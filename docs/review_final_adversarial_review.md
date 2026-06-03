@@ -28,7 +28,7 @@ Suggested change:
 
 Build reviewer metrics and second-review sampling in week 3, not after the pilot.
 
-Status: documented in `operations/reviewer_workflow.md` and `roadmap/day_by_day_execution_plan.md`.
+Status: documented in `docs/operations_reviewer_workflow.md` and `docs/roadmap_day_by_day_execution_plan.md`.
 
 ### Medium: Low-quality generated artifacts need project-specific bans
 
@@ -40,7 +40,7 @@ Suggested change:
 
 Add banned/generated artifact patterns in every project guide and feed repeated misses into `check_low_quality_generated_artifacts`.
 
-Status: documented in `architecture/checker_framework.md`, `templates/project_guide_template.md`, and `docs/risk_register.md`.
+Status: documented in `docs/architecture_checker_framework.md`, `docs/template_project_guide.md`, and `docs/risk_register.md`.
 
 ### Medium: Lessons learned must not become another passive document
 

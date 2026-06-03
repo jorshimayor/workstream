@@ -32,7 +32,7 @@ Suggested change:
 
 Keep `SCREENING` as a real lifecycle state and require a ready gate before `READY`.
 
-Status: fixed in `architecture/lifecycle_state_machine.md`, `operations/project_operating_manual.md`, and `operations/queue_policy.md`.
+Status: fixed in `docs/architecture_lifecycle_state_machine.md`, `docs/operations_project_operating_manual.md`, and `docs/operations_queue_policy.md`.
 
 ### High: Preflight evidence needed to be first-class
 
@@ -44,7 +44,7 @@ Suggested change:
 
 Add preflight evidence template and checker support for `check_preflight_evidence`.
 
-Status: fixed in `templates/preflight_evidence_template.md` and `architecture/checker_framework.md`.
+Status: fixed in `docs/template_preflight_evidence.md` and `docs/architecture_checker_framework.md`.
 
 ### Medium: Lane capacity rules needed to be explicit
 
@@ -56,7 +56,7 @@ Suggested change:
 
 Define lane capacity defaults and daily queue review metrics.
 
-Status: fixed in `operations/queue_policy.md`.
+Status: fixed in `docs/operations_queue_policy.md`.
 
 ### Medium: Reviewer simulation should exist before first-of-kind tasks are released
 
@@ -68,7 +68,7 @@ Suggested change:
 
 Add reviewer simulation gate for high-value and first-of-kind tasks.
 
-Status: fixed in `operations/project_operating_manual.md`, `operations/subagent_review_protocol.md`, and `roadmap/implementation_backlog.md`.
+Status: fixed in `docs/operations_project_operating_manual.md`, `docs/operations_subagent_review_protocol.md`, and `docs/roadmap_implementation_backlog.md`.
 
 ### Medium: Lessons learned needed action ownership
 
@@ -80,5 +80,5 @@ Suggested change:
 
 Require each lesson to have an owner and target action.
 
-Status: fixed in `operations/project_operating_manual.md`.
+Status: fixed in `docs/operations_project_operating_manual.md`.
 

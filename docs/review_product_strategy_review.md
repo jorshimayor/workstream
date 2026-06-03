@@ -12,7 +12,7 @@ Suggested change: add a "Day 7 Thin Slice" that proves `Project -> Task -> Submi
 
 ### High: Recommended stack is still undecided
 
-`architecture/system_architecture.md` says backend can be Node/TypeScript or Go. For a 30-day execution plan, this leaves too much room for debate.
+`docs/architecture_system_architecture.md` says backend can be Node/TypeScript or Go. For a 30-day execution plan, this leaves too much room for debate.
 
 Suggested change: pick one v0.1 stack and treat alternatives as future decisions.
 
