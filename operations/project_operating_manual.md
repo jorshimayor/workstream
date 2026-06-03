@@ -1,0 +1,175 @@
+# Project Operating Manual
+
+## Purpose
+
+This manual defines how a project runs inside Workstream. It is the practical bridge between a project guide and daily work.
+
+Every project has:
+
+- active guide
+- queue owner
+- reviewer owner
+- checker policy
+- review policy
+- payment policy
+- review guard
+- preflight evidence requirements
+- lessons learned log
+
+## Project Setup Checklist
+
+Before releasing tasks:
+
+- project name and slug exist
+- project guide imported
+- guide version marked active
+- base amount configured
+- currency configured
+- allowed task types listed
+- required task fields listed
+- required submission fields listed
+- checker policy attached
+- review policy attached
+- payment policy attached
+- reviewer pool assigned
+- review guard created from the project guide
+- preflight evidence requirements defined
+
+## v0.1 Quality Gates
+
+### Project Activation Gate
+
+A project cannot become active unless guide, checker policy, review policy, evidence policy, and payment policy are present.
+
+### Task Screening Gate
+
+A task cannot move to `READY` until the task contract is complete, the guide version is locked, evidence requirements are clear, payout policy is present, and a release decision is recorded.
+
+### Submission Quality Gate
+
+A submission cannot move to human review until required checkers run against the exact submission version and artifact hashes. High-severity failures return to the worker when submission-caused; platform infrastructure failures remain in checker/admin handling with audit records.
+
+External origin qualification and webhook drop notifications are future adapter concerns, not v0.1 gates.
+
+## Task Release Checklist
+
+Before moving a task to `READY`:
+
+- task belongs to project
+- active guide version attached
+- acceptance criteria exist
+- required output is explicit
+- evidence requirements exist
+- base amount is set
+- deadline or review SLA is set
+- skill tags are set
+- screening/readiness gate passed
+- task status snapshot created
+- task creator has run the project ready gate
+
+## Ready Gate
+
+A task cannot move to `READY` just because it has text.
+
+The ready gate confirms:
+
+- guide version is active
+- task fits project scope
+- acceptance criteria are objective enough to review
+- required evidence is clear
+- payout is set
+- known project failure modes have been checked
+- task does not depend on private or prohibited source material
+
+If the ready gate fails, the task remains `DRAFT`.
+
+## Submission Intake Checklist
+
+Before accepting a submission packet:
+
+- task is assigned to submitter
+- summary exists
+- output package or reference exists
+- evidence exists
+- revision replay exists when task was previously `NEEDS_REVISION`
+- preflight evidence record can be generated
+
+## Reviewer Simulation Gate
+
+Before high-value or first-of-kind tasks are released, run a reviewer simulation:
+
+- inspect task as if rejecting it
+- identify likely blocker findings
+- check whether acceptance criteria are atomic
+- check whether evidence requirements are sufficient
+- check whether the task can be reviewed without private explanation
+
+The output is one of:
+
+- ready
+- needs revision before release
+- reject-risk
+
+## Review Checklist
+
+Before review decision:
+
+- read active guide version
+- read task acceptance criteria
+- inspect checker results
+- inspect evidence
+- inspect prior findings if resubmission
+- write structured findings if not accepting
+
+## Payment Checklist
+
+Before marking paid:
+
+- task is accepted
+- payment record exists
+- accepted amount is correct
+- worker identity is correct
+- payment reference is recorded
+- paid amount matches record
+
+## Lessons Learned Loop
+
+Every repeated failure becomes one of:
+
+- guide update
+- checker update
+- template update
+- reviewer training note
+- payment policy update
+- task creator checklist update
+
+Do not let repeated mistakes remain tribal knowledge.
+
+Each lesson must have an action owner and one target:
+
+- guide update
+- checker update
+- template update
+- reviewer policy update
+- operator training note
+
+## Weekly Project Review
+
+Review:
+
+- task counts by status
+- accepted work
+- rejected work
+- needs-revision reasons
+- checker failures
+- reviewer quality
+- pending payout
+- paid total
+- lessons learned
+
+Output:
+
+- policy changes
+- checker backlog
+- guide amendments
+- operator training notes

@@ -1,0 +1,269 @@
+# Lifecycle State Machine
+
+## Task States
+
+```text
+DRAFT
+SCREENING
+READY
+CLAIMED
+IN_PROGRESS
+SUBMITTED
+AUTO_CHECKING
+PRE_REVIEW_GATE
+REVIEW_PENDING
+NEEDS_REVISION
+ACCEPTED
+REJECTED
+CANCELLED
+```
+
+Payment status is separate from task status:
+
+```text
+NONE
+PENDING
+PAYOUT_SUBMITTED
+PAID
+DISPUTED
+```
+
+External adapter pipeline states such as `INGESTED`, `FILTERED`, `NORMALIZED`, and `ROUTED` are not v0.1 task lifecycle states. If source adapters are added later, they must normalize accepted external input into the canonical task lifecycle before workers see it.
+
+## State Definitions
+
+### DRAFT
+
+The task is being created. It is not available to workers.
+
+Required before leaving:
+
+- project selected
+- guide version attached
+- source type recorded
+- title
+- description
+- acceptance criteria
+- base amount
+- required output
+
+### SCREENING
+
+The task is structurally prepared but not yet released. This is the pre-release quality gate used to catch weak guides, vague acceptance criteria, missing evidence requirements, bad payout policy, or missing checker policy before workers see the task.
+
+Required before entering:
+
+- draft task has required fields
+- project guide version is attached
+- base payout policy is present
+- task creator believes the task is ready for independent screening
+
+Required before leaving:
+
+- screening checklist passed
+- no open high-severity readiness finding
+- task status snapshot created
+- release decision recorded by an authorized reviewer, project manager, or admin
+
+### READY
+
+The task is available for assignment or claiming.
+
+Required before entering:
+
+- task schema valid
+- project guide active
+- payout policy present
+- guide version locked for this task
+- source reference recorded when imported
+- acceptance criteria frozen unless an admin records a guide-correction event
+
+### CLAIMED
+
+A worker has claimed or been assigned the task.
+
+### IN_PROGRESS
+
+The worker is actively working on the task.
+
+### SUBMITTED
+
+The worker submitted a packet.
+
+Required before entering:
+
+- submission summary
+- package or output reference
+- evidence items
+- stable evidence ids
+- immutable submission version
+- content hash for every uploaded artifact where possible
+- evidence references bound to submitted artifact hashes where possible
+- worker attestation that the packet does not include prohibited or confidential material
+
+### AUTO_CHECKING
+
+Automated checks are running.
+
+### PRE_REVIEW_GATE
+
+Optional project policy state for reviewer simulation, adversarial review, or readiness audit before a human reviewer receives the packet.
+
+Required before leaving:
+
+- simulation or review guard results recorded
+- no unresolved blocking readiness issue
+
+### REVIEW_PENDING
+
+Automated checks passed or produced only non-blocking warnings. A human reviewer can now review the submission.
+
+Required before entering:
+
+- checker run exists for the exact submission version
+- checker run references the same artifact hashes as the submission packet
+- no high-severity checker failure is open
+
+### NEEDS_REVISION
+
+The human reviewer found fixable issues.
+
+Required before entering:
+
+- at least one review finding
+- required fix for each high/medium finding
+
+### ACCEPTED
+
+The submission is accepted.
+
+Required before entering:
+
+- accepted review decision
+- no unresolved high-severity checker failure
+- evidence present
+- reviewer cited evidence supporting acceptance
+- no unresolved high or medium prior revision finding
+- payment amount calculated from the locked project payment policy
+
+Required side effects:
+
+- contribution record created from accepted submission, accepting review, locked guide version, artifact hash manifest, and acceptance evidence refs
+- payment record created or updated from the contribution record
+- reputation events reference the contribution record
+
+### REJECTED
+
+The task or submission is rejected.
+
+Required before entering:
+
+- rejection review decision
+- rejection reason
+
+### CANCELLED
+
+The task is cancelled before acceptance.
+
+## Allowed Transitions
+
+```text
+DRAFT -> SCREENING
+SCREENING -> READY
+SCREENING -> DRAFT
+READY -> CLAIMED
+CLAIMED -> IN_PROGRESS
+IN_PROGRESS -> SUBMITTED
+SUBMITTED -> AUTO_CHECKING
+AUTO_CHECKING -> REVIEW_PENDING
+AUTO_CHECKING -> NEEDS_REVISION
+AUTO_CHECKING -> PRE_REVIEW_GATE
+PRE_REVIEW_GATE -> REVIEW_PENDING
+PRE_REVIEW_GATE -> NEEDS_REVISION
+REVIEW_PENDING -> ACCEPTED
+REVIEW_PENDING -> NEEDS_REVISION
+REVIEW_PENDING -> REJECTED
+NEEDS_REVISION -> IN_PROGRESS
+DRAFT -> CANCELLED
+SCREENING -> CANCELLED
+READY -> CANCELLED
+CLAIMED -> CANCELLED
+IN_PROGRESS -> CANCELLED
+```
+
+## Blocked Transitions
+
+These require admin override:
+
+- `SUBMITTED -> REVIEW_PENDING` without checker run
+- `REVIEW_PENDING -> ACCEPTED` without review decision
+- `REVIEW_PENDING -> ACCEPTED` without contribution record creation
+- `NEEDS_REVISION -> ACCEPTED` without new submission or explicit finding closure
+- `SUBMITTED -> ACCEPTED` directly
+- `SUBMITTED -> NEEDS_REVISION` without checker run unless the submission packet cannot be parsed
+- any transition based on artifacts whose hashes differ from the checker run
+- payment `NONE -> PAID` without accepted task and payment record
+- payment exposure without a contribution record
+- payment `PENDING -> PAID` without payment reference
+
+## Submission Versioning
+
+Each task can have multiple submissions.
+
+```text
+submission v1 -> needs revision
+submission v2 -> review pending
+submission v2 -> accepted
+```
+
+Each resubmission must link to the prior submission it supersedes.
+
+## Revision Replay
+
+When a task enters NEEDS_REVISION, the next submission must include a revision replay:
+
+```text
+Finding A -> fixed by change X -> evidence Y -> closed
+Finding B -> fixed by change Z -> evidence W -> closed
+```
+
+The worker can claim each prior finding as:
+
+- fixed
+- disputed
+- not_applicable
+
+The reviewer can mark each prior finding:
+
+- closed_fixed
+- closed_rebutted
+- partially_closed
+- still_open
+- obsolete
+
+## Audit Requirements
+
+Every transition records:
+
+- task id
+- old state
+- new state
+- actor
+- timestamp
+- reason
+- related submission or review
+- related guide version
+- related artifact hashes when the transition depends on submitted files
+- override id when an admin override was used
+
+No lifecycle change happens silently.
+
+Payment transitions are recorded in the payment ledger and audit log, not as task lifecycle states.
+
+## Anti-Bypass Rules
+
+- Workers cannot edit a submitted packet in place. They must create a new submission version.
+- Reviewers cannot accept a submission whose checker run belongs to a different submission version.
+- Admin overrides cannot erase failed checker results, rejected reviews, or prior submissions.
+- Guide edits do not retroactively change active tasks unless an admin records the affected tasks and reason.
+- A task with disputed evidence, suspected copied material, or payment conflict cannot be accepted until the issue is resolved through review, rejection, revision, payment dispute handling, or an audit-recorded admin action.
