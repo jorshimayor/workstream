@@ -16,7 +16,7 @@ Suggested change:
 
 Keep v0.1 limited to manual task intake, project guides, queues, checkers, review, revision, payment ledger, and reputation events.
 
-Status: addressed in `product/product_brief.md`, `roadmap/30_day_master_plan.md`, and decision records.
+Status: addressed in `docs/product_brief.md`, `docs/roadmap_30_day_master_plan.md`, and decision records.
 
 ### High: Day-7 thin slice is necessary
 
@@ -28,7 +28,7 @@ Suggested change:
 
 Add a day-7 thin slice: project, guide, task, screening, ready, claim, submit, checker result, review decision.
 
-Status: fixed in `roadmap/30_day_master_plan.md`.
+Status: fixed in `docs/roadmap_30_day_master_plan.md`.
 
 ### Medium: The first operator value is now clear
 
@@ -40,5 +40,5 @@ Suggested change:
 
 Keep these as pilot success checks, not marketing copy.
 
-Status: addressed in `product/product_brief.md`.
+Status: addressed in `docs/product_brief.md`.
 

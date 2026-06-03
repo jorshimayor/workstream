@@ -6,7 +6,7 @@ Review scope: markdown docs only.
 
 ### High: Revision rebuttal path needs a clearer state
 
-The operator workflow says rebuttal is allowed when a finding is wrong, but the reviewer workflow does not define how a rebutted finding is accepted, rejected, or escalated.
+The operator workflow says rebuttal is allowed when a finding is wrong, but the reviewer workflow does not define how a rebutted finding is closed or kept open.
 
 Suggested change: define finding closure states and the rule for rebutted findings.
 
@@ -27,4 +27,3 @@ Suggested change: add reviewer independence constraints.
 Checker result schema has a message field, but operationally each failure should include a suggested fix. This reduces repeated confusion.
 
 Suggested change: add `suggested_fix` to checker result contract.
-

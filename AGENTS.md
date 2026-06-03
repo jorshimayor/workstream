@@ -12,9 +12,10 @@ Workstream is how Flow measures, certifies, and coordinates useful human-agent w
 
 - Keep wording consistent with `README.md`, `docs/glossary.md`, and `docs/architecture_lockdown.md`.
 - Do not use old names such as "task-production control plane" or "Garden roadmap".
-- Do not add extra sheets to `sheets/workstream_roadmap.xlsx`; the workbook must contain one sheet only: `WorkStream RoadMap`.
-- Treat `sheets/workstream_roadmap.xlsx` as the primary spreadsheet export. The CSV is fallback only.
-- If updating the roadmap, update both XLSX and CSV.
+- Spreadsheet exports live locally under ignored `sheets/`; do not commit them.
+- Do not add extra sheets to local `sheets/workstream_roadmap.xlsx`; the workbook must contain one sheet only: `WorkStream RoadMap`.
+- Treat local `sheets/workstream_roadmap.xlsx` as the primary spreadsheet export. The CSV is fallback only.
+- If updating the roadmap, update both local XLSX and CSV exports.
 - Do not import XLSX into Google Sheets with "replace spreadsheet"; use a temporary sheet and copy only the roadmap tab.
 - Prefer evidence-backed docs over vague product claims.
 - Keep v0.1 focused on project guide -> task -> submission -> checks -> review -> revision -> contribution/payment/reputation records.
@@ -33,6 +34,6 @@ Before reporting completion:
 
 - run a stale wording scan
 - check markdown links
-- verify the XLSX has one sheet only
-- verify the current Workstream definition appears in README and sheet exports
-- update related docs/templates/sheets together, not only one file
+- verify the local XLSX has one sheet only when local sheet exports are present
+- verify the current Workstream definition appears in README and local sheet exports when local sheet exports are present
+- update related docs/templates and local sheet exports together when the roadmap changes

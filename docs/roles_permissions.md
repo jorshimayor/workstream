@@ -1,6 +1,6 @@
 # Roles And Permissions
 
-This is a supporting note. The canonical permission matrix lives in `operations/roles_permissions.md`.
+This is a supporting note. The canonical permission matrix lives in `docs/operations_roles_permissions.md`.
 
 `Operator` is a product persona, not a separate permission role. Operator work is performed by project managers, workers, reviewers, admins, or finance users depending on the action.
 

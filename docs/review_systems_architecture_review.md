@@ -12,7 +12,7 @@ Task lifecycle initially included `PAID` as a terminal task state. That risks th
 
 Suggested change: keep task status and payment status separate. Task terminal states should be accepted, rejected, or cancelled, while payment status should move through pending, payout submitted, paid, or disputed.
 
-Status: fixed in `roadmap/30_day_master_plan.md`, `architecture/lifecycle_state_machine.md`, and `operations/payment_reputation.md`.
+Status: fixed in `docs/roadmap_30_day_master_plan.md`, `docs/architecture_lifecycle_state_machine.md`, and `docs/operations_payment_reputation.md`.
 
 ### High: Roles and permissions needed a first-version matrix
 
@@ -20,7 +20,7 @@ The plan mentioned roles, but did not define who can review, override, or update
 
 Suggested change: add a permission matrix and separation rules.
 
-Status: fixed in `operations/roles_permissions.md`.
+Status: fixed in `docs/operations_roles_permissions.md`.
 
 ### Medium: Guide and policy versioning needed to attach to submissions, checks, reviews, and payments
 
@@ -28,7 +28,7 @@ Tasks recorded guide version, but submissions, checker runs, reviews, and paymen
 
 Suggested change: add guide and policy version fields to those records.
 
-Status: fixed in `architecture/data_model.md`.
+Status: fixed in `docs/architecture_data_model.md`.
 
 ### Medium: Artifact immutability needed to be explicit
 
@@ -36,19 +36,19 @@ The evidence model had hashes but did not clearly say when artifacts become immu
 
 Suggested change: artifacts should be hash-locked when checker execution begins; changes require a new submission version.
 
-Status: fixed in `architecture/system_architecture.md` and `architecture/data_model.md`.
+Status: fixed in `docs/architecture_system_architecture.md` and `docs/architecture_data_model.md`.
 
-### Low: Duplicate older docs exist and should be treated as supporting notes
+### Low: Duplicate older docs are not part of the canonical package
 
-The repository contains older docs such as `architecture/domain_model.md`, `architecture/state_machine.md`, and `roadmap/30_day_roadmap.md`. The canonical docs now linked from `README.md` are more complete.
+The canonical package now lives in the flat `docs/` directory and the root `README.md` links to those files.
 
-Suggested change: either archive older docs later or add a short note marking the canonical set.
+Suggested change: keep future markdown docs in `docs/` with clear prefixes.
 
-Status: noted for later cleanup.
+Status: resolved by flattening markdown documentation into `docs/`.
 
 ### Low: README had duplicate roles/permissions links
 
-README linked both `docs/roles_permissions.md` and `operations/roles_permissions.md`.
+README linked both `docs/roles_permissions.md` and `docs/operations_roles_permissions.md`.
 
 Suggested change: keep the operations document as canonical because it has the permission matrix.
 
@@ -64,7 +64,7 @@ Baseline pattern: submission packages commonly carry hashes, provenance metadata
 
 Suggested change: add readiness certificate and submission provenance fields.
 
-Status: fixed in `architecture/data_model.md`, `architecture/checker_framework.md`, and `templates/submission_packet_template.md`.
+Status: fixed in `docs/architecture_data_model.md`, `docs/architecture_checker_framework.md`, and `docs/template_submission_packet.md`.
 
 ### Medium: Lessons learned should be a data object, not only prose
 
@@ -72,7 +72,7 @@ Baseline pattern: repeated workflow misses become guide updates, review-guard up
 
 Suggested change: add `ProjectLesson` with status and recommended change.
 
-Status: fixed in `architecture/data_model.md` and `operations/operator_workflow.md`.
+Status: fixed in `docs/architecture_data_model.md` and `docs/operations_operator_workflow.md`.
 
 ### Low: Workstream captures the reusable operating model
 

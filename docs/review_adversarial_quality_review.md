@@ -8,7 +8,7 @@ Review stance: try to break Workstream through gaming, weak operations, fake evi
 
 ### High: Evidence Can Be Structurally Present But False
 
-Files: `architecture/checker_framework.md`, `architecture/lifecycle_state_machine.md`, `templates/project_guide_template.md`
+Files: `docs/architecture_checker_framework.md`, `docs/architecture_lifecycle_state_machine.md`, `docs/template_project_guide.md`
 
 Finding: The plan required evidence, but did not strongly bind evidence to immutable submission versions. A worker could submit logs from an earlier local run, attach unrelated screenshots, or replace artifacts after checks.
 
@@ -16,7 +16,7 @@ Suggested change: Require artifact hashes, immutable submission versions, checke
 
 ### High: Status Bypass Needs Code-Level Enforcement
 
-Files: `architecture/lifecycle_state_machine.md`, `docs/roles_permissions.md`
+Files: `docs/architecture_lifecycle_state_machine.md`, `docs/roles_permissions.md`
 
 Finding: The state model listed blocked transitions, but did not explicitly block direct `SUBMITTED -> ACCEPTED`, checker-version mismatch, or non-destructive override behavior.
 
@@ -24,7 +24,7 @@ Suggested change: Enforce transition guards in code and record guide version, ar
 
 ### High: Reviewer Collusion And Rubber-Stamping Could Corrupt Quality
 
-Files: `docs/roles_permissions.md`, `operations/reviewer_workflow.md`, `docs/risk_register.md`
+Files: `docs/roles_permissions.md`, `docs/operations_reviewer_workflow.md`, `docs/risk_register.md`
 
 Finding: Reviewer reputation existed, but collusion signals were underspecified. A reviewer could repeatedly accept the same worker's weak submissions with short comments.
 
@@ -32,7 +32,7 @@ Suggested change: Flag repeated worker-reviewer pairs, fast accepts with no evid
 
 ### High: Bad Project Guides Can Poison The Whole Workflow
 
-Files: `templates/project_guide_template.md`, `docs/risk_register.md`
+Files: `docs/template_project_guide.md`, `docs/risk_register.md`
 
 Finding: Project guides are first-class, but the template did not require version approval, effective dates, unacceptable-work definitions, evidence policy, or known checker blind spots.
 
@@ -40,7 +40,7 @@ Suggested change: Add guide versioning, approver, unacceptable-work criteria, ev
 
 ### High: Payment Disputes Need Explicit Holds And Adjustment Records
 
-Files: `operations/payment_reputation.md`, `templates/project_guide_template.md`, `docs/risk_register.md`
+Files: `docs/operations_payment_reputation.md`, `docs/template_project_guide.md`, `docs/risk_register.md`
 
 Finding: Payment states existed, but dispute opening, amount adjustment, and payment holds were not explicit enough.
 
@@ -48,7 +48,7 @@ Suggested change: Project guides must define dispute rules; accepted amount chan
 
 ### Medium: Low-Quality LLM-Generated Artifacts Can Pass Formatting Checks
 
-Files: `architecture/checker_framework.md`, `templates/project_guide_template.md`, `docs/risk_register.md`
+Files: `docs/architecture_checker_framework.md`, `docs/template_project_guide.md`, `docs/risk_register.md`
 
 Finding: A generic generated submission can satisfy markdown structure while being hollow. This includes fabricated helper files, generic "model_for_test" style artifacts, placeholder reports, or evidence that only looks official.
 
@@ -56,7 +56,7 @@ Suggested change: Each project guide should define banned generated patterns and
 
 ### Medium: Confidentiality Depends Too Much On Worker Honesty
 
-Files: `architecture/checker_framework.md`, `docs/risk_register.md`, `templates/project_guide_template.md`
+Files: `docs/architecture_checker_framework.md`, `docs/risk_register.md`, `docs/template_project_guide.md`
 
 Finding: Worker attestation is necessary but not sufficient. Confidential or copied data can leak through packages, screenshots, logs, and evidence files.
 
@@ -64,7 +64,7 @@ Suggested change: Keep attestation, but pair it with forbidden-file checks, guid
 
 ### Medium: Checker Blind Spots Need A Feedback Loop
 
-Files: `architecture/checker_framework.md`
+Files: `docs/architecture_checker_framework.md`
 
 Finding: Checkers will initially miss real issues and produce false positives. Without a blind-spot review, the system will rely on memory and repeated manual corrections.
 

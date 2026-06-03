@@ -16,7 +16,7 @@ Suggested change:
 
 Keep `PAID` out of task lifecycle states and enforce payment transitions in the payment ledger.
 
-Status: fixed in `architecture/lifecycle_state_machine.md`, `operations/payment_reputation.md`, and `operations/queue_policy.md`.
+Status: fixed in `docs/architecture_lifecycle_state_machine.md`, `docs/operations_payment_reputation.md`, and `docs/operations_queue_policy.md`.
 
 ### High: Auditability is represented but must be implemented early
 
@@ -28,7 +28,7 @@ Suggested change:
 
 Every status transition, checker override, review decision, payment transition, and guide activation writes an audit event.
 
-Status: documented in `architecture/data_model.md` and `architecture/lifecycle_state_machine.md`.
+Status: documented in `docs/architecture_data_model.md` and `docs/architecture_lifecycle_state_machine.md`.
 
 ### Medium: The v0.1 stack decision is clear
 
@@ -40,7 +40,7 @@ Suggested change:
 
 Only introduce Go services later for checker runners or high-throughput workers.
 
-Status: addressed in `architecture/system_architecture.md`.
+Status: addressed in `docs/architecture_system_architecture.md`.
 
 ### Medium: Artifact immutability is correctly captured
 
@@ -52,5 +52,5 @@ Suggested change:
 
 Implement hash manifests and prevent in-place artifact mutation.
 
-Status: documented in `architecture/data_model.md`, `architecture/lifecycle_state_machine.md`, and `architecture/checker_framework.md`.
+Status: documented in `docs/architecture_data_model.md`, `docs/architecture_lifecycle_state_machine.md`, and `docs/architecture_checker_framework.md`.
 
