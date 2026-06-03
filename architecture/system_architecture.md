@@ -1,0 +1,299 @@
+# System Architecture
+
+## Summary
+
+Workstream is organized around projects, tasks, submissions, checks, reviews, revisions, payments, and reputation.
+
+The architecture stays modular enough to support different project types without becoming abstract to the point that no project can use it.
+
+## High-Level Components
+
+```text
+Frontend
+  Project dashboard
+  Task queue
+  Task detail
+  Submission page
+  Checker results
+  Review queue
+  Review page
+  Payment dashboard
+  Reputation dashboard
+
+Backend API
+  Project service
+  Source/import service
+  Task service
+  Submission service
+  Checker service
+  Review service
+  Revision service
+  Contribution service
+  Evidence service
+  Payment service
+  Reputation service
+
+Storage
+  Postgres for records
+  Object storage abstraction for files and evidence
+  Append-only audit log for state transitions
+  Hash-locked artifacts after submission lock
+
+Execution
+  External at first
+  Async checker/background workers
+  Optional future agent runtime
+```
+
+## v0.1 Stack
+
+The v0.1 stack is locked for implementation.
+
+Approved stack:
+
+- Frontend: React + Vite + TypeScript
+- Backend API: Python with FastAPI
+- Database: Postgres
+- File storage: local development can use filesystem-backed storage, but it must sit behind an object-storage abstraction compatible with R2/S3-style storage
+- Auth: role-based accounts
+- Jobs: async-first background execution; FastAPI background tasks are acceptable for simple local v0.1 jobs, with Celery or an equivalent durable queue when jobs need retries, scheduling, isolation, or distributed workers
+
+Async policy:
+
+- API handlers use async FastAPI patterns where I/O is involved.
+- Database access, file storage, checker execution orchestration, notifications, and audit writes use non-blocking boundaries.
+- Long-running checker work must not block request/response paths.
+- Checker runs create records immediately, return an accepted/running state, and complete through a background worker.
+- FastAPI background tasks are acceptable only for simple local execution during early v0.1.
+- Celery or an equivalent durable queue is introduced once checker jobs need retries, progress tracking, scheduled reconciliation, or worker isolation.
+
+Rust, TypeScript, or another language can be introduced later for a specific layer only with a clear reason, such as high-throughput checker execution, worker isolation, frontend integration, or a specialized SDK/runtime requirement. They do not replace the Python/FastAPI API by default.
+
+Frontend policy:
+
+- React + Vite owns the internal operations UI.
+- The frontend talks to FastAPI through explicit API contracts.
+- The UI stays dashboard/form/workflow focused, not a marketing site.
+- Next.js is deferred unless server rendering, public pages, or full-stack React routing becomes a real requirement.
+
+The architecture avoids framework coupling in the domain model. Project, task, submission, checker, review, revision, contribution, payment, reputation, and audit behavior remain portable.
+
+## Component Responsibilities
+
+### Project Service
+
+Owns:
+
+- project metadata
+- guide
+- base payout
+- checker policy
+- review policy
+- payment policy
+- skill taxonomy
+
+### Source/Import Service
+
+Owns:
+
+- manual intake metadata
+- markdown import metadata
+- CSV import metadata
+- source payload hashes
+- import batch ids
+- internal screening rejection records
+
+External origin onboarding, source adapters, and webhook drop notifications are later extensions. v0.1 keeps intake controlled and manual-first.
+
+### Task Service
+
+Owns:
+
+- task creation
+- task assignment
+- task status
+- task requirements
+- task acceptance criteria
+- queue views
+
+### Submission Service
+
+Owns:
+
+- submitted output
+- submission packet
+- attached evidence
+- package metadata
+- submission versioning
+
+### Checker Service
+
+Owns:
+
+- checker registry
+- checker execution
+- checker results
+- severity handling
+- review gate enforcement
+
+### Review Service
+
+Owns:
+
+- review queue
+- findings
+- review decisions
+- second-review flags
+- reviewer audit history
+
+### Revision Service
+
+Owns:
+
+- prior feedback replay
+- fix summaries
+- issue closure
+- resubmission linkage
+
+### Contribution Service
+
+Owns:
+
+- contribution record creation after acceptance
+- accepted submission linkage
+- accepted review linkage
+- acceptance evidence references
+- artifact hash manifest references
+- export status
+- payment and reputation attachment point
+
+### Evidence Service
+
+Owns:
+
+- file attachments
+- logs
+- hashes
+- screenshots
+- checker output
+- reviewer notes
+- artifact immutability after checker execution begins
+
+### Payment Service
+
+Owns:
+
+- base amount
+- accepted amount
+- pending payout
+- paid amount
+- payment status
+- payment references
+
+### Reputation Service
+
+Owns:
+
+- worker performance
+- reviewer performance
+- skill-level score
+- revision and rejection rates
+- task-difficulty weighting
+
+### Audit Event Service
+
+Owns:
+
+- state transition events
+- checker run events
+- review decision events
+- revision submission events
+- payment transition events
+- manual overrides
+- guide and policy version references
+
+## First Database Choice
+
+Use Postgres for records.
+
+Use a storage interface for large files and evidence. During local development, the implementation can store files on the local filesystem, but callers use stable object identifiers, content hashes, and an object-storage-style API so the backend will later target R2, S3, or another compatible object store without changing submission/evidence semantics.
+
+Submission artifacts are hash-locked once a checker run starts. Any changed artifact creates a new submission version instead of mutating the old one.
+
+Every important lifecycle action creates an append-only audit event. State is readable from current records, and audit history explains how the system got there.
+
+## API Style
+
+Use explicit domain APIs rather than generic CRUD-only endpoints.
+
+Examples:
+
+```text
+POST /projects
+POST /projects/:id/tasks
+POST /tasks/:id/claim
+POST /tasks/:id/submit
+POST /submissions/:id/run-checks
+POST /reviews/:id/decision
+POST /submissions/:id/revision-replay
+POST /contributions/:id/export
+POST /payments/:id/mark-paid
+```
+
+## v0.1 Gates
+
+Workstream has three v0.1 quality gates:
+
+- project activation gate
+- task screening gate
+- submission quality gate
+
+The proposal's origin qualification and task ingestion gates are future adapter concepts. In v0.1, manual, markdown, and CSV intake normalize into the same task contract and pass through project activation plus task screening before work reaches workers.
+
+## Audit Log
+
+Workstream needs an append-only audit log from v0.1.
+
+Audit events cover:
+
+- task status transitions
+- assignment changes
+- submission creation and locking
+- checker runs
+- review decisions
+- revision replay closure
+- payment status transitions
+- reputation events
+- admin overrides
+
+## Future Extension Points
+
+Source adapters:
+
+- import tasks from external systems
+- map external schema to WorkstreamTask
+- submit accepted outputs back to external systems
+
+Agent runtime:
+
+- assign work to human-agent pairs
+- track agent execution logs
+- preserve owner review gate
+
+Settlement adapters:
+
+- manual payout
+- Stripe or bank ledger
+- stablecoin payout
+- ERC-8183 job settlement
+- x402 micropayment support
+
+Reputation adapters:
+
+- internal reputation
+- portable on-chain identity
+- external reviewer score integration
+
+## Anti-Overbuild Boundary
+
+Do not build source adapters, agent runtime, marketplace discovery, or blockchain settlement until the internal lifecycle works with real pilot tasks.

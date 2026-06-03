@@ -1,0 +1,89 @@
+Workstream Roadmap
+Definition,"Workstream is Flow's task evaluation and contribution infrastructure. It manages project guides, task queues, submission packets, automated checks, reviewer routing, evaluation sprints, revision loops, contribution records, payment status, and reputation signals."
+Near-term priority,"Near-term priority: prove one internal project loop end to end: guide, screening, queue, submission packet, checks, pre-review gate, human review, revision replay, acceptance/rejection, contribution record, payment ledger, reputation, and lessons learned. Keep scope narrow: manual intake first, database ledger first, strong evidence and review controls before expansion."
+
+Week,Date range,Primary goal,Project + guide,Task + queue loop,Checkers + trust,Review + contribution ledger,Done when
+Now,Jun 2-5,Turn Workstream into an implementation-ready launch gate.,"- choose first pilot project
+- lock project guide template
+- name base amount, evidence policy, review policy
+- assign product/ops, engineering, review, payment owners","- define SCREENING, READY, CLAIMED, IN_PROGRESS views
+- prepare first 5 pilot task shells
+- freeze workspace/packet convention
+- confirm manual intake only for v0.1","- define P0 checker list
+- create readiness certificate contract
+- require artifact hash manifest
+- require worker attestation and preflight evidence","- lock review packet template
+- lock revision replay states
+- separate task acceptance from payment status
+- define contribution record fields
+- define daily payment reconciliation report","One buildable v0.1 spec exists, first pilot project is named, roles are assigned, and the first task can be created without inventing rules in chat."
+W1,Jun 8-12,Stand up the core evaluation and contribution loop.,"- create WorkstreamProject + ProjectGuide
+- guide versioning and active guide lock
+- base amount and payment policy fields
+- project activation gate","- create WorkstreamTask
+- status transitions with audit events
+- task list, queue lanes, task detail
+- assignment/claim flow
+- submission packet v1","- one structural checker runs against a submission
+- immutable submission artifact versioning starts when checker runs
+- checker result visible on task detail","- basic reviewer profile
+- contribution record created after accepted review
+- payment and reputation concepts attach to contribution records
+- no acceptance without evidence concept",A single task can move Project -> Task -> Submission -> Checker Result -> Review Decision -> Contribution Record with records stored and no silent state change.
+W2,Jun 15-19,Make automated gates strong enough to protect reviewers.,"- project checker policy
+- project-specific required files
+- allowed task types
+- guide/policy version recorded on submissions and checks","- broken packets return to worker before review
+- clean packets reach PRE_REVIEW_GATE
+- queue dashboards show screening, active, submitted, failed, review pending","- check_project_guide_attached
+- check_task_schema
+- check_acceptance_criteria_present
+- check_submission_packet
+- check_required_files
+- check_evidence_integrity
+- check_forbidden_files
+- check_low_quality_generated_artifacts v1
+- check_preflight_evidence","- checker failures include suggested_fix
+- admin override requires reason
+- checker blind spots logged as ProjectLesson
+- readiness certificate ties contribution to artifact hashes and evidence ids","High-severity checker failures block REVIEW_PENDING, clean submissions receive a readiness certificate, and every checker run is tied to exact artifact hashes."
+W3,Jun 22-26,"Turn reviewer routing, human review, and revision into a repeatable quality system.","- reviewer independence rules
+- reviewer routing policy
+- second-review triggers
+- project-specific acceptance/rejection rules
+- unacceptable-work definitions","- REVIEW_PENDING -> NEEDS_REVISION / ACCEPTED / REJECTED
+- resubmission creates a new immutable submission version
+- prior feedback checklist required before resubmission","- PRE_REVIEW_GATE reviewer simulation/adversarial check
+- prior feedback checklist checker
+- reviewer evidence panel includes guide, checker output, artifacts, history","- structured ReviewFinding
+- closure states: closed_fixed, closed_rebutted, partially_closed, still_open, obsolete
+- reviewer quality metrics
+- ContributionRecord created after ACCEPTED
+- PaymentRecord and reputation events attach to contribution record","A reviewer can request revision, the worker can replay every finding, the reviewer can close or reopen each issue, and accepted work creates contribution, pending payment, and reputation records."
+W4,Jun 29-Jul 3,"Run an evaluation sprint, harden from evidence, and freeze v0.1.","- launch 1 pilot project
+- run 10-20 real pilot tasks as an evaluation sprint
+- update guide from actual failures
+- convert repeated misses into checker/policy/template changes","- batch 1 and batch 2 pilot runs
+- throughput metrics
+- stuck-state review
+- no accepted task missing evidence/contribution/payment record","- false-positive notes
+- missing-checker list
+- low-quality/fake evidence checks refined
+- confidentiality and forbidden-file checks validated
+- adversarial drills seeded into pilot","- payment reconciliation
+- reviewer audit
+- accepted/rejected/needs-revision dashboard
+- contribution records exported
+- pilot report and v0.2 priorities","Workstream can run a small real project from guide to contribution record and payment status, and the next cycle is chosen from pilot evidence, not vibes."
+Later,After v0.1,Pull forward only from measured evaluation-sprint pain.,"- source adapters
+- client-facing project setup
+- more project templates after repeatable value","- agent execution logs
+- stronger routing
+- larger team queues
+- external client portal","- specialized checker runners
+- multi-review consensus
+- dispute workflow hardening
+- advanced originality/quality checks","- on-chain settlement adapters
+- x402/OmniClaw integration
+- portable reputation
+- marketplace economics",Expansion is justified by contribution and quality data and does not weaken the guide/check/review/revision/payment discipline.

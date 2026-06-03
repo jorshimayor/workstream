@@ -1,0 +1,68 @@
+# Revision Replay
+
+## Purpose
+
+Revision replay prevents the common failure where a task comes back, the worker says it is fixed, and nobody can prove which reviewer issues were actually closed.
+
+Every resubmission after `NEEDS_REVISION` must map prior findings to concrete fixes.
+
+## Required Replay Fields
+
+For each prior finding:
+
+- prior finding id
+- prior severity
+- prior area
+- required fix
+- worker fix summary
+- evidence reference
+- worker claim status: `fixed`, `disputed`, or `not_applicable`
+
+Reviewer closure status:
+
+- `closed_fixed`
+- `closed_rebutted`
+- `partially_closed`
+- `still_open`
+- `obsolete`
+
+## Worker Rules
+
+The worker must:
+
+- address every high and medium finding
+- attach evidence for every claimed fix
+- explain any disputed finding directly
+- avoid bundling multiple findings into vague "fixed all" notes
+
+## Reviewer Rules
+
+The reviewer must:
+
+- check each replay row
+- mark closure status per finding
+- only introduce new findings when they are real and guide-grounded
+- avoid moving goalposts unless the new issue blocks acceptance
+
+## Blocking Policy
+
+A resubmission cannot move to `REVIEW_PENDING` when:
+
+- prior high finding has no replay row
+- prior medium finding has no replay row
+- replay row has no fix summary
+- replay row has no evidence and project policy requires evidence
+
+Low findings can be left unresolved if the reviewer marks them as informational.
+
+## Replay Table
+
+| Prior Finding ID | Required Fix | Worker Fix Summary | Evidence | Worker Status | Reviewer Closure |
+| --- | --- | --- | --- | --- | --- |
+| `RF-001` | `<required fix>` | `<what changed>` | `<evidence id/file/log/link>` | `fixed` | `still_open` |
+
+## Operational Standard
+
+Revision replay is not optional paperwork. It is the memory of the system.
+
+If the replay is weak, the platform fails the resubmission before a reviewer spends time on it.
