@@ -205,7 +205,7 @@ Every operating day starts with:
 | `DRAFT -> SCREENING` | project id, locked guide candidate, required task fields, payout policy |
 | `SCREENING -> READY` | screening decision, guide version lock, acceptance criteria, evidence requirements, checker policy |
 | `IN_PROGRESS -> SUBMITTED` | submission packet, evidence ids, artifact hash manifest, worker attestation |
-| `SUBMITTED -> AUTO_CHECKING` | immutable submission version, checker policy version |
+| `SUBMITTED -> AUTO_CHECKING` | immutable submission version, checker policy version derived from the locked task context |
 | `AUTO_CHECKING -> REVIEW_PENDING` | checker run for exact submission version, readiness certificate, no blocking failures |
 | `AUTO_CHECKING -> NEEDS_REVISION` | checker failures with severity, message, suggested fix |
 | `REVIEW_PENDING -> NEEDS_REVISION` | review decision, at least one structured finding |

@@ -24,9 +24,9 @@ List files, links, packages, or deliverables.
 
 - package hash:
 - artifact hash manifest:
-- source guide version:
-- checker policy version:
 - generated at:
+
+Workstream derives the locked project guide version, checker policy version, review policy version, and payment policy version from the task and server-side project policy records. The worker does not provide those versions in the submission packet.
 
 ## Artifact Hash Manifest
 

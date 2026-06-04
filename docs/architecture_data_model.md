@@ -1,5 +1,9 @@
 # Data Model
 
+## Implementation Stack
+
+The v0.1 persistence layer uses SQLAlchemy 2.x async models, Alembic migrations, and Pydantic schemas.
+
 ## Entity Overview
 
 ```text
@@ -134,6 +138,8 @@ Fields:
 
 The guide is versioned. Every task records the guide version active at creation or screening time before the task enters `READY`. Later source adapters must also lock the guide version during normalization before workers see the task.
 
+When a task is claimed or moved to `IN_PROGRESS`, its locked guide and policy context does not change silently. A newer upstream guide version can only affect unclaimed work or a controlled revision path when policy allows it and the audit log records the reason.
+
 Material changes require a new guide version. Material changes include acceptance criteria, rejection criteria, reviewer rubric, output requirements, evidence policy, checker policy, review policy, revision policy, and payment policy.
 
 ## CheckerPolicy
@@ -227,7 +233,10 @@ Fields:
 
 - `id`
 - `project_id`
-- `guide_version`
+- `locked_guide_version`
+- `locked_checker_policy_version`
+- `locked_review_policy_version`
+- `locked_payment_policy_version`
 - `source_type`
 - `source_ref`
 - `source_payload_hash`
@@ -277,6 +286,8 @@ Source type:
 
 External origin adapters are later work. When added, they normalize into this task shape instead of creating a separate task lifecycle.
 
+The task id points to the locked task contract. That contract includes the guide version, checker policy version, review policy version, payment policy version, acceptance criteria, required evidence, required files, base payout, and skill tags. Workers submit against the task id; they do not restate policy versions.
+
 ## Assignment
 
 Fields:
@@ -304,13 +315,15 @@ Fields:
 - `package_hash`
 - `artifact_hash_manifest`
 - `worker_attestation`
-- `guide_version`
-- `checker_policy_version`
-- `review_policy_version`
-- `payment_policy_version`
+- `locked_guide_version`
+- `locked_checker_policy_version`
+- `locked_review_policy_version`
+- `locked_payment_policy_version`
 - `submitted_at`
 - `locked_at`
 - `supersedes_submission_id`
+
+The worker submission packet supplies the task id, summary, outputs, artifact hashes, evidence ids, submission version, and worker attestation. Workstream stamps the locked guide and policy versions from trusted task/project state. The worker does not provide guide, checker policy, review policy, or payment policy versions.
 
 Status:
 
@@ -357,8 +370,8 @@ Fields:
 - `started_at`
 - `finished_at`
 - `runner_version`
-- `guide_version`
-- `checker_policy_version`
+- `locked_guide_version`
+- `locked_checker_policy_version`
 - `submission_version`
 - `artifact_hash_manifest`
 - `summary`
@@ -455,8 +468,8 @@ Fields:
 - `summary`
 - `confidence`
 - `acceptance_evidence_refs`
-- `guide_version`
-- `review_policy_version`
+- `locked_guide_version`
+- `locked_review_policy_version`
 - `created_at`
 - `completed_at`
 
@@ -528,7 +541,7 @@ Fields:
 - `accepted_submission_id`
 - `accepting_review_id`
 - `worker_id`
-- `guide_version`
+- `locked_guide_version`
 - `checker_run_id`
 - `readiness_certificate_id`
 - `artifact_hash_manifest`
@@ -572,7 +585,7 @@ Fields:
 - `payout_type`
 - `status`
 - `payment_reference`
-- `payment_policy_version`
+- `locked_payment_policy_version`
 - `dispute_reason`
 - `disputed_at`
 - `accepted_at`
@@ -641,7 +654,7 @@ Fields:
 - `before`
 - `after`
 - `reason`
-- `guide_version`
+- `locked_guide_version`
 - `submission_id`
 - `checker_run_id`
 - `review_id`

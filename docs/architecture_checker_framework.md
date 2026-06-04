@@ -225,7 +225,7 @@ The certificate records:
 
 - submission id
 - checker run id
-- checker policy version
+- checker policy version derived from the locked task context
 - artifact hash manifest
 - blocking failure count
 - warning count

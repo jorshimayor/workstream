@@ -22,6 +22,7 @@ Workstream is how Flow measures, certifies, and coordinates useful human-agent w
 - Review decisions are only accept, needs revision, or reject.
 - Frontend is locked as React + Vite + TypeScript.
 - Backend API is locked as Python with FastAPI.
+- ORM, migrations, and API schemas are locked as SQLAlchemy 2.x async + Alembic + Pydantic schemas.
 - Execution is async-first; do not document synchronous-first checkers or jobs.
 - FastAPI background tasks are acceptable for simple local v0.1 jobs; use Celery or equivalent durable workers when retries, scheduling, isolation, or distributed execution are needed.
 - Postgres is the record database.
