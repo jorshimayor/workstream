@@ -7,7 +7,7 @@ The v0.1 persistence layer uses SQLAlchemy 2.x async models, Alembic migrations,
 ## Entity Overview
 
 ```text
-User
+Actor
   WorkerProfile
   ReviewerProfile
 
@@ -34,16 +34,25 @@ Task
   AuditEvent
 ```
 
-## User
+## Actor
 
 Fields:
 
 - `id`
-- `name`
+- `external_subject`
+- `external_issuer`
 - `email`
+- `display_name`
 - `role`
+- `claim_snapshot`
+- `auth_source`
 - `created_at`
+- `last_seen_at`
 - `status`
+
+Actor identity comes from external Flow authentication. `external_subject` plus `external_issuer` is the stable identity binding. Email is profile metadata and must not be treated as the primary identity.
+
+Workstream can keep actor/profile records for permissions, assignments, reputation, and audit display, but it does not own password authentication or primary login sessions.
 
 Roles:
 
@@ -60,7 +69,7 @@ Roles:
 
 Fields:
 
-- `user_id`
+- `actor_id`
 - `display_name`
 - `skill_tags`
 - `accepted_count`
@@ -75,7 +84,7 @@ Fields:
 
 Fields:
 
-- `user_id`
+- `actor_id`
 - `skill_tags`
 - `reviews_completed`
 - `accept_count`
@@ -620,7 +629,7 @@ Payment adjustments are append-only. Accepted amount changes must use this recor
 Fields:
 
 - `id`
-- `user_id`
+- `actor_id`
 - `task_id`
 - `submission_id`
 - `contribution_record_id`
@@ -650,6 +659,11 @@ Fields:
 - `entity_type`
 - `entity_id`
 - `actor_id`
+- `external_subject`
+- `external_issuer`
+- `actor_role`
+- `claim_snapshot`
+- `auth_source`
 - `event_type`
 - `before`
 - `after`

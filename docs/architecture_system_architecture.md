@@ -56,7 +56,7 @@ Approved stack:
 - ORM, migrations, and API schemas: SQLAlchemy 2.x async + Alembic + Pydantic schemas
 - Database: Postgres
 - File storage: local development can use filesystem-backed storage, but it must sit behind an object-storage abstraction compatible with R2/S3-style storage
-- Auth: role-based accounts
+- Auth: external Flow authentication token verification through an auth interface/adapter; Workstream does not own login, signup, password reset, password storage, or primary auth sessions
 - Jobs: async-first background execution; FastAPI background tasks are acceptable for simple local v0.1 jobs, with Celery or an equivalent durable queue when jobs need retries, scheduling, isolation, or distributed workers
 
 Async policy:
@@ -78,6 +78,17 @@ Frontend policy:
 - Next.js is deferred unless server rendering, public pages, or full-stack React routing becomes a real requirement.
 
 The architecture avoids framework coupling in the domain model. Project, task, submission, checker, review, revision, contribution, payment, reputation, and audit behavior remain portable.
+
+Auth policy:
+
+- Workstream verifies Flow-issued tokens through an `AuthVerifier` interface.
+- Production auth uses a Flow token verifier adapter.
+- Local development may use a mock verifier only outside production.
+- Actor identity is based on stable token subject and issuer, not email.
+- Workstream may keep local actor/profile records for workflow state, permissions, audit display, and reputation, but those records do not replace Flow as the auth source.
+- Role and permission checks use trusted Flow claims, local Workstream role mappings, or a documented combination of both.
+- Routers depend on a single current-actor dependency; permission checks live in service or policy code so workflow rules do not scatter across HTTP handlers.
+- Audit records preserve actor id, external subject, issuer, role/claim context, and whether dev/mock auth was used when relevant.
 
 ## Component Responsibilities
 

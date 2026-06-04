@@ -41,11 +41,14 @@ Current phase: reviewed planning baseline.
 
 ## Pending Before Build Starts
 
-- Choose the actual repository/app scaffold for implementation.
+- Review and accept the Week 1 backend chunk plan.
+- Review and accept the external Flow auth verifier contract before backend scaffold implementation.
+- Review and accept the Week 1 backend test gates before implementation.
 - Create the first pilot project guide from the template.
 - Create the first 5 pilot task records.
 - Confirm who owns product, engineering, review, operations, and payment reconciliation during the first build cycle.
 - Confirm the first v0.1 project guide uses the locked guide fields, task contract fields, evidence IDs, and contribution record flow.
+- Confirm each implementation chunk will start with a specification and conditions of satisfaction.
 
 ## Operating Rule
 

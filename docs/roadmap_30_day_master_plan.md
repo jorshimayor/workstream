@@ -52,7 +52,7 @@ If a feature does not improve lifecycle correctness, review quality, evidence, p
 
 ## Week 1: Foundation
 
-Objective: define the product contract and implement the core records.
+Objective: define the product contract and implement the backend foundation for the core records.
 
 Deliverables:
 
@@ -68,8 +68,10 @@ Deliverables:
 - evidence record
 - payment record
 - reputation record
-- basic task list and task detail pages
+- backend API smoke paths for project, task, assignment, and submission records
 - workspace/packet convention for the first project
+- modular monolith structure with clean router, service, repository, interface, and adapter boundaries
+- external Flow authentication verification boundary
 
 Day 1:
 
@@ -78,18 +80,20 @@ Day 1:
 - finalize first database schema
 - create first internal project template
 - define default queue lanes and packet convention
+- lock the per-chunk specification and conditions-of-satisfaction protocol
 
 Day 2:
 
 - build project and guide records
 - create project guide editor or markdown-backed guide import
 - define base amount and payout policy fields
+- use backend records/API first; frontend editor is deferred until the backend contract is stable
 
 Day 3:
 
 - build task creation
 - build queue states
-- build task detail page
+- build task detail API response
 - enforce task belongs to project
 
 Day 4:
@@ -110,6 +114,9 @@ Week 1 acceptance bar:
 - a task can be created, screened, claimed, submitted, and tracked
 - every task status transition is recorded
 - no task exists outside a project
+- the backend runs as a modular monolith with clear boundaries
+- Flow authentication is represented as token verification, not Workstream-owned login
+- frontend implementation is not required for Week 1 acceptance
 
 ## Day-7 Thin Slice
 
