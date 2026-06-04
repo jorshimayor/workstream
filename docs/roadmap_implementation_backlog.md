@@ -2,6 +2,32 @@
 
 ## P0: Must Exist For v0.1
 
+### Backend Foundation
+
+- FastAPI backend scaffold
+- modular monolith module layout
+- thin routers
+- service layer for workflow rules
+- repository layer for database access
+- interfaces for external boundaries
+- adapters for external implementations
+- SQLAlchemy 2.x async setup
+- Alembic migrations
+- Pydantic request and response schemas
+- Postgres configuration
+- async-first request and database boundaries
+- test setup
+- health endpoint
+
+### Authentication Boundary
+
+- verify external Flow authentication tokens
+- map trusted token claims into Workstream actor context
+- provide current actor dependency for protected routes
+- attach actor id to audit events
+- keep login, signup, password reset, and password storage out of Workstream
+- keep local development auth separate from production Flow token verification
+
 ### Project And Guide
 
 - create project
@@ -9,7 +35,7 @@
 - version project guide
 - mark one guide version active
 - require guide approval before activation
-- lock guide version on every task
+- lock guide and policy versions on every task
 - configure base amount and currency
 - configure checker policy
 - configure review policy

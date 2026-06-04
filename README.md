@@ -46,6 +46,7 @@ Workstream turns that operating knowledge into reusable infrastructure.
 
 - [30-Day Master Plan](docs/roadmap_30_day_master_plan.md)
 - [Roadmap Status](docs/roadmap_status.md)
+- [Week 1 Backend Plan](docs/roadmap_week1_backend_plan.md)
 - [Day-by-Day Execution Plan](docs/roadmap_day_by_day_execution_plan.md)
 - [Implementation Backlog](docs/roadmap_implementation_backlog.md)
 - [Product Principles](docs/product_principles.md)

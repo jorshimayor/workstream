@@ -10,11 +10,13 @@ The plan defines the full 30-day loop, but it does not explicitly name the small
 
 Suggested change: add a "Day 7 Thin Slice" that proves `Project -> Task -> Submission -> Checker Result -> Review Decision` with one project, one task, one checker, and one reviewer.
 
-### High: Recommended stack is still undecided
+### High: Recommended stack needed to be locked
 
-`docs/architecture_system_architecture.md` says backend can be Node/TypeScript or Go. For a 30-day execution plan, this leaves too much room for debate.
+The architecture needed one v0.1 stack so the first build cycle would not keep reopening framework decisions.
 
 Suggested change: pick one v0.1 stack and treat alternatives as future decisions.
+
+Status: fixed in `docs/architecture_system_architecture.md`. Backend is Python/FastAPI with SQLAlchemy 2.x async, Alembic, Pydantic schemas, and Postgres. Frontend is React/Vite/TypeScript.
 
 ### Medium: First customer/operator value needs sharper wording
 
@@ -33,4 +35,3 @@ Suggested change: add manual intake as the only v0.1 task source.
 The metrics mix system deliverables with pilot outcomes.
 
 Suggested change: separate "Build Success" and "Pilot Success" in the roadmap.
-

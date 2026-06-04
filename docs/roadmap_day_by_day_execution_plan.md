@@ -14,7 +14,13 @@ The plan assumes a small team:
 
 If the team is smaller, keep the sequence and reduce scope, not the quality gates.
 
-## Week 1: Core Control Plane
+## Week 1: Backend Foundation
+
+Week 1 is backend-first. The frontend starts after the backend contract, lifecycle guards, and first workflow are stable.
+
+The backend is a modular monolith. Routers stay thin, services own workflow rules, repositories own database queries, interfaces define external boundaries, and adapters implement those boundaries.
+
+Each implementation chunk must have a specification and conditions of satisfaction before code starts. Senior engineering, QA/test, and security/auth verification are required before operator final review.
 
 ### Day 1: Freeze Product Contract
 
@@ -25,12 +31,16 @@ Deliver:
 - entity list accepted
 - first three project templates named
 - initial operating principles frozen
+- Week 1 backend chunk plan accepted
+- modular monolith boundaries accepted
+- external Flow auth verification boundary accepted
 
 Exit criteria:
 
 - no task can exist without a project
 - no project can exist without a guide
 - no accepted task can exist without payment and evidence concepts
+- no backend implementation starts without chunk specification and conditions of satisfaction
 
 ### Day 2: Project And Guide Records
 
@@ -44,6 +54,8 @@ Deliver:
 - evidence policy fields
 - dispute policy fields
 - active/inactive project status
+- SQLAlchemy 2.x async model shape
+- Pydantic request/response schemas
 
 Exit criteria:
 
@@ -51,6 +63,7 @@ Exit criteria:
 - retrieve the active guide version for a task
 - edit a draft guide without changing historical task guide versions
 - block activation of a guide with missing payment or evidence policy
+- migrations and model tests define the expected invariants
 
 ### Day 3: Task Queue
 
@@ -62,6 +75,7 @@ Deliver:
 - screening/readiness gate
 - task status transition table
 - audit event for each status change
+- task-owned locked guide and policy context
 
 Exit criteria:
 
@@ -69,6 +83,7 @@ Exit criteria:
 - move task to `SCREENING` only when required fields exist
 - move task to `READY` only after screening passes
 - view queues by status
+- every transition writes an actor-attributed audit event
 
 ### Day 4: People And Assignment
 
@@ -79,12 +94,14 @@ Deliver:
 - `AdminRole`
 - assignment/claim flow
 - skill tags
+- external Flow actor identity mapped into Workstream actor context
 
 Exit criteria:
 
 - assign task to worker
 - move `READY -> CLAIMED -> IN_PROGRESS`
 - prevent two workers owning the same task unless project policy allows it
+- Workstream verifies Flow-issued tokens and does not own passwords or login
 
 ### Day 5: Submission Packet
 
@@ -97,10 +114,12 @@ Deliver:
 - artifact hash manifest
 - worker attestation
 - submission versioning
+- server-stamped locked guide and policy context from the task
 
 Exit criteria:
 
 - submit v1 packet
+- worker does not provide guide, checker policy, review policy, or payment policy versions
 - task moves to `SUBMITTED`
 - package/evidence records are immutable after checker run starts
 - replacing any artifact creates v2 instead of mutating v1

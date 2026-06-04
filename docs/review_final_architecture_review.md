@@ -34,11 +34,11 @@ Status: documented in `docs/architecture_data_model.md` and `docs/architecture_l
 
 Finding:
 
-The plan now chooses Next.js/TypeScript/Postgres for v0.1. This avoids wasting the first month debating stack.
+The plan now chooses Python/FastAPI, SQLAlchemy 2.x async, Alembic, Pydantic schemas, Postgres, and React/Vite/TypeScript for v0.1. This avoids wasting the first month debating stack.
 
 Suggested change:
 
-Only introduce Go services later for checker runners or high-throughput workers.
+Only introduce Rust, TypeScript, or another language later for a specific layer when there is a clear justification.
 
 Status: addressed in `docs/architecture_system_architecture.md`.
 
@@ -53,4 +53,3 @@ Suggested change:
 Implement hash manifests and prevent in-place artifact mutation.
 
 Status: documented in `docs/architecture_data_model.md`, `docs/architecture_lifecycle_state_machine.md`, and `docs/architecture_checker_framework.md`.
-

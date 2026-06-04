@@ -6,6 +6,8 @@ Workstream needs explicit permissions from the first version because review, pay
 
 ## Roles
 
+Roles come from trusted Flow token claims, local Workstream role mappings, or an explicitly documented combination of both. The backend resolves those into a current actor context before protected workflow actions run.
+
 | Role | Purpose |
 | --- | --- |
 | Admin | Controls project setup, policies, overrides, and user access. |
@@ -45,4 +47,6 @@ Workstream needs explicit permissions from the first version because review, pay
 
 ## First-Version Enforcement
 
-The first version can enforce permissions in application code. The database records actor IDs for every important event so later role enforcement can be audited.
+The first version enforces permissions in application service or policy code, not directly inside routers. The database records actor IDs, external subject, issuer, role/claim context, and auth source for important events so later role enforcement can be audited.
+
+Development auth, if enabled, must be impossible to use in production and must be visible in audit context.
