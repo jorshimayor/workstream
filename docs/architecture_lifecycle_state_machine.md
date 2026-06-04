@@ -265,5 +265,5 @@ Payment transitions are recorded in the payment ledger and audit log, not as tas
 - Workers cannot edit a submitted packet in place. They must create a new submission version.
 - Reviewers cannot accept a submission whose checker run belongs to a different submission version.
 - Admin overrides cannot erase failed checker results, rejected reviews, or prior submissions.
-- Guide edits do not retroactively change active tasks unless an admin records the affected tasks and reason.
+- Guide edits do not retroactively change active tasks unless policy allows the change and an admin records the affected tasks and reason.
 - A task with disputed evidence, suspected copied material, or payment conflict cannot be accepted until the issue is resolved through review, rejection, revision, payment dispute handling, or an audit-recorded admin action.

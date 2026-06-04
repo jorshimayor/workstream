@@ -53,6 +53,7 @@ Approved stack:
 
 - Frontend: React + Vite + TypeScript
 - Backend API: Python with FastAPI
+- ORM, migrations, and API schemas: SQLAlchemy 2.x async + Alembic + Pydantic schemas
 - Database: Postgres
 - File storage: local development can use filesystem-backed storage, but it must sit behind an object-storage abstraction compatible with R2/S3-style storage
 - Auth: role-based accounts

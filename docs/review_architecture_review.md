@@ -16,15 +16,14 @@ The flows mention admin, operator, worker, and reviewer, but there is no clear p
 
 Suggested change: add a v0.1 roles and permissions table.
 
-### Medium: Guide and policy versioning should be tied to submissions
+### Medium: Guide and policy versioning should be tied to system records
 
-The docs say guides are versioned, but submissions and checker runs need to record the guide/policy version used at time of submission. Otherwise later guide edits can make old reviews ambiguous.
+The docs say guides are versioned, but tasks, submissions, checker runs, reviews, and payments need to record the guide/policy version used by the locked task contract. Otherwise later guide edits can make old reviews ambiguous.
 
-Suggested change: add guide version and policy version fields to submissions, checker runs, and reviews.
+Suggested change: add server-stamped locked guide and policy version fields to task-owned system records. Workers should submit against the task id without restating those versions.
 
 ### Medium: Artifact storage needs immutability rule
 
 The docs say submission is immutable after check starts, but artifact mutation rules should be explicit.
 
 Suggested change: require artifacts to be content-addressed or hash-locked once a submission is locked.
-

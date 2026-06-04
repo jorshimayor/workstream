@@ -8,13 +8,15 @@
 
 `<submission id / version>`
 
-## Project Guide Version
+## Locked Project Guide Version
 
 `<guide version>`
 
-## Checker Policy Version
+## Locked Checker Policy Version
 
 `<checker policy version>`
+
+These values come from Workstream's task context and checker run records. They are not worker-provided submission fields.
 
 ## Preflight Summary
 

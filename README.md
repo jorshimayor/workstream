@@ -128,6 +128,6 @@ Workstream is built as durable operational infrastructure:
 - lessons learned become guide updates or new checkers
 - submitted artifacts are immutable and hash-bound to checker runs
 - accepted work cites evidence before payment exposure is created
-- guide versions are locked per task so rules do not drift silently
+- guide and policy versions are locked per task so rules do not drift silently
 - accepted work creates an evidence-backed contribution record before payment or reputation updates
 - quality gates remain separate: project activation, task screening, and submission quality

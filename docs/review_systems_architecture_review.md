@@ -22,11 +22,11 @@ Suggested change: add a permission matrix and separation rules.
 
 Status: fixed in `docs/operations_roles_permissions.md`.
 
-### Medium: Guide and policy versioning needed to attach to submissions, checks, reviews, and payments
+### Medium: Guide and policy versioning needed to attach to system records
 
-Tasks recorded guide version, but submissions, checker runs, reviews, and payment records also need policy versions so later guide edits do not make old decisions ambiguous.
+Tasks recorded guide version, but the locked task contract and downstream system records also need policy versions so later guide edits do not make old decisions ambiguous.
 
-Suggested change: add guide and policy version fields to those records.
+Suggested change: add server-stamped locked guide and policy version fields to the task contract, submissions, checker runs, reviews, and payment records. Workers submit against the task id without restating policy versions.
 
 Status: fixed in `docs/architecture_data_model.md`.
 
