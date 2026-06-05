@@ -96,6 +96,20 @@ Workstream turns that operating knowledge into reusable infrastructure.
 - [ADR 0002: Database Ledger Before Blockchain Settlement](docs/decision_0002_db_first_not_blockchain_first.md)
 - [ADR 0003: Project Guides Are First-Class](docs/decision_0003_project_guides_are_first_class.md)
 
+## Local Backend Database
+
+Workstream uses Postgres locally and in CI. Start the local database with:
+
+```bash
+docker compose up -d postgres
+```
+
+The default local test URL is:
+
+```text
+postgresql+asyncpg://workstream:workstream@localhost:5433/workstream
+```
+
 ## Day-30 Success Standard
 
 By day 30, Workstream runs a real internal task cycle with real people:

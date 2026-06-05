@@ -1,3 +1,5 @@
+"""Declarative SQLAlchemy base and naming conventions."""
+
 from __future__ import annotations
 
 from sqlalchemy import MetaData
@@ -13,5 +15,6 @@ NAMING_CONVENTION = {
 
 
 class Base(DeclarativeBase):
-    metadata = MetaData(naming_convention=NAMING_CONVENTION)
+    """Base class for all ORM models."""
 
+    metadata = MetaData(naming_convention=NAMING_CONVENTION)

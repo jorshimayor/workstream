@@ -1,3 +1,5 @@
+"""Authentication utility routes."""
+
 from __future__ import annotations
 
 from typing import Annotated
@@ -14,4 +16,12 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 async def read_current_actor(
     actor: Annotated[ActorContext, Depends(get_current_actor)],
 ) -> ActorResponse:
+    """Return the actor context derived from the current bearer token.
+
+    Args:
+        actor: Verified actor resolved by auth dependencies.
+
+    Returns:
+        Public actor response including audit context.
+    """
     return ActorResponse.from_actor(actor)

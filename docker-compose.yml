@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: workstream
+      POSTGRES_USER: workstream
+      POSTGRES_PASSWORD: workstream
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U workstream -d workstream"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - workstream_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  workstream_postgres_data:

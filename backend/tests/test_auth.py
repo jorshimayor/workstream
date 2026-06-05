@@ -202,7 +202,7 @@ async def test_permission_policy_rejects_missing_role() -> None:
         )
     ).verify("local-token")
 
-    with pytest.raises(PermissionDenied, match="needs one of"):
+    with pytest.raises(PermissionDenied, match="actor lacks required role"):
         require_any_role(actor, {"finance"})
 
 

@@ -1,3 +1,5 @@
+"""Health-check route for the Workstream API."""
+
 from __future__ import annotations
 
 from fastapi import APIRouter
@@ -9,5 +11,9 @@ router = APIRouter(tags=["health"])
 
 @router.get("/health", response_model=HealthResponse)
 async def health() -> HealthResponse:
-    return HealthResponse(status="ok")
+    """Return a lightweight API health response.
 
+    Returns:
+        Health response with an ``ok`` status.
+    """
+    return HealthResponse(status="ok")

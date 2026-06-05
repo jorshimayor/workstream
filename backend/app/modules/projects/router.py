@@ -1,0 +1,147 @@
+"""FastAPI routes for project and guide lifecycle operations."""
+
+from __future__ import annotations
+
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.deps.auth import get_current_actor
+from app.core.permissions import PermissionDenied
+from app.db.session import get_db_session
+from app.modules.projects.schemas import (
+    ActiveGuideResponse,
+    ProjectCreate,
+    ProjectGuideCreate,
+    ProjectGuideResponse,
+    ProjectGuideUpdate,
+    ProjectResponse,
+)
+from app.modules.projects.service import ProjectService, ProjectServiceError
+from app.schemas.auth import ActorContext
+
+router = APIRouter(prefix="/projects", tags=["projects"])
+
+
+def project_http_error(exc: ProjectServiceError) -> HTTPException:
+    """Convert a service-layer project error into an HTTP error.
+
+    Args:
+        exc: Project service exception with an API status code.
+
+    Returns:
+        HTTP exception carrying the service error details.
+    """
+    return HTTPException(status_code=exc.status_code, detail=str(exc))
+
+
+def permission_http_error(exc: PermissionDenied) -> HTTPException:
+    """Convert a permission failure into a 403 HTTP error.
+
+    Args:
+        exc: Permission exception raised by the service layer.
+
+    Returns:
+        HTTP exception with a forbidden status.
+    """
+    return HTTPException(status_code=403, detail=str(exc))
+
+
+@router.post("", response_model=ProjectResponse, status_code=201)
+async def create_project(
+    payload: ProjectCreate,
+    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> ProjectResponse:
+    """Create a draft project shell for future guide versions."""
+    try:
+        return await ProjectService(session).create_project(actor, payload)
+    except PermissionDenied as exc:
+        raise permission_http_error(exc) from exc
+    except ProjectServiceError as exc:
+        raise project_http_error(exc) from exc
+
+
+@router.get("/{project_id}", response_model=ProjectResponse)
+async def get_project(
+    project_id: str,
+    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> ProjectResponse:
+    """Return one project by id."""
+    try:
+        return await ProjectService(session).get_project(actor, project_id)
+    except PermissionDenied as exc:
+        raise permission_http_error(exc) from exc
+    except ProjectServiceError as exc:
+        raise project_http_error(exc) from exc
+
+
+@router.post("/{project_id}/guides", response_model=ProjectGuideResponse, status_code=201)
+async def create_guide(
+    project_id: str,
+    payload: ProjectGuideCreate,
+    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> ProjectGuideResponse:
+    """Create a draft guide under a project."""
+    try:
+        return await ProjectService(session).create_guide(actor, project_id, payload)
+    except PermissionDenied as exc:
+        raise permission_http_error(exc) from exc
+    except ProjectServiceError as exc:
+        raise project_http_error(exc) from exc
+
+
+@router.patch("/{project_id}/guides/{guide_id}", response_model=ProjectGuideResponse)
+async def update_guide(
+    project_id: str,
+    guide_id: str,
+    payload: ProjectGuideUpdate,
+    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> ProjectGuideResponse:
+    """Update a draft guide and any supplied policy records."""
+    try:
+        return await ProjectService(session).update_draft_guide(
+            actor,
+            project_id,
+            guide_id,
+            payload,
+        )
+    except PermissionDenied as exc:
+        raise permission_http_error(exc) from exc
+    except ProjectServiceError as exc:
+        raise project_http_error(exc) from exc
+
+
+@router.post("/{project_id}/guides/{guide_id}/activate", response_model=ActiveGuideResponse)
+async def activate_guide(
+    project_id: str,
+    guide_id: str,
+    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> ActiveGuideResponse:
+    """Activate a complete draft guide for a project."""
+    try:
+        return await ProjectService(session).activate_guide(actor, project_id, guide_id)
+    except PermissionDenied as exc:
+        raise permission_http_error(exc) from exc
+    except ProjectServiceError as exc:
+        raise project_http_error(exc) from exc
+
+
+@router.get("/{project_id}/active-guide", response_model=ActiveGuideResponse)
+async def get_active_guide(
+    project_id: str,
+    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> ActiveGuideResponse:
+    """Return the current active guide and policy context for a project."""
+    try:
+        return await ProjectService(session).get_active_guide(actor, project_id)
+    except PermissionDenied as exc:
+        raise permission_http_error(exc) from exc
+    except ProjectServiceError as exc:
+        raise project_http_error(exc) from exc
