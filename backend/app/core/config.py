@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from typing import Literal
 
-from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,10 +10,25 @@ class Settings(BaseSettings):
     app_name: str = "Workstream API"
     app_version: str = "0.1.0"
     debug: bool = False
-    environment: str = "local"
-    database_url: str = Field(
-        default="postgresql+asyncpg://workstream:workstream@localhost:5432/workstream"
-    )
+    environment: Literal[
+        "local",
+        "dev",
+        "development",
+        "test",
+        "staging",
+        "preview",
+        "prod",
+        "production",
+    ] = "production"
+    auth_provider: Literal["dev", "flow"] = "flow"
+    database_url: str | None = None
+    dev_auth_token: str | None = None
+    dev_auth_subject: str | None = None
+    dev_auth_issuer: str | None = None
+    dev_auth_email: str | None = None
+    dev_auth_display_name: str | None = None
+    dev_auth_roles: str = ""
+    flow_auth_issuer: str = "https://auth.flow.local"
 
     model_config = SettingsConfigDict(
         env_prefix="WORKSTREAM_",
@@ -25,4 +40,3 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
-

@@ -20,7 +20,10 @@ target_metadata = Base.metadata
 
 
 def get_database_url() -> str:
-    return str(get_settings().database_url)
+    database_url = get_settings().database_url
+    if not database_url:
+        raise RuntimeError("WORKSTREAM_DATABASE_URL must be set before running migrations")
+    return database_url
 
 
 def run_migrations_offline() -> None:
@@ -65,4 +68,3 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-
