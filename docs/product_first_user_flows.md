@@ -10,12 +10,14 @@ The first user flows prove that Workstream can run real work from intake to acce
 4. Admin selects required submission fields.
 5. Admin enables checker policy.
 6. Admin enables review policy.
-7. Project becomes active.
+7. Admin enables revision policy.
+8. Admin enables payment policy.
+9. Project becomes active.
 
 Acceptance:
 
-- Project cannot become active without guide, base amount, and status policy.
-- Checker and review policies are visible on the project page.
+- Project cannot become active without guide, base amount, checker policy, review policy, revision policy, and payment policy.
+- Checker, review, revision, and payment policies are visible on the project page.
 
 ## Flow 2: Operator Creates A Task
 
@@ -23,14 +25,14 @@ Acceptance:
 2. Operator creates task with title, description, expected output, acceptance criteria, base amount, deadline, and difficulty.
 3. Workstream validates task against project guide.
 4. Task enters `SCREENING`.
-5. Screening confirms guide version, task contract, evidence requirements, payout policy, and reviewability.
+5. Screening confirms guide version, task contract, evidence requirements, checker policy, review policy, revision policy, payment policy, and reviewability.
 6. Task enters `READY`.
 
 Acceptance:
 
 - Missing required fields block `SCREENING`.
 - Missing required fields block `READY`.
-- Task shows project guide, required files, and checker policy.
+- Task shows project guide, required files, checker policy, review policy, revision policy, and payment policy.
 
 ## Flow 3: Worker Submits Work
 
@@ -87,7 +89,8 @@ Acceptance:
 
 - Prior review remains visible.
 - Each required finding has a closure state.
-- Revision count is tracked.
+- Revision count is tracked against the locked revision policy.
+- Resubmission is blocked or rejected when the revision policy limit or deadline says so.
 
 ## Flow 7: Accepted Work Creates Contribution Record
 

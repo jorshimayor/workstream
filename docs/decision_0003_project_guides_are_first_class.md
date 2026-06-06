@@ -23,6 +23,17 @@ The guide drives:
 - payment policy
 - common rejection reasons
 
+The checker, review, revision, and payment policies are guide-version policies. They must be tied to the project guide version they govern, not only to the project.
+
+Project guide activation requires the guide plus its required policy context before work can lock against it:
+
+- checker policy
+- review policy
+- revision policy
+- payment policy
+
+Revision policy is not optional. It defines the revision loop contract, including revision limits, revision deadlines, allowed resubmission states, and automatic rejection behavior after the limit.
+
 ## Consequences
 
 Positive:
@@ -30,10 +41,11 @@ Positive:
 - rules become inspectable
 - checkers can be mapped to guide requirements
 - reviewers have a consistent source of truth
+- revision loops have explicit limits and deadlines
 - project templates become reusable
 
 Tradeoff:
 
 - project setup takes more discipline
 - guide changes need versioning
-
+- policies must be versioned and validated with the guide

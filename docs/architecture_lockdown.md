@@ -1,10 +1,12 @@
 # Architecture Lockdown
 
-Last updated: 2026-06-03
+Last updated: 2026-06-06
 
 ## Purpose
 
 This note locks the Workstream v0.1 architecture around source-agnostic intake, project guide discipline, task contracts, human accountability for agent-assisted work, contribution records, payment records, and reputation consequences.
+
+The ADR files under `docs/decision_*.md` are the decision record for this lockdown. When a locked rule changes, update or add an ADR before changing implementation specs.
 
 The canonical v0.1 scope remains narrower:
 
@@ -17,7 +19,7 @@ Project guide
 -> pre-review gate
 -> human review
 -> revision replay
--> accepted/rejected outcome
+-> review decision: accept / needs revision / reject
 -> contribution record
 -> payment record
 -> reputation event
@@ -63,7 +65,7 @@ Every project guide must define:
 - required skills
 - difficulty scale
 - estimated time policy
-- base payout policy
+- payment policy
 - checker policy
 - review policy
 - revision policy

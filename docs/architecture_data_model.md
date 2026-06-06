@@ -15,6 +15,7 @@ Project
   ProjectGuide
   CheckerPolicy
   ReviewPolicy
+  RevisionPolicy
   PaymentPolicy
   ProjectLesson
 
@@ -239,6 +240,7 @@ Lesson types:
 - guide_update
 - checker_update
 - reviewer_policy_update
+- revision_policy_update
 - queue_policy_update
 - payment_policy_update
 - risk_note

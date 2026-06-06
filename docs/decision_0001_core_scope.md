@@ -19,8 +19,9 @@ Project Guide
 -> Platform Checker
 -> Human Review
 -> Needs Revision / Accepted / Rejected
--> Payment
--> Reputation
+-> Contribution Record
+-> Payment Record
+-> Reputation Event
 ```
 
 The same evaluation and contribution infrastructure can support many project domains if project-specific rules are configurable.
@@ -36,6 +37,7 @@ The first version prioritizes:
 - reviews
 - revisions
 - evidence
+- contribution records
 - payment ledger
 - reputation ledger
 

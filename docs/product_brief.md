@@ -140,7 +140,7 @@ By day 30:
 - 3 project templates configured
 - 20 tasks entered
 - 10 submissions created
-- 5 accepted or rejected by review
+- 5 review decisions recorded across accept, needs revision, and reject
 - 3 needs-revision loops completed
 - 100 percent of submissions have checker results
 - 100 percent of accepted tasks have evidence, contribution record, and payment record

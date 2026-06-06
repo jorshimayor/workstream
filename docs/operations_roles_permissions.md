@@ -11,7 +11,7 @@ Roles come from trusted Flow token claims, local Workstream role mappings, or an
 | Role | Purpose |
 | --- | --- |
 | Admin | Controls project setup, policies, overrides, and user access. |
-| Project Manager | Creates project guides, task batches, checker policies, and review policies. |
+| Project Manager | Creates project guides, task batches, checker policies, review policies, revision policies, and payment policies. |
 | Worker | Claims tasks, submits packets, and handles revisions. |
 | Reviewer | Reviews checker-passed submissions and records decisions. |
 | Finance | Updates payout status and payment references. |

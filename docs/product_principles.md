@@ -19,9 +19,9 @@ Workstream is source-agnostic, but v0.1 stays manual-first. External origin adap
 
 ## 2. Project Rules Are First-Class
 
-Every project has its own guide, quality bar, checker policy, review policy, payout policy, and revision policy.
+Every project has its own guide, quality bar, checker policy, review policy, revision policy, and payment policy.
 
-The platform does not rely on memory or chat messages to enforce rules. If a rule matters, it belongs in the project guide or checker policy.
+The platform does not rely on memory or chat messages to enforce rules. If a rule matters, it belongs in the project guide, checker policy, review policy, revision policy, payment policy, or task template.
 
 ## 3. Same Lifecycle, Different Domain Language
 

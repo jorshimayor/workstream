@@ -108,7 +108,7 @@ Required checkers:
 
 - check_task_schema
 - check_project_guide_attached
-- check_payment_policy_present
+- check_policy_context_present
 - check_submission_packet
 - check_evidence_present
 - check_evidence_integrity
@@ -159,6 +159,18 @@ Mandatory second review:
 - reviewer conflict of interest:
 - admin override used:
 
+## Revision Policy
+
+Define:
+
+- maximum revision rounds:
+- revision deadline hours:
+- allowed resubmission states:
+- auto-reject after revision limit:
+- missed deadline behavior:
+- reviewer reassignment rule:
+- payment effect during revision:
+
 ## Acceptance Policy
 
 Accepted work must:
@@ -206,4 +218,4 @@ Define:
 
 Keep this section updated as the project runs.
 
-Each repeated issue becomes a guide update, checker update, template update, or reviewer training note.
+Each repeated issue becomes a guide update, checker update, review policy update, revision policy update, payment policy update, template update, or reviewer training note.

@@ -49,13 +49,13 @@ Required before leaving:
 
 ### SCREENING
 
-The task is structurally prepared but not yet released. This is the pre-release quality gate used to catch weak guides, vague acceptance criteria, missing evidence requirements, bad payout policy, or missing checker policy before workers see the task.
+The task is structurally prepared but not yet released. This is the pre-release quality gate used to catch weak guides, vague acceptance criteria, missing evidence requirements, bad payment policy, missing checker policy, missing review policy, or missing revision policy before workers see the task.
 
 Required before entering:
 
 - draft task has required fields
 - project guide version is attached
-- base payout policy is present
+- payment policy is present
 - task creator believes the task is ready for independent screening
 
 Required before leaving:
@@ -73,7 +73,10 @@ Required before entering:
 
 - task schema valid
 - project guide active
-- payout policy present
+- checker policy present
+- review policy present
+- revision policy present
+- payment policy present
 - guide version locked for this task
 - source reference recorded when imported
 - acceptance criteria frozen unless an admin records a guide-correction event

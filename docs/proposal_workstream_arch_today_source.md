@@ -1,3 +1,7 @@
+// Historical source, non-canonical.
+// This file preserves the original React proposal for reference only.
+// Canonical Workstream architecture lives in README.md, AGENTS.md, docs/architecture_lockdown.md, and docs/decision_*.md.
+
 import { useState } from "react";
 
 const c = {

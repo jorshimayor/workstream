@@ -298,7 +298,7 @@ Look for:
 - evidence that passed structurally but did not prove the claim
 - generated or copied artifacts that evade forbidden-file rules
 
-Each blind spot becomes a guide update, checker update, or reviewer policy update.
+Each blind spot becomes a guide update, checker update, reviewer policy update, revision policy update, or payment policy update.
 
 ## First Implementation
 
