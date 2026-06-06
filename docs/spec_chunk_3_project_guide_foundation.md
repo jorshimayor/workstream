@@ -1,0 +1,145 @@
+# Chunk 3 Project And Guide Foundation Spec
+
+## Scope
+
+Build the Workstream v0.1 project and guide foundation.
+
+This chunk creates the first domain module for projects, versioned project guides, checker policies, review policies, revision policies, and payment policies. It implements the backend rules needed before tasks can lock a guide and policy context.
+
+## Non-Scope
+
+- frontend
+- external source adapters
+- checker execution
+- task queue and assignment
+- submission packet logic
+- review workflow
+- payment execution
+- reputation records
+
+Revision workflow execution is not in this chunk, but revision policy is in scope. The project-guides ADR requires every active guide to drive revision policy, so this chunk stores and validates the revision-policy contract before a guide can become active.
+
+## Expected Files And Modules
+
+- `backend/app/modules/projects/models.py`
+- `backend/app/modules/projects/schemas.py`
+- `backend/app/modules/projects/repository.py`
+- `backend/app/modules/projects/service.py`
+- `backend/app/modules/projects/router.py`
+- `backend/alembic/versions/0002_project_guide_foundation.py`
+- `backend/tests/test_projects.py`
+
+## Architecture Requirements
+
+- Routers handle HTTP only.
+- Services own activation, validation, and permission rules.
+- Repositories own SQLAlchemy database access.
+- Models use SQLAlchemy 2.x async-compatible mappings.
+- API contracts use Pydantic schemas.
+- Routes use the current actor dependency from Chunk 2.
+- Permission checks live in the service layer.
+
+## Data Model Impact
+
+Adds:
+
+- `projects`
+- `project_guides`
+- `checker_policies`
+- `review_policies`
+- `revision_policies`
+- `payment_policies`
+
+The guide version is the join key for the guide-specific policies.
+
+Project guide activation requires:
+
+- guide is still draft
+- evidence policy exists
+- checker policy exists for the guide version
+- review policy exists for the guide version
+- revision policy exists for the guide version
+- payment policy exists for the guide version
+- revision policy has max revision rounds, revision deadline hours, and allowed resubmission states
+- payment policy has base amount, currency, payout type, and accepted payment rule
+
+Activating a new guide supersedes the prior active guide for that project without mutating its content.
+
+## Revision Policy
+
+Revision policy is a first-class guide-version policy, as required by the project-guides ADR. It defines how Workstream will later enforce the `needs_revision` loop after a reviewer requests changes.
+
+The v0.1 contract records:
+
+- maximum revision rounds
+- revision deadline in hours
+- whether the task automatically rejects after the revision limit
+- states that allow resubmission
+- reviewer reassignment rule
+
+Activation requires a revision policy before the guide can become active. The active guide response returns revision policy beside checker policy, review policy, and payment policy so future task records can lock the full policy context. The Non-Scope section keeps only revision workflow execution out of this chunk, not revision policy itself.
+
+## API Impact
+
+Adds protected v1 routes:
+
+- `POST /api/v1/projects`
+- `GET /api/v1/projects/{project_id}`
+- `POST /api/v1/projects/{project_id}/guides`
+- `PATCH /api/v1/projects/{project_id}/guides/{guide_id}`
+- `POST /api/v1/projects/{project_id}/guides/{guide_id}/activate`
+- `GET /api/v1/projects/{project_id}/active-guide`
+
+These routes require an actor role allowed to manage project setup.
+
+## Lifecycle Impact
+
+No task lifecycle transitions are implemented.
+
+The active guide response becomes the future source for task-owned locked guide and policy context.
+
+## Security/Auth Impact
+
+- Routes require bearer auth.
+- Missing/invalid token is rejected by the existing auth dependency.
+- Project setup actions require admin or project manager role.
+- Workers cannot create or activate guides.
+
+## Tests Required
+
+- migration upgrade/downgrade works
+- project can be created
+- draft guide can be created
+- guide activation is blocked when evidence policy is missing
+- guide activation is blocked when checker/review/revision/payment policies are missing
+- guide activation is blocked when revision policy is missing
+- guide activation is blocked when revision policy is incomplete
+- guide activation is blocked when payment policy is incomplete
+- guide activation succeeds with complete guide and policies
+- active guide can be retrieved for task creation
+- editing a draft guide works
+- editing an active guide is blocked
+- activating a new guide supersedes the prior active guide without mutating prior content
+- worker role cannot create project setup records
+- API validation errors are structured
+
+## Conditions Of Satisfaction
+
+- project can be created
+- guide version can be created as draft
+- guide version can be activated only when required policy fields exist
+- active guide can be retrieved for task creation
+- editing a draft guide does not mutate historical task context
+- migrations pass upgrade/downgrade tests
+- model/service/API tests pass
+- stale wording scan passes
+- Markdown link check passes
+- senior engineering verifier passes
+- QA/test verifier passes
+- security/auth verifier passes
+
+## Reviewer Agents Required
+
+- senior engineering
+- QA/test
+- security/auth

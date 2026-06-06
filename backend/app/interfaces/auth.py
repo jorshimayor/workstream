@@ -1,3 +1,5 @@
+"""Auth interface contracts used by verifier adapters."""
+
 from __future__ import annotations
 
 from typing import Protocol
@@ -10,5 +12,7 @@ class AuthVerificationError(Exception):
 
 
 class AuthVerifier(Protocol):
+    """Protocol implemented by external auth verifier adapters."""
+
     async def verify(self, token: str) -> ActorContext:
         """Verify a bearer token and return the trusted actor context."""

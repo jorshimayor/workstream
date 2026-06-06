@@ -1,3 +1,5 @@
+"""Auth actor schemas used by API dependencies and responses."""
+
 from __future__ import annotations
 
 from typing import Any, Literal
@@ -6,6 +8,8 @@ from pydantic import BaseModel, Field
 
 
 class ActorAuditContext(BaseModel):
+    """Stable actor claims stored with auditable Workstream actions."""
+
     actor_id: str
     external_subject: str
     external_issuer: str
@@ -16,6 +20,8 @@ class ActorAuditContext(BaseModel):
 
 
 class ActorContext(BaseModel):
+    """Trusted actor context resolved from an external Flow token."""
+
     actor_id: str
     external_subject: str
     external_issuer: str
@@ -27,6 +33,11 @@ class ActorContext(BaseModel):
     is_dev_auth: bool = False
 
     def audit_context(self) -> ActorAuditContext:
+        """Build the audit-safe actor snapshot for persisted records.
+
+        Returns:
+            Actor audit context derived from the trusted actor claims.
+        """
         return ActorAuditContext(
             actor_id=self.actor_id,
             external_subject=self.external_subject,
@@ -39,6 +50,8 @@ class ActorContext(BaseModel):
 
 
 class ActorResponse(BaseModel):
+    """Public response schema for the current actor endpoint."""
+
     actor_id: str
     external_subject: str
     external_issuer: str
@@ -51,6 +64,14 @@ class ActorResponse(BaseModel):
 
     @classmethod
     def from_actor(cls, actor: ActorContext) -> "ActorResponse":
+        """Build an actor response from the trusted actor context.
+
+        Args:
+            actor: Trusted actor resolved by authentication.
+
+        Returns:
+            Public actor response with audit context included.
+        """
         return cls(
             actor_id=actor.actor_id,
             external_subject=actor.external_subject,

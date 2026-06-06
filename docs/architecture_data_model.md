@@ -189,6 +189,20 @@ Fields:
 - `sla_hours`
 - `created_at`
 
+## RevisionPolicy
+
+Fields:
+
+- `id`
+- `project_id`
+- `guide_version`
+- `max_revision_rounds`
+- `revision_deadline_hours`
+- `auto_reject_after_limit`
+- `allowed_resubmission_states`
+- `reviewer_reassignment_rule`
+- `created_at`
+
 ## PaymentPolicy
 
 Fields:
@@ -245,6 +259,7 @@ Fields:
 - `locked_guide_version`
 - `locked_checker_policy_version`
 - `locked_review_policy_version`
+- `locked_revision_policy_version`
 - `locked_payment_policy_version`
 - `source_type`
 - `source_ref`
@@ -295,7 +310,7 @@ Source type:
 
 External origin adapters are later work. When added, they normalize into this task shape instead of creating a separate task lifecycle.
 
-The task id points to the locked task contract. That contract includes the guide version, checker policy version, review policy version, payment policy version, acceptance criteria, required evidence, required files, base payout, and skill tags. Workers submit against the task id; they do not restate policy versions.
+The task id points to the locked task contract. That contract includes the guide version, checker policy version, review policy version, revision policy version, payment policy version, acceptance criteria, required evidence, required files, base payout, and skill tags. Workers submit against the task id; they do not restate policy versions.
 
 ## Assignment
 
@@ -327,12 +342,13 @@ Fields:
 - `locked_guide_version`
 - `locked_checker_policy_version`
 - `locked_review_policy_version`
+- `locked_revision_policy_version`
 - `locked_payment_policy_version`
 - `submitted_at`
 - `locked_at`
 - `supersedes_submission_id`
 
-The worker submission packet supplies the task id, summary, outputs, artifact hashes, evidence ids, submission version, and worker attestation. Workstream stamps the locked guide and policy versions from trusted task/project state. The worker does not provide guide, checker policy, review policy, or payment policy versions.
+The worker submission packet supplies the task id, summary, outputs, artifact hashes, evidence ids, submission version, and worker attestation. Workstream stamps the locked guide and policy versions from trusted task/project state. The worker does not provide guide, checker policy, review policy, revision policy, or payment policy versions.
 
 Status:
 

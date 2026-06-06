@@ -11,6 +11,6 @@ def test_alembic_upgrade_and_downgrade(isolated_database_env: str) -> None:
     config = Config(str(project_root / "alembic.ini"))
     config.set_main_option("script_location", str(project_root / "alembic"))
 
+    command.downgrade(config, "base")
     command.upgrade(config, "head")
     command.downgrade(config, "base")
-

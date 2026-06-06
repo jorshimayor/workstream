@@ -1,3 +1,5 @@
+"""Application settings loaded from environment variables."""
+
 from __future__ import annotations
 
 from functools import lru_cache
@@ -7,6 +9,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    """Runtime configuration for the Workstream API."""
+
     app_name: str = "Workstream API"
     app_version: str = "0.1.0"
     debug: bool = False
@@ -39,4 +43,9 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
+    """Load and cache application settings.
+
+    Returns:
+        Settings resolved from environment variables and optional ``.env``.
+    """
     return Settings()

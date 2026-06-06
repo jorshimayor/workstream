@@ -119,7 +119,7 @@ Deliver:
 Exit criteria:
 
 - submit v1 packet
-- worker does not provide guide, checker policy, review policy, or payment policy versions
+- worker does not provide guide, checker policy, review policy, revision policy, or payment policy versions
 - task moves to `SUBMITTED`
 - package/evidence records are immutable after checker run starts
 - replacing any artifact creates v2 instead of mutating v1
