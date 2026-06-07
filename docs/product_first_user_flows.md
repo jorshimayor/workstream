@@ -73,8 +73,8 @@ Acceptance:
 Acceptance:
 
 - Review cannot be submitted without a decision.
-- Needs revision and reject require at least one finding.
-- Accept requires no unresolved high-severity checker failure.
+- needs_revision and reject require at least one finding.
+- accept requires no unresolved high-severity checker failure.
 
 ## Flow 6: Revision Replay
 

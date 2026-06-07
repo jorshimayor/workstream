@@ -251,7 +251,7 @@ Week 3 acceptance bar:
 - reviewers cannot issue vague decisions without findings
 - every NEEDS_REVISION has concrete fix requirements
 - every resubmission must close prior feedback
-- accept, needs revision, and reject decisions are auditable
+- accept, needs_revision, and reject decisions are auditable
 
 ## Week 4: Payment, Reputation, Pilot
 
