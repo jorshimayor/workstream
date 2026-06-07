@@ -1,0 +1,797 @@
+from __future__ import annotations
+
+import asyncio
+from collections.abc import AsyncIterator, Iterator
+from decimal import Decimal
+from pathlib import Path
+from uuid import uuid4
+
+import pytest
+from alembic import command
+from alembic.config import Config
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy import inspect, select
+from sqlalchemy.dialects import postgresql
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.schema import CreateIndex
+
+from app.adapters.auth.dev import actor_id_from_external_identity
+from app.core.config import get_settings
+from app.db import models as db_models
+from app.db import session as db_session
+from app.db.base import Base
+from app.main import create_app
+from app.modules.tasks.lifecycle import InvalidTaskTransition, ensure_allowed_transition
+from app.modules.tasks.models import (
+    AuditEvent,
+    ReviewerProfile,
+    TaskAssignment,
+    WorkerProfile,
+    WorkstreamTask,
+)
+from app.modules.tasks.repository import TaskRepository
+
+
+@pytest.fixture
+def task_database_env(
+    monkeypatch: pytest.MonkeyPatch,
+    postgres_database_url: str,
+) -> Iterator[str]:
+    monkeypatch.setenv("WORKSTREAM_DATABASE_URL", postgres_database_url)
+    set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
+    get_settings.cache_clear()
+    asyncio.run(db_session.dispose_engine())
+
+    config = alembic_config()
+    command.downgrade(config, "base")
+    command.upgrade(config, "head")
+
+    yield postgres_database_url
+
+    command.downgrade(config, "base")
+    asyncio.run(db_session.dispose_engine())
+    get_settings.cache_clear()
+
+
+@pytest.fixture
+async def task_client(task_database_env: str) -> AsyncIterator[AsyncClient]:
+    app = create_app()
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as client:
+        yield client
+
+
+def alembic_config() -> Config:
+    project_root = Path(__file__).resolve().parents[1]
+    config = Config(str(project_root / "alembic.ini"))
+    config.set_main_option("script_location", str(project_root / "alembic"))
+    return config
+
+
+def auth_headers(token: str = "task-token") -> dict[str, str]:
+    return {"Authorization": f"Bearer {token}"}
+
+
+def set_dev_actor(
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    roles: str,
+    subject: str,
+    token: str = "task-token",
+    issuer: str = "flow-test",
+) -> None:
+    monkeypatch.setenv("WORKSTREAM_AUTH_PROVIDER", "dev")
+    monkeypatch.setenv("WORKSTREAM_ENVIRONMENT", "test")
+    monkeypatch.setenv("WORKSTREAM_DEV_AUTH_TOKEN", token)
+    monkeypatch.setenv("WORKSTREAM_DEV_AUTH_SUBJECT", subject)
+    monkeypatch.setenv("WORKSTREAM_DEV_AUTH_ISSUER", issuer)
+    monkeypatch.setenv("WORKSTREAM_DEV_AUTH_EMAIL", f"{subject}@example.test")
+    monkeypatch.setenv("WORKSTREAM_DEV_AUTH_DISPLAY_NAME", subject.replace("-", " ").title())
+    monkeypatch.setenv("WORKSTREAM_DEV_AUTH_ROLES", roles)
+    get_settings.cache_clear()
+
+
+def actor_id(subject: str, issuer: str = "flow-test") -> str:
+    return actor_id_from_external_identity(issuer, subject)
+
+
+def complete_guide_payload(version: str = "v1") -> dict:
+    return {
+        "version": version,
+        "content_markdown": f"# Task Guide {version}",
+        "required_task_fields": [
+            "title",
+            "description",
+            "acceptance_criteria",
+            "required_evidence",
+        ],
+        "required_submission_fields": ["summary", "evidence", "worker_attestation"],
+        "task_instructions": "Complete the task.",
+        "output_requirements": "Submit the required output.",
+        "acceptance_criteria": "Meets the project guide.",
+        "rejection_criteria": "Missing required evidence.",
+        "reviewer_rubric": "Review evidence and output.",
+        "forbidden_actions": "No copied work.",
+        "required_skills": ["stem"],
+        "difficulty_scale": {"easy": 1, "hard": 3},
+        "estimated_time_policy": {"default_minutes": 60},
+        "common_rejection_reasons": ["missing evidence"],
+        "evidence_policy": {"required": ["log"]},
+        "unacceptable_work_policy": "Copied or unverifiable work.",
+        "change_summary": f"Initial {version}",
+        "checker_policy": {
+            "required_checkers": ["check_policy_context_present"],
+            "warning_checkers": [],
+            "blocking_severities": ["high"],
+        },
+        "review_policy": {
+            "requires_second_review": False,
+            "allowed_decisions": ["accept", "needs_revision", "reject"],
+            "minimum_finding_fields": ["issue", "required_fix"],
+            "sla_hours": 24,
+        },
+        "revision_policy": {
+            "max_revision_rounds": 7,
+            "revision_deadline_hours": 48,
+            "auto_reject_after_limit": True,
+            "allowed_resubmission_states": ["needs_revision"],
+            "reviewer_reassignment_rule": "same reviewer preferred",
+        },
+        "payment_policy": {
+            "base_amount": "25.00",
+            "currency": "USD",
+            "payout_type": "fixed",
+            "revision_payment_rule": "none",
+            "rejection_payment_rule": "none",
+            "accepted_payment_rule": "pay base amount",
+        },
+    }
+
+
+def complete_task_payload() -> dict:
+    return {
+        "title": "Evaluate proof",
+        "description": "Check whether the proof satisfies the guide.",
+        "task_type": "evaluation",
+        "difficulty": "medium",
+        "skill_tags": ["stem", "proofs"],
+        "estimated_time_minutes": 45,
+        "source_type": "manual",
+        "source_ref": "local-ticket-1",
+        "source_payload_hash": "hash-123",
+        "acceptance_criteria": "Proof is correct and evidence is present.",
+        "rejection_criteria": "Proof is unsupported.",
+        "required_files": ["answer.md"],
+        "required_evidence": ["checker log"],
+    }
+
+
+async def create_active_project(client: AsyncClient) -> dict:
+    project_response = await client.post(
+        "/api/v1/projects",
+        headers=auth_headers(),
+        json={
+            "name": "Task Queue Project",
+            "slug": "task-queue-project",
+            "description": "Project for task queue tests",
+            "base_amount": "25.00",
+            "currency": "USD",
+        },
+    )
+    assert project_response.status_code == 201, project_response.text
+    project = project_response.json()
+
+    guide_response = await client.post(
+        f"/api/v1/projects/{project['id']}/guides",
+        headers=auth_headers(),
+        json=complete_guide_payload(),
+    )
+    assert guide_response.status_code == 201, guide_response.text
+    guide = guide_response.json()
+
+    activation_response = await client.post(
+        f"/api/v1/projects/{project['id']}/guides/{guide['id']}/activate",
+        headers=auth_headers(),
+    )
+    assert activation_response.status_code == 200, activation_response.text
+    return project
+
+
+async def create_draft_task(client: AsyncClient, project_id: str, payload: dict | None = None) -> dict:
+    response = await client.post(
+        f"/api/v1/projects/{project_id}/tasks",
+        headers=auth_headers(),
+        json=payload or complete_task_payload(),
+    )
+    assert response.status_code == 201, response.text
+    return response.json()
+
+
+async def create_ready_task(client: AsyncClient, project_id: str) -> dict:
+    task = await create_draft_task(client, project_id)
+    screen = await client.post(
+        f"/api/v1/tasks/{task['id']}/screen",
+        headers=auth_headers(),
+        json={"reason": "screening checklist passed"},
+    )
+    assert screen.status_code == 200, screen.text
+    release = await client.post(
+        f"/api/v1/tasks/{task['id']}/release",
+        headers=auth_headers(),
+        json={"reason": "release decision recorded"},
+    )
+    assert release.status_code == 200, release.text
+    return release.json()
+
+
+async def seed_worker_profile(subject: str, *, skill_tags: list[str] | None = None) -> str:
+    worker_actor_id = actor_id(subject)
+    async with db_session.get_session_factory()() as session:
+        session.add(
+            WorkerProfile(
+                id=str(uuid4()),
+                actor_id=worker_actor_id,
+                external_subject=subject,
+                external_issuer="flow-test",
+                display_name=subject.replace("-", " ").title(),
+                email=f"{subject}@example.test",
+                skill_tags=skill_tags or ["stem"],
+                status="active",
+            )
+        )
+        await session.commit()
+    return worker_actor_id
+
+
+def test_task_models_are_registered_for_alembic_metadata() -> None:
+    expected_tables = {
+        "worker_profiles",
+        "reviewer_profiles",
+        "workstream_tasks",
+        "task_assignments",
+        "audit_events",
+    }
+
+    assert expected_tables.issubset(Base.metadata.tables)
+    assert db_models.WorkerProfile is WorkerProfile
+    assert db_models.ReviewerProfile is ReviewerProfile
+    assert db_models.WorkstreamTask is WorkstreamTask
+    assert db_models.TaskAssignment is TaskAssignment
+    assert db_models.AuditEvent is AuditEvent
+
+
+async def test_chunk4_migration_creates_expected_tables(task_database_env: str) -> None:
+    async with db_session.get_engine().connect() as connection:
+        table_names = await connection.run_sync(
+            lambda sync_connection: set(inspect(sync_connection).get_table_names())
+        )
+
+    assert {
+        "worker_profiles",
+        "reviewer_profiles",
+        "workstream_tasks",
+        "task_assignments",
+        "audit_events",
+    }.issubset(table_names)
+
+
+def test_chunk4_migration_downgrade_removes_task_tables(task_database_env: str) -> None:
+    config = alembic_config()
+    asyncio.run(db_session.dispose_engine())
+    command.downgrade(config, "0002_project_guide_foundation")
+
+    async def inspect_tables() -> set[str]:
+        async with db_session.get_engine().connect() as connection:
+            return await connection.run_sync(
+                lambda sync_connection: set(inspect(sync_connection).get_table_names())
+            )
+
+    table_names = asyncio.run(inspect_tables())
+
+    assert "projects" in table_names
+    assert {
+        "worker_profiles",
+        "reviewer_profiles",
+        "workstream_tasks",
+        "task_assignments",
+        "audit_events",
+    }.isdisjoint(table_names)
+
+    asyncio.run(db_session.dispose_engine())
+    command.upgrade(config, "head")
+
+
+def test_task_assignment_partial_unique_index_metadata_compiles() -> None:
+    index = next(
+        index
+        for index in TaskAssignment.__table__.indexes
+        if index.name == "uq_task_assignments_one_active_per_task"
+    )
+
+    postgres_compiled = str(CreateIndex(index).compile(dialect=postgresql.dialect()))
+
+    assert "status = 'active'" in postgres_compiled
+
+
+async def test_profile_upserts_update_existing_actor_rows(task_database_env: str) -> None:
+    async with db_session.get_session_factory()() as session:
+        repository = TaskRepository(session)
+        worker_actor_id = actor_id("worker-upsert")
+        first_worker = await repository.upsert_worker_profile(
+            WorkerProfile(
+                id=str(uuid4()),
+                actor_id=worker_actor_id,
+                external_subject="worker-upsert",
+                external_issuer="flow-test",
+                display_name="Worker Upsert",
+                email="worker-upsert@example.test",
+                skill_tags=["stem"],
+                status="active",
+            )
+        )
+        updated_worker = await repository.upsert_worker_profile(
+            WorkerProfile(
+                id=str(uuid4()),
+                actor_id=worker_actor_id,
+                external_subject="worker-upsert",
+                external_issuer="flow-test",
+                display_name="Worker Updated",
+                email="worker-updated@example.test",
+                skill_tags=["stem", "analysis"],
+                status="active",
+            )
+        )
+
+        reviewer_actor_id = actor_id("reviewer-upsert")
+        first_reviewer = await repository.upsert_reviewer_profile(
+            ReviewerProfile(
+                id=str(uuid4()),
+                actor_id=reviewer_actor_id,
+                external_subject="reviewer-upsert",
+                external_issuer="flow-test",
+                display_name="Reviewer Upsert",
+                email="reviewer-upsert@example.test",
+                skill_tags=["review"],
+                status="active",
+            )
+        )
+        updated_reviewer = await repository.upsert_reviewer_profile(
+            ReviewerProfile(
+                id=str(uuid4()),
+                actor_id=reviewer_actor_id,
+                external_subject="reviewer-upsert",
+                external_issuer="flow-test",
+                display_name="Reviewer Updated",
+                email="reviewer-updated@example.test",
+                skill_tags=["review", "stem"],
+                status="active",
+            )
+        )
+        await session.commit()
+
+    async with db_session.get_session_factory()() as session:
+        worker_rows = (
+            await session.execute(
+                select(WorkerProfile).where(WorkerProfile.actor_id == worker_actor_id)
+            )
+        ).scalars().all()
+        reviewer_rows = (
+            await session.execute(
+                select(ReviewerProfile).where(ReviewerProfile.actor_id == reviewer_actor_id)
+            )
+        ).scalars().all()
+
+    assert updated_worker.id == first_worker.id
+    assert updated_worker.display_name == "Worker Updated"
+    assert updated_worker.skill_tags == ["stem", "analysis"]
+    assert len(worker_rows) == 1
+    assert worker_rows[0].id == first_worker.id
+    assert updated_reviewer.id == first_reviewer.id
+    assert updated_reviewer.display_name == "Reviewer Updated"
+    assert updated_reviewer.skill_tags == ["review", "stem"]
+    assert len(reviewer_rows) == 1
+    assert reviewer_rows[0].id == first_reviewer.id
+
+
+async def test_task_can_be_created_in_draft(task_client: AsyncClient) -> None:
+    project = await create_active_project(task_client)
+    task = await create_draft_task(task_client, project["id"])
+
+    assert task["status"] == "draft"
+    assert task["locked_guide_version"] is None
+    assert task["skill_tags"] == ["stem", "proofs"]
+    assert task["source_ref"] == "local-ticket-1"
+
+
+async def test_screening_requires_active_guide_context(task_client: AsyncClient) -> None:
+    project_response = await task_client.post(
+        "/api/v1/projects",
+        headers=auth_headers(),
+        json={"name": "No Guide", "slug": "no-guide"},
+    )
+    assert project_response.status_code == 201, project_response.text
+    task = await create_draft_task(task_client, project_response.json()["id"])
+
+    response = await task_client.post(
+        f"/api/v1/tasks/{task['id']}/screen",
+        headers=auth_headers(),
+        json={"reason": "screen"},
+    )
+
+    assert response.status_code == 422
+    assert "active guide" in response.json()["detail"]
+
+
+async def test_screening_rejects_missing_required_task_fields(task_client: AsyncClient) -> None:
+    project = await create_active_project(task_client)
+    payload = complete_task_payload()
+    payload.pop("acceptance_criteria")
+    task = await create_draft_task(task_client, project["id"], payload)
+
+    response = await task_client.post(
+        f"/api/v1/tasks/{task['id']}/screen",
+        headers=auth_headers(),
+        json={"reason": "screen"},
+    )
+
+    assert response.status_code == 422
+    assert "acceptance_criteria" in response.json()["detail"]
+
+
+async def test_screening_locks_guide_policy_context_and_payment_fields(
+    task_client: AsyncClient,
+) -> None:
+    project = await create_active_project(task_client)
+    task = await create_draft_task(task_client, project["id"])
+
+    response = await task_client.post(
+        f"/api/v1/tasks/{task['id']}/screen",
+        headers=auth_headers(),
+        json={"reason": "screen"},
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["status"] == "screening"
+    assert body["locked_guide_version"] == "v1"
+    assert body["locked_checker_policy_version"] == "v1"
+    assert body["locked_review_policy_version"] == "v1"
+    assert body["locked_revision_policy_version"] == "v1"
+    assert body["locked_payment_policy_version"] == "v1"
+    assert body["base_amount"] == "25.00"
+    assert body["currency"] == "USD"
+    assert body["payout_type"] == "fixed"
+
+
+async def test_release_requires_decision_reason(task_client: AsyncClient) -> None:
+    project = await create_active_project(task_client)
+    task = await create_draft_task(task_client, project["id"])
+    screen = await task_client.post(
+        f"/api/v1/tasks/{task['id']}/screen",
+        headers=auth_headers(),
+        json={"reason": "screen"},
+    )
+    assert screen.status_code == 200, screen.text
+
+    response = await task_client.post(
+        f"/api/v1/tasks/{task['id']}/release",
+        headers=auth_headers(),
+        json={},
+    )
+
+    assert response.status_code == 422
+    assert "release decision reason" in response.json()["detail"]
+
+
+async def test_full_task_claim_start_flow_writes_audit_events(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    ready_task = await create_ready_task(task_client, project["id"])
+    worker_actor_id = await seed_worker_profile("worker-one")
+    set_dev_actor(monkeypatch, roles="worker", subject="worker-one")
+
+    claim = await task_client.post(
+        f"/api/v1/tasks/{ready_task['id']}/claim",
+        headers=auth_headers(),
+        json={"reason": "claiming task"},
+    )
+    assert claim.status_code == 200, claim.text
+    assert claim.json()["task"]["status"] == "claimed"
+    assert claim.json()["assignment"]["worker_id"] == worker_actor_id
+
+    start = await task_client.post(
+        f"/api/v1/tasks/{ready_task['id']}/start",
+        headers=auth_headers(),
+        json={"reason": "starting work"},
+    )
+    assert start.status_code == 200, start.text
+    assert start.json()["status"] == "in_progress"
+
+    audit = await task_client.get(
+        f"/api/v1/tasks/{ready_task['id']}/audit-events",
+        headers=auth_headers(),
+    )
+    assert audit.status_code == 200, audit.text
+    events = audit.json()
+    assert [event["to_status"] for event in events] == [
+        "draft",
+        "screening",
+        "ready",
+        "claimed",
+        "in_progress",
+    ]
+    assert [event["from_status"] for event in events] == [
+        None,
+        "draft",
+        "screening",
+        "ready",
+        "claimed",
+    ]
+    assert [event["reason"] for event in events] == [
+        None,
+        "screening checklist passed",
+        "release decision recorded",
+        "claiming task",
+        "starting work",
+    ]
+    assert all(event["created_at"] for event in events)
+    screening_event = next(event for event in events if event["to_status"] == "screening")
+    release_event = next(event for event in events if event["to_status"] == "ready")
+    for event in (screening_event, release_event):
+        assert event["event_payload"]["locked_guide_version"] == "v1"
+        assert event["event_payload"]["locked_checker_policy_version"] == "v1"
+        assert event["event_payload"]["locked_review_policy_version"] == "v1"
+        assert event["event_payload"]["locked_revision_policy_version"] == "v1"
+        assert event["event_payload"]["locked_payment_policy_version"] == "v1"
+    claim_event = next(event for event in events if event["to_status"] == "claimed")
+    assert claim_event["actor_id"] == worker_actor_id
+    assert claim_event["external_subject"] == "worker-one"
+    assert claim_event["external_issuer"] == "flow-test"
+    assert claim_event["actor_roles"] == ["worker"]
+    assert claim_event["claim_snapshot"] == {}
+    assert claim_event["auth_source"] == "dev_mock"
+    assert claim_event["is_dev_auth"] is True
+    assert claim_event["event_payload"]["assignment_id"] == claim.json()["assignment"]["id"]
+
+    async with db_session.get_session_factory()() as session:
+        persisted_event = await session.get(AuditEvent, claim_event["id"])
+    assert persisted_event is not None
+    assert persisted_event.claim_snapshot["roles"] == ["worker"]
+
+
+async def test_worker_without_profile_cannot_claim_ready_task(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    ready_task = await create_ready_task(task_client, project["id"])
+    set_dev_actor(monkeypatch, roles="worker", subject="worker-without-profile")
+
+    response = await task_client.post(
+        f"/api/v1/tasks/{ready_task['id']}/claim",
+        headers=auth_headers(),
+        json={"reason": "claim"},
+    )
+
+    assert response.status_code == 403
+    assert "active worker profile" in response.json()["detail"]
+
+
+async def test_second_claim_is_rejected(task_client: AsyncClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    project = await create_active_project(task_client)
+    ready_task = await create_ready_task(task_client, project["id"])
+    await seed_worker_profile("worker-one")
+    set_dev_actor(monkeypatch, roles="worker", subject="worker-one")
+    first_claim = await task_client.post(
+        f"/api/v1/tasks/{ready_task['id']}/claim",
+        headers=auth_headers(),
+        json={"reason": "claim"},
+    )
+    assert first_claim.status_code == 200, first_claim.text
+
+    await seed_worker_profile("worker-two")
+    set_dev_actor(monkeypatch, roles="worker", subject="worker-two")
+    second_claim = await task_client.post(
+        f"/api/v1/tasks/{ready_task['id']}/claim",
+        headers=auth_headers(),
+        json={"reason": "claim again"},
+    )
+
+    assert second_claim.status_code == 409
+
+
+async def test_different_worker_cannot_start_or_read_claimed_task(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    ready_task = await create_ready_task(task_client, project["id"])
+    await seed_worker_profile("worker-one")
+    set_dev_actor(monkeypatch, roles="worker", subject="worker-one")
+    claim = await task_client.post(
+        f"/api/v1/tasks/{ready_task['id']}/claim",
+        headers=auth_headers(),
+        json={"reason": "claim"},
+    )
+    assert claim.status_code == 200, claim.text
+
+    await seed_worker_profile("worker-two")
+    set_dev_actor(monkeypatch, roles="worker", subject="worker-two")
+    start = await task_client.post(
+        f"/api/v1/tasks/{ready_task['id']}/start",
+        headers=auth_headers(),
+        json={"reason": "start"},
+    )
+    read = await task_client.get(f"/api/v1/tasks/{ready_task['id']}", headers=auth_headers())
+    audit = await task_client.get(
+        f"/api/v1/tasks/{ready_task['id']}/audit-events",
+        headers=auth_headers(),
+    )
+
+    assert start.status_code == 409
+    assert read.status_code == 404
+    assert audit.status_code == 404
+
+
+async def test_operator_start_override_requires_reason_and_records_distinct_event(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    ready_task = await create_ready_task(task_client, project["id"])
+    await seed_worker_profile("worker-one")
+    set_dev_actor(monkeypatch, roles="worker", subject="worker-one")
+    claim = await task_client.post(
+        f"/api/v1/tasks/{ready_task['id']}/claim",
+        headers=auth_headers(),
+        json={"reason": "claim"},
+    )
+    assert claim.status_code == 200, claim.text
+
+    set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
+    missing_reason = await task_client.post(
+        f"/api/v1/tasks/{ready_task['id']}/start",
+        headers=auth_headers(),
+        json={},
+    )
+    assert missing_reason.status_code == 422
+
+    started = await task_client.post(
+        f"/api/v1/tasks/{ready_task['id']}/start",
+        headers=auth_headers(),
+        json={"reason": "operator verified worker started"},
+    )
+    assert started.status_code == 200, started.text
+    assert started.json()["status"] == "in_progress"
+
+    audit = await task_client.get(
+        f"/api/v1/tasks/{ready_task['id']}/audit-events",
+        headers=auth_headers(),
+    )
+    assert audit.status_code == 200, audit.text
+    assert audit.json()[-1]["event_type"] == "task_start_override"
+    assert audit.json()[-1]["event_payload"]["operator_override"] is True
+
+
+async def test_worker_cannot_create_screen_or_release_tasks(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    task = await create_draft_task(task_client, project["id"])
+    set_dev_actor(monkeypatch, roles="worker", subject="worker-one")
+
+    create = await task_client.post(
+        f"/api/v1/projects/{project['id']}/tasks",
+        headers=auth_headers(),
+        json=complete_task_payload(),
+    )
+    screen = await task_client.post(
+        f"/api/v1/tasks/{task['id']}/screen",
+        headers=auth_headers(),
+        json={"reason": "screen"},
+    )
+    release = await task_client.post(
+        f"/api/v1/tasks/{task['id']}/release",
+        headers=auth_headers(),
+        json={"reason": "release"},
+    )
+
+    assert create.status_code == 403
+    assert screen.status_code == 403
+    assert release.status_code == 403
+
+
+async def test_invalid_transitions_are_rejected(task_client: AsyncClient) -> None:
+    project = await create_active_project(task_client)
+    task = await create_draft_task(task_client, project["id"])
+
+    release_from_draft = await task_client.post(
+        f"/api/v1/tasks/{task['id']}/release",
+        headers=auth_headers(),
+        json={"reason": "release"},
+    )
+    start_from_draft = await task_client.post(
+        f"/api/v1/tasks/{task['id']}/start",
+        headers=auth_headers(),
+        json={"reason": "start"},
+    )
+
+    assert release_from_draft.status_code == 409
+    assert start_from_draft.status_code == 409
+    with pytest.raises(InvalidTaskTransition):
+        ensure_allowed_transition("unknown", "ready")
+
+
+async def test_database_enforces_one_active_assignment_per_task(task_client: AsyncClient) -> None:
+    project = await create_active_project(task_client)
+    ready_task = await create_ready_task(task_client, project["id"])
+
+    async with db_session.get_session_factory()() as session:
+        session.add_all(
+            [
+                TaskAssignment(
+                    id=str(uuid4()),
+                    task_id=ready_task["id"],
+                    worker_id="worker-1",
+                    assigned_by="operator",
+                    status="active",
+                ),
+                TaskAssignment(
+                    id=str(uuid4()),
+                    task_id=ready_task["id"],
+                    worker_id="worker-2",
+                    assigned_by="operator",
+                    status="active",
+                ),
+            ]
+        )
+        with pytest.raises(IntegrityError):
+            await session.commit()
+
+
+async def test_released_assignment_does_not_block_new_active_assignment(
+    task_client: AsyncClient,
+) -> None:
+    project = await create_active_project(task_client)
+    ready_task = await create_ready_task(task_client, project["id"])
+
+    async with db_session.get_session_factory()() as session:
+        session.add_all(
+            [
+                TaskAssignment(
+                    id=str(uuid4()),
+                    task_id=ready_task["id"],
+                    worker_id="worker-1",
+                    assigned_by="operator",
+                    status="released",
+                ),
+                TaskAssignment(
+                    id=str(uuid4()),
+                    task_id=ready_task["id"],
+                    worker_id="worker-2",
+                    assigned_by="operator",
+                    status="active",
+                ),
+            ]
+        )
+        await session.commit()
+
+
+async def test_json_and_numeric_fields_round_trip_under_postgres(task_client: AsyncClient) -> None:
+    project = await create_active_project(task_client)
+    ready_task = await create_ready_task(task_client, project["id"])
+
+    async with db_session.get_session_factory()() as session:
+        task = await session.get(WorkstreamTask, ready_task["id"])
+
+    assert task is not None
+    assert task.skill_tags == ["stem", "proofs"]
+    assert task.required_files == ["answer.md"]
+    assert task.required_evidence == ["checker log"]
+    assert task.source_payload_hash == "hash-123"
+    assert task.base_amount == Decimal("25.00")
