@@ -94,7 +94,9 @@ class TaskRepository:
             Worker profile when found; otherwise ``None``.
         """
         result = await self._session.execute(
-            select(WorkerProfile).where(WorkerProfile.actor_id == actor_id)
+            select(WorkerProfile)
+            .where(WorkerProfile.actor_id == actor_id)
+            .execution_options(populate_existing=True)
         )
         return result.scalar_one_or_none()
 
@@ -136,7 +138,6 @@ class TaskRepository:
         persisted = await self.get_worker_profile(profile.actor_id)
         if persisted is None:
             raise RuntimeError("worker profile upsert did not return a persisted row")
-        await self._session.refresh(persisted)
         return persisted
 
     async def get_reviewer_profile(self, actor_id: str) -> ReviewerProfile | None:
@@ -149,7 +150,9 @@ class TaskRepository:
             Reviewer profile when found; otherwise ``None``.
         """
         result = await self._session.execute(
-            select(ReviewerProfile).where(ReviewerProfile.actor_id == actor_id)
+            select(ReviewerProfile)
+            .where(ReviewerProfile.actor_id == actor_id)
+            .execution_options(populate_existing=True)
         )
         return result.scalar_one_or_none()
 
@@ -191,7 +194,6 @@ class TaskRepository:
         persisted = await self.get_reviewer_profile(profile.actor_id)
         if persisted is None:
             raise RuntimeError("reviewer profile upsert did not return a persisted row")
-        await self._session.refresh(persisted)
         return persisted
 
     async def add_audit_event(self, event: AuditEvent) -> AuditEvent:
