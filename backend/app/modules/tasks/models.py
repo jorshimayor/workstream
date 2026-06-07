@@ -16,6 +16,7 @@ from sqlalchemy import (
     Numeric,
     String,
     Text,
+    UniqueConstraint,
     text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -96,6 +97,27 @@ class WorkstreamTask(Base):
             ["payment_policies.project_id", "payment_policies.guide_version"],
             name="fk_workstream_tasks_locked_payment_policy",
         ),
+        UniqueConstraint("id", "locked_guide_version", name="uq_workstream_tasks_id_locked_guide"),
+        UniqueConstraint(
+            "id",
+            "locked_checker_policy_version",
+            name="uq_workstream_tasks_id_locked_checker_policy",
+        ),
+        UniqueConstraint(
+            "id",
+            "locked_review_policy_version",
+            name="uq_workstream_tasks_id_locked_review_policy",
+        ),
+        UniqueConstraint(
+            "id",
+            "locked_revision_policy_version",
+            name="uq_workstream_tasks_id_locked_revision_policy",
+        ),
+        UniqueConstraint(
+            "id",
+            "locked_payment_policy_version",
+            name="uq_workstream_tasks_id_locked_payment_policy",
+        ),
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
@@ -138,6 +160,11 @@ class WorkstreamTask(Base):
         back_populates="task",
         cascade="all, delete-orphan",
     )
+    submissions: Mapped[list[Submission]] = relationship(
+        back_populates="task",
+        cascade="all, delete-orphan",
+        foreign_keys="Submission.task_id",
+    )
 
 
 class TaskAssignment(Base):
@@ -167,6 +194,94 @@ class TaskAssignment(Base):
     status: Mapped[str] = mapped_column(String(30), nullable=False, default="active", index=True)
 
     task: Mapped[WorkstreamTask] = relationship(back_populates="assignments")
+
+
+class Submission(Base):
+    """Immutable worker submission packet version for a task."""
+
+    __tablename__ = "submissions"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["task_id", "locked_guide_version"],
+            ["workstream_tasks.id", "workstream_tasks.locked_guide_version"],
+            name="fk_submissions_task_locked_guide",
+        ),
+        ForeignKeyConstraint(
+            ["task_id", "locked_checker_policy_version"],
+            ["workstream_tasks.id", "workstream_tasks.locked_checker_policy_version"],
+            name="fk_submissions_task_locked_checker_policy",
+        ),
+        ForeignKeyConstraint(
+            ["task_id", "locked_review_policy_version"],
+            ["workstream_tasks.id", "workstream_tasks.locked_review_policy_version"],
+            name="fk_submissions_task_locked_review_policy",
+        ),
+        ForeignKeyConstraint(
+            ["task_id", "locked_revision_policy_version"],
+            ["workstream_tasks.id", "workstream_tasks.locked_revision_policy_version"],
+            name="fk_submissions_task_locked_revision_policy",
+        ),
+        ForeignKeyConstraint(
+            ["task_id", "locked_payment_policy_version"],
+            ["workstream_tasks.id", "workstream_tasks.locked_payment_policy_version"],
+            name="fk_submissions_task_locked_payment_policy",
+        ),
+        UniqueConstraint("task_id", "version", name="uq_submissions_task_version"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    task_id: Mapped[str] = mapped_column(ForeignKey("workstream_tasks.id"), nullable=False, index=True)
+    worker_id: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="submitted", index=True)
+    summary: Mapped[str] = mapped_column(Text, nullable=False)
+    package_uri: Mapped[str | None] = mapped_column(String(1000))
+    package_hash: Mapped[str] = mapped_column(String(128), nullable=False)
+    artifact_hash_manifest: Mapped[list[dict]] = mapped_column(JSON, nullable=False, default=list)
+    worker_attestation: Mapped[str] = mapped_column(Text, nullable=False)
+    locked_guide_version: Mapped[str] = mapped_column(String(50), nullable=False)
+    locked_checker_policy_version: Mapped[str] = mapped_column(String(50), nullable=False)
+    locked_review_policy_version: Mapped[str] = mapped_column(String(50), nullable=False)
+    locked_revision_policy_version: Mapped[str] = mapped_column(String(50), nullable=False)
+    locked_payment_policy_version: Mapped[str] = mapped_column(String(50), nullable=False)
+    submitted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    locked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    supersedes_submission_id: Mapped[str | None] = mapped_column(
+        ForeignKey("submissions.id"),
+        nullable=True,
+    )
+
+    task: Mapped[WorkstreamTask] = relationship(
+        back_populates="submissions",
+        foreign_keys=[task_id],
+    )
+    evidence_items: Mapped[list[EvidenceItem]] = relationship(
+        back_populates="submission",
+        cascade="all, delete-orphan",
+    )
+
+
+class EvidenceItem(Base):
+    """Evidence reference bound to one submission version."""
+
+    __tablename__ = "evidence_items"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    submission_id: Mapped[str] = mapped_column(
+        ForeignKey("submissions.id"),
+        nullable=False,
+        index=True,
+    )
+    type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    label: Mapped[str] = mapped_column(String(200), nullable=False)
+    uri: Mapped[str | None] = mapped_column(String(1000))
+    hash: Mapped[str | None] = mapped_column(String(128))
+    size_bytes: Mapped[int | None] = mapped_column(Integer)
+    locked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    metadata_json: Mapped[dict] = mapped_column("metadata", JSON, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    submission: Mapped[Submission] = relationship(back_populates="evidence_items")
 
 
 class AuditEvent(Base):

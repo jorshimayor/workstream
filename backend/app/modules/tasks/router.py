@@ -12,6 +12,8 @@ from app.core.permissions import PermissionDenied
 from app.db.session import get_db_session
 from app.modules.tasks.schemas import (
     AuditEventResponse,
+    SubmissionCreate,
+    SubmissionResponse,
     TaskCreate,
     TaskResponse,
     TaskTransitionRequest,
@@ -152,6 +154,67 @@ async def start_task(
             task_id,
             None if payload is None else payload.reason,
         )
+    except PermissionDenied as exc:
+        raise permission_http_error(exc) from exc
+    except TaskServiceError as exc:
+        raise task_http_error(exc) from exc
+
+
+@router.post("/tasks/{task_id}/submissions", response_model=SubmissionResponse, status_code=201)
+async def create_submission(
+    task_id: str,
+    payload: SubmissionCreate,
+    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> SubmissionResponse:
+    """Create a submission packet version for a task."""
+    try:
+        return await TaskService(session).create_submission(actor, task_id, payload)
+    except PermissionDenied as exc:
+        raise permission_http_error(exc) from exc
+    except TaskServiceError as exc:
+        raise task_http_error(exc) from exc
+
+
+@router.get("/tasks/{task_id}/submissions", response_model=list[SubmissionResponse])
+async def list_task_submissions(
+    task_id: str,
+    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> list[SubmissionResponse]:
+    """Return submission packet versions for one task."""
+    try:
+        return await TaskService(session).list_task_submissions(actor, task_id)
+    except PermissionDenied as exc:
+        raise permission_http_error(exc) from exc
+    except TaskServiceError as exc:
+        raise task_http_error(exc) from exc
+
+
+@router.get("/submissions/{submission_id}", response_model=SubmissionResponse)
+async def get_submission(
+    submission_id: str,
+    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> SubmissionResponse:
+    """Return one submission packet version."""
+    try:
+        return await TaskService(session).get_submission(actor, submission_id)
+    except PermissionDenied as exc:
+        raise permission_http_error(exc) from exc
+    except TaskServiceError as exc:
+        raise task_http_error(exc) from exc
+
+
+@router.post("/submissions/{submission_id}/lock", response_model=SubmissionResponse)
+async def lock_submission(
+    submission_id: str,
+    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> SubmissionResponse:
+    """Lock a submission packet before checker execution."""
+    try:
+        return await TaskService(session).lock_submission(actor, submission_id)
     except PermissionDenied as exc:
         raise permission_http_error(exc) from exc
     except TaskServiceError as exc:

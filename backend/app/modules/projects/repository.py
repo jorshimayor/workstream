@@ -108,6 +108,24 @@ class ProjectRepository:
             raise ProjectRepositoryIntegrityError("multiple active guides found for project")
         return active_guides[0]
 
+    async def get_guide_by_version(self, project_id: str, version: str) -> ProjectGuide | None:
+        """Load one project guide by project id and version.
+
+        Args:
+            project_id: Project that owns the guide.
+            version: Guide version to load.
+
+        Returns:
+            Project guide when found; otherwise ``None``.
+        """
+        result = await self._session.execute(
+            select(ProjectGuide).where(
+                ProjectGuide.project_id == project_id,
+                ProjectGuide.version == version,
+            )
+        )
+        return result.scalar_one_or_none()
+
     async def list_active_guides(self, project_id: str) -> Sequence[ProjectGuide]:
         """List active guides for a project.
 

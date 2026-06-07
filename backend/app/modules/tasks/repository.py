@@ -3,14 +3,18 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from datetime import datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.modules.tasks.models import (
     AuditEvent,
+    EvidenceItem,
     ReviewerProfile,
+    Submission,
     TaskAssignment,
     WorkerProfile,
     WorkstreamTask,
@@ -83,6 +87,83 @@ class TaskRepository:
             )
         )
         return result.scalar_one_or_none()
+
+    async def add_submission(self, submission: Submission) -> Submission:
+        """Persist a submission packet and its evidence items.
+
+        Args:
+            submission: Submission model to persist.
+
+        Returns:
+            Persisted submission with generated database fields refreshed.
+        """
+        self._session.add(submission)
+        await self._session.flush()
+        await self._session.refresh(submission)
+        return submission
+
+    async def get_submission(self, submission_id: str) -> Submission | None:
+        """Load one submission by id with evidence items.
+
+        Args:
+            submission_id: Submission id to load.
+
+        Returns:
+            Submission when found; otherwise ``None``.
+        """
+        result = await self._session.execute(
+            select(Submission)
+            .options(selectinload(Submission.evidence_items))
+            .where(Submission.id == submission_id)
+        )
+        return result.scalar_one_or_none()
+
+    async def get_latest_submission_for_task(self, task_id: str) -> Submission | None:
+        """Load the latest submission version for a task.
+
+        Args:
+            task_id: Task whose latest submission should be loaded.
+
+        Returns:
+            Latest submission by version when present; otherwise ``None``.
+        """
+        result = await self._session.execute(
+            select(Submission)
+            .where(Submission.task_id == task_id)
+            .order_by(Submission.version.desc(), Submission.submitted_at.desc())
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
+
+    async def list_submissions_for_task(self, task_id: str) -> Sequence[Submission]:
+        """List submission versions for one task.
+
+        Args:
+            task_id: Task whose submissions should be listed.
+
+        Returns:
+            Submission versions ordered from oldest to newest.
+        """
+        result = await self._session.execute(
+            select(Submission)
+            .options(selectinload(Submission.evidence_items))
+            .where(Submission.task_id == task_id)
+            .order_by(Submission.version.asc(), Submission.submitted_at.asc())
+        )
+        return result.scalars().all()
+
+    async def lock_submission_evidence(self, submission_id: str, locked_at: datetime) -> None:
+        """Stamp evidence rows with the submission lock timestamp.
+
+        Args:
+            submission_id: Submission whose evidence rows should be locked.
+            locked_at: Timestamp applied to each evidence item.
+        """
+        result = await self._session.execute(
+            select(EvidenceItem).where(EvidenceItem.submission_id == submission_id)
+        )
+        for evidence in result.scalars():
+            evidence.locked_at = locked_at
 
     async def get_worker_profile(self, actor_id: str) -> WorkerProfile | None:
         """Load a worker profile by actor id.

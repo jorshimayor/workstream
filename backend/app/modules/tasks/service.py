@@ -23,12 +23,15 @@ from app.modules.tasks.lifecycle import (
     TASK_STATUS_IN_PROGRESS,
     TASK_STATUS_READY,
     TASK_STATUS_SCREENING,
+    TASK_STATUS_SUBMITTED,
     InvalidTaskTransition,
     ensure_allowed_transition,
 )
 from app.modules.tasks.models import (
     AuditEvent,
+    EvidenceItem,
     ReviewerProfile,
+    Submission,
     TaskAssignment,
     WorkerProfile,
     WorkstreamTask,
@@ -37,6 +40,8 @@ from app.modules.tasks.repository import TaskRepository
 from app.modules.tasks.schemas import (
     AssignmentResponse,
     AuditEventResponse,
+    SubmissionCreate,
+    SubmissionResponse,
     TaskCreate,
     TaskResponse,
     TaskWithAssignmentResponse,
@@ -46,8 +51,10 @@ from app.schemas.auth import ActorContext
 PROJECT_OPERATOR_ROLES = {"admin", "project_manager"}
 TASK_VIEW_ROLES = {"admin", "project_manager", "worker"}
 TASK_CLAIM_ROLES = {"worker"}
+TASK_SUBMIT_ROLES = {"worker"}
 TASK_START_ROLES = {"admin", "project_manager", "worker"}
 TASK_START_OPERATOR_ROLES = {"admin", "project_manager"}
+SUBMISSION_LOCK_ROLES = {"admin", "project_manager"}
 
 
 class TaskServiceError(Exception):
@@ -90,6 +97,18 @@ class WorkerProfileRequired(TaskServiceError):
     """Raised when a worker tries to claim without an active worker profile."""
 
     status_code = 403
+
+
+class SubmissionNotFound(TaskServiceError):
+    """Raised when a submission id does not match a stored packet."""
+
+    status_code = 404
+
+
+class SubmissionVersionConflict(TaskServiceError):
+    """Raised when concurrent submission version allocation conflicts."""
+
+    status_code = 409
 
 
 class TaskService:
@@ -364,6 +383,194 @@ class TaskService:
         await self._session.refresh(task)
         return TaskResponse.model_validate(task)
 
+    async def create_submission(
+        self,
+        actor: ActorContext,
+        task_id: str,
+        payload: SubmissionCreate,
+    ) -> SubmissionResponse:
+        """Create a task-owned submission packet version.
+
+        Args:
+            actor: Verified Flow actor context for the current request.
+            task_id: Task receiving the submission packet.
+            payload: Submission packet fields supplied by the worker.
+
+        Returns:
+            Created submission response with evidence items.
+
+        Raises:
+            PermissionDenied: If the actor cannot create worker submissions.
+            TaskTransitionBlocked: If task state or assignment does not allow submission.
+            TaskValidationError: If required submission fields are missing.
+            SubmissionVersionConflict: If concurrent version allocation conflicts.
+        """
+        require_any_role(actor, TASK_SUBMIT_ROLES)
+        task = await self._get_task(task_id)
+        await self._require_active_worker_profile(actor)
+        assignment = await self._repo.get_active_assignment(task_id)
+        if assignment is None:
+            raise TaskTransitionBlocked("task has no active assignment")
+        if assignment.worker_id != actor.actor_id or task.assigned_to != actor.actor_id:
+            raise TaskTransitionBlocked("actor is not assigned to this task")
+        if task.status not in {TASK_STATUS_IN_PROGRESS, TASK_STATUS_SUBMITTED}:
+            raise TaskTransitionBlocked("task must be in progress before first submission")
+        self._ensure_locked_context(task)
+        await self._validate_required_submission_fields(task, payload)
+
+        latest_submission = await self._repo.get_latest_submission_for_task(task.id)
+        next_version = 1 if latest_submission is None else latest_submission.version + 1
+        submission = Submission(
+            id=str(uuid4()),
+            task_id=task.id,
+            worker_id=actor.actor_id,
+            version=next_version,
+            status="submitted",
+            summary=payload.summary,
+            package_uri=payload.package_uri,
+            package_hash=payload.package_hash,
+            artifact_hash_manifest=[
+                entry.model_dump(mode="json") for entry in payload.artifact_hash_manifest
+            ],
+            worker_attestation=payload.worker_attestation,
+            locked_guide_version=task.locked_guide_version,
+            locked_checker_policy_version=task.locked_checker_policy_version,
+            locked_review_policy_version=task.locked_review_policy_version,
+            locked_revision_policy_version=task.locked_revision_policy_version,
+            locked_payment_policy_version=task.locked_payment_policy_version,
+            supersedes_submission_id=None if latest_submission is None else latest_submission.id,
+            evidence_items=[
+                EvidenceItem(
+                    id=str(uuid4()),
+                    type=evidence.type,
+                    label=evidence.label,
+                    uri=evidence.uri,
+                    hash=evidence.hash,
+                    size_bytes=evidence.size_bytes,
+                    metadata_json=evidence.metadata,
+                )
+                for evidence in payload.evidence_items
+            ],
+        )
+        try:
+            submission = await self._repo.add_submission(submission)
+            event_payload = self._submission_audit_payload(submission)
+            if task.status == TASK_STATUS_IN_PROGRESS:
+                await self._change_task_status(
+                    actor,
+                    task,
+                    TASK_STATUS_SUBMITTED,
+                    reason=None,
+                    event_payload=event_payload,
+                    event_type="submission_created",
+                )
+            else:
+                await self._write_task_audit(
+                    actor,
+                    task,
+                    event_type="submission_created",
+                    from_status=task.status,
+                    to_status=task.status,
+                    reason=None,
+                    event_payload=event_payload,
+                )
+            await self._session.commit()
+        except IntegrityError as exc:
+            await self._session.rollback()
+            raise SubmissionVersionConflict("submission version conflicted; retry") from exc
+
+        persisted = await self._repo.get_submission(submission.id)
+        if persisted is None:
+            raise SubmissionNotFound("submission not found")
+        return SubmissionResponse.model_validate(persisted)
+
+    async def list_task_submissions(
+        self,
+        actor: ActorContext,
+        task_id: str,
+    ) -> list[SubmissionResponse]:
+        """List submission versions for one visible task.
+
+        Args:
+            actor: Verified Flow actor context for the current request.
+            task_id: Task whose submissions should be listed.
+
+        Returns:
+            Submission responses ordered by version.
+        """
+        require_any_role(actor, TASK_VIEW_ROLES)
+        task = await self._get_task(task_id)
+        await self._ensure_task_visible(actor, task)
+        submissions = await self._repo.list_submissions_for_task(task.id)
+        return [SubmissionResponse.model_validate(submission) for submission in submissions]
+
+    async def get_submission(
+        self,
+        actor: ActorContext,
+        submission_id: str,
+    ) -> SubmissionResponse:
+        """Return one visible submission packet.
+
+        Args:
+            actor: Verified Flow actor context for the current request.
+            submission_id: Submission id to load.
+
+        Returns:
+            Submission response.
+        """
+        require_any_role(actor, TASK_VIEW_ROLES)
+        submission = await self._get_submission(submission_id)
+        task = await self._get_task(submission.task_id)
+        await self._ensure_task_visible(actor, task)
+        return SubmissionResponse.model_validate(submission)
+
+    async def lock_submission(
+        self,
+        actor: ActorContext,
+        submission_id: str,
+    ) -> SubmissionResponse:
+        """Lock the latest submission packet before checker execution.
+
+        Args:
+            actor: Verified Flow actor context for the current request.
+            submission_id: Submission id to lock.
+
+        Returns:
+            Locked submission response.
+
+        Raises:
+            PermissionDenied: If the actor cannot lock submissions.
+            TaskTransitionBlocked: If the submission is stale or task state is invalid.
+        """
+        require_any_role(actor, SUBMISSION_LOCK_ROLES)
+        submission = await self._get_submission(submission_id)
+        task = await self._get_task(submission.task_id)
+        if task.status != TASK_STATUS_SUBMITTED:
+            raise TaskTransitionBlocked("task must be submitted before locking submission")
+        latest_submission = await self._repo.get_latest_submission_for_task(task.id)
+        if latest_submission is None or latest_submission.id != submission.id:
+            raise TaskTransitionBlocked("only latest submission version can be locked")
+        if submission.locked_at is not None:
+            return SubmissionResponse.model_validate(submission)
+
+        locked_at = datetime.now(UTC)
+        submission.locked_at = locked_at
+        await self._repo.lock_submission_evidence(submission.id, locked_at)
+        await self._write_task_audit(
+            actor,
+            task,
+            event_type="submission_locked",
+            from_status=task.status,
+            to_status=task.status,
+            reason=None,
+            event_payload=self._submission_audit_payload(submission),
+        )
+        await self._session.commit()
+        persisted = await self._repo.get_submission(submission.id)
+        if persisted is None:
+            raise SubmissionNotFound("submission not found")
+        return SubmissionResponse.model_validate(persisted)
+
     async def list_task_audit_events(
         self,
         actor: ActorContext,
@@ -384,6 +591,23 @@ class TaskService:
         events = await self._repo.list_audit_events("task", task.id)
         return [self._audit_response(event) for event in events]
 
+    async def _get_submission(self, submission_id: str) -> Submission:
+        """Load a submission packet or raise a service error.
+
+        Args:
+            submission_id: Submission id to load.
+
+        Returns:
+            Matching submission model.
+
+        Raises:
+            SubmissionNotFound: If the submission id is unknown.
+        """
+        submission = await self._repo.get_submission(submission_id)
+        if submission is None:
+            raise SubmissionNotFound("submission not found")
+        return submission
+
     async def _get_task(self, task_id: str) -> WorkstreamTask:
         """Load a task or raise a service error.
 
@@ -400,6 +624,67 @@ class TaskService:
         if task is None:
             raise TaskNotFound("task not found")
         return task
+
+    async def _validate_required_submission_fields(
+        self,
+        task: WorkstreamTask,
+        payload: SubmissionCreate,
+    ) -> None:
+        """Validate a submission packet against the locked guide.
+
+        Args:
+            task: Task whose locked guide defines required submission fields.
+            payload: Submission packet supplied by the assigned worker.
+
+        Raises:
+            TaskProjectNotReady: If the locked guide cannot be loaded.
+            TaskValidationError: If required submission fields are missing.
+        """
+        if not task.locked_guide_version:
+            raise TaskProjectNotReady("task has no locked guide version")
+        guide = await self._project_repo.get_guide_by_version(task.project_id, task.locked_guide_version)
+        if guide is None:
+            raise TaskProjectNotReady("locked guide not found")
+        required_fields = set(guide.required_submission_fields or [])
+        required_fields.update({"summary", "worker_attestation"})
+        field_values = {
+            "summary": payload.summary,
+            "output": payload.package_uri or payload.artifact_hash_manifest,
+            "outputs": payload.package_uri or payload.artifact_hash_manifest,
+            "package_uri": payload.package_uri,
+            "package_hash": payload.package_hash,
+            "artifact_hash_manifest": payload.artifact_hash_manifest,
+            "evidence": payload.evidence_items,
+            "evidence_items": payload.evidence_items,
+            "worker_attestation": payload.worker_attestation,
+        }
+        missing = [
+            field
+            for field in sorted(required_fields)
+            if not self._field_has_value(field_values.get(field))
+        ]
+        if missing:
+            raise TaskValidationError(f"submission missing required fields: {', '.join(missing)}")
+
+    @staticmethod
+    def _submission_audit_payload(submission: Submission) -> dict:
+        """Build the task audit payload for a submission event.
+
+        Args:
+            submission: Submission model associated with the audit event.
+
+        Returns:
+            Structured audit payload without raw package or evidence URIs.
+        """
+        return {
+            "submission_id": submission.id,
+            "submission_version": submission.version,
+            "worker_id": submission.worker_id,
+            "package_hash": submission.package_hash,
+            "artifact_hash_manifest": submission.artifact_hash_manifest,
+            "supersedes_submission_id": submission.supersedes_submission_id,
+            "locked_at": submission.locked_at.isoformat() if submission.locked_at else None,
+        }
 
     async def _load_active_policy_context(
         self,

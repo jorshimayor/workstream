@@ -36,6 +36,51 @@ class TaskTransitionRequest(BaseModel):
     reason: str | None = None
 
 
+class EvidenceItemCreate(BaseModel):
+    """Request schema for one evidence item in a submission packet."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal[
+        "log",
+        "screenshot",
+        "test_result",
+        "package",
+        "diff",
+        "note",
+        "external_reference",
+    ]
+    label: str = Field(min_length=1, max_length=200)
+    uri: str | None = Field(default=None, max_length=1000)
+    hash: str | None = Field(default=None, max_length=128)
+    size_bytes: int | None = Field(default=None, ge=0)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class ArtifactHashEntry(BaseModel):
+    """Structured artifact hash entry supplied by a worker."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    artifact: str = Field(min_length=1, max_length=1000)
+    hash: str = Field(min_length=1, max_length=128)
+    size_bytes: int | None = Field(default=None, ge=0)
+    notes: str | None = None
+
+
+class SubmissionCreate(BaseModel):
+    """Request schema for creating a submission packet version."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    summary: str = Field(min_length=1)
+    package_uri: str | None = Field(default=None, max_length=1000)
+    package_hash: str = Field(min_length=1, max_length=128)
+    artifact_hash_manifest: list[ArtifactHashEntry] = Field(min_length=1)
+    worker_attestation: str = Field(min_length=1)
+    evidence_items: list[EvidenceItemCreate] = Field(default_factory=list)
+
+
 class TaskResponse(BaseModel):
     """Response schema for task records."""
 
@@ -94,6 +139,53 @@ class TaskWithAssignmentResponse(BaseModel):
 
     task: TaskResponse
     assignment: AssignmentResponse
+
+
+class EvidenceItemResponse(BaseModel):
+    """Response schema for evidence items."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    submission_id: str
+    type: str
+    label: str
+    uri: str | None
+    hash: str | None
+    size_bytes: int | None
+    locked_at: datetime | None
+    metadata: dict[str, Any] = Field(
+        default_factory=dict,
+        validation_alias="metadata_json",
+        serialization_alias="metadata",
+    )
+    created_at: datetime
+
+
+class SubmissionResponse(BaseModel):
+    """Response schema for submission packet versions."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    task_id: str
+    worker_id: str
+    version: int
+    status: str
+    summary: str
+    package_uri: str | None
+    package_hash: str
+    artifact_hash_manifest: list[dict[str, Any]]
+    worker_attestation: str
+    locked_guide_version: str
+    locked_checker_policy_version: str
+    locked_review_policy_version: str
+    locked_revision_policy_version: str
+    locked_payment_policy_version: str
+    submitted_at: datetime
+    locked_at: datetime | None
+    supersedes_submission_id: str | None
+    evidence_items: list[EvidenceItemResponse] = Field(default_factory=list)
 
 
 class AuditEventResponse(BaseModel):
