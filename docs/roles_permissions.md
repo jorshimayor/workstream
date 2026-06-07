@@ -46,7 +46,7 @@ Can:
 
 - review submissions assigned to them
 - create structured findings
-- accept, needs revision, or reject
+- accept, needs_revision, or reject
 - close or reopen revision findings
 
 Cannot:

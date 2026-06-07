@@ -12,7 +12,7 @@ Claims or receives tasks, completes work, submits packet, handles revisions.
 
 ### Reviewer
 
-Reviews checker-passed submissions and issues accept, needs revision, or reject decisions.
+Reviews checker-passed submissions and issues accept, needs_revision, or reject decisions.
 
 ### Admin
 

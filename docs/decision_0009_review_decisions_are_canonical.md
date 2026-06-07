@@ -12,13 +12,15 @@ If projects invent their own review outcome labels, downstream lifecycle rules b
 
 ## Decision
 
-The only review decisions are:
+The only canonical stored review decision values are:
 
 - accept
-- needs revision
+- needs_revision
 - reject
 
-`Escalated` is not a review decision.
+Display labels may render these as "Accept", "Needs revision", and "Reject", but persisted records, audit events, API payloads, and analytics must use the canonical stored values.
+
+`Escalated` is not a review decision value.
 
 Disputes, second review, suspected fraud, payment holds, or admin overrides may create separate workflow records and audit events, but they do not replace the reviewer decision contract.
 

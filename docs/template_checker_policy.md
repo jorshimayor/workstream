@@ -22,7 +22,7 @@ Medium and low severities are visible to reviewers unless this policy overrides 
 | `check_task_schema` | high | yes | Task must include required project fields. |
 | `check_acceptance_criteria_present` | high | yes | Task must include reviewable acceptance criteria. |
 | `check_ready_gate` | high | yes | Task must pass screening before release. |
-| `check_payment_policy_present` | high | yes | Task must have base amount and currency. |
+| `check_policy_context_present` | high | yes | Task must have locked checker, review, revision, and payment policy context. |
 | `check_submission_packet` | high | yes | Submission must include required packet fields. |
 | `check_evidence_present` | high | yes | Submission must include audit evidence. |
 | `check_evidence_integrity` | high | yes | Evidence and checker runs must bind to submitted artifacts. |

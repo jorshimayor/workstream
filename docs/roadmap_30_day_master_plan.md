@@ -86,7 +86,7 @@ Day 2:
 
 - build project and guide records
 - create project guide editor or markdown-backed guide import
-- define checker, review, revision, and payment policy fields, including base amount and payout fields
+- define checker, review, revision, and payment policy fields, including base amount, currency, and payment rule fields
 - use backend records/API first; frontend editor is deferred until the backend contract is stable
 
 Day 3:
@@ -161,7 +161,7 @@ Required first checkers:
 - `check_acceptance_criteria_present`
 - `check_status_transition`
 - `check_prior_revision_closed`
-- `check_payment_policy_present`
+- `check_policy_context_present`
 - `check_forbidden_files`
 
 Day 6:
@@ -207,7 +207,7 @@ Deliverables:
 - review packet
 - finding model
 - severity model
-- accept / needs revision / reject decisions
+- accept / needs_revision / reject decisions
 - revision replay
 - reviewer metrics
 - second-review flag

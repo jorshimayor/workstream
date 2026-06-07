@@ -127,7 +127,7 @@ Assign task
 Submit packet
 Run checks
 Review packet
-Record review decision: accept, needs revision, or reject
+Record review decision: accept, needs_revision, or reject
 Create contribution record for accepted work
 Record payment status separately for accepted work
 Update reputation from review outcome

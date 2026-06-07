@@ -168,7 +168,7 @@ Deliver:
 - `check_evidence_present`
 - `check_evidence_integrity`
 - `check_acceptance_criteria_present`
-- `check_payment_policy_present`
+- `check_policy_context_present`
 - `check_forbidden_files`
 - `check_confidentiality_attestation`
 - first version of `check_low_quality_generated_artifacts`

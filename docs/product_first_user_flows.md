@@ -68,7 +68,7 @@ Acceptance:
 2. Reviewer selects `REVIEW_PENDING` task.
 3. Reviewer reads guide, task, submission, evidence, and checker results.
 4. Reviewer enters structured findings.
-5. Reviewer selects accept, needs revision, or reject.
+5. Reviewer selects accept, needs_revision, or reject.
 
 Acceptance:
 

@@ -19,7 +19,7 @@ Project guide
 -> pre-review gate
 -> human review
 -> revision replay
--> review decision: accept / needs revision / reject
+-> review decision: accept / needs_revision / reject
 -> contribution record
 -> payment record
 -> reputation event
@@ -69,7 +69,6 @@ Every project guide must define:
 - checker policy
 - review policy
 - revision policy
-- payment policy
 - common rejection reasons
 
 Tasks lock to the active guide version at creation or screening time before entering `READY`. Material guide changes require a new guide version.
