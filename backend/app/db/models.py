@@ -8,3 +8,10 @@ from app.modules.projects.models import (  # noqa: F401
     RevisionPolicy,
     ReviewPolicy,
 )
+from app.modules.tasks.models import (  # noqa: F401
+    AuditEvent,
+    ReviewerProfile,
+    TaskAssignment,
+    WorkerProfile,
+    WorkstreamTask,
+)
