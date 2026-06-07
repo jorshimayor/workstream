@@ -249,6 +249,7 @@ class Submission(Base):
     supersedes_submission_id: Mapped[str | None] = mapped_column(
         ForeignKey("submissions.id"),
         nullable=True,
+        index=True,
     )
 
     task: Mapped[WorkstreamTask] = relationship(

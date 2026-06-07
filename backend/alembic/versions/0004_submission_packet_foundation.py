@@ -101,6 +101,12 @@ def upgrade() -> None:
     op.create_index(op.f("ix_submissions_task_id"), "submissions", ["task_id"], unique=False)
     op.create_index(op.f("ix_submissions_worker_id"), "submissions", ["worker_id"], unique=False)
     op.create_index(op.f("ix_submissions_status"), "submissions", ["status"], unique=False)
+    op.create_index(
+        op.f("ix_submissions_supersedes_submission_id"),
+        "submissions",
+        ["supersedes_submission_id"],
+        unique=False,
+    )
 
     op.create_table(
         "evidence_items",
@@ -130,6 +136,7 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_evidence_items_type"), table_name="evidence_items")
     op.drop_index(op.f("ix_evidence_items_submission_id"), table_name="evidence_items")
     op.drop_table("evidence_items")
+    op.drop_index(op.f("ix_submissions_supersedes_submission_id"), table_name="submissions")
     op.drop_index(op.f("ix_submissions_status"), table_name="submissions")
     op.drop_index(op.f("ix_submissions_worker_id"), table_name="submissions")
     op.drop_index(op.f("ix_submissions_task_id"), table_name="submissions")
