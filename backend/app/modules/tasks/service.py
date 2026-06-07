@@ -44,7 +44,7 @@ from app.modules.tasks.schemas import (
 from app.schemas.auth import ActorContext
 
 PROJECT_OPERATOR_ROLES = {"admin", "project_manager"}
-TASK_VIEW_ROLES = {"admin", "project_manager", "worker", "reviewer", "finance", "auditor"}
+TASK_VIEW_ROLES = {"admin", "project_manager", "worker"}
 TASK_CLAIM_ROLES = {"worker"}
 TASK_START_ROLES = {"admin", "project_manager", "worker"}
 TASK_START_OPERATOR_ROLES = {"admin", "project_manager"}
@@ -677,7 +677,7 @@ class TaskService:
             TaskNotFound: If the actor has no object-level visibility.
         """
         roles = set(actor.roles)
-        if roles.intersection({"admin", "project_manager", "auditor"}):
+        if roles.intersection({"admin", "project_manager"}):
             return
         if "worker" in roles:
             if task.status == TASK_STATUS_READY or task.assigned_to == actor.actor_id:

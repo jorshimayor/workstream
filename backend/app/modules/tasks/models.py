@@ -30,7 +30,7 @@ class WorkerProfile(Base):
     __tablename__ = "worker_profiles"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    actor_id: Mapped[str] = mapped_column(String(100), nullable=False, unique=True, index=True)
+    actor_id: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     external_subject: Mapped[str] = mapped_column(String(200), nullable=False)
     external_issuer: Mapped[str] = mapped_column(String(200), nullable=False)
     display_name: Mapped[str | None] = mapped_column(String(200))
@@ -51,7 +51,7 @@ class ReviewerProfile(Base):
     __tablename__ = "reviewer_profiles"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    actor_id: Mapped[str] = mapped_column(String(100), nullable=False, unique=True, index=True)
+    actor_id: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     external_subject: Mapped[str] = mapped_column(String(200), nullable=False)
     external_issuer: Mapped[str] = mapped_column(String(200), nullable=False)
     display_name: Mapped[str | None] = mapped_column(String(200))

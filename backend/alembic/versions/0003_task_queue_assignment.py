@@ -33,7 +33,6 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id", name=op.f("pk_worker_profiles")),
         sa.UniqueConstraint("actor_id", name=op.f("uq_worker_profiles_actor_id")),
     )
-    op.create_index(op.f("ix_worker_profiles_actor_id"), "worker_profiles", ["actor_id"], unique=False)
     op.create_index(op.f("ix_worker_profiles_status"), "worker_profiles", ["status"], unique=False)
 
     op.create_table(
@@ -51,7 +50,6 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id", name=op.f("pk_reviewer_profiles")),
         sa.UniqueConstraint("actor_id", name=op.f("uq_reviewer_profiles_actor_id")),
     )
-    op.create_index(op.f("ix_reviewer_profiles_actor_id"), "reviewer_profiles", ["actor_id"], unique=False)
     op.create_index(op.f("ix_reviewer_profiles_status"), "reviewer_profiles", ["status"], unique=False)
 
     op.create_table(
@@ -186,8 +184,6 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_workstream_tasks_assigned_to"), table_name="workstream_tasks")
     op.drop_table("workstream_tasks")
     op.drop_index(op.f("ix_reviewer_profiles_status"), table_name="reviewer_profiles")
-    op.drop_index(op.f("ix_reviewer_profiles_actor_id"), table_name="reviewer_profiles")
     op.drop_table("reviewer_profiles")
     op.drop_index(op.f("ix_worker_profiles_status"), table_name="worker_profiles")
-    op.drop_index(op.f("ix_worker_profiles_actor_id"), table_name="worker_profiles")
     op.drop_table("worker_profiles")

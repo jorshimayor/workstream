@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from sqlalchemy import select
+from sqlalchemy import func, select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.tasks.models import (
@@ -106,20 +107,37 @@ class TaskRepository:
         Returns:
             Persisted worker profile.
         """
-        existing = await self.get_worker_profile(profile.actor_id)
-        if existing is None:
-            self._session.add(profile)
-            await self._session.flush()
-            await self._session.refresh(profile)
-            return profile
-        existing.external_subject = profile.external_subject
-        existing.external_issuer = profile.external_issuer
-        existing.display_name = profile.display_name
-        existing.email = profile.email
-        existing.skill_tags = profile.skill_tags
+        await self._session.execute(
+            insert(WorkerProfile)
+            .values(
+                id=profile.id,
+                actor_id=profile.actor_id,
+                external_subject=profile.external_subject,
+                external_issuer=profile.external_issuer,
+                display_name=profile.display_name,
+                email=profile.email,
+                skill_tags=profile.skill_tags,
+                status=profile.status,
+            )
+            .on_conflict_do_update(
+                index_elements=[WorkerProfile.actor_id],
+                set_={
+                    "external_subject": profile.external_subject,
+                    "external_issuer": profile.external_issuer,
+                    "display_name": profile.display_name,
+                    "email": profile.email,
+                    "skill_tags": profile.skill_tags,
+                    "status": profile.status,
+                    "updated_at": func.now(),
+                },
+            )
+        )
         await self._session.flush()
-        await self._session.refresh(existing)
-        return existing
+        persisted = await self.get_worker_profile(profile.actor_id)
+        if persisted is None:
+            raise RuntimeError("worker profile upsert did not return a persisted row")
+        await self._session.refresh(persisted)
+        return persisted
 
     async def get_reviewer_profile(self, actor_id: str) -> ReviewerProfile | None:
         """Load a reviewer profile by actor id.
@@ -144,20 +162,37 @@ class TaskRepository:
         Returns:
             Persisted reviewer profile.
         """
-        existing = await self.get_reviewer_profile(profile.actor_id)
-        if existing is None:
-            self._session.add(profile)
-            await self._session.flush()
-            await self._session.refresh(profile)
-            return profile
-        existing.external_subject = profile.external_subject
-        existing.external_issuer = profile.external_issuer
-        existing.display_name = profile.display_name
-        existing.email = profile.email
-        existing.skill_tags = profile.skill_tags
+        await self._session.execute(
+            insert(ReviewerProfile)
+            .values(
+                id=profile.id,
+                actor_id=profile.actor_id,
+                external_subject=profile.external_subject,
+                external_issuer=profile.external_issuer,
+                display_name=profile.display_name,
+                email=profile.email,
+                skill_tags=profile.skill_tags,
+                status=profile.status,
+            )
+            .on_conflict_do_update(
+                index_elements=[ReviewerProfile.actor_id],
+                set_={
+                    "external_subject": profile.external_subject,
+                    "external_issuer": profile.external_issuer,
+                    "display_name": profile.display_name,
+                    "email": profile.email,
+                    "skill_tags": profile.skill_tags,
+                    "status": profile.status,
+                    "updated_at": func.now(),
+                },
+            )
+        )
         await self._session.flush()
-        await self._session.refresh(existing)
-        return existing
+        persisted = await self.get_reviewer_profile(profile.actor_id)
+        if persisted is None:
+            raise RuntimeError("reviewer profile upsert did not return a persisted row")
+        await self._session.refresh(persisted)
+        return persisted
 
     async def add_audit_event(self, event: AuditEvent) -> AuditEvent:
         """Persist an audit event.

@@ -103,7 +103,7 @@ CLAIMED -> IN_PROGRESS
 Rules:
 
 - `DRAFT -> SCREENING` requires active project guide context and all required task fields, then locks guide and policy versions on the task.
-- `SCREENING -> READY` requires locked guide, checker, review, revision, and payment policy context.
+- `SCREENING -> READY` requires that guide, checker, review, revision, and payment policy context be locked.
 - `READY -> CLAIMED` creates an active assignment and blocks a second active assignment.
 - `CLAIMED -> IN_PROGRESS` requires an active assignment for the actor or an authorized operator role.
 - every status change writes an audit event.
@@ -120,7 +120,7 @@ Role expectations:
 - workers can read ready tasks and their own assigned tasks
 - admins and project managers can start a claimed task for operational testing, but do not create worker assignments for themselves through the claim path
 - non-assigned operator starts require a non-empty override reason in audit
-- audit API responses redact persisted claim snapshots unless a later admin/auditor endpoint explicitly exposes them
+- audit API responses redact persisted claim snapshots unless a later privileged endpoint explicitly exposes them
 - audit events persist the actor audit context from the verified token
 
 ## Tests Required

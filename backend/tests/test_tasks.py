@@ -10,7 +10,7 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import inspect
+from sqlalchemy import inspect, select
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.schema import CreateIndex
@@ -29,6 +29,7 @@ from app.modules.tasks.models import (
     WorkerProfile,
     WorkstreamTask,
 )
+from app.modules.tasks.repository import TaskRepository
 
 
 @pytest.fixture
@@ -312,6 +313,86 @@ def test_task_assignment_partial_unique_index_metadata_compiles() -> None:
     postgres_compiled = str(CreateIndex(index).compile(dialect=postgresql.dialect()))
 
     assert "status = 'active'" in postgres_compiled
+
+
+async def test_profile_upserts_update_existing_actor_rows(task_database_env: str) -> None:
+    async with db_session.get_session_factory()() as session:
+        repository = TaskRepository(session)
+        worker_actor_id = actor_id("worker-upsert")
+        first_worker = await repository.upsert_worker_profile(
+            WorkerProfile(
+                id=str(uuid4()),
+                actor_id=worker_actor_id,
+                external_subject="worker-upsert",
+                external_issuer="flow-test",
+                display_name="Worker Upsert",
+                email="worker-upsert@example.test",
+                skill_tags=["stem"],
+                status="active",
+            )
+        )
+        updated_worker = await repository.upsert_worker_profile(
+            WorkerProfile(
+                id=str(uuid4()),
+                actor_id=worker_actor_id,
+                external_subject="worker-upsert",
+                external_issuer="flow-test",
+                display_name="Worker Updated",
+                email="worker-updated@example.test",
+                skill_tags=["stem", "analysis"],
+                status="active",
+            )
+        )
+
+        reviewer_actor_id = actor_id("reviewer-upsert")
+        first_reviewer = await repository.upsert_reviewer_profile(
+            ReviewerProfile(
+                id=str(uuid4()),
+                actor_id=reviewer_actor_id,
+                external_subject="reviewer-upsert",
+                external_issuer="flow-test",
+                display_name="Reviewer Upsert",
+                email="reviewer-upsert@example.test",
+                skill_tags=["review"],
+                status="active",
+            )
+        )
+        updated_reviewer = await repository.upsert_reviewer_profile(
+            ReviewerProfile(
+                id=str(uuid4()),
+                actor_id=reviewer_actor_id,
+                external_subject="reviewer-upsert",
+                external_issuer="flow-test",
+                display_name="Reviewer Updated",
+                email="reviewer-updated@example.test",
+                skill_tags=["review", "stem"],
+                status="active",
+            )
+        )
+        await session.commit()
+
+    async with db_session.get_session_factory()() as session:
+        worker_rows = (
+            await session.execute(
+                select(WorkerProfile).where(WorkerProfile.actor_id == worker_actor_id)
+            )
+        ).scalars().all()
+        reviewer_rows = (
+            await session.execute(
+                select(ReviewerProfile).where(ReviewerProfile.actor_id == reviewer_actor_id)
+            )
+        ).scalars().all()
+
+    assert updated_worker.id == first_worker.id
+    assert updated_worker.display_name == "Worker Updated"
+    assert updated_worker.skill_tags == ["stem", "analysis"]
+    assert len(worker_rows) == 1
+    assert worker_rows[0].id == first_worker.id
+    assert updated_reviewer.id == first_reviewer.id
+    assert updated_reviewer.display_name == "Reviewer Updated"
+    assert updated_reviewer.skill_tags == ["review", "stem"]
+    assert len(reviewer_rows) == 1
+    assert reviewer_rows[0].id == first_reviewer.id
 
 
 async def test_task_can_be_created_in_draft(task_client: AsyncClient) -> None:
