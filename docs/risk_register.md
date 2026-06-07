@@ -16,7 +16,7 @@ Project rules scattered across chat, memory, screenshots, or informal notes will
 
 Mitigation:
 
-- every rule belongs in project guide, checker policy, review policy, or payment policy
+- every rule belongs in project guide, checker policy, review policy, revision policy, or payment policy
 - daily lessons learned become document updates
 
 ### R2: Weak Submissions Reach Review

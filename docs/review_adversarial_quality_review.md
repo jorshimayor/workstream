@@ -68,7 +68,7 @@ Files: `docs/architecture_checker_framework.md`
 
 Finding: Checkers will initially miss real issues and produce false positives. Without a blind-spot review, the system will rely on memory and repeated manual corrections.
 
-Suggested change: Weekly compare checker output against reviewer findings and convert repeated misses into guide, checker, template, or reviewer-policy updates. This has been added.
+Suggested change: Weekly compare checker output against reviewer findings and convert repeated misses into guide, checker, template, reviewer-policy, revision-policy, or payment-policy updates. This has been added.
 
 ## Remaining Implementation Requirements
 

@@ -101,6 +101,7 @@ Owns:
 - base payout
 - checker policy
 - review policy
+- revision policy
 - payment policy
 - skill taxonomy
 

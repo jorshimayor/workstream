@@ -14,6 +14,7 @@ Can:
 - edit project guides
 - configure checker policies
 - configure review policies
+- configure revision policies
 - configure payment policies
 - override task status with audit reason
 - assign reviewers
@@ -25,7 +26,6 @@ Can:
 
 Can:
 
-- create tasks under active projects
 - claim or assign tasks if project policy allows
 - create submissions
 - attach evidence
@@ -46,7 +46,7 @@ Can:
 
 - review submissions assigned to them
 - create structured findings
-- accept, reject, or request revision
+- accept, needs_revision, or reject
 - close or reopen revision findings
 
 Cannot:

@@ -21,7 +21,7 @@ Exit requirement:
 
 - project guide attached
 - acceptance criteria present
-- payout policy present
+- payment policy present
 - required output defined
 
 ### Screening
@@ -40,6 +40,8 @@ Exit requirement:
 - acceptance criteria are concrete
 - evidence requirements are explicit
 - checker policy is attached
+- review policy is attached
+- revision policy is attached
 - payment policy is attached
 - no open high-severity readiness finding
 
@@ -202,16 +204,16 @@ Every operating day starts with:
 
 | Transition | Required Records |
 | --- | --- |
-| `DRAFT -> SCREENING` | project id, locked guide candidate, required task fields, payout policy |
-| `SCREENING -> READY` | screening decision, guide version lock, acceptance criteria, evidence requirements, checker policy |
+| `DRAFT -> SCREENING` | project id, locked guide candidate, required task fields, payment policy |
+| `SCREENING -> READY` | screening decision, guide version lock, acceptance criteria, evidence requirements, checker policy, review policy, revision policy, payment policy |
 | `IN_PROGRESS -> SUBMITTED` | submission packet, evidence ids, artifact hash manifest, worker attestation |
 | `SUBMITTED -> AUTO_CHECKING` | immutable submission version, checker policy version derived from the locked task context |
 | `AUTO_CHECKING -> REVIEW_PENDING` | checker run for exact submission version, readiness certificate, no blocking failures |
 | `AUTO_CHECKING -> NEEDS_REVISION` | checker failures with severity, message, suggested fix |
-| `REVIEW_PENDING -> NEEDS_REVISION` | review decision, at least one structured finding |
+| `REVIEW_PENDING -> NEEDS_REVISION` | review decision, at least one structured finding, revision policy still permits revision |
 | `REVIEW_PENDING -> ACCEPTED` | accepted review, acceptance evidence refs, contribution record, payment record |
-| `NEEDS_REVISION -> IN_PROGRESS` | prior findings visible to worker |
-| resubmission after `NEEDS_REVISION` | revision replay covering every high and medium prior finding |
+| `NEEDS_REVISION -> IN_PROGRESS` | prior findings visible to worker, revision deadline active |
+| resubmission after `NEEDS_REVISION` | revision replay covering every high and medium prior finding, revision count under policy limit |
 | payment `PENDING -> PAID` | payment reference and payment audit event |
 
 ## Lane Capacity

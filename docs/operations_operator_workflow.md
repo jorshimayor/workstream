@@ -12,7 +12,7 @@ Claims or receives tasks, completes work, submits packet, handles revisions.
 
 ### Reviewer
 
-Reviews checker-passed submissions and issues accept, needs revision, or reject decisions.
+Reviews checker-passed submissions and issues accept, needs_revision, or reject decisions.
 
 ### Admin
 
@@ -91,6 +91,8 @@ Every project maintains lessons learned:
 - new checker needed
 - guide update needed
 - reviewer policy update needed
+- revision policy update needed
+- payment policy update needed
 
 This is how Workstream compounds operational knowledge.
 
@@ -109,5 +111,6 @@ Lessons are not just notes. They become one of:
 - checker update
 - reviewer workflow update
 - queue policy update
+- revision policy update
 - payment policy update
 - risk register update

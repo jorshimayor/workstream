@@ -31,7 +31,7 @@ Each project has a guide that defines the rules for that project. A guide specif
 - payment policy
 - common rejection reasons
 
-If a rule matters, it belongs in the guide, a checker, or a template.
+If a rule matters, it belongs in the guide, checker policy, review policy, revision policy, payment policy, or task template.
 
 ## 3. Automated Checks Protect Human Time
 

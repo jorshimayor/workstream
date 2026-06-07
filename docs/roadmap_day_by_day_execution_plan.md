@@ -50,9 +50,13 @@ Deliver:
 - `ProjectGuide`
 - guide versioning
 - guide approval and active-version locking
+- checker policy fields
+- review policy fields
+- revision policy fields
+- payment policy fields
 - base amount fields
 - evidence policy fields
-- dispute policy fields
+- payment dispute policy fields
 - active/inactive project status
 - SQLAlchemy 2.x async model shape
 - Pydantic request/response schemas
@@ -62,7 +66,7 @@ Exit criteria:
 - create a project from a markdown guide
 - retrieve the active guide version for a task
 - edit a draft guide without changing historical task guide versions
-- block activation of a guide with missing payment or evidence policy
+- block activation of a guide missing checker, review, revision, payment, or evidence policy
 - migrations and model tests define the expected invariants
 
 ### Day 3: Task Queue
@@ -164,7 +168,7 @@ Deliver:
 - `check_evidence_present`
 - `check_evidence_integrity`
 - `check_acceptance_criteria_present`
-- `check_payment_policy_present`
+- `check_policy_context_present`
 - `check_forbidden_files`
 - `check_confidentiality_attestation`
 - first version of `check_low_quality_generated_artifacts`

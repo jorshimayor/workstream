@@ -11,6 +11,7 @@ Every project has:
 - reviewer owner
 - checker policy
 - review policy
+- revision policy
 - payment policy
 - review guard
 - preflight evidence requirements
@@ -30,6 +31,7 @@ Before releasing tasks:
 - required submission fields listed
 - checker policy attached
 - review policy attached
+- revision policy attached
 - payment policy attached
 - reviewer pool assigned
 - review guard created from the project guide
@@ -39,11 +41,11 @@ Before releasing tasks:
 
 ### Project Activation Gate
 
-A project cannot become active unless guide, checker policy, review policy, evidence policy, and payment policy are present.
+A project cannot become active unless guide, checker policy, review policy, revision policy, evidence policy, and payment policy are present.
 
 ### Task Screening Gate
 
-A task cannot move to `READY` until the task contract is complete, the guide version is locked, evidence requirements are clear, payout policy is present, and a release decision is recorded.
+A task cannot move to `READY` until the task contract is complete, the guide version is locked, evidence requirements are clear, checker/review/revision/payment policy versions are locked, and a release decision is recorded.
 
 ### Submission Quality Gate
 
@@ -141,6 +143,7 @@ Every repeated failure becomes one of:
 - template update
 - reviewer training note
 - payment policy update
+- revision policy update
 - task creator checklist update
 
 Do not let repeated mistakes remain tribal knowledge.
@@ -151,6 +154,8 @@ Each lesson must have an action owner and one target:
 - checker update
 - template update
 - reviewer policy update
+- revision policy update
+- payment policy update
 - operator training note
 
 ## Weekly Project Review
@@ -172,4 +177,6 @@ Output:
 - policy changes
 - checker backlog
 - guide amendments
+- revision policy amendments
+- payment policy amendments
 - operator training notes

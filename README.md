@@ -32,7 +32,7 @@ Different projects speak different domain languages, but serious task evaluation
 
 - every project has a guide
 - every task belongs to a project
-- every project has a base amount or payout policy
+- every project has a base amount or payment policy
 - every task has acceptance criteria
 - every submission has evidence
 - every submission passes automated checks before human review
@@ -95,6 +95,12 @@ Workstream turns that operating knowledge into reusable infrastructure.
 - [ADR 0001: Core Scope](docs/decision_0001_core_scope.md)
 - [ADR 0002: Database Ledger Before Blockchain Settlement](docs/decision_0002_db_first_not_blockchain_first.md)
 - [ADR 0003: Project Guides Are First-Class](docs/decision_0003_project_guides_are_first_class.md)
+- [ADR 0004: v0.1 Implementation Stack Is Locked](docs/decision_0004_v0_1_stack_is_locked.md)
+- [ADR 0005: Postgres Is The Record Database](docs/decision_0005_postgres_is_the_record_database.md)
+- [ADR 0006: Workstream Verifies External Flow Auth](docs/decision_0006_external_flow_auth_boundary.md)
+- [ADR 0007: Execution Is Async-First](docs/decision_0007_async_first_execution.md)
+- [ADR 0008: Files Use An Object-Storage Abstraction](docs/decision_0008_object_storage_abstraction.md)
+- [ADR 0009: Review Decisions Are Canonical](docs/decision_0009_review_decisions_are_canonical.md)
 
 ## Local Backend Database
 
@@ -121,10 +127,10 @@ Assign task
 Submit packet
 Run checks
 Review packet
-Request revision or accept
-Create contribution record
-Record payment status separately
-Update reputation
+Record review decision: accept, needs_revision, or reject
+Create contribution record for accepted work
+Record payment status separately for accepted work
+Update reputation from review outcome
 Review lessons learned
 ```
 

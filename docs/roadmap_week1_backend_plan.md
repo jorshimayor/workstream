@@ -194,6 +194,7 @@ Scope:
 - project guide model
 - checker policy model
 - review policy model
+- revision policy model
 - payment policy model
 - guide versioning fields
 - active guide lock behavior

@@ -82,9 +82,9 @@ Validates task record fields required by the project guide.
 
 Ensures the task has a guide version attached.
 
-### check_payment_policy_present
+### check_policy_context_present
 
-Ensures the task has base amount and currency.
+Ensures the task has locked checker, review, revision, and payment policy context, including base amount and currency where required.
 
 ### check_submission_packet
 
@@ -154,7 +154,7 @@ This is optional by project policy, but recommended for high-value work.
 Project activation gate:
 
 - `check_project_guide_attached`
-- `check_payment_policy_present`
+- `check_policy_context_present`
 - project-specific guide completeness checks
 
 Task screening gate:
@@ -298,7 +298,7 @@ Look for:
 - evidence that passed structurally but did not prove the claim
 - generated or copied artifacts that evade forbidden-file rules
 
-Each blind spot becomes a guide update, checker update, or reviewer policy update.
+Each blind spot becomes a guide update, checker update, reviewer policy update, revision policy update, or payment policy update.
 
 ## First Implementation
 

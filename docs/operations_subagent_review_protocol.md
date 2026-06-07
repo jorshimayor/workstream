@@ -77,7 +77,7 @@ No major plan is marked ready without at least product, architecture, and operat
 
 Before a task moves from `SCREENING` to `READY`, run the same review pattern at task scale:
 
-- product/ops pass: task is worth doing and payout policy is clear
+- product/ops pass: task is worth doing and payment policy is clear
 - guide pass: task follows the active project guide
 - checker pass: required automated checks exist for the task type
 - reviewer pass: acceptance criteria are reviewable

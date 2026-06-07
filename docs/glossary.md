@@ -6,7 +6,7 @@ Flow's task evaluation and contribution infrastructure: the system for project g
 
 ## Project
 
-A configured work program with its own guide, rules, checker policy, review policy, payout policy, and queue.
+A configured work program with its own guide, rules, checker policy, review policy, revision policy, payment policy, and queue.
 
 ## Source
 
@@ -18,7 +18,7 @@ A future external task source that can submit tasks into Workstream through an a
 
 ## Project Guide
 
-The operating law of a project. Defines quality standards, submission format, reviewer expectations, payment policy, and common rejection reasons.
+The operating law of a project. Defines quality standards, submission format, reviewer expectations, revision policy, payment policy, and common rejection reasons.
 
 ## Task
 

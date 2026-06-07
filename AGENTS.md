@@ -19,7 +19,7 @@ Workstream is how Flow measures, certifies, and coordinates useful human-agent w
 - Do not import XLSX into Google Sheets with "replace spreadsheet"; use a temporary sheet and copy only the roadmap tab.
 - Prefer evidence-backed docs over vague product claims.
 - Keep v0.1 focused on project guide -> task -> submission -> checks -> review -> revision -> contribution/payment/reputation records.
-- Review decisions are only accept, needs revision, or reject.
+- Review decision stored values are only accept, needs_revision, or reject.
 - Frontend is locked as React + Vite + TypeScript.
 - Backend API is locked as Python with FastAPI.
 - ORM, migrations, and API schemas are locked as SQLAlchemy 2.x async + Alembic + Pydantic schemas.

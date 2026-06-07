@@ -39,9 +39,10 @@
 - configure base amount and currency
 - configure checker policy
 - configure review policy
-- configure review guard policy
+- configure revision policy
+- configure pre-review gate policy
 - configure evidence policy
-- configure payment dispute policy
+- configure payment policy, including payment dispute policy
 - configure lessons-learned promotion rule
 
 ### Task Queue

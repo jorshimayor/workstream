@@ -86,7 +86,7 @@ Day 2:
 
 - build project and guide records
 - create project guide editor or markdown-backed guide import
-- define base amount and payout policy fields
+- define checker, review, revision, and payment policy fields, including base amount, currency, and payment rule fields
 - use backend records/API first; frontend editor is deferred until the backend contract is stable
 
 Day 3:
@@ -110,7 +110,7 @@ Day 5:
 
 Week 1 acceptance bar:
 
-- a project can be created with a guide and base payout policy
+- a project can be created with a versioned guide plus checker, review, revision, and payment policy context
 - a task can be created, screened, claimed, submitted, and tracked
 - every task status transition is recorded
 - no task exists outside a project
@@ -161,7 +161,7 @@ Required first checkers:
 - `check_acceptance_criteria_present`
 - `check_status_transition`
 - `check_prior_revision_closed`
-- `check_payment_policy_present`
+- `check_policy_context_present`
 - `check_forbidden_files`
 
 Day 6:
@@ -207,7 +207,7 @@ Deliverables:
 - review packet
 - finding model
 - severity model
-- accept / needs revision / reject decisions
+- accept / needs_revision / reject decisions
 - revision replay
 - reviewer metrics
 - second-review flag
@@ -251,7 +251,7 @@ Week 3 acceptance bar:
 - reviewers cannot issue vague decisions without findings
 - every NEEDS_REVISION has concrete fix requirements
 - every resubmission must close prior feedback
-- accepted/rejected decisions are auditable
+- accept, needs_revision, and reject decisions are auditable
 
 ## Week 4: Payment, Reputation, Pilot
 
@@ -403,7 +403,7 @@ Mitigation: keep the first 30 days internal.
 
 Risk: project rules living in chat instead of system policy.
 
-Mitigation: every project guide must define checker and review policy.
+Mitigation: every project guide must define checker, review, revision, and payment policy.
 
 Risk: reviewers giving vague feedback.
 
