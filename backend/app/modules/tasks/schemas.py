@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal
 from typing import Any, Literal
-from urllib.parse import unquote
+from urllib.parse import unquote, urlparse
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -39,19 +39,27 @@ def validate_storage_reference(value: str | None) -> str | None:
     if value is None:
         return value
     normalized = value.strip()
-    lowered = normalized.lower()
+    parsed = urlparse(normalized)
     matching_prefix = next(
-        (prefix for prefix in ALLOWED_STORAGE_URI_PREFIXES if lowered.startswith(prefix)),
+        (prefix for prefix in ALLOWED_STORAGE_URI_PREFIXES if parsed.scheme == prefix[:-3]),
         None,
     )
     if matching_prefix is None:
         raise ValueError("uri must be a local, R2, or S3 object reference")
-    if any(fragment in lowered for fragment in FORBIDDEN_URI_FRAGMENTS):
+    lowered_auth_components = f"{parsed.query}&{parsed.fragment}".lower()
+    has_signed_or_credential_fragment = any(
+        fragment in lowered_auth_components
+        for fragment in FORBIDDEN_URI_FRAGMENTS
+        if fragment not in {"?", "#", "@"}
+    )
+    if parsed.username or parsed.password or "@" in parsed.netloc:
         raise ValueError("uri must not include credentials, query strings, or signed URL data")
-    reference = normalized[len(matching_prefix) :]
+    if parsed.query or parsed.fragment or has_signed_or_credential_fragment:
+        raise ValueError("uri must not include credentials, query strings, or signed URL data")
+    reference = f"{parsed.netloc}{parsed.path}"
     if not reference.strip("/"):
         raise ValueError("uri must include an object reference")
-    if matching_prefix in {"s3://", "r2://"} and "/" not in reference.strip("/"):
+    if matching_prefix in {"s3://", "r2://"} and (not parsed.netloc or not parsed.path.strip("/")):
         raise ValueError("uri must include a bucket and object key")
     decoded_segments = unquote(reference).replace("\\", "/").split("/")
     if any(segment in {"", ".", ".."} for segment in decoded_segments):
