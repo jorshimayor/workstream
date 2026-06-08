@@ -116,6 +116,49 @@ The default local test URL is:
 postgresql+asyncpg://workstream:workstream@localhost:5433/workstream
 ```
 
+## Local Frontend Demo
+
+The team demo UI lives in `frontend/`. It calls the real backend over HTTP through the Vite proxy and uses local Flow-style bearer tokens against the backend `flow` verifier.
+
+Start the backend for the demo:
+
+```bash
+cd backend
+WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream \
+WORKSTREAM_AUTH_PROVIDER=flow \
+WORKSTREAM_ENVIRONMENT=local \
+WORKSTREAM_FLOW_AUTH_ISSUER=https://auth.flow.local/demo \
+WORKSTREAM_FLOW_AUTH_AUDIENCE=workstream-demo \
+WORKSTREAM_FLOW_AUTH_LOCAL_HMAC_SECRET=workstream-demo-local-secret \
+WORKSTREAM_ENABLE_DEMO_ROUTES=true \
+.venv/bin/alembic upgrade head
+
+WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream \
+WORKSTREAM_AUTH_PROVIDER=flow \
+WORKSTREAM_ENVIRONMENT=local \
+WORKSTREAM_FLOW_AUTH_ISSUER=https://auth.flow.local/demo \
+WORKSTREAM_FLOW_AUTH_AUDIENCE=workstream-demo \
+WORKSTREAM_FLOW_AUTH_LOCAL_HMAC_SECRET=workstream-demo-local-secret \
+WORKSTREAM_ENABLE_DEMO_ROUTES=true \
+.venv/bin/python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000
+```
+
+Start the frontend:
+
+```bash
+cd frontend
+npm install
+npm run dev -- --port 5173
+```
+
+Open:
+
+```text
+http://127.0.0.1:5173/
+```
+
+The demo runs the Week 1 path from project guide to locked submission using real API calls. The local demo worker-profile route is guarded by `WORKSTREAM_ENABLE_DEMO_ROUTES=true` and local/test environments only.
+
 ## Day-30 Success Standard
 
 By day 30, Workstream runs a real internal task cycle with real people:

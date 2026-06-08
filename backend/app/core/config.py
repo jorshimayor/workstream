@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     flow_auth_issuer: str = "https://auth.flow.local"
     flow_auth_audience: str = "workstream-api"
     flow_auth_local_hmac_secret: str | None = None
+    enable_demo_routes: bool = False
 
     model_config = SettingsConfigDict(
         env_prefix="WORKSTREAM_",

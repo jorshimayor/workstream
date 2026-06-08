@@ -20,9 +20,6 @@ import httpx
 from alembic import command
 from alembic.config import Config
 
-from app.adapters.auth.flow import actor_id_from_flow_identity
-from app.modules.tasks.models import WorkerProfile
-
 FLOW_ISSUER = os.environ.get("WORKSTREAM_E2E_FLOW_ISSUER", "https://auth.flow.local/e2e")
 FLOW_AUDIENCE = os.environ.get("WORKSTREAM_E2E_FLOW_AUDIENCE", "workstream-api")
 FLOW_SECRET = os.environ.get("WORKSTREAM_E2E_FLOW_SECRET", f"local-flow-e2e-{uuid4().hex}")
@@ -143,6 +140,7 @@ def api_environment() -> dict[str, str]:
     env["WORKSTREAM_FLOW_AUTH_ISSUER"] = FLOW_ISSUER
     env["WORKSTREAM_FLOW_AUTH_AUDIENCE"] = FLOW_AUDIENCE
     env["WORKSTREAM_FLOW_AUTH_LOCAL_HMAC_SECRET"] = FLOW_SECRET
+    env["WORKSTREAM_ENABLE_DEMO_ROUTES"] = "true"
     env["PYTHONPATH"] = str(project_root())
     return env
 
@@ -206,35 +204,6 @@ async def wait_for_health(base_url: str, process: subprocess.Popen, log_path: Pa
             except httpx.HTTPError:
                 await asyncio.sleep(0.25)
     raise RuntimeError(f"API server did not become healthy:\n{log_path.read_text()}")
-
-
-async def seed_worker_profile(subject: str) -> str:
-    """Seed the active worker profile required before claim.
-
-    Args:
-        subject: Flow subject for the worker actor.
-
-    Returns:
-        Stable Workstream actor id for the worker.
-    """
-    from app.db import session as db_session
-
-    actor_id = actor_id_from_flow_identity(FLOW_ISSUER, subject)
-    async with db_session.get_session_factory()() as session:
-        session.add(
-            WorkerProfile(
-                id=str(uuid4()),
-                actor_id=actor_id,
-                external_subject=subject,
-                external_issuer=FLOW_ISSUER,
-                display_name=subject.replace("-", " ").title(),
-                email=f"{subject}@flow.local",
-                skill_tags=["stem", "proofs"],
-                status="active",
-            )
-        )
-        await session.commit()
-    return actor_id
 
 
 async def request_json(
@@ -449,9 +418,16 @@ async def exercise_week1_api(base_url: str) -> None:
             {"reason": "real API release"},
         )
 
-        await seed_worker_profile(worker_subject)
         worker = await request_json(client, "GET", "/api/v1/auth/me", worker_token)
         assert worker["roles"] == ["worker"]
+        await request_json(
+            client,
+            "POST",
+            "/api/v1/demo/worker-profile",
+            worker_token,
+            {"skill_tags": ["stem", "proofs"]},
+            201,
+        )
         await request_json(client, "GET", f"/api/v1/tasks/{task['id']}", worker_token)
         claim = await request_json(
             client,
