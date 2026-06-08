@@ -1,58 +1,73 @@
 @startuml future_identity_payment_reputation
-!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
-
-LAYOUT_LEFT_RIGHT()
-LAYOUT_WITH_LEGEND()
-
 title Future Identity, Task Contract, Settlement, And Reputation View
 
-AddElementTag("current", $bgColor="#E7F5FF", $fontColor="#0B2942", $borderColor="#1C7ED6")
-AddElementTag("record", $bgColor="#E6FCF5", $fontColor="#063B2C", $borderColor="#0CA678")
-AddElementTag("later", $bgColor="#FFF3BF", $fontColor="#4A2F00", $borderColor="#F08C00")
-AddElementTag("external", $bgColor="#F1F3F5", $fontColor="#212529", $borderColor="#868E96")
+left to right direction
 
-Person(human, "Human", "Flow identity subject", $tags="external")
-System_Ext(agent, "Agent", "ERC-8004 identity", $tags="external")
-Person(contributor, "Human-Agent Contributor", "One accountable Workstream workflow actor with linked human and agent references", $tags="external")
-
-System_Ext(flow_identity, "Flow Identity Layer", "Human identity, auth token, and human-agent link context", $tags="external")
-System_Ext(erc8004, "ERC-8004", "Agent identity and agent reputation registry", $tags="later")
-System_Ext(erc8183, "ERC-8183", "Task contract and escrow layer", $tags="later")
-
-System_Boundary(workstream, "Workstream") {
-  Container(gate, "Claim / Submission Gate", "Policy + identity checks", "Reads locked policy, human identity, agent id, reputation, and task contract references", $tags="current")
-  Container(lifecycle, "Evaluation Lifecycle", "Workflow services", "guide -> task -> submission -> checks -> review -> revision", $tags="current")
-  Container(contribution, "Contribution Record", "Durable record", "Accepted work under locked guide and evidence", $tags="record")
-  Container(payment_record, "Payment Record", "Durable ledger", "Amount, currency, policy, status, and references", $tags="record")
-  Container(reputation_record, "Reputation Event", "Durable ledger", "Human and agent-linked outcome signal", $tags="record")
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam defaultFontSize 15
+skinparam ArrowColor #495057
+skinparam ArrowThickness 1.2
+skinparam packageStyle rectangle
+skinparam rectangle {
+  BorderColor #1C7ED6
+  BackgroundColor #E7F5FF
+  FontColor #0B2942
+}
+skinparam cloud {
+  BorderColor #868E96
+  BackgroundColor #F1F3F5
+  FontColor #212529
 }
 
-System_Boundary(settlement, "Future Settlement Rails") {
-  Container(payment_link, "Payment Link / Request", "Future adapter", "Generated from accepted contribution and locked payment policy", $tags="later")
-  Container(x402, "x402", "Payment request protocol", "Payment request rail", $tags="later")
-  Container(omniclaw, "OmniClaw", "Settlement orchestration", "Settlement execution rail", $tags="later")
-  Container(usdc, "USDC Stablecoin", "Settlement asset", "Payout asset", $tags="later")
+package "Contributor Unit" #F8F9FA {
+  rectangle "Human\n----\nFlow identity\nsubject" as human #F1F3F5
+  rectangle "Agent\n----\nERC-8004\nidentity" as agent #F1F3F5
+  rectangle "Human-Agent\nContributor\n----\nOne accountable\nWorkstream actor" as contributor #F1F3F5
 }
 
-Rel(human, contributor, "Acts through")
-Rel(agent, contributor, "Assists")
-Rel(human, flow_identity, "Authenticates through")
-Rel(flow_identity, gate, "Provides trusted human identity and link context")
-Rel(agent, erc8004, "Has identity")
-Rel(erc8004, gate, "Later: read agent identity and reputation before claim")
-Rel(erc8183, gate, "Later: provide optional task contract / escrow reference")
+cloud "Flow Identity Layer\n----\nHuman identity,\nauth token,\nhuman-agent link" as flow_identity
 
-Rel(gate, lifecycle, "Allows claim or submission when policy passes")
-Rel(lifecycle, contribution, "Creates after accepted work")
-Rel(contribution, payment_record, "Creates pending payment")
-Rel(contribution, reputation_record, "Creates reputation event")
+package "Future Identity / Contract Rails" #FFF9DB {
+  rectangle "ERC-8004\n----\nAgent identity\nand agent reputation\nregistry" as erc8004 #FFF3BF
+  rectangle "ERC-8183\n----\nTask contract\nand escrow layer" as erc8183 #FFF3BF
+}
 
-Rel(payment_record, payment_link, "Later: creates payment request")
-Rel(payment_link, x402, "Uses")
-Rel(x402, omniclaw, "Routes to")
-Rel(omniclaw, usdc, "Executes USDC payout")
-Rel(usdc, payment_record, "Settlement confirmation updates status")
+package "Workstream" #F8FBFF {
+  rectangle "Claim /\nSubmission Gate\n----\nPolicy, identity,\nagent id, reputation,\ncontract references" as gate
+  rectangle "Evaluation\nLifecycle\n----\nguide -> task ->\nsubmission -> checks ->\nreview -> revision" as lifecycle
+  rectangle "Contribution\nRecord\n----\nAccepted work\nunder locked guide\nand evidence" as contribution #E6FCF5
+  rectangle "Payment\nRecord\n----\nAmount, currency,\npolicy, status,\nreferences" as payment_record #E6FCF5
+  rectangle "Reputation\nEvent\n----\nHuman and\nagent-linked\noutcome signal" as reputation_record #E6FCF5
+}
 
-Rel(reputation_record, erc8004, "Later: optional agent reputation write")
+package "Future Settlement Rails" #FFF9DB {
+  rectangle "Payment Link /\nRequest\n----\nGenerated from\naccepted contribution" as payment_link #FFF3BF
+  rectangle "x402\n----\nPayment request\nprotocol" as x402 #FFF3BF
+  rectangle "OmniClaw\n----\nSettlement\norchestration" as omniclaw #FFF3BF
+  rectangle "USDC\nStablecoin\n----\nPayout asset" as usdc #FFF3BF
+}
+
+human --> contributor : accountable human
+agent --> contributor : assists
+human --> flow_identity : authenticates
+flow_identity --> gate : trusted identity
+agent --> erc8004 : has id
+erc8004 ..> gate : read reputation
+erc8183 ..> gate : task contract ref
+
+gate --> lifecycle : allows work
+lifecycle --> contribution : accepted work
+contribution --> payment_record : pending payment
+contribution --> reputation_record : outcome event
+
+payment_record ..> payment_link : create request
+payment_link ..> x402
+x402 ..> omniclaw
+omniclaw ..> usdc : settle
+usdc ..> payment_record : confirmation
+reputation_record ..> erc8004 : optional write
 
 @enduml

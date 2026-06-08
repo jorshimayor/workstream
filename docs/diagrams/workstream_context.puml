@@ -1,45 +1,55 @@
 @startuml workstream_context
-!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
-
-LAYOUT_LEFT_RIGHT()
-LAYOUT_WITH_LEGEND()
-
 title Workstream System Context
 
-AddElementTag("current", $bgColor="#E7F5FF", $fontColor="#0B2942", $borderColor="#1C7ED6")
-AddElementTag("record", $bgColor="#E6FCF5", $fontColor="#063B2C", $borderColor="#0CA678")
-AddElementTag("later", $bgColor="#FFF3BF", $fontColor="#4A2F00", $borderColor="#F08C00")
+left to right direction
 
-Person(project_manager, "Project Manager", "Creates projects, guides, policies, and tasks")
-Person(worker, "Human-Agent Contributor", "Claims work, submits packets, and attests to output")
-Person(reviewer, "Reviewer", "Reviews evidence, findings, and checker results")
-Person(operator, "Operator / Admin", "Handles overrides, audits, and reconciliation")
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam defaultFontSize 15
+skinparam ArrowColor #495057
+skinparam ArrowThickness 1.2
+skinparam packageStyle rectangle
+skinparam rectangle {
+  BorderColor #1C7ED6
+  BackgroundColor #E7F5FF
+  FontColor #0B2942
+}
+skinparam database {
+  BorderColor #0CA678
+  BackgroundColor #E6FCF5
+  FontColor #063B2C
+}
+skinparam cloud {
+  BorderColor #868E96
+  BackgroundColor #F1F3F5
+  FontColor #212529
+}
 
-System(workstream, "Workstream", "Flow task evaluation and contribution infrastructure", $tags="current")
+rectangle "Project Manager\n----\nCreates projects,\nguides, policies,\nand tasks" as project_manager #F1F3F5
+rectangle "Human-Agent\nContributor\n----\nClaims work,\nsubmits packets,\nand attests output" as worker #F1F3F5
+rectangle "Reviewer\n----\nReviews evidence,\nfindings, and\nchecker results" as reviewer #F1F3F5
+rectangle "Operator / Admin\n----\nAudits, overrides,\nand reconciles" as operator #F1F3F5
 
-System_Ext(flow_auth, "Flow Identity", "External human identity and authentication tokens")
-SystemDb(postgres, "Postgres", "Record database for Workstream lifecycle state", $tags="record")
-System(storage, "Object Storage Abstraction", "Local now, R2/S3-compatible later", $tags="record")
+rectangle "Workstream\n----\nFlow task evaluation\nand contribution\ninfrastructure" as workstream #E7F5FF
 
-System_Ext(origins, "External Task Origins", "Enterprise, Bittensor, protocols, and internal teams", $tags="later")
-System_Ext(erc8004, "ERC-8004", "Agent identity and agent reputation", $tags="later")
-System_Ext(erc8183, "ERC-8183", "Task contract and escrow layer", $tags="later")
-System_Ext(settlement, "x402 / OmniClaw / USDC", "Payment request and settlement rails", $tags="later")
-System_Ext(consumers, "Reputation / Reporting Consumers", "Routing, dashboards, and future filters", $tags="later")
+cloud "Flow Identity\n----\nHuman identity\nand auth tokens" as flow_auth
+database "Postgres\n----\nRecord database" as postgres
+rectangle "Object Storage\nAbstraction\n----\nLocal now;\nR2/S3-compatible later" as storage #E6FCF5
 
-Rel(project_manager, workstream, "Creates and operates projects")
-Rel(worker, workstream, "Claims tasks and submits packets")
-Rel(reviewer, workstream, "Reviews submissions")
-Rel(operator, workstream, "Audits and reconciles")
+rectangle "Future Adapter Boundary\n----\nExternal task origins\nERC-8004 agent identity/reputation\nERC-8183 task contract/escrow\nx402 / OmniClaw / USDC settlement\nReputation and reporting consumers" as future_boundary #FFF3BF
 
-Rel(workstream, flow_auth, "Verifies Flow-issued tokens")
-Rel(workstream, postgres, "Reads and writes durable records")
-Rel(workstream, storage, "Stores and reads evidence/artifacts through stable object references")
+project_manager --> workstream : operates
+worker --> workstream : submits
+reviewer --> workstream : reviews
+operator --> workstream : audits
 
-Rel(origins, workstream, "Later: source adapters normalize tasks into Workstream contracts")
-Rel(workstream, erc8004, "Later: read agent reputation before claim; write outcome after accepted work")
-Rel(workstream, erc8183, "Later: reference task contract or escrow when an origin requires it")
-Rel(workstream, settlement, "Later: create payment request from accepted contribution and locked payment policy")
-Rel(workstream, consumers, "Later: publish contribution, payment, and reputation signals")
+workstream --> flow_auth : verifies tokens
+workstream --> postgres : records lifecycle
+workstream --> storage : stores evidence
+
+future_boundary ..> workstream : source intake
+workstream ..> future_boundary : adapter outputs
 
 @enduml

@@ -1,81 +1,82 @@
 @startuml backend_v01_components
-!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
-
-LAYOUT_TOP_DOWN()
-LAYOUT_WITH_LEGEND()
-
 title Workstream v0.1 Backend Component View
 
-AddElementTag("current", $bgColor="#E7F5FF", $fontColor="#0B2942", $borderColor="#1C7ED6")
-AddElementTag("shared", $bgColor="#EDF2FF", $fontColor="#17224D", $borderColor="#5C7CFA")
-AddElementTag("record", $bgColor="#E6FCF5", $fontColor="#063B2C", $borderColor="#0CA678")
-AddElementTag("external", $bgColor="#F1F3F5", $fontColor="#212529", $borderColor="#868E96")
+left to right direction
 
-Person(client, "React UI / API Client", "Internal Workstream operator UI", $tags="external")
-System_Ext(flow_auth, "External Flow Auth", "Flow token issuer and identity source", $tags="external")
-ContainerDb(postgres, "Postgres", "PostgreSQL", "Workstream record database", $tags="record")
-Container(file_store, "File Store", "Filesystem now; R2/S3-compatible later", "Evidence and artifact storage implementation", $tags="record")
-
-Container_Boundary(api, "FastAPI Backend - Modular Monolith") {
-  Component(api_router, "API Router", "FastAPI", "HTTP routing under /api/v1", $tags="current")
-  Component(current_actor, "Current Actor Dependency", "FastAPI dependency", "Flow token to ActorContext", $tags="current")
-
-  Component(projects, "Projects Module", "Router/service/repository", "Projects, guides, checker/review/revision/payment policies", $tags="current")
-  Component(tasks, "Tasks Module", "Router/service/repository", "Task queue, assignment, claim, and state transitions", $tags="current")
-  Component(submissions, "Submission Module", "Router/service/repository", "Submission packets, evidence, and artifact manifests", $tags="current")
-  Component(checks, "Checker Module", "Service/runner", "Checker runs, results, and blocking severities", $tags="current")
-  Component(reviews, "Review + Revision Module", "Service/repository", "accept, needs_revision, reject, findings, and revision replay", $tags="current")
-  Component(contributions, "Contribution Module", "Service/repository", "Accepted-work certification", $tags="current")
-  Component(payment, "Payment Module", "Service/repository", "Payment status and references", $tags="current")
-  Component(reputation, "Reputation Module", "Service/repository", "Worker/reviewer outcome events", $tags="current")
-  Component(audit, "Audit Module", "Service/repository", "Append-only lifecycle events", $tags="current")
-
-  Component(schemas, "Pydantic Schemas", "Pydantic", "Request and response contracts", $tags="shared")
-  Component(services, "Services", "Python", "Workflow and policy rules", $tags="shared")
-  Component(repositories, "Repositories", "SQLAlchemy 2.x async", "Database queries and persistence", $tags="shared")
-  Component(lifecycle, "Lifecycle Guards", "Python", "Allowed state transitions", $tags="shared")
-  Component(permissions, "Permission Policies", "Python", "Role and object-level access checks", $tags="shared")
-  Component(storage_port, "Storage Port", "Python interface", "Object-storage abstraction", $tags="shared")
-  Component(auth_port, "Auth Verifier Interface", "Python interface", "External authentication boundary", $tags="shared")
-
-  Component(flow_adapter, "Flow Auth Adapter", "Python adapter", "Verifies Flow-issued tokens", $tags="current")
-  Component(storage_adapter, "Local Storage Adapter", "Python adapter", "R2/S3-compatible storage contract", $tags="current")
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam defaultFontSize 15
+skinparam ArrowColor #495057
+skinparam ArrowThickness 1.1
+skinparam packageStyle rectangle
+skinparam rectangle {
+  BorderColor #1C7ED6
+  BackgroundColor #E7F5FF
+  FontColor #0B2942
+}
+skinparam database {
+  BorderColor #0CA678
+  BackgroundColor #E6FCF5
+  FontColor #063B2C
+}
+skinparam cloud {
+  BorderColor #868E96
+  BackgroundColor #F1F3F5
+  FontColor #212529
 }
 
-Rel(client, api_router, "Calls", "HTTP/JSON")
-Rel(api_router, current_actor, "Resolves actor")
-Rel(current_actor, auth_port, "Uses")
-Rel(auth_port, flow_adapter, "Delegates verification")
-Rel(flow_adapter, flow_auth, "Verifies token")
+rectangle "React UI /\nAPI Client" as client #F1F3F5
+cloud "External\nFlow Auth" as flow_auth
+database "Postgres\n----\nRecord database" as postgres
+rectangle "File Store\n----\nEvidence and\nartifact objects" as file_store #E6FCF5
 
-Rel(api_router, projects, "Routes")
-Rel(api_router, tasks, "Routes")
-Rel(api_router, submissions, "Routes")
-Rel(api_router, checks, "Routes")
-Rel(api_router, reviews, "Routes")
-Rel(api_router, contributions, "Routes")
-Rel(api_router, payment, "Routes")
-Rel(api_router, reputation, "Routes")
+package "FastAPI Backend - Modular Monolith" as backend #F8FBFF {
+  package "HTTP + Auth Boundary" as http_boundary #EDF2FF {
+    rectangle "API Router\n----\nHTTP only\nrequest -> service\nerror -> response" as api_router
+    rectangle "Current Actor\nDependency\n----\nBearer token ->\nActorContext" as current_actor
+    rectangle "Permission\nPolicies\n----\nRole and object\nvisibility checks" as permissions
+    rectangle "Pydantic\nSchemas\n----\nRequest/response\ncontracts" as schemas
+  }
 
-Rel(projects, services, "Uses")
-Rel(tasks, services, "Uses")
-Rel(submissions, services, "Uses")
-Rel(checks, services, "Uses")
-Rel(reviews, services, "Uses")
-Rel(contributions, services, "Uses")
-Rel(payment, services, "Uses")
-Rel(reputation, services, "Uses")
+  package "Workflow Services" as workflow_services #E7F5FF {
+    rectangle "Project Guide\nService\n----\nProjects, guides,\nchecker/review/revision/\npayment policies" as project_service
+    rectangle "Task Queue\nService\n----\nTask contract,\nscreening, release,\nclaim, assignment,\nstate guards" as task_service
+    rectangle "Submission\nService\n----\nPackets, evidence,\nartifact manifest,\nversions, locking" as submission_service
+    rectangle "Checker\nService\n----\nChecker runs,\nblocking results,\npre-review gate" as checker_service
+    rectangle "Review + Revision\nService\n----\naccept,\nneeds_revision,\nreject, findings,\nrevision replay" as review_service
+    rectangle "Contribution /\nPayment /\nReputation\nService\n----\nAccepted-work record,\npayment status,\noutcome events" as ledger_service
+  }
 
-Rel(services, schemas, "Validates contracts")
-Rel(services, lifecycle, "Checks transitions")
-Rel(services, permissions, "Checks access")
-Rel(services, repositories, "Persists state")
-Rel(services, storage_port, "Stores/reads evidence")
-Rel(services, audit, "Records events")
+  package "Shared Domain Rules" as shared_rules #EDF2FF {
+    rectangle "Lifecycle\nGuards\n----\nAllowed task and\nsubmission transitions" as lifecycle
+    rectangle "Audit\nService\n----\nAppend-only\nworkflow events" as audit_service
+  }
 
-Rel(repositories, postgres, "Reads/writes")
-Rel(audit, repositories, "Persists audit events")
-Rel(storage_port, storage_adapter, "Uses")
-Rel(storage_adapter, file_store, "Stores objects")
+  package "Persistence Boundary" as persistence #E6FCF5 {
+    rectangle "Repositories\n----\nProject, task,\nsubmission, checker,\nreview, ledger,\naudit persistence" as repositories #E6FCF5
+  }
+
+  package "External Ports + Adapters" as ports #FFF3BF {
+    rectangle "Auth Verifier\nInterface" as auth_port #FFF3BF
+    rectangle "Flow Auth\nAdapter" as flow_adapter #FFF3BF
+    rectangle "Storage Port" as storage_port #FFF3BF
+    rectangle "Local Storage\nAdapter" as storage_adapter #FFF3BF
+    rectangle "Checker Runner\nAdapter" as checker_runner #FFF3BF
+  }
+}
+
+client --> http_boundary : HTTP/JSON
+http_boundary --> workflow_services : route to domain services
+http_boundary --> ports : verify actor
+
+workflow_services --> shared_rules : state, audit, policy rules
+workflow_services --> persistence : read/write records
+workflow_services --> ports : storage and checker execution
+
+ports --> flow_auth : verify token
+ports --> file_store : store/read artifacts
+persistence --> postgres : SQLAlchemy async
 
 @enduml
