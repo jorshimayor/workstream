@@ -5,7 +5,7 @@ This diagram pack explains Workstream at two levels:
 - the 30-day v0.1 implementation that is being built now
 - the broader Workstream ecosystem that can connect later to external origins, agent identity, task contracts, settlement rails, and portable reputation
 
-The diagrams use C4-style boundaries with Mermaid flowcharts so they render directly in GitHub.
+The architecture diagrams use C4-PlantUML source files so they render with real C4 system, container, component, boundary, and external-system boxes. The task lifecycle sequence remains Mermaid because GitHub renders it directly and the sequence is easier to read in that format.
 
 ## Diagram Index
 
@@ -15,25 +15,29 @@ The diagrams use C4-style boundaries with Mermaid flowcharts so they render dire
 - [Task Lifecycle Sequence](task_lifecycle_sequence.md)
 - [Future Identity, Task Contract, Settlement, And Reputation View](future_identity_payment_reputation.md)
 
+## PlantUML Sources
+
+- [workstream_context.puml](workstream_context.puml)
+- [workstream_v01_container.puml](workstream_v01_container.puml)
+- [backend_v01_components.puml](backend_v01_components.puml)
+- [future_identity_payment_reputation.puml](future_identity_payment_reputation.puml)
+
 ## Legend
 
-```mermaid
-flowchart LR
-  current["Current v0.1 scope"]
-  later["Later adapter boundary"]
-  external["External system"]
-  record["Durable Workstream record"]
+- blue: current v0.1 Workstream implementation
+- green: durable Workstream records
+- gray: external people or systems
+- yellow: later adapter boundary
 
-  classDef current fill:#e7f5ff,stroke:#1c7ed6,color:#0b2942
-  classDef later fill:#fff3bf,stroke:#f08c00,color:#4a2f00
-  classDef external fill:#f1f3f5,stroke:#868e96,color:#212529
-  classDef record fill:#e6fcf5,stroke:#0ca678,color:#063b2c
+## Render Locally
 
-  class current current
-  class later later
-  class external external
-  class record record
+Install PlantUML or point `PLANTUML_JAR` at a local PlantUML jar, then run:
+
+```bash
+docs/diagrams/render_plantuml.sh
 ```
+
+The rendered SVGs are written to `docs/diagrams/rendered/` and are committed so the architecture pages display directly in GitHub.
 
 ## Reading Order
 

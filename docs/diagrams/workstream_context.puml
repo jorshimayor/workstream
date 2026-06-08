@@ -1,0 +1,45 @@
+@startuml workstream_context
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+LAYOUT_LEFT_RIGHT()
+LAYOUT_WITH_LEGEND()
+
+title Workstream System Context
+
+AddElementTag("current", $bgColor="#E7F5FF", $fontColor="#0B2942", $borderColor="#1C7ED6")
+AddElementTag("record", $bgColor="#E6FCF5", $fontColor="#063B2C", $borderColor="#0CA678")
+AddElementTag("later", $bgColor="#FFF3BF", $fontColor="#4A2F00", $borderColor="#F08C00")
+
+Person(project_manager, "Project Manager", "Creates projects, guides, policies, and tasks")
+Person(worker, "Human-Agent Contributor", "Claims work, submits packets, and attests to output")
+Person(reviewer, "Reviewer", "Reviews evidence, findings, and checker results")
+Person(operator, "Operator / Admin", "Handles overrides, audits, and reconciliation")
+
+System(workstream, "Workstream", "Flow task evaluation and contribution infrastructure", $tags="current")
+
+System_Ext(flow_auth, "Flow Identity", "External human identity and authentication tokens")
+SystemDb(postgres, "Postgres", "Record database for Workstream lifecycle state", $tags="record")
+System(storage, "Object Storage Abstraction", "Local now, R2/S3-compatible later", $tags="record")
+
+System_Ext(origins, "External Task Origins", "Enterprise, Bittensor, protocols, and internal teams", $tags="later")
+System_Ext(erc8004, "ERC-8004", "Agent identity and agent reputation", $tags="later")
+System_Ext(erc8183, "ERC-8183", "Task contract and escrow layer", $tags="later")
+System_Ext(settlement, "x402 / OmniClaw / USDC", "Payment request and settlement rails", $tags="later")
+System_Ext(consumers, "Reputation / Reporting Consumers", "Routing, dashboards, and future filters", $tags="later")
+
+Rel(project_manager, workstream, "Creates and operates projects")
+Rel(worker, workstream, "Claims tasks and submits packets")
+Rel(reviewer, workstream, "Reviews submissions")
+Rel(operator, workstream, "Audits and reconciles")
+
+Rel(workstream, flow_auth, "Verifies Flow-issued tokens")
+Rel(workstream, postgres, "Reads and writes durable records")
+Rel(workstream, storage, "Stores and reads evidence/artifacts through stable object references")
+
+Rel(origins, workstream, "Later: source adapters normalize tasks into Workstream contracts")
+Rel(workstream, erc8004, "Later: read agent reputation before claim; write outcome after accepted work")
+Rel(workstream, erc8183, "Later: reference task contract or escrow when an origin requires it")
+Rel(workstream, settlement, "Later: create payment request from accepted contribution and locked payment policy")
+Rel(workstream, consumers, "Later: publish contribution, payment, and reputation signals")
+
+@enduml

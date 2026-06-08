@@ -1,0 +1,81 @@
+@startuml backend_v01_components
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_TOP_DOWN()
+LAYOUT_WITH_LEGEND()
+
+title Workstream v0.1 Backend Component View
+
+AddElementTag("current", $bgColor="#E7F5FF", $fontColor="#0B2942", $borderColor="#1C7ED6")
+AddElementTag("shared", $bgColor="#EDF2FF", $fontColor="#17224D", $borderColor="#5C7CFA")
+AddElementTag("record", $bgColor="#E6FCF5", $fontColor="#063B2C", $borderColor="#0CA678")
+AddElementTag("external", $bgColor="#F1F3F5", $fontColor="#212529", $borderColor="#868E96")
+
+Person(client, "React UI / API Client", "Internal Workstream operator UI", $tags="external")
+System_Ext(flow_auth, "External Flow Auth", "Flow token issuer and identity source", $tags="external")
+ContainerDb(postgres, "Postgres", "PostgreSQL", "Workstream record database", $tags="record")
+Container(file_store, "File Store", "Filesystem now; R2/S3-compatible later", "Evidence and artifact storage implementation", $tags="record")
+
+Container_Boundary(api, "FastAPI Backend - Modular Monolith") {
+  Component(api_router, "API Router", "FastAPI", "HTTP routing under /api/v1", $tags="current")
+  Component(current_actor, "Current Actor Dependency", "FastAPI dependency", "Flow token to ActorContext", $tags="current")
+
+  Component(projects, "Projects Module", "Router/service/repository", "Projects, guides, checker/review/revision/payment policies", $tags="current")
+  Component(tasks, "Tasks Module", "Router/service/repository", "Task queue, assignment, claim, and state transitions", $tags="current")
+  Component(submissions, "Submission Module", "Router/service/repository", "Submission packets, evidence, and artifact manifests", $tags="current")
+  Component(checks, "Checker Module", "Service/runner", "Checker runs, results, and blocking severities", $tags="current")
+  Component(reviews, "Review + Revision Module", "Service/repository", "accept, needs_revision, reject, findings, and revision replay", $tags="current")
+  Component(contributions, "Contribution Module", "Service/repository", "Accepted-work certification", $tags="current")
+  Component(payment, "Payment Module", "Service/repository", "Payment status and references", $tags="current")
+  Component(reputation, "Reputation Module", "Service/repository", "Worker/reviewer outcome events", $tags="current")
+  Component(audit, "Audit Module", "Service/repository", "Append-only lifecycle events", $tags="current")
+
+  Component(schemas, "Pydantic Schemas", "Pydantic", "Request and response contracts", $tags="shared")
+  Component(services, "Services", "Python", "Workflow and policy rules", $tags="shared")
+  Component(repositories, "Repositories", "SQLAlchemy 2.x async", "Database queries and persistence", $tags="shared")
+  Component(lifecycle, "Lifecycle Guards", "Python", "Allowed state transitions", $tags="shared")
+  Component(permissions, "Permission Policies", "Python", "Role and object-level access checks", $tags="shared")
+  Component(storage_port, "Storage Port", "Python interface", "Object-storage abstraction", $tags="shared")
+  Component(auth_port, "Auth Verifier Interface", "Python interface", "External authentication boundary", $tags="shared")
+
+  Component(flow_adapter, "Flow Auth Adapter", "Python adapter", "Verifies Flow-issued tokens", $tags="current")
+  Component(storage_adapter, "Local Storage Adapter", "Python adapter", "R2/S3-compatible storage contract", $tags="current")
+}
+
+Rel(client, api_router, "Calls", "HTTP/JSON")
+Rel(api_router, current_actor, "Resolves actor")
+Rel(current_actor, auth_port, "Uses")
+Rel(auth_port, flow_adapter, "Delegates verification")
+Rel(flow_adapter, flow_auth, "Verifies token")
+
+Rel(api_router, projects, "Routes")
+Rel(api_router, tasks, "Routes")
+Rel(api_router, submissions, "Routes")
+Rel(api_router, checks, "Routes")
+Rel(api_router, reviews, "Routes")
+Rel(api_router, contributions, "Routes")
+Rel(api_router, payment, "Routes")
+Rel(api_router, reputation, "Routes")
+
+Rel(projects, services, "Uses")
+Rel(tasks, services, "Uses")
+Rel(submissions, services, "Uses")
+Rel(checks, services, "Uses")
+Rel(reviews, services, "Uses")
+Rel(contributions, services, "Uses")
+Rel(payment, services, "Uses")
+Rel(reputation, services, "Uses")
+
+Rel(services, schemas, "Validates contracts")
+Rel(services, lifecycle, "Checks transitions")
+Rel(services, permissions, "Checks access")
+Rel(services, repositories, "Persists state")
+Rel(services, storage_port, "Stores/reads evidence")
+Rel(services, audit, "Records events")
+
+Rel(repositories, postgres, "Reads/writes")
+Rel(audit, repositories, "Persists audit events")
+Rel(storage_port, storage_adapter, "Uses")
+Rel(storage_adapter, file_store, "Stores objects")
+
+@enduml

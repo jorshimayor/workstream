@@ -1,0 +1,46 @@
+@startuml workstream_v01_container
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_TOP_DOWN()
+LAYOUT_WITH_LEGEND()
+
+title Workstream v0.1 Container View
+
+AddElementTag("current", $bgColor="#E7F5FF", $fontColor="#0B2942", $borderColor="#1C7ED6")
+AddElementTag("record", $bgColor="#E6FCF5", $fontColor="#063B2C", $borderColor="#0CA678")
+AddElementTag("external", $bgColor="#F1F3F5", $fontColor="#212529", $borderColor="#868E96")
+
+Person(project_manager, "Project Manager", "Creates projects, guides, policies, and tasks", $tags="external")
+Person(worker, "Human-Agent Contributor", "Claims work and submits packets", $tags="external")
+Person(reviewer, "Reviewer", "Reviews submissions and findings", $tags="external")
+Person(operator, "Operator / Admin", "Audits and reconciles", $tags="external")
+
+System_Ext(flow_auth, "Flow Auth", "Token issuer and human identity source", $tags="external")
+
+System_Boundary(workstream, "Workstream v0.1") {
+  Container(frontend, "React + Vite UI", "TypeScript", "Internal operations dashboard for projects, queues, tasks, submissions, reviews, payment status, and reputation", $tags="current")
+  Container(api, "FastAPI Backend", "Python / FastAPI", "Modular monolith API for workflow rules, auth dependency, lifecycle guards, and audit writes", $tags="current")
+  Container(jobs, "Async Job Boundary", "FastAPI background tasks now; durable workers later", "Runs non-blocking checker and background work without blocking request/response paths", $tags="current")
+  Container(checker, "Checker Runner", "Python", "Automated task and submission checks", $tags="current")
+  Container(storage_adapter, "Storage Interface", "Python port/adapter", "Object-storage style API for evidence and artifacts", $tags="current")
+}
+
+ContainerDb(postgres, "Postgres", "PostgreSQL", "Projects, guides, tasks, submissions, checks, reviews, revisions, contribution records, payment records, reputation events, and audit events", $tags="record")
+Container(file_store, "Local File Store Behind Interface", "Filesystem now; R2/S3-compatible later", "Development storage implementation behind the object-storage abstraction", $tags="record")
+
+Rel(project_manager, frontend, "Uses")
+Rel(worker, frontend, "Uses")
+Rel(reviewer, frontend, "Uses")
+Rel(operator, frontend, "Uses")
+
+Rel(frontend, api, "Calls", "HTTP/JSON")
+Rel(api, flow_auth, "Verifies bearer tokens")
+Rel(api, postgres, "Reads/writes records", "SQLAlchemy async")
+Rel(api, storage_adapter, "Stores and reads object references")
+Rel(api, jobs, "Schedules async work")
+Rel(jobs, checker, "Executes checker runs")
+Rel(checker, postgres, "Persists checker runs and results")
+Rel(checker, storage_adapter, "Reads evidence and artifacts")
+Rel(storage_adapter, file_store, "Stores objects behind stable references")
+
+@enduml
