@@ -7,12 +7,14 @@ TASK_STATUS_SCREENING = "screening"
 TASK_STATUS_READY = "ready"
 TASK_STATUS_CLAIMED = "claimed"
 TASK_STATUS_IN_PROGRESS = "in_progress"
+TASK_STATUS_SUBMITTED = "submitted"
 
-ALLOWED_CHUNK4_TRANSITIONS = {
+ALLOWED_TASK_TRANSITIONS = {
     (TASK_STATUS_DRAFT, TASK_STATUS_SCREENING),
     (TASK_STATUS_SCREENING, TASK_STATUS_READY),
     (TASK_STATUS_READY, TASK_STATUS_CLAIMED),
     (TASK_STATUS_CLAIMED, TASK_STATUS_IN_PROGRESS),
+    (TASK_STATUS_IN_PROGRESS, TASK_STATUS_SUBMITTED),
 }
 
 
@@ -21,7 +23,7 @@ class InvalidTaskTransition(ValueError):
 
 
 def ensure_allowed_transition(from_status: str, to_status: str) -> None:
-    """Validate a task status transition implemented by Chunk 4.
+    """Validate a task status transition implemented by the current backend.
 
     Args:
         from_status: Current task status.
@@ -30,5 +32,5 @@ def ensure_allowed_transition(from_status: str, to_status: str) -> None:
     Raises:
         InvalidTaskTransition: If the transition is not supported.
     """
-    if (from_status, to_status) not in ALLOWED_CHUNK4_TRANSITIONS:
+    if (from_status, to_status) not in ALLOWED_TASK_TRANSITIONS:
         raise InvalidTaskTransition(f"invalid task transition: {from_status} -> {to_status}")

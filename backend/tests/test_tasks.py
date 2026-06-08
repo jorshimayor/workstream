@@ -24,7 +24,9 @@ from app.main import create_app
 from app.modules.tasks.lifecycle import InvalidTaskTransition, ensure_allowed_transition
 from app.modules.tasks.models import (
     AuditEvent,
+    EvidenceItem,
     ReviewerProfile,
+    Submission,
     TaskAssignment,
     WorkerProfile,
     WorkstreamTask,
@@ -168,6 +170,33 @@ def complete_task_payload() -> dict:
     }
 
 
+def complete_submission_payload(package_hash: str = "sha256:package-v1") -> dict:
+    return {
+        "summary": "Completed the proof evaluation.",
+        "package_uri": "local://submissions/proof-evaluation-v1.tar.zst",
+        "package_hash": package_hash,
+        "artifact_hash_manifest": [
+            {
+                "artifact": "answer.md",
+                "hash": "sha256:answer-v1",
+                "size_bytes": 128,
+                "notes": "main answer",
+            }
+        ],
+        "worker_attestation": "I confirm this submission follows the locked guide.",
+        "evidence_items": [
+            {
+                "type": "log",
+                "label": "checker dry run",
+                "uri": "local://evidence/checker.log",
+                "hash": "sha256:log-v1",
+                "size_bytes": 256,
+                "metadata": {"command": "pytest"},
+            }
+        ],
+    }
+
+
 async def create_active_project(client: AsyncClient) -> dict:
     project_response = await client.post(
         "/api/v1/projects",
@@ -226,6 +255,31 @@ async def create_ready_task(client: AsyncClient, project_id: str) -> dict:
     return release.json()
 
 
+async def create_started_task(
+    client: AsyncClient,
+    project_id: str,
+    monkeypatch: pytest.MonkeyPatch,
+    subject: str = "worker-one",
+) -> dict:
+    set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
+    ready_task = await create_ready_task(client, project_id)
+    await seed_worker_profile(subject)
+    set_dev_actor(monkeypatch, roles="worker", subject=subject)
+    claim = await client.post(
+        f"/api/v1/tasks/{ready_task['id']}/claim",
+        headers=auth_headers(),
+        json={"reason": "claim"},
+    )
+    assert claim.status_code == 200, claim.text
+    start = await client.post(
+        f"/api/v1/tasks/{ready_task['id']}/start",
+        headers=auth_headers(),
+        json={"reason": "start"},
+    )
+    assert start.status_code == 200, start.text
+    return start.json()
+
+
 async def seed_worker_profile(subject: str, *, skill_tags: list[str] | None = None) -> str:
     worker_actor_id = actor_id(subject)
     async with db_session.get_session_factory()() as session:
@@ -251,6 +305,8 @@ def test_task_models_are_registered_for_alembic_metadata() -> None:
         "reviewer_profiles",
         "workstream_tasks",
         "task_assignments",
+        "submissions",
+        "evidence_items",
         "audit_events",
     }
 
@@ -259,6 +315,8 @@ def test_task_models_are_registered_for_alembic_metadata() -> None:
     assert db_models.ReviewerProfile is ReviewerProfile
     assert db_models.WorkstreamTask is WorkstreamTask
     assert db_models.TaskAssignment is TaskAssignment
+    assert db_models.Submission is Submission
+    assert db_models.EvidenceItem is EvidenceItem
     assert db_models.AuditEvent is AuditEvent
 
 
@@ -273,6 +331,8 @@ async def test_chunk4_migration_creates_expected_tables(task_database_env: str) 
         "reviewer_profiles",
         "workstream_tasks",
         "task_assignments",
+        "submissions",
+        "evidence_items",
         "audit_events",
     }.issubset(table_names)
 
@@ -296,6 +356,8 @@ def test_chunk4_migration_downgrade_removes_task_tables(task_database_env: str) 
         "reviewer_profiles",
         "workstream_tasks",
         "task_assignments",
+        "submissions",
+        "evidence_items",
         "audit_events",
     }.isdisjoint(table_names)
 
@@ -675,6 +737,265 @@ async def test_operator_start_override_requires_reason_and_records_distinct_even
     assert audit.status_code == 200, audit.text
     assert audit.json()[-1]["event_type"] == "task_start_override"
     assert audit.json()[-1]["event_payload"]["operator_override"] is True
+
+
+async def test_assigned_worker_submits_v1_and_task_moves_to_submitted(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+    worker_actor_id = actor_id("worker-one")
+
+    response = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+
+    assert response.status_code == 201, response.text
+    submission = response.json()
+    assert submission["task_id"] == started_task["id"]
+    assert submission["worker_id"] == worker_actor_id
+    assert submission["version"] == 1
+    assert submission["status"] == "submitted"
+    assert submission["locked_guide_version"] == "v1"
+    assert submission["locked_checker_policy_version"] == "v1"
+    assert submission["locked_review_policy_version"] == "v1"
+    assert submission["locked_revision_policy_version"] == "v1"
+    assert submission["locked_payment_policy_version"] == "v1"
+    assert submission["artifact_hash_manifest"][0]["artifact"] == "answer.md"
+    assert submission["evidence_items"][0]["metadata"] == {"command": "pytest"}
+
+    task = await task_client.get(f"/api/v1/tasks/{started_task['id']}", headers=auth_headers())
+    assert task.status_code == 200, task.text
+    assert task.json()["status"] == "submitted"
+
+    audit = await task_client.get(
+        f"/api/v1/tasks/{started_task['id']}/audit-events",
+        headers=auth_headers(),
+    )
+    assert audit.status_code == 200, audit.text
+    submission_event = audit.json()[-1]
+    assert submission_event["event_type"] == "submission_created"
+    assert submission_event["from_status"] == "in_progress"
+    assert submission_event["to_status"] == "submitted"
+    assert submission_event["event_payload"]["submission_id"] == submission["id"]
+    assert submission_event["event_payload"]["submission_version"] == 1
+    assert submission_event["event_payload"]["package_hash"] == "sha256:package-v1"
+    assert "package_uri" not in submission_event["event_payload"]
+
+
+async def test_submission_schema_rejects_worker_supplied_locked_context(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+    payload = complete_submission_payload()
+    payload.update(
+        {
+            "worker_id": actor_id("worker-one"),
+            "version": 1,
+            "status": "submitted",
+            "locked_guide_version": "malicious",
+            "locked_checker_policy_version": "malicious",
+            "locked_review_policy_version": "malicious",
+            "locked_revision_policy_version": "malicious",
+            "locked_payment_policy_version": "malicious",
+            "locked_at": "2026-06-07T00:00:00Z",
+        }
+    )
+
+    response = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=payload,
+    )
+
+    assert response.status_code == 422
+    task = await task_client.get(f"/api/v1/tasks/{started_task['id']}", headers=auth_headers())
+    assert task.status_code == 200, task.text
+    assert task.json()["status"] == "in_progress"
+
+
+async def test_submission_requires_assigned_worker_and_in_progress_task(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    ready_task = await create_ready_task(task_client, project["id"])
+    await seed_worker_profile("worker-two")
+    set_dev_actor(monkeypatch, roles="worker", subject="worker-two")
+
+    ready_response = await task_client.post(
+        f"/api/v1/tasks/{ready_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+
+    assert ready_response.status_code == 409
+
+    started_task = await create_started_task(task_client, project["id"], monkeypatch, "worker-one")
+    set_dev_actor(monkeypatch, roles="worker", subject="worker-two")
+    other_worker_response = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+
+    assert other_worker_response.status_code == 409
+
+
+async def test_submission_validates_locked_guide_required_submission_fields(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+    payload = complete_submission_payload()
+    payload["evidence_items"] = []
+
+    response = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=payload,
+    )
+
+    assert response.status_code == 422
+    assert "evidence" in response.json()["detail"]
+
+
+async def test_submission_versioning_creates_new_rows_and_preserves_v1(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+    v1_payload = complete_submission_payload()
+    v1 = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=v1_payload,
+    )
+    assert v1.status_code == 201, v1.text
+    v2_payload = complete_submission_payload("sha256:package-v2")
+    v2_payload["artifact_hash_manifest"][0]["hash"] = "sha256:answer-v2"
+
+    v2 = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=v2_payload,
+    )
+
+    assert v2.status_code == 201, v2.text
+    first = v1.json()
+    second = v2.json()
+    assert second["version"] == 2
+    assert second["supersedes_submission_id"] == first["id"]
+    assert first["package_hash"] == "sha256:package-v1"
+    assert first["artifact_hash_manifest"][0]["hash"] == "sha256:answer-v1"
+
+    listed = await task_client.get(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+    )
+    assert listed.status_code == 200, listed.text
+    assert [submission["version"] for submission in listed.json()] == [1, 2]
+
+    set_dev_actor(monkeypatch, roles="worker", subject="worker-two")
+    await seed_worker_profile("worker-two")
+    denied = await task_client.get(
+        f"/api/v1/submissions/{second['id']}",
+        headers=auth_headers(),
+    )
+    assert denied.status_code == 404
+
+
+async def test_lock_submission_requires_operator_and_latest_version(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+    v1 = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+    assert v1.status_code == 201, v1.text
+    v2 = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload("sha256:package-v2"),
+    )
+    assert v2.status_code == 201, v2.text
+
+    worker_lock = await task_client.post(
+        f"/api/v1/submissions/{v2.json()['id']}/lock",
+        headers=auth_headers(),
+    )
+    assert worker_lock.status_code == 403
+
+    set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
+    stale_lock = await task_client.post(
+        f"/api/v1/submissions/{v1.json()['id']}/lock",
+        headers=auth_headers(),
+    )
+    assert stale_lock.status_code == 409
+
+    locked = await task_client.post(
+        f"/api/v1/submissions/{v2.json()['id']}/lock",
+        headers=auth_headers(),
+    )
+    assert locked.status_code == 200, locked.text
+    locked_body = locked.json()
+    assert locked_body["locked_at"] is not None
+    assert locked_body["evidence_items"][0]["locked_at"] == locked_body["locked_at"]
+
+    second_lock = await task_client.post(
+        f"/api/v1/submissions/{v2.json()['id']}/lock",
+        headers=auth_headers(),
+    )
+    assert second_lock.status_code == 200, second_lock.text
+    assert second_lock.json()["locked_at"] == locked_body["locked_at"]
+
+
+async def test_database_enforces_unique_submission_version(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+    created = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+    assert created.status_code == 201, created.text
+    body = created.json()
+
+    async with db_session.get_session_factory()() as session:
+        session.add(
+            Submission(
+                id=str(uuid4()),
+                task_id=body["task_id"],
+                worker_id=body["worker_id"],
+                version=body["version"],
+                status="submitted",
+                summary="duplicate",
+                package_hash="sha256:duplicate",
+                artifact_hash_manifest=body["artifact_hash_manifest"],
+                worker_attestation="duplicate",
+                locked_guide_version=body["locked_guide_version"],
+                locked_checker_policy_version=body["locked_checker_policy_version"],
+                locked_review_policy_version=body["locked_review_policy_version"],
+                locked_revision_policy_version=body["locked_revision_policy_version"],
+                locked_payment_policy_version=body["locked_payment_policy_version"],
+            )
+        )
+        with pytest.raises(IntegrityError):
+            await session.commit()
 
 
 async def test_worker_cannot_create_screen_or_release_tasks(
