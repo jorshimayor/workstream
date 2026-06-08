@@ -45,7 +45,7 @@ jobs:
 
       - name: Lint
         working-directory: backend
-        run: ruff check app tests
+        run: ruff check app tests scripts
 
       - name: Docstring coverage
         working-directory: backend
@@ -54,3 +54,9 @@ jobs:
       - name: Test
         working-directory: backend
         run: pytest -q
+
+      - name: Week 1 real API e2e
+        working-directory: backend
+        env:
+          WORKSTREAM_DATABASE_URL: postgresql+asyncpg://workstream:workstream@localhost:5433/workstream
+        run: python scripts/week1_api_e2e.py

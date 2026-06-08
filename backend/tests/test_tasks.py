@@ -912,6 +912,351 @@ async def test_submission_versioning_creates_new_rows_and_preserves_v1(
     assert denied.status_code == 404
 
 
+async def test_submission_uses_task_locked_context_after_new_guide_activation(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+
+    set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
+    guide_v2 = await task_client.post(
+        f"/api/v1/projects/{project['id']}/guides",
+        headers=auth_headers(),
+        json=complete_guide_payload("v2"),
+    )
+    assert guide_v2.status_code == 201, guide_v2.text
+    activate_v2 = await task_client.post(
+        f"/api/v1/projects/{project['id']}/guides/{guide_v2.json()['id']}/activate",
+        headers=auth_headers(),
+    )
+    assert activate_v2.status_code == 200, activate_v2.text
+    assert activate_v2.json()["guide"]["version"] == "v2"
+
+    set_dev_actor(monkeypatch, roles="worker", subject="worker-one")
+    response = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+
+    assert response.status_code == 201, response.text
+    submission = response.json()
+    assert submission["locked_guide_version"] == "v1"
+    assert submission["locked_checker_policy_version"] == "v1"
+    task = await task_client.get(f"/api/v1/tasks/{started_task['id']}", headers=auth_headers())
+    assert task.status_code == 200, task.text
+    assert task.json()["locked_guide_version"] == "v1"
+
+
+async def test_locked_submission_can_only_be_replaced_by_new_version(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+    v1 = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+    assert v1.status_code == 201, v1.text
+
+    set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
+    locked_v1 = await task_client.post(
+        f"/api/v1/submissions/{v1.json()['id']}/lock",
+        headers=auth_headers(),
+    )
+    assert locked_v1.status_code == 200, locked_v1.text
+
+    set_dev_actor(monkeypatch, roles="worker", subject="worker-one")
+    v2_payload = complete_submission_payload("sha256:package-replacement")
+    v2_payload["summary"] = "Replacement packet after locked v1."
+    v2_payload["artifact_hash_manifest"][0]["hash"] = "sha256:replacement-artifact"
+    v2 = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=v2_payload,
+    )
+
+    assert v2.status_code == 201, v2.text
+    assert v2.json()["version"] == 2
+    assert v2.json()["supersedes_submission_id"] == v1.json()["id"]
+    fetched_v1 = await task_client.get(
+        f"/api/v1/submissions/{v1.json()['id']}",
+        headers=auth_headers(),
+    )
+    assert fetched_v1.status_code == 200, fetched_v1.text
+    assert fetched_v1.json()["locked_at"] == locked_v1.json()["locked_at"]
+    assert fetched_v1.json()["package_hash"] == "sha256:package-v1"
+    assert fetched_v1.json()["artifact_hash_manifest"][0]["hash"] == "sha256:answer-v1"
+
+
+async def test_project_manager_cannot_submit_as_worker(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+    set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
+
+    response = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+
+    assert response.status_code == 403
+
+
+async def test_submission_rejects_nested_manifest_and_evidence_injection(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+    payload = complete_submission_payload()
+    payload["artifact_hash_manifest"][0]["locked_guide_version"] = "v999"
+    payload["evidence_items"][0]["submission_id"] = "attacker-controlled"
+
+    response = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=payload,
+    )
+
+    assert response.status_code == 422
+
+
+async def test_submission_rejects_signed_or_raw_external_uris(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+    payload = complete_submission_payload()
+    payload["package_uri"] = "https://storage.example.test/package.tar?token=secret"
+
+    signed_package_response = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=payload,
+    )
+
+    assert signed_package_response.status_code == 422
+
+    payload = complete_submission_payload()
+    payload["evidence_items"][0]["uri"] = "file:///home/worker/private/evidence.log"
+    raw_file_response = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=payload,
+    )
+
+    assert raw_file_response.status_code == 422
+
+    payload = complete_submission_payload()
+    payload["package_uri"] = "local://"
+    empty_reference_response = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=payload,
+    )
+
+    assert empty_reference_response.status_code == 422
+
+    payload = complete_submission_payload()
+    payload["evidence_items"][0]["uri"] = "local://../private/evidence.log"
+    traversal_response = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=payload,
+    )
+
+    assert traversal_response.status_code == 422
+
+
+async def test_submitted_task_rejects_earlier_lifecycle_actions_without_new_audit(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+    submitted = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+    assert submitted.status_code == 201, submitted.text
+    audit_before = await task_client.get(
+        f"/api/v1/tasks/{started_task['id']}/audit-events",
+        headers=auth_headers(),
+    )
+    assert audit_before.status_code == 200, audit_before.text
+
+    set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
+    screen = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/screen",
+        headers=auth_headers(),
+        json={"reason": "try rescreen"},
+    )
+    release = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/release",
+        headers=auth_headers(),
+        json={"reason": "try release"},
+    )
+    set_dev_actor(monkeypatch, roles="worker", subject="worker-one")
+    claim = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/claim",
+        headers=auth_headers(),
+        json={"reason": "try claim"},
+    )
+    start = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/start",
+        headers=auth_headers(),
+        json={"reason": "try start"},
+    )
+    audit_after = await task_client.get(
+        f"/api/v1/tasks/{started_task['id']}/audit-events",
+        headers=auth_headers(),
+    )
+
+    assert screen.status_code == 409
+    assert release.status_code == 409
+    assert claim.status_code == 409
+    assert start.status_code == 409
+    assert audit_after.status_code == 200, audit_after.text
+    assert len(audit_after.json()) == len(audit_before.json())
+
+
+async def test_concurrent_submission_posts_return_clean_version_outcomes(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+
+    async def post_submission(package_hash: str) -> int:
+        payload = complete_submission_payload(package_hash)
+        response = await task_client.post(
+            f"/api/v1/tasks/{started_task['id']}/submissions",
+            headers=auth_headers(),
+            json=payload,
+        )
+        return response.status_code
+
+    statuses = await asyncio.gather(
+        post_submission("sha256:concurrent-one"),
+        post_submission("sha256:concurrent-two"),
+    )
+    listed = await task_client.get(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+    )
+    task = await task_client.get(f"/api/v1/tasks/{started_task['id']}", headers=auth_headers())
+
+    assert set(statuses).issubset({201, 409})
+    assert statuses.count(201) >= 1
+    assert listed.status_code == 200, listed.text
+    assert [submission["version"] for submission in listed.json()] == list(
+        range(1, statuses.count(201) + 1)
+    )
+    assert task.status_code == 200, task.text
+    assert task.json()["status"] == "submitted"
+
+
+async def test_cross_worker_cannot_list_submissions_or_audit_after_submit(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+    created = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+    assert created.status_code == 201, created.text
+    await seed_worker_profile("worker-two")
+    set_dev_actor(monkeypatch, roles="worker", subject="worker-two")
+
+    listed = await task_client.get(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+    )
+    audit = await task_client.get(
+        f"/api/v1/tasks/{started_task['id']}/audit-events",
+        headers=auth_headers(),
+    )
+
+    assert listed.status_code == 404
+    assert audit.status_code == 404
+
+
+@pytest.mark.parametrize("role", ["reviewer", "finance", "auditor"])
+async def test_future_roles_cannot_view_week1_task_or_submissions(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+    role: str,
+) -> None:
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+    created = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+    assert created.status_code == 201, created.text
+    set_dev_actor(monkeypatch, roles=role, subject=f"{role}-subject")
+
+    task_read = await task_client.get(f"/api/v1/tasks/{started_task['id']}", headers=auth_headers())
+    submissions_read = await task_client.get(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+    )
+
+    assert task_read.status_code == 403
+    assert submissions_read.status_code == 403
+
+
+async def test_database_blocks_task_locked_context_mutation_after_submission(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+    created = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+    assert created.status_code == 201, created.text
+
+    set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
+    guide_v2 = await task_client.post(
+        f"/api/v1/projects/{project['id']}/guides",
+        headers=auth_headers(),
+        json=complete_guide_payload("v2"),
+    )
+    assert guide_v2.status_code == 201, guide_v2.text
+    activate_v2 = await task_client.post(
+        f"/api/v1/projects/{project['id']}/guides/{guide_v2.json()['id']}/activate",
+        headers=auth_headers(),
+    )
+    assert activate_v2.status_code == 200, activate_v2.text
+
+    async with db_session.get_session_factory()() as session:
+        task = await session.get(WorkstreamTask, started_task["id"])
+        assert task is not None
+        task.locked_guide_version = "v2"
+        task.locked_checker_policy_version = "v2"
+        task.locked_review_policy_version = "v2"
+        task.locked_revision_policy_version = "v2"
+        task.locked_payment_policy_version = "v2"
+        with pytest.raises(IntegrityError):
+            await session.commit()
+
+
 async def test_lock_submission_requires_operator_and_latest_version(
     task_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,

@@ -52,6 +52,8 @@ Workstream turns that operating knowledge into reusable infrastructure.
 - [Product Principles](docs/product_principles.md)
 - [Product Brief](docs/product_brief.md)
 - [First User Flows](docs/product_first_user_flows.md)
+- [Architecture Brief PDF](docs/architecture_brief/workstream_architecture_brief.pdf)
+- [Architecture Diagrams](docs/diagrams/README.md)
 - [System Architecture](docs/architecture_system_architecture.md)
 - [Data Model](docs/architecture_data_model.md)
 - [Lifecycle State Machine](docs/architecture_lifecycle_state_machine.md)
@@ -115,6 +117,49 @@ The default local test URL is:
 ```text
 postgresql+asyncpg://workstream:workstream@localhost:5433/workstream
 ```
+
+## Local Frontend Demo
+
+The team demo UI lives in `frontend/`. It calls the real backend over HTTP through the Vite proxy and uses local Flow-style bearer tokens against the backend `flow` verifier.
+
+Start the backend for the demo:
+
+```bash
+cd backend
+WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream \
+WORKSTREAM_AUTH_PROVIDER=flow \
+WORKSTREAM_ENVIRONMENT=local \
+WORKSTREAM_FLOW_AUTH_ISSUER=https://auth.flow.local/demo \
+WORKSTREAM_FLOW_AUTH_AUDIENCE=workstream-demo \
+WORKSTREAM_FLOW_AUTH_LOCAL_HMAC_SECRET=workstream-demo-local-secret \
+WORKSTREAM_ENABLE_DEMO_ROUTES=true \
+.venv/bin/alembic upgrade head
+
+WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream \
+WORKSTREAM_AUTH_PROVIDER=flow \
+WORKSTREAM_ENVIRONMENT=local \
+WORKSTREAM_FLOW_AUTH_ISSUER=https://auth.flow.local/demo \
+WORKSTREAM_FLOW_AUTH_AUDIENCE=workstream-demo \
+WORKSTREAM_FLOW_AUTH_LOCAL_HMAC_SECRET=workstream-demo-local-secret \
+WORKSTREAM_ENABLE_DEMO_ROUTES=true \
+.venv/bin/python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000
+```
+
+Start the frontend:
+
+```bash
+cd frontend
+npm install
+npm run dev -- --port 5173
+```
+
+Open:
+
+```text
+http://127.0.0.1:5173/
+```
+
+The demo runs the Week 1 path from project guide to locked submission using real API calls. The local demo worker-profile route is guarded by `WORKSTREAM_ENABLE_DEMO_ROUTES=true` and local/test environments only.
 
 ## Day-30 Success Standard
 
