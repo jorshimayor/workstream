@@ -21,7 +21,6 @@ from alembic import command
 from alembic.config import Config
 
 from app.adapters.auth.flow import actor_id_from_flow_identity
-from app.db import session as db_session
 from app.modules.tasks.models import WorkerProfile
 
 FLOW_ISSUER = os.environ.get("WORKSTREAM_E2E_FLOW_ISSUER", "https://auth.flow.local/e2e")
@@ -218,6 +217,8 @@ async def seed_worker_profile(subject: str) -> str:
     Returns:
         Stable Workstream actor id for the worker.
     """
+    from app.db import session as db_session
+
     actor_id = actor_id_from_flow_identity(FLOW_ISSUER, subject)
     async with db_session.get_session_factory()() as session:
         session.add(
@@ -266,11 +267,22 @@ async def request_json(
         headers={} if token is None else auth_headers(token),
         json=payload,
     )
-    body = response.json()
     if response.status_code != expected_status:
+        try:
+            body = response.json()
+        except ValueError:
+            body = response.text
         raise AssertionError(
             f"{method} {path} expected {expected_status}, got {response.status_code}: {body}"
         )
+    try:
+        body = response.json()
+    except ValueError as exc:
+        raise AssertionError(
+            f"{method} {path} returned non-JSON response: {response.text!r}"
+        ) from exc
+    if not isinstance(body, dict | list):
+        raise AssertionError(f"{method} {path} returned non-JSON payload: {body!r}")
     print(f"PASS {method} {path} -> {response.status_code}")
     return body
 
@@ -533,6 +545,8 @@ async def main(env: dict[str, str]) -> None:
     Args:
         env: Environment variables for the API server.
     """
+    from app.db import session as db_session
+
     await db_session.dispose_engine()
 
     port = find_free_port()

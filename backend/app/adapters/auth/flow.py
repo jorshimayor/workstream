@@ -64,7 +64,7 @@ def _decode_json_segment(value: str) -> dict[str, Any]:
     """
     try:
         decoded = json.loads(_decode_base64url(value))
-    except json.JSONDecodeError as exc:
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise AuthVerificationError("malformed Flow token JSON") from exc
     if not isinstance(decoded, dict):
         raise AuthVerificationError("malformed Flow token JSON")
