@@ -1,6 +1,6 @@
 # Workstream Roadmap Status
 
-Current phase: reviewed planning baseline.
+Current phase: Week 1 backend foundation complete; preparing checker framework.
 
 ## Completed
 
@@ -29,6 +29,13 @@ Current phase: reviewed planning baseline.
 - Review closure record.
 - June 3 architecture proposal preserved and reconciled.
 - Architecture lockdown note.
+- Week 1 backend chunk plan.
+- Chunk 1 backend scaffold.
+- Chunk 2 external Flow auth actor boundary.
+- Chunk 3 project guide foundation with checker, review, revision, and payment policy context.
+- Chunk 4 task queue, worker/reviewer profiles, assignment, claim, start, and task audit events.
+- Chunk 5 submission packet foundation with evidence items, versioning, server-stamped locked context, and submission locking.
+- Week 1 backend dry run through `Project -> Guide -> Task -> Screening -> Ready -> Claim -> Start -> Submit -> Lock submission`.
 
 ## Review Tracks Closed
 
@@ -39,16 +46,26 @@ Current phase: reviewed planning baseline.
 - Process-pattern baseline.
 - Adversarial quality.
 
-## Pending Before Build Starts
+## Pending Before Week 2
 
-- Review and accept the Week 1 backend chunk plan.
-- Review and accept the external Flow auth verifier contract before backend scaffold implementation.
-- Review and accept the Week 1 backend test gates before implementation.
 - Create the first pilot project guide from the template.
 - Create the first 5 pilot task records.
 - Confirm who owns product, engineering, review, operations, and payment reconciliation during the first build cycle.
 - Confirm the first v0.1 project guide uses the locked guide fields, task contract fields, evidence IDs, and contribution record flow.
-- Confirm each implementation chunk will start with a specification and conditions of satisfaction.
+- Lock the checker framework implementation spec and conditions of satisfaction.
+- Build checker run records and `check_submission_packet` in Week 2.
+
+## Week 1 Dry Run
+
+Run from the backend directory against local Postgres:
+
+```bash
+WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream .venv/bin/python scripts/week1_dry_run.py
+```
+
+The script runs migrations forward and exercises:
+
+`Project -> Guide -> Task -> Screening -> Ready -> Claim -> Start -> Submit -> Lock submission`
 
 ## Operating Rule
 

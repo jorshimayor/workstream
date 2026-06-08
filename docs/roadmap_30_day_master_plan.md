@@ -66,8 +66,8 @@ Deliverables:
 - roles and permissions matrix
 - submission record
 - evidence record
-- payment record
-- reputation record
+- payment policy context
+- reputation dimensions
 - backend API smoke paths for project, task, assignment, and submission records
 - workspace/packet convention for the first project
 - modular monolith structure with clean router, service, repository, interface, and adapter boundaries
