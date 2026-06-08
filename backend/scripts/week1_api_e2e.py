@@ -20,9 +20,8 @@ import httpx
 from alembic import command
 from alembic.config import Config
 
-FLOW_ISSUER = os.environ.get("WORKSTREAM_E2E_FLOW_ISSUER", "https://auth.flow.local/e2e")
-FLOW_AUDIENCE = os.environ.get("WORKSTREAM_E2E_FLOW_AUDIENCE", "workstream-api")
-FLOW_SECRET = os.environ.get("WORKSTREAM_E2E_FLOW_SECRET", f"local-flow-e2e-{uuid4().hex}")
+DEFAULT_FLOW_ISSUER = "https://auth.flow.local/e2e"
+DEFAULT_FLOW_AUDIENCE = "workstream-api"
 
 
 def base64url_json(payload: dict) -> str:
@@ -50,12 +49,38 @@ def base64url_bytes(payload: bytes) -> str:
     return base64.urlsafe_b64encode(payload).rstrip(b"=").decode()
 
 
-def issue_flow_token(subject: str, roles: list[str]) -> str:
+def flow_settings(env: dict[str, str]) -> tuple[str, str, str]:
+    """Resolve local Flow settings from the runtime environment.
+
+    Args:
+        env: Runtime environment used by the API server and client.
+
+    Returns:
+        Issuer, audience, and HMAC secret used for local Flow tokens.
+    """
+    return (
+        env.get("WORKSTREAM_E2E_FLOW_ISSUER", DEFAULT_FLOW_ISSUER),
+        env.get("WORKSTREAM_E2E_FLOW_AUDIENCE", DEFAULT_FLOW_AUDIENCE),
+        env.get("WORKSTREAM_E2E_FLOW_SECRET", f"local-flow-e2e-{uuid4().hex}"),
+    )
+
+
+def issue_flow_token(
+    subject: str,
+    roles: list[str],
+    *,
+    issuer: str,
+    audience: str,
+    secret: str,
+) -> str:
     """Issue a local Flow-compatible signed token for one QA actor.
 
     Args:
         subject: External Flow subject.
         roles: Workstream roles granted by Flow for this actor.
+        issuer: Flow issuer claim.
+        audience: Flow audience claim.
+        secret: HMAC secret shared with the local Flow verifier.
 
     Returns:
         HMAC-signed bearer token consumed by ``FlowAuthVerifier``.
@@ -64,8 +89,8 @@ def issue_flow_token(subject: str, roles: list[str]) -> str:
     header = base64url_json({"alg": "HS256", "typ": "JWT"})
     payload = base64url_json(
         {
-            "iss": FLOW_ISSUER,
-            "aud": FLOW_AUDIENCE,
+            "iss": issuer,
+            "aud": audience,
             "sub": subject,
             "email": f"{subject}@flow.local",
             "name": subject.replace("-", " ").title(),
@@ -76,7 +101,7 @@ def issue_flow_token(subject: str, roles: list[str]) -> str:
         }
     )
     signed_content = f"{header}.{payload}".encode()
-    signature = hmac.new(FLOW_SECRET.encode(), signed_content, hashlib.sha256).digest()
+    signature = hmac.new(secret.encode(), signed_content, hashlib.sha256).digest()
     return f"{header}.{payload}.{base64url_bytes(signature)}"
 
 
@@ -135,11 +160,13 @@ def api_environment() -> dict[str, str]:
         "WORKSTREAM_DATABASE_URL",
         "postgresql+asyncpg://workstream:workstream@localhost:5433/workstream",
     )
+    flow_issuer, flow_audience, flow_secret = flow_settings(env)
+    env["WORKSTREAM_E2E_FLOW_SECRET"] = flow_secret
     env["WORKSTREAM_AUTH_PROVIDER"] = "flow"
     env["WORKSTREAM_ENVIRONMENT"] = "local"
-    env["WORKSTREAM_FLOW_AUTH_ISSUER"] = FLOW_ISSUER
-    env["WORKSTREAM_FLOW_AUTH_AUDIENCE"] = FLOW_AUDIENCE
-    env["WORKSTREAM_FLOW_AUTH_LOCAL_HMAC_SECRET"] = FLOW_SECRET
+    env["WORKSTREAM_FLOW_AUTH_ISSUER"] = flow_issuer
+    env["WORKSTREAM_FLOW_AUTH_AUDIENCE"] = flow_audience
+    env["WORKSTREAM_FLOW_AUTH_LOCAL_HMAC_SECRET"] = flow_secret
     env["WORKSTREAM_ENABLE_DEMO_ROUTES"] = "true"
     env["PYTHONPATH"] = str(project_root())
     return env
@@ -202,7 +229,8 @@ async def wait_for_health(base_url: str, process: subprocess.Popen, log_path: Pa
                 if response.status_code == 200:
                     return
             except httpx.HTTPError:
-                await asyncio.sleep(0.25)
+                pass
+            await asyncio.sleep(0.25)
     raise RuntimeError(f"API server did not become healthy:\n{log_path.read_text()}")
 
 
@@ -317,18 +345,47 @@ def guide_payload(run_id: str) -> dict:
     }
 
 
-async def exercise_week1_api(base_url: str) -> None:
+async def exercise_week1_api(base_url: str, env: dict[str, str]) -> None:
     """Run the real Project -> Task -> Submission Week 1 API flow.
 
     Args:
         base_url: Real API server base URL.
+        env: Runtime environment shared by the API server and token issuer.
     """
+    flow_issuer, flow_audience, flow_secret = flow_settings(env)
     run_id = uuid4().hex[:8]
-    manager_token = issue_flow_token(f"real-api-project-manager-{run_id}", ["project_manager"])
+    manager_token = issue_flow_token(
+        f"real-api-project-manager-{run_id}",
+        ["project_manager"],
+        issuer=flow_issuer,
+        audience=flow_audience,
+        secret=flow_secret,
+    )
     worker_subject = f"real-api-worker-{run_id}"
-    worker_token = issue_flow_token(worker_subject, ["worker"])
-    reviewer_token = issue_flow_token(f"real-api-reviewer-{run_id}", ["reviewer"])
-    invalid_token = issue_flow_token(f"real-api-invalid-{run_id}", ["worker"])[:-8] + "tampered"
+    worker_token = issue_flow_token(
+        worker_subject,
+        ["worker"],
+        issuer=flow_issuer,
+        audience=flow_audience,
+        secret=flow_secret,
+    )
+    reviewer_token = issue_flow_token(
+        f"real-api-reviewer-{run_id}",
+        ["reviewer"],
+        issuer=flow_issuer,
+        audience=flow_audience,
+        secret=flow_secret,
+    )
+    invalid_token = (
+        issue_flow_token(
+            f"real-api-invalid-{run_id}",
+            ["worker"],
+            issuer=flow_issuer,
+            audience=flow_audience,
+            secret=flow_secret,
+        )[:-8]
+        + "tampered"
+    )
 
     async with httpx.AsyncClient(base_url=base_url, timeout=10) as client:
         await request_json(client, "GET", "/health")
@@ -420,7 +477,7 @@ async def exercise_week1_api(base_url: str) -> None:
 
         worker = await request_json(client, "GET", "/api/v1/auth/me", worker_token)
         assert worker["roles"] == ["worker"]
-        await request_json(
+        worker_profile = await request_json(
             client,
             "POST",
             "/api/v1/demo/worker-profile",
@@ -428,6 +485,10 @@ async def exercise_week1_api(base_url: str) -> None:
             {"skill_tags": ["stem", "proofs"]},
             201,
         )
+        assert worker_profile["external_subject"] == worker_subject
+        assert worker_profile["external_issuer"] == flow_issuer
+        assert worker_profile["status"] == "active"
+        assert set(worker_profile["skill_tags"]) == {"stem", "proofs"}
         await request_json(client, "GET", f"/api/v1/tasks/{task['id']}", worker_token)
         claim = await request_json(
             client,
@@ -530,7 +591,7 @@ async def main(env: dict[str, str]) -> None:
     process, log_path = start_api_server(port, env)
     try:
         await wait_for_health(base_url, process, log_path)
-        await exercise_week1_api(base_url)
+        await exercise_week1_api(base_url, env)
     finally:
         process.terminate()
         try:

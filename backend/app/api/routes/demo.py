@@ -60,6 +60,7 @@ async def activate_demo_worker_profile(
     payload: DemoWorkerProfileRequest,
     actor: Annotated[ActorContext, Depends(get_current_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> DemoWorkerProfileResponse:
     """Create or update the current actor's local demo worker profile.
 
@@ -67,11 +68,12 @@ async def activate_demo_worker_profile(
         payload: Demo worker profile fields.
         actor: Current Flow-authenticated actor.
         session: Database session for the request.
+        settings: Runtime settings.
 
     Returns:
         Persisted worker profile for the current actor.
     """
-    ensure_demo_routes_enabled(get_settings())
+    ensure_demo_routes_enabled(settings)
     if "worker" not in actor.roles:
         raise HTTPException(status_code=403, detail="worker role required")
 
