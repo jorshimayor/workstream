@@ -5,8 +5,58 @@ from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal
 from typing import Any, Literal
+from urllib.parse import unquote
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+ALLOWED_STORAGE_URI_PREFIXES = ("local://", "s3://", "r2://")
+FORBIDDEN_URI_FRAGMENTS = (
+    "?",
+    "#",
+    "@",
+    "authorization=",
+    "credential=",
+    "password=",
+    "secret=",
+    "signature=",
+    "token=",
+    "x-amz-",
+)
+
+
+def validate_storage_reference(value: str | None) -> str | None:
+    """Validate a storage URI/reference accepted by submission packets.
+
+    Args:
+        value: Optional storage reference supplied by the client.
+
+    Returns:
+        Normalized value when it is a safe storage reference.
+
+    Raises:
+        ValueError: If the value is not an allowed storage reference.
+    """
+    if value is None:
+        return value
+    normalized = value.strip()
+    lowered = normalized.lower()
+    matching_prefix = next(
+        (prefix for prefix in ALLOWED_STORAGE_URI_PREFIXES if lowered.startswith(prefix)),
+        None,
+    )
+    if matching_prefix is None:
+        raise ValueError("uri must be a local, R2, or S3 object reference")
+    if any(fragment in lowered for fragment in FORBIDDEN_URI_FRAGMENTS):
+        raise ValueError("uri must not include credentials, query strings, or signed URL data")
+    reference = normalized[len(matching_prefix) :]
+    if not reference.strip("/"):
+        raise ValueError("uri must include an object reference")
+    if matching_prefix in {"s3://", "r2://"} and "/" not in reference.strip("/"):
+        raise ValueError("uri must include a bucket and object key")
+    decoded_segments = unquote(reference).replace("\\", "/").split("/")
+    if any(segment in {"", ".", ".."} for segment in decoded_segments):
+        raise ValueError("uri must not include empty or traversal path segments")
+    return normalized
 
 
 class TaskCreate(BaseModel):
@@ -56,6 +106,8 @@ class EvidenceItemCreate(BaseModel):
     size_bytes: int | None = Field(default=None, ge=0)
     metadata: dict[str, Any] = Field(default_factory=dict)
 
+    _validate_uri = field_validator("uri")(validate_storage_reference)
+
 
 class ArtifactHashEntry(BaseModel):
     """Structured artifact hash entry supplied by a worker."""
@@ -79,6 +131,8 @@ class SubmissionCreate(BaseModel):
     artifact_hash_manifest: list[ArtifactHashEntry] = Field(min_length=1)
     worker_attestation: str = Field(min_length=1)
     evidence_items: list[EvidenceItemCreate] = Field(default_factory=list)
+
+    _validate_package_uri = field_validator("package_uri")(validate_storage_reference)
 
 
 class TaskResponse(BaseModel):
