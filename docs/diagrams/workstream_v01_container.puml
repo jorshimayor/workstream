@@ -37,7 +37,7 @@ package "People" #F8F9FA {
 cloud "Flow Auth\n----\nToken issuer and\nhuman identity source" as flow_auth
 
 package "Workstream v0.1" #F8FBFF {
-  rectangle "React + Vite UI\n----\nInternal operations\ninterface" as frontend
+  rectangle "React + Vite Operations UI\n----\nPlanned internal\noperations dashboard" as frontend
   rectangle "FastAPI Backend\n----\nModular monolith API\nand workflow rules" as api
   rectangle "Async Job Boundary\n----\nBackground tasks now;\ndurable workers later" as jobs
   rectangle "Checker Runner\n----\nAutomated task and\nsubmission checks" as checker

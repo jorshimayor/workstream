@@ -218,6 +218,6 @@ __marimo__/
 # Local spreadsheet exports
 sheets/
 
-# Frontend local artifacts
-frontend/node_modules/
-frontend/dist/
+# Week 1 API demo UI local artifacts
+demos/week1_api_demo_ui/node_modules/
+demos/week1_api_demo_ui/dist/

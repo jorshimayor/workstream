@@ -68,7 +68,7 @@ The context diagram shows Workstream as one system inside the broader Flow ecosy
 
 ## C2: v0.1 Container View
 
-The container view shows the first 30-day implementation. It is intentionally small: React + Vite for the internal operations UI, FastAPI for the backend, Postgres for records, a storage interface for artifacts, and an async checker/job boundary.
+The container view shows the first 30-day implementation. It is intentionally small: React + Vite for the planned internal operations UI, FastAPI for the backend, Postgres for records, a storage interface for artifacts, and an async checker/job boundary. The Week 1 API demo UI is only a walkthrough client for backend validation; it is not the canonical product frontend.
 
 <div class="diagram wide">
   <img src="images/workstream_v01_container.png" alt="Workstream v0.1 container diagram" />
@@ -80,7 +80,7 @@ The container view shows the first 30-day implementation. It is intentionally sm
 
 | Container | Responsibility |
 | --- | --- |
-| React + Vite UI | Internal operations dashboard for project, task, submission, review, payment status, and reputation workflows. |
+| React + Vite operations UI | Planned internal operations dashboard for project, task, submission, review, payment status, and reputation workflows. |
 | FastAPI backend | API contracts, workflow rules, auth dependency, lifecycle guards, module orchestration, and audit writes. |
 | Async job boundary | Non-blocking checker and background work. FastAPI background tasks are acceptable early; durable workers come when retries or distributed execution are needed. |
 | Checker runner | Executes automated checks and stores checker results. |
