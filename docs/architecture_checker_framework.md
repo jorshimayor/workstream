@@ -203,19 +203,22 @@ Examples:
 ## Checker Run Flow
 
 ```text
-Submission received
+Draft packet
+-> run pre-submit static checks
+-> submit packet
+-> lock submission
 -> create CheckerRun
 -> load project CheckerPolicy
 -> run required checkers
 -> store CheckerResult records
 -> calculate blocking status
 -> issue ReadinessCertificate when no blocking failures remain
--> move to REVIEW_PENDING or remain checker-blocked from human review
+-> move to REVIEW_PENDING or NEEDS_REVISION
 ```
 
 The checker run must bind to one immutable submission version. If the worker uploads a replacement file, the platform creates a new submission version and reruns checks.
 
-Checker failures are not review decisions. They do not accept, reject, or request revision. They block review entry until the worker submits a replacement packet, an allowed policy override is recorded, or a later review/revision workflow handles the issue.
+Checker failures are not human review decisions. They do not accept or reject work. Worker-fixable blocking failures can route the task to user-facing `NEEDS_REVISION`, with `outcome_source = auto_checker` and no review decision id. Human review can also produce `needs_revision` later, but that records `outcome_source = human_review` and a review decision id.
 
 If a checker crashes or cannot run because of platform infrastructure, the checker run remains failed as an infrastructure failure and the task does not move to human review. The retry or admin action is recorded in audit history.
 

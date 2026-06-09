@@ -48,6 +48,7 @@ Workstream turns that operating knowledge into reusable infrastructure.
 - [Roadmap Status](docs/roadmap_status.md)
 - [Week 1 Backend Plan](docs/roadmap_week1_backend_plan.md)
 - [Week 2 Checker Framework Specification](docs/spec_week2_checker_framework.md)
+- [Chunk 6 Checker Contract And Records](docs/spec_chunk_6_checker_contract_records.md)
 - [Day-by-Day Execution Plan](docs/roadmap_day_by_day_execution_plan.md)
 - [Implementation Backlog](docs/roadmap_implementation_backlog.md)
 - [Product Principles](docs/product_principles.md)
