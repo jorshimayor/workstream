@@ -76,9 +76,10 @@
 - checker result storage
 - blocking status calculation
 - project-specific required checkers
-- reviewer-visible checker results
+- API-readable checker results for the future reviewer surface
 - worker-visible failure summary
 - bind checker run to exact submission version and artifact hash manifest
+- bind checker run to package hash and locked task guide/policy context
 - implement `check_evidence_integrity`
 - implement `check_confidentiality_attestation`
 - implement `check_low_quality_generated_artifacts`

@@ -210,10 +210,12 @@ Submission received
 -> store CheckerResult records
 -> calculate blocking status
 -> issue ReadinessCertificate when no blocking failures remain
--> move to REVIEW_PENDING or NEEDS_REVISION
+-> move to REVIEW_PENDING or remain checker-blocked from human review
 ```
 
 The checker run must bind to one immutable submission version. If the worker uploads a replacement file, the platform creates a new submission version and reruns checks.
+
+Checker failures are not review decisions. They do not accept, reject, or request revision. They block review entry until the worker submits a replacement packet, an allowed policy override is recorded, or a later review/revision workflow handles the issue.
 
 If a checker crashes or cannot run because of platform infrastructure, the checker run remains failed as an infrastructure failure and the task does not move to human review. The retry or admin action is recorded in audit history.
 

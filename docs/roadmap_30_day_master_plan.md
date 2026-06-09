@@ -142,6 +142,8 @@ This thin slice is the first proof that Workstream can measure and certify usefu
 
 Objective: prevent broken submissions from reaching human review.
 
+Week 2 is backend/checker-framework work. Checker results must be available through backend APIs, dry-run scripts, and demo/debug output. Product frontend pages, reviewer queue UI, and review decision screens stay in Week 3 or later.
+
 Deliverables:
 
 - checker runner
@@ -151,6 +153,7 @@ Deliverables:
 - blocking versus warning checks
 - evidence log per checker run
 - review gate enforcement
+- API-readable checker output for the exact submission version and artifact hash manifest
 
 Required first checkers:
 
@@ -169,6 +172,7 @@ Day 6:
 - define checker interface
 - define checker result record
 - build checker runner
+- expose checker run and result reads through backend contracts
 
 Day 7:
 
@@ -178,7 +182,7 @@ Day 7:
 Day 8:
 
 - implement evidence and rubric/acceptance checks
-- block REVIEW_PENDING when high-severity checks fail
+- block `REVIEW_PENDING` when high-severity checks fail
 
 Day 9:
 
@@ -194,8 +198,8 @@ Week 2 acceptance bar:
 
 - every submitted task runs checks
 - checker output is stored permanently
-- high-severity failures block human review
-- a reviewer can see the exact checker results before reviewing
+- high-severity failures block human review without creating a review decision
+- backend contracts expose the exact checker results before Week 3 reviewer UI work begins
 
 ## Week 3: Review And Revision Engine
 

@@ -130,6 +130,14 @@ Exit criteria:
 
 ## Week 2: Checker System
 
+Week 2 is backend-first checker infrastructure. Checker output is exposed through APIs, dry-run scripts, and demo/debug output. It does not build the product frontend, reviewer queue UI, review decision form, contribution records, payment records, or reputation updates.
+
+The core invariant is:
+
+`Submission -> Lock -> CheckerRun -> CheckerResults -> Gate -> REVIEW_PENDING or checker-blocked`
+
+The checker framework does not accept, reject, or request revision. It decides whether the latest locked submission can move toward human review.
+
 ### Day 6: Checker Interface
 
 Deliver:
@@ -144,7 +152,8 @@ Exit criteria:
 
 - run a checker against a submission
 - store pass/warn/fail results
-- display results on task page
+- expose checker run and result data through backend API responses and dry-run/demo output
+- no product frontend task page is added in Week 2
 
 ### Day 7: Core Structural Checkers
 
@@ -160,6 +169,7 @@ Exit criteria:
 
 - broken submissions fail before review
 - high severity failures block `REVIEW_PENDING`
+- checker runs bind to the exact submission id, submission version, package hash, and artifact hash manifest
 
 ### Day 8: Evidence And Acceptance Checkers
 
@@ -175,8 +185,8 @@ Deliver:
 
 Exit criteria:
 
-- task cannot be review-ready with no evidence
-- task cannot be review-ready when checker artifact hashes do not match submission hashes
+- task cannot become review-pending with no evidence
+- task cannot become review-pending when checker artifact hashes do not match submission hashes
 - task cannot be accepted later without payment policy
 
 ### Day 9: Project Checker Policy
@@ -192,6 +202,7 @@ Exit criteria:
 
 - two projects can require different checkers
 - override creates audit record
+- project-required checker policy is read from the locked task context, not from mutable worker input
 
 ### Day 10: Checker Trial
 
@@ -206,6 +217,7 @@ Exit criteria:
 
 - at least one intentionally broken submission is blocked
 - at least one clean submission reaches `REVIEW_PENDING`
+- trial output documents which checker results would be visible to Week 3 reviewers through backend APIs
 
 ## Week 3: Review And Revision
 

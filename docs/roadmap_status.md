@@ -36,6 +36,7 @@ Current phase: Week 1 backend foundation complete; preparing checker framework.
 - Chunk 4 task queue, worker/reviewer profiles, assignment, claim, start, and task audit events.
 - Chunk 5 submission packet foundation with evidence items, versioning, server-stamped locked context, and submission locking.
 - Week 1 backend dry run through `Project -> Guide -> Task -> Screening -> Ready -> Claim -> Start -> Submit -> Lock submission`.
+- Week 2 checker framework scope specification.
 
 ## Review Tracks Closed
 
@@ -52,8 +53,9 @@ Current phase: Week 1 backend foundation complete; preparing checker framework.
 - Create the first 5 pilot task records.
 - Confirm who owns product, engineering, review, operations, and payment reconciliation during the first build cycle.
 - Confirm the first v0.1 project guide uses the locked guide fields, task contract fields, evidence IDs, and contribution record flow.
-- Lock the checker framework implementation spec and conditions of satisfaction.
+- Lock Chunk 6 checker contract and records specification with conditions of satisfaction.
 - Build checker run records and `check_submission_packet` in Week 2.
+- Keep Week 2 backend/checker-framework only: expose checker results through APIs and dry-run/demo output, not product frontend pages.
 
 ## Week 1 Dry Run
 
