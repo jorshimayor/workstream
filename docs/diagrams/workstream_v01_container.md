@@ -12,7 +12,7 @@ Source: [workstream_v01_container.puml](workstream_v01_container.puml)
 
 | Container | Responsibility |
 | --- | --- |
-| React + Vite UI | Internal project, queue, task, submission, review, payment, and reputation operations surfaces. |
+| React + Vite operations UI | Planned internal project, queue, task, submission, review, payment, and reputation operations surfaces. The Week 1 API demo UI is separate and lives under `demos/`. |
 | FastAPI backend | API contracts, workflow rules, auth dependency, lifecycle guards, module orchestration, audit writes. |
 | Postgres | Record database for workflow state, policy context, submissions, checks, reviews, revisions, contribution records, payment records, reputation events, and audit history. |
 | Storage interface | Stable file/evidence boundary that can use local storage in development and R2/S3-style object storage later. |

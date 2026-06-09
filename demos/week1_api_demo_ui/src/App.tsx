@@ -213,7 +213,7 @@ export function App() {
             "PATCH",
             `/api/v1/projects/${records.project.id}/guides/${guide.id}`,
             actors.manager,
-            { change_summary: "Patched from the frontend demo before activation." }
+            { change_summary: "Patched from the Week 1 API demo before activation." }
           );
           const activeGuide = await call<any>(
             "Activate guide",
@@ -241,14 +241,14 @@ export function App() {
             201
           );
           await call("Screen task", "POST", `/api/v1/tasks/${task.id}/screen`, actors.manager, {
-            reason: "frontend demo screening passed"
+            reason: "Week 1 API demo screening passed"
           });
           const released = await call<any>(
             "Release task",
             "POST",
             `/api/v1/tasks/${task.id}/release`,
             actors.manager,
-            { reason: "frontend demo release" }
+            { reason: "Week 1 API demo release" }
           );
           setRecords((current) => ({ ...current, task: released }));
           setSelectedRecord("task");
@@ -274,14 +274,14 @@ export function App() {
             "POST",
             `/api/v1/tasks/${records.task.id}/claim`,
             actors.worker,
-            { reason: "frontend demo worker claim" }
+            { reason: "Week 1 API demo worker claim" }
           );
           const started = await call<any>(
             "Start task",
             "POST",
             `/api/v1/tasks/${records.task.id}/start`,
             actors.worker,
-            { reason: "frontend demo worker start" }
+            { reason: "Week 1 API demo worker start" }
           );
           setRecords((current) => ({
             ...current,
@@ -388,7 +388,7 @@ export function App() {
         "PATCH",
         `/api/v1/projects/${project.id}/guides/${guide.id}`,
         actors.manager,
-        { change_summary: "Patched from the frontend demo before activation." }
+        { change_summary: "Patched from the Week 1 API demo before activation." }
       );
       const activeGuide = await call<any>(
         "Activate guide",
@@ -407,14 +407,14 @@ export function App() {
         201
       );
       await call("Screen task", "POST", `/api/v1/tasks/${task.id}/screen`, actors.manager, {
-        reason: "frontend demo screening passed"
+        reason: "Week 1 API demo screening passed"
       });
       const releasedTask = await call<any>(
         "Release task",
         "POST",
         `/api/v1/tasks/${task.id}/release`,
         actors.manager,
-        { reason: "frontend demo release" }
+        { reason: "Week 1 API demo release" }
       );
       setRecords((current) => ({ ...current, task: releasedTask }));
 
@@ -431,14 +431,14 @@ export function App() {
         "POST",
         `/api/v1/tasks/${task.id}/claim`,
         actors.worker,
-        { reason: "frontend demo worker claim" }
+        { reason: "Week 1 API demo worker claim" }
       );
       const startedTask = await call<any>(
         "Start task",
         "POST",
         `/api/v1/tasks/${task.id}/start`,
         actors.worker,
-        { reason: "frontend demo worker start" }
+        { reason: "Week 1 API demo worker start" }
       );
       setRecords((current) => ({
         ...current,

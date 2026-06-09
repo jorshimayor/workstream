@@ -2,7 +2,7 @@
 
 Workstream is Flow's task evaluation and contribution infrastructure.
 
-It manages project guides, task queues, submission packets, automated checks, reviewer routing, evaluation sprints, revision loops, contribution records, payment status, and reputation signals.
+Workstream manages project guides, task queues, submission packets, automated checks, reviewer routing, evaluation sprints, revision loops, contribution records, payment status, and reputation signals.
 
 Workstream is how Flow measures, certifies, and coordinates useful human-agent work.
 
@@ -118,9 +118,9 @@ The default local test URL is:
 postgresql+asyncpg://workstream:workstream@localhost:5433/workstream
 ```
 
-## Local Frontend Demo
+## Week 1 API Demo UI
 
-The team demo UI lives in `frontend/`. It calls the real backend over HTTP through the Vite proxy and uses local Flow-style bearer tokens against the backend `flow` verifier.
+The Week 1 API demo UI lives in `demos/week1_api_demo_ui/`. It is a temporary walkthrough client for the Week 1 backend APIs, not the canonical Workstream frontend implementation. It calls the real backend over HTTP through the Vite proxy and uses local Flow-style bearer tokens against the backend `flow` verifier.
 
 Start the backend for the demo:
 
@@ -145,10 +145,10 @@ WORKSTREAM_ENABLE_DEMO_ROUTES=true \
 .venv/bin/python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000
 ```
 
-Start the frontend:
+Start the demo UI:
 
 ```bash
-cd frontend
+cd demos/week1_api_demo_ui
 npm install
 npm run dev -- --port 5173
 ```
