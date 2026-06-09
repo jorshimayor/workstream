@@ -137,7 +137,7 @@ Policy:
 
 ### Needs Revision
 
-Reviewer found fixable issues.
+Worker-facing lane for fixable issues from automated checks, pre-review gates, or human review.
 
 Owner:
 
@@ -209,7 +209,7 @@ Every operating day starts with:
 | `IN_PROGRESS -> SUBMITTED` | submission packet, evidence ids, artifact hash manifest, worker attestation |
 | `SUBMITTED -> AUTO_CHECKING` | immutable submission version, checker policy version derived from the locked task context |
 | `AUTO_CHECKING -> REVIEW_PENDING` | checker run for exact submission version, readiness certificate, no blocking failures |
-| `AUTO_CHECKING -> NEEDS_REVISION` | checker failures with severity, message, suggested fix |
+| `AUTO_CHECKING -> NEEDS_REVISION` | checker run id, outcome source `auto_checker`, worker-visible checker failures with severity, message, suggested fix |
 | `REVIEW_PENDING -> NEEDS_REVISION` | review decision, at least one structured finding, revision policy still permits revision |
 | `REVIEW_PENDING -> ACCEPTED` | accepted review, acceptance evidence refs, contribution record, payment record |
 | `NEEDS_REVISION -> IN_PROGRESS` | prior findings visible to worker, revision deadline active |

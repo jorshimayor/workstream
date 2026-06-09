@@ -129,12 +129,19 @@ Required before entering:
 
 ### NEEDS_REVISION
 
-The human reviewer found fixable issues.
+The worker-facing state for fixable issues.
+
+This state can be entered from:
+
+- `AUTO_CHECKING`, when automated checker results contain worker-fixable blocking failures.
+- `PRE_REVIEW_GATE`, when pre-review policy finds worker-fixable blocking failures.
+- `REVIEW_PENDING`, when a human reviewer records a `needs_revision` decision.
 
 Required before entering:
 
-- at least one review finding
-- required fix for each high/medium finding
+- from `AUTO_CHECKING`: checker run id, blocking checker results, worker-visible messages, and suggested fixes
+- from `PRE_REVIEW_GATE`: gate run id, worker-visible findings, and suggested fixes
+- from `REVIEW_PENDING`: review decision id and at least one structured review finding
 
 ### ACCEPTED
 

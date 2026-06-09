@@ -146,6 +146,8 @@ Week 2 is backend/checker-framework work. Checker results must be available thro
 
 Deliverables:
 
+- pre-submit static checker path
+- post-submit internal auto-check path
 - checker runner
 - checker result schema
 - project checker policy
@@ -198,7 +200,7 @@ Week 2 acceptance bar:
 
 - every submitted task runs checks
 - checker output is stored permanently
-- high-severity failures block human review without creating a review decision
+- high-severity failures block human review and can route to user-facing `NEEDS_REVISION` without creating a human review decision
 - backend contracts expose the exact checker results before Week 3 reviewer UI work begins
 
 ## Week 3: Review And Revision Engine
