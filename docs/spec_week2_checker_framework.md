@@ -26,7 +26,7 @@ The checker framework protects reviewer time by proving that the latest locked s
 - product frontend implementation
 - reviewer queue UI
 - review decision form
-- accept, needs_revision, or reject decisions
+- human review decision records/forms for `accept`, `needs_revision`, or `reject`
 - revision replay enforcement
 - contribution records
 - payment records
@@ -83,6 +83,8 @@ Users see the same simple outcome language everywhere:
 
 Automated checker failures may route a submitted packet to `needs_revision` when the failure is worker-fixable. This is user-facing revision, not a human review decision.
 
+Week 2 may set a checker-caused task/submission outcome of `needs_revision`, but it does not create a human review decision record.
+
 Internally Workstream records the source:
 
 - `outcome = needs_revision`
@@ -111,6 +113,8 @@ Human review decisions remain only:
 - `needs_revision`
 - `reject`
 
+Stored human review decision tokens are `accept`, `needs_revision`, and `reject`. User-facing task outcomes are displayed as Accepted, Rejected, and Needs revision. Internal lifecycle constants may use uppercase enum names, but persisted workflow values and API payloads should use canonical lowercase tokens.
+
 ## Week 2 Visibility Boundary
 
 Checker results are exposed through backend contracts and operational output:
@@ -134,8 +138,8 @@ Conditions of satisfaction:
 - checker runs are tied to one submission version
 - checker results are immutable after persistence
 - status and severity values are canonical
-- run type supports `pre_submit` and `post_submit`
-- gate outcome can record `allow_review`, `needs_revision`, or `operator_retry`
+- pre-submit feedback has a response contract but is not authoritative review-gate proof
+- post-submit checker runs can record `allow_review`, `needs_revision`, or `operator_retry` as routing recommendations
 - checker-caused `needs_revision` stores `outcome_source = auto_checker`
 - checker output can be read through backend APIs
 

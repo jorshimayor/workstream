@@ -30,6 +30,10 @@ Workstream is how Flow measures, certifies, and coordinates useful human-agent w
 - Postgres is the record database.
 - Local filesystem storage is acceptable only behind an object-storage abstraction compatible with R2/S3-style storage.
 - Do not expand into blockchain settlement, marketplace, external source adapters, automated routing, or agent workspace until the internal loop is proven.
+- Every implementation or specification chunk must receive internal sub-agent review before external PR review is treated as sufficient.
+- Required internal reviewer tracks are senior engineering, QA/test, security/auth, and product/ops unless the chunk is explicitly unrelated to that track.
+- Do not report a chunk complete while reviewer agents are still running. Wait for them, address valid findings, and close any open sub-agent sessions.
+- CodeRabbit, CI, and GitHub review are external checks. They supplement internal reviewer agents; they do not replace them.
 
 ## Done Criteria
 
@@ -40,3 +44,5 @@ Before reporting completion:
 - verify the local XLSX has one sheet only when local sheet exports are present
 - verify the current Workstream definition appears in README and local sheet exports when local sheet exports are present
 - update related docs/templates and local sheet exports together when the roadmap changes
+- run required internal sub-agent reviewers for the chunk and resolve or explicitly document every valid finding
+- confirm no sub-agent sessions remain open

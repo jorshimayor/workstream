@@ -212,8 +212,9 @@ Draft packet
 -> run required checkers
 -> store CheckerResult records
 -> calculate blocking status
--> issue ReadinessCertificate when no blocking failures remain
--> move to REVIEW_PENDING or NEEDS_REVISION
+-> if no blocking failures remain: issue ReadinessCertificate and move to REVIEW_PENDING
+-> if worker-fixable blocking failures exist: route to user-facing needs_revision with outcome_source = auto_checker
+-> if checker infrastructure fails: keep in operator retry handling
 ```
 
 The checker run must bind to one immutable submission version. If the worker uploads a replacement file, the platform creates a new submission version and reruns checks.

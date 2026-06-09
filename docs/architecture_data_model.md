@@ -392,23 +392,37 @@ Types:
 Fields:
 
 - `id`
+- `task_id`
 - `submission_id`
+- `submission_version`
 - `status`
+- `routing_recommendation`
+- `outcome_source`
+- `trigger_source`
+- `attempt_number`
+- `supersedes_checker_run_id`
+- `is_current_for_submission`
 - `started_at`
-- `finished_at`
+- `completed_at`
 - `runner_version`
 - `locked_guide_version`
 - `locked_checker_policy_version`
-- `submission_version`
+- `locked_review_policy_version`
+- `locked_revision_policy_version`
+- `locked_payment_policy_version`
+- `package_hash`
 - `artifact_hash_manifest`
+- `artifact_manifest_hash`
 - `summary`
 
 Status:
 
+- queued
 - running
-- passed
-- warning
+- completed
 - failed
+
+Run pass/warn/fail summary is derived from checker result counts, not stored as run status.
 
 ## CheckerResult
 
@@ -421,7 +435,12 @@ Fields:
 - `severity`
 - `message`
 - `suggested_fix`
+- `worker_message`
+- `worker_suggested_fix`
 - `evidence_refs`
+- `worker_evidence_refs`
+- `worker_visible`
+- `metadata`
 - `created_at`
 
 Status:
