@@ -29,6 +29,7 @@ from app.modules.projects.repository import ProjectRepository, ProjectRepository
 def project_database_env(
     monkeypatch: pytest.MonkeyPatch,
     postgres_database_url: str,
+    migration_lock,
 ) -> Iterator[str]:
     monkeypatch.setenv("WORKSTREAM_DATABASE_URL", postgres_database_url)
     monkeypatch.setenv("WORKSTREAM_AUTH_PROVIDER", "dev")
@@ -43,12 +44,11 @@ def project_database_env(
     project_root = Path(__file__).resolve().parents[1]
     config = Config(str(project_root / "alembic.ini"))
     config.set_main_option("script_location", str(project_root / "alembic"))
-    command.downgrade(config, "base")
-    command.upgrade(config, "head")
-
-    yield postgres_database_url
-
-    command.downgrade(config, "base")
+    with migration_lock():
+        command.downgrade(config, "base")
+        command.upgrade(config, "head")
+        yield postgres_database_url
+        command.downgrade(config, "base")
     asyncio.run(db_session.dispose_engine())
     get_settings.cache_clear()
 

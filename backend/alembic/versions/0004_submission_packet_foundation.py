@@ -97,6 +97,7 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_submissions")),
         sa.UniqueConstraint("task_id", "version", name="uq_submissions_task_version"),
+        sa.UniqueConstraint("id", "version", name="uq_submissions_id_version"),
     )
     op.create_index(op.f("ix_submissions_task_id"), "submissions", ["task_id"], unique=False)
     op.create_index(op.f("ix_submissions_worker_id"), "submissions", ["worker_id"], unique=False)

@@ -311,10 +311,12 @@ Each blind spot becomes a guide update, checker update, reviewer policy update, 
 The first checker runner can be simple:
 
 - async-first execution
-- local background worker process or FastAPI background task for simple local v0.1 jobs
+- request-bound manual operator trigger for the first structural checks
 - markdown/json output
 - attached logs
 
-The request path does not block on long-running checker execution. A checker run is created as `running`, then completed by background execution.
+The checker interface is async-first from the start so storage reads, external checks, and later agent evaluation do not require a contract rewrite.
+
+Chunk 7 may complete the first structural checker run inside the request path because those checks are local and fast. Longer-running checker execution should create a run as `running` and complete it through FastAPI background tasks, Celery, or an equivalent worker boundary.
 
 Use Celery or an equivalent durable queue when checker execution needs retries, scheduled jobs, progress reporting, worker isolation, or distributed execution.

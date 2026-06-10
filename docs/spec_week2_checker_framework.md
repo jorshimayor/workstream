@@ -147,6 +147,8 @@ Conditions of satisfaction:
 
 Creates the checker interface, registry, pre-submit static checker path, runner service, and first structural checkers.
 
+Detailed spec: [Chunk 7 Checker Runner And Registry](spec_chunk_7_checker_runner_registry.md).
+
 Conditions of satisfaction:
 
 - registered checker names cannot drift from policy names
