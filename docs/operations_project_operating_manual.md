@@ -49,7 +49,7 @@ A task cannot move to `READY` until the task contract is complete, the guide ver
 
 ### Submission Quality Gate
 
-A submission cannot move to human review until required checkers run against the exact submission version and artifact hashes. High-severity failures return to the worker when submission-caused; platform infrastructure failures remain in checker/admin handling with audit records.
+A submission cannot move to human review until required checkers run against the exact submission version and artifact hashes. High-severity failures return to the worker when submission-caused; platform infrastructure failures remain in checker retry handling or audited admin/project manager intervention.
 
 External origin qualification and webhook drop notifications are future adapter concerns, not v0.1 gates.
 

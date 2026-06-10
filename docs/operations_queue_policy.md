@@ -103,7 +103,7 @@ Owner:
 
 Policy:
 
-- checker failure because of platform/tooling stays in checker/admin handling and does not move to human review
+- checker failure because of platform/tooling stays in checker retry handling or audited admin/project manager intervention and does not move to human review
 - retry and admin actions are recorded in audit history
 
 ### Pre Review Gate

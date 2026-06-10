@@ -320,7 +320,7 @@ async def check_policy_context_present(context: CheckerContext) -> CheckerOutcom
         return _fail(
             "check_policy_context_present",
             f"Submission is missing locked policy context: {', '.join(missing)}.",
-            "Ask the operator to re-screen the task before submitting.",
+            "Ask a project manager to re-screen the task before submitting.",
             metadata={"missing_context": missing},
         )
     return _pass("check_policy_context_present", "Submission has locked guide and policy context.")

@@ -105,7 +105,7 @@ Checkers decide:
 - passing required checks can allow `REVIEW_PENDING`
 - warning checks can still allow `REVIEW_PENDING` with visible context
 - worker-fixable blocking failures route to `needs_revision`
-- platform/infrastructure failures stay in checker/admin retry handling
+- platform/infrastructure failures stay in checker retry handling or audited admin intervention
 
 Checker routing recommendations are not human review decisions. `allow_review` means "ready for human review", not `accept`. A checker must never write `accept` or `reject`.
 
@@ -117,7 +117,7 @@ Human review decisions remain only:
 
 Stored human review decision tokens are `accept`, `needs_revision`, and `reject`. User-facing task outcomes are displayed as Accepted, Rejected, and Needs revision. Internal lifecycle constants may use uppercase enum names, but persisted workflow values and API payloads should use canonical lowercase tokens.
 
-Checker routing recommendation tokens are separate: `not_evaluated`, `allow_review`, `needs_revision`, and `operator_retry`.
+Checker routing recommendation tokens are separate: `not_evaluated`, `allow_review`, `needs_revision`, and `checker_retry`.
 
 ## Week 2 Visibility Boundary
 
@@ -143,7 +143,7 @@ Conditions of satisfaction:
 - checker results are immutable after persistence
 - status and severity values are canonical
 - pre-submit feedback has a response contract but is not authoritative review-gate proof
-- post-submit checker runs can record `allow_review`, `needs_revision`, or `operator_retry` as routing recommendations
+- post-submit checker runs can record `allow_review`, `needs_revision`, or `checker_retry` as routing recommendations
 - `allow_review` is not stored as `accept`; it only means the submission can proceed to human review
 - checker-caused `needs_revision` stores `outcome_source = auto_checker`
 - checker output can be read through backend APIs

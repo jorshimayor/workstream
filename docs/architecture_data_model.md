@@ -429,7 +429,7 @@ Routing recommendation:
 - not_evaluated
 - allow_review
 - needs_revision
-- operator_retry
+- checker_retry
 
 `routing_recommendation` is a checker-side workflow hint, not a human review decision. `allow_review` means the automated checker found no blocking issue and the submission may proceed to human review. It must not be stored or reported as `accept`.
 

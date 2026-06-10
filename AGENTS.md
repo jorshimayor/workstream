@@ -18,6 +18,7 @@ Workstream is how Flow measures, certifies, and coordinates useful human-agent w
 - If updating the roadmap, update both local XLSX and CSV exports.
 - Do not import XLSX into Google Sheets with "replace spreadsheet"; use a temporary sheet and copy only the roadmap tab.
 - Prefer evidence-backed docs over vague product claims.
+- For workflow states, persisted tokens, API enum values, roles, and lifecycle names, prefer subsystem- or actor-specific names over vague labels. If the naming has product or security impact and the user is unavailable, run the required internal reviewer tracks before locking it.
 - Keep v0.1 focused on project guide -> task -> submission -> checks -> review -> revision -> contribution/payment/reputation records.
 - Review decision stored values are only accept, needs_revision, or reject.
 - Frontend is locked as React + Vite + TypeScript.

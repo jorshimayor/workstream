@@ -33,7 +33,7 @@ from app.modules.tasks.repository import TaskRepository
 from app.modules.tasks.schemas import SubmissionCreate
 from app.schemas.auth import ActorContext
 
-CHECKER_OPERATOR_ROLES = {"admin", "project_manager"}
+CHECKER_TRIGGER_ROLES = {"admin", "project_manager"}
 CHECKER_READ_ROLES = {"admin", "project_manager", "worker"}
 
 
@@ -131,7 +131,7 @@ class CheckerService:
         """Run registered checkers against one locked submission.
 
         Args:
-            actor: Trusted operator actor resolved from the Flow token.
+            actor: Trusted admin or project manager actor resolved from the Flow token.
             submission_id: Submission whose latest locked packet should be checked.
             trigger_reason: Audit reason for the manual v0.1 trigger.
 
@@ -143,7 +143,7 @@ class CheckerService:
             CheckerExecutionBlocked: If the submission is not locked or not checkable.
             CheckerPolicyInvalid: If the locked checker policy references unknown names.
         """
-        require_any_role(actor, CHECKER_OPERATOR_ROLES)
+        require_any_role(actor, CHECKER_TRIGGER_ROLES)
         submission = await self._get_submission(submission_id)
         task = await self._get_task_for_actor(actor, submission.task_id)
         if submission.locked_at is None:
@@ -298,7 +298,7 @@ class CheckerService:
         task = await self._task_repo.get_task(task_id)
         if task is None:
             raise CheckerTaskNotFound("task not found")
-        if set(actor.roles).intersection(CHECKER_OPERATOR_ROLES):
+        if set(actor.roles).intersection(CHECKER_TRIGGER_ROLES):
             return task
         if "worker" in actor.roles and task.assigned_to == actor.actor_id:
             return task
@@ -326,7 +326,7 @@ class CheckerService:
             artifact_manifest_hash: Canonical or invalid marker manifest hash.
             attempt_number: Monotonic attempt number for the submission.
             supersedes_checker_run_id: Previous current run id when retrying.
-            trigger_reason: Operator-supplied audit reason.
+            trigger_reason: Audit reason supplied by the trusted trigger actor.
             audit_event_id: Audit event id linked to the manual trigger.
             now: Timestamp for run start and completion.
 
@@ -342,7 +342,7 @@ class CheckerService:
             task_id=submission.task_id,
             submission_id=submission.id,
             submission_version=submission.version,
-            trigger_source="manual_operator",
+            trigger_source="manual_checker_trigger",
             status="completed",
             routing_recommendation="needs_revision" if blocking_count else "allow_review",
             outcome_source="auto_checker" if blocking_count else "none",
@@ -402,11 +402,11 @@ class CheckerService:
         """Persist the audit event for a manual checker trigger.
 
         Args:
-            actor: Trusted operator actor triggering the checker run.
+            actor: Trusted admin or project manager actor triggering the checker run.
             task: Task associated with the submission.
             submission: Submission being checked.
             attempt_number: Checker attempt number for the submission.
-            trigger_reason: Operator-supplied audit reason.
+            trigger_reason: Audit reason supplied by the trusted trigger actor.
 
         Returns:
             Persisted audit event linked from the checker run.
@@ -482,10 +482,10 @@ class CheckerService:
         Returns:
             Checker run response visible to that actor.
         """
-        is_operator = bool(set(actor.roles).intersection(CHECKER_OPERATOR_ROLES))
+        has_checker_admin_access = bool(set(actor.roles).intersection(CHECKER_TRIGGER_ROLES))
         results = []
         for result in checker_run.results:
-            if not is_operator and not result.worker_visible:
+            if not has_checker_admin_access and not result.worker_visible:
                 continue
             results.append(
                 CheckerResultResponse(
@@ -497,12 +497,12 @@ class CheckerService:
                     status=result.status,
                     severity=result.severity,
                     blocks_review=result.blocks_review,
-                    message=result.message if is_operator else None,
+                    message=result.message if has_checker_admin_access else None,
                     worker_message=result.worker_message,
                     worker_suggested_fix=result.worker_suggested_fix,
                     worker_evidence_refs=result.worker_evidence_refs,
                     worker_visible=result.worker_visible,
-                    metadata=result.metadata_json if is_operator else {},
+                    metadata=result.metadata_json if has_checker_admin_access else {},
                     created_at=result.created_at,
                 )
             )
@@ -515,31 +515,43 @@ class CheckerService:
             status=checker_run.status,
             routing_recommendation=checker_run.routing_recommendation,
             outcome_source=checker_run.outcome_source,
-            triggered_by=checker_run.triggered_by if is_operator else None,
-            triggered_by_subject=checker_run.triggered_by_subject if is_operator else None,
-            triggered_by_issuer=checker_run.triggered_by_issuer if is_operator else None,
-            trigger_auth_source=checker_run.trigger_auth_source if is_operator else None,
-            trigger_reason=checker_run.trigger_reason if is_operator else None,
-            audit_event_id=checker_run.audit_event_id if is_operator else None,
+            triggered_by=checker_run.triggered_by if has_checker_admin_access else None,
+            triggered_by_subject=(
+                checker_run.triggered_by_subject if has_checker_admin_access else None
+            ),
+            triggered_by_issuer=(
+                checker_run.triggered_by_issuer if has_checker_admin_access else None
+            ),
+            trigger_auth_source=(
+                checker_run.trigger_auth_source if has_checker_admin_access else None
+            ),
+            trigger_reason=checker_run.trigger_reason if has_checker_admin_access else None,
+            audit_event_id=checker_run.audit_event_id if has_checker_admin_access else None,
             attempt_number=checker_run.attempt_number,
             supersedes_checker_run_id=checker_run.supersedes_checker_run_id,
             is_current_for_submission=checker_run.is_current_for_submission,
-            locked_guide_version=checker_run.locked_guide_version if is_operator else None,
+            locked_guide_version=(
+                checker_run.locked_guide_version if has_checker_admin_access else None
+            ),
             locked_checker_policy_version=(
-                checker_run.locked_checker_policy_version if is_operator else None
+                checker_run.locked_checker_policy_version if has_checker_admin_access else None
             ),
             locked_review_policy_version=(
-                checker_run.locked_review_policy_version if is_operator else None
+                checker_run.locked_review_policy_version if has_checker_admin_access else None
             ),
             locked_revision_policy_version=(
-                checker_run.locked_revision_policy_version if is_operator else None
+                checker_run.locked_revision_policy_version if has_checker_admin_access else None
             ),
             locked_payment_policy_version=(
-                checker_run.locked_payment_policy_version if is_operator else None
+                checker_run.locked_payment_policy_version if has_checker_admin_access else None
             ),
-            package_hash=checker_run.package_hash if is_operator else None,
-            artifact_hash_manifest=checker_run.artifact_hash_manifest if is_operator else [],
-            artifact_manifest_hash=checker_run.artifact_manifest_hash if is_operator else None,
+            package_hash=checker_run.package_hash if has_checker_admin_access else None,
+            artifact_hash_manifest=(
+                checker_run.artifact_hash_manifest if has_checker_admin_access else []
+            ),
+            artifact_manifest_hash=(
+                checker_run.artifact_manifest_hash if has_checker_admin_access else None
+            ),
             passed_count=checker_run.passed_count,
             warning_count=checker_run.warning_count,
             failed_count=checker_run.failed_count,
@@ -547,8 +559,8 @@ class CheckerService:
             queued_at=checker_run.queued_at,
             started_at=checker_run.started_at,
             completed_at=checker_run.completed_at,
-            failure_code=checker_run.failure_code if is_operator else None,
-            failure_message=checker_run.failure_message if is_operator else None,
+            failure_code=checker_run.failure_code if has_checker_admin_access else None,
+            failure_message=checker_run.failure_message if has_checker_admin_access else None,
             created_at=checker_run.created_at,
             results=results,
         )

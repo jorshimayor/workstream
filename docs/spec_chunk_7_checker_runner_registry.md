@@ -52,7 +52,7 @@ Pre-submit feedback:
 POST /api/v1/tasks/{task_id}/submission-precheck
 ```
 
-This endpoint accepts a draft `SubmissionCreate` payload wrapped in a pre-submit request body. It returns immediate feedback for the UI/operator flow.
+This endpoint accepts a draft `SubmissionCreate` payload wrapped in a pre-submit request body. It returns immediate feedback for the UI submission flow.
 
 Pre-submit feedback is not authoritative review-gate proof and does not create durable `checker_runs`. The response uses `eligible_to_submit` and `would_block_if_submitted` language so the UI does not confuse draft feedback with post-submit review gating.
 
@@ -62,7 +62,7 @@ Durable post-submit checker run:
 POST /api/v1/submissions/{submission_id}/checker-runs
 ```
 
-This endpoint triggers the v0.1 manual operator path for internal checker execution. It accepts only a trigger reason. It does not accept checker status, severity, routing, result, metadata, or pass/fail fields from the caller.
+This endpoint triggers the v0.1 authorized manual checker path for internal checker execution. It accepts only a trigger reason. It does not accept checker status, severity, routing, result, metadata, or pass/fail fields from the caller.
 
 Checker read APIs:
 
@@ -104,7 +104,7 @@ The checker interface is async-first. Chunk 7 can complete the first structural 
 
 It creates one current checker run per submission. A later manual run supersedes the previous current run for that submission and increments `attempt_number`.
 
-Manual operator triggers create an append-only audit event and link it from `checker_runs.audit_event_id`.
+Authorized manual checker triggers create an append-only audit event and link it from `checker_runs.audit_event_id`.
 
 For a clean submission, the run records:
 
@@ -161,7 +161,7 @@ Worker responses must not expose:
 - duplicate artifact manifests persist worker-visible checker failures
 - unknown policy checker names block execution before fake results are written
 - assigned worker reads are sanitized
-- operator/manual checker triggers are linked to audit events
+- authorized manual checker triggers are linked to audit events
 - non-latest submissions cannot receive new checker runs
 - unassigned workers cannot read or precheck another worker's task
 - caller-supplied fake checker result payloads are rejected by schemas

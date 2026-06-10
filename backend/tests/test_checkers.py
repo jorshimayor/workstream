@@ -8,6 +8,7 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from httpx import ASGITransport, AsyncClient
+from pydantic import TypeAdapter, ValidationError
 from sqlalchemy import inspect, select
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.schema import CreateIndex
@@ -19,6 +20,7 @@ from app.db.base import Base
 from app.main import create_app
 from app.modules.checkers.models import CheckerResult, CheckerRun
 from app.modules.checkers.runner import canonical_artifact_manifest_hash
+from app.modules.checkers.schemas import CheckerRoutingRecommendation
 from app.modules.tasks.models import AuditEvent, Submission
 from tests.test_tasks import (
     auth_headers,
@@ -75,6 +77,14 @@ def test_checker_models_are_registered_for_alembic_metadata() -> None:
     assert expected_tables.issubset(Base.metadata.tables)
     assert db_models.CheckerRun is CheckerRun
     assert db_models.CheckerResult is CheckerResult
+
+
+def test_checker_routing_recommendation_schema_uses_checker_retry_token() -> None:
+    adapter = TypeAdapter(CheckerRoutingRecommendation)
+
+    assert adapter.validate_python("checker_retry") == "checker_retry"
+    with pytest.raises(ValidationError):
+        adapter.validate_python("operator" + "_retry")
 
 
 async def test_checker_migration_creates_expected_tables(checker_database_env: str) -> None:
@@ -180,12 +190,13 @@ async def test_locked_submission_checker_run_persists_results_and_allows_review(
     run = await checker_client.post(
         f"/api/v1/submissions/{created.json()['id']}/checker-runs",
         headers=auth_headers(),
-        json={"trigger_reason": "operator dry run"},
+        json={"trigger_reason": "manual checker dry run"},
     )
 
     assert run.status_code == 200, run.text
     body = run.json()
     assert body["status"] == "completed"
+    assert body["trigger_source"] == "manual_checker_trigger"
     assert body["routing_recommendation"] == "allow_review"
     assert body["outcome_source"] == "none"
     assert body["submission_version"] == 1
@@ -213,7 +224,7 @@ async def test_locked_submission_checker_run_persists_results_and_allows_review(
     assert audit is not None
     assert audit.event_type == "checker_run_triggered"
     assert audit.entity_id == created.json()["id"]
-    assert audit.reason == "operator dry run"
+    assert audit.reason == "manual checker dry run"
     assert audit.event_payload["submission_version"] == 1
 
 
@@ -293,7 +304,7 @@ async def test_checker_run_with_duplicate_artifact_persists_needs_revision_resul
     run = await checker_client.post(
         f"/api/v1/submissions/{created.json()['id']}/checker-runs",
         headers=auth_headers(),
-        json={"trigger_reason": "operator dry run"},
+        json={"trigger_reason": "manual checker dry run"},
     )
 
     assert run.status_code == 200, run.text
@@ -332,7 +343,7 @@ async def test_worker_can_read_only_worker_visible_checker_result_fields(
     run = await checker_client.post(
         f"/api/v1/submissions/{created.json()['id']}/checker-runs",
         headers=auth_headers(),
-        json={"trigger_reason": "operator dry run"},
+        json={"trigger_reason": "manual checker dry run"},
     )
     assert run.status_code == 200, run.text
 
@@ -386,7 +397,7 @@ async def test_worker_cannot_see_hidden_checker_results(
     run = await checker_client.post(
         f"/api/v1/submissions/{created.json()['id']}/checker-runs",
         headers=auth_headers(),
-        json={"trigger_reason": "operator dry run"},
+        json={"trigger_reason": "manual checker dry run"},
     )
     assert run.status_code == 200, run.text
 
@@ -411,13 +422,13 @@ async def test_worker_cannot_see_hidden_checker_results(
         )
         await session.commit()
 
-    operator_read = await checker_client.get(
+    manager_read = await checker_client.get(
         f"/api/v1/checker-runs/{run.json()['id']}",
         headers=auth_headers(),
     )
-    assert operator_read.status_code == 200, operator_read.text
+    assert manager_read.status_code == 200, manager_read.text
     assert "internal_hidden_checker" in {
-        result["checker_name"] for result in operator_read.json()["results"]
+        result["checker_name"] for result in manager_read.json()["results"]
     }
 
     set_dev_actor(monkeypatch, roles="worker", subject="worker-one")
@@ -464,7 +475,7 @@ async def test_checker_endpoints_reject_unassigned_worker_and_fake_result_payloa
         f"/api/v1/submissions/{created.json()['id']}/checker-runs",
         headers=auth_headers(),
         json={
-            "trigger_reason": "operator dry run",
+            "trigger_reason": "manual checker dry run",
             "status": "completed",
             "routing_recommendation": "allow_review",
             "results": [{"checker_name": "fake", "status": "passed"}],
@@ -605,7 +616,7 @@ async def test_unknown_policy_checker_blocks_durable_run_without_fake_results(
     run = await checker_client.post(
         f"/api/v1/submissions/{created.json()['id']}/checker-runs",
         headers=auth_headers(),
-        json={"trigger_reason": "operator dry run"},
+        json={"trigger_reason": "manual checker dry run"},
     )
 
     assert run.status_code == 422

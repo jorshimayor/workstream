@@ -214,7 +214,7 @@ Draft packet
 -> calculate blocking status
 -> if no blocking failures remain: issue ReadinessCertificate and move to REVIEW_PENDING
 -> if worker-fixable blocking failures exist: route to user-facing needs_revision with outcome_source = auto_checker
--> if checker infrastructure fails: keep in operator retry handling
+-> if checker infrastructure fails: keep in checker retry handling
 ```
 
 The checker run must bind to one immutable submission version. If the worker uploads a replacement file, the platform creates a new submission version and reruns checks.
@@ -311,7 +311,7 @@ Each blind spot becomes a guide update, checker update, reviewer policy update, 
 The first checker runner can be simple:
 
 - async-first execution
-- request-bound manual operator trigger for the first structural checks
+- request-bound authorized manual checker trigger for the first structural checks
 - markdown/json output
 - attached logs
 

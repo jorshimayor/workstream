@@ -26,14 +26,14 @@ Display labels may render these as "Accept", "Needs revision", and "Reject", but
 
 Disputes, second review, suspected fraud, payment holds, or admin overrides may create separate workflow records and audit events, but they do not replace the reviewer decision contract.
 
-Checker routing recommendations use a separate contract. A checker can recommend that a submission is ready for review, needs worker revision, or needs operator retry handling. A checker cannot accept or reject work.
+Checker routing recommendations use a separate contract. A checker can recommend that a submission is ready for review, needs worker revision, or needs checker retry handling. A checker cannot accept or reject work.
 
 Canonical checker routing recommendation values are:
 
 - not_evaluated
 - allow_review
 - needs_revision
-- operator_retry
+- checker_retry
 
 `allow_review` must not be stored as `accept`. It only means the automated checker found no blocking issue and the packet may proceed to human review. Only a human review decision can store `accept`.
 

@@ -18,7 +18,7 @@ CheckerRoutingRecommendation = Literal[
     "not_evaluated",
     "allow_review",
     "needs_revision",
-    "operator_retry",
+    "checker_retry",
 ]
 CheckerOutcomeSource = Literal["none", "auto_checker"]
 
