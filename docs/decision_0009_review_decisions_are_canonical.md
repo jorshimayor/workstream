@@ -10,6 +10,8 @@ Workstream review results drive task state, revision loops, contribution records
 
 If projects invent their own review outcome labels, downstream lifecycle rules become ambiguous.
 
+Automated checker results also influence workflow routing before human review. That routing is not the same thing as a human review decision.
+
 ## Decision
 
 The only canonical stored review decision values are:
@@ -24,6 +26,22 @@ Display labels may render these as "Accept", "Needs revision", and "Reject", but
 
 Disputes, second review, suspected fraud, payment holds, or admin overrides may create separate workflow records and audit events, but they do not replace the reviewer decision contract.
 
+Checker routing recommendations use a separate contract. A checker can recommend that a submission is ready for review, needs worker revision, or needs operator retry handling. A checker cannot accept or reject work.
+
+Canonical checker routing recommendation values are:
+
+- not_evaluated
+- allow_review
+- needs_revision
+- operator_retry
+
+`allow_review` must not be stored as `accept`. It only means the automated checker found no blocking issue and the packet may proceed to human review. Only a human review decision can store `accept`.
+
+`needs_revision` can appear in both contracts, but the source must be explicit:
+
+- checker-caused revision: `outcome_source = auto_checker`, `review_decision_id = null`
+- human reviewer revision: `outcome_source = human_review`, `review_decision_id = <review decision id>`
+
 ## Consequences
 
 Positive:
@@ -32,7 +50,9 @@ Positive:
 - review analytics can compare decisions across projects
 - revision policy has one clear entry point
 - payment and reputation logic can depend on a stable decision set
+- automated checker routing cannot accidentally masquerade as human acceptance or rejection
 
 Tradeoff:
 
 - special handling must be modeled as workflow, audit, dispute, or override records instead of extra review decisions
+- code and docs must name checker routing fields clearly so reviewers do not confuse them with review decision fields
