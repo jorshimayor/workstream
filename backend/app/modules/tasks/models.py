@@ -227,6 +227,7 @@ class Submission(Base):
             name="fk_submissions_task_locked_payment_policy",
         ),
         UniqueConstraint("task_id", "version", name="uq_submissions_task_version"),
+        UniqueConstraint("id", "version", name="uq_submissions_id_version"),
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)

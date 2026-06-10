@@ -97,7 +97,7 @@ This chunk does not run the full checker framework yet. It defines the durable p
 `checker_runs.trigger_source`
 
 - `submission_locked`
-- `manual_operator`
+- `manual_checker_trigger`
 - `retry`
 
 `checker_runs.status`
@@ -112,7 +112,13 @@ This chunk does not run the full checker framework yet. It defines the durable p
 - `not_evaluated`
 - `allow_review`
 - `needs_revision`
-- `operator_retry`
+- `checker_retry`
+
+`routing_recommendation` is not a human review decision field. It is a checker-side routing recommendation used before human review.
+
+`allow_review` means the checker run found no blocking issue and the submission may proceed to human review. It must not be stored as `accept`, because no human reviewer has accepted the work yet.
+
+`needs_revision` from a checker run must carry `outcome_source = auto_checker` and no review decision id. `needs_revision` from a human reviewer must carry `outcome_source = human_review` and a review decision id.
 
 `checker_runs.outcome_source`
 
@@ -266,7 +272,7 @@ Project managers and admins can see operational metadata.
 
 ## Manual And Retry Audit Rules
 
-`manual_operator` and `retry` trigger sources require:
+`manual_checker_trigger` and `retry` trigger sources require:
 
 - `triggered_by`
 - Flow auth subject
@@ -275,7 +281,7 @@ Project managers and admins can see operational metadata.
 - reason
 - `audit_event_id`
 
-System-triggered runs use a Workstream service principal. Manual runs must be attributable to an authorized admin/operator and must not overwrite prior checker results.
+System-triggered runs use a Workstream service principal. Manual runs must be attributable to an authorized admin or project manager and must not overwrite prior checker results.
 
 ## Immutability Rules
 

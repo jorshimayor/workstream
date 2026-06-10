@@ -1,0 +1,176 @@
+# Chunk 7: Checker Runner And Registry
+
+## Purpose
+
+Chunk 7 turns the checker contract into a working backend slice.
+
+Workstream now has a checker module that can:
+
+- return non-authoritative pre-submit feedback before a packet is finalized
+- run registered structural checkers against a real locked submission
+- persist durable `checker_runs` and `checker_results`
+- validate checker policy names against the registry
+- expose checker runs/results through authenticated backend APIs
+- keep worker-visible checker output separate from internal metadata
+
+This is still not the automatic pre-review gate. Chunk 9 owns automatic transition into `REVIEW_PENDING` or checker-caused `needs_revision`.
+
+## Scope
+
+- `checker_runs` and `checker_results` migration
+- SQLAlchemy checker models
+- checker schemas
+- checker repository
+- checker service
+- checker API router
+- checker registry
+- pre-submit static feedback path
+- first structural checkers:
+  - `check_submission_packet`
+  - `check_policy_context_present`
+  - `check_artifact_manifest_integrity`
+  - `check_evidence_references_present`
+- canonical artifact manifest hash helper
+- real Postgres-backed API and migration tests
+
+## Non-Scope
+
+- automatic checker trigger after submission locking
+- moving tasks into `REVIEW_PENDING`
+- creating human review decision records
+- creating contribution, payment, or reputation records
+- product frontend pages
+- reviewer object-level checker visibility before review assignment exists
+- external checker adapters
+- Celery or distributed worker execution
+
+## API Contract
+
+Pre-submit feedback:
+
+```text
+POST /api/v1/tasks/{task_id}/submission-precheck
+```
+
+This endpoint accepts a draft `SubmissionCreate` payload wrapped in a pre-submit request body. It returns immediate feedback for the UI submission flow.
+
+Pre-submit feedback is not authoritative review-gate proof and does not create durable `checker_runs`. The response uses `eligible_to_submit` and `would_block_if_submitted` language so the UI does not confuse draft feedback with post-submit review gating.
+
+Durable post-submit checker run:
+
+```text
+POST /api/v1/submissions/{submission_id}/checker-runs
+```
+
+This endpoint triggers the v0.1 authorized manual checker path for internal checker execution. It accepts only a trigger reason. It does not accept checker status, severity, routing, result, metadata, or pass/fail fields from the caller.
+
+Checker read APIs:
+
+```text
+GET /api/v1/submissions/{submission_id}/checker-runs
+GET /api/v1/checker-runs/{checker_run_id}
+```
+
+Project managers and admins can see internal result messages and metadata. Assigned workers can only see worker-visible result rows and sanitized worker-facing fields.
+
+Reviewer checker visibility is deferred until reviewer assignment/routing exists. Reviewers should eventually see checker proof for packets assigned to them, but Chunk 7 does not grant broad reviewer read access without an object-level review assignment.
+
+## Registry Contract
+
+Checker policy names must match registered checker names.
+
+If a locked checker policy references an unknown checker, Workstream rejects durable checker execution with a validation error and does not write fake checker results.
+
+The initial registered checker names are:
+
+- `check_submission_packet`
+- `check_policy_context_present`
+- `check_artifact_manifest_integrity`
+- `check_evidence_references_present`
+
+## Runner Behavior
+
+The runner loads:
+
+- task
+- latest locked submission by id
+- locked checker policy
+- locked guide and policy versions already stamped on the submission
+- package hash
+- artifact hash manifest
+- actor audit context from the verified Flow token
+
+The checker interface is async-first. Chunk 7 can complete the first structural checker run inside the request path because the built-in checks are local and fast. Background execution, retries, and distributed worker isolation stay deferred until the pre-review gate and later runner hardening.
+
+It creates one current checker run per submission. A later manual run supersedes the previous current run for that submission and increments `attempt_number`.
+
+Authorized manual checker triggers create an append-only audit event and link it from `checker_runs.audit_event_id`.
+
+For a clean submission, the run records:
+
+- `status = completed`
+- `routing_recommendation = allow_review`
+- `outcome_source = none`
+
+`routing_recommendation` is a checker routing field, not a human review decision. It must not be normalized to `accept`, because a checker can only recommend that the packet is ready for human review. Human review decisions remain only `accept`, `needs_revision`, and `reject`.
+
+For worker-fixable blocking structural failures, the run records:
+
+- `status = completed`
+- `routing_recommendation = needs_revision`
+- `outcome_source = auto_checker`
+
+Chunk 7 records the recommendation only. Chunk 9 applies the lifecycle transition.
+
+## Artifact Manifest Hash
+
+The artifact manifest hash uses SHA-256 over canonical UTF-8 JSON:
+
+- preserve `artifact`, `hash`, `size_bytes`, and `notes`
+- sort entries by `artifact` and `hash`
+- sort keys inside JSON objects
+- use compact JSON separators
+- reject duplicate artifact names
+
+Malformed artifact manifests become persisted checker failures in durable post-submit runs.
+
+## Security Boundary
+
+Workstream still verifies external Flow authentication tokens. Chunk 7 does not add Workstream-owned login, signup, passwords, auth sessions, or API keys.
+
+Only Workstream-owned checker code writes durable checker results. API callers can trigger an allowed run path, but they cannot supply result payloads.
+
+Worker responses must not expose:
+
+- raw checker metadata
+- internal messages
+- stack traces
+- private object paths
+- hidden-test details
+- reviewer simulation prompts
+- secrets or security heuristics
+
+## Conditions Of Satisfaction
+
+- Alembic upgrade/downgrade creates and removes checker tables
+- checker ORM models are registered in Alembic metadata
+- partial unique index allows one current run per submission
+- pre-submit check returns feedback without durable checker rows
+- durable checker run works through real authenticated API calls
+- `check_submission_packet` runs against real submission data
+- duplicate artifact manifests persist worker-visible checker failures
+- unknown policy checker names block execution before fake results are written
+- assigned worker reads are sanitized
+- authorized manual checker triggers are linked to audit events
+- non-latest submissions cannot receive new checker runs
+- unassigned workers cannot read or precheck another worker's task
+- caller-supplied fake checker result payloads are rejected by schemas
+- tests use real Postgres-backed API flows, not monkeypatch-only unit tests
+
+## Verification
+
+Run from `backend/` against local Postgres:
+
+```bash
+WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream .venv/bin/python -m pytest tests/test_checkers.py -q
+```

@@ -38,6 +38,7 @@ from app.modules.tasks.repository import TaskRepository
 def task_database_env(
     monkeypatch: pytest.MonkeyPatch,
     postgres_database_url: str,
+    migration_lock,
 ) -> Iterator[str]:
     monkeypatch.setenv("WORKSTREAM_DATABASE_URL", postgres_database_url)
     set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
@@ -45,12 +46,11 @@ def task_database_env(
     asyncio.run(db_session.dispose_engine())
 
     config = alembic_config()
-    command.downgrade(config, "base")
-    command.upgrade(config, "head")
-
-    yield postgres_database_url
-
-    command.downgrade(config, "base")
+    with migration_lock():
+        command.downgrade(config, "base")
+        command.upgrade(config, "head")
+        yield postgres_database_url
+        command.downgrade(config, "base")
     asyncio.run(db_session.dispose_engine())
     get_settings.cache_clear()
 
