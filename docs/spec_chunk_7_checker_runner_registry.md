@@ -112,6 +112,8 @@ For a clean submission, the run records:
 - `routing_recommendation = allow_review`
 - `outcome_source = none`
 
+`routing_recommendation` is a checker routing field, not a human review decision. It must not be normalized to `accept`, because a checker can only recommend that the packet is ready for human review. Human review decisions remain only `accept`, `needs_revision`, and `reject`.
+
 For worker-fixable blocking structural failures, the run records:
 
 - `status = completed`

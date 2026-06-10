@@ -12,6 +12,8 @@ from app.modules.tasks.schemas import SubmissionCreate
 CheckerStatus = Literal["queued", "running", "completed", "failed"]
 CheckerResultStatus = Literal["passed", "warning", "failed"]
 CheckerSeverity = Literal["info", "low", "medium", "high", "critical"]
+# Checker routing recommendations are not human review decision tokens.
+# Human review decisions remain only: accept, needs_revision, reject.
 CheckerRoutingRecommendation = Literal[
     "not_evaluated",
     "allow_review",
