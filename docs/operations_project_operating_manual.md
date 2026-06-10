@@ -156,7 +156,7 @@ Each lesson must have an action owner and one target:
 - reviewer policy update
 - revision policy update
 - payment policy update
-- operator training note
+- project manager training note
 
 ## Weekly Project Review
 
@@ -179,4 +179,4 @@ Output:
 - guide amendments
 - revision policy amendments
 - payment policy amendments
-- operator training notes
+- project manager training notes
