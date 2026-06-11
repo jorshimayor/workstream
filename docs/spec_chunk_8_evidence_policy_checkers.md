@@ -109,7 +109,7 @@ Project-manager operational message:
 
 - tell the project manager to add reviewable acceptance criteria before review can continue
 
-This is a project setup failure, not worker-fixable submission work. Worker-facing checker responses must not expose the internal `project_setup_required` route or the missing setup field names.
+This is a locked task setup failure, not worker-fixable submission work. Worker-facing checker responses must not expose the internal `task_setup_blocked` route or the missing setup field names.
 
 ### `check_required_files`
 
@@ -218,7 +218,7 @@ Durable post-submit checker runs run the canonical default submission-quality ch
 - additional locked `required_checkers`
 - additional locked `warning_checkers`
 
-`check_acceptance_criteria_present` is registered in Chunk 8, but it is a project/task setup checker. It is not part of the default durable submission-quality list. If a locked checker policy requires it and it fails, the run must use project setup routing, not worker revision routing.
+`check_acceptance_criteria_present` is registered in Chunk 8, but it is a locked task setup checker. It is not part of the default durable submission-quality list. If a locked checker policy requires it and it fails, the run must use task setup routing, not worker revision routing.
 
 ## Routing Boundary
 
@@ -232,10 +232,10 @@ If worker-fixable submission checks fail, the durable checker run records:
 
 Worker-fixable submission checks include missing evidence, missing required files, malformed artifact/evidence hash references, forbidden file patterns, and missing/invalid confidentiality attestation.
 
-If project setup checks fail, the durable checker run records:
+If task setup checks fail, the durable checker run records:
 
 - `status = completed`
-- `routing_recommendation = project_setup_required`
+- `routing_recommendation = task_setup_blocked`
 - `outcome_source = auto_checker`
 
 Project setup checks include missing acceptance criteria or missing locked project/policy context. These are not worker revision outcomes.
@@ -243,13 +243,13 @@ Project setup checks include missing acceptance criteria or missing locked proje
 Routing priority is deterministic:
 
 1. `checker_retry` for checker/platform execution failures
-2. `project_setup_required` for project/task setup defects
+2. `task_setup_blocked` for locked task setup defects
 3. `needs_revision` for worker-fixable submission failures
 4. `allow_review` when there are no blocking failures
 
-When one checker run contains both project setup failures and worker-fixable submission failures, `project_setup_required` wins because the project manager must fix the task contract before the worker can receive a meaningful revision request.
+When one checker run contains both task setup failures and worker-fixable submission failures, `task_setup_blocked` wins because the project manager must fix the task contract before the worker can receive a meaningful revision request.
 
-Chunk 8 schema-documents `project_setup_required` and implements the routing contract, but normal API flows are expected to prevent project setup defects before submission. For example, current task screening requires acceptance criteria before a task can be released. Chunk 8 tests must verify the enum/source-of-truth contract and may verify project setup routing through controlled service/repository setup if no normal FastAPI path can produce a locked submission with that defect. A later admin repair workflow can add a real API path for this route.
+Chunk 8 schema-documents `task_setup_blocked` and implements the routing contract, but normal API flows are expected to prevent task setup defects before submission. For example, current task screening requires acceptance criteria before a task can be released. Chunk 8 tests must verify the enum/source-of-truth contract and may verify task setup routing through controlled service/repository setup if no normal FastAPI path can produce a locked submission with that defect. A later admin repair workflow can add a real API path for this route.
 
 Chunk 9 owns applying the lifecycle transition.
 
@@ -298,7 +298,7 @@ Safe evidence references mean opaque Workstream evidence ids, sanitized labels, 
 - low-quality generated artifact patterns persist warning results by default
 - clean submissions keep `routing_recommendation = allow_review`
 - worker-fixable submission failures keep `routing_recommendation = needs_revision` and `outcome_source = auto_checker`
-- project setup failures keep `routing_recommendation = project_setup_required` and do not create worker revision outcomes
+- task setup failures keep `routing_recommendation = task_setup_blocked` and do not create worker revision outcomes
 - tests use real FastAPI calls and Postgres-backed persistence, not monkeypatch-only unit tests
 - senior engineering, QA/test, security/auth, and product/ops reviewer tracks pass before PR completion
 

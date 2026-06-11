@@ -35,6 +35,7 @@ Workstream is how Flow measures, certifies, and coordinates useful human-agent w
 - Required internal reviewer tracks are senior engineering, QA/test, security/auth, and product/ops unless the chunk is explicitly unrelated to that track.
 - Do not report a chunk complete while reviewer agents are still running. Wait for them, address valid findings, and close any open sub-agent sessions.
 - CodeRabbit, CI, and GitHub review are external checks. They supplement internal reviewer agents; they do not replace them.
+- Do not open, push, or ask for review on a PR until required internal reviewer tracks have run for the chunk, all valid findings are addressed or documented, and no sub-agent sessions remain open.
 
 ## Done Criteria
 

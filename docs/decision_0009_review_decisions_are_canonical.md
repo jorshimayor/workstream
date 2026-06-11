@@ -26,7 +26,7 @@ Display labels may render these as "Accept", "Needs revision", and "Reject", but
 
 Disputes, second review, suspected fraud, payment holds, or admin overrides may create separate workflow records and audit events, but they do not replace the reviewer decision contract.
 
-Checker routing recommendations use a separate contract. A checker can recommend that a submission is ready for review, needs worker revision, needs checker retry handling, or needs project setup correction. A checker cannot accept or reject work.
+Checker routing recommendations use a separate contract. A checker can recommend that a submission is ready for review, needs worker revision, needs checker retry handling, or cannot proceed because the task's locked setup is incomplete. A checker cannot accept or reject work.
 
 Canonical checker routing recommendation values are:
 
@@ -34,11 +34,11 @@ Canonical checker routing recommendation values are:
 - allow_review
 - needs_revision
 - checker_retry
-- project_setup_required
+- task_setup_blocked
 
 `allow_review` must not be stored as `accept`. It only means the automated checker found no blocking issue and the packet may proceed to human review. Only a human review decision can store `accept`.
 
-`project_setup_required` must not be stored as `needs_revision`. It means the task/project contract is incomplete and a project manager must fix setup before worker-facing revision or human review can continue.
+`task_setup_blocked` must not be stored as `needs_revision`. It means the task's locked contract or policy context is incomplete, stale, or unsafe to review. A project manager must repair or re-screen the task before worker-facing revision or human review can continue.
 
 `needs_revision` can appear in both contracts, but the source must be explicit:
 

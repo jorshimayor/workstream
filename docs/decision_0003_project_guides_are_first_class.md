@@ -34,6 +34,10 @@ Project guide activation requires the guide plus its required policy context bef
 
 Revision policy is not optional. It defines the revision loop contract, including revision limits, revision deadlines, allowed resubmission states, and automatic rejection behavior after the limit.
 
+Guide and policy changes do not silently mutate submitted attempts. A submitted attempt stays tied to the guide and policy versions stamped on that submission. When a task enters `NEEDS_REVISION`, revision policy controls whether the next attempt keeps the prior context or rebases to the latest active guide and policy context.
+
+Rules that affect acceptance must be encoded in the project guide, checker policy, review policy, revision policy, payment policy, task template, or checker implementation. Chat messages and informal notices are not enforceable rules until they are moved into those contracts.
+
 ## Consequences
 
 Positive:

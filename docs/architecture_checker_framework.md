@@ -216,6 +216,7 @@ Draft packet
 -> calculate blocking status
 -> if no blocking failures remain: issue ReadinessCertificate and move to REVIEW_PENDING
 -> if worker-fixable blocking failures exist: route to user-facing needs_revision with outcome_source = auto_checker
+-> if locked task setup is incomplete or unsafe: route to internal task_setup_blocked
 -> if checker infrastructure fails: keep in checker retry handling
 ```
 
@@ -224,6 +225,8 @@ The checker run must bind to one immutable submission version. If the worker upl
 Checker failures are not human review decisions. They do not accept or reject work. Worker-fixable blocking failures can route the task to user-facing `NEEDS_REVISION`, with `outcome_source = auto_checker` and no review decision id. Human review can also produce `needs_revision` later, but that records `outcome_source = human_review` and a review decision id.
 
 If a checker crashes or cannot run because of platform infrastructure, the checker run remains failed as an infrastructure failure and the task does not move to human review. The retry or admin action is recorded in audit history.
+
+If a checker finds missing locked guide or policy context, missing acceptance criteria, or another task setup defect that is not worker-fixable, the run uses `task_setup_blocked`. That route is internal to project managers and must not be shown to workers as a revision request.
 
 ## Readiness Certificate
 

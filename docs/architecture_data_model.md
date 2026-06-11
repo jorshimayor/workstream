@@ -29,6 +29,7 @@ Task
     Review
       ReviewFinding
     RevisionReplay
+    RevisionContextPreparation
   ContributionRecord
   PaymentRecord
   ReputationEvent
@@ -201,8 +202,12 @@ Fields:
 - `revision_deadline_hours`
 - `auto_reject_after_limit`
 - `allowed_resubmission_states`
+- `context_rebase_rule`
+- `context_rebase_triggers`
 - `reviewer_reassignment_rule`
 - `created_at`
+
+`context_rebase_rule` defines whether a revision attempt keeps prior context, rebases to current active context, or blocks for project-manager repair when guide or policy context changed. `context_rebase_triggers` names the guide or policy changes that require preparation before the worker resumes.
 
 ## PaymentPolicy
 
@@ -430,9 +435,11 @@ Routing recommendation:
 - allow_review
 - needs_revision
 - checker_retry
-- project_setup_required
+- task_setup_blocked
 
 `routing_recommendation` is a checker-side workflow hint, not a human review decision. `allow_review` means the automated checker found no blocking issue and the submission may proceed to human review. It must not be stored or reported as `accept`.
+
+`task_setup_blocked` means the task's locked contract or policy context is incomplete, stale, or unsafe to review. It is an internal project-manager route, not a worker-facing revision outcome.
 
 ## CheckerResult
 
@@ -588,6 +595,38 @@ Reviewer closure status:
 - partially_closed
 - still_open
 - obsolete
+
+## RevisionContextPreparation
+
+Fields:
+
+- `id`
+- `task_id`
+- `prior_submission_id`
+- `prior_submission_version`
+- `next_submission_version`
+- `prior_locked_guide_version`
+- `next_locked_guide_version`
+- `prior_locked_checker_policy_version`
+- `next_locked_checker_policy_version`
+- `prior_locked_review_policy_version`
+- `next_locked_review_policy_version`
+- `prior_locked_revision_policy_version`
+- `next_locked_revision_policy_version`
+- `prior_locked_payment_policy_version`
+- `next_locked_payment_policy_version`
+- `context_rebased`
+- `rebase_reason`
+- `change_summary`
+- `prepared_by`
+- `audit_event_id`
+- `created_at`
+
+Purpose:
+
+This record is created before a worker resumes a task in `NEEDS_REVISION` when guide or policy context must be checked for the next attempt. It does not mutate the prior submission. It records whether the next attempt keeps the prior context or rebases to the current active guide and policy context under revision policy.
+
+The worker and reviewer packets must show the old version, new version, rebase reason, and change summary when `context_rebased = true`.
 
 ## ContributionRecord
 
@@ -748,6 +787,7 @@ Audit events are append-only.
 - a review cannot accept a submission if the checker run belongs to a different submission version
 - every status transition creates an audit event
 - every needs-revision decision has at least one review finding
+- every revision context rebase creates an audit event and preserves prior submission context
 - every accept decision cites evidence
 - repeated review/checker failures become ProjectLesson records
 - submission artifacts are immutable after `locked_at`

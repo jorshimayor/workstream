@@ -139,6 +139,13 @@ Policy:
 
 Worker-facing lane for fixable issues from automated checks, pre-review gates, or human review.
 
+Policy:
+
+- before the worker resumes, Workstream prepares revision context against the active guide and policy records
+- revision policy decides whether the next attempt keeps the prior locked context or rebases to the current active context
+- a rebase must show the worker the old version, new version, and change summary
+- out-of-band guidance is not enforceable until it is encoded into guide, policy, task template, or checker contracts
+
 Owner:
 
 - worker

@@ -143,6 +143,10 @@ Required before entering:
 - from `PRE_REVIEW_GATE`: gate run id, worker-visible findings, and suggested fixes
 - from `REVIEW_PENDING`: review decision id and at least one structured review finding
 
+Before the worker resumes, Workstream prepares the next revision context. That preparation checks whether the active project guide or policy context changed since the prior submission was locked. Revision policy decides whether the next attempt keeps the prior context, rebases to the current active context, or is blocked for project-manager repair.
+
+A revision context rebase never mutates the prior submitted attempt. It only stamps the next submission attempt. The worker and reviewer must see the old version, the new version, and the guide or policy change summary.
+
 ### ACCEPTED
 
 The submission is accepted.
@@ -227,6 +231,8 @@ submission v2 -> accepted
 ```
 
 Each resubmission must link to the prior submission it supersedes.
+
+Each submitted version keeps its own locked guide and policy context. If a later revision is rebased to a newer active guide, that rebase is recorded as next-attempt preparation and does not rewrite earlier submission records.
 
 ## Revision Replay
 

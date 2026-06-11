@@ -8,6 +8,34 @@
 
 ## Revision Summary
 
+## Revision Context
+
+Worker-visible fields:
+
+| Field | Value |
+| --- | --- |
+| prior submission id | `<submission id>` |
+| prior submission version | `<version>` |
+| context rebased | `yes | no` |
+| prior guide version | `<guide version>` |
+| next guide version | `<guide version>` |
+| prior checker policy version | `<checker policy version>` |
+| next checker policy version | `<checker policy version>` |
+| prior review policy version | `<review policy version>` |
+| next review policy version | `<review policy version>` |
+| prior revision policy version | `<revision policy version>` |
+| next revision policy version | `<revision policy version>` |
+| prior payment policy version | `<payment policy version>` |
+| next payment policy version | `<payment policy version>` |
+| rebase reason | `<reason>` |
+| change summary shown to worker | `<summary>` |
+
+Reviewer/admin fields:
+
+| Field | Value |
+| --- | --- |
+| audit event id | `<audit event id>` |
+
 ## Finding Closure
 
 Every high and medium prior finding must have one row. A resubmission cannot move to review if any required finding is unmapped.

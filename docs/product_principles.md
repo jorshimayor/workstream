@@ -23,6 +23,8 @@ Every project has its own guide, quality bar, checker policy, review policy, rev
 
 The platform does not rely on memory or chat messages to enforce rules. If a rule matters, it belongs in the project guide, checker policy, review policy, revision policy, payment policy, or task template.
 
+When a guide or policy changes while work is already in progress, prior submitted attempts remain tied to their locked context. If the task returns for revision, revision policy decides whether the next attempt rebases to the latest active context, and the worker must see what changed.
+
 ## 3. Same Lifecycle, Different Domain Language
 
 Projects may differ by domain, language, task format, or review style. The lifecycle remains stable:
@@ -52,6 +54,8 @@ The first version enforces accountability through assignment ownership, worker a
 ## 6. Revision Is A State, Not A Failure
 
 Needs revision is a normal lifecycle state. The system must preserve feedback, require closure, and make resubmission easy to audit.
+
+Revision must also preserve context. Workers and reviewers need to know which guide and policy versions governed the prior attempt and which versions govern the next attempt.
 
 ## 7. Evidence Beats Claims
 

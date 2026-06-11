@@ -19,7 +19,7 @@ CheckerRoutingRecommendation = Literal[
     "allow_review",
     "needs_revision",
     "checker_retry",
-    "project_setup_required",
+    "task_setup_blocked",
 ]
 CheckerOutcomeSource = Literal["none", "auto_checker"]
 

@@ -15,7 +15,7 @@ from app.modules.checkers.repository import CheckerRepository
 from app.modules.checkers.runner import (
     CheckerContext,
     CheckerOutcome,
-    ROUTING_PROJECT_SETUP_REQUIRED,
+    ROUTING_TASK_SETUP_BLOCKED,
     UnknownChecker,
     canonical_artifact_manifest_hash,
     default_checker_registry,
@@ -41,7 +41,7 @@ ROUTING_NEEDS_REVISION = "needs_revision"
 ROUTING_CHECKER_RETRY = "checker_retry"
 INTERNAL_ROUTING_RECOMMENDATIONS = {
     ROUTING_CHECKER_RETRY,
-    ROUTING_PROJECT_SETUP_REQUIRED,
+    ROUTING_TASK_SETUP_BLOCKED,
 }
 DEFAULT_DURABLE_CHECKERS = [
     "check_submission_packet",
@@ -364,7 +364,7 @@ class CheckerService:
             outcome_source=(
                 "auto_checker"
                 if routing_recommendation
-                in {ROUTING_NEEDS_REVISION, ROUTING_PROJECT_SETUP_REQUIRED}
+                in {ROUTING_NEEDS_REVISION, ROUTING_TASK_SETUP_BLOCKED}
                 else "none"
             ),
             triggered_by=actor.actor_id,
@@ -476,10 +476,10 @@ class CheckerService:
         if any(outcome.routing_recommendation == ROUTING_CHECKER_RETRY for outcome in outcomes):
             return ROUTING_CHECKER_RETRY
         if any(
-            outcome.routing_recommendation == ROUTING_PROJECT_SETUP_REQUIRED
+            outcome.routing_recommendation == ROUTING_TASK_SETUP_BLOCKED
             for outcome in outcomes
         ):
-            return ROUTING_PROJECT_SETUP_REQUIRED
+            return ROUTING_TASK_SETUP_BLOCKED
         if any(outcome.blocks_review for outcome in outcomes):
             return ROUTING_NEEDS_REVISION
         return ROUTING_ALLOW_REVIEW

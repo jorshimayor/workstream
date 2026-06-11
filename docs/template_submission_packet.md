@@ -50,6 +50,8 @@ Any known checker considerations.
 
 Only required for resubmissions.
 
+Workstream provides prior and next guide/policy context for the revision. The worker responds to the findings and changed requirements, but does not provide guide or policy versions manually.
+
 | Prior Finding | Fix Summary | Evidence | Status |
 | --- | --- | --- | --- |
 | `<finding>` | `<fix>` | `<evidence>` | `closed` |
