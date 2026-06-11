@@ -15,6 +15,7 @@ from app.modules.checkers.repository import CheckerRepository
 from app.modules.checkers.runner import (
     CheckerContext,
     CheckerOutcome,
+    ROUTING_PROJECT_SETUP_REQUIRED,
     UnknownChecker,
     canonical_artifact_manifest_hash,
     default_checker_registry,
@@ -35,6 +36,23 @@ from app.schemas.auth import ActorContext
 
 CHECKER_TRIGGER_ROLES = {"admin", "project_manager"}
 CHECKER_READ_ROLES = {"admin", "project_manager", "worker"}
+ROUTING_ALLOW_REVIEW = "allow_review"
+ROUTING_NEEDS_REVISION = "needs_revision"
+ROUTING_CHECKER_RETRY = "checker_retry"
+INTERNAL_ROUTING_RECOMMENDATIONS = {
+    ROUTING_CHECKER_RETRY,
+    ROUTING_PROJECT_SETUP_REQUIRED,
+}
+DEFAULT_DURABLE_CHECKERS = [
+    "check_submission_packet",
+    "check_policy_context_present",
+    "check_evidence_present",
+    "check_evidence_integrity",
+    "check_required_files",
+    "check_forbidden_files",
+    "check_confidentiality_attestation",
+    "check_low_quality_generated_artifacts",
+]
 
 
 class CheckerServiceError(Exception):
@@ -166,10 +184,7 @@ class CheckerService:
         checker_names = list(
             dict.fromkeys(
                 [
-                    "check_submission_packet",
-                    "check_policy_context_present",
-                    "check_artifact_manifest_integrity",
-                    "check_evidence_references_present",
+                    *DEFAULT_DURABLE_CHECKERS,
                     *required_names,
                     *warning_names,
                 ]
@@ -337,6 +352,7 @@ class CheckerService:
         failed_count = sum(1 for outcome in outcomes if outcome.status == "failed")
         warning_count = sum(1 for outcome in outcomes if outcome.status == "warning")
         passed_count = sum(1 for outcome in outcomes if outcome.status == "passed")
+        routing_recommendation = self._routing_recommendation_for_outcomes(outcomes)
         checker_run = CheckerRun(
             id=str(uuid4()),
             task_id=submission.task_id,
@@ -344,8 +360,13 @@ class CheckerService:
             submission_version=submission.version,
             trigger_source="manual_checker_trigger",
             status="completed",
-            routing_recommendation="needs_revision" if blocking_count else "allow_review",
-            outcome_source="auto_checker" if blocking_count else "none",
+            routing_recommendation=routing_recommendation,
+            outcome_source=(
+                "auto_checker"
+                if routing_recommendation
+                in {ROUTING_NEEDS_REVISION, ROUTING_PROJECT_SETUP_REQUIRED}
+                else "none"
+            ),
             triggered_by=actor.actor_id,
             triggered_by_subject=actor.external_subject,
             triggered_by_issuer=actor.external_issuer,
@@ -443,6 +464,27 @@ class CheckerService:
         )
 
     @staticmethod
+    def _routing_recommendation_for_outcomes(outcomes: list[CheckerOutcome]) -> str:
+        """Return the run routing recommendation using the Chunk 8 priority order.
+
+        Args:
+            outcomes: Policy-adjusted checker outcomes.
+
+        Returns:
+            Canonical checker routing recommendation for the run.
+        """
+        if any(outcome.routing_recommendation == ROUTING_CHECKER_RETRY for outcome in outcomes):
+            return ROUTING_CHECKER_RETRY
+        if any(
+            outcome.routing_recommendation == ROUTING_PROJECT_SETUP_REQUIRED
+            for outcome in outcomes
+        ):
+            return ROUTING_PROJECT_SETUP_REQUIRED
+        if any(outcome.blocks_review for outcome in outcomes):
+            return ROUTING_NEEDS_REVISION
+        return ROUTING_ALLOW_REVIEW
+
+    @staticmethod
     def _apply_blocking_policy(
         outcomes: list[CheckerOutcome],
         context: CheckerContext,
@@ -461,7 +503,8 @@ class CheckerService:
             blocks_review = (
                 outcome.status == "failed"
                 and (
-                    outcome.checker_name in context.required_checker_names
+                    outcome.blocks_review
+                    or outcome.checker_name in context.required_checker_names
                     or outcome.severity in context.blocking_severities
                 )
             )
@@ -483,8 +526,14 @@ class CheckerService:
             Checker run response visible to that actor.
         """
         has_checker_admin_access = bool(set(actor.roles).intersection(CHECKER_TRIGGER_ROLES))
+        hide_internal_route_from_worker = (
+            not has_checker_admin_access
+            and checker_run.routing_recommendation in INTERNAL_ROUTING_RECOMMENDATIONS
+        )
         results = []
         for result in checker_run.results:
+            if hide_internal_route_from_worker:
+                continue
             if not has_checker_admin_access and not result.worker_visible:
                 continue
             results.append(
@@ -506,6 +555,18 @@ class CheckerService:
                     created_at=result.created_at,
                 )
             )
+        routing_recommendation = (
+            "not_evaluated"
+            if hide_internal_route_from_worker
+            else checker_run.routing_recommendation
+        )
+        outcome_source = (
+            "none" if hide_internal_route_from_worker else checker_run.outcome_source
+        )
+        passed_count = 0 if hide_internal_route_from_worker else checker_run.passed_count
+        warning_count = 0 if hide_internal_route_from_worker else checker_run.warning_count
+        failed_count = 0 if hide_internal_route_from_worker else checker_run.failed_count
+        blocking_count = 0 if hide_internal_route_from_worker else checker_run.blocking_count
         return CheckerRunResponse(
             id=checker_run.id,
             task_id=checker_run.task_id,
@@ -513,8 +574,8 @@ class CheckerService:
             submission_version=checker_run.submission_version,
             trigger_source=checker_run.trigger_source,
             status=checker_run.status,
-            routing_recommendation=checker_run.routing_recommendation,
-            outcome_source=checker_run.outcome_source,
+            routing_recommendation=routing_recommendation,
+            outcome_source=outcome_source,
             triggered_by=checker_run.triggered_by if has_checker_admin_access else None,
             triggered_by_subject=(
                 checker_run.triggered_by_subject if has_checker_admin_access else None
@@ -552,10 +613,10 @@ class CheckerService:
             artifact_manifest_hash=(
                 checker_run.artifact_manifest_hash if has_checker_admin_access else None
             ),
-            passed_count=checker_run.passed_count,
-            warning_count=checker_run.warning_count,
-            failed_count=checker_run.failed_count,
-            blocking_count=checker_run.blocking_count,
+            passed_count=passed_count,
+            warning_count=warning_count,
+            failed_count=failed_count,
+            blocking_count=blocking_count,
             queued_at=checker_run.queued_at,
             started_at=checker_run.started_at,
             completed_at=checker_run.completed_at,
