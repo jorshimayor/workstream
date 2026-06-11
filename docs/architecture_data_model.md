@@ -422,7 +422,7 @@ Status:
 - completed
 - failed
 
-Run pass/warn/fail summary is derived from checker result counts, not stored as run status.
+Run `passed`/`warning`/`failed` summary is derived from checker result counts, not stored as run status.
 
 Routing recommendation:
 
@@ -430,6 +430,7 @@ Routing recommendation:
 - allow_review
 - needs_revision
 - checker_retry
+- project_setup_required
 
 `routing_recommendation` is a checker-side workflow hint, not a human review decision. `allow_review` means the automated checker found no blocking issue and the submission may proceed to human review. It must not be stored or reported as `accept`.
 
@@ -454,15 +455,17 @@ Fields:
 
 Status:
 
-- pass
-- warn
-- fail
+- passed
+- warning
+- failed
 
 Severity:
 
+- info
 - low
 - medium
 - high
+- critical
 
 ## CheckerDefinition
 

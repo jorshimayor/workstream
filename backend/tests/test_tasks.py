@@ -183,7 +183,11 @@ def complete_submission_payload(package_hash: str = "sha256:package-v1") -> dict
                 "notes": "main answer",
             }
         ],
-        "worker_attestation": "I confirm this submission follows the locked guide.",
+        "worker_attestation": (
+            "I attest this submission contains no confidential client data, "
+            "credentials, secrets, tokens, passwords, API keys, private source material, "
+            "source code, copied platform artifacts, or copied platform content."
+        ),
         "evidence_items": [
             {
                 "type": "log",

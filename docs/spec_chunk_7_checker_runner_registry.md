@@ -17,6 +17,8 @@ This is still not the automatic pre-review gate. Chunk 9 owns automatic transiti
 
 ## Scope
 
+Note: Chunk 8 supersedes the temporary public checker names `check_artifact_manifest_integrity` and `check_evidence_references_present` with `check_evidence_integrity` and `check_evidence_present`. This Chunk 7 spec preserves the historical implementation point; current checker policies should use the Chunk 8 names.
+
 - `checker_runs` and `checker_results` migration
 - SQLAlchemy checker models
 - checker schemas
@@ -87,6 +89,8 @@ The initial registered checker names are:
 - `check_policy_context_present`
 - `check_artifact_manifest_integrity`
 - `check_evidence_references_present`
+
+These were the initial Chunk 7 names. Chunk 8 replaces the last two names in current policy-facing contracts.
 
 ## Runner Behavior
 

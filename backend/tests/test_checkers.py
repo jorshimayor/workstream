@@ -21,7 +21,7 @@ from app.main import create_app
 from app.modules.checkers.models import CheckerResult, CheckerRun
 from app.modules.checkers.runner import canonical_artifact_manifest_hash
 from app.modules.checkers.schemas import CheckerRoutingRecommendation
-from app.modules.tasks.models import AuditEvent, Submission
+from app.modules.tasks.models import AuditEvent, Submission, WorkstreamTask
 from tests.test_tasks import (
     auth_headers,
     complete_guide_payload,
@@ -79,10 +79,11 @@ def test_checker_models_are_registered_for_alembic_metadata() -> None:
     assert db_models.CheckerResult is CheckerResult
 
 
-def test_checker_routing_recommendation_schema_uses_checker_retry_token() -> None:
+def test_checker_routing_recommendation_schema_uses_canonical_routing_tokens() -> None:
     adapter = TypeAdapter(CheckerRoutingRecommendation)
 
     assert adapter.validate_python("checker_retry") == "checker_retry"
+    assert adapter.validate_python("project_setup_required") == "project_setup_required"
     with pytest.raises(ValidationError):
         adapter.validate_python("operator" + "_retry")
 
@@ -156,10 +157,57 @@ async def test_pre_submit_check_returns_feedback_without_durable_run(
     assert body["authoritative"] is False
     assert body["status"] == "failed"
     assert body["eligible_to_submit"] is False
+    result_names = {result["checker_name"] for result in body["results"]}
+    assert {
+        "check_submission_packet",
+        "check_evidence_present",
+        "check_evidence_integrity",
+        "check_required_files",
+        "check_forbidden_files",
+        "check_confidentiality_attestation",
+    }.issubset(result_names)
     assert any(
-        result["checker_name"] == "check_artifact_manifest_integrity"
+        result["checker_name"] == "check_evidence_integrity"
         and result["would_block_if_submitted"] is True
         for result in body["results"]
+    )
+
+    async with db_session.get_session_factory()() as session:
+        rows = (await session.execute(CheckerRun.__table__.select())).all()
+    assert rows == []
+
+
+async def test_pre_submit_chunk8_matrix_flags_missing_evidence_and_warning(
+    checker_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(checker_client)
+    started_task = await create_started_task(checker_client, project["id"], monkeypatch)
+    payload = complete_submission_payload()
+    payload["evidence_items"] = []
+    payload["summary"] = "Completed the proof evaluation with a placeholder note."
+
+    response = await checker_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submission-precheck",
+        headers=auth_headers(),
+        json={"submission": payload},
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["authoritative"] is False
+    assert body["status"] == "failed"
+    assert body["eligible_to_submit"] is False
+    result_by_name = {result["checker_name"]: result for result in body["results"]}
+    assert result_by_name["check_evidence_present"]["status"] == "failed"
+    assert result_by_name["check_evidence_present"]["would_block_if_submitted"] is True
+    assert result_by_name["check_required_files"]["status"] == "passed"
+    assert result_by_name["check_forbidden_files"]["status"] == "passed"
+    assert result_by_name["check_confidentiality_attestation"]["status"] == "passed"
+    assert result_by_name["check_low_quality_generated_artifacts"]["status"] == "warning"
+    assert (
+        result_by_name["check_low_quality_generated_artifacts"]["would_block_if_submitted"]
+        is False
     )
 
     async with db_session.get_session_factory()() as session:
@@ -203,13 +251,17 @@ async def test_locked_submission_checker_run_persists_results_and_allows_review(
     assert body["locked_checker_policy_version"] == "v1"
     assert body["artifact_manifest_hash"].startswith("sha256:")
     assert body["audit_event_id"]
-    assert body["passed_count"] >= 4
+    assert body["passed_count"] >= 8
     assert body["blocking_count"] == 0
     assert {
         "check_submission_packet",
         "check_policy_context_present",
-        "check_artifact_manifest_integrity",
-        "check_evidence_references_present",
+        "check_evidence_present",
+        "check_evidence_integrity",
+        "check_required_files",
+        "check_forbidden_files",
+        "check_confidentiality_attestation",
+        "check_low_quality_generated_artifacts",
     }.issubset({result["checker_name"] for result in body["results"]})
 
     listed = await checker_client.get(
@@ -315,11 +367,356 @@ async def test_checker_run_with_duplicate_artifact_persists_needs_revision_resul
     duplicate_result = next(
         result
         for result in body["results"]
-        if result["checker_name"] == "check_artifact_manifest_integrity"
+        if result["checker_name"] == "check_evidence_integrity"
     )
     assert duplicate_result["status"] == "failed"
     assert duplicate_result["blocks_review"] is True
-    assert "duplicate artifact" in duplicate_result["worker_message"]
+    assert duplicate_result["worker_message"] == (
+        "Artifact manifest contains invalid or duplicate entries."
+    )
+    assert "duplicate artifact" in duplicate_result["metadata"]["integrity_error"]
+
+
+async def test_chunk8_missing_required_file_routes_to_needs_revision(
+    checker_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(checker_client)
+    started_task = await create_started_task(checker_client, project["id"], monkeypatch)
+    payload = complete_submission_payload()
+    payload["artifact_hash_manifest"] = [
+        {
+            "artifact": "other.md",
+            "hash": "sha256:other-v1",
+            "size_bytes": 128,
+            "notes": "wrong artifact",
+        }
+    ]
+    created = await checker_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=payload,
+    )
+    assert created.status_code == 201, created.text
+
+    set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
+    locked = await checker_client.post(
+        f"/api/v1/submissions/{created.json()['id']}/lock",
+        headers=auth_headers(),
+    )
+    assert locked.status_code == 200, locked.text
+    run = await checker_client.post(
+        f"/api/v1/submissions/{created.json()['id']}/checker-runs",
+        headers=auth_headers(),
+        json={"trigger_reason": "missing required file validation"},
+    )
+
+    assert run.status_code == 200, run.text
+    body = run.json()
+    assert body["routing_recommendation"] == "needs_revision"
+    assert body["outcome_source"] == "auto_checker"
+    required_files = next(
+        result for result in body["results"] if result["checker_name"] == "check_required_files"
+    )
+    assert required_files["status"] == "failed"
+    assert required_files["blocks_review"] is True
+    assert "missing required artifact files" in required_files["worker_message"]
+
+
+async def test_chunk8_default_blocking_checker_survives_empty_blocking_severities(
+    checker_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project_response = await checker_client.post(
+        "/api/v1/projects",
+        headers=auth_headers(),
+        json={
+            "name": "Empty Blocking Severity Project",
+            "slug": "empty-blocking-severity-project",
+            "base_amount": "25.00",
+            "currency": "USD",
+        },
+    )
+    assert project_response.status_code == 201, project_response.text
+    project = project_response.json()
+    guide_payload = complete_guide_payload()
+    guide_payload["checker_policy"]["required_checkers"] = ["check_policy_context_present"]
+    guide_payload["checker_policy"]["blocking_severities"] = []
+    guide_response = await checker_client.post(
+        f"/api/v1/projects/{project['id']}/guides",
+        headers=auth_headers(),
+        json=guide_payload,
+    )
+    assert guide_response.status_code == 201, guide_response.text
+    activation_response = await checker_client.post(
+        f"/api/v1/projects/{project['id']}/guides/{guide_response.json()['id']}/activate",
+        headers=auth_headers(),
+    )
+    assert activation_response.status_code == 200, activation_response.text
+    started_task = await create_started_task(checker_client, project["id"], monkeypatch)
+    payload = complete_submission_payload()
+    payload["artifact_hash_manifest"] = [
+        {
+            "artifact": "other.md",
+            "hash": "sha256:other-v1",
+            "size_bytes": 128,
+            "notes": "wrong artifact",
+        }
+    ]
+    created = await checker_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=payload,
+    )
+    assert created.status_code == 201, created.text
+
+    set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
+    locked = await checker_client.post(
+        f"/api/v1/submissions/{created.json()['id']}/lock",
+        headers=auth_headers(),
+    )
+    assert locked.status_code == 200, locked.text
+    run = await checker_client.post(
+        f"/api/v1/submissions/{created.json()['id']}/checker-runs",
+        headers=auth_headers(),
+        json={"trigger_reason": "empty blocking severity regression"},
+    )
+
+    assert run.status_code == 200, run.text
+    body = run.json()
+    assert body["routing_recommendation"] == "needs_revision"
+    required_files = next(
+        result for result in body["results"] if result["checker_name"] == "check_required_files"
+    )
+    assert required_files["status"] == "failed"
+    assert required_files["blocks_review"] is True
+
+
+async def test_chunk8_forbidden_file_blocks_without_worker_path_leakage(
+    checker_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(checker_client)
+    started_task = await create_started_task(checker_client, project["id"], monkeypatch)
+    payload = complete_submission_payload()
+    payload["artifact_hash_manifest"].append(
+        {
+            "artifact": "secrets/.env",
+            "hash": "sha256:env-v1",
+            "size_bytes": 64,
+            "notes": "should be removed",
+        }
+    )
+    created = await checker_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=payload,
+    )
+    assert created.status_code == 201, created.text
+
+    set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
+    locked = await checker_client.post(
+        f"/api/v1/submissions/{created.json()['id']}/lock",
+        headers=auth_headers(),
+    )
+    assert locked.status_code == 200, locked.text
+    run = await checker_client.post(
+        f"/api/v1/submissions/{created.json()['id']}/checker-runs",
+        headers=auth_headers(),
+        json={"trigger_reason": "forbidden file validation"},
+    )
+
+    assert run.status_code == 200, run.text
+    body = run.json()
+    assert body["routing_recommendation"] == "needs_revision"
+    forbidden = next(
+        result for result in body["results"] if result["checker_name"] == "check_forbidden_files"
+    )
+    assert forbidden["status"] == "failed"
+    assert forbidden["blocks_review"] is True
+    assert forbidden["worker_visible"] is True
+    assert ".env" not in forbidden["worker_message"]
+    assert "secrets/" not in forbidden["worker_message"]
+    assert "local://" not in forbidden["worker_message"]
+
+
+async def test_chunk8_confidentiality_attestation_blocks_generic_text(
+    checker_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(checker_client)
+    started_task = await create_started_task(checker_client, project["id"], monkeypatch)
+    payload = complete_submission_payload()
+    payload["worker_attestation"] = "ok"
+    created = await checker_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=payload,
+    )
+    assert created.status_code == 201, created.text
+
+    set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
+    locked = await checker_client.post(
+        f"/api/v1/submissions/{created.json()['id']}/lock",
+        headers=auth_headers(),
+    )
+    assert locked.status_code == 200, locked.text
+    run = await checker_client.post(
+        f"/api/v1/submissions/{created.json()['id']}/checker-runs",
+        headers=auth_headers(),
+        json={"trigger_reason": "confidentiality attestation validation"},
+    )
+
+    assert run.status_code == 200, run.text
+    body = run.json()
+    assert body["routing_recommendation"] == "needs_revision"
+    attestation = next(
+        result
+        for result in body["results"]
+        if result["checker_name"] == "check_confidentiality_attestation"
+    )
+    assert attestation["status"] == "failed"
+    assert attestation["blocks_review"] is True
+    assert "confidentiality attestation" in attestation["worker_message"]
+
+
+async def test_chunk8_low_quality_generated_artifacts_warns_without_blocking(
+    checker_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(checker_client)
+    started_task = await create_started_task(checker_client, project["id"], monkeypatch)
+    payload = complete_submission_payload()
+    payload["summary"] = "Completed the proof evaluation with a placeholder note to revise."
+    created = await checker_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=payload,
+    )
+    assert created.status_code == 201, created.text
+
+    set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
+    locked = await checker_client.post(
+        f"/api/v1/submissions/{created.json()['id']}/lock",
+        headers=auth_headers(),
+    )
+    assert locked.status_code == 200, locked.text
+    run = await checker_client.post(
+        f"/api/v1/submissions/{created.json()['id']}/checker-runs",
+        headers=auth_headers(),
+        json={"trigger_reason": "warning-only generated artifact validation"},
+    )
+
+    assert run.status_code == 200, run.text
+    body = run.json()
+    assert body["routing_recommendation"] == "allow_review"
+    assert body["outcome_source"] == "none"
+    assert body["warning_count"] >= 1
+    low_quality = next(
+        result
+        for result in body["results"]
+        if result["checker_name"] == "check_low_quality_generated_artifacts"
+    )
+    assert low_quality["status"] == "warning"
+    assert low_quality["blocks_review"] is False
+
+
+async def test_chunk8_project_setup_required_takes_priority_over_worker_revision(
+    checker_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project_response = await checker_client.post(
+        "/api/v1/projects",
+        headers=auth_headers(),
+        json={
+            "name": "Project Setup Checker Project",
+            "slug": "project-setup-checker-project",
+            "base_amount": "25.00",
+            "currency": "USD",
+        },
+    )
+    assert project_response.status_code == 201, project_response.text
+    project = project_response.json()
+    guide_payload = complete_guide_payload()
+    guide_payload["checker_policy"]["required_checkers"] = [
+        "check_acceptance_criteria_present"
+    ]
+    guide_response = await checker_client.post(
+        f"/api/v1/projects/{project['id']}/guides",
+        headers=auth_headers(),
+        json=guide_payload,
+    )
+    assert guide_response.status_code == 201, guide_response.text
+    activation_response = await checker_client.post(
+        f"/api/v1/projects/{project['id']}/guides/{guide_response.json()['id']}/activate",
+        headers=auth_headers(),
+    )
+    assert activation_response.status_code == 200, activation_response.text
+    started_task = await create_started_task(checker_client, project["id"], monkeypatch)
+    payload = complete_submission_payload()
+    payload["artifact_hash_manifest"] = [
+        {
+            "artifact": "other.md",
+            "hash": "sha256:other-v1",
+            "size_bytes": 128,
+            "notes": "worker-fixable missing required file case",
+        }
+    ]
+    created = await checker_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=payload,
+    )
+    assert created.status_code == 201, created.text
+
+    set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
+    locked = await checker_client.post(
+        f"/api/v1/submissions/{created.json()['id']}/lock",
+        headers=auth_headers(),
+    )
+    assert locked.status_code == 200, locked.text
+    async with db_session.get_session_factory()() as session:
+        task = await session.get(WorkstreamTask, started_task["id"])
+        assert task is not None
+        task.acceptance_criteria = None
+        await session.commit()
+
+    run = await checker_client.post(
+        f"/api/v1/submissions/{created.json()['id']}/checker-runs",
+        headers=auth_headers(),
+        json={"trigger_reason": "project setup route validation"},
+    )
+
+    assert run.status_code == 200, run.text
+    body = run.json()
+    assert body["routing_recommendation"] == "project_setup_required"
+    assert body["outcome_source"] == "auto_checker"
+    setup_result = next(
+        result
+        for result in body["results"]
+        if result["checker_name"] == "check_acceptance_criteria_present"
+    )
+    assert setup_result["status"] == "failed"
+    assert setup_result["blocks_review"] is True
+    assert setup_result["worker_visible"] is False
+    assert setup_result["worker_message"] is None
+
+    set_dev_actor(monkeypatch, roles="worker", subject="worker-one")
+    worker_read = await checker_client.get(
+        f"/api/v1/checker-runs/{body['id']}",
+        headers=auth_headers(),
+    )
+    assert worker_read.status_code == 200, worker_read.text
+    worker_body = worker_read.json()
+    assert worker_body["routing_recommendation"] == "not_evaluated"
+    assert worker_body["outcome_source"] == "none"
+    assert worker_body["passed_count"] == 0
+    assert worker_body["warning_count"] == 0
+    assert worker_body["failed_count"] == 0
+    assert worker_body["blocking_count"] == 0
+    assert worker_body["results"] == []
+    assert "project_setup_required" not in worker_read.text
+    assert "acceptance_criteria" not in worker_read.text
 
 
 async def test_worker_can_read_only_worker_visible_checker_result_fields(
@@ -570,16 +967,21 @@ async def test_stale_locked_submission_cannot_receive_checker_run(
     assert submissions[0].version == 1
 
 
-async def test_unknown_policy_checker_blocks_durable_run_without_fake_results(
+@pytest.mark.parametrize(
+    "old_checker_name",
+    ["check_evidence_references_present", "check_artifact_manifest_integrity"],
+)
+async def test_old_checker_name_blocks_durable_run_without_alias(
     checker_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
+    old_checker_name: str,
 ) -> None:
     project_response = await checker_client.post(
         "/api/v1/projects",
         headers=auth_headers(),
         json={
-            "name": "Unknown Checker Project",
-            "slug": "unknown-checker-project",
+            "name": "Old Checker Name Project",
+            "slug": "old-checker-name-project",
             "base_amount": "25.00",
             "currency": "USD",
         },
@@ -587,7 +989,7 @@ async def test_unknown_policy_checker_blocks_durable_run_without_fake_results(
     assert project_response.status_code == 201, project_response.text
     project = project_response.json()
     guide_payload = complete_guide_payload()
-    guide_payload["checker_policy"]["required_checkers"] = ["check_missing_registered_checker"]
+    guide_payload["checker_policy"]["required_checkers"] = [old_checker_name]
     guide_response = await checker_client.post(
         f"/api/v1/projects/{project['id']}/guides",
         headers=auth_headers(),

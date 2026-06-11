@@ -151,7 +151,7 @@ Deliver:
 Exit criteria:
 
 - run a checker against a submission
-- store pass/warn/fail results
+- store `passed`, `warning`, and `failed` results
 - expose checker run and result data through backend API responses and dry-run/demo output
 - no product frontend task page is added in Week 2
 - checker records can distinguish pre-submit feedback from post-submit internal auto checks
@@ -168,7 +168,7 @@ Deliver:
 
 Exit criteria:
 
-- broken submissions fail before review
+- worker-fixable submission failures fail before review
 - high severity failures block `REVIEW_PENDING`
 - checker runs bind to the exact submission id, submission version, package hash, and artifact hash manifest
 - worker-fixable checker failures route to user-facing `NEEDS_REVISION`
@@ -217,7 +217,7 @@ Deliver:
 
 Exit criteria:
 
-- at least one intentionally broken submission is blocked
+- at least one worker-fixable submission failure is blocked
 - at least one clean submission reaches `REVIEW_PENDING`
 - trial output documents which checker results would be visible to Week 3 reviewers through backend APIs
 

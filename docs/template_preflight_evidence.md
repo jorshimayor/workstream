@@ -26,7 +26,7 @@ State what was checked before review.
 
 | Check | Result | Checker Run ID | Evidence ID | Evidence |
 | --- | --- | --- | --- | --- |
-| `<checker>` | `<pass/warn/fail>` | `<checker run id>` | `<evidence id>` | `<log/hash/reference>` |
+| `<checker>` | `<passed/warning/failed>` | `<checker run id>` | `<evidence id>` | `<log/hash/reference>` |
 
 ## Package Evidence
 

@@ -37,10 +37,12 @@ The checker framework protects reviewer time by proving that the latest locked s
 ## Core Invariant
 
 ```text
-Draft packet -> Pre-submit checks -> Submit -> Lock -> Internal CheckerRun -> CheckerResults -> REVIEW_PENDING or NEEDS_REVISION
+Draft packet -> Pre-submit checks -> Submit -> Lock -> Internal CheckerRun -> CheckerResults -> REVIEW_PENDING or NEEDS_REVISION or PROJECT_SETUP_REQUIRED
 ```
 
 A task cannot reach `REVIEW_PENDING` unless the latest locked submission has a completed checker run for the exact submission version and artifact context.
+
+`NEEDS_REVISION` is the worker-facing route for worker-fixable submission failures. `PROJECT_SETUP_REQUIRED` is the internal route for project/task setup defects owned by a project manager.
 
 The checker binding includes:
 
@@ -117,7 +119,7 @@ Human review decisions remain only:
 
 Stored human review decision tokens are `accept`, `needs_revision`, and `reject`. User-facing task outcomes are displayed as Accepted, Rejected, and Needs revision. Internal lifecycle constants may use uppercase enum names, but persisted workflow values and API payloads should use canonical lowercase tokens.
 
-Checker routing recommendation tokens are separate: `not_evaluated`, `allow_review`, `needs_revision`, and `checker_retry`.
+Checker routing recommendation tokens are separate: `not_evaluated`, `allow_review`, `needs_revision`, `checker_retry`, and `project_setup_required`.
 
 ## Week 2 Visibility Boundary
 
@@ -143,7 +145,7 @@ Conditions of satisfaction:
 - checker results are immutable after persistence
 - status and severity values are canonical
 - pre-submit feedback has a response contract but is not authoritative review-gate proof
-- post-submit checker runs can record `allow_review`, `needs_revision`, or `checker_retry` as routing recommendations
+- post-submit checker runs can record `allow_review`, `needs_revision`, `checker_retry`, or `project_setup_required` as routing recommendations
 - `allow_review` is not stored as `accept`; it only means the submission can proceed to human review
 - checker-caused `needs_revision` stores `outcome_source = auto_checker`
 - checker output can be read through backend APIs
@@ -160,22 +162,24 @@ Conditions of satisfaction:
 - pre-submit checks return immediate feedback before final submission
 - `check_submission_packet` runs against real submission data
 - failed structural checks produce stored checker results
-- broken submissions are blocked before human review
+- worker-fixable submission failures and project setup failures are blocked before human review with distinct routing recommendations
 
 ### Chunk 8: Evidence And Policy Checkers
 
 Adds evidence, integrity, acceptance criteria, policy context, forbidden file, confidentiality, and generated-artifact checks.
 
+Detailed spec: [Chunk 8 Evidence And Policy Checkers](spec_chunk_8_evidence_policy_checkers.md).
+
 Conditions of satisfaction:
 
 - missing evidence blocks `REVIEW_PENDING`
-- artifact hash mismatch blocks `REVIEW_PENDING`
+- malformed or missing artifact/evidence hash references block `REVIEW_PENDING`
 - missing locked policy context blocks `REVIEW_PENDING`
 - worker-visible messages do not leak sensitive internals
 
 ### Chunk 9: Pre-Review Gate
 
-Automatically triggers internal post-submit checks after submission locking and calculates whether a checked submission moves to `REVIEW_PENDING` or user-facing `NEEDS_REVISION`.
+Automatically triggers internal post-submit checks after submission locking and calculates whether a checked submission moves to `REVIEW_PENDING`, user-facing `NEEDS_REVISION`, or internal `PROJECT_SETUP_REQUIRED`.
 
 Conditions of satisfaction:
 
@@ -192,7 +196,8 @@ Runs real sample submissions through the checker framework.
 Conditions of satisfaction:
 
 - at least one clean submission reaches `REVIEW_PENDING`
-- at least one intentionally broken submission is blocked
+- at least one worker-fixable submission failure is blocked
+- project setup failures and worker-fixable submission failures use distinct routing recommendations
 - checker failures are documented in a failure catalog
 - false-positive and missing-checker notes are recorded
 

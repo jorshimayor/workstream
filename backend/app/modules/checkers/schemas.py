@@ -19,6 +19,7 @@ CheckerRoutingRecommendation = Literal[
     "allow_review",
     "needs_revision",
     "checker_retry",
+    "project_setup_required",
 ]
 CheckerOutcomeSource = Literal["none", "auto_checker"]
 
@@ -73,7 +74,7 @@ class PreSubmitCheckResponse(BaseModel):
 class CheckerResultResponse(BaseModel):
     """Response schema for one persisted checker result."""
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     id: str
     checker_run_id: str

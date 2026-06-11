@@ -52,7 +52,7 @@ Acceptance:
 
 1. Checker runner loads project policy.
 2. Runner executes enabled checks.
-3. Results are saved with pass, warn, fail, severity, message, and evidence.
+3. Results are saved with `passed`, `warning`, or `failed`, plus severity, message, and evidence.
 4. If high-severity failures exist, task enters `NEEDS_REVISION`.
 5. If no high-severity failures exist, task enters `REVIEW_PENDING`.
 

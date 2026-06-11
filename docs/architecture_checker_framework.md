@@ -13,8 +13,8 @@ Every checker returns:
 ```json
 {
   "name": "check_submission_packet",
-  "status": "pass",
-  "severity": "high",
+  "status": "passed",
+  "severity": "info",
   "message": "Submission packet is complete.",
   "suggested_fix": null,
   "evidence": [],
@@ -24,15 +24,17 @@ Every checker returns:
 
 Status:
 
-- pass
-- warn
-- fail
+- passed
+- warning
+- failed
 
 Severity:
 
+- info
 - low
 - medium
 - high
+- critical
 
 ## Checker Registry
 
@@ -64,9 +66,9 @@ Checker names must not drift between project guides, policy templates, implement
 
 Default:
 
-- high fail blocks human review
-- medium fail creates reviewer warning
-- low fail creates informational note
+- high-severity `failed` result blocks human review
+- medium-severity `failed` result creates reviewer warning
+- low-severity `failed` result creates informational note
 
 Project guides can override this by declaring stricter policies.
 
