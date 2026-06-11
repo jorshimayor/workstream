@@ -626,7 +626,7 @@ Purpose:
 
 This record is created before a worker resumes a task in `NEEDS_REVISION` when guide or policy context must be checked for the next attempt. It does not mutate the prior submission. It records whether the next attempt keeps the prior context or rebases to the current active guide and policy context under revision policy.
 
-The worker and reviewer packets must show the old version, new version, rebase reason, and change summary when `context_rebased = true`.
+The worker and reviewer packets must show the prior version, next version, rebase reason, and change summary when `context_rebased = true`.
 
 ## ContributionRecord
 

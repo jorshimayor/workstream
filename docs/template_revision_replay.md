@@ -16,7 +16,7 @@ Worker-visible fields:
 | --- | --- |
 | prior submission id | `<submission id>` |
 | prior submission version | `<version>` |
-| context rebased | `yes | no` |
+| context rebased | yes or no |
 | prior guide version | `<guide version>` |
 | next guide version | `<guide version>` |
 | prior checker policy version | `<checker policy version>` |
@@ -42,7 +42,7 @@ Every high and medium prior finding must have one row. A resubmission cannot mov
 
 | Prior Finding ID | Prior Severity | Area | Required Fix | Worker Fix Summary | Evidence Ref | Worker Claim Status | Reviewer Closure Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `<finding id>` | `high | medium | low` | `<area>` | `<required fix>` | `<what changed>` | `<evidence id>` | `fixed | disputed | not_applicable` | `closed_fixed | closed_rebutted | partially_closed | still_open | obsolete` |
+| `<finding id>` | high / medium / low | `<area>` | `<required fix>` | `<what changed>` | `<evidence id>` | fixed / disputed / not_applicable | closed_fixed / closed_rebutted / partially_closed / still_open / obsolete |
 
 ## Checker Results After Revision
 

@@ -33,7 +33,7 @@ Mitigation:
 
 - prior submissions remain tied to their locked guide and policy versions
 - revision policy controls whether the next attempt rebases to current active guide and policy context
-- worker and reviewer packets show old version, new version, rebase reason, and change summary
+- worker and reviewer packets show prior version, next version, rebase reason, and change summary
 - every rebase records an audit event
 
 ### R2: Weak Submissions Reach Review

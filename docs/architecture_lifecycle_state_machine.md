@@ -145,7 +145,7 @@ Required before entering:
 
 Before the worker resumes, Workstream prepares the next revision context. That preparation checks whether the active project guide or policy context changed since the prior submission was locked. Revision policy decides whether the next attempt keeps the prior context, rebases to the current active context, or is blocked for project-manager repair.
 
-A revision context rebase never mutates the prior submitted attempt. It only stamps the next submission attempt. The worker and reviewer must see the old version, the new version, and the guide or policy change summary.
+A revision context rebase never mutates the prior submitted attempt. It only stamps the next submission attempt. The worker and reviewer must see the prior version, the next version, and the guide or policy change summary.
 
 ### ACCEPTED
 

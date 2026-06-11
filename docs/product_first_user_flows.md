@@ -80,7 +80,7 @@ Acceptance:
 
 1. Worker opens needs-revision task.
 2. Workstream prepares revision context from the revision policy.
-3. Worker sees old guide/policy version, current guide/policy version, and any change summary when the task was rebased.
+3. Worker sees prior guide/policy version, next guide/policy version, and any change summary when the task was rebased.
 4. Worker sees each finding as a checklist item.
 5. Worker adds fix note and evidence per finding.
 6. Worker resubmits.

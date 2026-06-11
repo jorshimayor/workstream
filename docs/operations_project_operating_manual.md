@@ -150,7 +150,7 @@ Do not let repeated mistakes remain tribal knowledge.
 
 If a lesson changes acceptance, review, revision, payment, evidence, or checker expectations, it must become a guide, policy, template, or checker update before it is enforced. Chat and Slack messages can announce the change, but they are not the source of truth.
 
-When a task already in `NEEDS_REVISION` is affected by a new guide or policy version, revision policy decides whether the next attempt is rebased. The worker must see the old version, new version, and change summary before resubmitting.
+When a task already in `NEEDS_REVISION` is affected by a new guide or policy version, revision policy decides whether the next attempt is rebased. The worker must see the prior version, next version, and change summary before resubmitting.
 
 Each lesson must have an action owner and one target:
 

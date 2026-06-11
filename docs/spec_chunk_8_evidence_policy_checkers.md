@@ -249,7 +249,7 @@ Routing priority is deterministic:
 
 When one checker run contains both task setup failures and worker-fixable submission failures, `task_setup_blocked` wins because the project manager must fix the task contract before the worker can receive a meaningful revision request.
 
-Chunk 8 schema-documents `task_setup_blocked` and implements the routing contract, but normal API flows are expected to prevent task setup defects before submission. For example, current task screening requires acceptance criteria before a task can be released. Chunk 8 tests must verify the enum/source-of-truth contract and may verify task setup routing through controlled service/repository setup if no normal FastAPI path can produce a locked submission with that defect. A later admin repair workflow can add a real API path for this route.
+Chunk 8 documents `task_setup_blocked` in its schema and implements the routing contract, but normal API flows are expected to prevent task setup defects before submission. For example, current task screening requires acceptance criteria before a task can be released. Chunk 8 tests must verify the enum/source-of-truth contract and may verify task setup routing through controlled service/repository setup if no normal FastAPI path can produce a locked submission with that defect. A later admin repair workflow can add a real API path for this route.
 
 Chunk 9 owns applying the lifecycle transition.
 
