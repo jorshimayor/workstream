@@ -18,6 +18,23 @@ Mitigation:
 
 - every rule belongs in project guide, checker policy, review policy, revision policy, or payment policy
 - daily lessons learned become document updates
+- out-of-band guidance has no acceptance force until it becomes a guide, policy, template, or checker contract update
+- revision context preparation shows workers any guide or policy changes before resubmission
+
+### R1A: Revision Uses Stale Or Hidden Rules
+
+Severity: high
+
+Problem:
+
+A task can be sent back for revision after the project guide or policies changed. If the worker is not shown the new context, the revision loop becomes unfair and reviewers may apply standards that were not visible when the worker resumed.
+
+Mitigation:
+
+- prior submissions remain tied to their locked guide and policy versions
+- revision policy controls whether the next attempt rebases to current active guide and policy context
+- worker and reviewer packets show prior version, next version, rebase reason, and change summary
+- every rebase records an audit event
 
 ### R2: Weak Submissions Reach Review
 

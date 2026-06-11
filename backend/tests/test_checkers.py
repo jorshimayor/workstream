@@ -83,7 +83,7 @@ def test_checker_routing_recommendation_schema_uses_canonical_routing_tokens() -
     adapter = TypeAdapter(CheckerRoutingRecommendation)
 
     assert adapter.validate_python("checker_retry") == "checker_retry"
-    assert adapter.validate_python("project_setup_required") == "project_setup_required"
+    assert adapter.validate_python("task_setup_blocked") == "task_setup_blocked"
     with pytest.raises(ValidationError):
         adapter.validate_python("operator" + "_retry")
 
@@ -621,7 +621,7 @@ async def test_chunk8_low_quality_generated_artifacts_warns_without_blocking(
     assert low_quality["blocks_review"] is False
 
 
-async def test_chunk8_project_setup_required_takes_priority_over_worker_revision(
+async def test_chunk8_task_setup_blocked_takes_priority_over_worker_revision(
     checker_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -629,8 +629,8 @@ async def test_chunk8_project_setup_required_takes_priority_over_worker_revision
         "/api/v1/projects",
         headers=auth_headers(),
         json={
-            "name": "Project Setup Checker Project",
-            "slug": "project-setup-checker-project",
+            "name": "Task Setup Checker Project",
+            "slug": "task-setup-checker-project",
             "base_amount": "25.00",
             "currency": "USD",
         },
@@ -684,12 +684,12 @@ async def test_chunk8_project_setup_required_takes_priority_over_worker_revision
     run = await checker_client.post(
         f"/api/v1/submissions/{created.json()['id']}/checker-runs",
         headers=auth_headers(),
-        json={"trigger_reason": "project setup route validation"},
+        json={"trigger_reason": "task setup blocked route validation"},
     )
 
     assert run.status_code == 200, run.text
     body = run.json()
-    assert body["routing_recommendation"] == "project_setup_required"
+    assert body["routing_recommendation"] == "task_setup_blocked"
     assert body["outcome_source"] == "auto_checker"
     setup_result = next(
         result
@@ -715,7 +715,7 @@ async def test_chunk8_project_setup_required_takes_priority_over_worker_revision
     assert worker_body["failed_count"] == 0
     assert worker_body["blocking_count"] == 0
     assert worker_body["results"] == []
-    assert "project_setup_required" not in worker_read.text
+    assert "task_setup_blocked" not in worker_read.text
     assert "acceptance_criteria" not in worker_read.text
 
 

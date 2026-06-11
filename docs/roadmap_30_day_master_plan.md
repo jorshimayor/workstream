@@ -140,7 +140,7 @@ This thin slice is the first proof that Workstream can measure and certify usefu
 
 ## Week 2: Checker Framework
 
-Objective: prevent worker-fixable submission failures and project setup defects from reaching human review.
+Objective: prevent worker-fixable submission failures and locked task setup defects from reaching human review.
 
 Week 2 is backend/checker-framework work. Checker results must be available through backend APIs, dry-run scripts, and demo/debug output. Product frontend pages, reviewer queue UI, and review decision screens stay in Week 3 or later.
 
@@ -215,6 +215,7 @@ Deliverables:
 - severity model
 - accept / needs_revision / reject decisions
 - revision replay
+- revision context preparation and guide/policy rebase audit
 - reviewer metrics
 - second-review flag
 

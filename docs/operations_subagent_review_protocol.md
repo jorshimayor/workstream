@@ -2,38 +2,46 @@
 
 Workstream planning and major system changes receive multiple review perspectives before being treated as ready.
 
-This repository may not have actual autonomous subagents wired in yet, but the review roles are simulated consistently until tooling exists.
+Implementation and specification chunks must run internal reviewer agents before PR review. The PR must include a changed `docs/internal_reviews/*.md` evidence file, and CI runs `scripts/check_internal_review_evidence.py` to block missing or incomplete evidence.
 
 ## Review Roles
 
-### Product Strategy Reviewer
+### Senior Engineering Reviewer
 
 Focus:
 
-- product clarity
-- 30-day scope
-- MVP risk
-- first-user flow
-- operator value
-- whether the plan is too broad
+- architecture consistency
+- code boundaries
+- naming clarity
+- lifecycle and data-model invariants
+- implementation risk
 
-### Architecture Reviewer
-
-Focus:
-
-- system boundaries
-- state model
-- data model
-- extensibility
-- failure modes
-- whether future adapters can be added without rewriting the core
-
-### Operations Reviewer
+### QA/Test Reviewer
 
 Focus:
 
-- daily operator workflow
-- reviewer workflow
+- test coverage
+- real API and persistence behavior
+- stale wording scans
+- regression risk
+- CI coverage
+
+### Security/Auth Reviewer
+
+Focus:
+
+- auth boundary
+- redaction and visibility
+- sensitive metadata exposure
+- audit integrity
+- permission risks
+
+### Product/Ops Reviewer
+
+Focus:
+
+- daily project manager workflow
+- worker and reviewer workflow
 - checker policy
 - revision replay
 - payment/reputation consistency
@@ -71,7 +79,7 @@ Severity:
 
 ## Rule
 
-No major plan is marked ready without at least product, architecture, and operations review passes.
+No implementation or specification chunk is marked ready, pushed for PR review, or reported complete until required reviewer tracks have run, valid findings are fixed or documented, and every reviewer-agent session is closed.
 
 ## Task Readiness Gate
 

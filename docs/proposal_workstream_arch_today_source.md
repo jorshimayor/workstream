@@ -617,7 +617,7 @@ const LockdownSection = () => (
         action:"Agree the field list in this document. Team reviews, challenges, and confirms. Must be frozen before any schema is written." },
       { n:"02",title:"Guide versioning policy",color:c.red,tag:"HIGHEST PRIORITY",
         why:"Must be in from day one. Retrofitting versioning after tasks are in flight creates disputes that are impossible to resolve fairly.",
-        action:"Confirm: version field is required, tasks lock at assignment, version increments on material guide changes, old versions are never deleted." },
+        action:"Confirm: version field is required, tasks lock at assignment, version increments on material guide changes, prior versions are never deleted." },
       { n:"03",title:"Origin qualification criteria",color:c.accent,tag:"HIGH",
         why:"Defines what Workstream accepts at the source level. Determines who can become an origin and on what terms.",
         action:"Confirm the three checks. Set the platform floor value — recommended starting point is $5 USD equivalent, configurable per currency." },

@@ -37,12 +37,12 @@ The checker framework protects reviewer time by proving that the latest locked s
 ## Core Invariant
 
 ```text
-Draft packet -> Pre-submit checks -> Submit -> Lock -> Internal CheckerRun -> CheckerResults -> REVIEW_PENDING or NEEDS_REVISION or PROJECT_SETUP_REQUIRED
+Draft packet -> Pre-submit checks -> Submit -> Lock -> Internal CheckerRun -> CheckerResults -> routing recommendation
 ```
 
 A task cannot reach `REVIEW_PENDING` unless the latest locked submission has a completed checker run for the exact submission version and artifact context.
 
-`NEEDS_REVISION` is the worker-facing route for worker-fixable submission failures. `PROJECT_SETUP_REQUIRED` is the internal route for project/task setup defects owned by a project manager.
+`allow_review` can move the task toward `REVIEW_PENDING`. `needs_revision` is the worker-facing route for worker-fixable submission failures. `task_setup_blocked` is an internal checker routing recommendation for locked task setup defects owned by a project manager; it is not a task lifecycle state.
 
 The checker binding includes:
 
@@ -119,7 +119,7 @@ Human review decisions remain only:
 
 Stored human review decision tokens are `accept`, `needs_revision`, and `reject`. User-facing task outcomes are displayed as Accepted, Rejected, and Needs revision. Internal lifecycle constants may use uppercase enum names, but persisted workflow values and API payloads should use canonical lowercase tokens.
 
-Checker routing recommendation tokens are separate: `not_evaluated`, `allow_review`, `needs_revision`, `checker_retry`, and `project_setup_required`.
+Checker routing recommendation tokens are separate: `not_evaluated`, `allow_review`, `needs_revision`, `checker_retry`, and `task_setup_blocked`.
 
 ## Week 2 Visibility Boundary
 
@@ -145,7 +145,7 @@ Conditions of satisfaction:
 - checker results are immutable after persistence
 - status and severity values are canonical
 - pre-submit feedback has a response contract but is not authoritative review-gate proof
-- post-submit checker runs can record `allow_review`, `needs_revision`, `checker_retry`, or `project_setup_required` as routing recommendations
+- post-submit checker runs can record `allow_review`, `needs_revision`, `checker_retry`, or `task_setup_blocked` as routing recommendations
 - `allow_review` is not stored as `accept`; it only means the submission can proceed to human review
 - checker-caused `needs_revision` stores `outcome_source = auto_checker`
 - checker output can be read through backend APIs
@@ -162,7 +162,7 @@ Conditions of satisfaction:
 - pre-submit checks return immediate feedback before final submission
 - `check_submission_packet` runs against real submission data
 - failed structural checks produce stored checker results
-- worker-fixable submission failures and project setup failures are blocked before human review with distinct routing recommendations
+- worker-fixable submission failures and locked task setup failures are blocked before human review with distinct routing recommendations
 
 ### Chunk 8: Evidence And Policy Checkers
 
@@ -179,7 +179,7 @@ Conditions of satisfaction:
 
 ### Chunk 9: Pre-Review Gate
 
-Automatically triggers internal post-submit checks after submission locking and calculates whether a checked submission moves to `REVIEW_PENDING`, user-facing `NEEDS_REVISION`, or internal `PROJECT_SETUP_REQUIRED`.
+Automatically triggers internal post-submit checks after submission locking and calculates whether a checked submission moves to `REVIEW_PENDING`, user-facing `NEEDS_REVISION`, or an internal `task_setup_blocked` repair route.
 
 Conditions of satisfaction:
 
@@ -197,7 +197,7 @@ Conditions of satisfaction:
 
 - at least one clean submission reaches `REVIEW_PENDING`
 - at least one worker-fixable submission failure is blocked
-- project setup failures and worker-fixable submission failures use distinct routing recommendations
+- locked task setup failures and worker-fixable submission failures use distinct routing recommendations
 - checker failures are documented in a failure catalog
 - false-positive and missing-checker notes are recorded
 

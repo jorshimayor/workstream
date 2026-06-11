@@ -79,15 +79,18 @@ Acceptance:
 ## Flow 6: Revision Replay
 
 1. Worker opens needs-revision task.
-2. Worker sees each finding as a checklist item.
-3. Worker adds fix note and evidence per finding.
-4. Worker resubmits.
-5. Checkers rerun.
-6. Reviewer closes or reopens each finding.
+2. Workstream prepares revision context from the revision policy.
+3. Worker sees prior guide/policy version, next guide/policy version, and any change summary when the task was rebased.
+4. Worker sees each finding as a checklist item.
+5. Worker adds fix note and evidence per finding.
+6. Worker resubmits.
+7. Checkers rerun.
+8. Reviewer closes or reopens each finding.
 
 Acceptance:
 
 - Prior review remains visible.
+- Context changes are visible before the worker revises.
 - Each required finding has a closure state.
 - Revision count is tracked against the locked revision policy.
 - Resubmission is blocked or rejected when the revision policy limit or deadline says so.

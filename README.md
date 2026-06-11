@@ -106,6 +106,7 @@ Workstream turns that operating knowledge into reusable infrastructure.
 - [ADR 0007: Execution Is Async-First](docs/decision_0007_async_first_execution.md)
 - [ADR 0008: Files Use An Object-Storage Abstraction](docs/decision_0008_object_storage_abstraction.md)
 - [ADR 0009: Review Decisions Are Canonical](docs/decision_0009_review_decisions_are_canonical.md)
+- [ADR 0010: Revision Context Rebase Is Controlled By Policy](docs/decision_0010_revision_context_rebase.md)
 
 ## Local Backend Database
 
@@ -188,15 +189,31 @@ The system is successful only if it prevents weak work from reaching review, pre
 
 Workstream is built as durable operational infrastructure:
 
+Governance:
+
 - project rules live in guides and policies, not chat memory
-- status is a ledger, not a loose label
-- reviews cite evidence and required changes
-- revisions replay prior findings one by one
-- payments are recorded separately from task acceptance
-- every checker result is stored and auditable
-- lessons learned become guide updates or new checkers
-- submitted artifacts are immutable and hash-bound to checker runs
-- accepted work cites evidence before payment exposure is created
 - guide and policy versions are locked per task so rules do not drift silently
+- out-of-band guidance is not enforceable until it becomes a guide, policy, template, or checker contract update
+
+Lifecycle and revision:
+
+- status is a ledger, not a loose label
+- revisions replay prior findings one by one
+- revision context is prepared before resubmission when guide or policy versions change
+
+Artifacts, evidence, and auditing:
+
+- reviews cite evidence and required changes
+- submitted artifacts are immutable and hash-bound to checker runs
+- every checker result is stored and auditable
+
+Acceptance and payment:
+
+- accepted work cites evidence before payment exposure is created
 - accepted work creates an evidence-backed contribution record before payment or reputation updates
+- payments are recorded separately from task acceptance
+
+Checkers, lessons, and gates:
+
+- lessons learned become guide updates or new checkers
 - quality gates remain separate: project activation, task screening, and submission quality

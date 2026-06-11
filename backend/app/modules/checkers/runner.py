@@ -24,7 +24,7 @@ CHECKER_SEVERITY_HIGH = "high"
 CHECKER_SEVERITY_CRITICAL = "critical"
 
 BLOCKING_SEVERITIES = {CHECKER_SEVERITY_HIGH, CHECKER_SEVERITY_CRITICAL}
-ROUTING_PROJECT_SETUP_REQUIRED = "project_setup_required"
+ROUTING_TASK_SETUP_BLOCKED = "task_setup_blocked"
 
 HASH_TOKEN_PATTERN = re.compile(r"^sha256:\S+$")
 GENERIC_ATTESTATIONS = {"ok", "done", "yes", "i agree", "confirmed"}
@@ -551,7 +551,7 @@ async def check_policy_context_present(context: CheckerContext) -> CheckerOutcom
             "A project manager must re-screen the task before review can continue.",
             metadata={"missing_context": missing},
             worker_visible=False,
-            routing_recommendation=ROUTING_PROJECT_SETUP_REQUIRED,
+            routing_recommendation=ROUTING_TASK_SETUP_BLOCKED,
         )
     return _pass("check_policy_context_present", "Submission has locked guide and policy context.")
 
@@ -586,7 +586,7 @@ async def check_acceptance_criteria_present(context: CheckerContext) -> CheckerO
             "Task is not review-ready because acceptance criteria are missing.",
             "A project manager must add reviewable acceptance criteria before review can continue.",
             worker_visible=False,
-            routing_recommendation=ROUTING_PROJECT_SETUP_REQUIRED,
+            routing_recommendation=ROUTING_TASK_SETUP_BLOCKED,
         )
     return _pass(
         "check_acceptance_criteria_present",

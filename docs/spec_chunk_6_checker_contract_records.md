@@ -113,13 +113,13 @@ This chunk does not run the full checker framework yet. It defines the durable p
 - `allow_review`
 - `needs_revision`
 - `checker_retry`
-- `project_setup_required`
+- `task_setup_blocked`
 
 `routing_recommendation` is not a human review decision field. It is a checker-side routing recommendation used before human review.
 
 `allow_review` means the checker run found no blocking issue and the submission may proceed to human review. It must not be stored as `accept`, because no human reviewer has accepted the work yet.
 
-`project_setup_required` means the task/project contract is incomplete and the fix belongs to a project manager, not the worker.
+`task_setup_blocked` means the task's locked contract or policy context is incomplete, stale, or unsafe to review. The fix belongs to a project manager, not the worker.
 
 `needs_revision` from a checker run must carry `outcome_source = auto_checker` and no review decision id. `needs_revision` from a human reviewer must carry `outcome_source = human_review` and a review decision id.
 

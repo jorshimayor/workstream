@@ -55,6 +55,23 @@ A resubmission cannot move to `REVIEW_PENDING` when:
 
 Low findings can be left unresolved if the reviewer marks them as informational.
 
+## Revision Context Preparation
+
+Before the worker resumes a task in `NEEDS_REVISION`, Workstream prepares the next revision context.
+
+That preparation compares the prior submission's locked project guide and policy versions with the current active guide and policy versions. Revision policy decides whether the next attempt keeps the prior context, rebases to the latest active context, or is blocked for project-manager repair.
+
+A rebase does not change the prior submission. It only defines the guide and policy context for the next submission attempt.
+
+When a rebase happens, the worker must see:
+
+- prior guide and policy versions
+- next guide and policy versions
+- guide or policy change summary
+- reason the next attempt was rebased
+
+The reviewer must see the same context change in the review packet. A reviewer cannot apply out-of-band guidance unless it was encoded into the guide, policy, task template, or checker contract that governed the attempt.
+
 ## Replay Table
 
 | Prior Finding ID | Required Fix | Worker Fix Summary | Evidence | Worker Status | Reviewer Closure |

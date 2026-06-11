@@ -33,6 +33,8 @@ Each project has a guide that defines the rules for that project. A guide specif
 
 If a rule matters, it belongs in the guide, checker policy, review policy, revision policy, payment policy, or task template.
 
+Out-of-band guidance is not enforceable until it is moved into those contracts or into a checker that is governed by those contracts.
+
 ## 3. Automated Checks Protect Human Time
 
 Human reviewers do not spend time discovering basic package failures. Workstream checkers catch structural issues before review:
@@ -68,6 +70,8 @@ NEEDS_REVISION -> IN_PROGRESS -> SUBMITTED -> AUTO_CHECKING -> REVIEW_PENDING
 ```
 
 The system must preserve original feedback, fix notes, evidence, and closure.
+
+The system must also preserve guide and policy context. Prior submissions keep their locked context; revision policy decides whether the next attempt rebases to the latest active context before the worker resumes.
 
 ## 6. Payment Follows Acceptance
 

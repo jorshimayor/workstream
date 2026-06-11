@@ -50,6 +50,20 @@ State whether checker output supports the decision.
 
 For resubmissions, list whether prior findings are closed.
 
+## Revision Context
+
+Required when reviewing a resubmission.
+
+| Field | Value |
+| --- | --- |
+| context rebased | yes or no |
+| prior guide version | `<guide version>` |
+| next guide version | `<guide version>` |
+| prior policy versions | `<checker/review/revision/payment policy versions>` |
+| next policy versions | `<checker/review/revision/payment policy versions>` |
+| change summary shown to worker | `<summary>` |
+| revision context audit event | `<audit event id>` |
+
 ## Payment Eligibility
 
 State whether this decision creates a pending payment.
