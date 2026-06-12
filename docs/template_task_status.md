@@ -10,7 +10,7 @@
 
 ## Current State
 
-`DRAFT | SCREENING | READY | CLAIMED | IN_PROGRESS | SUBMITTED | AUTO_CHECKING | PRE_REVIEW_GATE | REVIEW_PENDING | NEEDS_REVISION | ACCEPTED | REJECTED | CANCELLED`
+`DRAFT | SCREENING | READY | CLAIMED | IN_PROGRESS | SUBMITTED | AUTO_CHECKING | REVIEW_PENDING | NEEDS_REVISION | ACCEPTED | REJECTED | CANCELLED`
 
 ## Locked Guide Version
 
@@ -42,7 +42,7 @@
 
 Use only when a draft/imported task fails before `READY`.
 
-- gate: `project_activation | task_screening | submission_quality | pre_review_gate`
+- gate: `project_activation | task_screening | submission_quality`
 - reason code:
 - fix required:
 - source task id:
