@@ -2,7 +2,13 @@
 
 Workstream planning and major system changes receive multiple review perspectives before being treated as ready.
 
-Implementation and specification chunks must run internal reviewer agents before PR review. The PR must include a changed `docs/internal_reviews/*.md` evidence file, and CI runs `scripts/check_internal_review_evidence.py` to block missing or incomplete evidence.
+Implementation and specification chunks must run internal reviewer agents before PR review. The PR must include changed internal review evidence in either `docs/internal_reviews/*.md` or `.agent-loop/initiatives/<initiative>/reviews/*-internal-review-evidence.md`, and CI runs `scripts/check_internal_review_evidence.py` to block missing or incomplete evidence.
+
+External review responses are separate artifacts. CodeRabbit, GitHub checks, and human PR review responses belong in `.agent-loop/initiatives/<initiative>/reviews/*-external-review-response.md`; those files do not replace internal reviewer evidence.
+
+The Codex-native reviewer definitions live under `.codex/agents/`. Reusable reviewer workflows live under `.agents/skills/`. Durable initiative plans, chunk contracts, policies, and review logs live under `.agent-loop/`.
+
+The engineering review protocol is separate from Workstream product review. Product review decisions stored by Workstream remain only `accept`, `needs_revision`, and `reject`.
 
 ## Review Roles
 
@@ -47,6 +53,8 @@ Focus:
 - payment/reputation consistency
 - auditability
 
+The Product/Ops reviewer is first-class. Do not collapse this track into QA or docs when a chunk affects operator, worker, reviewer, revision, payment, reputation, or audit workflows.
+
 ### Risk Reviewer
 
 Focus:
@@ -80,6 +88,8 @@ Severity:
 ## Rule
 
 No implementation or specification chunk is marked ready, pushed for PR review, or reported complete until required reviewer tracks have run, valid findings are fixed or documented, and every reviewer-agent session is closed.
+
+Codex must not merge a PR unless the user explicitly approves that specific PR for merge.
 
 ## Task Readiness Gate
 
