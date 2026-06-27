@@ -71,7 +71,7 @@ Default:
 - medium-severity `failed` result creates reviewer warning
 - low-severity `failed` result creates informational note
 
-Approved machine policies can declare stricter blocking behavior. `SubmissionArtifactPolicy` and generated `PreSubmitCheckerPolicy` govern pre-submit artifact rules. `PostSubmitCheckerPolicy` governs durable post-submit checker blocking.
+Approved machine policies can declare stricter blocking behavior. `SubmissionArtifactPolicy` and generated project `PreSubmitCheckerPolicy` govern pre-submit artifact rules. `PostSubmitCheckerPolicy` governs durable post-submit checker blocking.
 
 Project policy cannot weaken Workstream default submission artifact rules. Workstream defaults are applied before project policy. A project policy that attempts to require a forbidden artifact, remove hash requirements, allow credential-bearing storage references, or downgrade blocking defaults is a project setup defect.
 
@@ -101,11 +101,12 @@ Ensures a task has rubric or acceptance criteria.
 
 ### check_required_files
 
-Validates required submission artifacts from the effective submission artifact policy.
+Validates required submission artifacts from the locked project pre-submit
+checker policy.
 
 ### check_forbidden_files
 
-Blocks known forbidden artifacts, secrets, private keys, copied internal data, or artifacts forbidden by the effective submission artifact policy.
+Blocks known forbidden artifacts, secrets, private keys, copied internal data, or artifacts forbidden by the locked project pre-submit checker policy.
 
 Default forbidden patterns include:
 
@@ -163,14 +164,27 @@ The deterministic chain is:
 
 ```text
 ProjectGuide
+-> GuideSourceSnapshot
+-> GuideSufficiencyReport
 -> ProjectSubmissionArtifactPolicy
--> EffectiveSubmissionArtifactPolicy
+-> EffectiveProjectSubmissionArtifactPolicy
+-> trusted Workstream checker compiler
 -> PreSubmitCheckerPolicy
 -> pre-submit intake checks
 -> Submission row only when blocking checks pass
 ```
 
-`ProjectGuide` is human-facing. `SubmissionArtifactPolicy` is machine-readable and approved by a project admin. Workstream combines that policy with the non-bypassable Workstream default submission artifact policy.
+`ProjectGuide` is open-ended human-facing project material. Workstream first
+persists a `GuideSufficiencyReport`. Blocking guide gaps stop activation and
+create clarification requests for the project owner. Warnings require
+acknowledgement by `admin` or `project_manager`.
+
+`SubmissionArtifactPolicy` is machine-readable, derived by Workstream from
+project guide material after sufficiency passes or warnings are acknowledged,
+and approved by a Workstream actor with the `admin` or `project_manager` role.
+The project owner does not approve this internal policy. Workstream combines
+that policy with the non-bypassable Workstream default submission artifact
+policy.
 
 Workstream default submission artifact rules require:
 
@@ -185,7 +199,39 @@ Workstream default submission artifact rules require:
 
 Project policy adds required artifacts, evidence requirements, stricter forbidden artifacts, stricter packaging rules, and project-specific attestation requirements.
 
-The generated `PreSubmitCheckerPolicy` runs before Workstream creates a submission. Blocking failures prevent submission creation and return worker-safe fixes. Pre-submit results do not create durable `CheckerRun` records and do not move a task to `review_pending`.
+The generated project `PreSubmitCheckerPolicy` is persisted with a compiled
+bundle hash and locked to the effective project submission artifact policy before tasks enter the
+worker pipeline. Tasks lock references to the shared project's compiled checker
+bundle hash. It runs before Workstream creates a submission. Preflight failures return
+`PreSubmitCheckResponse` with `status="failed"`,
+`eligible_to_submit=false`, and structured pass/fail/warning details in
+`results`. Blocked submission-create attempts use the user-facing error code
+`pre_submission_checker_failed`; it is not a review decision value.
+Pre-submit results do not create durable `CheckerRun` records, do not move a
+task to `review_pending`, and do not return review decision values: `accept`,
+`needs_revision`, or `reject`.
+
+The `SubmissionArtifactPolicyDerivationAgent` produces a constrained checker
+specification. It does not produce unrestricted checker code. Workstream's
+trusted checker compiler validates that project spec during setup, then
+persists deterministic project-level checker logic using approved primitives
+such as:
+
+- `require_file`
+- `allow_extension`
+- `forbid_extension`
+- `require_manifest_field`
+- `validate_json_schema`
+- `check_directory_structure`
+- `require_minimum_evidence`
+- `verify_hash`
+- `limit_file_size`
+
+Project-specific executable checker code is a future extension path, not the
+default. That extension path must require static validation, generated tests,
+sandboxed execution, no network, no shell, no secrets, no database access,
+`admin` or `project_manager` approval of the exact code hash after those checks
+pass, and a locked code hash.
 
 Pre-submit checks are authoritative for intake. Post-submit checker runs are authoritative for review readiness.
 
@@ -214,8 +260,8 @@ Examples:
 ```text
 Draft packet
 -> load locked task context
--> compute EffectiveSubmissionArtifactPolicy
--> generate PreSubmitCheckerPolicy
+-> load locked EffectiveProjectSubmissionArtifactPolicy hash
+-> load locked PreSubmitCheckerPolicy compiled bundle hash
 -> run pre-submit intake checks
 -> create Submission only when blocking pre-submit checks pass
 -> lock submission

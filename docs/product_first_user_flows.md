@@ -5,19 +5,25 @@ The first user flows prove that Workstream can run real work from intake to acce
 ## Flow 1: Admin Creates A Project
 
 1. Admin creates project.
-2. Admin adds guide.
-3. Admin sets base amount.
-4. Admin approves submission artifact policy.
-5. Workstream generates pre-submit checker policy.
-6. Admin enables post-submit checker policy.
-7. Admin enables review policy.
-8. Admin enables revision policy.
-9. Admin enables payment policy.
-10. Project becomes active.
+2. Project owner provides open-ended guide material and business terms.
+3. Admin or project_manager adds the guide.
+4. Workstream runs `ProjectGuideSufficiencyAgent` against the immutable guide-source snapshot.
+5. Blocking sufficiency gaps create clarification requests for the project owner.
+6. Admin or project_manager acknowledges non-blocking sufficiency warnings.
+7. Workstream runs `SubmissionArtifactPolicyDerivationAgent`.
+8. Admin or project_manager reviews and approves the derived submission artifact policy.
+9. Workstream persists the effective project submission artifact policy hash.
+10. Workstream compiles, persists, and locks the project `PreSubmitCheckerPolicy`.
+11. Admin or project_manager enables post-submit checker policy.
+12. Admin or project_manager enables review policy.
+13. Admin or project_manager enables revision policy.
+14. Admin or project_manager enables payment policy.
+15. Project becomes active.
 
 Acceptance:
 
-- Project cannot become active without guide, base amount, submission artifact policy, generated pre-submit checker policy, post-submit checker policy, review policy, revision policy, and payment policy.
+- Project cannot become active without guide, base amount, immutable guide source snapshot, passed or acknowledged guide sufficiency report for that immutable guide source snapshot, submission artifact policy, effective project submission artifact policy hash, project pre-submit checker bundle hash, post-submit checker policy, review policy, revision policy, and payment policy.
+- Submission artifact policy is Workstream-derived and approved by `admin` or `project_manager`; project owners do not author or approve the machine policy schema directly.
 - Submission artifact, checker, review, revision, and payment policies are visible on the project page.
 
 ## Flow 2: Operator Creates A Task
@@ -26,14 +32,14 @@ Acceptance:
 2. Operator creates task with title, description, expected output, acceptance criteria, base amount, deadline, and difficulty.
 3. Workstream validates task against project guide.
 4. Task enters `SCREENING`.
-5. Screening confirms guide version, task contract, submission artifact requirements, checker policy, review policy, revision policy, payment policy, and reviewability.
+5. Screening locks the guide source snapshot id/hash, effective project submission artifact policy hash, and project pre-submit checker bundle hash, then confirms task contract, post-submit checker policy, review policy, revision policy, payment policy, and reviewability.
 6. Task enters `READY`.
 
 Acceptance:
 
 - Missing required fields block `SCREENING`.
 - Missing required fields block `READY`.
-- Task shows project guide, required artifacts, generated pre-submit checker policy summary, post-submit checker policy, review policy, revision policy, and payment policy.
+- Task shows project guide, required artifacts, generated project pre-submit checker policy summary, post-submit checker policy, review policy, revision policy, and payment policy.
 
 ## Flow 3: Worker Submits Work
 
@@ -41,15 +47,16 @@ Acceptance:
 2. Worker attaches output files or links.
 3. Worker attaches evidence.
 4. Worker writes submission notes.
-5. Workstream runs pre-submit checks generated from the effective submission artifact policy.
-6. Blocking pre-submit failures return worker-safe fixes and create no submission.
+5. Workstream executes the task's locked project `PreSubmitCheckerPolicy`.
+6. Preflight failures return `PreSubmitCheckResponse`; blocked submission-create attempts return `pre_submission_checker_failed` with structured pass/fail/warning details and create no submission.
 7. When blocking pre-submit checks pass, Worker submits packet.
 8. Task enters `SUBMITTED`.
 
 Acceptance:
 
 - Submission cannot be created when blocking pre-submit checks fail.
-- Submission cannot be created without required artifacts, evidence references, hashes, and worker attestation defined by the effective submission artifact policy.
+- Blocking pre-submit failures are not review decisions and never return `accept`, `needs_revision`, or `reject`.
+- Submission cannot be created without required artifacts, evidence references, hashes, and worker attestation defined by the locked project pre-submit checker policy.
 - Submission packet is immutable after checks start.
 
 ## Flow 4: Automated Checks Run

@@ -68,8 +68,11 @@ Every project guide is human-facing. It must explain:
 
 Every active guide version must also have approved machine-readable policies:
 
+- immutable guide-source snapshot
+- guide sufficiency report
 - submission artifact policy
-- generated pre-submit checker policy
+- effective project submission artifact policy hash
+- project pre-submit checker bundle hash
 - post-submit checker policy
 - review policy
 - revision policy
@@ -77,9 +80,21 @@ Every active guide version must also have approved machine-readable policies:
 
 The guide may summarize or link to those policies, but the policies are the enforcement source.
 
-`SubmissionArtifactPolicy` defines what a worker must submit. Workstream combines it with the non-bypassable Workstream default submission artifact policy to create the effective submission artifact policy. Workstream generates `PreSubmitCheckerPolicy` from that effective policy.
+Project owners provide open-ended project material and business terms.
+Workstream evaluates guide sufficiency, derives
+`ProjectSubmissionArtifactPolicy` from that material, and a Workstream actor
+with the `admin` or `project_manager` role approves the internal policy bundle
+before guide activation. Project owners do not approve Workstream's internal
+submission policy schema.
 
-Blocking pre-submit failures prevent submission creation. They return worker-safe fixes and create no submission row, no submission version, no task transition to `submitted`, and no submission-created audit event.
+`SubmissionArtifactPolicy` defines project-level intake rules. Workstream combines it with the non-bypassable Workstream default submission artifact policy to create `EffectiveProjectSubmissionArtifactPolicy`. Workstream then generates, persists, and locks project `PreSubmitCheckerPolicy` with a compiled bundle hash from that effective project submission artifact policy. Tasks lock the applicable guide snapshot, effective project submission artifact policy hash, and pre-submit checker bundle hash before entering the worker pipeline.
+
+Blocking pre-submit failures prevent submission creation. Preflight failures
+return `PreSubmitCheckResponse(status="failed", eligible_to_submit=false,
+results=[...])`. Blocked submission-create attempts return
+`pre_submission_checker_failed` with structured pass/fail/warning details and
+create no submission row, no submission version, no task transition to
+`submitted`, and no submission-created audit event.
 
 Tasks lock to the active guide version at creation or screening time before entering `READY`. Material guide changes require a new guide version.
 
@@ -94,7 +109,7 @@ Every task must carry enough information to make claiming, checking, reviewing, 
 - task type
 - required output
 - acceptance criteria
-- required artifacts and evidence references derived from the effective submission artifact policy
+- required artifacts and evidence references derived from the locked project pre-submit checker policy
 - difficulty
 - skill tags
 - estimated time when known
@@ -147,9 +162,10 @@ Use these names consistently:
 - `check_acceptance_criteria_present`
 - `ContributionRecord`
 - `SubmissionArtifactPolicy`
-- `EffectiveSubmissionArtifactPolicy`
+- `EffectiveProjectSubmissionArtifactPolicy`
 - `PreSubmitCheckerPolicy`
 - `PostSubmitCheckerPolicy`
+- `pre_submission_checker_failed`
 - `Project activation gate`
 - `Task screening gate`
 - `Submission quality gate`

@@ -470,11 +470,12 @@
 
             <article class="step">
               <span class="num">2</span>
-              <h3>Project guide is drafted</h3>
-              <p>The project manager creates the human-facing project guide, submission artifact policy, and all policy context needed before tasks can run.</p>
+              <h3>Project guide and policy are prepared</h3>
+              <p>The project owner provides open-ended guide material and business terms. Workstream runs guide sufficiency review, derives the submission artifact policy, then an admin or project_manager approves the internal policy bundle before tasks can run.</p>
               <div class="data">
                 <code>Project</code>
                 <code>ProjectGuide v1</code>
+                <code>GuideSufficiencyReport</code>
                 <code>artifact/checker/review/revision/payment</code>
               </div>
             </article>
@@ -482,7 +483,7 @@
             <article class="step">
               <span class="num">3</span>
               <h3>Guide activation locks contract</h3>
-              <p>Activation validates submission artifact policy, generated pre-submit policy, registered post-submit checker names, review decisions, revision states, and payment policy.</p>
+              <p>Activation validates a passing or acknowledged sufficiency report, immutable guide source snapshot, approved submission artifact policy, effective project submission artifact policy hash, project pre-submit checker compiled bundle hash, registered post-submit checker names, review policy allowed decisions, revision states, and payment policy. Task readiness later validates that the task locks the applicable guide snapshot, effective project submission artifact policy hash, and pre-submit checker bundle hash.</p>
               <div class="data">
                 <code>status=active</code>
                 <code>one active guide</code>
@@ -514,7 +515,7 @@
             <article class="step">
               <span class="num">6</span>
               <h3>Pre-submit intake checks run</h3>
-              <p>Workstream runs generated pre-submit checks from the effective submission artifact policy before creating a submission row.</p>
+              <p>Workstream runs pre-submit checks from the locked project pre-submit checker policy before creating a submission row. Preflight failures return PreSubmitCheckResponse details. Blocked submission-create attempts return pre_submission_checker_failed with pass/fail/warning details.</p>
               <div class="data">
                 <code>no submission yet</code>
                 <code>no checker run yet</code>
@@ -590,11 +591,11 @@
           <div class="records">
             <div class="record">
               <strong>Project + Guide</strong>
-              <span>Project, ProjectGuide, SubmissionArtifactPolicy, generated pre-submit checker policy, post-submit checker policy, review policy, revision policy, payment policy.</span>
+              <span>Project, ProjectGuide, GuideSourceSnapshot bundle, SubmissionArtifactPolicy, effective project policy, project PreSubmitCheckerPolicy, post-submit checker policy, review policy, revision policy, payment policy.</span>
             </div>
             <div class="record">
               <strong>Task Queue</strong>
-              <span>WorkstreamTask, locked policy versions, TaskAssignment, status transitions.</span>
+              <span>WorkstreamTask, locked guide snapshot, locked effective project submission artifact policy hash, locked pre-submit checker bundle hash, TaskAssignment, status transitions.</span>
             </div>
             <div class="record">
               <strong>Submission Packet</strong>
@@ -627,7 +628,7 @@
       <aside class="side-panel" aria-labelledby="invariants-title">
         <h2 id="invariants-title">Hard Invariants</h2>
         <ul class="check-list">
-          <li>Guide activation fails if submission artifact policy or required policy context is missing.</li>
+          <li>Guide activation fails if the immutable guide source snapshot, guide sufficiency report, submission artifact policy, effective project submission artifact policy hash, project pre-submit checker compiled bundle hash, or required review, revision, payment, and post-submit checker policy context is missing.</li>
           <li>Pre-submit intake failures create no submission row or submission version.</li>
           <li>Revision resubmission states are limited to needs_revision in v0.1.</li>
           <li>Submission packet does not carry guide or policy versions from the worker.</li>

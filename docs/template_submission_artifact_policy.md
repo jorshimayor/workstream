@@ -12,6 +12,68 @@
 
 `v1`
 
+## Source Material
+
+Project owners provide open-ended project material and business terms.
+Workstream derives this policy from that material after guide sufficiency passes
+or warnings are acknowledged. Project owners do not author or approve the
+machine-readable Workstream policy schema directly.
+
+Source snapshot:
+
+- guide source snapshot id:
+- guide source snapshot bundle hash:
+- manifest json:
+- captured at:
+
+Bundle hash algorithm:
+
+```text
+sha256(canonical_json(manifest_json))
+```
+
+Canonical JSON uses UTF-8, sorted object keys, no insignificant whitespace, and
+source items sorted by `(source_kind, durable_ref, content_hash)`. Exclude
+database ids, capture timestamps, and transient fetch locators. Reject duplicate
+source items with the same `source_kind + durable_ref` before hashing.
+
+Source snapshot items:
+
+| Source Kind | Durable Ref | Ingestion Adapter | Content Hash | Content CID | Media Type |
+| --- | --- | --- | --- | --- | --- |
+| `<inline_markdown / url_doc / repository_doc / example / rubric / imported_file>` | `<opaque sanitized ref>` | `<adapter>` | `sha256:<hash>` | `<future Flow Node CID when available>` | `<media type>` |
+
+Temporary fetch locators are adapter inputs only. Durable source refs must not
+store query strings, signed URLs, credentials, token-bearing refs, local
+filesystem paths, or private storage paths.
+
+## Guide Sufficiency
+
+- sufficiency report id:
+- sufficiency status: `passed | blocked | passed_with_warnings`
+- finding severities used: `blocking_gap | warning | info`
+- warnings acknowledged by role: `admin | project_manager`
+- warnings acknowledged by actor:
+- warnings acknowledged at:
+
+## Approval Provenance
+
+- source material ingestion method: `manual_entry | import_adapter | url_import | repository_import`
+- derivation agent name:
+- derivation agent version:
+- sufficiency report id:
+- source snapshot id:
+- source snapshot bundle hash:
+- lifecycle status: `draft | approved | superseded`
+- approved policy hash:
+- approved by role: `admin | project_manager`
+- approved by actor:
+- approved at:
+
+Source material is untrusted input. Embedded instructions in guide text, URLs,
+repository docs, examples, or imported documents cannot grant tool authority,
+override Workstream rules, or weaken default checks.
+
 ## Workstream Default Rules
 
 Every project inherits Workstream default submission artifact rules. Project policy can add stricter requirements, but it cannot remove, weaken, downgrade, or bypass these defaults.
@@ -50,6 +112,22 @@ Default forbidden artifacts:
 
 A project-required artifact that matches a Workstream default forbidden rule remains blocked. That conflict is a project setup defect.
 
+## Effective Policy Merge Rules
+
+| Field | Merge Rule |
+| --- | --- |
+| required artifacts | union by canonical artifact key |
+| required evidence | union by canonical evidence key |
+| forbidden artifacts | union |
+| attestation terms | union |
+| manifest required | logical OR |
+| hash required | logical OR |
+| allowed storage schemes | intersection |
+| hash algorithm | platform-locked `sha256`; project policy cannot change it and task runtime parameters cannot override it |
+| maximum file size bytes | minimum non-null limit |
+| maximum package size bytes | minimum non-null limit |
+| packaging rules | restrictive merge; conflicts block setup |
+
 ## Project Required Artifacts
 
 | Artifact | Required | Hash Required | Notes |
@@ -68,8 +146,8 @@ A project-required artifact that matches a Workstream default forbidden rule rem
 - accepted package format:
 - required root files:
 - required directory structure:
-- maximum artifact size:
-- maximum package size:
+- maximum file size bytes:
+- maximum package size bytes:
 
 ## Project Forbidden Artifacts
 
@@ -88,14 +166,37 @@ Required attestation topics:
 
 ## Generated Pre-Submit Checker Policy
 
-Workstream generates `PreSubmitCheckerPolicy` from:
+Workstream generates project-level `PreSubmitCheckerPolicy` from:
 
 ```text
-WorkstreamDefaultSubmissionArtifactPolicy
-+ ProjectSubmissionArtifactPolicy
+EffectiveProjectSubmissionArtifactPolicy
++ constrained checker specification
 ```
 
-Generated pre-submit checks run before submission creation. Blocking failures create no submission row, no submission version, no task transition to `submitted`, and no submission-created audit event.
+Pre-submit checks from the locked project pre-submit checker policy run before submission creation. Blocking failures create no submission row, no submission version, no task transition to `submitted`, and no submission-created audit event.
+
+Compiler coverage requirement:
+
+- every enforceable effective project policy rule maps to deterministic checker logic
+- required artifacts and evidence rules cannot be omitted
+- Workstream defaults cannot be omitted or weakened
+- severity cannot be downgraded by project policy or task runtime parameters
+
+Generated policy lock:
+
+- generated project pre-submit checker policy version:
+- generated project pre-submit checker bundle hash:
+- effective project submission artifact policy hash:
+- locked guide version:
+
+Tasks lock this project checker compiled bundle hash before entering the worker pipeline. Tasks
+do not derive or compile their own checker by default.
+
+Blocked submission-create attempts return `pre_submission_checker_failed` with
+structured pass/fail/warning details.
+The preflight endpoint returns `PreSubmitCheckResponse` with `status`,
+`eligible_to_submit`, and `results`. Neither path returns review decision
+values: `accept`, `needs_revision`, or `reject`.
 
 Expected generated checks:
 
@@ -112,6 +213,10 @@ Expected generated checks:
 ## Approval
 
 - created by:
-- approved by:
+- approved by role: `admin | project_manager`
+- approved by actor:
 - effective at:
 - change summary:
+- supersedes policy id:
+
+Approved and superseded policies are immutable. Changes create a new revision.

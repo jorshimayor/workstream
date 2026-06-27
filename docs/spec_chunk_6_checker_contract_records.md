@@ -191,7 +191,10 @@ Normalization rules:
 
 Pre-submit checks run before a submission is created. They are authoritative for submission intake and return immediate API feedback without creating an authoritative post-submit checker run.
 
-Workstream generates pre-submit checker policy server-side from the effective submission artifact policy for the task. Workers submit only draft packet fields. They cannot choose checker names, policy versions, blocking rules, severities, results, or outcomes.
+Workstream loads the locked generated project pre-submit checker compiled bundle hash
+for the task's guide version. Workers submit only draft packet fields. They
+cannot choose checker names, policy versions, blocking rules, severities,
+results, or outcomes.
 
 Response fields:
 
@@ -209,11 +212,24 @@ Response fields:
 - `created_at`
 - `expires_at`
 
-Pre-submit feedback binds to `task_id`, the task's locked guide version, the approved submission artifact policy context, draft packet fields, package hash, and artifact manifest shape. It does not require a locked `submission_id` or locked submission version because those do not exist before submission creation.
+Pre-submit feedback binds to `task_id`, the task's locked guide source snapshot,
+effective project submission artifact policy hash, pre-submit checker bundle hash,
+draft packet fields, package hash, and artifact manifest shape. It does not
+require a locked `submission_id` or locked submission version because those do
+not exist before submission creation.
 
-Blocking pre-submit failures prevent submission creation. They create no submission row, no submission version, no task transition to `submitted`, and no submission-created audit event.
+Blocking pre-submit failures prevent submission creation. Preflight failures
+return `PreSubmitCheckResponse(status="failed", eligible_to_submit=false,
+results=[...])`. Blocked submission-create attempts return
+`DomainError(code="pre_submission_checker_failed")` with structured
+pass/fail/warning details, create no submission row, no submission version, no
+task transition to `submitted`, and no submission-created audit event.
 
-Pre-submit results are not authoritative for `REVIEW_PENDING` and cannot create `NEEDS_REVISION`. Only post-submit runs against locked submissions can produce routing recommendations for `REVIEW_PENDING` or user-facing `needs_revision`.
+Pre-submit results are not authoritative for `REVIEW_PENDING`, cannot create
+`NEEDS_REVISION`, and do not return review decision values: `accept`,
+`needs_revision`, or `reject`. Only post-submit runs against locked submissions
+can produce routing recommendations for `REVIEW_PENDING` or user-facing
+`needs_revision`.
 
 ## User-Facing Revision Rule
 
@@ -307,7 +323,7 @@ Internal services may only create new runs/results or transition a run status th
 - post-submit checker run creation snapshots locked submission context server-side
 - creating run for an unlocked submission fails
 - creating run with mismatched task/submission context fails
-- later task policy changes do not mutate historical checker run context
+- later project policy changes or audited task-context rebases do not mutate historical checker run context
 - artifact manifest hash follows the canonical SHA-256 JSON algorithm
 - equivalent manifests with different entry or key order hash identically
 - duplicate artifact names are rejected

@@ -107,14 +107,29 @@ This section is a human-readable summary. The enforcement source is the approved
 
 Every active guide version must have:
 
+- GuideSourceSnapshot:
+- GuideSufficiencyReport:
 - SubmissionArtifactPolicy:
-- generated PreSubmitCheckerPolicy:
+- EffectiveProjectSubmissionArtifactPolicy hash:
+- project PreSubmitCheckerPolicy compiled bundle hash:
 - PostSubmitCheckerPolicy:
 - ReviewPolicy:
 - RevisionPolicy:
 - PaymentPolicy:
 
+Each task later locks:
+
+- GuideSourceSnapshot id/hash:
+- EffectiveProjectSubmissionArtifactPolicy hash:
+- generated project PreSubmitCheckerPolicy compiled bundle hash:
+
 Artifact requirements shown to workers are derived from the approved `SubmissionArtifactPolicy`. The guide may summarize those requirements, but the policy is the enforcement source.
+
+Project owners provide open-ended guide material and business terms in plain
+language. Workstream evaluates guide sufficiency, derives
+`ProjectSubmissionArtifactPolicy` from that material, and a Workstream actor
+with the `admin` or `project_manager` role approves the internal policy bundle
+before guide activation.
 
 ## Known Checker Blind Spots
 

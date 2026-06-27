@@ -63,12 +63,14 @@ Fails when the task requires evidence and the locked submission has no evidence 
 
 The checker reads:
 
-- `task.required_evidence`
+- the locked project `PreSubmitCheckerPolicy` and effective project submission
+  artifact policy
 - `submission.evidence_items`
 
 Worker-visible failure:
 
-- explain that evidence required by the task is missing
+- explain that evidence required by the locked project pre-submit checker
+  policy is missing
 - tell the worker to attach evidence items before review
 
 ### `check_evidence_integrity`
@@ -112,7 +114,7 @@ Fails when required artifacts are not represented in the artifact manifest.
 
 The checker reads:
 
-- `EffectiveSubmissionArtifactPolicy.required_artifacts`, or a server-locked task snapshot derived from it
+- locked project `PreSubmitCheckerPolicy` required artifacts
 - `submission.artifact_hash_manifest[*].artifact`
 
 `task.required_files` is legacy/transitional storage. It is not the policy source of truth once `SubmissionArtifactPolicy` is implemented.
@@ -192,7 +194,7 @@ If a future project needs generated-artifact signals to block review, that must 
 
 ## Pre-Submit Versus Durable Runs
 
-Pre-submit feedback runs checks generated from the effective submission artifact policy. These checks run before Workstream creates a submission row:
+Pre-submit feedback executes the task's locked project `PreSubmitCheckerPolicy`, which was compiled from the effective project submission artifact policy at project setup time. These checks run before Workstream creates a submission row:
 
 - `check_submission_packet`
 - `check_evidence_present`
@@ -202,7 +204,7 @@ Pre-submit feedback runs checks generated from the effective submission artifact
 - `check_confidentiality_attestation`
 - `check_low_quality_generated_artifacts`
 
-The effective submission artifact policy is:
+The project pre-submit checker policy is generated from:
 
 ```text
 WorkstreamDefaultSubmissionArtifactPolicy
@@ -211,7 +213,13 @@ WorkstreamDefaultSubmissionArtifactPolicy
 
 Workstream defaults are non-bypassable. Project policy can add required artifacts, evidence requirements, stricter forbidden patterns, and packaging rules, but it cannot remove hash requirements, allow unsafe storage references, require forbidden files, or downgrade blocking defaults.
 
-Blocking pre-submit failures prevent submission creation. They create no submission row, no submission version, no task transition to `submitted`, and no submission-created audit event.
+Blocking pre-submit failures prevent submission creation. Preflight failures
+return `PreSubmitCheckResponse(status="failed", eligible_to_submit=false,
+results=[...])`. Blocked submission-create attempts return
+`DomainError(code="pre_submission_checker_failed")` with structured
+pass/fail/warning details, create no submission row, no submission version, no
+task transition to `submitted`, and no submission-created audit event. They do
+not return review decision values: `accept`, `needs_revision`, or `reject`.
 
 Durable post-submit checker runs run the canonical default submission-quality checks plus locked checker-policy names:
 
@@ -296,8 +304,9 @@ Safe evidence references mean opaque Workstream evidence ids, sanitized labels, 
 
 - canonical Chunk 8 checker names are registered
 - stale Chunk 7 temporary checker names are removed from public docs/templates/tests
-- pre-submit feedback is generated from the effective submission artifact policy and runs without durable checker records
-- blocking pre-submit failures create no submission row, no submission version, no task transition to `submitted`, and no submission-created audit event
+- pre-submit feedback executes the task's locked project `PreSubmitCheckerPolicy` and runs without durable checker records
+- preflight failures return `PreSubmitCheckResponse(status="failed", eligible_to_submit=false, results=[...])`
+- blocked submission-create attempts return `DomainError(code="pre_submission_checker_failed")`, include structured pass/fail/warning details, create no submission row, no submission version, no task transition to `submitted`, and no submission-created audit event
 - Workstream default submission artifact rules cannot be weakened by project policy
 - durable checker runs persist Chunk 8 checker results
 - missing required evidence blocks review routing

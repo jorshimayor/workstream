@@ -8,9 +8,22 @@ Workstream does not need to own the execution workspace, but it must define what
 
 ## Project-Level Convention
 
-Every project defines an approved `SubmissionArtifactPolicy`:
+Every project has a guide-version policy bundle derived by Workstream from
+open-ended project material:
 
 ```text
+GuideSourceSnapshot
+GuideSufficiencyReport
+ProjectSubmissionArtifactPolicy
+EffectiveProjectSubmissionArtifactPolicy
+```
+
+Every task then locks the project intake context:
+
+```text
+GuideSourceSnapshot
+EffectiveProjectSubmissionArtifactPolicy
+PreSubmitCheckerPolicy
 required_artifacts
 required_evidence
 allowed_artifact_types
@@ -56,7 +69,7 @@ A packet is not ready unless:
 - evidence is attached
 - artifact hashes are present
 - evidence references bind to artifact hashes
-- generated pre-submit checks pass before submission creation
+- pre-submit checks from the locked project pre-submit checker policy pass before submission creation
 - prior feedback is linked when resubmitting
 - status is current
 
@@ -64,7 +77,7 @@ A packet is not ready unless:
 
 Some projects need final work in a paste-ready form. Others need a zip, artifact bundle, markdown packet, or review file.
 
-The project guide explains the canonical form to humans. The approved `SubmissionArtifactPolicy` enforces the artifact, evidence, hash, and packaging rules.
+The project guide explains the canonical form to humans. The approved `SubmissionArtifactPolicy` and persisted `PreSubmitCheckerPolicy` enforce the artifact, evidence, hash, and packaging rules. Project owners do not author or approve this machine policy schema directly.
 
 ## Why This Matters
 

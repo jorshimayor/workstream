@@ -22,7 +22,8 @@ The guide drives:
 
 - task requirements
 - submission artifact policy
-- pre-submit checker policy generated from the effective submission artifact policy
+- guide source snapshot and effective project submission artifact policy
+- project pre-submit checker policy generated from the effective project submission artifact policy
 - post-submit checker policy
 - review policy
 - revision policy
@@ -33,14 +34,17 @@ The submission artifact, checker, review, revision, and payment policies are gui
 
 Project guide activation requires the guide plus its required policy context before work can lock against it:
 
+- guide source snapshot
+- guide sufficiency report
 - submission artifact policy
-- generated pre-submit checker policy
+- effective project submission artifact policy hash
+- project pre-submit checker bundle hash
 - post-submit checker policy
 - review policy
 - revision policy
 - payment policy
 
-The project-admin-approved submission artifact policy defines what workers must submit. Workstream combines it with non-bypassable Workstream default artifact rules to create the effective submission artifact policy. Workstream then generates the pre-submit checker policy from that effective policy.
+The Workstream-derived submission artifact policy defines project-level intake rules. Project owners provide open-ended project material and business terms. Workstream captures an immutable guide source snapshot, evaluates guide sufficiency, derives the machine policy, and a Workstream actor with the `admin` or `project_manager` role approves the internal policy bundle. Workstream combines that policy with non-bypassable Workstream default artifact rules to create the effective project submission artifact policy, then generates the project pre-submit checker policy from that effective project submission artifact policy. Tasks lock references to the applicable guide snapshot, effective project submission artifact policy hash, and pre-submit checker bundle hash.
 
 Blocking pre-submit failures prevent submission creation. They do not create durable post-submit checker runs and they do not create human review decisions.
 
@@ -48,7 +52,7 @@ Revision policy is not optional. It defines the revision loop contract, includin
 
 Guide and policy changes do not silently mutate submitted attempts. A submitted attempt stays tied to the guide and policy versions stamped on that submission. When a task enters `NEEDS_REVISION`, revision policy controls whether the next attempt keeps the prior context or rebases to the latest active guide and policy context.
 
-Rules that affect acceptance judgment may be encoded in the human-facing project guide, review policy, revision policy, payment policy, task template, or checker implementation. Rules that affect submission intake must be encoded in `SubmissionArtifactPolicy` and the generated `PreSubmitCheckerPolicy`. Chat messages and informal notices are not enforceable rules until they are moved into those contracts.
+Rules that affect acceptance judgment may be encoded in the human-facing project guide, review policy, revision policy, payment policy, task template, or checker implementation. Rules that affect submission intake must be encoded in `SubmissionArtifactPolicy` and the generated project `PreSubmitCheckerPolicy`. Chat messages and informal notices are not enforceable rules until they are moved into those contracts.
 
 ## Consequences
 

@@ -45,27 +45,37 @@ Architecture target:
 
 - `projects`
 - `project_guides`
+- `guide_sufficiency_reports`
 - `submission_artifact_policies`
+- `effective_project_submission_artifact_policies`
+- `pre_submit_checker_policies`
 - `checker_policies`
 - `review_policies`
 - `revision_policies`
 - `payment_policies`
 
-Current v0.1 implementation note: the first project-guide foundation stores submission artifact requirements in `ProjectGuide.evidence_policy`. That is transitional and maps to `SubmissionArtifactPolicy` until the dedicated table/API migration is implemented.
+Current v0.1 implementation note: the first project-guide foundation stores submission artifact requirements in `ProjectGuide.evidence_policy`. That is old construction state. The target replacement is `SubmissionArtifactPolicy`; no compatibility alias is required.
 
 The guide version is the join key for the guide-specific policies.
 
 Project guide activation requires:
 
 - guide is still draft
-- submission artifact policy exists for the guide version
-- generated pre-submit checker policy exists for the guide version
+- immutable guide source snapshot exists for the exact source material being activated
+- guide sufficiency report is passed or warnings are acknowledged by `admin` or `project_manager`
+- Workstream-derived submission artifact policy is approved for the guide version with `admin` or `project_manager` approval provenance
+- effective project submission artifact policy hash exists for the guide source snapshot
+- project pre-submit checker policy exists for the effective project policy
 - post-submit checker policy exists for the guide version
 - review policy exists for the guide version
 - revision policy exists for the guide version
 - payment policy exists for the guide version
 - revision policy has max revision rounds, revision deadline hours, and allowed resubmission states
 - payment policy has base amount, currency, payout type, and accepted payment rule
+
+Implementation sequencing: Chunk 1 can model the project pre-submit checker
+dependency before compiler execution exists. Chunk 2 compiles the checker and
+enforces the complete activation gate.
 
 Activating a new guide supersedes the prior active guide for that project without mutating its content.
 
@@ -90,14 +100,14 @@ Submission artifact policy is a first-class guide-version policy. It defines wha
 The architecture contract is:
 
 ```text
-EffectiveSubmissionArtifactPolicy =
+EffectiveProjectSubmissionArtifactPolicy =
   WorkstreamDefaultSubmissionArtifactPolicy
   + ProjectSubmissionArtifactPolicy
 ```
 
-Workstream generates pre-submit checker policy from the effective submission artifact policy. Blocking pre-submit failures prevent submission creation.
+Workstream generates, persists, and locks project `PreSubmitCheckerPolicy` with a compiled bundle hash from the effective project submission artifact policy. Tasks later lock the applicable guide snapshot, effective project submission artifact policy hash, and pre-submit checker bundle hash. Blocking pre-submit failures prevent submission creation.
 
-Implementation note: the first v0.1 schema stored this as `ProjectGuide.evidence_policy`. That field is transitional and maps to submission artifact requirements until the dedicated policy table/API is implemented.
+Implementation note: the first v0.1 schema stored this as `ProjectGuide.evidence_policy`. That field is old construction state and is replaced by the dedicated policy table/API path.
 
 ## API Impact
 
@@ -139,7 +149,7 @@ The active guide response becomes the future source for task-owned locked guide 
 - guide activation or policy approval is blocked when project submission artifact policy permits unsafe storage references
 - guide activation or policy approval is blocked when project submission artifact policy requires default-forbidden artifacts
 - guide activation or policy approval is blocked when project submission artifact policy downgrades Workstream blocking defaults
-- generated effective submission artifact policy always contains Workstream defaults
+- generated effective project submission artifact policy always contains Workstream defaults
 - guide activation succeeds with complete guide and policies
 - active guide can be retrieved for task creation
 - editing a draft guide works
