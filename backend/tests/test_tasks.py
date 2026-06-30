@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import json
 from collections.abc import AsyncIterator, Iterator
 from decimal import Decimal
 from pathlib import Path
@@ -22,6 +24,7 @@ from app.db import session as db_session
 from app.db.base import Base
 from app.main import create_app
 from app.modules.tasks.lifecycle import InvalidTaskTransition, ensure_allowed_transition
+from app.modules.projects.models import PreSubmitCheckerPolicy
 from app.modules.tasks.models import (
     AuditEvent,
     EvidenceItem,
@@ -152,6 +155,163 @@ def complete_guide_payload(version: str = "v1") -> dict:
     }
 
 
+def sha256_hash(seed: str) -> str:
+    return f"sha256:{hashlib.sha256(seed.encode('utf-8')).hexdigest()}"
+
+
+def canonical_json_hash(value: dict) -> str:
+    encoded = json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode("utf-8")
+    return f"sha256:{hashlib.sha256(encoded).hexdigest()}"
+
+
+async def mark_pre_submit_checker_policy_compiled(effective_policy: dict) -> dict:
+    compiled_bundle = {
+        "schema_version": "pre_submit_checker_bundle.v1",
+        "compiler_version": "test-compiler-v0.1",
+        "effective_policy_hash": effective_policy["effective_policy_hash"],
+        "checks": [
+            {
+                "name": "require_submission_manifest",
+                "severity": "blocking",
+            },
+            {
+                "name": "require_artifact_hashes",
+                "severity": "blocking",
+            },
+        ],
+    }
+    compiled_bundle_hash = canonical_json_hash(compiled_bundle)
+    async with db_session.get_session_factory()() as session:
+        pre_submit_checker_policy = await session.scalar(
+            select(PreSubmitCheckerPolicy).where(
+                PreSubmitCheckerPolicy.effective_policy_id == effective_policy["id"]
+            )
+        )
+        assert pre_submit_checker_policy is not None
+        pre_submit_checker_policy.lifecycle_status = "compiled"
+        pre_submit_checker_policy.compiler_version = "test-compiler-v0.1"
+        pre_submit_checker_policy.compiled_bundle = compiled_bundle
+        pre_submit_checker_policy.compiled_bundle_hash = compiled_bundle_hash
+        pre_submit_checker_policy.checker_names = [
+            "require_submission_manifest",
+            "require_artifact_hashes",
+        ]
+        pre_submit_checker_policy.checker_configs = {}
+        await session.commit()
+    return {
+        "compiled_bundle": compiled_bundle,
+        "compiled_bundle_hash": compiled_bundle_hash,
+    }
+
+
+def policy_body_for_task_tests() -> dict:
+    return {
+        "required_artifacts": [
+            {
+                "key": "answer",
+                "path": "answer.md",
+                "hash_required": True,
+                "required": True,
+                "description": "Main task answer.",
+            }
+        ],
+        "required_evidence": [
+            {
+                "key": "checker_log",
+                "label": "checker log",
+                "hash_required": True,
+                "required": True,
+                "description": "Evidence used by the reviewer.",
+            }
+        ],
+        "forbidden_artifacts": [],
+        "attestation_terms": ["task_test_originality"],
+        "manifest_required": True,
+        "artifact_hash_required": True,
+        "artifact_hash_algorithm": "sha256",
+        "allowed_storage_schemes": ["local", "s3", "r2"],
+        "maximum_file_size_bytes": 1_000_000,
+        "maximum_package_size_bytes": 5_000_000,
+        "packaging": {"package_required": False},
+    }
+
+
+async def create_policy_bundle_for_guide(
+    client: AsyncClient,
+    project_id: str,
+    guide_id: str,
+) -> dict:
+    snapshot_response = await client.post(
+        f"/api/v1/projects/{project_id}/guides/{guide_id}/source-snapshots",
+        headers=auth_headers(),
+        json={
+            "items": [
+                {
+                    "source_kind": "inline_markdown",
+                    "durable_ref": f"inline:/guides/{guide_id}/guide",
+                    "ingestion_adapter": "manual_import",
+                    "content_hash": sha256_hash(f"{guide_id}:guide"),
+                    "media_type": "text/markdown",
+                }
+            ]
+        },
+    )
+    assert snapshot_response.status_code == 201, snapshot_response.text
+    snapshot = snapshot_response.json()
+
+    report_response = await client.post(
+        f"/api/v1/projects/{project_id}/guides/{guide_id}/sufficiency-reports",
+        headers=auth_headers(),
+        json={
+            "source_snapshot_id": snapshot["id"],
+            "status": "passed",
+            "findings": [],
+            "summary": "Guide is sufficient for test setup.",
+            "agent_name": "ProjectGuideSufficiencyAgent",
+            "agent_version": "test",
+        },
+    )
+    assert report_response.status_code == 201, report_response.text
+
+    policy_response = await client.post(
+        f"/api/v1/projects/{project_id}/guides/{guide_id}/submission-artifact-policies",
+        headers=auth_headers(),
+        json={
+            "source_snapshot_id": snapshot["id"],
+            "policy_version": "v1",
+            "policy_body": policy_body_for_task_tests(),
+            "derivation_source": "manual_admin_derivation",
+            "derivation_agent_name": "SubmissionArtifactPolicyDerivationAgent",
+            "derivation_agent_version": "test",
+        },
+    )
+    assert policy_response.status_code == 201, policy_response.text
+    policy = policy_response.json()
+
+    effective_response = await client.post(
+        f"/api/v1/projects/{project_id}/guides/{guide_id}/submission-artifact-policies/"
+        f"{policy['id']}/approve",
+        headers=auth_headers(),
+        json={"approval_note": "Approved for test setup."},
+    )
+    assert effective_response.status_code == 200, effective_response.text
+    compiled_pre_submit_checker = await mark_pre_submit_checker_policy_compiled(
+        effective_response.json()
+    )
+    return {
+        "source_snapshot": snapshot,
+        "sufficiency_report": report_response.json(),
+        "submission_artifact_policy": policy,
+        "effective_policy": effective_response.json(),
+        "pre_submit_checker_policy": compiled_pre_submit_checker,
+    }
+
+
 def complete_task_payload() -> dict:
     return {
         "title": "Evaluate proof",
@@ -223,6 +383,7 @@ async def create_active_project(client: AsyncClient) -> dict:
     )
     assert guide_response.status_code == 201, guide_response.text
     guide = guide_response.json()
+    await create_policy_bundle_for_guide(client, project["id"], guide["id"])
 
     activation_response = await client.post(
         f"/api/v1/projects/{project['id']}/guides/{guide['id']}/activate",
@@ -945,6 +1106,7 @@ async def test_submission_uses_task_locked_context_after_new_guide_activation(
         json=complete_guide_payload("v2"),
     )
     assert guide_v2.status_code == 201, guide_v2.text
+    await create_policy_bundle_for_guide(task_client, project["id"], guide_v2.json()["id"])
     activate_v2 = await task_client.post(
         f"/api/v1/projects/{project['id']}/guides/{guide_v2.json()['id']}/activate",
         headers=auth_headers(),
@@ -1267,6 +1429,7 @@ async def test_database_blocks_task_locked_context_mutation_after_submission(
         json=complete_guide_payload("v2"),
     )
     assert guide_v2.status_code == 201, guide_v2.text
+    await create_policy_bundle_for_guide(task_client, project["id"], guide_v2.json()["id"])
     activate_v2 = await task_client.post(
         f"/api/v1/projects/{project['id']}/guides/{guide_v2.json()['id']}/activate",
         headers=auth_headers(),

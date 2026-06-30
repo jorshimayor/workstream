@@ -28,8 +28,10 @@ activation.
 
 The generated project pre-submit checker policy is deterministic compiled policy, not
 unrestricted generated checker code. This first chunk defines the record
-contract and activation dependency; the async derivation and trusted compiler
-behavior land in the next chunk.
+contract and activation dependency. Approval creates the pending checker
+contract; activation requires compiler-owned compiled bundle fields. The async
+derivation and trusted compiler behavior that writes those fields lands in the
+next chunk.
 
 Project owner material is untrusted input. Guide text, URLs, repository docs,
 examples, and imported documents cannot grant tool authority, override
@@ -82,10 +84,18 @@ P1
 
 ```text
 backend/alembic/versions/**
+backend/app/db/models.py
 backend/app/modules/projects/**
 backend/tests/test_projects.py
+backend/tests/test_tasks.py
+backend/tests/test_checkers.py
+backend/scripts/week1_api_e2e.py
+docs/architecture_data_model.md
+docs/decision_0011_submission_artifact_policy_drives_pre_submit.md
+docs/operations_project_operating_manual.md
 docs/spec_chunk_3_project_guide_foundation.md
 docs/template_submission_artifact_policy.md
+.agent-loop/LOOP_STATE.md
 .agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/**
 ```
 
@@ -112,6 +122,13 @@ human review implementation
   derivation boundaries, and permission-aware orchestration.
 - Repositories only persist and query policy records.
 - Schemas only define API input/output contracts and validation shape.
+- `backend/app/db/models.py` may only register new project policy models for
+  Alembic metadata discovery; no cross-module behavior belongs there.
+- `backend/tests/test_tasks.py` and `backend/tests/test_checkers.py` may only
+  update test setup helpers to create the required guide-policy bundle before
+  guide activation; no task/checker product behavior changes belong there.
+- `backend/scripts/week1_api_e2e.py` may only update the real API drill setup
+  to create the required guide-policy bundle before guide activation.
 - Full async agent execution is not part of this chunk. This chunk models the
   records/contracts and activation guard those agents will use.
 - Trusted checker compiler behavior is not part of this chunk. This chunk
@@ -156,9 +173,9 @@ human review implementation
 - [ ] Guide activation fails when no approved project submission artifact policy
       exists for the guide version.
 - [ ] Guide activation requires valid submission artifact policy.
-- [ ] The activation contract models project `PreSubmitCheckerPolicy` as a
-      required final activation dependency; Chunk 2 enforces it after compiler
-      execution exists.
+- [ ] The activation contract requires project `PreSubmitCheckerPolicy` to be
+      `compiled` with a persisted compiled bundle and compiled bundle hash;
+      Chunk 2 implements the compiler path that writes those fields.
 - [ ] Workstream default submission artifact policy is represented in code.
 - [ ] Workstream default policy requires `sha256:<64 lowercase hex>` artifact hashes where production hashes are required.
 - [ ] Persisted artifact/storage refs reject raw signed URLs, query strings,
@@ -187,8 +204,10 @@ human review implementation
 ## Verification Commands
 
 ```bash
-cd backend && .venv/bin/python -m ruff check app tests
-cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python -m pytest tests/test_projects.py
+cd backend && .venv/bin/python -m ruff check app tests scripts
+cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python -m pytest tests
+cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/week1_api_e2e.py
+cd backend && .venv/bin/docstr-coverage --config .docstr.yaml
 python3 scripts/check_markdown_links.py
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_internal_review_evidence.py

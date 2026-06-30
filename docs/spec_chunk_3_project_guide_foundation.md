@@ -27,6 +27,7 @@ Revision workflow execution is not in this chunk, but revision policy is in scop
 - `backend/app/modules/projects/service.py`
 - `backend/app/modules/projects/router.py`
 - `backend/alembic/versions/0002_project_guide_foundation.py`
+- `backend/alembic/versions/0006_submission_artifact_policy_foundation.py` (revision `0006_submission_policy`)
 - `backend/tests/test_projects.py`
 
 ## Architecture Requirements
@@ -56,6 +57,13 @@ Architecture target:
 
 Current v0.1 implementation note: the first project-guide foundation stores submission artifact requirements in `ProjectGuide.evidence_policy`. That is old construction state. The target replacement is `SubmissionArtifactPolicy`; no compatibility alias is required.
 
+There is no automatic backfill from `ProjectGuide.evidence_policy` into
+`SubmissionArtifactPolicy`. Existing local draft guides must create a fresh
+guide source snapshot, guide sufficiency report, approved submission artifact
+policy, effective project submission artifact policy, and project
+`PreSubmitCheckerPolicy` contract before activation. Already-active task policy
+context is not silently rewritten.
+
 The guide version is the join key for the guide-specific policies.
 
 Project guide activation requires:
@@ -65,7 +73,8 @@ Project guide activation requires:
 - guide sufficiency report is passed or warnings are acknowledged by `admin` or `project_manager`
 - Workstream-derived submission artifact policy is approved for the guide version with `admin` or `project_manager` approval provenance
 - effective project submission artifact policy hash exists for the guide source snapshot
-- project pre-submit checker policy exists for the effective project policy
+- project pre-submit checker policy is compiled for the effective project policy
+  and has a persisted compiled bundle hash
 - post-submit checker policy exists for the guide version
 - review policy exists for the guide version
 - revision policy exists for the guide version
@@ -73,9 +82,9 @@ Project guide activation requires:
 - revision policy has max revision rounds, revision deadline hours, and allowed resubmission states
 - payment policy has base amount, currency, payout type, and accepted payment rule
 
-Implementation sequencing: Chunk 1 can model the project pre-submit checker
-dependency before compiler execution exists. Chunk 2 compiles the checker and
-enforces the complete activation gate.
+Implementation sequencing: Chunk 1 models the project pre-submit checker
+dependency and fails activation unless compiler-owned compiled bundle fields are
+present. Chunk 2 adds the trusted compiler path that writes those fields.
 
 Activating a new guide supersedes the prior active guide for that project without mutating its content.
 
@@ -105,7 +114,12 @@ EffectiveProjectSubmissionArtifactPolicy =
   + ProjectSubmissionArtifactPolicy
 ```
 
-Workstream generates, persists, and locks project `PreSubmitCheckerPolicy` with a compiled bundle hash from the effective project submission artifact policy. Tasks later lock the applicable guide snapshot, effective project submission artifact policy hash, and pre-submit checker bundle hash. Blocking pre-submit failures prevent submission creation.
+Workstream generates, persists, and locks a project `PreSubmitCheckerPolicy`
+contract bound to the effective project submission artifact policy hash. Chunk
+2 fills the compiled bundle and compiled bundle hash. Tasks later lock the
+applicable guide snapshot, effective project submission artifact policy hash,
+and compiled pre-submit checker bundle hash once compiler execution exists.
+Blocking pre-submit failures prevent submission creation.
 
 Implementation note: the first v0.1 schema stored this as `ProjectGuide.evidence_policy`. That field is old construction state and is replaced by the dedicated policy table/API path.
 
@@ -117,10 +131,35 @@ Adds protected v1 routes:
 - `GET /api/v1/projects/{project_id}`
 - `POST /api/v1/projects/{project_id}/guides`
 - `PATCH /api/v1/projects/{project_id}/guides/{guide_id}`
+- `POST /api/v1/projects/{project_id}/guides/{guide_id}/source-snapshots`
+- `POST /api/v1/projects/{project_id}/guides/{guide_id}/sufficiency-reports`
+- `POST /api/v1/projects/{project_id}/guides/{guide_id}/sufficiency-reports/{report_id}/acknowledge-warnings`
+- `POST /api/v1/projects/{project_id}/guides/{guide_id}/submission-artifact-policies`
+- `PATCH /api/v1/projects/{project_id}/guides/{guide_id}/submission-artifact-policies/{policy_id}`
+- `POST /api/v1/projects/{project_id}/guides/{guide_id}/submission-artifact-policies/{policy_id}/approve`
 - `POST /api/v1/projects/{project_id}/guides/{guide_id}/activate`
 - `GET /api/v1/projects/{project_id}/active-guide`
 
 These routes require an actor role allowed to manage project setup.
+
+`POST /submission-artifact-policies/{policy_id}/approve` returns the merged
+`EffectiveProjectSubmissionArtifactPolicy`. The approval path also creates the
+project-scoped `PreSubmitCheckerPolicy` contract in `pending_compilation`
+status. Chunk 2 fills the compiled bundle and compiled bundle hash. Until those
+fields are present with lifecycle status `compiled`, guide activation fails.
+
+`POST /activate` and `GET /active-guide` return the active guide with the full
+setup bundle:
+
+- `guide_source_snapshot`
+- `guide_sufficiency_report`
+- `submission_artifact_policy`
+- `effective_submission_artifact_policy`
+- `pre_submit_checker_policy`
+- `checker_policy`
+- `review_policy`
+- `revision_policy`
+- `payment_policy`
 
 ## Lifecycle Impact
 
@@ -169,12 +208,12 @@ The active guide response becomes the future source for task-owned locked guide 
 - model/service/API tests pass
 - stale wording scan passes
 - Markdown link check passes
-- senior engineering verifier passes
-- QA/test verifier passes
-- security/auth verifier passes
+- required engineering-loop reviewer tracks pass according to the active chunk contract
 
 ## Reviewer Agents Required
 
 - senior engineering
 - QA/test
 - security/auth
+- product/ops
+- architecture/docs/reuse/test-delta/CI reviewers when the chunk touches those surfaces

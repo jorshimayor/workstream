@@ -3,17 +3,24 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.projects.models import (
     CheckerPolicy,
+    EffectiveProjectSubmissionArtifactPolicy,
+    GuideSourceSnapshot,
+    GuideSourceSnapshotItem,
+    GuideSufficiencyReport,
     PaymentPolicy,
+    PreSubmitCheckerPolicy,
     Project,
     ProjectGuide,
     RevisionPolicy,
     ReviewPolicy,
+    SubmissionArtifactPolicy,
 )
 
 
@@ -31,6 +38,25 @@ class ProjectRepository:
             session: Async SQLAlchemy session for the current unit of work.
         """
         self._session = session
+
+    def _resolve_current_append_only_row(
+        self,
+        rows: Sequence[Any],
+        supersedes_field: str,
+        description: str,
+    ) -> Any | None:
+        """Return the row not superseded by another row in an append-only chain."""
+        superseded_ids = {
+            getattr(row, supersedes_field)
+            for row in rows
+            if getattr(row, supersedes_field) is not None
+        }
+        current_rows = [row for row in rows if row.id not in superseded_ids]
+        if len(current_rows) > 1:
+            raise ProjectRepositoryIntegrityError(f"multiple current {description} found")
+        if not current_rows:
+            return None
+        return current_rows[0]
 
     async def add_project(self, project: Project) -> Project:
         """Persist a new project and refresh generated database fields.
@@ -82,6 +108,15 @@ class ProjectRepository:
         """
         return await self._session.get(ProjectGuide, guide_id)
 
+    async def lock_project_guide(self, guide_id: str) -> ProjectGuide | None:
+        """Load one project guide with a transactional row lock."""
+        result = await self._session.execute(
+            select(ProjectGuide)
+            .where(ProjectGuide.id == guide_id)
+            .with_for_update()
+        )
+        return result.scalar_one_or_none()
+
     async def get_active_guide(self, project_id: str) -> ProjectGuide | None:
         """Load the active guide for a project.
 
@@ -125,6 +160,323 @@ class ProjectRepository:
             )
         )
         return result.scalar_one_or_none()
+
+    async def add_guide_source_snapshot(
+        self,
+        snapshot: GuideSourceSnapshot,
+        items: Sequence[GuideSourceSnapshotItem],
+    ) -> GuideSourceSnapshot:
+        """Persist an immutable guide-source snapshot and its source items.
+
+        Args:
+            snapshot: Snapshot bundle model to persist.
+            items: Sanitized source items included in the snapshot manifest.
+
+        Returns:
+            Persisted snapshot model.
+        """
+        self._session.add(snapshot)
+        self._session.add_all(items)
+        await self._session.flush()
+        await self._session.refresh(snapshot)
+        return snapshot
+
+    async def get_guide_source_snapshot(
+        self,
+        snapshot_id: str,
+    ) -> GuideSourceSnapshot | None:
+        """Load one guide-source snapshot by primary key.
+
+        Args:
+            snapshot_id: Snapshot id to load.
+
+        Returns:
+            Snapshot when found; otherwise ``None``.
+        """
+        return await self._session.get(GuideSourceSnapshot, snapshot_id)
+
+    async def list_guide_source_snapshots(
+        self,
+        project_id: str,
+        guide_id: str,
+        guide_version: str,
+    ) -> Sequence[GuideSourceSnapshot]:
+        """List snapshots created for a guide version.
+
+        Args:
+            project_id: Project that owns the guide.
+            guide_id: Guide id whose snapshots should be loaded.
+            guide_version: Guide version whose snapshots should be loaded.
+
+        Returns:
+            Snapshots ordered by creation time.
+        """
+        result = await self._session.execute(
+            select(GuideSourceSnapshot)
+            .where(
+                GuideSourceSnapshot.project_id == project_id,
+                GuideSourceSnapshot.guide_id == guide_id,
+                GuideSourceSnapshot.guide_version == guide_version,
+            )
+            .order_by(GuideSourceSnapshot.captured_at)
+        )
+        return result.scalars().all()
+
+    async def get_latest_guide_source_snapshot(
+        self,
+        project_id: str,
+        guide_id: str,
+        guide_version: str,
+    ) -> GuideSourceSnapshot | None:
+        """Load the latest source snapshot for a guide version."""
+        result = await self._session.execute(
+            select(GuideSourceSnapshot)
+            .where(
+                GuideSourceSnapshot.project_id == project_id,
+                GuideSourceSnapshot.guide_id == guide_id,
+                GuideSourceSnapshot.guide_version == guide_version,
+            )
+            .order_by(GuideSourceSnapshot.captured_at.desc())
+            .limit(2)
+        )
+        snapshots = list(result.scalars().all())
+        if not snapshots:
+            return None
+        if len(snapshots) > 1 and snapshots[0].captured_at == snapshots[1].captured_at:
+            raise ProjectRepositoryIntegrityError(
+                "latest guide source snapshot is ambiguous for guide version"
+            )
+        return snapshots[0]
+
+    async def list_guide_source_snapshot_items(
+        self,
+        snapshot_id: str,
+    ) -> Sequence[GuideSourceSnapshotItem]:
+        """List sanitized source items for a snapshot in deterministic order.
+
+        Args:
+            snapshot_id: Snapshot id whose items should be loaded.
+
+        Returns:
+            Source items ordered by manifest item order.
+        """
+        result = await self._session.execute(
+            select(GuideSourceSnapshotItem)
+            .where(GuideSourceSnapshotItem.source_snapshot_id == snapshot_id)
+            .order_by(GuideSourceSnapshotItem.item_order)
+        )
+        return result.scalars().all()
+
+    async def add_guide_sufficiency_report(
+        self,
+        report: GuideSufficiencyReport,
+    ) -> GuideSufficiencyReport:
+        """Persist a guide sufficiency report.
+
+        Args:
+            report: Sufficiency report to persist.
+
+        Returns:
+            Persisted sufficiency report.
+        """
+        self._session.add(report)
+        await self._session.flush()
+        await self._session.refresh(report)
+        return report
+
+    async def get_guide_sufficiency_report(
+        self,
+        report_id: str,
+    ) -> GuideSufficiencyReport | None:
+        """Load one guide sufficiency report by primary key."""
+        return await self._session.get(GuideSufficiencyReport, report_id)
+
+    async def get_sufficiency_report_for_snapshot(
+        self,
+        snapshot_id: str,
+    ) -> GuideSufficiencyReport | None:
+        """Load the sufficiency report bound to a guide-source snapshot."""
+        result = await self._session.execute(
+            select(GuideSufficiencyReport).where(
+                GuideSufficiencyReport.source_snapshot_id == snapshot_id
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def add_submission_artifact_policy(
+        self,
+        policy: SubmissionArtifactPolicy,
+    ) -> SubmissionArtifactPolicy:
+        """Persist a draft submission artifact policy.
+
+        Args:
+            policy: Policy model to persist.
+
+        Returns:
+            Persisted policy model.
+        """
+        self._session.add(policy)
+        await self._session.flush()
+        await self._session.refresh(policy)
+        return policy
+
+    async def get_submission_artifact_policy(
+        self,
+        policy_id: str,
+    ) -> SubmissionArtifactPolicy | None:
+        """Load one submission artifact policy by primary key."""
+        return await self._session.get(SubmissionArtifactPolicy, policy_id)
+
+    async def lock_submission_artifact_policy(
+        self,
+        policy_id: str,
+    ) -> SubmissionArtifactPolicy | None:
+        """Load one submission artifact policy with a transactional row lock."""
+        result = await self._session.execute(
+            select(SubmissionArtifactPolicy)
+            .where(SubmissionArtifactPolicy.id == policy_id)
+            .with_for_update()
+        )
+        return result.scalar_one_or_none()
+
+    async def get_approved_submission_artifact_policy(
+        self,
+        project_id: str,
+        guide_version: str,
+        source_snapshot_id: str,
+    ) -> SubmissionArtifactPolicy | None:
+        """Load the approved policy for one guide source snapshot."""
+        result = await self._session.execute(
+            select(SubmissionArtifactPolicy).where(
+                SubmissionArtifactPolicy.project_id == project_id,
+                SubmissionArtifactPolicy.guide_version == guide_version,
+                SubmissionArtifactPolicy.source_snapshot_id == source_snapshot_id,
+                SubmissionArtifactPolicy.lifecycle_status == "approved",
+            )
+        )
+        return self._resolve_current_append_only_row(
+            result.scalars().all(),
+            "supersedes_policy_id",
+            "submission artifact policies",
+        )
+
+    async def get_current_approved_submission_artifact_policy(
+        self,
+        project_id: str,
+        guide_version: str,
+    ) -> SubmissionArtifactPolicy | None:
+        """Load the current approved policy for one guide version."""
+        result = await self._session.execute(
+            select(SubmissionArtifactPolicy).where(
+                SubmissionArtifactPolicy.project_id == project_id,
+                SubmissionArtifactPolicy.guide_version == guide_version,
+                SubmissionArtifactPolicy.lifecycle_status == "approved",
+            )
+        )
+        return self._resolve_current_append_only_row(
+            result.scalars().all(),
+            "supersedes_policy_id",
+            "submission artifact policies",
+        )
+
+    async def list_approved_submission_artifact_policies(
+        self,
+        project_id: str,
+        guide_version: str,
+    ) -> Sequence[SubmissionArtifactPolicy]:
+        """List approved submission artifact policies for one guide version."""
+        result = await self._session.execute(
+            select(SubmissionArtifactPolicy).where(
+                SubmissionArtifactPolicy.project_id == project_id,
+                SubmissionArtifactPolicy.guide_version == guide_version,
+                SubmissionArtifactPolicy.lifecycle_status == "approved",
+            )
+        )
+        return result.scalars().all()
+
+    async def add_effective_submission_artifact_policy(
+        self,
+        policy: EffectiveProjectSubmissionArtifactPolicy,
+    ) -> EffectiveProjectSubmissionArtifactPolicy:
+        """Persist an effective project submission artifact policy."""
+        self._session.add(policy)
+        await self._session.flush()
+        await self._session.refresh(policy)
+        return policy
+
+    async def get_effective_submission_artifact_policy(
+        self,
+        project_id: str,
+        guide_version: str,
+        source_snapshot_id: str,
+    ) -> EffectiveProjectSubmissionArtifactPolicy | None:
+        """Load the active effective policy for one guide source snapshot."""
+        result = await self._session.execute(
+            select(EffectiveProjectSubmissionArtifactPolicy).where(
+                EffectiveProjectSubmissionArtifactPolicy.project_id == project_id,
+                EffectiveProjectSubmissionArtifactPolicy.guide_version == guide_version,
+                EffectiveProjectSubmissionArtifactPolicy.source_snapshot_id == source_snapshot_id,
+                EffectiveProjectSubmissionArtifactPolicy.lifecycle_status == "approved",
+            )
+        )
+        return self._resolve_current_append_only_row(
+            result.scalars().all(),
+            "supersedes_effective_policy_id",
+            "effective project submission artifact policies",
+        )
+
+    async def add_pre_submit_checker_policy(
+        self,
+        policy: PreSubmitCheckerPolicy,
+    ) -> PreSubmitCheckerPolicy:
+        """Persist a project pre-submit checker policy contract."""
+        self._session.add(policy)
+        await self._session.flush()
+        await self._session.refresh(policy)
+        return policy
+
+    async def get_pre_submit_checker_policy_for_effective_policy(
+        self,
+        effective_policy_id: str,
+    ) -> PreSubmitCheckerPolicy | None:
+        """Load the pre-submit checker policy bound to one effective policy."""
+        result = await self._session.execute(
+            select(PreSubmitCheckerPolicy).where(
+                PreSubmitCheckerPolicy.effective_policy_id == effective_policy_id,
+                PreSubmitCheckerPolicy.lifecycle_status.in_(
+                    ["pending_compilation", "compiled"]
+                ),
+            )
+        )
+        rows = result.scalars().all()
+        if len(rows) > 1:
+            raise ProjectRepositoryIntegrityError(
+                "multiple pre-submit checker policies found for effective policy"
+            )
+        if not rows:
+            return None
+        return rows[0]
+
+    async def get_current_pre_submit_checker_policy(
+        self,
+        project_id: str,
+        guide_version: str,
+    ) -> PreSubmitCheckerPolicy | None:
+        """Load the current pre-submit checker policy for one guide version."""
+        result = await self._session.execute(
+            select(PreSubmitCheckerPolicy).where(
+                PreSubmitCheckerPolicy.project_id == project_id,
+                PreSubmitCheckerPolicy.guide_version == guide_version,
+                PreSubmitCheckerPolicy.lifecycle_status.in_(
+                    ["pending_compilation", "compiled"]
+                ),
+            )
+        )
+        return self._resolve_current_append_only_row(
+            result.scalars().all(),
+            "supersedes_pre_submit_checker_policy_id",
+            "pre-submit checker policies",
+        )
 
     async def list_active_guides(self, project_id: str) -> Sequence[ProjectGuide]:
         """List active guides for a project.

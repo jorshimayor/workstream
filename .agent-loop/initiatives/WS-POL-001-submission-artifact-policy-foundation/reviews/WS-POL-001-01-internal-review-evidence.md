@@ -10,83 +10,71 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: 8b51a84b1bede193bbafe0b1eeb7b7981a271a0e
+Reviewed code SHA: a77845bfe041c3fa8d7f9b25b928e76060049ec2
 
-Reviewed at: 2026-06-26T21:22:31Z
+Reviewed at: 2026-06-28T08:56:12Z
 
-Reviewer run IDs: 019f05c6-67db-7650-9f9e-d7313cfa3969, 019f05c6-6e02-7ca2-8d2f-1881c51ffd71, 019f05c6-71c2-7cc0-b86b-cab012596f23, 019f05c6-755b-7892-b9d3-cbd5a5bffdd6, 019f05c6-7d33-7af0-bbdf-340ff8ad6634, 019f05c6-848e-7b22-9405-1ee70f67ae55, 019f05c9-2556-7730-bed9-6d21ebf9fb20, 019f05cc-a82a-7d90-8277-2e13d0417252, 019f05cc-aa78-7ee0-922c-be066be11538
+Reviewer run IDs: 019f0d6a-6dcb-76e0-8e72-8fc54cda1f48, 019f0d6a-70f0-7e53-ba62-595b136610a9, 019f0d6a-73e8-7d72-9666-f7a486ac9017, 019f0d6a-770b-7b61-a0b8-c6e0a99a2faa, 019f0d6a-7d04-70a0-9aad-6a71b259f765, 019f0d6a-8049-7d72-a111-2db0bd4c19ec, 019f0d6e-9b7b-7340-b4d0-959670f70ab6, 019f0d6e-9e0f-7430-ba15-3a73342d1785
 
-After reviewed SHA `8b51a84b1bede193bbafe0b1eeb7b7981a271a0e`, only review evidence, initiative status, and loop state changed.
+After reviewed SHA `a77845bfe041c3fa8d7f9b25b928e76060049ec2`, only review evidence, initiative status, loop state, and PR trust-bundle files may change before PR publication.
 
 ## Reviewer Results
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS WITH LOW RISKS | None | Confirmed planning-vs-implementation separation, project-scoped `PreSubmitCheckerPolicy`, no per-task checker generation, `locked_pre_submit_checker_bundle_hash` as compiled bundle hash, and activation/READY boundaries. Low risk: some summary docs omit the word compiled while canonical docs are explicit. |
-| QA/test | PASS WITH LOW RISKS | None | Confirmed project-guide-version checker reuse, blocked/split uncovered task sets, activation/READY locks, submission provenance, and strengthened stale-wording tests. Low risk: archived internal review docs intentionally preserve old target wording. |
-| security/auth | PASS WITH LOW RISKS | None | Confirmed immutable guide-source bundle, server-derived source snapshot hash, append-only approved rows, non-weakening defaults, locked compiled bundle hash, constrained runtime parameters, and narrow stale-wording skip. Low risk: one plan sentence uses shortened sufficiency wording while chunk/data contracts include warning acknowledgement. |
-| product/ops | PASS WITH LOW RISKS | None | Confirmed project-owner boundary, setup checklist, activation/READY gates, pre-submit failure separation from review decisions, and no per-task checker generation. Low risk: setup checklist ordering is acceptable but could be polished later. |
-| architecture | PASS WITH LOW RISKS | None | Confirmed no boundary violation, project/guide-version-scoped checker bundle, immutable `GuideSourceSnapshot`, chunk separation, and no hidden per-task policy channel. Low risk: runtime enforcement is future work by design. |
-| ci integrity | PASS WITH LOW RISKS | None | Confirmed no workflow/package weakening, exact reviewer result parsing, reviewed-SHA binding, narrow stale-wording skip, and fail-closed agent gate behavior when `--fail-on-high` is used. Low risk: the default PR workflow keeps the static agent gate advisory, unchanged from main. |
-| docs | PASS WITH LOW RISKS | None | Confirmed docs/templates cover guide-source snapshot id/hash, `locked_pre_submit_checker_bundle_hash`, pre-submit failure API contract, and product/engineering loop separation. Medium human-review risk remains only PR breadth. |
-| reuse/dedup | PASS WITH LOW RISKS | None | Confirmed no duplicate task-owned policy/checker path, internal/external review separation, and one implementation table path for `SubmissionArtifactPolicy`. Low risk: `SubmissionArtifactPolicy` and `ProjectSubmissionArtifactPolicy` wording must stay explicit during implementation. |
-| test delta | PASS | None | Confirmed tests were strengthened, no assertions were weakened, stale-wording coverage is additive, exact reviewer-result tests remain active, and reviewed-SHA binding remains covered. |
+| senior engineering | PASS WITH LOW RISKS | None | Confirmed the key-based artifact merge repair, project service boundary, and chunk scope. Low follow-ups: define stricter artifact/evidence key grammar and make required rule fields literal or explicitly optional before compiler/runtime chunks. |
+| qa/test | PASS WITH LOW RISKS | None | Confirmed required artifacts now merge by canonical `key`, API-level tests cover same-key conflict and identical dedupe, and approval/activation revalidation remains covered. |
+| security/auth | PASS WITH LOW RISKS | None | No blocking auth, source-ref, hash, permission, or append-only lifecycle issue. Low follow-ups: make sufficiency report creation explicitly draft-only and prevent warning acknowledgement overwrite. |
+| product/ops | PASS WITH LOW RISKS | None | Confirmed setup workflow remains project-scoped, pre-submit failure is separate from review decisions, and pending compiler dependency is correctly deferred to Chunk 2. |
+| architecture | PASS WITH LOW RISKS | None | Confirmed no per-task checker model drift, no forbidden task/checker/submission runtime edits, and project-scoped `PreSubmitCheckerPolicy` remains the architecture. |
+| ci integrity | N/A - with approved reason | N/A | No workflow, package-script, coverage-threshold, dependency, or test-tooling files changed in the reviewed implementation. |
+| docs | PASS | None | Confirmed `docs/template_submission_artifact_policy.md` now matches artifact `key/path/description` and evidence `key/label/description` schema fields. |
+| reuse/dedup | PASS WITH LOW RISKS | None | Accepted temporary duplicated compiler-stub setup in tests/E2E until Chunk 2 introduces the trusted compiler path. No missed production abstraction blocks this chunk. |
+| test delta | PASS | None | Confirmed two new API-level merge-key tests would fail against the old path-based merge, no skips or weakened assertions, and no test deletions. |
 
 ## Valid Findings Addressed
 
-- Removed rejected per-task policy/checker generation from active contracts.
-- Locked the project-guide-version model: every task under the same active guide
-  version reuses that guide version's project `PreSubmitCheckerPolicy`; uncovered
-  task sets block activation or are split into another project/guide.
-- Clarified that `locked_pre_submit_checker_bundle_hash` means
-  `PreSubmitCheckerPolicy.compiled_bundle_hash`, not a generic policy hash.
-- Added immutable `GuideSourceSnapshot` bundle semantics with canonical
-  manifest hash, source item refs, server-derived source hash, and activation
-  invalidation rules.
-- Added project activation and task `READY` gates requiring guide-source
-  snapshot id/hash, effective project submission artifact policy hash, and
-  project pre-submit checker bundle hash.
-- Updated submission packet provenance to include locked guide-source snapshot
-  id/hash, effective project submission artifact policy hash, and checker bundle
-  hash from server-owned task context.
-- Replaced stale target wording that read from `task.required_evidence` with the
-  locked project `PreSubmitCheckerPolicy` and effective project submission
-  artifact policy path.
-- Documented that this PR is planning approval only. Runtime product behavior,
-  schema/API changes, and frontend changes remain out of scope until the
-  implementation chunk is approved.
-- Expanded stale-wording guard coverage for rejected per-task policy/checker
-  names and narrowed the historical-review skip to `docs/internal_reviews/`.
-- Preserved separation between internal sub-agent evidence and external
-  CodeRabbit/GitHub/human review response artifacts.
+- Fixed the QA finding that effective `required_artifacts` merged by `path` instead of canonical artifact `key`.
+- Added API-level regression coverage for same-key/different-path default artifact conflicts.
+- Added API-level regression coverage for identical same-key default/project artifact dedupe.
+- Updated the operator-facing submission artifact policy template so required artifact and evidence tables match the real schema.
+- Preserved the current chunk boundary: this PR models and guards project setup; it does not move task runtime or implement the trusted compiler execution.
 
 ## Commands Run
 
 ```bash
-python3 scripts/check_markdown_links.py
+cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python -m pytest tests/test_projects.py -q -k 'default_artifact_key_conflict or dedupes_identical_default_artifact_key or rejects_default_weakening'
+cd backend && .venv/bin/python -m ruff check app/modules/projects/service.py tests/test_projects.py
+python3 scripts/check_markdown_links.py docs/template_submission_artifact_policy.md
 python3 scripts/check_stale_workstream_wording.py
-python3 scripts/test_agent_gates.py
-python3 scripts/check_loop_memory_state.py
-python3 scripts/workstream_agent_gate.py --base origin/main --head HEAD --format json
 git diff --check
+cd backend && .venv/bin/python -m ruff check app tests scripts
+cd backend && .venv/bin/docstr-coverage --config .docstr.yaml
+python3 scripts/check_markdown_links.py
+python3 scripts/workstream_agent_gate.py --base origin/main --head HEAD --format json
+docker compose exec -T postgres psql -U workstream -d workstream_test -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
+cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python -m pytest tests
+cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/week1_api_e2e.py
 ```
 
 ## Results
 
 ```text
-Markdown link check passed for 41 changed Markdown files.
+Focused merge-key tests passed: 3 passed, 155 deselected.
+Full ruff passed.
+Docstring coverage passed: 100.0% (435/435).
+Full backend test suite passed: 249 passed in 1004.33s.
+Week 1 real API E2E passed.
+Markdown link check passed for 12 changed Markdown files.
 Stale wording check passed.
-25 agent gate tests passed.
-Loop memory state check passed.
 git diff --check passed.
-Agent gate result: REVIEW_REQUIRED because this planning PR is large and touches risk-sensitive policy/spec/test-gate files.
+Agent gate result: REVIEW_REQUIRED because this is a large L1 migration/policy chunk touching risk-sensitive files.
 ```
 
 ## Remaining Risks
 
-- `WS-POL-001-01` is planning-only and is not backend implementation approval.
-- Runtime enforcement remains for later chunks, especially compiler execution,
-  task locked-context persistence, and submission runtime migration.
-- Human review must accept the large planning PR breadth before merge.
-- Historical review archives under `docs/internal_reviews/` intentionally
-  preserve old wording and are skipped by the stale-wording scan.
+- Chunk 2 must replace test/E2E direct `PreSubmitCheckerPolicy` compiled-field mutation with the real trusted compiler path.
+- Chunk 2 should lock artifact/evidence key grammar before compiler/runtime consumption.
+- Chunk 2 should decide whether `required` remains a boolean or becomes `Literal[True]`.
+- Chunk 2 or a setup-hardening follow-up should make sufficiency reports draft-only and warning acknowledgement idempotent.
+- Chunk 3 must add task locked-context fields and submission runtime migration; this chunk intentionally does not move task runtime.
