@@ -6,10 +6,10 @@ from dataclasses import replace
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.hashing import canonical_json_hash
 from app.core.permissions import require_any_role
 from app.modules.checkers.compiler import PRIMITIVE_CHECKER_NAME_MAP
 from app.modules.checkers.models import CheckerResult, CheckerRun
@@ -212,8 +212,26 @@ class CheckerService:
             if submission is not None
             else task.locked_pre_submit_checker_bundle_hash
         )
+        guide_version = (
+            submission.locked_guide_version
+            if submission is not None
+            else task.locked_guide_version
+        )
+        source_snapshot_id = (
+            submission.locked_guide_source_snapshot_id
+            if submission is not None
+            else task.locked_guide_source_snapshot_id
+        )
+        source_snapshot_hash = (
+            submission.locked_guide_source_snapshot_hash
+            if submission is not None
+            else task.locked_guide_source_snapshot_hash
+        )
         if not all(
             [
+                guide_version,
+                source_snapshot_id,
+                source_snapshot_hash,
                 effective_policy_id,
                 effective_policy_hash,
                 pre_submit_checker_policy_id,
@@ -222,27 +240,31 @@ class CheckerService:
         ):
             raise CheckerPolicyInvalid("locked project pre-submit context is incomplete")
 
-        effective_policy_result = await self._session.execute(
-            select(EffectiveProjectSubmissionArtifactPolicy).where(
-                EffectiveProjectSubmissionArtifactPolicy.id == effective_policy_id
-            )
+        effective_policy = await self._project_repo.get_effective_submission_artifact_policy_by_id(
+            effective_policy_id,
         )
-        effective_policy = effective_policy_result.scalar_one_or_none()
         if (
             effective_policy is None
+            or effective_policy.project_id != task.project_id
+            or effective_policy.guide_version != guide_version
+            or effective_policy.source_snapshot_id != source_snapshot_id
+            or effective_policy.source_snapshot_hash != source_snapshot_hash
             or effective_policy.effective_policy_hash != effective_policy_hash
             or effective_policy.lifecycle_status not in {"approved", "superseded"}
         ):
             raise CheckerPolicyInvalid("locked effective project submission policy is invalid")
+        if canonical_json_hash(effective_policy.effective_policy) != effective_policy_hash:
+            raise CheckerPolicyInvalid("locked effective project submission policy is invalid")
 
-        pre_submit_result = await self._session.execute(
-            select(PreSubmitCheckerPolicy).where(
-                PreSubmitCheckerPolicy.id == pre_submit_checker_policy_id
-            )
+        pre_submit_checker_policy = await self._project_repo.get_pre_submit_checker_policy(
+            pre_submit_checker_policy_id,
         )
-        pre_submit_checker_policy = pre_submit_result.scalar_one_or_none()
         if (
             pre_submit_checker_policy is None
+            or pre_submit_checker_policy.project_id != task.project_id
+            or pre_submit_checker_policy.guide_version != guide_version
+            or pre_submit_checker_policy.source_snapshot_id != source_snapshot_id
+            or pre_submit_checker_policy.source_snapshot_hash != source_snapshot_hash
             or pre_submit_checker_policy.lifecycle_status not in {"compiled", "superseded"}
             or pre_submit_checker_policy.effective_policy_id != effective_policy.id
             or pre_submit_checker_policy.effective_policy_hash
@@ -250,6 +272,13 @@ class CheckerService:
             or pre_submit_checker_policy.compiled_bundle_hash != pre_submit_checker_bundle_hash
             or not pre_submit_checker_policy.compiled_bundle
             or not pre_submit_checker_policy.checker_names
+        ):
+            raise CheckerPolicyInvalid("locked project pre-submit checker policy is invalid")
+        if (
+            pre_submit_checker_policy.compiled_bundle.get("effective_policy_hash")
+            != effective_policy_hash
+            or canonical_json_hash(pre_submit_checker_policy.compiled_bundle)
+            != pre_submit_checker_bundle_hash
         ):
             raise CheckerPolicyInvalid("locked project pre-submit checker policy is invalid")
         checker_names = list(pre_submit_checker_policy.checker_names or [])

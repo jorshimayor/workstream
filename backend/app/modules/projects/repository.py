@@ -450,6 +450,13 @@ class ProjectRepository:
             "effective project submission artifact policies",
         )
 
+    async def get_effective_submission_artifact_policy_by_id(
+        self,
+        policy_id: str,
+    ) -> EffectiveProjectSubmissionArtifactPolicy | None:
+        """Load one effective project submission artifact policy by primary key."""
+        return await self._session.get(EffectiveProjectSubmissionArtifactPolicy, policy_id)
+
     async def add_pre_submit_checker_policy(
         self,
         policy: PreSubmitCheckerPolicy,
@@ -481,6 +488,13 @@ class ProjectRepository:
         if not rows:
             return None
         return rows[0]
+
+    async def get_pre_submit_checker_policy(
+        self,
+        policy_id: str,
+    ) -> PreSubmitCheckerPolicy | None:
+        """Load one project pre-submit checker policy by primary key."""
+        return await self._session.get(PreSubmitCheckerPolicy, policy_id)
 
     async def get_current_pre_submit_checker_policy(
         self,

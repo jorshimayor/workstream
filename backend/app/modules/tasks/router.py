@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps.auth import get_current_actor
@@ -34,14 +35,18 @@ def task_http_error(exc: TaskServiceError) -> HTTPException:
     Returns:
         HTTP exception carrying the service error details.
     """
-    error_code = getattr(exc, "code", None)
-    details = getattr(exc, "details", None)
-    if error_code is not None:
-        return HTTPException(
-            status_code=exc.status_code,
-            detail={"code": error_code, "details": details or {}},
-        )
     return HTTPException(status_code=exc.status_code, detail=str(exc))
+
+
+def task_domain_error_response(exc: TaskServiceError) -> JSONResponse:
+    """Convert a coded domain error into the public API error body."""
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "code": getattr(exc, "code"),
+            "details": getattr(exc, "details", None) or {},
+        },
+    )
 
 
 def permission_http_error(exc: PermissionDenied) -> HTTPException:
@@ -173,13 +178,15 @@ async def create_submission(
     payload: SubmissionCreate,
     actor: Annotated[ActorContext, Depends(get_current_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
-) -> SubmissionResponse:
+) -> SubmissionResponse | JSONResponse:
     """Create a submission packet version for a task."""
     try:
         return await TaskService(session).create_submission(actor, task_id, payload)
     except PermissionDenied as exc:
         raise permission_http_error(exc) from exc
     except TaskServiceError as exc:
+        if getattr(exc, "code", None) is not None:
+            return task_domain_error_response(exc)
         raise task_http_error(exc) from exc
 
 

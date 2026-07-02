@@ -769,7 +769,7 @@ async def test_duplicate_artifact_fails_before_submission_row(
         json=payload,
     )
     assert created.status_code == 422, created.text
-    detail = created.json()["detail"]
+    detail = created.json()
     assert detail["code"] == "pre_submission_checker_failed"
     duplicate_result = next(
         result
@@ -811,7 +811,7 @@ async def test_chunk8_missing_required_file_fails_pre_submit_without_submission(
         json=payload,
     )
     assert created.status_code == 422, created.text
-    detail = created.json()["detail"]
+    detail = created.json()
     assert detail["code"] == "pre_submission_checker_failed"
     required_files = next(
         result
@@ -874,7 +874,7 @@ async def test_chunk8_default_blocking_checker_survives_empty_blocking_severitie
         json=payload,
     )
     assert created.status_code == 422, created.text
-    detail = created.json()["detail"]
+    detail = created.json()
     assert detail["code"] == "pre_submission_checker_failed"
     required_files = next(
         result
@@ -906,7 +906,7 @@ async def test_chunk8_forbidden_file_blocks_without_worker_path_leakage(
         json=payload,
     )
     assert created.status_code == 422, created.text
-    detail = created.json()["detail"]
+    detail = created.json()
     assert detail["code"] == "pre_submission_checker_failed"
     forbidden = next(
         result
@@ -934,7 +934,7 @@ async def test_chunk8_confidentiality_attestation_blocks_generic_text(
         json=payload,
     )
     assert created.status_code == 422, created.text
-    detail = created.json()["detail"]
+    detail = created.json()
     assert detail["code"] == "pre_submission_checker_failed"
     attestation = next(
         result
@@ -1192,7 +1192,7 @@ async def test_chunk10_checker_trial_runs_sample_submissions_through_real_api(
         )
         assert created.status_code == case["create_status"], created.text
         if case["create_status"] == 422:
-            detail = created.json()["detail"]
+            detail = created.json()
             assert detail["code"] == case["route"]
             target_result = next(
                 result

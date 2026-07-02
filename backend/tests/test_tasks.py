@@ -24,7 +24,11 @@ from app.db import session as db_session
 from app.db.base import Base
 from app.main import create_app
 from app.modules.tasks.lifecycle import InvalidTaskTransition, ensure_allowed_transition
-from app.modules.projects.models import PreSubmitCheckerPolicy, SubmissionArtifactPolicy
+from app.modules.projects.models import (
+    EffectiveProjectSubmissionArtifactPolicy,
+    PreSubmitCheckerPolicy,
+    SubmissionArtifactPolicy,
+)
 from app.modules.tasks.models import (
     AuditEvent,
     EvidenceItem,
@@ -848,7 +852,7 @@ async def test_submission_runtime_uses_locked_project_policy_not_task_required_f
     )
 
     assert legacy_only_response.status_code == 422, legacy_only_response.text
-    detail = legacy_only_response.json()["detail"]
+    detail = legacy_only_response.json()
     assert detail["code"] == "pre_submission_checker_failed"
     required_files = next(
         result
@@ -883,7 +887,7 @@ async def test_submission_runtime_uses_locked_project_policy_not_task_required_f
     )
 
     assert legacy_evidence_response.status_code == 422, legacy_evidence_response.text
-    detail = legacy_evidence_response.json()["detail"]
+    detail = legacy_evidence_response.json()
     assert detail["code"] == "pre_submission_checker_failed"
     required_evidence = next(
         result
@@ -1269,7 +1273,7 @@ async def test_submission_pre_submit_failure_returns_structured_domain_error(
     )
 
     assert response.status_code == 422
-    detail = response.json()["detail"]
+    detail = response.json()
     assert detail["code"] == "pre_submission_checker_failed"
     assert detail["details"]["status"] == "failed"
     assert detail["details"]["eligible_to_submit"] is False
@@ -1326,7 +1330,7 @@ async def test_submission_pre_submit_requires_specific_evidence_key(
     )
 
     assert response.status_code == 422, response.text
-    detail = response.json()["detail"]
+    detail = response.json()
     assert detail["code"] == "pre_submission_checker_failed"
     evidence_result = next(
         result
@@ -1364,7 +1368,7 @@ async def test_submission_pre_submit_requires_project_attestation_terms(
     )
 
     assert response.status_code == 422, response.text
-    detail = response.json()["detail"]
+    detail = response.json()
     assert detail["code"] == "pre_submission_checker_failed"
     attestation_result = next(
         result
@@ -1380,6 +1384,82 @@ async def test_submission_pre_submit_requires_project_attestation_terms(
             await session.execute(select(Submission).where(Submission.task_id == started_task["id"]))
         ).scalars().all()
     assert submissions == []
+
+
+async def test_submission_pre_submit_rejects_mutated_effective_policy_body(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+    async with db_session.get_session_factory()() as session:
+        task = await session.get(WorkstreamTask, started_task["id"])
+        assert task is not None
+        effective_policy = await session.get(
+            EffectiveProjectSubmissionArtifactPolicy,
+            task.locked_effective_project_submission_artifact_policy_id,
+        )
+        assert effective_policy is not None
+        effective_policy.effective_policy = {
+            **effective_policy.effective_policy,
+            "required_evidence": [],
+        }
+        await session.commit()
+
+    response = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+
+    assert response.status_code == 422, response.text
+    assert "locked effective project submission policy" in response.json()["detail"]
+
+    async with db_session.get_session_factory()() as session:
+        submissions = (
+            await session.execute(select(Submission).where(Submission.task_id == started_task["id"]))
+        ).scalars().all()
+        checker_runs = (await session.execute(select(db_models.CheckerRun))).scalars().all()
+    assert submissions == []
+    assert checker_runs == []
+
+
+async def test_submission_pre_submit_rejects_mutated_compiled_checker_bundle(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+    async with db_session.get_session_factory()() as session:
+        task = await session.get(WorkstreamTask, started_task["id"])
+        assert task is not None
+        pre_submit_policy = await session.get(
+            PreSubmitCheckerPolicy,
+            task.locked_pre_submit_checker_policy_id,
+        )
+        assert pre_submit_policy is not None
+        pre_submit_policy.compiled_bundle = {
+            **pre_submit_policy.compiled_bundle,
+            "effective_policy_hash": "sha256:" + "0" * 64,
+        }
+        await session.commit()
+
+    response = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+
+    assert response.status_code == 422, response.text
+    assert "locked project pre-submit checker policy" in response.json()["detail"]
+
+    async with db_session.get_session_factory()() as session:
+        submissions = (
+            await session.execute(select(Submission).where(Submission.task_id == started_task["id"]))
+        ).scalars().all()
+        checker_runs = (await session.execute(select(db_models.CheckerRun))).scalars().all()
+    assert submissions == []
+    assert checker_runs == []
 
 
 async def test_submission_pre_submit_checker_setup_error_is_controlled(
