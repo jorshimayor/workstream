@@ -6,9 +6,9 @@
 - Active planning chunk: none
 - Active implementation chunk: `WS-POL-001-03`
 - Branch: `codex/ws-pol-001-03-task-locked-context`
-- Status: PR #63 awaiting review for `WS-POL-001-03`; internal review complete and external review pending
+- Status: PR #63 awaiting human review for `WS-POL-001-03`; internal review, CodeRabbit, and GitHub Actions complete
 - Reviewed code SHA: `a3abfac3bc3a91026856c5e42d8fc873e575d757`
-- Current gate: GitHub Actions rerun, CodeRabbit refresh, and human PR review checkpoint
+- Current gate: human PR review checkpoint
 - Next chunk: inactive until `WS-POL-001-03` is reviewed and merged by the user
 
 ## Operating Rule

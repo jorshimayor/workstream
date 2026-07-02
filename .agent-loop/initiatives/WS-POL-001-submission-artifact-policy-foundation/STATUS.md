@@ -3,8 +3,8 @@
 ## Current Status
 
 `WS-POL-001-01` and `WS-POL-001-02` are merged to `main`. `WS-POL-001-03` is
-awaiting review as PR #63 on branch `codex/ws-pol-001-03-task-locked-context` with
-implementation and internal review complete.
+awaiting human review as PR #63 on branch `codex/ws-pol-001-03-task-locked-context`
+with implementation, internal review, CodeRabbit, and GitHub Actions complete.
 
 Internal review, external review, and GitHub Actions passed for `WS-POL-001-02`
 before merge. `WS-POL-001-03` now owns the task locked-context and submission
@@ -28,7 +28,7 @@ creation runtime migration.
 
 | Blocker | Owner | Next action |
 |---|---|---|
-| Backend workflow failed on Week 1 real API E2E before repair | Codex | Push repaired E2E packet and wait for GitHub Actions rerun. |
+| None | - | Wait for human PR review and user-owned merge decision. |
 
 ## Follow-Ups
 

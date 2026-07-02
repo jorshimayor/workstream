@@ -139,10 +139,9 @@ Reviewer run IDs: see `WS-POL-001-03-internal-review-evidence.md`.
 
 ## External Review
 
-CodeRabbit passed on PR #63. The backend workflow initially failed in the Week
-1 real API E2E step and was repaired by aligning the E2E submission packet with
-the locked project pre-submit checker policy. GitHub Actions rerun is pending
-after this repair.
+CodeRabbit and GitHub Actions passed on PR #63. The backend workflow initially
+failed in the Week 1 real API E2E step and was repaired by aligning the E2E
+submission packet with the locked project pre-submit checker policy.
 External review responses must be tracked separately in
 `WS-POL-001-03-external-review-response.md`.
 

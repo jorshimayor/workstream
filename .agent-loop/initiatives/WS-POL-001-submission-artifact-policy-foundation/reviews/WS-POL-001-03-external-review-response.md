@@ -2,14 +2,12 @@
 
 ## Status
 
-CodeRabbit passed on PR #63. The backend workflow initially failed in the Week
-1 real API E2E step because the script submitted an old packet shape missing
-the current locked policy evidence key and attestation terms.
+CodeRabbit and GitHub Actions passed on PR #63.
 
 ## Source
 
 - CodeRabbit: pass
-- GitHub Actions: backend workflow repair pending rerun
+- GitHub Actions: pass
 - Human PR review: pending
 
 ## Notes
@@ -43,4 +41,5 @@ Local verification:
 ```text
 ruff check scripts/week1_api_e2e.py passed.
 Week 1 real API E2E passed locally.
+GitHub Actions backend test passed after repair.
 ```
