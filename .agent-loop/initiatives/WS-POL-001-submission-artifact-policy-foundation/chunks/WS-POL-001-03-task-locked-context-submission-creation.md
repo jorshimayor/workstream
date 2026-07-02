@@ -172,6 +172,7 @@ Required:
 - docs
 - reuse/dedup
 - test delta
+- CI integrity
 
 ## Human Review Focus
 
