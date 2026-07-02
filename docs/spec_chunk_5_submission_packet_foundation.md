@@ -21,8 +21,8 @@ This completes the Week 1 backend lifecycle through `SUBMITTED`.
 
 ## Non-Scope
 
-- checker execution
-- checker run records
+- new post-submit checker execution behavior beyond the existing lock-triggered gate
+- new checker run record schema
 - human review decisions
 - revision replay enforcement
 - contribution, payment, or reputation records
@@ -130,7 +130,7 @@ Returns one visible submission packet.
 
 POST `/api/v1/submissions/{submission_id}/lock`
 
-Locks a submission packet and triggers the current post-submit checker gate. Locking makes the packet immutable in place.
+Locks a submission packet and triggers the current post-submit checker gate. Locking makes the packet immutable in place. This uses the existing checker gate behavior; defining the dedicated post-submit checker policy model remains separate scope.
 
 ## Versioning Rules
 

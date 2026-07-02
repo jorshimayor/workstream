@@ -815,7 +815,7 @@ effective project policy ids/hashes, pre-submit checker ids/bundle hashes,
 current checker policy versions, review policy versions, revision policy
 versions, or payment policy versions.
 
-Implementation note: current v0.1 code uses `locked_checker_policy_version` on submissions for post-submit checker policy provenance. The architecture target adds explicit submission artifact and pre-submit policy provenance.
+Implementation note: current v0.1 code stamps explicit effective project submission artifact policy and pre-submit checker provenance on submissions. `locked_checker_policy_version` remains the v0.1 post-submit checker policy reference until `WS-POL-001-04` splits post-submit checker provenance into a dedicated `PostSubmitCheckerPolicy`.
 
 Status:
 

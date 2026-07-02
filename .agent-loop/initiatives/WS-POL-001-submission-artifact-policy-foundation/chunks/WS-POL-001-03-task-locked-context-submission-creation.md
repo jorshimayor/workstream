@@ -48,6 +48,7 @@ backend/tests/test_projects.py
 backend/scripts/week2_api_e2e.py
 docs/architecture_data_model.md
 docs/spec_chunk_5_submission_packet_foundation.md
+docs/spec_chunk_7_checker_runner_registry.md
 docs/template_checker_policy.md
 docs/template_submission_packet.md
 .agent-loop/LOOP_STATE.md
@@ -78,7 +79,9 @@ setup flow in this chunk.
 
 The architecture/template docs are included only to align locked task and
 submission provenance wording with the implemented v0.1 fields and public
-`pre_submission_checker_failed` contract.
+`pre_submission_checker_failed` contract. `docs/spec_chunk_7_checker_runner_registry.md`
+is included only for stale pre-submit/post-submit wording discovered during
+internal product/ops review; it must not change checker behavior in this chunk.
 
 ## Implementation Boundaries
 
