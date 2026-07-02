@@ -512,6 +512,17 @@ def test_task_assignment_partial_unique_index_metadata_compiles() -> None:
     assert "status = 'active'" in postgres_compiled
 
 
+def test_submission_create_openapi_documents_domain_error() -> None:
+    schema = create_app().openapi()
+    responses = schema["paths"]["/api/v1/tasks/{task_id}/submissions"]["post"]["responses"]
+    response_422 = responses["422"]["content"]["application/json"]["schema"]
+
+    assert {"$ref": "#/components/schemas/HTTPValidationError"} in response_422["oneOf"]
+    domain_schema = next(option for option in response_422["oneOf"] if "properties" in option)
+    assert domain_schema["properties"]["code"]["enum"] == ["pre_submission_checker_failed"]
+    assert "details" in domain_schema["properties"]
+
+
 def test_task_locked_context_constraints_bind_task_submission_and_hashes() -> None:
     expected_task_constraints = {
         "fk_workstream_tasks_locked_source_snapshot_hash": [
@@ -1601,6 +1612,59 @@ async def test_submission_pre_submit_rejects_mutated_compiled_checker_bundle(
         }
         await session.commit()
 
+    response = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+
+    assert response.status_code == 422, response.text
+    assert "locked project pre-submit checker policy" in response.json()["detail"]
+
+    async with db_session.get_session_factory()() as session:
+        submissions = (
+            await session.execute(select(Submission).where(Submission.task_id == started_task["id"]))
+        ).scalars().all()
+        checker_runs = (await session.execute(select(db_models.CheckerRun))).scalars().all()
+    assert submissions == []
+    assert checker_runs == []
+
+
+async def test_submission_pre_submit_rejects_hash_consistent_incomplete_checker_bundle(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    async with db_session.get_session_factory()() as session:
+        effective_policy = await session.scalar(
+            select(EffectiveProjectSubmissionArtifactPolicy).where(
+                EffectiveProjectSubmissionArtifactPolicy.project_id == project["id"],
+                EffectiveProjectSubmissionArtifactPolicy.guide_version == "v1",
+                EffectiveProjectSubmissionArtifactPolicy.lifecycle_status == "approved",
+            )
+        )
+        assert effective_policy is not None
+        pre_submit_policy = await session.scalar(
+            select(PreSubmitCheckerPolicy).where(
+                PreSubmitCheckerPolicy.effective_policy_id == effective_policy.id,
+                PreSubmitCheckerPolicy.lifecycle_status == "compiled",
+            )
+        )
+        assert pre_submit_policy is not None
+        replacement_bundle = {
+            **pre_submit_policy.compiled_bundle,
+            "rules": [
+                rule
+                for rule in pre_submit_policy.compiled_bundle["rules"]
+                if rule["primitive"] != "require_file"
+            ],
+        }
+        replacement_bundle_hash = canonical_json_hash(replacement_bundle)
+        pre_submit_policy.compiled_bundle = replacement_bundle
+        pre_submit_policy.compiled_bundle_hash = replacement_bundle_hash
+        await session.commit()
+
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
     response = await task_client.post(
         f"/api/v1/tasks/{started_task['id']}/submissions",
         headers=auth_headers(),

@@ -46,7 +46,10 @@ backend/tests/test_tasks.py
 backend/tests/test_checkers.py
 backend/tests/test_projects.py
 backend/scripts/week2_api_e2e.py
+docs/architecture_data_model.md
 docs/spec_chunk_5_submission_packet_foundation.md
+docs/template_checker_policy.md
+docs/template_submission_packet.md
 .agent-loop/LOOP_STATE.md
 .agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/**
 ```
@@ -72,6 +75,10 @@ read-only locked effective-policy and pre-submit checker policy loaders so the
 checker service does not query project persistence tables directly. These
 project-module changes must not change guide activation behavior or project
 setup flow in this chunk.
+
+The architecture/template docs are included only to align locked task and
+submission provenance wording with the implemented v0.1 fields and public
+`pre_submission_checker_failed` contract.
 
 ## Implementation Boundaries
 

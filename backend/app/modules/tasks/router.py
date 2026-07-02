@@ -25,6 +25,24 @@ from app.schemas.auth import ActorContext
 
 router = APIRouter(tags=["tasks"])
 
+DOMAIN_ERROR_RESPONSE_SCHEMA = {
+    "oneOf": [
+        {
+            "type": "object",
+            "required": ["code", "details"],
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "enum": ["pre_submission_checker_failed"],
+                },
+                "details": {"type": "object"},
+            },
+            "additionalProperties": False,
+        },
+        {"$ref": "#/components/schemas/HTTPValidationError"},
+    ]
+}
+
 
 def task_http_error(exc: TaskServiceError) -> HTTPException:
     """Convert a service-layer task error into an HTTP error.
@@ -172,7 +190,21 @@ async def start_task(
         raise task_http_error(exc) from exc
 
 
-@router.post("/tasks/{task_id}/submissions", response_model=SubmissionResponse, status_code=201)
+@router.post(
+    "/tasks/{task_id}/submissions",
+    response_model=SubmissionResponse,
+    status_code=201,
+    responses={
+        422: {
+            "description": "Pre-submit domain failure or request validation error.",
+            "content": {
+                "application/json": {
+                    "schema": DOMAIN_ERROR_RESPONSE_SCHEMA,
+                }
+            },
+        }
+    },
+)
 async def create_submission(
     task_id: str,
     payload: SubmissionCreate,

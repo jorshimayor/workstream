@@ -751,14 +751,16 @@ Source type:
 External origin adapters are later work. When added, they normalize into this task shape instead of creating a separate task lifecycle.
 
 The task id points to the locked task contract. That contract includes the guide
-version, guide source snapshot id/hash, project submission artifact policy version,
-effective project submission artifact policy hash, generated project pre-submit checker bundle hash,
-post-submit checker policy version, review policy version, revision policy
+version, guide source snapshot id/hash, effective project submission artifact
+policy id/hash, generated project pre-submit checker policy id/bundle hash,
+current checker policy version, review policy version, revision policy
 version, payment policy version, acceptance criteria, derived display summaries,
 base payout, and skill tags. Workers submit against the task id; they do not
 restate policy versions.
 
-Implementation note: current v0.1 code uses `locked_checker_policy_version` for the post-submit checker policy version. The architecture target splits this into `locked_post_submit_checker_policy_version` and explicit submission artifact/pre-submit provenance fields.
+Implementation note: current v0.1 code uses `locked_checker_policy_version`
+for current checker-policy provenance. The later post-submit split adds
+explicit post-submit checker provenance.
 
 ## Assignment
 
@@ -809,9 +811,9 @@ submission artifact, effective project policy, pre-submit checker, post-submit
 checker, review, revision, and payment policy provenance from trusted
 task/project state. The worker does not provide submission version, evidence
 ids, checker results, checker run ids, guide versions, source snapshots,
-submission artifact policy versions, policy hashes, post-submit checker
-policy versions, review policy versions, revision policy versions, or payment
-policy versions.
+effective project policy ids/hashes, pre-submit checker ids/bundle hashes,
+current checker policy versions, review policy versions, revision policy
+versions, or payment policy versions.
 
 Implementation note: current v0.1 code uses `locked_checker_policy_version` on submissions for post-submit checker policy provenance. The architecture target adds explicit submission artifact and pre-submit policy provenance.
 

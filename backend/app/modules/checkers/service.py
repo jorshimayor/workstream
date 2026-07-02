@@ -12,7 +12,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.hashing import canonical_json_hash
 from app.core.permissions import require_any_role
-from app.modules.checkers.compiler import PRIMITIVE_CHECKER_NAME_MAP
+from app.modules.checkers.compiler import (
+    PreSubmitCheckerCompilerError,
+    validate_compiled_pre_submit_checker_bundle,
+)
 from app.modules.checkers.models import CheckerResult, CheckerRun
 from app.modules.checkers.repository import CheckerRepository
 from app.modules.checkers.runner import (
@@ -289,10 +292,16 @@ class CheckerService:
             or canonical_json_hash(compiled_bundle) != pre_submit_checker_bundle_hash
         ):
             raise CheckerPolicyInvalid("locked project pre-submit checker policy is invalid")
+        try:
+            compiled_checker_names = validate_compiled_pre_submit_checker_bundle(
+                effective_policy.effective_policy,
+                effective_policy_hash,
+                compiled_bundle,
+                compiler_version=pre_submit_checker_policy.compiler_version,
+            )
+        except PreSubmitCheckerCompilerError as exc:
+            raise CheckerPolicyInvalid("locked project pre-submit checker policy is invalid") from exc
         checker_names = list(pre_submit_checker_policy.checker_names or [])
-        compiled_checker_names = self._checker_names_from_compiled_bundle(
-            compiled_bundle
-        )
         if checker_names != compiled_checker_names:
             raise CheckerPolicyInvalid("locked project pre-submit checker projection is invalid")
         try:
@@ -383,28 +392,6 @@ class CheckerService:
             return False
         allowed_formats = value.get("allowed_package_formats", [])
         return CheckerService._string_list(allowed_formats)
-
-    @staticmethod
-    def _checker_names_from_compiled_bundle(compiled_bundle: dict | None) -> list[str]:
-        """Derive checker names from the canonical compiled bundle rules."""
-        if not isinstance(compiled_bundle, dict):
-            raise CheckerPolicyInvalid("locked project pre-submit checker bundle is invalid")
-        rules = compiled_bundle.get("rules")
-        if not isinstance(rules, list) or not rules:
-            raise CheckerPolicyInvalid("locked project pre-submit checker bundle lacks rules")
-        checker_names: list[str] = []
-        for rule in rules:
-            if not isinstance(rule, dict):
-                raise CheckerPolicyInvalid("locked project pre-submit checker rule is invalid")
-            primitive = rule.get("primitive")
-            checker_name = PRIMITIVE_CHECKER_NAME_MAP.get(str(primitive))
-            if checker_name is None:
-                raise CheckerPolicyInvalid(
-                    "locked project pre-submit checker bundle references unknown primitive"
-                )
-            if checker_name not in checker_names:
-                checker_names.append(checker_name)
-        return checker_names
 
     async def run_submission_checkers(
         self,
