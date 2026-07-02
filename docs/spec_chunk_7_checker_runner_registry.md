@@ -100,10 +100,15 @@ The current registered checker names are:
 
 - `check_submission_packet`
 - `check_policy_context_present`
-- `check_evidence_integrity`
+- `check_acceptance_criteria_present`
 - `check_evidence_present`
+- `check_evidence_integrity`
+- `check_required_files`
+- `check_forbidden_files`
+- `check_confidentiality_attestation`
+- `check_low_quality_generated_artifacts`
 
-Chunk 8 replaces the temporary Chunk 7 artifact-manifest and evidence-reference checker names in current policy-facing contracts.
+Chunk 8 replaces the temporary Chunk 7 artifact-manifest and evidence-reference checker names in current policy-facing contracts. The registry also includes the Workstream default pre-submit checker names added after Chunk 7.
 
 Pre-submit checker generation must reference registered checker names. Unknown generated checker names are implementation defects and must fail tests before release.
 

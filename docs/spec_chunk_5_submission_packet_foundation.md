@@ -61,7 +61,7 @@ Chunk 5 stores package and evidence references. Actual file storage still belong
 
 Submissions intentionally reference the task's locked guide and policy fields, including guide-source snapshot provenance, effective project submission artifact policy provenance, and project pre-submit checker compiled bundle hash provenance. This prevents task-owned locked context from changing silently after a submission has been recorded.
 
-Implementation note: current v0.1 code uses `locked_checker_policy_version` for post-submit checker policy provenance. The architecture target splits post-submit checker provenance into an explicit `PostSubmitCheckerPolicy` in a later chunk.
+Implementation note: current v0.1 code uses `locked_checker_policy_version` for post-submit checker policy provenance. `WS-POL-001-04` splits post-submit checker provenance into an explicit `PostSubmitCheckerPolicy`.
 
 `evidence_items`
 
