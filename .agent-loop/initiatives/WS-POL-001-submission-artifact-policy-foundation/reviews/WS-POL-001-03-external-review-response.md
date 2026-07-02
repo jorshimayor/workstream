@@ -8,7 +8,7 @@ CodeRabbit and GitHub Actions passed on PR #63.
 
 - CodeRabbit: pass
 - GitHub Actions: pass
-- Human PR review: pending
+- Human PR review: completed before merge
 
 ## Notes
 
