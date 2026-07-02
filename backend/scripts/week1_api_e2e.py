@@ -64,7 +64,9 @@ NONLOCAL_DATABASE_OVERRIDE_VALUE = "I_UNDERSTAND_THIS_WRITES_DATA"
 STRONG_ATTESTATION = (
     "I attest this submission contains no confidential client data, credentials, "
     "secrets, tokens, passwords, API keys, private source material, source code, "
-    "copied platform artifacts, or copied platform content."
+    "copied platform artifacts, or copied platform content, and it satisfies "
+    "the original_work, credentials_and_secret_exclusion, real_api_originality, and "
+    "human_accountability_for_agent_assisted_work policy terms."
 )
 
 
@@ -919,7 +921,10 @@ async def exercise_week1_api(base_url: str, env: dict[str, str]) -> None:
                         "uri": f"s3://workstream-e2e/reports/user@team-{run_id}.log",
                         "hash": f"sha256:evidence-{run_id}",
                         "size_bytes": 256,
-                        "metadata": {"command": "week1_api_e2e"},
+                        "metadata": {
+                            "command": "week1_api_e2e",
+                            "required_evidence_key": "checker_log",
+                        },
                     }
                 ],
             },

@@ -45,6 +45,7 @@ backend/app/modules/checkers/**
 backend/tests/test_tasks.py
 backend/tests/test_checkers.py
 backend/tests/test_projects.py
+backend/scripts/week1_api_e2e.py
 backend/scripts/week2_api_e2e.py
 docs/architecture_data_model.md
 docs/spec_chunk_5_submission_packet_foundation.md
@@ -82,6 +83,11 @@ submission provenance wording with the implemented v0.1 fields and public
 `pre_submission_checker_failed` contract. `docs/spec_chunk_7_checker_runner_registry.md`
 is included only for stale pre-submit/post-submit wording discovered during
 internal product/ops review; it must not change checker behavior in this chunk.
+
+`backend/scripts/week1_api_e2e.py` is included only to keep the real HTTP CI
+drill aligned with the locked project pre-submit checker policy. The script
+must submit evidence and attestation data that satisfy the current effective
+policy instead of relying on transitional task fields.
 
 ## Implementation Boundaries
 
