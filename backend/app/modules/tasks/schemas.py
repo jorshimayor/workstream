@@ -155,6 +155,12 @@ class TaskResponse(BaseModel):
     locked_review_policy_version: str | None
     locked_revision_policy_version: str | None
     locked_payment_policy_version: str | None
+    locked_guide_source_snapshot_id: str | None
+    locked_guide_source_snapshot_hash: str | None
+    locked_effective_project_submission_artifact_policy_id: str | None
+    locked_effective_project_submission_artifact_policy_hash: str | None
+    locked_pre_submit_checker_policy_id: str | None
+    locked_pre_submit_checker_bundle_hash: str | None
     source_type: str
     source_ref: str | None
     source_payload_hash: str | None
@@ -244,6 +250,12 @@ class SubmissionResponse(BaseModel):
     locked_review_policy_version: str
     locked_revision_policy_version: str
     locked_payment_policy_version: str
+    locked_guide_source_snapshot_id: str | None
+    locked_guide_source_snapshot_hash: str | None
+    locked_effective_project_submission_artifact_policy_id: str | None
+    locked_effective_project_submission_artifact_policy_hash: str | None
+    locked_pre_submit_checker_policy_id: str | None
+    locked_pre_submit_checker_bundle_hash: str | None
     submitted_at: datetime
     locked_at: datetime | None
     supersedes_submission_id: str | None

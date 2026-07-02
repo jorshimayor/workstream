@@ -302,9 +302,10 @@ def complete_submission_payload(package_hash: str = "sha256:package-v1") -> dict
             }
         ],
         "worker_attestation": (
-            "I attest this submission contains no confidential client data, "
+            "I attest this is original work with task test originality and contains no confidential client data, "
             "credentials, secrets, tokens, passwords, API keys, private source material, "
-            "source code, copied platform artifacts, or copied platform content."
+            "source code, copied platform artifacts, or copied platform content. I confirm credentials "
+            "and secret exclusion and accept human accountability for agent assisted work."
         ),
         "evidence_items": [
             {
@@ -313,7 +314,7 @@ def complete_submission_payload(package_hash: str = "sha256:package-v1") -> dict
                 "uri": "local://evidence/checker.log",
                 "hash": "sha256:log-v1",
                 "size_bytes": 256,
-                "metadata": {"command": "pytest"},
+                "metadata": {"command": "pytest", "policy_key": "checker_log"},
             }
         ],
     }
@@ -361,8 +362,12 @@ async def create_draft_task(client: AsyncClient, project_id: str, payload: dict 
     return response.json()
 
 
-async def create_ready_task(client: AsyncClient, project_id: str) -> dict:
-    task = await create_draft_task(client, project_id)
+async def create_ready_task(
+    client: AsyncClient,
+    project_id: str,
+    payload: dict | None = None,
+) -> dict:
+    task = await create_draft_task(client, project_id, payload)
     screen = await client.post(
         f"/api/v1/tasks/{task['id']}/screen",
         headers=auth_headers(),
@@ -383,9 +388,10 @@ async def create_started_task(
     project_id: str,
     monkeypatch: pytest.MonkeyPatch,
     subject: str = "worker-one",
+    payload: dict | None = None,
 ) -> dict:
     set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
-    ready_task = await create_ready_task(client, project_id)
+    ready_task = await create_ready_task(client, project_id, payload)
     await seed_worker_profile(subject)
     set_dev_actor(monkeypatch, roles="worker", subject=subject)
     claim = await client.post(
@@ -498,6 +504,70 @@ def test_task_assignment_partial_unique_index_metadata_compiles() -> None:
     postgres_compiled = str(CreateIndex(index).compile(dialect=postgresql.dialect()))
 
     assert "status = 'active'" in postgres_compiled
+
+
+def test_task_locked_context_constraints_bind_task_submission_and_hashes() -> None:
+    expected_task_constraints = {
+        "fk_workstream_tasks_locked_source_snapshot_hash": [
+            "locked_guide_source_snapshot_id",
+            "locked_guide_source_snapshot_hash",
+        ],
+        "fk_workstream_tasks_locked_effective_policy_hash": [
+            "locked_effective_project_submission_artifact_policy_id",
+            "locked_effective_project_submission_artifact_policy_hash",
+        ],
+        "fk_workstream_tasks_locked_pre_submit_checker_hash": [
+            "locked_pre_submit_checker_policy_id",
+            "locked_pre_submit_checker_bundle_hash",
+        ],
+    }
+    for constraint_name, local_columns in expected_task_constraints.items():
+        constraint = next(
+            constraint
+            for constraint in WorkstreamTask.__table__.foreign_key_constraints
+            if constraint.name == constraint_name
+        )
+        assert [column.name for column in constraint.columns] == local_columns
+
+    expected_submission_constraints = {
+        "fk_submissions_task_locked_source_snapshot_hash": [
+            "task_id",
+            "locked_guide_source_snapshot_id",
+            "locked_guide_source_snapshot_hash",
+        ],
+        "fk_submissions_task_locked_effective_policy_hash": [
+            "task_id",
+            "locked_effective_project_submission_artifact_policy_id",
+            "locked_effective_project_submission_artifact_policy_hash",
+        ],
+        "fk_submissions_task_locked_pre_submit_checker_hash": [
+            "task_id",
+            "locked_pre_submit_checker_policy_id",
+            "locked_pre_submit_checker_bundle_hash",
+        ],
+        "fk_submissions_locked_pre_submit_checker_hash": [
+            "locked_pre_submit_checker_policy_id",
+            "locked_pre_submit_checker_bundle_hash",
+        ],
+    }
+    for constraint_name, local_columns in expected_submission_constraints.items():
+        constraint = next(
+            constraint
+            for constraint in Submission.__table__.foreign_key_constraints
+            if constraint.name == constraint_name
+        )
+        assert [column.name for column in constraint.columns] == local_columns
+
+    assert {
+        "ix_workstream_tasks_locked_source_snapshot",
+        "ix_workstream_tasks_locked_effective_policy_hash",
+        "ix_workstream_tasks_locked_pre_submit_checker_hash",
+    }.issubset({index.name for index in WorkstreamTask.__table__.indexes})
+    assert {
+        "ix_submissions_locked_source_snapshot",
+        "ix_submissions_locked_effective_policy_hash",
+        "ix_submissions_locked_pre_submit_checker_hash",
+    }.issubset({index.name for index in Submission.__table__.indexes})
 
 
 async def test_profile_upserts_update_existing_actor_rows(task_database_env: str) -> None:
@@ -645,9 +715,133 @@ async def test_screening_locks_guide_policy_context_and_payment_fields(
     assert body["locked_review_policy_version"] == "v1"
     assert body["locked_revision_policy_version"] == "v1"
     assert body["locked_payment_policy_version"] == "v1"
+    assert body["locked_guide_source_snapshot_id"]
+    assert body["locked_guide_source_snapshot_hash"].startswith("sha256:")
+    assert body["locked_effective_project_submission_artifact_policy_id"]
+    assert body["locked_effective_project_submission_artifact_policy_hash"].startswith("sha256:")
+    assert body["locked_pre_submit_checker_policy_id"]
+    assert body["locked_pre_submit_checker_bundle_hash"].startswith("sha256:")
     assert body["base_amount"] == "25.00"
     assert body["currency"] == "USD"
     assert body["payout_type"] == "fixed"
+
+
+async def test_tasks_under_same_active_guide_share_project_pre_submit_checker(
+    task_client: AsyncClient,
+) -> None:
+    project = await create_active_project(task_client)
+    first_task = await create_ready_task(task_client, project["id"])
+    second_task = await create_ready_task(task_client, project["id"])
+
+    assert first_task["locked_guide_version"] == "v1"
+    assert second_task["locked_guide_version"] == "v1"
+    assert (
+        first_task["locked_guide_source_snapshot_id"]
+        == second_task["locked_guide_source_snapshot_id"]
+    )
+    assert (
+        first_task["locked_effective_project_submission_artifact_policy_hash"]
+        == second_task["locked_effective_project_submission_artifact_policy_hash"]
+    )
+    assert (
+        first_task["locked_pre_submit_checker_policy_id"]
+        == second_task["locked_pre_submit_checker_policy_id"]
+    )
+    assert (
+        first_task["locked_pre_submit_checker_bundle_hash"]
+        == second_task["locked_pre_submit_checker_bundle_hash"]
+    )
+
+
+async def test_submission_runtime_uses_locked_project_policy_not_task_required_fields(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    conflicting_task_payload = complete_task_payload()
+    conflicting_task_payload["required_files"] = ["legacy-only.md"]
+    conflicting_task_payload["required_evidence"] = ["legacy evidence"]
+
+    project_policy_task = await create_started_task(
+        task_client,
+        project["id"],
+        monkeypatch,
+        "worker-one",
+        conflicting_task_payload,
+    )
+    project_policy_response = await task_client.post(
+        f"/api/v1/tasks/{project_policy_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+    assert project_policy_response.status_code == 201, project_policy_response.text
+
+    legacy_only_task = await create_started_task(
+        task_client,
+        project["id"],
+        monkeypatch,
+        "worker-two",
+        conflicting_task_payload,
+    )
+    legacy_only_payload = complete_submission_payload("sha256:legacy-package")
+    legacy_only_payload["artifact_hash_manifest"] = [
+        {
+            "artifact": "legacy-only.md",
+            "hash": "sha256:legacy-only-v1",
+            "size_bytes": 128,
+            "notes": "matches transitional task field only",
+        }
+    ]
+    legacy_only_response = await task_client.post(
+        f"/api/v1/tasks/{legacy_only_task['id']}/submissions",
+        headers=auth_headers(),
+        json=legacy_only_payload,
+    )
+
+    assert legacy_only_response.status_code == 422, legacy_only_response.text
+    detail = legacy_only_response.json()["detail"]
+    assert detail["code"] == "pre_submission_checker_failed"
+    required_files = next(
+        result
+        for result in detail["details"]["results"]
+        if result["checker_name"] == "check_required_files"
+    )
+    assert required_files["status"] == "failed"
+
+    legacy_evidence_task = await create_started_task(
+        task_client,
+        project["id"],
+        monkeypatch,
+        "worker-three",
+        conflicting_task_payload,
+    )
+    legacy_evidence_payload = complete_submission_payload("sha256:legacy-evidence-package")
+    legacy_evidence_payload["artifact_hash_manifest"][0]["hash"] = "sha256:answer-legacy-evidence"
+    legacy_evidence_payload["evidence_items"] = [
+        {
+            "type": "note",
+            "label": "legacy evidence",
+            "uri": "local://evidence/legacy-evidence.txt",
+            "hash": "sha256:legacy-evidence-v1",
+            "size_bytes": 128,
+            "metadata": {"policy_key": "legacy_evidence"},
+        }
+    ]
+    legacy_evidence_response = await task_client.post(
+        f"/api/v1/tasks/{legacy_evidence_task['id']}/submissions",
+        headers=auth_headers(),
+        json=legacy_evidence_payload,
+    )
+
+    assert legacy_evidence_response.status_code == 422, legacy_evidence_response.text
+    detail = legacy_evidence_response.json()["detail"]
+    assert detail["code"] == "pre_submission_checker_failed"
+    required_evidence = next(
+        result
+        for result in detail["details"]["results"]
+        if result["checker_name"] == "check_evidence_present"
+    )
+    assert required_evidence["status"] == "failed"
 
 
 async def test_release_requires_decision_reason(task_client: AsyncClient) -> None:
@@ -887,8 +1081,19 @@ async def test_assigned_worker_submits_v1_and_task_moves_to_submitted(
     assert submission["locked_review_policy_version"] == "v1"
     assert submission["locked_revision_policy_version"] == "v1"
     assert submission["locked_payment_policy_version"] == "v1"
+    assert submission["locked_guide_source_snapshot_id"]
+    assert submission["locked_guide_source_snapshot_hash"].startswith("sha256:")
+    assert submission["locked_effective_project_submission_artifact_policy_id"]
+    assert submission["locked_effective_project_submission_artifact_policy_hash"].startswith(
+        "sha256:"
+    )
+    assert submission["locked_pre_submit_checker_policy_id"]
+    assert submission["locked_pre_submit_checker_bundle_hash"].startswith("sha256:")
     assert submission["artifact_hash_manifest"][0]["artifact"] == "answer.md"
-    assert submission["evidence_items"][0]["metadata"] == {"command": "pytest"}
+    assert submission["evidence_items"][0]["metadata"] == {
+        "command": "pytest",
+        "policy_key": "checker_log",
+    }
 
     task = await task_client.get(f"/api/v1/tasks/{started_task['id']}", headers=auth_headers())
     assert task.status_code == 200, task.text
@@ -906,6 +1111,16 @@ async def test_assigned_worker_submits_v1_and_task_moves_to_submitted(
     assert submission_event["event_payload"]["submission_id"] == submission["id"]
     assert submission_event["event_payload"]["submission_version"] == 1
     assert submission_event["event_payload"]["package_hash"] == "sha256:package-v1"
+    assert submission_event["event_payload"]["locked_guide_source_snapshot_id"]
+    assert submission_event["event_payload"]["locked_guide_source_snapshot_hash"].startswith(
+        "sha256:"
+    )
+    assert submission_event["event_payload"][
+        "locked_effective_project_submission_artifact_policy_hash"
+    ].startswith("sha256:")
+    assert submission_event["event_payload"]["locked_pre_submit_checker_bundle_hash"].startswith(
+        "sha256:"
+    )
     assert "package_uri" not in submission_event["event_payload"]
 
 
@@ -926,6 +1141,13 @@ async def test_submission_schema_rejects_worker_supplied_locked_context(
             "locked_review_policy_version": "malicious",
             "locked_revision_policy_version": "malicious",
             "locked_payment_policy_version": "malicious",
+            "locked_guide_source_snapshot_id": "malicious",
+            "locked_guide_source_snapshot_hash": "sha256:" + "0" * 64,
+            "locked_effective_project_submission_artifact_policy_id": "malicious",
+            "locked_effective_project_submission_artifact_policy_hash": "sha256:" + "0" * 64,
+            "locked_pre_submit_checker_policy_id": "malicious",
+            "locked_pre_submit_checker_bundle_hash": "sha256:" + "0" * 64,
+            "runtime_parameters": {"required_artifacts": []},
             "locked_at": "2026-06-07T00:00:00Z",
         }
     )
@@ -970,7 +1192,7 @@ async def test_submission_requires_assigned_worker_and_in_progress_task(
     assert other_worker_response.status_code == 409
 
 
-async def test_submission_validates_locked_guide_required_submission_fields(
+async def test_submission_pre_submit_failure_returns_structured_domain_error(
     task_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -978,6 +1200,18 @@ async def test_submission_validates_locked_guide_required_submission_fields(
     started_task = await create_started_task(task_client, project["id"], monkeypatch)
     payload = complete_submission_payload()
     payload["evidence_items"] = []
+    async with db_session.get_session_factory()() as session:
+        audit_ids_before = {
+            event.id
+            for event in (
+                await session.execute(
+                    select(AuditEvent).where(
+                        AuditEvent.entity_type == "task",
+                        AuditEvent.entity_id == started_task["id"],
+                    )
+                )
+            ).scalars()
+        }
 
     response = await task_client.post(
         f"/api/v1/tasks/{started_task['id']}/submissions",
@@ -986,7 +1220,150 @@ async def test_submission_validates_locked_guide_required_submission_fields(
     )
 
     assert response.status_code == 422
-    assert "evidence" in response.json()["detail"]
+    detail = response.json()["detail"]
+    assert detail["code"] == "pre_submission_checker_failed"
+    assert detail["details"]["status"] == "failed"
+    assert detail["details"]["eligible_to_submit"] is False
+    evidence_result = next(
+        result
+        for result in detail["details"]["results"]
+        if result["checker_name"] == "check_evidence_present"
+    )
+    assert evidence_result["status"] == "failed"
+
+    async with db_session.get_session_factory()() as session:
+        submissions = (
+            await session.execute(select(Submission).where(Submission.task_id == started_task["id"]))
+        ).scalars().all()
+        audit_events = (
+            await session.execute(
+                select(AuditEvent).where(
+                    AuditEvent.entity_type == "task",
+                    AuditEvent.entity_id == started_task["id"],
+                )
+            )
+        ).scalars().all()
+        checker_runs = (await session.execute(select(db_models.CheckerRun))).scalars().all()
+        task = await session.get(WorkstreamTask, started_task["id"])
+    assert submissions == []
+    assert {event.id for event in audit_events} == audit_ids_before
+    assert checker_runs == []
+    assert task is not None
+    assert task.status == "in_progress"
+
+
+async def test_submission_pre_submit_requires_specific_evidence_key(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+    payload = complete_submission_payload()
+    payload["evidence_items"] = [
+        {
+            "type": "note",
+            "label": "unrelated evidence",
+            "uri": "local://evidence/unrelated.txt",
+            "hash": "sha256:unrelated-v1",
+            "size_bytes": 64,
+            "metadata": {"policy_key": "other_evidence"},
+        }
+    ]
+
+    response = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=payload,
+    )
+
+    assert response.status_code == 422, response.text
+    detail = response.json()["detail"]
+    assert detail["code"] == "pre_submission_checker_failed"
+    evidence_result = next(
+        result
+        for result in detail["details"]["results"]
+        if result["checker_name"] == "check_evidence_present"
+    )
+    assert evidence_result["status"] == "failed"
+    assert evidence_result["would_block_if_submitted"] is True
+    assert "required evidence" in evidence_result["worker_message"]
+
+    async with db_session.get_session_factory()() as session:
+        submissions = (
+            await session.execute(select(Submission).where(Submission.task_id == started_task["id"]))
+        ).scalars().all()
+    assert submissions == []
+
+
+async def test_submission_pre_submit_requires_project_attestation_terms(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+    payload = complete_submission_payload()
+    payload["worker_attestation"] = (
+        "I attest this submission contains no confidential client data, credentials, secrets, "
+        "tokens, passwords, API keys, private source material, source code, copied platform "
+        "artifacts, or copied platform content."
+    )
+
+    response = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=payload,
+    )
+
+    assert response.status_code == 422, response.text
+    detail = response.json()["detail"]
+    assert detail["code"] == "pre_submission_checker_failed"
+    attestation_result = next(
+        result
+        for result in detail["details"]["results"]
+        if result["checker_name"] == "check_confidentiality_attestation"
+    )
+    assert attestation_result["status"] == "failed"
+    assert attestation_result["would_block_if_submitted"] is True
+    assert "confidentiality attestation" in attestation_result["worker_message"]
+
+    async with db_session.get_session_factory()() as session:
+        submissions = (
+            await session.execute(select(Submission).where(Submission.task_id == started_task["id"]))
+        ).scalars().all()
+    assert submissions == []
+
+
+async def test_submission_pre_submit_checker_setup_error_is_controlled(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+    async with db_session.get_session_factory()() as session:
+        task = await session.get(WorkstreamTask, started_task["id"])
+        assert task is not None
+        pre_submit_policy = await session.get(
+            PreSubmitCheckerPolicy,
+            task.locked_pre_submit_checker_policy_id,
+        )
+        assert pre_submit_policy is not None
+        pre_submit_policy.checker_names = ["unknown_project_checker"]
+        await session.commit()
+
+    response = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+
+    assert response.status_code == 422, response.text
+    assert "locked project pre-submit checker" in response.json()["detail"]
+
+    async with db_session.get_session_factory()() as session:
+        submissions = (
+            await session.execute(select(Submission).where(Submission.task_id == started_task["id"]))
+        ).scalars().all()
+    assert submissions == []
 
 
 async def test_submission_versioning_creates_new_rows_and_preserves_v1(
@@ -996,26 +1373,17 @@ async def test_submission_versioning_creates_new_rows_and_preserves_v1(
     project = await create_active_project(task_client)
     started_task = await create_started_task(task_client, project["id"], monkeypatch)
     v1_payload = complete_submission_payload()
-    v1_payload["artifact_hash_manifest"] = [
-        {
-            "artifact": "other.md",
-            "hash": "sha256:other-v1",
-            "size_bytes": 128,
-            "notes": "missing required file so v2 is a revision",
-        }
-    ]
     v1 = await task_client.post(
         f"/api/v1/tasks/{started_task['id']}/submissions",
         headers=auth_headers(),
         json=v1_payload,
     )
     assert v1.status_code == 201, v1.text
-    set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
-    locked_v1 = await task_client.post(
-        f"/api/v1/submissions/{v1.json()['id']}/lock",
-        headers=auth_headers(),
-    )
-    assert locked_v1.status_code == 200, locked_v1.text
+    async with db_session.get_session_factory()() as session:
+        task = await session.get(WorkstreamTask, started_task["id"])
+        assert task is not None
+        task.status = "needs_revision"
+        await session.commit()
     set_dev_actor(monkeypatch, roles="worker", subject="worker-one")
     v2_payload = complete_submission_payload("sha256:package-v2")
     v2_payload["artifact_hash_manifest"][0]["hash"] = "sha256:answer-v2"
@@ -1032,7 +1400,7 @@ async def test_submission_versioning_creates_new_rows_and_preserves_v1(
     assert second["version"] == 2
     assert second["supersedes_submission_id"] == first["id"]
     assert first["package_hash"] == "sha256:package-v1"
-    assert first["artifact_hash_manifest"][0]["hash"] == "sha256:other-v1"
+    assert first["artifact_hash_manifest"][0]["hash"] == "sha256:answer-v1"
 
     listed = await task_client.get(
         f"/api/v1/tasks/{started_task['id']}/submissions",
@@ -1095,14 +1463,6 @@ async def test_locked_submission_can_only_be_replaced_by_new_version(
     project = await create_active_project(task_client)
     started_task = await create_started_task(task_client, project["id"], monkeypatch)
     v1_payload = complete_submission_payload()
-    v1_payload["artifact_hash_manifest"] = [
-        {
-            "artifact": "other.md",
-            "hash": "sha256:other-v1",
-            "size_bytes": 128,
-            "notes": "missing required file so v1 needs revision",
-        }
-    ]
     v1 = await task_client.post(
         f"/api/v1/tasks/{started_task['id']}/submissions",
         headers=auth_headers(),
@@ -1116,6 +1476,11 @@ async def test_locked_submission_can_only_be_replaced_by_new_version(
         headers=auth_headers(),
     )
     assert locked_v1.status_code == 200, locked_v1.text
+    async with db_session.get_session_factory()() as session:
+        task = await session.get(WorkstreamTask, started_task["id"])
+        assert task is not None
+        task.status = "needs_revision"
+        await session.commit()
 
     set_dev_actor(monkeypatch, roles="worker", subject="worker-one")
     v2_payload = complete_submission_payload("sha256:package-replacement")
@@ -1137,7 +1502,7 @@ async def test_locked_submission_can_only_be_replaced_by_new_version(
     assert fetched_v1.status_code == 200, fetched_v1.text
     assert fetched_v1.json()["locked_at"] == locked_v1.json()["locked_at"]
     assert fetched_v1.json()["package_hash"] == "sha256:package-v1"
-    assert fetched_v1.json()["artifact_hash_manifest"][0]["hash"] == "sha256:other-v1"
+    assert fetched_v1.json()["artifact_hash_manifest"][0]["hash"] == "sha256:answer-v1"
 
 
 async def test_project_manager_cannot_submit_as_worker(

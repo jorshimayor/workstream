@@ -34,6 +34,13 @@ def task_http_error(exc: TaskServiceError) -> HTTPException:
     Returns:
         HTTP exception carrying the service error details.
     """
+    error_code = getattr(exc, "code", None)
+    details = getattr(exc, "details", None)
+    if error_code is not None:
+        return HTTPException(
+            status_code=exc.status_code,
+            detail={"code": error_code, "details": details or {}},
+        )
     return HTTPException(status_code=exc.status_code, detail=str(exc))
 
 

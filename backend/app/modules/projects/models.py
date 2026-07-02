@@ -474,6 +474,11 @@ class PreSubmitCheckerPolicy(Base):
             ],
             name="fk_pre_submit_checker_policies_effective_hash",
         ),
+        UniqueConstraint(
+            "id",
+            "compiled_bundle_hash",
+            name="uq_pre_submit_checker_policies_id_compiled_bundle_hash",
+        ),
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)

@@ -4,12 +4,12 @@
 
 - Active initiative: `WS-POL-001` - Submission Artifact Policy Foundation
 - Active planning chunk: none
-- Active implementation chunk: `WS-POL-001-02`
-- Branch: `codex/ws-pol-001-02-agent-runtime-compiler`
-- Status: `WS-POL-001-01` merged; `WS-POL-001-02` internal review and external review passed
-- Reviewed code SHA: `aaffa7b25d88fcdff9a87e89d6a2f7ff6ceabb46`
-- Current gate: final evidence-only check rerun, then user review for PR #61
-- Next chunk: inactive until `WS-POL-001-02` is reviewed and merged by the user
+- Active implementation chunk: `WS-POL-001-03`
+- Branch: `codex/ws-pol-001-03-task-locked-context`
+- Status: `WS-POL-001-01` and `WS-POL-001-02` merged; `WS-POL-001-03` contract created
+- Reviewed code SHA: pending for `WS-POL-001-03`
+- Current gate: implement task locked-context and submission creation runtime migration
+- Next chunk: inactive until `WS-POL-001-03` is reviewed and merged by the user
 
 ## Operating Rule
 
@@ -19,12 +19,12 @@ Workstream engineering chunks move through:
 Intent -> Discovery -> Plan -> Chunk Map -> Chunk Contract -> Implementation -> Evidence -> Internal Review -> PR -> Human Checkpoint -> Memory Update -> Stop
 ```
 
-This branch implements the second backend foundation chunk for submission intake
-policy. It introduces the agent runtime boundary, first OpenAI Agents SDK
-adapter, async guide analysis/derivation orchestration, and trusted compiler
-path. It does not
-implement task locked-context migration, submission runtime migration, frontend
-behavior, payment, reputation, settlement, or blockchain integrations.
+This branch implements the third backend foundation chunk for submission intake
+policy. It moves task readiness and submission creation onto the locked project
+guide-source snapshot, effective project submission artifact policy, and
+compiled project `PreSubmitCheckerPolicy` bundle. It does not implement
+frontend behavior, payment, reputation, settlement, blockchain integrations,
+post-submit policy splitting, or revision resubmission drill behavior.
 
 ## Last Review State
 
@@ -35,10 +35,8 @@ behavior, payment, reputation, settlement, or blockchain integrations.
 - PR #26 approved and merged WS-POL-001 planning into `main` on 2026-06-27.
 - PR #27 updated WS-POL post-merge memory on `main`.
 - PR #28 implemented `WS-POL-001-01` and was merged into `main`.
-- Current implementation branch: `codex/ws-pol-001-02-agent-runtime-compiler`.
-- Internal review evidence for the active chunk is at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-02-internal-review-evidence.md`.
-- PR trust bundle for the active chunk is at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-02-pr-trust-bundle.md`.
-- External review response for the active chunk is tracked separately at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-02-external-review-response.md` after external review runs.
-- PR #61 is open. External review and CI passed on pushed head
-  `d7e4669f6fa6bd782a8f12e43bb5b94449fb235d`; after this evidence-only update
-  reruns checks, the next gate is the user-owned merge decision.
+- PR #61 implemented `WS-POL-001-02` and was merged into `main`.
+- Current implementation branch: `codex/ws-pol-001-03-task-locked-context`.
+- Internal review evidence for the active chunk will be written to `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-03-internal-review-evidence.md`.
+- PR trust bundle for the active chunk will be written to `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-03-pr-trust-bundle.md`.
+- External review response for the active chunk will be tracked separately at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-03-external-review-response.md` after external review runs.
