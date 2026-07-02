@@ -6,9 +6,9 @@
 - Active planning chunk: none
 - Active implementation chunk: `WS-POL-001-03`
 - Branch: `codex/ws-pol-001-03-task-locked-context`
-- Status: `WS-POL-001-01` and `WS-POL-001-02` merged; `WS-POL-001-03` contract created
-- Reviewed code SHA: pending for `WS-POL-001-03`
-- Current gate: implement task locked-context and submission creation runtime migration
+- Status: `WS-POL-001-01` and `WS-POL-001-02` merged; `WS-POL-001-03` implementation and internal review evidence prepared
+- Reviewed code SHA: `df468066cc3c6180c12735daf5e4dd8de654bef7`
+- Current gate: final evidence gate, PR creation, external review, and human PR review checkpoint
 - Next chunk: inactive until `WS-POL-001-03` is reviewed and merged by the user
 
 ## Operating Rule
@@ -37,6 +37,6 @@ post-submit policy splitting, or revision resubmission drill behavior.
 - PR #28 implemented `WS-POL-001-01` and was merged into `main`.
 - PR #61 implemented `WS-POL-001-02` and was merged into `main`.
 - Current implementation branch: `codex/ws-pol-001-03-task-locked-context`.
-- Internal review evidence for the active chunk will be written to `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-03-internal-review-evidence.md`.
-- PR trust bundle for the active chunk will be written to `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-03-pr-trust-bundle.md`.
-- External review response for the active chunk will be tracked separately at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-03-external-review-response.md` after external review runs.
+- Internal review evidence for the active chunk is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-03-internal-review-evidence.md`.
+- PR trust bundle for the active chunk is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-03-pr-trust-bundle.md`.
+- External review response for the active chunk is tracked separately at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-03-external-review-response.md` after external review runs.
