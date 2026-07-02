@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from datetime import UTC, datetime
+from typing import Any
 from uuid import uuid4
 
 from sqlalchemy.exc import IntegrityError
@@ -253,11 +254,19 @@ class CheckerService:
             or effective_policy.lifecycle_status not in {"approved", "superseded"}
         ):
             raise CheckerPolicyInvalid("locked effective project submission policy is invalid")
-        if canonical_json_hash(effective_policy.effective_policy) != effective_policy_hash:
+        if (
+            not self._effective_policy_shape_is_valid(effective_policy.effective_policy)
+            or canonical_json_hash(effective_policy.effective_policy) != effective_policy_hash
+        ):
             raise CheckerPolicyInvalid("locked effective project submission policy is invalid")
 
         pre_submit_checker_policy = await self._project_repo.get_pre_submit_checker_policy(
             pre_submit_checker_policy_id,
+        )
+        compiled_bundle = (
+            pre_submit_checker_policy.compiled_bundle
+            if pre_submit_checker_policy is not None
+            else None
         )
         if (
             pre_submit_checker_policy is None
@@ -270,20 +279,19 @@ class CheckerService:
             or pre_submit_checker_policy.effective_policy_hash
             != effective_policy.effective_policy_hash
             or pre_submit_checker_policy.compiled_bundle_hash != pre_submit_checker_bundle_hash
-            or not pre_submit_checker_policy.compiled_bundle
+            or not isinstance(compiled_bundle, dict)
             or not pre_submit_checker_policy.checker_names
         ):
             raise CheckerPolicyInvalid("locked project pre-submit checker policy is invalid")
         if (
-            pre_submit_checker_policy.compiled_bundle.get("effective_policy_hash")
+            compiled_bundle.get("effective_policy_hash")
             != effective_policy_hash
-            or canonical_json_hash(pre_submit_checker_policy.compiled_bundle)
-            != pre_submit_checker_bundle_hash
+            or canonical_json_hash(compiled_bundle) != pre_submit_checker_bundle_hash
         ):
             raise CheckerPolicyInvalid("locked project pre-submit checker policy is invalid")
         checker_names = list(pre_submit_checker_policy.checker_names or [])
         compiled_checker_names = self._checker_names_from_compiled_bundle(
-            pre_submit_checker_policy.compiled_bundle
+            compiled_bundle
         )
         if checker_names != compiled_checker_names:
             raise CheckerPolicyInvalid("locked project pre-submit checker projection is invalid")
@@ -294,6 +302,64 @@ class CheckerService:
                 "locked project pre-submit checker policy references unregistered checker"
             ) from exc
         return effective_policy, pre_submit_checker_policy
+
+    @staticmethod
+    def _effective_policy_shape_is_valid(effective_policy: Any) -> bool:
+        """Return whether a locked effective policy can be safely executed."""
+        if not isinstance(effective_policy, dict):
+            return False
+        if not CheckerService._string_list(effective_policy.get("required_packet_fields", [])):
+            return False
+        if not CheckerService._string_list(effective_policy.get("allowed_storage_schemes", [])):
+            return False
+        if not CheckerService._string_list(effective_policy.get("attestation_terms", [])):
+            return False
+        if effective_policy.get("artifact_hash_algorithm", "sha256") != "sha256":
+            return False
+        for flag in ("manifest_required", "artifact_hash_required"):
+            if flag in effective_policy and not isinstance(effective_policy[flag], bool):
+                return False
+        for limit_name in ("maximum_file_size_bytes", "maximum_package_size_bytes"):
+            limit = effective_policy.get(limit_name)
+            if limit is not None and (
+                not isinstance(limit, int) or isinstance(limit, bool) or limit < 0
+            ):
+                return False
+        if not isinstance(effective_policy.get("packaging", {}), dict):
+            return False
+        if not CheckerService._artifact_rule_list(
+            effective_policy.get("required_artifacts", []),
+            required_key="path",
+        ):
+            return False
+        if not CheckerService._artifact_rule_list(
+            effective_policy.get("required_evidence", []),
+            required_key="key",
+        ):
+            return False
+        return CheckerService._artifact_rule_list(
+            effective_policy.get("forbidden_artifacts", []),
+            required_key="pattern",
+        )
+
+    @staticmethod
+    def _artifact_rule_list(value: Any, *, required_key: str) -> bool:
+        """Return whether policy artifact/evidence rules are executable."""
+        if not isinstance(value, list):
+            return False
+        for item in value:
+            if not isinstance(item, dict):
+                return False
+            if not isinstance(item.get(required_key), str) or not item[required_key].strip():
+                return False
+            if "required" in item and not isinstance(item["required"], bool):
+                return False
+        return True
+
+    @staticmethod
+    def _string_list(value: Any) -> bool:
+        """Return whether a value is a list of strings."""
+        return isinstance(value, list) and all(isinstance(item, str) for item in value)
 
     @staticmethod
     def _checker_names_from_compiled_bundle(compiled_bundle: dict | None) -> list[str]:

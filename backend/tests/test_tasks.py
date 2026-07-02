@@ -19,6 +19,7 @@ from sqlalchemy.schema import CreateIndex
 
 from app.adapters.auth.dev import actor_id_from_external_identity
 from app.core.config import get_settings
+from app.core.hashing import canonical_json_hash
 from app.db import models as db_models
 from app.db import session as db_session
 from app.db.base import Base
@@ -1406,6 +1407,84 @@ async def test_submission_pre_submit_rejects_mutated_effective_policy_body(
         }
         await session.commit()
 
+    response = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+
+    assert response.status_code == 422, response.text
+    assert "locked effective project submission policy" in response.json()["detail"]
+
+    async with db_session.get_session_factory()() as session:
+        submissions = (
+            await session.execute(select(Submission).where(Submission.task_id == started_task["id"]))
+        ).scalars().all()
+        checker_runs = (await session.execute(select(db_models.CheckerRun))).scalars().all()
+    assert submissions == []
+    assert checker_runs == []
+
+
+async def test_submission_pre_submit_rejects_hash_consistent_malformed_effective_policy(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    async with db_session.get_session_factory()() as session:
+        effective_policy = await session.scalar(
+            select(EffectiveProjectSubmissionArtifactPolicy).where(
+                EffectiveProjectSubmissionArtifactPolicy.project_id == project["id"],
+                EffectiveProjectSubmissionArtifactPolicy.guide_version == "v1",
+                EffectiveProjectSubmissionArtifactPolicy.lifecycle_status == "approved",
+            )
+        )
+        assert effective_policy is not None
+        pre_submit_policy = await session.scalar(
+            select(PreSubmitCheckerPolicy).where(
+                PreSubmitCheckerPolicy.effective_policy_id == effective_policy.id,
+                PreSubmitCheckerPolicy.lifecycle_status == "compiled",
+            )
+        )
+        assert pre_submit_policy is not None
+        replacement_bundle = dict(pre_submit_policy.compiled_bundle)
+        replacement_checker_names = list(pre_submit_policy.checker_names)
+        replacement_checker_configs = dict(pre_submit_policy.checker_configs)
+        compiler_version = pre_submit_policy.compiler_version
+        await session.delete(pre_submit_policy)
+        await session.flush()
+
+        malformed_policy_body = {
+            **effective_policy.effective_policy,
+            "required_evidence": ["bad-shape"],
+        }
+        malformed_policy_hash = canonical_json_hash(malformed_policy_body)
+        effective_policy.effective_policy = malformed_policy_body
+        effective_policy.effective_policy_hash = malformed_policy_hash
+
+        replacement_bundle["effective_policy_hash"] = malformed_policy_hash
+        replacement_bundle_hash = canonical_json_hash(replacement_bundle)
+        session.add(
+            PreSubmitCheckerPolicy(
+                id=str(uuid4()),
+                project_id=effective_policy.project_id,
+                guide_id=effective_policy.guide_id,
+                guide_version=effective_policy.guide_version,
+                source_snapshot_id=effective_policy.source_snapshot_id,
+                source_snapshot_hash=effective_policy.source_snapshot_hash,
+                effective_policy_id=effective_policy.id,
+                effective_policy_hash=malformed_policy_hash,
+                lifecycle_status="compiled",
+                compiler_version=compiler_version,
+                compiled_bundle=replacement_bundle,
+                compiled_bundle_hash=replacement_bundle_hash,
+                checker_names=replacement_checker_names,
+                checker_configs=replacement_checker_configs,
+                created_by="test",
+            )
+        )
+        await session.commit()
+
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
     response = await task_client.post(
         f"/api/v1/tasks/{started_task['id']}/submissions",
         headers=auth_headers(),
