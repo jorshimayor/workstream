@@ -100,10 +100,15 @@ The current registered checker names are:
 
 - `check_submission_packet`
 - `check_policy_context_present`
-- `check_evidence_integrity`
+- `check_acceptance_criteria_present`
 - `check_evidence_present`
+- `check_evidence_integrity`
+- `check_required_files`
+- `check_forbidden_files`
+- `check_confidentiality_attestation`
+- `check_low_quality_generated_artifacts`
 
-Chunk 8 replaces the temporary Chunk 7 artifact-manifest and evidence-reference checker names in current policy-facing contracts.
+Chunk 8 replaces the temporary Chunk 7 artifact-manifest and evidence-reference checker names in current policy-facing contracts. The registry also includes the Workstream default pre-submit checker names added after Chunk 7.
 
 Pre-submit checker generation must reference registered checker names. Unknown generated checker names are implementation defects and must fail tests before release.
 
@@ -158,7 +163,7 @@ The artifact manifest hash uses SHA-256 over canonical UTF-8 JSON:
 - use compact JSON separators
 - reject duplicate artifact names
 
-Malformed artifact manifests become persisted checker failures in durable post-submit runs.
+Draft malformed or duplicate artifact manifests are blocked by pre-submit intake and create no submission or durable checker run. If a locked historical packet reaches durable post-submit checks, manifest integrity failures are recorded as post-submit checker results.
 
 ## Security Boundary
 
@@ -186,7 +191,7 @@ Worker responses must not expose:
 - blocked submission-create attempts return `DomainError(code="pre_submission_checker_failed")`, include structured pass/fail/warning details, create no submission row, no submission version, no task transition to `submitted`, and no submission-created audit event
 - durable checker run works through real authenticated API calls
 - `check_submission_packet` runs against real submission data
-- duplicate artifact manifests persist worker-visible checker failures
+- duplicate draft artifact manifests are blocked before submission creation; locked post-submit manifest integrity failures persist worker-visible checker results
 - unknown policy checker names block execution before fake results are written
 - assigned worker reads are sanitized
 - authorized manual checker triggers are linked to audit events

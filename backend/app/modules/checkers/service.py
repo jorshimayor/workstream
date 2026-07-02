@@ -4,12 +4,18 @@ from __future__ import annotations
 
 from dataclasses import replace
 from datetime import UTC, datetime
+from typing import Any
 from uuid import uuid4
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.hashing import canonical_json_hash
 from app.core.permissions import require_any_role
+from app.modules.checkers.compiler import (
+    PreSubmitCheckerCompilerError,
+    validate_compiled_pre_submit_checker_bundle,
+)
 from app.modules.checkers.models import CheckerResult, CheckerRun
 from app.modules.checkers.repository import CheckerRepository
 from app.modules.checkers.runner import (
@@ -26,6 +32,10 @@ from app.modules.checkers.schemas import (
     CheckerResultResponse,
     CheckerRunResponse,
     PreSubmitCheckResponse,
+)
+from app.modules.projects.models import (
+    EffectiveProjectSubmissionArtifactPolicy,
+    PreSubmitCheckerPolicy,
 )
 from app.modules.projects.repository import ProjectRepository
 from app.modules.tasks.lifecycle import (
@@ -142,9 +152,25 @@ class CheckerService:
             Worker-facing pre-submit feedback.
         """
         task = await self._get_task_for_actor(actor, task_id)
-        if "worker" in actor.roles and task.status != TASK_STATUS_IN_PROGRESS:
+        if "worker" in actor.roles and task.status not in {
+            TASK_STATUS_IN_PROGRESS,
+            TASK_STATUS_NEEDS_REVISION,
+        }:
             raise CheckerExecutionBlocked("task must be in progress for worker pre-submit checks")
-        outcomes = await pre_submit_static_feedback(task, payload)
+        effective_policy, pre_submit_checker_policy = await self._load_locked_pre_submit_context(
+            task,
+        )
+        try:
+            outcomes = await pre_submit_static_feedback(
+                task,
+                payload,
+                effective_policy.effective_policy,
+                list(pre_submit_checker_policy.checker_names or []),
+            )
+        except UnknownChecker as exc:
+            raise CheckerPolicyInvalid(
+                "locked project pre-submit checker policy references unregistered checker"
+            ) from exc
         eligible_to_submit = not any(outcome.blocks_review for outcome in outcomes)
         return PreSubmitCheckResponse(
             task_id=task.id,
@@ -152,6 +178,220 @@ class CheckerService:
             eligible_to_submit=eligible_to_submit,
             results=[self._feedback_item(outcome) for outcome in outcomes],
         )
+
+    async def _load_locked_pre_submit_context(
+        self,
+        task: WorkstreamTask,
+        submission: Submission | None = None,
+    ) -> tuple[EffectiveProjectSubmissionArtifactPolicy, PreSubmitCheckerPolicy]:
+        """Load the locked effective project policy and compiled checker bundle.
+
+        Args:
+            task: Task whose locked context is authoritative.
+            submission: Optional persisted submission stamped from the task context.
+
+        Returns:
+            Effective policy and compiled project pre-submit checker policy.
+
+        Raises:
+            CheckerPolicyInvalid: If the locked context is missing or inconsistent.
+        """
+        effective_policy_id = (
+            submission.locked_effective_project_submission_artifact_policy_id
+            if submission is not None
+            else task.locked_effective_project_submission_artifact_policy_id
+        )
+        effective_policy_hash = (
+            submission.locked_effective_project_submission_artifact_policy_hash
+            if submission is not None
+            else task.locked_effective_project_submission_artifact_policy_hash
+        )
+        pre_submit_checker_policy_id = (
+            submission.locked_pre_submit_checker_policy_id
+            if submission is not None
+            else task.locked_pre_submit_checker_policy_id
+        )
+        pre_submit_checker_bundle_hash = (
+            submission.locked_pre_submit_checker_bundle_hash
+            if submission is not None
+            else task.locked_pre_submit_checker_bundle_hash
+        )
+        guide_version = (
+            submission.locked_guide_version
+            if submission is not None
+            else task.locked_guide_version
+        )
+        source_snapshot_id = (
+            submission.locked_guide_source_snapshot_id
+            if submission is not None
+            else task.locked_guide_source_snapshot_id
+        )
+        source_snapshot_hash = (
+            submission.locked_guide_source_snapshot_hash
+            if submission is not None
+            else task.locked_guide_source_snapshot_hash
+        )
+        if not all(
+            [
+                guide_version,
+                source_snapshot_id,
+                source_snapshot_hash,
+                effective_policy_id,
+                effective_policy_hash,
+                pre_submit_checker_policy_id,
+                pre_submit_checker_bundle_hash,
+            ]
+        ):
+            raise CheckerPolicyInvalid("locked project pre-submit context is incomplete")
+
+        effective_policy = await self._project_repo.get_effective_submission_artifact_policy_by_id(
+            effective_policy_id,
+        )
+        if (
+            effective_policy is None
+            or effective_policy.project_id != task.project_id
+            or effective_policy.guide_version != guide_version
+            or effective_policy.source_snapshot_id != source_snapshot_id
+            or effective_policy.source_snapshot_hash != source_snapshot_hash
+            or effective_policy.effective_policy_hash != effective_policy_hash
+            or effective_policy.lifecycle_status not in {"approved", "superseded"}
+        ):
+            raise CheckerPolicyInvalid("locked effective project submission policy is invalid")
+        if (
+            not self._effective_policy_shape_is_valid(effective_policy.effective_policy)
+            or canonical_json_hash(effective_policy.effective_policy) != effective_policy_hash
+        ):
+            raise CheckerPolicyInvalid("locked effective project submission policy is invalid")
+
+        pre_submit_checker_policy = await self._project_repo.get_pre_submit_checker_policy(
+            pre_submit_checker_policy_id,
+        )
+        compiled_bundle = (
+            pre_submit_checker_policy.compiled_bundle
+            if pre_submit_checker_policy is not None
+            else None
+        )
+        if (
+            pre_submit_checker_policy is None
+            or pre_submit_checker_policy.project_id != task.project_id
+            or pre_submit_checker_policy.guide_version != guide_version
+            or pre_submit_checker_policy.source_snapshot_id != source_snapshot_id
+            or pre_submit_checker_policy.source_snapshot_hash != source_snapshot_hash
+            or pre_submit_checker_policy.lifecycle_status not in {"compiled", "superseded"}
+            or pre_submit_checker_policy.effective_policy_id != effective_policy.id
+            or pre_submit_checker_policy.effective_policy_hash
+            != effective_policy.effective_policy_hash
+            or pre_submit_checker_policy.compiled_bundle_hash != pre_submit_checker_bundle_hash
+            or not isinstance(compiled_bundle, dict)
+            or not pre_submit_checker_policy.checker_names
+        ):
+            raise CheckerPolicyInvalid("locked project pre-submit checker policy is invalid")
+        if (
+            compiled_bundle.get("effective_policy_hash")
+            != effective_policy_hash
+            or canonical_json_hash(compiled_bundle) != pre_submit_checker_bundle_hash
+        ):
+            raise CheckerPolicyInvalid("locked project pre-submit checker policy is invalid")
+        try:
+            compiled_checker_names = validate_compiled_pre_submit_checker_bundle(
+                effective_policy.effective_policy,
+                effective_policy_hash,
+                compiled_bundle,
+                compiler_version=pre_submit_checker_policy.compiler_version,
+            )
+        except PreSubmitCheckerCompilerError as exc:
+            raise CheckerPolicyInvalid("locked project pre-submit checker policy is invalid") from exc
+        checker_names = list(pre_submit_checker_policy.checker_names or [])
+        if checker_names != compiled_checker_names:
+            raise CheckerPolicyInvalid("locked project pre-submit checker projection is invalid")
+        try:
+            self._registry.require_registered(set(checker_names))
+        except UnknownChecker as exc:
+            raise CheckerPolicyInvalid(
+                "locked project pre-submit checker policy references unregistered checker"
+            ) from exc
+        return effective_policy, pre_submit_checker_policy
+
+    @staticmethod
+    def _effective_policy_shape_is_valid(effective_policy: Any) -> bool:
+        """Return whether a locked effective policy can be safely executed."""
+        if not isinstance(effective_policy, dict):
+            return False
+        if not CheckerService._string_list(effective_policy.get("required_packet_fields", [])):
+            return False
+        if not CheckerService._string_list(effective_policy.get("allowed_storage_schemes", [])):
+            return False
+        if not CheckerService._string_list(effective_policy.get("attestation_terms", [])):
+            return False
+        if effective_policy.get("artifact_hash_algorithm", "sha256") != "sha256":
+            return False
+        for flag in ("manifest_required", "artifact_hash_required"):
+            if flag in effective_policy and not isinstance(effective_policy[flag], bool):
+                return False
+        for limit_name in ("maximum_file_size_bytes", "maximum_package_size_bytes"):
+            limit = effective_policy.get(limit_name)
+            if limit is not None and (
+                not isinstance(limit, int) or isinstance(limit, bool) or limit < 0
+            ):
+                return False
+        if not CheckerService._packaging_shape_is_valid(effective_policy.get("packaging", {})):
+            return False
+        if not CheckerService._artifact_rule_list(
+            effective_policy.get("required_artifacts", []),
+            required_key="path",
+            optional_keys={"key", "description"},
+        ):
+            return False
+        if not CheckerService._artifact_rule_list(
+            effective_policy.get("required_evidence", []),
+            required_key="key",
+            optional_keys={"label", "description"},
+        ):
+            return False
+        return CheckerService._artifact_rule_list(
+            effective_policy.get("forbidden_artifacts", []),
+            required_key="pattern",
+            optional_keys={"reason", "source", "severity"},
+        )
+
+    @staticmethod
+    def _artifact_rule_list(
+        value: Any,
+        *,
+        required_key: str,
+        optional_keys: set[str],
+    ) -> bool:
+        """Return whether policy artifact/evidence rules are executable."""
+        if not isinstance(value, list):
+            return False
+        for item in value:
+            if not isinstance(item, dict):
+                return False
+            if not isinstance(item.get(required_key), str) or not item[required_key].strip():
+                return False
+            if "required" in item and not isinstance(item["required"], bool):
+                return False
+            if "hash_required" in item and not isinstance(item["hash_required"], bool):
+                return False
+            for key in optional_keys:
+                if key in item and item[key] is not None and not isinstance(item[key], str):
+                    return False
+        return True
+
+    @staticmethod
+    def _string_list(value: Any) -> bool:
+        """Return whether a value is a list of strings."""
+        return isinstance(value, list) and all(isinstance(item, str) for item in value)
+
+    @staticmethod
+    def _packaging_shape_is_valid(value: Any) -> bool:
+        """Return whether packaging rules are executable."""
+        if not isinstance(value, dict):
+            return False
+        if "package_required" in value and not isinstance(value["package_required"], bool):
+            return False
+        allowed_formats = value.get("allowed_package_formats", [])
+        return CheckerService._string_list(allowed_formats)
 
     async def run_submission_checkers(
         self,
@@ -193,6 +433,10 @@ class CheckerService:
         )
         if checker_policy is None:
             raise CheckerPolicyInvalid("locked checker policy not found")
+        effective_policy, _ = await self._load_locked_pre_submit_context(
+            task,
+            submission,
+        )
 
         required_names = list(checker_policy.required_checkers or [])
         warning_names = list(checker_policy.warning_checkers or [])
@@ -234,6 +478,7 @@ class CheckerService:
             required_checker_names=frozenset(required_names),
             warning_checker_names=frozenset(warning_names),
             blocking_severities=frozenset(checker_policy.blocking_severities or []),
+            effective_policy=effective_policy.effective_policy,
         )
         now = datetime.now(UTC)
         outcomes = self._apply_blocking_policy(

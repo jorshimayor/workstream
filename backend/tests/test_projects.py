@@ -265,6 +265,7 @@ def test_policy_hash_pairs_are_unique_fk_targets() -> None:
         EffectiveProjectSubmissionArtifactPolicy: (
             "uq_effective_project_submission_artifact_policies_id_hash"
         ),
+        PreSubmitCheckerPolicy: "uq_pre_submit_checker_policies_id_compiled_bundle_hash",
     }
 
     for model, constraint_name in expected_constraints.items():
@@ -277,6 +278,7 @@ def test_policy_hash_pairs_are_unique_fk_targets() -> None:
         assert [column.name for column in constraint.columns] in (
             ["id", "policy_hash"],
             ["id", "effective_policy_hash"],
+            ["id", "compiled_bundle_hash"],
         )
 
 

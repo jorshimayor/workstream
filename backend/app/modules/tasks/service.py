@@ -11,12 +11,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.permissions import require_any_role
 from app.modules.projects.models import (
     CheckerPolicy,
+    EffectiveProjectSubmissionArtifactPolicy,
+    GuideSourceSnapshot,
     PaymentPolicy,
+    PreSubmitCheckerPolicy,
     ProjectGuide,
     RevisionPolicy,
     ReviewPolicy,
 )
-from app.modules.projects.repository import ProjectRepository
+from app.modules.projects.repository import ProjectRepository, ProjectRepositoryIntegrityError
 from app.modules.tasks.lifecycle import (
     TASK_STATUS_CLAIMED,
     TASK_STATUS_DRAFT,
@@ -63,6 +66,12 @@ WORKER_VISIBLE_AUDIT_PAYLOAD_KEYS = {
     "locked_review_policy_version",
     "locked_revision_policy_version",
     "locked_payment_policy_version",
+    "locked_guide_source_snapshot_id",
+    "locked_guide_source_snapshot_hash",
+    "locked_effective_project_submission_artifact_policy_id",
+    "locked_effective_project_submission_artifact_policy_hash",
+    "locked_pre_submit_checker_policy_id",
+    "locked_pre_submit_checker_bundle_hash",
     "package_hash",
     "source_type",
     "submission_id",
@@ -144,6 +153,18 @@ class SubmissionCheckerGateError(TaskServiceError):
         """
         super().__init__(message)
         self.status_code = status_code
+
+
+class PreSubmissionCheckerFailed(TaskServiceError):
+    """Raised when the locked pre-submit checker blocks submission creation."""
+
+    status_code = 422
+    code = "pre_submission_checker_failed"
+
+    def __init__(self, details: dict) -> None:
+        """Create a pre-submit failure carrying structured checker feedback."""
+        super().__init__(self.code)
+        self.details = details
 
 
 class TaskService:
@@ -265,9 +286,16 @@ class TaskService:
         task = await self._get_task(task_id)
         self._ensure_transition_allowed(task.status, TASK_STATUS_SCREENING)
 
-        guide, checker_policy, review_policy, revision_policy, payment_policy = (
-            await self._load_active_policy_context(task.project_id)
-        )
+        (
+            guide,
+            checker_policy,
+            review_policy,
+            revision_policy,
+            payment_policy,
+            source_snapshot,
+            effective_policy,
+            pre_submit_checker_policy,
+        ) = await self._load_active_policy_context(task.project_id)
         self._validate_required_task_fields(task, guide)
         self._stamp_locked_context(
             task,
@@ -276,6 +304,9 @@ class TaskService:
             review_policy,
             revision_policy,
             payment_policy,
+            source_snapshot,
+            effective_policy,
+            pre_submit_checker_policy,
         )
         await self._change_task_status(actor, task, TASK_STATUS_SCREENING, reason)
         await self._session.commit()
@@ -456,7 +487,21 @@ class TaskService:
                 "task must be in progress or needs revision before submission"
             )
         self._ensure_locked_context(task)
-        await self._validate_required_submission_fields(task, payload)
+
+        from app.modules.checkers.service import CheckerService, CheckerServiceError
+
+        try:
+            pre_submit_response = await CheckerService(self._session).pre_submit_check(
+                actor,
+                task_id,
+                payload,
+            )
+        except CheckerServiceError as exc:
+            raise SubmissionCheckerGateError(str(exc), exc.status_code) from exc
+        if not pre_submit_response.eligible_to_submit:
+            raise PreSubmissionCheckerFailed(
+                pre_submit_response.model_dump(mode="json"),
+            )
 
         latest_submission = await self._repo.get_latest_submission_for_task(task.id)
         next_version = 1 if latest_submission is None else latest_submission.version + 1
@@ -478,6 +523,16 @@ class TaskService:
             locked_review_policy_version=task.locked_review_policy_version,
             locked_revision_policy_version=task.locked_revision_policy_version,
             locked_payment_policy_version=task.locked_payment_policy_version,
+            locked_guide_source_snapshot_id=task.locked_guide_source_snapshot_id,
+            locked_guide_source_snapshot_hash=task.locked_guide_source_snapshot_hash,
+            locked_effective_project_submission_artifact_policy_id=(
+                task.locked_effective_project_submission_artifact_policy_id
+            ),
+            locked_effective_project_submission_artifact_policy_hash=(
+                task.locked_effective_project_submission_artifact_policy_hash
+            ),
+            locked_pre_submit_checker_policy_id=task.locked_pre_submit_checker_policy_id,
+            locked_pre_submit_checker_bundle_hash=task.locked_pre_submit_checker_bundle_hash,
             supersedes_submission_id=None if latest_submission is None else latest_submission.id,
             evidence_items=[
                 EvidenceItem(
@@ -676,47 +731,6 @@ class TaskService:
             raise TaskNotFound("task not found")
         return task
 
-    async def _validate_required_submission_fields(
-        self,
-        task: WorkstreamTask,
-        payload: SubmissionCreate,
-    ) -> None:
-        """Validate a submission packet against the locked guide.
-
-        Args:
-            task: Task whose locked guide defines required submission fields.
-            payload: Submission packet supplied by the assigned worker.
-
-        Raises:
-            TaskProjectNotReady: If the locked guide cannot be loaded.
-            TaskValidationError: If required submission fields are missing.
-        """
-        if not task.locked_guide_version:
-            raise TaskProjectNotReady("task has no locked guide version")
-        guide = await self._project_repo.get_guide_by_version(task.project_id, task.locked_guide_version)
-        if guide is None:
-            raise TaskProjectNotReady("locked guide not found")
-        required_fields = set(guide.required_submission_fields or [])
-        required_fields.update({"summary", "worker_attestation"})
-        field_values = {
-            "summary": payload.summary,
-            "output": payload.package_uri or payload.artifact_hash_manifest,
-            "outputs": payload.package_uri or payload.artifact_hash_manifest,
-            "package_uri": payload.package_uri,
-            "package_hash": payload.package_hash,
-            "artifact_hash_manifest": payload.artifact_hash_manifest,
-            "evidence": payload.evidence_items,
-            "evidence_items": payload.evidence_items,
-            "worker_attestation": payload.worker_attestation,
-        }
-        missing = [
-            field
-            for field in sorted(required_fields)
-            if not self._field_has_value(field_values.get(field))
-        ]
-        if missing:
-            raise TaskValidationError(f"submission missing required fields: {', '.join(missing)}")
-
     @staticmethod
     def _submission_audit_payload(submission: Submission) -> dict:
         """Build the task audit payload for a submission event.
@@ -735,12 +749,33 @@ class TaskService:
             "artifact_hash_manifest": submission.artifact_hash_manifest,
             "supersedes_submission_id": submission.supersedes_submission_id,
             "locked_at": submission.locked_at.isoformat() if submission.locked_at else None,
+            "locked_guide_source_snapshot_id": submission.locked_guide_source_snapshot_id,
+            "locked_guide_source_snapshot_hash": submission.locked_guide_source_snapshot_hash,
+            "locked_effective_project_submission_artifact_policy_id": (
+                submission.locked_effective_project_submission_artifact_policy_id
+            ),
+            "locked_effective_project_submission_artifact_policy_hash": (
+                submission.locked_effective_project_submission_artifact_policy_hash
+            ),
+            "locked_pre_submit_checker_policy_id": submission.locked_pre_submit_checker_policy_id,
+            "locked_pre_submit_checker_bundle_hash": (
+                submission.locked_pre_submit_checker_bundle_hash
+            ),
         }
 
     async def _load_active_policy_context(
         self,
         project_id: str,
-    ) -> tuple[ProjectGuide, CheckerPolicy, ReviewPolicy, RevisionPolicy, PaymentPolicy]:
+    ) -> tuple[
+        ProjectGuide,
+        CheckerPolicy,
+        ReviewPolicy,
+        RevisionPolicy,
+        PaymentPolicy,
+        GuideSourceSnapshot,
+        EffectiveProjectSubmissionArtifactPolicy,
+        PreSubmitCheckerPolicy,
+    ]:
         """Load the active guide plus every policy needed for task locking.
 
         Args:
@@ -752,21 +787,71 @@ class TaskService:
         Raises:
             TaskProjectNotReady: If any required context is missing.
         """
-        guide = await self._project_repo.get_active_guide(project_id)
-        if guide is None:
-            raise TaskProjectNotReady("project has no active guide")
-        checker_policy = await self._project_repo.get_checker_policy(project_id, guide.version)
-        review_policy = await self._project_repo.get_review_policy(project_id, guide.version)
-        revision_policy = await self._project_repo.get_revision_policy(project_id, guide.version)
-        payment_policy = await self._project_repo.get_payment_policy(project_id, guide.version)
+        try:
+            guide = await self._project_repo.get_active_guide(project_id)
+            if guide is None:
+                raise TaskProjectNotReady("project has no active guide")
+            checker_policy = await self._project_repo.get_checker_policy(project_id, guide.version)
+            review_policy = await self._project_repo.get_review_policy(project_id, guide.version)
+            revision_policy = await self._project_repo.get_revision_policy(
+                project_id,
+                guide.version,
+            )
+            payment_policy = await self._project_repo.get_payment_policy(project_id, guide.version)
+            submission_artifact_policy = (
+                await self._project_repo.get_current_approved_submission_artifact_policy(
+                    project_id,
+                    guide.version,
+                )
+            )
+            if (
+                checker_policy is None
+                or review_policy is None
+                or revision_policy is None
+                or payment_policy is None
+                or submission_artifact_policy is None
+            ):
+                raise TaskProjectNotReady("active guide policy context is incomplete")
+            source_snapshot = await self._project_repo.get_guide_source_snapshot(
+                submission_artifact_policy.source_snapshot_id
+            )
+            if (
+                source_snapshot is None
+                or source_snapshot.bundle_hash != submission_artifact_policy.source_snapshot_hash
+            ):
+                raise TaskProjectNotReady("active guide source snapshot context is incomplete")
+            effective_policy = await self._project_repo.get_effective_submission_artifact_policy(
+                project_id,
+                guide.version,
+                source_snapshot.id,
+            )
+            if effective_policy is None:
+                raise TaskProjectNotReady(
+                    "active effective submission artifact policy is incomplete"
+                )
+            pre_submit_checker_policy = (
+                await self._project_repo.get_pre_submit_checker_policy_for_effective_policy(
+                    effective_policy.id
+                )
+            )
+        except ProjectRepositoryIntegrityError as exc:
+            raise TaskProjectNotReady("active guide policy context is ambiguous") from exc
         if (
-            checker_policy is None
-            or review_policy is None
-            or revision_policy is None
-            or payment_policy is None
+            pre_submit_checker_policy is None
+            or pre_submit_checker_policy.lifecycle_status != "compiled"
+            or not pre_submit_checker_policy.compiled_bundle_hash
         ):
-            raise TaskProjectNotReady("active guide policy context is incomplete")
-        return guide, checker_policy, review_policy, revision_policy, payment_policy
+            raise TaskProjectNotReady("active project pre-submit checker policy is incomplete")
+        return (
+            guide,
+            checker_policy,
+            review_policy,
+            revision_policy,
+            payment_policy,
+            source_snapshot,
+            effective_policy,
+            pre_submit_checker_policy,
+        )
 
     def _validate_required_task_fields(self, task: WorkstreamTask, guide: ProjectGuide) -> None:
         """Validate guide-required task fields before screening.
@@ -827,6 +912,9 @@ class TaskService:
         review_policy: ReviewPolicy,
         revision_policy: RevisionPolicy,
         payment_policy: PaymentPolicy,
+        source_snapshot: GuideSourceSnapshot,
+        effective_policy: EffectiveProjectSubmissionArtifactPolicy,
+        pre_submit_checker_policy: PreSubmitCheckerPolicy,
     ) -> None:
         """Stamp server-owned guide and policy context onto a task.
 
@@ -837,12 +925,25 @@ class TaskService:
             review_policy: Review policy for the guide version.
             revision_policy: Revision policy for the guide version.
             payment_policy: Payment policy for the guide version.
+            source_snapshot: Immutable guide source snapshot for the active setup.
+            effective_policy: Effective project submission artifact policy.
+            pre_submit_checker_policy: Compiled project pre-submit checker policy.
         """
         task.locked_guide_version = guide.version
         task.locked_checker_policy_version = checker_policy.guide_version
         task.locked_review_policy_version = review_policy.guide_version
         task.locked_revision_policy_version = revision_policy.guide_version
         task.locked_payment_policy_version = payment_policy.guide_version
+        task.locked_guide_source_snapshot_id = source_snapshot.id
+        task.locked_guide_source_snapshot_hash = source_snapshot.bundle_hash
+        task.locked_effective_project_submission_artifact_policy_id = effective_policy.id
+        task.locked_effective_project_submission_artifact_policy_hash = (
+            effective_policy.effective_policy_hash
+        )
+        task.locked_pre_submit_checker_policy_id = pre_submit_checker_policy.id
+        task.locked_pre_submit_checker_bundle_hash = (
+            pre_submit_checker_policy.compiled_bundle_hash
+        )
         task.base_amount = payment_policy.base_amount
         task.currency = payment_policy.currency
         task.payout_type = payment_policy.payout_type
@@ -864,6 +965,12 @@ class TaskService:
                 "locked_review_policy_version",
                 "locked_revision_policy_version",
                 "locked_payment_policy_version",
+                "locked_guide_source_snapshot_id",
+                "locked_guide_source_snapshot_hash",
+                "locked_effective_project_submission_artifact_policy_id",
+                "locked_effective_project_submission_artifact_policy_hash",
+                "locked_pre_submit_checker_policy_id",
+                "locked_pre_submit_checker_bundle_hash",
             )
             if not getattr(task, field)
         ]
@@ -978,6 +1085,16 @@ class TaskService:
             "locked_review_policy_version": task.locked_review_policy_version,
             "locked_revision_policy_version": task.locked_revision_policy_version,
             "locked_payment_policy_version": task.locked_payment_policy_version,
+            "locked_guide_source_snapshot_id": task.locked_guide_source_snapshot_id,
+            "locked_guide_source_snapshot_hash": task.locked_guide_source_snapshot_hash,
+            "locked_effective_project_submission_artifact_policy_id": (
+                task.locked_effective_project_submission_artifact_policy_id
+            ),
+            "locked_effective_project_submission_artifact_policy_hash": (
+                task.locked_effective_project_submission_artifact_policy_hash
+            ),
+            "locked_pre_submit_checker_policy_id": task.locked_pre_submit_checker_policy_id,
+            "locked_pre_submit_checker_bundle_hash": task.locked_pre_submit_checker_bundle_hash,
             "assigned_to": task.assigned_to,
         }
         if event_payload:

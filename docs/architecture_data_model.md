@@ -694,10 +694,11 @@ Fields:
 - `locked_guide_version`
 - `locked_guide_source_snapshot_id`
 - `locked_guide_source_snapshot_hash`
-- `locked_submission_artifact_policy_version`
+- `locked_effective_project_submission_artifact_policy_id`
 - `locked_effective_project_submission_artifact_policy_hash`
+- `locked_pre_submit_checker_policy_id`
 - `locked_pre_submit_checker_bundle_hash`
-- `locked_post_submit_checker_policy_version`
+- `locked_checker_policy_version`
 - `locked_review_policy_version`
 - `locked_revision_policy_version`
 - `locked_payment_policy_version`
@@ -750,14 +751,16 @@ Source type:
 External origin adapters are later work. When added, they normalize into this task shape instead of creating a separate task lifecycle.
 
 The task id points to the locked task contract. That contract includes the guide
-version, guide source snapshot id/hash, project submission artifact policy version,
-effective project submission artifact policy hash, generated project pre-submit checker bundle hash,
-post-submit checker policy version, review policy version, revision policy
+version, guide source snapshot id/hash, effective project submission artifact
+policy id/hash, generated project pre-submit checker policy id/bundle hash,
+current checker policy version, review policy version, revision policy
 version, payment policy version, acceptance criteria, derived display summaries,
 base payout, and skill tags. Workers submit against the task id; they do not
 restate policy versions.
 
-Implementation note: current v0.1 code uses `locked_checker_policy_version` for the post-submit checker policy version. The architecture target splits this into `locked_post_submit_checker_policy_version` and explicit submission artifact/pre-submit provenance fields.
+Implementation note: current v0.1 code uses `locked_checker_policy_version`
+for current checker-policy provenance. The later post-submit split adds
+explicit post-submit checker provenance.
 
 ## Assignment
 
@@ -789,10 +792,11 @@ Fields:
 - `locked_guide_version`
 - `locked_guide_source_snapshot_id`
 - `locked_guide_source_snapshot_hash`
-- `locked_submission_artifact_policy_version`
+- `locked_effective_project_submission_artifact_policy_id`
 - `locked_effective_project_submission_artifact_policy_hash`
+- `locked_pre_submit_checker_policy_id`
 - `locked_pre_submit_checker_bundle_hash`
-- `locked_post_submit_checker_policy_version`
+- `locked_checker_policy_version`
 - `locked_review_policy_version`
 - `locked_revision_policy_version`
 - `locked_payment_policy_version`
@@ -807,11 +811,11 @@ submission artifact, effective project policy, pre-submit checker, post-submit
 checker, review, revision, and payment policy provenance from trusted
 task/project state. The worker does not provide submission version, evidence
 ids, checker results, checker run ids, guide versions, source snapshots,
-submission artifact policy versions, policy hashes, post-submit checker
-policy versions, review policy versions, revision policy versions, or payment
-policy versions.
+effective project policy ids/hashes, pre-submit checker ids/bundle hashes,
+current checker policy versions, review policy versions, revision policy
+versions, or payment policy versions.
 
-Implementation note: current v0.1 code uses `locked_checker_policy_version` on submissions for post-submit checker policy provenance. The architecture target adds explicit submission artifact and pre-submit policy provenance.
+Implementation note: current v0.1 code stamps explicit effective project submission artifact policy and pre-submit checker provenance on submissions. `locked_checker_policy_version` remains the v0.1 post-submit checker policy reference until `WS-POL-001-04` splits post-submit checker provenance into a dedicated `PostSubmitCheckerPolicy`.
 
 Status:
 
@@ -867,7 +871,7 @@ Fields:
 - `completed_at`
 - `runner_version`
 - `locked_guide_version`
-- `locked_post_submit_checker_policy_version`
+- `locked_checker_policy_version`
 - `locked_review_policy_version`
 - `locked_revision_policy_version`
 - `locked_payment_policy_version`
@@ -1069,12 +1073,12 @@ Fields:
 - `next_submission_version`
 - `prior_locked_guide_version`
 - `next_locked_guide_version`
-- `prior_locked_submission_artifact_policy_version`
-- `next_locked_submission_artifact_policy_version`
+- `prior_locked_effective_project_submission_artifact_policy_hash`
+- `next_locked_effective_project_submission_artifact_policy_hash`
 - `prior_locked_pre_submit_checker_bundle_hash`
 - `next_locked_pre_submit_checker_bundle_hash`
-- `prior_locked_post_submit_checker_policy_version`
-- `next_locked_post_submit_checker_policy_version`
+- `prior_locked_checker_policy_version`
+- `next_locked_checker_policy_version`
 - `prior_locked_review_policy_version`
 - `next_locked_review_policy_version`
 - `prior_locked_revision_policy_version`

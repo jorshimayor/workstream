@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps.auth import get_current_actor
@@ -24,6 +25,24 @@ from app.schemas.auth import ActorContext
 
 router = APIRouter(tags=["tasks"])
 
+DOMAIN_ERROR_RESPONSE_SCHEMA = {
+    "oneOf": [
+        {
+            "type": "object",
+            "required": ["code", "details"],
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "enum": ["pre_submission_checker_failed"],
+                },
+                "details": {"type": "object"},
+            },
+            "additionalProperties": False,
+        },
+        {"$ref": "#/components/schemas/HTTPValidationError"},
+    ]
+}
+
 
 def task_http_error(exc: TaskServiceError) -> HTTPException:
     """Convert a service-layer task error into an HTTP error.
@@ -35,6 +54,17 @@ def task_http_error(exc: TaskServiceError) -> HTTPException:
         HTTP exception carrying the service error details.
     """
     return HTTPException(status_code=exc.status_code, detail=str(exc))
+
+
+def task_domain_error_response(exc: TaskServiceError) -> JSONResponse:
+    """Convert a coded domain error into the public API error body."""
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "code": getattr(exc, "code"),
+            "details": getattr(exc, "details", None) or {},
+        },
+    )
 
 
 def permission_http_error(exc: PermissionDenied) -> HTTPException:
@@ -160,19 +190,35 @@ async def start_task(
         raise task_http_error(exc) from exc
 
 
-@router.post("/tasks/{task_id}/submissions", response_model=SubmissionResponse, status_code=201)
+@router.post(
+    "/tasks/{task_id}/submissions",
+    response_model=SubmissionResponse,
+    status_code=201,
+    responses={
+        422: {
+            "description": "Pre-submit domain failure or request validation error.",
+            "content": {
+                "application/json": {
+                    "schema": DOMAIN_ERROR_RESPONSE_SCHEMA,
+                }
+            },
+        }
+    },
+)
 async def create_submission(
     task_id: str,
     payload: SubmissionCreate,
     actor: Annotated[ActorContext, Depends(get_current_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
-) -> SubmissionResponse:
+) -> SubmissionResponse | JSONResponse:
     """Create a submission packet version for a task."""
     try:
         return await TaskService(session).create_submission(actor, task_id, payload)
     except PermissionDenied as exc:
         raise permission_http_error(exc) from exc
     except TaskServiceError as exc:
+        if getattr(exc, "code", None) is not None:
+            return task_domain_error_response(exc)
         raise task_http_error(exc) from exc
 
 
