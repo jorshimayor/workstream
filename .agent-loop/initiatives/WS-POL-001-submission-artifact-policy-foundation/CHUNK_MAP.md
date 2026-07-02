@@ -14,9 +14,9 @@
 - Project owner material is untrusted input. Implementation chunks must reject
   unsafe source refs and prevent guide text or imported docs from granting tool
   authority or weakening Workstream defaults.
-- Agents derive constrained policy and checker specifications. Workstream
-  compiles deterministic checker bundles. Unrestricted generated checker code
-  is not the default path.
+- Agents derive constrained project policy. Workstream's trusted compiler builds
+  and validates checker specifications, then compiles deterministic checker
+  bundles. Unrestricted generated checker code is not the default path.
 - Reports, derived policies, acknowledgements, effective policies, task locked
   references, and checker bundles bind to immutable `GuideSourceSnapshot`
   bundle id/hash, not only to `guide_version`.
@@ -81,7 +81,8 @@ Acceptance criteria:
 - `GuideSourceSnapshot.bundle_hash` is computed as
   `sha256(canonical_json(manifest_json))` with deterministic key ordering,
   source-item ordering, UTF-8 encoding, duplicate handling, and volatile-field
-  exclusions.
+  exclusions. Non-finite numbers such as `NaN` or `Infinity` are rejected before
+  hashing.
 - Dedicated guide sufficiency report model/table exists.
 - Guide sufficiency report supports `passed`, `blocked`, and
   `passed_with_warnings`.
@@ -153,16 +154,41 @@ Depends on:
 Allowed files:
 
 ```text
+backend/pyproject.toml
+backend/app/main.py
+backend/app/core/config.py
+backend/app/core/hashing.py
+backend/app/core/project_agents.py
+backend/app/interfaces/project_agents.py
+backend/app/adapters/project_agents/**
 backend/app/modules/projects/**
 backend/app/modules/checkers/**
 backend/tests/test_projects.py
 backend/tests/test_checkers.py
+backend/tests/test_tasks.py
+backend/scripts/week1_api_e2e.py
+README.md
+docs/architecture_checker_framework.md
+docs/architecture_data_model.md
+docs/architecture_lockdown.md
+docs/decision_0011_submission_artifact_policy_drives_pre_submit.md
+docs/glossary.md
+docs/internal_reviews/2026-06-16_submission_artifact_policy_architecture.md
+docs/operations_workspace_packet_convention.md
+docs/spec_chunk_3_project_guide_foundation.md
+docs/spec_chunk_7_checker_runner_registry.md
 docs/spec_chunk_8_submission_artifact_policy_checkers.md
+docs/template_checker_policy.md
+docs/template_project_guide.md
+docs/template_submission_artifact_policy.md
+.agent-loop/LOOP_STATE.md
+.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/**
 ```
 
 Not allowed:
 
 ```text
+backend/app/adapters/auth/**
 submission creation runtime rewiring
 post-submit lifecycle changes
 payment/reputation/blockchain code
@@ -176,13 +202,22 @@ Acceptance criteria:
   requests.
 - Warnings can be acknowledged only by `admin` or `project_manager`.
 - `SubmissionArtifactPolicyDerivationAgent` runs async after sufficiency passes
-  or warnings are acknowledged.
+  or passes with warnings. Warning acknowledgement is required before policy
+  approval and guide activation.
+- Agent derivation requires a Workstream-agent sufficiency report for the same
+  immutable snapshot; manual sufficiency reports can clear manual policy
+  creation but do not create agent-derivation provenance.
+- Persisted sufficiency-agent and derivation-agent names and versions are
+  server-owned; runtime/provider identity fields cannot spoof audit records.
+- Agent-derived policy provenance is revalidated before approval and guide
+  activation.
 - Derived policy cannot weaken Workstream defaults.
-- `SubmissionArtifactPolicyDerivationAgent` produces a constrained checker
+- Workstream's trusted checker compiler builds a constrained checker
   specification using only approved Workstream primitives.
-- Trusted checker compiler validates the specification and persists a
+- Trusted checker compiler validates that specification and persists a
   deterministic project `PreSubmitCheckerPolicy` bundle and hash. The default
-  path compiles once per project guide version, not once per task.
+  path compiles once per effective project submission artifact policy hash plus
+  compiler version, not once per task.
 - Guide activation requires the compiled project `PreSubmitCheckerPolicy` once
   Chunk 2 is complete.
 - Compiler rejects any checker specification that omits an enforceable
@@ -194,18 +229,18 @@ Acceptance criteria:
 - Derived report, project policy, effective project policy, and pre-submit checker bundle
   are invalidated by a new guide source snapshot.
 - Malicious guide text, embedded prompt-injection instructions, and unsafe
-  source refs cannot influence agent authority, fetch behavior, or default
-  policy strength.
+  source refs cannot influence agent authority, fetch behavior, compiler
+  behavior, server-side policy validation, or default policy strength.
 - Workers and project owners cannot provide checker names, severities,
   versions, or outcomes.
 
 Verification:
 
 - Postgres-backed async tests cover sufficiency report creation, blocking
-  clarification requests, warning acknowledgement, derivation job output, unsafe
-  source-ref rejection, and default weakening rejection.
-- Background execution tests prove jobs are async and idempotent for a guide
-  source snapshot.
+  clarification requests, warning acknowledgement, derivation route output,
+  unsafe source-ref rejection, and default weakening rejection.
+- Async API/service tests prove the routes are awaitable and idempotent for a
+  guide source snapshot.
 - Compiler tests prove allowed primitive emission, unknown primitive rejection,
   byte-stable same-input same-compiler-version bundle hashing, hash binding to
   `effective_project_submission_artifact_policy_hash`, and client/worker
@@ -218,12 +253,12 @@ Verification:
 Required reviewers:
 
 senior engineering, QA/test, security/auth, product/ops, architecture, docs,
-reuse/dedup, test delta.
+reuse/dedup, test delta, CI integrity.
 
 Human review focus:
 
-Async job boundaries, sufficiency severity behavior, and clarification request
-shape.
+Async service boundaries, sufficiency severity behavior, and clarification
+request shape.
 
 ### WS-POL-001-03: Task Locked Context And Submission Creation
 

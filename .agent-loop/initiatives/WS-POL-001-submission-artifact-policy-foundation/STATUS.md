@@ -2,24 +2,26 @@
 
 ## Current Status
 
-`WS-POL-001-01` implementation is complete locally on branch
-`codex/ws-pol-001-01-submission-artifact-policy`.
+`WS-POL-001-01` is merged to `main`. `WS-POL-001-02` is implemented on branch
+`codex/ws-pol-001-02-agent-runtime-compiler`; PR #61 is ready for user review
+after final evidence-only check rerun.
 
-Internal reviewer fanout is complete for reviewed code SHA
-`a77845bfe041c3fa8d7f9b25b928e76060049ec2`. Deterministic local checks,
-internal evidence validation, GitHub Actions, and CodeRabbit passed. The current
-gate is explicit user review and merge approval for PR #28.
+Internal review and deterministic proof are complete for reviewed code SHA
+`aaffa7b25d88fcdff9a87e89d6a2f7ff6ceabb46`. External review and GitHub Actions
+passed on pushed head `d7e4669f6fa6bd782a8f12e43bb5b94449fb235d`: CodeRabbit,
+Agent Gates, Backend, and Week 1 API Demo UI are green, and no unresolved
+non-outdated review threads remain.
 
 ## Active Chunk
 
-`WS-POL-001-01` - Guide Policy Bundle Foundation
+`WS-POL-001-02` - Async Guide Analysis And Policy Derivation
 
 ## Chunk Status
 
 | Chunk | Status | Branch | PR | Notes |
 |---|---|---|---:|---|
-| `WS-POL-001-01` | External review complete; awaiting explicit user approval | `codex/ws-pol-001-01-submission-artifact-policy` | 28 | Implements guide-source snapshots, guide sufficiency reports, submission artifact policy, effective project policy, project pre-submit checker contract, activation guards, and key-based artifact policy merge. |
-| `WS-POL-001-02` | Planned | - | - | Adds async guide sufficiency / derivation agents and the trusted compiler path. |
+| `WS-POL-001-01` | Merged | `codex/ws-pol-001-01-submission-artifact-policy` | 28 | Implements guide-source snapshots, guide sufficiency reports, submission artifact policy, effective project policy, project pre-submit checker contract, activation guards, and key-based artifact policy merge. |
+| `WS-POL-001-02` | External review passed | `codex/ws-pol-001-02-agent-runtime-compiler` | 61 | Adds async guide sufficiency / derivation agents, runtime port, OpenAI Agents SDK adapter boundary, trusted compiler path, and server-owned provenance guards. |
 | `WS-POL-001-03` | Planned | - | - | Moves task locked-context and submission runtime to the effective policy and project checker bundle. |
 | `WS-POL-001-04` | Planned | - | - | Splits post-submit checker policy provenance. |
 | `WS-POL-001-05` | Planned | - | - | Proves revision resubmission and real API drill. |
@@ -28,14 +30,10 @@ gate is explicit user review and merge approval for PR #28.
 
 | Blocker | Owner | Next action |
 |---|---|---|
-| Human merge decision | User | Review PR #28 trust bundle and approve merge only if acceptable. |
+| User review | User | Review PR #61 after the final evidence-only check rerun and decide whether to merge. |
 
 ## Follow-Ups
 
 | Item | Source | Priority |
 |---|---|---|
-| Replace test/E2E direct compiled-field mutation with real trusted compiler path | Reuse/dedup, architecture, and product/ops review | High for Chunk 2 |
-| Define artifact/evidence key grammar before compiler/runtime consumption | Senior engineering and QA review | High for Chunk 2 |
-| Decide whether `required` remains boolean or becomes `Literal[True]` | Senior engineering review | High for Chunk 2 |
-| Make sufficiency report creation draft-only and warning acknowledgement idempotent | Security review | Medium |
 | Add task locked guide-source snapshot/effective-policy/pre-submit bundle references before `READY` | Chunk map | High for Chunk 3 |

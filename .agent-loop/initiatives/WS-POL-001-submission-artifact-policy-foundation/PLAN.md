@@ -27,7 +27,7 @@ GuideSufficiencyReport
 WorkstreamDefaultSubmissionArtifactPolicy
   platform-owned, non-bypassable safety rules
 
-ProjectSubmissionArtifactPolicy
+SubmissionArtifactPolicy
   Workstream-derived, admin-or-project-manager-approved machine-readable intake rules
 
 EffectiveProjectSubmissionArtifactPolicy
@@ -59,14 +59,17 @@ timestamps. It never persists signed URLs, credentials, or token-bearing
 locators as durable source identity.
 The bundle hash is `sha256(canonical_json(manifest_json))` with deterministic
 key ordering, source-item ordering, UTF-8 encoding, duplicate handling, and
-volatile-field exclusions.
+volatile-field exclusions. Non-finite numbers such as `NaN` or `Infinity` are
+rejected before hashing.
 
 `SubmissionArtifactPolicyDerivationAgent` derives machine-readable
-`ProjectSubmissionArtifactPolicy` after guide sufficiency passes. A Workstream
-actor with the `admin` or `project_manager` role approves the derived policy.
+`SubmissionArtifactPolicy` after guide sufficiency passes or passes with
+warnings. A Workstream actor with the `admin` or `project_manager` role
+approves the derived policy after any sufficiency warnings are acknowledged.
 Workstream then computes the effective project submission artifact policy and compiles the project
 `PreSubmitCheckerPolicy`. The generated project `PreSubmitCheckerPolicy`
-compiled bundle hash is scoped to the project guide version.
+compiled bundle hash is scoped to the effective project submission artifact
+policy hash plus compiler version.
 Tasks lock references to the exact guide snapshot, effective project submission
 artifact policy hash, and pre-submit checker bundle hash during screening before
 entering `READY`.
@@ -76,9 +79,11 @@ Post-submit/internal checks run after submission lock and do create durable
 checker records.
 
 The derivation agent does not generate unrestricted executable checker code.
-It produces a constrained checker specification using Workstream-approved
-primitives. Workstream's trusted checker compiler turns that specification into
-a deterministic project `PreSubmitCheckerPolicy` bundle during project setup.
+It produces the machine-readable project submission artifact policy.
+Workstream's trusted checker compiler builds and validates the constrained
+checker specification using Workstream-approved primitives, then turns that
+specification into a deterministic project `PreSubmitCheckerPolicy` bundle
+during project setup.
 Runtime checks execute the locked compiled bundle against staged artifact hashes
 or future content identifiers plus the task's constrained parameters. Tasks do
 not rerun the derivation agent or compile a new checker bundle for each task.
@@ -153,9 +158,10 @@ while post-submit answers whether a locked submission can move to human review.
 - Project-owner boundary: project owners provide open-ended guide material and
   business terms; Workstream evaluates sufficiency, derives policy, and owns
   internal controls.
-- Checker-code boundary: agents derive constrained checker specifications;
-  Workstream compiles deterministic checker bundles. Unrestricted generated
-  checker code is not the default path.
+- Checker-code boundary: agents derive constrained project policy; Workstream's
+  trusted compiler builds and validates checker specifications, then compiles
+  deterministic checker bundles. Unrestricted generated checker code is not the
+  default path.
 - Source-material security: project-owner docs, URLs, examples, and repository
   docs are untrusted input; embedded tool instructions, prompt-injection text,
   credential-bearing refs, signed URLs, token-bearing refs, and local filesystem

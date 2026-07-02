@@ -21,7 +21,7 @@ Every active project guide version must have a complete guide-policy bundle:
 
 - immutable `GuideSourceSnapshot` bundle for the exact guide/source material evaluated
 - passing or acknowledged `GuideSufficiencyReport`
-- approved `ProjectSubmissionArtifactPolicy`
+- approved `SubmissionArtifactPolicy`
 - persisted `EffectiveProjectSubmissionArtifactPolicy` hash
 - persisted generated project `PreSubmitCheckerPolicy` compiled bundle hash
 - `PostSubmitCheckerPolicy`
@@ -36,16 +36,24 @@ Workstream binds all downstream setup records to the exact guide source
 snapshot, not only to `guide_version`. `GuideSourceSnapshot` records include the
 guide id, canonical manifest JSON, bundle hash, and capture timestamp. Snapshot
 items record source kind, sanitized durable ref, ingestion adapter, content
-hash, optional future content id, media type, and capture timestamp. The bundle
-hash is `sha256(canonical_json(manifest_json))`. Canonical JSON uses UTF-8,
-sorted object keys, no insignificant whitespace, and source items sorted by
+hash, optional future content id, media type, capture timestamp, and optional
+bounded `content_excerpt` inside the canonical manifest. The bundle hash is
+`sha256(canonical_json(manifest_json))`. Canonical JSON uses UTF-8, sorted
+object keys, no insignificant whitespace, and source items sorted by
 `(source_kind, durable_ref, content_hash)`. Volatile database ids, capture
 timestamps, and transient fetch locators are excluded from the canonical
-manifest. Duplicate source items with the same `source_kind + durable_ref` are
+manifest. Non-finite numbers such as `NaN` or `Infinity` are rejected before
+hashing. Duplicate source items with the same `source_kind + durable_ref` are
 rejected before hashing. Changing any included document, example, rubric,
-repository doc, or inline guide body creates a new snapshot and invalidates
-prior sufficiency reports, derived policies, effective policies, checker specs,
-checker bundles, acknowledgements, and approvals for activation.
+repository doc, representative task excerpt, task sample, or inline guide body
+creates a new snapshot and invalidates prior sufficiency reports, derived
+policies, effective policies, checker specs, checker bundles, acknowledgements,
+and approvals for activation.
+Representative task excerpts and task samples are source material for project
+setup agents only. They help the `ProjectGuideSufficiencyAgent` and
+`SubmissionArtifactPolicyDerivationAgent` evaluate whether the project guide is
+usable across the project task set; they do not create task-scoped policy or
+task-scoped checker generation.
 A new guide-source snapshot invalidates prior setup records for new activation
 and unlocked tasks only. Tasks already locked to an earlier snapshot retain
 that policy context unless an explicit audited rebase occurs.
@@ -64,15 +72,24 @@ remain visible to Workstream actors with the `admin` or `project_manager` role
 and must be acknowledged before activation.
 
 `SubmissionArtifactPolicyDerivationAgent` derives
-`ProjectSubmissionArtifactPolicy` from the guide material after sufficiency
-passes or warnings are acknowledged. The project owner does not approve this
+`SubmissionArtifactPolicy` from the guide material after sufficiency
+passes or passes with warnings. The project owner does not approve this
 internal policy. A Workstream actor with the `admin` or `project_manager` role
-reviews and approves the derived policy before guide activation.
+reviews and approves the derived policy before guide activation, and any
+sufficiency warnings must be acknowledged before approval or activation.
+Agent-derived policy versioning is server-owned and deterministic from the
+guide source snapshot hash. Provider-returned policy versions are not trusted
+for idempotency and cannot create multiple current policies for the same
+snapshot.
+Persisted agent names and versions are also Workstream-owned provenance, not
+provider-returned audit truth. Manual sufficiency reports can support manual
+policy creation after sufficiency clearance, but the derivation agent requires
+a Workstream-agent sufficiency report for the same immutable snapshot.
 
 The derivation agent does not generate unrestricted executable checker code as
-the default path. It produces a machine-readable artifact-intake contract and a
-constrained pre-submit checker specification using Workstream-approved
-primitives.
+the default path. It produces a machine-readable artifact-intake contract.
+Workstream's trusted compiler builds and validates the constrained pre-submit
+checker specification using Workstream-approved primitives.
 
 `SubmissionArtifactPolicy` is the Workstream-derived, admin-or-project-manager-approved machine-readable contract for worker submissions. It defines:
 
@@ -100,15 +117,15 @@ The runtime contract is:
 ```text
 EffectiveProjectSubmissionArtifactPolicy =
   WorkstreamDefaultSubmissionArtifactPolicy
-  + ProjectSubmissionArtifactPolicy
+  + SubmissionArtifactPolicy
 
 PreSubmitCheckerPolicy =
   trusted compiler output from EffectiveProjectSubmissionArtifactPolicy
 ```
 
-`SubmissionArtifactPolicyDerivationAgent` produces a constrained checker
-specification at project setup time. Workstream's trusted checker compiler
-validates that specification and persists the project-level
+`SubmissionArtifactPolicyDerivationAgent` produces the artifact-intake contract
+at project setup time. Workstream's trusted checker compiler builds and
+validates the constrained checker specification and persists the project-level
 `PreSubmitCheckerPolicy`.
 
 Project policies define project-wide artifact intake rules for a guide
@@ -147,15 +164,22 @@ policy.
 
 Approved pre-submit checker primitives include:
 
-- `require_file`
-- `allow_extension`
-- `forbid_extension`
+- `validate_submission_packet`
+- `enforce_storage_scheme`
 - `require_manifest_field`
-- `validate_json_schema`
-- `check_directory_structure`
-- `require_minimum_evidence`
 - `verify_hash`
+- `require_file`
+- `require_minimum_evidence`
+- `forbid_artifact`
+- `require_attestation`
 - `limit_file_size`
+- `limit_package_size`
+- `require_packaging`
+- `warn_low_quality_generated_artifact`
+
+The trusted compiler must keep `warn_low_quality_generated_artifact`
+warning-only; escalating that primitive to blocking is rejected because it would
+change worker-facing intake semantics.
 
 Project-specific executable checker code is not part of the default path. If a
 future project requires logic that cannot fit the constrained checker

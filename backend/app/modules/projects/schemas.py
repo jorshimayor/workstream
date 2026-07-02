@@ -2,11 +2,25 @@
 
 from __future__ import annotations
 
+import math
 from datetime import datetime
 from decimal import Decimal
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+def reject_non_finite_json_numbers(value: Any) -> Any:
+    """Reject NaN and Infinity values from JSON-like request metadata."""
+    if isinstance(value, float) and not math.isfinite(value):
+        raise ValueError("non-finite numbers are not allowed")
+    if isinstance(value, dict):
+        for item in value.values():
+            reject_non_finite_json_numbers(item)
+    if isinstance(value, list):
+        for item in value:
+            reject_non_finite_json_numbers(item)
+    return value
 
 
 class CheckerPolicyInput(BaseModel):
@@ -68,6 +82,7 @@ class GuideSourceSnapshotItemInput(BaseModel):
     content_hash: str = Field(max_length=71)
     content_cid: str | None = Field(default=None, max_length=200)
     media_type: str | None = Field(default=None, max_length=100)
+    content_excerpt: str | None = Field(default=None, max_length=12000)
 
 
 class GuideSourceSnapshotCreate(BaseModel):
@@ -132,8 +147,6 @@ class GuideSufficiencyReportCreate(BaseModel):
     status: Literal["passed", "blocked", "passed_with_warnings"]
     findings: list[GuideSufficiencyFindingInput] = Field(default_factory=list, max_length=100)
     summary: str | None = Field(default=None, max_length=2000)
-    agent_name: str | None = Field(default=None, max_length=100)
-    agent_version: str | None = Field(default=None, max_length=50)
 
 
 class GuideSufficiencyAcknowledgement(BaseModel):
@@ -246,10 +259,18 @@ class SubmissionArtifactPolicyCreate(BaseModel):
     source_snapshot_id: str = Field(max_length=36)
     policy_version: str = Field(max_length=50)
     policy_body: SubmissionArtifactPolicyInput
-    derivation_source: str = Field(default="manual_admin_derivation", max_length=100)
-    derivation_agent_name: str | None = Field(default=None, max_length=100)
-    derivation_agent_version: str | None = Field(default=None, max_length=50)
     change_summary: str | None = Field(default=None, max_length=2000)
+
+    @field_validator("policy_version")
+    @classmethod
+    def reject_reserved_agent_policy_version(cls, value: str) -> str:
+        """Reserve agent-derived policy version names for Workstream."""
+        stripped_value = value.strip()
+        if value != stripped_value:
+            raise ValueError("policy_version cannot include surrounding whitespace")
+        if stripped_value.casefold().startswith("agent-"):
+            raise ValueError("policy_version prefix 'agent-' is reserved")
+        return value
 
 
 class SubmissionArtifactPolicyUpdate(BaseModel):
@@ -258,9 +279,6 @@ class SubmissionArtifactPolicyUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     policy_body: SubmissionArtifactPolicyInput | None = None
-    derivation_source: str | None = Field(default=None, max_length=100)
-    derivation_agent_name: str | None = Field(default=None, max_length=100)
-    derivation_agent_version: str | None = Field(default=None, max_length=50)
     change_summary: str | None = Field(default=None, max_length=2000)
 
 
@@ -427,6 +445,12 @@ class ProjectGuideCreate(BaseModel):
     revision_policy: RevisionPolicyInput | None = None
     payment_policy: PaymentPolicyInput | None = None
 
+    @field_validator("difficulty_scale", "estimated_time_policy", "evidence_policy")
+    @classmethod
+    def validate_finite_json_metadata(cls, value: Any) -> Any:
+        """Reject non-finite numbers from guide metadata."""
+        return reject_non_finite_json_numbers(value)
+
 
 class ProjectGuideUpdate(BaseModel):
     """Request schema for editing mutable fields on a draft guide."""
@@ -453,6 +477,12 @@ class ProjectGuideUpdate(BaseModel):
     review_policy: ReviewPolicyInput | None = None
     revision_policy: RevisionPolicyInput | None = None
     payment_policy: PaymentPolicyInput | None = None
+
+    @field_validator("difficulty_scale", "estimated_time_policy", "evidence_policy")
+    @classmethod
+    def validate_finite_json_metadata(cls, value: Any) -> Any:
+        """Reject non-finite numbers from guide metadata updates."""
+        return reject_non_finite_json_numbers(value)
 
 
 class ProjectGuideResponse(BaseModel):

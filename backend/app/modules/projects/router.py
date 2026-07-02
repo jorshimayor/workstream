@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps.auth import get_current_actor
@@ -179,6 +179,41 @@ async def create_guide_sufficiency_report(
 
 
 @router.post(
+    "/{project_id}/guides/{guide_id}/source-snapshots/{source_snapshot_id}/run-sufficiency-agent",
+    response_model=GuideSufficiencyReportResponse,
+    status_code=201,
+    responses={
+        200: {
+            "model": GuideSufficiencyReportResponse,
+            "description": "Existing guide sufficiency report reused.",
+        }
+    },
+)
+async def run_guide_sufficiency_agent(
+    project_id: str,
+    guide_id: str,
+    source_snapshot_id: str,
+    response: Response,
+    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> GuideSufficiencyReportResponse:
+    """Run Workstream's guide sufficiency agent for a source snapshot."""
+    try:
+        result, created = await ProjectService(session).run_guide_sufficiency_agent(
+            actor,
+            project_id,
+            guide_id,
+            source_snapshot_id,
+        )
+        response.status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
+        return result
+    except PermissionDenied as exc:
+        raise permission_http_error(exc) from exc
+    except ProjectServiceError as exc:
+        raise project_http_error(exc) from exc
+
+
+@router.post(
     "/{project_id}/guides/{guide_id}/sufficiency-reports/{report_id}/acknowledge-warnings",
     response_model=GuideSufficiencyReportResponse,
 )
@@ -225,6 +260,41 @@ async def create_submission_artifact_policy(
             guide_id,
             payload,
         )
+    except PermissionDenied as exc:
+        raise permission_http_error(exc) from exc
+    except ProjectServiceError as exc:
+        raise project_http_error(exc) from exc
+
+
+@router.post(
+    "/{project_id}/guides/{guide_id}/source-snapshots/{source_snapshot_id}/derive-submission-artifact-policy",
+    response_model=SubmissionArtifactPolicyResponse,
+    status_code=201,
+    responses={
+        200: {
+            "model": SubmissionArtifactPolicyResponse,
+            "description": "Existing agent-derived submission artifact policy reused.",
+        }
+    },
+)
+async def run_submission_artifact_policy_derivation_agent(
+    project_id: str,
+    guide_id: str,
+    source_snapshot_id: str,
+    response: Response,
+    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> SubmissionArtifactPolicyResponse:
+    """Run Workstream's submission artifact policy derivation agent."""
+    try:
+        result, created = await ProjectService(session).run_submission_artifact_policy_derivation_agent(
+            actor,
+            project_id,
+            guide_id,
+            source_snapshot_id,
+        )
+        response.status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
+        return result
     except PermissionDenied as exc:
         raise permission_http_error(exc) from exc
     except ProjectServiceError as exc:

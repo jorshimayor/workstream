@@ -30,27 +30,29 @@ The human-facing operating guide for a project. It contains the project instruct
 
 ## Guide Sufficiency Report
 
-The Workstream-owned record produced by `ProjectGuideSufficiencyAgent` for a
-project guide version. It records whether the guide passed, is blocked by gaps,
-or passed with warnings that an `admin` or `project_manager` must acknowledge
-before activation.
+The Workstream-owned sufficiency record for a project guide version and source
+snapshot. It is normally produced by `ProjectGuideSufficiencyAgent`, but an
+`admin` or `project_manager` can create a manual report when needed. It records
+whether the guide passed, is blocked by gaps, or passed with warnings that an
+`admin` or `project_manager` must acknowledge before activation. Manual reports
+clear only the manual policy path; agent derivation requires an agent-created
+sufficiency report for the same snapshot.
 
 ## Submission Artifact Policy
 
 The Workstream-derived, admin-or-project-manager-approved machine-readable
 contract for what a worker must submit. It is derived from open-ended project
-guide material after guide sufficiency passes or warnings are acknowledged,
-reviewed by a Workstream actor with the `admin` or `project_manager` role, and
-attached to a project guide version. It defines required artifacts, evidence
+guide material after guide sufficiency passes or passes with warnings, reviewed
+by a Workstream actor with the `admin` or `project_manager` role after any
+warnings are acknowledged, and attached to a project guide version. It defines
+required artifacts, evidence
 requirements, artifact hash requirements, allowed storage reference forms,
 forbidden artifacts, attestation requirements, and project-specific packaging
 rules. It can add or tighten requirements, but it cannot weaken Workstream's
 default submission artifact rules.
 
-## Project Submission Artifact Policy
-
-The project-specific `SubmissionArtifactPolicy` attached to one project guide
-version before Workstream merges it with default submission artifact policy.
+The project-specific policy row is still `SubmissionArtifactPolicy`; Workstream
+does not define a separate `ProjectSubmissionArtifactPolicy` type.
 
 ## Effective Project Submission Artifact Policy
 

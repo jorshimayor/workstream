@@ -221,6 +221,12 @@ content hash is computed from the current guide material fields. Caller-supplied
 source items can add external docs, examples, or rubrics, but they cannot omit
 the guide body from the bundle hash.
 
+Source items may include a bounded `content_excerpt` in the canonical manifest
+so setup agents can inspect representative task examples or source snippets
+without following mutable refs at runtime. `content_excerpt` is untrusted source
+material, is included in `bundle_hash`, and is not stored as a separate mutable
+database column.
+
 ## GuideSourceSnapshotItem
 
 Fields:
@@ -301,6 +307,12 @@ with the `admin` or `project_manager` role before activation.
 
 `source_snapshot_hash` is server-derived from the referenced
 `GuideSourceSnapshot.bundle_hash`. Clients cannot supply a conflicting hash.
+Manual sufficiency reports persist `agent_name` and `agent_version` as null.
+Reports created through the agent route persist Workstream-owned agent identity;
+provider-returned names or versions are not trusted as audit provenance.
+A source snapshot has one sufficiency report. If a manual report already exists
+for a snapshot, operators either continue through manual policy creation after
+clearance or create a new guide-source snapshot to run the agent path.
 
 ## SubmissionArtifactPolicy
 
@@ -371,9 +383,9 @@ Example:
     }
   },
   "policy_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-  "derivation_source": "agent_derived",
+  "derivation_source": "agent_derivation",
   "derivation_agent_name": "SubmissionArtifactPolicyDerivationAgent",
-  "derivation_agent_version": "v1",
+  "derivation_agent_version": "workstream-policy-derivation-agent-v0.1",
   "source_material_refs": ["project-guide:v1"],
   "lifecycle_status": "approved",
   "approved_by_role": "project_manager",
@@ -383,9 +395,22 @@ Example:
 ```
 
 Workstream derives this policy from project guide material after guide
-sufficiency passes or warnings are acknowledged. A Workstream actor with the
-`admin` or `project_manager` role approves it. Project owners and workers do not
-supply or approve this internal policy schema.
+sufficiency passes or passes with warnings. A Workstream actor with the
+`admin` or `project_manager` role approves it after any sufficiency warnings are
+acknowledged. Project owners and workers do not supply or approve this internal
+policy schema.
+`derivation_source` is server-owned. Manual/admin-created policies persist
+`manual_admin_derivation`; policies created by the derivation agent persist
+`agent_derivation`. Client requests do not supply derivation provenance, and
+manual `policy_version` values cannot use the reserved `agent-` prefix.
+Agent-derived policy versioning and persisted derivation-agent identity are
+server-owned. The derivation agent can run only from a Workstream-agent
+sufficiency report for the same guide source snapshot; manual sufficiency
+reports can support manual policy creation after clearance, but they do not
+create agent-derivation provenance.
+Agent-derived policy provenance is revalidated before approval and guide
+activation, so seeded or stale rows with spoofed agent identity cannot become
+the active policy context.
 
 Project policy can add stricter requirements, but it cannot weaken Workstream's default submission artifact policy.
 `artifact_hash_algorithm` is platform-locked to `sha256` for v0.1. Project
@@ -415,7 +440,7 @@ Generated server-side from:
 
 ```text
 WorkstreamDefaultSubmissionArtifactPolicy
-+ ProjectSubmissionArtifactPolicy
++ SubmissionArtifactPolicy
 ```
 
 Fields:
@@ -498,9 +523,9 @@ the work is split into another project/guide. The task stores
 `PreSubmitCheckerPolicy.compiled_bundle_hash`; it does not own a newly derived
 policy or newly compiled checker.
 
-In Chunk 1, approval creates a project-scoped `PreSubmitCheckerPolicy` row in
-`pending_compilation`. Chunk 2 supplies the trusted compiler path that writes the
-immutable `compiled_bundle` JSON and `compiled_bundle_hash`. The compiled bundle
+Approval creates a project-scoped `PreSubmitCheckerPolicy` row with lifecycle
+status `compiled`. The trusted compiler writes the immutable `compiled_bundle`
+JSON and `compiled_bundle_hash` in the same approval path. The compiled bundle
 is the canonical checker source of truth. It is stored as a structured snapshot,
 not arbitrary executable code. `compiled_bundle_hash` binds the exact compiled
 logic to `effective_policy_hash`. `checker_names` and `checker_configs` are

@@ -165,6 +165,37 @@ Destructive real API drills use the separate local test database:
 postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test
 ```
 
+Project guide sufficiency and submission artifact policy derivation use the
+local fixture adapter by default. This adapter is an async, no-network test and
+development stand-in; it is not the production intelligence path.
+
+```text
+WORKSTREAM_PROJECT_AGENT_RUNTIME_ADAPTER=local_fixture
+```
+
+Persisted sufficiency and derivation agent identity is Workstream-owned; runtime
+or provider-returned identity fields are not trusted as audit provenance.
+
+To try the optional OpenAI Agents SDK adapter, install the backend agent extra
+and set the model explicitly:
+
+```bash
+cd backend
+.venv/bin/pip install -e ".[agents]"
+```
+
+```text
+WORKSTREAM_PROJECT_AGENT_RUNTIME_ADAPTER=openai_agent_sdk
+WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL=<approved-model>
+WORKSTREAM_PROJECT_AGENT_RUN_TIMEOUT_SECONDS=1800
+WORKSTREAM_PROJECT_AGENT_MAX_PROMPT_BYTES=2000000
+OPENAI_API_KEY=<runtime-secret>
+```
+
+The OpenAI Agents SDK adapter is only resolved on the explicit project-agent routes.
+Normal project setup APIs and the local fixture adapter do not require an
+OpenAI API key.
+
 ## Week 1 API Demo UI
 
 The Week 1 API demo UI lives in `demos/week1_api_demo_ui/`. It is a temporary walkthrough client for the Week 1 backend APIs, not the canonical Workstream frontend implementation. It calls the real backend over HTTP through the Vite proxy and uses local Flow-style bearer tokens against the backend `flow` verifier.
