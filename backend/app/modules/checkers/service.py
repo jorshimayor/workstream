@@ -325,25 +325,33 @@ class CheckerService:
                 not isinstance(limit, int) or isinstance(limit, bool) or limit < 0
             ):
                 return False
-        if not isinstance(effective_policy.get("packaging", {}), dict):
+        if not CheckerService._packaging_shape_is_valid(effective_policy.get("packaging", {})):
             return False
         if not CheckerService._artifact_rule_list(
             effective_policy.get("required_artifacts", []),
             required_key="path",
+            optional_keys={"key", "description"},
         ):
             return False
         if not CheckerService._artifact_rule_list(
             effective_policy.get("required_evidence", []),
             required_key="key",
+            optional_keys={"label", "description"},
         ):
             return False
         return CheckerService._artifact_rule_list(
             effective_policy.get("forbidden_artifacts", []),
             required_key="pattern",
+            optional_keys={"reason", "source", "severity"},
         )
 
     @staticmethod
-    def _artifact_rule_list(value: Any, *, required_key: str) -> bool:
+    def _artifact_rule_list(
+        value: Any,
+        *,
+        required_key: str,
+        optional_keys: set[str],
+    ) -> bool:
         """Return whether policy artifact/evidence rules are executable."""
         if not isinstance(value, list):
             return False
@@ -354,12 +362,27 @@ class CheckerService:
                 return False
             if "required" in item and not isinstance(item["required"], bool):
                 return False
+            if "hash_required" in item and not isinstance(item["hash_required"], bool):
+                return False
+            for key in optional_keys:
+                if key in item and item[key] is not None and not isinstance(item[key], str):
+                    return False
         return True
 
     @staticmethod
     def _string_list(value: Any) -> bool:
         """Return whether a value is a list of strings."""
         return isinstance(value, list) and all(isinstance(item, str) for item in value)
+
+    @staticmethod
+    def _packaging_shape_is_valid(value: Any) -> bool:
+        """Return whether packaging rules are executable."""
+        if not isinstance(value, dict):
+            return False
+        if "package_required" in value and not isinstance(value["package_required"], bool):
+            return False
+        allowed_formats = value.get("allowed_package_formats", [])
+        return CheckerService._string_list(allowed_formats)
 
     @staticmethod
     def _checker_names_from_compiled_bundle(compiled_bundle: dict | None) -> list[str]:

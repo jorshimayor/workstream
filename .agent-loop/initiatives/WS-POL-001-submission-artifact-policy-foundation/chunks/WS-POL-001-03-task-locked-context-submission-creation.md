@@ -39,6 +39,7 @@ P1
 ```text
 backend/alembic/versions/**
 backend/app/modules/projects/models.py
+backend/app/modules/projects/repository.py
 backend/app/modules/tasks/**
 backend/app/modules/checkers/**
 backend/tests/test_tasks.py
@@ -66,8 +67,11 @@ Workstream-owned login, signup, password, auth session, or API key auth
 `backend/app/modules/projects/models.py` and `backend/tests/test_projects.py`
 are included only to bind `PreSubmitCheckerPolicy.id` to
 `compiled_bundle_hash` as a composite FK target for locked task/submission
-provenance. They must not change guide activation behavior or project setup
-flow in this chunk.
+provenance. `backend/app/modules/projects/repository.py` is included only for
+read-only locked effective-policy and pre-submit checker policy loaders so the
+checker service does not query project persistence tables directly. These
+project-module changes must not change guide activation behavior or project
+setup flow in this chunk.
 
 ## Implementation Boundaries
 
