@@ -28,7 +28,7 @@ creation runtime migration.
 
 | Blocker | Owner | Next action |
 |---|---|---|
-| None | - | Wait for external review, GitHub Actions, CodeRabbit, and human PR review. |
+| Backend workflow failed on Week 1 real API E2E before repair | Codex | Push repaired E2E packet and wait for GitHub Actions rerun. |
 
 ## Follow-Ups
 

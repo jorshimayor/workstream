@@ -28,6 +28,7 @@ snapshot, effective project submission artifact policy, and compiled project
 - Hardened checker runtime validation so hash-consistent but malformed effective policies or compiled bundles are rejected before execution.
 - Added OpenAPI response documentation for the domain-level failed submission-create response.
 - Updated docs/templates to match the implemented locked context and pre-submit/post-submit boundary.
+- Updated the Week 1 real API E2E drill to submit evidence and attestation data that satisfy the locked project pre-submit checker policy.
 
 ## Scope Control
 
@@ -41,6 +42,7 @@ Allowed implementation surface:
 - `backend/tests/test_tasks.py`
 - `backend/tests/test_checkers.py`
 - `backend/tests/test_projects.py`
+- `backend/scripts/week1_api_e2e.py`
 - `docs/architecture_data_model.md`
 - `docs/spec_chunk_5_submission_packet_foundation.md`
 - `docs/spec_chunk_7_checker_runner_registry.md`
@@ -95,6 +97,8 @@ python3 scripts/check_stale_workstream_wording.py
 git diff --check
 python3 scripts/workstream_agent_gate.py --base origin/main --head HEAD --format json
 cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python -m pytest tests -q
+cd backend && .venv/bin/python -m ruff check scripts/week1_api_e2e.py
+cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/week1_api_e2e.py
 ```
 
 Result summary:
@@ -107,32 +111,38 @@ Stale wording check passed.
 git diff --check passed.
 Agent gate result: REVIEW_REQUIRED because this is a large L1 migration/runtime/checker diff touching risk-sensitive files.
 Full Postgres-backed backend suite passed before docs-only repair commits: 306 passed in 1680.44s.
-No backend code or tests changed after the full backend suite.
+Full Postgres-backed backend suite passed in CI on PR #63: 306 passed in 193.72s.
+Week 1 real API E2E initially failed in CI because the script submitted an old packet shape missing current required evidence/attestation terms.
+Week 1 real API E2E passed locally after repair.
+No production backend code changed after the full backend suite.
 ```
 
 ## Reviewer Results
 
-Reviewed code SHA: `df468066cc3c6180c12735daf5e4dd8de654bef7`
+Reviewed code SHA: `a3abfac3bc3a91026856c5e42d8fc873e575d757`
 
-Reviewed at: `2026-07-02T17:19:29Z`
+Reviewed at: `2026-07-02T18:01:15Z`
 
 Reviewer run IDs: see `WS-POL-001-03-internal-review-evidence.md`.
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS AFTER FIXES | None | Runtime/migration flow reviewed; process evidence gap addressed by evidence artifact. |
-| QA/test | PASS AFTER FIXES | None | Runtime acceptance criteria reviewed; process evidence gap addressed by evidence artifact. |
-| security/auth | PASS | None | Locked context, hash binding, and auth boundaries reviewed. |
-| product/ops | PASS | None | Worker-facing pre-submit semantics and project-scoped checker reuse reviewed. |
-| architecture | PASS | None | Project-scoped checker architecture and boundaries reviewed. |
-| docs | PASS AFTER FIXES | None | Registry and scope wording repaired. |
-| reuse/dedup | PASS WITH LOW RISKS | None | Low residual around shared path/pattern helpers. |
-| test delta | PASS WITH LOW RISKS | None | Low residual around revision transition and focused migration downgrade assertions. |
-| CI integrity | PASS AFTER FIXES | None | Evidence gate behavior preserved; evidence artifact added. |
+| senior engineering | PASS | None | E2E repair reviewed as current-policy packet alignment, not checker weakening. |
+| QA/test | PASS | None | Real API E2E repair reviewed and verified locally. |
+| security/auth | PASS | None | Evidence/attestation repair reviewed with no security boundary change. |
+| product/ops | PASS WITH LOW RISKS | None | Worker-facing current-policy packet reviewed. |
+| architecture | PASS WITH LOW RISKS | None | Project-scoped checker architecture preserved; trust bundle scope refreshed. |
+| docs | PASS AFTER FIXES | None | Stale reviewed-SHA evidence fixed. |
+| reuse/dedup | PASS | None | E2E repair remains minimal. |
+| test delta | PASS WITH LOW RISKS | None | No test weakening; revision-flow residual remains deferred. |
+| CI integrity | PASS AFTER FIXES | None | No CI gate weakening; evidence and contract reviewer list refreshed. |
 
 ## External Review
 
-PR #63 is awaiting initial GitHub Actions and CodeRabbit results.
+CodeRabbit passed on PR #63. The backend workflow initially failed in the Week
+1 real API E2E step and was repaired by aligning the E2E submission packet with
+the locked project pre-submit checker policy. GitHub Actions rerun is pending
+after this repair.
 External review responses must be tracked separately in
 `WS-POL-001-03-external-review-response.md`.
 

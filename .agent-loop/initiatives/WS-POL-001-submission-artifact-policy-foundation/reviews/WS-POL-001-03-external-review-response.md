@@ -2,12 +2,14 @@
 
 ## Status
 
-PR #63 is awaiting initial GitHub Actions and CodeRabbit results.
+CodeRabbit passed on PR #63. The backend workflow initially failed in the Week
+1 real API E2E step because the script submitted an old packet shape missing
+the current locked policy evidence key and attestation terms.
 
 ## Source
 
-- CodeRabbit: pending
-- GitHub Actions: pending
+- CodeRabbit: pass
+- GitHub Actions: backend workflow repair pending rerun
 - Human PR review: pending
 
 ## Notes
@@ -15,3 +17,30 @@ PR #63 is awaiting initial GitHub Actions and CodeRabbit results.
 External review findings must stay separate from internal sub-agent evidence.
 This file tracks CodeRabbit, GitHub Actions, and human PR-review feedback after
 the PR exists.
+
+## Backend CI Failure
+
+Failing check:
+
+- Backend `test`
+
+Root cause:
+
+- `backend/scripts/week1_api_e2e.py` submitted a packet that predated
+  `WS-POL-001-03`.
+- The locked project `PreSubmitCheckerPolicy` correctly returned
+  `pre_submission_checker_failed` for missing required evidence token and
+  required attestation terms.
+
+Repair:
+
+- Added `required_evidence_key = "checker_log"` to the E2E evidence metadata.
+- Added exact platform/project attestation terms to the E2E worker attestation.
+- Added the script to the chunk contract as CI drill alignment scope.
+
+Local verification:
+
+```text
+ruff check scripts/week1_api_e2e.py passed.
+Week 1 real API E2E passed locally.
+```
