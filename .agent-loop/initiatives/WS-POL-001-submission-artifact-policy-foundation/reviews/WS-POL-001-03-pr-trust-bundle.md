@@ -132,7 +132,7 @@ Reviewer run IDs: see `WS-POL-001-03-internal-review-evidence.md`.
 
 ## External Review
 
-External review is pending until this branch is pushed and the PR is opened.
+PR #63 is awaiting initial GitHub Actions and CodeRabbit results.
 External review responses must be tracked separately in
 `WS-POL-001-03-external-review-response.md`.
 

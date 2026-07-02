@@ -2,13 +2,13 @@
 
 ## Status
 
-External review has not run yet for this branch.
+PR #63 is awaiting initial GitHub Actions and CodeRabbit results.
 
 ## Source
 
-- CodeRabbit: pending PR creation
-- GitHub Actions: pending PR creation
-- Human PR review: pending PR creation
+- CodeRabbit: pending
+- GitHub Actions: pending
+- Human PR review: pending
 
 ## Notes
 

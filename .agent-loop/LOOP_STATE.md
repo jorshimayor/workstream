@@ -6,9 +6,9 @@
 - Active planning chunk: none
 - Active implementation chunk: `WS-POL-001-03`
 - Branch: `codex/ws-pol-001-03-task-locked-context`
-- Status: `WS-POL-001-01` and `WS-POL-001-02` merged; `WS-POL-001-03` implementation and internal review evidence prepared
+- Status: PR #63 awaiting review for `WS-POL-001-03`; internal review complete and external review pending
 - Reviewed code SHA: `df468066cc3c6180c12735daf5e4dd8de654bef7`
-- Current gate: final evidence gate, PR creation, external review, and human PR review checkpoint
+- Current gate: external review, GitHub Actions, CodeRabbit, and human PR review checkpoint
 - Next chunk: inactive until `WS-POL-001-03` is reviewed and merged by the user
 
 ## Operating Rule
@@ -36,7 +36,7 @@ post-submit policy splitting, or revision resubmission drill behavior.
 - PR #27 updated WS-POL post-merge memory on `main`.
 - PR #28 implemented `WS-POL-001-01` and was merged into `main`.
 - PR #61 implemented `WS-POL-001-02` and was merged into `main`.
-- Current implementation branch: `codex/ws-pol-001-03-task-locked-context`.
+- PR #63 implements `WS-POL-001-03` from `codex/ws-pol-001-03-task-locked-context` into `main`.
 - Internal review evidence for the active chunk is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-03-internal-review-evidence.md`.
 - PR trust bundle for the active chunk is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-03-pr-trust-bundle.md`.
 - External review response for the active chunk is tracked separately at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-03-external-review-response.md` after external review runs.
