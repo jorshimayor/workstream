@@ -19,7 +19,7 @@ from app.modules.projects.models import (
     RevisionPolicy,
     ReviewPolicy,
 )
-from app.modules.projects.repository import ProjectRepository
+from app.modules.projects.repository import ProjectRepository, ProjectRepositoryIntegrityError
 from app.modules.tasks.lifecycle import (
     TASK_STATUS_CLAIMED,
     TASK_STATUS_DRAFT,
@@ -787,47 +787,55 @@ class TaskService:
         Raises:
             TaskProjectNotReady: If any required context is missing.
         """
-        guide = await self._project_repo.get_active_guide(project_id)
-        if guide is None:
-            raise TaskProjectNotReady("project has no active guide")
-        checker_policy = await self._project_repo.get_checker_policy(project_id, guide.version)
-        review_policy = await self._project_repo.get_review_policy(project_id, guide.version)
-        revision_policy = await self._project_repo.get_revision_policy(project_id, guide.version)
-        payment_policy = await self._project_repo.get_payment_policy(project_id, guide.version)
-        submission_artifact_policy = (
-            await self._project_repo.get_current_approved_submission_artifact_policy(
+        try:
+            guide = await self._project_repo.get_active_guide(project_id)
+            if guide is None:
+                raise TaskProjectNotReady("project has no active guide")
+            checker_policy = await self._project_repo.get_checker_policy(project_id, guide.version)
+            review_policy = await self._project_repo.get_review_policy(project_id, guide.version)
+            revision_policy = await self._project_repo.get_revision_policy(
                 project_id,
                 guide.version,
             )
-        )
-        if (
-            checker_policy is None
-            or review_policy is None
-            or revision_policy is None
-            or payment_policy is None
-            or submission_artifact_policy is None
-        ):
-            raise TaskProjectNotReady("active guide policy context is incomplete")
-        source_snapshot = await self._project_repo.get_guide_source_snapshot(
-            submission_artifact_policy.source_snapshot_id
-        )
-        if (
-            source_snapshot is None
-            or source_snapshot.bundle_hash != submission_artifact_policy.source_snapshot_hash
-        ):
-            raise TaskProjectNotReady("active guide source snapshot context is incomplete")
-        effective_policy = await self._project_repo.get_effective_submission_artifact_policy(
-            project_id,
-            guide.version,
-            source_snapshot.id,
-        )
-        if effective_policy is None:
-            raise TaskProjectNotReady("active effective submission artifact policy is incomplete")
-        pre_submit_checker_policy = (
-            await self._project_repo.get_pre_submit_checker_policy_for_effective_policy(
-                effective_policy.id
+            payment_policy = await self._project_repo.get_payment_policy(project_id, guide.version)
+            submission_artifact_policy = (
+                await self._project_repo.get_current_approved_submission_artifact_policy(
+                    project_id,
+                    guide.version,
+                )
             )
-        )
+            if (
+                checker_policy is None
+                or review_policy is None
+                or revision_policy is None
+                or payment_policy is None
+                or submission_artifact_policy is None
+            ):
+                raise TaskProjectNotReady("active guide policy context is incomplete")
+            source_snapshot = await self._project_repo.get_guide_source_snapshot(
+                submission_artifact_policy.source_snapshot_id
+            )
+            if (
+                source_snapshot is None
+                or source_snapshot.bundle_hash != submission_artifact_policy.source_snapshot_hash
+            ):
+                raise TaskProjectNotReady("active guide source snapshot context is incomplete")
+            effective_policy = await self._project_repo.get_effective_submission_artifact_policy(
+                project_id,
+                guide.version,
+                source_snapshot.id,
+            )
+            if effective_policy is None:
+                raise TaskProjectNotReady(
+                    "active effective submission artifact policy is incomplete"
+                )
+            pre_submit_checker_policy = (
+                await self._project_repo.get_pre_submit_checker_policy_for_effective_policy(
+                    effective_policy.id
+                )
+            )
+        except ProjectRepositoryIntegrityError as exc:
+            raise TaskProjectNotReady("active guide policy context is ambiguous") from exc
         if (
             pre_submit_checker_policy is None
             or pre_submit_checker_policy.lifecycle_status != "compiled"

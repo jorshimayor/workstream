@@ -78,6 +78,31 @@ Implementation note: current v0.1 code uses `locked_checker_policy_version` for 
 
 ## API Contract
 
+POST `/api/v1/tasks/{task_id}/submission-precheck`
+
+Runs non-authoritative pre-submit feedback against the task's locked project
+`PreSubmitCheckerPolicy`. This endpoint does not create a submission row,
+submission version, durable checker run, task transition, or submission-created
+audit event.
+
+Request body:
+
+- `submission`
+  - `summary`
+  - `package_uri`
+  - `package_hash`
+  - `artifact_hash_manifest`
+  - `worker_attestation`
+  - `evidence_items`
+
+Response body:
+
+- `task_id`
+- `authoritative` set to `false`
+- `status` as `passed` or `failed`
+- `eligible_to_submit`
+- `results`
+
 POST `/api/v1/tasks/{task_id}/submissions`
 
 Runs pre-submit checks from the locked project pre-submit checker policy for the assigned worker's draft packet. Creates a new submission version only when blocking pre-submit checks pass.
@@ -105,7 +130,7 @@ Returns one visible submission packet.
 
 POST `/api/v1/submissions/{submission_id}/lock`
 
-Locks a submission packet before checker execution. Locking makes the packet immutable in place.
+Locks a submission packet and triggers the current post-submit checker gate. Locking makes the packet immutable in place.
 
 ## Versioning Rules
 
@@ -170,7 +195,7 @@ Chunk 5 writes task audit events with submission identifiers in `event_payload`.
 - blocked submission-create attempts return `DomainError(code="pre_submission_checker_failed")` with structured pass/fail/warning details and create no submission row, no submission version, no task transition to `SUBMITTED`, and no submission-created audit event
 - Workstream stamps locked guide source snapshot ids/hashes, effective project submission artifact policy ids/hashes, project pre-submit checker policy ids/bundle hashes, and guide/checker/review/revision/payment policy versions from task context
 - task moves to `SUBMITTED`
-- submitted packet can be locked before checker execution
+- submitted packet can be locked and automatically enters the current post-submit checker gate
 - replacing an artifact creates a new submission version instead of mutating v1
 - submission audit events include task, worker, version, package, and artifact context
 - submission and immutability tests pass

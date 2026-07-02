@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 from collections.abc import AsyncIterator, Iterator
+from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
 from uuid import uuid4
@@ -23,7 +24,7 @@ from app.db import session as db_session
 from app.db.base import Base
 from app.main import create_app
 from app.modules.tasks.lifecycle import InvalidTaskTransition, ensure_allowed_transition
-from app.modules.projects.models import PreSubmitCheckerPolicy
+from app.modules.projects.models import PreSubmitCheckerPolicy, SubmissionArtifactPolicy
 from app.modules.tasks.models import (
     AuditEvent,
     EvidenceItem,
@@ -677,6 +678,54 @@ async def test_screening_requires_active_guide_context(task_client: AsyncClient)
 
     assert response.status_code == 422
     assert "active guide" in response.json()["detail"]
+
+
+async def test_screening_maps_ambiguous_active_policy_context_to_controlled_error(
+    task_client: AsyncClient,
+) -> None:
+    project = await create_active_project(task_client)
+    task = await create_draft_task(task_client, project["id"])
+
+    async with db_session.get_session_factory()() as session:
+        approved_policy = await session.scalar(
+            select(SubmissionArtifactPolicy).where(
+                SubmissionArtifactPolicy.project_id == project["id"],
+                SubmissionArtifactPolicy.guide_version == "v1",
+                SubmissionArtifactPolicy.lifecycle_status == "approved",
+            )
+        )
+        assert approved_policy is not None
+        session.add(
+            SubmissionArtifactPolicy(
+                id=str(uuid4()),
+                project_id=approved_policy.project_id,
+                guide_id=approved_policy.guide_id,
+                guide_version=approved_policy.guide_version,
+                source_snapshot_id=approved_policy.source_snapshot_id,
+                source_snapshot_hash=approved_policy.source_snapshot_hash,
+                policy_version="ambiguous-v2",
+                lifecycle_status="approved",
+                policy_body=approved_policy.policy_body,
+                policy_hash=sha256_hash("ambiguous-approved-policy"),
+                derivation_source="manual_import",
+                source_material_refs=approved_policy.source_material_refs,
+                created_by="test",
+                approved_by_role="project_manager",
+                approved_by_actor=actor_id("project-manager-subject"),
+                approved_at=datetime.now(UTC),
+                change_summary="Creates an ambiguous approved policy state for screening.",
+            )
+        )
+        await session.commit()
+
+    response = await task_client.post(
+        f"/api/v1/tasks/{task['id']}/screen",
+        headers=auth_headers(),
+        json={"reason": "screen"},
+    )
+
+    assert response.status_code == 422
+    assert "ambiguous" in response.json()["detail"]
 
 
 async def test_screening_rejects_missing_required_task_fields(task_client: AsyncClient) -> None:
