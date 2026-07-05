@@ -7,13 +7,13 @@
 - Active implementation chunk: `WS-POL-001-06`
 - Branch: `codex/ws-pol-001-06-terminal-benchmark-drill`
 - Status: `WS-POL-001-05` is merged to `main`; `WS-POL-001-06` live manual API
-  proof exposed and fixed an OpenAI Agents SDK adapter issue; final
-  verification and internal review re-check are in progress
+  proof exposed and fixed an OpenAI Agents SDK adapter issue; PR #67 is open,
+  internal review is complete, GitHub Actions passed, and CodeRabbit reported
+  no actionable comments
 - Last merged implementation SHA: `b20988ba79626e1edbc03953aba60f54f2fc94ab`
 - Last merge commit: `b20988ba79626e1edbc03953aba60f54f2fc94ab`
-- Current gate: `WS-POL-001-06` final verification and internal review re-check
-- Next chunk: inactive until `WS-POL-001-06` is internally reviewed, externally
-  reviewed, and merged by the user
+- Current gate: `WS-POL-001-06` awaiting human merge decision on PR #67
+- Next chunk: inactive until `WS-POL-001-06` is merged by the user
 
 ## Operating Rule
 
@@ -74,3 +74,5 @@ runtime redesign.
   strict-schema issue for the policy derivation result's open `policy_body`.
 - `WS-POL-001-06` internal review evidence is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-06-internal-review-evidence.md`.
 - `WS-POL-001-06` PR trust bundle is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-06-pr-trust-bundle.md`.
+- `WS-POL-001-06` PR #67 is open, mergeable, not draft, and has passing GitHub
+  Actions plus CodeRabbit with no actionable comments.

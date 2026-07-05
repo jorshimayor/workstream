@@ -163,8 +163,12 @@ Full final verification completed locally.
 
 ## External Review
 
-Not run yet for this branch. CodeRabbit and GitHub Actions are external checks
-that should run after the PR is opened.
+PR #67 external checks completed:
+
+- GitHub Actions `agent-gates`: pass
+- GitHub Actions `Backend / test`: pass
+- GitHub Actions `Week 1 API Demo UI / build-demo-ui`: pass
+- CodeRabbit: pass; no actionable comments generated
 
 ## Remaining Risks
 

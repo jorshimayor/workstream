@@ -10,9 +10,10 @@ internal reviewer fanout, GitHub Actions, and user merge approval.
 `WS-POL-001-06` is active. It uses real Terminal Benchmark reviewer fixture
 material as an external-project proof for the current Workstream setup-agent,
 policy bundle, and submission/checker lifecycle. The live manual API proof
-passed after fixing a narrow OpenAI Agents SDK adapter issue. Final verification
-and internal reviewer re-check are in progress. It must not make Terminal
-Benchmark a Workstream product dependency.
+passed after fixing a narrow OpenAI Agents SDK adapter issue. PR #67 is open,
+not draft, mergeable, and has passing GitHub Actions plus CodeRabbit with no
+actionable comments. It must not make Terminal Benchmark a Workstream product
+dependency.
 
 ## Active Chunk
 
@@ -27,13 +28,13 @@ Benchmark a Workstream product dependency.
 | `WS-POL-001-03` | Merged | `codex/ws-pol-001-03-task-locked-context` | 63 | Moves task locked-context and submission runtime to the effective policy and project checker bundle. |
 | `WS-POL-001-04` | Merged | `codex/ws-pol-001-04-post-submit-policy` | 65 | Splits post-submit checker policy provenance and locks durable checker runs to post-submit policy context. |
 | `WS-POL-001-05` | Merged | `codex/ws-pol-001-05-revision-resubmission` | 66 | Proves revision resubmission, real API drill, and `evaluation_pending` lifecycle status. |
-| `WS-POL-001-06` | Final verification and internal review re-check | `codex/ws-pol-001-06-terminal-benchmark-drill` | - | Runs the Terminal Benchmark manual live API proof and fixes the OpenAI Agents SDK policy-derivation adapter issue found by the proof. |
+| `WS-POL-001-06` | Awaiting human merge decision | `codex/ws-pol-001-06-terminal-benchmark-drill` | 67 | Runs the Terminal Benchmark manual live API proof and fixes the OpenAI Agents SDK policy-derivation adapter issue found by the proof. |
 
 ## Blockers
 
 | Blocker | Owner | Next action |
 |---|---|---|
-| None | - | Complete internal review re-check, then open PR. |
+| None | - | User review and merge decision on PR #67. |
 
 ## Follow-Ups
 
