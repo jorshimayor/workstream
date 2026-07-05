@@ -50,7 +50,6 @@ EXPECTED_PRE_SUBMIT_CHECKERS = {
     "check_confidentiality_attestation",
     "check_low_quality_generated_artifacts",
 }
-LEGACY_EVALUATION_STATUS = "auto_checking"
 DATABASE_URL_ENV = "WORKSTREAM_DATABASE_URL"
 TEST_DATABASE_URL_ENV = "WORKSTREAM_TEST_DATABASE_URL"
 LOCAL_DATABASE_HOSTS = {"localhost", "127.0.0.1", "::1"}
@@ -783,25 +782,6 @@ async def assert_week2_database_invariants(scenarios: list[dict]) -> None:
         scenarios: Scenario expectations captured from real API responses.
     """
     async with db_session.get_session_factory()() as session:
-        legacy_tasks = (
-            await session.scalars(
-                select(WorkstreamTask).where(WorkstreamTask.status == LEGACY_EVALUATION_STATUS)
-            )
-        ).all()
-        legacy_from_events = (
-            await session.scalars(
-                select(AuditEvent).where(AuditEvent.from_status == LEGACY_EVALUATION_STATUS)
-            )
-        ).all()
-        legacy_to_events = (
-            await session.scalars(
-                select(AuditEvent).where(AuditEvent.to_status == LEGACY_EVALUATION_STATUS)
-            )
-        ).all()
-        ensure(not legacy_tasks, "legacy evaluation status remained on task rows")
-        ensure(not legacy_from_events, "legacy evaluation status remained on audit from_status")
-        ensure(not legacy_to_events, "legacy evaluation status remained on audit to_status")
-
         for scenario in scenarios:
             task = await session.get(WorkstreamTask, scenario["task_id"])
             submission = await session.get(Submission, scenario["submission_id"])
@@ -816,7 +796,6 @@ async def assert_week2_database_invariants(scenarios: list[dict]) -> None:
             )
             task_versions = {
                 task.locked_guide_version,
-                task.locked_checker_policy_version,
                 task.locked_review_policy_version,
                 task.locked_revision_policy_version,
                 task.locked_payment_policy_version,
@@ -845,7 +824,6 @@ async def assert_week2_database_invariants(scenarios: list[dict]) -> None:
             )
             submission_versions = {
                 submission.locked_guide_version,
-                submission.locked_checker_policy_version,
                 submission.locked_review_policy_version,
                 submission.locked_revision_policy_version,
                 submission.locked_payment_policy_version,
@@ -934,7 +912,6 @@ async def assert_week2_database_invariants(scenarios: list[dict]) -> None:
             )
             run_versions = {
                 checker_run.locked_guide_version,
-                checker_run.locked_checker_policy_version,
                 checker_run.locked_review_policy_version,
                 checker_run.locked_revision_policy_version,
                 checker_run.locked_payment_policy_version,

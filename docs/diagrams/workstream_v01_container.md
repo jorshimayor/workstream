@@ -16,7 +16,7 @@ Source: [workstream_v01_container.puml](workstream_v01_container.puml)
 | FastAPI backend | API contracts, workflow rules, auth dependency, lifecycle guards, module orchestration, audit writes. |
 | Postgres | Record database for workflow state, policy context, submissions, checks, reviews, revisions, contribution records, payment records, reputation events, and audit history. |
 | Storage interface | Stable file/evidence boundary that can use local storage in development and R2/S3-style object storage later. |
-| Async job boundary | Non-blocking checker and background execution path. FastAPI background tasks are acceptable for simple local v0.1 jobs; durable workers come when retries, scheduling, isolation, or distribution are needed. |
+| Celery worker boundary | Durable project setup, checker, and background product-job execution path. FastAPI background tasks are not the Workstream product-job boundary. |
 
 ## v0.1 Guardrails
 

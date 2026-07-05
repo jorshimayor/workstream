@@ -389,12 +389,15 @@ Each blind spot becomes a guide update, checker update, reviewer policy update, 
 The first checker runner can be simple:
 
 - async-first execution
-- request-bound authorized manual checker trigger for the first structural checks
+- authorized checker trigger that records a run before execution
 - markdown/json output
 - attached logs
 
-The checker interface is async-first from the start so storage reads, external checks, and later agent evaluation do not require a contract rewrite.
+The checker interface is async-first from the start so storage reads, external
+checks, and later agent evaluation do not require a contract rewrite.
 
-Chunk 7 may complete the first structural checker run inside the request path because those checks are local and fast. Longer-running checker execution should create a run as `running` and complete it through FastAPI background tasks, Celery, or an equivalent worker boundary.
-
-Use Celery or an equivalent durable queue when checker execution needs retries, scheduled jobs, progress reporting, worker isolation, or distributed execution.
+Background checker execution uses Celery. FastAPI background tasks are not the
+Workstream product-job boundary. Request-bound pre-submit feedback can remain
+fast and deterministic because it runs before submission creation, but any
+long-running setup or post-submit checker work must go through the durable
+worker boundary.

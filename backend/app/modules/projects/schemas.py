@@ -401,7 +401,7 @@ class ProjectResponse(BaseModel):
 
 
 class ProjectGuideCreate(BaseModel):
-    """Request schema for creating a draft project guide."""
+    """Request schema for guide material plus optional activation policies."""
 
     model_config = ConfigDict(extra="forbid")
 

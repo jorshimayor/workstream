@@ -73,6 +73,8 @@ def project_database_env(
     monkeypatch.setenv("WORKSTREAM_DEV_AUTH_SUBJECT", "project-manager-subject")
     monkeypatch.setenv("WORKSTREAM_DEV_AUTH_ISSUER", "flow-test")
     monkeypatch.setenv("WORKSTREAM_DEV_AUTH_ROLES", "project_manager")
+    monkeypatch.setenv("WORKSTREAM_PROJECT_SETUP_PIPELINE_AUTOSTART", "false")
+    monkeypatch.setenv("WORKSTREAM_CELERY_BROKER_URL", "memory://")
     get_settings.cache_clear()
     asyncio.run(db_session.dispose_engine())
 
@@ -359,24 +361,6 @@ def complete_guide_payload(version: str = "v1") -> dict:
     }
 
 
-LEGACY_PROJECT_GUIDE_REQUEST_FIELDS = (
-    "required_task_fields",
-    "required_submission_fields",
-    "task_instructions",
-    "output_requirements",
-    "acceptance_criteria",
-    "rejection_criteria",
-    "reviewer_rubric",
-    "forbidden_actions",
-    "required_skills",
-    "difficulty_scale",
-    "estimated_time_policy",
-    "common_rejection_reasons",
-    "evidence_policy",
-    "unacceptable_work_policy",
-)
-
-
 async def create_project(client: AsyncClient) -> dict:
     response = await client.post(
         "/api/v1/projects",
@@ -399,6 +383,229 @@ async def create_guide(client: AsyncClient, project_id: str, payload: dict) -> d
     )
     assert response.status_code == 201, response.text
     return response.json()
+
+
+async def test_create_guide_autostart_enqueues_without_inline_agent_execution(
+    project_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FailingRuntime:
+        """Runtime that proves request handling does not execute agents inline."""
+
+        async def analyze_guide_sufficiency(
+            self,
+            _: GuideSourceMaterial,
+        ) -> GuideSufficiencyAgentResult:
+            """Fail if the guide create request invokes agent analysis."""
+            raise AssertionError("agent runtime must not run in request path")
+
+        async def derive_submission_artifact_policy(
+            self,
+            _: GuideSourceMaterial,
+            __: GuideSufficiencyAgentResult,
+        ) -> SubmissionArtifactPolicyDerivationResult:
+            """Fail if the guide create request invokes policy derivation."""
+            raise AssertionError("derivation runtime must not run in request path")
+
+    enqueued: list[dict[str, str]] = []
+
+    def capture_enqueue(*, project_id: str, guide_id: str, source_snapshot_id: str) -> str:
+        """Capture queue arguments without running Celery."""
+        enqueued.append(
+            {
+                "project_id": project_id,
+                "guide_id": guide_id,
+                "source_snapshot_id": source_snapshot_id,
+            }
+        )
+        return "captured-task-id"
+
+    monkeypatch.setenv("WORKSTREAM_PROJECT_SETUP_PIPELINE_AUTOSTART", "true")
+    monkeypatch.setenv("WORKSTREAM_CELERY_TASK_ALWAYS_EAGER", "false")
+    get_settings.cache_clear()
+    monkeypatch.setattr(
+        project_service_module,
+        "get_project_guide_agent_runtime",
+        lambda: FailingRuntime(),
+    )
+    monkeypatch.setattr(
+        project_service_module,
+        "enqueue_pre_submit_setup_pipeline",
+        capture_enqueue,
+    )
+
+    project = await create_project(project_client)
+    guide = await create_guide(project_client, project["id"], complete_guide_payload())
+
+    assert len(enqueued) == 1
+    assert enqueued[0]["project_id"] == project["id"]
+    assert enqueued[0]["guide_id"] == guide["id"]
+    async with db_session.get_session_factory()() as session:
+        snapshots = (
+            await session.scalars(
+                select(GuideSourceSnapshot).where(GuideSourceSnapshot.guide_id == guide["id"])
+            )
+        ).all()
+        reports = (
+            await session.scalars(
+                select(GuideSufficiencyReport).where(GuideSufficiencyReport.guide_id == guide["id"])
+            )
+        ).all()
+        policies = (
+            await session.scalars(
+                select(SubmissionArtifactPolicy).where(SubmissionArtifactPolicy.guide_id == guide["id"])
+            )
+        ).all()
+
+    assert len(snapshots) == 1
+    assert enqueued[0]["source_snapshot_id"] == snapshots[0].id
+    assert reports == []
+    assert policies == []
+
+
+async def test_create_guide_autostart_requires_queue_before_persisting(
+    project_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Prove queue failure does not leave guide setup half-created."""
+    project = await create_project(project_client)
+    monkeypatch.setenv("WORKSTREAM_PROJECT_SETUP_PIPELINE_AUTOSTART", "true")
+    monkeypatch.setenv("WORKSTREAM_CELERY_TASK_ALWAYS_EAGER", "false")
+    monkeypatch.delenv("WORKSTREAM_CELERY_BROKER_URL", raising=False)
+    get_settings.cache_clear()
+
+    response = await project_client.post(
+        f"/api/v1/projects/{project['id']}/guides",
+        headers=auth_headers(),
+        json=complete_guide_payload(),
+    )
+
+    assert response.status_code == 503, response.text
+    assert response.json()["detail"] == "project setup pipeline queue is unavailable"
+    async with db_session.get_session_factory()() as session:
+        guides = (
+            await session.scalars(
+                select(ProjectGuide).where(ProjectGuide.project_id == project["id"])
+            )
+        ).all()
+        snapshots = (
+            await session.scalars(
+                select(GuideSourceSnapshot).where(GuideSourceSnapshot.project_id == project["id"])
+            )
+        ).all()
+
+    assert guides == []
+    assert snapshots == []
+
+
+async def test_create_guide_autostart_runs_celery_pipeline_to_draft_policy(
+    project_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("WORKSTREAM_PROJECT_SETUP_PIPELINE_AUTOSTART", "true")
+    monkeypatch.setenv("WORKSTREAM_CELERY_TASK_ALWAYS_EAGER", "true")
+    get_settings.cache_clear()
+
+    project = await create_project(project_client)
+    guide = await create_guide(project_client, project["id"], complete_guide_payload())
+
+    async with db_session.get_session_factory()() as session:
+        snapshot = await session.scalar(
+            select(GuideSourceSnapshot).where(GuideSourceSnapshot.guide_id == guide["id"])
+        )
+        report = await session.scalar(
+            select(GuideSufficiencyReport).where(GuideSufficiencyReport.guide_id == guide["id"])
+        )
+        policy = await session.scalar(
+            select(SubmissionArtifactPolicy).where(SubmissionArtifactPolicy.guide_id == guide["id"])
+        )
+        effective_policy = await session.scalar(
+            select(EffectiveProjectSubmissionArtifactPolicy).where(
+                EffectiveProjectSubmissionArtifactPolicy.guide_id == guide["id"]
+            )
+        )
+        pre_submit_checker_policy = await session.scalar(
+            select(PreSubmitCheckerPolicy).where(PreSubmitCheckerPolicy.guide_id == guide["id"])
+        )
+
+    assert snapshot is not None
+    assert report is not None
+    assert report.status == "passed"
+    assert report.agent_name == PROJECT_GUIDE_SUFFICIENCY_AGENT_NAME
+    assert report.created_by == "workstream-system:project-setup-pipeline"
+    assert policy is not None
+    assert policy.lifecycle_status == "draft"
+    assert policy.derivation_source == "agent_derivation"
+    assert policy.derivation_agent_name == SUBMISSION_ARTIFACT_POLICY_DERIVATION_AGENT_NAME
+    assert policy.created_by == "workstream-system:project-setup-pipeline"
+    assert effective_policy is None
+    assert pre_submit_checker_policy is None
+
+
+async def test_create_guide_autostart_stops_before_derivation_when_sufficiency_blocks(
+    project_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("WORKSTREAM_PROJECT_SETUP_PIPELINE_AUTOSTART", "true")
+    monkeypatch.setenv("WORKSTREAM_CELERY_TASK_ALWAYS_EAGER", "true")
+    get_settings.cache_clear()
+
+    project = await create_project(project_client)
+    blocked_payload = complete_guide_payload()
+    blocked_payload["content_markdown"] = "Too thin."
+    guide = await create_guide(project_client, project["id"], blocked_payload)
+
+    async with db_session.get_session_factory()() as session:
+        report = await session.scalar(
+            select(GuideSufficiencyReport).where(GuideSufficiencyReport.guide_id == guide["id"])
+        )
+        policy = await session.scalar(
+            select(SubmissionArtifactPolicy).where(SubmissionArtifactPolicy.guide_id == guide["id"])
+        )
+
+    assert report is not None
+    assert report.status == "blocked"
+    assert report.findings[0]["severity"] == "blocking_gap"
+    assert policy is None
+
+
+async def test_create_source_snapshot_autostart_enqueues_latest_snapshot(
+    project_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    enqueued: list[dict[str, str]] = []
+
+    def capture_enqueue(*, project_id: str, guide_id: str, source_snapshot_id: str) -> str:
+        """Capture queue arguments without running Celery."""
+        enqueued.append(
+            {
+                "project_id": project_id,
+                "guide_id": guide_id,
+                "source_snapshot_id": source_snapshot_id,
+            }
+        )
+        return "captured-task-id"
+
+    project = await create_project(project_client)
+    guide = await create_guide(project_client, project["id"], complete_guide_payload())
+
+    monkeypatch.setenv("WORKSTREAM_PROJECT_SETUP_PIPELINE_AUTOSTART", "true")
+    get_settings.cache_clear()
+    monkeypatch.setattr(
+        project_service_module,
+        "enqueue_pre_submit_setup_pipeline",
+        capture_enqueue,
+    )
+
+    snapshot = await create_source_snapshot(project_client, project["id"], guide["id"])
+
+    assert enqueued == [
+        {
+            "project_id": project["id"],
+            "guide_id": guide["id"],
+            "source_snapshot_id": snapshot["id"],
+        }
+    ]
 
 
 def sha256_hash(seed: str) -> str:
@@ -676,18 +883,27 @@ async def test_draft_guide_can_be_created(project_client: AsyncClient) -> None:
     assert guide["created_by"]
     assert guide["approved_by"] is None
     assert guide["effective_at"] is None
-    for field in LEGACY_PROJECT_GUIDE_REQUEST_FIELDS:
-        assert field not in guide
+    assert set(guide).issuperset(
+        {
+            "id",
+            "project_id",
+            "version",
+            "status",
+            "content_markdown",
+            "created_by",
+            "approved_by",
+            "effective_at",
+        }
+    )
 
 
-async def test_project_guide_rejects_legacy_structured_fields(
+async def test_project_guide_rejects_unknown_non_contract_fields(
     project_client: AsyncClient,
 ) -> None:
     project = await create_project(project_client)
     payload = complete_guide_payload()
-    payload["evidence_policy"] = {"required": ["log"]}
-    payload["required_task_fields"] = ["title"]
-    payload["reviewer_rubric"] = "legacy rubric"
+    payload["machine_policy_schema"] = {"required": ["log"]}
+    payload["guide_setup_checklist"] = ["title"]
     payload["approved_by"] = "project-manager-subject"
     payload["effective_at"] = "2026-07-05T00:00:00Z"
 
@@ -699,21 +915,20 @@ async def test_project_guide_rejects_legacy_structured_fields(
 
     assert response.status_code == 422
     for field in (
-        "evidence_policy",
-        "required_task_fields",
-        "reviewer_rubric",
+        "machine_policy_schema",
+        "guide_setup_checklist",
         "approved_by",
         "effective_at",
     ):
         assert field in response.text
 
 
-async def test_project_guide_update_rejects_legacy_structured_fields(
+async def test_project_guide_update_rejects_unknown_non_contract_fields(
     project_client: AsyncClient,
 ) -> None:
     project = await create_project(project_client)
     guide = await create_guide(project_client, project["id"], complete_guide_payload())
-    payload = {"required_submission_fields": ["summary"]}
+    payload = {"guide_setup_checklist": ["summary"]}
 
     response = await project_client.patch(
         f"/api/v1/projects/{project['id']}/guides/{guide['id']}",
@@ -722,7 +937,7 @@ async def test_project_guide_update_rejects_legacy_structured_fields(
     )
 
     assert response.status_code == 422
-    assert "required_submission_fields" in response.text
+    assert "guide_setup_checklist" in response.text
 
 
 async def test_source_snapshot_hash_is_server_computed_and_canonical(
@@ -3693,7 +3908,7 @@ async def test_activation_requires_submission_artifact_policy(project_client: As
     assert "approved submission artifact policy" in response.json()["detail"]
 
 
-async def test_activation_uses_policy_bundle_without_legacy_guide_fields(
+async def test_activation_uses_policy_bundle_without_guide_owned_artifact_fields(
     project_client: AsyncClient,
 ) -> None:
     project = await create_project(project_client)

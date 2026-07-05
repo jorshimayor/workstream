@@ -79,11 +79,6 @@ class WorkstreamTask(Base):
             name="fk_workstream_tasks_locked_guide",
         ),
         ForeignKeyConstraint(
-            ["project_id", "locked_checker_policy_version"],
-            ["checker_policies.project_id", "checker_policies.guide_version"],
-            name="fk_workstream_tasks_locked_checker_policy",
-        ),
-        ForeignKeyConstraint(
             [
                 "locked_post_submit_checker_policy_id",
                 "locked_post_submit_checker_policy_version",
@@ -129,11 +124,6 @@ class WorkstreamTask(Base):
             name="fk_workstream_tasks_locked_pre_submit_checker_hash",
         ),
         UniqueConstraint("id", "locked_guide_version", name="uq_workstream_tasks_id_locked_guide"),
-        UniqueConstraint(
-            "id",
-            "locked_checker_policy_version",
-            name="uq_workstream_tasks_id_locked_checker_policy",
-        ),
         UniqueConstraint(
             "id",
             "locked_post_submit_checker_policy_id",
@@ -207,7 +197,6 @@ class WorkstreamTask(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), nullable=False, index=True)
     locked_guide_version: Mapped[str | None] = mapped_column(String(50))
-    locked_checker_policy_version: Mapped[str | None] = mapped_column(String(50))
     locked_post_submit_checker_policy_id: Mapped[str | None] = mapped_column(String(36))
     locked_post_submit_checker_policy_version: Mapped[str | None] = mapped_column(String(50))
     locked_post_submit_checker_policy_hash: Mapped[str | None] = mapped_column(String(71))
@@ -303,11 +292,6 @@ class Submission(Base):
             ["task_id", "locked_guide_version"],
             ["workstream_tasks.id", "workstream_tasks.locked_guide_version"],
             name="fk_submissions_task_locked_guide",
-        ),
-        ForeignKeyConstraint(
-            ["task_id", "locked_checker_policy_version"],
-            ["workstream_tasks.id", "workstream_tasks.locked_checker_policy_version"],
-            name="fk_submissions_task_locked_checker_policy",
         ),
         ForeignKeyConstraint(
             [
@@ -447,7 +431,6 @@ class Submission(Base):
     artifact_hash_manifest: Mapped[list[dict]] = mapped_column(JSON, nullable=False, default=list)
     worker_attestation: Mapped[str] = mapped_column(Text, nullable=False)
     locked_guide_version: Mapped[str] = mapped_column(String(50), nullable=False)
-    locked_checker_policy_version: Mapped[str] = mapped_column(String(50), nullable=False)
     locked_post_submit_checker_policy_id: Mapped[str] = mapped_column(String(36), nullable=False)
     locked_post_submit_checker_policy_version: Mapped[str] = mapped_column(
         String(50),

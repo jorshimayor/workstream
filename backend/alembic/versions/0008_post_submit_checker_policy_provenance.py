@@ -16,8 +16,8 @@ branch_labels = None
 depends_on = None
 
 
-def _preflight_no_legacy_runtime_rows() -> None:
-    """Stop before schema changes when legacy runtime rows cannot be backfilled."""
+def _preflight_no_pre_provenance_runtime_rows() -> None:
+    """Stop before schema changes when runtime rows cannot receive trusted provenance."""
     bind = op.get_bind()
     counts = {
         "non_draft_tasks": bind.scalar(
@@ -37,7 +37,7 @@ def _preflight_no_legacy_runtime_rows() -> None:
 
 def upgrade() -> None:
     """Add explicit post-submit checker policy provenance locks."""
-    _preflight_no_legacy_runtime_rows()
+    _preflight_no_pre_provenance_runtime_rows()
 
     op.add_column(
         "checker_policies",

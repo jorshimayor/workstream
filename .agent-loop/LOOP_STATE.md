@@ -4,16 +4,17 @@
 
 - Active initiative: `WS-POL-001` - Submission Artifact Policy Foundation
 - Active planning chunk: none
-- Active implementation chunk: `WS-POL-001-07`
-- Branch: `codex/ws-pol-001-07-task-contract-cleanup`
-- Status: `WS-POL-001-06` is merged to `main` through PR #67 as `3cce92c`.
-  `WS-POL-001-07` is active and removes the remaining task-owned
-  `required_files` / `required_evidence` artifact requirement fields from the
-  task API, ORM model, migration state, tests, scripts, and docs.
-- Last merged implementation SHA: `3cce92c`
-- Last merge commit: `3cce92c`
-- Current gate: `WS-POL-001-07` implementation in progress
-- Next chunk: inactive until `WS-POL-001-07` is merged by the user
+- Active implementation chunk: `WS-POL-001-08`
+- Branch: `codex/ws-pol-001-08-celery-project-setup`
+- Status: `WS-POL-001-07` is merged to `main` through PR #68 as `3dc6a95`.
+  `WS-POL-001-08` is active and moves automatic pre-submit project setup onto
+  Celery: guide/source capture enqueues sufficiency analysis, blocked
+  sufficiency stops derivation, and passed or warning sufficiency creates only
+  a draft `SubmissionArtifactPolicy` for human Workstream approval.
+- Last merged implementation SHA: `3dc6a95`
+- Last merge commit: `3dc6a95`
+- Current gate: `WS-POL-001-08` implementation in progress
+- Next chunk: inactive until `WS-POL-001-08` is merged by the user
 
 ## Operating Rule
 
@@ -30,12 +31,11 @@ not implement frontend behavior, payment, reputation, settlement, blockchain
 integrations, post-submit policy splitting, or revision resubmission drill
 behavior.
 
-The active `WS-POL-001-07` chunk removes stale task-owned artifact requirement
-fields after the project-guide/payment cleanup exposed the same request-body
-problem at task creation. It must not change project policy derivation, checker
-compilation, post-submit runtime, Terminal Benchmark example behavior,
-frontend behavior, payment, reputation, blockchain integrations, or agent
-runtime design.
+The active `WS-POL-001-08` chunk corrects the project setup orchestration path:
+normal guide/source capture starts the pre-submit setup pipeline automatically
+through Celery. It must not redesign post-submit policy, review, revision,
+payment, reputation, blockchain integrations, frontend behavior, or task
+submission runtime.
 
 ## Last Review State
 
@@ -71,7 +71,7 @@ runtime design.
 - `WS-POL-001-06` live drill exposed and fixed an OpenAI Agents SDK adapter
   strict-schema issue for the policy derivation result's open `policy_body`.
 - `WS-POL-001-06` follow-up cleanup removed stale project-owned payment fields
-  and legacy guide checklist fields, preserved server-written activation
+  and removed construction-state guide checklist fields, preserved server-written activation
   provenance on reads, added fail-closed migration behavior for old
   guide-source snapshots, and aligned active docs around `PaymentPolicy` as the
   payment-term authority.
@@ -80,3 +80,7 @@ runtime design.
 - PR #67 merged into `main` as `3cce92c`.
 - `WS-POL-001-07` started on branch `codex/ws-pol-001-07-task-contract-cleanup`
   after the user's explicit start signal.
+- PR #68 merged into `main` as `3dc6a95`.
+- `WS-POL-001-08` started on branch `codex/ws-pol-001-08-celery-project-setup`
+  after the user's explicit correction that project setup must run
+  automatically from guide/source capture through Celery.

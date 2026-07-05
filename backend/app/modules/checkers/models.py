@@ -35,11 +35,6 @@ class CheckerRun(Base):
             name="fk_checker_runs_task_locked_guide",
         ),
         ForeignKeyConstraint(
-            ["task_id", "locked_checker_policy_version"],
-            ["workstream_tasks.id", "workstream_tasks.locked_checker_policy_version"],
-            name="fk_checker_runs_task_locked_checker_policy",
-        ),
-        ForeignKeyConstraint(
             [
                 "locked_post_submit_checker_policy_id",
                 "locked_post_submit_checker_policy_version",
@@ -135,7 +130,6 @@ class CheckerRun(Base):
     )
     is_current_for_submission: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     locked_guide_version: Mapped[str] = mapped_column(String(50), nullable=False)
-    locked_checker_policy_version: Mapped[str] = mapped_column(String(50), nullable=False)
     locked_post_submit_checker_policy_id: Mapped[str] = mapped_column(String(36), nullable=False)
     locked_post_submit_checker_policy_version: Mapped[str] = mapped_column(
         String(50),

@@ -82,7 +82,7 @@ The container view shows the first 30-day implementation. It is intentionally sm
 | --- | --- |
 | React + Vite operations UI | Planned internal operations dashboard for project, task, submission, review, payment status, and reputation workflows. |
 | FastAPI backend | API contracts, workflow rules, auth dependency, lifecycle guards, module orchestration, and audit writes. |
-| Async job boundary | Non-blocking checker and background work. FastAPI background tasks are acceptable early; durable workers come when retries or distributed execution are needed. |
+| Celery worker boundary | Durable project setup, checker, and background product-job execution. FastAPI background tasks are not the Workstream product-job boundary. |
 | Checker runner | Executes automated checks and stores checker results. |
 | Storage interface | Keeps file/evidence semantics stable while local storage can later move to R2/S3-compatible object storage. |
 | Postgres | Durable record database for the full Workstream lifecycle. |

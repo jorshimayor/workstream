@@ -120,7 +120,6 @@ class CheckerRunResponse(BaseModel):
     supersedes_checker_run_id: str | None
     is_current_for_submission: bool
     locked_guide_version: str | None
-    locked_checker_policy_version: str | None
     locked_post_submit_checker_policy_id: str | None = None
     locked_post_submit_checker_policy_version: str | None = None
     locked_post_submit_checker_policy_hash: str | None = None

@@ -517,7 +517,6 @@ class TaskService:
             ],
             worker_attestation=payload.worker_attestation,
             locked_guide_version=task.locked_guide_version,
-            locked_checker_policy_version=task.locked_checker_policy_version,
             locked_post_submit_checker_policy_id=task.locked_post_submit_checker_policy_id,
             locked_post_submit_checker_policy_version=(
                 task.locked_post_submit_checker_policy_version
@@ -953,7 +952,6 @@ class TaskService:
             pre_submit_checker_policy: Compiled project pre-submit checker policy.
         """
         task.locked_guide_version = guide.version
-        task.locked_checker_policy_version = checker_policy.guide_version
         task.locked_post_submit_checker_policy_id = checker_policy.id
         task.locked_post_submit_checker_policy_version = checker_policy.guide_version
         task.locked_post_submit_checker_policy_hash = checker_policy.policy_hash
@@ -988,7 +986,6 @@ class TaskService:
             field
             for field in (
                 "locked_guide_version",
-                "locked_checker_policy_version",
                 "locked_post_submit_checker_policy_id",
                 "locked_post_submit_checker_policy_version",
                 "locked_post_submit_checker_policy_hash",
@@ -1144,7 +1141,6 @@ class TaskService:
         audit = actor.audit_context()
         payload = {
             "locked_guide_version": task.locked_guide_version,
-            "locked_checker_policy_version": task.locked_checker_policy_version,
             "locked_post_submit_checker_policy_id": task.locked_post_submit_checker_policy_id,
             "locked_post_submit_checker_policy_version": (
                 task.locked_post_submit_checker_policy_version

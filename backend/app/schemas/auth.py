@@ -15,7 +15,7 @@ class ActorAuditContext(BaseModel):
     external_issuer: str
     actor_roles: tuple[str, ...]
     claim_snapshot: dict[str, Any]
-    auth_source: Literal["flow", "dev_mock"]
+    auth_source: Literal["flow", "dev_mock", "workstream_system"]
     is_dev_auth: bool
 
 
@@ -29,7 +29,7 @@ class ActorContext(BaseModel):
     display_name: str | None = None
     roles: tuple[str, ...] = ()
     claim_snapshot: dict[str, Any] = Field(default_factory=dict)
-    auth_source: Literal["flow", "dev_mock"]
+    auth_source: Literal["flow", "dev_mock", "workstream_system"]
     is_dev_auth: bool = False
 
     def audit_context(self) -> ActorAuditContext:
@@ -58,7 +58,7 @@ class ActorResponse(BaseModel):
     email: str | None = None
     display_name: str | None = None
     roles: tuple[str, ...]
-    auth_source: Literal["flow", "dev_mock"]
+    auth_source: Literal["flow", "dev_mock", "workstream_system"]
     is_dev_auth: bool
     audit_context: ActorAuditContext
 

@@ -57,17 +57,11 @@ Architecture target:
 
 Current v0.1 implementation note: project guide rows store human-facing guide
 content only. Submission artifact requirements live in `SubmissionArtifactPolicy`
-and compile into the project `PreSubmitCheckerPolicy`; there is no guide-field
-compatibility alias.
+and compile into the project `PreSubmitCheckerPolicy`.
 
-Migration note: `0010_guide_cleanup` removes construction-state guide checklist
-columns and project-owned payment duplicates. Base amount and currency belong to
-`PaymentPolicy`. This migration is intentionally safe only when no guide-source
-snapshots exist. Existing local draft data that already has guide-source
-snapshots must be recreated through the current guide-source snapshot,
-submission artifact policy, effective policy, and checker bundle path;
-Workstream does not preserve an
-`evidence_policy` or guide checklist compatibility alias.
+Migration note: the migration history now creates the current guide and task
+contract directly. Project payment terms belong to `PaymentPolicy`; task
+artifact requirements come from the locked project policy and checker bundle.
 
 The guide version is the join key for the guide-specific policies.
 
@@ -147,11 +141,19 @@ Adds protected v1 routes:
 
 These routes require an actor role allowed to manage project setup.
 
-`run-sufficiency-agent` returns `201` when it creates a new report and `200`
-when it reuses the existing sufficiency row for the same source snapshot.
-`derive-submission-artifact-policy` returns `201` when it creates a new policy
-and `200` only when it reuses an existing agent-derived policy for the same
-source snapshot.
+Normal project setup does not depend on manually calling the sufficiency or
+derivation routes. Creating a guide or a later guide-source snapshot enqueues
+the Celery project setup pipeline, which runs guide sufficiency first and only
+continues to submission artifact policy derivation when sufficiency is not
+blocked.
+
+`run-sufficiency-agent` is an admin/project_manager repair and diagnostics
+endpoint. It returns `201` when it creates a new report and `200` when it reuses
+the existing sufficiency row for the same source snapshot.
+`derive-submission-artifact-policy` is an admin/project_manager repair and
+diagnostics endpoint. It returns `201` when it creates a new policy and `200`
+only when it reuses an existing agent-derived policy for the same source
+snapshot.
 Manual policy creation does not accept derivation provenance fields. Manual
 policies persist `manual_admin_derivation`; agent-created policies persist
 `agent_derivation` and use a server-owned `agent-<snapshot-hash>` policy

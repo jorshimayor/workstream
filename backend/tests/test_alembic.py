@@ -10,10 +10,6 @@ from alembic.config import Config
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
-LEGACY_EVALUATION_STATUS = "auto_checking"
-EVALUATION_PENDING_STATUS = "evaluation_pending"
-
-
 def test_alembic_upgrade_and_downgrade(isolated_database_env: str, migration_lock) -> None:
     project_root = Path(__file__).resolve().parents[1]
     config = Config(str(project_root / "alembic.ini"))
@@ -25,11 +21,11 @@ def test_alembic_upgrade_and_downgrade(isolated_database_env: str, migration_loc
         command.downgrade(config, "base")
 
 
-def test_guide_cleanup_migration_removes_legacy_columns(
+def test_current_schema_uses_project_policy_contract(
     isolated_database_env: str,
     migration_lock,
 ) -> None:
-    """Prove current schema removes old guide, project, and task shortcuts."""
+    """Prove current schema stores guide prose and policy records separately."""
     project_root = Path(__file__).resolve().parents[1]
     config = Config(str(project_root / "alembic.ini"))
     config.set_main_option("script_location", str(project_root / "alembic"))
@@ -42,80 +38,76 @@ def test_guide_cleanup_migration_removes_legacy_columns(
         finally:
             command.downgrade(config, "base")
 
-    assert "projects.base_amount" not in columns
-    assert "projects.currency" not in columns
-    assert "workstream_tasks.required_files" not in columns
-    assert "workstream_tasks.required_evidence" not in columns
-    assert "project_guides.approved_by" in columns
-    assert "project_guides.effective_at" in columns
-    for column in (
-        "required_task_fields",
-        "required_submission_fields",
-        "task_instructions",
-        "output_requirements",
-        "acceptance_criteria",
-        "rejection_criteria",
-        "reviewer_rubric",
-        "forbidden_actions",
-        "required_skills",
-        "difficulty_scale",
-        "estimated_time_policy",
-        "common_rejection_reasons",
-        "evidence_policy",
-        "unacceptable_work_policy",
-    ):
-        assert f"project_guides.{column}" not in columns
+    assert {
+        "projects.id",
+        "projects.name",
+        "projects.slug",
+        "projects.status",
+        "project_guides.content_markdown",
+        "project_guides.approved_by",
+        "project_guides.effective_at",
+        "submission_artifact_policies.policy_body",
+        "effective_project_submission_artifact_policies.effective_policy",
+        "pre_submit_checker_policies.compiled_bundle",
+        "payment_policies.base_amount",
+        "payment_policies.currency",
+    }.issubset(columns)
+    discarded_columns = {
+        "projects.base_amount",
+        "projects.currency",
+        "project_guides.required_task_fields",
+        "project_guides.required_submission_fields",
+        "project_guides.task_instructions",
+        "project_guides.output_requirements",
+        "project_guides.acceptance_criteria",
+        "project_guides.rejection_criteria",
+        "project_guides.reviewer_rubric",
+        "project_guides.forbidden_actions",
+        "project_guides.required_skills",
+        "project_guides.difficulty_scale",
+        "project_guides.estimated_time_policy",
+        "project_guides.common_rejection_reasons",
+        "project_guides.evidence_policy",
+        "project_guides.unacceptable_work_policy",
+        "workstream_tasks.required_files",
+        "workstream_tasks.required_evidence",
+        "workstream_tasks.locked_checker_policy_version",
+        "submissions.locked_checker_policy_version",
+        "checker_runs.locked_checker_policy_version",
+    }
+    assert columns.isdisjoint(discarded_columns)
 
 
-def test_guide_cleanup_migration_blocks_pre_cleanup_snapshots(
+def test_post_submit_policy_upgrade_leaves_pre_provenance_rows_fail_closed(
     isolated_database_env: str,
     migration_lock,
 ) -> None:
-    """Prove 0010 refuses pre-cleanup guide-source snapshot provenance."""
+    """Prove 0008 does not create fake post-submit authority for pre-provenance rows."""
     project_root = Path(__file__).resolve().parents[1]
     config = Config(str(project_root / "alembic.ini"))
     config.set_main_option("script_location", str(project_root / "alembic"))
 
-    ids = {name: str(uuid4()) for name in ("project", "guide", "snapshot")}
-    with migration_lock():
-        try:
-            command.downgrade(config, "base")
-            command.upgrade(config, "0009_evaluation_pending_status")
-            asyncio.run(_seed_legacy_guide_source_snapshot(isolated_database_env, ids))
-
-            with pytest.raises(RuntimeError, match="safe only when no guide source snapshots exist"):
-                command.upgrade(config, "head")
-        finally:
-            command.downgrade(config, "base")
-
-
-def test_post_submit_policy_upgrade_leaves_legacy_rows_fail_closed(
-    isolated_database_env: str,
-    migration_lock,
-) -> None:
-    """Prove 0008 does not create fake post-submit policy authority for legacy rows."""
-    project_root = Path(__file__).resolve().parents[1]
-    config = Config(str(project_root / "alembic.ini"))
-    config.set_main_option("script_location", str(project_root / "alembic"))
-
-    legacy_project_id = str(uuid4())
-    legacy_guide_id = str(uuid4())
-    legacy_policy_id = str(uuid4())
+    pre_provenance_project_id = str(uuid4())
+    pre_provenance_guide_id = str(uuid4())
+    pre_provenance_policy_id = str(uuid4())
     with migration_lock():
         try:
             command.downgrade(config, "base")
             command.upgrade(config, "0007_task_locked_context")
             asyncio.run(
-                _seed_legacy_post_submit_policy(
+                _seed_pre_provenance_post_submit_policy(
                     isolated_database_env,
-                    legacy_project_id,
-                    legacy_guide_id,
-                    legacy_policy_id,
+                    pre_provenance_project_id,
+                    pre_provenance_guide_id,
+                    pre_provenance_policy_id,
                 )
             )
             command.upgrade(config, "0008_post_submit_checker_policy")
             policy_hash = asyncio.run(
-                _fetch_legacy_post_submit_policy_hash(isolated_database_env, legacy_policy_id)
+                _fetch_pre_provenance_post_submit_policy_hash(
+                    isolated_database_env,
+                    pre_provenance_policy_id,
+                )
             )
         finally:
             command.downgrade(config, "base")
@@ -123,7 +115,7 @@ def test_post_submit_policy_upgrade_leaves_legacy_rows_fail_closed(
     assert policy_hash is None
 
 
-def test_post_submit_policy_upgrade_blocks_legacy_runtime_rows(
+def test_post_submit_policy_upgrade_blocks_pre_provenance_runtime_rows(
     isolated_database_env: str,
     migration_lock,
 ) -> None:
@@ -137,7 +129,7 @@ def test_post_submit_policy_upgrade_blocks_legacy_runtime_rows(
         try:
             command.downgrade(config, "base")
             command.upgrade(config, "0007_task_locked_context")
-            asyncio.run(_seed_legacy_runtime_rows(isolated_database_env, ids))
+            asyncio.run(_seed_pre_provenance_runtime_rows(isolated_database_env, ids))
 
             with pytest.raises(RuntimeError, match="cannot infer locked post-submit"):
                 command.upgrade(config, "0008_post_submit_checker_policy")
@@ -149,41 +141,6 @@ def test_post_submit_policy_upgrade_blocks_legacy_runtime_rows(
             command.downgrade(config, "base")
 
     assert columns_exist is False
-
-
-def test_evaluation_pending_status_migration_rewrites_task_and_audit_rows(
-    isolated_database_env: str,
-    migration_lock,
-) -> None:
-    """Prove 0009 backfills persisted post-submission evaluation statuses."""
-    project_root = Path(__file__).resolve().parents[1]
-    config = Config(str(project_root / "alembic.ini"))
-    config.set_main_option("script_location", str(project_root / "alembic"))
-
-    ids = {name: str(uuid4()) for name in ("project", "policy", "task", "audit_start", "audit_done")}
-    with migration_lock():
-        try:
-            command.downgrade(config, "base")
-            command.upgrade(config, "0008_post_submit_checker_policy")
-            asyncio.run(_seed_legacy_evaluation_status_rows(isolated_database_env, ids))
-
-            command.upgrade(config, "0009_evaluation_pending_status")
-            upgraded = asyncio.run(_fetch_status_migration_rows(isolated_database_env, ids))
-            command.downgrade(config, "0008_post_submit_checker_policy")
-            downgraded = asyncio.run(_fetch_status_migration_rows(isolated_database_env, ids))
-        finally:
-            command.downgrade(config, "base")
-
-    assert upgraded == {
-        "task_status": EVALUATION_PENDING_STATUS,
-        "audit_start_to_status": EVALUATION_PENDING_STATUS,
-        "audit_done_from_status": EVALUATION_PENDING_STATUS,
-    }
-    assert downgraded == {
-        "task_status": LEGACY_EVALUATION_STATUS,
-        "audit_start_to_status": LEGACY_EVALUATION_STATUS,
-        "audit_done_from_status": LEGACY_EVALUATION_STATUS,
-    }
 
 
 async def _fetch_columns(database_url: str) -> set[str]:
@@ -207,124 +164,7 @@ async def _fetch_columns(database_url: str) -> set[str]:
         await engine.dispose()
 
 
-async def _seed_legacy_guide_source_snapshot(
-    database_url: str,
-    ids: dict[str, str],
-) -> None:
-    """Seed a 0009 guide snapshot whose old guide-field provenance must not carry over."""
-    engine = create_async_engine(database_url)
-    try:
-        async with engine.begin() as connection:
-            await connection.execute(
-                text(
-                    """
-                    insert into projects (
-                        id,
-                        name,
-                        slug,
-                        status,
-                        base_amount,
-                        currency
-                    )
-                    values (
-                        :project_id,
-                        'Legacy guide snapshot project',
-                        'legacy-guide-snapshot-project',
-                        'draft',
-                        25.00,
-                        'USD'
-                    )
-                    """
-                ),
-                {"project_id": ids["project"]},
-            )
-            await connection.execute(
-                text(
-                    """
-                    insert into project_guides (
-                        id,
-                        project_id,
-                        version,
-                        status,
-                        content_markdown,
-                        required_task_fields,
-                        required_submission_fields,
-                        task_instructions,
-                        output_requirements,
-                        acceptance_criteria,
-                        rejection_criteria,
-                        reviewer_rubric,
-                        forbidden_actions,
-                        required_skills,
-                        difficulty_scale,
-                        estimated_time_policy,
-                        common_rejection_reasons,
-                        evidence_policy,
-                        unacceptable_work_policy,
-                        created_by
-                    )
-                    values (
-                        :guide_id,
-                        :project_id,
-                        'v1',
-                        'draft',
-                        '# Legacy guide',
-                        '["title"]'::json,
-                        '["summary"]'::json,
-                        'Do the work.',
-                        'Submit the output.',
-                        'Meets the guide.',
-                        'Misses required evidence.',
-                        'Review against the rubric.',
-                        'Do not include secrets.',
-                        '["coding"]'::json,
-                        '{"level": "hard"}'::json,
-                        '{"target_hours": 2}'::json,
-                        '["missing evidence"]'::json,
-                        '{"required": ["log"]}'::json,
-                        'Unverifiable work.',
-                        'migration-test'
-                    )
-                    """
-                ),
-                {"guide_id": ids["guide"], "project_id": ids["project"]},
-            )
-            await connection.execute(
-                text(
-                    """
-                    insert into guide_source_snapshots (
-                        id,
-                        project_id,
-                        guide_id,
-                        guide_version,
-                        manifest_schema_version,
-                        manifest_json,
-                        bundle_hash,
-                        captured_by
-                    )
-                    values (
-                        :snapshot_id,
-                        :project_id,
-                        :guide_id,
-                        'v1',
-                        'guide-source-manifest/v1',
-                        '{"items": [{"source_kind": "project_guide"}]}'::json,
-                        'sha256:1111111111111111111111111111111111111111111111111111111111111111',
-                        'migration-test'
-                    )
-                    """
-                ),
-                {
-                    "snapshot_id": ids["snapshot"],
-                    "project_id": ids["project"],
-                    "guide_id": ids["guide"],
-                },
-            )
-    finally:
-        await engine.dispose()
-
-
-async def _seed_legacy_post_submit_policy(
+async def _seed_pre_provenance_post_submit_policy(
     database_url: str,
     project_id: str,
     guide_id: str,
@@ -341,17 +181,13 @@ async def _seed_legacy_post_submit_policy(
                         id,
                         name,
                         slug,
-                        status,
-                        base_amount,
-                        currency
+                        status
                     )
                     values (
                         :project_id,
-                        'Legacy policy project',
-                        'legacy-policy-project',
-                        'draft',
-                        25.00,
-                        'USD'
+                        'Pre-provenance policy project',
+                        'pre-provenance-policy-project',
+                        'draft'
                     )
                     """
                 ),
@@ -366,12 +202,6 @@ async def _seed_legacy_post_submit_policy(
                         version,
                         status,
                         content_markdown,
-                        required_task_fields,
-                        required_submission_fields,
-                        required_skills,
-                        difficulty_scale,
-                        estimated_time_policy,
-                        common_rejection_reasons,
                         created_by
                     )
                     values (
@@ -379,14 +209,8 @@ async def _seed_legacy_post_submit_policy(
                         :project_id,
                         'v1',
                         'draft',
-                        '# Legacy guide',
-                        '[]'::json,
-                        '[]'::json,
-                        '[]'::json,
-                        '{}'::json,
-                        '{}'::json,
-                        '[]'::json,
-                        'legacy-test'
+                        '# Pre-provenance guide',
+                        'pre-provenance-test'
                     )
                     """
                 ),
@@ -419,237 +243,7 @@ async def _seed_legacy_post_submit_policy(
         await engine.dispose()
 
 
-async def _seed_legacy_evaluation_status_rows(database_url: str, ids: dict[str, str]) -> None:
-    """Seed post-0008 rows carrying the old persisted evaluation status."""
-    engine = create_async_engine(database_url)
-    params = {
-        **ids,
-        "project_id": ids["project"],
-        "policy_id": ids["policy"],
-        "task_id": ids["task"],
-        "guide_id": str(uuid4()),
-        "legacy_status": LEGACY_EVALUATION_STATUS,
-    }
-    try:
-        async with engine.begin() as connection:
-            await connection.execute(
-                text(
-                    """
-                    insert into projects (
-                        id,
-                        name,
-                        slug,
-                        status,
-                        base_amount,
-                        currency
-                    )
-                    values (
-                        :project_id,
-                        'Evaluation pending migration project',
-                        'evaluation-pending-migration-project',
-                        'draft',
-                        25.00,
-                        'USD'
-                    )
-                    """
-                ),
-                params,
-            )
-            await connection.execute(
-                text(
-                    """
-                    insert into project_guides (
-                        id,
-                        project_id,
-                        version,
-                        status,
-                        content_markdown,
-                        required_task_fields,
-                        required_submission_fields,
-                        required_skills,
-                        difficulty_scale,
-                        estimated_time_policy,
-                        common_rejection_reasons,
-                        created_by
-                    )
-                    values (
-                        :guide_id,
-                        :project_id,
-                        'v1',
-                        'active',
-                        '# Evaluation pending migration guide',
-                        '[]'::json,
-                        '[]'::json,
-                        '[]'::json,
-                        '{}'::json,
-                        '{}'::json,
-                        '[]'::json,
-                        'migration-test'
-                    )
-                    """
-                ),
-                params,
-            )
-            await connection.execute(
-                text(
-                    """
-                    insert into checker_policies (
-                        id,
-                        project_id,
-                        guide_version,
-                        required_checkers,
-                        warning_checkers,
-                        blocking_severities,
-                        policy_hash,
-                        policy_body
-                    )
-                    values (
-                        :policy_id,
-                        :project_id,
-                        'v1',
-                        '["check_policy_context_present"]'::json,
-                        '[]'::json,
-                        '["high"]'::json,
-                        'sha256:0000000000000000000000000000000000000000000000000000000000000000',
-                        '{}'::json
-                    )
-                    """
-                ),
-                params,
-            )
-            await connection.execute(
-                text(
-                    """
-                    insert into workstream_tasks (
-                        id,
-                        project_id,
-                        locked_post_submit_checker_policy_id,
-                        locked_post_submit_checker_policy_version,
-                        locked_post_submit_checker_policy_hash,
-                        locked_post_submit_checker_policy_body,
-                        source_type,
-                        title,
-                        description,
-                        skill_tags,
-                        status,
-                        required_files,
-                        required_evidence,
-                        created_by
-                    )
-                    values (
-                        :task_id,
-                        :project_id,
-                        :policy_id,
-                        'v1',
-                        'sha256:0000000000000000000000000000000000000000000000000000000000000000',
-                        '{}'::json,
-                        'manual',
-                        'Evaluation pending migration task',
-                        'Task waiting in the old persisted evaluation status.',
-                        '[]'::json,
-                        :legacy_status,
-                        '[]'::json,
-                        '[]'::json,
-                        'migration-test'
-                    )
-                    """
-                ),
-                params,
-            )
-            await connection.execute(
-                text(
-                    """
-                    insert into audit_events (
-                        id,
-                        entity_type,
-                        entity_id,
-                        event_type,
-                        from_status,
-                        to_status,
-                        actor_id,
-                        external_subject,
-                        external_issuer,
-                        actor_roles,
-                        claim_snapshot,
-                        auth_source,
-                        is_dev_auth,
-                        event_payload
-                    )
-                    values
-                    (
-                        :audit_start,
-                        'task',
-                        :task_id,
-                        'pre_review_gate_started',
-                        'submitted',
-                        :legacy_status,
-                        'migration-test',
-                        'migration-test',
-                        'flow-test',
-                        '["project_manager"]'::json,
-                        '{}'::json,
-                        'dev_mock',
-                        true,
-                        '{}'::json
-                    ),
-                    (
-                        :audit_done,
-                        'task',
-                        :task_id,
-                        'pre_review_gate_passed',
-                        :legacy_status,
-                        'review_pending',
-                        'migration-test',
-                        'migration-test',
-                        'flow-test',
-                        '["project_manager"]'::json,
-                        '{}'::json,
-                        'dev_mock',
-                        true,
-                        '{}'::json
-                    )
-                    """
-                ),
-                params,
-            )
-    finally:
-        await engine.dispose()
-
-
-async def _fetch_status_migration_rows(
-    database_url: str,
-    ids: dict[str, str],
-) -> dict[str, str | None]:
-    """Return status values touched by the 0009 status migration."""
-    engine = create_async_engine(database_url)
-    params = {
-        **ids,
-        "task_id": ids["task"],
-    }
-    try:
-        async with engine.begin() as connection:
-            task_status = await connection.scalar(
-                text("select status from workstream_tasks where id = :task_id"),
-                params,
-            )
-            audit_start_to_status = await connection.scalar(
-                text("select to_status from audit_events where id = :audit_start"),
-                ids,
-            )
-            audit_done_from_status = await connection.scalar(
-                text("select from_status from audit_events where id = :audit_done"),
-                ids,
-            )
-            return {
-                "task_status": task_status,
-                "audit_start_to_status": audit_start_to_status,
-                "audit_done_from_status": audit_done_from_status,
-            }
-    finally:
-        await engine.dispose()
-
-
-async def _seed_legacy_runtime_rows(database_url: str, ids: dict[str, str]) -> None:
+async def _seed_pre_provenance_runtime_rows(database_url: str, ids: dict[str, str]) -> None:
     """Seed 0007 runtime rows that cannot be trusted under 0008 provenance."""
     engine = create_async_engine(database_url)
     try:
@@ -661,17 +255,13 @@ async def _seed_legacy_runtime_rows(database_url: str, ids: dict[str, str]) -> N
                         id,
                         name,
                         slug,
-                        status,
-                        base_amount,
-                        currency
+                        status
                     )
                     values (
                         :project_id,
-                        'Legacy runtime project',
-                        'legacy-runtime-project',
-                        'draft',
-                        25.00,
-                        'USD'
+                        'Pre-provenance runtime project',
+                        'pre-provenance-runtime-project',
+                        'draft'
                     )
                     """
                 ),
@@ -686,12 +276,6 @@ async def _seed_legacy_runtime_rows(database_url: str, ids: dict[str, str]) -> N
                         version,
                         status,
                         content_markdown,
-                        required_task_fields,
-                        required_submission_fields,
-                        required_skills,
-                        difficulty_scale,
-                        estimated_time_policy,
-                        common_rejection_reasons,
                         created_by
                     )
                     values (
@@ -699,20 +283,14 @@ async def _seed_legacy_runtime_rows(database_url: str, ids: dict[str, str]) -> N
                         :project_id,
                         'v1',
                         'active',
-                        '# Legacy runtime guide',
-                        '[]'::json,
-                        '[]'::json,
-                        '[]'::json,
-                        '{}'::json,
-                        '{}'::json,
-                        '[]'::json,
-                        'legacy-test'
+                        '# Pre-provenance runtime guide',
+                        'pre-provenance-test'
                     )
                     """
                 ),
                 {"guide_id": ids["guide"], "project_id": ids["project"]},
             )
-            await _seed_legacy_policies(connection, ids["project"], ids["policy"])
+            await _seed_pre_provenance_policies(connection, ids["project"], ids["policy"])
             await connection.execute(
                 text(
                     """
@@ -720,7 +298,6 @@ async def _seed_legacy_runtime_rows(database_url: str, ids: dict[str, str]) -> N
                         id,
                         project_id,
                         locked_guide_version,
-                        locked_checker_policy_version,
                         locked_review_policy_version,
                         locked_revision_policy_version,
                         locked_payment_policy_version,
@@ -729,8 +306,6 @@ async def _seed_legacy_runtime_rows(database_url: str, ids: dict[str, str]) -> N
                         description,
                         skill_tags,
                         status,
-                        required_files,
-                        required_evidence,
                         created_by
                     )
                     values (
@@ -740,15 +315,12 @@ async def _seed_legacy_runtime_rows(database_url: str, ids: dict[str, str]) -> N
                         'v1',
                         'v1',
                         'v1',
-                        'v1',
                         'manual',
-                        'Legacy runtime task',
+                        'Pre-provenance runtime task',
                         'Already in progress before 0008.',
                         '[]'::json,
                         'in_progress',
-                        '[]'::json,
-                        '[]'::json,
-                        'legacy-test'
+                        'pre-provenance-test'
                     )
                     """
                 ),
@@ -768,7 +340,6 @@ async def _seed_legacy_runtime_rows(database_url: str, ids: dict[str, str]) -> N
                         artifact_hash_manifest,
                         worker_attestation,
                         locked_guide_version,
-                        locked_checker_policy_version,
                         locked_review_policy_version,
                         locked_revision_policy_version,
                         locked_payment_policy_version
@@ -776,14 +347,13 @@ async def _seed_legacy_runtime_rows(database_url: str, ids: dict[str, str]) -> N
                     values (
                         :submission_id,
                         :task_id,
-                        'legacy-worker',
+                        'pre-provenance-worker',
                         1,
                         'submitted',
-                        'Legacy submitted packet',
-                        'sha256:legacy-package',
+                        'Pre-provenance submitted packet',
+                        'sha256:pre-provenance-package',
                         '[]'::json,
-                        'legacy attestation',
-                        'v1',
+                        'pre-provenance attestation',
                         'v1',
                         'v1',
                         'v1',
@@ -812,7 +382,6 @@ async def _seed_legacy_runtime_rows(database_url: str, ids: dict[str, str]) -> N
                         attempt_number,
                         is_current_for_submission,
                         locked_guide_version,
-                        locked_checker_policy_version,
                         locked_review_policy_version,
                         locked_revision_policy_version,
                         locked_payment_policy_version,
@@ -833,9 +402,9 @@ async def _seed_legacy_runtime_rows(database_url: str, ids: dict[str, str]) -> N
                         'completed',
                         'allow_review',
                         'auto_checker',
-                        'legacy-test',
-                        'legacy-test',
-                        'flow-legacy',
+                        'pre-provenance-test',
+                        'pre-provenance-test',
+                        'flow-pre-provenance',
                         'flow',
                         1,
                         true,
@@ -843,10 +412,9 @@ async def _seed_legacy_runtime_rows(database_url: str, ids: dict[str, str]) -> N
                         'v1',
                         'v1',
                         'v1',
-                        'v1',
-                        'sha256:legacy-package',
+                        'sha256:pre-provenance-package',
                         '[]'::json,
-                        'sha256:legacy-manifest',
+                        'sha256:pre-provenance-manifest',
                         1,
                         0,
                         0,
@@ -864,7 +432,7 @@ async def _seed_legacy_runtime_rows(database_url: str, ids: dict[str, str]) -> N
         await engine.dispose()
 
 
-async def _seed_legacy_policies(connection, project_id: str, checker_policy_id: str) -> None:
+async def _seed_pre_provenance_policies(connection, project_id: str, checker_policy_id: str) -> None:
     """Seed v0.1 guide policies required by locked task foreign keys."""
     await connection.execute(
         text(
@@ -983,7 +551,10 @@ async def _post_submit_lock_columns_exist(database_url: str, table_name: str) ->
         await engine.dispose()
 
 
-async def _fetch_legacy_post_submit_policy_hash(database_url: str, policy_id: str) -> str | None:
+async def _fetch_pre_provenance_post_submit_policy_hash(
+    database_url: str,
+    policy_id: str,
+) -> str | None:
     """Return the post-submit policy hash created by the 0008 migration, if any."""
     engine = create_async_engine(database_url)
     try:
