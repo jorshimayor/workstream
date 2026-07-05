@@ -10,11 +10,11 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: 83d0343ec789f1480cef62d9aa894e86c6c27b48
+Reviewed code SHA: ec9810bf1408a12a9840645481619744fcbebe0f
 
-Reviewed at: 2026-07-05T21:21:17Z
+Reviewed at: 2026-07-05T21:46:07Z
 
-Reviewer run IDs: local-senior-engineering-review-20260705T211517Z, local-qa-test-review-20260705T211517Z, local-security-auth-review-20260705T211517Z, local-product-ops-review-20260705T211517Z, local-architecture-review-20260705T211517Z, local-docs-review-20260705T211517Z, local-reuse-dedup-review-20260705T211517Z, local-ci-integrity-review-20260705T211517Z, local-test-delta-review-20260705T211517Z
+Reviewer run IDs: local-senior-engineering-review-20260705T214607Z, local-qa-test-review-20260705T214607Z, local-security-auth-review-20260705T214607Z, local-product-ops-review-20260705T214607Z, local-architecture-review-20260705T214607Z, local-docs-review-20260705T214607Z, local-reuse-dedup-review-20260705T214607Z, local-ci-integrity-review-20260705T214607Z, local-test-delta-review-20260705T214607Z
 
 Note: no callable sub-agent spawn tool was available in this Codex session. The
 reviewer tracks below were run from the repository reviewer skill instructions,
@@ -45,12 +45,12 @@ Scope:
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS AFTER FIXES | None | Fixed queue preflight ordering so missing queue config does not leave guide/snapshot rows behind; removed unused checker-policy wrapper methods. |
-| QA/test | PASS AFTER FIXES | None | Added autostart coverage for no inline agent execution, eager Celery success, blocked sufficiency stop, later snapshot enqueue, and queue-unavailable no-partial-persist behavior. |
+| senior engineering | PASS AFTER FIXES | None | Fixed queue preflight ordering, removed read-path queue checks, and made post-commit enqueue semantics truthful. Removed unused checker-policy wrapper methods. |
+| QA/test | PASS AFTER FIXES | None | Added autostart coverage for no inline agent execution, eager Celery success, blocked sufficiency stop, later snapshot enqueue, queue-unavailable no-partial-persist behavior, read-path availability, and late enqueue failure. |
 | security/auth | PASS AFTER FIXES | None | Pinned the Redis image digest; internal automation uses explicit `workstream_system` actor provenance; no Workstream-owned auth session path was added. |
-| product/ops | PASS AFTER FIXES | None | Normal setup no longer depends on manually calling internal trigger endpoints; project owner still supplies guide/payment terms while Workstream derives draft intake policy for human approval. |
-| architecture | PASS AFTER FIXES | None | Celery owns the product-job boundary; FastAPI request path does not run agents inline; post-submit/review/revision/payment lifecycle was not redesigned. |
-| docs | PASS AFTER FIXES | None | README, ADR, system architecture, first user flow, checker framework, and Chunk 3 docs now describe Celery setup automation; obsolete non-canonical proposal source was removed. |
+| product/ops | PASS AFTER FIXES | None | Normal setup no longer depends on manually calling internal trigger endpoints; project owner still supplies guide/payment terms while Workstream derives draft intake policy for human approval. Read paths remain available even if setup queue config is missing. |
+| architecture | PASS AFTER FIXES | None | Celery owns the product-job boundary; FastAPI request path does not run agents inline or block the event loop for broker checks; post-submit/review/revision/payment lifecycle was not redesigned. |
+| docs | PASS AFTER FIXES | None | README, ADR, system architecture, first user flow, checker framework, Chunk 3 docs, PR trust bundle, and external review response describe the current behavior; obsolete non-canonical proposal source was removed. |
 | reuse/dedup | PASS AFTER FIXES | None | Reused existing `ProjectService` agent methods, repository writes, and checker compiler path; removed redundant compatibility wrappers instead of adding aliases. |
 | ci integrity | PASS AFTER FIXES | None | Added dependency and local broker without weakening CI/workflow gates; reran agent gate tests and demo UI build. |
 | test delta | PASS AFTER FIXES | None | Replaced removed compatibility/backfill tests with current-schema absence assertions and new automatic setup behavior tests; no tests were skipped. |
@@ -61,6 +61,16 @@ Scope:
   source snapshot had already committed. The service now checks queue readiness
   after project/guide existence validation and before mutation, and a test
   proves no guide/snapshot rows persist when the queue is unavailable.
+- CodeRabbit found that the queue readiness check had leaked into the
+  `get_project` read path. That check was removed, and a test proves project
+  reads do not require project setup queue configuration.
+- CodeRabbit found that the synchronous Celery/Kombu readiness check ran
+  directly inside async service methods. The service now offloads queue
+  readiness and enqueue work through `asyncio.to_thread`.
+- CodeRabbit found that enqueue failure after commit could return a false 503
+  even though the write persisted. Post-commit enqueue failure is now logged and
+  leaves the successful create response intact; tests cover guide and source
+  snapshot late-enqueue failures.
 - Redis was first added with a mutable image tag. The local Compose service now
   pins the current `redis:7` image index digest.
 - The diff still contained compatibility-shaped wrapper methods for old checker
@@ -83,6 +93,7 @@ Scope:
 cd backend && .venv/bin/python -m ruff check app tests scripts
 cd backend && .venv/bin/python -m pytest tests/test_alembic.py -q
 cd backend && .venv/bin/python -m pytest tests/test_projects.py -q -k "create_guide_autostart or create_source_snapshot_autostart"
+cd backend && .venv/bin/python -m pytest tests/test_projects.py -q -k "create_guide_autostart or create_source_snapshot_autostart or get_project_does_not_require_project_setup_queue or post_commit_enqueue_fails"
 cd backend && .venv/bin/python -m pytest tests/test_projects.py -q -k "project_create_rejects_payment_fields or project_guide_rejects_unknown_non_contract_fields or project_guide_update_rejects_unknown_non_contract_fields or activation_uses_policy_bundle_without_guide_owned_artifact_fields"
 cd backend && .venv/bin/python -m pytest tests/test_projects.py -q
 npm --prefix demos/week1_api_demo_ui run build
@@ -99,9 +110,11 @@ Results:
 
 - ruff: passed.
 - Alembic tests: 4 passed in 69.68s.
-- Project autostart tests: 5 passed, 188 deselected in 90.53s.
+- Project autostart tests before external review fixes: 5 passed, 188 deselected in 90.53s.
+- Focused project setup queue/autostart tests after external review fixes: 8 passed, 188 deselected in 73.39s.
 - Project request-body/policy cleanup focused tests: 7 passed, 185 deselected in 93.82s.
-- Full project-module suite: 193 passed in 1964.10s.
+- Full project-module suite before external review fixes: 193 passed in 1964.10s.
+- Full project-module suite after external review fixes: 196 passed in 1612.80s.
 - Week 1 API demo UI build: passed.
 - Markdown link check: passed for 17 changed Markdown files.
 - Stale wording check: passed.

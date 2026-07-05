@@ -72,6 +72,10 @@ the real API drill confusing and could reintroduce the wrong mental model.
   `auth_source="workstream_system"` for audit provenance.
 - Queue readiness is preflighted before mutation when autostart is enabled, so
   missing queue configuration does not leave half-created guide setup state.
+- Queue checks are not run on read paths.
+- Blocking Celery/Kombu queue checks are offloaded from the async request loop.
+- If the queue fails after a guide/source snapshot has already committed, the
+  durable write remains successful and the failure is logged for retry/repair.
 - Human approval remains required before an effective project policy and
   deterministic pre-submit checker bundle become active.
 
@@ -101,6 +105,9 @@ post-submit redesign was added.
   `WORKSTREAM_PROJECT_SETUP_PIPELINE_AUTOSTART=true`.
 - If the queue is unavailable, guide setup fails with 503 before creating guide
   or source snapshot rows.
+- If enqueue fails only after the database transaction committed, the API does
+  not return a false 503 for a durable write.
+- Project read paths do not depend on Celery broker configuration.
 - Blocking guide sufficiency stops the pipeline and creates no
   `SubmissionArtifactPolicy`.
 - Passing or warning sufficiency creates a draft policy only.
@@ -124,6 +131,12 @@ post-submit redesign was added.
   `test_create_guide_autostart_stops_before_derivation_when_sufficiency_blocks`.
 - Queue unavailable leaves no partial guide setup rows: covered by
   `test_create_guide_autostart_requires_queue_before_persisting`.
+- Project reads do not require project setup queue configuration: covered by
+  `test_get_project_does_not_require_project_setup_queue`.
+- Late post-commit enqueue failure does not turn a durable guide/source snapshot
+  create into a false 503: covered by
+  `test_create_guide_returns_created_when_post_commit_enqueue_fails` and
+  `test_create_source_snapshot_returns_created_when_post_commit_enqueue_fails`.
 - Removed compatibility surfaces are absent from current schema: covered by
   `test_current_schema_uses_project_policy_contract`.
 
@@ -133,6 +146,7 @@ post-submit redesign was added.
 cd backend && .venv/bin/python -m ruff check app tests scripts
 cd backend && .venv/bin/python -m pytest tests/test_alembic.py -q
 cd backend && .venv/bin/python -m pytest tests/test_projects.py -q -k "create_guide_autostart or create_source_snapshot_autostart"
+cd backend && .venv/bin/python -m pytest tests/test_projects.py -q -k "create_guide_autostart or create_source_snapshot_autostart or get_project_does_not_require_project_setup_queue or post_commit_enqueue_fails"
 cd backend && .venv/bin/python -m pytest tests/test_projects.py -q -k "project_create_rejects_payment_fields or project_guide_rejects_unknown_non_contract_fields or project_guide_update_rejects_unknown_non_contract_fields or activation_uses_policy_bundle_without_guide_owned_artifact_fields"
 cd backend && .venv/bin/python -m pytest tests/test_projects.py -q
 npm --prefix demos/week1_api_demo_ui run build
@@ -149,9 +163,11 @@ Result summary:
 
 - ruff: passed.
 - Alembic tests: 4 passed.
-- Project autostart tests: 5 passed.
+- Project autostart tests before external review fixes: 5 passed.
+- Focused project setup queue/autostart tests after external review fixes: 8 passed.
 - Project cleanup focused tests: 7 passed.
-- Full project-module suite: 193 passed.
+- Full project-module suite before external review fixes: 193 passed.
+- Full project-module suite after external review fixes: 196 passed.
 - Demo UI build: passed.
 - Markdown link, stale wording, loop memory, internal review evidence, and diff
   whitespace checks: passed.
@@ -188,11 +204,11 @@ Internal review evidence:
 
 - `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-08-internal-review-evidence.md`
 
-Reviewed code SHA: `83d0343ec789f1480cef62d9aa894e86c6c27b48`
+Reviewed code SHA: `ec9810bf1408a12a9840645481619744fcbebe0f`
 
-Reviewed at: `2026-07-05T21:21:17Z`
+Reviewed at: `2026-07-05T21:46:07Z`
 
-Reviewer run IDs: local-senior-engineering-review-20260705T211517Z, local-qa-test-review-20260705T211517Z, local-security-auth-review-20260705T211517Z, local-product-ops-review-20260705T211517Z, local-architecture-review-20260705T211517Z, local-docs-review-20260705T211517Z, local-reuse-dedup-review-20260705T211517Z, local-ci-integrity-review-20260705T211517Z, local-test-delta-review-20260705T211517Z
+Reviewer run IDs: local-senior-engineering-review-20260705T214607Z, local-qa-test-review-20260705T214607Z, local-security-auth-review-20260705T214607Z, local-product-ops-review-20260705T214607Z, local-architecture-review-20260705T214607Z, local-docs-review-20260705T214607Z, local-reuse-dedup-review-20260705T214607Z, local-ci-integrity-review-20260705T214607Z, local-test-delta-review-20260705T214607Z
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
@@ -210,18 +226,18 @@ Reviewer run IDs: local-senior-engineering-review-20260705T211517Z, local-qa-tes
 
 External review response file:
 
-- Pending until PR exists.
+- `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-08-external-review-response.md`
 
 | Source | Status | Notes |
 |---|---:|---|
-| CodeRabbit | Pending | Must run after PR open. |
-| GitHub checks | Pending | Must run after PR open. |
+| CodeRabbit | PASS AFTER FIXES | Addressed three actionable comments: read-path queue check, blocking queue I/O in async service, and false 503 after post-commit enqueue failure. |
+| GitHub checks | Passing before follow-up push | Agent Gates, Backend, and Week 1 API Demo UI were passing before the external-review fix commit; they must rerun after push. |
 
 ## Remaining Risks
 
-- Direct Celery enqueue after commit is adequate for this chunk with preflight
-  protection, but a future durable outbox is the stronger pattern for broker
-  outages that happen exactly after commit.
+- Direct Celery enqueue after commit is semantically honest for the API caller,
+  but a future durable outbox is the stronger pattern for guaranteed eventual
+  enqueue after broker outages.
 - Explicit setup trigger routes remain available for development and repair;
   normal project setup no longer depends on them.
 
