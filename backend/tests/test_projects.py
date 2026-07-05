@@ -56,6 +56,7 @@ from app.modules.projects.service import (
     PROJECT_GUIDE_SUFFICIENCY_AGENT_VERSION,
     SUBMISSION_ARTIFACT_POLICY_DERIVATION_AGENT_NAME,
     SUBMISSION_ARTIFACT_POLICY_DERIVATION_AGENT_VERSION,
+    ProjectSetupQueueError,
     ProjectService,
 )
 
@@ -498,6 +499,74 @@ async def test_create_guide_autostart_requires_queue_before_persisting(
     assert snapshots == []
 
 
+async def test_get_project_does_not_require_project_setup_queue(
+    project_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Read paths stay available even when automatic setup cannot enqueue work."""
+    project = await create_project(project_client)
+    monkeypatch.setenv("WORKSTREAM_PROJECT_SETUP_PIPELINE_AUTOSTART", "true")
+    monkeypatch.setenv("WORKSTREAM_CELERY_TASK_ALWAYS_EAGER", "false")
+    monkeypatch.delenv("WORKSTREAM_CELERY_BROKER_URL", raising=False)
+    get_settings.cache_clear()
+
+    response = await project_client.get(
+        f"/api/v1/projects/{project['id']}",
+        headers=auth_headers(),
+    )
+
+    assert response.status_code == 200, response.text
+    assert response.json()["id"] == project["id"]
+
+
+async def test_create_guide_returns_created_when_post_commit_enqueue_fails(
+    project_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A late broker failure cannot turn a durable guide create into a false 503."""
+    project = await create_project(project_client)
+
+    def queue_ready() -> None:
+        """Pretend the pre-mutation readiness check succeeded."""
+
+    def enqueue_failure(*, project_id: str, guide_id: str, source_snapshot_id: str) -> str:
+        """Simulate a broker outage after the guide transaction commits."""
+        raise ProjectSetupQueueError("queue failed after commit")
+
+    monkeypatch.setenv("WORKSTREAM_PROJECT_SETUP_PIPELINE_AUTOSTART", "true")
+    monkeypatch.setenv("WORKSTREAM_CELERY_TASK_ALWAYS_EAGER", "false")
+    get_settings.cache_clear()
+    monkeypatch.setattr(
+        project_service_module,
+        "ensure_pre_submit_setup_pipeline_queue_ready",
+        queue_ready,
+    )
+    monkeypatch.setattr(
+        project_service_module,
+        "enqueue_pre_submit_setup_pipeline",
+        enqueue_failure,
+    )
+
+    response = await project_client.post(
+        f"/api/v1/projects/{project['id']}/guides",
+        headers=auth_headers(),
+        json=complete_guide_payload(),
+    )
+
+    assert response.status_code == 201, response.text
+    guide = response.json()
+    async with db_session.get_session_factory()() as session:
+        persisted_guide = await session.scalar(
+            select(ProjectGuide).where(ProjectGuide.id == guide["id"])
+        )
+        snapshot = await session.scalar(
+            select(GuideSourceSnapshot).where(GuideSourceSnapshot.guide_id == guide["id"])
+        )
+
+    assert persisted_guide is not None
+    assert snapshot is not None
+
+
 async def test_create_guide_autostart_runs_celery_pipeline_to_draft_policy(
     project_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
@@ -606,6 +675,50 @@ async def test_create_source_snapshot_autostart_enqueues_latest_snapshot(
             "source_snapshot_id": snapshot["id"],
         }
     ]
+
+
+async def test_create_source_snapshot_returns_created_when_post_commit_enqueue_fails(
+    project_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A late broker failure cannot turn a durable source snapshot create into a false 503."""
+    project = await create_project(project_client)
+    guide = await create_guide(project_client, project["id"], complete_guide_payload())
+
+    def queue_ready() -> None:
+        """Pretend the pre-mutation readiness check succeeded."""
+
+    def enqueue_failure(*, project_id: str, guide_id: str, source_snapshot_id: str) -> str:
+        """Simulate a broker outage after the snapshot transaction commits."""
+        raise ProjectSetupQueueError("queue failed after commit")
+
+    monkeypatch.setenv("WORKSTREAM_PROJECT_SETUP_PIPELINE_AUTOSTART", "true")
+    get_settings.cache_clear()
+    monkeypatch.setattr(
+        project_service_module,
+        "ensure_pre_submit_setup_pipeline_queue_ready",
+        queue_ready,
+    )
+    monkeypatch.setattr(
+        project_service_module,
+        "enqueue_pre_submit_setup_pipeline",
+        enqueue_failure,
+    )
+
+    response = await project_client.post(
+        f"/api/v1/projects/{project['id']}/guides/{guide['id']}/source-snapshots",
+        headers=auth_headers(),
+        json=source_snapshot_payload(durable_ref="https://docs.flow.test/stem/source-v2.md"),
+    )
+
+    assert response.status_code == 201, response.text
+    snapshot = response.json()
+    async with db_session.get_session_factory()() as session:
+        persisted_snapshot = await session.scalar(
+            select(GuideSourceSnapshot).where(GuideSourceSnapshot.id == snapshot["id"])
+        )
+
+    assert persisted_snapshot is not None
 
 
 def sha256_hash(seed: str) -> str:

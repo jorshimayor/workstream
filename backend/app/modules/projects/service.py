@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import fnmatch
+import logging
 import re
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -86,6 +88,8 @@ from app.modules.projects.schemas import (
     SubmissionArtifactPolicyUpdate,
 )
 from app.schemas.auth import ActorContext
+
+logger = logging.getLogger(__name__)
 
 PROJECT_SETUP_ROLES = {"admin", "project_manager"}
 ALLOWED_REVIEW_DECISIONS = {"accept", "needs_revision", "reject"}
@@ -415,7 +419,6 @@ class ProjectService:
             ProjectNotFound: If the project id is unknown.
         """
         require_any_role(actor, PROJECT_SETUP_ROLES)
-        self._ensure_project_setup_queue_ready_if_needed()
         project = await self._repo.get_project(project_id)
         if project is None:
             raise ProjectNotFound("project not found")
@@ -445,7 +448,7 @@ class ProjectService:
         project = await self._repo.get_project(project_id)
         if project is None:
             raise ProjectNotFound("project not found")
-        self._ensure_project_setup_queue_ready_if_needed()
+        await self._ensure_project_setup_queue_ready_if_needed()
         guide = ProjectGuide(
             id=str(uuid4()),
             project_id=project_id,
@@ -468,7 +471,7 @@ class ProjectService:
         await self._session.commit()
         await self._session.refresh(guide)
         if source_snapshot is not None:
-            self._enqueue_pre_submit_setup_pipeline(
+            await self._enqueue_pre_submit_setup_pipeline_after_commit(
                 project_id=project_id,
                 guide_id=guide.id,
                 source_snapshot_id=source_snapshot.id,
@@ -556,7 +559,7 @@ class ProjectService:
         guide = await self._lock_project_guide_for_setup(project_id, guide_id)
         if guide.status != "draft":
             raise GuideEditBlocked("only draft guides can receive source snapshots")
-        self._ensure_project_setup_queue_ready_if_needed()
+        await self._ensure_project_setup_queue_ready_if_needed()
 
         snapshot = await self._create_guide_source_snapshot_model(
             actor,
@@ -572,7 +575,7 @@ class ProjectService:
                 "guide source snapshot conflicted with concurrent setup; retry"
             ) from exc
         if get_settings().project_setup_pipeline_autostart:
-            self._enqueue_pre_submit_setup_pipeline(
+            await self._enqueue_pre_submit_setup_pipeline_after_commit(
                 project_id=project_id,
                 guide_id=guide.id,
                 source_snapshot_id=snapshot.id,
@@ -1532,14 +1535,19 @@ class ProjectService:
         ]
         return await self._repo.add_guide_source_snapshot(snapshot, item_models)
 
-    def _enqueue_pre_submit_setup_pipeline(
+    async def _enqueue_pre_submit_setup_pipeline_after_commit(
         self,
         *,
         project_id: str,
         guide_id: str,
         source_snapshot_id: str,
-    ) -> str:
+    ) -> str | None:
         """Enqueue automatic pre-submit setup for an immutable source snapshot.
+
+        This is called only after the project setup record is already committed.
+        If the broker fails at this point, the write remains successful and the
+        operator can retry setup from the persisted snapshot instead of receiving
+        a false 503 for a durable create.
 
         Args:
             project_id: Project that owns the guide.
@@ -1547,28 +1555,33 @@ class ProjectService:
             source_snapshot_id: Immutable source snapshot to process.
 
         Returns:
-            Celery task id.
-
-        Raises:
-            ProjectSetupQueueUnavailable: If the queue cannot accept the job.
+            Celery task id when enqueue succeeds; otherwise ``None``.
         """
         try:
-            return enqueue_pre_submit_setup_pipeline(
+            return await asyncio.to_thread(
+                enqueue_pre_submit_setup_pipeline,
                 project_id=project_id,
                 guide_id=guide_id,
                 source_snapshot_id=source_snapshot_id,
             )
         except ProjectSetupQueueError as exc:
-            raise ProjectSetupQueueUnavailable(
-                "project setup pipeline could not be enqueued"
-            ) from exc
+            logger.warning(
+                "project setup pipeline enqueue failed after commit",
+                extra={
+                    "project_id": project_id,
+                    "guide_id": guide_id,
+                    "source_snapshot_id": source_snapshot_id,
+                },
+                exc_info=exc,
+            )
+            return None
 
-    def _ensure_project_setup_queue_ready_if_needed(self) -> None:
+    async def _ensure_project_setup_queue_ready_if_needed(self) -> None:
         """Fail before mutation when automatic setup has no usable queue."""
         if not get_settings().project_setup_pipeline_autostart:
             return
         try:
-            ensure_pre_submit_setup_pipeline_queue_ready()
+            await asyncio.to_thread(ensure_pre_submit_setup_pipeline_queue_ready)
         except ProjectSetupQueueError as exc:
             raise ProjectSetupQueueUnavailable(
                 "project setup pipeline queue is unavailable"
