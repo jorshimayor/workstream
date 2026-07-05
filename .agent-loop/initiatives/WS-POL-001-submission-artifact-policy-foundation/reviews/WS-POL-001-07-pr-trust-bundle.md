@@ -170,9 +170,10 @@ Reviewer summary:
 
 ## External Review
 
-GitHub Actions and CodeRabbit have not run for this branch yet. They must run
-after the PR is opened, and any actionable external comments must be handled in
-a separate external review response file.
+GitHub Actions passed on PR #68. CodeRabbit posted two actionable documentation
+comments, both addressed in:
+
+`.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-07-external-review-response.md`
 
 ## Remaining Risks
 

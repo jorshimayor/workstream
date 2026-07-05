@@ -67,8 +67,11 @@ These values are stamped from the active project policy bundle during
 screening. Task creators do not provide submission artifact requirement fields
 directly.
 
-- submission artifact policy version:
+- guide source snapshot id:
+- guide source snapshot hash:
+- effective project submission artifact policy id:
 - effective project submission artifact policy hash:
+- project pre-submit checker policy id:
 - project pre-submit checker bundle hash:
 
 ## Locked Payment Policy Snapshot
