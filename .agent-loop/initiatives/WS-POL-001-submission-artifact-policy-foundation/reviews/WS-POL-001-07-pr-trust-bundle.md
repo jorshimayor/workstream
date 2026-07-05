@@ -154,7 +154,7 @@ Evidence:
 
 Reviewed implementation SHA:
 
-`55cc79a0b6b832519cf9258ad60722e49f2f4b4b`
+`4845f9891362caad479030d339e512dbe5924b46`
 
 Reviewer summary:
 
@@ -163,7 +163,7 @@ Reviewer summary:
 - security/auth: PASS
 - product/ops: PASS AFTER FIXES
 - architecture: PASS
-- docs: PASS
+- docs: PASS AFTER FIXES
 - reuse/dedup: PASS
 - test delta: PASS
 - CI integrity: PASS AFTER FIXES

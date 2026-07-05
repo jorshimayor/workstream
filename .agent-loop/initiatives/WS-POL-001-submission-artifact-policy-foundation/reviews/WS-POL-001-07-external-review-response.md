@@ -32,15 +32,29 @@ None.
 
 ## Commands Rerun
 
-Pending after this response file is committed:
-
 ```bash
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
 git diff --check
+```
+
+Results:
+
+- stale wording scan: passed
+- Markdown link check: passed for 14 changed Markdown files
+- diff whitespace check: passed
+
+Evidence refresh commands rerun after the docs-delta review:
+
+```bash
 python3 scripts/check_internal_review_evidence.py
 python3 scripts/check_loop_memory_state.py
 ```
+
+Results:
+
+- internal review evidence gate: passed
+- loop memory state check: passed
 
 ## Remaining Risks
 
