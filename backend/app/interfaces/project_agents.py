@@ -91,7 +91,7 @@ class SubmissionArtifactPolicyDerivationResult(BaseModel):
     policy_body: dict[str, Any]
     change_summary: str | None = Field(default=None, max_length=2000)
     agent_name: str = Field(default="SubmissionArtifactPolicyDerivationAgent", max_length=100)
-    agent_version: str = Field(max_length=50)
+    agent_version: str = Field(max_length=100)
 
 
 class ProjectGuideAgentRuntime(Protocol):

@@ -1480,7 +1480,11 @@ async def test_openai_agent_sdk_adapter_wraps_sdk_failures(
     monkeypatch.setitem(
         sys.modules,
         "agents",
-        types.SimpleNamespace(Agent=FakeAgent, Runner=FakeRunner),
+        types.SimpleNamespace(
+            Agent=FakeAgent,
+            AgentOutputSchema=lambda output_type, strict_json_schema=True: output_type,
+            Runner=FakeRunner,
+        ),
     )
     runtime = OpenAIAgentSdkProjectGuideRuntime(
         Settings(project_agent_openai_agent_sdk_model="gpt-test")
@@ -1500,6 +1504,89 @@ async def test_openai_agent_sdk_adapter_wraps_sdk_failures(
 
     assert "raw-openai-secret-token" not in str(exc.value)
     assert exc.value.__cause__ is None
+
+
+async def test_openai_agent_sdk_adapter_uses_non_strict_schema_for_policy_body(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, object] = {}
+
+    class FakeAgentOutputSchema:
+        """Fake SDK schema wrapper that records strict-schema configuration."""
+
+        def __init__(self, output_type: object, strict_json_schema: bool = True) -> None:
+            """Record output schema constructor arguments."""
+            captured["output_type"] = output_type
+            captured["strict_json_schema"] = strict_json_schema
+
+    class FakeAgent:
+        """Fake OpenAI Agent constructor for schema-wrapper tests."""
+
+        def __init__(self, **kwargs: object) -> None:
+            """Record the wrapped output schema passed to the SDK."""
+            captured["agent_output_type"] = kwargs["output_type"]
+
+    class FakeRunner:
+        """Fake OpenAI Runner that returns a valid policy derivation result."""
+
+        @staticmethod
+        async def run(_: FakeAgent, __: str) -> object:
+            """Return a typed final output without calling a model."""
+            return types.SimpleNamespace(
+                final_output=SubmissionArtifactPolicyDerivationResult(
+                    policy_version="agent-test",
+                    policy_body={
+                        "required_artifacts": [],
+                        "required_evidence": [],
+                        "forbidden_artifacts": [],
+                        "attestation_terms": [],
+                        "manifest_required": True,
+                        "artifact_hash_required": True,
+                        "artifact_hash_algorithm": "sha256",
+                        "allowed_storage_schemes": ["local", "s3", "r2"],
+                        "maximum_file_size_bytes": None,
+                        "maximum_package_size_bytes": None,
+                        "packaging": {"package_required": False},
+                    },
+                    change_summary="fake policy",
+                    agent_version="fake-openai-agent-sdk-v0.1",
+                )
+            )
+
+    monkeypatch.setitem(
+        sys.modules,
+        "agents",
+        types.SimpleNamespace(
+            Agent=FakeAgent,
+            AgentOutputSchema=FakeAgentOutputSchema,
+            Runner=FakeRunner,
+        ),
+    )
+    runtime = OpenAIAgentSdkProjectGuideRuntime(
+        Settings(project_agent_openai_agent_sdk_model="gpt-test")
+    )
+    material = GuideSourceMaterial(
+        project_id="project-1",
+        guide_id="guide-1",
+        guide_version="v1",
+        source_snapshot_id="snapshot-1",
+        source_snapshot_hash="sha256:" + "1" * 64,
+        guide_material={"content_markdown": "A complete project guide."},
+        source_refs=[],
+    )
+    report = GuideSufficiencyAgentResult(
+        status="guide_sufficient",
+        findings=[],
+        summary="Guide is sufficient.",
+        agent_version="fake-guide-agent-v0.1",
+    )
+
+    result = await runtime.derive_submission_artifact_policy(material, report)
+
+    assert captured["output_type"] is SubmissionArtifactPolicyDerivationResult
+    assert captured["strict_json_schema"] is False
+    assert isinstance(captured["agent_output_type"], FakeAgentOutputSchema)
+    assert result.policy_version == "agent-test"
 
 
 async def test_openai_agent_sdk_adapter_wraps_sdk_timeouts(
@@ -1523,7 +1610,11 @@ async def test_openai_agent_sdk_adapter_wraps_sdk_timeouts(
     monkeypatch.setitem(
         sys.modules,
         "agents",
-        types.SimpleNamespace(Agent=FakeAgent, Runner=FakeRunner),
+        types.SimpleNamespace(
+            Agent=FakeAgent,
+            AgentOutputSchema=lambda output_type, strict_json_schema=True: output_type,
+            Runner=FakeRunner,
+        ),
     )
     runtime = OpenAIAgentSdkProjectGuideRuntime(
         Settings(
@@ -1565,7 +1656,11 @@ async def test_openai_agent_sdk_adapter_wraps_sdk_cancellation(
     monkeypatch.setitem(
         sys.modules,
         "agents",
-        types.SimpleNamespace(Agent=FakeAgent, Runner=FakeRunner),
+        types.SimpleNamespace(
+            Agent=FakeAgent,
+            AgentOutputSchema=lambda output_type, strict_json_schema=True: output_type,
+            Runner=FakeRunner,
+        ),
     )
     runtime = OpenAIAgentSdkProjectGuideRuntime(
         Settings(project_agent_openai_agent_sdk_model="gpt-test")
@@ -1605,7 +1700,11 @@ async def test_openai_agent_sdk_adapter_propagates_caller_cancellation(
     monkeypatch.setitem(
         sys.modules,
         "agents",
-        types.SimpleNamespace(Agent=FakeAgent, Runner=FakeRunner),
+        types.SimpleNamespace(
+            Agent=FakeAgent,
+            AgentOutputSchema=lambda output_type, strict_json_schema=True: output_type,
+            Runner=FakeRunner,
+        ),
     )
     runtime = OpenAIAgentSdkProjectGuideRuntime(
         Settings(project_agent_openai_agent_sdk_model="gpt-test")

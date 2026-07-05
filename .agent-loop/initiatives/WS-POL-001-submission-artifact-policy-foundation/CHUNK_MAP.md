@@ -478,3 +478,90 @@ reuse/dedup, test delta.
 Human review focus:
 
 Fair worker experience during revision and audit clarity.
+
+### WS-POL-001-06: Terminal Benchmark Real Fixture Drill
+
+Goal:
+
+Use a real Terminal Benchmark reviewer fixture from the local Termius workspace
+to prove the current Workstream setup-agent route, project policy bundle, task
+locked context, pre-submit feedback, submission versioning, post-submit checker
+gate, and fixed revision path over live manual HTTP calls and local Postgres.
+
+Risk:
+
+L1
+
+Depends on:
+
+`WS-POL-001-05`
+
+Allowed files:
+
+```text
+examples/terminal_benchmark/**
+backend/app/adapters/project_agents/openai_agent_sdk.py
+backend/app/interfaces/project_agents.py
+backend/tests/test_projects.py
+.agent-loop/LOOP_STATE.md
+.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/**
+```
+
+Not allowed:
+
+```text
+backend/app/** except listed adapter/interface files
+backend/alembic/**
+backend/tests/** except `backend/tests/test_projects.py`
+backend/scripts/**
+.github/workflows/**
+demos/**
+frontend/**
+payment/reputation/blockchain code
+production secrets or committed .env files
+Terminal Benchmark-specific product runtime code
+```
+
+Acceptance criteria:
+
+- The Terminal Benchmark drill uses guide source snapshots, guide sufficiency
+  reports, project `SubmissionArtifactPolicy`, effective project submission
+  artifact policy, and compiled project `PreSubmitCheckerPolicy`.
+- The guide sufficiency and submission artifact policy derivation endpoints run
+  through the configured OpenAI Agents SDK adapter during the live manual API
+  drill.
+- The OpenAI Agents SDK adapter can return Workstream's open `policy_body`
+  contract without weakening server-side `SubmissionArtifactPolicyInput`
+  validation.
+- The agent-derived policy row remains immutable; exact admin adjustments create
+  a separate manual policy before approval.
+- The drill does not rely on `ProjectGuide.evidence_policy` as the intake
+  contract.
+- The drill does not rely on task `required_files` or `required_evidence` as
+  the source of pre-submit truth.
+- The project submission artifact policy is Terminal Benchmark-shaped but
+  project-scoped, compiled once, and reused by all tasks in the drill.
+- Real fixture hashes feed artifact and evidence manifests without persisting
+  absolute local paths.
+- Pre-submit feedback creates no durable submission or checker rows.
+- The clean path reaches `review_pending`, the checker-caused v1 path reaches
+  `needs_revision`, and the fixed v2 path supersedes v1 and reaches
+  `review_pending`.
+
+Verification:
+
+- Manual live API drill runs against local Postgres and one explicit Termius
+  reviewer fixture path.
+- Targeted adapter regression tests, stale wording scan, ruff, docstring
+  coverage, markdown link check, and diff whitespace checks pass.
+
+Required reviewers:
+
+senior engineering, QA/test, security/auth, product/ops, architecture, docs,
+reuse/dedup, test delta.
+
+Human review focus:
+
+The example remains proof harness code, uses current policy-bundle APIs, keeps
+fixture paths and secrets local, and does not add Terminal Benchmark behavior to
+Workstream runtime.
