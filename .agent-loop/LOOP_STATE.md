@@ -7,12 +7,15 @@
 - Active implementation chunk: `WS-POL-001-06`
 - Branch: `codex/ws-pol-001-06-terminal-benchmark-drill`
 - Status: `WS-POL-001-05` is merged to `main`; `WS-POL-001-06` live manual API
-  proof exposed and fixed an OpenAI Agents SDK adapter issue; PR #67 is open,
-  internal review is complete, GitHub Actions passed, and CodeRabbit reported
-  no actionable comments
+  proof exposed and fixed an OpenAI Agents SDK adapter issue, then this branch
+  removed stale project guide/payment construction-state contracts before
+  continuing pre-submit checker work. Local verification and internal review are
+  complete for implementation SHA `bab2fe8680407dd457016e9023970d7b5fcce95f`.
+  PR #67 needs the new commits pushed so GitHub Actions and CodeRabbit can
+  rerun on the current head.
 - Last merged implementation SHA: `b20988ba79626e1edbc03953aba60f54f2fc94ab`
 - Last merge commit: `b20988ba79626e1edbc03953aba60f54f2fc94ab`
-- Current gate: `WS-POL-001-06` awaiting human merge decision on PR #67
+- Current gate: `WS-POL-001-06` awaiting push, external checks, then human merge decision on PR #67
 - Next chunk: inactive until `WS-POL-001-06` is merged by the user
 
 ## Operating Rule
@@ -72,7 +75,12 @@ runtime redesign.
   paths and local IDs only.
 - `WS-POL-001-06` live drill exposed and fixed an OpenAI Agents SDK adapter
   strict-schema issue for the policy derivation result's open `policy_body`.
+- `WS-POL-001-06` follow-up cleanup removed stale project-owned payment fields
+  and legacy guide checklist fields, preserved server-written activation
+  provenance on reads, added fail-closed migration behavior for old
+  guide-source snapshots, and aligned active docs around `PaymentPolicy` as the
+  payment-term authority.
 - `WS-POL-001-06` internal review evidence is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-06-internal-review-evidence.md`.
 - `WS-POL-001-06` PR trust bundle is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-06-pr-trust-bundle.md`.
-- `WS-POL-001-06` PR #67 is open, mergeable, not draft, and has passing GitHub
-  Actions plus CodeRabbit with no actionable comments.
+- `WS-POL-001-06` PR #67 is open and needs external checks rerun after the
+  latest commits are pushed.

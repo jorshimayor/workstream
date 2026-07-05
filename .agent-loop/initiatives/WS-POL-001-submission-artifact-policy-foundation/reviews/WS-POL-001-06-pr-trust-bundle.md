@@ -10,181 +10,203 @@ Use a real Terminal Benchmark reviewer fixture as an external-project proof for
 the current Workstream setup-agent, project policy-bundle, task locked-context,
 pre-submit, post-submit checker, and revision resubmission lifecycle.
 
+This pass also cleans up stale construction-state product contracts before
+continuing pre-submit checker work.
+
 ## Human-Approved Intent
 
-The user asked to prove Workstream against real Terminal Benchmark material from
-the local Termius workspace without turning Workstream into Terminal Benchmark.
-The proof must behave like real users using the API one endpoint at a time:
-project manager setup, worker pre-submit, submission creation, lock, checker
-execution, revision, and fixed resubmission.
+The user explicitly pushed back that:
+
+- project creation must be shell-only;
+- base amount, currency, and payout terms belong to `PaymentPolicy`;
+- `ProjectGuide` is human-facing guide material, not a machine-readable
+  artifact checklist;
+- stale `evidence_policy` and guide checklist fields should be removed, not
+  preserved through compatibility aliases;
+- request bodies must hard-fail unknown fields;
+- Terminal Benchmark is a real external-project proof harness, not Workstream
+  product runtime.
 
 ## What Changed
 
-- Added the `WS-POL-001-06` chunk contract and loop/status updates.
-- Updated Terminal Benchmark docs/notes to record a live manual HTTP transcript.
-- Kept Terminal Benchmark as example proof material only.
-- Fixed the OpenAI Agents SDK adapter so the policy-derivation endpoint accepts
-  Workstream's open `policy_body` output object while preserving server-side
-  validation through `SubmissionArtifactPolicyInput`.
-- Tightened the policy-derivation prompt to return Workstream's constrained
-  project submission artifact policy shape.
-- Updated adapter isolation tests for the SDK schema wrapper.
-- Left the optional Terminal Benchmark Python scaffold as historical regression
-  material; it is not the proof surface for this chunk.
-
-## Why It Changed
-
-The live manual drill exposed that the OpenAI Agents SDK adapter could run guide
-sufficiency but failed policy derivation before the model call completed because
-the SDK strict schema path rejected the open `policy_body` object. That made the
-real setup-agent route unusable for exactly the flow this chunk was meant to
-prove.
-
-The fix keeps the trust boundary intact: the agent may return an open JSON
-object, but Workstream validates and compiles only a constrained
-`SubmissionArtifactPolicyInput` before activation.
+- Added `0010_remove_legacy_project_guide_fields.py`.
+- Removed project-owned `base_amount` and `currency` columns from the current
+  project shape.
+- Removed legacy structured guide fields from current project guide model/API
+  shape, including `required_task_fields`, `required_submission_fields`,
+  `reviewer_rubric`, `forbidden_actions`, `evidence_policy`, and related
+  checklist fields.
+- Preserved `approved_by` and `effective_at` as server-written guide activation
+  provenance and exposes them on read responses.
+- Kept `approved_by` and `effective_at` forbidden in create/update request
+  bodies.
+- Made `0010` fail closed when existing `guide_source_snapshots` are present,
+  forcing stale setup data to be rebuilt under the current guide-source
+  contract.
+- Updated task screening so it validates task-owned contract fields, not
+  guide-side required fields.
+- Updated active docs/templates/roadmaps so payment terms are policy-owned and
+  task-visible payout fields are locked snapshots from `PaymentPolicy`.
+- Updated the Terminal Benchmark example to require the OpenAI Agents SDK
+  adapter and real Termius project guide, reviewer program, task TOML, and
+  review packet material.
+- Removed Terminal Benchmark-specific derivation shortcuts from the local
+  fixture adapter.
+- Updated tests for request hard gates, activation provenance, migration schema
+  cleanup, stale snapshot fail-closed behavior, task/checker behavior, and the
+  example contract.
 
 ## Design Chosen
 
-Use the real product APIs over HTTP as the authoritative proof:
+The current v0.1 contract is:
 
 ```text
-Project
--> ProjectGuide with Termius material
--> GuideSourceSnapshot
--> ProjectGuideSufficiencyAgent
--> SubmissionArtifactPolicyDerivationAgent
--> immutable agent draft
--> admin exact policy
--> approved effective project policy
--> compiled project PreSubmitCheckerPolicy
--> task locked context
--> worker pre-submit
--> submission lock
--> durable checker run
--> review_pending / needs_revision / fixed v2 review_pending
+Project = shell metadata
+ProjectGuide = human-facing guide material
+PaymentPolicy = base amount, currency, payout type, payout rules
+SubmissionArtifactPolicy = machine-readable artifact intake contract
+Project PreSubmitCheckerPolicy = compiled deterministic pre-submit bundle
+Task = locks guide/source/policy/checker/payment context during screening
 ```
 
-The agent-derived policy remains immutable. If admin review needs exact
-project-specific filenames, the manager creates a separate manual/admin policy
-for approval. That matches the zero-trust setup model: agent output informs the
-process but does not become trusted until Workstream validates and an authorized
-operator approves the final policy.
+There is no compatibility alias for `ProjectGuide.evidence_policy` or guide-side
+required fields. Existing pre-production setup data with guide-source snapshots
+must be rebuilt instead of silently carrying stale provenance through a
+destructive cleanup.
 
 ## Alternatives Rejected
 
-- Treat the Python example script as the proof: rejected after user pushback.
-  The script is secondary regression scaffolding only.
-- Mutate the agent-derived policy row: rejected by the API and by design.
-- Add Terminal Benchmark-specific backend logic: rejected because this is an
-  external-project proof, not product runtime.
-- Weaken policy-body validation to make the SDK happy: rejected. The adapter
-  schema wrapper changed, but server validation stayed strict.
+- Keep project `base_amount` / `currency`: rejected because payment belongs to
+  `PaymentPolicy`.
+- Preserve guide checklist fields as compatibility aliases: rejected because
+  those fields were construction-state shortcuts and would keep the wrong
+  mental model alive.
+- Let old guide-source snapshots survive cleanup: rejected because those hashes
+  may have been calculated from now-deleted guide fields.
+- Generate Terminal Benchmark-specific backend logic: rejected because the
+  example must not become product runtime.
+- Let the Terminal Benchmark example fall back to `local_fixture`: rejected
+  because this proof is meant to exercise the setup-agent route.
 
-## Scope Control
+## Scope
 
-Allowed runtime files:
+Runtime/backend:
 
-- `backend/app/adapters/project_agents/openai_agent_sdk.py`
-- `backend/app/interfaces/project_agents.py`
+- `backend/alembic/versions/0010_remove_legacy_project_guide_fields.py`
+- `backend/app/adapters/project_agents/local_fixture.py`
+- `backend/app/modules/projects/models.py`
+- `backend/app/modules/projects/schemas.py`
+- `backend/app/modules/projects/service.py`
+- `backend/app/modules/tasks/service.py`
+
+Tests:
+
+- `backend/tests/test_alembic.py`
+- `backend/tests/test_checkers.py`
 - `backend/tests/test_projects.py`
+- `backend/tests/test_tasks.py`
 
-Allowed evidence/example files:
+Docs/examples/process:
 
-- `.agent-loop/**`
+- `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/**`
+- `README.md`
+- `docs/architecture_data_model.md`
+- `docs/architecture_lockdown.md`
+- `docs/architecture_system_architecture.md`
+- `docs/operations_operator_workflow.md`
+- `docs/operations_project_operating_manual.md`
+- `docs/operations_queue_policy.md`
+- `docs/operations_reviewer_workflow.md`
+- `docs/product_first_user_flows.md`
+- `docs/roadmap_implementation_backlog.md`
+- `docs/spec_chunk_3_project_guide_foundation.md`
+- `docs/spec_chunk_4_task_queue_assignment.md`
+- `docs/template_project_guide.md`
+- `docs/template_task.md`
 - `examples/terminal_benchmark/**`
-
-No changes were made to migrations, workflows, payment/reputation/blockchain,
-frontend/demo runtime, or Terminal Benchmark-specific product runtime.
 
 ## Product Behavior
 
-The live drill proved:
+- Project create rejects `base_amount` and `currency`.
+- Project guide create/update rejects legacy guide checklist fields and
+  server-written activation provenance fields.
+- Active guide responses expose `approved_by` and `effective_at`.
+- Guide activation still requires complete payment policy context.
+- Task screening stamps payout values from locked payment policy context.
+- Pre-submit failure remains pre-submit feedback / `pre_submission_checker_failed`;
+  it does not create a submission and does not become `needs_revision`.
+- Post-submit checker failure can route a valid immutable submission to
+  `needs_revision`.
+- Fixed v2 submission supersedes v1 and can return to `review_pending`.
 
-- pre-submit failure is `pre_submission_checker_failed`, not `needs_revision`
-- blocked pre-submit and blocked submission creation create no submission rows
-- post-submit checker-caused failure can move the task to `needs_revision`
-- fixed v2 submission supersedes v1 and moves the task back to
-  `review_pending`
-- task-level `required_files` and `required_evidence` are not the intake
-  authority
-- tasks lock project guide/source/policy/checker context at screening
-- project manager/admin approval owns exact policy acceptance after agent
-  derivation
+## Verification
 
-## Live API Proof
-
-The manual HTTP transcript is recorded in
-`.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-06-internal-review-evidence.md`.
-
-Key local outcomes:
-
-- sufficiency agent: `passed`
-- sufficiency and derivation agent calls used the live product endpoints and
-  persisted server-owned agent provenance
-- derivation agent: immutable draft policy persisted
-- admin exact policy approved and compiled
-- active guide exposed compiled project pre-submit checker hash
-- missing `static_guard.txt`: pre-submit failed, submission count stayed `0`,
-  blocked create returned `pre_submission_checker_failed`
-- complete packet: pre-submit passed, durable checker run passed `8/8`, task
-  reached `review_pending`
-- placeholder packet: pre-submit warning, durable checker routed
-  `needs_revision`
-- fixed v2: superseded v1 and returned to `review_pending`
-
-## Tests/Checks Run So Far
+Passed locally:
 
 ```bash
+git diff --check
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
-python3 scripts/test_agent_gates.py
-cd backend && .venv/bin/python -m pytest tests/test_projects.py -k 'openai_agent_sdk_adapter'
-cd backend && .venv/bin/python -m ruff check app tests scripts ../examples/terminal_benchmark
-cd backend && .venv/bin/docstr-coverage app scripts --config .docstr.yaml
-cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@127.0.0.1:5433/workstream_test .venv/bin/python -m pytest tests
-git diff --check && git diff --cached --check
+cd backend && uv run ruff check app tests ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
+cd backend && uv run pytest tests/test_alembic.py -q
+cd backend && uv run pytest tests/test_checkers.py -q
+cd backend && uv run pytest tests/test_tasks.py -q
+cd backend && uv run pytest tests/test_projects.py -q
 ```
 
-Full final verification completed locally.
+Results:
 
-## Reviewer Results
+- `tests/test_alembic.py`: 6 passed
+- `tests/test_checkers.py`: 47 passed
+- `tests/test_tasks.py`: 60 passed
+- `tests/test_projects.py`: 188 passed
 
-| Reviewer | Result | Blocking findings | Notes |
-|---|---:|---|---|
-| senior engineering | PASS AFTER FIXES | None | Confirmed chunk map reviewer alignment, endpoint/provenance evidence, and narrow adapter/interface/test maintainability after fixes. |
-| QA/test | PASS AFTER FIXES | None | Confirmed live manual API evidence proves setup-agent route, agent draft immutability, admin exact policy, pre-submit, post-submit, and fixed v2 path. |
-| security/auth | PASS WITH LOW RISKS | None | Confirmed SDK schema relaxation remains behind Pydantic/service validation and no secret/path leakage was found. |
-| product/ops | PASS WITH LOW RISKS | None | Confirmed project-manager/admin/worker lifecycle, pre-submit failure boundary, durable checker `needs_revision`, and fixed v2 path. |
-| architecture | PASS AFTER FIXES | None | Confirmed allowed scope and no Terminal Benchmark product-runtime leakage; earlier blocker was evidence closure only. |
-| docs | PASS | None | Confirmed manual proof is authoritative, script wording is historical/regression only, and Terminal Benchmark remains example material. |
-| reuse/dedup | PASS | None | Confirmed optional script diff was removed and no current-policy scaffold duplication remains after wording fixes. |
-| test delta | PASS | None | Confirmed adapter regression tests cover schema wrapper and no assertions were weakened. |
+## Internal Review
+
+Evidence:
+
+`.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-06-internal-review-evidence.md`
+
+Reviewed implementation SHA:
+
+`bab2fe8680407dd457016e9023970d7b5fcce95f`
+
+Reviewer summary:
+
+- senior engineering: PASS AFTER FIXES
+- QA/test: PASS
+- security/auth: PASS
+- product/ops: PASS
+- architecture: PASS
+- docs: PASS
+- reuse/dedup: PASS
+- test delta: PASS WITH LOW RISKS
 
 ## External Review
 
-PR #67 external checks completed:
-
-- GitHub Actions `agent-gates`: pass
-- GitHub Actions `Backend / test`: pass
-- GitHub Actions `Week 1 API Demo UI / build-demo-ui`: pass
-- CodeRabbit: pass; no actionable comments generated
+External GitHub Actions and CodeRabbit must rerun after this evidence/status
+commit is pushed. Do not treat the previous PR check state as current for the
+new commits.
 
 ## Remaining Risks
 
-- The real fixture drill is local-only and not CI-required.
-- The live OpenAI agent run depends on ignored local `.env` configuration.
-- The example scaffold imports backend E2E helpers; it remains example code, not
-  runtime structure.
+- The Terminal Benchmark drill is local proof harness code, not CI-required
+  runtime.
+- The live OpenAI Agents SDK drill requires ignored local credentials and model
+  configuration.
+- The migration intentionally blocks databases that already contain
+  `guide_source_snapshots`; any such local pre-production data must be rebuilt
+  through the current policy-bundle path.
 
 ## Human Review Focus
 
+- Confirm project creation is shell-only.
+- Confirm payment terms live in `PaymentPolicy`.
+- Confirm `ProjectGuide` is now human-facing guide material only.
+- Confirm request bodies fail closed for unknown/stale fields.
+- Confirm `0010` intentionally fails closed for old snapshot provenance.
 - Confirm Terminal Benchmark remains example proof only.
-- Confirm the OpenAI Agents SDK adapter fix preserves server validation.
-- Confirm agent-derived policy immutability and manual admin policy adjustment
-  match the intended setup lifecycle.
-- Confirm pre-submit versus `needs_revision` boundary is clear.
-- Confirm no local fixture path or secret is committed.
+- Confirm external checks rerun on the pushed commits before merge.
 
 ## Human Merge Ownership
 
