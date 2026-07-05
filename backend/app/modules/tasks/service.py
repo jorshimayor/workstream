@@ -901,15 +901,7 @@ class TaskService:
         field_values = {
             "title": task.title,
             "description": task.description,
-            "task_type": task.task_type,
-            "difficulty": task.difficulty,
-            "skill_tags": task.skill_tags,
-            "estimated_time_minutes": task.estimated_time_minutes,
             "acceptance_criteria": task.acceptance_criteria,
-            "rejection_criteria": task.rejection_criteria,
-            "required_files": task.required_files,
-            "required_evidence": task.required_evidence,
-            "deadline_at": task.deadline_at,
         }
         missing = [
             field

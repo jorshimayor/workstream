@@ -34,8 +34,13 @@ LEGACY_COLUMNS = (
 )
 
 
-def _legacy_guide_snapshots_exist() -> bool:
-    """Return whether old snapshot provenance must be rebuilt before cleanup."""
+def _pre_cleanup_guide_snapshots_exist() -> bool:
+    """Return whether setup snapshots exist before this destructive cleanup.
+
+    This migration is intentionally safe only when no guide-source snapshots
+    exist. Any guide-source snapshot captured before the guide-field cleanup
+    must be rebuilt under the current content-markdown-only guide contract.
+    """
     bind = op.get_bind()
     count = bind.scalar(sa.text("select count(*) from guide_source_snapshots"))
     return bool(count)
@@ -43,11 +48,11 @@ def _legacy_guide_snapshots_exist() -> bool:
 
 def upgrade() -> None:
     """Remove stale guide fields and project-owned payment duplicates."""
-    if _legacy_guide_snapshots_exist():
+    if _pre_cleanup_guide_snapshots_exist():
         raise RuntimeError(
-            "cannot drop legacy project guide fields while guide source snapshots exist; "
-            "recreate setup data with fresh guide source snapshots under the current "
-            "content_markdown-only guide contract"
+            "0010_guide_cleanup is safe only when no guide source snapshots exist; "
+            "pre-cleanup guide source snapshots exist and must be recreated "
+            "under the current content_markdown-only guide contract"
         )
     op.drop_column("projects", "base_amount")
     op.drop_column("projects", "currency")

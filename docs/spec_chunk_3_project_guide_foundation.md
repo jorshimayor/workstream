@@ -62,10 +62,12 @@ compatibility alias.
 
 Migration note: `0010_guide_cleanup` removes construction-state guide checklist
 columns and project-owned payment duplicates. Base amount and currency belong to
-`PaymentPolicy`. Existing local draft data that used the old guide fields must
-be recreated through the current guide-source snapshot, submission artifact
-policy, effective policy, and checker bundle path; Workstream does not preserve
-an `evidence_policy` or guide checklist compatibility alias.
+`PaymentPolicy`. This migration is intentionally safe only when no guide-source
+snapshots exist. Existing local draft data that already has guide-source
+snapshots must be recreated through the current guide-source snapshot,
+submission artifact policy, effective policy, and checker bundle path;
+Workstream does not preserve an
+`evidence_policy` or guide checklist compatibility alias.
 
 The guide version is the join key for the guide-specific policies.
 

@@ -120,7 +120,7 @@ def reviewer_root(fixture_root_path: Path) -> Path:
     candidates = []
     if configured:
         candidates.append(Path(configured).expanduser())
-    candidates.extend([fixture_root_path, *fixture_root_path.parents])
+    candidates.extend([fixture_root_path, fixture_root_path.parent])
 
     for candidate in candidates:
         project_guide = candidate / "PROJECT_GUIDE.md"

@@ -65,11 +65,11 @@ def test_guide_cleanup_migration_removes_legacy_columns(
         assert f"project_guides.{column}" not in columns
 
 
-def test_guide_cleanup_migration_blocks_existing_snapshots(
+def test_guide_cleanup_migration_blocks_pre_cleanup_snapshots(
     isolated_database_env: str,
     migration_lock,
 ) -> None:
-    """Prove 0010 refuses stale snapshot provenance from the old guide schema."""
+    """Prove 0010 refuses pre-cleanup guide-source snapshot provenance."""
     project_root = Path(__file__).resolve().parents[1]
     config = Config(str(project_root / "alembic.ini"))
     config.set_main_option("script_location", str(project_root / "alembic"))
@@ -81,7 +81,7 @@ def test_guide_cleanup_migration_blocks_existing_snapshots(
             command.upgrade(config, "0009_evaluation_pending_status")
             asyncio.run(_seed_legacy_guide_source_snapshot(isolated_database_env, ids))
 
-            with pytest.raises(RuntimeError, match="guide source snapshots exist"):
+            with pytest.raises(RuntimeError, match="safe only when no guide source snapshots exist"):
                 command.upgrade(config, "head")
         finally:
             command.downgrade(config, "base")

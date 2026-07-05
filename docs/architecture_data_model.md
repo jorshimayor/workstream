@@ -129,12 +129,14 @@ Fields:
 - `id`
 - `project_id`
 - `version`
+- `status`
 - `content_markdown`
 - `change_summary`
 - `approved_by`
 - `effective_at`
 - `created_by`
 - `created_at`
+- `updated_at`
 - `superseded_at`
 
 The guide is versioned and human-facing. Its persisted body is the project
