@@ -4,19 +4,16 @@
 
 - Active initiative: `WS-POL-001` - Submission Artifact Policy Foundation
 - Active planning chunk: none
-- Active implementation chunk: `WS-POL-001-06`
-- Branch: `codex/ws-pol-001-06-terminal-benchmark-drill`
-- Status: `WS-POL-001-05` is merged to `main`; `WS-POL-001-06` live manual API
-  proof exposed and fixed an OpenAI Agents SDK adapter issue, then this branch
-  removed stale project guide/payment construction-state contracts before
-  continuing pre-submit checker work. Local verification and internal review are
-  complete for implementation SHA `96792961c7cb74f31150df803c533fe4c6432636`.
-  PR #67 needs the new commits pushed so GitHub Actions and CodeRabbit can
-  rerun on the current head.
-- Last merged implementation SHA: `b20988ba79626e1edbc03953aba60f54f2fc94ab`
-- Last merge commit: `b20988ba79626e1edbc03953aba60f54f2fc94ab`
-- Current gate: `WS-POL-001-06` awaiting push, external checks, then human merge decision on PR #67
-- Next chunk: inactive until `WS-POL-001-06` is merged by the user
+- Active implementation chunk: `WS-POL-001-07`
+- Branch: `codex/ws-pol-001-07-task-contract-cleanup`
+- Status: `WS-POL-001-06` is merged to `main` through PR #67 as `3cce92c`.
+  `WS-POL-001-07` is active and removes the remaining task-owned
+  `required_files` / `required_evidence` artifact requirement fields from the
+  task API, ORM model, migration state, tests, scripts, and docs.
+- Last merged implementation SHA: `3cce92c`
+- Last merge commit: `3cce92c`
+- Current gate: `WS-POL-001-07` implementation in progress
+- Next chunk: inactive until `WS-POL-001-07` is merged by the user
 
 ## Operating Rule
 
@@ -33,14 +30,12 @@ not implement frontend behavior, payment, reputation, settlement, blockchain
 integrations, post-submit policy splitting, or revision resubmission drill
 behavior.
 
-The active `WS-POL-001-06` chunk uses real Terminal Benchmark reviewer fixture
-material to prove the current Workstream setup-agent route, project policy
-bundle, task locked context, pre-submit, submission versioning, post-submit
-checker, and fixed revision path through live manual API calls. It also fixes a
-narrow OpenAI Agents SDK adapter issue found by that live drill. It must not add
-Terminal Benchmark-specific product runtime code, human review decisions,
-payment, reputation, blockchain integrations, frontend behavior, or agent
-runtime redesign.
+The active `WS-POL-001-07` chunk removes stale task-owned artifact requirement
+fields after the project-guide/payment cleanup exposed the same request-body
+problem at task creation. It must not change project policy derivation, checker
+compilation, post-submit runtime, Terminal Benchmark example behavior,
+frontend behavior, payment, reputation, blockchain integrations, or agent
+runtime design.
 
 ## Last Review State
 
@@ -82,5 +77,6 @@ runtime redesign.
   payment-term authority.
 - `WS-POL-001-06` internal review evidence is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-06-internal-review-evidence.md`.
 - `WS-POL-001-06` PR trust bundle is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-06-pr-trust-bundle.md`.
-- `WS-POL-001-06` PR #67 is open and needs external checks rerun after the
-  latest commits are pushed.
+- PR #67 merged into `main` as `3cce92c`.
+- `WS-POL-001-07` started on branch `codex/ws-pol-001-07-task-contract-cleanup`
+  after the user's explicit start signal.

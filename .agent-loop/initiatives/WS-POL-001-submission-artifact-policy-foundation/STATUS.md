@@ -2,23 +2,19 @@
 
 ## Current Status
 
-`WS-POL-001-01`, `WS-POL-001-02`, `WS-POL-001-03`, `WS-POL-001-04`, and
-`WS-POL-001-05` are merged to `main`. `WS-POL-001-05` merged through PR #66 as
-`b20988ba79626e1edbc03953aba60f54f2fc94ab` after deterministic verification,
-internal reviewer fanout, GitHub Actions, and user merge approval.
+`WS-POL-001-01`, `WS-POL-001-02`, `WS-POL-001-03`, `WS-POL-001-04`,
+`WS-POL-001-05`, and `WS-POL-001-06` are merged to `main`. `WS-POL-001-06`
+merged through PR #67 as `3cce92c` after deterministic verification, internal
+reviewer fanout, GitHub Actions, CodeRabbit review, and user merge approval.
 
-`WS-POL-001-06` is active. It uses real Terminal Benchmark reviewer fixture
-material as an external-project proof for the current Workstream setup-agent,
-policy bundle, and submission/checker lifecycle. The branch now also removes
-stale construction-state project guide and payment request/body contracts before
-continuing pre-submit checker work. Local implementation and internal review
-are complete through implementation SHA
-`96792961c7cb74f31150df803c533fe4c6432636`; PR #67 needs the new commits
-pushed so GitHub Actions and CodeRabbit can rerun on the current head.
+`WS-POL-001-07` is active. Implementation is committed at
+`55cc79a0b6b832519cf9258ad60722e49f2f4b4b`; deterministic checks, internal
+reviewer fanout, and evidence-gate validation have completed. The next gate is
+PR creation, GitHub Actions, CodeRabbit, and human review.
 
 ## Active Chunk
 
-`WS-POL-001-06` - Terminal Benchmark Real Fixture Drill
+`WS-POL-001-07` - Task Contract Artifact Field Cleanup
 
 ## Chunk Status
 
@@ -29,13 +25,14 @@ pushed so GitHub Actions and CodeRabbit can rerun on the current head.
 | `WS-POL-001-03` | Merged | `codex/ws-pol-001-03-task-locked-context` | 63 | Moves task locked-context and submission runtime to the effective policy and project checker bundle. |
 | `WS-POL-001-04` | Merged | `codex/ws-pol-001-04-post-submit-policy` | 65 | Splits post-submit checker policy provenance and locks durable checker runs to post-submit policy context. |
 | `WS-POL-001-05` | Merged | `codex/ws-pol-001-05-revision-resubmission` | 66 | Proves revision resubmission, real API drill, and `evaluation_pending` lifecycle status. |
-| `WS-POL-001-06` | Local verification complete; awaiting push and external checks | `codex/ws-pol-001-06-terminal-benchmark-drill` | 67 | Hardens the Terminal Benchmark proof harness and removes stale project guide/payment contracts before continuing pre-submit checker work. |
+| `WS-POL-001-06` | Merged | `codex/ws-pol-001-06-terminal-benchmark-drill` | 67 | Hardens the Terminal Benchmark proof harness and removes stale project guide/payment contracts before continuing pre-submit checker work. |
+| `WS-POL-001-07` | Internal review complete; PR next | `codex/ws-pol-001-07-task-contract-cleanup` | TBD | Removes task-owned `required_files`/`required_evidence` from request/response/model/migration and keeps artifact requirements project-policy driven. |
 
 ## Blockers
 
 | Blocker | Owner | Next action |
 |---|---|---|
-| New commits not yet externally checked | agent | Push evidence/status commit, then wait for GitHub Actions and CodeRabbit on PR #67. |
+| None | - | Continue bounded implementation for `WS-POL-001-07`. |
 
 ## Follow-Ups
 

@@ -217,8 +217,6 @@ async def main() -> None:
                 "name": f"Week 1 Dry Run {run_id}",
                 "slug": f"week1-dry-run-{run_id}",
                 "description": "Week 1 backend closure dry run",
-                "base_amount": "25.00",
-                "currency": "USD",
             },
         )
         guide = await post_ok(
@@ -227,25 +225,6 @@ async def main() -> None:
             {
                 "version": "v1",
                 "content_markdown": "# Week 1 Dry Run Guide",
-                "required_task_fields": [
-                    "title",
-                    "description",
-                    "acceptance_criteria",
-                    "required_evidence",
-                ],
-                "required_submission_fields": ["summary", "evidence", "worker_attestation"],
-                "task_instructions": "Complete the dry-run task.",
-                "output_requirements": "Submit an artifact manifest and evidence item.",
-                "acceptance_criteria": "The packet is complete.",
-                "rejection_criteria": "The packet is missing evidence.",
-                "reviewer_rubric": "Review packet completeness.",
-                "forbidden_actions": "No credentials or private source data.",
-                "required_skills": ["stem"],
-                "difficulty_scale": {"medium": 2},
-                "estimated_time_policy": {"default_minutes": 45},
-                "common_rejection_reasons": ["missing evidence"],
-                "evidence_policy": {"required": ["log"]},
-                "unacceptable_work_policy": "Copied or unverifiable work.",
                 "change_summary": "Initial dry-run guide",
                 "post_submit_checker_policy": {
                     "required_checkers": ["check_policy_context_present"],
@@ -292,8 +271,6 @@ async def main() -> None:
                 "source_payload_hash": f"sha256:source-{run_id}",
                 "acceptance_criteria": "The submission packet is complete.",
                 "rejection_criteria": "Evidence is missing.",
-                "required_files": ["answer.md"],
-                "required_evidence": ["checker log"],
             },
         )
         await post_ok(

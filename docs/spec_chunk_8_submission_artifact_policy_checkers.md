@@ -114,10 +114,12 @@ Fails when required artifacts are not represented in the artifact manifest.
 
 The checker reads:
 
-- locked project `PreSubmitCheckerPolicy` required artifacts
+- required artifact paths from `context.effective_policy`
 - `submission.artifact_hash_manifest[*].artifact`
 
-`task.required_files` is legacy/transitional storage. It is not the policy source of truth once `SubmissionArtifactPolicy` is implemented.
+Task records do not define required files. Required artifact rules come from
+the locked effective project submission artifact policy loaded into
+`context.effective_policy`.
 
 Matching is exact after path normalization. Chunk 8 does not implement glob matching.
 

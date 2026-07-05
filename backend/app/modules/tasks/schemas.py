@@ -85,8 +85,6 @@ class TaskCreate(BaseModel):
     external_task_id: str | None = None
     acceptance_criteria: str | None = None
     rejection_criteria: str | None = None
-    required_files: list[str] = Field(default_factory=list)
-    required_evidence: list[str] = Field(default_factory=list)
     deadline_at: datetime | None = None
 
 
@@ -181,8 +179,6 @@ class TaskResponse(BaseModel):
     status: str
     acceptance_criteria: str | None
     rejection_criteria: str | None
-    required_files: list[str]
-    required_evidence: list[str]
     deadline_at: datetime | None
     created_by: str
     assigned_to: str | None

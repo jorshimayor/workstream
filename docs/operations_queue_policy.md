@@ -213,7 +213,7 @@ Every operating day starts with:
 
 | Transition | Required Records |
 | --- | --- |
-| `DRAFT -> SCREENING` | project id, locked guide candidate, task-owned contract fields, payment policy |
+| `DRAFT -> SCREENING` | project id, locked guide candidate, task source/description fields, acceptance and rejection criteria, payment policy |
 | `SCREENING -> READY` | screening decision, guide version lock, guide source snapshot id/hash lock, acceptance criteria, effective project submission artifact policy hash lock, project `PreSubmitCheckerPolicy` compiled bundle hash lock, post-submit checker policy, review policy, revision policy, payment policy |
 | `IN_PROGRESS -> SUBMITTED` | blocking pre-submit checks passed, submission packet, artifact hash manifest, evidence references, worker attestation |
 | `SUBMITTED -> EVALUATION_PENDING` | immutable submission version, locked post-submit checker policy id/version/hash/body copied from the task context |

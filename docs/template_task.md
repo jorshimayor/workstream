@@ -43,9 +43,13 @@
 
 Describe the work to be done.
 
-## Required Output
+## Output Notes
 
-List exactly what must be submitted.
+Describe task-specific work in human terms when the description needs more
+detail. Machine-enforced required files, evidence, hashes, packaging, and
+forbidden artifacts are defined by the active project
+`SubmissionArtifactPolicy` and locked project `PreSubmitCheckerPolicy`, not by
+task fields.
 
 ## Acceptance Criteria
 
@@ -57,12 +61,18 @@ List exactly what must be submitted.
 
 - Criterion 1
 
-## Required Evidence
+## Submission Artifact Policy Context
 
-- checker logs
-- output files
-- summary
-- screenshots or hashes when applicable
+These values are stamped from the active project policy bundle during
+screening. Task creators do not provide submission artifact requirement fields
+directly.
+
+- guide source snapshot id:
+- guide source snapshot hash:
+- effective project submission artifact policy id:
+- effective project submission artifact policy hash:
+- project pre-submit checker policy id:
+- project pre-submit checker bundle hash:
 
 ## Locked Payment Policy Snapshot
 

@@ -773,8 +773,6 @@ Fields:
 - `status`
 - `acceptance_criteria`
 - `rejection_criteria`
-- `required_files` (legacy display snapshot)
-- `required_evidence` (legacy display snapshot)
 - `deadline_at`
 - `created_by`
 - `assigned_to`

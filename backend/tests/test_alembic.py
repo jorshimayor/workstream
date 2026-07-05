@@ -29,7 +29,7 @@ def test_guide_cleanup_migration_removes_legacy_columns(
     isolated_database_env: str,
     migration_lock,
 ) -> None:
-    """Prove current schema removes old guide fields and project payment duplicates."""
+    """Prove current schema removes old guide, project, and task shortcuts."""
     project_root = Path(__file__).resolve().parents[1]
     config = Config(str(project_root / "alembic.ini"))
     config.set_main_option("script_location", str(project_root / "alembic"))
@@ -44,6 +44,8 @@ def test_guide_cleanup_migration_removes_legacy_columns(
 
     assert "projects.base_amount" not in columns
     assert "projects.currency" not in columns
+    assert "workstream_tasks.required_files" not in columns
+    assert "workstream_tasks.required_evidence" not in columns
     assert "project_guides.approved_by" in columns
     assert "project_guides.effective_at" in columns
     for column in (

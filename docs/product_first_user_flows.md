@@ -30,8 +30,8 @@ Acceptance:
 ## Flow 2: Operator Creates A Task
 
 1. Operator selects active project.
-2. Operator creates task with title, description, expected output, acceptance criteria, deadline, and difficulty.
-3. Workstream validates the task-owned contract fields and confirms the task fits the active project guide and policy bundle.
+2. Operator creates task with title, description, source reference, acceptance criteria, rejection criteria, deadline, and difficulty.
+3. Workstream validates the task source and reviewability fields, then confirms the task fits the active project guide and policy bundle.
 4. Task enters `SCREENING`.
 5. Screening locks the guide source snapshot id/hash, effective project submission artifact policy hash, and project pre-submit checker bundle hash, then confirms task contract, post-submit checker policy, review policy, revision policy, payment policy, and reviewability.
 6. Task enters `READY`.
