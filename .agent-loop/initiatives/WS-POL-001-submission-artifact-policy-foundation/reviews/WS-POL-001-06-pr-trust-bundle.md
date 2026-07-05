@@ -56,6 +56,10 @@ The user explicitly pushed back that:
   contracts: shell project creation, payment terms only under `PaymentPolicy`,
   human-facing guide content plus policy records, and no task
   `required_files`/`required_evidence` intake-policy inputs.
+- Addressed CodeRabbit review feedback by clarifying the fail-closed migration
+  guard, aligning the `ProjectGuide` field list with the ORM model, removing
+  dead task-validation map entries, and bounding Terminal Benchmark
+  reviewer-root discovery.
 - Updated tests for request hard gates, activation provenance, migration schema
   cleanup, stale snapshot fail-closed behavior, task/checker behavior, and the
   example contract.
@@ -158,6 +162,9 @@ cd backend && uv run pytest tests/test_checkers.py -q
 cd backend && uv run pytest tests/test_tasks.py -q
 cd backend && uv run pytest tests/test_projects.py -q
 cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test uv run python scripts/week1_api_e2e.py
+cd backend && .venv/bin/python -m ruff check app tests scripts ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
+cd backend && .venv/bin/python -m pytest tests/test_alembic.py -q
+cd backend && .venv/bin/python -m pytest tests/test_tasks.py -k 'screen or missing or required or locked_context' -q
 ```
 
 Results:
@@ -167,6 +174,10 @@ Results:
 - `tests/test_tasks.py`: 60 passed
 - `tests/test_projects.py`: 188 passed
 - `scripts/week1_api_e2e.py`: passed against local Postgres on 2026-07-05
+- CodeRabbit fix validation:
+  - ruff: passed
+  - `tests/test_alembic.py`: 6 passed
+  - targeted task screening/locked-context subset: 11 passed, 49 deselected
 
 ## Internal Review
 
@@ -176,19 +187,19 @@ Evidence:
 
 Reviewed implementation SHA:
 
-`e01ac246409aed587e42c065b718b2d4db87ea1f`
+`96792961c7cb74f31150df803c533fe4c6432636`
 
 Reviewer summary:
 
-- senior engineering: PASS WITH LOW RISKS
-- QA/test: PASS AFTER FIXES
+- senior engineering: PASS
+- QA/test: PASS WITH LOW RISKS
 - security/auth: PASS WITH LOW RISKS
-- product/ops: PASS WITH LOW RISKS
-- architecture: PASS WITH LOW RISKS
-- docs: PASS AFTER FIXES
-- reuse/dedup: PASS
-- test delta: PASS
-- CI integrity: PASS WITH LOW RISKS
+- product/ops: PASS
+- architecture: PASS
+- docs: PASS WITH LOW RISKS
+- reuse/dedup: PASS WITH LOW RISKS
+- test delta: PASS WITH LOW RISKS
+- CI integrity: PASS AFTER FIXES
 
 ## External Review
 

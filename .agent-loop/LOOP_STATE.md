@@ -10,7 +10,7 @@
   proof exposed and fixed an OpenAI Agents SDK adapter issue, then this branch
   removed stale project guide/payment construction-state contracts before
   continuing pre-submit checker work. Local verification and internal review are
-  complete for implementation SHA `e01ac246409aed587e42c065b718b2d4db87ea1f`.
+  complete for implementation SHA `96792961c7cb74f31150df803c533fe4c6432636`.
   PR #67 needs the new commits pushed so GitHub Actions and CodeRabbit can
   rerun on the current head.
 - Last merged implementation SHA: `b20988ba79626e1edbc03953aba60f54f2fc94ab`
