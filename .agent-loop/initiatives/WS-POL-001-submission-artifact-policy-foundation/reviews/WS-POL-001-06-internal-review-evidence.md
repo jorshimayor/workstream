@@ -10,9 +10,9 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: pending-final-commit-sha
+Reviewed code SHA: 58f802097eb03de35022451f299d4992c102010d
 
-Reviewed at: pending-final-review-timestamp
+Reviewed at: 2026-07-05T02:33:04Z
 
 Reviewer run IDs: 019f3010-b6a4-7cf0-9408-f5dff13b6eaf, 019f3017-56f2-7040-95fb-51d26577d818, 019f3010-fd7f-7261-9990-dcc50edbd542, 019f3017-7612-7582-974d-a5765b07c983, 019f3011-3f7c-73b3-9044-75aa70d29b4c, 019f3017-9d0a-7e02-bca4-221ed52463ba, 019f3017-c65d-7802-a56f-f98b480d3a25, 019f301c-22ff-75d3-b0b8-4c3192e69b51, 019f3017-f130-7613-be94-128ac8c8f1ec
 
