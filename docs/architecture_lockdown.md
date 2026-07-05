@@ -113,9 +113,9 @@ Every task must carry enough information to make claiming, checking, reviewing, 
 - difficulty
 - skill tags
 - estimated time when known
-- base amount
-- currency
-- payout type
+- locked payment policy amount
+- locked payment policy currency
+- locked payment policy payout type
 - deadline or SLA when applicable
 - source type and source reference when imported
 

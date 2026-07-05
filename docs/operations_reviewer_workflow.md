@@ -166,6 +166,6 @@ During the first 30 days, sample at least:
 
 - 25 percent of accepted submissions
 - 25 percent of rejected submissions
-- any submission with payment above the project base amount
+- any submission above the configured second-review payment-policy threshold
 
 Second review checks whether the first reviewer followed the guide, cited evidence, and made the correct decision type.

@@ -100,7 +100,6 @@ Owns:
 
 - project metadata
 - guide
-- base payout
 - submission artifact policy
 - generated project pre-submit checker policy
 - post-submit checker policy
@@ -200,7 +199,7 @@ Owns:
 
 Owns:
 
-- base amount
+- payment records derived from locked payment policy context
 - accepted amount
 - pending payout
 - paid amount

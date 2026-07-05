@@ -27,7 +27,7 @@ from app.db.base import Base
 
 
 class Project(Base):
-    """Project container that owns guide versions and shared payout defaults."""
+    """Project container that owns guide versions."""
 
     __tablename__ = "projects"
 
@@ -36,8 +36,6 @@ class Project(Base):
     slug: Mapped[str] = mapped_column(String(120), nullable=False, unique=True, index=True)
     description: Mapped[str | None] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(30), nullable=False, default="draft", index=True)
-    base_amount: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
-    currency: Mapped[str | None] = mapped_column(String(20))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -52,7 +50,7 @@ class Project(Base):
 
 
 class ProjectGuide(Base):
-    """Versioned project guide that defines task and submission expectations."""
+    """Versioned human-facing project guide material."""
 
     __tablename__ = "project_guides"
     __table_args__ = (
@@ -70,27 +68,9 @@ class ProjectGuide(Base):
     version: Mapped[str] = mapped_column(String(50), nullable=False)
     status: Mapped[str] = mapped_column(String(30), nullable=False, default="draft", index=True)
     content_markdown: Mapped[str] = mapped_column(Text, nullable=False)
-    required_task_fields: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
-    required_submission_fields: Mapped[list[str]] = mapped_column(
-        JSON,
-        nullable=False,
-        default=list,
-    )
-    task_instructions: Mapped[str | None] = mapped_column(Text)
-    output_requirements: Mapped[str | None] = mapped_column(Text)
-    acceptance_criteria: Mapped[str | None] = mapped_column(Text)
-    rejection_criteria: Mapped[str | None] = mapped_column(Text)
-    reviewer_rubric: Mapped[str | None] = mapped_column(Text)
-    forbidden_actions: Mapped[str | None] = mapped_column(Text)
-    required_skills: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
-    difficulty_scale: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
-    estimated_time_policy: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
-    common_rejection_reasons: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
-    evidence_policy: Mapped[dict | None] = mapped_column(JSON)
-    unacceptable_work_policy: Mapped[str | None] = mapped_column(Text)
+    change_summary: Mapped[str | None] = mapped_column(Text)
     approved_by: Mapped[str | None] = mapped_column(String(100))
     effective_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    change_summary: Mapped[str | None] = mapped_column(Text)
     created_by: Mapped[str] = mapped_column(String(100), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(

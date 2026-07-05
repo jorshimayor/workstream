@@ -42,7 +42,7 @@ Tracks accepted work, pending payout, payout submitted, and paid states.
 3. Create task title and description.
 4. Add acceptance criteria.
 5. Add required output format.
-6. Set base amount.
+6. Confirm the active payment policy amount and currency that will be locked onto the task.
 7. Set skill tags.
 8. Run task schema check.
 9. Move to READY.

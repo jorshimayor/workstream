@@ -33,8 +33,31 @@ handling and path redaction matter.
 ```text
 examples/terminal_benchmark/**
 backend/app/adapters/project_agents/openai_agent_sdk.py
+backend/app/adapters/project_agents/local_fixture.py
 backend/app/interfaces/project_agents.py
+backend/app/modules/projects/models.py
+backend/app/modules/projects/schemas.py
+backend/app/modules/projects/service.py
+backend/app/modules/tasks/service.py
+backend/alembic/versions/0010_remove_legacy_project_guide_fields.py
 backend/tests/test_projects.py
+backend/tests/test_tasks.py
+backend/tests/test_checkers.py
+backend/tests/test_alembic.py
+README.md
+docs/architecture_lockdown.md
+docs/architecture_data_model.md
+docs/architecture_system_architecture.md
+docs/operations_project_operating_manual.md
+docs/operations_operator_workflow.md
+docs/operations_queue_policy.md
+docs/operations_reviewer_workflow.md
+docs/product_first_user_flows.md
+docs/roadmap_implementation_backlog.md
+docs/spec_chunk_3_project_guide_foundation.md
+docs/spec_chunk_4_task_queue_assignment.md
+docs/template_project_guide.md
+docs/template_task.md
 .agent-loop/LOOP_STATE.md
 .agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/**
 ```
@@ -45,9 +68,18 @@ backend/tests/test_projects.py
 backend/app/** except:
   backend/app/adapters/project_agents/openai_agent_sdk.py
   backend/app/interfaces/project_agents.py
-backend/alembic/**
+  backend/app/adapters/project_agents/local_fixture.py
+  backend/app/modules/projects/models.py
+  backend/app/modules/projects/schemas.py
+  backend/app/modules/projects/service.py
+  backend/app/modules/tasks/service.py
+backend/alembic/** except:
+  backend/alembic/versions/0010_remove_legacy_project_guide_fields.py
 backend/tests/** except:
   backend/tests/test_projects.py
+  backend/tests/test_tasks.py
+  backend/tests/test_checkers.py
+  backend/tests/test_alembic.py
 backend/scripts/**
 .github/workflows/**
 demos/**
@@ -57,9 +89,9 @@ production secrets or committed .env files
 Terminal Benchmark-specific product runtime code
 ```
 
-If the drill exposes any additional runtime bug outside the listed adapter
-boundary, stop and create a separate implementation chunk instead of widening
-this proof harness again.
+The user explicitly expanded this chunk to clean stale project-guide and
+project-payment request/body contracts before continuing the pre-submit checker
+work. Further unrelated runtime bugs still require a separate chunk.
 
 ## Acceptance Criteria
 
@@ -67,6 +99,12 @@ this proof harness again.
   guide source snapshot, guide sufficiency report, project
   `SubmissionArtifactPolicy`, effective project submission artifact policy, and
   compiled project `PreSubmitCheckerPolicy`.
+- Project creation is shell-only; base amount and currency live in
+  `PaymentPolicy`.
+- Project guide create/update/response bodies expose guide content and policy
+  records only. Legacy guide checklist fields are rejected by `extra="forbid"`
+  and removed from the current database shape.
+- Task screening no longer reads guide-side required task fields.
 - The guide sufficiency and submission artifact policy derivation endpoints run
   through the configured OpenAI Agents SDK adapter during the live manual drill.
 - The OpenAI Agents SDK adapter accepts Workstream's intentionally open
@@ -75,8 +113,8 @@ this proof harness again.
 - The agent-derived policy row remains immutable; if admin review needs exact
   project-specific filenames, the manager creates a separate manual/admin
   policy before approval.
-- The drill does not rely on `ProjectGuide.evidence_policy` as the intake
-  contract.
+- The drill uses `SubmissionArtifactPolicy` and the compiled project
+  `PreSubmitCheckerPolicy` as the intake contract.
 - The drill does not rely on task `required_files` or `required_evidence` as the
   source of pre-submit truth.
 - The guide source snapshot is built from real Termius material, including the
@@ -93,9 +131,8 @@ this proof harness again.
   `PreSubmitCheckerPolicy` and creates no durable submission or checker rows.
 - A blocking pre-submit failure returns worker-facing pre-submit failure details
   and creates no submission version.
-- A deliberately incomplete v1 submission can still be forced through the API
-  path only where the current v0.1 drill intentionally proves post-submit
-  checker-caused `needs_revision`.
+- A worker-fixable post-submit checker failure can reach `needs_revision` only
+  after the packet passes pre-submit intake and becomes an immutable submission.
 - A fixed v2 submission supersedes v1, keeps v1 immutable, and reaches
   `review_pending`.
 - Database invariants prove submission, evidence, checker-run, audit, route,
@@ -111,6 +148,9 @@ python3 scripts/check_stale_workstream_wording.py
 cd backend && .venv/bin/python -m ruff check app tests scripts ../examples/terminal_benchmark
 cd backend && .venv/bin/docstr-coverage app scripts --config .docstr.yaml
 cd backend && .venv/bin/python -m pytest tests/test_projects.py -k 'openai_agent_sdk_adapter'
+cd backend && .venv/bin/python -m pytest tests/test_projects.py
+cd backend && .venv/bin/python -m pytest tests/test_tasks.py
+cd backend && .venv/bin/python -m pytest tests/test_alembic.py
 cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test WORKSTREAM_TERMINAL_BENCH_FIXTURE=/path/to/local/terminal-benchmark-fixture .venv/bin/python ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
 ```
 
@@ -138,6 +178,8 @@ recorded in internal evidence.
 - The example remains proof harness code and does not leak into product runtime.
 - The drill uses current policy-bundle APIs instead of legacy guide/task intake
   fields.
+- Project guide and project creation request bodies no longer accept stale
+  policy/payment fields.
 - The real fixture path and OpenAI key stay local and uncommitted.
 - The Terminal Benchmark terms are examples of an external project shape, not
   Workstream product terminology.

@@ -35,7 +35,7 @@ Different projects speak different domain languages, but serious task evaluation
 - every project has a guide
 - every project has an approved submission artifact policy
 - every task belongs to a project
-- every project has a base amount or payment policy
+- every project has a payment policy that carries base amount, currency, and payout rules
 - every task has acceptance criteria
 - every submission has required artifacts, evidence references, hashes, and worker attestation
 - every invalid submission packet is blocked before submission creation

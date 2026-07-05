@@ -57,9 +57,14 @@ from week2_api_e2e import (
 )
 
 FIXTURE_ENV_VAR = "WORKSTREAM_TERMINAL_BENCH_FIXTURE"
+REVIEWER_ROOT_ENV_VAR = "WORKSTREAM_TERMIUS_REVIEWER_ROOT"
 LOCAL_DATABASE_HOSTS = {"localhost", "127.0.0.1", "::1"}
 LOCAL_DATABASE_NAMES = {"workstream_test", "test_workstream"}
 ASYNC_POSTGRES_SCHEMES = {"postgresql+asyncpg"}
+REQUIRED_OPENAI_AGENT_SDK_ENV = (
+    "OPENAI_API_KEY",
+    "WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL",
+)
 
 
 @dataclass(frozen=True)
@@ -78,6 +83,8 @@ class TerminalBenchmarkFixture:
 
     root: Path
     fixture_id: str
+    project_guide: Path
+    reviewer_program: Path
     task_toml: Path
     submission_zip: Path
     static_guard: Path
@@ -105,6 +112,36 @@ def fixture_root() -> Path:
         "fixture directory, for example a Termius review folder containing extracted/task.toml, "
         "one *_submission_*.zip, one review_packet_*.md, static_guard.txt, and verifier logs."
     )
+
+
+def reviewer_root(fixture_root_path: Path) -> Path:
+    """Resolve the Termius reviewer root containing real guide/program material."""
+    configured = os.environ.get(REVIEWER_ROOT_ENV_VAR)
+    candidates = []
+    if configured:
+        candidates.append(Path(configured).expanduser())
+    candidates.extend([fixture_root_path, *fixture_root_path.parents])
+
+    for candidate in candidates:
+        project_guide = candidate / "PROJECT_GUIDE.md"
+        reviewer_program = candidate / "REVIEWER_PROGRAM.md"
+        if project_guide.is_file() and reviewer_program.is_file():
+            return candidate.resolve()
+    raise RuntimeError(
+        f"could not find PROJECT_GUIDE.md and REVIEWER_PROGRAM.md. Set {REVIEWER_ROOT_ENV_VAR} "
+        "to the local Termius reviewer root."
+    )
+
+
+def require_openai_agent_sdk_environment(env: dict[str, str]) -> None:
+    """Force the live setup-agent adapter for this real API drill."""
+    env["WORKSTREAM_PROJECT_AGENT_RUNTIME_ADAPTER"] = "openai_agent_sdk"
+    missing = [name for name in REQUIRED_OPENAI_AGENT_SDK_ENV if not env.get(name)]
+    if missing:
+        raise RuntimeError(
+            "Terminal Benchmark API drill requires the OpenAI Agents SDK adapter. "
+            f"Set required environment variables: {', '.join(missing)}"
+        )
 
 
 def require_single_fixture_match(root: Path, pattern: str, label: str) -> Path:
@@ -190,9 +227,12 @@ def load_fixture(root: Path) -> TerminalBenchmarkFixture:
 
     with task_toml.open("rb") as file:
         task_config = tomllib.load(file)
+    termius_root = reviewer_root(root)
     return TerminalBenchmarkFixture(
         root=root,
         fixture_id=sanitized_fixture_id(task_toml, submission_zip),
+        project_guide=termius_root / "PROJECT_GUIDE.md",
+        reviewer_program=termius_root / "REVIEWER_PROGRAM.md",
         task_toml=task_toml,
         submission_zip=submission_zip,
         static_guard=root / "static_guard.txt",
@@ -210,6 +250,34 @@ def sha256_token(path: Path) -> str:
     """Hash one real fixture file using Workstream's structural token shape."""
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
     return f"sha256:{digest}"
+
+
+def safe_ref_segment(value: str) -> str:
+    """Return a safe opaque source-ref segment from fixture identity."""
+    normalized = re.sub(r"[^A-Za-z0-9_.-]+", "-", value.strip()).strip("-")
+    return normalized or "fixture"
+
+
+def policy_key(value: str) -> str:
+    """Return a stable policy key from human-readable fixture labels."""
+    normalized = re.sub(r"[^a-z0-9]+", "_", value.strip().lower())
+    return normalized.strip("_")
+
+
+def text_excerpt(path: Path, *, limit: int = 4000) -> str | None:
+    """Read a bounded text excerpt for source-snapshot material."""
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore").strip()
+    except OSError:
+        return None
+    if not text:
+        return None
+    return text[:limit]
+
+
+def text_content(path: Path) -> str:
+    """Read full trusted local setup material for the guide body."""
+    return path.read_text(encoding="utf-8", errors="ignore").strip()
 
 
 def artifact_entry(file: FixtureFile) -> dict:
@@ -234,6 +302,7 @@ def evidence_entry(file: FixtureFile, fixture: TerminalBenchmarkFixture) -> dict
             "source": "terminal_benchmark_fixture",
             "fixture_id": fixture.fixture_id,
             "artifact": file.artifact_name,
+            "policy_key": policy_key(file.label),
         },
     }
 
@@ -314,76 +383,39 @@ def task_payload(fixture: TerminalBenchmarkFixture, run_id: str, suffix: str) ->
         "rejection_criteria": (
             "Missing required Terminal Benchmark artifacts or evidence blocks review."
         ),
-        "required_files": ["submission.zip", "task.toml", "static_guard.txt", "review_packet.md"],
-        "required_evidence": [
-            "evidence references",
-        ],
     }
 
 
 def guide_payload(fixture: TerminalBenchmarkFixture, run_id: str) -> dict:
     """Build a project guide around the Terminal Benchmark fixture contract."""
-    metadata = fixture.metadata
+    project_guide = text_content(fixture.project_guide)
+    reviewer_program = text_content(fixture.reviewer_program)
+    task_toml = text_content(fixture.task_toml)
+    review_packet = text_content(fixture.review_packet)
     return {
         "version": "v1",
         "content_markdown": (
             f"# Terminal Benchmark Guide {run_id}\n\n"
-            "This guide models the Terminal Benchmark reviewer fixture contract captured "
-            "by this packet for a real "
-            f"Terminal Benchmark task: `{fixture.fixture_id}`.\n\n"
-            "A reviewable packet must carry the task configuration, original "
-            "submission archive, static guard output, AutoEval or review packet "
-            "evidence, and verifier logs."
+            f"Fixture: `{fixture.fixture_id}`\n\n"
+            "## Termius Project Guide\n\n"
+            f"{project_guide}\n\n"
+            "## Termius Reviewer Program\n\n"
+            f"{reviewer_program}\n\n"
+            "## Selected Terminal Benchmark Task TOML\n\n"
+            "```toml\n"
+            f"{task_toml}\n"
+            "```\n\n"
+            "## Selected Review Packet\n\n"
+            f"{review_packet}"
         ),
-        "required_task_fields": [
-            "title",
-            "description",
-            "acceptance_criteria",
-            "required_files",
-            "required_evidence",
-        ],
-        "required_submission_fields": [
-            "summary",
-            "artifact_hash_manifest",
-            "evidence_items",
-            "worker_attestation",
-        ],
-        "task_instructions": (
-            "Use the Terminal Benchmark task packet and evidence bundle to evaluate "
-            "whether the submitted task is structurally reviewable."
-        ),
-        "output_requirements": (
-            "Submission packets must include local, R2, or S3 references with sha256 "
-            "hash tokens for every required artifact and evidence item."
-        ),
-        "acceptance_criteria": "All required Terminal Benchmark packet files are present.",
-        "rejection_criteria": "A required packet file or evidence item is missing.",
-        "reviewer_rubric": (
-            "Check task packet completeness, static guard evidence, and verifier logs "
-            "before any human review decision."
-        ),
-        "forbidden_actions": "Do not include credentials, secrets, or private platform data.",
-        "required_skills": list(dict.fromkeys(metadata["tags"])),
-        "difficulty_scale": {metadata["difficulty"]: 2},
-        "estimated_time_policy": {
-            "expert_minutes": metadata["expert_time_estimate_min"],
-            "junior_minutes": metadata["junior_time_estimate_min"],
-        },
-        "common_rejection_reasons": ["missing static guard", "missing verifier evidence"],
-        "evidence_policy": {
-            "required": [
-                "static_guard.txt",
-                "review_packet.md",
-                "oracle_test.log",
-                "starter_m1_test.log",
-            ]
-        },
-        "unacceptable_work_policy": "Unverifiable or incomplete task packets are not reviewable.",
         "change_summary": "Initial Terminal Benchmark real-world guide",
-        "checker_policy": {
-            "required_checkers": ["check_policy_context_present"],
+        "post_submit_checker_policy": {
+            "required_checkers": [
+                "check_policy_context_present",
+                "check_low_quality_generated_artifacts",
+            ],
             "warning_checkers": [],
-            "blocking_severities": ["high"],
+            "blocking_severities": ["high", "medium"],
         },
         "review_policy": {
             "requires_second_review": False,
@@ -415,21 +447,101 @@ def submission_payload(
     suffix: str,
     *,
     include_static_guard: bool,
+    low_quality_signal: bool = False,
 ) -> dict:
     """Build a submission packet from real Terminal Benchmark fixture files."""
     files = fixture_files(fixture)
     if not include_static_guard:
         files = [file for file in files if file.artifact_name != "static_guard.txt"]
+    summary = (
+        f"Terminal Benchmark {fixture.fixture_id} packet {suffix} from real "
+        "reviewer-side fixture evidence."
+    )
+    if low_quality_signal:
+        summary += " Placeholder sample output requires reviewer revision."
     return {
-        "summary": (
-            f"Terminal Benchmark {fixture.fixture_id} packet {suffix} from real "
-            "reviewer-side fixture evidence."
-        ),
+        "summary": summary,
         "package_uri": f"local://termius/{fixture.fixture_id}/submission.zip",
         "package_hash": sha256_token(fixture.submission_zip),
         "artifact_hash_manifest": [artifact_entry(file) for file in files],
         "worker_attestation": STRONG_ATTESTATION,
         "evidence_items": [evidence_entry(file, fixture) for file in files[1:]],
+    }
+
+
+def source_snapshot_payload(fixture: TerminalBenchmarkFixture) -> dict:
+    """Build an opaque guide-source snapshot from real fixture material."""
+    fixture_segment = safe_ref_segment(fixture.fixture_id)
+    source_files = [
+        ("project_guide", "PROJECT_GUIDE.md", fixture.project_guide, "text/markdown"),
+        ("reviewer_program", "REVIEWER_PROGRAM.md", fixture.reviewer_program, "text/markdown"),
+        ("task_material", "task.toml", fixture.task_toml, "text/toml"),
+        ("review_packet", "review_packet.md", fixture.review_packet, "text/markdown"),
+        ("static_guard", "static_guard.txt", fixture.static_guard, "text/plain"),
+        ("build_log", "docker_build.log", fixture.docker_build_log, "text/plain"),
+        ("verifier_log", "oracle_test.log", fixture.oracle_log, "text/plain"),
+        ("verifier_log", "starter_m1_test.log", fixture.starter_log, "text/plain"),
+    ]
+    return {
+        "items": [
+            {
+                "source_kind": source_kind,
+                "durable_ref": f"import:/fixtures/{fixture_segment}/{artifact_name}",
+                "ingestion_adapter": "manual_fixture_import",
+                "content_hash": sha256_token(path),
+                "content_cid": None,
+                "media_type": media_type,
+                "content_excerpt": text_excerpt(path),
+            }
+            for source_kind, artifact_name, path, media_type in source_files
+        ]
+    }
+
+
+def terminal_benchmark_submission_artifact_policy_body(
+    fixture: TerminalBenchmarkFixture,
+) -> dict:
+    """Build the exact project artifact policy used by this example fixture."""
+    files = fixture_files(fixture)
+    evidence_files = files[1:]
+    return {
+        "required_artifacts": [
+            {
+                "key": policy_key(file.artifact_name),
+                "path": file.artifact_name,
+                "hash_required": True,
+                "required": True,
+                "description": file.notes,
+            }
+            for file in files
+        ],
+        "required_evidence": [
+            {
+                "key": policy_key(file.label),
+                "label": file.label,
+                "hash_required": True,
+                "required": True,
+                "description": file.notes,
+            }
+            for file in evidence_files
+        ],
+        "forbidden_artifacts": [],
+        "attestation_terms": [
+            "original_work",
+            "credentials_and_secret_exclusion",
+            "real_api_originality",
+            "human_accountability_for_agent_assisted_work",
+        ],
+        "manifest_required": True,
+        "artifact_hash_required": True,
+        "artifact_hash_algorithm": "sha256",
+        "allowed_storage_schemes": ["local", "s3", "r2"],
+        "maximum_file_size_bytes": None,
+        "maximum_package_size_bytes": None,
+        "packaging": {
+            "package_required": True,
+            "allowed_package_formats": ["zip"],
+        },
     }
 
 
@@ -504,7 +616,7 @@ async def create_project_with_terminal_benchmark_guide(
     fixture: TerminalBenchmarkFixture,
     run_id: str,
 ) -> dict:
-    """Create a Workstream project and active guide from a Terminal Benchmark fixture."""
+    """Create a project and activate it through the current policy-bundle path."""
     project = await request_json(
         client,
         "POST",
@@ -514,8 +626,6 @@ async def create_project_with_terminal_benchmark_guide(
             "name": f"Terminal Benchmark Real API {run_id}",
             "slug": f"terminal-benchmark-real-api-{run_id}",
             "description": "Real Terminal Benchmark fixture used as Workstream API evidence.",
-            "base_amount": "25.00",
-            "currency": "USD",
         },
         201,
     )
@@ -527,6 +637,75 @@ async def create_project_with_terminal_benchmark_guide(
         guide_payload(fixture, run_id),
         201,
     )
+    snapshot = await request_json(
+        client,
+        "POST",
+        f"/api/v1/projects/{project['id']}/guides/{guide['id']}/source-snapshots",
+        manager_token,
+        source_snapshot_payload(fixture),
+        201,
+    )
+    sufficiency = await request_json(
+        client,
+        "POST",
+        f"/api/v1/projects/{project['id']}/guides/{guide['id']}/source-snapshots/"
+        f"{snapshot['id']}/run-sufficiency-agent",
+        manager_token,
+        expected_status=201,
+    )
+    if sufficiency["status"] == "passed_with_warnings":
+        sufficiency = await request_json(
+            client,
+            "POST",
+            f"/api/v1/projects/{project['id']}/guides/{guide['id']}/sufficiency-reports/"
+            f"{sufficiency['id']}/acknowledge-warnings",
+            manager_token,
+            {"acknowledgement_note": "Example fixture warnings reviewed by project manager."},
+        )
+    ensure(
+        sufficiency["status"] in {"passed", "passed_with_warnings"},
+        f"guide sufficiency did not pass: {sufficiency['status']}",
+    )
+    derived = await request_json(
+        client,
+        "POST",
+        f"/api/v1/projects/{project['id']}/guides/{guide['id']}/source-snapshots/"
+        f"{snapshot['id']}/derive-submission-artifact-policy",
+        manager_token,
+        expected_status=201,
+    )
+    ensure(
+        derived["derivation_source"] == "agent_derivation",
+        "policy derivation agent did not create an agent-derived draft policy",
+    )
+    manual_policy = await request_json(
+        client,
+        "POST",
+        f"/api/v1/projects/{project['id']}/guides/{guide['id']}/submission-artifact-policies",
+        manager_token,
+        {
+            "source_snapshot_id": snapshot["id"],
+            "policy_version": "v1-terminal-benchmark-admin",
+            "policy_body": terminal_benchmark_submission_artifact_policy_body(fixture),
+            "change_summary": (
+                "Admin-reviewed exact Terminal Benchmark artifact policy derived from "
+                "the guide source snapshot and real fixture material."
+            ),
+        },
+        201,
+    )
+    effective = await request_json(
+        client,
+        "POST",
+        f"/api/v1/projects/{project['id']}/guides/{guide['id']}/submission-artifact-policies/"
+        f"{manual_policy['id']}/approve",
+        manager_token,
+        {"approval_note": "Approved exact Terminal Benchmark intake contract."},
+    )
+    ensure(
+        effective["source_snapshot_hash"] == snapshot["bundle_hash"],
+        "effective policy did not bind to the guide source snapshot",
+    )
     active = await request_json(
         client,
         "POST",
@@ -534,6 +713,19 @@ async def create_project_with_terminal_benchmark_guide(
         manager_token,
     )
     ensure(active["guide"]["version"] == "v1", "Terminal Benchmark guide did not activate v1")
+    ensure(
+        active["guide_source_snapshot"]["bundle_hash"] == snapshot["bundle_hash"],
+        "active guide did not bind to source snapshot",
+    )
+    ensure(
+        active["effective_submission_artifact_policy"]["effective_policy_hash"]
+        == effective["effective_policy_hash"],
+        "active guide did not bind to effective project policy",
+    )
+    ensure(
+        active["pre_submit_checker_policy"]["compiled_bundle_hash"],
+        "active guide missing compiled pre-submit checker bundle",
+    )
     return project
 
 
@@ -904,6 +1096,27 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
             run_id=run_id,
             suffix="revision",
         )
+        locked_context_fields = (
+            "locked_guide_source_snapshot_hash",
+            "locked_effective_project_submission_artifact_policy_hash",
+            "locked_pre_submit_checker_bundle_hash",
+        )
+        ensure(
+            all(complete_task[field] for field in locked_context_fields),
+            "complete task did not lock project policy context hashes",
+        )
+        ensure(
+            all(revision_task[field] for field in locked_context_fields),
+            "revision task did not lock project policy context hashes",
+        )
+        ensure(
+            {
+                tuple(task[field] for field in locked_context_fields)
+                for task in (complete_task, revision_task)
+            }
+            == {tuple(complete_task[field] for field in locked_context_fields)},
+            "tasks under the same project did not reuse the same policy context hashes",
+        )
         missing_static_guard_payload = submission_payload(
             fixture,
             run_id,
@@ -944,12 +1157,40 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
             "failed pre-submit check created durable submissions",
         )
 
+        low_quality_payload = submission_payload(
+            fixture,
+            run_id,
+            "low-quality-v1",
+            include_static_guard=True,
+            low_quality_signal=True,
+        )
+        low_quality_precheck = await request_json(
+            client,
+            "POST",
+            f"/api/v1/tasks/{revision_task['id']}/submission-precheck",
+            revision_worker_token,
+            {"submission": low_quality_payload},
+        )
+        assert_pre_submit_checker_set(low_quality_precheck)
+        ensure(
+            low_quality_precheck["eligible_to_submit"] is True,
+            "low-quality warning should not block pre-submit intake",
+        )
+        low_quality_precheck_result = next(
+            result
+            for result in low_quality_precheck["results"]
+            if result["checker_name"] == "check_low_quality_generated_artifacts"
+        )
+        ensure(
+            low_quality_precheck_result["status"] == "warning",
+            "low-quality pre-submit scenario did not warn",
+        )
         first_submission, first_locked, first_run = await submit_lock_and_wait(
             client,
             manager_token=manager_token,
             worker_token=revision_worker_token,
             task_id=revision_task["id"],
-            payload=missing_static_guard_payload,
+            payload=low_quality_payload,
         )
         assert_default_checker_set(first_run)
         assert_checker_counts(first_run, passed=7, warning=0, failed=1, blocking=1)
@@ -957,20 +1198,21 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
             first_run,
             {
                 **{checker_name: "passed" for checker_name in EXPECTED_DURABLE_CHECKERS},
-                "check_required_files": "failed",
+                "check_low_quality_generated_artifacts": "failed",
             },
         )
         ensure(
             first_run["routing_recommendation"] == "needs_revision",
-            "missing static guard did not route to needs_revision",
+            "required low-quality checker did not route to needs_revision",
         )
         ensure(
-            checker_result(first_run, "check_required_files")["status"] == "failed",
-            "durable required-files checker did not fail",
+            checker_result(first_run, "check_low_quality_generated_artifacts")["status"]
+            == "failed",
+            "durable low-quality checker did not fail",
         )
         ensure(
-            checker_result(first_run, "check_evidence_present")["status"] == "passed",
-            "durable missing-static-guard scenario should isolate artifact enforcement",
+            checker_result(first_run, "check_required_files")["status"] == "passed",
+            "durable low-quality scenario should keep artifact enforcement passing",
         )
         await wait_for_task_status(client, manager_token, revision_task["id"], "needs_revision")
         ensure(first_locked["locked_at"] is not None, "revision v1 submission did not lock")
@@ -978,7 +1220,7 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
         fixed_payload = submission_payload(
             fixture,
             run_id,
-            "fixed-static-guard",
+            "fixed-low-quality",
             include_static_guard=True,
         )
         fixed_precheck = await request_json(
@@ -1038,14 +1280,14 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
                 "expected_blocking_count": 0,
             },
             {
-                "name": "missing_static_guard",
+                "name": "low_quality_v1",
                 "task_id": revision_task["id"],
                 "submission_id": first_submission["id"],
                 "checker_run_id": first_run["id"],
                 "expected_route": "needs_revision",
                 "expected_gate_event": "pre_review_gate_needs_revision",
-                "expected_manifest": expected_manifest(missing_static_guard_payload),
-                "expected_evidence": expected_evidence(missing_static_guard_payload),
+                "expected_manifest": expected_manifest(low_quality_payload),
+                "expected_evidence": expected_evidence(low_quality_payload),
                 "expected_submission_version": 1,
                 "expected_supersedes_submission_id": None,
                 "expected_passed_count": 7,
@@ -1054,7 +1296,7 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
                 "expected_blocking_count": 1,
             },
             {
-                "name": "fixed_static_guard",
+                "name": "fixed_low_quality_v2",
                 "task_id": revision_task["id"],
                 "submission_id": second_submission["id"],
                 "checker_run_id": second_run["id"],
@@ -1083,8 +1325,9 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
     print(f"revision_v1_submission_id={first_submission['id']}")
     print(f"revision_v2_submission_id={second_submission['id']}")
     print("complete_packet=review_pending")
-    print("missing_static_guard=needs_revision")
-    print("fixed_static_guard=review_pending")
+    print("missing_static_guard=pre_submit_blocked_no_submission")
+    print("low_quality_v1=needs_revision")
+    print("fixed_low_quality_v2=review_pending")
     print("worker_profile_setup=demo_bootstrap_not_canonical_workflow")
 
 
@@ -1108,6 +1351,7 @@ async def main(env: dict[str, str]) -> None:
 
 if __name__ == "__main__":
     api_env = api_environment()
+    require_openai_agent_sdk_environment(api_env)
     assert_strict_local_database_url(api_env["WORKSTREAM_DATABASE_URL"])
     os.environ.update(api_env)
     command.upgrade(alembic_config(), "head")

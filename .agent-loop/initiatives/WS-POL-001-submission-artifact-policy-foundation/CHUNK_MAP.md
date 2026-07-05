@@ -112,9 +112,9 @@ Acceptance criteria:
   temporary fetch locators.
 - Embedded instructions in guide material cannot grant tool authority or weaken
   Workstream default policy.
-- Legacy `evidence_policy`, `required_files`, and `required_evidence` are not
-  treated as compatibility contracts. Runtime removal happens in the task
-  locked-context and submission migration chunk.
+- Legacy guide-field artifact rules and task-level artifact/evidence shortcuts
+  are not treated as compatibility contracts. Runtime removal happens in the
+  task locked-context and submission migration chunk.
 
 Verification:
 
@@ -501,8 +501,31 @@ Allowed files:
 ```text
 examples/terminal_benchmark/**
 backend/app/adapters/project_agents/openai_agent_sdk.py
+backend/app/adapters/project_agents/local_fixture.py
 backend/app/interfaces/project_agents.py
+backend/app/modules/projects/models.py
+backend/app/modules/projects/schemas.py
+backend/app/modules/projects/service.py
+backend/app/modules/tasks/service.py
+backend/alembic/versions/0010_remove_legacy_project_guide_fields.py
+backend/tests/test_checkers.py
 backend/tests/test_projects.py
+backend/tests/test_tasks.py
+backend/tests/test_alembic.py
+README.md
+docs/architecture_lockdown.md
+docs/architecture_data_model.md
+docs/architecture_system_architecture.md
+docs/operations_project_operating_manual.md
+docs/operations_operator_workflow.md
+docs/operations_queue_policy.md
+docs/operations_reviewer_workflow.md
+docs/product_first_user_flows.md
+docs/roadmap_implementation_backlog.md
+docs/spec_chunk_3_project_guide_foundation.md
+docs/spec_chunk_4_task_queue_assignment.md
+docs/template_project_guide.md
+docs/template_task.md
 .agent-loop/LOOP_STATE.md
 .agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/**
 ```
@@ -510,9 +533,9 @@ backend/tests/test_projects.py
 Not allowed:
 
 ```text
-backend/app/** except listed adapter/interface files
-backend/alembic/**
-backend/tests/** except `backend/tests/test_projects.py`
+backend/app/** except listed adapter/interface/project/task files
+backend/alembic/** except `backend/alembic/versions/0010_remove_legacy_project_guide_fields.py`
+backend/tests/** except `backend/tests/test_projects.py`, `backend/tests/test_tasks.py`, `backend/tests/test_checkers.py`, and `backend/tests/test_alembic.py`
 backend/scripts/**
 .github/workflows/**
 demos/**
@@ -535,8 +558,8 @@ Acceptance criteria:
   validation.
 - The agent-derived policy row remains immutable; exact admin adjustments create
   a separate manual policy before approval.
-- The drill does not rely on `ProjectGuide.evidence_policy` as the intake
-  contract.
+- The drill uses `SubmissionArtifactPolicy` and the compiled project
+  `PreSubmitCheckerPolicy` as the intake contract.
 - The drill does not rely on task `required_files` or `required_evidence` as
   the source of pre-submit truth.
 - The project submission artifact policy is Terminal Benchmark-shaped but

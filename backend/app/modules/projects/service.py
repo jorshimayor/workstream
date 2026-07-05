@@ -220,20 +220,6 @@ OPAQUE_SOURCE_REF_NAMESPACES = {
 }
 GUIDE_SOURCE_MATERIAL_FIELDS = {
     "content_markdown",
-    "required_task_fields",
-    "required_submission_fields",
-    "task_instructions",
-    "output_requirements",
-    "acceptance_criteria",
-    "rejection_criteria",
-    "reviewer_rubric",
-    "forbidden_actions",
-    "required_skills",
-    "difficulty_scale",
-    "estimated_time_policy",
-    "common_rejection_reasons",
-    "evidence_policy",
-    "unacceptable_work_policy",
 }
 REPRESENTATIVE_TASK_SOURCE_KINDS = {"example", "representative_task", "task_sample", "task_example"}
 SOURCE_ITEM_CONTENT_EXCERPT_MAX_LENGTH = 12000
@@ -396,8 +382,6 @@ class ProjectService:
             slug=payload.slug,
             description=payload.description,
             status="draft",
-            base_amount=payload.base_amount,
-            currency=payload.currency,
         )
         project = await self._repo.add_project(project)
         await self._session.commit()
@@ -454,20 +438,6 @@ class ProjectService:
             version=payload.version,
             status="draft",
             content_markdown=payload.content_markdown,
-            required_task_fields=payload.required_task_fields,
-            required_submission_fields=payload.required_submission_fields,
-            task_instructions=payload.task_instructions,
-            output_requirements=payload.output_requirements,
-            acceptance_criteria=payload.acceptance_criteria,
-            rejection_criteria=payload.rejection_criteria,
-            reviewer_rubric=payload.reviewer_rubric,
-            forbidden_actions=payload.forbidden_actions,
-            required_skills=payload.required_skills,
-            difficulty_scale=payload.difficulty_scale,
-            estimated_time_policy=payload.estimated_time_policy,
-            common_rejection_reasons=payload.common_rejection_reasons,
-            evidence_policy=payload.evidence_policy,
-            unacceptable_work_policy=payload.unacceptable_work_policy,
             change_summary=payload.change_summary,
             created_by=actor.actor_id,
         )
@@ -1285,8 +1255,6 @@ class ProjectService:
             guide.effective_at = now
 
             project.status = "active"
-            project.base_amount = payment_policy.base_amount
-            project.currency = payment_policy.currency
 
             await self._session.commit()
         except IntegrityError as exc:

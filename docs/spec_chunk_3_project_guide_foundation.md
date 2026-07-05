@@ -55,14 +55,17 @@ Architecture target:
 - `revision_policies`
 - `payment_policies`
 
-Current v0.1 implementation note: the first project-guide foundation stores submission artifact requirements in `ProjectGuide.evidence_policy`. That is old construction state. The target replacement is `SubmissionArtifactPolicy`; no compatibility alias is required.
+Current v0.1 implementation note: project guide rows store human-facing guide
+content only. Submission artifact requirements live in `SubmissionArtifactPolicy`
+and compile into the project `PreSubmitCheckerPolicy`; there is no guide-field
+compatibility alias.
 
-There is no automatic backfill from `ProjectGuide.evidence_policy` into
-`SubmissionArtifactPolicy`. Existing local draft guides must create a fresh
-guide source snapshot, guide sufficiency report, approved submission artifact
-policy, effective project submission artifact policy, and project
-`PreSubmitCheckerPolicy` contract before activation. Already-active task policy
-context is not silently rewritten.
+Migration note: `0010_guide_cleanup` removes construction-state guide checklist
+columns and project-owned payment duplicates. Base amount and currency belong to
+`PaymentPolicy`. Existing local draft data that used the old guide fields must
+be recreated through the current guide-source snapshot, submission artifact
+policy, effective policy, and checker bundle path; Workstream does not preserve
+an `evidence_policy` or guide checklist compatibility alias.
 
 The guide version is the join key for the guide-specific policies.
 
@@ -120,8 +123,6 @@ approval path compiles the deterministic checker bundle and stores lifecycle
 status `compiled`. Tasks later lock the applicable guide snapshot, effective
 project submission artifact policy hash, and compiled pre-submit checker bundle
 hash. Blocking pre-submit failures prevent submission creation.
-
-Implementation note: the first v0.1 schema stored this as `ProjectGuide.evidence_policy`. That field is old construction state and is replaced by the dedicated policy table/API path.
 
 ## API Impact
 
