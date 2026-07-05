@@ -90,6 +90,7 @@ python3 scripts/check_markdown_links.py
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/test_agent_gates.py
 python3 scripts/check_loop_memory_state.py
+python3 scripts/workstream_agent_gate.py --base origin/main --head HEAD --format json
 git diff --check
 docker buildx imagetools inspect redis:7
 ```
@@ -106,6 +107,9 @@ Results:
 - Stale wording check: passed.
 - Agent gate tests: 26 passed.
 - Loop memory state check: passed.
+- Workstream static agent gate: `REVIEW_REQUIRED` for expected L1 diff size,
+  risky migration/checker/auth paths, build configuration changes, and test
+  delta breadth. Required reviewer tracks covered those findings.
 - Diff whitespace check: passed.
 - Redis image digest resolved to `sha256:b2b95679e3b46fb51864949ed25ea976fc3a6bcc00a40a1bc00d568cb2822e50`.
 
