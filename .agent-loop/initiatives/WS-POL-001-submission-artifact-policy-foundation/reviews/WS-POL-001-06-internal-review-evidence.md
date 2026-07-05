@@ -10,11 +10,11 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: bab2fe8680407dd457016e9023970d7b5fcce95f
+Reviewed code SHA: e01ac246409aed587e42c065b718b2d4db87ea1f
 
-Reviewed at: 2026-07-05T12:14:01Z
+Reviewed at: 2026-07-05T13:26:22Z
 
-Reviewer run IDs: 019f31e1-520e-7fb1-905c-ae156be67b38, 019f31e4-536c-7860-b036-488bbe55b4d7, 019f31e4-6eaa-7522-ba73-2fc7b4617082, 019f31e4-9085-7021-802e-46f73d784d7a, 019f31e4-b8bb-79b2-9617-1be43d6380ad, 019f31e4-eb29-7b83-9355-43452e50c8cb, 019f31e5-1700-7e21-89eb-8c06c7edee7d, 019f31f2-0cd9-7600-92cc-93a8fbd7eb04, 019f31f2-5cba-7c21-8b8b-894d2d59cab3, 019f31f2-833e-7c22-86ac-20a3e69c0a88, 019f31f2-aa70-7ed1-9aaf-dcb98134dea2, 019f31f2-dc12-7cf0-b8d8-c60497503f52, 019f31f3-0e03-7260-baae-7ef65184ee48, 019f3227-764f-7c53-818a-513ac2d4d12b, 019f3227-9311-7c00-975a-6484b4c6af1b, 019f3227-c029-7680-a0c1-14de4705ebf1, 019f322c-5b3c-7e00-9a46-6190c253f298, 019f322f-73d7-7291-80f2-6443c334dd5e
+Reviewer run IDs: 019f31e1-520e-7fb1-905c-ae156be67b38, 019f31e4-536c-7860-b036-488bbe55b4d7, 019f31e4-6eaa-7522-ba73-2fc7b4617082, 019f31e4-9085-7021-802e-46f73d784d7a, 019f31e4-b8bb-79b2-9617-1be43d6380ad, 019f31e4-eb29-7b83-9355-43452e50c8cb, 019f31e5-1700-7e21-89eb-8c06c7edee7d, 019f31f2-0cd9-7600-92cc-93a8fbd7eb04, 019f31f2-5cba-7c21-8b8b-894d2d59cab3, 019f31f2-833e-7c22-86ac-20a3e69c0a88, 019f31f2-aa70-7ed1-9aaf-dcb98134dea2, 019f31f2-dc12-7cf0-b8d8-c60497503f52, 019f31f3-0e03-7260-baae-7ef65184ee48, 019f3227-764f-7c53-818a-513ac2d4d12b, 019f3227-9311-7c00-975a-6484b4c6af1b, 019f3227-c029-7680-a0c1-14de4705ebf1, 019f322c-5b3c-7e00-9a46-6190c253f298, 019f322f-73d7-7291-80f2-6443c334dd5e, 019f326f-a62a-7ac1-b9de-fef3dd5c6b8e, 019f326f-bdf6-7541-b22b-abf3bfd3c722, 019f326f-df56-72d0-83e2-909c98484bbb, 019f3270-0454-7583-9efd-605556e23a00, 019f3270-357b-7723-8ea7-1b5946719040, 019f3270-6d12-7202-b946-be2f4a6a2862, 019f3271-8abd-7a10-898b-fed8f52a8908, 019f3272-5213-7cc0-b8ad-6785ebc50103, 019f3275-3888-71a1-ad0d-9942db14f476
 
 ## Reviewed Change
 
@@ -34,6 +34,7 @@ Scope:
 - `backend/tests/test_checkers.py`
 - `backend/tests/test_projects.py`
 - `backend/tests/test_tasks.py`
+- `backend/scripts/week1_api_e2e.py`
 - `docs/architecture_data_model.md`
 - `docs/architecture_lockdown.md`
 - `docs/architecture_system_architecture.md`
@@ -57,14 +58,15 @@ construction-state product contracts before continuing pre-submit checker work.
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS AFTER FIXES | None | Initial blockers were untracked migration and stale evidence. Scope and migration are now included; evidence is refreshed in this artifact. |
-| qa/test | PASS | None | Confirmed request hard gates, migration cleanup, locked policy context, and Terminal Benchmark example forcing the OpenAI Agents SDK path. |
-| security/auth | PASS | None | Confirmed request-body fail-closed behavior, activation provenance, fail-closed snapshot migration, no normal-path secret/path leakage, and bounded SDK runtime settings. |
-| product/ops | PASS | None | Confirmed `PaymentPolicy` owns payment terms and task-visible payout values are locked/stamped snapshots, not project/task create inputs. |
-| architecture | PASS | None | Confirmed scope drift is resolved and Terminal Benchmark remains outside product runtime. |
-| docs | PASS | None | Confirmed current-contract docs align on shell project creation, human-facing guides, task-owned contract fields, and OpenAI Agents SDK drill requirements. |
-| reuse/dedup | PASS | None | Confirmed repeated legacy field lists are migration/test proof scaffolding, not parallel runtime contracts. |
-| test delta | PASS WITH LOW RISKS | None | Confirmed tests were added/updated without weakening assertions; low risk noted around example checker-row assertions covered elsewhere. |
+| senior engineering | PASS WITH LOW RISKS | None | Confirmed the CI repair is minimal and keeps project/payment/guide/task request contracts aligned. |
+| qa/test | PASS AFTER FIXES | None | Found stale evidence for the CI repair; the fixed Week 1 real API drill now passes locally and this artifact records the reviewed SHA. |
+| security/auth | PASS WITH LOW RISKS | None | Confirmed request-body fail-closed behavior, no Flow auth weakening, no secret/path leakage, and no storage constraint weakening. |
+| product/ops | PASS WITH LOW RISKS | None | Confirmed project creation is shell-only, `PaymentPolicy` owns payment terms, and task payout values are locked snapshots. |
+| architecture | PASS WITH LOW RISKS | None | Confirmed project-scoped policy architecture is preserved and legacy guide/task artifact-policy request fields are not revived. |
+| docs | PASS AFTER FIXES | None | Found stale evidence/status before this refresh; this evidence/status update records the current implementation SHA and verification. |
+| reuse/dedup | PASS | None | Confirmed no new helper fork or missed abstraction is introduced by the request-body cleanup. |
+| test delta | PASS | None | Confirmed removed request fields were stale inputs, not assertions, and artifact requirements still flow through `SubmissionArtifactPolicy`. |
+| ci integrity | PASS WITH LOW RISKS | None | Confirmed no CI gate was weakened and the GitHub backend failure cause is fixed in the CI-invoked script. |
 
 ## Valid Findings Addressed
 
@@ -91,6 +93,14 @@ construction-state product contracts before continuing pre-submit checker work.
   review packet material.
 - Updated `WS-POL-001-06` chunk scope and master chunk map to include the
   intentional docs and migration cleanup.
+- Updated the Week 1 real API E2E script after GitHub Actions proved it still
+  sent stale request bodies. The script now creates a shell project, keeps
+  payment terms in `PaymentPolicy`, sends only human-facing guide content plus
+  policy records for guide creation, and no longer sends task
+  `required_files`/`required_evidence` as intake-policy inputs.
+- Narrowly expanded the `WS-POL-001-06` contract to allow
+  `backend/scripts/week1_api_e2e.py` because that script is the CI-invoked
+  real API drill for the corrected request-body contract.
 
 ## Verification
 
@@ -105,6 +115,7 @@ cd backend && uv run pytest tests/test_alembic.py -q
 cd backend && uv run pytest tests/test_checkers.py -q
 cd backend && uv run pytest tests/test_tasks.py -q
 cd backend && uv run pytest tests/test_projects.py -q
+cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test uv run python scripts/week1_api_e2e.py
 ```
 
 Results:
@@ -113,6 +124,7 @@ Results:
 - `tests/test_checkers.py`: 47 passed
 - `tests/test_tasks.py`: 60 passed
 - `tests/test_projects.py`: 188 passed
+- `scripts/week1_api_e2e.py`: passed against local Postgres on 2026-07-05
 
 Focused suites also passed during the repair loop:
 

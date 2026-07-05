@@ -13,7 +13,7 @@ policy bundle, and submission/checker lifecycle. The branch now also removes
 stale construction-state project guide and payment request/body contracts before
 continuing pre-submit checker work. Local implementation and internal review
 are complete through implementation SHA
-`bab2fe8680407dd457016e9023970d7b5fcce95f`; PR #67 needs the new commits
+`e01ac246409aed587e42c065b718b2d4db87ea1f`; PR #67 needs the new commits
 pushed so GitHub Actions and CodeRabbit can rerun on the current head.
 
 ## Active Chunk

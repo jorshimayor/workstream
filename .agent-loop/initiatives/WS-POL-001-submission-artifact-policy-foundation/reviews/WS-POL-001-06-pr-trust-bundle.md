@@ -52,6 +52,10 @@ The user explicitly pushed back that:
   review packet material.
 - Removed Terminal Benchmark-specific derivation shortcuts from the local
   fixture adapter.
+- Updated the CI-invoked Week 1 real API drill so it uses the current request
+  contracts: shell project creation, payment terms only under `PaymentPolicy`,
+  human-facing guide content plus policy records, and no task
+  `required_files`/`required_evidence` intake-policy inputs.
 - Updated tests for request hard gates, activation provenance, migration schema
   cleanup, stale snapshot fail-closed behavior, task/checker behavior, and the
   example contract.
@@ -105,6 +109,7 @@ Tests:
 - `backend/tests/test_checkers.py`
 - `backend/tests/test_projects.py`
 - `backend/tests/test_tasks.py`
+- `backend/scripts/week1_api_e2e.py`
 
 Docs/examples/process:
 
@@ -152,6 +157,7 @@ cd backend && uv run pytest tests/test_alembic.py -q
 cd backend && uv run pytest tests/test_checkers.py -q
 cd backend && uv run pytest tests/test_tasks.py -q
 cd backend && uv run pytest tests/test_projects.py -q
+cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test uv run python scripts/week1_api_e2e.py
 ```
 
 Results:
@@ -160,6 +166,7 @@ Results:
 - `tests/test_checkers.py`: 47 passed
 - `tests/test_tasks.py`: 60 passed
 - `tests/test_projects.py`: 188 passed
+- `scripts/week1_api_e2e.py`: passed against local Postgres on 2026-07-05
 
 ## Internal Review
 
@@ -169,18 +176,19 @@ Evidence:
 
 Reviewed implementation SHA:
 
-`bab2fe8680407dd457016e9023970d7b5fcce95f`
+`e01ac246409aed587e42c065b718b2d4db87ea1f`
 
 Reviewer summary:
 
-- senior engineering: PASS AFTER FIXES
-- QA/test: PASS
-- security/auth: PASS
-- product/ops: PASS
-- architecture: PASS
-- docs: PASS
+- senior engineering: PASS WITH LOW RISKS
+- QA/test: PASS AFTER FIXES
+- security/auth: PASS WITH LOW RISKS
+- product/ops: PASS WITH LOW RISKS
+- architecture: PASS WITH LOW RISKS
+- docs: PASS AFTER FIXES
 - reuse/dedup: PASS
-- test delta: PASS WITH LOW RISKS
+- test delta: PASS
+- CI integrity: PASS WITH LOW RISKS
 
 ## External Review
 
