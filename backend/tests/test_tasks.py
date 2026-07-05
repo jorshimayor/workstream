@@ -296,8 +296,6 @@ def complete_task_payload() -> dict:
         "source_payload_hash": "hash-123",
         "acceptance_criteria": "Proof is correct and evidence is present.",
         "rejection_criteria": "Proof is unsupported.",
-        "required_files": ["answer.md"],
-        "required_evidence": ["checker log"],
     }
 
 
@@ -704,6 +702,28 @@ async def test_task_can_be_created_in_draft(task_client: AsyncClient) -> None:
     assert "locked_guide_version" not in task
     assert task["skill_tags"] == ["stem", "proofs"]
     assert task["source_ref"] == "local-ticket-1"
+    assert "required_files" not in task
+    assert "required_evidence" not in task
+
+
+async def test_task_create_rejects_legacy_artifact_requirement_fields(
+    task_client: AsyncClient,
+) -> None:
+    project = await create_active_project(task_client)
+    payload = complete_task_payload()
+    payload["required_files"] = ["answer.md"]
+    payload["required_evidence"] = ["checker log"]
+
+    response = await task_client.post(
+        f"/api/v1/projects/{project['id']}/tasks",
+        headers=auth_headers(),
+        json=payload,
+    )
+
+    assert response.status_code == 422
+    error_text = response.text
+    assert "required_files" in error_text
+    assert "required_evidence" in error_text
 
 
 async def test_task_create_and_transitions_reject_client_supplied_policy_context(
@@ -1034,16 +1054,13 @@ async def test_submission_runtime_uses_locked_project_policy_not_task_required_f
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     project = await create_active_project(task_client)
-    conflicting_task_payload = complete_task_payload()
-    conflicting_task_payload["required_files"] = ["legacy-only.md"]
-    conflicting_task_payload["required_evidence"] = ["legacy evidence"]
 
     project_policy_task = await create_started_task(
         task_client,
         project["id"],
         monkeypatch,
         "worker-one",
-        conflicting_task_payload,
+        complete_task_payload(),
     )
     project_policy_response = await task_client.post(
         f"/api/v1/tasks/{project_policy_task['id']}/submissions",
@@ -1057,7 +1074,7 @@ async def test_submission_runtime_uses_locked_project_policy_not_task_required_f
         project["id"],
         monkeypatch,
         "worker-two",
-        conflicting_task_payload,
+        complete_task_payload(),
     )
     legacy_only_payload = complete_submission_payload("sha256:legacy-package")
     legacy_only_payload["artifact_hash_manifest"] = [
@@ -1089,7 +1106,7 @@ async def test_submission_runtime_uses_locked_project_policy_not_task_required_f
         project["id"],
         monkeypatch,
         "worker-three",
-        conflicting_task_payload,
+        complete_task_payload(),
     )
     legacy_evidence_payload = complete_submission_payload("sha256:legacy-evidence-package")
     legacy_evidence_payload["artifact_hash_manifest"][0]["hash"] = "sha256:answer-legacy-evidence"
@@ -2769,7 +2786,5 @@ async def test_json_and_numeric_fields_round_trip_under_postgres(task_client: As
 
     assert task is not None
     assert task.skill_tags == ["stem", "proofs"]
-    assert task.required_files == ["answer.md"]
-    assert task.required_evidence == ["checker log"]
     assert task.source_payload_hash == "hash-123"
     assert task.base_amount == Decimal("25.00")

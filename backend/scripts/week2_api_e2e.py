@@ -239,8 +239,6 @@ def task_payload(run_id: str, suffix: str) -> dict:
         "source_payload_hash": sha256_token(f"source:{suffix}:{run_id}"),
         "acceptance_criteria": "Submission packet is complete and reviewable.",
         "rejection_criteria": "Evidence or required output is missing.",
-        "required_files": ["answer.md"],
-        "required_evidence": ["checker log"],
     }
 
 
@@ -340,8 +338,6 @@ async def create_project_with_guide(
             "name": f"Week 2 API {suffix} {run_id}",
             "slug": f"week2-api-{suffix}-{run_id}",
             "description": "Real Week 2 checker API lifecycle QA",
-            "base_amount": "25.00",
-            "currency": "USD",
         },
         201,
     )

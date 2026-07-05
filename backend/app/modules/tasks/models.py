@@ -244,8 +244,6 @@ class WorkstreamTask(Base):
     status: Mapped[str] = mapped_column(String(30), nullable=False, default="draft", index=True)
     acceptance_criteria: Mapped[str | None] = mapped_column(Text)
     rejection_criteria: Mapped[str | None] = mapped_column(Text)
-    required_files: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
-    required_evidence: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     deadline_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_by: Mapped[str] = mapped_column(String(100), nullable=False)
     assigned_to: Mapped[str | None] = mapped_column(String(100), index=True)

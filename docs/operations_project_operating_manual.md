@@ -32,7 +32,7 @@ Before releasing tasks:
 - payment policy base amount configured
 - payment policy currency configured
 - allowed task types listed
-- task-owned contract fields listed
+- task source, description, acceptance, and rejection fields listed
 - guide sufficiency report passed or warnings acknowledged by `admin` or `project_manager`
 - submission artifact policy derived by Workstream and approved by `admin` or `project_manager`
 - effective project submission artifact policy hash persisted

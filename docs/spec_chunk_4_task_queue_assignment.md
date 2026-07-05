@@ -105,7 +105,7 @@ CLAIMED -> IN_PROGRESS
 
 Rules:
 
-- `DRAFT -> SCREENING` requires active project guide context and complete task-owned contract fields, then locks guide and policy versions on the task.
+- `DRAFT -> SCREENING` requires active project guide context and complete task source, description, acceptance, and rejection fields, then locks guide and policy versions on the task.
 - `SCREENING -> READY` requires that guide, checker, review, revision, and payment policy context be locked.
 - `READY -> CLAIMED` creates an active assignment and blocks a second active assignment.
 - `CLAIMED -> IN_PROGRESS` requires an active assignment for the actor or an authorized operator role.

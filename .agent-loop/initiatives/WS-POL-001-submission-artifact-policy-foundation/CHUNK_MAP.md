@@ -589,3 +589,79 @@ Human review focus:
 The example remains proof harness code, uses current policy-bundle APIs, keeps
 fixture paths and secrets local, and does not add Terminal Benchmark behavior to
 Workstream runtime.
+
+### WS-POL-001-07: Task Contract Artifact Field Cleanup
+
+Goal:
+
+Remove task-owned `required_files` and `required_evidence` from task creation,
+task responses, and `workstream_tasks`. Submission artifact requirements are
+project-policy authority through `SubmissionArtifactPolicy`,
+`EffectiveProjectSubmissionArtifactPolicy`, and the project
+`PreSubmitCheckerPolicy`.
+
+Risk:
+
+L1
+
+Depends on:
+
+`WS-POL-001-06`
+
+Allowed files:
+
+```text
+backend/alembic/versions/**
+backend/app/modules/tasks/**
+backend/tests/test_tasks.py
+backend/tests/test_alembic.py
+backend/scripts/week1_dry_run.py
+backend/scripts/week2_api_e2e.py
+docs/architecture_data_model.md
+docs/operations_project_operating_manual.md
+docs/operations_queue_policy.md
+docs/product_first_user_flows.md
+docs/spec_chunk_4_task_queue_assignment.md
+docs/spec_chunk_8_submission_artifact_policy_checkers.md
+docs/template_task.md
+.agent-loop/LOOP_STATE.md
+.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/**
+```
+
+Not allowed:
+
+```text
+backend/app/modules/projects/**
+backend/app/modules/checkers/**
+backend/app/modules/submissions/**
+examples/terminal_benchmark/**
+demos/**
+frontend/**
+.github/workflows/**
+human review implementation
+payment/reputation/blockchain code
+project-agent runtime redesign
+new checker derivation or compilation per task
+```
+
+Acceptance criteria:
+
+- `TaskCreate` no longer exposes `required_files` or `required_evidence`.
+- `TaskResponse` no longer exposes `required_files` or `required_evidence`.
+- `WorkstreamTask` no longer maps `required_files` or `required_evidence`.
+- Alembic removes `workstream_tasks.required_files` and
+  `workstream_tasks.required_evidence`.
+- Task creation with either stale field returns 422.
+- Pre-submit required artifact/evidence behavior remains driven by locked
+  project policy and project `PreSubmitCheckerPolicy`.
+- Real API helper scripts create tasks using the current task request body.
+
+Required reviewers:
+
+senior engineering, QA/test, security/auth, product/ops, architecture, docs,
+reuse/dedup, test delta, CI integrity.
+
+Human review focus:
+
+Task contract cleanup without weakening project-policy driven submission
+intake.

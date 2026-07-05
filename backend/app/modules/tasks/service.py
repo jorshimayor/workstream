@@ -217,8 +217,6 @@ class TaskService:
             status=TASK_STATUS_DRAFT,
             acceptance_criteria=payload.acceptance_criteria,
             rejection_criteria=payload.rejection_criteria,
-            required_files=payload.required_files,
-            required_evidence=payload.required_evidence,
             deadline_at=payload.deadline_at,
             created_by=actor.actor_id,
         )
@@ -889,7 +887,7 @@ class TaskService:
         )
 
     def _validate_task_contract_fields(self, task: WorkstreamTask) -> None:
-        """Validate task-owned contract fields before screening.
+        """Validate task source and reviewability fields before screening.
 
         Args:
             task: Task being screened.
