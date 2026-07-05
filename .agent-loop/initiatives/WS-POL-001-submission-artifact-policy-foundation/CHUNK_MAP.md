@@ -512,6 +512,7 @@ backend/tests/test_checkers.py
 backend/tests/test_projects.py
 backend/tests/test_tasks.py
 backend/tests/test_alembic.py
+backend/scripts/week1_api_e2e.py
 README.md
 docs/architecture_lockdown.md
 docs/architecture_data_model.md
@@ -536,7 +537,7 @@ Not allowed:
 backend/app/** except listed adapter/interface/project/task files
 backend/alembic/** except `backend/alembic/versions/0010_remove_legacy_project_guide_fields.py`
 backend/tests/** except `backend/tests/test_projects.py`, `backend/tests/test_tasks.py`, `backend/tests/test_checkers.py`, and `backend/tests/test_alembic.py`
-backend/scripts/**
+backend/scripts/** except `backend/scripts/week1_api_e2e.py`
 .github/workflows/**
 demos/**
 frontend/**

@@ -44,6 +44,7 @@ backend/tests/test_projects.py
 backend/tests/test_tasks.py
 backend/tests/test_checkers.py
 backend/tests/test_alembic.py
+backend/scripts/week1_api_e2e.py
 README.md
 docs/architecture_lockdown.md
 docs/architecture_data_model.md
@@ -80,7 +81,8 @@ backend/tests/** except:
   backend/tests/test_tasks.py
   backend/tests/test_checkers.py
   backend/tests/test_alembic.py
-backend/scripts/**
+backend/scripts/** except:
+  backend/scripts/week1_api_e2e.py
 .github/workflows/**
 demos/**
 frontend/**
