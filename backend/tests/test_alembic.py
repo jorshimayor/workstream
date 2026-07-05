@@ -25,6 +25,68 @@ def test_alembic_upgrade_and_downgrade(isolated_database_env: str, migration_loc
         command.downgrade(config, "base")
 
 
+def test_guide_cleanup_migration_removes_legacy_columns(
+    isolated_database_env: str,
+    migration_lock,
+) -> None:
+    """Prove current schema removes old guide fields and project payment duplicates."""
+    project_root = Path(__file__).resolve().parents[1]
+    config = Config(str(project_root / "alembic.ini"))
+    config.set_main_option("script_location", str(project_root / "alembic"))
+
+    with migration_lock():
+        try:
+            command.downgrade(config, "base")
+            command.upgrade(config, "head")
+            columns = asyncio.run(_fetch_columns(isolated_database_env))
+        finally:
+            command.downgrade(config, "base")
+
+    assert "projects.base_amount" not in columns
+    assert "projects.currency" not in columns
+    assert "project_guides.approved_by" in columns
+    assert "project_guides.effective_at" in columns
+    for column in (
+        "required_task_fields",
+        "required_submission_fields",
+        "task_instructions",
+        "output_requirements",
+        "acceptance_criteria",
+        "rejection_criteria",
+        "reviewer_rubric",
+        "forbidden_actions",
+        "required_skills",
+        "difficulty_scale",
+        "estimated_time_policy",
+        "common_rejection_reasons",
+        "evidence_policy",
+        "unacceptable_work_policy",
+    ):
+        assert f"project_guides.{column}" not in columns
+
+
+def test_guide_cleanup_migration_blocks_pre_cleanup_snapshots(
+    isolated_database_env: str,
+    migration_lock,
+) -> None:
+    """Prove 0010 refuses pre-cleanup guide-source snapshot provenance."""
+    project_root = Path(__file__).resolve().parents[1]
+    config = Config(str(project_root / "alembic.ini"))
+    config.set_main_option("script_location", str(project_root / "alembic"))
+
+    ids = {name: str(uuid4()) for name in ("project", "guide", "snapshot")}
+    with migration_lock():
+        try:
+            command.downgrade(config, "base")
+            command.upgrade(config, "0009_evaluation_pending_status")
+            asyncio.run(_seed_legacy_guide_source_snapshot(isolated_database_env, ids))
+
+            with pytest.raises(RuntimeError, match="safe only when no guide source snapshots exist"):
+                command.upgrade(config, "head")
+        finally:
+            command.downgrade(config, "base")
+
+
 def test_post_submit_policy_upgrade_leaves_legacy_rows_fail_closed(
     isolated_database_env: str,
     migration_lock,
@@ -120,6 +182,144 @@ def test_evaluation_pending_status_migration_rewrites_task_and_audit_rows(
         "audit_start_to_status": LEGACY_EVALUATION_STATUS,
         "audit_done_from_status": LEGACY_EVALUATION_STATUS,
     }
+
+
+async def _fetch_columns(database_url: str) -> set[str]:
+    """Return current public table columns as table.column names."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            rows = (
+                await connection.execute(
+                    text(
+                        """
+                        select table_name, column_name
+                        from information_schema.columns
+                        where table_schema = 'public'
+                        """
+                    )
+                )
+            ).all()
+            return {f"{row.table_name}.{row.column_name}" for row in rows}
+    finally:
+        await engine.dispose()
+
+
+async def _seed_legacy_guide_source_snapshot(
+    database_url: str,
+    ids: dict[str, str],
+) -> None:
+    """Seed a 0009 guide snapshot whose old guide-field provenance must not carry over."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(
+                text(
+                    """
+                    insert into projects (
+                        id,
+                        name,
+                        slug,
+                        status,
+                        base_amount,
+                        currency
+                    )
+                    values (
+                        :project_id,
+                        'Legacy guide snapshot project',
+                        'legacy-guide-snapshot-project',
+                        'draft',
+                        25.00,
+                        'USD'
+                    )
+                    """
+                ),
+                {"project_id": ids["project"]},
+            )
+            await connection.execute(
+                text(
+                    """
+                    insert into project_guides (
+                        id,
+                        project_id,
+                        version,
+                        status,
+                        content_markdown,
+                        required_task_fields,
+                        required_submission_fields,
+                        task_instructions,
+                        output_requirements,
+                        acceptance_criteria,
+                        rejection_criteria,
+                        reviewer_rubric,
+                        forbidden_actions,
+                        required_skills,
+                        difficulty_scale,
+                        estimated_time_policy,
+                        common_rejection_reasons,
+                        evidence_policy,
+                        unacceptable_work_policy,
+                        created_by
+                    )
+                    values (
+                        :guide_id,
+                        :project_id,
+                        'v1',
+                        'draft',
+                        '# Legacy guide',
+                        '["title"]'::json,
+                        '["summary"]'::json,
+                        'Do the work.',
+                        'Submit the output.',
+                        'Meets the guide.',
+                        'Misses required evidence.',
+                        'Review against the rubric.',
+                        'Do not include secrets.',
+                        '["coding"]'::json,
+                        '{"level": "hard"}'::json,
+                        '{"target_hours": 2}'::json,
+                        '["missing evidence"]'::json,
+                        '{"required": ["log"]}'::json,
+                        'Unverifiable work.',
+                        'migration-test'
+                    )
+                    """
+                ),
+                {"guide_id": ids["guide"], "project_id": ids["project"]},
+            )
+            await connection.execute(
+                text(
+                    """
+                    insert into guide_source_snapshots (
+                        id,
+                        project_id,
+                        guide_id,
+                        guide_version,
+                        manifest_schema_version,
+                        manifest_json,
+                        bundle_hash,
+                        captured_by
+                    )
+                    values (
+                        :snapshot_id,
+                        :project_id,
+                        :guide_id,
+                        'v1',
+                        'guide-source-manifest/v1',
+                        '{"items": [{"source_kind": "project_guide"}]}'::json,
+                        'sha256:1111111111111111111111111111111111111111111111111111111111111111',
+                        'migration-test'
+                    )
+                    """
+                ),
+                {
+                    "snapshot_id": ids["snapshot"],
+                    "project_id": ids["project"],
+                    "guide_id": ids["guide"],
+                },
+            )
+    finally:
+        await engine.dispose()
 
 
 async def _seed_legacy_post_submit_policy(

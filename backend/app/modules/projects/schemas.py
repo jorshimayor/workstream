@@ -2,25 +2,11 @@
 
 from __future__ import annotations
 
-import math
 from datetime import datetime
 from decimal import Decimal
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-
-
-def reject_non_finite_json_numbers(value: Any) -> Any:
-    """Reject NaN and Infinity values from JSON-like request metadata."""
-    if isinstance(value, float) and not math.isfinite(value):
-        raise ValueError("non-finite numbers are not allowed")
-    if isinstance(value, dict):
-        for item in value.values():
-            reject_non_finite_json_numbers(item)
-    if isinstance(value, list):
-        for item in value:
-            reject_non_finite_json_numbers(item)
-    return value
 
 
 class PostSubmitCheckerPolicyInput(BaseModel):
@@ -398,8 +384,6 @@ class ProjectCreate(BaseModel):
     name: str
     slug: str
     description: str | None = None
-    base_amount: Decimal | None = None
-    currency: str | None = None
 
 
 class ProjectResponse(BaseModel):
@@ -412,8 +396,6 @@ class ProjectResponse(BaseModel):
     slug: str
     description: str | None
     status: str
-    base_amount: Decimal | None
-    currency: str | None
     created_at: datetime
     updated_at: datetime
 
@@ -425,31 +407,11 @@ class ProjectGuideCreate(BaseModel):
 
     version: str
     content_markdown: str
-    required_task_fields: list[str] = Field(default_factory=list)
-    required_submission_fields: list[str] = Field(default_factory=list)
-    task_instructions: str | None = None
-    output_requirements: str | None = None
-    acceptance_criteria: str | None = None
-    rejection_criteria: str | None = None
-    reviewer_rubric: str | None = None
-    forbidden_actions: str | None = None
-    required_skills: list[str] = Field(default_factory=list)
-    difficulty_scale: dict[str, Any] = Field(default_factory=dict)
-    estimated_time_policy: dict[str, Any] = Field(default_factory=dict)
-    common_rejection_reasons: list[str] = Field(default_factory=list)
-    evidence_policy: dict[str, Any] | None = None
-    unacceptable_work_policy: str | None = None
     change_summary: str | None = None
     post_submit_checker_policy: PostSubmitCheckerPolicyInput | None = None
     review_policy: ReviewPolicyInput | None = None
     revision_policy: RevisionPolicyInput | None = None
     payment_policy: PaymentPolicyInput | None = None
-
-    @field_validator("difficulty_scale", "estimated_time_policy", "evidence_policy")
-    @classmethod
-    def validate_finite_json_metadata(cls, value: Any) -> Any:
-        """Reject non-finite numbers from guide metadata."""
-        return reject_non_finite_json_numbers(value)
 
 
 class ProjectGuideUpdate(BaseModel):
@@ -458,31 +420,11 @@ class ProjectGuideUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     content_markdown: str | None = None
-    required_task_fields: list[str] | None = None
-    required_submission_fields: list[str] | None = None
-    task_instructions: str | None = None
-    output_requirements: str | None = None
-    acceptance_criteria: str | None = None
-    rejection_criteria: str | None = None
-    reviewer_rubric: str | None = None
-    forbidden_actions: str | None = None
-    required_skills: list[str] | None = None
-    difficulty_scale: dict[str, Any] | None = None
-    estimated_time_policy: dict[str, Any] | None = None
-    common_rejection_reasons: list[str] | None = None
-    evidence_policy: dict[str, Any] | None = None
-    unacceptable_work_policy: str | None = None
     change_summary: str | None = None
     post_submit_checker_policy: PostSubmitCheckerPolicyInput | None = None
     review_policy: ReviewPolicyInput | None = None
     revision_policy: RevisionPolicyInput | None = None
     payment_policy: PaymentPolicyInput | None = None
-
-    @field_validator("difficulty_scale", "estimated_time_policy", "evidence_policy")
-    @classmethod
-    def validate_finite_json_metadata(cls, value: Any) -> Any:
-        """Reject non-finite numbers from guide metadata updates."""
-        return reject_non_finite_json_numbers(value)
 
 
 class ProjectGuideResponse(BaseModel):
@@ -495,23 +437,9 @@ class ProjectGuideResponse(BaseModel):
     version: str
     status: str
     content_markdown: str
-    required_task_fields: list[str]
-    required_submission_fields: list[str]
-    task_instructions: str | None
-    output_requirements: str | None
-    acceptance_criteria: str | None
-    rejection_criteria: str | None
-    reviewer_rubric: str | None
-    forbidden_actions: str | None
-    required_skills: list[str]
-    difficulty_scale: dict[str, Any]
-    estimated_time_policy: dict[str, Any]
-    common_rejection_reasons: list[str]
-    evidence_policy: dict[str, Any] | None
-    unacceptable_work_policy: str | None
+    change_summary: str | None
     approved_by: str | None
     effective_at: datetime | None
-    change_summary: str | None
     created_by: str
     created_at: datetime
     updated_at: datetime

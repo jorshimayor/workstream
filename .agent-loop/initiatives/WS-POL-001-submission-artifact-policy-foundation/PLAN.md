@@ -118,7 +118,7 @@ that policy context unless an explicit audited rebase occurs.
 Rejected because it leaves too much room for project drift and unfair worker
 feedback.
 
-### Keep legacy `ProjectGuide.evidence_policy` as the long-term object
+### Keep artifact intake rules as guide fields
 
 Rejected because the name is too narrow. The policy governs artifacts, hashes,
 storage references, packaging, forbidden files, and attestation, not only
@@ -177,8 +177,8 @@ while post-submit answers whether a locked submission can move to human review.
 
 1. Add dedicated guide source snapshot, guide sufficiency, submission artifact
    policy, and effective project submission artifact policy records.
-2. Replace transitional `evidence_policy`, `required_files`, and
-   `required_evidence` usage; no v0.1 compatibility alias is required.
+2. Replace transitional guide-field artifact rules and task-level artifact/evidence
+   shortcuts; no v0.1 compatibility alias is required.
 3. Add the Workstream-owned derivation/approval boundary for project policy.
 4. Compute effective project submission artifact policy in service code and validate defaults cannot weaken.
 5. Add async guide sufficiency, policy derivation execution, and trusted checker

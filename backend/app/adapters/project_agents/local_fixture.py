@@ -84,10 +84,7 @@ class LocalFixtureProjectGuideAgentRuntime:
         sufficiency_report: GuideSufficiencyAgentResult,
     ) -> SubmissionArtifactPolicyDerivationResult:
         """Derive a conservative v0.1 artifact intake policy."""
-        artifact_key = _first_safe_token(
-            material.guide_material.get("required_submission_fields"),
-            fallback="primary_output",
-        )
+        artifact_key = "primary_output"
         artifact_path = f"outputs/{artifact_key}.md"
         policy_body: dict[str, Any] = {
             "required_artifacts": [
@@ -140,14 +137,3 @@ def _flatten_material_text(value: Any) -> str:
     if isinstance(value, list | tuple | set):
         return "\n".join(_flatten_material_text(item) for item in value)
     return str(value)
-
-
-def _first_safe_token(value: Any, *, fallback: str) -> str:
-    """Return the first safe artifact token from guide material."""
-    if not isinstance(value, list):
-        return fallback
-    for item in value:
-        token = re.sub(r"[^a-z0-9_]+", "_", str(item).strip().lower()).strip("_")
-        if re.fullmatch(r"[a-z][a-z0-9_]{1,63}", token):
-            return token
-    return fallback

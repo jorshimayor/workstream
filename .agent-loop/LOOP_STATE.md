@@ -4,13 +4,19 @@
 
 - Active initiative: `WS-POL-001` - Submission Artifact Policy Foundation
 - Active planning chunk: none
-- Active implementation chunk: `WS-POL-001-05`
-- Branch: `codex/ws-pol-001-05-revision-resubmission`
-- Status: `WS-POL-001-04` is merged to `main`; PR #66 is open for `WS-POL-001-05`, GitHub checks are passing, CodeRabbit detailed review is rate-limited, and user PR review is next
-- Last merged implementation SHA: `47e6fa48957853fb21ab049d0d505f37df7b24b6`
-- Last merge commit: `47e6fa48957853fb21ab049d0d505f37df7b24b6`
-- Current gate: `WS-POL-001-05` user PR review on PR #66
-- Next chunk: inactive until `WS-POL-001-05` is externally reviewed and merged by the user
+- Active implementation chunk: `WS-POL-001-06`
+- Branch: `codex/ws-pol-001-06-terminal-benchmark-drill`
+- Status: `WS-POL-001-05` is merged to `main`; `WS-POL-001-06` live manual API
+  proof exposed and fixed an OpenAI Agents SDK adapter issue, then this branch
+  removed stale project guide/payment construction-state contracts before
+  continuing pre-submit checker work. Local verification and internal review are
+  complete for implementation SHA `96792961c7cb74f31150df803c533fe4c6432636`.
+  PR #67 needs the new commits pushed so GitHub Actions and CodeRabbit can
+  rerun on the current head.
+- Last merged implementation SHA: `b20988ba79626e1edbc03953aba60f54f2fc94ab`
+- Last merge commit: `b20988ba79626e1edbc03953aba60f54f2fc94ab`
+- Current gate: `WS-POL-001-06` awaiting push, external checks, then human merge decision on PR #67
+- Next chunk: inactive until `WS-POL-001-06` is merged by the user
 
 ## Operating Rule
 
@@ -27,11 +33,14 @@ not implement frontend behavior, payment, reputation, settlement, blockchain
 integrations, post-submit policy splitting, or revision resubmission drill
 behavior.
 
-The active `WS-POL-001-05` chunk proves checker-caused revision resubmission and
-the real API drill. It also replaces the legacy evaluation lifecycle status
-with `evaluation_pending` for the post-submission evaluation window. It must not
-implement human review decisions, payment, reputation, blockchain integrations,
-frontend behavior, or agent runtime redesign.
+The active `WS-POL-001-06` chunk uses real Terminal Benchmark reviewer fixture
+material to prove the current Workstream setup-agent route, project policy
+bundle, task locked context, pre-submit, submission versioning, post-submit
+checker, and fixed revision path through live manual API calls. It also fixes a
+narrow OpenAI Agents SDK adapter issue found by that live drill. It must not add
+Terminal Benchmark-specific product runtime code, human review decisions,
+payment, reputation, blockchain integrations, frontend behavior, or agent
+runtime redesign.
 
 ## Last Review State
 
@@ -58,6 +67,20 @@ frontend behavior, or agent runtime redesign.
 - `WS-POL-001-05` internal review evidence is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-05-internal-review-evidence.md`.
 - `WS-POL-001-05` PR trust bundle is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-05-pr-trust-bundle.md`.
 - `WS-POL-001-05` external review response is tracked separately at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-05-external-review-response.md`.
-- PR #66 is open for `WS-POL-001-05`.
-- PR #66 GitHub checks passed: Agent Gates, Backend, and Week 1 API Demo UI.
-- PR #66 CodeRabbit status context is green, but detailed review was rate-limited on the latest head.
+- PR #66 merged into `main` as `b20988ba79626e1edbc03953aba60f54f2fc94ab`.
+- `WS-POL-001-06` started on branch `codex/ws-pol-001-06-terminal-benchmark-drill`
+  after the user's explicit start signal.
+- `WS-POL-001-06` real Terminal Benchmark manual HTTP drill passed against a
+  local Termius reviewer fixture; committed evidence uses placeholder fixture
+  paths and local IDs only.
+- `WS-POL-001-06` live drill exposed and fixed an OpenAI Agents SDK adapter
+  strict-schema issue for the policy derivation result's open `policy_body`.
+- `WS-POL-001-06` follow-up cleanup removed stale project-owned payment fields
+  and legacy guide checklist fields, preserved server-written activation
+  provenance on reads, added fail-closed migration behavior for old
+  guide-source snapshots, and aligned active docs around `PaymentPolicy` as the
+  payment-term authority.
+- `WS-POL-001-06` internal review evidence is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-06-internal-review-evidence.md`.
+- `WS-POL-001-06` PR trust bundle is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-06-pr-trust-bundle.md`.
+- `WS-POL-001-06` PR #67 is open and needs external checks rerun after the
+  latest commits are pushed.

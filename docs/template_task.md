@@ -23,10 +23,6 @@
 
 `DRAFT`
 
-## Base Amount
-
-`<amount> <currency>`
-
 ## Difficulty
 
 `<easy | medium | hard | expert>`
@@ -68,8 +64,12 @@ List exactly what must be submitted.
 - summary
 - screenshots or hashes when applicable
 
-## Payout
+## Locked Payment Policy Snapshot
 
+These values are stamped from the active `PaymentPolicy` during screening.
+Task creators do not provide payout fields directly.
+
+- payment policy version:
 - base amount:
 - currency:
 - payout type:

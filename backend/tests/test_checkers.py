@@ -657,8 +657,6 @@ async def create_checker_trial_project(
             "name": slug.replace("-", " ").title(),
             "slug": slug,
             "description": "Project for the Chunk 10 checker trial.",
-            "base_amount": "25.00",
-            "currency": "USD",
         },
     )
     assert project_response.status_code == 201, project_response.text
@@ -1268,8 +1266,6 @@ async def test_chunk8_default_blocking_checker_survives_empty_blocking_severitie
         json={
             "name": "Empty Blocking Severity Project",
             "slug": "empty-blocking-severity-project",
-            "base_amount": "25.00",
-            "currency": "USD",
         },
     )
     assert project_response.status_code == 201, project_response.text
@@ -1643,8 +1639,6 @@ async def test_chunk8_task_setup_blocked_takes_priority_over_worker_revision(
         json={
             "name": "Task Setup Checker Project",
             "slug": "task-setup-checker-project",
-            "base_amount": "25.00",
-            "currency": "USD",
         },
     )
     assert project_response.status_code == 201, project_response.text
@@ -2320,8 +2314,6 @@ async def test_old_checker_name_blocks_guide_activation_without_alias(
         json={
             "name": "Old Checker Name Project",
             "slug": "old-checker-name-project",
-            "base_amount": "25.00",
-            "currency": "USD",
         },
     )
     assert project_response.status_code == 201, project_response.text

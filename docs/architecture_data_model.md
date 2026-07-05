@@ -112,8 +112,6 @@ Fields:
 - `slug`
 - `description`
 - `status`
-- `base_amount`
-- `currency`
 - `created_at`
 - `updated_at`
 
@@ -131,32 +129,22 @@ Fields:
 - `id`
 - `project_id`
 - `version`
+- `status`
 - `content_markdown`
-- `required_task_fields`
-- `required_submission_fields` (legacy display summary)
-- `task_instructions`
-- `output_requirements`
-- `acceptance_criteria`
-- `rejection_criteria`
-- `reviewer_rubric`
-- `forbidden_actions`
-- `required_skills`
-- `difficulty_scale`
-- `estimated_time_policy`
-- `common_rejection_reasons`
-- `unacceptable_work_policy`
+- `change_summary`
 - `approved_by`
 - `effective_at`
-- `change_summary`
 - `created_by`
 - `created_at`
+- `updated_at`
 - `superseded_at`
 
-The guide is versioned and human-facing. It contains project instructions,
-quality bar, examples, rubric, common rejection reasons, and links or summaries
-for approved policies. It may be markdown, an imported document, URL-backed
-docs, repository docs, examples, rubrics, task instructions, or other
-project-specific source material.
+The guide is versioned and human-facing. Its persisted body is the project
+guide material itself, usually markdown or imported source material. The source
+snapshot may include URL-backed docs, repository docs, examples, rubrics, task
+instructions, reviewer guidance, or other project-specific source material.
+`approved_by` and `effective_at` are server-written activation provenance, not
+request-body fields and not worker-facing guide content.
 
 Runtime enforcement uses machine-readable policies attached to the guide version. Workstream does not parse guide prose at submission time to decide which artifact checks to run.
 
@@ -171,14 +159,10 @@ Every task records the guide version active at creation or screening time before
 
 When a task is claimed or moved to `IN_PROGRESS`, its locked guide and policy context does not change silently. A newer upstream guide version can only affect unclaimed work or a controlled revision path when policy allows it and the audit log records the reason.
 
-Material changes require a new guide version or policy version. Material changes include acceptance criteria, rejection criteria, reviewer rubric, output requirements, submission artifact policy, pre-submit checker generation rules, post-submit checker policy, review policy, revision policy, and payment policy.
-
-Implementation note: the current v0.1 database has `ProjectGuide.evidence_policy`.
-That field is old construction state. The architecture source of truth is
-`SubmissionArtifactPolicy`, and the replacement path does not require a
-compatibility alias.
-
-Implementation note: `ProjectGuide.required_submission_fields` is a legacy display summary. Submission validity is enforced by the locked `PreSubmitCheckerPolicy` generated from `EffectiveProjectSubmissionArtifactPolicy`, not by project guide fields.
+Material changes require a new guide version or policy version. Material changes
+include guide source material, submission artifact policy, pre-submit checker
+generation rules, post-submit checker policy, review policy, revision policy,
+and payment policy.
 
 ## GuideSourceSnapshot
 
@@ -825,7 +809,8 @@ version, guide source snapshot id/hash, effective project submission artifact
 policy id/hash, generated project pre-submit checker policy id/bundle hash,
 legacy checker policy version, post-submit checker policy id/version/hash,
 review policy version, revision policy version, payment policy version,
-acceptance criteria, derived display summaries, base payout, and skill tags.
+acceptance criteria, derived display summaries, locked payment policy amount,
+locked payment policy currency, locked payment policy payout type, and skill tags.
 Workers submit against the task id; they do not restate policy versions.
 
 Implementation note: `locked_checker_policy_version` is retained only as

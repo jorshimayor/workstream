@@ -449,26 +449,12 @@ def guide_payload(run_id: str) -> dict:
     """
     return {
         "version": "v1",
-        "content_markdown": f"# Real API Guide {run_id}",
-        "required_task_fields": [
-            "title",
-            "description",
-            "acceptance_criteria",
-            "required_evidence",
-        ],
-        "required_submission_fields": ["summary", "evidence", "worker_attestation"],
-        "task_instructions": "Complete the real API task.",
-        "output_requirements": "Submit artifact manifest and evidence.",
-        "acceptance_criteria": "Submission packet is complete.",
-        "rejection_criteria": "Evidence is missing.",
-        "reviewer_rubric": "Review packet completeness.",
-        "forbidden_actions": "No credentials or private source data.",
-        "required_skills": ["stem"],
-        "difficulty_scale": {"medium": 2},
-        "estimated_time_policy": {"default_minutes": 45},
-        "common_rejection_reasons": ["missing evidence"],
-        "evidence_policy": {"required": ["log"]},
-        "unacceptable_work_policy": "Copied or unverifiable work.",
+        "content_markdown": (
+            f"# Real API Guide {run_id}\n\n"
+            "Complete the real API task. Submit an artifact manifest and "
+            "reviewable evidence. Do not include credentials or private source "
+            "data."
+        ),
         "change_summary": "Initial real API guide",
         "post_submit_checker_policy": {
             "required_checkers": ["check_policy_context_present"],
@@ -744,8 +730,6 @@ async def exercise_week1_api(base_url: str, env: dict[str, str]) -> None:
                 "name": f"Week 1 Real API {run_id}",
                 "slug": f"week1-real-api-{run_id}",
                 "description": "Real Week 1 API lifecycle QA",
-                "base_amount": "25.00",
-                "currency": "USD",
             },
             201,
         )
@@ -800,7 +784,6 @@ async def exercise_week1_api(base_url: str, env: dict[str, str]) -> None:
                 "description": "Unauthorized task create probe.",
                 "source_type": "manual",
                 "acceptance_criteria": "Must fail.",
-                "required_evidence": ["log"],
             },
             403,
         )
@@ -822,8 +805,6 @@ async def exercise_week1_api(base_url: str, env: dict[str, str]) -> None:
                 "source_payload_hash": f"sha256:source-{run_id}",
                 "acceptance_criteria": "Submission packet is complete.",
                 "rejection_criteria": "Evidence is missing.",
-                "required_files": ["answer.md"],
-                "required_evidence": ["checker log"],
             },
             201,
         )

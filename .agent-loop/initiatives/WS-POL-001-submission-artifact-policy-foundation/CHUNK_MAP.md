@@ -112,9 +112,9 @@ Acceptance criteria:
   temporary fetch locators.
 - Embedded instructions in guide material cannot grant tool authority or weaken
   Workstream default policy.
-- Legacy `evidence_policy`, `required_files`, and `required_evidence` are not
-  treated as compatibility contracts. Runtime removal happens in the task
-  locked-context and submission migration chunk.
+- Legacy guide-field artifact rules and task-level artifact/evidence shortcuts
+  are not treated as compatibility contracts. Runtime removal happens in the
+  task locked-context and submission migration chunk.
 
 Verification:
 
@@ -478,3 +478,114 @@ reuse/dedup, test delta.
 Human review focus:
 
 Fair worker experience during revision and audit clarity.
+
+### WS-POL-001-06: Terminal Benchmark Real Fixture Drill
+
+Goal:
+
+Use a real Terminal Benchmark reviewer fixture from the local Termius workspace
+to prove the current Workstream setup-agent route, project policy bundle, task
+locked context, pre-submit feedback, submission versioning, post-submit checker
+gate, and fixed revision path over live manual HTTP calls and local Postgres.
+
+Risk:
+
+L1
+
+Depends on:
+
+`WS-POL-001-05`
+
+Allowed files:
+
+```text
+examples/terminal_benchmark/**
+backend/app/adapters/project_agents/openai_agent_sdk.py
+backend/app/adapters/project_agents/local_fixture.py
+backend/app/interfaces/project_agents.py
+backend/app/modules/projects/models.py
+backend/app/modules/projects/schemas.py
+backend/app/modules/projects/service.py
+backend/app/modules/tasks/service.py
+backend/alembic/versions/0010_remove_legacy_project_guide_fields.py
+backend/tests/test_checkers.py
+backend/tests/test_projects.py
+backend/tests/test_tasks.py
+backend/tests/test_alembic.py
+backend/scripts/week1_api_e2e.py
+README.md
+docs/architecture_lockdown.md
+docs/architecture_data_model.md
+docs/architecture_system_architecture.md
+docs/operations_project_operating_manual.md
+docs/operations_operator_workflow.md
+docs/operations_queue_policy.md
+docs/operations_reviewer_workflow.md
+docs/product_first_user_flows.md
+docs/roadmap_implementation_backlog.md
+docs/spec_chunk_3_project_guide_foundation.md
+docs/spec_chunk_4_task_queue_assignment.md
+docs/template_project_guide.md
+docs/template_task.md
+.agent-loop/LOOP_STATE.md
+.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/**
+```
+
+Not allowed:
+
+```text
+backend/app/** except listed adapter/interface/project/task files
+backend/alembic/** except `backend/alembic/versions/0010_remove_legacy_project_guide_fields.py`
+backend/tests/** except `backend/tests/test_projects.py`, `backend/tests/test_tasks.py`, `backend/tests/test_checkers.py`, and `backend/tests/test_alembic.py`
+backend/scripts/** except `backend/scripts/week1_api_e2e.py`
+.github/workflows/**
+demos/**
+frontend/**
+payment/reputation/blockchain code
+production secrets or committed .env files
+Terminal Benchmark-specific product runtime code
+```
+
+Acceptance criteria:
+
+- The Terminal Benchmark drill uses guide source snapshots, guide sufficiency
+  reports, project `SubmissionArtifactPolicy`, effective project submission
+  artifact policy, and compiled project `PreSubmitCheckerPolicy`.
+- The guide sufficiency and submission artifact policy derivation endpoints run
+  through the configured OpenAI Agents SDK adapter during the live manual API
+  drill.
+- The OpenAI Agents SDK adapter can return Workstream's open `policy_body`
+  contract without weakening server-side `SubmissionArtifactPolicyInput`
+  validation.
+- The agent-derived policy row remains immutable; exact admin adjustments create
+  a separate manual policy before approval.
+- The drill uses `SubmissionArtifactPolicy` and the compiled project
+  `PreSubmitCheckerPolicy` as the intake contract.
+- The drill does not rely on task `required_files` or `required_evidence` as
+  the source of pre-submit truth.
+- The project submission artifact policy is Terminal Benchmark-shaped but
+  project-scoped, compiled once, and reused by all tasks in the drill.
+- Real fixture hashes feed artifact and evidence manifests without persisting
+  absolute local paths.
+- Pre-submit feedback creates no durable submission or checker rows.
+- The clean path reaches `review_pending`, the checker-caused v1 path reaches
+  `needs_revision`, and the fixed v2 path supersedes v1 and reaches
+  `review_pending`.
+
+Verification:
+
+- Manual live API drill runs against local Postgres and one explicit Termius
+  reviewer fixture path.
+- Targeted adapter regression tests, stale wording scan, ruff, docstring
+  coverage, markdown link check, and diff whitespace checks pass.
+
+Required reviewers:
+
+senior engineering, QA/test, security/auth, product/ops, architecture, docs,
+reuse/dedup, test delta.
+
+Human review focus:
+
+The example remains proof harness code, uses current policy-bundle APIs, keeps
+fixture paths and secrets local, and does not add Terminal Benchmark behavior to
+Workstream runtime.

@@ -111,26 +111,12 @@ def actor_id(subject: str, issuer: str = "flow-test") -> str:
 def complete_guide_payload(version: str = "v1") -> dict:
     return {
         "version": version,
-        "content_markdown": f"# Task Guide {version}",
-        "required_task_fields": [
-            "title",
-            "description",
-            "acceptance_criteria",
-            "required_evidence",
-        ],
-        "required_submission_fields": ["summary", "evidence", "worker_attestation"],
-        "task_instructions": "Complete the task.",
-        "output_requirements": "Submit the required output.",
-        "acceptance_criteria": "Meets the project guide.",
-        "rejection_criteria": "Missing required evidence.",
-        "reviewer_rubric": "Review evidence and output.",
-        "forbidden_actions": "No copied work.",
-        "required_skills": ["stem"],
-        "difficulty_scale": {"easy": 1, "hard": 3},
-        "estimated_time_policy": {"default_minutes": 60},
-        "common_rejection_reasons": ["missing evidence"],
-        "evidence_policy": {"required": ["log"]},
-        "unacceptable_work_policy": "Copied or unverifiable work.",
+        "content_markdown": (
+            f"# Task Guide {version}\n\n"
+            "Workers submit complete task packets with artifact hashes, evidence "
+            "references, and attestations. The project policy bundle controls "
+            "submission intake while the guide gives human review context."
+        ),
         "change_summary": f"Initial {version}",
         "post_submit_checker_policy": {
             "required_checkers": ["check_policy_context_present"],
@@ -355,8 +341,6 @@ async def create_active_project(client: AsyncClient) -> dict:
             "name": "Task Queue Project",
             "slug": "task-queue-project",
             "description": "Project for task queue tests",
-            "base_amount": "25.00",
-            "currency": "USD",
         },
     )
     assert project_response.status_code == 201, project_response.text
@@ -832,7 +816,7 @@ async def test_screening_maps_ambiguous_active_policy_context_to_controlled_erro
     assert "ambiguous" in response.json()["detail"]
 
 
-async def test_screening_rejects_missing_required_task_fields(task_client: AsyncClient) -> None:
+async def test_screening_rejects_missing_task_contract_fields(task_client: AsyncClient) -> None:
     project = await create_active_project(task_client)
     payload = complete_task_payload()
     payload.pop("acceptance_criteria")

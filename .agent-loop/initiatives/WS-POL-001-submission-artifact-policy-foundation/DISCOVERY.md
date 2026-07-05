@@ -40,8 +40,8 @@ project owner does not approve Workstream's internal policy controls.
 | `docs/spec_chunk_5_submission_packet_foundation.md` | Submission packet target contract | Already says current code is transitional. |
 | `docs/spec_chunk_8_submission_artifact_policy_checkers.md` | Pre-submit versus durable checker boundary | Names default pre-submit checks and routing. |
 | `docs/spec_chunk_9_pre_review_gate.md` | Post-submit gate | Keeps internal checker routing separate from human review. |
-| `backend/app/modules/projects/models.py` | Project guide and policies | `ProjectGuide.evidence_policy` is old construction state that remains until the later migration removes it. |
-| `backend/app/modules/projects/schemas.py` | Project guide API schemas | Exposes `evidence_policy` until the later API cleanup removes the field. |
+| `backend/app/modules/projects/models.py` | Project guide and policies | `ProjectGuide.evidence_policy` was old construction state; `WS-POL-001-06` removes it from the current schema. |
+| `backend/app/modules/projects/schemas.py` | Project guide API schemas | `WS-POL-001-06` removes `evidence_policy` and other legacy guide checklist fields from create/update/response contracts. |
 | `backend/app/modules/projects/service.py` | Guide activation and policy validation | Chunk 1 moved activation authority to dedicated submission artifact policy records. |
 | `backend/app/modules/tasks/models.py` | Task/submission models | Transitional task required files/evidence remain until the task locked-context chunk. |
 | `backend/app/modules/tasks/service.py` | Task lifecycle and locked context | Later chunk migrates runtime authority to locked project policy/checker references. |

@@ -29,10 +29,10 @@ Before releasing tasks:
 - project guide imported
 - guide source snapshot captured
 - project owner setup material captured
-- base amount configured
-- currency configured
+- payment policy base amount configured
+- payment policy currency configured
 - allowed task types listed
-- required task fields listed
+- task-owned contract fields listed
 - guide sufficiency report passed or warnings acknowledged by `admin` or `project_manager`
 - submission artifact policy derived by Workstream and approved by `admin` or `project_manager`
 - effective project submission artifact policy hash persisted
@@ -83,7 +83,7 @@ Before moving a task to `READY`:
 - acceptance criteria exist
 - required output is explicit
 - submission artifact requirements are clear
-- base amount is set
+- payment policy amount is set
 - deadline or review SLA is set
 - skill tags are set
 - screening/readiness gate passed

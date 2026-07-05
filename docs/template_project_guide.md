@@ -12,12 +12,11 @@ Describe what this project produces and why it matters.
 
 - `<task type>`
 
-## Base Amount
+## Business Terms Summary
 
-- currency:
-- base amount:
-- payout type:
-- payout rule:
+Describe payment expectations in plain language when useful for project
+context. The enforceable base amount, currency, payout type, and payout rules
+live in `PaymentPolicy`, not in the project shell or guide request body.
 
 ## Difficulty And Time Policy
 
@@ -76,8 +75,6 @@ Define prohibited behavior, tools, copied material, generated artifacts, confide
 - skill tags
 - task type
 - estimated time when known
-- base amount
-- payout type
 - deadline
 
 ## Required Submission Fields
@@ -116,6 +113,9 @@ Every active guide version must have:
 - ReviewPolicy:
 - RevisionPolicy:
 - PaymentPolicy:
+
+`PaymentPolicy` is the source of truth for base amount, currency, payout type,
+revision payment rule, rejection payment rule, and accepted payment rule.
 
 Each task later locks:
 

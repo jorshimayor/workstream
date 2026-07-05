@@ -322,21 +322,13 @@ def test_submission_artifact_policy_approval_requires_provenance() -> None:
 def complete_guide_payload(version: str = "v1") -> dict:
     return {
         "version": version,
-        "content_markdown": f"# Guide {version}",
-        "required_task_fields": ["title", "description", "acceptance_criteria"],
-        "required_submission_fields": ["summary", "evidence", "worker_attestation"],
-        "task_instructions": "Do the task.",
-        "output_requirements": "Submit a packet.",
-        "acceptance_criteria": "Meets the guide.",
-        "rejection_criteria": "Missing evidence.",
-        "reviewer_rubric": "Check evidence and output.",
-        "forbidden_actions": "No copied work.",
-        "required_skills": ["stem"],
-        "difficulty_scale": {"easy": 1, "hard": 3},
-        "estimated_time_policy": {"default_minutes": 60},
-        "common_rejection_reasons": ["missing evidence"],
-        "evidence_policy": {"required": ["log"]},
-        "unacceptable_work_policy": "Copied or unverifiable work.",
+        "content_markdown": (
+            f"# Guide {version}\n\n"
+            "Workers submit a complete project packet with original work, artifact "
+            "hashes, evidence references, and an attestation. Reviewers use the "
+            "locked policy bundle for automated checks and the guide body for human "
+            "context."
+        ),
         "change_summary": f"Initial {version}",
         "post_submit_checker_policy": {
             "required_checkers": ["check_policy_context_present"],
@@ -367,6 +359,24 @@ def complete_guide_payload(version: str = "v1") -> dict:
     }
 
 
+LEGACY_PROJECT_GUIDE_REQUEST_FIELDS = (
+    "required_task_fields",
+    "required_submission_fields",
+    "task_instructions",
+    "output_requirements",
+    "acceptance_criteria",
+    "rejection_criteria",
+    "reviewer_rubric",
+    "forbidden_actions",
+    "required_skills",
+    "difficulty_scale",
+    "estimated_time_policy",
+    "common_rejection_reasons",
+    "evidence_policy",
+    "unacceptable_work_policy",
+)
+
+
 async def create_project(client: AsyncClient) -> dict:
     response = await client.post(
         "/api/v1/projects",
@@ -375,8 +385,6 @@ async def create_project(client: AsyncClient) -> dict:
             "name": "STEM Eval",
             "slug": "stem-eval",
             "description": "Internal STEM evaluation tasks",
-            "base_amount": "25.00",
-            "currency": "USD",
         },
     )
     assert response.status_code == 201, response.text
@@ -637,7 +645,26 @@ async def test_project_can_be_created(project_client: AsyncClient) -> None:
 
     assert project["name"] == "STEM Eval"
     assert project["status"] == "draft"
-    assert project["currency"] == "USD"
+    assert "base_amount" not in project
+    assert "currency" not in project
+
+
+async def test_project_create_rejects_payment_fields(project_client: AsyncClient) -> None:
+    response = await project_client.post(
+        "/api/v1/projects",
+        headers=auth_headers(),
+        json={
+            "name": "Payment Field Project",
+            "slug": "payment-field-project",
+            "description": "Payment belongs to PaymentPolicy.",
+            "base_amount": "25.00",
+            "currency": "USD",
+        },
+    )
+
+    assert response.status_code == 422
+    assert "base_amount" in response.text
+    assert "currency" in response.text
 
 
 async def test_draft_guide_can_be_created(project_client: AsyncClient) -> None:
@@ -647,42 +674,55 @@ async def test_draft_guide_can_be_created(project_client: AsyncClient) -> None:
     assert guide["version"] == "v1"
     assert guide["status"] == "draft"
     assert guide["created_by"]
+    assert guide["approved_by"] is None
+    assert guide["effective_at"] is None
+    for field in LEGACY_PROJECT_GUIDE_REQUEST_FIELDS:
+        assert field not in guide
 
 
-async def test_project_guide_rejects_non_finite_source_metadata(
+async def test_project_guide_rejects_legacy_structured_fields(
     project_client: AsyncClient,
 ) -> None:
     project = await create_project(project_client)
     payload = complete_guide_payload()
-    payload["difficulty_scale"] = {"unsafe": float("nan")}
+    payload["evidence_policy"] = {"required": ["log"]}
+    payload["required_task_fields"] = ["title"]
+    payload["reviewer_rubric"] = "legacy rubric"
+    payload["approved_by"] = "project-manager-subject"
+    payload["effective_at"] = "2026-07-05T00:00:00Z"
 
     response = await project_client.post(
         f"/api/v1/projects/{project['id']}/guides",
-        headers={**auth_headers(), "Content-Type": "application/json"},
-        content=json.dumps(payload, allow_nan=True),
+        headers=auth_headers(),
+        json=payload,
     )
 
     assert response.status_code == 422
-    assert "non-finite numbers are not allowed" in response.text
-    assert "unsafe" not in response.text
+    for field in (
+        "evidence_policy",
+        "required_task_fields",
+        "reviewer_rubric",
+        "approved_by",
+        "effective_at",
+    ):
+        assert field in response.text
 
 
-async def test_project_guide_update_rejects_non_finite_source_metadata(
+async def test_project_guide_update_rejects_legacy_structured_fields(
     project_client: AsyncClient,
 ) -> None:
     project = await create_project(project_client)
     guide = await create_guide(project_client, project["id"], complete_guide_payload())
-    payload = {"estimated_time_policy": {"unsafe": float("inf")}}
+    payload = {"required_submission_fields": ["summary"]}
 
     response = await project_client.patch(
         f"/api/v1/projects/{project['id']}/guides/{guide['id']}",
-        headers={**auth_headers(), "Content-Type": "application/json"},
-        content=json.dumps(payload, allow_nan=True),
+        headers=auth_headers(),
+        json=payload,
     )
 
     assert response.status_code == 422
-    assert "non-finite numbers are not allowed" in response.text
-    assert "unsafe" not in response.text
+    assert "required_submission_fields" in response.text
 
 
 async def test_source_snapshot_hash_is_server_computed_and_canonical(
@@ -1480,7 +1520,11 @@ async def test_openai_agent_sdk_adapter_wraps_sdk_failures(
     monkeypatch.setitem(
         sys.modules,
         "agents",
-        types.SimpleNamespace(Agent=FakeAgent, Runner=FakeRunner),
+        types.SimpleNamespace(
+            Agent=FakeAgent,
+            AgentOutputSchema=lambda output_type, strict_json_schema=True: output_type,
+            Runner=FakeRunner,
+        ),
     )
     runtime = OpenAIAgentSdkProjectGuideRuntime(
         Settings(project_agent_openai_agent_sdk_model="gpt-test")
@@ -1500,6 +1544,89 @@ async def test_openai_agent_sdk_adapter_wraps_sdk_failures(
 
     assert "raw-openai-secret-token" not in str(exc.value)
     assert exc.value.__cause__ is None
+
+
+async def test_openai_agent_sdk_adapter_uses_non_strict_schema_for_policy_body(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, object] = {}
+
+    class FakeAgentOutputSchema:
+        """Fake SDK schema wrapper that records strict-schema configuration."""
+
+        def __init__(self, output_type: object, strict_json_schema: bool = True) -> None:
+            """Record output schema constructor arguments."""
+            captured["output_type"] = output_type
+            captured["strict_json_schema"] = strict_json_schema
+
+    class FakeAgent:
+        """Fake OpenAI Agent constructor for schema-wrapper tests."""
+
+        def __init__(self, **kwargs: object) -> None:
+            """Record the wrapped output schema passed to the SDK."""
+            captured["agent_output_type"] = kwargs["output_type"]
+
+    class FakeRunner:
+        """Fake OpenAI Runner that returns a valid policy derivation result."""
+
+        @staticmethod
+        async def run(_: FakeAgent, __: str) -> object:
+            """Return a typed final output without calling a model."""
+            return types.SimpleNamespace(
+                final_output=SubmissionArtifactPolicyDerivationResult(
+                    policy_version="agent-test",
+                    policy_body={
+                        "required_artifacts": [],
+                        "required_evidence": [],
+                        "forbidden_artifacts": [],
+                        "attestation_terms": [],
+                        "manifest_required": True,
+                        "artifact_hash_required": True,
+                        "artifact_hash_algorithm": "sha256",
+                        "allowed_storage_schemes": ["local", "s3", "r2"],
+                        "maximum_file_size_bytes": None,
+                        "maximum_package_size_bytes": None,
+                        "packaging": {"package_required": False},
+                    },
+                    change_summary="fake policy",
+                    agent_version="fake-openai-agent-sdk-v0.1",
+                )
+            )
+
+    monkeypatch.setitem(
+        sys.modules,
+        "agents",
+        types.SimpleNamespace(
+            Agent=FakeAgent,
+            AgentOutputSchema=FakeAgentOutputSchema,
+            Runner=FakeRunner,
+        ),
+    )
+    runtime = OpenAIAgentSdkProjectGuideRuntime(
+        Settings(project_agent_openai_agent_sdk_model="gpt-test")
+    )
+    material = GuideSourceMaterial(
+        project_id="project-1",
+        guide_id="guide-1",
+        guide_version="v1",
+        source_snapshot_id="snapshot-1",
+        source_snapshot_hash="sha256:" + "1" * 64,
+        guide_material={"content_markdown": "A complete project guide."},
+        source_refs=[],
+    )
+    report = GuideSufficiencyAgentResult(
+        status="guide_sufficient",
+        findings=[],
+        summary="Guide is sufficient.",
+        agent_version="fake-guide-agent-v0.1",
+    )
+
+    result = await runtime.derive_submission_artifact_policy(material, report)
+
+    assert captured["output_type"] is SubmissionArtifactPolicyDerivationResult
+    assert captured["strict_json_schema"] is False
+    assert isinstance(captured["agent_output_type"], FakeAgentOutputSchema)
+    assert result.policy_version == "agent-test"
 
 
 async def test_openai_agent_sdk_adapter_wraps_sdk_timeouts(
@@ -1523,7 +1650,11 @@ async def test_openai_agent_sdk_adapter_wraps_sdk_timeouts(
     monkeypatch.setitem(
         sys.modules,
         "agents",
-        types.SimpleNamespace(Agent=FakeAgent, Runner=FakeRunner),
+        types.SimpleNamespace(
+            Agent=FakeAgent,
+            AgentOutputSchema=lambda output_type, strict_json_schema=True: output_type,
+            Runner=FakeRunner,
+        ),
     )
     runtime = OpenAIAgentSdkProjectGuideRuntime(
         Settings(
@@ -1565,7 +1696,11 @@ async def test_openai_agent_sdk_adapter_wraps_sdk_cancellation(
     monkeypatch.setitem(
         sys.modules,
         "agents",
-        types.SimpleNamespace(Agent=FakeAgent, Runner=FakeRunner),
+        types.SimpleNamespace(
+            Agent=FakeAgent,
+            AgentOutputSchema=lambda output_type, strict_json_schema=True: output_type,
+            Runner=FakeRunner,
+        ),
     )
     runtime = OpenAIAgentSdkProjectGuideRuntime(
         Settings(project_agent_openai_agent_sdk_model="gpt-test")
@@ -1605,7 +1740,11 @@ async def test_openai_agent_sdk_adapter_propagates_caller_cancellation(
     monkeypatch.setitem(
         sys.modules,
         "agents",
-        types.SimpleNamespace(Agent=FakeAgent, Runner=FakeRunner),
+        types.SimpleNamespace(
+            Agent=FakeAgent,
+            AgentOutputSchema=lambda output_type, strict_json_schema=True: output_type,
+            Runner=FakeRunner,
+        ),
     )
     runtime = OpenAIAgentSdkProjectGuideRuntime(
         Settings(project_agent_openai_agent_sdk_model="gpt-test")
@@ -1670,20 +1809,6 @@ async def test_sufficiency_agent_blocks_thin_guides(project_client: AsyncClient)
     project = await create_project(project_client)
     payload = complete_guide_payload()
     payload["content_markdown"] = "Too thin."
-    payload["required_task_fields"] = []
-    payload["required_submission_fields"] = []
-    payload["task_instructions"] = None
-    payload["output_requirements"] = None
-    payload["acceptance_criteria"] = None
-    payload["rejection_criteria"] = None
-    payload["reviewer_rubric"] = None
-    payload["forbidden_actions"] = None
-    payload["required_skills"] = []
-    payload["difficulty_scale"] = {}
-    payload["estimated_time_policy"] = {}
-    payload["common_rejection_reasons"] = []
-    payload["evidence_policy"] = None
-    payload["unacceptable_work_policy"] = None
     guide = await create_guide(project_client, project["id"], payload)
     snapshot = await create_source_snapshot(project_client, project["id"], guide["id"])
 
@@ -3555,9 +3680,7 @@ async def test_worker_cannot_approve_submission_artifact_policy(
 
 async def test_activation_requires_submission_artifact_policy(project_client: AsyncClient) -> None:
     project = await create_project(project_client)
-    payload = complete_guide_payload()
-    payload["evidence_policy"] = None
-    guide = await create_guide(project_client, project["id"], payload)
+    guide = await create_guide(project_client, project["id"], complete_guide_payload())
     snapshot = await create_source_snapshot(project_client, project["id"], guide["id"])
     await create_sufficiency_report(project_client, project["id"], guide["id"], snapshot["id"])
 
@@ -3570,13 +3693,11 @@ async def test_activation_requires_submission_artifact_policy(project_client: As
     assert "approved submission artifact policy" in response.json()["detail"]
 
 
-async def test_activation_does_not_require_legacy_evidence_policy(
+async def test_activation_uses_policy_bundle_without_legacy_guide_fields(
     project_client: AsyncClient,
 ) -> None:
     project = await create_project(project_client)
-    payload = complete_guide_payload()
-    payload["evidence_policy"] = None
-    guide = await create_guide(project_client, project["id"], payload)
+    guide = await create_guide(project_client, project["id"], complete_guide_payload())
     await create_approved_policy_bundle(project_client, project["id"], guide["id"])
 
     response = await project_client.post(
@@ -3928,6 +4049,10 @@ async def test_guide_activation_and_active_guide_retrieval(project_client: Async
     assert active.status_code == 200, active.text
     assert active.json()["guide"]["status"] == "active"
     assert active.json()["guide"]["version"] == "v1"
+    assert active.json()["guide"]["approved_by"] == guide["created_by"]
+    assert active.json()["guide"]["effective_at"] is not None
+    assert activation.json()["guide"]["approved_by"] == guide["created_by"]
+    assert activation.json()["guide"]["effective_at"] == active.json()["guide"]["effective_at"]
     assert active.json()["post_submit_checker_policy"]["required_checkers"] == [
         "check_policy_context_present"
     ]
@@ -3961,10 +4086,7 @@ async def test_draft_guide_edit_and_active_guide_edit_block(project_client: Asyn
     draft_update = await project_client.patch(
         f"/api/v1/projects/{project['id']}/guides/{guide['id']}",
         headers=auth_headers(),
-        json={
-            "content_markdown": "# Updated draft",
-            "evidence_policy": {"required": ["log", "hash"]},
-        },
+        json={"content_markdown": "# Updated draft"},
     )
     assert draft_update.status_code == 200, draft_update.text
     assert draft_update.json()["content_markdown"] == "# Updated draft"
@@ -4011,7 +4133,7 @@ async def test_new_active_guide_supersedes_prior_without_mutating_content(
 
     assert first_guide is not None
     assert first_guide.status == "superseded"
-    assert first_guide.content_markdown == "# Guide v1"
+    assert first_guide.content_markdown == complete_guide_payload("v1")["content_markdown"]
 
 
 async def test_database_enforces_single_active_guide_per_project(

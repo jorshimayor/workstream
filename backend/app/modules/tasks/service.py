@@ -291,7 +291,7 @@ class TaskService:
             effective_policy,
             pre_submit_checker_policy,
         ) = await self._load_active_policy_context(task.project_id)
-        self._validate_required_task_fields(task, guide)
+        self._validate_task_contract_fields(task)
         self._stamp_locked_context(
             task,
             guide,
@@ -888,30 +888,20 @@ class TaskService:
             pre_submit_checker_policy,
         )
 
-    def _validate_required_task_fields(self, task: WorkstreamTask, guide: ProjectGuide) -> None:
-        """Validate guide-required task fields before screening.
+    def _validate_task_contract_fields(self, task: WorkstreamTask) -> None:
+        """Validate task-owned contract fields before screening.
 
         Args:
             task: Task being screened.
-            guide: Active guide defining required task fields.
 
         Raises:
             TaskValidationError: If one or more required fields are missing.
         """
-        required_fields = set(guide.required_task_fields or [])
-        required_fields.update({"title", "description", "acceptance_criteria"})
+        required_fields = {"title", "description", "acceptance_criteria"}
         field_values = {
             "title": task.title,
             "description": task.description,
-            "task_type": task.task_type,
-            "difficulty": task.difficulty,
-            "skill_tags": task.skill_tags,
-            "estimated_time_minutes": task.estimated_time_minutes,
             "acceptance_criteria": task.acceptance_criteria,
-            "rejection_criteria": task.rejection_criteria,
-            "required_files": task.required_files,
-            "required_evidence": task.required_evidence,
-            "deadline_at": task.deadline_at,
         }
         missing = [
             field

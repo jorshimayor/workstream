@@ -36,7 +36,7 @@
 - mark one guide version active
 - require guide approval before activation
 - lock guide and policy versions on every task
-- configure base amount and currency
+- configure payment policy amount and currency
 - configure submission artifact policy
 - generate pre-submit checker policy
 - configure post-submit checker policy
@@ -53,7 +53,7 @@
 - implement `SCREENING` lane before `READY`
 - require readiness gate before task release
 - assign skill tags
-- assign base amount
+- stamp locked payment policy amount and currency during screening
 - change status only through allowed transitions
 - record status audit event
 - block direct `SUBMITTED -> ACCEPTED`
