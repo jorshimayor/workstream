@@ -7,11 +7,10 @@
 merged through PR #67 as `3cce92c` after deterministic verification, internal
 reviewer fanout, GitHub Actions, CodeRabbit review, and user merge approval.
 
-`WS-POL-001-07` is active. It removes the remaining task-owned artifact
-requirement fields from the current backend task contract so `required_files`
-and `required_evidence` live only in `SubmissionArtifactPolicy` /
-`EffectiveProjectSubmissionArtifactPolicy` and the compiled project
-`PreSubmitCheckerPolicy`.
+`WS-POL-001-07` is active. Implementation is committed at
+`55cc79a0b6b832519cf9258ad60722e49f2f4b4b`; deterministic checks, internal
+reviewer fanout, and evidence-gate validation have completed. The next gate is
+PR creation, GitHub Actions, CodeRabbit, and human review.
 
 ## Active Chunk
 
@@ -27,7 +26,7 @@ and `required_evidence` live only in `SubmissionArtifactPolicy` /
 | `WS-POL-001-04` | Merged | `codex/ws-pol-001-04-post-submit-policy` | 65 | Splits post-submit checker policy provenance and locks durable checker runs to post-submit policy context. |
 | `WS-POL-001-05` | Merged | `codex/ws-pol-001-05-revision-resubmission` | 66 | Proves revision resubmission, real API drill, and `evaluation_pending` lifecycle status. |
 | `WS-POL-001-06` | Merged | `codex/ws-pol-001-06-terminal-benchmark-drill` | 67 | Hardens the Terminal Benchmark proof harness and removes stale project guide/payment contracts before continuing pre-submit checker work. |
-| `WS-POL-001-07` | Active | `codex/ws-pol-001-07-task-contract-cleanup` | TBD | Removes task-owned `required_files`/`required_evidence` from request/response/model/migration and keeps artifact requirements project-policy driven. |
+| `WS-POL-001-07` | Internal review complete; PR next | `codex/ws-pol-001-07-task-contract-cleanup` | TBD | Removes task-owned `required_files`/`required_evidence` from request/response/model/migration and keeps artifact requirements project-policy driven. |
 
 ## Blockers
 
