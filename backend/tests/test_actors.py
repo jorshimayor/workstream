@@ -401,7 +401,10 @@ async def test_scoped_project_owner_profile_comes_from_trusted_relationship_clai
                     "profile_type": "project_owner",
                     "scope_type": "project",
                     "scope_id": "project-123",
-                    "profile_metadata": {"organization": "Example Labs"},
+                    "profile_metadata": {
+                        "organization": "Example Labs",
+                        "api_key": "must-not-persist",
+                    },
                 }
             ]
         },
@@ -425,7 +428,7 @@ async def test_scoped_project_owner_profile_comes_from_trusted_relationship_clai
     assert profiles[0].status == "observed"
     assert profiles[0].scope_type == "project"
     assert profiles[0].scope_id == "project-123"
-    assert profiles[0].profile_metadata["organization"] == "Example Labs"
+    assert profiles[0].profile_metadata == {"source": "trusted_relationship_claim"}
 
 
 async def test_active_profile_without_matching_token_role_cannot_use_worker_profile_api(

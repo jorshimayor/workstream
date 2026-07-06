@@ -431,14 +431,7 @@ class ActorService:
                     "profile_type": "project_owner",
                     "scope_type": scope_type,
                     "scope_id": scope_id,
-                    "profile_metadata": {
-                        "source": "trusted_relationship_claim",
-                        **(
-                            raw_profile.get("profile_metadata")
-                            if isinstance(raw_profile.get("profile_metadata"), dict)
-                            else {}
-                        ),
-                    },
+                    "profile_metadata": {"source": "trusted_relationship_claim"},
                 }
             )
         return profiles

@@ -760,7 +760,7 @@ async def create_started_terminal_benchmark_task(
     ensure(screened["locked_guide_version"] == "v1", "screening did not lock guide v1")
     ensure(
         {
-            screened["locked_checker_policy_version"],
+            screened["locked_post_submit_checker_policy_version"],
             screened["locked_review_policy_version"],
             screened["locked_revision_policy_version"],
             screened["locked_payment_policy_version"],
@@ -906,7 +906,7 @@ async def assert_database_invariants(scenarios: list[dict]) -> None:
             ensure(
                 {
                     task.locked_guide_version,
-                    task.locked_checker_policy_version,
+                    task.locked_post_submit_checker_policy_version,
                     task.locked_review_policy_version,
                     task.locked_revision_policy_version,
                     task.locked_payment_policy_version,
@@ -917,7 +917,7 @@ async def assert_database_invariants(scenarios: list[dict]) -> None:
             ensure(
                 {
                     checker_run.locked_guide_version,
-                    checker_run.locked_checker_policy_version,
+                    checker_run.locked_post_submit_checker_policy_version,
                     checker_run.locked_review_policy_version,
                     checker_run.locked_revision_policy_version,
                     checker_run.locked_payment_policy_version,
