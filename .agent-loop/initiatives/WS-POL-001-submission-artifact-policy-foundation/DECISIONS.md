@@ -40,8 +40,14 @@
 - Worker-facing task outcomes remain simple; internal routes stay internal.
 - Stored review decision values remain exactly `accept`, `needs_revision`, and
   `reject`. Display wording must not create new persisted tokens.
-- `evidence_policy`, `required_files`, and `required_evidence` are transitional
-  fields to replace, not compatibility contracts to preserve.
+- `evidence_policy`, task-owned `required_files`, task-owned
+  `required_evidence`, and generic checker-policy version locks are discarded
+  construction-state fields. They are not compatibility contracts and must not
+  be restored in current v0.1 APIs or migrations.
+- Guide/source capture starts automatic project setup through Celery. The
+  pipeline runs guide sufficiency first, stops on blocking sufficiency, and
+  creates only a draft `SubmissionArtifactPolicy` after sufficiency passes or
+  passes with warnings.
 
 ## Accepted Defaults
 
@@ -62,5 +68,5 @@
 - Final review of persisted provenance field names for guide sufficiency
   reports, project submission artifact policies, effective project submission artifact policy hashes, and
   generated project pre-submit checker compiled bundle hashes.
-- Final confirmation that Chunk 1 implements records/contracts/activation guard
-  only, while full async agent execution comes later.
+- Confirm the next chunk contract before resuming the real Terminal Benchmark
+  drill through the automatic Celery setup path.

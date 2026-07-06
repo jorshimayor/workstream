@@ -3,18 +3,17 @@
 ## Current Status
 
 `WS-POL-001-01`, `WS-POL-001-02`, `WS-POL-001-03`, `WS-POL-001-04`,
-`WS-POL-001-05`, `WS-POL-001-06`, and `WS-POL-001-07` are merged to `main`.
-`WS-POL-001-07` merged through PR #68 as `3dc6a95` after deterministic
-verification, internal reviewer fanout, GitHub Actions, CodeRabbit review, and
-user merge approval.
+`WS-POL-001-05`, `WS-POL-001-06`, `WS-POL-001-07`, and `WS-POL-001-08` are
+merged to `main`. `WS-POL-001-08` merged through PR #69 as `aea7024` after
+deterministic verification, internal reviewer fanout, GitHub Actions,
+CodeRabbit review, external review response, and user merge approval.
 
-`WS-POL-001-08` is active. Implementation is in progress on
-`codex/ws-pol-001-08-celery-project-setup` and moves automatic pre-submit
-project setup onto Celery.
+No implementation chunk is active. The next chunk must start only after an
+explicit user signal and a new chunk contract.
 
 ## Active Chunk
 
-`WS-POL-001-08` - Celery Project Setup Pipeline
+None.
 
 ## Chunk Status
 
@@ -27,13 +26,13 @@ project setup onto Celery.
 | `WS-POL-001-05` | Merged | `codex/ws-pol-001-05-revision-resubmission` | 66 | Proves revision resubmission, real API drill, and `evaluation_pending` lifecycle status. |
 | `WS-POL-001-06` | Merged | `codex/ws-pol-001-06-terminal-benchmark-drill` | 67 | Hardens the Terminal Benchmark proof harness and removes stale project guide/payment contracts before continuing pre-submit checker work. |
 | `WS-POL-001-07` | Merged | `codex/ws-pol-001-07-task-contract-cleanup` | 68 | Removes task-owned `required_files`/`required_evidence` from request/response/model/migration and keeps artifact requirements project-policy driven. |
-| `WS-POL-001-08` | Implementation in progress | `codex/ws-pol-001-08-celery-project-setup` | TBD | Makes guide/source capture enqueue Celery pre-submit setup automatically: sufficiency first, blocked stops, draft submission artifact policy next. |
+| `WS-POL-001-08` | Merged | `codex/ws-pol-001-08-celery-project-setup` | 69 | Makes guide/source capture enqueue Celery pre-submit setup automatically: sufficiency first, blocked stops, draft submission artifact policy next; removes remaining construction-state compatibility surfaces. |
 
 ## Blockers
 
 | Blocker | Owner | Next action |
 |---|---|---|
-| None | - | Continue bounded implementation for `WS-POL-001-08`. |
+| None | - | Await explicit user start signal for the next bounded chunk. |
 
 ## Follow-Ups
 

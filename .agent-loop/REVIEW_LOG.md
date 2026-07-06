@@ -137,3 +137,94 @@ explicit start signal.
 Evidence: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-03-internal-review-evidence.md`
 
 External review response: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-03-external-review-response.md`
+
+## WS-POL-001-04
+
+Status: merged through PR #65.
+
+Required reviewer tracks:
+
+- senior engineering
+- QA/test
+- security/auth
+- product/ops
+- architecture
+- docs
+- reuse/dedup
+- test delta
+
+Result: PASS after fixes; external review addressed; GitHub checks passed.
+
+Scope: post-submit checker policy provenance, durable checker-run policy locks,
+and separation of post-submit/internal checks from pre-submit intake.
+
+Evidence: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-04-internal-review-evidence.md`
+
+External review response: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-04-external-review-response.md`
+
+## WS-POL-001-05
+
+Status: merged through PR #66.
+
+Result: PASS after fixes; external review addressed; GitHub checks passed.
+
+Scope: revision resubmission proof, real API drill, and `evaluation_pending`
+lifecycle status.
+
+Evidence: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-05-internal-review-evidence.md`
+
+External review response: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-05-external-review-response.md`
+
+## WS-POL-001-06
+
+Status: merged through PR #67.
+
+Result: PASS after fixes; GitHub checks passed.
+
+Scope: Terminal Benchmark fixture proof harness, OpenAI Agents SDK strict-schema
+fix, and cleanup of stale project guide/payment contracts.
+
+Evidence: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-06-internal-review-evidence.md`
+
+## WS-POL-001-07
+
+Status: merged through PR #68.
+
+Result: PASS after fixes; external review addressed; GitHub checks passed.
+
+Scope: removed task-owned artifact fields and kept artifact requirements driven
+by project submission artifact policy.
+
+Evidence: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-07-internal-review-evidence.md`
+
+External review response: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-07-external-review-response.md`
+
+## WS-POL-001-08
+
+Status: merged through PR #69 on 2026-07-06.
+
+Merge commit: `aea7024`
+
+Reviewed implementation SHA: `0c32c97a3895f0435b7602698730b5d40b1bacbd`
+
+Required reviewer tracks:
+
+- senior engineering
+- QA/test
+- security/auth
+- product/ops
+- architecture
+- CI integrity
+- docs
+- reuse/dedup
+- test delta
+
+Result: PASS after fixes; external review addressed; GitHub checks passed.
+
+Scope: Celery-backed automatic project setup from guide/source capture,
+sufficiency-first pipeline ordering, draft submission artifact policy creation,
+and removal of remaining construction-state compatibility surfaces.
+
+Evidence: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-08-internal-review-evidence.md`
+
+External review response: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-08-external-review-response.md`

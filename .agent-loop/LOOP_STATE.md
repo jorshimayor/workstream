@@ -4,17 +4,17 @@
 
 - Active initiative: `WS-POL-001` - Submission Artifact Policy Foundation
 - Active planning chunk: none
-- Active implementation chunk: `WS-POL-001-08`
-- Branch: `codex/ws-pol-001-08-celery-project-setup`
-- Status: `WS-POL-001-07` is merged to `main` through PR #68 as `3dc6a95`.
-  `WS-POL-001-08` is active and moves automatic pre-submit project setup onto
-  Celery: guide/source capture enqueues sufficiency analysis, blocked
-  sufficiency stops derivation, and passed or warning sufficiency creates only
-  a draft `SubmissionArtifactPolicy` for human Workstream approval.
-- Last merged implementation SHA: `3dc6a95`
-- Last merge commit: `3dc6a95`
-- Current gate: `WS-POL-001-08` implementation in progress
-- Next chunk: inactive until `WS-POL-001-08` is merged by the user
+- Active implementation chunk: none
+- Branch: `main`
+- Status: `WS-POL-001-08` is merged to `main` through PR #69 as `aea7024`.
+  Automatic pre-submit project setup now runs through Celery from guide/source
+  capture: sufficiency analysis runs first, blocked sufficiency stops policy
+  derivation, and passed or warning sufficiency creates only a draft
+  `SubmissionArtifactPolicy` for human Workstream approval.
+- Last merged implementation SHA: `0c32c97`
+- Last merge commit: `aea7024`
+- Current gate: post-merge memory update for `WS-POL-001-08`
+- Next chunk: inactive until the user gives an explicit start signal
 
 ## Operating Rule
 
@@ -31,9 +31,9 @@ not implement frontend behavior, payment, reputation, settlement, blockchain
 integrations, post-submit policy splitting, or revision resubmission drill
 behavior.
 
-The active `WS-POL-001-08` chunk corrects the project setup orchestration path:
+The merged `WS-POL-001-08` chunk corrected the project setup orchestration path:
 normal guide/source capture starts the pre-submit setup pipeline automatically
-through Celery. It must not redesign post-submit policy, review, revision,
+through Celery. It did not redesign post-submit policy, review, revision,
 payment, reputation, blockchain integrations, frontend behavior, or task
 submission runtime.
 
@@ -84,3 +84,7 @@ submission runtime.
 - `WS-POL-001-08` started on branch `codex/ws-pol-001-08-celery-project-setup`
   after the user's explicit correction that project setup must run
   automatically from guide/source capture through Celery.
+- `WS-POL-001-08` internal review evidence is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-08-internal-review-evidence.md`.
+- `WS-POL-001-08` external review response is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-08-external-review-response.md`.
+- `WS-POL-001-08` PR trust bundle is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-08-pr-trust-bundle.md`.
+- PR #69 merged into `main` as `aea7024`.
