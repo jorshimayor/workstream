@@ -6,13 +6,13 @@
 - Active planning chunk: `WS-POL-001-11` - Actor Identity And Profile Registry
 - Active implementation chunk: none
 - Branch: `codex/ws-pol-001-11-actor-identity-profile-contract`
-- Status: `WS-POL-001-10` merged through PR #72. `WS-POL-001-11` contract,
-  internal review evidence, and PR trust bundle are prepared for human review.
-  Implementation is inactive until human review approves the contract.
+- Status: `WS-POL-001-10` merged through PR #72. `WS-POL-001-11` is open as
+  PR #73 with contract, internal review evidence, and PR trust bundle prepared
+  for human review. Implementation is inactive until human review approves the
+  contract.
 - Last merged implementation SHA: `cc78f2a`
 - Last merge commit: `1bbde47`
-- Current gate: `WS-POL-001-11` PR/external review, then human contract
-  approval
+- Current gate: PR #73 external review, then human contract approval
 - Next chunk: `WS-POL-001-11` is contract-only until human review approves the
   implementation boundary
 
