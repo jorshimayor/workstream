@@ -141,31 +141,38 @@ Internal review evidence:
 
 - `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-09-internal-review-evidence.md`
 
-Reviewed code SHA: `4cd69b525665d5c9000734300aa313d9713c575f`
+Reviewed code SHA: `daf31dfc0925482fd1dfdf057133d2e657c8868d`
 
-Reviewed at: `2026-07-06T04:59:38Z`
+Reviewed at: `2026-07-06T05:18:52Z`
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS | None | Runtime factory and scope history reviewed. |
+| senior engineering | PASS | None | Runtime factory, scope history, and post-CodeRabbit test fixture extraction reviewed. |
 | QA/test | PASS | None | Acceptance criteria and focused checks reviewed. |
 | security/auth | PASS | None | Fail-closed config and secret handling reviewed. |
 | product/ops | PASS | None | Operator docs and product/runtime separation reviewed. |
 | architecture | PASS WITH LOW RISKS | None | Project-agent port and scope integrity reviewed. |
 | docs | PASS | None | Runtime selector/fallback wording reviewed. |
-| reuse/dedup | PASS WITH LOW RISKS | None | No production abstraction issue; low repeated test monkeypatch note. |
-| test delta | PASS | None | Selector regression tests reviewed. |
+| reuse/dedup | PASS | None | No production abstraction issue; repeated deterministic runtime monkeypatches extracted. |
+| test delta | PASS | None | Selector regression tests and post-CodeRabbit fixture extraction reviewed. |
 
 ## External Review
 
-External review has not run yet for this branch. CodeRabbit/GitHub findings
-must be recorded separately if a PR is opened.
+CodeRabbit found one valid nitpick: repeated deterministic project-agent runtime
+monkeypatch boilerplate in `backend/tests/test_projects.py`. It was fixed by
+extracting the test-local `deterministic_project_agent_runtime` fixture and
+recorded separately in:
+
+- `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-09-external-review-response.md`
+
+GitHub Actions passed before the post-CodeRabbit fix and must rerun after the
+follow-up evidence push.
 
 ## Remaining Risks
 
-- External CI and CodeRabbit are pending until PR creation.
-- Repeated test-local runtime monkeypatches can be extracted later if the test
-  surface grows.
+- External CI and CodeRabbit must rerun after the post-CodeRabbit fix is pushed.
+- Custom failing/spoofing/capturing runtime patches remain local to their tests
+  because they are intentionally different behaviors.
 
 ## Human Review Focus
 
