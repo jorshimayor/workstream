@@ -109,6 +109,8 @@ blockchain, frontend, or demo behavior was changed.
 - Worker profile fail-closed validation and role gate: tested by
   `test_worker_profile_request_is_fail_closed_and_validated` and
   `test_worker_profile_requires_worker_role`.
+- Nullable worker identity response contract: tested by
+  `test_worker_profile_response_includes_nullable_identity_fields`.
 - Failed pre-submit audit without submission: tested by
   `test_pre_submit_failure_writes_audit_event_without_submission`.
 
@@ -117,7 +119,7 @@ blockchain, frontend, or demo behavior was changed.
 ```bash
 cd backend && .venv/bin/python -m ruff check app/modules/projects/schemas.py app/modules/projects/service.py app/modules/tasks/router.py app/modules/tasks/schemas.py app/modules/tasks/service.py tests/test_projects.py tests/test_tasks.py
 cd backend && .venv/bin/python -m pytest tests/test_projects.py -k 'duplicate_guide_version_returns_conflict or guide_creation_accepts_source_snapshot_items_for_agent_material or guide_activation_and_active_guide_retrieval' -q
-cd backend && .venv/bin/python -m pytest tests/test_tasks.py -k 'worker_can_create_profile_before_claiming_task or worker_profile_request_is_fail_closed_and_validated or worker_profile_requires_worker_role or worker_without_profile_cannot_claim_ready_task or pre_submit_failure_writes_audit_event_without_submission' -q
+cd backend && .venv/bin/python -m pytest tests/test_tasks.py -k 'worker_can_create_profile_before_claiming_task or worker_profile_response_includes_nullable_identity_fields or worker_profile_request_is_fail_closed_and_validated or worker_profile_requires_worker_role or worker_without_profile_cannot_claim_ready_task or pre_submit_failure_writes_audit_event_without_submission' -q
 cd backend && .venv/bin/docstr-coverage app/modules/projects app/modules/tasks --config .docstr.yaml
 python3 scripts/check_markdown_links.py
 python3 scripts/check_stale_workstream_wording.py
@@ -129,12 +131,13 @@ Result summary:
 
 - ruff: passed.
 - Focused project tests: 3 passed.
-- Focused task tests: 5 passed.
+- Focused task tests: 6 passed.
 - Docstring coverage: 100.0%.
-- Markdown link check: passed for 7 changed Markdown files.
+- Markdown link check: passed for 10 changed Markdown files.
 - Stale wording scan: passed.
 - Diff whitespace check: passed.
-- Full project/task/checker suite: 310 passed.
+- Full project/task/checker suite before the final nullable-response test
+  addition: 310 passed; final focused worker/pre-submit rerun passed.
 
 ## Reviewer Results
 
@@ -142,7 +145,7 @@ Internal review evidence:
 
 - `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-10-internal-review-evidence.md`
 
-Reviewed base SHA: `8a524dec9de1fabb7ae6a605d45ae8ab3778a32c`
+Reviewed code SHA: `1b7d2e889fe1fd0460349b77c37e643a4e0c4cb0`
 
 Reviewed diff digest before evidence files:
 `67e2b7561d3688f6e588e5abe09317104da3bbd66ec97231f9f49b886801903b`
@@ -150,20 +153,24 @@ Reviewed diff digest before evidence files:
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
 | senior engineering | PASS WITH LOW RISKS | None | Findings on conflict mapping and skill tags addressed. |
-| QA/test | PASS WITH LOW RISKS | None | Requested worker profile fail-closed test; addressed. |
-| security/auth | PASS | None | Verified Flow-derived identity, role gate, and bounded audit exposure. |
-| product/ops | PASS WITH LOW RISKS | None | Skill-tag normalization concern addressed. |
+| QA/test | PASS | None | Requested nullable worker identity response coverage; addressed and passed rereview. |
+| security/auth | PASS WITH LOW RISKS | None | Verified Flow-derived identity, role gate, bounded audit exposure, and nullable self-profile fields. |
+| product/ops | PASS | None | Confirmed worker-owned profile setup, pre-submit failure audit evidence, and naming. |
 | architecture | PASS WITH LOW RISKS | None | Broad `IntegrityError` concern addressed. |
 | reuse/dedup | PASS WITH LOW RISKS | None | Minor profile construction duplication accepted. |
-| docs | PASS AFTER FIXES | Fixed | Public/operator behavior docs updated and passed rereview. |
-| docs rereview | PASS | None | Confirmed scoped docs and loop state. |
-| test delta | PASS WITH LOW RISKS | None | Role-gate and refresh coverage requested. |
-| test-delta final rereview | PASS | None | Confirmed test gaps fixed. |
+| docs | PASS WITH LOW RISKS | None | Endpoint inventory and loop metadata cleanup confirmed. |
+| ci integrity | PASS AFTER FIXES | None | Evidence rebound to reviewed code SHA; only evidence/status files changed afterward. |
+| test delta | PASS | None | Confirmed nullable identity-field regression test is meaningful and no assertions were weakened. |
 
 ## External Review
 
-No external PR review has been run for this local chunk yet. CodeRabbit and
-GitHub Actions should run after the PR is opened.
+External review response:
+
+- `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-10-external-review-response.md`
+
+CodeRabbit found three valid follow-up issues: evidence metadata, worker profile
+response serialization, and endpoint inventory documentation. All are addressed.
+GitHub Actions must rerun after the follow-up push.
 
 ## Remaining Risks
 

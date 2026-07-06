@@ -5,13 +5,14 @@
 - Active initiative: `WS-POL-001` - Submission Artifact Policy Foundation
 - Active planning chunk: none
 - Active implementation chunk: `WS-POL-001-10` - Pre-Submit Live Drill Hardening
-- Branch: `main` with local chunk changes
-- Status: `WS-POL-001-10` implementation, deterministic verification, and
-  internal review are complete. This chunk fixes the concrete pre-submit setup
-  and intake gaps found during the real Terminal Benchmark API drill.
+- Branch: `codex/ws-pol-001-10-pre-submit-hardening`
+- Status: `WS-POL-001-10` is open as PR #72. Implementation and internal
+  review are complete; CodeRabbit follow-up fixes are addressed locally and the
+  branch is awaiting pushed CI reruns and the human merge checkpoint.
 - Last merged implementation SHA: `8a524de`
 - Last merge commit: `8a524de`
-- Current gate: awaiting human checkpoint for `WS-POL-001-10`
+- Current gate: PR #72 external checks after evidence rebind, then human merge
+  decision
 - Next chunk: inactive until `WS-POL-001-10` reaches a human checkpoint
 
 ## Operating Rule
@@ -104,5 +105,7 @@ frontend, or agent-runtime behavior.
 - `WS-POL-001-09` external review response is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-09-external-review-response.md`.
 - `WS-POL-001-09` PR trust bundle is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-09-pr-trust-bundle.md`.
 - PR #71 merged into `main` as `8a524de`.
-- `WS-POL-001-10` started on `main` after the user's explicit start signal for
-  the first five pre-submit hardening fixes from the live API drill.
+- `WS-POL-001-10` started after the user's explicit start signal for the first
+  five pre-submit hardening fixes from the live API drill.
+- PR #72 is open from `codex/ws-pol-001-10-pre-submit-hardening`; CodeRabbit
+  follow-up fixes are applied locally and require CI rerun after push.

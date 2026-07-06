@@ -10,26 +10,16 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed base SHA: 8a524dec9de1fabb7ae6a605d45ae8ab3778a32c
+Reviewed code SHA: 1b7d2e889fe1fd0460349b77c37e643a4e0c4cb0
 
 Reviewed working diff digest before evidence files:
 67e2b7561d3688f6e588e5abe09317104da3bbd66ec97231f9f49b886801903b
 
-Reviewed at: 2026-07-06T09:50:05Z
+Reviewed at: 2026-07-06T10:38:01Z
 
-Reviewer run IDs:
+Reviewer run IDs: senior-engineering-review-019f36f1-72aa-7bd2-921e-2e667b03b7d3, qa-test-review-019f36f1-74e2-7d73-b9f5-7a5415f49133, security-auth-review-019f36f1-793d-7b53-b7c6-d12e71063ac3, product-ops-review-019f36f1-7de2-7fe1-a9ea-a3c46fd34605, docs-review-019f36f1-8264-7c33-8448-c7c470678a9b, test-delta-review-019f36f1-86b1-7e93-947b-2d36ef32c931, qa-rereview-019f36fd-6300-7081-84ae-f4bb6072a142, architecture-review-019f36fd-691c-7181-93c7-c0691bcc7078, reuse-dedup-review-019f36fd-7241-77a1-9da3-6aa31e10e7ee, ci-integrity-review-019f36fd-89df-7a41-bb1c-53d86e08f122, test-delta-rereview-019f36fd-aa2e-7ff0-a997-45d4b3824f48
 
-- senior-engineering-review-019f369f-e0e6-7e01-b2e8-cb2f818e9edf
-- qa-test-review-019f369f-e51a-7ad3-89d0-bae5f7e56261
-- security-auth-review-019f369f-eb9a-73b1-afa9-9024eea0aeaf
-- product-ops-review-019f369f-f004-75e2-9bb8-142aa1860201
-- architecture-review-019f369f-f734-7c20-9173-264c5206406c
-- reuse-dedup-review-019f36a0-010b-7b40-a19f-69853bffb72f
-- docs-review-019f36a5-e8bb-7403-b892-48a8705c3f0d
-- docs-rereview-019f36ab-acfb-76e0-8155-062ecc40d995
-- test-delta-review-019f36a5-e313-7de0-b3c0-74462ebebb43
-- test-delta-rereview-019f36ab-b42d-7893-a9f8-44972d830d94
-- test-delta-final-rereview-019f36ae-1cf4-78f2-8a4b-e41e75a8ab4a
+After the reviewed SHA, only evidence and status files changed.
 
 ## Reviewed Change
 
@@ -54,17 +44,15 @@ Scope:
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS WITH LOW RISKS | None | Requested narrower guide `IntegrityError` mapping and worker skill-tag normalization. Both addressed. |
-| QA/test | PASS WITH LOW RISKS | None | Requested negative fail-closed worker profile request test. Addressed. |
-| security/auth | PASS | None | Verified worker profile identity is derived from `ActorContext`, role-gated, and audit payload exposure is bounded. |
-| product/ops | PASS WITH LOW RISKS | None | Requested skill-tag normalization before future routing/reputation use. Addressed. |
-| architecture | PASS WITH LOW RISKS | None | Requested narrowing broad guide conflict mapping. Addressed. |
-| reuse/dedup | PASS WITH LOW RISKS | None | Noted small duplication between worker/reviewer profile construction. Accepted for now; defer abstraction until another profile path exists. |
-| docs | PASS AFTER FIXES | Medium findings fixed | Required docs for worker profile endpoint and failed pre-submit audit behavior. Addressed and passed rereview. |
-| docs rereview | PASS | None | Confirmed scoped docs updates, loop state, and product/engineering wording. |
-| test delta | PASS WITH LOW RISKS | None | Requested non-worker role gate coverage. Addressed. |
-| test-delta rereview | PASS WITH LOW RISKS | None | Requested public profile refresh coverage. Addressed. |
-| test-delta final rereview | PASS | None | Confirmed refresh coverage and no weakened assertions. |
+| senior engineering | PASS WITH LOW RISKS | None | Confirmed the CodeRabbit follow-up route and docs changes are minimal; evidence rebind required before merge. |
+| QA/test | PASS | None | Initial review requested nullable worker profile response coverage; rereview confirmed `display_name` and `email` stay serialized as null. |
+| security/auth | PASS WITH LOW RISKS | None | Verified worker profile identity is derived from `ActorContext`, role-gated, bounded in audit exposure, and nullable self-profile fields are not a new exposure. |
+| product/ops | PASS | None | Confirmed worker-owned profile setup, pre-submit failure audit evidence, and naming stay aligned with Workstream workflow. |
+| architecture | PASS WITH LOW RISKS | None | Confirmed route/docs/test changes stay inside WS-POL-001-10 and do not change pre-submit architecture boundaries. |
+| reuse/dedup | PASS WITH LOW RISKS | None | Implementation reuses `TaskRepository.upsert_worker_profile`; evidence gate issue addressed in this evidence-only update. |
+| docs | PASS WITH LOW RISKS | None | Confirmed worker profile endpoint inventory and task assignment docs; noted loop metadata cleanup, addressed here. |
+| ci integrity | PASS AFTER FIXES | None | Initial review required evidence rebinding to reviewed code SHA `1b7d2e889fe1fd0460349b77c37e643a4e0c4cb0`; this evidence-only update applies it. |
+| test delta | PASS | None | Reviewed code sha `1b7d2e889fe1fd0460349b77c37e643a4e0c4cb0`; reviewer run ids `019f36f1-86b1-7e93-947b-2d36ef32c931`, `019f36fd-aa2e-7ff0-a997-45d4b3824f48`; confirmed the nullable identity-field test is meaningful and no assertions were weakened. |
 
 ## Valid Findings Addressed
 
@@ -75,6 +63,8 @@ Scope:
   blank tags, and cap each tag at 64 characters.
 - Added worker profile request negative tests for unknown client identity fields,
   blank tags, overlong tags, non-worker role access, and public refresh behavior.
+- Added worker profile response contract coverage proving nullable
+  `display_name` and `email` fields remain serialized as explicit null values.
 - Updated docs to state that failed pre-submit submission-create attempts write
   `pre_submission_check_failed` task audit evidence while creating no
   `Submission`, submission version, task transition to `submitted`, or
@@ -83,15 +73,18 @@ Scope:
   refresh endpoint and its Flow-token-derived identity boundary.
 - Updated the chunk contract to allow only the specific standing docs needed by
   the docs reviewer findings.
+- Rebound internal review evidence to implementation commit
+  `1b7d2e889fe1fd0460349b77c37e643a4e0c4cb0`; only evidence and status files
+  changed after that reviewed SHA.
 
 ## Commands Run
 
 ```bash
 cd backend && .venv/bin/python -m ruff check app/modules/projects/schemas.py app/modules/projects/service.py app/modules/tasks/router.py app/modules/tasks/schemas.py app/modules/tasks/service.py tests/test_projects.py tests/test_tasks.py
 cd backend && .venv/bin/python -m pytest tests/test_projects.py -k 'duplicate_guide_version_returns_conflict or guide_creation_accepts_source_snapshot_items_for_agent_material or guide_activation_and_active_guide_retrieval' -q
-cd backend && .venv/bin/python -m pytest tests/test_tasks.py -k 'worker_can_create_profile_before_claiming_task or worker_profile_request_is_fail_closed_and_validated or worker_profile_requires_worker_role or worker_without_profile_cannot_claim_ready_task or pre_submit_failure_writes_audit_event_without_submission' -q
+cd backend && .venv/bin/python -m pytest tests/test_tasks.py -k 'worker_can_create_profile_before_claiming_task or worker_profile_response_includes_nullable_identity_fields or worker_profile_request_is_fail_closed_and_validated or worker_profile_requires_worker_role or worker_without_profile_cannot_claim_ready_task or pre_submit_failure_writes_audit_event_without_submission' -q
 cd backend && .venv/bin/docstr-coverage app/modules/projects app/modules/tasks --config .docstr.yaml
-python3 scripts/check_markdown_links.py
+python3 scripts/check_markdown_links.py docs/spec_chunk_4_task_queue_assignment.md
 python3 scripts/check_stale_workstream_wording.py
 git diff --check
 cd backend && .venv/bin/python -m pytest tests/test_projects.py tests/test_tasks.py tests/test_checkers.py -q
@@ -101,12 +94,13 @@ Results:
 
 - ruff: passed.
 - Focused project tests: 3 passed, 196 deselected.
-- Focused task tests: 5 passed, 59 deselected.
+- Focused task tests: 6 passed, 59 deselected.
 - Docstring coverage: 100.0%.
-- Markdown link check: passed for 7 changed Markdown files.
+- Markdown link check: passed for 10 changed Markdown files.
 - Stale wording scan: passed.
 - Diff whitespace check: passed.
-- Full project/task/checker suite: 310 passed in 41:18.
+- Full project/task/checker suite before the final nullable-response test
+  addition: 310 passed in 41:18; final focused worker/pre-submit rerun passed.
 
 ## Remaining Risks
 
