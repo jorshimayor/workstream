@@ -84,7 +84,6 @@ def permission_http_error(exc: PermissionDenied) -> HTTPException:
 @router.post(
     "/workers/me/profile",
     response_model=WorkerProfileResponse,
-    response_model_exclude_none=True,
 )
 async def ensure_worker_profile(
     payload: WorkerProfileUpsertRequest,

@@ -89,6 +89,7 @@ New endpoints:
 - `POST /api/v1/tasks/{task_id}/claim`
 - `POST /api/v1/tasks/{task_id}/start`
 - `GET /api/v1/tasks/{task_id}/audit-events`
+- `POST /api/v1/workers/me/profile`
 
 Routers stay thin. Services own authorization, lifecycle checks, locked context stamping, assignment rules, and audit writes.
 

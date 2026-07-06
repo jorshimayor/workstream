@@ -85,6 +85,9 @@ def auth_headers(token: str = "task-token") -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
+_DEFAULT_DEV_ACTOR_FIELD = object()
+
+
 def set_dev_actor(
     monkeypatch: pytest.MonkeyPatch,
     *,
@@ -92,14 +95,26 @@ def set_dev_actor(
     subject: str,
     token: str = "task-token",
     issuer: str = "flow-test",
+    email: str | None | object = _DEFAULT_DEV_ACTOR_FIELD,
+    display_name: str | None | object = _DEFAULT_DEV_ACTOR_FIELD,
 ) -> None:
     monkeypatch.setenv("WORKSTREAM_AUTH_PROVIDER", "dev")
     monkeypatch.setenv("WORKSTREAM_ENVIRONMENT", "test")
     monkeypatch.setenv("WORKSTREAM_DEV_AUTH_TOKEN", token)
     monkeypatch.setenv("WORKSTREAM_DEV_AUTH_SUBJECT", subject)
     monkeypatch.setenv("WORKSTREAM_DEV_AUTH_ISSUER", issuer)
-    monkeypatch.setenv("WORKSTREAM_DEV_AUTH_EMAIL", f"{subject}@example.test")
-    monkeypatch.setenv("WORKSTREAM_DEV_AUTH_DISPLAY_NAME", subject.replace("-", " ").title())
+    if email is _DEFAULT_DEV_ACTOR_FIELD:
+        monkeypatch.setenv("WORKSTREAM_DEV_AUTH_EMAIL", f"{subject}@example.test")
+    elif email is None:
+        monkeypatch.delenv("WORKSTREAM_DEV_AUTH_EMAIL", raising=False)
+    else:
+        monkeypatch.setenv("WORKSTREAM_DEV_AUTH_EMAIL", email)
+    if display_name is _DEFAULT_DEV_ACTOR_FIELD:
+        monkeypatch.setenv("WORKSTREAM_DEV_AUTH_DISPLAY_NAME", subject.replace("-", " ").title())
+    elif display_name is None:
+        monkeypatch.delenv("WORKSTREAM_DEV_AUTH_DISPLAY_NAME", raising=False)
+    else:
+        monkeypatch.setenv("WORKSTREAM_DEV_AUTH_DISPLAY_NAME", display_name)
     monkeypatch.setenv("WORKSTREAM_DEV_AUTH_ROLES", roles)
     monkeypatch.setenv("WORKSTREAM_PROJECT_SETUP_PIPELINE_AUTOSTART", "false")
     get_settings.cache_clear()
@@ -1294,6 +1309,35 @@ async def test_worker_can_create_profile_before_claiming_task(
     assert claim.status_code == 200, claim.text
     assert claim.json()["task"]["status"] == "claimed"
     assert claim.json()["assignment"]["worker_id"] == actor_id("worker-self-profile")
+
+
+async def test_worker_profile_response_includes_nullable_identity_fields(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    set_dev_actor(
+        monkeypatch,
+        roles="worker",
+        subject="worker-null-identity",
+        email=None,
+        display_name=None,
+    )
+
+    response = await task_client.post(
+        "/api/v1/workers/me/profile",
+        headers=auth_headers(),
+        json={"skill_tags": []},
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["actor_id"] == actor_id("worker-null-identity")
+    assert body["external_subject"] == "worker-null-identity"
+    assert body["external_issuer"] == "flow-test"
+    assert body["display_name"] is None
+    assert body["email"] is None
+    assert body["skill_tags"] == []
+    assert body["status"] == "active"
 
 
 async def test_worker_profile_request_is_fail_closed_and_validated(
