@@ -749,3 +749,142 @@ The removed fixture path cannot be used as a production project setup runtime;
 test fakes stay visibly test-local; operator docs do not imply fallback
 behavior; and the project-agent port remains available for deliberate future
 runtime providers.
+
+### WS-POL-001-10: Pre-Submit Live Drill Hardening
+
+Goal:
+
+Harden the concrete pre-submit setup and intake gaps found during the real
+Terminal Benchmark API drill.
+
+Risk:
+
+L1
+
+Depends on:
+
+`WS-POL-001-09`
+
+Status:
+
+Merged through PR #72.
+
+Scope:
+
+Duplicate guide-version conflict mapping, guide-create source snapshot capture,
+active-guide checker summary visibility, worker self-profile onboarding through
+authenticated API, and durable failed-pre-submit audit evidence without creating
+a submission.
+
+Human review focus:
+
+Worker profile setup is a real authenticated API path, active-guide checker
+visibility does not expose compiled bundle bodies, and failed pre-submit
+attempts remain outside product review decisions.
+
+### WS-POL-001-11: Actor Identity And Profile Registry
+
+Goal:
+
+Create local `ActorIdentity` and shared `ActorProfile` registries for verified
+Flow actors before the next Terminal Benchmark live API drill.
+
+Risk:
+
+L1
+
+Depends on:
+
+`WS-POL-001-10`
+
+Allowed files:
+
+```text
+backend/alembic/versions/*_actor_identity_profile_registry.py
+backend/app/api/router.py
+backend/app/api/deps/auth.py
+backend/app/api/routes/demo.py
+backend/app/api/routes/auth.py
+backend/app/db/models.py
+backend/app/modules/actors/__init__.py
+backend/app/modules/actors/models.py
+backend/app/modules/actors/repository.py
+backend/app/modules/actors/schemas.py
+backend/app/modules/actors/service.py
+backend/app/modules/tasks/models.py
+backend/app/modules/tasks/repository.py
+backend/app/modules/tasks/router.py
+backend/app/modules/tasks/schemas.py
+backend/app/modules/tasks/service.py
+backend/tests/test_actors.py
+backend/tests/test_alembic.py
+backend/tests/test_auth.py
+backend/tests/test_tasks.py
+backend/scripts/week1_dry_run.py
+backend/scripts/week1_api_e2e.py
+backend/scripts/week2_api_e2e.py
+examples/terminal_benchmark/terminal_benchmark_api_e2e.py
+docs/architecture_data_model.md
+docs/architecture_lockdown.md
+docs/architecture_system_architecture.md
+docs/glossary.md
+docs/operations_roles_permissions.md
+docs/spec_chunk_2_auth_actor_boundary.md
+docs/spec_chunk_4_task_queue_assignment.md
+.agent-loop/LOOP_STATE.md
+.agent-loop/WORK_QUEUE.md
+.agent-loop/REVIEW_LOG.md
+.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/CHUNK_MAP.md
+.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/STATUS.md
+.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/chunks/WS-POL-001-11-actor-identity-profile-registry.md
+.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-11-*
+```
+
+Not allowed:
+
+```text
+Workstream-owned login, signup, password reset, password storage, primary auth sessions, or API-key auth
+Flow token verifier replacement
+route access from persisted profile rows instead of verified token roles
+task/submission/checker/review/revision/payment/reputation behavior changes
+agent runtime, project setup pipeline, Celery, storage, frontend, demo feature, or blockchain changes
+```
+
+Acceptance criteria:
+
+- `ActorIdentity` and `ActorProfile` models/tables exist with unique identity
+  and profile constraints.
+- Existing worker/reviewer profile rows are backfilled into the shared profile
+  model and the separate profile tables, ORM models, and repository authority
+  paths stop owning profile state.
+- Seeded migration tests prove worker/reviewer profile backfill preserves
+  profile type, status, skill tags, scope, and table removal.
+- Flow token verification remains pure. Actor registration uses a separate
+  actors service/repository boundary.
+- Route authorization remains token-derived.
+- Profile status values are explicit. `observed` is audit/display metadata,
+  `active` is explicit workflow eligibility, and profile status is never route
+  permission.
+- Observation refresh preserves existing `active` and `disabled` profile
+  status unless an explicit audited profile workflow changes status.
+- Worker claim requires both verified worker token role and active worker
+  profile.
+- Stored profiles without matching token roles do not grant operator, worker,
+  reviewer, or project-manager access.
+- Stale backend demo/script imports of old worker/reviewer profile models are
+  removed, rewired, or retired so the shared actor profile model is the only
+  profile authority.
+- Stale backend script/example calls to `/api/v1/demo/worker-profile` are
+  removed, rewired to `POST /api/v1/workers/me/profile`, or explicitly retired.
+- Verification includes a stale helper scan for old profile model imports and
+  the removed demo worker-profile endpoint.
+
+Required reviewers:
+
+senior engineering, QA/test, security/auth, product/ops, architecture, docs,
+reuse/dedup, test delta.
+
+Human review focus:
+
+The shared actor/profile model removes duplicated profile storage without
+turning persisted profiles into auth or permission authority.

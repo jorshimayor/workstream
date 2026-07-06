@@ -228,3 +228,68 @@ and removal of remaining construction-state compatibility surfaces.
 Evidence: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-08-internal-review-evidence.md`
 
 External review response: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-08-external-review-response.md`
+
+## WS-POL-001-09
+
+Status: merged through PR #71 on 2026-07-06.
+
+Merge commit: `8a524de`
+
+Required reviewer tracks:
+
+- senior engineering
+- QA/test
+- security/auth
+- product/ops
+- architecture
+- CI integrity
+- docs
+- reuse/dedup
+- test delta
+
+Result: PASS after fixes; external review addressed; GitHub checks passed.
+
+Scope: removed the production `local_fixture` project setup runtime and old
+runtime selector, kept deterministic test behavior in explicit test-local
+fakes only, and preserved OpenAI Agents SDK as the configured project setup
+runtime boundary.
+
+Evidence: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-09-internal-review-evidence.md`
+
+External review response: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-09-external-review-response.md`
+
+## WS-POL-001-10
+
+Status: merged through PR #72 on 2026-07-06.
+
+Merge commit: `1bbde47`
+
+Reviewed implementation SHA: `cc78f2a`
+
+Required reviewer tracks:
+
+- senior engineering
+- QA/test
+- security/auth
+- product/ops
+- architecture
+- CI integrity
+- docs
+- reuse/dedup
+- test delta
+
+Result: PASS after fixes; external review addressed; GitHub checks passed.
+
+Scope: duplicate guide-version conflict handling, guide-create source snapshot
+capture, active-guide checker summary visibility, worker self-profile
+onboarding through authenticated API, nullable worker identity response
+coverage, and durable failed-pre-submit audit evidence without creating a
+submission.
+
+Next chunk: `WS-POL-001-11` should define and then implement local actor
+identity and actor profile registries before the next Terminal Benchmark live
+API drill.
+
+Evidence: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-10-internal-review-evidence.md`
+
+External review response: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-10-external-review-response.md`
