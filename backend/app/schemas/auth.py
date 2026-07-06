@@ -16,8 +16,18 @@ def sanitized_claim_snapshot(claim_snapshot: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Claim snapshot with relationship claims reduced to scope identity only.
     """
-    sanitized = dict(claim_snapshot)
-    relationship_profiles = sanitized.get("workstream_relationship_profiles")
+    sanitized: dict[str, Any] = {}
+    raw_roles = claim_snapshot.get("roles")
+    if isinstance(raw_roles, list | tuple):
+        sanitized["roles"] = [role for role in raw_roles if isinstance(role, str)]
+    elif isinstance(raw_roles, str):
+        sanitized["roles"] = [raw_roles]
+
+    claim_source = claim_snapshot.get("claim_source")
+    if isinstance(claim_source, str):
+        sanitized["claim_source"] = claim_source
+
+    relationship_profiles = claim_snapshot.get("workstream_relationship_profiles")
     if not isinstance(relationship_profiles, list):
         return sanitized
 

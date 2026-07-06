@@ -70,11 +70,14 @@ backend/app/api/deps/auth.py
 backend/app/api/routes/auth.py
 backend/app/core/config.py
 backend/app/db/models.py
+backend/app/schemas/auth.py
 backend/app/modules/actors/__init__.py
 backend/app/modules/actors/models.py
 backend/app/modules/actors/repository.py
 backend/app/modules/actors/schemas.py
 backend/app/modules/actors/service.py
+backend/app/modules/checkers/router.py
+backend/app/modules/projects/router.py
 backend/app/modules/tasks/models.py
 backend/app/modules/tasks/repository.py
 backend/app/modules/tasks/router.py
@@ -83,6 +86,7 @@ backend/app/modules/tasks/service.py
 backend/tests/test_actors.py
 backend/tests/test_alembic.py
 backend/tests/test_auth.py
+backend/tests/test_projects.py
 backend/tests/test_tasks.py
 backend/scripts/api_contract_e2e.py
 backend/scripts/week2_api_e2e.py
