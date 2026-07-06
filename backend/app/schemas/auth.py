@@ -23,10 +23,6 @@ def sanitized_claim_snapshot(claim_snapshot: dict[str, Any]) -> dict[str, Any]:
     elif isinstance(raw_roles, str):
         sanitized["roles"] = [raw_roles]
 
-    claim_source = claim_snapshot.get("claim_source")
-    if isinstance(claim_source, str):
-        sanitized["claim_source"] = claim_source
-
     relationship_profiles = claim_snapshot.get("workstream_relationship_profiles")
     if not isinstance(relationship_profiles, list):
         return sanitized

@@ -398,6 +398,7 @@ async def test_scoped_project_owner_profile_comes_from_trusted_relationship_clai
         claim_snapshot={
             "roles": ["project_manager"],
             "access_token": "must-not-persist",
+            "claim_source": "must-not-persist",
             "email": "must-not-persist@example.test",
             "nested": {"api_key": "must-not-persist"},
             "secret": "must-not-persist",
@@ -453,6 +454,7 @@ async def test_scoped_project_owner_profile_comes_from_trusted_relationship_clai
     assert "must-not-persist" not in str(identity_snapshot)
     assert "api_key" not in str(identity_snapshot)
     assert "access_token" not in str(identity_snapshot)
+    assert "claim_source" not in str(identity_snapshot)
     assert "nested" not in str(identity_snapshot)
     assert "email" not in str(identity_snapshot)
     assert "secret" not in str(identity_snapshot).lower()
@@ -468,6 +470,7 @@ async def test_scoped_project_owner_profile_comes_from_trusted_relationship_clai
         assert "must-not-persist" not in str(claim_snapshot)
         assert "api_key" not in str(claim_snapshot)
         assert "access_token" not in str(claim_snapshot)
+        assert "claim_source" not in str(claim_snapshot)
         assert "nested" not in str(claim_snapshot)
         assert "email" not in str(claim_snapshot)
         assert "secret" not in str(claim_snapshot).lower()

@@ -68,6 +68,7 @@ backend/alembic/versions/*_actor_identity_profile_registry.py
 backend/app/api/router.py
 backend/app/api/deps/auth.py
 backend/app/api/routes/auth.py
+backend/app/adapters/auth/flow.py
 backend/app/core/config.py
 backend/app/db/models.py
 backend/app/schemas/auth.py
@@ -124,7 +125,8 @@ roles or permissions sourced from ActorIdentity instead of the verified token
 roles or permissions sourced from ActorProfile instead of the verified token
 canonical product roles sourced from Identity Issuer token claims instead of Workstream-owned role-assignment records once that layer exists
 automatic task claiming, reviewing, payment, or project access from profiles alone
-worker/reviewer routing changes beyond moving profile storage to ActorProfile and preserving current worker-profile API behavior
+worker/reviewer routing changes beyond moving profile storage to ActorProfile and preserving the canonical worker-profile API behavior
+compatibility backfill or restoration of obsolete worker/reviewer profile rows
 task lifecycle, submission, checker, review, revision, payment, or reputation behavior changes
 agent runtime, project setup pipeline, Celery, storage, frontend, or demo feature changes
 blockchain, ERC-8004, ERC-8183, settlement, marketplace, or external source adapters
