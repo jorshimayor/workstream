@@ -51,7 +51,8 @@ Security re-review confirmed:
 - non-Postgres URL is blocked
 - local async Postgres URLs for `workstream` and `workstream_test` are allowed
 - Flow-token auth remains in use
-- demo worker-profile route remains local/test gated
+- superseded: the local demo worker-profile route was later removed; current
+  drills use `POST /api/v1/workers/me/profile`
 - worker redaction and reviewer denial are asserted
 - no production route or checker-read permission is widened
 
@@ -60,7 +61,8 @@ Security re-review confirmed:
 Findings:
 
 - no blocking findings
-- the demo worker-profile helper is acceptable for v0.1 drills but should not be described as production worker onboarding
+- superseded: the demo worker-profile helper was removed; current drills use
+  the canonical worker profile API
 - uppercase lifecycle labels must not drift into persisted token contracts
 
 Resolution: roadmap wording keeps Week 3 readiness explicit and does not overclaim reviewer checker visibility.

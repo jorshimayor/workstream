@@ -51,7 +51,7 @@ the route still requires the matching role in the current verified token.
 
 | Action | Admin | Project Manager | Worker | Reviewer | Finance | Auditor |
 | --- | --- | --- | --- | --- | --- | --- |
-| Create project | yes | no | no | no | no | no |
+| Create project | yes | yes | no | no | no | no |
 | Edit project guide | yes | yes | no | no | no | no |
 | Create task | yes | yes | no | no | no | no |
 | Claim task | no | no | yes | no | no | no |

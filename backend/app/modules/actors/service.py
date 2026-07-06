@@ -120,7 +120,7 @@ class ActorService:
             await self._repo.upsert_identity(self._identity_from_actor(actor))
         existing = await self._repo.get_profile(actor.actor_id, profile_type, scope_type, scope_id)
         if existing is None:
-            await self._repo.insert_profile_if_absent(
+            inserted = await self._repo.insert_profile_if_absent(
                 ActorProfile(
                     id=str(uuid4()),
                     actor_id=actor.actor_id,
@@ -135,14 +135,15 @@ class ActorService:
             profile = await self._repo.get_profile(actor.actor_id, profile_type, scope_type, scope_id)
             if profile is None:
                 raise RuntimeError("actor profile insert did not return a persisted row")
-            await self._write_profile_audit(
-                actor,
-                profile,
-                event_type="actor_profile_observed",
-                from_status=None,
-                to_status=profile.status,
-                event_payload={"profile_metadata": profile.profile_metadata},
-            )
+            if inserted:
+                await self._write_profile_audit(
+                    actor,
+                    profile,
+                    event_type="actor_profile_observed",
+                    from_status=None,
+                    to_status=profile.status,
+                    event_payload={"profile_metadata": profile.profile_metadata},
+                )
             return profile
 
         if existing.status != "observed":
@@ -201,7 +202,7 @@ class ActorService:
             GLOBAL_PROFILE_SCOPE_ID,
         )
         if profile is None:
-            await self._repo.insert_profile_if_absent(
+            inserted = await self._repo.insert_profile_if_absent(
                 ActorProfile(
                     id=str(uuid4()),
                     actor_id=actor.actor_id,
@@ -221,14 +222,15 @@ class ActorService:
             )
             if profile is None:
                 raise RuntimeError("worker actor profile insert did not return a persisted row")
-            await self._write_profile_audit(
-                actor,
-                profile,
-                event_type="actor_profile_activated",
-                from_status=None,
-                to_status="active",
-                event_payload={"skill_tags": profile.skill_tags},
-            )
+            if inserted:
+                await self._write_profile_audit(
+                    actor,
+                    profile,
+                    event_type="actor_profile_activated",
+                    from_status=None,
+                    to_status="active",
+                    event_payload={"skill_tags": profile.skill_tags},
+                )
         else:
             if profile.status == "disabled":
                 raise ActorProfileDisabled("worker profile is disabled")

@@ -134,13 +134,16 @@ class ActorRepository:
         )
         return result.scalars().all()
 
-    async def insert_profile_if_absent(self, profile: ActorProfile) -> None:
+    async def insert_profile_if_absent(self, profile: ActorProfile) -> bool:
         """Insert a profile without overwriting existing scoped profile state.
 
         Args:
             profile: Actor profile to insert when absent.
+
+        Returns:
+            True when this call inserted the profile; false on conflict.
         """
-        await self._session.execute(
+        result = await self._session.execute(
             insert(ActorProfile)
             .values(
                 id=profile.id,
@@ -160,5 +163,7 @@ class ActorRepository:
                     ActorProfile.scope_id,
                 ]
             )
+            .returning(ActorProfile.id)
         )
         await self._session.flush()
+        return result.scalar_one_or_none() is not None

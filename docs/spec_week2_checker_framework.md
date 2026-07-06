@@ -18,7 +18,7 @@ The checker framework protects reviewer time by proving that the latest locked s
 - blocking versus warning calculation
 - user-facing `needs_revision` routing from checker failures
 - backend API access to checker runs and results
-- dry-run/demo output for checker visibility
+- backend API drill/debug output for checker visibility
 - pre-review gate enforcement for `REVIEW_PENDING`
 
 ## Non-Scope

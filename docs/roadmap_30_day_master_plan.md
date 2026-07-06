@@ -144,7 +144,7 @@ This thin slice is the first proof that Workstream can measure and certify usefu
 
 Objective: prevent worker-fixable submission failures and locked task setup defects from reaching human review.
 
-Week 2 is backend/checker-framework work. Checker results must be available through backend APIs, dry-run scripts, and demo/debug output. Product frontend pages, reviewer queue UI, and review decision screens stay in Week 3 or later.
+Week 2 is backend/checker-framework work. Checker results must be available through backend APIs, backend contract drills, and operational debug output. Product frontend pages, reviewer queue UI, and review decision screens stay in Week 3 or later.
 
 Deliverables:
 
