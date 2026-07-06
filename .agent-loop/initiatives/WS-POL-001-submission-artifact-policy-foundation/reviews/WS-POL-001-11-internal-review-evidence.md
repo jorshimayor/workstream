@@ -10,11 +10,11 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: ef2cd187c4a1b4fc2b3cbb7d4d8d563ff9e50bb0
+Reviewed code SHA: 912a1bef3ce7065e9563a03a440b24efe6af3f89
 
-Reviewed at: 2026-07-06T16:07:41Z
+Reviewed at: 2026-07-06T16:17:45Z
 
-Reviewer run IDs: senior-engineering-review-019f37c9-f47a-7fa2-ac9b-639db0d4943a, qa-test-review-019f3804-d7c9-7f40-9a55-abb3ab0ea152, security-auth-review-019f37ca-2035-7e93-b63d-e53c632ee23a, product-ops-review-019f37ca-2da9-7670-a0a1-9bb351b0ecf1, architecture-review-019f382c-b040-7ac3-a7f6-f26b17fbe533, docs-review-019f3805-095b-7490-b410-3b28688bc979, reuse-dedup-review-019f3805-369e-7050-ba48-b1aca7c8208c, test-delta-review-019f3805-5f52-73b1-9aba-6254ce075cd9
+Reviewer run IDs: senior-engineering-review-019f37c9-f47a-7fa2-ac9b-639db0d4943a, qa-test-review-019f3804-d7c9-7f40-9a55-abb3ab0ea152, security-auth-review-019f37ca-2035-7e93-b63d-e53c632ee23a, product-ops-review-019f37ca-2da9-7670-a0a1-9bb351b0ecf1, architecture-review-019f382c-b040-7ac3-a7f6-f26b17fbe533, docs-review-019f3805-095b-7490-b410-3b28688bc979, reuse-dedup-review-019f3805-369e-7050-ba48-b1aca7c8208c, test-delta-review-019f3805-5f52-73b1-9aba-6254ce075cd9, ci-integrity-review-019f3836-8680-7f90-be04-b79fa169f57b
 
 After the reviewed SHA, only evidence and status files changed.
 
@@ -41,7 +41,7 @@ Scope:
 | security/auth | PASS AFTER FIXES | None | Confirmed token roles remain route authority; scoped docs stayed inside the chunk after reverting out-of-scope roadmap edits. |
 | product/ops | PASS | None | Confirmed actor/profile workflow semantics after stale loop evidence was treated as pending final evidence work. |
 | architecture | PASS WITH LOW RISKS | None | Confirmed Flow auth boundary, actor/profile non-auth semantics, worker claim gate, and documented v0.1 audit ledger coupling. |
-| CI integrity | N/A - with approved reason | N/A | No CI workflow, package script, dependency, lint, typecheck, or coverage configuration changed. |
+| CI integrity | PASS | None | Confirmed the post-PR lint fix only adds the missing `uuid4` import and does not weaken CI, lint, tests, typecheck, coverage, workflows, or package scripts. |
 | docs | PASS WITH LOW RISKS | None | Confirmed docs align after adding `workstream_relationship_profiles` schema, audit schema, demo cleanup, and issuer-plus-subject wording. |
 | reuse/dedup | PASS | None | Confirmed `ActorService` is profile authority, audit writes reuse `TaskRepository.add_audit_event`, and old profile authority paths are removed. |
 | test delta | PASS | None | Confirmed persisted overposting assertions, downgrade restore assertions, metadata negative assertions, and active/disabled metadata preservation coverage. |
@@ -60,6 +60,7 @@ Scope:
 - Documented exact `workstream_relationship_profiles` trusted claim schema and its non-authorizing behavior.
 - Updated audit-event docs to match actual `actor_roles`, `from_status`, `to_status`, `is_dev_auth`, and `event_payload` fields.
 - Aligned Flow Identity wording so docs consistently name Flow issuer plus subject as the canonical identity anchor.
+- Fixed the GitHub Backend/Lint failure by importing `uuid4` in the Week 1 dry-run script.
 
 ## Commands Run
 

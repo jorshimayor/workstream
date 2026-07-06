@@ -125,7 +125,7 @@ Internal review evidence:
 
 - `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-11-internal-review-evidence.md`
 
-Reviewed code SHA: `ef2cd187c4a1b4fc2b3cbb7d4d8d563ff9e50bb0`
+Reviewed code SHA: `912a1bef3ce7065e9563a03a440b24efe6af3f89`
 
 Reviewer run IDs: see `WS-POL-001-11-internal-review-evidence.md`.
 
@@ -136,7 +136,7 @@ Reviewer run IDs: see `WS-POL-001-11-internal-review-evidence.md`.
 | security/auth | PASS AFTER FIXES | None | Confirmed token authority and fail-closed scope after fixes. |
 | product/ops | PASS | None | Confirmed actor/profile workflow semantics. |
 | architecture | PASS WITH LOW RISKS | None | Confirmed auth/profile boundaries; future shared audit module noted as follow-up. |
-| CI integrity | N/A - with approved reason | N/A | No CI/workflow/package/dependency/config changes. |
+| CI integrity | PASS | None | Confirmed the post-PR lint fix only imports `uuid4` and does not weaken CI or tests. |
 | docs | PASS WITH LOW RISKS | None | Confirmed docs alignment after final issuer-plus-subject wording. |
 | reuse/dedup | PASS | None | Confirmed single actor/profile authority and audit helper reuse. |
 | test delta | PASS | None | Confirmed tests were strengthened and not weakened. |
