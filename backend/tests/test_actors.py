@@ -396,7 +396,7 @@ async def test_scoped_project_owner_profile_comes_from_trusted_relationship_clai
         subject="source-contact",
         roles=("project_manager",),
         claim_snapshot={
-            "roles": ["project_manager"],
+            "roles": [" project_manager ", ""],
             "access_token": "must-not-persist",
             "claim_source": "must-not-persist",
             "email": "must-not-persist@example.test",

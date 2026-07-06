@@ -19,9 +19,13 @@ def sanitized_claim_snapshot(claim_snapshot: dict[str, Any]) -> dict[str, Any]:
     sanitized: dict[str, Any] = {}
     raw_roles = claim_snapshot.get("roles")
     if isinstance(raw_roles, list | tuple):
-        sanitized["roles"] = [role for role in raw_roles if isinstance(role, str)]
+        roles = [role.strip() for role in raw_roles if isinstance(role, str) and role.strip()]
     elif isinstance(raw_roles, str):
-        sanitized["roles"] = [raw_roles]
+        roles = [role.strip() for role in raw_roles.split(",") if role.strip()]
+    else:
+        roles = []
+    if roles:
+        sanitized["roles"] = roles
 
     relationship_profiles = claim_snapshot.get("workstream_relationship_profiles")
     if not isinstance(relationship_profiles, list):
