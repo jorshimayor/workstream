@@ -66,4 +66,3 @@ class ActorProfileResponse(BaseModel):
     email: str | None
     created_at: datetime
     updated_at: datetime
-
