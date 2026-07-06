@@ -85,6 +85,9 @@ def auth_headers(token: str = "task-token") -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
+_DEFAULT_DEV_ACTOR_FIELD = object()
+
+
 def set_dev_actor(
     monkeypatch: pytest.MonkeyPatch,
     *,
@@ -92,14 +95,26 @@ def set_dev_actor(
     subject: str,
     token: str = "task-token",
     issuer: str = "flow-test",
+    email: str | None | object = _DEFAULT_DEV_ACTOR_FIELD,
+    display_name: str | None | object = _DEFAULT_DEV_ACTOR_FIELD,
 ) -> None:
     monkeypatch.setenv("WORKSTREAM_AUTH_PROVIDER", "dev")
     monkeypatch.setenv("WORKSTREAM_ENVIRONMENT", "test")
     monkeypatch.setenv("WORKSTREAM_DEV_AUTH_TOKEN", token)
     monkeypatch.setenv("WORKSTREAM_DEV_AUTH_SUBJECT", subject)
     monkeypatch.setenv("WORKSTREAM_DEV_AUTH_ISSUER", issuer)
-    monkeypatch.setenv("WORKSTREAM_DEV_AUTH_EMAIL", f"{subject}@example.test")
-    monkeypatch.setenv("WORKSTREAM_DEV_AUTH_DISPLAY_NAME", subject.replace("-", " ").title())
+    if email is _DEFAULT_DEV_ACTOR_FIELD:
+        monkeypatch.setenv("WORKSTREAM_DEV_AUTH_EMAIL", f"{subject}@example.test")
+    elif email is None:
+        monkeypatch.delenv("WORKSTREAM_DEV_AUTH_EMAIL", raising=False)
+    else:
+        monkeypatch.setenv("WORKSTREAM_DEV_AUTH_EMAIL", email)
+    if display_name is _DEFAULT_DEV_ACTOR_FIELD:
+        monkeypatch.setenv("WORKSTREAM_DEV_AUTH_DISPLAY_NAME", subject.replace("-", " ").title())
+    elif display_name is None:
+        monkeypatch.delenv("WORKSTREAM_DEV_AUTH_DISPLAY_NAME", raising=False)
+    else:
+        monkeypatch.setenv("WORKSTREAM_DEV_AUTH_DISPLAY_NAME", display_name)
     monkeypatch.setenv("WORKSTREAM_DEV_AUTH_ROLES", roles)
     monkeypatch.setenv("WORKSTREAM_PROJECT_SETUP_PIPELINE_AUTOSTART", "false")
     get_settings.cache_clear()
@@ -1256,6 +1271,124 @@ async def test_worker_without_profile_cannot_claim_ready_task(
     assert "active worker profile" in response.json()["detail"]
 
 
+async def test_worker_can_create_profile_before_claiming_task(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    ready_task = await create_ready_task(task_client, project["id"])
+    set_dev_actor(monkeypatch, roles="worker", subject="worker-self-profile")
+
+    profile = await task_client.post(
+        "/api/v1/workers/me/profile",
+        headers=auth_headers(),
+        json={"skill_tags": [" Terminal_Benchmark ", "GO", "go"]},
+    )
+    assert profile.status_code == 200, profile.text
+    profile_body = profile.json()
+    assert profile_body["actor_id"] == actor_id("worker-self-profile")
+    assert profile_body["external_subject"] == "worker-self-profile"
+    assert profile_body["skill_tags"] == ["terminal_benchmark", "go"]
+    assert profile_body["status"] == "active"
+
+    refreshed_profile = await task_client.post(
+        "/api/v1/workers/me/profile",
+        headers=auth_headers(),
+        json={"skill_tags": ["stem"]},
+    )
+    assert refreshed_profile.status_code == 200, refreshed_profile.text
+    assert refreshed_profile.json()["id"] == profile_body["id"]
+    assert refreshed_profile.json()["skill_tags"] == ["stem"]
+
+    claim = await task_client.post(
+        f"/api/v1/tasks/{ready_task['id']}/claim",
+        headers=auth_headers(),
+        json={"reason": "claim after self profile"},
+    )
+
+    assert claim.status_code == 200, claim.text
+    assert claim.json()["task"]["status"] == "claimed"
+    assert claim.json()["assignment"]["worker_id"] == actor_id("worker-self-profile")
+
+
+async def test_worker_profile_response_includes_nullable_identity_fields(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    set_dev_actor(
+        monkeypatch,
+        roles="worker",
+        subject="worker-null-identity",
+        email=None,
+        display_name=None,
+    )
+
+    response = await task_client.post(
+        "/api/v1/workers/me/profile",
+        headers=auth_headers(),
+        json={"skill_tags": []},
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["actor_id"] == actor_id("worker-null-identity")
+    assert body["external_subject"] == "worker-null-identity"
+    assert body["external_issuer"] == "flow-test"
+    assert body["display_name"] is None
+    assert body["email"] is None
+    assert body["skill_tags"] == []
+    assert body["status"] == "active"
+
+
+async def test_worker_profile_request_is_fail_closed_and_validated(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    set_dev_actor(monkeypatch, roles="worker", subject="worker-profile-validation")
+
+    unknown_field = await task_client.post(
+        "/api/v1/workers/me/profile",
+        headers=auth_headers(),
+        json={
+            "skill_tags": ["stem"],
+            "actor_id": actor_id("malicious"),
+        },
+    )
+    blank_tag = await task_client.post(
+        "/api/v1/workers/me/profile",
+        headers=auth_headers(),
+        json={"skill_tags": [" "]},
+    )
+    long_tag = await task_client.post(
+        "/api/v1/workers/me/profile",
+        headers=auth_headers(),
+        json={"skill_tags": ["x" * 65]},
+    )
+
+    assert unknown_field.status_code == 422
+    assert "actor_id" in unknown_field.text
+    assert blank_tag.status_code == 422
+    assert "skill_tags cannot include empty values" in blank_tag.text
+    assert long_tag.status_code == 422
+    assert "skill_tags values must be 64 characters or fewer" in long_tag.text
+
+
+async def test_worker_profile_requires_worker_role(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
+
+    response = await task_client.post(
+        "/api/v1/workers/me/profile",
+        headers=auth_headers(),
+        json={"skill_tags": ["stem"]},
+    )
+
+    assert response.status_code == 403
+    assert "actor lacks required role" in response.json()["detail"]
+
+
 async def test_second_claim_is_rejected(task_client: AsyncClient, monkeypatch: pytest.MonkeyPatch) -> None:
     project = await create_active_project(task_client)
     ready_task = await create_ready_task(task_client, project["id"])
@@ -1526,7 +1659,7 @@ async def test_submission_requires_assigned_worker_and_in_progress_task(
     assert other_worker_response.status_code == 404
 
 
-async def test_submission_pre_submit_failure_returns_structured_domain_error(
+async def test_pre_submit_failure_writes_audit_event_without_submission(
     task_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -1580,10 +1713,32 @@ async def test_submission_pre_submit_failure_returns_structured_domain_error(
         checker_runs = (await session.execute(select(db_models.CheckerRun))).scalars().all()
         task = await session.get(WorkstreamTask, started_task["id"])
     assert submissions == []
-    assert {event.id for event in audit_events} == audit_ids_before
+    new_audit_events = [event for event in audit_events if event.id not in audit_ids_before]
+    assert len(new_audit_events) == 1
+    assert new_audit_events[0].event_type == "pre_submission_check_failed"
+    assert new_audit_events[0].from_status == "in_progress"
+    assert new_audit_events[0].to_status == "in_progress"
+    assert new_audit_events[0].event_payload["pre_submit_check"]["status"] == "failed"
+    assert (
+        new_audit_events[0].event_payload["pre_submit_check"]["eligible_to_submit"]
+        is False
+    )
     assert checker_runs == []
     assert task is not None
     assert task.status == "in_progress"
+
+    set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
+    audit_response = await task_client.get(
+        f"/api/v1/tasks/{started_task['id']}/audit-events",
+        headers=auth_headers(),
+    )
+    assert audit_response.status_code == 200, audit_response.text
+    audit_event = next(
+        event
+        for event in audit_response.json()
+        if event["event_type"] == "pre_submission_check_failed"
+    )
+    assert audit_event["event_payload"]["pre_submit_check"]["status"] == "failed"
 
 
 async def test_submission_pre_submit_requires_specific_evidence_key(

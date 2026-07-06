@@ -96,6 +96,48 @@ class TaskTransitionRequest(BaseModel):
     reason: str | None = None
 
 
+class WorkerProfileUpsertRequest(BaseModel):
+    """Request schema for creating or refreshing the current worker profile."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    skill_tags: list[str] = Field(default_factory=list, max_length=100)
+
+    @field_validator("skill_tags")
+    @classmethod
+    def normalize_skill_tags(cls, value: list[str]) -> list[str]:
+        """Normalize worker skill tags before they enter profile metadata."""
+        normalized_tags: list[str] = []
+        seen_tags: set[str] = set()
+        for raw_tag in value:
+            tag = raw_tag.strip().lower()
+            if not tag:
+                raise ValueError("skill_tags cannot include empty values")
+            if len(tag) > 64:
+                raise ValueError("skill_tags values must be 64 characters or fewer")
+            if tag not in seen_tags:
+                normalized_tags.append(tag)
+                seen_tags.add(tag)
+        return normalized_tags
+
+
+class WorkerProfileResponse(BaseModel):
+    """Response schema for a worker profile derived from Flow identity."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    actor_id: str
+    external_subject: str
+    external_issuer: str
+    display_name: str | None
+    email: str | None
+    skill_tags: list[str]
+    status: str
+    created_at: datetime
+    updated_at: datetime
+
+
 class EvidenceItemCreate(BaseModel):
     """Request schema for one evidence item in a submission packet."""
 

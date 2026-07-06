@@ -4,18 +4,16 @@
 
 - Active initiative: `WS-POL-001` - Submission Artifact Policy Foundation
 - Active planning chunk: none
-- Active implementation chunk: `WS-POL-001-09` - OpenAI Agents SDK Only Project
-  Setup Runtime
-- Branch: `codex/ws-pol-001-09-openai-agent-sdk-only`
-- Status: `WS-POL-001-09` is in implementation and internal review. This chunk
-  removes the production `local_fixture` project setup runtime and the old
-  runtime selector so automatic project setup only uses the OpenAI Agents SDK
-  runtime behind the Workstream project-agent port.
-- Last merged implementation SHA: `0c32c97`
-- Last merge commit: `aea7024`
-- Current gate: deterministic verification and internal reviewer fanout for
-  `WS-POL-001-09`
-- Next chunk: inactive until `WS-POL-001-09` reaches a human checkpoint
+- Active implementation chunk: `WS-POL-001-10` - Pre-Submit Live Drill Hardening
+- Branch: `codex/ws-pol-001-10-pre-submit-hardening`
+- Status: `WS-POL-001-10` is open as PR #72. Implementation and internal
+  review are complete; CodeRabbit follow-up fixes are addressed locally and the
+  branch is awaiting pushed CI reruns and the human merge checkpoint.
+- Last merged implementation SHA: `8a524de`
+- Last merge commit: `8a524de`
+- Current gate: PR #72 external checks after evidence rebind, then human merge
+  decision
+- Next chunk: inactive until `WS-POL-001-10` reaches a human checkpoint
 
 ## Operating Rule
 
@@ -38,10 +36,17 @@ through Celery. It did not redesign post-submit policy, review, revision,
 payment, reputation, blockchain integrations, frontend behavior, or task
 submission runtime.
 
-The active `WS-POL-001-09` chunk is a corrective hardening chunk for the project
-setup runtime boundary. It removes the production fixture adapter and does not
-change task, checker, post-submit, review, revision, payment, reputation,
-blockchain, frontend, or object-storage behavior.
+The merged `WS-POL-001-09` chunk was a corrective hardening chunk for the
+project setup runtime boundary. It removed the production fixture adapter and
+did not change task, checker, post-submit, review, revision, payment,
+reputation, blockchain, frontend, or object-storage behavior.
+
+The active `WS-POL-001-10` chunk is a corrective hardening chunk for the
+pre-submit live API drill. It fixes guide-version conflict mapping, guide-create
+source snapshot capture, active-guide checker summary visibility, worker
+self-profile onboarding, and failed pre-submit audit evidence. It does not
+change post-submit policy, review, revision, payment, reputation, blockchain,
+frontend, or agent-runtime behavior.
 
 ## Last Review State
 
@@ -94,3 +99,13 @@ blockchain, frontend, or object-storage behavior.
 - `WS-POL-001-08` external review response is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-08-external-review-response.md`.
 - `WS-POL-001-08` PR trust bundle is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-08-pr-trust-bundle.md`.
 - PR #69 merged into `main` as `aea7024`.
+- `WS-POL-001-09` started on branch `codex/ws-pol-001-09-openai-agent-sdk-only`
+  after the user's explicit correction to remove the production fixture runtime.
+- `WS-POL-001-09` internal review evidence is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-09-internal-review-evidence.md`.
+- `WS-POL-001-09` external review response is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-09-external-review-response.md`.
+- `WS-POL-001-09` PR trust bundle is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-09-pr-trust-bundle.md`.
+- PR #71 merged into `main` as `8a524de`.
+- `WS-POL-001-10` started after the user's explicit start signal for the first
+  five pre-submit hardening fixes from the live API drill.
+- PR #72 is open from `codex/ws-pol-001-10-pre-submit-hardening`; CodeRabbit
+  follow-up fixes are applied locally and require CI rerun after push.

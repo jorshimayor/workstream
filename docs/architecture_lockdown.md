@@ -94,7 +94,10 @@ return `PreSubmitCheckResponse(status="failed", eligible_to_submit=false,
 results=[...])`. Blocked submission-create attempts return
 `pre_submission_checker_failed` with structured pass/fail/warning details and
 create no submission row, no submission version, no task transition to
-`submitted`, and no submission-created audit event.
+`submitted`, and no submission-created audit event. Workstream still writes a
+task audit event named `pre_submission_check_failed` with the structured checker
+result for project operators; this is audit evidence, not a product review
+decision.
 
 Tasks lock to the active guide version at creation or screening time before entering `READY`. Material guide changes require a new guide version.
 

@@ -1088,6 +1088,94 @@ async def test_draft_guide_can_be_created(project_client: AsyncClient) -> None:
     )
 
 
+async def test_duplicate_guide_version_returns_conflict(project_client: AsyncClient) -> None:
+    project = await create_project(project_client)
+    await create_guide(project_client, project["id"], complete_guide_payload("v1"))
+
+    response = await project_client.post(
+        f"/api/v1/projects/{project['id']}/guides",
+        headers=auth_headers(),
+        json=complete_guide_payload("v1"),
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "guide version already exists for project"
+
+
+async def test_guide_creation_accepts_source_snapshot_items_for_agent_material(
+    project_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, GuideSourceMaterial] = {}
+
+    class CapturingRuntime:
+        """Runtime that records material supplied to the sufficiency agent."""
+
+        async def analyze_guide_sufficiency(
+            self,
+            material: GuideSourceMaterial,
+        ) -> GuideSufficiencyAgentResult:
+            """Capture material and return a passing guide report."""
+            captured["material"] = material
+            return GuideSufficiencyAgentResult(
+                status="guide_sufficient",
+                findings=[],
+                summary="Captured guide creation source material.",
+                agent_version="capture-v0",
+            )
+
+        async def derive_submission_artifact_policy(
+            self,
+            _: GuideSourceMaterial,
+            __: GuideSufficiencyAgentResult,
+        ) -> SubmissionArtifactPolicyDerivationResult:
+            """Unused derivation implementation required by the runtime protocol."""
+            raise AssertionError("derivation is not part of this test")
+
+    monkeypatch.setattr(
+        project_service_module,
+        "get_project_guide_agent_runtime",
+        lambda: CapturingRuntime(),
+    )
+    project = await create_project(project_client)
+    payload = complete_guide_payload()
+    payload["source_snapshot"] = source_snapshot_payload()
+    payload["source_snapshot"]["items"].append(
+        {
+            "source_kind": "representative_task",
+            "durable_ref": "inline:/examples/tasks/stem/sample-1",
+            "ingestion_adapter": "manual_import",
+            "content_hash": sha256_hash("guide-create-representative-task"),
+            "media_type": "application/json",
+            "content_excerpt": "Representative task: solve a STEM prompt and submit evidence.",
+        }
+    )
+    guide = await create_guide(project_client, project["id"], payload)
+    async with db_session.get_session_factory()() as session:
+        snapshot = await session.scalar(
+            select(GuideSourceSnapshot).where(GuideSourceSnapshot.guide_id == guide["id"])
+        )
+    assert snapshot is not None
+    snapshot_id = snapshot.id
+
+    response = await project_client.post(
+        f"/api/v1/projects/{project['id']}/guides/{guide['id']}/source-snapshots/"
+        f"{snapshot_id}/run-sufficiency-agent",
+        headers=auth_headers(),
+    )
+
+    assert response.status_code == 201, response.text
+    material = captured["material"]
+    assert material.source_snapshot_id == snapshot_id
+    assert len(material.representative_task_material.items) == 1
+    representative_task = material.representative_task_material.items[0]
+    assert representative_task.source_kind == "representative_task"
+    assert representative_task.durable_ref == "inline:/examples/tasks/stem/sample-1"
+    assert representative_task.content_excerpt == (
+        "Representative task: solve a STEM prompt and submit evidence."
+    )
+
+
 async def test_project_guide_rejects_unknown_non_contract_fields(
     project_client: AsyncClient,
 ) -> None:
@@ -4501,8 +4589,12 @@ async def test_guide_activation_and_active_guide_retrieval(project_client: Async
         bundle["pre_submit_checker_policy"]["compiled_bundle_hash"]
     )
     assert "compiled_bundle" not in active.json()["pre_submit_checker_policy"]
-    assert "checker_configs" not in active.json()["pre_submit_checker_policy"]
-    assert "checker_names" not in active.json()["pre_submit_checker_policy"]
+    assert active.json()["pre_submit_checker_policy"]["checker_names"] == (
+        bundle["pre_submit_checker_policy"]["checker_names"]
+    )
+    assert active.json()["pre_submit_checker_policy"]["checker_configs"] == (
+        bundle["pre_submit_checker_policy"]["checker_configs"]
+    )
     assert active.json()["revision_policy"]["max_revision_rounds"] == 7
     assert active.json()["revision_policy"]["auto_reject_after_limit"] is True
     assert active.json()["payment_policy"]["base_amount"] == "25.00"

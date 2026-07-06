@@ -370,6 +370,8 @@ class PreSubmitCheckerPolicySummaryResponse(BaseModel):
     lifecycle_status: str
     compiler_version: str | None
     compiled_bundle_hash: str | None
+    checker_names: list[str]
+    checker_configs: dict[str, Any]
     created_by: str
     created_at: datetime
     supersedes_pre_submit_checker_policy_id: str | None
@@ -408,6 +410,7 @@ class ProjectGuideCreate(BaseModel):
     version: str
     content_markdown: str
     change_summary: str | None = None
+    source_snapshot: GuideSourceSnapshotCreate | None = None
     post_submit_checker_policy: PostSubmitCheckerPolicyInput | None = None
     review_policy: ReviewPolicyInput | None = None
     revision_policy: RevisionPolicyInput | None = None
