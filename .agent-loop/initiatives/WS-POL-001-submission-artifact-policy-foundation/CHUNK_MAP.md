@@ -665,3 +665,87 @@ Human review focus:
 
 Task contract cleanup without weakening project-policy driven submission
 intake.
+
+### WS-POL-001-09: OpenAI Agents SDK Only Project Setup Runtime
+
+Goal:
+
+Remove the production `local_fixture` project setup runtime and the runtime
+selector that made fixture-derived output look like real agent SDK output.
+Automatic project guide sufficiency and submission artifact policy derivation
+now run only through the OpenAI Agents SDK runtime behind Workstream's
+project-agent port.
+
+Risk:
+
+L1
+
+Depends on:
+
+`WS-POL-001-08`
+
+Allowed files:
+
+```text
+backend/app/core/config.py
+backend/app/adapters/project_agents/**
+backend/tests/test_projects.py
+backend/tests/test_config.py
+README.md
+examples/terminal_benchmark/**
+.agent-loop/LOOP_STATE.md
+.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/STATUS.md
+.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/CHUNK_MAP.md
+.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/chunks/WS-POL-001-09-openai-agent-sdk-only-project-setup.md
+.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-09-*
+```
+
+Not allowed:
+
+```text
+backend/app/modules/tasks/**
+backend/app/modules/checkers/**
+backend/app/modules/projects/** except project-agent adapter imports if needed
+backend/alembic/**
+.github/workflows/**
+demos/**
+frontend/**
+payment/reputation/blockchain code
+object-storage implementation
+new agent runtime provider implementation
+production secrets or committed .env files
+```
+
+Acceptance criteria:
+
+- Production project setup has no `local_fixture` runtime adapter.
+- `WORKSTREAM_PROJECT_AGENT_RUNTIME_ADAPTER` is removed from active code and
+  current operator docs.
+- The project-agent runtime factory builds the OpenAI Agents SDK runtime and
+  fails closed when the required model setting is missing.
+- Setting the old runtime selector to `local_fixture` does not re-enable a
+  fixture runtime.
+- Tests use explicit test-local fakes for deterministic project-agent behavior.
+- Terminal Benchmark example docs and script do not describe a removed runtime
+  selector or fallback.
+- README explains that automatic project setup needs OpenAI Agents SDK model and
+  API-key settings.
+- Temporary Week 1 demo startup does not enable setup autostart without the
+  required OpenAI worker configuration.
+
+Verification:
+
+- Ruff, focused project-agent tests, docstring coverage, stale wording scan,
+  Markdown link check, and diff whitespace checks pass.
+
+Required reviewers:
+
+senior engineering, QA/test, security/auth, product/ops, architecture, docs,
+reuse/dedup, test delta.
+
+Human review focus:
+
+The removed fixture path cannot be used as a production project setup runtime;
+test fakes stay visibly test-local; operator docs do not imply fallback
+behavior; and the project-agent port remains available for deliberate future
+runtime providers.

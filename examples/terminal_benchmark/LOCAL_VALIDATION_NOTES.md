@@ -75,7 +75,7 @@ cd backend && .venv/bin/python -m ruff check app tests scripts
 cd backend && .venv/bin/docstr-coverage app scripts --config .docstr.yaml
 git diff --check
 cd backend && .venv/bin/python -m pytest tests/test_checkers.py -k 'pre_submit_check_allows_worker_revision_packet_feedback or pre_submit_check_returns_feedback_without_durable_run'
-cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test WORKSTREAM_TERMINAL_BENCH_FIXTURE=/path/to/terminal-benchmark-fixture .venv/bin/python ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
+cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test WORKSTREAM_TERMINAL_BENCH_FIXTURE=/path/to/terminal-benchmark-source-material .venv/bin/python ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
 cd backend && .venv/bin/python -m pytest
 ```
 
@@ -132,7 +132,8 @@ Results:
 - docstring coverage passed at 100.0%
 - diff whitespace check passed
 - Markdown link check passed for changed Markdown files
-- Terminal Benchmark manual API drill passed against the selected local fixture
+- Terminal Benchmark manual API drill passed against the selected local
+  source-material directory
 - clean packet reached `review_pending`
 - missing static guard was blocked at pre-submit and created no submission
 - blocked pre-submit and blocked submission-create produced no durable

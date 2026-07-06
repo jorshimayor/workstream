@@ -1,7 +1,7 @@
-"""Run a real Terminal Benchmark fixture through the Week 1 and Week 2 APIs.
+"""Run real Terminal Benchmark source material through the Week 1 and Week 2 APIs.
 
 This is an example drill, not Workstream runtime code and not a required CI
-test. It expects a local reviewer fixture path through
+test. It expects a local reviewer source-material path through
 ``WORKSTREAM_TERMINAL_BENCH_FIXTURE`` and writes only to a local test Postgres
 database.
 """
@@ -104,12 +104,12 @@ def fixture_root() -> Path:
         root = Path(configured).expanduser()
         if not root.is_dir():
             raise RuntimeError(
-                f"{FIXTURE_ENV_VAR} must point at an existing local fixture directory"
+                f"{FIXTURE_ENV_VAR} must point at an existing local source-material directory"
             )
         return root.resolve()
     raise RuntimeError(
         f"{FIXTURE_ENV_VAR} is required. Point it at one Terminal Benchmark reviewer "
-        "fixture directory, for example a Termius review folder containing extracted/task.toml, "
+        "source-material directory, for example a Termius review folder containing extracted/task.toml, "
         "one *_submission_*.zip, one review_packet_*.md, static_guard.txt, and verifier logs."
     )
 
@@ -134,8 +134,7 @@ def reviewer_root(fixture_root_path: Path) -> Path:
 
 
 def require_openai_agent_sdk_environment(env: dict[str, str]) -> None:
-    """Force the live setup-agent adapter for this real API drill."""
-    env["WORKSTREAM_PROJECT_AGENT_RUNTIME_ADAPTER"] = "openai_agent_sdk"
+    """Require the OpenAI Agents SDK runtime for this real API drill."""
     missing = [name for name in REQUIRED_OPENAI_AGENT_SDK_ENV if not env.get(name)]
     if missing:
         raise RuntimeError(

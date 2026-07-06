@@ -4,17 +4,18 @@
 
 - Active initiative: `WS-POL-001` - Submission Artifact Policy Foundation
 - Active planning chunk: none
-- Active implementation chunk: none
-- Branch: `main`
-- Status: `WS-POL-001-08` is merged to `main` through PR #69 as `aea7024`.
-  Automatic pre-submit project setup now runs through Celery from guide/source
-  capture: sufficiency analysis runs first, blocked sufficiency stops policy
-  derivation, and passed or warning sufficiency creates only a draft
-  `SubmissionArtifactPolicy` for human Workstream approval.
+- Active implementation chunk: `WS-POL-001-09` - OpenAI Agents SDK Only Project
+  Setup Runtime
+- Branch: `codex/ws-pol-001-09-openai-agent-sdk-only`
+- Status: `WS-POL-001-09` is in implementation and internal review. This chunk
+  removes the production `local_fixture` project setup runtime and the old
+  runtime selector so automatic project setup only uses the OpenAI Agents SDK
+  runtime behind the Workstream project-agent port.
 - Last merged implementation SHA: `0c32c97`
 - Last merge commit: `aea7024`
-- Current gate: post-merge memory update for `WS-POL-001-08`
-- Next chunk: inactive until the user gives an explicit start signal
+- Current gate: deterministic verification and internal reviewer fanout for
+  `WS-POL-001-09`
+- Next chunk: inactive until `WS-POL-001-09` reaches a human checkpoint
 
 ## Operating Rule
 
@@ -36,6 +37,11 @@ normal guide/source capture starts the pre-submit setup pipeline automatically
 through Celery. It did not redesign post-submit policy, review, revision,
 payment, reputation, blockchain integrations, frontend behavior, or task
 submission runtime.
+
+The active `WS-POL-001-09` chunk is a corrective hardening chunk for the project
+setup runtime boundary. It removes the production fixture adapter and does not
+change task, checker, post-submit, review, revision, payment, reputation,
+blockchain, frontend, or object-storage behavior.
 
 ## Last Review State
 

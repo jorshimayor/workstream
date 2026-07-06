@@ -166,21 +166,9 @@ Destructive real API drills use the separate local test database:
 postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test
 ```
 
-Project guide sufficiency and submission artifact policy derivation use the
-local fixture adapter by default. This adapter is an async, no-network test and
-development stand-in; it is not the production intelligence path.
-
-```text
-WORKSTREAM_PROJECT_AGENT_RUNTIME_ADAPTER=local_fixture
-WORKSTREAM_PROJECT_SETUP_PIPELINE_AUTOSTART=true
-WORKSTREAM_CELERY_BROKER_URL=redis://localhost:6379/0
-```
-
-Persisted sufficiency and derivation agent identity is Workstream-owned; runtime
-or provider-returned identity fields are not trusted as audit provenance.
-
-To try the optional OpenAI Agents SDK adapter, install the backend agent extra
-and set the model explicitly:
+Project guide sufficiency and submission artifact policy derivation run through
+the OpenAI Agents SDK adapter. Install the backend agent extra and set the model
+explicitly before running automatic project setup:
 
 ```bash
 cd backend
@@ -188,17 +176,18 @@ cd backend
 ```
 
 ```text
-WORKSTREAM_PROJECT_AGENT_RUNTIME_ADAPTER=openai_agent_sdk
 WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL=<approved-model>
 WORKSTREAM_PROJECT_AGENT_RUN_TIMEOUT_SECONDS=1800
 WORKSTREAM_PROJECT_AGENT_MAX_PROMPT_BYTES=2000000
 OPENAI_API_KEY=<runtime-secret>
+WORKSTREAM_PROJECT_SETUP_PIPELINE_AUTOSTART=true
+WORKSTREAM_CELERY_BROKER_URL=redis://localhost:6379/0
 ```
 
-The Celery project setup pipeline uses the configured project-agent adapter.
-With the default `local_fixture` adapter, normal project setup APIs do not
-require an OpenAI API key. With `openai_agent_sdk`, the worker environment must
-include `OPENAI_API_KEY` and the approved model settings.
+The Celery project setup pipeline uses the OpenAI Agents SDK runtime. The worker
+environment must include `OPENAI_API_KEY` and the approved model settings.
+Persisted sufficiency and derivation agent identity is Workstream-owned; runtime
+or provider-returned identity fields are not trusted as audit provenance.
 
 Run the worker before creating project guides that should automatically prepare
 pre-submit policy:
@@ -208,7 +197,8 @@ cd backend
 WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream \
 WORKSTREAM_AUTH_PROVIDER=flow \
 WORKSTREAM_ENVIRONMENT=local \
-WORKSTREAM_PROJECT_AGENT_RUNTIME_ADAPTER=local_fixture \
+WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL=<approved-model> \
+OPENAI_API_KEY=<runtime-secret> \
 WORKSTREAM_PROJECT_SETUP_PIPELINE_AUTOSTART=true \
 WORKSTREAM_CELERY_BROKER_URL=redis://localhost:6379/0 \
 .venv/bin/celery -A app.workers.celery_app.celery_app worker --loglevel=INFO
@@ -229,7 +219,7 @@ WORKSTREAM_FLOW_AUTH_ISSUER=https://auth.flow.local/demo \
 WORKSTREAM_FLOW_AUTH_AUDIENCE=workstream-demo \
 WORKSTREAM_FLOW_AUTH_LOCAL_HMAC_SECRET=workstream-demo-local-secret \
 WORKSTREAM_ENABLE_DEMO_ROUTES=true \
-WORKSTREAM_PROJECT_SETUP_PIPELINE_AUTOSTART=true \
+WORKSTREAM_PROJECT_SETUP_PIPELINE_AUTOSTART=false \
 WORKSTREAM_CELERY_BROKER_URL=redis://localhost:6379/0 \
 .venv/bin/alembic upgrade head
 
@@ -240,10 +230,15 @@ WORKSTREAM_FLOW_AUTH_ISSUER=https://auth.flow.local/demo \
 WORKSTREAM_FLOW_AUTH_AUDIENCE=workstream-demo \
 WORKSTREAM_FLOW_AUTH_LOCAL_HMAC_SECRET=workstream-demo-local-secret \
 WORKSTREAM_ENABLE_DEMO_ROUTES=true \
-WORKSTREAM_PROJECT_SETUP_PIPELINE_AUTOSTART=true \
+WORKSTREAM_PROJECT_SETUP_PIPELINE_AUTOSTART=false \
 WORKSTREAM_CELERY_BROKER_URL=redis://localhost:6379/0 \
 .venv/bin/python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000
 ```
+
+The Week 1 demo keeps project setup autostart disabled because it is a temporary
+backend walkthrough, not the current automatic setup-agent proof path. Use the
+project setup worker command above when testing guide sufficiency and policy
+derivation.
 
 Start the demo UI:
 
