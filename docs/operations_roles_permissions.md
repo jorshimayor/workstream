@@ -6,11 +6,21 @@ Workstream needs explicit permissions from the first version because review, pay
 
 ## Roles
 
-Route authorization roles come from trusted Flow token claims resolved into the
-current `ActorContext`. Local Workstream `ActorIdentity` and `ActorProfile`
-records may mirror observed roles, profile state, skill tags, scope, and
-eligibility metadata, but persisted profile rows do not grant route access by
-themselves.
+The Identity Issuer owns identity, audience, scopes, delegation, and token
+signing. Workstream owns product roles and exact resource authorization keyed
+by the issuer plus subject. Scopes are an outer request-class gate; they are not
+proof that the subject is a reviewer, worker, project owner, or admin inside
+Workstream.
+
+In the current v0.1 bootstrap, route checks still read trusted role claims from
+the verified `ActorContext` where a dedicated Workstream role-assignment table
+does not exist yet. Those token roles are request context and provisioning
+input, not the long-term source of truth. The role-assignment API must become a
+Workstream-owned authorization layer keyed to `ActorIdentity`.
+
+Local Workstream `ActorIdentity` and `ActorProfile` records may mirror observed
+roles, profile state, skill tags, scope, and eligibility metadata, but persisted
+profile rows do not grant route access by themselves.
 
 | Role | Purpose |
 | --- | --- |
@@ -65,6 +75,34 @@ the route still requires the matching role in the current verified token.
 - Admin and project-manager operational intervention must use a separate
   audited override path. It must not masquerade as worker task claiming.
 - Admin overrides must create an audit event with reason and evidence.
+
+## Role Provisioning Direction
+
+The Workstream role/provisioning layer is product-owned. A subject can exist in
+the Identity Issuer and still have no Workstream access until Workstream creates
+local actor and role records for that issuer plus subject.
+
+The first durable shape should be:
+
+```text
+WorkstreamActor
+- id
+- issuer
+- subject
+- status
+
+WorkstreamRoleAssignment
+- actor_id
+- role
+- scope_type
+- scope_id
+- status
+```
+
+Role records may be global, project-scoped, task-scoped, or review-queue scoped.
+One actor can hold multiple roles at once, such as worker plus reviewer, or
+admin plus worker. Permission checks must evaluate the current role assignment
+for the exact resource and still enforce workflow rules such as no self-review.
 
 ## First-Version Enforcement
 

@@ -35,7 +35,7 @@ Current phase: Week 3 review and revision preparation.
 - Chunk 3 project guide foundation with checker, review, revision, and payment policy context.
 - Chunk 4 task queue, worker/reviewer profiles, assignment, claim, start, and task audit events.
 - Chunk 5 submission packet foundation with evidence items, versioning, server-stamped locked context, and submission locking.
-- Week 1 backend dry run through `Project -> Guide -> Task -> Screening -> Ready -> Claim -> Start -> Submit -> Lock submission`.
+- Backend API contract drill through `Project -> Guide -> Task -> Screening -> Ready -> Claim -> Start -> Submit -> Lock submission`.
 - Week 2 checker framework scope specification.
 - Chunk 6 checker contract and records specification.
 - Chunk 7 checker runner, registry, structural checkers, durable checker records, and API tests.
@@ -70,12 +70,12 @@ Current phase: Week 3 review and revision preparation.
 - Confirm who owns product, engineering, review, operations, and payment reconciliation during the first build cycle.
 - Confirm the first v0.1 project guide uses the locked guide fields, task contract fields, evidence IDs, and contribution record flow.
 
-## Week 1 Dry Run
+## Backend API Contract Drill
 
 Run from the backend directory against local Postgres:
 
 ```bash
-WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/week1_dry_run.py
+WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/api_contract_e2e.py
 ```
 
 The script runs migrations forward and exercises:
@@ -105,7 +105,7 @@ The Week 2 closeout gate is deterministic and must fail on contract drift.
 
 Required invariants:
 
-- Week 1 and Week 2 real API drills run only against local `postgresql+asyncpg://` test databases named `workstream_test` or `test_workstream` unless an explicit write-risk override is supplied.
+- Real API drills run only against local `postgresql+asyncpg://` test databases named `workstream_test` or `test_workstream` unless an explicit write-risk override is supplied.
 - Pre-submit checker responses are authoritative for submission intake and must not create submissions, checker runs, or lifecycle transitions when blocking failures exist.
 - Missing or unexpected pre-submit checker names fail the drill.
 - Missing or unexpected durable checker names fail the drill.
@@ -119,7 +119,7 @@ Week 2 closeout validation is not only this script. The full gate is:
 
 ```bash
 .venv/bin/python -m ruff check app tests scripts
-WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/week1_api_e2e.py
+WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/api_contract_e2e.py
 WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/week2_api_e2e.py
 WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python -m pytest tests/test_checkers.py tests/test_tasks.py -q
 WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python -m pytest -q

@@ -14,6 +14,8 @@ ACTOR_PROFILE_TYPES = ("worker", "reviewer", "admin", "project_manager", "projec
 ACTOR_PROFILE_STATUSES = ("observed", "active", "disabled")
 GLOBAL_PROFILE_SCOPE_TYPE = "global"
 GLOBAL_PROFILE_SCOPE_ID = "global"
+_PROFILE_TYPE_CHECK_VALUES = ", ".join(f"'{profile_type}'" for profile_type in ACTOR_PROFILE_TYPES)
+_PROFILE_STATUS_CHECK_VALUES = ", ".join(f"'{status}'" for status in ACTOR_PROFILE_STATUSES)
 
 
 class ActorIdentity(Base):
@@ -57,11 +59,11 @@ class ActorProfile(Base):
     __tablename__ = "actor_profiles"
     __table_args__ = (
         CheckConstraint(
-            "profile_type in ('worker', 'reviewer', 'admin', 'project_manager', 'project_owner')",
+            f"profile_type in ({_PROFILE_TYPE_CHECK_VALUES})",
             name="ck_actor_profiles_profile_type",
         ),
         CheckConstraint(
-            "status in ('observed', 'active', 'disabled')",
+            f"status in ({_PROFILE_STATUS_CHECK_VALUES})",
             name="ck_actor_profiles_status",
         ),
         UniqueConstraint(
@@ -93,4 +95,3 @@ class ActorProfile(Base):
     )
 
     identity: Mapped[ActorIdentity] = relationship(back_populates="profiles")
-

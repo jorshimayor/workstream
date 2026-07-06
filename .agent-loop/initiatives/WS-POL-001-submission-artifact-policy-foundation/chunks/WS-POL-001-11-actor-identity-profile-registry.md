@@ -32,13 +32,16 @@ Flow token verification
 
 `ActorIdentity` and `ActorProfile` are not authentication. Flow remains the auth
 provider. Workstream still does not own login, signup, password reset, password
-storage, primary auth sessions, or role authority. Route access is still
-decided from the verified token for each request.
+storage, or primary auth sessions. Workstream owns product authorization and
+the future role-assignment API keyed by issuer plus subject; this chunk only
+adds the shared identity/profile registry needed before that layer. In the
+v0.1 bootstrap, route access may still use trusted roles from the verified
+`ActorContext` until Workstream-owned role assignment records are implemented.
 
 Persisted `ActorProfile.profile_type` is metadata, eligibility, audit context,
 and later routing/reputation context. It may be required as an additional
-workflow condition, but it must never grant access without the matching verified
-token role.
+workflow condition, but it is not the canonical product role-assignment table
+and must never grant route access by itself.
 
 ## Approved plan reference
 
@@ -61,10 +64,11 @@ P1
 
 ```text
 backend/alembic/versions/*_actor_identity_profile_registry.py
+.github/workflows/backend.yml
 backend/app/api/router.py
 backend/app/api/deps/auth.py
-backend/app/api/routes/demo.py
 backend/app/api/routes/auth.py
+backend/app/core/config.py
 backend/app/db/models.py
 backend/app/modules/actors/__init__.py
 backend/app/modules/actors/models.py
@@ -80,20 +84,21 @@ backend/tests/test_actors.py
 backend/tests/test_alembic.py
 backend/tests/test_auth.py
 backend/tests/test_tasks.py
-backend/scripts/week1_dry_run.py
-backend/scripts/week1_api_e2e.py
+backend/scripts/api_contract_e2e.py
 backend/scripts/week2_api_e2e.py
 examples/terminal_benchmark/terminal_benchmark_api_e2e.py
 examples/terminal_benchmark/LOCAL_VALIDATION_NOTES.md
 README.md
-demos/week1_api_demo_ui/src/App.tsx
 docs/architecture_data_model.md
 docs/architecture_lockdown.md
 docs/architecture_system_architecture.md
 docs/glossary.md
 docs/operations_roles_permissions.md
+docs/roadmap_status.md
 docs/spec_chunk_2_auth_actor_boundary.md
 docs/spec_chunk_4_task_queue_assignment.md
+scripts/check_internal_review_evidence.py
+scripts/test_agent_gates.py
 .agent-loop/LOOP_STATE.md
 .agent-loop/WORK_QUEUE.md
 .agent-loop/REVIEW_LOG.md
@@ -110,6 +115,7 @@ Workstream-owned login, signup, password reset, password storage, primary auth s
 Flow token verification provider replacement
 roles or permissions sourced from ActorIdentity instead of the verified token
 roles or permissions sourced from ActorProfile instead of the verified token
+canonical product roles sourced from Identity Issuer token claims instead of Workstream-owned role-assignment records once that layer exists
 automatic task claiming, reviewing, payment, or project access from profiles alone
 worker/reviewer routing changes beyond moving profile storage to ActorProfile and preserving current worker-profile API behavior
 task lifecycle, submission, checker, review, revision, payment, or reputation behavior changes
@@ -117,12 +123,12 @@ agent runtime, project setup pipeline, Celery, storage, frontend, or demo featur
 blockchain, ERC-8004, ERC-8183, settlement, marketplace, or external source adapters
 ```
 
-Demo/backend script/example edits are allowed only to remove, retire, or rewire
-stale `WorkerProfile`/`ReviewerProfile` imports and stale
-`/api/v1/demo/worker-profile` calls that would break application import or
-local evidence scripts after the shared actor profile migration. The Week 1 demo
-README/UI may be updated only to point worker profile setup at
-`POST /api/v1/workers/me/profile`.
+Backend script/example edits are allowed only to remove, retire, or rewire
+stale `WorkerProfile`/`ReviewerProfile` imports and stale demo/profile calls
+that would break application import or local evidence scripts after the shared
+actor profile migration. Stale demo routes, demo workflow files, and obsolete
+Week 1 script entry points should be removed rather than kept as compatibility
+surfaces.
 
 ## Expected design
 
@@ -256,8 +262,11 @@ This must be fail-closed:
 
 ### Route Access And Workflow Eligibility
 
-Route authorization must always check verified token roles from `ActorContext`.
-Profile checks are additional workflow eligibility checks.
+Route authorization currently checks trusted request roles from `ActorContext`
+as the v0.1 bootstrap path. The Identity Issuer is not the canonical source of
+Workstream product roles; the later Workstream role-assignment API must own that
+authorization state keyed to `ActorIdentity`. Profile checks are additional
+workflow eligibility checks, not route permissions.
 
 Examples:
 
@@ -282,14 +291,12 @@ Reviewer action later:
 This preserves the security boundary and still gives Workstream one shared
 profile implementation.
 
-### Compatibility Boundary
+### Obsolete Surface Removal Boundary
 
 The implementation path is fixed:
 
 - create `actor_identities`
 - create `actor_profiles`
-- backfill actor/profile rows from existing `worker_profiles` and
-  `reviewer_profiles` rows when those rows exist
 - remove the separate `worker_profiles` and `reviewer_profiles` tables as
   independent profile stores
 - remove old worker/reviewer profile ORM models and repository authority paths;
@@ -304,26 +311,27 @@ tables, views, or dual-write paths in v0.1. If the implementation discovers a
 hard migration blocker, stop and return for human review instead of keeping two
 profile sources of truth.
 
+This repository is still in active buildout. Obsolete experimental profile data
+does not receive a compatibility backfill. The migration moves the schema to the
+current contract and drops the old profile tables.
+
 ## Acceptance criteria
 
 - [ ] Alembic creates `actor_identities` with uniqueness on `actor_id` and
       `external_issuer + external_subject`.
 - [ ] Alembic creates `actor_profiles` with uniqueness on `actor_id`,
       `profile_type`, `scope_type`, and `scope_id`.
-- [ ] Alembic backfills existing worker/reviewer profile rows into
-      `actor_identities` and `actor_profiles`, then removes the separate
-      `worker_profiles` and `reviewer_profiles` tables as independent profile
-      stores.
+- [ ] Alembic removes the separate `worker_profiles` and `reviewer_profiles`
+      tables as independent profile stores without keeping compatibility
+      backfill or dual-write behavior.
 - [ ] Worker/reviewer ORM models and repositories stop owning profile state;
       services use the actor module as the profile authority.
 - [ ] SQLAlchemy metadata imports the new actor models so Alembic does not
       drift.
 - [ ] Migration tests prove the new tables, unique constraints, metadata
       imports, and downgrade/upgrade path expected by the repo.
-- [ ] Seeded migration tests prove existing `worker_profiles` and
-      `reviewer_profiles` rows are backfilled into `ActorIdentity` and
-      `ActorProfile` with expected `profile_type`, `status`, `skill_tags`,
-      `scope_type`, and `scope_id`, and that old profile tables are removed.
+- [ ] Migration tests prove old profile tables are absent from the current
+      schema and no legacy profile authority remains.
 - [ ] API requests updated in this chunk create or refresh `ActorIdentity` from
       trusted `ActorContext` through the explicit actor-registration
       dependency. Routes outside this chunk may continue using pure
@@ -376,21 +384,18 @@ profile sources of truth.
 - [ ] Docs clearly distinguish Flow auth, `ActorContext`, `ActorIdentity`,
       `ActorProfile`, route authorization, and workflow eligibility.
 - [ ] The next Terminal Benchmark live API drill must use
-      `POST /api/v1/workers/me/profile` for worker profile setup. It must not
-      use `/api/v1/demo/worker-profile`.
-- [ ] Stale demo/backend evidence helpers no longer import or write old
+      `POST /api/v1/workers/me/profile` for worker profile setup.
+- [ ] Stale backend evidence helpers no longer import or write old
       `WorkerProfile` or `ReviewerProfile` models after those stores are
-      removed. They are either rewired to `ActorProfile` or explicitly retired.
-- [ ] `backend/scripts/week1_api_e2e.py`,
+      removed. They are rewired to `ActorProfile` or explicitly retired.
+- [ ] `backend/scripts/api_contract_e2e.py`,
       `backend/scripts/week2_api_e2e.py`, and
-      `examples/terminal_benchmark/terminal_benchmark_api_e2e.py` no longer
-      call `/api/v1/demo/worker-profile`; they either use
+      `examples/terminal_benchmark/terminal_benchmark_api_e2e.py` use
       `POST /api/v1/workers/me/profile` or are explicitly retired.
-- [ ] Terminal Benchmark validation notes no longer describe worker profile
-      setup as demo bootstrap; they identify the canonical worker profile API.
-- [ ] Week 1 demo README/UI no longer advertise or call
-      `/api/v1/demo/worker-profile`; the demo uses
-      `POST /api/v1/workers/me/profile`.
+- [ ] Terminal Benchmark validation notes identify the canonical worker profile
+      API and do not describe worker profile setup as an obsolete bootstrap path.
+- [ ] The obsolete Week 1 demo UI, local demo route, and deleted script entry
+      points are not kept as compatibility surfaces.
 
 ## Verification commands
 
@@ -399,7 +404,7 @@ cd backend && .venv/bin/python -m ruff check app/api/deps/auth.py app/api/routes
 cd backend && .venv/bin/python -m pytest tests/test_alembic.py tests/test_actors.py tests/test_auth.py -q
 cd backend && .venv/bin/python -m pytest tests/test_tasks.py -q
 cd backend && .venv/bin/docstr-coverage app/api app/modules/actors app/modules/tasks --config .docstr.yaml
-! rg -n 'WorkerProfile|ReviewerProfile|/api/v1/demo/worker-profile' backend/scripts examples/terminal_benchmark backend/app/api/routes/demo.py backend/app/modules README.md demos/week1_api_demo_ui/src/App.tsx
+! rg -n 'WorkerProfile|ReviewerProfile|/api/v1/demo/worker-profile|week1_api_e2e|week1_dry_run|week1_api_demo_ui|WORKSTREAM_ENABLE_DEMO_ROUTES' backend/scripts examples/terminal_benchmark backend/app README.md docs/roadmap_status.md scripts
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
 git diff --check

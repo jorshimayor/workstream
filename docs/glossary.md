@@ -19,11 +19,15 @@ does not author or approve Workstream's machine-readable internal policy schema.
 ## ActorContext
 
 The trusted per-request actor object resolved from a verified Flow token. It
-contains the current actor id, external subject, issuer, roles, claim snapshot,
+contains the current actor id, external subject, issuer, scopes/roles when
+present in the trusted request context, claim snapshot,
 auth source, and display metadata. The Flow issuer plus subject is the canonical
 portable identity anchor; Workstream's actor id is a local durable reference
-derived from that pair. Route authorization uses this current token context, not
-persisted profile rows.
+derived from that pair. The Identity Issuer is not the source of truth for
+Workstream product roles; Workstream owns exact resource authorization keyed by
+issuer plus subject. In the v0.1 bootstrap, route checks may still read trusted
+role claims from the current actor context until the Workstream role-assignment
+API is introduced. Persisted profile rows are never route permission grants.
 
 ## ActorIdentity
 
@@ -39,9 +43,9 @@ issuance, or global identity authority.
 Workstream's shared profile and workflow eligibility record attached to an
 `ActorIdentity`. Initial profile types include worker, reviewer, admin,
 project_manager, and project_owner. A profile can store status, skill tags,
-scope, and metadata, but it does not grant route access without the matching
-verified token role. A project_owner profile is scoped source/contact metadata,
-not project-manager authority.
+scope, and metadata, but it is not the canonical role-assignment table and does
+not grant route access. A project_owner profile is scoped source/contact
+metadata, not project-manager authority.
 
 `observed` profile status is audit/display metadata from verified token
 observation. `active` profile status means an explicit profile workflow made

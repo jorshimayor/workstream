@@ -97,7 +97,11 @@ async def ensure_worker_profile(
 ) -> ActorProfileResponse:
     """Create or refresh the current worker profile from trusted Flow identity."""
     try:
-        return await ActorService(session).activate_worker_profile(actor, payload)
+        return await ActorService(session).activate_worker_profile(
+            actor,
+            payload,
+            identity_already_refreshed=True,
+        )
     except PermissionDenied as exc:
         raise permission_http_error(exc) from exc
     except ActorRegistryError as exc:

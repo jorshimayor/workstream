@@ -151,7 +151,7 @@ async def test_auth_me_registers_identity_and_observed_profiles_without_duplicat
     ]
 
 
-async def test_repeated_auth_me_refreshes_profile_freshness_without_status_drift(
+async def test_repeated_auth_me_does_not_rewrite_unchanged_observed_profile(
     actor_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -184,7 +184,7 @@ async def test_repeated_auth_me_refreshes_profile_freshness_without_status_drift
 
     assert len(profile_rows) == 1
     assert profile_rows[0].status == "observed"
-    assert profile_rows[0].updated_at > stale_time
+    assert profile_rows[0].updated_at == stale_time
 
 
 @pytest.mark.parametrize("role", ["worker", "reviewer", "admin", "project_manager"])
@@ -291,6 +291,38 @@ async def test_observation_preserves_active_and_disabled_statuses(
     assert disabled_profile is not None
     assert disabled_profile.status == "disabled"
     assert disabled_profile.profile_metadata == {"source": "worker_profile_api"}
+
+
+async def test_observation_can_explicitly_clear_metadata(actor_database_env: str) -> None:
+    actor = actor_context(subject="metadata-clear-worker", roles=("worker",))
+    async with db_session.get_session_factory()() as session:
+        service = ActorService(session)
+        await service.ensure_observed_profile(
+            actor,
+            profile_type="worker",
+            scope_type="global",
+            scope_id="global",
+            profile_metadata={"source": "initial"},
+        )
+        await service.ensure_observed_profile(
+            actor,
+            profile_type="worker",
+            scope_type="global",
+            scope_id="global",
+            profile_metadata={},
+        )
+        await session.commit()
+
+    async with db_session.get_session_factory()() as session:
+        profile = await session.scalar(
+            select(ActorProfile).where(
+                ActorProfile.actor_id == actor.actor_id,
+                ActorProfile.profile_type == "worker",
+            )
+        )
+
+    assert profile is not None
+    assert profile.profile_metadata == {}
 
 
 async def test_scoped_project_owner_profile_comes_from_trusted_relationship_claim(

@@ -64,9 +64,11 @@ must not be treated as the primary identity.
 
 Workstream keeps `ActorIdentity` rows for local workflow continuity, audit
 display, profile linkage, assignments, and later reputation records. It does
-not own password authentication, primary login sessions, or role authority.
-Route authorization still uses the verified token roles in the current
-`ActorContext`.
+not own password authentication or primary login sessions. Workstream does own
+product roles and exact resource authorization keyed by issuer plus subject. In
+the v0.1 bootstrap, route checks may still read trusted role claims from the
+current `ActorContext` until the dedicated Workstream role-assignment API is
+introduced.
 
 `ActorProfile` is the shared profile and eligibility model attached to an
 `ActorIdentity`.
@@ -93,9 +95,9 @@ Initial profile types:
 - project_owner
 
 Profile rows are metadata and workflow eligibility records. They do not grant
-route access without the matching verified token role. A project owner profile
-is scoped source/contact metadata and is not the same as a project manager
-permission role.
+route access and are not the canonical Workstream role-assignment table. A
+project owner profile is scoped source/contact metadata and is not the same as
+a project manager permission role.
 
 Initial profile statuses:
 
@@ -106,8 +108,9 @@ Initial profile statuses:
 - `disabled`: retained for audit but blocked from workflow eligibility.
 
 Auth observation alone may create `observed` profiles, but it must not mark a
-worker or reviewer profile `active`. Route access always comes from the current
-verified token roles, not from profile status.
+worker or reviewer profile `active`. Profile status can satisfy workflow
+eligibility only when product authorization for the current request has already
+passed.
 
 `project_owner` is a scoped profile/contact relationship, not a route role. In
 this chunk it is created from trusted relationship claims when present. Later
@@ -121,7 +124,7 @@ The trusted relationship claim key is
 `scope_id`, and optional object `profile_metadata`. These values are persisted
 as observed relationship metadata only; they are not route authorization.
 
-Verified token roles:
+Trusted v0.1 bootstrap request roles:
 
 - admin
 - project_manager

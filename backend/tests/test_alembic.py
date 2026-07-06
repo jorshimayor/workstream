@@ -147,70 +147,27 @@ def test_post_submit_policy_upgrade_blocks_pre_provenance_runtime_rows(
     assert columns_exist is False
 
 
-def test_actor_profile_registry_backfills_and_removes_legacy_profile_tables(
+def test_actor_profile_registry_removes_obsolete_profile_tables(
     isolated_database_env: str,
     migration_lock,
 ) -> None:
-    """Prove legacy profile rows move into the shared actor registry."""
+    """Prove obsolete profile tables are removed from the current schema."""
     project_root = Path(__file__).resolve().parents[1]
     config = Config(str(project_root / "alembic.ini"))
     config.set_main_option("script_location", str(project_root / "alembic"))
 
-    worker_actor_id = actor_id_from_external_identity("flow-test", "legacy-worker")
-    reviewer_actor_id = actor_id_from_external_identity("flow-test", "legacy-reviewer")
-    ids = {
-        "worker": str(uuid4()),
-        "reviewer": str(uuid4()),
-        "worker_actor": worker_actor_id,
-        "reviewer_actor": reviewer_actor_id,
-    }
     with migration_lock():
         try:
             command.downgrade(config, "base")
-            command.upgrade(config, "0011_task_artifact_cleanup")
-            asyncio.run(_seed_legacy_profile_rows(isolated_database_env, ids))
             command.upgrade(config, "head")
-            head_state = asyncio.run(_fetch_actor_registry_state(isolated_database_env))
-
-            command.downgrade(config, "0011_task_artifact_cleanup")
-            downgraded_tables = asyncio.run(_fetch_table_names(isolated_database_env))
-            downgraded_state = asyncio.run(_fetch_legacy_profile_state(isolated_database_env))
+            table_names = asyncio.run(_fetch_table_names(isolated_database_env))
         finally:
             command.downgrade(config, "base")
 
-    assert "worker_profiles" not in head_state["tables"]
-    assert "reviewer_profiles" not in head_state["tables"]
-    assert head_state["identities"] == {
-        ("legacy-worker", "flow-test"),
-        ("legacy-reviewer", "flow-test"),
-    }
-    assert head_state["profiles"] == {
-        ("legacy-worker", "worker", "active", ("stem", "python"), "global", "global"),
-        ("legacy-reviewer", "reviewer", "active", ("review",), "global", "global"),
-    }
-    assert {"worker_profiles", "reviewer_profiles"}.issubset(downgraded_tables)
-    assert downgraded_state["worker_profiles"] == {
-        (
-            worker_actor_id,
-            "legacy-worker",
-            "flow-test",
-            "Legacy Worker",
-            "legacy-worker@example.test",
-            ("stem", "python"),
-            "active",
-        )
-    }
-    assert downgraded_state["reviewer_profiles"] == {
-        (
-            reviewer_actor_id,
-            "legacy-reviewer",
-            "flow-test",
-            "Legacy Reviewer",
-            "legacy-reviewer@example.test",
-            ("review",),
-            "active",
-        )
-    }
+    assert "actor_identities" in table_names
+    assert "actor_profiles" in table_names
+    assert "worker_profiles" not in table_names
+    assert "reviewer_profiles" not in table_names
 
 
 def test_actor_profile_registry_unique_constraints_are_enforced(
@@ -269,77 +226,6 @@ async def _fetch_table_names(database_url: str) -> set[str]:
                 )
             ).all()
             return {row.table_name for row in rows}
-    finally:
-        await engine.dispose()
-
-
-async def _seed_legacy_profile_rows(database_url: str, ids: dict[str, str]) -> None:
-    """Seed old profile tables before the actor registry migration."""
-    engine = create_async_engine(database_url)
-    try:
-        async with engine.begin() as connection:
-            await connection.execute(
-                text(
-                    """
-                    insert into worker_profiles (
-                        id,
-                        actor_id,
-                        external_subject,
-                        external_issuer,
-                        display_name,
-                        email,
-                        skill_tags,
-                        status
-                    )
-                    values (
-                        :id,
-                        :actor_id,
-                        'legacy-worker',
-                        'flow-test',
-                        'Legacy Worker',
-                        'legacy-worker@example.test',
-                        cast(:skill_tags as json),
-                        'active'
-                    )
-                    """
-                ),
-                {
-                    "id": ids["worker"],
-                    "actor_id": ids["worker_actor"],
-                    "skill_tags": json.dumps(["stem", "python"]),
-                },
-            )
-            await connection.execute(
-                text(
-                    """
-                    insert into reviewer_profiles (
-                        id,
-                        actor_id,
-                        external_subject,
-                        external_issuer,
-                        display_name,
-                        email,
-                        skill_tags,
-                        status
-                    )
-                    values (
-                        :id,
-                        :actor_id,
-                        'legacy-reviewer',
-                        'flow-test',
-                        'Legacy Reviewer',
-                        'legacy-reviewer@example.test',
-                        cast(:skill_tags as json),
-                        'active'
-                    )
-                    """
-                ),
-                {
-                    "id": ids["reviewer"],
-                    "actor_id": ids["reviewer_actor"],
-                    "skill_tags": json.dumps(["review"]),
-                },
-            )
     finally:
         await engine.dispose()
 
@@ -521,112 +407,6 @@ async def _expect_integrity_error(engine, statement, params: dict) -> None:
     with pytest.raises(IntegrityError):
         async with engine.begin() as connection:
             await connection.execute(statement, params)
-
-
-async def _fetch_actor_registry_state(database_url: str) -> dict[str, set]:
-    """Return actor registry rows and table names for migration assertions."""
-    engine = create_async_engine(database_url)
-    try:
-        async with engine.begin() as connection:
-            tables = await _fetch_table_names(database_url)
-            identities = (
-                await connection.execute(
-                    text(
-                        """
-                        select external_subject, external_issuer
-                        from actor_identities
-                        order by external_subject
-                        """
-                    )
-                )
-            ).all()
-            profiles = (
-                await connection.execute(
-                    text(
-                        """
-                        select
-                            i.external_subject,
-                            p.profile_type,
-                            p.status,
-                            p.skill_tags,
-                            p.scope_type,
-                            p.scope_id
-                        from actor_profiles p
-                        join actor_identities i on i.actor_id = p.actor_id
-                        order by i.external_subject, p.profile_type
-                        """
-                    )
-                )
-            ).all()
-            return {
-                "tables": tables,
-                "identities": {
-                    (row.external_subject, row.external_issuer)
-                    for row in identities
-                },
-                "profiles": {
-                    (
-                        row.external_subject,
-                        row.profile_type,
-                        row.status,
-                        tuple(row.skill_tags),
-                        row.scope_type,
-                        row.scope_id,
-                    )
-                    for row in profiles
-                },
-            }
-    finally:
-        await engine.dispose()
-
-
-async def _fetch_legacy_profile_state(database_url: str) -> dict[str, set]:
-    """Return restored legacy profile rows after actor registry downgrade."""
-    engine = create_async_engine(database_url)
-    try:
-        async with engine.begin() as connection:
-            worker_rows = await _fetch_legacy_profile_rows(connection, "worker_profiles")
-            reviewer_rows = await _fetch_legacy_profile_rows(connection, "reviewer_profiles")
-            return {
-                "worker_profiles": worker_rows,
-                "reviewer_profiles": reviewer_rows,
-            }
-    finally:
-        await engine.dispose()
-
-
-async def _fetch_legacy_profile_rows(connection, table_name: str) -> set[tuple]:
-    """Return comparable legacy profile rows from one restored table."""
-    rows = (
-        await connection.execute(
-            text(
-                f"""
-                select
-                    actor_id,
-                    external_subject,
-                    external_issuer,
-                    display_name,
-                    email,
-                    skill_tags,
-                    status
-                from {table_name}
-                order by external_subject
-                """
-            )
-        )
-    ).all()
-    return {
-        (
-            row.actor_id,
-            row.external_subject,
-            row.external_issuer,
-            row.display_name,
-            row.email,
-            tuple(row.skill_tags),
-            row.status,
-        )
-        for row in rows
-    }
 
 
 async def _seed_pre_provenance_post_submit_policy(

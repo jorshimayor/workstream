@@ -22,16 +22,27 @@ class ActorRepository:
         """
         self._session = session
 
-    async def get_identity(self, actor_id: str) -> ActorIdentity | None:
+    async def get_identity(
+        self,
+        actor_id: str,
+        *,
+        populate_existing: bool = False,
+    ) -> ActorIdentity | None:
         """Load an actor identity by stable Workstream actor id.
 
         Args:
             actor_id: Stable actor id.
+            populate_existing: Whether to overwrite any existing session state
+                with the current database row.
 
         Returns:
             Actor identity when present; otherwise ``None``.
         """
-        return await self._session.get(ActorIdentity, actor_id)
+        return await self._session.get(
+            ActorIdentity,
+            actor_id,
+            populate_existing=populate_existing,
+        )
 
     async def upsert_identity(self, identity: ActorIdentity) -> ActorIdentity:
         """Create or refresh an actor identity from trusted token claims.
@@ -72,7 +83,7 @@ class ActorRepository:
             )
         )
         await self._session.flush()
-        persisted = await self.get_identity(identity.actor_id)
+        persisted = await self.get_identity(identity.actor_id, populate_existing=True)
         if persisted is None:
             raise RuntimeError("actor identity upsert did not return a persisted row")
         return persisted
@@ -151,4 +162,3 @@ class ActorRepository:
             )
         )
         await self._session.flush()
-

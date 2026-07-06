@@ -204,58 +204,6 @@ WORKSTREAM_CELERY_BROKER_URL=redis://localhost:6379/0 \
 .venv/bin/celery -A app.workers.celery_app.celery_app worker --loglevel=INFO
 ```
 
-## Week 1 API Demo UI
-
-The Week 1 API demo UI lives in `demos/week1_api_demo_ui/`. It is a temporary walkthrough client for the Week 1 backend APIs, not the canonical Workstream frontend implementation. It calls the real backend over HTTP through the Vite proxy and uses local Flow-style bearer tokens against the backend `flow` verifier.
-
-Start the backend for the demo:
-
-```bash
-cd backend
-WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream \
-WORKSTREAM_AUTH_PROVIDER=flow \
-WORKSTREAM_ENVIRONMENT=local \
-WORKSTREAM_FLOW_AUTH_ISSUER=https://auth.flow.local/demo \
-WORKSTREAM_FLOW_AUTH_AUDIENCE=workstream-demo \
-WORKSTREAM_FLOW_AUTH_LOCAL_HMAC_SECRET=workstream-demo-local-secret \
-WORKSTREAM_PROJECT_SETUP_PIPELINE_AUTOSTART=false \
-WORKSTREAM_CELERY_BROKER_URL=redis://localhost:6379/0 \
-.venv/bin/alembic upgrade head
-
-WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream \
-WORKSTREAM_AUTH_PROVIDER=flow \
-WORKSTREAM_ENVIRONMENT=local \
-WORKSTREAM_FLOW_AUTH_ISSUER=https://auth.flow.local/demo \
-WORKSTREAM_FLOW_AUTH_AUDIENCE=workstream-demo \
-WORKSTREAM_FLOW_AUTH_LOCAL_HMAC_SECRET=workstream-demo-local-secret \
-WORKSTREAM_PROJECT_SETUP_PIPELINE_AUTOSTART=false \
-WORKSTREAM_CELERY_BROKER_URL=redis://localhost:6379/0 \
-.venv/bin/python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000
-```
-
-The Week 1 demo keeps project setup autostart disabled because it is a temporary
-backend walkthrough, not the current automatic setup-agent proof path. Use the
-project setup worker command above when testing guide sufficiency and policy
-derivation.
-
-Start the demo UI:
-
-```bash
-cd demos/week1_api_demo_ui
-npm install
-npm run dev -- --port 5173
-```
-
-Open:
-
-```text
-http://127.0.0.1:5173/
-```
-
-The demo runs the Week 1 path from project guide to locked submission using
-real API calls. Worker profile setup uses `POST /api/v1/workers/me/profile`
-with a worker token; the old local demo worker-profile route is retired.
-
 ## Day-30 Success Standard
 
 By day 30, Workstream runs a real internal task cycle with real people:

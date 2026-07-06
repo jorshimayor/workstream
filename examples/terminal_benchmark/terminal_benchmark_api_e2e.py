@@ -1,4 +1,4 @@
-"""Run real Terminal Benchmark source material through the Week 1 and Week 2 APIs.
+"""Run real Terminal Benchmark source material through the current API contracts.
 
 This is an example drill, not Workstream runtime code and not a required CI
 test. It expects a local reviewer source-material path through
@@ -36,7 +36,7 @@ from sqlalchemy import select
 from app.db import session as db_session
 from app.modules.checkers.models import CheckerResult, CheckerRun
 from app.modules.tasks.models import AuditEvent, EvidenceItem, Submission, WorkstreamTask
-from week1_api_e2e import (
+from api_contract_e2e import (
     alembic_config,
     api_environment,
     find_free_port,
@@ -988,7 +988,7 @@ async def assert_database_invariants(scenarios: list[dict]) -> None:
 
 
 async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) -> None:
-    """Run the Terminal Benchmark fixture through Week 1 and Week 2 API behavior."""
+    """Run the Terminal Benchmark fixture through current API behavior."""
     fixture = load_fixture(fixture_root())
     flow_issuer, flow_audience, flow_secret = flow_settings(env)
     run_id = uuid4().hex[:8]

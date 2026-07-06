@@ -59,8 +59,6 @@ def test_backend_config_paths_require_review_evidence() -> None:
     assert gate.is_relevant("backend/alembic/versions/0001_init.py")
     assert gate.is_relevant("backend/alembic.ini")
     assert gate.is_relevant("backend/pyproject.toml")
-    assert gate.is_relevant("demos/week1_api_demo_ui/package.json")
-    assert gate.is_relevant("demos/week1_api_demo_ui/src/App.tsx")
 
     backend_tracks = gate.required_tracks_for(["backend/alembic/versions/0001_init.py"])
     assert "architecture" in backend_tracks
@@ -68,14 +66,6 @@ def test_backend_config_paths_require_review_evidence() -> None:
 
     backend_config_tracks = gate.required_tracks_for(["backend/pyproject.toml"])
     assert "ci integrity" in backend_config_tracks
-
-    demo_source_tracks = gate.required_tracks_for(["demos/week1_api_demo_ui/src/App.tsx"])
-    assert "test delta" in demo_source_tracks
-    assert "ci integrity" not in demo_source_tracks
-
-    demo_config_tracks = gate.required_tracks_for(["demos/week1_api_demo_ui/vite.config.ts"])
-    assert "test delta" in demo_config_tracks
-    assert "ci integrity" in demo_config_tracks
 
 
 def test_review_evidence_files_are_not_relevant_changes() -> None:
