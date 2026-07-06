@@ -52,6 +52,8 @@ from app.modules.tasks.schemas import (
     TaskCreate,
     TaskResponse,
     TaskWithAssignmentResponse,
+    WorkerProfileResponse,
+    WorkerProfileUpsertRequest,
 )
 from app.schemas.auth import ActorContext
 
@@ -497,9 +499,18 @@ class TaskService:
         except CheckerServiceError as exc:
             raise SubmissionCheckerGateError(str(exc), exc.status_code) from exc
         if not pre_submit_response.eligible_to_submit:
-            raise PreSubmissionCheckerFailed(
-                pre_submit_response.model_dump(mode="json"),
+            pre_submit_details = pre_submit_response.model_dump(mode="json")
+            await self._write_task_audit(
+                actor,
+                task,
+                event_type="pre_submission_check_failed",
+                from_status=task.status,
+                to_status=task.status,
+                reason=None,
+                event_payload={"pre_submit_check": pre_submit_details},
             )
+            await self._session.commit()
+            raise PreSubmissionCheckerFailed(pre_submit_details)
 
         latest_submission = await self._repo.get_latest_submission_for_task(task.id)
         next_version = 1 if latest_submission is None else latest_submission.version + 1
@@ -1056,6 +1067,37 @@ class TaskService:
         if profile is None or profile.status != "active":
             raise WorkerProfileRequired("active worker profile is required to claim task")
         return profile
+
+    async def ensure_worker_profile(
+        self,
+        actor: ActorContext,
+        payload: WorkerProfileUpsertRequest,
+    ) -> WorkerProfileResponse:
+        """Create or refresh a worker profile for the current actor.
+
+        Args:
+            actor: Verified Flow actor context.
+            payload: Worker-controlled skill tags for task matching.
+
+        Returns:
+            Persisted active worker profile response.
+        """
+        require_any_role(actor, {"worker"})
+        profile = await self._repo.upsert_worker_profile(
+            WorkerProfile(
+                id=str(uuid4()),
+                actor_id=actor.actor_id,
+                external_subject=actor.external_subject,
+                external_issuer=actor.external_issuer,
+                display_name=actor.display_name,
+                email=actor.email,
+                skill_tags=payload.skill_tags,
+                status="active",
+            )
+        )
+        await self._session.commit()
+        await self._session.refresh(profile)
+        return WorkerProfileResponse.model_validate(profile)
 
     async def ensure_reviewer_profile(
         self,

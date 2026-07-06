@@ -119,6 +119,9 @@ Role expectations:
 
 - admin and project manager can create, screen, release, and inspect tasks
 - workers can claim ready tasks only when an active worker profile already exists
+- workers create or refresh their own active profile through
+  `POST /api/v1/workers/me/profile` before claim; identity fields come from the
+  verified Flow token and the request may only supply normalized skill tags
 - worker claim does not self-create or overwrite worker eligibility skill state
 - workers can read ready tasks and their own assigned tasks
 - admins and project managers can start a claimed task for operational testing, but do not create worker assignments for themselves through the claim path

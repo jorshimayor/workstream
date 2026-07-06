@@ -19,6 +19,8 @@ from app.modules.tasks.schemas import (
     TaskResponse,
     TaskTransitionRequest,
     TaskWithAssignmentResponse,
+    WorkerProfileResponse,
+    WorkerProfileUpsertRequest,
 )
 from app.modules.tasks.service import TaskService, TaskServiceError
 from app.schemas.auth import ActorContext
@@ -77,6 +79,25 @@ def permission_http_error(exc: PermissionDenied) -> HTTPException:
         HTTP exception with a forbidden status.
     """
     return HTTPException(status_code=403, detail=str(exc))
+
+
+@router.post(
+    "/workers/me/profile",
+    response_model=WorkerProfileResponse,
+    response_model_exclude_none=True,
+)
+async def ensure_worker_profile(
+    payload: WorkerProfileUpsertRequest,
+    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> WorkerProfileResponse:
+    """Create or refresh the current worker profile from trusted Flow identity."""
+    try:
+        return await TaskService(session).ensure_worker_profile(actor, payload)
+    except PermissionDenied as exc:
+        raise permission_http_error(exc) from exc
+    except TaskServiceError as exc:
+        raise task_http_error(exc) from exc
 
 
 @router.post(

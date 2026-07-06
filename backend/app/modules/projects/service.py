@@ -283,6 +283,12 @@ class GuideEditBlocked(ProjectServiceError):
     status_code = 409
 
 
+class GuideVersionConflict(ProjectServiceError):
+    """Raised when a guide version already exists for a project."""
+
+    status_code = 409
+
+
 class GuideActivationConflict(ProjectServiceError):
     """Raised when another transaction wins the guide activation race."""
 
@@ -443,6 +449,7 @@ class ProjectService:
         Raises:
             PermissionDenied: If the actor cannot manage project setup.
             ProjectNotFound: If the parent project is unknown.
+            GuideVersionConflict: If the project already has the requested guide version.
         """
         require_any_role(actor, PROJECT_SETUP_ROLES)
         project = await self._repo.get_project(project_id)
@@ -458,19 +465,27 @@ class ProjectService:
             change_summary=payload.change_summary,
             created_by=actor.actor_id,
         )
-        guide = await self._repo.add_guide(guide)
-        await self._upsert_optional_policies(project_id, payload.version, payload)
+        source_snapshot_payload = payload.source_snapshot
         source_snapshot: GuideSourceSnapshot | None = None
-        if get_settings().project_setup_pipeline_autostart:
+        try:
+            guide = await self._repo.add_guide(guide)
+        except IntegrityError as exc:
+            await self._session.rollback()
+            raise GuideVersionConflict("guide version already exists for project") from exc
+        await self._upsert_optional_policies(project_id, payload.version, payload)
+        if (
+            source_snapshot_payload is not None
+            or get_settings().project_setup_pipeline_autostart
+        ):
             source_snapshot = await self._create_guide_source_snapshot_model(
                 actor,
                 project_id,
                 guide,
-                GuideSourceSnapshotCreate(),
+                source_snapshot_payload or GuideSourceSnapshotCreate(),
             )
         await self._session.commit()
         await self._session.refresh(guide)
-        if source_snapshot is not None:
+        if source_snapshot is not None and get_settings().project_setup_pipeline_autostart:
             await self._enqueue_pre_submit_setup_pipeline_after_commit(
                 project_id=project_id,
                 guide_id=guide.id,

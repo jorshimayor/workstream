@@ -561,7 +561,9 @@ POST /tasks/{id}/submissions
 
 Blocking pre-submit failures prevent submission creation, create no submission
 row, no submission version, no task transition to `submitted`, and no
-submission-created audit event. They do not return review decision values.
+submission-created audit event. Workstream still writes a task audit event named
+`pre_submission_check_failed` with the structured checker result for project
+operators. They do not return review decision values.
 
 ## PostSubmitCheckerPolicy
 

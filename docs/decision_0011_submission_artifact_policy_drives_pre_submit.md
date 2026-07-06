@@ -200,6 +200,8 @@ Blocking pre-submit failures prevent submission creation. When blocking pre-subm
 - no submission version is assigned
 - no task transition to `submitted` occurs
 - no submission-created audit event is written
+- a task audit event named `pre_submission_check_failed` is written with the
+  structured checker result for project operators
 - the response does not use review decision values: `accept`, `needs_revision`, or `reject`
 
 Pre-submit has two API contracts:
