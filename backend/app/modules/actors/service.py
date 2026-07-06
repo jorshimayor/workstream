@@ -300,6 +300,7 @@ class ActorService:
                 "profile_type": profile_type,
                 "scope_type": GLOBAL_PROFILE_SCOPE_TYPE,
                 "scope_id": GLOBAL_PROFILE_SCOPE_ID,
+                "profile_metadata": {"source": "verified_token_role"},
             }
             for profile_type in self._observed_profile_types(actor.roles)
         ]
@@ -312,6 +313,11 @@ class ActorService:
                 required_profile["scope_id"],
             )
             if profile is None:
+                return False
+            if (
+                profile.status == "observed"
+                and profile.profile_metadata != required_profile.get("profile_metadata")
+            ):
                 return False
         return True
 

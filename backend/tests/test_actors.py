@@ -187,6 +187,41 @@ async def test_repeated_auth_me_does_not_rewrite_unchanged_observed_profile(
     assert profile_rows[0].updated_at == stale_time
 
 
+async def test_auth_me_refreshes_stale_observed_profile_metadata(
+    actor_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    set_dev_actor(monkeypatch, roles="reviewer", subject="metadata-refresh-reviewer")
+    created = await actor_client.get("/api/v1/auth/me", headers=auth_headers())
+    assert created.status_code == 200, created.text
+    stale_time = datetime.now(UTC) - timedelta(days=1)
+    async with db_session.get_session_factory()() as session:
+        profile = await session.scalar(
+            select(ActorProfile).where(
+                ActorProfile.actor_id == actor_id("metadata-refresh-reviewer"),
+                ActorProfile.profile_type == "reviewer",
+            )
+        )
+        assert profile is not None
+        profile.profile_metadata = {"source": "stale"}
+        profile.updated_at = stale_time
+        await session.commit()
+
+    refreshed = await actor_client.get("/api/v1/auth/me", headers=auth_headers())
+    assert refreshed.status_code == 200, refreshed.text
+    async with db_session.get_session_factory()() as session:
+        profile = await session.scalar(
+            select(ActorProfile).where(
+                ActorProfile.actor_id == actor_id("metadata-refresh-reviewer"),
+                ActorProfile.profile_type == "reviewer",
+            )
+        )
+
+    assert profile is not None
+    assert profile.profile_metadata == {"source": "verified_token_role"}
+    assert profile.updated_at > stale_time
+
+
 async def test_auth_me_refreshes_identity_after_configured_interval(
     actor_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,

@@ -86,7 +86,7 @@ local actor and role records for that issuer plus subject.
 The first durable shape should be:
 
 ```text
-WorkstreamActor
+ActorIdentity
 - id
 - issuer
 - subject

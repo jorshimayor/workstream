@@ -226,7 +226,6 @@ OPAQUE_SOURCE_REF_NAMESPACES = {
     "rubrics",
     "source-material",
     "task-docs",
-    "week1",
 }
 GUIDE_SOURCE_MATERIAL_FIELDS = {
     "content_markdown",

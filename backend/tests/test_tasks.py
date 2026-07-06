@@ -2860,7 +2860,7 @@ async def test_cross_worker_cannot_list_submissions_or_audit_after_submit(
 
 
 @pytest.mark.parametrize("role", ["reviewer", "finance", "auditor"])
-async def test_future_roles_cannot_view_week1_task_or_submissions(
+async def test_future_roles_cannot_view_unassigned_task_or_submissions(
     task_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
     role: str,

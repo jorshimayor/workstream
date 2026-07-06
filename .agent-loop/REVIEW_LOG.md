@@ -317,7 +317,7 @@ Required reviewer tracks:
 Result: PASS after fixes from internal review.
 
 Scope: local `ActorIdentity` and shared `ActorProfile` registry for verified
-Flow actors, migration/backfill/removal of old worker/reviewer profile stores,
+Flow actors, destructive removal of obsolete worker/reviewer profile stores,
 explicit actor-registration dependency, worker profile activation through the
 canonical worker endpoint, claim eligibility requiring verified worker token
 role plus active worker profile, stale demo route cleanup, and Flow
