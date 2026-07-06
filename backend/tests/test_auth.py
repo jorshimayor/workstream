@@ -11,7 +11,7 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.adapters.auth.dev import DevelopmentAuthVerifier
-from app.adapters.auth.flow import FlowAuthVerifier
+from app.adapters.auth.flow import FlowAuthVerifier, _normalize_roles
 from app.core.config import Settings, get_settings
 from app.core.permissions import PermissionDenied, require_any_role
 from app.db import session as db_session
@@ -250,6 +250,18 @@ async def test_flow_auth_verifier_boundary_rejects_unconfigured_verification() -
 
     with pytest.raises(AuthVerificationError, match="Flow token verification is not configured"):
         await verifier.verify("flow-token")
+
+
+async def test_flow_role_normalization_ignores_non_string_values() -> None:
+    assert _normalize_roles(
+        [
+            "worker",
+            {"api_key": "must-not-persist"},
+            42,
+            " reviewer ",
+            "",
+        ]
+    ) == ("worker", "reviewer")
 
 
 async def test_permission_policy_allows_required_role() -> None:
