@@ -8,6 +8,7 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.adapters.auth.dev import DevelopmentAuthVerifier
 from app.adapters.auth.flow import FlowAuthVerifier
@@ -16,6 +17,7 @@ from app.core.permissions import PermissionDenied, require_any_role
 from app.db import session as db_session
 from app.interfaces.auth import AuthVerificationError
 from app.main import create_app
+from app.modules.actors.service import ActorService
 
 
 def _application_paths(app) -> set[str]:
@@ -130,6 +132,37 @@ async def test_valid_dev_token_resolves_actor_context(
     assert body["audit_context"]["external_issuer"] == "flow-dev-issuer"
     assert body["audit_context"]["auth_source"] == "dev_mock"
     assert body["audit_context"]["is_dev_auth"] is True
+
+
+async def test_auth_me_maps_actor_registry_failure_to_service_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+    auth_database_env: str,
+) -> None:
+    monkeypatch.setenv("WORKSTREAM_AUTH_PROVIDER", "dev")
+    monkeypatch.setenv("WORKSTREAM_ENVIRONMENT", "local")
+    monkeypatch.setenv("WORKSTREAM_DEV_AUTH_TOKEN", "local-token")
+    monkeypatch.setenv("WORKSTREAM_DEV_AUTH_SUBJECT", "registry-failure-subject")
+    monkeypatch.setenv("WORKSTREAM_DEV_AUTH_ISSUER", "flow-dev-issuer")
+    monkeypatch.setenv("WORKSTREAM_DEV_AUTH_ROLES", "worker")
+    get_settings.cache_clear()
+
+    async def fail_register_actor(self, actor):
+        raise SQLAlchemyError("registry unavailable")
+
+    monkeypatch.setattr(ActorService, "register_actor", fail_register_actor)
+    app = create_app()
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as client:
+        response = await client.get(
+            "/api/v1/auth/me",
+            headers={"Authorization": "Bearer local-token"},
+        )
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "Actor registry unavailable"
 
 
 async def test_actor_id_uses_subject_and_issuer_not_email() -> None:

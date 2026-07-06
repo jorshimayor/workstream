@@ -137,8 +137,8 @@ Checker results are exposed through backend contracts and operational output:
 - checker run API responses
 - checker result API responses
 - task/submission API expansion where needed
-- dry-run scripts
-- Week 1 API demo/debug output when useful
+- backend API contract drills
+- operational debug output when useful
 
 Week 2 does not build the product frontend page for checker results. The planned React + Vite operations dashboard consumes these backend contracts later.
 

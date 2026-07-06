@@ -90,10 +90,13 @@ examples/terminal_benchmark/terminal_benchmark_api_e2e.py
 examples/terminal_benchmark/LOCAL_VALIDATION_NOTES.md
 README.md
 docs/architecture_data_model.md
+docs/architecture_brief/workstream_architecture_brief.md
 docs/architecture_lockdown.md
 docs/architecture_system_architecture.md
+docs/diagrams/workstream_v01_container.md
 docs/glossary.md
 docs/operations_roles_permissions.md
+docs/roadmap_day_by_day_execution_plan.md
 docs/roadmap_status.md
 docs/spec_chunk_2_auth_actor_boundary.md
 docs/spec_chunk_4_task_queue_assignment.md
@@ -124,11 +127,10 @@ blockchain, ERC-8004, ERC-8183, settlement, marketplace, or external source adap
 ```
 
 Backend script/example edits are allowed only to remove, retire, or rewire
-stale `WorkerProfile`/`ReviewerProfile` imports and stale demo/profile calls
-that would break application import or local evidence scripts after the shared
-actor profile migration. Stale demo routes, demo workflow files, and obsolete
-Week 1 script entry points should be removed rather than kept as compatibility
-surfaces.
+stale per-role profile imports and stale demo/profile calls that would break
+application import or local evidence scripts after the shared actor profile
+migration. Stale demo routes, demo workflow files, and obsolete script entry
+points should be removed rather than kept as compatibility surfaces.
 
 ## Expected design
 
@@ -341,8 +343,11 @@ current contract and drops the old profile tables.
       access from the stored row.
 - [ ] `GET /api/v1/auth/me` proves actor identity/profile persistence without
       adding any Workstream-owned auth session behavior.
-- [ ] Repeated requests by the same external issuer/subject update last-seen
-      identity/profile metadata without creating duplicate actor rows.
+- [ ] Repeated requests by the same external issuer/subject never create
+      duplicate actor rows. Registry writes may be skipped inside the configured
+      freshness window when trusted claims and required observed profiles already
+      match; stale or disabled freshness windows refresh identity last-seen
+      metadata.
 - [ ] Parametrized tests cover profile creation/refresh for `worker`,
       `reviewer`, `admin`, and `project_manager` from trusted token roles,
       plus scoped `project_owner` profile creation from trusted project
@@ -385,17 +390,17 @@ current contract and drops the old profile tables.
       `ActorProfile`, route authorization, and workflow eligibility.
 - [ ] The next Terminal Benchmark live API drill must use
       `POST /api/v1/workers/me/profile` for worker profile setup.
-- [ ] Stale backend evidence helpers no longer import or write old
-      `WorkerProfile` or `ReviewerProfile` models after those stores are
-      removed. They are rewired to `ActorProfile` or explicitly retired.
+- [ ] Stale backend evidence helpers no longer import or write old per-role
+      profile models after those stores are removed. They are rewired to
+      `ActorProfile` or explicitly retired.
 - [ ] `backend/scripts/api_contract_e2e.py`,
       `backend/scripts/week2_api_e2e.py`, and
       `examples/terminal_benchmark/terminal_benchmark_api_e2e.py` use
       `POST /api/v1/workers/me/profile` or are explicitly retired.
 - [ ] Terminal Benchmark validation notes identify the canonical worker profile
       API and do not describe worker profile setup as an obsolete bootstrap path.
-- [ ] The obsolete Week 1 demo UI, local demo route, and deleted script entry
-      points are not kept as compatibility surfaces.
+- [ ] The obsolete demo UI, local demo route, and deleted script entry points
+      are not kept as compatibility surfaces.
 
 ## Verification commands
 
@@ -404,7 +409,6 @@ cd backend && .venv/bin/python -m ruff check app/api/deps/auth.py app/api/routes
 cd backend && .venv/bin/python -m pytest tests/test_alembic.py tests/test_actors.py tests/test_auth.py -q
 cd backend && .venv/bin/python -m pytest tests/test_tasks.py -q
 cd backend && .venv/bin/docstr-coverage app/api app/modules/actors app/modules/tasks --config .docstr.yaml
-! rg -n 'WorkerProfile|ReviewerProfile|/api/v1/demo/worker-profile|week1_api_e2e|week1_dry_run|week1_api_demo_ui|WORKSTREAM_ENABLE_DEMO_ROUTES' backend/scripts examples/terminal_benchmark backend/app README.md docs/roadmap_status.md scripts
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
 git diff --check

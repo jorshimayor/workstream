@@ -70,6 +70,12 @@ the v0.1 bootstrap, route checks may still read trusted role claims from the
 current `ActorContext` until the dedicated Workstream role-assignment API is
 introduced.
 
+Actor registry refresh is bounded by
+`WORKSTREAM_ACTOR_REGISTRY_REFRESH_INTERVAL_SECONDS`. Workstream verifies the
+token on every protected request, but it may skip the local identity/profile
+write when the stored identity is fresh, claims match, and required observed
+profiles already exist. Setting the interval to `0` disables the skip path.
+
 `ActorProfile` is the shared profile and eligibility model attached to an
 `ActorIdentity`.
 

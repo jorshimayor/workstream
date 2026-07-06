@@ -95,9 +95,9 @@ Exit criteria:
 
 Deliver:
 
-- `WorkerProfile`
-- `ReviewerProfile`
-- `AdminRole`
+- `ActorIdentity`
+- `ActorProfile`
+- Workstream-owned role assignment direction
 - assignment/claim flow
 - skill tags
 - external Flow actor identity mapped into Workstream actor context

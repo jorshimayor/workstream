@@ -187,6 +187,70 @@ async def test_repeated_auth_me_does_not_rewrite_unchanged_observed_profile(
     assert profile_rows[0].updated_at == stale_time
 
 
+async def test_auth_me_refreshes_identity_after_configured_interval(
+    actor_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    set_dev_actor(monkeypatch, roles="worker", subject="stale-identity-worker")
+    created = await actor_client.get("/api/v1/auth/me", headers=auth_headers())
+    assert created.status_code == 200, created.text
+    stale_time = datetime.now(UTC) - timedelta(minutes=10)
+    async with db_session.get_session_factory()() as session:
+        identity = await session.scalar(
+            select(ActorIdentity).where(
+                ActorIdentity.actor_id == actor_id("stale-identity-worker")
+            )
+        )
+        assert identity is not None
+        identity.last_seen_at = stale_time
+        await session.commit()
+
+    refreshed = await actor_client.get("/api/v1/auth/me", headers=auth_headers())
+    assert refreshed.status_code == 200, refreshed.text
+    async with db_session.get_session_factory()() as session:
+        identity = await session.scalar(
+            select(ActorIdentity).where(
+                ActorIdentity.actor_id == actor_id("stale-identity-worker")
+            )
+        )
+
+    assert identity is not None
+    assert identity.last_seen_at > stale_time
+
+
+async def test_zero_registry_refresh_interval_writes_identity_every_time(
+    actor_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("WORKSTREAM_ACTOR_REGISTRY_REFRESH_INTERVAL_SECONDS", "0")
+    get_settings.cache_clear()
+    set_dev_actor(monkeypatch, roles="worker", subject="always-refresh-worker")
+    first = await actor_client.get("/api/v1/auth/me", headers=auth_headers())
+    assert first.status_code == 200, first.text
+    stale_time = datetime.now(UTC) - timedelta(minutes=10)
+    async with db_session.get_session_factory()() as session:
+        identity = await session.scalar(
+            select(ActorIdentity).where(
+                ActorIdentity.actor_id == actor_id("always-refresh-worker")
+            )
+        )
+        assert identity is not None
+        identity.last_seen_at = stale_time
+        await session.commit()
+
+    second = await actor_client.get("/api/v1/auth/me", headers=auth_headers())
+    assert second.status_code == 200, second.text
+    async with db_session.get_session_factory()() as session:
+        identity = await session.scalar(
+            select(ActorIdentity).where(
+                ActorIdentity.actor_id == actor_id("always-refresh-worker")
+            )
+        )
+
+    assert identity is not None
+    assert identity.last_seen_at > stale_time
+
+
 @pytest.mark.parametrize("role", ["worker", "reviewer", "admin", "project_manager"])
 async def test_token_roles_create_observed_non_eligibility_profiles(
     actor_client: AsyncClient,
