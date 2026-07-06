@@ -418,10 +418,9 @@ async def create_started_task(
     worker_profile = await request_json(
         client,
         "POST",
-        "/api/v1/demo/worker-profile",
+        "/api/v1/workers/me/profile",
         worker_token,
         {"skill_tags": ["stem", "proofs"]},
-        201,
     )
     ensure(worker_profile["external_subject"] == worker_subject, "worker subject mismatch")
     ensure(worker_profile["external_issuer"] == flow_issuer, "worker issuer mismatch")
@@ -1760,10 +1759,9 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
         await request_json(
             client,
             "POST",
-            "/api/v1/demo/worker-profile",
+            "/api/v1/workers/me/profile",
             unassigned_worker_token,
             {"skill_tags": ["stem", "proofs"]},
-            201,
         )
         denied_snapshot = await task_side_effect_snapshot(checker_revision_task["id"])
         await request_json(

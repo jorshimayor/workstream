@@ -86,7 +86,14 @@ Auth policy:
 - Workstream verifies Flow-issued tokens through an `AuthVerifier` interface.
 - Production auth uses a Flow token verifier adapter.
 - Local development may use a mock verifier only outside production.
-- Actor identity is based on stable token subject and issuer, not email.
+- Actor identity is based on stable Flow token issuer and subject, not email.
+  Flow issuer plus subject remains the canonical portable identity anchor;
+  Workstream actor id is a local durable product reference derived from that
+  pair.
+- Flow Identity token audience, scope, token id, client, space, and delegation
+  claims remain token/claim context. Workstream may preserve them in audit or
+  actor claim snapshots, but exact task, submission, review, payment, and
+  evidence access is still authorized locally by Workstream.
 - Workstream may keep local actor/profile records for workflow state,
   workflow eligibility, audit display, and reputation, but those records do not
   replace Flow as the auth source and do not grant route access.

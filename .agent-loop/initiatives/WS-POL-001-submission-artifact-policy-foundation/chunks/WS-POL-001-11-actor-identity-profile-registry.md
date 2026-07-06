@@ -84,6 +84,9 @@ backend/scripts/week1_dry_run.py
 backend/scripts/week1_api_e2e.py
 backend/scripts/week2_api_e2e.py
 examples/terminal_benchmark/terminal_benchmark_api_e2e.py
+examples/terminal_benchmark/LOCAL_VALIDATION_NOTES.md
+README.md
+demos/week1_api_demo_ui/src/App.tsx
 docs/architecture_data_model.md
 docs/architecture_lockdown.md
 docs/architecture_system_architecture.md
@@ -117,7 +120,9 @@ blockchain, ERC-8004, ERC-8183, settlement, marketplace, or external source adap
 Demo/backend script/example edits are allowed only to remove, retire, or rewire
 stale `WorkerProfile`/`ReviewerProfile` imports and stale
 `/api/v1/demo/worker-profile` calls that would break application import or
-local evidence scripts after the shared actor profile migration.
+local evidence scripts after the shared actor profile migration. The Week 1 demo
+README/UI may be updated only to point worker profile setup at
+`POST /api/v1/workers/me/profile`.
 
 ## Expected design
 
@@ -381,6 +386,11 @@ profile sources of truth.
       `examples/terminal_benchmark/terminal_benchmark_api_e2e.py` no longer
       call `/api/v1/demo/worker-profile`; they either use
       `POST /api/v1/workers/me/profile` or are explicitly retired.
+- [ ] Terminal Benchmark validation notes no longer describe worker profile
+      setup as demo bootstrap; they identify the canonical worker profile API.
+- [ ] Week 1 demo README/UI no longer advertise or call
+      `/api/v1/demo/worker-profile`; the demo uses
+      `POST /api/v1/workers/me/profile`.
 
 ## Verification commands
 
@@ -389,7 +399,7 @@ cd backend && .venv/bin/python -m ruff check app/api/deps/auth.py app/api/routes
 cd backend && .venv/bin/python -m pytest tests/test_alembic.py tests/test_actors.py tests/test_auth.py -q
 cd backend && .venv/bin/python -m pytest tests/test_tasks.py -q
 cd backend && .venv/bin/docstr-coverage app/api app/modules/actors app/modules/tasks --config .docstr.yaml
-! rg -n 'WorkerProfile|ReviewerProfile|/api/v1/demo/worker-profile' backend/scripts examples/terminal_benchmark backend/app/api/routes/demo.py backend/app/modules
+! rg -n 'WorkerProfile|ReviewerProfile|/api/v1/demo/worker-profile' backend/scripts examples/terminal_benchmark backend/app/api/routes/demo.py backend/app/modules README.md demos/week1_api_demo_ui/src/App.tsx
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
 git diff --check

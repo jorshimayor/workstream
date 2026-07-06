@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-POL-001-11` | Actor Identity And Profile Registry Contract | L1 | Contract-only branch active; implementation waits for human review |
+| `WS-POL-001-11` | Actor Identity And Profile Registry | L1 | Implementation branch active; internal review passed; preparing PR evidence |
 
 ## Completed
 
@@ -26,11 +26,11 @@
 
 ## Proposed Next
 
-The next implementation chunk should create local Workstream actor identity and
-actor profile registries for verified Flow actors. It must not turn Workstream
-into the auth provider, and persisted profiles must not become permission
-authority. After that merge, rerun the Terminal Benchmark live API drill through
-real HTTP calls.
+After `WS-POL-001-11` is externally reviewed and merged, rerun the Terminal
+Benchmark live API drill through real HTTP calls using
+`POST /api/v1/workers/me/profile` for worker profile setup. The next product
+chunk should stay bounded to issues discovered by that drill or the approved
+WS-POL chunk map.
 
 ## Blocked
 

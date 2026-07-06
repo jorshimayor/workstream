@@ -58,8 +58,8 @@ Fields:
 - `last_seen_at`
 - `updated_at`
 
-Actor identity comes from external Flow authentication. `external_subject` plus
-`external_issuer` is the stable identity binding. Email is profile metadata and
+Actor identity comes from external Flow authentication. `external_issuer` plus
+`external_subject` is the stable identity binding. Email is profile metadata and
 must not be treated as the primary identity.
 
 Workstream keeps `ActorIdentity` rows for local workflow continuity, audit
@@ -109,9 +109,17 @@ Auth observation alone may create `observed` profiles, but it must not mark a
 worker or reviewer profile `active`. Route access always comes from the current
 verified token roles, not from profile status.
 
-`project_owner` is a scoped profile/contact relationship, not a route role. It
-is created from trusted project setup or relationship claims when present; it is
-not listed as a permission role and does not grant operator access.
+`project_owner` is a scoped profile/contact relationship, not a route role. In
+this chunk it is created from trusted relationship claims when present. Later
+project setup/source-contact workflows may create the same scoped profile type
+through an explicit trusted service path. It is not listed as a permission role
+and does not grant operator access.
+
+The trusted relationship claim key is
+`claim_snapshot["workstream_relationship_profiles"]`. Each item must use
+`profile_type = "project_owner"`, a non-empty `scope_type`, a non-empty
+`scope_id`, and optional object `profile_metadata`. These values are persisted
+as observed relationship metadata only; they are not route authorization.
 
 Verified token roles:
 
@@ -124,13 +132,13 @@ Verified token roles:
 
 `Operator` is a product persona, not a separate v0.1 permission role. In the application model, operator actions are performed by project managers, workers, reviewers, admins, or finance users depending on the action.
 
-## WorkerProfile
+## Worker Actor Profile
 
 Worker profile behavior is represented by `ActorProfile(profile_type="worker")`.
 The public worker profile API remains worker-owned, but the persistence model is
 the shared actor profile model.
 
-## ReviewerProfile
+## Reviewer Actor Profile
 
 Reviewer profile behavior is represented by
 `ActorProfile(profile_type="reviewer")`. Reviewer eligibility must be explicit;
@@ -1313,25 +1321,29 @@ Fields:
 - `id`
 - `entity_type`
 - `entity_id`
+- `event_type`
+- `from_status`
+- `to_status`
 - `actor_id`
 - `external_subject`
 - `external_issuer`
-- `actor_role`
+- `actor_roles`
 - `claim_snapshot`
 - `auth_source`
-- `event_type`
-- `before`
-- `after`
+- `is_dev_auth`
 - `reason`
-- `locked_guide_version`
-- `submission_id`
-- `checker_run_id`
-- `review_id`
-- `contribution_record_id`
-- `override_id`
+- `event_payload`
 - `created_at`
 
 Audit events are append-only.
+
+v0.1 audit storage is the existing Workstream `audit_events` ledger. Task
+lifecycle events and actor profile eligibility events both write there so
+operators can reconstruct why an actor was allowed to claim, submit, or later
+review. Actor profile audit events use `entity_type = "actor_profile"` and
+record profile type, scope, and skill/status details in `event_payload`. A
+future shared audit module can move the code boundary out of the task module,
+but this chunk does not create a second audit source of truth.
 
 ## Required Invariants
 

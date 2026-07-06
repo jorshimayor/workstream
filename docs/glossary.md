@@ -20,15 +20,19 @@ does not author or approve Workstream's machine-readable internal policy schema.
 
 The trusted per-request actor object resolved from a verified Flow token. It
 contains the current actor id, external subject, issuer, roles, claim snapshot,
-auth source, and display metadata. Route authorization uses this current token
-context, not persisted profile rows.
+auth source, and display metadata. The Flow issuer plus subject is the canonical
+portable identity anchor; Workstream's actor id is a local durable reference
+derived from that pair. Route authorization uses this current token context, not
+persisted profile rows.
 
 ## ActorIdentity
 
 Workstream's local durable identity record for a verified Flow actor. It is
-keyed by the stable actor id derived from external issuer and subject. It
+keyed by the stable Workstream actor id derived from the Flow issuer and
+subject, while the issuer plus subject remains the canonical Flow identity. It
 supports audit display, profile linkage, assignment history, and later
-reputation records. It is not Workstream-owned authentication.
+reputation records. It is not Workstream-owned authentication, login, token
+issuance, or global identity authority.
 
 ## ActorProfile
 

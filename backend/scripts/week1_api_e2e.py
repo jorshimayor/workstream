@@ -219,7 +219,6 @@ def api_environment() -> dict[str, str]:
     env["WORKSTREAM_FLOW_AUTH_ISSUER"] = flow_issuer
     env["WORKSTREAM_FLOW_AUTH_AUDIENCE"] = flow_audience
     env["WORKSTREAM_FLOW_AUTH_LOCAL_HMAC_SECRET"] = flow_secret
-    env["WORKSTREAM_ENABLE_DEMO_ROUTES"] = "true"
     env["WORKSTREAM_PROJECT_SETUP_PIPELINE_AUTOSTART"] = "false"
     env["WORKSTREAM_CELERY_TASK_ALWAYS_EAGER"] = "true"
     env["WORKSTREAM_CELERY_BROKER_URL"] = "memory://"
@@ -842,10 +841,9 @@ async def exercise_week1_api(base_url: str, env: dict[str, str]) -> None:
         worker_profile = await request_json(
             client,
             "POST",
-            "/api/v1/demo/worker-profile",
+            "/api/v1/workers/me/profile",
             worker_token,
             {"skill_tags": ["stem", "proofs"]},
-            201,
         )
         assert worker_profile["external_subject"] == worker_subject
         assert worker_profile["external_issuer"] == flow_issuer

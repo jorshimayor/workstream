@@ -775,15 +775,12 @@ async def create_started_terminal_benchmark_task(
         manager_token,
         {"reason": f"Terminal Benchmark {suffix} release"},
     )
-    # Current v0.1 has no canonical worker-profile provisioning API. This demo
-    # route is used only to bootstrap the real task lifecycle drill.
     profile = await request_json(
         client,
         "POST",
-        "/api/v1/demo/worker-profile",
+        "/api/v1/workers/me/profile",
         worker_token,
         {"skill_tags": list(dict.fromkeys(fixture.metadata["tags"]))},
-        201,
     )
     ensure(profile["external_subject"] == worker_subject, "worker profile subject drifted")
     ensure(profile["external_issuer"] == flow_issuer, "worker profile issuer drifted")
@@ -1327,7 +1324,7 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
     print("missing_static_guard=pre_submit_blocked_no_submission")
     print("low_quality_v1=needs_revision")
     print("fixed_low_quality_v2=review_pending")
-    print("worker_profile_setup=demo_bootstrap_not_canonical_workflow")
+    print("worker_profile_setup=canonical_worker_profile_api")
 
 
 async def main(env: dict[str, str]) -> None:

@@ -1,12 +1,19 @@
 from __future__ import annotations
 
+import asyncio
+from collections.abc import Iterator
+from pathlib import Path
+
 import pytest
+from alembic import command
+from alembic.config import Config
 from httpx import ASGITransport, AsyncClient
 
 from app.adapters.auth.dev import DevelopmentAuthVerifier
 from app.adapters.auth.flow import FlowAuthVerifier
 from app.core.config import Settings, get_settings
 from app.core.permissions import PermissionDenied, require_any_role
+from app.db import session as db_session
 from app.interfaces.auth import AuthVerificationError
 from app.main import create_app
 
@@ -28,6 +35,29 @@ def _application_paths(app) -> set[str]:
 def clear_settings_cache() -> None:
     get_settings.cache_clear()
     yield
+    get_settings.cache_clear()
+
+
+@pytest.fixture
+def auth_database_env(
+    monkeypatch: pytest.MonkeyPatch,
+    postgres_database_url: str,
+    migration_lock,
+) -> Iterator[str]:
+    """Run auth route persistence tests against a migrated Postgres schema."""
+    monkeypatch.setenv("WORKSTREAM_DATABASE_URL", postgres_database_url)
+    get_settings.cache_clear()
+    asyncio.run(db_session.dispose_engine())
+
+    project_root = Path(__file__).resolve().parents[1]
+    config = Config(str(project_root / "alembic.ini"))
+    config.set_main_option("script_location", str(project_root / "alembic"))
+    with migration_lock():
+        command.downgrade(config, "base")
+        command.upgrade(config, "head")
+        yield postgres_database_url
+        command.downgrade(config, "base")
+    asyncio.run(db_session.dispose_engine())
     get_settings.cache_clear()
 
 
@@ -63,6 +93,7 @@ async def test_invalid_bearer_token_is_rejected() -> None:
 
 async def test_valid_dev_token_resolves_actor_context(
     monkeypatch: pytest.MonkeyPatch,
+    auth_database_env: str,
 ) -> None:
     monkeypatch.setenv("WORKSTREAM_AUTH_PROVIDER", "dev")
     monkeypatch.setenv("WORKSTREAM_ENVIRONMENT", "local")

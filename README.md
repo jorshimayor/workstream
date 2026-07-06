@@ -218,7 +218,6 @@ WORKSTREAM_ENVIRONMENT=local \
 WORKSTREAM_FLOW_AUTH_ISSUER=https://auth.flow.local/demo \
 WORKSTREAM_FLOW_AUTH_AUDIENCE=workstream-demo \
 WORKSTREAM_FLOW_AUTH_LOCAL_HMAC_SECRET=workstream-demo-local-secret \
-WORKSTREAM_ENABLE_DEMO_ROUTES=true \
 WORKSTREAM_PROJECT_SETUP_PIPELINE_AUTOSTART=false \
 WORKSTREAM_CELERY_BROKER_URL=redis://localhost:6379/0 \
 .venv/bin/alembic upgrade head
@@ -229,7 +228,6 @@ WORKSTREAM_ENVIRONMENT=local \
 WORKSTREAM_FLOW_AUTH_ISSUER=https://auth.flow.local/demo \
 WORKSTREAM_FLOW_AUTH_AUDIENCE=workstream-demo \
 WORKSTREAM_FLOW_AUTH_LOCAL_HMAC_SECRET=workstream-demo-local-secret \
-WORKSTREAM_ENABLE_DEMO_ROUTES=true \
 WORKSTREAM_PROJECT_SETUP_PIPELINE_AUTOSTART=false \
 WORKSTREAM_CELERY_BROKER_URL=redis://localhost:6379/0 \
 .venv/bin/python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000
@@ -254,7 +252,9 @@ Open:
 http://127.0.0.1:5173/
 ```
 
-The demo runs the Week 1 path from project guide to locked submission using real API calls. The local demo worker-profile route is guarded by `WORKSTREAM_ENABLE_DEMO_ROUTES=true` and local/test environments only.
+The demo runs the Week 1 path from project guide to locked submission using
+real API calls. Worker profile setup uses `POST /api/v1/workers/me/profile`
+with a worker token; the old local demo worker-profile route is retired.
 
 ## Day-30 Success Standard
 

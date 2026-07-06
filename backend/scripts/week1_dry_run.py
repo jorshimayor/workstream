@@ -6,17 +6,14 @@ import asyncio
 import hashlib
 import os
 from pathlib import Path
-from uuid import uuid4
 
 from alembic import command
 from alembic.config import Config
 from httpx import ASGITransport, AsyncClient
 
-from app.adapters.auth.dev import actor_id_from_external_identity
 from app.core.config import get_settings
 from app.db import session as db_session
 from app.main import create_app
-from app.modules.tasks.models import WorkerProfile
 
 TOKEN = "week1-dry-run-token"
 ISSUER = "flow-dry-run"
@@ -65,33 +62,6 @@ def alembic_config() -> Config:
     config = Config(str(project_root / "alembic.ini"))
     config.set_main_option("script_location", str(project_root / "alembic"))
     return config
-
-
-async def seed_worker_profile(subject: str) -> str:
-    """Create the active worker profile required before claim.
-
-    Args:
-        subject: External Flow subject for the worker.
-
-    Returns:
-        Stable Workstream actor id for the worker.
-    """
-    worker_actor_id = actor_id_from_external_identity(ISSUER, subject)
-    async with db_session.get_session_factory()() as session:
-        session.add(
-            WorkerProfile(
-                id=str(uuid4()),
-                actor_id=worker_actor_id,
-                external_subject=subject,
-                external_issuer=ISSUER,
-                display_name=subject.replace("-", " ").title(),
-                email=f"{subject}@flow.local",
-                skill_tags=["stem", "proofs"],
-                status="active",
-            )
-        )
-        await session.commit()
-    return worker_actor_id
 
 
 async def post_ok(client: AsyncClient, url: str, payload: dict | None = None) -> dict:
@@ -284,8 +254,12 @@ async def main() -> None:
             {"reason": "dry-run release decision"},
         )
 
-        await seed_worker_profile(worker_subject)
         set_actor(subject=worker_subject, roles="worker")
+        await post_ok(
+            client,
+            "/api/v1/workers/me/profile",
+            {"skill_tags": ["stem", "proofs"]},
+        )
         claim = await post_ok(
             client,
             f"/api/v1/tasks/{task['id']}/claim",

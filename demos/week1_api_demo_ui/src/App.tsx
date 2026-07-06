@@ -257,17 +257,17 @@ export function App() {
       {
         key: "claim",
         label: "Worker Claims And Starts",
-        detail: "Activates demo worker profile, claims the task, then starts work.",
+        detail: "Activates worker profile, claims the task, then starts work.",
         icon: Users,
         run: async () => {
           if (!records.task) throw new Error("Create and release a task first.");
           const workerProfile = await call<any>(
             "Activate worker profile",
             "POST",
-            "/api/v1/demo/worker-profile",
+            "/api/v1/workers/me/profile",
             actors.worker,
             { skill_tags: ["stem", "proofs"] },
-            201
+            200
           );
           const claimed = await call<any>(
             "Claim task",
@@ -421,10 +421,10 @@ export function App() {
       const workerProfile = await call<any>(
         "Activate worker profile",
         "POST",
-        "/api/v1/demo/worker-profile",
+        "/api/v1/workers/me/profile",
         actors.worker,
         { skill_tags: ["stem", "proofs"] },
-        201
+        200
       );
       const claimed = await call<any>(
         "Claim task",

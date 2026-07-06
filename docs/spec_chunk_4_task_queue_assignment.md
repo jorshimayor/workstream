@@ -8,12 +8,12 @@ It covers:
 
 - task records under active projects
 - locked guide and policy context during task screening before release to `READY`
-- worker profile records
-- reviewer profile records
+- worker actor profile records
+- reviewer actor profile records
 - assignment records
 - lifecycle guards from `DRAFT` through `IN_PROGRESS`
 - audit events for task status changes
-- skill tags on tasks and worker profiles
+- skill tags on tasks and actor profiles
 
 ## Non-Scope
 
@@ -48,10 +48,10 @@ Shared wiring:
 
 ## Data Model Impact
 
-New tables:
+Current tables after `WS-POL-001-11`:
 
-- `worker_profiles`
-- `reviewer_profiles`
+- `actor_identities`
+- `actor_profiles`
 - `workstream_tasks`
 - `task_assignments`
 - `audit_events`

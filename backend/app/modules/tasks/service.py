@@ -9,6 +9,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.permissions import require_any_role
+from app.modules.actors.models import ActorProfile
+from app.modules.actors.service import ActorService
 from app.modules.projects.models import (
     EffectiveProjectSubmissionArtifactPolicy,
     GuideSourceSnapshot,
@@ -37,10 +39,8 @@ from app.modules.tasks.lifecycle import (
 from app.modules.tasks.models import (
     AuditEvent,
     EvidenceItem,
-    ReviewerProfile,
     Submission,
     TaskAssignment,
-    WorkerProfile,
     WorkstreamTask,
 )
 from app.modules.tasks.repository import TaskRepository
@@ -52,8 +52,6 @@ from app.modules.tasks.schemas import (
     TaskCreate,
     TaskResponse,
     TaskWithAssignmentResponse,
-    WorkerProfileResponse,
-    WorkerProfileUpsertRequest,
 )
 from app.schemas.auth import ActorContext
 
@@ -120,8 +118,8 @@ class TaskAssignmentConflict(TaskServiceError):
     status_code = 409
 
 
-class WorkerProfileRequired(TaskServiceError):
-    """Raised when a worker tries to claim without an active worker profile."""
+class WorkerEligibilityRequired(TaskServiceError):
+    """Raised when a worker tries to claim without active worker profile eligibility."""
 
     status_code = 403
 
@@ -176,6 +174,7 @@ class TaskService:
         self._session = session
         self._repo = TaskRepository(session)
         self._project_repo = ProjectRepository(session)
+        self._actor_service = ActorService(session)
 
     async def create_task(
         self,
@@ -1051,81 +1050,22 @@ class TaskService:
     async def _require_active_worker_profile(
         self,
         actor: ActorContext,
-    ) -> WorkerProfile:
-        """Require an active worker profile before claim.
+    ) -> ActorProfile:
+        """Require active worker actor profile eligibility before claim.
 
         Args:
             actor: Verified Flow actor context.
 
         Returns:
-            Persisted active worker profile.
+            Persisted active worker actor profile.
 
         Raises:
-            WorkerProfileRequired: If the actor has no active worker profile.
+            WorkerEligibilityRequired: If the actor has no active worker profile.
         """
-        profile = await self._repo.get_worker_profile(actor.actor_id)
-        if profile is None or profile.status != "active":
-            raise WorkerProfileRequired("active worker profile is required to claim task")
+        profile = await self._actor_service.get_active_profile(actor.actor_id, "worker")
+        if profile is None:
+            raise WorkerEligibilityRequired("active worker profile is required to claim task")
         return profile
-
-    async def ensure_worker_profile(
-        self,
-        actor: ActorContext,
-        payload: WorkerProfileUpsertRequest,
-    ) -> WorkerProfileResponse:
-        """Create or refresh a worker profile for the current actor.
-
-        Args:
-            actor: Verified Flow actor context.
-            payload: Worker-controlled skill tags for task matching.
-
-        Returns:
-            Persisted active worker profile response.
-        """
-        require_any_role(actor, {"worker"})
-        profile = await self._repo.upsert_worker_profile(
-            WorkerProfile(
-                id=str(uuid4()),
-                actor_id=actor.actor_id,
-                external_subject=actor.external_subject,
-                external_issuer=actor.external_issuer,
-                display_name=actor.display_name,
-                email=actor.email,
-                skill_tags=payload.skill_tags,
-                status="active",
-            )
-        )
-        await self._session.commit()
-        await self._session.refresh(profile)
-        return WorkerProfileResponse.model_validate(profile)
-
-    async def ensure_reviewer_profile(
-        self,
-        actor: ActorContext,
-        skill_tags: list[str],
-    ) -> ReviewerProfile:
-        """Create or refresh a reviewer profile for the current actor.
-
-        Args:
-            actor: Verified Flow actor context.
-            skill_tags: Skill tags to associate with the reviewer.
-
-        Returns:
-            Persisted reviewer profile.
-        """
-        require_any_role(actor, {"admin", "project_manager", "reviewer"})
-        return await self._repo.upsert_reviewer_profile(
-            ReviewerProfile(
-                id=str(uuid4()),
-                actor_id=actor.actor_id,
-                external_subject=actor.external_subject,
-                external_issuer=actor.external_issuer,
-                display_name=actor.display_name,
-                email=actor.email,
-                skill_tags=skill_tags,
-                status="active",
-            )
-        )
 
     async def _change_task_status(
         self,
