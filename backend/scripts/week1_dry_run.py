@@ -6,6 +6,7 @@ import asyncio
 import hashlib
 import os
 from pathlib import Path
+from uuid import uuid4
 
 from alembic import command
 from alembic.config import Config
