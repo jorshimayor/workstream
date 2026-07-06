@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import fnmatch
+import logging
 import re
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -13,6 +15,7 @@ from uuid import uuid4
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.core.hashing import canonical_json_hash
 from app.core.permissions import require_any_role
 from app.core.project_agents import get_project_guide_agent_runtime
@@ -50,6 +53,11 @@ from app.modules.projects.post_submit_policy import (
     post_submit_checker_policy_hash,
 )
 from app.modules.projects.repository import ProjectRepository, ProjectRepositoryIntegrityError
+from app.modules.projects.setup_queue import (
+    ProjectSetupQueueError,
+    ensure_pre_submit_setup_pipeline_queue_ready,
+    enqueue_pre_submit_setup_pipeline,
+)
 from app.modules.projects.schemas import (
     ActiveGuideResponse,
     EffectiveProjectSubmissionArtifactPolicyResponse,
@@ -80,6 +88,8 @@ from app.modules.projects.schemas import (
     SubmissionArtifactPolicyUpdate,
 )
 from app.schemas.auth import ActorContext
+
+logger = logging.getLogger(__name__)
 
 PROJECT_SETUP_ROLES = {"admin", "project_manager"}
 ALLOWED_REVIEW_DECISIONS = {"accept", "needs_revision", "reject"}
@@ -327,6 +337,12 @@ class AgentRuntimeUnavailable(ProjectServiceError):
     status_code = 503
 
 
+class ProjectSetupQueueUnavailable(ProjectServiceError):
+    """Raised when automatic project setup cannot be queued."""
+
+    status_code = 503
+
+
 class ProjectService:
     """Coordinates project guide rules, persistence, and response shaping.
 
@@ -419,7 +435,7 @@ class ProjectService:
         Args:
             actor: Verified Flow actor context for the current request.
             project_id: Project that owns the guide.
-            payload: Guide content plus optional checker, review, revision, and payment policies.
+            payload: Guide content plus optional post-submit, review, revision, and payment policies.
 
         Returns:
             Created draft guide response.
@@ -432,6 +448,7 @@ class ProjectService:
         project = await self._repo.get_project(project_id)
         if project is None:
             raise ProjectNotFound("project not found")
+        await self._ensure_project_setup_queue_ready_if_needed()
         guide = ProjectGuide(
             id=str(uuid4()),
             project_id=project_id,
@@ -443,8 +460,22 @@ class ProjectService:
         )
         guide = await self._repo.add_guide(guide)
         await self._upsert_optional_policies(project_id, payload.version, payload)
+        source_snapshot: GuideSourceSnapshot | None = None
+        if get_settings().project_setup_pipeline_autostart:
+            source_snapshot = await self._create_guide_source_snapshot_model(
+                actor,
+                project_id,
+                guide,
+                GuideSourceSnapshotCreate(),
+            )
         await self._session.commit()
         await self._session.refresh(guide)
+        if source_snapshot is not None:
+            await self._enqueue_pre_submit_setup_pipeline_after_commit(
+                project_id=project_id,
+                guide_id=guide.id,
+                source_snapshot_id=source_snapshot.id,
+            )
         return ProjectGuideResponse.model_validate(guide)
 
     async def update_draft_guide(
@@ -528,41 +559,27 @@ class ProjectService:
         guide = await self._lock_project_guide_for_setup(project_id, guide_id)
         if guide.status != "draft":
             raise GuideEditBlocked("only draft guides can receive source snapshots")
+        await self._ensure_project_setup_queue_ready_if_needed()
 
-        manifest, sanitized_items = self._build_source_snapshot_manifest(payload, guide)
-        bundle_hash = self._hash_canonical_json(manifest)
-        snapshot = GuideSourceSnapshot(
-            id=str(uuid4()),
-            project_id=project_id,
-            guide_id=guide.id,
-            guide_version=guide.version,
-            manifest_schema_version=GUIDE_SOURCE_SNAPSHOT_SCHEMA_VERSION,
-            manifest_json=manifest,
-            bundle_hash=bundle_hash,
-            captured_by=actor.actor_id,
+        snapshot = await self._create_guide_source_snapshot_model(
+            actor,
+            project_id,
+            guide,
+            payload,
         )
-        item_models = [
-            GuideSourceSnapshotItem(
-                id=str(uuid4()),
-                source_snapshot_id=snapshot.id,
-                item_order=index,
-                source_kind=item["source_kind"],
-                durable_ref=item["durable_ref"],
-                ingestion_adapter=item["ingestion_adapter"],
-                content_hash=item["content_hash"],
-                content_cid=item.get("content_cid"),
-                media_type=item.get("media_type"),
-            )
-            for index, item in enumerate(sanitized_items)
-        ]
         try:
-            snapshot = await self._repo.add_guide_source_snapshot(snapshot, item_models)
             await self._session.commit()
         except IntegrityError as exc:
             await self._session.rollback()
             raise PolicySetupConflict(
                 "guide source snapshot conflicted with concurrent setup; retry"
             ) from exc
+        if get_settings().project_setup_pipeline_autostart:
+            await self._enqueue_pre_submit_setup_pipeline_after_commit(
+                project_id=project_id,
+                guide_id=guide.id,
+                source_snapshot_id=snapshot.id,
+            )
         return await self._source_snapshot_response(snapshot)
 
     async def create_guide_sufficiency_report(
@@ -1471,6 +1488,104 @@ class ProjectService:
         ):
             raise SourceSnapshotNotFound("guide source snapshot not found")
         return snapshot
+
+    async def _create_guide_source_snapshot_model(
+        self,
+        actor: ActorContext,
+        project_id: str,
+        guide: ProjectGuide,
+        payload: GuideSourceSnapshotCreate,
+    ) -> GuideSourceSnapshot:
+        """Persist a guide-source snapshot model without committing.
+
+        Args:
+            actor: Actor responsible for capturing the source material.
+            project_id: Project that owns the guide.
+            guide: Draft guide whose material is snapshotted.
+            payload: Additional source items to include with the guide body.
+
+        Returns:
+            Persisted source snapshot pending transaction commit.
+        """
+        manifest, sanitized_items = self._build_source_snapshot_manifest(payload, guide)
+        bundle_hash = self._hash_canonical_json(manifest)
+        snapshot = GuideSourceSnapshot(
+            id=str(uuid4()),
+            project_id=project_id,
+            guide_id=guide.id,
+            guide_version=guide.version,
+            manifest_schema_version=GUIDE_SOURCE_SNAPSHOT_SCHEMA_VERSION,
+            manifest_json=manifest,
+            bundle_hash=bundle_hash,
+            captured_by=actor.actor_id,
+        )
+        item_models = [
+            GuideSourceSnapshotItem(
+                id=str(uuid4()),
+                source_snapshot_id=snapshot.id,
+                item_order=index,
+                source_kind=item["source_kind"],
+                durable_ref=item["durable_ref"],
+                ingestion_adapter=item["ingestion_adapter"],
+                content_hash=item["content_hash"],
+                content_cid=item.get("content_cid"),
+                media_type=item.get("media_type"),
+            )
+            for index, item in enumerate(sanitized_items)
+        ]
+        return await self._repo.add_guide_source_snapshot(snapshot, item_models)
+
+    async def _enqueue_pre_submit_setup_pipeline_after_commit(
+        self,
+        *,
+        project_id: str,
+        guide_id: str,
+        source_snapshot_id: str,
+    ) -> str | None:
+        """Enqueue automatic pre-submit setup for an immutable source snapshot.
+
+        This is called only after the project setup record is already committed.
+        If the broker fails at this point, the write remains successful and the
+        operator can retry setup from the persisted snapshot instead of receiving
+        a false 503 for a durable create.
+
+        Args:
+            project_id: Project that owns the guide.
+            guide_id: Guide whose snapshot should be processed.
+            source_snapshot_id: Immutable source snapshot to process.
+
+        Returns:
+            Celery task id when enqueue succeeds; otherwise ``None``.
+        """
+        try:
+            return await asyncio.to_thread(
+                enqueue_pre_submit_setup_pipeline,
+                project_id=project_id,
+                guide_id=guide_id,
+                source_snapshot_id=source_snapshot_id,
+            )
+        except ProjectSetupQueueError as exc:
+            logger.warning(
+                "project setup pipeline enqueue failed after commit",
+                extra={
+                    "project_id": project_id,
+                    "guide_id": guide_id,
+                    "source_snapshot_id": source_snapshot_id,
+                },
+                exc_info=exc,
+            )
+            return None
+
+    async def _ensure_project_setup_queue_ready_if_needed(self) -> None:
+        """Fail before mutation when automatic setup has no usable queue."""
+        if not get_settings().project_setup_pipeline_autostart:
+            return
+        try:
+            await asyncio.to_thread(ensure_pre_submit_setup_pipeline_queue_ready)
+        except ProjectSetupQueueError as exc:
+            raise ProjectSetupQueueUnavailable(
+                "project setup pipeline queue is unavailable"
+            ) from exc
 
     async def _ensure_snapshot_is_latest(
         self,

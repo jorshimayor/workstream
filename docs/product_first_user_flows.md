@@ -7,22 +7,24 @@ The first user flows prove that Workstream can run real work from intake to acce
 1. Admin creates project.
 2. Project owner provides open-ended guide material and business terms.
 3. Admin or project_manager adds the guide.
-4. Workstream runs `ProjectGuideSufficiencyAgent` against the immutable guide-source snapshot.
-5. Blocking sufficiency gaps create clarification requests for the project owner.
-6. Admin or project_manager acknowledges non-blocking sufficiency warnings.
-7. Workstream runs `SubmissionArtifactPolicyDerivationAgent`.
-8. Admin or project_manager reviews and approves the derived submission artifact policy.
-9. Workstream persists the effective project submission artifact policy hash.
-10. Workstream compiles, persists, and locks the project `PreSubmitCheckerPolicy`.
-11. Admin or project_manager enables post-submit checker policy.
-12. Admin or project_manager enables review policy.
-13. Admin or project_manager enables revision policy.
-14. Admin or project_manager enables payment policy.
-15. Project becomes active.
+4. Workstream enqueues the Celery project setup pipeline for the immutable guide-source snapshot.
+5. The pipeline runs `ProjectGuideSufficiencyAgent`.
+6. Blocking sufficiency gaps stop the setup pipeline and create clarification requests for the project owner.
+7. Admin or project_manager acknowledges non-blocking sufficiency warnings.
+8. The pipeline runs `SubmissionArtifactPolicyDerivationAgent` only after sufficiency is not blocked.
+9. Admin or project_manager reviews and approves the derived submission artifact policy.
+10. Workstream persists the effective project submission artifact policy hash.
+11. Workstream compiles, persists, and locks the project `PreSubmitCheckerPolicy`.
+12. Admin or project_manager enables post-submit checker policy.
+13. Admin or project_manager enables review policy.
+14. Admin or project_manager enables revision policy.
+15. Admin or project_manager enables payment policy.
+16. Project becomes active.
 
 Acceptance:
 
 - Project cannot become active without guide, immutable guide source snapshot, passed or acknowledged guide sufficiency report for that immutable guide source snapshot, submission artifact policy, effective project submission artifact policy hash, project pre-submit checker bundle hash, post-submit checker policy, review policy, revision policy, and payment policy.
+- Normal setup starts from guide/source capture. Admins and project managers do not manually trigger sufficiency or derivation in the happy path.
 - Submission artifact policy is Workstream-derived and approved by `admin` or `project_manager`; project owners do not author or approve the machine policy schema directly.
 - This flow is the agent-derived setup path. If an admin or project_manager creates a manual sufficiency report for a snapshot, that snapshot continues through manual policy creation; agent derivation requires an agent-created sufficiency report for the same snapshot or a fresh guide-source snapshot.
 - Submission artifact, checker, review, revision, and payment policies are visible on the project page.

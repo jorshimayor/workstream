@@ -101,6 +101,7 @@ def set_dev_actor(
     monkeypatch.setenv("WORKSTREAM_DEV_AUTH_EMAIL", f"{subject}@example.test")
     monkeypatch.setenv("WORKSTREAM_DEV_AUTH_DISPLAY_NAME", subject.replace("-", " ").title())
     monkeypatch.setenv("WORKSTREAM_DEV_AUTH_ROLES", roles)
+    monkeypatch.setenv("WORKSTREAM_PROJECT_SETUP_PIPELINE_AUTOSTART", "false")
     get_settings.cache_clear()
 
 
@@ -706,7 +707,7 @@ async def test_task_can_be_created_in_draft(task_client: AsyncClient) -> None:
     assert "required_evidence" not in task
 
 
-async def test_task_create_rejects_legacy_artifact_requirement_fields(
+async def test_task_create_rejects_task_owned_artifact_requirement_fields(
     task_client: AsyncClient,
 ) -> None:
     project = await create_active_project(task_client)
@@ -868,7 +869,6 @@ async def test_screening_locks_guide_policy_context_and_payment_fields(
     body = response.json()
     assert body["status"] == "screening"
     assert body["locked_guide_version"] == "v1"
-    assert "locked_checker_policy_version" not in body
     assert body["locked_review_policy_version"] == "v1"
     assert body["locked_revision_policy_version"] == "v1"
     assert body["locked_payment_policy_version"] == "v1"
@@ -993,7 +993,6 @@ async def test_worker_task_response_redacts_locked_policy_hashes(
     )
 
     assert operator_response.status_code == 200, operator_response.text
-    assert "locked_checker_policy_version" not in operator_response.json()
 
     await seed_worker_profile("worker-one")
     set_dev_actor(monkeypatch, roles="worker", subject="worker-one")
@@ -1006,7 +1005,6 @@ async def test_worker_task_response_redacts_locked_policy_hashes(
     assert response.status_code == 200, response.text
     body = response.json()
     assert body["status"] == "ready"
-    assert "locked_checker_policy_version" not in body
     for internal_field in (
         "locked_guide_source_snapshot_id",
         "locked_guide_source_snapshot_hash",
@@ -1069,30 +1067,32 @@ async def test_submission_runtime_uses_locked_project_policy_not_task_required_f
     )
     assert project_policy_response.status_code == 201, project_policy_response.text
 
-    legacy_only_task = await create_started_task(
+    non_contract_artifact_task = await create_started_task(
         task_client,
         project["id"],
         monkeypatch,
         "worker-two",
         complete_task_payload(),
     )
-    legacy_only_payload = complete_submission_payload("sha256:legacy-package")
-    legacy_only_payload["artifact_hash_manifest"] = [
+    non_contract_artifact_payload = complete_submission_payload(
+        "sha256:non-contract-package"
+    )
+    non_contract_artifact_payload["artifact_hash_manifest"] = [
         {
-            "artifact": "legacy-only.md",
-            "hash": "sha256:legacy-only-v1",
+            "artifact": "non-contract-only.md",
+            "hash": "sha256:non-contract-only-v1",
             "size_bytes": 128,
-            "notes": "matches transitional task field only",
+            "notes": "does not match the locked project policy",
         }
     ]
-    legacy_only_response = await task_client.post(
-        f"/api/v1/tasks/{legacy_only_task['id']}/submissions",
+    non_contract_artifact_response = await task_client.post(
+        f"/api/v1/tasks/{non_contract_artifact_task['id']}/submissions",
         headers=auth_headers(),
-        json=legacy_only_payload,
+        json=non_contract_artifact_payload,
     )
 
-    assert legacy_only_response.status_code == 422, legacy_only_response.text
-    detail = legacy_only_response.json()
+    assert non_contract_artifact_response.status_code == 422, non_contract_artifact_response.text
+    detail = non_contract_artifact_response.json()
     assert detail["code"] == "pre_submission_checker_failed"
     required_files = next(
         result
@@ -1101,33 +1101,37 @@ async def test_submission_runtime_uses_locked_project_policy_not_task_required_f
     )
     assert required_files["status"] == "failed"
 
-    legacy_evidence_task = await create_started_task(
+    non_contract_evidence_task = await create_started_task(
         task_client,
         project["id"],
         monkeypatch,
         "worker-three",
         complete_task_payload(),
     )
-    legacy_evidence_payload = complete_submission_payload("sha256:legacy-evidence-package")
-    legacy_evidence_payload["artifact_hash_manifest"][0]["hash"] = "sha256:answer-legacy-evidence"
-    legacy_evidence_payload["evidence_items"] = [
+    non_contract_evidence_payload = complete_submission_payload(
+        "sha256:non-contract-evidence-package"
+    )
+    non_contract_evidence_payload["artifact_hash_manifest"][0]["hash"] = (
+        "sha256:answer-non-contract-evidence"
+    )
+    non_contract_evidence_payload["evidence_items"] = [
         {
             "type": "note",
-            "label": "legacy evidence",
-            "uri": "local://evidence/legacy-evidence.txt",
-            "hash": "sha256:legacy-evidence-v1",
+            "label": "non-contract evidence",
+            "uri": "local://evidence/non-contract-evidence.txt",
+            "hash": "sha256:non-contract-evidence-v1",
             "size_bytes": 128,
-            "metadata": {"policy_key": "legacy_evidence"},
+            "metadata": {"policy_key": "non_contract_evidence"},
         }
     ]
-    legacy_evidence_response = await task_client.post(
-        f"/api/v1/tasks/{legacy_evidence_task['id']}/submissions",
+    non_contract_evidence_response = await task_client.post(
+        f"/api/v1/tasks/{non_contract_evidence_task['id']}/submissions",
         headers=auth_headers(),
-        json=legacy_evidence_payload,
+        json=non_contract_evidence_payload,
     )
 
-    assert legacy_evidence_response.status_code == 422, legacy_evidence_response.text
-    detail = legacy_evidence_response.json()
+    assert non_contract_evidence_response.status_code == 422, non_contract_evidence_response.text
+    detail = non_contract_evidence_response.json()
     assert detail["code"] == "pre_submission_checker_failed"
     required_evidence = next(
         result
@@ -1215,7 +1219,6 @@ async def test_full_task_claim_start_flow_writes_audit_events(
     release_event = next(event for event in events if event["to_status"] == "ready")
     for event in (screening_event, release_event):
         assert event["event_payload"]["locked_guide_version"] == "v1"
-        assert "locked_checker_policy_version" not in event["event_payload"]
         assert event["event_payload"]["locked_review_policy_version"] == "v1"
         assert event["event_payload"]["locked_revision_policy_version"] == "v1"
         assert event["event_payload"]["locked_payment_policy_version"] == "v1"
@@ -1369,7 +1372,6 @@ async def test_assigned_worker_submits_v1_and_task_moves_to_submitted(
     assert submission["worker_id"] == worker_actor_id
     assert submission["version"] == 1
     assert submission["status"] == "submitted"
-    assert "locked_checker_policy_version" not in submission
     for internal_field in (
         "package_uri",
         "package_hash",
@@ -1466,7 +1468,6 @@ async def test_submission_schema_rejects_worker_supplied_locked_context(
             "version": 1,
             "status": "submitted",
             "locked_guide_version": "malicious",
-            "locked_checker_policy_version": "malicious",
             "locked_post_submit_checker_policy_id": "malicious",
             "locked_post_submit_checker_policy_version": "malicious",
             "locked_post_submit_checker_policy_hash": "sha256:" + "0" * 64,
@@ -2078,7 +2079,6 @@ async def test_database_rejects_submission_without_post_submit_policy_context(
             artifact_hash_manifest=[{"artifact": "answer.md", "hash": "sha256:answer-bypass"}],
             worker_attestation="Bypass attestation.",
             locked_guide_version=task.locked_guide_version,
-            locked_checker_policy_version=task.locked_checker_policy_version,
             locked_post_submit_checker_policy_id=None,
             locked_post_submit_checker_policy_version=None,
             locked_post_submit_checker_policy_hash=None,
@@ -2135,7 +2135,6 @@ async def test_database_rejects_checker_run_without_post_submit_policy_context(
             attempt_number=1,
             is_current_for_submission=True,
             locked_guide_version=submission.locked_guide_version,
-            locked_checker_policy_version=submission.locked_checker_policy_version,
             locked_post_submit_checker_policy_id=None,
             locked_post_submit_checker_policy_version=None,
             locked_post_submit_checker_policy_hash=None,
@@ -2242,7 +2241,6 @@ async def test_submission_uses_task_locked_context_after_new_guide_activation(
 
     assert response.status_code == 201, response.text
     submission = response.json()
-    assert "locked_checker_policy_version" not in submission
     assert "locked_guide_version" not in submission
     async with db_session.get_session_factory()() as session:
         persisted_submission = await session.get(Submission, submission["id"])
@@ -2569,7 +2567,6 @@ async def test_database_blocks_task_locked_context_mutation_after_submission(
         task = await session.get(WorkstreamTask, started_task["id"])
         assert task is not None
         task.locked_guide_version = "v2"
-        task.locked_checker_policy_version = "v2"
         task.locked_review_policy_version = "v2"
         task.locked_revision_policy_version = "v2"
         task.locked_payment_policy_version = "v2"
@@ -2650,7 +2647,6 @@ async def test_database_enforces_unique_submission_version(
                 artifact_hash_manifest=persisted.artifact_hash_manifest,
                 worker_attestation=persisted.worker_attestation,
                 locked_guide_version=persisted.locked_guide_version,
-                locked_checker_policy_version=persisted.locked_checker_policy_version,
                 locked_post_submit_checker_policy_id=(
                     persisted.locked_post_submit_checker_policy_id
                 ),

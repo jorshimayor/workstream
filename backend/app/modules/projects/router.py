@@ -95,7 +95,7 @@ async def create_guide(
     actor: Annotated[ActorContext, Depends(get_current_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> ProjectGuideResponse:
-    """Create a draft guide under a project."""
+    """Create a draft guide and enqueue automatic pre-submit setup."""
     try:
         return await ProjectService(session).create_guide(actor, project_id, payload)
     except PermissionDenied as exc:
@@ -112,7 +112,7 @@ async def update_guide(
     actor: Annotated[ActorContext, Depends(get_current_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> ProjectGuideResponse:
-    """Update a draft guide and any supplied policy records."""
+    """Update a draft guide and optional post-submit/review/revision/payment policies."""
     try:
         return await ProjectService(session).update_draft_guide(
             actor,

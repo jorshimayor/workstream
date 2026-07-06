@@ -117,11 +117,6 @@ class PostSubmitCheckerPolicy(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
-# Legacy alias for older module imports. New runtime authority uses
-# PostSubmitCheckerPolicy naming.
-CheckerPolicy = PostSubmitCheckerPolicy
-
-
 class ReviewPolicy(Base):
     """Review rules attached to a project guide version."""
 

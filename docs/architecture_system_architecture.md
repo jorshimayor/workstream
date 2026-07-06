@@ -59,16 +59,16 @@ Approved stack:
 - Database: Postgres
 - File storage: local development can use filesystem-backed storage, but it must sit behind an object-storage abstraction compatible with R2/S3-style storage
 - Auth: external Flow authentication token verification through an auth interface/adapter; Workstream does not own login, signup, password reset, password storage, or primary auth sessions
-- Jobs: async-first background execution; FastAPI background tasks are acceptable for simple local v0.1 jobs, with Celery or an equivalent durable queue when jobs need retries, scheduling, isolation, or distributed workers
+- Jobs: async-first background execution through Celery-backed workers for product lifecycle jobs
 
 Async policy:
 
 - API handlers use async FastAPI patterns where I/O is involved.
 - Database access, file storage, checker execution orchestration, notifications, and audit writes use non-blocking boundaries.
-- Long-running checker work must not block request/response paths.
-- Checker runs create records immediately, return an accepted/running state, and complete through a background worker.
-- FastAPI background tasks are acceptable only for simple local execution during early v0.1.
-- Celery or an equivalent durable queue is introduced once checker jobs need retries, progress tracking, scheduled reconciliation, or worker isolation.
+- Long-running setup and checker work must not block request/response paths.
+- Project setup automation and checker runs create records immediately, return an accepted/running state where applicable, and complete through a Celery worker.
+- FastAPI background tasks are not used for Workstream product lifecycle jobs.
+- A different durable queue can replace Celery later only with an ADR-level reason.
 
 Rust, TypeScript, or another language can be introduced later for a specific layer only with a clear reason, such as high-throughput checker execution, worker isolation, frontend integration, or a specialized SDK/runtime requirement. They do not replace the Python/FastAPI API by default.
 

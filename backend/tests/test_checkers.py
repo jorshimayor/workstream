@@ -196,10 +196,10 @@ def test_locked_post_submit_policy_parser_uses_persisted_body_hash() -> None:
         "schema_version": POST_SUBMIT_CHECKER_POLICY_SCHEMA_VERSION,
         "project_id": "project-id",
         "guide_version": "v1",
-        "default_checkers": ["legacy_default_checker"],
+        "default_checkers": ["default_checker_v1"],
         "required_checkers": ["project_required_checker"],
         "warning_checkers": [],
-        "execution_checkers": ["legacy_default_checker", "project_required_checker"],
+        "execution_checkers": ["default_checker_v1", "project_required_checker"],
         "blocking_severities": ["high"],
     }
     policy_hash = canonical_json_hash(body)
@@ -211,9 +211,9 @@ def test_locked_post_submit_policy_parser_uses_persisted_body_hash() -> None:
         policy_hash=policy_hash,
     )
 
-    assert parsed.default_checkers == ["legacy_default_checker"]
+    assert parsed.default_checkers == ["default_checker_v1"]
     assert parsed.execution_checkers == [
-        "legacy_default_checker",
+        "default_checker_v1",
         "project_required_checker",
     ]
 
@@ -785,7 +785,6 @@ async def test_locked_submission_checker_run_persists_results_and_allows_review(
     assert body["routing_recommendation"] == "allow_review"
     assert body["outcome_source"] == "none"
     assert body["submission_version"] == 1
-    assert body["locked_checker_policy_version"] == "v1"
     expected_post_submit_policy = await load_post_submit_checker_policy(project["id"])
     assert body["locked_post_submit_checker_policy_id"] == expected_post_submit_policy["id"]
     assert body["locked_post_submit_checker_policy_version"] == "v1"
@@ -2036,7 +2035,6 @@ async def test_worker_can_read_only_worker_visible_checker_result_fields(
     assert "trigger_reason" not in body
     assert "audit_event_id" not in body
     assert "locked_guide_version" not in body
-    assert "locked_checker_policy_version" not in body
     assert "locked_post_submit_checker_policy_id" not in body
     assert "locked_post_submit_checker_policy_version" not in body
     assert "locked_post_submit_checker_policy_hash" not in body

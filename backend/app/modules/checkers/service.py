@@ -686,7 +686,6 @@ class CheckerService:
             supersedes_checker_run_id=supersedes_checker_run_id,
             is_current_for_submission=True,
             locked_guide_version=submission.locked_guide_version,
-            locked_checker_policy_version=submission.locked_checker_policy_version,
             locked_post_submit_checker_policy_id=submission.locked_post_submit_checker_policy_id,
             locked_post_submit_checker_policy_version=(
                 submission.locked_post_submit_checker_policy_version
@@ -890,7 +889,6 @@ class CheckerService:
             "submission_id": submission.id,
             "submission_version": submission.version,
             "locked_guide_version": submission.locked_guide_version,
-            "locked_checker_policy_version": submission.locked_checker_policy_version,
             "locked_post_submit_checker_policy_id": (
                 submission.locked_post_submit_checker_policy_id
             ),
@@ -972,7 +970,6 @@ class CheckerService:
                     "attempt_number": attempt_number,
                     "trigger_source": trigger_source,
                     "locked_guide_version": submission.locked_guide_version,
-                    "locked_checker_policy_version": submission.locked_checker_policy_version,
                     "locked_post_submit_checker_policy_id": (
                         submission.locked_post_submit_checker_policy_id
                     ),
@@ -1157,9 +1154,6 @@ class CheckerService:
             is_current_for_submission=checker_run.is_current_for_submission,
             locked_guide_version=(
                 checker_run.locked_guide_version if has_checker_admin_access else None
-            ),
-            locked_checker_policy_version=(
-                checker_run.locked_checker_policy_version if has_checker_admin_access else None
             ),
             locked_post_submit_checker_policy_id=(
                 checker_run.locked_post_submit_checker_policy_id

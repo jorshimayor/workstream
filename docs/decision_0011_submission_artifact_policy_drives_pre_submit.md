@@ -77,6 +77,12 @@ passes or passes with warnings. The project owner does not approve this
 internal policy. A Workstream actor with the `admin` or `project_manager` role
 reviews and approves the derived policy before guide activation, and any
 sufficiency warnings must be acknowledged before approval or activation.
+This setup pipeline is automatic. When Workstream captures a guide-source
+snapshot, it enqueues a Celery project setup job. The job runs
+`ProjectGuideSufficiencyAgent`; a blocked report stops the pipeline and no
+submission artifact policy is created. A passed or passed-with-warnings report
+continues to `SubmissionArtifactPolicyDerivationAgent`, which creates a draft
+policy for human Workstream review.
 Agent-derived policy versioning is server-owned and deterministic from the
 guide source snapshot hash. Provider-returned policy versions are not trusted
 for idempotency and cannot create multiple current policies for the same
@@ -342,7 +348,6 @@ Positive:
 Tradeoff:
 
 - project setup must approve one more explicit Workstream-owned policy bundle
-- existing `evidence_policy`, `required_files`, and `required_evidence` wording
-  must be replaced by `SubmissionArtifactPolicy`; no v0.1 compatibility alias
-  is required
+- project setup and task submission use `SubmissionArtifactPolicy` as the
+  artifact-intake contract from the start
 - post-submit checker policy must remain separate from generated project pre-submit checker policy

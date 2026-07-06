@@ -116,38 +116,24 @@ export function projectPayload(runId: string) {
   return {
     name: `Week 1 Demo ${runId}`,
     slug: `week1-demo-${runId}`,
-    description: "Team demo project running the Week 1 Workstream lifecycle.",
-    base_amount: "25.00",
-    currency: "USD"
+    description: "Team demo project running the Week 1 Workstream lifecycle."
   };
 }
 
 export function guidePayload(runId: string) {
   return {
     version: "v1",
-    content_markdown: `# Demo Project Guide ${runId}`,
-    required_task_fields: [
-      "title",
-      "description",
-      "acceptance_criteria",
-      "required_evidence"
-    ],
-    required_submission_fields: ["summary", "evidence", "worker_attestation"],
-    task_instructions: "Complete the task and submit verifiable evidence.",
-    output_requirements: "Submit an artifact manifest and evidence reference.",
-    acceptance_criteria: "Submission packet is complete and evidence-backed.",
-    rejection_criteria: "Evidence is missing or the output cannot be verified.",
-    reviewer_rubric: "Check guide compliance, artifact hashes, and evidence quality.",
-    forbidden_actions: "No credentials, private source data, or unverifiable output.",
-    required_skills: ["stem", "proofs"],
-    difficulty_scale: { medium: 2, hard: 3 },
-    estimated_time_policy: { default_minutes: 45 },
-    common_rejection_reasons: ["missing evidence", "wrong output format"],
-    evidence_policy: { required: ["log", "artifact hash"] },
-    unacceptable_work_policy: "Copied or unverifiable work.",
+    content_markdown: `# Demo Project Guide ${runId}
+
+Complete the task and submit verifiable evidence. A valid submission includes a
+summary, an artifact manifest, an artifact package reference, and evidence that
+can be checked against the locked project policy.
+
+Reviewers check guide compliance, artifact hashes, evidence quality, and whether
+the output satisfies the task acceptance criteria.`,
     change_summary: "Initial demo guide",
-    checker_policy: {
-      required_checkers: ["check_policy_context_present"],
+    post_submit_checker_policy: {
+      required_checkers: ["check_policy_context_present", "check_required_files"],
       warning_checkers: [],
       blocking_severities: ["high"]
     },
@@ -187,9 +173,7 @@ export function taskPayload(runId: string) {
     source_ref: `demo-${runId}`,
     source_payload_hash: `sha256:source-${runId}`,
     acceptance_criteria: "The submission packet is complete and evidence-backed.",
-    rejection_criteria: "Evidence is missing or unverifiable.",
-    required_files: ["answer.md"],
-    required_evidence: ["checker log"]
+    rejection_criteria: "Evidence is missing or unverifiable."
   };
 }
 

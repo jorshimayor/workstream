@@ -41,6 +41,10 @@ class Settings(BaseSettings):
     project_agent_openai_agent_sdk_model: str | None = None
     project_agent_run_timeout_seconds: float = Field(default=1800.0, gt=0.0, le=7200.0)
     project_agent_max_prompt_bytes: int = Field(default=2_000_000, gt=0, le=10_000_000)
+    project_setup_pipeline_autostart: bool = True
+    celery_broker_url: str | None = None
+    celery_result_backend_url: str | None = None
+    celery_task_always_eager: bool = False
 
     model_config = SettingsConfigDict(
         env_prefix="WORKSTREAM_",

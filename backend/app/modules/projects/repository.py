@@ -564,13 +564,6 @@ class ProjectRepository:
         await self._session.refresh(existing)
         return existing
 
-    async def upsert_checker_policy(
-        self,
-        policy: PostSubmitCheckerPolicy,
-    ) -> PostSubmitCheckerPolicy:
-        """Legacy wrapper for creating a post-submit checker policy."""
-        return await self.upsert_post_submit_checker_policy(policy)
-
     async def get_post_submit_checker_policy(
         self,
         project_id: str,
@@ -592,14 +585,6 @@ class ProjectRepository:
             )
         )
         return result.scalar_one_or_none()
-
-    async def get_checker_policy(
-        self,
-        project_id: str,
-        guide_version: str,
-    ) -> PostSubmitCheckerPolicy | None:
-        """Legacy wrapper for loading a post-submit checker policy."""
-        return await self.get_post_submit_checker_policy(project_id, guide_version)
 
     async def get_post_submit_checker_policy_by_id(
         self,

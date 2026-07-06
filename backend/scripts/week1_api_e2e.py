@@ -220,6 +220,10 @@ def api_environment() -> dict[str, str]:
     env["WORKSTREAM_FLOW_AUTH_AUDIENCE"] = flow_audience
     env["WORKSTREAM_FLOW_AUTH_LOCAL_HMAC_SECRET"] = flow_secret
     env["WORKSTREAM_ENABLE_DEMO_ROUTES"] = "true"
+    env["WORKSTREAM_PROJECT_SETUP_PIPELINE_AUTOSTART"] = "false"
+    env["WORKSTREAM_CELERY_TASK_ALWAYS_EAGER"] = "true"
+    env["WORKSTREAM_CELERY_BROKER_URL"] = "memory://"
+    env["WORKSTREAM_CELERY_RESULT_BACKEND_URL"] = "cache+memory://"
     env["PYTHONPATH"] = str(project_root())
     return env
 
@@ -1155,7 +1159,6 @@ async def assert_week1_database_invariants(
 
         locked_versions = {
             task.locked_guide_version,
-            task.locked_checker_policy_version,
             task.locked_review_policy_version,
             task.locked_revision_policy_version,
             task.locked_payment_policy_version,
@@ -1185,7 +1188,6 @@ async def assert_week1_database_invariants(
         ensure(submission.supersedes_submission_id is None, "first submission supersedes another")
         submission_versions = {
             submission.locked_guide_version,
-            submission.locked_checker_policy_version,
             submission.locked_review_policy_version,
             submission.locked_revision_policy_version,
             submission.locked_payment_policy_version,

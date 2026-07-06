@@ -843,7 +843,6 @@ async def check_policy_context_present(context: CheckerContext) -> CheckerOutcom
         name
         for name, value in {
             "locked_guide_version": context.submission.locked_guide_version,
-            "locked_checker_policy_version": context.submission.locked_checker_policy_version,
             "locked_post_submit_checker_policy_id": (
                 context.submission.locked_post_submit_checker_policy_id
             ),
