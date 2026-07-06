@@ -22,7 +22,7 @@ from app.modules.actors.repository import ActorRepository
 from app.modules.actors.schemas import ActorProfileActivationRequest, ActorProfileResponse
 from app.modules.tasks.models import AuditEvent
 from app.modules.tasks.repository import TaskRepository
-from app.schemas.auth import ActorContext
+from app.schemas.auth import ActorContext, sanitized_claim_snapshot
 
 TOKEN_OBSERVED_PROFILE_TYPES = {"worker", "reviewer", "admin", "project_manager"}
 
@@ -367,7 +367,7 @@ class ActorService:
             display_name=actor.display_name,
             email=actor.email,
             last_seen_roles=list(actor.roles),
-            last_claim_snapshot=actor.claim_snapshot,
+            last_claim_snapshot=sanitized_claim_snapshot(actor.claim_snapshot),
             auth_source=actor.auth_source,
             is_dev_auth=actor.is_dev_auth,
         )

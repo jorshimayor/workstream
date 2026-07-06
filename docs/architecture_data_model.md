@@ -127,8 +127,10 @@ and does not grant operator access.
 The trusted relationship claim key is
 `claim_snapshot["workstream_relationship_profiles"]`. Each item must use
 `profile_type = "project_owner"`, a non-empty `scope_type`, a non-empty
-`scope_id`, and optional object `profile_metadata`. These values are persisted
-as observed relationship metadata only; they are not route authorization.
+`scope_id`. Workstream stores only those scope identity fields in actor
+identity/audit claim snapshots and stores server-owned profile metadata for the
+observed relationship. Nested relationship `profile_metadata` from token claims
+is discarded before persistence and is not route authorization.
 
 Trusted v0.1 bootstrap request roles:
 

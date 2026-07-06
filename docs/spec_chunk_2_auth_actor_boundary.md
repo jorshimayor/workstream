@@ -51,7 +51,9 @@ Forward note: `WS-POL-001-11` later adds `ActorIdentity` and `ActorProfile`
 tables. That does not change this chunk's authentication boundary:
 `get_current_actor` remains pure token verification. Routes that need local
 registry side effects use a separate registration dependency after actor
-resolution.
+resolution. After `WS-POL-001-11`, authenticated Workstream product routes use
+that registration dependency so actor identity/profile observation does not
+depend on a prior `/auth/me` call.
 
 The in-request actor context must expose:
 
@@ -70,12 +72,11 @@ object with:
 - `profile_type`: currently only `project_owner`
 - `scope_type`: non-empty string such as `project`
 - `scope_id`: non-empty string for that scope
-- `profile_metadata`: optional object for non-authoritative contact/source
-  metadata
 
 These claims are token-derived relationship metadata. They may create observed
 scoped `ActorProfile` rows for audit/display, but they do not authorize routes
-or approve Workstream machine-readable policy.
+or approve Workstream machine-readable policy. Nested relationship
+`profile_metadata` from token claims is discarded before persistence.
 
 ## API Impact
 

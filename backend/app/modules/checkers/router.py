@@ -9,7 +9,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps.auth import get_current_actor
+from app.api.deps.auth import get_registered_actor
 from app.core.permissions import PermissionDenied
 from app.db.session import get_db_session
 from app.modules.checkers.schemas import (
@@ -69,7 +69,7 @@ def checker_run_response(payload: CheckerRunResponse | list[CheckerRunResponse])
 async def pre_submit_check(
     task_id: str,
     payload: PreSubmitCheckRequest,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> PreSubmitCheckResponse:
     """Return non-authoritative static checker feedback for a draft packet."""
@@ -89,7 +89,7 @@ async def pre_submit_check(
 async def run_submission_checkers(
     submission_id: str,
     payload: CheckerRunRequest,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> JSONResponse:
     """Trigger a durable internal checker run for a locked submission."""
@@ -122,7 +122,7 @@ async def run_submission_checkers(
 )
 async def list_submission_checker_runs(
     submission_id: str,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> JSONResponse:
     """Return checker runs for one visible submission."""
@@ -142,7 +142,7 @@ async def list_submission_checker_runs(
 )
 async def get_checker_run(
     checker_run_id: str,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> JSONResponse:
     """Return one visible checker run."""

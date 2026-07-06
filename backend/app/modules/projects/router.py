@@ -7,7 +7,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps.auth import get_current_actor
+from app.api.deps.auth import get_registered_actor
 from app.core.permissions import PermissionDenied
 from app.db.session import get_db_session
 from app.modules.projects.schemas import (
@@ -61,7 +61,7 @@ def permission_http_error(exc: PermissionDenied) -> HTTPException:
 @router.post("", response_model=ProjectResponse, status_code=201)
 async def create_project(
     payload: ProjectCreate,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> ProjectResponse:
     """Create a draft project shell for future guide versions."""
@@ -76,7 +76,7 @@ async def create_project(
 @router.get("/{project_id}", response_model=ProjectResponse)
 async def get_project(
     project_id: str,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> ProjectResponse:
     """Return one project by id."""
@@ -92,7 +92,7 @@ async def get_project(
 async def create_guide(
     project_id: str,
     payload: ProjectGuideCreate,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> ProjectGuideResponse:
     """Create a draft guide and enqueue automatic pre-submit setup."""
@@ -109,7 +109,7 @@ async def update_guide(
     project_id: str,
     guide_id: str,
     payload: ProjectGuideUpdate,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> ProjectGuideResponse:
     """Update a draft guide and optional post-submit/review/revision/payment policies."""
@@ -135,7 +135,7 @@ async def create_guide_source_snapshot(
     project_id: str,
     guide_id: str,
     payload: GuideSourceSnapshotCreate,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> GuideSourceSnapshotResponse:
     """Create an immutable source-material snapshot for a draft guide."""
@@ -161,7 +161,7 @@ async def create_guide_sufficiency_report(
     project_id: str,
     guide_id: str,
     payload: GuideSufficiencyReportCreate,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> GuideSufficiencyReportResponse:
     """Record Workstream's sufficiency assessment for a guide snapshot."""
@@ -194,7 +194,7 @@ async def run_guide_sufficiency_agent(
     guide_id: str,
     source_snapshot_id: str,
     response: Response,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> GuideSufficiencyReportResponse:
     """Run Workstream's guide sufficiency agent for a source snapshot."""
@@ -222,7 +222,7 @@ async def acknowledge_guide_sufficiency_warnings(
     guide_id: str,
     report_id: str,
     payload: GuideSufficiencyAcknowledgement,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> GuideSufficiencyReportResponse:
     """Acknowledge non-blocking guide sufficiency warnings."""
@@ -249,7 +249,7 @@ async def create_submission_artifact_policy(
     project_id: str,
     guide_id: str,
     payload: SubmissionArtifactPolicyCreate,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> SubmissionArtifactPolicyResponse:
     """Create a draft Workstream-derived submission artifact policy."""
@@ -282,7 +282,7 @@ async def run_submission_artifact_policy_derivation_agent(
     guide_id: str,
     source_snapshot_id: str,
     response: Response,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> SubmissionArtifactPolicyResponse:
     """Run Workstream's submission artifact policy derivation agent."""
@@ -310,7 +310,7 @@ async def update_submission_artifact_policy(
     guide_id: str,
     policy_id: str,
     payload: SubmissionArtifactPolicyUpdate,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> SubmissionArtifactPolicyResponse:
     """Update a draft submission artifact policy."""
@@ -337,7 +337,7 @@ async def approve_submission_artifact_policy(
     guide_id: str,
     policy_id: str,
     payload: SubmissionArtifactPolicyApprove,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> EffectiveProjectSubmissionArtifactPolicyResponse:
     """Approve a draft submission artifact policy and persist the effective policy."""
@@ -359,7 +359,7 @@ async def approve_submission_artifact_policy(
 async def activate_guide(
     project_id: str,
     guide_id: str,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> ActiveGuideResponse:
     """Activate a complete draft guide for a project."""
@@ -374,7 +374,7 @@ async def activate_guide(
 @router.get("/{project_id}/active-guide", response_model=ActiveGuideResponse)
 async def get_active_guide(
     project_id: str,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> ActiveGuideResponse:
     """Return the current active guide and policy context for a project."""

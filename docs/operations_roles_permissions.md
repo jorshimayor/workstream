@@ -38,8 +38,9 @@ approve Workstream machine-readable policies unless the verified token also
 carries an authorized Workstream role such as admin or project manager.
 The token claim key for trusted relationship metadata is
 `workstream_relationship_profiles`; v0.1 accepts only
-`profile_type="project_owner"` with non-empty `scope_type` and `scope_id`, plus
-optional object `profile_metadata`.
+`profile_type="project_owner"` with non-empty `scope_type` and `scope_id`.
+Workstream discards any nested relationship `profile_metadata` from token
+claims before writing actor identity, profile, or audit records.
 
 Actor profile status is a workflow condition, not route permission. An
 `observed` profile only records that Workstream saw the actor through a verified

@@ -28,6 +28,7 @@ from app.adapters.project_agents.openai_agent_sdk import OpenAIAgentSdkProjectGu
 from app.db import session as db_session
 from app.db.base import Base
 from app.main import create_app
+from app.modules.actors.models import ActorIdentity, ActorProfile
 from app.interfaces.project_agents import (
     GuideSourceMaterial,
     GuideSufficiencyAgentResult,
@@ -450,6 +451,37 @@ async def create_project(client: AsyncClient) -> dict:
     )
     assert response.status_code == 201, response.text
     return response.json()
+
+
+async def test_project_route_registers_project_manager_actor_without_auth_me(
+    project_client: AsyncClient,
+) -> None:
+    response = await project_client.post(
+        "/api/v1/projects",
+        headers=auth_headers(),
+        json={
+            "name": "Registry Proof",
+            "slug": "registry-proof",
+            "description": "Proves product routes observe actors directly",
+        },
+    )
+    assert response.status_code == 201, response.text
+
+    async with db_session.get_session_factory()() as session:
+        identity = await session.scalar(
+            select(ActorIdentity).where(
+                ActorIdentity.external_subject == "project-manager-subject"
+            )
+        )
+        assert identity is not None
+        profiles = (
+            await session.execute(
+                select(ActorProfile).where(ActorProfile.actor_id == identity.actor_id)
+            )
+        ).scalars().all()
+
+    assert identity.last_seen_roles == ["project_manager"]
+    assert any(profile.profile_type == "project_manager" for profile in profiles)
 
 
 async def create_guide(client: AsyncClient, project_id: str, payload: dict) -> dict:

@@ -415,6 +415,9 @@ async def test_scoped_project_owner_profile_comes_from_trusted_relationship_clai
         await service.register_actor(actor)
 
     async with db_session.get_session_factory()() as session:
+        identity = await session.scalar(
+            select(ActorIdentity).where(ActorIdentity.actor_id == actor.actor_id)
+        )
         profiles = (
             await session.execute(
                 select(ActorProfile).where(
@@ -423,12 +426,40 @@ async def test_scoped_project_owner_profile_comes_from_trusted_relationship_clai
                 )
             )
         ).scalars().all()
+        audit_events = (
+            await session.execute(
+                select(AuditEvent).where(
+                    AuditEvent.entity_type == "actor_profile",
+                    AuditEvent.actor_id == actor.actor_id,
+                )
+            )
+        ).scalars().all()
 
+    assert identity is not None
+    identity_snapshot = identity.last_claim_snapshot
+    assert identity_snapshot["workstream_relationship_profiles"] == [
+        {
+            "profile_type": "project_owner",
+            "scope_type": "project",
+            "scope_id": "project-123",
+        }
+    ]
+    assert "must-not-persist" not in str(identity_snapshot)
+    assert "api_key" not in str(identity_snapshot)
+    assert "secret" not in str(identity_snapshot).lower()
+    assert "token" not in str(identity_snapshot).lower()
     assert len(profiles) == 1
     assert profiles[0].status == "observed"
     assert profiles[0].scope_type == "project"
     assert profiles[0].scope_id == "project-123"
     assert profiles[0].profile_metadata == {"source": "trusted_relationship_claim"}
+    assert audit_events
+    for audit_event in audit_events:
+        claim_snapshot = audit_event.claim_snapshot
+        assert "must-not-persist" not in str(claim_snapshot)
+        assert "api_key" not in str(claim_snapshot)
+        assert "secret" not in str(claim_snapshot).lower()
+        assert "token" not in str(claim_snapshot).lower()
 
 
 async def test_active_profile_without_matching_token_role_cannot_use_worker_profile_api(
