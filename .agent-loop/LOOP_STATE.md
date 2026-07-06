@@ -3,17 +3,18 @@
 ## Current State
 
 - Active initiative: `WS-POL-001` - Submission Artifact Policy Foundation
-- Active planning chunk: none
-- Active implementation chunk: `WS-POL-001-10` - Pre-Submit Live Drill Hardening
-- Branch: `codex/ws-pol-001-10-pre-submit-hardening`
-- Status: `WS-POL-001-10` is open as PR #72. Implementation and internal
-  review are complete; CodeRabbit follow-up fixes are addressed locally and the
-  branch is awaiting pushed CI reruns and the human merge checkpoint.
-- Last merged implementation SHA: `8a524de`
-- Last merge commit: `8a524de`
-- Current gate: PR #72 external checks after evidence rebind, then human merge
-  decision
-- Next chunk: inactive until `WS-POL-001-10` reaches a human checkpoint
+- Active planning chunk: `WS-POL-001-11` - Actor Identity And Profile Registry
+- Active implementation chunk: none
+- Branch: `codex/ws-pol-001-11-actor-identity-profile-contract`
+- Status: `WS-POL-001-10` merged through PR #72. `WS-POL-001-11` has contract,
+  internal review evidence, and PR trust bundle prepared for human review.
+  Implementation is inactive until the contract is approved and the user gives
+  an explicit implementation start signal.
+- Last merged implementation SHA: `cc78f2a`
+- Last merge commit: `1bbde47`
+- Current gate: human review of `WS-POL-001-11` contract
+- Next chunk: `WS-POL-001-11` is contract-only until human review approves the
+  implementation boundary
 
 ## Operating Rule
 
@@ -41,12 +42,12 @@ project setup runtime boundary. It removed the production fixture adapter and
 did not change task, checker, post-submit, review, revision, payment,
 reputation, blockchain, frontend, or object-storage behavior.
 
-The active `WS-POL-001-10` chunk is a corrective hardening chunk for the
-pre-submit live API drill. It fixes guide-version conflict mapping, guide-create
-source snapshot capture, active-guide checker summary visibility, worker
-self-profile onboarding, and failed pre-submit audit evidence. It does not
-change post-submit policy, review, revision, payment, reputation, blockchain,
-frontend, or agent-runtime behavior.
+The merged `WS-POL-001-10` chunk was a corrective hardening chunk for the
+pre-submit live API drill. It fixed guide-version conflict mapping,
+guide-create source snapshot capture, active-guide checker summary visibility,
+worker self-profile onboarding, and failed pre-submit audit evidence. It did
+not change post-submit policy, review, revision, payment, reputation,
+blockchain, frontend, or agent-runtime behavior.
 
 ## Last Review State
 
@@ -107,5 +108,9 @@ frontend, or agent-runtime behavior.
 - PR #71 merged into `main` as `8a524de`.
 - `WS-POL-001-10` started after the user's explicit start signal for the first
   five pre-submit hardening fixes from the live API drill.
-- PR #72 is open from `codex/ws-pol-001-10-pre-submit-hardening`; CodeRabbit
-  follow-up fixes are applied locally and require CI rerun after push.
+- PR #72 merged into `main` as `1bbde47`.
+- `WS-POL-001-11` is the next planned bounded chunk. It should add local
+  Workstream actor identity and actor profile registries for verified Flow
+  actors before the next Terminal Benchmark live API drill.
+- `WS-POL-001-11` internal review evidence is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-11-internal-review-evidence.md`.
+- `WS-POL-001-11` PR trust bundle is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-11-pr-trust-bundle.md`.

@@ -56,6 +56,11 @@ New tables:
 - `task_assignments`
 - `audit_events`
 
+Note: `WS-POL-001-11` supersedes the separate worker/reviewer profile storage
+from this earlier chunk. Worker and reviewer profile behavior moves to the
+shared `ActorProfile` model, while task assignment and audit records keep using
+stable actor ids.
+
 Task records store:
 
 - project id

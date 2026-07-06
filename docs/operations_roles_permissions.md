@@ -6,7 +6,11 @@ Workstream needs explicit permissions from the first version because review, pay
 
 ## Roles
 
-Roles come from trusted Flow token claims, local Workstream role mappings, or an explicitly documented combination of both. The backend resolves those into a current actor context before protected workflow actions run.
+Route authorization roles come from trusted Flow token claims resolved into the
+current `ActorContext`. Local Workstream `ActorIdentity` and `ActorProfile`
+records may mirror observed roles, profile state, skill tags, scope, and
+eligibility metadata, but persisted profile rows do not grant route access by
+themselves.
 
 | Role | Purpose |
 | --- | --- |
@@ -17,6 +21,17 @@ Roles come from trusted Flow token claims, local Workstream role mappings, or an
 | Finance | Updates payout status and payment references. |
 | Auditor | Reads records and audit logs without modifying work. |
 
+`project_owner` is not a route-authorizing Workstream role in v0.1. A project
+owner is the external or internal source of project material or business terms.
+It may be recorded as scoped actor profile/contact metadata, but it does not
+approve Workstream machine-readable policies unless the verified token also
+carries an authorized Workstream role such as admin or project manager.
+
+Actor profile status is a workflow condition, not route permission. An
+`observed` profile only records that Workstream saw the actor through a verified
+token. An `active` profile can satisfy the profile side of a workflow gate, but
+the route still requires the matching role in the current verified token.
+
 ## Permission Matrix
 
 | Action | Admin | Project Manager | Worker | Reviewer | Finance | Auditor |
@@ -24,8 +39,8 @@ Roles come from trusted Flow token claims, local Workstream role mappings, or an
 | Create project | yes | no | no | no | no | no |
 | Edit project guide | yes | yes | no | no | no | no |
 | Create task | yes | yes | no | no | no | no |
-| Claim task | yes | yes | yes | no | no | no |
-| Submit task | yes | no | own task only | no | no | no |
+| Claim task | no | no | yes | no | no | no |
+| Submit task | no | no | own task only | no | no | no |
 | Run checkers | yes | yes | own submission | no | no | no |
 | Review submission | yes | no | no | yes | no | no |
 | Review own submission | no | no | no | no | no | no |
@@ -43,10 +58,16 @@ Roles come from trusted Flow token claims, local Workstream role mappings, or an
 - A reviewer cannot mark payment as paid.
 - Finance cannot change review decisions.
 - Project managers cannot silently override checker failures.
+- Admin and project-manager operational intervention must use a separate
+  audited override path. It must not masquerade as worker task claiming.
 - Admin overrides must create an audit event with reason and evidence.
 
 ## First-Version Enforcement
 
-The first version enforces permissions in application service or policy code, not directly inside routers. The database records actor IDs, external subject, issuer, role/claim context, and auth source for important events so later role enforcement can be audited.
+The first version enforces permissions in application service or policy code,
+not directly inside routers. The database records actor IDs, external subject,
+issuer, role/claim context, auth source, actor identity, and actor profile
+context for important events so later route decisions and workflow eligibility
+can be audited.
 
 Development auth, if enabled, must be impossible to use in production and must be visible in audit context.

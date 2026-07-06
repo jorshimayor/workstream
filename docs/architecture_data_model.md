@@ -7,9 +7,8 @@ The v0.1 persistence layer uses SQLAlchemy 2.x async models, Alembic migrations,
 ## Entity Overview
 
 ```text
-Actor
-  WorkerProfile
-  ReviewerProfile
+ActorIdentity
+  ActorProfile
 
 Project
   ProjectGuide
@@ -42,27 +41,79 @@ Task
   AuditEvent
 ```
 
-## Actor
+## Actor Identity And Profile
 
 Fields:
 
-- `id`
+- `actor_id`
 - `external_subject`
 - `external_issuer`
 - `email`
 - `display_name`
-- `role`
-- `claim_snapshot`
+- `last_seen_roles`
+- `last_claim_snapshot`
 - `auth_source`
-- `created_at`
+- `is_dev_auth`
+- `first_seen_at`
 - `last_seen_at`
+- `updated_at`
+
+Actor identity comes from external Flow authentication. `external_subject` plus
+`external_issuer` is the stable identity binding. Email is profile metadata and
+must not be treated as the primary identity.
+
+Workstream keeps `ActorIdentity` rows for local workflow continuity, audit
+display, profile linkage, assignments, and later reputation records. It does
+not own password authentication, primary login sessions, or role authority.
+Route authorization still uses the verified token roles in the current
+`ActorContext`.
+
+`ActorProfile` is the shared profile and eligibility model attached to an
+`ActorIdentity`.
+
+Fields:
+
+- `id`
+- `actor_id`
+- `profile_type`
 - `status`
+- `skill_tags`
+- `scope_type`
+- `scope_id`
+- `profile_metadata`
+- `created_at`
+- `updated_at`
 
-Actor identity comes from external Flow authentication. `external_subject` plus `external_issuer` is the stable identity binding. Email is profile metadata and must not be treated as the primary identity.
+Initial profile types:
 
-Workstream can keep actor/profile records for permissions, assignments, reputation, and audit display, but it does not own password authentication or primary login sessions.
+- worker
+- reviewer
+- admin
+- project_manager
+- project_owner
 
-Roles:
+Profile rows are metadata and workflow eligibility records. They do not grant
+route access without the matching verified token role. A project owner profile
+is scoped source/contact metadata and is not the same as a project manager
+permission role.
+
+Initial profile statuses:
+
+- `observed`: created or refreshed from a verified token role for audit/display
+  metadata only; it is not workflow eligibility.
+- `active`: created by an explicit profile workflow and allowed to satisfy
+  workflow eligibility checks for that profile type.
+- `disabled`: retained for audit but blocked from workflow eligibility.
+
+Auth observation alone may create `observed` profiles, but it must not mark a
+worker or reviewer profile `active`. Route access always comes from the current
+verified token roles, not from profile status.
+
+`project_owner` is a scoped profile/contact relationship, not a route role. It
+is created from trusted project setup or relationship claims when present; it is
+not listed as a permission role and does not grant operator access.
+
+Verified token roles:
 
 - admin
 - project_manager
@@ -75,33 +126,16 @@ Roles:
 
 ## WorkerProfile
 
-Fields:
-
-- `actor_id`
-- `display_name`
-- `skill_tags`
-- `accepted_count`
-- `needs_revision_count`
-- `rejected_count`
-- `paid_total`
-- `pending_payout_total`
-- `reputation_score`
-- `status`
+Worker profile behavior is represented by `ActorProfile(profile_type="worker")`.
+The public worker profile API remains worker-owned, but the persistence model is
+the shared actor profile model.
 
 ## ReviewerProfile
 
-Fields:
-
-- `actor_id`
-- `skill_tags`
-- `reviews_completed`
-- `accept_count`
-- `needs_revision_count`
-- `reject_count`
-- `overturned_count`
-- `average_turnaround_hours`
-- `review_quality_score`
-- `status`
+Reviewer profile behavior is represented by
+`ActorProfile(profile_type="reviewer")`. Reviewer eligibility must be explicit;
+observing a reviewer token role alone does not make the actor eligible for
+review workflow.
 
 ## Project
 

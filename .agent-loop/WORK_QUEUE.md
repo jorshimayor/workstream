@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| TBD | Next WS-POL-001 bounded chunk | L1 | Inactive until explicit user start signal and chunk contract |
+| `WS-POL-001-11` | Actor Identity And Profile Registry Contract | L1 | Contract-only branch active; implementation waits for human review |
 
 ## Completed
 
@@ -21,13 +21,16 @@
 | `WS-POL-001-06` | Terminal Benchmark Real Fixture Drill | L1 | Merged through PR #67 |
 | `WS-POL-001-07` | Task Contract Artifact Field Cleanup | L1 | Merged through PR #68 |
 | `WS-POL-001-08` | Celery Project Setup Pipeline | L1 | Merged through PR #69 |
+| `WS-POL-001-09` | OpenAI Agents SDK Runtime Only | L1 | Merged through PR #71 |
+| `WS-POL-001-10` | Pre-Submit Live Drill Hardening | L1 | Merged through PR #72 |
 
 ## Proposed Next
 
-No chunk is active. The next likely step is a new bounded chunk to prove the
-automatic Celery project setup path against the Terminal Benchmark example with
-real API calls, but it must receive an explicit chunk contract before
-implementation starts.
+The next implementation chunk should create local Workstream actor identity and
+actor profile registries for verified Flow actors. It must not turn Workstream
+into the auth provider, and persisted profiles must not become permission
+authority. After that merge, rerun the Terminal Benchmark live API drill through
+real HTTP calls.
 
 ## Blocked
 

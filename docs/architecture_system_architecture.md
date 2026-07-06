@@ -87,9 +87,18 @@ Auth policy:
 - Production auth uses a Flow token verifier adapter.
 - Local development may use a mock verifier only outside production.
 - Actor identity is based on stable token subject and issuer, not email.
-- Workstream may keep local actor/profile records for workflow state, permissions, audit display, and reputation, but those records do not replace Flow as the auth source.
-- Role and permission checks use trusted Flow claims, local Workstream role mappings, or a documented combination of both.
-- Routers depend on a single current-actor dependency; permission checks live in service or policy code so workflow rules do not scatter across HTTP handlers.
+- Workstream may keep local actor/profile records for workflow state,
+  workflow eligibility, audit display, and reputation, but those records do not
+  replace Flow as the auth source and do not grant route access.
+- Route role and permission checks use trusted Flow token claims for the
+  current request. Local actor/profile records may add workflow eligibility
+  conditions, such as an active worker profile before task claim, but they are
+  not route permission authority.
+- Routers use the pure current-actor dependency when they only need verified
+  Flow identity. Routes that need local actor registry side effects use a
+  separate registration dependency that first resolves the current actor, then
+  records or refreshes local actor/profile metadata. Permission checks live in
+  service or policy code so workflow rules do not scatter across HTTP handlers.
 - Audit records preserve actor id, external subject, issuer, role/claim context, and whether dev/mock auth was used when relevant.
 
 ## Component Responsibilities

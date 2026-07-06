@@ -16,6 +16,34 @@ repository docs, examples, rubrics, task instructions, base payout or payment
 policy inputs, or other project-specific source material. The project owner
 does not author or approve Workstream's machine-readable internal policy schema.
 
+## ActorContext
+
+The trusted per-request actor object resolved from a verified Flow token. It
+contains the current actor id, external subject, issuer, roles, claim snapshot,
+auth source, and display metadata. Route authorization uses this current token
+context, not persisted profile rows.
+
+## ActorIdentity
+
+Workstream's local durable identity record for a verified Flow actor. It is
+keyed by the stable actor id derived from external issuer and subject. It
+supports audit display, profile linkage, assignment history, and later
+reputation records. It is not Workstream-owned authentication.
+
+## ActorProfile
+
+Workstream's shared profile and workflow eligibility record attached to an
+`ActorIdentity`. Initial profile types include worker, reviewer, admin,
+project_manager, and project_owner. A profile can store status, skill tags,
+scope, and metadata, but it does not grant route access without the matching
+verified token role. A project_owner profile is scoped source/contact metadata,
+not project-manager authority.
+
+`observed` profile status is audit/display metadata from verified token
+observation. `active` profile status means an explicit profile workflow made
+that profile eligible for the relevant Workstream workflow. Neither status is
+route permission.
+
 ## Source
 
 Where a task came from. In v0.1, sources are manual creation, controlled markdown import, or controlled CSV import.
