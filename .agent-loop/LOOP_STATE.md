@@ -6,13 +6,13 @@
 - Active planning chunk: `WS-POL-001-11` - Actor Identity And Profile Registry
 - Active implementation chunk: none
 - Branch: `codex/ws-pol-001-11-actor-identity-profile-contract`
-- Status: `WS-POL-001-10` merged through PR #72. `WS-POL-001-11` is in active
-  planning/spec contract review for Workstream's local actor identity and
-  profile registry. Implementation is inactive until human review approves the
-  contract.
+- Status: `WS-POL-001-10` merged through PR #72. `WS-POL-001-11` contract,
+  internal review evidence, and PR trust bundle are prepared for human review.
+  Implementation is inactive until human review approves the contract.
 - Last merged implementation SHA: `cc78f2a`
 - Last merge commit: `1bbde47`
-- Current gate: `WS-POL-001-11` contract review
+- Current gate: `WS-POL-001-11` PR/external review, then human contract
+  approval
 - Next chunk: `WS-POL-001-11` is contract-only until human review approves the
   implementation boundary
 
@@ -112,3 +112,5 @@ blockchain, frontend, or agent-runtime behavior.
 - `WS-POL-001-11` is the next planned bounded chunk. It should add local
   Workstream actor identity and actor profile registries for verified Flow
   actors before the next Terminal Benchmark live API drill.
+- `WS-POL-001-11` internal review evidence is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-11-internal-review-evidence.md`.
+- `WS-POL-001-11` PR trust bundle is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-11-pr-trust-bundle.md`.
