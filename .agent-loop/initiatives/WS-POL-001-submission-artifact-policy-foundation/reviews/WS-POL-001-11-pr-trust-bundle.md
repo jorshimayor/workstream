@@ -26,6 +26,7 @@ Chunk contract:
 - Preserved active/disabled profile provenance during token observation refreshes.
 - Retired stale demo worker-profile bootstrap paths and rewired scripts/examples/UI to `POST /api/v1/workers/me/profile`.
 - Documented Flow issuer plus subject as the canonical identity anchor; Workstream actor id is a local durable reference.
+- Tightened wording so Flow issuer plus subject is only the identity anchor; Workstream-owned role assignment is the product-role authority.
 - Documented trusted `workstream_relationship_profiles` claim shape for scoped project-owner metadata.
 
 ## Why It Changed
@@ -83,6 +84,7 @@ No Workstream-owned login/signup/session/password behavior was added. No post-su
 
 ```bash
 cd backend && .venv/bin/python -m ruff check tests/test_auth.py tests/test_tasks.py
+cd backend && .venv/bin/python -m ruff check scripts/api_contract_e2e.py scripts/week2_api_e2e.py
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
 git diff --check origin/main...HEAD
@@ -91,6 +93,7 @@ python3 scripts/check_internal_review_evidence.py
 cd backend && .venv/bin/python -m pytest tests/test_alembic.py tests/test_actors.py tests/test_auth.py -q
 cd backend && .venv/bin/python -m pytest tests/test_auth.py::test_no_local_login_password_or_session_routes -q
 cd backend && .venv/bin/python -m pytest tests/test_tasks.py::test_disabled_worker_profile_cannot_claim_ready_task tests/test_tasks.py::test_worker_without_profile_cannot_claim_ready_task -q
+cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/api_contract_e2e.py
 ```
 
 Result summary:
@@ -104,6 +107,7 @@ Result summary:
 - Migration/actor/auth tests: 41 passed in 348.89s.
 - Demo route regression: 1 passed in 14.77s.
 - Task eligibility regressions: 2 passed in 84.84s.
+- API contract real API E2E: passed on final patch state.
 
 ## Test Delta
 
@@ -125,7 +129,7 @@ Internal review evidence:
 
 - `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-11-internal-review-evidence.md`
 
-Reviewed code SHA: `a008cf81519913f1ec2f6ffe530c0598f8df087e`
+Reviewed code SHA: `f1847d59dd2eb19bca5160e0514a8f47d8bc494f`
 
 Reviewer run IDs: see `WS-POL-001-11-internal-review-evidence.md`.
 
@@ -134,10 +138,10 @@ Reviewer run IDs: see `WS-POL-001-11-internal-review-evidence.md`.
 | senior engineering | PASS AFTER FIXES | None | Required stale evidence wording to be fixed so the PR no longer claims compatibility backfill or deleted demo UI proof. |
 | QA/test | PASS AFTER FIXES | None | Added disabled-worker claim denial and deleted demo-route regression coverage. |
 | security/auth | PASS | None | Confirmed no valid security/auth findings on the final code SHA. |
-| product/ops | PASS AFTER FIXES | None | Required stale backfill wording to be fixed so operator expectations match destructive removal/no compatibility backfill. |
+| product/ops | PASS AFTER FIXES | None | Fixed role wording so Identity Issuer does not read as product-role authority. |
 | architecture | PASS WITH LOW RISKS | None | Confirmed auth/profile boundaries; future shared audit module noted as follow-up. |
-| CI integrity | PASS AFTER FIXES | None | Fixed stale reviewed-SHA evidence and kept `.agent-loop` review evidence as the canonical gate input. |
-| docs | PASS AFTER FIXES | None | Added destructive migration note and marked old demo/Week 1 internal-review references as superseded. |
+| CI integrity | PASS AFTER FIXES | None | Fixed the API contract E2E source-ref namespace and kept source-ref validation intact. |
+| docs | PASS AFTER FIXES | None | Tightened Identity Issuer versus Workstream-owned role wording across docs and scripts. |
 | reuse/dedup | PASS AFTER FIXES | None | Added full reviewer provenance and corrected route-registration scope in evidence. |
 | test delta | PASS AFTER FIXES | None | Added disabled-profile claim denial, deleted demo-route assertion, and gate behavior coverage. |
 
