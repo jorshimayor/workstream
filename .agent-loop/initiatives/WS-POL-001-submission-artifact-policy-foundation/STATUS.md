@@ -4,14 +4,13 @@
 
 `WS-POL-001-01`, `WS-POL-001-02`, `WS-POL-001-03`, `WS-POL-001-04`,
 `WS-POL-001-05`, `WS-POL-001-06`, `WS-POL-001-07`, `WS-POL-001-08`,
-`WS-POL-001-09`, and `WS-POL-001-10` are merged to `main`. `WS-POL-001-11`
-implementation is committed on the active branch with deterministic
-verification and internal reviewer evidence complete. The current gate is PR
-review and human checkpoint.
+`WS-POL-001-09`, `WS-POL-001-10`, and `WS-POL-001-11` are merged to `main`.
+The current gate is the post-actor-registry Terminal Benchmark live API drill
+through real HTTP calls using the canonical worker profile endpoint.
 
 ## Active Chunk
 
-`WS-POL-001-11` implementation review.
+No implementation chunk is active.
 
 ## Chunk Status
 
@@ -27,13 +26,13 @@ review and human checkpoint.
 | `WS-POL-001-08` | Merged | `codex/ws-pol-001-08-celery-project-setup` | 69 | Makes guide/source capture enqueue Celery pre-submit setup automatically: sufficiency first, blocked stops, draft submission artifact policy next; removes remaining construction-state compatibility surfaces. |
 | `WS-POL-001-09` | Merged | `codex/ws-pol-001-09-openai-agent-sdk-only` | 71 | Removes the production `local_fixture` project setup runtime and old runtime selector; keeps deterministic test behavior in explicit test-local fakes only. |
 | `WS-POL-001-10` | Merged | `codex/ws-pol-001-10-pre-submit-hardening` | 72 | Hardens duplicate guide-version conflicts, guide-create source snapshots, active-guide checker summaries, worker self-profile onboarding, and failed pre-submit audit evidence. |
-| `WS-POL-001-11` | Implementation ready for PR review | `codex/ws-pol-001-11-actor-profile-registry-impl` | - | Implements local Workstream actor identity and actor profile registries for verified Flow actors before the next live API drill. |
+| `WS-POL-001-11` | Merged | `codex/ws-pol-001-11-actor-profile-registry-impl` | 74 | Implements local Workstream actor identity and actor profile registries for verified Flow actors before the next live API drill. |
 
 ## Blockers
 
 | Blocker | Owner | Next action |
 |---|---|---|
-| None | - | Open PR, wait for external review, and keep the next chunk inactive until human checkpoint. |
+| None | - | Rerun the Terminal Benchmark live API drill and keep the next chunk inactive until the drill result is reviewed. |
 
 ## Follow-Ups
 
@@ -43,3 +42,4 @@ review and human checkpoint.
 | Add focused `0007 -> 0006` downgrade assertion for locked-context columns and constraints | QA/test-delta review | Medium follow-up |
 | Extract shared artifact path and forbidden-pattern helpers before further checker-policy expansion | Reuse/dedup review | Medium follow-up |
 | Add profile-level audit events if actor/profile changes become reputation-sensitive | Security review on PR #72 | Medium follow-up |
+| Rerun Terminal Benchmark live API drill with canonical worker profile setup | Post-merge gate after PR #74 | High |
