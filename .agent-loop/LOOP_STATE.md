@@ -4,15 +4,18 @@
 
 - Active initiative: `WS-POL-001` - Submission Artifact Policy Foundation
 - Active planning chunk: none
-- Active implementation chunk: none
-- Branch: `main`
-- Status: `WS-POL-001-11` merged through PR #74 on 2026-07-07.
-  The shared actor identity/profile registry is now on `main`; GitHub Agent
-  Gates, Backend, and CodeRabbit passed before merge.
+- Active implementation chunk: `WS-POL-001-12`
+- Branch: `codex/ws-pol-001-12-project-setup-policy-visibility`
+- Status: `WS-POL-001-12` is implemented in PR #76 on branch
+  `codex/ws-pol-001-12-project-setup-policy-visibility`. Internal review is
+  complete, CodeRabbit feedback is being addressed in a follow-up commit, and
+  the chunk is waiting for human merge review after external-review fixes are
+  verified.
 - Last merged implementation SHA: `0729531`
 - Last merge commit: `5cec0e0`
-- Current gate: rerun the Terminal Benchmark live API drill through real HTTP calls using `POST /api/v1/workers/me/profile`
-- Next chunk: inactive until the post-merge Terminal Benchmark live API drill passes and findings are reviewed
+- Current gate: verify CodeRabbit fixes on PR #76, update trust evidence, then
+  wait for explicit human merge approval.
+- Next chunk: inactive until `WS-POL-001-12` receives human review and merge.
 
 ## Operating Rule
 
