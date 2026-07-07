@@ -6,11 +6,23 @@ Workstream needs explicit permissions from the first version because review, pay
 
 ## Roles
 
-Route authorization roles come from trusted Flow token claims resolved into the
-current `ActorContext`. Local Workstream `ActorIdentity` and `ActorProfile`
-records may mirror observed roles, profile state, skill tags, scope, and
-eligibility metadata, but persisted profile rows do not grant route access by
-themselves.
+The Identity Issuer owns identity, audience, scopes, delegation, and token
+signing. Workstream owns product roles and exact resource authorization.
+Workstream role records are stored locally for verified Flow subjects; the
+issuer plus subject only identifies the actor and does not assign product
+roles. Scopes are an outer request-class gate; they are not proof that the
+subject is a reviewer, worker, project owner, or admin inside Workstream.
+
+In the current v0.1 bootstrap, route checks still read trusted role claims from
+the verified `ActorContext` where a dedicated Workstream role-assignment table
+does not exist yet. Those token roles are request context and provisioning
+input, not the long-term source of truth. The later role-assignment layer must
+be Workstream-owned and must store product roles on local `ActorIdentity`
+records.
+
+Local Workstream `ActorIdentity` and `ActorProfile` records may mirror observed
+roles, profile state, skill tags, scope, and eligibility metadata, but persisted
+profile rows do not grant route access by themselves.
 
 | Role | Purpose |
 | --- | --- |
@@ -26,6 +38,11 @@ owner is the external or internal source of project material or business terms.
 It may be recorded as scoped actor profile/contact metadata, but it does not
 approve Workstream machine-readable policies unless the verified token also
 carries an authorized Workstream role such as admin or project manager.
+The token claim key for trusted relationship metadata is
+`workstream_relationship_profiles`; v0.1 accepts only
+`profile_type="project_owner"` with non-empty `scope_type` and `scope_id`.
+Workstream discards any nested relationship `profile_metadata` from token
+claims before writing actor identity, profile, or audit records.
 
 Actor profile status is a workflow condition, not route permission. An
 `observed` profile only records that Workstream saw the actor through a verified
@@ -36,7 +53,7 @@ the route still requires the matching role in the current verified token.
 
 | Action | Admin | Project Manager | Worker | Reviewer | Finance | Auditor |
 | --- | --- | --- | --- | --- | --- | --- |
-| Create project | yes | no | no | no | no | no |
+| Create project | yes | yes | no | no | no | no |
 | Edit project guide | yes | yes | no | no | no | no |
 | Create task | yes | yes | no | no | no | no |
 | Claim task | no | no | yes | no | no | no |
@@ -61,6 +78,34 @@ the route still requires the matching role in the current verified token.
 - Admin and project-manager operational intervention must use a separate
   audited override path. It must not masquerade as worker task claiming.
 - Admin overrides must create an audit event with reason and evidence.
+
+## Role Provisioning Direction
+
+The Workstream role/provisioning layer is product-owned. A subject can exist in
+the Identity Issuer and still have no Workstream access until Workstream creates
+local actor and role records for that issuer plus subject.
+
+The first durable shape should be:
+
+```text
+ActorIdentity
+- id
+- issuer
+- subject
+- status
+
+WorkstreamRoleAssignment
+- actor_id
+- role
+- scope_type
+- scope_id
+- status
+```
+
+Role records may be global, project-scoped, task-scoped, or review-queue scoped.
+One actor can hold multiple roles at once, such as worker plus reviewer, or
+admin plus worker. Permission checks must evaluate the current role assignment
+for the exact resource and still enforce workflow rules such as no self-review.
 
 ## First-Version Enforcement
 

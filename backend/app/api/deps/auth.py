@@ -6,9 +6,13 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_auth_verifier
+from app.db.session import get_db_session
 from app.interfaces.auth import AuthVerificationError, AuthVerifier
+from app.modules.actors.service import ActorRegistryError, ActorService
 from app.schemas.auth import ActorContext
 
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -53,3 +57,31 @@ async def get_current_actor(
         return await verifier.verify(credentials.credentials)
     except AuthVerificationError as exc:
         raise unauthorized("Invalid bearer token") from exc
+
+
+async def get_registered_actor(
+    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> ActorContext:
+    """Resolve the current actor and refresh local registry metadata.
+
+    Args:
+        actor: Verified actor returned by the pure auth boundary.
+        session: Database session for registry persistence.
+
+    Returns:
+        The same verified actor context. Route authorization must still use
+        this token-derived context, not persisted profile rows.
+    """
+    try:
+        await ActorService(session).register_actor(actor)
+    except ActorRegistryError as exc:
+        await session.rollback()
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+    except SQLAlchemyError as exc:
+        await session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Actor registry unavailable",
+        ) from exc
+    return actor

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from pathlib import Path
 from uuid import uuid4
 
@@ -8,7 +9,10 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine
+
+from app.adapters.auth.dev import actor_id_from_external_identity
 
 def test_alembic_upgrade_and_downgrade(isolated_database_env: str, migration_lock) -> None:
     project_root = Path(__file__).resolve().parents[1]
@@ -143,6 +147,47 @@ def test_post_submit_policy_upgrade_blocks_pre_provenance_runtime_rows(
     assert columns_exist is False
 
 
+def test_actor_profile_registry_removes_obsolete_profile_tables(
+    isolated_database_env: str,
+    migration_lock,
+) -> None:
+    """Prove obsolete profile tables are removed from the current schema."""
+    project_root = Path(__file__).resolve().parents[1]
+    config = Config(str(project_root / "alembic.ini"))
+    config.set_main_option("script_location", str(project_root / "alembic"))
+
+    with migration_lock():
+        try:
+            command.downgrade(config, "base")
+            command.upgrade(config, "head")
+            table_names = asyncio.run(_fetch_table_names(isolated_database_env))
+        finally:
+            command.downgrade(config, "base")
+
+    assert "actor_identities" in table_names
+    assert "actor_profiles" in table_names
+    assert "worker_profiles" not in table_names
+    assert "reviewer_profiles" not in table_names
+
+
+def test_actor_profile_registry_unique_constraints_are_enforced(
+    isolated_database_env: str,
+    migration_lock,
+) -> None:
+    """Prove actor registry uniqueness is enforced by Postgres."""
+    project_root = Path(__file__).resolve().parents[1]
+    config = Config(str(project_root / "alembic.ini"))
+    config.set_main_option("script_location", str(project_root / "alembic"))
+
+    with migration_lock():
+        try:
+            command.downgrade(config, "base")
+            command.upgrade(config, "head")
+            asyncio.run(_assert_actor_registry_unique_constraints(isolated_database_env))
+        finally:
+            command.downgrade(config, "base")
+
+
 async def _fetch_columns(database_url: str) -> set[str]:
     """Return current public table columns as table.column names."""
     engine = create_async_engine(database_url)
@@ -162,6 +207,206 @@ async def _fetch_columns(database_url: str) -> set[str]:
             return {f"{row.table_name}.{row.column_name}" for row in rows}
     finally:
         await engine.dispose()
+
+
+async def _fetch_table_names(database_url: str) -> set[str]:
+    """Return current public table names."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            rows = (
+                await connection.execute(
+                    text(
+                        """
+                        select table_name
+                        from information_schema.tables
+                        where table_schema = 'public'
+                        """
+                    )
+                )
+            ).all()
+            return {row.table_name for row in rows}
+    finally:
+        await engine.dispose()
+
+
+async def _assert_actor_registry_unique_constraints(database_url: str) -> None:
+    """Insert duplicates and prove actor registry unique constraints reject them."""
+    engine = create_async_engine(database_url)
+    actor_id = actor_id_from_external_identity("flow-test", "unique-actor")
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(
+                text(
+                    """
+                    insert into actor_identities (
+                        actor_id,
+                        external_subject,
+                        external_issuer,
+                        display_name,
+                        email,
+                        last_seen_roles,
+                        last_claim_snapshot,
+                        auth_source,
+                        is_dev_auth
+                    )
+                    values (
+                        :actor_id,
+                        'unique-actor',
+                        'flow-test',
+                        'Unique Actor',
+                        'unique@example.test',
+                        cast(:roles as json),
+                        cast(:claim_snapshot as json),
+                        'dev_mock',
+                        true
+                    )
+                    """
+                ),
+                {
+                    "actor_id": actor_id,
+                    "roles": json.dumps(["worker"]),
+                    "claim_snapshot": json.dumps({"roles": ["worker"]}),
+                },
+            )
+            await connection.execute(
+                text(
+                    """
+                    insert into actor_profiles (
+                        id,
+                        actor_id,
+                        profile_type,
+                        status,
+                        skill_tags,
+                        scope_type,
+                        scope_id,
+                        profile_metadata
+                    )
+                    values (
+                        :id,
+                        :actor_id,
+                        'worker',
+                        'observed',
+                        cast(:skill_tags as json),
+                        'global',
+                        'global',
+                        cast(:profile_metadata as json)
+                    )
+                    """
+                ),
+                {
+                    "id": str(uuid4()),
+                    "actor_id": actor_id,
+                    "skill_tags": json.dumps([]),
+                    "profile_metadata": json.dumps({}),
+                },
+            )
+
+        duplicate_actor_id = text(
+            """
+            insert into actor_identities (
+                actor_id,
+                external_subject,
+                external_issuer,
+                last_seen_roles,
+                last_claim_snapshot,
+                auth_source,
+                is_dev_auth
+            )
+            values (
+                :actor_id,
+                'different-subject',
+                'flow-test',
+                cast(:roles as json),
+                cast(:claim_snapshot as json),
+                'dev_mock',
+                true
+            )
+            """
+        )
+        duplicate_external_identity = text(
+            """
+            insert into actor_identities (
+                actor_id,
+                external_subject,
+                external_issuer,
+                last_seen_roles,
+                last_claim_snapshot,
+                auth_source,
+                is_dev_auth
+            )
+            values (
+                :actor_id,
+                'unique-actor',
+                'flow-test',
+                cast(:roles as json),
+                cast(:claim_snapshot as json),
+                'dev_mock',
+                true
+            )
+            """
+        )
+        duplicate_profile_scope = text(
+            """
+            insert into actor_profiles (
+                id,
+                actor_id,
+                profile_type,
+                status,
+                skill_tags,
+                scope_type,
+                scope_id,
+                profile_metadata
+            )
+            values (
+                :id,
+                :actor_id,
+                'worker',
+                'observed',
+                cast(:skill_tags as json),
+                'global',
+                'global',
+                cast(:profile_metadata as json)
+            )
+            """
+        )
+        await _expect_integrity_error(
+            engine,
+            duplicate_actor_id,
+            {
+                "actor_id": actor_id,
+                "roles": json.dumps([]),
+                "claim_snapshot": json.dumps({}),
+            },
+        )
+        await _expect_integrity_error(
+            engine,
+            duplicate_external_identity,
+            {
+                "actor_id": actor_id_from_external_identity("flow-test", "other-unique-actor"),
+                "roles": json.dumps([]),
+                "claim_snapshot": json.dumps({}),
+            },
+        )
+        await _expect_integrity_error(
+            engine,
+            duplicate_profile_scope,
+            {
+                "id": str(uuid4()),
+                "actor_id": actor_id,
+                "skill_tags": json.dumps([]),
+                "profile_metadata": json.dumps({}),
+            },
+        )
+    finally:
+        await engine.dispose()
+
+
+async def _expect_integrity_error(engine, statement, params: dict) -> None:
+    """Assert that one SQL statement raises a database integrity error."""
+    with pytest.raises(IntegrityError):
+        async with engine.begin() as connection:
+            await connection.execute(statement, params)
 
 
 async def _seed_pre_provenance_post_submit_policy(

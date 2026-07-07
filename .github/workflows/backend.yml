@@ -59,8 +59,8 @@ jobs:
         working-directory: backend
         run: pytest -q
 
-      - name: Week 1 real API e2e
+      - name: API contract real API e2e
         working-directory: backend
         env:
           WORKSTREAM_DATABASE_URL: postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test
-        run: python scripts/week1_api_e2e.py
+        run: python scripts/api_contract_e2e.py

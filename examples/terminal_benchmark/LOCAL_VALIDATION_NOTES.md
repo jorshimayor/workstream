@@ -60,11 +60,11 @@ Security observations:
 
 Product/ops observations:
 
-- Demo worker profile bootstrap could be confused with canonical workflow.
+- Worker profile setup needed to use the canonical profile workflow.
 - Locked wording used time-relative and external-tool-specific phrasing.
-- Demo bootstrap is explicitly labeled as non-canonical v0.1 setup, output
-  includes `worker_profile_setup=demo_bootstrap_not_canonical_workflow`, and
-  guide/submission wording uses stable Terminal Benchmark fixture language.
+- The drill now uses `POST /api/v1/workers/me/profile`, output includes
+  `worker_profile_setup=canonical_worker_profile_api`, and guide/submission
+  wording uses stable Terminal Benchmark fixture language.
 
 ## Validations
 

@@ -50,7 +50,7 @@ backend/app/modules/projects/**
 backend/tests/test_projects.py
 backend/tests/test_tasks.py
 backend/tests/test_checkers.py
-backend/scripts/week1_api_e2e.py
+backend/scripts/api_contract_e2e.py
 docs/architecture_data_model.md
 docs/decision_0011_submission_artifact_policy_drives_pre_submit.md
 docs/operations_project_operating_manual.md
@@ -166,7 +166,7 @@ backend/app/modules/checkers/**
 backend/tests/test_projects.py
 backend/tests/test_checkers.py
 backend/tests/test_tasks.py
-backend/scripts/week1_api_e2e.py
+backend/scripts/api_contract_e2e.py
 README.md
 docs/architecture_checker_framework.md
 docs/architecture_data_model.md
@@ -501,7 +501,6 @@ Allowed files:
 ```text
 examples/terminal_benchmark/**
 backend/app/adapters/project_agents/openai_agent_sdk.py
-backend/app/adapters/project_agents/local_fixture.py
 backend/app/interfaces/project_agents.py
 backend/app/modules/projects/models.py
 backend/app/modules/projects/schemas.py
@@ -512,7 +511,7 @@ backend/tests/test_checkers.py
 backend/tests/test_projects.py
 backend/tests/test_tasks.py
 backend/tests/test_alembic.py
-backend/scripts/week1_api_e2e.py
+backend/scripts/api_contract_e2e.py
 README.md
 docs/architecture_lockdown.md
 docs/architecture_data_model.md
@@ -537,7 +536,7 @@ Not allowed:
 backend/app/** except listed adapter/interface/project/task files
 backend/alembic/** except `backend/alembic/versions/0010_remove_legacy_project_guide_fields.py`
 backend/tests/** except `backend/tests/test_projects.py`, `backend/tests/test_tasks.py`, `backend/tests/test_checkers.py`, and `backend/tests/test_alembic.py`
-backend/scripts/** except `backend/scripts/week1_api_e2e.py`
+backend/scripts/** except `backend/scripts/api_contract_e2e.py`
 .github/workflows/**
 demos/**
 frontend/**
@@ -615,7 +614,7 @@ backend/alembic/versions/**
 backend/app/modules/tasks/**
 backend/tests/test_tasks.py
 backend/tests/test_alembic.py
-backend/scripts/week1_dry_run.py
+backend/scripts/api_contract_e2e.py
 backend/scripts/week2_api_e2e.py
 docs/architecture_data_model.md
 docs/operations_project_operating_manual.md
@@ -727,11 +726,11 @@ Acceptance criteria:
   fixture runtime.
 - Tests use explicit test-local fakes for deterministic project-agent behavior.
 - Terminal Benchmark example docs and script do not describe a removed runtime
-  selector or fallback.
+  selector, fixture runtime, or fallback.
 - README explains that automatic project setup needs OpenAI Agents SDK model and
   API-key settings.
-- Temporary Week 1 demo startup does not enable setup autostart without the
-  required OpenAI worker configuration.
+- Local API contract drills do not enable setup autostart without the required
+  OpenAI worker configuration.
 
 Verification:
 
@@ -801,10 +800,11 @@ Allowed files:
 
 ```text
 backend/alembic/versions/*_actor_identity_profile_registry.py
+.github/workflows/backend.yml
 backend/app/api/router.py
 backend/app/api/deps/auth.py
-backend/app/api/routes/demo.py
 backend/app/api/routes/auth.py
+backend/app/core/config.py
 backend/app/db/models.py
 backend/app/modules/actors/__init__.py
 backend/app/modules/actors/models.py
@@ -820,17 +820,23 @@ backend/tests/test_actors.py
 backend/tests/test_alembic.py
 backend/tests/test_auth.py
 backend/tests/test_tasks.py
-backend/scripts/week1_dry_run.py
-backend/scripts/week1_api_e2e.py
+backend/scripts/api_contract_e2e.py
 backend/scripts/week2_api_e2e.py
 examples/terminal_benchmark/terminal_benchmark_api_e2e.py
+README.md
 docs/architecture_data_model.md
+docs/architecture_brief/workstream_architecture_brief.md
 docs/architecture_lockdown.md
 docs/architecture_system_architecture.md
+docs/diagrams/workstream_v01_container.md
 docs/glossary.md
 docs/operations_roles_permissions.md
+docs/roadmap_day_by_day_execution_plan.md
+docs/roadmap_status.md
 docs/spec_chunk_2_auth_actor_boundary.md
 docs/spec_chunk_4_task_queue_assignment.md
+scripts/check_internal_review_evidence.py
+scripts/test_agent_gates.py
 .agent-loop/LOOP_STATE.md
 .agent-loop/WORK_QUEUE.md
 .agent-loop/REVIEW_LOG.md
@@ -854,11 +860,12 @@ Acceptance criteria:
 
 - `ActorIdentity` and `ActorProfile` models/tables exist with unique identity
   and profile constraints.
-- Existing worker/reviewer profile rows are backfilled into the shared profile
-  model and the separate profile tables, ORM models, and repository authority
-  paths stop owning profile state.
-- Seeded migration tests prove worker/reviewer profile backfill preserves
-  profile type, status, skill tags, scope, and table removal.
+- The separate worker/reviewer profile tables, ORM models, and repository
+  authority paths stop owning profile state. This build-phase migration does
+  not preserve obsolete experimental profile rows through a compatibility
+  backfill.
+- Migration tests prove the current schema exposes the shared profile authority
+  and old worker/reviewer profile tables are absent.
 - Flow token verification remains pure. Actor registration uses a separate
   actors service/repository boundary.
 - Route authorization remains token-derived.
@@ -871,13 +878,13 @@ Acceptance criteria:
   profile.
 - Stored profiles without matching token roles do not grant operator, worker,
   reviewer, or project-manager access.
-- Stale backend demo/script imports of old worker/reviewer profile models are
-  removed, rewired, or retired so the shared actor profile model is the only
-  profile authority.
-- Stale backend script/example calls to `/api/v1/demo/worker-profile` are
-  removed, rewired to `POST /api/v1/workers/me/profile`, or explicitly retired.
-- Verification includes a stale helper scan for old profile model imports and
-  the removed demo worker-profile endpoint.
+- Stale backend script imports of old worker/reviewer profile models are
+  removed or retired so the shared actor profile model is the only profile
+  authority.
+- Stale backend script/example calls to local demo profile endpoints are
+  removed; current drills use `POST /api/v1/workers/me/profile`.
+- Verification includes a stale helper scan for old profile model imports,
+  removed Week 1 entry points, and removed demo worker-profile endpoints.
 
 Required reviewers:
 

@@ -1,4 +1,4 @@
-"""Run real Terminal Benchmark source material through the Week 1 and Week 2 APIs.
+"""Run real Terminal Benchmark source material through the current API contracts.
 
 This is an example drill, not Workstream runtime code and not a required CI
 test. It expects a local reviewer source-material path through
@@ -36,7 +36,7 @@ from sqlalchemy import select
 from app.db import session as db_session
 from app.modules.checkers.models import CheckerResult, CheckerRun
 from app.modules.tasks.models import AuditEvent, EvidenceItem, Submission, WorkstreamTask
-from week1_api_e2e import (
+from api_contract_e2e import (
     alembic_config,
     api_environment,
     find_free_port,
@@ -760,7 +760,7 @@ async def create_started_terminal_benchmark_task(
     ensure(screened["locked_guide_version"] == "v1", "screening did not lock guide v1")
     ensure(
         {
-            screened["locked_checker_policy_version"],
+            screened["locked_post_submit_checker_policy_version"],
             screened["locked_review_policy_version"],
             screened["locked_revision_policy_version"],
             screened["locked_payment_policy_version"],
@@ -775,15 +775,12 @@ async def create_started_terminal_benchmark_task(
         manager_token,
         {"reason": f"Terminal Benchmark {suffix} release"},
     )
-    # Current v0.1 has no canonical worker-profile provisioning API. This demo
-    # route is used only to bootstrap the real task lifecycle drill.
     profile = await request_json(
         client,
         "POST",
-        "/api/v1/demo/worker-profile",
+        "/api/v1/workers/me/profile",
         worker_token,
         {"skill_tags": list(dict.fromkeys(fixture.metadata["tags"]))},
-        201,
     )
     ensure(profile["external_subject"] == worker_subject, "worker profile subject drifted")
     ensure(profile["external_issuer"] == flow_issuer, "worker profile issuer drifted")
@@ -909,7 +906,7 @@ async def assert_database_invariants(scenarios: list[dict]) -> None:
             ensure(
                 {
                     task.locked_guide_version,
-                    task.locked_checker_policy_version,
+                    task.locked_post_submit_checker_policy_version,
                     task.locked_review_policy_version,
                     task.locked_revision_policy_version,
                     task.locked_payment_policy_version,
@@ -920,7 +917,7 @@ async def assert_database_invariants(scenarios: list[dict]) -> None:
             ensure(
                 {
                     checker_run.locked_guide_version,
-                    checker_run.locked_checker_policy_version,
+                    checker_run.locked_post_submit_checker_policy_version,
                     checker_run.locked_review_policy_version,
                     checker_run.locked_revision_policy_version,
                     checker_run.locked_payment_policy_version,
@@ -991,7 +988,7 @@ async def assert_database_invariants(scenarios: list[dict]) -> None:
 
 
 async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) -> None:
-    """Run the Terminal Benchmark fixture through Week 1 and Week 2 API behavior."""
+    """Run the Terminal Benchmark fixture through current API behavior."""
     fixture = load_fixture(fixture_root())
     flow_issuer, flow_audience, flow_secret = flow_settings(env)
     run_id = uuid4().hex[:8]
@@ -1327,7 +1324,7 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
     print("missing_static_guard=pre_submit_blocked_no_submission")
     print("low_quality_v1=needs_revision")
     print("fixed_low_quality_v2=review_pending")
-    print("worker_profile_setup=demo_bootstrap_not_canonical_workflow")
+    print("worker_profile_setup=canonical_worker_profile_api")
 
 
 async def main(env: dict[str, str]) -> None:

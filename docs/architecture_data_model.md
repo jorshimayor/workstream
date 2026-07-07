@@ -58,15 +58,23 @@ Fields:
 - `last_seen_at`
 - `updated_at`
 
-Actor identity comes from external Flow authentication. `external_subject` plus
-`external_issuer` is the stable identity binding. Email is profile metadata and
+Actor identity comes from external Flow authentication. `external_issuer` plus
+`external_subject` is the stable identity binding. Email is profile metadata and
 must not be treated as the primary identity.
 
 Workstream keeps `ActorIdentity` rows for local workflow continuity, audit
 display, profile linkage, assignments, and later reputation records. It does
-not own password authentication, primary login sessions, or role authority.
-Route authorization still uses the verified token roles in the current
-`ActorContext`.
+not own password authentication or primary login sessions. Workstream owns
+product roles and exact resource authorization locally. Flow issuer plus subject
+identifies the actor; it does not assign Workstream product roles. In the v0.1
+bootstrap, route checks may still read trusted role claims from the current
+`ActorContext` until the Workstream-owned role-assignment layer is introduced.
+
+Actor registry refresh is bounded by
+`WORKSTREAM_ACTOR_REGISTRY_REFRESH_INTERVAL_SECONDS`. Workstream verifies the
+token on every protected request, but it may skip the local identity/profile
+write when the stored identity is fresh, claims match, and required observed
+profiles already exist. Setting the interval to `0` disables the skip path.
 
 `ActorProfile` is the shared profile and eligibility model attached to an
 `ActorIdentity`.
@@ -93,9 +101,9 @@ Initial profile types:
 - project_owner
 
 Profile rows are metadata and workflow eligibility records. They do not grant
-route access without the matching verified token role. A project owner profile
-is scoped source/contact metadata and is not the same as a project manager
-permission role.
+route access and are not the canonical Workstream role-assignment table. A
+project owner profile is scoped source/contact metadata and is not the same as
+a project manager permission role.
 
 Initial profile statuses:
 
@@ -106,14 +114,30 @@ Initial profile statuses:
 - `disabled`: retained for audit but blocked from workflow eligibility.
 
 Auth observation alone may create `observed` profiles, but it must not mark a
-worker or reviewer profile `active`. Route access always comes from the current
-verified token roles, not from profile status.
+worker or reviewer profile `active`. Profile status can satisfy workflow
+eligibility only when product authorization for the current request has already
+passed.
 
-`project_owner` is a scoped profile/contact relationship, not a route role. It
-is created from trusted project setup or relationship claims when present; it is
-not listed as a permission role and does not grant operator access.
+The actor registry migration is intentionally destructive for the earlier
+experimental `worker_profiles` and `reviewer_profiles` tables. Those obsolete
+stores are dropped without compatibility backfill. Downgrade restores table
+shape only; it does not preserve old experimental profile data.
 
-Verified token roles:
+`project_owner` is a scoped profile/contact relationship, not a route role. In
+this chunk it is created from trusted relationship claims when present. Later
+project setup/source-contact workflows may create the same scoped profile type
+through an explicit trusted service path. It is not listed as a permission role
+and does not grant operator access.
+
+The trusted relationship claim key is
+`claim_snapshot["workstream_relationship_profiles"]`. Each item must use
+`profile_type = "project_owner"`, a non-empty `scope_type`, a non-empty
+`scope_id`. Workstream stores only those scope identity fields in actor
+identity/audit claim snapshots and stores server-owned profile metadata for the
+observed relationship. Nested relationship `profile_metadata` from token claims
+is discarded before persistence and is not route authorization.
+
+Trusted v0.1 bootstrap request roles:
 
 - admin
 - project_manager
@@ -124,13 +148,13 @@ Verified token roles:
 
 `Operator` is a product persona, not a separate v0.1 permission role. In the application model, operator actions are performed by project managers, workers, reviewers, admins, or finance users depending on the action.
 
-## WorkerProfile
+## Worker Actor Profile
 
 Worker profile behavior is represented by `ActorProfile(profile_type="worker")`.
 The public worker profile API remains worker-owned, but the persistence model is
 the shared actor profile model.
 
-## ReviewerProfile
+## Reviewer Actor Profile
 
 Reviewer profile behavior is represented by
 `ActorProfile(profile_type="reviewer")`. Reviewer eligibility must be explicit;
@@ -1313,25 +1337,29 @@ Fields:
 - `id`
 - `entity_type`
 - `entity_id`
+- `event_type`
+- `from_status`
+- `to_status`
 - `actor_id`
 - `external_subject`
 - `external_issuer`
-- `actor_role`
+- `actor_roles`
 - `claim_snapshot`
 - `auth_source`
-- `event_type`
-- `before`
-- `after`
+- `is_dev_auth`
 - `reason`
-- `locked_guide_version`
-- `submission_id`
-- `checker_run_id`
-- `review_id`
-- `contribution_record_id`
-- `override_id`
+- `event_payload`
 - `created_at`
 
 Audit events are append-only.
+
+v0.1 audit storage is the existing Workstream `audit_events` ledger. Task
+lifecycle events and actor profile eligibility events both write there so
+operators can reconstruct why an actor was allowed to claim, submit, or later
+review. Actor profile audit events use `entity_type = "actor_profile"` and
+record profile type, scope, and skill/status details in `event_payload`. A
+future shared audit module can move the code boundary out of the task module,
+but this chunk does not create a second audit source of truth.
 
 ## Required Invariants
 

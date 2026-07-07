@@ -1,4 +1,4 @@
-"""SQLAlchemy models for task queue, assignment, profiles, and audit events."""
+"""SQLAlchemy models for task queue, assignment, submissions, and audit events."""
 
 from __future__ import annotations
 
@@ -24,48 +24,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from app.db.base import Base
-
-
-class WorkerProfile(Base):
-    """Worker profile derived from a trusted external Flow actor."""
-
-    __tablename__ = "worker_profiles"
-
-    id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    actor_id: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
-    external_subject: Mapped[str] = mapped_column(String(200), nullable=False)
-    external_issuer: Mapped[str] = mapped_column(String(200), nullable=False)
-    display_name: Mapped[str | None] = mapped_column(String(200))
-    email: Mapped[str | None] = mapped_column(String(320))
-    skill_tags: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
-    status: Mapped[str] = mapped_column(String(30), nullable=False, default="active", index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
-    )
-
-
-class ReviewerProfile(Base):
-    """Reviewer profile derived from a trusted external Flow actor."""
-
-    __tablename__ = "reviewer_profiles"
-
-    id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    actor_id: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
-    external_subject: Mapped[str] = mapped_column(String(200), nullable=False)
-    external_issuer: Mapped[str] = mapped_column(String(200), nullable=False)
-    display_name: Mapped[str | None] = mapped_column(String(200))
-    email: Mapped[str | None] = mapped_column(String(320))
-    skill_tags: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
-    status: Mapped[str] = mapped_column(String(30), nullable=False, default="active", index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
-    )
 
 
 class WorkstreamTask(Base):

@@ -8,9 +8,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps.auth import get_current_actor
+from app.api.deps.auth import get_registered_actor
 from app.core.permissions import PermissionDenied
 from app.db.session import get_db_session
+from app.modules.actors.schemas import ActorProfileActivationRequest, ActorProfileResponse
+from app.modules.actors.service import ActorRegistryError, ActorService
 from app.modules.tasks.schemas import (
     AuditEventResponse,
     SubmissionCreate,
@@ -19,8 +21,6 @@ from app.modules.tasks.schemas import (
     TaskResponse,
     TaskTransitionRequest,
     TaskWithAssignmentResponse,
-    WorkerProfileResponse,
-    WorkerProfileUpsertRequest,
 )
 from app.modules.tasks.service import TaskService, TaskServiceError
 from app.schemas.auth import ActorContext
@@ -81,22 +81,31 @@ def permission_http_error(exc: PermissionDenied) -> HTTPException:
     return HTTPException(status_code=403, detail=str(exc))
 
 
+def actor_registry_http_error(exc: ActorRegistryError) -> HTTPException:
+    """Convert an actor-registry failure into an HTTP error."""
+    return HTTPException(status_code=exc.status_code, detail=str(exc))
+
+
 @router.post(
     "/workers/me/profile",
-    response_model=WorkerProfileResponse,
+    response_model=ActorProfileResponse,
 )
 async def ensure_worker_profile(
-    payload: WorkerProfileUpsertRequest,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    payload: ActorProfileActivationRequest,
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
-) -> WorkerProfileResponse:
+) -> ActorProfileResponse:
     """Create or refresh the current worker profile from trusted Flow identity."""
     try:
-        return await TaskService(session).ensure_worker_profile(actor, payload)
+        return await ActorService(session).activate_worker_profile(
+            actor,
+            payload,
+            identity_already_refreshed=True,
+        )
     except PermissionDenied as exc:
         raise permission_http_error(exc) from exc
-    except TaskServiceError as exc:
-        raise task_http_error(exc) from exc
+    except ActorRegistryError as exc:
+        raise actor_registry_http_error(exc) from exc
 
 
 @router.post(
@@ -108,7 +117,7 @@ async def ensure_worker_profile(
 async def create_task(
     project_id: str,
     payload: TaskCreate,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> TaskResponse:
     """Create a draft task under a project."""
@@ -123,7 +132,7 @@ async def create_task(
 @router.get("/tasks/{task_id}", response_model=TaskResponse, response_model_exclude_none=True)
 async def get_task(
     task_id: str,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> TaskResponse:
     """Return one task by id."""
@@ -142,7 +151,7 @@ async def get_task(
 )
 async def screen_task(
     task_id: str,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
     payload: TaskTransitionRequest | None = None,
 ) -> TaskResponse:
@@ -166,7 +175,7 @@ async def screen_task(
 )
 async def release_task(
     task_id: str,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
     payload: TaskTransitionRequest | None = None,
 ) -> TaskResponse:
@@ -190,7 +199,7 @@ async def release_task(
 )
 async def claim_task(
     task_id: str,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
     payload: TaskTransitionRequest | None = None,
 ) -> TaskWithAssignmentResponse:
@@ -214,7 +223,7 @@ async def claim_task(
 )
 async def start_task(
     task_id: str,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
     payload: TaskTransitionRequest | None = None,
 ) -> TaskResponse:
@@ -250,7 +259,7 @@ async def start_task(
 async def create_submission(
     task_id: str,
     payload: SubmissionCreate,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> SubmissionResponse | JSONResponse:
     """Create a submission packet version for a task."""
@@ -271,7 +280,7 @@ async def create_submission(
 )
 async def list_task_submissions(
     task_id: str,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> list[SubmissionResponse]:
     """Return submission packet versions for one task."""
@@ -290,7 +299,7 @@ async def list_task_submissions(
 )
 async def get_submission(
     submission_id: str,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> SubmissionResponse:
     """Return one submission packet version."""
@@ -309,7 +318,7 @@ async def get_submission(
 )
 async def lock_submission(
     submission_id: str,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> SubmissionResponse:
     """Lock a submission packet before checker execution."""
@@ -324,7 +333,7 @@ async def lock_submission(
 @router.get("/tasks/{task_id}/audit-events", response_model=list[AuditEventResponse])
 async def list_task_audit_events(
     task_id: str,
-    actor: Annotated[ActorContext, Depends(get_current_actor)],
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> list[AuditEventResponse]:
     """Return audit events for one task."""

@@ -4,17 +4,16 @@
 
 - Active initiative: `WS-POL-001` - Submission Artifact Policy Foundation
 - Active planning chunk: `WS-POL-001-11` - Actor Identity And Profile Registry
-- Active implementation chunk: none
-- Branch: `codex/ws-pol-001-11-actor-identity-profile-contract`
-- Status: `WS-POL-001-10` merged through PR #72. `WS-POL-001-11` has contract,
-  internal review evidence, and PR trust bundle prepared for human review.
-  Implementation is inactive until the contract is approved and the user gives
-  an explicit implementation start signal.
+- Active implementation chunk: `WS-POL-001-11` - Actor Identity And Profile Registry
+- Branch: `codex/ws-pol-001-11-actor-profile-registry-impl`
+- Status: `WS-POL-001-10` merged through PR #72. `WS-POL-001-11`
+  implementation and CodeRabbit follow-up fixes are committed, deterministic
+  verification passed, required internal reviewer tracks completed with no
+  blocking findings, and evidence / trust bundle are prepared for human review.
 - Last merged implementation SHA: `cc78f2a`
 - Last merge commit: `1bbde47`
-- Current gate: human review of `WS-POL-001-11` contract
-- Next chunk: `WS-POL-001-11` is contract-only until human review approves the
-  implementation boundary
+- Current gate: PR #74 external review addressed; await final CI and human merge decision
+- Next chunk: inactive until `WS-POL-001-11` is reviewed and merged
 
 ## Operating Rule
 

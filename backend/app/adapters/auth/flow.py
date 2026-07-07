@@ -87,7 +87,7 @@ def _normalize_roles(value: Any) -> tuple[str, ...]:
         raw_roles = value
     else:
         raw_roles = ()
-    return tuple(str(role).strip() for role in raw_roles if str(role).strip())
+    return tuple(role.strip() for role in raw_roles if isinstance(role, str) and role.strip())
 
 
 class FlowAuthVerifier:

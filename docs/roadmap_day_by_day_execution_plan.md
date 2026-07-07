@@ -95,9 +95,9 @@ Exit criteria:
 
 Deliver:
 
-- `WorkerProfile`
-- `ReviewerProfile`
-- `AdminRole`
+- `ActorIdentity`
+- `ActorProfile`
+- Workstream-owned role assignment direction
 - assignment/claim flow
 - skill tags
 - external Flow actor identity mapped into Workstream actor context
@@ -133,7 +133,7 @@ Exit criteria:
 
 ## Week 2: Checker System
 
-Week 2 is backend-first checker infrastructure. Checker output is exposed through APIs, dry-run scripts, and demo/debug output. It does not build the product frontend, reviewer queue UI, review decision form, contribution records, payment records, or reputation updates.
+Week 2 is backend-first checker infrastructure. Checker output is exposed through APIs, backend contract drills, and operational debug output. It does not build the product frontend, reviewer queue UI, review decision form, contribution records, payment records, or reputation updates.
 
 The core invariant is:
 
@@ -155,7 +155,7 @@ Exit criteria:
 
 - run a checker against a submission
 - store `passed`, `warning`, and `failed` results
-- expose checker run and result data through backend API responses and dry-run/demo output
+- expose checker run and result data through backend API responses and API drill/debug output
 - no product frontend task page is added in Week 2
 - checker records can distinguish pre-submit feedback from post-submit internal auto checks
 

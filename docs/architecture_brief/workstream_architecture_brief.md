@@ -68,7 +68,7 @@ The context diagram shows Workstream as one system inside the broader Flow ecosy
 
 ## C2: v0.1 Container View
 
-The container view shows the first 30-day implementation. It is intentionally small: React + Vite for the planned internal operations UI, FastAPI for the backend, Postgres for records, a storage interface for artifacts, and an async checker/job boundary. The Week 1 API demo UI is only a walkthrough client for backend validation; it is not the canonical product frontend.
+The container view shows the first 30-day implementation. It is intentionally small: React + Vite for the planned internal operations UI, FastAPI for the backend, Postgres for records, a storage interface for artifacts, and an async checker/job boundary.
 
 <div class="diagram wide">
   <img src="images/workstream_v01_container.png" alt="Workstream v0.1 container diagram" />

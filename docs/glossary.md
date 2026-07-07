@@ -19,25 +19,34 @@ does not author or approve Workstream's machine-readable internal policy schema.
 ## ActorContext
 
 The trusted per-request actor object resolved from a verified Flow token. It
-contains the current actor id, external subject, issuer, roles, claim snapshot,
-auth source, and display metadata. Route authorization uses this current token
-context, not persisted profile rows.
+contains the current actor id, external subject, issuer, scopes/roles when
+present in the trusted request context, claim snapshot,
+auth source, and display metadata. The Flow issuer plus subject is the canonical
+portable identity anchor; Workstream's actor id is a local durable reference
+derived from that pair. The Identity Issuer is not the source of truth for
+Workstream product roles; Workstream stores and enforces product roles locally
+for verified Flow subjects. In the v0.1 bootstrap, route checks may still read
+trusted role claims from the current actor context until the Workstream-owned
+role-assignment layer is introduced. Persisted profile rows are never route
+permission grants.
 
 ## ActorIdentity
 
 Workstream's local durable identity record for a verified Flow actor. It is
-keyed by the stable actor id derived from external issuer and subject. It
+keyed by the stable Workstream actor id derived from the Flow issuer and
+subject, while the issuer plus subject remains the canonical Flow identity. It
 supports audit display, profile linkage, assignment history, and later
-reputation records. It is not Workstream-owned authentication.
+reputation records. It is not Workstream-owned authentication, login, token
+issuance, or global identity authority.
 
 ## ActorProfile
 
 Workstream's shared profile and workflow eligibility record attached to an
 `ActorIdentity`. Initial profile types include worker, reviewer, admin,
 project_manager, and project_owner. A profile can store status, skill tags,
-scope, and metadata, but it does not grant route access without the matching
-verified token role. A project_owner profile is scoped source/contact metadata,
-not project-manager authority.
+scope, and metadata, but it is not the canonical role-assignment table and does
+not grant route access. A project_owner profile is scoped source/contact
+metadata, not project-manager authority.
 
 `observed` profile status is audit/display metadata from verified token
 observation. `active` profile status means an explicit profile workflow made

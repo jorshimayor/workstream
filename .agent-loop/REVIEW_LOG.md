@@ -293,3 +293,40 @@ API drill.
 Evidence: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-10-internal-review-evidence.md`
 
 External review response: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-10-external-review-response.md`
+
+## WS-POL-001-11
+
+Status: implementation branch prepared for PR review on 2026-07-06.
+
+Branch: `codex/ws-pol-001-11-actor-profile-registry-impl`
+
+Reviewed implementation SHA: see the internal review evidence file for the
+exact reviewed code SHA.
+
+Required reviewer tracks:
+
+- senior engineering
+- QA/test
+- security/auth
+- product/ops
+- architecture
+- docs
+- reuse/dedup
+- test delta
+
+Result: PASS after fixes from internal review.
+
+Scope: local `ActorIdentity` and shared `ActorProfile` registry for verified
+Flow actors, destructive removal of obsolete worker/reviewer profile stores,
+explicit actor-registration dependency, worker profile activation through the
+canonical worker endpoint, claim eligibility requiring verified worker token
+role plus active worker profile, stale demo route cleanup, and Flow
+issuer-plus-subject identity compatibility wording.
+
+Evidence: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-11-internal-review-evidence.md`
+
+External review response: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-11-external-review-response.md`
+
+External review status: CodeRabbit comments triaged; valid findings fixed;
+legacy-profile backfill request rejected because it contradicts the
+no-backward-compatibility chunk decision.

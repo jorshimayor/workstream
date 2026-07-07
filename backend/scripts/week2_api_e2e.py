@@ -17,9 +17,9 @@ from sqlalchemy import select
 from app.db import session as db_session
 from app.modules.checkers.models import CheckerResult, CheckerRun
 from app.modules.tasks.models import AuditEvent, EvidenceItem, Submission, WorkstreamTask
-from week1_api_e2e import (
+from api_contract_e2e import (
     alembic_config,
-    api_environment as week1_api_environment,
+    api_environment as contract_api_environment,
     create_policy_bundle_for_guide,
     find_free_port,
     flow_settings,
@@ -78,7 +78,7 @@ def ensure(condition: bool, message: str) -> None:
 
 def api_environment() -> dict[str, str]:
     """Build the API environment and honor the contract's test DB variable."""
-    env = week1_api_environment()
+    env = contract_api_environment()
     test_database_url = os.environ.get(TEST_DATABASE_URL_ENV)
     if test_database_url:
         env[DATABASE_URL_ENV] = test_database_url
@@ -292,7 +292,7 @@ def token_for(
 
     Args:
         subject: External Flow subject.
-        roles: Flow roles to include in the signed token.
+        roles: Trusted v0.1 bootstrap role claims for the signed token.
         issuer: Expected Flow issuer.
         audience: Expected Flow audience.
         secret: Local HMAC secret.
@@ -418,10 +418,9 @@ async def create_started_task(
     worker_profile = await request_json(
         client,
         "POST",
-        "/api/v1/demo/worker-profile",
+        "/api/v1/workers/me/profile",
         worker_token,
         {"skill_tags": ["stem", "proofs"]},
-        201,
     )
     ensure(worker_profile["external_subject"] == worker_subject, "worker subject mismatch")
     ensure(worker_profile["external_issuer"] == flow_issuer, "worker issuer mismatch")
@@ -1760,10 +1759,9 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
         await request_json(
             client,
             "POST",
-            "/api/v1/demo/worker-profile",
+            "/api/v1/workers/me/profile",
             unassigned_worker_token,
             {"skill_tags": ["stem", "proofs"]},
-            201,
         )
         denied_snapshot = await task_side_effect_snapshot(checker_revision_task["id"])
         await request_json(

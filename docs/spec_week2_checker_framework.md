@@ -18,7 +18,7 @@ The checker framework protects reviewer time by proving that the latest locked s
 - blocking versus warning calculation
 - user-facing `needs_revision` routing from checker failures
 - backend API access to checker runs and results
-- dry-run/demo output for checker visibility
+- backend API drill/debug output for checker visibility
 - pre-review gate enforcement for `REVIEW_PENDING`
 
 ## Non-Scope
@@ -137,8 +137,8 @@ Checker results are exposed through backend contracts and operational output:
 - checker run API responses
 - checker result API responses
 - task/submission API expansion where needed
-- dry-run scripts
-- Week 1 API demo/debug output when useful
+- backend API contract drills
+- operational debug output when useful
 
 Week 2 does not build the product frontend page for checker results. The planned React + Vite operations dashboard consumes these backend contracts later.
 

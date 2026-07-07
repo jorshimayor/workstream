@@ -1,4 +1,4 @@
-"""Run a real HTTP Week 1 API flow against Postgres and local Flow tokens."""
+"""Run a real HTTP backend API contract flow against Postgres and local Flow tokens."""
 
 from __future__ import annotations
 
@@ -126,7 +126,7 @@ def issue_flow_token(
 
     Args:
         subject: External Flow subject.
-        roles: Workstream roles granted by Flow for this actor.
+        roles: Trusted v0.1 bootstrap role claims for this actor.
         issuer: Flow issuer claim.
         audience: Flow audience claim.
         secret: HMAC secret shared with the local Flow verifier.
@@ -219,7 +219,6 @@ def api_environment() -> dict[str, str]:
     env["WORKSTREAM_FLOW_AUTH_ISSUER"] = flow_issuer
     env["WORKSTREAM_FLOW_AUTH_AUDIENCE"] = flow_audience
     env["WORKSTREAM_FLOW_AUTH_LOCAL_HMAC_SECRET"] = flow_secret
-    env["WORKSTREAM_ENABLE_DEMO_ROUTES"] = "true"
     env["WORKSTREAM_PROJECT_SETUP_PIPELINE_AUTOSTART"] = "false"
     env["WORKSTREAM_CELERY_TASK_ALWAYS_EAGER"] = "true"
     env["WORKSTREAM_CELERY_BROKER_URL"] = "memory://"
@@ -238,7 +237,7 @@ def start_api_server(port: int, env: dict[str, str]) -> tuple[subprocess.Popen, 
     Returns:
         Server process and log path.
     """
-    log_path = project_root() / ".week1_api_e2e_server.log"
+    log_path = project_root() / ".api_contract_e2e_server.log"
     log_file = log_path.open("w", encoding="utf-8")
     process = subprocess.Popen(
         [
@@ -434,7 +433,7 @@ def assert_local_database_url(database_url: str) -> None:
     if is_local_async_postgres or override == NONLOCAL_DATABASE_OVERRIDE_VALUE:
         return
     raise RuntimeError(
-        "Refusing to run Week 1 API E2E against a non-local database. "
+        "Refusing to run API contract E2E against a non-local database. "
         "Use an async Postgres URL such as postgresql+asyncpg:// on "
         "localhost/127.0.0.1 with a local test database named "
         "workstream_test or test_workstream, or set "
@@ -521,7 +520,7 @@ async def load_pre_submit_checker_policy(effective_policy: dict) -> dict:
 
 
 def submission_artifact_policy_body() -> dict:
-    """Build the project submission artifact policy used by the Week 1 drill.
+    """Build the project submission artifact policy used by the API contract drill.
 
     Returns:
         Machine-readable artifact policy payload.
@@ -585,7 +584,7 @@ async def create_policy_bundle_for_guide(
             "items": [
                 {
                     "source_kind": "inline_markdown",
-                    "durable_ref": f"inline:/week1/{run_id}/guide",
+                    "durable_ref": f"inline:/guides/{run_id}/guide",
                     "ingestion_adapter": "manual_import",
                     "content_hash": sha256_token(f"{run_id}:guide"),
                     "media_type": "text/markdown",
@@ -603,7 +602,7 @@ async def create_policy_bundle_for_guide(
             "source_snapshot_id": snapshot["id"],
             "status": "passed",
             "findings": [],
-            "summary": "Guide is sufficient for the Week 1 real API drill.",
+            "summary": "Guide is sufficient for the API contract real API drill.",
         },
         201,
     )
@@ -625,14 +624,14 @@ async def create_policy_bundle_for_guide(
         f"/api/v1/projects/{project_id}/guides/{guide_id}/submission-artifact-policies/"
         f"{policy['id']}/approve",
         manager_token,
-        {"approval_note": "Approved for Week 1 real API drill."},
+        {"approval_note": "Approved for API contract real API drill."},
     )
     await load_pre_submit_checker_policy(effective_policy)
     return effective_policy
 
 
-async def exercise_week1_api(base_url: str, env: dict[str, str]) -> None:
-    """Run the real Project -> Task -> Submission Week 1 API flow.
+async def exercise_api_contract(base_url: str, env: dict[str, str]) -> None:
+    """Run the real Project -> Task -> Submission API contract flow.
 
     Args:
         base_url: Real API server base URL.
@@ -731,9 +730,9 @@ async def exercise_week1_api(base_url: str, env: dict[str, str]) -> None:
             "/api/v1/projects",
             manager_token,
             {
-                "name": f"Week 1 Real API {run_id}",
-                "slug": f"week1-real-api-{run_id}",
-                "description": "Real Week 1 API lifecycle QA",
+                "name": f"API Contract Real API {run_id}",
+                "slug": f"api-contract-real-api-{run_id}",
+                "description": "Real backend API contract lifecycle QA",
             },
             201,
         )
@@ -799,7 +798,7 @@ async def exercise_week1_api(base_url: str, env: dict[str, str]) -> None:
             manager_token,
             {
                 "title": "Real API task",
-                "description": "Exercise the full Week 1 API lifecycle over HTTP.",
+                "description": "Exercise the full backend API contract lifecycle over HTTP.",
                 "task_type": "evaluation",
                 "difficulty": "medium",
                 "skill_tags": ["stem", "proofs"],
@@ -842,10 +841,9 @@ async def exercise_week1_api(base_url: str, env: dict[str, str]) -> None:
         worker_profile = await request_json(
             client,
             "POST",
-            "/api/v1/demo/worker-profile",
+            "/api/v1/workers/me/profile",
             worker_token,
             {"skill_tags": ["stem", "proofs"]},
-            201,
         )
         assert worker_profile["external_subject"] == worker_subject
         assert worker_profile["external_issuer"] == flow_issuer
@@ -906,7 +904,7 @@ async def exercise_week1_api(base_url: str, env: dict[str, str]) -> None:
                         "hash": f"sha256:evidence-{run_id}",
                         "size_bytes": 256,
                         "metadata": {
-                            "command": "week1_api_e2e",
+                            "command": "api_contract_e2e",
                             "required_evidence_key": "checker_log",
                         },
                     }
@@ -1016,7 +1014,7 @@ async def exercise_week1_api(base_url: str, env: dict[str, str]) -> None:
             expected_status=403,
         )
 
-    await assert_week1_database_invariants(
+    await assert_api_contract_database_invariants(
         project_id=project["id"],
         guide_id=guide["id"],
         task_id=task["id"],
@@ -1026,7 +1024,7 @@ async def exercise_week1_api(base_url: str, env: dict[str, str]) -> None:
         flow_issuer=flow_issuer,
     )
 
-    print("Week 1 real API e2e passed")
+    print("API contract real API e2e passed")
     print(f"project_id={project['id']}")
     print(f"guide_id={guide['id']}")
     print(f"task_id={task['id']}")
@@ -1035,7 +1033,7 @@ async def exercise_week1_api(base_url: str, env: dict[str, str]) -> None:
     print(f"submission_locked_at={locked['locked_at']}")
 
 
-async def assert_week1_database_invariants(
+async def assert_api_contract_database_invariants(
     *,
     project_id: str,
     guide_id: str,
@@ -1045,7 +1043,7 @@ async def assert_week1_database_invariants(
     worker_subject: str,
     flow_issuer: str,
 ) -> None:
-    """Verify Week 1 API calls produced the expected durable database state.
+    """Verify API contract calls produced the expected durable database state.
 
     Args:
         project_id: Created project id.
@@ -1290,11 +1288,11 @@ async def assert_week1_database_invariants(
             "audit issuer drifted",
         )
 
-    print("PASS Week 1 database invariants")
+    print("PASS API contract database invariants")
 
 
 async def main(env: dict[str, str]) -> None:
-    """Start the API server and exercise every Week 1 API.
+    """Start the API server and exercise the backend API contract.
 
     Args:
         env: Environment variables for the API server.
@@ -1306,7 +1304,7 @@ async def main(env: dict[str, str]) -> None:
     process, log_path = start_api_server(port, env)
     try:
         await wait_for_health(base_url, process, log_path)
-        await exercise_week1_api(base_url, env)
+        await exercise_api_contract(base_url, env)
     finally:
         process.terminate()
         try:

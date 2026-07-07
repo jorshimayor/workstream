@@ -35,7 +35,7 @@ This chunk defines how FastAPI routes resolve the current actor from an external
 - The current actor is resolved by one FastAPI dependency.
 - Routers do not own permission logic.
 - Permission checks live in service/policy code.
-- Actor identity uses stable Flow `subject + issuer`, not email.
+- Actor identity uses stable Flow `issuer + subject`, not email.
 - Actor context includes role/claim context for later audit writes.
 - Dev/mock auth cannot run in production.
 - Dev/mock auth is explicit opt-in only for local, dev, development, or test environments.
@@ -47,6 +47,14 @@ This chunk defines how FastAPI routes resolve the current actor from an external
 
 No database tables are introduced in this chunk.
 
+Forward note: `WS-POL-001-11` later adds `ActorIdentity` and `ActorProfile`
+tables. That does not change this chunk's authentication boundary:
+`get_current_actor` remains pure token verification. Routes that need local
+registry side effects use a separate registration dependency after actor
+resolution. After `WS-POL-001-11`, authenticated Workstream product routes use
+that registration dependency so actor identity/profile observation does not
+depend on a prior `/auth/me` call.
+
 The in-request actor context must expose:
 
 - `actor_id`
@@ -57,6 +65,19 @@ The in-request actor context must expose:
 - `auth_source`
 - `is_dev_auth`
 
+Forward note: `WS-POL-001-11` may read trusted scoped relationship metadata
+from `claim_snapshot["workstream_relationship_profiles"]`. Each item must be an
+object with:
+
+- `profile_type`: currently only `project_owner`
+- `scope_type`: non-empty string such as `project`
+- `scope_id`: non-empty string for that scope
+
+These claims are token-derived relationship metadata. They may create observed
+scoped `ActorProfile` rows for audit/display, but they do not authorize routes
+or approve Workstream machine-readable policy. Nested relationship
+`profile_metadata` from token claims is discarded before persistence.
+
 ## API Impact
 
 Adds:
@@ -64,6 +85,11 @@ Adds:
 - `GET /api/v1/auth/me`
 
 This is a protected smoke endpoint used to prove actor resolution. It does not replace Flow login and does not create a session.
+
+Forward note: after `WS-POL-001-11`, this endpoint also refreshes local
+`ActorIdentity` and observed `ActorProfile` metadata through the registration
+dependency. The response remains token-derived and no Workstream-owned auth
+session is created.
 
 ## Lifecycle Impact
 
@@ -84,7 +110,7 @@ The actor context created here becomes the input later services use for audit at
 - missing bearer token is rejected
 - invalid bearer token is rejected
 - valid dev token resolves actor id, external subject, external issuer, roles, auth source, and audit context
-- actor id is derived from `external_subject + external_issuer`, not email
+- actor id is derived from `external_issuer + external_subject`, not email
 - dev verifier cannot be created in production
 - Flow verifier adapter boundary rejects unsupported local verification
 - permission policy allows required roles

@@ -24,23 +24,24 @@ from app.db import models as db_models
 from app.db import session as db_session
 from app.db.base import Base
 from app.main import create_app
-from app.modules.tasks.lifecycle import InvalidTaskTransition, ensure_allowed_transition
+from app.modules.actors.models import ActorIdentity, ActorProfile
+from app.modules.actors.schemas import ActorProfileActivationRequest
+from app.modules.actors.service import ActorService
 from app.modules.projects.models import (
     EffectiveProjectSubmissionArtifactPolicy,
     PostSubmitCheckerPolicy,
     PreSubmitCheckerPolicy,
     SubmissionArtifactPolicy,
 )
+from app.modules.tasks.lifecycle import InvalidTaskTransition, ensure_allowed_transition
 from app.modules.tasks.models import (
     AuditEvent,
     EvidenceItem,
-    ReviewerProfile,
     Submission,
     TaskAssignment,
-    WorkerProfile,
     WorkstreamTask,
 )
-from app.modules.tasks.repository import TaskRepository
+from app.schemas.auth import ActorContext
 
 
 @pytest.fixture
@@ -122,6 +123,21 @@ def set_dev_actor(
 
 def actor_id(subject: str, issuer: str = "flow-test") -> str:
     return actor_id_from_external_identity(issuer, subject)
+
+
+async def fetch_actor_registry_rows(subject: str, issuer: str = "flow-test") -> tuple[ActorIdentity | None, list[ActorProfile]]:
+    """Load actor registry rows for assertions."""
+    expected_actor_id = actor_id(subject, issuer)
+    async with db_session.get_session_factory()() as session:
+        identity = await session.get(ActorIdentity, expected_actor_id)
+        profiles = (
+            await session.scalars(
+                select(ActorProfile)
+                .where(ActorProfile.actor_id == expected_actor_id)
+                .order_by(ActorProfile.profile_type.asc(), ActorProfile.scope_type.asc())
+            )
+        ).all()
+    return identity, list(profiles)
 
 
 def complete_guide_payload(version: str = "v1") -> dict:
@@ -437,26 +453,78 @@ async def create_started_task(
 async def seed_worker_profile(subject: str, *, skill_tags: list[str] | None = None) -> str:
     worker_actor_id = actor_id(subject)
     async with db_session.get_session_factory()() as session:
-        session.add(
-            WorkerProfile(
-                id=str(uuid4()),
-                actor_id=worker_actor_id,
-                external_subject=subject,
-                external_issuer="flow-test",
-                display_name=subject.replace("-", " ").title(),
-                email=f"{subject}@example.test",
-                skill_tags=skill_tags or ["stem"],
-                status="active",
-            )
+        session.add_all(
+            [
+                ActorIdentity(
+                    actor_id=worker_actor_id,
+                    external_subject=subject,
+                    external_issuer="flow-test",
+                    display_name=subject.replace("-", " ").title(),
+                    email=f"{subject}@example.test",
+                    last_seen_roles=["worker"],
+                    last_claim_snapshot={"seeded_for_task_test": True},
+                    auth_source="dev_mock",
+                    is_dev_auth=True,
+                ),
+                ActorProfile(
+                    id=str(uuid4()),
+                    actor_id=worker_actor_id,
+                    profile_type="worker",
+                    status="active",
+                    skill_tags=skill_tags or ["stem"],
+                    scope_type="global",
+                    scope_id="global",
+                    profile_metadata={"seeded_for_task_test": True},
+                ),
+            ]
         )
         await session.commit()
     return worker_actor_id
 
 
+async def seed_actor_profile(
+    subject: str,
+    *,
+    profile_type: str,
+    status: str = "active",
+    skill_tags: list[str] | None = None,
+) -> str:
+    """Seed one actor identity and global actor profile for authorization tests."""
+    seeded_actor_id = actor_id(subject)
+    async with db_session.get_session_factory()() as session:
+        session.add_all(
+            [
+                ActorIdentity(
+                    actor_id=seeded_actor_id,
+                    external_subject=subject,
+                    external_issuer="flow-test",
+                    display_name=subject.replace("-", " ").title(),
+                    email=f"{subject}@example.test",
+                    last_seen_roles=[profile_type],
+                    last_claim_snapshot={"seeded_for_task_test": True},
+                    auth_source="dev_mock",
+                    is_dev_auth=True,
+                ),
+                ActorProfile(
+                    id=str(uuid4()),
+                    actor_id=seeded_actor_id,
+                    profile_type=profile_type,
+                    status=status,
+                    skill_tags=skill_tags or [],
+                    scope_type="global",
+                    scope_id="global",
+                    profile_metadata={"seeded_for_task_test": True},
+                ),
+            ]
+        )
+        await session.commit()
+    return seeded_actor_id
+
+
 def test_task_models_are_registered_for_alembic_metadata() -> None:
     expected_tables = {
-        "worker_profiles",
-        "reviewer_profiles",
+        "actor_identities",
+        "actor_profiles",
         "workstream_tasks",
         "task_assignments",
         "submissions",
@@ -465,8 +533,12 @@ def test_task_models_are_registered_for_alembic_metadata() -> None:
     }
 
     assert expected_tables.issubset(Base.metadata.tables)
-    assert db_models.WorkerProfile is WorkerProfile
-    assert db_models.ReviewerProfile is ReviewerProfile
+    assert "worker_profiles" not in Base.metadata.tables
+    assert "reviewer_profiles" not in Base.metadata.tables
+    assert db_models.ActorIdentity is ActorIdentity
+    assert db_models.ActorProfile is ActorProfile
+    assert not hasattr(db_models, "WorkerProfile")
+    assert not hasattr(db_models, "ReviewerProfile")
     assert db_models.WorkstreamTask is WorkstreamTask
     assert db_models.TaskAssignment is TaskAssignment
     assert db_models.Submission is Submission
@@ -481,8 +553,8 @@ async def test_chunk4_migration_creates_expected_tables(task_database_env: str) 
         )
 
     assert {
-        "worker_profiles",
-        "reviewer_profiles",
+        "actor_identities",
+        "actor_profiles",
         "workstream_tasks",
         "task_assignments",
         "submissions",
@@ -506,8 +578,8 @@ def test_chunk4_migration_downgrade_removes_task_tables(task_database_env: str) 
 
     assert "projects" in table_names
     assert {
-        "worker_profiles",
-        "reviewer_profiles",
+        "actor_identities",
+        "actor_profiles",
         "workstream_tasks",
         "task_assignments",
         "submissions",
@@ -630,71 +702,78 @@ def test_task_locked_context_constraints_bind_task_submission_and_hashes() -> No
     }
 
 
-async def test_profile_upserts_update_existing_actor_rows(task_database_env: str) -> None:
+async def test_actor_profile_services_update_existing_actor_rows(task_database_env: str) -> None:
     async with db_session.get_session_factory()() as session:
-        repository = TaskRepository(session)
-        worker_actor_id = actor_id("worker-upsert")
-        first_worker = await repository.upsert_worker_profile(
-            WorkerProfile(
-                id=str(uuid4()),
-                actor_id=worker_actor_id,
-                external_subject="worker-upsert",
-                external_issuer="flow-test",
-                display_name="Worker Upsert",
-                email="worker-upsert@example.test",
-                skill_tags=["stem"],
-                status="active",
-            )
+        service = ActorService(session)
+        worker_actor = ActorContext(
+            actor_id=actor_id("worker-upsert"),
+            external_subject="worker-upsert",
+            external_issuer="flow-test",
+            display_name="Worker Upsert",
+            email="worker-upsert@example.test",
+            roles=("worker",),
+            claim_snapshot={"roles": ("worker",)},
+            auth_source="dev_mock",
+            is_dev_auth=True,
         )
-        updated_worker = await repository.upsert_worker_profile(
-            WorkerProfile(
-                id=str(uuid4()),
-                actor_id=worker_actor_id,
-                external_subject="worker-upsert",
-                external_issuer="flow-test",
-                display_name="Worker Updated",
-                email="worker-updated@example.test",
-                skill_tags=["stem", "analysis"],
-                status="active",
-            )
+        first_worker = await service.activate_worker_profile(
+            worker_actor,
+            ActorProfileActivationRequest(skill_tags=["stem"]),
+        )
+        updated_worker = await service.activate_worker_profile(
+            worker_actor.model_copy(
+                update={"display_name": "Worker Updated", "email": "worker-updated@example.test"}
+            ),
+            ActorProfileActivationRequest(skill_tags=["stem", "analysis"]),
         )
 
-        reviewer_actor_id = actor_id("reviewer-upsert")
-        first_reviewer = await repository.upsert_reviewer_profile(
-            ReviewerProfile(
-                id=str(uuid4()),
-                actor_id=reviewer_actor_id,
-                external_subject="reviewer-upsert",
-                external_issuer="flow-test",
-                display_name="Reviewer Upsert",
-                email="reviewer-upsert@example.test",
-                skill_tags=["review"],
-                status="active",
-            )
+        reviewer_actor = ActorContext(
+            actor_id=actor_id("reviewer-upsert"),
+            external_subject="reviewer-upsert",
+            external_issuer="flow-test",
+            display_name="Reviewer Upsert",
+            email="reviewer-upsert@example.test",
+            roles=("reviewer",),
+            claim_snapshot={"roles": ("reviewer",)},
+            auth_source="dev_mock",
+            is_dev_auth=True,
         )
-        updated_reviewer = await repository.upsert_reviewer_profile(
-            ReviewerProfile(
-                id=str(uuid4()),
-                actor_id=reviewer_actor_id,
-                external_subject="reviewer-upsert",
-                external_issuer="flow-test",
-                display_name="Reviewer Updated",
-                email="reviewer-updated@example.test",
-                skill_tags=["review", "stem"],
-                status="active",
-            )
+        first_reviewer = await service.ensure_observed_profile(
+            reviewer_actor,
+            profile_type="reviewer",
+            scope_type="global",
+            scope_id="global",
+            profile_metadata={"source": "test"},
+        )
+        updated_reviewer = await service.ensure_observed_profile(
+            reviewer_actor.model_copy(
+                update={
+                    "display_name": "Reviewer Updated",
+                    "email": "reviewer-updated@example.test",
+                }
+            ),
+            profile_type="reviewer",
+            scope_type="global",
+            scope_id="global",
+            profile_metadata={"source": "test_refresh"},
         )
         await session.commit()
 
     async with db_session.get_session_factory()() as session:
         worker_rows = (
             await session.execute(
-                select(WorkerProfile).where(WorkerProfile.actor_id == worker_actor_id)
+                select(ActorProfile).where(
+                    ActorProfile.actor_id == worker_actor.actor_id,
+                    ActorProfile.profile_type == "worker",
+                )
             )
         ).scalars().all()
         reviewer_rows = (
             await session.execute(
-                select(ReviewerProfile).where(ReviewerProfile.actor_id == reviewer_actor_id)
+                select(ActorProfile).where(
+                    ActorProfile.actor_id == reviewer_actor.actor_id,
+                    ActorProfile.profile_type == "reviewer",
+                )
             )
         ).scalars().all()
 
@@ -704,8 +783,8 @@ async def test_profile_upserts_update_existing_actor_rows(task_database_env: str
     assert len(worker_rows) == 1
     assert worker_rows[0].id == first_worker.id
     assert updated_reviewer.id == first_reviewer.id
-    assert updated_reviewer.display_name == "Reviewer Updated"
-    assert updated_reviewer.skill_tags == ["review", "stem"]
+    assert updated_reviewer.status == "observed"
+    assert updated_reviewer.profile_metadata == {"source": "test_refresh"}
     assert len(reviewer_rows) == 1
     assert reviewer_rows[0].id == first_reviewer.id
 
@@ -1271,6 +1350,73 @@ async def test_worker_without_profile_cannot_claim_ready_task(
     assert "active worker profile" in response.json()["detail"]
 
 
+async def test_disabled_worker_profile_cannot_claim_ready_task(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    ready_task = await create_ready_task(task_client, project["id"])
+    await seed_actor_profile("disabled-worker", profile_type="worker", status="disabled")
+    set_dev_actor(monkeypatch, roles="worker", subject="disabled-worker")
+
+    response = await task_client.post(
+        f"/api/v1/tasks/{ready_task['id']}/claim",
+        headers=auth_headers(),
+        json={"reason": "claim with disabled profile"},
+    )
+
+    assert response.status_code == 403
+    assert "active worker profile" in response.json()["detail"]
+    async with db_session.get_session_factory()() as session:
+        assignment = await session.scalar(
+            select(TaskAssignment).where(TaskAssignment.task_id == ready_task["id"])
+        )
+        task = await session.get(WorkstreamTask, ready_task["id"])
+    assert assignment is None
+    assert task is not None
+    assert task.status == "ready"
+
+
+async def test_active_worker_profile_without_worker_token_cannot_claim(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    ready_task = await create_ready_task(task_client, project["id"])
+    await seed_worker_profile("worker-role-missing")
+    set_dev_actor(monkeypatch, roles="project_manager", subject="worker-role-missing")
+
+    response = await task_client.post(
+        f"/api/v1/tasks/{ready_task['id']}/claim",
+        headers=auth_headers(),
+        json={"reason": "claim without worker token role"},
+    )
+
+    assert response.status_code == 403
+    assert "actor lacks required role" in response.json()["detail"]
+
+
+@pytest.mark.parametrize("profile_type", ["admin", "project_manager"])
+async def test_active_operator_profile_without_matching_token_cannot_create_task(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+    profile_type: str,
+) -> None:
+    project = await create_active_project(task_client)
+    subject = f"{profile_type}-profile-only"
+    await seed_actor_profile(subject, profile_type=profile_type)
+    set_dev_actor(monkeypatch, roles="worker", subject=subject)
+
+    response = await task_client.post(
+        f"/api/v1/projects/{project['id']}/tasks",
+        headers=auth_headers(),
+        json=complete_task_payload(),
+    )
+
+    assert response.status_code == 403
+    assert "actor lacks required role" in response.json()["detail"]
+
+
 async def test_worker_can_create_profile_before_claiming_task(
     task_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
@@ -1344,16 +1490,45 @@ async def test_worker_profile_request_is_fail_closed_and_validated(
     task_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    set_dev_actor(monkeypatch, roles="worker", subject="worker-profile-validation")
+    subject = "worker-profile-validation"
+    set_dev_actor(monkeypatch, roles="worker", subject=subject)
 
-    unknown_field = await task_client.post(
-        "/api/v1/workers/me/profile",
-        headers=auth_headers(),
-        json={
-            "skill_tags": ["stem"],
-            "actor_id": actor_id("malicious"),
-        },
-    )
+    spoofed_fields = {
+        "actor_id": actor_id("malicious"),
+        "external_subject": "spoofed-subject",
+        "external_issuer": "spoofed-issuer",
+        "roles": ["admin"],
+        "email": "spoofed@example.test",
+        "display_name": "Spoofed Name",
+    }
+    for field_name, field_value in spoofed_fields.items():
+        unknown_field = await task_client.post(
+            "/api/v1/workers/me/profile",
+            headers=auth_headers(),
+            json={
+                "skill_tags": ["stem"],
+                field_name: field_value,
+            },
+        )
+        assert unknown_field.status_code == 422
+        assert field_name in unknown_field.text
+
+    identity, profiles = await fetch_actor_registry_rows(subject)
+    malicious_identity, malicious_profiles = await fetch_actor_registry_rows("malicious")
+
+    assert malicious_identity is None
+    assert malicious_profiles == []
+    assert identity is not None
+    assert identity.actor_id == actor_id(subject)
+    assert identity.external_subject == subject
+    assert identity.external_issuer == "flow-test"
+    assert identity.email == f"{subject}@example.test"
+    assert identity.display_name == "Worker Profile Validation"
+    assert identity.last_seen_roles == ["worker"]
+    assert [(profile.profile_type, profile.status, profile.scope_type, profile.scope_id) for profile in profiles] == [
+        ("worker", "observed", "global", "global")
+    ]
+
     blank_tag = await task_client.post(
         "/api/v1/workers/me/profile",
         headers=auth_headers(),
@@ -1365,12 +1540,58 @@ async def test_worker_profile_request_is_fail_closed_and_validated(
         json={"skill_tags": ["x" * 65]},
     )
 
-    assert unknown_field.status_code == 422
-    assert "actor_id" in unknown_field.text
     assert blank_tag.status_code == 422
     assert "skill_tags cannot include empty values" in blank_tag.text
     assert long_tag.status_code == 422
     assert "skill_tags values must be 64 characters or fewer" in long_tag.text
+
+
+async def test_registered_claim_route_rejects_identity_spoof_fields(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    ready_task = await create_ready_task(task_client, project["id"])
+    set_dev_actor(monkeypatch, roles="worker", subject="worker-claim-overpost")
+    profile = await task_client.post(
+        "/api/v1/workers/me/profile",
+        headers=auth_headers(),
+        json={"skill_tags": ["stem"]},
+    )
+    assert profile.status_code == 200, profile.text
+
+    spoofed_fields = {
+        "actor_id": actor_id("malicious"),
+        "external_subject": "spoofed-subject",
+        "external_issuer": "spoofed-issuer",
+        "roles": ["admin"],
+        "email": "spoofed@example.test",
+        "display_name": "Spoofed Name",
+    }
+    for field_name, field_value in spoofed_fields.items():
+        response = await task_client.post(
+            f"/api/v1/tasks/{ready_task['id']}/claim",
+            headers=auth_headers(),
+            json={"reason": "claim", field_name: field_value},
+        )
+        assert response.status_code == 422
+        assert field_name in response.text
+
+    identity, profiles = await fetch_actor_registry_rows("worker-claim-overpost")
+    malicious_identity, malicious_profiles = await fetch_actor_registry_rows("malicious")
+
+    assert malicious_identity is None
+    assert malicious_profiles == []
+    assert identity is not None
+    assert identity.actor_id == actor_id("worker-claim-overpost")
+    assert identity.external_subject == "worker-claim-overpost"
+    assert identity.external_issuer == "flow-test"
+    assert identity.email == "worker-claim-overpost@example.test"
+    assert identity.display_name == "Worker Claim Overpost"
+    assert identity.last_seen_roles == ["worker"]
+    assert [(profile.profile_type, profile.status, profile.skill_tags) for profile in profiles] == [
+        ("worker", "active", ["stem"])
+    ]
 
 
 async def test_worker_profile_requires_worker_role(
@@ -2666,7 +2887,7 @@ async def test_cross_worker_cannot_list_submissions_or_audit_after_submit(
 
 
 @pytest.mark.parametrize("role", ["reviewer", "finance", "auditor"])
-async def test_future_roles_cannot_view_week1_task_or_submissions(
+async def test_future_roles_cannot_view_unassigned_task_or_submissions(
     task_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
     role: str,

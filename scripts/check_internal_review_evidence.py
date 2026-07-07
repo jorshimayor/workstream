@@ -27,15 +27,12 @@ RELEVANT_PREFIXES = (
     "backend/alembic/",
     "backend/app/",
     "backend/tests/",
-    "demos/week1_api_demo_ui/",
     "docs/",
     "scripts/",
 )
 RELEVANT_EXACT_PATHS = {
     "backend/alembic.ini",
     "backend/pyproject.toml",
-    "demos/week1_api_demo_ui/package-lock.json",
-    "demos/week1_api_demo_ui/package.json",
 }
 IGNORED_PREFIXES = (
     "docs/internal_reviews/",
@@ -157,15 +154,7 @@ def required_tracks_for(paths: list[str]) -> tuple[str, ...]:
             add("architecture")
         if path.startswith((".github/", "scripts/")) or path in {
             "backend/pyproject.toml",
-            "demos/week1_api_demo_ui/package-lock.json",
-            "demos/week1_api_demo_ui/package.json",
-        } or (
-            path.startswith("demos/week1_api_demo_ui/")
-            and (
-                Path(path).name in {"vite.config.ts", "vite.config.js"}
-                or Path(path).name.startswith("tsconfig")
-            )
-        ):
+        }:
             add("ci integrity")
         if path.endswith(".md") or path.startswith(("docs/", ".agent-loop/", ".agents/")) or path in {
             "AGENTS.md",
@@ -174,11 +163,7 @@ def required_tracks_for(paths: list[str]) -> tuple[str, ...]:
             add("docs")
         if path.startswith((".agents/skills/", ".codex/agents/", "backend/app/", "scripts/")):
             add("reuse/dedup")
-        if (
-            path.startswith(("backend/tests/", "demos/week1_api_demo_ui/"))
-            or "/tests/" in path
-            or Path(path).name.startswith("test_")
-        ):
+        if path.startswith("backend/tests/") or "/tests/" in path or Path(path).name.startswith("test_"):
             add("test delta")
 
     return tuple(required)
@@ -186,8 +171,6 @@ def required_tracks_for(paths: list[str]) -> tuple[str, ...]:
 
 def is_internal_review_evidence_path(path: str) -> bool:
     """Return whether path is an internal reviewer evidence file."""
-    if path.startswith("docs/internal_reviews/") and path.endswith(".md"):
-        return True
     return (
         path.startswith(".agent-loop/initiatives/")
         and "/reviews/" in path
@@ -430,8 +413,8 @@ def main() -> int:
         print(
             "Internal review evidence is required for engineering-loop, process, "
             "or implementation changes.\n"
-            "Add a changed docs/internal_reviews/*.md file or "
-            ".agent-loop/initiatives/<initiative>/reviews/*-internal-review-evidence.md file with these "
+            "Add a changed .agent-loop/initiatives/<initiative>/reviews/"
+            "*-internal-review-evidence.md file with these "
             f"reviewer tracks before opening the PR: {', '.join(required_tracks)}.",
             file=sys.stderr,
         )
