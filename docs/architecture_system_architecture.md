@@ -97,10 +97,11 @@ Auth policy:
 - Workstream may keep local actor/profile records for workflow state,
   workflow eligibility, audit display, and reputation, but those records do not
   replace Flow as the auth source and do not grant route access.
-- Route role and permission checks use trusted Flow token claims for the
-  current request. Local actor/profile records may add workflow eligibility
-  conditions, such as an active worker profile before task claim, but they are
-  not route permission authority.
+- Route role and permission checks may use trusted role claims from the current
+  `ActorContext` only as the v0.1 bootstrap path. The long-term authorization
+  source is a Workstream-owned role-assignment layer. Local actor/profile
+  records may add workflow eligibility conditions, such as an active worker
+  profile before task claim, but they are not route permission authority.
 - Routers use the pure current-actor dependency when they only need verified
   Flow identity. Routes that need local actor registry side effects use a
   separate registration dependency that first resolves the current actor, then

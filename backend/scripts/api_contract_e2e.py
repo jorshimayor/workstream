@@ -126,7 +126,7 @@ def issue_flow_token(
 
     Args:
         subject: External Flow subject.
-        roles: Workstream roles granted by Flow for this actor.
+        roles: Trusted v0.1 bootstrap role claims for this actor.
         issuer: Flow issuer claim.
         audience: Flow audience claim.
         secret: HMAC secret shared with the local Flow verifier.
