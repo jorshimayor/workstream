@@ -10,11 +10,11 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: 912a1bef3ce7065e9563a03a440b24efe6af3f89
+Reviewed code SHA: ce57958666bb28c9112b6513ec16f504c5fd1571
 
-Reviewed at: 2026-07-06T16:17:45Z
+Reviewed at: 2026-07-07T03:45:00Z
 
-Reviewer run IDs: senior-engineering-review-019f37c9-f47a-7fa2-ac9b-639db0d4943a, qa-test-review-019f3804-d7c9-7f40-9a55-abb3ab0ea152, security-auth-review-019f37ca-2035-7e93-b63d-e53c632ee23a, product-ops-review-019f37ca-2da9-7670-a0a1-9bb351b0ecf1, architecture-review-019f382c-b040-7ac3-a7f6-f26b17fbe533, docs-review-019f3805-095b-7490-b410-3b28688bc979, reuse-dedup-review-019f3805-369e-7050-ba48-b1aca7c8208c, test-delta-review-019f3805-5f52-73b1-9aba-6254ce075cd9, ci-integrity-review-019f3836-8680-7f90-be04-b79fa169f57b
+Reviewer run IDs: senior-engineering-review-019f3aa7-a13d-7052-85dc-635cbfa7dadb, qa-test-review-019f3aa7-a9a4-7e80-9fb5-8b9961b0c913, security-auth-review-019f3aa7-b1b3-73f2-959e-9eaae25fabd3, product-ops-review-019f3aa7-bce6-77b1-9053-09926c54b4c9
 
 After the reviewed SHA, only evidence and status files changed.
 
@@ -24,7 +24,7 @@ Scope:
 
 - Implements local `ActorIdentity` and shared `ActorProfile` persistence for verified Flow actors.
 - Keeps `get_current_actor` as the pure Flow-token boundary and adds `get_registered_actor` for explicit registry side effects.
-- Migrates legacy `worker_profiles` and `reviewer_profiles` into `actor_identities` and `actor_profiles`, then removes the old stores.
+- Creates new `actor_identities` and `actor_profiles` tables, then drops obsolete `worker_profiles` and `reviewer_profiles` without compatibility backfill.
 - Makes worker profile activation write `ActorProfile(profile_type="worker", status="active")` through the actor module.
 - Makes task claim require both a verified `worker` token role and an active worker profile.
 - Preserves active/disabled profile metadata during token observation refreshes.
@@ -36,10 +36,10 @@ Scope:
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS AFTER FIXES | None | Fixed profile freshness updates, redundant identity upserts, and documented v0.1 audit ledger coupling. |
-| QA/test | PASS | None | Confirmed migration/backfill/removal, registered auth boundary, profile eligibility, overposting protection, and demo/script rewiring. |
-| security/auth | PASS AFTER FIXES | None | Confirmed token roles remain route authority; scoped docs stayed inside the chunk after reverting out-of-scope roadmap edits. |
-| product/ops | PASS | None | Confirmed actor/profile workflow semantics after stale loop evidence was treated as pending final evidence work. |
+| senior engineering | PASS AFTER FIXES | None | Required stale evidence wording to be fixed so the PR no longer claims compatibility backfill or deleted demo UI proof. |
+| QA/test | PASS WITH LOW RISKS | None | Required stale trust-bundle proof wording to be fixed; no code/test blockers found. |
+| security/auth | PASS | None | Confirmed no valid security/auth findings on the final code SHA. |
+| product/ops | PASS AFTER FIXES | None | Required stale backfill wording to be fixed so operator expectations match destructive removal/no compatibility backfill. |
 | architecture | PASS WITH LOW RISKS | None | Confirmed Flow auth boundary, actor/profile non-auth semantics, worker claim gate, and documented v0.1 audit ledger coupling. |
 | CI integrity | PASS | None | Confirmed the post-PR lint fix only adds the missing `uuid4` import and does not weaken CI, lint, tests, typecheck, coverage, workflows, or package scripts. |
 | docs | PASS WITH LOW RISKS | None | Confirmed docs align after adding `workstream_relationship_profiles` schema, audit schema, demo cleanup, and issuer-plus-subject wording. |
@@ -53,40 +53,38 @@ Scope:
 - Reused `TaskRepository.add_audit_event` for actor profile audit writes instead of adding a parallel audit persistence path.
 - Removed the redundant task-service worker-profile facade; the route calls `ActorService.activate_worker_profile` directly.
 - Added persisted-value overposting assertions for `POST /api/v1/workers/me/profile` and task claim so spoofed identity fields cannot write malicious registry rows.
-- Added migration downgrade assertions proving legacy worker/reviewer rows are restored with actor id, subject, issuer, display/email, status, and skill tags.
+- Added migration assertions proving new actor registry tables exist and obsolete worker/reviewer profile tables are removed rather than kept as compatibility stores.
 - Added metadata negative assertions so old `worker_profiles`/`reviewer_profiles` metadata exports cannot silently return.
-- Removed stale `/api/v1/demo/worker-profile` usage from backend scripts, Terminal Benchmark example, README, and the Week 1 demo UI.
-- Removed stale `WORKSTREAM_ENABLE_DEMO_ROUTES=true` guidance where the Week 1 demo no longer needs demo routes.
+- Removed stale `/api/v1/demo/worker-profile` usage from backend scripts, Terminal Benchmark example, and README.
+- Removed the obsolete Week 1 demo UI package and workflow instead of preserving a stale compatibility surface.
 - Documented exact `workstream_relationship_profiles` trusted claim schema and its non-authorizing behavior.
 - Updated audit-event docs to match actual `actor_roles`, `from_status`, `to_status`, `is_dev_auth`, and `event_payload` fields.
 - Aligned Flow Identity wording so docs consistently name Flow issuer plus subject as the canonical identity anchor.
-- Fixed the GitHub Backend/Lint failure by importing `uuid4` in the Week 1 dry-run script.
+- Fixed stale evidence after final internal review so the trust bundle no longer claims compatibility backfill or deleted demo UI proof.
 
 ## Commands Run
 
 ```bash
-cd backend && .venv/bin/python -m ruff check app/api/deps/auth.py app/api/routes/auth.py app/modules/actors app/modules/tasks/models.py app/modules/tasks/repository.py app/modules/tasks/router.py app/modules/tasks/schemas.py app/modules/tasks/service.py tests/test_actors.py tests/test_alembic.py tests/test_auth.py tests/test_tasks.py
-cd backend && .venv/bin/docstr-coverage app/api app/modules/actors app/modules/tasks --config .docstr.yaml
+cd backend && .venv/bin/python -m ruff check app/modules/actors/service.py app/modules/projects/service.py tests/test_actors.py tests/test_tasks.py
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
-git diff --check
+git diff --check origin/main...HEAD
+python3 scripts/test_agent_gates.py
 cd backend && .venv/bin/python -m pytest tests/test_alembic.py tests/test_actors.py tests/test_auth.py -q
-cd backend && .venv/bin/python -m pytest tests/test_tasks.py -q
-cd demos/week1_api_demo_ui && npm run build
-rg -n 'worker_profile_setup=demo_bootstrap|demo worker profile|Activates demo worker profile|WORKSTREAM_ENABLE_DEMO_ROUTES|/api/v1/demo/worker-profile|WorkerProfile|ReviewerProfile' backend/scripts examples/terminal_benchmark backend/app/api/routes/demo.py backend/app/modules README.md demos/week1_api_demo_ui/src/App.tsx docs/spec_chunk_2_auth_actor_boundary.md docs/architecture_data_model.md docs/operations_roles_permissions.md
+cd backend && .venv/bin/python -m pytest tests/test_tasks.py::test_future_roles_cannot_view_unassigned_task_or_submissions -q
+cd backend && .venv/bin/python -m pytest tests/test_projects.py::test_source_snapshot_rejects_unsafe_refs -q
 ```
 
 Results:
 
 - Ruff: passed.
-- Docstring coverage: 100.0%.
 - Stale wording scan: passed.
-- Markdown link check: passed for 9 changed Markdown files.
+- Markdown link check: passed for 24 changed Markdown files.
 - Diff whitespace check: passed.
-- Migration/actor/auth tests: 35 passed in 518.35s.
-- Task tests: 69 passed in 1184.65s.
-- Week 1 demo UI build: passed.
-- Stale demo/profile scan: no matches.
+- Agent gate tests: 26 passed.
+- Migration/actor/auth tests: 41 passed in 385.17s.
+- Task eligibility regression: 3 passed in 139.46s.
+- Project source-ref regression: 1 passed in 79.77s.
 - Local XLSX export: not present.
 
 ## Remaining Risks

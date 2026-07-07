@@ -19,7 +19,7 @@ Chunk contract:
 ## What Changed
 
 - Added `actor_identities` and `actor_profiles` with async SQLAlchemy models, repository, schemas, service, and Alembic migration.
-- Backfilled legacy `worker_profiles` and `reviewer_profiles` into the shared actor registry and removed the old profile tables as profile authority.
+- Created the shared actor registry and dropped obsolete `worker_profiles` and `reviewer_profiles` without compatibility backfill.
 - Kept `get_current_actor` pure and added `get_registered_actor` for explicit registry side effects.
 - Updated `/auth/me`, `/workers/me/profile`, and task claim paths to register actor identity/profile metadata where needed.
 - Made worker claim require current verified `worker` token role plus active `ActorProfile(profile_type="worker")`.
@@ -52,7 +52,7 @@ The live Terminal Benchmark drill proved worker profile setup must be real. Doin
 
 ## Scope Control
 
-Implemented only actor identity/profile registry, migration/backfill/removal, touched-route registration, worker profile activation, worker claim eligibility, tests, demo/script cleanup required by the migration, and documentation alignment.
+Implemented only actor identity/profile registry, destructive removal of obsolete profile stores, touched-route registration, worker profile activation, worker claim eligibility, tests, demo/script cleanup required by the migration, and documentation alignment.
 
 No Workstream-owned login/signup/session/password behavior was added. No post-submit, review, revision, payment, reputation, blockchain, object storage, agent runtime, or frontend product implementation was added.
 
@@ -66,8 +66,8 @@ No Workstream-owned login/signup/session/password behavior was added. No post-su
 ## Acceptance Criteria Proof
 
 - Migration creates actor registry tables and uniqueness constraints.
-- Migration backfills worker/reviewer rows and removes old profile tables.
-- Downgrade restores legacy rows with identity/profile data.
+- Migration creates actor registry tables and removes old worker/reviewer profile tables without compatibility backfill.
+- Downgrade restores the old table shape only; obsolete experimental data is not preserved by this chunk.
 - SQLAlchemy metadata imports new actor models and has negative assertions for old profile exports.
 - `/auth/me` registers identity/profile metadata without Workstream auth sessions.
 - Repeated requests refresh identity/profile freshness without duplicate rows.
@@ -82,33 +82,31 @@ No Workstream-owned login/signup/session/password behavior was added. No post-su
 ## Tests/Checks Run
 
 ```bash
-cd backend && .venv/bin/python -m ruff check app/api/deps/auth.py app/api/routes/auth.py app/modules/actors app/modules/tasks/models.py app/modules/tasks/repository.py app/modules/tasks/router.py app/modules/tasks/schemas.py app/modules/tasks/service.py tests/test_actors.py tests/test_alembic.py tests/test_auth.py tests/test_tasks.py
-cd backend && .venv/bin/docstr-coverage app/api app/modules/actors app/modules/tasks --config .docstr.yaml
+cd backend && .venv/bin/python -m ruff check app/modules/actors/service.py app/modules/projects/service.py tests/test_actors.py tests/test_tasks.py
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
-git diff --check
+git diff --check origin/main...HEAD
+python3 scripts/test_agent_gates.py
 cd backend && .venv/bin/python -m pytest tests/test_alembic.py tests/test_actors.py tests/test_auth.py -q
-cd backend && .venv/bin/python -m pytest tests/test_tasks.py -q
-cd demos/week1_api_demo_ui && npm run build
-rg -n 'worker_profile_setup=demo_bootstrap|demo worker profile|Activates demo worker profile|WORKSTREAM_ENABLE_DEMO_ROUTES|/api/v1/demo/worker-profile|WorkerProfile|ReviewerProfile' backend/scripts examples/terminal_benchmark backend/app/api/routes/demo.py backend/app/modules README.md demos/week1_api_demo_ui/src/App.tsx docs/spec_chunk_2_auth_actor_boundary.md docs/architecture_data_model.md docs/operations_roles_permissions.md
+cd backend && .venv/bin/python -m pytest tests/test_tasks.py::test_future_roles_cannot_view_unassigned_task_or_submissions -q
+cd backend && .venv/bin/python -m pytest tests/test_projects.py::test_source_snapshot_rejects_unsafe_refs -q
 ```
 
 Result summary:
 
 - Ruff: passed.
-- Docstring coverage: 100.0%.
 - Stale wording scan: passed.
-- Markdown link check: passed for 9 changed Markdown files.
+- Markdown link check: passed for 24 changed Markdown files.
 - Diff whitespace check: passed.
-- Migration/actor/auth tests: 35 passed in 518.35s.
-- Task tests: 69 passed in 1184.65s.
-- Week 1 demo UI build: passed.
-- Stale demo/profile scan: no matches.
+- Agent gate tests: 26 passed.
+- Migration/actor/auth tests: 41 passed in 385.17s.
+- Task eligibility regression: 3 passed in 139.46s.
+- Project source-ref regression: 1 passed in 79.77s.
 
 ## Test Delta
 
 - Tests added: `backend/tests/test_actors.py`.
-- Tests expanded: Alembic backfill/downgrade/uniqueness, auth registration, task metadata, token-role authorization, overposting, active-profile eligibility, and stale route removal.
+- Tests expanded: Alembic destructive removal/downgrade/uniqueness, auth registration, task metadata, token-role authorization, overposting, active-profile eligibility, and stale route removal.
 - Tests removed/skipped: none.
 
 ## CI Integrity
@@ -125,16 +123,16 @@ Internal review evidence:
 
 - `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-11-internal-review-evidence.md`
 
-Reviewed code SHA: `912a1bef3ce7065e9563a03a440b24efe6af3f89`
+Reviewed code SHA: `ce57958666bb28c9112b6513ec16f504c5fd1571`
 
 Reviewer run IDs: see `WS-POL-001-11-internal-review-evidence.md`.
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS AFTER FIXES | None | Fixed profile freshness, identity upsert churn, and documented audit ledger coupling. |
-| QA/test | PASS | None | Confirmed actor registry behavior, migration, auth boundary, eligibility gates, and demo rewiring. |
-| security/auth | PASS AFTER FIXES | None | Confirmed token authority and fail-closed scope after fixes. |
-| product/ops | PASS | None | Confirmed actor/profile workflow semantics. |
+| senior engineering | PASS AFTER FIXES | None | Required stale evidence wording to be fixed so the PR no longer claims compatibility backfill or deleted demo UI proof. |
+| QA/test | PASS WITH LOW RISKS | None | Required stale trust-bundle proof wording to be fixed; no code/test blockers found. |
+| security/auth | PASS | None | Confirmed no valid security/auth findings on the final code SHA. |
+| product/ops | PASS AFTER FIXES | None | Required stale backfill wording to be fixed so operator expectations match destructive removal/no compatibility backfill. |
 | architecture | PASS WITH LOW RISKS | None | Confirmed auth/profile boundaries; future shared audit module noted as follow-up. |
 | CI integrity | PASS | None | Confirmed the post-PR lint fix only imports `uuid4` and does not weaken CI or tests. |
 | docs | PASS WITH LOW RISKS | None | Confirmed docs alignment after final issuer-plus-subject wording. |
@@ -162,7 +160,7 @@ External review has not run yet. CodeRabbit and GitHub checks should run after t
 Please inspect:
 
 - Flow auth boundary: token role first, profile eligibility second.
-- Migration/backfill/removal of old worker/reviewer profile stores.
+- Destructive removal of old worker/reviewer profile stores with no compatibility backfill.
 - `ActorProfile` status semantics and preservation of explicit profile metadata.
 - Overposting protections around registry writes.
 - Demo/script cleanup from demo bootstrap to canonical worker profile API.
