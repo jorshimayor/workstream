@@ -79,6 +79,7 @@ backend/app/modules/actors/schemas.py
 backend/app/modules/actors/service.py
 backend/app/modules/checkers/router.py
 backend/app/modules/projects/router.py
+backend/app/modules/projects/service.py
 backend/app/modules/tasks/models.py
 backend/app/modules/tasks/repository.py
 backend/app/modules/tasks/router.py
