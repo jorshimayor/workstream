@@ -73,6 +73,7 @@ def test_review_evidence_files_are_not_relevant_changes() -> None:
     gate = load_module("review_gate_relevance", "scripts/check_internal_review_evidence.py")
     assert not gate.is_relevant(".agent-loop/initiatives/example/reviews/review.md")
     assert not gate.is_relevant("docs/internal_reviews/example.md")
+    assert not gate.is_internal_review_evidence_path("docs/internal_reviews/example.md")
     assert gate.is_internal_review_evidence_path(
         ".agent-loop/initiatives/example/reviews/example-internal-review-evidence.md"
     )
@@ -440,7 +441,11 @@ def test_evidence_main_passes_with_complete_evidence_and_pr_head() -> None:
     original_changed_files = gate.changed_files
     reviewed = "a" * 40
     local_head = "b" * 40
-    evidence = ROOT / "docs/internal_reviews/test_agent_gate_complete_evidence.md"
+    evidence = (
+        ROOT
+        / ".agent-loop/initiatives/test-agent-gate/"
+        "reviews/test-agent-gate-internal-review-evidence.md"
+    )
 
     def fake_git(*args: str) -> str:
         if args == ("merge-base", "--is-ancestor", "origin/main", "HEAD"):
@@ -461,13 +466,16 @@ def test_evidence_main_passes_with_complete_evidence_and_pr_head() -> None:
     gate.git_ok = lambda *args: True
     gate.changed_files = lambda: [
         "scripts/check_internal_review_evidence.py",
-        "docs/internal_reviews/test_agent_gate_complete_evidence.md",
+        ".agent-loop/initiatives/test-agent-gate/"
+        "reviews/test-agent-gate-internal-review-evidence.md",
+        "docs/internal_reviews/historical-note.md",
         ".agent-loop/initiatives/example/reviews/example-external-review-response.md",
     ]
     try:
         os.environ.pop("INTERNAL_REVIEW_BASE_REF", None)
         os.environ["INTERNAL_REVIEW_CHUNK_ID"] = "WS-ENG-001-01"
         os.environ["PR_HEAD_SHA"] = reviewed
+        evidence.parent.mkdir(parents=True, exist_ok=True)
         evidence.write_text(
             "WS-ENG-001-01\n"
             "open sub-agent sessions: none\n"
@@ -492,6 +500,8 @@ def test_evidence_main_passes_with_complete_evidence_and_pr_head() -> None:
         gate.git_ok = original_git_ok
         gate.changed_files = original_changed_files
         evidence.unlink(missing_ok=True)
+        evidence.parent.rmdir()
+        evidence.parent.parent.rmdir()
         for key, value in original_env.items():
             if value is None:
                 os.environ.pop(key, None)

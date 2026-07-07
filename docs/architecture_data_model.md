@@ -118,6 +118,11 @@ worker or reviewer profile `active`. Profile status can satisfy workflow
 eligibility only when product authorization for the current request has already
 passed.
 
+The actor registry migration is intentionally destructive for the earlier
+experimental `worker_profiles` and `reviewer_profiles` tables. Those obsolete
+stores are dropped without compatibility backfill. Downgrade restores table
+shape only; it does not preserve old experimental profile data.
+
 `project_owner` is a scoped profile/contact relationship, not a route role. In
 this chunk it is created from trusted relationship claims when present. Later
 project setup/source-contact workflows may create the same scoped profile type

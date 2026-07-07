@@ -309,6 +309,7 @@ async def test_no_local_login_password_or_session_routes() -> None:
     }
 
     assert "/api/v1/auth/me" in paths
+    assert "/api/v1/demo/worker-profile" not in paths
     assert not any(
         segment in forbidden_segments
         for path in paths

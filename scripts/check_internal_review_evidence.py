@@ -171,8 +171,6 @@ def required_tracks_for(paths: list[str]) -> tuple[str, ...]:
 
 def is_internal_review_evidence_path(path: str) -> bool:
     """Return whether path is an internal reviewer evidence file."""
-    if path.startswith("docs/internal_reviews/") and path.endswith(".md"):
-        return True
     return (
         path.startswith(".agent-loop/initiatives/")
         and "/reviews/" in path
@@ -415,8 +413,8 @@ def main() -> int:
         print(
             "Internal review evidence is required for engineering-loop, process, "
             "or implementation changes.\n"
-            "Add a changed docs/internal_reviews/*.md file or "
-            ".agent-loop/initiatives/<initiative>/reviews/*-internal-review-evidence.md file with these "
+            "Add a changed .agent-loop/initiatives/<initiative>/reviews/"
+            "*-internal-review-evidence.md file with these "
             f"reviewer tracks before opening the PR: {', '.join(required_tracks)}.",
             file=sys.stderr,
         )

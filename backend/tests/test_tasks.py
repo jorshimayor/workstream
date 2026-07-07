@@ -1350,6 +1350,33 @@ async def test_worker_without_profile_cannot_claim_ready_task(
     assert "active worker profile" in response.json()["detail"]
 
 
+async def test_disabled_worker_profile_cannot_claim_ready_task(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    ready_task = await create_ready_task(task_client, project["id"])
+    await seed_actor_profile("disabled-worker", profile_type="worker", status="disabled")
+    set_dev_actor(monkeypatch, roles="worker", subject="disabled-worker")
+
+    response = await task_client.post(
+        f"/api/v1/tasks/{ready_task['id']}/claim",
+        headers=auth_headers(),
+        json={"reason": "claim with disabled profile"},
+    )
+
+    assert response.status_code == 403
+    assert "active worker profile" in response.json()["detail"]
+    async with db_session.get_session_factory()() as session:
+        assignment = await session.scalar(
+            select(TaskAssignment).where(TaskAssignment.task_id == ready_task["id"])
+        )
+        task = await session.get(WorkstreamTask, ready_task["id"])
+    assert assignment is None
+    assert task is not None
+    assert task.status == "ready"
+
+
 async def test_active_worker_profile_without_worker_token_cannot_claim(
     task_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
