@@ -52,7 +52,7 @@ Scope:
 
 - Fixed active/disabled profile observation so token-role observation refreshes do not overwrite explicit workflow provenance metadata.
 - Added regression coverage proving active and disabled worker profile metadata stays `worker_profile_api` after observation.
-- Reused `TaskRepository.add_audit_event` for actor profile audit writes instead of adding a parallel audit persistence path.
+- Added a shared `AuditRepository` so actor profile audit writes no longer depend on `TaskRepository`.
 - Removed the redundant task-service worker-profile facade; the route calls `ActorService.activate_worker_profile` directly.
 - Added persisted-value overposting assertions for `POST /api/v1/workers/me/profile` and task claim so spoofed identity fields cannot write malicious registry rows.
 - Added migration assertions proving new actor registry tables exist and obsolete worker/reviewer profile tables are removed rather than kept as compatibility stores.
@@ -105,6 +105,6 @@ Results:
 
 ## Remaining Risks
 
-- Actor profile audit writes use the existing task-owned audit ledger helper in v0.1. This keeps one audit source of truth for now, but a future shared audit module should extract the code boundary before actor/reputation work grows.
+- The audit event table still lives with the current task-domain models in v0.1. Actor services now use a shared audit repository boundary, but a future audit module should own the model when actor/reputation work grows.
 - Existing routes outside the chunk may continue using pure `get_current_actor` until deliberately migrated. This chunk adds registration side effects to `/auth/me`, worker profile setup, project routes, checker routes, and task routes touched here.
 - The next Terminal Benchmark live API drill still needs to run through real HTTP calls against this implementation after PR review.

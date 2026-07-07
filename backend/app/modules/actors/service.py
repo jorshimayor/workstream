@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.permissions import require_any_role
+from app.modules.audit.repository import AuditRepository
 from app.modules.actors.models import (
     ACTOR_PROFILE_TYPES,
     GLOBAL_PROFILE_SCOPE_ID,
@@ -21,8 +22,7 @@ from app.modules.actors.models import (
 from app.modules.actors.repository import ActorRepository
 from app.modules.actors.schemas import ActorProfileActivationRequest, ActorProfileResponse
 from app.modules.tasks.models import AuditEvent
-from app.modules.tasks.repository import TaskRepository
-from app.schemas.auth import ActorContext, sanitized_claim_snapshot
+from app.schemas.auth import ActorContext, normalized_relationship_profile_claims, sanitized_claim_snapshot
 
 TOKEN_OBSERVED_PROFILE_TYPES = {"worker", "reviewer", "admin", "project_manager"}
 
@@ -50,7 +50,7 @@ class ActorService:
         """
         self._session = session
         self._repo = ActorRepository(session)
-        self._audit_repo = TaskRepository(session)
+        self._audit_repo = AuditRepository(session)
 
     async def register_actor(self, actor: ActorContext) -> ActorIdentity:
         """Create or refresh identity and observed profiles for a verified actor.
@@ -305,12 +305,20 @@ class ActorService:
             for profile_type in self._observed_profile_types(actor.roles)
         ]
         required_profiles.extend(self._trusted_relationship_profiles(actor))
+        if not required_profiles:
+            return True
+
+        existing_profiles = {
+            (profile.profile_type, profile.scope_type, profile.scope_id): profile
+            for profile in await self._repo.list_profiles(actor.actor_id)
+        }
         for required_profile in required_profiles:
-            profile = await self._repo.get_profile(
-                actor.actor_id,
-                required_profile["profile_type"],
-                required_profile["scope_type"],
-                required_profile["scope_id"],
+            profile = existing_profiles.get(
+                (
+                    required_profile["profile_type"],
+                    required_profile["scope_type"],
+                    required_profile["scope_id"],
+                )
             )
             if profile is None:
                 return False
@@ -417,28 +425,13 @@ class ActorService:
         Returns:
             Sanitized project-owner relationship profile claims.
         """
-        raw_profiles = actor.claim_snapshot.get("workstream_relationship_profiles", [])
-        if not isinstance(raw_profiles, list):
-            return []
         profiles: list[dict] = []
-        for raw_profile in raw_profiles:
-            if not isinstance(raw_profile, dict):
-                continue
-            if raw_profile.get("profile_type") != "project_owner":
-                continue
-            scope_type = raw_profile.get("scope_type")
-            scope_id = raw_profile.get("scope_id")
-            if not isinstance(scope_type, str) or not isinstance(scope_id, str):
-                continue
-            scope_type = scope_type.strip()
-            scope_id = scope_id.strip()
-            if not scope_type or not scope_id:
-                continue
+        for raw_profile in normalized_relationship_profile_claims(actor.claim_snapshot):
             profiles.append(
                 {
-                    "profile_type": "project_owner",
-                    "scope_type": scope_type,
-                    "scope_id": scope_id,
+                    "profile_type": raw_profile["profile_type"],
+                    "scope_type": raw_profile["scope_type"],
+                    "scope_id": raw_profile["scope_id"],
                     "profile_metadata": {"source": "trusted_relationship_claim"},
                 }
             )

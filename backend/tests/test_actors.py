@@ -9,7 +9,7 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from app.adapters.auth.dev import actor_id_from_external_identity
 from app.core.config import get_settings
@@ -216,10 +216,25 @@ async def test_auth_me_refreshes_stale_observed_profile_metadata(
                 ActorProfile.profile_type == "reviewer",
             )
         )
+        events = (
+            await session.execute(
+                select(AuditEvent).where(
+                    AuditEvent.entity_type == "actor_profile",
+                    AuditEvent.actor_id == actor_id("metadata-refresh-reviewer"),
+                    AuditEvent.event_type == "actor_profile_observation_refreshed",
+                )
+            )
+        ).scalars().all()
 
     assert profile is not None
     assert profile.profile_metadata == {"source": "verified_token_role"}
     assert profile.updated_at > stale_time
+    assert len(events) == 1
+    assert events[0].from_status == "observed"
+    assert events[0].to_status == "observed"
+    assert events[0].event_payload["profile_type"] == "reviewer"
+    assert events[0].event_payload["previous_profile_metadata"] == {"source": "stale"}
+    assert events[0].event_payload["profile_metadata"] == {"source": "verified_token_role"}
 
 
 async def test_auth_me_refreshes_identity_after_configured_interval(
@@ -340,6 +355,13 @@ async def test_worker_profile_activation_is_explicit_and_audited(
     assert body["status"] == "active"
     assert body["skill_tags"] == ["stem", "finance"]
     assert body["email"] == "explicit-worker@example.test"
+    repeat_response = await actor_client.post(
+        "/api/v1/workers/me/profile",
+        headers=auth_headers(),
+        json={"skill_tags": ["stem", "finance"]},
+    )
+    assert repeat_response.status_code == 200, repeat_response.text
+
     async with db_session.get_session_factory()() as session:
         events = (
             await session.execute(
@@ -350,7 +372,16 @@ async def test_worker_profile_activation_is_explicit_and_audited(
             )
         ).scalars().all()
 
-    assert any(event.event_type == "actor_profile_activated" for event in events)
+    activation_events = [
+        event for event in events if event.event_type == "actor_profile_activated"
+    ]
+    assert len(activation_events) == 1
+    assert activation_events[0].from_status == "observed"
+    assert activation_events[0].to_status == "active"
+    assert activation_events[0].event_payload["profile_type"] == "worker"
+    assert activation_events[0].event_payload["scope_type"] == "global"
+    assert activation_events[0].event_payload["scope_id"] == "global"
+    assert activation_events[0].event_payload["skill_tags"] == ["stem", "finance"]
 
 
 async def test_observation_preserves_active_and_disabled_statuses(
@@ -510,6 +541,164 @@ async def test_scoped_project_owner_profile_comes_from_trusted_relationship_clai
         assert "email" not in str(claim_snapshot)
         assert "secret" not in str(claim_snapshot).lower()
         assert "token" not in str(claim_snapshot).lower()
+
+
+async def test_relationship_claims_ignore_malformed_entries_and_observe_multiple_scopes(
+    actor_database_env: str,
+) -> None:
+    actor = actor_context(
+        subject="multi-project-owner",
+        roles=("project_manager",),
+        claim_snapshot={
+            "roles": ["project_manager"],
+            "workstream_relationship_profiles": [
+                {
+                    "profile_type": "project_owner",
+                    "scope_type": " project ",
+                    "scope_id": " project-alpha ",
+                },
+                {
+                    "profile_type": "reviewer",
+                    "scope_type": "project",
+                    "scope_id": "project-ignored",
+                },
+                {
+                    "profile_type": "project_owner",
+                    "scope_type": "project",
+                    "scope_id": "",
+                },
+                {
+                    "profile_type": "project_owner",
+                    "scope_type": "project",
+                    "scope_id": "project-beta",
+                },
+                {"profile_type": "project_owner", "scope_type": 7, "scope_id": "bad"},
+                "not-a-profile",
+            ],
+        },
+    )
+    async with db_session.get_session_factory()() as session:
+        service = ActorService(session)
+        await service.register_actor(actor)
+        await service.register_actor(actor)
+
+    async with db_session.get_session_factory()() as session:
+        identity = await session.scalar(
+            select(ActorIdentity).where(ActorIdentity.actor_id == actor.actor_id)
+        )
+        profiles = (
+            await session.execute(
+                select(ActorProfile).where(
+                    ActorProfile.actor_id == actor.actor_id,
+                    ActorProfile.profile_type == "project_owner",
+                )
+            )
+        ).scalars().all()
+        audit_events = (
+            await session.execute(
+                select(AuditEvent).where(
+                    AuditEvent.entity_type == "actor_profile",
+                    AuditEvent.actor_id == actor.actor_id,
+                    AuditEvent.event_type == "actor_profile_observed",
+                )
+            )
+        ).scalars().all()
+
+    assert identity is not None
+    assert identity.last_claim_snapshot["workstream_relationship_profiles"] == [
+        {
+            "profile_type": "project_owner",
+            "scope_type": "project",
+            "scope_id": "project-alpha",
+        },
+        {
+            "profile_type": "project_owner",
+            "scope_type": "project",
+            "scope_id": "project-beta",
+        },
+    ]
+    assert {
+        (profile.scope_type, profile.scope_id, profile.status)
+        for profile in profiles
+    } == {
+        ("project", "project-alpha", "observed"),
+        ("project", "project-beta", "observed"),
+    }
+    project_owner_events = [
+        event
+        for event in audit_events
+        if event.event_payload["profile_type"] == "project_owner"
+    ]
+    assert len(project_owner_events) == 2
+    assert {
+        (event.event_payload["scope_type"], event.event_payload["scope_id"])
+        for event in project_owner_events
+    } == {("project", "project-alpha"), ("project", "project-beta")}
+
+
+async def test_missing_relationship_profile_forces_registry_refresh(
+    actor_database_env: str,
+) -> None:
+    actor = actor_context(
+        subject="missing-relationship-profile",
+        roles=("project_manager",),
+        claim_snapshot={
+            "roles": ["project_manager"],
+            "workstream_relationship_profiles": [
+                {
+                    "profile_type": "project_owner",
+                    "scope_type": "project",
+                    "scope_id": "project-recreated",
+                }
+            ],
+        },
+    )
+    async with db_session.get_session_factory()() as session:
+        service = ActorService(session)
+        await service.register_actor(actor)
+
+    async with db_session.get_session_factory()() as session:
+        await session.execute(
+            delete(ActorProfile).where(
+                ActorProfile.actor_id == actor.actor_id,
+                ActorProfile.profile_type == "project_owner",
+            )
+        )
+        await session.commit()
+
+    async with db_session.get_session_factory()() as session:
+        service = ActorService(session)
+        await service.register_actor(actor)
+
+    async with db_session.get_session_factory()() as session:
+        profiles = (
+            await session.execute(
+                select(ActorProfile).where(
+                    ActorProfile.actor_id == actor.actor_id,
+                    ActorProfile.profile_type == "project_owner",
+                )
+            )
+        ).scalars().all()
+        audit_events = (
+            await session.execute(
+                select(AuditEvent).where(
+                    AuditEvent.entity_type == "actor_profile",
+                    AuditEvent.actor_id == actor.actor_id,
+                    AuditEvent.event_type == "actor_profile_observed",
+                )
+            )
+        ).scalars().all()
+
+    assert len(profiles) == 1
+    assert profiles[0].scope_type == "project"
+    assert profiles[0].scope_id == "project-recreated"
+    assert profiles[0].status == "observed"
+    project_owner_events = [
+        event
+        for event in audit_events
+        if event.event_payload["profile_type"] == "project_owner"
+    ]
+    assert len(project_owner_events) == 2
 
 
 async def test_active_profile_without_matching_token_role_cannot_use_worker_profile_api(

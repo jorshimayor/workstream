@@ -41,7 +41,7 @@ The live Terminal Benchmark drill proved worker profile setup must be real. Doin
 - `active` is explicit workflow eligibility and still requires the matching current token role.
 - `disabled` blocks workflow eligibility and is preserved by observation refresh.
 - Route authorization still reads current `ActorContext.roles`, not database profile rows.
-- Actor profile audit events use the existing Workstream `audit_events` ledger through `TaskRepository.add_audit_event`.
+- Actor profile audit events use the existing Workstream `audit_events` ledger through a shared `AuditRepository`.
 
 ## Alternatives Rejected
 
@@ -49,7 +49,7 @@ The live Terminal Benchmark drill proved worker profile setup must be real. Doin
 - Persisted profiles as route permissions: rejected because profile rows are workflow metadata/eligibility, not product authorization.
 - Automatic worker/reviewer eligibility from token observation: rejected because eligibility must come from explicit profile workflows.
 - Keeping old worker/reviewer compatibility stores: rejected because v0.1 is still under construction and should not preserve stale authority.
-- A new audit table/module in this chunk: deferred because the current accepted boundary is one v0.1 audit ledger, with extraction documented for future actor/reputation expansion.
+- A new audit table in this chunk: deferred because the current accepted boundary is one v0.1 audit ledger. A shared `AuditRepository` now keeps actor services from depending on task repository methods.
 
 ## Scope Control
 
@@ -139,7 +139,7 @@ Reviewer run IDs: see `WS-POL-001-11-internal-review-evidence.md`.
 | QA/test | PASS AFTER FIXES | None | Added disabled-worker claim denial and deleted demo-route regression coverage. |
 | security/auth | PASS | None | Confirmed no valid security/auth findings on the final code SHA. |
 | product/ops | PASS AFTER FIXES | None | Fixed role wording so Identity Issuer does not read as product-role authority. |
-| architecture | PASS WITH LOW RISKS | None | Confirmed auth/profile boundaries; future shared audit module noted as follow-up. |
+| architecture | PASS WITH LOW RISKS | None | Confirmed auth/profile boundaries and v0.1 audit ledger coupling. |
 | CI integrity | PASS AFTER FIXES | None | Fixed the API contract E2E source-ref namespace and kept source-ref validation intact. |
 | docs | PASS AFTER FIXES | None | Tightened Identity Issuer versus Workstream-owned role wording across docs and scripts. |
 | reuse/dedup | PASS AFTER FIXES | None | Added full reviewer provenance and corrected route-registration scope in evidence. |
@@ -147,11 +147,18 @@ Reviewer run IDs: see `WS-POL-001-11-internal-review-evidence.md`.
 
 ## External Review
 
-External review has not run yet. CodeRabbit and GitHub checks should run after the PR is opened.
+External review response:
+
+- `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-11-external-review-response.md`
+
+CodeRabbit findings were triaged separately from internal reviewer evidence.
+Valid actor-registry findings were fixed. The requested legacy-profile backfill
+was rejected because it contradicts the no-backward-compatibility chunk
+decision.
 
 ## Remaining Risks
 
-- Actor profile audit persistence currently imports the existing task audit repository. This keeps one v0.1 audit ledger but should be extracted to a shared audit module before actor/reputation work grows.
+- The audit event table still lives with the current task-domain models in v0.1. Actor services use a shared audit repository boundary, but a future audit module should own the model when actor/reputation work grows.
 - Existing routes outside this chunk may continue using pure `get_current_actor` until deliberately migrated; this chunk deliberately registers actor context on `/auth/me`, worker profile setup, project routes, checker routes, and touched task routes.
 - The next Terminal Benchmark live API drill still needs to run against this implementation through real HTTP calls after merge.
 

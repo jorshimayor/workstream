@@ -325,4 +325,8 @@ issuer-plus-subject identity compatibility wording.
 
 Evidence: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-11-internal-review-evidence.md`
 
-External review response: pending PR review.
+External review response: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-11-external-review-response.md`
+
+External review status: CodeRabbit comments triaged; valid findings fixed;
+legacy-profile backfill request rejected because it contradicts the
+no-backward-compatibility chunk decision.

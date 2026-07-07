@@ -7,29 +7,19 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 
-def sanitized_claim_snapshot(claim_snapshot: dict[str, Any]) -> dict[str, Any]:
-    """Return the audit-safe claim snapshot allowed in Workstream storage.
+def normalized_relationship_profile_claims(claim_snapshot: dict[str, Any]) -> list[dict[str, str]]:
+    """Return sanitized Workstream relationship profiles from trusted claims.
 
     Args:
         claim_snapshot: Trusted token claims produced by the auth verifier.
 
     Returns:
-        Claim snapshot with relationship claims reduced to scope identity only.
+        Sanitized relationship profile records. Unsupported or malformed claim
+        entries are dropped rather than stored.
     """
-    sanitized: dict[str, Any] = {}
-    raw_roles = claim_snapshot.get("roles")
-    if isinstance(raw_roles, list | tuple):
-        roles = [role.strip() for role in raw_roles if isinstance(role, str) and role.strip()]
-    elif isinstance(raw_roles, str):
-        roles = [role.strip() for role in raw_roles.split(",") if role.strip()]
-    else:
-        roles = []
-    if roles:
-        sanitized["roles"] = roles
-
     relationship_profiles = claim_snapshot.get("workstream_relationship_profiles")
     if not isinstance(relationship_profiles, list):
-        return sanitized
+        return []
 
     sanitized_relationships: list[dict[str, str]] = []
     for raw_profile in relationship_profiles:
@@ -52,6 +42,32 @@ def sanitized_claim_snapshot(claim_snapshot: dict[str, Any]) -> dict[str, Any]:
                 "scope_id": scope_id,
             }
         )
+    return sanitized_relationships
+
+
+def sanitized_claim_snapshot(claim_snapshot: dict[str, Any]) -> dict[str, Any]:
+    """Return the audit-safe claim snapshot allowed in Workstream storage.
+
+    Args:
+        claim_snapshot: Trusted token claims produced by the auth verifier.
+
+    Returns:
+        Claim snapshot with relationship claims reduced to scope identity only.
+    """
+    sanitized: dict[str, Any] = {}
+    raw_roles = claim_snapshot.get("roles")
+    if isinstance(raw_roles, list | tuple):
+        roles = [role.strip() for role in raw_roles if isinstance(role, str) and role.strip()]
+    elif isinstance(raw_roles, str):
+        roles = [role.strip() for role in raw_roles.split(",") if role.strip()]
+    else:
+        roles = []
+    if roles:
+        sanitized["roles"] = roles
+
+    sanitized_relationships = normalized_relationship_profile_claims(claim_snapshot)
+    if not sanitized_relationships:
+        return sanitized
     sanitized["workstream_relationship_profiles"] = sanitized_relationships
     return sanitized
 

@@ -74,6 +74,8 @@ backend/app/adapters/auth/flow.py
 backend/app/core/config.py
 backend/app/db/models.py
 backend/app/schemas/auth.py
+backend/app/modules/audit/__init__.py
+backend/app/modules/audit/repository.py
 backend/app/modules/actors/__init__.py
 backend/app/modules/actors/models.py
 backend/app/modules/actors/repository.py
@@ -97,6 +99,7 @@ backend/scripts/week2_api_e2e.py
 examples/terminal_benchmark/terminal_benchmark_api_e2e.py
 examples/terminal_benchmark/LOCAL_VALIDATION_NOTES.md
 README.md
+docs/internal_reviews/2026-06-13_week1_week2_deterministic_hardening.md
 docs/architecture_data_model.md
 docs/architecture_brief/workstream_architecture_brief.md
 docs/architecture_lockdown.md
