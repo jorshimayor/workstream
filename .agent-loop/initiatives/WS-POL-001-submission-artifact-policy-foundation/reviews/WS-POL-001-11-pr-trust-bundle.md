@@ -21,7 +21,7 @@ Chunk contract:
 - Added `actor_identities` and `actor_profiles` with async SQLAlchemy models, repository, schemas, service, and Alembic migration.
 - Created the shared actor registry and dropped obsolete `worker_profiles` and `reviewer_profiles` without compatibility backfill.
 - Kept `get_current_actor` pure and added `get_registered_actor` for explicit registry side effects.
-- Updated `/auth/me`, `/workers/me/profile`, and task claim paths to register actor identity/profile metadata where needed.
+- Updated `/auth/me`, `/workers/me/profile`, project routes, checker routes, and task paths touched by this chunk to register actor identity/profile metadata where needed.
 - Made worker claim require current verified `worker` token role plus active `ActorProfile(profile_type="worker")`.
 - Preserved active/disabled profile provenance during token observation refreshes.
 - Retired stale demo worker-profile bootstrap paths and rewired scripts/examples/UI to `POST /api/v1/workers/me/profile`.
@@ -82,14 +82,15 @@ No Workstream-owned login/signup/session/password behavior was added. No post-su
 ## Tests/Checks Run
 
 ```bash
-cd backend && .venv/bin/python -m ruff check app/modules/actors/service.py app/modules/projects/service.py tests/test_actors.py tests/test_tasks.py
+cd backend && .venv/bin/python -m ruff check tests/test_auth.py tests/test_tasks.py
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
 git diff --check origin/main...HEAD
 python3 scripts/test_agent_gates.py
+python3 scripts/check_internal_review_evidence.py
 cd backend && .venv/bin/python -m pytest tests/test_alembic.py tests/test_actors.py tests/test_auth.py -q
-cd backend && .venv/bin/python -m pytest tests/test_tasks.py::test_future_roles_cannot_view_unassigned_task_or_submissions -q
-cd backend && .venv/bin/python -m pytest tests/test_projects.py::test_source_snapshot_rejects_unsafe_refs -q
+cd backend && .venv/bin/python -m pytest tests/test_auth.py::test_no_local_login_password_or_session_routes -q
+cd backend && .venv/bin/python -m pytest tests/test_tasks.py::test_disabled_worker_profile_cannot_claim_ready_task tests/test_tasks.py::test_worker_without_profile_cannot_claim_ready_task -q
 ```
 
 Result summary:
@@ -99,14 +100,15 @@ Result summary:
 - Markdown link check: passed for 24 changed Markdown files.
 - Diff whitespace check: passed.
 - Agent gate tests: 26 passed.
-- Migration/actor/auth tests: 41 passed in 385.17s.
-- Task eligibility regression: 3 passed in 139.46s.
-- Project source-ref regression: 1 passed in 79.77s.
+- Internal review evidence gate: passed after evidence update.
+- Migration/actor/auth tests: 41 passed in 348.89s.
+- Demo route regression: 1 passed in 14.77s.
+- Task eligibility regressions: 2 passed in 84.84s.
 
 ## Test Delta
 
 - Tests added: `backend/tests/test_actors.py`.
-- Tests expanded: Alembic destructive removal/downgrade/uniqueness, auth registration, task metadata, token-role authorization, overposting, active-profile eligibility, and stale route removal.
+- Tests expanded: Alembic destructive removal/downgrade/uniqueness, auth registration, task metadata, token-role authorization, overposting, active/disabled-profile eligibility, stale route removal, and internal-review evidence gate behavior.
 - Tests removed/skipped: none.
 
 ## CI Integrity
@@ -123,21 +125,21 @@ Internal review evidence:
 
 - `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-11-internal-review-evidence.md`
 
-Reviewed code SHA: `ce57958666bb28c9112b6513ec16f504c5fd1571`
+Reviewed code SHA: `a008cf81519913f1ec2f6ffe530c0598f8df087e`
 
 Reviewer run IDs: see `WS-POL-001-11-internal-review-evidence.md`.
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
 | senior engineering | PASS AFTER FIXES | None | Required stale evidence wording to be fixed so the PR no longer claims compatibility backfill or deleted demo UI proof. |
-| QA/test | PASS WITH LOW RISKS | None | Required stale trust-bundle proof wording to be fixed; no code/test blockers found. |
+| QA/test | PASS AFTER FIXES | None | Added disabled-worker claim denial and deleted demo-route regression coverage. |
 | security/auth | PASS | None | Confirmed no valid security/auth findings on the final code SHA. |
 | product/ops | PASS AFTER FIXES | None | Required stale backfill wording to be fixed so operator expectations match destructive removal/no compatibility backfill. |
 | architecture | PASS WITH LOW RISKS | None | Confirmed auth/profile boundaries; future shared audit module noted as follow-up. |
-| CI integrity | PASS | None | Confirmed the post-PR lint fix only imports `uuid4` and does not weaken CI or tests. |
-| docs | PASS WITH LOW RISKS | None | Confirmed docs alignment after final issuer-plus-subject wording. |
-| reuse/dedup | PASS | None | Confirmed single actor/profile authority and audit helper reuse. |
-| test delta | PASS | None | Confirmed tests were strengthened and not weakened. |
+| CI integrity | PASS AFTER FIXES | None | Fixed stale reviewed-SHA evidence and kept `.agent-loop` review evidence as the canonical gate input. |
+| docs | PASS AFTER FIXES | None | Added destructive migration note and marked old demo/Week 1 internal-review references as superseded. |
+| reuse/dedup | PASS AFTER FIXES | None | Added full reviewer provenance and corrected route-registration scope in evidence. |
+| test delta | PASS AFTER FIXES | None | Added disabled-profile claim denial, deleted demo-route assertion, and gate behavior coverage. |
 
 ## External Review
 
@@ -146,7 +148,7 @@ External review has not run yet. CodeRabbit and GitHub checks should run after t
 ## Remaining Risks
 
 - Actor profile audit persistence currently imports the existing task audit repository. This keeps one v0.1 audit ledger but should be extracted to a shared audit module before actor/reputation work grows.
-- Existing routes outside this chunk may continue using pure `get_current_actor` until deliberately migrated.
+- Existing routes outside this chunk may continue using pure `get_current_actor` until deliberately migrated; this chunk deliberately registers actor context on `/auth/me`, worker profile setup, project routes, checker routes, and touched task routes.
 - The next Terminal Benchmark live API drill still needs to run against this implementation through real HTTP calls after merge.
 
 ## Follow-Up Work

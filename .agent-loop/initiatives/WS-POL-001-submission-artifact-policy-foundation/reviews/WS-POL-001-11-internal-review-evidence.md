@@ -10,11 +10,11 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: ce57958666bb28c9112b6513ec16f504c5fd1571
+Reviewed code SHA: a008cf81519913f1ec2f6ffe530c0598f8df087e
 
-Reviewed at: 2026-07-07T03:45:00Z
+Reviewed at: 2026-07-07T04:12:04Z
 
-Reviewer run IDs: senior-engineering-review-019f3aa7-a13d-7052-85dc-635cbfa7dadb, qa-test-review-019f3aa7-a9a4-7e80-9fb5-8b9961b0c913, security-auth-review-019f3aa7-b1b3-73f2-959e-9eaae25fabd3, product-ops-review-019f3aa7-bce6-77b1-9053-09926c54b4c9
+Reviewer run IDs: senior-engineering-review-019f3aa7-a13d-7052-85dc-635cbfa7dadb, qa-test-review-019f3aa7-a9a4-7e80-9fb5-8b9961b0c913, qa-test-rerun-019f3ac2-c5d7-7e90-947f-85309bd89808, security-auth-review-019f3aa7-b1b3-73f2-959e-9eaae25fabd3, product-ops-review-019f3aa7-bce6-77b1-9053-09926c54b4c9, architecture-review-019f3ab2-f368-7f03-bff7-29999e5a076f, ci-integrity-review-019f3ab2-f9fd-7263-82a3-d6fdf9d3967b, ci-integrity-rerun-019f3ac2-d856-7c80-9bcf-63f5c5b71c2d, docs-review-019f3ab3-0752-7391-adac-3a72c9af37ba, docs-rerun-019f3ac2-ce8e-7c12-9bbe-c3ffc54d1166, reuse-dedup-review-019f3ab3-12ad-7c92-86e7-eee531d82a6a, reuse-dedup-rerun-019f3ac2-e587-7d33-a978-57734c17d681, test-delta-review-019f3ab3-2436-7b82-9e17-7dd083ef1afa, test-delta-rerun-019f3ac2-fb49-7530-968f-50cd1b79041b
 
 After the reviewed SHA, only evidence and status files changed.
 
@@ -26,6 +26,7 @@ Scope:
 - Keeps `get_current_actor` as the pure Flow-token boundary and adds `get_registered_actor` for explicit registry side effects.
 - Creates new `actor_identities` and `actor_profiles` tables, then drops obsolete `worker_profiles` and `reviewer_profiles` without compatibility backfill.
 - Makes worker profile activation write `ActorProfile(profile_type="worker", status="active")` through the actor module.
+- Applies registration side effects to `/auth/me`, worker profile setup, project routes, checker routes, and task routes touched by this chunk.
 - Makes task claim require both a verified `worker` token role and an active worker profile.
 - Preserves active/disabled profile metadata during token observation refreshes.
 - Keeps persisted profiles as workflow eligibility/audit records, never route permission authority.
@@ -37,14 +38,14 @@ Scope:
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
 | senior engineering | PASS AFTER FIXES | None | Required stale evidence wording to be fixed so the PR no longer claims compatibility backfill or deleted demo UI proof. |
-| QA/test | PASS WITH LOW RISKS | None | Required stale trust-bundle proof wording to be fixed; no code/test blockers found. |
+| QA/test | PASS AFTER FIXES | None | Added disabled-worker claim denial and deleted demo-route regression coverage. |
 | security/auth | PASS | None | Confirmed no valid security/auth findings on the final code SHA. |
 | product/ops | PASS AFTER FIXES | None | Required stale backfill wording to be fixed so operator expectations match destructive removal/no compatibility backfill. |
 | architecture | PASS WITH LOW RISKS | None | Confirmed Flow auth boundary, actor/profile non-auth semantics, worker claim gate, and documented v0.1 audit ledger coupling. |
-| CI integrity | PASS | None | Confirmed the post-PR lint fix only adds the missing `uuid4` import and does not weaken CI, lint, tests, typecheck, coverage, workflows, or package scripts. |
-| docs | PASS WITH LOW RISKS | None | Confirmed docs align after adding `workstream_relationship_profiles` schema, audit schema, demo cleanup, and issuer-plus-subject wording. |
-| reuse/dedup | PASS | None | Confirmed `ActorService` is profile authority, audit writes reuse `TaskRepository.add_audit_event`, and old profile authority paths are removed. |
-| test delta | PASS | None | Confirmed persisted overposting assertions, downgrade restore assertions, metadata negative assertions, and active/disabled metadata preservation coverage. |
+| CI integrity | PASS AFTER FIXES | None | Fixed stale reviewed-SHA evidence and made `.agent-loop` review evidence the canonical gate input; historical `docs/internal_reviews` notes are docs. |
+| docs | PASS AFTER FIXES | None | Added destructive migration note and marked old demo/Week 1 internal-review references as superseded. |
+| reuse/dedup | PASS AFTER FIXES | None | Added full reviewer provenance and corrected route-registration scope in evidence. |
+| test delta | PASS AFTER FIXES | None | Added disabled-profile claim denial, deleted demo-route assertion, and gate behavior coverage. |
 
 ## Valid Findings Addressed
 
@@ -61,18 +62,25 @@ Scope:
 - Updated audit-event docs to match actual `actor_roles`, `from_status`, `to_status`, `is_dev_auth`, and `event_payload` fields.
 - Aligned Flow Identity wording so docs consistently name Flow issuer plus subject as the canonical identity anchor.
 - Fixed stale evidence after final internal review so the trust bundle no longer claims compatibility backfill or deleted demo UI proof.
+- Added a disabled-worker-profile claim regression proving disabled profiles cannot satisfy worker eligibility.
+- Added a route-regression assertion proving `/api/v1/demo/worker-profile` is no longer mounted.
+- Documented destructive actor-profile migration behavior in the public data model.
+- Updated historical internal-review notes to mark removed demo helper behavior as superseded.
+- Changed the internal-review evidence gate so ordinary `docs/internal_reviews` notes are documentation, while current gate-satisfying evidence must live in `.agent-loop/...-internal-review-evidence.md`.
+- Updated this evidence with full reviewer run IDs and project/checker route-registration scope.
 
 ## Commands Run
 
 ```bash
-cd backend && .venv/bin/python -m ruff check app/modules/actors/service.py app/modules/projects/service.py tests/test_actors.py tests/test_tasks.py
+cd backend && .venv/bin/python -m ruff check tests/test_auth.py tests/test_tasks.py
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
 git diff --check origin/main...HEAD
 python3 scripts/test_agent_gates.py
+python3 scripts/check_internal_review_evidence.py
 cd backend && .venv/bin/python -m pytest tests/test_alembic.py tests/test_actors.py tests/test_auth.py -q
-cd backend && .venv/bin/python -m pytest tests/test_tasks.py::test_future_roles_cannot_view_unassigned_task_or_submissions -q
-cd backend && .venv/bin/python -m pytest tests/test_projects.py::test_source_snapshot_rejects_unsafe_refs -q
+cd backend && .venv/bin/python -m pytest tests/test_auth.py::test_no_local_login_password_or_session_routes -q
+cd backend && .venv/bin/python -m pytest tests/test_tasks.py::test_disabled_worker_profile_cannot_claim_ready_task tests/test_tasks.py::test_worker_without_profile_cannot_claim_ready_task -q
 ```
 
 Results:
@@ -82,13 +90,14 @@ Results:
 - Markdown link check: passed for 24 changed Markdown files.
 - Diff whitespace check: passed.
 - Agent gate tests: 26 passed.
-- Migration/actor/auth tests: 41 passed in 385.17s.
-- Task eligibility regression: 3 passed in 139.46s.
-- Project source-ref regression: 1 passed in 79.77s.
+- Internal review evidence gate: passed after this evidence update.
+- Migration/actor/auth tests: 41 passed in 348.89s.
+- Demo route regression: 1 passed in 14.77s.
+- Task eligibility regressions: 2 passed in 84.84s.
 - Local XLSX export: not present.
 
 ## Remaining Risks
 
 - Actor profile audit writes use the existing task-owned audit ledger helper in v0.1. This keeps one audit source of truth for now, but a future shared audit module should extract the code boundary before actor/reputation work grows.
-- Existing routes outside the chunk may continue using pure `get_current_actor` until deliberately migrated. This chunk only adds registration side effects to `/auth/me`, worker profile setup, and task claim paths touched here.
+- Existing routes outside the chunk may continue using pure `get_current_actor` until deliberately migrated. This chunk adds registration side effects to `/auth/me`, worker profile setup, project routes, checker routes, and task routes touched here.
 - The next Terminal Benchmark live API drill still needs to run through real HTTP calls against this implementation after PR review.
