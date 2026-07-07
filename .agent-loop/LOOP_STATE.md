@@ -3,17 +3,16 @@
 ## Current State
 
 - Active initiative: `WS-POL-001` - Submission Artifact Policy Foundation
-- Active planning chunk: `WS-POL-001-11` - Actor Identity And Profile Registry
-- Active implementation chunk: `WS-POL-001-11` - Actor Identity And Profile Registry
-- Branch: `codex/ws-pol-001-11-actor-profile-registry-impl`
-- Status: `WS-POL-001-10` merged through PR #72. `WS-POL-001-11`
-  implementation and CodeRabbit follow-up fixes are committed, deterministic
-  verification passed, required internal reviewer tracks completed with no
-  blocking findings, and evidence / trust bundle are prepared for human review.
-- Last merged implementation SHA: `cc78f2a`
-- Last merge commit: `1bbde47`
-- Current gate: PR #74 external review addressed; await final CI and human merge decision
-- Next chunk: inactive until `WS-POL-001-11` is reviewed and merged
+- Active planning chunk: none
+- Active implementation chunk: none
+- Branch: `main`
+- Status: `WS-POL-001-11` merged through PR #74 on 2026-07-07.
+  The shared actor identity/profile registry is now on `main`; GitHub Agent
+  Gates, Backend, and CodeRabbit passed before merge.
+- Last merged implementation SHA: `0729531`
+- Last merge commit: `5cec0e0`
+- Current gate: rerun the Terminal Benchmark live API drill through real HTTP calls using `POST /api/v1/workers/me/profile`
+- Next chunk: inactive until the post-merge Terminal Benchmark live API drill passes and findings are reviewed
 
 ## Operating Rule
 
@@ -108,7 +107,7 @@ blockchain, frontend, or agent-runtime behavior.
 - `WS-POL-001-10` started after the user's explicit start signal for the first
   five pre-submit hardening fixes from the live API drill.
 - PR #72 merged into `main` as `1bbde47`.
-- `WS-POL-001-11` is the next planned bounded chunk. It should add local
+- `WS-POL-001-11` merged through PR #74 as `5cec0e0`; it added local
   Workstream actor identity and actor profile registries for verified Flow
   actors before the next Terminal Benchmark live API drill.
 - `WS-POL-001-11` internal review evidence is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-11-internal-review-evidence.md`.

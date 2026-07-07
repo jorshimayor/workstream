@@ -13,7 +13,6 @@ Required reviewer tracks:
 - security/auth
 - product/ops
 - architecture
-- CI integrity
 - docs
 - reuse/dedup
 - test delta
@@ -66,6 +65,7 @@ Required reviewer tracks:
 - security/auth
 - product/ops
 - architecture
+- CI integrity
 - docs
 - reuse/dedup
 - test delta
@@ -296,12 +296,13 @@ External review response: `.agent-loop/initiatives/WS-POL-001-submission-artifac
 
 ## WS-POL-001-11
 
-Status: implementation branch prepared for PR review on 2026-07-06.
+Status: merged through PR #74 on 2026-07-07.
+
+Merge commit: `5cec0e0`
 
 Branch: `codex/ws-pol-001-11-actor-profile-registry-impl`
 
-Reviewed implementation SHA: see the internal review evidence file for the
-exact reviewed code SHA.
+Reviewed implementation SHA: `0729531`
 
 Required reviewer tracks:
 
@@ -310,11 +311,13 @@ Required reviewer tracks:
 - security/auth
 - product/ops
 - architecture
+- CI integrity
 - docs
 - reuse/dedup
 - test delta
 
-Result: PASS after fixes from internal review.
+Result: PASS after fixes from internal review and CodeRabbit. GitHub Agent
+Gates, Backend, and CodeRabbit passed before merge.
 
 Scope: local `ActorIdentity` and shared `ActorProfile` registry for verified
 Flow actors, destructive removal of obsolete worker/reviewer profile stores,
@@ -330,3 +333,7 @@ External review response: `.agent-loop/initiatives/WS-POL-001-submission-artifac
 External review status: CodeRabbit comments triaged; valid findings fixed;
 legacy-profile backfill request rejected because it contradicts the
 no-backward-compatibility chunk decision.
+
+Next gate: rerun the Terminal Benchmark live API drill through real HTTP calls
+using `POST /api/v1/workers/me/profile`, then review findings before starting
+the next product chunk.

@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-POL-001-11` | Actor Identity And Profile Registry | L1 | Implementation branch active; internal review passed; preparing PR evidence |
+| `TERMINAL-BENCHMARK-LIVE-DRILL` | Post-Actor-Registry Real API Drill | L1 | Next gate; use real HTTP calls and canonical `POST /api/v1/workers/me/profile` |
 
 ## Completed
 
@@ -23,14 +23,14 @@
 | `WS-POL-001-08` | Celery Project Setup Pipeline | L1 | Merged through PR #69 |
 | `WS-POL-001-09` | OpenAI Agents SDK Runtime Only | L1 | Merged through PR #71 |
 | `WS-POL-001-10` | Pre-Submit Live Drill Hardening | L1 | Merged through PR #72 |
+| `WS-POL-001-11` | Actor Identity And Profile Registry | L1 | Merged through PR #74 on 2026-07-07 |
 
 ## Proposed Next
 
-After `WS-POL-001-11` is externally reviewed and merged, rerun the Terminal
-Benchmark live API drill through real HTTP calls using
-`POST /api/v1/workers/me/profile` for worker profile setup. The next product
-chunk should stay bounded to issues discovered by that drill or the approved
-WS-POL chunk map.
+After the Terminal Benchmark live API drill passes, decide whether the next
+product chunk should address drill findings or continue from the approved
+WS-POL chunk map. Do not start another implementation chunk before the drill
+result is reviewed.
 
 ## Blocked
 
