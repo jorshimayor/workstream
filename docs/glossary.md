@@ -24,10 +24,11 @@ present in the trusted request context, claim snapshot,
 auth source, and display metadata. The Flow issuer plus subject is the canonical
 portable identity anchor; Workstream's actor id is a local durable reference
 derived from that pair. The Identity Issuer is not the source of truth for
-Workstream product roles; Workstream owns exact resource authorization keyed by
-issuer plus subject. In the v0.1 bootstrap, route checks may still read trusted
-role claims from the current actor context until the Workstream role-assignment
-API is introduced. Persisted profile rows are never route permission grants.
+Workstream product roles; Workstream stores and enforces product roles locally
+for verified Flow subjects. In the v0.1 bootstrap, route checks may still read
+trusted role claims from the current actor context until the Workstream-owned
+role-assignment layer is introduced. Persisted profile rows are never route
+permission grants.
 
 ## ActorIdentity
 

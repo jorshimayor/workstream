@@ -64,11 +64,11 @@ must not be treated as the primary identity.
 
 Workstream keeps `ActorIdentity` rows for local workflow continuity, audit
 display, profile linkage, assignments, and later reputation records. It does
-not own password authentication or primary login sessions. Workstream does own
-product roles and exact resource authorization keyed by issuer plus subject. In
-the v0.1 bootstrap, route checks may still read trusted role claims from the
-current `ActorContext` until the dedicated Workstream role-assignment API is
-introduced.
+not own password authentication or primary login sessions. Workstream owns
+product roles and exact resource authorization locally. Flow issuer plus subject
+identifies the actor; it does not assign Workstream product roles. In the v0.1
+bootstrap, route checks may still read trusted role claims from the current
+`ActorContext` until the Workstream-owned role-assignment layer is introduced.
 
 Actor registry refresh is bounded by
 `WORKSTREAM_ACTOR_REGISTRY_REFRESH_INTERVAL_SECONDS`. Workstream verifies the

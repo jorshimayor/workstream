@@ -584,7 +584,7 @@ async def create_policy_bundle_for_guide(
             "items": [
                 {
                     "source_kind": "inline_markdown",
-                    "durable_ref": f"inline:/api-contract/{run_id}/guide",
+                    "durable_ref": f"inline:/guides/{run_id}/guide",
                     "ingestion_adapter": "manual_import",
                     "content_hash": sha256_token(f"{run_id}:guide"),
                     "media_type": "text/markdown",

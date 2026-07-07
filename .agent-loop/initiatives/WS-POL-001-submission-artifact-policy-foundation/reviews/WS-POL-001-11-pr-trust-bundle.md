@@ -10,7 +10,7 @@ Implement Workstream's local actor identity and shared actor profile registry fo
 
 ## Human-Approved Intent
 
-The user asked for one shared actor/profile model instead of separate worker, reviewer, admin, project-manager, and project-owner implementations. The verified Flow token remains the authority for route access. Workstream stores local actor/profile rows for workflow eligibility, audit, display, future routing, and later reputation linkage.
+The user asked for one shared actor/profile model instead of separate worker, reviewer, admin, project-manager, and project-owner implementations. During the v0.1 bootstrap, trusted roles in the verified `ActorContext` remain the request-time route gate until Workstream-owned role assignment exists. Workstream stores local actor/profile rows for workflow eligibility, audit, display, future routing, and later reputation linkage.
 
 Chunk contract:
 
@@ -45,7 +45,7 @@ The live Terminal Benchmark drill proved worker profile setup must be real. Doin
 ## Alternatives Rejected
 
 - Separate profile tables per role: rejected because it duplicates profile authority.
-- Persisted profiles as route permissions: rejected because Flow token claims are the route authorization source.
+- Persisted profiles as route permissions: rejected because profile rows are workflow metadata/eligibility, not product authorization.
 - Automatic worker/reviewer eligibility from token observation: rejected because eligibility must come from explicit profile workflows.
 - Keeping old worker/reviewer compatibility stores: rejected because v0.1 is still under construction and should not preserve stale authority.
 - A new audit table/module in this chunk: deferred because the current accepted boundary is one v0.1 audit ledger, with extraction documented for future actor/reputation expansion.

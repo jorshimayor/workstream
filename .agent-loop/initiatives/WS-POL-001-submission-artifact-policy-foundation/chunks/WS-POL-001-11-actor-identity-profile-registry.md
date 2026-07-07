@@ -32,11 +32,13 @@ Flow token verification
 
 `ActorIdentity` and `ActorProfile` are not authentication. Flow remains the auth
 provider. Workstream still does not own login, signup, password reset, password
-storage, or primary auth sessions. Workstream owns product authorization and
-the future role-assignment API keyed by issuer plus subject; this chunk only
-adds the shared identity/profile registry needed before that layer. In the
-v0.1 bootstrap, route access may still use trusted roles from the verified
-`ActorContext` until Workstream-owned role assignment records are implemented.
+storage, or primary auth sessions. Workstream owns product authorization. A
+later Workstream-owned role-assignment layer will store product roles on local
+`ActorIdentity` records derived from verified Flow issuer plus subject; this
+chunk only adds the shared identity/profile registry needed before that layer.
+In the v0.1 bootstrap, route access may still use trusted roles from the
+verified `ActorContext` until Workstream-owned role assignment records are
+implemented.
 
 Persisted `ActorProfile.profile_type` is metadata, eligibility, audit context,
 and later routing/reputation context. It may be required as an additional
@@ -273,9 +275,10 @@ This must be fail-closed:
 
 Route authorization currently checks trusted request roles from `ActorContext`
 as the v0.1 bootstrap path. The Identity Issuer is not the canonical source of
-Workstream product roles; the later Workstream role-assignment API must own that
-authorization state keyed to `ActorIdentity`. Profile checks are additional
-workflow eligibility checks, not route permissions.
+Workstream product roles; the later Workstream-owned role-assignment layer must
+store and enforce that authorization state on local `ActorIdentity` records.
+Profile checks are additional workflow eligibility checks, not route
+permissions.
 
 Examples:
 

@@ -7,16 +7,18 @@ Workstream needs explicit permissions from the first version because review, pay
 ## Roles
 
 The Identity Issuer owns identity, audience, scopes, delegation, and token
-signing. Workstream owns product roles and exact resource authorization keyed
-by the issuer plus subject. Scopes are an outer request-class gate; they are not
-proof that the subject is a reviewer, worker, project owner, or admin inside
-Workstream.
+signing. Workstream owns product roles and exact resource authorization.
+Workstream role records are stored locally for verified Flow subjects; the
+issuer plus subject only identifies the actor and does not assign product
+roles. Scopes are an outer request-class gate; they are not proof that the
+subject is a reviewer, worker, project owner, or admin inside Workstream.
 
 In the current v0.1 bootstrap, route checks still read trusted role claims from
 the verified `ActorContext` where a dedicated Workstream role-assignment table
 does not exist yet. Those token roles are request context and provisioning
-input, not the long-term source of truth. The role-assignment API must become a
-Workstream-owned authorization layer keyed to `ActorIdentity`.
+input, not the long-term source of truth. The later role-assignment layer must
+be Workstream-owned and must store product roles on local `ActorIdentity`
+records.
 
 Local Workstream `ActorIdentity` and `ActorProfile` records may mirror observed
 roles, profile state, skill tags, scope, and eligibility metadata, but persisted
