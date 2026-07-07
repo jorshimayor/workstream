@@ -292,7 +292,7 @@ def token_for(
 
     Args:
         subject: External Flow subject.
-        roles: Flow roles to include in the signed token.
+        roles: Trusted v0.1 bootstrap role claims for the signed token.
         issuer: Expected Flow issuer.
         audience: Expected Flow audience.
         secret: Local HMAC secret.
