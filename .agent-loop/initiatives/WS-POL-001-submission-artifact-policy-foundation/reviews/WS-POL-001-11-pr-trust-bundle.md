@@ -83,7 +83,8 @@ No Workstream-owned login/signup/session/password behavior was added. No post-su
 ## Tests/Checks Run
 
 ```bash
-cd backend && .venv/bin/python -m ruff check tests/test_auth.py tests/test_tasks.py
+cd backend && .venv/bin/python -m ruff check app tests scripts
+cd backend && .venv/bin/docstr-coverage --config .docstr.yaml
 cd backend && .venv/bin/python -m ruff check scripts/api_contract_e2e.py scripts/week2_api_e2e.py
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
@@ -91,6 +92,7 @@ git diff --check origin/main...HEAD
 python3 scripts/test_agent_gates.py
 python3 scripts/check_internal_review_evidence.py
 cd backend && .venv/bin/python -m pytest tests/test_alembic.py tests/test_actors.py tests/test_auth.py -q
+cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python -m pytest -q
 cd backend && .venv/bin/python -m pytest tests/test_auth.py::test_no_local_login_password_or_session_routes -q
 cd backend && .venv/bin/python -m pytest tests/test_tasks.py::test_disabled_worker_profile_cannot_claim_ready_task tests/test_tasks.py::test_worker_without_profile_cannot_claim_ready_task -q
 cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/api_contract_e2e.py
@@ -99,12 +101,17 @@ cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream
 Result summary:
 
 - Ruff: passed.
+- Docstring coverage: passed at 100.0%.
 - Stale wording scan: passed.
-- Markdown link check: passed for 24 changed Markdown files.
+- Markdown link check: passed for 25 changed Markdown files.
 - Diff whitespace check: passed.
 - Agent gate tests: 26 passed.
 - Internal review evidence gate: passed after evidence update.
+- Full backend pytest: 369 passed in 3116.81s.
 - Migration/actor/auth tests: 41 passed in 348.89s.
+- Actor registry focused tests: 16 passed in 190.65s.
+- Auth tests: 21 passed in 57.37s.
+- Worker profile/task targeted tests: 7 passed in 113.12s.
 - Demo route regression: 1 passed in 14.77s.
 - Task eligibility regressions: 2 passed in 84.84s.
 - API contract real API E2E: passed on final patch state.
@@ -129,7 +136,7 @@ Internal review evidence:
 
 - `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-11-internal-review-evidence.md`
 
-Reviewed code SHA: `f1847d59dd2eb19bca5160e0514a8f47d8bc494f`
+Reviewed code SHA: `07295316c5973ea544d766b291d790147bc38920`
 
 Reviewer run IDs: see `WS-POL-001-11-internal-review-evidence.md`.
 
@@ -164,8 +171,8 @@ decision.
 
 ## Follow-Up Work
 
-- Open PR and wait for CodeRabbit/GitHub checks.
-- Address external review in a separate external-review response file if needed.
+- Wait for final GitHub checks on the pushed branch.
+- Human reviews PR #74 and decides whether to merge.
 - After merge, rerun the Terminal Benchmark live API drill using the canonical worker profile endpoint.
 
 ## Human Review Focus
