@@ -418,5 +418,8 @@ External review response: `.agent-loop/initiatives/WS-POL-001-submission-artifac
 External review status: CodeRabbit comments triaged; valid findings fixed;
 GitHub checks and CodeRabbit passed before merge.
 
-Next gate: rerun the accepted no-DB Terminal Benchmark live API drill from
-`main` using real HTTP calls, then decide the next chunk.
+Next gate update: the accepted no-DB Terminal Benchmark live API drill from
+`main` exposed an agent-derived submission artifact policy self-conflict during
+policy derivation. Corrective chunk `WS-POL-001-15` is now active to harden the
+derivation contract before any next implementation chunk starts. The corrective
+branch has rerun that live API drill successfully after hardening.

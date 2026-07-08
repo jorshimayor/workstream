@@ -66,9 +66,9 @@ Current phase: Week 3 review and revision preparation.
 - Week 3 must keep review decisions canonical: `accept`, `needs_revision`, and `reject`.
 - `needs_revision` from human review must carry `outcome_source = human_review` and a review decision id; checker-caused `needs_revision` keeps `outcome_source = auto_checker`.
 - Review findings, revision replay, and reviewer-quality metrics are the next backend contracts to lock.
-- The accepted no-DB Terminal Benchmark drill can now run from `main` using real
-  HTTP calls and API-visible setup, task context, finalization, checker-run,
-  audit, and revision responses.
+- The accepted no-DB Terminal Benchmark drill exposed an agent-derived
+  submission artifact policy self-conflict from `main`; `WS-POL-001-15` hardens
+  the derivation contract before the next implementation chunk starts.
 
 ## Pending Before Pilot
 

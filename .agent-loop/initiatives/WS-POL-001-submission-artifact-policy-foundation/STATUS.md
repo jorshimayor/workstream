@@ -8,12 +8,15 @@ HTTP calls, and task context visibility is now exposed through APIs.
 `WS-POL-001-14` replaced public submission lock wording with finalization,
 defined system actor audit semantics, and merged PR #79's HTTP-visible Terminal
 Benchmark proof evidence. The accepted post-merge no-DB Terminal Benchmark
-drill still needs to rerun from `main`.
+drill from `main` exposed a self-conflicting agent-derived submission artifact
+policy, now tracked as corrective chunk `WS-POL-001-15`.
+The corrective branch now reruns that accepted drill successfully after
+hardening the derivation contract.
 
 ## Active Chunk
 
-None. The next gate is the accepted no-DB Terminal Benchmark live API drill from
-`main`.
+`WS-POL-001-15` on branch
+`codex/ws-pol-001-15-agent-derivation-hardening`.
 
 ## Chunk Status
 
@@ -33,6 +36,7 @@ None. The next gate is the accepted no-DB Terminal Benchmark live API drill from
 | `WS-POL-001-12` | Merged | `codex/ws-pol-001-12-project-setup-policy-visibility` | 76 | Adds project setup-run and project policy visibility APIs for setup runs, sufficiency reports, submission artifact policies, effective policy, and compiled project pre-submit checker policy. |
 | `WS-POL-001-13` | Merged | `codex/ws-pol-001-13-task-context-apis` | 77 | Adds task work-context, worker submission-requirements, and operator-only locked-context APIs. |
 | `WS-POL-001-14` | Merged | `codex/ws-pol-001-14-submission-finalize` | 79 | Replaces public submission lock with finalize, defines system actor audit semantics, scopes operator visibility, and proves the Terminal Benchmark flow through HTTP-visible lifecycle responses. |
+| `WS-POL-001-15` | Active | `codex/ws-pol-001-15-agent-derivation-hardening` | - | Hardens agent-derived submission artifact policy instructions after the no-DB Terminal Benchmark drill exposed a required-artifact/forbidden-pattern self-conflict. |
 
 ## Blockers
 
@@ -48,6 +52,4 @@ None. The next gate is the accepted no-DB Terminal Benchmark live API drill from
 | Add focused `0007 -> 0006` downgrade assertion for locked-context columns and constraints | QA/test-delta review | Medium follow-up |
 | Extract shared artifact path and forbidden-pattern helpers before further checker-policy expansion | Reuse/dedup review | Medium follow-up |
 | Add profile-level audit events if actor/profile changes become reputation-sensitive | Security review on PR #72 | Medium follow-up |
-| Rerun Terminal Benchmark live API drill with canonical worker profile setup | Post-merge gate after PR #74 | High |
-| Rerun accepted no-DB Terminal Benchmark live API drill from `main` | Post-merge gate after PR #79 | High |
 | Add reviewer packet visibility scoped to eligible/assigned reviewers before full review lifecycle work | Product/ops review on visibility planning | High follow-up |
