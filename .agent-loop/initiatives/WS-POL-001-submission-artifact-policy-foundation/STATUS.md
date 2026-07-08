@@ -14,7 +14,7 @@ reran that accepted drill successfully before merging through PR #81.
 
 ## Active Chunk
 
-None. Waiting for the user's next explicit implementation chunk.
+`WS-POL-001-16` - Terminal Benchmark Live API Drill.
 
 ## Chunk Status
 
@@ -35,6 +35,7 @@ None. Waiting for the user's next explicit implementation chunk.
 | `WS-POL-001-13` | Merged | `codex/ws-pol-001-13-task-context-apis` | 77 | Adds task work-context, worker submission-requirements, and operator-only locked-context APIs. |
 | `WS-POL-001-14` | Merged | `codex/ws-pol-001-14-submission-finalize` | 79 | Replaces public submission lock with finalize, defines system actor audit semantics, scopes operator visibility, and proves the Terminal Benchmark flow through HTTP-visible lifecycle responses. |
 | `WS-POL-001-15` | Merged | `codex/ws-pol-001-15-agent-derivation-hardening` | 81 | Hardens agent-derived submission artifact policy instructions after the no-DB Terminal Benchmark drill exposed a required-artifact/forbidden-pattern self-conflict. |
+| `WS-POL-001-16` | Active | `codex/ws-pol-001-16-terminal-benchmark-live-api-drill` | - | Runs a human-visible Terminal Benchmark drill through real HTTP APIs without DB inspection as lifecycle proof. |
 
 ## Blockers
 

@@ -4,17 +4,18 @@
 
 - Active initiative: `WS-POL-001` - Submission Artifact Policy Foundation
 - Active planning chunk: none
-- Active implementation chunk: none
-- Branch: `main`
-- Status: `WS-POL-001-15` merged through PR #81. The project setup derivation
-  prompt now explicitly prevents required/forbidden artifact self-conflicts,
-  keeps derivation project-scoped, and the accepted no-DB Terminal Benchmark
-  live API drill passes after hardening.
+- Active implementation chunk: `WS-POL-001-16` - Terminal Benchmark Live API Drill
+- Branch: `codex/ws-pol-001-16-terminal-benchmark-live-api-drill`
+- Status: `WS-POL-001-16` started after the user's explicit start signal. This
+  chunk runs the Terminal Benchmark project through real HTTP-visible APIs
+  without database inspection as lifecycle proof.
 - Last merged implementation SHA: `b72a5b9`
 - Last merge commit: `b1a9851`
-- Current gate: post-merge memory update for PR #81, then stop for the user's
-  next explicit implementation chunk.
-- Next chunk: inactive until the user explicitly starts it.
+- Current gate: plan-review repair for the Terminal Benchmark live API drill
+  contract. Live execution begins only after plan-review conditions are
+  addressed.
+- Next chunk: inactive until this chunk is reviewed, merged, and followed by a
+  post-merge memory update.
 
 ## Operating Rule
 
