@@ -1248,3 +1248,72 @@ Human review focus:
 
 Public `finalize` wording, operator-only authorization, system actor audit
 provenance, and whether the live drill is genuinely API-only.
+
+### WS-POL-001-15: Agent Derivation Policy Conflict Hardening
+
+Goal:
+
+Harden the project setup derivation contract after the accepted no-DB Terminal
+Benchmark drill exposed that the agent can emit a required artifact and a
+forbidden artifact pattern that match each other.
+
+Risk:
+
+L1
+
+Depends on:
+
+`WS-POL-001-14`
+
+Allowed files:
+
+```text
+backend/app/adapters/project_agents/openai_agent_sdk.py
+backend/tests/test_projects.py
+examples/terminal_benchmark/terminal_benchmark_api_e2e.py
+docs/roadmap_status.md
+.agent-loop/LOOP_STATE.md
+.agent-loop/WORK_QUEUE.md
+.agent-loop/REVIEW_LOG.md
+.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/**
+```
+
+Not allowed:
+
+```text
+backend/alembic/versions/**
+backend/app/adapters/auth/**
+backend/app/modules/tasks/**
+backend/app/modules/checkers/**
+backend/app/modules/projects/models.py
+backend/app/modules/projects/router.py
+backend/app/modules/projects/repository.py
+payment/reputation/blockchain settlement
+frontend/demo UI work
+new agent runtime providers
+weakening Workstream default forbidden artifact rules
+```
+
+Acceptance criteria:
+
+- `SubmissionArtifactPolicyDerivationAgent` instructions prohibit
+  self-conflicting policies where forbidden artifact rules match required
+  artifact paths/keys or required evidence keys/labels.
+- The instructions distinguish worker-submitted artifacts from guide source,
+  reviewer-only, and example material.
+- The instructions prefer deterministic project-level artifact intake contracts
+  over overfitting to one representative task.
+- Tests pin the prompt contract and preserve fail-closed rejection for unsafe
+  required artifact paths and keys.
+- The accepted Terminal Benchmark no-DB live API drill proceeds past policy
+  derivation and through the HTTP-visible proof path.
+
+Required reviewers:
+
+senior engineering, QA/test, security/auth, product/ops, architecture, docs,
+reuse/dedup, test delta.
+
+Human review focus:
+
+Whether the derivation contract prevents real setup-agent self-conflicts without
+weakening default forbidden artifact enforcement.

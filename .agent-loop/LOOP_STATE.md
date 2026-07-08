@@ -4,16 +4,21 @@
 
 - Active initiative: `WS-POL-001` - Submission Artifact Policy Foundation
 - Active planning chunk: none
-- Active implementation chunk: none
-- Branch: `main`
-- Status: `WS-POL-001-14` merged through PR #79. Submission finalization,
-  system actor pre-review gate audit semantics, scoped operator visibility, and
-  HTTP-visible Terminal Benchmark proof are now on `main`.
+- Active implementation chunk: `WS-POL-001-15` - Agent Derivation Policy
+  Conflict Hardening
+- Branch: `codex/ws-pol-001-15-agent-derivation-hardening`
+- Status: The accepted no-DB Terminal Benchmark live API drill from `main`
+  reached project/guide/snapshot/sufficiency, then failed during
+  agent-derived submission artifact policy creation because the agent emitted a
+  required artifact and forbidden artifact pattern that matched each other.
 - Last merged implementation SHA: `ebf9d1d`
 - Last merge commit: `53a57c3`
-- Current gate: run the accepted no-DB Terminal Benchmark live API drill from
-  `main`, then decide the next chunk.
-- Next chunk: inactive until the user explicitly starts it.
+- Current gate: write internal review evidence, run the evidence gate, and open
+  a PR for human review after the derivation contract hardening, full project
+  tests, internal reviewers, and accepted no-DB Terminal Benchmark live API
+  drill passed on this branch.
+- Next chunk: inactive until this corrective chunk is merged and the user
+  explicitly starts it.
 
 ## Operating Rule
 

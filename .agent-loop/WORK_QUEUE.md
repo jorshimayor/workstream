@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `TERMINAL-BENCHMARK-LIVE-DRILL` | Accepted No-DB Terminal Benchmark Drill | L1 | Ready on `main`; use real HTTP calls only |
+| `WS-POL-001-15` | Agent Derivation Policy Conflict Hardening | L1 | Active on `codex/ws-pol-001-15-agent-derivation-hardening` |
 
 ## Completed
 
@@ -30,10 +30,10 @@
 
 ## Proposed Next
 
-Run the accepted no-DB Terminal Benchmark live API drill from `main`, using
-real HTTP calls and the HTTP-visible setup, task context, finalization,
-checker-run, audit, and revision responses. Do not start the next implementation
-chunk until the user explicitly approves it.
+Complete `WS-POL-001-15` after the accepted no-DB Terminal Benchmark live API
+drill exposed an agent-derived submission artifact policy self-conflict. Do not
+start the next implementation chunk until this corrective PR is merged and the
+user explicitly approves the next chunk.
 
 ## Blocked
 

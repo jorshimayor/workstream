@@ -24,7 +24,10 @@ from app.core.config import get_settings
 from app.core.config import Settings
 from app.core.hashing import canonical_json_hash
 from app.adapters.project_agents import build_project_guide_agent_runtime
-from app.adapters.project_agents.openai_agent_sdk import OpenAIAgentSdkProjectGuideRuntime
+from app.adapters.project_agents.openai_agent_sdk import (
+    POLICY_DERIVATION_INSTRUCTIONS,
+    OpenAIAgentSdkProjectGuideRuntime,
+)
 from app.db import session as db_session
 from app.db.base import Base
 from app.main import create_app
@@ -2625,6 +2628,24 @@ def test_project_agent_factory_ignores_removed_runtime_selector(
     assert isinstance(runtime, OpenAIAgentSdkProjectGuideRuntime)
 
 
+def test_policy_derivation_prompt_prohibits_self_conflicting_policies() -> None:
+    instructions = " ".join(POLICY_DERIVATION_INSTRUCTIONS.split())
+
+    assert "project-level worker submission contract" in instructions
+    assert "not a reviewer packet" in instructions
+    assert "not a copy of every source-snapshot file" in instructions
+    assert "A forbidden_artifacts pattern must never match" in instructions
+    assert "required_artifacts key, path, or description" in instructions
+    assert "required_evidence key, label, or description" in instructions
+    assert "do not forbid steps/*/tests/* if tests are required" in instructions
+    assert "Do not place credential, secret, token, password, API key" in instructions
+    assert "required evidence keys, labels, or descriptions" in instructions
+    assert "one exact safe relative file path" in instructions
+    assert "must not be directories" in instructions
+    assert "must not contain globs" in instructions
+    assert "Forbidden artifact patterns may use globs; required artifact paths may not" in instructions
+
+
 def test_project_agent_timeout_is_loaded_from_environment(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -4601,6 +4622,21 @@ async def test_submission_artifact_policy_rejects_forbidden_required_artifacts(
                         **project_submission_artifact_policy_body()["required_artifacts"][0],
                         "key": "aws_access_key",
                         "path": "outputs/safe.txt",
+                    }
+                ],
+            },
+            "required artifact conflicts with forbidden artifacts",
+        ),
+        (
+            {
+                **project_submission_artifact_policy_body(
+                    artifact_path="steps/milestone_1/tests/test_m1.py"
+                ),
+                "forbidden_artifacts": [
+                    {
+                        "pattern": "steps/*/tests/*",
+                        "reason": "Broad test-directory block conflicts with required tests.",
+                        "worker_facing_fix": "Do not forbid required test files.",
                     }
                 ],
             },
