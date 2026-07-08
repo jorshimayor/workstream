@@ -2,9 +2,7 @@
 
 ## Comments Addressed
 
-CodeRabbit review on PR #82 generated no actionable code comments.
-
-It reported one pre-merge description warning:
+CodeRabbit review on PR #82 reported one pre-merge description warning:
 
 - PR description covered summary and validation, but omitted template sections
   such as Chunk, Goal, Human-Approved Intent, What Changed, Why It Changed,
@@ -14,6 +12,25 @@ It reported one pre-merge description warning:
 Resolution:
 
 - Updated PR #82 description to include the missing template sections.
+
+CodeRabbit later posted three actionable wording comments:
+
+- The internal review evidence claimed only the evidence file changed after the
+  reviewed SHA.
+- The internal review evidence used future-tense external review wording even
+  though the PR and checks now exist.
+- The work queue used `approves` where the loop state uses `starts` for the
+  explicit user signal that begins the next chunk.
+
+Resolution:
+
+- Updated the evidence file to state that the reviewed SHA contains the
+  WS-POL-001-15 memory updates and that post-review edits are limited to review
+  evidence artifacts for this memory-only chunk.
+- Updated the external review separation section to describe the current PR
+  tracking state.
+- Updated the work queue wording to say the next chunk waits until the user
+  explicitly starts it.
 
 ## Comments Deferred
 

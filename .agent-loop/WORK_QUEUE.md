@@ -32,7 +32,7 @@
 ## Proposed Next
 
 Stop after the PR #81 post-merge memory update. Do not start the next
-implementation chunk until the user explicitly approves it.
+implementation chunk until the user explicitly starts it.
 
 ## Blocked
 

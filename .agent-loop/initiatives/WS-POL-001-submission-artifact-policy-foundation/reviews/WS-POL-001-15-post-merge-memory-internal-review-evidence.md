@@ -16,7 +16,9 @@ Reviewed at: 2026-07-08T19:07:35Z
 
 Reviewer run IDs: senior-engineering-019f431d-4b9f-7aa0-95f0-0a2b0352362e, qa-test-019f431d-510c-7bd3-a288-4d8b95bbf3e1, security-auth-019f431d-58e1-7e43-95ae-18412e784ecd, product-ops-019f431d-68eb-7743-b0d9-8ab222362106, architecture-initial-019f431d-76eb-7b10-8082-5f7881fee63e, docs-019f431d-8a2a-7360-9ff0-d1c8123ec8e0
 
-After the reviewed SHA, only this internal review evidence file changed.
+The reviewed SHA contains the loop state, work queue, review log, initiative
+status, and roadmap memory updates for `WS-POL-001-15`. Post-review edits are
+limited to review evidence artifacts for this same memory-only chunk.
 
 ## Reviewed Change
 
@@ -62,8 +64,9 @@ Results:
 
 ## External Review Separation
 
-No external review has run yet for this post-merge memory branch. CodeRabbit and
-GitHub checks will be tracked separately if a PR is opened.
+External review is tracked separately from this internal reviewer evidence.
+CodeRabbit comments and GitHub checks are recorded in the PR and the external
+review response artifact.
 
 ## Remaining Risks
 
