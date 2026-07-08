@@ -179,6 +179,10 @@ class TaskRepository:
     ) -> bool:
         """Atomically stamp a submission as finalized if it is still open.
 
+        The persistence column remains ``locked_at`` because it represents the
+        immutable storage boundary. This repository method uses finalize
+        terminology to match the public API lifecycle.
+
         Args:
             submission_id: Submission id to finalize.
             finalized_at: Timestamp applied to the submission row.
