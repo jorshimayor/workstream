@@ -374,18 +374,19 @@ External review status: CodeRabbit comments triaged; the valid test
 maintainability nitpick was fixed; PR description warning was fixed by updating
 the trust bundle and PR body.
 
-Next gate: `WS-POL-001-14` remains inactive until the user explicitly starts it.
-It should replace public submission lock wording with finalize semantics,
-define system actor audit behavior, and rerun the Terminal Benchmark proof
-through HTTP-visible lifecycle responses.
+Historical next gate at the time of PR #77 merge: `WS-POL-001-14` remained
+inactive until the user explicitly started it. That gate was later satisfied by
+PR #79.
 
 ## WS-POL-001-14
 
-Status: PR #79 open on 2026-07-08.
+Status: merged through PR #79 on 2026-07-08.
 
 Branch: `codex/ws-pol-001-14-submission-finalize`
 
-Reviewed implementation SHA: pending CodeRabbit-fix evidence commit
+Merge commit: `53a57c3`
+
+Reviewed implementation SHA: `ebf9d1d`
 
 Required reviewer tracks:
 
@@ -398,10 +399,10 @@ Required reviewer tracks:
 - reuse/dedup
 - test delta
 
-Result: PASS after internal review fixes. CodeRabbit comments were triaged;
-valid finalization, docs, and permissions-matrix findings were fixed. The broad
-non-creator project-manager visibility suggestion was rejected because it
-conflicts with the current scoped-operator security contract.
+Result: PASS after internal review fixes and CodeRabbit review. GitHub Agent
+Gates, Backend, and CodeRabbit passed before merge. The broad non-creator
+project-manager visibility suggestion was rejected because it conflicts with
+the current scoped-operator security contract.
 
 Scope: public submission handoff renamed to `finalize`, finalized response
 fields replace public lock wording, pre-review checker execution is audited
@@ -415,7 +416,7 @@ Evidence: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundat
 External review response: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-14-external-review-response.md`
 
 External review status: CodeRabbit comments triaged; valid findings fixed;
-GitHub checks must rerun after the fix push.
+GitHub checks and CodeRabbit passed before merge.
 
-Next gate: push CodeRabbit fixes, wait for CodeRabbit and GitHub checks, then
-wait for the user's explicit merge approval.
+Next gate: rerun the accepted no-DB Terminal Benchmark live API drill from
+`main` using real HTTP calls, then decide the next chunk.

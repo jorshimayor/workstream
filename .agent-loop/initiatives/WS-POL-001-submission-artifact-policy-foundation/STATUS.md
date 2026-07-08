@@ -2,21 +2,18 @@
 
 ## Current Status
 
-`WS-POL-001-01`, `WS-POL-001-02`, `WS-POL-001-03`, `WS-POL-001-04`,
-`WS-POL-001-05`, `WS-POL-001-06`, `WS-POL-001-07`, `WS-POL-001-08`,
-`WS-POL-001-09`, `WS-POL-001-10`, `WS-POL-001-11`, `WS-POL-001-12`, and
-`WS-POL-001-13` are merged to `main`.
+`WS-POL-001-01` through `WS-POL-001-14` are merged to `main`.
 The post-actor-registry Terminal Benchmark live API drill passed through real
 HTTP calls, and task context visibility is now exposed through APIs.
-`WS-POL-001-14` implementation and internal review are complete. It replaces
-public submission lock wording with finalization, defines system actor audit
-semantics, and proves the Terminal Benchmark drill through HTTP-visible
-lifecycle responses.
+`WS-POL-001-14` replaced public submission lock wording with finalization,
+defined system actor audit semantics, and merged PR #79's HTTP-visible Terminal
+Benchmark proof evidence. The accepted post-merge no-DB Terminal Benchmark
+drill still needs to rerun from `main`.
 
 ## Active Chunk
 
-`WS-POL-001-14` is ready for PR review on branch
-`codex/ws-pol-001-14-submission-finalize`.
+None. The next gate is the accepted no-DB Terminal Benchmark live API drill from
+`main`.
 
 ## Chunk Status
 
@@ -35,13 +32,13 @@ lifecycle responses.
 | `WS-POL-001-11` | Merged | `codex/ws-pol-001-11-actor-profile-registry-impl` | 74 | Implements local Workstream actor identity and actor profile registries for verified Flow actors before the next live API drill. |
 | `WS-POL-001-12` | Merged | `codex/ws-pol-001-12-project-setup-policy-visibility` | 76 | Adds project setup-run and project policy visibility APIs for setup runs, sufficiency reports, submission artifact policies, effective policy, and compiled project pre-submit checker policy. |
 | `WS-POL-001-13` | Merged | `codex/ws-pol-001-13-task-context-apis` | 77 | Adds task work-context, worker submission-requirements, and operator-only locked-context APIs. |
-| `WS-POL-001-14` | Ready for PR | `codex/ws-pol-001-14-submission-finalize` | - | Replace public submission lock with finalize, define system actor audit semantics, and rerun the Terminal Benchmark proof through HTTP-visible lifecycle responses. |
+| `WS-POL-001-14` | Merged | `codex/ws-pol-001-14-submission-finalize` | 79 | Replaces public submission lock with finalize, defines system actor audit semantics, scopes operator visibility, and proves the Terminal Benchmark flow through HTTP-visible lifecycle responses. |
 
 ## Blockers
 
 | Blocker | Owner | Next action |
 |---|---|---|
-| External review and human checkpoint for `WS-POL-001-14` | Workstream | Open PR, wait for CodeRabbit/GitHub checks, and request human review. |
+| none | none | none |
 
 ## Follow-Ups
 
@@ -52,5 +49,5 @@ lifecycle responses.
 | Extract shared artifact path and forbidden-pattern helpers before further checker-policy expansion | Reuse/dedup review | Medium follow-up |
 | Add profile-level audit events if actor/profile changes become reputation-sensitive | Security review on PR #72 | Medium follow-up |
 | Rerun Terminal Benchmark live API drill with canonical worker profile setup | Post-merge gate after PR #74 | High |
-| Rerun Terminal Benchmark live API drill through HTTP-visible lifecycle proof | `WS-POL-001-14` | Complete before PR |
+| Rerun accepted no-DB Terminal Benchmark live API drill from `main` | Post-merge gate after PR #79 | High |
 | Add reviewer packet visibility scoped to eligible/assigned reviewers before full review lifecycle work | Product/ops review on visibility planning | High follow-up |

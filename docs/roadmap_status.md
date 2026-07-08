@@ -46,6 +46,7 @@ Current phase: Week 3 review and revision preparation.
 - Chunk 11 actor identity/profile registry for verified Flow actors.
 - Chunk 12 project setup-run and project policy visibility APIs for setup runs, sufficiency reports, submission artifact policies, effective policy, and compiled project pre-submit checker policy.
 - Chunk 13 task work-context, worker submission-requirements, and operator-only locked-context APIs.
+- Chunk 14 submission finalization, system actor pre-review gate audit semantics, scoped operator visibility, and HTTP-visible Terminal Benchmark proof.
 
 ## Review Tracks Closed
 
@@ -65,9 +66,9 @@ Current phase: Week 3 review and revision preparation.
 - Week 3 must keep review decisions canonical: `accept`, `needs_revision`, and `reject`.
 - `needs_revision` from human review must carry `outcome_source = human_review` and a review decision id; checker-caused `needs_revision` keeps `outcome_source = auto_checker`.
 - Review findings, revision replay, and reviewer-quality metrics are the next backend contracts to lock.
-- Chunk 14 is active before the accepted no-DB Terminal Benchmark drill. It
-  replaces public submission lock wording with finalize semantics and defines
-  system actor audit behavior.
+- The accepted no-DB Terminal Benchmark drill can now run from `main` using real
+  HTTP calls and API-visible setup, task context, finalization, checker-run,
+  audit, and revision responses.
 
 ## Pending Before Pilot
 
