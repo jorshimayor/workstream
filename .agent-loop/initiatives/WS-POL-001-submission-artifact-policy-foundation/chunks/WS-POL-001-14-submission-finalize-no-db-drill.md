@@ -63,6 +63,7 @@ docs/operations_roles_permissions.md
 docs/operations_project_operating_manual.md
 docs/roadmap_day_by_day_execution_plan.md
 docs/roadmap_status.md
+docs/roadmap_week1_backend_plan.md
 docs/spec_chunk_5_submission_packet_foundation.md
 docs/spec_chunk_6_checker_contract_records.md
 docs/spec_chunk_7_checker_runner_registry.md
@@ -75,6 +76,7 @@ docs/diagrams/task_lifecycle_sequence.md
 examples/terminal_benchmark/README.md
 examples/terminal_benchmark/LOCAL_VALIDATION_NOTES.md
 .agent-loop/LOOP_STATE.md
+.agent-loop/REVIEW_LOG.md
 .agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/**
 ```
 

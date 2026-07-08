@@ -46,6 +46,7 @@ from app.modules.tasks.models import (
     TaskAssignment,
     WorkstreamTask,
 )
+from app.modules.tasks.repository import TaskRepository
 from app.schemas.auth import ActorContext
 
 
@@ -3641,6 +3642,57 @@ async def test_finalize_submission_requires_operator_and_latest_version(
     )
     assert second_lock.status_code == 200, second_lock.text
     assert second_lock.json()["finalized_at"] == locked_body["finalized_at"]
+    repeated_checker_runs = await task_client.get(
+        f"/api/v1/submissions/{v1.json()['id']}/checker-runs",
+        headers=auth_headers(),
+    )
+    assert repeated_checker_runs.status_code == 200, repeated_checker_runs.text
+    assert len(repeated_checker_runs.json()) == 1
+    repeated_audit = await task_client.get(
+        f"/api/v1/tasks/{started_task['id']}/audit-events",
+        headers=auth_headers(),
+    )
+    assert repeated_audit.status_code == 200, repeated_audit.text
+    repeated_event_types = [event["event_type"] for event in repeated_audit.json()]
+    assert repeated_event_types.count("submission_finalized") == 1
+    assert repeated_event_types.count("pre_review_gate_started") == 1
+    assert repeated_event_types.count("pre_review_gate_passed") == 1
+
+
+async def test_submission_finalize_guard_is_atomic(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+    created = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+    assert created.status_code == 201, created.text
+    submission_id = created.json()["id"]
+    finalized_at = datetime.now(UTC)
+
+    async with db_session.get_session_factory()() as session:
+        repo = TaskRepository(session)
+        assert await repo.finalize_submission_if_unlocked(submission_id, finalized_at) is True
+        await repo.lock_submission_evidence(submission_id, finalized_at)
+        await session.commit()
+
+    async with db_session.get_session_factory()() as session:
+        repo = TaskRepository(session)
+        assert (
+            await repo.finalize_submission_if_unlocked(
+                submission_id,
+                datetime.now(UTC),
+            )
+            is False
+        )
+        persisted = await repo.get_submission(submission_id, populate_existing=True)
+        assert persisted is not None
+        assert persisted.locked_at == finalized_at
+        assert {evidence.locked_at for evidence in persisted.evidence_items} == {finalized_at}
 
 
 async def test_database_enforces_unique_submission_version(

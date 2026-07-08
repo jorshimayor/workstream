@@ -847,6 +847,16 @@ class TaskService:
             raise TaskTransitionBlocked("task must be submitted before finalizing submission")
 
         locked_at = datetime.now(UTC)
+        did_finalize = await self._repo.finalize_submission_if_unlocked(submission.id, locked_at)
+        if not did_finalize:
+            persisted = await self._repo.get_submission(submission.id, populate_existing=True)
+            if persisted is not None and persisted.locked_at is not None:
+                return self._submission_response(
+                    actor,
+                    persisted,
+                    has_operator_access=can_admin_or_task_creator_manage(actor, task),
+                )
+            raise TaskTransitionBlocked("submission finalization conflicted; retry")
         submission.locked_at = locked_at
         await self._repo.lock_submission_evidence(submission.id, locked_at)
         await self._write_task_audit(

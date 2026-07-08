@@ -537,7 +537,7 @@
             <article class="step">
               <span class="num">8</span>
               <h3>Submission is finalized</h3>
-              <p>The server stamps the locked guide and policy versions, finalizes evidence rows, and schedules the checker run.</p>
+              <p>The server records finalization against the task's server-owned guide and policy context, finalizes evidence rows, and schedules the checker run.</p>
               <div class="data">
                 <code>finalized_at</code>
                 <code>submission_finalized</code>
@@ -632,7 +632,7 @@
           <li>Pre-submit intake failures create no submission row or submission version.</li>
           <li>Revision resubmission states are limited to needs_revision in v0.1.</li>
           <li>Submission packet does not carry guide or policy versions from the worker.</li>
-          <li>Submission finalization stamps server-owned guide and policy versions.</li>
+          <li>Submission finalization records against the task's server-owned guide and policy context.</li>
           <li>Evidence rows finalize with the submission.</li>
           <li>Checker runs bind to submission version, package hash, and artifact hashes.</li>
           <li>Duplicate checker results fail the real API drill.</li>

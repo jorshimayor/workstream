@@ -381,11 +381,11 @@ through HTTP-visible lifecycle responses.
 
 ## WS-POL-001-14
 
-Status: ready for PR on 2026-07-08.
+Status: PR #79 open on 2026-07-08.
 
 Branch: `codex/ws-pol-001-14-submission-finalize`
 
-Reviewed implementation SHA: pending evidence commit
+Reviewed implementation SHA: pending CodeRabbit-fix evidence commit
 
 Required reviewer tracks:
 
@@ -398,7 +398,10 @@ Required reviewer tracks:
 - reuse/dedup
 - test delta
 
-Result: PASS after internal review fixes. External review is pending PR.
+Result: PASS after internal review fixes. CodeRabbit comments were triaged;
+valid finalization, docs, and permissions-matrix findings were fixed. The broad
+non-creator project-manager visibility suggestion was rejected because it
+conflicts with the current scoped-operator security contract.
 
 Scope: public submission handoff renamed to `finalize`, finalized response
 fields replace public lock wording, pre-review checker execution is audited
@@ -409,7 +412,10 @@ responses.
 
 Evidence: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-14-internal-review-evidence.md`
 
-External review status: pending PR.
+External review response: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-14-external-review-response.md`
 
-Next gate: open PR, wait for CodeRabbit and GitHub checks, address valid
-external findings, then wait for the user's explicit merge approval.
+External review status: CodeRabbit comments triaged; valid findings fixed;
+GitHub checks must rerun after the fix push.
+
+Next gate: push CodeRabbit fixes, wait for CodeRabbit and GitHub checks, then
+wait for the user's explicit merge approval.

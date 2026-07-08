@@ -6,12 +6,12 @@
 - Active planning chunk: none
 - Active implementation chunk: `WS-POL-001-14`
 - Branch: `codex/ws-pol-001-14-submission-finalize`
-- Status: `WS-POL-001-14` implementation and internal review are complete.
-  Submission finalization, system actor pre-review gate audit semantics, and
-  HTTP-visible Terminal Benchmark proof are ready for PR review.
+- Status: `WS-POL-001-14` PR #79 is open. CodeRabbit comments were triaged;
+  valid finalization, docs, and permissions-matrix findings were fixed locally.
 - Last merged implementation SHA: `af43b78`
 - Last merge commit: `af43b78`
-- Current gate: open PR, wait for external review and human checkpoint.
+- Current gate: push CodeRabbit fixes, wait for external review and GitHub
+  checks, then wait for human checkpoint.
 - Next chunk: inactive until `WS-POL-001-14` receives human review and merge.
 
 ## Operating Rule
@@ -121,6 +121,6 @@ blockchain, frontend, or agent-runtime behavior.
 - `WS-POL-001-13` internal review evidence is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-13-internal-review-evidence.md`.
 - `WS-POL-001-13` external review response is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-13-external-review-response.md`.
 - `WS-POL-001-13` PR trust bundle is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-13-pr-trust-bundle.md`.
-- `WS-POL-001-14` is ready for PR. It addresses submission finalization and
+- `WS-POL-001-14` is open as PR #79. It addresses submission finalization and
   HTTP-visible Terminal Benchmark proof semantics before the next accepted
   Terminal Benchmark drill.

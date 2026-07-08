@@ -58,7 +58,8 @@ the route still requires the matching role in the current verified token.
 | Create task | yes | yes | no | no | no | no |
 | Claim task | no | no | yes | no | no | no |
 | Submit task | no | no | own task only | no | no | no |
-| Run/finalize checker gate | yes | tasks they created | own submission precheck only | no | no | no |
+| Run submission precheck | yes | tasks they created | assigned in-progress or revision task only | no | no | no |
+| Finalize submission | yes | tasks they created | no | no | no | no |
 | Review submission | yes | no | no | yes | no | no |
 | Review own submission | no | no | no | no | no | no |
 | Request revision | yes | no | no | yes | no | no |
@@ -67,7 +68,7 @@ the route still requires the matching role in the current verified token.
 | Override checker failure | yes | no | no | no | no | no |
 | Mark payout submitted | yes | no | no | no | yes | no |
 | Mark paid | yes | no | no | no | yes | no |
-| View audit log | yes | yes | own tasks only | reviewed tasks | payment records | yes |
+| View audit log | yes | tasks they created | own tasks only | reviewed tasks | payment records | yes |
 
 ## Separation Rules
 
@@ -75,6 +76,11 @@ the route still requires the matching role in the current verified token.
 - A reviewer cannot mark payment as paid.
 - Finance cannot change review decisions.
 - Project managers cannot silently override checker failures.
+- Multi-role precheck access does not collapse into one role. Object visibility
+  may come from admin access, task-creator project-manager access, or worker
+  assignment. When the current verified token includes `worker`, the worker
+  task-status restriction still applies: the task must be in progress or in
+  revision. Finalization remains a separate audited operator action.
 - Admin and project-manager operational intervention must use a separate
   audited override path. It must not masquerade as worker task claiming.
 - Admin overrides must create an audit event with reason and evidence.
