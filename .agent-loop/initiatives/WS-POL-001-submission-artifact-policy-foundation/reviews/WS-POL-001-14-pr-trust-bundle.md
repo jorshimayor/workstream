@@ -30,6 +30,8 @@ checker runs, and audit events without manually inspecting Postgres.
 - Finalization validates task locked context before running the pre-review gate.
 - Finalization uses an atomic database guard so concurrent finalize calls cannot
   duplicate audit or checker side effects.
+- The repository docstring explicitly explains that the public finalization
+  lifecycle still writes the existing internal `locked_at` persistence column.
 - Automatic checker execution writes audit events as
   `workstream-system:pre-review-gate` with requester provenance.
 - Checker-run detail/list, task audit, task responses, submission responses,
@@ -214,9 +216,9 @@ External review response file:
 
 ## Reviewer results
 
-Reviewed implementation SHA: `77511d1e53616e5e99c393ddf064cd6d7649776c`
+Reviewed implementation SHA: `8372c6e15299960cc78231603a463d238464bc35`
 
-Reviewed at: 2026-07-08T11:43:40Z
+Reviewed at: 2026-07-08T12:01:24Z
 
 Reviewer run IDs:
 
@@ -236,15 +238,17 @@ Reviewer run IDs:
 - docs CodeRabbit fix: `019f4187-1fa8-7563-8854-c2e01c71178d`
 - reuse/dedup CodeRabbit fix: `019f417d-763c-73e1-80fa-d30e0adc1f1f`
 - test delta CodeRabbit fix: `019f417d-850c-7362-8f44-850fd42e3b40`
+- senior engineering docstring fix: `019f4198-90a8-71f2-898f-48b087443428`
+- docs docstring fix: `019f4198-c2b5-7c01-ae2c-161d4fe3ec64`
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS WITH LOW RISKS | None | Atomic guard direction accepted; true concurrent API race test remains optional follow-up. |
+| senior engineering | PASS WITH LOW RISKS | None | Atomic guard direction and final docstring bridge accepted; true concurrent API race test remains optional follow-up. |
 | QA/test | PASS WITH LOW RISKS | None | Coverage accepted; repository guard and repeat-finalize side effects covered. |
 | security/auth | PASS WITH LOW RISKS | None | Scoped-operator visibility and permissions wording accepted. |
 | product/ops | PASS WITH LOW RISKS | None | User-facing wording and proof terminology fixed. |
 | architecture | PASS WITH LOW RISKS | None | Boundary accepted; allowed-file contract updated. |
-| docs | PASS | None | Multi-role precheck and finalization wording now match service behavior. |
+| docs | PASS WITH LOW RISKS | None | Multi-role precheck and finalization wording now match service behavior; evidence/trust metadata refreshed after docstring fix. |
 | reuse/dedup | PASS WITH LOW RISKS | None | Shared authorization helper accepted. |
 | test delta | PASS WITH LOW RISKS | None | Tests strengthened without weakening. |
 

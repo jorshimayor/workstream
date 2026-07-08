@@ -15,6 +15,7 @@ findings without conflating them with Codex sub-agent review.
 | CodeRabbit | Concurrent `finalize_submission` calls could both pass the in-memory `locked_at` check and duplicate audit/checker side effects. | Valid | Added atomic `finalize_submission_if_unlocked()` conditional update, refreshed stale persisted rows on repeat finalize, and added tests asserting no duplicate checker runs or audit events. |
 | CodeRabbit | `docs/current_system_data_flow.html` used stale "locked guide and policy versions" wording. | Valid | Reworded the public flow to say finalization records against the task's server-owned guide and policy context. |
 | CodeRabbit | `operations_roles_permissions.md` combined precheck and finalization in one permission row. | Valid | Split into separate `Run submission precheck` and `Finalize submission` rows, and added multi-role precheck clarification. |
+| CodeRabbit | `finalize_submission_if_unlocked()` mixes finalize naming with the internal `locked_at` column. | Valid | Added a docstring bridge explaining that `locked_at` remains the immutable storage boundary while the method follows public finalize terminology. |
 | CodeRabbit | Let every `project_manager` read locked context for all tasks. | Rejected | This conflicts with the v0.1 scoped-operator security contract. Until project-scoped role assignments exist, non-admin project-manager access is limited to tasks the actor created. |
 
 ## GitHub Checks
@@ -26,6 +27,7 @@ must rerun after the fix push.
 
 ```bash
 cd backend && .venv/bin/ruff check app/modules/tasks/repository.py app/modules/tasks/service.py tests/test_tasks.py
+cd backend && .venv/bin/ruff check app/modules/tasks/repository.py
 cd backend && .venv/bin/pytest tests/test_tasks.py::test_finalize_submission_requires_operator_and_latest_version tests/test_tasks.py::test_submission_finalize_guard_is_atomic -q
 cd backend && .venv/bin/pytest tests/test_tasks.py tests/test_checkers.py
 cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/api_contract_e2e.py
@@ -37,6 +39,7 @@ git diff --check
 Results:
 
 - Focused Ruff: passed.
+- CodeRabbit docstring-nitpick Ruff: passed.
 - Focused finalize guard tests: 2 passed.
 - Task/checker suite: 133 passed.
 - API contract real API E2E: passed.

@@ -10,11 +10,11 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: 77511d1e53616e5e99c393ddf064cd6d7649776c
+Reviewed code SHA: 8372c6e15299960cc78231603a463d238464bc35
 
-Reviewed at: 2026-07-08T11:43:40Z
+Reviewed at: 2026-07-08T12:01:24Z
 
-Reviewer run IDs: senior-engineering-final-019f4040-38db-7c02-ada8-ec277d640635, qa-test-final-019f4033-07a1-72c1-a172-9cebee7ab9de, security-auth-final-019f4049-451a-75c2-8a90-1e80e12bfa55, product-ops-final-019f4021-0291-73d2-8052-69c10a6346e9, architecture-final-019f4021-172e-7671-b16c-c09a66343d87, docs-final-019f4021-22fa-7003-bf1f-4f80affcb7d9, reuse-dedup-final-019f4064-43a3-7e90-9569-a8f341310bfa, test-delta-final-019f4049-51ed-78a1-8d3a-7ffa22dba883, senior-engineering-coderabbit-fix-019f4179-808b-7503-97bd-016cb2e1bbba, qa-test-coderabbit-fix-019f4179-8247-7751-9222-d678cd0f1b79, security-auth-coderabbit-fix-019f4179-8487-7153-bea8-fc093979a7da, product-ops-coderabbit-fix-019f4179-8647-77a3-830d-c5a8f2187b8a, architecture-coderabbit-fix-019f4179-883c-7330-ad49-d8ec9bca999c, docs-coderabbit-fix-019f4187-1fa8-7563-8854-c2e01c71178d, reuse-dedup-coderabbit-fix-019f417d-763c-73e1-80fa-d30e0adc1f1f, test-delta-coderabbit-fix-019f417d-850c-7362-8f44-850fd42e3b40
+Reviewer run IDs: senior-engineering-final-019f4040-38db-7c02-ada8-ec277d640635, qa-test-final-019f4033-07a1-72c1-a172-9cebee7ab9de, security-auth-final-019f4049-451a-75c2-8a90-1e80e12bfa55, product-ops-final-019f4021-0291-73d2-8052-69c10a6346e9, architecture-final-019f4021-172e-7671-b16c-c09a66343d87, docs-final-019f4021-22fa-7003-bf1f-4f80affcb7d9, reuse-dedup-final-019f4064-43a3-7e90-9569-a8f341310bfa, test-delta-final-019f4049-51ed-78a1-8d3a-7ffa22dba883, senior-engineering-coderabbit-fix-019f4179-808b-7503-97bd-016cb2e1bbba, qa-test-coderabbit-fix-019f4179-8247-7751-9222-d678cd0f1b79, security-auth-coderabbit-fix-019f4179-8487-7153-bea8-fc093979a7da, product-ops-coderabbit-fix-019f4179-8647-77a3-830d-c5a8f2187b8a, architecture-coderabbit-fix-019f4179-883c-7330-ad49-d8ec9bca999c, docs-coderabbit-fix-019f4187-1fa8-7563-8854-c2e01c71178d, reuse-dedup-coderabbit-fix-019f417d-763c-73e1-80fa-d30e0adc1f1f, test-delta-coderabbit-fix-019f417d-850c-7362-8f44-850fd42e3b40, senior-engineering-docstring-fix-019f4198-90a8-71f2-898f-48b087443428, docs-docstring-fix-019f4198-c2b5-7c01-ae2c-161d4fe3ec64
 
 After the reviewed SHA, only evidence and review-bundle files changed.
 
@@ -51,6 +51,7 @@ Scope:
 - Added `can_admin_or_task_creator_manage()` and used it for task visibility, locked context, checker-run detail/list, audit events, and manual checker trigger authorization.
 - Prevented a worker who also carries `project_manager` but did not create the task from receiving operator-shaped data for an assigned task.
 - Added an atomic `finalize_submission_if_unlocked()` repository guard so repeat or concurrent finalize calls cannot duplicate checker-run and audit side effects.
+- Added a docstring bridge explaining why the finalize-facing repository method still writes the internal `locked_at` persistence column.
 - Made repeat finalization return the already-finalized submission response without scheduling another pre-review gate.
 - Mapped automatic post-submit checker audit to `workstream-system:pre-review-gate` and preserved requester actor provenance for authorized operator reads.
 - Made finalization reject unfinished tasks, unsubmitted submissions, non-latest versions, unauthorized actors, and missing/malformed task locked context.
@@ -81,6 +82,7 @@ Results:
 
 - Focused Ruff: passed.
 - Focused finalize guard tests: 2 passed.
+- Final CodeRabbit docstring-nitpick Ruff: passed for `backend/app/modules/tasks/repository.py`.
 - Task/checker suite: 133 passed in 1666.46s.
 - API contract real API E2E: passed and exercised `/finalize`, checker-run reads, audit-event reads, and scoped access.
 - Terminal Benchmark real API E2E: passed using the real OpenAI Agents SDK adapter and fixture `build-seccomp-profile-reducer-rust-json`.
