@@ -1,0 +1,163 @@
+/* Layout and components. Hairlines and whitespace do the work shadows would. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  min-height: 100vh;
+}
+
+/* Shared mono metadata treatment */
+.mono {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mono-muted {
+  color: var(--ink-muted);
+}
+
+/* State text — plain colored text, never a filled pill */
+.state-ready {
+  color: var(--state-ready-text);
+}
+.state-pending {
+  color: var(--state-pending-text);
+}
+.state-blocked {
+  color: var(--state-blocked-text);
+}
+.state-rejected {
+  color: var(--state-rejected-text);
+}
+
+/* Navigation shell */
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  padding: 20px max(32px, calc((100% - 1160px) / 2));
+  border-bottom: 1px solid var(--hairline);
+}
+
+.nav-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.nav-mark {
+  display: inline-block;
+  width: 3px;
+  height: 18px;
+  background: var(--accent);
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.nav-link {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.nav-link:hover {
+  color: var(--accent);
+}
+
+.nav-link.is-active {
+  color: var(--accent);
+}
+
+.nav-right {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.command-trigger {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--accent);
+}
+
+/* Backend status strip — proves the /api/v1 connection */
+.status-strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px max(32px, calc((100% - 1160px) / 2));
+  border-bottom: 1px solid var(--hairline);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.status-sep {
+  color: var(--hairline);
+}
+
+/* Main content */
+.app-main {
+  padding: 64px max(32px, calc((100% - 1160px) / 2)) 96px;
+}
+
+.display-title {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1.2;
+  margin: 0 0 16px;
+  color: var(--ink);
+}
+
+.body-copy {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  color: var(--ink-soft);
+  max-width: 65ch;
+  margin: 0;
+}
+
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin: 0 0 12px;
+}

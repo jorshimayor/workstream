@@ -75,6 +75,8 @@ Rust, TypeScript, or another language can be introduced later for a specific lay
 Frontend policy:
 
 - React + Vite owns the internal operations UI.
+- The canonical frontend lives in `frontend/` (React + Vite + TypeScript). There is
+  no separate demo UI in the tree; `frontend/` is the one operations console.
 - The frontend talks to FastAPI through explicit API contracts.
 - The UI stays dashboard/form/workflow focused, not a marketing site.
 - Next.js is deferred unless server rendering, public pages, or full-stack React routing becomes a real requirement.

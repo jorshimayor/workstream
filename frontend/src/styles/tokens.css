@@ -1,0 +1,31 @@
+/*
+ * Design tokens — the single source of color and type for the console.
+ * Values come from docs/design_system.md. Paper-and-ink only; no dark theme.
+ */
+:root {
+  /* Surfaces and ink */
+  --paper: #f3efe3;
+  --paper-raised: #faf8f1;
+  --ink: #1a1a22;
+  --ink-soft: #5a5850;
+  --ink-muted: #8c887d;
+  --hairline: #dad5c4;
+
+  /* Accent — used sparingly */
+  --accent: #3e7cb1;
+  --accent-soft: #e6eef5;
+
+  /* State colors — small text only, never a large fill */
+  --state-ready-text: #3b6d11;
+  --state-ready-fill: #eaf3de;
+  --state-pending-text: #854f0b;
+  --state-pending-fill: #faeeda;
+  --state-blocked-text: #993c1d;
+  --state-blocked-fill: #faece7;
+  --state-rejected-text: #a32d2d;
+  --state-rejected-fill: #fcebeb;
+
+  /* Type families — two families carry the whole interface */
+  --font-serif: "Source Serif 4 Variable", "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Consolas, monospace;
+}

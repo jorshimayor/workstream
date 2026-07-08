@@ -204,6 +204,78 @@ WORKSTREAM_CELERY_BROKER_URL=redis://localhost:6379/0 \
 .venv/bin/celery -A app.workers.celery_app.celery_app worker --loglevel=INFO
 ```
 
+## Canonical Frontend
+
+The canonical Workstream operations console is a React + Vite + TypeScript app in
+[`frontend/`](frontend). It is the one operations UI; there is no separate demo UI
+in the tree. Visual and flow specs live in
+[`docs/design_system.md`](docs/design_system.md) and
+[`docs/website_flow.md`](docs/website_flow.md).
+
+Run it against a local backend:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The dev server runs on `http://localhost:5173` and proxies `/api` to the backend
+at `http://127.0.0.1:8000`, so the app calls the same `/api/v1` paths in
+development and production. Override the base URL with `VITE_API_BASE_URL` if the
+backend runs elsewhere.
+
+The app calls `/api/v1/health` and `/api/v1/auth/me` on load and shows both in a
+status strip. `/auth/me` needs a Flow-style bearer token; in local development set
+one on the backend and hand the same value to the app.
+
+The backend requires Python 3.11+. If your system `python3` is older, `uv` is the
+quickest way to get a matching venv (`python3 -m venv` built from an older
+interpreter will fail at install):
+
+```bash
+cd backend
+uv venv --python 3.12 .venv                     # or: python3.11 -m venv .venv
+uv pip install --python .venv/bin/python -e .    # or: .venv/bin/pip install -e .
+WORKSTREAM_DATABASE_URL="postgresql+asyncpg://workstream:workstream@localhost:5433/workstream" \
+  .venv/bin/alembic upgrade head
+```
+
+Then start it with dev auth so `/auth/me` resolves an actor:
+
+```bash
+# backend (in addition to the database env from above)
+WORKSTREAM_AUTH_PROVIDER=dev \
+WORKSTREAM_ENVIRONMENT=local \
+WORKSTREAM_DEV_AUTH_TOKEN=dev-token \
+WORKSTREAM_DEV_AUTH_SUBJECT=fellow-001 \
+WORKSTREAM_DEV_AUTH_ISSUER=https://auth.flow.local \
+WORKSTREAM_DEV_AUTH_DISPLAY_NAME="Research Lead" \
+WORKSTREAM_DEV_AUTH_ROLES=reviewer \
+.venv/bin/uvicorn app.main:app --port 8000
+```
+
+```bash
+# frontend: point the app at the same token
+echo 'VITE_WORKSTREAM_TOKEN=dev-token' > frontend/.env.local
+```
+
+`VITE_WORKSTREAM_TOKEN` is a local-development convenience only. Vite inlines
+`VITE_`-prefixed values into the built bundle, so never set it in a production
+build — a real deployment carries the Flow-issued token at runtime, not baked into
+assets. Without a token the app renders a handled `signed out` state rather than
+failing.
+
+Checks:
+
+```bash
+cd frontend
+npm run lint
+npm run typecheck
+npm run test -- --run
+npm run build
+```
+
 ## Day-30 Success Standard
 
 By day 30, Workstream runs a real internal task cycle with real people:
