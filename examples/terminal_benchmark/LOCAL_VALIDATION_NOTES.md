@@ -20,7 +20,7 @@ This historical note covered the earlier Terminal Benchmark API drill shape:
 - task screening, release, claim, and start
 - pre-submit checker feedback for intake
 - submission packet creation
-- submission lock
+- submission finalization
 - automatic durable checker gate
 - `review_pending`
 - `needs_revision`
@@ -182,7 +182,7 @@ Live API sequence:
   post-submit checker, and moved the revision-path task to `needs_revision`
 - fixed v2 submission superseded v1 and moved the task back to `review_pending`
 
-Live IDs from the local test database:
+Live IDs captured from local HTTP API responses:
 
 - project: `6e87e2c2-91a1-4140-8f66-6d0c5bd4b966`
 - guide: `b2857abb-6bb0-4e27-89e8-bfb3bfedb8f2`

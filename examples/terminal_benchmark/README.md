@@ -55,7 +55,7 @@ The authoritative proof for `WS-POL-001-06` was a live manual HTTP drill:
 7. approve the policy and activate the guide;
 8. create, screen, release, claim, and start a task;
 9. run pre-submit checks, blocked submission creation, successful submission
-   creation, submission lock, durable checker run, and revision resubmission
+   creation, submission finalization, durable checker run, and revision resubmission
    through the HTTP APIs.
 
 ## Manual Drill Command

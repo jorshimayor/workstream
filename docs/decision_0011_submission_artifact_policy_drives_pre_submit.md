@@ -232,7 +232,7 @@ POST /tasks/{id}/submissions
 `pre_submission_checker_failed` is the submission-creation error code. It is not
 a review decision and is not the response type for the preflight endpoint.
 
-Pre-submit checks are authoritative for submission intake. They are not authoritative proof for human review readiness. Review readiness still requires post-submit internal checker runs against a locked submission.
+Pre-submit checks are authoritative for submission intake. They are not authoritative proof for human review readiness. Review readiness still requires post-submit internal checker runs against a finalized submission.
 
 ## Implementation Enforcement Contract
 

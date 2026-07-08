@@ -4,7 +4,7 @@
 
 Chunk 8 expands the checker registry from the first structural runner into the first policy-aware submission artifact gate.
 
-The goal is not to judge final work quality. The goal is to verify that required structural signals are present before Workstream can later move a locked submission toward human review.
+The goal is not to judge final work quality. The goal is to verify that required structural signals are present before Workstream can later move a finalized submission toward human review.
 
 Chunk 8 does not prove artifact content safety, confidentiality truth, absence of secrets, or hash/content equality. Those require later object-store reads, content scanning, and stronger checker adapters.
 
@@ -59,7 +59,7 @@ Internal helper function names may be implementation-specific, but API responses
 
 ### `check_evidence_present`
 
-Fails when the task requires evidence and the locked submission has no evidence rows.
+Fails when the task requires evidence and the finalized submission has no evidence rows.
 
 The checker reads:
 
@@ -280,7 +280,7 @@ Routing priority is deterministic:
 
 When one checker run contains both task setup failures and worker-fixable submission failures, `task_setup_blocked` wins because the project manager must fix the task contract before the worker can receive a meaningful revision request.
 
-Chunk 8 documents `task_setup_blocked` in its schema and implements the routing contract, but normal API flows are expected to prevent task setup defects before submission. For example, current task screening requires acceptance criteria before a task can be released. Chunk 8 tests must verify the enum/source-of-truth contract and may verify task setup routing through controlled service/repository setup if no normal FastAPI path can produce a locked submission with that defect. A later admin repair workflow can add a real API path for this route.
+Chunk 8 documents `task_setup_blocked` in its schema and implements the routing contract, but normal API flows are expected to prevent task setup defects before submission. For example, current task screening requires acceptance criteria before a task can be released. Chunk 8 tests must verify the enum/source-of-truth contract and may verify task setup routing through controlled service/repository setup if no normal FastAPI path can produce a finalized submission with that defect. A later admin repair workflow can add a real API path for this route.
 
 Chunk 9 owns applying the lifecycle transition.
 

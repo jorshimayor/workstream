@@ -4,16 +4,15 @@
 
 - Active initiative: `WS-POL-001` - Submission Artifact Policy Foundation
 - Active planning chunk: none
-- Active implementation chunk: none
-- Branch: `main`
-- Status: `WS-POL-001-13` merged through PR #77. Worker-safe task work
-  context, exact submission requirements, and operator-only locked task
-  provenance APIs are now on `main`.
-- Last merged implementation SHA: `b567bac`
-- Last merge commit: `b567bac`
-- Current gate: post-merge memory update, then stop.
-- Next chunk: `WS-POL-001-14` is inactive until the user gives an explicit
-  start signal.
+- Active implementation chunk: `WS-POL-001-14`
+- Branch: `codex/ws-pol-001-14-submission-finalize`
+- Status: `WS-POL-001-14` implementation and internal review are complete.
+  Submission finalization, system actor pre-review gate audit semantics, and
+  HTTP-visible Terminal Benchmark proof are ready for PR review.
+- Last merged implementation SHA: `af43b78`
+- Last merge commit: `af43b78`
+- Current gate: open PR, wait for external review and human checkpoint.
+- Next chunk: inactive until `WS-POL-001-14` receives human review and merge.
 
 ## Operating Rule
 
@@ -122,5 +121,6 @@ blockchain, frontend, or agent-runtime behavior.
 - `WS-POL-001-13` internal review evidence is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-13-internal-review-evidence.md`.
 - `WS-POL-001-13` external review response is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-13-external-review-response.md`.
 - `WS-POL-001-13` PR trust bundle is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-13-pr-trust-bundle.md`.
-- `WS-POL-001-14` remains inactive. It should address submission finalize/no-DB
-  proof semantics before the next Terminal Benchmark accepted drill.
+- `WS-POL-001-14` is ready for PR. It addresses submission finalization and
+  HTTP-visible Terminal Benchmark proof semantics before the next accepted
+  Terminal Benchmark drill.

@@ -1007,8 +1007,8 @@ Verification:
   sufficiency report list/get, submission artifact policy list/get, effective
   policy GET, pre-submit checker policy GET, scoping, and unauthorized roles.
 - `backend/scripts/api_contract_e2e.py` may be updated only to consume the new
-  APIs through HTTP, not to add DB inspection as proof.
-- Stale wording scan covers DB-inspection instructions in docs, scripts, and
+  APIs through HTTP, not to add database proof paths.
+- Stale wording scan covers database-proof instructions in docs, scripts, and
   examples.
 - Markdown link check passes for changed docs.
 
@@ -1198,9 +1198,9 @@ Authorization:
 
 Acceptance criteria:
 
-- Public `POST /submissions/{submission_id}/finalize` replaces public
-  `POST /submissions/{submission_id}/lock` in code, tests, scripts, examples,
-  and docs. No v0.1 compatibility alias is kept.
+- Public `POST /submissions/{submission_id}/finalize` replaces the previous
+  public submission handoff route in code, tests, scripts, examples, and docs.
+  No v0.1 compatibility alias is kept.
 - `finalize` is idempotent for the latest submitted version and returns the
   existing finalized response on repeat calls.
 - `finalize` fails for non-latest submission versions, unfinished submissions,
@@ -1208,8 +1208,8 @@ Acceptance criteria:
   inconsistent.
 - Persistence may keep `locked_at` as the internal timestamp field.
 - Public audit event wording uses `submission_finalized` for the requester
-  handoff. Old public `submission_locked` wording is removed from current docs,
-  scripts, and tests.
+  handoff. Old public lock-event wording is removed from current docs, scripts,
+  and tests.
 - Pre-review checker execution is audited under
   `workstream-system:pre-review-gate` and includes requester actor id, issuer,
   subject, and auth source in the event payload.
@@ -1218,7 +1218,7 @@ Acceptance criteria:
 - Existing task audit-event endpoint remains stable and exposes the finalization
   and pre-review gate path.
 - The Terminal Benchmark drill proceeds from guide creation through
-  `review_pending` using HTTP API responses only. Direct DB reads are allowed
+  `review_pending` using HTTP API responses only. Database access is allowed
   only for test setup/cleanup and migration reset, not for proving lifecycle
   state or finding ids.
 - The drill explicitly proves both paths: pre-submit preflight failure returns
@@ -1233,10 +1233,10 @@ Verification:
   and audit-event reads.
 - `backend/scripts/api_contract_e2e.py` uses `/finalize`, not `/lock`.
 - `examples/terminal_benchmark/terminal_benchmark_api_e2e.py` uses APIs 1-14
-  plus pre-submit preflight and contains no DB inspection as proof.
-- Stale wording scan covers `/submissions/.*/lock`, `submission_locked`,
-  `lock endpoint`, and DB-inspection proof wording in backend, docs, scripts,
-  examples, and `.agent-loop`.
+  plus pre-submit preflight and proves lifecycle state through HTTP-visible
+  responses.
+- Stale wording scan covers old public submission handoff, old lock-event, and
+  database-proof wording in backend, docs, scripts, examples, and `.agent-loop`.
 - Markdown link check passes for changed docs.
 
 Required reviewers:

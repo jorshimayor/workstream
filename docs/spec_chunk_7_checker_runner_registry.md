@@ -7,7 +7,7 @@ Chunk 7 turns the checker contract into a working backend slice.
 Workstream now has a checker module that can:
 
 - return pre-submit intake feedback before a submission row is created
-- run registered structural checkers against a real locked submission
+- run registered structural checkers against a real finalized submission
 - persist durable `checker_runs` and `checker_results`
 - validate checker policy names against the registry
 - expose checker runs/results through authenticated backend APIs
@@ -37,7 +37,7 @@ Note: Chunk 8 supersedes the temporary Chunk 7 artifact-manifest and evidence-re
 
 ## Non-Scope
 
-- automatic checker trigger after submission locking
+- automatic checker trigger after submission finalization
 - moving tasks into `REVIEW_PENDING`
 - creating human review decision records
 - creating contribution, payment, or reputation records
@@ -117,7 +117,7 @@ Pre-submit checker generation must reference registered checker names. Unknown g
 The runner loads:
 
 - task
-- latest locked submission by id
+- latest finalized submission by id
 - locked post-submit checker policy
 - locked guide and policy versions already stamped on the submission
 - package hash
@@ -138,7 +138,7 @@ For a clean submission, the run records:
 
 `routing_recommendation` is a checker routing field, not a human review decision. It must not be normalized to `accept`, because a checker can only recommend that the packet is ready for human review. Human review decisions remain only `accept`, `needs_revision`, and `reject`.
 
-For worker-fixable blocking structural failures after submission lock, the run records:
+For worker-fixable blocking structural failures after submission finalization, the run records:
 
 - `status = completed`
 - `routing_recommendation = needs_revision`

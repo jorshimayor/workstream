@@ -58,7 +58,7 @@ the route still requires the matching role in the current verified token.
 | Create task | yes | yes | no | no | no | no |
 | Claim task | no | no | yes | no | no | no |
 | Submit task | no | no | own task only | no | no | no |
-| Run checkers | yes | yes | own submission | no | no | no |
+| Run/finalize checker gate | yes | tasks they created | own submission precheck only | no | no | no |
 | Review submission | yes | no | no | yes | no | no |
 | Review own submission | no | no | no | no | no | no |
 | Request revision | yes | no | no | yes | no | no |

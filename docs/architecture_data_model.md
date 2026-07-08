@@ -759,7 +759,7 @@ Example:
 }
 ```
 
-Post-submit checker policy governs durable internal checker runs after a submission is locked. It does not replace the generated project pre-submit checker policy.
+Post-submit checker policy governs durable internal checker runs after a submission is finalized. It does not replace the generated project pre-submit checker policy.
 
 Migration note: the `0008_post_submit_checker_policy` migration adds explicit
 post-submit policy hash, body, and lock columns. Existing local v0.1 checker

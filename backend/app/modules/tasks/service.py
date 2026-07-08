@@ -11,7 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.hashing import canonical_json_hash
-from app.core.permissions import require_any_role
+from app.core.permissions import PermissionDenied, require_any_role
 from app.modules.checkers.compiler import (
     PreSubmitCheckerCompilerError,
     validate_compiled_pre_submit_checker_bundle,
@@ -33,6 +33,7 @@ from app.modules.projects.post_submit_policy import (
     parse_locked_post_submit_checker_policy_body,
 )
 from app.modules.projects.repository import ProjectRepository, ProjectRepositoryIntegrityError
+from app.modules.tasks.authorization import can_admin_or_task_creator_manage
 from app.modules.tasks.lifecycle import (
     TASK_STATUS_CLAIMED,
     TASK_STATUS_DRAFT,
@@ -84,7 +85,10 @@ TASK_CLAIM_ROLES = {"worker"}
 TASK_SUBMIT_ROLES = {"worker"}
 TASK_START_ROLES = {"admin", "project_manager", "worker"}
 TASK_START_OPERATOR_ROLES = {"admin", "project_manager"}
-SUBMISSION_LOCK_ROLES = {"admin", "project_manager"}
+SUBMISSION_FINALIZE_ROLES = {"admin", "project_manager"}
+SUBMISSION_FINALIZED_EVENT_TYPE = "submission_finalized"
+SUBMISSION_FINALIZED_TRIGGER_SOURCE = "submission_finalized"
+SUBMISSION_FINALIZED_PRE_REVIEW_REASON = "submission finalized pre-review gate"
 WORKER_VISIBLE_AUDIT_PAYLOAD_KEYS = {
     "assignment_id",
     "locked_guide_version",
@@ -182,7 +186,7 @@ class SubmissionVersionConflict(TaskServiceError):
 
 
 class SubmissionCheckerGateError(TaskServiceError):
-    """Raised when automatic checker gate execution blocks submission locking."""
+    """Raised when automatic checker gate execution blocks submission finalization."""
 
     def __init__(self, message: str, status_code: int) -> None:
         """Create a task-layer error preserving the checker gate status code.
@@ -403,6 +407,8 @@ class TaskService:
         """
         require_any_role(actor, PROJECT_OPERATOR_ROLES)
         task = await self._get_task(task_id)
+        if not can_admin_or_task_creator_manage(actor, task):
+            raise TaskNotFound("task not found")
         context = await self._load_locked_task_context(task)
         return self._locked_context_response(task, context)
 
@@ -742,7 +748,11 @@ class TaskService:
         persisted = await self._repo.get_submission(submission.id)
         if persisted is None:
             raise SubmissionNotFound("submission not found")
-        return self._submission_response(actor, persisted)
+        return self._submission_response(
+            actor,
+            persisted,
+            has_operator_access=can_admin_or_task_creator_manage(actor, task),
+        )
 
     async def list_task_submissions(
         self,
@@ -762,7 +772,15 @@ class TaskService:
         task = await self._get_task(task_id)
         await self._ensure_task_visible(actor, task)
         submissions = await self._repo.list_submissions_for_task(task.id)
-        return [self._submission_response(actor, submission) for submission in submissions]
+        has_operator_access = can_admin_or_task_creator_manage(actor, task)
+        return [
+            self._submission_response(
+                actor,
+                submission,
+                has_operator_access=has_operator_access,
+            )
+            for submission in submissions
+        ]
 
     async def get_submission(
         self,
@@ -782,36 +800,51 @@ class TaskService:
         submission = await self._get_submission(submission_id)
         task = await self._get_task(submission.task_id)
         await self._ensure_task_visible(actor, task)
-        return self._submission_response(actor, submission)
+        return self._submission_response(
+            actor,
+            submission,
+            has_operator_access=can_admin_or_task_creator_manage(actor, task),
+        )
 
-    async def lock_submission(
+    async def finalize_submission(
         self,
         actor: ActorContext,
         submission_id: str,
     ) -> SubmissionResponse:
-        """Lock the latest submission packet before checker execution.
+        """Finalize the latest submission packet before checker execution.
 
         Args:
             actor: Verified Flow actor context for the current request.
-            submission_id: Submission id to lock.
+            submission_id: Submission id to finalize.
 
         Returns:
-            Locked submission response.
+            Finalized submission response.
 
         Raises:
-            PermissionDenied: If the actor cannot lock submissions.
+            PermissionDenied: If the actor cannot finalize submissions.
             TaskTransitionBlocked: If the submission is stale or task state is invalid.
         """
-        require_any_role(actor, SUBMISSION_LOCK_ROLES)
+        require_any_role(actor, SUBMISSION_FINALIZE_ROLES)
         submission = await self._get_submission(submission_id)
         task = await self._get_task(submission.task_id)
+        await self._ensure_submission_finalize_authorized(actor, task)
         latest_submission = await self._repo.get_latest_submission_for_task(task.id)
         if latest_submission is None or latest_submission.id != submission.id:
-            raise TaskTransitionBlocked("only latest submission version can be locked")
+            raise TaskTransitionBlocked("only latest submission version can be finalized")
+        if submission.status != "submitted":
+            raise TaskTransitionBlocked("submission must be submitted before finalizing")
+        try:
+            await self._load_locked_task_context(task)
+        except TaskLockedContextInvalid as exc:
+            raise TaskTransitionBlocked(str(exc)) from exc
         if submission.locked_at is not None:
-            return self._submission_response(actor, submission)
+            return self._submission_response(
+                actor,
+                submission,
+                has_operator_access=can_admin_or_task_creator_manage(actor, task),
+            )
         if task.status != TASK_STATUS_SUBMITTED:
-            raise TaskTransitionBlocked("task must be submitted before locking submission")
+            raise TaskTransitionBlocked("task must be submitted before finalizing submission")
 
         locked_at = datetime.now(UTC)
         submission.locked_at = locked_at
@@ -819,20 +852,26 @@ class TaskService:
         await self._write_task_audit(
             actor,
             task,
-            event_type="submission_locked",
+            event_type=SUBMISSION_FINALIZED_EVENT_TYPE,
             from_status=task.status,
             to_status=task.status,
             reason=None,
             event_payload=self._submission_audit_payload(submission),
         )
-        from app.modules.checkers.service import CheckerService, CheckerServiceError
+        from app.modules.checkers.service import (
+            CheckerService,
+            CheckerServiceError,
+            pre_review_gate_system_actor,
+        )
 
         try:
             await CheckerService(self._session).run_submission_checkers(
                 actor,
                 submission.id,
-                "submission locked pre-review gate",
-                trigger_source="submission_locked",
+                SUBMISSION_FINALIZED_PRE_REVIEW_REASON,
+                trigger_source=SUBMISSION_FINALIZED_TRIGGER_SOURCE,
+                audit_actor=pre_review_gate_system_actor(),
+                requester_actor=actor,
             )
         except CheckerServiceError as exc:
             await self._session.rollback()
@@ -840,7 +879,29 @@ class TaskService:
         persisted = await self._repo.get_submission(submission.id)
         if persisted is None:
             raise SubmissionNotFound("submission not found")
-        return self._submission_response(actor, persisted)
+        return self._submission_response(
+            actor,
+            persisted,
+            has_operator_access=can_admin_or_task_creator_manage(actor, task),
+        )
+
+    async def _ensure_submission_finalize_authorized(
+        self,
+        actor: ActorContext,
+        task: WorkstreamTask,
+    ) -> None:
+        """Enforce object-level authorization for submission finalization.
+
+        Args:
+            actor: Verified actor requesting finalization.
+            task: Task that owns the submission being finalized.
+
+        Raises:
+            PermissionDenied: If the role is valid but not authorized for this task.
+        """
+        if can_admin_or_task_creator_manage(actor, task):
+            return
+        raise PermissionDenied("actor is not authorized to finalize this submission")
 
     async def list_task_audit_events(
         self,
@@ -860,7 +921,11 @@ class TaskService:
         task = await self._get_task(task_id)
         await self._ensure_task_visible(actor, task)
         events = await self._repo.list_audit_events("task", task.id)
-        return [self._audit_response(actor, event) for event in events]
+        has_operator_access = can_admin_or_task_creator_manage(actor, task)
+        return [
+            self._audit_response(actor, event, has_operator_access=has_operator_access)
+            for event in events
+        ]
 
     async def _get_submission(self, submission_id: str) -> Submission:
         """Load a submission packet or raise a service error.
@@ -913,7 +978,7 @@ class TaskService:
             "package_hash": submission.package_hash,
             "artifact_hash_manifest": submission.artifact_hash_manifest,
             "supersedes_submission_id": submission.supersedes_submission_id,
-            "locked_at": submission.locked_at.isoformat() if submission.locked_at else None,
+            "finalized_at": submission.locked_at.isoformat() if submission.locked_at else None,
             "locked_guide_source_snapshot_id": submission.locked_guide_source_snapshot_id,
             "locked_guide_source_snapshot_hash": submission.locked_guide_source_snapshot_hash,
             "locked_post_submit_checker_policy_id": (
@@ -1899,9 +1964,9 @@ class TaskService:
         Raises:
             TaskNotFound: If the actor has no object-level visibility.
         """
-        roles = set(actor.roles)
-        if roles.intersection({"admin", "project_manager"}):
+        if can_admin_or_task_creator_manage(actor, task):
             return
+        roles = set(actor.roles)
         if "worker" in roles:
             if task.status == TASK_STATUS_READY or task.assigned_to == actor.actor_id:
                 return
@@ -1918,7 +1983,7 @@ class TaskService:
             Task response with internal locked policy hashes hidden from workers.
         """
         response = TaskResponse.model_validate(task)
-        if not set(actor.roles).intersection(PROJECT_OPERATOR_ROLES):
+        if not can_admin_or_task_creator_manage(actor, task):
             response.source_ref = None
             response.source_payload_hash = None
             response.import_batch_id = None
@@ -1937,18 +2002,22 @@ class TaskService:
         self,
         actor: ActorContext,
         submission: Submission,
+        *,
+        has_operator_access: bool,
     ) -> SubmissionResponse:
         """Build a role-sensitive submission response.
 
         Args:
             actor: Verified actor reading the submission.
             submission: Persisted submission model.
+            has_operator_access: Whether the actor has scoped operator access
+                to the task that owns this submission.
 
         Returns:
             Submission response with artifact and policy provenance hidden from workers.
         """
         response = SubmissionResponse.model_validate(submission)
-        if not set(actor.roles).intersection(PROJECT_OPERATOR_ROLES):
+        if not has_operator_access:
             response.package_uri = None
             response.package_hash = None
             response.artifact_hash_manifest = None
@@ -1969,19 +2038,27 @@ class TaskService:
                 evidence_item.metadata = {}
         return response
 
-    def _audit_response(self, actor: ActorContext, event: AuditEvent) -> AuditEventResponse:
+    def _audit_response(
+        self,
+        actor: ActorContext,
+        event: AuditEvent,
+        *,
+        has_operator_access: bool,
+    ) -> AuditEventResponse:
         """Build a public audit response with claim snapshots redacted.
 
         Args:
             actor: Verified actor reading the audit event.
             event: Persisted audit event.
+            has_operator_access: Whether the actor has scoped operator access
+                to the task that owns this audit event.
 
         Returns:
             Audit response safe for the current task audit endpoint.
         """
         response = AuditEventResponse.model_validate(event)
         response.claim_snapshot = {}
-        if not set(actor.roles).intersection(PROJECT_OPERATOR_ROLES):
+        if not has_operator_access:
             response.event_payload = {
                 key: value
                 for key, value in response.event_payload.items()

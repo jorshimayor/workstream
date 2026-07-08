@@ -400,7 +400,11 @@ class EvidenceItemResponse(BaseModel):
     uri: str | None
     hash: str | None
     size_bytes: int | None
-    locked_at: datetime | None
+    finalized_at: datetime | None = Field(
+        default=None,
+        validation_alias="locked_at",
+        serialization_alias="finalized_at",
+    )
     metadata: dict[str, Any] = Field(
         default_factory=dict,
         validation_alias="metadata_json",
@@ -435,7 +439,11 @@ class SubmissionResponse(BaseModel):
     locked_pre_submit_checker_policy_id: str | None
     locked_pre_submit_checker_bundle_hash: str | None
     submitted_at: datetime
-    locked_at: datetime | None
+    finalized_at: datetime | None = Field(
+        default=None,
+        validation_alias="locked_at",
+        serialization_alias="finalized_at",
+    )
     supersedes_submission_id: str | None
     evidence_items: list[EvidenceItemResponse] = Field(default_factory=list)
 

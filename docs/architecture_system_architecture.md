@@ -39,7 +39,7 @@ Storage
   Postgres for records
   Object storage abstraction for files and evidence
   Append-only audit log for state transitions
-  Hash-locked artifacts after submission lock
+  Hash-locked artifacts after submission finalization
 
 Execution
   External at first
@@ -129,7 +129,7 @@ Owns:
 Project setup visibility APIs expose the latest setup run, sufficiency reports,
 submission artifact policies, the current effective project policy, and the
 compiled project pre-submit checker policy summary to `admin` and
-`project_manager` actors. These reads replace operator DB inspection for setup
+`project_manager` actors. These reads replace operator database reads for setup
 drills, but they do not make `ProjectSetupRun` a policy source of truth.
 
 ### Source/Import Service
@@ -276,7 +276,8 @@ POST /projects
 POST /projects/:id/tasks
 POST /tasks/:id/claim
 POST /tasks/:id/submit
-POST /submissions/:id/run-checks
+POST /submissions/:id/finalize
+GET /submissions/:id/checker-runs
 POST /reviews/:id/decision
 POST /submissions/:id/revision-replay
 POST /contributions/:id/export
@@ -301,7 +302,7 @@ Audit events cover:
 
 - task status transitions
 - assignment changes
-- submission creation and locking
+- submission creation and finalization
 - checker runs
 - review decisions
 - revision replay closure

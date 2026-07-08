@@ -11,7 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.hashing import canonical_json_hash
-from app.core.permissions import require_any_role
+from app.core.permissions import PermissionDenied, require_any_role
 from app.modules.checkers.compiler import (
     PreSubmitCheckerCompilerError,
     validate_compiled_pre_submit_checker_bundle,
@@ -51,6 +51,7 @@ from app.modules.tasks.lifecycle import (
     TASK_STATUS_SUBMITTED,
     ensure_allowed_transition,
 )
+from app.modules.tasks.authorization import can_admin_or_task_creator_manage
 from app.modules.tasks.models import AuditEvent, Submission, WorkstreamTask
 from app.modules.tasks.repository import TaskRepository
 from app.modules.tasks.schemas import SubmissionCreate
@@ -70,6 +71,28 @@ INTERNAL_ROUTING_RECOMMENDATIONS = {
     ROUTING_CHECKER_RETRY,
     ROUTING_TASK_SETUP_BLOCKED,
 }
+PRE_REVIEW_GATE_SYSTEM_ACTOR_ID = "workstream-system:pre-review-gate"
+PRE_REVIEW_GATE_SYSTEM_ISSUER = "workstream"
+PRE_REVIEW_GATE_SYSTEM_ROLE = "workstream_system"
+
+
+def pre_review_gate_system_actor() -> ActorContext:
+    """Return the server-owned audit actor for automatic pre-review gates.
+
+    The system actor is never accepted from client input and is never used for
+    HTTP authorization. It exists only to attribute Workstream-owned checker
+    gate execution after a verified requester has already authorized the
+    finalization operation.
+    """
+    return ActorContext(
+        actor_id=PRE_REVIEW_GATE_SYSTEM_ACTOR_ID,
+        external_subject=PRE_REVIEW_GATE_SYSTEM_ACTOR_ID,
+        external_issuer=PRE_REVIEW_GATE_SYSTEM_ISSUER,
+        roles=(PRE_REVIEW_GATE_SYSTEM_ROLE,),
+        claim_snapshot={"roles": [PRE_REVIEW_GATE_SYSTEM_ROLE]},
+        auth_source="workstream_system",
+        is_dev_auth=False,
+    )
 
 
 class CheckerServiceError(Exception):
@@ -451,33 +474,47 @@ class CheckerService:
         submission_id: str,
         trigger_reason: str,
         trigger_source: str = "manual_checker_trigger",
+        *,
+        audit_actor: ActorContext | None = None,
+        requester_actor: ActorContext | None = None,
     ) -> CheckerRunResponse:
-        """Run registered checkers against one locked submission.
+        """Run registered checkers against one finalized submission.
 
         Args:
             actor: Trusted admin or project manager actor resolved from the Flow token.
             submission_id: Submission whose latest locked packet should be checked.
             trigger_reason: Audit reason for the manual v0.1 trigger.
             trigger_source: Durable source label for the checker run.
+            audit_actor: Optional server-owned actor used only for persisted
+                checker/gate attribution after ``actor`` authorizes the request.
+            requester_actor: Optional verified requester whose provenance should
+                be copied into automatic gate audit payloads.
 
         Returns:
             Persisted checker run response.
 
         Raises:
             PermissionDenied: If the actor cannot trigger internal checks.
-            CheckerExecutionBlocked: If the submission is not locked or not checkable.
+            CheckerExecutionBlocked: If the submission is not finalized or not checkable.
             CheckerPolicyInvalid: If the locked checker policy references unknown names.
         """
         require_any_role(actor, CHECKER_TRIGGER_ROLES)
         submission = await self._get_submission(submission_id)
         task = await self._get_task_for_actor(actor, submission.task_id)
+        self._ensure_checker_trigger_authorized(actor, task)
         if submission.locked_at is None:
-            raise CheckerExecutionBlocked("submission must be locked before internal checkers run")
+            raise CheckerExecutionBlocked("submission must be finalized before internal checkers run")
         if task.status not in CHECKER_RUN_ALLOWED_TASK_STATUSES:
             raise CheckerExecutionBlocked("task must be submitted or in checker gate before checkers run")
         latest_submission = await self._task_repo.get_latest_submission_for_task(task.id)
         if latest_submission is None or latest_submission.id != submission.id:
             raise CheckerExecutionBlocked("only latest submission version can be checked")
+        execution_actor = audit_actor or actor
+        requester_payload = (
+            self._requester_provenance_payload(requester_actor)
+            if requester_actor is not None
+            else {}
+        )
 
         checker_policy = await self._load_locked_post_submit_policy(task, submission)
         effective_policy, _ = await self._load_locked_pre_submit_context(
@@ -502,11 +539,12 @@ class CheckerService:
             current_run.is_current_for_submission = False
         attempt_number = 1 if current_run is None else current_run.attempt_number + 1
         await self._enter_evaluation_pending(
-            actor,
+            execution_actor,
             task,
             submission,
             trigger_reason,
             trigger_source,
+            requester_payload,
         )
 
         context = CheckerContext(
@@ -523,15 +561,16 @@ class CheckerService:
             context,
         )
         audit_event = await self._write_checker_audit(
-            actor,
+            execution_actor,
             task,
             submission,
             attempt_number,
             trigger_reason,
             trigger_source,
+            requester_payload,
         )
         checker_run = self._build_checker_run(
-            actor=actor,
+            actor=execution_actor,
             submission=submission,
             outcomes=outcomes,
             artifact_manifest_hash=artifact_manifest_hash,
@@ -542,7 +581,13 @@ class CheckerService:
             audit_event_id=audit_event.id,
             now=now,
         )
-        await self._apply_pre_review_gate_result(actor, task, submission, checker_run)
+        await self._apply_pre_review_gate_result(
+            execution_actor,
+            task,
+            submission,
+            checker_run,
+            requester_payload,
+        )
         try:
             checker_run = await self._checker_repo.add_run(checker_run)
             await self._session.commit()
@@ -553,7 +598,11 @@ class CheckerService:
         persisted = await self._checker_repo.get_run(checker_run.id)
         if persisted is None:
             raise CheckerRunNotFound("checker run not found")
-        return self._run_response_for_actor(actor, persisted)
+        return self._run_response_for_actor(
+            actor,
+            persisted,
+            has_checker_admin_access=can_admin_or_task_creator_manage(actor, task),
+        )
 
     async def list_submission_checker_runs(
         self,
@@ -571,9 +620,17 @@ class CheckerService:
         """
         require_any_role(actor, CHECKER_READ_ROLES)
         submission = await self._get_submission(submission_id)
-        await self._get_task_for_actor(actor, submission.task_id)
+        task = await self._get_task_for_actor(actor, submission.task_id)
         runs = await self._checker_repo.list_runs_for_submission(submission.id)
-        return [self._run_response_for_actor(actor, run) for run in runs]
+        has_checker_admin_access = can_admin_or_task_creator_manage(actor, task)
+        return [
+            self._run_response_for_actor(
+                actor,
+                run,
+                has_checker_admin_access=has_checker_admin_access,
+            )
+            for run in runs
+        ]
 
     async def get_checker_run(self, actor: ActorContext, checker_run_id: str) -> CheckerRunResponse:
         """Return one visible checker run.
@@ -589,8 +646,12 @@ class CheckerService:
         checker_run = await self._checker_repo.get_run(checker_run_id)
         if checker_run is None:
             raise CheckerRunNotFound("checker run not found")
-        await self._get_task_for_actor(actor, checker_run.task_id)
-        return self._run_response_for_actor(actor, checker_run)
+        task = await self._get_task_for_actor(actor, checker_run.task_id)
+        return self._run_response_for_actor(
+            actor,
+            checker_run,
+            has_checker_admin_access=can_admin_or_task_creator_manage(actor, task),
+        )
 
     async def _get_submission(self, submission_id: str) -> Submission:
         """Load a submission or raise a checker-domain not-found error.
@@ -620,11 +681,18 @@ class CheckerService:
         task = await self._task_repo.get_task(task_id)
         if task is None:
             raise CheckerTaskNotFound("task not found")
-        if set(actor.roles).intersection(CHECKER_TRIGGER_ROLES):
+        if can_admin_or_task_creator_manage(actor, task):
             return task
         if "worker" in actor.roles and task.assigned_to == actor.actor_id:
             return task
         raise CheckerTaskNotFound("task not found")
+
+    @staticmethod
+    def _ensure_checker_trigger_authorized(actor: ActorContext, task: WorkstreamTask) -> None:
+        """Enforce object-level authorization for manual checker execution."""
+        if can_admin_or_task_creator_manage(actor, task):
+            return
+        raise PermissionDenied("actor is not authorized to run checkers for this submission")
 
     def _build_checker_run(
         self,
@@ -737,6 +805,7 @@ class CheckerService:
         submission: Submission,
         trigger_reason: str,
         trigger_source: str,
+        requester_payload: dict[str, Any],
     ) -> None:
         """Move a task into post-submission evaluation when needed.
 
@@ -760,7 +829,7 @@ class CheckerService:
             from_status=from_status,
             to_status=TASK_STATUS_EVALUATION_PENDING,
             reason=trigger_reason,
-            event_payload={"trigger_source": trigger_source},
+            event_payload={"trigger_source": trigger_source, **requester_payload},
         )
 
     async def _apply_pre_review_gate_result(
@@ -769,6 +838,7 @@ class CheckerService:
         task: WorkstreamTask,
         submission: Submission,
         checker_run: CheckerRun,
+        requester_payload: dict[str, Any],
     ) -> None:
         """Apply task routing from a completed checker run.
 
@@ -786,6 +856,7 @@ class CheckerService:
                 checker_run,
                 TASK_STATUS_REVIEW_PENDING,
                 "pre_review_gate_passed",
+                requester_payload,
             )
             return
         if checker_run.routing_recommendation == ROUTING_NEEDS_REVISION:
@@ -796,6 +867,7 @@ class CheckerService:
                 checker_run,
                 TASK_STATUS_NEEDS_REVISION,
                 "pre_review_gate_needs_revision",
+                requester_payload,
             )
             return
         await self._write_gate_audit(
@@ -812,6 +884,7 @@ class CheckerService:
                 "outcome_source": checker_run.outcome_source,
                 "review_decision_id": None,
                 "trigger_source": checker_run.trigger_source,
+                **requester_payload,
             },
         )
 
@@ -823,6 +896,7 @@ class CheckerService:
         checker_run: CheckerRun,
         to_status: str,
         event_type: str,
+        requester_payload: dict[str, Any],
     ) -> None:
         """Transition a task out of the checker gate.
 
@@ -854,6 +928,7 @@ class CheckerService:
                 "blocking_count": checker_run.blocking_count,
                 "warning_count": checker_run.warning_count,
                 "failed_count": checker_run.failed_count,
+                **requester_payload,
             },
         )
 
@@ -932,6 +1007,7 @@ class CheckerService:
         attempt_number: int,
         trigger_reason: str,
         trigger_source: str,
+        requester_payload: dict[str, Any],
     ) -> AuditEvent:
         """Persist the audit event for a manual checker trigger.
 
@@ -982,9 +1058,21 @@ class CheckerService:
                     "locked_review_policy_version": submission.locked_review_policy_version,
                     "locked_revision_policy_version": submission.locked_revision_policy_version,
                     "locked_payment_policy_version": submission.locked_payment_policy_version,
+                    **requester_payload,
                 },
             )
         )
+
+    @staticmethod
+    def _requester_provenance_payload(requester: ActorContext) -> dict[str, Any]:
+        """Build requester provenance stored beside system-owned gate events."""
+        audit = requester.audit_context()
+        return {
+            "requester_actor_id": audit.actor_id,
+            "requester_external_subject": audit.external_subject,
+            "requester_external_issuer": audit.external_issuer,
+            "requester_auth_source": audit.auth_source,
+        }
 
     @staticmethod
     def _routing_recommendation_for_outcomes(outcomes: list[CheckerOutcome]) -> str:
@@ -1080,17 +1168,20 @@ class CheckerService:
         self,
         actor: ActorContext,
         checker_run: CheckerRun,
+        *,
+        has_checker_admin_access: bool,
     ) -> CheckerRunResponse:
         """Build a checker run response with role-sensitive result redaction.
 
         Args:
             actor: Trusted actor requesting the run.
             checker_run: Persisted checker run with result rows loaded.
+            has_checker_admin_access: Whether the actor has scoped operator
+                access to the task that owns this checker run.
 
         Returns:
             Checker run response visible to that actor.
         """
-        has_checker_admin_access = bool(set(actor.roles).intersection(CHECKER_TRIGGER_ROLES))
         hide_internal_route_from_worker = (
             not has_checker_admin_access
             and checker_run.routing_recommendation in INTERNAL_ROUTING_RECOMMENDATIONS

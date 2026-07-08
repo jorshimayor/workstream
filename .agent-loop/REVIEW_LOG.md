@@ -377,4 +377,39 @@ the trust bundle and PR body.
 Next gate: `WS-POL-001-14` remains inactive until the user explicitly starts it.
 It should replace public submission lock wording with finalize semantics,
 define system actor audit behavior, and rerun the Terminal Benchmark proof
-without DB inspection.
+through HTTP-visible lifecycle responses.
+
+## WS-POL-001-14
+
+Status: ready for PR on 2026-07-08.
+
+Branch: `codex/ws-pol-001-14-submission-finalize`
+
+Reviewed implementation SHA: pending evidence commit
+
+Required reviewer tracks:
+
+- senior engineering
+- QA/test
+- security/auth
+- product/ops
+- architecture
+- docs
+- reuse/dedup
+- test delta
+
+Result: PASS after internal review fixes. External review is pending PR.
+
+Scope: public submission handoff renamed to `finalize`, finalized response
+fields replace public lock wording, pre-review checker execution is audited
+under `workstream-system:pre-review-gate` with requester provenance, checker
+and audit visibility use scoped operator authorization, and the API contract
+plus Terminal Benchmark drills prove the lifecycle through HTTP-visible
+responses.
+
+Evidence: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-14-internal-review-evidence.md`
+
+External review status: pending PR.
+
+Next gate: open PR, wait for CodeRabbit and GitHub checks, address valid
+external findings, then wait for the user's explicit merge approval.

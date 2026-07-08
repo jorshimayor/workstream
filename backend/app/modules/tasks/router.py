@@ -425,18 +425,18 @@ async def get_submission(
 
 
 @router.post(
-    "/submissions/{submission_id}/lock",
+    "/submissions/{submission_id}/finalize",
     response_model=SubmissionResponse,
     response_model_exclude_none=True,
 )
-async def lock_submission(
+async def finalize_submission(
     submission_id: str,
     actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> SubmissionResponse:
-    """Lock a submission packet before checker execution."""
+    """Finalize a submission packet into the pre-review checker gate."""
     try:
-        return await TaskService(session).lock_submission(actor, submission_id)
+        return await TaskService(session).finalize_submission(actor, submission_id)
     except PermissionDenied as exc:
         raise permission_http_error(exc) from exc
     except TaskServiceError as exc:
