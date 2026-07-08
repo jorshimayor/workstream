@@ -1,0 +1,261 @@
+# PR Trust Bundle: WS-POL-001-14
+
+## Chunk
+
+`WS-POL-001-14` - Submission finalization and API-visible proof.
+
+## Goal
+
+Make the submission handoff explicit as finalization, preserve system actor
+audit provenance for automatic pre-review checker execution, and prove the
+Terminal Benchmark flow through authorized HTTP APIs instead of database
+inspection.
+
+## Human-approved intent
+
+Chunk contract:
+
+- `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/chunks/WS-POL-001-14-submission-finalize-no-db-drill.md`
+
+The user approved returning to the Terminal Benchmark drill only after the
+system exposes enough API surface to inspect setup, task context, finalization,
+checker runs, and audit events without manually inspecting Postgres.
+
+## What changed
+
+- Added public `POST /api/v1/submissions/{submission_id}/finalize`.
+- Removed the public submission lock route and public lock wording from active
+  code, tests, examples, and docs.
+- Public submission/evidence responses now use `finalized_at`.
+- Finalization validates task locked context before running the pre-review gate.
+- Automatic checker execution writes audit events as
+  `workstream-system:pre-review-gate` with requester provenance.
+- Checker-run detail/list, task audit, task responses, submission responses,
+  and locked-context reads use scoped operator visibility instead of broad role
+  checks.
+- API contract and Terminal Benchmark drills now prove finalization, checker
+  runs, audit events, pre-submit blocking, and revision v1/v2 behavior through
+  HTTP responses.
+
+## Why it changed
+
+The Terminal Benchmark drill exposed two product-contract problems:
+
+- Public `/lock` wording sounded like storage mutation, not a project manager
+  handoff into the pre-review gate.
+- The proof still depended on database inspection for confidence in lifecycle
+  state.
+
+This chunk makes the public boundary clearer and proves the current Workstream
+system through the same API surfaces a real operator or worker would use.
+
+## Design chosen
+
+Finalization is an operator handoff:
+
+```text
+submitted latest submission
+-> POST /submissions/{id}/finalize
+-> validate locked task context
+-> write submission_finalized audit event
+-> execute pre-review gate under workstream-system:pre-review-gate
+-> expose checker-run and audit state through authorized APIs
+```
+
+The database column remains `locked_at` internally because it still represents
+the immutable persistence boundary. Public responses expose `finalized_at`
+because that is the user-facing lifecycle concept.
+
+Authorization is intentionally scoped:
+
+- `admin` can manage all tasks.
+- `project_manager` can manage tasks they created until project-scoped role
+  assignment exists.
+- A worker who also has `project_manager` in the token does not receive
+  operator-shaped data for an assigned task they did not create.
+
+## Alternatives rejected
+
+- Keeping a public lock alias: rejected because v0.1 has no backward
+  compatibility obligation and stale names cause product confusion.
+- Treating the automatic checker as the requester: rejected because audit must
+  distinguish the system actor from the human/operator who finalized the
+  submission.
+- Continuing to prove lifecycle state through database reads: rejected because
+  the live drill should use authorized product APIs.
+
+## Scope control
+
+### Allowed files changed
+
+- `.agent-loop/` WS-POL-001 plan/status/chunk/review files
+- `backend/app/modules/checkers/router.py`
+- `backend/app/modules/checkers/runner.py`
+- `backend/app/modules/checkers/service.py`
+- `backend/app/modules/tasks/authorization.py`
+- `backend/app/modules/tasks/router.py`
+- `backend/app/modules/tasks/schemas.py`
+- `backend/app/modules/tasks/service.py`
+- `backend/scripts/api_contract_e2e.py`
+- `backend/scripts/week2_api_e2e.py`
+- `backend/tests/test_checkers.py`
+- `backend/tests/test_tasks.py`
+- active architecture, operations, roadmap, and checker docs
+- `examples/terminal_benchmark/` README, notes, and API drill
+
+### Files outside scope
+
+None intentionally.
+
+## Product Behavior
+
+- [ ] No Workstream product behavior changed.
+- [x] Product behavior changed and is explained here:
+
+Project managers/admins finalize submitted packets instead of calling a public
+lock endpoint. Workers see `finalized_at` in public submission/evidence
+responses. Operators can inspect checker-run and audit state through API
+responses after finalization.
+
+## Acceptance criteria proof
+
+- [x] Public finalization route replaces the old public handoff.
+  Evidence: router/tests/scripts use `/finalize`; active stale scan passed.
+- [x] Finalization is idempotent for latest submitted version and rejects
+  invalid states.
+  Evidence: task tests cover success, idempotency, unfinished task, unsubmitted
+  row, non-latest version, unauthorized actors, and invalid locked context.
+- [x] Automatic checker run uses system actor audit provenance.
+  Evidence: task/checker tests assert `workstream-system:pre-review-gate` and
+  requester provenance.
+- [x] Operator-only details are scoped correctly.
+  Evidence: security findings were fixed; tests cover wrong project manager and
+  multi-role worker/project-manager cases.
+- [x] API contract drill proves checker-run and audit APIs after finalization.
+  Evidence: `scripts/api_contract_e2e.py` passed.
+- [x] Terminal Benchmark drill proves current lifecycle through HTTP-visible
+  responses.
+  Evidence: `examples/terminal_benchmark/terminal_benchmark_api_e2e.py` passed
+  with the real OpenAI Agents SDK adapter.
+
+## Tests/checks run
+
+```bash
+cd backend && .venv/bin/pytest tests/test_tasks.py tests/test_checkers.py
+cd backend && .venv/bin/ruff check app/modules/tasks app/modules/checkers tests/test_tasks.py tests/test_checkers.py scripts/api_contract_e2e.py scripts/week2_api_e2e.py ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
+cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/api_contract_e2e.py
+bash -lc 'set -a; source /home/abiorh/flow/jarvis-live-agent-proof/.env; set +a; export WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test; export WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL=${WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL:-gpt-4.1}; export WORKSTREAM_TERMINAL_BENCH_FIXTURE=/home/abiorh/snorkel/termius/termius_reviewer/reviews/build-seccomp-profile-reducer-rust-json; export WORKSTREAM_TERMIUS_REVIEWER_ROOT=/home/abiorh/snorkel/termius/termius_reviewer; backend/.venv/bin/python examples/terminal_benchmark/terminal_benchmark_api_e2e.py'
+python3 scripts/check_markdown_links.py
+git diff --check
+```
+
+Result summary:
+
+```text
+Task/checker suite: 132 passed
+Ruff: passed
+API contract real API E2E: passed
+Terminal Benchmark real API E2E: passed
+Markdown links: passed for 24 changed Markdown files
+Active stale wording scan: passed
+git diff --check: passed
+```
+
+## Test delta
+
+### Tests added
+
+- Finalize rejects unfinished tasks.
+- Finalize rejects unsubmitted submission rows.
+- Finalize rejects invalid locked context.
+- Finalize rejects non-latest submission versions.
+- Wrong project manager and multi-role worker/project-manager visibility cases
+  for audit, checker, submission, task, and locked-context responses.
+- Checker-run result integrity in the API contract drill.
+- Terminal Benchmark blocked pre-submit proof with no persisted submission.
+
+### Tests modified
+
+- Existing submission lock tests and scripts were renamed to finalization.
+- Existing checker-run tests now assert system actor/requester provenance and
+  scoped response shapes.
+
+### Tests removed/skipped
+
+None.
+
+## CI integrity
+
+- [x] Coverage threshold unchanged
+- [x] Lint unchanged
+- [x] Typecheck unchanged
+- [x] No workflow weakening
+- [x] No package script weakening
+- [x] No unpinned new GitHub Action
+- [x] Checkout credential persistence unchanged
+
+## External review
+
+External review response file:
+
+- Pending PR review.
+
+| Source | Status | Notes |
+|---|---:|---|
+| CodeRabbit | Pending | Must run after PR is opened. |
+| GitHub checks | Pending | Must run after push. |
+
+## Reviewer results
+
+Reviewed implementation SHA: `592d4b02fec1b0b8921061ad6f93f90fc84ca83b`
+
+Reviewed at: 2026-07-08T10:16:02Z
+
+Reviewer run IDs:
+
+- senior engineering: `019f4040-38db-7c02-ada8-ec277d640635`
+- QA/test: `019f4033-07a1-72c1-a172-9cebee7ab9de`
+- security/auth: `019f4049-451a-75c2-8a90-1e80e12bfa55`
+- product/ops: `019f4021-0291-73d2-8052-69c10a6346e9`
+- architecture: `019f4021-172e-7671-b16c-c09a66343d87`
+- docs: `019f4021-22fa-7003-bf1f-4f80affcb7d9`
+- reuse/dedup: `019f4064-43a3-7e90-9569-a8f341310bfa`
+- test delta: `019f4049-51ed-78a1-8d3a-7ffa22dba883`
+
+| Reviewer | Result | Blocking findings | Notes |
+|---|---:|---|---|
+| senior engineering | PASS WITH LOW RISKS | None | Low proof clarity notes addressed. |
+| QA/test | PASS | None | Coverage accepted. |
+| security/auth | PASS | None | Scoped-operator visibility fixes accepted. |
+| product/ops | PASS AFTER FIXES | None | User-facing wording and proof terminology fixed. |
+| architecture | PASS | None | Boundary accepted. |
+| docs | PASS AFTER FIXES | None | Active docs cleaned up. |
+| reuse/dedup | PASS WITH LOW RISKS | None | Shared authorization helper accepted. |
+| test delta | PASS | None | Tests strengthened without weakening. |
+
+All sub-agent sessions were closed before final reporting.
+
+## Remaining risks
+
+- Post-submit policy derivation agent work remains future scope. Current
+  finalization executes the existing project post-submit checker policy.
+- Reviewer packet visibility remains a future review-lifecycle chunk.
+- External review has not run until the PR is opened.
+
+## Human review focus
+
+Please inspect:
+
+- Confirm `finalize` is the right public handoff name and `finalized_at` is the
+  right public timestamp.
+- Confirm scoped operator authorization is acceptable until project-scoped role
+  assignment exists.
+- Confirm system actor/requester audit separation is clear enough for future
+  review and reputation records.
+- Confirm the Terminal Benchmark proof now satisfies the real-API drill intent.
+
+## Human ownership
+
+- [ ] I can explain what changed.
+- [ ] I can explain why it changed.
+- [ ] I know what could break.
