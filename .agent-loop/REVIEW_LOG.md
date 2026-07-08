@@ -418,8 +418,29 @@ External review response: `.agent-loop/initiatives/WS-POL-001-submission-artifac
 External review status: CodeRabbit comments triaged; valid findings fixed;
 GitHub checks and CodeRabbit passed before merge.
 
-Next gate update: the accepted no-DB Terminal Benchmark live API drill from
-`main` exposed an agent-derived submission artifact policy self-conflict during
-policy derivation. Corrective chunk `WS-POL-001-15` is now active to harden the
-derivation contract before any next implementation chunk starts. The corrective
-branch has rerun that live API drill successfully after hardening.
+Next gate update before PR #81: the accepted no-DB Terminal Benchmark live API
+drill from `main` exposed an agent-derived submission artifact policy
+self-conflict during policy derivation. Corrective chunk `WS-POL-001-15`
+hardened the derivation contract and reran that live API drill successfully.
+
+## 2026-07-08 - WS-POL-001-15 Merged
+
+PR #81 merged into `main` as `b1a9851a5fe00580b704fe42bdeb511638dfe688`.
+
+Result: PASS after internal review, CodeRabbit, Agent Gates, and Backend checks.
+
+Scope: hardened the OpenAI Agents SDK submission artifact policy derivation
+prompt so it produces a project-level worker submission contract, avoids
+required/forbidden self-conflicts, avoids secret-like required fields, and
+requires exact safe relative artifact paths. Server-side default forbidden
+artifact validation remains fail-closed.
+
+Evidence: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-15-internal-review-evidence.md`
+
+External review response: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-15-external-review-response.md`
+
+External review status: CodeRabbit generated no actionable code comments; the
+description warning was fixed before merge.
+
+Next gate: no active implementation chunk. Wait for the user's next explicit
+chunk start signal.

@@ -2,21 +2,19 @@
 
 ## Current Status
 
-`WS-POL-001-01` through `WS-POL-001-14` are merged to `main`.
+`WS-POL-001-01` through `WS-POL-001-15` are merged to `main`.
 The post-actor-registry Terminal Benchmark live API drill passed through real
 HTTP calls, and task context visibility is now exposed through APIs.
 `WS-POL-001-14` replaced public submission lock wording with finalization,
 defined system actor audit semantics, and merged PR #79's HTTP-visible Terminal
 Benchmark proof evidence. The accepted post-merge no-DB Terminal Benchmark
 drill from `main` exposed a self-conflicting agent-derived submission artifact
-policy, now tracked as corrective chunk `WS-POL-001-15`.
-The corrective branch now reruns that accepted drill successfully after
-hardening the derivation contract.
+policy. Corrective chunk `WS-POL-001-15` hardened the derivation contract and
+reran that accepted drill successfully before merging through PR #81.
 
 ## Active Chunk
 
-`WS-POL-001-15` on branch
-`codex/ws-pol-001-15-agent-derivation-hardening`.
+None. Waiting for the user's next explicit implementation chunk.
 
 ## Chunk Status
 
@@ -36,7 +34,7 @@ hardening the derivation contract.
 | `WS-POL-001-12` | Merged | `codex/ws-pol-001-12-project-setup-policy-visibility` | 76 | Adds project setup-run and project policy visibility APIs for setup runs, sufficiency reports, submission artifact policies, effective policy, and compiled project pre-submit checker policy. |
 | `WS-POL-001-13` | Merged | `codex/ws-pol-001-13-task-context-apis` | 77 | Adds task work-context, worker submission-requirements, and operator-only locked-context APIs. |
 | `WS-POL-001-14` | Merged | `codex/ws-pol-001-14-submission-finalize` | 79 | Replaces public submission lock with finalize, defines system actor audit semantics, scopes operator visibility, and proves the Terminal Benchmark flow through HTTP-visible lifecycle responses. |
-| `WS-POL-001-15` | Active | `codex/ws-pol-001-15-agent-derivation-hardening` | - | Hardens agent-derived submission artifact policy instructions after the no-DB Terminal Benchmark drill exposed a required-artifact/forbidden-pattern self-conflict. |
+| `WS-POL-001-15` | Merged | `codex/ws-pol-001-15-agent-derivation-hardening` | 81 | Hardens agent-derived submission artifact policy instructions after the no-DB Terminal Benchmark drill exposed a required-artifact/forbidden-pattern self-conflict. |
 
 ## Blockers
 

@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-POL-001-15` | Agent Derivation Policy Conflict Hardening | L1 | Active on `codex/ws-pol-001-15-agent-derivation-hardening` |
+| none | none | - | Waiting for user to explicitly start the next chunk |
 
 ## Completed
 
@@ -27,13 +27,12 @@
 | `WS-POL-001-12` | Project Setup And Policy Visibility APIs | L1 | Merged through PR #76 as `46e74de` |
 | `WS-POL-001-13` | Task Context And Submission Requirement APIs | L1 | Merged through PR #77 as `b567bac` on 2026-07-08 |
 | `WS-POL-001-14` | Submission Finalize And No-DB Terminal Benchmark Proof | L1 | Merged through PR #79 as `53a57c3` on 2026-07-08 |
+| `WS-POL-001-15` | Agent Derivation Policy Conflict Hardening | L1 | Merged through PR #81 as `b1a9851` on 2026-07-08 |
 
 ## Proposed Next
 
-Complete `WS-POL-001-15` after the accepted no-DB Terminal Benchmark live API
-drill exposed an agent-derived submission artifact policy self-conflict. Do not
-start the next implementation chunk until this corrective PR is merged and the
-user explicitly approves the next chunk.
+Stop after the PR #81 post-merge memory update. Do not start the next
+implementation chunk until the user explicitly approves it.
 
 ## Blocked
 
