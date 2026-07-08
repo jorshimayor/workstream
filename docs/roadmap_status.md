@@ -47,6 +47,7 @@ Current phase: Week 3 review and revision preparation.
 - Chunk 12 project setup-run and project policy visibility APIs for setup runs, sufficiency reports, submission artifact policies, effective policy, and compiled project pre-submit checker policy.
 - Chunk 13 task work-context, worker submission-requirements, and operator-only locked-context APIs.
 - Chunk 14 submission finalization, system actor pre-review gate audit semantics, scoped operator visibility, and HTTP-visible Terminal Benchmark proof.
+- Chunk 15 agent-derivation hardening after the accepted no-DB Terminal Benchmark drill exposed a required/forbidden self-conflict.
 
 ## Review Tracks Closed
 
@@ -66,9 +67,9 @@ Current phase: Week 3 review and revision preparation.
 - Week 3 must keep review decisions canonical: `accept`, `needs_revision`, and `reject`.
 - `needs_revision` from human review must carry `outcome_source = human_review` and a review decision id; checker-caused `needs_revision` keeps `outcome_source = auto_checker`.
 - Review findings, revision replay, and reviewer-quality metrics are the next backend contracts to lock.
-- The accepted no-DB Terminal Benchmark drill exposed an agent-derived
-  submission artifact policy self-conflict from `main`; `WS-POL-001-15` hardens
-  the derivation contract before the next implementation chunk starts.
+- `WS-POL-001-15` hardened the agent-derived submission artifact policy
+  contract after the accepted no-DB Terminal Benchmark drill exposed a
+  required/forbidden self-conflict; the drill now passes after hardening.
 
 ## Pending Before Pilot
 

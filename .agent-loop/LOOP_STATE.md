@@ -4,21 +4,17 @@
 
 - Active initiative: `WS-POL-001` - Submission Artifact Policy Foundation
 - Active planning chunk: none
-- Active implementation chunk: `WS-POL-001-15` - Agent Derivation Policy
-  Conflict Hardening
-- Branch: `codex/ws-pol-001-15-agent-derivation-hardening`
-- Status: The accepted no-DB Terminal Benchmark live API drill from `main`
-  reached project/guide/snapshot/sufficiency, then failed during
-  agent-derived submission artifact policy creation because the agent emitted a
-  required artifact and forbidden artifact pattern that matched each other.
-- Last merged implementation SHA: `ebf9d1d`
-- Last merge commit: `53a57c3`
-- Current gate: write internal review evidence, run the evidence gate, and open
-  a PR for human review after the derivation contract hardening, full project
-  tests, internal reviewers, and accepted no-DB Terminal Benchmark live API
-  drill passed on this branch.
-- Next chunk: inactive until this corrective chunk is merged and the user
-  explicitly starts it.
+- Active implementation chunk: none
+- Branch: `main`
+- Status: `WS-POL-001-15` merged through PR #81. The project setup derivation
+  prompt now explicitly prevents required/forbidden artifact self-conflicts,
+  keeps derivation project-scoped, and the accepted no-DB Terminal Benchmark
+  live API drill passes after hardening.
+- Last merged implementation SHA: `b72a5b9`
+- Last merge commit: `b1a9851`
+- Current gate: post-merge memory update for PR #81, then stop for the user's
+  next explicit implementation chunk.
+- Next chunk: inactive until the user explicitly starts it.
 
 ## Operating Rule
 
