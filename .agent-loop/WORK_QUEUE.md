@@ -4,8 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-POL-001-14` | Submission Finalize And No-DB Terminal Benchmark Proof | L1 | Inactive; start only after explicit user signal |
-| `TERMINAL-BENCHMARK-LIVE-DRILL` | Accepted No-DB Terminal Benchmark Drill | L1 | Blocked behind `WS-POL-001-14`; use real HTTP calls only after finalize/system actor semantics are implemented |
+| `TERMINAL-BENCHMARK-LIVE-DRILL` | Accepted No-DB Terminal Benchmark Drill | L1 | Ready on `main`; use real HTTP calls only |
 
 ## Completed
 
@@ -27,16 +26,17 @@
 | `WS-POL-001-11` | Actor Identity And Profile Registry | L1 | Merged through PR #74 on 2026-07-07 |
 | `WS-POL-001-12` | Project Setup And Policy Visibility APIs | L1 | Merged through PR #76 as `46e74de` |
 | `WS-POL-001-13` | Task Context And Submission Requirement APIs | L1 | Merged through PR #77 as `b567bac` on 2026-07-08 |
+| `WS-POL-001-14` | Submission Finalize And No-DB Terminal Benchmark Proof | L1 | Merged through PR #79 as `53a57c3` on 2026-07-08 |
 
 ## Proposed Next
 
-`WS-POL-001-14` should replace public submission lock wording with finalize
-semantics, define system actor audit behavior, and enable the accepted
-Terminal Benchmark proof without DB inspection. Do not start it until the user
-explicitly asks.
+Run the accepted no-DB Terminal Benchmark live API drill from `main`, using
+real HTTP calls and the HTTP-visible setup, task context, finalization,
+checker-run, audit, and revision responses. Do not start the next implementation
+chunk until the user explicitly approves it.
 
 ## Blocked
 
 | Chunk | Blocker | Next action |
 |---|---|---|
-| `TERMINAL-BENCHMARK-LIVE-DRILL` | Accepted no-DB proof requires submission finalize semantics and system actor audit behavior. | Complete and review `WS-POL-001-14`, then rerun the drill through real HTTP calls. |
+| none | none | none |

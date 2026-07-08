@@ -4,15 +4,16 @@
 
 - Active initiative: `WS-POL-001` - Submission Artifact Policy Foundation
 - Active planning chunk: none
-- Active implementation chunk: `WS-POL-001-14`
-- Branch: `codex/ws-pol-001-14-submission-finalize`
-- Status: `WS-POL-001-14` PR #79 is open. CodeRabbit comments were triaged;
-  valid finalization, docs, and permissions-matrix findings were fixed locally.
-- Last merged implementation SHA: `af43b78`
-- Last merge commit: `af43b78`
-- Current gate: push CodeRabbit fixes, wait for external review and GitHub
-  checks, then wait for human checkpoint.
-- Next chunk: inactive until `WS-POL-001-14` receives human review and merge.
+- Active implementation chunk: none
+- Branch: `main`
+- Status: `WS-POL-001-14` merged through PR #79. Submission finalization,
+  system actor pre-review gate audit semantics, scoped operator visibility, and
+  HTTP-visible Terminal Benchmark proof are now on `main`.
+- Last merged implementation SHA: `ebf9d1d`
+- Last merge commit: `53a57c3`
+- Current gate: run the accepted no-DB Terminal Benchmark live API drill from
+  `main`, then decide the next chunk.
+- Next chunk: inactive until the user explicitly starts it.
 
 ## Operating Rule
 
@@ -121,6 +122,5 @@ blockchain, frontend, or agent-runtime behavior.
 - `WS-POL-001-13` internal review evidence is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-13-internal-review-evidence.md`.
 - `WS-POL-001-13` external review response is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-13-external-review-response.md`.
 - `WS-POL-001-13` PR trust bundle is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-13-pr-trust-bundle.md`.
-- `WS-POL-001-14` is open as PR #79. It addresses submission finalization and
-  HTTP-visible Terminal Benchmark proof semantics before the next accepted
-  Terminal Benchmark drill.
+- PR #79 merged into `main` as `53a57c3`; it implemented `WS-POL-001-14`
+  submission finalization and HTTP-visible Terminal Benchmark proof semantics.
