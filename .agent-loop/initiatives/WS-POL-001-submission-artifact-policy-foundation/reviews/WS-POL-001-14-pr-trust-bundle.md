@@ -28,6 +28,8 @@ checker runs, and audit events without manually inspecting Postgres.
   code, tests, examples, and docs.
 - Public submission/evidence responses now use `finalized_at`.
 - Finalization validates task locked context before running the pre-review gate.
+- Finalization uses an atomic database guard so concurrent finalize calls cannot
+  duplicate audit or checker side effects.
 - Automatic checker execution writes audit events as
   `workstream-system:pre-review-gate` with requester provenance.
 - Checker-run detail/list, task audit, task responses, submission responses,
@@ -124,7 +126,8 @@ responses after finalization.
 - [x] Finalization is idempotent for latest submitted version and rejects
   invalid states.
   Evidence: task tests cover success, idempotency, unfinished task, unsubmitted
-  row, non-latest version, unauthorized actors, and invalid locked context.
+  row, non-latest version, unauthorized actors, invalid locked context, and
+  duplicate side-effect prevention on repeated finalization.
 - [x] Automatic checker run uses system actor audit provenance.
   Evidence: task/checker tests assert `workstream-system:pre-review-gate` and
   requester provenance.
@@ -141,8 +144,9 @@ responses after finalization.
 ## Tests/checks run
 
 ```bash
+cd backend && .venv/bin/ruff check app/modules/tasks/repository.py app/modules/tasks/service.py tests/test_tasks.py
+cd backend && .venv/bin/pytest tests/test_tasks.py::test_finalize_submission_requires_operator_and_latest_version tests/test_tasks.py::test_submission_finalize_guard_is_atomic -q
 cd backend && .venv/bin/pytest tests/test_tasks.py tests/test_checkers.py
-cd backend && .venv/bin/ruff check app/modules/tasks app/modules/checkers tests/test_tasks.py tests/test_checkers.py scripts/api_contract_e2e.py scripts/week2_api_e2e.py ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
 cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/api_contract_e2e.py
 bash -lc 'set -a; source /home/abiorh/flow/jarvis-live-agent-proof/.env; set +a; export WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test; export WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL=${WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL:-gpt-4.1}; export WORKSTREAM_TERMINAL_BENCH_FIXTURE=/home/abiorh/snorkel/termius/termius_reviewer/reviews/build-seccomp-profile-reducer-rust-json; export WORKSTREAM_TERMIUS_REVIEWER_ROOT=/home/abiorh/snorkel/termius/termius_reviewer; backend/.venv/bin/python examples/terminal_benchmark/terminal_benchmark_api_e2e.py'
 python3 scripts/check_markdown_links.py
@@ -152,11 +156,12 @@ git diff --check
 Result summary:
 
 ```text
-Task/checker suite: 132 passed
-Ruff: passed
+Focused Ruff: passed
+Focused finalize guard tests: 2 passed
+Task/checker suite: 133 passed
 API contract real API E2E: passed
 Terminal Benchmark real API E2E: passed
-Markdown links: passed for 24 changed Markdown files
+Markdown links: passed for 27 changed Markdown files
 Active stale wording scan: passed
 git diff --check: passed
 ```
@@ -169,6 +174,8 @@ git diff --check: passed
 - Finalize rejects unsubmitted submission rows.
 - Finalize rejects invalid locked context.
 - Finalize rejects non-latest submission versions.
+- Finalize uses an atomic repository guard and repeat finalization does not
+  create duplicate checker runs or audit events.
 - Wrong project manager and multi-role worker/project-manager visibility cases
   for audit, checker, submission, task, and locked-context responses.
 - Checker-run result integrity in the API contract drill.
@@ -198,18 +205,18 @@ None.
 
 External review response file:
 
-- Pending PR review.
+- `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-14-external-review-response.md`
 
 | Source | Status | Notes |
 |---|---:|---|
-| CodeRabbit | Pending | Must run after PR is opened. |
-| GitHub checks | Pending | Must run after push. |
+| CodeRabbit | Addressed locally | Valid atomic finalization and docs findings fixed; broad project-manager access suggestion rejected as conflicting with scoped-operator security contract. Must rerun after push. |
+| GitHub checks | Pending rerun | Local checks passed; GitHub checks must rerun after push. |
 
 ## Reviewer results
 
-Reviewed implementation SHA: `592d4b02fec1b0b8921061ad6f93f90fc84ca83b`
+Reviewed implementation SHA: `77511d1e53616e5e99c393ddf064cd6d7649776c`
 
-Reviewed at: 2026-07-08T10:16:02Z
+Reviewed at: 2026-07-08T11:43:40Z
 
 Reviewer run IDs:
 
@@ -221,17 +228,25 @@ Reviewer run IDs:
 - docs: `019f4021-22fa-7003-bf1f-4f80affcb7d9`
 - reuse/dedup: `019f4064-43a3-7e90-9569-a8f341310bfa`
 - test delta: `019f4049-51ed-78a1-8d3a-7ffa22dba883`
+- senior engineering CodeRabbit fix: `019f4179-808b-7503-97bd-016cb2e1bbba`
+- QA/test CodeRabbit fix: `019f4179-8247-7751-9222-d678cd0f1b79`
+- security/auth CodeRabbit fix: `019f4179-8487-7153-bea8-fc093979a7da`
+- product/ops CodeRabbit fix: `019f4179-8647-77a3-830d-c5a8f2187b8a`
+- architecture CodeRabbit fix: `019f4179-883c-7330-ad49-d8ec9bca999c`
+- docs CodeRabbit fix: `019f4187-1fa8-7563-8854-c2e01c71178d`
+- reuse/dedup CodeRabbit fix: `019f417d-763c-73e1-80fa-d30e0adc1f1f`
+- test delta CodeRabbit fix: `019f417d-850c-7362-8f44-850fd42e3b40`
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS WITH LOW RISKS | None | Low proof clarity notes addressed. |
-| QA/test | PASS | None | Coverage accepted. |
-| security/auth | PASS | None | Scoped-operator visibility fixes accepted. |
-| product/ops | PASS AFTER FIXES | None | User-facing wording and proof terminology fixed. |
-| architecture | PASS | None | Boundary accepted. |
-| docs | PASS AFTER FIXES | None | Active docs cleaned up. |
+| senior engineering | PASS WITH LOW RISKS | None | Atomic guard direction accepted; true concurrent API race test remains optional follow-up. |
+| QA/test | PASS WITH LOW RISKS | None | Coverage accepted; repository guard and repeat-finalize side effects covered. |
+| security/auth | PASS WITH LOW RISKS | None | Scoped-operator visibility and permissions wording accepted. |
+| product/ops | PASS WITH LOW RISKS | None | User-facing wording and proof terminology fixed. |
+| architecture | PASS WITH LOW RISKS | None | Boundary accepted; allowed-file contract updated. |
+| docs | PASS | None | Multi-role precheck and finalization wording now match service behavior. |
 | reuse/dedup | PASS WITH LOW RISKS | None | Shared authorization helper accepted. |
-| test delta | PASS | None | Tests strengthened without weakening. |
+| test delta | PASS WITH LOW RISKS | None | Tests strengthened without weakening. |
 
 All sub-agent sessions were closed before final reporting.
 
@@ -240,7 +255,7 @@ All sub-agent sessions were closed before final reporting.
 - Post-submit policy derivation agent work remains future scope. Current
   finalization executes the existing project post-submit checker policy.
 - Reviewer packet visibility remains a future review-lifecycle chunk.
-- External review has not run until the PR is opened.
+- CodeRabbit and GitHub checks must rerun after the final evidence push.
 
 ## Human review focus
 
