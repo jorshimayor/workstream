@@ -4,7 +4,8 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `TERMINAL-BENCHMARK-LIVE-DRILL` | Post-Actor-Registry Real API Drill | L1 | Next gate; use real HTTP calls and canonical `POST /api/v1/workers/me/profile` |
+| `WS-POL-001-14` | Submission Finalize And No-DB Terminal Benchmark Proof | L1 | Inactive; start only after explicit user signal |
+| `TERMINAL-BENCHMARK-LIVE-DRILL` | Accepted No-DB Terminal Benchmark Drill | L1 | Blocked behind `WS-POL-001-14`; use real HTTP calls only after finalize/system actor semantics are implemented |
 
 ## Completed
 
@@ -24,14 +25,18 @@
 | `WS-POL-001-09` | OpenAI Agents SDK Runtime Only | L1 | Merged through PR #71 |
 | `WS-POL-001-10` | Pre-Submit Live Drill Hardening | L1 | Merged through PR #72 |
 | `WS-POL-001-11` | Actor Identity And Profile Registry | L1 | Merged through PR #74 on 2026-07-07 |
+| `WS-POL-001-12` | Project Setup And Policy Visibility APIs | L1 | Merged through PR #76 as `46e74de` |
+| `WS-POL-001-13` | Task Context And Submission Requirement APIs | L1 | Merged through PR #77 as `b567bac` on 2026-07-08 |
 
 ## Proposed Next
 
-After the Terminal Benchmark live API drill passes, decide whether the next
-product chunk should address drill findings or continue from the approved
-WS-POL chunk map. Do not start another implementation chunk before the drill
-result is reviewed.
+`WS-POL-001-14` should replace public submission lock wording with finalize
+semantics, define system actor audit behavior, and enable the accepted
+Terminal Benchmark proof without DB inspection. Do not start it until the user
+explicitly asks.
 
 ## Blocked
 
-None.
+| Chunk | Blocker | Next action |
+|---|---|---|
+| `TERMINAL-BENCHMARK-LIVE-DRILL` | Accepted no-DB proof requires submission finalize semantics and system actor audit behavior. | Complete and review `WS-POL-001-14`, then rerun the drill through real HTTP calls. |

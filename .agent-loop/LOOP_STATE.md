@@ -4,16 +4,16 @@
 
 - Active initiative: `WS-POL-001` - Submission Artifact Policy Foundation
 - Active planning chunk: none
-- Active implementation chunk: `WS-POL-001-13`
-- Branch: `codex/ws-pol-001-13-task-context-apis`
-- Status: `WS-POL-001-13` is implementing worker-safe task work context,
-  exact submission requirements, and operator-only locked task provenance APIs
-  after PR #76 merged to `main`.
-- Last merged implementation SHA: `46e74de`
-- Last merge commit: `46e74de`
-- Current gate: implement Chunk 13, run deterministic proof, run required
-  internal reviewer tracks, then open a PR for human review.
-- Next chunk: inactive until `WS-POL-001-13` receives human review and merge.
+- Active implementation chunk: none
+- Branch: `main`
+- Status: `WS-POL-001-13` merged through PR #77. Worker-safe task work
+  context, exact submission requirements, and operator-only locked task
+  provenance APIs are now on `main`.
+- Last merged implementation SHA: `b567bac`
+- Last merge commit: `b567bac`
+- Current gate: post-merge memory update, then stop.
+- Next chunk: `WS-POL-001-14` is inactive until the user gives an explicit
+  start signal.
 
 ## Operating Rule
 
@@ -117,3 +117,10 @@ blockchain, frontend, or agent-runtime behavior.
   project setup-run and policy visibility APIs.
 - `WS-POL-001-13` started on branch `codex/ws-pol-001-13-task-context-apis`
   after the user's explicit start signal.
+- PR #77 merged into `main` as `b567bac`; it implemented `WS-POL-001-13`
+  task work-context, submission-requirements, and operator-only locked-context APIs.
+- `WS-POL-001-13` internal review evidence is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-13-internal-review-evidence.md`.
+- `WS-POL-001-13` external review response is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-13-external-review-response.md`.
+- `WS-POL-001-13` PR trust bundle is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-13-pr-trust-bundle.md`.
+- `WS-POL-001-14` remains inactive. It should address submission finalize/no-DB
+  proof semantics before the next Terminal Benchmark accepted drill.
