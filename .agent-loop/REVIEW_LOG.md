@@ -337,3 +337,44 @@ no-backward-compatibility chunk decision.
 Next gate: rerun the Terminal Benchmark live API drill through real HTTP calls
 using `POST /api/v1/workers/me/profile`, then review findings before starting
 the next product chunk.
+
+## WS-POL-001-13
+
+Status: merged through PR #77 on 2026-07-08.
+
+Merge commit: `b567bac`
+
+Branch: `codex/ws-pol-001-13-task-context-apis`
+
+Reviewed implementation SHA: `f533f1a`
+
+Required reviewer tracks:
+
+- senior engineering
+- QA/test
+- security/auth
+- product/ops
+- architecture
+- docs
+- reuse/dedup
+- test delta
+
+Result: PASS after fixes from internal review and CodeRabbit. GitHub Agent
+Gates, Backend, and CodeRabbit passed before merge.
+
+Scope: worker-safe task work context, exact submission requirements, existing
+worker task-read redaction, fail-closed locked-context validation, and
+operator-only locked task provenance APIs.
+
+Evidence: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-13-internal-review-evidence.md`
+
+External review response: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-13-external-review-response.md`
+
+External review status: CodeRabbit comments triaged; the valid test
+maintainability nitpick was fixed; PR description warning was fixed by updating
+the trust bundle and PR body.
+
+Next gate: `WS-POL-001-14` remains inactive until the user explicitly starts it.
+It should replace public submission lock wording with finalize semantics,
+define system actor audit behavior, and rerun the Terminal Benchmark proof
+without DB inspection.
