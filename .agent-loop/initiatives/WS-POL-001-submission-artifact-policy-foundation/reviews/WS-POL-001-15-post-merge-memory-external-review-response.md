@@ -32,6 +32,14 @@ Resolution:
 - Updated the work queue wording to say the next chunk waits until the user
   explicitly starts it.
 
+Internal reviewer repair pass also found one low documentation cleanup:
+
+- `docs/roadmap_status.md` listed Chunk 15 before Chunks 11-14.
+
+Resolution:
+
+- Moved the Chunk 15 completed item after Chunk 14.
+
 ## Comments Deferred
 
 None.

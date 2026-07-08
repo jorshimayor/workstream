@@ -43,11 +43,11 @@ Current phase: Week 3 review and revision preparation.
 - Chunk 9 automatic pre-review gate with pre-submit intake blocking, internal `task_setup_blocked`, trusted checker retry, and worker redaction.
 - Chunk 10 checker trial with the expanded real API sample matrix, failure catalog, false-positive notes, missing-checker notes, and internal verifier evidence.
 - Week 2 real HTTP API drill through Flow-token auth, project/guide/task/submission lifecycle, pre-submit checks, automatic checker runs, `pre_submission_checker_failed` intake failures, worker redaction, internal `task_setup_blocked`, and trusted checker retry.
-- Chunk 15 agent-derivation hardening after the accepted no-DB Terminal Benchmark drill exposed a required/forbidden self-conflict.
 - Chunk 11 actor identity/profile registry for verified Flow actors.
 - Chunk 12 project setup-run and project policy visibility APIs for setup runs, sufficiency reports, submission artifact policies, effective policy, and compiled project pre-submit checker policy.
 - Chunk 13 task work-context, worker submission-requirements, and operator-only locked-context APIs.
 - Chunk 14 submission finalization, system actor pre-review gate audit semantics, scoped operator visibility, and HTTP-visible Terminal Benchmark proof.
+- Chunk 15 agent-derivation hardening after the accepted no-DB Terminal Benchmark drill exposed a required/forbidden self-conflict.
 
 ## Review Tracks Closed
 
