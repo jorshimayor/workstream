@@ -4,19 +4,19 @@
 
 Chunk 9 makes internal post-submit checks automatic.
 
-When an operator locks the latest submission, Workstream immediately runs the durable checker framework against that exact submission version and artifact manifest. A task cannot move to human review until this gate has completed.
+When an operator finalizes the latest submission, Workstream immediately runs the durable checker framework against that exact submission version and artifact manifest. A task cannot move to human review until this gate has completed.
 
-This matches the operating pattern we want from serious evaluation systems: the worker can run pre-submit feedback before sending work, but Workstream still owns the authoritative internal check after submission lock.
+This matches the operating pattern we want from serious evaluation systems: the worker can run pre-submit feedback before sending work, but Workstream still owns the authoritative internal check after submission finalization.
 
 ## Scope
 
-- automatic checker run trigger from submission locking
+- automatic checker run trigger from submission finalization
 - `submitted -> evaluation_pending` task transition when the gate starts
 - `evaluation_pending -> review_pending` when blocking checks pass
 - `evaluation_pending -> needs_revision` for worker-fixable blocking failures
 - internal `task_setup_blocked` route for task setup defects owned by project managers
 - checker run audit events for gate start, checker trigger, pass, needs-revision, and internal block outcomes
-- latest locked submission enforcement
+- latest finalized submission enforcement
 - manual checker retry after a completed run
 
 ## Non-Scope
@@ -38,8 +38,8 @@ The canonical flow is:
 
 ```text
 worker submits packet
--> operator locks latest submission
--> Workstream runs CheckerRun with trigger_source = submission_locked
+-> operator finalizes latest submission
+-> Workstream runs CheckerRun with trigger_source = submission_finalized
 -> task moves submitted -> evaluation_pending
 -> checker results determine the next route
 ```
@@ -55,13 +55,13 @@ Route outcomes:
 
 ## Latest Submission Rule
 
-Only the latest submission version can be locked or checked.
+Only the latest submission version can be finalized or checked.
 
-If a worker submits a new version after `needs_revision`, older locked versions stay immutable and cannot receive new checker runs.
+If a worker submits a new version after `needs_revision`, older finalized versions stay immutable and cannot receive new checker runs.
 
 ## Policy Binding
 
-The automatic run uses the policy context already stamped on the locked submission:
+The automatic run uses the policy context already stamped on the finalized submission:
 
 - locked guide version
 - locked post-submit checker policy id
@@ -77,7 +77,7 @@ The worker does not provide or restate these policy versions.
 The checker service validates the locked `PostSubmitCheckerPolicy`
 id/version/hash/body stamped on the submission, then executes from that locked
 body. Missing, mismatched, deleted, stale, malformed, or unregistered
-post-submit policy context blocks the lock/gate path with a structured setup or
+post-submit policy context blocks the finalize/gate path with a structured setup or
 post-submit checker policy API error before a durable `CheckerRun` or
 `CheckerResult` is created.
 
@@ -111,12 +111,20 @@ It also keeps the submission-level checker audit event:
 
 - `checker_run_triggered`
 
-Each event records actor identity, auth source, task id, submission id, submission version, locked policy versions, trigger source, and the checker routing context where applicable.
+Automatic pre-review gate events are attributed to the server-owned
+`workstream-system:pre-review-gate` actor. That actor is never accepted from
+client input and cannot authorize HTTP requests. The verified requester remains
+visible in audit payloads through requester actor id, external subject, external
+issuer, and auth source fields.
+
+Each event records actor identity, auth source, task id, submission id,
+submission version, locked policy versions, trigger source, requester
+provenance, and the checker routing context where applicable.
 
 ## Conditions Of Satisfaction
 
-- locking a clean latest submission creates attempt 1 automatically
-- automatic run uses `trigger_source = submission_locked`
+- finalizing a clean latest submission creates attempt 1 automatically
+- automatic run uses `trigger_source = submission_finalized`
 - clean submission moves task to `review_pending`
 - worker-fixable blocking result moves task to `needs_revision`
 - task setup defect produces `task_setup_blocked` and keeps task internal in `evaluation_pending`
@@ -126,5 +134,5 @@ Each event records actor identity, auth source, task id, submission id, submissi
 - manual checker retry supersedes the prior current run and increments attempt number
 - older submission versions cannot receive checker runs after a newer submission exists
 - checker-caused revision does not create a human review decision
-- checker policy errors return structured API errors through the lock endpoint
+- checker policy errors return structured API errors through the finalize endpoint
 - Postgres-backed integration tests cover the complete API flow

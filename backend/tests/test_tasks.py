@@ -46,6 +46,7 @@ from app.modules.tasks.models import (
     TaskAssignment,
     WorkstreamTask,
 )
+from app.modules.tasks.repository import TaskRepository
 from app.schemas.auth import ActorContext
 
 
@@ -2288,7 +2289,7 @@ async def test_submission_schema_rejects_worker_supplied_locked_context(
             "locked_pre_submit_checker_policy_id": "malicious",
             "locked_pre_submit_checker_bundle_hash": "sha256:" + "0" * 64,
             "runtime_parameters": {"required_artifacts": []},
-            "locked_at": "2026-06-07T00:00:00Z",
+            "finalized_at": "2026-06-07T00:00:00Z",
         }
     )
 
@@ -2952,7 +2953,7 @@ async def test_database_rejects_checker_run_without_post_submit_policy_context(
             task_id=task.id,
             submission_id=submission.id,
             submission_version=submission.version,
-            trigger_source="submission_locked",
+            trigger_source="submission_finalized",
             status="queued",
             routing_recommendation="not_evaluated",
             outcome_source="none",
@@ -3099,7 +3100,7 @@ async def test_locked_submission_can_only_be_replaced_by_new_version(
 
     set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
     locked_v1 = await task_client.post(
-        f"/api/v1/submissions/{v1.json()['id']}/lock",
+        f"/api/v1/submissions/{v1.json()['id']}/finalize",
         headers=auth_headers(),
     )
     assert locked_v1.status_code == 200, locked_v1.text
@@ -3127,7 +3128,7 @@ async def test_locked_submission_can_only_be_replaced_by_new_version(
         headers=auth_headers(),
     )
     assert fetched_v1.status_code == 200, fetched_v1.text
-    assert fetched_v1.json()["locked_at"] == locked_v1.json()["locked_at"]
+    assert fetched_v1.json()["finalized_at"] == locked_v1.json()["finalized_at"]
     assert "package_hash" not in fetched_v1.json()
     assert "artifact_hash_manifest" not in fetched_v1.json()
     async with db_session.get_session_factory()() as session:
@@ -3402,7 +3403,130 @@ async def test_database_blocks_task_locked_context_mutation_after_submission(
             await session.commit()
 
 
-async def test_lock_submission_requires_operator_and_latest_version(
+async def test_finalize_submission_rejects_unfinished_task(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+    created = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+    assert created.status_code == 201, created.text
+    async with db_session.get_session_factory()() as session:
+        task = await session.get(WorkstreamTask, started_task["id"])
+        assert task is not None
+        task.status = "in_progress"
+        await session.commit()
+
+    set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
+    finalize = await task_client.post(
+        f"/api/v1/submissions/{created.json()['id']}/finalize",
+        headers=auth_headers(),
+    )
+
+    assert finalize.status_code == 409
+    assert "submitted before finalizing" in finalize.json()["detail"]
+
+
+async def test_finalize_submission_rejects_unsubmitted_submission_row(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+    created = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+    assert created.status_code == 201, created.text
+    async with db_session.get_session_factory()() as session:
+        submission = await session.get(Submission, created.json()["id"])
+        assert submission is not None
+        submission.status = "draft"
+        await session.commit()
+
+    set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
+    finalize = await task_client.post(
+        f"/api/v1/submissions/{created.json()['id']}/finalize",
+        headers=auth_headers(),
+    )
+
+    assert finalize.status_code == 409
+    assert "submission must be submitted before finalizing" in finalize.json()["detail"]
+
+
+async def test_finalize_submission_rejects_invalid_locked_context(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+    created = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+    assert created.status_code == 201, created.text
+    async with db_session.get_session_factory()() as session:
+        task = await session.get(WorkstreamTask, started_task["id"])
+        assert task is not None
+        policy = await session.get(PreSubmitCheckerPolicy, task.locked_pre_submit_checker_policy_id)
+        assert policy is not None
+        policy.compiled_bundle = {**policy.compiled_bundle, "tampered": True}
+        await session.commit()
+
+    set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
+    finalize = await task_client.post(
+        f"/api/v1/submissions/{created.json()['id']}/finalize",
+        headers=auth_headers(),
+    )
+
+    assert finalize.status_code == 409
+    assert "task locked project pre-submit checker policy is invalid" in finalize.json()["detail"]
+
+
+async def test_finalize_submission_rejects_non_latest_version(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+    v1 = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+    assert v1.status_code == 201, v1.text
+    async with db_session.get_session_factory()() as session:
+        task = await session.get(WorkstreamTask, started_task["id"])
+        assert task is not None
+        task.status = "needs_revision"
+        await session.commit()
+    set_dev_actor(monkeypatch, roles="worker", subject="worker-one")
+    v2_payload = complete_submission_payload("sha256:package-v2")
+    v2_payload["artifact_hash_manifest"][0]["hash"] = "sha256:answer-v2"
+    v2 = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=v2_payload,
+    )
+    assert v2.status_code == 201, v2.text
+
+    set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
+    stale_finalize = await task_client.post(
+        f"/api/v1/submissions/{v1.json()['id']}/finalize",
+        headers=auth_headers(),
+    )
+
+    assert stale_finalize.status_code == 409
+    assert "only latest submission version can be finalized" in stale_finalize.json()["detail"]
+
+
+async def test_finalize_submission_requires_operator_and_latest_version(
     task_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -3422,28 +3546,153 @@ async def test_lock_submission_requires_operator_and_latest_version(
     assert premature_v2.status_code == 409
     assert "in progress or needs revision" in premature_v2.json()["detail"]
 
-    worker_lock = await task_client.post(
-        f"/api/v1/submissions/{v1.json()['id']}/lock",
+    worker_finalize = await task_client.post(
+        f"/api/v1/submissions/{v1.json()['id']}/finalize",
+        headers=auth_headers(),
+        json={"actor_id": "workstream-system:pre-review-gate"},
+    )
+    assert worker_finalize.status_code == 403
+
+    set_dev_actor(monkeypatch, roles="project_manager", subject="other-project-manager")
+    wrong_manager_finalize = await task_client.post(
+        f"/api/v1/submissions/{v1.json()['id']}/finalize",
+        headers=auth_headers(),
+        json={"audit_actor": "workstream-system:pre-review-gate"},
+    )
+    assert wrong_manager_finalize.status_code == 403
+    wrong_manager_audit = await task_client.get(
+        f"/api/v1/tasks/{started_task['id']}/audit-events",
         headers=auth_headers(),
     )
-    assert worker_lock.status_code == 403
+    assert wrong_manager_audit.status_code == 404
+    wrong_manager_locked_context = await task_client.get(
+        f"/api/v1/tasks/{started_task['id']}/locked-context",
+        headers=auth_headers(),
+    )
+    assert wrong_manager_locked_context.status_code == 404
 
     set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
     locked = await task_client.post(
-        f"/api/v1/submissions/{v1.json()['id']}/lock",
+        f"/api/v1/submissions/{v1.json()['id']}/finalize",
         headers=auth_headers(),
+        json={"audit_actor": "client-supplied-spoof"},
     )
     assert locked.status_code == 200, locked.text
     locked_body = locked.json()
-    assert locked_body["locked_at"] is not None
-    assert locked_body["evidence_items"][0]["locked_at"] == locked_body["locked_at"]
+    assert locked_body["finalized_at"] is not None
+    assert locked_body["evidence_items"][0]["finalized_at"] == locked_body["finalized_at"]
+    checker_runs = await task_client.get(
+        f"/api/v1/submissions/{v1.json()['id']}/checker-runs",
+        headers=auth_headers(),
+    )
+    assert checker_runs.status_code == 200, checker_runs.text
+    assert len(checker_runs.json()) == 1
+    checker_run = checker_runs.json()[0]
+    assert checker_run["trigger_source"] == "submission_finalized"
+    assert checker_run["triggered_by"] == "workstream-system:pre-review-gate"
+    assert checker_run["triggered_by_subject"] == "workstream-system:pre-review-gate"
+    assert checker_run["triggered_by_issuer"] == "workstream"
+    assert checker_run["trigger_auth_source"] == "workstream_system"
+    audit = await task_client.get(
+        f"/api/v1/tasks/{started_task['id']}/audit-events",
+        headers=auth_headers(),
+    )
+    assert audit.status_code == 200, audit.text
+    audit_events = {event["event_type"]: event for event in audit.json()}
+    finalized_event = audit_events["submission_finalized"]
+    assert finalized_event["actor_id"] == actor_id("project-manager-subject")
+    assert finalized_event["external_subject"] == "project-manager-subject"
+    assert finalized_event["external_issuer"] == "flow-test"
+    assert finalized_event["auth_source"] == "dev_mock"
+    assert (
+        finalized_event["event_payload"]["finalized_at"].replace("+00:00", "Z")
+        == locked_body["finalized_at"]
+    )
+    for event_type in ("pre_review_gate_started", "pre_review_gate_passed"):
+        event = audit_events[event_type]
+        assert event["actor_id"] == "workstream-system:pre-review-gate"
+        assert event["external_subject"] == "workstream-system:pre-review-gate"
+        assert event["external_issuer"] == "workstream"
+        assert event["auth_source"] == "workstream_system"
+        assert event["event_payload"]["requester_actor_id"] == actor_id("project-manager-subject")
+        assert event["event_payload"]["requester_external_subject"] == "project-manager-subject"
+        assert event["event_payload"]["requester_external_issuer"] == "flow-test"
+        assert event["event_payload"]["requester_auth_source"] == "dev_mock"
+        assert event["event_payload"]["trigger_source"] == "submission_finalized"
 
+    set_dev_actor(monkeypatch, roles="worker,project_manager", subject="worker-one")
+    multi_role_worker_audit = await task_client.get(
+        f"/api/v1/tasks/{started_task['id']}/audit-events",
+        headers=auth_headers(),
+    )
+    assert multi_role_worker_audit.status_code == 200, multi_role_worker_audit.text
+    assert "pre_review_gate_passed" not in multi_role_worker_audit.text
+    assert "requester_actor_id" not in multi_role_worker_audit.text
+    assert "post_submit_checks_processing" in multi_role_worker_audit.text
+    multi_role_worker_locked_context = await task_client.get(
+        f"/api/v1/tasks/{started_task['id']}/locked-context",
+        headers=auth_headers(),
+    )
+    assert multi_role_worker_locked_context.status_code == 404
+
+    set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
     second_lock = await task_client.post(
-        f"/api/v1/submissions/{v1.json()['id']}/lock",
+        f"/api/v1/submissions/{v1.json()['id']}/finalize",
         headers=auth_headers(),
     )
     assert second_lock.status_code == 200, second_lock.text
-    assert second_lock.json()["locked_at"] == locked_body["locked_at"]
+    assert second_lock.json()["finalized_at"] == locked_body["finalized_at"]
+    repeated_checker_runs = await task_client.get(
+        f"/api/v1/submissions/{v1.json()['id']}/checker-runs",
+        headers=auth_headers(),
+    )
+    assert repeated_checker_runs.status_code == 200, repeated_checker_runs.text
+    assert len(repeated_checker_runs.json()) == 1
+    repeated_audit = await task_client.get(
+        f"/api/v1/tasks/{started_task['id']}/audit-events",
+        headers=auth_headers(),
+    )
+    assert repeated_audit.status_code == 200, repeated_audit.text
+    repeated_event_types = [event["event_type"] for event in repeated_audit.json()]
+    assert repeated_event_types.count("submission_finalized") == 1
+    assert repeated_event_types.count("pre_review_gate_started") == 1
+    assert repeated_event_types.count("pre_review_gate_passed") == 1
+
+
+async def test_submission_finalize_guard_is_atomic(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+    created = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+    assert created.status_code == 201, created.text
+    submission_id = created.json()["id"]
+    finalized_at = datetime.now(UTC)
+
+    async with db_session.get_session_factory()() as session:
+        repo = TaskRepository(session)
+        assert await repo.finalize_submission_if_unlocked(submission_id, finalized_at) is True
+        await repo.lock_submission_evidence(submission_id, finalized_at)
+        await session.commit()
+
+    async with db_session.get_session_factory()() as session:
+        repo = TaskRepository(session)
+        assert (
+            await repo.finalize_submission_if_unlocked(
+                submission_id,
+                datetime.now(UTC),
+            )
+            is False
+        )
+        persisted = await repo.get_submission(submission_id, populate_existing=True)
+        assert persisted is not None
+        assert persisted.locked_at == finalized_at
+        assert {evidence.locked_at for evidence in persisted.evidence_items} == {finalized_at}
 
 
 async def test_database_enforces_unique_submission_version(

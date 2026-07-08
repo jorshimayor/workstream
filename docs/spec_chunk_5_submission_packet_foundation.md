@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This chunk adds the backend record for worker submission packets. A worker submits against a task id, Workstream runs pre-submit intake checks from the locked project pre-submit checker policy, stamps the task's locked guide source snapshot, effective project submission artifact policy, project pre-submit checker bundle, post-submit checker, review, revision, and payment context, and every submitted packet version becomes immutable once locked for checker execution.
+This chunk adds the backend record for worker submission packets. A worker submits against a task id, Workstream runs pre-submit intake checks from the locked project pre-submit checker policy, stamps the task's locked guide source snapshot, effective project submission artifact policy, project pre-submit checker bundle, post-submit checker, review, revision, and payment context, and every submitted packet version becomes immutable once finalized for checker execution.
 
 This completes the Week 1 backend lifecycle through `SUBMITTED`.
 
@@ -17,11 +17,11 @@ This completes the Week 1 backend lifecycle through `SUBMITTED`.
 - submission versioning
 - task transition from `IN_PROGRESS` to `SUBMITTED`
 - submission audit events
-- API paths for creating, reading, listing, and locking submission packets
+- API paths for creating, reading, listing, and finalizing submission packets
 
 ## Non-Scope
 
-- new post-submit checker execution behavior beyond the existing lock-triggered gate
+- new post-submit checker execution behavior beyond the existing finalize-triggered gate
 - new checker run record schema
 - human review decisions
 - revision replay enforcement
@@ -135,11 +135,11 @@ GET `/api/v1/submissions/{submission_id}`
 
 Returns one visible submission packet.
 
-POST `/api/v1/submissions/{submission_id}/lock`
+POST `/api/v1/submissions/{submission_id}/finalize`
 
-Locks a submission packet and triggers the current post-submit checker gate.
-Locking makes the packet immutable in place and binds durable checker runs to
-the locked `PostSubmitCheckerPolicy` id, version, hash, and body.
+Finalizes a submission packet into the current post-submit checker gate.
+Finalization makes the packet immutable in place and binds durable checker runs
+to the locked `PostSubmitCheckerPolicy` id, version, hash, and body.
 
 ## Versioning Rules
 
@@ -152,7 +152,7 @@ the locked `PostSubmitCheckerPolicy` id, version, hash, and body.
 - existing submission rows are never edited to replace artifacts
 - artifact changes require a new submission version
 - evidence rows belong to exactly one submission version
-- locked submission packets cannot be mutated in place
+- finalized submission packets cannot be mutated in place
 - concurrent version conflicts return a controlled conflict response instead of a server error
 
 ## Lifecycle Rules
@@ -168,16 +168,17 @@ the locked `PostSubmitCheckerPolicy` id, version, hash, and body.
 - submission packet content must satisfy the locked project pre-submit checker policy
 - every submission creation writes a task audit event
 - the audit event includes submission id, submission version, worker id, package hash, and artifact hash manifest
-- locking a submission writes a task audit event
-- only the latest submission version for a task can be locked
-- Chunk 5 submission status is `submitted`; locking sets `locked_at` and does not change status
+- finalizing a submission writes a task audit event
+- only the latest submission version for a task can be finalized
+- Chunk 5 submission status is `submitted`; finalization sets internal `locked_at` and does not change status
 
 ## Security And Auth
 
 - Workstream still verifies external Flow auth only
 - no Workstream-owned login or primary auth session is added
 - only the assigned worker can create a submission for the task
-- project managers and admins can read and lock submissions for operational flow
+- admins can read and finalize submissions for operational flow
+- project managers can read and finalize submissions only for tasks they created in v0.1
 - workers can read their own task submissions
 - response payloads are role-sensitive: operators can inspect server-stamped locked provenance for source snapshots and policy context, while worker-facing payloads hide internal policy ids, hashes, and bodies
 - package and evidence URIs are stored as object references, not signed URLs or credentials
@@ -204,7 +205,7 @@ Chunk 5 writes task audit events with submission identifiers in `event_payload`.
 - blocked submission-create attempts return `DomainError(code="pre_submission_checker_failed")` with structured pass/fail/warning details and create no submission row, no submission version, no task transition to `SUBMITTED`, and no submission-created audit event
 - Workstream stamps locked guide source snapshot ids/hashes, effective project submission artifact policy ids/hashes, project pre-submit checker policy ids/bundle hashes, and guide/checker/review/revision/payment policy versions from task context
 - task moves to `SUBMITTED`
-- submitted packet can be locked and automatically enters the current post-submit checker gate
+- submitted packet can be finalized and automatically enters the current post-submit checker gate
 - replacing an artifact creates a new submission version instead of mutating v1
 - submission audit events include task, worker, version, package, and artifact context
 - submission and immutability tests pass

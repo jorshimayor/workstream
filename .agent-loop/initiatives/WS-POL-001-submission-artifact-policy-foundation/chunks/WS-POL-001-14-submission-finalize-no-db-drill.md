@@ -52,13 +52,31 @@ backend/app/modules/checkers/**
 backend/tests/test_tasks.py
 backend/tests/test_checkers.py
 backend/scripts/api_contract_e2e.py
+backend/scripts/week2_api_e2e.py
 examples/terminal_benchmark/terminal_benchmark_api_e2e.py
 docs/architecture_data_model.md
 docs/architecture_system_architecture.md
+docs/architecture_checker_framework.md
 docs/glossary.md
+docs/current_system_data_flow.html
+docs/operations_roles_permissions.md
 docs/operations_project_operating_manual.md
+docs/roadmap_day_by_day_execution_plan.md
 docs/roadmap_status.md
+docs/roadmap_week1_backend_plan.md
+docs/spec_chunk_5_submission_packet_foundation.md
+docs/spec_chunk_6_checker_contract_records.md
+docs/spec_chunk_7_checker_runner_registry.md
+docs/spec_chunk_8_submission_artifact_policy_checkers.md
+docs/spec_chunk_9_pre_review_gate.md
+docs/spec_chunk_10_checker_trial.md
+docs/spec_week2_checker_framework.md
+docs/decision_0011_submission_artifact_policy_drives_pre_submit.md
+docs/diagrams/task_lifecycle_sequence.md
+examples/terminal_benchmark/README.md
+examples/terminal_benchmark/LOCAL_VALIDATION_NOTES.md
 .agent-loop/LOOP_STATE.md
+.agent-loop/REVIEW_LOG.md
 .agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/**
 ```
 
@@ -83,14 +101,23 @@ DB-only drill steps as accepted proof
 - The requester must be authorized against the submission's project/task.
 - The internal pre-review gate system actor cannot authorize HTTP requests and
   cannot be supplied by the client.
-- Checker-run and audit reads retain their existing route permissions unless a
-  test proves a visibility mismatch.
+- Manual checker-run trigger retains the same object-level scope: `admin`, or
+  `project_manager` for tasks they created.
+- Security review proved a visibility mismatch in v0.1 project-manager reads:
+  operator-shaped checker, audit, locked-context, submission, and task
+  provenance must be exposed only to `admin` or the `project_manager` that
+  created the task. A multi-role `worker,project_manager` actor assigned to a
+  task they did not create must receive worker-shaped responses or not-found
+  responses, not operator internals.
+- Checker-run and audit reads retain route-level role gates, but the response
+  and object-level visibility now use the scoped operator rule above until
+  project-scoped role assignments exist.
 
 ## Acceptance Criteria
 
-- Public `POST /submissions/{submission_id}/finalize` replaces public
-  `POST /submissions/{submission_id}/lock` in code, tests, scripts, examples,
-  and docs. No v0.1 compatibility alias is kept.
+- Public `POST /submissions/{submission_id}/finalize` replaces the previous
+  public submission handoff route in code, tests, scripts, examples, and docs.
+  No v0.1 compatibility alias is kept.
 - `finalize` is idempotent for the latest submitted version and returns the
   existing finalized response on repeat calls.
 - `finalize` fails for non-latest submission versions, unfinished submissions,
@@ -98,8 +125,8 @@ DB-only drill steps as accepted proof
   inconsistent.
 - Persistence may keep `locked_at` as the internal timestamp field.
 - Public audit event wording uses `submission_finalized` for the requester
-  handoff. Old public `submission_locked` wording is removed from current docs,
-  scripts, and tests.
+  handoff. Old public lock-event wording is removed from current docs, scripts,
+  and tests.
 - Pre-review checker execution is audited under
   `workstream-system:pre-review-gate` and includes requester actor id, issuer,
   subject, and auth source in the event payload.
@@ -108,7 +135,7 @@ DB-only drill steps as accepted proof
 - Existing task audit-event endpoint remains stable and exposes the finalization
   and pre-review gate path.
 - The Terminal Benchmark drill proceeds from guide creation through
-  `review_pending` using HTTP API responses only. Direct DB reads are allowed
+  `review_pending` using HTTP API responses only. Database access is allowed
   only for test setup/cleanup and migration reset, not for proving lifecycle
   state or finding ids.
 - The drill explicitly proves both paths: pre-submit preflight failure returns
@@ -125,11 +152,8 @@ cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream
 python scripts/check_internal_review_evidence.py
 ```
 
-Also run:
-
-```bash
-rg -n "/submissions/.*/lock|submission_locked|lock endpoint|DB inspection|direct DB" docs backend examples .agent-loop
-```
+Also run a stale wording scan against active public surfaces for old submission
+handoff, old lock-event, and database-proof wording.
 
 ## Required Reviewers
 
@@ -143,8 +167,8 @@ provenance, and whether the live drill is genuinely API-only.
 
 ## Stop Conditions
 
-- Stop if replacing public `/lock` breaks unrelated lifecycle contracts.
+- Stop if replacing the previous public submission handoff breaks unrelated
+  lifecycle contracts.
 - Stop if system actor provenance cannot be separated from requester
   authorization.
-- Stop if the Terminal Benchmark drill still requires DB inspection to prove
-  lifecycle state.
+- Stop if the Terminal Benchmark drill lacks HTTP-visible lifecycle proof.

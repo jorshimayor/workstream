@@ -446,7 +446,7 @@
             </div>
             <div class="actor">
               <strong>Checker Runner</strong>
-              <small>Runs registered checkers after submission lock and records results.</small>
+              <small>Runs registered checkers after submission finalization and records results.</small>
             </div>
             <div class="actor">
               <strong>Postgres</strong>
@@ -536,18 +536,18 @@
 
             <article class="step">
               <span class="num">8</span>
-              <h3>Submission is locked</h3>
-              <p>The server stamps the locked guide and policy versions, locks evidence rows, and schedules the checker run.</p>
+              <h3>Submission is finalized</h3>
+              <p>The server records finalization against the task's server-owned guide and policy context, finalizes evidence rows, and schedules the checker run.</p>
               <div class="data">
-                <code>locked_at</code>
-                <code>submission_locked</code>
+                <code>finalized_at</code>
+                <code>submission_finalized</code>
               </div>
             </article>
 
             <article class="step">
               <span class="num">9</span>
               <h3>Automatic checkers execute</h3>
-              <p>Registered checkers run against the exact locked submission, package hash, artifacts, and policy context.</p>
+              <p>Registered checkers run against the exact finalized submission, package hash, artifacts, and policy context.</p>
               <div class="data">
                 <code>CheckerRun</code>
                 <code>CheckerResult</code>
@@ -607,7 +607,7 @@
             </div>
             <div class="record">
               <strong>Audit Events</strong>
-              <span>Task creation, status changes, submission lock, checker gate start/pass/block.</span>
+              <span>Task creation, status changes, submission finalization, checker gate start/pass/block.</span>
             </div>
             <div class="record">
               <strong>Visibility Rules</strong>
@@ -632,15 +632,15 @@
           <li>Pre-submit intake failures create no submission row or submission version.</li>
           <li>Revision resubmission states are limited to needs_revision in v0.1.</li>
           <li>Submission packet does not carry guide or policy versions from the worker.</li>
-          <li>Submission lock stamps server-owned guide and policy versions.</li>
-          <li>Evidence rows lock with the submission.</li>
+          <li>Submission finalization records against the task's server-owned guide and policy context.</li>
+          <li>Evidence rows finalize with the submission.</li>
           <li>Checker runs bind to submission version, package hash, and artifact hashes.</li>
           <li>Duplicate checker results fail the real API drill.</li>
           <li>Worker-facing review decisions stay accept, needs_revision, and reject.</li>
         </ul>
 
         <div class="mini-flow">
-          <div><strong>Clean path:</strong> active guide -&gt; ready task -&gt; locked submission -&gt; checker pass -&gt; review_pending.</div>
+          <div><strong>Clean path:</strong> active guide -&gt; ready task -&gt; finalized submission -&gt; checker pass -&gt; review_pending.</div>
           <div><strong>Worker-fix path:</strong> checker failure -&gt; needs_revision -&gt; new submission version.</div>
           <div><strong>Setup-defect path:</strong> task_setup_blocked -&gt; project manager repair -&gt; trusted checker retry.</div>
         </div>

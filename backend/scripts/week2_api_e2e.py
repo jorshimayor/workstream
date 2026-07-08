@@ -110,7 +110,7 @@ def assert_local_database_url(database_url: str) -> None:
     )
 
 
-def start_week2_api_server(port: int, env: dict[str, str]) -> tuple[subprocess.Popen, Path]:
+def start_backend_api_server(port: int, env: dict[str, str]) -> tuple[subprocess.Popen, Path]:
     """Start a real uvicorn server process for the Week 2 drill.
 
     Args:
@@ -442,7 +442,7 @@ async def create_started_task(
     return started
 
 
-async def submit_lock_and_get_run(
+async def submit_finalize_and_get_run(
     client: httpx.AsyncClient,
     *,
     manager_token: str,
@@ -450,7 +450,7 @@ async def submit_lock_and_get_run(
     task_id: str,
     payload: dict,
 ) -> tuple[dict, dict, dict]:
-    """Submit a packet, lock it, and return the automatic checker run.
+    """Submit a packet, finalize it, and return the automatic checker run.
 
     Args:
         client: Real HTTP client.
@@ -460,7 +460,7 @@ async def submit_lock_and_get_run(
         payload: Submission packet payload.
 
     Returns:
-        Created submission, locked submission, and automatic checker run payload.
+        Created submission, finalized submission, and automatic checker run payload.
     """
     submission = await request_json(
         client,
@@ -470,28 +470,28 @@ async def submit_lock_and_get_run(
         payload,
         201,
     )
-    locked = await request_json(
+    finalized = await request_json(
         client,
         "POST",
-        f"/api/v1/submissions/{submission['id']}/lock",
+        f"/api/v1/submissions/{submission['id']}/finalize",
         manager_token,
     )
-    assert_locked_submission_response(locked)
+    assert_finalized_submission_versions(finalized)
     checker_run = await wait_for_submission_checker_run(
         client,
         manager_token,
         submission["id"],
     )
-    return submission, locked, checker_run
+    return submission, finalized, checker_run
 
 
-def assert_locked_submission_response(submission: dict) -> None:
-    """Assert a locked submission response has complete locked context.
+def assert_finalized_submission_versions(submission: dict) -> None:
+    """Assert a finalized submission response has expected version stamps.
 
     Args:
-        submission: Locked submission response payload.
+        submission: Finalized submission response payload.
     """
-    ensure(submission["locked_at"] is not None, "locked submission missing locked_at")
+    ensure(submission["finalized_at"] is not None, "finalized submission missing finalized_at")
     locked_versions = {
         submission["locked_guide_version"],
         submission["locked_review_policy_version"],
@@ -500,44 +500,44 @@ def assert_locked_submission_response(submission: dict) -> None:
     }
     ensure(locked_versions == {"v1"}, f"locked context drifted: {locked_versions}")
     ensure(
-        all(item["locked_at"] == submission["locked_at"] for item in submission["evidence_items"]),
-        "evidence item locked_at does not match submission locked_at",
+        all(item["finalized_at"] == submission["finalized_at"] for item in submission["evidence_items"]),
+        "evidence item finalized_at does not match submission finalized_at",
     )
 
 
-async def assert_lock_idempotency(
+async def assert_finalize_idempotency(
     client: httpx.AsyncClient,
     *,
     manager_token: str,
     submission_id: str,
-    expected_locked_at: str,
+    expected_finalized_at: str,
     expected_checker_run_id: str,
 ) -> None:
-    """Assert locking an already locked submission does not create another run.
+    """Assert finalizing an already finalized submission does not create another run.
 
     Args:
         client: Real HTTP client.
         manager_token: Project manager Flow token.
-        submission_id: Submission id to relock.
-        expected_locked_at: Original lock timestamp.
+        submission_id: Submission id to finalize again.
+        expected_finalized_at: Original finalize timestamp.
         expected_checker_run_id: Original automatic checker run id.
     """
-    relocked = await request_json(
+    refinalized = await request_json(
         client,
         "POST",
-        f"/api/v1/submissions/{submission_id}/lock",
+        f"/api/v1/submissions/{submission_id}/finalize",
         manager_token,
     )
-    ensure(relocked["locked_at"] == expected_locked_at, "idempotent lock changed locked_at")
+    ensure(refinalized["finalized_at"] == expected_finalized_at, "idempotent finalize changed finalized_at")
     runs = await request_json(
         client,
         "GET",
         f"/api/v1/submissions/{submission_id}/checker-runs",
         manager_token,
     )
-    ensure(len(runs) == 1, f"idempotent lock created extra checker runs: {len(runs)}")
-    ensure(runs[0]["id"] == expected_checker_run_id, "idempotent lock changed checker run")
-    ensure(runs[0]["attempt_number"] == 1, "idempotent lock changed attempt number")
+    ensure(len(runs) == 1, f"idempotent finalize created extra checker runs: {len(runs)}")
+    ensure(runs[0]["id"] == expected_checker_run_id, "idempotent finalize changed checker run")
+    ensure(runs[0]["attempt_number"] == 1, "idempotent finalize changed attempt number")
 
 
 async def wait_for_submission_checker_run(
@@ -545,7 +545,7 @@ async def wait_for_submission_checker_run(
     manager_token: str,
     submission_id: str,
 ) -> dict:
-    """Wait for the automatic submission-locked checker run.
+    """Wait for the automatic finalized-submission checker run.
 
     Args:
         client: Real HTTP client.
@@ -565,7 +565,7 @@ async def wait_for_submission_checker_run(
         )
         ensure(isinstance(runs, list), "checker run list did not return a list")
         last_count = len(runs)
-        if len(runs) == 1 and runs[0]["trigger_source"] == "submission_locked":
+        if len(runs) == 1 and runs[0]["trigger_source"] == "submission_finalized":
             return await wait_for_checker_run_terminal(
                 client,
                 manager_token,
@@ -867,11 +867,11 @@ async def assert_week2_database_invariants(scenarios: list[dict]) -> None:
                 == task.locked_pre_submit_checker_bundle_hash,
                 f"{scenario['name']} submission pre-submit checker lock drifted",
             )
-            ensure(submission.locked_at is not None, f"{scenario['name']} submission not locked")
+            ensure(submission.locked_at is not None, f"{scenario['name']} submission not finalized")
             ensure(
                 submission.locked_at.isoformat().replace("+00:00", "Z")
-                == scenario["locked_at"],
-                f"{scenario['name']} locked_at response/database drifted",
+                == scenario["finalized_at"],
+                f"{scenario['name']} finalized_at response/database drifted",
             )
             evidence_items = (
                 await session.scalars(
@@ -881,7 +881,7 @@ async def assert_week2_database_invariants(scenarios: list[dict]) -> None:
             ensure(evidence_items, f"{scenario['name']} evidence items missing")
             ensure(
                 all(item.locked_at == submission.locked_at for item in evidence_items),
-                f"{scenario['name']} evidence lock drifted",
+                f"{scenario['name']} evidence finalize timestamp drifted",
             )
 
             ensure(
@@ -1101,7 +1101,7 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
             clean_worker_token,
         )
         ensure(clean_precheck_submissions == [], "clean precheck created a submission")
-        clean_submission, clean_locked, clean_run = await submit_lock_and_get_run(
+        clean_submission, clean_finalized, clean_run = await submit_finalize_and_get_run(
             client,
             manager_token=manager_token,
             worker_token=clean_worker_token,
@@ -1111,11 +1111,11 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
         assert_default_checker_set(clean_run)
         ensure(clean_run["routing_recommendation"] == "allow_review", "clean run was blocked")
         ensure(clean_run["blocking_count"] == 0, "clean run had blocking checker results")
-        await assert_lock_idempotency(
+        await assert_finalize_idempotency(
             client,
             manager_token=manager_token,
             submission_id=clean_submission["id"],
-            expected_locked_at=clean_locked["locked_at"],
+            expected_finalized_at=clean_finalized["finalized_at"],
             expected_checker_run_id=clean_run["id"],
         )
         await assert_task_status(client, manager_token, clean_task["id"], "review_pending")
@@ -1210,9 +1210,9 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
         )
         (
             trusted_retry_submission,
-            trusted_retry_locked,
+            trusted_retry_finalized,
             trusted_retry_initial_run,
-        ) = await submit_lock_and_get_run(
+        ) = await submit_finalize_and_get_run(
             client,
             manager_token=manager_token,
             worker_token=trusted_retry_worker_token,
@@ -1379,7 +1379,7 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
         )
         ensure(
             all(
-                event[1] not in {"submission_created", "submission_locked", "checker_run_triggered"}
+                event[1] not in {"submission_created", "submission_finalized", "checker_run_triggered"}
                 for event in revision_blocked_create_snapshot["audit_events"]
             ),
             "blocked submission create persisted task submission/checker audit events",
@@ -1594,7 +1594,7 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
         )
         warning_payload = submission_payload(run_id, "warning")
         warning_payload["summary"] = "Completed with a placeholder note that must be reviewed."
-        warning_submission, warning_locked, warning_run = await submit_lock_and_get_run(
+        warning_submission, warning_finalized, warning_run = await submit_finalize_and_get_run(
             client,
             manager_token=manager_token,
             worker_token=warning_worker_token,
@@ -1653,9 +1653,9 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
         )
         (
             checker_revision_v1_submission,
-            checker_revision_v1_locked,
+            checker_revision_v1_finalized,
             checker_revision_v1_run,
-        ) = await submit_lock_and_get_run(
+        ) = await submit_finalize_and_get_run(
             client,
             manager_token=manager_token,
             worker_token=checker_revision_worker_token,
@@ -1819,7 +1819,7 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
                 "review_decision_id": "fake-review-decision",
                 "routing_recommendation": "allow_review",
                 "task_setup_blocked": True,
-                "trigger_source": "submission_locked",
+                "trigger_source": "submission_finalized",
             }
         )
         malicious_snapshot = await task_side_effect_snapshot(checker_revision_task["id"])
@@ -1888,13 +1888,13 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
             {"trigger_reason": "Week 2 stale revision retry"},
             409,
         )
-        checker_revision_v2_locked = await request_json(
+        checker_revision_v2_finalized = await request_json(
             client,
             "POST",
-            f"/api/v1/submissions/{checker_revision_v2_submission['id']}/lock",
+            f"/api/v1/submissions/{checker_revision_v2_submission['id']}/finalize",
             manager_token,
         )
-        assert_locked_submission_response(checker_revision_v2_locked)
+        assert_finalized_submission_versions(checker_revision_v2_finalized)
         checker_revision_v2_run = await wait_for_submission_checker_run(
             client,
             manager_token,
@@ -2013,13 +2013,13 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
             201,
         )
         await break_acceptance_criteria(setup_task["id"])
-        setup_locked = await request_json(
+        setup_finalized = await request_json(
             client,
             "POST",
-            f"/api/v1/submissions/{setup_submission['id']}/lock",
+            f"/api/v1/submissions/{setup_submission['id']}/finalize",
             manager_token,
         )
-        assert_locked_submission_response(setup_locked)
+        assert_finalized_submission_versions(setup_finalized)
         setup_run = await wait_for_submission_checker_run(
             client,
             manager_token,
@@ -2088,7 +2088,7 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
             "retry checker run is not current",
         )
         ensure(
-            setup_runs_by_attempt[1]["trigger_source"] == "submission_locked",
+            setup_runs_by_attempt[1]["trigger_source"] == "submission_finalized",
             "first setup checker trigger source drifted",
         )
         ensure(
@@ -2105,10 +2105,10 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
                 "task_id": clean_task["id"],
                 "submission_id": clean_submission["id"],
                 "checker_run_id": clean_run["id"],
-                "locked_at": clean_locked["locked_at"],
+                "finalized_at": clean_finalized["finalized_at"],
                 "expected_route": "allow_review",
                 "expected_final_task_status": "review_pending",
-                "expected_trigger_source": "submission_locked",
+                "expected_trigger_source": "submission_finalized",
                 "expected_attempt": 1,
                 "expected_attempts": [1],
                 "expected_current": True,
@@ -2125,10 +2125,10 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
                 "task_id": warning_task["id"],
                 "submission_id": warning_submission["id"],
                 "checker_run_id": warning_run["id"],
-                "locked_at": warning_locked["locked_at"],
+                "finalized_at": warning_finalized["finalized_at"],
                 "expected_route": "allow_review",
                 "expected_final_task_status": "review_pending",
-                "expected_trigger_source": "submission_locked",
+                "expected_trigger_source": "submission_finalized",
                 "expected_attempt": 1,
                 "expected_attempts": [1],
                 "expected_current": True,
@@ -2145,7 +2145,7 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
                 "task_id": trusted_retry_task["id"],
                 "submission_id": trusted_retry_submission["id"],
                 "checker_run_id": trusted_retry_run["id"],
-                "locked_at": trusted_retry_locked["locked_at"],
+                "finalized_at": trusted_retry_finalized["finalized_at"],
                 "expected_route": "allow_review",
                 "expected_final_task_status": "review_pending",
                 "expected_trigger_source": "manual_checker_trigger",
@@ -2166,10 +2166,10 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
                 "task_id": checker_revision_task["id"],
                 "submission_id": checker_revision_v1_submission["id"],
                 "checker_run_id": checker_revision_v1_run["id"],
-                "locked_at": checker_revision_v1_locked["locked_at"],
+                "finalized_at": checker_revision_v1_finalized["finalized_at"],
                 "expected_route": "needs_revision",
                 "expected_final_task_status": "review_pending",
-                "expected_trigger_source": "submission_locked",
+                "expected_trigger_source": "submission_finalized",
                 "expected_attempt": 1,
                 "expected_attempts": [1],
                 "expected_current": True,
@@ -2186,10 +2186,10 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
                 "task_id": checker_revision_task["id"],
                 "submission_id": checker_revision_v2_submission["id"],
                 "checker_run_id": checker_revision_v2_run["id"],
-                "locked_at": checker_revision_v2_locked["locked_at"],
+                "finalized_at": checker_revision_v2_finalized["finalized_at"],
                 "expected_route": "allow_review",
                 "expected_final_task_status": "review_pending",
-                "expected_trigger_source": "submission_locked",
+                "expected_trigger_source": "submission_finalized",
                 "expected_attempt": 1,
                 "expected_attempts": [1],
                 "expected_current": True,
@@ -2207,10 +2207,10 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
                 "task_id": setup_task["id"],
                 "submission_id": setup_submission["id"],
                 "checker_run_id": setup_run["id"],
-                "locked_at": setup_locked["locked_at"],
+                "finalized_at": setup_finalized["finalized_at"],
                 "expected_route": "task_setup_blocked",
                 "expected_final_task_status": "review_pending",
-                "expected_trigger_source": "submission_locked",
+                "expected_trigger_source": "submission_finalized",
                 "expected_attempt": 1,
                 "expected_attempts": [1, 2],
                 "expected_current": False,
@@ -2227,7 +2227,7 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
                 "task_id": setup_task["id"],
                 "submission_id": setup_submission["id"],
                 "checker_run_id": retry["id"],
-                "locked_at": setup_locked["locked_at"],
+                "finalized_at": setup_finalized["finalized_at"],
                 "expected_route": "allow_review",
                 "expected_final_task_status": "review_pending",
                 "expected_trigger_source": "manual_checker_trigger",
@@ -2284,7 +2284,7 @@ async def main(env: dict[str, str]) -> None:
 
     port = find_free_port()
     base_url = f"http://127.0.0.1:{port}"
-    process, log_path = start_week2_api_server(port, env)
+    process, log_path = start_backend_api_server(port, env)
     try:
         await wait_for_health(base_url, process, log_path)
         await exercise_week2_api(base_url, env)

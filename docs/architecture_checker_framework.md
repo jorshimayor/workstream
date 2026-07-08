@@ -158,7 +158,7 @@ Submission quality gate:
 
 Pre-review gate phase:
 
-- project-configured registered checkers run against the locked submission and policy context
+- project-configured registered checkers run against the finalized submission and policy context
 
 ## Submission Artifact Policy And Pre-Submit Generation
 
@@ -275,7 +275,7 @@ Draft packet
 -> load locked PreSubmitCheckerPolicy compiled bundle hash
 -> run pre-submit intake checks
 -> create Submission only when blocking pre-submit checks pass
--> lock submission
+-> finalize submission
 -> create CheckerRun
 -> validate locked PostSubmitCheckerPolicy id/version/hash/body
 -> execute locked PostSubmitCheckerPolicy execution_checkers
@@ -303,7 +303,7 @@ The checker run records:
 
 - submission id
 - post-submit checker policy id, version, hash, and internal locked body
-  stamped from the locked submission context
+  stamped from the finalized submission context
 - artifact hash manifest
 - blocking failure count
 - warning count

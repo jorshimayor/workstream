@@ -34,8 +34,8 @@ Current phase: Week 3 review and revision preparation.
 - Chunk 2 external Flow auth actor boundary.
 - Chunk 3 project guide foundation with checker, review, revision, and payment policy context.
 - Chunk 4 task queue, worker/reviewer profiles, assignment, claim, start, and task audit events.
-- Chunk 5 submission packet foundation with evidence items, versioning, server-stamped locked context, and submission locking.
-- Backend API contract drill through `Project -> Guide -> Task -> Screening -> Ready -> Claim -> Start -> Submit -> Lock submission`.
+- Chunk 5 submission packet foundation with evidence items, versioning, server-stamped locked context, and submission finalization.
+- Backend API contract drill through `Project -> Guide -> Task -> Screening -> Ready -> Claim -> Start -> Submit -> Finalize submission`.
 - Week 2 checker framework scope specification.
 - Chunk 6 checker contract and records specification.
 - Chunk 7 checker runner, registry, structural checkers, durable checker records, and API tests.
@@ -65,8 +65,8 @@ Current phase: Week 3 review and revision preparation.
 - Week 3 must keep review decisions canonical: `accept`, `needs_revision`, and `reject`.
 - `needs_revision` from human review must carry `outcome_source = human_review` and a review decision id; checker-caused `needs_revision` keeps `outcome_source = auto_checker`.
 - Review findings, revision replay, and reviewer-quality metrics are the next backend contracts to lock.
-- Chunk 14 remains before the accepted no-DB Terminal Benchmark drill. It must
-  replace public submission lock wording with finalize semantics and define
+- Chunk 14 is active before the accepted no-DB Terminal Benchmark drill. It
+  replaces public submission lock wording with finalize semantics and defines
   system actor audit behavior.
 
 ## Pending Before Pilot
@@ -86,7 +86,7 @@ WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:543
 
 The script runs migrations forward and exercises project policy visibility plus task context APIs across the following flow:
 
-`Project -> Guide -> Task -> Screening -> Ready -> Work context -> Submission requirements -> Locked context -> Claim -> Start -> Submit -> Lock submission`
+`Project -> Guide -> Task -> Screening -> Ready -> Work context -> Submission requirements -> Locked context -> Claim -> Start -> Submit -> Finalize submission`
 
 ## Week 2 Real API Drill
 
@@ -99,7 +99,7 @@ WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:543
 The script starts a real local API server, issues local Flow-compatible tokens,
 runs migrations forward, and exercises:
 
-`Project -> Guide -> Task -> Screening -> Ready -> Claim -> Start -> Pre-submit checks -> pre_submission_checker_failed | Submit -> Lock submission -> evaluation_pending -> review_pending | checker_caused_revision -> needs_revision -> fixed_resubmission -> evaluation_pending -> review_pending | internal task_setup_blocked -> trusted checker retry`
+`Project -> Guide -> Task -> Screening -> Ready -> Claim -> Start -> Pre-submit checks -> pre_submission_checker_failed | Submit -> Finalize submission -> evaluation_pending -> review_pending | checker_caused_revision -> needs_revision -> fixed_resubmission -> evaluation_pending -> review_pending | internal task_setup_blocked -> trusted checker retry`
 
 It also proves older submissions remain immutable, non-owning worker calls create
 no task-side effects, malicious internal fields are rejected before persistence,
@@ -115,11 +115,11 @@ Required invariants:
 - Pre-submit checker responses are non-authoritative preflight feedback; submission creation is the authoritative intake gate and must not create submissions, checker runs, or lifecycle transitions when blocking failures exist.
 - Missing or unexpected pre-submit checker names fail the drill.
 - Missing or unexpected durable checker names fail the drill.
-- Submission locking returns `locked_at`, locks evidence rows, and is idempotent.
+- Submission finalization returns `finalized_at`, stamps evidence rows, and is idempotent.
 - Automatic checker-run creation, checker terminal status, and task-status transitions are polled because execution is async-first.
 - Checker-run list visibility is checked for project manager, assigned worker, unassigned worker, and reviewer denial while broad reviewer checker-run access remains deferred.
 - Trusted checker retry proves attempt ordering, supersession, and current-run flags.
-- Postgres invariants are checked after the real API flows for locked guide/policy context, evidence locks, checker results, checker counters, current-run uniqueness, and gate audit events.
+- API-visible invariants are checked after the real API flows for locked guide/policy context, evidence finalization, checker results, checker counters, current-run uniqueness, and gate audit events. The legacy Week 2 regression script still includes direct database assertions; the accepted no-DB proof is the API contract drill plus the Terminal Benchmark API drill.
 
 Week 2 closeout validation is not only this script. The full gate is:
 

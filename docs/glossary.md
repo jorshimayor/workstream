@@ -152,7 +152,7 @@ An automated rule that validates a task or submission before human review.
 
 ## Checker Policy
 
-The set of required and warning checks for a project phase. Pre-submit checker policy is generated from the effective project submission artifact policy. Post-submit checker policy governs durable internal checker runs after a submission is locked.
+The set of required and warning checks for a project phase. Pre-submit checker policy is generated from the effective project submission artifact policy. Post-submit checker policy governs durable internal checker runs after a submission is finalized into the pre-review gate.
 
 ## Human Review
 

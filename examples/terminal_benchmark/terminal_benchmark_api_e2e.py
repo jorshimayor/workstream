@@ -31,11 +31,8 @@ for import_root in (BACKEND_ROOT, BACKEND_SCRIPTS_ROOT):
 
 import httpx
 from alembic import command
-from sqlalchemy import select
 
 from app.db import session as db_session
-from app.modules.checkers.models import CheckerResult, CheckerRun
-from app.modules.tasks.models import AuditEvent, EvidenceItem, Submission, WorkstreamTask
 from api_contract_e2e import (
     alembic_config,
     api_environment,
@@ -52,7 +49,7 @@ from week2_api_e2e import (
     assert_pre_submit_checker_set,
     checker_result,
     ensure,
-    start_week2_api_server,
+    start_backend_api_server,
     wait_for_submission_checker_run,
 )
 
@@ -61,6 +58,7 @@ REVIEWER_ROOT_ENV_VAR = "WORKSTREAM_TERMIUS_REVIEWER_ROOT"
 LOCAL_DATABASE_HOSTS = {"localhost", "127.0.0.1", "::1"}
 LOCAL_DATABASE_NAMES = {"workstream_test", "test_workstream"}
 ASYNC_POSTGRES_SCHEMES = {"postgresql+asyncpg"}
+PROJECT_SETUP_HTTP_TIMEOUT_SECONDS = 1800.0
 REQUIRED_OPENAI_AGENT_SDK_ENV = (
     "OPENAI_API_KEY",
     "WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL",
@@ -544,34 +542,6 @@ def terminal_benchmark_submission_artifact_policy_body(
     }
 
 
-def expected_manifest(payload: dict) -> list[dict]:
-    """Return the exact manifest persisted for a submitted payload."""
-    return [
-        {
-            "artifact": entry["artifact"],
-            "hash": entry["hash"],
-            "size_bytes": entry["size_bytes"],
-            "notes": entry["notes"],
-        }
-        for entry in payload["artifact_hash_manifest"]
-    ]
-
-
-def expected_evidence(payload: dict) -> list[dict]:
-    """Return exact evidence fields expected to persist for a submitted payload."""
-    return [
-        {
-            "type": entry["type"],
-            "label": entry["label"],
-            "uri": entry["uri"],
-            "hash": entry["hash"],
-            "size_bytes": entry["size_bytes"],
-            "metadata": entry["metadata"],
-        }
-        for entry in payload["evidence_items"]
-    ]
-
-
 def assert_checker_counts(
     run: dict,
     *,
@@ -757,16 +727,22 @@ async def create_started_terminal_benchmark_task(
         {"reason": f"Terminal Benchmark {suffix} screening"},
     )
     screened = await request_json(client, "GET", f"/api/v1/tasks/{task['id']}", manager_token)
-    ensure(screened["locked_guide_version"] == "v1", "screening did not lock guide v1")
+    ensure(screened["locked_guide_version"] == "v1", "screening did not stamp guide v1")
+    locked_context = await request_json(
+        client,
+        "GET",
+        f"/api/v1/tasks/{task['id']}/locked-context",
+        manager_token,
+    )
     ensure(
         {
-            screened["locked_post_submit_checker_policy_version"],
-            screened["locked_review_policy_version"],
-            screened["locked_revision_policy_version"],
-            screened["locked_payment_policy_version"],
+            locked_context["locked_post_submit_checker_policy_version"],
+            locked_context["locked_review_policy_version"],
+            locked_context["locked_revision_policy_version"],
+            locked_context["locked_payment_policy_version"],
         }
         == {"v1"},
-        "screening did not lock every policy version",
+        "screening did not stamp every policy version",
     )
     await request_json(
         client,
@@ -799,10 +775,11 @@ async def create_started_terminal_benchmark_task(
         {"reason": f"Terminal Benchmark {suffix} start"},
     )
     ensure(started["status"] == "in_progress", "Terminal Benchmark task did not start")
+    started["operator_locked_context"] = locked_context
     return started
 
 
-async def submit_lock_and_wait(
+async def submit_finalize_and_wait(
     client: httpx.AsyncClient,
     *,
     manager_token: str,
@@ -810,7 +787,7 @@ async def submit_lock_and_wait(
     task_id: str,
     payload: dict,
 ) -> tuple[dict, dict, dict]:
-    """Submit, lock, and wait for the automatic checker run."""
+    """Submit, finalize, and wait for the automatic checker run."""
     submission = await request_json(
         client,
         "POST",
@@ -822,7 +799,7 @@ async def submit_lock_and_wait(
     locked = await request_json(
         client,
         "POST",
-        f"/api/v1/submissions/{submission['id']}/lock",
+        f"/api/v1/submissions/{submission['id']}/finalize",
         manager_token,
     )
     run = await wait_for_submission_checker_run(client, manager_token, submission["id"])
@@ -847,144 +824,73 @@ async def wait_for_task_status(
     )
 
 
-async def assert_database_invariants(scenarios: list[dict]) -> None:
-    """Verify the real API drill persisted the expected durable state."""
-    async with db_session.get_session_factory()() as session:
-        for scenario in scenarios:
-            task = await session.get(WorkstreamTask, scenario["task_id"])
-            submission = await session.get(Submission, scenario["submission_id"])
-            checker_run = await session.get(CheckerRun, scenario["checker_run_id"])
-            ensure(task is not None, f"{scenario['name']} task missing")
-            ensure(submission is not None, f"{scenario['name']} submission missing")
-            ensure(checker_run is not None, f"{scenario['name']} checker run missing")
-            ensure(submission.locked_at is not None, f"{scenario['name']} submission not locked")
-            ensure(
-                submission.artifact_hash_manifest == scenario["expected_manifest"],
-                f"{scenario['name']} artifact manifest drifted",
-            )
-            ensure(
-                submission.version == scenario["expected_submission_version"],
-                f"{scenario['name']} submission version drifted: {submission.version}",
-            )
-            ensure(
-                submission.supersedes_submission_id == scenario["expected_supersedes_submission_id"],
-                f"{scenario['name']} superseded submission drifted",
-            )
-            ensure(
-                checker_run.trigger_source == "submission_locked",
-                f"{scenario['name']} checker run was not automatic",
-            )
-            ensure(
-                checker_run.routing_recommendation == scenario["expected_route"],
-                f"{scenario['name']} route drifted: {checker_run.routing_recommendation}",
-            )
-            ensure(
-                checker_run.passed_count == scenario["expected_passed_count"],
-                f"{scenario['name']} passed_count drifted",
-            )
-            ensure(
-                checker_run.warning_count == scenario["expected_warning_count"],
-                f"{scenario['name']} warning_count drifted",
-            )
-            ensure(
-                checker_run.failed_count == scenario["expected_failed_count"],
-                f"{scenario['name']} failed_count drifted",
-            )
-            ensure(
-                checker_run.blocking_count == scenario["expected_blocking_count"],
-                f"{scenario['name']} blocking_count drifted",
-            )
-            ensure(checker_run.status == "completed", f"{scenario['name']} checker incomplete")
-            ensure(
-                checker_run.submission_version == submission.version,
-                f"{scenario['name']} checker submission version drifted",
-            )
-            ensure(
-                checker_run.package_hash == submission.package_hash,
-                f"{scenario['name']} package hash drifted",
-            )
-            ensure(
-                {
-                    task.locked_guide_version,
-                    task.locked_post_submit_checker_policy_version,
-                    task.locked_review_policy_version,
-                    task.locked_revision_policy_version,
-                    task.locked_payment_policy_version,
-                }
-                == {"v1"},
-                f"{scenario['name']} task context was not locked to v1",
-            )
-            ensure(
-                {
-                    checker_run.locked_guide_version,
-                    checker_run.locked_post_submit_checker_policy_version,
-                    checker_run.locked_review_policy_version,
-                    checker_run.locked_revision_policy_version,
-                    checker_run.locked_payment_policy_version,
-                }
-                == {"v1"},
-                f"{scenario['name']} checker context was not locked to v1",
-            )
-
-            evidence = (
-                await session.scalars(
-                    select(EvidenceItem).where(EvidenceItem.submission_id == submission.id)
-                )
-            ).all()
-            actual_evidence = [
-                {
-                    "type": item.type,
-                    "label": item.label,
-                    "uri": item.uri,
-                    "hash": item.hash,
-                    "size_bytes": item.size_bytes,
-                    "metadata": item.metadata_json,
-                }
-                for item in evidence
-            ]
-            expected = scenario["expected_evidence"]
-            ensure(
-                sorted(actual_evidence, key=lambda item: item["label"])
-                == sorted(expected, key=lambda item: item["label"]),
-                f"{scenario['name']} evidence rows drifted",
-            )
-            ensure(
-                all(item.locked_at == submission.locked_at for item in evidence),
-                f"{scenario['name']} evidence was not locked with submission",
-            )
-
-            results = (
-                await session.scalars(
-                    select(CheckerResult).where(CheckerResult.checker_run_id == checker_run.id)
-                )
-            ).all()
-            ensure(
-                set(result.checker_name for result in results) == EXPECTED_DURABLE_CHECKERS,
-                f"{scenario['name']} durable checker set drifted",
-            )
-            ensure(
-                checker_run.blocking_count
-                == sum(1 for result in results if result.blocks_review),
-                f"{scenario['name']} blocking count drifted",
-            )
-
-            events = (
-                await session.scalars(
-                    select(AuditEvent).where(
-                        AuditEvent.entity_type == "task",
-                        AuditEvent.entity_id == task.id,
-                    )
-                )
-            ).all()
-            ensure(
-                any(
-                    event.event_type == scenario["expected_gate_event"]
-                    and event.event_payload.get("checker_run_id") == checker_run.id
-                    for event in events
-                ),
-                f"{scenario['name']} expected gate event missing",
-            )
-    print("PASS Terminal Benchmark database invariants")
+async def assert_finalize_gate_audit(
+    client: httpx.AsyncClient,
+    *,
+    manager_token: str,
+    manager_subject: str,
+    flow_issuer: str,
+    task_id: str,
+    checker_run_id: str,
+    expected_gate_event: str,
+) -> None:
+    """Assert finalization and checker gate audit events through the API."""
+    audit_events = await request_json(
+        client,
+        "GET",
+        f"/api/v1/tasks/{task_id}/audit-events",
+        manager_token,
+    )
+    finalized_event = next(
+        event for event in audit_events if event["event_type"] == "submission_finalized"
+    )
+    ensure(
+        finalized_event["external_subject"] == manager_subject,
+        "submission_finalized requester subject drifted",
+    )
+    ensure(
+        finalized_event["external_issuer"] == flow_issuer,
+        "submission_finalized requester issuer drifted",
+    )
+    requester_actor_id = finalized_event["actor_id"]
+    ensure(
+        requester_actor_id and requester_actor_id != "workstream-system:pre-review-gate",
+        "submission_finalized used the system actor as requester",
+    )
+    gate_event = next(event for event in audit_events if event["event_type"] == expected_gate_event)
+    ensure(
+        gate_event["actor_id"] == "workstream-system:pre-review-gate",
+        f"{expected_gate_event} did not use the pre-review gate system actor",
+    )
+    ensure(
+        gate_event["external_subject"] == "workstream-system:pre-review-gate",
+        f"{expected_gate_event} system subject drifted",
+    )
+    ensure(gate_event["external_issuer"] == "workstream", f"{expected_gate_event} issuer drifted")
+    ensure(
+        gate_event["auth_source"] == "workstream_system",
+        f"{expected_gate_event} auth source drifted",
+    )
+    ensure(
+        gate_event["event_payload"]["requester_actor_id"] == requester_actor_id,
+        f"{expected_gate_event} requester actor provenance drifted",
+    )
+    ensure(
+        gate_event["event_payload"]["requester_external_subject"] == manager_subject,
+        f"{expected_gate_event} requester subject provenance drifted",
+    )
+    ensure(
+        gate_event["event_payload"]["requester_external_issuer"] == flow_issuer,
+        f"{expected_gate_event} requester issuer provenance drifted",
+    )
+    ensure(
+        gate_event["event_payload"]["checker_run_id"] == checker_run_id,
+        f"{expected_gate_event} checker run provenance drifted",
+    )
+    ensure(
+        gate_event["event_payload"]["trigger_source"] == "submission_finalized",
+        f"{expected_gate_event} trigger source drifted",
+    )
 
 
 async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) -> None:
@@ -992,8 +898,9 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
     fixture = load_fixture(fixture_root())
     flow_issuer, flow_audience, flow_secret = flow_settings(env)
     run_id = uuid4().hex[:8]
+    manager_subject = f"terminal-benchmark-manager-{run_id}"
     manager_token = issue_flow_token(
-        f"terminal-benchmark-manager-{run_id}",
+        manager_subject,
         ["project_manager"],
         issuer=flow_issuer,
         audience=flow_audience,
@@ -1016,7 +923,10 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
         secret=flow_secret,
     )
 
-    async with httpx.AsyncClient(base_url=base_url, timeout=10) as client:
+    async with httpx.AsyncClient(
+        base_url=base_url,
+        timeout=PROJECT_SETUP_HTTP_TIMEOUT_SECONDS,
+    ) as client:
         await request_json(client, "GET", "/api/v1/health")
         project = await create_project_with_terminal_benchmark_guide(
             client,
@@ -1058,7 +968,7 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
             complete_task["id"],
             "successful pre-submit check created durable submissions",
         )
-        complete_submission, complete_locked, complete_run = await submit_lock_and_wait(
+        complete_submission, complete_locked, complete_run = await submit_finalize_and_wait(
             client,
             manager_token=manager_token,
             worker_token=complete_worker_token,
@@ -1079,7 +989,16 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
             "complete packet did not route to review",
         )
         await wait_for_task_status(client, manager_token, complete_task["id"], "review_pending")
-        ensure(complete_locked["locked_at"] is not None, "complete submission did not lock")
+        ensure(complete_locked["finalized_at"] is not None, "complete submission did not finalize")
+        await assert_finalize_gate_audit(
+            client,
+            manager_token=manager_token,
+            manager_subject=manager_subject,
+            flow_issuer=flow_issuer,
+            task_id=complete_task["id"],
+            checker_run_id=complete_run["id"],
+            expected_gate_event="pre_review_gate_passed",
+        )
 
         revision_task = await create_started_terminal_benchmark_task(
             client,
@@ -1098,19 +1017,33 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
             "locked_pre_submit_checker_bundle_hash",
         )
         ensure(
-            all(complete_task[field] for field in locked_context_fields),
-            "complete task did not lock project policy context hashes",
+            all(
+                complete_task["operator_locked_context"][field]
+                for field in locked_context_fields
+            ),
+            "complete task did not stamp project policy context hashes",
         )
         ensure(
-            all(revision_task[field] for field in locked_context_fields),
-            "revision task did not lock project policy context hashes",
+            all(
+                revision_task["operator_locked_context"][field]
+                for field in locked_context_fields
+            ),
+            "revision task did not stamp project policy context hashes",
         )
         ensure(
             {
-                tuple(task[field] for field in locked_context_fields)
+                tuple(
+                    task["operator_locked_context"][field]
+                    for field in locked_context_fields
+                )
                 for task in (complete_task, revision_task)
             }
-            == {tuple(complete_task[field] for field in locked_context_fields)},
+            == {
+                tuple(
+                    complete_task["operator_locked_context"][field]
+                    for field in locked_context_fields
+                )
+            },
             "tasks under the same project did not reuse the same policy context hashes",
         )
         missing_static_guard_payload = submission_payload(
@@ -1143,14 +1076,40 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
             if result["checker_name"] == "check_evidence_present"
         )
         ensure(
-            evidence_present["status"] == "passed",
-            "missing-static-guard scenario should isolate artifact enforcement",
+            evidence_present["status"] == "failed",
+            "missing-static-guard scenario did not enforce required evidence",
         )
         await assert_no_durable_submissions_after_precheck(
             client,
             revision_worker_token,
             revision_task["id"],
             "failed pre-submit check created durable submissions",
+        )
+        blocked_create = await request_json(
+            client,
+            "POST",
+            f"/api/v1/tasks/{revision_task['id']}/submissions",
+            revision_worker_token,
+            missing_static_guard_payload,
+            expected_status=422,
+        )
+        ensure(
+            blocked_create["code"] == "pre_submission_checker_failed",
+            "blocked submission create did not return pre_submission_checker_failed",
+        )
+        ensure(
+            blocked_create["details"]["status"] == "failed",
+            "blocked submission create did not return failed checker details",
+        )
+        ensure(
+            blocked_create["details"]["eligible_to_submit"] is False,
+            "blocked submission create returned eligible_to_submit=true",
+        )
+        await assert_no_durable_submissions_after_precheck(
+            client,
+            revision_worker_token,
+            revision_task["id"],
+            "blocked submission create persisted a submission",
         )
 
         low_quality_payload = submission_payload(
@@ -1181,7 +1140,7 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
             low_quality_precheck_result["status"] == "warning",
             "low-quality pre-submit scenario did not warn",
         )
-        first_submission, first_locked, first_run = await submit_lock_and_wait(
+        first_submission, first_locked, first_run = await submit_finalize_and_wait(
             client,
             manager_token=manager_token,
             worker_token=revision_worker_token,
@@ -1211,7 +1170,16 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
             "durable low-quality scenario should keep artifact enforcement passing",
         )
         await wait_for_task_status(client, manager_token, revision_task["id"], "needs_revision")
-        ensure(first_locked["locked_at"] is not None, "revision v1 submission did not lock")
+        ensure(first_locked["finalized_at"] is not None, "revision v1 submission did not finalize")
+        await assert_finalize_gate_audit(
+            client,
+            manager_token=manager_token,
+            manager_subject=manager_subject,
+            flow_issuer=flow_issuer,
+            task_id=revision_task["id"],
+            checker_run_id=first_run["id"],
+            expected_gate_event="pre_review_gate_needs_revision",
+        )
 
         fixed_payload = submission_payload(
             fixture,
@@ -1228,7 +1196,7 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
         )
         assert_pre_submit_checker_set(fixed_precheck)
         ensure(fixed_precheck["eligible_to_submit"] is True, "fixed packet precheck failed")
-        second_submission, second_locked, second_run = await submit_lock_and_wait(
+        second_submission, second_locked, second_run = await submit_finalize_and_wait(
             client,
             manager_token=manager_token,
             worker_token=revision_worker_token,
@@ -1255,60 +1223,16 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
             "fixed Terminal Benchmark packet did not route to review",
         )
         await wait_for_task_status(client, manager_token, revision_task["id"], "review_pending")
-        ensure(second_locked["locked_at"] is not None, "revision v2 submission did not lock")
-
-    await assert_database_invariants(
-        [
-            {
-                "name": "complete_packet",
-                "task_id": complete_task["id"],
-                "submission_id": complete_submission["id"],
-                "checker_run_id": complete_run["id"],
-                "expected_route": "allow_review",
-                "expected_gate_event": "pre_review_gate_passed",
-                "expected_manifest": expected_manifest(complete_payload),
-                "expected_evidence": expected_evidence(complete_payload),
-                "expected_submission_version": 1,
-                "expected_supersedes_submission_id": None,
-                "expected_passed_count": 8,
-                "expected_warning_count": 0,
-                "expected_failed_count": 0,
-                "expected_blocking_count": 0,
-            },
-            {
-                "name": "low_quality_v1",
-                "task_id": revision_task["id"],
-                "submission_id": first_submission["id"],
-                "checker_run_id": first_run["id"],
-                "expected_route": "needs_revision",
-                "expected_gate_event": "pre_review_gate_needs_revision",
-                "expected_manifest": expected_manifest(low_quality_payload),
-                "expected_evidence": expected_evidence(low_quality_payload),
-                "expected_submission_version": 1,
-                "expected_supersedes_submission_id": None,
-                "expected_passed_count": 7,
-                "expected_warning_count": 0,
-                "expected_failed_count": 1,
-                "expected_blocking_count": 1,
-            },
-            {
-                "name": "fixed_low_quality_v2",
-                "task_id": revision_task["id"],
-                "submission_id": second_submission["id"],
-                "checker_run_id": second_run["id"],
-                "expected_route": "allow_review",
-                "expected_gate_event": "pre_review_gate_passed",
-                "expected_manifest": expected_manifest(fixed_payload),
-                "expected_evidence": expected_evidence(fixed_payload),
-                "expected_submission_version": 2,
-                "expected_supersedes_submission_id": first_submission["id"],
-                "expected_passed_count": 8,
-                "expected_warning_count": 0,
-                "expected_failed_count": 0,
-                "expected_blocking_count": 0,
-            },
-        ]
-    )
+        ensure(second_locked["finalized_at"] is not None, "revision v2 submission did not finalize")
+        await assert_finalize_gate_audit(
+            client,
+            manager_token=manager_token,
+            manager_subject=manager_subject,
+            flow_issuer=flow_issuer,
+            task_id=revision_task["id"],
+            checker_run_id=second_run["id"],
+            expected_gate_event="pre_review_gate_passed",
+        )
 
     print("Terminal Benchmark real API e2e passed")
     print("scenario_summary:")
@@ -1332,7 +1256,7 @@ async def main(env: dict[str, str]) -> None:
     await db_session.dispose_engine()
     port = find_free_port()
     base_url = f"http://127.0.0.1:{port}"
-    process, log_path = start_week2_api_server(port, env)
+    process, log_path = start_backend_api_server(port, env)
     try:
         await wait_for_health(base_url, process, log_path)
         await exercise_terminal_benchmark_api(base_url, env)

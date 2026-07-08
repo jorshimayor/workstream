@@ -92,7 +92,7 @@ async def run_submission_checkers(
     actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> JSONResponse:
-    """Trigger a durable internal checker run for a locked submission."""
+    """Trigger a durable internal checker run for a finalized submission."""
     try:
         result = await CheckerService(session).run_submission_checkers(
             actor,

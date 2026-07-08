@@ -109,7 +109,7 @@ class Checker(Protocol):
     name: str
 
     async def run(self, context: CheckerContext) -> CheckerOutcome:
-        """Run the checker against a locked submission context."""
+        """Run the checker against a finalized submission context."""
 
 
 CheckerHandler = Callable[[CheckerContext], Awaitable[CheckerOutcome]]

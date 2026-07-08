@@ -37,7 +37,7 @@ PreSubmitCheckerPolicy
   persisted project checker rules for draft packet intake
 
 PostSubmitCheckerPolicy
-  durable checker rules for locked submission review readiness
+  durable checker rules for finalized submission review readiness
 ```
 
 Project owners provide open-ended project material. Workstream does not enforce
@@ -148,7 +148,7 @@ checklist.
 ### Combine pre-submit and post-submit checker policy
 
 Rejected because pre-submit answers whether a packet can be submitted at all,
-while post-submit answers whether a locked submission can move to human review.
+while post-submit answers whether a finalized submission can move to human review.
 
 ## Boundaries Preserved
 
@@ -253,7 +253,7 @@ The target API surface is:
 | 8 | `GET /api/v1/tasks/{task_id}/work-context` | New |
 | 9 | `GET /api/v1/tasks/{task_id}/submission-requirements` | New |
 | 10 | `GET /api/v1/tasks/{task_id}/locked-context` | New |
-| 11 | `POST /api/v1/submissions/{submission_id}/finalize` | New replacement for public `/lock` |
+| 11 | `POST /api/v1/submissions/{submission_id}/finalize` | New public finalization handoff |
 | 12 | `GET /api/v1/submissions/{submission_id}/checker-runs` | Existing; keep and cover |
 | 13 | `GET /api/v1/checker-runs/{checker_run_id}` | Existing; keep and cover |
 | 14 | `GET /api/v1/tasks/{task_id}/audit-events` | Existing; keep and cover |

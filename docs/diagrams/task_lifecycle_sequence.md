@@ -45,7 +45,7 @@ sequenceDiagram
   UI->>API: POST submission packet with evidence and artifact manifest
   API->>Storage: Store or reference artifacts through storage abstraction
   API->>DB: Create immutable submission version
-  API->>DB: Lock submission context and audit submission
+  API->>DB: Finalize submission and audit finalization
 
   API->>Checks: Start automated checks asynchronously
   Checks->>Storage: Read referenced artifacts

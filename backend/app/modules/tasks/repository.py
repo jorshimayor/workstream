@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -99,20 +99,30 @@ class TaskRepository:
         await self._session.refresh(submission)
         return submission
 
-    async def get_submission(self, submission_id: str) -> Submission | None:
+    async def get_submission(
+        self,
+        submission_id: str,
+        *,
+        populate_existing: bool = False,
+    ) -> Submission | None:
         """Load one submission by id with evidence items.
 
         Args:
             submission_id: Submission id to load.
+            populate_existing: Whether to refresh an already-loaded ORM instance
+                from the database.
 
         Returns:
             Submission when found; otherwise ``None``.
         """
-        result = await self._session.execute(
+        statement = (
             select(Submission)
             .options(selectinload(Submission.evidence_items))
             .where(Submission.id == submission_id)
         )
+        if populate_existing:
+            statement = statement.execution_options(populate_existing=True)
+        result = await self._session.execute(statement)
         return result.scalar_one_or_none()
 
     async def get_latest_submission_for_task(self, task_id: str) -> Submission | None:
@@ -161,6 +171,32 @@ class TaskRepository:
         )
         for evidence in result.scalars():
             evidence.locked_at = locked_at
+
+    async def finalize_submission_if_unlocked(
+        self,
+        submission_id: str,
+        finalized_at: datetime,
+    ) -> bool:
+        """Atomically stamp a submission as finalized if it is still open.
+
+        The persistence column remains ``locked_at`` because it represents the
+        immutable storage boundary. This repository method uses finalize
+        terminology to match the public API lifecycle.
+
+        Args:
+            submission_id: Submission id to finalize.
+            finalized_at: Timestamp applied to the submission row.
+
+        Returns:
+            ``True`` when this call won the finalize guard; otherwise ``False``.
+        """
+        result = await self._session.execute(
+            update(Submission)
+            .where(Submission.id == submission_id, Submission.locked_at.is_(None))
+            .values(locked_at=finalized_at)
+            .returning(Submission.id)
+        )
+        return result.scalar_one_or_none() is not None
 
     async def add_audit_event(self, event: AuditEvent) -> AuditEvent:
         """Persist an audit event.
