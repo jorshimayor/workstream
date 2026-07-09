@@ -14,7 +14,7 @@ Reviewed code SHA: 4471549742041e2818d3e3cd89e36518d7126993
 
 Reviewed at: 2026-07-09T04:14:08Z
 
-Reviewer run IDs: senior-engineering-final-019f4506-2be4-7bb3-a66e-a96893f34b1d, qa-test-final-019f450b-de80-7101-9b06-f41167c0df00, security-auth-final-019f450b-e649-7aa1-8399-7b8a5968ee0b, product-ops-final-019f4506-48d3-7c91-b162-8bf72ec5c4de, architecture-final-019f4512-7cef-7a02-9cf6-78fbad3f73af, docs-final-019f4506-11cf-73d2-942a-9327cc22cadf, reuse-dedup-final-019f4512-9182-7990-99ac-ccc438b5fb6b, test-delta-final-019f4506-598d-7880-8927-a85e5b4b0cbb, ci-integrity-final-019f450b-ee14-7992-b45b-51225962b7fd
+Reviewer run IDs: senior-engineering-final-reviewer-run-id, qa-test-final-reviewer-run-id, security-auth-final-reviewer-run-id, product-ops-final-reviewer-run-id, architecture-final-reviewer-run-id, docs-final-reviewer-run-id, reuse-dedup-final-reviewer-run-id, test-delta-final-reviewer-run-id, ci-integrity-final-reviewer-run-id
 
 Current privacy-scrub chunk: `WS-POL-001-16-terminal-benchmark-live-api-drill`.
 This file was touched only to remove private/local source identifiers from
@@ -27,7 +27,7 @@ Reviewed code SHA: 8372c6e15299960cc78231603a463d238464bc35
 
 Reviewed at: 2026-07-08T12:01:24Z
 
-Reviewer run IDs: senior-engineering-final-019f4040-38db-7c02-ada8-ec277d640635, qa-test-final-019f4033-07a1-72c1-a172-9cebee7ab9de, security-auth-final-019f4049-451a-75c2-8a90-1e80e12bfa55, product-ops-final-019f4021-0291-73d2-8052-69c10a6346e9, architecture-final-019f4021-172e-7671-b16c-c09a66343d87, docs-final-019f4021-22fa-7003-bf1f-4f80affcb7d9, reuse-dedup-final-019f4064-43a3-7e90-9569-a8f341310bfa, test-delta-final-019f4049-51ed-78a1-8d3a-7ffa22dba883, senior-engineering-coderabbit-fix-019f4179-808b-7503-97bd-016cb2e1bbba, qa-test-coderabbit-fix-019f4179-8247-7751-9222-d678cd0f1b79, security-auth-coderabbit-fix-019f4179-8487-7153-bea8-fc093979a7da, product-ops-coderabbit-fix-019f4179-8647-77a3-830d-c5a8f2187b8a, architecture-coderabbit-fix-019f4179-883c-7330-ad49-d8ec9bca999c, docs-coderabbit-fix-019f4187-1fa8-7563-8854-c2e01c71178d, reuse-dedup-coderabbit-fix-019f417d-763c-73e1-80fa-d30e0adc1f1f, test-delta-coderabbit-fix-019f417d-850c-7362-8f44-850fd42e3b40, senior-engineering-docstring-fix-019f4198-90a8-71f2-898f-48b087443428, docs-docstring-fix-019f4198-c2b5-7c01-ae2c-161d4fe3ec64
+Reviewer run IDs: senior-engineering-final-reviewer-run-id, qa-test-final-reviewer-run-id, security-auth-final-reviewer-run-id, product-ops-final-reviewer-run-id, architecture-final-reviewer-run-id, docs-final-reviewer-run-id, reuse-dedup-final-reviewer-run-id, test-delta-final-reviewer-run-id, senior-engineering-coderabbit-fix-reviewer-run-id, qa-test-coderabbit-fix-reviewer-run-id, security-auth-coderabbit-fix-reviewer-run-id, product-ops-coderabbit-fix-reviewer-run-id, architecture-coderabbit-fix-reviewer-run-id, docs-coderabbit-fix-reviewer-run-id, reuse-dedup-coderabbit-fix-reviewer-run-id, test-delta-coderabbit-fix-reviewer-run-id, senior-engineering-docstring-fix-reviewer-run-id, docs-docstring-fix-reviewer-run-id
 
 After the reviewed SHA, only evidence and review-bundle files changed.
 
@@ -79,8 +79,8 @@ Scope:
 cd backend && .venv/bin/ruff check app/modules/tasks/repository.py app/modules/tasks/service.py tests/test_tasks.py
 cd backend && .venv/bin/pytest tests/test_tasks.py::test_finalize_submission_requires_operator_and_latest_version tests/test_tasks.py::test_submission_finalize_guard_is_atomic -q
 cd backend && .venv/bin/pytest tests/test_tasks.py tests/test_checkers.py
-cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/api_contract_e2e.py
-bash -lc 'set -a; set +a; export WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test; export WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL=${WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL:-gpt-4.1}; export WORKSTREAM_TERMINAL_BENCH_FIXTURE=<redacted-local-fixture-path>; export WORKSTREAM_TERMINAL_BENCH_GUIDE_ROOT=<redacted-local-guide-root>; backend/.venv/bin/python examples/terminal_benchmark/terminal_benchmark_api_e2e.py'
+cd backend && WORKSTREAM_DATABASE_URL=<local-test-db-url> .venv/bin/python scripts/api_contract_e2e.py
+bash -lc 'set -a; set +a; export WORKSTREAM_DATABASE_URL=<local-test-db-url>; export WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL=${WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL:-gpt-4.1}; export WORKSTREAM_TERMINAL_BENCH_FIXTURE=<redacted-local-fixture-path>; export WORKSTREAM_TERMINAL_BENCH_GUIDE_ROOT=<redacted-local-guide-root>; backend/.venv/bin/python examples/terminal_benchmark/terminal_benchmark_api_e2e.py'
 python3 scripts/check_markdown_links.py
 git diff --check
 ```

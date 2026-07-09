@@ -14,6 +14,8 @@ Changed:
 - `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/STATUS.md`
 - `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/chunks/WS-POL-001-16-terminal-benchmark-live-api-drill.md`
 - `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-16-live-api-drill-evidence.md`
+- `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-16-live-api-drill-report.md`
+- `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-16-live-api-drill-report.pdf`
 - `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-16-internal-review-evidence.md`
 - `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-16-pr-trust-bundle.md`
 - Privacy scrub amendment: standalone Terminal Benchmark example docs/script,
@@ -40,11 +42,11 @@ The drill evidence follows the real Workstream chain:
 ProjectGuide
 -> GuideSourceSnapshot
 -> GuideSufficiencyReport
--> ProjectSubmissionArtifactPolicy
+-> SubmissionArtifactPolicy
 -> EffectiveProjectSubmissionArtifactPolicy
 -> project PreSubmitCheckerPolicy
 -> task locked context
--> worker pre-submit
+-> deterministic pre-submit
 -> submission finalization
 -> durable checker run
 -> review_pending
@@ -72,11 +74,13 @@ Passed:
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
 cd backend && .venv/bin/pytest tests/test_projects.py tests/test_tasks.py tests/test_checkers.py -q
-cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/api_contract_e2e.py
+cd backend && WORKSTREAM_DATABASE_URL=<local-test-db-url> .venv/bin/python scripts/api_contract_e2e.py
 cd backend && .venv/bin/python -m ruff check ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
 cd backend && python3 -m py_compile ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
 redaction helper inline check for UUID, fixture-id, hash, and local-path sanitization
 default missing-agent-env failure check for sanitized stderr and nonzero exit
+render professional PDF report from the redacted evidence source
+extract PDF text and run targeted privacy scan over the PDF/source artifacts
 targeted privacy scan for private source names, local paths, fixture-id shapes, source-task labels, and agent hash prefixes
 git diff --check
 ```
@@ -89,10 +93,16 @@ Key results:
 - Public-safe exception helper check passed.
 - Default missing-agent-env failure emitted only the sanitized one-line public
   failure message and printed `terminal benchmark public failure output redaction passed`.
+- Professional PDF report rendered as 14 A4 pages.
+- PDF report SHA-256:
+  `f455414dfd1d60f066352e7d74ea9e5b55271a3b943464f88968f8ffc7de5492`.
+- Embedded PreSubmitCheckResponse JSON samples validated against the backend
+  Pydantic schema.
+- Extracted PDF text passed the targeted privacy scan.
 - Privacy scan only reported intentional backend test literals for unsafe-path
   and reserved `agent-` prefix validation.
 - Stale wording check passed.
-- Markdown link check passed for 25 changed Markdown files.
+- Markdown link check passed for 26 changed Markdown files.
 - Diff whitespace check passed.
 
 ## Live Drill Result
@@ -122,6 +132,8 @@ final_task_status: review_pending
 Evidence:
 
 - `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-16-live-api-drill-evidence.md`
+- `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-16-live-api-drill-report.pdf`
+- `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-16-live-api-drill-report.md`
 
 ## Internal Review
 
@@ -151,7 +163,8 @@ Evidence:
 
 ## Remaining Risks
 
-- The evidence appendix is large because it records all redacted HTTP bodies required by the chunk contract.
+- The detailed live drill report is now a PDF artifact, with a concise Markdown
+  evidence index and source Markdown for reviewability.
 - This chunk does not implement review packet assignment, human review decisions, or revision replay APIs; those remain future chunks.
 - Default failure output may include unrelated Alembic INFO lines before the
   sanitized failure if migration logging is enabled, but reviewer reruns

@@ -14,7 +14,7 @@ Reviewed code SHA: 4471549742041e2818d3e3cd89e36518d7126993
 
 Reviewed at: 2026-07-09T04:14:08Z
 
-Reviewer run IDs: senior-engineering-final-019f4506-2be4-7bb3-a66e-a96893f34b1d, qa-test-final-019f450b-de80-7101-9b06-f41167c0df00, security-auth-final-019f450b-e649-7aa1-8399-7b8a5968ee0b, product-ops-final-019f4506-48d3-7c91-b162-8bf72ec5c4de, architecture-final-019f4512-7cef-7a02-9cf6-78fbad3f73af, docs-final-019f4506-11cf-73d2-942a-9327cc22cadf, reuse-dedup-final-019f4512-9182-7990-99ac-ccc438b5fb6b, test-delta-final-019f4506-598d-7880-8927-a85e5b4b0cbb, ci-integrity-final-019f450b-ee14-7992-b45b-51225962b7fd
+Reviewer run IDs: senior-engineering-report-review, qa-test-report-review, security-auth-report-review, product-ops-report-review, architecture-report-review, docs-report-review, reuse-dedup-report-review, test-delta-report-review, ci-integrity-report-review
 
 After the reviewed SHA, only allowed review evidence, PR trust-bundle, status,
 loop-state files, and the documented privacy-scrub amendment files may change.
@@ -26,7 +26,8 @@ Scope:
 - Recorded the final clean Terminal Benchmark live API drill evidence for `WS-POL-001-16`.
 - Captured sanitized source snapshot material, setup-run status, sufficiency output, derived submission artifact policy, effective project policy, and compiled project pre-submit checker policy.
 - Added explicit sufficiency-agent input and submission-policy-derivation input summaries using the real `GuideSourceMaterial` envelope, with public source-material fingerprints redacted.
-- Added a redacted HTTP body appendix for every final-run API request and response body, including all 14 setup-run polls.
+- Replaced the oversized raw HTTP appendix with a professional PDF report,
+  source Markdown, and concise evidence index carrying the PDF SHA-256.
 - Proved blocked pre-submit with `pre_submission_checker_failed`, empty task submission list, and audit-event evidence; checker-run visibility is proven only after a submission id exists because checker-run list/get APIs are submission-scoped.
 - Proved successful pre-submit, submission creation, manager finalization, automatic checker run, durable checker results, audit events, and final `review_pending` task state without database inspection as lifecycle proof.
 - Updated initiative and loop status to show this chunk is evidence complete and awaiting PR/human checkpoint.
@@ -54,13 +55,15 @@ Scope:
 
 ## Valid Findings Addressed
 
-- Added a redacted HTTP request/response body appendix for every human-review API step.
-- Added every setup-run poll response body from `03_setup_poll_01` through `03_setup_poll_14`.
+- Preserved human-reviewable API step coverage in the PDF lifecycle index.
+- Preserved setup-run poll evidence in the PDF setup-pipeline section.
 - Added sufficiency-agent input and submission-policy-derivation input summaries tied to the source snapshot, with public source-material fingerprints redacted.
+- Converted the final live API evidence into a shareable 14-page PDF report
+  with a concise evidence index and recorded SHA-256.
 - Expanded blocked pre-submit proof to include audit evidence and clarified why checker-run list/get is only valid after submission creation.
 - Repaired the chunk contract acceptance criterion for blocked intake to match the submission-scoped checker-run API design.
 - Moved roadmap wording from completed to under-review state for `WS-POL-001-16`.
-- Corrected the compact setup-poll summary so it matches the appendix body statuses.
+- Corrected the compact setup-poll summary so it matches the final API observations.
 - Staged the formal live evidence file so it is no longer untracked.
 - Added a public-evidence redaction boundary so reviewers can distinguish the
   local live drill from the privacy-redacted public transcript.
@@ -84,11 +87,13 @@ Scope:
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
 cd backend && .venv/bin/pytest tests/test_projects.py tests/test_tasks.py tests/test_checkers.py -q
-cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/api_contract_e2e.py
+cd backend && WORKSTREAM_DATABASE_URL=<local-test-db-url> .venv/bin/python scripts/api_contract_e2e.py
 cd backend && .venv/bin/python -m ruff check ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
 cd backend && python3 -m py_compile ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
 redaction helper inline check for UUID, fixture-id, hash, and local-path sanitization
 default missing-agent-env failure check for sanitized stderr and nonzero exit
+render professional PDF report from the redacted evidence source
+extract PDF text and run targeted privacy scan over the PDF/source artifacts
 targeted privacy scan for private source names, local paths, fixture-id shapes, source-task labels, and agent hash prefixes
 git diff --check
 ```
@@ -96,7 +101,7 @@ git diff --check
 Results:
 
 - Stale wording check: passed.
-- Markdown link check: passed for 25 changed Markdown files.
+- Markdown link check: passed for 26 changed Markdown files.
 - Focused backend tests: `342 passed in 4305.43s (1:11:45)`.
 - API contract drill: `API contract real API e2e passed`.
 - Terminal Benchmark example Ruff and py_compile: passed.
@@ -104,6 +109,12 @@ Results:
 - Default missing-agent-env failure check: emitted only
   `RuntimeError: Terminal Benchmark API drill failed. Raw local failure details are hidden by default; set WORKSTREAM_TERMINAL_BENCH_PRINT_RAW_LOCAL_IDS=1 for local debugging.`
   and printed `terminal benchmark public failure output redaction passed`.
+- Professional PDF report: rendered as 14 A4 pages.
+- PDF report SHA-256:
+  `f455414dfd1d60f066352e7d74ea9e5b55271a3b943464f88968f8ffc7de5492`.
+- Embedded PreSubmitCheckResponse JSON samples validated against the backend
+  Pydantic schema.
+- Extracted PDF text privacy scan: passed.
 - Privacy scan: only intentional backend test literals remained for unsafe-path
   and reserved `agent-` prefix validation.
 - Diff whitespace check: passed.
@@ -128,7 +139,9 @@ CodeRabbit, GitHub checks, and human PR review are external review. They will be
 
 ## Remaining Risks
 
-- The redacted HTTP appendix is large because the contract required human-reviewable request and response bodies. It is evidence-only and does not add runtime code.
+- The raw redacted HTTP appendix has been replaced with a professional PDF
+  report and concise evidence index. The report is evidence-only and does not
+  add runtime code.
 - The live drill proves the final clean Terminal Benchmark path; future review lifecycle chunks still need reviewer packet and `needs_revision` API coverage.
 - Default failure output may include unrelated Alembic INFO lines before the
   sanitized failure if migration logging is enabled, but reviewer reruns

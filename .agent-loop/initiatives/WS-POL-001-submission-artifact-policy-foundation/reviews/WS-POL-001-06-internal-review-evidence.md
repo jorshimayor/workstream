@@ -14,7 +14,7 @@ Reviewed code SHA: 4471549742041e2818d3e3cd89e36518d7126993
 
 Reviewed at: 2026-07-09T04:14:08Z
 
-Reviewer run IDs: senior-engineering-final-019f4506-2be4-7bb3-a66e-a96893f34b1d, qa-test-final-019f450b-de80-7101-9b06-f41167c0df00, security-auth-final-019f450b-e649-7aa1-8399-7b8a5968ee0b, product-ops-final-019f4506-48d3-7c91-b162-8bf72ec5c4de, architecture-final-019f4512-7cef-7a02-9cf6-78fbad3f73af, docs-final-019f4506-11cf-73d2-942a-9327cc22cadf, reuse-dedup-final-019f4512-9182-7990-99ac-ccc438b5fb6b, test-delta-final-019f4506-598d-7880-8927-a85e5b4b0cbb, ci-integrity-final-019f450b-ee14-7992-b45b-51225962b7fd
+Reviewer run IDs: senior-engineering-final-reviewer-run-id, qa-test-final-reviewer-run-id, security-auth-final-reviewer-run-id, product-ops-final-reviewer-run-id, architecture-final-reviewer-run-id, docs-final-reviewer-run-id, reuse-dedup-final-reviewer-run-id, test-delta-final-reviewer-run-id, ci-integrity-final-reviewer-run-id
 
 Current privacy-scrub chunk: `WS-POL-001-16-terminal-benchmark-live-api-drill`.
 This file was touched only to remove private/local Terminal Benchmark source
@@ -27,7 +27,7 @@ Reviewed code SHA: 96792961c7cb74f31150df803c533fe4c6432636
 
 Reviewed at: 2026-07-05T13:59:55Z
 
-Reviewer run IDs: 019f31e1-520e-7fb1-905c-ae156be67b38, 019f31e4-536c-7860-b036-488bbe55b4d7, 019f31e4-6eaa-7522-ba73-2fc7b4617082, 019f31e4-9085-7021-802e-46f73d784d7a, 019f31e4-b8bb-79b2-9617-1be43d6380ad, 019f31e4-eb29-7b83-9355-43452e50c8cb, 019f31e5-1700-7e21-89eb-8c06c7edee7d, 019f31f2-0cd9-7600-92cc-93a8fbd7eb04, 019f31f2-5cba-7c21-8b8b-894d2d59cab3, 019f31f2-833e-7c22-86ac-20a3e69c0a88, 019f31f2-aa70-7ed1-9aaf-dcb98134dea2, 019f31f2-dc12-7cf0-b8d8-c60497503f52, 019f31f3-0e03-7260-baae-7ef65184ee48, 019f3227-764f-7c53-818a-513ac2d4d12b, 019f3227-9311-7c00-975a-6484b4c6af1b, 019f3227-c029-7680-a0c1-14de4705ebf1, 019f322c-5b3c-7e00-9a46-6190c253f298, 019f322f-73d7-7291-80f2-6443c334dd5e, 019f326f-a62a-7ac1-b9de-fef3dd5c6b8e, 019f326f-bdf6-7541-b22b-abf3bfd3c722, 019f326f-df56-72d0-83e2-909c98484bbb, 019f3270-0454-7583-9efd-605556e23a00, 019f3270-357b-7723-8ea7-1b5946719040, 019f3270-6d12-7202-b946-be2f4a6a2862, 019f3271-8abd-7a10-898b-fed8f52a8908, 019f3272-5213-7cc0-b8ad-6785ebc50103, 019f3275-3888-71a1-ad0d-9942db14f476, 019f3289-8823-7be2-9da8-ea3b998b11fd, 019f3289-a9f1-76e0-890d-eb35c1834c2f, 019f3289-c61d-7c22-9139-c3dabf384926, 019f3289-e2d8-7ac0-b872-fce6f07ee527, 019f3289-ff61-7113-b468-4d5c1333838e, 019f328a-358b-7ca1-a9ce-18b8ca088969, 019f328c-0e09-7ac3-9248-42fb150882e5, 019f328d-f6b8-74d0-b5d5-3fd06a6ca715, 019f328f-3150-7fc0-94f4-bdad99b8cc00
+Reviewer run IDs: reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id, reviewer-run-id
 
 ## Reviewed Change
 
@@ -138,7 +138,7 @@ cd backend && uv run pytest tests/test_alembic.py -q
 cd backend && uv run pytest tests/test_checkers.py -q
 cd backend && uv run pytest tests/test_tasks.py -q
 cd backend && uv run pytest tests/test_projects.py -q
-cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test uv run python scripts/week1_api_e2e.py
+cd backend && WORKSTREAM_DATABASE_URL=<local-test-db-url> uv run python scripts/week1_api_e2e.py
 cd backend && .venv/bin/python -m ruff check app tests scripts ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
 cd backend && .venv/bin/python -m pytest tests/test_alembic.py -q
 cd backend && .venv/bin/python -m pytest tests/test_tasks.py -k 'screen or missing or required or locked_context' -q

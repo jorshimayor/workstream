@@ -11,10 +11,10 @@ Terminal Benchmark proof, but the next confidence step is a human-visible live
 drill that walks the Terminal Benchmark project through Workstream one API call
 at a time.
 
-The drill must show request bodies, response bodies, agent inputs, agent
-outputs, setup status, task context, pre-submit feedback, submission creation,
-finalization, checker runs, and audit state through HTTP-visible APIs. It must
-not rely on database inspection as proof.
+The drill must show lifecycle-critical request/response facts, agent inputs,
+agent outputs, setup status, task context, pre-submit feedback, submission
+creation, finalization, checker runs, and audit state through HTTP-visible
+APIs. It must not rely on database inspection as proof.
 
 ## Why This Work Matters
 
@@ -121,6 +121,8 @@ docs/roadmap_status.md
 .agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/STATUS.md
 .agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/chunks/WS-POL-001-16-terminal-benchmark-live-api-drill.md
 .agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-16-live-api-drill-evidence.md
+.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-16-live-api-drill-report.md
+.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-16-live-api-drill-report.pdf
 .agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-16-internal-review-evidence.md
 .agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-16-pr-trust-bundle.md
 .agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-16-external-review-response.md
@@ -196,8 +198,10 @@ public API/schema behavior changes without a new approved implementation chunk
   `<redacted-id>`, `<redacted-fixture-id>`, `<redacted-run-id>`, and
   `sha256:<redacted>`; they must not be presented as literal replayable API
   values.
-- The drill shows each API request body and response body for the human review
-  path with credentials and local secret paths redacted.
+- The drill report shows the human-review API path at professional summary
+  level, with lifecycle-critical request/response facts preserved and
+  credentials, local secret paths, raw ids, exact source hashes, exact byte
+  counts, and source-specific identifiers redacted.
 - The drill shows sufficiency-agent input and output.
 - The drill shows submission-policy-derivation input and output.
 - The drill shows setup-run status, sufficiency result, warning
@@ -231,11 +235,20 @@ public API/schema behavior changes without a new approved implementation chunk
 
 ## Live Drill Evidence
 
-The formal live-drill transcript must be committed to:
+The formal live-drill evidence must be committed as a concise evidence index
+plus a professional PDF report and source Markdown:
 
 ```text
 .agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-16-live-api-drill-evidence.md
+.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-16-live-api-drill-report.md
+.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-16-live-api-drill-report.pdf
 ```
+
+The report may be professional summary evidence rather than a raw committed
+request/response-body transcript. It must still preserve enough lifecycle facts
+for a human reviewer to verify setup, policy derivation, checker compilation,
+blocked intake, successful intake, checker-run visibility, audit flow, and final
+task state without database inspection.
 
 Required sections:
 
@@ -244,8 +257,8 @@ Required sections:
   labels; public evidence must redact exact content hashes, exact fixture ids,
   local UUIDs, and exact byte counts when they fingerprint private local source
   material
-- ordered HTTP request/response transcript for project creation, guide creation,
-  source snapshot capture, setup-run polling, sufficiency result, warning
+- ordered API lifecycle index for project creation, guide creation, source
+  snapshot capture, setup-run polling, sufficiency result, warning
   acknowledgement when applicable, derived policy visibility, policy approval,
   effective policy visibility, pre-submit checker policy visibility, guide
   activation, task creation, task screening/release/claim/start, work context,
@@ -256,12 +269,13 @@ Required sections:
 - submission-policy-derivation input and output
 - explicit no-DB proof notes for every lifecycle assertion
 - blocker notes and stop decision if any step cannot proceed
+- PDF metadata, page count, and SHA-256 recorded in the evidence index
 
 ## Verification Commands
 
 ```bash
 cd backend && .venv/bin/pytest tests/test_projects.py tests/test_tasks.py tests/test_checkers.py -q
-cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/api_contract_e2e.py
+cd backend && WORKSTREAM_DATABASE_URL=<local-test-db-url> .venv/bin/python scripts/api_contract_e2e.py
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
 INTERNAL_REVIEW_CHUNK_ID=WS-POL-001-16-terminal-benchmark-live-api-drill python3 scripts/check_internal_review_evidence.py
@@ -271,8 +285,8 @@ Live drill verification is direct HTTP execution against local FastAPI,
 Postgres, Celery, and Redis. Database access is allowed for migration reset and
 cleanup only, not for proving lifecycle state.
 
-The live drill must follow the ordered transcript checklist in the Live Drill
-Evidence section and must commit the completed evidence artifact before the
+The live drill must follow the ordered lifecycle checklist in the Live Drill
+Evidence section and must commit the completed evidence artifacts before the
 chunk can be reviewed.
 
 ## Required Reviewers

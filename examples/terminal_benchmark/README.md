@@ -67,7 +67,7 @@ The authoritative proof for `WS-POL-001-06` was a live manual HTTP drill:
 
 ```bash
 cd backend
-WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test \
+WORKSTREAM_DATABASE_URL=<local-test-db-url> \
 OPENAI_API_KEY="$OPENAI_API_KEY" \
 WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL="${WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL:?set model}" \
 WORKSTREAM_TERMINAL_BENCH_FIXTURE=<redacted-local-fixture-path> \

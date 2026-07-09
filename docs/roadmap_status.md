@@ -86,7 +86,7 @@ Current phase: Week 3 review and revision preparation.
 Run from the backend directory against local Postgres:
 
 ```bash
-WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/api_contract_e2e.py
+WORKSTREAM_DATABASE_URL=<local-test-db-url> .venv/bin/python scripts/api_contract_e2e.py
 ```
 
 The script runs migrations forward and exercises project policy visibility plus task context APIs across the following flow:
@@ -98,7 +98,7 @@ The script runs migrations forward and exercises project policy visibility plus 
 Run from the backend directory against local Postgres:
 
 ```bash
-WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/week2_api_e2e.py
+WORKSTREAM_DATABASE_URL=<local-test-db-url> .venv/bin/python scripts/week2_api_e2e.py
 ```
 
 The script starts a real local API server, issues local Flow-compatible tokens,
@@ -130,10 +130,10 @@ Week 2 closeout validation is not only this script. The full gate is:
 
 ```bash
 .venv/bin/python -m ruff check app tests scripts
-WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/api_contract_e2e.py
-WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/week2_api_e2e.py
-WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python -m pytest tests/test_checkers.py tests/test_tasks.py -q
-WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python -m pytest -q
+WORKSTREAM_DATABASE_URL=<local-test-db-url> .venv/bin/python scripts/api_contract_e2e.py
+WORKSTREAM_DATABASE_URL=<local-test-db-url> .venv/bin/python scripts/week2_api_e2e.py
+WORKSTREAM_DATABASE_URL=<local-test-db-url> .venv/bin/python -m pytest tests/test_checkers.py tests/test_tasks.py -q
+WORKSTREAM_DATABASE_URL=<local-test-db-url> .venv/bin/python -m pytest -q
 .venv/bin/docstr-coverage --config .docstr.yaml
 ```
 

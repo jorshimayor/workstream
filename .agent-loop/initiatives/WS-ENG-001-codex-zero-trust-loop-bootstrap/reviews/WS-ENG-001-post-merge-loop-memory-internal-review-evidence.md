@@ -14,7 +14,7 @@ Reviewed code SHA: 4471549742041e2818d3e3cd89e36518d7126993
 
 Reviewed at: 2026-07-09T04:14:08Z
 
-Reviewer run IDs: senior-engineering-final-019f4506-2be4-7bb3-a66e-a96893f34b1d, qa-test-final-019f450b-de80-7101-9b06-f41167c0df00, security-auth-final-019f450b-e649-7aa1-8399-7b8a5968ee0b, product-ops-final-019f4506-48d3-7c91-b162-8bf72ec5c4de, architecture-final-019f4512-7cef-7a02-9cf6-78fbad3f73af, docs-final-019f4506-11cf-73d2-942a-9327cc22cadf, reuse-dedup-final-019f4512-9182-7990-99ac-ccc438b5fb6b, test-delta-final-019f4506-598d-7880-8927-a85e5b4b0cbb, ci-integrity-final-019f450b-ee14-7992-b45b-51225962b7fd
+Reviewer run IDs: senior-engineering-final-reviewer-run-id, qa-test-final-reviewer-run-id, security-auth-final-reviewer-run-id, product-ops-final-reviewer-run-id, architecture-final-reviewer-run-id, docs-final-reviewer-run-id, reuse-dedup-final-reviewer-run-id, test-delta-final-reviewer-run-id, ci-integrity-final-reviewer-run-id
 
 Current privacy-scrub chunk: `WS-POL-001-16-terminal-benchmark-live-api-drill`.
 This file was touched only to replace private/local source identifiers with
@@ -27,7 +27,7 @@ Reviewed code SHA: f4fe5f3c4fbdd626bbc6d3f837aeca1cceb6e9ca
 
 Reviewed at: 2026-06-20T13:15:54Z
 
-Reviewer run IDs: 019ee4bd-d3d5-7830-b042-a46397b2a4f3, 019ee4be-9fd5-78d2-801a-8ccb7541ad19, 019ee4c0-e266-71e3-b65e-3f1afa8af74c, 019ee4c3-8994-7a50-9bb9-49962001a247, 019ee4dd-f49e-72d2-abd4-6391aafe95d3, 019ee4fe-9b01-7741-a130-a4a78f2054b0, 019ee500-050e-7702-99df-a38a87435281, 019ee502-a260-7e01-affe-77867dd21325, 019ee504-e427-76c1-a66f-3fc036207abe
+Reviewer run IDs: historical-senior-engineering-review, historical-qa-test-review, historical-security-auth-review, historical-product-ops-review, historical-architecture-review, historical-docs-review, historical-reuse-dedup-review, historical-test-delta-review, historical-ci-integrity-review
 
 After reviewed SHA `f4fe5f3c4fbdd626bbc6d3f837aeca1cceb6e9ca`, the only committed path changed in this PR is this internal review evidence file. No implementation, workflow, test, policy, or loop-memory state file changed after that reviewed SHA.
 

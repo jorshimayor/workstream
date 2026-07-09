@@ -75,7 +75,7 @@ cd backend && .venv/bin/python -m ruff check app tests scripts
 cd backend && .venv/bin/docstr-coverage app scripts --config .docstr.yaml
 git diff --check
 cd backend && .venv/bin/python -m pytest tests/test_checkers.py -k 'pre_submit_check_allows_worker_revision_packet_feedback or pre_submit_check_returns_feedback_without_durable_run'
-cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test WORKSTREAM_TERMINAL_BENCH_FIXTURE=<redacted-local-fixture-path> .venv/bin/python ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
+cd backend && WORKSTREAM_DATABASE_URL=<local-test-db-url> WORKSTREAM_TERMINAL_BENCH_FIXTURE=<redacted-local-fixture-path> .venv/bin/python ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
 cd backend && .venv/bin/python -m pytest
 ```
 
@@ -137,7 +137,8 @@ Results:
 - clean packet reached `review_pending`
 - missing static guard was blocked at pre-submit and created no submission
 - blocked pre-submit and blocked submission-create produced no durable
-  submission, evidence, checker-run, checker-result, or audit side effects
+  submission, evidence, checker-run, or checker-result side effects; task audit
+  recorded the blocked intake attempt
 - after a v2 guide and project checker became active, the already-started task
   still used its locked v1 checker bundle
 - checker-caused v1 reached `needs_revision`
@@ -150,7 +151,7 @@ chunk evidence lives under `.agent-loop/`.
 
 Date: 2026-07-05
 
-The current proof was rerun manually over HTTP against a live local uvicorn
+The 2026-07-05 proof was rerun manually over HTTP against a live local uvicorn
 server and local Postgres. The Python example scaffold was not used as the
 authoritative proof for this pass.
 
