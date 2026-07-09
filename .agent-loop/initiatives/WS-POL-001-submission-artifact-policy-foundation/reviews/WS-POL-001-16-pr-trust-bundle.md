@@ -18,8 +18,10 @@ Changed:
 - `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-16-pr-trust-bundle.md`
 - `docs/roadmap_status.md`
 - Privacy scrub amendment: standalone Terminal Benchmark example docs/script,
-  older Terminal Benchmark evidence references, and review-process docs were
-  scrubbed to remove private/local source identifiers and local secret paths.
+  older Terminal Benchmark evidence references, WS-ENG memory evidence,
+  chunk-map/status/loop files, and review-process docs were scrubbed or amended
+  to remove private/local source identifiers, local secret paths, and stale
+  scope claims.
 
 Not changed:
 

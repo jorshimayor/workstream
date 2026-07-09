@@ -85,7 +85,7 @@ Results:
 - Final CodeRabbit docstring-nitpick Ruff: passed for `backend/app/modules/tasks/repository.py`.
 - Task/checker suite: 133 passed in 1666.46s.
 - API contract real API E2E: passed and exercised `/finalize`, checker-run reads, audit-event reads, and scoped access.
-- Terminal Benchmark real API E2E: passed using the real OpenAI Agents SDK adapter and fixture `terminal-benchmark-reference-task`.
+- Terminal Benchmark real API E2E: passed using the real OpenAI Agents SDK adapter and fixture `<redacted-fixture-id>`.
 - Terminal Benchmark scenario summary: `complete_packet=review_pending`, `missing_static_guard=pre_submit_blocked_no_submission`, `low_quality_v1=needs_revision`, `fixed_low_quality_v2=review_pending`, `worker_profile_setup=canonical_worker_profile_api`.
 - Markdown link check: passed for 27 changed Markdown files.
 - Diff whitespace check: passed.

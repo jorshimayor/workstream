@@ -135,6 +135,10 @@ privacy scrub in addition to the original drill evidence scope.
 Additional files allowed only for this scrub:
 
 ```text
+.agent-loop/LOOP_STATE.md
+.agent-loop/initiatives/WS-ENG-001-codex-zero-trust-loop-bootstrap/reviews/WS-ENG-001-post-merge-loop-memory-internal-review-evidence.md
+.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/CHUNK_MAP.md
+.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/STATUS.md
 examples/terminal_benchmark/README.md
 examples/terminal_benchmark/LOCAL_VALIDATION_NOTES.md
 examples/terminal_benchmark/terminal_benchmark_api_e2e.py

@@ -162,7 +162,7 @@ Sufficiency-agent input:
   "guide_material": {
     "content_markdown": {
       "hash": "sha256:<redacted>",
-      "bytes": 138427
+      "bytes": "<redacted>"
     }
   },
   "source_items": [
