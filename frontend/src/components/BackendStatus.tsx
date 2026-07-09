@@ -11,7 +11,7 @@ interface BackendStatusProps {
 // left, the resolved actor (or signed-out state) on the right.
 export function BackendStatus({ health, actor }: BackendStatusProps) {
   return (
-    <div className="status-strip">
+    <div className="status-strip" aria-live="polite">
       <span>
         {'api: '}
         {health.status === 'loading' && <span className="mono-muted">checking</span>}

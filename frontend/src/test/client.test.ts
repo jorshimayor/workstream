@@ -1,7 +1,14 @@
 import { ApiError, apiFetch } from '../api/client'
 
 describe('apiFetch', () => {
+  beforeEach(() => {
+    // Keep token-source tests hermetic: ignore any VITE_WORKSTREAM_TOKEN a
+    // developer set in .env.local for running against a real backend.
+    vi.stubEnv('VITE_WORKSTREAM_TOKEN', '')
+  })
+
   afterEach(() => {
+    vi.unstubAllEnvs()
     vi.restoreAllMocks()
     window.localStorage.clear()
   })

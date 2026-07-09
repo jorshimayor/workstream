@@ -6,9 +6,9 @@ WS-FE-001 — Frontend Operations Console
 
 > **Prerequisite note.** WS-FE-001 is a new, large initiative and per `AGENTS.md`
 > ("an initiative plan for large work") it needs `INTENT.md`, `PLAN.md`, and
-> `CHUNK_MAP.md` before the second chunk. This foundation chunk is bounded and can
-> be contracted first, but the initiative plan should be authored and human-approved
-> immediately after this contract is accepted.
+> `CHUNK_MAP.md`. This foundation chunk is bounded and was contracted first; the
+> initiative plan (`INTENT.md`, `PLAN.md`, `CHUNK_MAP.md`) was authored alongside
+> it and ships in this PR.
 
 ## Upstream issue
 
@@ -55,9 +55,9 @@ proves backend connectivity, unblocking the per-surface screen chunks
 ## Approved plan reference
 
 - Authoritative scope: Flow-Research/workstream#50 (parent #29)
-- INTENT: `.agent-loop/initiatives/WS-FE-001-frontend-operations-console/INTENT.md` *(to be created)*
-- PLAN: `.agent-loop/initiatives/WS-FE-001-frontend-operations-console/PLAN.md` *(to be created)*
-- CHUNK_MAP: `.agent-loop/initiatives/WS-FE-001-frontend-operations-console/CHUNK_MAP.md` *(to be created)*
+- INTENT: `.agent-loop/initiatives/WS-FE-001-frontend-operations-console/INTENT.md`
+- PLAN: `.agent-loop/initiatives/WS-FE-001-frontend-operations-console/PLAN.md`
+- CHUNK_MAP: `.agent-loop/initiatives/WS-FE-001-frontend-operations-console/CHUNK_MAP.md`
 - Design reference (committed in-repo by this chunk): `docs/design_system.md`,
   `docs/website_flow.md` — the visual language for the shell and all later chunks.
 
@@ -121,11 +121,11 @@ handoff only — ADR 0006, AGENTS.md)
   hairline dividers, no cards/shadows, one accent plus the state colors used as
   small text only. Fonts: IBM Plex Mono for mono; editorial serif via a licensed
   face if available, else the approved Google Fonts stand-in (Source Serif 4 /
-  Newsreader / Lora) per `website-flow.md`, self-hosted or pinned.
+  Newsreader / Lora) per `website_flow.md`, self-hosted or pinned.
 - Navigation placeholders name the five operations surfaces from issue #50 —
   project setup, task queue, worker tasks, review queue, dashboards — mapped to
   the project-manager / worker / reviewer / admin-finance roles. Full nav-label
-  and role-visibility reconciliation with `website-flow.md` happens in the screen
+  and role-visibility reconciliation with `website_flow.md` happens in the screen
   chunks.
 - The canonical UI lives at `frontend/`. Because no demo UI exists in the tree,
   the docs must state that `frontend/` is the one canonical UI and note the stale

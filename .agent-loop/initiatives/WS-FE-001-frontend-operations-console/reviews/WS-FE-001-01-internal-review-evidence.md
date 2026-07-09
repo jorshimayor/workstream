@@ -9,16 +9,17 @@ Branch: `codex/ws-fe-001-01-frontend-foundation` off `upstream/main`
 | -------------- | ------------------------------------------- | -------------------------------------- |
 | Lint           | `npm run lint`                              | PASS (exit 0)                          |
 | Typecheck      | `npm run typecheck` (`tsc --noEmit`)        | PASS (exit 0)                          |
-| Unit tests     | `npm run test -- --run`                     | PASS — 8/8 (client 4, shell 5... 3+5)  |
+| Unit tests     | `npm run test -- --run`                     | PASS — 13/13 (client 3, shell 5, actor 5)  |
 | Build          | `npm run build`                             | PASS (`dist` built, fonts self-hosted) |
 | Markdown links | `scripts/check_markdown_links.py`           | PASS (12 files)                        |
 | Stale wording  | `scripts/check_stale_workstream_wording.py` | PASS                                   |
 | Loop memory    | `scripts/check_loop_memory_state.py`        | PASS                                   |
 
 Shell verified visually via preview screenshot: nav wordmark + five surface
-placeholders, mono status strip (`API: UNREACHABLE / ACTOR: UNAVAILABLE` handled
-offline state, since no local backend ≥Python 3.11 was available in the build
-environment), paper-and-ink design system, no console errors.
+placeholders, mono status strip, paper-and-ink design system, no console errors.
+Live end-to-end later confirmed against a local FastAPI backend (Postgres + dev
+auth): `/api/v1/health` → 200, `/api/v1/auth/me` → 401 without a token and 200
+(actor resolved) with a Flow-style bearer token, through the Vite dev proxy.
 
 ## Acceptance criteria (issue #50)
 
@@ -49,7 +50,7 @@ environment), paper-and-ink design system, no console errors.
   distinguished 401 → shared `actorErrorLabel` in `components/actor.ts`, used by
   both; a backend outage now reads `unavailable` consistently.
 - \[MINOR] Coverage gaps → added tests for authenticated actor (name + roles),
-  health-unreachable, and the not-found route (5→8 tests).
+  health-unreachable, and the not-found route (5→13 tests).
 - \[MINOR] `useAsync` load-once footgun → added an optional `deps` argument so
   screen chunks can pass `[id]`; default preserves load-once.
 - \[MINOR] `VITE_WORKSTREAM_TOKEN` prod-build risk → README caveat: dev-only, never
