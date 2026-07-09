@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-POL-001-16` | Terminal Benchmark Live API Drill | L1 | Active on `codex/ws-pol-001-16-terminal-benchmark-live-api-drill` |
+| `WS-POL-002-PLAN` | Post-Submit Checker Foundation Planning | L1 | Active on `codex/ws-pol-002-post-submit-checker-planning` |
 
 ## Completed
 
@@ -28,11 +28,13 @@
 | `WS-POL-001-13` | Task Context And Submission Requirement APIs | L1 | Merged through PR #77 as `b567bac` on 2026-07-08 |
 | `WS-POL-001-14` | Submission Finalize And No-DB Terminal Benchmark Proof | L1 | Merged through PR #79 as `53a57c3` on 2026-07-08 |
 | `WS-POL-001-15` | Agent Derivation Policy Conflict Hardening | L1 | Merged through PR #81 as `b1a9851` on 2026-07-08 |
+| `WS-POL-001-16` | Terminal Benchmark Live API Drill | L1 | Merged through PR #84 as `a3d2a3f` on 2026-07-09 |
 
 ## Proposed Next
 
-Stop after `WS-POL-001-16` is implemented, reviewed, and opened for human
-review. Do not start another implementation chunk from this branch.
+Stop after `WS-POL-002-PLAN` is reviewed. Do not start `WS-POL-002-01` until
+the planning PR is merged and the user explicitly starts the implementation
+chunk.
 
 ## Blocked
 

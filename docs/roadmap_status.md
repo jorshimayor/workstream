@@ -48,6 +48,9 @@ Current phase: Week 3 review and revision preparation.
 - Chunk 13 task work-context, worker submission-requirements, and operator-only locked-context APIs.
 - Chunk 14 submission finalization, system actor pre-review gate audit semantics, scoped operator visibility, and HTTP-visible Terminal Benchmark proof.
 - Chunk 15 agent-derivation hardening after the accepted no-DB Terminal Benchmark drill exposed a required/forbidden self-conflict.
+- Chunk 16 Terminal Benchmark live API drill with privacy-scrubbed evidence and
+  professional PDF report proving the current lifecycle through HTTP-visible
+  APIs without database inspection.
 
 ## Review Tracks Closed
 
@@ -71,8 +74,9 @@ Current phase: Week 3 review and revision preparation.
   contract after the accepted no-DB Terminal Benchmark drill exposed a
   required/forbidden self-conflict; the drill now passes after hardening.
 - `WS-POL-001-16` completed a human-visible Terminal Benchmark live API drill
-  without database inspection as lifecycle proof; the privacy-scrubbed evidence
-  is at PR/human checkpoint.
+  without database inspection as lifecycle proof and merged through PR #84.
+- `WS-POL-002` planning is open to make post-submit checker setup match the
+  project-guide-derived, compiler-validated, deterministic pre-submit pipeline.
 
 ## Pending Before Pilot
 
