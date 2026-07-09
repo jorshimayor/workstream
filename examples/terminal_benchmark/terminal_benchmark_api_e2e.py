@@ -167,10 +167,9 @@ def require_single_fixture_match(root: Path, pattern: str, label: str) -> Path:
     """
     matches = sorted(root.glob(pattern))
     if len(matches) != 1:
-        match_names = [path.name for path in matches]
         raise RuntimeError(
             f"expected exactly one {label} matching {pattern!r} in fixture "
-            f"{safe_label(root.name)!r}; found {len(matches)} file(s): {match_names}"
+            f"<redacted-fixture-label>; found {len(matches)} file(s)"
         )
     return matches[0]
 
@@ -202,6 +201,15 @@ def public_safe_exception_message(exc: Exception) -> str:
     message = SHA256_VALUE_PATTERN.sub("sha256:<redacted>", message)
     message = LOCAL_PATH_PATTERN.sub("<redacted-local-path>", message)
     return f"{exc.__class__.__name__}: {message}"
+
+
+def public_safe_script_failure_message(exc: Exception) -> str:
+    """Return a generic top-level failure that cannot expose local transcript data."""
+    return (
+        f"{exc.__class__.__name__}: Terminal Benchmark API drill failed. "
+        "Raw local failure details are hidden by default; set "
+        f"{PRINT_RAW_LOCAL_IDS_ENV_VAR}=1 for local debugging."
+    )
 
 
 async def request_json(*args, **kwargs) -> dict:
@@ -1350,9 +1358,15 @@ async def main(env: dict[str, str]) -> None:
 
 
 if __name__ == "__main__":
-    api_env = api_environment()
-    require_openai_agent_sdk_environment(api_env)
-    assert_strict_local_database_url(api_env["WORKSTREAM_DATABASE_URL"])
-    os.environ.update(api_env)
-    command.upgrade(alembic_config(), "head")
-    asyncio.run(main(api_env))
+    try:
+        api_env = api_environment()
+        require_openai_agent_sdk_environment(api_env)
+        assert_strict_local_database_url(api_env["WORKSTREAM_DATABASE_URL"])
+        os.environ.update(api_env)
+        command.upgrade(alembic_config(), "head")
+        asyncio.run(main(api_env))
+    except Exception as exc:
+        if os.environ.get(PRINT_RAW_LOCAL_IDS_ENV_VAR) == "1":
+            raise
+        print(public_safe_script_failure_message(exc), file=sys.stderr)
+        raise SystemExit(1) from None
