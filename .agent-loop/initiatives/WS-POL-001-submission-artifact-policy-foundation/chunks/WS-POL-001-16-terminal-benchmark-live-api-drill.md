@@ -169,7 +169,9 @@ public API/schema behavior changes without a new approved implementation chunk
   decision leakage.
 - The drill proves a blocked pre-submit path creates no submission using
   HTTP-visible evidence: failed create response, unchanged/empty task
-  submission list, checker-run list, and audit-event response.
+  submission list, and audit-event response. Because checker-run visibility is
+  submission-scoped, blocked intake with no submission id must explicitly note
+  that no checker-run list endpoint is valid before a submission exists.
 - The drill proves a successful pre-submit path is non-authoritative and then a
   submission-create call creates the durable submission.
 - The drill finalizes the submission and shows checker-run and audit visibility

@@ -70,6 +70,9 @@ Current phase: Week 3 review and revision preparation.
 - `WS-POL-001-15` hardened the agent-derived submission artifact policy
   contract after the accepted no-DB Terminal Benchmark drill exposed a
   required/forbidden self-conflict; the drill now passes after hardening.
+- `WS-POL-001-16` completed a human-visible Terminal Benchmark live API drill
+  without database inspection as lifecycle proof; the evidence is under
+  internal review before PR/human checkpoint.
 
 ## Pending Before Pilot
 
