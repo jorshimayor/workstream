@@ -1007,7 +1007,7 @@ async def test_screening_locks_guide_policy_context_and_payment_fields(
     assert body["payout_type"] == "fixed"
 
 
-async def test_screening_rejects_post_submit_policy_body_after_default_drift(
+async def test_screening_uses_versioned_post_submit_policy_body_after_default_drift(
     task_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -1022,6 +1022,8 @@ async def test_screening_rejects_post_submit_policy_body_after_default_drift(
             )
         )
         assert source_policy is not None
+        expected_policy_body = dict(source_policy.policy_body or {})
+        expected_policy_hash = source_policy.policy_hash
 
     monkeypatch.setattr(
         post_submit_policy_module,
@@ -1039,12 +1041,12 @@ async def test_screening_rejects_post_submit_policy_body_after_default_drift(
         json={"reason": "screen"},
     )
 
-    assert response.status_code == 422
-    assert response.json()["detail"] == "active post-submit checker policy hash is invalid"
+    assert response.status_code == 200, response.text
     async with db_session.get_session_factory()() as session:
         persisted_task = await session.get(WorkstreamTask, task["id"])
     assert persisted_task is not None
-    assert persisted_task.locked_post_submit_checker_policy_body is None
+    assert persisted_task.locked_post_submit_checker_policy_body == expected_policy_body
+    assert persisted_task.locked_post_submit_checker_policy_hash == expected_policy_hash
 
 
 async def test_release_uses_locked_post_submit_policy_body_after_setup_mutation(

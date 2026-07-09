@@ -118,11 +118,12 @@ The trusted Workstream post-submit compiler:
 - emits the canonical `PostSubmitCheckerPolicy.policy_body`
 - emits `policy_hash = sha256(canonical_json(policy_body))`
 
-The platform default checker list is authoritative. `policy_body.default_checkers`
-must exactly equal the server-owned `DEFAULT_DURABLE_CHECKERS` list. Default-only
-projects are valid: the compiler represents defaults as required durable
-coverage and permits an empty project-specific addition set only when all
-platform defaults remain required.
+The platform default checker list is authoritative at compile time.
+`policy_body.default_checkers` is stamped into the versioned locked policy body,
+and the body hash preserves that exact compiler output for future task context.
+Default-only projects are valid: the compiler represents defaults as required
+durable coverage and permits an empty project-specific addition set only when
+all platform defaults remain required in the compiled body.
 
 The compiler, not the agent, decides the executable policy body.
 

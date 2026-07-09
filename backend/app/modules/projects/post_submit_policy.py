@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any
 
 from app.core.hashing import canonical_json_hash
@@ -16,6 +17,7 @@ POST_SUBMIT_CHECKER_POLICY_SCHEMA_VERSION = "post_submit_checker_policy.v1"
 POST_SUBMIT_CHECKER_POLICY_SPEC_SCHEMA_VERSION = "post_submit_checker_policy_spec.v1"
 POST_SUBMIT_CHECKER_POLICY_BODY_KEYS = {
     "schema_version",
+    "compiler_version",
     "project_id",
     "guide_version",
     "default_checkers",
@@ -32,7 +34,7 @@ POST_SUBMIT_CHECKER_POLICY_SPEC_KEYS = {
     "warning_checkers",
     "blocking_severities",
 }
-DEFAULT_DURABLE_CHECKERS = [
+POST_SUBMIT_V01_DEFAULT_CHECKERS = (
     "check_submission_packet",
     "check_policy_context_present",
     "check_evidence_present",
@@ -41,15 +43,25 @@ DEFAULT_DURABLE_CHECKERS = [
     "check_forbidden_files",
     "check_confidentiality_attestation",
     "check_low_quality_generated_artifacts",
-]
-POST_SUBMIT_SEVERITY_ORDER = [
+)
+DEFAULT_DURABLE_CHECKERS = list(POST_SUBMIT_V01_DEFAULT_CHECKERS)
+POST_SUBMIT_DEFAULT_CHECKERS_BY_COMPILER_VERSION = MappingProxyType(
+    {
+        POST_SUBMIT_COMPILER_VERSION: POST_SUBMIT_V01_DEFAULT_CHECKERS,
+    }
+)
+SUPPORTED_POST_SUBMIT_COMPILER_VERSIONS = frozenset(
+    POST_SUBMIT_DEFAULT_CHECKERS_BY_COMPILER_VERSION
+)
+POST_SUBMIT_SEVERITY_ORDER = (
     "critical",
     "high",
     "medium",
     "low",
     "info",
-]
-PLATFORM_BLOCKING_SEVERITIES = ["critical", "high"]
+)
+PLATFORM_BLOCKING_SEVERITIES = ("critical", "high")
+PLATFORM_BLOCKING_SEVERITY_SET = frozenset(PLATFORM_BLOCKING_SEVERITIES)
 
 
 class PostSubmitCheckerCompilerError(ValueError):
@@ -60,6 +72,7 @@ class PostSubmitCheckerCompilerError(ValueError):
 class LockedPostSubmitCheckerPolicy:
     """Validated locked post-submit checker policy body."""
 
+    compiler_version: str
     default_checkers: list[str]
     required_checkers: list[str]
     warning_checkers: list[str]
@@ -101,12 +114,21 @@ def build_project_post_submit_checker_spec(
     Returns:
         Canonical JSON-compatible checker specification.
     """
+    canonical_required = _canonical_checker_names(required_checkers or [])
+    canonical_warning = _canonical_checker_names(warning_checkers or [])
+    _validate_checker_classifications(
+        canonical_required,
+        canonical_warning,
+        platform_default_checkers=_default_checkers_for_compiler_version(
+            POST_SUBMIT_COMPILER_VERSION
+        ),
+    )
     return {
         "schema_version": POST_SUBMIT_CHECKER_POLICY_SPEC_SCHEMA_VERSION,
         "project_id": project_id,
         "guide_version": guide_version,
-        "required_checkers": _canonical_checker_names(required_checkers or []),
-        "warning_checkers": _canonical_checker_names(warning_checkers or []),
+        "required_checkers": canonical_required,
+        "warning_checkers": canonical_warning,
         "blocking_severities": (
             list(PLATFORM_BLOCKING_SEVERITIES)
             if blocking_severities is None
@@ -139,16 +161,22 @@ def compile_project_post_submit_checker_spec(
             platform defaults.
     """
     _validate_spec_shape(spec, project_id, guide_version)
+    default_checkers = _default_checkers_for_compiler_version(compiler_version)
     required_checkers = _canonical_checker_names(spec["required_checkers"])
     warning_checkers = _canonical_checker_names(spec["warning_checkers"])
     blocking_severities = _canonical_blocking_severities(spec["blocking_severities"])
-    _validate_checker_classifications(required_checkers, warning_checkers)
+    _validate_checker_classifications(
+        required_checkers,
+        warning_checkers,
+        platform_default_checkers=default_checkers,
+    )
     policy_body = post_submit_checker_policy_body(
         project_id=project_id,
         guide_version=guide_version,
         required_checkers=required_checkers,
         warning_checkers=warning_checkers,
         blocking_severities=blocking_severities,
+        compiler_version=compiler_version,
     )
     try:
         default_checker_registry().require_registered(set(policy_body["execution_checkers"]))
@@ -173,6 +201,7 @@ def post_submit_checker_policy_body(
     required_checkers: list[str],
     warning_checkers: list[str],
     blocking_severities: list[str],
+    compiler_version: str = POST_SUBMIT_COMPILER_VERSION,
 ) -> dict[str, Any]:
     """Build the canonical body for a post-submit checker policy.
 
@@ -182,23 +211,26 @@ def post_submit_checker_policy_body(
         required_checkers: Checker names that can block review on failure.
         warning_checkers: Checker names that produce non-blocking findings.
         blocking_severities: Severities that force a failed checker to block review.
+        compiler_version: Versioned compiler contract that owns default checkers.
 
     Returns:
         Canonical JSON-compatible policy body.
     """
+    default_checkers = _default_checkers_for_compiler_version(compiler_version)
     canonical_required_checkers = _canonical_checker_names(required_checkers)
     canonical_warning_checkers = _canonical_checker_names(warning_checkers)
     return {
         "schema_version": POST_SUBMIT_CHECKER_POLICY_SCHEMA_VERSION,
+        "compiler_version": compiler_version,
         "project_id": project_id,
         "guide_version": guide_version,
-        "default_checkers": list(DEFAULT_DURABLE_CHECKERS),
+        "default_checkers": list(default_checkers),
         "required_checkers": canonical_required_checkers,
         "warning_checkers": canonical_warning_checkers,
         "execution_checkers": list(
             dict.fromkeys(
                 [
-                    *DEFAULT_DURABLE_CHECKERS,
+                    *default_checkers,
                     *canonical_required_checkers,
                     *canonical_warning_checkers,
                 ]
@@ -206,37 +238,6 @@ def post_submit_checker_policy_body(
         ),
         "blocking_severities": _canonical_blocking_severities(blocking_severities),
     }
-
-
-def post_submit_checker_policy_hash(
-    *,
-    project_id: str,
-    guide_version: str,
-    required_checkers: list[str],
-    warning_checkers: list[str],
-    blocking_severities: list[str],
-) -> str:
-    """Return the server-owned hash for a post-submit checker policy.
-
-    Args:
-        project_id: Project that owns the guide version.
-        guide_version: Guide version the policy belongs to.
-        required_checkers: Checker names that can block review on failure.
-        warning_checkers: Checker names that produce non-blocking findings.
-        blocking_severities: Severities that force a failed checker to block review.
-
-    Returns:
-        Canonical SHA-256 hash for the durable policy contract.
-    """
-    return canonical_json_hash(
-        post_submit_checker_policy_body(
-            project_id=project_id,
-            guide_version=guide_version,
-            required_checkers=required_checkers,
-            warning_checkers=warning_checkers,
-            blocking_severities=blocking_severities,
-        )
-    )
 
 
 def parse_locked_post_submit_checker_policy_body(
@@ -262,6 +263,7 @@ def parse_locked_post_submit_checker_policy_body(
     """
     if not isinstance(body, dict):
         raise ValueError("locked post-submit checker policy body is missing")
+    compiler_version = body.get("compiler_version")
     required_checkers = body.get("required_checkers")
     warning_checkers = body.get("warning_checkers")
     default_checkers = body.get("default_checkers")
@@ -270,9 +272,11 @@ def parse_locked_post_submit_checker_policy_body(
     if (
         set(body) != POST_SUBMIT_CHECKER_POLICY_BODY_KEYS
         or body.get("schema_version") != POST_SUBMIT_CHECKER_POLICY_SCHEMA_VERSION
+        or not isinstance(compiler_version, str)
+        or compiler_version not in SUPPORTED_POST_SUBMIT_COMPILER_VERSIONS
         or body.get("project_id") != project_id
         or body.get("guide_version") != guide_version
-        or default_checkers != DEFAULT_DURABLE_CHECKERS
+        or not _valid_unique_string_list(default_checkers)
         or not _valid_canonical_checker_list(required_checkers)
         or not _valid_canonical_checker_list(warning_checkers)
         or not _valid_unique_string_list(execution_checkers)
@@ -281,13 +285,21 @@ def parse_locked_post_submit_checker_policy_body(
         != list(dict.fromkeys([*default_checkers, *required_checkers, *warning_checkers]))
     ):
         raise ValueError("locked post-submit checker policy body is invalid")
+    expected_default_checkers = _default_checkers_for_compiler_version(compiler_version)
+    if default_checkers != expected_default_checkers:
+        raise ValueError("locked post-submit checker policy body is invalid")
     try:
-        _validate_checker_classifications(required_checkers, warning_checkers)
+        _validate_checker_classifications(
+            required_checkers,
+            warning_checkers,
+            platform_default_checkers=expected_default_checkers,
+        )
     except PostSubmitCheckerCompilerError as exc:
         raise ValueError("locked post-submit checker policy body is invalid") from exc
     if canonical_json_hash(body) != policy_hash:
         raise ValueError("locked post-submit checker policy hash is invalid")
     return LockedPostSubmitCheckerPolicy(
+        compiler_version=compiler_version,
         default_checkers=list(default_checkers),
         required_checkers=list(required_checkers),
         warning_checkers=list(warning_checkers),
@@ -315,7 +327,12 @@ def _validate_spec_shape(
             raise PostSubmitCheckerCompilerError(f"post-submit checker spec {field_name} is invalid")
 
 
-def _validate_checker_classifications(required_checkers: list[str], warning_checkers: list[str]) -> None:
+def _validate_checker_classifications(
+    required_checkers: list[str],
+    warning_checkers: list[str],
+    *,
+    platform_default_checkers: list[str],
+) -> None:
     """Reject duplicate, contradictory, or weakening checker classifications."""
     duplicate_required = _duplicates(required_checkers)
     duplicate_warning = _duplicates(warning_checkers)
@@ -328,11 +345,19 @@ def _validate_checker_classifications(required_checkers: list[str], warning_chec
         raise PostSubmitCheckerCompilerError(
             "post-submit checker spec contains conflicting checker classifications"
         )
-    weakened_defaults = sorted(set(warning_checkers).intersection(DEFAULT_DURABLE_CHECKERS))
+    weakened_defaults = sorted(set(warning_checkers).intersection(platform_default_checkers))
     if weakened_defaults:
         raise PostSubmitCheckerCompilerError(
             "post-submit checker spec cannot mark default checkers as warning-only"
         )
+
+
+def _default_checkers_for_compiler_version(compiler_version: str) -> list[str]:
+    """Return the frozen default-checker snapshot for a compiler version."""
+    default_checkers = POST_SUBMIT_DEFAULT_CHECKERS_BY_COMPILER_VERSION.get(compiler_version)
+    if default_checkers is None:
+        raise PostSubmitCheckerCompilerError("post-submit checker compiler version is unsupported")
+    return list(default_checkers)
 
 
 def _canonical_checker_names(checker_names: list[str]) -> list[str]:
@@ -352,7 +377,7 @@ def _canonical_blocking_severities(severities: list[str]) -> list[str]:
     unknown = sorted(set(severities).difference(POST_SUBMIT_SEVERITY_ORDER))
     if unknown:
         raise PostSubmitCheckerCompilerError("post-submit checker spec contains unknown severities")
-    if not set(PLATFORM_BLOCKING_SEVERITIES).issubset(severities):
+    if not PLATFORM_BLOCKING_SEVERITY_SET.issubset(severities):
         raise PostSubmitCheckerCompilerError(
             "post-submit checker spec weakens platform blocking severities"
         )
@@ -370,7 +395,7 @@ def _valid_canonical_blocking_severities(value: Any) -> bool:
     """Return whether severity names use the canonical severity order."""
     if not _valid_unique_string_list(value):
         return False
-    if not set(PLATFORM_BLOCKING_SEVERITIES).issubset(value):
+    if not PLATFORM_BLOCKING_SEVERITY_SET.issubset(value):
         return False
     return list(value) == [
         severity for severity in POST_SUBMIT_SEVERITY_ORDER if severity in set(value)

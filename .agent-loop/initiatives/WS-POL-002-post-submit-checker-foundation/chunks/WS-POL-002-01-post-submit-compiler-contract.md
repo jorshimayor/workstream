@@ -49,16 +49,16 @@ chunks so the first implementation remains reviewable.
 - Compiler supports default-only projects. A default-only constrained spec has
   empty project-specific `required_checkers` and `warning_checkers`; the
   compiled policy body still executes every platform default because
-  `default_checkers` and `execution_checkers` exactly equal
-  `DEFAULT_DURABLE_CHECKERS`.
+  `default_checkers` is stamped from the compiler's platform defaults and
+  `execution_checkers` is compiled from that locked default list.
 - `required_checkers` and `warning_checkers` represent project-specific routing
   classifications. They may reference registered non-default checkers, and
   `required_checkers` may also reference a default checker to tighten its
   routing for the project. Default-only projects leave both lists empty.
   Platform defaults remain mandatory through the compiler-owned default list
   and execution list, not by duplicating them into `required_checkers`.
-- `policy_body.default_checkers` must exactly equal the platform-owned
-  `DEFAULT_DURABLE_CHECKERS` list.
+- `policy_body.default_checkers` is a locked compiler output, not a runtime read
+  from the mutable `DEFAULT_DURABLE_CHECKERS` constant.
 - Platform blocking severities are `["critical", "high"]`, matching the
   existing checker runner. A constrained spec may tighten routing by adding
   known severities, but it cannot remove `critical` or `high`.
@@ -121,10 +121,13 @@ arbitrary generated checker code execution
   project `PostSubmitCheckerPolicy` body.
 - Default durable post-submit checkers are always present in
   `execution_checkers`.
-- `policy_body.default_checkers` exactly matches `DEFAULT_DURABLE_CHECKERS`; no
-  missing, extra, renamed, or reordered defaults are accepted. This chunk must
-  not change the `DEFAULT_DURABLE_CHECKERS` list; any future default-list change
-  requires explicit human approval and security review in its own chunk.
+- `policy_body.default_checkers` is copied from `DEFAULT_DURABLE_CHECKERS` at
+  compile time and stamped with `compiler_version`; runtime validates the locked
+  body by schema version, supported compiler version, canonical structure, and
+  `policy_hash`, not by comparing old locked rows to today's default constant.
+  This chunk must not change the `DEFAULT_DURABLE_CHECKERS` list; any future
+  default-list change requires explicit human approval and security review in
+  its own chunk.
 - Default-only project policy compilation and activation are valid when all
   platform defaults remain present in `default_checkers` and
   `execution_checkers`.
@@ -137,8 +140,11 @@ arbitrary generated checker code execution
   parsing helpers instead of reimplementing a second post-submit canonicalizer.
 - Compiler implementation must not introduce a reverse dependency from
   `backend/app/modules/checkers/compiler.py` into project modules.
-- The locked-body parser rejects bodies whose `default_checkers` are missing,
-  reordered, renamed, or extended relative to `DEFAULT_DURABLE_CHECKERS`.
+- The locked-body parser rejects bodies whose `default_checkers` are malformed
+  or inconsistent with `execution_checkers`; a locked body must also match the
+  frozen default-checker snapshot for its stamped `compiler_version`. Later
+  default-list constant changes therefore do not break older rows, but a v0.1
+  body cannot invent a different v0.1 default list.
 - Existing runtime tests still pass.
 - Docs describe the compiler boundary and default checker list.
 
