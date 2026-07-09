@@ -2,7 +2,7 @@
 
 ## Scope
 
-Planning package in `/home/abiorh/flow/workstream`.
+Planning package in `<repo-root>`.
 
 ## Review Passes Completed
 

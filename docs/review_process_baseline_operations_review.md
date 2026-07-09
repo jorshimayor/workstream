@@ -4,7 +4,7 @@ Reviewer role: Operations and Review Workflow Reviewer.
 
 Scope:
 
-- markdown docs in `/home/abiorh/flow/workstream`
+- markdown docs in `<repo-root>`
 - metadata-level process patterns under `local reference workspace`
 - no task content, private data, or confidential project details copied
 

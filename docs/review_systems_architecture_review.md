@@ -1,6 +1,6 @@
 # Systems Architecture Review
 
-Review scope: markdown docs in `/home/abiorh/flow/workstream`.
+Review scope: markdown docs in `<repo-root>`.
 
 Reviewer role: Systems Architecture Reviewer.
 

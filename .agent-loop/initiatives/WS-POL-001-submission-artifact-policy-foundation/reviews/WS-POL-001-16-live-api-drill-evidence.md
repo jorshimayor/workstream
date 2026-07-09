@@ -7,20 +7,26 @@ PASS.
 The final clean Terminal Benchmark drill ran through public/operator HTTP APIs
 without database inspection as lifecycle proof.
 
+This is privacy-redacted public evidence. The source fixture came from private
+local operator material, so exact fixture ids, local database UUIDs,
+source-material hashes, package hashes, artifact byte counts, and
+source-specific task identifiers are replaced with explicit redaction
+placeholders. The placeholders are not replayable API literals.
+
 Final state:
 
 ```text
-project_id: 36331e8e-c849-484d-9e9e-c8ebc2f70130
-guide_id: fbe0b2ab-2793-4619-a414-ed083d9cc117
-source_snapshot_id: 2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b
+project_id: <redacted-id>
+guide_id: <redacted-id>
+source_snapshot_id: <redacted-id>
 source_snapshot_hash: sha256:<redacted>
 sufficiency_status: passed
 submission_artifact_policy_hash: sha256:<redacted>
 effective_policy_hash: sha256:<redacted>
 pre_submit_checker_bundle_hash: sha256:<redacted>
-task_id: d8cfda33-6c7e-461a-bdcd-036a6cefeda3
-submission_id: ba25f15a-e36a-4925-9891-09d394eae2ec
-checker_run_id: d7885348-fd08-4820-b209-36a704765a2b
+task_id: <redacted-id>
+submission_id: <redacted-id>
+checker_run_id: <redacted-id>
 final_task_status: review_pending
 ```
 
@@ -43,13 +49,13 @@ from HTTP responses.
 Fixture label:
 
 ```text
-terminal-benchmark-reference-task
+Terminal Benchmark reference fixture
 ```
 
 Fixture id:
 
 ```text
-terminal-benchmark-reference-fixture
+<redacted-fixture-id>
 ```
 
 Before the final API run, source text was sanitized so raw local filesystem
@@ -60,27 +66,28 @@ Guide body:
 
 ```text
 content_markdown_hash: sha256:<redacted>
-content_markdown_bytes: 138427
+content_markdown_bytes: <redacted>
 ```
 
 Source snapshot manifest:
 
 | Label | Durable ref | Hash | Bytes |
 |---|---|---:|---:|
-| `PROJECT_GUIDE.md` | `import:/fixtures/terminal-benchmark-reference-fixture/PROJECT_GUIDE.md` | `sha256:<redacted>` | 27143 |
-| `REVIEWER_PROGRAM.md` | `import:/fixtures/terminal-benchmark-reference-fixture/REVIEWER_PROGRAM.md` | `sha256:<redacted>` | 45121 |
-| `task.toml` | `import:/fixtures/terminal-benchmark-reference-fixture/task.toml` | `sha256:<redacted>` | 1562 |
-| `review_packet.md` | `import:/fixtures/terminal-benchmark-reference-fixture/review_packet.md` | `sha256:<redacted>` | 36295 |
-| `static_guard.txt` | `import:/fixtures/terminal-benchmark-reference-fixture/static_guard.txt` | `sha256:<redacted>` | 612 |
-| `docker_build.log` | `import:/fixtures/terminal-benchmark-reference-fixture/docker_build.log` | `sha256:<redacted>` | 31676 |
-| `oracle_test.log` | `import:/fixtures/terminal-benchmark-reference-fixture/oracle_test.log` | `sha256:<redacted>` | 3926 |
-| `starter_m1_test.log` | `import:/fixtures/terminal-benchmark-reference-fixture/starter_m1_test.log` | `sha256:<redacted>` | 11284 |
+| `PROJECT_GUIDE.md` | `import:/fixtures/<redacted-fixture-id>/PROJECT_GUIDE.md` | `sha256:<redacted>` | <redacted> |
+| `REVIEWER_PROGRAM.md` | `import:/fixtures/<redacted-fixture-id>/REVIEWER_PROGRAM.md` | `sha256:<redacted>` | <redacted> |
+| `task.toml` | `import:/fixtures/<redacted-fixture-id>/task.toml` | `sha256:<redacted>` | <redacted> |
+| `review_packet.md` | `import:/fixtures/<redacted-fixture-id>/review_packet.md` | `sha256:<redacted>` | <redacted> |
+| `static_guard.txt` | `import:/fixtures/<redacted-fixture-id>/static_guard.txt` | `sha256:<redacted>` | <redacted> |
+| `docker_build.log` | `import:/fixtures/<redacted-fixture-id>/docker_build.log` | `sha256:<redacted>` | <redacted> |
+| `oracle_test.log` | `import:/fixtures/<redacted-fixture-id>/oracle_test.log` | `sha256:<redacted>` | <redacted> |
+| `starter_m1_test.log` | `import:/fixtures/<redacted-fixture-id>/starter_m1_test.log` | `sha256:<redacted>` | <redacted> |
 
 ## HTTP Transcript
 
-Large guide content is represented by stable hashes and source manifest rows
-above. The table below is an ordered index; full redacted request and response
-bodies for every step are recorded in the Redacted HTTP Body Appendix.
+Large guide content, exact hashes, local identifiers, and exact byte counts are
+redacted as source-material fingerprints. The table below is an ordered index;
+full privacy-redacted request and response bodies for every step are recorded
+in the Redacted HTTP Body Appendix.
 
 | Step | Method and path | HTTP |
 |---|---|---:|
@@ -147,10 +154,10 @@ Sufficiency-agent input:
 ```json
 {
   "input_type": "GuideSourceMaterial",
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
-  "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
+  "project_id": "<redacted-id>",
+  "guide_id": "<redacted-id>",
   "guide_version": "v1",
-  "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+  "source_snapshot_id": "<redacted-id>",
   "source_snapshot_hash": "sha256:<redacted>",
   "guide_material": {
     "content_markdown": {
@@ -159,14 +166,14 @@ Sufficiency-agent input:
     }
   },
   "source_items": [
-    ["project_guide", "import:/fixtures/terminal-benchmark-reference-fixture/PROJECT_GUIDE.md", "sha256:<redacted>"],
-    ["reviewer_program", "import:/fixtures/terminal-benchmark-reference-fixture/REVIEWER_PROGRAM.md", "sha256:<redacted>"],
-    ["task_material", "import:/fixtures/terminal-benchmark-reference-fixture/task.toml", "sha256:<redacted>"],
-    ["review_packet", "import:/fixtures/terminal-benchmark-reference-fixture/review_packet.md", "sha256:<redacted>"],
-    ["static_guard", "import:/fixtures/terminal-benchmark-reference-fixture/static_guard.txt", "sha256:<redacted>"],
-    ["build_log", "import:/fixtures/terminal-benchmark-reference-fixture/docker_build.log", "sha256:<redacted>"],
-    ["test_log", "import:/fixtures/terminal-benchmark-reference-fixture/oracle_test.log", "sha256:<redacted>"],
-    ["test_log", "import:/fixtures/terminal-benchmark-reference-fixture/starter_m1_test.log", "sha256:<redacted>"]
+    ["project_guide", "import:/fixtures/<redacted-fixture-id>/PROJECT_GUIDE.md", "sha256:<redacted>"],
+    ["reviewer_program", "import:/fixtures/<redacted-fixture-id>/REVIEWER_PROGRAM.md", "sha256:<redacted>"],
+    ["task_material", "import:/fixtures/<redacted-fixture-id>/task.toml", "sha256:<redacted>"],
+    ["review_packet", "import:/fixtures/<redacted-fixture-id>/review_packet.md", "sha256:<redacted>"],
+    ["static_guard", "import:/fixtures/<redacted-fixture-id>/static_guard.txt", "sha256:<redacted>"],
+    ["build_log", "import:/fixtures/<redacted-fixture-id>/docker_build.log", "sha256:<redacted>"],
+    ["test_log", "import:/fixtures/<redacted-fixture-id>/oracle_test.log", "sha256:<redacted>"],
+    ["test_log", "import:/fixtures/<redacted-fixture-id>/starter_m1_test.log", "sha256:<redacted>"]
   ],
   "representative_task_material": {
     "items": []
@@ -263,13 +270,13 @@ Task creation request used the current task contract only:
 
 ```json
 {
-  "title": "Terminal Benchmark terminal-benchmark-reference-fixture live-api",
+  "title": "Terminal Benchmark <redacted-fixture-id> live-api",
   "task_type": "terminal_benchmark",
   "difficulty": "medium",
-  "skill_tags": ["rust", "json", "systems", "containers", "cli"],
+  "skill_tags": ["rust", "json", "<redacted-domain-tag>", "containers", "cli"],
   "source_type": "manual",
-  "source_ref": "terminal-benchmark/terminal-benchmark-reference-fixture/live-api/ws16-clean-cb1540ba",
-  "external_task_id": "terminal-benchmark-reference-fixture"
+  "source_ref": "terminal-benchmark/<redacted-fixture-id>/live-api/<redacted-run-id>",
+  "external_task_id": "<redacted-fixture-id>"
 }
 ```
 
@@ -369,7 +376,7 @@ Submission create:
 
 ```text
 HTTP: 201
-submission_id: ba25f15a-e36a-4925-9891-09d394eae2ec
+submission_id: <redacted-id>
 version: 1
 ```
 
@@ -393,7 +400,7 @@ Checker run list and get both returned:
 
 ```json
 {
-  "id": "d7885348-fd08-4820-b209-36a704765a2b",
+  "id": "<redacted-id>",
   "status": "completed",
   "routing_recommendation": "allow_review",
   "passed_count": 8,
@@ -455,8 +462,8 @@ Request body:
 ```json
 {
   "description": "Real Terminal Benchmark fixture used as Workstream API evidence with sanitized source text.",
-  "name": "Terminal Benchmark Real API ws16-clean-cb1540ba",
-  "slug": "terminal-benchmark-real-api-ws16-clean-cb1540ba"
+  "name": "Terminal Benchmark Real API <redacted-run-id>",
+  "slug": "terminal-benchmark-real-api-<redacted-run-id>"
 }
 ```
 
@@ -466,9 +473,9 @@ Response body:
 {
   "created_at": "2026-07-08T23:43:31.535968Z",
   "description": "Real Terminal Benchmark fixture used as Workstream API evidence with sanitized source text.",
-  "id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
-  "name": "Terminal Benchmark Real API ws16-clean-cb1540ba",
-  "slug": "terminal-benchmark-real-api-ws16-clean-cb1540ba",
+  "id": "<redacted-id>",
+  "name": "Terminal Benchmark Real API <redacted-run-id>",
+  "slug": "terminal-benchmark-real-api-<redacted-run-id>",
   "status": "draft",
   "updated_at": "2026-07-08T23:43:31.535968Z"
 }
@@ -483,7 +490,7 @@ Request body:
 ```json
 {
   "change_summary": "Initial Terminal Benchmark real-world guide from sanitized imported source snapshot bundle.",
-  "content_markdown": "<redacted-large-text sha256:<redacted> bytes:138427>",
+  "content_markdown": "<redacted-large-text sha256:<redacted> bytes:<redacted>>",
   "payment_policy": {
     "accepted_payment_rule": "pay_on_acceptance",
     "base_amount": "25.00",
@@ -529,72 +536,72 @@ Request body:
     "items": [
       {
         "content_cid": null,
-        "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:6112>",
+        "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:<redacted>>",
         "content_hash": "sha256:<redacted>",
-        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/PROJECT_GUIDE.md",
+        "durable_ref": "import:/fixtures/<redacted-fixture-id>/PROJECT_GUIDE.md",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "media_type": "text/markdown",
         "source_kind": "project_guide"
       },
       {
         "content_cid": null,
-        "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:6000>",
+        "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:<redacted>>",
         "content_hash": "sha256:<redacted>",
-        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/REVIEWER_PROGRAM.md",
+        "durable_ref": "import:/fixtures/<redacted-fixture-id>/REVIEWER_PROGRAM.md",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "media_type": "text/markdown",
         "source_kind": "reviewer_program"
       },
       {
         "content_cid": null,
-        "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:1562>",
+        "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:<redacted>>",
         "content_hash": "sha256:<redacted>",
-        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/task.toml",
+        "durable_ref": "import:/fixtures/<redacted-fixture-id>/task.toml",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "media_type": "text/toml",
         "source_kind": "task_material"
       },
       {
         "content_cid": null,
-        "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:6184>",
+        "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:<redacted>>",
         "content_hash": "sha256:<redacted>",
-        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/review_packet.md",
+        "durable_ref": "import:/fixtures/<redacted-fixture-id>/review_packet.md",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "media_type": "text/markdown",
         "source_kind": "review_packet"
       },
       {
         "content_cid": null,
-        "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:612>",
+        "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:<redacted>>",
         "content_hash": "sha256:<redacted>",
-        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/static_guard.txt",
+        "durable_ref": "import:/fixtures/<redacted-fixture-id>/static_guard.txt",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "media_type": "text/plain",
         "source_kind": "checker_evidence"
       },
       {
         "content_cid": null,
-        "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:6000>",
+        "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:<redacted>>",
         "content_hash": "sha256:<redacted>",
-        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/docker_build.log",
+        "durable_ref": "import:/fixtures/<redacted-fixture-id>/docker_build.log",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "media_type": "text/plain",
         "source_kind": "checker_evidence"
       },
       {
         "content_cid": null,
-        "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:3926>",
+        "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:<redacted>>",
         "content_hash": "sha256:<redacted>",
-        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/oracle_test.log",
+        "durable_ref": "import:/fixtures/<redacted-fixture-id>/oracle_test.log",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "media_type": "text/plain",
         "source_kind": "checker_evidence"
       },
       {
         "content_cid": null,
-        "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:6000>",
+        "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:<redacted>>",
         "content_hash": "sha256:<redacted>",
-        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/starter_m1_test.log",
+        "durable_ref": "import:/fixtures/<redacted-fixture-id>/starter_m1_test.log",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "media_type": "text/plain",
         "source_kind": "checker_evidence"
@@ -611,12 +618,12 @@ Response body:
 {
   "approved_by": null,
   "change_summary": "Initial Terminal Benchmark real-world guide from sanitized imported source snapshot bundle.",
-  "content_markdown": "<redacted-large-text sha256:<redacted> bytes:138427>",
+  "content_markdown": "<redacted-large-text sha256:<redacted> bytes:<redacted>>",
   "created_at": "2026-07-08T23:43:31.606777Z",
-  "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
+  "created_by": "<redacted-id>",
   "effective_at": null,
-  "id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+  "id": "<redacted-id>",
+  "project_id": "<redacted-id>",
   "status": "draft",
   "superseded_at": null,
   "updated_at": "2026-07-08T23:43:31.606777Z",
@@ -638,21 +645,21 @@ Response body:
 
 ```json
 {
-  "celery_task_id": "3ef70bda-0261-4008-9255-d6b4a0fd2351",
+  "celery_task_id": "<redacted-id>",
   "created_at": "2026-07-08T23:43:31.606777Z",
-  "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
+  "created_by": "<redacted-id>",
   "current_step": "queued",
   "error_code": null,
   "error_summary": null,
   "finished_at": null,
-  "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
+  "guide_id": "<redacted-id>",
   "guide_version": "v1",
-  "id": "54b56346-0562-47b9-b2b1-1f7ec10f8805",
+  "id": "<redacted-id>",
   "output_submission_artifact_policy_id": null,
   "output_sufficiency_report_id": null,
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+  "project_id": "<redacted-id>",
   "source_snapshot_hash": "sha256:<redacted>",
-  "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+  "source_snapshot_id": "<redacted-id>",
   "started_at": null,
   "status": "queued",
   "updated_at": "2026-07-08T23:43:31.799970Z"
@@ -673,21 +680,21 @@ Response body:
 
 ```json
 {
-  "celery_task_id": "3ef70bda-0261-4008-9255-d6b4a0fd2351",
+  "celery_task_id": "<redacted-id>",
   "created_at": "2026-07-08T23:43:31.606777Z",
-  "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
+  "created_by": "<redacted-id>",
   "current_step": "guide_sufficiency",
   "error_code": null,
   "error_summary": null,
   "finished_at": null,
-  "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
+  "guide_id": "<redacted-id>",
   "guide_version": "v1",
-  "id": "54b56346-0562-47b9-b2b1-1f7ec10f8805",
+  "id": "<redacted-id>",
   "output_submission_artifact_policy_id": null,
   "output_sufficiency_report_id": null,
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+  "project_id": "<redacted-id>",
   "source_snapshot_hash": "sha256:<redacted>",
-  "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+  "source_snapshot_id": "<redacted-id>",
   "started_at": "2026-07-08T23:43:32.307172Z",
   "status": "running_sufficiency_agent",
   "updated_at": "2026-07-08T23:43:32.263663Z"
@@ -708,21 +715,21 @@ Response body:
 
 ```json
 {
-  "celery_task_id": "3ef70bda-0261-4008-9255-d6b4a0fd2351",
+  "celery_task_id": "<redacted-id>",
   "created_at": "2026-07-08T23:43:31.606777Z",
-  "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
+  "created_by": "<redacted-id>",
   "current_step": "guide_sufficiency",
   "error_code": null,
   "error_summary": null,
   "finished_at": null,
-  "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
+  "guide_id": "<redacted-id>",
   "guide_version": "v1",
-  "id": "54b56346-0562-47b9-b2b1-1f7ec10f8805",
+  "id": "<redacted-id>",
   "output_submission_artifact_policy_id": null,
   "output_sufficiency_report_id": null,
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+  "project_id": "<redacted-id>",
   "source_snapshot_hash": "sha256:<redacted>",
-  "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+  "source_snapshot_id": "<redacted-id>",
   "started_at": "2026-07-08T23:43:32.307172Z",
   "status": "running_sufficiency_agent",
   "updated_at": "2026-07-08T23:43:32.263663Z"
@@ -743,21 +750,21 @@ Response body:
 
 ```json
 {
-  "celery_task_id": "3ef70bda-0261-4008-9255-d6b4a0fd2351",
+  "celery_task_id": "<redacted-id>",
   "created_at": "2026-07-08T23:43:31.606777Z",
-  "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
+  "created_by": "<redacted-id>",
   "current_step": "guide_sufficiency",
   "error_code": null,
   "error_summary": null,
   "finished_at": null,
-  "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
+  "guide_id": "<redacted-id>",
   "guide_version": "v1",
-  "id": "54b56346-0562-47b9-b2b1-1f7ec10f8805",
+  "id": "<redacted-id>",
   "output_submission_artifact_policy_id": null,
   "output_sufficiency_report_id": null,
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+  "project_id": "<redacted-id>",
   "source_snapshot_hash": "sha256:<redacted>",
-  "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+  "source_snapshot_id": "<redacted-id>",
   "started_at": "2026-07-08T23:43:32.307172Z",
   "status": "running_sufficiency_agent",
   "updated_at": "2026-07-08T23:43:32.263663Z"
@@ -778,21 +785,21 @@ Response body:
 
 ```json
 {
-  "celery_task_id": "3ef70bda-0261-4008-9255-d6b4a0fd2351",
+  "celery_task_id": "<redacted-id>",
   "created_at": "2026-07-08T23:43:31.606777Z",
-  "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
+  "created_by": "<redacted-id>",
   "current_step": "submission_artifact_policy_derivation",
   "error_code": null,
   "error_summary": null,
   "finished_at": null,
-  "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
+  "guide_id": "<redacted-id>",
   "guide_version": "v1",
-  "id": "54b56346-0562-47b9-b2b1-1f7ec10f8805",
+  "id": "<redacted-id>",
   "output_submission_artifact_policy_id": null,
-  "output_sufficiency_report_id": "27cd37ac-638f-445a-8637-b8ced01d3ae1",
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+  "output_sufficiency_report_id": "<redacted-id>",
+  "project_id": "<redacted-id>",
   "source_snapshot_hash": "sha256:<redacted>",
-  "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+  "source_snapshot_id": "<redacted-id>",
   "started_at": "2026-07-08T23:43:32.307172Z",
   "status": "running_policy_derivation_agent",
   "updated_at": "2026-07-08T23:43:40.681014Z"
@@ -813,21 +820,21 @@ Response body:
 
 ```json
 {
-  "celery_task_id": "3ef70bda-0261-4008-9255-d6b4a0fd2351",
+  "celery_task_id": "<redacted-id>",
   "created_at": "2026-07-08T23:43:31.606777Z",
-  "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
+  "created_by": "<redacted-id>",
   "current_step": "submission_artifact_policy_derivation",
   "error_code": null,
   "error_summary": null,
   "finished_at": null,
-  "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
+  "guide_id": "<redacted-id>",
   "guide_version": "v1",
-  "id": "54b56346-0562-47b9-b2b1-1f7ec10f8805",
+  "id": "<redacted-id>",
   "output_submission_artifact_policy_id": null,
-  "output_sufficiency_report_id": "27cd37ac-638f-445a-8637-b8ced01d3ae1",
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+  "output_sufficiency_report_id": "<redacted-id>",
+  "project_id": "<redacted-id>",
   "source_snapshot_hash": "sha256:<redacted>",
-  "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+  "source_snapshot_id": "<redacted-id>",
   "started_at": "2026-07-08T23:43:32.307172Z",
   "status": "running_policy_derivation_agent",
   "updated_at": "2026-07-08T23:43:40.681014Z"
@@ -848,21 +855,21 @@ Response body:
 
 ```json
 {
-  "celery_task_id": "3ef70bda-0261-4008-9255-d6b4a0fd2351",
+  "celery_task_id": "<redacted-id>",
   "created_at": "2026-07-08T23:43:31.606777Z",
-  "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
+  "created_by": "<redacted-id>",
   "current_step": "submission_artifact_policy_derivation",
   "error_code": null,
   "error_summary": null,
   "finished_at": null,
-  "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
+  "guide_id": "<redacted-id>",
   "guide_version": "v1",
-  "id": "54b56346-0562-47b9-b2b1-1f7ec10f8805",
+  "id": "<redacted-id>",
   "output_submission_artifact_policy_id": null,
-  "output_sufficiency_report_id": "27cd37ac-638f-445a-8637-b8ced01d3ae1",
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+  "output_sufficiency_report_id": "<redacted-id>",
+  "project_id": "<redacted-id>",
   "source_snapshot_hash": "sha256:<redacted>",
-  "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+  "source_snapshot_id": "<redacted-id>",
   "started_at": "2026-07-08T23:43:32.307172Z",
   "status": "running_policy_derivation_agent",
   "updated_at": "2026-07-08T23:43:40.681014Z"
@@ -883,21 +890,21 @@ Response body:
 
 ```json
 {
-  "celery_task_id": "3ef70bda-0261-4008-9255-d6b4a0fd2351",
+  "celery_task_id": "<redacted-id>",
   "created_at": "2026-07-08T23:43:31.606777Z",
-  "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
+  "created_by": "<redacted-id>",
   "current_step": "submission_artifact_policy_derivation",
   "error_code": null,
   "error_summary": null,
   "finished_at": null,
-  "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
+  "guide_id": "<redacted-id>",
   "guide_version": "v1",
-  "id": "54b56346-0562-47b9-b2b1-1f7ec10f8805",
+  "id": "<redacted-id>",
   "output_submission_artifact_policy_id": null,
-  "output_sufficiency_report_id": "27cd37ac-638f-445a-8637-b8ced01d3ae1",
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+  "output_sufficiency_report_id": "<redacted-id>",
+  "project_id": "<redacted-id>",
   "source_snapshot_hash": "sha256:<redacted>",
-  "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+  "source_snapshot_id": "<redacted-id>",
   "started_at": "2026-07-08T23:43:32.307172Z",
   "status": "running_policy_derivation_agent",
   "updated_at": "2026-07-08T23:43:40.681014Z"
@@ -918,21 +925,21 @@ Response body:
 
 ```json
 {
-  "celery_task_id": "3ef70bda-0261-4008-9255-d6b4a0fd2351",
+  "celery_task_id": "<redacted-id>",
   "created_at": "2026-07-08T23:43:31.606777Z",
-  "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
+  "created_by": "<redacted-id>",
   "current_step": "submission_artifact_policy_derivation",
   "error_code": null,
   "error_summary": null,
   "finished_at": null,
-  "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
+  "guide_id": "<redacted-id>",
   "guide_version": "v1",
-  "id": "54b56346-0562-47b9-b2b1-1f7ec10f8805",
+  "id": "<redacted-id>",
   "output_submission_artifact_policy_id": null,
-  "output_sufficiency_report_id": "27cd37ac-638f-445a-8637-b8ced01d3ae1",
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+  "output_sufficiency_report_id": "<redacted-id>",
+  "project_id": "<redacted-id>",
   "source_snapshot_hash": "sha256:<redacted>",
-  "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+  "source_snapshot_id": "<redacted-id>",
   "started_at": "2026-07-08T23:43:32.307172Z",
   "status": "running_policy_derivation_agent",
   "updated_at": "2026-07-08T23:43:40.681014Z"
@@ -953,21 +960,21 @@ Response body:
 
 ```json
 {
-  "celery_task_id": "3ef70bda-0261-4008-9255-d6b4a0fd2351",
+  "celery_task_id": "<redacted-id>",
   "created_at": "2026-07-08T23:43:31.606777Z",
-  "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
+  "created_by": "<redacted-id>",
   "current_step": "submission_artifact_policy_derivation",
   "error_code": null,
   "error_summary": null,
   "finished_at": null,
-  "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
+  "guide_id": "<redacted-id>",
   "guide_version": "v1",
-  "id": "54b56346-0562-47b9-b2b1-1f7ec10f8805",
+  "id": "<redacted-id>",
   "output_submission_artifact_policy_id": null,
-  "output_sufficiency_report_id": "27cd37ac-638f-445a-8637-b8ced01d3ae1",
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+  "output_sufficiency_report_id": "<redacted-id>",
+  "project_id": "<redacted-id>",
   "source_snapshot_hash": "sha256:<redacted>",
-  "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+  "source_snapshot_id": "<redacted-id>",
   "started_at": "2026-07-08T23:43:32.307172Z",
   "status": "running_policy_derivation_agent",
   "updated_at": "2026-07-08T23:43:40.681014Z"
@@ -988,21 +995,21 @@ Response body:
 
 ```json
 {
-  "celery_task_id": "3ef70bda-0261-4008-9255-d6b4a0fd2351",
+  "celery_task_id": "<redacted-id>",
   "created_at": "2026-07-08T23:43:31.606777Z",
-  "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
+  "created_by": "<redacted-id>",
   "current_step": "submission_artifact_policy_derivation",
   "error_code": null,
   "error_summary": null,
   "finished_at": null,
-  "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
+  "guide_id": "<redacted-id>",
   "guide_version": "v1",
-  "id": "54b56346-0562-47b9-b2b1-1f7ec10f8805",
+  "id": "<redacted-id>",
   "output_submission_artifact_policy_id": null,
-  "output_sufficiency_report_id": "27cd37ac-638f-445a-8637-b8ced01d3ae1",
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+  "output_sufficiency_report_id": "<redacted-id>",
+  "project_id": "<redacted-id>",
   "source_snapshot_hash": "sha256:<redacted>",
-  "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+  "source_snapshot_id": "<redacted-id>",
   "started_at": "2026-07-08T23:43:32.307172Z",
   "status": "running_policy_derivation_agent",
   "updated_at": "2026-07-08T23:43:40.681014Z"
@@ -1023,21 +1030,21 @@ Response body:
 
 ```json
 {
-  "celery_task_id": "3ef70bda-0261-4008-9255-d6b4a0fd2351",
+  "celery_task_id": "<redacted-id>",
   "created_at": "2026-07-08T23:43:31.606777Z",
-  "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
+  "created_by": "<redacted-id>",
   "current_step": "submission_artifact_policy_derivation",
   "error_code": null,
   "error_summary": null,
   "finished_at": null,
-  "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
+  "guide_id": "<redacted-id>",
   "guide_version": "v1",
-  "id": "54b56346-0562-47b9-b2b1-1f7ec10f8805",
+  "id": "<redacted-id>",
   "output_submission_artifact_policy_id": null,
-  "output_sufficiency_report_id": "27cd37ac-638f-445a-8637-b8ced01d3ae1",
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+  "output_sufficiency_report_id": "<redacted-id>",
+  "project_id": "<redacted-id>",
   "source_snapshot_hash": "sha256:<redacted>",
-  "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+  "source_snapshot_id": "<redacted-id>",
   "started_at": "2026-07-08T23:43:32.307172Z",
   "status": "running_policy_derivation_agent",
   "updated_at": "2026-07-08T23:43:40.681014Z"
@@ -1058,21 +1065,21 @@ Response body:
 
 ```json
 {
-  "celery_task_id": "3ef70bda-0261-4008-9255-d6b4a0fd2351",
+  "celery_task_id": "<redacted-id>",
   "created_at": "2026-07-08T23:43:31.606777Z",
-  "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
+  "created_by": "<redacted-id>",
   "current_step": "submission_artifact_policy_derivation",
   "error_code": null,
   "error_summary": null,
   "finished_at": null,
-  "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
+  "guide_id": "<redacted-id>",
   "guide_version": "v1",
-  "id": "54b56346-0562-47b9-b2b1-1f7ec10f8805",
+  "id": "<redacted-id>",
   "output_submission_artifact_policy_id": null,
-  "output_sufficiency_report_id": "27cd37ac-638f-445a-8637-b8ced01d3ae1",
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+  "output_sufficiency_report_id": "<redacted-id>",
+  "project_id": "<redacted-id>",
   "source_snapshot_hash": "sha256:<redacted>",
-  "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+  "source_snapshot_id": "<redacted-id>",
   "started_at": "2026-07-08T23:43:32.307172Z",
   "status": "running_policy_derivation_agent",
   "updated_at": "2026-07-08T23:43:40.681014Z"
@@ -1093,21 +1100,21 @@ Response body:
 
 ```json
 {
-  "celery_task_id": "3ef70bda-0261-4008-9255-d6b4a0fd2351",
+  "celery_task_id": "<redacted-id>",
   "created_at": "2026-07-08T23:43:31.606777Z",
-  "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
+  "created_by": "<redacted-id>",
   "current_step": "submission_artifact_policy_derivation",
   "error_code": null,
   "error_summary": null,
   "finished_at": "2026-07-08T23:44:00.380059Z",
-  "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
+  "guide_id": "<redacted-id>",
   "guide_version": "v1",
-  "id": "54b56346-0562-47b9-b2b1-1f7ec10f8805",
-  "output_submission_artifact_policy_id": "f81d05aa-8f7d-4498-b3da-1de9b453d450",
-  "output_sufficiency_report_id": "27cd37ac-638f-445a-8637-b8ced01d3ae1",
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+  "id": "<redacted-id>",
+  "output_submission_artifact_policy_id": "<redacted-id>",
+  "output_sufficiency_report_id": "<redacted-id>",
+  "project_id": "<redacted-id>",
   "source_snapshot_hash": "sha256:<redacted>",
-  "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+  "source_snapshot_id": "<redacted-id>",
   "started_at": "2026-07-08T23:43:32.307172Z",
   "status": "policy_draft_ready",
   "updated_at": "2026-07-08T23:44:00.332149Z"
@@ -1134,12 +1141,12 @@ Response body:
   "created_at": "2026-07-08T23:43:40.523990Z",
   "created_by": "workstream-system:project-setup-pipeline",
   "findings": [],
-  "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
+  "guide_id": "<redacted-id>",
   "guide_version": "v1",
-  "id": "27cd37ac-638f-445a-8637-b8ced01d3ae1",
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+  "id": "<redacted-id>",
+  "project_id": "<redacted-id>",
   "source_snapshot_hash": "sha256:<redacted>",
-  "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+  "source_snapshot_id": "<redacted-id>",
   "status": "passed",
   "summary": "The guide provides sufficient reviewer criteria and workflow direction for this Terminal Benchmark task review, including milestone structure, static guard handling, dependency pinning, Dockerfile requirements, test alignment, rubric rules, reward behavior, and category mapping.",
   "warnings_acknowledged_at": null,
@@ -1171,9 +1178,9 @@ Response body:
   "derivation_agent_name": "SubmissionArtifactPolicyDerivationAgent",
   "derivation_agent_version": "workstream-policy-derivation-agent-v0.1",
   "derivation_source": "agent_derivation",
-  "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
+  "guide_id": "<redacted-id>",
   "guide_version": "v1",
-  "id": "f81d05aa-8f7d-4498-b3da-1de9b453d450",
+  "id": "<redacted-id>",
   "lifecycle_status": "draft",
   "policy_body": {
     "allowed_storage_schemes": [
@@ -1403,20 +1410,20 @@ Response body:
   },
   "policy_hash": "sha256:<redacted>",
   "policy_version": "agent-9843f69ef5b7f7631f98a61d",
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+  "project_id": "<redacted-id>",
   "source_material_refs": [
-    "import:/fixtures/terminal-benchmark-reference-fixture/docker_build.log",
-    "import:/fixtures/terminal-benchmark-reference-fixture/oracle_test.log",
-    "import:/fixtures/terminal-benchmark-reference-fixture/starter_m1_test.log",
-    "import:/fixtures/terminal-benchmark-reference-fixture/static_guard.txt",
-    "import:/fixtures/terminal-benchmark-reference-fixture/PROJECT_GUIDE.md",
-    "inline:/guides/fbe0b2ab-2793-4619-a414-ed083d9cc117/v1",
-    "import:/fixtures/terminal-benchmark-reference-fixture/review_packet.md",
-    "import:/fixtures/terminal-benchmark-reference-fixture/REVIEWER_PROGRAM.md",
-    "import:/fixtures/terminal-benchmark-reference-fixture/task.toml"
+    "import:/fixtures/<redacted-fixture-id>/docker_build.log",
+    "import:/fixtures/<redacted-fixture-id>/oracle_test.log",
+    "import:/fixtures/<redacted-fixture-id>/starter_m1_test.log",
+    "import:/fixtures/<redacted-fixture-id>/static_guard.txt",
+    "import:/fixtures/<redacted-fixture-id>/PROJECT_GUIDE.md",
+    "inline:/guides/<redacted-id>/v1",
+    "import:/fixtures/<redacted-fixture-id>/review_packet.md",
+    "import:/fixtures/<redacted-fixture-id>/REVIEWER_PROGRAM.md",
+    "import:/fixtures/<redacted-fixture-id>/task.toml"
   ],
   "source_snapshot_hash": "sha256:<redacted>",
-  "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+  "source_snapshot_id": "<redacted-id>",
   "superseded_at": null,
   "supersedes_policy_id": null,
   "updated_at": "2026-07-08T23:44:00.095072Z"
@@ -1440,7 +1447,7 @@ Response body:
 ```json
 {
   "created_at": "2026-07-08T23:44:02.228409Z",
-  "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
+  "created_by": "<redacted-id>",
   "effective_policy": {
     "allowed_storage_schemes": [
       "local",
@@ -2333,16 +2340,16 @@ Response body:
     }
   },
   "effective_policy_hash": "sha256:<redacted>",
-  "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
+  "guide_id": "<redacted-id>",
   "guide_version": "v1",
-  "id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
+  "id": "<redacted-id>",
   "lifecycle_status": "approved",
   "merge_algorithm_version": "workstream_default_merge.v1",
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+  "project_id": "<redacted-id>",
   "source_snapshot_hash": "sha256:<redacted>",
-  "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+  "source_snapshot_id": "<redacted-id>",
   "submission_artifact_policy_hash": "sha256:<redacted>",
-  "submission_artifact_policy_id": "f81d05aa-8f7d-4498-b3da-1de9b453d450",
+  "submission_artifact_policy_id": "<redacted-id>",
   "superseded_at": null,
   "supersedes_effective_policy_id": null
 }
@@ -2363,7 +2370,7 @@ Response body:
 ```json
 {
   "created_at": "2026-07-08T23:44:02.228409Z",
-  "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
+  "created_by": "<redacted-id>",
   "effective_policy": {
     "allowed_storage_schemes": [
       "local",
@@ -3256,16 +3263,16 @@ Response body:
     }
   },
   "effective_policy_hash": "sha256:<redacted>",
-  "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
+  "guide_id": "<redacted-id>",
   "guide_version": "v1",
-  "id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
+  "id": "<redacted-id>",
   "lifecycle_status": "approved",
   "merge_algorithm_version": "workstream_default_merge.v1",
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+  "project_id": "<redacted-id>",
   "source_snapshot_hash": "sha256:<redacted>",
-  "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+  "source_snapshot_id": "<redacted-id>",
   "submission_artifact_policy_hash": "sha256:<redacted>",
-  "submission_artifact_policy_id": "f81d05aa-8f7d-4498-b3da-1de9b453d450",
+  "submission_artifact_policy_id": "<redacted-id>",
   "superseded_at": null,
   "supersedes_effective_policy_id": null
 }
@@ -3297,16 +3304,16 @@ Response body:
   "compiled_bundle_hash": "sha256:<redacted>",
   "compiler_version": "workstream-pre-submit-compiler-v0.1",
   "created_at": "2026-07-08T23:44:02.228409Z",
-  "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
+  "created_by": "<redacted-id>",
   "effective_policy_hash": "sha256:<redacted>",
-  "effective_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
-  "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
+  "effective_policy_id": "<redacted-id>",
+  "guide_id": "<redacted-id>",
   "guide_version": "v1",
-  "id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
+  "id": "<redacted-id>",
   "lifecycle_status": "compiled",
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+  "project_id": "<redacted-id>",
   "source_snapshot_hash": "sha256:<redacted>",
-  "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+  "source_snapshot_id": "<redacted-id>",
   "superseded_at": null,
   "supersedes_pre_submit_checker_policy_id": null
 }
@@ -3328,7 +3335,7 @@ Response body:
 {
   "effective_submission_artifact_policy": {
     "created_at": "2026-07-08T23:44:02.228409Z",
-    "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
+    "created_by": "<redacted-id>",
     "effective_policy": {
       "allowed_storage_schemes": [
         "local",
@@ -4221,28 +4228,28 @@ Response body:
       }
     },
     "effective_policy_hash": "sha256:<redacted>",
-    "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
+    "guide_id": "<redacted-id>",
     "guide_version": "v1",
-    "id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
+    "id": "<redacted-id>",
     "lifecycle_status": "approved",
     "merge_algorithm_version": "workstream_default_merge.v1",
-    "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+    "project_id": "<redacted-id>",
     "source_snapshot_hash": "sha256:<redacted>",
-    "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+    "source_snapshot_id": "<redacted-id>",
     "submission_artifact_policy_hash": "sha256:<redacted>",
-    "submission_artifact_policy_id": "f81d05aa-8f7d-4498-b3da-1de9b453d450",
+    "submission_artifact_policy_id": "<redacted-id>",
     "superseded_at": null,
     "supersedes_effective_policy_id": null
   },
   "guide": {
-    "approved_by": "5080787a-cb3b-591d-9948-6b38354788ab",
+    "approved_by": "<redacted-id>",
     "change_summary": "Initial Terminal Benchmark real-world guide from sanitized imported source snapshot bundle.",
-    "content_markdown": "<redacted-large-text sha256:<redacted> bytes:138427>",
+    "content_markdown": "<redacted-large-text sha256:<redacted> bytes:<redacted>>",
     "created_at": "2026-07-08T23:43:31.606777Z",
-    "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
+    "created_by": "<redacted-id>",
     "effective_at": "2026-07-08T23:44:03.147622Z",
-    "id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
-    "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+    "id": "<redacted-id>",
+    "project_id": "<redacted-id>",
     "status": "active",
     "superseded_at": null,
     "updated_at": "2026-07-08T23:44:02.875444Z",
@@ -4251,163 +4258,163 @@ Response body:
   "guide_source_snapshot": {
     "bundle_hash": "sha256:<redacted>",
     "captured_at": "2026-07-08T23:43:31.606777Z",
-    "captured_by": "5080787a-cb3b-591d-9948-6b38354788ab",
-    "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
+    "captured_by": "<redacted-id>",
+    "guide_id": "<redacted-id>",
     "guide_version": "v1",
-    "id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+    "id": "<redacted-id>",
     "items": [
       {
         "content_cid": null,
         "content_hash": "sha256:<redacted>",
         "created_at": "2026-07-08T23:43:31.606777Z",
-        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/docker_build.log",
-        "id": "c408d25e-6276-426f-a99e-ac6114db773b",
+        "durable_ref": "import:/fixtures/<redacted-fixture-id>/docker_build.log",
+        "id": "<redacted-id>",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "item_order": 0,
         "media_type": "text/plain",
         "source_kind": "checker_evidence",
-        "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b"
+        "source_snapshot_id": "<redacted-id>"
       },
       {
         "content_cid": null,
         "content_hash": "sha256:<redacted>",
         "created_at": "2026-07-08T23:43:31.606777Z",
-        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/oracle_test.log",
-        "id": "8531f065-4575-43c1-bf39-e51e0ae3cd07",
+        "durable_ref": "import:/fixtures/<redacted-fixture-id>/oracle_test.log",
+        "id": "<redacted-id>",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "item_order": 1,
         "media_type": "text/plain",
         "source_kind": "checker_evidence",
-        "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b"
+        "source_snapshot_id": "<redacted-id>"
       },
       {
         "content_cid": null,
         "content_hash": "sha256:<redacted>",
         "created_at": "2026-07-08T23:43:31.606777Z",
-        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/starter_m1_test.log",
-        "id": "45961844-d3cb-4418-b03f-3a3eeca32615",
+        "durable_ref": "import:/fixtures/<redacted-fixture-id>/starter_m1_test.log",
+        "id": "<redacted-id>",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "item_order": 2,
         "media_type": "text/plain",
         "source_kind": "checker_evidence",
-        "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b"
+        "source_snapshot_id": "<redacted-id>"
       },
       {
         "content_cid": null,
         "content_hash": "sha256:<redacted>",
         "created_at": "2026-07-08T23:43:31.606777Z",
-        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/static_guard.txt",
-        "id": "49d53b1d-1a81-45e1-9d37-7f519478c654",
+        "durable_ref": "import:/fixtures/<redacted-fixture-id>/static_guard.txt",
+        "id": "<redacted-id>",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "item_order": 3,
         "media_type": "text/plain",
         "source_kind": "checker_evidence",
-        "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b"
+        "source_snapshot_id": "<redacted-id>"
       },
       {
         "content_cid": null,
         "content_hash": "sha256:<redacted>",
         "created_at": "2026-07-08T23:43:31.606777Z",
-        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/PROJECT_GUIDE.md",
-        "id": "a23f68aa-b4d0-4dd5-aeba-d0d9a716f96c",
+        "durable_ref": "import:/fixtures/<redacted-fixture-id>/PROJECT_GUIDE.md",
+        "id": "<redacted-id>",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "item_order": 4,
         "media_type": "text/markdown",
         "source_kind": "project_guide",
-        "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b"
+        "source_snapshot_id": "<redacted-id>"
       },
       {
         "content_cid": null,
         "content_hash": "sha256:<redacted>",
         "created_at": "2026-07-08T23:43:31.606777Z",
-        "durable_ref": "inline:/guides/fbe0b2ab-2793-4619-a414-ed083d9cc117/v1",
-        "id": "f1b51900-4dac-47fd-9d93-97d975877cd8",
+        "durable_ref": "inline:/guides/<redacted-id>/v1",
+        "id": "<redacted-id>",
         "ingestion_adapter": "workstream_project_guide",
         "item_order": 5,
         "media_type": "application/json",
         "source_kind": "project_guide",
-        "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b"
+        "source_snapshot_id": "<redacted-id>"
       },
       {
         "content_cid": null,
         "content_hash": "sha256:<redacted>",
         "created_at": "2026-07-08T23:43:31.606777Z",
-        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/review_packet.md",
-        "id": "61db2ff4-3495-49d4-80b3-78cc023f2e51",
+        "durable_ref": "import:/fixtures/<redacted-fixture-id>/review_packet.md",
+        "id": "<redacted-id>",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "item_order": 6,
         "media_type": "text/markdown",
         "source_kind": "review_packet",
-        "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b"
+        "source_snapshot_id": "<redacted-id>"
       },
       {
         "content_cid": null,
         "content_hash": "sha256:<redacted>",
         "created_at": "2026-07-08T23:43:31.606777Z",
-        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/REVIEWER_PROGRAM.md",
-        "id": "87c64c15-33d9-48f2-85a6-cb0ee5ddd932",
+        "durable_ref": "import:/fixtures/<redacted-fixture-id>/REVIEWER_PROGRAM.md",
+        "id": "<redacted-id>",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "item_order": 7,
         "media_type": "text/markdown",
         "source_kind": "reviewer_program",
-        "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b"
+        "source_snapshot_id": "<redacted-id>"
       },
       {
         "content_cid": null,
         "content_hash": "sha256:<redacted>",
         "created_at": "2026-07-08T23:43:31.606777Z",
-        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/task.toml",
-        "id": "316c8374-322d-4e49-a6d9-a581803cb32a",
+        "durable_ref": "import:/fixtures/<redacted-fixture-id>/task.toml",
+        "id": "<redacted-id>",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "item_order": 8,
         "media_type": "text/toml",
         "source_kind": "task_material",
-        "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b"
+        "source_snapshot_id": "<redacted-id>"
       }
     ],
     "manifest_json": {
       "items": [
         {
           "content_cid": null,
-          "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:6000>",
+          "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:<redacted>>",
           "content_hash": "sha256:<redacted>",
-          "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/docker_build.log",
+          "durable_ref": "import:/fixtures/<redacted-fixture-id>/docker_build.log",
           "ingestion_adapter": "manual_fixture_import_sanitized",
           "media_type": "text/plain",
           "source_kind": "checker_evidence"
         },
         {
           "content_cid": null,
-          "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:3926>",
+          "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:<redacted>>",
           "content_hash": "sha256:<redacted>",
-          "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/oracle_test.log",
+          "durable_ref": "import:/fixtures/<redacted-fixture-id>/oracle_test.log",
           "ingestion_adapter": "manual_fixture_import_sanitized",
           "media_type": "text/plain",
           "source_kind": "checker_evidence"
         },
         {
           "content_cid": null,
-          "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:6000>",
+          "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:<redacted>>",
           "content_hash": "sha256:<redacted>",
-          "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/starter_m1_test.log",
+          "durable_ref": "import:/fixtures/<redacted-fixture-id>/starter_m1_test.log",
           "ingestion_adapter": "manual_fixture_import_sanitized",
           "media_type": "text/plain",
           "source_kind": "checker_evidence"
         },
         {
           "content_cid": null,
-          "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:612>",
+          "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:<redacted>>",
           "content_hash": "sha256:<redacted>",
-          "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/static_guard.txt",
+          "durable_ref": "import:/fixtures/<redacted-fixture-id>/static_guard.txt",
           "ingestion_adapter": "manual_fixture_import_sanitized",
           "media_type": "text/plain",
           "source_kind": "checker_evidence"
         },
         {
           "content_cid": null,
-          "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:6112>",
+          "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:<redacted>>",
           "content_hash": "sha256:<redacted>",
-          "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/PROJECT_GUIDE.md",
+          "durable_ref": "import:/fixtures/<redacted-fixture-id>/PROJECT_GUIDE.md",
           "ingestion_adapter": "manual_fixture_import_sanitized",
           "media_type": "text/markdown",
           "source_kind": "project_guide"
@@ -4416,34 +4423,34 @@ Response body:
           "content_cid": null,
           "content_excerpt": null,
           "content_hash": "sha256:<redacted>",
-          "durable_ref": "inline:/guides/fbe0b2ab-2793-4619-a414-ed083d9cc117/v1",
+          "durable_ref": "inline:/guides/<redacted-id>/v1",
           "ingestion_adapter": "workstream_project_guide",
           "media_type": "application/json",
           "source_kind": "project_guide"
         },
         {
           "content_cid": null,
-          "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:6184>",
+          "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:<redacted>>",
           "content_hash": "sha256:<redacted>",
-          "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/review_packet.md",
+          "durable_ref": "import:/fixtures/<redacted-fixture-id>/review_packet.md",
           "ingestion_adapter": "manual_fixture_import_sanitized",
           "media_type": "text/markdown",
           "source_kind": "review_packet"
         },
         {
           "content_cid": null,
-          "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:6000>",
+          "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:<redacted>>",
           "content_hash": "sha256:<redacted>",
-          "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/REVIEWER_PROGRAM.md",
+          "durable_ref": "import:/fixtures/<redacted-fixture-id>/REVIEWER_PROGRAM.md",
           "ingestion_adapter": "manual_fixture_import_sanitized",
           "media_type": "text/markdown",
           "source_kind": "reviewer_program"
         },
         {
           "content_cid": null,
-          "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:1562>",
+          "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:<redacted>>",
           "content_hash": "sha256:<redacted>",
-          "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/task.toml",
+          "durable_ref": "import:/fixtures/<redacted-fixture-id>/task.toml",
           "ingestion_adapter": "manual_fixture_import_sanitized",
           "media_type": "text/toml",
           "source_kind": "task_material"
@@ -4452,7 +4459,7 @@ Response body:
       "schema_version": "guide_source_snapshot.v1"
     },
     "manifest_schema_version": "guide_source_snapshot.v1",
-    "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130"
+    "project_id": "<redacted-id>"
   },
   "guide_sufficiency_report": {
     "acknowledgement_note": null,
@@ -4461,12 +4468,12 @@ Response body:
     "created_at": "2026-07-08T23:43:40.523990Z",
     "created_by": "workstream-system:project-setup-pipeline",
     "findings": [],
-    "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
+    "guide_id": "<redacted-id>",
     "guide_version": "v1",
-    "id": "27cd37ac-638f-445a-8637-b8ced01d3ae1",
-    "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+    "id": "<redacted-id>",
+    "project_id": "<redacted-id>",
     "source_snapshot_hash": "sha256:<redacted>",
-    "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+    "source_snapshot_id": "<redacted-id>",
     "status": "passed",
     "summary": "The guide provides sufficient reviewer criteria and workflow direction for this Terminal Benchmark task review, including milestone structure, static guard handling, dependency pinning, Dockerfile requirements, test alignment, rubric rules, reward behavior, and category mapping.",
     "warnings_acknowledged_at": null,
@@ -4479,9 +4486,9 @@ Response body:
     "created_at": "2026-07-08T23:43:31.606777Z",
     "currency": "USD",
     "guide_version": "v1",
-    "id": "9219d8bc-153c-4492-8884-571ec92a8264",
+    "id": "<redacted-id>",
     "payout_type": "fixed",
-    "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+    "project_id": "<redacted-id>",
     "rejection_payment_rule": "no_payment_on_reject",
     "revision_payment_rule": "no_extra_payment_for_revisions"
   },
@@ -4492,9 +4499,9 @@ Response body:
     ],
     "created_at": "2026-07-08T23:43:31.606777Z",
     "guide_version": "v1",
-    "id": "30095d84-e5c5-46e3-a292-3788bd34699f",
+    "id": "<redacted-id>",
     "policy_hash": "sha256:<redacted>",
-    "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+    "project_id": "<redacted-id>",
     "required_checkers": [
       "check_policy_context_present",
       "check_low_quality_generated_artifacts"
@@ -4644,16 +4651,16 @@ Response body:
     "compiled_bundle_hash": "sha256:<redacted>",
     "compiler_version": "workstream-pre-submit-compiler-v0.1",
     "created_at": "2026-07-08T23:44:02.228409Z",
-    "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
+    "created_by": "<redacted-id>",
     "effective_policy_hash": "sha256:<redacted>",
-    "effective_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
-    "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
+    "effective_policy_id": "<redacted-id>",
+    "guide_id": "<redacted-id>",
     "guide_version": "v1",
-    "id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
+    "id": "<redacted-id>",
     "lifecycle_status": "compiled",
-    "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+    "project_id": "<redacted-id>",
     "source_snapshot_hash": "sha256:<redacted>",
-    "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+    "source_snapshot_id": "<redacted-id>",
     "superseded_at": null,
     "supersedes_pre_submit_checker_policy_id": null
   },
@@ -4665,12 +4672,12 @@ Response body:
     ],
     "created_at": "2026-07-08T23:43:31.606777Z",
     "guide_version": "v1",
-    "id": "ff2e72ce-efff-461a-9491-e88f3e61e259",
+    "id": "<redacted-id>",
     "minimum_finding_fields": [
       "issue",
       "required_fix"
     ],
-    "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+    "project_id": "<redacted-id>",
     "requires_second_review": false,
     "sla_hours": 24
   },
@@ -4681,15 +4688,15 @@ Response body:
     "auto_reject_after_limit": true,
     "created_at": "2026-07-08T23:43:31.606777Z",
     "guide_version": "v1",
-    "id": "17ddcb94-16e0-420d-8507-a8faba12fa8c",
+    "id": "<redacted-id>",
     "max_revision_rounds": 7,
-    "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+    "project_id": "<redacted-id>",
     "reviewer_reassignment_rule": "same_reviewer_preferred",
     "revision_deadline_hours": 48
   },
   "submission_artifact_policy": {
     "approved_at": "2026-07-08T23:44:02.420104Z",
-    "approved_by_actor": "5080787a-cb3b-591d-9948-6b38354788ab",
+    "approved_by_actor": "<redacted-id>",
     "approved_by_role": "project_manager",
     "change_summary": null,
     "created_at": "2026-07-08T23:44:00.095072Z",
@@ -4697,9 +4704,9 @@ Response body:
     "derivation_agent_name": "SubmissionArtifactPolicyDerivationAgent",
     "derivation_agent_version": "workstream-policy-derivation-agent-v0.1",
     "derivation_source": "agent_derivation",
-    "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
+    "guide_id": "<redacted-id>",
     "guide_version": "v1",
-    "id": "f81d05aa-8f7d-4498-b3da-1de9b453d450",
+    "id": "<redacted-id>",
     "lifecycle_status": "approved",
     "policy_body": {
       "allowed_storage_schemes": [
@@ -4929,20 +4936,20 @@ Response body:
     },
     "policy_hash": "sha256:<redacted>",
     "policy_version": "agent-9843f69ef5b7f7631f98a61d",
-    "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+    "project_id": "<redacted-id>",
     "source_material_refs": [
-      "import:/fixtures/terminal-benchmark-reference-fixture/docker_build.log",
-      "import:/fixtures/terminal-benchmark-reference-fixture/oracle_test.log",
-      "import:/fixtures/terminal-benchmark-reference-fixture/starter_m1_test.log",
-      "import:/fixtures/terminal-benchmark-reference-fixture/static_guard.txt",
-      "import:/fixtures/terminal-benchmark-reference-fixture/PROJECT_GUIDE.md",
-      "inline:/guides/fbe0b2ab-2793-4619-a414-ed083d9cc117/v1",
-      "import:/fixtures/terminal-benchmark-reference-fixture/review_packet.md",
-      "import:/fixtures/terminal-benchmark-reference-fixture/REVIEWER_PROGRAM.md",
-      "import:/fixtures/terminal-benchmark-reference-fixture/task.toml"
+      "import:/fixtures/<redacted-fixture-id>/docker_build.log",
+      "import:/fixtures/<redacted-fixture-id>/oracle_test.log",
+      "import:/fixtures/<redacted-fixture-id>/starter_m1_test.log",
+      "import:/fixtures/<redacted-fixture-id>/static_guard.txt",
+      "import:/fixtures/<redacted-fixture-id>/PROJECT_GUIDE.md",
+      "inline:/guides/<redacted-id>/v1",
+      "import:/fixtures/<redacted-fixture-id>/review_packet.md",
+      "import:/fixtures/<redacted-fixture-id>/REVIEWER_PROGRAM.md",
+      "import:/fixtures/<redacted-fixture-id>/task.toml"
     ],
     "source_snapshot_hash": "sha256:<redacted>",
-    "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+    "source_snapshot_id": "<redacted-id>",
     "superseded_at": null,
     "supersedes_policy_id": null,
     "updated_at": "2026-07-08T23:44:02.228409Z"
@@ -4962,20 +4969,20 @@ Request body:
   "description": "Real Terminal Benchmark reference fixture with 3 milestones, languages=['rust', 'json'], category=software-engineering.",
   "difficulty": "medium",
   "estimated_time_minutes": 75,
-  "external_task_id": "terminal-benchmark-reference-fixture",
+  "external_task_id": "<redacted-fixture-id>",
   "rejection_criteria": "Missing required artifacts, evidence, hashes, or attestation blocks submission intake.",
   "skill_tags": [
     "rust",
     "json",
-    "systems",
+    "<redacted-domain-tag>",
     "containers",
     "cli"
   ],
   "source_payload_hash": "sha256:<redacted>",
-  "source_ref": "terminal-benchmark/terminal-benchmark-reference-fixture/live-api/ws16-clean-cb1540ba",
+  "source_ref": "terminal-benchmark/<redacted-fixture-id>/live-api/<redacted-run-id>",
   "source_type": "manual",
   "task_type": "terminal_benchmark",
-  "title": "Terminal Benchmark terminal-benchmark-reference-fixture live-api"
+  "title": "Terminal Benchmark <redacted-fixture-id> live-api"
 }
 ```
 
@@ -4985,27 +4992,27 @@ Response body:
 {
   "acceptance_criteria": "Submission packet must satisfy the locked project submission requirements and pre-submit checker policy.",
   "created_at": "2026-07-08T23:44:03.452947Z",
-  "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
+  "created_by": "<redacted-id>",
   "description": "Real Terminal Benchmark reference fixture with 3 milestones, languages=['rust', 'json'], category=software-engineering.",
   "difficulty": "medium",
   "estimated_time_minutes": 75,
-  "external_task_id": "terminal-benchmark-reference-fixture",
-  "id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+  "external_task_id": "<redacted-fixture-id>",
+  "id": "<redacted-id>",
+  "project_id": "<redacted-id>",
   "rejection_criteria": "Missing required artifacts, evidence, hashes, or attestation blocks submission intake.",
   "skill_tags": [
     "rust",
     "json",
-    "systems",
+    "<redacted-domain-tag>",
     "containers",
     "cli"
   ],
   "source_payload_hash": "sha256:<redacted>",
-  "source_ref": "terminal-benchmark/terminal-benchmark-reference-fixture/live-api/ws16-clean-cb1540ba",
+  "source_ref": "terminal-benchmark/<redacted-fixture-id>/live-api/<redacted-run-id>",
   "source_type": "manual",
   "status": "draft",
   "task_type": "terminal_benchmark",
-  "title": "Terminal Benchmark terminal-benchmark-reference-fixture live-api",
+  "title": "Terminal Benchmark <redacted-fixture-id> live-api",
   "updated_at": "2026-07-08T23:44:03.452947Z"
 }
 ```
@@ -5029,39 +5036,39 @@ Response body:
   "acceptance_criteria": "Submission packet must satisfy the locked project submission requirements and pre-submit checker policy.",
   "base_amount": "25.00",
   "created_at": "2026-07-08T23:44:03.452947Z",
-  "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
+  "created_by": "<redacted-id>",
   "currency": "USD",
   "description": "Real Terminal Benchmark reference fixture with 3 milestones, languages=['rust', 'json'], category=software-engineering.",
   "difficulty": "medium",
   "estimated_time_minutes": 75,
-  "external_task_id": "terminal-benchmark-reference-fixture",
-  "id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+  "external_task_id": "<redacted-fixture-id>",
+  "id": "<redacted-id>",
   "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
-  "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
+  "locked_effective_project_submission_artifact_policy_id": "<redacted-id>",
   "locked_guide_source_snapshot_hash": "sha256:<redacted>",
-  "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+  "locked_guide_source_snapshot_id": "<redacted-id>",
   "locked_guide_version": "v1",
   "locked_payment_policy_version": "v1",
   "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
-  "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
+  "locked_pre_submit_checker_policy_id": "<redacted-id>",
   "locked_review_policy_version": "v1",
   "locked_revision_policy_version": "v1",
   "payout_type": "fixed",
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+  "project_id": "<redacted-id>",
   "rejection_criteria": "Missing required artifacts, evidence, hashes, or attestation blocks submission intake.",
   "skill_tags": [
     "rust",
     "json",
-    "systems",
+    "<redacted-domain-tag>",
     "containers",
     "cli"
   ],
   "source_payload_hash": "sha256:<redacted>",
-  "source_ref": "terminal-benchmark/terminal-benchmark-reference-fixture/live-api/ws16-clean-cb1540ba",
+  "source_ref": "terminal-benchmark/<redacted-fixture-id>/live-api/<redacted-run-id>",
   "source_type": "manual",
   "status": "screening",
   "task_type": "terminal_benchmark",
-  "title": "Terminal Benchmark terminal-benchmark-reference-fixture live-api",
+  "title": "Terminal Benchmark <redacted-fixture-id> live-api",
   "updated_at": "2026-07-08T23:44:03.630101Z"
 }
 ```
@@ -5081,9 +5088,9 @@ Response body:
 ```json
 {
   "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
-  "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
+  "locked_effective_project_submission_artifact_policy_id": "<redacted-id>",
   "locked_guide_source_snapshot_hash": "sha256:<redacted>",
-  "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+  "locked_guide_source_snapshot_id": "<redacted-id>",
   "locked_guide_version": "v1",
   "locked_payment_policy_version": "v1",
   "locked_post_submit_checker_policy_body_summary": {
@@ -5119,14 +5126,14 @@ Response body:
     "warning_checkers": []
   },
   "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
-  "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
+  "locked_post_submit_checker_policy_id": "<redacted-id>",
   "locked_post_submit_checker_policy_version": "v1",
   "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
-  "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
+  "locked_pre_submit_checker_policy_id": "<redacted-id>",
   "locked_review_policy_version": "v1",
   "locked_revision_policy_version": "v1",
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
-  "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3"
+  "project_id": "<redacted-id>",
+  "task_id": "<redacted-id>"
 }
 ```
 
@@ -5149,39 +5156,39 @@ Response body:
   "acceptance_criteria": "Submission packet must satisfy the locked project submission requirements and pre-submit checker policy.",
   "base_amount": "25.00",
   "created_at": "2026-07-08T23:44:03.452947Z",
-  "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
+  "created_by": "<redacted-id>",
   "currency": "USD",
   "description": "Real Terminal Benchmark reference fixture with 3 milestones, languages=['rust', 'json'], category=software-engineering.",
   "difficulty": "medium",
   "estimated_time_minutes": 75,
-  "external_task_id": "terminal-benchmark-reference-fixture",
-  "id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+  "external_task_id": "<redacted-fixture-id>",
+  "id": "<redacted-id>",
   "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
-  "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
+  "locked_effective_project_submission_artifact_policy_id": "<redacted-id>",
   "locked_guide_source_snapshot_hash": "sha256:<redacted>",
-  "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+  "locked_guide_source_snapshot_id": "<redacted-id>",
   "locked_guide_version": "v1",
   "locked_payment_policy_version": "v1",
   "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
-  "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
+  "locked_pre_submit_checker_policy_id": "<redacted-id>",
   "locked_review_policy_version": "v1",
   "locked_revision_policy_version": "v1",
   "payout_type": "fixed",
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+  "project_id": "<redacted-id>",
   "rejection_criteria": "Missing required artifacts, evidence, hashes, or attestation blocks submission intake.",
   "skill_tags": [
     "rust",
     "json",
-    "systems",
+    "<redacted-domain-tag>",
     "containers",
     "cli"
   ],
   "source_payload_hash": "sha256:<redacted>",
-  "source_ref": "terminal-benchmark/terminal-benchmark-reference-fixture/live-api/ws16-clean-cb1540ba",
+  "source_ref": "terminal-benchmark/<redacted-fixture-id>/live-api/<redacted-run-id>",
   "source_type": "manual",
   "status": "ready",
   "task_type": "terminal_benchmark",
-  "title": "Terminal Benchmark terminal-benchmark-reference-fixture live-api",
+  "title": "Terminal Benchmark <redacted-fixture-id> live-api",
   "updated_at": "2026-07-08T23:44:04.041939Z"
 }
 ```
@@ -5197,7 +5204,7 @@ Request body:
   "skill_tags": [
     "rust",
     "json",
-    "systems",
+    "<redacted-domain-tag>",
     "containers",
     "cli"
   ]
@@ -5208,13 +5215,13 @@ Response body:
 
 ```json
 {
-  "actor_id": "d0c5c1f3-7689-5965-bba3-975bbac3c815",
+  "actor_id": "<redacted-id>",
   "created_at": "2026-07-08T23:44:04.145081Z",
   "display_name": "Terminal Benchmark Worker Ws16 Clean Cb1540Ba",
-  "email": "terminal-benchmark-worker-ws16-clean-cb1540ba@flow.local",
+  "email": "terminal-benchmark-worker-<redacted-run-id>@flow.local",
   "external_issuer": "https://auth.flow.local/e2e",
-  "external_subject": "terminal-benchmark-worker-ws16-clean-cb1540ba",
-  "id": "f67a061a-ff59-4416-bd5a-3fa8461e8b25",
+  "external_subject": "terminal-benchmark-worker-<redacted-run-id>",
+  "id": "<redacted-id>",
   "profile_metadata": {
     "source": "worker_profile_api"
   },
@@ -5224,7 +5231,7 @@ Response body:
   "skill_tags": [
     "rust",
     "json",
-    "systems",
+    "<redacted-domain-tag>",
     "containers",
     "cli"
   ],
@@ -5252,11 +5259,11 @@ Response body:
   "assignment": {
     "accepted_at": "2026-07-08T23:44:04.575130Z",
     "assigned_at": "2026-07-08T23:44:04.503583Z",
-    "assigned_by": "d0c5c1f3-7689-5965-bba3-975bbac3c815",
-    "id": "47f47a44-cd98-41e6-859e-86ac232cd83b",
+    "assigned_by": "<redacted-id>",
+    "id": "<redacted-id>",
     "status": "active",
-    "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
-    "worker_id": "d0c5c1f3-7689-5965-bba3-975bbac3c815"
+    "task_id": "<redacted-id>",
+    "worker_id": "<redacted-id>"
   },
   "task": {
     "acceptance_criteria": "Submission packet must satisfy the locked project submission requirements and pre-submit checker policy.",
@@ -5266,25 +5273,25 @@ Response body:
     "description": "Real Terminal Benchmark reference fixture with 3 milestones, languages=['rust', 'json'], category=software-engineering.",
     "difficulty": "medium",
     "estimated_time_minutes": 75,
-    "id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+    "id": "<redacted-id>",
     "locked_guide_version": "v1",
     "locked_payment_policy_version": "v1",
     "locked_review_policy_version": "v1",
     "locked_revision_policy_version": "v1",
     "payout_type": "fixed",
-    "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+    "project_id": "<redacted-id>",
     "rejection_criteria": "Missing required artifacts, evidence, hashes, or attestation blocks submission intake.",
     "skill_tags": [
       "rust",
       "json",
-      "systems",
+      "<redacted-domain-tag>",
       "containers",
       "cli"
     ],
     "source_type": "manual",
     "status": "claimed",
     "task_type": "terminal_benchmark",
-    "title": "Terminal Benchmark terminal-benchmark-reference-fixture live-api",
+    "title": "Terminal Benchmark <redacted-fixture-id> live-api",
     "updated_at": "2026-07-08T23:44:04.503583Z"
   }
 }
@@ -5313,25 +5320,25 @@ Response body:
   "description": "Real Terminal Benchmark reference fixture with 3 milestones, languages=['rust', 'json'], category=software-engineering.",
   "difficulty": "medium",
   "estimated_time_minutes": 75,
-  "id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+  "id": "<redacted-id>",
   "locked_guide_version": "v1",
   "locked_payment_policy_version": "v1",
   "locked_review_policy_version": "v1",
   "locked_revision_policy_version": "v1",
   "payout_type": "fixed",
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+  "project_id": "<redacted-id>",
   "rejection_criteria": "Missing required artifacts, evidence, hashes, or attestation blocks submission intake.",
   "skill_tags": [
     "rust",
     "json",
-    "systems",
+    "<redacted-domain-tag>",
     "containers",
     "cli"
   ],
   "source_type": "manual",
   "status": "in_progress",
   "task_type": "terminal_benchmark",
-  "title": "Terminal Benchmark terminal-benchmark-reference-fixture live-api",
+  "title": "Terminal Benchmark <redacted-fixture-id> live-api",
   "updated_at": "2026-07-08T23:44:04.727342Z"
 }
 ```
@@ -5351,9 +5358,9 @@ Response body:
 ```json
 {
   "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
-  "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
+  "locked_effective_project_submission_artifact_policy_id": "<redacted-id>",
   "locked_guide_source_snapshot_hash": "sha256:<redacted>",
-  "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+  "locked_guide_source_snapshot_id": "<redacted-id>",
   "locked_guide_version": "v1",
   "locked_payment_policy_version": "v1",
   "locked_post_submit_checker_policy_body_summary": {
@@ -5389,14 +5396,14 @@ Response body:
     "warning_checkers": []
   },
   "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
-  "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
+  "locked_post_submit_checker_policy_id": "<redacted-id>",
   "locked_post_submit_checker_policy_version": "v1",
   "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
-  "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
+  "locked_pre_submit_checker_policy_id": "<redacted-id>",
   "locked_review_policy_version": "v1",
   "locked_revision_policy_version": "v1",
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
-  "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3"
+  "project_id": "<redacted-id>",
+  "task_id": "<redacted-id>"
 }
 ```
 
@@ -5416,9 +5423,9 @@ Response body:
 {
   "guide": {
     "change_summary": "Initial Terminal Benchmark real-world guide from sanitized imported source snapshot bundle.",
-    "content_markdown": "<redacted-large-text sha256:<redacted> bytes:138427>",
+    "content_markdown": "<redacted-large-text sha256:<redacted> bytes:<redacted>>",
     "effective_at": "2026-07-08T23:44:03.147622Z",
-    "id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
+    "id": "<redacted-id>",
     "version": "v1"
   },
   "lifecycle": {
@@ -5439,9 +5446,9 @@ Response body:
   },
   "project": {
     "description": "Real Terminal Benchmark fixture used as Workstream API evidence with sanitized source text.",
-    "id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
-    "name": "Terminal Benchmark Real API ws16-clean-cb1540ba",
-    "slug": "terminal-benchmark-real-api-ws16-clean-cb1540ba"
+    "id": "<redacted-id>",
+    "name": "Terminal Benchmark Real API <redacted-run-id>",
+    "slug": "terminal-benchmark-real-api-<redacted-run-id>"
   },
   "review_policy": {
     "guide_version": "v1"
@@ -5457,21 +5464,21 @@ Response body:
     "description": "Real Terminal Benchmark reference fixture with 3 milestones, languages=['rust', 'json'], category=software-engineering.",
     "difficulty": "medium",
     "estimated_time_minutes": 75,
-    "id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+    "id": "<redacted-id>",
     "locked_guide_version": "v1",
     "payout_type": "fixed",
-    "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+    "project_id": "<redacted-id>",
     "rejection_criteria": "Missing required artifacts, evidence, hashes, or attestation blocks submission intake.",
     "skill_tags": [
       "rust",
       "json",
-      "systems",
+      "<redacted-domain-tag>",
       "containers",
       "cli"
     ],
     "status": "in_progress",
     "task_type": "terminal_benchmark",
-    "title": "Terminal Benchmark terminal-benchmark-reference-fixture live-api",
+    "title": "Terminal Benchmark <redacted-fixture-id> live-api",
     "updated_at": "2026-07-08T23:44:04.727342Z"
   }
 }
@@ -5791,7 +5798,7 @@ Response body:
     "package_required": true
   },
   "policy_schema_version": "effective_project_submission_artifact_policy.v1",
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+  "project_id": "<redacted-id>",
   "required_artifacts": [
     {
       "description": "container build definition for the task environment",
@@ -5902,7 +5909,7 @@ Response body:
     "path_traversal_allowed": false,
     "query_strings_allowed": false
   },
-  "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3"
+  "task_id": "<redacted-id>"
 }
 ```
 
@@ -5920,19 +5927,19 @@ Request body:
         "artifact": "environment/Dockerfile",
         "hash": "sha256:<redacted>",
         "notes": "Required by locked Terminal Benchmark project policy.",
-        "size_bytes": 1327
+        "size_bytes": "<redacted>"
       },
       {
         "artifact": "rubric.md",
         "hash": "sha256:<redacted>",
         "notes": "Required by locked Terminal Benchmark project policy.",
-        "size_bytes": 34
+        "size_bytes": "<redacted>"
       },
       {
         "artifact": "task.toml",
         "hash": "sha256:<redacted>",
         "notes": "Required by locked Terminal Benchmark project policy.",
-        "size_bytes": 1562
+        "size_bytes": "<redacted>"
       }
     ],
     "evidence_items": [
@@ -5940,95 +5947,95 @@ Request body:
         "hash": "sha256:<redacted>",
         "label": "Dependency pinning review",
         "metadata": {
-          "fixture_id": "terminal-benchmark-reference-fixture",
+          "fixture_id": "<redacted-fixture-id>",
           "required_evidence_key": "dependency_pinning_review"
         },
-        "size_bytes": 40,
+        "size_bytes": "<redacted>",
         "type": "log",
-        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/dependency_pinning_review.txt"
+        "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/dependency_pinning_review.txt"
       },
       {
         "hash": "sha256:<redacted>",
         "label": "Environment hygiene review",
         "metadata": {
-          "fixture_id": "terminal-benchmark-reference-fixture",
+          "fixture_id": "<redacted-fixture-id>",
           "required_evidence_key": "environment_hygiene_review"
         },
-        "size_bytes": 41,
+        "size_bytes": "<redacted>",
         "type": "log",
-        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/environment_hygiene_review.txt"
+        "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/environment_hygiene_review.txt"
       },
       {
         "hash": "sha256:<redacted>",
         "label": "Task instructions included",
         "metadata": {
-          "fixture_id": "terminal-benchmark-reference-fixture",
+          "fixture_id": "<redacted-fixture-id>",
           "required_evidence_key": "instructions_present"
         },
-        "size_bytes": 35,
+        "size_bytes": "<redacted>",
         "type": "log",
-        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/instructions_present.txt"
+        "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/instructions_present.txt"
       },
       {
         "hash": "sha256:<redacted>",
         "label": "Reward footer review",
         "metadata": {
-          "fixture_id": "terminal-benchmark-reference-fixture",
+          "fixture_id": "<redacted-fixture-id>",
           "required_evidence_key": "reward_footer_review"
         },
-        "size_bytes": 35,
+        "size_bytes": "<redacted>",
         "type": "log",
-        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/reward_footer_review.txt"
+        "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/reward_footer_review.txt"
       },
       {
         "hash": "sha256:<redacted>",
         "label": "Reference solution included",
         "metadata": {
-          "fixture_id": "terminal-benchmark-reference-fixture",
+          "fixture_id": "<redacted-fixture-id>",
           "required_evidence_key": "solution_present"
         },
-        "size_bytes": 31,
+        "size_bytes": "<redacted>",
         "type": "log",
-        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/solution_present.txt"
+        "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/solution_present.txt"
       },
       {
         "hash": "sha256:<redacted>",
         "label": "Submission explanations",
         "metadata": {
-          "fixture_id": "terminal-benchmark-reference-fixture",
+          "fixture_id": "<redacted-fixture-id>",
           "required_evidence_key": "submission_explanations"
         },
-        "size_bytes": 38,
+        "size_bytes": "<redacted>",
         "type": "log",
-        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/submission_explanations.txt"
+        "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/submission_explanations.txt"
       },
       {
         "hash": "sha256:<redacted>",
         "label": "Test alignment review",
         "metadata": {
-          "fixture_id": "terminal-benchmark-reference-fixture",
+          "fixture_id": "<redacted-fixture-id>",
           "required_evidence_key": "test_alignment_review"
         },
-        "size_bytes": 36,
+        "size_bytes": "<redacted>",
         "type": "log",
-        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/test_alignment_review.txt"
+        "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/test_alignment_review.txt"
       },
       {
         "hash": "sha256:<redacted>",
         "label": "Verifier files included",
         "metadata": {
-          "fixture_id": "terminal-benchmark-reference-fixture",
+          "fixture_id": "<redacted-fixture-id>",
           "required_evidence_key": "tests_present"
         },
-        "size_bytes": 28,
+        "size_bytes": "<redacted>",
         "type": "log",
-        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/tests_present.txt"
+        "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/tests_present.txt"
       }
     ],
     "package_hash": "sha256:<redacted>",
-    "package_uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/submission.zip",
+    "package_uri": "local://terminal-benchmark/<redacted-fixture-id>/submission.zip",
     "summary": "Blocked-path packet built from live requirements, missing environment/.dockerignore.",
-    "worker_attestation": "<redacted-large-string sha256:<redacted> bytes:752 prefix:'I attest this submission is original_work, produced under human_accountability_f'>"
+    "worker_attestation": "<redacted-large-string sha256:<redacted> bytes:<redacted> prefix:'I attest this submission is original_work, produced under human_accountability_f'>"
   }
 }
 ```
@@ -6105,7 +6112,7 @@ Response body:
     }
   ],
   "status": "failed",
-  "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3"
+  "task_id": "<redacted-id>"
 }
 ```
 
@@ -6122,19 +6129,19 @@ Request body:
       "artifact": "environment/Dockerfile",
       "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
-      "size_bytes": 1327
+      "size_bytes": "<redacted>"
     },
     {
       "artifact": "rubric.md",
       "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
-      "size_bytes": 34
+      "size_bytes": "<redacted>"
     },
     {
       "artifact": "task.toml",
       "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
-      "size_bytes": 1562
+      "size_bytes": "<redacted>"
     }
   ],
   "evidence_items": [
@@ -6142,95 +6149,95 @@ Request body:
       "hash": "sha256:<redacted>",
       "label": "Dependency pinning review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "dependency_pinning_review"
       },
-      "size_bytes": 40,
+      "size_bytes": "<redacted>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/dependency_pinning_review.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/dependency_pinning_review.txt"
     },
     {
       "hash": "sha256:<redacted>",
       "label": "Environment hygiene review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "environment_hygiene_review"
       },
-      "size_bytes": 41,
+      "size_bytes": "<redacted>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/environment_hygiene_review.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/environment_hygiene_review.txt"
     },
     {
       "hash": "sha256:<redacted>",
       "label": "Task instructions included",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "instructions_present"
       },
-      "size_bytes": 35,
+      "size_bytes": "<redacted>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/instructions_present.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/instructions_present.txt"
     },
     {
       "hash": "sha256:<redacted>",
       "label": "Reward footer review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "reward_footer_review"
       },
-      "size_bytes": 35,
+      "size_bytes": "<redacted>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/reward_footer_review.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/reward_footer_review.txt"
     },
     {
       "hash": "sha256:<redacted>",
       "label": "Reference solution included",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "solution_present"
       },
-      "size_bytes": 31,
+      "size_bytes": "<redacted>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/solution_present.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/solution_present.txt"
     },
     {
       "hash": "sha256:<redacted>",
       "label": "Submission explanations",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "submission_explanations"
       },
-      "size_bytes": 38,
+      "size_bytes": "<redacted>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/submission_explanations.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/submission_explanations.txt"
     },
     {
       "hash": "sha256:<redacted>",
       "label": "Test alignment review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "test_alignment_review"
       },
-      "size_bytes": 36,
+      "size_bytes": "<redacted>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/test_alignment_review.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/test_alignment_review.txt"
     },
     {
       "hash": "sha256:<redacted>",
       "label": "Verifier files included",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "tests_present"
       },
-      "size_bytes": 28,
+      "size_bytes": "<redacted>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/tests_present.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/tests_present.txt"
     }
   ],
   "package_hash": "sha256:<redacted>",
-  "package_uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/submission.zip",
+  "package_uri": "local://terminal-benchmark/<redacted-fixture-id>/submission.zip",
   "summary": "Blocked-path packet built from live requirements, missing environment/.dockerignore.",
-  "worker_attestation": "<redacted-large-string sha256:<redacted> bytes:752 prefix:'I attest this submission is original_work, produced under human_accountability_f'>"
+  "worker_attestation": "<redacted-large-string sha256:<redacted> bytes:<redacted> prefix:'I attest this submission is original_work, produced under human_accountability_f'>"
 }
 ```
 
@@ -6308,7 +6315,7 @@ Response body:
       }
     ],
     "status": "failed",
-    "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3"
+    "task_id": "<redacted-id>"
   }
 }
 ```
@@ -6344,14 +6351,14 @@ Response body:
 ```json
 [
   {
-    "actor_id": "5080787a-cb3b-591d-9948-6b38354788ab",
+    "actor_id": "<redacted-id>",
     "actor_roles": [
       "project_manager"
     ],
     "auth_source": "flow",
     "claim_snapshot": {},
     "created_at": "2026-07-08T23:44:03.452947Z",
-    "entity_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+    "entity_id": "<redacted-id>",
     "entity_type": "task",
     "event_payload": {
       "assigned_to": null,
@@ -6372,181 +6379,181 @@ Response body:
     },
     "event_type": "task_created",
     "external_issuer": "https://auth.flow.local/e2e",
-    "external_subject": "terminal-benchmark-manager-ws16-clean-cb1540ba",
+    "external_subject": "terminal-benchmark-manager-<redacted-run-id>",
     "from_status": null,
-    "id": "3c645ce6-9cf1-498c-bff2-b5a53e481c3d",
+    "id": "<redacted-id>",
     "is_dev_auth": false,
     "reason": null,
     "to_status": "draft"
   },
   {
-    "actor_id": "5080787a-cb3b-591d-9948-6b38354788ab",
+    "actor_id": "<redacted-id>",
     "actor_roles": [
       "project_manager"
     ],
     "auth_source": "flow",
     "claim_snapshot": {},
     "created_at": "2026-07-08T23:44:03.630101Z",
-    "entity_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+    "entity_id": "<redacted-id>",
     "entity_type": "task",
     "event_payload": {
       "assigned_to": null,
       "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
-      "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
+      "locked_effective_project_submission_artifact_policy_id": "<redacted-id>",
       "locked_guide_source_snapshot_hash": "sha256:<redacted>",
-      "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+      "locked_guide_source_snapshot_id": "<redacted-id>",
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
       "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
-      "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
+      "locked_post_submit_checker_policy_id": "<redacted-id>",
       "locked_post_submit_checker_policy_version": "v1",
       "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
-      "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
+      "locked_pre_submit_checker_policy_id": "<redacted-id>",
       "locked_review_policy_version": "v1",
       "locked_revision_policy_version": "v1"
     },
     "event_type": "task_status_changed",
     "external_issuer": "https://auth.flow.local/e2e",
-    "external_subject": "terminal-benchmark-manager-ws16-clean-cb1540ba",
+    "external_subject": "terminal-benchmark-manager-<redacted-run-id>",
     "from_status": "draft",
-    "id": "43563128-a38c-41ef-baad-f4a5ea77e153",
+    "id": "<redacted-id>",
     "is_dev_auth": false,
     "reason": "Terminal Benchmark final clean live API screening; lock active guide and policy context.",
     "to_status": "screening"
   },
   {
-    "actor_id": "5080787a-cb3b-591d-9948-6b38354788ab",
+    "actor_id": "<redacted-id>",
     "actor_roles": [
       "project_manager"
     ],
     "auth_source": "flow",
     "claim_snapshot": {},
     "created_at": "2026-07-08T23:44:04.041939Z",
-    "entity_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+    "entity_id": "<redacted-id>",
     "entity_type": "task",
     "event_payload": {
       "assigned_to": null,
       "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
-      "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
+      "locked_effective_project_submission_artifact_policy_id": "<redacted-id>",
       "locked_guide_source_snapshot_hash": "sha256:<redacted>",
-      "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+      "locked_guide_source_snapshot_id": "<redacted-id>",
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
       "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
-      "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
+      "locked_post_submit_checker_policy_id": "<redacted-id>",
       "locked_post_submit_checker_policy_version": "v1",
       "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
-      "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
+      "locked_pre_submit_checker_policy_id": "<redacted-id>",
       "locked_review_policy_version": "v1",
       "locked_revision_policy_version": "v1"
     },
     "event_type": "task_status_changed",
     "external_issuer": "https://auth.flow.local/e2e",
-    "external_subject": "terminal-benchmark-manager-ws16-clean-cb1540ba",
+    "external_subject": "terminal-benchmark-manager-<redacted-run-id>",
     "from_status": "screening",
-    "id": "b8264b10-3383-4138-ab3b-6071850aaff9",
+    "id": "<redacted-id>",
     "is_dev_auth": false,
     "reason": "Terminal Benchmark final clean live API ready for worker claim.",
     "to_status": "ready"
   },
   {
-    "actor_id": "d0c5c1f3-7689-5965-bba3-975bbac3c815",
+    "actor_id": "<redacted-id>",
     "actor_roles": [
       "worker"
     ],
     "auth_source": "flow",
     "claim_snapshot": {},
     "created_at": "2026-07-08T23:44:04.503583Z",
-    "entity_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+    "entity_id": "<redacted-id>",
     "entity_type": "task",
     "event_payload": {
-      "assigned_to": "d0c5c1f3-7689-5965-bba3-975bbac3c815",
-      "assignment_id": "47f47a44-cd98-41e6-859e-86ac232cd83b",
+      "assigned_to": "<redacted-id>",
+      "assignment_id": "<redacted-id>",
       "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
-      "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
+      "locked_effective_project_submission_artifact_policy_id": "<redacted-id>",
       "locked_guide_source_snapshot_hash": "sha256:<redacted>",
-      "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+      "locked_guide_source_snapshot_id": "<redacted-id>",
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
       "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
-      "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
+      "locked_post_submit_checker_policy_id": "<redacted-id>",
       "locked_post_submit_checker_policy_version": "v1",
       "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
-      "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
+      "locked_pre_submit_checker_policy_id": "<redacted-id>",
       "locked_review_policy_version": "v1",
       "locked_revision_policy_version": "v1",
-      "worker_id": "d0c5c1f3-7689-5965-bba3-975bbac3c815"
+      "worker_id": "<redacted-id>"
     },
     "event_type": "task_status_changed",
     "external_issuer": "https://auth.flow.local/e2e",
-    "external_subject": "terminal-benchmark-worker-ws16-clean-cb1540ba",
+    "external_subject": "terminal-benchmark-worker-<redacted-run-id>",
     "from_status": "ready",
-    "id": "b5a3091c-8506-41fe-800c-58dd1aadfb8a",
+    "id": "<redacted-id>",
     "is_dev_auth": false,
     "reason": "Terminal Benchmark final clean live API worker claim.",
     "to_status": "claimed"
   },
   {
-    "actor_id": "d0c5c1f3-7689-5965-bba3-975bbac3c815",
+    "actor_id": "<redacted-id>",
     "actor_roles": [
       "worker"
     ],
     "auth_source": "flow",
     "claim_snapshot": {},
     "created_at": "2026-07-08T23:44:04.727342Z",
-    "entity_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+    "entity_id": "<redacted-id>",
     "entity_type": "task",
     "event_payload": {
-      "assigned_to": "d0c5c1f3-7689-5965-bba3-975bbac3c815",
-      "assignment_id": "47f47a44-cd98-41e6-859e-86ac232cd83b",
+      "assigned_to": "<redacted-id>",
+      "assignment_id": "<redacted-id>",
       "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
-      "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
+      "locked_effective_project_submission_artifact_policy_id": "<redacted-id>",
       "locked_guide_source_snapshot_hash": "sha256:<redacted>",
-      "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+      "locked_guide_source_snapshot_id": "<redacted-id>",
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
       "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
-      "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
+      "locked_post_submit_checker_policy_id": "<redacted-id>",
       "locked_post_submit_checker_policy_version": "v1",
       "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
-      "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
+      "locked_pre_submit_checker_policy_id": "<redacted-id>",
       "locked_review_policy_version": "v1",
       "locked_revision_policy_version": "v1",
       "operator_override": false,
-      "worker_id": "d0c5c1f3-7689-5965-bba3-975bbac3c815"
+      "worker_id": "<redacted-id>"
     },
     "event_type": "task_status_changed",
     "external_issuer": "https://auth.flow.local/e2e",
-    "external_subject": "terminal-benchmark-worker-ws16-clean-cb1540ba",
+    "external_subject": "terminal-benchmark-worker-<redacted-run-id>",
     "from_status": "claimed",
-    "id": "3f3f1439-662a-4c42-b2bf-6e5543489d46",
+    "id": "<redacted-id>",
     "is_dev_auth": false,
     "reason": "Terminal Benchmark final clean live API worker started work.",
     "to_status": "in_progress"
   },
   {
-    "actor_id": "d0c5c1f3-7689-5965-bba3-975bbac3c815",
+    "actor_id": "<redacted-id>",
     "actor_roles": [
       "worker"
     ],
     "auth_source": "flow",
     "claim_snapshot": {},
     "created_at": "2026-07-08T23:45:17.452515Z",
-    "entity_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+    "entity_id": "<redacted-id>",
     "entity_type": "task",
     "event_payload": {
-      "assigned_to": "d0c5c1f3-7689-5965-bba3-975bbac3c815",
+      "assigned_to": "<redacted-id>",
       "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
-      "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
+      "locked_effective_project_submission_artifact_policy_id": "<redacted-id>",
       "locked_guide_source_snapshot_hash": "sha256:<redacted>",
-      "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+      "locked_guide_source_snapshot_id": "<redacted-id>",
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
       "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
-      "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
+      "locked_post_submit_checker_policy_id": "<redacted-id>",
       "locked_post_submit_checker_policy_version": "v1",
       "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
-      "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
+      "locked_pre_submit_checker_policy_id": "<redacted-id>",
       "locked_review_policy_version": "v1",
       "locked_revision_policy_version": "v1",
       "pre_submit_check": {
@@ -6618,14 +6625,14 @@ Response body:
           }
         ],
         "status": "failed",
-        "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3"
+        "task_id": "<redacted-id>"
       }
     },
     "event_type": "pre_submission_check_failed",
     "external_issuer": "https://auth.flow.local/e2e",
-    "external_subject": "terminal-benchmark-worker-ws16-clean-cb1540ba",
+    "external_subject": "terminal-benchmark-worker-<redacted-run-id>",
     "from_status": "in_progress",
-    "id": "aaeaf9c7-4482-4bdf-956f-075f539175eb",
+    "id": "<redacted-id>",
     "is_dev_auth": false,
     "reason": null,
     "to_status": "in_progress"
@@ -6647,25 +6654,25 @@ Request body:
         "artifact": "environment/Dockerfile",
         "hash": "sha256:<redacted>",
         "notes": "Required by locked Terminal Benchmark project policy.",
-        "size_bytes": 1327
+        "size_bytes": "<redacted>"
       },
       {
         "artifact": "environment/.dockerignore",
         "hash": "sha256:<redacted>",
         "notes": "Required by locked Terminal Benchmark project policy.",
-        "size_bytes": 185
+        "size_bytes": "<redacted>"
       },
       {
         "artifact": "rubric.md",
         "hash": "sha256:<redacted>",
         "notes": "Required by locked Terminal Benchmark project policy.",
-        "size_bytes": 34
+        "size_bytes": "<redacted>"
       },
       {
         "artifact": "task.toml",
         "hash": "sha256:<redacted>",
         "notes": "Required by locked Terminal Benchmark project policy.",
-        "size_bytes": 1562
+        "size_bytes": "<redacted>"
       }
     ],
     "evidence_items": [
@@ -6673,95 +6680,95 @@ Request body:
         "hash": "sha256:<redacted>",
         "label": "Dependency pinning review",
         "metadata": {
-          "fixture_id": "terminal-benchmark-reference-fixture",
+          "fixture_id": "<redacted-fixture-id>",
           "required_evidence_key": "dependency_pinning_review"
         },
-        "size_bytes": 40,
+        "size_bytes": "<redacted>",
         "type": "log",
-        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/dependency_pinning_review.txt"
+        "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/dependency_pinning_review.txt"
       },
       {
         "hash": "sha256:<redacted>",
         "label": "Environment hygiene review",
         "metadata": {
-          "fixture_id": "terminal-benchmark-reference-fixture",
+          "fixture_id": "<redacted-fixture-id>",
           "required_evidence_key": "environment_hygiene_review"
         },
-        "size_bytes": 41,
+        "size_bytes": "<redacted>",
         "type": "log",
-        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/environment_hygiene_review.txt"
+        "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/environment_hygiene_review.txt"
       },
       {
         "hash": "sha256:<redacted>",
         "label": "Task instructions included",
         "metadata": {
-          "fixture_id": "terminal-benchmark-reference-fixture",
+          "fixture_id": "<redacted-fixture-id>",
           "required_evidence_key": "instructions_present"
         },
-        "size_bytes": 35,
+        "size_bytes": "<redacted>",
         "type": "log",
-        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/instructions_present.txt"
+        "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/instructions_present.txt"
       },
       {
         "hash": "sha256:<redacted>",
         "label": "Reward footer review",
         "metadata": {
-          "fixture_id": "terminal-benchmark-reference-fixture",
+          "fixture_id": "<redacted-fixture-id>",
           "required_evidence_key": "reward_footer_review"
         },
-        "size_bytes": 35,
+        "size_bytes": "<redacted>",
         "type": "log",
-        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/reward_footer_review.txt"
+        "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/reward_footer_review.txt"
       },
       {
         "hash": "sha256:<redacted>",
         "label": "Reference solution included",
         "metadata": {
-          "fixture_id": "terminal-benchmark-reference-fixture",
+          "fixture_id": "<redacted-fixture-id>",
           "required_evidence_key": "solution_present"
         },
-        "size_bytes": 31,
+        "size_bytes": "<redacted>",
         "type": "log",
-        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/solution_present.txt"
+        "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/solution_present.txt"
       },
       {
         "hash": "sha256:<redacted>",
         "label": "Submission explanations",
         "metadata": {
-          "fixture_id": "terminal-benchmark-reference-fixture",
+          "fixture_id": "<redacted-fixture-id>",
           "required_evidence_key": "submission_explanations"
         },
-        "size_bytes": 38,
+        "size_bytes": "<redacted>",
         "type": "log",
-        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/submission_explanations.txt"
+        "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/submission_explanations.txt"
       },
       {
         "hash": "sha256:<redacted>",
         "label": "Test alignment review",
         "metadata": {
-          "fixture_id": "terminal-benchmark-reference-fixture",
+          "fixture_id": "<redacted-fixture-id>",
           "required_evidence_key": "test_alignment_review"
         },
-        "size_bytes": 36,
+        "size_bytes": "<redacted>",
         "type": "log",
-        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/test_alignment_review.txt"
+        "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/test_alignment_review.txt"
       },
       {
         "hash": "sha256:<redacted>",
         "label": "Verifier files included",
         "metadata": {
-          "fixture_id": "terminal-benchmark-reference-fixture",
+          "fixture_id": "<redacted-fixture-id>",
           "required_evidence_key": "tests_present"
         },
-        "size_bytes": 28,
+        "size_bytes": "<redacted>",
         "type": "log",
-        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/tests_present.txt"
+        "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/tests_present.txt"
       }
     ],
     "package_hash": "sha256:<redacted>",
-    "package_uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/submission.zip",
-    "summary": "Terminal Benchmark terminal-benchmark-reference-fixture packet built from live submission requirements.",
-    "worker_attestation": "<redacted-large-string sha256:<redacted> bytes:752 prefix:'I attest this submission is original_work, produced under human_accountability_f'>"
+    "package_uri": "local://terminal-benchmark/<redacted-fixture-id>/submission.zip",
+    "summary": "Terminal Benchmark <redacted-fixture-id> packet built from live submission requirements.",
+    "worker_attestation": "<redacted-large-string sha256:<redacted> bytes:<redacted> prefix:'I attest this submission is original_work, produced under human_accountability_f'>"
   }
 }
 ```
@@ -6838,7 +6845,7 @@ Response body:
     }
   ],
   "status": "passed",
-  "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3"
+  "task_id": "<redacted-id>"
 }
 ```
 
@@ -6871,25 +6878,25 @@ Request body:
       "artifact": "environment/Dockerfile",
       "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
-      "size_bytes": 1327
+      "size_bytes": "<redacted>"
     },
     {
       "artifact": "environment/.dockerignore",
       "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
-      "size_bytes": 185
+      "size_bytes": "<redacted>"
     },
     {
       "artifact": "rubric.md",
       "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
-      "size_bytes": 34
+      "size_bytes": "<redacted>"
     },
     {
       "artifact": "task.toml",
       "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
-      "size_bytes": 1562
+      "size_bytes": "<redacted>"
     }
   ],
   "evidence_items": [
@@ -6897,95 +6904,95 @@ Request body:
       "hash": "sha256:<redacted>",
       "label": "Dependency pinning review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "dependency_pinning_review"
       },
-      "size_bytes": 40,
+      "size_bytes": "<redacted>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/dependency_pinning_review.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/dependency_pinning_review.txt"
     },
     {
       "hash": "sha256:<redacted>",
       "label": "Environment hygiene review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "environment_hygiene_review"
       },
-      "size_bytes": 41,
+      "size_bytes": "<redacted>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/environment_hygiene_review.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/environment_hygiene_review.txt"
     },
     {
       "hash": "sha256:<redacted>",
       "label": "Task instructions included",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "instructions_present"
       },
-      "size_bytes": 35,
+      "size_bytes": "<redacted>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/instructions_present.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/instructions_present.txt"
     },
     {
       "hash": "sha256:<redacted>",
       "label": "Reward footer review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "reward_footer_review"
       },
-      "size_bytes": 35,
+      "size_bytes": "<redacted>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/reward_footer_review.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/reward_footer_review.txt"
     },
     {
       "hash": "sha256:<redacted>",
       "label": "Reference solution included",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "solution_present"
       },
-      "size_bytes": 31,
+      "size_bytes": "<redacted>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/solution_present.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/solution_present.txt"
     },
     {
       "hash": "sha256:<redacted>",
       "label": "Submission explanations",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "submission_explanations"
       },
-      "size_bytes": 38,
+      "size_bytes": "<redacted>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/submission_explanations.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/submission_explanations.txt"
     },
     {
       "hash": "sha256:<redacted>",
       "label": "Test alignment review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "test_alignment_review"
       },
-      "size_bytes": 36,
+      "size_bytes": "<redacted>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/test_alignment_review.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/test_alignment_review.txt"
     },
     {
       "hash": "sha256:<redacted>",
       "label": "Verifier files included",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "tests_present"
       },
-      "size_bytes": 28,
+      "size_bytes": "<redacted>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/tests_present.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/tests_present.txt"
     }
   ],
   "package_hash": "sha256:<redacted>",
-  "package_uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/submission.zip",
-  "summary": "Terminal Benchmark terminal-benchmark-reference-fixture packet built from live submission requirements.",
-  "worker_attestation": "<redacted-large-string sha256:<redacted> bytes:752 prefix:'I attest this submission is original_work, produced under human_accountability_f'>"
+  "package_uri": "local://terminal-benchmark/<redacted-fixture-id>/submission.zip",
+  "summary": "Terminal Benchmark <redacted-fixture-id> packet built from live submission requirements.",
+  "worker_attestation": "<redacted-large-string sha256:<redacted> bytes:<redacted> prefix:'I attest this submission is original_work, produced under human_accountability_f'>"
 }
 ```
 
@@ -6996,84 +7003,84 @@ Response body:
   "evidence_items": [
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
-      "id": "0807ade0-2c5a-4128-a253-e3f6307c6e69",
+      "id": "<redacted-id>",
       "label": "Dependency pinning review",
       "metadata": {},
-      "size_bytes": 40,
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "size_bytes": "<redacted>",
+      "submission_id": "<redacted-id>",
       "type": "log"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
-      "id": "21e8b24f-51d8-4934-96dd-6608b9d54082",
+      "id": "<redacted-id>",
       "label": "Environment hygiene review",
       "metadata": {},
-      "size_bytes": 41,
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "size_bytes": "<redacted>",
+      "submission_id": "<redacted-id>",
       "type": "log"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
-      "id": "06f50e90-b055-485e-bda4-289ffa822025",
+      "id": "<redacted-id>",
       "label": "Task instructions included",
       "metadata": {},
-      "size_bytes": 35,
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "size_bytes": "<redacted>",
+      "submission_id": "<redacted-id>",
       "type": "log"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
-      "id": "f21c9ab2-cc6d-466b-a2fb-817ae8741918",
+      "id": "<redacted-id>",
       "label": "Reward footer review",
       "metadata": {},
-      "size_bytes": 35,
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "size_bytes": "<redacted>",
+      "submission_id": "<redacted-id>",
       "type": "log"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
-      "id": "40eb6111-adeb-48ba-9333-ddaa8340a768",
+      "id": "<redacted-id>",
       "label": "Reference solution included",
       "metadata": {},
-      "size_bytes": 31,
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "size_bytes": "<redacted>",
+      "submission_id": "<redacted-id>",
       "type": "log"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
-      "id": "d94c5f46-a286-44cc-a19b-2e4890be3ef8",
+      "id": "<redacted-id>",
       "label": "Submission explanations",
       "metadata": {},
-      "size_bytes": 38,
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "size_bytes": "<redacted>",
+      "submission_id": "<redacted-id>",
       "type": "log"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
-      "id": "f0d58929-efa4-446f-bb72-04c7a2c14a77",
+      "id": "<redacted-id>",
       "label": "Test alignment review",
       "metadata": {},
-      "size_bytes": 36,
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "size_bytes": "<redacted>",
+      "submission_id": "<redacted-id>",
       "type": "log"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
-      "id": "afdb97ca-4a8d-46de-9d7f-34f4c7468242",
+      "id": "<redacted-id>",
       "label": "Verifier files included",
       "metadata": {},
-      "size_bytes": 28,
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "size_bytes": "<redacted>",
+      "submission_id": "<redacted-id>",
       "type": "log"
     }
   ],
-  "id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+  "id": "<redacted-id>",
   "status": "submitted",
   "submitted_at": "2026-07-08T23:45:18.127472Z",
-  "summary": "Terminal Benchmark terminal-benchmark-reference-fixture packet built from live submission requirements.",
-  "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+  "summary": "Terminal Benchmark <redacted-fixture-id> packet built from live submission requirements.",
+  "task_id": "<redacted-id>",
   "version": 1,
-  "worker_id": "d0c5c1f3-7689-5965-bba3-975bbac3c815"
+  "worker_id": "<redacted-id>"
 }
 ```
 
@@ -7095,84 +7102,84 @@ Response body:
     "evidence_items": [
       {
         "created_at": "2026-07-08T23:45:18.127472Z",
-        "id": "0807ade0-2c5a-4128-a253-e3f6307c6e69",
+        "id": "<redacted-id>",
         "label": "Dependency pinning review",
         "metadata": {},
-        "size_bytes": 40,
-        "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+        "size_bytes": "<redacted>",
+        "submission_id": "<redacted-id>",
         "type": "log"
       },
       {
         "created_at": "2026-07-08T23:45:18.127472Z",
-        "id": "21e8b24f-51d8-4934-96dd-6608b9d54082",
+        "id": "<redacted-id>",
         "label": "Environment hygiene review",
         "metadata": {},
-        "size_bytes": 41,
-        "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+        "size_bytes": "<redacted>",
+        "submission_id": "<redacted-id>",
         "type": "log"
       },
       {
         "created_at": "2026-07-08T23:45:18.127472Z",
-        "id": "06f50e90-b055-485e-bda4-289ffa822025",
+        "id": "<redacted-id>",
         "label": "Task instructions included",
         "metadata": {},
-        "size_bytes": 35,
-        "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+        "size_bytes": "<redacted>",
+        "submission_id": "<redacted-id>",
         "type": "log"
       },
       {
         "created_at": "2026-07-08T23:45:18.127472Z",
-        "id": "f21c9ab2-cc6d-466b-a2fb-817ae8741918",
+        "id": "<redacted-id>",
         "label": "Reward footer review",
         "metadata": {},
-        "size_bytes": 35,
-        "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+        "size_bytes": "<redacted>",
+        "submission_id": "<redacted-id>",
         "type": "log"
       },
       {
         "created_at": "2026-07-08T23:45:18.127472Z",
-        "id": "40eb6111-adeb-48ba-9333-ddaa8340a768",
+        "id": "<redacted-id>",
         "label": "Reference solution included",
         "metadata": {},
-        "size_bytes": 31,
-        "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+        "size_bytes": "<redacted>",
+        "submission_id": "<redacted-id>",
         "type": "log"
       },
       {
         "created_at": "2026-07-08T23:45:18.127472Z",
-        "id": "d94c5f46-a286-44cc-a19b-2e4890be3ef8",
+        "id": "<redacted-id>",
         "label": "Submission explanations",
         "metadata": {},
-        "size_bytes": 38,
-        "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+        "size_bytes": "<redacted>",
+        "submission_id": "<redacted-id>",
         "type": "log"
       },
       {
         "created_at": "2026-07-08T23:45:18.127472Z",
-        "id": "f0d58929-efa4-446f-bb72-04c7a2c14a77",
+        "id": "<redacted-id>",
         "label": "Test alignment review",
         "metadata": {},
-        "size_bytes": 36,
-        "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+        "size_bytes": "<redacted>",
+        "submission_id": "<redacted-id>",
         "type": "log"
       },
       {
         "created_at": "2026-07-08T23:45:18.127472Z",
-        "id": "afdb97ca-4a8d-46de-9d7f-34f4c7468242",
+        "id": "<redacted-id>",
         "label": "Verifier files included",
         "metadata": {},
-        "size_bytes": 28,
-        "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+        "size_bytes": "<redacted>",
+        "submission_id": "<redacted-id>",
         "type": "log"
       }
     ],
-    "id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+    "id": "<redacted-id>",
     "status": "submitted",
     "submitted_at": "2026-07-08T23:45:18.127472Z",
-    "summary": "Terminal Benchmark terminal-benchmark-reference-fixture packet built from live submission requirements.",
-    "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+    "summary": "Terminal Benchmark <redacted-fixture-id> packet built from live submission requirements.",
+    "task_id": "<redacted-id>",
     "version": 1,
-    "worker_id": "d0c5c1f3-7689-5965-bba3-975bbac3c815"
+    "worker_id": "<redacted-id>"
   }
 ]
 ```
@@ -7214,25 +7221,25 @@ Response body:
       "artifact": "environment/Dockerfile",
       "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
-      "size_bytes": 1327
+      "size_bytes": "<redacted>"
     },
     {
       "artifact": "environment/.dockerignore",
       "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
-      "size_bytes": 185
+      "size_bytes": "<redacted>"
     },
     {
       "artifact": "rubric.md",
       "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
-      "size_bytes": 34
+      "size_bytes": "<redacted>"
     },
     {
       "artifact": "task.toml",
       "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
-      "size_bytes": 1562
+      "size_bytes": "<redacted>"
     }
   ],
   "evidence_items": [
@@ -7240,144 +7247,144 @@ Response body:
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
       "hash": "sha256:<redacted>",
-      "id": "0807ade0-2c5a-4128-a253-e3f6307c6e69",
+      "id": "<redacted-id>",
       "label": "Dependency pinning review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "dependency_pinning_review"
       },
-      "size_bytes": 40,
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "size_bytes": "<redacted>",
+      "submission_id": "<redacted-id>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/dependency_pinning_review.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/dependency_pinning_review.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
       "hash": "sha256:<redacted>",
-      "id": "21e8b24f-51d8-4934-96dd-6608b9d54082",
+      "id": "<redacted-id>",
       "label": "Environment hygiene review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "environment_hygiene_review"
       },
-      "size_bytes": 41,
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "size_bytes": "<redacted>",
+      "submission_id": "<redacted-id>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/environment_hygiene_review.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/environment_hygiene_review.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
       "hash": "sha256:<redacted>",
-      "id": "06f50e90-b055-485e-bda4-289ffa822025",
+      "id": "<redacted-id>",
       "label": "Task instructions included",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "instructions_present"
       },
-      "size_bytes": 35,
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "size_bytes": "<redacted>",
+      "submission_id": "<redacted-id>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/instructions_present.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/instructions_present.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
       "hash": "sha256:<redacted>",
-      "id": "f21c9ab2-cc6d-466b-a2fb-817ae8741918",
+      "id": "<redacted-id>",
       "label": "Reward footer review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "reward_footer_review"
       },
-      "size_bytes": 35,
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "size_bytes": "<redacted>",
+      "submission_id": "<redacted-id>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/reward_footer_review.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/reward_footer_review.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
       "hash": "sha256:<redacted>",
-      "id": "40eb6111-adeb-48ba-9333-ddaa8340a768",
+      "id": "<redacted-id>",
       "label": "Reference solution included",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "solution_present"
       },
-      "size_bytes": 31,
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "size_bytes": "<redacted>",
+      "submission_id": "<redacted-id>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/solution_present.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/solution_present.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
       "hash": "sha256:<redacted>",
-      "id": "d94c5f46-a286-44cc-a19b-2e4890be3ef8",
+      "id": "<redacted-id>",
       "label": "Submission explanations",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "submission_explanations"
       },
-      "size_bytes": 38,
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "size_bytes": "<redacted>",
+      "submission_id": "<redacted-id>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/submission_explanations.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/submission_explanations.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
       "hash": "sha256:<redacted>",
-      "id": "f0d58929-efa4-446f-bb72-04c7a2c14a77",
+      "id": "<redacted-id>",
       "label": "Test alignment review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "test_alignment_review"
       },
-      "size_bytes": 36,
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "size_bytes": "<redacted>",
+      "submission_id": "<redacted-id>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/test_alignment_review.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/test_alignment_review.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
       "hash": "sha256:<redacted>",
-      "id": "afdb97ca-4a8d-46de-9d7f-34f4c7468242",
+      "id": "<redacted-id>",
       "label": "Verifier files included",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "tests_present"
       },
-      "size_bytes": 28,
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "size_bytes": "<redacted>",
+      "submission_id": "<redacted-id>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/tests_present.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/tests_present.txt"
     }
   ],
   "finalized_at": "2026-07-08T23:45:18.750577Z",
-  "id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+  "id": "<redacted-id>",
   "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
-  "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
+  "locked_effective_project_submission_artifact_policy_id": "<redacted-id>",
   "locked_guide_source_snapshot_hash": "sha256:<redacted>",
-  "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+  "locked_guide_source_snapshot_id": "<redacted-id>",
   "locked_guide_version": "v1",
   "locked_payment_policy_version": "v1",
   "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
-  "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
+  "locked_pre_submit_checker_policy_id": "<redacted-id>",
   "locked_review_policy_version": "v1",
   "locked_revision_policy_version": "v1",
   "package_hash": "sha256:<redacted>",
-  "package_uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/submission.zip",
+  "package_uri": "local://terminal-benchmark/<redacted-fixture-id>/submission.zip",
   "status": "submitted",
   "submitted_at": "2026-07-08T23:45:18.127472Z",
-  "summary": "Terminal Benchmark terminal-benchmark-reference-fixture packet built from live submission requirements.",
-  "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+  "summary": "Terminal Benchmark <redacted-fixture-id> packet built from live submission requirements.",
+  "task_id": "<redacted-id>",
   "version": 1,
-  "worker_attestation": "<redacted-large-string sha256:<redacted> bytes:752 prefix:'I attest this submission is original_work, produced under human_accountability_f'>",
-  "worker_id": "d0c5c1f3-7689-5965-bba3-975bbac3c815"
+  "worker_attestation": "<redacted-large-string sha256:<redacted> bytes:<redacted> prefix:'I attest this submission is original_work, produced under human_accountability_f'>",
+  "worker_id": "<redacted-id>"
 }
 ```
 
@@ -7400,25 +7407,25 @@ Response body:
       "artifact": "environment/Dockerfile",
       "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
-      "size_bytes": 1327
+      "size_bytes": "<redacted>"
     },
     {
       "artifact": "environment/.dockerignore",
       "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
-      "size_bytes": 185
+      "size_bytes": "<redacted>"
     },
     {
       "artifact": "rubric.md",
       "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
-      "size_bytes": 34
+      "size_bytes": "<redacted>"
     },
     {
       "artifact": "task.toml",
       "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
-      "size_bytes": 1562
+      "size_bytes": "<redacted>"
     }
   ],
   "evidence_items": [
@@ -7426,144 +7433,144 @@ Response body:
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
       "hash": "sha256:<redacted>",
-      "id": "0807ade0-2c5a-4128-a253-e3f6307c6e69",
+      "id": "<redacted-id>",
       "label": "Dependency pinning review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "dependency_pinning_review"
       },
-      "size_bytes": 40,
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "size_bytes": "<redacted>",
+      "submission_id": "<redacted-id>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/dependency_pinning_review.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/dependency_pinning_review.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
       "hash": "sha256:<redacted>",
-      "id": "21e8b24f-51d8-4934-96dd-6608b9d54082",
+      "id": "<redacted-id>",
       "label": "Environment hygiene review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "environment_hygiene_review"
       },
-      "size_bytes": 41,
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "size_bytes": "<redacted>",
+      "submission_id": "<redacted-id>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/environment_hygiene_review.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/environment_hygiene_review.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
       "hash": "sha256:<redacted>",
-      "id": "06f50e90-b055-485e-bda4-289ffa822025",
+      "id": "<redacted-id>",
       "label": "Task instructions included",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "instructions_present"
       },
-      "size_bytes": 35,
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "size_bytes": "<redacted>",
+      "submission_id": "<redacted-id>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/instructions_present.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/instructions_present.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
       "hash": "sha256:<redacted>",
-      "id": "f21c9ab2-cc6d-466b-a2fb-817ae8741918",
+      "id": "<redacted-id>",
       "label": "Reward footer review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "reward_footer_review"
       },
-      "size_bytes": 35,
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "size_bytes": "<redacted>",
+      "submission_id": "<redacted-id>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/reward_footer_review.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/reward_footer_review.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
       "hash": "sha256:<redacted>",
-      "id": "40eb6111-adeb-48ba-9333-ddaa8340a768",
+      "id": "<redacted-id>",
       "label": "Reference solution included",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "solution_present"
       },
-      "size_bytes": 31,
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "size_bytes": "<redacted>",
+      "submission_id": "<redacted-id>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/solution_present.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/solution_present.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
       "hash": "sha256:<redacted>",
-      "id": "d94c5f46-a286-44cc-a19b-2e4890be3ef8",
+      "id": "<redacted-id>",
       "label": "Submission explanations",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "submission_explanations"
       },
-      "size_bytes": 38,
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "size_bytes": "<redacted>",
+      "submission_id": "<redacted-id>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/submission_explanations.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/submission_explanations.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
       "hash": "sha256:<redacted>",
-      "id": "f0d58929-efa4-446f-bb72-04c7a2c14a77",
+      "id": "<redacted-id>",
       "label": "Test alignment review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "test_alignment_review"
       },
-      "size_bytes": 36,
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "size_bytes": "<redacted>",
+      "submission_id": "<redacted-id>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/test_alignment_review.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/test_alignment_review.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
       "hash": "sha256:<redacted>",
-      "id": "afdb97ca-4a8d-46de-9d7f-34f4c7468242",
+      "id": "<redacted-id>",
       "label": "Verifier files included",
       "metadata": {
-        "fixture_id": "terminal-benchmark-reference-fixture",
+        "fixture_id": "<redacted-fixture-id>",
         "required_evidence_key": "tests_present"
       },
-      "size_bytes": 28,
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "size_bytes": "<redacted>",
+      "submission_id": "<redacted-id>",
       "type": "log",
-      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/tests_present.txt"
+      "uri": "local://terminal-benchmark/<redacted-fixture-id>/evidence/tests_present.txt"
     }
   ],
   "finalized_at": "2026-07-08T23:45:18.750577Z",
-  "id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+  "id": "<redacted-id>",
   "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
-  "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
+  "locked_effective_project_submission_artifact_policy_id": "<redacted-id>",
   "locked_guide_source_snapshot_hash": "sha256:<redacted>",
-  "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+  "locked_guide_source_snapshot_id": "<redacted-id>",
   "locked_guide_version": "v1",
   "locked_payment_policy_version": "v1",
   "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
-  "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
+  "locked_pre_submit_checker_policy_id": "<redacted-id>",
   "locked_review_policy_version": "v1",
   "locked_revision_policy_version": "v1",
   "package_hash": "sha256:<redacted>",
-  "package_uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/submission.zip",
+  "package_uri": "local://terminal-benchmark/<redacted-fixture-id>/submission.zip",
   "status": "submitted",
   "submitted_at": "2026-07-08T23:45:18.127472Z",
-  "summary": "Terminal Benchmark terminal-benchmark-reference-fixture packet built from live submission requirements.",
-  "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+  "summary": "Terminal Benchmark <redacted-fixture-id> packet built from live submission requirements.",
+  "task_id": "<redacted-id>",
   "version": 1,
-  "worker_attestation": "<redacted-large-string sha256:<redacted> bytes:752 prefix:'I attest this submission is original_work, produced under human_accountability_f'>",
-  "worker_id": "d0c5c1f3-7689-5965-bba3-975bbac3c815"
+  "worker_attestation": "<redacted-large-string sha256:<redacted> bytes:<redacted> prefix:'I attest this submission is original_work, produced under human_accountability_f'>",
+  "worker_id": "<redacted-id>"
 }
 ```
 
@@ -7587,40 +7594,40 @@ Response body:
         "artifact": "environment/Dockerfile",
         "hash": "sha256:<redacted>",
         "notes": "Required by locked Terminal Benchmark project policy.",
-        "size_bytes": 1327
+        "size_bytes": "<redacted>"
       },
       {
         "artifact": "environment/.dockerignore",
         "hash": "sha256:<redacted>",
         "notes": "Required by locked Terminal Benchmark project policy.",
-        "size_bytes": 185
+        "size_bytes": "<redacted>"
       },
       {
         "artifact": "rubric.md",
         "hash": "sha256:<redacted>",
         "notes": "Required by locked Terminal Benchmark project policy.",
-        "size_bytes": 34
+        "size_bytes": "<redacted>"
       },
       {
         "artifact": "task.toml",
         "hash": "sha256:<redacted>",
         "notes": "Required by locked Terminal Benchmark project policy.",
-        "size_bytes": 1562
+        "size_bytes": "<redacted>"
       }
     ],
     "artifact_manifest_hash": "sha256:<redacted>",
     "attempt_number": 1,
-    "audit_event_id": "b79137c1-398e-4826-9147-9179aa07eb00",
+    "audit_event_id": "<redacted-id>",
     "blocking_count": 0,
     "completed_at": "2026-07-08T23:45:18.864215Z",
     "created_at": "2026-07-08T23:45:18.592353Z",
     "failed_count": 0,
-    "id": "d7885348-fd08-4820-b209-36a704765a2b",
+    "id": "<redacted-id>",
     "is_current_for_submission": true,
     "locked_guide_version": "v1",
     "locked_payment_policy_version": "v1",
     "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
-    "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
+    "locked_post_submit_checker_policy_id": "<redacted-id>",
     "locked_post_submit_checker_policy_version": "v1",
     "locked_review_policy_version": "v1",
     "locked_revision_policy_version": "v1",
@@ -7632,15 +7639,15 @@ Response body:
       {
         "blocks_review": false,
         "checker_name": "check_submission_packet",
-        "checker_run_id": "d7885348-fd08-4820-b209-36a704765a2b",
+        "checker_run_id": "<redacted-id>",
         "created_at": "2026-07-08T23:45:18.592353Z",
-        "id": "881d313f-729e-442b-9d2a-9e7b41ced497",
+        "id": "<redacted-id>",
         "message": "Submission packet contains required fields.",
         "metadata": {},
         "severity": "info",
         "status": "passed",
-        "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
-        "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+        "submission_id": "<redacted-id>",
+        "task_id": "<redacted-id>",
         "worker_evidence_refs": [],
         "worker_message": "Submission packet contains required fields.",
         "worker_visible": true
@@ -7648,15 +7655,15 @@ Response body:
       {
         "blocks_review": false,
         "checker_name": "check_policy_context_present",
-        "checker_run_id": "d7885348-fd08-4820-b209-36a704765a2b",
+        "checker_run_id": "<redacted-id>",
         "created_at": "2026-07-08T23:45:18.592353Z",
-        "id": "5e9e4ea6-b300-4860-b543-4539c227f755",
+        "id": "<redacted-id>",
         "message": "Submission has locked guide and policy context.",
         "metadata": {},
         "severity": "info",
         "status": "passed",
-        "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
-        "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+        "submission_id": "<redacted-id>",
+        "task_id": "<redacted-id>",
         "worker_evidence_refs": [],
         "worker_message": "Submission has locked guide and policy context.",
         "worker_visible": true
@@ -7664,15 +7671,15 @@ Response body:
       {
         "blocks_review": false,
         "checker_name": "check_evidence_present",
-        "checker_run_id": "d7885348-fd08-4820-b209-36a704765a2b",
+        "checker_run_id": "<redacted-id>",
         "created_at": "2026-07-08T23:45:18.592353Z",
-        "id": "981f41b2-59b3-4a4d-b9b3-a368719de2a5",
+        "id": "<redacted-id>",
         "message": "Submission includes required evidence references.",
         "metadata": {},
         "severity": "info",
         "status": "passed",
-        "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
-        "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+        "submission_id": "<redacted-id>",
+        "task_id": "<redacted-id>",
         "worker_evidence_refs": [],
         "worker_message": "Submission includes required evidence references.",
         "worker_visible": true
@@ -7680,9 +7687,9 @@ Response body:
       {
         "blocks_review": false,
         "checker_name": "check_evidence_integrity",
-        "checker_run_id": "d7885348-fd08-4820-b209-36a704765a2b",
+        "checker_run_id": "<redacted-id>",
         "created_at": "2026-07-08T23:45:18.592353Z",
-        "id": "95dda22a-9486-4e2f-9ada-1ff6def7c0cc",
+        "id": "<redacted-id>",
         "message": "Artifact manifest and evidence references are structurally valid.",
         "metadata": {
           "artifact_count": 4,
@@ -7690,8 +7697,8 @@ Response body:
         },
         "severity": "info",
         "status": "passed",
-        "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
-        "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+        "submission_id": "<redacted-id>",
+        "task_id": "<redacted-id>",
         "worker_evidence_refs": [],
         "worker_message": "Artifact manifest and evidence references are structurally valid.",
         "worker_visible": true
@@ -7699,15 +7706,15 @@ Response body:
       {
         "blocks_review": false,
         "checker_name": "check_required_files",
-        "checker_run_id": "d7885348-fd08-4820-b209-36a704765a2b",
+        "checker_run_id": "<redacted-id>",
         "created_at": "2026-07-08T23:45:18.592353Z",
-        "id": "e5d0538a-79c2-40a7-90c5-56ef67538dd2",
+        "id": "<redacted-id>",
         "message": "Submission includes required artifact files.",
         "metadata": {},
         "severity": "info",
         "status": "passed",
-        "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
-        "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+        "submission_id": "<redacted-id>",
+        "task_id": "<redacted-id>",
         "worker_evidence_refs": [],
         "worker_message": "Submission includes required artifact files.",
         "worker_visible": true
@@ -7715,15 +7722,15 @@ Response body:
       {
         "blocks_review": false,
         "checker_name": "check_forbidden_files",
-        "checker_run_id": "d7885348-fd08-4820-b209-36a704765a2b",
+        "checker_run_id": "<redacted-id>",
         "created_at": "2026-07-08T23:45:18.592353Z",
-        "id": "183eeb53-03f2-4c7d-8f9c-9b4544241bd2",
+        "id": "<redacted-id>",
         "message": "Submission does not include default forbidden paths.",
         "metadata": {},
         "severity": "info",
         "status": "passed",
-        "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
-        "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+        "submission_id": "<redacted-id>",
+        "task_id": "<redacted-id>",
         "worker_evidence_refs": [],
         "worker_message": "Submission does not include default forbidden paths.",
         "worker_visible": true
@@ -7731,15 +7738,15 @@ Response body:
       {
         "blocks_review": false,
         "checker_name": "check_confidentiality_attestation",
-        "checker_run_id": "d7885348-fd08-4820-b209-36a704765a2b",
+        "checker_run_id": "<redacted-id>",
         "created_at": "2026-07-08T23:45:18.592353Z",
-        "id": "ec9e8111-1128-4a34-a576-27afb8d5f664",
+        "id": "<redacted-id>",
         "message": "Submission includes the required confidentiality attestation.",
         "metadata": {},
         "severity": "info",
         "status": "passed",
-        "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
-        "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+        "submission_id": "<redacted-id>",
+        "task_id": "<redacted-id>",
         "worker_evidence_refs": [],
         "worker_message": "Submission includes the required confidentiality attestation.",
         "worker_visible": true
@@ -7747,15 +7754,15 @@ Response body:
       {
         "blocks_review": false,
         "checker_name": "check_low_quality_generated_artifacts",
-        "checker_run_id": "d7885348-fd08-4820-b209-36a704765a2b",
+        "checker_run_id": "<redacted-id>",
         "created_at": "2026-07-08T23:45:18.592353Z",
-        "id": "024d7ea5-69f8-4c68-a457-b0c24c8c4eca",
+        "id": "<redacted-id>",
         "message": "Submission does not contain obvious generated-output placeholder signals.",
         "metadata": {},
         "severity": "info",
         "status": "passed",
-        "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
-        "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+        "submission_id": "<redacted-id>",
+        "task_id": "<redacted-id>",
         "worker_evidence_refs": [],
         "worker_message": "Submission does not contain obvious generated-output placeholder signals.",
         "worker_visible": true
@@ -7764,9 +7771,9 @@ Response body:
     "routing_recommendation": "allow_review",
     "started_at": "2026-07-08T23:45:18.864215Z",
     "status": "completed",
-    "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+    "submission_id": "<redacted-id>",
     "submission_version": 1,
-    "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+    "task_id": "<redacted-id>",
     "trigger_auth_source": "workstream_system",
     "trigger_reason": "submission finalized pre-review gate",
     "trigger_source": "submission_finalized",
@@ -7797,40 +7804,40 @@ Response body:
       "artifact": "environment/Dockerfile",
       "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
-      "size_bytes": 1327
+      "size_bytes": "<redacted>"
     },
     {
       "artifact": "environment/.dockerignore",
       "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
-      "size_bytes": 185
+      "size_bytes": "<redacted>"
     },
     {
       "artifact": "rubric.md",
       "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
-      "size_bytes": 34
+      "size_bytes": "<redacted>"
     },
     {
       "artifact": "task.toml",
       "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
-      "size_bytes": 1562
+      "size_bytes": "<redacted>"
     }
   ],
   "artifact_manifest_hash": "sha256:<redacted>",
   "attempt_number": 1,
-  "audit_event_id": "b79137c1-398e-4826-9147-9179aa07eb00",
+  "audit_event_id": "<redacted-id>",
   "blocking_count": 0,
   "completed_at": "2026-07-08T23:45:18.864215Z",
   "created_at": "2026-07-08T23:45:18.592353Z",
   "failed_count": 0,
-  "id": "d7885348-fd08-4820-b209-36a704765a2b",
+  "id": "<redacted-id>",
   "is_current_for_submission": true,
   "locked_guide_version": "v1",
   "locked_payment_policy_version": "v1",
   "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
-  "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
+  "locked_post_submit_checker_policy_id": "<redacted-id>",
   "locked_post_submit_checker_policy_version": "v1",
   "locked_review_policy_version": "v1",
   "locked_revision_policy_version": "v1",
@@ -7842,15 +7849,15 @@ Response body:
     {
       "blocks_review": false,
       "checker_name": "check_submission_packet",
-      "checker_run_id": "d7885348-fd08-4820-b209-36a704765a2b",
+      "checker_run_id": "<redacted-id>",
       "created_at": "2026-07-08T23:45:18.592353Z",
-      "id": "881d313f-729e-442b-9d2a-9e7b41ced497",
+      "id": "<redacted-id>",
       "message": "Submission packet contains required fields.",
       "metadata": {},
       "severity": "info",
       "status": "passed",
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
-      "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+      "submission_id": "<redacted-id>",
+      "task_id": "<redacted-id>",
       "worker_evidence_refs": [],
       "worker_message": "Submission packet contains required fields.",
       "worker_visible": true
@@ -7858,15 +7865,15 @@ Response body:
     {
       "blocks_review": false,
       "checker_name": "check_policy_context_present",
-      "checker_run_id": "d7885348-fd08-4820-b209-36a704765a2b",
+      "checker_run_id": "<redacted-id>",
       "created_at": "2026-07-08T23:45:18.592353Z",
-      "id": "5e9e4ea6-b300-4860-b543-4539c227f755",
+      "id": "<redacted-id>",
       "message": "Submission has locked guide and policy context.",
       "metadata": {},
       "severity": "info",
       "status": "passed",
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
-      "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+      "submission_id": "<redacted-id>",
+      "task_id": "<redacted-id>",
       "worker_evidence_refs": [],
       "worker_message": "Submission has locked guide and policy context.",
       "worker_visible": true
@@ -7874,15 +7881,15 @@ Response body:
     {
       "blocks_review": false,
       "checker_name": "check_evidence_present",
-      "checker_run_id": "d7885348-fd08-4820-b209-36a704765a2b",
+      "checker_run_id": "<redacted-id>",
       "created_at": "2026-07-08T23:45:18.592353Z",
-      "id": "981f41b2-59b3-4a4d-b9b3-a368719de2a5",
+      "id": "<redacted-id>",
       "message": "Submission includes required evidence references.",
       "metadata": {},
       "severity": "info",
       "status": "passed",
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
-      "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+      "submission_id": "<redacted-id>",
+      "task_id": "<redacted-id>",
       "worker_evidence_refs": [],
       "worker_message": "Submission includes required evidence references.",
       "worker_visible": true
@@ -7890,9 +7897,9 @@ Response body:
     {
       "blocks_review": false,
       "checker_name": "check_evidence_integrity",
-      "checker_run_id": "d7885348-fd08-4820-b209-36a704765a2b",
+      "checker_run_id": "<redacted-id>",
       "created_at": "2026-07-08T23:45:18.592353Z",
-      "id": "95dda22a-9486-4e2f-9ada-1ff6def7c0cc",
+      "id": "<redacted-id>",
       "message": "Artifact manifest and evidence references are structurally valid.",
       "metadata": {
         "artifact_count": 4,
@@ -7900,8 +7907,8 @@ Response body:
       },
       "severity": "info",
       "status": "passed",
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
-      "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+      "submission_id": "<redacted-id>",
+      "task_id": "<redacted-id>",
       "worker_evidence_refs": [],
       "worker_message": "Artifact manifest and evidence references are structurally valid.",
       "worker_visible": true
@@ -7909,15 +7916,15 @@ Response body:
     {
       "blocks_review": false,
       "checker_name": "check_required_files",
-      "checker_run_id": "d7885348-fd08-4820-b209-36a704765a2b",
+      "checker_run_id": "<redacted-id>",
       "created_at": "2026-07-08T23:45:18.592353Z",
-      "id": "e5d0538a-79c2-40a7-90c5-56ef67538dd2",
+      "id": "<redacted-id>",
       "message": "Submission includes required artifact files.",
       "metadata": {},
       "severity": "info",
       "status": "passed",
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
-      "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+      "submission_id": "<redacted-id>",
+      "task_id": "<redacted-id>",
       "worker_evidence_refs": [],
       "worker_message": "Submission includes required artifact files.",
       "worker_visible": true
@@ -7925,15 +7932,15 @@ Response body:
     {
       "blocks_review": false,
       "checker_name": "check_forbidden_files",
-      "checker_run_id": "d7885348-fd08-4820-b209-36a704765a2b",
+      "checker_run_id": "<redacted-id>",
       "created_at": "2026-07-08T23:45:18.592353Z",
-      "id": "183eeb53-03f2-4c7d-8f9c-9b4544241bd2",
+      "id": "<redacted-id>",
       "message": "Submission does not include default forbidden paths.",
       "metadata": {},
       "severity": "info",
       "status": "passed",
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
-      "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+      "submission_id": "<redacted-id>",
+      "task_id": "<redacted-id>",
       "worker_evidence_refs": [],
       "worker_message": "Submission does not include default forbidden paths.",
       "worker_visible": true
@@ -7941,15 +7948,15 @@ Response body:
     {
       "blocks_review": false,
       "checker_name": "check_confidentiality_attestation",
-      "checker_run_id": "d7885348-fd08-4820-b209-36a704765a2b",
+      "checker_run_id": "<redacted-id>",
       "created_at": "2026-07-08T23:45:18.592353Z",
-      "id": "ec9e8111-1128-4a34-a576-27afb8d5f664",
+      "id": "<redacted-id>",
       "message": "Submission includes the required confidentiality attestation.",
       "metadata": {},
       "severity": "info",
       "status": "passed",
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
-      "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+      "submission_id": "<redacted-id>",
+      "task_id": "<redacted-id>",
       "worker_evidence_refs": [],
       "worker_message": "Submission includes the required confidentiality attestation.",
       "worker_visible": true
@@ -7957,15 +7964,15 @@ Response body:
     {
       "blocks_review": false,
       "checker_name": "check_low_quality_generated_artifacts",
-      "checker_run_id": "d7885348-fd08-4820-b209-36a704765a2b",
+      "checker_run_id": "<redacted-id>",
       "created_at": "2026-07-08T23:45:18.592353Z",
-      "id": "024d7ea5-69f8-4c68-a457-b0c24c8c4eca",
+      "id": "<redacted-id>",
       "message": "Submission does not contain obvious generated-output placeholder signals.",
       "metadata": {},
       "severity": "info",
       "status": "passed",
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
-      "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+      "submission_id": "<redacted-id>",
+      "task_id": "<redacted-id>",
       "worker_evidence_refs": [],
       "worker_message": "Submission does not contain obvious generated-output placeholder signals.",
       "worker_visible": true
@@ -7974,9 +7981,9 @@ Response body:
   "routing_recommendation": "allow_review",
   "started_at": "2026-07-08T23:45:18.864215Z",
   "status": "completed",
-  "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+  "submission_id": "<redacted-id>",
   "submission_version": 1,
-  "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+  "task_id": "<redacted-id>",
   "trigger_auth_source": "workstream_system",
   "trigger_reason": "submission finalized pre-review gate",
   "trigger_source": "submission_finalized",
@@ -8002,14 +8009,14 @@ Response body:
 ```json
 [
   {
-    "actor_id": "5080787a-cb3b-591d-9948-6b38354788ab",
+    "actor_id": "<redacted-id>",
     "actor_roles": [
       "project_manager"
     ],
     "auth_source": "flow",
     "claim_snapshot": {},
     "created_at": "2026-07-08T23:44:03.452947Z",
-    "entity_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+    "entity_id": "<redacted-id>",
     "entity_type": "task",
     "event_payload": {
       "assigned_to": null,
@@ -8030,181 +8037,181 @@ Response body:
     },
     "event_type": "task_created",
     "external_issuer": "https://auth.flow.local/e2e",
-    "external_subject": "terminal-benchmark-manager-ws16-clean-cb1540ba",
+    "external_subject": "terminal-benchmark-manager-<redacted-run-id>",
     "from_status": null,
-    "id": "3c645ce6-9cf1-498c-bff2-b5a53e481c3d",
+    "id": "<redacted-id>",
     "is_dev_auth": false,
     "reason": null,
     "to_status": "draft"
   },
   {
-    "actor_id": "5080787a-cb3b-591d-9948-6b38354788ab",
+    "actor_id": "<redacted-id>",
     "actor_roles": [
       "project_manager"
     ],
     "auth_source": "flow",
     "claim_snapshot": {},
     "created_at": "2026-07-08T23:44:03.630101Z",
-    "entity_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+    "entity_id": "<redacted-id>",
     "entity_type": "task",
     "event_payload": {
       "assigned_to": null,
       "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
-      "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
+      "locked_effective_project_submission_artifact_policy_id": "<redacted-id>",
       "locked_guide_source_snapshot_hash": "sha256:<redacted>",
-      "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+      "locked_guide_source_snapshot_id": "<redacted-id>",
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
       "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
-      "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
+      "locked_post_submit_checker_policy_id": "<redacted-id>",
       "locked_post_submit_checker_policy_version": "v1",
       "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
-      "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
+      "locked_pre_submit_checker_policy_id": "<redacted-id>",
       "locked_review_policy_version": "v1",
       "locked_revision_policy_version": "v1"
     },
     "event_type": "task_status_changed",
     "external_issuer": "https://auth.flow.local/e2e",
-    "external_subject": "terminal-benchmark-manager-ws16-clean-cb1540ba",
+    "external_subject": "terminal-benchmark-manager-<redacted-run-id>",
     "from_status": "draft",
-    "id": "43563128-a38c-41ef-baad-f4a5ea77e153",
+    "id": "<redacted-id>",
     "is_dev_auth": false,
     "reason": "Terminal Benchmark final clean live API screening; lock active guide and policy context.",
     "to_status": "screening"
   },
   {
-    "actor_id": "5080787a-cb3b-591d-9948-6b38354788ab",
+    "actor_id": "<redacted-id>",
     "actor_roles": [
       "project_manager"
     ],
     "auth_source": "flow",
     "claim_snapshot": {},
     "created_at": "2026-07-08T23:44:04.041939Z",
-    "entity_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+    "entity_id": "<redacted-id>",
     "entity_type": "task",
     "event_payload": {
       "assigned_to": null,
       "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
-      "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
+      "locked_effective_project_submission_artifact_policy_id": "<redacted-id>",
       "locked_guide_source_snapshot_hash": "sha256:<redacted>",
-      "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+      "locked_guide_source_snapshot_id": "<redacted-id>",
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
       "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
-      "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
+      "locked_post_submit_checker_policy_id": "<redacted-id>",
       "locked_post_submit_checker_policy_version": "v1",
       "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
-      "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
+      "locked_pre_submit_checker_policy_id": "<redacted-id>",
       "locked_review_policy_version": "v1",
       "locked_revision_policy_version": "v1"
     },
     "event_type": "task_status_changed",
     "external_issuer": "https://auth.flow.local/e2e",
-    "external_subject": "terminal-benchmark-manager-ws16-clean-cb1540ba",
+    "external_subject": "terminal-benchmark-manager-<redacted-run-id>",
     "from_status": "screening",
-    "id": "b8264b10-3383-4138-ab3b-6071850aaff9",
+    "id": "<redacted-id>",
     "is_dev_auth": false,
     "reason": "Terminal Benchmark final clean live API ready for worker claim.",
     "to_status": "ready"
   },
   {
-    "actor_id": "d0c5c1f3-7689-5965-bba3-975bbac3c815",
+    "actor_id": "<redacted-id>",
     "actor_roles": [
       "worker"
     ],
     "auth_source": "flow",
     "claim_snapshot": {},
     "created_at": "2026-07-08T23:44:04.503583Z",
-    "entity_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+    "entity_id": "<redacted-id>",
     "entity_type": "task",
     "event_payload": {
-      "assigned_to": "d0c5c1f3-7689-5965-bba3-975bbac3c815",
-      "assignment_id": "47f47a44-cd98-41e6-859e-86ac232cd83b",
+      "assigned_to": "<redacted-id>",
+      "assignment_id": "<redacted-id>",
       "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
-      "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
+      "locked_effective_project_submission_artifact_policy_id": "<redacted-id>",
       "locked_guide_source_snapshot_hash": "sha256:<redacted>",
-      "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+      "locked_guide_source_snapshot_id": "<redacted-id>",
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
       "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
-      "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
+      "locked_post_submit_checker_policy_id": "<redacted-id>",
       "locked_post_submit_checker_policy_version": "v1",
       "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
-      "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
+      "locked_pre_submit_checker_policy_id": "<redacted-id>",
       "locked_review_policy_version": "v1",
       "locked_revision_policy_version": "v1",
-      "worker_id": "d0c5c1f3-7689-5965-bba3-975bbac3c815"
+      "worker_id": "<redacted-id>"
     },
     "event_type": "task_status_changed",
     "external_issuer": "https://auth.flow.local/e2e",
-    "external_subject": "terminal-benchmark-worker-ws16-clean-cb1540ba",
+    "external_subject": "terminal-benchmark-worker-<redacted-run-id>",
     "from_status": "ready",
-    "id": "b5a3091c-8506-41fe-800c-58dd1aadfb8a",
+    "id": "<redacted-id>",
     "is_dev_auth": false,
     "reason": "Terminal Benchmark final clean live API worker claim.",
     "to_status": "claimed"
   },
   {
-    "actor_id": "d0c5c1f3-7689-5965-bba3-975bbac3c815",
+    "actor_id": "<redacted-id>",
     "actor_roles": [
       "worker"
     ],
     "auth_source": "flow",
     "claim_snapshot": {},
     "created_at": "2026-07-08T23:44:04.727342Z",
-    "entity_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+    "entity_id": "<redacted-id>",
     "entity_type": "task",
     "event_payload": {
-      "assigned_to": "d0c5c1f3-7689-5965-bba3-975bbac3c815",
-      "assignment_id": "47f47a44-cd98-41e6-859e-86ac232cd83b",
+      "assigned_to": "<redacted-id>",
+      "assignment_id": "<redacted-id>",
       "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
-      "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
+      "locked_effective_project_submission_artifact_policy_id": "<redacted-id>",
       "locked_guide_source_snapshot_hash": "sha256:<redacted>",
-      "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+      "locked_guide_source_snapshot_id": "<redacted-id>",
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
       "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
-      "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
+      "locked_post_submit_checker_policy_id": "<redacted-id>",
       "locked_post_submit_checker_policy_version": "v1",
       "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
-      "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
+      "locked_pre_submit_checker_policy_id": "<redacted-id>",
       "locked_review_policy_version": "v1",
       "locked_revision_policy_version": "v1",
       "operator_override": false,
-      "worker_id": "d0c5c1f3-7689-5965-bba3-975bbac3c815"
+      "worker_id": "<redacted-id>"
     },
     "event_type": "task_status_changed",
     "external_issuer": "https://auth.flow.local/e2e",
-    "external_subject": "terminal-benchmark-worker-ws16-clean-cb1540ba",
+    "external_subject": "terminal-benchmark-worker-<redacted-run-id>",
     "from_status": "claimed",
-    "id": "3f3f1439-662a-4c42-b2bf-6e5543489d46",
+    "id": "<redacted-id>",
     "is_dev_auth": false,
     "reason": "Terminal Benchmark final clean live API worker started work.",
     "to_status": "in_progress"
   },
   {
-    "actor_id": "d0c5c1f3-7689-5965-bba3-975bbac3c815",
+    "actor_id": "<redacted-id>",
     "actor_roles": [
       "worker"
     ],
     "auth_source": "flow",
     "claim_snapshot": {},
     "created_at": "2026-07-08T23:45:17.452515Z",
-    "entity_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+    "entity_id": "<redacted-id>",
     "entity_type": "task",
     "event_payload": {
-      "assigned_to": "d0c5c1f3-7689-5965-bba3-975bbac3c815",
+      "assigned_to": "<redacted-id>",
       "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
-      "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
+      "locked_effective_project_submission_artifact_policy_id": "<redacted-id>",
       "locked_guide_source_snapshot_hash": "sha256:<redacted>",
-      "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+      "locked_guide_source_snapshot_id": "<redacted-id>",
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
       "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
-      "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
+      "locked_post_submit_checker_policy_id": "<redacted-id>",
       "locked_post_submit_checker_policy_version": "v1",
       "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
-      "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
+      "locked_pre_submit_checker_policy_id": "<redacted-id>",
       "locked_review_policy_version": "v1",
       "locked_revision_policy_version": "v1",
       "pre_submit_check": {
@@ -8276,27 +8283,27 @@ Response body:
           }
         ],
         "status": "failed",
-        "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3"
+        "task_id": "<redacted-id>"
       }
     },
     "event_type": "pre_submission_check_failed",
     "external_issuer": "https://auth.flow.local/e2e",
-    "external_subject": "terminal-benchmark-worker-ws16-clean-cb1540ba",
+    "external_subject": "terminal-benchmark-worker-<redacted-run-id>",
     "from_status": "in_progress",
-    "id": "aaeaf9c7-4482-4bdf-956f-075f539175eb",
+    "id": "<redacted-id>",
     "is_dev_auth": false,
     "reason": null,
     "to_status": "in_progress"
   },
   {
-    "actor_id": "d0c5c1f3-7689-5965-bba3-975bbac3c815",
+    "actor_id": "<redacted-id>",
     "actor_roles": [
       "worker"
     ],
     "auth_source": "flow",
     "claim_snapshot": {},
     "created_at": "2026-07-08T23:45:18.127472Z",
-    "entity_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+    "entity_id": "<redacted-id>",
     "entity_type": "task",
     "event_payload": {
       "artifact_hash_manifest": [
@@ -8304,66 +8311,66 @@ Response body:
           "artifact": "environment/Dockerfile",
           "hash": "sha256:<redacted>",
           "notes": "Required by locked Terminal Benchmark project policy.",
-          "size_bytes": 1327
+          "size_bytes": "<redacted>"
         },
         {
           "artifact": "environment/.dockerignore",
           "hash": "sha256:<redacted>",
           "notes": "Required by locked Terminal Benchmark project policy.",
-          "size_bytes": 185
+          "size_bytes": "<redacted>"
         },
         {
           "artifact": "rubric.md",
           "hash": "sha256:<redacted>",
           "notes": "Required by locked Terminal Benchmark project policy.",
-          "size_bytes": 34
+          "size_bytes": "<redacted>"
         },
         {
           "artifact": "task.toml",
           "hash": "sha256:<redacted>",
           "notes": "Required by locked Terminal Benchmark project policy.",
-          "size_bytes": 1562
+          "size_bytes": "<redacted>"
         }
       ],
-      "assigned_to": "d0c5c1f3-7689-5965-bba3-975bbac3c815",
+      "assigned_to": "<redacted-id>",
       "finalized_at": null,
       "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
-      "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
+      "locked_effective_project_submission_artifact_policy_id": "<redacted-id>",
       "locked_guide_source_snapshot_hash": "sha256:<redacted>",
-      "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+      "locked_guide_source_snapshot_id": "<redacted-id>",
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
       "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
-      "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
+      "locked_post_submit_checker_policy_id": "<redacted-id>",
       "locked_post_submit_checker_policy_version": "v1",
       "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
-      "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
+      "locked_pre_submit_checker_policy_id": "<redacted-id>",
       "locked_review_policy_version": "v1",
       "locked_revision_policy_version": "v1",
       "package_hash": "sha256:<redacted>",
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "submission_id": "<redacted-id>",
       "submission_version": 1,
       "supersedes_submission_id": null,
-      "worker_id": "d0c5c1f3-7689-5965-bba3-975bbac3c815"
+      "worker_id": "<redacted-id>"
     },
     "event_type": "submission_created",
     "external_issuer": "https://auth.flow.local/e2e",
-    "external_subject": "terminal-benchmark-worker-ws16-clean-cb1540ba",
+    "external_subject": "terminal-benchmark-worker-<redacted-run-id>",
     "from_status": "in_progress",
-    "id": "6eb6b53f-01c1-421b-806c-2a9e23b2117a",
+    "id": "<redacted-id>",
     "is_dev_auth": false,
     "reason": null,
     "to_status": "submitted"
   },
   {
-    "actor_id": "5080787a-cb3b-591d-9948-6b38354788ab",
+    "actor_id": "<redacted-id>",
     "actor_roles": [
       "project_manager"
     ],
     "auth_source": "flow",
     "claim_snapshot": {},
     "created_at": "2026-07-08T23:45:18.592353Z",
-    "entity_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+    "entity_id": "<redacted-id>",
     "entity_type": "task",
     "event_payload": {
       "artifact_hash_manifest": [
@@ -8371,53 +8378,53 @@ Response body:
           "artifact": "environment/Dockerfile",
           "hash": "sha256:<redacted>",
           "notes": "Required by locked Terminal Benchmark project policy.",
-          "size_bytes": 1327
+          "size_bytes": "<redacted>"
         },
         {
           "artifact": "environment/.dockerignore",
           "hash": "sha256:<redacted>",
           "notes": "Required by locked Terminal Benchmark project policy.",
-          "size_bytes": 185
+          "size_bytes": "<redacted>"
         },
         {
           "artifact": "rubric.md",
           "hash": "sha256:<redacted>",
           "notes": "Required by locked Terminal Benchmark project policy.",
-          "size_bytes": 34
+          "size_bytes": "<redacted>"
         },
         {
           "artifact": "task.toml",
           "hash": "sha256:<redacted>",
           "notes": "Required by locked Terminal Benchmark project policy.",
-          "size_bytes": 1562
+          "size_bytes": "<redacted>"
         }
       ],
-      "assigned_to": "d0c5c1f3-7689-5965-bba3-975bbac3c815",
+      "assigned_to": "<redacted-id>",
       "finalized_at": "2026-07-08T23:45:18.750577+00:00",
       "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
-      "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
+      "locked_effective_project_submission_artifact_policy_id": "<redacted-id>",
       "locked_guide_source_snapshot_hash": "sha256:<redacted>",
-      "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+      "locked_guide_source_snapshot_id": "<redacted-id>",
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
       "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
-      "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
+      "locked_post_submit_checker_policy_id": "<redacted-id>",
       "locked_post_submit_checker_policy_version": "v1",
       "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
-      "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
+      "locked_pre_submit_checker_policy_id": "<redacted-id>",
       "locked_review_policy_version": "v1",
       "locked_revision_policy_version": "v1",
       "package_hash": "sha256:<redacted>",
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "submission_id": "<redacted-id>",
       "submission_version": 1,
       "supersedes_submission_id": null,
-      "worker_id": "d0c5c1f3-7689-5965-bba3-975bbac3c815"
+      "worker_id": "<redacted-id>"
     },
     "event_type": "submission_finalized",
     "external_issuer": "https://auth.flow.local/e2e",
-    "external_subject": "terminal-benchmark-manager-ws16-clean-cb1540ba",
+    "external_subject": "terminal-benchmark-manager-<redacted-run-id>",
     "from_status": "submitted",
-    "id": "a6843c8e-dc22-45db-9fd2-de16877fde01",
+    "id": "<redacted-id>",
     "is_dev_auth": false,
     "reason": null,
     "to_status": "submitted"
@@ -8430,30 +8437,30 @@ Response body:
     "auth_source": "workstream_system",
     "claim_snapshot": {},
     "created_at": "2026-07-08T23:45:18.592353Z",
-    "entity_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+    "entity_id": "<redacted-id>",
     "entity_type": "task",
     "event_payload": {
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
       "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
-      "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
+      "locked_post_submit_checker_policy_id": "<redacted-id>",
       "locked_post_submit_checker_policy_version": "v1",
       "locked_review_policy_version": "v1",
       "locked_revision_policy_version": "v1",
-      "requester_actor_id": "5080787a-cb3b-591d-9948-6b38354788ab",
+      "requester_actor_id": "<redacted-id>",
       "requester_auth_source": "flow",
       "requester_external_issuer": "https://auth.flow.local/e2e",
-      "requester_external_subject": "terminal-benchmark-manager-ws16-clean-cb1540ba",
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "requester_external_subject": "terminal-benchmark-manager-<redacted-run-id>",
+      "submission_id": "<redacted-id>",
       "submission_version": 1,
-      "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+      "task_id": "<redacted-id>",
       "trigger_source": "submission_finalized"
     },
     "event_type": "pre_review_gate_started",
     "external_issuer": "workstream",
     "external_subject": "workstream-system:pre-review-gate",
     "from_status": "submitted",
-    "id": "f6d7a015-51cd-4419-9b3b-c502a10681bc",
+    "id": "<redacted-id>",
     "is_dev_auth": false,
     "reason": "submission finalized pre-review gate",
     "to_status": "evaluation_pending"
@@ -8466,29 +8473,29 @@ Response body:
     "auth_source": "workstream_system",
     "claim_snapshot": {},
     "created_at": "2026-07-08T23:45:18.592353Z",
-    "entity_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+    "entity_id": "<redacted-id>",
     "entity_type": "task",
     "event_payload": {
       "blocking_count": 0,
-      "checker_run_id": "d7885348-fd08-4820-b209-36a704765a2b",
+      "checker_run_id": "<redacted-id>",
       "failed_count": 0,
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
       "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
-      "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
+      "locked_post_submit_checker_policy_id": "<redacted-id>",
       "locked_post_submit_checker_policy_version": "v1",
       "locked_review_policy_version": "v1",
       "locked_revision_policy_version": "v1",
       "outcome_source": "none",
-      "requester_actor_id": "5080787a-cb3b-591d-9948-6b38354788ab",
+      "requester_actor_id": "<redacted-id>",
       "requester_auth_source": "flow",
       "requester_external_issuer": "https://auth.flow.local/e2e",
-      "requester_external_subject": "terminal-benchmark-manager-ws16-clean-cb1540ba",
+      "requester_external_subject": "terminal-benchmark-manager-<redacted-run-id>",
       "review_decision_id": null,
       "routing_recommendation": "allow_review",
-      "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
+      "submission_id": "<redacted-id>",
       "submission_version": 1,
-      "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+      "task_id": "<redacted-id>",
       "trigger_source": "submission_finalized",
       "warning_count": 0
     },
@@ -8496,7 +8503,7 @@ Response body:
     "external_issuer": "workstream",
     "external_subject": "workstream-system:pre-review-gate",
     "from_status": "evaluation_pending",
-    "id": "fef7e1c4-78b8-4c4e-a740-bbdcb046c2ae",
+    "id": "<redacted-id>",
     "is_dev_auth": false,
     "reason": "submission finalized pre-review gate",
     "to_status": "review_pending"
@@ -8519,42 +8526,42 @@ Response body:
 ```json
 {
   "acceptance_criteria": "Submission packet must satisfy the locked project submission requirements and pre-submit checker policy.",
-  "assigned_to": "d0c5c1f3-7689-5965-bba3-975bbac3c815",
+  "assigned_to": "<redacted-id>",
   "base_amount": "25.00",
   "created_at": "2026-07-08T23:44:03.452947Z",
-  "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
+  "created_by": "<redacted-id>",
   "currency": "USD",
   "description": "Real Terminal Benchmark reference fixture with 3 milestones, languages=['rust', 'json'], category=software-engineering.",
   "difficulty": "medium",
   "estimated_time_minutes": 75,
-  "external_task_id": "terminal-benchmark-reference-fixture",
-  "id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
+  "external_task_id": "<redacted-fixture-id>",
+  "id": "<redacted-id>",
   "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
-  "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
+  "locked_effective_project_submission_artifact_policy_id": "<redacted-id>",
   "locked_guide_source_snapshot_hash": "sha256:<redacted>",
-  "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
+  "locked_guide_source_snapshot_id": "<redacted-id>",
   "locked_guide_version": "v1",
   "locked_payment_policy_version": "v1",
   "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
-  "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
+  "locked_pre_submit_checker_policy_id": "<redacted-id>",
   "locked_review_policy_version": "v1",
   "locked_revision_policy_version": "v1",
   "payout_type": "fixed",
-  "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
+  "project_id": "<redacted-id>",
   "rejection_criteria": "Missing required artifacts, evidence, hashes, or attestation blocks submission intake.",
   "skill_tags": [
     "rust",
     "json",
-    "systems",
+    "<redacted-domain-tag>",
     "containers",
     "cli"
   ],
   "source_payload_hash": "sha256:<redacted>",
-  "source_ref": "terminal-benchmark/terminal-benchmark-reference-fixture/live-api/ws16-clean-cb1540ba",
+  "source_ref": "terminal-benchmark/<redacted-fixture-id>/live-api/<redacted-run-id>",
   "source_type": "manual",
   "status": "review_pending",
   "task_type": "terminal_benchmark",
-  "title": "Terminal Benchmark terminal-benchmark-reference-fixture live-api",
+  "title": "Terminal Benchmark <redacted-fixture-id> live-api",
   "updated_at": "2026-07-08T23:45:18.592353Z"
 }
 ```

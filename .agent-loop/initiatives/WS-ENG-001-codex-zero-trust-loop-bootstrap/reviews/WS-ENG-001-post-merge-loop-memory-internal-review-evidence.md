@@ -34,7 +34,7 @@ After reviewed SHA `f4fe5f3c4fbdd626bbc6d3f837aeca1cceb6e9ca`, the only committe
 
 ## Valid Findings Addressed
 
-- Local Workstream directory confusion: identified `/home/abiorh/flow/workstream` as a separate dirty feature branch, not `main`, and left unrelated checker/test changes untouched.
+- Local Workstream directory confusion: identified `<repo-root>` as a separate dirty feature branch, not `main`, and left unrelated checker/test changes untouched.
 - Stale merged-loop memory: updated `.agent-loop/LOOP_STATE.md`, initiative `STATUS.md`, `WORK_QUEUE.md`, and `REVIEW_LOG.md` to reflect that PR #23 is merged.
 - Missing main enforcement: added the verified workflow path `.github/workflows/loop-memory.yml` so merged loop memory is checked on pushes to `main`.
 - Over-broad local-state test risk: changed loop-memory regression tests to use fixture files instead of the live repository state.
@@ -54,4 +54,4 @@ git diff --check HEAD~1..HEAD
 
 ## Remaining Risks
 
-- `/home/abiorh/flow/workstream` remains dirty on `codex/submission-artifact-policy-docs` with unrelated checker/revision testing changes. Those changes were not modified here because they are outside PR #24.
+- `<repo-root>` remains dirty on `codex/submission-artifact-policy-docs` with unrelated checker/revision testing changes. Those changes were not modified here because they are outside PR #24.

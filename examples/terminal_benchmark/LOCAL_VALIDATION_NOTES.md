@@ -184,23 +184,23 @@ Live API sequence:
 
 Live IDs captured from local HTTP API responses:
 
-- project: `6e87e2c2-91a1-4140-8f66-6d0c5bd4b966`
-- guide: `b2857abb-6bb0-4e27-89e8-bfb3bfedb8f2`
-- guide-source snapshot: `185e80bb-5676-4370-a09f-1c51853bd400`
-- sufficiency report: `8368e1c5-cbd6-4503-94f8-74e647a15550`
-- agent-derived policy draft: `2838434c-7695-4037-a6d4-531f860a07a6`
-- admin exact policy: `dc2e054b-5ce1-49fe-8388-49eb0ec7f992`
+- project: `<redacted-id>`
+- guide: `<redacted-id>`
+- guide-source snapshot: `<redacted-id>`
+- sufficiency report: `<redacted-id>`
+- agent-derived policy draft: `<redacted-id>`
+- admin exact policy: `<redacted-id>`
 - effective project submission artifact policy hash:
   `sha256:<redacted>`
 - compiled pre-submit checker hash:
   `sha256:<redacted>`
-- clean task: `9fd7be8f-5886-403b-8ce7-faba37705e72`
-- clean submission: `ad0d08f9-4b91-4363-85e9-d8a7b6e055a8`
-- clean checker run: `4e72cf39-3348-48b1-8d1a-b3ae17433c65`
-- revision-path task: `3ae5db8a-eb40-49bb-8a2a-87ccb1f6594f`
-- revision v1 submission: `77a5614b-d0cd-4875-abe2-6e4a83d213cb`
-- revision v1 checker run: `b4c9fb23-bf83-48f2-a9ca-5e145aaa707d`
-- fixed v2 submission: `a233eefd-598e-4c1b-89c5-c1a93b077682`
+- clean task: `<redacted-id>`
+- clean submission: `<redacted-id>`
+- clean checker run: `<redacted-id>`
+- revision-path task: `<redacted-id>`
+- revision v1 submission: `<redacted-id>`
+- revision v1 checker run: `<redacted-id>`
+- fixed v2 submission: `<redacted-id>`
 
 Runtime issue found and fixed:
 

@@ -75,6 +75,12 @@ concrete finding instead of broadening implementation scope silently.
   values, signed URLs, query credentials, and local secret paths must never be
   committed, printed in evidence, or included in request/response transcripts.
 - Evidence must redact credential-shaped values as `<redacted>`.
+- Public PR evidence must also redact local source-material fingerprints when
+  the fixture comes from private operator material. This includes exact fixture
+  ids, local database UUIDs, exact source-material hashes, exact package hashes,
+  exact artifact byte counts, and source-specific task identifiers. The
+  evidence must state this boundary clearly and must not replace sensitive
+  values with plausible fake literals.
 
 ## Authorization Boundary
 
@@ -120,6 +126,35 @@ docs/roadmap_status.md
 .agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-16-external-review-response.md
 ```
 
+## Privacy Scrub Amendment
+
+After human review identified that earlier evidence and the standalone example
+still exposed private/local source identifiers, this chunk permits a bounded
+privacy scrub in addition to the original drill evidence scope.
+
+Additional files allowed only for this scrub:
+
+```text
+examples/terminal_benchmark/README.md
+examples/terminal_benchmark/LOCAL_VALIDATION_NOTES.md
+examples/terminal_benchmark/terminal_benchmark_api_e2e.py
+docs/review_closure.md
+docs/review_process_baseline_operations_review.md
+docs/review_process_pattern_baseline_review.md
+docs/review_systems_architecture_review.md
+.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/chunks/WS-POL-001-06-terminal-benchmark-real-fixture-drill.md
+.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-06-internal-review-evidence.md
+.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-06-pr-trust-bundle.md
+.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-14-external-review-response.md
+.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-14-internal-review-evidence.md
+.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-14-pr-trust-bundle.md
+.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-15-internal-review-evidence.md
+.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-15-pr-trust-bundle.md
+```
+
+This amendment does not allow backend, API, migration, test, CI, auth,
+payment, reputation, or product behavior changes.
+
 ## Not Allowed
 
 ```text
@@ -127,7 +162,7 @@ backend/alembic/versions/**
 backend/app/**
 backend/tests/**
 backend/scripts/**
-examples/terminal_benchmark/**
+examples/terminal_benchmark/** except the privacy-scrub files listed above
 backend/app/adapters/auth/**
 backend/app/adapters/project_agents/openai_agent_sdk.py
 backend/app/core/config.py
@@ -143,13 +178,19 @@ public API/schema behavior changes without a new approved implementation chunk
 
 ## Acceptance Criteria
 
-- The chunk records the exact Terminal Benchmark source material used for the
-  project guide/source snapshot using sanitized durable refs, fixture ids,
-  relative/public-safe labels, content hashes, and API-visible source snapshot
-  id/hash only.
+- The chunk records the Terminal Benchmark source-material flow used for the
+  project guide/source snapshot using sanitized durable refs and
+  relative/public-safe labels. Because the source fixture came from private
+  local operator material, public PR evidence must redact exact fixture ids,
+  local database UUIDs, source-material hashes, package hashes, artifact byte
+  counts, and source-specific task identifiers.
 - Persisted snapshots and review evidence contain no raw local filesystem
   paths, signed URLs, credential-bearing refs, token-bearing refs, or unsafe
   source refs.
+- Redacted fields in public evidence use explicit placeholders such as
+  `<redacted-id>`, `<redacted-fixture-id>`, `<redacted-run-id>`, and
+  `sha256:<redacted>`; they must not be presented as literal replayable API
+  values.
 - The drill shows each API request body and response body for the human review
   path with credentials and local secret paths redacted.
 - The drill shows sufficiency-agent input and output.
@@ -194,8 +235,10 @@ The formal live-drill transcript must be committed to:
 Required sections:
 
 - local stack and environment summary, with secret values redacted
-- source-material manifest with sanitized durable refs, relative/public-safe
-  labels, content hashes, fixture id, and API-visible source snapshot id/hash
+- source-material manifest with sanitized durable refs and relative/public-safe
+  labels; public evidence must redact exact content hashes, exact fixture ids,
+  local UUIDs, and exact byte counts when they fingerprint private local source
+  material
 - ordered HTTP request/response transcript for project creation, guide creation,
   source snapshot capture, setup-run polling, sufficiency result, warning
   acknowledgement when applicable, derived policy visibility, policy approval,

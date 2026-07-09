@@ -17,12 +17,15 @@ Changed:
 - `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-16-internal-review-evidence.md`
 - `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-16-pr-trust-bundle.md`
 - `docs/roadmap_status.md`
+- Privacy scrub amendment: standalone Terminal Benchmark example docs/script,
+  older Terminal Benchmark evidence references, and review-process docs were
+  scrubbed to remove private/local source identifiers and local secret paths.
 
 Not changed:
 
 - No backend code.
 - No migrations.
-- No tests or scripts.
+- No backend tests or production scripts.
 - No CI/workflow files.
 - No frontend/demo work.
 - No auth, payment, reputation, settlement, or blockchain behavior.
@@ -48,7 +51,8 @@ ProjectGuide
 
 The evidence records:
 
-- sanitized Terminal Benchmark source material and source snapshot hashes;
+- sanitized Terminal Benchmark source material with public redaction of source
+  fingerprints;
 - automatic Celery setup status from queued through `policy_draft_ready`;
 - sufficiency-agent and submission-policy-derivation inputs and outputs;
 - policy approval, effective policy, checker policy, and guide activation;
@@ -81,19 +85,25 @@ Key results:
 
 ## Live Drill Result
 
+The live drill values below are privacy-redacted for public PR evidence. Exact
+fixture ids, local UUIDs, source-material hashes, package hashes, byte counts,
+and source-specific task identifiers are not committed because they fingerprint
+private local source material. Redaction placeholders are not replayable API
+literals.
+
 Final clean run:
 
 ```text
-project_id: 36331e8e-c849-484d-9e9e-c8ebc2f70130
-guide_id: fbe0b2ab-2793-4619-a414-ed083d9cc117
-source_snapshot_id: 2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b
+project_id: <redacted-id>
+guide_id: <redacted-id>
+source_snapshot_id: <redacted-id>
 source_snapshot_hash: sha256:<redacted>
 submission_artifact_policy_hash: sha256:<redacted>
 effective_policy_hash: sha256:<redacted>
 pre_submit_checker_bundle_hash: sha256:<redacted>
-task_id: d8cfda33-6c7e-461a-bdcd-036a6cefeda3
-submission_id: ba25f15a-e36a-4925-9891-09d394eae2ec
-checker_run_id: d7885348-fd08-4820-b209-36a704765a2b
+task_id: <redacted-id>
+submission_id: <redacted-id>
+checker_run_id: <redacted-id>
 final_task_status: review_pending
 ```
 
