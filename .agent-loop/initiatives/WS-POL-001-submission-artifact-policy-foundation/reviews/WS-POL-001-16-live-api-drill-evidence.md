@@ -1409,7 +1409,7 @@ Response body:
     "schema_version": "project_submission_artifact_policy.v1"
   },
   "policy_hash": "sha256:<redacted>",
-  "policy_version": "agent-9843f69ef5b7f7631f98a61d",
+  "policy_version": "agent-<redacted>",
   "project_id": "<redacted-id>",
   "source_material_refs": [
     "import:/fixtures/<redacted-fixture-id>/docker_build.log",
@@ -4935,7 +4935,7 @@ Response body:
       "schema_version": "project_submission_artifact_policy.v1"
     },
     "policy_hash": "sha256:<redacted>",
-    "policy_version": "agent-9843f69ef5b7f7631f98a61d",
+    "policy_version": "agent-<redacted>",
     "project_id": "<redacted-id>",
     "source_material_refs": [
       "import:/fixtures/<redacted-fixture-id>/docker_build.log",
