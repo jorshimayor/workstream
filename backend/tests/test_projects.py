@@ -417,7 +417,7 @@ def complete_guide_payload(version: str = "v1") -> dict:
         "post_submit_checker_policy": {
             "required_checkers": ["check_policy_context_present"],
             "warning_checkers": [],
-            "blocking_severities": ["high"],
+            "blocking_severities": ["critical", "high"],
         },
         "review_policy": {
             "requires_second_review": False,
@@ -4959,6 +4959,31 @@ async def test_activation_requires_all_policies(project_client: AsyncClient) -> 
     assert "checker policy" in response.json()["detail"]
 
 
+async def test_activation_accepts_default_only_post_submit_checker_policy(
+    project_client: AsyncClient,
+) -> None:
+    project = await create_project(project_client)
+    payload = complete_guide_payload()
+    payload["post_submit_checker_policy"] = {
+        "required_checkers": [],
+        "warning_checkers": [],
+    }
+    guide = await create_guide(project_client, project["id"], payload)
+    await create_approved_policy_bundle(project_client, project["id"], guide["id"])
+
+    response = await project_client.post(
+        f"/api/v1/projects/{project['id']}/guides/{guide['id']}/activate",
+        headers=auth_headers(),
+    )
+
+    assert response.status_code == 200, response.text
+    policy = response.json()["post_submit_checker_policy"]
+    assert policy["required_checkers"] == []
+    assert policy["warning_checkers"] == []
+    assert policy["blocking_severities"] == ["critical", "high"]
+    assert policy["policy_hash"].startswith("sha256:")
+
+
 async def test_activation_requires_review_policy(project_client: AsyncClient) -> None:
     project = await create_project(project_client)
     payload = complete_guide_payload()
@@ -5079,16 +5104,51 @@ async def test_activation_rejects_unregistered_checker_names(
     project = await create_project(project_client)
     payload = complete_guide_payload()
     payload["post_submit_checker_policy"]["required_checkers"] = ["missing_checker"]
-    guide = await create_guide(project_client, project["id"], payload)
-    await create_approved_policy_bundle(project_client, project["id"], guide["id"])
 
     response = await project_client.post(
-        f"/api/v1/projects/{project['id']}/guides/{guide['id']}/activate",
+        f"/api/v1/projects/{project['id']}/guides",
         headers=auth_headers(),
+        json=payload,
     )
 
     assert response.status_code == 422
-    assert "unregistered checker policy names" in response.json()["detail"]
+    assert "post-submit checker policy compilation failed" in response.json()["detail"]
+
+
+@pytest.mark.parametrize(
+    ("policy_patch", "case_slug"),
+    [
+        ({"blocking_severities": ["severe"]}, "unsupported-severity"),
+        ({"blocking_severities": []}, "empty-blocking-severities"),
+        ({"required_checkers": [" check_submission_packet"]}, "noncanonical-checker"),
+    ],
+)
+async def test_guide_create_maps_post_submit_compiler_validation_errors(
+    project_client: AsyncClient,
+    policy_patch: dict,
+    case_slug: str,
+) -> None:
+    project_response = await project_client.post(
+        "/api/v1/projects",
+        headers=auth_headers(),
+        json={
+            "name": f"Post Submit {case_slug}",
+            "slug": f"post-submit-{case_slug}",
+        },
+    )
+    assert project_response.status_code == 201, project_response.text
+    project = project_response.json()
+    payload = complete_guide_payload()
+    payload["post_submit_checker_policy"].update(policy_patch)
+
+    response = await project_client.post(
+        f"/api/v1/projects/{project['id']}/guides",
+        headers=auth_headers(),
+        json=payload,
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == "post-submit checker policy compilation failed"
 
 
 async def test_activation_rejects_unsupported_revision_resubmission_states(

@@ -188,7 +188,7 @@ Day 7:
 Day 8:
 
 - implement evidence and rubric/acceptance checks
-- block `REVIEW_PENDING` when high-severity checks fail
+- block `REVIEW_PENDING` when critical- or high-severity checks fail
 
 Day 9:
 

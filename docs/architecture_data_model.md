@@ -702,10 +702,13 @@ When a task locks its project context, Workstream stamps
 `locked_post_submit_checker_policy_body` by copying the persisted project
 `PostSubmitCheckerPolicy.policy_body`. Submissions copy that body from the task,
 and durable checker runs copy it from the submission. Checker execution
-validates the body against the stamped hash and executes from that locked body,
-not from mutable project setup rows or the current default-checker constant.
-Later project policy edits therefore cannot change already locked task,
-submission, or checker-run behavior.
+validates the body against the stamped hash and the active compiler/default-list
+contract, then executes from that locked body, not from mutable project setup
+rows. Later project policy edits therefore cannot change already locked task,
+submission, or checker-run behavior. A future platform default-checker list
+change requires a separately approved and security-reviewed compatibility,
+versioning, or migration path instead of silently reinterpreting old locked
+bodies.
 
 The policy body includes:
 
@@ -719,8 +722,18 @@ The policy body includes:
 - `blocking_severities`
 
 `execution_checkers` is the complete ordered durable checker list. It is
-computed from Workstream default durable checkers plus project required and
-warning checkers, and it is covered by `policy_hash`.
+compiled from Workstream default durable checkers plus project-specific
+required and warning checker classifications, and it is covered by
+`policy_hash`. `default_checkers` must exactly match the platform-owned
+default durable checker list. Default-only projects leave `required_checkers`
+and `warning_checkers` empty; they still execute every default checker through
+`execution_checkers`.
+
+The trusted post-submit compiler owns the policy body. It rejects unknown
+checker names, duplicate or conflicting classifications, warning-only
+reclassification of default checkers, default-list drift, and blocking-severity
+downgrades. Platform blocking severities are `critical` and `high`; project
+policy may add stricter blocking severities but cannot remove those defaults.
 
 Example:
 
@@ -739,11 +752,7 @@ Example:
     "check_confidentiality_attestation",
     "check_low_quality_generated_artifacts"
   ],
-  "required_checkers": [
-    "check_policy_context_present",
-    "check_submission_packet",
-    "check_evidence_present"
-  ],
+  "required_checkers": [],
   "warning_checkers": [],
   "execution_checkers": [
     "check_submission_packet",
@@ -755,7 +764,7 @@ Example:
     "check_confidentiality_attestation",
     "check_low_quality_generated_artifacts"
   ],
-  "blocking_severities": ["high"]
+  "blocking_severities": ["critical", "high"]
 }
 ```
 
@@ -1432,7 +1441,7 @@ but this chunk does not create a second audit source of truth.
 - reviewer-quality reputation events must reference a review or audit source
 - payment amount changes require a payment adjustment record
 - disputed payments cannot become `paid` without a dispute resolution audit event
-- high-severity checker failures block review unless an admin override is recorded
+- critical- and high-severity checker failures block review unless an admin override is recorded
 - a checker run must reference the exact submission version and artifact hashes it evaluated
 - the current checker run is the v0.1 readiness proof for the submission version that cleared automated checks
 - a review cannot accept a submission if the checker run belongs to a different submission version

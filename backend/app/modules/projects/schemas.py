@@ -16,7 +16,7 @@ class PostSubmitCheckerPolicyInput(BaseModel):
 
     required_checkers: list[str] = Field(default_factory=list)
     warning_checkers: list[str] = Field(default_factory=list)
-    blocking_severities: list[str] = Field(default_factory=list)
+    blocking_severities: list[str] | None = None
 
 
 class ReviewPolicyInput(BaseModel):

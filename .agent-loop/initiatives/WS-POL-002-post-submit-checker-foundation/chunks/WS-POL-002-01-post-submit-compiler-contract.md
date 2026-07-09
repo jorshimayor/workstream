@@ -1,4 +1,4 @@
-# Chunk Contract: WS-POL-002-01 - Post-Submit Provenance And Compiler Contract
+# Chunk Contract: WS-POL-002-01 - Post-Submit Compiler Contract
 
 ## Parent Initiative
 
@@ -27,45 +27,72 @@ weakening platform defaults or referencing unsupported checkers.
 
 ## Goal
 
-Introduce the durable post-submit policy provenance fields, setup-run output
-fields, and trusted compiler contract that produce the canonical project-scoped
-`PostSubmitCheckerPolicy` body from a constrained spec.
+Introduce the trusted compiler contract that produces the canonical
+project-scoped `PostSubmitCheckerPolicy` body from a constrained spec.
+
+This chunk is compiler-only. Durable provenance columns, setup-run output
+fields, approval state, and guide activation changes are deferred to later
+chunks so the first implementation remains reviewable.
 
 ## Target Behavior
 
-- Compiler always includes platform default durable post-submit checkers.
+- Compiler is owned by `backend/app/modules/projects/post_submit_policy.py`.
+  `backend/app/modules/checkers/compiler.py` remains the pre-submit compiler
+  module and must not import project post-submit policy helpers.
+- Compiler always includes platform default durable post-submit checkers in
+  `default_checkers` and `execution_checkers`.
 - Compiler rejects unknown checker names.
 - Compiler rejects attempts to remove or weaken defaults.
 - Compiler rejects duplicate/conflicting checker classifications.
 - Compiler rejects unsupported blocking-severity downgrade attempts.
 - Compiler emits the canonical policy body and hash.
-- Compiler supports default-only projects by representing platform defaults as
-  required durable coverage while permitting an empty project-specific addition
-  set.
+- Compiler supports default-only projects. A default-only constrained spec has
+  empty project-specific `required_checkers` and `warning_checkers`; the
+  compiled policy body still executes every platform default because
+  `default_checkers` and `execution_checkers` exactly equal
+  `DEFAULT_DURABLE_CHECKERS`.
+- `required_checkers` and `warning_checkers` represent project-specific routing
+  classifications. They may reference registered non-default checkers, and
+  `required_checkers` may also reference a default checker to tighten its
+  routing for the project. Default-only projects leave both lists empty.
+  Platform defaults remain mandatory through the compiler-owned default list
+  and execution list, not by duplicating them into `required_checkers`.
 - `policy_body.default_checkers` must exactly equal the platform-owned
   `DEFAULT_DURABLE_CHECKERS` list.
-- Policy rows bind to guide source snapshot id/hash, compiler version,
-  derivation provenance, lifecycle status, and approval provenance.
-- `ProjectSetupRun` can reference post-submit derivation/compile output and
-  represent post-submit setup statuses without JSON-only hiding.
-- Activation/runtime validation uses the compiled canonical body, not ad hoc
-  request lists.
+- Platform blocking severities are `["critical", "high"]`, matching the
+  existing checker runner. A constrained spec may tighten routing by adding
+  known severities, but it cannot remove `critical` or `high`.
+- Activation and runtime behavior are not changed in this chunk except where
+  existing validation calls the canonical parser/body helpers. Persistence
+  fields and setup-run statuses are defined in `WS-POL-002-02` and
+  server-owned approval/activation enforcement remains in `WS-POL-002-03`.
+- Existing real API drill scripts may be updated only to keep their bootstrap
+  post-submit policy payloads aligned with the compiler's
+  non-weakenable `["critical", "high"]` platform severity floor.
 
 ## Allowed Files
 
 ```text
 backend/app/modules/projects/post_submit_policy.py
-backend/app/modules/checkers/compiler.py
-backend/app/modules/projects/models.py
-backend/app/modules/projects/repository.py
 backend/app/modules/projects/service.py
 backend/app/modules/projects/schemas.py
-backend/alembic/versions/**
-backend/tests/test_alembic.py
 backend/tests/test_checkers.py
 backend/tests/test_projects.py
+backend/tests/test_tasks.py
+backend/scripts/api_contract_e2e.py
+examples/terminal_benchmark/terminal_benchmark_api_e2e.py
 docs/architecture_checker_framework.md
 docs/architecture_data_model.md
+docs/architecture_lifecycle_state_machine.md
+docs/operations_project_operating_manual.md
+docs/operations_queue_policy.md
+docs/operations_reviewer_workflow.md
+docs/product_principles.md
+docs/principles.md
+docs/product_first_user_flows.md
+docs/roadmap_30_day_master_plan.md
+docs/roadmap_pilot_plan.md
+docs/roles_permissions.md
 docs/template_checker_policy.md
 .agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/**
 .agent-loop/LOOP_STATE.md
@@ -77,6 +104,10 @@ docs/template_checker_policy.md
 
 ```text
 backend/app/adapters/project_agents/**
+backend/app/modules/checkers/compiler.py
+backend/app/modules/projects/models.py
+backend/app/modules/projects/repository.py
+backend/alembic/versions/**
 backend/app/modules/tasks/**
 frontend or demo UI work
 payment/reputation/blockchain settlement
@@ -95,7 +126,8 @@ arbitrary generated checker code execution
   not change the `DEFAULT_DURABLE_CHECKERS` list; any future default-list change
   requires explicit human approval and security review in its own chunk.
 - Default-only project policy compilation and activation are valid when all
-  platform defaults remain required.
+  platform defaults remain present in `default_checkers` and
+  `execution_checkers`.
 - Unknown checker names fail closed.
 - Duplicate or contradictory required/warning checker classifications fail
   closed.
@@ -103,11 +135,10 @@ arbitrary generated checker code execution
 - Compiler implementation reuses or consolidates through existing
   `post_submit_policy.py` canonical body, hash, default-list, and locked-body
   parsing helpers instead of reimplementing a second post-submit canonicalizer.
-- Migration and ORM metadata persist source snapshot id/hash, compiler version,
-  lifecycle status, approval actor/role/time, derivation provenance, and
-  unsupported checker gaps without weakening existing policy locks.
-- Migration and ORM metadata add explicit setup-run post-submit output/status
-  support.
+- Compiler implementation must not introduce a reverse dependency from
+  `backend/app/modules/checkers/compiler.py` into project modules.
+- The locked-body parser rejects bodies whose `default_checkers` are missing,
+  reordered, renamed, or extended relative to `DEFAULT_DURABLE_CHECKERS`.
 - Existing runtime tests still pass.
 - Docs describe the compiler boundary and default checker list.
 
@@ -117,7 +148,6 @@ arbitrary generated checker code execution
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
 (cd backend && .venv/bin/pytest tests/test_projects.py tests/test_checkers.py -q)
-(cd backend && .venv/bin/pytest tests/test_alembic.py -q)
 git diff --check
 ```
 

@@ -60,7 +60,7 @@ Required before entering:
 Required before leaving:
 
 - screening checklist passed
-- no open high-severity readiness finding
+- no open critical- or high-severity readiness finding
 - task status snapshot created
 - release decision recorded by an authorized reviewer, project manager, or admin
 

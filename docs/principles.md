@@ -53,7 +53,7 @@ Human reviewers do not spend time discovering basic package failures. Workstream
 - impossible status transitions
 - known low-quality signatures
 
-High-severity failures block review.
+Critical- and high-severity failures block review.
 
 Blocking pre-submit failures block submission creation before a submission version exists.
 

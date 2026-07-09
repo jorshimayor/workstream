@@ -473,7 +473,7 @@ def guide_payload(fixture: TerminalBenchmarkFixture, run_id: str) -> dict:
                 "check_low_quality_generated_artifacts",
             ],
             "warning_checkers": [],
-            "blocking_severities": ["high", "medium"],
+            "blocking_severities": ["critical", "high", "medium"],
         },
         "review_policy": {
             "requires_second_review": False,

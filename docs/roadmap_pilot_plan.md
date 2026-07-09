@@ -50,7 +50,7 @@ Seed negative or edge-case packets during the pilot:
 
 - fake or irrelevant evidence
 - missing revision replay row
-- high-severity checker failure with admin override request
+- critical- or high-severity checker failure with admin override request
 - reviewer disagreement on review decision
 - imported task rejected during screening
 - payment amount mismatch

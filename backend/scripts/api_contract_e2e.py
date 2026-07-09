@@ -471,7 +471,7 @@ def guide_payload(run_id: str) -> dict:
         "post_submit_checker_policy": {
             "required_checkers": ["check_policy_context_present"],
             "warning_checkers": [],
-            "blocking_severities": ["high"],
+            "blocking_severities": ["critical", "high"],
         },
         "review_policy": {
             "requires_second_review": False,
