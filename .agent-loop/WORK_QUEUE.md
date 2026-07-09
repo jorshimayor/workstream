@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-POL-002-01` | Post-Submit Provenance And Compiler Contract | L1 | Proposed; inactive until explicit user start |
+| `WS-POL-002-01` | Post-Submit Compiler Contract | L1 | Active on `codex/ws-pol-002-01-post-submit-compiler` |
 
 ## Completed
 
@@ -33,8 +33,9 @@
 
 ## Proposed Next
 
-Do not start `WS-POL-002-01` until the user explicitly starts the
-implementation chunk.
+Do not start the next chunk until `WS-POL-002-01` is implemented, reviewed,
+externally checked, merged by explicit human approval, and followed by memory
+update.
 
 ## Blocked
 

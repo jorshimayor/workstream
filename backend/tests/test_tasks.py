@@ -159,7 +159,7 @@ def complete_guide_payload(version: str = "v1") -> dict:
         "post_submit_checker_policy": {
             "required_checkers": ["check_policy_context_present"],
             "warning_checkers": [],
-            "blocking_severities": ["high"],
+            "blocking_severities": ["critical", "high"],
         },
         "review_policy": {
             "requires_second_review": False,
@@ -1007,7 +1007,7 @@ async def test_screening_locks_guide_policy_context_and_payment_fields(
     assert body["payout_type"] == "fixed"
 
 
-async def test_screening_uses_persisted_post_submit_policy_body_after_default_drift(
+async def test_screening_uses_versioned_post_submit_policy_body_after_default_drift(
     task_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -1022,7 +1022,8 @@ async def test_screening_uses_persisted_post_submit_policy_body_after_default_dr
             )
         )
         assert source_policy is not None
-        persisted_body = dict(source_policy.policy_body or {})
+        expected_policy_body = dict(source_policy.policy_body or {})
+        expected_policy_hash = source_policy.policy_hash
 
     monkeypatch.setattr(
         post_submit_policy_module,
@@ -1044,10 +1045,8 @@ async def test_screening_uses_persisted_post_submit_policy_body_after_default_dr
     async with db_session.get_session_factory()() as session:
         persisted_task = await session.get(WorkstreamTask, task["id"])
     assert persisted_task is not None
-    assert persisted_task.locked_post_submit_checker_policy_body == persisted_body
-    assert "check_acceptance_criteria_present" not in (
-        persisted_task.locked_post_submit_checker_policy_body or {}
-    )["execution_checkers"]
+    assert persisted_task.locked_post_submit_checker_policy_body == expected_policy_body
+    assert persisted_task.locked_post_submit_checker_policy_hash == expected_policy_hash
 
 
 async def test_release_uses_locked_post_submit_policy_body_after_setup_mutation(

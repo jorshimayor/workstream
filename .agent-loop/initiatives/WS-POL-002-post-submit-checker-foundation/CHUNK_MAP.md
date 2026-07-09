@@ -10,7 +10,7 @@ reviewed, merged by explicit human approval, and followed by a memory update.
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-POL-002-01` | Post-Submit Provenance And Compiler Contract | L1 | Proposed |
+| `WS-POL-002-01` | Post-Submit Compiler Contract | L1 | Active |
 | `WS-POL-002-02` | Post-Submit Derivation Agent And Resumable Setup Integration | L1 | Proposed |
 | `WS-POL-002-03` | Server-Owned Policy Approval And Visibility APIs | L1 | Proposed |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Proposed |
@@ -28,5 +28,6 @@ WS-POL-002-01
 
 ## Stop Condition
 
-After this planning chunk is reviewed, stop. The first implementation chunk is
-inactive until the user explicitly starts `WS-POL-002-01`.
+After each implementation chunk is reviewed, externally checked, and merged by
+explicit human approval, perform the memory update before starting the next
+chunk.

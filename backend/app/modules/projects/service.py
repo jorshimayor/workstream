@@ -49,9 +49,10 @@ from app.modules.projects.models import (
     SubmissionArtifactPolicy,
 )
 from app.modules.projects.post_submit_policy import (
+    PostSubmitCheckerCompilerError,
+    build_project_post_submit_checker_spec,
+    compile_project_post_submit_checker_spec,
     parse_locked_post_submit_checker_policy_body,
-    post_submit_checker_policy_body,
-    post_submit_checker_policy_hash,
 )
 from app.modules.projects.repository import ProjectRepository, ProjectRepositoryIntegrityError
 from app.modules.projects.setup_queue import (
@@ -2895,8 +2896,8 @@ class ProjectService:
             != pre_submit_checker_policy.compiled_bundle_hash
         ):
             raise GuideActivationBlocked("pre-submit checker compiled bundle hash mismatch")
-        if post_submit_checker_policy is None or not post_submit_checker_policy.required_checkers:
-            raise GuideActivationBlocked("post-submit checker policy with required checkers is required")
+        if post_submit_checker_policy is None:
+            raise GuideActivationBlocked("post-submit checker policy is required")
         try:
             parsed_post_submit_policy = parse_locked_post_submit_checker_policy_body(
                 post_submit_checker_policy.policy_body,
@@ -2919,7 +2920,9 @@ class ProjectService:
         try:
             default_checker_registry().require_registered(checker_names)
         except UnknownChecker as exc:
-            raise GuideActivationBlocked(str(exc)) from exc
+            raise GuideActivationBlocked(
+                "post-submit checker policy references unregistered checker"
+            ) from exc
         if review_policy is None or not review_policy.allowed_decisions:
             raise GuideActivationBlocked("review policy with allowed decisions is required")
         if not set(review_policy.allowed_decisions).issubset(ALLOWED_REVIEW_DECISIONS):
@@ -2979,29 +2982,30 @@ class ProjectService:
         Returns:
             Unsaved post-submit checker policy model.
         """
-        policy_body = post_submit_checker_policy_body(
-            project_id=project_id,
-            guide_version=guide_version,
-            required_checkers=payload.required_checkers,
-            warning_checkers=payload.warning_checkers,
-            blocking_severities=payload.blocking_severities,
-        )
-        policy_hash = post_submit_checker_policy_hash(
-            project_id=project_id,
-            guide_version=guide_version,
-            required_checkers=payload.required_checkers,
-            warning_checkers=payload.warning_checkers,
-            blocking_severities=payload.blocking_severities,
-        )
+        try:
+            spec = build_project_post_submit_checker_spec(
+                project_id=project_id,
+                guide_version=guide_version,
+                required_checkers=payload.required_checkers,
+                warning_checkers=payload.warning_checkers,
+                blocking_severities=payload.blocking_severities,
+            )
+            compiled_policy = compile_project_post_submit_checker_spec(
+                project_id=project_id,
+                guide_version=guide_version,
+                spec=spec,
+            )
+        except PostSubmitCheckerCompilerError as exc:
+            raise PolicySetupBlocked("post-submit checker policy compilation failed") from exc
         return PostSubmitCheckerPolicy(
             id=str(uuid4()),
             project_id=project_id,
             guide_version=guide_version,
-            required_checkers=payload.required_checkers,
-            warning_checkers=payload.warning_checkers,
-            blocking_severities=payload.blocking_severities,
-            policy_hash=policy_hash,
-            policy_body=policy_body,
+            required_checkers=compiled_policy.required_checkers,
+            warning_checkers=compiled_policy.warning_checkers,
+            blocking_severities=compiled_policy.blocking_severities,
+            policy_hash=compiled_policy.policy_hash,
+            policy_body=compiled_policy.policy_body,
         )
 
     def _review_policy_model(

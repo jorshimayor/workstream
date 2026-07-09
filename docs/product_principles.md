@@ -39,7 +39,7 @@ Guide -> Task -> Submission -> Checker -> Review -> Revision/Acceptance -> Payme
 
 Human reviewers do not spend time on submissions that fail basic gates.
 
-High-severity checker failures block review. Medium and low severity issues are visible to reviewers and can influence decisions.
+Critical- and high-severity checker failures block review. Medium and low severity issues are visible to reviewers and can influence decisions.
 
 Blocking pre-submit checker failures block submission creation before a submission version exists.
 

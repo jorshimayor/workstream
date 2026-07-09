@@ -20,7 +20,7 @@ Revision closure, readiness, and lifecycle movement are lifecycle guards in v0.1
 
 ## Blocking Rule
 
-High-severity failed checks block human review.
+Critical- and high-severity failed checks block human review.
 
 Medium and low severities are visible to reviewers unless this policy overrides them.
 
@@ -44,6 +44,19 @@ Task setup checks:
 | Checker | Severity | Blocks Review | Owner |
 | --- | --- | --- | --- |
 | `check_acceptance_criteria_present` | high | yes | Project manager repair, not worker revision. |
+
+## Compiler Contract
+
+Workstream compiles this project policy into the canonical
+`PostSubmitCheckerPolicy` body. The compiler always includes Workstream default
+durable checkers in `default_checkers` and `execution_checkers`. Default-only
+projects leave project-specific `required_checkers` and `warning_checkers`
+empty, but they still execute every default checker.
+
+Project-specific `required_checkers` may add a registered checker or tighten a
+default checker's routing. `warning_checkers` must not weaken a default
+checker. Unknown checker names, duplicate classifications, conflicting
+required/warning classifications, and default-checker list drift fail closed.
 
 ## Pre-Submit Boundary
 

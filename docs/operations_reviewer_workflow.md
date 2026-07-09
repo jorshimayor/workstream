@@ -72,7 +72,7 @@ Use accept only when:
 - task requirements are satisfied
 - acceptance criteria are met
 - evidence is sufficient
-- no unresolved high-severity checker failure exists
+- no unresolved critical- or high-severity checker failure exists
 - prior revision findings are closed if applicable
 
 Accept must create:

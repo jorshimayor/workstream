@@ -67,7 +67,7 @@ Checker names must not drift between project guides, policy templates, implement
 
 Default:
 
-- high-severity `failed` result blocks human review
+- critical- and high-severity `failed` results block human review
 - medium-severity `failed` result creates reviewer warning
 - low-severity `failed` result creates informational note
 
@@ -266,6 +266,38 @@ Examples:
 - reviewer simulation gate
 - prior feedback checklist checker
 
+## Post-Submit Compiler Boundary
+
+`PostSubmitCheckerPolicy` is produced by Workstream's trusted post-submit
+compiler from a constrained specification. The compiler owns the canonical
+runtime body and hash. Setup agents may propose registered checker names and
+routing classifications, but they do not produce executable runtime code and
+they do not decide submission outcomes at runtime.
+
+The compiler always includes the platform default durable checkers in
+`default_checkers` and `execution_checkers`:
+
+- `check_submission_packet`
+- `check_policy_context_present`
+- `check_evidence_present`
+- `check_evidence_integrity`
+- `check_required_files`
+- `check_forbidden_files`
+- `check_confidentiality_attestation`
+- `check_low_quality_generated_artifacts`
+
+Default-only projects are valid. In that case, project-specific
+`required_checkers` and `warning_checkers` are empty, while
+`execution_checkers` still contains every platform default checker. A project
+may use `required_checkers` to tighten routing for a registered checker,
+including a default checker such as `check_low_quality_generated_artifacts`.
+Project policy cannot remove, rename, reorder, or weaken the platform default
+checker list.
+
+Platform blocking severities are `critical` and `high`. Project policy may add
+stricter blocking severities, but it cannot remove those platform blocking
+severities.
+
 ## Checker Run Flow
 
 ```text
@@ -340,7 +372,7 @@ Admins see:
 
 ## Admin Override
 
-An admin can override a high-severity checker failure only with:
+An admin can override a critical- or high-severity checker failure only with:
 
 - reason
 - actor
@@ -378,7 +410,7 @@ Look for:
 
 - reviewer findings that no checker predicted
 - checker warnings reviewers always ignore
-- high-severity checker failures that admins repeatedly override
+- critical- or high-severity checker failures that admins repeatedly override
 - evidence that passed structurally but did not prove the claim
 - generated or copied artifacts that evade forbidden-file rules
 

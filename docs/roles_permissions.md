@@ -55,7 +55,7 @@ Cannot:
 - edit submitted artifacts
 - change payment status
 - review a submission from a worker they directly manage unless project policy allows disclosed review
-- accept a task with unresolved high-severity checker failures unless an admin override exists
+- accept a task with unresolved critical- or high-severity checker failures unless an admin override exists
 
 ### Finance
 

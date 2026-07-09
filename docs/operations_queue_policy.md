@@ -45,7 +45,7 @@ Exit requirement:
 - review policy is attached
 - revision policy is attached
 - payment policy is attached
-- no open high-severity readiness finding
+- no open critical- or high-severity readiness finding
 
 Policy:
 
@@ -135,7 +135,7 @@ Owner:
 Policy:
 
 - reviewers only see this lane for normal work
-- any high-severity checker failure in this lane is a system bug or admin override
+- any critical- or high-severity checker failure in this lane is a system bug or admin override
 
 ### Needs Revision
 

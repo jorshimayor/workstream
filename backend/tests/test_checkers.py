@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncIterator, Iterator
 from pathlib import Path
+from typing import Any
 
 import pytest
 from alembic import command
@@ -32,7 +33,14 @@ from app.modules.checkers.runner import canonical_artifact_manifest_hash
 from app.modules.checkers.schemas import CheckerRoutingRecommendation
 from app.modules.projects.models import PostSubmitCheckerPolicy
 from app.modules.projects.post_submit_policy import (
+    DEFAULT_DURABLE_CHECKERS,
     POST_SUBMIT_CHECKER_POLICY_SCHEMA_VERSION,
+    POST_SUBMIT_COMPILER_VERSION,
+    POST_SUBMIT_CHECKER_POLICY_SPEC_SCHEMA_VERSION,
+    POST_SUBMIT_V01_DEFAULT_CHECKERS,
+    PostSubmitCheckerCompilerError,
+    build_project_post_submit_checker_spec,
+    compile_project_post_submit_checker_spec,
     parse_locked_post_submit_checker_policy_body,
 )
 from app.modules.tasks.models import AuditEvent, EvidenceItem, Submission, WorkstreamTask
@@ -194,13 +202,17 @@ async def task_side_effect_snapshot(task_id: str) -> dict:
 def test_locked_post_submit_policy_parser_uses_persisted_body_hash() -> None:
     body = {
         "schema_version": POST_SUBMIT_CHECKER_POLICY_SCHEMA_VERSION,
+        "compiler_version": POST_SUBMIT_COMPILER_VERSION,
         "project_id": "project-id",
         "guide_version": "v1",
-        "default_checkers": ["default_checker_v1"],
+        "default_checkers": list(DEFAULT_DURABLE_CHECKERS),
         "required_checkers": ["project_required_checker"],
         "warning_checkers": [],
-        "execution_checkers": ["default_checker_v1", "project_required_checker"],
-        "blocking_severities": ["high"],
+        "execution_checkers": [
+            *DEFAULT_DURABLE_CHECKERS,
+            "project_required_checker",
+        ],
+        "blocking_severities": ["critical", "high"],
     }
     policy_hash = canonical_json_hash(body)
 
@@ -211,11 +223,406 @@ def test_locked_post_submit_policy_parser_uses_persisted_body_hash() -> None:
         policy_hash=policy_hash,
     )
 
-    assert parsed.default_checkers == ["default_checker_v1"]
+    assert parsed.default_checkers == DEFAULT_DURABLE_CHECKERS
     assert parsed.execution_checkers == [
-        "default_checker_v1",
+        *DEFAULT_DURABLE_CHECKERS,
         "project_required_checker",
     ]
+
+
+def test_post_submit_compiler_accepts_default_only_policy() -> None:
+    spec = build_project_post_submit_checker_spec(
+        project_id="project-id",
+        guide_version="v1",
+    )
+
+    compiled = compile_project_post_submit_checker_spec(
+        project_id="project-id",
+        guide_version="v1",
+        spec=spec,
+    )
+
+    assert compiled.compiler_version == POST_SUBMIT_COMPILER_VERSION
+    assert compiled.policy_body["compiler_version"] == compiled.compiler_version
+    assert compiled.required_checkers == []
+    assert compiled.warning_checkers == []
+    assert compiled.execution_checkers == DEFAULT_DURABLE_CHECKERS
+    assert compiled.policy_body["default_checkers"] == DEFAULT_DURABLE_CHECKERS
+    assert compiled.policy_body["execution_checkers"] == DEFAULT_DURABLE_CHECKERS
+    assert compiled.policy_hash == canonical_json_hash(compiled.policy_body)
+    assert compiled.blocking_severities == ["critical", "high"]
+
+
+def test_post_submit_compiler_canonicalizes_project_specific_checker_spec() -> None:
+    spec = build_project_post_submit_checker_spec(
+        project_id="project-id",
+        guide_version="v1",
+        required_checkers=[
+            "check_acceptance_criteria_present",
+            "check_low_quality_generated_artifacts",
+        ],
+        warning_checkers=[],
+        blocking_severities=["critical", "high", "medium"],
+    )
+
+    compiled = compile_project_post_submit_checker_spec(
+        project_id="project-id",
+        guide_version="v1",
+        spec=spec,
+    )
+
+    assert compiled.required_checkers == [
+        "check_acceptance_criteria_present",
+        "check_low_quality_generated_artifacts",
+    ]
+    assert compiled.execution_checkers == [
+        *DEFAULT_DURABLE_CHECKERS,
+        "check_acceptance_criteria_present",
+    ]
+    assert compiled.blocking_severities == ["critical", "high", "medium"]
+
+
+def test_post_submit_compiler_rejects_unknown_checker_name() -> None:
+    spec = build_project_post_submit_checker_spec(
+        project_id="project-id",
+        guide_version="v1",
+        required_checkers=["missing_checker"],
+    )
+
+    with pytest.raises(PostSubmitCheckerCompilerError, match="unregistered checker"):
+        compile_project_post_submit_checker_spec(
+            project_id="project-id",
+            guide_version="v1",
+            spec=spec,
+        )
+
+
+def test_post_submit_compiler_rejects_non_object_spec() -> None:
+    spec: Any = []
+
+    with pytest.raises(PostSubmitCheckerCompilerError, match="spec shape"):
+        compile_project_post_submit_checker_spec(
+            project_id="project-id",
+            guide_version="v1",
+            spec=spec,
+        )
+
+
+def test_post_submit_compiler_rejects_tuple_spec_lists() -> None:
+    spec = {
+        "schema_version": POST_SUBMIT_CHECKER_POLICY_SPEC_SCHEMA_VERSION,
+        "project_id": "project-id",
+        "guide_version": "v1",
+        "required_checkers": ("check_acceptance_criteria_present",),
+        "warning_checkers": [],
+        "blocking_severities": ["critical", "high"],
+    }
+
+    with pytest.raises(PostSubmitCheckerCompilerError, match="required_checkers"):
+        compile_project_post_submit_checker_spec(
+            project_id="project-id",
+            guide_version="v1",
+            spec=spec,
+        )
+
+
+def test_post_submit_compiler_rejects_duplicate_checker_names() -> None:
+    spec = {
+        "schema_version": POST_SUBMIT_CHECKER_POLICY_SPEC_SCHEMA_VERSION,
+        "project_id": "project-id",
+        "guide_version": "v1",
+        "required_checkers": [
+            "check_acceptance_criteria_present",
+            "check_acceptance_criteria_present",
+        ],
+        "warning_checkers": [],
+        "blocking_severities": ["critical", "high"],
+    }
+
+    with pytest.raises(PostSubmitCheckerCompilerError, match="duplicate checker"):
+        compile_project_post_submit_checker_spec(
+            project_id="project-id",
+            guide_version="v1",
+            spec=spec,
+        )
+
+
+def test_post_submit_compiler_rejects_conflicting_checker_classification() -> None:
+    spec = {
+        "schema_version": POST_SUBMIT_CHECKER_POLICY_SPEC_SCHEMA_VERSION,
+        "project_id": "project-id",
+        "guide_version": "v1",
+        "required_checkers": ["check_acceptance_criteria_present"],
+        "warning_checkers": ["check_acceptance_criteria_present"],
+        "blocking_severities": ["critical", "high"],
+    }
+
+    with pytest.raises(PostSubmitCheckerCompilerError, match="conflicting checker"):
+        compile_project_post_submit_checker_spec(
+            project_id="project-id",
+            guide_version="v1",
+            spec=spec,
+        )
+
+
+def test_post_submit_compiler_rejects_warning_only_default_checker_override() -> None:
+    with pytest.raises(PostSubmitCheckerCompilerError, match="default checkers"):
+        build_project_post_submit_checker_spec(
+            project_id="project-id",
+            guide_version="v1",
+            warning_checkers=["check_submission_packet"],
+        )
+
+
+def test_post_submit_compiler_rejects_raw_spec_warning_only_default_checker_override() -> None:
+    spec = {
+        "schema_version": POST_SUBMIT_CHECKER_POLICY_SPEC_SCHEMA_VERSION,
+        "project_id": "project-id",
+        "guide_version": "v1",
+        "required_checkers": [],
+        "warning_checkers": ["check_submission_packet"],
+        "blocking_severities": ["critical", "high"],
+    }
+
+    with pytest.raises(PostSubmitCheckerCompilerError, match="default checkers"):
+        compile_project_post_submit_checker_spec(
+            project_id="project-id",
+            guide_version="v1",
+            spec=spec,
+        )
+
+
+def test_post_submit_compiler_rejects_raw_spec_blocking_severity_downgrade() -> None:
+    spec = {
+        "schema_version": POST_SUBMIT_CHECKER_POLICY_SPEC_SCHEMA_VERSION,
+        "project_id": "project-id",
+        "guide_version": "v1",
+        "required_checkers": [],
+        "warning_checkers": [],
+        "blocking_severities": ["high"],
+    }
+
+    with pytest.raises(PostSubmitCheckerCompilerError, match="blocking severities"):
+        compile_project_post_submit_checker_spec(
+            project_id="project-id",
+            guide_version="v1",
+            spec=spec,
+        )
+
+
+@pytest.mark.parametrize(
+    "blocking_severities",
+    [[], ["critical"], ["high"]],
+)
+def test_post_submit_compiler_rejects_blocking_severity_downgrade(
+    blocking_severities: list[str],
+) -> None:
+    with pytest.raises(PostSubmitCheckerCompilerError, match="blocking severities"):
+        build_project_post_submit_checker_spec(
+            project_id="project-id",
+            guide_version="v1",
+            blocking_severities=blocking_severities,
+        )
+
+
+@pytest.mark.parametrize(
+    "default_checkers",
+    [
+        list(POST_SUBMIT_V01_DEFAULT_CHECKERS[:-1]),
+        list(reversed(POST_SUBMIT_V01_DEFAULT_CHECKERS)),
+        [*POST_SUBMIT_V01_DEFAULT_CHECKERS[:-1], "renamed_default_checker"],
+        [*POST_SUBMIT_V01_DEFAULT_CHECKERS, "extra_default_checker"],
+    ],
+)
+def test_locked_post_submit_policy_parser_rejects_default_checker_drift(
+    default_checkers: list[str],
+) -> None:
+    body = {
+        "schema_version": POST_SUBMIT_CHECKER_POLICY_SCHEMA_VERSION,
+        "compiler_version": POST_SUBMIT_COMPILER_VERSION,
+        "project_id": "project-id",
+        "guide_version": "v1",
+        "default_checkers": default_checkers,
+        "required_checkers": [],
+        "warning_checkers": [],
+        "execution_checkers": list(POST_SUBMIT_V01_DEFAULT_CHECKERS),
+        "blocking_severities": ["critical", "high"],
+    }
+    policy_hash = canonical_json_hash(body)
+
+    with pytest.raises(ValueError, match="policy body is invalid"):
+        parse_locked_post_submit_checker_policy_body(
+            body,
+            project_id="project-id",
+            guide_version="v1",
+            policy_hash=policy_hash,
+        )
+
+
+@pytest.mark.parametrize(
+    "drifted_defaults",
+    [
+        list(POST_SUBMIT_V01_DEFAULT_CHECKERS[:-1]),
+        list(reversed(POST_SUBMIT_V01_DEFAULT_CHECKERS)),
+        [*POST_SUBMIT_V01_DEFAULT_CHECKERS[:-1], "renamed_default_checker"],
+        [*POST_SUBMIT_V01_DEFAULT_CHECKERS, "extra_default_checker"],
+    ],
+)
+def test_locked_post_submit_policy_parser_rejects_self_consistent_default_drift(
+    drifted_defaults: list[str],
+) -> None:
+    body = {
+        "schema_version": POST_SUBMIT_CHECKER_POLICY_SCHEMA_VERSION,
+        "compiler_version": POST_SUBMIT_COMPILER_VERSION,
+        "project_id": "project-id",
+        "guide_version": "v1",
+        "default_checkers": drifted_defaults,
+        "required_checkers": [],
+        "warning_checkers": [],
+        "execution_checkers": list(drifted_defaults),
+        "blocking_severities": ["critical", "high"],
+    }
+    policy_hash = canonical_json_hash(body)
+
+    with pytest.raises(ValueError, match="policy body is invalid"):
+        parse_locked_post_submit_checker_policy_body(
+            body,
+            project_id="project-id",
+            guide_version="v1",
+            policy_hash=policy_hash,
+        )
+
+
+def test_locked_post_submit_policy_parser_uses_v01_snapshot_not_current_defaults(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from app.modules.projects import post_submit_policy as post_submit_policy_module
+
+    original_v01_body = {
+        "schema_version": POST_SUBMIT_CHECKER_POLICY_SCHEMA_VERSION,
+        "compiler_version": POST_SUBMIT_COMPILER_VERSION,
+        "project_id": "project-id",
+        "guide_version": "v1",
+        "default_checkers": list(POST_SUBMIT_V01_DEFAULT_CHECKERS),
+        "required_checkers": [],
+        "warning_checkers": [],
+        "execution_checkers": list(POST_SUBMIT_V01_DEFAULT_CHECKERS),
+        "blocking_severities": ["critical", "high"],
+    }
+    later_defaults = [*POST_SUBMIT_V01_DEFAULT_CHECKERS, "check_acceptance_criteria_present"]
+    invented_v01_body = {
+        **original_v01_body,
+        "default_checkers": later_defaults,
+        "execution_checkers": later_defaults,
+    }
+
+    monkeypatch.setattr(post_submit_policy_module, "DEFAULT_DURABLE_CHECKERS", later_defaults)
+
+    parsed = parse_locked_post_submit_checker_policy_body(
+        original_v01_body,
+        project_id="project-id",
+        guide_version="v1",
+        policy_hash=canonical_json_hash(original_v01_body),
+    )
+    assert parsed.default_checkers == list(POST_SUBMIT_V01_DEFAULT_CHECKERS)
+
+    with pytest.raises(ValueError, match="policy body is invalid"):
+        parse_locked_post_submit_checker_policy_body(
+            invented_v01_body,
+            project_id="project-id",
+            guide_version="v1",
+            policy_hash=canonical_json_hash(invented_v01_body),
+        )
+
+
+def test_locked_post_submit_policy_parser_rejects_unsupported_compiler_version() -> None:
+    body = {
+        "schema_version": POST_SUBMIT_CHECKER_POLICY_SCHEMA_VERSION,
+        "compiler_version": "workstream-post-submit-compiler-v9",
+        "project_id": "project-id",
+        "guide_version": "v1",
+        "default_checkers": list(DEFAULT_DURABLE_CHECKERS),
+        "required_checkers": [],
+        "warning_checkers": [],
+        "execution_checkers": list(DEFAULT_DURABLE_CHECKERS),
+        "blocking_severities": ["critical", "high"],
+    }
+    policy_hash = canonical_json_hash(body)
+
+    with pytest.raises(ValueError, match="policy body is invalid"):
+        parse_locked_post_submit_checker_policy_body(
+            body,
+            project_id="project-id",
+            guide_version="v1",
+            policy_hash=policy_hash,
+        )
+
+
+@pytest.mark.parametrize(
+    ("required_checkers", "warning_checkers", "execution_checkers"),
+    [
+        (
+            ["check_acceptance_criteria_present"],
+            ["check_acceptance_criteria_present"],
+            [*DEFAULT_DURABLE_CHECKERS, "check_acceptance_criteria_present"],
+        ),
+        ([], ["check_submission_packet"], list(DEFAULT_DURABLE_CHECKERS)),
+    ],
+)
+def test_locked_post_submit_policy_parser_rejects_conflicting_classifications(
+    required_checkers: list[str],
+    warning_checkers: list[str],
+    execution_checkers: list[str],
+) -> None:
+    body = {
+        "schema_version": POST_SUBMIT_CHECKER_POLICY_SCHEMA_VERSION,
+        "compiler_version": POST_SUBMIT_COMPILER_VERSION,
+        "project_id": "project-id",
+        "guide_version": "v1",
+        "default_checkers": list(DEFAULT_DURABLE_CHECKERS),
+        "required_checkers": required_checkers,
+        "warning_checkers": warning_checkers,
+        "execution_checkers": execution_checkers,
+        "blocking_severities": ["critical", "high"],
+    }
+    policy_hash = canonical_json_hash(body)
+
+    with pytest.raises(ValueError, match="policy body is invalid"):
+        parse_locked_post_submit_checker_policy_body(
+            body,
+            project_id="project-id",
+            guide_version="v1",
+            policy_hash=policy_hash,
+        )
+
+
+@pytest.mark.parametrize(
+    "blocking_severities",
+    [[], ["critical"], ["high"]],
+)
+def test_locked_post_submit_policy_parser_rejects_blocking_severity_downgrade(
+    blocking_severities: list[str],
+) -> None:
+    body = {
+        "schema_version": POST_SUBMIT_CHECKER_POLICY_SCHEMA_VERSION,
+        "compiler_version": POST_SUBMIT_COMPILER_VERSION,
+        "project_id": "project-id",
+        "guide_version": "v1",
+        "default_checkers": list(DEFAULT_DURABLE_CHECKERS),
+        "required_checkers": [],
+        "warning_checkers": [],
+        "execution_checkers": list(DEFAULT_DURABLE_CHECKERS),
+        "blocking_severities": blocking_severities,
+    }
+    policy_hash = canonical_json_hash(body)
+
+    with pytest.raises(ValueError, match="policy body is invalid"):
+        parse_locked_post_submit_checker_policy_body(
+            body,
+            project_id="project-id",
+            guide_version="v1",
+            policy_hash=policy_hash,
+        )
 
 
 def test_checker_models_are_registered_for_alembic_metadata() -> None:
@@ -1286,7 +1693,7 @@ async def test_chunk8_missing_required_file_fails_pre_submit_without_submission(
     assert "missing required artifact files" in required_files["worker_message"]
 
 
-async def test_chunk8_default_blocking_checker_survives_empty_blocking_severities(
+async def test_chunk8_default_blocking_checker_survives_omitted_blocking_severities(
     checker_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -1302,7 +1709,7 @@ async def test_chunk8_default_blocking_checker_survives_empty_blocking_severitie
     project = project_response.json()
     guide_payload = complete_guide_payload()
     guide_payload["post_submit_checker_policy"]["required_checkers"] = ["check_policy_context_present"]
-    guide_payload["post_submit_checker_policy"]["blocking_severities"] = []
+    del guide_payload["post_submit_checker_policy"]["blocking_severities"]
     guide_response = await checker_client.post(
         f"/api/v1/projects/{project['id']}/guides",
         headers=auth_headers(),
@@ -2354,18 +2761,8 @@ async def test_old_checker_name_blocks_guide_activation_without_alias(
         headers=auth_headers(),
         json=guide_payload,
     )
-    assert guide_response.status_code == 201, guide_response.text
-    await create_policy_bundle_for_guide(
-        checker_client,
-        project["id"],
-        guide_response.json()["id"],
-    )
-    activation_response = await checker_client.post(
-        f"/api/v1/projects/{project['id']}/guides/{guide_response.json()['id']}/activate",
-        headers=auth_headers(),
-    )
-    assert activation_response.status_code == 422, activation_response.text
-    assert "unregistered checker policy names" in activation_response.json()["detail"]
+    assert guide_response.status_code == 422, guide_response.text
+    assert "post-submit checker policy compilation failed" in guide_response.json()["detail"]
 
     async with db_session.get_session_factory()() as session:
         rows = (await session.execute(CheckerRun.__table__.select())).all()

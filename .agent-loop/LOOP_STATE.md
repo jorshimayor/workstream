@@ -4,17 +4,18 @@
 
 - Active initiative: `WS-POL-002` - Post-Submit Checker Foundation
 - Active planning chunk: none
-- Active implementation chunk: none
-- Branch: `main`
-- Status: `WS-POL-002-PLAN` merged through PR #85. Planning is complete for
-  post-submit checker setup to follow the same project-guide-derived,
-  compiler-validated, deterministic shape as the pre-submit checker pipeline.
+- Active implementation chunk: `WS-POL-002-01` - Post-Submit Compiler Contract
+- Branch: `codex/ws-pol-002-01-post-submit-compiler`
+- Status: `WS-POL-002-01` started after the user's explicit start signal.
+  Pre-implementation plan review narrowed the chunk to compiler/body/hash
+  behavior only; persistence, setup-run fields, approval, and activation
+  enforcement remain in later chunks.
 - Last merged implementation SHA: `be2d5ec`
 - Last merge commit: `3fc1a68`
-- Current gate: post-merge memory update for `WS-POL-002-PLAN`; no
-  implementation chunk is active.
-- Next chunk: `WS-POL-002-01` is proposed only and inactive until the
-  user gives an explicit start signal.
+- Current gate: implementation for `WS-POL-002-01`.
+- Next chunk: inactive until `WS-POL-002-01` is implemented, reviewed,
+  externally checked, merged by explicit human approval, and followed by memory
+  update.
 
 ## Operating Rule
 

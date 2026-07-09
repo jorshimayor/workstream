@@ -73,7 +73,7 @@ Acceptance:
 
 Acceptance:
 
-- High-severity failure blocks human review.
+- Critical- or high-severity failure blocks human review.
 - Warnings remain visible to reviewer.
 - Every checker result is timestamped.
 
@@ -89,7 +89,7 @@ Acceptance:
 
 - Review cannot be submitted without a decision.
 - needs_revision and reject require at least one finding.
-- accept requires no unresolved high-severity checker failure.
+- accept requires no unresolved critical- or high-severity checker failure.
 
 ## Flow 6: Revision Replay
 

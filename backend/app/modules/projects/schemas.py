@@ -16,7 +16,13 @@ class PostSubmitCheckerPolicyInput(BaseModel):
 
     required_checkers: list[str] = Field(default_factory=list)
     warning_checkers: list[str] = Field(default_factory=list)
-    blocking_severities: list[str] = Field(default_factory=list)
+    blocking_severities: list[str] | None = Field(
+        default=None,
+        description=(
+            "Omitted or null uses the platform blocking floor; an explicit empty "
+            "list is rejected as a downgrade."
+        ),
+    )
 
 
 class ReviewPolicyInput(BaseModel):
