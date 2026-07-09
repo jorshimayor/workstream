@@ -2,22 +2,20 @@
 
 ## Current State
 
-- Active initiative: `WS-POL-001` - Submission Artifact Policy Foundation
-- Active planning chunk: none
-- Active implementation chunk: `WS-POL-001-16` - Terminal Benchmark Live API Drill
-- Branch: `codex/ws-pol-001-16-terminal-benchmark-live-api-drill`
-- Status: `WS-POL-001-16` completed the final clean Terminal Benchmark live API
-  drill through real HTTP-visible APIs. The accepted run used sanitized source
-  material, automatic project setup, live `submission-requirements`-derived
-  worker packets, blocked pre-submit no-side-effect proof, successful
-  submission finalization, durable checker-run visibility, and final
-  `review_pending` task state without database inspection as lifecycle proof.
-- Last merged implementation SHA: `b72a5b9`
-- Last merge commit: `b1a9851`
-- Current gate: PR creation and human checkpoint for `WS-POL-001-16`; internal
-  reviewer fanout and evidence gate are complete.
-- Next chunk: inactive until this chunk is reviewed, merged, and followed by a
-  post-merge memory update.
+- Active initiative: `WS-POL-002` - Post-Submit Checker Foundation
+- Active planning chunk: `WS-POL-002-PLAN` - Post-submit checker foundation planning
+- Active implementation chunk: none
+- Branch: `codex/ws-pol-002-post-submit-checker-planning`
+- Status: `WS-POL-001-16` merged through PR #84. Planning has started for
+  `WS-POL-002`, which will make post-submit checker setup follow the same
+  project-guide-derived, compiler-validated, deterministic shape as the
+  pre-submit checker pipeline.
+- Last merged implementation SHA: `be2d5ec`
+- Last merge commit: `a3d2a3f`
+- Current gate: planning/specification for `WS-POL-002`; no implementation
+  chunk is active.
+- Next chunk: `WS-POL-002-01` is proposed only and inactive until the
+  planning PR is reviewed and the user gives an explicit start signal.
 
 ## Operating Rule
 
@@ -128,3 +126,6 @@ blockchain, frontend, or agent-runtime behavior.
 - `WS-POL-001-13` PR trust bundle is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-13-pr-trust-bundle.md`.
 - PR #79 merged into `main` as `53a57c3`; it implemented `WS-POL-001-14`
   submission finalization and HTTP-visible Terminal Benchmark proof semantics.
+- PR #84 merged into `main` as `a3d2a3f`; it implemented `WS-POL-001-16`
+  Terminal Benchmark live API drill evidence, privacy scrub, and a professional
+  PDF report proving the current lifecycle through HTTP-visible APIs.

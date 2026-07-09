@@ -444,3 +444,35 @@ description warning was fixed before merge.
 
 Next gate: no active implementation chunk. Wait for the user's next explicit
 chunk start signal.
+
+## 2026-07-09 - WS-POL-001-16 Merged
+
+PR #84 merged into `main` as `a3d2a3f1701391c8dafdca6cff2f0f80dbebda3b`.
+
+Reviewed revision: `49101d4ad3fc22ec6e6065b1e593ef04145db953`.
+
+Required reviewer tracks:
+
+- senior engineering
+- QA/test
+- security/auth
+- product/ops
+- architecture
+- docs
+- reuse/dedup
+- test delta
+- CI integrity
+
+Result: PASS after internal review and privacy-scrub fixes. Agent Gates,
+Backend, Week 1 API Demo UI, and external review passed before merge.
+
+Scope: Terminal Benchmark live API drill evidence, privacy scrub, professional
+PDF report, setup/policy/task/submission/checker-run lifecycle proof through
+HTTP-visible APIs, and no database inspection as proof.
+
+Evidence: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-16-internal-review-evidence.md`
+
+Trust bundle: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-16-pr-trust-bundle.md`
+
+Next gate: `WS-POL-002` planning for post-submit checker foundation. No
+implementation chunk is active until the user explicitly starts it.
