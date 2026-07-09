@@ -17,7 +17,7 @@ None.
 
 ## Proposed First Implementation Chunk
 
-`WS-POL-002-01` - Post-submit compiler and default policy contract.
+`WS-POL-002-01` - Post-Submit Provenance And Compiler Contract.
 
 This chunk is inactive until the planning PR is reviewed and the user gives an
 explicit start signal.
@@ -27,7 +27,7 @@ explicit start signal.
 | Chunk | Status | Branch | PR | Notes |
 |---|---|---|---:|---|
 | `WS-POL-002-PLAN` | Active planning | `codex/ws-pol-002-post-submit-checker-planning` | - | Defines intent, discovery, design, risks, decisions, and implementation chunks. |
-| `WS-POL-002-01` | Proposed | - | - | Post-submit provenance model and compiler contract. |
+| `WS-POL-002-01` | Proposed | - | - | Post-Submit Provenance And Compiler Contract. |
 | `WS-POL-002-02` | Proposed | - | - | Post-submit derivation agent and resumable setup integration after pre-submit approval/compile. |
 | `WS-POL-002-03` | Proposed | - | - | Server-owned approval and setup visibility APIs; remove manual guide payload. |
 | `WS-POL-002-04` | Proposed | - | - | Runtime hardening for locked post-submit policy execution and routing. |

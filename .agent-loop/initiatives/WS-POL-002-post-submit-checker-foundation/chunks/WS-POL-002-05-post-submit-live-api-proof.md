@@ -4,6 +4,10 @@
 
 `WS-POL-002` - Post-Submit Checker Foundation
 
+## Risk Class
+
+L1
+
 ## Problem Being Solved
 
 The implementation must be proven as a real operator/worker flow, not only by
@@ -78,9 +82,10 @@ database inspection as lifecycle proof
 - Evidence proves operator-visible internal repair routes include bounded
   reason, owner, next action, retry eligibility, and audit event id.
 - Evidence is privacy-safe and contains no raw local paths, source-specific task
-  identifiers, source hashes, credentials, or replayable private refs.
-- Privacy scan rejects exact source hashes while allowing approved redacted
-  provenance placeholders such as `sha256:<redacted>`.
+  identifiers, raw source hashes, raw policy hashes, credentials, or replayable
+  private refs.
+- Privacy scan rejects exact source and policy hashes while allowing approved
+  redacted provenance placeholders such as `sha256:<redacted>`.
 - A professional PDF report is generated when evidence volume exceeds a concise
   Markdown review packet.
 
