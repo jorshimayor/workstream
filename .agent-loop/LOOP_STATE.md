@@ -3,19 +3,18 @@
 ## Current State
 
 - Active initiative: `WS-POL-002` - Post-Submit Checker Foundation
-- Active planning chunk: `WS-POL-002-PLAN` - Post-submit checker foundation planning
+- Active planning chunk: none
 - Active implementation chunk: none
-- Branch: `codex/ws-pol-002-post-submit-checker-planning`
-- Status: `WS-POL-001-16` merged through PR #84. Planning has started for
-  `WS-POL-002`, which will make post-submit checker setup follow the same
-  project-guide-derived, compiler-validated, deterministic shape as the
-  pre-submit checker pipeline.
+- Branch: `main`
+- Status: `WS-POL-002-PLAN` merged through PR #85. Planning is complete for
+  post-submit checker setup to follow the same project-guide-derived,
+  compiler-validated, deterministic shape as the pre-submit checker pipeline.
 - Last merged implementation SHA: `be2d5ec`
-- Last merge commit: `a3d2a3f`
-- Current gate: planning/specification for `WS-POL-002`; no implementation
-  chunk is active.
+- Last merge commit: `3fc1a68`
+- Current gate: post-merge memory update for `WS-POL-002-PLAN`; no
+  implementation chunk is active.
 - Next chunk: `WS-POL-002-01` is proposed only and inactive until the
-  planning PR is reviewed and the user gives an explicit start signal.
+  user gives an explicit start signal.
 
 ## Operating Rule
 
@@ -129,3 +128,5 @@ blockchain, frontend, or agent-runtime behavior.
 - PR #84 merged into `main` as `a3d2a3f`; it implemented `WS-POL-001-16`
   Terminal Benchmark live API drill evidence, privacy scrub, and a professional
   PDF report proving the current lifecycle through HTTP-visible APIs.
+- PR #85 merged into `main` as `3fc1a68`; it completed `WS-POL-002-PLAN`
+  planning for project-guide-derived post-submit checker setup.
