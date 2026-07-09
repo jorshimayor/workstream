@@ -97,11 +97,11 @@ Date: 2026-07-05
 
 Purpose:
 
-Record that a real Terminal Benchmark reviewer fixture was used in formal
+Record that a real Terminal Benchmark reference fixture was used in formal
 `.agent-loop` evidence to prove the current Workstream policy-bundle path:
 
 - project guide creation
-- immutable guide-source snapshot from real Termius guide, reviewer, task, and
+- immutable guide-source snapshot from real Terminal Benchmark guide, review program, task, and
   review packet material
 - guide sufficiency report
 - project `SubmissionArtifactPolicy`
@@ -158,8 +158,8 @@ Live API sequence:
 
 - health check returned `ok`
 - project manager created project
-- project manager created a project guide with full Termius submission program,
-  reviewer project guide, reviewer program, task TOML, and review packet content
+- project manager created a project guide with full Terminal Benchmark submission program,
+  project guide, review program, task TOML, and review packet content
 - project manager created an immutable guide-source snapshot with source hashes
   and sanitized durable refs
 - `ProjectGuideSufficiencyAgent` endpoint returned `passed`
@@ -191,9 +191,9 @@ Live IDs captured from local HTTP API responses:
 - agent-derived policy draft: `2838434c-7695-4037-a6d4-531f860a07a6`
 - admin exact policy: `dc2e054b-5ce1-49fe-8388-49eb0ec7f992`
 - effective project submission artifact policy hash:
-  `sha256:38213716e58f10f0916029f91a882681dc52136c9460a958bb4780b070da82f8`
+  `sha256:<redacted>`
 - compiled pre-submit checker hash:
-  `sha256:1dc2e4b8e9a509e26f6fff8a6da68fbc7340654ecc135d025351173501265855`
+  `sha256:<redacted>`
 - clean task: `9fd7be8f-5886-403b-8ce7-faba37705e72`
 - clean submission: `ad0d08f9-4b91-4363-85e9-d8a7b6e055a8`
 - clean checker run: `4e72cf39-3348-48b1-8d1a-b3ae17433c65`

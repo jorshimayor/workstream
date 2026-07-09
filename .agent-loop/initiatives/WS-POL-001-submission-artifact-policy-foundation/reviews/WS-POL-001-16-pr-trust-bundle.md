@@ -87,10 +87,10 @@ Final clean run:
 project_id: 36331e8e-c849-484d-9e9e-c8ebc2f70130
 guide_id: fbe0b2ab-2793-4619-a414-ed083d9cc117
 source_snapshot_id: 2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b
-source_snapshot_hash: sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb
-submission_artifact_policy_hash: sha256:aa0cf8add77b6d193e5f3ffa1bf22f0fd21f27e484e4aa027e693d77b3624136
-effective_policy_hash: sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850
-pre_submit_checker_bundle_hash: sha256:aa7bb902a63cb031a809533cf1939e1fc1dc47f3834aead923c9679e0302aa63
+source_snapshot_hash: sha256:<redacted>
+submission_artifact_policy_hash: sha256:<redacted>
+effective_policy_hash: sha256:<redacted>
+pre_submit_checker_bundle_hash: sha256:<redacted>
 task_id: d8cfda33-6c7e-461a-bdcd-036a6cefeda3
 submission_id: ba25f15a-e36a-4925-9891-09d394eae2ec
 checker_run_id: d7885348-fd08-4820-b209-36a704765a2b

@@ -5,7 +5,7 @@ Reviewer role: Operations and Review Workflow Reviewer.
 Scope:
 
 - markdown docs in `/home/abiorh/flow/workstream`
-- metadata-level process patterns under `/home/abiorh/snorkel`
+- metadata-level process patterns under `local reference workspace`
 - no task content, private data, or confidential project details copied
 
 ## Findings
@@ -26,7 +26,7 @@ Status: fixed in `docs/process_pattern_baseline.md`.
 
 Finding:
 
-The Snorkel-style projects often have review guards, simulation gates, or screening lanes before work is treated as ready. Workstream would break in daily use if weak tasks went straight from draft to ready.
+The reference evaluation projects often have review guards, simulation gates, or screening lanes before work is treated as ready. Workstream would break in daily use if weak tasks went straight from draft to ready.
 
 Suggested change:
 
@@ -62,7 +62,7 @@ Status: fixed in `docs/operations_queue_policy.md`.
 
 Finding:
 
-Geranium-like and review-guard-heavy workflows show the value of pretending to reject the task before release. Workstream needed this as an operational gate.
+Reference review-guard-heavy workflows show the value of pretending to reject the task before release. Workstream needed this as an operational gate.
 
 Suggested change:
 

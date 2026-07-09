@@ -1,8 +1,8 @@
 # Process Pattern Baseline Review
 
-Review scope: metadata-level inspection only under `/home/abiorh/snorkel`. No task content copied.
+Review scope: metadata-level inspection only under `local reference workspace`. No task content copied.
 
-Projects inspected: Sequoia, Geranium, Excalibur, Marlin, Termius.
+Projects inspected: several reference evaluation projects.
 
 ## Baseline Patterns Observed
 
@@ -26,7 +26,7 @@ Suggested change: add an operations doc for project workspace conventions and ad
 
 ### High: Workstream needs a pre-review simulation gate
 
-Geranium and Sequoia patterns show review guard plus adversarial/reviewer simulation before calling work ready. Workstream has subagent review protocol but not a productized gate in the lifecycle.
+reference project patterns show review guard plus adversarial/reviewer simulation before calling work ready. Workstream has subagent review protocol but not a productized gate in the lifecycle.
 
 Suggested change: add `pre_review_gate` as an optional checker phase before `REVIEW_PENDING`, and add reviewer simulation to checker policy/project templates.
 

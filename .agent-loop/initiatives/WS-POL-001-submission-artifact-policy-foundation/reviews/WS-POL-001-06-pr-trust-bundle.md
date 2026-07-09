@@ -48,7 +48,7 @@ The user explicitly pushed back that:
 - Updated active docs/templates/roadmaps so payment terms are policy-owned and
   task-visible payout fields are locked snapshots from `PaymentPolicy`.
 - Updated the Terminal Benchmark example to require the OpenAI Agents SDK
-  adapter and real Termius project guide, reviewer program, task TOML, and
+  adapter and real Terminal Benchmark reference project guide, reviewer program, task TOML, and
   review packet material.
 - Removed Terminal Benchmark-specific derivation shortcuts from the local
   fixture adapter.

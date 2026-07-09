@@ -13,11 +13,11 @@ Final state:
 project_id: 36331e8e-c849-484d-9e9e-c8ebc2f70130
 guide_id: fbe0b2ab-2793-4619-a414-ed083d9cc117
 source_snapshot_id: 2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b
-source_snapshot_hash: sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb
+source_snapshot_hash: sha256:<redacted>
 sufficiency_status: passed
-submission_artifact_policy_hash: sha256:aa0cf8add77b6d193e5f3ffa1bf22f0fd21f27e484e4aa027e693d77b3624136
-effective_policy_hash: sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850
-pre_submit_checker_bundle_hash: sha256:aa7bb902a63cb031a809533cf1939e1fc1dc47f3834aead923c9679e0302aa63
+submission_artifact_policy_hash: sha256:<redacted>
+effective_policy_hash: sha256:<redacted>
+pre_submit_checker_bundle_hash: sha256:<redacted>
 task_id: d8cfda33-6c7e-461a-bdcd-036a6cefeda3
 submission_id: ba25f15a-e36a-4925-9891-09d394eae2ec
 checker_run_id: d7885348-fd08-4820-b209-36a704765a2b
@@ -43,13 +43,13 @@ from HTTP responses.
 Fixture label:
 
 ```text
-termius_reviewer/reviews/build-seccomp-profile-reducer-rust-json
+terminal-benchmark-reference-task
 ```
 
 Fixture id:
 
 ```text
-terminal-benchmark-1c027e78be41
+terminal-benchmark-reference-fixture
 ```
 
 Before the final API run, source text was sanitized so raw local filesystem
@@ -59,7 +59,7 @@ scanned for `/home/` and passed.
 Guide body:
 
 ```text
-content_markdown_hash: sha256:586b0e702b8fe201185ffab41d9ec4b4b862fea134deb010c2cc93c3b7412c1c
+content_markdown_hash: sha256:<redacted>
 content_markdown_bytes: 138427
 ```
 
@@ -67,14 +67,14 @@ Source snapshot manifest:
 
 | Label | Durable ref | Hash | Bytes |
 |---|---|---:|---:|
-| `PROJECT_GUIDE.md` | `import:/fixtures/terminal-benchmark-1c027e78be41/PROJECT_GUIDE.md` | `sha256:a2b2d57cc56cddc4a8049e9df00da02577fcd729043aad065e2a47f84ca4372e` | 27143 |
-| `REVIEWER_PROGRAM.md` | `import:/fixtures/terminal-benchmark-1c027e78be41/REVIEWER_PROGRAM.md` | `sha256:297415ca932fd7109c63c03232afd0d73a0ce0b1237cd460a6b0cbec81e8995d` | 45121 |
-| `task.toml` | `import:/fixtures/terminal-benchmark-1c027e78be41/task.toml` | `sha256:4a464edbf1b9047733412e228af0755227f2e44440125761c094324cff3a3811` | 1562 |
-| `review_packet.md` | `import:/fixtures/terminal-benchmark-1c027e78be41/review_packet.md` | `sha256:42eb6fead00923488b1212d23ef756926849dd51087aa0490ca656e829e8b8ea` | 36295 |
-| `static_guard.txt` | `import:/fixtures/terminal-benchmark-1c027e78be41/static_guard.txt` | `sha256:73840f643300f873de7bfff017cfe00ed01659208800fd1c572362fc8a300b62` | 612 |
-| `docker_build.log` | `import:/fixtures/terminal-benchmark-1c027e78be41/docker_build.log` | `sha256:793b9c193beb4f7b4bad4aacf66f5a74a6007e420c3232039d96cfa8cf6fbf42` | 31676 |
-| `oracle_test.log` | `import:/fixtures/terminal-benchmark-1c027e78be41/oracle_test.log` | `sha256:33e5d68026c8e84b7558e2389293edc9d8b9f366a37e40b449397cd1b5b6fd97` | 3926 |
-| `starter_m1_test.log` | `import:/fixtures/terminal-benchmark-1c027e78be41/starter_m1_test.log` | `sha256:fb06dbd479c6a782297fde0f83414ff3f9bc456ece2c7e7098362f783730bbc2` | 11284 |
+| `PROJECT_GUIDE.md` | `import:/fixtures/terminal-benchmark-reference-fixture/PROJECT_GUIDE.md` | `sha256:<redacted>` | 27143 |
+| `REVIEWER_PROGRAM.md` | `import:/fixtures/terminal-benchmark-reference-fixture/REVIEWER_PROGRAM.md` | `sha256:<redacted>` | 45121 |
+| `task.toml` | `import:/fixtures/terminal-benchmark-reference-fixture/task.toml` | `sha256:<redacted>` | 1562 |
+| `review_packet.md` | `import:/fixtures/terminal-benchmark-reference-fixture/review_packet.md` | `sha256:<redacted>` | 36295 |
+| `static_guard.txt` | `import:/fixtures/terminal-benchmark-reference-fixture/static_guard.txt` | `sha256:<redacted>` | 612 |
+| `docker_build.log` | `import:/fixtures/terminal-benchmark-reference-fixture/docker_build.log` | `sha256:<redacted>` | 31676 |
+| `oracle_test.log` | `import:/fixtures/terminal-benchmark-reference-fixture/oracle_test.log` | `sha256:<redacted>` | 3926 |
+| `starter_m1_test.log` | `import:/fixtures/terminal-benchmark-reference-fixture/starter_m1_test.log` | `sha256:<redacted>` | 11284 |
 
 ## HTTP Transcript
 
@@ -151,22 +151,22 @@ Sufficiency-agent input:
   "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
   "guide_version": "v1",
   "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
-  "source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+  "source_snapshot_hash": "sha256:<redacted>",
   "guide_material": {
     "content_markdown": {
-      "hash": "sha256:586b0e702b8fe201185ffab41d9ec4b4b862fea134deb010c2cc93c3b7412c1c",
+      "hash": "sha256:<redacted>",
       "bytes": 138427
     }
   },
   "source_items": [
-    ["project_guide", "import:/fixtures/terminal-benchmark-1c027e78be41/PROJECT_GUIDE.md", "sha256:a2b2d57cc56cddc4a8049e9df00da02577fcd729043aad065e2a47f84ca4372e"],
-    ["reviewer_program", "import:/fixtures/terminal-benchmark-1c027e78be41/REVIEWER_PROGRAM.md", "sha256:297415ca932fd7109c63c03232afd0d73a0ce0b1237cd460a6b0cbec81e8995d"],
-    ["task_material", "import:/fixtures/terminal-benchmark-1c027e78be41/task.toml", "sha256:4a464edbf1b9047733412e228af0755227f2e44440125761c094324cff3a3811"],
-    ["review_packet", "import:/fixtures/terminal-benchmark-1c027e78be41/review_packet.md", "sha256:42eb6fead00923488b1212d23ef756926849dd51087aa0490ca656e829e8b8ea"],
-    ["static_guard", "import:/fixtures/terminal-benchmark-1c027e78be41/static_guard.txt", "sha256:73840f643300f873de7bfff017cfe00ed01659208800fd1c572362fc8a300b62"],
-    ["build_log", "import:/fixtures/terminal-benchmark-1c027e78be41/docker_build.log", "sha256:793b9c193beb4f7b4bad4aacf66f5a74a6007e420c3232039d96cfa8cf6fbf42"],
-    ["test_log", "import:/fixtures/terminal-benchmark-1c027e78be41/oracle_test.log", "sha256:33e5d68026c8e84b7558e2389293edc9d8b9f366a37e40b449397cd1b5b6fd97"],
-    ["test_log", "import:/fixtures/terminal-benchmark-1c027e78be41/starter_m1_test.log", "sha256:fb06dbd479c6a782297fde0f83414ff3f9bc456ece2c7e7098362f783730bbc2"]
+    ["project_guide", "import:/fixtures/terminal-benchmark-reference-fixture/PROJECT_GUIDE.md", "sha256:<redacted>"],
+    ["reviewer_program", "import:/fixtures/terminal-benchmark-reference-fixture/REVIEWER_PROGRAM.md", "sha256:<redacted>"],
+    ["task_material", "import:/fixtures/terminal-benchmark-reference-fixture/task.toml", "sha256:<redacted>"],
+    ["review_packet", "import:/fixtures/terminal-benchmark-reference-fixture/review_packet.md", "sha256:<redacted>"],
+    ["static_guard", "import:/fixtures/terminal-benchmark-reference-fixture/static_guard.txt", "sha256:<redacted>"],
+    ["build_log", "import:/fixtures/terminal-benchmark-reference-fixture/docker_build.log", "sha256:<redacted>"],
+    ["test_log", "import:/fixtures/terminal-benchmark-reference-fixture/oracle_test.log", "sha256:<redacted>"],
+    ["test_log", "import:/fixtures/terminal-benchmark-reference-fixture/starter_m1_test.log", "sha256:<redacted>"]
   ],
   "representative_task_material": {
     "items": []
@@ -179,7 +179,7 @@ Sufficiency-agent output:
 ```text
 status: passed
 agent_name: ProjectGuideSufficiencyAgent
-source_snapshot_hash: sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb
+source_snapshot_hash: sha256:<redacted>
 ```
 
 Submission-policy-derivation input:
@@ -190,7 +190,7 @@ Submission-policy-derivation input:
   "sufficiency_report": {
     "status": "guide_sufficient",
     "findings": [],
-    "summary_hash": "sha256:2cfc87c9362a379ea96b21e57d2bc054abd5a523b939fe7c85c38428c844ab21",
+    "summary_hash": "sha256:<redacted>",
     "agent_name": "ProjectGuideSufficiencyAgent",
     "agent_version": "workstream-sufficiency-agent-v0.1"
   }
@@ -201,7 +201,7 @@ Submission-policy-derivation output:
 
 ```text
 derivation_source: agent_derivation
-policy_hash: sha256:aa0cf8add77b6d193e5f3ffa1bf22f0fd21f27e484e4aa027e693d77b3624136
+policy_hash: sha256:<redacted>
 ```
 
 Final live submission requirements:
@@ -246,7 +246,7 @@ Final live submission requirements:
 Compiled project pre-submit checker policy:
 
 ```text
-compiled_bundle_hash: sha256:aa7bb902a63cb031a809533cf1939e1fc1dc47f3834aead923c9679e0302aa63
+compiled_bundle_hash: sha256:<redacted>
 checker_names:
 - check_submission_packet
 - check_forbidden_files
@@ -263,13 +263,13 @@ Task creation request used the current task contract only:
 
 ```json
 {
-  "title": "Terminal Benchmark terminal-benchmark-1c027e78be41 live-api",
+  "title": "Terminal Benchmark terminal-benchmark-reference-fixture live-api",
   "task_type": "terminal_benchmark",
   "difficulty": "medium",
-  "skill_tags": ["rust", "json", "seccomp", "containers", "cli"],
+  "skill_tags": ["rust", "json", "systems", "containers", "cli"],
   "source_type": "manual",
-  "source_ref": "terminal-benchmark/terminal-benchmark-1c027e78be41/live-api/ws16-clean-cb1540ba",
-  "external_task_id": "terminal-benchmark-1c027e78be41"
+  "source_ref": "terminal-benchmark/terminal-benchmark-reference-fixture/live-api/ws16-clean-cb1540ba",
+  "external_task_id": "terminal-benchmark-reference-fixture"
 }
 ```
 
@@ -277,9 +277,9 @@ Locked task context after screening included:
 
 ```text
 locked_guide_version: v1
-locked_guide_source_snapshot_hash: sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb
-locked_effective_project_submission_artifact_policy_hash: sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850
-locked_pre_submit_checker_bundle_hash: sha256:aa7bb902a63cb031a809533cf1939e1fc1dc47f3834aead923c9679e0302aa63
+locked_guide_source_snapshot_hash: sha256:<redacted>
+locked_effective_project_submission_artifact_policy_hash: sha256:<redacted>
+locked_pre_submit_checker_bundle_hash: sha256:<redacted>
 ```
 
 Worker work context reported:
@@ -421,9 +421,9 @@ Final task response:
 
 ```text
 status: review_pending
-locked_guide_source_snapshot_hash: sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb
-locked_effective_project_submission_artifact_policy_hash: sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850
-locked_pre_submit_checker_bundle_hash: sha256:aa7bb902a63cb031a809533cf1939e1fc1dc47f3834aead923c9679e0302aa63
+locked_guide_source_snapshot_hash: sha256:<redacted>
+locked_effective_project_submission_artifact_policy_hash: sha256:<redacted>
+locked_pre_submit_checker_bundle_hash: sha256:<redacted>
 ```
 
 ## Audit Events
@@ -483,7 +483,7 @@ Request body:
 ```json
 {
   "change_summary": "Initial Terminal Benchmark real-world guide from sanitized imported source snapshot bundle.",
-  "content_markdown": "<redacted-large-text sha256:586b0e702b8fe201185ffab41d9ec4b4b862fea134deb010c2cc93c3b7412c1c bytes:138427>",
+  "content_markdown": "<redacted-large-text sha256:<redacted> bytes:138427>",
   "payment_policy": {
     "accepted_payment_rule": "pay_on_acceptance",
     "base_amount": "25.00",
@@ -529,72 +529,72 @@ Request body:
     "items": [
       {
         "content_cid": null,
-        "content_excerpt": "<redacted-large-text sha256:83e622313af9475491018b62eaf7e04994d21cb37e2477243429f898915d42c3 bytes:6112>",
-        "content_hash": "sha256:a2b2d57cc56cddc4a8049e9df00da02577fcd729043aad065e2a47f84ca4372e",
-        "durable_ref": "import:/fixtures/terminal-benchmark-1c027e78be41/PROJECT_GUIDE.md",
+        "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:6112>",
+        "content_hash": "sha256:<redacted>",
+        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/PROJECT_GUIDE.md",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "media_type": "text/markdown",
         "source_kind": "project_guide"
       },
       {
         "content_cid": null,
-        "content_excerpt": "<redacted-large-text sha256:d9f7d7d3e8c6a2f34e8a66a3a16b59debe5288698ab47816decc46783abdc55c bytes:6000>",
-        "content_hash": "sha256:297415ca932fd7109c63c03232afd0d73a0ce0b1237cd460a6b0cbec81e8995d",
-        "durable_ref": "import:/fixtures/terminal-benchmark-1c027e78be41/REVIEWER_PROGRAM.md",
+        "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:6000>",
+        "content_hash": "sha256:<redacted>",
+        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/REVIEWER_PROGRAM.md",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "media_type": "text/markdown",
         "source_kind": "reviewer_program"
       },
       {
         "content_cid": null,
-        "content_excerpt": "<redacted-large-text sha256:4a464edbf1b9047733412e228af0755227f2e44440125761c094324cff3a3811 bytes:1562>",
-        "content_hash": "sha256:4a464edbf1b9047733412e228af0755227f2e44440125761c094324cff3a3811",
-        "durable_ref": "import:/fixtures/terminal-benchmark-1c027e78be41/task.toml",
+        "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:1562>",
+        "content_hash": "sha256:<redacted>",
+        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/task.toml",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "media_type": "text/toml",
         "source_kind": "task_material"
       },
       {
         "content_cid": null,
-        "content_excerpt": "<redacted-large-text sha256:ad79f0f6e01c996dad51584e8e94613a7a90c7926dbea45d42f6403c3ab269de bytes:6184>",
-        "content_hash": "sha256:42eb6fead00923488b1212d23ef756926849dd51087aa0490ca656e829e8b8ea",
-        "durable_ref": "import:/fixtures/terminal-benchmark-1c027e78be41/review_packet.md",
+        "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:6184>",
+        "content_hash": "sha256:<redacted>",
+        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/review_packet.md",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "media_type": "text/markdown",
         "source_kind": "review_packet"
       },
       {
         "content_cid": null,
-        "content_excerpt": "<redacted-large-text sha256:73840f643300f873de7bfff017cfe00ed01659208800fd1c572362fc8a300b62 bytes:612>",
-        "content_hash": "sha256:73840f643300f873de7bfff017cfe00ed01659208800fd1c572362fc8a300b62",
-        "durable_ref": "import:/fixtures/terminal-benchmark-1c027e78be41/static_guard.txt",
+        "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:612>",
+        "content_hash": "sha256:<redacted>",
+        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/static_guard.txt",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "media_type": "text/plain",
         "source_kind": "checker_evidence"
       },
       {
         "content_cid": null,
-        "content_excerpt": "<redacted-large-text sha256:6063a751026695b21e58992629eb5051890e424baece1163de3f5e8491e89bc2 bytes:6000>",
-        "content_hash": "sha256:793b9c193beb4f7b4bad4aacf66f5a74a6007e420c3232039d96cfa8cf6fbf42",
-        "durable_ref": "import:/fixtures/terminal-benchmark-1c027e78be41/docker_build.log",
+        "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:6000>",
+        "content_hash": "sha256:<redacted>",
+        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/docker_build.log",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "media_type": "text/plain",
         "source_kind": "checker_evidence"
       },
       {
         "content_cid": null,
-        "content_excerpt": "<redacted-large-text sha256:33e5d68026c8e84b7558e2389293edc9d8b9f366a37e40b449397cd1b5b6fd97 bytes:3926>",
-        "content_hash": "sha256:33e5d68026c8e84b7558e2389293edc9d8b9f366a37e40b449397cd1b5b6fd97",
-        "durable_ref": "import:/fixtures/terminal-benchmark-1c027e78be41/oracle_test.log",
+        "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:3926>",
+        "content_hash": "sha256:<redacted>",
+        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/oracle_test.log",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "media_type": "text/plain",
         "source_kind": "checker_evidence"
       },
       {
         "content_cid": null,
-        "content_excerpt": "<redacted-large-text sha256:49d77e52862014442ee09cb884fa89856bdd06a26c10131411b23bf641aeca1c bytes:6000>",
-        "content_hash": "sha256:fb06dbd479c6a782297fde0f83414ff3f9bc456ece2c7e7098362f783730bbc2",
-        "durable_ref": "import:/fixtures/terminal-benchmark-1c027e78be41/starter_m1_test.log",
+        "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:6000>",
+        "content_hash": "sha256:<redacted>",
+        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/starter_m1_test.log",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "media_type": "text/plain",
         "source_kind": "checker_evidence"
@@ -611,7 +611,7 @@ Response body:
 {
   "approved_by": null,
   "change_summary": "Initial Terminal Benchmark real-world guide from sanitized imported source snapshot bundle.",
-  "content_markdown": "<redacted-large-text sha256:586b0e702b8fe201185ffab41d9ec4b4b862fea134deb010c2cc93c3b7412c1c bytes:138427>",
+  "content_markdown": "<redacted-large-text sha256:<redacted> bytes:138427>",
   "created_at": "2026-07-08T23:43:31.606777Z",
   "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
   "effective_at": null,
@@ -651,7 +651,7 @@ Response body:
   "output_submission_artifact_policy_id": null,
   "output_sufficiency_report_id": null,
   "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
-  "source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+  "source_snapshot_hash": "sha256:<redacted>",
   "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
   "started_at": null,
   "status": "queued",
@@ -686,7 +686,7 @@ Response body:
   "output_submission_artifact_policy_id": null,
   "output_sufficiency_report_id": null,
   "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
-  "source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+  "source_snapshot_hash": "sha256:<redacted>",
   "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
   "started_at": "2026-07-08T23:43:32.307172Z",
   "status": "running_sufficiency_agent",
@@ -721,7 +721,7 @@ Response body:
   "output_submission_artifact_policy_id": null,
   "output_sufficiency_report_id": null,
   "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
-  "source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+  "source_snapshot_hash": "sha256:<redacted>",
   "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
   "started_at": "2026-07-08T23:43:32.307172Z",
   "status": "running_sufficiency_agent",
@@ -756,7 +756,7 @@ Response body:
   "output_submission_artifact_policy_id": null,
   "output_sufficiency_report_id": null,
   "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
-  "source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+  "source_snapshot_hash": "sha256:<redacted>",
   "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
   "started_at": "2026-07-08T23:43:32.307172Z",
   "status": "running_sufficiency_agent",
@@ -791,7 +791,7 @@ Response body:
   "output_submission_artifact_policy_id": null,
   "output_sufficiency_report_id": "27cd37ac-638f-445a-8637-b8ced01d3ae1",
   "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
-  "source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+  "source_snapshot_hash": "sha256:<redacted>",
   "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
   "started_at": "2026-07-08T23:43:32.307172Z",
   "status": "running_policy_derivation_agent",
@@ -826,7 +826,7 @@ Response body:
   "output_submission_artifact_policy_id": null,
   "output_sufficiency_report_id": "27cd37ac-638f-445a-8637-b8ced01d3ae1",
   "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
-  "source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+  "source_snapshot_hash": "sha256:<redacted>",
   "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
   "started_at": "2026-07-08T23:43:32.307172Z",
   "status": "running_policy_derivation_agent",
@@ -861,7 +861,7 @@ Response body:
   "output_submission_artifact_policy_id": null,
   "output_sufficiency_report_id": "27cd37ac-638f-445a-8637-b8ced01d3ae1",
   "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
-  "source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+  "source_snapshot_hash": "sha256:<redacted>",
   "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
   "started_at": "2026-07-08T23:43:32.307172Z",
   "status": "running_policy_derivation_agent",
@@ -896,7 +896,7 @@ Response body:
   "output_submission_artifact_policy_id": null,
   "output_sufficiency_report_id": "27cd37ac-638f-445a-8637-b8ced01d3ae1",
   "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
-  "source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+  "source_snapshot_hash": "sha256:<redacted>",
   "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
   "started_at": "2026-07-08T23:43:32.307172Z",
   "status": "running_policy_derivation_agent",
@@ -931,7 +931,7 @@ Response body:
   "output_submission_artifact_policy_id": null,
   "output_sufficiency_report_id": "27cd37ac-638f-445a-8637-b8ced01d3ae1",
   "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
-  "source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+  "source_snapshot_hash": "sha256:<redacted>",
   "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
   "started_at": "2026-07-08T23:43:32.307172Z",
   "status": "running_policy_derivation_agent",
@@ -966,7 +966,7 @@ Response body:
   "output_submission_artifact_policy_id": null,
   "output_sufficiency_report_id": "27cd37ac-638f-445a-8637-b8ced01d3ae1",
   "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
-  "source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+  "source_snapshot_hash": "sha256:<redacted>",
   "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
   "started_at": "2026-07-08T23:43:32.307172Z",
   "status": "running_policy_derivation_agent",
@@ -1001,7 +1001,7 @@ Response body:
   "output_submission_artifact_policy_id": null,
   "output_sufficiency_report_id": "27cd37ac-638f-445a-8637-b8ced01d3ae1",
   "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
-  "source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+  "source_snapshot_hash": "sha256:<redacted>",
   "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
   "started_at": "2026-07-08T23:43:32.307172Z",
   "status": "running_policy_derivation_agent",
@@ -1036,7 +1036,7 @@ Response body:
   "output_submission_artifact_policy_id": null,
   "output_sufficiency_report_id": "27cd37ac-638f-445a-8637-b8ced01d3ae1",
   "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
-  "source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+  "source_snapshot_hash": "sha256:<redacted>",
   "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
   "started_at": "2026-07-08T23:43:32.307172Z",
   "status": "running_policy_derivation_agent",
@@ -1071,7 +1071,7 @@ Response body:
   "output_submission_artifact_policy_id": null,
   "output_sufficiency_report_id": "27cd37ac-638f-445a-8637-b8ced01d3ae1",
   "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
-  "source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+  "source_snapshot_hash": "sha256:<redacted>",
   "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
   "started_at": "2026-07-08T23:43:32.307172Z",
   "status": "running_policy_derivation_agent",
@@ -1106,7 +1106,7 @@ Response body:
   "output_submission_artifact_policy_id": "f81d05aa-8f7d-4498-b3da-1de9b453d450",
   "output_sufficiency_report_id": "27cd37ac-638f-445a-8637-b8ced01d3ae1",
   "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
-  "source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+  "source_snapshot_hash": "sha256:<redacted>",
   "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
   "started_at": "2026-07-08T23:43:32.307172Z",
   "status": "policy_draft_ready",
@@ -1138,10 +1138,10 @@ Response body:
   "guide_version": "v1",
   "id": "27cd37ac-638f-445a-8637-b8ced01d3ae1",
   "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
-  "source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+  "source_snapshot_hash": "sha256:<redacted>",
   "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
   "status": "passed",
-  "summary": "The guide provides sufficient reviewer criteria and workflow direction for this Terminus task review, including milestone structure, static guard handling, dependency pinning, Dockerfile requirements, test alignment, rubric rules, reward behavior, and category mapping.",
+  "summary": "The guide provides sufficient reviewer criteria and workflow direction for this Terminal Benchmark task review, including milestone structure, static guard handling, dependency pinning, Dockerfile requirements, test alignment, rubric rules, reward behavior, and category mapping.",
   "warnings_acknowledged_at": null,
   "warnings_acknowledged_by_actor": null,
   "warnings_acknowledged_by_role": null
@@ -1401,21 +1401,21 @@ Response body:
     ],
     "schema_version": "project_submission_artifact_policy.v1"
   },
-  "policy_hash": "sha256:aa0cf8add77b6d193e5f3ffa1bf22f0fd21f27e484e4aa027e693d77b3624136",
+  "policy_hash": "sha256:<redacted>",
   "policy_version": "agent-9843f69ef5b7f7631f98a61d",
   "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
   "source_material_refs": [
-    "import:/fixtures/terminal-benchmark-1c027e78be41/docker_build.log",
-    "import:/fixtures/terminal-benchmark-1c027e78be41/oracle_test.log",
-    "import:/fixtures/terminal-benchmark-1c027e78be41/starter_m1_test.log",
-    "import:/fixtures/terminal-benchmark-1c027e78be41/static_guard.txt",
-    "import:/fixtures/terminal-benchmark-1c027e78be41/PROJECT_GUIDE.md",
+    "import:/fixtures/terminal-benchmark-reference-fixture/docker_build.log",
+    "import:/fixtures/terminal-benchmark-reference-fixture/oracle_test.log",
+    "import:/fixtures/terminal-benchmark-reference-fixture/starter_m1_test.log",
+    "import:/fixtures/terminal-benchmark-reference-fixture/static_guard.txt",
+    "import:/fixtures/terminal-benchmark-reference-fixture/PROJECT_GUIDE.md",
     "inline:/guides/fbe0b2ab-2793-4619-a414-ed083d9cc117/v1",
-    "import:/fixtures/terminal-benchmark-1c027e78be41/review_packet.md",
-    "import:/fixtures/terminal-benchmark-1c027e78be41/REVIEWER_PROGRAM.md",
-    "import:/fixtures/terminal-benchmark-1c027e78be41/task.toml"
+    "import:/fixtures/terminal-benchmark-reference-fixture/review_packet.md",
+    "import:/fixtures/terminal-benchmark-reference-fixture/REVIEWER_PROGRAM.md",
+    "import:/fixtures/terminal-benchmark-reference-fixture/task.toml"
   ],
-  "source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+  "source_snapshot_hash": "sha256:<redacted>",
   "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
   "superseded_at": null,
   "supersedes_policy_id": null,
@@ -2332,16 +2332,16 @@ Response body:
       "schema_version": "workstream_default_submission_artifact_policy.v1"
     }
   },
-  "effective_policy_hash": "sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850",
+  "effective_policy_hash": "sha256:<redacted>",
   "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
   "guide_version": "v1",
   "id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
   "lifecycle_status": "approved",
   "merge_algorithm_version": "workstream_default_merge.v1",
   "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
-  "source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+  "source_snapshot_hash": "sha256:<redacted>",
   "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
-  "submission_artifact_policy_hash": "sha256:aa0cf8add77b6d193e5f3ffa1bf22f0fd21f27e484e4aa027e693d77b3624136",
+  "submission_artifact_policy_hash": "sha256:<redacted>",
   "submission_artifact_policy_id": "f81d05aa-8f7d-4498-b3da-1de9b453d450",
   "superseded_at": null,
   "supersedes_effective_policy_id": null
@@ -3255,16 +3255,16 @@ Response body:
       "schema_version": "workstream_default_submission_artifact_policy.v1"
     }
   },
-  "effective_policy_hash": "sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850",
+  "effective_policy_hash": "sha256:<redacted>",
   "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
   "guide_version": "v1",
   "id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
   "lifecycle_status": "approved",
   "merge_algorithm_version": "workstream_default_merge.v1",
   "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
-  "source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+  "source_snapshot_hash": "sha256:<redacted>",
   "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
-  "submission_artifact_policy_hash": "sha256:aa0cf8add77b6d193e5f3ffa1bf22f0fd21f27e484e4aa027e693d77b3624136",
+  "submission_artifact_policy_hash": "sha256:<redacted>",
   "submission_artifact_policy_id": "f81d05aa-8f7d-4498-b3da-1de9b453d450",
   "superseded_at": null,
   "supersedes_effective_policy_id": null
@@ -3294,18 +3294,18 @@ Response body:
     "check_evidence_integrity",
     "check_low_quality_generated_artifacts"
   ],
-  "compiled_bundle_hash": "sha256:aa7bb902a63cb031a809533cf1939e1fc1dc47f3834aead923c9679e0302aa63",
+  "compiled_bundle_hash": "sha256:<redacted>",
   "compiler_version": "workstream-pre-submit-compiler-v0.1",
   "created_at": "2026-07-08T23:44:02.228409Z",
   "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
-  "effective_policy_hash": "sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850",
+  "effective_policy_hash": "sha256:<redacted>",
   "effective_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
   "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
   "guide_version": "v1",
   "id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
   "lifecycle_status": "compiled",
   "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
-  "source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+  "source_snapshot_hash": "sha256:<redacted>",
   "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
   "superseded_at": null,
   "supersedes_pre_submit_checker_policy_id": null
@@ -4220,16 +4220,16 @@ Response body:
         "schema_version": "workstream_default_submission_artifact_policy.v1"
       }
     },
-    "effective_policy_hash": "sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850",
+    "effective_policy_hash": "sha256:<redacted>",
     "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
     "guide_version": "v1",
     "id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
     "lifecycle_status": "approved",
     "merge_algorithm_version": "workstream_default_merge.v1",
     "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
-    "source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+    "source_snapshot_hash": "sha256:<redacted>",
     "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
-    "submission_artifact_policy_hash": "sha256:aa0cf8add77b6d193e5f3ffa1bf22f0fd21f27e484e4aa027e693d77b3624136",
+    "submission_artifact_policy_hash": "sha256:<redacted>",
     "submission_artifact_policy_id": "f81d05aa-8f7d-4498-b3da-1de9b453d450",
     "superseded_at": null,
     "supersedes_effective_policy_id": null
@@ -4237,7 +4237,7 @@ Response body:
   "guide": {
     "approved_by": "5080787a-cb3b-591d-9948-6b38354788ab",
     "change_summary": "Initial Terminal Benchmark real-world guide from sanitized imported source snapshot bundle.",
-    "content_markdown": "<redacted-large-text sha256:586b0e702b8fe201185ffab41d9ec4b4b862fea134deb010c2cc93c3b7412c1c bytes:138427>",
+    "content_markdown": "<redacted-large-text sha256:<redacted> bytes:138427>",
     "created_at": "2026-07-08T23:43:31.606777Z",
     "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
     "effective_at": "2026-07-08T23:44:03.147622Z",
@@ -4249,7 +4249,7 @@ Response body:
     "version": "v1"
   },
   "guide_source_snapshot": {
-    "bundle_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+    "bundle_hash": "sha256:<redacted>",
     "captured_at": "2026-07-08T23:43:31.606777Z",
     "captured_by": "5080787a-cb3b-591d-9948-6b38354788ab",
     "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
@@ -4258,9 +4258,9 @@ Response body:
     "items": [
       {
         "content_cid": null,
-        "content_hash": "sha256:793b9c193beb4f7b4bad4aacf66f5a74a6007e420c3232039d96cfa8cf6fbf42",
+        "content_hash": "sha256:<redacted>",
         "created_at": "2026-07-08T23:43:31.606777Z",
-        "durable_ref": "import:/fixtures/terminal-benchmark-1c027e78be41/docker_build.log",
+        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/docker_build.log",
         "id": "c408d25e-6276-426f-a99e-ac6114db773b",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "item_order": 0,
@@ -4270,9 +4270,9 @@ Response body:
       },
       {
         "content_cid": null,
-        "content_hash": "sha256:33e5d68026c8e84b7558e2389293edc9d8b9f366a37e40b449397cd1b5b6fd97",
+        "content_hash": "sha256:<redacted>",
         "created_at": "2026-07-08T23:43:31.606777Z",
-        "durable_ref": "import:/fixtures/terminal-benchmark-1c027e78be41/oracle_test.log",
+        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/oracle_test.log",
         "id": "8531f065-4575-43c1-bf39-e51e0ae3cd07",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "item_order": 1,
@@ -4282,9 +4282,9 @@ Response body:
       },
       {
         "content_cid": null,
-        "content_hash": "sha256:fb06dbd479c6a782297fde0f83414ff3f9bc456ece2c7e7098362f783730bbc2",
+        "content_hash": "sha256:<redacted>",
         "created_at": "2026-07-08T23:43:31.606777Z",
-        "durable_ref": "import:/fixtures/terminal-benchmark-1c027e78be41/starter_m1_test.log",
+        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/starter_m1_test.log",
         "id": "45961844-d3cb-4418-b03f-3a3eeca32615",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "item_order": 2,
@@ -4294,9 +4294,9 @@ Response body:
       },
       {
         "content_cid": null,
-        "content_hash": "sha256:73840f643300f873de7bfff017cfe00ed01659208800fd1c572362fc8a300b62",
+        "content_hash": "sha256:<redacted>",
         "created_at": "2026-07-08T23:43:31.606777Z",
-        "durable_ref": "import:/fixtures/terminal-benchmark-1c027e78be41/static_guard.txt",
+        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/static_guard.txt",
         "id": "49d53b1d-1a81-45e1-9d37-7f519478c654",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "item_order": 3,
@@ -4306,9 +4306,9 @@ Response body:
       },
       {
         "content_cid": null,
-        "content_hash": "sha256:a2b2d57cc56cddc4a8049e9df00da02577fcd729043aad065e2a47f84ca4372e",
+        "content_hash": "sha256:<redacted>",
         "created_at": "2026-07-08T23:43:31.606777Z",
-        "durable_ref": "import:/fixtures/terminal-benchmark-1c027e78be41/PROJECT_GUIDE.md",
+        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/PROJECT_GUIDE.md",
         "id": "a23f68aa-b4d0-4dd5-aeba-d0d9a716f96c",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "item_order": 4,
@@ -4318,7 +4318,7 @@ Response body:
       },
       {
         "content_cid": null,
-        "content_hash": "sha256:4b88e4bb333b1ff2d207ffedfde94c8350a814e3c89db8789a2d0a851397a042",
+        "content_hash": "sha256:<redacted>",
         "created_at": "2026-07-08T23:43:31.606777Z",
         "durable_ref": "inline:/guides/fbe0b2ab-2793-4619-a414-ed083d9cc117/v1",
         "id": "f1b51900-4dac-47fd-9d93-97d975877cd8",
@@ -4330,9 +4330,9 @@ Response body:
       },
       {
         "content_cid": null,
-        "content_hash": "sha256:42eb6fead00923488b1212d23ef756926849dd51087aa0490ca656e829e8b8ea",
+        "content_hash": "sha256:<redacted>",
         "created_at": "2026-07-08T23:43:31.606777Z",
-        "durable_ref": "import:/fixtures/terminal-benchmark-1c027e78be41/review_packet.md",
+        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/review_packet.md",
         "id": "61db2ff4-3495-49d4-80b3-78cc023f2e51",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "item_order": 6,
@@ -4342,9 +4342,9 @@ Response body:
       },
       {
         "content_cid": null,
-        "content_hash": "sha256:297415ca932fd7109c63c03232afd0d73a0ce0b1237cd460a6b0cbec81e8995d",
+        "content_hash": "sha256:<redacted>",
         "created_at": "2026-07-08T23:43:31.606777Z",
-        "durable_ref": "import:/fixtures/terminal-benchmark-1c027e78be41/REVIEWER_PROGRAM.md",
+        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/REVIEWER_PROGRAM.md",
         "id": "87c64c15-33d9-48f2-85a6-cb0ee5ddd932",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "item_order": 7,
@@ -4354,9 +4354,9 @@ Response body:
       },
       {
         "content_cid": null,
-        "content_hash": "sha256:4a464edbf1b9047733412e228af0755227f2e44440125761c094324cff3a3811",
+        "content_hash": "sha256:<redacted>",
         "created_at": "2026-07-08T23:43:31.606777Z",
-        "durable_ref": "import:/fixtures/terminal-benchmark-1c027e78be41/task.toml",
+        "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/task.toml",
         "id": "316c8374-322d-4e49-a6d9-a581803cb32a",
         "ingestion_adapter": "manual_fixture_import_sanitized",
         "item_order": 8,
@@ -4369,45 +4369,45 @@ Response body:
       "items": [
         {
           "content_cid": null,
-          "content_excerpt": "<redacted-large-text sha256:6063a751026695b21e58992629eb5051890e424baece1163de3f5e8491e89bc2 bytes:6000>",
-          "content_hash": "sha256:793b9c193beb4f7b4bad4aacf66f5a74a6007e420c3232039d96cfa8cf6fbf42",
-          "durable_ref": "import:/fixtures/terminal-benchmark-1c027e78be41/docker_build.log",
+          "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:6000>",
+          "content_hash": "sha256:<redacted>",
+          "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/docker_build.log",
           "ingestion_adapter": "manual_fixture_import_sanitized",
           "media_type": "text/plain",
           "source_kind": "checker_evidence"
         },
         {
           "content_cid": null,
-          "content_excerpt": "<redacted-large-text sha256:33e5d68026c8e84b7558e2389293edc9d8b9f366a37e40b449397cd1b5b6fd97 bytes:3926>",
-          "content_hash": "sha256:33e5d68026c8e84b7558e2389293edc9d8b9f366a37e40b449397cd1b5b6fd97",
-          "durable_ref": "import:/fixtures/terminal-benchmark-1c027e78be41/oracle_test.log",
+          "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:3926>",
+          "content_hash": "sha256:<redacted>",
+          "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/oracle_test.log",
           "ingestion_adapter": "manual_fixture_import_sanitized",
           "media_type": "text/plain",
           "source_kind": "checker_evidence"
         },
         {
           "content_cid": null,
-          "content_excerpt": "<redacted-large-text sha256:49d77e52862014442ee09cb884fa89856bdd06a26c10131411b23bf641aeca1c bytes:6000>",
-          "content_hash": "sha256:fb06dbd479c6a782297fde0f83414ff3f9bc456ece2c7e7098362f783730bbc2",
-          "durable_ref": "import:/fixtures/terminal-benchmark-1c027e78be41/starter_m1_test.log",
+          "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:6000>",
+          "content_hash": "sha256:<redacted>",
+          "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/starter_m1_test.log",
           "ingestion_adapter": "manual_fixture_import_sanitized",
           "media_type": "text/plain",
           "source_kind": "checker_evidence"
         },
         {
           "content_cid": null,
-          "content_excerpt": "<redacted-large-text sha256:73840f643300f873de7bfff017cfe00ed01659208800fd1c572362fc8a300b62 bytes:612>",
-          "content_hash": "sha256:73840f643300f873de7bfff017cfe00ed01659208800fd1c572362fc8a300b62",
-          "durable_ref": "import:/fixtures/terminal-benchmark-1c027e78be41/static_guard.txt",
+          "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:612>",
+          "content_hash": "sha256:<redacted>",
+          "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/static_guard.txt",
           "ingestion_adapter": "manual_fixture_import_sanitized",
           "media_type": "text/plain",
           "source_kind": "checker_evidence"
         },
         {
           "content_cid": null,
-          "content_excerpt": "<redacted-large-text sha256:83e622313af9475491018b62eaf7e04994d21cb37e2477243429f898915d42c3 bytes:6112>",
-          "content_hash": "sha256:a2b2d57cc56cddc4a8049e9df00da02577fcd729043aad065e2a47f84ca4372e",
-          "durable_ref": "import:/fixtures/terminal-benchmark-1c027e78be41/PROJECT_GUIDE.md",
+          "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:6112>",
+          "content_hash": "sha256:<redacted>",
+          "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/PROJECT_GUIDE.md",
           "ingestion_adapter": "manual_fixture_import_sanitized",
           "media_type": "text/markdown",
           "source_kind": "project_guide"
@@ -4415,7 +4415,7 @@ Response body:
         {
           "content_cid": null,
           "content_excerpt": null,
-          "content_hash": "sha256:4b88e4bb333b1ff2d207ffedfde94c8350a814e3c89db8789a2d0a851397a042",
+          "content_hash": "sha256:<redacted>",
           "durable_ref": "inline:/guides/fbe0b2ab-2793-4619-a414-ed083d9cc117/v1",
           "ingestion_adapter": "workstream_project_guide",
           "media_type": "application/json",
@@ -4423,27 +4423,27 @@ Response body:
         },
         {
           "content_cid": null,
-          "content_excerpt": "<redacted-large-text sha256:ad79f0f6e01c996dad51584e8e94613a7a90c7926dbea45d42f6403c3ab269de bytes:6184>",
-          "content_hash": "sha256:42eb6fead00923488b1212d23ef756926849dd51087aa0490ca656e829e8b8ea",
-          "durable_ref": "import:/fixtures/terminal-benchmark-1c027e78be41/review_packet.md",
+          "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:6184>",
+          "content_hash": "sha256:<redacted>",
+          "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/review_packet.md",
           "ingestion_adapter": "manual_fixture_import_sanitized",
           "media_type": "text/markdown",
           "source_kind": "review_packet"
         },
         {
           "content_cid": null,
-          "content_excerpt": "<redacted-large-text sha256:d9f7d7d3e8c6a2f34e8a66a3a16b59debe5288698ab47816decc46783abdc55c bytes:6000>",
-          "content_hash": "sha256:297415ca932fd7109c63c03232afd0d73a0ce0b1237cd460a6b0cbec81e8995d",
-          "durable_ref": "import:/fixtures/terminal-benchmark-1c027e78be41/REVIEWER_PROGRAM.md",
+          "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:6000>",
+          "content_hash": "sha256:<redacted>",
+          "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/REVIEWER_PROGRAM.md",
           "ingestion_adapter": "manual_fixture_import_sanitized",
           "media_type": "text/markdown",
           "source_kind": "reviewer_program"
         },
         {
           "content_cid": null,
-          "content_excerpt": "<redacted-large-text sha256:4a464edbf1b9047733412e228af0755227f2e44440125761c094324cff3a3811 bytes:1562>",
-          "content_hash": "sha256:4a464edbf1b9047733412e228af0755227f2e44440125761c094324cff3a3811",
-          "durable_ref": "import:/fixtures/terminal-benchmark-1c027e78be41/task.toml",
+          "content_excerpt": "<redacted-large-text sha256:<redacted> bytes:1562>",
+          "content_hash": "sha256:<redacted>",
+          "durable_ref": "import:/fixtures/terminal-benchmark-reference-fixture/task.toml",
           "ingestion_adapter": "manual_fixture_import_sanitized",
           "media_type": "text/toml",
           "source_kind": "task_material"
@@ -4465,10 +4465,10 @@ Response body:
     "guide_version": "v1",
     "id": "27cd37ac-638f-445a-8637-b8ced01d3ae1",
     "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
-    "source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+    "source_snapshot_hash": "sha256:<redacted>",
     "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
     "status": "passed",
-    "summary": "The guide provides sufficient reviewer criteria and workflow direction for this Terminus task review, including milestone structure, static guard handling, dependency pinning, Dockerfile requirements, test alignment, rubric rules, reward behavior, and category mapping.",
+    "summary": "The guide provides sufficient reviewer criteria and workflow direction for this Terminal Benchmark task review, including milestone structure, static guard handling, dependency pinning, Dockerfile requirements, test alignment, rubric rules, reward behavior, and category mapping.",
     "warnings_acknowledged_at": null,
     "warnings_acknowledged_by_actor": null,
     "warnings_acknowledged_by_role": null
@@ -4493,7 +4493,7 @@ Response body:
     "created_at": "2026-07-08T23:43:31.606777Z",
     "guide_version": "v1",
     "id": "30095d84-e5c5-46e3-a292-3788bd34699f",
-    "policy_hash": "sha256:e2730e8ecea2eca2d8dce218ba1548f7c675d801045b58e1f211df3a35bdc41d",
+    "policy_hash": "sha256:<redacted>",
     "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
     "required_checkers": [
       "check_policy_context_present",
@@ -4641,18 +4641,18 @@ Response body:
       "check_evidence_integrity",
       "check_low_quality_generated_artifacts"
     ],
-    "compiled_bundle_hash": "sha256:aa7bb902a63cb031a809533cf1939e1fc1dc47f3834aead923c9679e0302aa63",
+    "compiled_bundle_hash": "sha256:<redacted>",
     "compiler_version": "workstream-pre-submit-compiler-v0.1",
     "created_at": "2026-07-08T23:44:02.228409Z",
     "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
-    "effective_policy_hash": "sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850",
+    "effective_policy_hash": "sha256:<redacted>",
     "effective_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
     "guide_id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
     "guide_version": "v1",
     "id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
     "lifecycle_status": "compiled",
     "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
-    "source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+    "source_snapshot_hash": "sha256:<redacted>",
     "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
     "superseded_at": null,
     "supersedes_pre_submit_checker_policy_id": null
@@ -4927,21 +4927,21 @@ Response body:
       ],
       "schema_version": "project_submission_artifact_policy.v1"
     },
-    "policy_hash": "sha256:aa0cf8add77b6d193e5f3ffa1bf22f0fd21f27e484e4aa027e693d77b3624136",
+    "policy_hash": "sha256:<redacted>",
     "policy_version": "agent-9843f69ef5b7f7631f98a61d",
     "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
     "source_material_refs": [
-      "import:/fixtures/terminal-benchmark-1c027e78be41/docker_build.log",
-      "import:/fixtures/terminal-benchmark-1c027e78be41/oracle_test.log",
-      "import:/fixtures/terminal-benchmark-1c027e78be41/starter_m1_test.log",
-      "import:/fixtures/terminal-benchmark-1c027e78be41/static_guard.txt",
-      "import:/fixtures/terminal-benchmark-1c027e78be41/PROJECT_GUIDE.md",
+      "import:/fixtures/terminal-benchmark-reference-fixture/docker_build.log",
+      "import:/fixtures/terminal-benchmark-reference-fixture/oracle_test.log",
+      "import:/fixtures/terminal-benchmark-reference-fixture/starter_m1_test.log",
+      "import:/fixtures/terminal-benchmark-reference-fixture/static_guard.txt",
+      "import:/fixtures/terminal-benchmark-reference-fixture/PROJECT_GUIDE.md",
       "inline:/guides/fbe0b2ab-2793-4619-a414-ed083d9cc117/v1",
-      "import:/fixtures/terminal-benchmark-1c027e78be41/review_packet.md",
-      "import:/fixtures/terminal-benchmark-1c027e78be41/REVIEWER_PROGRAM.md",
-      "import:/fixtures/terminal-benchmark-1c027e78be41/task.toml"
+      "import:/fixtures/terminal-benchmark-reference-fixture/review_packet.md",
+      "import:/fixtures/terminal-benchmark-reference-fixture/REVIEWER_PROGRAM.md",
+      "import:/fixtures/terminal-benchmark-reference-fixture/task.toml"
     ],
-    "source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+    "source_snapshot_hash": "sha256:<redacted>",
     "source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
     "superseded_at": null,
     "supersedes_policy_id": null,
@@ -4959,23 +4959,23 @@ Request body:
 ```json
 {
   "acceptance_criteria": "Submission packet must satisfy the locked project submission requirements and pre-submit checker policy.",
-  "description": "Real Terminal Benchmark reviewer fixture with 3 milestones, languages=['rust', 'json'], category=software-engineering.",
+  "description": "Real Terminal Benchmark reference fixture with 3 milestones, languages=['rust', 'json'], category=software-engineering.",
   "difficulty": "medium",
   "estimated_time_minutes": 75,
-  "external_task_id": "terminal-benchmark-1c027e78be41",
+  "external_task_id": "terminal-benchmark-reference-fixture",
   "rejection_criteria": "Missing required artifacts, evidence, hashes, or attestation blocks submission intake.",
   "skill_tags": [
     "rust",
     "json",
-    "seccomp",
+    "systems",
     "containers",
     "cli"
   ],
-  "source_payload_hash": "sha256:4a464edbf1b9047733412e228af0755227f2e44440125761c094324cff3a3811",
-  "source_ref": "terminal-benchmark/terminal-benchmark-1c027e78be41/live-api/ws16-clean-cb1540ba",
+  "source_payload_hash": "sha256:<redacted>",
+  "source_ref": "terminal-benchmark/terminal-benchmark-reference-fixture/live-api/ws16-clean-cb1540ba",
   "source_type": "manual",
   "task_type": "terminal_benchmark",
-  "title": "Terminal Benchmark terminal-benchmark-1c027e78be41 live-api"
+  "title": "Terminal Benchmark terminal-benchmark-reference-fixture live-api"
 }
 ```
 
@@ -4986,26 +4986,26 @@ Response body:
   "acceptance_criteria": "Submission packet must satisfy the locked project submission requirements and pre-submit checker policy.",
   "created_at": "2026-07-08T23:44:03.452947Z",
   "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
-  "description": "Real Terminal Benchmark reviewer fixture with 3 milestones, languages=['rust', 'json'], category=software-engineering.",
+  "description": "Real Terminal Benchmark reference fixture with 3 milestones, languages=['rust', 'json'], category=software-engineering.",
   "difficulty": "medium",
   "estimated_time_minutes": 75,
-  "external_task_id": "terminal-benchmark-1c027e78be41",
+  "external_task_id": "terminal-benchmark-reference-fixture",
   "id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
   "project_id": "36331e8e-c849-484d-9e9e-c8ebc2f70130",
   "rejection_criteria": "Missing required artifacts, evidence, hashes, or attestation blocks submission intake.",
   "skill_tags": [
     "rust",
     "json",
-    "seccomp",
+    "systems",
     "containers",
     "cli"
   ],
-  "source_payload_hash": "sha256:4a464edbf1b9047733412e228af0755227f2e44440125761c094324cff3a3811",
-  "source_ref": "terminal-benchmark/terminal-benchmark-1c027e78be41/live-api/ws16-clean-cb1540ba",
+  "source_payload_hash": "sha256:<redacted>",
+  "source_ref": "terminal-benchmark/terminal-benchmark-reference-fixture/live-api/ws16-clean-cb1540ba",
   "source_type": "manual",
   "status": "draft",
   "task_type": "terminal_benchmark",
-  "title": "Terminal Benchmark terminal-benchmark-1c027e78be41 live-api",
+  "title": "Terminal Benchmark terminal-benchmark-reference-fixture live-api",
   "updated_at": "2026-07-08T23:44:03.452947Z"
 }
 ```
@@ -5031,18 +5031,18 @@ Response body:
   "created_at": "2026-07-08T23:44:03.452947Z",
   "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
   "currency": "USD",
-  "description": "Real Terminal Benchmark reviewer fixture with 3 milestones, languages=['rust', 'json'], category=software-engineering.",
+  "description": "Real Terminal Benchmark reference fixture with 3 milestones, languages=['rust', 'json'], category=software-engineering.",
   "difficulty": "medium",
   "estimated_time_minutes": 75,
-  "external_task_id": "terminal-benchmark-1c027e78be41",
+  "external_task_id": "terminal-benchmark-reference-fixture",
   "id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
-  "locked_effective_project_submission_artifact_policy_hash": "sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850",
+  "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
   "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
-  "locked_guide_source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+  "locked_guide_source_snapshot_hash": "sha256:<redacted>",
   "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
   "locked_guide_version": "v1",
   "locked_payment_policy_version": "v1",
-  "locked_pre_submit_checker_bundle_hash": "sha256:aa7bb902a63cb031a809533cf1939e1fc1dc47f3834aead923c9679e0302aa63",
+  "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
   "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
   "locked_review_policy_version": "v1",
   "locked_revision_policy_version": "v1",
@@ -5052,16 +5052,16 @@ Response body:
   "skill_tags": [
     "rust",
     "json",
-    "seccomp",
+    "systems",
     "containers",
     "cli"
   ],
-  "source_payload_hash": "sha256:4a464edbf1b9047733412e228af0755227f2e44440125761c094324cff3a3811",
-  "source_ref": "terminal-benchmark/terminal-benchmark-1c027e78be41/live-api/ws16-clean-cb1540ba",
+  "source_payload_hash": "sha256:<redacted>",
+  "source_ref": "terminal-benchmark/terminal-benchmark-reference-fixture/live-api/ws16-clean-cb1540ba",
   "source_type": "manual",
   "status": "screening",
   "task_type": "terminal_benchmark",
-  "title": "Terminal Benchmark terminal-benchmark-1c027e78be41 live-api",
+  "title": "Terminal Benchmark terminal-benchmark-reference-fixture live-api",
   "updated_at": "2026-07-08T23:44:03.630101Z"
 }
 ```
@@ -5080,9 +5080,9 @@ Response body:
 
 ```json
 {
-  "locked_effective_project_submission_artifact_policy_hash": "sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850",
+  "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
   "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
-  "locked_guide_source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+  "locked_guide_source_snapshot_hash": "sha256:<redacted>",
   "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
   "locked_guide_version": "v1",
   "locked_payment_policy_version": "v1",
@@ -5118,10 +5118,10 @@ Response body:
     "schema_version": "post_submit_checker_policy.v1",
     "warning_checkers": []
   },
-  "locked_post_submit_checker_policy_hash": "sha256:e2730e8ecea2eca2d8dce218ba1548f7c675d801045b58e1f211df3a35bdc41d",
+  "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
   "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
   "locked_post_submit_checker_policy_version": "v1",
-  "locked_pre_submit_checker_bundle_hash": "sha256:aa7bb902a63cb031a809533cf1939e1fc1dc47f3834aead923c9679e0302aa63",
+  "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
   "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
   "locked_review_policy_version": "v1",
   "locked_revision_policy_version": "v1",
@@ -5151,18 +5151,18 @@ Response body:
   "created_at": "2026-07-08T23:44:03.452947Z",
   "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
   "currency": "USD",
-  "description": "Real Terminal Benchmark reviewer fixture with 3 milestones, languages=['rust', 'json'], category=software-engineering.",
+  "description": "Real Terminal Benchmark reference fixture with 3 milestones, languages=['rust', 'json'], category=software-engineering.",
   "difficulty": "medium",
   "estimated_time_minutes": 75,
-  "external_task_id": "terminal-benchmark-1c027e78be41",
+  "external_task_id": "terminal-benchmark-reference-fixture",
   "id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
-  "locked_effective_project_submission_artifact_policy_hash": "sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850",
+  "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
   "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
-  "locked_guide_source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+  "locked_guide_source_snapshot_hash": "sha256:<redacted>",
   "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
   "locked_guide_version": "v1",
   "locked_payment_policy_version": "v1",
-  "locked_pre_submit_checker_bundle_hash": "sha256:aa7bb902a63cb031a809533cf1939e1fc1dc47f3834aead923c9679e0302aa63",
+  "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
   "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
   "locked_review_policy_version": "v1",
   "locked_revision_policy_version": "v1",
@@ -5172,16 +5172,16 @@ Response body:
   "skill_tags": [
     "rust",
     "json",
-    "seccomp",
+    "systems",
     "containers",
     "cli"
   ],
-  "source_payload_hash": "sha256:4a464edbf1b9047733412e228af0755227f2e44440125761c094324cff3a3811",
-  "source_ref": "terminal-benchmark/terminal-benchmark-1c027e78be41/live-api/ws16-clean-cb1540ba",
+  "source_payload_hash": "sha256:<redacted>",
+  "source_ref": "terminal-benchmark/terminal-benchmark-reference-fixture/live-api/ws16-clean-cb1540ba",
   "source_type": "manual",
   "status": "ready",
   "task_type": "terminal_benchmark",
-  "title": "Terminal Benchmark terminal-benchmark-1c027e78be41 live-api",
+  "title": "Terminal Benchmark terminal-benchmark-reference-fixture live-api",
   "updated_at": "2026-07-08T23:44:04.041939Z"
 }
 ```
@@ -5197,7 +5197,7 @@ Request body:
   "skill_tags": [
     "rust",
     "json",
-    "seccomp",
+    "systems",
     "containers",
     "cli"
   ]
@@ -5224,7 +5224,7 @@ Response body:
   "skill_tags": [
     "rust",
     "json",
-    "seccomp",
+    "systems",
     "containers",
     "cli"
   ],
@@ -5263,7 +5263,7 @@ Response body:
     "base_amount": "25.00",
     "created_at": "2026-07-08T23:44:03.452947Z",
     "currency": "USD",
-    "description": "Real Terminal Benchmark reviewer fixture with 3 milestones, languages=['rust', 'json'], category=software-engineering.",
+    "description": "Real Terminal Benchmark reference fixture with 3 milestones, languages=['rust', 'json'], category=software-engineering.",
     "difficulty": "medium",
     "estimated_time_minutes": 75,
     "id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
@@ -5277,14 +5277,14 @@ Response body:
     "skill_tags": [
       "rust",
       "json",
-      "seccomp",
+      "systems",
       "containers",
       "cli"
     ],
     "source_type": "manual",
     "status": "claimed",
     "task_type": "terminal_benchmark",
-    "title": "Terminal Benchmark terminal-benchmark-1c027e78be41 live-api",
+    "title": "Terminal Benchmark terminal-benchmark-reference-fixture live-api",
     "updated_at": "2026-07-08T23:44:04.503583Z"
   }
 }
@@ -5310,7 +5310,7 @@ Response body:
   "base_amount": "25.00",
   "created_at": "2026-07-08T23:44:03.452947Z",
   "currency": "USD",
-  "description": "Real Terminal Benchmark reviewer fixture with 3 milestones, languages=['rust', 'json'], category=software-engineering.",
+  "description": "Real Terminal Benchmark reference fixture with 3 milestones, languages=['rust', 'json'], category=software-engineering.",
   "difficulty": "medium",
   "estimated_time_minutes": 75,
   "id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
@@ -5324,14 +5324,14 @@ Response body:
   "skill_tags": [
     "rust",
     "json",
-    "seccomp",
+    "systems",
     "containers",
     "cli"
   ],
   "source_type": "manual",
   "status": "in_progress",
   "task_type": "terminal_benchmark",
-  "title": "Terminal Benchmark terminal-benchmark-1c027e78be41 live-api",
+  "title": "Terminal Benchmark terminal-benchmark-reference-fixture live-api",
   "updated_at": "2026-07-08T23:44:04.727342Z"
 }
 ```
@@ -5350,9 +5350,9 @@ Response body:
 
 ```json
 {
-  "locked_effective_project_submission_artifact_policy_hash": "sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850",
+  "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
   "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
-  "locked_guide_source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+  "locked_guide_source_snapshot_hash": "sha256:<redacted>",
   "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
   "locked_guide_version": "v1",
   "locked_payment_policy_version": "v1",
@@ -5388,10 +5388,10 @@ Response body:
     "schema_version": "post_submit_checker_policy.v1",
     "warning_checkers": []
   },
-  "locked_post_submit_checker_policy_hash": "sha256:e2730e8ecea2eca2d8dce218ba1548f7c675d801045b58e1f211df3a35bdc41d",
+  "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
   "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
   "locked_post_submit_checker_policy_version": "v1",
-  "locked_pre_submit_checker_bundle_hash": "sha256:aa7bb902a63cb031a809533cf1939e1fc1dc47f3834aead923c9679e0302aa63",
+  "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
   "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
   "locked_review_policy_version": "v1",
   "locked_revision_policy_version": "v1",
@@ -5416,7 +5416,7 @@ Response body:
 {
   "guide": {
     "change_summary": "Initial Terminal Benchmark real-world guide from sanitized imported source snapshot bundle.",
-    "content_markdown": "<redacted-large-text sha256:586b0e702b8fe201185ffab41d9ec4b4b862fea134deb010c2cc93c3b7412c1c bytes:138427>",
+    "content_markdown": "<redacted-large-text sha256:<redacted> bytes:138427>",
     "effective_at": "2026-07-08T23:44:03.147622Z",
     "id": "fbe0b2ab-2793-4619-a414-ed083d9cc117",
     "version": "v1"
@@ -5454,7 +5454,7 @@ Response body:
     "base_amount": "25.00",
     "created_at": "2026-07-08T23:44:03.452947Z",
     "currency": "USD",
-    "description": "Real Terminal Benchmark reviewer fixture with 3 milestones, languages=['rust', 'json'], category=software-engineering.",
+    "description": "Real Terminal Benchmark reference fixture with 3 milestones, languages=['rust', 'json'], category=software-engineering.",
     "difficulty": "medium",
     "estimated_time_minutes": 75,
     "id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
@@ -5465,13 +5465,13 @@ Response body:
     "skill_tags": [
       "rust",
       "json",
-      "seccomp",
+      "systems",
       "containers",
       "cli"
     ],
     "status": "in_progress",
     "task_type": "terminal_benchmark",
-    "title": "Terminal Benchmark terminal-benchmark-1c027e78be41 live-api",
+    "title": "Terminal Benchmark terminal-benchmark-reference-fixture live-api",
     "updated_at": "2026-07-08T23:44:04.727342Z"
   }
 }
@@ -5918,117 +5918,117 @@ Request body:
     "artifact_hash_manifest": [
       {
         "artifact": "environment/Dockerfile",
-        "hash": "sha256:c91a62df2e7075d06fa53255f331f19559d301549201ae693ae3a465891087fa",
+        "hash": "sha256:<redacted>",
         "notes": "Required by locked Terminal Benchmark project policy.",
         "size_bytes": 1327
       },
       {
         "artifact": "rubric.md",
-        "hash": "sha256:4786d11876205560bb85de2ab09b333645b714c43d6f46bee27ef6b0b410816e",
+        "hash": "sha256:<redacted>",
         "notes": "Required by locked Terminal Benchmark project policy.",
         "size_bytes": 34
       },
       {
         "artifact": "task.toml",
-        "hash": "sha256:4a464edbf1b9047733412e228af0755227f2e44440125761c094324cff3a3811",
+        "hash": "sha256:<redacted>",
         "notes": "Required by locked Terminal Benchmark project policy.",
         "size_bytes": 1562
       }
     ],
     "evidence_items": [
       {
-        "hash": "sha256:054bfe7027e1d80dbbcc44e9ccb077714e482d7bdef7abbdf9cee10dea17966a",
+        "hash": "sha256:<redacted>",
         "label": "Dependency pinning review",
         "metadata": {
-          "fixture_id": "terminal-benchmark-1c027e78be41",
+          "fixture_id": "terminal-benchmark-reference-fixture",
           "required_evidence_key": "dependency_pinning_review"
         },
         "size_bytes": 40,
         "type": "log",
-        "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/dependency_pinning_review.txt"
+        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/dependency_pinning_review.txt"
       },
       {
-        "hash": "sha256:693734646cdc384030f735f2cf8b74da1fcf5fe1f12e0e53237ecf13016de751",
+        "hash": "sha256:<redacted>",
         "label": "Environment hygiene review",
         "metadata": {
-          "fixture_id": "terminal-benchmark-1c027e78be41",
+          "fixture_id": "terminal-benchmark-reference-fixture",
           "required_evidence_key": "environment_hygiene_review"
         },
         "size_bytes": 41,
         "type": "log",
-        "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/environment_hygiene_review.txt"
+        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/environment_hygiene_review.txt"
       },
       {
-        "hash": "sha256:37f31815061bdb7ad0d0c0c1e46ad7382b77df61c36583e3a704c87c763d99ca",
+        "hash": "sha256:<redacted>",
         "label": "Task instructions included",
         "metadata": {
-          "fixture_id": "terminal-benchmark-1c027e78be41",
+          "fixture_id": "terminal-benchmark-reference-fixture",
           "required_evidence_key": "instructions_present"
         },
         "size_bytes": 35,
         "type": "log",
-        "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/instructions_present.txt"
+        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/instructions_present.txt"
       },
       {
-        "hash": "sha256:a88f98916343d1e1aac53d6fd09b9d3be01c322bce792a06074d0a2d46b27659",
+        "hash": "sha256:<redacted>",
         "label": "Reward footer review",
         "metadata": {
-          "fixture_id": "terminal-benchmark-1c027e78be41",
+          "fixture_id": "terminal-benchmark-reference-fixture",
           "required_evidence_key": "reward_footer_review"
         },
         "size_bytes": 35,
         "type": "log",
-        "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/reward_footer_review.txt"
+        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/reward_footer_review.txt"
       },
       {
-        "hash": "sha256:71feef897c3a79358318bf8b2634fce6c928ddd5303b57293b93be063bd8d20a",
+        "hash": "sha256:<redacted>",
         "label": "Reference solution included",
         "metadata": {
-          "fixture_id": "terminal-benchmark-1c027e78be41",
+          "fixture_id": "terminal-benchmark-reference-fixture",
           "required_evidence_key": "solution_present"
         },
         "size_bytes": 31,
         "type": "log",
-        "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/solution_present.txt"
+        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/solution_present.txt"
       },
       {
-        "hash": "sha256:c82ac87b125cad1ca6928d1fed6b9190fda594c239a84c34dc9a2f77b2d10021",
+        "hash": "sha256:<redacted>",
         "label": "Submission explanations",
         "metadata": {
-          "fixture_id": "terminal-benchmark-1c027e78be41",
+          "fixture_id": "terminal-benchmark-reference-fixture",
           "required_evidence_key": "submission_explanations"
         },
         "size_bytes": 38,
         "type": "log",
-        "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/submission_explanations.txt"
+        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/submission_explanations.txt"
       },
       {
-        "hash": "sha256:d4390376e1a3875eb88b7b404f0c02cc5cfb5aa123d087ce5890ad13dd6accc1",
+        "hash": "sha256:<redacted>",
         "label": "Test alignment review",
         "metadata": {
-          "fixture_id": "terminal-benchmark-1c027e78be41",
+          "fixture_id": "terminal-benchmark-reference-fixture",
           "required_evidence_key": "test_alignment_review"
         },
         "size_bytes": 36,
         "type": "log",
-        "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/test_alignment_review.txt"
+        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/test_alignment_review.txt"
       },
       {
-        "hash": "sha256:a89843ff6d20f721ed2b958b37046e740c53dad7c0e7fdd928b97e3e16e885ce",
+        "hash": "sha256:<redacted>",
         "label": "Verifier files included",
         "metadata": {
-          "fixture_id": "terminal-benchmark-1c027e78be41",
+          "fixture_id": "terminal-benchmark-reference-fixture",
           "required_evidence_key": "tests_present"
         },
         "size_bytes": 28,
         "type": "log",
-        "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/tests_present.txt"
+        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/tests_present.txt"
       }
     ],
-    "package_hash": "sha256:24297fe175abfa9998d0195e0a990e9e9557e8b361afb1fd0680c0e9d41889fd",
-    "package_uri": "local://termius/terminal-benchmark-1c027e78be41/submission.zip",
+    "package_hash": "sha256:<redacted>",
+    "package_uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/submission.zip",
     "summary": "Blocked-path packet built from live requirements, missing environment/.dockerignore.",
-    "worker_attestation": "<redacted-large-string sha256:cc6f114774078918553f5b2f5c3cddc2c0d9a8cb997837becba1ea330e51a82c bytes:752 prefix:'I attest this submission is original_work, produced under human_accountability_f'>"
+    "worker_attestation": "<redacted-large-string sha256:<redacted> bytes:752 prefix:'I attest this submission is original_work, produced under human_accountability_f'>"
   }
 }
 ```
@@ -6120,117 +6120,117 @@ Request body:
   "artifact_hash_manifest": [
     {
       "artifact": "environment/Dockerfile",
-      "hash": "sha256:c91a62df2e7075d06fa53255f331f19559d301549201ae693ae3a465891087fa",
+      "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
       "size_bytes": 1327
     },
     {
       "artifact": "rubric.md",
-      "hash": "sha256:4786d11876205560bb85de2ab09b333645b714c43d6f46bee27ef6b0b410816e",
+      "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
       "size_bytes": 34
     },
     {
       "artifact": "task.toml",
-      "hash": "sha256:4a464edbf1b9047733412e228af0755227f2e44440125761c094324cff3a3811",
+      "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
       "size_bytes": 1562
     }
   ],
   "evidence_items": [
     {
-      "hash": "sha256:054bfe7027e1d80dbbcc44e9ccb077714e482d7bdef7abbdf9cee10dea17966a",
+      "hash": "sha256:<redacted>",
       "label": "Dependency pinning review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "dependency_pinning_review"
       },
       "size_bytes": 40,
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/dependency_pinning_review.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/dependency_pinning_review.txt"
     },
     {
-      "hash": "sha256:693734646cdc384030f735f2cf8b74da1fcf5fe1f12e0e53237ecf13016de751",
+      "hash": "sha256:<redacted>",
       "label": "Environment hygiene review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "environment_hygiene_review"
       },
       "size_bytes": 41,
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/environment_hygiene_review.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/environment_hygiene_review.txt"
     },
     {
-      "hash": "sha256:37f31815061bdb7ad0d0c0c1e46ad7382b77df61c36583e3a704c87c763d99ca",
+      "hash": "sha256:<redacted>",
       "label": "Task instructions included",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "instructions_present"
       },
       "size_bytes": 35,
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/instructions_present.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/instructions_present.txt"
     },
     {
-      "hash": "sha256:a88f98916343d1e1aac53d6fd09b9d3be01c322bce792a06074d0a2d46b27659",
+      "hash": "sha256:<redacted>",
       "label": "Reward footer review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "reward_footer_review"
       },
       "size_bytes": 35,
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/reward_footer_review.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/reward_footer_review.txt"
     },
     {
-      "hash": "sha256:71feef897c3a79358318bf8b2634fce6c928ddd5303b57293b93be063bd8d20a",
+      "hash": "sha256:<redacted>",
       "label": "Reference solution included",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "solution_present"
       },
       "size_bytes": 31,
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/solution_present.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/solution_present.txt"
     },
     {
-      "hash": "sha256:c82ac87b125cad1ca6928d1fed6b9190fda594c239a84c34dc9a2f77b2d10021",
+      "hash": "sha256:<redacted>",
       "label": "Submission explanations",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "submission_explanations"
       },
       "size_bytes": 38,
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/submission_explanations.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/submission_explanations.txt"
     },
     {
-      "hash": "sha256:d4390376e1a3875eb88b7b404f0c02cc5cfb5aa123d087ce5890ad13dd6accc1",
+      "hash": "sha256:<redacted>",
       "label": "Test alignment review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "test_alignment_review"
       },
       "size_bytes": 36,
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/test_alignment_review.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/test_alignment_review.txt"
     },
     {
-      "hash": "sha256:a89843ff6d20f721ed2b958b37046e740c53dad7c0e7fdd928b97e3e16e885ce",
+      "hash": "sha256:<redacted>",
       "label": "Verifier files included",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "tests_present"
       },
       "size_bytes": 28,
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/tests_present.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/tests_present.txt"
     }
   ],
-  "package_hash": "sha256:24297fe175abfa9998d0195e0a990e9e9557e8b361afb1fd0680c0e9d41889fd",
-  "package_uri": "local://termius/terminal-benchmark-1c027e78be41/submission.zip",
+  "package_hash": "sha256:<redacted>",
+  "package_uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/submission.zip",
   "summary": "Blocked-path packet built from live requirements, missing environment/.dockerignore.",
-  "worker_attestation": "<redacted-large-string sha256:cc6f114774078918553f5b2f5c3cddc2c0d9a8cb997837becba1ea330e51a82c bytes:752 prefix:'I attest this submission is original_work, produced under human_accountability_f'>"
+  "worker_attestation": "<redacted-large-string sha256:<redacted> bytes:752 prefix:'I attest this submission is original_work, produced under human_accountability_f'>"
 }
 ```
 
@@ -6391,16 +6391,16 @@ Response body:
     "entity_type": "task",
     "event_payload": {
       "assigned_to": null,
-      "locked_effective_project_submission_artifact_policy_hash": "sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850",
+      "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
       "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
-      "locked_guide_source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+      "locked_guide_source_snapshot_hash": "sha256:<redacted>",
       "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
-      "locked_post_submit_checker_policy_hash": "sha256:e2730e8ecea2eca2d8dce218ba1548f7c675d801045b58e1f211df3a35bdc41d",
+      "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
       "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
       "locked_post_submit_checker_policy_version": "v1",
-      "locked_pre_submit_checker_bundle_hash": "sha256:aa7bb902a63cb031a809533cf1939e1fc1dc47f3834aead923c9679e0302aa63",
+      "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
       "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
       "locked_review_policy_version": "v1",
       "locked_revision_policy_version": "v1"
@@ -6426,16 +6426,16 @@ Response body:
     "entity_type": "task",
     "event_payload": {
       "assigned_to": null,
-      "locked_effective_project_submission_artifact_policy_hash": "sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850",
+      "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
       "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
-      "locked_guide_source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+      "locked_guide_source_snapshot_hash": "sha256:<redacted>",
       "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
-      "locked_post_submit_checker_policy_hash": "sha256:e2730e8ecea2eca2d8dce218ba1548f7c675d801045b58e1f211df3a35bdc41d",
+      "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
       "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
       "locked_post_submit_checker_policy_version": "v1",
-      "locked_pre_submit_checker_bundle_hash": "sha256:aa7bb902a63cb031a809533cf1939e1fc1dc47f3834aead923c9679e0302aa63",
+      "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
       "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
       "locked_review_policy_version": "v1",
       "locked_revision_policy_version": "v1"
@@ -6462,16 +6462,16 @@ Response body:
     "event_payload": {
       "assigned_to": "d0c5c1f3-7689-5965-bba3-975bbac3c815",
       "assignment_id": "47f47a44-cd98-41e6-859e-86ac232cd83b",
-      "locked_effective_project_submission_artifact_policy_hash": "sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850",
+      "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
       "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
-      "locked_guide_source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+      "locked_guide_source_snapshot_hash": "sha256:<redacted>",
       "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
-      "locked_post_submit_checker_policy_hash": "sha256:e2730e8ecea2eca2d8dce218ba1548f7c675d801045b58e1f211df3a35bdc41d",
+      "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
       "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
       "locked_post_submit_checker_policy_version": "v1",
-      "locked_pre_submit_checker_bundle_hash": "sha256:aa7bb902a63cb031a809533cf1939e1fc1dc47f3834aead923c9679e0302aa63",
+      "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
       "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
       "locked_review_policy_version": "v1",
       "locked_revision_policy_version": "v1",
@@ -6499,16 +6499,16 @@ Response body:
     "event_payload": {
       "assigned_to": "d0c5c1f3-7689-5965-bba3-975bbac3c815",
       "assignment_id": "47f47a44-cd98-41e6-859e-86ac232cd83b",
-      "locked_effective_project_submission_artifact_policy_hash": "sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850",
+      "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
       "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
-      "locked_guide_source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+      "locked_guide_source_snapshot_hash": "sha256:<redacted>",
       "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
-      "locked_post_submit_checker_policy_hash": "sha256:e2730e8ecea2eca2d8dce218ba1548f7c675d801045b58e1f211df3a35bdc41d",
+      "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
       "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
       "locked_post_submit_checker_policy_version": "v1",
-      "locked_pre_submit_checker_bundle_hash": "sha256:aa7bb902a63cb031a809533cf1939e1fc1dc47f3834aead923c9679e0302aa63",
+      "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
       "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
       "locked_review_policy_version": "v1",
       "locked_revision_policy_version": "v1",
@@ -6536,16 +6536,16 @@ Response body:
     "entity_type": "task",
     "event_payload": {
       "assigned_to": "d0c5c1f3-7689-5965-bba3-975bbac3c815",
-      "locked_effective_project_submission_artifact_policy_hash": "sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850",
+      "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
       "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
-      "locked_guide_source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+      "locked_guide_source_snapshot_hash": "sha256:<redacted>",
       "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
-      "locked_post_submit_checker_policy_hash": "sha256:e2730e8ecea2eca2d8dce218ba1548f7c675d801045b58e1f211df3a35bdc41d",
+      "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
       "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
       "locked_post_submit_checker_policy_version": "v1",
-      "locked_pre_submit_checker_bundle_hash": "sha256:aa7bb902a63cb031a809533cf1939e1fc1dc47f3834aead923c9679e0302aa63",
+      "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
       "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
       "locked_review_policy_version": "v1",
       "locked_revision_policy_version": "v1",
@@ -6645,123 +6645,123 @@ Request body:
     "artifact_hash_manifest": [
       {
         "artifact": "environment/Dockerfile",
-        "hash": "sha256:c91a62df2e7075d06fa53255f331f19559d301549201ae693ae3a465891087fa",
+        "hash": "sha256:<redacted>",
         "notes": "Required by locked Terminal Benchmark project policy.",
         "size_bytes": 1327
       },
       {
         "artifact": "environment/.dockerignore",
-        "hash": "sha256:cb2d67a46a111652f3bb388ee15d455eed7542905bdc61cd2a3c6d2fc23cc709",
+        "hash": "sha256:<redacted>",
         "notes": "Required by locked Terminal Benchmark project policy.",
         "size_bytes": 185
       },
       {
         "artifact": "rubric.md",
-        "hash": "sha256:4786d11876205560bb85de2ab09b333645b714c43d6f46bee27ef6b0b410816e",
+        "hash": "sha256:<redacted>",
         "notes": "Required by locked Terminal Benchmark project policy.",
         "size_bytes": 34
       },
       {
         "artifact": "task.toml",
-        "hash": "sha256:4a464edbf1b9047733412e228af0755227f2e44440125761c094324cff3a3811",
+        "hash": "sha256:<redacted>",
         "notes": "Required by locked Terminal Benchmark project policy.",
         "size_bytes": 1562
       }
     ],
     "evidence_items": [
       {
-        "hash": "sha256:054bfe7027e1d80dbbcc44e9ccb077714e482d7bdef7abbdf9cee10dea17966a",
+        "hash": "sha256:<redacted>",
         "label": "Dependency pinning review",
         "metadata": {
-          "fixture_id": "terminal-benchmark-1c027e78be41",
+          "fixture_id": "terminal-benchmark-reference-fixture",
           "required_evidence_key": "dependency_pinning_review"
         },
         "size_bytes": 40,
         "type": "log",
-        "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/dependency_pinning_review.txt"
+        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/dependency_pinning_review.txt"
       },
       {
-        "hash": "sha256:693734646cdc384030f735f2cf8b74da1fcf5fe1f12e0e53237ecf13016de751",
+        "hash": "sha256:<redacted>",
         "label": "Environment hygiene review",
         "metadata": {
-          "fixture_id": "terminal-benchmark-1c027e78be41",
+          "fixture_id": "terminal-benchmark-reference-fixture",
           "required_evidence_key": "environment_hygiene_review"
         },
         "size_bytes": 41,
         "type": "log",
-        "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/environment_hygiene_review.txt"
+        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/environment_hygiene_review.txt"
       },
       {
-        "hash": "sha256:37f31815061bdb7ad0d0c0c1e46ad7382b77df61c36583e3a704c87c763d99ca",
+        "hash": "sha256:<redacted>",
         "label": "Task instructions included",
         "metadata": {
-          "fixture_id": "terminal-benchmark-1c027e78be41",
+          "fixture_id": "terminal-benchmark-reference-fixture",
           "required_evidence_key": "instructions_present"
         },
         "size_bytes": 35,
         "type": "log",
-        "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/instructions_present.txt"
+        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/instructions_present.txt"
       },
       {
-        "hash": "sha256:a88f98916343d1e1aac53d6fd09b9d3be01c322bce792a06074d0a2d46b27659",
+        "hash": "sha256:<redacted>",
         "label": "Reward footer review",
         "metadata": {
-          "fixture_id": "terminal-benchmark-1c027e78be41",
+          "fixture_id": "terminal-benchmark-reference-fixture",
           "required_evidence_key": "reward_footer_review"
         },
         "size_bytes": 35,
         "type": "log",
-        "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/reward_footer_review.txt"
+        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/reward_footer_review.txt"
       },
       {
-        "hash": "sha256:71feef897c3a79358318bf8b2634fce6c928ddd5303b57293b93be063bd8d20a",
+        "hash": "sha256:<redacted>",
         "label": "Reference solution included",
         "metadata": {
-          "fixture_id": "terminal-benchmark-1c027e78be41",
+          "fixture_id": "terminal-benchmark-reference-fixture",
           "required_evidence_key": "solution_present"
         },
         "size_bytes": 31,
         "type": "log",
-        "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/solution_present.txt"
+        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/solution_present.txt"
       },
       {
-        "hash": "sha256:c82ac87b125cad1ca6928d1fed6b9190fda594c239a84c34dc9a2f77b2d10021",
+        "hash": "sha256:<redacted>",
         "label": "Submission explanations",
         "metadata": {
-          "fixture_id": "terminal-benchmark-1c027e78be41",
+          "fixture_id": "terminal-benchmark-reference-fixture",
           "required_evidence_key": "submission_explanations"
         },
         "size_bytes": 38,
         "type": "log",
-        "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/submission_explanations.txt"
+        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/submission_explanations.txt"
       },
       {
-        "hash": "sha256:d4390376e1a3875eb88b7b404f0c02cc5cfb5aa123d087ce5890ad13dd6accc1",
+        "hash": "sha256:<redacted>",
         "label": "Test alignment review",
         "metadata": {
-          "fixture_id": "terminal-benchmark-1c027e78be41",
+          "fixture_id": "terminal-benchmark-reference-fixture",
           "required_evidence_key": "test_alignment_review"
         },
         "size_bytes": 36,
         "type": "log",
-        "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/test_alignment_review.txt"
+        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/test_alignment_review.txt"
       },
       {
-        "hash": "sha256:a89843ff6d20f721ed2b958b37046e740c53dad7c0e7fdd928b97e3e16e885ce",
+        "hash": "sha256:<redacted>",
         "label": "Verifier files included",
         "metadata": {
-          "fixture_id": "terminal-benchmark-1c027e78be41",
+          "fixture_id": "terminal-benchmark-reference-fixture",
           "required_evidence_key": "tests_present"
         },
         "size_bytes": 28,
         "type": "log",
-        "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/tests_present.txt"
+        "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/tests_present.txt"
       }
     ],
-    "package_hash": "sha256:24297fe175abfa9998d0195e0a990e9e9557e8b361afb1fd0680c0e9d41889fd",
-    "package_uri": "local://termius/terminal-benchmark-1c027e78be41/submission.zip",
-    "summary": "Terminal Benchmark terminal-benchmark-1c027e78be41 packet built from live submission requirements.",
-    "worker_attestation": "<redacted-large-string sha256:cc6f114774078918553f5b2f5c3cddc2c0d9a8cb997837becba1ea330e51a82c bytes:752 prefix:'I attest this submission is original_work, produced under human_accountability_f'>"
+    "package_hash": "sha256:<redacted>",
+    "package_uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/submission.zip",
+    "summary": "Terminal Benchmark terminal-benchmark-reference-fixture packet built from live submission requirements.",
+    "worker_attestation": "<redacted-large-string sha256:<redacted> bytes:752 prefix:'I attest this submission is original_work, produced under human_accountability_f'>"
   }
 }
 ```
@@ -6869,123 +6869,123 @@ Request body:
   "artifact_hash_manifest": [
     {
       "artifact": "environment/Dockerfile",
-      "hash": "sha256:c91a62df2e7075d06fa53255f331f19559d301549201ae693ae3a465891087fa",
+      "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
       "size_bytes": 1327
     },
     {
       "artifact": "environment/.dockerignore",
-      "hash": "sha256:cb2d67a46a111652f3bb388ee15d455eed7542905bdc61cd2a3c6d2fc23cc709",
+      "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
       "size_bytes": 185
     },
     {
       "artifact": "rubric.md",
-      "hash": "sha256:4786d11876205560bb85de2ab09b333645b714c43d6f46bee27ef6b0b410816e",
+      "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
       "size_bytes": 34
     },
     {
       "artifact": "task.toml",
-      "hash": "sha256:4a464edbf1b9047733412e228af0755227f2e44440125761c094324cff3a3811",
+      "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
       "size_bytes": 1562
     }
   ],
   "evidence_items": [
     {
-      "hash": "sha256:054bfe7027e1d80dbbcc44e9ccb077714e482d7bdef7abbdf9cee10dea17966a",
+      "hash": "sha256:<redacted>",
       "label": "Dependency pinning review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "dependency_pinning_review"
       },
       "size_bytes": 40,
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/dependency_pinning_review.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/dependency_pinning_review.txt"
     },
     {
-      "hash": "sha256:693734646cdc384030f735f2cf8b74da1fcf5fe1f12e0e53237ecf13016de751",
+      "hash": "sha256:<redacted>",
       "label": "Environment hygiene review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "environment_hygiene_review"
       },
       "size_bytes": 41,
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/environment_hygiene_review.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/environment_hygiene_review.txt"
     },
     {
-      "hash": "sha256:37f31815061bdb7ad0d0c0c1e46ad7382b77df61c36583e3a704c87c763d99ca",
+      "hash": "sha256:<redacted>",
       "label": "Task instructions included",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "instructions_present"
       },
       "size_bytes": 35,
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/instructions_present.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/instructions_present.txt"
     },
     {
-      "hash": "sha256:a88f98916343d1e1aac53d6fd09b9d3be01c322bce792a06074d0a2d46b27659",
+      "hash": "sha256:<redacted>",
       "label": "Reward footer review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "reward_footer_review"
       },
       "size_bytes": 35,
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/reward_footer_review.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/reward_footer_review.txt"
     },
     {
-      "hash": "sha256:71feef897c3a79358318bf8b2634fce6c928ddd5303b57293b93be063bd8d20a",
+      "hash": "sha256:<redacted>",
       "label": "Reference solution included",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "solution_present"
       },
       "size_bytes": 31,
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/solution_present.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/solution_present.txt"
     },
     {
-      "hash": "sha256:c82ac87b125cad1ca6928d1fed6b9190fda594c239a84c34dc9a2f77b2d10021",
+      "hash": "sha256:<redacted>",
       "label": "Submission explanations",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "submission_explanations"
       },
       "size_bytes": 38,
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/submission_explanations.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/submission_explanations.txt"
     },
     {
-      "hash": "sha256:d4390376e1a3875eb88b7b404f0c02cc5cfb5aa123d087ce5890ad13dd6accc1",
+      "hash": "sha256:<redacted>",
       "label": "Test alignment review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "test_alignment_review"
       },
       "size_bytes": 36,
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/test_alignment_review.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/test_alignment_review.txt"
     },
     {
-      "hash": "sha256:a89843ff6d20f721ed2b958b37046e740c53dad7c0e7fdd928b97e3e16e885ce",
+      "hash": "sha256:<redacted>",
       "label": "Verifier files included",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "tests_present"
       },
       "size_bytes": 28,
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/tests_present.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/tests_present.txt"
     }
   ],
-  "package_hash": "sha256:24297fe175abfa9998d0195e0a990e9e9557e8b361afb1fd0680c0e9d41889fd",
-  "package_uri": "local://termius/terminal-benchmark-1c027e78be41/submission.zip",
-  "summary": "Terminal Benchmark terminal-benchmark-1c027e78be41 packet built from live submission requirements.",
-  "worker_attestation": "<redacted-large-string sha256:cc6f114774078918553f5b2f5c3cddc2c0d9a8cb997837becba1ea330e51a82c bytes:752 prefix:'I attest this submission is original_work, produced under human_accountability_f'>"
+  "package_hash": "sha256:<redacted>",
+  "package_uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/submission.zip",
+  "summary": "Terminal Benchmark terminal-benchmark-reference-fixture packet built from live submission requirements.",
+  "worker_attestation": "<redacted-large-string sha256:<redacted> bytes:752 prefix:'I attest this submission is original_work, produced under human_accountability_f'>"
 }
 ```
 
@@ -7070,7 +7070,7 @@ Response body:
   "id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
   "status": "submitted",
   "submitted_at": "2026-07-08T23:45:18.127472Z",
-  "summary": "Terminal Benchmark terminal-benchmark-1c027e78be41 packet built from live submission requirements.",
+  "summary": "Terminal Benchmark terminal-benchmark-reference-fixture packet built from live submission requirements.",
   "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
   "version": 1,
   "worker_id": "d0c5c1f3-7689-5965-bba3-975bbac3c815"
@@ -7169,7 +7169,7 @@ Response body:
     "id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
     "status": "submitted",
     "submitted_at": "2026-07-08T23:45:18.127472Z",
-    "summary": "Terminal Benchmark terminal-benchmark-1c027e78be41 packet built from live submission requirements.",
+    "summary": "Terminal Benchmark terminal-benchmark-reference-fixture packet built from live submission requirements.",
     "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
     "version": 1,
     "worker_id": "d0c5c1f3-7689-5965-bba3-975bbac3c815"
@@ -7212,25 +7212,25 @@ Response body:
   "artifact_hash_manifest": [
     {
       "artifact": "environment/Dockerfile",
-      "hash": "sha256:c91a62df2e7075d06fa53255f331f19559d301549201ae693ae3a465891087fa",
+      "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
       "size_bytes": 1327
     },
     {
       "artifact": "environment/.dockerignore",
-      "hash": "sha256:cb2d67a46a111652f3bb388ee15d455eed7542905bdc61cd2a3c6d2fc23cc709",
+      "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
       "size_bytes": 185
     },
     {
       "artifact": "rubric.md",
-      "hash": "sha256:4786d11876205560bb85de2ab09b333645b714c43d6f46bee27ef6b0b410816e",
+      "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
       "size_bytes": 34
     },
     {
       "artifact": "task.toml",
-      "hash": "sha256:4a464edbf1b9047733412e228af0755227f2e44440125761c094324cff3a3811",
+      "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
       "size_bytes": 1562
     }
@@ -7239,144 +7239,144 @@ Response body:
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
-      "hash": "sha256:054bfe7027e1d80dbbcc44e9ccb077714e482d7bdef7abbdf9cee10dea17966a",
+      "hash": "sha256:<redacted>",
       "id": "0807ade0-2c5a-4128-a253-e3f6307c6e69",
       "label": "Dependency pinning review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "dependency_pinning_review"
       },
       "size_bytes": 40,
       "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/dependency_pinning_review.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/dependency_pinning_review.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
-      "hash": "sha256:693734646cdc384030f735f2cf8b74da1fcf5fe1f12e0e53237ecf13016de751",
+      "hash": "sha256:<redacted>",
       "id": "21e8b24f-51d8-4934-96dd-6608b9d54082",
       "label": "Environment hygiene review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "environment_hygiene_review"
       },
       "size_bytes": 41,
       "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/environment_hygiene_review.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/environment_hygiene_review.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
-      "hash": "sha256:37f31815061bdb7ad0d0c0c1e46ad7382b77df61c36583e3a704c87c763d99ca",
+      "hash": "sha256:<redacted>",
       "id": "06f50e90-b055-485e-bda4-289ffa822025",
       "label": "Task instructions included",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "instructions_present"
       },
       "size_bytes": 35,
       "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/instructions_present.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/instructions_present.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
-      "hash": "sha256:a88f98916343d1e1aac53d6fd09b9d3be01c322bce792a06074d0a2d46b27659",
+      "hash": "sha256:<redacted>",
       "id": "f21c9ab2-cc6d-466b-a2fb-817ae8741918",
       "label": "Reward footer review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "reward_footer_review"
       },
       "size_bytes": 35,
       "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/reward_footer_review.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/reward_footer_review.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
-      "hash": "sha256:71feef897c3a79358318bf8b2634fce6c928ddd5303b57293b93be063bd8d20a",
+      "hash": "sha256:<redacted>",
       "id": "40eb6111-adeb-48ba-9333-ddaa8340a768",
       "label": "Reference solution included",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "solution_present"
       },
       "size_bytes": 31,
       "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/solution_present.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/solution_present.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
-      "hash": "sha256:c82ac87b125cad1ca6928d1fed6b9190fda594c239a84c34dc9a2f77b2d10021",
+      "hash": "sha256:<redacted>",
       "id": "d94c5f46-a286-44cc-a19b-2e4890be3ef8",
       "label": "Submission explanations",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "submission_explanations"
       },
       "size_bytes": 38,
       "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/submission_explanations.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/submission_explanations.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
-      "hash": "sha256:d4390376e1a3875eb88b7b404f0c02cc5cfb5aa123d087ce5890ad13dd6accc1",
+      "hash": "sha256:<redacted>",
       "id": "f0d58929-efa4-446f-bb72-04c7a2c14a77",
       "label": "Test alignment review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "test_alignment_review"
       },
       "size_bytes": 36,
       "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/test_alignment_review.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/test_alignment_review.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
-      "hash": "sha256:a89843ff6d20f721ed2b958b37046e740c53dad7c0e7fdd928b97e3e16e885ce",
+      "hash": "sha256:<redacted>",
       "id": "afdb97ca-4a8d-46de-9d7f-34f4c7468242",
       "label": "Verifier files included",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "tests_present"
       },
       "size_bytes": 28,
       "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/tests_present.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/tests_present.txt"
     }
   ],
   "finalized_at": "2026-07-08T23:45:18.750577Z",
   "id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
-  "locked_effective_project_submission_artifact_policy_hash": "sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850",
+  "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
   "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
-  "locked_guide_source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+  "locked_guide_source_snapshot_hash": "sha256:<redacted>",
   "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
   "locked_guide_version": "v1",
   "locked_payment_policy_version": "v1",
-  "locked_pre_submit_checker_bundle_hash": "sha256:aa7bb902a63cb031a809533cf1939e1fc1dc47f3834aead923c9679e0302aa63",
+  "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
   "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
   "locked_review_policy_version": "v1",
   "locked_revision_policy_version": "v1",
-  "package_hash": "sha256:24297fe175abfa9998d0195e0a990e9e9557e8b361afb1fd0680c0e9d41889fd",
-  "package_uri": "local://termius/terminal-benchmark-1c027e78be41/submission.zip",
+  "package_hash": "sha256:<redacted>",
+  "package_uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/submission.zip",
   "status": "submitted",
   "submitted_at": "2026-07-08T23:45:18.127472Z",
-  "summary": "Terminal Benchmark terminal-benchmark-1c027e78be41 packet built from live submission requirements.",
+  "summary": "Terminal Benchmark terminal-benchmark-reference-fixture packet built from live submission requirements.",
   "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
   "version": 1,
-  "worker_attestation": "<redacted-large-string sha256:cc6f114774078918553f5b2f5c3cddc2c0d9a8cb997837becba1ea330e51a82c bytes:752 prefix:'I attest this submission is original_work, produced under human_accountability_f'>",
+  "worker_attestation": "<redacted-large-string sha256:<redacted> bytes:752 prefix:'I attest this submission is original_work, produced under human_accountability_f'>",
   "worker_id": "d0c5c1f3-7689-5965-bba3-975bbac3c815"
 }
 ```
@@ -7398,25 +7398,25 @@ Response body:
   "artifact_hash_manifest": [
     {
       "artifact": "environment/Dockerfile",
-      "hash": "sha256:c91a62df2e7075d06fa53255f331f19559d301549201ae693ae3a465891087fa",
+      "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
       "size_bytes": 1327
     },
     {
       "artifact": "environment/.dockerignore",
-      "hash": "sha256:cb2d67a46a111652f3bb388ee15d455eed7542905bdc61cd2a3c6d2fc23cc709",
+      "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
       "size_bytes": 185
     },
     {
       "artifact": "rubric.md",
-      "hash": "sha256:4786d11876205560bb85de2ab09b333645b714c43d6f46bee27ef6b0b410816e",
+      "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
       "size_bytes": 34
     },
     {
       "artifact": "task.toml",
-      "hash": "sha256:4a464edbf1b9047733412e228af0755227f2e44440125761c094324cff3a3811",
+      "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
       "size_bytes": 1562
     }
@@ -7425,144 +7425,144 @@ Response body:
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
-      "hash": "sha256:054bfe7027e1d80dbbcc44e9ccb077714e482d7bdef7abbdf9cee10dea17966a",
+      "hash": "sha256:<redacted>",
       "id": "0807ade0-2c5a-4128-a253-e3f6307c6e69",
       "label": "Dependency pinning review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "dependency_pinning_review"
       },
       "size_bytes": 40,
       "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/dependency_pinning_review.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/dependency_pinning_review.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
-      "hash": "sha256:693734646cdc384030f735f2cf8b74da1fcf5fe1f12e0e53237ecf13016de751",
+      "hash": "sha256:<redacted>",
       "id": "21e8b24f-51d8-4934-96dd-6608b9d54082",
       "label": "Environment hygiene review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "environment_hygiene_review"
       },
       "size_bytes": 41,
       "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/environment_hygiene_review.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/environment_hygiene_review.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
-      "hash": "sha256:37f31815061bdb7ad0d0c0c1e46ad7382b77df61c36583e3a704c87c763d99ca",
+      "hash": "sha256:<redacted>",
       "id": "06f50e90-b055-485e-bda4-289ffa822025",
       "label": "Task instructions included",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "instructions_present"
       },
       "size_bytes": 35,
       "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/instructions_present.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/instructions_present.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
-      "hash": "sha256:a88f98916343d1e1aac53d6fd09b9d3be01c322bce792a06074d0a2d46b27659",
+      "hash": "sha256:<redacted>",
       "id": "f21c9ab2-cc6d-466b-a2fb-817ae8741918",
       "label": "Reward footer review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "reward_footer_review"
       },
       "size_bytes": 35,
       "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/reward_footer_review.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/reward_footer_review.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
-      "hash": "sha256:71feef897c3a79358318bf8b2634fce6c928ddd5303b57293b93be063bd8d20a",
+      "hash": "sha256:<redacted>",
       "id": "40eb6111-adeb-48ba-9333-ddaa8340a768",
       "label": "Reference solution included",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "solution_present"
       },
       "size_bytes": 31,
       "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/solution_present.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/solution_present.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
-      "hash": "sha256:c82ac87b125cad1ca6928d1fed6b9190fda594c239a84c34dc9a2f77b2d10021",
+      "hash": "sha256:<redacted>",
       "id": "d94c5f46-a286-44cc-a19b-2e4890be3ef8",
       "label": "Submission explanations",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "submission_explanations"
       },
       "size_bytes": 38,
       "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/submission_explanations.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/submission_explanations.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
-      "hash": "sha256:d4390376e1a3875eb88b7b404f0c02cc5cfb5aa123d087ce5890ad13dd6accc1",
+      "hash": "sha256:<redacted>",
       "id": "f0d58929-efa4-446f-bb72-04c7a2c14a77",
       "label": "Test alignment review",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "test_alignment_review"
       },
       "size_bytes": 36,
       "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/test_alignment_review.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/test_alignment_review.txt"
     },
     {
       "created_at": "2026-07-08T23:45:18.127472Z",
       "finalized_at": "2026-07-08T23:45:18.750577Z",
-      "hash": "sha256:a89843ff6d20f721ed2b958b37046e740c53dad7c0e7fdd928b97e3e16e885ce",
+      "hash": "sha256:<redacted>",
       "id": "afdb97ca-4a8d-46de-9d7f-34f4c7468242",
       "label": "Verifier files included",
       "metadata": {
-        "fixture_id": "terminal-benchmark-1c027e78be41",
+        "fixture_id": "terminal-benchmark-reference-fixture",
         "required_evidence_key": "tests_present"
       },
       "size_bytes": 28,
       "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
       "type": "log",
-      "uri": "local://termius/terminal-benchmark-1c027e78be41/evidence/tests_present.txt"
+      "uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/evidence/tests_present.txt"
     }
   ],
   "finalized_at": "2026-07-08T23:45:18.750577Z",
   "id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
-  "locked_effective_project_submission_artifact_policy_hash": "sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850",
+  "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
   "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
-  "locked_guide_source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+  "locked_guide_source_snapshot_hash": "sha256:<redacted>",
   "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
   "locked_guide_version": "v1",
   "locked_payment_policy_version": "v1",
-  "locked_pre_submit_checker_bundle_hash": "sha256:aa7bb902a63cb031a809533cf1939e1fc1dc47f3834aead923c9679e0302aa63",
+  "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
   "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
   "locked_review_policy_version": "v1",
   "locked_revision_policy_version": "v1",
-  "package_hash": "sha256:24297fe175abfa9998d0195e0a990e9e9557e8b361afb1fd0680c0e9d41889fd",
-  "package_uri": "local://termius/terminal-benchmark-1c027e78be41/submission.zip",
+  "package_hash": "sha256:<redacted>",
+  "package_uri": "local://terminal-benchmark/terminal-benchmark-reference-fixture/submission.zip",
   "status": "submitted",
   "submitted_at": "2026-07-08T23:45:18.127472Z",
-  "summary": "Terminal Benchmark terminal-benchmark-1c027e78be41 packet built from live submission requirements.",
+  "summary": "Terminal Benchmark terminal-benchmark-reference-fixture packet built from live submission requirements.",
   "task_id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
   "version": 1,
-  "worker_attestation": "<redacted-large-string sha256:cc6f114774078918553f5b2f5c3cddc2c0d9a8cb997837becba1ea330e51a82c bytes:752 prefix:'I attest this submission is original_work, produced under human_accountability_f'>",
+  "worker_attestation": "<redacted-large-string sha256:<redacted> bytes:752 prefix:'I attest this submission is original_work, produced under human_accountability_f'>",
   "worker_id": "d0c5c1f3-7689-5965-bba3-975bbac3c815"
 }
 ```
@@ -7585,30 +7585,30 @@ Response body:
     "artifact_hash_manifest": [
       {
         "artifact": "environment/Dockerfile",
-        "hash": "sha256:c91a62df2e7075d06fa53255f331f19559d301549201ae693ae3a465891087fa",
+        "hash": "sha256:<redacted>",
         "notes": "Required by locked Terminal Benchmark project policy.",
         "size_bytes": 1327
       },
       {
         "artifact": "environment/.dockerignore",
-        "hash": "sha256:cb2d67a46a111652f3bb388ee15d455eed7542905bdc61cd2a3c6d2fc23cc709",
+        "hash": "sha256:<redacted>",
         "notes": "Required by locked Terminal Benchmark project policy.",
         "size_bytes": 185
       },
       {
         "artifact": "rubric.md",
-        "hash": "sha256:4786d11876205560bb85de2ab09b333645b714c43d6f46bee27ef6b0b410816e",
+        "hash": "sha256:<redacted>",
         "notes": "Required by locked Terminal Benchmark project policy.",
         "size_bytes": 34
       },
       {
         "artifact": "task.toml",
-        "hash": "sha256:4a464edbf1b9047733412e228af0755227f2e44440125761c094324cff3a3811",
+        "hash": "sha256:<redacted>",
         "notes": "Required by locked Terminal Benchmark project policy.",
         "size_bytes": 1562
       }
     ],
-    "artifact_manifest_hash": "sha256:69c050a6f5042e96d4775d666722bc5f5f231a64052e4e37ebee8c978df36eb6",
+    "artifact_manifest_hash": "sha256:<redacted>",
     "attempt_number": 1,
     "audit_event_id": "b79137c1-398e-4826-9147-9179aa07eb00",
     "blocking_count": 0,
@@ -7619,13 +7619,13 @@ Response body:
     "is_current_for_submission": true,
     "locked_guide_version": "v1",
     "locked_payment_policy_version": "v1",
-    "locked_post_submit_checker_policy_hash": "sha256:e2730e8ecea2eca2d8dce218ba1548f7c675d801045b58e1f211df3a35bdc41d",
+    "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
     "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
     "locked_post_submit_checker_policy_version": "v1",
     "locked_review_policy_version": "v1",
     "locked_revision_policy_version": "v1",
     "outcome_source": "none",
-    "package_hash": "sha256:24297fe175abfa9998d0195e0a990e9e9557e8b361afb1fd0680c0e9d41889fd",
+    "package_hash": "sha256:<redacted>",
     "passed_count": 8,
     "queued_at": "2026-07-08T23:45:18.592353Z",
     "results": [
@@ -7686,7 +7686,7 @@ Response body:
         "message": "Artifact manifest and evidence references are structurally valid.",
         "metadata": {
           "artifact_count": 4,
-          "artifact_manifest_hash": "sha256:69c050a6f5042e96d4775d666722bc5f5f231a64052e4e37ebee8c978df36eb6"
+          "artifact_manifest_hash": "sha256:<redacted>"
         },
         "severity": "info",
         "status": "passed",
@@ -7795,30 +7795,30 @@ Response body:
   "artifact_hash_manifest": [
     {
       "artifact": "environment/Dockerfile",
-      "hash": "sha256:c91a62df2e7075d06fa53255f331f19559d301549201ae693ae3a465891087fa",
+      "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
       "size_bytes": 1327
     },
     {
       "artifact": "environment/.dockerignore",
-      "hash": "sha256:cb2d67a46a111652f3bb388ee15d455eed7542905bdc61cd2a3c6d2fc23cc709",
+      "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
       "size_bytes": 185
     },
     {
       "artifact": "rubric.md",
-      "hash": "sha256:4786d11876205560bb85de2ab09b333645b714c43d6f46bee27ef6b0b410816e",
+      "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
       "size_bytes": 34
     },
     {
       "artifact": "task.toml",
-      "hash": "sha256:4a464edbf1b9047733412e228af0755227f2e44440125761c094324cff3a3811",
+      "hash": "sha256:<redacted>",
       "notes": "Required by locked Terminal Benchmark project policy.",
       "size_bytes": 1562
     }
   ],
-  "artifact_manifest_hash": "sha256:69c050a6f5042e96d4775d666722bc5f5f231a64052e4e37ebee8c978df36eb6",
+  "artifact_manifest_hash": "sha256:<redacted>",
   "attempt_number": 1,
   "audit_event_id": "b79137c1-398e-4826-9147-9179aa07eb00",
   "blocking_count": 0,
@@ -7829,13 +7829,13 @@ Response body:
   "is_current_for_submission": true,
   "locked_guide_version": "v1",
   "locked_payment_policy_version": "v1",
-  "locked_post_submit_checker_policy_hash": "sha256:e2730e8ecea2eca2d8dce218ba1548f7c675d801045b58e1f211df3a35bdc41d",
+  "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
   "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
   "locked_post_submit_checker_policy_version": "v1",
   "locked_review_policy_version": "v1",
   "locked_revision_policy_version": "v1",
   "outcome_source": "none",
-  "package_hash": "sha256:24297fe175abfa9998d0195e0a990e9e9557e8b361afb1fd0680c0e9d41889fd",
+  "package_hash": "sha256:<redacted>",
   "passed_count": 8,
   "queued_at": "2026-07-08T23:45:18.592353Z",
   "results": [
@@ -7896,7 +7896,7 @@ Response body:
       "message": "Artifact manifest and evidence references are structurally valid.",
       "metadata": {
         "artifact_count": 4,
-        "artifact_manifest_hash": "sha256:69c050a6f5042e96d4775d666722bc5f5f231a64052e4e37ebee8c978df36eb6"
+        "artifact_manifest_hash": "sha256:<redacted>"
       },
       "severity": "info",
       "status": "passed",
@@ -8049,16 +8049,16 @@ Response body:
     "entity_type": "task",
     "event_payload": {
       "assigned_to": null,
-      "locked_effective_project_submission_artifact_policy_hash": "sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850",
+      "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
       "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
-      "locked_guide_source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+      "locked_guide_source_snapshot_hash": "sha256:<redacted>",
       "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
-      "locked_post_submit_checker_policy_hash": "sha256:e2730e8ecea2eca2d8dce218ba1548f7c675d801045b58e1f211df3a35bdc41d",
+      "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
       "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
       "locked_post_submit_checker_policy_version": "v1",
-      "locked_pre_submit_checker_bundle_hash": "sha256:aa7bb902a63cb031a809533cf1939e1fc1dc47f3834aead923c9679e0302aa63",
+      "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
       "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
       "locked_review_policy_version": "v1",
       "locked_revision_policy_version": "v1"
@@ -8084,16 +8084,16 @@ Response body:
     "entity_type": "task",
     "event_payload": {
       "assigned_to": null,
-      "locked_effective_project_submission_artifact_policy_hash": "sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850",
+      "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
       "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
-      "locked_guide_source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+      "locked_guide_source_snapshot_hash": "sha256:<redacted>",
       "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
-      "locked_post_submit_checker_policy_hash": "sha256:e2730e8ecea2eca2d8dce218ba1548f7c675d801045b58e1f211df3a35bdc41d",
+      "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
       "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
       "locked_post_submit_checker_policy_version": "v1",
-      "locked_pre_submit_checker_bundle_hash": "sha256:aa7bb902a63cb031a809533cf1939e1fc1dc47f3834aead923c9679e0302aa63",
+      "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
       "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
       "locked_review_policy_version": "v1",
       "locked_revision_policy_version": "v1"
@@ -8120,16 +8120,16 @@ Response body:
     "event_payload": {
       "assigned_to": "d0c5c1f3-7689-5965-bba3-975bbac3c815",
       "assignment_id": "47f47a44-cd98-41e6-859e-86ac232cd83b",
-      "locked_effective_project_submission_artifact_policy_hash": "sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850",
+      "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
       "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
-      "locked_guide_source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+      "locked_guide_source_snapshot_hash": "sha256:<redacted>",
       "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
-      "locked_post_submit_checker_policy_hash": "sha256:e2730e8ecea2eca2d8dce218ba1548f7c675d801045b58e1f211df3a35bdc41d",
+      "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
       "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
       "locked_post_submit_checker_policy_version": "v1",
-      "locked_pre_submit_checker_bundle_hash": "sha256:aa7bb902a63cb031a809533cf1939e1fc1dc47f3834aead923c9679e0302aa63",
+      "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
       "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
       "locked_review_policy_version": "v1",
       "locked_revision_policy_version": "v1",
@@ -8157,16 +8157,16 @@ Response body:
     "event_payload": {
       "assigned_to": "d0c5c1f3-7689-5965-bba3-975bbac3c815",
       "assignment_id": "47f47a44-cd98-41e6-859e-86ac232cd83b",
-      "locked_effective_project_submission_artifact_policy_hash": "sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850",
+      "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
       "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
-      "locked_guide_source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+      "locked_guide_source_snapshot_hash": "sha256:<redacted>",
       "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
-      "locked_post_submit_checker_policy_hash": "sha256:e2730e8ecea2eca2d8dce218ba1548f7c675d801045b58e1f211df3a35bdc41d",
+      "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
       "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
       "locked_post_submit_checker_policy_version": "v1",
-      "locked_pre_submit_checker_bundle_hash": "sha256:aa7bb902a63cb031a809533cf1939e1fc1dc47f3834aead923c9679e0302aa63",
+      "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
       "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
       "locked_review_policy_version": "v1",
       "locked_revision_policy_version": "v1",
@@ -8194,16 +8194,16 @@ Response body:
     "entity_type": "task",
     "event_payload": {
       "assigned_to": "d0c5c1f3-7689-5965-bba3-975bbac3c815",
-      "locked_effective_project_submission_artifact_policy_hash": "sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850",
+      "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
       "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
-      "locked_guide_source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+      "locked_guide_source_snapshot_hash": "sha256:<redacted>",
       "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
-      "locked_post_submit_checker_policy_hash": "sha256:e2730e8ecea2eca2d8dce218ba1548f7c675d801045b58e1f211df3a35bdc41d",
+      "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
       "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
       "locked_post_submit_checker_policy_version": "v1",
-      "locked_pre_submit_checker_bundle_hash": "sha256:aa7bb902a63cb031a809533cf1939e1fc1dc47f3834aead923c9679e0302aa63",
+      "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
       "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
       "locked_review_policy_version": "v1",
       "locked_revision_policy_version": "v1",
@@ -8302,45 +8302,45 @@ Response body:
       "artifact_hash_manifest": [
         {
           "artifact": "environment/Dockerfile",
-          "hash": "sha256:c91a62df2e7075d06fa53255f331f19559d301549201ae693ae3a465891087fa",
+          "hash": "sha256:<redacted>",
           "notes": "Required by locked Terminal Benchmark project policy.",
           "size_bytes": 1327
         },
         {
           "artifact": "environment/.dockerignore",
-          "hash": "sha256:cb2d67a46a111652f3bb388ee15d455eed7542905bdc61cd2a3c6d2fc23cc709",
+          "hash": "sha256:<redacted>",
           "notes": "Required by locked Terminal Benchmark project policy.",
           "size_bytes": 185
         },
         {
           "artifact": "rubric.md",
-          "hash": "sha256:4786d11876205560bb85de2ab09b333645b714c43d6f46bee27ef6b0b410816e",
+          "hash": "sha256:<redacted>",
           "notes": "Required by locked Terminal Benchmark project policy.",
           "size_bytes": 34
         },
         {
           "artifact": "task.toml",
-          "hash": "sha256:4a464edbf1b9047733412e228af0755227f2e44440125761c094324cff3a3811",
+          "hash": "sha256:<redacted>",
           "notes": "Required by locked Terminal Benchmark project policy.",
           "size_bytes": 1562
         }
       ],
       "assigned_to": "d0c5c1f3-7689-5965-bba3-975bbac3c815",
       "finalized_at": null,
-      "locked_effective_project_submission_artifact_policy_hash": "sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850",
+      "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
       "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
-      "locked_guide_source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+      "locked_guide_source_snapshot_hash": "sha256:<redacted>",
       "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
-      "locked_post_submit_checker_policy_hash": "sha256:e2730e8ecea2eca2d8dce218ba1548f7c675d801045b58e1f211df3a35bdc41d",
+      "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
       "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
       "locked_post_submit_checker_policy_version": "v1",
-      "locked_pre_submit_checker_bundle_hash": "sha256:aa7bb902a63cb031a809533cf1939e1fc1dc47f3834aead923c9679e0302aa63",
+      "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
       "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
       "locked_review_policy_version": "v1",
       "locked_revision_policy_version": "v1",
-      "package_hash": "sha256:24297fe175abfa9998d0195e0a990e9e9557e8b361afb1fd0680c0e9d41889fd",
+      "package_hash": "sha256:<redacted>",
       "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
       "submission_version": 1,
       "supersedes_submission_id": null,
@@ -8369,45 +8369,45 @@ Response body:
       "artifact_hash_manifest": [
         {
           "artifact": "environment/Dockerfile",
-          "hash": "sha256:c91a62df2e7075d06fa53255f331f19559d301549201ae693ae3a465891087fa",
+          "hash": "sha256:<redacted>",
           "notes": "Required by locked Terminal Benchmark project policy.",
           "size_bytes": 1327
         },
         {
           "artifact": "environment/.dockerignore",
-          "hash": "sha256:cb2d67a46a111652f3bb388ee15d455eed7542905bdc61cd2a3c6d2fc23cc709",
+          "hash": "sha256:<redacted>",
           "notes": "Required by locked Terminal Benchmark project policy.",
           "size_bytes": 185
         },
         {
           "artifact": "rubric.md",
-          "hash": "sha256:4786d11876205560bb85de2ab09b333645b714c43d6f46bee27ef6b0b410816e",
+          "hash": "sha256:<redacted>",
           "notes": "Required by locked Terminal Benchmark project policy.",
           "size_bytes": 34
         },
         {
           "artifact": "task.toml",
-          "hash": "sha256:4a464edbf1b9047733412e228af0755227f2e44440125761c094324cff3a3811",
+          "hash": "sha256:<redacted>",
           "notes": "Required by locked Terminal Benchmark project policy.",
           "size_bytes": 1562
         }
       ],
       "assigned_to": "d0c5c1f3-7689-5965-bba3-975bbac3c815",
       "finalized_at": "2026-07-08T23:45:18.750577+00:00",
-      "locked_effective_project_submission_artifact_policy_hash": "sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850",
+      "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
       "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
-      "locked_guide_source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+      "locked_guide_source_snapshot_hash": "sha256:<redacted>",
       "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
-      "locked_post_submit_checker_policy_hash": "sha256:e2730e8ecea2eca2d8dce218ba1548f7c675d801045b58e1f211df3a35bdc41d",
+      "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
       "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
       "locked_post_submit_checker_policy_version": "v1",
-      "locked_pre_submit_checker_bundle_hash": "sha256:aa7bb902a63cb031a809533cf1939e1fc1dc47f3834aead923c9679e0302aa63",
+      "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
       "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
       "locked_review_policy_version": "v1",
       "locked_revision_policy_version": "v1",
-      "package_hash": "sha256:24297fe175abfa9998d0195e0a990e9e9557e8b361afb1fd0680c0e9d41889fd",
+      "package_hash": "sha256:<redacted>",
       "submission_id": "ba25f15a-e36a-4925-9891-09d394eae2ec",
       "submission_version": 1,
       "supersedes_submission_id": null,
@@ -8435,7 +8435,7 @@ Response body:
     "event_payload": {
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
-      "locked_post_submit_checker_policy_hash": "sha256:e2730e8ecea2eca2d8dce218ba1548f7c675d801045b58e1f211df3a35bdc41d",
+      "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
       "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
       "locked_post_submit_checker_policy_version": "v1",
       "locked_review_policy_version": "v1",
@@ -8474,7 +8474,7 @@ Response body:
       "failed_count": 0,
       "locked_guide_version": "v1",
       "locked_payment_policy_version": "v1",
-      "locked_post_submit_checker_policy_hash": "sha256:e2730e8ecea2eca2d8dce218ba1548f7c675d801045b58e1f211df3a35bdc41d",
+      "locked_post_submit_checker_policy_hash": "sha256:<redacted>",
       "locked_post_submit_checker_policy_id": "30095d84-e5c5-46e3-a292-3788bd34699f",
       "locked_post_submit_checker_policy_version": "v1",
       "locked_review_policy_version": "v1",
@@ -8524,18 +8524,18 @@ Response body:
   "created_at": "2026-07-08T23:44:03.452947Z",
   "created_by": "5080787a-cb3b-591d-9948-6b38354788ab",
   "currency": "USD",
-  "description": "Real Terminal Benchmark reviewer fixture with 3 milestones, languages=['rust', 'json'], category=software-engineering.",
+  "description": "Real Terminal Benchmark reference fixture with 3 milestones, languages=['rust', 'json'], category=software-engineering.",
   "difficulty": "medium",
   "estimated_time_minutes": 75,
-  "external_task_id": "terminal-benchmark-1c027e78be41",
+  "external_task_id": "terminal-benchmark-reference-fixture",
   "id": "d8cfda33-6c7e-461a-bdcd-036a6cefeda3",
-  "locked_effective_project_submission_artifact_policy_hash": "sha256:5595f7aa03a671ff81decf94e0a2edd18189391c7524b0367277f177a0b01850",
+  "locked_effective_project_submission_artifact_policy_hash": "sha256:<redacted>",
   "locked_effective_project_submission_artifact_policy_id": "40acb2dd-b1a4-4a8f-90cf-038e6b5941e3",
-  "locked_guide_source_snapshot_hash": "sha256:9843f69ef5b7f7631f98a61dcd0a5be4c592be597fc859d9e5ac8142bdf606fb",
+  "locked_guide_source_snapshot_hash": "sha256:<redacted>",
   "locked_guide_source_snapshot_id": "2b6592db-ae88-4fd8-b9d0-c16bd9dbf09b",
   "locked_guide_version": "v1",
   "locked_payment_policy_version": "v1",
-  "locked_pre_submit_checker_bundle_hash": "sha256:aa7bb902a63cb031a809533cf1939e1fc1dc47f3834aead923c9679e0302aa63",
+  "locked_pre_submit_checker_bundle_hash": "sha256:<redacted>",
   "locked_pre_submit_checker_policy_id": "f9b527da-6831-40d5-b834-b3fb3a6471fe",
   "locked_review_policy_version": "v1",
   "locked_revision_policy_version": "v1",
@@ -8545,16 +8545,16 @@ Response body:
   "skill_tags": [
     "rust",
     "json",
-    "seccomp",
+    "systems",
     "containers",
     "cli"
   ],
-  "source_payload_hash": "sha256:4a464edbf1b9047733412e228af0755227f2e44440125761c094324cff3a3811",
-  "source_ref": "terminal-benchmark/terminal-benchmark-1c027e78be41/live-api/ws16-clean-cb1540ba",
+  "source_payload_hash": "sha256:<redacted>",
+  "source_ref": "terminal-benchmark/terminal-benchmark-reference-fixture/live-api/ws16-clean-cb1540ba",
   "source_type": "manual",
   "status": "review_pending",
   "task_type": "terminal_benchmark",
-  "title": "Terminal Benchmark terminal-benchmark-1c027e78be41 live-api",
+  "title": "Terminal Benchmark terminal-benchmark-reference-fixture live-api",
   "updated_at": "2026-07-08T23:45:18.592353Z"
 }
 ```

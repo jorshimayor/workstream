@@ -1,7 +1,7 @@
 """Run real Terminal Benchmark source material through the current API contracts.
 
 This is an example drill, not Workstream runtime code and not a required CI
-test. It expects a local reviewer source-material path through
+test. It expects a local reference source-material path through
 ``WORKSTREAM_TERMINAL_BENCH_FIXTURE`` and writes only to a local test Postgres
 database.
 """
@@ -54,7 +54,7 @@ from week2_api_e2e import (
 )
 
 FIXTURE_ENV_VAR = "WORKSTREAM_TERMINAL_BENCH_FIXTURE"
-REVIEWER_ROOT_ENV_VAR = "WORKSTREAM_TERMIUS_REVIEWER_ROOT"
+GUIDE_ROOT_ENV_VAR = "WORKSTREAM_TERMINAL_BENCH_GUIDE_ROOT"
 LOCAL_DATABASE_HOSTS = {"localhost", "127.0.0.1", "::1"}
 LOCAL_DATABASE_NAMES = {"workstream_test", "test_workstream"}
 ASYNC_POSTGRES_SCHEMES = {"postgresql+asyncpg"}
@@ -67,7 +67,7 @@ REQUIRED_OPENAI_AGENT_SDK_ENV = (
 
 @dataclass(frozen=True)
 class FixtureFile:
-    """Real file from the Terminal Benchmark reviewer fixture."""
+    """Real file from the Terminal Benchmark reference fixture."""
 
     artifact_name: str
     path: Path
@@ -106,15 +106,15 @@ def fixture_root() -> Path:
             )
         return root.resolve()
     raise RuntimeError(
-        f"{FIXTURE_ENV_VAR} is required. Point it at one Terminal Benchmark reviewer "
-        "source-material directory, for example a Termius review folder containing extracted/task.toml, "
+        f"{FIXTURE_ENV_VAR} is required. Point it at one Terminal Benchmark "
+        "source-material directory, for example a prepared fixture directory containing extracted/task.toml, "
         "one *_submission_*.zip, one review_packet_*.md, static_guard.txt, and verifier logs."
     )
 
 
-def reviewer_root(fixture_root_path: Path) -> Path:
-    """Resolve the Termius reviewer root containing real guide/program material."""
-    configured = os.environ.get(REVIEWER_ROOT_ENV_VAR)
+def guide_root(fixture_root_path: Path) -> Path:
+    """Resolve the Terminal Benchmark reference root containing guide/program material."""
+    configured = os.environ.get(GUIDE_ROOT_ENV_VAR)
     candidates = []
     if configured:
         candidates.append(Path(configured).expanduser())
@@ -126,8 +126,8 @@ def reviewer_root(fixture_root_path: Path) -> Path:
         if project_guide.is_file() and reviewer_program.is_file():
             return candidate.resolve()
     raise RuntimeError(
-        f"could not find PROJECT_GUIDE.md and REVIEWER_PROGRAM.md. Set {REVIEWER_ROOT_ENV_VAR} "
-        "to the local Termius reviewer root."
+        f"could not find PROJECT_GUIDE.md and REVIEWER_PROGRAM.md. Set {GUIDE_ROOT_ENV_VAR} "
+        "to the local Terminal Benchmark reference root."
     )
 
 
@@ -200,10 +200,10 @@ def assert_strict_local_database_url(database_url: str) -> None:
 
 
 def load_fixture(root: Path) -> TerminalBenchmarkFixture:
-    """Load and validate a Terminal Benchmark reviewer fixture.
+    """Load and validate a Terminal Benchmark reference fixture.
 
     Args:
-        root: Fixture directory copied from the Termius reviewer workspace.
+        root: Prepared fixture directory copied from Terminal Benchmark reference material.
 
     Returns:
         Parsed fixture paths and metadata.
@@ -224,12 +224,12 @@ def load_fixture(root: Path) -> TerminalBenchmarkFixture:
 
     with task_toml.open("rb") as file:
         task_config = tomllib.load(file)
-    termius_root = reviewer_root(root)
+    guide_material_root = guide_root(root)
     return TerminalBenchmarkFixture(
         root=root,
         fixture_id=sanitized_fixture_id(task_toml, submission_zip),
-        project_guide=termius_root / "PROJECT_GUIDE.md",
-        reviewer_program=termius_root / "REVIEWER_PROGRAM.md",
+        project_guide=guide_material_root / "PROJECT_GUIDE.md",
+        reviewer_program=guide_material_root / "REVIEWER_PROGRAM.md",
         task_toml=task_toml,
         submission_zip=submission_zip,
         static_guard=root / "static_guard.txt",
@@ -292,7 +292,7 @@ def evidence_entry(file: FixtureFile, fixture: TerminalBenchmarkFixture) -> dict
     return {
         "type": "log",
         "label": file.label,
-        "uri": f"local://termius/{fixture.fixture_id}/{file.artifact_name}",
+        "uri": f"local://terminal-benchmark/{fixture.fixture_id}/{file.artifact_name}",
         "hash": sha256_token(file.path),
         "size_bytes": file.path.stat().st_size,
         "metadata": {
@@ -311,7 +311,7 @@ def fixture_files(fixture: TerminalBenchmarkFixture) -> list[FixtureFile]:
             "submission.zip",
             fixture.submission_zip,
             "original submission zip",
-            "original reviewer-side submission archive",
+            "original submission archive",
         ),
         FixtureFile(
             "task.toml",
@@ -323,13 +323,13 @@ def fixture_files(fixture: TerminalBenchmarkFixture) -> list[FixtureFile]:
             "static_guard.txt",
             fixture.static_guard,
             "platform static guard output",
-            "static guard output captured by the reviewer",
+            "static guard output captured with the fixture",
         ),
         FixtureFile(
             "review_packet.md",
             fixture.review_packet,
             "automated review packet",
-            "AutoEval and reviewer packet evidence",
+            "AutoEval and review packet evidence",
         ),
         FixtureFile(
             "docker_build.log",
@@ -361,7 +361,7 @@ def task_payload(fixture: TerminalBenchmarkFixture, run_id: str, suffix: str) ->
     return {
         "title": f"Terminal Benchmark {fixture.fixture_id} {suffix}",
         "description": (
-            "Real Terminal Benchmark reviewer fixture with "
+            "Real Terminal Benchmark reference fixture with "
             f"{milestone_count} milestones, languages={metadata['languages']}, "
             f"category={metadata['category']}."
         ),
@@ -394,9 +394,9 @@ def guide_payload(fixture: TerminalBenchmarkFixture, run_id: str) -> dict:
         "content_markdown": (
             f"# Terminal Benchmark Guide {run_id}\n\n"
             f"Fixture: `{fixture.fixture_id}`\n\n"
-            "## Termius Project Guide\n\n"
+            "## Terminal Benchmark Project Guide\n\n"
             f"{project_guide}\n\n"
-            "## Termius Reviewer Program\n\n"
+            "## Terminal Benchmark Reference Program\n\n"
             f"{reviewer_program}\n\n"
             "## Selected Terminal Benchmark Task TOML\n\n"
             "```toml\n"
@@ -452,13 +452,13 @@ def submission_payload(
         files = [file for file in files if file.artifact_name != "static_guard.txt"]
     summary = (
         f"Terminal Benchmark {fixture.fixture_id} packet {suffix} from real "
-        "reviewer-side fixture evidence."
+        "reference fixture evidence."
     )
     if low_quality_signal:
         summary += " Placeholder sample output requires reviewer revision."
     return {
         "summary": summary,
-        "package_uri": f"local://termius/{fixture.fixture_id}/submission.zip",
+        "package_uri": f"local://terminal-benchmark/{fixture.fixture_id}/submission.zip",
         "package_hash": sha256_token(fixture.submission_zip),
         "artifact_hash_manifest": [artifact_entry(file) for file in files],
         "worker_attestation": STRONG_ATTESTATION,

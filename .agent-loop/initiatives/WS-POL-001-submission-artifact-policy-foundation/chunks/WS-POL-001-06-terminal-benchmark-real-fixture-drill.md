@@ -6,7 +6,7 @@ WS-POL-001 - Submission Artifact Policy Foundation
 
 ## Goal
 
-Use a real Terminal Benchmark reviewer fixture from the local Termius workspace
+Use a real Terminal Benchmark reviewer fixture from the local Terminal Benchmark reference workspace
 to prove the current Workstream project guide, setup-agent, policy bundle, task
 locked context, pre-submit feedback, submission versioning, post-submit checker
 gate, and revision resubmission path over live HTTP calls and local Postgres.
@@ -119,7 +119,7 @@ work. Further unrelated runtime bugs still require a separate chunk.
   `PreSubmitCheckerPolicy` as the intake contract.
 - The drill does not rely on task `required_files` or `required_evidence` as the
   source of pre-submit truth.
-- The guide source snapshot is built from real Termius material, including the
+- The guide source snapshot is built from real Terminal Benchmark reference material, including the
   Terminal Benchmark submission guide/program material, reviewer program or
   guide material, the selected task TOML, and the selected review packet.
 - Persisted fixture identifiers and normal success output do not reveal absolute
@@ -156,7 +156,7 @@ cd backend && .venv/bin/python -m pytest tests/test_alembic.py
 cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test WORKSTREAM_TERMINAL_BENCH_FIXTURE=/path/to/local/terminal-benchmark-fixture .venv/bin/python ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
 ```
 
-The fixture path may be changed to another local Termius reviewer fixture that
+The fixture path may be changed to another local Terminal Benchmark reference fixture that
 contains the required files. The command must stay local-only and must never run
 against production or shared databases.
 

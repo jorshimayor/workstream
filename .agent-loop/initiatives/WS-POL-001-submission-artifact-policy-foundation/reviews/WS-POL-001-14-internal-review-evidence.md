@@ -67,7 +67,7 @@ cd backend && .venv/bin/ruff check app/modules/tasks/repository.py app/modules/t
 cd backend && .venv/bin/pytest tests/test_tasks.py::test_finalize_submission_requires_operator_and_latest_version tests/test_tasks.py::test_submission_finalize_guard_is_atomic -q
 cd backend && .venv/bin/pytest tests/test_tasks.py tests/test_checkers.py
 cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/api_contract_e2e.py
-bash -lc 'set -a; source /home/abiorh/flow/jarvis-live-agent-proof/.env; set +a; export WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test; export WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL=${WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL:-gpt-4.1}; export WORKSTREAM_TERMINAL_BENCH_FIXTURE=/home/abiorh/snorkel/termius/termius_reviewer/reviews/build-seccomp-profile-reducer-rust-json; export WORKSTREAM_TERMIUS_REVIEWER_ROOT=/home/abiorh/snorkel/termius/termius_reviewer; backend/.venv/bin/python examples/terminal_benchmark/terminal_benchmark_api_e2e.py'
+bash -lc 'set -a; source /home/abiorh/flow/jarvis-live-agent-proof/.env; set +a; export WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test; export WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL=${WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL:-gpt-4.1}; export WORKSTREAM_TERMINAL_BENCH_FIXTURE=local reference workspace/terminal-benchmark-reference/terminal-benchmark-reference-task; export WORKSTREAM_TERMINAL_BENCH_GUIDE_ROOT=/path/to/terminal-benchmark-guide-root; backend/.venv/bin/python examples/terminal_benchmark/terminal_benchmark_api_e2e.py'
 python3 scripts/check_markdown_links.py
 git diff --check
 ```
@@ -85,7 +85,7 @@ Results:
 - Final CodeRabbit docstring-nitpick Ruff: passed for `backend/app/modules/tasks/repository.py`.
 - Task/checker suite: 133 passed in 1666.46s.
 - API contract real API E2E: passed and exercised `/finalize`, checker-run reads, audit-event reads, and scoped access.
-- Terminal Benchmark real API E2E: passed using the real OpenAI Agents SDK adapter and fixture `build-seccomp-profile-reducer-rust-json`.
+- Terminal Benchmark real API E2E: passed using the real OpenAI Agents SDK adapter and fixture `terminal-benchmark-reference-task`.
 - Terminal Benchmark scenario summary: `complete_packet=review_pending`, `missing_static_guard=pre_submit_blocked_no_submission`, `low_quality_v1=needs_revision`, `fixed_low_quality_v2=review_pending`, `worker_profile_setup=canonical_worker_profile_api`.
 - Markdown link check: passed for 27 changed Markdown files.
 - Diff whitespace check: passed.

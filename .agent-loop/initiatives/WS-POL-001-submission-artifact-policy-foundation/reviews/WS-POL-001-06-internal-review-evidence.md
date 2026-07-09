@@ -89,7 +89,7 @@ construction-state product contracts before continuing pre-submit checker work.
   snapshots.
 - Removed Terminal Benchmark-specific branching from the local fixture adapter.
 - Updated the Terminal Benchmark example to require the OpenAI Agents SDK
-  adapter and real Termius project guide, reviewer program, task TOML, and
+  adapter and real Terminal Benchmark reference project guide, reviewer program, task TOML, and
   review packet material.
 - Updated `WS-POL-001-06` chunk scope and master chunk map to include the
   intentional docs and migration cleanup.

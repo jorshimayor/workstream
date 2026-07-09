@@ -81,7 +81,7 @@ blockchain, frontend, or agent-runtime behavior.
 - `WS-POL-001-06` started on branch `codex/ws-pol-001-06-terminal-benchmark-drill`
   after the user's explicit start signal.
 - `WS-POL-001-06` real Terminal Benchmark manual HTTP drill passed against a
-  local Termius reviewer fixture; committed evidence uses placeholder fixture
+  local Terminal Benchmark reference fixture; committed evidence uses placeholder fixture
   paths and local IDs only.
 - `WS-POL-001-06` live drill exposed and fixed an OpenAI Agents SDK adapter
   strict-schema issue for the policy derivation result's open `policy_body`.

@@ -10,7 +10,7 @@ Planning package in `/home/abiorh/flow/workstream`.
 - systems architecture review
 - operations review
 - adversarial quality review
-- process-pattern baseline review against `/home/abiorh/snorkel` metadata
+- process-pattern baseline review against `local reference workspace` metadata
 
 ## Closure Decision
 
