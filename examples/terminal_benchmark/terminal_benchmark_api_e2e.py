@@ -11,7 +11,9 @@ database.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import hashlib
+import io
 import os
 import re
 import subprocess
@@ -39,7 +41,7 @@ from api_contract_e2e import (
     find_free_port,
     flow_settings,
     issue_flow_token,
-    request_json,
+    request_json as api_contract_request_json,
     wait_for_health,
 )
 from week2_api_e2e import (
@@ -183,6 +185,14 @@ def public_evidence_value(value: str, placeholder: str, env: dict[str, str]) -> 
     if env.get(PRINT_RAW_LOCAL_IDS_ENV_VAR) == "1":
         return value
     return placeholder
+
+
+async def request_json(*args, **kwargs) -> dict:
+    """Call the shared API helper without leaking raw request paths by default."""
+    if os.environ.get(PRINT_RAW_LOCAL_IDS_ENV_VAR) == "1":
+        return await api_contract_request_json(*args, **kwargs)
+    with contextlib.redirect_stdout(io.StringIO()):
+        return await api_contract_request_json(*args, **kwargs)
 
 
 def assert_strict_local_database_url(database_url: str) -> None:
