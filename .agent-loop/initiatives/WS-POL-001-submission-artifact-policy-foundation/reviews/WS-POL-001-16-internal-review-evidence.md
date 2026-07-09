@@ -77,7 +77,7 @@ git diff --cached --check
 Results:
 
 - Stale wording check: passed.
-- Markdown link check: passed for 6 changed Markdown files.
+- Markdown link check: passed for 25 changed Markdown files.
 - Focused backend tests: `342 passed in 4305.43s (1:11:45)`.
 - API contract drill: `API contract real API e2e passed`.
 - Diff whitespace check: passed.

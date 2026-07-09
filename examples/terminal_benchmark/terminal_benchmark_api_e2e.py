@@ -55,6 +55,7 @@ from week2_api_e2e import (
 
 FIXTURE_ENV_VAR = "WORKSTREAM_TERMINAL_BENCH_FIXTURE"
 GUIDE_ROOT_ENV_VAR = "WORKSTREAM_TERMINAL_BENCH_GUIDE_ROOT"
+PRINT_RAW_LOCAL_IDS_ENV_VAR = "WORKSTREAM_TERMINAL_BENCH_PRINT_RAW_LOCAL_IDS"
 LOCAL_DATABASE_HOSTS = {"localhost", "127.0.0.1", "::1"}
 LOCAL_DATABASE_NAMES = {"workstream_test", "test_workstream"}
 ASYNC_POSTGRES_SCHEMES = {"postgresql+asyncpg"}
@@ -175,6 +176,13 @@ def sanitized_fixture_id(task_toml: Path, submission_zip: Path) -> str:
 def safe_label(value: str) -> str:
     """Return a conservative display label for trusted fixture metadata."""
     return re.sub(r"[^a-zA-Z0-9_.-]+", "-", value).strip("-")[:120] or "terminal-benchmark"
+
+
+def public_evidence_value(value: str, placeholder: str, env: dict[str, str]) -> str:
+    """Return raw local ids only when explicitly requested for local debugging."""
+    if env.get(PRINT_RAW_LOCAL_IDS_ENV_VAR) == "1":
+        return value
+    return placeholder
 
 
 def assert_strict_local_database_url(database_url: str) -> None:
@@ -1236,14 +1244,37 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
 
     print("Terminal Benchmark real API e2e passed")
     print("scenario_summary:")
-    print(f"fixture_id={fixture.fixture_id}")
-    print(f"fixture_label={safe_label(fixture.root.name)}")
-    print(f"project_id={project['id']}")
-    print(f"complete_task_id={complete_task['id']}")
-    print(f"complete_submission_id={complete_submission['id']}")
-    print(f"revision_task_id={revision_task['id']}")
-    print(f"revision_v1_submission_id={first_submission['id']}")
-    print(f"revision_v2_submission_id={second_submission['id']}")
+    print(
+        "redaction="
+        + public_evidence_value(
+            "raw_local_ids_enabled",
+            "public_evidence_safe_by_default",
+            env,
+        )
+    )
+    print(
+        "fixture_id="
+        + public_evidence_value(fixture.fixture_id, "<redacted-fixture-id>", env)
+    )
+    print(
+        "fixture_label="
+        + public_evidence_value(safe_label(fixture.root.name), "<redacted-fixture-label>", env)
+    )
+    print("project_id=" + public_evidence_value(project["id"], "<redacted-id>", env))
+    print("complete_task_id=" + public_evidence_value(complete_task["id"], "<redacted-id>", env))
+    print(
+        "complete_submission_id="
+        + public_evidence_value(complete_submission["id"], "<redacted-id>", env)
+    )
+    print("revision_task_id=" + public_evidence_value(revision_task["id"], "<redacted-id>", env))
+    print(
+        "revision_v1_submission_id="
+        + public_evidence_value(first_submission["id"], "<redacted-id>", env)
+    )
+    print(
+        "revision_v2_submission_id="
+        + public_evidence_value(second_submission["id"], "<redacted-id>", env)
+    )
     print("complete_packet=review_pending")
     print("missing_static_guard=pre_submit_blocked_no_submission")
     print("low_quality_v1=needs_revision")

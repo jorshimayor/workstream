@@ -32,6 +32,10 @@ approved `.agent-loop` or `docs/internal_reviews` paths for that chunk.
 The script fails closed unless `WORKSTREAM_DATABASE_URL` points to local async
 Postgres using `workstream_test` or `test_workstream`.
 
+The script redacts fixture-derived identifiers and local Workstream UUIDs in
+stdout by default so copied output is safe for public PR evidence. Set
+`WORKSTREAM_TERMINAL_BENCH_PRINT_RAW_LOCAL_IDS=1` only for local debugging.
+
 The source-material path should point at a local Terminal Benchmark reference directory containing
 `extracted/task.toml`, one `*_submission_*.zip`, one `review_packet_*.md`,
 `static_guard.txt`, `docker_build.log`, `oracle_test.log`, and

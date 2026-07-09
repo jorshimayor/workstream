@@ -16,7 +16,6 @@ Changed:
 - `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-16-live-api-drill-evidence.md`
 - `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-16-internal-review-evidence.md`
 - `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-16-pr-trust-bundle.md`
-- `docs/roadmap_status.md`
 - Privacy scrub amendment: standalone Terminal Benchmark example docs/script,
   older Terminal Benchmark evidence references, WS-ENG memory evidence,
   chunk-map/status/loop files, and review-process docs were scrubbed or amended
@@ -82,7 +81,7 @@ Key results:
 - `342 passed in 4305.43s (1:11:45)` for focused backend tests.
 - `API contract real API e2e passed`.
 - Stale wording check passed.
-- Markdown link check passed for 6 changed Markdown files.
+- Markdown link check passed for 25 changed Markdown files.
 - Diff whitespace check passed.
 
 ## Live Drill Result
