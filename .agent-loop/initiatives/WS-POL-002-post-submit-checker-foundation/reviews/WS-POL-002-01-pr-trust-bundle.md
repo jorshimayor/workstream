@@ -120,7 +120,7 @@ cd backend && .venv/bin/pytest tests/test_projects.py tests/test_checkers.py -q
 Result summary:
 
 - Stale wording scan: passed.
-- Markdown link check: passed for 20 changed Markdown files.
+- Markdown link check: passed for 21 changed Markdown files.
 - Diff whitespace check: passed.
 - Ruff: passed.
 - Focused project API compiler slice: 5 passed, 208 deselected.
@@ -133,7 +133,7 @@ Internal review evidence:
 
 - `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/reviews/WS-POL-002-01-internal-review-evidence.md`
 
-Reviewed code SHA: `4c3dd191de7917d3959d5e01287977d318c0e43b`
+Reviewed code SHA: `dcaa703c6e53e7b3144edb4ba793b77530c1dbe5`
 
 Reviewed at: `2026-07-09T16:02:30Z`
 
