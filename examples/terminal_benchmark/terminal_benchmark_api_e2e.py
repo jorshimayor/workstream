@@ -820,7 +820,11 @@ async def submit_finalize_and_wait(
         f"/api/v1/submissions/{submission['id']}/finalize",
         manager_token,
     )
-    run = await wait_for_submission_checker_run(client, manager_token, submission["id"])
+    if os.environ.get(PRINT_RAW_LOCAL_IDS_ENV_VAR) == "1":
+        run = await wait_for_submission_checker_run(client, manager_token, submission["id"])
+    else:
+        with contextlib.redirect_stdout(io.StringIO()):
+            run = await wait_for_submission_checker_run(client, manager_token, submission["id"])
     return submission, locked, run
 
 
