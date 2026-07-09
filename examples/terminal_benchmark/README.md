@@ -65,7 +65,7 @@ cd backend
 WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test \
 OPENAI_API_KEY="$OPENAI_API_KEY" \
 WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL="${WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL:?set model}" \
-WORKSTREAM_TERMINAL_BENCH_FIXTURE=/path/to/terminal-benchmark-source-material \
-WORKSTREAM_TERMINAL_BENCH_GUIDE_ROOT=/path/to/terminal-benchmark-guide-root \
+WORKSTREAM_TERMINAL_BENCH_FIXTURE=<redacted-local-fixture-path> \
+WORKSTREAM_TERMINAL_BENCH_GUIDE_ROOT=<redacted-local-guide-root> \
 .venv/bin/python ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
 ```

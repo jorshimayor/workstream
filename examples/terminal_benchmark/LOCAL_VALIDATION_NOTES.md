@@ -75,7 +75,7 @@ cd backend && .venv/bin/python -m ruff check app tests scripts
 cd backend && .venv/bin/docstr-coverage app scripts --config .docstr.yaml
 git diff --check
 cd backend && .venv/bin/python -m pytest tests/test_checkers.py -k 'pre_submit_check_allows_worker_revision_packet_feedback or pre_submit_check_returns_feedback_without_durable_run'
-cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test WORKSTREAM_TERMINAL_BENCH_FIXTURE=/path/to/terminal-benchmark-source-material .venv/bin/python ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
+cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test WORKSTREAM_TERMINAL_BENCH_FIXTURE=<redacted-local-fixture-path> .venv/bin/python ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
 cd backend && .venv/bin/python -m pytest
 ```
 

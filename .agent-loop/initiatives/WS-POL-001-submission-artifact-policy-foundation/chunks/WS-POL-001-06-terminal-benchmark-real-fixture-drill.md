@@ -153,7 +153,7 @@ cd backend && .venv/bin/python -m pytest tests/test_projects.py -k 'openai_agent
 cd backend && .venv/bin/python -m pytest tests/test_projects.py
 cd backend && .venv/bin/python -m pytest tests/test_tasks.py
 cd backend && .venv/bin/python -m pytest tests/test_alembic.py
-cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test WORKSTREAM_TERMINAL_BENCH_FIXTURE=/path/to/local/terminal-benchmark-fixture .venv/bin/python ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
+cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test WORKSTREAM_TERMINAL_BENCH_FIXTURE=<redacted-local-fixture-path> .venv/bin/python ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
 ```
 
 The fixture path may be changed to another local Terminal Benchmark reference fixture that

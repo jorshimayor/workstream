@@ -61,8 +61,8 @@ Scope:
   old production deny path. Strengthened selector tests to run in `test`, assert
   the exact OpenAI model configuration error, and prove valid model settings
   still build `OpenAIAgentSdkProjectGuideRuntime`.
-- Docs review found one stale `/path/to/terminal-benchmark-fixture` placeholder.
-  Updated it to `/path/to/terminal-benchmark-source-material`.
+- Docs review found one stale `<redacted-local-fixture-path>` placeholder.
+  Updated it to `<redacted-local-fixture-path>`.
 - CodeRabbit found repeated deterministic runtime monkeypatch boilerplate in
   project-agent tests. Extracted `deterministic_project_agent_runtime` as a
   test-local fixture, kept custom failing/spoofing/capturing runtime patches
