@@ -6,7 +6,8 @@
 `WS-POL-001-16` completed the final clean Terminal Benchmark live API drill
 through real HTTP calls, using sanitized source material and a worker packet
 derived from the live `submission-requirements` response. Evidence is recorded
-and awaiting deterministic checks plus internal reviewer fanout.
+and internal reviewer fanout is complete. The branch is ready for PR/human
+checkpoint.
 `WS-POL-001-14` replaced public submission lock wording with finalization,
 defined system actor audit semantics, and merged PR #79's HTTP-visible Terminal
 Benchmark proof evidence. The accepted post-merge no-DB Terminal Benchmark
@@ -37,7 +38,7 @@ reran that accepted drill successfully before merging through PR #81.
 | `WS-POL-001-13` | Merged | `codex/ws-pol-001-13-task-context-apis` | 77 | Adds task work-context, worker submission-requirements, and operator-only locked-context APIs. |
 | `WS-POL-001-14` | Merged | `codex/ws-pol-001-14-submission-finalize` | 79 | Replaces public submission lock with finalize, defines system actor audit semantics, scopes operator visibility, and proves the Terminal Benchmark flow through HTTP-visible lifecycle responses. |
 | `WS-POL-001-15` | Merged | `codex/ws-pol-001-15-agent-derivation-hardening` | 81 | Hardens agent-derived submission artifact policy instructions after the no-DB Terminal Benchmark drill exposed a required-artifact/forbidden-pattern self-conflict. |
-| `WS-POL-001-16` | Evidence complete | `codex/ws-pol-001-16-terminal-benchmark-live-api-drill` | - | Proved a human-visible Terminal Benchmark drill through real HTTP APIs without DB inspection as lifecycle proof; deterministic checks and internal review are pending. |
+| `WS-POL-001-16` | Internal review complete | `codex/ws-pol-001-16-terminal-benchmark-live-api-drill` | - | Proved a human-visible Terminal Benchmark drill through real HTTP APIs without DB inspection as lifecycle proof; PR/human checkpoint is pending. |
 
 ## Blockers
 

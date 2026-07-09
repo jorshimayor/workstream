@@ -14,8 +14,8 @@
   `review_pending` task state without database inspection as lifecycle proof.
 - Last merged implementation SHA: `b72a5b9`
 - Last merge commit: `b1a9851`
-- Current gate: deterministic verification and internal reviewer fanout for
-  `WS-POL-001-16` before PR review.
+- Current gate: PR creation and human checkpoint for `WS-POL-001-16`; internal
+  reviewer fanout and evidence gate are complete.
 - Next chunk: inactive until this chunk is reviewed, merged, and followed by a
   post-merge memory update.
 
