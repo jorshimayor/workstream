@@ -20,8 +20,7 @@ None.
 
 `WS-POL-002-01` - Post-Submit Provenance And Compiler Contract.
 
-This chunk is inactive until the planning PR is reviewed and the user gives an
-explicit start signal.
+This chunk is inactive until the user gives an explicit start signal.
 
 ## Chunk Status
 

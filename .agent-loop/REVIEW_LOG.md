@@ -492,6 +492,10 @@ Required reviewer tracks:
 - architecture
 - docs
 - CI integrity
+- reuse/dedup - N/A with approved reason; no skills, agents, backend app code,
+  or scripts changed in the final repair.
+- test delta - N/A with approved reason; no tests or test-like files changed in
+  the final repair.
 
 Result: PASS after CodeRabbit and internal review fixes. GitHub Agent Gates,
 Backend, and CodeRabbit passed before merge.
