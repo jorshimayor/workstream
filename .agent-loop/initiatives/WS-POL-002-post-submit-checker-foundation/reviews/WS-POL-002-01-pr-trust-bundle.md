@@ -160,15 +160,14 @@ The response is recorded separately in:
 
 - `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/reviews/WS-POL-002-01-external-review-response.md`
 
-CodeRabbit and the rerun GitHub Actions checks are still pending after the CI
-fix push.
+After the CI fix push, Backend, Agent Gates, and CodeRabbit passed.
 
 ## Remaining Risks
 
 - Severity constants are explicitly owned in the compiler contract and also
   exist in the checker runner. Future severity model changes must be versioned
   or consolidated deliberately.
-- GitHub Actions and CodeRabbit must rerun after the CI fix push.
+- Human merge review is still required. No external-review blocker remains.
 
 ## Human Review Focus
 

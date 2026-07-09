@@ -52,13 +52,19 @@ Internal post-fix review:
 - QA/test: PASS.
 - Test delta: PASS.
 
+## Final External Check Status
+
+- Backend: passed after the CI fix push.
+- Agent Gates: passed.
+- CodeRabbit: passed with no actionable comments.
+
 ## Comments Deferred
 
 None.
 
 ## Human Decisions Needed
 
-None before rerunning external checks.
+None before human merge review.
 
 ## Commands Rerun
 
@@ -69,5 +75,4 @@ cd backend && .venv/bin/ruff check tests/test_tasks.py
 
 ## Remaining Risks
 
-- Backend CI must rerun after the fix is pushed.
-- CodeRabbit review was still pending when this response was written.
+- None from external review. Human merge review is still required.
