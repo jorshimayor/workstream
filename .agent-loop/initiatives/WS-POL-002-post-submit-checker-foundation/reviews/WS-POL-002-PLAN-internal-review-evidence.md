@@ -10,21 +10,11 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Base SHA: `a3d2a3f1701391c8dafdca6cff2f0f80dbebda3b`
+Reviewed code SHA: f07160145fd5b92515cfbbd1c78c81a583a86508
 
-Reviewed at: 2026-07-09T07:51:21Z
+Reviewed at: 2026-07-09T08:46:42Z
 
-Reviewer run IDs:
-
-- senior-engineering: `019f45cc-18c8-7773-96e5-69718376bc68`
-- QA/test: `019f45d6-0b10-7711-b93a-36829979e9b4`
-- security/auth: `019f45d3-1319-7171-873b-85670bfcf071`
-- product/ops: `019f45cc-3125-72c1-9396-4346ae293529`
-- architecture: `019f45d3-0d52-7423-82a5-524a61841f86`
-- docs: `019f45cc-453d-73c0-acd9-58f906dd27f4`
-- reuse/dedup: `019f45d3-5206-75b1-a245-0c5fc8f015b3`
-- test delta: `019f45d3-6067-78c0-8f2b-cc5001da3e17`
-- CI integrity: `019f45d9-2c32-7df2-bdae-98d90a46e6d1`
+Reviewer run IDs: senior-engineering=019f4607-7d3d-75f1-9f95-1c97e6a754ed; QA/test=019f4607-9e65-7dd3-a4a1-e5902738c7ae; security/auth=019f4607-c400-7d70-ba90-d3a864da5619; product/ops=019f4607-e130-7183-935e-399d7c0da675; architecture=019f4608-0acf-72a0-a876-f9e0b2d1f8c6; docs=019f4609-1043-76f0-9474-7a0ecb9d43eb; CI-integrity=019f4610-a68c-7742-bff9-6b89fa3931c9
 
 ## Reviewed Change
 
@@ -43,46 +33,40 @@ Scope:
 - Kept v0.1 setup authorization honest: verified `admin` / `project_manager`
   roles remain the current bootstrap boundary; project-scoped role assignment is
   out of scope for WS-POL-002.
+- Addressed CodeRabbit and internal-review findings by normalizing chunk titles,
+  adding required chunk metadata, tightening committed-evidence redaction, and
+  adding external review and PR trust artifacts.
 
 ## Reviewer Results
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS WITH LOW RISKS | None | Confirmed real Celery files, persistence scope, planning contract, and narrowed runtime scope after fixes. |
-| QA/test | PASS | None | Confirmed feasible commands and resolved source-hash evidence contradiction. |
-| security/auth | PASS | None | Confirmed v0.1 setup authorization wording, prompt-injection controls, redaction, and default-checker protections. |
-| product/ops | PASS WITH LOW RISKS | None | Confirmed lifecycle/product routing boundaries; low clarifications were folded into final proof and runtime contracts. |
-| architecture | PASS | None | Confirmed current authorization boundary, setup trigger boundary, model/migration scope, planning contract, and privacy scan path. |
-| docs | PASS WITH LOW RISKS | None | Confirmed persistence scope, canonical wording, command shape, and docs clarity; env prerequisites were added. |
-| reuse/dedup | PASS WITH LOW RISKS | None | Confirmed reuse of existing post-submit helpers and setup boundary; low notes were folded into chunk contracts. |
-| test delta | PASS WITH LOW RISKS | None | Confirmed no tests were weakened; low notes on privacy scan lint and redacted hash proof were addressed. |
-| CI integrity | PASS | None | Confirmed no CI changes and CI integrity reviewer is required where tests/scripts can change. |
+| senior engineering | PASS AFTER FIXES | None | Content passed; evidence provenance and remote push findings are addressed by this evidence update and follow-up push. |
+| QA/test | PASS WITH LOW RISKS | None | Confirmed contract metadata and CodeRabbit fixes; remote push was the only remaining low note. |
+| security/auth | PASS | None | Confirmed raw source hashes, raw policy hashes, actor/source/setup identifiers, secrets, local paths, and private refs are handled safely. |
+| product/ops | PASS AFTER FIXES | None | Product lifecycle passed; evidence provenance and PR trust bundle findings are addressed in this review artifact update. |
+| architecture | PASS WITH LOW RISKS | None | Confirmed project-scoped policy, deterministic runtime, no per-task checker generation; broad future runtime globs remain accepted low risk. |
+| docs | PASS AFTER FIXES | None | Canonical wording and chunk content passed; external response and trust-bundle findings are addressed in this review artifact update. |
+| CI integrity | PASS | None | Confirmed no workflow, script, package, or CI configuration changes; local evidence gate passes and artifacts do not overclaim remote checks. |
+| reuse/dedup | N/A - with approved reason | N/A | No skills, agents, backend app code, or scripts changed in this repair. |
+| test delta | N/A - with approved reason | N/A | No tests or test-like files changed in this repair. |
 
 ## Valid Findings Addressed
 
-- Added model/migration scope for post-submit policy provenance, approval
-  provenance, setup-run post-submit outputs, and lifecycle status.
-- Added real setup worker/queue files to the derivation chunk.
-- Corrected setup trigger boundary so post-submit derivation starts after
-  setup-approved submission artifact policy approval and pre-submit compilation,
-  not during initial source capture.
-- Added explicit planning chunk contract.
-- Replaced non-canonical `ProjectSubmissionArtifactPolicy` wording with
-  `SubmissionArtifactPolicy`.
-- Required default-only post-submit policy support while preserving exact
-  platform default checker identity.
-- Required prompt-injection tests and bounded/redacted setup summaries.
-- Corrected authorization wording from project-scoped manager claims to the
-  current v0.1 verified `admin` / `project_manager` setup boundary.
-- Required worker/reviewer/finance/auditor denials for new setup visibility and
-  approval endpoints.
-- Added operator-visible internal route evidence requirements.
-- Preserved checker-caused `needs_revision` provenance as
-  `outcome_source = auto_checker` with no human review decision id.
-- Added executable Terminal Benchmark drill prerequisites and privacy scan
-  script scope.
-- Required privacy scan lint/compile checks and redacted source-hash proof.
-- Added CI integrity to chunks that allow tests or scripts.
+- CodeRabbit: added explicit `Risk class` to `WS-POL-002-05`.
+- CodeRabbit: updated privacy proof criteria to reject raw source and policy
+  hashes and require `sha256:<redacted>` placeholders for committed evidence.
+- CodeRabbit: normalized the `WS-POL-002-01` title in `STATUS.md` to match
+  `CHUNK_MAP.md`.
+- Internal architecture/QA/docs: added approved-plan references, `Risk class`,
+  `SLA`, and stop conditions to every WS-POL-002 chunk contract.
+- Internal security: tightened committed-evidence handling so actor/source/setup
+  identifiers are represented by field presence/shape or approved redacted
+  placeholders.
+- Internal product/docs: added a separate external review response artifact and
+  PR trust bundle instead of mixing CodeRabbit findings into internal evidence.
+- CI: replaced stale `Base SHA` provenance with `Reviewed code SHA` and made
+  reviewer run IDs parseable on one line for `check_internal_review_evidence.py`.
 
 ## Commands Run
 
@@ -90,21 +74,21 @@ Scope:
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
 git diff --check
-find .agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation -type f -print0 | xargs -0 -n1 sh -c 'for f do if grep -n "[[:blank:]]$" "$f"; then echo "trailing whitespace in $f"; exit 1; fi; done' sh
+for f in .agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/chunks/*.md; do rg -n "^## (Approved Plan Reference|Risk class|SLA|Stop conditions)$" "$f"; done
 ```
 
 Results:
 
 - Stale wording check: passed.
-- Markdown link check: passed for 18 changed Markdown files.
+- Markdown link check: passed for 19 changed Markdown files.
 - `git diff --check`: passed.
-- Extra whitespace scan over new untracked WS-POL-002 files: passed.
+- Chunk metadata heading scan: passed for every WS-POL-002 chunk contract.
 
-## Residual Risks
+## Remaining Risks
 
 - `WS-POL-002-04` still allows broad task/checker module globs, but its target
   behavior and acceptance criteria are narrowed to generated-policy runtime
-  deltas. Senior engineering accepted this as low risk.
+  deltas. Architecture accepted this as low risk.
 - Project-scoped role assignment remains future Workstream authorization work.
   WS-POL-002 must not pretend it exists.
 
