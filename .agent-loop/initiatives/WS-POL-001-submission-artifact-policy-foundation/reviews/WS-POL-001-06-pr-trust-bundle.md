@@ -6,7 +6,7 @@
 
 ## Goal
 
-Use a real Terminal Benchmark reviewer fixture as an external-project proof for
+Use a real Terminal Benchmark reference fixture as an external-project proof for
 the current Workstream setup-agent, project policy-bundle, task locked-context,
 pre-submit, post-submit checker, and revision resubmission lifecycle.
 
@@ -48,7 +48,7 @@ The user explicitly pushed back that:
 - Updated active docs/templates/roadmaps so payment terms are policy-owned and
   task-visible payout fields are locked snapshots from `PaymentPolicy`.
 - Updated the Terminal Benchmark example to require the OpenAI Agents SDK
-  adapter and real Termius project guide, reviewer program, task TOML, and
+  adapter and real Terminal Benchmark reference project guide, reviewer program, task TOML, and
   review packet material.
 - Removed Terminal Benchmark-specific derivation shortcuts from the local
   fixture adapter.
@@ -161,7 +161,7 @@ cd backend && uv run pytest tests/test_alembic.py -q
 cd backend && uv run pytest tests/test_checkers.py -q
 cd backend && uv run pytest tests/test_tasks.py -q
 cd backend && uv run pytest tests/test_projects.py -q
-cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test uv run python scripts/week1_api_e2e.py
+cd backend && WORKSTREAM_DATABASE_URL=<local-test-db-url> uv run python scripts/week1_api_e2e.py
 cd backend && .venv/bin/python -m ruff check app tests scripts ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
 cd backend && .venv/bin/python -m pytest tests/test_alembic.py -q
 cd backend && .venv/bin/python -m pytest tests/test_tasks.py -k 'screen or missing or required or locked_context' -q

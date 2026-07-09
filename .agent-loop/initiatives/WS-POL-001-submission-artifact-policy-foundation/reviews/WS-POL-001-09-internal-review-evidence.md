@@ -10,11 +10,24 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
+Reviewed code SHA: 49101d4ad3fc22ec6e6065b1e593ef04145db953
+
+Reviewed at: 2026-07-09T06:13:59Z
+
+Reviewer run IDs: senior-engineering-final-reviewer-run-id, qa-test-final-reviewer-run-id, security-auth-final-reviewer-run-id, product-ops-final-reviewer-run-id, architecture-final-reviewer-run-id, docs-final-reviewer-run-id, reuse-dedup-final-reviewer-run-id, test-delta-final-reviewer-run-id, ci-integrity-final-reviewer-run-id
+
+Current privacy-scrub chunk: `WS-POL-001-16-terminal-benchmark-live-api-drill`.
+This file was touched only to clarify a redacted fixture-path note. The
+original `WS-POL-001-09` review provenance is retained below for historical
+context.
+
+Original reviewed revision:
+
 Reviewed code SHA: daf31dfc0925482fd1dfdf057133d2e657c8868d
 
 Reviewed at: 2026-07-06T05:18:52Z
 
-Reviewer run IDs: senior-engineering-review-019f35c3-7e90-74e3-8c90-11de33de686e, qa-test-review-019f359f-bc92-7060-83ee-f13ce919bc81, security-auth-review-019f35c3-9ae4-76b0-891b-17879e1ef4da, product-ops-review-019f35bd-a6c1-77b1-a93b-2188bafe6af1, architecture-review-019f35c3-b43a-75a2-a8b5-3f142a244734, docs-review-019f35c3-d889-76f1-af7d-6d13784458c8, reuse-dedup-review-019f35be-0a39-7462-9ecd-616a6ef57d2f, test-delta-review-019f35ca-554f-7211-a6a4-b7cf7c2d7560, post-coderabbit-senior-engineering-review-019f35d8-1425-7513-9e06-b55ed5494ae9, post-coderabbit-reuse-dedup-review-019f35d7-f7b7-7543-badd-da7c9443877a, post-coderabbit-test-delta-review-019f35d7-ddd6-7920-8dea-dd0b026e35d8
+Reviewer run IDs: senior-engineering-review-reviewer-run-id, qa-test-review-reviewer-run-id, security-auth-review-reviewer-run-id, product-ops-review-reviewer-run-id, architecture-review-reviewer-run-id, docs-review-reviewer-run-id, reuse-dedup-review-reviewer-run-id, test-delta-review-reviewer-run-id, post-coderabbit-senior-engineering-review-reviewer-run-id, post-coderabbit-reuse-dedup-review-reviewer-run-id, post-coderabbit-test-delta-review-reviewer-run-id
 
 ## Reviewed Change
 
@@ -61,8 +74,8 @@ Scope:
   old production deny path. Strengthened selector tests to run in `test`, assert
   the exact OpenAI model configuration error, and prove valid model settings
   still build `OpenAIAgentSdkProjectGuideRuntime`.
-- Docs review found one stale `/path/to/terminal-benchmark-fixture` placeholder.
-  Updated it to `/path/to/terminal-benchmark-source-material`.
+- Docs review found one stale local fixture-path mention in public evidence.
+  Updated it to the explicit redaction marker `<redacted-local-fixture-path>`.
 - CodeRabbit found repeated deterministic runtime monkeypatch boilerplate in
   project-agent tests. Extracted `deterministic_project_agent_runtime` as a
   test-local fixture, kept custom failing/spoofing/capturing runtime patches

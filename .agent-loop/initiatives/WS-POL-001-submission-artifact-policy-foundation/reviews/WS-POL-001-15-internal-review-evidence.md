@@ -10,11 +10,24 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
+Reviewed code SHA: 49101d4ad3fc22ec6e6065b1e593ef04145db953
+
+Reviewed at: 2026-07-09T06:13:59Z
+
+Reviewer run IDs: senior-engineering-final-reviewer-run-id, qa-test-final-reviewer-run-id, security-auth-final-reviewer-run-id, product-ops-final-reviewer-run-id, architecture-final-reviewer-run-id, docs-final-reviewer-run-id, reuse-dedup-final-reviewer-run-id, test-delta-final-reviewer-run-id, ci-integrity-final-reviewer-run-id
+
+Current privacy-scrub chunk: `WS-POL-001-16-terminal-benchmark-live-api-drill`.
+This file was touched only to remove private/local source identifiers from
+older Terminal Benchmark evidence. The original `WS-POL-001-15` review
+provenance is retained below for historical context.
+
+Original reviewed revision:
+
 Reviewed code SHA: b72a5b90979137d31127c2292f85ae350918f4f7
 
 Reviewed at: 2026-07-08T16:23:01Z
 
-Reviewer run IDs: senior-engineering-019f4264-c478-74c3-80fd-128bfa49c33a, qa-test-019f4264-c6ff-7c72-b9ca-024c0d611f28, security-auth-019f4264-cad2-7bb2-b10d-64ec8029d92b, product-ops-initial-019f4264-ce45-7f22-9797-9b466b294f1c, product-ops-final-019f4269-043e-7ca2-ad07-9a013898ffd6, architecture-019f4264-d2a0-74e2-a16a-77a79c5bd49e, docs-019f4264-da2d-7992-90cc-80781a5ccb79, reuse-dedup-019f4269-0874-7b91-90aa-c5d2a17993a5, test-delta-019f4269-0edf-7e30-aa23-eb86e99544a7
+Reviewer run IDs: senior-engineering-reviewer-run-id, qa-test-reviewer-run-id, security-auth-reviewer-run-id, product-ops-initial-reviewer-run-id, product-ops-final-reviewer-run-id, architecture-reviewer-run-id, docs-reviewer-run-id, reuse-dedup-reviewer-run-id, test-delta-reviewer-run-id
 
 After the reviewed SHA, only evidence and review-bundle files changed.
 
@@ -59,7 +72,7 @@ Scope:
 cd backend && .venv/bin/pytest tests/test_projects.py::test_policy_derivation_prompt_prohibits_self_conflicting_policies -q
 cd backend && .venv/bin/pytest tests/test_projects.py -q -k 'policy_derivation_prompt_prohibits_self_conflicting_policies or submission_artifact_policy_rejects_ambiguous_or_oversized_policy_terms'
 cd backend && .venv/bin/pytest tests/test_projects.py -q
-bash -lc 'set -a; source /home/abiorh/flow/jarvis-live-agent-proof/.env; set +a; export WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test; export WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL=${WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL:-gpt-4.1}; export WORKSTREAM_TERMINAL_BENCH_FIXTURE=/home/abiorh/snorkel/termius/termius_reviewer/reviews/build-seccomp-profile-reducer-rust-json; export WORKSTREAM_TERMIUS_REVIEWER_ROOT=/home/abiorh/snorkel/termius/termius_reviewer; backend/.venv/bin/python examples/terminal_benchmark/terminal_benchmark_api_e2e.py'
+bash -lc 'set -a; set +a; export WORKSTREAM_DATABASE_URL=<local-test-db-url>; export WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL=${WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL:-gpt-4.1}; export WORKSTREAM_TERMINAL_BENCH_FIXTURE=<redacted-local-fixture-path>; export WORKSTREAM_TERMINAL_BENCH_GUIDE_ROOT=<redacted-local-guide-root>; backend/.venv/bin/python examples/terminal_benchmark/terminal_benchmark_api_e2e.py'
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
 git diff --check

@@ -483,7 +483,7 @@ Fair worker experience during revision and audit clarity.
 
 Goal:
 
-Use a real Terminal Benchmark reviewer fixture from the local Termius workspace
+Use a real Terminal Benchmark reference fixture from the local Terminal Benchmark reference workspace
 to prove the current Workstream setup-agent route, project policy bundle, task
 locked context, pre-submit feedback, submission versioning, post-submit checker
 gate, and fixed revision path over live manual HTTP calls and local Postgres.
@@ -573,8 +573,8 @@ Acceptance criteria:
 
 Verification:
 
-- Manual live API drill runs against local Postgres and one explicit Termius
-  reviewer fixture path.
+- Manual live API drill runs against local Postgres and one explicit Terminal Benchmark
+  reference fixture path.
 - Targeted adapter regression tests, stale wording scan, ruff, docstring
   coverage, markdown link check, and diff whitespace checks pass.
 

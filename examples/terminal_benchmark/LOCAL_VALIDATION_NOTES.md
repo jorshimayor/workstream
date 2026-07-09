@@ -75,7 +75,7 @@ cd backend && .venv/bin/python -m ruff check app tests scripts
 cd backend && .venv/bin/docstr-coverage app scripts --config .docstr.yaml
 git diff --check
 cd backend && .venv/bin/python -m pytest tests/test_checkers.py -k 'pre_submit_check_allows_worker_revision_packet_feedback or pre_submit_check_returns_feedback_without_durable_run'
-cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test WORKSTREAM_TERMINAL_BENCH_FIXTURE=/path/to/terminal-benchmark-source-material .venv/bin/python ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
+cd backend && WORKSTREAM_DATABASE_URL=<local-test-db-url> WORKSTREAM_TERMINAL_BENCH_FIXTURE=<redacted-local-fixture-path> .venv/bin/python ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
 cd backend && .venv/bin/python -m pytest
 ```
 
@@ -97,11 +97,11 @@ Date: 2026-07-05
 
 Purpose:
 
-Record that a real Terminal Benchmark reviewer fixture was used in formal
+Record that a real Terminal Benchmark reference fixture was used in formal
 `.agent-loop` evidence to prove the current Workstream policy-bundle path:
 
 - project guide creation
-- immutable guide-source snapshot from real Termius guide, reviewer, task, and
+- immutable guide-source snapshot from real Terminal Benchmark guide, review program, task, and
   review packet material
 - guide sufficiency report
 - project `SubmissionArtifactPolicy`
@@ -137,7 +137,8 @@ Results:
 - clean packet reached `review_pending`
 - missing static guard was blocked at pre-submit and created no submission
 - blocked pre-submit and blocked submission-create produced no durable
-  submission, evidence, checker-run, checker-result, or audit side effects
+  submission, evidence, checker-run, or checker-result side effects; task audit
+  recorded the blocked intake attempt
 - after a v2 guide and project checker became active, the already-started task
   still used its locked v1 checker bundle
 - checker-caused v1 reached `needs_revision`
@@ -150,7 +151,7 @@ chunk evidence lives under `.agent-loop/`.
 
 Date: 2026-07-05
 
-The current proof was rerun manually over HTTP against a live local uvicorn
+The 2026-07-05 proof was rerun manually over HTTP against a live local uvicorn
 server and local Postgres. The Python example scaffold was not used as the
 authoritative proof for this pass.
 
@@ -158,8 +159,8 @@ Live API sequence:
 
 - health check returned `ok`
 - project manager created project
-- project manager created a project guide with full Termius submission program,
-  reviewer project guide, reviewer program, task TOML, and review packet content
+- project manager created a project guide with full Terminal Benchmark submission program,
+  project guide, review program, task TOML, and review packet content
 - project manager created an immutable guide-source snapshot with source hashes
   and sanitized durable refs
 - `ProjectGuideSufficiencyAgent` endpoint returned `passed`
@@ -184,23 +185,23 @@ Live API sequence:
 
 Live IDs captured from local HTTP API responses:
 
-- project: `6e87e2c2-91a1-4140-8f66-6d0c5bd4b966`
-- guide: `b2857abb-6bb0-4e27-89e8-bfb3bfedb8f2`
-- guide-source snapshot: `185e80bb-5676-4370-a09f-1c51853bd400`
-- sufficiency report: `8368e1c5-cbd6-4503-94f8-74e647a15550`
-- agent-derived policy draft: `2838434c-7695-4037-a6d4-531f860a07a6`
-- admin exact policy: `dc2e054b-5ce1-49fe-8388-49eb0ec7f992`
+- project: `<redacted-id>`
+- guide: `<redacted-id>`
+- guide-source snapshot: `<redacted-id>`
+- sufficiency report: `<redacted-id>`
+- agent-derived policy draft: `<redacted-id>`
+- admin exact policy: `<redacted-id>`
 - effective project submission artifact policy hash:
-  `sha256:38213716e58f10f0916029f91a882681dc52136c9460a958bb4780b070da82f8`
+  `sha256:<redacted>`
 - compiled pre-submit checker hash:
-  `sha256:1dc2e4b8e9a509e26f6fff8a6da68fbc7340654ecc135d025351173501265855`
-- clean task: `9fd7be8f-5886-403b-8ce7-faba37705e72`
-- clean submission: `ad0d08f9-4b91-4363-85e9-d8a7b6e055a8`
-- clean checker run: `4e72cf39-3348-48b1-8d1a-b3ae17433c65`
-- revision-path task: `3ae5db8a-eb40-49bb-8a2a-87ccb1f6594f`
-- revision v1 submission: `77a5614b-d0cd-4875-abe2-6e4a83d213cb`
-- revision v1 checker run: `b4c9fb23-bf83-48f2-a9ca-5e145aaa707d`
-- fixed v2 submission: `a233eefd-598e-4c1b-89c5-c1a93b077682`
+  `sha256:<redacted>`
+- clean task: `<redacted-id>`
+- clean submission: `<redacted-id>`
+- clean checker run: `<redacted-id>`
+- revision-path task: `<redacted-id>`
+- revision v1 submission: `<redacted-id>`
+- revision v1 checker run: `<redacted-id>`
+- fixed v2 submission: `<redacted-id>`
 
 Runtime issue found and fixed:
 

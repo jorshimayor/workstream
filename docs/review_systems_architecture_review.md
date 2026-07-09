@@ -1,6 +1,6 @@
 # Systems Architecture Review
 
-Review scope: markdown docs in `/home/abiorh/flow/workstream`.
+Review scope: markdown docs in `<repo-root>`.
 
 Reviewer role: Systems Architecture Reviewer.
 
@@ -56,7 +56,7 @@ Status: fixed in `README.md`.
 
 ## Baseline Scope Update
 
-Baseline scanned at metadata/process level only under `/home/abiorh/snorkel`, covering Sequoia, Geranium, Excalibur, Marlin, and Termius. The scan looked at guide names/headings, queue/status structures, review guards, checker/preflight scripts, review packet/evidence/status patterns, and submission package/provenance structures. No task content or confidential details were copied.
+Baseline scanned at metadata/process level only under `local reference workspace`, covering several reference projects. The scan looked at guide names/headings, queue/status structures, review guards, checker/preflight scripts, review packet/evidence/status patterns, and submission package/provenance structures. No task content or confidential details were copied.
 
 ### Medium: Packaged submission provenance should be first-class
 

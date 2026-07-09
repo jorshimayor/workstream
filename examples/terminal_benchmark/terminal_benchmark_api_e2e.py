@@ -1,7 +1,7 @@
 """Run real Terminal Benchmark source material through the current API contracts.
 
 This is an example drill, not Workstream runtime code and not a required CI
-test. It expects a local reviewer source-material path through
+test. It expects a local reference source-material path through
 ``WORKSTREAM_TERMINAL_BENCH_FIXTURE`` and writes only to a local test Postgres
 database.
 """
@@ -11,7 +11,9 @@ database.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import hashlib
+import io
 import os
 import re
 import subprocess
@@ -39,7 +41,7 @@ from api_contract_e2e import (
     find_free_port,
     flow_settings,
     issue_flow_token,
-    request_json,
+    request_json as api_contract_request_json,
     wait_for_health,
 )
 from week2_api_e2e import (
@@ -54,7 +56,8 @@ from week2_api_e2e import (
 )
 
 FIXTURE_ENV_VAR = "WORKSTREAM_TERMINAL_BENCH_FIXTURE"
-REVIEWER_ROOT_ENV_VAR = "WORKSTREAM_TERMIUS_REVIEWER_ROOT"
+GUIDE_ROOT_ENV_VAR = "WORKSTREAM_TERMINAL_BENCH_GUIDE_ROOT"
+PRINT_RAW_LOCAL_IDS_ENV_VAR = "WORKSTREAM_TERMINAL_BENCH_PRINT_RAW_LOCAL_IDS"
 LOCAL_DATABASE_HOSTS = {"localhost", "127.0.0.1", "::1"}
 LOCAL_DATABASE_NAMES = {"workstream_test", "test_workstream"}
 ASYNC_POSTGRES_SCHEMES = {"postgresql+asyncpg"}
@@ -63,11 +66,18 @@ REQUIRED_OPENAI_AGENT_SDK_ENV = (
     "OPENAI_API_KEY",
     "WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL",
 )
+UUID_PATTERN = re.compile(
+    r"\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
+    r"[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b"
+)
+FIXTURE_ID_PATTERN = re.compile(r"\bterminal-benchmark-[0-9a-fA-F]{12,}\b")
+SHA256_VALUE_PATTERN = re.compile(r"\bsha256:[A-Za-z0-9._:-]+")
+LOCAL_PATH_PATTERN = re.compile(r"(?<![A-Za-z0-9_])/(?:home|Users|tmp|var|private)/[^\s'\"),]+")
 
 
 @dataclass(frozen=True)
 class FixtureFile:
-    """Real file from the Terminal Benchmark reviewer fixture."""
+    """Real file from the Terminal Benchmark reference fixture."""
 
     artifact_name: str
     path: Path
@@ -106,15 +116,15 @@ def fixture_root() -> Path:
             )
         return root.resolve()
     raise RuntimeError(
-        f"{FIXTURE_ENV_VAR} is required. Point it at one Terminal Benchmark reviewer "
-        "source-material directory, for example a Termius review folder containing extracted/task.toml, "
+        f"{FIXTURE_ENV_VAR} is required. Point it at one Terminal Benchmark "
+        "source-material directory, for example a prepared fixture directory containing extracted/task.toml, "
         "one *_submission_*.zip, one review_packet_*.md, static_guard.txt, and verifier logs."
     )
 
 
-def reviewer_root(fixture_root_path: Path) -> Path:
-    """Resolve the Termius reviewer root containing real guide/program material."""
-    configured = os.environ.get(REVIEWER_ROOT_ENV_VAR)
+def guide_root(fixture_root_path: Path) -> Path:
+    """Resolve the Terminal Benchmark reference root containing guide/program material."""
+    configured = os.environ.get(GUIDE_ROOT_ENV_VAR)
     candidates = []
     if configured:
         candidates.append(Path(configured).expanduser())
@@ -126,8 +136,8 @@ def reviewer_root(fixture_root_path: Path) -> Path:
         if project_guide.is_file() and reviewer_program.is_file():
             return candidate.resolve()
     raise RuntimeError(
-        f"could not find PROJECT_GUIDE.md and REVIEWER_PROGRAM.md. Set {REVIEWER_ROOT_ENV_VAR} "
-        "to the local Termius reviewer root."
+        f"could not find PROJECT_GUIDE.md and REVIEWER_PROGRAM.md. Set {GUIDE_ROOT_ENV_VAR} "
+        "to the local Terminal Benchmark reference root."
     )
 
 
@@ -157,10 +167,9 @@ def require_single_fixture_match(root: Path, pattern: str, label: str) -> Path:
     """
     matches = sorted(root.glob(pattern))
     if len(matches) != 1:
-        match_names = [path.name for path in matches]
         raise RuntimeError(
             f"expected exactly one {label} matching {pattern!r} in fixture "
-            f"{safe_label(root.name)!r}; found {len(matches)} file(s): {match_names}"
+            f"<redacted-fixture-label>; found {len(matches)} file(s)"
         )
     return matches[0]
 
@@ -175,6 +184,58 @@ def sanitized_fixture_id(task_toml: Path, submission_zip: Path) -> str:
 def safe_label(value: str) -> str:
     """Return a conservative display label for trusted fixture metadata."""
     return re.sub(r"[^a-zA-Z0-9_.-]+", "-", value).strip("-")[:120] or "terminal-benchmark"
+
+
+def public_evidence_value(value: str, placeholder: str, env: dict[str, str]) -> str:
+    """Return raw local ids only when explicitly requested for local debugging."""
+    if env.get(PRINT_RAW_LOCAL_IDS_ENV_VAR) == "1":
+        return value
+    return placeholder
+
+
+def public_safe_exception_message(exc: Exception) -> str:
+    """Return an exception summary without local ids or source fingerprints."""
+    message = str(exc) or exc.__class__.__name__
+    message = UUID_PATTERN.sub("<redacted-id>", message)
+    message = FIXTURE_ID_PATTERN.sub("<redacted-fixture-id>", message)
+    message = SHA256_VALUE_PATTERN.sub("sha256:<redacted>", message)
+    message = LOCAL_PATH_PATTERN.sub("<redacted-local-path>", message)
+    return f"{exc.__class__.__name__}: {message}"
+
+
+def public_safe_script_failure_message(exc: Exception) -> str:
+    """Return a generic top-level failure that cannot expose local transcript data."""
+    return (
+        f"{exc.__class__.__name__}: Terminal Benchmark API drill failed. "
+        "Raw local failure details are hidden by default; set "
+        f"{PRINT_RAW_LOCAL_IDS_ENV_VAR}=1 for local debugging."
+    )
+
+
+async def request_json(*args, **kwargs) -> dict:
+    """Call the shared API helper without leaking raw request paths by default."""
+    if os.environ.get(PRINT_RAW_LOCAL_IDS_ENV_VAR) == "1":
+        return await api_contract_request_json(*args, **kwargs)
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            return await api_contract_request_json(*args, **kwargs)
+    except Exception as exc:
+        raise RuntimeError(public_safe_exception_message(exc)) from None
+
+
+async def wait_for_submission_checker_run_public_safe(
+    client: httpx.AsyncClient,
+    manager_token: str,
+    submission_id: str,
+) -> dict:
+    """Wait for a checker run without leaking local ids on failure by default."""
+    if os.environ.get(PRINT_RAW_LOCAL_IDS_ENV_VAR) == "1":
+        return await wait_for_submission_checker_run(client, manager_token, submission_id)
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            return await wait_for_submission_checker_run(client, manager_token, submission_id)
+    except Exception as exc:
+        raise RuntimeError(public_safe_exception_message(exc)) from None
 
 
 def assert_strict_local_database_url(database_url: str) -> None:
@@ -200,10 +261,10 @@ def assert_strict_local_database_url(database_url: str) -> None:
 
 
 def load_fixture(root: Path) -> TerminalBenchmarkFixture:
-    """Load and validate a Terminal Benchmark reviewer fixture.
+    """Load and validate a Terminal Benchmark reference fixture.
 
     Args:
-        root: Fixture directory copied from the Termius reviewer workspace.
+        root: Prepared fixture directory copied from Terminal Benchmark reference material.
 
     Returns:
         Parsed fixture paths and metadata.
@@ -224,12 +285,12 @@ def load_fixture(root: Path) -> TerminalBenchmarkFixture:
 
     with task_toml.open("rb") as file:
         task_config = tomllib.load(file)
-    termius_root = reviewer_root(root)
+    guide_material_root = guide_root(root)
     return TerminalBenchmarkFixture(
         root=root,
         fixture_id=sanitized_fixture_id(task_toml, submission_zip),
-        project_guide=termius_root / "PROJECT_GUIDE.md",
-        reviewer_program=termius_root / "REVIEWER_PROGRAM.md",
+        project_guide=guide_material_root / "PROJECT_GUIDE.md",
+        reviewer_program=guide_material_root / "REVIEWER_PROGRAM.md",
         task_toml=task_toml,
         submission_zip=submission_zip,
         static_guard=root / "static_guard.txt",
@@ -292,7 +353,7 @@ def evidence_entry(file: FixtureFile, fixture: TerminalBenchmarkFixture) -> dict
     return {
         "type": "log",
         "label": file.label,
-        "uri": f"local://termius/{fixture.fixture_id}/{file.artifact_name}",
+        "uri": f"local://terminal-benchmark/{fixture.fixture_id}/{file.artifact_name}",
         "hash": sha256_token(file.path),
         "size_bytes": file.path.stat().st_size,
         "metadata": {
@@ -311,7 +372,7 @@ def fixture_files(fixture: TerminalBenchmarkFixture) -> list[FixtureFile]:
             "submission.zip",
             fixture.submission_zip,
             "original submission zip",
-            "original reviewer-side submission archive",
+            "original submission archive",
         ),
         FixtureFile(
             "task.toml",
@@ -323,13 +384,13 @@ def fixture_files(fixture: TerminalBenchmarkFixture) -> list[FixtureFile]:
             "static_guard.txt",
             fixture.static_guard,
             "platform static guard output",
-            "static guard output captured by the reviewer",
+            "static guard output captured with the fixture",
         ),
         FixtureFile(
             "review_packet.md",
             fixture.review_packet,
             "automated review packet",
-            "AutoEval and reviewer packet evidence",
+            "AutoEval and review packet evidence",
         ),
         FixtureFile(
             "docker_build.log",
@@ -361,7 +422,7 @@ def task_payload(fixture: TerminalBenchmarkFixture, run_id: str, suffix: str) ->
     return {
         "title": f"Terminal Benchmark {fixture.fixture_id} {suffix}",
         "description": (
-            "Real Terminal Benchmark reviewer fixture with "
+            "Real Terminal Benchmark reference fixture with "
             f"{milestone_count} milestones, languages={metadata['languages']}, "
             f"category={metadata['category']}."
         ),
@@ -394,9 +455,9 @@ def guide_payload(fixture: TerminalBenchmarkFixture, run_id: str) -> dict:
         "content_markdown": (
             f"# Terminal Benchmark Guide {run_id}\n\n"
             f"Fixture: `{fixture.fixture_id}`\n\n"
-            "## Termius Project Guide\n\n"
+            "## Terminal Benchmark Project Guide\n\n"
             f"{project_guide}\n\n"
-            "## Termius Reviewer Program\n\n"
+            "## Terminal Benchmark Reference Program\n\n"
             f"{reviewer_program}\n\n"
             "## Selected Terminal Benchmark Task TOML\n\n"
             "```toml\n"
@@ -452,13 +513,13 @@ def submission_payload(
         files = [file for file in files if file.artifact_name != "static_guard.txt"]
     summary = (
         f"Terminal Benchmark {fixture.fixture_id} packet {suffix} from real "
-        "reviewer-side fixture evidence."
+        "reference fixture evidence."
     )
     if low_quality_signal:
         summary += " Placeholder sample output requires reviewer revision."
     return {
         "summary": summary,
-        "package_uri": f"local://termius/{fixture.fixture_id}/submission.zip",
+        "package_uri": f"local://terminal-benchmark/{fixture.fixture_id}/submission.zip",
         "package_hash": sha256_token(fixture.submission_zip),
         "artifact_hash_manifest": [artifact_entry(file) for file in files],
         "worker_attestation": STRONG_ATTESTATION,
@@ -802,7 +863,11 @@ async def submit_finalize_and_wait(
         f"/api/v1/submissions/{submission['id']}/finalize",
         manager_token,
     )
-    run = await wait_for_submission_checker_run(client, manager_token, submission["id"])
+    run = await wait_for_submission_checker_run_public_safe(
+        client,
+        manager_token,
+        submission["id"],
+    )
     return submission, locked, run
 
 
@@ -1236,14 +1301,37 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
 
     print("Terminal Benchmark real API e2e passed")
     print("scenario_summary:")
-    print(f"fixture_id={fixture.fixture_id}")
-    print(f"fixture_label={safe_label(fixture.root.name)}")
-    print(f"project_id={project['id']}")
-    print(f"complete_task_id={complete_task['id']}")
-    print(f"complete_submission_id={complete_submission['id']}")
-    print(f"revision_task_id={revision_task['id']}")
-    print(f"revision_v1_submission_id={first_submission['id']}")
-    print(f"revision_v2_submission_id={second_submission['id']}")
+    print(
+        "redaction="
+        + public_evidence_value(
+            "raw_local_ids_enabled",
+            "public_evidence_safe_by_default",
+            env,
+        )
+    )
+    print(
+        "fixture_id="
+        + public_evidence_value(fixture.fixture_id, "<redacted-fixture-id>", env)
+    )
+    print(
+        "fixture_label="
+        + public_evidence_value(safe_label(fixture.root.name), "<redacted-fixture-label>", env)
+    )
+    print("project_id=" + public_evidence_value(project["id"], "<redacted-id>", env))
+    print("complete_task_id=" + public_evidence_value(complete_task["id"], "<redacted-id>", env))
+    print(
+        "complete_submission_id="
+        + public_evidence_value(complete_submission["id"], "<redacted-id>", env)
+    )
+    print("revision_task_id=" + public_evidence_value(revision_task["id"], "<redacted-id>", env))
+    print(
+        "revision_v1_submission_id="
+        + public_evidence_value(first_submission["id"], "<redacted-id>", env)
+    )
+    print(
+        "revision_v2_submission_id="
+        + public_evidence_value(second_submission["id"], "<redacted-id>", env)
+    )
     print("complete_packet=review_pending")
     print("missing_static_guard=pre_submit_blocked_no_submission")
     print("low_quality_v1=needs_revision")
@@ -1270,9 +1358,15 @@ async def main(env: dict[str, str]) -> None:
 
 
 if __name__ == "__main__":
-    api_env = api_environment()
-    require_openai_agent_sdk_environment(api_env)
-    assert_strict_local_database_url(api_env["WORKSTREAM_DATABASE_URL"])
-    os.environ.update(api_env)
-    command.upgrade(alembic_config(), "head")
-    asyncio.run(main(api_env))
+    try:
+        api_env = api_environment()
+        require_openai_agent_sdk_environment(api_env)
+        assert_strict_local_database_url(api_env["WORKSTREAM_DATABASE_URL"])
+        os.environ.update(api_env)
+        command.upgrade(alembic_config(), "head")
+        asyncio.run(main(api_env))
+    except Exception as exc:
+        if os.environ.get(PRINT_RAW_LOCAL_IDS_ENV_VAR) == "1":
+            raise
+        print(public_safe_script_failure_message(exc), file=sys.stderr)
+        raise SystemExit(1) from None

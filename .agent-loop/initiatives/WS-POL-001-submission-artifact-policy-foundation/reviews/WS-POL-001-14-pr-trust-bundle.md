@@ -149,8 +149,8 @@ responses after finalization.
 cd backend && .venv/bin/ruff check app/modules/tasks/repository.py app/modules/tasks/service.py tests/test_tasks.py
 cd backend && .venv/bin/pytest tests/test_tasks.py::test_finalize_submission_requires_operator_and_latest_version tests/test_tasks.py::test_submission_finalize_guard_is_atomic -q
 cd backend && .venv/bin/pytest tests/test_tasks.py tests/test_checkers.py
-cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/api_contract_e2e.py
-bash -lc 'set -a; source /home/abiorh/flow/jarvis-live-agent-proof/.env; set +a; export WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test; export WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL=${WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL:-gpt-4.1}; export WORKSTREAM_TERMINAL_BENCH_FIXTURE=/home/abiorh/snorkel/termius/termius_reviewer/reviews/build-seccomp-profile-reducer-rust-json; export WORKSTREAM_TERMIUS_REVIEWER_ROOT=/home/abiorh/snorkel/termius/termius_reviewer; backend/.venv/bin/python examples/terminal_benchmark/terminal_benchmark_api_e2e.py'
+cd backend && WORKSTREAM_DATABASE_URL=<local-test-db-url> .venv/bin/python scripts/api_contract_e2e.py
+bash -lc 'set -a; set +a; export WORKSTREAM_DATABASE_URL=<local-test-db-url>; export WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL=${WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL:-gpt-4.1}; export WORKSTREAM_TERMINAL_BENCH_FIXTURE=<redacted-local-fixture-path>; export WORKSTREAM_TERMINAL_BENCH_GUIDE_ROOT=<redacted-local-guide-root>; backend/.venv/bin/python examples/terminal_benchmark/terminal_benchmark_api_e2e.py'
 python3 scripts/check_markdown_links.py
 git diff --check
 ```
@@ -222,24 +222,24 @@ Reviewed at: 2026-07-08T12:01:24Z
 
 Reviewer run IDs:
 
-- senior engineering: `019f4040-38db-7c02-ada8-ec277d640635`
-- QA/test: `019f4033-07a1-72c1-a172-9cebee7ab9de`
-- security/auth: `019f4049-451a-75c2-8a90-1e80e12bfa55`
-- product/ops: `019f4021-0291-73d2-8052-69c10a6346e9`
-- architecture: `019f4021-172e-7671-b16c-c09a66343d87`
-- docs: `019f4021-22fa-7003-bf1f-4f80affcb7d9`
-- reuse/dedup: `019f4064-43a3-7e90-9569-a8f341310bfa`
-- test delta: `019f4049-51ed-78a1-8d3a-7ffa22dba883`
-- senior engineering CodeRabbit fix: `019f4179-808b-7503-97bd-016cb2e1bbba`
-- QA/test CodeRabbit fix: `019f4179-8247-7751-9222-d678cd0f1b79`
-- security/auth CodeRabbit fix: `019f4179-8487-7153-bea8-fc093979a7da`
-- product/ops CodeRabbit fix: `019f4179-8647-77a3-830d-c5a8f2187b8a`
-- architecture CodeRabbit fix: `019f4179-883c-7330-ad49-d8ec9bca999c`
-- docs CodeRabbit fix: `019f4187-1fa8-7563-8854-c2e01c71178d`
-- reuse/dedup CodeRabbit fix: `019f417d-763c-73e1-80fa-d30e0adc1f1f`
-- test delta CodeRabbit fix: `019f417d-850c-7362-8f44-850fd42e3b40`
-- senior engineering docstring fix: `019f4198-90a8-71f2-898f-48b087443428`
-- docs docstring fix: `019f4198-c2b5-7c01-ae2c-161d4fe3ec64`
+- senior engineering: `reviewer-run-id`
+- QA/test: `reviewer-run-id`
+- security/auth: `reviewer-run-id`
+- product/ops: `reviewer-run-id`
+- architecture: `reviewer-run-id`
+- docs: `reviewer-run-id`
+- reuse/dedup: `reviewer-run-id`
+- test delta: `reviewer-run-id`
+- senior engineering CodeRabbit fix: `reviewer-run-id`
+- QA/test CodeRabbit fix: `reviewer-run-id`
+- security/auth CodeRabbit fix: `reviewer-run-id`
+- product/ops CodeRabbit fix: `reviewer-run-id`
+- architecture CodeRabbit fix: `reviewer-run-id`
+- docs CodeRabbit fix: `reviewer-run-id`
+- reuse/dedup CodeRabbit fix: `reviewer-run-id`
+- test delta CodeRabbit fix: `reviewer-run-id`
+- senior engineering docstring fix: `reviewer-run-id`
+- docs docstring fix: `reviewer-run-id`
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|

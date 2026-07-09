@@ -24,15 +24,20 @@ approved `.agent-loop` or `docs/internal_reviews` paths for that chunk.
 - `WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL`.
 - `WORKSTREAM_TERMINAL_BENCH_FIXTURE` pointing at one local Terminal Benchmark
   source-material directory.
-- `WORKSTREAM_TERMIUS_REVIEWER_ROOT` when the source-material directory is not under a
-  Termius reviewer root containing `PROJECT_GUIDE.md` and
+- `WORKSTREAM_TERMINAL_BENCH_GUIDE_ROOT` when the source-material directory is not under a
+  Terminal Benchmark reference root containing `PROJECT_GUIDE.md` and
   `REVIEWER_PROGRAM.md`.
 - Backend dependencies installed.
 
 The script fails closed unless `WORKSTREAM_DATABASE_URL` points to local async
 Postgres using `workstream_test` or `test_workstream`.
 
-The source-material path should point at a local Termius reviewer directory containing
+The script suppresses raw per-request progress paths and redacts fixture-derived
+identifiers plus local Workstream UUIDs in stdout by default, so copied output
+is safe for public PR evidence. Set
+`WORKSTREAM_TERMINAL_BENCH_PRINT_RAW_LOCAL_IDS=1` only for local debugging.
+
+The source-material path should point at a local Terminal Benchmark reference directory containing
 `extracted/task.toml`, one `*_submission_*.zip`, one `review_packet_*.md`,
 `static_guard.txt`, `docker_build.log`, `oracle_test.log`, and
 `starter_m1_test.log`. Keep the concrete local path in your shell environment;
@@ -46,7 +51,7 @@ runtime fallback.
 The authoritative proof for `WS-POL-001-06` was a live manual HTTP drill:
 
 1. create a project;
-2. create a project guide containing Termius submission, reviewer, task, and
+2. create a project guide containing Terminal Benchmark submission, review, task, and
    review packet material;
 3. create a guide-source snapshot with source hashes and excerpts;
 4. run the guide sufficiency agent endpoint;
@@ -62,10 +67,10 @@ The authoritative proof for `WS-POL-001-06` was a live manual HTTP drill:
 
 ```bash
 cd backend
-WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test \
+WORKSTREAM_DATABASE_URL=<local-test-db-url> \
 OPENAI_API_KEY="$OPENAI_API_KEY" \
 WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL="${WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL:?set model}" \
-WORKSTREAM_TERMINAL_BENCH_FIXTURE=/path/to/terminal-benchmark-source-material \
-WORKSTREAM_TERMIUS_REVIEWER_ROOT=/path/to/termius_reviewer \
+WORKSTREAM_TERMINAL_BENCH_FIXTURE=<redacted-local-fixture-path> \
+WORKSTREAM_TERMINAL_BENCH_GUIDE_ROOT=<redacted-local-guide-root> \
 .venv/bin/python ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
 ```

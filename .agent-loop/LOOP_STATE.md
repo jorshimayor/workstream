@@ -4,17 +4,20 @@
 
 - Active initiative: `WS-POL-001` - Submission Artifact Policy Foundation
 - Active planning chunk: none
-- Active implementation chunk: none
-- Branch: `main`
-- Status: `WS-POL-001-15` merged through PR #81. The project setup derivation
-  prompt now explicitly prevents required/forbidden artifact self-conflicts,
-  keeps derivation project-scoped, and the accepted no-DB Terminal Benchmark
-  live API drill passes after hardening.
+- Active implementation chunk: `WS-POL-001-16` - Terminal Benchmark Live API Drill
+- Branch: `codex/ws-pol-001-16-terminal-benchmark-live-api-drill`
+- Status: `WS-POL-001-16` completed the final clean Terminal Benchmark live API
+  drill through real HTTP-visible APIs. The accepted run used sanitized source
+  material, automatic project setup, live `submission-requirements`-derived
+  worker packets, blocked pre-submit no-side-effect proof, successful
+  submission finalization, durable checker-run visibility, and final
+  `review_pending` task state without database inspection as lifecycle proof.
 - Last merged implementation SHA: `b72a5b9`
 - Last merge commit: `b1a9851`
-- Current gate: post-merge memory update for PR #81, then stop for the user's
-  next explicit implementation chunk.
-- Next chunk: inactive until the user explicitly starts it.
+- Current gate: PR creation and human checkpoint for `WS-POL-001-16`; internal
+  reviewer fanout and evidence gate are complete.
+- Next chunk: inactive until this chunk is reviewed, merged, and followed by a
+  post-merge memory update.
 
 ## Operating Rule
 
@@ -78,7 +81,7 @@ blockchain, frontend, or agent-runtime behavior.
 - `WS-POL-001-06` started on branch `codex/ws-pol-001-06-terminal-benchmark-drill`
   after the user's explicit start signal.
 - `WS-POL-001-06` real Terminal Benchmark manual HTTP drill passed against a
-  local Termius reviewer fixture; committed evidence uses placeholder fixture
+  local Terminal Benchmark reference fixture; committed evidence uses placeholder fixture
   paths and local IDs only.
 - `WS-POL-001-06` live drill exposed and fixed an OpenAI Agents SDK adapter
   strict-schema issue for the policy derivation result's open `policy_body`.

@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| none | none | - | Waiting for user to explicitly start the next chunk |
+| `WS-POL-001-16` | Terminal Benchmark Live API Drill | L1 | Active on `codex/ws-pol-001-16-terminal-benchmark-live-api-drill` |
 
 ## Completed
 
@@ -31,8 +31,8 @@
 
 ## Proposed Next
 
-Stop after the PR #81 post-merge memory update. Do not start the next
-implementation chunk until the user explicitly starts it.
+Stop after `WS-POL-001-16` is implemented, reviewed, and opened for human
+review. Do not start another implementation chunk from this branch.
 
 ## Blocked
 
