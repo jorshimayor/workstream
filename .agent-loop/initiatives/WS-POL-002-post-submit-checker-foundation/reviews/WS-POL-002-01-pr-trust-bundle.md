@@ -151,17 +151,24 @@ Reviewed at: `2026-07-09T16:02:30Z`
 
 ## External Review
 
-External review is pending. CodeRabbit, GitHub Actions, and any human review
-comments must be recorded separately in:
+Backend CI found one stale test expectation after the first push. The test still
+expected screening to accept a persisted post-submit policy body after default
+checker list drift. That expectation contradicted the new compiler contract, so
+it was updated to assert fail-closed `422` and no locked post-submit policy body.
+
+The response is recorded separately in:
 
 - `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/reviews/WS-POL-002-01-external-review-response.md`
+
+CodeRabbit and the rerun GitHub Actions checks are still pending after the CI
+fix push.
 
 ## Remaining Risks
 
 - Severity constants are explicitly owned in the compiler contract and also
   exist in the checker runner. Future severity model changes must be versioned
   or consolidated deliberately.
-- GitHub Actions and CodeRabbit must run after the PR is pushed.
+- GitHub Actions and CodeRabbit must rerun after the CI fix push.
 
 ## Human Review Focus
 
