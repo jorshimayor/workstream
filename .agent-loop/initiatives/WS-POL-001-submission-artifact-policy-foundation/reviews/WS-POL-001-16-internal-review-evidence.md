@@ -10,11 +10,11 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: 48cdcd2512428632225f2f97359b68271ab03575
+Reviewed code SHA: 4471549742041e2818d3e3cd89e36518d7126993
 
-Reviewed at: 2026-07-09T01:21:17Z
+Reviewed at: 2026-07-09T04:14:08Z
 
-Reviewer run IDs: senior-engineering-initial-019f4468-0149-7331-8432-375a955e4617, senior-engineering-rerun-019f446e-568e-7c00-9728-3e15f65b28a6, senior-engineering-final-019f4472-4bd5-7693-a477-1fae8be3b573, qa-test-initial-019f4468-085b-7bd1-ab51-7bb5a1c6242b, qa-test-rerun-019f446e-4dd4-7c80-a020-799f61f45c37, security-auth-initial-019f4468-146c-7c40-a44a-327b5e619453, security-auth-rerun-019f446e-5f86-7b50-90af-2e7bb3144a09, product-ops-initial-019f4468-22bf-7b81-aff1-82f91df7f853, product-ops-rerun-019f446e-6b96-7df3-a525-7894302969e6, architecture-initial-019f4468-2fb0-7aa3-a3f7-3f08a4efc3ea, architecture-rerun-019f446e-7dc0-7963-949d-da760eaa0779, docs-initial-019f4468-397a-7752-ab7f-e536b304ecd8, docs-rerun-019f446e-8b52-73e1-a1cb-50e7acd11abe, reuse-dedup-019f4472-4ff2-70e1-8a06-32fcfecdd4b5, test-delta-019f4472-5431-7a41-af36-00f19813b272
+Reviewer run IDs: senior-engineering-final-019f4506-2be4-7bb3-a66e-a96893f34b1d, qa-test-final-019f450b-de80-7101-9b06-f41167c0df00, security-auth-final-019f450b-e649-7aa1-8399-7b8a5968ee0b, product-ops-final-019f4506-48d3-7c91-b162-8bf72ec5c4de, architecture-final-019f4512-7cef-7a02-9cf6-78fbad3f73af, docs-final-019f4506-11cf-73d2-942a-9327cc22cadf, reuse-dedup-final-019f4512-9182-7990-99ac-ccc438b5fb6b, test-delta-final-019f4506-598d-7880-8927-a85e5b4b0cbb, ci-integrity-final-019f450b-ee14-7992-b45b-51225962b7fd
 
 After the reviewed SHA, only allowed review evidence, PR trust-bundle, status,
 loop-state files, and the documented privacy-scrub amendment files may change.
@@ -42,14 +42,15 @@ Scope:
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS WITH LOW RISKS | None | Initial and rerun reviews found missing full body transcript, missing agent inputs, checker-run proof wording mismatch, and missing setup-poll body entries. Evidence and contract wording were fixed. Final low note about poll-summary mismatch was corrected. |
-| qa/test | PASS AFTER FIXES | None | Initial review failed on summarized transcript, missing agent inputs, incomplete blocked proof, and abbreviated pre-submit response. Rerun confirmed redacted bodies, full pre-submit structures, agent input/output, blocked audit proof, and checker-run visibility after submission exists. |
-| security/auth | PASS AFTER FIXES | None | Confirmed no bearer token values, API key values, signed URLs, raw local filesystem paths, unsafe source refs, or auth expansion. Forbidden-pattern strings such as `api_key`, `secret`, and `token` are checker policy patterns only. |
-| product/ops | PASS AFTER FIXES | None | Confirmed lifecycle clarity, worker/operator visibility, no product decision leakage in pre-submit, no Terminal Benchmark fork, and correct blocked/success/finalize/checker/audit state. |
-| architecture | PASS AFTER FIXES | None | Confirmed docs/evidence-only scope, no task-specific checker generation, no DB-only lifecycle proof, no backend behavior change, no default-checker weakening, and valid checker-run visibility contract repair. |
-| docs | PASS AFTER FIXES | None | Confirmed stale wording, Markdown links, whitespace, roadmap/status wording, and redacted appendix readability after fixes. |
-| reuse/dedup | PASS | None | Confirmed no new scripts, helpers, backend code, or duplicate implementation; the appendix is evidence, not parallel implementation. |
-| test delta | PASS | None | Confirmed no tests were added, modified, removed, skipped, or weakened; verification evidence matches the chunk contract. |
+| senior engineering | PASS | None | Confirmed the privacy scrub is scoped, maintainable, and does not change backend/product behavior. |
+| qa/test | PASS WITH LOW RISKS | None | Initial rerun found top-level fixture/startup failure paths could leak local labels. The example now emits a generic sanitized failure by default and preserves raw output only behind explicit debug opt-in. |
+| security/auth | PASS | None | Confirmed no private source names, raw local paths, raw local UUIDs, exact source fingerprints, credentials, or raw server logs remain in public evidence/example output by default. |
+| product/ops | PASS WITH LOW RISKS | None | Confirmed the Terminal Benchmark material remains a standalone Workstream reference example, not a leaked external/company workflow. |
+| architecture | PASS WITH LOW RISKS | None | Confirmed the privacy scrub stays in docs/evidence/example scope and does not change Workstream product architecture, checker authority, or task-specific checker generation. |
+| docs | PASS WITH LOW RISKS | None | Confirmed public evidence, trust bundle, roadmap status, and historical evidence amendments are standalone and privacy-safe. |
+| reuse/dedup | PASS | None | Confirmed the redaction helper is local to the optional example and does not duplicate backend/runtime/checker abstractions. |
+| test delta | PASS WITH LOW RISKS | None | Confirmed no tests/checks were weakened and final evidence records parse, privacy-scan, and redaction checks. |
+| ci integrity | PASS WITH LOW RISKS | None | Confirmed no CI/workflow/package/test gate was weakened and this evidence can bind to the reviewed revision with evidence-only updates after it. |
 
 ## Valid Findings Addressed
 
@@ -63,6 +64,19 @@ Scope:
 - Staged the formal live evidence file so it is no longer untracked.
 - Added a public-evidence redaction boundary so reviewers can distinguish the
   local live drill from the privacy-redacted public transcript.
+- Removed private/local source names, exact source-material fingerprints, exact
+  source byte counts, local database UUIDs, and source-specific task labels
+  from current and older public evidence.
+- Redacted agent-derived `policy_version` values that exposed source snapshot
+  hash prefixes in public evidence.
+- Renamed legacy private-source environment wording to public
+  `WORKSTREAM_TERMINAL_BENCH_*` wording.
+- Suppressed shared helper progress output and checker polling output by
+  default in the optional Terminal Benchmark example.
+- Added public-safe exception and top-level failure handling so copied failure
+  transcripts do not expose fixture labels, local paths, raw server logs, UUIDs,
+  fixture ids, or source hashes unless
+  `WORKSTREAM_TERMINAL_BENCH_PRINT_RAW_LOCAL_IDS=1` is explicitly set.
 
 ## Commands Run
 
@@ -71,7 +85,12 @@ python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
 cd backend && .venv/bin/pytest tests/test_projects.py tests/test_tasks.py tests/test_checkers.py -q
 cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/api_contract_e2e.py
-git diff --cached --check
+cd backend && .venv/bin/python -m ruff check ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
+cd backend && python3 -m py_compile ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
+redaction helper inline check for UUID, fixture-id, hash, and local-path sanitization
+default missing-agent-env failure check for sanitized stderr and nonzero exit
+targeted privacy scan for private source names, local paths, fixture-id shapes, source-task labels, and agent hash prefixes
+git diff --check
 ```
 
 Results:
@@ -80,6 +99,13 @@ Results:
 - Markdown link check: passed for 25 changed Markdown files.
 - Focused backend tests: `342 passed in 4305.43s (1:11:45)`.
 - API contract drill: `API contract real API e2e passed`.
+- Terminal Benchmark example Ruff and py_compile: passed.
+- Public-safe exception helper check: `terminal benchmark public-safe exception redaction passed`.
+- Default missing-agent-env failure check: emitted only
+  `RuntimeError: Terminal Benchmark API drill failed. Raw local failure details are hidden by default; set WORKSTREAM_TERMINAL_BENCH_PRINT_RAW_LOCAL_IDS=1 for local debugging.`
+  and printed `terminal benchmark public failure output redaction passed`.
+- Privacy scan: only intentional backend test literals remained for unsafe-path
+  and reserved `agent-` prefix validation.
 - Diff whitespace check: passed.
 
 ## Evidence Gate
@@ -104,3 +130,7 @@ CodeRabbit, GitHub checks, and human PR review are external review. They will be
 
 - The redacted HTTP appendix is large because the contract required human-reviewable request and response bodies. It is evidence-only and does not add runtime code.
 - The live drill proves the final clean Terminal Benchmark path; future review lifecycle chunks still need reviewer packet and `needs_revision` API coverage.
+- Default failure output may include unrelated Alembic INFO lines before the
+  sanitized failure if migration logging is enabled, but reviewer reruns
+  confirmed it does not expose fixture/source details, paths, hashes, UUIDs,
+  or tracebacks.

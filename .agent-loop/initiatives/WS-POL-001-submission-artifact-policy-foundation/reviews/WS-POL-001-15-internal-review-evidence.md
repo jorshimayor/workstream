@@ -10,6 +10,19 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
+Reviewed code SHA: 4471549742041e2818d3e3cd89e36518d7126993
+
+Reviewed at: 2026-07-09T04:14:08Z
+
+Reviewer run IDs: senior-engineering-final-019f4506-2be4-7bb3-a66e-a96893f34b1d, qa-test-final-019f450b-de80-7101-9b06-f41167c0df00, security-auth-final-019f450b-e649-7aa1-8399-7b8a5968ee0b, product-ops-final-019f4506-48d3-7c91-b162-8bf72ec5c4de, architecture-final-019f4512-7cef-7a02-9cf6-78fbad3f73af, docs-final-019f4506-11cf-73d2-942a-9327cc22cadf, reuse-dedup-final-019f4512-9182-7990-99ac-ccc438b5fb6b, test-delta-final-019f4506-598d-7880-8927-a85e5b4b0cbb, ci-integrity-final-019f450b-ee14-7992-b45b-51225962b7fd
+
+Current privacy-scrub chunk: `WS-POL-001-16-terminal-benchmark-live-api-drill`.
+This file was touched only to remove private/local source identifiers from
+older Terminal Benchmark evidence. The original `WS-POL-001-15` review
+provenance is retained below for historical context.
+
+Original reviewed revision:
+
 Reviewed code SHA: b72a5b90979137d31127c2292f85ae350918f4f7
 
 Reviewed at: 2026-07-08T16:23:01Z

@@ -73,13 +73,24 @@ python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
 cd backend && .venv/bin/pytest tests/test_projects.py tests/test_tasks.py tests/test_checkers.py -q
 cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/api_contract_e2e.py
-git diff --cached --check
+cd backend && .venv/bin/python -m ruff check ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
+cd backend && python3 -m py_compile ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py
+redaction helper inline check for UUID, fixture-id, hash, and local-path sanitization
+default missing-agent-env failure check for sanitized stderr and nonzero exit
+targeted privacy scan for private source names, local paths, fixture-id shapes, source-task labels, and agent hash prefixes
+git diff --check
 ```
 
 Key results:
 
 - `342 passed in 4305.43s (1:11:45)` for focused backend tests.
 - `API contract real API e2e passed`.
+- Terminal Benchmark example Ruff and py_compile passed.
+- Public-safe exception helper check passed.
+- Default missing-agent-env failure emitted only the sanitized one-line public
+  failure message and printed `terminal benchmark public failure output redaction passed`.
+- Privacy scan only reported intentional backend test literals for unsafe-path
+  and reserved `agent-` prefix validation.
 - Stale wording check passed.
 - Markdown link check passed for 25 changed Markdown files.
 - Diff whitespace check passed.
@@ -116,14 +127,15 @@ Evidence:
 
 | Reviewer | Result |
 |---|---:|
-| senior engineering | PASS WITH LOW RISKS |
-| QA/test | PASS AFTER FIXES |
-| security/auth | PASS AFTER FIXES |
-| product/ops | PASS AFTER FIXES |
-| architecture | PASS AFTER FIXES |
-| docs | PASS AFTER FIXES |
+| senior engineering | PASS |
+| QA/test | PASS WITH LOW RISKS |
+| security/auth | PASS |
+| product/ops | PASS WITH LOW RISKS |
+| architecture | PASS WITH LOW RISKS |
+| docs | PASS WITH LOW RISKS |
 | reuse/dedup | PASS |
-| test delta | PASS |
+| test delta | PASS WITH LOW RISKS |
+| CI integrity | PASS WITH LOW RISKS |
 
 Evidence:
 
@@ -141,3 +153,7 @@ Evidence:
 
 - The evidence appendix is large because it records all redacted HTTP bodies required by the chunk contract.
 - This chunk does not implement review packet assignment, human review decisions, or revision replay APIs; those remain future chunks.
+- Default failure output may include unrelated Alembic INFO lines before the
+  sanitized failure if migration logging is enabled, but reviewer reruns
+  confirmed it does not expose fixture/source details, paths, hashes, UUIDs,
+  or tracebacks.
