@@ -10,9 +10,9 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: 4471549742041e2818d3e3cd89e36518d7126993
+Reviewed code SHA: 49101d4ad3fc22ec6e6065b1e593ef04145db953
 
-Reviewed at: 2026-07-09T04:14:08Z
+Reviewed at: 2026-07-09T06:13:59Z
 
 Reviewer run IDs: senior-engineering-report-review, qa-test-report-review, security-auth-report-review, product-ops-report-review, architecture-report-review, docs-report-review, reuse-dedup-report-review, test-delta-report-review, ci-integrity-report-review
 
@@ -43,15 +43,15 @@ Scope:
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS | None | Confirmed the privacy scrub is scoped, maintainable, and does not change backend/product behavior. |
-| qa/test | PASS WITH LOW RISKS | None | Initial rerun found top-level fixture/startup failure paths could leak local labels. The example now emits a generic sanitized failure by default and preserves raw output only behind explicit debug opt-in. |
-| security/auth | PASS | None | Confirmed no private source names, raw local paths, raw local UUIDs, exact source fingerprints, credentials, or raw server logs remain in public evidence/example output by default. |
-| product/ops | PASS WITH LOW RISKS | None | Confirmed the Terminal Benchmark material remains a standalone Workstream reference example, not a leaked external/company workflow. |
-| architecture | PASS WITH LOW RISKS | None | Confirmed the privacy scrub stays in docs/evidence/example scope and does not change Workstream product architecture, checker authority, or task-specific checker generation. |
-| docs | PASS WITH LOW RISKS | None | Confirmed public evidence, trust bundle, roadmap status, and historical evidence amendments are standalone and privacy-safe. |
-| reuse/dedup | PASS | None | Confirmed the redaction helper is local to the optional example and does not duplicate backend/runtime/checker abstractions. |
-| test delta | PASS WITH LOW RISKS | None | Confirmed no tests/checks were weakened and final evidence records parse, privacy-scan, and redaction checks. |
-| ci integrity | PASS WITH LOW RISKS | None | Confirmed no CI/workflow/package/test gate was weakened and this evidence can bind to the reviewed revision with evidence-only updates after it. |
+| senior engineering | PASS WITH LOW RISKS | None | Confirmed the final report is maintainable, reviewable, and operationally safe after correcting approved-policy and response-shape evidence. |
+| qa/test | PASS | None | Confirmed the report matches the executed drill, including manager-approved exact policy, `check_required_files` and `check_evidence_present` failures, schema-valid severities, and embedded `PreSubmitCheckResponse` samples validated against backend schemas. |
+| security/auth | PASS | None | Confirmed no private source names, raw local paths, raw reviewer UUIDs, local DB URLs, credentials, replayable locators, source-specific task identifiers, or sensitive IDs remain in the final report/evidence artifacts. |
+| product/ops | PASS | None | Confirmed deterministic pre-submit, blocked submission creation, task audit visibility, successful finalization, durable checker run, and `review_pending` handoff are represented without confusing checker output with product review decisions. |
+| architecture | PASS | None | Confirmed checker authority remains project-scoped, the deterministic checker boundary is preserved, and the report distinguishes agent-derived drafts from manager-approved exact/effective policy. |
+| docs | PASS WITH LOW RISKS | None | Confirmed PDF/source/evidence metadata, public-safe durable refs, Markdown links, stale wording, and report/PDF consistency after moving report date out of PDF metadata. |
+| reuse/dedup | PASS WITH LOW RISKS | None | Noted low-risk duplication of reviewer summary in the shareable PDF and durable evidence files; no required fix because the PDF is intentionally a standalone review packet. |
+| test delta | PASS WITH LOW RISKS | None | Confirmed no tests or evidence assertions were weakened and independently validated the embedded response JSON samples against the backend schema. |
+| ci integrity | PASS WITH LOW RISKS | None | Confirmed no CI/workflow/package/test gates were weakened and the evidence gate can pass after final reviewed-SHA binding. |
 
 ## Valid Findings Addressed
 
@@ -67,6 +67,16 @@ Scope:
 - Staged the formal live evidence file so it is no longer untracked.
 - Added a public-evidence redaction boundary so reviewers can distinguish the
   local live drill from the privacy-redacted public transcript.
+- Distinguished the agent-derived draft policy from the manager-approved exact
+  policy that produced the effective project policy and compiled checker.
+- Corrected blocked pre-submit evidence to show both `check_required_files` and
+  `check_evidence_present` failures from the executed drill.
+- Corrected embedded pre-submit response samples to use the actual backend
+  schema, including `results`, worker-facing fields, and valid severity tokens.
+- Added public-safe durable reference placeholders for guide source snapshot
+  items and PDF metadata fields in the evidence index.
+- Validated embedded `PreSubmitCheckResponse` JSON samples against the backend
+  Pydantic schema.
 - Removed private/local source names, exact source-material fingerprints, exact
   source byte counts, local database UUIDs, and source-specific task labels
   from current and older public evidence.
@@ -94,6 +104,7 @@ redaction helper inline check for UUID, fixture-id, hash, and local-path sanitiz
 default missing-agent-env failure check for sanitized stderr and nonzero exit
 render professional PDF report from the redacted evidence source
 extract PDF text and run targeted privacy scan over the PDF/source artifacts
+validate embedded report PreSubmitCheckResponse JSON snippets against backend Pydantic schemas
 targeted privacy scan for private source names, local paths, fixture-id shapes, source-task labels, and agent hash prefixes
 git diff --check
 ```
