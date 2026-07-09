@@ -452,7 +452,7 @@ pre_review_gate_passed: evaluation_pending -> review_pending
 
 ## Redacted HTTP Body Appendix
 
-Every step below records the HTTP method/path, request body, and response body from the final clean run. `null` request body means the call had no JSON body. Large guide/source text is redacted to hash and byte count; credentials were not recorded.
+Every step below records the HTTP method/path, request body, and response body from the final clean run. `null` request body means the call had no JSON body. Large guide/source text and source-material fingerprints are redacted to explicit placeholders; credentials were not recorded.
 ### 01_project_create
 
 `POST /api/v1/projects` -> HTTP `201`
