@@ -71,8 +71,8 @@ Current phase: Week 3 review and revision preparation.
   contract after the accepted no-DB Terminal Benchmark drill exposed a
   required/forbidden self-conflict; the drill now passes after hardening.
 - `WS-POL-001-16` completed a human-visible Terminal Benchmark live API drill
-  without database inspection as lifecycle proof; the evidence is under
-  internal review before PR/human checkpoint.
+  without database inspection as lifecycle proof; the privacy-scrubbed evidence
+  is at PR/human checkpoint.
 
 ## Pending Before Pilot
 

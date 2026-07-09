@@ -66,6 +66,13 @@ REQUIRED_OPENAI_AGENT_SDK_ENV = (
     "OPENAI_API_KEY",
     "WORKSTREAM_PROJECT_AGENT_OPENAI_AGENT_SDK_MODEL",
 )
+UUID_PATTERN = re.compile(
+    r"\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
+    r"[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b"
+)
+FIXTURE_ID_PATTERN = re.compile(r"\bterminal-benchmark-[0-9a-fA-F]{12,}\b")
+SHA256_VALUE_PATTERN = re.compile(r"\bsha256:[A-Za-z0-9._:-]+")
+LOCAL_PATH_PATTERN = re.compile(r"(?<![A-Za-z0-9_])/(?:home|Users|tmp|var|private)/[^\s'\"),]+")
 
 
 @dataclass(frozen=True)
@@ -187,12 +194,40 @@ def public_evidence_value(value: str, placeholder: str, env: dict[str, str]) -> 
     return placeholder
 
 
+def public_safe_exception_message(exc: Exception) -> str:
+    """Return an exception summary without local ids or source fingerprints."""
+    message = str(exc) or exc.__class__.__name__
+    message = UUID_PATTERN.sub("<redacted-id>", message)
+    message = FIXTURE_ID_PATTERN.sub("<redacted-fixture-id>", message)
+    message = SHA256_VALUE_PATTERN.sub("sha256:<redacted>", message)
+    message = LOCAL_PATH_PATTERN.sub("<redacted-local-path>", message)
+    return f"{exc.__class__.__name__}: {message}"
+
+
 async def request_json(*args, **kwargs) -> dict:
     """Call the shared API helper without leaking raw request paths by default."""
     if os.environ.get(PRINT_RAW_LOCAL_IDS_ENV_VAR) == "1":
         return await api_contract_request_json(*args, **kwargs)
-    with contextlib.redirect_stdout(io.StringIO()):
-        return await api_contract_request_json(*args, **kwargs)
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            return await api_contract_request_json(*args, **kwargs)
+    except Exception as exc:
+        raise RuntimeError(public_safe_exception_message(exc)) from None
+
+
+async def wait_for_submission_checker_run_public_safe(
+    client: httpx.AsyncClient,
+    manager_token: str,
+    submission_id: str,
+) -> dict:
+    """Wait for a checker run without leaking local ids on failure by default."""
+    if os.environ.get(PRINT_RAW_LOCAL_IDS_ENV_VAR) == "1":
+        return await wait_for_submission_checker_run(client, manager_token, submission_id)
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            return await wait_for_submission_checker_run(client, manager_token, submission_id)
+    except Exception as exc:
+        raise RuntimeError(public_safe_exception_message(exc)) from None
 
 
 def assert_strict_local_database_url(database_url: str) -> None:
@@ -820,11 +855,11 @@ async def submit_finalize_and_wait(
         f"/api/v1/submissions/{submission['id']}/finalize",
         manager_token,
     )
-    if os.environ.get(PRINT_RAW_LOCAL_IDS_ENV_VAR) == "1":
-        run = await wait_for_submission_checker_run(client, manager_token, submission["id"])
-    else:
-        with contextlib.redirect_stdout(io.StringIO()):
-            run = await wait_for_submission_checker_run(client, manager_token, submission["id"])
+    run = await wait_for_submission_checker_run_public_safe(
+        client,
+        manager_token,
+        submission["id"],
+    )
     return submission, locked, run
 
 
