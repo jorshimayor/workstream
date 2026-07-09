@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-POL-002-PLAN` | Post-Submit Checker Foundation Planning | L1 | Active on `codex/ws-pol-002-post-submit-checker-planning` |
+| `WS-POL-002-01` | Post-Submit Provenance And Compiler Contract | L1 | Proposed; inactive until explicit user start |
 
 ## Completed
 
@@ -29,12 +29,12 @@
 | `WS-POL-001-14` | Submission Finalize And No-DB Terminal Benchmark Proof | L1 | Merged through PR #79 as `53a57c3` on 2026-07-08 |
 | `WS-POL-001-15` | Agent Derivation Policy Conflict Hardening | L1 | Merged through PR #81 as `b1a9851` on 2026-07-08 |
 | `WS-POL-001-16` | Terminal Benchmark Live API Drill | L1 | Merged through PR #84 as `a3d2a3f` on 2026-07-09 |
+| `WS-POL-002-PLAN` | Post-Submit Checker Foundation Planning | L1 | Merged through PR #85 as `3fc1a68` on 2026-07-09 |
 
 ## Proposed Next
 
-Stop after `WS-POL-002-PLAN` is reviewed. Do not start `WS-POL-002-01` until
-the planning PR is merged and the user explicitly starts the implementation
-chunk.
+Do not start `WS-POL-002-01` until the user explicitly starts the
+implementation chunk.
 
 ## Blocked
 

@@ -51,6 +51,9 @@ Current phase: Week 3 review and revision preparation.
 - Chunk 16 Terminal Benchmark live API drill with privacy-scrubbed evidence and
   professional PDF report proving the current lifecycle through HTTP-visible
   APIs without database inspection.
+- WS-POL-002 post-submit checker foundation planning, including project-scoped
+  `PostSubmitCheckerPolicy` setup, trusted compiler boundaries, deterministic
+  runtime separation, and implementation chunk contracts.
 
 ## Review Tracks Closed
 
@@ -75,8 +78,8 @@ Current phase: Week 3 review and revision preparation.
   required/forbidden self-conflict; the drill now passes after hardening.
 - `WS-POL-001-16` completed a human-visible Terminal Benchmark live API drill
   without database inspection as lifecycle proof and merged through PR #84.
-- `WS-POL-002` planning is open to make post-submit checker setup match the
-  project-guide-derived, compiler-validated, deterministic pre-submit pipeline.
+- `WS-POL-002` planning merged through PR #85. `WS-POL-002-01` is ready to
+  start only after an explicit user start signal.
 
 ## Pending Before Pilot
 

@@ -476,3 +476,37 @@ Trust bundle: `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-fou
 
 Next gate: `WS-POL-002` planning for post-submit checker foundation. No
 implementation chunk is active until the user explicitly starts it.
+
+## 2026-07-09 - WS-POL-002-PLAN Merged
+
+PR #85 merged into `main` as `3fc1a688743f13476d6092078d40792592823d27`.
+
+Reviewed planning SHA: `f07160145fd5b92515cfbbd1c78c81a583a86508`.
+
+Required reviewer tracks:
+
+- senior engineering
+- QA/test
+- security/auth
+- product/ops
+- architecture
+- docs
+- CI integrity
+
+Result: PASS after CodeRabbit and internal review fixes. GitHub Agent Gates,
+Backend, and CodeRabbit passed before merge.
+
+Scope: created WS-POL-002 intent, discovery, plan, decisions, risks, status,
+chunk map, and chunk contracts for project-guide-derived post-submit checker
+setup. The plan keeps `PostSubmitCheckerPolicy` project-scoped, keeps derivation
+setup-time only, keeps runtime deterministic, and forbids per-task checker
+generation.
+
+Evidence: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/reviews/WS-POL-002-PLAN-internal-review-evidence.md`
+
+External review response: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/reviews/WS-POL-002-PLAN-external-review-response.md`
+
+Trust bundle: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/reviews/WS-POL-002-PLAN-pr-trust-bundle.md`
+
+Next gate: `WS-POL-002-01` Post-Submit Provenance And Compiler Contract. No
+implementation chunk is active until the user explicitly starts it.
