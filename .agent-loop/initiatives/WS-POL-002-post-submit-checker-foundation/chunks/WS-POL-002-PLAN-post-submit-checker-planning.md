@@ -4,6 +4,20 @@
 
 `WS-POL-002` - Post-Submit Checker Foundation
 
+## Approved Plan Reference
+
+- INTENT: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/INTENT.md`
+- PLAN: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/PLAN.md`
+- CHUNK_MAP: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/CHUNK_MAP.md`
+
+## Risk class
+
+L1
+
+## SLA
+
+P1
+
 ## Problem Being Solved
 
 The current post-submit checker runtime is durable and policy-locked, but the
@@ -76,3 +90,14 @@ git diff --check
 - Confirm the intent matches the desired post-submit checker direction.
 - Confirm the setup trigger boundary is realistic against current code.
 - Confirm implementation chunks are small enough to review.
+
+## Stop conditions
+
+Stop and escalate if:
+
+- scope must expand beyond allowed files
+- architecture direction changes
+- auth/payment/policy/data boundary changes beyond this contract
+- CI/test weakening is required to pass
+- the same blocker remains after 2 repair attempts
+- secrets or production data are needed

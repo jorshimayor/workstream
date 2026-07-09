@@ -4,6 +4,20 @@
 
 `WS-POL-002` - Post-Submit Checker Foundation
 
+## Approved Plan Reference
+
+- INTENT: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/INTENT.md`
+- PLAN: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/PLAN.md`
+- CHUNK_MAP: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/CHUNK_MAP.md`
+
+## Risk class
+
+L1
+
+## SLA
+
+P1
+
 ## Problem Being Solved
 
 Post-submit policy currently has a canonical body and hash, but it lacks a
@@ -124,3 +138,14 @@ git diff --check
 - Confirm the compiler, not the agent, owns canonical runtime policy.
 - Confirm project policy cannot weaken defaults.
 - Confirm no task-specific checker generation is introduced.
+
+## Stop conditions
+
+Stop and escalate if:
+
+- scope must expand beyond allowed files
+- architecture direction changes
+- auth/payment/policy/data boundary changes beyond this contract
+- CI/test weakening is required to pass
+- the same blocker remains after 2 repair attempts
+- secrets or production data are needed

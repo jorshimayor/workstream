@@ -4,6 +4,20 @@
 
 `WS-POL-002` - Post-Submit Checker Foundation
 
+## Approved Plan Reference
+
+- INTENT: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/INTENT.md`
+- PLAN: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/PLAN.md`
+- CHUNK_MAP: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/CHUNK_MAP.md`
+
+## Risk class
+
+L1
+
+## SLA
+
+P1
+
 ## Problem Being Solved
 
 Post-submit policy must be derived from project guide/source context instead of
@@ -123,3 +137,14 @@ git diff --check
 - Confirm the agent derives setup policy only.
 - Confirm unsupported checker requirements fail closed.
 - Confirm no runtime submission judgment is delegated to an agent.
+
+## Stop conditions
+
+Stop and escalate if:
+
+- scope must expand beyond allowed files
+- architecture direction changes
+- auth/payment/policy/data boundary changes beyond this contract
+- CI/test weakening is required to pass
+- the same blocker remains after 2 repair attempts
+- secrets or production data are needed

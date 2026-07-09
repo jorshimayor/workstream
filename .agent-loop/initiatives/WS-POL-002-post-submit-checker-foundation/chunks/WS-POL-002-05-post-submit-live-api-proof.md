@@ -4,9 +4,19 @@
 
 `WS-POL-002` - Post-Submit Checker Foundation
 
-## Risk Class
+## Approved Plan Reference
+
+- INTENT: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/INTENT.md`
+- PLAN: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/PLAN.md`
+- CHUNK_MAP: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/CHUNK_MAP.md`
+
+## Risk class
 
 L1
+
+## SLA
+
+P1
 
 ## Problem Being Solved
 
@@ -69,10 +79,11 @@ database inspection as lifecycle proof
   facts.
 - Evidence includes post-submit derivation input and output summaries.
 - Evidence includes compiled post-submit policy hash and approved status.
-- Evidence reads back approval actor, role, timestamp, setup context, source
-  snapshot id, source snapshot hash field presence/shape, and compiled policy
-  hash field presence/shape through APIs. Committed evidence must redact exact
-  source and policy hash values as `sha256:<redacted>`.
+- Evidence reads back approval provenance, setup context, source snapshot id,
+  source snapshot hash field presence/shape, and compiled policy hash field
+  presence/shape through APIs. Committed evidence must show field presence/shape
+  or approved redacted placeholders for actor/source/setup identifiers, and must
+  redact exact source and policy hash values as `sha256:<redacted>`.
 - Evidence proves clean finalization to `review_pending`.
 - Evidence proves worker-fixable post-submit failure to `needs_revision`.
 - Evidence proves checker-caused `needs_revision` has
@@ -139,3 +150,14 @@ script before evidence is accepted.
 - Confirm Terminal Benchmark material is used only as a sanitized example.
 - Confirm post-submit checker policy is project-scoped and deterministic.
 - Confirm worker-facing lifecycle remains clear.
+
+## Stop conditions
+
+Stop and escalate if:
+
+- scope must expand beyond allowed files
+- architecture direction changes
+- auth/payment/policy/data boundary changes beyond this contract
+- CI/test weakening is required to pass
+- the same blocker remains after 2 repair attempts
+- secrets or production data are needed

@@ -4,6 +4,20 @@
 
 `WS-POL-002` - Post-Submit Checker Foundation
 
+## Approved Plan Reference
+
+- INTENT: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/INTENT.md`
+- PLAN: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/PLAN.md`
+- CHUNK_MAP: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/CHUNK_MAP.md`
+
+## Risk class
+
+L1
+
+## SLA
+
+P1
+
 ## Problem Being Solved
 
 Operators need API-visible post-submit setup state. The old guide create/update
@@ -108,3 +122,14 @@ git diff --check
 - Confirm there is one authoritative server-owned post-submit policy path.
 - Confirm obsolete manual payload fields are removed, not aliased.
 - Confirm visibility is useful for operators but safe for workers.
+
+## Stop conditions
+
+Stop and escalate if:
+
+- scope must expand beyond allowed files
+- architecture direction changes
+- auth/payment/policy/data boundary changes beyond this contract
+- CI/test weakening is required to pass
+- the same blocker remains after 2 repair attempts
+- secrets or production data are needed

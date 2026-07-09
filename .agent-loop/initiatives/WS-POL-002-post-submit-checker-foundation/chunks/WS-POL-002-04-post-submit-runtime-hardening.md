@@ -4,6 +4,20 @@
 
 `WS-POL-002` - Post-Submit Checker Foundation
 
+## Approved Plan Reference
+
+- INTENT: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/INTENT.md`
+- PLAN: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/PLAN.md`
+- CHUNK_MAP: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/CHUNK_MAP.md`
+
+## Risk class
+
+L1
+
+## SLA
+
+P1
+
 ## Problem Being Solved
 
 Runtime already locks and executes post-submit policy, but it must be hardened
@@ -100,3 +114,14 @@ git diff --check
 - Confirm post-submit routing remains distinct from review decisions.
 - Confirm worker-facing responses stay understandable.
 - Confirm no pre-submit regression is introduced.
+
+## Stop conditions
+
+Stop and escalate if:
+
+- scope must expand beyond allowed files
+- architecture direction changes
+- auth/payment/policy/data boundary changes beyond this contract
+- CI/test weakening is required to pass
+- the same blocker remains after 2 repair attempts
+- secrets or production data are needed
