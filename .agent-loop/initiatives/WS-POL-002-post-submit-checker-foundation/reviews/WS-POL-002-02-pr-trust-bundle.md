@@ -43,6 +43,14 @@ submissions at runtime.
 - Enforced activation rejection for compiled-only or non-setup-approved post-submit policies.
 - Added stale continuation guards for enqueue bookkeeping, worker start, in-flight derivation, terminal state updates, and duplicate worker retries.
 - Updated docs to describe the setup continuation and the next approval chunk boundary.
+- Removed stale manual `post_submit_checker_policy` request-body usage from
+  test/e2e setup paths and kept it only in explicit rejection tests.
+- Added a clearly named temporary CI activation bridge for generated
+  post-submit policy approval plus setup-ledger marking until `WS-POL-002-03`
+  provides the server-owned approval API.
+- Normalized post-submit worker terminal results so compiled and idempotent
+  paths both include `status`, `idempotent`, and
+  `post_submit_checker_policy_id`.
 
 ## Design Chosen
 
@@ -117,8 +125,16 @@ implements the server-owned visibility and approval surface.
 cd backend && .venv/bin/pytest tests/test_projects.py -q -k "post_submit_continuation or corrected_submission_artifact_policy or stale_in_flight_post_submit or status_update_rejects_stale_continuation or enqueue_bookkeeping_rejects_stale or compiled_post_submit_setup_run_does_not_regress or activation_rejects_compiled_post_submit or approved_by_non_setup_role or unsupported_checker_gap or unknown_checker_blocks or setup_summary_redacts"
 cd backend && .venv/bin/pytest tests/test_projects.py tests/test_agent_runtime.py -q
 cd backend && .venv/bin/pytest tests/test_alembic.py -q
+cd backend && .venv/bin/pytest tests/test_tasks.py -q
+cd backend && .venv/bin/pytest tests/test_checkers.py -q
+cd backend && .venv/bin/pytest -q
+cd backend && .venv/bin/pytest tests/test_projects.py::test_policy_approval_resumes_post_submit_setup_continuation tests/test_projects.py::test_post_submit_continuation_is_idempotent_after_compile tests/test_projects.py::test_post_submit_continuation_running_worker_redelivery_resumes_setup tests/test_projects.py::test_activation_rejects_compiled_post_submit_checker_policy_before_approval -q
+cd backend && .venv/bin/pytest tests/test_checkers.py::test_old_checker_name_blocks_post_submit_compilation_without_alias -q
+cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/alembic downgrade base && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/api_contract_e2e.py
 cd backend && .venv/bin/ruff check app/adapters/project_agents/openai_agent_sdk.py app/interfaces/project_agents.py app/workers/project_setup.py app/modules/projects/setup_queue.py app/modules/projects/service.py app/modules/projects/schemas.py app/modules/projects/models.py app/modules/projects/repository.py app/modules/projects/router.py tests/test_projects.py tests/test_agent_runtime.py tests/test_alembic.py
+cd backend && .venv/bin/ruff check app tests scripts
 cd backend && .venv/bin/python -m py_compile app/adapters/project_agents/openai_agent_sdk.py app/interfaces/project_agents.py app/workers/project_setup.py app/modules/projects/setup_queue.py app/modules/projects/service.py app/modules/projects/schemas.py app/modules/projects/models.py app/modules/projects/repository.py app/modules/projects/router.py tests/test_projects.py tests/test_agent_runtime.py tests/test_alembic.py
+python3 -m py_compile backend/scripts/api_contract_e2e.py backend/scripts/week2_api_e2e.py examples/terminal_benchmark/terminal_benchmark_api_e2e.py
 cd backend && .venv/bin/docstr-coverage --config .docstr.yaml
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
@@ -132,6 +148,12 @@ Result summary:
 - Focused stale/setup suite: 13 passed.
 - Full project and agent-runtime suite: 229 passed.
 - Alembic suite: 6 passed.
+- Task suite: 86 passed.
+- Checker suite: 75 passed.
+- Full backend suite after stale fixture repair: 442 passed.
+- Exact-head post-submit setup focused suite: 4 passed.
+- Exact-head old-checker compiler regression: 2 passed.
+- API contract real API drill passed after the CI bridge scope repair.
 - Ruff, py_compile, docstring coverage, stale wording, Markdown links, agent gates, loop memory, and diff whitespace checks passed.
 
 ## Reviewer Results
@@ -140,27 +162,28 @@ Internal review evidence:
 
 - `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/reviews/WS-POL-002-02-internal-review-evidence.md`
 
-Reviewed code SHA: `9179f9dced4b5b58c298cb1f93149c26d6d2b6c3`
+Reviewed code SHA: `fa7afaf4bda1db88ec6b50d7933643ba18e527fe`
 
-Reviewed at: `2026-07-10T05:27:44Z`
+Reviewed at: `2026-07-10T11:45:18Z`
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS WITH LOW RISKS | None | Duplicate worker regression fixed; low future crash-window hardening noted. |
-| QA/test | PASS | None | Stale enqueue, stale in-flight, status update, and duplicate worker tests cover prior failures. |
-| security/auth | PASS | None | Role, provenance, redaction, and fail-closed checks passed. |
+| senior engineering | PASS WITH LOW RISKS | None | Exact-SHA review found no new maintainability or operational findings. |
+| QA/test | PASS WITH LOW RISKS | None | Setup/activation/e2e fixture repair remains covered; CI bridge risk accepted for `WS-POL-002-02`. |
+| security/auth | PASS | None | Prior worker-result auditability finding resolved; no auth/security issue remains. |
 | product/ops | PASS WITH LOW RISKS | None | Setup defects stay operator-visible and separate from review decisions. |
-| architecture | PASS WITH LOW RISKS | None | Setup-time/project-scoped boundaries preserved. |
-| docs | PASS WITH LOW RISKS | None | Wording fixes applied. |
-| reuse/dedup | PASS WITH LOW RISKS | None | Low future extraction opportunities accepted. |
-| test delta | PASS | None | No weakened/skipped coverage. |
-| CI integrity | PASS | None | No gate weakening. |
+| architecture | PASS WITH LOW RISKS | None | Setup-time/project-scoped boundaries preserved; no product shortcut from CI bridge. |
+| docs | PASS WITH LOW RISKS | None | Exact-SHA review confirmed bridge wording is clear and stale helper names are gone. |
+| reuse/dedup | PASS WITH LOW RISKS | None | Low temporary duplication in test/e2e bridge fixture construction accepted until `WS-POL-002-03`. |
+| test delta | PASS | None | Exact-SHA review found no skipped/weakened tests and final delta was wording-only. |
+| CI integrity | PASS AFTER FIXES | None | No CI/test weakening; stale evidence blocker fixed by this trust/evidence refresh. |
 
 ## External Review
 
-External review is pending for this PR. CodeRabbit and GitHub Actions must run
-after the branch is pushed, and any actionable comments must be handled in a
-separate external review response file.
+External review must rerun after this evidence refresh is pushed. CodeRabbit
+and GitHub Actions are external checks and must pass before human merge review.
+Any actionable comments must be handled in a separate external review response
+file.
 
 ## Remaining Risks
 
@@ -170,6 +193,9 @@ separate external review response file.
 - Provenance validation appears in a few service locations for different
   exception semantics. This is accepted for this chunk but should be extracted
   if setup policy grows further.
+- The CI activation bridge is temporary. `WS-POL-002-03` must replace direct
+  test/e2e policy approval plus setup-ledger marking with the server-owned
+  post-submit approval API.
 
 ## Human Review Focus
 
