@@ -713,7 +713,8 @@ async def create_approved_post_submit_policy_ci_bridge(
     agent credentials. This helper is therefore a test-only activation bridge:
     all prerequisite records are created through the public API first, the real
     trusted compiler builds the policy body, and the direct DB write is limited
-    to the missing approval bridge that WS-POL-002-03 will replace.
+    to the generated policy approval plus setup-ledger marker that
+    WS-POL-002-03 will replace.
     """
     guide_version = effective_policy["guide_version"]
     spec = build_project_post_submit_checker_spec(

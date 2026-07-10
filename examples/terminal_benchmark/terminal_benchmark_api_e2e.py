@@ -640,7 +640,7 @@ async def create_project_with_terminal_benchmark_guide(
     fixture: TerminalBenchmarkFixture,
     run_id: str,
 ) -> dict:
-    """Create a project and activate it through the current policy-bundle path."""
+    """Create a project and activate it through the temporary CI bridge path."""
     project = await request_json(
         client,
         "POST",
