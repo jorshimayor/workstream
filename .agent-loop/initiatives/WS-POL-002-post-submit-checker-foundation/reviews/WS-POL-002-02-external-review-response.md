@@ -4,6 +4,17 @@
 
 PR #88 external checks and CodeRabbit comments.
 
+## Comment Triage
+
+| Source | Severity | Status | Response |
+|---|---:|---|---|
+| CodeRabbit | Minor | fixed | Normalized compiled post-submit worker return dictionaries. |
+| CodeRabbit | Trivial | fixed | Wrapped migration composite FK names and matching downgrade drops with `op.f()`. |
+| CodeRabbit | Trivial | fixed | Deduplicated mutable Celery setup task configuration. |
+| CodeRabbit | Major | already satisfied | Migration 0014 explicitly rejects existing draft-era checker rows before adding non-null setup-provenance columns. |
+| CodeRabbit | Major | stale / not applied | `.agent-loop/REVIEW_LOG.md` line 23 describes already-merged PR #87, not current PR #88. |
+| CodeRabbit | Major | invalid / not applied | Internal engineering reviewer verdicts must remain `PASS`, `PASS WITH LOW RISKS`, or `PASS AFTER FIXES`; product review decision tokens are not used for engineering evidence. |
+
 ## Comments Addressed
 
 ### Worker return shape for compiled post-submit policies
@@ -135,6 +146,7 @@ Evidence:
 
 ```bash
 cd backend && .venv/bin/pytest tests/test_alembic.py -q
+cd backend && .venv/bin/pytest tests/test_projects.py::test_project_setup_queue_syncs_all_setup_task_settings -q
 cd backend && .venv/bin/pytest tests/test_projects.py::test_post_submit_continuation_is_idempotent_after_compile tests/test_projects.py::test_post_submit_continuation_running_worker_redelivery_resumes_setup -q
 cd backend && .venv/bin/ruff check app/modules/projects/setup_queue.py app/workers/project_setup.py app/modules/projects/models.py tests/test_projects.py tests/test_alembic.py
 cd backend && .venv/bin/docstr-coverage --config .docstr.yaml
@@ -145,6 +157,11 @@ python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
 git diff --check
 ```
+
+Note: `check_internal_review_evidence.py` is expected to pass only after the
+final internal-review evidence is rebound to the reviewed code SHA that includes
+the external-review cleanup. It was intentionally rerun before rebinding and
+correctly failed stale evidence at that point.
 
 ## External Check Status
 
