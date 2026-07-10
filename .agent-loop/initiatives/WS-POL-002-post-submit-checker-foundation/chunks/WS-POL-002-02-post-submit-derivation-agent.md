@@ -68,6 +68,15 @@ Internal docs review also required README and glossary alignment after the
 post-submit continuation became part of automatic project setup. Those docs may
 only be changed to describe the new setup continuation at a high level.
 
+Post-review CI repair exposed stale task/checker fixtures and real API drill
+setup bridges that still assumed manual guide-body post-submit policy fields.
+The allowed scope therefore also includes the test and e2e files listed below,
+but only to remove that legacy request-body shape, keep activation fixtures
+aligned with generated post-submit setup output, and make the temporary CI
+activation bridge explicit until `WS-POL-002-03` adds the server-owned approval
+API. These files must not introduce product runtime shortcuts or skip the
+project setup continuation tests in `backend/tests/test_projects.py`.
+
 ## Allowed Files
 
 ```text
@@ -85,6 +94,11 @@ backend/alembic/versions/**
 backend/tests/test_projects.py
 backend/tests/test_agent_runtime.py
 backend/tests/test_alembic.py
+backend/tests/test_tasks.py
+backend/tests/test_checkers.py
+backend/scripts/api_contract_e2e.py
+backend/scripts/week2_api_e2e.py
+examples/terminal_benchmark/terminal_benchmark_api_e2e.py
 README.md
 docs/architecture_checker_framework.md
 docs/architecture_data_model.md

@@ -38,7 +38,7 @@ from app.db import session as db_session
 from api_contract_e2e import (
     alembic_config,
     api_environment,
-    create_generated_post_submit_checker_policy,
+    create_approved_post_submit_policy_ci_bridge,
     find_free_port,
     flow_settings,
     issue_flow_token,
@@ -736,7 +736,7 @@ async def create_project_with_terminal_benchmark_guide(
         f"/api/v1/projects/{project['id']}/guides/{guide['id']}/pre-submit-checker-policy",
         manager_token,
     )
-    await create_generated_post_submit_checker_policy(
+    await create_approved_post_submit_policy_ci_bridge(
         project_id=project["id"],
         guide_id=guide["id"],
         manager_subject=manager_subject,

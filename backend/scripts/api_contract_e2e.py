@@ -675,7 +675,7 @@ async def create_policy_bundle_for_guide(
         pre_submit_checker_policy["effective_policy_id"] == effective_policy["id"],
         "pre-submit checker visibility endpoint returned the wrong effective policy",
     )
-    await create_generated_post_submit_checker_policy(
+    await create_approved_post_submit_policy_ci_bridge(
         project_id=project_id,
         guide_id=guide_id,
         manager_subject=manager_subject,
@@ -691,7 +691,7 @@ async def create_policy_bundle_for_guide(
     return effective_policy
 
 
-async def create_generated_post_submit_checker_policy(
+async def create_approved_post_submit_policy_ci_bridge(
     *,
     project_id: str,
     guide_id: str,
@@ -705,15 +705,20 @@ async def create_generated_post_submit_checker_policy(
     warning_checkers: list[str] | None = None,
     blocking_severities: list[str] | None = None,
 ) -> dict:
-    """Persist generated post-submit setup output for the real API drill.
+    """Persist a temporary approved post-submit policy for CI contract drills.
 
-    The public guide API no longer accepts manual post-submit checker policy
-    fields. This helper mirrors the v0.1 setup continuation output after the
-    API has created every prerequisite record.
+    WS-POL-002-02 builds derivation and compilation, while WS-POL-002-03 owns
+    the server approval API. The CI API-contract drill still needs an active
+    guide to exercise task/submission/checker APIs without requiring external
+    agent credentials. This helper is therefore a test-only activation bridge:
+    all prerequisite records are created through the public API first, the real
+    trusted compiler builds the policy body, and the direct DB write is limited
+    to the missing approval bridge that WS-POL-002-03 will replace.
     """
+    guide_version = effective_policy["guide_version"]
     spec = build_project_post_submit_checker_spec(
         project_id=project_id,
-        guide_version="v1",
+        guide_version=guide_version,
         required_checkers=(
             ["check_policy_context_present"] if required_checkers is None else required_checkers
         ),
@@ -722,7 +727,7 @@ async def create_generated_post_submit_checker_policy(
     )
     compiled = compile_project_post_submit_checker_spec(
         project_id=project_id,
-        guide_version="v1",
+        guide_version=guide_version,
         spec=spec,
     )
     async with db_session.get_session_factory()() as session:
@@ -730,7 +735,7 @@ async def create_generated_post_submit_checker_policy(
             id=str(uuid4()),
             project_id=project_id,
             guide_id=guide_id,
-            guide_version="v1",
+            guide_version=guide_version,
             source_snapshot_id=source_snapshot["id"],
             source_snapshot_hash=source_snapshot["bundle_hash"],
             effective_policy_id=effective_policy["id"],
@@ -754,7 +759,7 @@ async def create_generated_post_submit_checker_policy(
             id=str(uuid4()),
             project_id=project_id,
             guide_id=guide_id,
-            guide_version="v1",
+            guide_version=guide_version,
             source_snapshot_id=source_snapshot["id"],
             source_snapshot_hash=source_snapshot["bundle_hash"],
             status="post_submit_policy_compiled",
