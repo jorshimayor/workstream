@@ -38,6 +38,7 @@ from app.db import session as db_session
 from api_contract_e2e import (
     alembic_config,
     api_environment,
+    create_generated_post_submit_checker_policy,
     find_free_port,
     flow_settings,
     issue_flow_token,
@@ -467,14 +468,6 @@ def guide_payload(fixture: TerminalBenchmarkFixture, run_id: str) -> dict:
             f"{review_packet}"
         ),
         "change_summary": "Initial Terminal Benchmark real-world guide",
-        "post_submit_checker_policy": {
-            "required_checkers": [
-                "check_policy_context_present",
-                "check_low_quality_generated_artifacts",
-            ],
-            "warning_checkers": [],
-            "blocking_severities": ["critical", "high", "medium"],
-        },
         "review_policy": {
             "requires_second_review": False,
             "allowed_decisions": ["accept", "needs_revision", "reject"],
@@ -643,6 +636,7 @@ async def assert_no_durable_submissions_after_precheck(
 async def create_project_with_terminal_benchmark_guide(
     client: httpx.AsyncClient,
     manager_token: str,
+    manager_subject: str,
     fixture: TerminalBenchmarkFixture,
     run_id: str,
 ) -> dict:
@@ -735,6 +729,28 @@ async def create_project_with_terminal_benchmark_guide(
     ensure(
         effective["source_snapshot_hash"] == snapshot["bundle_hash"],
         "effective policy did not bind to the guide source snapshot",
+    )
+    pre_submit_checker_policy = await request_json(
+        client,
+        "GET",
+        f"/api/v1/projects/{project['id']}/guides/{guide['id']}/pre-submit-checker-policy",
+        manager_token,
+    )
+    await create_generated_post_submit_checker_policy(
+        project_id=project["id"],
+        guide_id=guide["id"],
+        manager_subject=manager_subject,
+        source_snapshot=snapshot,
+        sufficiency_report=sufficiency,
+        submission_artifact_policy=manual_policy,
+        effective_policy=effective,
+        pre_submit_checker_policy=pre_submit_checker_policy,
+        required_checkers=[
+            "check_policy_context_present",
+            "check_low_quality_generated_artifacts",
+        ],
+        warning_checkers=[],
+        blocking_severities=["critical", "high", "medium"],
     )
     active = await request_json(
         client,
@@ -996,6 +1012,7 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
         project = await create_project_with_terminal_benchmark_guide(
             client,
             manager_token,
+            manager_subject,
             fixture,
             run_id,
         )

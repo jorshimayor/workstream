@@ -312,6 +312,7 @@ def token_for(
 async def create_project_with_guide(
     client: httpx.AsyncClient,
     manager_token: str,
+    manager_subject: str,
     run_id: str,
     suffix: str,
     required_checkers: list[str] | None = None,
@@ -340,23 +341,22 @@ async def create_project_with_guide(
         },
         201,
     )
-    payload = guide_payload(run_id)
-    if required_checkers is not None:
-        payload["post_submit_checker_policy"]["required_checkers"] = required_checkers
     guide = await request_json(
         client,
         "POST",
         f"/api/v1/projects/{project['id']}/guides",
         manager_token,
-        payload,
+        guide_payload(run_id),
         201,
     )
     await create_policy_bundle_for_guide(
         client,
         manager_token,
+        manager_subject,
         project["id"],
         guide["id"],
         run_id,
+        post_submit_required_checkers=required_checkers,
     )
     await request_json(
         client,
@@ -1031,8 +1031,9 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
     """
     flow_issuer, flow_audience, flow_secret = flow_settings(env)
     run_id = uuid4().hex[:8]
+    manager_subject = f"week2-manager-{run_id}"
     manager_token = token_for(
-        f"week2-manager-{run_id}",
+        manager_subject,
         ["project_manager"],
         issuer=flow_issuer,
         audience=flow_audience,
@@ -1067,6 +1068,7 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
         clean_project = await create_project_with_guide(
             client,
             manager_token,
+            manager_subject,
             run_id,
             "clean",
         )
@@ -1195,6 +1197,7 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
         trusted_retry_project = await create_project_with_guide(
             client,
             manager_token,
+            manager_subject,
             run_id,
             "trusted-retry",
         )
@@ -1313,6 +1316,7 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
         revision_project = await create_project_with_guide(
             client,
             manager_token,
+            manager_subject,
             run_id,
             "revision",
         )
@@ -1396,6 +1400,7 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
         missing_evidence_project = await create_project_with_guide(
             client,
             manager_token,
+            manager_subject,
             run_id,
             "no-evidence",
         )
@@ -1460,6 +1465,7 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
         integrity_project = await create_project_with_guide(
             client,
             manager_token,
+            manager_subject,
             run_id,
             "integrity",
         )
@@ -1523,6 +1529,7 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
         attestation_project = await create_project_with_guide(
             client,
             manager_token,
+            manager_subject,
             run_id,
             "attestation",
         )
@@ -1579,6 +1586,7 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
         warning_project = await create_project_with_guide(
             client,
             manager_token,
+            manager_subject,
             run_id,
             "warning",
         )
@@ -1621,6 +1629,7 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
         checker_revision_project = await create_project_with_guide(
             client,
             manager_token,
+            manager_subject,
             run_id,
             "checker-revision",
             required_checkers=["check_low_quality_generated_artifacts"],
@@ -1927,6 +1936,7 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
         forbidden_project = await create_project_with_guide(
             client,
             manager_token,
+            manager_subject,
             run_id,
             "forbidden",
         )
@@ -1990,6 +2000,7 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
         setup_project = await create_project_with_guide(
             client,
             manager_token,
+            manager_subject,
             run_id,
             "setup",
             required_checkers=["check_acceptance_criteria_present"],

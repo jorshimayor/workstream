@@ -1070,15 +1070,18 @@ async def create_checker_trial_project(
     project = project_response.json()
 
     guide_payload = complete_guide_payload()
-    if required_checkers is not None:
-        guide_payload["post_submit_checker_policy"]["required_checkers"] = required_checkers
     guide_response = await client.post(
         f"/api/v1/projects/{project['id']}/guides",
         headers=auth_headers(),
         json=guide_payload,
     )
     assert guide_response.status_code == 201, guide_response.text
-    await create_policy_bundle_for_guide(client, project["id"], guide_response.json()["id"])
+    await create_policy_bundle_for_guide(
+        client,
+        project["id"],
+        guide_response.json()["id"],
+        post_submit_required_checkers=required_checkers,
+    )
     activation_response = await client.post(
         f"/api/v1/projects/{project['id']}/guides/{guide_response.json()['id']}/activate",
         headers=auth_headers(),
@@ -1708,8 +1711,6 @@ async def test_chunk8_default_blocking_checker_survives_omitted_blocking_severit
     assert project_response.status_code == 201, project_response.text
     project = project_response.json()
     guide_payload = complete_guide_payload()
-    guide_payload["post_submit_checker_policy"]["required_checkers"] = ["check_policy_context_present"]
-    del guide_payload["post_submit_checker_policy"]["blocking_severities"]
     guide_response = await checker_client.post(
         f"/api/v1/projects/{project['id']}/guides",
         headers=auth_headers(),
@@ -1720,6 +1721,8 @@ async def test_chunk8_default_blocking_checker_survives_omitted_blocking_severit
         checker_client,
         project["id"],
         guide_response.json()["id"],
+        post_submit_required_checkers=["check_policy_context_present"],
+        post_submit_blocking_severities=None,
     )
     activation_response = await checker_client.post(
         f"/api/v1/projects/{project['id']}/guides/{guide_response.json()['id']}/activate",
@@ -2081,9 +2084,6 @@ async def test_chunk8_task_setup_blocked_takes_priority_over_worker_revision(
     assert project_response.status_code == 201, project_response.text
     project = project_response.json()
     guide_payload = complete_guide_payload()
-    guide_payload["post_submit_checker_policy"]["required_checkers"] = [
-        "check_acceptance_criteria_present"
-    ]
     guide_response = await checker_client.post(
         f"/api/v1/projects/{project['id']}/guides",
         headers=auth_headers(),
@@ -2094,6 +2094,7 @@ async def test_chunk8_task_setup_blocked_takes_priority_over_worker_revision(
         checker_client,
         project["id"],
         guide_response.json()["id"],
+        post_submit_required_checkers=["check_acceptance_criteria_present"],
     )
     activation_response = await checker_client.post(
         f"/api/v1/projects/{project['id']}/guides/{guide_response.json()['id']}/activate",
@@ -2740,30 +2741,18 @@ async def test_stale_locked_submission_cannot_receive_checker_run(
     "old_checker_name",
     ["check_evidence_references_present", "check_artifact_manifest_integrity"],
 )
-async def test_old_checker_name_blocks_guide_activation_without_alias(
-    checker_client: AsyncClient,
+def test_old_checker_name_blocks_post_submit_compilation_without_alias(
     old_checker_name: str,
 ) -> None:
-    project_response = await checker_client.post(
-        "/api/v1/projects",
-        headers=auth_headers(),
-        json={
-            "name": "Old Checker Name Project",
-            "slug": "old-checker-name-project",
-        },
+    spec = build_project_post_submit_checker_spec(
+        project_id="old-checker-name-project",
+        guide_version="v1",
+        required_checkers=[old_checker_name],
     )
-    assert project_response.status_code == 201, project_response.text
-    project = project_response.json()
-    guide_payload = complete_guide_payload()
-    guide_payload["post_submit_checker_policy"]["required_checkers"] = [old_checker_name]
-    guide_response = await checker_client.post(
-        f"/api/v1/projects/{project['id']}/guides",
-        headers=auth_headers(),
-        json=guide_payload,
-    )
-    assert guide_response.status_code == 422, guide_response.text
-    assert "post-submit checker policy compilation failed" in guide_response.json()["detail"]
 
-    async with db_session.get_session_factory()() as session:
-        rows = (await session.execute(CheckerRun.__table__.select())).all()
-    assert rows == []
+    with pytest.raises(PostSubmitCheckerCompilerError, match="unregistered checker"):
+        compile_project_post_submit_checker_spec(
+            project_id="old-checker-name-project",
+            guide_version="v1",
+            spec=spec,
+        )
