@@ -10,9 +10,10 @@ implemented the version-stamped trusted post-submit compiler contract,
 default-checker snapshot validation, canonical policy hashing, and tests around
 default-drift safety.
 
-`WS-POL-002-02` is active after the user's explicit start signal. It must add
-post-submit policy derivation to the resumable setup pipeline without creating
-a separate post-submit-only queue or runtime agent judgment path.
+`WS-POL-002-02` is active after the user's explicit start signal. Its
+implementation, deterministic proof, internal reviewer fanout, internal review
+evidence, and PR trust bundle are complete. The current gate is external PR
+review and human checkpoint.
 
 ## Active Planning Chunk
 

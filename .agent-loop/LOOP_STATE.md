@@ -11,7 +11,8 @@
   `WS-POL-002-02` started after the user's explicit start signal.
 - Last merged implementation SHA: `438361a`
 - Last merge commit: `ed52c21`
-- Current gate: implementation for `WS-POL-002-02`.
+- Current gate: `WS-POL-002-02` internal review and evidence complete;
+  preparing PR for external checks and human checkpoint.
 - Next chunk: inactive until `WS-POL-002-02` is implemented, reviewed,
   externally checked, merged by explicit human approval, and followed by memory
   update.
