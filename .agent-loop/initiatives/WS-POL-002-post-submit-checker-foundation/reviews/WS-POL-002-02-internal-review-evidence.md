@@ -10,11 +10,11 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: fa7afaf4bda1db88ec6b50d7933643ba18e527fe
+Reviewed code SHA: 26efde405a13add052607eb4e093706d856f4746
 
-Reviewed at: 2026-07-10T11:45:18Z
+Reviewed at: 2026-07-10T12:35:46Z
 
-Reviewer run ids: senior-engineering-019f4bd3-ebd5-7c22-a648-03017f876c01, qa-test-019f4bb9-6b99-74e0-aba8-d69c05a312a9, security-auth-019f4bc9-c8fe-7de1-be80-ebdf868a3e1d, product-ops-019f4bb9-83e5-7ce2-bed6-0de05726334e, architecture-019f4bb9-903b-7a92-8b2f-461bc2b6f9b4, docs-019f4bd3-f4cc-7620-8eed-7416b4fa64fc, reuse-dedup-019f4bc9-ab0a-7382-b4be-becf86d441e1, test-delta-019f4bd4-06fc-7802-a16d-cf2641034b67, ci-integrity-019f4bd3-fe3a-71d2-8398-adb2de70eff1
+Reviewer run ids: senior-engineering-019f4bf9-a0e8-73b1-be5d-f8f182fd1eed, qa-test-019f4bf9-ac36-79e1-9e86-5e244ac12b63, security-auth-019f4bf9-b1c8-7e92-8dd8-c0168b0312ba, product-ops-019f4c02-907d-70e3-98a5-21c4312feceb, architecture-019f4bf9-c1c8-7ef3-bb25-b723d566d08d, docs-019f4c02-9963-7ec1-80b6-994b206fc021, reuse-dedup-019f4bf1-195a-7ce3-bd4e-3a23b466c0a6, test-delta-019f4c02-a13e-7370-9b45-f353e5482a5b, ci-integrity-019f4bf9-cb2f-7bb0-993f-96815963973e
 
 ## Reviewed Change
 
@@ -38,20 +38,27 @@ Scope:
 - Normalizes post-submit worker terminal results so compiled and idempotent
   paths both return `status`, `idempotent`, and
   `post_submit_checker_policy_id`.
+- Addresses CodeRabbit external-review cleanup by using Alembic naming
+  conventions for composite FK create/drop calls and deduplicating mutable
+  Celery setup task configuration.
+- Adds focused regression coverage that both project setup Celery task entry
+  points receive the same mutable broker/result/eager configuration.
+- Records CodeRabbit findings in a separate external-review response artifact
+  instead of mixing external review into internal review evidence.
 
 ## Reviewer Results
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS WITH LOW RISKS | None | Exact-SHA review confirmed `fa7afaf` final delta is wording-only and no new operational risk was added; low future crash-window hardening remains non-blocking. |
-| QA/test | PASS WITH LOW RISKS | None | Confirmed stale manual guide-body payloads are removed, activation/setup coverage remains in place, and the CI bridge is bounded until `WS-POL-002-03`. |
-| security/auth | PASS | None | Confirmed the prior worker-result auditability finding is resolved and no auth, tenant-boundary, PII, secrets, prompt-injection, or activation-bypass issue remains. |
-| product/ops | PASS WITH LOW RISKS | None | Confirmed setup defects stay operator-visible, activation rejects compiled-only policies, and approval/correction API remains the next chunk boundary. |
-| architecture | PASS WITH LOW RISKS | None | Confirmed project-scoped setup-time derivation, deterministic runtime boundary, no per-task checker generation, and no product shortcut from the CI bridge. |
-| docs | PASS WITH LOW RISKS | None | Exact-SHA review confirmed CI bridge wording is clear, stale helper names are gone, and public docs need no further update. |
-| reuse/dedup | PASS WITH LOW RISKS | None | Accepted low temporary duplication in test/e2e bridge fixture construction; remove or centralize it when `WS-POL-002-03` replaces the bridge. |
-| test delta | PASS | None | Exact-SHA review confirmed no skipped/xfail tests, no weakened assertions, final delta is wording-only, and generated-output/manual-payload rejection coverage replaces legacy expectations. |
-| ci integrity | PASS AFTER FIXES | None | Exact-SHA review found no CI/test weakening; its only blocker was stale evidence, fixed by this evidence refresh. |
+| senior engineering | PASS AFTER FIXES | None | Found no maintainability issue in the final code delta; stale evidence was the only blocker and is fixed by this refresh. |
+| QA/test | PASS AFTER FIXES | None | Confirmed Alembic, queue config, worker-result, lint, wording, link, agent-gate, and loop-memory proof; stale evidence was the only blocker. |
+| security/auth | PASS AFTER FIXES | None | Found no auth bypass, tenant leak, PII/secrets issue, prompt-injection exposure, or product-token misuse; stale evidence was the only blocker. |
+| product/ops | PASS WITH LOW RISKS | None | Confirmed setup remains operator-visible and engineering verdicts remain separate from Workstream product decisions; external-response wording fix is included in this refresh. |
+| architecture | PASS AFTER FIXES | None | Confirmed setup-time derivation and project-scoped policy boundaries; stale evidence was the only blocker. |
+| docs | PASS AFTER FIXES | None | Confirmed external review is separate from internal evidence and loop/status wording is correct after the wording fix committed with this refresh. |
+| reuse/dedup | PASS WITH LOW RISKS | None | Confirmed setup queue config dedup is appropriate; low future provenance-validation extraction remains accepted. |
+| test delta | PASS WITH LOW RISKS | None | Confirmed no skipped/weakened assertions and the new queue config regression covers effective shared config; low structural-enumeration caveat accepted. |
+| ci integrity | PASS AFTER FIXES | None | Found no CI/test-runner weakening; stale evidence was the only blocker and is fixed by this refresh. |
 
 ## Valid Findings Addressed
 
@@ -70,8 +77,19 @@ Scope:
   server-owned approval API lands in `WS-POL-002-03`.
 - Security's low worker-result auditability finding was fixed by normalizing
   post-submit worker terminal results across compiled and idempotent paths.
-- Docs and CI integrity findings about stale evidence are addressed by
-  rebinding this evidence file and the trust bundle to `fa7afaf`.
+- CodeRabbit external-review findings were separated into
+  `WS-POL-002-02-external-review-response.md`. Valid findings were fixed;
+  stale or invalid findings were documented there.
+- CodeRabbit's valid migration naming finding was fixed by wrapping composite
+  checker-policy FK names and matching downgrade drops with `op.f()`.
+- CodeRabbit's valid Celery config duplication finding was fixed by applying
+  mutable setup task configuration through one shared loop.
+- Test-delta's queue-config proof gap was fixed by adding
+  `test_project_setup_queue_syncs_all_setup_task_settings`.
+- Product/docs wording findings about the external-response human checkpoint
+  were fixed in the external-review response.
+- Reviewer findings about stale evidence are addressed by rebinding this
+  evidence file and the trust bundle to `26efde4`.
 
 ## Commands Run
 
@@ -83,6 +101,7 @@ cd backend && .venv/bin/pytest tests/test_tasks.py -q
 cd backend && .venv/bin/pytest tests/test_checkers.py -q
 cd backend && .venv/bin/pytest -q
 cd backend && .venv/bin/pytest tests/test_projects.py::test_policy_approval_resumes_post_submit_setup_continuation tests/test_projects.py::test_post_submit_continuation_is_idempotent_after_compile tests/test_projects.py::test_post_submit_continuation_running_worker_redelivery_resumes_setup tests/test_projects.py::test_activation_rejects_compiled_post_submit_checker_policy_before_approval -q
+cd backend && .venv/bin/pytest tests/test_projects.py::test_project_setup_queue_syncs_all_setup_task_settings tests/test_projects.py::test_post_submit_continuation_is_idempotent_after_compile tests/test_projects.py::test_post_submit_continuation_running_worker_redelivery_resumes_setup -q
 cd backend && .venv/bin/pytest tests/test_checkers.py::test_old_checker_name_blocks_post_submit_compilation_without_alias -q
 cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/alembic downgrade base && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/api_contract_e2e.py
 cd backend && .venv/bin/ruff check app/adapters/project_agents/openai_agent_sdk.py app/interfaces/project_agents.py app/workers/project_setup.py app/modules/projects/setup_queue.py app/modules/projects/service.py app/modules/projects/schemas.py app/modules/projects/models.py app/modules/projects/repository.py app/modules/projects/router.py tests/test_projects.py tests/test_agent_runtime.py tests/test_alembic.py
@@ -106,13 +125,16 @@ Results:
 - Checker suite: 75 passed in 303.48s.
 - Full backend suite after stale fixture repair: 442 passed in 4100.54s.
 - Exact-head post-submit setup focused suite: 4 passed in 126.24s.
+- Final-head queue/worker focused suite: 3 passed in 35.97s.
+- Final-head setup queue config regression: 1 passed in 2.62s.
+- Final-head Alembic suite: 6 passed in 67.47s.
 - Exact-head old-checker compiler regression: 2 passed in 15.34s.
 - API contract real API drill passed after the CI bridge scope repair.
 - Ruff: passed.
 - Py compile: passed.
 - Docstring coverage: 100.0%.
 - Stale wording scan: passed.
-- Markdown link check: passed for 14 changed Markdown files.
+- Markdown link check: passed for 15 changed Markdown files.
 - Agent gates: 26 passed.
 - Loop memory state check: passed.
 - Diff whitespace check: passed.
@@ -122,6 +144,9 @@ Results:
 - Senior engineering accepted a low fail-closed crash window between compiled post-submit policy commit and setup-run status update. A later hardening chunk can make the first compiled policy win by provenance during retry recovery.
 - Reuse/dedup accepted a low future extraction opportunity for repeated effective/pre-submit provenance checks.
 - Reuse/dedup accepted a low test-maintenance risk around duplicated default-checker literal expectations.
+- Test-delta accepted a low structural caveat that the setup queue config
+  regression proves effective shared Celery config behavior, not an isolated
+  fake-task enumeration.
 - Reuse/dedup and test-delta accepted a low temporary CI activation bridge risk:
   it directly writes approved generated post-submit policy/setup-ledger rows
   only after API-created prerequisites and real compiler output. `WS-POL-002-03`

@@ -171,7 +171,9 @@ human merge review.
 
 ## Human Decisions Needed
 
-None before human merge review.
+None after the final internal-review evidence is rebound, local gates pass, and
+GitHub current-head checks are green. Human merge review remains the required
+checkpoint.
 
 ## Remaining Risks
 

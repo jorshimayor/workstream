@@ -51,6 +51,11 @@ submissions at runtime.
 - Normalized post-submit worker terminal results so compiled and idempotent
   paths both include `status`, `idempotent`, and
   `post_submit_checker_policy_id`.
+- Addressed external review cleanup by using Alembic naming conventions for
+  composite FK create/drop calls and deduplicating mutable Celery setup task
+  configuration.
+- Added queue configuration regression proof for both project setup Celery task
+  entry points.
 
 ## Design Chosen
 
@@ -129,6 +134,7 @@ cd backend && .venv/bin/pytest tests/test_tasks.py -q
 cd backend && .venv/bin/pytest tests/test_checkers.py -q
 cd backend && .venv/bin/pytest -q
 cd backend && .venv/bin/pytest tests/test_projects.py::test_policy_approval_resumes_post_submit_setup_continuation tests/test_projects.py::test_post_submit_continuation_is_idempotent_after_compile tests/test_projects.py::test_post_submit_continuation_running_worker_redelivery_resumes_setup tests/test_projects.py::test_activation_rejects_compiled_post_submit_checker_policy_before_approval -q
+cd backend && .venv/bin/pytest tests/test_projects.py::test_project_setup_queue_syncs_all_setup_task_settings tests/test_projects.py::test_post_submit_continuation_is_idempotent_after_compile tests/test_projects.py::test_post_submit_continuation_running_worker_redelivery_resumes_setup -q
 cd backend && .venv/bin/pytest tests/test_checkers.py::test_old_checker_name_blocks_post_submit_compilation_without_alias -q
 cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/alembic downgrade base && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/api_contract_e2e.py
 cd backend && .venv/bin/ruff check app/adapters/project_agents/openai_agent_sdk.py app/interfaces/project_agents.py app/workers/project_setup.py app/modules/projects/setup_queue.py app/modules/projects/service.py app/modules/projects/schemas.py app/modules/projects/models.py app/modules/projects/repository.py app/modules/projects/router.py tests/test_projects.py tests/test_agent_runtime.py tests/test_alembic.py
@@ -152,6 +158,9 @@ Result summary:
 - Checker suite: 75 passed.
 - Full backend suite after stale fixture repair: 442 passed.
 - Exact-head post-submit setup focused suite: 4 passed.
+- Final-head queue/worker focused suite: 3 passed.
+- Final-head setup queue config regression: 1 passed.
+- Final-head Alembic suite: 6 passed.
 - Exact-head old-checker compiler regression: 2 passed.
 - API contract real API drill passed after the CI bridge scope repair.
 - Ruff, py_compile, docstring coverage, stale wording, Markdown links, agent gates, loop memory, and diff whitespace checks passed.
@@ -162,21 +171,21 @@ Internal review evidence:
 
 - `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/reviews/WS-POL-002-02-internal-review-evidence.md`
 
-Reviewed code SHA: `fa7afaf4bda1db88ec6b50d7933643ba18e527fe`
+Reviewed code SHA: `26efde405a13add052607eb4e093706d856f4746`
 
-Reviewed at: `2026-07-10T11:45:18Z`
+Reviewed at: `2026-07-10T12:35:46Z`
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS WITH LOW RISKS | None | Exact-SHA review found no new maintainability or operational findings. |
-| QA/test | PASS WITH LOW RISKS | None | Setup/activation/e2e fixture repair remains covered; CI bridge risk accepted for `WS-POL-002-02`. |
-| security/auth | PASS | None | Prior worker-result auditability finding resolved; no auth/security issue remains. |
-| product/ops | PASS WITH LOW RISKS | None | Setup defects stay operator-visible and separate from review decisions. |
-| architecture | PASS WITH LOW RISKS | None | Setup-time/project-scoped boundaries preserved; no product shortcut from CI bridge. |
-| docs | PASS WITH LOW RISKS | None | Exact-SHA review confirmed bridge wording is clear and stale helper names are gone. |
-| reuse/dedup | PASS WITH LOW RISKS | None | Low temporary duplication in test/e2e bridge fixture construction accepted until `WS-POL-002-03`. |
-| test delta | PASS | None | Exact-SHA review found no skipped/weakened tests and final delta was wording-only. |
-| CI integrity | PASS AFTER FIXES | None | No CI/test weakening; stale evidence blocker fixed by this trust/evidence refresh. |
+| senior engineering | PASS AFTER FIXES | None | Found no maintainability issue in final code delta; stale evidence fixed by final refresh. |
+| QA/test | PASS AFTER FIXES | None | Confirmed Alembic, queue config, worker-result, lint, wording, link, agent-gate, and loop-memory proof; stale evidence fixed by final refresh. |
+| security/auth | PASS AFTER FIXES | None | Found no auth bypass, tenant leak, PII/secrets issue, prompt-injection exposure, or product-token misuse; stale evidence fixed by final refresh. |
+| product/ops | PASS WITH LOW RISKS | None | Confirmed setup remains operator-visible and engineering verdicts remain separate from product decisions; external-response wording fix included. |
+| architecture | PASS AFTER FIXES | None | Confirmed setup-time derivation and project-scoped policy boundaries; stale evidence fixed by final refresh. |
+| docs | PASS AFTER FIXES | None | Confirmed external review is separate from internal evidence and loop/status wording is correct after final wording fix. |
+| reuse/dedup | PASS WITH LOW RISKS | None | Confirmed setup queue config dedup is appropriate; low future provenance-validation extraction remains accepted. |
+| test delta | PASS WITH LOW RISKS | None | Confirmed no skipped/weakened assertions and queue config regression covers effective shared config; low structural-enumeration caveat accepted. |
+| CI integrity | PASS AFTER FIXES | None | Found no CI/test-runner weakening; stale evidence fixed by final refresh. |
 
 ## External Review
 
