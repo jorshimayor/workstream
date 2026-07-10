@@ -180,10 +180,13 @@ Reviewed at: `2026-07-10T11:45:18Z`
 
 ## External Review
 
-External review must rerun after this evidence refresh is pushed. CodeRabbit
-and GitHub Actions are external checks and must pass before human merge review.
-Any actionable comments must be handled in a separate external review response
-file.
+External review response:
+
+- `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/reviews/WS-POL-002-02-external-review-response.md`
+
+CodeRabbit comments are triaged there: valid findings were fixed, stale or
+invalid findings were documented, and GitHub Actions plus CodeRabbit must be
+checked on the PR head before human merge review.
 
 ## Remaining Risks
 

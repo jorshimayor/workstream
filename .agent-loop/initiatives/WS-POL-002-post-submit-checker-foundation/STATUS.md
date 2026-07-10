@@ -12,8 +12,8 @@ default-drift safety.
 
 `WS-POL-002-02` is active after the user's explicit start signal. Its
 implementation, deterministic proof, internal reviewer fanout, internal review
-evidence, and PR trust bundle are refreshed for `fa7afaf`. PR #88 is open; the
-current gate is external checks and human checkpoint after the latest push.
+evidence, PR trust bundle, and external-review response are recorded. PR #88 is
+open; the current gate is current-head GitHub checks and human checkpoint.
 
 ## Active Planning Chunk
 
@@ -33,7 +33,7 @@ None.
 |---|---|---|---:|---|
 | `WS-POL-002-PLAN` | Merged | `codex/ws-pol-002-post-submit-checker-planning` | #85 | Defines intent, discovery, design, risks, decisions, and implementation chunks. |
 | `WS-POL-002-01` | Merged | `codex/ws-pol-002-01-post-submit-compiler` | #87 | Post-Submit Compiler Contract; merged as `ed52c21`. |
-| `WS-POL-002-02` | Active | `codex/ws-pol-002-02-post-submit-derivation` | #88 | Post-submit derivation agent and resumable setup integration after pre-submit approval/compile; external checks must rerun on latest evidence refresh. |
+| `WS-POL-002-02` | Active | `codex/ws-pol-002-02-post-submit-derivation` | #88 | Post-submit derivation agent and resumable setup integration after pre-submit approval/compile; current-head checks and human merge review remain the active gate. |
 | `WS-POL-002-03` | Proposed | - | - | Server-owned approval and setup visibility APIs for compiled post-submit policies. |
 | `WS-POL-002-04` | Proposed | - | - | Runtime hardening for locked post-submit policy execution and routing. |
 | `WS-POL-002-05` | Proposed | - | - | Terminal Benchmark-style live API proof and report. |

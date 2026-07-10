@@ -100,19 +100,11 @@ def _sync_task_settings() -> None:
     )
 
     settings = get_settings()
-    if settings.celery_broker_url is not None:
-        run_pre_submit_setup_pipeline.app.conf.broker_url = settings.celery_broker_url
-        run_post_submit_setup_continuation.app.conf.broker_url = settings.celery_broker_url
-    elif settings.celery_task_always_eager:
-        run_pre_submit_setup_pipeline.app.conf.broker_url = "memory://"
-        run_post_submit_setup_continuation.app.conf.broker_url = "memory://"
-    run_pre_submit_setup_pipeline.app.conf.result_backend = settings.celery_result_backend_url
-    run_pre_submit_setup_pipeline.app.conf.task_always_eager = settings.celery_task_always_eager
-    run_pre_submit_setup_pipeline.app.conf.task_eager_propagates = True
-    run_post_submit_setup_continuation.app.conf.result_backend = (
-        settings.celery_result_backend_url
-    )
-    run_post_submit_setup_continuation.app.conf.task_always_eager = (
-        settings.celery_task_always_eager
-    )
-    run_post_submit_setup_continuation.app.conf.task_eager_propagates = True
+    for task in (run_pre_submit_setup_pipeline, run_post_submit_setup_continuation):
+        if settings.celery_broker_url is not None:
+            task.app.conf.broker_url = settings.celery_broker_url
+        elif settings.celery_task_always_eager:
+            task.app.conf.broker_url = "memory://"
+        task.app.conf.result_backend = settings.celery_result_backend_url
+        task.app.conf.task_always_eager = settings.celery_task_always_eager
+        task.app.conf.task_eager_propagates = True

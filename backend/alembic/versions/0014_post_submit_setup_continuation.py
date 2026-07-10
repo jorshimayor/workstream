@@ -93,21 +93,21 @@ def upgrade() -> None:
         ["id"],
     )
     op.create_foreign_key(
-        "fk_checker_policies_source_snapshot_hash",
+        op.f("fk_checker_policies_source_snapshot_hash"),
         "checker_policies",
         "guide_source_snapshots",
         ["source_snapshot_id", "source_snapshot_hash"],
         ["id", "bundle_hash"],
     )
     op.create_foreign_key(
-        "fk_checker_policies_effective_policy_hash",
+        op.f("fk_checker_policies_effective_policy_hash"),
         "checker_policies",
         "effective_project_submission_artifact_policies",
         ["effective_policy_id", "effective_policy_hash"],
         ["id", "effective_policy_hash"],
     )
     op.create_foreign_key(
-        "fk_checker_policies_pre_submit_checker_hash",
+        op.f("fk_checker_policies_pre_submit_checker_hash"),
         "checker_policies",
         "pre_submit_checker_policies",
         ["pre_submit_checker_policy_id", "pre_submit_checker_bundle_hash"],
@@ -309,23 +309,20 @@ def downgrade() -> None:
     op.execute(sa.text("drop index if exists ix_checker_policies_effective_policy_id"))
     op.execute(sa.text("drop index if exists ix_checker_policies_source_snapshot_id"))
     op.execute(sa.text("drop index if exists ix_checker_policies_guide_id"))
-    op.execute(
-        sa.text(
-            "alter table checker_policies "
-            "drop constraint if exists fk_checker_policies_pre_submit_checker_hash"
-        )
+    op.drop_constraint(
+        op.f("fk_checker_policies_pre_submit_checker_hash"),
+        "checker_policies",
+        type_="foreignkey",
     )
-    op.execute(
-        sa.text(
-            "alter table checker_policies "
-            "drop constraint if exists fk_checker_policies_effective_policy_hash"
-        )
+    op.drop_constraint(
+        op.f("fk_checker_policies_effective_policy_hash"),
+        "checker_policies",
+        type_="foreignkey",
     )
-    op.execute(
-        sa.text(
-            "alter table checker_policies "
-            "drop constraint if exists fk_checker_policies_source_snapshot_hash"
-        )
+    op.drop_constraint(
+        op.f("fk_checker_policies_source_snapshot_hash"),
+        "checker_policies",
+        type_="foreignkey",
     )
     op.execute(
         sa.text(
