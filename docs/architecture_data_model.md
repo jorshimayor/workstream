@@ -324,6 +324,8 @@ Fields:
 - `current_step`
 - `output_sufficiency_report_id`
 - `output_submission_artifact_policy_id`
+- `output_post_submit_checker_policy_id`
+- `post_submit_derivation_summary`
 - `error_code`
 - `error_summary`
 - `created_by`
@@ -334,10 +336,22 @@ Fields:
 
 `ProjectSetupRun` is a non-authoritative orchestration ledger for automatic
 project setup. It records that Workstream queued or attempted the guide
-sufficiency and submission artifact policy derivation pipeline for one guide
-source snapshot. It does not replace the source snapshot, sufficiency report,
-submission artifact policy, effective project policy, or pre-submit checker
+sufficiency, submission artifact policy derivation, and post-submit checker
+policy derivation continuations for one guide source snapshot. It does not
+replace the source snapshot, sufficiency report, submission artifact policy,
+effective project policy, pre-submit checker policy, or post-submit checker
 policy rows.
+
+Current step values are stable setup diagnostics, not product lifecycle states:
+
+- `queued`
+- `enqueue`
+- `guide_sufficiency`
+- `submission_artifact_policy_derivation`
+- `project_setup`
+- `post_submit_checker_policy_enqueue`
+- `post_submit_checker_policy_derivation`
+- `post_submit_checker_policy_compilation`
 
 Statuses:
 
@@ -347,14 +361,22 @@ Statuses:
 - `sufficiency_blocked`
 - `running_policy_derivation_agent`
 - `policy_draft_ready`
+- `running_post_submit_derivation_agent`
+- `post_submit_setup_blocked`
+- `post_submit_policy_compiled`
 - `setup_blocked`
 - `failed`
 
 The run references downstream truth by id/hash. Operators can read the latest
 run through the project setup API to understand whether setup is still queued,
-blocked by guide sufficiency, waiting on policy approval, or failed at the
-queue/worker layer. Error summaries are bounded and redacted; server logs remain
-the source for sensitive diagnostics.
+blocked by guide sufficiency, waiting on policy approval, compiling post-submit
+policy, blocked by unsupported checker requirements, or failed at the
+queue/worker layer. Error summaries and post-submit derivation summaries are
+bounded and redacted; server logs remain the source for sensitive diagnostics.
+The default setup-run API returns the source snapshot id for correlation, but
+does not return the exact source snapshot hash; exact hashes remain available
+through source-snapshot and policy records when an authorized workflow needs
+provenance inspection.
 
 ## GuideSufficiencyReport
 
@@ -685,18 +707,73 @@ Fields:
 
 - `id`
 - `project_id`
+- `guide_id`
 - `guide_version`
+- `source_snapshot_id`
+- `source_snapshot_hash`
+- `effective_policy_id`
+- `effective_policy_hash`
+- `pre_submit_checker_policy_id`
+- `pre_submit_checker_bundle_hash`
 - `required_checkers`
 - `warning_checkers`
 - `blocking_severities`
 - `policy_hash`
 - `policy_body`
+- `lifecycle_status`
+- `approved_by_role`
+- `approved_by_actor`
+- `approved_at`
+- `created_by`
 - `created_at`
 
 `policy_body` is the canonical source for post-submit checker execution. The
 hash is `sha256(canonical_json(policy_body))`. `required_checkers`,
 `warning_checkers`, and `blocking_severities` are query projections and must
 match `policy_body`.
+
+`lifecycle_status` is `compiled`, `approved`, or `superseded`. The derivation
+and compiler continuation creates `compiled` records. Guide activation requires
+an `approved` generated policy with setup-role approval provenance and exact
+`source_snapshot_id/hash`, `effective_policy_id/hash`, and
+`pre_submit_checker_policy_id` plus pre-submit checker bundle hash matching the
+active setup context. `WS-POL-002-03` adds the server-owned approval/correction
+API that moves compiled post-submit policies into that approved state.
+
+For generated setup, `PostSubmitCheckerPolicyDerivationAgent` runs only after a
+setup-authorized `admin` or `project_manager` approves the derived
+`SubmissionArtifactPolicy`, producing an approved
+`EffectiveProjectSubmissionArtifactPolicy` and compiled project
+`PreSubmitCheckerPolicy`. The agent receives bounded guide-source material,
+guide sufficiency summary, effective policy summary, pre-submit checker
+summary, and the registered post-submit checker catalog. It returns a
+constrained checker specification, unsupported required-check gaps, bounded
+reasons, and setup notes. It does not produce executable code and it does not
+judge worker submissions at runtime.
+
+The constrained derivation output contains:
+
+- `required_checkers`
+- `warning_checkers`
+- `blocking_severities`
+- `reasons`
+- `unsupported_required_checks`
+- `setup_notes`
+
+Setup-run summaries persist bounded metadata from that output: checker lists,
+server-owned agent name/version, reason count, sanitized evidence refs,
+unsupported checker reason codes, and setup note count. They do not persist
+free-form agent rationales, setup-note text, source excerpts, local paths,
+exact source hashes, replayable refs, or worker submission data. Agent-returned
+agent names and versions are treated as untrusted metadata; persisted setup
+summaries use Workstream's server-owned derivation agent identity.
+
+Evidence references in `reasons` and unsupported-checker gaps are bounded
+setup pointers such as `project_guide`, `source_item:N`, `sufficiency_report`,
+`effective_policy`, and `pre_submit_checker`. The registered checker catalog is
+agent input, not an evidence reference. Evidence refs must not contain local
+filesystem paths, signed URLs, credentials, private storage locators, raw source
+excerpts, or worker submission data.
 
 When a task locks its project context, Workstream stamps
 `locked_post_submit_checker_policy_body` by copying the persisted project
@@ -785,6 +862,13 @@ because Workstream cannot truthfully infer which post-submit policy body and
 hash governed those runtime records. After the migration, runtime records fail
 closed when a task, submission, or checker run lacks valid
 `locked_post_submit_checker_policy_*` context.
+
+Migration note: the `0014_post_submit_setup` migration adds required
+post-submit policy provenance fields that bind a compiled policy to guide,
+source snapshot, effective project policy, and pre-submit checker bundle
+context. Existing construction-era `checker_policies` rows cannot be truthfully
+backfilled into that provenance, so the migration fails closed until those local
+draft-era rows are reset and recreated through project setup.
 
 ## ReviewPolicy
 

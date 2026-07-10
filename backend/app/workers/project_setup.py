@@ -14,6 +14,7 @@ from app.db.session import get_database_url
 from app.modules.projects.service import (
     ProjectService,
     ProjectServiceError,
+    StaleProjectSetupContinuation,
     safe_project_setup_error_summary,
 )
 from app.schemas.auth import ActorContext
@@ -21,6 +22,9 @@ from app.workers.celery_app import celery_app
 
 PROJECT_SETUP_PIPELINE_ACTOR_ID = "workstream-system:project-setup-pipeline"
 PROJECT_SETUP_PIPELINE_TASK = "workstream.project_setup.run_pre_submit_setup_pipeline"
+PROJECT_SETUP_POST_SUBMIT_CONTINUATION_TASK = (
+    "workstream.project_setup.run_post_submit_setup_continuation"
+)
 
 logger = get_task_logger(__name__)
 T = TypeVar("T")
@@ -65,6 +69,40 @@ def run_pre_submit_setup_pipeline(
             guide_id,
             source_snapshot_id,
             setup_run_id,
+        )
+    )
+
+
+@celery_app.task(name=PROJECT_SETUP_POST_SUBMIT_CONTINUATION_TASK)
+def run_post_submit_setup_continuation(
+    project_id: str,
+    guide_id: str,
+    source_snapshot_id: str,
+    setup_run_id: str,
+    effective_policy_id: str,
+    pre_submit_checker_policy_id: str,
+) -> dict[str, Any]:
+    """Resume setup after pre-submit policy approval and compilation.
+
+    Args:
+        project_id: Project that owns the guide.
+        guide_id: Guide whose latest source snapshot should be processed.
+        source_snapshot_id: Immutable source snapshot to analyze.
+        setup_run_id: Existing project setup run ledger row to update.
+        effective_policy_id: Effective submission artifact policy id.
+        pre_submit_checker_policy_id: Compiled pre-submit checker policy id.
+
+    Returns:
+        Machine-readable terminal continuation state.
+    """
+    return _run_async_task(
+        lambda: _run_post_submit_setup_continuation(
+            project_id,
+            guide_id,
+            source_snapshot_id,
+            setup_run_id,
+            effective_policy_id,
+            pre_submit_checker_policy_id,
         )
     )
 
@@ -203,6 +241,187 @@ async def _run_pre_submit_setup_pipeline(
                     "error": public_error,
                     "guide_sufficiency_report_id": None,
                     "submission_artifact_policy_id": None,
+                }
+    finally:
+        await engine.dispose()
+
+
+async def _run_post_submit_setup_continuation(
+    project_id: str,
+    guide_id: str,
+    source_snapshot_id: str,
+    setup_run_id: str,
+    effective_policy_id: str,
+    pre_submit_checker_policy_id: str,
+) -> dict[str, Any]:
+    """Execute post-submit setup continuation using async service contracts."""
+    actor = project_setup_pipeline_actor()
+    engine = create_async_engine(get_database_url(), pool_pre_ping=True)
+    session_factory = async_sessionmaker(engine, expire_on_commit=False)
+    try:
+        async with session_factory() as session:
+            service = ProjectService(session)
+            try:
+                start_status = await service.start_post_submit_setup_continuation(
+                    setup_run_id,
+                    project_id=project_id,
+                    guide_id=guide_id,
+                    source_snapshot_id=source_snapshot_id,
+                    effective_policy_id=effective_policy_id,
+                    pre_submit_checker_policy_id=pre_submit_checker_policy_id,
+                )
+                if start_status == "already_compiled":
+                    return {"status": "post_submit_policy_compiled", "idempotent": True}
+                policy, _, summary = await service.run_post_submit_checker_policy_derivation_agent(
+                    actor,
+                    project_id,
+                    guide_id,
+                    source_snapshot_id,
+                    effective_policy_id,
+                    pre_submit_checker_policy_id,
+                    setup_run_id,
+                )
+                await service.update_project_setup_run_status(
+                    setup_run_id,
+                    status="post_submit_policy_compiled",
+                    current_step="post_submit_checker_policy_compilation",
+                    output_post_submit_checker_policy_id=policy.id,
+                    post_submit_derivation_summary=summary
+                    | {"post_submit_checker_policy_id": policy.id},
+                    continuation_effective_policy_id=effective_policy_id,
+                    continuation_pre_submit_checker_policy_id=pre_submit_checker_policy_id,
+                )
+                return {
+                    "status": "post_submit_policy_compiled",
+                    "post_submit_checker_policy_id": policy.id,
+                }
+            except StaleProjectSetupContinuation as exc:
+                logger.info(
+                    "stale project setup post-submit continuation ignored",
+                    extra={
+                        "project_id": project_id,
+                        "guide_id": guide_id,
+                        "source_snapshot_id": source_snapshot_id,
+                        "setup_run_id": setup_run_id,
+                        "error_code": exc.__class__.__name__,
+                    },
+                )
+                return {
+                    "status": "stale_post_submit_continuation_ignored",
+                    "idempotent": True,
+                    "post_submit_checker_policy_id": None,
+                }
+            except ProjectServiceError as exc:
+                public_error = safe_project_setup_error_summary(str(exc))
+                logger.warning(
+                    "project setup post-submit continuation stopped",
+                    extra={
+                        "project_id": project_id,
+                        "guide_id": guide_id,
+                        "source_snapshot_id": source_snapshot_id,
+                        "setup_run_id": setup_run_id,
+                        "error_code": exc.__class__.__name__,
+                        "error_summary": public_error,
+                    },
+                )
+                try:
+                    status_response = await service.update_project_setup_run_status(
+                        setup_run_id,
+                        status="post_submit_setup_blocked",
+                        current_step="post_submit_checker_policy_derivation",
+                        error_code=exc.__class__.__name__,
+                        error_summary=public_error,
+                        post_submit_derivation_summary={
+                            "status": "blocked",
+                            "reason": public_error,
+                            "unsupported_required_checks": getattr(exc, "details", {}).get(
+                                "unsupported_required_checks",
+                                [],
+                            ),
+                        },
+                        continuation_effective_policy_id=effective_policy_id,
+                        continuation_pre_submit_checker_policy_id=pre_submit_checker_policy_id,
+                    )
+                    if status_response.status == "post_submit_policy_compiled":
+                        return {
+                            "status": "post_submit_policy_compiled",
+                            "idempotent": True,
+                            "post_submit_checker_policy_id": (
+                                status_response.output_post_submit_checker_policy_id
+                            ),
+                        }
+                except StaleProjectSetupContinuation:
+                    logger.info(
+                        "stale project setup post-submit continuation error ignored",
+                        extra={
+                            "project_id": project_id,
+                            "guide_id": guide_id,
+                            "source_snapshot_id": source_snapshot_id,
+                            "setup_run_id": setup_run_id,
+                            "error_code": exc.__class__.__name__,
+                        },
+                    )
+                    return {
+                        "status": "stale_post_submit_continuation_ignored",
+                        "idempotent": True,
+                        "post_submit_checker_policy_id": None,
+                    }
+                return {
+                    "status": "post_submit_setup_blocked",
+                    "error": public_error,
+                    "post_submit_checker_policy_id": None,
+                }
+            except Exception as exc:
+                public_error = "unexpected project setup continuation failure"
+                logger.error(
+                    "project setup post-submit continuation failed",
+                    extra={
+                        "project_id": project_id,
+                        "guide_id": guide_id,
+                        "source_snapshot_id": source_snapshot_id,
+                        "setup_run_id": setup_run_id,
+                        "error_code": exc.__class__.__name__,
+                        "error_summary": public_error,
+                    },
+                )
+                try:
+                    status_response = await service.update_project_setup_run_status(
+                        setup_run_id,
+                        status="failed",
+                        current_step="post_submit_checker_policy_derivation",
+                        error_code=exc.__class__.__name__,
+                        error_summary=public_error,
+                        continuation_effective_policy_id=effective_policy_id,
+                        continuation_pre_submit_checker_policy_id=pre_submit_checker_policy_id,
+                    )
+                    if status_response.status == "post_submit_policy_compiled":
+                        return {
+                            "status": "post_submit_policy_compiled",
+                            "idempotent": True,
+                            "post_submit_checker_policy_id": (
+                                status_response.output_post_submit_checker_policy_id
+                            ),
+                        }
+                except StaleProjectSetupContinuation:
+                    logger.info(
+                        "stale project setup post-submit continuation failure ignored",
+                        extra={
+                            "project_id": project_id,
+                            "guide_id": guide_id,
+                            "source_snapshot_id": source_snapshot_id,
+                            "setup_run_id": setup_run_id,
+                            "error_code": exc.__class__.__name__,
+                        },
+                    )
+                    return {
+                        "status": "stale_post_submit_continuation_ignored",
+                        "idempotent": True,
+                        "post_submit_checker_policy_id": None,
+                    }
+                return {
+                    "status": "failed",
+                    "error": public_error,
+                    "post_submit_checker_policy_id": None,
                 }
     finally:
         await engine.dispose()

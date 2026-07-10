@@ -79,10 +79,10 @@ sufficiency report for the same snapshot.
 
 A non-authoritative orchestration ledger for automatic project setup. It records
 queue status, current setup step, Celery task id, bounded errors, and output
-record ids for guide sufficiency and submission artifact policy derivation. The
-actual policy truth remains in the source snapshot, sufficiency report,
-submission artifact policy, effective project policy, and pre-submit checker
-policy rows.
+record ids for guide sufficiency, submission artifact policy derivation, and
+post-submit checker setup continuation. The actual policy truth remains in the
+source snapshot, sufficiency report, submission artifact policy, effective
+project policy, pre-submit checker policy, and post-submit checker policy rows.
 
 ## Submission Artifact Policy
 

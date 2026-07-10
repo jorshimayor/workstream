@@ -4,16 +4,15 @@
 
 - Active initiative: `WS-POL-002` - Post-Submit Checker Foundation
 - Active planning chunk: none
-- Active implementation chunk: `WS-POL-002-01` - Post-Submit Compiler Contract
-- Branch: `codex/ws-pol-002-01-post-submit-compiler`
-- Status: `WS-POL-002-01` started after the user's explicit start signal.
-  Pre-implementation plan review narrowed the chunk to compiler/body/hash
-  behavior only; persistence, setup-run fields, approval, and activation
-  enforcement remain in later chunks.
-- Last merged implementation SHA: `be2d5ec`
-- Last merge commit: `3fc1a68`
-- Current gate: implementation for `WS-POL-002-01`.
-- Next chunk: inactive until `WS-POL-002-01` is implemented, reviewed,
+- Active implementation chunk: `WS-POL-002-02` - Post-Submit Derivation Agent
+  And Resumable Setup Integration
+- Branch: `codex/ws-pol-002-02-post-submit-derivation`
+- Status: `WS-POL-002-01` merged through PR #87 as `ed52c21` on 2026-07-09.
+  `WS-POL-002-02` started after the user's explicit start signal.
+- Last merged implementation SHA: `438361a`
+- Last merge commit: `ed52c21`
+- Current gate: implementation for `WS-POL-002-02`.
+- Next chunk: inactive until `WS-POL-002-02` is implemented, reviewed,
   externally checked, merged by explicit human approval, and followed by memory
   update.
 
@@ -131,3 +130,7 @@ blockchain, frontend, or agent-runtime behavior.
   PDF report proving the current lifecycle through HTTP-visible APIs.
 - PR #85 merged into `main` as `3fc1a68`; it completed `WS-POL-002-PLAN`
   planning for project-guide-derived post-submit checker setup.
+- PR #87 merged into `main` as `ed52c21`; it implemented `WS-POL-002-01`
+  Post-Submit Compiler Contract with version-stamped default-checker snapshots,
+  canonical policy hashing, compiler-boundary validation, and default-drift
+  regression tests.

@@ -53,6 +53,12 @@ def test_current_schema_uses_project_policy_contract(
         "submission_artifact_policies.policy_body",
         "effective_project_submission_artifact_policies.effective_policy",
         "pre_submit_checker_policies.compiled_bundle",
+        "checker_policies.source_snapshot_id",
+        "checker_policies.source_snapshot_hash",
+        "checker_policies.effective_policy_id",
+        "checker_policies.effective_policy_hash",
+        "checker_policies.pre_submit_checker_policy_id",
+        "checker_policies.pre_submit_checker_bundle_hash",
         "payment_policies.base_amount",
         "payment_policies.currency",
     }.issubset(columns)

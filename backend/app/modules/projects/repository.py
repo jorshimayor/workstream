@@ -282,6 +282,15 @@ class ProjectRepository:
         """Load one project setup run by primary key."""
         return await self._session.get(ProjectSetupRun, setup_run_id)
 
+    async def lock_project_setup_run(self, setup_run_id: str) -> ProjectSetupRun | None:
+        """Load one project setup run with a transactional row lock."""
+        result = await self._session.execute(
+            select(ProjectSetupRun)
+            .where(ProjectSetupRun.id == setup_run_id)
+            .with_for_update()
+        )
+        return result.scalar_one_or_none()
+
     async def get_latest_project_setup_run(
         self,
         project_id: str,
@@ -627,13 +636,23 @@ class ProjectRepository:
             await self._session.flush()
             await self._session.refresh(policy)
             return policy
-        existing.required_checkers = policy.required_checkers
-        existing.warning_checkers = policy.warning_checkers
-        existing.blocking_severities = policy.blocking_severities
-        existing.policy_hash = policy.policy_hash
-        existing.policy_body = policy.policy_body
-        await self._session.flush()
-        await self._session.refresh(existing)
+        if (
+            existing.required_checkers != policy.required_checkers
+            or existing.warning_checkers != policy.warning_checkers
+            or existing.blocking_severities != policy.blocking_severities
+            or existing.policy_hash != policy.policy_hash
+            or existing.policy_body != policy.policy_body
+            or existing.guide_id != policy.guide_id
+            or existing.source_snapshot_id != policy.source_snapshot_id
+            or existing.source_snapshot_hash != policy.source_snapshot_hash
+            or existing.effective_policy_id != policy.effective_policy_id
+            or existing.effective_policy_hash != policy.effective_policy_hash
+            or existing.pre_submit_checker_policy_id != policy.pre_submit_checker_policy_id
+            or existing.pre_submit_checker_bundle_hash != policy.pre_submit_checker_bundle_hash
+        ):
+            raise ProjectRepositoryIntegrityError(
+                "post-submit checker policy already exists with different content"
+            )
         return existing
 
     async def get_post_submit_checker_policy(
@@ -664,6 +683,14 @@ class ProjectRepository:
     ) -> PostSubmitCheckerPolicy | None:
         """Load a post-submit checker policy by id."""
         return await self._session.get(PostSubmitCheckerPolicy, policy_id)
+
+    async def delete_post_submit_checker_policy(
+        self,
+        policy: PostSubmitCheckerPolicy,
+    ) -> None:
+        """Delete an unapproved generated post-submit policy before regeneration."""
+        await self._session.delete(policy)
+        await self._session.flush()
 
     async def upsert_review_policy(self, policy: ReviewPolicy) -> ReviewPolicy:
         """Create or replace a review policy for one guide version.

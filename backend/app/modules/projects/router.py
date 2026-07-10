@@ -114,7 +114,7 @@ async def update_guide(
     actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> ProjectGuideResponse:
-    """Update a draft guide and optional post-submit/review/revision/payment policies."""
+    """Update a draft guide and optional review, revision, or payment policies."""
     try:
         return await ProjectService(session).update_draft_guide(
             actor,

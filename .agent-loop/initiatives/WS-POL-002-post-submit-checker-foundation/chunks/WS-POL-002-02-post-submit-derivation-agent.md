@@ -45,7 +45,8 @@ and compiled project pre-submit checker bundle.
   checker catalog.
 - Agent output is a constrained spec, not executable runtime code.
 - Unsupported required checks are recorded as setup blockers.
-- Successful derivation passes through the trusted compiler.
+- Successful derivation passes through the trusted compiler and creates a
+  compiled project post-submit policy pending setup approval.
 - Setup run status makes post-submit derivation/compile state visible.
 - Hostile guide/source instructions that attempt to weaken Workstream defaults,
   roles, routing, authorization, or review decisions are ignored or rejected.
@@ -53,22 +54,41 @@ and compiled project pre-submit checker bundle.
   local paths, secrets, signed refs, and exact source hashes are not returned in
   setup APIs by default.
 
+## Contract Amendment
+
+During implementation review, the chunk was explicitly kept as one L1
+implementation slice rather than split because post-submit derivation cannot be
+made durable without the project-agent interface contract and the database
+provenance migration. The allowed files therefore include
+`backend/app/interfaces/project_agents.py` and `backend/alembic/versions/**`.
+Those files may only be changed for this chunk's derivation contract,
+setup-run output state, and generated post-submit policy provenance; they must
+not introduce runtime submission judgment or per-task checker generation.
+Internal docs review also required README and glossary alignment after the
+post-submit continuation became part of automatic project setup. Those docs may
+only be changed to describe the new setup continuation at a high level.
+
 ## Allowed Files
 
 ```text
 backend/app/adapters/project_agents/**
+backend/app/interfaces/project_agents.py
 backend/app/workers/project_setup.py
 backend/app/modules/projects/setup_queue.py
+backend/app/modules/projects/router.py (docstring-only stale OpenAPI wording cleanup)
 backend/app/modules/projects/service.py
 backend/app/modules/projects/schemas.py
 backend/app/modules/projects/models.py
 backend/app/modules/projects/repository.py
 backend/app/modules/checkers/compiler.py
+backend/alembic/versions/**
 backend/tests/test_projects.py
 backend/tests/test_agent_runtime.py
 backend/tests/test_alembic.py
+README.md
 docs/architecture_checker_framework.md
 docs/architecture_data_model.md
+docs/glossary.md
 docs/operations_project_operating_manual.md
 .agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/**
 .agent-loop/LOOP_STATE.md
@@ -94,7 +114,14 @@ runtime agent-based submission judgment
   submission artifact policy and compiled project pre-submit checker bundle.
 - Blocked guide sufficiency prevents post-submit derivation.
 - Unsupported required checker gaps block setup and are visible to operators.
-- Successful derivation creates a compiled project `PostSubmitCheckerPolicy`.
+- Successful derivation creates a compiled project `PostSubmitCheckerPolicy`
+  without treating compilation as setup approval.
+- Guide activation rejects compiled-only post-submit checker policies until a
+  server-owned setup approval path records approval provenance.
+- The compiled `PostSubmitCheckerPolicy` is bound to guide id, source snapshot
+  id/hash, effective project policy id/hash, and pre-submit checker policy
+  id/hash; setup-run and activation validation reject project/version-only
+  matches.
 - Agent prompt/instructions explicitly forbid arbitrary checker code and
   per-task checker generation.
 - Tests include malicious guide/source excerpts and prove source text is treated

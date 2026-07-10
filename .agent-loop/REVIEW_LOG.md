@@ -1,5 +1,35 @@
 # Review Log
 
+## WS-POL-002-01
+
+Status: merged through PR #87 on 2026-07-09.
+
+Merge commit: `ed52c21`
+
+Reviewed implementation SHA: `438361a`
+
+Required reviewer tracks:
+
+- senior engineering
+- QA/test
+- security/auth
+- product/ops
+- architecture
+- CI integrity
+- docs
+- reuse/dedup
+- test delta
+
+Result: PASS after fixes; external review addressed; GitHub checks passed.
+
+Scope: trusted post-submit compiler contract, version-stamped default-checker
+snapshots, canonical policy hashing, compile/parse validation, and regression
+tests around default-drift safety.
+
+Evidence: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/reviews/WS-POL-002-01-internal-review-evidence.md`
+
+External review response: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/reviews/WS-POL-002-01-external-review-response.md`
+
 ## WS-ENG-001-01
 
 Status: merged through PR #23 on 2026-06-20.

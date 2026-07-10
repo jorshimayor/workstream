@@ -26,8 +26,8 @@ there is one authoritative policy path.
 
 ## Goal
 
-Expose generated post-submit policy setup state through APIs and remove manual
-guide request-body policy creation for post-submit checkers.
+Expose generated post-submit policy setup state through APIs and add the
+server-owned approval/correction path for compiled post-submit checker policies.
 
 ## Target Behavior
 
@@ -36,7 +36,7 @@ guide request-body policy creation for post-submit checkers.
   policy hash under the current v0.1 bootstrap authorization boundary.
 - Setup-authorized admin or project_manager can approve or request setup
   correction for the generated project post-submit policy.
-- Guide create/update no longer accepts `post_submit_checker_policy` from
+- Guide create/update continues to reject `post_submit_checker_policy` from
   clients.
 - Guide activation requires the approved compiled project
   `PostSubmitCheckerPolicy`.
@@ -80,8 +80,8 @@ compatibility aliases for removed guide payload fields
 
 - Project setup APIs show generated post-submit policy status without database
   inspection.
-- Guide create/update rejects obsolete manual `post_submit_checker_policy`
-  payload fields.
+- Guide create/update request-body rejection for obsolete
+  `post_submit_checker_policy` payload fields remains covered.
 - Activation blocks unless the compiled post-submit policy is approved and
   matches the guide/source context.
 - Approval provenance is immutable and records actor id, role, timestamp,
