@@ -271,7 +271,19 @@ async def _run_post_submit_setup_continuation(
                     pre_submit_checker_policy_id=pre_submit_checker_policy_id,
                 )
                 if start_status == "already_compiled":
-                    return {"status": "post_submit_policy_compiled", "idempotent": True}
+                    setup_run = await service.validate_project_setup_run_context(
+                        setup_run_id,
+                        project_id=project_id,
+                        guide_id=guide_id,
+                        source_snapshot_id=source_snapshot_id,
+                    )
+                    return {
+                        "status": "post_submit_policy_compiled",
+                        "idempotent": True,
+                        "post_submit_checker_policy_id": (
+                            setup_run.output_post_submit_checker_policy_id
+                        ),
+                    }
                 policy, _, summary = await service.run_post_submit_checker_policy_derivation_agent(
                     actor,
                     project_id,
@@ -293,6 +305,7 @@ async def _run_post_submit_setup_continuation(
                 )
                 return {
                     "status": "post_submit_policy_compiled",
+                    "idempotent": False,
                     "post_submit_checker_policy_id": policy.id,
                 }
             except StaleProjectSetupContinuation as exc:

@@ -1764,7 +1764,11 @@ async def test_post_submit_continuation_is_idempotent_after_compile(
     )
 
     assert CountingRuntime.post_submit_calls == 1
-    assert result == {"status": "post_submit_policy_compiled", "idempotent": True}
+    assert result == {
+        "status": "post_submit_policy_compiled",
+        "idempotent": True,
+        "post_submit_checker_policy_id": compiled["output_post_submit_checker_policy_id"],
+    }
     rerun = (
         await project_client.get(
             f"/api/v1/projects/{project['id']}/guides/{guide['id']}/setup-runs/latest",
@@ -1846,6 +1850,7 @@ async def test_post_submit_continuation_running_worker_redelivery_resumes_setup(
     )
 
     assert result["status"] == "post_submit_policy_compiled"
+    assert result["idempotent"] is False
     assert result["post_submit_checker_policy_id"]
     assert CountingRuntime.post_submit_calls == 1
     latest = (
