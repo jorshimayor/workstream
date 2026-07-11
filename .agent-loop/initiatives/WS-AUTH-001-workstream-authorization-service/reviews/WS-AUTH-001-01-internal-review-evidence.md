@@ -10,17 +10,18 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: 34d3593e9a529eecb6b75ac164fbc665020c9ace
+Reviewed code SHA: 3815bbd2ade4ada7f03be611282d38e93dba1b7e
 
-Reviewed at: 2026-07-11T19:39:12Z
+Reviewed at: 2026-07-11T20:03:18Z
 
 Reviewer run IDs: senior-engineering=/root/auth01_plan_engineering; QA/test=/root/auth01_plan_quality_ci; security/auth=/root/auth01_plan_security_product; product/ops=/root/auth01_plan_security_product; architecture=/root/auth01_plan_engineering; docs=/root/auth01_plan_security_product; CI-integrity=/root/auth01_plan_quality_ci; reuse/dedup=/root/auth01_plan_engineering; test-delta=/root/auth01_plan_quality_ci
 
 ## Reviewed Change
 
-Implementation freeze SHA: `2164e3b8192f5f5f9b54363a6b981a8799c20ac4`.
-Final reviewed SHA `34d3593` adds only loop/status/review state around that
-unchanged implementation.
+Implementation freeze SHA: `be0b836` includes the CI terminology assertion
+repair. Final reviewed SHA `3815bbd` adds only reviewed scope-count and
+latest-main lifecycle-memory reconciliation around that unchanged
+implementation.
 
 - Adopted ADR 0012 and the canonical authorization specification/runbook.
 - Preserved external Flow authentication ownership while assigning local
@@ -38,6 +39,8 @@ unchanged implementation.
 - Merged latest `main` through PR #90, preserved its correction provenance and
   activation guards, and moved the planned auth migration sequence after its
   new `0015` migration.
+- Merged the PR #94 post-merge memory update from latest `main` and reconciled
+  the active authorization gate without reactivating `WS-POL-002-04`.
 - Kept all eight imported reference inputs and their checksum/manifest records
   byte-immutable.
 - Incorporated PR #90 correction and activation semantics without importing or
@@ -83,6 +86,8 @@ unchanged implementation.
   and renumbered the auth sequence to `0016`-`0023` after merged-main `0015`.
 - Addressed all valid CodeRabbit comments; retained user-approved `both` with
   explicit guarded union semantics instead of renaming it.
+- Corrected the one stale agent-runtime prompt assertion reported by GitHub CI;
+  the focused runtime tests pass and the assertion remains equally strict.
 
 ## Commands Run
 
@@ -98,17 +103,21 @@ sha256sum -c docs/reference_specs/SHA256SUMS
 PLANTUML_JAR=/tmp/workstream-plantuml.jar scripts/render_authorization_docs.sh
 (cd backend && /home/abiorh/flow/workstream/backend/.venv/bin/python -m ruff check app/adapters/project_agents/openai_agent_sdk.py tests/test_projects.py)
 (cd backend && /home/abiorh/flow/workstream/backend/.venv/bin/python -m pytest -q tests/test_projects.py)
+(cd backend && /home/abiorh/flow/workstream/backend/.venv/bin/python -m pytest -q tests/test_agent_runtime.py)
 git diff --check
 ```
 
 Results: all passed. `test_projects.py` completed with 234 passing tests in
-3576.81 seconds. Markdown links passed for 68 changed Markdown files.
+3576.81 seconds; the focused agent-runtime file completed with 2 passing tests.
+Markdown links passed for 68 changed Markdown files. The pre-fix GitHub run
+reported 463 passes plus the one stale terminology assertion; rerun remains an
+external post-push check.
 
 ## Evidence Gate
 
 Evidence gate: PASS
 
-Scope exception: 84 changed paths and more than 500 changed lines are accepted because
+Scope exception: 85 changed paths and more than 500 changed lines are accepted because
 this is one approved atomic active-document reconciliation plus its scanner,
 tests, CI step, generated companions, latest-main merge, and two exact
 terminology-only backend files. Splitting would leave contradictory canonical

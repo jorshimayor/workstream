@@ -74,6 +74,7 @@ approved.
 
 - 31 agent-gate regression tests passed.
 - 234 project backend tests passed in 3576.81 seconds.
+- 2 focused agent-runtime prompt tests passed after the CI assertion repair.
 - Stale authorization and Workstream wording scans passed.
 - Markdown links passed for 68 changed Markdown files.
 - Loop-memory validation and `git diff --check` passed.
@@ -90,9 +91,9 @@ directly without `continue-on-error`; no existing gate or threshold changed.
 ## Reviewer Results
 
 All required tracks passed against implementation freeze
-`2164e3b8192f5f5f9b54363a6b981a8799c20ac4`, and the administrative evidence
+`be0b836`, including the CI assertion repair, and the latest-main lifecycle
 state was reviewed at final bound SHA
-`34d3593e9a529eecb6b75ac164fbc665020c9ace`: senior engineering, QA/test,
+`3815bbd2ade4ada7f03be611282d38e93dba1b7e`: senior engineering, QA/test,
 security/auth, product/ops, architecture, docs, reuse/dedup, CI integrity, and
 test delta. The circuit breaker accepted the documented atomic-docs size
 exception.
