@@ -57,15 +57,17 @@ Needs:
 - issue actionable revision feedback
 - avoid reviewing broken packages
 
-### Admin
+### Project Manager And Operator
 
-The person configuring projects, rules, checkers, payments, and roles.
+The covered Project Manager configures project rules and tasks. The Operator
+inspects runtime health and performs registered recovery. Actor/grant,
+finance, and audit duties remain separate authorities.
 
 Needs:
 
-- create project templates
-- configure statuses and checkers
-- audit review decisions
+- create covered project templates
+- configure project statuses and checkers
+- inspect permission-appropriate review evidence
 - track throughput and payout exposure
 
 ## MVP Boundary

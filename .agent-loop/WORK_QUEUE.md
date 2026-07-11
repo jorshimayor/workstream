@@ -2,14 +2,15 @@
 
 ## In Progress
 
-None. WS-AUTH-001 planning is merged and no implementation chunk is active.
+| Chunk | Title | Risk | Status |
+|---|---|---:|---|
+| `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Active in dedicated worktree after D4-D10 approval |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Proposed after D4-D10 approval and explicit start |
-| `WS-POL-002-03` | Server-Owned Policy Approval And Visibility APIs | L1 | Paused behind WS-AUTH-001 and explicit resume |
+| `WS-POL-002-03` | Server-Owned Policy Approval And Visibility APIs | L1 | Implemented separately; PR #90 in external review |
 
 ## Completed
 
@@ -41,9 +42,9 @@ None. WS-AUTH-001 planning is merged and no implementation chunk is active.
 
 ## Proposed Next
 
-Stop at the WS-AUTH-001 planning human checkpoint. Do not activate
-`WS-AUTH-001-01` before explicit D4-D10 approval and a separate start signal;
-do not resume `WS-POL-002-03` while auth has priority.
+Execute only `WS-AUTH-001-01` in its dedicated worktree. Stop after internal
+review and PR preparation; do not start `WS-AUTH-001-02` or resume
+`WS-POL-002-03` automatically.
 
 ## Blocked
 

@@ -118,7 +118,8 @@ namespace and remains canonical.
 - Existing task lifecycle behavior except the explicit, audited release of an
   exclusive assignment when its actor/link/project authority is invalidated.
 - CI, test, documentation, and internal-review gates.
-- `WS-POL-002-03` remains paused until the authorization foundation is ready.
+- `WS-POL-002-03` remains independently owned by PR #90; this initiative does
+  not activate `WS-POL-002-04` before authorization proof and a separate start.
 
 ## How this will be proven
 
@@ -140,11 +141,8 @@ Resolved:
 - `WS-AUTH-001` is authoritative and supersedes the token-role bootstrap.
 - `/api/v1` remains the canonical API namespace.
 - `WS-AUTH-001` is prioritized before `WS-POL-002-03`.
-
-Pending before `WS-AUTH-001-01` activation:
-
-- Explicit human approval of proposed L0 architecture and data-model decisions
-  D4-D10 in `DECISIONS.md`. Planning review does not imply that approval.
+- D4-D10 were explicitly approved and `WS-AUTH-001-01` was started by the user
+  on 2026-07-11 after planning and post-merge memory closed.
 
 External deployment details such as issuer URL, JWKS URL, approved algorithms,
 claim names, and introspection policy are configuration inputs. Their absence
@@ -153,7 +151,6 @@ block the production live-token proof.
 
 ## Initial risk class
 
-L0 for initiative direction, auth model, and data-model strategy. D1-D3 are
-human-approved; D4-D10 remain at the explicit human approval gate above.
-Subsequent bounded implementation chunks are L1 and require their own chunk
-contracts, evidence, reviewer fanout, and human checkpoints.
+L0 for initiative direction, auth model, and data-model strategy. D1-D10 are
+human-approved. Subsequent bounded implementation chunks are L1 and require
+their own chunk contracts, evidence, reviewer fanout, and human checkpoints.

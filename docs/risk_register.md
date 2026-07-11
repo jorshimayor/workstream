@@ -154,7 +154,8 @@ Mitigation:
 - require checker run id before `REVIEW_PENDING`
 - require review id before `ACCEPTED`
 - require accepted task and payment reference before `PAID`
-- make admin overrides visible and non-destructive
+- replace broad historical override language with registered, scoped,
+  reasoned, non-destructive Project Manager repair or Operator recovery
 
 ### R11: Reviewer Collusion Or Rubber-Stamping
 

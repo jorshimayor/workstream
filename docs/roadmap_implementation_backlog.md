@@ -136,7 +136,7 @@
 
 - second-review assignment
 - reviewer disagreement tracking
-- admin override controls
+- registered Project Manager repair and Operator recovery controls
 - project guide approval workflow
 - checker false positive flag
 - task batch import

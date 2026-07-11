@@ -18,40 +18,44 @@ does not author or approve Workstream's machine-readable internal policy schema.
 
 ## ActorContext
 
-The trusted per-request actor object resolved from a verified Flow token. It
-contains the current actor id, external subject, issuer, scopes/roles when
-present in the trusted request context, claim snapshot,
-auth source, and display metadata. The Flow issuer plus subject is the canonical
-portable identity anchor; Workstream's actor id is a local durable reference
-derived from that pair. The Identity Issuer is not the source of truth for
-Workstream product roles; Workstream stores and enforces product roles locally
-for verified Flow subjects. In the v0.1 bootstrap, route checks may still read
-trusted role claims from the current actor context until the Workstream-owned
-role-assignment layer is introduced. Persisted profile rows are never route
-permission grants.
+Legacy name for the trusted per-request identity context resolved from a
+verified Flow token. During WS-AUTH-001 migration it is replaced by a minimal
+`VerifiedIssuerToken` plus locally resolved `AuthorizationContext`. Token roles
+are not Workstream product authority.
 
 ## ActorIdentity
 
-Workstream's local durable identity record for a verified Flow actor. It is
-keyed by the stable Workstream actor id derived from the Flow issuer and
-subject, while the issuer plus subject remains the canonical Flow identity. It
-supports audit display, profile linkage, assignment history, and later
-reputation records. It is not Workstream-owned authentication, login, token
-issuance, or global identity authority.
+Legacy registry record for a verified Flow actor. WS-AUTH-001 classifies each
+row before migrating safe UUID actor identifiers into canonical
+`ActorProfile.id` plus a new `ActorIdentityLink`. It is not a grant or
+Workstream-owned authentication.
 
 ## ActorProfile
 
-Workstream's shared profile and workflow eligibility record attached to an
-`ActorIdentity`. Initial profile types include worker, reviewer, admin,
-project_manager, and project_owner. A profile can store status, skill tags,
-scope, and metadata, but it is not the canonical role-assignment table and does
-not grant route access. A project_owner profile is scoped source/contact
-metadata, not project-manager authority.
+The single canonical Workstream actor root. It records actor kind and status;
+it does not itself grant project or administrative authority. Verified
+issuer/subject identities attach through `ActorIdentityLink`. Authority comes
+from `AdminRoleGrant` or exact-project `ProjectRoleGrant` records plus resource
+and lifecycle guards.
 
-`observed` profile status is audit/display metadata from verified token
-observation. `active` profile status means an explicit profile workflow made
-that profile eligible for the relevant Workstream workflow. Neither status is
-route permission.
+Legacy typed profile row IDs are workflow metadata IDs and never canonical
+actor IDs or grants.
+
+## ActorIdentityLink
+
+The active-or-revoked link between one canonical issuer/opaque subject and one
+ActorProfile. Raw tokens, provider credentials, and full claims are not stored.
+
+## AdminRoleGrant
+
+An immutable administrative authority record for Access Administrator,
+Operator, Project Manager, Finance Authority, or Audit Authority at compatible
+system/project scope.
+
+## ProjectRoleGrant
+
+An immutable exact-project contributor authority record with role `submitter`,
+`reviewer`, or `both`.
 
 ## Source
 
@@ -69,9 +73,10 @@ The human-facing operating guide for a project. It contains the project instruct
 
 The Workstream-owned sufficiency record for a project guide version and source
 snapshot. It is normally produced by `ProjectGuideSufficiencyAgent`, but an
-`admin` or `project_manager` can create a manual report when needed. It records
+an authorized covered Project Manager can create a manual report when needed.
+It records
 whether the guide passed, is blocked by gaps, or passed with warnings that an
-`admin` or `project_manager` must acknowledge before activation. Manual reports
+authorized covered Project Manager must acknowledge before activation. Manual reports
 clear only the manual policy path; agent derivation requires an agent-created
 sufficiency report for the same snapshot.
 
@@ -86,10 +91,10 @@ project policy, pre-submit checker policy, and post-submit checker policy rows.
 
 ## Submission Artifact Policy
 
-The Workstream-derived, admin-or-project-manager-approved machine-readable
+The Workstream-derived, covered-Project-Manager-approved machine-readable
 contract for what a worker must submit. It is derived from open-ended project
 guide material after guide sufficiency passes or passes with warnings, reviewed
-by a Workstream actor with the `admin` or `project_manager` role after any
+by an authorized covered Project Manager after any
 warnings are acknowledged, and attached to a project guide version. It defines
 required artifacts, evidence
 requirements, artifact hash requirements, allowed storage reference forms,
@@ -133,7 +138,7 @@ rules, hash algorithm, size limits, and attestation terms before submission.
 
 ## Task Locked Context
 
-The `admin` and `project_manager` API projection of a task's locked guide and
+The permission-scoped Project Manager/Operator projection of a task's locked guide and
 policy provenance, including guide source snapshot id/hash, effective policy
 id/hash, pre-submit checker policy id/hash, post-submit checker policy
 id/hash/body summary, and review, revision, and payment policy versions.

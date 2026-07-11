@@ -24,7 +24,10 @@ Display labels may render these as "Accept", "Needs revision", and "Reject", but
 
 `Escalated` is not a review decision value.
 
-Disputes, second review, suspected fraud, payment holds, or admin overrides may create separate workflow records and audit events, but they do not replace the reviewer decision contract.
+Disputes, second review, suspected fraud, payment holds, or registered recovery
+may create separate workflow records and audit events, but they do not replace
+the reviewer decision contract. Authorization recovery never creates a review
+decision.
 
 Checker routing recommendations use a separate contract. A checker can recommend that a submission is ready for review, needs worker revision, needs checker retry handling, or cannot proceed because the task's locked setup is incomplete. A checker cannot accept or reject work.
 
@@ -38,7 +41,10 @@ Canonical checker routing recommendation values are:
 
 `allow_review` must not be stored as `accept`. It only means the automated checker found no blocking issue and the packet may proceed to human review. Only a human review decision can store `accept`.
 
-`task_setup_blocked` must not be stored as `needs_revision`. It means the task's locked contract or policy context is incomplete, stale, or unsafe to review. A project manager must repair or re-screen the task before worker-facing revision or human review can continue.
+`task_setup_blocked` must not be stored as `needs_revision`. It means the task's
+locked contract or policy context is incomplete, stale, or unsafe to review. An
+authorized covered Project Manager must repair or re-screen the task before
+worker-facing revision or human review can continue.
 
 `needs_revision` can appear in both contracts, but the source must be explicit:
 
@@ -57,5 +63,6 @@ Positive:
 
 Tradeoff:
 
-- special handling must be modeled as workflow, audit, dispute, or override records instead of extra review decisions
+- special handling must be modeled as workflow, audit, dispute, or registered
+  recovery records instead of extra review decisions
 - code and docs must name checker routing fields clearly so reviewers do not confuse them with review decision fields

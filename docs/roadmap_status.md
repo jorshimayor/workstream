@@ -1,6 +1,7 @@
 # Workstream Roadmap Status
 
-Current phase: Week 3 review and revision preparation.
+Current phase: WS-AUTH-001 authorization foundation before further lifecycle
+expansion.
 
 ## Completed
 
@@ -54,6 +55,18 @@ Current phase: Week 3 review and revision preparation.
 - WS-POL-002 post-submit checker foundation planning, including project-scoped
   `PostSubmitCheckerPolicy` setup, trusted compiler boundaries, deterministic
   runtime separation, and implementation chunk contracts.
+- WS-AUTH-001 planning and post-merge memory through PRs #91 and #92, including
+  the adopted external-auth/local-authorization boundary and 16 bounded chunks.
+
+## Current Priority
+
+- `WS-AUTH-001-01` adopts ADR 0012, canonical `/api/v1` authorization
+  documentation, operational ownership, and deterministic stale-doc gates.
+- Token roles and typed workflow profiles are not the target product authority;
+  later chunks introduce canonical actors, links, grants, permissions,
+  revocation, and authority evidence before resource-family cutover.
+- WS-POL-002-03 is handled separately by PR #90. No WS-POL-002-04 or human
+  review implementation starts automatically while authorization has priority.
 
 ## Review Tracks Closed
 
@@ -66,20 +79,22 @@ Current phase: Week 3 review and revision preparation.
 - Chunk 9 pre-review gate internal verifier pass.
 - Chunk 10 checker trial internal verifier pass.
 
-## Ready For Week 3
+## Preserved For Later Review Work
 
-- Review queue scope can start from `review_pending` tasks that already passed internal checkers.
+- Review queue scope starts only after the required authorization foundation;
+  it will consume `review_pending` tasks that already passed internal checkers.
 - Reviewer access must be object-level and tied to assigned review work; broad reviewer checker-run access is still intentionally deferred.
 - Week 3 must keep review decisions canonical: `accept`, `needs_revision`, and `reject`.
 - `needs_revision` from human review must carry `outcome_source = human_review` and a review decision id; checker-caused `needs_revision` keeps `outcome_source = auto_checker`.
-- Review findings, revision replay, and reviewer-quality metrics are the next backend contracts to lock.
+- Review findings, revision replay, and reviewer-quality metrics remain later
+  backend contracts after authorization proof.
 - `WS-POL-001-15` hardened the agent-derived submission artifact policy
   contract after the accepted no-DB Terminal Benchmark drill exposed a
   required/forbidden self-conflict; the drill now passes after hardening.
 - `WS-POL-001-16` completed a human-visible Terminal Benchmark live API drill
   without database inspection as lifecycle proof and merged through PR #84.
-- `WS-POL-002` planning merged through PR #85. `WS-POL-002-01` is ready to
-  start only after an explicit user start signal.
+- `WS-POL-002` planning and chunks 01/02 are merged. Chunk 03 is handled in PR
+  #90; chunk 04 remains inactive while authorization has priority.
 
 ## Pending Before Pilot
 

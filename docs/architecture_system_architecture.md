@@ -23,6 +23,8 @@ Frontend
   Reputation dashboard
 
 Backend API
+  Actor service
+  Authorization service
   Project service
   Source/import service
   Task service
@@ -86,28 +88,22 @@ Auth policy:
 - Workstream verifies Flow-issued tokens through an `AuthVerifier` interface.
 - Production auth uses a Flow token verifier adapter.
 - Local development may use a mock verifier only outside production.
-- Actor identity is based on stable Flow token issuer and subject, not email.
-  Flow issuer plus subject remains the canonical portable identity anchor;
-  Workstream actor id is a local durable product reference derived from that
-  pair.
-- Flow Identity token audience, scope, token id, client, space, and delegation
-  claims remain token/claim context. Workstream may preserve them in audit or
-  actor claim snapshots, but exact task, submission, review, payment, and
-  evidence access is still authorized locally by Workstream.
-- Workstream may keep local actor/profile records for workflow state,
-  workflow eligibility, audit display, and reputation, but those records do not
-  replace Flow as the auth source and do not grant route access.
-- Route role and permission checks may use trusted role claims from the current
-  `ActorContext` only as the v0.1 bootstrap path. The long-term authorization
-  source is a Workstream-owned role-assignment layer. Local actor/profile
-  records may add workflow eligibility conditions, such as an active worker
-  profile before task claim, but they are not route permission authority.
-- Routers use the pure current-actor dependency when they only need verified
-  Flow identity. Routes that need local actor registry side effects use a
-  separate registration dependency that first resolves the current actor, then
-  records or refreshes local actor/profile metadata. Permission checks live in
-  service or policy code so workflow rules do not scatter across HTTP handlers.
-- Audit records preserve actor id, external subject, issuer, role/claim context, and whether dev/mock auth was used when relevant.
+- Verified tokens establish issuer/subject identity, subject kind, audience,
+  time validity, and coarse scope; token roles are not product authority.
+- `ActorProfile` and `ActorIdentityLink` provide the local actor root and
+  revocable issuer/subject binding.
+- `AdminRoleGrant` and exact-project `ProjectRoleGrant` records supply candidate
+  permissions. Actor/resource/lifecycle guards decide the final result.
+- Application services load canonical resources and call the single
+  authorization service; routers do not evaluate grants or infer scope.
+- Sensitive mutations revalidate actor/link/grant state in the same
+  `AsyncSession` transaction that writes state and append-only authority
+  evidence.
+- Internal workers use fixed system principals and explicit system permissions,
+  never fabricated human roles.
+- Audit records preserve bounded actor, issuer, matched grant/permission,
+  resource, request/correlation, and decision context without raw tokens or
+  full claims.
 
 ## Component Responsibilities
 
@@ -128,8 +124,8 @@ Owns:
 
 Project setup visibility APIs expose the latest setup run, sufficiency reports,
 submission artifact policies, the current effective project policy, and the
-compiled project pre-submit checker policy summary to `admin` and
-`project_manager` actors. These reads replace operator database reads for setup
+compiled project pre-submit checker policy summary through covered Project
+Manager or authorized Operator/Audit projections. These reads replace operator database reads for setup
 drills, but they do not make `ProjectSetupRun` a policy source of truth.
 
 ### Source/Import Service
@@ -157,7 +153,8 @@ Owns:
 - queue views
 - worker-safe task work context
 - worker-safe submission requirements derived from locked effective project policy
-- locked task provenance for `admin` and `project_manager` actors
+- permission-scoped locked task provenance for covered Project Managers and
+  authorized Operator/Audit projections
 
 ### Submission Service
 

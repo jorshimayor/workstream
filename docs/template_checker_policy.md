@@ -114,15 +114,21 @@ Workers must not see:
   `task_setup_blocked`
 - post-submit checker policy provenance fields
 
-## Admin Override
+## Recovery Contract
 
-Allowed only with:
+Blocking checker outcomes are not overridden into review readiness. Registered
+Operator retry or covered Project Manager repair is allowed only with:
 
 - actor
+- matched grant and permission
+- exact resource scope
 - timestamp
 - checker name
 - reason
 - evidence
+
+Recovery creates a new attempt or repaired setup state and preserves every
+prior checker result. It cannot create a human review decision.
 
 ## Review Cadence
 

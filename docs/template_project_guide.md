@@ -127,8 +127,8 @@ Artifact requirements shown to workers are derived from the approved `Submission
 
 Project owners provide open-ended guide material and business terms in plain
 language. Workstream evaluates guide sufficiency, derives
-`SubmissionArtifactPolicy` from that material, and a Workstream actor
-with the `admin` or `project_manager` role approves the internal policy bundle
+`SubmissionArtifactPolicy` from that material, and an authorized covered
+Project Manager approves the internal policy bundle
 before guide activation.
 
 ## Known Checker Blind Spots
@@ -162,7 +162,7 @@ Mandatory second review:
 - suspected copied or confidential material:
 - payment above threshold:
 - reviewer conflict of interest:
-- admin override used:
+- registered recovery operation used (permission, actor, reason, evidence):
 
 ## Revision Policy
 

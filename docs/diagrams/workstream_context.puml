@@ -30,7 +30,7 @@ skinparam cloud {
 rectangle "Project Manager\n----\nCreates projects,\nguides, policies,\nand tasks" as project_manager #F1F3F5
 rectangle "Human-Agent\nContributor\n----\nClaims work,\nsubmits packets,\nand attests output" as worker #F1F3F5
 rectangle "Reviewer\n----\nReviews evidence,\nfindings, and\nchecker results" as reviewer #F1F3F5
-rectangle "Operator / Admin\n----\nAudits, overrides,\nand reconciles" as operator #F1F3F5
+rectangle "Operator / Access Admin\n----\nAudits, performs registered\nrecovery, and manages grants" as operator #F1F3F5
 
 rectangle "Workstream\n----\nFlow task evaluation\nand contribution\ninfrastructure" as workstream #E7F5FF
 
@@ -45,7 +45,7 @@ worker --> workstream : submits
 reviewer --> workstream : reviews
 operator --> workstream : audits
 
-workstream --> flow_auth : verifies tokens
+workstream --> flow_auth : verifies identity tokens
 workstream --> postgres : records lifecycle
 workstream --> storage : stores evidence
 

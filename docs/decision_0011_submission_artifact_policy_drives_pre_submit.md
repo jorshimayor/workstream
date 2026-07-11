@@ -68,13 +68,13 @@ opaque sanitized source ref plus content hash or future content id.
 `ProjectGuideSufficiencyAgent` evaluates whether the guide is sufficient for
 submitters, reviewers, and Workstream quality control. Blocking guide gaps stop
 activation and create clarification requests back to the project owner. Warnings
-remain visible to Workstream actors with the `admin` or `project_manager` role
+remain visible to authorized covered Project Managers
 and must be acknowledged before activation.
 
 `SubmissionArtifactPolicyDerivationAgent` derives
 `SubmissionArtifactPolicy` from the guide material after sufficiency
 passes or passes with warnings. The project owner does not approve this
-internal policy. A Workstream actor with the `admin` or `project_manager` role
+internal policy. An authorized covered Project Manager
 reviews and approves the derived policy before guide activation, and any
 sufficiency warnings must be acknowledged before approval or activation.
 This setup pipeline is automatic. When Workstream captures a guide-source
@@ -97,7 +97,9 @@ the default path. It produces a machine-readable artifact-intake contract.
 Workstream's trusted compiler builds and validates the constrained pre-submit
 checker specification using Workstream-approved primitives.
 
-`SubmissionArtifactPolicy` is the Workstream-derived, admin-or-project-manager-approved machine-readable contract for worker submissions. It defines:
+`SubmissionArtifactPolicy` is the Workstream-derived,
+covered-Project-Manager-approved machine-readable contract for worker
+submissions. It defines:
 
 - required artifacts
 - required evidence references
@@ -191,7 +193,7 @@ Project-specific executable checker code is not part of the default path. If a
 future project requires logic that cannot fit the constrained checker
 specification, the extension path must require static validation, generated
 tests, sandboxed execution, no network, no shell, no secrets, no database access,
-`admin` or `project_manager` approval of the exact code hash after those checks
+covered Project Manager approval of the exact code hash after those checks
 pass, and a locked code hash.
 
 Blocking pre-submit failures prevent submission creation. When blocking pre-submit checks fail:

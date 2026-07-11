@@ -631,3 +631,21 @@ Evidence: `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/
 Next gate: explicit durable human approval of D4-D10 and a separate
 `WS-AUTH-001-01` start signal. Create a fresh worktree/branch from the latest
 merged `main`; do not implement chunk 01 in the planning worktree.
+
+## 2026-07-11 - WS-AUTH-001-01 Started
+
+The user explicitly approved D4-D10 and started only `WS-AUTH-001-01` by saying
+"ok start" after the planning and post-merge memory PRs merged.
+
+Branch: `codex/ws-auth-001-01-adopt-authorization-baseline`
+
+Worktree: `/home/abiorh/flow/workstream-auth-001-01`
+
+Scope: authorization ADR, canonical repository documentation, deterministic
+stale-authorization documentation gate, operations runbook, and durable loop
+state. Backend runtime, migrations, tests, dependencies, review, contribution,
+compensation, frontend, and later authorization chunks remain inactive.
+
+Next gate: implement and verify only the WS-AUTH-001-01 contract, run all
+required internal reviewer tracks, prepare the trust bundle, and stop for human
+review.

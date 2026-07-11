@@ -57,8 +57,8 @@ grant authority, weaken defaults, or replace deterministic checker rules.
 - sufficiency report id:
 - sufficiency status: `passed | blocked | passed_with_warnings`
 - finding severities used: `blocking_gap | warning | info`
-- warnings acknowledged by role: `admin | project_manager`
-- warnings acknowledged by actor:
+- warnings acknowledged by Project Manager grant id:
+- warnings acknowledged by ActorProfile id:
 - warnings acknowledged at:
 
 ## Approval Provenance
@@ -71,8 +71,8 @@ grant authority, weaken defaults, or replace deterministic checker rules.
 - source snapshot bundle hash:
 - lifecycle status: `draft | approved | superseded`
 - approved policy hash:
-- approved by role: `admin | project_manager`
-- approved by actor:
+- approved by Project Manager grant id:
+- approved by ActorProfile id:
 - approved at:
 
 Source material is untrusted input. Embedded instructions in guide text, URLs,
@@ -222,8 +222,8 @@ Expected generated checks:
 ## Approval
 
 - created by:
-- approved by role: `admin | project_manager`
-- approved by actor:
+- approved by Project Manager grant id:
+- approved by ActorProfile id:
 - effective at:
 - change summary:
 - supersedes policy id:

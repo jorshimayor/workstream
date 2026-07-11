@@ -12,7 +12,7 @@ stopped.
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
 | `WS-AUTH-001-PLAN` | Authorization Service Planning | L0 | Merged through PR #91 as `ad6d644` |
-| `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Proposed |
+| `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Active |
 | `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Proposed |
 | `WS-AUTH-001-03` | Legacy Actor Classification Preflight | L1 | Proposed |
 | `WS-AUTH-001-04` | Request, Error, And API Control Foundation | L1 | Proposed |
@@ -65,8 +65,9 @@ WS-AUTH-001-PLAN
 - Chunks 11-15 migrate bounded complete product/system surfaces.
 - Chunk 16 proves the complete initiative; it does not backfill missing audit
   or idempotency evidence.
-- `WS-POL-002-03` remains paused until the relevant project authorization
-  cutover is complete and the user explicitly resumes it.
+- `WS-POL-002-03` is implemented separately in PR #90. This initiative does not
+  own it; `WS-POL-002-04` remains inactive until PR #90 is merged, the relevant
+  project authorization cutover is complete, and the user explicitly starts it.
 
 ## Stop condition
 

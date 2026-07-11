@@ -13,6 +13,7 @@ sequenceDiagram
   participant UI as React UI
   participant API as FastAPI Backend
   participant Auth as Flow Auth Verifier
+  participant Authorization as Workstream Authorization
   participant DB as Postgres
   participant Storage as Storage Abstraction
   participant Checks as Checker Runner
@@ -20,7 +21,9 @@ sequenceDiagram
   PM->>UI: Create project, guide, and policies
   UI->>API: POST project / guide / policies
   API->>Auth: Verify Flow token
-  Auth-->>API: ActorContext(project_manager)
+  Auth-->>API: Verified external identity
+  API->>Authorization: Resolve actor profile and local grants
+  Authorization-->>API: AuthorizationContext with covered Project Manager capability
   API->>DB: Persist draft guide and checker/review/revision/payment policy context
 
   PM->>UI: Activate guide
@@ -37,7 +40,9 @@ sequenceDiagram
   Worker->>UI: Claim task
   UI->>API: POST claim
   API->>Auth: Verify Flow token
-  Auth-->>API: ActorContext(worker)
+  Auth-->>API: Verified external identity
+  API->>Authorization: Resolve actor profile and project grants
+  Authorization-->>API: AuthorizationContext with contributor capability
   API->>DB: Validate visibility, profile, skill tags, and READY status
   API->>DB: Create assignment and move READY -> CLAIMED -> IN_PROGRESS
 
@@ -56,7 +61,9 @@ sequenceDiagram
   Reviewer->>UI: Review packet
   UI->>API: Submit review decision
   API->>Auth: Verify Flow token
-  Auth-->>API: ActorContext(reviewer)
+  Auth-->>API: Verified external identity
+  API->>Authorization: Resolve actor profile and project grants
+  Authorization-->>API: AuthorizationContext with reviewer capability
   API->>DB: Store decision: accept, needs_revision, or reject
 
   alt needs_revision

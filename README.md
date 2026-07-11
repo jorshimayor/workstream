@@ -77,6 +77,8 @@ Workstream turns that operating knowledge into reusable infrastructure.
 - [Reviewer Workflow](docs/operations_reviewer_workflow.md)
 - [Revision Replay](docs/operations_revision_replay.md)
 - [Roles And Permissions](docs/operations_roles_permissions.md)
+- [Authorization Service](docs/spec_authorization_service.md)
+- [Authorization Operations](docs/operations_authorization_service.md)
 - [Payment And Reputation](docs/operations_payment_reputation.md)
 - [Risk Register](docs/risk_register.md)
 - [Process Pattern Baseline](docs/process_pattern_baseline.md)
@@ -118,6 +120,20 @@ Workstream turns that operating knowledge into reusable infrastructure.
 - [ADR 0009: Review Decisions Are Canonical](docs/decision_0009_review_decisions_are_canonical.md)
 - [ADR 0010: Revision Context Rebase Is Controlled By Policy](docs/decision_0010_revision_context_rebase.md)
 - [ADR 0011: Submission Artifact Policy Drives Pre-Submit Intake](docs/decision_0011_submission_artifact_policy_drives_pre_submit.md)
+- [ADR 0012: Workstream Owns Product Authorization](docs/decision_0012_workstream_authorization_service.md)
+
+## Authorization Baseline
+
+Workstream verifies externally issued Flow authentication tokens and owns its
+product authorization. Token role claims, email, display name, skills,
+reputation, and typed workflow profiles are not product authority. Canonical
+authority comes from local actor identity links, administrative grants,
+exact-project contributor grants, registered permissions, resource/lifecycle
+guards, revocation, and append-only evidence.
+
+All public API documentation uses `/api/v1`. Imported reference specifications
+are immutable archival inputs; ADR 0012 and the canonical authorization service
+specification record repository-specific precedence and implementation order.
 
 ## Engineering Loop
 

@@ -101,12 +101,15 @@ Checker run is active.
 Owner:
 
 - checker system
-- admin if checker fails unexpectedly
+- Operator when infrastructure recovery is required
 
 Policy:
 
-- checker failure because of platform/tooling stays in checker retry handling or audited admin/project manager intervention and does not move to human review
-- retry and admin actions are recorded in audit history
+- checker failure because of platform/tooling stays in checker retry handling;
+  Operator retry uses `operations.checker.retry`, while covered Project Manager
+  repair uses `project.task.manage`, and neither moves work directly to review
+- retry and repair actions record matched grant/permission, reason, attempt, and
+  immutable audit history
 
 ### Pre Review Gate
 
@@ -122,7 +125,9 @@ Policy:
 
 - use this for high-value tasks, new project types, disputed checker outcomes, or projects still being calibrated
 - the gate records findings or explicitly clears the packet for normal review
-- unresolved blocking issues go to `NEEDS_REVISION` when worker-fixable or remain blocked from review until an admin/policy action is recorded
+- unresolved blocking issues go to `NEEDS_REVISION` when worker-fixable or
+  remain blocked from review until the owning covered repair/retry action
+  succeeds
 
 ### Review Pending
 
@@ -135,7 +140,8 @@ Owner:
 Policy:
 
 - reviewers only see this lane for normal work
-- any critical- or high-severity checker failure in this lane is a system bug or admin override
+- any critical- or high-severity checker failure in this lane is a system bug;
+  no administrative grant can override it into review readiness
 
 ### Needs Revision
 

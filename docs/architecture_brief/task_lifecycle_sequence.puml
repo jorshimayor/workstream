@@ -21,6 +21,7 @@ actor Reviewer
 participant "React UI" as UI
 participant "FastAPI\nBackend" as API
 participant "Flow Auth\nVerifier" as Auth
+participant "Workstream\nAuthorization" as Authorization
 database "Postgres" as DB
 participant "Storage\nAbstraction" as Storage
 participant "Checker\nRunner" as Checks
@@ -28,7 +29,9 @@ participant "Checker\nRunner" as Checks
 PM -> UI : create project, guide, policies
 UI -> API : POST project / guide / policies
 API -> Auth : verify Flow token
-Auth --> API : ActorContext(project_manager)
+Auth --> API : verified external identity
+API -> Authorization : resolve actor profile and local grants
+Authorization --> API : covered Project Manager capability
 API -> DB : persist draft guide and policy context
 
 PM -> UI : activate guide
@@ -43,7 +46,9 @@ API -> DB : DRAFT -> SCREENING -> READY
 Worker -> UI : claim task
 UI -> API : POST claim / start
 API -> Auth : verify Flow token
-Auth --> API : ActorContext(worker)
+Auth --> API : verified external identity
+API -> Authorization : resolve actor profile and project grants
+Authorization --> API : contributor capability
 API -> DB : create assignment and move in progress
 
 Worker -> UI : submit packet
@@ -58,7 +63,9 @@ Checks -> DB : persist checker results
 Reviewer -> UI : submit review decision
 UI -> API : accept / needs_revision / reject
 API -> Auth : verify Flow token
-Auth --> API : ActorContext(reviewer)
+Auth --> API : verified external identity
+API -> Authorization : resolve actor profile and project grants
+Authorization --> API : reviewer capability
 API -> DB : store review decision
 
 alt needs_revision

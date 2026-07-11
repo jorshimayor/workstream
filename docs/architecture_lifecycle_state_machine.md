@@ -62,7 +62,8 @@ Required before leaving:
 - screening checklist passed
 - no open critical- or high-severity readiness finding
 - task status snapshot created
-- release decision recorded by an authorized reviewer, project manager, or admin
+- release decision recorded by an authorized covered Project Manager under the
+  task-management permission and screening guards
 
 ### READY
 
@@ -84,7 +85,8 @@ Required before entering:
 - payment policy present
 - guide version locked for this task
 - source reference recorded when imported
-- acceptance criteria frozen unless an admin records a guide-correction event
+- acceptance criteria frozen; a controlled new guide/task context follows its
+  owning policy/rebase path and never rewrites existing locked context
 
 ### CLAIMED
 
@@ -203,9 +205,9 @@ CLAIMED -> CANCELLED
 IN_PROGRESS -> CANCELLED
 ```
 
-## Blocked Transitions
+## Forbidden Transitions
 
-These require admin override:
+No administrative or recovery grant authorizes these transitions:
 
 - `SUBMITTED -> REVIEW_PENDING` without checker run
 - `REVIEW_PENDING -> ACCEPTED` without review decision
@@ -268,7 +270,8 @@ Every transition records:
 - related submission or review
 - related guide version
 - related artifact hashes when the transition depends on submitted files
-- override id when an admin override was used
+- matched permission/grant and authority-event id when a registered recovery
+  operation participated
 
 No lifecycle change happens silently.
 
@@ -278,6 +281,11 @@ Payment transitions are recorded in the payment ledger and audit log, not as tas
 
 - Workers cannot edit a submitted packet in place. They must create a new submission version.
 - Reviewers cannot accept a submission whose checker run belongs to a different submission version.
-- Admin overrides cannot erase failed checker results, rejected reviews, or prior submissions.
-- Guide edits do not retroactively change active tasks unless policy allows the change and an admin records the affected tasks and reason.
-- A task with disputed evidence, suspected copied material, or payment conflict cannot be accepted until the issue is resolved through review, rejection, revision, payment dispute handling, or an audit-recorded admin action.
+- Registered recovery cannot erase failed checker results, rejected reviews, or
+  prior submissions.
+- Guide edits do not retroactively change active tasks; an owning policy/rebase
+  path records affected tasks, context, actor authority, and reason.
+- A task with disputed evidence, suspected copied material, or payment conflict
+  cannot be accepted until the issue is resolved through its owning review,
+  rejection, revision, or payment-dispute behavior. Authorization recovery does
+  not create a product resolution.

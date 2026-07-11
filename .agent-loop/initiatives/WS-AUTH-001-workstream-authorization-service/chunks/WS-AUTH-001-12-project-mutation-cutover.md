@@ -12,8 +12,9 @@ provenance.
 
 ## Why this chunk exists
 
-This completes project authorization and unblocks later resumption of
-`WS-POL-002-03` without implementing that paused chunk.
+This completes project authorization required before separately starting
+`WS-POL-002-04`; it does not claim ownership of PR #90 or implement that later
+runtime-hardening chunk.
 
 ## Approved plan reference
 

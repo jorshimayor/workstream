@@ -49,6 +49,17 @@ Workstream uses three separate quality gates:
 2. Task screening gate
 3. Submission quality gate
 
+### Authorization Boundary
+
+Workstream verifies external Flow tokens and owns product authorization through
+local ActorProfile/ActorIdentityLink records, administrative grants,
+exact-project submitter/reviewer grants, registered permissions, resource and
+lifecycle guards, revocation, and append-only authority evidence.
+
+Token roles and typed workflow profiles are not product authority. All public
+routes remain under `/api/v1`. ADR 0012 and the canonical authorization service
+specification control authorization wording in this lockdown.
+
 External origin qualification and task ingestion map to project activation and task screening in v0.1. External origins remain deferred.
 
 ### Project Guide Structure
@@ -82,8 +93,8 @@ The guide may summarize or link to those policies, but the policies are the enfo
 
 Project owners provide open-ended project material and business terms.
 Workstream evaluates guide sufficiency, derives
-`SubmissionArtifactPolicy` from that material, and a Workstream actor
-with the `admin` or `project_manager` role approves the internal policy bundle
+`SubmissionArtifactPolicy` from that material, and an authorized covered
+Project Manager approves the internal policy bundle
 before guide activation. Project owners do not approve Workstream's internal
 submission policy schema.
 

@@ -181,11 +181,11 @@ ProjectGuide
 `ProjectGuide` is open-ended human-facing project material. Workstream first
 persists a `GuideSufficiencyReport`. Blocking guide gaps stop activation and
 create clarification requests for the project owner. Warnings require
-acknowledgement by `admin` or `project_manager`.
+acknowledgement by an authorized covered Project Manager.
 
 `SubmissionArtifactPolicy` is machine-readable, derived by Workstream from
 project guide material after sufficiency passes or passes with warnings, and
-approved by a Workstream actor with the `admin` or `project_manager` role after
+approved by an authorized covered Project Manager after
 any warnings are acknowledged.
 The project owner does not approve this internal policy. Workstream combines
 that policy with the non-bypassable Workstream default submission artifact
@@ -241,15 +241,15 @@ rejects checker specifications that escalate that primitive to blocking.
 Project-specific executable checker code is a future extension path, not the
 default. That extension path must require static validation, generated tests,
 sandboxed execution, no network, no shell, no secrets, no database access,
-`admin` or `project_manager` approval of the exact code hash after those checks
+covered Project Manager approval of the exact code hash after those checks
 pass, and a locked code hash.
 
 Pre-submit checks are authoritative for intake. Post-submit checker runs are authoritative for review readiness.
 
 ## Post-Submit Derivation
 
-Post-submit policy setup resumes after a setup-authorized `admin` or
-`project_manager` approves the derived `SubmissionArtifactPolicy`. That approval
+Post-submit policy setup resumes after an authorized covered Project Manager
+approves the derived `SubmissionArtifactPolicy`. That approval
 creates the effective project submission artifact policy and compiled project
 `PreSubmitCheckerPolicy`; only then does Workstream run
 `PostSubmitCheckerPolicyDerivationAgent`.
@@ -351,9 +351,16 @@ The checker run must bind to one immutable submission version. If the worker upl
 
 Checker failures are not human review decisions. They do not `accept` or `reject` work. Worker-fixable blocking failures can route the task to user-facing `needs_revision`, with `outcome_source = auto_checker` and no review decision id. Human review can also produce `needs_revision` later, but that records `outcome_source = human_review` and a review decision id.
 
-If a checker crashes or cannot run because of platform infrastructure, the checker run remains failed as an infrastructure failure and the task does not move to human review. The retry or admin action is recorded in audit history.
+If a checker crashes or cannot run because of platform infrastructure, the
+checker run remains failed as an infrastructure failure and the task does not
+move to human review. A retry requires Operator
+`operations.checker.retry`, a reason, a new attempt/supersession record, and
+append-only audit evidence.
 
-If a checker finds missing locked guide or policy context, missing acceptance criteria, or another task setup defect that is not worker-fixable, the run uses `task_setup_blocked`. That route is internal to project managers and must not be shown to workers as a revision request.
+If a checker finds missing locked guide or policy context, missing acceptance
+criteria, or another task setup defect that is not worker-fixable, the run uses
+`task_setup_blocked`. That route is internal to covered Project Managers and
+authorized Operators and must not be shown to workers as a revision request.
 
 ## Readiness Proof
 
@@ -392,25 +399,34 @@ Reviewers see:
 - evidence references
 - full metadata where allowed
 
-Admins see:
+Authorized Project Manager, Operator, and Audit projections expose only their
+permission-appropriate fields. Depending on the matched permission they may
+see:
 
 - full logs
 - internal rule IDs
-- override controls
+- reasoned retry/repair controls
 
-## Admin Override
+## Recovery, Not Checker Override
 
-An admin can override a critical- or high-severity checker failure only with:
+Critical- and high-severity checker failures cannot be converted into review
+readiness by an administrative grant. A covered Project Manager may repair task
+setup under `project.task.manage`; an Operator may use
+`operations.submission_gate.repair` or `operations.checker.retry` only for the
+registered recovery purpose.
+
+Recovery requires:
 
 - reason
 - actor
 - timestamp
-- affected checker
+- exact project/task/submission/checker resource
+- matched grant and permission
 - evidence
 
-Overrides are rare and visible in audit logs.
-
-Overrides cannot delete checker results. They only create an auditable exception record.
+Recovery cannot delete checker results, mutate an immutable submission, create
+a human review decision, or bypass a blocking content failure. It creates a new
+audited repair/retry attempt while preserving prior evidence.
 
 ## Checker Quality Metrics
 
@@ -438,7 +454,8 @@ Look for:
 
 - reviewer findings that no checker predicted
 - checker warnings reviewers always ignore
-- critical- or high-severity checker failures that admins repeatedly override
+- repeated infrastructure retry/repair patterns or attempts to bypass blocking
+  checker failures
 - evidence that passed structurally but did not prove the claim
 - generated or copied artifacts that evade forbidden-file rules
 

@@ -10,6 +10,7 @@ import contextlib
 import importlib.util
 import io
 import os
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -880,6 +881,55 @@ def test_loop_memory_state_accepts_merged_fixture() -> None:
             checker.INITIATIVE_STATUS_FILES = original_status_files
 
 
+def test_stale_authorization_rule_examples_are_rejected() -> None:
+    """Every stale-authorization rule keeps a known-bad regression example."""
+    gate = load_module(
+        "stale_authorization_docs_rules",
+        "scripts/check_stale_authorization_docs.py",
+    )
+    for rule in gate.RULES:
+        assert gate.scan_text("docs/new_active_doc.md", rule.example), rule.code
+
+
+def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:
+    """A new active doc fails without being added to a hardcoded corpus."""
+    gate = load_module(
+        "stale_authorization_docs_discovery",
+        "scripts/check_stale_authorization_docs.py",
+    )
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        root = Path(tmp_dir)
+        subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+        (root / "docs").mkdir()
+        active = root / "docs" / "new_active_doc.md"
+        active.write_text("POST /v1/projects\n", encoding="utf-8")
+        assert active in gate.discover_documents(root)
+        assert gate.scan(root) == [
+            "docs/new_active_doc.md:1: NON_CANONICAL_API_PREFIX"
+        ]
+
+        active.write_text("POST /api/v1/projects\n", encoding="utf-8")
+        assert gate.scan(root) == []
+
+
+def test_stale_authorization_history_allowlist_is_exact() -> None:
+    """Only reviewed exact history paths bypass active-document scanning."""
+    gate = load_module(
+        "stale_authorization_docs_history",
+        "scripts/check_stale_authorization_docs.py",
+    )
+    assert "docs/spec_chunk_3_project_guide_foundation.md" in gate.HISTORICAL_PATHS
+    assert "docs/spec_chunk_999_future.md" not in gate.HISTORICAL_PATHS
+
+
+def test_agent_gates_runs_stale_authorization_docs_fail_closed() -> None:
+    """The Agent Gates workflow must retain the authorization-doc scanner."""
+    workflow = (ROOT / ".github/workflows/agent-gates.yml").read_text(encoding="utf-8")
+    command = "run: python3 scripts/check_stale_authorization_docs.py"
+    assert workflow.count(command) == 1
+    assert "continue-on-error" not in workflow
+
+
 def main() -> int:
     """Run all local test functions."""
     tests = [
@@ -909,6 +959,10 @@ def main() -> int:
         test_stale_wording_catches_multiline_legacy_status_reconstruction,
         test_loop_memory_state_rejects_pre_merge_status,
         test_loop_memory_state_accepts_merged_fixture,
+        test_stale_authorization_rule_examples_are_rejected,
+        test_stale_authorization_discovery_includes_new_untracked_docs,
+        test_stale_authorization_history_allowlist_is_exact,
+        test_agent_gates_runs_stale_authorization_docs_fail_closed,
     ]
     for test in tests:
         test()

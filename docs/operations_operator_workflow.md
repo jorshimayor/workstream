@@ -4,23 +4,35 @@
 
 ### Project Manager
 
-Creates projects, guides, policies, and task batches.
+Creates projects when system-scoped and manages guides, policies, tasks, and
+contributor grants only for covered projects.
 
-### Worker
+### Submitter / Worker
 
-Claims or receives tasks, completes work, submits packet, handles revisions.
+An exact-project Submitter grant permits queue/claim/submission candidates. The
+person remains the worker in task lifecycle, assignment, and attribution text.
 
 ### Reviewer
 
 Reviews checker-passed submissions and issues accept, needs_revision, or reject decisions.
 
-### Admin
+### Operator
 
-Manages policies, overrides, audits, users, and system integrity.
+Inspects runtime state and performs only registered reasoned recovery. Operator
+does not issue grants, approve policy, or record review decisions by that grant.
 
-### Finance
+### Access Administrator
+
+Manages actors, identity links, the permission catalog, and administrative
+grants. This grant does not manage project work.
+
+### Finance Authority
 
 Tracks accepted work, pending payout, payout submitted, and paid states.
+
+### Audit Authority
+
+Reads authorized immutable and operational evidence without mutation.
 
 ## Daily Operating Loop
 
@@ -31,7 +43,7 @@ Tracks accepted work, pending payout, payout submitted, and paid states.
 4. Review submitted packets
 5. Resolve needs-revision queue
 6. Update accepted and paid records
-7. Review failed checks
+7. Review failed checks; use covered repair or registered Operator retry only
 8. Update project lessons learned
 ```
 

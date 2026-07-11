@@ -26,8 +26,9 @@ pytest -q
 
 | Boundary | Owner | Rule |
 |---|---|---|
-| Auth | `backend/app/adapters/auth`, `backend/app/api/deps.py` | Verify external Flow tokens only; do not add Workstream login/password/session ownership. |
-| Permissions | `backend/app/core/permissions.py`, module services | Role and object checks stay in services; routers map errors. |
+| External authentication | `backend/app/adapters/auth`, `backend/app/api/deps/auth.py` | Verify external Flow tokens only; do not add Workstream login/password/session ownership or product roles to verified-token types. |
+| Actors | `backend/app/modules/actors` | Own canonical ActorProfile and ActorIdentityLink persistence/resolution. |
+| Authorization | `backend/app/modules/authorization` | Own grants, permission registry/evaluation, idempotency, invalidation, and authority decisions; routers map stable errors. |
 | Project guide and policy context | `backend/app/modules/projects` | Guide and policy versions are explicit and locked before task/submission use. |
 | Task lifecycle | `backend/app/modules/tasks` | State transitions are policy-driven and auditable. |
 | Submission/checker lifecycle | `backend/app/modules/submissions`, `backend/app/modules/checkers` | Pre-submit blocking gates and post-submit checker records stay separate. |

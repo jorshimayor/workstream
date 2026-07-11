@@ -7,8 +7,14 @@ The v0.1 persistence layer uses SQLAlchemy 2.x async models, Alembic migrations,
 ## Entity Overview
 
 ```text
-ActorIdentity
-  ActorProfile
+ActorProfile
+  ActorIdentityLink
+  AdminRoleGrant
+  ProjectRoleGrant
+  QualificationSnapshot
+AuthorityControl
+AuthorityIdempotencyRecord
+AuthorityInvalidationEvent
 
 Project
   ProjectGuide
@@ -42,125 +48,71 @@ Task
   AuditEvent
 ```
 
-## Actor Identity And Profile
+## Actor Authorization Model
 
-Fields:
+The canonical target model is introduced by staged WS-AUTH-001 migrations. The
+current legacy tables remain implementation evidence until their owning cutover
+chunks merge.
 
-- `actor_id`
-- `external_subject`
-- `external_issuer`
-- `email`
-- `display_name`
-- `last_seen_roles`
-- `last_claim_snapshot`
-- `auth_source`
-- `is_dev_auth`
-- `first_seen_at`
-- `last_seen_at`
-- `updated_at`
+### ActorProfile
 
-Actor identity comes from external Flow authentication. `external_issuer` plus
-`external_subject` is the stable identity binding. Email is profile metadata and
-must not be treated as the primary identity.
+`ActorProfile` is the single Workstream actor root.
 
-Workstream keeps `ActorIdentity` rows for local workflow continuity, audit
-display, profile linkage, assignments, and later reputation records. It does
-not own password authentication or primary login sessions. Workstream owns
-product roles and exact resource authorization locally. Flow issuer plus subject
-identifies the actor; it does not assign Workstream product roles. In the v0.1
-bootstrap, route checks may still read trusted role claims from the current
-`ActorContext` until the Workstream-owned role-assignment layer is introduced.
-
-Actor registry refresh is bounded by
-`WORKSTREAM_ACTOR_REGISTRY_REFRESH_INTERVAL_SECONDS`. Workstream verifies the
-token on every protected request, but it may skip the local identity/profile
-write when the stored identity is fresh, claims match, and required observed
-profiles already exist. Setting the interval to `0` disables the skip path.
-
-`ActorProfile` is the shared profile and eligibility model attached to an
-`ActorIdentity`.
-
-Fields:
+Fields include:
 
 - `id`
-- `actor_id`
-- `profile_type`
-- `status`
-- `skill_tags`
-- `scope_type`
-- `scope_id`
-- `profile_metadata`
-- `created_at`
-- `updated_at`
+- `kind` (`human` or explicitly provisioned `service`)
+- `status` (`active`, `suspended`, `deactivated`)
+- permitted display/profile metadata
+- database-time creation/update fields
 
-Initial profile types:
+Profile status is a guard, not a role or project grant.
 
-- worker
-- reviewer
-- admin
-- project_manager
-- project_owner
+### ActorIdentityLink
 
-Profile rows are metadata and workflow eligibility records. They do not grant
-route access and are not the canonical Workstream role-assignment table. A
-project owner profile is scoped source/contact metadata and is not the same as
-a project manager permission role.
+An identity link binds one canonical external issuer and opaque subject to one
+ActorProfile. It has active/revoked state plus immutable revocation provenance.
+Raw tokens, provider credentials, and full claim payloads are not stored.
 
-Initial profile statuses:
+### AdminRoleGrant
 
-- `observed`: created or refreshed from a verified token role for audit/display
-  metadata only; it is not workflow eligibility.
-- `active`: created by an explicit profile workflow and allowed to satisfy
-  workflow eligibility checks for that profile type.
-- `disabled`: retained for audit but blocked from workflow eligibility.
+Immutable administrative-grant history with role, compatible system/project
+scope, target profile, issuing grant/actor, reason, active/revoked state, and
+database time. Roles are Access Administrator, Operator, Project Manager,
+Finance Authority, and Audit Authority.
 
-Auth observation alone may create `observed` profiles, but it must not mark a
-worker or reviewer profile `active`. Profile status can satisfy workflow
-eligibility only when product authorization for the current request has already
-passed.
+### ProjectRoleGrant
 
-The actor registry migration is intentionally destructive for the earlier
-experimental `worker_profiles` and `reviewer_profiles` tables. Those obsolete
-stores are dropped without compatibility backfill. Downgrade restores table
-shape only; it does not preserve old experimental profile data.
+Immutable exact-project contributor-grant history with role `submitter`,
+`reviewer`, or `both`, target profile, issuing Project Manager grant, optional
+qualification snapshot, reason, and active/revoked state.
 
-`project_owner` is a scoped profile/contact relationship, not a route role. In
-this chunk it is created from trusted relationship claims when present. Later
-project setup/source-contact workflows may create the same scoped profile type
-through an explicit trusted service path. It is not listed as a permission role
-and does not grant operator access.
+`worker` remains a lifecycle/attribution term. It is not the persisted project
+grant name.
 
-The trusted relationship claim key is
-`claim_snapshot["workstream_relationship_profiles"]`. Each item must use
-`profile_type = "project_owner"`, a non-empty `scope_type`, a non-empty
-`scope_id`. Workstream stores only those scope identity fields in actor
-identity/audit claim snapshots and stores server-owned profile metadata for the
-observed relationship. Nested relationship `profile_metadata` from token claims
-is discarded before persistence and is not route authorization.
+### QualificationSnapshot
 
-Trusted v0.1 bootstrap request roles:
+An immutable, privacy-bounded record of evidence considered by a covered
+Project Manager before manual contributor grant creation. It never creates a
+grant automatically.
 
-- admin
-- project_manager
-- worker
-- reviewer
-- finance
-- auditor
+### AuthorityControl
 
-`Operator` is a product persona, not a separate v0.1 permission role. In the application model, operator actions are performed by project managers, workers, reviewers, admins, or finance users depending on the action.
+The singleton `AuthorityControl(id = 1)` row serializes one-time bootstrap and
+every operation that could remove the final effective Access Administrator.
 
-## Worker Actor Profile
+### Authority Idempotency And Invalidation
 
-Worker profile behavior is represented by `ActorProfile(profile_type="worker")`.
-The public worker profile API remains worker-owned, but the persistence model is
-the shared actor profile model.
+Canonical idempotency records bind operation, actor, request hash, committed
+result, and replay status. Authority invalidation events are written atomically
+with grant/profile/link changes and drive bounded reconciliation.
 
-## Reviewer Actor Profile
+### Legacy Migration
 
-Reviewer profile behavior is represented by
-`ActorProfile(profile_type="reviewer")`. Reviewer eligibility must be explicit;
-observing a reviewer token role alone does not make the actor eligible for
-review workflow.
+Existing external `ActorIdentity.actor_id` UUIDs may become canonical profile
+IDs only after exact issuer/subject/subject-kind classification. Typed legacy
+profile row IDs never become actor IDs or grants. No email, subject shape,
+skill, reputation, profile type, or token role is used to infer authority.
 
 ## Project
 
@@ -210,9 +162,8 @@ Runtime enforcement uses machine-readable policies attached to the guide version
 Project owners provide open-ended setup material and business terms. Workstream
 does not force every project owner through one universal intake checklist.
 Workstream evaluates guide sufficiency, derives machine-readable project policy,
-and owns the internal controls. A Workstream actor with the `admin` or
-`project_manager` role approves the guide-policy bundle before the guide can
-activate.
+and owns the internal controls. A covered Project Manager grant authorizes the
+guide-policy approval flow before the guide can activate.
 
 Every task records the guide version active at creation or screening time before the task enters `READY`. Later source adapters must also lock the guide version during normalization before workers see the task.
 
@@ -414,8 +365,8 @@ Finding severity:
 
 `ProjectGuideSufficiencyAgent` creates this report asynchronously for a guide
 version. Blocking gaps stop guide activation and create clarification requests
-for the project owner. Warnings can be acknowledged only by a Workstream actor
-with the `admin` or `project_manager` role before activation.
+for the project owner. Warnings can be acknowledged only by an authorized
+covered Project Manager before activation.
 
 `source_snapshot_hash` is server-derived from the referenced
 `GuideSourceSnapshot.bundle_hash`. Clients cannot supply a conflicting hash.
@@ -500,19 +451,20 @@ Example:
   "derivation_agent_version": "workstream-policy-derivation-agent-v0.1",
   "source_material_refs": ["project-guide:v1"],
   "lifecycle_status": "approved",
-  "approved_by_role": "project_manager",
-  "approved_by_actor": "flow-project-manager",
+  "approved_by_admin_role_grant_id": "00000000-0000-0000-0000-000000000010",
+  "approved_by_actor_profile_id": "00000000-0000-0000-0000-000000000020",
   "approved_at": "2026-06-22T12:00:00Z"
 }
 ```
 
 Workstream derives this policy from project guide material after guide
-sufficiency passes or passes with warnings. A Workstream actor with the
-`admin` or `project_manager` role approves it after any sufficiency warnings are
-acknowledged. Project owners and workers do not supply or approve this internal
+sufficiency passes or passes with warnings. An authorized covered Project
+Manager approves it after any sufficiency warnings are acknowledged. Project
+owners and workers do not supply or approve this internal
 policy schema.
-`derivation_source` is server-owned. Manual/admin-created policies persist
-`manual_admin_derivation`; policies created by the derivation agent persist
+`derivation_source` is server-owned. The legacy technical token
+`manual_admin_derivation` remains historical provenance until its owning
+migration; it does not grant authority. Policies created by the derivation agent persist
 `agent_derivation`. Client requests do not supply derivation provenance, and
 manual `policy_version` values cannot use the reserved `agent-` prefix.
 Agent-derived policy versioning and persisted derivation-agent identity are
@@ -637,8 +589,9 @@ policy or newly compiled checker.
 
 Task context APIs read this already-stamped context. `work-context` and
 `submission-requirements` return task-visible worker-safe guide and requirement
-projections from the locked rows. `locked-context` is available only to
-token-authenticated `admin` and `project_manager` actors and exposes the full
+projections from the locked rows. `locked-context` requires the registered
+covered Project Manager permission or an explicitly authorized Operator/Audit
+projection and exposes the full
 locked source snapshot, effective policy, pre-submit checker, post-submit
 checker, review, revision, and payment provenance. None of these reads
 recompute from the current active guide.
@@ -741,7 +694,7 @@ active setup context. `WS-POL-002-03` adds the server-owned approval/correction
 API that moves compiled post-submit policies into that approved state.
 
 For generated setup, `PostSubmitCheckerPolicyDerivationAgent` runs only after a
-setup-authorized `admin` or `project_manager` approves the derived
+authorized covered Project Manager approves the derived
 `SubmissionArtifactPolicy`, producing an approved
 `EffectiveProjectSubmissionArtifactPolicy` and compiled project
 `PreSubmitCheckerPolicy`. The agent receives bounded guide-source material,
@@ -1505,18 +1458,17 @@ Fields:
 Audit events are append-only.
 
 v0.1 audit storage is the existing Workstream `audit_events` ledger. Task
-lifecycle events and actor profile eligibility events both write there so
-operators can reconstruct why an actor was allowed to claim, submit, or later
-review. Actor profile audit events use `entity_type = "actor_profile"` and
-record profile type, scope, and skill/status details in `event_payload`. A
-future shared audit module can move the code boundary out of the task module,
-but this chunk does not create a second audit source of truth.
+Lifecycle events and authority events share the canonical audit repository so
+operators can reconstruct why an actor was allowed or denied. Authority events
+record bounded actor, matched grant/permission, scope, resource, reason, and
+before/after facts without raw claims or unnecessary profile data.
 
 ## Required Invariants
 
 - a task must belong to a project
 - a task records the project guide version used at creation
-- a task cannot enter ready without passing screening or documented admin override
+- a task cannot enter ready without passing screening; recovery uses only its
+  registered scoped permission and cannot bypass missing task policy context
 - a submission must belong to a task
 - a review must belong to a submission
 - an accepted task must have at least one accepted submission
@@ -1527,7 +1479,9 @@ but this chunk does not create a second audit source of truth.
 - reviewer-quality reputation events must reference a review or audit source
 - payment amount changes require a payment adjustment record
 - disputed payments cannot become `paid` without a dispute resolution audit event
-- critical- and high-severity checker failures block review unless an admin override is recorded
+- critical- and high-severity checker failures block review; registered
+  recovery may retry or repair infrastructure but cannot create a review
+  decision or erase checker evidence
 - a checker run must reference the exact submission version and artifact hashes it evaluated
 - the current checker run is the v0.1 readiness proof for the submission version that cleared automated checks
 - a review cannot accept a submission if the checker run belongs to a different submission version

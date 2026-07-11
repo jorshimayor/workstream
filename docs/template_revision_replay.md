@@ -34,7 +34,7 @@ Worker-visible fields:
 | rebase reason | `<reason>` |
 | change summary shown to worker | `<summary>` |
 
-Reviewer/admin fields:
+Reviewer and authorized recovery evidence fields:
 
 | Field | Value |
 | --- | --- |
