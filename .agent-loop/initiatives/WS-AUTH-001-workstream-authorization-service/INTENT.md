@@ -118,9 +118,7 @@ namespace and remains canonical.
 - Existing task lifecycle behavior except the explicit, audited release of an
   exclusive assignment when its actor/link/project authority is invalidated.
 - CI, test, documentation, and internal-review gates.
-- `WS-POL-002-03` later resumed by explicit user start and is tracked in PR #90.
-  Future WS-POL chunks still require explicit starts after their predecessors
-  merge and memory is updated.
+- `WS-POL-002-03` remains paused until the authorization foundation is ready.
 
 ## How this will be proven
 
@@ -141,8 +139,7 @@ Resolved:
 
 - `WS-AUTH-001` is authoritative and supersedes the token-role bootstrap.
 - `/api/v1` remains the canonical API namespace.
-- `WS-AUTH-001` was prioritized before future WS-POL expansion; `WS-POL-002-03`
-  is now an active exception tracked in PR #90 after explicit user start.
+- `WS-AUTH-001` is prioritized before `WS-POL-002-03`.
 
 Pending before `WS-AUTH-001-01` activation:
 

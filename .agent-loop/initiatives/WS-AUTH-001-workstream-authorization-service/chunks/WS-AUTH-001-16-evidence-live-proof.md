@@ -62,7 +62,7 @@ review/contribution/compensation implementation
 production credentials or private keys in fixtures/evidence
 direct database bootstrap or grant edits in live proof
 loosening issuer, scope, permission, or resource guards
-starting future WS-POL chunks automatically
+starting WS-POL-002-03 automatically
 ```
 
 ## Acceptance criteria
@@ -100,8 +100,8 @@ starting future WS-POL chunks automatically
   production dependency change requires separately recorded explicit human
   approval before modification.
 - No obsolete token-role authorization remains in runtime code.
-- Initiative memory records proof and leaves future WS-POL chunks inactive
-  until explicit user start signals.
+- Initiative memory records proof and leaves `WS-POL-002-03` inactive until an
+  explicit user resume signal.
 
 ## Verification commands
 

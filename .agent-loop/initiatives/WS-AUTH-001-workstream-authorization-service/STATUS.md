@@ -9,10 +9,9 @@ actionable findings, then its final check was cancelled when the PR closed. The
 initiative is stopped at the L0 human checkpoint: D1-D3 are approved; D4-D10
 require explicit durable approval before implementation.
 
-## Checkpointed planning artifact
+## Active planning chunk
 
-`WS-AUTH-001-PLAN` is merged and stopped at the L0 human checkpoint. No active
-planning chunk is running.
+None.
 
 ## Active implementation chunk
 
@@ -54,7 +53,7 @@ implementation start signal.
 
 Internal review evidence is recorded at
 `reviews/WS-AUTH-001-PLAN-internal-review-evidence.md` and binds reviewed SHA
-`6966c868b9a5f931b91f900ec754044cb61fabba`.
+`5739e1d6fc8df0fa620bd007c45e370530ac8d12`.
 
 Production issuer configuration and legacy non-test actor classification are
 future implementation/live-proof inputs and are tracked explicitly in

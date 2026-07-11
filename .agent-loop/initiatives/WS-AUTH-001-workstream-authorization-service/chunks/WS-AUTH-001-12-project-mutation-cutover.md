@@ -13,8 +13,7 @@ provenance.
 ## Why this chunk exists
 
 This completes project authorization and unblocks later resumption of
-the project setup approval surface without implementing unrelated WS-POL
-runtime behavior.
+`WS-POL-002-03` without implementing that paused chunk.
 
 ## Approved plan reference
 

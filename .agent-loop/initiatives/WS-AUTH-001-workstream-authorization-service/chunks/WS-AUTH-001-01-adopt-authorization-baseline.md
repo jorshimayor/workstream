@@ -116,11 +116,9 @@ adding permanent /v1 aliases
   `docs/reference_specs/README.md` records their hashes/status and the
   `/api/v1` override; canonical reconciled text lives separately in
   `docs/spec_authorization_service.md`.
-- Future WS-POL chunks remain gated by explicit start signals and authorization
-  impact review.
+- `WS-POL-002-03` is durably paused behind the auth initiative.
 - Roadmap status names WS-AUTH-001 as current priority, records POL-002 chunks
-  01/02 merged and 03 handled separately in PR #90, and defers authorization
-  implementation until auth proof.
+  01/02 merged and 03 paused, and defers review implementation until auth proof.
 - Canonical vocabulary distinguishes `worker` as a task-lifecycle persona and
   attribution term from `submitter` as the persisted exact-project grant.
 - Every current operational override/repair command is inventoried and assigned
