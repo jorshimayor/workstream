@@ -631,6 +631,21 @@ async def create_started_task(
     return start.json()
 
 
+def expected_worker_requester_provenance(subject: str = "worker-one") -> dict[str, str]:
+    """Return the queue-safe requester provenance for a seeded worker actor."""
+    return {
+        "requester_actor_id": actor_id(subject),
+        "requester_external_subject": subject,
+        "requester_external_issuer": "flow-test",
+        "requester_auth_source": "dev_mock",
+    }
+
+
+def hold_pre_review_enqueue(*, checker_run_id: str, requester_provenance: dict) -> str:
+    """Hold a pre-review gate enqueue while preserving the production call shape."""
+    return f"held:{checker_run_id}"
+
+
 async def seed_worker_profile(subject: str, *, skill_tags: list[str] | None = None) -> str:
     worker_actor_id = actor_id(subject)
     async with db_session.get_session_factory()() as session:
@@ -3957,12 +3972,7 @@ async def test_finalize_repairs_locked_submission_with_missing_pre_review_gate(
 
     def fail_enqueue(*, checker_run_id: str, requester_provenance: dict) -> str:
         enqueue_calls.append(checker_run_id)
-        assert requester_provenance == {
-            "requester_actor_id": actor_id("worker-one"),
-            "requester_external_subject": "worker-one",
-            "requester_external_issuer": "flow-test",
-            "requester_auth_source": "dev_mock",
-        }
+        assert requester_provenance == expected_worker_requester_provenance()
         raise PreReviewGateQueueError("simulated broker outage")
 
     monkeypatch.setattr(task_service_module, "enqueue_pre_review_gate", fail_enqueue)
@@ -4233,10 +4243,11 @@ async def test_nonrepairable_failed_gate_does_not_return_success(
     project = await create_active_project(task_client)
     started_task = await create_started_task(task_client, project["id"], monkeypatch)
 
-    def hold_enqueue(*, checker_run_id: str, requester_provenance: dict) -> str:
-        return f"held:{checker_run_id}"
-
-    monkeypatch.setattr(task_service_module, "enqueue_pre_review_gate", hold_enqueue)
+    monkeypatch.setattr(
+        task_service_module,
+        "enqueue_pre_review_gate",
+        hold_pre_review_enqueue,
+    )
     created = await task_client.post(
         f"/api/v1/tasks/{started_task['id']}/submissions",
         headers=auth_headers(),
@@ -4276,6 +4287,7 @@ async def test_eager_pre_review_gate_failure_after_submission_is_repairable(
 
     project = await create_active_project(task_client)
     started_task = await create_started_task(task_client, project["id"], monkeypatch)
+    original_run_queued_gate = checker_worker_module.CheckerService.run_queued_pre_review_gate
 
     async def fail_run_queued_gate(
         self,
@@ -4324,6 +4336,36 @@ async def test_eager_pre_review_gate_failure_after_submission_is_repairable(
     assert dispatch_failed_event.event_payload["checker_run_id"] == failed_run.id
     assert dispatch_failed_event.event_payload["requester_actor_id"] == actor_id("worker-one")
 
+    monkeypatch.setattr(
+        checker_worker_module.CheckerService,
+        "run_queued_pre_review_gate",
+        original_run_queued_gate,
+    )
+    set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
+    repair_response = await task_client.post(
+        f"/api/v1/submissions/{submission_id}/finalize",
+        headers=auth_headers(),
+    )
+    assert repair_response.status_code == 200, repair_response.text
+
+    async with db_session.get_session_factory()() as session:
+        repaired_run = await session.get(db_models.CheckerRun, failed_run.id)
+        repaired_task = await session.get(WorkstreamTask, started_task["id"])
+        repair_audit = await session.scalar(
+            select(AuditEvent).where(
+                AuditEvent.entity_type == "task",
+                AuditEvent.entity_id == started_task["id"],
+                AuditEvent.event_type == "pre_review_gate_repair_requested",
+            )
+        )
+
+    assert repaired_run is not None
+    assert repaired_run.status == "completed"
+    assert repaired_run.failure_code is None
+    assert repaired_task is not None
+    assert repaired_task.status == "review_pending"
+    assert repair_audit is not None
+
 
 async def test_finalize_repairs_stale_running_pre_review_gate(
     task_client: AsyncClient,
@@ -4335,10 +4377,11 @@ async def test_finalize_repairs_stale_running_pre_review_gate(
     started_task = await create_started_task(task_client, project["id"], monkeypatch)
     original_enqueue = task_service_module.enqueue_pre_review_gate
 
-    def hold_enqueue(*, checker_run_id: str, requester_provenance: dict) -> str:
-        return f"held:{checker_run_id}"
-
-    monkeypatch.setattr(task_service_module, "enqueue_pre_review_gate", hold_enqueue)
+    monkeypatch.setattr(
+        task_service_module,
+        "enqueue_pre_review_gate",
+        hold_pre_review_enqueue,
+    )
     created = await task_client.post(
         f"/api/v1/tasks/{started_task['id']}/submissions",
         headers=auth_headers(),
@@ -4518,12 +4561,7 @@ async def test_finalize_redispatches_queued_pre_review_gate_without_duplicate_ru
     submission_id = created.json()["id"]
     assert created.json()["finalized_at"] is not None
     assert len(enqueue_calls) == 1
-    assert enqueue_calls[0]["requester_provenance"] == {
-        "requester_actor_id": actor_id("worker-one"),
-        "requester_external_subject": "worker-one",
-        "requester_external_issuer": "flow-test",
-        "requester_auth_source": "dev_mock",
-    }
+    assert enqueue_calls[0]["requester_provenance"] == expected_worker_requester_provenance()
     assert "claim_snapshot" not in enqueue_calls[0]["requester_provenance"]
     assert "roles" not in enqueue_calls[0]["requester_provenance"]
 
@@ -4581,10 +4619,11 @@ async def test_manual_checker_run_cannot_replace_queued_automatic_gate(
     project = await create_active_project(task_client)
     started_task = await create_started_task(task_client, project["id"], monkeypatch)
 
-    def hold_enqueue(*, checker_run_id: str, requester_provenance: dict) -> str:
-        return f"held:{checker_run_id}"
-
-    monkeypatch.setattr(task_service_module, "enqueue_pre_review_gate", hold_enqueue)
+    monkeypatch.setattr(
+        task_service_module,
+        "enqueue_pre_review_gate",
+        hold_pre_review_enqueue,
+    )
     created = await task_client.post(
         f"/api/v1/tasks/{started_task['id']}/submissions",
         headers=auth_headers(),
@@ -4625,10 +4664,11 @@ async def test_manual_checker_run_cannot_bypass_failed_automatic_gate(
     project = await create_active_project(task_client)
     started_task = await create_started_task(task_client, project["id"], monkeypatch)
 
-    def hold_enqueue(*, checker_run_id: str, requester_provenance: dict) -> str:
-        return f"held:{checker_run_id}"
-
-    monkeypatch.setattr(task_service_module, "enqueue_pre_review_gate", hold_enqueue)
+    monkeypatch.setattr(
+        task_service_module,
+        "enqueue_pre_review_gate",
+        hold_pre_review_enqueue,
+    )
     created = await task_client.post(
         f"/api/v1/tasks/{started_task['id']}/submissions",
         headers=auth_headers(),
@@ -4657,12 +4697,7 @@ async def test_manual_checker_run_cannot_bypass_failed_automatic_gate(
     with pytest.raises(CheckerExecutionBlocked):
         run_pre_review_gate.run(
             queued_run.id,
-            {
-                "requester_actor_id": actor_id("worker-one"),
-                "requester_external_subject": "worker-one",
-                "requester_external_issuer": "flow-test",
-                "requester_auth_source": "dev_mock",
-            },
+            expected_worker_requester_provenance(),
         )
 
     set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
@@ -4700,10 +4735,11 @@ async def test_queued_gate_policy_error_is_failed_and_repairable(
     started_task = await create_started_task(task_client, project["id"], monkeypatch)
     original_enqueue = task_service_module.enqueue_pre_review_gate
 
-    def hold_enqueue(*, checker_run_id: str, requester_provenance: dict) -> str:
-        return f"held:{checker_run_id}"
-
-    monkeypatch.setattr(task_service_module, "enqueue_pre_review_gate", hold_enqueue)
+    monkeypatch.setattr(
+        task_service_module,
+        "enqueue_pre_review_gate",
+        hold_pre_review_enqueue,
+    )
     created = await task_client.post(
         f"/api/v1/tasks/{started_task['id']}/submissions",
         headers=auth_headers(),
@@ -4737,12 +4773,7 @@ async def test_queued_gate_policy_error_is_failed_and_repairable(
     with pytest.raises(CheckerPolicyInvalid):
         run_pre_review_gate.run(
             queued_run.id,
-            {
-                "requester_actor_id": actor_id("worker-one"),
-                "requester_external_subject": "worker-one",
-                "requester_external_issuer": "flow-test",
-                "requester_auth_source": "dev_mock",
-            },
+            expected_worker_requester_provenance(),
         )
 
     async with db_session.get_session_factory()() as session:
@@ -4800,10 +4831,11 @@ async def test_queued_gate_rejects_tampered_requester_provenance(
     started_task = await create_started_task(task_client, project["id"], monkeypatch)
     original_enqueue = task_service_module.enqueue_pre_review_gate
 
-    def hold_enqueue(*, checker_run_id: str, requester_provenance: dict) -> str:
-        return f"held:{checker_run_id}"
-
-    monkeypatch.setattr(task_service_module, "enqueue_pre_review_gate", hold_enqueue)
+    monkeypatch.setattr(
+        task_service_module,
+        "enqueue_pre_review_gate",
+        hold_pre_review_enqueue,
+    )
     created = await task_client.post(
         f"/api/v1/tasks/{started_task['id']}/submissions",
         headers=auth_headers(),
@@ -4837,6 +4869,7 @@ async def test_queued_gate_rejects_tampered_requester_provenance(
         gate_events = (
             await session.execute(
                 select(AuditEvent).where(
+                    AuditEvent.entity_type == "task",
                     AuditEvent.entity_id == started_task["id"],
                     AuditEvent.event_type.like("pre_review_gate_%"),
                 )
@@ -4878,10 +4911,11 @@ async def test_queued_gate_fails_closed_when_lock_audit_is_missing(
     project = await create_active_project(task_client)
     started_task = await create_started_task(task_client, project["id"], monkeypatch)
 
-    def hold_enqueue(*, checker_run_id: str, requester_provenance: dict) -> str:
-        return f"held:{checker_run_id}"
-
-    monkeypatch.setattr(task_service_module, "enqueue_pre_review_gate", hold_enqueue)
+    monkeypatch.setattr(
+        task_service_module,
+        "enqueue_pre_review_gate",
+        hold_pre_review_enqueue,
+    )
     created = await task_client.post(
         f"/api/v1/tasks/{started_task['id']}/submissions",
         headers=auth_headers(),
@@ -4910,12 +4944,7 @@ async def test_queued_gate_fails_closed_when_lock_audit_is_missing(
     with pytest.raises(CheckerExecutionBlocked):
         run_pre_review_gate.run(
             queued_run.id,
-            {
-                "requester_actor_id": actor_id("worker-one"),
-                "requester_external_subject": "worker-one",
-                "requester_external_issuer": "flow-test",
-                "requester_auth_source": "dev_mock",
-            },
+            expected_worker_requester_provenance(),
         )
 
     async with db_session.get_session_factory()() as session:
@@ -4943,10 +4972,11 @@ async def test_stale_queued_pre_review_gate_skips_before_task_status_check(
     project = await create_active_project(task_client)
     started_task = await create_started_task(task_client, project["id"], monkeypatch)
 
-    def hold_enqueue(*, checker_run_id: str, requester_provenance: dict) -> str:
-        return f"held:{checker_run_id}"
-
-    monkeypatch.setattr(task_service_module, "enqueue_pre_review_gate", hold_enqueue)
+    monkeypatch.setattr(
+        task_service_module,
+        "enqueue_pre_review_gate",
+        hold_pre_review_enqueue,
+    )
     v1 = await task_client.post(
         f"/api/v1/tasks/{started_task['id']}/submissions",
         headers=auth_headers(),
@@ -4978,10 +5008,7 @@ async def test_stale_queued_pre_review_gate_skips_before_task_status_check(
     result = run_pre_review_gate.run(
         v1_run.id,
         {
-            "requester_actor_id": actor_id("worker-one"),
-            "requester_external_subject": "worker-one",
-            "requester_external_issuer": "flow-test",
-            "requester_auth_source": "dev_mock",
+            **expected_worker_requester_provenance(),
             "claim_snapshot": {"roles": ["worker"]},
         },
     )
@@ -4998,6 +5025,7 @@ async def test_stale_queued_pre_review_gate_skips_before_task_status_check(
         audit_events = (
             await session.execute(
                 select(AuditEvent).where(
+                    AuditEvent.entity_type == "task",
                     AuditEvent.entity_id == started_task["id"],
                     AuditEvent.event_type.like("pre_review_gate_%"),
                 )

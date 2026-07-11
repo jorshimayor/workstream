@@ -18,6 +18,10 @@ from app.modules.checkers.compiler import (
     validate_compiled_pre_submit_checker_bundle,
 )
 from app.modules.checkers.gate_queue import PreReviewGateQueueError, enqueue_pre_review_gate
+from app.modules.checkers.pre_review_gate import (
+    find_submission_requester_provenance,
+    requester_provenance_payload,
+)
 from app.modules.checkers.service import (
     CheckerService,
     CheckerServiceError,
@@ -1031,17 +1035,13 @@ class TaskService:
     ) -> dict[str, str]:
         """Load original submitter/lock provenance for repair enqueue."""
         events = await self._repo.list_audit_events("task", task.id)
-        for event in reversed(events):
-            if event.event_type != SUBMISSION_FINALIZED_EVENT_TYPE:
-                continue
-            if event.event_payload.get("submission_id") != submission.id:
-                continue
-            return {
-                "requester_actor_id": event.actor_id,
-                "requester_external_subject": event.external_subject,
-                "requester_external_issuer": event.external_issuer,
-                "requester_auth_source": event.auth_source,
-            }
+        provenance = find_submission_requester_provenance(
+            events,
+            submission_id=submission.id,
+            event_type=SUBMISSION_FINALIZED_EVENT_TYPE,
+        )
+        if provenance is not None:
+            return provenance
         raise TaskTransitionBlocked("submission lock audit provenance is missing")
 
     async def _write_pre_review_gate_repair_audit(
@@ -1074,13 +1074,7 @@ class TaskService:
     @staticmethod
     def _requester_provenance_payload(actor: ActorContext) -> dict[str, str]:
         """Build the minimal requester provenance safe to send through Celery."""
-        audit = actor.audit_context()
-        return {
-            "requester_actor_id": audit.actor_id,
-            "requester_external_subject": audit.external_subject,
-            "requester_external_issuer": audit.external_issuer,
-            "requester_auth_source": audit.auth_source,
-        }
+        return requester_provenance_payload(actor)
 
     async def list_task_audit_events(
         self,

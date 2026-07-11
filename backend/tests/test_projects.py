@@ -59,7 +59,6 @@ from app.modules.projects.models import (
     SubmissionArtifactPolicy,
 )
 from app.modules.projects import service as project_service_module
-from app.modules.projects import setup_queue as project_setup_queue_module
 from app.modules.projects.repository import ProjectRepository, ProjectRepositoryIntegrityError
 from app.modules.projects.service import (
     GUIDE_SOURCE_MATERIAL_FIELDS,
@@ -674,6 +673,7 @@ def test_project_setup_queue_syncs_all_setup_task_settings(
         run_post_submit_setup_continuation,
         run_pre_submit_setup_pipeline,
     )
+    from app.workers.task_settings import sync_task_settings
 
     tasks = (run_pre_submit_setup_pipeline, run_post_submit_setup_continuation)
     original_config = {
@@ -690,7 +690,7 @@ def test_project_setup_queue_syncs_all_setup_task_settings(
         monkeypatch.setenv("WORKSTREAM_CELERY_RESULT_BACKEND_URL", "rpc://")
         monkeypatch.setenv("WORKSTREAM_CELERY_TASK_ALWAYS_EAGER", "false")
         get_settings.cache_clear()
-        project_setup_queue_module._sync_task_settings()
+        sync_task_settings(*tasks)
 
         for task in tasks:
             assert task.app.conf.broker_url == "memory://explicit"
@@ -701,7 +701,7 @@ def test_project_setup_queue_syncs_all_setup_task_settings(
         monkeypatch.delenv("WORKSTREAM_CELERY_BROKER_URL", raising=False)
         monkeypatch.setenv("WORKSTREAM_CELERY_TASK_ALWAYS_EAGER", "true")
         get_settings.cache_clear()
-        project_setup_queue_module._sync_task_settings()
+        sync_task_settings(*tasks)
 
         for task in tasks:
             assert task.app.conf.broker_url == "memory://"

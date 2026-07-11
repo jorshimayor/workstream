@@ -96,9 +96,12 @@ Users see the same simple outcome language everywhere:
 - `rejected`
 - `needs_revision`
 
-Automated checker failures may route a submitted packet to `needs_revision` when the failure is worker-fixable. This is user-facing revision, not a human review decision.
+Automated checker failures may route the task to `needs_revision` when the
+failure is worker-fixable. The submitted packet remains an immutable submitted
+version. This is user-facing revision, not a human review decision.
 
-Week 2 may set a checker-caused task/submission outcome of `needs_revision`, but it does not create a human review decision record.
+Week 2 may set a checker-caused task outcome of `needs_revision`, but it does
+not create a human review decision record.
 
 Internally Workstream records the source:
 

@@ -17,6 +17,12 @@ from app.modules.checkers.compiler import (
     validate_compiled_pre_submit_checker_bundle,
 )
 from app.modules.checkers.models import CheckerResult, CheckerRun
+from app.modules.checkers.pre_review_gate import (
+    find_submission_requester_provenance,
+    requester_provenance_matches,
+    requester_provenance_payload,
+    sanitize_requester_provenance,
+)
 from app.modules.checkers.repository import CheckerRepository
 from app.modules.checkers.runner import (
     CheckerContext,
@@ -538,11 +544,7 @@ class CheckerService:
         if task.status not in CHECKER_RUN_ALLOWED_TASK_STATUSES:
             raise CheckerExecutionBlocked("task must be submitted or in checker gate before checkers run")
         execution_actor = audit_actor or actor
-        requester_payload = (
-            self._requester_provenance_payload(requester_actor)
-            if requester_actor is not None
-            else {}
-        )
+        requester_payload = requester_provenance_payload(requester_actor) if requester_actor else {}
         current_run = await self._checker_repo.get_current_run_for_submission(submission.id)
         if (
             current_run is not None
@@ -876,7 +878,7 @@ class CheckerService:
                     "task must be submitted or in checker gate before checkers run"
                 )
 
-            queued_requester_payload = self._sanitize_requester_provenance(requester_provenance)
+            queued_requester_payload = sanitize_requester_provenance(requester_provenance)
             try:
                 requester_payload = await self._submission_requester_provenance(
                     task,
@@ -889,7 +891,7 @@ class CheckerService:
                     failure_message="submission lock audit provenance is missing",
                 )
                 raise
-            if not self._requester_provenance_matches(
+            if not requester_provenance_matches(
                 expected=requester_payload,
                 received=queued_requester_payload,
             ):
@@ -1772,33 +1774,6 @@ class CheckerService:
             )
         )
 
-    @staticmethod
-    def _requester_provenance_payload(requester: ActorContext) -> dict[str, Any]:
-        """Build requester provenance stored beside system-owned gate events."""
-        audit = requester.audit_context()
-        return {
-            "requester_actor_id": audit.actor_id,
-            "requester_external_subject": audit.external_subject,
-            "requester_external_issuer": audit.external_issuer,
-            "requester_auth_source": audit.auth_source,
-        }
-
-    @staticmethod
-    def _sanitize_requester_provenance(payload: dict[str, Any]) -> dict[str, Any]:
-        """Keep only bounded requester provenance accepted from queue payloads."""
-        allowed_keys = {
-            "requester_actor_id",
-            "requester_external_subject",
-            "requester_external_issuer",
-            "requester_auth_source",
-        }
-        sanitized: dict[str, Any] = {}
-        for key in allowed_keys:
-            value = payload.get(key)
-            if isinstance(value, str) and value.strip():
-                sanitized[key] = value.strip()[:300]
-        return sanitized
-
     async def _submission_requester_provenance(
         self,
         task: WorkstreamTask,
@@ -1806,30 +1781,14 @@ class CheckerService:
     ) -> dict[str, str]:
         """Load requester provenance from the locked submission audit trail."""
         events = await self._task_repo.list_audit_events("task", task.id)
-        for event in reversed(events):
-            if event.event_type != PRE_REVIEW_GATE_TRIGGER_SOURCE:
-                continue
-            if event.event_payload.get("submission_id") != submission.id:
-                continue
-            return {
-                "requester_actor_id": event.actor_id,
-                "requester_external_subject": event.external_subject,
-                "requester_external_issuer": event.external_issuer,
-                "requester_auth_source": event.auth_source,
-            }
+        provenance = find_submission_requester_provenance(
+            events,
+            submission_id=submission.id,
+            event_type=PRE_REVIEW_GATE_TRIGGER_SOURCE,
+        )
+        if provenance is not None:
+            return provenance
         raise CheckerExecutionBlocked("submission lock audit provenance is missing")
-
-    @staticmethod
-    def _requester_provenance_matches(
-        *,
-        expected: dict[str, str],
-        received: dict[str, Any],
-    ) -> bool:
-        """Return whether queue provenance agrees with persisted submission audit."""
-        for key, expected_value in expected.items():
-            if received.get(key) != expected_value:
-                return False
-        return True
 
     @staticmethod
     def _routing_recommendation_for_outcomes(outcomes: list[CheckerOutcome]) -> str:
