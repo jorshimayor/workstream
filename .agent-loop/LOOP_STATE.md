@@ -7,12 +7,12 @@
 - Active implementation chunk: `WS-AUTH-001-01`
 - Branch: `codex/ws-auth-001-01-adopt-authorization-baseline`
 - Worktree: `/home/abiorh/flow/workstream-auth-001-01`
-- Status: D4-D10 were explicitly approved and WS-AUTH-001-01 was started by the
-  user on 2026-07-11. Only the baseline adoption/docs contract is active.
+- Status: WS-AUTH-001-01 implementation and all required internal reviews
+  passed at `6756e6c`; PR publication is pending.
 - Last merged implementation SHA: `67fb3ca`
 - Last merge commit: `14fb2160922274a6678fc7cb4ebb49c42aa0ac5b`
-- Current gate: implement and verify only the approved WS-AUTH-001-01 contract,
-  then run all required internal reviewer tracks and stop for human review.
+- Current gate: publish the reviewed WS-AUTH-001-01 PR, observe external checks,
+  and stop for human review.
 - Next chunk: `WS-AUTH-001-02` remains proposed and must not start
   automatically.
 - Parallel initiative: `WS-POL-002-03` is implemented and under external review

@@ -1,5 +1,24 @@
 # Review Log
 
+## WS-AUTH-001-01
+
+Status: implementation and required internal review complete; PR publication pending.
+
+Reviewed implementation SHA: `6756e6cb397da5f813eca39fb738633bc24f2ab2`
+
+Result: PASS after fixes across senior engineering, QA/test, security/auth,
+product/ops, architecture, docs, reuse/dedup, CI integrity, and test delta.
+
+Scope: canonical authorization ADR/spec/runbook, active-document and diagram
+reconciliation, stale-authorization scanner/tests, and additive Agent Gates step.
+
+Evidence: `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/reviews/WS-AUTH-001-01-internal-review-evidence.md`
+
+Trust bundle: `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/reviews/WS-AUTH-001-01-pr-trust-bundle.md`
+
+Next chunk: `WS-AUTH-001-02` remains inactive pending merge, memory update, and
+an explicit user start.
+
 ## WS-POL-002-02
 
 Status: merged through PR #88 on 2026-07-11.

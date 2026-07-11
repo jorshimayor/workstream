@@ -7,7 +7,8 @@ Planning merged through PR #91 as
 Agent Gates, and Backend passed. CodeRabbit produced a walkthrough with no
 actionable findings, then its final check was cancelled when the PR closed.
 D4-D10 were explicitly approved and WS-AUTH-001-01 was started by the user on
-2026-07-11 in a fresh worktree from merged `main`.
+2026-07-11 in a fresh worktree from merged `main`. Implementation and all
+required internal reviewer tracks passed at `6756e6c`; PR publication is next.
 
 ## Active planning chunk
 
@@ -26,7 +27,7 @@ None.
 | Chunk | Status | Branch | PR | Notes |
 |---|---|---|---:|---|
 | `WS-AUTH-001-PLAN` | Merged | `authorization-service` | #91 | Merged as `ad6d644`; D4-D10 later approved. |
-| `WS-AUTH-001-01` | Active | `codex/ws-auth-001-01-adopt-authorization-baseline` | - | Baseline adoption and repository contract reconciliation only. |
+| `WS-AUTH-001-01` | Internally reviewed | `codex/ws-auth-001-01-adopt-authorization-baseline` | - | Reviewed SHA `6756e6c`; PR publication pending. |
 | `WS-AUTH-001-02` | Proposed | - | - | Verified issuer token and JWKS boundary. |
 | `WS-AUTH-001-03` | Proposed | - | - | Legacy actor classification preflight. |
 | `WS-AUTH-001-04` | Proposed | - | - | Request, error, and API control foundation. |
