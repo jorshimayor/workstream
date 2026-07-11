@@ -12,7 +12,7 @@
 - Last merged implementation SHA: `67fb3ca`
 - Last merge commit: `32af6a7`
 - Current gate: evidence packaging, trust bundle, PR publication, external
-  review, and human merge checkpoint.
+  review, and user review.
 - Next chunk: `WS-POL-002-04` remains inactive until `WS-POL-002-03` is merged
   by explicit human approval and memory is updated.
 
