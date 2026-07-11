@@ -4160,6 +4160,113 @@ async def test_failed_pre_review_gate_repair_is_idempotent_while_queued(
     assert len(repair_events) == 1
 
 
+async def test_unknown_checker_gate_failure_is_repairable(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from app.modules.tasks import service as task_service_module
+
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+
+    def hold_initial_enqueue(*, checker_run_id: str, requester_provenance: dict) -> str:
+        return f"held:{checker_run_id}"
+
+    monkeypatch.setattr(task_service_module, "enqueue_pre_review_gate", hold_initial_enqueue)
+    created = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+    assert created.status_code == 201, created.text
+    submission_id = created.json()["id"]
+
+    async with db_session.get_session_factory()() as session:
+        failed_run = await session.scalar(
+            select(db_models.CheckerRun).where(
+                db_models.CheckerRun.submission_id == submission_id
+            )
+        )
+        assert failed_run is not None
+        failed_run.status = "failed"
+        failed_run.failure_code = "unknown_checker"
+        failed_run.failure_message = "checker registry was missing a required checker"
+        failed_run.completed_at = datetime.now(UTC)
+        await session.commit()
+
+    repair_enqueue_calls: list[str] = []
+
+    def hold_repair_enqueue(*, checker_run_id: str, requester_provenance: dict) -> str:
+        repair_enqueue_calls.append(checker_run_id)
+        return f"held:{checker_run_id}"
+
+    monkeypatch.setattr(task_service_module, "enqueue_pre_review_gate", hold_repair_enqueue)
+    set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
+    repair_response = await task_client.post(
+        f"/api/v1/submissions/{submission_id}/finalize",
+        headers=auth_headers(),
+    )
+    assert repair_response.status_code == 200, repair_response.text
+
+    async with db_session.get_session_factory()() as session:
+        repaired_run = await session.get(db_models.CheckerRun, failed_run.id)
+        repair_event = await session.scalar(
+            select(AuditEvent).where(
+                AuditEvent.entity_id == started_task["id"],
+                AuditEvent.event_type == "pre_review_gate_repair_requested",
+            )
+        )
+
+    assert repair_enqueue_calls == [failed_run.id]
+    assert repaired_run is not None
+    assert repaired_run.status == "queued"
+    assert repaired_run.failure_code is None
+    assert repair_event is not None
+
+
+async def test_nonrepairable_failed_gate_does_not_return_success(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from app.modules.tasks import service as task_service_module
+
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+
+    def hold_enqueue(*, checker_run_id: str, requester_provenance: dict) -> str:
+        return f"held:{checker_run_id}"
+
+    monkeypatch.setattr(task_service_module, "enqueue_pre_review_gate", hold_enqueue)
+    created = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+    assert created.status_code == 201, created.text
+    submission_id = created.json()["id"]
+
+    async with db_session.get_session_factory()() as session:
+        failed_run = await session.scalar(
+            select(db_models.CheckerRun).where(
+                db_models.CheckerRun.submission_id == submission_id
+            )
+        )
+        assert failed_run is not None
+        failed_run.status = "failed"
+        failed_run.failure_code = "nonrepairable_test_failure"
+        failed_run.failure_message = "not repairable through finalize"
+        failed_run.completed_at = datetime.now(UTC)
+        await session.commit()
+
+    set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
+    repair_response = await task_client.post(
+        f"/api/v1/submissions/{submission_id}/finalize",
+        headers=auth_headers(),
+    )
+    assert repair_response.status_code == 409, repair_response.text
+    assert "not repairable through finalize" in repair_response.json()["detail"]
+
+
 async def test_eager_pre_review_gate_failure_after_submission_is_repairable(
     task_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
@@ -4641,15 +4748,18 @@ async def test_queued_gate_policy_error_is_failed_and_repairable(
     async with db_session.get_session_factory()() as session:
         failed_run = await session.get(db_models.CheckerRun, queued_run.id)
         submission = await session.get(Submission, submission_id)
+        task = await session.get(WorkstreamTask, started_task["id"])
         pre_submit_policy = await session.get(
             PreSubmitCheckerPolicy,
             submission.locked_pre_submit_checker_policy_id if submission is not None else "",
         )
         assert failed_run is not None
         assert submission is not None
+        assert task is not None
         assert pre_submit_policy is not None
         assert failed_run.status == "failed"
         assert failed_run.failure_code == "pre_review_gate_execution_failed"
+        assert task.status == "evaluation_pending"
         restored_bundle = dict(pre_submit_policy.compiled_bundle)
         restored_bundle.pop("tampered", None)
         pre_submit_policy.compiled_bundle = restored_bundle

@@ -78,6 +78,7 @@ PRE_REVIEW_GATE_TRIGGER_SOURCE = "submission_finalized"
 PRE_REVIEW_GATE_TRIGGER_REASON = "submission locked for automatic pre-review gate"
 PRE_REVIEW_GATE_ENQUEUE_FAILURE_CODE = "pre_review_gate_enqueue_failed"
 PRE_REVIEW_GATE_EXECUTION_FAILURE_CODE = "pre_review_gate_execution_failed"
+PRE_REVIEW_GATE_UNKNOWN_CHECKER_FAILURE_CODE = "unknown_checker"
 PRE_REVIEW_GATE_STALE_FAILURE_CODE = "stale_submission_version"
 PRE_REVIEW_GATE_STALE_RUNNING_FAILURE_CODE = "pre_review_gate_running_timed_out"
 PRE_REVIEW_GATE_REPAIR_DISPATCH_REASON = (
@@ -875,11 +876,30 @@ class CheckerService:
                     "task must be submitted or in checker gate before checkers run"
                 )
 
-            checker_policy = await self._load_locked_post_submit_policy(task, submission)
-            effective_policy, _ = await self._load_locked_pre_submit_context(
+            queued_requester_payload = self._sanitize_requester_provenance(requester_provenance)
+            await self._assert_pre_review_gate_claim_still_current(checker_run)
+            await self._enter_evaluation_pending(
+                actor,
                 task,
                 submission,
+                checker_run.trigger_reason or PRE_REVIEW_GATE_TRIGGER_REASON,
+                checker_run.trigger_source or PRE_REVIEW_GATE_TRIGGER_SOURCE,
+                queued_requester_payload,
             )
+
+            try:
+                checker_policy = await self._load_locked_post_submit_policy(task, submission)
+                effective_policy, _ = await self._load_locked_pre_submit_context(
+                    task,
+                    submission,
+                )
+            except CheckerPolicyInvalid as exc:
+                await self._fail_claimed_pre_review_gate(
+                    checker_run,
+                    failure_code=PRE_REVIEW_GATE_EXECUTION_FAILURE_CODE,
+                    failure_message=str(exc),
+                )
+                raise
             try:
                 requester_payload = await self._submission_requester_provenance(
                     task,
@@ -892,7 +912,6 @@ class CheckerService:
                     failure_message="submission lock audit provenance is missing",
                 )
                 raise
-            queued_requester_payload = self._sanitize_requester_provenance(requester_provenance)
             if not self._requester_provenance_matches(
                 expected=requester_payload,
                 received=queued_requester_payload,
@@ -913,7 +932,7 @@ class CheckerService:
             except UnknownChecker as exc:
                 await self._fail_claimed_pre_review_gate(
                     checker_run,
-                    failure_code="unknown_checker",
+                    failure_code=PRE_REVIEW_GATE_UNKNOWN_CHECKER_FAILURE_CODE,
                     failure_message=str(exc),
                 )
                 raise CheckerPolicyInvalid(str(exc)) from exc
@@ -925,15 +944,6 @@ class CheckerService:
             except ValueError:
                 artifact_manifest_hash = "invalid:artifact_manifest"
 
-            await self._assert_pre_review_gate_claim_still_current(checker_run)
-            await self._enter_evaluation_pending(
-                actor,
-                task,
-                submission,
-                checker_run.trigger_reason or PRE_REVIEW_GATE_TRIGGER_REASON,
-                checker_run.trigger_source or PRE_REVIEW_GATE_TRIGGER_SOURCE,
-                requester_payload,
-            )
             context = CheckerContext(
                 task=task,
                 submission=submission,
@@ -1228,6 +1238,7 @@ class CheckerService:
         retryable_failure_codes = {
             PRE_REVIEW_GATE_ENQUEUE_FAILURE_CODE,
             PRE_REVIEW_GATE_EXECUTION_FAILURE_CODE,
+            PRE_REVIEW_GATE_UNKNOWN_CHECKER_FAILURE_CODE,
             PRE_REVIEW_GATE_REQUESTER_PROVENANCE_MISMATCH_CODE,
         }
         is_retryable_failure = (

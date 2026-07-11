@@ -938,6 +938,11 @@ class TaskService:
             force_enqueue_queued=repair_snapshot is not None,
         )
         if not should_enqueue:
+            if repair_snapshot is not None and checker_run.status == "failed":
+                raise TaskTransitionBlocked(
+                    "automatic pre-review gate failure is not repairable through finalize; "
+                    "inspect checker run"
+                )
             return checker_run.id
         if repair_snapshot is not None:
             dispatch_claimed = await checker_service.claim_pre_review_gate_repair_dispatch(
