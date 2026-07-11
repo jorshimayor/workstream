@@ -10,11 +10,11 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: d5b0ca96cc8010ae136eb5a3295248cd04197d2f
+Reviewed code SHA: 5739e1d6fc8df0fa620bd007c45e370530ac8d12
 
-Reviewed at: 2026-07-11T13:15:59Z
+Reviewed at: 2026-07-11T14:08:40Z
 
-Reviewer run IDs: senior-engineering=/root/final_senior_review; QA/test=/root/final_qa_review; security/auth=/root/final_security_review; product/ops=/root/final_product_review; architecture=/root/final_arch_review; docs=/root/final_docs_review; CI-integrity=/root/final_ci_review; reuse/dedup=/root/final_reuse_review; test-delta=/root/final_test_delta_review
+Reviewer run IDs: senior-engineering=/root/pdf_attr_engineering_review; QA/test=/root/pdf_attr_quality_review; security/auth=/root/pdf_attr_ci_docs_security_review; product/ops=/root/pdf_attr_quality_review; architecture=/root/pdf_attr_engineering_review; docs=/root/pdf_attr_ci_docs_security_review; CI-integrity=/root/pdf_attr_ci_docs_security_review; reuse/dedup=/root/pdf_attr_engineering_review; test-delta=/root/pdf_attr_quality_review
 
 ## Reviewed Change
 
@@ -22,6 +22,8 @@ Scope:
 
 - Imported and SHA-256 bound eight user-supplied Workstream reference files as
   immutable archival planning inputs with an adjacent precedence marker.
+- Marked only imported reference PDFs as Git binary content so diff and CI
+  tooling cannot attempt UTF-8 decoding; added deterministic attribute proof.
 - Adopted WS-AUTH-001 as the target authorization source while preserving the
   external Flow authentication boundary and canonical `/api/v1` namespace.
 - Added intent, discovery, decisions, risks, plan, source manifest, status,
@@ -75,6 +77,9 @@ Scope:
 - Reused the existing Celery include list for durable reconciliation.
 - Added adjacent archival input labeling and complete active-doc/scanner
   ownership for the baseline adoption chunk.
+- Corrected the PR-discovered PDF diff failure with a narrow Git-native binary
+  attribute, added it to the planning contract, and proved all five PDFs resolve
+  `diff`, `merge`, and `text` to `unset` without changing archival bytes.
 
 ## Commands Run
 
@@ -84,6 +89,7 @@ python3 scripts/check_markdown_links.py
 python3 scripts/check_loop_memory_state.py
 python3 scripts/test_agent_gates.py
 sha256sum -c docs/reference_specs/SHA256SUMS
+git check-attr diff merge text -- docs/reference_specs/*.pdf | awk '$3 != "unset" { exit 1 }'
 git diff --check
 ```
 
@@ -94,6 +100,7 @@ Results:
 - Loop memory: passed.
 - Agent gate regression suite: 26 passed.
 - All eight imported-file hashes: passed.
+- Reference PDF binary attribute assertion: passed for all five PDFs.
 - `git diff --check`: passed.
 
 ## Remaining Risks
