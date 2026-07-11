@@ -2,8 +2,9 @@
 
 ## WS-ART-001-PLAN
 
-Status: PR #97 open. Seven valid CodeRabbit findings were fixed locally; final
-evidence rebinding and fresh external checks remain before human review.
+Status: planning external review in progress on PR #97. Seven valid CodeRabbit
+findings were fixed locally; final evidence rebinding and fresh external checks
+remain before human review.
 
 Reviewed planning SHA: `cb3e3397c6dd4698ebed5f54efe8820688f23d16`
 

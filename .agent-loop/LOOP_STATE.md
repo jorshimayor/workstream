@@ -7,9 +7,10 @@
 - Active implementation chunk: none
 - Branch: `codex/ws-art-001-artifact-storage-planning`
 - Worktree: `/home/abiorh/flow/workstream`
-- Status: PR #97 is open. Seven valid CodeRabbit findings were fixed locally;
-  final internal evidence rebinding and fresh external checks remain. No
-  application or Flow Node implementation has started.
+- Status: WS-ART planning external review is in progress on PR #97. Seven valid
+  CodeRabbit findings were fixed locally; final internal evidence rebinding and
+  fresh external checks remain. No application or Flow Node implementation has
+  started.
 - Last reviewed implementation SHA: `be0b836`
 - Final merged WS-AUTH-001-01 branch head: `b5217e1`
 - Last merge commit: `1d3e487`
