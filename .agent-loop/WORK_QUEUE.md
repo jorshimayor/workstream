@@ -2,15 +2,13 @@
 
 ## In Progress
 
-| Chunk | Title | Risk | Status |
-|---|---|---:|---|
-| `WS-POL-002-03` | Server-Owned Policy Approval And Visibility APIs | L1 | Pull request #90 current; current `main` merged locally; evidence rebind and external checks pending |
+None.
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive until explicit user start after `WS-POL-002-03` merge |
+| `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive until this memory update completes and a separate explicit user start is given |
 | `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Proposed after D4-D10 approval and explicit start |
 
 ## Human Checkpoints
@@ -45,12 +43,13 @@
 | `WS-POL-002-PLAN` | Post-Submit Checker Foundation Planning | L1 | Merged through PR #85 as `3fc1a68` on 2026-07-09 |
 | `WS-POL-002-01` | Post-Submit Compiler Contract | L1 | Merged through PR #87 as `ed52c21` on 2026-07-09 |
 | `WS-POL-002-02` | Post-Submit Derivation Agent And Resumable Setup Integration | L1 | Merged through PR #88 as `32af6a7` on 2026-07-11 |
+| `WS-POL-002-03` | Server-Owned Policy Approval And Visibility APIs | L1 | Merged through PR #90 as `a7aa474` on 2026-07-11 |
 | `WS-AUTH-001-PLAN` | Authorization Service Planning | L0 | Merged through PR #91 as `ad6d644` on 2026-07-11 |
 
 ## Proposed Next
 
-Do not start `WS-POL-002-04` until `WS-POL-002-03` is externally reviewed,
-merged by explicit human approval, and followed by memory update.
+Do not start `WS-POL-002-04` until a separate explicit user start signal after
+this post-merge memory update.
 Stop at the WS-AUTH-001 planning human checkpoint. Do not activate
 `WS-AUTH-001-01` before explicit D4-D10 approval and a separate start signal.
 Future WS-POL work after PR #90 also requires a separate start signal.
