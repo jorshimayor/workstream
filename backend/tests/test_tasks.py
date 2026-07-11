@@ -4833,9 +4833,21 @@ async def test_queued_gate_rejects_tampered_requester_provenance(
 
     async with db_session.get_session_factory()() as session:
         failed_run = await session.get(db_models.CheckerRun, queued_run.id)
+        task = await session.get(WorkstreamTask, started_task["id"])
+        gate_events = (
+            await session.execute(
+                select(AuditEvent).where(
+                    AuditEvent.entity_id == started_task["id"],
+                    AuditEvent.event_type.like("pre_review_gate_%"),
+                )
+            )
+        ).scalars().all()
     assert failed_run is not None
     assert failed_run.status == "failed"
     assert failed_run.failure_code == "requester_provenance_mismatch"
+    assert task is not None
+    assert task.status == "submitted"
+    assert [event.event_type for event in gate_events] == []
 
     monkeypatch.setattr(task_service_module, "enqueue_pre_review_gate", original_enqueue)
     set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
@@ -4985,7 +4997,10 @@ async def test_stale_queued_pre_review_gate_skips_before_task_status_check(
         )
         audit_events = (
             await session.execute(
-                select(AuditEvent).where(AuditEvent.entity_id == v1.json()["id"])
+                select(AuditEvent).where(
+                    AuditEvent.entity_id == started_task["id"],
+                    AuditEvent.event_type.like("pre_review_gate_%"),
+                )
             )
         ).scalars().all()
 

@@ -261,7 +261,9 @@ Use Postgres for records.
 
 Use a storage interface for large files and evidence. During local development, the implementation can store files on the local filesystem, but callers use stable object identifiers, content hashes, and an object-storage-style API so the backend will later target R2, S3, or another compatible object store without changing submission/evidence semantics.
 
-Submission artifacts are hash-locked once a checker run starts. Any changed artifact creates a new submission version instead of mutating the old one.
+Submission artifacts are hash-locked during successful submission creation
+before automatic checker execution is queued. Any changed artifact creates a new
+submission version instead of mutating the old one.
 
 Every important lifecycle action creates an append-only audit event. State is readable from current records, and audit history explains how the system got there.
 
@@ -276,7 +278,7 @@ POST /projects
 POST /projects/:id/tasks
 POST /tasks/:id/claim
 POST /tasks/:id/submit
-POST /submissions/:id/finalize
+POST /submissions/:id/finalize          # operational repair for the automatic checker gate
 GET /submissions/:id/checker-runs
 POST /reviews/:id/decision
 POST /submissions/:id/revision-replay

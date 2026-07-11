@@ -152,8 +152,8 @@ Repair outcomes:
   queue/broker/eager-dispatch problem is corrected
 - `unknown_checker`: requeue after the missing checker registration or setup
   defect is corrected
-- non-repairable failed automatic gate claim: return HTTP 409 with the current
-  failure code and no false success response
+- non-repairable failed automatic gate claim: return HTTP 409 with an
+  operator-visible repair-blocked message and no false success response
 
 ## Versioning Rules
 

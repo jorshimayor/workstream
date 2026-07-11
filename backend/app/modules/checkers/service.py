@@ -877,29 +877,6 @@ class CheckerService:
                 )
 
             queued_requester_payload = self._sanitize_requester_provenance(requester_provenance)
-            await self._assert_pre_review_gate_claim_still_current(checker_run)
-            await self._enter_evaluation_pending(
-                actor,
-                task,
-                submission,
-                checker_run.trigger_reason or PRE_REVIEW_GATE_TRIGGER_REASON,
-                checker_run.trigger_source or PRE_REVIEW_GATE_TRIGGER_SOURCE,
-                queued_requester_payload,
-            )
-
-            try:
-                checker_policy = await self._load_locked_post_submit_policy(task, submission)
-                effective_policy, _ = await self._load_locked_pre_submit_context(
-                    task,
-                    submission,
-                )
-            except CheckerPolicyInvalid as exc:
-                await self._fail_claimed_pre_review_gate(
-                    checker_run,
-                    failure_code=PRE_REVIEW_GATE_EXECUTION_FAILURE_CODE,
-                    failure_message=str(exc),
-                )
-                raise
             try:
                 requester_payload = await self._submission_requester_provenance(
                     task,
@@ -926,6 +903,29 @@ class CheckerService:
                 raise CheckerExecutionBlocked(
                     "pre-review gate requester provenance did not match locked submission audit"
                 )
+            await self._assert_pre_review_gate_claim_still_current(checker_run)
+            await self._enter_evaluation_pending(
+                actor,
+                task,
+                submission,
+                checker_run.trigger_reason or PRE_REVIEW_GATE_TRIGGER_REASON,
+                checker_run.trigger_source or PRE_REVIEW_GATE_TRIGGER_SOURCE,
+                requester_payload,
+            )
+
+            try:
+                checker_policy = await self._load_locked_post_submit_policy(task, submission)
+                effective_policy, _ = await self._load_locked_pre_submit_context(
+                    task,
+                    submission,
+                )
+            except CheckerPolicyInvalid as exc:
+                await self._fail_claimed_pre_review_gate(
+                    checker_run,
+                    failure_code=PRE_REVIEW_GATE_EXECUTION_FAILURE_CODE,
+                    failure_message=str(exc),
+                )
+                raise
             checker_names = list(checker_policy.execution_checkers or [])
             try:
                 self._registry.require_registered(set(checker_names))
