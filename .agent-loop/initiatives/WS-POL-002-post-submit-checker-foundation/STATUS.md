@@ -10,10 +10,11 @@ implemented the version-stamped trusted post-submit compiler contract,
 default-checker snapshot validation, canonical policy hashing, and tests around
 default-drift safety.
 
-`WS-POL-002-02` is active after the user's explicit start signal. Its
-implementation, deterministic proof, internal reviewer fanout, internal review
-evidence, PR trust bundle, and external-review response are recorded. PR #88 is
-open; the current gate is current-head GitHub checks and human checkpoint.
+`WS-POL-002-02` merged through PR #88 as `32af6a7` on 2026-07-11. It
+implemented setup-time post-submit checker derivation, resumable setup
+continuation, generated project `PostSubmitCheckerPolicy` persistence, automatic
+contributor submission handoff to the pre-review gate, and repair-only
+`/finalize` semantics.
 
 ## Active Planning Chunk
 
@@ -21,11 +22,11 @@ None.
 
 ## Active Implementation Chunk
 
-`WS-POL-002-02` - Post-Submit Derivation Agent And Resumable Setup Integration.
+None.
 
 ## Current Implementation Branch
 
-`codex/ws-pol-002-02-post-submit-derivation`
+`main`
 
 ## Chunk Status
 
@@ -33,7 +34,7 @@ None.
 |---|---|---|---:|---|
 | `WS-POL-002-PLAN` | Merged | `codex/ws-pol-002-post-submit-checker-planning` | #85 | Defines intent, discovery, design, risks, decisions, and implementation chunks. |
 | `WS-POL-002-01` | Merged | `codex/ws-pol-002-01-post-submit-compiler` | #87 | Post-Submit Compiler Contract; merged as `ed52c21`. |
-| `WS-POL-002-02` | Active | `codex/ws-pol-002-02-post-submit-derivation` | #88 | Post-submit derivation agent and resumable setup integration after pre-submit approval/compile; current-head checks and human merge review remain the active gate. |
+| `WS-POL-002-02` | Merged | `codex/ws-pol-002-02-post-submit-derivation` | #88 | Post-submit derivation agent and resumable setup integration; merged as `32af6a7`. |
 | `WS-POL-002-03` | Proposed | - | - | Server-owned approval and setup visibility APIs for compiled post-submit policies. |
 | `WS-POL-002-04` | Proposed | - | - | Runtime hardening for locked post-submit policy execution and routing. |
 | `WS-POL-002-05` | Proposed | - | - | Terminal Benchmark-style live API proof and report. |
