@@ -39,14 +39,15 @@ semantic search, public announcement, or Workstream lifecycle state.
   not promote legacy published/discovered metadata to verified artifacts,
   refuses a non-empty production downgrade, and passes empty-fixture
   downgrade/re-upgrade tests.
+- A dedicated `artifact_http_contract` integration-test target is non-empty;
+  the test runner fails if target discovery reports zero tests.
 
 ## Verification
 
 ```bash
 cd /home/abiorh/flow/Flow-Node/back-end && cargo fmt --check
 cd /home/abiorh/flow/Flow-Node/back-end && cargo clippy --all-targets --all-features -- -D warnings
-cd /home/abiorh/flow/Flow-Node/back-end && cargo test api::rest::artifact
-cd /home/abiorh/flow/Flow-Node/back-end && cargo test artifact_contract::core_ingest_retrieve_status
+cd /home/abiorh/flow/Flow-Node/back-end && ./scripts/run_nonempty_cargo_test_target.sh artifact_http_contract
 cd /home/abiorh/flow/Flow-Node/back-end && cargo test
 git -C /home/abiorh/flow/Flow-Node diff --check
 ```

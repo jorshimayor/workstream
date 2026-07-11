@@ -13,6 +13,7 @@ records/port, configuration, and `LocalStorageAdapter` conformance.
 - `backend/app/interfaces/artifacts.py`
 - `backend/app/modules/artifacts/**`
 - `backend/app/adapters/artifacts/local.py`
+- `backend/app/core/hashing.py`, `backend/app/modules/audit/repository.py`
 - `backend/app/core/config.py`, `backend/app/db/models.py`
 - one new `backend/alembic/versions/*.py`
 - `backend/tests/test_artifacts.py`, `test_config.py`, `test_alembic.py`
@@ -30,6 +31,11 @@ lifecycle transaction, legacy-field removal, or WS-AUTH implementation.
 - Separate upload session/item, content, immutable binding, replica, and receipt
   records; staging creates no binding.
 - Generic port exposes no CID/DAG/pin types.
+- Manifest/request/response digests reuse or centrally extend
+  `canonical_json_hash`; no artifact-local canonical JSON helper is added.
+- Binding/release/quarantine/reconciliation audit evidence uses the shared
+  `AuditEvent`/`AuditRepository`; operation receipts do not form a parallel
+  audit framework.
 - Additive migration succeeds with current legacy rows and promotes none.
 - Local adapter performs bounded atomic writes, independent SHA-256/size checks,
   opaque IDs, private permissions, idempotent replay/mismatch, retrieval, verify,
@@ -50,14 +56,18 @@ lifecycle transaction, legacy-field removal, or WS-AUTH implementation.
 ## Verification
 
 ```bash
-cd backend && .venv/bin/ruff check app tests scripts
-cd backend && .venv/bin/docstr-coverage --config .docstr.yaml
-cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest -q tests/test_artifacts.py tests/test_config.py tests/test_alembic.py
-cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest -q
+(cd backend && .venv/bin/ruff check app tests scripts)
+(cd backend && .venv/bin/docstr-coverage --config .docstr.yaml)
+(cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest -q tests/test_artifacts.py tests/test_config.py tests/test_alembic.py)
+(cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest -q)
+(cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/api_contract_e2e.py)
+python3 scripts/test_agent_gates.py
 python3 scripts/check_stale_authorization_docs.py
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
+python3 scripts/check_loop_memory_state.py
+python3 scripts/check_internal_review_evidence.py
 git diff --check
 ```
 

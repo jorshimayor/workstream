@@ -170,3 +170,16 @@ internal reconciliation only. `ReviewPacketManifest` and
 `ReviewEvidenceArtifact` remain approved names, but their records/APIs are owned
 by WS-REV after reviewer assignment/lease authority exists. WS-ART supplies only
 generic artifact primitives.
+
+## D13 - Shared Infrastructure Reuse
+
+Artifact services write product/audit evidence through the existing
+`AuditEvent` and `AuditRepository` path. `ArtifactOperationReceipt` is provider
+operation evidence and must not become a second audit-event framework.
+
+Canonical manifests plus idempotency request/response digests reuse
+`app.core.hashing.canonical_json_hash`. If artifact contracts require canonical
+JSON values broader than the current helper accepts, that helper is extended
+centrally with regression vectors; no artifact-local JSON encoder/hash helper is
+introduced. The legacy caller-manifest hash helper is removed in its owning
+cutover rather than reused as canonical artifact truth.

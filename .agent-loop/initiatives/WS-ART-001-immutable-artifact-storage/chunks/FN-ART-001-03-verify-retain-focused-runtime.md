@@ -43,17 +43,19 @@ domain IDs in provider contracts.
 - The additive retention/reference/status migration verifies existing artifact
   rows before retain eligibility, refuses downgrade while active retention
   references exist, and passes empty-fixture downgrade/re-upgrade tests.
+- A dedicated `artifact_retention_contract` integration-test target is
+  non-empty; the test runner fails if target discovery reports zero tests.
 
 ## Verification
 
 ```bash
 cd /home/abiorh/flow/Flow-Node/back-end && cargo fmt --check
 cd /home/abiorh/flow/Flow-Node/back-end && cargo clippy --all-targets --all-features -- -D warnings
-cd /home/abiorh/flow/Flow-Node/back-end && cargo test artifact
-cd /home/abiorh/flow/Flow-Node/back-end && cargo test artifact_contract::verify_retain_release
-cd /home/abiorh/flow/Flow-Node/back-end && cargo test artifact_contract::version_1
+cd /home/abiorh/flow/Flow-Node/back-end && ./scripts/run_nonempty_cargo_test_target.sh artifact_retention_contract
 cd /home/abiorh/flow/Flow-Node/back-end && cargo test
-cd /home/abiorh/flow/Flow-Node && docker compose -f docker-compose.workstream.yml up -d --build
+cd /home/abiorh/flow/Flow-Node && docker compose -f docker-compose.workstream.yml up -d --build --wait --wait-timeout 120
+cd /home/abiorh/flow/Flow-Node && ./scripts/run_artifact_contract_vectors.sh --compose docker-compose.workstream.yml --suite version_1
+cd /home/abiorh/flow/Flow-Node && docker compose -f docker-compose.workstream.yml run --rm flow-node-production-route-audit
 cd /home/abiorh/flow/Flow-Node && docker compose -f docker-compose.workstream.yml down -v
 git -C /home/abiorh/flow/Flow-Node diff --check
 ```

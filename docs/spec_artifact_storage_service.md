@@ -85,6 +85,13 @@ DTOs expose opaque provider IDs, SHA-256, size, media type, typed states, and
 stable errors. Provider-specific receipt details are bounded and never required
 for domain decisions.
 
+Canonical JSON and SHA-256 operations reuse Workstream's shared
+`app.core.hashing.canonical_json_hash` implementation (extended centrally if
+needed). Artifact modules do not create a parallel JSON canonicalizer. Product
+audit events for binding, release, quarantine, and reconciliation use the
+existing `AuditEvent`/`AuditRepository`; provider operation receipts remain a
+separate provider-evidence record, not a replacement audit framework.
+
 ## Versioned Provider Contract
 
 Workstream owns `contracts/artifact-store/version_1/` request/response schemas, stable

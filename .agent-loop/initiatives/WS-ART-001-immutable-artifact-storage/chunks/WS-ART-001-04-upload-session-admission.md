@@ -16,7 +16,7 @@ server-generated artifact-set manifests, and authoritative admission records.
 - `backend/app/modules/checkers/service.py`
 - `backend/app/modules/checkers/schemas.py`
 - one additive migration
-- focused artifact/task/auth tests
+- focused artifact/task/auth tests plus `backend/tests/test_alembic.py`
 - exact upload API and artifact-set docs
 
 ## Not Allowed
@@ -47,15 +47,25 @@ reviewer upload, or direct Flow Node access by clients.
 - Cancellation/sweeper produces one terminal transition and at most one
   metadata-only release; content already bound to a resource has zero release
   operations.
+- The additive migration proves fresh/prior-head upgrade with existing
+  submission rows preserved, empty downgrade, and re-upgrade in
+  `test_alembic.py`.
 
 ## Verification
 
 ```bash
-cd backend && .venv/bin/ruff check app tests scripts
-cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest -q tests/test_artifacts.py tests/test_tasks.py tests/test_auth.py
-cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest -q
+(cd backend && .venv/bin/ruff check app tests scripts)
+(cd backend && .venv/bin/docstr-coverage --config .docstr.yaml)
+(cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest -q tests/test_artifacts.py tests/test_tasks.py tests/test_auth.py tests/test_alembic.py)
+(cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest -q)
+(cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/api_contract_e2e.py)
+python3 scripts/test_agent_gates.py
 python3 scripts/check_stale_authorization_docs.py
+python3 scripts/check_stale_artifact_contracts.py
+python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
+python3 scripts/check_loop_memory_state.py
+python3 scripts/check_internal_review_evidence.py
 git diff --check
 ```
 

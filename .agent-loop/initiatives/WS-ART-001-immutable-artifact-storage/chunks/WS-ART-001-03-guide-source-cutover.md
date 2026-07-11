@@ -38,12 +38,18 @@ remote reads after capture, `content_cid` alias, or authorization bypass.
 ## Verification
 
 ```bash
-cd backend && .venv/bin/ruff check app tests scripts
-cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest -q tests/test_projects.py tests/test_artifacts.py tests/test_alembic.py
-cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest -q
+(cd backend && .venv/bin/ruff check app tests scripts)
+(cd backend && .venv/bin/docstr-coverage --config .docstr.yaml)
+(cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest -q tests/test_projects.py tests/test_artifacts.py tests/test_alembic.py)
+(cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest -q)
+(cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/api_contract_e2e.py)
+python3 scripts/test_agent_gates.py
 python3 scripts/check_stale_authorization_docs.py
 python3 scripts/check_stale_artifact_contracts.py
+python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
+python3 scripts/check_loop_memory_state.py
+python3 scripts/check_internal_review_evidence.py
 git diff --check
 ```
 

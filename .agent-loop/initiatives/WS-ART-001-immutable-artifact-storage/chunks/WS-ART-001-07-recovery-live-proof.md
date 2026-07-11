@@ -44,7 +44,8 @@ or provider totals/private paths in evidence.
 ## Verification
 
 ```bash
-docker compose up -d --build postgres redis flow-node api celery-worker
+docker compose down -v --remove-orphans
+docker compose up -d --build --wait --wait-timeout 180 postgres redis flow-node api celery-worker
 docker compose ps
 docker compose exec -T api python scripts/artifact_flow_live_api_drill.py --phase healthy
 docker compose exec -T api python scripts/artifact_flow_live_api_drill.py --phase crash-window
@@ -55,11 +56,16 @@ docker compose start flow-node
 docker compose exec -T api python scripts/artifact_flow_live_api_drill.py --phase recovery
 docker compose run --rm flow-node-production-route-audit
 docker compose exec -T api ruff check app tests scripts
+docker compose exec -T api docstr-coverage --config .docstr.yaml
 docker compose exec -T api pytest -q
+docker compose exec -T api python scripts/api_contract_e2e.py
+python3 scripts/test_agent_gates.py
 python3 scripts/check_stale_authorization_docs.py
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
+python3 scripts/check_loop_memory_state.py
+python3 scripts/check_internal_review_evidence.py
 git diff --check
 docker compose down -v
 ```

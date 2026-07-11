@@ -10,6 +10,7 @@ new HTTP routes.
 ## Allowed Files
 
 - `back-end/node/src/modules/storage/content/{service,dag,chunking,provider}.rs`
+- `back-end/scripts/run_nonempty_cargo_test_target.sh`
 - focused storage tests/fixtures and internal docs
 
 ## Not Allowed
@@ -28,13 +29,15 @@ or Workstream repository edits.
   cleanup are tested.
 - Existing non-streaming callers use a bounded compatibility wrapper only inside
   Flow Node and are scheduled for removal by FN-ART-001-02.
+- A dedicated `artifact_streaming_contract` integration-test target is
+  non-empty; the test runner fails if target discovery reports zero tests.
 
 ## Verification
 
 ```bash
 cd /home/abiorh/flow/Flow-Node/back-end && cargo fmt --check
 cd /home/abiorh/flow/Flow-Node/back-end && cargo clippy --all-targets --all-features -- -D warnings
-cd /home/abiorh/flow/Flow-Node/back-end && cargo test modules::storage::content
+cd /home/abiorh/flow/Flow-Node/back-end && ./scripts/run_nonempty_cargo_test_target.sh artifact_streaming_contract
 cd /home/abiorh/flow/Flow-Node/back-end && cargo test
 git -C /home/abiorh/flow/Flow-Node diff --check
 ```
