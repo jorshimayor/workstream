@@ -43,8 +43,8 @@
 ## Proposed Next
 
 Execute only `WS-AUTH-001-01` in its dedicated worktree. Stop after internal
-review and PR preparation; do not start `WS-AUTH-001-02` or resume
-`WS-POL-002-03` automatically.
+review and PR preparation; do not start `WS-AUTH-001-02` or
+`WS-POL-002-04`. This worktree does not own or advance PR #90.
 
 ## Blocked
 

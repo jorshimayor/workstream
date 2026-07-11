@@ -80,7 +80,7 @@ Legacy typed workflow-profile IDs are unrelated and never promoted.
 | Grant | Scope | Purpose |
 |---|---|---|
 | `access_administrator` | system | Actor, identity-link, administrative-grant, and permission-catalog administration. |
-| `operator` | system or covered project where defined | Runtime inspection and explicit recovery operations. |
+| `operator` | system | Runtime inspection and explicit recovery operations against canonically resolved resources. |
 | `project_manager` | system or exact covered project | Project configuration, task management, and contributor grants. |
 | `finance_authority` | system or exact covered project | Compensation configuration and fulfillment observation owned by WS-CON. |
 | `audit_authority` | system or exact covered project | Read-only evidence access and authorized export. |
@@ -110,7 +110,7 @@ The initial registered catalog includes:
 ```text
 actor.profile.read_self
 actor.profile.update_self
-actor.profile.read
+actor.profile.read_any
 actor.profile.suspend
 actor.profile.reactivate
 actor.profile.deactivate

@@ -882,13 +882,45 @@ def test_loop_memory_state_accepts_merged_fixture() -> None:
 
 
 def test_stale_authorization_rule_examples_are_rejected() -> None:
-    """Every stale-authorization rule keeps a known-bad regression example."""
+    """Independent fixtures cover each required stale-authority family."""
     gate = load_module(
         "stale_authorization_docs_rules",
         "scripts/check_stale_authorization_docs.py",
     )
-    for rule in gate.RULES:
-        assert gate.scan_text("docs/new_active_doc.md", rule.example), rule.code
+    fixtures = {
+        "NON_CANONICAL_API_PREFIX": "POST /v1/projects",
+        "LEGACY_ADMIN_PROJECT_MANAGER_AUTHORITY": "An admin or project_manager approves.",
+        "LEGACY_ROLE_HELPER": "Call require_any_role for this route.",
+        "TRUSTED_ROLE_CLAIM_AUTHORITY": "Routes use trusted role claims.",
+        "CURRENT_TOKEN_ROLE_AUTHORITY": "Require the role in the current verified token.",
+        "TOKEN_CARRIES_PRODUCT_ROLE": "The token also carries an authorized Workstream role.",
+        "TYPED_PROFILE_AUTHORITY": 'ActorProfile(profile_type="worker") grants access.',
+        "OBSOLETE_ROLE_ASSIGNMENT_MODEL": "Persist a WorkstreamRoleAssignment.",
+        "OPERATOR_NOT_A_ROLE": "Operator is not a separate permission role.",
+        "BROAD_ADMIN_OVERRIDE": "An admin can override a checker failure.",
+        "LEGACY_ADMIN_HEADING": "### Admin",
+        "LEGACY_ROLE_MATRIX": "| Admin | Project Manager | Finance | Auditor |",
+        "ROLE_NAME_APPROVAL_PROVENANCE": '"approved_by_role": "project_manager"',
+        "GENERIC_ADMIN_PRODUCT_AUTHORITY": "An admin can create projects.",
+        "TOKEN_ROLE_PRODUCT_AUTHORITY": "A token role grants project access.",
+        "NAMED_ROLE_TOKEN_AUTHORITY": "A project_manager token may approve this request.",
+        "TYPED_PROFILE_PRODUCT_AUTHORITY": (
+            "ActorProfile with type worker authorizes task claim."
+        ),
+    }
+    for code, sample in fixtures.items():
+        failures = gate.scan_text("docs/new_active_doc.md", sample)
+        assert any(failure.endswith(code) for failure in failures), (code, failures)
+
+    canonical_negatives = (
+        "No token role grants Workstream product authority.",
+        "Roles from the bearer token do not permit this request.",
+        "A worker role from the verified token never authorizes task claim.",
+        "ActorProfile with type worker does not authorize task claim.",
+        "An Access Administrator may grant administrative roles.",
+    )
+    for sample in canonical_negatives:
+        assert gate.scan_text("docs/new_active_doc.md", sample) == [], sample
 
 
 def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:
@@ -910,6 +942,34 @@ def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:
 
         active.write_text("POST /api/v1/projects\n", encoding="utf-8")
         assert gate.scan(root) == []
+
+        active.write_text(
+            "The worker role from the verified token authorizes task claims.\n"
+            "ActorProfile with type worker authorizes task claim.\n",
+            encoding="utf-8",
+        )
+        failures = gate.scan(root)
+        assert any(item.endswith("TOKEN_ROLE_PRODUCT_AUTHORITY") for item in failures)
+        assert any(item.endswith("TYPED_PROFILE_PRODUCT_AUTHORITY") for item in failures)
+
+
+def test_stale_authorization_precedence_exemption_is_line_scoped() -> None:
+    """The active archive marker exempts one line, not its entire document."""
+    gate = load_module(
+        "stale_authorization_docs_precedence",
+        "scripts/check_stale_authorization_docs.py",
+    )
+    marker = (
+        "archival input uses `/v1`. WS-AUTH-001 takes precedence over the current"
+    )
+    assert gate.scan_text("docs/reference_specs/README.md", marker) == []
+    failures = gate.scan_text(
+        "docs/reference_specs/README.md",
+        marker + "\nClients call POST /v1/projects.\n",
+    )
+    assert failures == [
+        "docs/reference_specs/README.md:2: NON_CANONICAL_API_PREFIX"
+    ]
 
 
 def test_stale_authorization_history_allowlist_is_exact() -> None:
@@ -961,6 +1021,7 @@ def main() -> int:
         test_loop_memory_state_accepts_merged_fixture,
         test_stale_authorization_rule_examples_are_rejected,
         test_stale_authorization_discovery_includes_new_untracked_docs,
+        test_stale_authorization_precedence_exemption_is_line_scoped,
         test_stale_authorization_history_allowlist_is_exact,
         test_agent_gates_runs_stale_authorization_docs_fail_closed,
     ]

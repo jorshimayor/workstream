@@ -23,7 +23,7 @@ product authority. Scopes are an outer request-class gate only.
 | Grant | Scope | Purpose |
 |---|---|---|
 | Access Administrator | system | Actor, identity-link, permission-catalog, and administrative-grant management. |
-| Operator | system or explicitly covered project | Runtime observation, reconciliation, retry, and approved recovery. |
+| Operator | system | Runtime observation, reconciliation, retry, and approved recovery against canonically resolved resources. |
 | Project Manager | system or exact covered project | Project configuration, project tasks, policies, and contributor grants. |
 | Finance Authority | system or exact covered project | Compensation configuration and fulfillment observation under WS-CON-001. |
 | Audit Authority | system or exact covered project | Read-only evidence access and authorized export. |

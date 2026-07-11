@@ -76,6 +76,7 @@ docs/diagrams/rendered/workstream_v01_container.svg
 docs/risk_register.md
 docs/spec_*.md
 scripts/check_stale_authorization_docs.py
+scripts/render_authorization_docs.sh
 scripts/test_agent_gates.py
 .github/workflows/agent-gates.yml
 .agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/**
@@ -86,6 +87,10 @@ scripts/test_agent_gates.py
 .agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/STATUS.md
 .agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/CHUNK_MAP.md
 ```
+
+The eight exact PlantUML/image paths above are approved companion sources and
+generated artifacts for the reconciled active diagrams; they are not a scope
+exception.
 
 ## Not allowed
 
@@ -155,8 +160,12 @@ python3 scripts/check_markdown_links.py
 python3 scripts/check_stale_authorization_docs.py
 python3 scripts/test_agent_gates.py
 sha256sum -c docs/reference_specs/SHA256SUMS
+PLANTUML_JAR=/path/to/plantuml-1.2026.6.jar scripts/render_authorization_docs.sh
 git diff --check
 ```
+
+Diagram regeneration uses PlantUML `1.2026.6`; evidence records the local JAR
+SHA-256 and the regenerated artifact checks.
 
 ## Required reviewers
 

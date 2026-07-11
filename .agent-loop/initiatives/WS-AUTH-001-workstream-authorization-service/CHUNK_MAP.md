@@ -71,6 +71,6 @@ WS-AUTH-001-PLAN
 
 ## Stop condition
 
-After planning review, stop. `WS-AUTH-001-01` does not become active without
-explicit human approval of D4-D10 plus an implementation start signal under the
-repository engineering loop.
+After WS-AUTH-001-01 review and PR preparation, stop. Do not start
+`WS-AUTH-001-02` or `WS-POL-002-04`; this worktree does not own or advance
+PR #90.

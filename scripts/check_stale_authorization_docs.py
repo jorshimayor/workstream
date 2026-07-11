@@ -23,7 +23,6 @@ HISTORICAL_PATHS = {
     "docs/internal_reviews/2026-06-12_week2_closeout_real_api_drill.md": "closed internal review",
     "docs/internal_reviews/2026-06-13_week1_week2_deterministic_hardening.md": "closed internal review",
     "docs/internal_reviews/2026-06-16_submission_artifact_policy_architecture.md": "closed internal review",
-    "docs/reference_specs/README.md": "archive precedence marker",
     "docs/reference_specs/WS-AUTH-001-actor-profile-role-and-authorization-service-specification.md": "immutable archival input",
     "docs/reference_specs/WS-IMP-001-workstream-v0.1-coding-agent-implementation-specification.md": "immutable archival input",
     "docs/reference_specs/WS-REV-001-review-lifecycle-specification.md": "immutable archival input",
@@ -57,64 +56,105 @@ HISTORICAL_PATHS = {
 
 @dataclass(frozen=True)
 class Rule:
-    """One forbidden active-document pattern and a deterministic example."""
+    """One forbidden active-document pattern."""
 
     code: str
     pattern: re.Pattern[str]
-    example: str
+    allow_negated: bool = False
 
 
 RULES = (
-    Rule("NON_CANONICAL_API_PREFIX", re.compile(r"(?<!/api)/v1(?:/|\b)"), "POST /v1/projects"),
+    Rule("NON_CANONICAL_API_PREFIX", re.compile(r"(?<!/api)/v1(?:/|\b)")),
     Rule(
         "LEGACY_ADMIN_PROJECT_MANAGER_AUTHORITY",
         re.compile(r"`?admin`?\s*(?:/|or)\s*`?project_manager`?", re.IGNORECASE),
-        "An `admin` or `project_manager` approves this operation.",
     ),
-    Rule("LEGACY_ROLE_HELPER", re.compile(r"require_any_role", re.IGNORECASE), "Use require_any_role here."),
-    Rule("TRUSTED_ROLE_CLAIM_AUTHORITY", re.compile(r"trusted role claims", re.IGNORECASE), "Routes use trusted role claims."),
+    Rule("LEGACY_ROLE_HELPER", re.compile(r"require_any_role", re.IGNORECASE)),
+    Rule("TRUSTED_ROLE_CLAIM_AUTHORITY", re.compile(r"trusted role claims", re.IGNORECASE)),
     Rule(
         "CURRENT_TOKEN_ROLE_AUTHORITY",
         re.compile(r"role in the current verified token", re.IGNORECASE),
-        "The route requires the role in the current verified token.",
     ),
     Rule(
         "TOKEN_CARRIES_PRODUCT_ROLE",
         re.compile(r"token also carries an authorized Workstream role", re.IGNORECASE),
-        "Access works when the token also carries an authorized Workstream role.",
     ),
     Rule(
         "TYPED_PROFILE_AUTHORITY",
         re.compile(r"ActorProfile\s*\(\s*profile_type", re.IGNORECASE),
-        'ActorProfile(profile_type="worker") grants access.',
     ),
     Rule(
         "OBSOLETE_ROLE_ASSIGNMENT_MODEL",
         re.compile(r"WorkstreamRoleAssignment", re.IGNORECASE),
-        "Persist a WorkstreamRoleAssignment.",
     ),
     Rule(
         "OPERATOR_NOT_A_ROLE",
         re.compile(r"Operator.{0,80}not a separate.{0,40}permission role", re.IGNORECASE),
-        "Operator is a product persona, not a separate permission role.",
     ),
     Rule(
         "BROAD_ADMIN_OVERRIDE",
         re.compile(r"\badmin\s+(?:can|may|must)\s+override", re.IGNORECASE),
-        "An admin can override a checker failure.",
     ),
-    Rule("LEGACY_ADMIN_HEADING", re.compile(r"^#{2,4}\s+Admin\s*$", re.IGNORECASE | re.MULTILINE), "### Admin"),
+    Rule("LEGACY_ADMIN_HEADING", re.compile(r"^#{2,4}\s+Admin\s*$", re.IGNORECASE | re.MULTILINE)),
     Rule(
         "LEGACY_ROLE_MATRIX",
         re.compile(r"\|\s*Admin\s*\|.*\|\s*(?:Finance|Auditor)\s*\|", re.IGNORECASE),
-        "| Admin | Project Manager | Finance | Auditor |",
     ),
     Rule(
         "ROLE_NAME_APPROVAL_PROVENANCE",
         re.compile(r"approved_by_role.{0,40}project_manager", re.IGNORECASE),
-        '"approved_by_role": "project_manager"',
+    ),
+    Rule(
+        "GENERIC_ADMIN_PRODUCT_AUTHORITY",
+        re.compile(
+            r"\badmin\s+(?:can|may|must|is allowed to)\s+"
+            r"(?:create|approve|activate|manage|claim|review|submit|grant|revoke|read|update|delete)\b",
+            re.IGNORECASE,
+        ),
+    ),
+    Rule(
+        "TOKEN_ROLE_PRODUCT_AUTHORITY",
+        re.compile(
+            r"(?:token\s+roles?|roles?\s+(?:from|in)\s+(?:the\s+)?"
+            r"(?:(?:current|verified|bearer)\s+)*token).{0,100}"
+            r"\b(?:grants?|authoriz(?:e[sd]?|ation)|permits?|allows?|approv(?:e[sd]?|al))\b",
+            re.IGNORECASE,
+        ),
+        allow_negated=True,
+    ),
+    Rule(
+        "NAMED_ROLE_TOKEN_AUTHORITY",
+        re.compile(
+            r"\b(?:admin|project_manager|worker|reviewer|operator)\b.{0,24}\btoken\b.{0,80}"
+            r"\b(?:can|may|must|grants?|authoriz(?:e[sd]?|ation)|permits?|allows?|approv(?:e[sd]?|al))\b",
+            re.IGNORECASE,
+        ),
+        allow_negated=True,
+    ),
+    Rule(
+        "TYPED_PROFILE_PRODUCT_AUTHORITY",
+        re.compile(
+            r"ActorProfile.{0,60}\b(?:profile_type|type)\b.{0,80}"
+            r"\b(?:grants?|authoriz(?:e[sd]?|ation)|permits?|allows?|approv(?:e[sd]?|al))\b",
+            re.IGNORECASE,
+        ),
+        allow_negated=True,
     ),
 )
+
+NEGATION_PATTERN = re.compile(
+    r"\b(?:no|not|never|cannot|can't|does not|do not|must not|non-authoritative)\b",
+    re.IGNORECASE,
+)
+
+MATCH_EXEMPTIONS = {
+    (
+        "docs/reference_specs/README.md",
+        "NON_CANONICAL_API_PREFIX",
+    ): re.compile(
+        r"^archival input uses `/v1`\. WS-AUTH-001 takes precedence over the current$"
+    ),
+}
 
 
 def git_lines(root: Path, *args: str) -> list[str]:
@@ -152,11 +192,39 @@ def line_number(text: str, offset: int) -> int:
     return text.count("\n", 0, offset) + 1
 
 
+def containing_line(text: str, offset: int) -> str:
+    """Return the full line containing ``offset``."""
+    start = text.rfind("\n", 0, offset) + 1
+    end = text.find("\n", offset)
+    return text[start:] if end == -1 else text[start:end]
+
+
+def containing_statement(text: str, start: int, end: int) -> str:
+    """Return the bounded line or sentence containing a match."""
+    line = containing_line(text, start)
+    relative_start = start - (text.rfind("\n", 0, start) + 1)
+    sentence_start = line.rfind(".", 0, relative_start) + 1
+    sentence_end = line.find(".", max(relative_start, end - start))
+    return line[sentence_start:] if sentence_end == -1 else line[sentence_start:sentence_end]
+
+
+def exempt_match(relative_path: str, rule: Rule, text: str, offset: int) -> bool:
+    """Return whether one exact reviewed archival marker match is allowed."""
+    exemption = MATCH_EXEMPTIONS.get((relative_path, rule.code))
+    return bool(exemption and exemption.fullmatch(containing_line(text, offset)))
+
+
 def scan_text(relative_path: str, text: str) -> list[str]:
     """Return deterministic rule failures for one active document."""
     failures: list[str] = []
     for rule in RULES:
         for match in rule.pattern.finditer(text):
+            if exempt_match(relative_path, rule, text, match.start()):
+                continue
+            if rule.allow_negated and NEGATION_PATTERN.search(
+                containing_statement(text, match.start(), match.end())
+            ):
+                continue
             failures.append(
                 f"{relative_path}:{line_number(text, match.start())}: {rule.code}"
             )
