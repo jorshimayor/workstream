@@ -2,13 +2,16 @@
 
 ## Current status
 
-Planning and all required internal reviewer tracks passed after repair. The
+Planning merged through PR #91 as
+`ad6d6444e497b76d7cb925f3b0999ed4b74a3dac` after required internal reviews,
+Agent Gates, and Backend passed. CodeRabbit produced a walkthrough with no
+actionable findings, then its final check was cancelled when the PR closed. The
 initiative is stopped at the L0 human checkpoint: D1-D3 are approved; D4-D10
-require explicit durable approval before implementation activation.
+require explicit durable approval before implementation.
 
 ## Active planning chunk
 
-`WS-AUTH-001-PLAN`
+None.
 
 ## Active implementation chunk
 
@@ -16,13 +19,13 @@ None.
 
 ## Current implementation branch
 
-`authorization-service`
+None.
 
 ## Chunk status
 
 | Chunk | Status | Branch | PR | Notes |
 |---|---|---|---:|---|
-| `WS-AUTH-001-PLAN` | Internally reviewed | `authorization-service` | - | L0 plan complete; D4-D10 human approval pending. |
+| `WS-AUTH-001-PLAN` | Merged | `authorization-service` | #91 | Merged as `ad6d644`; D4-D10 human approval pending. |
 | `WS-AUTH-001-01` | Proposed | - | - | Baseline adoption and repository contract reconciliation. |
 | `WS-AUTH-001-02` | Proposed | - | - | Verified issuer token and JWKS boundary. |
 | `WS-AUTH-001-03` | Proposed | - | - | Legacy actor classification preflight. |

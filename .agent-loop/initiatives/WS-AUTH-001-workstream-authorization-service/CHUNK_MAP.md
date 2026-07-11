@@ -11,7 +11,7 @@ stopped.
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-PLAN` | Authorization Service Planning | L0 | Internally reviewed; awaiting human approval |
+| `WS-AUTH-001-PLAN` | Authorization Service Planning | L0 | Merged through PR #91 as `ad6d644` |
 | `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Proposed |
 | `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Proposed |
 | `WS-AUTH-001-03` | Legacy Actor Classification Preflight | L1 | Proposed |

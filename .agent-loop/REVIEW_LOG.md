@@ -609,3 +609,25 @@ Evidence: `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/
 
 Next gate: stop. Do not activate `WS-AUTH-001-01` without explicit human
 approval of D4-D10 and a separate implementation start signal.
+
+## 2026-07-11 - WS-AUTH-001-PLAN Merged
+
+PR #91 merged into `main` as
+`ad6d6444e497b76d7cb925f3b0999ed4b74a3dac`.
+
+Reviewed planning SHA: `5739e1d6fc8df0fa620bd007c45e370530ac8d12`.
+
+Result: PASS after internal plan repair and a CI-discovered PDF binary-diff
+repair. Agent Gates and Backend passed. CodeRabbit produced a walkthrough with
+no actionable findings, then its final check was cancelled when the PR closed.
+
+Scope: merged the immutable reference-spec archive and the complete
+WS-AUTH-001 planning package with 16 bounded implementation chunks. No runtime,
+schema, dependency, frontend, review, contribution, or compensation behavior
+was implemented.
+
+Evidence: `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/reviews/WS-AUTH-001-PLAN-internal-review-evidence.md`
+
+Next gate: explicit durable human approval of D4-D10 and a separate
+`WS-AUTH-001-01` start signal. Create a fresh worktree/branch from the latest
+merged `main`; do not implement chunk 01 in the planning worktree.
