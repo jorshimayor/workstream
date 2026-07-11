@@ -6,11 +6,16 @@
 |---|---|---:|---|
 | `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Active in dedicated worktree after D4-D10 approval |
 
-## Planned Next
+## Parallel External Review
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-POL-002-03` | Server-Owned Policy Approval And Visibility APIs | L1 | Implemented separately; PR #90 in external review |
+| `WS-POL-002-03` | Server-Owned Policy Approval And Visibility APIs | L1 | Implemented separately; PR #90 open in external review |
+
+## Planned Next
+
+No next chunk is active. Start requires the current chunk's human checkpoint,
+memory update, and an explicit user signal.
 
 ## Completed
 

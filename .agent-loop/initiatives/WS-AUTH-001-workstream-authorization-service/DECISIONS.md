@@ -115,3 +115,20 @@ Celery, checker, setup, and reconciliation workers are internal services and
 background jobs, not human product roles. Existing human-role
 values using the old term are migration inputs to remove, not target product
 vocabulary or authority concepts.
+
+The field cutover is explicitly owned as follows:
+
+- `WS-AUTH-001-13` renames assignment ownership from legacy `worker_id` to
+  `contributor_id` across storage, models, services, schemas, audits, and tests.
+- `WS-AUTH-001-14` renames submission ownership/attestation and checker-result
+  visibility fields from legacy `worker_*` names to their `contributor_*`
+  equivalents across storage, models, services, schemas, audits, and tests.
+- Revision replay is not implemented yet and must begin with
+  `contributor_claim_status`; it must not introduce the legacy name.
+- Contribution and payment records are owned by WS-CON and must begin with
+  `contributor_id`; no new legacy column is permitted.
+
+Each owning migration preserves values and immutable attribution, uses only a
+bounded transitional storage compatibility layer inside the migration chunk,
+exposes no legacy public API alias, and removes the old column/name before that
+chunk completes.

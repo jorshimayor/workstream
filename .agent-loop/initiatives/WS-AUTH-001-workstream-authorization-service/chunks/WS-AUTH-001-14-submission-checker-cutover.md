@@ -35,14 +35,16 @@ P1
 backend/app/modules/tasks/router.py
 backend/app/modules/tasks/service.py
 backend/app/modules/tasks/schemas.py
+backend/app/modules/tasks/models.py
 backend/app/modules/actors/**
-backend/app/modules/checkers/router.py
-backend/app/modules/checkers/service.py
+backend/app/modules/checkers/**
+backend/alembic/versions/0022_*.py
 backend/app/modules/authorization/**
 backend/app/api/deps/auth.py
 backend/tests/test_tasks.py
 backend/tests/test_checkers.py
 backend/tests/test_auth.py
+backend/tests/test_alembic.py
 backend/scripts/api_contract_e2e.py
 docs/operations_authorization_service.md
 .agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/**
@@ -83,6 +85,13 @@ legacy active-worker-profile or workflow-eligibility compatibility fallback
 - Submission removes the final `LegacyWorkflowEligibilityCompatibility`
   consumer; eligibility is the exact-project submitter/both grant plus active
   assignment and lifecycle guards.
+- Submission ownership and attestation plus checker-result visibility fields
+  use `contributor_id`, `contributor_attestation`, `contributor_message`,
+  `contributor_suggested_fix`, `contributor_evidence_refs`, and
+  `contributor_visible` across persistence, models, schemas, services, runner
+  contracts, audit payloads, and tests. Migration `0022` preserves all values,
+  supports downgrade, and removes the legacy storage names without public API
+  aliases.
 - With the final consumer removed, the legacy `/api/v1/workers/me/profile`
   route, typed-profile activation service/schema, and token-role workflow
   observation fields plus the now-unused compatibility adapter/allowlist are
@@ -104,6 +113,9 @@ legacy active-worker-profile or workflow-eligibility compatibility fallback
 (cd backend && .venv/bin/python -m ruff check app tests scripts)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python scripts/api_contract_e2e.py)
+(cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic upgrade head)
+(cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic downgrade -1)
+(cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic upgrade head)
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
 git diff --check

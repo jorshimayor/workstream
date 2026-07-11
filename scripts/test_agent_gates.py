@@ -909,6 +909,9 @@ def test_stale_authorization_rule_examples_are_rejected() -> None:
         ),
         "HUMAN_WORKER_VOCABULARY": "## Flow 3: Worker Submits Work",
         "HUMAN_WORKER_IDENTIFIER": "worker_claim_status: fixed",
+        "TECHNICAL_WORKER_HUMAN_AUTHORITY": (
+            "The checker worker submits a contributor packet."
+        ),
     }
     for code, sample in fixtures.items():
         failures = gate.scan_text("docs/new_active_doc.md", sample)
@@ -941,7 +944,10 @@ def test_stale_authorization_rule_examples_are_rejected() -> None:
             "ActorProfile with type worker does not authorize read access but "
             "permits task claim."
         ),
-        "A worker role from the token does not allow profile reads but may approve projects.",
+        (
+            "A worker role from the token does not allow profile reads but may "
+            "approve projects."
+        ),
         "A token role does not record email but grants project access.",
         "A worker token does not carry profile metadata but authorizes task claim.",
         "ActorProfile with type worker does not store secrets but permits task claim.",
@@ -960,6 +966,9 @@ def test_stale_authorization_rule_examples_are_rejected() -> None:
         "The Celery worker submission is retried.",
         "The checker worker claim status is internal.",
         "Celery workers submit jobs.",
+        "Celery worker_id identifies the background process.",
+        "The checker worker_id is included in internal telemetry.",
+        "See backend/app/workers/tasks.py.",
     )
     for sample in technical_worker_statements:
         assert gate.scan_text("docs/new_active_doc.md", sample) == [], sample
@@ -974,6 +983,17 @@ def test_stale_authorization_rule_examples_are_rejected() -> None:
         "A worker can claim a task.",
         "Persist worker_id on the assignment.",
         "POST /api/v1/workers/me/profile",
+        "Celery schedules background jobs; a worker submits the packet.",
+        "Celery is configured here; workers submit task packets.",
+        "Celery is installed; a worker submits human work.",
+        "Celery supports queues, but human workers submit tasks.",
+        "Human workers use Celery.",
+        "The Celery worker claims a human task using submitter authority.",
+        (
+            "The system worker receives a reviewer grant and records a review "
+            "decision."
+        ),
+        "The setup worker is a human product role.",
     )
     for sample in human_worker_statements:
         assert gate.scan_text("docs/new_active_doc.md", sample), sample
@@ -990,8 +1010,13 @@ def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:
         subprocess.run(["git", "init", "-q"], cwd=root, check=True)
         (root / "docs").mkdir()
         active = root / "docs" / "new_active_doc.md"
+        diagram = root / "docs" / "new_active_diagram.puml"
         active.write_text("POST /v1/projects\n", encoding="utf-8")
+        diagram.write_text(
+            "Workstream --> API : POST /api/v1/projects\n", encoding="utf-8"
+        )
         assert active in gate.discover_documents(root)
+        assert diagram in gate.discover_documents(root)
         assert gate.scan(root) == [
             "docs/new_active_doc.md:1: NON_CANONICAL_API_PREFIX"
         ]
@@ -1007,6 +1032,12 @@ def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:
         failures = gate.scan(root)
         assert any(item.endswith("TOKEN_ROLE_PRODUCT_AUTHORITY") for item in failures)
         assert any(item.endswith("TYPED_PROFILE_PRODUCT_AUTHORITY") for item in failures)
+
+        active.write_text("POST /api/v1/projects\n", encoding="utf-8")
+        diagram.write_text("Workstream --> API : POST /v1/projects\n", encoding="utf-8")
+        assert gate.scan(root) == [
+            "docs/new_active_diagram.puml:1: NON_CANONICAL_API_PREFIX"
+        ]
 
 
 def test_stale_authorization_precedence_exemption_is_line_scoped() -> None:

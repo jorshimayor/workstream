@@ -64,6 +64,11 @@ or the exact project; own means record-level ownership still applies.
 | Compensation mutation | no | reconciliation only where registered | no | covered | no | no | no |
 | Audit read/export | authority history system | operational system | project covered | finance covered | covered | own chain only | assigned chain only |
 
+`Both` is exactly the union of the Submitter and Reviewer candidate capabilities
+in this matrix. It adds no administrative capability, and every ownership,
+assignment, no-self-review, separation-of-duties, and lifecycle guard still
+applies independently to the selected capability.
+
 Access Administrator's authority-only project view means the minimum resource
 identity necessary to administer grants; it is not general project-management
 visibility.

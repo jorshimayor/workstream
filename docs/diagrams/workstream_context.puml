@@ -45,7 +45,7 @@ contributor --> workstream : submits
 reviewer --> workstream : reviews
 operator --> workstream : audits
 
-workstream --> flow_auth : verifies identity tokens
+workstream --> flow_auth : verifies externally issued Flow tokens
 workstream --> postgres : records lifecycle
 workstream --> storage : stores evidence
 

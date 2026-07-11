@@ -39,12 +39,14 @@ backend/app/modules/tasks/repository.py
 backend/app/modules/tasks/schemas.py
 backend/app/modules/tasks/models.py
 backend/app/modules/tasks/lifecycle.py
+backend/alembic/versions/0021_*.py
 backend/app/modules/authorization/**
 backend/app/api/deps/auth.py
 backend/app/workers/authority_reconciliation.py
 backend/app/workers/celery_app.py
 backend/tests/test_tasks.py
 backend/tests/test_auth.py
+backend/tests/test_alembic.py
 backend/scripts/api_contract_e2e.py
 docs/operations_authorization_service.md
 .agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/**
@@ -109,10 +111,14 @@ token role or legacy active-worker-profile fallback
   supported service/API path before claim. The legacy workflow-profile route
   remains bounded only because chunk 14 still owns the final submission
   compatibility consumer; task queue/claim/start no longer depend on it.
+- The assignment persistence column, model/schema/service fields, response
+  contract, and new audit payload keys use `contributor_id`. Migration `0021`
+  preserves every existing assignment owner, supports downgrade, and removes
+  the legacy storage name without exposing a public compatibility alias.
 - Full backend suite and API contract drill pass.
 - Tests cover revoke/suspend/reactivate before claim, while claimed, while in
-  progress, at needs-revision, after submit, duplicate reconciliation, worker
-  retry, a second contributor reclaiming released work, and needs-revision
+  progress, at needs-revision, after submit, duplicate reconciliation,
+  reconciliation worker retry, a second contributor reclaiming released work, and needs-revision
   reassignment preserving prior findings, locked/rebased context, submission
   supersession, and high/medium finding replay requirements.
 
@@ -122,6 +128,9 @@ token role or legacy active-worker-profile fallback
 (cd backend && .venv/bin/python -m ruff check app tests scripts)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python scripts/api_contract_e2e.py)
+(cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic upgrade head)
+(cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic downgrade -1)
+(cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic upgrade head)
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
 git diff --check

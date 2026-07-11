@@ -94,7 +94,8 @@ exception.
 
 ## External Review
 
-Pending PR publication, GitHub checks, CodeRabbit, and human review.
+PR #93 is published. GitHub checks, CodeRabbit follow-up, and human review remain
+pending.
 
 ## Remaining Risks And Follow-Up
 

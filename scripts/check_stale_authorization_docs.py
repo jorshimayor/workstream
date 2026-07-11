@@ -11,7 +11,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DOCUMENT_SUFFIXES = {".md", ".html"}
+DOCUMENT_SUFFIXES = {".md", ".html", ".puml"}
 
 # Exact reviewed history/archive paths. New files are active unless added here
 # with an explicit rationale through normal review.
@@ -144,14 +144,29 @@ RULES = (
         "HUMAN_WORKER_IDENTIFIER",
         re.compile(
             r"\bworker_(?:id|attestation|message|suggested_fix|evidence_refs|"
-            r"visible|claim_status|profile)\b|/workers(?:/|\b)",
+            r"visible|claim_status|profile)\b|/api/v1/workers(?:/|\b)",
+            re.IGNORECASE,
+        ),
+    ),
+    Rule(
+        "TECHNICAL_WORKER_HUMAN_AUTHORITY",
+        re.compile(
+            r"\b(?:celery|checker|setup|system|background|reconciliation)\s+"
+            r"workers?\b.{0,120}\b(?:"
+            r"claims?\s+(?:a\s+)?(?:human\s+|contributor\s+)?task|"
+            r"submits?\s+(?:a\s+)?(?:contributor\s+)?(?:packet|submission)|"
+            r"records?\s+(?:a\s+)?review\s+decision|"
+            r"receives?\s+(?:a\s+)?(?:submitter|reviewer|both|contributor|"
+            r"human\s+administrative)\s+grant|"
+            r"is\s+(?:a\s+)?human\s+product\s+role)\b",
             re.IGNORECASE,
         ),
     ),
 )
 
 TECHNICAL_WORKER_PREFIX = re.compile(
-    r"(?:celery|checker|setup|system|background|reconciliation|execution|"
+    r"(?:celery(?:[- ]backed)?|checker|setup|system|background|reconciliation|"
+    r"execution|"
     r"service|job|queue|durable|project[- ]setup|pre[- ]review|post[- ]submit)"
     r"[\s/-]+$",
     re.IGNORECASE,
@@ -217,16 +232,34 @@ def exempt_match(relative_path: str, rule: Rule, text: str, offset: int) -> bool
 
 def technical_worker_match(text: str, match: re.Match[str]) -> bool:
     """Return whether the matched worker token is service-qualified."""
-    token = re.search(r"\bworkers?\b", match.group(0), re.IGNORECASE)
+    token = re.search(
+        r"\bworkers?(?:_(?:id|attestation|message|suggested_fix|evidence_refs|"
+        r"visible|claim_status|profile))?\b",
+        match.group(0),
+        re.IGNORECASE,
+    )
     if token is None:
         return False
     worker_offset = match.start() + token.start()
     prefix = text[max(0, worker_offset - 120) : worker_offset]
-    line = containing_line(text, worker_offset)
+    token_end = worker_offset + len(token.group(0))
+    suffix = text[token_end : token_end + 20]
+    exact_code_path = token.group(0).lower() == "workers" and (
+        (prefix.endswith("backend/app/") and suffix.startswith("/"))
+        or (prefix.endswith("app.") and suffix.startswith("."))
+    )
+    exact_celery_cli = bool(
+        re.search(
+            r"(?:^|\n)[^;\n]*\bcelery\s+-A\s+[^;\n]+$",
+            prefix,
+            re.IGNORECASE,
+        )
+        and suffix.startswith(" --")
+    )
     return bool(
         TECHNICAL_WORKER_PREFIX.search(prefix)
-        or ("celery" in line.lower() and line.lower().find("celery") < worker_offset)
-        or "backend/app/workers/" in line
+        or exact_code_path
+        or exact_celery_cli
     )
 
 
@@ -237,9 +270,10 @@ def scan_text(relative_path: str, text: str) -> list[str]:
         for match in rule.pattern.finditer(text):
             if exempt_match(relative_path, rule, text, match.start()):
                 continue
-            if rule.code == "HUMAN_WORKER_VOCABULARY" and technical_worker_match(
-                text, match
-            ):
+            if rule.code in {
+                "HUMAN_WORKER_VOCABULARY",
+                "HUMAN_WORKER_IDENTIFIER",
+            } and technical_worker_match(text, match):
                 continue
             failures.append(
                 f"{relative_path}:{line_number(text, match.start())}: {rule.code}"

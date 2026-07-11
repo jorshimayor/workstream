@@ -23,16 +23,21 @@ sequenceDiagram
   API->>Auth: Verify Flow token
   Auth-->>API: Verified external identity
   API->>Authorization: Resolve actor profile and local grants
-  Authorization-->>API: AuthorizationContext with covered Project Manager capability
+  Authorization->>Authorization: require(project.create/configure, candidates, resource/lifecycle guards)
+  Authorization-->>API: Allowed AuthorizationContext with matched Project Manager grant
   API->>DB: Persist draft guide and checker/review/revision/payment policy context
 
   PM->>UI: Activate guide
   UI->>API: POST activate guide
+  API->>Authorization: require(guide.activate, candidates, project/lifecycle guards)
+  Authorization-->>API: Allowed with matched grant and permission
   API->>DB: Validate required policy context and mark guide active
   API->>DB: Audit project activation
 
   PM->>UI: Create and screen task
   UI->>API: POST task, then screen/release
+  API->>Authorization: require(task.manage, candidates, project/lifecycle guards)
+  Authorization-->>API: Allowed with matched grant and permission
   API->>DB: Lock active guide and policy versions onto task
   API->>DB: Move DRAFT -> SCREENING -> READY
   API->>DB: Audit transitions
@@ -42,12 +47,17 @@ sequenceDiagram
   API->>Auth: Verify Flow token
   Auth-->>API: Verified external identity
   API->>Authorization: Resolve actor profile and project grants
-  Authorization-->>API: AuthorizationContext with contributor capability
-  API->>DB: Validate visibility, profile, skill tags, and READY status
+  Authorization->>Authorization: require(task.claim, candidates, assignment/resource/lifecycle guards)
+  Authorization-->>API: Allowed AuthorizationContext with matched submitter/both grant
+  API->>DB: Validate visibility, qualification, skill tags, and READY status
   API->>DB: Create assignment and move READY -> CLAIMED -> IN_PROGRESS
 
   Contributor->>UI: Submit packet
   UI->>API: POST submission packet with evidence and artifact manifest
+  API->>Auth: Verify Flow token
+  Auth-->>API: Verified external identity
+  API->>Authorization: require(submission.create, candidates, ownership/resource/lifecycle guards)
+  Authorization-->>API: Allowed with matched submitter/both grant
   API->>Storage: Store or reference artifacts through storage abstraction
   API->>DB: Create immutable submission version
   API->>DB: Lock submission version and audit submitter-owned finalization
@@ -63,7 +73,8 @@ sequenceDiagram
   API->>Auth: Verify Flow token
   Auth-->>API: Verified external identity
   API->>Authorization: Resolve actor profile and project grants
-  Authorization-->>API: AuthorizationContext with reviewer capability
+  Authorization->>Authorization: require(review.decision, candidates, assignment/resource/lifecycle guards)
+  Authorization-->>API: Allowed AuthorizationContext with matched reviewer/both grant
   API->>DB: Store decision: accept, needs_revision, or reject
 
   alt needs_revision

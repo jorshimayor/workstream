@@ -145,8 +145,8 @@ rules, hash algorithm, size limits, and attestation terms before submission.
 
 ## Task Locked Context
 
-The permission-scoped Project Manager/Operator projection of a task's locked guide and
-policy provenance, including guide source snapshot id/hash, effective policy
+The permission-scoped Project Manager, Operator, or Audit projection of a task's
+locked guide and policy provenance, including guide source snapshot id/hash, effective policy
 id/hash, pre-submit checker policy id/hash, post-submit checker policy
 id/hash/body summary, and review, revision, and payment policy versions.
 

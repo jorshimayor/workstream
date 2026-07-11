@@ -44,7 +44,9 @@ Reads authorized immutable and operational evidence without mutation.
 4. Review submitted packets
 5. Resolve needs-revision queue
 6. Update accepted and paid records
-7. Review failed checks; use covered repair or registered Operator retry only
+7. Review failed checks; apply covered repair where eligible, use registered
+   Operator retry for infrastructure or setup failures, and route
+   contributor-fixable blockers to `NEEDS_REVISION`
 8. Update project lessons learned
 ```
 

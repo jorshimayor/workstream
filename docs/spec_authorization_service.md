@@ -81,7 +81,7 @@ Legacy typed workflow-profile IDs are unrelated and never promoted.
 |---|---|---|
 | `access_administrator` | system | Actor, identity-link, administrative-grant, and permission-catalog administration. |
 | `operator` | system | Runtime inspection and explicit recovery operations against canonically resolved resources. |
-| `project_manager` | system or exact covered project | Project configuration, task management, and contributor grants. |
+| `project_manager` | system or exact covered project | Project configuration, task management, and contributor grants. System scope covers all projects but remains resource- and lifecycle-guarded; exact-project scope covers only that project. |
 | `finance_authority` | system or exact covered project | Compensation configuration and fulfillment observation owned by WS-CON. |
 | `audit_authority` | system or exact covered project | Read-only evidence access and authorized export. |
 
@@ -199,7 +199,11 @@ List filtering occurs before counts and pagination cursors.
 - An actor cannot grant or revoke their own authority through an administrative
   grant operation.
 - A submitter cannot act as the sole reviewer of their own work.
-- Project Manager authority is limited to its covered project.
+- Project Manager authority is limited to its grant scope. A system-scoped
+  Project Manager covers all projects but remains subject to resource and
+  lifecycle guards; an exact-project grant covers only that project. Only a
+  system-scoped Project Manager may create a project because no project scope
+  exists before creation.
 - Administrative roles alone cannot claim contributor work, submit, or review.
 - Operator recovery is distinct from Project Manager management.
 - `operations.task.start_override`,

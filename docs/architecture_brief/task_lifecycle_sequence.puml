@@ -31,15 +31,20 @@ UI -> API : POST project / guide / policies
 API -> Auth : verify Flow token
 Auth --> API : verified external identity
 API -> Authorization : resolve actor profile and local grants
-Authorization --> API : covered Project Manager capability
+Authorization -> Authorization : require permission + candidate grant\n+ resource/lifecycle guards
+Authorization --> API : allowed with matched Project Manager grant
 API -> DB : persist draft guide and policy context
 
 PM -> UI : activate guide
 UI -> API : POST activate guide
+API -> Authorization : require guide activation + project/lifecycle guards
+Authorization --> API : allowed with matched grant and permission
 API -> DB : validate policy context and mark active
 
 PM -> UI : create and screen task
 UI -> API : POST task, screen, release
+API -> Authorization : require task management + project/lifecycle guards
+Authorization --> API : allowed with matched grant and permission
 API -> DB : lock guide and policy versions
 API -> DB : DRAFT -> SCREENING -> READY
 
@@ -48,11 +53,16 @@ UI -> API : POST claim / start
 API -> Auth : verify Flow token
 Auth --> API : verified external identity
 API -> Authorization : resolve actor profile and project grants
-Authorization --> API : contributor capability
+Authorization -> Authorization : require task claim + candidate grant\n+ assignment/resource/lifecycle guards
+Authorization --> API : allowed with matched submitter/both grant
 API -> DB : create assignment and move in progress
 
 Contributor -> UI : submit packet
 UI -> API : POST submission packet
+API -> Auth : verify Flow token
+Auth --> API : verified external identity
+API -> Authorization : require submission create + candidate grant\n+ ownership/resource/lifecycle guards
+Authorization --> API : allowed with matched submitter/both grant
 API -> Storage : store/read artifact references
 API -> DB : create immutable submission version
 
@@ -65,7 +75,8 @@ UI -> API : accept / needs_revision / reject
 API -> Auth : verify Flow token
 Auth --> API : verified external identity
 API -> Authorization : resolve actor profile and project grants
-Authorization --> API : reviewer capability
+Authorization -> Authorization : require review decision + candidate grant\n+ assignment/resource/lifecycle guards
+Authorization --> API : allowed with matched reviewer/both grant
 API -> DB : store review decision
 
 alt needs_revision

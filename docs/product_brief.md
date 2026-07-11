@@ -35,9 +35,11 @@ The system is source-agnostic without becoming source-adapter-first. A task crea
 
 ## Target Users
 
-### Primary User: Operator
+### Primary User: Contributor
 
-The person who creates tasks, packages work, submits evidence, monitors status, and resolves revisions.
+The person who claims assigned work, packages submissions, submits evidence,
+monitors their contribution status, and resolves revisions under an
+exact-project Submitter or Both grant.
 
 Needs:
 

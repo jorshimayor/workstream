@@ -73,6 +73,9 @@ Profile status is a guard, not a role or project grant.
 An identity link binds one canonical external issuer and opaque subject to one
 ActorProfile. It has active/revoked state plus immutable revocation provenance.
 Raw tokens, provider credentials, and full claim payloads are not stored.
+The database enforces a unique `(issuer, subject)` pair across all links and, in
+v0.1, at most one active identity link per ActorProfile. Revocation preserves
+the immutable link and provenance; it does not free the pair for rebinding.
 
 ### AdminRoleGrant
 
@@ -399,8 +402,8 @@ Fields:
 - `created_by`
 - `created_at`
 - `updated_at`
-- `approved_by_role`
-- `approved_by_actor`
+- `approved_by_admin_role_grant_id`
+- `approved_by_actor_profile_id`
 - `approved_at`
 - `supersedes_policy_id`
 - `superseded_at`
@@ -675,8 +678,8 @@ Fields:
 - `policy_hash`
 - `policy_body`
 - `lifecycle_status`
-- `approved_by_role`
-- `approved_by_actor`
+- `approved_by_admin_role_grant_id`
+- `approved_by_actor_profile_id`
 - `approved_at`
 - `created_by`
 - `created_at`
@@ -1457,6 +1460,11 @@ Fields:
 - `created_at`
 
 Audit events are append-only.
+
+`actor_roles` and `claim_snapshot` are legacy-only columns. New authority events
+must leave them empty and use only the bounded actor, matched grant/permission,
+scope, resource, reason, and before/after fields. Raw claims and unnecessary
+profile data are prohibited.
 
 v0.1 audit storage is the existing Workstream `audit_events` ledger. Task
 Lifecycle events and authority events share the canonical audit repository so
