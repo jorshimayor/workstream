@@ -10,13 +10,17 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: 6756e6cb397da5f813eca39fb738633bc24f2ab2
+Reviewed code SHA: 35152a001e0689782f5c0d59615a59a89e6e2677
 
-Reviewed at: 2026-07-11T17:43:32Z
+Reviewed at: 2026-07-11T17:49:00Z
 
 Reviewer run IDs: senior-engineering=/root/auth01_plan_engineering; QA/test=/root/auth01_plan_quality_ci; security/auth=/root/auth01_plan_security_product; product/ops=/root/auth01_plan_security_product; architecture=/root/auth01_plan_engineering; docs=/root/auth01_plan_security_product; CI-integrity=/root/auth01_plan_quality_ci; reuse/dedup=/root/auth01_plan_engineering; test-delta=/root/auth01_plan_quality_ci
 
 ## Reviewed Change
+
+Implementation freeze SHA: `6756e6cb397da5f813eca39fb738633bc24f2ab2`.
+Final reviewed SHA `35152a0` adds only loop/status/review evidence and the trust
+bundle around that unchanged implementation.
 
 - Adopted ADR 0012 and the canonical authorization specification/runbook.
 - Preserved external Flow authentication ownership while assigning local
@@ -100,6 +104,10 @@ in.
 
 - PlantUML is pinned; Java, ImageMagick, Pandoc, WeasyPrint, and fonts remain
   environment-provided, so cross-host rendering is not fully hermetic.
+- The externally requested phrase "authorization implementation until auth
+  proof" is intentionally retained in the chunk contract even though later
+  authorization chunks produce that proof; reviewers recorded this as a low
+  wording risk rather than an implementation ambiguity.
 - Production issuer/JWKS/introspection configuration and legacy actor
   classification remain future chunk inputs.
 - This chunk specifies authorization; it does not implement runtime authority.

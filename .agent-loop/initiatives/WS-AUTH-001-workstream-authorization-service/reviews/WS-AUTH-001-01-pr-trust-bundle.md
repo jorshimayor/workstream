@@ -84,8 +84,10 @@ directly without `continue-on-error`; no existing gate or threshold changed.
 
 ## Reviewer Results
 
-All required tracks passed at reviewed SHA
-`6756e6cb397da5f813eca39fb738633bc24f2ab2`: senior engineering, QA/test,
+All required tracks passed against implementation freeze
+`6756e6cb397da5f813eca39fb738633bc24f2ab2`, and the administrative evidence
+bundle was reviewed at final bound SHA
+`35152a001e0689782f5c0d59615a59a89e6e2677`: senior engineering, QA/test,
 security/auth, product/ops, architecture, docs, reuse/dedup, CI integrity, and
 test delta. The circuit breaker accepted the documented atomic-docs size
 exception.
@@ -98,6 +100,8 @@ Pending PR publication, GitHub checks, CodeRabbit, and human review.
 
 - Rendering is locally repeatable but not fully cross-host hermetic beyond the
   pinned PlantUML JAR.
+- The externally requested "authorization implementation until auth proof"
+  contract phrase remains an acknowledged low wording risk.
 - Production issuer inputs and runtime authorization remain owned by later
   bounded chunks.
 - `WS-AUTH-001-02` and `WS-POL-002-04` remain inactive.
