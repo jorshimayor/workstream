@@ -8,7 +8,7 @@ None.
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive until this memory update completes and a separate explicit user start is given |
+| `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive until a separate explicit user start is given |
 | `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Proposed after D4-D10 approval and explicit start |
 
 ## Human Checkpoints
