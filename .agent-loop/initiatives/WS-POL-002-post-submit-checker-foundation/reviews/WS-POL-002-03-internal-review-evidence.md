@@ -10,9 +10,9 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: ae7e0a1d9ec2804ec32a6b262197d685f137550a
+Reviewed code SHA: 8414dbdffcbcec108f0e736a06e7bbc750eca18b
 
-Reviewed at: 2026-07-11T13:49:15Z
+Reviewed at: 2026-07-11T15:07:06Z
 
 Reviewer run ids: senior-engineering-019f5133-8882, qa-test-019f5133-9349, security-auth-019f5133-a018, product-ops-019f5133-b385, architecture-019f5133-cc0e, docs-019f5133-d78d, security-auth-rerun-019f513f-0255, product-ops-rerun-019f513e-fcdf, reuse-dedup-019f513f-0938, test-delta-019f513f-116c, ci-integrity-019f513f-1ce8
 
@@ -85,8 +85,15 @@ Results:
 - Markdown link check: passed.
 - Diff whitespace check: passed.
 
+Rebind note:
+
+- The PR branch was updated with current `main` after the original evidence was
+  recorded. CI correctly failed the stale reviewed-SHA gate because non-evidence
+  files from `main` appeared above the prior reviewed commit. This evidence now
+  binds to the merged PR head before the evidence-only repair commit.
+
 ## Remaining Risks
 
-- External GitHub Actions and CodeRabbit must run on the pushed PR head before human merge review.
+- GitHub Actions and CodeRabbit must rerun on the pushed PR head before human merge review.
 - Project-scoped `project_manager` role grants remain future Workstream role-assignment work; this chunk keeps the current bootstrap authorization boundary and documents that limit.
 - `WS-POL-002-04` still owns runtime hardening for locked post-submit policy execution and routing.

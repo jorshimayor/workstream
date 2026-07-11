@@ -6,9 +6,9 @@
 
 ## Reviewed Revision
 
-Reviewed code SHA: `ae7e0a1d9ec2804ec32a6b262197d685f137550a`
+Reviewed code SHA: `8414dbdffcbcec108f0e736a06e7bbc750eca18b`
 
-Reviewed at: `2026-07-11T13:49:15Z`
+Reviewed at: `2026-07-11T15:07:06Z`
 
 Internal review evidence:
 
@@ -145,8 +145,14 @@ lifecycle records.
 
 ## External Review
 
-GitHub Actions and CodeRabbit must rerun on the pushed PR head before human
-merge review.
+External review response:
+
+- `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/reviews/WS-POL-002-03-external-review-response.md`
+
+CodeRabbit did not post actionable review threads on the latest pass because
+the review limit was reached. GitHub Actions failed only because the reviewed
+SHA became stale after `main` was merged into the PR branch. The evidence was
+rebound to the merged PR head and must rerun on the pushed repair commit.
 
 ## Remaining Risks
 
