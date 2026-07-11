@@ -7,12 +7,11 @@
 - Active implementation chunk: `WS-POL-002-03` - Server-Owned Policy Approval
   And Visibility APIs
 - Branch: `codex/ws-pol-002-03-post-submit-approval-visibility`
-- Status: `WS-POL-002-03` implemented and internally reviewed; evidence and PR
-  publication are in progress.
+- Status: `WS-POL-002-03` implemented and internally reviewed; pull request
+  created at `https://github.com/Flow-Research/workstream/pull/90`.
 - Last merged implementation SHA: `67fb3ca`
 - Last merge commit: `32af6a7`
-- Current gate: evidence packaging, trust bundle, PR publication, external
-  review, and user review.
+- Current gate: external review, GitHub checks, and user review.
 - Next chunk: `WS-POL-002-04` remains inactive until `WS-POL-002-03` is merged
   by explicit human approval and memory is updated.
 
