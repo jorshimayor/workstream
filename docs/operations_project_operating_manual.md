@@ -42,6 +42,7 @@ Before releasing tasks:
 - post-submit checker derivation runs after submission artifact policy approval
 - generated project post-submit checker policy compiled, or unsupported checker gaps resolved
 - compiled project post-submit checker policy attached with source/effective/pre-submit provenance
+- compiled project post-submit checker policy approved by `admin` or `project_manager`; a correction request supersedes and retains the rejected policy, then returns the blocked setup state to correction-aware regeneration
 - review policy attached
 - revision policy attached
 - payment policy attached
@@ -67,6 +68,9 @@ database queries. These endpoints require `admin` or `project_manager` access:
 - `POST /api/v1/projects/{project_id}/guides/{guide_id}/submission-artifact-policies/{policy_id}/approve`
 - `GET /api/v1/projects/{project_id}/guides/{guide_id}/effective-submission-artifact-policy`
 - `GET /api/v1/projects/{project_id}/guides/{guide_id}/pre-submit-checker-policy`
+- `GET /api/v1/projects/{project_id}/guides/{guide_id}/post-submit-checker-policy/setup`
+- `POST /api/v1/projects/{project_id}/guides/{guide_id}/post-submit-checker-policy/approve`
+- `POST /api/v1/projects/{project_id}/guides/{guide_id}/post-submit-checker-policy/request-correction`
 
 `ProjectSetupRun` is only a setup ledger. Policy truth remains in the guide
 source snapshot, sufficiency report, submission artifact policy, effective
@@ -83,6 +87,17 @@ checker derivation. That approval creates the effective project policy and
 compiled project pre-submit checker bundle before Workstream continues into
 post-submit setup.
 
+The post-submit checker setup read returns only bounded operator summaries:
+setup status, compiled checker names/severities, sufficiency status/counts,
+effective policy counts, pre-submit checker names/count, and registered
+post-submit checker catalog count. It does not return raw source text, local
+paths, replayable refs, exact source hashes, or compiled policy body internals.
+When `admin` or `project_manager` requests correction, Workstream supersedes
+the unapproved compiled output, preserves its policy hash/body plus bounded
+actor/reason/time provenance, supplies bounded correction feedback to the next
+derivation run, and keeps activation blocked. An unchanged replacement fails
+closed; a changed replacement must be approved separately.
+
 ## v0.1 Quality Gates
 
 ### Project Activation Gate
@@ -91,13 +106,15 @@ A project cannot become active unless guide, immutable guide-source snapshot,
 passed or acknowledged guide sufficiency report, approved submission artifact
 policy, persisted effective project submission artifact policy hash, project
 pre-submit checker bundle hash, approved project post-submit checker policy,
-review policy, revision policy, and payment policy are present. `WS-POL-002-02`
-produces compiled post-submit setup output with exact source/effective/pre-submit
-provenance, but activation remains blocked until the policy is approved through
-the server-owned approval/correction path added in `WS-POL-002-03`. A task
-cannot enter `READY` until it also locks the guide source
-snapshot id/hash, effective project submission artifact policy hash, and project
-pre-submit checker bundle hash.
+review policy, revision policy, and payment policy are present. Compiled
+post-submit setup output carries exact source/effective/pre-submit provenance,
+but activation remains blocked until the policy is approved through the
+server-owned approval endpoint. A correction request supersedes the rejected
+output and requeues correction-aware regeneration; it does not satisfy
+activation. A task cannot enter `READY` until it also locks
+the guide source snapshot id/hash, effective project submission artifact policy
+hash, project pre-submit checker bundle hash, and approved provenance-matched
+project post-submit checker policy reference.
 
 ### Task Screening Gate
 

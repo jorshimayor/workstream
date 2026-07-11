@@ -15,15 +15,17 @@ The first user flows prove that Workstream can run real work from intake to acce
 9. Admin or project_manager reviews and approves the derived submission artifact policy.
 10. Workstream persists the effective project submission artifact policy hash.
 11. Workstream compiles, persists, and locks the project `PreSubmitCheckerPolicy`.
-12. Admin or project_manager enables post-submit checker policy.
-13. Admin or project_manager enables review policy.
-14. Admin or project_manager enables revision policy.
-15. Admin or project_manager enables payment policy.
-16. Project becomes active.
+12. Workstream derives and compiles the project post-submit checker policy.
+13. Admin or project_manager approves the compiled post-submit checker policy.
+14. If admin or project_manager requests correction instead, Workstream supersedes and retains the rejected output, passes bounded correction feedback to post-submit derivation, and rejects an unchanged replacement; setup does not continue toward activation.
+15. Admin or project_manager enables review policy.
+16. Admin or project_manager enables revision policy.
+17. Admin or project_manager enables payment policy.
+18. Project becomes active.
 
 Acceptance:
 
-- Project cannot become active without guide, immutable guide source snapshot, passed or acknowledged guide sufficiency report for that immutable guide source snapshot, submission artifact policy, effective project submission artifact policy hash, project pre-submit checker bundle hash, post-submit checker policy, review policy, revision policy, and payment policy.
+- Project cannot become active without guide, immutable guide source snapshot, passed or acknowledged guide sufficiency report for that immutable guide source snapshot, submission artifact policy, effective project submission artifact policy hash, project pre-submit checker bundle hash, approved generated project post-submit checker policy with matching guide, source snapshot, effective project policy, and pre-submit checker provenance, review policy, revision policy, and payment policy.
 - Normal setup starts from guide/source capture. Admins and project managers do not manually trigger sufficiency or derivation in the happy path.
 - Submission artifact policy is Workstream-derived and approved by `admin` or `project_manager`; project owners do not author or approve the machine policy schema directly.
 - This flow is the agent-derived setup path. If an admin or project_manager creates a manual sufficiency report for a snapshot, that snapshot continues through manual policy creation; agent derivation requires an agent-created sufficiency report for the same snapshot or a fresh guide-source snapshot.
@@ -35,14 +37,14 @@ Acceptance:
 2. Operator creates task with title, description, source reference, acceptance criteria, rejection criteria, deadline, and difficulty.
 3. Workstream validates the task source and reviewability fields, then confirms the task fits the active project guide and policy bundle.
 4. Task enters `SCREENING`.
-5. Screening locks the guide source snapshot id/hash, effective project submission artifact policy hash, and project pre-submit checker bundle hash, then confirms task contract, post-submit checker policy, review policy, revision policy, payment policy, and reviewability.
+5. Screening locks the guide source snapshot id/hash, effective project submission artifact policy hash, project pre-submit checker bundle hash, and approved provenance-matched project post-submit checker policy reference, then confirms the task contract, review policy, revision policy, payment policy, and reviewability.
 6. Task enters `READY`.
 
 Acceptance:
 
 - Missing required fields block `SCREENING`.
 - Missing required fields block `READY`.
-- Task shows project guide, required artifacts, generated project pre-submit checker policy summary, post-submit checker policy, review policy, revision policy, and payment policy.
+- Task shows project guide, required artifacts, generated project pre-submit checker policy summary, operator-visible post-submit checker policy summary, review policy, revision policy, and payment policy.
 
 ## Flow 3: Worker Submits Work
 

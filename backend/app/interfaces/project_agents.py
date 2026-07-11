@@ -137,6 +137,19 @@ class UnsupportedPostSubmitCheckerGap(BaseModel):
     )
 
 
+class PostSubmitCheckerPolicyCorrectionFeedback(BaseModel):
+    """Bounded operator feedback for replacing one superseded checker policy."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    superseded_policy_id: str = Field(max_length=36)
+    superseded_policy_hash: str = Field(max_length=71)
+    required_checkers: list[str] = Field(default_factory=list, max_length=100)
+    warning_checkers: list[str] = Field(default_factory=list, max_length=100)
+    blocking_severities: list[str] = Field(default_factory=list, max_length=10)
+    correction_reason: str = Field(max_length=500)
+
+
 class PostSubmitCheckerPolicyDerivationContext(BaseModel):
     """Server-owned context supplied to the post-submit policy derivation agent."""
 
@@ -146,6 +159,7 @@ class PostSubmitCheckerPolicyDerivationContext(BaseModel):
     effective_policy_summary: dict[str, Any]
     pre_submit_checker_summary: dict[str, Any]
     registered_checker_catalog: list[PostSubmitCheckerCatalogEntry]
+    correction_feedback: PostSubmitCheckerPolicyCorrectionFeedback | None = None
 
 
 class PostSubmitCheckerPolicyDerivationResult(BaseModel):

@@ -5,11 +5,6 @@
 Planning completed and merged through PR #85 as
 `3fc1a688743f13476d6092078d40792592823d27`.
 
-The initiative is paused after chunk 02 by the user's 2026-07-11 decision to
-prioritize `WS-AUTH-001`. No later chunk may start until the relevant
-authorization foundation exists and the user explicitly resumes this
-initiative.
-
 `WS-POL-002-01` merged through PR #87 as `ed52c21` on 2026-07-09. It
 implemented the version-stamped trusted post-submit compiler contract,
 default-checker snapshot validation, canonical policy hashing, and tests around
@@ -21,17 +16,22 @@ continuation, generated project `PostSubmitCheckerPolicy` persistence, automatic
 contributor submission handoff to the pre-review gate, and repair-only
 `/finalize` semantics.
 
+`WS-POL-002-03` is implemented and internally reviewed on branch
+`codex/ws-pol-002-03-post-submit-approval-visibility`; pull request #90 is
+current with local CodeRabbit-response fixes complete; push and external checks
+are pending.
+
 ## Active Planning Chunk
 
 None.
 
 ## Active Implementation Chunk
 
-None.
+`WS-POL-002-03` - Server-Owned Policy Approval And Visibility APIs
 
 ## Current Implementation Branch
 
-`main`
+`codex/ws-pol-002-03-post-submit-approval-visibility`
 
 ## Chunk Status
 
@@ -40,7 +40,7 @@ None.
 | `WS-POL-002-PLAN` | Merged | `codex/ws-pol-002-post-submit-checker-planning` | #85 | Defines intent, discovery, design, risks, decisions, and implementation chunks. |
 | `WS-POL-002-01` | Merged | `codex/ws-pol-002-01-post-submit-compiler` | #87 | Post-Submit Compiler Contract; merged as `ed52c21`. |
 | `WS-POL-002-02` | Merged | `codex/ws-pol-002-02-post-submit-derivation` | #88 | Post-submit derivation agent and resumable setup integration; merged as `32af6a7`. |
-| `WS-POL-002-03` | Paused | - | - | Server-owned approval and setup visibility APIs; paused behind WS-AUTH-001 and explicit resume. |
+| `WS-POL-002-03` | In review | `codex/ws-pol-002-03-post-submit-approval-visibility` | #90 | Server-owned approval and setup visibility APIs for compiled post-submit policies. |
 | `WS-POL-002-04` | Proposed | - | - | Runtime hardening for locked post-submit policy execution and routing. |
 | `WS-POL-002-05` | Proposed | - | - | Terminal Benchmark-style live API proof and report. |
 
@@ -48,4 +48,4 @@ None.
 
 | Blocker | Owner | Next action |
 |---|---|---|
-| `WS-AUTH-001` priority | Authorization foundation must precede new setup approval APIs | Complete relevant auth cutover, then require explicit user resume |
+| none | none | none |

@@ -2,14 +2,22 @@
 
 ## In Progress
 
-None. WS-AUTH-001 planning is merged and no implementation chunk is active.
+| Chunk | Title | Risk | Status |
+|---|---|---:|---|
+| `WS-POL-002-03` | Server-Owned Policy Approval And Visibility APIs | L1 | Pull request #90 current; current `main` merged locally; evidence rebind and external checks pending |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
+| `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive until explicit user start after `WS-POL-002-03` merge |
 | `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Proposed after D4-D10 approval and explicit start |
-| `WS-POL-002-03` | Server-Owned Policy Approval And Visibility APIs | L1 | Paused behind WS-AUTH-001 and explicit resume |
+
+## Human Checkpoints
+
+| Gate | Initiative | Risk | Status |
+|---|---|---:|---|
+| D4-D10 approval | `WS-AUTH-001` | L0 | Stopped at human checkpoint; explicit D4-D10 approval required before implementation |
 
 ## Completed
 
@@ -41,9 +49,11 @@ None. WS-AUTH-001 planning is merged and no implementation chunk is active.
 
 ## Proposed Next
 
+Do not start `WS-POL-002-04` until `WS-POL-002-03` is externally reviewed,
+merged by explicit human approval, and followed by memory update.
 Stop at the WS-AUTH-001 planning human checkpoint. Do not activate
-`WS-AUTH-001-01` before explicit D4-D10 approval and a separate start signal;
-do not resume `WS-POL-002-03` while auth has priority.
+`WS-AUTH-001-01` before explicit D4-D10 approval and a separate start signal.
+Future WS-POL work after PR #90 also requires a separate start signal.
 
 ## Blocked
 

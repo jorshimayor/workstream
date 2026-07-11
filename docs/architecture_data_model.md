@@ -724,6 +724,12 @@ Fields:
 - `approved_by_role`
 - `approved_by_actor`
 - `approved_at`
+- `supersedes_policy_id`
+- `superseded_at`
+- `superseded_by_role`
+- `superseded_by_actor`
+- `supersession_kind`
+- `supersession_reason`
 - `created_by`
 - `created_at`
 
@@ -737,8 +743,13 @@ and compiler continuation creates `compiled` records. Guide activation requires
 an `approved` generated policy with setup-role approval provenance and exact
 `source_snapshot_id/hash`, `effective_policy_id/hash`, and
 `pre_submit_checker_policy_id` plus pre-submit checker bundle hash matching the
-active setup context. `WS-POL-002-03` adds the server-owned approval/correction
-API that moves compiled post-submit policies into that approved state.
+active setup context. Server-owned approval/correction APIs move compiled
+post-submit policies into that approved state or supersede rejected generated
+output for regeneration. Superseded records retain actor, role, time, bounded
+reason, policy hash, and policy body provenance. A replacement links through
+`supersedes_policy_id` only when it replaces a correction-requested policy in
+the exact same setup context; bounded correction feedback reaches setup-time
+derivation, and Workstream rejects an identical replacement policy hash.
 
 For generated setup, `PostSubmitCheckerPolicyDerivationAgent` runs only after a
 setup-authorized `admin` or `project_manager` approves the derived
@@ -869,6 +880,15 @@ source snapshot, effective project policy, and pre-submit checker bundle
 context. Existing construction-era `checker_policies` rows cannot be truthfully
 backfilled into that provenance, so the migration fails closed until those local
 draft-era rows are reset and recreated through project setup.
+
+Migration note: the `0015_post_submit_correction` migration replaces the
+single-row project/guide-version uniqueness rule with uniqueness for current
+`compiled` or `approved` rows. Superseded rows remain append-only and retain
+their policy body/hash, supersession kind/reason, actor/role/time provenance,
+and any same-context correction replacement link. Correction lookup is scoped
+to the exact guide, source
+snapshot, effective project policy, and pre-submit checker provenance so stale
+feedback cannot influence a later setup context.
 
 ## ReviewPolicy
 
