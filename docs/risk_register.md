@@ -27,13 +27,13 @@ Severity: high
 
 Problem:
 
-A task can be sent back for revision after the project guide or policies changed. If the worker is not shown the new context, the revision loop becomes unfair and reviewers may apply standards that were not visible when the worker resumed.
+A task can be sent back for revision after the project guide or policies changed. If the contributor is not shown the new context, the revision loop becomes unfair and reviewers may apply standards that were not visible when the contributor resumed.
 
 Mitigation:
 
 - prior submissions remain tied to their locked guide and policy versions
 - revision policy controls whether the next attempt rebases to current active guide and policy context
-- worker and reviewer packets show prior version, next version, rebase reason, and change summary
+- contributor and reviewer packets show prior version, next version, rebase reason, and change summary
 - every rebase records an audit event
 
 ### R2: Weak Submissions Reach Review
@@ -47,7 +47,7 @@ Reviewers waste time on missing files, broken packets, unclear evidence, and inc
 Mitigation:
 
 - blocking checker failures prevent `REVIEW_PENDING`
-- checker output visible to worker and reviewer
+- checker output visible to contributor and reviewer
 
 ### R3: Vague Reviewer Feedback
 
@@ -137,7 +137,7 @@ Mitigation:
 
 - no-confidential-source-data checker
 - forbidden file rules
-- worker attestation
+- contributor attestation
 - guide rules for allowed materials
 
 ### R10: Status Bypass
@@ -168,7 +168,7 @@ Reviewers can repeatedly approve weak work for favored workers or skip evidence 
 Mitigation:
 
 - sample accepted work for second review
-- flag repeated worker-reviewer pairs
+- flag repeated contributor-reviewer pairs
 - require evidence citation on accept
 - track overturned accept decisions
 - require independent review for high-value or disputed tasks
@@ -201,7 +201,7 @@ Mitigation:
 - project guides define banned low-quality patterns
 - checkers flag repeated boilerplate, placeholders, and fabricated helper artifacts
 - reviewers judge task-specific evidence, not formatting polish
-- repeated pattern matches affect worker reputation
+- repeated pattern matches affect contributor reputation
 
 ### R14: Payment Disputes
 

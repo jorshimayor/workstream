@@ -104,3 +104,14 @@ duplicates, stale/missing rows, mismatches, unknown fields, and unsupported
 kinds; supports dry-run; emits a checksum-bound report; and never writes grants.
 The schema migration consumes only validated staged classification evidence or
 fails closed. Manual SQL is not a supported path.
+
+## D11: Contributor is the human product term
+
+Status: accepted by the user on 2026-07-11.
+
+Contributor is the umbrella term for a human participating in Workstream. A
+contributor has an exact-project `submitter`, `reviewer`, or `both` grant.
+Worker terminology is reserved for internal services and background jobs such
+as Celery, checker, setup, and reconciliation workers. Existing human-role
+values using the old term are migration inputs to remove, not target product
+vocabulary or authority concepts.

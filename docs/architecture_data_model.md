@@ -87,8 +87,9 @@ Immutable exact-project contributor-grant history with role `submitter`,
 `reviewer`, or `both`, target profile, issuing Project Manager grant, optional
 qualification snapshot, reason, and active/revoked state.
 
-`worker` remains a lifecycle/attribution term. It is not the persisted project
-grant name.
+Contributor is the umbrella human product term. `submitter`, `reviewer`, and
+`both` are the persisted exact-project grant values. Worker terminology is
+reserved for internal services and background jobs.
 
 ### QualificationSnapshot
 
@@ -155,7 +156,7 @@ guide material itself, usually markdown or imported source material. The source
 snapshot may include URL-backed docs, repository docs, examples, rubrics, task
 instructions, reviewer guidance, or other project-specific source material.
 `approved_by` and `effective_at` are server-written activation provenance, not
-request-body fields and not worker-facing guide content.
+request-body fields and not contributor-facing guide content.
 
 Runtime enforcement uses machine-readable policies attached to the guide version. Workstream does not parse guide prose at submission time to decide which artifact checks to run.
 
@@ -545,7 +546,7 @@ The merge contract is executable per field:
 | `packaging` | restrictive merge; conflicts block activation |
 
 A required artifact or evidence rule matching a forbidden artifact rule blocks
-project setup as a policy conflict. It is not deferred to worker submission.
+project setup as a policy conflict. It is not deferred to contributor submission.
 
 Approved and superseded effective policy content and hashes are immutable.
 Recomputing the effective policy after guide/source/policy changes creates a new
@@ -579,7 +580,7 @@ Fields:
 
 Generated server-side from `EffectiveProjectSubmissionArtifactPolicy`, then
 persisted and locked for the project guide version before tasks enter the
-worker pipeline. Every task under the same active project guide version reuses
+contributor pipeline. Every task under the same active project guide version reuses
 that guide version's project pre-submit checker bundle. If the guide version
 does not cover the task set, activation is blocked and the guide is improved or
 the work is split into another project/guide. The task stores
@@ -588,7 +589,7 @@ the work is split into another project/guide. The task stores
 policy or newly compiled checker.
 
 Task context APIs read this already-stamped context. `work-context` and
-`submission-requirements` return task-visible worker-safe guide and requirement
+`submission-requirements` return task-visible contributor-safe guide and requirement
 projections from the locked rows. `locked-context` requires the registered
 covered Project Manager permission or an explicitly authorized Operator/Audit
 projection and exposes the full
@@ -633,7 +634,7 @@ The generated checker order is deterministic:
 5. forbidden artifact blocking
 6. required artifact presence
 7. evidence requirement presence
-8. worker attestation validation
+8. contributor attestation validation
 9. low-quality artifact warnings
 
 Pre-submit has two API paths:
@@ -702,7 +703,7 @@ guide sufficiency summary, effective policy summary, pre-submit checker
 summary, and the registered post-submit checker catalog. It returns a
 constrained checker specification, unsupported required-check gaps, bounded
 reasons, and setup notes. It does not produce executable code and it does not
-judge worker submissions at runtime.
+judge contributor submissions at runtime.
 
 The constrained derivation output contains:
 
@@ -717,7 +718,7 @@ Setup-run summaries persist bounded metadata from that output: checker lists,
 server-owned agent name/version, reason count, sanitized evidence refs,
 unsupported checker reason codes, and setup note count. They do not persist
 free-form agent rationales, setup-note text, source excerpts, local paths,
-exact source hashes, replayable refs, or worker submission data. Agent-returned
+exact source hashes, replayable refs, or contributor submission data. Agent-returned
 agent names and versions are treated as untrusted metadata; persisted setup
 summaries use Workstream's server-owned derivation agent identity.
 
@@ -726,7 +727,7 @@ setup pointers such as `project_guide`, `source_item:N`, `sufficiency_report`,
 `effective_policy`, and `pre_submit_checker`. The registered checker catalog is
 agent input, not an evidence reference. Evidence refs must not contain local
 filesystem paths, signed URLs, credentials, private storage locators, raw source
-excerpts, or worker submission data.
+excerpts, or contributor submission data.
 
 When a task locks its project context, Workstream stamps
 `locked_post_submit_checker_policy_body` by copying the persisted project
@@ -852,7 +853,7 @@ Fields:
 - `reviewer_reassignment_rule`
 - `created_at`
 
-`context_rebase_rule` defines whether a revision attempt keeps prior context, rebases to current active context, or blocks for project-manager repair when guide or policy context changed. `context_rebase_triggers` names the guide or policy changes that require preparation before the worker resumes.
+`context_rebase_rule` defines whether a revision attempt keeps prior context, rebases to current active context, or blocks for project-manager repair when guide or policy context changed. `context_rebase_triggers` names the guide or policy changes that require preparation before the contributor resumes.
 
 ## PaymentPolicy
 
@@ -981,7 +982,7 @@ Durable post-submit checker execution uses
 `locked_post_submit_checker_policy_id`,
 `locked_post_submit_checker_policy_version`, and
 `locked_post_submit_checker_policy_hash`.
-Worker-facing task responses omit post-submit checker policy internals.
+Contributor-facing task responses omit post-submit checker policy internals.
 
 ## Assignment
 
@@ -1028,12 +1029,12 @@ Fields:
 - `locked_at`
 - `supersedes_submission_id`
 
-The worker submission packet supplies the task id, summary, outputs, artifact
-hashes, evidence references, and worker attestation. Workstream assigns the
+The contributor submission packet supplies the task id, summary, outputs,
+artifact hashes, evidence references, and contributor attestation. Workstream assigns the
 submission version, creates evidence ids, and stamps locked guide source,
 submission artifact, effective project policy, pre-submit checker, post-submit
 checker, review, revision, and payment policy provenance from trusted
-task/project state. The worker does not provide submission version, evidence
+task/project state. The contributor does not provide submission version, evidence
 ids, checker results, checker run ids, guide versions, source snapshots,
 effective project policy ids/hashes, pre-submit checker ids/bundle hashes,
 post-submit checker policy ids/versions/hashes, review policy versions, revision
@@ -1043,7 +1044,7 @@ Implementation note: submissions stamp explicit post-submit checker provenance
 from the task. Durable `CheckerRun` creation uses those
 `locked_post_submit_checker_policy_*` fields and fails closed when they are
 missing, mismatched, deleted, stale, or unauthorized.
-Worker-facing submission responses omit post-submit checker policy internals.
+Contributor-facing submission responses omit post-submit checker policy internals.
 
 Status:
 
@@ -1127,7 +1128,7 @@ Routing recommendation:
 
 `routing_recommendation` is a checker-side workflow hint, not a human review decision. `allow_review` means the automated checker found no blocking issue and the submission may proceed to human review. It must not be stored or reported as `accept`.
 
-`task_setup_blocked` means the task's locked contract or policy context is incomplete, stale, or unsafe to review. It is an internal project-manager route, not a worker-facing revision outcome.
+`task_setup_blocked` means the task's locked contract or policy context is incomplete, stale, or unsafe to review. It is an internal project-manager route, not a contributor-facing revision outcome.
 
 ## CheckerResult
 
@@ -1276,7 +1277,7 @@ Each replay has items:
 - `worker_claim_status`
 - `reviewer_closure_status`
 
-Worker claim status:
+Contributor claim status:
 
 - fixed
 - disputed
@@ -1320,9 +1321,9 @@ Fields:
 
 Purpose:
 
-This record is created before a worker resumes a task in `NEEDS_REVISION` when guide or policy context must be checked for the next attempt. It does not mutate the prior submission. It records whether the next attempt keeps the prior context or rebases to the current active guide and policy context under revision policy.
+This record is created before a contributor resumes a task in `NEEDS_REVISION` when guide or policy context must be checked for the next attempt. It does not mutate the prior submission. It records whether the next attempt keeps the prior context or rebases to the current active guide and policy context under revision policy.
 
-The worker and reviewer packets must show the prior version, next version, rebase reason, and change summary when `context_rebased = true`.
+The contributor and reviewer packets must show the prior version, next version, rebase reason, and change summary when `context_rebased = true`.
 
 ## ContributionRecord
 
@@ -1359,7 +1360,7 @@ Status:
 
 Purpose:
 
-The contribution record is created when work is accepted. It certifies that a specific worker completed accepted work under a locked project guide with cited evidence. Payment records and reputation events attach to this record, but do not replace it.
+The contribution record is created when work is accepted. It certifies that a specific contributor completed accepted work under a locked project guide with cited evidence. Payment records and reputation events attach to this record, but do not replace it.
 
 ## PaymentRecord
 

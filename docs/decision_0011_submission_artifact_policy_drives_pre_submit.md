@@ -98,7 +98,7 @@ Workstream's trusted compiler builds and validates the constrained pre-submit
 checker specification using Workstream-approved primitives.
 
 `SubmissionArtifactPolicy` is the Workstream-derived,
-covered-Project-Manager-approved machine-readable contract for worker
+covered-Project-Manager-approved machine-readable contract for contributor
 submissions. It defines:
 
 - required artifacts
@@ -108,7 +108,7 @@ submissions. It defines:
 - maximum file and package size rules
 - allowed storage reference forms
 - forbidden artifacts
-- worker attestation requirements
+- contributor attestation requirements
 - project-specific packaging requirements
 
 Workstream owns a default submission artifact policy. Every project inherits it.
@@ -146,11 +146,11 @@ or the work is split into another project/guide. Workstream does not hide guide
 coverage problems by generating new task-specific policies.
 
 `PreSubmitCheckerPolicy` is locked to the effective project submission artifact policy hash. It is
-not derived on read, manually edited by workers, or supplied by clients. Workers
+not derived on read, manually edited by contributors, or supplied by clients. Contributors
 submit only draft packet fields. They do not choose checker names, policy
 versions, blocking rules, severities, or outcomes. Each task stores locked
 references to the applicable guide snapshot, effective project submission artifact policy hash, and
-pre-submit checker bundle hash before entering the worker pipeline. Task-specific
+pre-submit checker bundle hash before entering the contributor pipeline. Task-specific
 values are constrained runtime parameters consumed by the shared checker, not
 new checker generation. For v0.1, those parameters come only from trusted
 task-contract fields already owned by Workstream; there is no free-form
@@ -187,7 +187,7 @@ Approved pre-submit checker primitives include:
 
 The trusted compiler must keep `warn_low_quality_generated_artifact`
 warning-only; escalating that primitive to blocking is rejected because it would
-change worker-facing intake semantics.
+change contributor-facing intake semantics.
 
 Project-specific executable checker code is not part of the default path. If a
 future project requires logic that cannot fit the constrained checker
@@ -248,7 +248,7 @@ points before they can be marked complete:
 
 - API response schemas for `pre_submission_checker_failed` must exclude review
   decision fields and values such as `accept`, `needs_revision`, and `reject`.
-- Worker-facing UI or demo surfaces that render pre-submit results must use
+- Contributor-facing UI or demo surfaces that render pre-submit results must use
   pre-submit pass/fail/warning language, not human review decision terminology.
 - Pre-submit intake feedback must not be persisted as human review decisions or
   durable post-submit checker results.
@@ -261,7 +261,7 @@ points before they can be marked complete:
 
 Chunk `WS-POL-001-03` must prove the API response and no-row/no-version/no-task
 transition behavior. Chunk `WS-POL-001-04` must prove post-submit checker
-records remain separate from pre-submit feedback and that worker-facing
+records remain separate from pre-submit feedback and that contributor-facing
 responses do not expose internal-only routes. If any UI or demo surface renders
 pre-submit results, a later frontend/demo chunk must prove the same wording
 separation before this ADR can be closed as fully implemented.
@@ -273,7 +273,7 @@ Every submission must include:
 - summary
 - package hash when a package reference is supplied
 - artifact hash manifest
-- worker attestation
+- contributor attestation
 
 Every artifact manifest entry must include:
 

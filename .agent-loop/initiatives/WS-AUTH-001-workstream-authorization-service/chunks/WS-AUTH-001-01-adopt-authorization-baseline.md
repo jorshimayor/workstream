@@ -67,7 +67,18 @@ docs/template_revision_replay.md
 docs/template_submission_artifact_policy.md
 docs/decision_0003_project_guides_are_first_class.md
 docs/decision_0009_review_decisions_are_canonical.md
+docs/decision_0010_revision_context_rebase.md
 docs/decision_0011_submission_artifact_policy_drives_pre_submit.md
+docs/operations_payment_reputation.md
+docs/operations_reviewer_workflow.md
+docs/operations_revision_replay.md
+docs/operations_subagent_review_protocol.md
+docs/principles.md
+docs/product_principles.md
+docs/template_preflight_evidence.md
+docs/template_review_packet.md
+docs/template_submission_packet.md
+docs/template_task_status.md
 docs/diagrams/*.md
 docs/diagrams/workstream_context.puml
 docs/diagrams/workstream_v01_container.puml
@@ -142,8 +153,9 @@ docs/reference_specs/SHA256SUMS
 - Roadmap status names WS-AUTH-001 as current priority, records POL-002 chunks
   01/02 merged and chunk 03 handled separately by PR #90, and defers further
   authorization implementation until auth proof.
-- Canonical vocabulary distinguishes `worker` as a task-lifecycle persona and
-  attribution term from `submitter` as the persisted exact-project grant.
+- Canonical vocabulary uses Contributor as the umbrella human term. A
+  contributor has an exact-project `submitter`, `reviewer`, or `both` grant.
+  Worker terminology is reserved for internal services and background jobs.
 - Every current operational override/repair command is inventoried and assigned
   a precise registered Project Manager or Operator permission for later chunks;
   any additive permission is approved in the ADR rather than invented in code.

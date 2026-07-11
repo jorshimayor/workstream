@@ -60,7 +60,7 @@ authorization as an alternate path.
 
 Implementation is split into PR-sized chunks. Token verification and canonical
 actor resolution precede grants. Grants precede centralized permission
-evaluation. Existing project, task, submission, checker, and worker surfaces
+evaluation. Existing project, task, submission, checker, and contributor surfaces
 move to the new authorization service in bounded cutover chunks.
 
 ## Alternatives considered

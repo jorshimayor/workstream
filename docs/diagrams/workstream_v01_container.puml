@@ -29,7 +29,7 @@ skinparam cloud {
 
 package "People" #F8F9FA {
   rectangle "Project Manager" as project_manager #F1F3F5
-  rectangle "Human-Agent\nContributor" as worker #F1F3F5
+  rectangle "Human-Agent\nContributor" as contributor #F1F3F5
   rectangle "Reviewer" as reviewer #F1F3F5
   rectangle "Operator / Access Admin" as operator #F1F3F5
 }
@@ -51,7 +51,7 @@ package "Durable Records" #F2FBF7 {
 }
 
 project_manager --> frontend : uses
-worker --> frontend : uses
+contributor --> frontend : uses
 reviewer --> frontend : uses
 operator --> frontend : uses
 

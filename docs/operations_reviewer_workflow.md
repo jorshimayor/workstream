@@ -6,7 +6,7 @@ The reviewer decides whether a submission satisfies the task and project guide.
 
 The reviewer does not spend time diagnosing basic packaging or schema failures. The checker framework handles that before review.
 
-The reviewer is accountable for judgment, not task execution. A good review is specific enough that a worker can either fix the issue or clearly dispute it.
+The reviewer is accountable for judgment, not task execution. A good review is specific enough that a contributor can either fix the issue or clearly dispute it.
 
 ## Review Inputs
 
@@ -93,7 +93,7 @@ Use needs_revision when:
 - the submission is not acceptable yet
 - reviewer can describe concrete required fixes
 
-Do not write vague feedback. Every issue must tell the worker what is wrong and what must change.
+Do not write vague feedback. Every issue must tell the contributor what is wrong and what must change.
 
 Needs revision feedback must not introduce preference-only work. If the guide does not require it and acceptance is not blocked by it, keep it as a low-severity note.
 
@@ -111,7 +111,7 @@ Use reject when:
 - the work is fundamentally wrong
 - the submission is non-original or violates policy
 - the task cannot be salvaged by reasonable revision
-- the worker submitted prohibited material
+- the contributor submitted prohibited material
 
 Use reject carefully. If the work can be reasonably corrected through one revision cycle, use `needs_revision`.
 

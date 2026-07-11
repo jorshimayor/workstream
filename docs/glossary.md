@@ -57,6 +57,12 @@ system/project scope.
 An immutable exact-project contributor authority record with role `submitter`,
 `reviewer`, or `both`.
 
+## Contributor
+
+The umbrella human product term for a person participating in Workstream. A
+contributor has an exact-project `submitter`, `reviewer`, or `both` grant.
+Worker terminology is reserved for internal services and background jobs.
+
 ## Source
 
 Where a task came from. In v0.1, sources are manual creation, controlled markdown import, or controlled CSV import.
@@ -92,7 +98,7 @@ project policy, pre-submit checker policy, and post-submit checker policy rows.
 ## Submission Artifact Policy
 
 The Workstream-derived, covered-Project-Manager-approved machine-readable
-contract for what a worker must submit. It is derived from open-ended project
+contract for what a contributor must submit. It is derived from open-ended project
 guide material after guide sufficiency passes or passes with warnings, reviewed
 by an authorized covered Project Manager after any
 warnings are acknowledged, and attached to a project guide version. It defines
@@ -111,11 +117,11 @@ The deterministic merge of Workstream's default submission artifact policy and t
 
 ## Pre-Submit Checker Policy
 
-The server-generated project checker matrix produced from the effective project submission artifact policy, persisted with a compiled bundle hash, and locked by tasks before they enter the worker pipeline. It runs before Workstream creates a submission row or submission version. The preflight endpoint returns `PreSubmitCheckResponse`; a blocked submission-create attempt returns `pre_submission_checker_failed` with structured pass/fail/warning details. Neither path returns review decision values: `accept`, `needs_revision`, or `reject`.
+The server-generated project checker matrix produced from the effective project submission artifact policy, persisted with a compiled bundle hash, and locked by tasks before they enter the contributor pipeline. It runs before Workstream creates a submission row or submission version. The preflight endpoint returns `PreSubmitCheckResponse`; a blocked submission-create attempt returns `pre_submission_checker_failed` with structured pass/fail/warning details. Neither path returns review decision values: `accept`, `needs_revision`, or `reject`.
 
 ## pre_submission_checker_failed
 
-The worker-facing domain error code returned when a submission-create attempt is blocked by pre-submit checks. It includes structured pass/fail/warning details in the error details and is not a review decision. It must not be stored as `accept`, `needs_revision`, or `reject`. The preflight endpoint returns `PreSubmitCheckResponse` instead of this error code.
+The contributor-facing domain error code returned when a submission-create attempt is blocked by pre-submit checks. It includes structured pass/fail/warning details in the error details and is not a review decision. It must not be stored as `accept`, `needs_revision`, or `reject`. The preflight endpoint returns `PreSubmitCheckResponse` instead of this error code.
 
 ## Task
 
@@ -123,7 +129,7 @@ A unit of work inside a project.
 
 ## Task Work Context
 
-The worker-safe API projection of a task's locked guide, project summary,
+The contributor-safe API projection of a task's locked guide, project summary,
 review policy, revision policy, payment policy, and lifecycle state. It is read
 from the task's stamped locked context and does not expose source snapshot
 hashes, private source/import refs, compiled checker bundles, checker configs,
@@ -131,8 +137,8 @@ Celery ids, or setup errors.
 
 ## Task Submission Requirements
 
-The worker-safe API projection of the task's locked effective project
-submission artifact policy. It tells the worker the exact required artifacts,
+The contributor-safe API projection of the task's locked effective project
+submission artifact policy. It tells the contributor the exact required artifacts,
 evidence keys, forbidden artifact rules, storage reference rules, packaging
 rules, hash algorithm, size limits, and attestation terms before submission.
 
@@ -149,7 +155,7 @@ The normalized task fields required for Workstream to screen, assign, check, rev
 
 ## Submission Packet
 
-The worker's submitted output plus summary, artifacts, evidence references, hashes, and metadata. Workstream assigns the submission version server-side after blocking pre-submit checks pass.
+The contributor's submitted output plus summary, artifacts, evidence references, hashes, and metadata. Workstream assigns the submission version server-side after blocking pre-submit checks pass.
 
 ## Checker
 
@@ -181,7 +187,7 @@ The record of accepted amount, pending payout, paid amount, and payment state.
 
 ## Reputation Ledger
 
-The outcome-based record of worker and reviewer performance.
+The outcome-based record of contributor and reviewer performance.
 
 ## Contribution Record
 

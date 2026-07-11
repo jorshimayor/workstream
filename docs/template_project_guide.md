@@ -22,7 +22,7 @@ live in `PaymentPolicy`, not in the project shell or guide request body.
 
 - difficulty scale:
 - estimated time policy:
-- maximum active tasks per worker:
+- maximum active tasks per contributor:
 - review SLA:
 
 ## Guide Versioning
@@ -83,10 +83,10 @@ Define prohibited behavior, tools, copied material, generated artifacts, confide
 - output files or package
 - evidence
 - revision replay when applicable
-- worker attestation
+- contributor attestation
 - artifact hash manifest
 
-Workstream assigns submission version server-side after blocking pre-submit checks pass. The worker does not provide a submission version or any guide/policy version.
+Workstream assigns submission version server-side after blocking pre-submit checks pass. The contributor does not provide a submission version or any guide/policy version.
 
 ## Submission Expectations Summary
 
@@ -195,7 +195,7 @@ Reject when:
 - work cannot be fixed by reasonable revision
 - prohibited content or files are included
 - evidence is fabricated or does not correspond to the submitted artifact
-- worker repeatedly resubmits without addressing prior findings
+- contributor repeatedly resubmits without addressing prior findings
 
 ## Common Rejection Reasons
 

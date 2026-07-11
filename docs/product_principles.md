@@ -25,7 +25,7 @@ Workstream combines the approved submission artifact policy with non-bypassable 
 
 The platform does not rely on memory or chat messages to enforce rules. If a rule matters, it belongs in the project guide, submission artifact policy, checker policy, review policy, revision policy, payment policy, or task template.
 
-When a guide or policy changes while work is already in progress, prior submitted attempts remain tied to their locked context. If the task returns for revision, revision policy decides whether the next attempt rebases to the latest active context, and the worker must see what changed.
+When a guide or policy changes while work is already in progress, prior submitted attempts remain tied to their locked context. If the task returns for revision, revision policy decides whether the next attempt rebases to the latest active context, and the contributor must see what changed.
 
 ## 3. Same Lifecycle, Different Domain Language
 
@@ -51,9 +51,9 @@ The system improves reviewer judgment. It does not pretend to replace it.
 
 ## 5A. Human Owners Are Accountable For Agent-Assisted Work
 
-Workstream allows humans to use agents and external tools, but the human worker or owner is accountable for the submitted packet.
+Workstream allows humans to use agents and external tools, but the human contributor or owner is accountable for the submitted packet.
 
-The first version enforces accountability through assignment ownership, worker attestation, immutable submission versions, evidence, review decisions, and reputation events. A built-in owner-agent execution workspace is later work.
+The first version enforces accountability through assignment ownership, contributor attestation, immutable submission versions, evidence, review decisions, and reputation events. A built-in owner-agent execution workspace is later work.
 
 ## 6. Revision Is A State, Not A Failure
 

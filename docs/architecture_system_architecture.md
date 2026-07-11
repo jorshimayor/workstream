@@ -151,8 +151,8 @@ Owns:
 - task requirements
 - task acceptance criteria
 - queue views
-- worker-safe task work context
-- worker-safe submission requirements derived from locked effective project policy
+- contributor-safe task work context
+- contributor-safe submission requirements derived from locked effective project policy
 - permission-scoped locked task provenance for covered Project Managers and
   authorized Operator/Audit projections
 
@@ -234,7 +234,7 @@ Owns:
 
 Owns:
 
-- worker performance
+- contributor performance
 - reviewer performance
 - skill-level score
 - revision and rejection rates

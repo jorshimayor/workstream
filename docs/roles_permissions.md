@@ -24,8 +24,10 @@ The external Flow token identifies a subject and supplies verified coarse
 scope; it does not assign these roles. Workstream stores grants locally and
 evaluates them against canonical resources and lifecycle guards.
 
-`worker` is a lifecycle persona, not the persisted contributor grant name.
-Administrative grants alone never authorize submission or review.
+Contributor is the umbrella human product term. Exact-project Submitter,
+Reviewer, or Both grants determine candidate authority. Worker terminology is
+reserved for internal services and background jobs. Administrative grants
+alone never authorize submission or review.
 
 ## Independence
 

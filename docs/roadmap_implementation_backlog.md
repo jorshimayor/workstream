@@ -67,7 +67,7 @@
 - attach evidence items
 - calculate package hash when file is uploaded
 - calculate artifact hash manifest for every uploaded artifact
-- require worker attestation
+- require contributor attestation
 - lock submission after auto-check starts
 - create new submission version when any artifact changes
 
@@ -78,7 +78,7 @@
 - blocking status calculation
 - project-specific required checkers
 - API-readable checker results for the future reviewer surface
-- worker-visible failure summary
+- contributor-visible failure summary
 - bind checker run to exact submission version and artifact hash manifest
 - bind checker run to package hash and locked task guide/policy context
 - implement `check_evidence_integrity`
@@ -115,7 +115,7 @@
 - paid status with reference
 - disputed payment status
 - payment adjustment record for amount changes
-- worker reputation events
+- contributor reputation events
 - reviewer reputation events
 - reviewer-pair anomaly flags
 - fast-accept-without-evidence flags

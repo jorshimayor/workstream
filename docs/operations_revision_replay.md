@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Revision replay prevents the common failure where a task comes back, the worker says it is fixed, and nobody can prove which reviewer issues were actually closed.
+Revision replay prevents the common failure where a task comes back, the contributor says it is fixed, and nobody can prove which reviewer issues were actually closed.
 
 Every resubmission after `NEEDS_REVISION` must map prior findings to concrete fixes.
 
@@ -14,9 +14,9 @@ For each prior finding:
 - prior severity
 - prior area
 - required fix
-- worker fix summary
+- contributor fix summary
 - evidence reference
-- worker claim status: `fixed`, `disputed`, or `not_applicable`
+- contributor claim status: `fixed`, `disputed`, or `not_applicable`
 
 Reviewer closure status:
 
@@ -26,9 +26,9 @@ Reviewer closure status:
 - `still_open`
 - `obsolete`
 
-## Worker Rules
+## Contributor Rules
 
-The worker must:
+The contributor must:
 
 - address every high and medium finding
 - attach evidence for every claimed fix
@@ -57,13 +57,13 @@ Low findings can be left unresolved if the reviewer marks them as informational.
 
 ## Revision Context Preparation
 
-Before the worker resumes a task in `NEEDS_REVISION`, Workstream prepares the next revision context.
+Before the contributor resumes a task in `NEEDS_REVISION`, Workstream prepares the next revision context.
 
 That preparation compares the prior submission's locked project guide and policy versions with the current active guide and policy versions. Revision policy decides whether the next attempt keeps the prior context, rebases to the latest active context, or is blocked for project-manager repair.
 
 A rebase does not change the prior submission. It only defines the guide and policy context for the next submission attempt.
 
-When a rebase happens, the worker must see:
+When a rebase happens, the contributor must see:
 
 - prior guide and policy versions
 - next guide and policy versions
@@ -74,7 +74,7 @@ The reviewer must see the same context change in the review packet. A reviewer c
 
 ## Replay Table
 
-| Prior Finding ID | Required Fix | Worker Fix Summary | Evidence | Worker Status | Reviewer Closure |
+| Prior Finding ID | Required Fix | Contributor Fix Summary | Evidence | Contributor Status | Reviewer Closure |
 | --- | --- | --- | --- | --- | --- |
 | `RF-001` | `<required fix>` | `<what changed>` | `<evidence id/file/log/link>` | `fixed` | `still_open` |
 

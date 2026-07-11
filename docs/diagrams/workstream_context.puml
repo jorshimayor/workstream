@@ -28,7 +28,7 @@ skinparam cloud {
 }
 
 rectangle "Project Manager\n----\nCreates projects,\nguides, policies,\nand tasks" as project_manager #F1F3F5
-rectangle "Human-Agent\nContributor\n----\nClaims work,\nsubmits packets,\nand attests output" as worker #F1F3F5
+rectangle "Human-Agent\nContributor\n----\nClaims work,\nsubmits packets,\nand attests output" as contributor #F1F3F5
 rectangle "Reviewer\n----\nReviews evidence,\nfindings, and\nchecker results" as reviewer #F1F3F5
 rectangle "Operator / Access Admin\n----\nAudits, performs registered\nrecovery, and manages grants" as operator #F1F3F5
 
@@ -41,7 +41,7 @@ rectangle "Object Storage\nAbstraction\n----\nLocal now;\nR2/S3-compatible later
 rectangle "Future Adapter Boundary\n----\nExternal task origins\nERC-8004 agent identity/reputation\nERC-8183 task contract/escrow\nx402 / OmniClaw / USDC settlement\nReputation and reporting consumers" as future_boundary #FFF3BF
 
 project_manager --> workstream : operates
-worker --> workstream : submits
+contributor --> workstream : submits
 reviewer --> workstream : reviews
 operator --> workstream : audits
 

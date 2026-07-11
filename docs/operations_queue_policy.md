@@ -62,7 +62,7 @@ Owner:
 
 Exit requirement:
 
-- assigned or claimed by worker
+- assigned or claimed by contributor
 
 ### Active
 
@@ -70,7 +70,7 @@ Tasks in `CLAIMED` or `IN_PROGRESS`.
 
 Owner:
 
-- worker
+- contributor
 - operator
 
 Operational risk:
@@ -125,7 +125,7 @@ Policy:
 
 - use this for high-value tasks, new project types, disputed checker outcomes, or projects still being calibrated
 - the gate records findings or explicitly clears the packet for normal review
-- unresolved blocking issues go to `NEEDS_REVISION` when worker-fixable or
+- unresolved blocking issues go to `NEEDS_REVISION` when contributor-fixable or
   remain blocked from review until the owning covered repair/retry action
   succeeds
 
@@ -145,18 +145,18 @@ Policy:
 
 ### Needs Revision
 
-Worker-facing lane for fixable issues from automated checks, pre-review gates, or human review.
+Contributor-facing lane for fixable issues from automated checks, pre-review gates, or human review.
 
 Policy:
 
-- before the worker resumes, Workstream prepares revision context against the active guide and policy records
+- before the contributor resumes, Workstream prepares revision context against the active guide and policy records
 - revision policy decides whether the next attempt keeps the prior locked context or rebases to the current active context
-- a rebase must show the worker the prior version, next version, and change summary
+- a rebase must show the contributor the prior version, next version, and change summary
 - out-of-band guidance is not enforceable until it is encoded into guide, policy, task template, or checker contracts
 
 Owner:
 
-- worker
+- contributor
 - operator
 
 Policy:
@@ -221,13 +221,13 @@ Every operating day starts with:
 | --- | --- |
 | `DRAFT -> SCREENING` | project id, locked guide candidate, task source/description fields, acceptance and rejection criteria, payment policy |
 | `SCREENING -> READY` | screening decision, guide version lock, guide source snapshot id/hash lock, acceptance criteria, effective project submission artifact policy hash lock, project `PreSubmitCheckerPolicy` compiled bundle hash lock, post-submit checker policy, review policy, revision policy, payment policy |
-| `IN_PROGRESS -> SUBMITTED` | blocking pre-submit checks passed, submission packet, artifact hash manifest, evidence references, worker attestation |
+| `IN_PROGRESS -> SUBMITTED` | blocking pre-submit checks passed, submission packet, artifact hash manifest, evidence references, contributor attestation |
 | `SUBMITTED -> EVALUATION_PENDING` | immutable submission version, locked post-submit checker policy id/version/hash/body copied from the task context |
 | `EVALUATION_PENDING -> REVIEW_PENDING` | checker run for exact submission version, readiness certificate, no blocking failures |
-| `EVALUATION_PENDING -> NEEDS_REVISION` | checker run id, outcome source `auto_checker`, worker-visible checker failures with severity, message, suggested fix |
+| `EVALUATION_PENDING -> NEEDS_REVISION` | checker run id, outcome source `auto_checker`, contributor-visible checker failures with severity, message, suggested fix |
 | `REVIEW_PENDING -> NEEDS_REVISION` | review decision, at least one structured finding, revision policy still permits revision |
 | `REVIEW_PENDING -> ACCEPTED` | accepted review, acceptance evidence refs, contribution record, payment record |
-| pre-submit feedback in `NEEDS_REVISION` | prior findings visible to worker, revision deadline active, no new submission created |
+| pre-submit feedback in `NEEDS_REVISION` | prior findings visible to contributor, revision deadline active, no new submission created |
 | `NEEDS_REVISION -> SUBMITTED` | replacement submission packet, revision replay covering every high and medium prior finding, revision count under policy limit |
 | payment `PENDING -> PAID` | payment reference and payment audit event |
 
@@ -235,7 +235,7 @@ Every operating day starts with:
 
 Each project defines capacity limits:
 
-- maximum active tasks per worker
+- maximum active tasks per contributor
 - maximum review-pending tasks per reviewer
 - maximum stale active age
 - maximum accepted-unpaid age
@@ -244,7 +244,7 @@ Capacity limits prevent the queue from looking healthy while hidden work is stuc
 
 For early pilots, use conservative defaults:
 
-- worker active task limit: 2
+- contributor active task limit: 2
 - reviewer review-pending limit: 5
 - review SLA: 24 hours
 - payment reconciliation SLA: daily
@@ -282,7 +282,7 @@ Fix:
 Cause:
 
 - vague feedback
-- worker not closing findings
+- contributor not closing findings
 - task spec unclear
 
 Fix:

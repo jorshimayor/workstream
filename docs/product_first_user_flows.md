@@ -60,22 +60,22 @@ Acceptance:
   checker policy summary, permission-appropriate post-submit checker policy
   summary, review policy, revision policy, and payment policy.
 
-## Flow 3: Worker Submits Work
+## Flow 3: Contributor Submits Work
 
-1. Worker opens assigned task.
-2. Worker attaches output files or links.
-3. Worker attaches evidence.
-4. Worker writes submission notes.
+1. Contributor opens assigned task.
+2. Contributor attaches output files or links.
+3. Contributor attaches evidence.
+4. Contributor writes submission notes.
 5. Workstream executes the task's locked project `PreSubmitCheckerPolicy`.
 6. Preflight failures return `PreSubmitCheckResponse`; blocked submission-create attempts return `pre_submission_checker_failed` with structured pass/fail/warning details and create no submission.
-7. When blocking pre-submit checks pass, Worker submits packet.
+7. When blocking pre-submit checks pass, Contributor submits packet.
 8. Task enters `SUBMITTED`.
 
 Acceptance:
 
 - Submission cannot be created when blocking pre-submit checks fail.
 - Blocking pre-submit failures are not review decisions and never return `accept`, `needs_revision`, or `reject`.
-- Submission cannot be created without required artifacts, evidence references, hashes, and worker attestation defined by the locked project pre-submit checker policy.
+- Submission cannot be created without required artifacts, evidence references, hashes, and contributor attestation defined by the locked project pre-submit checker policy.
 - Submission packet is immutable after checks start.
 
 ## Flow 4: Automated Checks Run
@@ -83,7 +83,7 @@ Acceptance:
 1. Checker runner validates the submission-stamped locked `PostSubmitCheckerPolicy` id/version/hash/body.
 2. Runner executes enabled checks from that locked policy body.
 3. Results are saved with `passed`, `warning`, or `failed`, plus severity, message, and evidence.
-4. If worker-fixable blocking failures exist, task enters `NEEDS_REVISION`.
+4. If contributor-fixable blocking failures exist, task enters `NEEDS_REVISION`.
 5. If setup or provenance defects exist, the task stays in the internal operations queue.
 6. If no blocking failures exist, task enters `REVIEW_PENDING`.
 
@@ -109,19 +109,19 @@ Acceptance:
 
 ## Flow 6: Revision Replay
 
-1. Worker opens needs-revision task.
+1. Contributor opens needs-revision task.
 2. Workstream prepares revision context from the revision policy.
-3. Worker sees prior guide/policy version, next guide/policy version, and any change summary when the task was rebased.
-4. Worker sees each finding as a checklist item.
-5. Worker adds fix note and evidence per finding.
-6. Worker resubmits.
+3. Contributor sees prior guide/policy version, next guide/policy version, and any change summary when the task was rebased.
+4. Contributor sees each finding as a checklist item.
+5. Contributor adds fix note and evidence per finding.
+6. Contributor resubmits.
 7. Checkers rerun.
 8. Reviewer closes or reopens each finding.
 
 Acceptance:
 
 - Prior review remains visible.
-- Context changes are visible before the worker revises.
+- Context changes are visible before the contributor revises.
 - Each required finding has a closure state.
 - Revision count is tracked against the locked revision policy.
 - Resubmission is blocked or rejected when the revision policy limit or deadline says so.
@@ -132,7 +132,7 @@ Acceptance:
 2. Task enters `ACCEPTED`.
 3. Contribution record is created from accepted submission, accepting review, guide version, evidence refs, and artifact hashes.
 4. Payment record is created or updated as `PENDING`.
-5. Worker reputation updates from the contribution record.
+5. Contributor reputation updates from the contribution record.
 6. Project dashboard updates.
 
 Acceptance:

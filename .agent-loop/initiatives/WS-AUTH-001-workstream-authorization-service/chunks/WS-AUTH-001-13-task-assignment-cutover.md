@@ -6,7 +6,7 @@
 
 ## Goal
 
-Move task creation/screen/release, queue visibility, worker claim, assignment,
+Move task creation/screen/release, queue visibility, contributor claim, assignment,
 and start operations to scoped manager or exact-project submitter permissions
 while preserving task lifecycle guards.
 
@@ -57,7 +57,7 @@ docs/operations_authorization_service.md
 
 ```text
 submission create/read/finalize
-checker trigger/read or worker checker results
+checker trigger/read or contributor checker results
 new terminal task states or unrelated lifecycle redesign
 review models or self-review implementation
 token role or legacy active-worker-profile fallback
@@ -80,7 +80,7 @@ token role or legacy active-worker-profile fallback
 - Operator `operations.status.read` exposes a read-only cross-project task-queue
   operational projection with bounded fields; it does not grant task mutation.
   Audit Authority `audit.read` exposes only covered task evidence. Both paths
-  filter before counts/cursors, conceal unauthorized resources, redact worker
+  filter before counts/cursors, conceal unauthorized resources, redact contributor
   details, and have explicit mutation-denial tests.
 - ProjectRoleGrant revocation and ActorProfile suspension/deactivation/link
   revocation reconcile exclusive submitter assignments idempotently. For
@@ -89,7 +89,7 @@ token role or legacy active-worker-profile fallback
   immutable prior work/audit history remains. A `needs_revision` task instead
   remains `needs_revision` with a durable unassigned revision obligation. A
   covered manager may reassign it only to an active exact-project submitter;
-  the replacement receives the bounded worker-visible prior findings, prepared
+  the replacement receives the bounded contributor-visible prior findings, prepared
   revision context, supersession linkage, and replay requirements. Reactivation
   does not restore the old assignment. Submitted/evaluation/review-pending
   history is not rewritten.
@@ -100,7 +100,7 @@ token role or legacy active-worker-profile fallback
 - When the durable worker path is selected, it is explicitly registered in the
   existing Celery include list; no second worker registry or scheduler is added.
 - Revoked/suspended actors fail on the next request and transaction recheck.
-- Cross-project/worker visibility remains concealed.
+- Cross-project/contributor visibility remains concealed.
 - No migrated operation uses token roles or `require_any_role()`.
 - Task queue/claim/start remove their enumerated
   `LegacyWorkflowEligibilityCompatibility` consumers; only the submission

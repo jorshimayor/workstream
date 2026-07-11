@@ -119,7 +119,7 @@ Default forbidden patterns include:
 
 ### check_confidentiality_attestation
 
-Ensures the worker explicitly attests that the submission does not contain prohibited client data, private source material, credentials, or copied platform artifacts.
+Ensures the contributor explicitly attests that the submission does not contain prohibited client data, private source material, credentials, or copied platform artifacts.
 
 ### check_low_quality_generated_artifacts
 
@@ -127,7 +127,7 @@ Flags repeated low-quality generated patterns banned by project submission artif
 
 This checker produces warnings by default. If a project explicitly includes it
 in required post-submit checkers, matching low-quality signals become
-worker-fixable blocking failures and route the task to `needs_revision`.
+contributor-fixable blocking failures and route the task to `needs_revision`.
 
 Revision closure, task lifecycle movement, task readiness, and pre-review routing are enforced as lifecycle guards in v0.1. They must not be configured as checker policy names until a registered checker exists for that contract.
 
@@ -162,7 +162,7 @@ Pre-review gate phase:
 
 ## Submission Artifact Policy And Pre-Submit Generation
 
-Pre-submit intake is generated from policy. It is not manually supplied by the worker.
+Pre-submit intake is generated from policy. It is not manually supplied by the contributor.
 
 The deterministic chain is:
 
@@ -195,7 +195,7 @@ Workstream default submission artifact rules require:
 
 - summary
 - artifact hash manifest
-- worker attestation
+- contributor attestation
 - safe relative artifact paths
 - production artifact hashes shaped as `sha256:<64 lowercase hex>`
 - validated `local://`, `s3://`, or `r2://` storage references
@@ -206,7 +206,7 @@ Project policy adds required artifacts, evidence requirements, stricter forbidde
 
 The generated project `PreSubmitCheckerPolicy` is persisted with a compiled
 bundle hash and locked to the effective project submission artifact policy before tasks enter the
-worker pipeline. Tasks lock references to the shared project's compiled checker
+contributor pipeline. Tasks lock references to the shared project's compiled checker
 bundle hash. It runs before Workstream creates a submission. Preflight failures return
 `PreSubmitCheckResponse` with `status="failed"`,
 `eligible_to_submit=false`, and structured pass/fail/warning details in
@@ -265,7 +265,7 @@ inventing a checker or letting activation proceed.
 The agent output is a constrained spec. Workstream's trusted compiler owns the
 canonical `PostSubmitCheckerPolicy.policy_body`, hash, default checker list,
 and execution order. Runtime checker execution loads the locked compiled
-policy; it does not call an agent to judge a worker submission.
+policy; it does not call an agent to judge a contributor submission.
 
 The compiled project `PostSubmitCheckerPolicy` is persisted with exact setup
 provenance: guide id, source snapshot id/hash, effective project policy id/hash,
@@ -342,14 +342,14 @@ Draft packet
 -> store CheckerResult records
 -> calculate blocking status
 -> if no blocking failures remain: store readiness proof on CheckerRun and move to REVIEW_PENDING
--> if worker-fixable blocking failures exist: route to user-facing needs_revision with outcome_source = auto_checker
+-> if contributor-fixable blocking failures exist: route to user-facing needs_revision with outcome_source = auto_checker
 -> if locked task setup is incomplete or unsafe: route to internal task_setup_blocked
 -> if checker infrastructure fails: keep in checker retry handling
 ```
 
-The checker run must bind to one immutable submission version. If the worker uploads a replacement file, the platform creates a new submission version and reruns checks.
+The checker run must bind to one immutable submission version. If the contributor uploads a replacement file, the platform creates a new submission version and reruns checks.
 
-Checker failures are not human review decisions. They do not `accept` or `reject` work. Worker-fixable blocking failures can route the task to user-facing `needs_revision`, with `outcome_source = auto_checker` and no review decision id. Human review can also produce `needs_revision` later, but that records `outcome_source = human_review` and a review decision id.
+Checker failures are not human review decisions. They do not `accept` or `reject` work. Contributor-fixable blocking failures can route the task to user-facing `needs_revision`, with `outcome_source = auto_checker` and no review decision id. Human review can also produce `needs_revision` later, but that records `outcome_source = human_review` and a review decision id.
 
 If a checker crashes or cannot run because of platform infrastructure, the
 checker run remains failed as an infrastructure failure and the task does not
@@ -358,7 +358,7 @@ move to human review. A retry requires Operator
 append-only audit evidence.
 
 If a checker finds missing locked guide or policy context, missing acceptance
-criteria, or another task setup defect that is not worker-fixable, the run uses
+criteria, or another task setup defect that is not contributor-fixable, the run uses
 `task_setup_blocked`. That route is internal to covered Project Managers and
 authorized Operators and must not be shown to workers as a revision request.
 
@@ -389,7 +389,7 @@ Workers see:
 - message
 - suggested fix when safe
 
-Worker-facing checker-run responses do not expose `routing_recommendation`,
+Contributor-facing checker-run responses do not expose `routing_recommendation`,
 `outcome_source`, internal route tokens, post-submit policy provenance fields,
 locked post-submit policy body, or hidden task setup details.
 

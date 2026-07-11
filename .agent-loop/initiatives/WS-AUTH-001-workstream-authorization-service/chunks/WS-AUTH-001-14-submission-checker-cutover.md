@@ -7,12 +7,12 @@
 ## Goal
 
 Move submission precheck/create/read/finalize, checker trigger/read, checker
-worker projections, and task audit visibility to registered permissions and
+contributor projections, and task audit visibility to registered permissions and
 canonical task/project/assignment guards.
 
 ## Why this chunk exists
 
-Submission/checker authorization shares locked-task provenance and worker
+Submission/checker authorization shares locked-task provenance and contributor
 redaction rules but is separable from task claim and system-worker execution.
 
 ## Approved plan reference
@@ -70,7 +70,7 @@ legacy active-worker-profile or workflow-eligibility compatibility fallback
   uses distinct `operations.submission_gate.repair` and
   `operations.checker.retry` permissions. Each path requires a reason and
   records matched grant/permission without granting general project authority.
-- Worker reads preserve ownership, hidden-result redaction, and concealed
+- Contributor reads preserve ownership, hidden-result redaction, and concealed
   not-found behavior.
 - Audit reads expose only permission-appropriate bounded fields before counts.
 - Operator `operations.status.read` receives only the bounded submission/checker

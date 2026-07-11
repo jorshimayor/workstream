@@ -87,7 +87,7 @@ Default required packet fields:
 
 - summary
 - artifact hash manifest
-- worker attestation
+- contributor attestation
 
 Default artifact rules:
 
@@ -145,9 +145,9 @@ A project-required artifact that matches a Workstream default forbidden rule rem
 
 | Key | Label | Required | Hash Required | Description |
 | --- | --- | --- | --- | --- |
-| `<canonical evidence key>` | `<worker-facing label>` | yes | yes | `<what this evidence proves>` |
+| `<canonical evidence key>` | `<contributor-facing label>` | yes | yes | `<what this evidence proves>` |
 
-`key` is the canonical merge identity. `label` is worker-facing display text.
+`key` is the canonical merge identity. `label` is contributor-facing display text.
 
 ## Project Packaging Rules
 
@@ -160,11 +160,11 @@ A project-required artifact that matches a Workstream default forbidden rule rem
 
 ## Project Forbidden Artifacts
 
-| Pattern | Reason | Worker-Facing Fix |
+| Pattern | Reason | Contributor-Facing Fix |
 | --- | --- | --- |
 | `<pattern>` | `<reason>` | `<fix>` |
 
-## Worker Attestation Requirements
+## Contributor Attestation Requirements
 
 Required attestation topics:
 
@@ -198,7 +198,7 @@ Generated policy lock:
 - effective project submission artifact policy hash:
 - locked guide version:
 
-Tasks lock this project checker compiled bundle hash before entering the worker pipeline. Tasks
+Tasks lock this project checker compiled bundle hash before entering the contributor pipeline. Tasks
 do not derive or compile their own checker by default.
 
 Blocked submission-create attempts return `pre_submission_checker_failed` with
@@ -216,7 +216,7 @@ Expected generated checks:
 - forbidden artifact blocking
 - required artifact presence
 - evidence requirement presence
-- worker attestation validation
+- contributor attestation validation
 - low-quality artifact warnings
 
 ## Approval

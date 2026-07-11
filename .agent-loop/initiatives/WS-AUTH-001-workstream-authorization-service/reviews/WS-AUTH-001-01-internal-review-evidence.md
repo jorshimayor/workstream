@@ -45,7 +45,7 @@ bundle around that unchanged implementation.
 | senior engineering | PASS WITH LOW RISKS | None | Large atomic docs adoption is justified; scanner is simpler after removing natural-language negation parsing. |
 | QA/test | PASS | None | All supplied token-role/profile authority bypasses fail closed; 31 independent gate tests pass. |
 | security/auth | PASS | None | External identity verification and local product authorization are separated; grants and recovery remain scoped. |
-| product/ops | PASS | None | Worker/submitter, review-decision, correction, activation, and chunk-gating behavior remain correct. |
+| product/ops | PASS | None | Contributor/grant vocabulary, review-decision, correction, activation, and chunk-gating behavior remain correct. |
 | architecture | PASS | None | No backend, schema, migration, dependency, frontend, or immutable-source boundary drift. |
 | docs | PASS | None | Canonical/archival precedence, active corpus, diagrams, runbook, and lifecycle memory are consistent. |
 | CI integrity | PASS | None | Scanner invocation is direct and fail closed; no workflow step or threshold was weakened. |

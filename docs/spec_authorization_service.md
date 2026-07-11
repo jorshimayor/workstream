@@ -96,8 +96,9 @@ cannot submit or review by administrative role alone.
 | `reviewer` | Minimal project read, review queue/claim/release/decision, submission read for review, review-chain read. |
 | `both` | Union of submitter and reviewer candidates, still subject to separation-of-duties and lifecycle guards. |
 
-`worker` describes the task participant and remains in lifecycle/audit wording.
-`submitter` is the persisted authority grant.
+Contributor is the umbrella human product term. A contributor has an
+exact-project `submitter`, `reviewer`, or `both` grant. Worker terminology is
+reserved for internal services and background jobs.
 
 Grants are immutable history. Replacement revokes the prior active grant and
 creates a new row atomically. No observed token role, typed profile, skill,

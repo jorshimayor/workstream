@@ -136,6 +136,22 @@ RULES = (
             re.IGNORECASE,
         ),
     ),
+    Rule(
+        "HUMAN_WORKER_VOCABULARY",
+        re.compile(
+            r"(?:\bworker-(?:facing|visible|fixable|safe)\b|"
+            r"\bworker\s+(?:attestation|submission|reputation|identity|"
+            r"id|claim(?:s|\s+status)?|performance|active\s+task\s+limit|"
+            r"resumes|submitted|uploads|responds|completed|says|opens|"
+            r"attaches|writes|adds|resubmits|revises|fixes)\b|"
+            r"\b(?:assigned|unassigned|qualified|non-owning)\s+worker\b|"
+            r"\bper\s+worker\b|"
+            r"\b(?:the|human|each|per)\s+worker\s+"
+            r"(?:must|can|does|provides|resumes|submits|completed|id)\b|"
+            r"\bworker-reviewer\b|^#{2,4}\s+(?:Flow\s+\d+:\s+)?Worker(?:\b|-)?)",
+            re.IGNORECASE | re.MULTILINE,
+        ),
+    ),
 )
 
 MATCH_EXEMPTIONS = {

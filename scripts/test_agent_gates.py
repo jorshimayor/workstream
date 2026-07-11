@@ -907,6 +907,7 @@ def test_stale_authorization_rule_examples_are_rejected() -> None:
         "TYPED_PROFILE_PRODUCT_AUTHORITY": (
             "ActorProfile with type worker authorizes task claim."
         ),
+        "HUMAN_WORKER_VOCABULARY": "## Flow 3: Worker Submits Work",
     }
     for code, sample in fixtures.items():
         failures = gate.scan_text("docs/new_active_doc.md", sample)
@@ -945,6 +946,23 @@ def test_stale_authorization_rule_examples_are_rejected() -> None:
         "ActorProfile with type worker does not store secrets but permits task claim.",
     )
     for sample in fail_closed_authority_shapes:
+        assert gate.scan_text("docs/new_active_doc.md", sample), sample
+
+    technical_worker_statements = (
+        "The Celery worker runs project setup jobs.",
+        "Checker execution uses a durable worker boundary.",
+        "The setup worker reloads current authority before commit.",
+    )
+    for sample in technical_worker_statements:
+        assert gate.scan_text("docs/new_active_doc.md", sample) == [], sample
+
+    human_worker_statements = (
+        "A qualified worker claims the task.",
+        "The worker opens an assigned task.",
+        "Maximum active tasks per worker.",
+        "Worker attestation is required.",
+    )
+    for sample in human_worker_statements:
         assert gate.scan_text("docs/new_active_doc.md", sample), sample
 
 

@@ -137,7 +137,7 @@ needs full locked provenance without database inspection.
 
 A submission cannot move to human review until required checkers run against
 the exact submission version and artifact hashes. Critical- or high-severity
-failures return to the worker when submission-caused; platform infrastructure
+failures return to the contributor when submission-caused; platform infrastructure
 failures remain in checker retry handling through
 `operations.checker.retry` or covered setup repair and never move directly to
 human review.
@@ -229,7 +229,7 @@ Before marking paid:
 - task is accepted
 - payment record exists
 - accepted amount is correct
-- worker identity is correct
+- contributor identity is correct
 - payment reference is recorded
 - paid amount matches record
 
@@ -249,7 +249,7 @@ Do not let repeated mistakes remain tribal knowledge.
 
 If a lesson changes acceptance, review, revision, payment, evidence, or checker expectations, it must become a guide, policy, template, or checker update before it is enforced. Chat and Slack messages can announce the change, but they are not the source of truth.
 
-When a task already in `NEEDS_REVISION` is affected by a new guide or policy version, revision policy decides whether the next attempt is rebased. The worker must see the prior version, next version, and change summary before resubmitting.
+When a task already in `NEEDS_REVISION` is affected by a new guide or policy version, revision policy decides whether the next attempt is rebased. The contributor must see the prior version, next version, and change summary before resubmitting.
 
 Each lesson must have an action owner and one target:
 

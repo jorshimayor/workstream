@@ -7,10 +7,11 @@
 Creates projects when system-scoped and manages guides, policies, tasks, and
 contributor grants only for covered projects.
 
-### Submitter / Worker
+### Contributor
 
 An exact-project Submitter grant permits queue/claim/submission candidates. The
-person remains the worker in task lifecycle, assignment, and attribution text.
+person is a Contributor in product, lifecycle, assignment, and attribution
+language.
 
 ### Reviewer
 
@@ -59,7 +60,7 @@ Reads authorized immutable and operational evidence without mutation.
 8. Run task schema check.
 9. Move to READY.
 
-## Worker Submission Workflow
+## Contributor Submission Workflow
 
 1. Read project guide.
 2. Read task requirements.

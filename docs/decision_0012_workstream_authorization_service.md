@@ -76,9 +76,10 @@ Contributor project grants are:
 - `reviewer`
 - `both`
 
-`worker` remains a task-lifecycle persona and historical attribution term. It
-is not a persisted project authority grant. Administrative roles alone do not
-authorize submission or review.
+Contributor is the umbrella human product term. A contributor has an
+exact-project `submitter`, `reviewer`, or `both` grant. Worker terminology is
+reserved for internal services and background jobs. Administrative roles alone
+do not authorize submission or review.
 
 The three additive Operator recovery permissions approved with this ADR are:
 
@@ -97,8 +98,8 @@ contribution records, or compensation guards.
 Existing externally verified `ActorIdentity.actor_id` UUID5 values may become
 canonical `ActorProfile.id` values only after exact issuer/subject
 classification and UUID validation. Legacy typed profile row IDs never become
-canonical actor IDs. Existing worker, reviewer, admin, or project-manager
-profiles do not become grants.
+canonical actor IDs. Existing typed contributor, reviewer, admin, or
+project-manager profiles do not become grants.
 
 Non-empty persistent actor registries require the versioned, checksum-bound
 legacy classification process defined by the WS-AUTH-001 plan. Migration must

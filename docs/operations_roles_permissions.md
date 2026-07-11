@@ -39,8 +39,9 @@ not permit claiming tasks, submitting work, or recording review decisions.
 | Reviewer | exact project | Minimal project read, review queue/claim/release/decision under review guards. |
 | Both | exact project | Submitter and reviewer candidates, still subject to no-self-review and lifecycle guards. |
 
-`worker` remains the task-lifecycle persona and attribution term. `submitter`
-is the persisted exact-project grant.
+Contributor is the umbrella human product term. A contributor has an
+exact-project Submitter, Reviewer, or Both grant. Worker terminology is
+reserved for internal services and background jobs.
 
 ## Capability Matrix
 

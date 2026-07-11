@@ -77,11 +77,11 @@ Needs revision is not a side note. It is a formal loop:
 NEEDS_REVISION -> SUBMITTED -> EVALUATION_PENDING -> REVIEW_PENDING
 ```
 
-While a task is in `NEEDS_REVISION`, the assigned worker can run pre-submit
+While a task is in `NEEDS_REVISION`, the assigned contributor can run pre-submit
 feedback and submit a replacement version directly. The system must preserve
 original feedback, fix notes, evidence, and closure.
 
-The system must also preserve guide and policy context. Prior submissions keep their locked context; revision policy decides whether the next attempt rebases to the latest active context before the worker resumes.
+The system must also preserve guide and policy context. Prior submissions keep their locked context; revision policy decides whether the next attempt rebases to the latest active context before the contributor resumes.
 
 ## 6. Payment Follows Acceptance
 

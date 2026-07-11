@@ -90,15 +90,15 @@ Required before entering:
 
 ### CLAIMED
 
-A worker has claimed or been assigned the task.
+A contributor has claimed or been assigned the task.
 
 ### IN_PROGRESS
 
-The worker is actively working on the task.
+The contributor is actively working on the task.
 
 ### SUBMITTED
 
-The worker submitted a packet.
+The contributor submitted a packet.
 
 Required before entering:
 
@@ -111,9 +111,9 @@ Required before entering:
 - immutable submission version
 - content hash for every uploaded artifact
 - evidence references bound to submitted artifact hashes
-- worker attestation that the packet does not include prohibited or confidential material
+- contributor attestation that the packet does not include prohibited or confidential material
 
-Workstream assigns the immutable submission version server-side. The worker does not provide submission version, evidence ids, checker results, checker run ids, or guide/policy versions.
+Workstream assigns the immutable submission version server-side. The contributor does not provide submission version, evidence ids, checker results, checker run ids, or guide/policy versions.
 
 ### EVALUATION_PENDING
 
@@ -133,21 +133,21 @@ Required before entering:
 
 ### NEEDS_REVISION
 
-The worker-facing state for fixable issues.
+The contributor-facing state for fixable issues.
 
 This state can be entered from:
 
-- `EVALUATION_PENDING`, when automated checker results contain worker-fixable blocking failures.
+- `EVALUATION_PENDING`, when automated checker results contain contributor-fixable blocking failures.
 - `REVIEW_PENDING`, when a human reviewer records a `needs_revision` decision.
 
 Required before entering:
 
-- from `EVALUATION_PENDING`: checker run id, blocking checker results, worker-visible messages, and suggested fixes
+- from `EVALUATION_PENDING`: checker run id, blocking checker results, contributor-visible messages, and suggested fixes
 - from `REVIEW_PENDING`: review decision id and at least one structured review finding
 
-Before the worker resumes, Workstream prepares the next revision context. That preparation checks whether the active project guide or policy context changed since the prior submission was locked. Revision policy decides whether the next attempt keeps the prior context, rebases to the current active context, or is blocked for project-manager repair.
+Before the contributor resumes, Workstream prepares the next revision context. That preparation checks whether the active project guide or policy context changed since the prior submission was locked. Revision policy decides whether the next attempt keeps the prior context, rebases to the current active context, or is blocked for project-manager repair.
 
-A revision context rebase never mutates the prior submitted attempt. It only stamps the next submission attempt. The worker and reviewer must see the prior version, the next version, and the guide or policy change summary.
+A revision context rebase never mutates the prior submitted attempt. It only stamps the next submission attempt. The contributor and reviewer must see the prior version, the next version, and the guide or policy change summary.
 
 ### ACCEPTED
 
@@ -243,7 +243,7 @@ Finding A -> fixed by change X -> evidence Y -> closed
 Finding B -> fixed by change Z -> evidence W -> closed
 ```
 
-The worker can claim each prior finding as:
+The contributor can claim each prior finding as:
 
 - fixed
 - disputed
