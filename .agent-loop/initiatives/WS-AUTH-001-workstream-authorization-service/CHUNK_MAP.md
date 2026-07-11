@@ -12,7 +12,7 @@ stopped.
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
 | `WS-AUTH-001-PLAN` | Authorization Service Planning | L0 | Merged through PR #91 as `ad6d644` |
-| `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Active |
+| `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Merged through PR #93 as `772af1d` |
 | `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Proposed |
 | `WS-AUTH-001-03` | Legacy Actor Classification Preflight | L1 | Proposed |
 | `WS-AUTH-001-04` | Request, Error, And API Control Foundation | L1 | Proposed |
@@ -72,6 +72,6 @@ WS-AUTH-001-PLAN
 
 ## Stop condition
 
-After WS-AUTH-001-01 review and PR preparation, stop. Do not start
-`WS-AUTH-001-02` or `WS-POL-002-04`; this worktree only reconciles the already
-merged PR #90 behavior with the authorization baseline.
+`WS-AUTH-001-01` merged through PR #93. Stop after this post-merge memory
+update. Do not start `WS-AUTH-001-02` or `WS-POL-002-04`; each requires a
+separate explicit user start signal and its recorded prerequisites.

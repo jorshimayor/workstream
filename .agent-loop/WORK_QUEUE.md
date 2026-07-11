@@ -2,14 +2,14 @@
 
 ## In Progress
 
-| Chunk | Title | Risk | Status |
-|---|---|---:|---|
-| `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Active in dedicated worktree after D4-D10 approval |
+None.
 
 ## Planned Next
 
-No next chunk is active. Start requires the current chunk's human checkpoint,
-memory update, and an explicit user signal.
+| Chunk | Title | Risk | Status |
+|---|---|---:|---|
+| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Proposed but inactive until a separate explicit user start |
+| `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 
 ## Completed
 
@@ -39,14 +39,13 @@ memory update, and an explicit user signal.
 | `WS-POL-002-02` | Post-Submit Derivation Agent And Resumable Setup Integration | L1 | Merged through PR #88 as `32af6a7` on 2026-07-11 |
 | `WS-POL-002-03` | Server-Owned Policy Approval And Visibility APIs | L1 | Merged through PR #90 as `a7aa474` on 2026-07-11 |
 | `WS-AUTH-001-PLAN` | Authorization Service Planning | L0 | Merged through PR #91 as `ad6d644` on 2026-07-11 |
+| `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Merged through PR #93 as `772af1d` on 2026-07-11 |
 
 ## Proposed Next
 
-Execute only `WS-AUTH-001-01` in its dedicated worktree. Rebind evidence after
-the latest-main merge, push PR #93, observe external checks, and stop for human
-review; do not start `WS-AUTH-001-02` or `WS-POL-002-04`. PR #90 and its PR #94
-memory update are merged; this worktree only reconciles them with the active
-authorization baseline.
+No implementation chunk is active. Do not start `WS-AUTH-001-02` or
+`WS-POL-002-04` automatically; each requires its recorded prerequisites and a
+separate explicit user start signal.
 
 ## Blocked
 
