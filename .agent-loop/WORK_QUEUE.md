@@ -49,9 +49,10 @@ No implementation chunk is active. Do not start `WS-AUTH-001-02` or
 `WS-POL-002-04` automatically; each requires its recorded prerequisites and a
 separate explicit user start signal.
 
-Complete `WS-ART-001-PLAN`, run required planning reviewers, open its planning
-PR, and stop for human approval. Do not start `WS-ART-001-01` or edit Flow Node
-until the planning PR is merged and a separate explicit start signal is given.
+Complete the external-review response, final evidence rebinding, and fresh
+checks for WS-ART planning PR #97, then stop for human approval. Do not start
+`WS-ART-001-01` or edit Flow Node until the planning PR is merged and a separate
+explicit start signal is given.
 
 ## Blocked
 
