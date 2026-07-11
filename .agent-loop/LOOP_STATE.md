@@ -10,7 +10,8 @@
 - Status: WS-ART canonical storage boundary and chunk contracts are undergoing
   final internal planning review; no application or Flow Node implementation
   has started.
-- Last merged implementation SHA: `b5217e1`
+- Last reviewed implementation SHA: `be0b836`
+- Final merged WS-AUTH-001-01 branch head: `b5217e1`
 - Last merge commit: `1d3e487`
 - Current gate: complete latest-main internal review evidence, publish the
   planning PR, and stop for human approval.
@@ -20,10 +21,6 @@
   post-merge memory merged through PR #94 as `b1270d7`. `WS-POL-002-04` remains
   inactive pending the relevant authorization proof and a separate explicit
   start.
-- Parallel planning initiative: `WS-ART-001` - Immutable Artifact Storage And
-  Flow Node Integration. Only `WS-ART-001-PLAN` is active on
-  `codex/ws-art-001-artifact-storage-planning`; no artifact implementation
-  chunk is active and Flow Node remains read-only until planning approval.
 
 ## Operating Rule
 
