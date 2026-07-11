@@ -161,9 +161,9 @@ Finding:
 
 Decision:
 
-- Valid. A requester-provenance mismatch means the queued payload does not
-  match the locked submission audit trail. That is an integrity failure, not a
-  queue or setup defect.
+- Valid. A requester-provenance mismatch means the checker-run failure details
+  and locked submission audit must be inspected as an integrity failure, not
+  treated as a queue or setup defect.
 
 Fix:
 
@@ -197,6 +197,9 @@ cd backend && .venv/bin/pytest tests/test_projects.py::test_project_setup_queue_
 cd backend && .venv/bin/pytest tests/test_projects.py::test_post_submit_continuation_is_idempotent_after_compile tests/test_projects.py::test_post_submit_continuation_running_worker_redelivery_resumes_setup -q
 cd backend && .venv/bin/ruff check app/modules/projects/setup_queue.py app/workers/project_setup.py app/modules/projects/models.py tests/test_projects.py tests/test_alembic.py
 cd backend && .venv/bin/docstr-coverage --config .docstr.yaml
+cd backend && .venv/bin/pytest tests/test_tasks.py::test_queued_gate_rejects_tampered_requester_provenance -q
+cd backend && .venv/bin/pytest tests/test_tasks.py::test_queued_gate_rejects_tampered_requester_provenance tests/test_tasks.py::test_finalize_repairs_locked_submission_with_missing_pre_review_gate tests/test_tasks.py::test_failed_pre_review_gate_repair_is_idempotent_while_queued tests/test_tasks.py::test_eager_pre_review_gate_failure_after_submission_is_repairable tests/test_tasks.py::test_unknown_checker_gate_failure_is_repairable tests/test_tasks.py::test_nonrepairable_failed_gate_does_not_return_success tests/test_tasks.py::test_queued_gate_policy_error_is_failed_and_repairable tests/test_tasks.py::test_queued_gate_fails_closed_when_lock_audit_is_missing -q
+cd backend && .venv/bin/ruff check app/modules/checkers/service.py tests/test_tasks.py
 python3 scripts/check_internal_review_evidence.py
 python3 scripts/test_agent_gates.py
 python3 scripts/check_loop_memory_state.py
@@ -205,22 +208,20 @@ python3 scripts/check_markdown_links.py
 git diff --check
 ```
 
-Note: `check_internal_review_evidence.py` is expected to pass only after the
-final internal-review evidence is rebound to the reviewed code SHA that includes
-the external-review cleanup. It was intentionally rerun before rebinding and
-correctly failed stale evidence at that point.
+Final rebind result: `check_internal_review_evidence.py` passed after the
+internal evidence and trust bundle were bound to reviewed implementation SHA
+`67fb3caa302e03e5fdf99d4ad148c200d86348df`.
 
 ## External Check Status
 
-GitHub Actions and CodeRabbit passed on the previous pushed head. This response
-adds final external-review cleanup and must be checked on the PR head before
-human merge review.
+GitHub Actions and CodeRabbit passed on the previous pushed head. This
+evidence-only response update must run on the PR head before human merge
+review.
 
 ## Human Decisions Needed
 
-None after the final internal-review evidence is rebound, local gates pass, and
-GitHub current-head checks are green. Human merge review remains the required
-checkpoint.
+None after GitHub current-head checks are green. Human merge review remains the
+required checkpoint.
 
 ## Remaining Risks
 

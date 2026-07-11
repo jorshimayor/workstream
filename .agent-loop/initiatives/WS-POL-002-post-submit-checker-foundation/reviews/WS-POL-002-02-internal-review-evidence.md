@@ -10,11 +10,11 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: 0318beccd0ffd086b8ed403dd8e74dabe1fd8d6b
+Reviewed code SHA: 67fb3caa302e03e5fdf99d4ad148c200d86348df
 
-Reviewed at: 2026-07-11T08:33:06Z
+Reviewed at: 2026-07-11T09:55:12Z
 
-Reviewer run ids: senior-engineering-019f5048-10d7-79d0-a873-3d603aa2bb06, qa-test-019f5048-27cc-72a0-87d9-c6fab250556d, security-auth-019f5048-43e3-7812-9e6b-6be88845025c, product-ops-019f5048-674d-7d30-8268-a20c75be2509, architecture-019f5048-8d20-74a1-b9bd-570e511c2408, docs-019f504c-f575-7331-af00-fecfda936138, reuse-dedup-019f502c-50cd-7e42-9e8f-ac5fd297b152, test-delta-019f502c-7f1f-7aa2-8fad-50a2b5ea619b, ci-integrity-019f502c-96e6-70d2-ba38-bcd26705dbfe
+Reviewer run ids: senior-engineering-019f508e-53c3-7280-850d-66fe80feca06, qa-test-019f508e-746c-7652-9eb9-0d2ec0accd1d, security-auth-019f508e-9b0b-7d12-b95d-a9eb3d86797d, product-ops-019f508e-b935-72e0-b33a-5b4f1d274cc4, architecture-019f508e-e9b6-7c83-9177-d63408ceb40b, docs-019f5096-c758-7b71-8338-92ae26544a6c, reuse-dedup-019f509a-e849-7b83-946b-c074979f07d9, test-delta-019f5091-3f3f-79f3-9eab-70338db24b7c, ci-integrity-019f509b-07a6-7071-a161-fc5ead52d079
 
 ## Reviewed Change
 
@@ -43,15 +43,15 @@ lifecycle records.
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS AFTER FIXES | None | Final code review found no senior-engineering code fixes after CAS fence; stale evidence was fixed by this refresh. |
-| QA/test | PASS AFTER FIXES | None | Confirmed focused CAS-fence, eager repair, tampered provenance, missing audit, stale queued gate, and queue settings tests pass; stale evidence was fixed by this refresh. |
-| security/auth | PASS | None | Confirmed requester provenance validation, system actor fencing, `/finalize` authorization/object scope, and no private-path leakage. |
-| product/ops | PASS WITH LOW RISKS | None | Accepted brief `submitted` + queued-gate visibility window before worker claim; repair matrix wording was updated. |
-| architecture | PASS | None | Confirmed helper files are explicitly allowed and narrow; lifecycle remains in service/repository boundaries; no per-task checker derivation. |
-| docs | PASS | None | Confirmed final repair-matrix wording aligns with code and stale wording/link checks pass. |
-| reuse/dedup | PASS AFTER FIXES | None | Required shared provenance and Celery settings helpers; implemented and covered. |
-| test delta | PASS AFTER FIXES | None | Required eager repair proof and task-level audit query; implemented and covered. |
-| CI integrity | PASS | None | Found no workflow/package/test-runner weakening or evidence-gate bypass. |
+| senior engineering | PASS | None | Confirmed `requester_provenance_mismatch` removal from retryable failures is the smallest safe change and preserves service/repository boundaries. |
+| QA/test | PASS | None | Confirmed enqueue, execution, and unknown-checker failures remain repairable while requester-provenance mismatch is terminal and tested. |
+| security/auth | PASS | None | Confirmed requester-provenance mismatch fails closed, `/finalize` returns 409, and tampered automatic gate claims cannot be requeued. |
+| product/ops | PASS WITH LOW RISKS | None | Required durable-evidence wording instead of unavailable queued-payload inspection; fixed before this evidence rebind. |
+| architecture | PASS | None | Confirmed no runtime agent judgment, no per-task checker derivation, and engineering/product review decision separation remains intact. |
+| docs | PASS AFTER FIXES | None | Required final evidence rebinding and external-response cleanup; fixed by this evidence-only rebind. |
+| reuse/dedup | PASS WITH LOW RISKS | None | Found only an optional one-line wrapper cleanup; no helper bypass or behavior drift. |
+| test delta | PASS | None | Confirmed the changed test is stronger and would fail against the old requeue-to-completed behavior. |
+| CI integrity | PASS AFTER FIXES | None | Found no CI/test weakening; stale evidence was the only gate blocker and is fixed by this evidence-only rebind. |
 
 ## Valid Findings Addressed
 
@@ -62,6 +62,17 @@ lifecycle records.
 - Senior engineering found dispatch-failed audit could be written even when the checker-run enqueue-failure CAS missed. The task path now writes dispatch-failed audit only when `mark_pre_review_gate_enqueue_failed()` returns true, with a regression test.
 - Product/ops found stale docs implying submission status owns review/revision lifecycle. Docs now state submission status stays `submitted`; task status owns evaluation/review/revision/acceptance/rejection lifecycle.
 - Product/ops and docs found repair-matrix wording gaps for queued redispatch, stale running replacement, `pre_review_gate_execution_failed`, and non-repairable 409. Specs now match implemented behavior.
+- CodeRabbit found `requester_provenance_mismatch` was incorrectly
+  requeueable. The retryable failure set now only includes enqueue,
+  execution, and unknown-checker failures; the tampered-provenance regression
+  asserts `/finalize` returns 409 and leaves the failed run terminal.
+- Product/ops found the docs should not tell operators to inspect a queued
+  payload that is not retained as durable operator evidence. Specs and external
+  review response now direct operators to locked submission audit,
+  checker-run failure details, and retained worker logs if available.
+- CodeRabbit found an awkward "required shared" phrase in the chunk contract.
+  The sentence now says requester-provenance and Celery task-setting helpers
+  were required to be shared.
 - Architecture found helper files and `docs/architecture_system_architecture.md` were missing from the active chunk contract. The contract now explicitly allows those files for narrow lifecycle/provenance/helper alignment.
 - CodeRabbit external findings from earlier passes were handled in `WS-POL-002-02-external-review-response.md`; valid findings were fixed and stale findings documented.
 

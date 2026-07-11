@@ -6,9 +6,9 @@
 
 ## Reviewed Revision
 
-Reviewed code SHA: `0318beccd0ffd086b8ed403dd8e74dabe1fd8d6b`
+Reviewed code SHA: `67fb3caa302e03e5fdf99d4ad148c200d86348df`
 
-Reviewed at: `2026-07-11T08:33:06Z`
+Reviewed at: `2026-07-11T09:55:12Z`
 
 Internal review evidence:
 
@@ -155,15 +155,15 @@ lifecycle records.
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS AFTER FIXES | None | No final code issue after CAS fence; stale evidence fixed by this bundle. |
-| QA/test | PASS AFTER FIXES | None | Focused acceptance tests pass; stale evidence fixed by this bundle. |
-| security/auth | PASS | None | Provenance, system actor, `/finalize` auth/object scope, and leakage checks pass. |
-| product/ops | PASS WITH LOW RISKS | None | Accepted brief queued-gate visibility window before worker claim; docs updated for repair matrix. |
-| architecture | PASS | None | Helper files are contract-allowed and boundary-appropriate. |
-| docs | PASS | None | Final repair wording aligns with code. |
-| reuse/dedup | PASS AFTER FIXES | None | Shared helper extraction addressed required findings. |
-| test delta | PASS AFTER FIXES | None | Eager repair and task-level audit proof added. |
-| CI integrity | PASS | None | No CI or runner weakening found. |
+| senior engineering | PASS | None | Confirmed `requester_provenance_mismatch` removal from retryable failures is the smallest safe change and preserves service/repository boundaries. |
+| QA/test | PASS | None | Confirmed enqueue, execution, and unknown-checker failures remain repairable while requester-provenance mismatch is terminal and tested. |
+| security/auth | PASS | None | Confirmed requester-provenance mismatch fails closed, `/finalize` returns 409, and tampered automatic gate claims cannot be requeued. |
+| product/ops | PASS WITH LOW RISKS | None | Required durable-evidence wording instead of unavailable queued-payload inspection; fixed before this evidence rebind. |
+| architecture | PASS | None | Confirmed no runtime agent judgment, no per-task checker derivation, and engineering/product review decision separation remains intact. |
+| docs | PASS AFTER FIXES | None | Required final evidence rebinding and external-response cleanup; fixed by this evidence-only rebind. |
+| reuse/dedup | PASS WITH LOW RISKS | None | Found only an optional one-line wrapper cleanup; no helper bypass or behavior drift. |
+| test delta | PASS | None | Confirmed the changed test is stronger and would fail against the old requeue-to-completed behavior. |
+| CI integrity | PASS AFTER FIXES | None | Found no CI/test weakening; stale evidence was the only gate blocker and is fixed by this evidence-only rebind. |
 
 ## External Review
 
