@@ -2,7 +2,8 @@
 
 ## Repositories Inspected
 
-- Workstream `main` after PR #93, merge commit `772af1d`.
+- Workstream behavior was inspected after PR #93 (`772af1d`) and the planning
+  diff was rebased/revalidated on `main` after PR #96 (`1d3e487`).
 - Flow Node `main` at `2399eb4`.
 
 ## Workstream Current Behavior
