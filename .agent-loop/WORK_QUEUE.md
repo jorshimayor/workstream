@@ -1,10 +1,17 @@
 # Work Queue
 
+## In Progress
+
+| Chunk | Title | Risk | Status |
+|---|---|---:|---|
+| `WS-AUTH-001-PLAN` | Authorization Service Planning | L0 | Internal review passed; explicit D4-D10 human approval pending |
+
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-POL-002-03` | Server-Owned Policy Approval And Visibility APIs | L1 | Inactive until explicit user start |
+| `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Proposed after D4-D10 approval and explicit start |
+| `WS-POL-002-03` | Server-Owned Policy Approval And Visibility APIs | L1 | Paused behind WS-AUTH-001 and explicit resume |
 
 ## Completed
 
@@ -35,7 +42,9 @@
 
 ## Proposed Next
 
-Do not start `WS-POL-002-03` until the user gives an explicit start signal.
+Stop at the WS-AUTH-001 planning human checkpoint. Do not activate
+`WS-AUTH-001-01` before explicit D4-D10 approval and a separate start signal;
+do not resume `WS-POL-002-03` while auth has priority.
 
 ## Blocked
 

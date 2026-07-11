@@ -2,17 +2,20 @@
 
 ## Current State
 
-- Active initiative: `WS-POL-002` - Post-Submit Checker Foundation
-- Active planning chunk: none
+- Active initiative: `WS-AUTH-001` - Workstream Authorization Service
+- Active planning chunk: `WS-AUTH-001-PLAN`
 - Active implementation chunk: none
-- Branch: `main`
-- Status: `WS-POL-002-02` merged through PR #88 as `32af6a7` on 2026-07-11
-  after internal review, current-head GitHub checks, CodeRabbit, and explicit
-  human merge approval.
+- Branch: `authorization-service`
+- Status: authorization planning started after the user adopted
+  `WS-AUTH-001`, retained `/api/v1`, prioritized auth before
+  `WS-POL-002-03`, and directed the agent to proceed.
 - Last merged implementation SHA: `67fb3ca`
 - Last merge commit: `32af6a7`
-- Current gate: none; awaiting explicit user start for the next chunk.
-- Next chunk: `WS-POL-002-03` is inactive until the user explicitly starts it.
+- Current gate: planning artifacts and required internal plan review.
+- Next chunk: `WS-AUTH-001-01` remains proposed until planning closes and the
+  implementation start boundary is satisfied.
+- Paused initiative: `WS-POL-002`; chunk `WS-POL-002-03` must not start before
+  the relevant authorization foundation and an explicit resume signal.
 
 ## Operating Rule
 
