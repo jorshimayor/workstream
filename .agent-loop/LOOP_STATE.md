@@ -3,15 +3,18 @@
 ## Current State
 
 - Active initiative: `WS-AUTH-001` - Workstream Authorization Service
-- Active planning chunk: `WS-AUTH-001-PLAN`
+- Active planning chunk: none
 - Active implementation chunk: none
-- Branch: `authorization-service`
-- Status: WS-AUTH-001 planning is internally reviewed and stopped at the L0
-  human checkpoint. D1-D3 are approved; D4-D10 require explicit approval.
+- Branch: none for implementation; post-merge memory is on
+  `codex/ws-auth-001-post-merge-memory`
+- Status: WS-AUTH-001 planning merged through PR #91. The initiative is stopped
+  at the L0 human checkpoint: D1-D3 are approved; D4-D10 require explicit
+  approval.
 - Last merged implementation SHA: `67fb3ca`
-- Last merge commit: `32af6a7`
-- Current gate: explicit durable human approval of D4-D10. Planning evidence is
-  recorded at the WS-AUTH-001 internal review evidence path.
+- Last merge commit: `ad6d6444e497b76d7cb925f3b0999ed4b74a3dac`
+- Current gate: explicit durable human approval of D4-D10 followed by a
+  separate start signal for a fresh `WS-AUTH-001-01` worktree/branch. Planning
+  evidence is recorded at the WS-AUTH-001 internal review evidence path.
 - Next chunk: `WS-AUTH-001-01` remains proposed until D4-D10 approval and a
   separate implementation start signal.
 - Paused initiative: `WS-POL-002`; chunk `WS-POL-002-03` must not start before

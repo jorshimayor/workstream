@@ -2,9 +2,7 @@
 
 ## In Progress
 
-| Chunk | Title | Risk | Status |
-|---|---|---:|---|
-| `WS-AUTH-001-PLAN` | Authorization Service Planning | L0 | Internal review passed; explicit D4-D10 human approval pending |
+None. WS-AUTH-001 planning is merged and no implementation chunk is active.
 
 ## Planned Next
 
@@ -39,6 +37,7 @@
 | `WS-POL-002-PLAN` | Post-Submit Checker Foundation Planning | L1 | Merged through PR #85 as `3fc1a68` on 2026-07-09 |
 | `WS-POL-002-01` | Post-Submit Compiler Contract | L1 | Merged through PR #87 as `ed52c21` on 2026-07-09 |
 | `WS-POL-002-02` | Post-Submit Derivation Agent And Resumable Setup Integration | L1 | Merged through PR #88 as `32af6a7` on 2026-07-11 |
+| `WS-AUTH-001-PLAN` | Authorization Service Planning | L0 | Merged through PR #91 as `ad6d644` on 2026-07-11 |
 
 ## Proposed Next
 
