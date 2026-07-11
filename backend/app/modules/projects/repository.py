@@ -681,14 +681,30 @@ class ProjectRepository:
     async def get_latest_superseded_post_submit_checker_policy(
         self,
         project_id: str,
+        guide_id: str,
         guide_version: str,
+        source_snapshot_id: str,
+        source_snapshot_hash: str,
+        effective_policy_id: str,
+        effective_policy_hash: str,
+        pre_submit_checker_policy_id: str,
+        pre_submit_checker_bundle_hash: str,
     ) -> PostSubmitCheckerPolicy | None:
         """Load the latest rejected policy retained for correction provenance."""
         result = await self._session.execute(
             select(PostSubmitCheckerPolicy)
             .where(
                 PostSubmitCheckerPolicy.project_id == project_id,
+                PostSubmitCheckerPolicy.guide_id == guide_id,
                 PostSubmitCheckerPolicy.guide_version == guide_version,
+                PostSubmitCheckerPolicy.source_snapshot_id == source_snapshot_id,
+                PostSubmitCheckerPolicy.source_snapshot_hash == source_snapshot_hash,
+                PostSubmitCheckerPolicy.effective_policy_id == effective_policy_id,
+                PostSubmitCheckerPolicy.effective_policy_hash == effective_policy_hash,
+                PostSubmitCheckerPolicy.pre_submit_checker_policy_id
+                == pre_submit_checker_policy_id,
+                PostSubmitCheckerPolicy.pre_submit_checker_bundle_hash
+                == pre_submit_checker_bundle_hash,
                 PostSubmitCheckerPolicy.lifecycle_status == "superseded",
             )
             .order_by(
@@ -702,15 +718,32 @@ class ProjectRepository:
     async def list_superseded_post_submit_checker_policies(
         self,
         project_id: str,
+        guide_id: str,
         guide_version: str,
+        source_snapshot_id: str,
+        source_snapshot_hash: str,
+        effective_policy_id: str,
+        effective_policy_hash: str,
+        pre_submit_checker_policy_id: str,
+        pre_submit_checker_bundle_hash: str,
     ) -> Sequence[PostSubmitCheckerPolicy]:
         """List retained correction records newest first for operator visibility."""
         result = await self._session.execute(
             select(PostSubmitCheckerPolicy)
             .where(
                 PostSubmitCheckerPolicy.project_id == project_id,
+                PostSubmitCheckerPolicy.guide_id == guide_id,
                 PostSubmitCheckerPolicy.guide_version == guide_version,
+                PostSubmitCheckerPolicy.source_snapshot_id == source_snapshot_id,
+                PostSubmitCheckerPolicy.source_snapshot_hash == source_snapshot_hash,
+                PostSubmitCheckerPolicy.effective_policy_id == effective_policy_id,
+                PostSubmitCheckerPolicy.effective_policy_hash == effective_policy_hash,
+                PostSubmitCheckerPolicy.pre_submit_checker_policy_id
+                == pre_submit_checker_policy_id,
+                PostSubmitCheckerPolicy.pre_submit_checker_bundle_hash
+                == pre_submit_checker_bundle_hash,
                 PostSubmitCheckerPolicy.lifecycle_status == "superseded",
+                PostSubmitCheckerPolicy.supersession_kind == "correction_requested",
             )
             .order_by(
                 PostSubmitCheckerPolicy.superseded_at.desc(),

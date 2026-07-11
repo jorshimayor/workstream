@@ -138,9 +138,11 @@ class PostSubmitCheckerPolicy(Base):
             lifecycle_status != 'superseded'
             or (
                 superseded_at is not null
-                and correction_requested_by_role in ('admin', 'project_manager')
-                and correction_requested_by_actor is not null
-                and correction_reason is not null
+                and superseded_by_role in ('admin', 'project_manager')
+                and superseded_by_actor is not null
+                and supersession_kind in ('correction_requested', 'upstream_policy_changed')
+                and supersession_reason is not null
+                and length(btrim(supersession_reason)) > 0
             )
             """,
             name="correction_provenance",
@@ -196,9 +198,10 @@ class PostSubmitCheckerPolicy(Base):
         index=True,
     )
     superseded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    correction_requested_by_role: Mapped[str | None] = mapped_column(String(50))
-    correction_requested_by_actor: Mapped[str | None] = mapped_column(String(100))
-    correction_reason: Mapped[str | None] = mapped_column(Text)
+    superseded_by_role: Mapped[str | None] = mapped_column(String(50))
+    superseded_by_actor: Mapped[str | None] = mapped_column(String(100))
+    supersession_kind: Mapped[str | None] = mapped_column(String(50))
+    supersession_reason: Mapped[str | None] = mapped_column(Text)
     created_by: Mapped[str] = mapped_column(String(100), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

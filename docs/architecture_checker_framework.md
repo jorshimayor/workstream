@@ -270,9 +270,10 @@ policy; it does not call an agent to judge a worker submission.
 The compiled project `PostSubmitCheckerPolicy` is persisted with exact setup
 provenance: guide id, source snapshot id/hash, effective project policy id/hash,
 and pre-submit checker policy id/hash. A corrected submission artifact policy
-approval clears stale post-submit setup output and regenerates the compiled
-post-submit policy under the new provenance; Workstream must not reuse a policy
-that only happens to match the same project id and guide version.
+approval supersedes and retains stale post-submit setup output, then regenerates
+the compiled post-submit policy under the new provenance. Workstream must not
+reuse a policy or correction request that only happens to match the same project
+id and guide version.
 
 The first two gates replace external origin qualification and task ingestion for v0.1. Origin qualification and webhook drop notifications are future adapter concerns.
 

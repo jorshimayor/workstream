@@ -500,6 +500,15 @@ class PostSubmitCheckerPolicyCorrectionRequest(BaseModel):
 
     correction_reason: str = Field(min_length=1, max_length=2000)
 
+    @field_validator("correction_reason")
+    @classmethod
+    def normalize_correction_reason(cls, value: str) -> str:
+        """Strip correction feedback and reject an empty normalized reason."""
+        normalized = " ".join(value.split())
+        if not normalized:
+            raise ValueError("correction_reason must contain non-whitespace text")
+        return normalized
+
 
 class PostSubmitCheckerPolicySetupSummaryResponse(BaseModel):
     """Operator-visible summary for generated post-submit checker setup."""

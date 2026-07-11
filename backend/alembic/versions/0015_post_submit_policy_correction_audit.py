@@ -28,15 +28,19 @@ def upgrade() -> None:
     )
     op.add_column(
         "checker_policies",
-        sa.Column("correction_requested_by_role", sa.String(length=50), nullable=True),
+        sa.Column("superseded_by_role", sa.String(length=50), nullable=True),
     )
     op.add_column(
         "checker_policies",
-        sa.Column("correction_requested_by_actor", sa.String(length=100), nullable=True),
+        sa.Column("superseded_by_actor", sa.String(length=100), nullable=True),
     )
     op.add_column(
         "checker_policies",
-        sa.Column("correction_reason", sa.Text(), nullable=True),
+        sa.Column("supersession_kind", sa.String(length=50), nullable=True),
+    )
+    op.add_column(
+        "checker_policies",
+        sa.Column("supersession_reason", sa.Text(), nullable=True),
     )
     op.create_foreign_key(
         "fk_checker_policies_supersedes_policy_id",
@@ -70,9 +74,11 @@ def upgrade() -> None:
         lifecycle_status != 'superseded'
         or (
             superseded_at is not null
-            and correction_requested_by_role in ('admin', 'project_manager')
-            and correction_requested_by_actor is not null
-            and correction_reason is not null
+            and superseded_by_role in ('admin', 'project_manager')
+            and superseded_by_actor is not null
+            and supersession_kind in ('correction_requested', 'upstream_policy_changed')
+            and supersession_reason is not null
+            and length(btrim(supersession_reason)) > 0
         )
         """,
     )
@@ -105,8 +111,9 @@ def downgrade() -> None:
         "checker_policies",
         type_="foreignkey",
     )
-    op.drop_column("checker_policies", "correction_reason")
-    op.drop_column("checker_policies", "correction_requested_by_actor")
-    op.drop_column("checker_policies", "correction_requested_by_role")
+    op.drop_column("checker_policies", "supersession_reason")
+    op.drop_column("checker_policies", "supersession_kind")
+    op.drop_column("checker_policies", "superseded_by_actor")
+    op.drop_column("checker_policies", "superseded_by_role")
     op.drop_column("checker_policies", "superseded_at")
     op.drop_column("checker_policies", "supersedes_policy_id")

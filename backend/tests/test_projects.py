@@ -2051,7 +2051,25 @@ async def test_corrected_submission_artifact_policy_resumes_post_submit_setup(
     ]
     async with db_session.get_session_factory()() as session:
         stale_policy = await session.get(PostSubmitCheckerPolicy, first_post_submit_policy_id)
-    assert stale_policy is None
+        replacement_policy = await session.get(
+            PostSubmitCheckerPolicy,
+            resumed["output_post_submit_checker_policy_id"],
+        )
+    assert stale_policy is not None
+    assert stale_policy.lifecycle_status == "superseded"
+    assert stale_policy.supersession_kind == "upstream_policy_changed"
+    assert stale_policy.supersession_reason == (
+        "effective project submission artifact policy changed"
+    )
+    assert replacement_policy is not None
+    assert replacement_policy.supersedes_policy_id is None
+    setup_visibility = await project_client.get(
+        f"/api/v1/projects/{project['id']}/guides/{guide['id']}/"
+        "post-submit-checker-policy/setup",
+        headers=auth_headers(),
+    )
+    assert setup_visibility.status_code == 200
+    assert setup_visibility.json()["correction_history"] == []
 
 
 async def test_post_submit_status_update_rejects_stale_continuation_payload(
@@ -6505,6 +6523,14 @@ async def test_post_submit_checker_policy_correction_preserves_audit_and_guides_
         capture_enqueue,
     )
 
+    whitespace_reason = await project_client.post(
+        f"/api/v1/projects/{project['id']}/guides/{guide['id']}/"
+        "post-submit-checker-policy/request-correction",
+        headers=auth_headers(),
+        json={"correction_reason": "   \n  "},
+    )
+    assert whitespace_reason.status_code == 422
+
     response = await project_client.post(
         f"/api/v1/projects/{project['id']}/guides/{guide['id']}/"
         "post-submit-checker-policy/request-correction",
@@ -6567,7 +6593,8 @@ async def test_post_submit_checker_policy_correction_preserves_audit_and_guides_
         )
         assert superseded_policy is not None
         assert superseded_policy.lifecycle_status == "superseded"
-        assert superseded_policy.correction_reason == "redacted"
+        assert superseded_policy.supersession_reason == "redacted"
+        assert superseded_policy.supersession_kind == "correction_requested"
         assert superseded_policy.policy_body is not None
         assert superseded_policy.policy_hash == bundle["post_submit_checker_policy"]["policy_hash"]
         superseded_policy_id = superseded_policy.id
@@ -6635,6 +6662,76 @@ async def test_post_submit_checker_policy_correction_preserves_audit_and_guides_
         persisted_replacement = await session.get(PostSubmitCheckerPolicy, replacement.id)
         assert persisted_replacement is not None
         assert persisted_replacement.supersedes_policy_id == superseded_policy_id
+
+    next_submission_policy = await create_submission_artifact_policy(
+        project_client,
+        project["id"],
+        guide["id"],
+        bundle["source_snapshot"]["id"],
+        policy_version="new-context-after-correction-v1",
+    )
+    next_effective_policy = await approve_submission_artifact_policy(
+        project_client,
+        project["id"],
+        guide["id"],
+        next_submission_policy["id"],
+    )
+    next_pre_submit_policy = await load_pre_submit_checker_policy(next_effective_policy)
+
+    class NewContextRuntime(DeterministicTestProjectGuideAgentRuntime):
+        """Runtime proving old correction feedback cannot cross setup contexts."""
+
+        async def derive_post_submit_checker_policy(
+            self,
+            material: GuideSourceMaterial,
+            context: PostSubmitCheckerPolicyDerivationContext,
+        ) -> PostSubmitCheckerPolicyDerivationResult:
+            """Require the new effective-policy context to have no stale feedback."""
+            assert context.correction_feedback is None
+            return await super().derive_post_submit_checker_policy(material, context)
+
+    async with db_session.get_session_factory()() as session:
+        new_setup_run = ProjectSetupRun(
+            id=str(uuid4()),
+            project_id=project["id"],
+            guide_id=guide["id"],
+            guide_version=guide["version"],
+            source_snapshot_id=bundle["source_snapshot"]["id"],
+            source_snapshot_hash=bundle["source_snapshot"]["bundle_hash"],
+            status="running_post_submit_derivation_agent",
+            current_step="post_submit_checker_policy_derivation",
+            output_submission_artifact_policy_id=next_submission_policy["id"],
+            created_by="project-manager-subject",
+        )
+        session.add(new_setup_run)
+        await session.commit()
+        new_context_service = ProjectService(session, agent_runtime=NewContextRuntime())
+        new_context_policy, created, _ = (
+            await new_context_service.run_post_submit_checker_policy_derivation_agent(
+                project_setup_pipeline_actor(),
+                project["id"],
+                guide["id"],
+                bundle["source_snapshot"]["id"],
+                next_effective_policy["id"],
+                next_pre_submit_policy["id"],
+                new_setup_run.id,
+            )
+        )
+        assert created is True
+        persisted_new_context_policy = await session.get(
+            PostSubmitCheckerPolicy,
+            new_context_policy.id,
+        )
+        assert persisted_new_context_policy is not None
+        assert persisted_new_context_policy.supersedes_policy_id is None
+
+    setup_visibility = await project_client.get(
+        f"/api/v1/projects/{project['id']}/guides/{guide['id']}/"
+        "post-submit-checker-policy/setup",
+        headers=auth_headers(),
+    )
+    assert setup_visibility.status_code == 200
+    assert setup_visibility.json()["correction_history"] == []
 
     activation = await project_client.post(
         f"/api/v1/projects/{project['id']}/guides/{guide['id']}/activate",
