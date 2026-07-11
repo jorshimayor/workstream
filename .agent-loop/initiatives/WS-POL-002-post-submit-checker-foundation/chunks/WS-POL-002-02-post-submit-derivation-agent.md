@@ -91,6 +91,11 @@ boundary instead of inside the checker service. The allowed scope therefore
 includes `backend/app/modules/checkers/repository.py`, but only for atomic
 automatic pre-review gate persistence methods. Lifecycle decisions remain in
 `CheckerService`.
+Product/ops review found stale architecture wording that still described
+artifact locking and `/finalize` as the normal submission handoff. The allowed
+scope therefore also includes `docs/architecture_system_architecture.md`, but
+only to align lifecycle wording with the implemented contributor-owned
+submission lock and repair-only automatic gate finalization boundary.
 
 ## Allowed Files
 
@@ -125,6 +130,7 @@ examples/terminal_benchmark/terminal_benchmark_api_e2e.py
 README.md
 docs/architecture_checker_framework.md
 docs/architecture_data_model.md
+docs/architecture_system_architecture.md
 docs/glossary.md
 docs/operations_project_operating_manual.md
 docs/operations_roles_permissions.md

@@ -1095,12 +1095,9 @@ Worker-facing submission responses omit post-submit checker policy internals.
 Status:
 
 - submitted
-- checking
-- check_failed
-- review_pending
-- needs_revision
-- accepted
-- rejected
+
+Submission status records the immutable packet version state. Task status carries
+evaluation, human review, revision, acceptance, and rejection lifecycle states.
 
 ## EvidenceItem
 

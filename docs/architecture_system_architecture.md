@@ -39,7 +39,7 @@ Storage
   Postgres for records
   Object storage abstraction for files and evidence
   Append-only audit log for state transitions
-  Hash-locked artifacts after submission finalization
+  Hash-locked artifacts during successful submission creation
 
 Execution
   External at first
