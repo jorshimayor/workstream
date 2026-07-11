@@ -49,4 +49,3 @@ Reviewers: all required tracks.
 
 Human focus: same-byte proof, provider/domain separation, failure meaning,
 duplicate execution, and unchanged routing. Stop after this PR.
-

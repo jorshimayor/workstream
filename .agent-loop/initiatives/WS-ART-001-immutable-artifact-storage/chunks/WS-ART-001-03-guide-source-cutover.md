@@ -51,4 +51,3 @@ Reviewers: all required tracks.
 
 Human focus: project authority, immutable source capture, rebuild boundary, and
 setup failure semantics. Stop after this PR.
-

@@ -44,4 +44,3 @@ integrity, docs, reuse/dedup, test delta.
 
 Human focus: bounded memory, cancellation safety, DAG integrity, and absence of
 network exposure. Stop after this PR.
-

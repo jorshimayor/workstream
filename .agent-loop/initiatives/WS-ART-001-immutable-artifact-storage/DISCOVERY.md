@@ -96,4 +96,3 @@ Disconnected runtime:
 - Whether remote peer retrieval is enabled after local evidence storage is
   proven.
 - Whether semantic indexing is enabled for every artifact kind.
-

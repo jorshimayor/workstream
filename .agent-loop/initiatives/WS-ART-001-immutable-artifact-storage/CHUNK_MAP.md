@@ -39,4 +39,3 @@ Semantic search is deferred to a separate approved initiative.
 Do not resume pre-submit or post-submit checker feature expansion until
 `WS-ART-001-06` proves both phases consume the same immutable artifact-set
 commitment.
-
