@@ -14,6 +14,7 @@ operator recovery, and privacy-safe evidence through supported APIs.
 - Workstream Dockerfile/Compose/runtime config and health checks
 - artifact status/reconciliation APIs under existing registered permissions
 - deterministic storage drill and professional redacted report
+- `backend/scripts/api_contract_e2e.py` and focused safety tests
 - focused operations/README/CI changes and tests
 
 ## Not Allowed
@@ -27,6 +28,12 @@ or provider totals/private paths in evidence.
 - Clean checkout starts Postgres, Redis, Workstream API, Celery, and pinned
   focused Flow Node with health checks and migrations.
 - Local test issuer and deterministic setup fixture need no production secret.
+- The clean Compose proof uses database name `workstream_test`. The API-contract
+  script may accept the non-loopback Compose host only when all four guards are
+  true: exact host `postgres`, exact database `workstream_test`, explicit
+  development/test environment, and
+  `WORKSTREAM_ALLOW_COMPOSE_TEST_DATABASE=1`. Every other non-loopback target
+  remains rejected, with negative tests.
 - Real APIs prove guide capture, task upload/seal/admission, failed pre-submit
   no-side-effect, successful submission, post-submit exact artifact-set match,
   log/output bindings, and operator status/retry.
@@ -45,7 +52,7 @@ or provider totals/private paths in evidence.
 
 ```bash
 docker compose down -v --remove-orphans
-docker compose up -d --build --wait --wait-timeout 180 postgres redis flow-node api celery-worker
+WORKSTREAM_POSTGRES_DB=workstream_test WORKSTREAM_DATABASE_NAME=workstream_test docker compose up -d --build --wait --wait-timeout 180 postgres redis flow-node api celery-worker
 docker compose ps
 docker compose exec -T api python scripts/artifact_flow_live_api_drill.py --phase healthy
 docker compose exec -T api python scripts/artifact_flow_live_api_drill.py --phase crash-window
@@ -58,7 +65,7 @@ docker compose run --rm flow-node-production-route-audit
 docker compose exec -T api ruff check app tests scripts
 docker compose exec -T api docstr-coverage --config .docstr.yaml
 docker compose exec -T api pytest -q
-docker compose exec -T api python scripts/api_contract_e2e.py
+docker compose exec -T -e WORKSTREAM_ALLOW_COMPOSE_TEST_DATABASE=1 api python scripts/api_contract_e2e.py
 python3 scripts/test_agent_gates.py
 python3 scripts/check_stale_authorization_docs.py
 python3 scripts/check_stale_artifact_contracts.py
