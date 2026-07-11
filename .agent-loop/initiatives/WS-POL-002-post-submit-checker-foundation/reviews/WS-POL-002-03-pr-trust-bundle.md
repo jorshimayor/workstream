@@ -6,9 +6,9 @@
 
 ## Reviewed Revision
 
-Reviewed code SHA: `e42b9506815a2eef155230928e791d5a737a6155`
+Reviewed code SHA: `6966c868b9a5f931b91f900ec754044cb61fabba`
 
-Reviewed at: `2026-07-11T15:51:10Z`
+Reviewed at: `2026-07-11T16:10:55Z`
 
 Internal review evidence:
 
@@ -156,7 +156,7 @@ CodeRabbit and GitHub Actions passed on PR head
 `19680969d267c339907bc507ec37b22c65665298`. GitHub Actions had previously
 failed only because the reviewed SHA became stale after `main` was merged into
 the PR branch. The current review-response fixes are bound to non-evidence
-commit `e42b9506815a2eef155230928e791d5a737a6155` and must be pushed and
+commit `6966c868b9a5f931b91f900ec754044cb61fabba` and must be pushed and
 checked again before merge.
 
 ## Remaining Risks

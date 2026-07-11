@@ -42,5 +42,5 @@ git diff --check
 
 - CodeRabbit and GitHub Actions passed on PR head `19680969d267c339907bc507ec37b22c65665298`.
 - The current CodeRabbit-response fixes are bound to non-evidence commit
-  `e42b9506815a2eef155230928e791d5a737a6155` and must be pushed and checked
+  `6966c868b9a5f931b91f900ec754044cb61fabba` and must be pushed and checked
   again before merge.

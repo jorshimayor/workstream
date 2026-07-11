@@ -10,9 +10,9 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: e42b9506815a2eef155230928e791d5a737a6155
+Reviewed code SHA: 6966c868b9a5f931b91f900ec754044cb61fabba
 
-Reviewed at: 2026-07-11T15:51:10Z
+Reviewed at: 2026-07-11T16:10:55Z
 
 Reviewer run ids: senior-engineering-019f5133-8882, qa-test-019f5133-9349, security-auth-019f5133-a018, product-ops-019f5133-b385, architecture-019f5133-cc0e, docs-019f5133-d78d, security-auth-rerun-019f513f-0255, product-ops-rerun-019f513e-fcdf, reuse-dedup-019f513f-0938, test-delta-019f513f-116c, ci-integrity-019f513f-1ce8
 
@@ -107,6 +107,9 @@ Rebind note:
 - A later CodeRabbit pass found lifecycle-state drift between WS-POL and WS-AUTH
   loop artifacts. This evidence now binds to the non-evidence commit that
   reconciles those artifacts before this evidence-only rebind commit.
+- Current `main` was merged again after WS-AUTH-001 post-merge memory landed;
+  this evidence now binds to that merge resolution before this evidence-only
+  rebind commit.
 
 ## Remaining Risks
 

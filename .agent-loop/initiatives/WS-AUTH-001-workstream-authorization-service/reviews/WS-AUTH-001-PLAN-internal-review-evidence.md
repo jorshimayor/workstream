@@ -10,9 +10,9 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: e42b9506815a2eef155230928e791d5a737a6155
+Reviewed code SHA: 6966c868b9a5f931b91f900ec754044cb61fabba
 
-Reviewed at: 2026-07-11T15:51:10Z
+Reviewed at: 2026-07-11T16:10:55Z
 
 Reviewer run IDs: senior-engineering=/root/pdf_attr_engineering_review; QA/test=/root/pdf_attr_quality_review; security/auth=/root/pdf_attr_ci_docs_security_review; product/ops=/root/pdf_attr_quality_review; architecture=/root/pdf_attr_engineering_review; docs=/root/pdf_attr_ci_docs_security_review; CI-integrity=/root/pdf_attr_ci_docs_security_review; reuse/dedup=/root/pdf_attr_engineering_review; test-delta=/root/pdf_attr_quality_review
 
