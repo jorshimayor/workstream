@@ -10,11 +10,11 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: 5f7863eee1cf110d0cfe3f54e281aadefad028fe
+Reviewed code SHA: e0bb19c63cd2ac75f60c6200f186057a26bd920c
 
-Reviewed at: 2026-07-11T18:28:34Z
+Reviewed at: 2026-07-11T19:39:48Z
 
-Reviewer run IDs: senior-engineering=019f526b-c8d1-7d62-aef6-06099c5f4c2c; QA/test=019f526b-d112-7b60-9e5f-1dd6bc9090ae; security/auth=019f526b-da22-74a3-b5a1-1572077afd81; product/ops=019f526b-f06a-7950-8c9c-51f564108997; architecture=019f526b-e642-7f03-9095-b28b588b0066; docs=019f526c-04ef-78b1-960e-265b67be7576
+Reviewer run IDs: senior-engineering=019f52ad-7a91-79e1-9255-f8d9c6bd90f5; QA/test=019f52ad-7f08-7411-a589-88d973cd3d3c; security/auth=019f52b2-4585-7bc2-9303-f7ead6c64e42; product/ops=019f52ad-8465-7262-9771-71126b5dccff; architecture=019f52ad-8c68-7330-a905-9be813b313d0; docs=019f52ad-96a2-78c0-8b84-cace411d404f
 
 ## Reviewed Change
 
@@ -25,8 +25,8 @@ Scope:
   branch head `1e20b79`.
 - Moved `WS-POL-002-03` from active review to completed/merged state.
 - Left no active WS-POL implementation chunk.
-- Preserved `WS-POL-002-04` as inactive until this memory update completes and
-  the user provides a separate explicit start signal.
+- Preserved `WS-POL-002-04` as inactive until the user provides a separate
+  explicit start signal.
 - Preserved the parallel WS-AUTH worktree boundary without modifying its
   initiative files or inferring authorization approval.
 
@@ -34,12 +34,12 @@ Scope:
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS WITH LOW RISKS | None | Confirmed merge provenance and requested both reviewed and final branch SHAs for audit clarity. |
-| QA/test | PASS WITH LOW RISKS | None | Confirmed lifecycle consistency and requested exact stop-condition wording in the planned-next row. |
-| security/auth | PASS | None | Confirmed no authorization approval or WS-AUTH implementation change was implied. |
-| product/ops | PASS | None | Confirmed accurate product scope and no premature runtime or review-lifecycle claim. |
-| architecture | PASS WITH LOW RISKS | None | Confirmed initiative separation; noted the WS-AUTH worktree must reconcile with current `main`. |
-| docs | PASS WITH LOW RISKS | None | Requested explicit handling of point-in-time WS-AUTH pause wording and this evidence artifact. |
+| senior engineering | PASS | None | Confirmed the two live queue locations preserve only the explicit user-start gate. |
+| QA/test | PASS | None | Confirmed lifecycle consistency and that no implementation chunk became active. |
+| security/auth | PASS | None | Confirmed the D4-D10 authorization checkpoint and separate implementation-start requirement remain unchanged. |
+| product/ops | PASS | None | Confirmed `WS-POL-002-04` remains inactive and no product work was activated. |
+| architecture | PASS | None | Confirmed initiative separation and the WS-AUTH checkpoint remain intact. |
+| docs | PASS AFTER FIXES | None | Found and then confirmed removal of the completed memory prerequisite from both live queue locations. |
 | CI integrity | N/A - with approved reason | N/A | No workflow, script, dependency, test configuration, or CI gate changed. |
 | reuse/dedup | N/A - with approved reason | N/A | No application, helper, agent, skill, or script implementation changed. |
 | test delta | N/A - with approved reason | N/A | No tests or test-like files changed. |
@@ -53,6 +53,8 @@ Scope:
 - Added a durable note that historical WS-AUTH pause wording is owned by the
   separate WS-AUTH worktree and must not be rewritten from this branch.
 - Added this dedicated post-merge internal review evidence artifact.
+- Removed the completed memory-update prerequisite from both live work-queue
+  locations after supplemental docs review found the semantic inconsistency.
 
 ## Commands Run
 
