@@ -65,8 +65,8 @@ WS-AUTH-001-PLAN
 - Chunks 11-15 migrate bounded complete product/system surfaces.
 - Chunk 16 proves the complete initiative; it does not backfill missing audit
   or idempotency evidence.
-- `WS-POL-002-03` remains paused until the relevant project authorization
-  cutover is complete and the user explicitly resumes it.
+- `WS-POL-002-03` later resumed by explicit user start and is tracked in PR #90.
+  Future WS-POL chunks remain inactive until their own explicit start signals.
 
 ## Stop condition
 

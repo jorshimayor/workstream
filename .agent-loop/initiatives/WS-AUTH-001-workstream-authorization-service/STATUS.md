@@ -6,7 +6,7 @@ Planning and all required internal reviewer tracks passed after repair. The
 initiative is stopped at the L0 human checkpoint: D1-D3 are approved; D4-D10
 require explicit durable approval before implementation activation.
 
-## Active planning chunk
+## Checkpointed planning artifact
 
 `WS-AUTH-001-PLAN`
 
@@ -50,7 +50,7 @@ implementation start signal.
 
 Internal review evidence is recorded at
 `reviews/WS-AUTH-001-PLAN-internal-review-evidence.md` and binds reviewed SHA
-`5739e1d6fc8df0fa620bd007c45e370530ac8d12`.
+`54912769b8a066977d6dc62ec885b94a5ee05029`.
 
 Production issuer configuration and legacy non-test actor classification are
 future implementation/live-proof inputs and are tracked explicitly in

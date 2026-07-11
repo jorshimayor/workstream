@@ -128,13 +128,13 @@ requires explicit review in the token-verifier chunk.
 | Stale queued authority | Jobs may carry authority that has been revoked. | Re-resolve actor/grant state before actor-attributed commits. |
 | Claim/PII leakage | Current registry persists sanitized claim snapshots and role observations. | Minimize persisted identity data; never persist raw token/JWKS material. |
 | Namespace drift | New specs say `/v1`; repo uses `/api/v1`. | Record `/api/v1` as the adopted repository override and update generated/reference artifacts coherently. |
-| Current initiative interruption | `WS-POL-002` is incomplete after chunk 02. | Mark it paused, do not implement chunk 03 until auth foundation is ready. |
+| Current initiative interruption | `WS-POL-002` was incomplete after chunk 02 when this plan was written. | Historical: chunk 03 later resumed by explicit user start and is tracked in PR #90; future chunks still need explicit starts. |
 
 ## Unknowns/questions for human
 
 No blocking product questions remain for planning. The user explicitly adopted
 `WS-AUTH-001`, retained `/api/v1`, and prioritized auth before
-`WS-POL-002-03`.
+future WS-POL chunks after `WS-POL-002-03`.
 
 Production deployment inputs remain externally supplied:
 

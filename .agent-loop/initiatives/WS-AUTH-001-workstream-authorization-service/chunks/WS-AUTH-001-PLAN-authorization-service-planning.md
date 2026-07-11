@@ -66,7 +66,8 @@ review, contribution, compensation, frontend, or WS-POL implementation
 - Every implementation chunk has allowed files, exclusions, acceptance
   criteria, verification, reviewers, human focus, and stop conditions.
 - The plan preserves `/api/v1`, prevents dual authority, handles legacy actor
-  classification fail-closed, and pauses `WS-POL-002-03`.
+  classification fail-closed, and records authorization priority for future
+  WS-POL chunks.
 - Required internal plan reviews pass and all valid findings are resolved or
   documented.
 - The plan distinguishes approved L0 direction from proposed L0 decisions and
@@ -99,7 +100,7 @@ git diff --check
 ## Human review focus
 
 Review the authority precedence, migration safety, chunk size/order, `/api/v1`
-decision, WS-POL pause, and proof strategy.
+decision, WS-POL follow-up gating, and proof strategy.
 
 ## Stop conditions
 

@@ -3,7 +3,9 @@
 ## WS-POL-002-03
 
 Status: implemented and internally reviewed on branch
-`codex/ws-pol-002-03-post-submit-approval-visibility`; PR publication pending.
+`codex/ws-pol-002-03-post-submit-approval-visibility`; pull request #90 is
+current with local CodeRabbit-response fixes complete and external checks
+pending for the next pushed head.
 
 Required reviewer tracks:
 
@@ -17,7 +19,8 @@ Required reviewer tracks:
 - reuse/dedup
 - test delta
 
-Result: PASS after fixes; external review pending.
+Result: PASS after fixes locally; external review and GitHub checks must rerun
+after the next push.
 
 Scope: server-owned post-submit checker policy setup visibility, approval, and
 correction APIs; safe operator summaries; immutable approval provenance; and

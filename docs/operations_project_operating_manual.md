@@ -42,7 +42,7 @@ Before releasing tasks:
 - post-submit checker derivation runs after submission artifact policy approval
 - generated project post-submit checker policy compiled, or unsupported checker gaps resolved
 - compiled project post-submit checker policy attached with source/effective/pre-submit provenance
-- compiled project post-submit checker policy approved by `admin` or `project_manager`, or correction requested
+- compiled project post-submit checker policy approved by `admin` or `project_manager`; a correction request is a blocked setup state that returns to regeneration
 - review policy attached
 - revision policy attached
 - payment policy attached
@@ -93,8 +93,10 @@ effective policy counts, pre-submit checker names/count, and registered
 post-submit checker catalog count. It does not return raw source text, local
 paths, replayable refs, exact source hashes, or compiled policy body internals.
 When `admin` or `project_manager` requests correction, Workstream clears the
-unapproved compiled output, records safe correction provenance, and immediately
-queues the same post-submit setup continuation for regeneration.
+unapproved compiled output, records safe correction provenance, immediately
+queues the same post-submit setup continuation for regeneration, and keeps
+activation blocked until the regenerated policy is approved through the
+approval endpoint.
 
 ## v0.1 Quality Gates
 
@@ -107,7 +109,8 @@ pre-submit checker bundle hash, approved project post-submit checker policy,
 review policy, revision policy, and payment policy are present. Compiled
 post-submit setup output carries exact source/effective/pre-submit provenance,
 but activation remains blocked until the policy is approved through the
-server-owned approval/correction API. A task cannot enter `READY` until it also locks the guide source
+server-owned approval endpoint. A correction request only requeues regeneration;
+it does not satisfy activation. A task cannot enter `READY` until it also locks the guide source
 snapshot id/hash, effective project submission artifact policy hash, and project
 pre-submit checker bundle hash.
 

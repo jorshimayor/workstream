@@ -14,20 +14,15 @@
 - Current gate: external review, GitHub checks, and user review.
 - Next chunk: `WS-POL-002-04` remains inactive until `WS-POL-002-03` is merged
   by explicit human approval and memory is updated.
-- Active initiative: `WS-AUTH-001` - Workstream Authorization Service
-- Active planning chunk: `WS-AUTH-001-PLAN`
-- Active implementation chunk: none
-- Branch: `authorization-service`
+- Checkpointed initiative: `WS-AUTH-001` - Workstream Authorization Service
+- Checkpointed planning artifact: `WS-AUTH-001-PLAN`
 - Status: WS-AUTH-001 planning is internally reviewed and stopped at the L0
-  human checkpoint. D1-D3 are approved; D4-D10 require explicit approval.
-- Last merged implementation SHA: `67fb3ca`
-- Last merge commit: `32af6a7`
-- Current gate: explicit durable human approval of D4-D10. Planning evidence is
-  recorded at the WS-AUTH-001 internal review evidence path.
-- Next chunk: `WS-AUTH-001-01` remains proposed until D4-D10 approval and a
-  separate implementation start signal.
-- Paused initiative: `WS-POL-002`; chunk `WS-POL-002-03` must not start before
-  the relevant authorization foundation and an explicit resume signal.
+  human checkpoint. It is not the active implementation stream while PR #90 is
+  current.
+- Current gate: explicit durable human approval of D4-D10 before any
+  authorization implementation chunk starts.
+- Next authorization chunk: `WS-AUTH-001-01` remains proposed until D4-D10
+  approval and a separate implementation start signal.
 
 ## Operating Rule
 
