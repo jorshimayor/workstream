@@ -1004,6 +1004,12 @@ def test_stale_authorization_rule_examples_are_rejected() -> None:
         "The checker worker grants itself project access.",
         "The setup worker manages contributor grants.",
         "The background worker creates a project.",
+        "The system worker records a review decision.",
+        "The checker worker issues a submitter grant.",
+        "The setup worker revokes a reviewer grant.",
+        "The Celery worker accepts the submission.",
+        "The background worker rejects project work.",
+        "The checker worker requests revision.",
     )
     for sample in human_worker_statements:
         assert gate.scan_text("docs/new_active_doc.md", sample), sample

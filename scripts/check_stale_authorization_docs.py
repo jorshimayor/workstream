@@ -162,7 +162,13 @@ RULES = (
             r"submission|review\s+decision|project(?:\s+guide|\s+work)?)\b|"
             r"grants?\s+itself\s+project\s+access|"
             r"manages?\s+contributor\s+grants?|"
-            r"creates?\s+(?:a\s+)?project)\b",
+            r"creates?\s+(?:a\s+)?project|"
+            r"(?:records?|creates?|issues?)\s+(?:a\s+)?review\s+decision|"
+            r"(?:issues?|creates?|grants?|revokes?|approves?|manages?)\s+"
+            r"(?:a\s+)?(?:submitter|reviewer|both|contributor)\s+grant|"
+            r"(?:accepts?|rejects?)\s+(?:a\s+|the\s+)?(?:submission|task|"
+            r"project\s+work)|"
+            r"requests?\s+(?:a\s+)?(?:revision|needs_revision))\b",
             re.IGNORECASE,
         ),
     ),
