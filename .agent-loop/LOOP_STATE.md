@@ -7,14 +7,14 @@
 - Active implementation chunk: none
 - Branch: `codex/ws-art-001-artifact-storage-planning`
 - Worktree: `/home/abiorh/flow/workstream`
-- Status: WS-ART canonical storage boundary and chunk contracts are undergoing
-  final internal planning review; no application or Flow Node implementation
-  has started.
+- Status: WS-ART canonical storage boundary and chunk contracts passed all
+  required internal planning reviewer tracks; no application or Flow Node
+  implementation has started.
 - Last reviewed implementation SHA: `be0b836`
 - Final merged WS-AUTH-001-01 branch head: `b5217e1`
 - Last merge commit: `1d3e487`
-- Current gate: complete latest-main internal review evidence, publish the
-  planning PR, and stop for human approval.
+- Current gate: publish the planning PR, await separate external review and the
+  human checkpoint, and stop without starting implementation.
 - Next chunk: `WS-ART-001-01` remains proposed and must not start until this
   planning PR is approved/merged and the user gives a separate explicit start.
 - Parallel initiative: `WS-POL-002-03` merged through PR #90 as `a7aa474`; its
