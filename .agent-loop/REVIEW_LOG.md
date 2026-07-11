@@ -2,7 +2,8 @@
 
 ## WS-ART-001-PLAN
 
-Status: planning complete; awaiting PR publication and external/human review.
+Status: PR #97 open. Seven valid CodeRabbit findings were fixed locally; final
+evidence rebinding and fresh external checks remain before human review.
 
 Reviewed planning SHA: `cb3e3397c6dd4698ebed5f54efe8820688f23d16`
 
@@ -19,7 +20,9 @@ Evidence: `.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/reviews
 
 Trust bundle: `.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/reviews/WS-ART-001-PLAN-pr-trust-bundle.md`
 
-External review: pending PR publication and must be recorded separately.
+External review: CodeRabbit posted seven actionable comments; all were fixed in
+`567a052`. Response:
+`.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/reviews/WS-ART-001-PLAN-external-review-response.md`
 
 Next chunk: `WS-ART-001-01` remains proposed and inactive until explicit human
 planning merge approval and a separate start signal.
