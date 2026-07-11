@@ -327,7 +327,7 @@ Postgres-backed fail-closed controls before their public APIs become available.
 Each owning chunk must prove:
 
 - allow and deny cases for every permission path;
-- token role alone never authorizes a migrated surface;
+- migrated surfaces derive product authority only from local grants and guards;
 - cross-project and concealed-resource behavior;
 - immediate same-token revocation;
 - state/grant/link and final-administrator concurrency;

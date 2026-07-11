@@ -912,25 +912,39 @@ def test_stale_authorization_rule_examples_are_rejected() -> None:
         failures = gate.scan_text("docs/new_active_doc.md", sample)
         assert any(failure.endswith(code) for failure in failures), (code, failures)
 
-    canonical_negatives = (
-        "No token role grants Workstream product authority.",
-        "Roles from the bearer token do not permit this request.",
-        "A worker role from the verified token never authorizes task claim.",
-        "ActorProfile with type worker does not authorize task claim.",
+    unambiguous_canonical_statements = (
+        "Product authority comes only from local Workstream grants.",
+        "Bearer-token role metadata is identity provenance only.",
+        "Typed workflow profiles are eligibility metadata only.",
         "An Access Administrator may grant administrative roles.",
     )
-    for sample in canonical_negatives:
+    for sample in unambiguous_canonical_statements:
         assert gate.scan_text("docs/new_active_doc.md", sample) == [], sample
 
-    mixed_clause_bypasses = (
+    fail_closed_authority_shapes = (
+        "No current token role grants Workstream authority.",
+        "Roles from the bearer token do not permit this request.",
+        "ActorProfile with type worker does not authorize task claim.",
         "A token role grants project access, but email does not.",
         "A token role grants project access, not a typed profile.",
         (
             "ActorProfile with type worker authorizes task claim, but does not "
             "authorize review."
         ),
+        "A token role, not email, grants project access.",
+        "A token role does not merely provide context; it grants project access.",
+        "ActorProfile with type worker, not reviewer, authorizes task claim.",
+        "A token role does not grant profile access but authorizes project access.",
+        (
+            "ActorProfile with type worker does not authorize read access but "
+            "permits task claim."
+        ),
+        "A worker role from the token does not allow profile reads but may approve projects.",
+        "A token role does not record email but grants project access.",
+        "A worker token does not carry profile metadata but authorizes task claim.",
+        "ActorProfile with type worker does not store secrets but permits task claim.",
     )
-    for sample in mixed_clause_bypasses:
+    for sample in fail_closed_authority_shapes:
         assert gate.scan_text("docs/new_active_doc.md", sample), sample
 
 

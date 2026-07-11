@@ -60,7 +60,6 @@ class Rule:
 
     code: str
     pattern: re.Pattern[str]
-    allow_negated: bool = False
 
 
 RULES = (
@@ -120,7 +119,6 @@ RULES = (
             r"\b(?:grants?|authoriz(?:e[sd]?|ation)|permits?|allows?|approv(?:e[sd]?|al))\b",
             re.IGNORECASE,
         ),
-        allow_negated=True,
     ),
     Rule(
         "NAMED_ROLE_TOKEN_AUTHORITY",
@@ -129,7 +127,6 @@ RULES = (
             r"\b(?:can|may|must|grants?|authoriz(?:e[sd]?|ation)|permits?|allows?|approv(?:e[sd]?|al))\b",
             re.IGNORECASE,
         ),
-        allow_negated=True,
     ),
     Rule(
         "TYPED_PROFILE_PRODUCT_AUTHORITY",
@@ -138,13 +135,7 @@ RULES = (
             r"\b(?:grants?|authoriz(?:e[sd]?|ation)|permits?|allows?|approv(?:e[sd]?|al))\b",
             re.IGNORECASE,
         ),
-        allow_negated=True,
     ),
-)
-
-NEGATION_PATTERN = re.compile(
-    r"\b(?:no|not|never|cannot|can't|does not|do not|must not|non-authoritative)\b",
-    re.IGNORECASE,
 )
 
 MATCH_EXEMPTIONS = {
@@ -199,14 +190,6 @@ def containing_line(text: str, offset: int) -> str:
     return text[start:] if end == -1 else text[start:end]
 
 
-def match_is_negated(text: str, match: re.Match[str]) -> bool:
-    """Return whether negation directly qualifies the matched authority claim."""
-    if NEGATION_PATTERN.search(match.group(0)):
-        return True
-    prefix = text[max(0, match.start() - 16) : match.start()]
-    return bool(re.search(r"\b(?:no|neither)\s+$", prefix, re.IGNORECASE))
-
-
 def exempt_match(relative_path: str, rule: Rule, text: str, offset: int) -> bool:
     """Return whether one exact reviewed archival marker match is allowed."""
     exemption = MATCH_EXEMPTIONS.get((relative_path, rule.code))
@@ -219,8 +202,6 @@ def scan_text(relative_path: str, text: str) -> list[str]:
     for rule in RULES:
         for match in rule.pattern.finditer(text):
             if exempt_match(relative_path, rule, text, match.start()):
-                continue
-            if rule.allow_negated and match_is_negated(text, match):
                 continue
             failures.append(
                 f"{relative_path}:{line_number(text, match.start())}: {rule.code}"
