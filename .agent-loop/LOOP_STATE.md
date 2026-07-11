@@ -2,18 +2,20 @@
 
 ## Current State
 
-- Active initiative: none
+- Active initiative: `WS-AUTH-001` - Workstream Authorization Service
 - Active planning chunk: none
-- Active implementation chunk: none
-- Branch: `codex/ws-auth-001-01-post-merge-memory`
-- Worktree: `/home/abiorh/flow/workstream-auth-001-01-post-merge-memory`
-- Status: `WS-AUTH-001-01` merged through PR #93 on 2026-07-11.
+- Active implementation chunk: `WS-AUTH-001-02` - Verified Issuer Token And
+  JWKS Boundary
+- Branch: `codex/ws-auth-001-02-verified-issuer-token`
+- Worktree: `/home/abiorh/flow/workstream-auth-001-02`
+- Status: explicitly started by the user on 2026-07-11; preimplementation plan
+  review passed and runtime implementation is blocked on D12.
 - Reviewed implementation SHA: `be0b836`
 - Final merged branch head: `b5217e1`
 - Last merge commit: `772af1d`
-- Current gate: post-merge memory review; stop after this memory update.
-- Next chunk: `WS-AUTH-001-02` remains proposed but inactive until a separate
-  explicit user start signal.
+- Current gate: explicit human approval of the exact D12 production dependency
+  changes.
+- Next chunk: none; do not start `WS-AUTH-001-03` automatically.
 - Parallel initiative: `WS-POL-002-03` merged through PR #90 as `a7aa474`; its
   post-merge memory merged through PR #94 as `b1270d7`. `WS-POL-002-04` remains
   inactive pending the relevant authorization proof and a separate explicit

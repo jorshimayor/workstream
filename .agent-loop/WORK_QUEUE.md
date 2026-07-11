@@ -2,13 +2,14 @@
 
 ## In Progress
 
-None.
+| Chunk | Title | Risk | Status |
+|---|---|---:|---|
+| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Started; preimplementation plan review passed; runtime blocked pending D12 approval |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Proposed but inactive until a separate explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 
 ## Completed
@@ -43,12 +44,11 @@ None.
 
 ## Proposed Next
 
-No implementation chunk is active. Do not start `WS-AUTH-001-02` or
-`WS-POL-002-04` automatically; each requires its recorded prerequisites and a
-separate explicit user start signal.
+`WS-AUTH-001-02` is the only active chunk. Do not start `WS-AUTH-001-03` or
+`WS-POL-002-04` automatically.
 
 ## Blocked
 
 | Chunk | Blocker | Next action |
 |---|---|---|
-| none | none | none |
+| `WS-AUTH-001-02` | Exact production dependency changes lack explicit human approval under D12 | User explicitly approves or rejects D12; approval must be recorded before dependency/runtime edits |

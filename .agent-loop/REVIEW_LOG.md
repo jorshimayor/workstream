@@ -717,3 +717,31 @@ compensation, frontend, and later authorization chunks remain inactive.
 Next gate: implement and verify only the WS-AUTH-001-01 contract, run all
 required internal reviewer tracks, prepare the trust bundle, and stop for human
 review.
+
+## 2026-07-11 - WS-AUTH-001-02 Started; Dependency Gate Open
+
+The user explicitly started `WS-AUTH-001-02` by saying "now we start" after the
+WS-AUTH-001-01 post-merge memory was merged.
+
+Initial plan review found no safe standard-library or current production
+dependency path for asymmetric JOSE verification and policy-controlled async
+HTTP. D12 therefore proposes adding `PyJWT[crypto]>=2.13,<3.0` and moving the
+existing `httpx>=0.27,<1.0` requirement from development to base dependencies.
+The review also required explicit network lifecycle, cache concurrency,
+introspection, compatibility, metrics, and negative-test contracts; those
+details were added to the chunk contract.
+
+Final preimplementation plan-review result after repair:
+
+- senior engineering: PASS
+- architecture: PASS
+- reuse/dedup: PASS
+- QA/test: PASS
+- CI integrity: PASS
+- test delta: PASS
+- docs: PASS
+- security/auth: PASS
+- product/ops: PASS
+
+Current gate: no dependency or runtime implementation change until the user
+explicitly approves D12.
