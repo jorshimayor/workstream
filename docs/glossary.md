@@ -61,7 +61,8 @@ An immutable exact-project contributor authority record with role `submitter`,
 
 The umbrella human product term for a person participating in Workstream. A
 contributor has an exact-project `submitter`, `reviewer`, or `both` grant.
-Worker terminology is reserved for internal services and background jobs.
+Celery, checker, setup, and background workers are internal services, not human
+product roles.
 
 ## Source
 

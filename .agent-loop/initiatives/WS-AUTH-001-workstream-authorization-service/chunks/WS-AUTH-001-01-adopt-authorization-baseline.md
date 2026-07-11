@@ -63,6 +63,7 @@ docs/product_brief.md
 docs/product_first_user_flows.md
 docs/template_checker_policy.md
 docs/template_project_guide.md
+docs/template_prior_feedback_checklist.md
 docs/template_revision_replay.md
 docs/template_submission_artifact_policy.md
 docs/decision_0003_project_guides_are_first_class.md
@@ -155,7 +156,8 @@ docs/reference_specs/SHA256SUMS
   authorization implementation until auth proof.
 - Canonical vocabulary uses Contributor as the umbrella human term. A
   contributor has an exact-project `submitter`, `reviewer`, or `both` grant.
-  Worker terminology is reserved for internal services and background jobs.
+  Celery, checker, setup, and background workers are internal services, not
+  human product roles.
 - Every current operational override/repair command is inventoried and assigned
   a precise registered Project Manager or Operator permission for later chunks;
   any additive permission is approved in the ADR rather than invented in code.

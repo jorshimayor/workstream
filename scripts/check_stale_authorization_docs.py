@@ -138,20 +138,23 @@ RULES = (
     ),
     Rule(
         "HUMAN_WORKER_VOCABULARY",
+        re.compile(r"\bworkers?\b", re.IGNORECASE),
+    ),
+    Rule(
+        "HUMAN_WORKER_IDENTIFIER",
         re.compile(
-            r"(?:\bworker-(?:facing|visible|fixable|safe)\b|"
-            r"\bworker\s+(?:attestation|submission|reputation|identity|"
-            r"id|claim(?:s|\s+status)?|performance|active\s+task\s+limit|"
-            r"resumes|submitted|uploads|responds|completed|says|opens|"
-            r"attaches|writes|adds|resubmits|revises|fixes)\b|"
-            r"\b(?:assigned|unassigned|qualified|non-owning)\s+worker\b|"
-            r"\bper\s+worker\b|"
-            r"\b(?:the|human|each|per)\s+worker\s+"
-            r"(?:must|can|does|provides|resumes|submits|completed|id)\b|"
-            r"\bworker-reviewer\b|^#{2,4}\s+(?:Flow\s+\d+:\s+)?Worker(?:\b|-)?)",
-            re.IGNORECASE | re.MULTILINE,
+            r"\bworker_(?:id|attestation|message|suggested_fix|evidence_refs|"
+            r"visible|claim_status|profile)\b|/workers(?:/|\b)",
+            re.IGNORECASE,
         ),
     ),
+)
+
+TECHNICAL_WORKER_PREFIX = re.compile(
+    r"(?:celery|checker|setup|system|background|reconciliation|execution|"
+    r"service|job|queue|durable|project[- ]setup|pre[- ]review|post[- ]submit)"
+    r"[\s/-]+$",
+    re.IGNORECASE,
 )
 
 MATCH_EXEMPTIONS = {
@@ -212,12 +215,31 @@ def exempt_match(relative_path: str, rule: Rule, text: str, offset: int) -> bool
     return bool(exemption and exemption.fullmatch(containing_line(text, offset)))
 
 
+def technical_worker_match(text: str, match: re.Match[str]) -> bool:
+    """Return whether the matched worker token is service-qualified."""
+    token = re.search(r"\bworkers?\b", match.group(0), re.IGNORECASE)
+    if token is None:
+        return False
+    worker_offset = match.start() + token.start()
+    prefix = text[max(0, worker_offset - 120) : worker_offset]
+    line = containing_line(text, worker_offset)
+    return bool(
+        TECHNICAL_WORKER_PREFIX.search(prefix)
+        or ("celery" in line.lower() and line.lower().find("celery") < worker_offset)
+        or "backend/app/workers/" in line
+    )
+
+
 def scan_text(relative_path: str, text: str) -> list[str]:
     """Return deterministic rule failures for one active document."""
     failures: list[str] = []
     for rule in RULES:
         for match in rule.pattern.finditer(text):
             if exempt_match(relative_path, rule, text, match.start()):
+                continue
+            if rule.code == "HUMAN_WORKER_VOCABULARY" and technical_worker_match(
+                text, match
+            ):
                 continue
             failures.append(
                 f"{relative_path}:{line_number(text, match.start())}: {rule.code}"

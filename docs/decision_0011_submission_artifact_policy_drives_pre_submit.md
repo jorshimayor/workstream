@@ -309,7 +309,7 @@ The effective policy merge is deterministic:
 | `maximum_package_size_bytes` | minimum non-null limit |
 | `packaging` | restrictive merge; conflicts block activation |
 
-Conflicts block setup before workers see tasks. A project-required artifact that
+Conflicts block setup before contributors see tasks. A project-required artifact that
 matches a forbidden rule is not accepted as a runtime edge case.
 
 Approved policy and checker content, hashes, source bindings, and approval
@@ -343,7 +343,7 @@ Task, submission, and revision provenance fields named
 
 Positive:
 
-- workers get deterministic pre-submit feedback
+- contributors get deterministic pre-submit feedback
 - invalid packets are blocked before submission records are created
 - project-specific artifact requirements are enforced without rereading guide prose at runtime
 - Workstream security defaults cannot be weakened by project configuration

@@ -27,13 +27,13 @@ PAID
 DISPUTED
 ```
 
-External adapter pipeline states such as `INGESTED`, `FILTERED`, `NORMALIZED`, and `ROUTED` are not v0.1 task lifecycle states. If source adapters are added later, they must normalize accepted external input into the canonical task lifecycle before workers see it.
+External adapter pipeline states such as `INGESTED`, `FILTERED`, `NORMALIZED`, and `ROUTED` are not v0.1 task lifecycle states. If source adapters are added later, they must normalize accepted external input into the canonical task lifecycle before contributors see it.
 
 ## State Definitions
 
 ### DRAFT
 
-The task is being created. It is not available to workers.
+The task is being created. It is not available to contributors.
 
 Required before leaving:
 
@@ -48,7 +48,7 @@ Required before leaving:
 
 ### SCREENING
 
-The task is structurally prepared but not yet released. This is the pre-release quality gate used to catch weak guides, vague acceptance criteria, missing submission artifact requirements, bad payment policy, missing generated project pre-submit checker policy, missing post-submit checker policy, missing review policy, or missing revision policy before workers see the task.
+The task is structurally prepared but not yet released. This is the pre-release quality gate used to catch weak guides, vague acceptance criteria, missing submission artifact requirements, bad payment policy, missing generated project pre-submit checker policy, missing post-submit checker policy, missing review policy, or missing revision policy before contributors see the task.
 
 Required before entering:
 
@@ -279,7 +279,7 @@ Payment transitions are recorded in the payment ledger and audit log, not as tas
 
 ## Anti-Bypass Rules
 
-- Workers cannot edit a submitted packet in place. They must create a new submission version.
+- Contributors cannot edit a submitted packet in place. They must create a new submission version.
 - Reviewers cannot accept a submission whose checker run belongs to a different submission version.
 - Registered recovery cannot erase failed checker results, rejected reviews, or
   prior submissions.

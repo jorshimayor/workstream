@@ -72,7 +72,7 @@ Async policy:
 - FastAPI background tasks are not used for Workstream product lifecycle jobs.
 - A different durable queue can replace Celery later only with an ADR-level reason.
 
-Rust, TypeScript, or another language can be introduced later for a specific layer only with a clear reason, such as high-throughput checker execution, worker isolation, frontend integration, or a specialized SDK/runtime requirement. They do not replace the Python/FastAPI API by default.
+Rust, TypeScript, or another language can be introduced later for a specific layer only with a clear reason, such as high-throughput checker execution, execution-process isolation, frontend integration, or a specialized SDK/runtime requirement. They do not replace the Python/FastAPI API by default.
 
 Frontend policy:
 
@@ -99,7 +99,7 @@ Auth policy:
 - Sensitive mutations revalidate actor/link/grant state in the same
   `AsyncSession` transaction that writes state and append-only authority
   evidence.
-- Internal workers use fixed system principals and explicit system permissions,
+- Internal system workers use fixed system principals and explicit system permissions,
   never fabricated human roles.
 - Audit records preserve bounded actor, issuer, matched grant/permission,
   resource, request/correlation, and decision context without raw tokens or
@@ -291,7 +291,7 @@ Workstream has three v0.1 quality gates:
 - task screening gate
 - submission quality gate
 
-The proposal's origin qualification and task ingestion gates are future adapter concepts. In v0.1, manual, markdown, and CSV intake normalize into the same task contract and pass through project activation plus task screening before work reaches workers.
+The proposal's origin qualification and task ingestion gates are future adapter concepts. In v0.1, manual, markdown, and CSV intake normalize into the same task contract and pass through project activation plus task screening before work reaches contributors.
 
 ## Audit Log
 

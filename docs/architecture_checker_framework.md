@@ -48,7 +48,7 @@ Definition fields:
 - `version`
 - `default_severity`
 - `default_blocks_review`
-- `worker_visible`
+- `contributor_visible`
 - `description`
 
 Phase:
@@ -360,7 +360,7 @@ append-only audit evidence.
 If a checker finds missing locked guide or policy context, missing acceptance
 criteria, or another task setup defect that is not contributor-fixable, the run uses
 `task_setup_blocked`. That route is internal to covered Project Managers and
-authorized Operators and must not be shown to workers as a revision request.
+authorized Operators and must not be shown to contributors as a revision request.
 
 ## Readiness Proof
 
@@ -382,7 +382,7 @@ A separate `ReadinessCertificate` record may be added later if reviewer routing 
 
 ## Checker Output Visibility
 
-Workers see:
+Contributors see:
 
 - failed checker name
 - severity

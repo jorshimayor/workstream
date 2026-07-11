@@ -14,7 +14,7 @@ If project rules live only in chat or loose markdown, operators and reviewers wi
 
 Every active Workstream project must have a versioned project guide attached to its configuration.
 
-The project guide is the human-facing project source of truth. It may be markdown, an imported document, or a URL-backed guide. Workers and reviewers use it to understand the project purpose, quality bar, instructions, examples, reviewer rubric, and common rejection reasons.
+The project guide is the human-facing project source of truth. It may be markdown, an imported document, or a URL-backed guide. Contributors and reviewers use it to understand the project purpose, quality bar, instructions, examples, reviewer rubric, and common rejection reasons.
 
 Runtime enforcement uses approved machine-readable policies attached to the guide version. Workstream must not reread guide prose at submission time and guess what to enforce.
 

@@ -40,8 +40,8 @@ not permit claiming tasks, submitting work, or recording review decisions.
 | Both | exact project | Submitter and reviewer candidates, still subject to no-self-review and lifecycle guards. |
 
 Contributor is the umbrella human product term. A contributor has an
-exact-project Submitter, Reviewer, or Both grant. Worker terminology is
-reserved for internal services and background jobs.
+exact-project Submitter, Reviewer, or Both grant. Celery, checker, setup, and
+background workers are internal services, not human product roles.
 
 ## Capability Matrix
 

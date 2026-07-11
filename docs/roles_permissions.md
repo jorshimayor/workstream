@@ -25,8 +25,8 @@ scope; it does not assign these roles. Workstream stores grants locally and
 evaluates them against canonical resources and lifecycle guards.
 
 Contributor is the umbrella human product term. Exact-project Submitter,
-Reviewer, or Both grants determine candidate authority. Worker terminology is
-reserved for internal services and background jobs. Administrative grants
+Reviewer, or Both grants determine candidate authority. Celery, checker, setup,
+and background workers are internal services, not human product roles. Administrative grants
 alone never authorize submission or review.
 
 ## Independence

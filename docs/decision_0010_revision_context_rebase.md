@@ -8,7 +8,7 @@ Accepted
 
 Project guidance can change while a task is already in progress or under review.
 
-If rule changes live only in Slack, chat, or memory, workers can be punished for missing an out-of-band update and reviewers can apply inconsistent standards. If guide changes silently mutate prior submissions, Workstream loses auditability.
+If rule changes live only in Slack, chat, or memory, contributors can be punished for missing an out-of-band update and reviewers can apply inconsistent standards. If guide changes silently mutate prior submissions, Workstream loses auditability.
 
 Workstream needs both fairness and correctness:
 
@@ -57,7 +57,7 @@ Acceptance-affecting checker implementation changes must be tied to visible guid
 
 Positive:
 
-- workers are not expected to monitor chat to discover rule changes
+- contributors are not expected to monitor chat to discover rule changes
 - reviewers can see which standards governed each attempt
 - guide and policy updates can improve future revisions without mutating prior submissions
 - repeated lessons become durable guide, checker, review, revision, payment, or template changes

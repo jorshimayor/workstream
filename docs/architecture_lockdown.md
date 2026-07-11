@@ -183,7 +183,7 @@ Use these names consistently:
 - `Project activation gate`
 - `Task screening gate`
 - `Submission quality gate`
-- `worker_claim_status`
+- `contributor_claim_status`
 - `reviewer_closure_status`
 
 Revision replay contributor claim statuses:

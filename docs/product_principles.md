@@ -59,7 +59,7 @@ The first version enforces accountability through assignment ownership, contribu
 
 Needs revision is a normal lifecycle state. The system must preserve feedback, require closure, and make resubmission easy to audit.
 
-Revision must also preserve context. Workers and reviewers need to know which guide and policy versions governed the prior attempt and which versions govern the next attempt.
+Revision must also preserve context. Contributors and reviewers need to know which guide and policy versions governed the prior attempt and which versions govern the next attempt.
 
 ## 7. Evidence Beats Claims
 

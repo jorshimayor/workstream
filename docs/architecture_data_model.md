@@ -88,8 +88,8 @@ Immutable exact-project contributor-grant history with role `submitter`,
 qualification snapshot, reason, and active/revoked state.
 
 Contributor is the umbrella human product term. `submitter`, `reviewer`, and
-`both` are the persisted exact-project grant values. Worker terminology is
-reserved for internal services and background jobs.
+`both` are the persisted exact-project grant values. Celery, checker, setup,
+and background workers are internal services, not human product roles.
 
 ### QualificationSnapshot
 
@@ -166,7 +166,7 @@ Workstream evaluates guide sufficiency, derives machine-readable project policy,
 and owns the internal controls. A covered Project Manager grant authorizes the
 guide-policy approval flow before the guide can activate.
 
-Every task records the guide version active at creation or screening time before the task enters `READY`. Later source adapters must also lock the guide version during normalization before workers see the task.
+Every task records the guide version active at creation or screening time before the task enters `READY`. Later source adapters must also lock the guide version during normalization before contributors see the task.
 
 When a task is claimed or moved to `IN_PROGRESS`, its locked guide and policy context does not change silently. A newer upstream guide version can only affect unclaimed work or a controlled revision path when policy allows it and the audit log records the reason.
 
@@ -461,7 +461,7 @@ Example:
 Workstream derives this policy from project guide material after guide
 sufficiency passes or passes with warnings. An authorized covered Project
 Manager approves it after any sufficiency warnings are acknowledged. Project
-owners and workers do not supply or approve this internal
+owners and contributors do not supply or approve this internal
 policy schema.
 `derivation_source` is server-owned. The legacy technical token
 `manual_admin_derivation` remains historical provenance until its owning
@@ -976,7 +976,7 @@ post-submit checker policy id/version/hash, review policy version, revision
 policy version, payment policy version, acceptance criteria, derived display
 summaries, locked payment policy amount, locked payment policy currency, locked
 payment policy payout type, and skill tags.
-Workers submit against the task id; they do not restate policy versions.
+Contributors submit against the task id; they do not restate policy versions.
 
 Durable post-submit checker execution uses
 `locked_post_submit_checker_policy_id`,
@@ -990,7 +990,7 @@ Fields:
 
 - `id`
 - `task_id`
-- `worker_id`
+- `contributor_id`
 - `assigned_by`
 - `assigned_at`
 - `accepted_at`
@@ -1003,14 +1003,14 @@ Fields:
 
 - `id`
 - `task_id`
-- `worker_id`
+- `contributor_id`
 - `version`
 - `status`
 - `summary`
 - `package_uri`
 - `package_hash`
 - `artifact_hash_manifest`
-- `worker_attestation`
+- `contributor_attestation`
 - `locked_guide_version`
 - `locked_guide_source_snapshot_id`
 - `locked_guide_source_snapshot_hash`
@@ -1141,11 +1141,11 @@ Fields:
 - `severity`
 - `message`
 - `suggested_fix`
-- `worker_message`
-- `worker_suggested_fix`
+- `contributor_message`
+- `contributor_suggested_fix`
 - `evidence_refs`
-- `worker_evidence_refs`
-- `worker_visible`
+- `contributor_evidence_refs`
+- `contributor_visible`
 - `metadata`
 - `created_at`
 
@@ -1174,7 +1174,7 @@ Fields:
 - `default_severity`
 - `default_blocks_review`
 - `version`
-- `worker_visible`
+- `contributor_visible`
 - `description`
 - `created_at`
 - `retired_at`
@@ -1274,7 +1274,7 @@ Each replay has items:
 - `prior_finding_id`
 - `fix_summary`
 - `evidence_ref`
-- `worker_claim_status`
+- `contributor_claim_status`
 - `reviewer_closure_status`
 
 Contributor claim status:
@@ -1334,7 +1334,7 @@ Fields:
 - `task_id`
 - `accepted_submission_id`
 - `accepting_review_id`
-- `worker_id`
+- `contributor_id`
 - `locked_guide_version`
 - `checker_run_id`
 - `artifact_hash_manifest`
@@ -1369,7 +1369,7 @@ Fields:
 - `id`
 - `contribution_record_id`
 - `task_id`
-- `worker_id`
+- `contributor_id`
 - `base_amount`
 - `accepted_amount`
 - `pending_amount`

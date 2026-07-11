@@ -19,7 +19,7 @@ Mitigation:
 - every rule belongs in project guide, submission artifact policy, checker policy, review policy, revision policy, or payment policy
 - daily lessons learned become document updates
 - out-of-band guidance has no acceptance force until it becomes a guide, policy, template, or checker contract update
-- revision context preparation shows workers any guide or policy changes before resubmission
+- revision context preparation shows contributors any guide or policy changes before resubmission
 
 ### R1A: Revision Uses Stale Or Hidden Rules
 
@@ -55,7 +55,7 @@ Severity: high
 
 Problem:
 
-Workers cannot close feedback that does not specify the issue, evidence, and required fix.
+Contributors cannot close feedback that does not specify the issue, evidence, and required fix.
 
 Mitigation:
 
@@ -97,7 +97,7 @@ Severity: medium
 
 Problem:
 
-Bad review decisions can demoralize workers and corrupt quality metrics.
+Bad review decisions can demoralize contributors and corrupt quality metrics.
 
 Mitigation:
 
@@ -112,7 +112,7 @@ Severity: high
 
 Problem:
 
-Workers may attach evidence that does not prove the work.
+Contributors may attach evidence that does not prove the work.
 
 Mitigation:
 
@@ -163,7 +163,7 @@ Severity: high
 
 Problem:
 
-Reviewers can repeatedly approve weak work for favored workers or skip evidence review.
+Reviewers can repeatedly approve weak work for favored contributors or skip evidence review.
 
 Mitigation:
 
@@ -194,7 +194,7 @@ Severity: medium
 
 Problem:
 
-Workers may submit generic LLM-generated artifacts that look structured but do not solve the task.
+Contributors may submit generic LLM-generated artifacts that look structured but do not solve the task.
 
 Mitigation:
 

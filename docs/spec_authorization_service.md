@@ -97,8 +97,8 @@ cannot submit or review by administrative role alone.
 | `both` | Union of submitter and reviewer candidates, still subject to separation-of-duties and lifecycle guards. |
 
 Contributor is the umbrella human product term. A contributor has an
-exact-project `submitter`, `reviewer`, or `both` grant. Worker terminology is
-reserved for internal services and background jobs.
+exact-project `submitter`, `reviewer`, or `both` grant. Celery, checker, setup,
+and background workers are internal services, not human product roles.
 
 Grants are immutable history. Replacement revokes the prior active grant and
 creates a new row atomically. No observed token role, typed profile, skill,
@@ -213,7 +213,7 @@ List filtering occurs before counts and pagination cursors.
 
 ## System Work
 
-Internal workers use fixed Workstream system principals with explicit
+Internal system workers use fixed Workstream system principals with explicit
 registered system permissions. They never receive fabricated human grants.
 Serialized requester identity is provenance only. Actor-attributed jobs reload
 current actor/link/grant state before committing.

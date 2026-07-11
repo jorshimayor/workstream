@@ -97,7 +97,7 @@ Each checker definition specifies:
 
 ## Contributor-Visible Messages
 
-Workers may see:
+Contributors may see:
 
 - checker name
 - status
@@ -105,7 +105,7 @@ Workers may see:
 - safe failure message
 - suggested fix
 
-Workers must not see:
+Contributors must not see:
 
 - hidden evaluator logic
 - private reviewer notes

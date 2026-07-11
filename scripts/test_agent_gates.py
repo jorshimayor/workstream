@@ -908,6 +908,7 @@ def test_stale_authorization_rule_examples_are_rejected() -> None:
             "ActorProfile with type worker authorizes task claim."
         ),
         "HUMAN_WORKER_VOCABULARY": "## Flow 3: Worker Submits Work",
+        "HUMAN_WORKER_IDENTIFIER": "worker_claim_status: fixed",
     }
     for code, sample in fixtures.items():
         failures = gate.scan_text("docs/new_active_doc.md", sample)
@@ -952,6 +953,13 @@ def test_stale_authorization_rule_examples_are_rejected() -> None:
         "The Celery worker runs project setup jobs.",
         "Checker execution uses a durable worker boundary.",
         "The setup worker reloads current authority before commit.",
+        "The Celery worker identity is recorded for audit.",
+        "The checker worker writes results.",
+        "The setup worker resumes a failed job.",
+        "The system worker completed reconciliation.",
+        "The Celery worker submission is retried.",
+        "The checker worker claim status is internal.",
+        "Celery workers submit jobs.",
     )
     for sample in technical_worker_statements:
         assert gate.scan_text("docs/new_active_doc.md", sample) == [], sample
@@ -961,6 +969,11 @@ def test_stale_authorization_rule_examples_are_rejected() -> None:
         "The worker opens an assigned task.",
         "Maximum active tasks per worker.",
         "Worker attestation is required.",
+        "A worker submits the packet.",
+        "Workers submit packets.",
+        "A worker can claim a task.",
+        "Persist worker_id on the assignment.",
+        "POST /api/v1/workers/me/profile",
     )
     for sample in human_worker_statements:
         assert gate.scan_text("docs/new_active_doc.md", sample), sample

@@ -26,7 +26,7 @@ Exit requirement:
 
 ### Screening
 
-Tasks that look ready but need independent release review before workers can claim them.
+Tasks that look ready but need independent release review before contributors can claim them.
 
 Owner:
 
@@ -50,7 +50,7 @@ Exit requirement:
 Policy:
 
 - screening is where weak task guides and low-quality task specs fail
-- workers do not see tasks that have not passed screening
+- contributors do not see tasks that have not passed screening
 
 ### Ready
 
@@ -211,7 +211,7 @@ Every operating day starts with:
 3. inspect stale active tasks
 4. clear checker failures
 5. assign review pending tasks
-6. push needs revision tasks to workers
+6. push needs revision tasks to contributors
 7. reconcile accepted but unpaid tasks
 8. record new lessons learned
 

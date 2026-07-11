@@ -60,7 +60,7 @@ Define disqualifying conditions and what fails automatically or normally leads t
 
 ## Reviewer Rubric
 
-Define how reviewers evaluate quality. Workers see the same rubric they submit against.
+Define how reviewers evaluate quality. Contributors see the same rubric they submit against.
 
 ## Forbidden Actions And Artifacts
 
@@ -90,7 +90,7 @@ Workstream assigns submission version server-side after blocking pre-submit chec
 
 ## Submission Expectations Summary
 
-Summarize what workers must submit in plain language:
+Summarize what contributors must submit in plain language:
 
 - required artifacts:
 - required evidence references:
@@ -123,7 +123,7 @@ Each task later locks:
 - EffectiveProjectSubmissionArtifactPolicy hash:
 - generated project PreSubmitCheckerPolicy compiled bundle hash:
 
-Artifact requirements shown to workers are derived from the approved `SubmissionArtifactPolicy`. The guide may summarize those requirements, but the policy is the enforcement source.
+Artifact requirements shown to contributors are derived from the approved `SubmissionArtifactPolicy`. The guide may summarize those requirements, but the policy is the enforcement source.
 
 Project owners provide open-ended guide material and business terms in plain
 language. Workstream evaluates guide sufficiency, derives

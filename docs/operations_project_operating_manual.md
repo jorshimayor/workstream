@@ -125,7 +125,7 @@ pre-submit checker bundle hash.
 
 A task cannot move to `READY` until the task contract is complete, the guide version is locked, submission artifact requirements are clear, checker/review/revision/payment policy versions are locked, and a release decision is recorded.
 
-After screening and release, workers use
+After screening and release, contributors use
 `GET /api/v1/tasks/{task_id}/work-context` for the locked guide and lifecycle
 context and `GET /api/v1/tasks/{task_id}/submission-requirements` for the exact
 artifact, evidence, storage, packaging, hash, and attestation requirements.

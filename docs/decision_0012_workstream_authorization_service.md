@@ -77,8 +77,8 @@ Contributor project grants are:
 - `both`
 
 Contributor is the umbrella human product term. A contributor has an
-exact-project `submitter`, `reviewer`, or `both` grant. Worker terminology is
-reserved for internal services and background jobs. Administrative roles alone
+exact-project `submitter`, `reviewer`, or `both` grant. Celery, checker, setup,
+and background workers are internal services, not human product roles. Administrative roles alone
 do not authorize submission or review.
 
 The three additive Operator recovery permissions approved with this ADR are:
