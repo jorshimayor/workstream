@@ -101,7 +101,7 @@ test targets and live focused-runtime conformance.
 
 ## Reviewer Results
 
-Reviewed code SHA: bfddfcf0afd4d9d53735eb91df58bd73926cad98
+Reviewed code SHA: f7fbc339d6e2c806a0a711325a7d3314cd299ef2
 
 All required internal tracks passed: senior engineering, QA/test,
 security/auth, product/ops, architecture, docs, CI integrity, reuse/dedup, and
@@ -113,9 +113,10 @@ Internal evidence:
 
 ## External Review
 
-Pending PR publication. CodeRabbit, GitHub checks, and human PR comments will be
-recorded separately in `WS-ART-001-PLAN-external-review-response.md`; they are
-not internal review evidence.
+PR #97 received seven actionable CodeRabbit comments. All were fixed and
+recorded separately in `WS-ART-001-PLAN-external-review-response.md`; external
+review is not internal review evidence. Fresh checks must pass on the pushed
+fix/evidence head.
 
 ## Remaining Risks
 

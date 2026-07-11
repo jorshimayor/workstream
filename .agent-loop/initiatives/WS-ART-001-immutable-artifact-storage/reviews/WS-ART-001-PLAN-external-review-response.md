@@ -63,5 +63,6 @@ Results: all passed; 31 agent-gate regression tests passed.
 
 - The PR remains planning-only; runtime/provider proof belongs to each approved
   implementation chunk.
-- The external-fix head still requires final internal evidence rebinding and
-  fresh GitHub/CodeRabbit checks before human merge.
+- All nine internal tracks passed the external-fix/durable-memory head and the
+  evidence was rebound. Fresh GitHub/CodeRabbit checks still must pass before
+  human merge.

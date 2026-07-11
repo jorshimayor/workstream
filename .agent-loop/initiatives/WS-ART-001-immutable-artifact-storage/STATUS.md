@@ -4,8 +4,8 @@
 
 Planning complete and internally reviewed on
 `codex/ws-art-001-artifact-storage-planning`. PR #97 is under external review;
-the seven initial CodeRabbit findings are fixed and final evidence/check reruns
-remain. No implementation chunk is active.
+the seven initial CodeRabbit findings are fixed and final internal evidence is
+rebound. Fresh external checks remain. No implementation chunk is active.
 
 ## Active Chunk
 

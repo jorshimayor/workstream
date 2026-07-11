@@ -11,9 +11,9 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: bfddfcf0afd4d9d53735eb91df58bd73926cad98
+Reviewed code SHA: f7fbc339d6e2c806a0a711325a7d3314cd299ef2
 
-Reviewed at: 2026-07-11T22:43:00Z
+Reviewed at: 2026-07-11T23:03:40Z
 
 Reviewer run IDs: senior-engineering=019f5324-6fce-7a73-b92b-8886fbb30fdd; QA/test=019f5324-850d-7140-9e5c-58d1bc2c791e; security/auth=019f5324-7e01-7532-9f7f-943cfc886d4f; product/ops=019f5324-8c78-76d0-ab08-7a8d3f40cd27; architecture=019f5324-7661-72e0-857d-8902ed9da442; docs=019f5324-95e0-7d12-b0d6-5ff0b2ae4418; CI-integrity=019f5347-b88e-7571-a901-5c057d10d232; reuse/dedup=019f5347-bc91-7a42-8ea6-9c8b5e88e82c; test-delta=019f5347-c2c5-7443-aa79-ee656495781d
 
@@ -66,6 +66,8 @@ Reviewer run IDs: senior-engineering=019f5324-6fce-7a73-b92b-8886fbb30fdd; QA/te
 - Added Alembic test ownership, full backend regression commands, clean Compose
   health waits, explicit fault phases, and safe Compose test-database guards.
 - Required reuse of shared `AuditRepository` and `canonical_json_hash`.
+- Addressed all seven initial CodeRabbit findings and reran all nine internal
+  tracks against the external-fix and durable-memory head.
 
 ## Commands Run
 
