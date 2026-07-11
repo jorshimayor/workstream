@@ -15,8 +15,17 @@
   `WS-POL-002-03` review chunk, removing duplicate or stale paused rows, and
   marking future WS-POL work as separately gated.
 - Fixed the valid correction-flow comment by stating that correction requests
-  block activation, clear unapproved output, requeue regeneration, and do not
-  satisfy the approval gate.
+  block activation, supersede and retain rejected output, requeue regeneration,
+  and do not satisfy the approval gate.
+- A later CodeRabbit thread targeted WS-AUTH planning wording that entered PR
+  #90 through merge-state reconciliation. Rather than changing the separate
+  authorization initiative from this WS-POL chunk, all WS-AUTH initiative-file
+  deltas were removed; that worktree remains independent.
+- Internal review then found that destructive correction cleanup could erase
+  audit provenance and rerun the same agent input. The repair now retains
+  superseded policy rows, supplies bounded exact-context correction feedback,
+  rejects unchanged replacements, and distinguishes correction from upstream
+  policy supersession.
 
 ## Comments Deferred
 
@@ -31,6 +40,11 @@
 ```bash
 gh run view 29157251423 --log-failed
 gh run view 29157251426 --log-failed
+cd backend && .venv/bin/pytest tests/test_projects.py -q -k "post_submit_checker_policy or post_submit_setup_visibility"
+cd backend && .venv/bin/pytest tests/test_alembic.py -q
+cd backend && .venv/bin/pytest tests/test_auth.py -q
+cd backend && .venv/bin/ruff check app tests scripts
+cd backend && .venv/bin/docstr-coverage --config .docstr.yaml
 python3 scripts/check_internal_review_evidence.py
 python3 scripts/check_loop_memory_state.py
 python3 scripts/check_stale_workstream_wording.py
@@ -40,7 +54,6 @@ git diff --check
 
 ## Remaining Risks
 
-- CodeRabbit and GitHub Actions passed on PR head `19680969d267c339907bc507ec37b22c65665298`.
-- The current CodeRabbit-response fixes are bound to non-evidence commit
-  `6966c868b9a5f931b91f900ec754044cb61fabba` and must be pushed and checked
-  again before merge.
+- The current fixes are bound to reviewed non-evidence commit
+  `0e59873971db8c2a7d9d6f9f7e725cb902eb888e`.
+- CodeRabbit and GitHub Actions must rerun on the final evidence-only pushed head.
