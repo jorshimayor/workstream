@@ -2,17 +2,20 @@
 
 ## Current State
 
-- Active initiative: `WS-POL-002` - Post-Submit Checker Foundation
-- Active planning chunk: none
+- Active initiative: `WS-AUTH-001` - Workstream Authorization Service
+- Active planning chunk: `WS-AUTH-001-PLAN`
 - Active implementation chunk: none
-- Branch: `main`
-- Status: `WS-POL-002-02` merged through PR #88 as `32af6a7` on 2026-07-11
-  after internal review, current-head GitHub checks, CodeRabbit, and explicit
-  human merge approval.
+- Branch: `authorization-service`
+- Status: WS-AUTH-001 planning is internally reviewed and stopped at the L0
+  human checkpoint. D1-D3 are approved; D4-D10 require explicit approval.
 - Last merged implementation SHA: `67fb3ca`
 - Last merge commit: `32af6a7`
-- Current gate: none; awaiting explicit user start for the next chunk.
-- Next chunk: `WS-POL-002-03` is inactive until the user explicitly starts it.
+- Current gate: explicit durable human approval of D4-D10. Planning evidence is
+  recorded at the WS-AUTH-001 internal review evidence path.
+- Next chunk: `WS-AUTH-001-01` remains proposed until D4-D10 approval and a
+  separate implementation start signal.
+- Paused initiative: `WS-POL-002`; chunk `WS-POL-002-03` must not start before
+  the relevant authorization foundation and an explicit resume signal.
 
 ## Operating Rule
 

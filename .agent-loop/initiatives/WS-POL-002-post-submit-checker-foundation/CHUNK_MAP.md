@@ -12,7 +12,7 @@ reviewed, merged by explicit human approval, and followed by a memory update.
 |---|---|---:|---|
 | `WS-POL-002-01` | Post-Submit Compiler Contract | L1 | Merged |
 | `WS-POL-002-02` | Post-Submit Derivation Agent And Resumable Setup Integration | L1 | Merged |
-| `WS-POL-002-03` | Server-Owned Policy Approval And Visibility APIs | L1 | Proposed |
+| `WS-POL-002-03` | Server-Owned Policy Approval And Visibility APIs | L1 | Paused behind WS-AUTH-001 and explicit resume |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Proposed |
 | `WS-POL-002-05` | Terminal Benchmark Post-Submit Live API Proof | L1 | Proposed |
 
@@ -31,3 +31,6 @@ WS-POL-002-01
 After each implementation chunk is reviewed, externally checked, and merged by
 explicit human approval, perform the memory update before starting the next
 chunk.
+
+The initiative is currently paused after chunk 02 by explicit human priority
+for `WS-AUTH-001`. Do not start chunk 03 automatically.
