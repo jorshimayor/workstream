@@ -48,8 +48,7 @@ None.
 
 ## Proposed Next
 
-Do not start `WS-POL-002-04` until a separate explicit user start signal after
-this post-merge memory update.
+Do not start `WS-POL-002-04` until a separate explicit user start signal.
 Stop at the WS-AUTH-001 planning human checkpoint. Do not activate
 `WS-AUTH-001-01` before explicit D4-D10 approval and a separate start signal.
 Future WS-POL work after PR #90 also requires a separate start signal.
