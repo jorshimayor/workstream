@@ -610,3 +610,32 @@ Trust bundle: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation
 
 Next gate: `WS-POL-002-01` Post-Submit Provenance And Compiler Contract. No
 implementation chunk is active until the user explicitly starts it.
+
+## 2026-07-11 - WS-AUTH-001-PLAN Internal Review Passed
+
+Required reviewer tracks:
+
+- senior engineering
+- QA/test
+- security/auth
+- product/ops
+- architecture
+- docs
+- CI integrity
+- reuse/dedup
+- test delta
+
+Result: PASS after plan repairs. The reviewed planning tree preserves the
+external Flow authentication boundary, replaces token roles only through a
+staged local-grant cutover, keeps `/api/v1`, protects intermediate-release
+operability, and leaves all runtime implementation inactive.
+
+Scope: imported and hash-bound eight Workstream reference files; added the
+WS-AUTH-001 intent, discovery, decisions, risks, plan, source manifest, status,
+16 implementation chunk contracts, and durable WS-POL-002 pause. D1-D3 are
+human-approved. D4-D10 remain at the L0 human approval checkpoint.
+
+Evidence: `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/reviews/WS-AUTH-001-PLAN-internal-review-evidence.md`
+
+Next gate: stop. Do not activate `WS-AUTH-001-01` without explicit human
+approval of D4-D10 and a separate implementation start signal.
