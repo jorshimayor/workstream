@@ -9,7 +9,9 @@
 - Worktree: `/home/abiorh/flow/workstream-auth-001-01`
 - Status: PR #93 is published. Contributor terminology, CodeRabbit feedback, and
   latest-main integration passed all required internal reviewer tracks at
-  `2164e3b`; final evidence binding remains before the next push.
+  `2164e3b`. The stale CI assertion repair passed at `be0b836`, and its final
+  scope evidence passed at `b7dafb3`; evidence rebind remains before the next
+  push.
 - Last merged implementation SHA: `1e20b79`
 - Last merge commit: `a7aa474`
 - Current gate: bind final local review evidence, push PR #93, observe external

@@ -2,11 +2,11 @@
 
 ## WS-AUTH-001-01
 
-Status: PR #93 published; latest-main merge, CodeRabbit repairs, and required
-internal re-review complete locally; push, external checks, and human review
-pending.
+Status: PR #93 published; latest-main merge, CodeRabbit repairs, CI assertion
+repair, and required internal re-review complete locally; evidence rebind,
+push, external checks, and human review pending.
 
-Reviewed implementation SHA: `2164e3b8192f5f5f9b54363a6b981a8799c20ac4`
+Reviewed implementation SHA: `be0b836`
 
 Result: PASS after fixes across senior engineering, QA/test, security/auth,
 product/ops, architecture, docs, reuse/dedup, CI integrity, and test delta.

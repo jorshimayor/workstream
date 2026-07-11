@@ -11,7 +11,9 @@ D4-D10 were explicitly approved and WS-AUTH-001-01 was started by the user on
 branch now includes Contributor terminology repairs, CodeRabbit responses, and
 latest `main` through merged PR #90. Deterministic checks and all required
 internal reviewer tracks passed at `2164e3b`; final evidence binding is the
-remaining local gate before push.
+remaining local gate before push. The GitHub Backend run then exposed one stale
+agent-runtime terminology assertion; the repair passed at `be0b836`, and its
+scope-count evidence passed at `b7dafb3`.
 
 ## Active planning chunk
 
@@ -30,7 +32,7 @@ None.
 | Chunk | Status | Branch | PR | Notes |
 |---|---|---|---:|---|
 | `WS-AUTH-001-PLAN` | Merged | `authorization-service` | #91 | Merged as `ad6d644`; D4-D10 later approved. |
-| `WS-AUTH-001-01` | Internally reviewed | `codex/ws-auth-001-01-adopt-authorization-baseline` | #93 | Latest-main and external-review repairs passed at `2164e3b`; final evidence binding pending before push. |
+| `WS-AUTH-001-01` | Internally reviewed | `codex/ws-auth-001-01-adopt-authorization-baseline` | #93 | Latest-main/external-review repairs passed at `2164e3b`; CI assertion repair passed at `be0b836`; final evidence rebind pending. |
 | `WS-AUTH-001-02` | Proposed | - | - | Verified issuer token and JWKS boundary. |
 | `WS-AUTH-001-03` | Proposed | - | - | Legacy actor classification preflight. |
 | `WS-AUTH-001-04` | Proposed | - | - | Request, error, and API control foundation. |
