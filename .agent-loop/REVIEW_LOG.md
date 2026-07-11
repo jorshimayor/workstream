@@ -2,15 +2,18 @@
 
 ## WS-AUTH-001-01
 
-Status: PR #93 published; external checks, CodeRabbit follow-up, and human review pending.
+Status: PR #93 published; latest-main merge, CodeRabbit repairs, and required
+internal re-review complete locally; push, external checks, and human review
+pending.
 
-Reviewed implementation SHA: `6756e6cb397da5f813eca39fb738633bc24f2ab2`
+Reviewed implementation SHA: `2164e3b8192f5f5f9b54363a6b981a8799c20ac4`
 
 Result: PASS after fixes across senior engineering, QA/test, security/auth,
 product/ops, architecture, docs, reuse/dedup, CI integrity, and test delta.
 
 Scope: canonical authorization ADR/spec/runbook, active-document and diagram
-reconciliation, stale-authorization scanner/tests, and additive Agent Gates step.
+reconciliation, stale-authorization scanner/tests, additive Agent Gates step,
+latest-main/PR #90 reconciliation, and terminology-only prompt/test wording.
 
 Evidence: `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/reviews/WS-AUTH-001-01-internal-review-evidence.md`
 

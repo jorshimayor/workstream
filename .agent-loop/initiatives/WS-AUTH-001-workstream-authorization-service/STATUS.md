@@ -9,8 +9,9 @@ actionable findings, then its final check was cancelled when the PR closed.
 D4-D10 were explicitly approved and WS-AUTH-001-01 was started by the user on
 2026-07-11 in a fresh worktree from merged `main`. PR #93 is published. The
 branch now includes Contributor terminology repairs, CodeRabbit responses, and
-latest `main` through merged PR #90; the current repaired SHA must complete
-deterministic checks and required internal re-review before the next push.
+latest `main` through merged PR #90. Deterministic checks and all required
+internal reviewer tracks passed at `2164e3b`; final evidence binding is the
+remaining local gate before push.
 
 ## Active planning chunk
 
@@ -29,7 +30,7 @@ None.
 | Chunk | Status | Branch | PR | Notes |
 |---|---|---|---:|---|
 | `WS-AUTH-001-PLAN` | Merged | `authorization-service` | #91 | Merged as `ad6d644`; D4-D10 later approved. |
-| `WS-AUTH-001-01` | Repair re-review | `codex/ws-auth-001-01-adopt-authorization-baseline` | #93 | Published; latest-main and external-review repairs require final evidence binding before push. |
+| `WS-AUTH-001-01` | Internally reviewed | `codex/ws-auth-001-01-adopt-authorization-baseline` | #93 | Latest-main and external-review repairs passed at `2164e3b`; final evidence binding pending before push. |
 | `WS-AUTH-001-02` | Proposed | - | - | Verified issuer token and JWKS boundary. |
 | `WS-AUTH-001-03` | Proposed | - | - | Legacy actor classification preflight. |
 | `WS-AUTH-001-04` | Proposed | - | - | Request, error, and API control foundation. |

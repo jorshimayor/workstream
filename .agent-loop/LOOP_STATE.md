@@ -8,12 +8,12 @@
 - Branch: `codex/ws-auth-001-01-adopt-authorization-baseline`
 - Worktree: `/home/abiorh/flow/workstream-auth-001-01`
 - Status: PR #93 is published. Contributor terminology, CodeRabbit feedback, and
-  latest-main integration are being repaired and must be re-reviewed before the
-  next push.
+  latest-main integration passed all required internal reviewer tracks at
+  `2164e3b`; final evidence binding remains before the next push.
 - Last merged implementation SHA: `1e20b79`
 - Last merge commit: `a7aa474`
-- Current gate: complete local repair evidence and required internal review,
-  push PR #93, observe external checks, and stop for human review.
+- Current gate: bind final local review evidence, push PR #93, observe external
+  checks, and stop for human review.
 - Next chunk: `WS-AUTH-001-02` remains proposed and must not start
   automatically.
 - Parallel initiative: `WS-POL-002-03` merged through PR #90 as `a7aa474`.
