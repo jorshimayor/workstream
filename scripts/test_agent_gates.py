@@ -994,6 +994,16 @@ def test_stale_authorization_rule_examples_are_rejected() -> None:
             "decision."
         ),
         "The setup worker is a human product role.",
+        "The system worker has a reviewer grant.",
+        "The Celery worker may review a contributor submission.",
+        "The checker worker is a Contributor.",
+        "The setup worker uses submitter authority.",
+        "The background worker approves project work.",
+        "The Celery worker approves a project guide.",
+        "The system worker reviews the submission.",
+        "The checker worker grants itself project access.",
+        "The setup worker manages contributor grants.",
+        "The background worker creates a project.",
     )
     for sample in human_worker_statements:
         assert gate.scan_text("docs/new_active_doc.md", sample), sample

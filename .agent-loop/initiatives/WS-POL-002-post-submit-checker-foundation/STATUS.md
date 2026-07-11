@@ -21,22 +21,17 @@ continuation, generated project `PostSubmitCheckerPolicy` persistence, automatic
 contributor submission handoff to the pre-review gate, and repair-only
 `/finalize` semantics.
 
-`WS-POL-002-03` is implemented and internally reviewed on branch
-`codex/ws-pol-002-03-post-submit-approval-visibility`; pull request #90 is
-current with local CodeRabbit-response fixes complete; push and external checks
-are pending.
-
 ## Active Planning Chunk
 
 None.
 
 ## Active Implementation Chunk
 
-`WS-POL-002-03` - Server-Owned Policy Approval And Visibility APIs
+None.
 
 ## Current Implementation Branch
 
-`codex/ws-pol-002-03-post-submit-approval-visibility`
+`main`; no active implementation branch.
 
 ## Chunk Status
 

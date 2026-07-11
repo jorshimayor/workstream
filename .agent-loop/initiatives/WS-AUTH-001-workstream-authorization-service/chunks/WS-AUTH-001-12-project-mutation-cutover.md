@@ -37,7 +37,7 @@ backend/app/modules/projects/**
 backend/app/modules/authorization/**
 backend/app/api/deps/auth.py
 backend/app/workers/project_setup.py
-backend/alembic/versions/0020_*.py
+backend/alembic/versions/0021_*.py
 backend/tests/test_projects.py
 backend/tests/test_auth.py
 backend/tests/test_alembic.py
@@ -66,7 +66,7 @@ unscoped project-manager access or token role fallback
   revalidation.
 - Approval provenance records matched local grant/actor/scope while preserving
   historical bootstrap provenance.
-- Migration `0020` adds matched local grant/scope provenance and ownership
+- Migration `0021` adds matched local grant/scope provenance and ownership
   constraints to project policy approval records without rewriting historical
   bootstrap values; prior-head upgrade, downgrade, and re-upgrade preserve
   readable history.

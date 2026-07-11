@@ -41,7 +41,7 @@ backend/app/modules/checkers/**
 backend/app/modules/projects/schemas.py
 backend/app/modules/projects/service.py
 backend/app/adapters/project_agents/openai_agent_sdk.py
-backend/alembic/versions/0022_*.py
+backend/alembic/versions/0023_*.py
 backend/app/modules/authorization/**
 backend/app/api/deps/auth.py
 backend/tests/test_tasks.py
@@ -93,7 +93,7 @@ legacy active-worker-profile or workflow-eligibility compatibility fallback
   `contributor_suggested_fix`, `contributor_evidence_refs`, and
   `contributor_visible` across persistence, models, schemas, services, runner
   contracts, audit payloads, and tests. Submission-policy JSON and derivation
-  contracts use `contributor_facing_fix`. Migration `0022` preserves all values,
+  contracts use `contributor_facing_fix`. Migration `0023` preserves all values,
   supports downgrade, and removes legacy storage/property names without public
   API aliases.
 - With the final consumer removed, the legacy `/api/v1/workers/me/profile`

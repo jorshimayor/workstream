@@ -38,7 +38,7 @@ backend/app/api/router.py
 backend/app/db/models.py
 backend/scripts/bootstrap_access_administrator.py
 backend/app/modules/audit/**
-backend/alembic/versions/0018_*.py
+backend/alembic/versions/0019_*.py
 backend/tests/test_actors.py
 backend/tests/test_auth.py
 backend/tests/test_alembic.py

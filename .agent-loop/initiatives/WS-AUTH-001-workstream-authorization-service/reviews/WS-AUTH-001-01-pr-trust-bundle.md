@@ -44,18 +44,22 @@ wording uniformly instead of trying to interpret English negation.
 
 ## Scope Control
 
-The diff contains docs, loop memory, diagram sources/generated companions, one
-scanner, one renderer, scanner tests, and one additive CI step. It contains no
-backend/frontend runtime, schema, migration, dependency, package, or lockfile
-changes. All eight imported sources, `SHA256SUMS`, and `SOURCE_MANIFEST.md` are
-unchanged.
+The authored diff contains docs, loop memory, diagram sources/generated
+companions, one scanner, one renderer, scanner tests, one additive CI step, and
+two exact backend files whose only authored changes replace human `worker`
+prompt/assertion wording with Contributor. It contains no authored runtime
+logic, schema, migration, dependency, package, or lockfile changes. Merged PR
+#90 code appears only through the latest-main merge. All eight imported sources,
+`SHA256SUMS`, and `SOURCE_MANIFEST.md` are unchanged.
 
 ## Product Behavior
 
-No runtime behavior changes. Review decisions remain `accept`,
-`needs_revision`, and `reject`. PR #90 correction clears unapproved output,
-preserves redacted metadata, requeues derivation, and keeps activation blocked
-until the current compiled policy is approved.
+No authored runtime behavior changes. Review decisions remain `accept`,
+`needs_revision`, and `reject`. Merged PR #90 correction supersedes and retains
+unapproved compiled output with bounded correction provenance, requeues
+correction-aware derivation, rejects an unchanged replacement, and keeps
+activation blocked until the current provenance-matched compiled policy is
+approved.
 
 ## Acceptance Proof
 

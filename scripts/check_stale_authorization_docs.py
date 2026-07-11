@@ -153,12 +153,16 @@ RULES = (
         re.compile(
             r"\b(?:celery|checker|setup|system|background|reconciliation)\s+"
             r"workers?\b.{0,120}\b(?:"
-            r"claims?\s+(?:a\s+)?(?:human\s+|contributor\s+)?task|"
-            r"submits?\s+(?:a\s+)?(?:contributor\s+)?(?:packet|submission)|"
-            r"records?\s+(?:a\s+)?review\s+decision|"
-            r"receives?\s+(?:a\s+)?(?:submitter|reviewer|both|contributor|"
-            r"human\s+administrative)\s+grant|"
-            r"is\s+(?:a\s+)?human\s+product\s+role)\b",
+            r"(?:is|acts?\s+as|becomes?)\s+(?:a\s+)?(?:contributor|human\s+"
+            r"product\s+role)|"
+            r"(?:has|receives|uses|holds|is\s+assigned)\s+(?:a\s+)?(?:submitter|"
+            r"reviewer|both|contributor|human\s+administrative)\s+(?:grant|"
+            r"authority|role)|"
+            r"(?:claims?|submits?|reviews?|approves?)\b.{0,60}\b(?:task|packet|"
+            r"submission|review\s+decision|project(?:\s+guide|\s+work)?)\b|"
+            r"grants?\s+itself\s+project\s+access|"
+            r"manages?\s+contributor\s+grants?|"
+            r"creates?\s+(?:a\s+)?project)\b",
             re.IGNORECASE,
         ),
     ),

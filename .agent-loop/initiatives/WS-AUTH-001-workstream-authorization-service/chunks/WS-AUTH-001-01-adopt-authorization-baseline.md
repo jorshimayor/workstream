@@ -100,6 +100,7 @@ backend/tests/test_projects.py
 .agent-loop/policies/repository-engineering-policy.md
 .agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/STATUS.md
 .agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/CHUNK_MAP.md
+.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/chunks/WS-POL-002-03-post-submit-policy-approval-visibility.md
 ```
 
 The eight exact PlantUML/image paths above are approved companion sources and

@@ -41,7 +41,7 @@ backend/app/api/routes/auth.py
 backend/app/schemas/auth.py
 backend/app/db/models.py
 backend/app/modules/audit/**
-backend/alembic/versions/0017_*.py
+backend/alembic/versions/0018_*.py
 backend/tests/test_actors.py
 backend/tests/test_auth.py
 backend/tests/test_alembic.py

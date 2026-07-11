@@ -39,7 +39,7 @@ backend/app/modules/tasks/repository.py
 backend/app/modules/tasks/schemas.py
 backend/app/modules/tasks/models.py
 backend/app/modules/tasks/lifecycle.py
-backend/alembic/versions/0021_*.py
+backend/alembic/versions/0022_*.py
 backend/app/modules/authorization/**
 backend/app/api/deps/auth.py
 backend/app/workers/authority_reconciliation.py
@@ -112,7 +112,7 @@ token role or legacy active-worker-profile fallback
   remains bounded only because chunk 14 still owns the final submission
   compatibility consumer; task queue/claim/start no longer depend on it.
 - The assignment persistence column, model/schema/service fields, response
-  contract, and new audit payload keys use `contributor_id`. Migration `0021`
+  contract, and new audit payload keys use `contributor_id`. Migration `0022`
   preserves every existing assignment owner, supports downgrade, and removes
   the legacy storage name without exposing a public compatibility alias.
 - Full backend suite and API contract drill pass.

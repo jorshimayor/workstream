@@ -65,12 +65,13 @@ WS-AUTH-001-PLAN
 - Chunks 11-15 migrate bounded complete product/system surfaces.
 - Chunk 16 proves the complete initiative; it does not backfill missing audit
   or idempotency evidence.
-- `WS-POL-002-03` is implemented separately in PR #90. This initiative does not
-  own it; `WS-POL-002-04` remains inactive until PR #90 is merged, the relevant
-  project authorization cutover is complete, and the user explicitly starts it.
+- `WS-POL-002-03` merged separately through PR #90 as `a7aa474`. This initiative
+  does not own it; `WS-POL-002-04` remains inactive until post-merge memory is
+  updated, the relevant project authorization cutover is complete, and the user
+  explicitly starts it.
 
 ## Stop condition
 
 After WS-AUTH-001-01 review and PR preparation, stop. Do not start
-`WS-AUTH-001-02` or `WS-POL-002-04`; this worktree does not own or advance
-PR #90.
+`WS-AUTH-001-02` or `WS-POL-002-04`; this worktree only reconciles the already
+merged PR #90 behavior with the authorization baseline.

@@ -17,12 +17,14 @@ specification's `/v1` examples will be reconciled during the baseline-adoption
 chunk. Workstream will not expose two versioned route trees as permanent
 aliases.
 
-## D3: Prioritize auth before WS-POL-002-03
+## D3: Prioritize authorization foundation
 
 Status: accepted by the user on 2026-07-11.
 
-`WS-POL-002` is paused after merged chunk 02. New post-submit approval APIs must
-not be built on authority rules that have been declared obsolete.
+Authorization remains the priority before later locked runtime hardening. The
+user separately directed and merged `WS-POL-002-03` through PR #90 as
+`a7aa474`; that completed approval API does not activate `WS-POL-002-04` or
+change the authorization priority.
 
 ## L0 human approval boundary
 

@@ -38,7 +38,7 @@ backend/app/db/models.py
 backend/app/modules/tasks/models.py
 backend/app/modules/tasks/repository.py
 backend/app/modules/tasks/service.py
-backend/alembic/versions/0016_*.py
+backend/alembic/versions/0017_*.py
 backend/tests/test_auth.py
 backend/tests/test_alembic.py
 backend/tests/test_tasks.py
