@@ -9,22 +9,6 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
-class PostSubmitCheckerPolicyInput(BaseModel):
-    """Input schema for post-submit checker requirements on a guide version."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    required_checkers: list[str] = Field(default_factory=list)
-    warning_checkers: list[str] = Field(default_factory=list)
-    blocking_severities: list[str] | None = Field(
-        default=None,
-        description=(
-            "Omitted or null uses the platform blocking floor; an explicit empty "
-            "list is rejected as a downgrade."
-        ),
-    )
-
-
 class ReviewPolicyInput(BaseModel):
     """Input schema for review rules on a guide version."""
 
@@ -129,12 +113,13 @@ class ProjectSetupRunResponse(BaseModel):
     guide_id: str
     guide_version: str
     source_snapshot_id: str
-    source_snapshot_hash: str
     celery_task_id: str | None
     status: str
     current_step: str
     output_sufficiency_report_id: str | None
     output_submission_artifact_policy_id: str | None
+    output_post_submit_checker_policy_id: str | None
+    post_submit_derivation_summary: dict[str, Any] | None
     error_code: str | None
     error_summary: str | None
     created_by: str
@@ -447,7 +432,6 @@ class ProjectGuideCreate(BaseModel):
     content_markdown: str
     change_summary: str | None = None
     source_snapshot: GuideSourceSnapshotCreate | None = None
-    post_submit_checker_policy: PostSubmitCheckerPolicyInput | None = None
     review_policy: ReviewPolicyInput | None = None
     revision_policy: RevisionPolicyInput | None = None
     payment_policy: PaymentPolicyInput | None = None
@@ -460,7 +444,6 @@ class ProjectGuideUpdate(BaseModel):
 
     content_markdown: str | None = None
     change_summary: str | None = None
-    post_submit_checker_policy: PostSubmitCheckerPolicyInput | None = None
     review_policy: ReviewPolicyInput | None = None
     revision_policy: RevisionPolicyInput | None = None
     payment_policy: PaymentPolicyInput | None = None
@@ -497,6 +480,10 @@ class PostSubmitCheckerPolicyResponse(BaseModel):
     warning_checkers: list[str]
     blocking_severities: list[str]
     policy_hash: str | None
+    lifecycle_status: str
+    approved_by_role: str | None
+    approved_by_actor: str | None
+    approved_at: datetime | None
     created_at: datetime
 
 

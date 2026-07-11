@@ -35,7 +35,7 @@ Current phase: Week 3 review and revision preparation.
 - Chunk 3 project guide foundation with checker, review, revision, and payment policy context.
 - Chunk 4 task queue, worker/reviewer profiles, assignment, claim, start, and task audit events.
 - Chunk 5 submission packet foundation with evidence items, versioning, server-stamped locked context, and submission finalization.
-- Backend API contract drill through `Project -> Guide -> Task -> Screening -> Ready -> Claim -> Start -> Submit -> Finalize submission`.
+- Backend API contract drill through `Project -> Guide -> Task -> Screening -> Ready -> Claim -> Start -> Submit -> automatic pre-review gate`.
 - Week 2 checker framework scope specification.
 - Chunk 6 checker contract and records specification.
 - Chunk 7 checker runner, registry, structural checkers, durable checker records, and API tests.
@@ -98,7 +98,7 @@ WORKSTREAM_DATABASE_URL=<local-test-db-url> .venv/bin/python scripts/api_contrac
 
 The script runs migrations forward and exercises project policy visibility plus task context APIs across the following flow:
 
-`Project -> Guide -> Task -> Screening -> Ready -> Work context -> Submission requirements -> Locked context -> Claim -> Start -> Submit -> Finalize submission`
+`Project -> Guide -> Task -> Screening -> Ready -> Work context -> Submission requirements -> Locked context -> Claim -> Start -> Submit -> automatic pre-review gate`
 
 ## Week 2 Real API Drill
 
@@ -111,7 +111,7 @@ WORKSTREAM_DATABASE_URL=<local-test-db-url> .venv/bin/python scripts/week2_api_e
 The script starts a real local API server, issues local Flow-compatible tokens,
 runs migrations forward, and exercises:
 
-`Project -> Guide -> Task -> Screening -> Ready -> Claim -> Start -> Pre-submit checks -> pre_submission_checker_failed | Submit -> Finalize submission -> evaluation_pending -> review_pending | checker_caused_revision -> needs_revision -> fixed_resubmission -> evaluation_pending -> review_pending | internal task_setup_blocked -> trusted checker retry`
+`Project -> Guide -> Task -> Screening -> Ready -> Claim -> Start -> Pre-submit checks -> pre_submission_checker_failed | Submit -> automatic lock -> evaluation_pending -> review_pending | checker_caused_revision -> needs_revision -> fixed_resubmission -> evaluation_pending -> review_pending | internal task_setup_blocked -> trusted checker retry`
 
 It also proves older submissions remain immutable, non-owning worker calls create
 no task-side effects, malicious internal fields are rejected before persistence,
@@ -127,7 +127,8 @@ Required invariants:
 - Pre-submit checker responses are non-authoritative preflight feedback; submission creation is the authoritative intake gate and must not create submissions, checker runs, or lifecycle transitions when blocking failures exist.
 - Missing or unexpected pre-submit checker names fail the drill.
 - Missing or unexpected durable checker names fail the drill.
-- Submission finalization returns `finalized_at`, stamps evidence rows, and is idempotent.
+- Submission creation returns `finalized_at`, stamps evidence rows, and the
+  repair-only finalize endpoint is idempotent.
 - Automatic checker-run creation, checker terminal status, and task-status transitions are polled because execution is async-first.
 - Checker-run list visibility is checked for project manager, assigned worker, unassigned worker, and reviewer denial while broad reviewer checker-run access remains deferred.
 - Trusted checker retry proves attempt ordering, supersession, and current-run flags.

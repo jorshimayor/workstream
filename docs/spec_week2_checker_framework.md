@@ -2,9 +2,9 @@
 
 ## Purpose
 
-Week 2 adds the automated checker boundary between finalized submissions and human review.
+Week 2 adds the automated checker boundary between locked submissions and human review.
 
-The checker framework protects reviewer time by proving that the latest finalized submission is structurally valid, evidence-backed, policy-complete, and tied to the exact artifact hashes that were checked.
+The checker framework protects reviewer time by proving that the latest locked submission is structurally valid, evidence-backed, policy-complete, and tied to the exact artifact hashes that were checked.
 
 ## Scope
 
@@ -37,10 +37,10 @@ The checker framework protects reviewer time by proving that the latest finalize
 ## Core Invariant
 
 ```text
-Draft packet -> project PreSubmitCheckerPolicy -> Pre-submit checks -> Submit -> Finalize -> Internal CheckerRun -> CheckerResults -> routing recommendation
+Draft packet -> project PreSubmitCheckerPolicy -> pre-submit checks -> submit -> automatic submission lock -> Celery pre-review CheckerRun -> CheckerResults -> routing recommendation
 ```
 
-A task cannot reach `REVIEW_PENDING` unless the latest finalized submission has a completed checker run for the exact submission version and artifact context.
+A task cannot reach `REVIEW_PENDING` unless the latest locked submission has a completed checker run for the exact submission version and artifact context.
 
 `allow_review` can move the task toward `REVIEW_PENDING`. `needs_revision` is the worker-facing route for worker-fixable submission failures. `task_setup_blocked` is an internal checker routing recommendation for locked task setup defects owned by a project manager; it is not a task lifecycle state.
 
@@ -82,7 +82,11 @@ Pre-submit failures do not create review decisions, do not return `accept`,
 `needs_revision`, or `reject`, and do not create durable post-submit checker
 runs.
 
-Post-submit internal checks run after a submission is created and finalized. These checks are the source of truth for review gating. They run from Workstream-owned services, use locked task guide and policy context, and persist durable checker runs/results.
+Post-submit internal checks run after Workstream creates and locks a submission
+packet that passed authoritative pre-submit validation. These checks are the
+source of truth for review gating. They run
+from Workstream-owned services, use locked task guide and policy context, and
+persist durable checker runs/results.
 
 ## User-Facing Outcome Boundary
 
@@ -92,9 +96,12 @@ Users see the same simple outcome language everywhere:
 - `rejected`
 - `needs_revision`
 
-Automated checker failures may route a submitted packet to `needs_revision` when the failure is worker-fixable. This is user-facing revision, not a human review decision.
+Automated checker failures may route the task to `needs_revision` when the
+failure is worker-fixable. The submitted packet remains an immutable submitted
+version. This is user-facing revision, not a human review decision.
 
-Week 2 may set a checker-caused task/submission outcome of `needs_revision`, but it does not create a human review decision record.
+Week 2 may set a checker-caused task outcome of `needs_revision`, but it does
+not create a human review decision record.
 
 Internally Workstream records the source:
 
@@ -188,13 +195,13 @@ Conditions of satisfaction:
 
 ### Chunk 9: Pre-Review Gate
 
-Automatically triggers internal post-submit checks after submission finalization and calculates whether a checked submission moves to `REVIEW_PENDING`, user-facing `needs_revision`, or an internal `task_setup_blocked` repair route.
+Automatically triggers internal post-submit checks after Workstream locks a submission and calculates whether a checked submission moves to `REVIEW_PENDING`, user-facing `needs_revision`, or an internal `task_setup_blocked` repair route.
 
 Detailed spec: [Chunk 9 Pre-Review Gate](spec_chunk_9_pre_review_gate.md).
 
 Conditions of satisfaction:
 
-- the gate uses the latest finalized submission only
+- the gate uses the latest locked submission only
 - required checker list comes from locked post-submit checker policy
 - blocking severities come from locked post-submit checker policy
 - checker-caused revision does not create a human review decision

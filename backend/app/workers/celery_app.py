@@ -27,7 +27,7 @@ def create_celery_app() -> Celery:
         "workstream",
         broker=broker_url,
         backend=settings.celery_result_backend_url,
-        include=["app.workers.project_setup"],
+        include=["app.workers.checkers", "app.workers.project_setup"],
     )
     celery_app.conf.update(
         accept_content=["json"],

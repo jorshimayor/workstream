@@ -93,9 +93,45 @@ class PostSubmitCheckerPolicy(Base):
             ["project_guides.project_id", "project_guides.version"],
             name="fk_checker_policies_project_guide",
         ),
+        ForeignKeyConstraint(
+            ["source_snapshot_id", "source_snapshot_hash"],
+            ["guide_source_snapshots.id", "guide_source_snapshots.bundle_hash"],
+            name="fk_checker_policies_source_snapshot_hash",
+        ),
+        ForeignKeyConstraint(
+            ["effective_policy_id", "effective_policy_hash"],
+            [
+                "effective_project_submission_artifact_policies.id",
+                "effective_project_submission_artifact_policies.effective_policy_hash",
+            ],
+            name="fk_checker_policies_effective_policy_hash",
+        ),
+        ForeignKeyConstraint(
+            ["pre_submit_checker_policy_id", "pre_submit_checker_bundle_hash"],
+            [
+                "pre_submit_checker_policies.id",
+                "pre_submit_checker_policies.compiled_bundle_hash",
+            ],
+            name="fk_checker_policies_pre_submit_checker_hash",
+        ),
         CheckConstraint(
             "policy_hash is null or policy_hash ~ '^sha256:[0-9a-f]{64}$'",
             name="policy_hash_shape",
+        ),
+        CheckConstraint(
+            "lifecycle_status in ('compiled', 'approved', 'superseded')",
+            name="lifecycle_status",
+        ),
+        CheckConstraint(
+            """
+            lifecycle_status != 'approved'
+            or (
+                approved_by_role in ('admin', 'project_manager')
+                and approved_by_actor is not null
+                and approved_at is not null
+            )
+            """,
+            name="approval_provenance",
         ),
         UniqueConstraint("project_id", "guide_version", name="uq_checker_policies_project_version"),
         UniqueConstraint(
@@ -108,12 +144,36 @@ class PostSubmitCheckerPolicy(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), nullable=False, index=True)
+    guide_id: Mapped[str] = mapped_column(ForeignKey("project_guides.id"), nullable=False, index=True)
     guide_version: Mapped[str] = mapped_column(String(50), nullable=False)
+    source_snapshot_id: Mapped[str] = mapped_column(
+        ForeignKey("guide_source_snapshots.id"),
+        nullable=False,
+        index=True,
+    )
+    source_snapshot_hash: Mapped[str] = mapped_column(String(71), nullable=False)
+    effective_policy_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    effective_policy_hash: Mapped[str] = mapped_column(String(71), nullable=False, index=True)
+    pre_submit_checker_policy_id: Mapped[str] = mapped_column(
+        String(36),
+        nullable=False,
+        index=True,
+    )
+    pre_submit_checker_bundle_hash: Mapped[str] = mapped_column(
+        String(71),
+        nullable=False,
+        index=True,
+    )
     required_checkers: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     warning_checkers: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     blocking_severities: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     policy_hash: Mapped[str | None] = mapped_column(String(71), index=True)
     policy_body: Mapped[dict | None] = mapped_column(JSON)
+    lifecycle_status: Mapped[str] = mapped_column(String(30), nullable=False, default="compiled")
+    approved_by_role: Mapped[str | None] = mapped_column(String(50))
+    approved_by_actor: Mapped[str | None] = mapped_column(String(100))
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_by: Mapped[str] = mapped_column(String(100), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -269,6 +329,9 @@ class ProjectSetupRun(Base):
             "'sufficiency_blocked', "
             "'running_policy_derivation_agent', "
             "'policy_draft_ready', "
+            "'running_post_submit_derivation_agent', "
+            "'post_submit_setup_blocked', "
+            "'post_submit_policy_compiled', "
             "'setup_blocked', "
             "'failed'"
             ")",
@@ -307,6 +370,11 @@ class ProjectSetupRun(Base):
         ForeignKey("submission_artifact_policies.id"),
         index=True,
     )
+    output_post_submit_checker_policy_id: Mapped[str | None] = mapped_column(
+        ForeignKey("checker_policies.id", name="fk_project_setup_runs_post_submit_checker_policy"),
+        index=True,
+    )
+    post_submit_derivation_summary: Mapped[dict | None] = mapped_column(JSON)
     error_code: Mapped[str | None] = mapped_column(String(100))
     error_summary: Mapped[str | None] = mapped_column(Text)
     created_by: Mapped[str] = mapped_column(String(100), nullable=False)

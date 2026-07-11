@@ -22,6 +22,11 @@ from alembic import command
 from alembic.config import Config
 
 from app.db import session as db_session
+from app.modules.projects.models import PostSubmitCheckerPolicy, ProjectSetupRun
+from app.modules.projects.post_submit_policy import (
+    build_project_post_submit_checker_spec,
+    compile_project_post_submit_checker_spec,
+)
 
 EXPECTED_DURABLE_CHECKERS = {
     "check_submission_packet",
@@ -322,12 +327,12 @@ async def wait_for_submission_checker_run(
     manager_token: str,
     submission_id: str,
 ) -> dict:
-    """Wait for exactly one automatic checker run after submission finalization.
+    """Wait for exactly one automatic checker run after submission lock.
 
     Args:
         client: Real HTTP client.
         manager_token: Project manager Flow token.
-        submission_id: Finalized submission id.
+        submission_id: Locked submission id.
 
     Returns:
         Completed checker run response.
@@ -468,11 +473,6 @@ def guide_payload(run_id: str) -> dict:
             "data."
         ),
         "change_summary": "Initial real API guide",
-        "post_submit_checker_policy": {
-            "required_checkers": ["check_policy_context_present"],
-            "warning_checkers": [],
-            "blocking_severities": ["critical", "high"],
-        },
         "review_policy": {
             "requires_second_review": False,
             "allowed_decisions": ["accept", "needs_revision", "reject"],
@@ -549,9 +549,14 @@ def submission_artifact_policy_body() -> dict:
 async def create_policy_bundle_for_guide(
     client: httpx.AsyncClient,
     manager_token: str,
+    manager_subject: str,
     project_id: str,
     guide_id: str,
     run_id: str,
+    *,
+    post_submit_required_checkers: list[str] | None = None,
+    post_submit_warning_checkers: list[str] | None = None,
+    post_submit_blocking_severities: list[str] | None = None,
 ) -> dict:
     """Create the guide-source, sufficiency, and approved policy bundle.
 
@@ -670,7 +675,112 @@ async def create_policy_bundle_for_guide(
         pre_submit_checker_policy["effective_policy_id"] == effective_policy["id"],
         "pre-submit checker visibility endpoint returned the wrong effective policy",
     )
+    await create_approved_post_submit_policy_ci_bridge(
+        project_id=project_id,
+        guide_id=guide_id,
+        manager_subject=manager_subject,
+        source_snapshot=snapshot,
+        sufficiency_report=report,
+        submission_artifact_policy=policy,
+        effective_policy=effective_policy,
+        pre_submit_checker_policy=pre_submit_checker_policy,
+        required_checkers=post_submit_required_checkers,
+        warning_checkers=post_submit_warning_checkers,
+        blocking_severities=post_submit_blocking_severities,
+    )
     return effective_policy
+
+
+async def create_approved_post_submit_policy_ci_bridge(
+    *,
+    project_id: str,
+    guide_id: str,
+    manager_subject: str,
+    source_snapshot: dict,
+    sufficiency_report: dict,
+    submission_artifact_policy: dict,
+    effective_policy: dict,
+    pre_submit_checker_policy: dict,
+    required_checkers: list[str] | None = None,
+    warning_checkers: list[str] | None = None,
+    blocking_severities: list[str] | None = None,
+) -> dict:
+    """Persist a temporary approved post-submit policy for CI contract drills.
+
+    WS-POL-002-02 builds derivation and compilation, while WS-POL-002-03 owns
+    the server approval API. The CI API-contract drill still needs an active
+    guide to exercise task/submission/checker APIs without requiring external
+    agent credentials. This helper is therefore a test-only activation bridge:
+    all prerequisite records are created through the public API first, the real
+    trusted compiler builds the policy body, and the direct DB write is limited
+    to the generated policy approval plus setup-ledger marker that
+    WS-POL-002-03 will replace.
+    """
+    guide_version = effective_policy["guide_version"]
+    spec = build_project_post_submit_checker_spec(
+        project_id=project_id,
+        guide_version=guide_version,
+        required_checkers=(
+            ["check_policy_context_present"] if required_checkers is None else required_checkers
+        ),
+        warning_checkers=[] if warning_checkers is None else warning_checkers,
+        blocking_severities=blocking_severities,
+    )
+    compiled = compile_project_post_submit_checker_spec(
+        project_id=project_id,
+        guide_version=guide_version,
+        spec=spec,
+    )
+    async with db_session.get_session_factory()() as session:
+        post_submit_policy = PostSubmitCheckerPolicy(
+            id=str(uuid4()),
+            project_id=project_id,
+            guide_id=guide_id,
+            guide_version=guide_version,
+            source_snapshot_id=source_snapshot["id"],
+            source_snapshot_hash=source_snapshot["bundle_hash"],
+            effective_policy_id=effective_policy["id"],
+            effective_policy_hash=effective_policy["effective_policy_hash"],
+            pre_submit_checker_policy_id=pre_submit_checker_policy["id"],
+            pre_submit_checker_bundle_hash=pre_submit_checker_policy[
+                "compiled_bundle_hash"
+            ],
+            required_checkers=compiled.required_checkers,
+            warning_checkers=compiled.warning_checkers,
+            blocking_severities=compiled.blocking_severities,
+            policy_hash=compiled.policy_hash,
+            policy_body=compiled.policy_body,
+            lifecycle_status="approved",
+            approved_by_role="project_manager",
+            approved_by_actor=manager_subject,
+            approved_at=datetime.now(UTC),
+            created_by=manager_subject,
+        )
+        setup_run = ProjectSetupRun(
+            id=str(uuid4()),
+            project_id=project_id,
+            guide_id=guide_id,
+            guide_version=guide_version,
+            source_snapshot_id=source_snapshot["id"],
+            source_snapshot_hash=source_snapshot["bundle_hash"],
+            status="post_submit_policy_compiled",
+            current_step="post_submit_checker_policy_compilation",
+            output_sufficiency_report_id=sufficiency_report["id"],
+            output_submission_artifact_policy_id=submission_artifact_policy["id"],
+            output_post_submit_checker_policy_id=post_submit_policy.id,
+            post_submit_derivation_summary={
+                "status": "compiled",
+                "post_submit_checker_policy_id": post_submit_policy.id,
+                "required_checkers": post_submit_policy.required_checkers,
+                "warning_checkers": post_submit_policy.warning_checkers,
+                "blocking_severities": post_submit_policy.blocking_severities,
+            },
+            created_by=manager_subject,
+        )
+        session.add(post_submit_policy)
+        session.add(setup_run)
+        await session.commit()
+        return {"id": post_submit_policy.id, "policy_hash": post_submit_policy.policy_hash}
 
 
 async def exercise_api_contract(base_url: str, env: dict[str, str]) -> None:
@@ -801,6 +911,7 @@ async def exercise_api_contract(base_url: str, env: dict[str, str]) -> None:
         await create_policy_bundle_for_guide(
             client,
             manager_token,
+            manager_subject,
             project["id"],
             guide["id"],
             run_id,
@@ -1086,17 +1197,10 @@ async def exercise_api_contract(base_url: str, env: dict[str, str]) -> None:
             unassigned_worker_token,
             expected_status=404,
         )
-        await request_json(
-            client,
-            "POST",
-            f"/api/v1/submissions/{submission['id']}/finalize",
-            worker_token,
-            expected_status=403,
-        )
         locked = await request_json(
             client,
-            "POST",
-            f"/api/v1/submissions/{submission['id']}/finalize",
+            "GET",
+            f"/api/v1/submissions/{submission['id']}",
             manager_token,
         )
         assert locked["finalized_at"] is not None
@@ -1140,7 +1244,7 @@ async def exercise_api_contract(base_url: str, env: dict[str, str]) -> None:
         finalized_event = next(
             event for event in audit_events if event["event_type"] == "submission_finalized"
         )
-        assert finalized_event["external_subject"] == manager_subject
+        assert finalized_event["external_subject"] == worker_subject
         assert finalized_event["external_issuer"] == flow_issuer
         assert finalized_event["auth_source"] == "flow"
         assert finalized_event["event_payload"]["finalized_at"].replace("+00:00", "Z") == locked[
@@ -1156,7 +1260,7 @@ async def exercise_api_contract(base_url: str, env: dict[str, str]) -> None:
             assert gate_event["external_issuer"] == "workstream"
             assert gate_event["auth_source"] == "workstream_system"
             assert gate_event["event_payload"]["requester_actor_id"] == requester_actor_id
-            assert gate_event["event_payload"]["requester_external_subject"] == manager_subject
+            assert gate_event["event_payload"]["requester_external_subject"] == worker_subject
             assert gate_event["event_payload"]["requester_external_issuer"] == flow_issuer
             assert gate_event["event_payload"]["requester_auth_source"] == "flow"
             assert gate_event["event_payload"]["trigger_source"] == "submission_finalized"

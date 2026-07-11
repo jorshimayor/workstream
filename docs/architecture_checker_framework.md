@@ -158,7 +158,7 @@ Submission quality gate:
 
 Pre-review gate phase:
 
-- project-configured registered checkers run against the finalized submission and policy context
+- project-configured registered checkers run against the locked submission and policy context
 
 ## Submission Artifact Policy And Pre-Submit Generation
 
@@ -246,6 +246,34 @@ pass, and a locked code hash.
 
 Pre-submit checks are authoritative for intake. Post-submit checker runs are authoritative for review readiness.
 
+## Post-Submit Derivation
+
+Post-submit policy setup resumes after a setup-authorized `admin` or
+`project_manager` approves the derived `SubmissionArtifactPolicy`. That approval
+creates the effective project submission artifact policy and compiled project
+`PreSubmitCheckerPolicy`; only then does Workstream run
+`PostSubmitCheckerPolicyDerivationAgent`.
+
+The post-submit derivation agent receives bounded guide-source material,
+sufficiency summary, effective policy summary, pre-submit checker summary, and
+the registered post-submit checker catalog. It may request only registered
+checker names and must tie project-specific requests to bounded evidence refs.
+If the guide implies a required checker that is not registered, setup records
+`post_submit_setup_blocked` with a safe unsupported-checker summary instead of
+inventing a checker or letting activation proceed.
+
+The agent output is a constrained spec. Workstream's trusted compiler owns the
+canonical `PostSubmitCheckerPolicy.policy_body`, hash, default checker list,
+and execution order. Runtime checker execution loads the locked compiled
+policy; it does not call an agent to judge a worker submission.
+
+The compiled project `PostSubmitCheckerPolicy` is persisted with exact setup
+provenance: guide id, source snapshot id/hash, effective project policy id/hash,
+and pre-submit checker policy id/hash. A corrected submission artifact policy
+approval clears stale post-submit setup output and regenerates the compiled
+post-submit policy under the new provenance; Workstream must not reuse a policy
+that only happens to match the same project id and guide version.
+
 The first two gates replace external origin qualification and task ingestion for v0.1. Origin qualification and webhook drop notifications are future adapter concerns.
 
 ## Project-Specific Checkers
@@ -307,8 +335,8 @@ Draft packet
 -> load locked PreSubmitCheckerPolicy compiled bundle hash
 -> run pre-submit intake checks
 -> create Submission only when blocking pre-submit checks pass
--> finalize submission
--> create CheckerRun
+-> automatically lock submission
+-> queue automatic pre-review CheckerRun
 -> validate locked PostSubmitCheckerPolicy id/version/hash/body
 -> execute locked PostSubmitCheckerPolicy execution_checkers
 -> store CheckerResult records
@@ -335,7 +363,7 @@ The checker run records:
 
 - submission id
 - post-submit checker policy id, version, hash, and internal locked body
-  stamped from the finalized submission context
+  stamped from the locked submission context
 - artifact hash manifest
 - blocking failure count
 - warning count

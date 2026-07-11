@@ -148,7 +148,8 @@ the repository is changed; it does not define runtime task or review records.
 ## Local Backend Database
 
 Workstream uses Postgres locally and in CI. It uses Celery with Redis for
-durable local project setup jobs. Start local services with:
+durable local project setup jobs and automatic pre-review checker gates. Start
+local services with:
 
 ```bash
 docker compose up -d postgres redis
@@ -166,9 +167,10 @@ Destructive real API drills use the separate local test database:
 postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test
 ```
 
-Project guide sufficiency and submission artifact policy derivation run through
-the OpenAI Agents SDK adapter. Install the backend agent extra and set the model
-explicitly before running automatic project setup:
+Project guide sufficiency, submission artifact policy derivation, and
+post-submit checker policy derivation run through the OpenAI Agents SDK adapter.
+Install the backend agent extra and set the model explicitly before running
+automatic project setup:
 
 ```bash
 cd backend
@@ -190,7 +192,9 @@ Persisted sufficiency and derivation agent identity is Workstream-owned; runtime
 or provider-returned identity fields are not trusted as audit provenance.
 
 Run the worker before creating project guides that should automatically prepare
-pre-submit policy:
+pre-submit policy, continue into post-submit policy derivation after setup
+submission artifact policy approval, and advance locked submissions through the
+automatic pre-review checker gate:
 
 ```bash
 cd backend

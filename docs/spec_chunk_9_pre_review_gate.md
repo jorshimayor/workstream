@@ -4,19 +4,19 @@
 
 Chunk 9 makes internal post-submit checks automatic.
 
-When an operator finalizes the latest submission, Workstream immediately runs the durable checker framework against that exact submission version and artifact manifest. A task cannot move to human review until this gate has completed.
+When the assigned contributor submits a packet that passes authoritative server-side pre-submit validation, Workstream immediately locks that submission version and queues the durable checker framework against the exact submission version and artifact manifest. A task cannot move to human review until this gate has completed.
 
-This matches the operating pattern we want from serious evaluation systems: the worker can run pre-submit feedback before sending work, but Workstream still owns the authoritative internal check after submission finalization.
+This matches the operating pattern we want from serious evaluation systems: the worker can run pre-submit feedback before sending work, but Workstream still owns the authoritative internal check after it locks the submitted packet.
 
 ## Scope
 
-- automatic checker run trigger from submission finalization
+- automatic checker run trigger from the locked submission boundary
 - `submitted -> evaluation_pending` task transition when the gate starts
 - `evaluation_pending -> review_pending` when blocking checks pass
 - `evaluation_pending -> needs_revision` for worker-fixable blocking failures
 - internal `task_setup_blocked` route for task setup defects owned by project managers
 - checker run audit events for gate start, checker trigger, pass, needs-revision, and internal block outcomes
-- latest finalized submission enforcement
+- latest locked submission enforcement
 - manual checker retry after a completed run
 
 ## Non-Scope
@@ -38,8 +38,8 @@ The canonical flow is:
 
 ```text
 worker submits packet
--> operator finalizes latest submission
--> Workstream runs CheckerRun with trigger_source = submission_finalized
+-> Workstream locks the latest submission version
+-> Celery runs CheckerRun with trigger_source = submission_finalized
 -> task moves submitted -> evaluation_pending
 -> checker results determine the next route
 ```
@@ -55,13 +55,13 @@ Route outcomes:
 
 ## Latest Submission Rule
 
-Only the latest submission version can be finalized or checked.
+Only the latest submission version can be locked for post-submit evaluation or checked.
 
-If a worker submits a new version after `needs_revision`, older finalized versions stay immutable and cannot receive new checker runs.
+If a worker submits a new version after `needs_revision`, older locked versions stay immutable and cannot receive new checker runs.
 
 ## Policy Binding
 
-The automatic run uses the policy context already stamped on the finalized submission:
+The automatic run uses the policy context already stamped on the locked submission:
 
 - locked guide version
 - locked post-submit checker policy id
@@ -74,12 +74,14 @@ The automatic run uses the policy context already stamped on the finalized submi
 
 The worker does not provide or restate these policy versions.
 
-The checker service validates the locked `PostSubmitCheckerPolicy`
-id/version/hash/body stamped on the submission, then executes from that locked
+The checker service first creates a durable queued automatic-gate `CheckerRun`
+claim, then the Celery worker validates the locked `PostSubmitCheckerPolicy`
+id/version/hash/body stamped on the submission and executes from that locked
 body. Missing, mismatched, deleted, stale, malformed, or unregistered
-post-submit policy context blocks the finalize/gate path with a structured setup or
-post-submit checker policy API error before a durable `CheckerRun` or
-`CheckerResult` is created.
+post-submit policy context marks the queued claim `failed` with a structured
+failure code and no `CheckerResult` rows. Operator repair may requeue the same
+claim after the setup defect is fixed; it must not create duplicate current
+checker runs.
 
 ## Revision Boundary
 
@@ -123,7 +125,7 @@ provenance, and the checker routing context where applicable.
 
 ## Conditions Of Satisfaction
 
-- finalizing a clean latest submission creates attempt 1 automatically
+- creating a clean latest submission locks it and creates attempt 1 automatically
 - automatic run uses `trigger_source = submission_finalized`
 - clean submission moves task to `review_pending`
 - worker-fixable blocking result moves task to `needs_revision`
@@ -134,5 +136,17 @@ provenance, and the checker routing context where applicable.
 - manual checker retry supersedes the prior current run and increments attempt number
 - older submission versions cannot receive checker runs after a newer submission exists
 - checker-caused revision does not create a human review decision
-- checker policy errors return structured API errors through the finalize endpoint
+- checker policy errors are structured in the automatic gate path; the repair
+  endpoint is idempotent and may requeue a repairable locked submission claim
+- dispatch and eager-dispatch failures are recorded as
+  `pre_review_gate_enqueue_failed`, keep the locked packet in
+  `evaluation_pending`, and are repairable through `/finalize`
+- `unknown_checker` automatic gate failures are repairable after the missing
+  checker registration/setup issue is corrected
+- `requester_provenance_mismatch` automatic gate failures are terminal
+  integrity failures; operators inspect the locked submission audit,
+  checker-run failure details, and retained worker logs if available instead
+  of requeueing through `/finalize`
+- non-repairable failed automatic gate claims return HTTP 409 from `/finalize`
+  with an operator-visible next action instead of reporting false success
 - Postgres-backed integration tests cover the complete API flow

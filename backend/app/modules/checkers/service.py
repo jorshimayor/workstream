@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import uuid4
 
@@ -17,6 +17,12 @@ from app.modules.checkers.compiler import (
     validate_compiled_pre_submit_checker_bundle,
 )
 from app.modules.checkers.models import CheckerResult, CheckerRun
+from app.modules.checkers.pre_review_gate import (
+    find_submission_requester_provenance,
+    requester_provenance_matches,
+    requester_provenance_payload,
+    sanitize_requester_provenance,
+)
 from app.modules.checkers.repository import CheckerRepository
 from app.modules.checkers.runner import (
     CheckerContext,
@@ -74,6 +80,22 @@ INTERNAL_ROUTING_RECOMMENDATIONS = {
 PRE_REVIEW_GATE_SYSTEM_ACTOR_ID = "workstream-system:pre-review-gate"
 PRE_REVIEW_GATE_SYSTEM_ISSUER = "workstream"
 PRE_REVIEW_GATE_SYSTEM_ROLE = "workstream_system"
+PRE_REVIEW_GATE_TRIGGER_SOURCE = "submission_finalized"
+PRE_REVIEW_GATE_TRIGGER_REASON = "submission locked for automatic pre-review gate"
+PRE_REVIEW_GATE_ENQUEUE_FAILURE_CODE = "pre_review_gate_enqueue_failed"
+PRE_REVIEW_GATE_EXECUTION_FAILURE_CODE = "pre_review_gate_execution_failed"
+PRE_REVIEW_GATE_UNKNOWN_CHECKER_FAILURE_CODE = "unknown_checker"
+PRE_REVIEW_GATE_STALE_FAILURE_CODE = "stale_submission_version"
+PRE_REVIEW_GATE_STALE_RUNNING_FAILURE_CODE = "pre_review_gate_running_timed_out"
+PRE_REVIEW_GATE_REPAIR_DISPATCH_REASON = (
+    "submission locked for automatic pre-review gate; repair redispatch claimed"
+)
+PRE_REVIEW_GATE_REQUESTER_PROVENANCE_MISMATCH_CODE = "requester_provenance_mismatch"
+PRE_REVIEW_GATE_PROVENANCE_MISSING_CODE = "submission_lock_audit_missing"
+PRE_REVIEW_GATE_UNEXPECTED_FAILURE_MESSAGE = (
+    "pre-review gate execution failed; inspect server diagnostics"
+)
+PRE_REVIEW_GATE_RUNNING_TIMEOUT = timedelta(minutes=15)
 
 
 def pre_review_gate_system_actor() -> ActorContext:
@@ -82,7 +104,7 @@ def pre_review_gate_system_actor() -> ActorContext:
     The system actor is never accepted from client input and is never used for
     HTTP authorization. It exists only to attribute Workstream-owned checker
     gate execution after a verified requester has already authorized the
-    finalization operation.
+    submission-lock operation.
     """
     return ActorContext(
         actor_id=PRE_REVIEW_GATE_SYSTEM_ACTOR_ID,
@@ -92,6 +114,17 @@ def pre_review_gate_system_actor() -> ActorContext:
         claim_snapshot={"roles": [PRE_REVIEW_GATE_SYSTEM_ROLE]},
         auth_source="workstream_system",
         is_dev_auth=False,
+    )
+
+
+def is_pre_review_gate_system_actor(actor: ActorContext) -> bool:
+    """Return whether an actor is Workstream's internal pre-review gate actor."""
+    return (
+        actor.actor_id == PRE_REVIEW_GATE_SYSTEM_ACTOR_ID
+        and actor.external_subject == PRE_REVIEW_GATE_SYSTEM_ACTOR_ID
+        and actor.external_issuer == PRE_REVIEW_GATE_SYSTEM_ISSUER
+        and actor.auth_source == "workstream_system"
+        and not actor.is_dev_auth
     )
 
 
@@ -478,7 +511,7 @@ class CheckerService:
         audit_actor: ActorContext | None = None,
         requester_actor: ActorContext | None = None,
     ) -> CheckerRunResponse:
-        """Run registered checkers against one finalized submission.
+        """Run registered checkers against one locked submission.
 
         Args:
             actor: Trusted admin or project manager actor resolved from the Flow token.
@@ -495,26 +528,32 @@ class CheckerService:
 
         Raises:
             PermissionDenied: If the actor cannot trigger internal checks.
-            CheckerExecutionBlocked: If the submission is not finalized or not checkable.
+            CheckerExecutionBlocked: If the submission is not locked or not checkable.
             CheckerPolicyInvalid: If the locked checker policy references unknown names.
         """
-        require_any_role(actor, CHECKER_TRIGGER_ROLES)
+        if not is_pre_review_gate_system_actor(actor):
+            require_any_role(actor, CHECKER_TRIGGER_ROLES)
         submission = await self._get_submission(submission_id)
         task = await self._get_task_for_actor(actor, submission.task_id)
         self._ensure_checker_trigger_authorized(actor, task)
         if submission.locked_at is None:
-            raise CheckerExecutionBlocked("submission must be finalized before internal checkers run")
-        if task.status not in CHECKER_RUN_ALLOWED_TASK_STATUSES:
-            raise CheckerExecutionBlocked("task must be submitted or in checker gate before checkers run")
+            raise CheckerExecutionBlocked("submission must be locked before internal checkers run")
         latest_submission = await self._task_repo.get_latest_submission_for_task(task.id)
         if latest_submission is None or latest_submission.id != submission.id:
             raise CheckerExecutionBlocked("only latest submission version can be checked")
+        if task.status not in CHECKER_RUN_ALLOWED_TASK_STATUSES:
+            raise CheckerExecutionBlocked("task must be submitted or in checker gate before checkers run")
         execution_actor = audit_actor or actor
-        requester_payload = (
-            self._requester_provenance_payload(requester_actor)
-            if requester_actor is not None
-            else {}
-        )
+        requester_payload = requester_provenance_payload(requester_actor) if requester_actor else {}
+        current_run = await self._checker_repo.get_current_run_for_submission(submission.id)
+        if (
+            current_run is not None
+            and self._is_automatic_pre_review_gate_run(current_run)
+            and current_run.status != "completed"
+        ):
+            raise CheckerExecutionBlocked(
+                "automatic pre-review gate must be repaired before manual checker runs"
+            )
 
         checker_policy = await self._load_locked_post_submit_policy(task, submission)
         effective_policy, _ = await self._load_locked_pre_submit_context(
@@ -534,7 +573,6 @@ class CheckerService:
         except ValueError:
             artifact_manifest_hash = "invalid:artifact_manifest"
 
-        current_run = await self._checker_repo.get_current_run_for_submission(submission.id)
         if current_run is not None:
             current_run.is_current_for_submission = False
         attempt_number = 1 if current_run is None else current_run.attempt_number + 1
@@ -601,8 +639,403 @@ class CheckerService:
         return self._run_response_for_actor(
             actor,
             persisted,
-            has_checker_admin_access=can_admin_or_task_creator_manage(actor, task),
+            has_checker_admin_access=(
+                is_pre_review_gate_system_actor(actor)
+                or can_admin_or_task_creator_manage(actor, task)
+            ),
         )
+
+    async def ensure_automatic_pre_review_gate_queued(
+        self,
+        submission_id: str,
+        *,
+        force_enqueue_queued: bool = False,
+    ) -> tuple[CheckerRunResponse, bool]:
+        """Create or reuse the queued automatic pre-review gate claim.
+
+        Returns:
+            The current checker run response and whether a Celery enqueue should
+            be attempted for that run.
+        """
+        actor = pre_review_gate_system_actor()
+        submission = await self._get_submission(submission_id)
+        task = await self._get_task_for_actor(actor, submission.task_id)
+        if submission.locked_at is None:
+            raise CheckerExecutionBlocked("submission must be locked before internal checkers run")
+        latest_submission = await self._task_repo.get_latest_submission_for_task(task.id)
+        if latest_submission is None or latest_submission.id != submission.id:
+            raise CheckerExecutionBlocked("only latest submission version can be checked")
+
+        current_run = await self._checker_repo.get_current_run_for_submission(submission.id)
+        if current_run is not None:
+            if (
+                current_run.status == "queued"
+                and self._is_automatic_pre_review_gate_run(current_run)
+            ):
+                return (
+                    self._run_response_for_actor(
+                        actor,
+                        current_run,
+                        has_checker_admin_access=True,
+                    ),
+                    force_enqueue_queued,
+                )
+            replacement = await self._replace_stale_running_pre_review_gate(current_run)
+            if replacement is not None:
+                return (
+                    self._run_response_for_actor(
+                        actor,
+                        replacement,
+                        has_checker_admin_access=True,
+                    ),
+                    True,
+                )
+            should_enqueue = await self._requeue_failed_pre_review_gate_if_needed(current_run)
+            persisted = await self._checker_repo.get_run(current_run.id)
+            if persisted is None:
+                raise CheckerRunNotFound("checker run not found")
+            await self._session.refresh(persisted)
+            return (
+                self._run_response_for_actor(
+                    actor,
+                    persisted,
+                    has_checker_admin_access=True,
+                ),
+                should_enqueue,
+            )
+
+        try:
+            artifact_manifest_hash = canonical_artifact_manifest_hash(
+                submission.artifact_hash_manifest,
+            )
+        except ValueError:
+            artifact_manifest_hash = "invalid:artifact_manifest"
+
+        checker_run = CheckerRun(
+            id=str(uuid4()),
+            task_id=submission.task_id,
+            submission_id=submission.id,
+            submission_version=submission.version,
+            trigger_source=PRE_REVIEW_GATE_TRIGGER_SOURCE,
+            status="queued",
+            routing_recommendation="not_evaluated",
+            outcome_source="none",
+            triggered_by=actor.actor_id,
+            triggered_by_subject=actor.external_subject,
+            triggered_by_issuer=actor.external_issuer,
+            trigger_auth_source=actor.auth_source,
+            trigger_reason=PRE_REVIEW_GATE_TRIGGER_REASON,
+            audit_event_id=None,
+            attempt_number=1,
+            supersedes_checker_run_id=None,
+            is_current_for_submission=True,
+            locked_guide_version=submission.locked_guide_version,
+            locked_post_submit_checker_policy_id=submission.locked_post_submit_checker_policy_id,
+            locked_post_submit_checker_policy_version=(
+                submission.locked_post_submit_checker_policy_version
+            ),
+            locked_post_submit_checker_policy_hash=(
+                submission.locked_post_submit_checker_policy_hash
+            ),
+            locked_post_submit_checker_policy_body=(
+                submission.locked_post_submit_checker_policy_body
+            ),
+            locked_review_policy_version=submission.locked_review_policy_version,
+            locked_revision_policy_version=submission.locked_revision_policy_version,
+            locked_payment_policy_version=submission.locked_payment_policy_version,
+            package_hash=submission.package_hash,
+            artifact_hash_manifest=submission.artifact_hash_manifest,
+            artifact_manifest_hash=artifact_manifest_hash,
+            passed_count=0,
+            warning_count=0,
+            failed_count=0,
+            blocking_count=0,
+        )
+        try:
+            checker_run = await self._checker_repo.add_run(checker_run)
+            await self._session.commit()
+        except IntegrityError as exc:
+            await self._session.rollback()
+            current_run = await self._checker_repo.get_current_run_for_submission(submission.id)
+            if current_run is None:
+                raise CheckerConflict("checker run conflicted with another attempt; retry") from exc
+            return (
+                self._run_response_for_actor(
+                    actor,
+                    current_run,
+                    has_checker_admin_access=True,
+                ),
+                False,
+            )
+
+        persisted = await self._checker_repo.get_run(checker_run.id)
+        if persisted is None:
+            raise CheckerRunNotFound("checker run not found")
+        return (
+            self._run_response_for_actor(
+                actor,
+                persisted,
+                has_checker_admin_access=True,
+            ),
+            True,
+        )
+
+    async def mark_pre_review_gate_enqueue_failed(self, checker_run_id: str) -> bool:
+        """Record that the broker rejected a queued automatic pre-review gate."""
+        failed = await self._checker_repo.mark_automatic_gate_enqueue_failed(
+            checker_run_id=checker_run_id,
+            trigger_source=PRE_REVIEW_GATE_TRIGGER_SOURCE,
+            system_actor_id=PRE_REVIEW_GATE_SYSTEM_ACTOR_ID,
+            system_issuer=PRE_REVIEW_GATE_SYSTEM_ISSUER,
+            auth_source="workstream_system",
+            failure_code=PRE_REVIEW_GATE_ENQUEUE_FAILURE_CODE,
+            failure_message="pre-review gate could not be enqueued",
+            completed_at=datetime.now(UTC),
+        )
+        if failed:
+            await self._session.commit()
+        else:
+            await self._session.rollback()
+        return failed
+
+    async def claim_pre_review_gate_repair_dispatch(self, checker_run_id: str) -> bool:
+        """Claim a queued gate repair dispatch before publishing a broker job."""
+        claimed = await self._checker_repo.claim_queued_automatic_gate_repair_dispatch(
+            checker_run_id=checker_run_id,
+            trigger_source=PRE_REVIEW_GATE_TRIGGER_SOURCE,
+            system_actor_id=PRE_REVIEW_GATE_SYSTEM_ACTOR_ID,
+            system_issuer=PRE_REVIEW_GATE_SYSTEM_ISSUER,
+            auth_source="workstream_system",
+            unclaimed_trigger_reason=PRE_REVIEW_GATE_TRIGGER_REASON,
+            claimed_trigger_reason=PRE_REVIEW_GATE_REPAIR_DISPATCH_REASON,
+        )
+        if claimed:
+            await self._session.commit()
+        else:
+            await self._session.rollback()
+        return claimed
+
+    async def run_queued_pre_review_gate(
+        self,
+        actor: ActorContext,
+        checker_run_id: str,
+        *,
+        requester_provenance: dict[str, Any],
+    ) -> CheckerRunResponse:
+        """Execute one previously queued automatic pre-review gate claim."""
+        if not is_pre_review_gate_system_actor(actor):
+            raise PermissionDenied("only the pre-review gate system actor can run queued gates")
+        candidate = await self._checker_repo.get_run(checker_run_id)
+        if candidate is None:
+            raise CheckerRunNotFound("checker run not found")
+        if (
+            not candidate.is_current_for_submission
+            or not self._is_automatic_pre_review_gate_run(candidate)
+        ):
+            raise CheckerExecutionBlocked("checker run is not an automatic pre-review gate")
+        if not await self._claim_queued_pre_review_gate(checker_run_id):
+            checker_run = await self._checker_repo.get_run(checker_run_id)
+            if checker_run is None:
+                raise CheckerRunNotFound("checker run not found")
+            await self._session.refresh(checker_run)
+            if checker_run.status == "running":
+                raise CheckerConflict("pre-review gate is already running")
+            return self._run_response_for_actor(
+                actor,
+                checker_run,
+                has_checker_admin_access=True,
+            )
+
+        checker_run = await self._checker_repo.get_run(checker_run_id)
+        if checker_run is None:
+            raise CheckerRunNotFound("checker run not found")
+        await self._session.refresh(checker_run)
+        try:
+            submission = await self._get_submission(checker_run.submission_id)
+            task = await self._get_task_for_actor(actor, submission.task_id)
+            if submission.locked_at is None:
+                await self._fail_claimed_pre_review_gate(
+                    checker_run,
+                    failure_code="submission_not_locked",
+                    failure_message="submission must be locked before internal checkers run",
+                )
+                raise CheckerExecutionBlocked(
+                    "submission must be locked before internal checkers run"
+                )
+
+            latest_submission = await self._task_repo.get_latest_submission_for_task(task.id)
+            if latest_submission is None or latest_submission.id != submission.id:
+                await self._fail_claimed_pre_review_gate(
+                    checker_run,
+                    failure_code=PRE_REVIEW_GATE_STALE_FAILURE_CODE,
+                    failure_message="only latest submission version can be checked",
+                )
+                raise CheckerExecutionBlocked("only latest submission version can be checked")
+
+            if task.status not in CHECKER_RUN_ALLOWED_TASK_STATUSES:
+                await self._fail_claimed_pre_review_gate(
+                    checker_run,
+                    failure_code="task_status_not_checkable",
+                    failure_message="task must be submitted or in checker gate before checkers run",
+                )
+                raise CheckerExecutionBlocked(
+                    "task must be submitted or in checker gate before checkers run"
+                )
+
+            queued_requester_payload = sanitize_requester_provenance(requester_provenance)
+            try:
+                requester_payload = await self._submission_requester_provenance(
+                    task,
+                    submission,
+                )
+            except CheckerExecutionBlocked:
+                await self._fail_claimed_pre_review_gate(
+                    checker_run,
+                    failure_code=PRE_REVIEW_GATE_PROVENANCE_MISSING_CODE,
+                    failure_message="submission lock audit provenance is missing",
+                )
+                raise
+            if not requester_provenance_matches(
+                expected=requester_payload,
+                received=queued_requester_payload,
+            ):
+                await self._fail_claimed_pre_review_gate(
+                    checker_run,
+                    failure_code=PRE_REVIEW_GATE_REQUESTER_PROVENANCE_MISMATCH_CODE,
+                    failure_message=(
+                        "pre-review gate requester provenance did not match locked submission audit"
+                    ),
+                )
+                raise CheckerExecutionBlocked(
+                    "pre-review gate requester provenance did not match locked submission audit"
+                )
+            await self._assert_pre_review_gate_claim_still_current(checker_run)
+            await self._enter_evaluation_pending(
+                actor,
+                task,
+                submission,
+                checker_run.trigger_reason or PRE_REVIEW_GATE_TRIGGER_REASON,
+                checker_run.trigger_source or PRE_REVIEW_GATE_TRIGGER_SOURCE,
+                requester_payload,
+            )
+
+            try:
+                checker_policy = await self._load_locked_post_submit_policy(task, submission)
+                effective_policy, _ = await self._load_locked_pre_submit_context(
+                    task,
+                    submission,
+                )
+            except CheckerPolicyInvalid as exc:
+                await self._fail_claimed_pre_review_gate(
+                    checker_run,
+                    failure_code=PRE_REVIEW_GATE_EXECUTION_FAILURE_CODE,
+                    failure_message=str(exc),
+                )
+                raise
+            checker_names = list(checker_policy.execution_checkers or [])
+            try:
+                self._registry.require_registered(set(checker_names))
+            except UnknownChecker as exc:
+                await self._fail_claimed_pre_review_gate(
+                    checker_run,
+                    failure_code=PRE_REVIEW_GATE_UNKNOWN_CHECKER_FAILURE_CODE,
+                    failure_message=str(exc),
+                )
+                raise CheckerPolicyInvalid(str(exc)) from exc
+
+            try:
+                artifact_manifest_hash = canonical_artifact_manifest_hash(
+                    submission.artifact_hash_manifest,
+                )
+            except ValueError:
+                artifact_manifest_hash = "invalid:artifact_manifest"
+
+            context = CheckerContext(
+                task=task,
+                submission=submission,
+                required_checker_names=frozenset(checker_policy.required_checkers),
+                warning_checker_names=frozenset(checker_policy.warning_checkers),
+                blocking_severities=frozenset(checker_policy.blocking_severities or []),
+                effective_policy=effective_policy.effective_policy,
+            )
+            now = datetime.now(UTC)
+            outcomes = self._apply_blocking_policy(
+                await self._registry.run(context, checker_names),
+                context,
+            )
+            audit_event = await self._write_checker_audit(
+                actor,
+                task,
+                submission,
+                checker_run.attempt_number,
+                checker_run.trigger_reason or PRE_REVIEW_GATE_TRIGGER_REASON,
+                checker_run.trigger_source or PRE_REVIEW_GATE_TRIGGER_SOURCE,
+                requester_payload,
+            )
+            await self._complete_claimed_checker_run(
+                checker_run,
+                outcomes=outcomes,
+                artifact_manifest_hash=artifact_manifest_hash,
+                audit_event_id=audit_event.id,
+                completed_at=now,
+            )
+            await self._apply_pre_review_gate_result(
+                actor,
+                task,
+                submission,
+                checker_run,
+                requester_payload,
+            )
+            await self._assert_pre_review_gate_claim_still_current(
+                checker_run,
+                allow_completed=True,
+            )
+            await self._session.commit()
+        except IntegrityError as exc:
+            await self._session.rollback()
+            await self._fail_running_pre_review_gate_by_id(
+                checker_run.id,
+                failure_code=PRE_REVIEW_GATE_EXECUTION_FAILURE_CODE,
+                failure_message="checker run conflicted with another attempt; retry",
+            )
+            raise CheckerConflict("checker run conflicted with another attempt; retry") from exc
+        except Exception:
+            await self._fail_running_pre_review_gate_by_id(
+                checker_run.id,
+                failure_code=PRE_REVIEW_GATE_EXECUTION_FAILURE_CODE,
+                failure_message=PRE_REVIEW_GATE_UNEXPECTED_FAILURE_MESSAGE,
+            )
+            raise
+
+        persisted = await self._checker_repo.get_run(checker_run.id)
+        if persisted is None:
+            raise CheckerRunNotFound("checker run not found")
+        return self._run_response_for_actor(
+            actor,
+            persisted,
+            has_checker_admin_access=True,
+        )
+
+    async def pre_review_gate_repair_snapshot(self, submission_id: str) -> dict[str, Any]:
+        """Load current automatic gate state before an operator repair mutates it."""
+        checker_run = await self._checker_repo.get_current_run_for_submission(submission_id)
+        if checker_run is None:
+            return {
+                "previous_checker_run_id": None,
+                "previous_status": None,
+                "previous_failure_code": None,
+                "previous_failure_message": None,
+                "previous_started_at": None,
+            }
+        return {
+            "previous_checker_run_id": checker_run.id,
+            "previous_status": checker_run.status,
+            "previous_failure_code": checker_run.failure_code,
+            "previous_failure_message": checker_run.failure_message,
+            "previous_started_at": (
+                checker_run.started_at.isoformat() if checker_run.started_at else None
+            ),
+        }
 
     async def list_submission_checker_runs(
         self,
@@ -677,10 +1110,13 @@ class CheckerService:
         Returns:
             Visible task model.
         """
-        require_any_role(actor, CHECKER_READ_ROLES)
+        if not is_pre_review_gate_system_actor(actor):
+            require_any_role(actor, CHECKER_READ_ROLES)
         task = await self._task_repo.get_task(task_id)
         if task is None:
             raise CheckerTaskNotFound("task not found")
+        if is_pre_review_gate_system_actor(actor):
+            return task
         if can_admin_or_task_creator_manage(actor, task):
             return task
         if "worker" in actor.roles and task.assigned_to == actor.actor_id:
@@ -690,6 +1126,8 @@ class CheckerService:
     @staticmethod
     def _ensure_checker_trigger_authorized(actor: ActorContext, task: WorkstreamTask) -> None:
         """Enforce object-level authorization for manual checker execution."""
+        if is_pre_review_gate_system_actor(actor):
+            return
         if can_admin_or_task_creator_manage(actor, task):
             return
         raise PermissionDenied("actor is not authorized to run checkers for this submission")
@@ -797,6 +1235,282 @@ class CheckerService:
             for outcome in outcomes
         ]
         return checker_run
+
+    async def _requeue_failed_pre_review_gate_if_needed(
+        self,
+        checker_run: CheckerRun,
+    ) -> bool:
+        """Move a repairable automatic gate claim back to queued once."""
+        retryable_failure_codes = {
+            PRE_REVIEW_GATE_ENQUEUE_FAILURE_CODE,
+            PRE_REVIEW_GATE_EXECUTION_FAILURE_CODE,
+            PRE_REVIEW_GATE_UNKNOWN_CHECKER_FAILURE_CODE,
+        }
+        is_retryable_failure = (
+            checker_run.status == "failed"
+            and checker_run.failure_code in retryable_failure_codes
+        )
+        if not is_retryable_failure or not self._is_automatic_pre_review_gate_run(checker_run):
+            return False
+        should_enqueue = await self._checker_repo.requeue_failed_automatic_gate(
+            checker_run_id=checker_run.id,
+            retryable_failure_codes=retryable_failure_codes,
+            trigger_source=PRE_REVIEW_GATE_TRIGGER_SOURCE,
+            system_actor_id=PRE_REVIEW_GATE_SYSTEM_ACTOR_ID,
+            system_issuer=PRE_REVIEW_GATE_SYSTEM_ISSUER,
+            auth_source="workstream_system",
+            reset_trigger_reason=PRE_REVIEW_GATE_TRIGGER_REASON,
+        )
+        if should_enqueue:
+            await self._session.commit()
+        else:
+            await self._session.rollback()
+        return should_enqueue
+
+    async def _replace_stale_running_pre_review_gate(
+        self,
+        checker_run: CheckerRun,
+    ) -> CheckerRun | None:
+        """Retire a timed-out running gate and create a fenced retry attempt."""
+        if not self._is_stale_running_pre_review_gate(checker_run):
+            return None
+        now = datetime.now(UTC)
+        replacement = CheckerRun(
+            id=str(uuid4()),
+            task_id=checker_run.task_id,
+            submission_id=checker_run.submission_id,
+            submission_version=checker_run.submission_version,
+            trigger_source=PRE_REVIEW_GATE_TRIGGER_SOURCE,
+            status="queued",
+            routing_recommendation="not_evaluated",
+            outcome_source="none",
+            triggered_by=PRE_REVIEW_GATE_SYSTEM_ACTOR_ID,
+            triggered_by_subject=PRE_REVIEW_GATE_SYSTEM_ACTOR_ID,
+            triggered_by_issuer=PRE_REVIEW_GATE_SYSTEM_ISSUER,
+            trigger_auth_source="workstream_system",
+            trigger_reason=PRE_REVIEW_GATE_TRIGGER_REASON,
+            audit_event_id=None,
+            attempt_number=checker_run.attempt_number + 1,
+            supersedes_checker_run_id=checker_run.id,
+            is_current_for_submission=True,
+            locked_guide_version=checker_run.locked_guide_version,
+            locked_post_submit_checker_policy_id=(
+                checker_run.locked_post_submit_checker_policy_id
+            ),
+            locked_post_submit_checker_policy_version=(
+                checker_run.locked_post_submit_checker_policy_version
+            ),
+            locked_post_submit_checker_policy_hash=(
+                checker_run.locked_post_submit_checker_policy_hash
+            ),
+            locked_post_submit_checker_policy_body=(
+                checker_run.locked_post_submit_checker_policy_body
+            ),
+            locked_review_policy_version=checker_run.locked_review_policy_version,
+            locked_revision_policy_version=checker_run.locked_revision_policy_version,
+            locked_payment_policy_version=checker_run.locked_payment_policy_version,
+            package_hash=checker_run.package_hash,
+            artifact_hash_manifest=checker_run.artifact_hash_manifest,
+            artifact_manifest_hash=checker_run.artifact_manifest_hash,
+            passed_count=0,
+            warning_count=0,
+            failed_count=0,
+            blocking_count=0,
+        )
+        try:
+            replaced = await self._checker_repo.replace_stale_running_automatic_gate(
+                checker_run_id=checker_run.id,
+                replacement=replacement,
+                trigger_source=PRE_REVIEW_GATE_TRIGGER_SOURCE,
+                system_actor_id=PRE_REVIEW_GATE_SYSTEM_ACTOR_ID,
+                system_issuer=PRE_REVIEW_GATE_SYSTEM_ISSUER,
+                auth_source="workstream_system",
+                failure_code=PRE_REVIEW_GATE_STALE_RUNNING_FAILURE_CODE,
+                failure_message="pre-review gate running claim timed out before repair",
+                completed_at=now,
+            )
+            if not replaced:
+                await self._session.rollback()
+                return None
+            await self._session.commit()
+        except IntegrityError as exc:
+            await self._session.rollback()
+            raise CheckerConflict("checker run conflicted with another attempt; retry") from exc
+        persisted = await self._checker_repo.get_run(replacement.id)
+        if persisted is None:
+            raise CheckerRunNotFound("checker run not found")
+        return persisted
+
+    def _is_stale_running_pre_review_gate(self, checker_run: CheckerRun) -> bool:
+        """Return whether a running automatic gate is old enough for repair."""
+        if (
+            checker_run.status != "running"
+            or not self._is_automatic_pre_review_gate_run(checker_run)
+            or checker_run.started_at is None
+        ):
+            return False
+        started_at = checker_run.started_at
+        if started_at.tzinfo is None:
+            started_at = started_at.replace(tzinfo=UTC)
+        return datetime.now(UTC) - started_at >= PRE_REVIEW_GATE_RUNNING_TIMEOUT
+
+    async def _claim_queued_pre_review_gate(self, checker_run_id: str) -> bool:
+        """Atomically claim one queued automatic gate for checker execution."""
+        now = datetime.now(UTC)
+        claimed = await self._checker_repo.claim_queued_automatic_gate(
+            checker_run_id=checker_run_id,
+            trigger_source=PRE_REVIEW_GATE_TRIGGER_SOURCE,
+            system_actor_id=PRE_REVIEW_GATE_SYSTEM_ACTOR_ID,
+            system_issuer=PRE_REVIEW_GATE_SYSTEM_ISSUER,
+            auth_source="workstream_system",
+            started_at=now,
+        )
+        if claimed:
+            await self._session.commit()
+        else:
+            await self._session.rollback()
+        return claimed
+
+    async def _fail_running_pre_review_gate_by_id(
+        self,
+        checker_run_id: str,
+        *,
+        failure_code: str,
+        failure_message: str,
+    ) -> None:
+        """Fail a claimed automatic gate that errored after the running claim."""
+        await self._session.rollback()
+        failed = await self._checker_repo.fail_running_automatic_gate(
+            checker_run_id=checker_run_id,
+            trigger_source=PRE_REVIEW_GATE_TRIGGER_SOURCE,
+            system_actor_id=PRE_REVIEW_GATE_SYSTEM_ACTOR_ID,
+            system_issuer=PRE_REVIEW_GATE_SYSTEM_ISSUER,
+            auth_source="workstream_system",
+            failure_code=failure_code,
+            failure_message=failure_message,
+            completed_at=datetime.now(UTC),
+        )
+        if failed:
+            await self._session.commit()
+        else:
+            await self._session.rollback()
+
+    async def _assert_pre_review_gate_claim_still_current(
+        self,
+        checker_run: CheckerRun,
+        *,
+        allow_completed: bool = False,
+    ) -> None:
+        """Fail if a repaired retry has superseded this running gate claim."""
+        with self._session.no_autoflush:
+            row = await self._checker_repo.get_run_claim_state(checker_run.id)
+        allowed_statuses = {"running", "completed"} if allow_completed else {"running"}
+        if (
+            row is None
+            or row.status not in allowed_statuses
+            or row.is_current_for_submission is not True
+            or row.trigger_source != PRE_REVIEW_GATE_TRIGGER_SOURCE
+            or row.triggered_by != PRE_REVIEW_GATE_SYSTEM_ACTOR_ID
+            or row.triggered_by_subject != PRE_REVIEW_GATE_SYSTEM_ACTOR_ID
+            or row.triggered_by_issuer != PRE_REVIEW_GATE_SYSTEM_ISSUER
+            or row.trigger_auth_source != "workstream_system"
+        ):
+            raise CheckerConflict("pre-review gate claim is no longer current")
+
+    async def _fail_claimed_pre_review_gate(
+        self,
+        checker_run: CheckerRun,
+        *,
+        failure_code: str,
+        failure_message: str,
+    ) -> None:
+        """Mark a claimed queued gate as failed without writing result rows."""
+        failed = await self._checker_repo.fail_running_automatic_gate(
+            checker_run_id=checker_run.id,
+            trigger_source=PRE_REVIEW_GATE_TRIGGER_SOURCE,
+            system_actor_id=PRE_REVIEW_GATE_SYSTEM_ACTOR_ID,
+            system_issuer=PRE_REVIEW_GATE_SYSTEM_ISSUER,
+            auth_source="workstream_system",
+            failure_code=failure_code,
+            failure_message=failure_message,
+            completed_at=datetime.now(UTC),
+        )
+        if failed:
+            await self._session.commit()
+            await self._session.refresh(checker_run)
+        else:
+            await self._session.rollback()
+            raise CheckerConflict("pre-review gate claim is no longer current")
+
+    async def _complete_claimed_checker_run(
+        self,
+        checker_run: CheckerRun,
+        *,
+        outcomes: list[CheckerOutcome],
+        artifact_manifest_hash: str,
+        audit_event_id: str,
+        completed_at: datetime,
+    ) -> None:
+        """Populate a queued checker run with deterministic checker outcomes."""
+        blocking_count = sum(1 for outcome in outcomes if outcome.blocks_review)
+        failed_count = sum(1 for outcome in outcomes if outcome.status == "failed")
+        warning_count = sum(1 for outcome in outcomes if outcome.status == "warning")
+        passed_count = sum(1 for outcome in outcomes if outcome.status == "passed")
+        routing_recommendation = self._routing_recommendation_for_outcomes(outcomes)
+        outcome_source = (
+            "auto_checker"
+            if routing_recommendation in {ROUTING_NEEDS_REVISION, ROUTING_TASK_SETUP_BLOCKED}
+            else "none"
+        )
+        result_rows = [
+            CheckerResult(
+                id=str(uuid4()),
+                checker_run_id=checker_run.id,
+                task_id=checker_run.task_id,
+                submission_id=checker_run.submission_id,
+                checker_name=outcome.checker_name,
+                status=outcome.status,
+                severity=outcome.severity,
+                blocks_review=outcome.blocks_review,
+                message=outcome.message,
+                worker_message=outcome.worker_message,
+                worker_suggested_fix=outcome.worker_suggested_fix,
+                worker_evidence_refs=outcome.worker_evidence_refs,
+                worker_visible=outcome.worker_visible,
+                metadata_json=outcome.metadata,
+            )
+            for outcome in outcomes
+        ]
+        completed = await self._checker_repo.complete_running_automatic_gate(
+            checker_run=checker_run,
+            trigger_source=PRE_REVIEW_GATE_TRIGGER_SOURCE,
+            system_actor_id=PRE_REVIEW_GATE_SYSTEM_ACTOR_ID,
+            system_issuer=PRE_REVIEW_GATE_SYSTEM_ISSUER,
+            auth_source="workstream_system",
+            routing_recommendation=routing_recommendation,
+            outcome_source=outcome_source,
+            audit_event_id=audit_event_id,
+            artifact_manifest_hash=artifact_manifest_hash,
+            passed_count=passed_count,
+            warning_count=warning_count,
+            failed_count=failed_count,
+            blocking_count=blocking_count,
+            completed_at=completed_at,
+            results=result_rows,
+        )
+        if not completed:
+            raise CheckerConflict("pre-review gate claim is no longer current")
+
+    @staticmethod
+    def _is_automatic_pre_review_gate_run(checker_run: CheckerRun) -> bool:
+        """Return whether a checker run belongs to the automatic pre-review gate."""
+        return (
+            checker_run.trigger_source == PRE_REVIEW_GATE_TRIGGER_SOURCE
+            and checker_run.triggered_by == PRE_REVIEW_GATE_SYSTEM_ACTOR_ID
+            and checker_run.triggered_by_subject == PRE_REVIEW_GATE_SYSTEM_ACTOR_ID
+            and checker_run.triggered_by_issuer == PRE_REVIEW_GATE_SYSTEM_ISSUER
+            and checker_run.trigger_auth_source == "workstream_system"
+        )
 
     async def _enter_evaluation_pending(
         self,
@@ -1063,16 +1777,21 @@ class CheckerService:
             )
         )
 
-    @staticmethod
-    def _requester_provenance_payload(requester: ActorContext) -> dict[str, Any]:
-        """Build requester provenance stored beside system-owned gate events."""
-        audit = requester.audit_context()
-        return {
-            "requester_actor_id": audit.actor_id,
-            "requester_external_subject": audit.external_subject,
-            "requester_external_issuer": audit.external_issuer,
-            "requester_auth_source": audit.auth_source,
-        }
+    async def _submission_requester_provenance(
+        self,
+        task: WorkstreamTask,
+        submission: Submission,
+    ) -> dict[str, str]:
+        """Load requester provenance from the locked submission audit trail."""
+        events = await self._task_repo.list_audit_events("task", task.id)
+        provenance = find_submission_requester_provenance(
+            events,
+            submission_id=submission.id,
+            event_type=PRE_REVIEW_GATE_TRIGGER_SOURCE,
+        )
+        if provenance is not None:
+            return provenance
+        raise CheckerExecutionBlocked("submission lock audit provenance is missing")
 
     @staticmethod
     def _routing_recommendation_for_outcomes(outcomes: list[CheckerOutcome]) -> str:
