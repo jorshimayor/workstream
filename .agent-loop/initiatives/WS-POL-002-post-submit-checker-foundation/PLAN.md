@@ -24,17 +24,22 @@ ProjectGuide
 
 ## Current Baseline
 
-The runtime gate already exists:
+The runtime gate exists, but this initiative tightened the happy path during
+`WS-POL-002-02` so manager action is not required after a contributor submits:
 
 ```text
-finalize submission
+contributor creates submission
+-> Workstream reruns pre-submit against the exact payload
+-> Workstream locks the submission packet
+-> automatic Celery pre-review gate
 -> evaluation_pending
--> CheckerRun
 -> review_pending | needs_revision | internal repair route
 ```
 
 This initiative strengthens the project setup side so the policy feeding that
-gate is no longer manually assembled in guide create/update payloads.
+gate is no longer manually assembled in guide create/update payloads. The
+`finalize` route is a repair/requeue surface for locked submissions only; it is
+not the normal contributor submission handoff.
 
 ## Design
 

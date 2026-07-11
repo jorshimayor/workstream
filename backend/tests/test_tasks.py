@@ -3971,8 +3971,8 @@ async def test_finalize_repairs_locked_submission_with_missing_pre_review_gate(
         headers=auth_headers(),
         json=complete_submission_payload(),
     )
-    assert create_response.status_code == 503, create_response.text
-    assert "simulated broker outage" in create_response.json()["detail"]
+    assert create_response.status_code == 201, create_response.text
+    assert create_response.json()["finalized_at"] is not None
 
     submissions = await task_client.get(
         f"/api/v1/tasks/{started_task['id']}/submissions",
@@ -3982,6 +3982,7 @@ async def test_finalize_repairs_locked_submission_with_missing_pre_review_gate(
     assert len(submissions.json()) == 1
     submission_id = submissions.json()[0]["id"]
     assert submissions.json()[0]["finalized_at"] is not None
+    assert submission_id == create_response.json()["id"]
 
     async with db_session.get_session_factory()() as session:
         checker_runs = (
@@ -3992,6 +3993,14 @@ async def test_finalize_repairs_locked_submission_with_missing_pre_review_gate(
             )
         ).scalars().all()
         task = await session.get(WorkstreamTask, started_task["id"])
+        dispatch_failed_events = (
+            await session.execute(
+                select(AuditEvent).where(
+                    AuditEvent.entity_id == started_task["id"],
+                    AuditEvent.event_type == "pre_review_gate_dispatch_failed",
+                )
+            )
+        ).scalars().all()
     assert len(checker_runs) == 1
     failed_claim = checker_runs[0]
     assert failed_claim.status == "failed"
@@ -3999,7 +4008,9 @@ async def test_finalize_repairs_locked_submission_with_missing_pre_review_gate(
     assert failed_claim.triggered_by == "workstream-system:pre-review-gate"
     assert enqueue_calls == [failed_claim.id]
     assert task is not None
-    assert task.status == "submitted"
+    assert task.status == "evaluation_pending"
+    assert len(dispatch_failed_events) == 1
+    assert dispatch_failed_events[0].event_payload["checker_run_id"] == failed_claim.id
 
     monkeypatch.setattr(task_service_module, "enqueue_pre_review_gate", original_enqueue)
     worker_repair = await task_client.post(
@@ -4084,7 +4095,8 @@ async def test_failed_pre_review_gate_repair_is_idempotent_while_queued(
         headers=auth_headers(),
         json=complete_submission_payload(),
     )
-    assert create_response.status_code == 503, create_response.text
+    assert create_response.status_code == 201, create_response.text
+    assert create_response.json()["finalized_at"] is not None
     submissions = await task_client.get(
         f"/api/v1/tasks/{started_task['id']}/submissions",
         headers=auth_headers(),

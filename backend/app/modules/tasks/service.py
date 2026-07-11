@@ -40,6 +40,7 @@ from app.modules.tasks.authorization import can_admin_or_task_creator_manage
 from app.modules.tasks.lifecycle import (
     TASK_STATUS_CLAIMED,
     TASK_STATUS_DRAFT,
+    TASK_STATUS_EVALUATION_PENDING,
     TASK_STATUS_IN_PROGRESS,
     TASK_STATUS_NEEDS_REVISION,
     TASK_STATUS_READY,
@@ -90,6 +91,7 @@ TASK_START_ROLES = {"admin", "project_manager", "worker"}
 TASK_START_OPERATOR_ROLES = {"admin", "project_manager"}
 SUBMISSION_FINALIZE_ROLES = {"admin", "project_manager"}
 SUBMISSION_FINALIZED_EVENT_TYPE = "submission_finalized"
+PRE_REVIEW_GATE_DISPATCH_FAILED_EVENT_TYPE = "pre_review_gate_dispatch_failed"
 WORKER_VISIBLE_AUDIT_PAYLOAD_KEYS = {
     "assignment_id",
     "locked_guide_version",
@@ -107,6 +109,7 @@ WORKER_REDACTED_AUDIT_EVENTS = {
     "pre_review_gate_passed",
     "pre_review_gate_needs_revision",
     "pre_review_gate_blocked",
+    PRE_REVIEW_GATE_DISPATCH_FAILED_EVENT_TYPE,
     "pre_review_gate_repair_requested",
 }
 SUBMISSION_CREATE_REQUIRED_PACKET_FIELDS = (
@@ -746,7 +749,11 @@ class TaskService:
             await self._session.rollback()
             raise SubmissionVersionConflict("submission version conflicted; retry") from exc
 
-        await self._enqueue_pre_review_gate_after_commit(actor, submission.id)
+        await self._enqueue_pre_review_gate_after_commit(
+            actor,
+            submission.id,
+            raise_on_failure=False,
+        )
         persisted = await self._repo.get_submission(submission.id)
         if persisted is None:
             raise SubmissionNotFound("submission not found")
@@ -916,6 +923,7 @@ class TaskService:
         *,
         requester_provenance: dict[str, str] | None = None,
         repair_snapshot: dict[str, Any] | None = None,
+        raise_on_failure: bool = True,
     ) -> str:
         """Enqueue the system-owned post-submit checker gate after persistence."""
         checker_service = CheckerService(self._session)
@@ -942,7 +950,15 @@ class TaskService:
             )
         except PreReviewGateQueueError as exc:
             await checker_service.mark_pre_review_gate_enqueue_failed(checker_run.id)
-            raise SubmissionCheckerGateError(str(exc), 503) from exc
+            await self._mark_pre_review_gate_dispatch_failed(
+                actor,
+                submission_id,
+                checker_run.id,
+                str(exc),
+            )
+            if raise_on_failure:
+                raise SubmissionCheckerGateError(str(exc), 503) from exc
+            return checker_run.id
         if repair_snapshot is not None:
             if repair_submission is None:
                 repair_submission = await self._get_submission(submission_id)
@@ -958,6 +974,44 @@ class TaskService:
             )
             await self._session.commit()
         return task_id
+
+    async def _mark_pre_review_gate_dispatch_failed(
+        self,
+        actor: ActorContext,
+        submission_id: str,
+        checker_run_id: str,
+        failure_message: str,
+    ) -> None:
+        """Move accepted submissions into the evaluation repair lane after dispatch failure."""
+        submission = await self._get_submission(submission_id)
+        task = await self._get_task(submission.task_id)
+        event_payload = {
+            "submission_id": submission.id,
+            "submission_version": submission.version,
+            "checker_run_id": checker_run_id,
+            "failure_code": "pre_review_gate_enqueue_failed",
+            "failure_message": failure_message[:1000],
+        }
+        if task.status == TASK_STATUS_SUBMITTED:
+            await self._change_task_status(
+                actor,
+                task,
+                TASK_STATUS_EVALUATION_PENDING,
+                reason="automatic pre-review gate dispatch failed; operator repair required",
+                event_payload=event_payload,
+                event_type=PRE_REVIEW_GATE_DISPATCH_FAILED_EVENT_TYPE,
+            )
+        else:
+            await self._write_task_audit(
+                actor,
+                task,
+                event_type=PRE_REVIEW_GATE_DISPATCH_FAILED_EVENT_TYPE,
+                from_status=task.status,
+                to_status=task.status,
+                reason="automatic pre-review gate dispatch failed; operator repair required",
+                event_payload=event_payload,
+            )
+        await self._session.commit()
 
     async def _submission_finalization_requester_provenance(
         self,
