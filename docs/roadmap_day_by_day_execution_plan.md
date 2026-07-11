@@ -137,7 +137,7 @@ Week 2 is backend-first checker infrastructure. Checker output is exposed throug
 
 The core invariant is:
 
-`Draft packet -> Pre-submit checks -> Submit -> Finalize -> Internal CheckerRun -> CheckerResults -> review_pending | needs_revision | internal task_setup_blocked -> trusted checker retry when repaired`
+`Draft packet -> Pre-submit checks -> Submit -> automatic submission lock -> Celery pre-review CheckerRun -> CheckerResults -> review_pending | needs_revision | internal task_setup_blocked -> trusted checker retry when repaired`
 
 The checker framework does not accept or reject work. It may route worker-fixable checker failures to user-facing `needs_revision`, but that does not create a human review decision. Internally the source is recorded as `auto_checker`.
 

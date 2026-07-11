@@ -527,6 +527,7 @@ def source_snapshot_payload(fixture: TerminalBenchmarkFixture) -> dict:
         ("project_guide", "PROJECT_GUIDE.md", fixture.project_guide, "text/markdown"),
         ("reviewer_program", "REVIEWER_PROGRAM.md", fixture.reviewer_program, "text/markdown"),
         ("task_material", "task.toml", fixture.task_toml, "text/toml"),
+        ("submission_archive", "submission.zip", fixture.submission_zip, "application/zip"),
         ("review_packet", "review_packet.md", fixture.review_packet, "text/markdown"),
         ("static_guard", "static_guard.txt", fixture.static_guard, "text/plain"),
         ("build_log", "docker_build.log", fixture.docker_build_log, "text/plain"),
@@ -856,7 +857,7 @@ async def create_started_terminal_benchmark_task(
     return started
 
 
-async def submit_finalize_and_wait(
+async def submit_and_wait_for_automatic_gate(
     client: httpx.AsyncClient,
     *,
     manager_token: str,
@@ -864,7 +865,7 @@ async def submit_finalize_and_wait(
     task_id: str,
     payload: dict,
 ) -> tuple[dict, dict, dict]:
-    """Submit, finalize, and wait for the automatic checker run."""
+    """Submit and wait for the automatic checker run."""
     submission = await request_json(
         client,
         "POST",
@@ -873,18 +874,12 @@ async def submit_finalize_and_wait(
         payload,
         201,
     )
-    locked = await request_json(
-        client,
-        "POST",
-        f"/api/v1/submissions/{submission['id']}/finalize",
-        manager_token,
-    )
     run = await wait_for_submission_checker_run_public_safe(
         client,
         manager_token,
         submission["id"],
     )
-    return submission, locked, run
+    return submission, submission, run
 
 
 async def wait_for_task_status(
@@ -909,13 +904,13 @@ async def assert_finalize_gate_audit(
     client: httpx.AsyncClient,
     *,
     manager_token: str,
-    manager_subject: str,
+    requester_subject: str,
     flow_issuer: str,
     task_id: str,
     checker_run_id: str,
     expected_gate_event: str,
 ) -> None:
-    """Assert finalization and checker gate audit events through the API."""
+    """Assert submission-lock and checker gate audit events through the API."""
     audit_events = await request_json(
         client,
         "GET",
@@ -926,7 +921,7 @@ async def assert_finalize_gate_audit(
         event for event in audit_events if event["event_type"] == "submission_finalized"
     )
     ensure(
-        finalized_event["external_subject"] == manager_subject,
+        finalized_event["external_subject"] == requester_subject,
         "submission_finalized requester subject drifted",
     )
     ensure(
@@ -957,7 +952,7 @@ async def assert_finalize_gate_audit(
         f"{expected_gate_event} requester actor provenance drifted",
     )
     ensure(
-        gate_event["event_payload"]["requester_external_subject"] == manager_subject,
+        gate_event["event_payload"]["requester_external_subject"] == requester_subject,
         f"{expected_gate_event} requester subject provenance drifted",
     )
     ensure(
@@ -1050,7 +1045,7 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
             complete_task["id"],
             "successful pre-submit check created durable submissions",
         )
-        complete_submission, complete_locked, complete_run = await submit_finalize_and_wait(
+        complete_submission, complete_locked, complete_run = await submit_and_wait_for_automatic_gate(
             client,
             manager_token=manager_token,
             worker_token=complete_worker_token,
@@ -1075,7 +1070,7 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
         await assert_finalize_gate_audit(
             client,
             manager_token=manager_token,
-            manager_subject=manager_subject,
+            requester_subject=complete_worker_subject,
             flow_issuer=flow_issuer,
             task_id=complete_task["id"],
             checker_run_id=complete_run["id"],
@@ -1222,7 +1217,7 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
             low_quality_precheck_result["status"] == "warning",
             "low-quality pre-submit scenario did not warn",
         )
-        first_submission, first_locked, first_run = await submit_finalize_and_wait(
+        first_submission, first_locked, first_run = await submit_and_wait_for_automatic_gate(
             client,
             manager_token=manager_token,
             worker_token=revision_worker_token,
@@ -1256,7 +1251,7 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
         await assert_finalize_gate_audit(
             client,
             manager_token=manager_token,
-            manager_subject=manager_subject,
+            requester_subject=revision_worker_subject,
             flow_issuer=flow_issuer,
             task_id=revision_task["id"],
             checker_run_id=first_run["id"],
@@ -1278,7 +1273,7 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
         )
         assert_pre_submit_checker_set(fixed_precheck)
         ensure(fixed_precheck["eligible_to_submit"] is True, "fixed packet precheck failed")
-        second_submission, second_locked, second_run = await submit_finalize_and_wait(
+        second_submission, second_locked, second_run = await submit_and_wait_for_automatic_gate(
             client,
             manager_token=manager_token,
             worker_token=revision_worker_token,
@@ -1309,7 +1304,7 @@ async def exercise_terminal_benchmark_api(base_url: str, env: dict[str, str]) ->
         await assert_finalize_gate_audit(
             client,
             manager_token=manager_token,
-            manager_subject=manager_subject,
+            requester_subject=revision_worker_subject,
             flow_issuer=flow_issuer,
             task_id=revision_task["id"],
             checker_run_id=second_run["id"],

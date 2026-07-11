@@ -327,12 +327,12 @@ async def wait_for_submission_checker_run(
     manager_token: str,
     submission_id: str,
 ) -> dict:
-    """Wait for exactly one automatic checker run after submission finalization.
+    """Wait for exactly one automatic checker run after submission lock.
 
     Args:
         client: Real HTTP client.
         manager_token: Project manager Flow token.
-        submission_id: Finalized submission id.
+        submission_id: Locked submission id.
 
     Returns:
         Completed checker run response.
@@ -1197,17 +1197,10 @@ async def exercise_api_contract(base_url: str, env: dict[str, str]) -> None:
             unassigned_worker_token,
             expected_status=404,
         )
-        await request_json(
-            client,
-            "POST",
-            f"/api/v1/submissions/{submission['id']}/finalize",
-            worker_token,
-            expected_status=403,
-        )
         locked = await request_json(
             client,
-            "POST",
-            f"/api/v1/submissions/{submission['id']}/finalize",
+            "GET",
+            f"/api/v1/submissions/{submission['id']}",
             manager_token,
         )
         assert locked["finalized_at"] is not None
@@ -1251,7 +1244,7 @@ async def exercise_api_contract(base_url: str, env: dict[str, str]) -> None:
         finalized_event = next(
             event for event in audit_events if event["event_type"] == "submission_finalized"
         )
-        assert finalized_event["external_subject"] == manager_subject
+        assert finalized_event["external_subject"] == worker_subject
         assert finalized_event["external_issuer"] == flow_issuer
         assert finalized_event["auth_source"] == "flow"
         assert finalized_event["event_payload"]["finalized_at"].replace("+00:00", "Z") == locked[
@@ -1267,7 +1260,7 @@ async def exercise_api_contract(base_url: str, env: dict[str, str]) -> None:
             assert gate_event["external_issuer"] == "workstream"
             assert gate_event["auth_source"] == "workstream_system"
             assert gate_event["event_payload"]["requester_actor_id"] == requester_actor_id
-            assert gate_event["event_payload"]["requester_external_subject"] == manager_subject
+            assert gate_event["event_payload"]["requester_external_subject"] == worker_subject
             assert gate_event["event_payload"]["requester_external_issuer"] == flow_issuer
             assert gate_event["event_payload"]["requester_auth_source"] == "flow"
             assert gate_event["event_payload"]["trigger_source"] == "submission_finalized"

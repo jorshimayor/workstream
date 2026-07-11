@@ -148,7 +148,8 @@ the repository is changed; it does not define runtime task or review records.
 ## Local Backend Database
 
 Workstream uses Postgres locally and in CI. It uses Celery with Redis for
-durable local project setup jobs. Start local services with:
+durable local project setup jobs and automatic pre-review checker gates. Start
+local services with:
 
 ```bash
 docker compose up -d postgres redis
@@ -191,8 +192,9 @@ Persisted sufficiency and derivation agent identity is Workstream-owned; runtime
 or provider-returned identity fields are not trusted as audit provenance.
 
 Run the worker before creating project guides that should automatically prepare
-pre-submit policy and continue into post-submit policy derivation after setup
-submission artifact policy approval:
+pre-submit policy, continue into post-submit policy derivation after setup
+submission artifact policy approval, and advance locked submissions through the
+automatic pre-review checker gate:
 
 ```bash
 cd backend

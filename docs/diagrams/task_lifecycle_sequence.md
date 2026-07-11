@@ -45,9 +45,9 @@ sequenceDiagram
   UI->>API: POST submission packet with evidence and artifact manifest
   API->>Storage: Store or reference artifacts through storage abstraction
   API->>DB: Create immutable submission version
-  API->>DB: Finalize submission and audit finalization
+  API->>DB: Lock submission version and audit submitter-owned finalization
 
-  API->>Checks: Start automated checks asynchronously
+  API->>Checks: Enqueue automated checks through Celery
   Checks->>Storage: Read referenced artifacts
   Checks->>DB: Persist checker run and results
   Checks->>DB: Keep task EVALUATION_PENDING while pre-review gate runs

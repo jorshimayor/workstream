@@ -59,7 +59,7 @@ the route still requires the matching role in the current verified token.
 | Claim task | no | no | yes | no | no | no |
 | Submit task | no | no | own task only | no | no | no |
 | Run submission precheck | yes | tasks they created | assigned in-progress or revision task only | no | no | no |
-| Finalize submission | yes | tasks they created | no | no | no | no |
+| Repair automatic pre-review gate | yes | tasks they created | no | no | no | no |
 | Review submission | yes | no | no | yes | no | no |
 | Review own submission | no | no | no | no | no | no |
 | Request revision | yes | no | no | yes | no | no |
@@ -80,7 +80,8 @@ the route still requires the matching role in the current verified token.
   may come from admin access, task-creator project-manager access, or worker
   assignment. When the current verified token includes `worker`, the worker
   task-status restriction still applies: the task must be in progress or in
-  revision. Finalization remains a separate audited operator action.
+  revision. Automatic pre-review gate repair remains a separate audited
+  operator action.
 - Admin and project-manager operational intervention must use a separate
   audited override path. It must not masquerade as worker task claiming.
 - Admin overrides must create an audit event with reason and evidence.

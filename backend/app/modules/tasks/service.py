@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
@@ -16,6 +17,8 @@ from app.modules.checkers.compiler import (
     PreSubmitCheckerCompilerError,
     validate_compiled_pre_submit_checker_bundle,
 )
+from app.modules.checkers.gate_queue import PreReviewGateQueueError, enqueue_pre_review_gate
+from app.modules.checkers.service import CheckerService, CheckerServiceError
 from app.modules.actors.models import ActorProfile
 from app.modules.actors.service import ActorService
 from app.modules.projects.models import (
@@ -87,8 +90,6 @@ TASK_START_ROLES = {"admin", "project_manager", "worker"}
 TASK_START_OPERATOR_ROLES = {"admin", "project_manager"}
 SUBMISSION_FINALIZE_ROLES = {"admin", "project_manager"}
 SUBMISSION_FINALIZED_EVENT_TYPE = "submission_finalized"
-SUBMISSION_FINALIZED_TRIGGER_SOURCE = "submission_finalized"
-SUBMISSION_FINALIZED_PRE_REVIEW_REASON = "submission finalized pre-review gate"
 WORKER_VISIBLE_AUDIT_PAYLOAD_KEYS = {
     "assignment_id",
     "locked_guide_version",
@@ -106,6 +107,7 @@ WORKER_REDACTED_AUDIT_EVENTS = {
     "pre_review_gate_passed",
     "pre_review_gate_needs_revision",
     "pre_review_gate_blocked",
+    "pre_review_gate_repair_requested",
 }
 SUBMISSION_CREATE_REQUIRED_PACKET_FIELDS = (
     "summary",
@@ -186,7 +188,7 @@ class SubmissionVersionConflict(TaskServiceError):
 
 
 class SubmissionCheckerGateError(TaskServiceError):
-    """Raised when automatic checker gate execution blocks submission finalization."""
+    """Raised when automatic checker gate execution blocks submission intake."""
 
     def __init__(self, message: str, status_code: int) -> None:
         """Create a task-layer error preserving the checker gate status code.
@@ -491,7 +493,7 @@ class TaskService:
         if reason is None or not reason.strip():
             raise TaskValidationError("release decision reason is required")
         self._ensure_locked_context(task)
-        await self._validate_locked_post_submit_policy_context(task)
+        await self._load_locked_task_context(task)
         await self._change_task_status(actor, task, TASK_STATUS_READY, reason)
         await self._session.commit()
         await self._session.refresh(task)
@@ -643,9 +645,7 @@ class TaskService:
                 "task must be in progress or needs revision before submission"
             )
         self._ensure_locked_context(task)
-        await self._validate_locked_post_submit_policy_context(task)
-
-        from app.modules.checkers.service import CheckerService, CheckerServiceError
+        await self._load_locked_task_context(task)
 
         try:
             pre_submit_response = await CheckerService(self._session).pre_submit_check(
@@ -740,11 +740,13 @@ class TaskService:
                     reason=None,
                     event_payload=event_payload,
                 )
+            await self._finalize_submission_for_evaluation(actor, task, submission)
             await self._session.commit()
         except IntegrityError as exc:
             await self._session.rollback()
             raise SubmissionVersionConflict("submission version conflicted; retry") from exc
 
+        await self._enqueue_pre_review_gate_after_commit(actor, submission.id)
         persisted = await self._repo.get_submission(submission.id)
         if persisted is None:
             raise SubmissionNotFound("submission not found")
@@ -811,52 +813,90 @@ class TaskService:
         actor: ActorContext,
         submission_id: str,
     ) -> SubmissionResponse:
-        """Finalize the latest submission packet before checker execution.
+        """Repair or re-check the automatic gate for a locked submission.
 
         Args:
             actor: Verified Flow actor context for the current request.
-            submission_id: Submission id to finalize.
+            submission_id: Submission id whose automatic gate should be repaired.
 
         Returns:
-            Finalized submission response.
+            Locked submission response.
 
         Raises:
-            PermissionDenied: If the actor cannot finalize submissions.
+            PermissionDenied: If the actor cannot repair the automatic gate.
             TaskTransitionBlocked: If the submission is stale or task state is invalid.
         """
         require_any_role(actor, SUBMISSION_FINALIZE_ROLES)
         submission = await self._get_submission(submission_id)
         task = await self._get_task(submission.task_id)
         await self._ensure_submission_finalize_authorized(actor, task)
+        has_operator_access = can_admin_or_task_creator_manage(actor, task)
         latest_submission = await self._repo.get_latest_submission_for_task(task.id)
         if latest_submission is None or latest_submission.id != submission.id:
-            raise TaskTransitionBlocked("only latest submission version can be finalized")
+            raise TaskTransitionBlocked("only latest submission version can be repair-checked")
         if submission.status != "submitted":
-            raise TaskTransitionBlocked("submission must be submitted before finalizing")
-        try:
-            await self._load_locked_task_context(task)
-        except TaskLockedContextInvalid as exc:
-            raise TaskTransitionBlocked(str(exc)) from exc
+            raise TaskTransitionBlocked("submission must be submitted before repair check")
         if submission.locked_at is not None:
+            repair_snapshot = await CheckerService(self._session).pre_review_gate_repair_snapshot(
+                submission.id
+            )
+            requester_provenance = await self._submission_finalization_requester_provenance(
+                task,
+                submission,
+            )
+            await self._enqueue_pre_review_gate_after_commit(
+                actor,
+                submission.id,
+                requester_provenance=requester_provenance,
+                repair_snapshot=repair_snapshot,
+            )
+            persisted = await self._repo.get_submission(submission_id)
+            if persisted is None:
+                raise SubmissionNotFound("submission not found")
             return self._submission_response(
                 actor,
-                submission,
-                has_operator_access=can_admin_or_task_creator_manage(actor, task),
+                persisted,
+                has_operator_access=has_operator_access,
             )
-        if task.status != TASK_STATUS_SUBMITTED:
-            raise TaskTransitionBlocked("task must be submitted before finalizing submission")
+        raise TaskTransitionBlocked(
+            "submission is not locked; create a submission to trigger automatic pre-review gate"
+        )
 
+    async def _ensure_submission_finalize_authorized(
+        self,
+        actor: ActorContext,
+        task: WorkstreamTask,
+    ) -> None:
+        """Enforce object-level authorization for automatic gate repair.
+
+        Args:
+            actor: Verified actor requesting repair.
+            task: Task that owns the submission being repaired.
+
+        Raises:
+            PermissionDenied: If the role is valid but not authorized for this task.
+        """
+        if can_admin_or_task_creator_manage(actor, task):
+            return
+        raise PermissionDenied("actor is not authorized to repair this submission gate")
+
+    async def _finalize_submission_for_evaluation(
+        self,
+        actor: ActorContext,
+        task: WorkstreamTask,
+        submission: Submission,
+    ) -> None:
+        """Stamp the immutable submission boundary before post-submit evaluation."""
+        if submission.locked_at is not None:
+            return
         locked_at = datetime.now(UTC)
         did_finalize = await self._repo.finalize_submission_if_unlocked(submission.id, locked_at)
         if not did_finalize:
             persisted = await self._repo.get_submission(submission.id, populate_existing=True)
             if persisted is not None and persisted.locked_at is not None:
-                return self._submission_response(
-                    actor,
-                    persisted,
-                    has_operator_access=can_admin_or_task_creator_manage(actor, task),
-                )
-            raise TaskTransitionBlocked("submission finalization conflicted; retry")
+                submission.locked_at = persisted.locked_at
+                return
+            raise TaskTransitionBlocked("submission lock conflicted; retry")
         submission.locked_at = locked_at
         await self._repo.lock_submission_evidence(submission.id, locked_at)
         await self._write_task_audit(
@@ -868,50 +908,114 @@ class TaskService:
             reason=None,
             event_payload=self._submission_audit_payload(submission),
         )
-        from app.modules.checkers.service import (
-            CheckerService,
-            CheckerServiceError,
-            pre_review_gate_system_actor,
-        )
 
-        try:
-            await CheckerService(self._session).run_submission_checkers(
-                actor,
-                submission.id,
-                SUBMISSION_FINALIZED_PRE_REVIEW_REASON,
-                trigger_source=SUBMISSION_FINALIZED_TRIGGER_SOURCE,
-                audit_actor=pre_review_gate_system_actor(),
-                requester_actor=actor,
+    async def _enqueue_pre_review_gate_after_commit(
+        self,
+        actor: ActorContext,
+        submission_id: str,
+        *,
+        requester_provenance: dict[str, str] | None = None,
+        repair_snapshot: dict[str, Any] | None = None,
+    ) -> str:
+        """Enqueue the system-owned post-submit checker gate after persistence."""
+        checker_service = CheckerService(self._session)
+        repair_submission: Submission | None = None
+        repair_task: WorkstreamTask | None = None
+        checker_run, should_enqueue = await checker_service.ensure_automatic_pre_review_gate_queued(
+            submission_id,
+            force_enqueue_queued=repair_snapshot is not None,
+        )
+        if not should_enqueue:
+            return checker_run.id
+        if repair_snapshot is not None:
+            dispatch_claimed = await checker_service.claim_pre_review_gate_repair_dispatch(
+                checker_run.id
             )
-        except CheckerServiceError as exc:
-            await self._session.rollback()
-            raise SubmissionCheckerGateError(str(exc), exc.status_code) from exc
-        persisted = await self._repo.get_submission(submission.id)
-        if persisted is None:
-            raise SubmissionNotFound("submission not found")
-        return self._submission_response(
-            actor,
-            persisted,
-            has_operator_access=can_admin_or_task_creator_manage(actor, task),
-        )
+            if not dispatch_claimed:
+                return checker_run.id
+        requester_payload = requester_provenance or self._requester_provenance_payload(actor)
+        try:
+            task_id = await asyncio.to_thread(
+                enqueue_pre_review_gate,
+                checker_run_id=checker_run.id,
+                requester_provenance=requester_payload,
+            )
+        except PreReviewGateQueueError as exc:
+            await checker_service.mark_pre_review_gate_enqueue_failed(checker_run.id)
+            raise SubmissionCheckerGateError(str(exc), 503) from exc
+        if repair_snapshot is not None:
+            if repair_submission is None:
+                repair_submission = await self._get_submission(submission_id)
+            if repair_task is None:
+                repair_task = await self._get_task(repair_submission.task_id)
+            await self._write_pre_review_gate_repair_audit(
+                actor,
+                repair_task,
+                repair_submission,
+                checker_run_id=checker_run.id,
+                should_enqueue=should_enqueue,
+                repair_snapshot=repair_snapshot,
+            )
+            await self._session.commit()
+        return task_id
 
-    async def _ensure_submission_finalize_authorized(
+    async def _submission_finalization_requester_provenance(
+        self,
+        task: WorkstreamTask,
+        submission: Submission,
+    ) -> dict[str, str]:
+        """Load original submitter/lock provenance for repair enqueue."""
+        events = await self._repo.list_audit_events("task", task.id)
+        for event in reversed(events):
+            if event.event_type != SUBMISSION_FINALIZED_EVENT_TYPE:
+                continue
+            if event.event_payload.get("submission_id") != submission.id:
+                continue
+            return {
+                "requester_actor_id": event.actor_id,
+                "requester_external_subject": event.external_subject,
+                "requester_external_issuer": event.external_issuer,
+                "requester_auth_source": event.auth_source,
+            }
+        raise TaskTransitionBlocked("submission lock audit provenance is missing")
+
+    async def _write_pre_review_gate_repair_audit(
         self,
         actor: ActorContext,
         task: WorkstreamTask,
+        submission: Submission,
+        *,
+        checker_run_id: str,
+        should_enqueue: bool,
+        repair_snapshot: dict[str, Any],
     ) -> None:
-        """Enforce object-level authorization for submission finalization.
+        """Record a scoped operator attempt to repair the automatic gate."""
+        await self._write_task_audit(
+            actor,
+            task,
+            event_type="pre_review_gate_repair_requested",
+            from_status=task.status,
+            to_status=task.status,
+            reason="repair automatic pre-review gate",
+            event_payload={
+                **self._submission_audit_payload(submission),
+                "checker_run_id": checker_run_id,
+                "repair_action": "requeue_automatic_pre_review_gate",
+                "should_enqueue": should_enqueue,
+                **repair_snapshot,
+            },
+        )
 
-        Args:
-            actor: Verified actor requesting finalization.
-            task: Task that owns the submission being finalized.
-
-        Raises:
-            PermissionDenied: If the role is valid but not authorized for this task.
-        """
-        if can_admin_or_task_creator_manage(actor, task):
-            return
-        raise PermissionDenied("actor is not authorized to finalize this submission")
+    @staticmethod
+    def _requester_provenance_payload(actor: ActorContext) -> dict[str, str]:
+        """Build the minimal requester provenance safe to send through Celery."""
+        audit = actor.audit_context()
+        return {
+            "requester_actor_id": audit.actor_id,
+            "requester_external_subject": audit.external_subject,
+            "requester_external_issuer": audit.external_issuer,
+            "requester_auth_source": audit.auth_source,
+        }
 
     async def list_task_audit_events(
         self,

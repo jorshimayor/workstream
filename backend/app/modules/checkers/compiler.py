@@ -539,17 +539,11 @@ def _expected_primitives(effective_policy: dict[str, Any]) -> set[str]:
         expected.add("require_manifest_field")
     if effective_policy.get("artifact_hash_required"):
         expected.add("verify_hash")
-    if [
-        artifact["key"]
-        for artifact in effective_policy.get("required_artifacts", [])
-        if artifact.get("required", True)
-    ]:
+    required_artifacts = _policy_object_list(effective_policy, "required_artifacts")
+    if [artifact["key"] for artifact in required_artifacts if artifact.get("required", True)]:
         expected.add("require_file")
-    if [
-        evidence["key"]
-        for evidence in effective_policy.get("required_evidence", [])
-        if evidence.get("required", True)
-    ]:
+    required_evidence = _policy_object_list(effective_policy, "required_evidence")
+    if [evidence["key"] for evidence in required_evidence if evidence.get("required", True)]:
         expected.add("require_minimum_evidence")
     if effective_policy.get("forbidden_artifacts", []):
         expected.add("forbid_artifact")
@@ -560,9 +554,28 @@ def _expected_primitives(effective_policy: dict[str, Any]) -> set[str]:
     if effective_policy.get("maximum_package_size_bytes") is not None:
         expected.add("limit_package_size")
     packaging = effective_policy.get("packaging", {})
+    if not isinstance(packaging, dict):
+        raise PreSubmitCheckerCompilerError(
+            "effective project submission artifact policy packaging must be an object"
+        )
     if packaging.get("package_required") or packaging.get("allowed_package_formats"):
         expected.add("require_packaging")
     return expected
+
+
+def _policy_object_list(effective_policy: dict[str, Any], field: str) -> list[dict[str, Any]]:
+    """Return a policy list that must contain object entries with keys."""
+    values = effective_policy.get(field, [])
+    if not isinstance(values, list):
+        raise PreSubmitCheckerCompilerError(
+            f"effective project submission artifact policy {field} must be a list"
+        )
+    for value in values:
+        if not isinstance(value, dict) or not isinstance(value.get("key"), str):
+            raise PreSubmitCheckerCompilerError(
+                f"effective project submission artifact policy {field} entries are invalid"
+            )
+    return values
 
 
 def _checker_names_for_rules(rules: list[dict[str, Any]]) -> list[str]:

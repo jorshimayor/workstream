@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import asyncio
-from collections.abc import Awaitable, Callable
-from concurrent.futures import ThreadPoolExecutor
-from typing import Any, TypeVar
+from typing import Any
 
 from celery.utils.log import get_task_logger
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
@@ -18,6 +15,7 @@ from app.modules.projects.service import (
     safe_project_setup_error_summary,
 )
 from app.schemas.auth import ActorContext
+from app.workers.async_runner import run_async_task
 from app.workers.celery_app import celery_app
 
 PROJECT_SETUP_PIPELINE_ACTOR_ID = "workstream-system:project-setup-pipeline"
@@ -27,7 +25,6 @@ PROJECT_SETUP_POST_SUBMIT_CONTINUATION_TASK = (
 )
 
 logger = get_task_logger(__name__)
-T = TypeVar("T")
 
 
 def project_setup_pipeline_actor() -> ActorContext:
@@ -63,7 +60,7 @@ def run_pre_submit_setup_pipeline(
     Returns:
         Machine-readable terminal pipeline state.
     """
-    return _run_async_task(
+    return run_async_task(
         lambda: _run_pre_submit_setup_pipeline(
             project_id,
             guide_id,
@@ -95,7 +92,7 @@ def run_post_submit_setup_continuation(
     Returns:
         Machine-readable terminal continuation state.
     """
-    return _run_async_task(
+    return run_async_task(
         lambda: _run_post_submit_setup_continuation(
             project_id,
             guide_id,
@@ -105,23 +102,6 @@ def run_post_submit_setup_continuation(
             pre_submit_checker_policy_id,
         )
     )
-
-
-def _run_async_task(coro_factory: Callable[[], Awaitable[T]]) -> T:
-    """Run an async task body from a synchronous Celery task boundary.
-
-    Celery workers normally execute this with no running event loop. Eager test
-    execution can happen inside an async API request, so that case runs the
-    coroutine on a short-lived thread instead of nesting event loops.
-    """
-    try:
-        asyncio.get_running_loop()
-    except RuntimeError:
-        return asyncio.run(coro_factory())
-
-    with ThreadPoolExecutor(max_workers=1) as executor:
-        return executor.submit(lambda: asyncio.run(coro_factory())).result()
-
 
 async def _run_pre_submit_setup_pipeline(
     project_id: str,

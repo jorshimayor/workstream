@@ -434,7 +434,7 @@ async def finalize_submission(
     actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> SubmissionResponse:
-    """Finalize a submission packet into the pre-review checker gate."""
+    """Repair or re-check the automatic pre-review gate for a locked submission."""
     try:
         return await TaskService(session).finalize_submission(actor, submission_id)
     except PermissionDenied as exc:

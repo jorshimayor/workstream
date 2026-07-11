@@ -151,7 +151,7 @@ If the ready gate fails, the task remains `DRAFT`.
 
 ## Submission Intake Checklist
 
-Before accepting a submission packet:
+Before locking a submission packet:
 
 - task is assigned to submitter
 - summary exists
@@ -163,6 +163,8 @@ Before accepting a submission packet:
 - preflight failures return `PreSubmitCheckResponse(status="failed", eligible_to_submit=false, results=[...])`
 - blocked submission-create attempts return `pre_submission_checker_failed` with structured pass/fail/warning details
 - no submission row is created until blocking pre-submit checks pass
+- successful submission creation stamps the immutable submission boundary and queues the Celery pre-review gate
+- `/finalize` is an operator repair/requeue endpoint for an already locked submission; it is not the normal contributor handoff
 
 ## Reviewer Simulation Gate
 

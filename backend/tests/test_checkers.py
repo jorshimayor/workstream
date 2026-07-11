@@ -64,6 +64,7 @@ def checker_database_env(
     migration_lock,
 ) -> Iterator[str]:
     monkeypatch.setenv("WORKSTREAM_DATABASE_URL", postgres_database_url)
+    monkeypatch.setenv("WORKSTREAM_CELERY_TASK_ALWAYS_EAGER", "true")
     set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
     get_settings.cache_clear()
     asyncio.run(db_session.dispose_engine())
@@ -1011,24 +1012,24 @@ def test_pre_submit_compiler_rejects_untraceable_extra_rules() -> None:
         compile_project_pre_submit_checker_spec(effective_policy, effective_policy_hash, spec)
 
 
-async def finalize_submission_and_get_auto_run(
+async def get_submission_and_automatic_pre_review_run(
     client: AsyncClient,
     submission_id: str,
 ) -> tuple[dict, dict]:
-    """Finalize a submission and return the automatic pre-review checker run.
+    """Return a locked submission and its automatic pre-review checker run.
 
     Args:
         client: API client using the current test actor.
-        submission_id: Submission id to finalize.
+        submission_id: Submission id to inspect.
 
     Returns:
-        Finalized submission payload and the first automatic checker run payload.
+        Submission payload and the first automatic checker run payload.
     """
-    finalized = await client.post(
-        f"/api/v1/submissions/{submission_id}/finalize",
+    submission = await client.get(
+        f"/api/v1/submissions/{submission_id}",
         headers=auth_headers(),
     )
-    assert finalized.status_code == 200, finalized.text
+    assert submission.status_code == 200, submission.text
 
     listed = await client.get(
         f"/api/v1/submissions/{submission_id}/checker-runs",
@@ -1039,7 +1040,33 @@ async def finalize_submission_and_get_auto_run(
     assert len(runs) == 1
     assert runs[0]["trigger_source"] == "submission_finalized"
     assert runs[0]["attempt_number"] == 1
-    return finalized.json(), runs[0]
+    return submission.json(), runs[0]
+
+
+async def run_manual_checker_retry(
+    client: AsyncClient,
+    submission_id: str,
+    reason: str = "manual checker retry",
+) -> dict:
+    """Run an explicit operator checker retry for a locked submission.
+
+    Args:
+        client: API client using an authorized operator actor.
+        submission_id: Submission id whose locked packet should be rechecked.
+        reason: Required audit reason for the manual checker trigger.
+
+    Returns:
+        The persisted checker run payload.
+    """
+    response = await client.post(
+        f"/api/v1/submissions/{submission_id}/checker-runs",
+        headers=auth_headers(),
+        json={"trigger_reason": reason},
+    )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["trigger_source"] == "manual_checker_trigger"
+    return body
 
 
 async def create_checker_trial_project(
@@ -1189,7 +1216,7 @@ async def test_locked_submission_checker_run_persists_results_and_allows_review(
     assert created.status_code == 201, created.text
 
     set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
-    _, body = await finalize_submission_and_get_auto_run(checker_client, created.json()["id"])
+    _, body = await get_submission_and_automatic_pre_review_run(checker_client, created.json()["id"])
     assert body["status"] == "completed"
     assert body["trigger_source"] == "submission_finalized"
     assert body["routing_recommendation"] == "allow_review"
@@ -1229,7 +1256,7 @@ async def test_locked_submission_checker_run_persists_results_and_allows_review(
     assert audit is not None
     assert audit.event_type == "checker_run_triggered"
     assert audit.entity_id == created.json()["id"]
-    assert audit.reason == "submission finalized pre-review gate"
+    assert audit.reason == "submission locked for automatic pre-review gate"
     assert audit.event_payload["submission_version"] == 1
     assert audit.event_payload["trigger_source"] == "submission_finalized"
     assert (
@@ -1302,11 +1329,11 @@ async def test_database_rejects_missing_submission_post_submit_policy_context(
             )
         ).scalars().all()
     assert task is not None
-    assert task.status == "submitted"
+    assert task.status == "review_pending"
     assert submission is not None
-    assert submission.locked_at is None
-    assert runs == []
-    assert results == []
+    assert submission.locked_at is not None
+    assert len(runs) == 1
+    assert results != []
 
 
 async def test_checker_run_uses_locked_post_submit_policy_body_after_setup_mutation(
@@ -1377,68 +1404,64 @@ async def test_checker_run_uses_locked_post_submit_policy_body_after_setup_mutat
     assert results != []
 
 
-async def test_finalize_submission_rejects_malformed_locked_post_submit_policy_body_without_side_effects(
+async def test_submission_rejects_malformed_locked_post_submit_policy_body_without_side_effects(
     checker_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     project = await create_active_project(checker_client)
     started_task = await create_started_task(checker_client, project["id"], monkeypatch)
-    created = await checker_client.post(
-        f"/api/v1/tasks/{started_task['id']}/submissions",
-        headers=auth_headers(),
-        json=complete_submission_payload(),
-    )
-    assert created.status_code == 201, created.text
 
     async with db_session.get_session_factory()() as session:
         task = await session.get(WorkstreamTask, started_task["id"])
-        submission = await session.get(Submission, created.json()["id"])
         assert task is not None
-        assert submission is not None
-        corrupted_body = dict(submission.locked_post_submit_checker_policy_body or {})
+        corrupted_body = dict(task.locked_post_submit_checker_policy_body or {})
         corrupted_body["required_checkers"] = [
             "check_policy_context_present",
             "check_evidence_present",
         ]
         task.locked_post_submit_checker_policy_body = corrupted_body
-        submission.locked_post_submit_checker_policy_body = corrupted_body
         await session.commit()
 
-    set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
-    locked = await checker_client.post(
-        f"/api/v1/submissions/{created.json()['id']}/finalize",
+    rejected = await checker_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
         headers=auth_headers(),
+        json=complete_submission_payload(),
     )
 
-    assert locked.status_code == 409
-    assert "locked post-submit checker policy" in locked.json()["detail"]
+    assert rejected.status_code == 422
+    assert rejected.json()["code"] == "task_locked_context_invalid"
+    assert rejected.json()["details"]["field"] == "locked_post_submit_checker_policy_body"
     async with db_session.get_session_factory()() as session:
         task = await session.get(WorkstreamTask, started_task["id"])
-        submission = await session.get(Submission, created.json()["id"])
+        submissions = (
+            await session.execute(
+                select(Submission).where(Submission.task_id == started_task["id"])
+            )
+        ).scalars().all()
         runs = (
             await session.execute(
-                select(CheckerRun).where(CheckerRun.submission_id == created.json()["id"])
+                select(CheckerRun).join(Submission, CheckerRun.submission_id == Submission.id)
+                .where(Submission.task_id == started_task["id"])
             )
         ).scalars().all()
         results = (
             await session.execute(
-                select(CheckerResult).where(CheckerResult.submission_id == created.json()["id"])
+                select(CheckerResult).join(Submission, CheckerResult.submission_id == Submission.id)
+                .where(Submission.task_id == started_task["id"])
             )
         ).scalars().all()
         audit_events = (
             await session.execute(
-                select(AuditEvent).where(
-                    AuditEvent.entity_id.in_([started_task["id"], created.json()["id"]])
-                )
+                select(AuditEvent).where(AuditEvent.entity_id == started_task["id"])
             )
         ).scalars().all()
 
     assert task is not None
-    assert task.status == "submitted"
-    assert submission is not None
-    assert submission.locked_at is None
+    assert task.status == "in_progress"
+    assert submissions == []
     assert runs == []
     assert results == []
+    assert "submission_created" not in {event.event_type for event in audit_events}
     assert "submission_finalized" not in {event.event_type for event in audit_events}
     assert "checker_run_triggered" not in {event.event_type for event in audit_events}
 
@@ -1477,12 +1500,12 @@ async def test_database_rejects_mismatched_submission_post_submit_policy_context
             )
         ).scalars().all()
     assert task is not None
-    assert task.status == "submitted"
+    assert task.status == "review_pending"
     assert submission is not None
-    assert submission.locked_at is None
+    assert submission.locked_at is not None
     assert submission.locked_post_submit_checker_policy_hash != "sha256:" + "0" * 64
-    assert runs == []
-    assert results == []
+    assert len(runs) == 1
+    assert results != []
 
 
 async def test_locked_submission_checker_run_enforces_required_evidence_key(
@@ -1507,7 +1530,11 @@ async def test_locked_submission_checker_run_enforces_required_evidence_key(
         await session.commit()
 
     set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
-    _, body = await finalize_submission_and_get_auto_run(checker_client, created.json()["id"])
+    body = await run_manual_checker_retry(
+        checker_client,
+        created.json()["id"],
+        "evidence metadata repair retry",
+    )
 
     evidence_result = next(
         result
@@ -1543,7 +1570,11 @@ async def test_locked_submission_checker_run_enforces_project_attestation_terms(
         await session.commit()
 
     set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
-    _, body = await finalize_submission_and_get_auto_run(checker_client, created.json()["id"])
+    body = await run_manual_checker_retry(
+        checker_client,
+        created.json()["id"],
+        "attestation repair retry",
+    )
 
     attestation_result = next(
         result
@@ -1569,7 +1600,7 @@ async def test_checker_run_retry_supersedes_previous_current_run(
     )
     assert created.status_code == 201, created.text
     set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
-    _, first = await finalize_submission_and_get_auto_run(checker_client, created.json()["id"])
+    _, first = await get_submission_and_automatic_pre_review_run(checker_client, created.json()["id"])
 
     set_dev_actor(monkeypatch, roles="project_manager", subject="other-project-manager")
     wrong_manager_retry = await checker_client.post(
@@ -1833,7 +1864,7 @@ async def test_chunk8_low_quality_generated_artifacts_warns_without_blocking(
     assert created.status_code == 201, created.text
 
     set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
-    _, body = await finalize_submission_and_get_auto_run(checker_client, created.json()["id"])
+    _, body = await get_submission_and_automatic_pre_review_run(checker_client, created.json()["id"])
     assert body["routing_recommendation"] == "allow_review"
     assert body["outcome_source"] == "none"
     assert body["warning_count"] >= 1
@@ -1873,7 +1904,7 @@ async def test_checker_caused_revision_resubmits_fixed_version_through_api(
     )
     assert v1.status_code == 201, v1.text
     set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
-    _, v1_run = await finalize_submission_and_get_auto_run(checker_client, v1.json()["id"])
+    _, v1_run = await get_submission_and_automatic_pre_review_run(checker_client, v1.json()["id"])
     assert v1_run["routing_recommendation"] == "needs_revision"
     assert v1_run["outcome_source"] == "auto_checker"
     low_quality = next(
@@ -2027,7 +2058,7 @@ async def test_checker_caused_revision_resubmits_fixed_version_through_api(
         json={"trigger_reason": "stale v1 retry"},
     )
     assert stale_run.status_code == 409
-    _, v2_run = await finalize_submission_and_get_auto_run(checker_client, v2.json()["id"])
+    _, v2_run = await get_submission_and_automatic_pre_review_run(checker_client, v2.json()["id"])
     assert v2_run["routing_recommendation"] == "allow_review"
     assert v2_run["outcome_source"] == "none"
 
@@ -2102,6 +2133,12 @@ async def test_chunk8_task_setup_blocked_takes_priority_over_worker_revision(
     )
     assert activation_response.status_code == 200, activation_response.text
     started_task = await create_started_task(checker_client, project["id"], monkeypatch)
+    async with db_session.get_session_factory()() as session:
+        task = await session.get(WorkstreamTask, started_task["id"])
+        assert task is not None
+        task.acceptance_criteria = None
+        await session.commit()
+
     created = await checker_client.post(
         f"/api/v1/tasks/{started_task['id']}/submissions",
         headers=auth_headers(),
@@ -2109,14 +2146,8 @@ async def test_chunk8_task_setup_blocked_takes_priority_over_worker_revision(
     )
     assert created.status_code == 201, created.text
 
-    async with db_session.get_session_factory()() as session:
-        task = await session.get(WorkstreamTask, started_task["id"])
-        assert task is not None
-        task.acceptance_criteria = None
-        await session.commit()
-
     set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
-    _, body = await finalize_submission_and_get_auto_run(checker_client, created.json()["id"])
+    _, body = await get_submission_and_automatic_pre_review_run(checker_client, created.json()["id"])
     assert body["routing_recommendation"] == "task_setup_blocked"
     assert body["outcome_source"] == "auto_checker"
     setup_result = next(
@@ -2315,7 +2346,7 @@ async def test_chunk10_checker_trial_runs_sample_submissions_through_real_api(
             continue
 
         set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
-        _, manager_run = await finalize_submission_and_get_auto_run(
+        _, manager_run = await get_submission_and_automatic_pre_review_run(
             checker_client,
             created.json()["id"],
         )
@@ -2368,6 +2399,12 @@ async def test_chunk10_checker_trial_runs_sample_submissions_through_real_api(
         monkeypatch,
         subject="chunk10-worker-task-setup",
     )
+    async with db_session.get_session_factory()() as session:
+        task = await session.get(WorkstreamTask, started_task["id"])
+        assert task is not None
+        task.acceptance_criteria = None
+        await session.commit()
+
     created = await checker_client.post(
         f"/api/v1/tasks/{started_task['id']}/submissions",
         headers=auth_headers(),
@@ -2375,14 +2412,8 @@ async def test_chunk10_checker_trial_runs_sample_submissions_through_real_api(
     )
     assert created.status_code == 201, created.text
 
-    async with db_session.get_session_factory()() as session:
-        task = await session.get(WorkstreamTask, started_task["id"])
-        assert task is not None
-        task.acceptance_criteria = None
-        await session.commit()
-
     set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
-    _, blocked_run = await finalize_submission_and_get_auto_run(
+    _, blocked_run = await get_submission_and_automatic_pre_review_run(
         checker_client,
         created.json()["id"],
     )
@@ -2453,7 +2484,7 @@ async def test_worker_can_read_only_worker_visible_checker_result_fields(
     )
     assert created.status_code == 201, created.text
     set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
-    _, run = await finalize_submission_and_get_auto_run(checker_client, created.json()["id"])
+    _, run = await get_submission_and_automatic_pre_review_run(checker_client, created.json()["id"])
 
     set_dev_actor(monkeypatch, roles="worker", subject="worker-one")
     read = await checker_client.get(
@@ -2530,7 +2561,7 @@ async def test_worker_cannot_see_hidden_checker_results(
     )
     assert created.status_code == 201, created.text
     set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
-    _, run = await finalize_submission_and_get_auto_run(checker_client, created.json()["id"])
+    _, run = await get_submission_and_automatic_pre_review_run(checker_client, created.json()["id"])
 
     async with db_session.get_session_factory()() as session:
         session.add(
@@ -2615,7 +2646,7 @@ async def test_checker_endpoints_reject_unassigned_worker_and_fake_result_payloa
     )
     assert created.status_code == 201, created.text
     set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
-    await finalize_submission_and_get_auto_run(checker_client, created.json()["id"])
+    await get_submission_and_automatic_pre_review_run(checker_client, created.json()["id"])
     fake_run = await checker_client.post(
         f"/api/v1/submissions/{created.json()['id']}/checker-runs",
         headers=auth_headers(),
@@ -2719,7 +2750,7 @@ async def test_stale_locked_submission_cannot_receive_checker_run(
     assert stale_run.status_code == 409
     assert "latest submission" in stale_run.json()["detail"]
 
-    _, second_run = await finalize_submission_and_get_auto_run(checker_client, second.json()["id"])
+    _, second_run = await get_submission_and_automatic_pre_review_run(checker_client, second.json()["id"])
     assert second_run["submission_version"] == 2
     assert second_run["trigger_source"] == "submission_finalized"
     assert second_run["routing_recommendation"] == "allow_review"

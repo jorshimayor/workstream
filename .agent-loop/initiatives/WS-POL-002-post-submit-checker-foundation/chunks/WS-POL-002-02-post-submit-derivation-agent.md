@@ -77,19 +77,42 @@ activation bridge explicit until `WS-POL-002-03` adds the server-owned approval
 API. These files must not introduce product runtime shortcuts or skip the
 project setup continuation tests in `backend/tests/test_projects.py`.
 
+During the post-submit API drill review, the user rejected a manual
+manager-owned submission handoff. The normal product flow is now: assigned
+contributor submits a packet, Workstream reruns pre-submit authoritatively
+against that exact payload, Workstream stamps the immutable submission
+boundary, and the server-owned pre-review gate runs through Celery. The allowed
+scope therefore also includes the narrow task/checker runtime files needed to
+keep manager action out of the happy path. This amendment must not add runtime
+agent judgment, reviewer lifecycle behavior, or payment/reputation behavior.
+Internal architecture review also required the automatic pre-review gate's
+compare-and-set persistence primitives to sit behind the checker repository
+boundary instead of inside the checker service. The allowed scope therefore
+includes `backend/app/modules/checkers/repository.py`, but only for atomic
+automatic pre-review gate persistence methods. Lifecycle decisions remain in
+`CheckerService`.
+
 ## Allowed Files
 
 ```text
 backend/app/adapters/project_agents/**
 backend/app/interfaces/project_agents.py
+backend/app/modules/checkers/gate_queue.py
 backend/app/workers/project_setup.py
+backend/app/workers/async_runner.py
+backend/app/workers/checkers.py
+backend/app/workers/celery_app.py
 backend/app/modules/projects/setup_queue.py
 backend/app/modules/projects/router.py (docstring-only stale OpenAPI wording cleanup)
 backend/app/modules/projects/service.py
 backend/app/modules/projects/schemas.py
 backend/app/modules/projects/models.py
 backend/app/modules/projects/repository.py
+backend/app/modules/tasks/service.py
+backend/app/modules/tasks/router.py (docstring-only stale OpenAPI wording cleanup)
+backend/app/modules/checkers/service.py
 backend/app/modules/checkers/compiler.py
+backend/app/modules/checkers/repository.py
 backend/alembic/versions/**
 backend/tests/test_projects.py
 backend/tests/test_agent_runtime.py
@@ -104,6 +127,13 @@ docs/architecture_checker_framework.md
 docs/architecture_data_model.md
 docs/glossary.md
 docs/operations_project_operating_manual.md
+docs/operations_roles_permissions.md
+docs/spec_chunk_5_submission_packet_foundation.md
+docs/spec_chunk_9_pre_review_gate.md
+docs/spec_week2_checker_framework.md
+docs/roadmap_day_by_day_execution_plan.md
+docs/roadmap_status.md
+docs/diagrams/task_lifecycle_sequence.md
 .agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/**
 .agent-loop/LOOP_STATE.md
 .agent-loop/WORK_QUEUE.md
@@ -113,8 +143,8 @@ docs/operations_project_operating_manual.md
 ## Not Allowed
 
 ```text
-backend/app/modules/tasks/**
-backend/app/modules/checkers/service.py
+backend/app/modules/tasks/** except backend/app/modules/tasks/service.py
+backend/app/modules/checkers/** except backend/app/modules/checkers/service.py, backend/app/modules/checkers/gate_queue.py, backend/app/modules/checkers/compiler.py, and backend/app/modules/checkers/repository.py
 frontend or demo UI work
 payment/reputation/blockchain settlement
 per-task checker generation
@@ -150,6 +180,11 @@ runtime agent-based submission judgment
 - Implementation extends the existing project setup queue/worker boundary in
   `setup_queue.py` and `project_setup.py`; it must not create a disconnected
   post-submit-only queue or parallel pipeline.
+- Assigned contributor submission creation locks the submitted packet after
+  authoritative server-side pre-submit validation and enqueues the Celery
+  pre-review checker gate with requester provenance.
+- The existing finalize route remains idempotent/manual-repair only; repeated
+  calls must not create duplicate checker runs or audit events.
 
 ## Verification Commands
 

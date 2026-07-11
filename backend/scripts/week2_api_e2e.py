@@ -442,7 +442,7 @@ async def create_started_task(
     return started
 
 
-async def submit_finalize_and_get_run(
+async def submit_and_get_automatic_run(
     client: httpx.AsyncClient,
     *,
     manager_token: str,
@@ -450,17 +450,17 @@ async def submit_finalize_and_get_run(
     task_id: str,
     payload: dict,
 ) -> tuple[dict, dict, dict]:
-    """Submit a packet, finalize it, and return the automatic checker run.
+    """Submit a packet and return the automatic checker run.
 
     Args:
         client: Real HTTP client.
-        manager_token: Project manager Flow token.
+        manager_token: Project manager Flow token used for operator visibility.
         worker_token: Worker Flow token.
         task_id: Task receiving the submission.
         payload: Submission packet payload.
 
     Returns:
-        Created submission, finalized submission, and automatic checker run payload.
+        Created/locked submission, same locked response, and automatic checker run payload.
     """
     submission = await request_json(
         client,
@@ -470,10 +470,11 @@ async def submit_finalize_and_get_run(
         payload,
         201,
     )
+    ensure(submission["finalized_at"] is not None, "created submission missing finalized_at")
     finalized = await request_json(
         client,
-        "POST",
-        f"/api/v1/submissions/{submission['id']}/finalize",
+        "GET",
+        f"/api/v1/submissions/{submission['id']}",
         manager_token,
     )
     assert_finalized_submission_versions(finalized)
@@ -486,12 +487,12 @@ async def submit_finalize_and_get_run(
 
 
 def assert_finalized_submission_versions(submission: dict) -> None:
-    """Assert a finalized submission response has expected version stamps.
+    """Assert a locked submission response has expected version stamps.
 
     Args:
-        submission: Finalized submission response payload.
+        submission: Locked submission response payload.
     """
-    ensure(submission["finalized_at"] is not None, "finalized submission missing finalized_at")
+    ensure(submission["finalized_at"] is not None, "locked submission missing finalized_at")
     locked_versions = {
         submission["locked_guide_version"],
         submission["locked_review_policy_version"],
@@ -513,13 +514,13 @@ async def assert_finalize_idempotency(
     expected_finalized_at: str,
     expected_checker_run_id: str,
 ) -> None:
-    """Assert finalizing an already finalized submission does not create another run.
+    """Assert repair-checking an already locked submission does not create another run.
 
     Args:
         client: Real HTTP client.
         manager_token: Project manager Flow token.
-        submission_id: Submission id to finalize again.
-        expected_finalized_at: Original finalize timestamp.
+        submission_id: Submission id to repair-check.
+        expected_finalized_at: Original lock timestamp exposed as finalized_at.
         expected_checker_run_id: Original automatic checker run id.
     """
     refinalized = await request_json(
@@ -545,7 +546,7 @@ async def wait_for_submission_checker_run(
     manager_token: str,
     submission_id: str,
 ) -> dict:
-    """Wait for the automatic finalized-submission checker run.
+    """Wait for the automatic locked-submission checker run.
 
     Args:
         client: Real HTTP client.
@@ -1103,7 +1104,7 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
             clean_worker_token,
         )
         ensure(clean_precheck_submissions == [], "clean precheck created a submission")
-        clean_submission, clean_finalized, clean_run = await submit_finalize_and_get_run(
+        clean_submission, clean_finalized, clean_run = await submit_and_get_automatic_run(
             client,
             manager_token=manager_token,
             worker_token=clean_worker_token,
@@ -1215,7 +1216,7 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
             trusted_retry_submission,
             trusted_retry_finalized,
             trusted_retry_initial_run,
-        ) = await submit_finalize_and_get_run(
+        ) = await submit_and_get_automatic_run(
             client,
             manager_token=manager_token,
             worker_token=trusted_retry_worker_token,
@@ -1602,7 +1603,7 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
         )
         warning_payload = submission_payload(run_id, "warning")
         warning_payload["summary"] = "Completed with a placeholder note that must be reviewed."
-        warning_submission, warning_finalized, warning_run = await submit_finalize_and_get_run(
+        warning_submission, warning_finalized, warning_run = await submit_and_get_automatic_run(
             client,
             manager_token=manager_token,
             worker_token=warning_worker_token,
@@ -1664,7 +1665,7 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
             checker_revision_v1_submission,
             checker_revision_v1_finalized,
             checker_revision_v1_run,
-        ) = await submit_finalize_and_get_run(
+        ) = await submit_and_get_automatic_run(
             client,
             manager_token=manager_token,
             worker_token=checker_revision_worker_token,
@@ -1899,8 +1900,8 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
         )
         checker_revision_v2_finalized = await request_json(
             client,
-            "POST",
-            f"/api/v1/submissions/{checker_revision_v2_submission['id']}/finalize",
+            "GET",
+            f"/api/v1/submissions/{checker_revision_v2_submission['id']}",
             manager_token,
         )
         assert_finalized_submission_versions(checker_revision_v2_finalized)
@@ -2015,6 +2016,7 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
             worker_subject=setup_worker_subject,
             flow_issuer=flow_issuer,
         )
+        await break_acceptance_criteria(setup_task["id"])
         setup_submission = await request_json(
             client,
             "POST",
@@ -2023,11 +2025,10 @@ async def exercise_week2_api(base_url: str, env: dict[str, str]) -> None:
             submission_payload(run_id, "setup"),
             201,
         )
-        await break_acceptance_criteria(setup_task["id"])
         setup_finalized = await request_json(
             client,
-            "POST",
-            f"/api/v1/submissions/{setup_submission['id']}/finalize",
+            "GET",
+            f"/api/v1/submissions/{setup_submission['id']}",
             manager_token,
         )
         assert_finalized_submission_versions(setup_finalized)
