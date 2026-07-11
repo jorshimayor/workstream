@@ -19,7 +19,8 @@ Each chunk is one PR in one repository. No later chunk starts automatically.
 ## Dependency Order
 
 ```text
-WS-ART-001-01
+WS-ART-001-PLAN
+-> WS-ART-001-01
 -> FN-ART-001-01
 -> FN-ART-001-02
 -> FN-ART-001-03

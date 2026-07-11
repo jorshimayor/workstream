@@ -61,7 +61,7 @@ per-operation scopes over TLS, including a distinct destructive
 
 Evaluation evidence is private. Public announcement, peer retrieval, provider
 discovery, and semantic search are disabled in the focused runtime. Production
-requires encrypted storage/backup configuration, redacted logs, quotas, and an
+requires encrypted storage and encrypted backups, redacted logs, quotas, and an
 approved retention-policy version.
 
 ## Failure Meaning

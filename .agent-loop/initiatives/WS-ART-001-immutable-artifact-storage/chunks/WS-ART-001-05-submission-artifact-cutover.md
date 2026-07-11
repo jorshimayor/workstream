@@ -82,7 +82,9 @@ or backfill of declarations as verified evidence.
   `artifact_set_id`/`artifact_set_hash` bridge. WS-ART-001-06 owns retrieval,
   `CheckerInputSnapshot`, logs, and outputs, not this schema cleanup.
 - Populated legacy submission/evidence/checker data refuses migration with
-  rebuild guidance; fresh/downgrade-empty/re-upgrade tests pass.
+  rebuild guidance; refusal tests prove every existing row remains byte-for-byte
+  unchanged and the schema remains at the prior revision. Fresh,
+  downgrade-empty, and re-upgrade tests pass.
 
 ## Verification
 

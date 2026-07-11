@@ -49,15 +49,15 @@ domain IDs in provider contracts.
 ## Verification
 
 ```bash
-cd /home/abiorh/flow/Flow-Node/back-end && cargo fmt --check
-cd /home/abiorh/flow/Flow-Node/back-end && cargo clippy --all-targets --all-features -- -D warnings
-cd /home/abiorh/flow/Flow-Node/back-end && ./scripts/run_nonempty_cargo_test_target.sh artifact_retention_contract
-cd /home/abiorh/flow/Flow-Node/back-end && cargo test
-cd /home/abiorh/flow/Flow-Node && docker compose -f docker-compose.workstream.yml up -d --build --wait --wait-timeout 120
-cd /home/abiorh/flow/Flow-Node && ./scripts/run_artifact_contract_vectors.sh --compose docker-compose.workstream.yml --suite version_1
-cd /home/abiorh/flow/Flow-Node && docker compose -f docker-compose.workstream.yml run --rm flow-node-production-route-audit
-cd /home/abiorh/flow/Flow-Node && docker compose -f docker-compose.workstream.yml down -v
-git -C /home/abiorh/flow/Flow-Node diff --check
+(cd back-end && cargo fmt --check)
+(cd back-end && cargo clippy --all-targets --all-features -- -D warnings)
+(cd back-end && ./scripts/run_nonempty_cargo_test_target.sh artifact_retention_contract)
+(cd back-end && cargo test)
+docker compose -f docker-compose.workstream.yml up -d --build --wait --wait-timeout 120
+./scripts/run_artifact_contract_vectors.sh --compose docker-compose.workstream.yml --suite version_1
+docker compose -f docker-compose.workstream.yml run --rm flow-node-production-route-audit
+docker compose -f docker-compose.workstream.yml down -v
+git diff --check
 ```
 
 Reviewers: senior engineering, QA/test, security/auth, architecture, CI

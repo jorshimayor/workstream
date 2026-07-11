@@ -40,13 +40,17 @@ token forwarding, or provider-triggered lifecycle transition.
   shared `AuditRepository`; provider receipts remain operation evidence only.
 - Concurrent dispatch/reconcile has one monotonic provider effect and one
   canonical receipt outcome; row counts are asserted.
-- Same v1 vectors pass LocalStorageAdapter and pinned Flow Node image.
+- Same v1 vectors pass LocalStorageAdapter and a Flow Node image pinned by full
+  immutable registry digest. CI verifies the registry identity, manifest digest,
+  expected source revision/contract digest, and available build provenance; a
+  mutable tag or version-only reference is rejected.
 - If an additive migration is required, fresh/prior-head upgrade,
   populated-state preservation, empty downgrade, and re-upgrade are owned and
   proved in `test_alembic.py`; otherwise the chunk records that no migration was
   created.
-- Compose health proves authenticated ingest/retrieve/status without product
-  module changes.
+- Compose health proves adapter-level authenticated ingest/retrieve/status from
+  Workstream's service principal directly through `FlowNodeAdapter`; it does not
+  claim a public Workstream artifact API before the product cutover.
 
 ## Verification
 

@@ -102,8 +102,9 @@ require a new major version and coordinated human approval.
 
 ## Service Authentication
 
-Production requires pinned issuer/asymmetric algorithms, audience exactly
-`flow-node`, a pre-provisioned Workstream service subject of kind `service`,
+Production requires a pinned issuer and an explicit allowlist of permitted
+asymmetric signature algorithms, audience exactly `flow-node`, a
+pre-provisioned Workstream service subject of kind `service`,
 time/JTI validation, endpoint scopes `artifact:ingest`, `artifact:read`,
 `artifact:verify`, `artifact:retain`, `artifact:release`, and
 `artifact:status`, TLS, rotation, and redaction. Human subjects and unrelated

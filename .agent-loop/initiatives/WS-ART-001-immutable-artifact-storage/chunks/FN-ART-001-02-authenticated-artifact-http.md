@@ -45,11 +45,11 @@ semantic search, public announcement, or Workstream lifecycle state.
 ## Verification
 
 ```bash
-cd /home/abiorh/flow/Flow-Node/back-end && cargo fmt --check
-cd /home/abiorh/flow/Flow-Node/back-end && cargo clippy --all-targets --all-features -- -D warnings
-cd /home/abiorh/flow/Flow-Node/back-end && ./scripts/run_nonempty_cargo_test_target.sh artifact_http_contract
-cd /home/abiorh/flow/Flow-Node/back-end && cargo test
-git -C /home/abiorh/flow/Flow-Node diff --check
+(cd back-end && cargo fmt --check)
+(cd back-end && cargo clippy --all-targets --all-features -- -D warnings)
+(cd back-end && ./scripts/run_nonempty_cargo_test_target.sh artifact_http_contract)
+(cd back-end && cargo test)
+git diff --check
 ```
 
 Reviewers: senior engineering, QA/test, security/auth, architecture, CI
