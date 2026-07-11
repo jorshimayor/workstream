@@ -13,14 +13,14 @@
   scope evidence passed at `b7dafb3`; evidence rebind remains before the next
   push.
 - Last merged implementation SHA: `1e20b79`
-- Last merge commit: `a7aa474`
+- Last merge commit: `b1270d7`
 - Current gate: bind final local review evidence, push PR #93, observe external
   checks, and stop for human review.
 - Next chunk: `WS-AUTH-001-02` remains proposed and must not start
   automatically.
-- Parallel initiative: `WS-POL-002-03` merged through PR #90 as `a7aa474`.
-  `WS-POL-002-04` remains inactive pending post-merge memory, the authorization
-  foundation, and a separate explicit start signal.
+- Parallel initiative: `WS-POL-002-03` merged through PR #90 as `a7aa474`; its
+  post-merge memory merged through PR #94 as `b1270d7`. `WS-POL-002-04` remains
+  inactive pending the authorization foundation and a separate explicit start.
 
 ## Operating Rule
 
@@ -140,3 +140,6 @@ blockchain, frontend, or agent-runtime behavior.
   Post-Submit Compiler Contract with version-stamped default-checker snapshots,
   canonical policy hashing, compiler-boundary validation, and default-drift
   regression tests.
+- PR #90 merged into `main` as `a7aa474` on 2026-07-11; it implemented
+  `WS-POL-002-03` server-owned post-submit checker policy approval, correction,
+  immutable correction history, and bounded setup visibility APIs.
