@@ -91,6 +91,7 @@ scripts/check_stale_authorization_docs.py
 scripts/render_authorization_docs.sh
 scripts/test_agent_gates.py
 backend/app/adapters/project_agents/openai_agent_sdk.py
+backend/tests/test_agent_runtime.py
 backend/tests/test_projects.py
 .github/workflows/agent-gates.yml
 .agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/**

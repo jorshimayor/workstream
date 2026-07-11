@@ -47,3 +47,10 @@ only for internal execution processes.
 
 No GitHub thread is replied to or resolved by this evidence file. Thread writes
 remain a separate explicit action after the repaired commit is pushed.
+
+## CI Follow-Up
+
+The first repaired head passed Agent Gates and CodeRabbit. Backend CI reported
+one stale prompt assertion in `backend/tests/test_agent_runtime.py` while 463
+tests passed. The assertion is terminology-only and now expects Contributor,
+matching the reviewed prompt and the existing project prompt-contract test.
