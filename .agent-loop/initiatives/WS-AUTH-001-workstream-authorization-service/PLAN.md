@@ -55,8 +55,9 @@ its old token-role authorization. No command accepts token role or local grant
 as alternate sufficient proof.
 
 Project configuration moves first because it is required to create project
-grants and later resume `WS-POL-002-03`. Task/submission/checker access follows
-after exact-project contributor grants and resource loaders exist.
+grants and to prove authorization before separately starting `WS-POL-002-04`.
+This initiative does not own or advance PR #90. Task/submission/checker access
+follows after exact-project contributor grants and resource loaders exist.
 
 Chunk 06 preserves task claim/start/submission operability through an explicitly
 named `LegacyWorkflowEligibilityCompatibility` adapter. It reads only

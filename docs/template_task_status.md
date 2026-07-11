@@ -26,7 +26,7 @@
 ## Owner
 
 - task creator:
-- worker:
+- contributor:
 - reviewer:
 - queue owner:
 

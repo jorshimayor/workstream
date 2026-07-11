@@ -2,29 +2,25 @@
 
 ## Current State
 
-- Active initiative: none
+- Active initiative: `WS-AUTH-001` - Workstream Authorization Service
 - Active planning chunk: none
-- Active implementation chunk: none
-- Branch: `codex/ws-pol-002-03-post-merge-memory`
-- Status: `WS-POL-002-03` merged through PR #90 on 2026-07-11.
-- Last reviewed implementation SHA: `0e59873`
-- Final merged branch head: `1e20b79`
-- Last merge commit: `a7aa474`
-- Current gate: post-merge memory update; stop after memory review.
-- Next chunk: `WS-POL-002-04` remains inactive until a separate explicit user
-  start signal.
-- Checkpointed initiative: `WS-AUTH-001` - Workstream Authorization Service
-- Checkpointed planning artifact: `WS-AUTH-001-PLAN`
-- Status: WS-AUTH-001 planning merged through PR #91 and post-merge memory
-  merged through PR #92. Its separate implementation worktree owns any later
-  authorization activity; this WS-POL memory update does not modify that work.
-- Reconciliation note: WS-AUTH planning references to the earlier WS-POL pause
-  are point-in-time decision records. Any current-state reconciliation belongs
-  to the WS-AUTH worktree after it updates from `main`.
-- Current gate: explicit durable human approval of D4-D10 before any
-  authorization implementation chunk starts.
-- Next authorization chunk: `WS-AUTH-001-01` remains proposed until D4-D10
-  approval and a separate implementation start signal.
+- Active implementation chunk: `WS-AUTH-001-01`
+- Branch: `codex/ws-auth-001-01-adopt-authorization-baseline`
+- Worktree: `/home/abiorh/flow/workstream-auth-001-01`
+- Status: PR #93 is published. Contributor terminology, CodeRabbit feedback, and
+  latest-main integration passed all required internal reviewer tracks at
+  `2164e3b`. The stale CI assertion repair passed at `be0b836`, and its final
+  scope evidence passed at `b7dafb3`; evidence rebind remains before the next
+  push.
+- Last merged implementation SHA: `1e20b79`
+- Last merge commit: `b1270d7`
+- Current gate: bind final local review evidence, push PR #93, observe external
+  checks, and stop for human review.
+- Next chunk: `WS-AUTH-001-02` remains proposed and must not start
+  automatically.
+- Parallel initiative: `WS-POL-002-03` merged through PR #90 as `a7aa474`; its
+  post-merge memory merged through PR #94 as `b1270d7`. `WS-POL-002-04` remains
+  inactive pending the authorization foundation and a separate explicit start.
 
 ## Operating Rule
 

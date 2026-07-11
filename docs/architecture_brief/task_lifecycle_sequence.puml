@@ -16,11 +16,12 @@ skinparam DatabaseBorderColor #0CA678
 skinparam DatabaseBackgroundColor #E6FCF5
 
 actor "Project\nManager" as PM
-actor "Human-Agent\nContributor" as Worker
+actor "Human-Agent\nContributor" as Contributor
 actor Reviewer
 participant "React UI" as UI
 participant "FastAPI\nBackend" as API
 participant "Flow Auth\nVerifier" as Auth
+participant "Workstream\nAuthorization" as Authorization
 database "Postgres" as DB
 participant "Storage\nAbstraction" as Storage
 participant "Checker\nRunner" as Checks
@@ -28,26 +29,40 @@ participant "Checker\nRunner" as Checks
 PM -> UI : create project, guide, policies
 UI -> API : POST project / guide / policies
 API -> Auth : verify Flow token
-Auth --> API : ActorContext(project_manager)
+Auth --> API : verified external identity
+API -> Authorization : resolve actor profile and local grants
+Authorization -> Authorization : require permission + candidate grant\n+ resource/lifecycle guards
+Authorization --> API : allowed with matched Project Manager grant
 API -> DB : persist draft guide and policy context
 
 PM -> UI : activate guide
 UI -> API : POST activate guide
+API -> Authorization : require guide activation + project/lifecycle guards
+Authorization --> API : allowed with matched grant and permission
 API -> DB : validate policy context and mark active
 
 PM -> UI : create and screen task
 UI -> API : POST task, screen, release
+API -> Authorization : require task management + project/lifecycle guards
+Authorization --> API : allowed with matched grant and permission
 API -> DB : lock guide and policy versions
 API -> DB : DRAFT -> SCREENING -> READY
 
-Worker -> UI : claim task
+Contributor -> UI : claim task
 UI -> API : POST claim / start
 API -> Auth : verify Flow token
-Auth --> API : ActorContext(worker)
+Auth --> API : verified external identity
+API -> Authorization : resolve actor profile and project grants
+Authorization -> Authorization : require task claim + candidate grant\n+ assignment/resource/lifecycle guards
+Authorization --> API : allowed with matched submitter/both grant
 API -> DB : create assignment and move in progress
 
-Worker -> UI : submit packet
+Contributor -> UI : submit packet
 UI -> API : POST submission packet
+API -> Auth : verify Flow token
+Auth --> API : verified external identity
+API -> Authorization : require submission create + candidate grant\n+ ownership/resource/lifecycle guards
+Authorization --> API : allowed with matched submitter/both grant
 API -> Storage : store/read artifact references
 API -> DB : create immutable submission version
 
@@ -58,12 +73,15 @@ Checks -> DB : persist checker results
 Reviewer -> UI : submit review decision
 UI -> API : accept / needs_revision / reject
 API -> Auth : verify Flow token
-Auth --> API : ActorContext(reviewer)
+Auth --> API : verified external identity
+API -> Authorization : resolve actor profile and project grants
+Authorization -> Authorization : require review decision + candidate grant\n+ assignment/resource/lifecycle guards
+Authorization --> API : allowed with matched reviewer/both grant
 API -> DB : store review decision
 
 alt needs_revision
   API -> DB : create revision requirements
-  Worker -> UI : submit revision replay
+  Contributor -> UI : submit revision replay
   UI -> API : new submission version
   API -> Checks : rerun checks
 else accept

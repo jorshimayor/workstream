@@ -7,12 +7,12 @@
 ## Goal
 
 Move submission precheck/create/read/finalize, checker trigger/read, checker
-worker projections, and task audit visibility to registered permissions and
+contributor projections, and task audit visibility to registered permissions and
 canonical task/project/assignment guards.
 
 ## Why this chunk exists
 
-Submission/checker authorization shares locked-task provenance and worker
+Submission/checker authorization shares locked-task provenance and contributor
 redaction rules but is separable from task claim and system-worker execution.
 
 ## Approved plan reference
@@ -35,14 +35,19 @@ P1
 backend/app/modules/tasks/router.py
 backend/app/modules/tasks/service.py
 backend/app/modules/tasks/schemas.py
+backend/app/modules/tasks/models.py
 backend/app/modules/actors/**
-backend/app/modules/checkers/router.py
-backend/app/modules/checkers/service.py
+backend/app/modules/checkers/**
+backend/app/modules/projects/schemas.py
+backend/app/modules/projects/service.py
+backend/app/adapters/project_agents/openai_agent_sdk.py
+backend/alembic/versions/0023_*.py
 backend/app/modules/authorization/**
 backend/app/api/deps/auth.py
 backend/tests/test_tasks.py
 backend/tests/test_checkers.py
 backend/tests/test_auth.py
+backend/tests/test_alembic.py
 backend/scripts/api_contract_e2e.py
 docs/operations_authorization_service.md
 .agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/**
@@ -70,7 +75,7 @@ legacy active-worker-profile or workflow-eligibility compatibility fallback
   uses distinct `operations.submission_gate.repair` and
   `operations.checker.retry` permissions. Each path requires a reason and
   records matched grant/permission without granting general project authority.
-- Worker reads preserve ownership, hidden-result redaction, and concealed
+- Contributor reads preserve ownership, hidden-result redaction, and concealed
   not-found behavior.
 - Audit reads expose only permission-appropriate bounded fields before counts.
 - Operator `operations.status.read` receives only the bounded submission/checker
@@ -83,6 +88,14 @@ legacy active-worker-profile or workflow-eligibility compatibility fallback
 - Submission removes the final `LegacyWorkflowEligibilityCompatibility`
   consumer; eligibility is the exact-project submitter/both grant plus active
   assignment and lifecycle guards.
+- Submission ownership and attestation plus checker-result visibility fields
+  use `contributor_id`, `contributor_attestation`, `contributor_message`,
+  `contributor_suggested_fix`, `contributor_evidence_refs`, and
+  `contributor_visible` across persistence, models, schemas, services, runner
+  contracts, audit payloads, and tests. Submission-policy JSON and derivation
+  contracts use `contributor_facing_fix`. Migration `0023` preserves all values,
+  supports downgrade, and removes legacy storage/property names without public
+  API aliases.
 - With the final consumer removed, the legacy `/api/v1/workers/me/profile`
   route, typed-profile activation service/schema, and token-role workflow
   observation fields plus the now-unused compatibility adapter/allowlist are
@@ -104,6 +117,9 @@ legacy active-worker-profile or workflow-eligibility compatibility fallback
 (cd backend && .venv/bin/python -m ruff check app tests scripts)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python scripts/api_contract_e2e.py)
+(cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic upgrade head)
+(cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic downgrade -1)
+(cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic upgrade head)
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
 git diff --check

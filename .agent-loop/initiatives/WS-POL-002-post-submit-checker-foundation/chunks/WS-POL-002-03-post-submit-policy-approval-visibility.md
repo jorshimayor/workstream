@@ -43,8 +43,8 @@ server-owned approval/correction path for compiled post-submit checker policies.
   clients.
 - Guide activation requires the approved compiled project
   `PostSubmitCheckerPolicy`.
-- Worker-facing APIs continue to hide internal policy body details.
-- Workers, reviewers, finance actors, and auditors are denied on new setup
+- Contributor-facing APIs continue to hide internal policy body details.
+- Submitters, reviewers, finance actors, and auditors are denied on new setup
   visibility and approval endpoints. Project-scoped project_manager grants are
   future Workstream role-assignment work, not part of WS-POL-002.
 
@@ -95,8 +95,8 @@ compatibility aliases for removed guide payload fields
   matches the guide/source context.
 - Approval provenance is immutable and records actor id, role, timestamp,
   source snapshot id/hash, and compiled policy hash.
-- API responses are role-scoped and do not leak internal policy body to workers.
-- Negative authorization tests cover worker, reviewer, finance, and auditor
+- API responses are role-scoped and do not leak internal policy body to contributors.
+- Negative authorization tests cover submitter, reviewer, finance, and auditor
   access. A future project-scoped role-assignment chunk must add unrelated
   project_manager denial once project-level roles exist.
 - Visibility responses redact raw source text, local paths, secrets,
@@ -130,7 +130,7 @@ git diff --check
 
 - Confirm there is one authoritative server-owned post-submit policy path.
 - Confirm obsolete manual payload fields are removed, not aliased.
-- Confirm visibility is useful for operators but safe for workers.
+- Confirm visibility is useful for operators but safe for contributors.
 
 ## Stop conditions
 

@@ -47,13 +47,13 @@ Focus:
 Focus:
 
 - daily project manager workflow
-- worker and reviewer workflow
+- contributor and reviewer workflow
 - checker policy
 - revision replay
 - payment/reputation consistency
 - auditability
 
-The Product/Ops reviewer is first-class. Do not collapse this track into QA or docs when a chunk affects operator, worker, reviewer, revision, payment, reputation, or audit workflows.
+The Product/Ops reviewer is first-class. Do not collapse this track into QA or docs when a chunk affects operator, contributor, reviewer, revision, payment, reputation, or audit workflows.
 
 ### Risk Reviewer
 

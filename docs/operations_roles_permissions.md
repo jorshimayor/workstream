@@ -2,124 +2,125 @@
 
 ## Purpose
 
-Workstream needs explicit permissions from the first version because review, payment, and override actions carry real operational risk.
+This is the canonical operator-facing role and permission matrix for the target
+Workstream authorization service. ADR 0012 and
+`docs/spec_authorization_service.md` define precedence and implementation
+order. Until each WS-AUTH-001 cutover chunk merges, legacy runtime behavior is
+current-code evidence, not authority for new design.
 
-## Roles
+## Authentication Versus Authorization
 
-The Identity Issuer owns identity, audience, scopes, delegation, and token
-signing. Workstream owns product roles and exact resource authorization.
-Workstream role records are stored locally for verified Flow subjects; the
-issuer plus subject only identifies the actor and does not assign product
-roles. Scopes are an outer request-class gate; they are not proof that the
-subject is a reviewer, worker, project owner, or admin inside Workstream.
+The external Flow Identity Issuer owns login, token issuance, audience, subject
+kind, and token signing. Workstream verifies those facts and resolves the
+issuer/subject through a local identity link.
 
-In the current v0.1 bootstrap, route checks still read trusted role claims from
-the verified `ActorContext` where a dedicated Workstream role-assignment table
-does not exist yet. Those token roles are request context and provisioning
-input, not the long-term source of truth. The later role-assignment layer must
-be Workstream-owned and must store product roles on local `ActorIdentity`
-records.
+Workstream roles are local grants. Token role claims, coarse scopes, email,
+display name, skills, reputation, and typed workflow profiles do not grant
+product authority. Scopes are an outer request-class gate only.
 
-Local Workstream `ActorIdentity` and `ActorProfile` records may mirror observed
-roles, profile state, skill tags, scope, and eligibility metadata, but persisted
-profile rows do not grant route access by themselves.
+## Administrative Grants
 
-| Role | Purpose |
-| --- | --- |
-| Admin | Controls project setup, policies, overrides, and user access. |
-| Project Manager | Creates project guides, task batches, checker policies, review policies, revision policies, and payment policies. |
-| Worker | Claims tasks, submits packets, and handles revisions. |
-| Reviewer | Reviews checker-passed submissions and records decisions. |
-| Finance | Updates payout status and payment references. |
-| Auditor | Reads records and audit logs without modifying work. |
+| Grant | Scope | Purpose |
+|---|---|---|
+| Access Administrator | system | Actor, identity-link, permission-catalog, and administrative-grant management. |
+| Operator | system | Runtime observation, reconciliation, retry, and approved recovery against canonically resolved resources. |
+| Project Manager | system or exact covered project | Project configuration, project tasks, policies, and contributor grants. |
+| Finance Authority | system or exact covered project | Compensation configuration and fulfillment observation under WS-CON-001. |
+| Audit Authority | system or exact covered project | Read-only evidence access and authorized export. |
 
-`project_owner` is not a route-authorizing Workstream role in v0.1. A project
-owner is the external or internal source of project material or business terms.
-It may be recorded as scoped actor profile/contact metadata, but it does not
-approve Workstream machine-readable policies unless the verified token also
-carries an authorized Workstream role such as admin or project manager.
-The token claim key for trusted relationship metadata is
-`workstream_relationship_profiles`; v0.1 accepts only
-`profile_type="project_owner"` with non-empty `scope_type` and `scope_id`.
-Workstream discards any nested relationship `profile_metadata` from token
-claims before writing actor identity, profile, or audit records.
+Administrative grants do not imply contributor capability. Holding one does
+not permit claiming tasks, submitting work, or recording review decisions.
 
-Actor profile status is a workflow condition, not route permission. An
-`observed` profile only records that Workstream saw the actor through a verified
-token. An `active` profile can satisfy the profile side of a workflow gate, but
-the route still requires the matching role in the current verified token.
+## Contributor Grants
 
-## Permission Matrix
+| Grant | Scope | Purpose |
+|---|---|---|
+| Submitter | exact project | Minimal project read, queue/claim/start under task guards, own submission creation/read. |
+| Reviewer | exact project | Minimal project read, review queue/claim/release/decision under review guards. |
+| Both | exact project | Submitter and reviewer candidates, still subject to no-self-review and lifecycle guards. |
 
-| Action | Admin | Project Manager | Worker | Reviewer | Finance | Auditor |
-| --- | --- | --- | --- | --- | --- | --- |
-| Create project | yes | yes | no | no | no | no |
-| Edit project guide | yes | yes | no | no | no | no |
-| Create task | yes | yes | no | no | no | no |
-| Claim task | no | no | yes | no | no | no |
-| Submit task | no | no | own task only | no | no | no |
-| Run submission precheck | yes | tasks they created | assigned in-progress or revision task only | no | no | no |
-| Repair automatic pre-review gate | yes | tasks they created | no | no | no | no |
-| Review submission | yes | no | no | yes | no | no |
-| Review own submission | no | no | no | no | no | no |
-| Request revision | yes | no | no | yes | no | no |
-| Accept submission | yes | no | no | yes | no | no |
-| Reject submission | yes | no | no | yes | no | no |
-| Override checker failure | yes | no | no | no | no | no |
-| Mark payout submitted | yes | no | no | no | yes | no |
-| Mark paid | yes | no | no | no | yes | no |
-| View audit log | yes | tasks they created | own tasks only | reviewed tasks | payment records | yes |
+Contributor is the umbrella human product term. A contributor has an
+exact-project Submitter, Reviewer, or Both grant. Celery, checker, setup, and
+background workers are internal services, not human product roles.
+
+## Capability Matrix
+
+Legend: system means the grant must cover all Workstream; covered means system
+or the exact project; own means record-level ownership still applies.
+
+| Capability | Access Administrator | Operator | Project Manager | Finance Authority | Audit Authority | Submitter | Reviewer |
+|---|---|---|---|---|---|---|---|
+| Self profile | inherited human | inherited human | inherited human | inherited human | inherited human | inherited human | inherited human |
+| Actor/link administration | system | no | no | no | minimal read covered | no | no |
+| Administrative grants | system | no | no | no | history read covered | no | no |
+| Project create | no | no | system only | no | no | no | no |
+| Project read | authority-only | system operational | covered | covered finance projection | covered audit projection | exact project minimal | exact project minimal |
+| Project/guide/policy mutation | no | recovery-only where registered | covered | compensation policy only | no | no | no |
+| Project contributor grants | no | no | covered | no | read covered | no | no |
+| Task management | no | explicit recovery only | covered | no | read covered | no | no |
+| Task queue/claim | no | operational projection only | management projection only | no | read covered | exact project under guards | no |
+| Submission create/read | no | operational projection only | management projection only | no | read covered | own assignment | read-for-review only |
+| Human review decision | no | no | no without reviewer grant | no | no | no | exact project under review guards |
+| Compensation mutation | no | reconciliation only where registered | no | covered | no | no | no |
+| Audit read/export | authority history system | operational system | project covered | finance covered | covered | own chain only | assigned chain only |
+
+`Both` is exactly the union of the Submitter and Reviewer candidate capabilities
+in this matrix. It adds no administrative capability, and every ownership,
+assignment, no-self-review, separation-of-duties, and lifecycle guard still
+applies independently to the selected capability.
+
+Access Administrator's authority-only project view means the minimum resource
+identity necessary to administer grants; it is not general project-management
+visibility.
 
 ## Separation Rules
 
-- A worker cannot review their own submission.
-- A reviewer cannot mark payment as paid.
-- Finance cannot change review decisions.
-- Project managers cannot silently override checker failures.
-- Multi-role precheck access does not collapse into one role. Object visibility
-  may come from admin access, task-creator project-manager access, or worker
-  assignment. When the current verified token includes `worker`, the worker
-  task-status restriction still applies: the task must be in progress or in
-  revision. Automatic pre-review gate repair remains a separate audited
-  operator action.
-- Admin and project-manager operational intervention must use a separate
-  audited override path. It must not masquerade as worker task claiming.
-- Admin overrides must create an audit event with reason and evidence.
+- No actor grants or revokes their own authority through an administrative
+  operation.
+- A submitter cannot be the sole reviewer of their own task/submission chain.
+- Project Manager authority is limited to covered projects.
+- Access Administrator cannot manage project work by that grant alone.
+- Operator cannot issue grants, approve policy, record a review decision, or
+  mutate immutable records by that grant alone.
+- Finance Authority cannot create or alter review decisions or contribution
+  records.
+- Audit Authority is read-only.
+- A service principal never receives a fabricated human administrative grant.
 
-## Role Provisioning Direction
+## Recovery Operations
 
-The Workstream role/provisioning layer is product-owned. A subject can exist in
-the Identity Issuer and still have no Workstream access until Workstream creates
-local actor and role records for that issuer plus subject.
+Recovery is a separate, reasoned, audited path.
 
-The first durable shape should be:
+| Operation | Permission | Actor |
+|---|---|---|
+| Normal covered task/setup repair | `project.task.manage` | Covered Project Manager |
+| Task start override | `operations.task.start_override` | Operator |
+| Submission gate repair | `operations.submission_gate.repair` | Operator |
+| Checker retry | `operations.checker.retry` | Operator |
+| Review lease force release | `review.lease.force_release` | Operator under WS-REV-001 |
 
-```text
-ActorIdentity
-- id
-- issuer
-- subject
-- status
+Every recovery mutation records the exact actor, matched grant/permission,
+project/resource, reason, bounded before/after state, request/correlation IDs,
+and immutable evidence. Recovery cannot erase checker results, rewrite
+submissions, create review decisions, alter contribution history, or bypass
+compensation rules.
 
-WorkstreamRoleAssignment
-- actor_id
-- role
-- scope_type
-- scope_id
-- status
-```
+## Provisioning And Revocation
 
-Role records may be global, project-scoped, task-scoped, or review-queue scoped.
-One actor can hold multiple roles at once, such as worker plus reviewer, or
-admin plus worker. Permission checks must evaluate the current role assignment
-for the exact resource and still enforce workflow rules such as no self-review.
+The first Access Administrator is created once through a restricted local
+management command. Later administrative and project grants use supported APIs
+and require current authority, exact scope, target-state guards, reason where
+required, idempotency, and append-only evidence.
 
-## First-Version Enforcement
+Grant revocation, actor suspension/deactivation, and identity-link revocation
+take effect on the next request. Sensitive mutations revalidate current
+authority inside their database transaction. Revoked records remain history.
 
-The first version enforces permissions in application service or policy code,
-not directly inside routers. The database records actor IDs, external subject,
-issuer, role/claim context, auth source, actor identity, and actor profile
-context for important events so later route decisions and workflow eligibility
-can be audited.
+## Enforcement Location
 
-Development auth, if enabled, must be impossible to use in production and must be visible in audit context.
+Routers parse input and map stable errors. Application services load canonical
+resources, compose `ResourceContext`, and call the single authorization
+service. Repositories own persistence queries and do not evaluate permissions.
+
+No protected operation may accept request-body role/scope, a token role, a
+typed workflow profile, or a direct database edit as authority.

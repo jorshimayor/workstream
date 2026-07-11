@@ -4,23 +4,36 @@
 
 ### Project Manager
 
-Creates projects, guides, policies, and task batches.
+Creates projects when system-scoped and manages guides, policies, tasks, and
+contributor grants only for covered projects.
 
-### Worker
+### Contributor
 
-Claims or receives tasks, completes work, submits packet, handles revisions.
+An exact-project Submitter grant permits queue/claim/submission candidates. The
+person is a Contributor in product, lifecycle, assignment, and attribution
+language.
 
 ### Reviewer
 
 Reviews checker-passed submissions and issues accept, needs_revision, or reject decisions.
 
-### Admin
+### Operator
 
-Manages policies, overrides, audits, users, and system integrity.
+Inspects runtime state and performs only registered reasoned recovery. Operator
+does not issue grants, approve policy, or record review decisions by that grant.
 
-### Finance
+### Access Administrator
+
+Manages actors, identity links, the permission catalog, and administrative
+grants. This grant does not manage project work.
+
+### Finance Authority
 
 Tracks accepted work, pending payout, payout submitted, and paid states.
+
+### Audit Authority
+
+Reads authorized immutable and operational evidence without mutation.
 
 ## Daily Operating Loop
 
@@ -31,7 +44,9 @@ Tracks accepted work, pending payout, payout submitted, and paid states.
 4. Review submitted packets
 5. Resolve needs-revision queue
 6. Update accepted and paid records
-7. Review failed checks
+7. Review failed checks; apply covered repair where eligible, use registered
+   Operator retry for infrastructure or setup failures, and route
+   contributor-fixable blockers to `NEEDS_REVISION`
 8. Update project lessons learned
 ```
 
@@ -47,7 +62,7 @@ Tracks accepted work, pending payout, payout submitted, and paid states.
 8. Run task schema check.
 9. Move to READY.
 
-## Worker Submission Workflow
+## Contributor Submission Workflow
 
 1. Read project guide.
 2. Read task requirements.

@@ -49,6 +49,17 @@ Workstream uses three separate quality gates:
 2. Task screening gate
 3. Submission quality gate
 
+### Authorization Boundary
+
+Workstream verifies external Flow tokens and owns product authorization through
+local ActorProfile/ActorIdentityLink records, administrative grants,
+exact-project submitter/reviewer grants, registered permissions, resource and
+lifecycle guards, revocation, and append-only authority evidence.
+
+Token roles and typed workflow profiles are not product authority. All public
+routes remain under `/api/v1`. ADR 0012 and the canonical authorization service
+specification control authorization wording in this lockdown.
+
 External origin qualification and task ingestion map to project activation and task screening in v0.1. External origins remain deferred.
 
 ### Project Guide Structure
@@ -82,12 +93,12 @@ The guide may summarize or link to those policies, but the policies are the enfo
 
 Project owners provide open-ended project material and business terms.
 Workstream evaluates guide sufficiency, derives
-`SubmissionArtifactPolicy` from that material, and a Workstream actor
-with the `admin` or `project_manager` role approves the internal policy bundle
+`SubmissionArtifactPolicy` from that material, and an authorized covered
+Project Manager approves the internal policy bundle
 before guide activation. Project owners do not approve Workstream's internal
 submission policy schema.
 
-`SubmissionArtifactPolicy` defines project-level intake rules. Workstream combines it with the non-bypassable Workstream default submission artifact policy to create `EffectiveProjectSubmissionArtifactPolicy`. Workstream then generates, persists, and locks project `PreSubmitCheckerPolicy` with a compiled bundle hash from that effective project submission artifact policy. Tasks lock the applicable guide snapshot, effective project submission artifact policy hash, and pre-submit checker bundle hash before entering the worker pipeline.
+`SubmissionArtifactPolicy` defines project-level intake rules. Workstream combines it with the non-bypassable Workstream default submission artifact policy to create `EffectiveProjectSubmissionArtifactPolicy`. Workstream then generates, persists, and locks project `PreSubmitCheckerPolicy` with a compiled bundle hash from that effective project submission artifact policy. Tasks lock the applicable guide snapshot, effective project submission artifact policy hash, and pre-submit checker bundle hash before entering the contributor pipeline.
 
 Blocking pre-submit failures prevent submission creation. Preflight failures
 return `PreSubmitCheckResponse(status="failed", eligible_to_submit=false,
@@ -124,12 +135,12 @@ Every task must carry enough information to make claiming, checking, reviewing, 
 
 ### Human Accountability
 
-Workstream allows agent-assisted work, but the human worker or owner is accountable for the submitted packet.
+Workstream allows agent-assisted work, but the contributor or owner is accountable for the submitted packet.
 
 In v0.1, this is enforced through:
 
 - assignment ownership
-- worker attestation
+- contributor attestation
 - immutable submission versions
 - checker results bound to artifact hashes
 - human review before acceptance
@@ -141,7 +152,7 @@ An explicit owner-agent execution workspace is later work.
 
 Accepted work must create a durable contribution record separate from payment status.
 
-The contribution record is the evidence-backed certification that a worker completed accepted work under a locked project guide. Payment records and reputation events attach to this contribution record, but do not replace it.
+The contribution record is the evidence-backed certification that a contributor completed accepted work under a locked project guide. Payment records and reputation events attach to this contribution record, but do not replace it.
 
 ## Deferred
 
@@ -172,10 +183,10 @@ Use these names consistently:
 - `Project activation gate`
 - `Task screening gate`
 - `Submission quality gate`
-- `worker_claim_status`
+- `contributor_claim_status`
 - `reviewer_closure_status`
 
-Revision replay worker claim statuses:
+Revision replay contributor claim statuses:
 
 - `fixed`
 - `disputed`

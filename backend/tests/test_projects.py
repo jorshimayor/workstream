@@ -483,7 +483,7 @@ def complete_guide_payload(version: str = "v1") -> dict:
         "version": version,
         "content_markdown": (
             f"# Guide {version}\n\n"
-            "Workers submit a complete project packet with original work, artifact "
+            "Contributors submit a complete project packet with original work, artifact "
             "hashes, evidence references, and an attestation. Reviewers use the "
             "locked policy bundle for automated checks and the guide body for human "
             "context."
@@ -3998,7 +3998,7 @@ def test_project_agent_factory_ignores_removed_runtime_selector(
 def test_policy_derivation_prompt_prohibits_self_conflicting_policies() -> None:
     instructions = " ".join(POLICY_DERIVATION_INSTRUCTIONS.split())
 
-    assert "project-level worker submission contract" in instructions
+    assert "project-level contributor submission contract" in instructions
     assert "not a reviewer packet" in instructions
     assert "not a copy of every source-snapshot file" in instructions
     assert "A forbidden_artifacts pattern must never match" in instructions
@@ -4019,7 +4019,7 @@ def test_post_submit_policy_derivation_prompt_preserves_runtime_boundary() -> No
     assert "project-level post-submit checker policy specification" in instructions
     assert "Do not produce executable code" in instructions
     assert "Runtime submission evaluation must use the locked compiled policy" in instructions
-    assert "must never ask an agent to judge a worker submission" in instructions
+    assert "must never ask an agent to judge a contributor submission" in instructions
     assert "Select only checker names present in registered_checker_catalog" in instructions
     assert "unsupported_required_checks" in instructions
     assert "Evidence refs must not include raw source text" in instructions
@@ -6437,7 +6437,7 @@ async def test_post_submit_setup_visibility_redacts_source_hash_and_policy_body(
     for item in bundle["source_snapshot"]["items"]:
         assert item["durable_ref"] not in response.text
         assert item["content_hash"] not in response.text
-    assert "Workers submit a complete project packet" not in response.text
+    assert "Contributors submit a complete project packet" not in response.text
 
 
 async def test_post_submit_checker_policy_approval_uses_server_provenance(

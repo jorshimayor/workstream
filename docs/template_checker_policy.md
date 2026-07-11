@@ -26,7 +26,7 @@ Medium and low severities are visible to reviewers unless this policy overrides 
 
 ## Required Checkers
 
-Task setup and post-submit checks must stay separated from worker-fixable submission intake checks.
+Task setup and post-submit checks must stay separated from contributor-fixable submission intake checks.
 
 | Checker | Severity | Blocks Review | Purpose |
 | --- | --- | --- | --- |
@@ -36,14 +36,14 @@ Task setup and post-submit checks must stay separated from worker-fixable submis
 | `check_forbidden_files` | high | yes | Submission must not include forbidden file paths. |
 | `check_evidence_present` | high | yes | Submission must include audit evidence. |
 | `check_evidence_integrity` | high | yes | Evidence and checker runs must bind to submitted artifacts. |
-| `check_confidentiality_attestation` | high | yes | Worker attestation must address confidentiality and credential handling. |
+| `check_confidentiality_attestation` | high | yes | Contributor attestation must address confidentiality and credential handling. |
 | `check_low_quality_generated_artifacts` | low/high | policy-dependent | Low-quality generated artifact signals warn by default and block review only when the project explicitly requires this post-submit checker. |
 
 Task setup checks:
 
 | Checker | Severity | Blocks Review | Owner |
 | --- | --- | --- | --- |
-| `check_acceptance_criteria_present` | high | yes | Project manager repair, not worker revision. |
+| `check_acceptance_criteria_present` | high | yes | Project manager repair, not contributor revision. |
 
 ## Compiler Contract
 
@@ -87,7 +87,7 @@ Each checker definition specifies:
 - version
 - default severity
 - default blocking behavior
-- worker-visible message policy
+- contributor-visible message policy
 
 ## Project-Specific Checkers
 
@@ -95,9 +95,9 @@ Each checker definition specifies:
 | --- | --- | --- | --- |
 | `<checker name>` | `<low/medium/high>` | `<yes/no>` | `<why it exists>` |
 
-## Worker-Visible Messages
+## Contributor-Visible Messages
 
-Workers may see:
+Contributors may see:
 
 - checker name
 - status
@@ -105,7 +105,7 @@ Workers may see:
 - safe failure message
 - suggested fix
 
-Workers must not see:
+Contributors must not see:
 
 - hidden evaluator logic
 - private reviewer notes
@@ -114,15 +114,21 @@ Workers must not see:
   `task_setup_blocked`
 - post-submit checker policy provenance fields
 
-## Admin Override
+## Recovery Contract
 
-Allowed only with:
+Blocking checker outcomes are not overridden into review readiness. Registered
+Operator retry or covered Project Manager repair is allowed only with:
 
 - actor
+- matched grant and permission
+- exact resource scope
 - timestamp
 - checker name
 - reason
 - evidence
+
+Recovery creates a new attempt or repaired setup state and preserves every
+prior checker result. It cannot create a human review decision.
 
 ## Review Cadence
 

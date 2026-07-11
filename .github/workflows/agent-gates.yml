@@ -28,6 +28,9 @@ jobs:
       - name: Stale wording check
         run: python3 scripts/check_stale_workstream_wording.py
 
+      - name: Stale authorization documentation check
+        run: python3 scripts/check_stale_authorization_docs.py
+
       - name: Agent gate regression tests
         run: python3 scripts/test_agent_gates.py
 

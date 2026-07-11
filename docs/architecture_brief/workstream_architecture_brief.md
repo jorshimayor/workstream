@@ -122,7 +122,7 @@ The sequence below shows the narrow v0.1 loop the system must prove before expan
 ### Lifecycle Invariants
 
 - A task cannot enter `READY` without locked guide, checker, review, revision, and payment policy context.
-- A worker submission creates a new immutable submission version; locked artifacts are not edited in place.
+- A contributor submission creates a new immutable submission version; locked artifacts are not edited in place.
 - Review decisions are exactly `accept`, `needs_revision`, or `reject`.
 - `needs_revision` starts a revision loop and must replay prior findings.
 - Accepted work creates a contribution record before payment or reputation records.

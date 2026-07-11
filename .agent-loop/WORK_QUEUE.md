@@ -2,20 +2,14 @@
 
 ## In Progress
 
-None.
+| Chunk | Title | Risk | Status |
+|---|---|---:|---|
+| `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Active in dedicated worktree after D4-D10 approval |
 
 ## Planned Next
 
-| Chunk | Title | Risk | Status |
-|---|---|---:|---|
-| `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive until a separate explicit user start is given |
-| `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Proposed after D4-D10 approval and explicit start |
-
-## Human Checkpoints
-
-| Gate | Initiative | Risk | Status |
-|---|---|---:|---|
-| D4-D10 approval | `WS-AUTH-001` | L0 | Stopped at human checkpoint; explicit D4-D10 approval required before implementation |
+No next chunk is active. Start requires the current chunk's human checkpoint,
+memory update, and an explicit user signal.
 
 ## Completed
 
@@ -48,10 +42,11 @@ None.
 
 ## Proposed Next
 
-Do not start `WS-POL-002-04` until a separate explicit user start signal.
-Stop at the WS-AUTH-001 planning human checkpoint. Do not activate
-`WS-AUTH-001-01` before explicit D4-D10 approval and a separate start signal.
-Future WS-POL work after PR #90 also requires a separate start signal.
+Execute only `WS-AUTH-001-01` in its dedicated worktree. Rebind evidence after
+the latest-main merge, push PR #93, observe external checks, and stop for human
+review; do not start `WS-AUTH-001-02` or `WS-POL-002-04`. PR #90 and its PR #94
+memory update are merged; this worktree only reconciles them with the active
+authorization baseline.
 
 ## Blocked
 

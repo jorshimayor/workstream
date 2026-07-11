@@ -4,13 +4,13 @@
 
 `<task id>`
 
-## Worker
+## Contributor
 
-`<worker id>`
+`<contributor id>`
 
 ## Submission Version
 
-Assigned by Workstream after blocking pre-submit checks pass. The worker does not provide this value.
+Assigned by Workstream after blocking pre-submit checks pass. The contributor does not provide this value.
 
 ## Summary
 
@@ -30,7 +30,7 @@ Workstream derives the locked project guide version, locked guide-source
 snapshot id/hash, effective project submission artifact policy id/hash,
 generated project pre-submit checker policy id/bundle hash, post-submit
 checker policy context, review policy version, revision policy version, and
-payment policy version from the task's locked context. The worker does not
+payment policy version from the task's locked context. The contributor does not
 provide those ids, versions, hashes, or internal policy bodies in the
 submission packet.
 
@@ -60,19 +60,19 @@ Workstream assigns evidence IDs at persistence time. Checker run IDs are created
 
 ## Draft Checker Notes
 
-Any known worker-facing context that helps explain the packet. The worker does not provide checker outcomes, severities, policy versions, or pass/fail statuses.
+Any known contributor-facing context that helps explain the packet. The contributor does not provide checker outcomes, severities, policy versions, or pass/fail statuses.
 
 ## Revision Replay
 
 Only required for resubmissions.
 
-Workstream provides prior and next guide/policy context for the revision. The worker responds to the findings and changed requirements, but does not provide guide or policy versions manually.
+Workstream provides prior and next guide/policy context for the revision. The contributor responds to the findings and changed requirements, but does not provide guide or policy versions manually.
 
 | Prior Finding | Fix Summary | Evidence | Status |
 | --- | --- | --- | --- |
 | `<finding>` | `<fix>` | `<evidence>` | `closed` |
 
-## Worker Attestation
+## Contributor Attestation
 
 I confirm this submission is original, complete, follows the locked project guide, and does not include prohibited confidential material, private source data, credentials, or copied platform artifacts.
 

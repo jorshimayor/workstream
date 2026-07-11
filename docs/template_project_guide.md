@@ -22,7 +22,7 @@ live in `PaymentPolicy`, not in the project shell or guide request body.
 
 - difficulty scale:
 - estimated time policy:
-- maximum active tasks per worker:
+- maximum active tasks per contributor:
 - review SLA:
 
 ## Guide Versioning
@@ -60,7 +60,7 @@ Define disqualifying conditions and what fails automatically or normally leads t
 
 ## Reviewer Rubric
 
-Define how reviewers evaluate quality. Workers see the same rubric they submit against.
+Define how reviewers evaluate quality. Contributors see the same rubric they submit against.
 
 ## Forbidden Actions And Artifacts
 
@@ -83,14 +83,14 @@ Define prohibited behavior, tools, copied material, generated artifacts, confide
 - output files or package
 - evidence
 - revision replay when applicable
-- worker attestation
+- contributor attestation
 - artifact hash manifest
 
-Workstream assigns submission version server-side after blocking pre-submit checks pass. The worker does not provide a submission version or any guide/policy version.
+Workstream assigns submission version server-side after blocking pre-submit checks pass. The contributor does not provide a submission version or any guide/policy version.
 
 ## Submission Expectations Summary
 
-Summarize what workers must submit in plain language:
+Summarize what contributors must submit in plain language:
 
 - required artifacts:
 - required evidence references:
@@ -123,12 +123,12 @@ Each task later locks:
 - EffectiveProjectSubmissionArtifactPolicy hash:
 - generated project PreSubmitCheckerPolicy compiled bundle hash:
 
-Artifact requirements shown to workers are derived from the approved `SubmissionArtifactPolicy`. The guide may summarize those requirements, but the policy is the enforcement source.
+Artifact requirements shown to contributors are derived from the approved `SubmissionArtifactPolicy`. The guide may summarize those requirements, but the policy is the enforcement source.
 
 Project owners provide open-ended guide material and business terms in plain
 language. Workstream evaluates guide sufficiency, derives
-`SubmissionArtifactPolicy` from that material, and a Workstream actor
-with the `admin` or `project_manager` role approves the internal policy bundle
+`SubmissionArtifactPolicy` from that material, and an authorized covered
+Project Manager approves the internal policy bundle
 before guide activation.
 
 ## Known Checker Blind Spots
@@ -162,7 +162,7 @@ Mandatory second review:
 - suspected copied or confidential material:
 - payment above threshold:
 - reviewer conflict of interest:
-- admin override used:
+- registered recovery operation used (permission, actor, reason, evidence):
 
 ## Revision Policy
 
@@ -195,7 +195,7 @@ Reject when:
 - work cannot be fixed by reasonable revision
 - prohibited content or files are included
 - evidence is fabricated or does not correspond to the submitted artifact
-- worker repeatedly resubmits without addressing prior findings
+- contributor repeatedly resubmits without addressing prior findings
 
 ## Common Rejection Reasons
 

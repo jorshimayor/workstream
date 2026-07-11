@@ -8,19 +8,19 @@ Accepted
 
 Project guidance can change while a task is already in progress or under review.
 
-If rule changes live only in Slack, chat, or memory, workers can be punished for missing an out-of-band update and reviewers can apply inconsistent standards. If guide changes silently mutate prior submissions, Workstream loses auditability.
+If rule changes live only in Slack, chat, or memory, contributors can be punished for missing an out-of-band update and reviewers can apply inconsistent standards. If guide changes silently mutate prior submissions, Workstream loses auditability.
 
 Workstream needs both fairness and correctness:
 
 - a submitted attempt must remain tied to the exact guide and policy versions it used
-- a revised attempt may need the latest active guide and policy context before the worker resumes
-- the worker and reviewer must be able to see what changed
+- a revised attempt may need the latest active guide and policy context before the contributor resumes
+- the contributor and reviewer must be able to see what changed
 
 ## Decision
 
 Submitted attempts are immutable. Each submission remains evaluated against the locked project guide, checker policy, review policy, revision policy, and payment policy versions stamped on that submission.
 
-When a task enters `NEEDS_REVISION`, Workstream runs a revision context preparation step before the worker resumes. That step compares the submission's locked guide and policy context with the current active project guide and policy context.
+When a task enters `NEEDS_REVISION`, Workstream runs a revision context preparation step before the contributor resumes. That step compares the submission's locked guide and policy context with the current active project guide and policy context.
 
 Revision policy controls whether the next attempt:
 
@@ -35,11 +35,11 @@ Every revision context preparation must record its outcome. When the next attemp
 - prior locked guide and policy versions
 - next locked guide and policy versions
 - rebase reason
-- guide or policy change summary shown to the worker
+- guide or policy change summary shown to the contributor
 - actor or system process that prepared the revision context
 - audit event id
 
-The worker must see the old context, the new context, and the change summary before submitting the revised attempt when a rebase occurs. The reviewer packet must also show that the revised attempt used a different guide or policy context.
+The contributor must see the old context, the new context, and the change summary before submitting the revised attempt when a rebase occurs. The reviewer packet must also show that the revised attempt used a different guide or policy context.
 
 Out-of-band guidance has no acceptance force until it is encoded in one of:
 
@@ -51,13 +51,13 @@ Out-of-band guidance has no acceptance force until it is encoded in one of:
 - task template
 - checker implementation governed by the checker policy
 
-Acceptance-affecting checker implementation changes must be tied to visible guide, policy, or checker-policy context. When those changes affect a rebased revision attempt, the worker-visible change summary must describe the new requirement without exposing private detection details.
+Acceptance-affecting checker implementation changes must be tied to visible guide, policy, or checker-policy context. When those changes affect a rebased revision attempt, the contributor-visible change summary must describe the new requirement without exposing private detection details.
 
 ## Consequences
 
 Positive:
 
-- workers are not expected to monitor chat to discover rule changes
+- contributors are not expected to monitor chat to discover rule changes
 - reviewers can see which standards governed each attempt
 - guide and policy updates can improve future revisions without mutating prior submissions
 - repeated lessons become durable guide, checker, review, revision, payment, or template changes

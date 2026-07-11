@@ -5,9 +5,17 @@
 Planning merged through PR #91 as
 `ad6d6444e497b76d7cb925f3b0999ed4b74a3dac` after required internal reviews,
 Agent Gates, and Backend passed. CodeRabbit produced a walkthrough with no
-actionable findings, then its final check was cancelled when the PR closed. The
-initiative is stopped at the L0 human checkpoint: D1-D3 are approved; D4-D10
-require explicit durable approval before implementation.
+actionable findings, then its final check was cancelled when the PR closed.
+D4-D10 were explicitly approved and WS-AUTH-001-01 was started by the user on
+2026-07-11 in a fresh worktree from merged `main`. PR #93 is published. The
+branch now includes Contributor terminology repairs, CodeRabbit responses, and
+latest `main` through merged PR #90 plus its PR #94 memory update. Deterministic
+checks and all required internal reviewer tracks passed at `2164e3b`; final
+evidence binding is the remaining local gate before push. The GitHub Backend run
+then exposed one stale agent-runtime terminology assertion; the repair passed at
+`be0b836`, and its scope-count evidence passed at `b7dafb3`. Latest-main memory
+integration at `f7c9774` requires current review and evidence rebinding before
+the next push.
 
 ## Active planning chunk
 
@@ -15,18 +23,18 @@ None.
 
 ## Active implementation chunk
 
-None.
+`WS-AUTH-001-01`
 
 ## Current implementation branch
 
-None.
+`codex/ws-auth-001-01-adopt-authorization-baseline`
 
 ## Chunk status
 
 | Chunk | Status | Branch | PR | Notes |
 |---|---|---|---:|---|
-| `WS-AUTH-001-PLAN` | Merged | `authorization-service` | #91 | Merged as `ad6d644`; D4-D10 human approval pending. |
-| `WS-AUTH-001-01` | Proposed | - | - | Baseline adoption and repository contract reconciliation. |
+| `WS-AUTH-001-PLAN` | Merged | `authorization-service` | #91 | Merged as `ad6d644`; D4-D10 later approved. |
+| `WS-AUTH-001-01` | Internally reviewed | `codex/ws-auth-001-01-adopt-authorization-baseline` | #93 | Latest-main/external-review repairs passed at `2164e3b`; CI assertion repair passed at `be0b836`; final evidence rebind pending. |
 | `WS-AUTH-001-02` | Proposed | - | - | Verified issuer token and JWKS boundary. |
 | `WS-AUTH-001-03` | Proposed | - | - | Legacy actor classification preflight. |
 | `WS-AUTH-001-04` | Proposed | - | - | Request, error, and API control foundation. |
@@ -45,11 +53,7 @@ None.
 
 ## Blockers
 
-None for planning closure.
-
-`WS-AUTH-001-01` activation remains gated on explicit, durable human approval
-of proposed architecture/data-model decisions D4-D10 and a separate
-implementation start signal.
+None for the approved documentation/specification scope.
 
 Internal review evidence is recorded at
 `reviews/WS-AUTH-001-PLAN-internal-review-evidence.md` and binds reviewed SHA

@@ -6,7 +6,7 @@
 
 ## Goal
 
-Move task creation/screen/release, queue visibility, worker claim, assignment,
+Move task creation/screen/release, queue visibility, contributor claim, assignment,
 and start operations to scoped manager or exact-project submitter permissions
 while preserving task lifecycle guards.
 
@@ -39,12 +39,14 @@ backend/app/modules/tasks/repository.py
 backend/app/modules/tasks/schemas.py
 backend/app/modules/tasks/models.py
 backend/app/modules/tasks/lifecycle.py
+backend/alembic/versions/0022_*.py
 backend/app/modules/authorization/**
 backend/app/api/deps/auth.py
 backend/app/workers/authority_reconciliation.py
 backend/app/workers/celery_app.py
 backend/tests/test_tasks.py
 backend/tests/test_auth.py
+backend/tests/test_alembic.py
 backend/scripts/api_contract_e2e.py
 docs/operations_authorization_service.md
 .agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/**
@@ -57,7 +59,7 @@ docs/operations_authorization_service.md
 
 ```text
 submission create/read/finalize
-checker trigger/read or worker checker results
+checker trigger/read or contributor checker results
 new terminal task states or unrelated lifecycle redesign
 review models or self-review implementation
 token role or legacy active-worker-profile fallback
@@ -80,7 +82,7 @@ token role or legacy active-worker-profile fallback
 - Operator `operations.status.read` exposes a read-only cross-project task-queue
   operational projection with bounded fields; it does not grant task mutation.
   Audit Authority `audit.read` exposes only covered task evidence. Both paths
-  filter before counts/cursors, conceal unauthorized resources, redact worker
+  filter before counts/cursors, conceal unauthorized resources, redact contributor
   details, and have explicit mutation-denial tests.
 - ProjectRoleGrant revocation and ActorProfile suspension/deactivation/link
   revocation reconcile exclusive submitter assignments idempotently. For
@@ -89,7 +91,7 @@ token role or legacy active-worker-profile fallback
   immutable prior work/audit history remains. A `needs_revision` task instead
   remains `needs_revision` with a durable unassigned revision obligation. A
   covered manager may reassign it only to an active exact-project submitter;
-  the replacement receives the bounded worker-visible prior findings, prepared
+  the replacement receives the bounded contributor-visible prior findings, prepared
   revision context, supersession linkage, and replay requirements. Reactivation
   does not restore the old assignment. Submitted/evaluation/review-pending
   history is not rewritten.
@@ -100,7 +102,7 @@ token role or legacy active-worker-profile fallback
 - When the durable worker path is selected, it is explicitly registered in the
   existing Celery include list; no second worker registry or scheduler is added.
 - Revoked/suspended actors fail on the next request and transaction recheck.
-- Cross-project/worker visibility remains concealed.
+- Cross-project/contributor visibility remains concealed.
 - No migrated operation uses token roles or `require_any_role()`.
 - Task queue/claim/start remove their enumerated
   `LegacyWorkflowEligibilityCompatibility` consumers; only the submission
@@ -109,10 +111,14 @@ token role or legacy active-worker-profile fallback
   supported service/API path before claim. The legacy workflow-profile route
   remains bounded only because chunk 14 still owns the final submission
   compatibility consumer; task queue/claim/start no longer depend on it.
+- The assignment persistence column, model/schema/service fields, response
+  contract, and new audit payload keys use `contributor_id`. Migration `0022`
+  preserves every existing assignment owner, supports downgrade, and removes
+  the legacy storage name without exposing a public compatibility alias.
 - Full backend suite and API contract drill pass.
 - Tests cover revoke/suspend/reactivate before claim, while claimed, while in
-  progress, at needs-revision, after submit, duplicate reconciliation, worker
-  retry, a second contributor reclaiming released work, and needs-revision
+  progress, at needs-revision, after submit, duplicate reconciliation,
+  reconciliation worker retry, a second contributor reclaiming released work, and needs-revision
   reassignment preserving prior findings, locked/rebased context, submission
   supersession, and high/medium finding replay requirements.
 
@@ -122,6 +128,9 @@ token role or legacy active-worker-profile fallback
 (cd backend && .venv/bin/python -m ruff check app tests scripts)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python scripts/api_contract_e2e.py)
+(cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic upgrade head)
+(cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic downgrade -1)
+(cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic upgrade head)
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
 git diff --check

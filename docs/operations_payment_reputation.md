@@ -26,7 +26,7 @@ Fields:
 
 - contribution record id
 - task id
-- worker id
+- contributor id
 - project id
 - base amount
 - accepted amount
@@ -74,7 +74,7 @@ It updates from:
 - task difficulty
 - skill area
 
-## Worker Reputation
+## Contributor Reputation
 
 Track:
 
@@ -87,7 +87,7 @@ Track:
 - skill-specific quality
 - payout reliability
 
-Suggested v0.1 worker events:
+Suggested v0.1 contributor events:
 
 | Event | Default Delta | Notes |
 | --- | ---: | --- |
@@ -120,7 +120,7 @@ Suggested v0.1 reviewer events:
 
 ## Skill Tags
 
-Reputation is tagged by skill so a worker can be strong in one domain and weak in another.
+Reputation is tagged by skill so a contributor can be strong in one domain and weak in another.
 
 Examples:
 

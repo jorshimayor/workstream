@@ -12,7 +12,7 @@ stopped.
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
 | `WS-AUTH-001-PLAN` | Authorization Service Planning | L0 | Merged through PR #91 as `ad6d644` |
-| `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Proposed |
+| `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Active |
 | `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Proposed |
 | `WS-AUTH-001-03` | Legacy Actor Classification Preflight | L1 | Proposed |
 | `WS-AUTH-001-04` | Request, Error, And API Control Foundation | L1 | Proposed |
@@ -65,11 +65,13 @@ WS-AUTH-001-PLAN
 - Chunks 11-15 migrate bounded complete product/system surfaces.
 - Chunk 16 proves the complete initiative; it does not backfill missing audit
   or idempotency evidence.
-- `WS-POL-002-03` remains paused until the relevant project authorization
-  cutover is complete and the user explicitly resumes it.
+- `WS-POL-002-03` merged separately through PR #90 as `a7aa474`. This initiative
+  does not own it; post-merge memory completed through PR #94. `WS-POL-002-04`
+  remains inactive until the relevant project authorization cutover is complete
+  and the user explicitly starts it.
 
 ## Stop condition
 
-After planning review, stop. `WS-AUTH-001-01` does not become active without
-explicit human approval of D4-D10 plus an implementation start signal under the
-repository engineering loop.
+After WS-AUTH-001-01 review and PR preparation, stop. Do not start
+`WS-AUTH-001-02` or `WS-POL-002-04`; this worktree only reconciles the already
+merged PR #90 behavior with the authorization baseline.

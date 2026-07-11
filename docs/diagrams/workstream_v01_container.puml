@@ -29,9 +29,9 @@ skinparam cloud {
 
 package "People" #F8F9FA {
   rectangle "Project Manager" as project_manager #F1F3F5
-  rectangle "Human-Agent\nContributor" as worker #F1F3F5
+  rectangle "Human-Agent\nContributor" as contributor #F1F3F5
   rectangle "Reviewer" as reviewer #F1F3F5
-  rectangle "Operator / Admin" as operator #F1F3F5
+  rectangle "Operator / Access Admin" as operator #F1F3F5
 }
 
 cloud "Flow Auth\n----\nToken issuer and\nhuman identity source" as flow_auth
@@ -39,6 +39,7 @@ cloud "Flow Auth\n----\nToken issuer and\nhuman identity source" as flow_auth
 package "Workstream v0.1" #F8FBFF {
   rectangle "React + Vite Operations UI\n----\nPlanned internal\noperations dashboard" as frontend
   rectangle "FastAPI Backend\n----\nModular monolith API\nand workflow rules" as api
+  rectangle "Authorization Service\n----\nActor profiles, local grants,\nand capability checks" as authorization
   rectangle "Celery Worker Boundary\n----\nDurable project setup,\nchecker, and product jobs" as jobs
   rectangle "Checker Runner\n----\nAutomated task and\nsubmission checks" as checker
   rectangle "Storage Interface\n----\nObject-storage style\nAPI" as storage_adapter
@@ -50,12 +51,14 @@ package "Durable Records" #F2FBF7 {
 }
 
 project_manager --> frontend : uses
-worker --> frontend : uses
+contributor --> frontend : uses
 reviewer --> frontend : uses
 operator --> frontend : uses
 
 frontend --> api : HTTP/JSON
-api --> flow_auth : verify token
+api --> flow_auth : verify identity token
+api --> authorization : authorize capability
+authorization --> postgres : profiles and grants
 api --> postgres : SQLAlchemy async
 api --> storage_adapter : object refs
 api --> jobs : schedule work

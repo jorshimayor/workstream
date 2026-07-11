@@ -2,9 +2,8 @@
 
 ## Classification
 
-- Initiative direction/auth/data-model strategy: L0, human-led; D1-D3 approved
-  by the user on 2026-07-11, D4-D10 require explicit recorded approval before
-  `WS-AUTH-001-01` activation
+- Initiative direction/auth/data-model strategy: L0, human-led; D1-D10 approved
+  by the user on 2026-07-11 before `WS-AUTH-001-01` activation
 - Bounded implementation chunks: L1 after the L0 planning gate
 - SLA: P1
 - Work type: architecture, authentication, authorization, migration, audit
@@ -28,7 +27,7 @@
 | A11 | API namespace forks | Client and documentation drift | Adopt `/api/v1` only and update references together | Route/OpenAPI and stale-reference scan |
 | A12 | Existing intake regresses | Project/task/checker pipeline stops | Run full current suite and API drill after actor migration and each cutover surface | Existing backend suite and live drill |
 | A13 | Auth initiative becomes one oversized PR | Review failure and hidden coupling | Sixteen bounded implementation chunks, one active at a time | Circuit-breaker and PR-size evidence |
-| A14 | WS-POL work resumes on obsolete auth | Rework and inconsistent authority | Keep WS-POL-002-03 paused in durable loop state | Loop-memory gate |
+| A14 | Later WS-POL work resumes on obsolete auth | Rework and inconsistent authority | Keep WS-POL-002-04 inactive until PR #90 merges, auth proof exists, and the user starts it | Loop-memory gate |
 | A15 | Authority mutation ships before durable evidence | Missing provenance cannot be reconstructed | Introduce correlation/idempotency/shared audit with canonical actor persistence | Atomic state+idempotency+event tests in every authority chunk |
 | A16 | Identity-link revocation strands final administrator | Administrative lockout despite active grant row | Apply AuthorityControl lock to link revoke plus grant/profile changes | Mixed concurrent link/grant/profile final-admin tests |
 | A17 | Canonical actor migration deletes typed-profile workflow eligibility before task/submission cutover | An intermediate merged release cannot claim, start, or submit work | Bounded non-authoritative workflow-eligibility adapter in chunk 06; remove task consumers in 13 and final consumer plus adapter in 14 | Full suite/API drill after chunks 06, 13, 14, and scanner proof in 15 |

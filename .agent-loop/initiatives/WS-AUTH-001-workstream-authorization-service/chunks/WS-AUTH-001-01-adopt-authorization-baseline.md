@@ -34,7 +34,7 @@ P1
 
 ```text
 README.md
-docs/reference_specs/**
+docs/reference_specs/README.md
 docs/decision_0012_workstream_authorization_service.md
 docs/architecture_lockdown.md
 docs/architecture_system_architecture.md
@@ -49,8 +49,11 @@ docs/current_system_data_flow.html
 docs/roadmap_implementation_backlog.md
 docs/architecture_brief/workstream_architecture_brief.md
 docs/architecture_brief/workstream_architecture_brief.pdf
+docs/architecture_brief/task_lifecycle_sequence.puml
+docs/architecture_brief/images/task_lifecycle_sequence.png
+docs/architecture_brief/images/workstream_context.png
+docs/architecture_brief/images/workstream_v01_container.png
 docs/spec_authorization_service.md
-docs/reference_specs/README.md
 docs/architecture_checker_framework.md
 docs/architecture_lifecycle_state_machine.md
 docs/operations_operator_workflow.md
@@ -60,16 +63,36 @@ docs/product_brief.md
 docs/product_first_user_flows.md
 docs/template_checker_policy.md
 docs/template_project_guide.md
+docs/template_prior_feedback_checklist.md
 docs/template_revision_replay.md
 docs/template_submission_artifact_policy.md
 docs/decision_0003_project_guides_are_first_class.md
 docs/decision_0009_review_decisions_are_canonical.md
+docs/decision_0010_revision_context_rebase.md
 docs/decision_0011_submission_artifact_policy_drives_pre_submit.md
+docs/operations_payment_reputation.md
+docs/operations_reviewer_workflow.md
+docs/operations_revision_replay.md
+docs/operations_subagent_review_protocol.md
+docs/principles.md
+docs/product_principles.md
+docs/template_preflight_evidence.md
+docs/template_review_packet.md
+docs/template_submission_packet.md
+docs/template_task_status.md
 docs/diagrams/*.md
+docs/diagrams/workstream_context.puml
+docs/diagrams/workstream_v01_container.puml
+docs/diagrams/rendered/workstream_context.svg
+docs/diagrams/rendered/workstream_v01_container.svg
 docs/risk_register.md
 docs/spec_*.md
 scripts/check_stale_authorization_docs.py
+scripts/render_authorization_docs.sh
 scripts/test_agent_gates.py
+backend/app/adapters/project_agents/openai_agent_sdk.py
+backend/tests/test_agent_runtime.py
+backend/tests/test_projects.py
 .github/workflows/agent-gates.yml
 .agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/**
 .agent-loop/LOOP_STATE.md
@@ -78,15 +101,24 @@ scripts/test_agent_gates.py
 .agent-loop/policies/repository-engineering-policy.md
 .agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/STATUS.md
 .agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/CHUNK_MAP.md
+.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/chunks/WS-POL-002-03-post-submit-policy-approval-visibility.md
 ```
+
+The eight exact PlantUML/image paths above are approved companion sources and
+generated artifacts for the reconciled active diagrams; they are not a scope
+exception.
 
 ## Not allowed
 
 ```text
-backend application code, migrations, backend tests, dependencies
+backend application code or backend tests beyond the three exact terminology-only
+files allowed above; migrations and dependencies
 review/contribution/compensation implementation
 rewriting payment/reputation architecture beyond recording a later conflict
 adding permanent /v1 aliases
+the eight imported WS-ARCH/WS-AUTH/WS-CON/WS-IMP/WS-REV Markdown/PDF inputs
+docs/reference_specs/SHA256SUMS
+.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/SOURCE_MANIFEST.md
 ```
 
 ## Acceptance criteria
@@ -107,7 +139,13 @@ adding permanent /v1 aliases
   architecture, decision, diagram, and bounded specification document found by
   the deterministic authority scan is either reconciled in this chunk or
   classified by an explicit reviewed historical/archive allowlist. The scanner
-  has known-bad fixtures and fails if an active authority claim is omitted.
+  auto-discovers tracked and untracked active documents outside any hardcoded
+  corpus, has known-bad fixtures, and fails if an active authority claim is
+  omitted. Only exact reviewed archive/history paths may be allowlisted.
+- Agent Gates invokes `python3 scripts/check_stale_authorization_docs.py`
+  directly with fail-closed semantics. Regression tests prove the workflow
+  retains that step and a newly added active document containing `/v1` or an
+  obsolete authority claim fails discovery without editing a scanner corpus.
 - The five administrative grants and exact-project contributor grants use
   consistent names.
 - Imported Markdown/PDF pairs are reconciled or explicitly labeled so they do
@@ -116,11 +154,18 @@ adding permanent /v1 aliases
   `docs/reference_specs/README.md` records their hashes/status and the
   `/api/v1` override; canonical reconciled text lives separately in
   `docs/spec_authorization_service.md`.
-- `WS-POL-002-03` is durably paused behind the auth initiative.
+- `WS-POL-002-03` is recorded as implemented separately in PR #90 without this
+  chunk claiming ownership or activating `WS-POL-002-04`.
 - Roadmap status names WS-AUTH-001 as current priority, records POL-002 chunks
-  01/02 merged and 03 paused, and defers review implementation until auth proof.
-- Canonical vocabulary distinguishes `worker` as a task-lifecycle persona and
-  attribution term from `submitter` as the persisted exact-project grant.
+  01/02 merged and chunk 03 handled separately by PR #90, and defers further
+  authorization implementation until auth proof.
+- Canonical vocabulary uses Contributor as the umbrella human term. A
+  contributor has an exact-project `submitter`, `reviewer`, or `both` grant.
+  Celery, checker, setup, and background workers are internal services, not
+  human product roles.
+- The project policy derivation prompt and its exact prompt-contract tests use
+  Contributor for human submitters. This wording-only repair does not change
+  schemas, persisted legacy field names, authorization, or runtime routing.
 - Every current operational override/repair command is inventoried and assigned
   a precise registered Project Manager or Operator permission for later chunks;
   any additive permission is approved in the ADR rather than invented in code.
@@ -137,8 +182,12 @@ python3 scripts/check_markdown_links.py
 python3 scripts/check_stale_authorization_docs.py
 python3 scripts/test_agent_gates.py
 sha256sum -c docs/reference_specs/SHA256SUMS
+PLANTUML_JAR=/path/to/plantuml-1.2026.6.jar scripts/render_authorization_docs.sh
 git diff --check
 ```
+
+Diagram regeneration uses PlantUML `1.2026.6`; evidence records the local JAR
+SHA-256 and the regenerated artifact checks.
 
 ## Required reviewers
 

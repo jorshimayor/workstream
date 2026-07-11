@@ -1,5 +1,27 @@
 # Review Log
 
+## WS-AUTH-001-01
+
+Status: PR #93 published; latest-main merge, CodeRabbit repairs, CI assertion
+repair, and required internal re-review complete locally; evidence rebind,
+push, external checks, and human review pending.
+
+Reviewed implementation SHA: `be0b836`
+
+Result: PASS after fixes across senior engineering, QA/test, security/auth,
+product/ops, architecture, docs, reuse/dedup, CI integrity, and test delta.
+
+Scope: canonical authorization ADR/spec/runbook, active-document and diagram
+reconciliation, stale-authorization scanner/tests, additive Agent Gates step,
+latest-main/PR #90 reconciliation, and terminology-only prompt/test wording.
+
+Evidence: `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/reviews/WS-AUTH-001-01-internal-review-evidence.md`
+
+Trust bundle: `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/reviews/WS-AUTH-001-01-pr-trust-bundle.md`
+
+Next chunk: `WS-AUTH-001-02` remains inactive pending merge, memory update, and
+an explicit user start.
+
 ## WS-POL-002-03
 
 Status: merged through PR #90 on 2026-07-11 as `a7aa474`.
@@ -35,8 +57,8 @@ Trust bundle: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation
 
 External review response: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/reviews/WS-POL-002-03-external-review-response.md`
 
-Next chunk: `WS-POL-002-04` remains inactive until a separate explicit user
-start signal.
+Next chunk: `WS-POL-002-04` remains inactive until the authorization foundation
+is proven and the user provides a separate explicit start signal.
 
 Parallel-work note: stale point-in-time WS-POL pause wording in WS-AUTH planning
 artifacts is owned by the separate WS-AUTH worktree and was deliberately not
@@ -673,3 +695,21 @@ Evidence: `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/
 Next gate: explicit durable human approval of D4-D10 and a separate
 `WS-AUTH-001-01` start signal. Create a fresh worktree/branch from the latest
 merged `main`; do not implement chunk 01 in the planning worktree.
+
+## 2026-07-11 - WS-AUTH-001-01 Started
+
+The user explicitly approved D4-D10 and started only `WS-AUTH-001-01` by saying
+"ok start" after the planning and post-merge memory PRs merged.
+
+Branch: `codex/ws-auth-001-01-adopt-authorization-baseline`
+
+Worktree: `/home/abiorh/flow/workstream-auth-001-01`
+
+Scope: authorization ADR, canonical repository documentation, deterministic
+stale-authorization documentation gate, operations runbook, and durable loop
+state. Backend runtime, migrations, tests, dependencies, review, contribution,
+compensation, frontend, and later authorization chunks remain inactive.
+
+Next gate: implement and verify only the WS-AUTH-001-01 contract, run all
+required internal reviewer tracks, prepare the trust bundle, and stop for human
+review.

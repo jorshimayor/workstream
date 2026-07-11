@@ -10,6 +10,7 @@ import contextlib
 import importlib.util
 import io
 import os
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -880,6 +881,218 @@ def test_loop_memory_state_accepts_merged_fixture() -> None:
             checker.INITIATIVE_STATUS_FILES = original_status_files
 
 
+def test_stale_authorization_rule_examples_are_rejected() -> None:
+    """Independent fixtures cover each required stale-authority family."""
+    gate = load_module(
+        "stale_authorization_docs_rules",
+        "scripts/check_stale_authorization_docs.py",
+    )
+    fixtures = {
+        "NON_CANONICAL_API_PREFIX": "POST /v1/projects",
+        "LEGACY_ADMIN_PROJECT_MANAGER_AUTHORITY": "An admin or project_manager approves.",
+        "LEGACY_ROLE_HELPER": "Call require_any_role for this route.",
+        "TRUSTED_ROLE_CLAIM_AUTHORITY": "Routes use trusted role claims.",
+        "CURRENT_TOKEN_ROLE_AUTHORITY": "Require the role in the current verified token.",
+        "TOKEN_CARRIES_PRODUCT_ROLE": "The token also carries an authorized Workstream role.",
+        "TYPED_PROFILE_AUTHORITY": 'ActorProfile(profile_type="worker") grants access.',
+        "OBSOLETE_ROLE_ASSIGNMENT_MODEL": "Persist a WorkstreamRoleAssignment.",
+        "OPERATOR_NOT_A_ROLE": "Operator is not a separate permission role.",
+        "BROAD_ADMIN_OVERRIDE": "An admin can override a checker failure.",
+        "LEGACY_ADMIN_HEADING": "### Admin",
+        "LEGACY_ROLE_MATRIX": "| Admin | Project Manager | Finance | Auditor |",
+        "ROLE_NAME_APPROVAL_PROVENANCE": '"approved_by_role": "project_manager"',
+        "GENERIC_ADMIN_PRODUCT_AUTHORITY": "An admin can create projects.",
+        "TOKEN_ROLE_PRODUCT_AUTHORITY": "A token role grants project access.",
+        "NAMED_ROLE_TOKEN_AUTHORITY": "A project_manager token may approve this request.",
+        "TYPED_PROFILE_PRODUCT_AUTHORITY": (
+            "ActorProfile with type worker authorizes task claim."
+        ),
+        "HUMAN_WORKER_VOCABULARY": "## Flow 3: Worker Submits Work",
+        "HUMAN_WORKER_IDENTIFIER": "worker_claim_status: fixed",
+        "TECHNICAL_WORKER_HUMAN_AUTHORITY": (
+            "The checker worker submits a contributor packet."
+        ),
+    }
+    for code, sample in fixtures.items():
+        failures = gate.scan_text("docs/new_active_doc.md", sample)
+        assert any(failure.endswith(code) for failure in failures), (code, failures)
+
+    unambiguous_canonical_statements = (
+        "Product authority comes only from local Workstream grants.",
+        "Bearer-token role metadata is identity provenance only.",
+        "Typed workflow profiles are eligibility metadata only.",
+        "An Access Administrator may grant administrative roles.",
+    )
+    for sample in unambiguous_canonical_statements:
+        assert gate.scan_text("docs/new_active_doc.md", sample) == [], sample
+
+    fail_closed_authority_shapes = (
+        "No current token role grants Workstream authority.",
+        "Roles from the bearer token do not permit this request.",
+        "ActorProfile with type worker does not authorize task claim.",
+        "A token role grants project access, but email does not.",
+        "A token role grants project access, not a typed profile.",
+        (
+            "ActorProfile with type worker authorizes task claim, but does not "
+            "authorize review."
+        ),
+        "A token role, not email, grants project access.",
+        "A token role does not merely provide context; it grants project access.",
+        "ActorProfile with type worker, not reviewer, authorizes task claim.",
+        "A token role does not grant profile access but authorizes project access.",
+        (
+            "ActorProfile with type worker does not authorize read access but "
+            "permits task claim."
+        ),
+        (
+            "A worker role from the token does not allow profile reads but may "
+            "approve projects."
+        ),
+        "A token role does not record email but grants project access.",
+        "A worker token does not carry profile metadata but authorizes task claim.",
+        "ActorProfile with type worker does not store secrets but permits task claim.",
+    )
+    for sample in fail_closed_authority_shapes:
+        assert gate.scan_text("docs/new_active_doc.md", sample), sample
+
+    technical_worker_statements = (
+        "The Celery worker runs project setup jobs.",
+        "Checker execution uses a durable worker boundary.",
+        "The setup worker reloads current authority before commit.",
+        "The Celery worker identity is recorded for audit.",
+        "The checker worker writes results.",
+        "The setup worker resumes a failed job.",
+        "The system worker completed reconciliation.",
+        "The Celery worker submission is retried.",
+        "The checker worker claim status is internal.",
+        "Celery workers submit jobs.",
+        "Celery worker_id identifies the background process.",
+        "The checker worker_id is included in internal telemetry.",
+        "See backend/app/workers/tasks.py.",
+    )
+    for sample in technical_worker_statements:
+        assert gate.scan_text("docs/new_active_doc.md", sample) == [], sample
+
+    human_worker_statements = (
+        "A qualified worker claims the task.",
+        "The worker opens an assigned task.",
+        "Maximum active tasks per worker.",
+        "Worker attestation is required.",
+        "A worker submits the packet.",
+        "Workers submit packets.",
+        "A worker can claim a task.",
+        "Persist worker_id on the assignment.",
+        "POST /api/v1/workers/me/profile",
+        "Celery schedules background jobs; a worker submits the packet.",
+        "Celery is configured here; workers submit task packets.",
+        "Celery is installed; a worker submits human work.",
+        "Celery supports queues, but human workers submit tasks.",
+        "Human workers use Celery.",
+        "The Celery worker claims a human task using submitter authority.",
+        (
+            "The system worker receives a reviewer grant and records a review "
+            "decision."
+        ),
+        "The setup worker is a human product role.",
+        "The system worker has a reviewer grant.",
+        "The Celery worker may review a contributor submission.",
+        "The checker worker is a Contributor.",
+        "The setup worker uses submitter authority.",
+        "The background worker approves project work.",
+        "The Celery worker approves a project guide.",
+        "The system worker reviews the submission.",
+        "The checker worker grants itself project access.",
+        "The setup worker manages contributor grants.",
+        "The background worker creates a project.",
+        "The system worker records a review decision.",
+        "The checker worker issues a submitter grant.",
+        "The setup worker revokes a reviewer grant.",
+        "The Celery worker accepts the submission.",
+        "The background worker rejects project work.",
+        "The checker worker requests revision.",
+    )
+    for sample in human_worker_statements:
+        assert gate.scan_text("docs/new_active_doc.md", sample), sample
+
+
+def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:
+    """A new active doc fails without being added to a hardcoded corpus."""
+    gate = load_module(
+        "stale_authorization_docs_discovery",
+        "scripts/check_stale_authorization_docs.py",
+    )
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        root = Path(tmp_dir)
+        subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+        (root / "docs").mkdir()
+        active = root / "docs" / "new_active_doc.md"
+        diagram = root / "docs" / "new_active_diagram.puml"
+        active.write_text("POST /v1/projects\n", encoding="utf-8")
+        diagram.write_text(
+            "Workstream --> API : POST /api/v1/projects\n", encoding="utf-8"
+        )
+        assert active in gate.discover_documents(root)
+        assert diagram in gate.discover_documents(root)
+        assert gate.scan(root) == [
+            "docs/new_active_doc.md:1: NON_CANONICAL_API_PREFIX"
+        ]
+
+        active.write_text("POST /api/v1/projects\n", encoding="utf-8")
+        assert gate.scan(root) == []
+
+        active.write_text(
+            "The worker role from the verified token authorizes task claims.\n"
+            "ActorProfile with type worker authorizes task claim.\n",
+            encoding="utf-8",
+        )
+        failures = gate.scan(root)
+        assert any(item.endswith("TOKEN_ROLE_PRODUCT_AUTHORITY") for item in failures)
+        assert any(item.endswith("TYPED_PROFILE_PRODUCT_AUTHORITY") for item in failures)
+
+        active.write_text("POST /api/v1/projects\n", encoding="utf-8")
+        diagram.write_text("Workstream --> API : POST /v1/projects\n", encoding="utf-8")
+        assert gate.scan(root) == [
+            "docs/new_active_diagram.puml:1: NON_CANONICAL_API_PREFIX"
+        ]
+
+
+def test_stale_authorization_precedence_exemption_is_line_scoped() -> None:
+    """The active archive marker exempts one line, not its entire document."""
+    gate = load_module(
+        "stale_authorization_docs_precedence",
+        "scripts/check_stale_authorization_docs.py",
+    )
+    marker = (
+        "archival input uses `/v1`. WS-AUTH-001 takes precedence over the current"
+    )
+    assert gate.scan_text("docs/reference_specs/README.md", marker) == []
+    failures = gate.scan_text(
+        "docs/reference_specs/README.md",
+        marker + "\nClients call POST /v1/projects.\n",
+    )
+    assert failures == [
+        "docs/reference_specs/README.md:2: NON_CANONICAL_API_PREFIX"
+    ]
+
+
+def test_stale_authorization_history_allowlist_is_exact() -> None:
+    """Only reviewed exact history paths bypass active-document scanning."""
+    gate = load_module(
+        "stale_authorization_docs_history",
+        "scripts/check_stale_authorization_docs.py",
+    )
+    assert "docs/spec_chunk_3_project_guide_foundation.md" in gate.HISTORICAL_PATHS
+    assert "docs/spec_chunk_999_future.md" not in gate.HISTORICAL_PATHS
+
+
+def test_agent_gates_runs_stale_authorization_docs_fail_closed() -> None:
+    """The Agent Gates workflow must retain the authorization-doc scanner."""
+    workflow = (ROOT / ".github/workflows/agent-gates.yml").read_text(encoding="utf-8")
+    command = "run: python3 scripts/check_stale_authorization_docs.py"
+    assert workflow.count(command) == 1
+    assert "continue-on-error" not in workflow
+
+
 def main() -> int:
     """Run all local test functions."""
     tests = [
@@ -909,6 +1122,11 @@ def main() -> int:
         test_stale_wording_catches_multiline_legacy_status_reconstruction,
         test_loop_memory_state_rejects_pre_merge_status,
         test_loop_memory_state_accepts_merged_fixture,
+        test_stale_authorization_rule_examples_are_rejected,
+        test_stale_authorization_discovery_includes_new_untracked_docs,
+        test_stale_authorization_precedence_exemption_is_line_scoped,
+        test_stale_authorization_history_allowlist_is_exact,
+        test_agent_gates_runs_stale_authorization_docs_fail_closed,
     ]
     for test in tests:
         test()

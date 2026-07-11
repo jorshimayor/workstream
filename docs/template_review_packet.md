@@ -16,7 +16,7 @@
 
 - assigned reason:
 - conflict-of-interest attestation:
-- worker-reviewer pair risk:
+- contributor-reviewer pair risk:
 - second review required:
 - second review trigger:
 
@@ -61,7 +61,7 @@ Required when reviewing a resubmission.
 | next guide version | `<guide version>` |
 | prior policy versions | `<checker/review/revision/payment policy versions>` |
 | next policy versions | `<checker/review/revision/payment policy versions>` |
-| change summary shown to worker | `<summary>` |
+| change summary shown to contributor | `<summary>` |
 | revision context audit event | `<audit event id>` |
 
 ## Payment Eligibility

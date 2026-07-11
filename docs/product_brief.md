@@ -35,9 +35,11 @@ The system is source-agnostic without becoming source-adapter-first. A task crea
 
 ## Target Users
 
-### Primary User: Operator
+### Primary User: Contributor
 
-The person who creates tasks, packages work, submits evidence, monitors status, and resolves revisions.
+The person who claims assigned work, packages submissions, submits evidence,
+monitors their contribution status, and resolves revisions under an
+exact-project Submitter or Both grant.
 
 Needs:
 
@@ -57,15 +59,17 @@ Needs:
 - issue actionable revision feedback
 - avoid reviewing broken packages
 
-### Admin
+### Project Manager And Operator
 
-The person configuring projects, rules, checkers, payments, and roles.
+The covered Project Manager configures project rules and tasks. The Operator
+inspects runtime health and performs registered recovery. Actor/grant,
+finance, and audit duties remain separate authorities.
 
 Needs:
 
-- create project templates
-- configure statuses and checkers
-- audit review decisions
+- create covered project templates
+- configure project statuses and checkers
+- inspect permission-appropriate review evidence
 - track throughput and payout exposure
 
 ## MVP Boundary
