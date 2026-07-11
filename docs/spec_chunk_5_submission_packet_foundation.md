@@ -154,6 +154,8 @@ Repair outcomes:
   replacement automatic gate attempt for the same locked latest submission
 - `pre_review_gate_enqueue_failed`: requeue the same locked submission after the
   queue/broker/eager-dispatch problem is corrected
+- `pre_review_gate_execution_failed`: requeue after the task/checker setup
+  defect that blocked automatic execution is corrected
 - `unknown_checker`: requeue after the missing checker registration or setup
   defect is corrected
 - non-repairable failed automatic gate claim: return HTTP 409 with an
