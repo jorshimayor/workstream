@@ -2,10 +2,12 @@
 
 ## WS-POL-002-03
 
-Status: implemented and internally reviewed on branch
-`codex/ws-pol-002-03-post-submit-approval-visibility`; pull request #90 is
-current with local CodeRabbit-response fixes complete and external checks
-pending for the next pushed head.
+Status: merged through PR #90 on 2026-07-11 as `a7aa474`.
+
+Reviewed implementation SHA: `0e59873`
+
+Final merged branch head: `1e20b79` (review/evidence files only after the
+reviewed implementation SHA)
 
 Required reviewer tracks:
 
@@ -19,8 +21,9 @@ Required reviewer tracks:
 - reuse/dedup
 - test delta
 
-Result: PASS after fixes locally; external review and GitHub checks must rerun
-after the next push.
+Result: PASS after fixes. Required internal reviewer tracks passed with no open
+sessions; CodeRabbit reported no unresolved actionable comments; Agent Gates
+and Backend checks passed before explicit human merge.
 
 Scope: server-owned post-submit checker policy setup visibility, approval, and
 correction APIs; safe operator summaries; immutable approval provenance; and
@@ -30,8 +33,14 @@ Evidence: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/rev
 
 Trust bundle: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/reviews/WS-POL-002-03-pr-trust-bundle.md`
 
-Next chunk: `WS-POL-002-04` remains inactive until this PR is externally
-reviewed, merged by explicit human approval, and followed by memory update.
+External review response: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/reviews/WS-POL-002-03-external-review-response.md`
+
+Next chunk: `WS-POL-002-04` remains inactive until a separate explicit user
+start signal.
+
+Parallel-work note: stale point-in-time WS-POL pause wording in WS-AUTH planning
+artifacts is owned by the separate WS-AUTH worktree and was deliberately not
+rewritten by this memory-only update.
 
 ## WS-POL-002-02
 

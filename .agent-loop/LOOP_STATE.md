@@ -2,23 +2,25 @@
 
 ## Current State
 
-- Active initiative: `WS-POL-002` - Post-Submit Checker Foundation
+- Active initiative: none
 - Active planning chunk: none
-- Active implementation chunk: `WS-POL-002-03` - Server-Owned Policy Approval
-  And Visibility APIs
-- Branch: `codex/ws-pol-002-03-post-submit-approval-visibility`
-- Status: `WS-POL-002-03` implemented and internally reviewed; pull request
-  created at `https://github.com/Flow-Research/workstream/pull/90`.
-- Last merged implementation SHA: `67fb3ca`
-- Last merge commit: `14fb216`
-- Current gate: external review, GitHub checks, and user review.
-- Next chunk: `WS-POL-002-04` remains inactive until `WS-POL-002-03` is merged
-  by explicit human approval and memory is updated.
+- Active implementation chunk: none
+- Branch: `codex/ws-pol-002-03-post-merge-memory`
+- Status: `WS-POL-002-03` merged through PR #90 on 2026-07-11.
+- Last reviewed implementation SHA: `0e59873`
+- Final merged branch head: `1e20b79`
+- Last merge commit: `a7aa474`
+- Current gate: post-merge memory update; stop after memory review.
+- Next chunk: `WS-POL-002-04` remains inactive until a separate explicit user
+  start signal.
 - Checkpointed initiative: `WS-AUTH-001` - Workstream Authorization Service
 - Checkpointed planning artifact: `WS-AUTH-001-PLAN`
-- Status: WS-AUTH-001 planning merged through PR #91, post-merge memory merged
-  through PR #92, and the initiative is stopped at the L0 human checkpoint. It
-  is not the active implementation stream while PR #90 is current.
+- Status: WS-AUTH-001 planning merged through PR #91 and post-merge memory
+  merged through PR #92. Its separate implementation worktree owns any later
+  authorization activity; this WS-POL memory update does not modify that work.
+- Reconciliation note: WS-AUTH planning references to the earlier WS-POL pause
+  are point-in-time decision records. Any current-state reconciliation belongs
+  to the WS-AUTH worktree after it updates from `main`.
 - Current gate: explicit durable human approval of D4-D10 before any
   authorization implementation chunk starts.
 - Next authorization chunk: `WS-AUTH-001-01` remains proposed until D4-D10
@@ -142,3 +144,6 @@ blockchain, frontend, or agent-runtime behavior.
   Post-Submit Compiler Contract with version-stamped default-checker snapshots,
   canonical policy hashing, compiler-boundary validation, and default-drift
   regression tests.
+- PR #90 merged into `main` as `a7aa474` on 2026-07-11; it implemented
+  `WS-POL-002-03` server-owned post-submit checker policy approval, correction,
+  immutable correction history, and bounded setup visibility APIs.
