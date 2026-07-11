@@ -146,8 +146,10 @@ not the normal handoff from contributor work to evaluation.
 Repair outcomes:
 
 - no existing automatic gate run: enqueue the locked latest submission
-- queued or running automatic gate run: return the existing run without creating
-  another claim
+- queued automatic gate run: redispatch the existing queued claim without
+  creating another checker run
+- running automatic gate run: return the existing run without creating another
+  claim
 - timed-out running automatic gate run: fence the stale claim and create a
   replacement automatic gate attempt for the same locked latest submission
 - `pre_review_gate_enqueue_failed`: requeue the same locked submission after the

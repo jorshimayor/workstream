@@ -780,9 +780,9 @@ class CheckerService:
             True,
         )
 
-    async def mark_pre_review_gate_enqueue_failed(self, checker_run_id: str) -> None:
+    async def mark_pre_review_gate_enqueue_failed(self, checker_run_id: str) -> bool:
         """Record that the broker rejected a queued automatic pre-review gate."""
-        await self._checker_repo.mark_automatic_gate_enqueue_failed(
+        failed = await self._checker_repo.mark_automatic_gate_enqueue_failed(
             checker_run_id=checker_run_id,
             trigger_source=PRE_REVIEW_GATE_TRIGGER_SOURCE,
             system_actor_id=PRE_REVIEW_GATE_SYSTEM_ACTOR_ID,
@@ -792,7 +792,11 @@ class CheckerService:
             failure_message="pre-review gate could not be enqueued",
             completed_at=datetime.now(UTC),
         )
-        await self._session.commit()
+        if failed:
+            await self._session.commit()
+        else:
+            await self._session.rollback()
+        return failed
 
     async def claim_pre_review_gate_repair_dispatch(self, checker_run_id: str) -> bool:
         """Claim a queued gate repair dispatch before publishing a broker job."""

@@ -4170,6 +4170,63 @@ async def test_failed_pre_review_gate_repair_is_idempotent_while_queued(
     assert len(repair_events) == 1
 
 
+async def test_enqueue_failure_without_current_claim_skips_dispatch_failed_audit(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from app.modules.checkers.gate_queue import PreReviewGateQueueError
+    from app.modules.checkers.service import CheckerService
+    from app.modules.tasks import service as task_service_module
+
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+
+    async def miss_enqueue_failure_cas(_self, _checker_run_id: str) -> bool:
+        return False
+
+    def fail_enqueue(*, checker_run_id: str, requester_provenance: dict) -> str:
+        raise PreReviewGateQueueError("simulated broker outage after claim moved")
+
+    monkeypatch.setattr(
+        task_service_module,
+        "enqueue_pre_review_gate",
+        fail_enqueue,
+    )
+    monkeypatch.setattr(
+        CheckerService,
+        "mark_pre_review_gate_enqueue_failed",
+        miss_enqueue_failure_cas,
+    )
+    create_response = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+    assert create_response.status_code == 201, create_response.text
+    submission_id = create_response.json()["id"]
+
+    async with db_session.get_session_factory()() as session:
+        moved_run = await session.scalar(
+            select(db_models.CheckerRun).where(
+                db_models.CheckerRun.submission_id == submission_id
+            )
+        )
+        dispatch_events = (
+            await session.execute(
+                select(AuditEvent).where(
+                    AuditEvent.entity_type == "task",
+                    AuditEvent.entity_id == started_task["id"],
+                    AuditEvent.event_type == "pre_review_gate_dispatch_failed",
+                )
+            )
+        ).scalars().all()
+
+    assert moved_run is not None
+    assert moved_run.status == "queued"
+    assert moved_run.failure_code is None
+    assert dispatch_events == []
+
+
 async def test_unknown_checker_gate_failure_is_repairable(
     task_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,

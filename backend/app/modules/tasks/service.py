@@ -962,7 +962,16 @@ class TaskService:
                 requester_provenance=requester_payload,
             )
         except PreReviewGateQueueError as exc:
-            await checker_service.mark_pre_review_gate_enqueue_failed(checker_run.id)
+            enqueue_failure_recorded = await checker_service.mark_pre_review_gate_enqueue_failed(
+                checker_run.id
+            )
+            if not enqueue_failure_recorded:
+                if raise_on_failure:
+                    raise SubmissionCheckerGateError(
+                        "pre-review gate claim is no longer current",
+                        409,
+                    ) from exc
+                return checker_run.id
             await self._mark_pre_review_gate_dispatch_failed(
                 submission_id,
                 checker_run.id,

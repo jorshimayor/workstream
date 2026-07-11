@@ -96,6 +96,12 @@ artifact locking and `/finalize` as the normal submission handoff. The allowed
 scope therefore also includes `docs/architecture_system_architecture.md`, but
 only to align lifecycle wording with the implemented contributor-owned
 submission lock and repair-only automatic gate finalization boundary.
+Reuse/dedup review required shared requester-provenance and Celery task-setting
+helpers so the task enqueue path, checker worker validation path, and setup
+queue path do not drift. The allowed scope therefore also includes
+`backend/app/modules/checkers/pre_review_gate.py` and
+`backend/app/workers/task_settings.py`, limited to shared automatic-gate
+provenance and worker task-setting contracts.
 
 ## Allowed Files
 
@@ -103,10 +109,12 @@ submission lock and repair-only automatic gate finalization boundary.
 backend/app/adapters/project_agents/**
 backend/app/interfaces/project_agents.py
 backend/app/modules/checkers/gate_queue.py
+backend/app/modules/checkers/pre_review_gate.py
 backend/app/workers/project_setup.py
 backend/app/workers/async_runner.py
 backend/app/workers/checkers.py
 backend/app/workers/celery_app.py
+backend/app/workers/task_settings.py
 backend/app/modules/projects/setup_queue.py
 backend/app/modules/projects/router.py (docstring-only stale OpenAPI wording cleanup)
 backend/app/modules/projects/service.py
@@ -150,7 +158,7 @@ docs/diagrams/task_lifecycle_sequence.md
 
 ```text
 backend/app/modules/tasks/** except backend/app/modules/tasks/service.py
-backend/app/modules/checkers/** except backend/app/modules/checkers/service.py, backend/app/modules/checkers/gate_queue.py, backend/app/modules/checkers/compiler.py, and backend/app/modules/checkers/repository.py
+backend/app/modules/checkers/** except backend/app/modules/checkers/service.py, backend/app/modules/checkers/gate_queue.py, backend/app/modules/checkers/pre_review_gate.py, backend/app/modules/checkers/compiler.py, and backend/app/modules/checkers/repository.py
 frontend or demo UI work
 payment/reputation/blockchain settlement
 per-task checker generation
