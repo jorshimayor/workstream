@@ -2,25 +2,22 @@
 
 ## Current State
 
-- Active initiative: `WS-AUTH-001` - Workstream Authorization Service
+- Active initiative: none
 - Active planning chunk: none
-- Active implementation chunk: `WS-AUTH-001-01`
-- Branch: `codex/ws-auth-001-01-adopt-authorization-baseline`
-- Worktree: `/home/abiorh/flow/workstream-auth-001-01`
-- Status: PR #93 is published. Contributor terminology, CodeRabbit feedback, and
-  latest-main integration passed all required internal reviewer tracks at
-  `2164e3b`. The stale CI assertion repair passed at `be0b836`, and its final
-  scope evidence passed at `b7dafb3`; evidence rebind remains before the next
-  push.
-- Last merged implementation SHA: `1e20b79`
-- Last merge commit: `b1270d7`
-- Current gate: bind final local review evidence, push PR #93, observe external
-  checks, and stop for human review.
-- Next chunk: `WS-AUTH-001-02` remains proposed and must not start
-  automatically.
+- Active implementation chunk: none
+- Branch: `codex/ws-auth-001-01-post-merge-memory`
+- Worktree: `/home/abiorh/flow/workstream-auth-001-01-post-merge-memory`
+- Status: `WS-AUTH-001-01` merged through PR #93 on 2026-07-11.
+- Reviewed implementation SHA: `be0b836`
+- Final merged branch head: `b5217e1`
+- Last merge commit: `772af1d`
+- Current gate: post-merge memory review; stop after this memory update.
+- Next chunk: `WS-AUTH-001-02` remains proposed but inactive until a separate
+  explicit user start signal.
 - Parallel initiative: `WS-POL-002-03` merged through PR #90 as `a7aa474`; its
   post-merge memory merged through PR #94 as `b1270d7`. `WS-POL-002-04` remains
-  inactive pending the authorization foundation and a separate explicit start.
+  inactive pending the relevant authorization proof and a separate explicit
+  start.
 
 ## Operating Rule
 

@@ -2,11 +2,12 @@
 
 ## WS-AUTH-001-01
 
-Status: PR #93 published; latest-main merge, CodeRabbit repairs, CI assertion
-repair, and required internal re-review complete locally; evidence rebind,
-push, external checks, and human review pending.
+Status: merged through PR #93 on 2026-07-11 as `772af1d`.
 
 Reviewed implementation SHA: `be0b836`
+
+Final merged branch head: `b5217e1` (review/evidence and latest-main memory
+files only after the reviewed implementation SHA)
 
 Result: PASS after fixes across senior engineering, QA/test, security/auth,
 product/ops, architecture, docs, reuse/dedup, CI integrity, and test delta.
@@ -19,8 +20,11 @@ Evidence: `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/
 
 Trust bundle: `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/reviews/WS-AUTH-001-01-pr-trust-bundle.md`
 
-Next chunk: `WS-AUTH-001-02` remains inactive pending merge, memory update, and
-an explicit user start.
+Merge checks: Agent Gates, Backend, and CodeRabbit passed before explicit human
+merge. CodeRabbit had zero unresolved current review threads.
+
+Next chunk: `WS-AUTH-001-02` remains proposed but inactive until a separate
+explicit user start.
 
 ## WS-POL-002-03
 
