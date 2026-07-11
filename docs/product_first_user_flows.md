@@ -17,7 +17,7 @@ The first user flows prove that Workstream can run real work from intake to acce
 11. Workstream compiles, persists, and locks the project `PreSubmitCheckerPolicy`.
 12. Workstream derives and compiles the project post-submit checker policy.
 13. Admin or project_manager approves the compiled post-submit checker policy.
-14. If admin or project_manager requests correction instead, Workstream clears unapproved output and returns to post-submit derivation; setup does not continue toward activation.
+14. If admin or project_manager requests correction instead, Workstream supersedes and retains the rejected output, passes bounded correction feedback to post-submit derivation, and rejects an unchanged replacement; setup does not continue toward activation.
 15. Admin or project_manager enables review policy.
 16. Admin or project_manager enables revision policy.
 17. Admin or project_manager enables payment policy.

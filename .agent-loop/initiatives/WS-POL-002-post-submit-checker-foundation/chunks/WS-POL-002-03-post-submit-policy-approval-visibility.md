@@ -36,6 +36,9 @@ server-owned approval/correction path for compiled post-submit checker policies.
   policy hash under the current v0.1 bootstrap authorization boundary.
 - Setup-authorized admin or project_manager can approve or request setup
   correction for the generated project post-submit policy.
+- Correction supersedes rather than deletes the rejected compiled policy,
+  preserves actor/reason/hash/body provenance, supplies bounded feedback to
+  rederivation, and rejects an unchanged replacement.
 - Guide create/update continues to reject `post_submit_checker_policy` from
   clients.
 - Guide activation requires the approved compiled project
@@ -53,6 +56,8 @@ backend/app/modules/projects/service.py
 backend/app/modules/projects/schemas.py
 backend/app/modules/projects/repository.py
 backend/app/modules/projects/models.py
+backend/app/interfaces/project_agents.py
+backend/app/adapters/project_agents/openai_agent_sdk.py
 backend/alembic/versions/**
 backend/tests/test_alembic.py
 backend/tests/test_projects.py

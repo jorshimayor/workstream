@@ -724,6 +724,11 @@ Fields:
 - `approved_by_role`
 - `approved_by_actor`
 - `approved_at`
+- `supersedes_policy_id`
+- `superseded_at`
+- `correction_requested_by_role`
+- `correction_requested_by_actor`
+- `correction_reason`
 - `created_by`
 - `created_at`
 
@@ -738,8 +743,11 @@ an `approved` generated policy with setup-role approval provenance and exact
 `source_snapshot_id/hash`, `effective_policy_id/hash`, and
 `pre_submit_checker_policy_id` plus pre-submit checker bundle hash matching the
 active setup context. Server-owned approval/correction APIs move compiled
-post-submit policies into that approved state or clear unapproved generated
-output for regeneration.
+post-submit policies into that approved state or supersede rejected generated
+output for regeneration. Superseded records retain actor, role, time, bounded
+reason, policy hash, and policy body provenance. A replacement links through
+`supersedes_policy_id`; bounded correction feedback reaches setup-time
+derivation, and Workstream rejects an identical replacement policy hash.
 
 For generated setup, `PostSubmitCheckerPolicyDerivationAgent` runs only after a
 setup-authorized `admin` or `project_manager` approves the derived

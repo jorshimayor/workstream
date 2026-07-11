@@ -68,6 +68,7 @@ from app.modules.projects.service import (
     POST_SUBMIT_CHECKER_POLICY_DERIVATION_AGENT_VERSION,
     SUBMISSION_ARTIFACT_POLICY_DERIVATION_AGENT_NAME,
     SUBMISSION_ARTIFACT_POLICY_DERIVATION_AGENT_VERSION,
+    PolicySetupBlocked,
     ProjectSetupQueueError,
     ProjectService,
     StaleProjectSetupContinuation,
@@ -6462,7 +6463,7 @@ async def test_post_submit_checker_policy_approval_uses_server_provenance(
     assert retried_policy["approved_at"] == approved["approved_at"]
 
 
-async def test_post_submit_checker_policy_correction_clears_unapproved_output(
+async def test_post_submit_checker_policy_correction_preserves_audit_and_guides_rederivation(
     project_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -6533,6 +6534,21 @@ async def test_post_submit_checker_policy_correction_clears_unapproved_output(
     )
     assert correction_summary["correction_requested_at"]
     assert body["post_submit_checker_policy"] is None
+    assert len(body["correction_history"]) == 1
+    correction_history = body["correction_history"][0]
+    assert correction_history["policy_id"] == bundle["post_submit_checker_policy"]["id"]
+    assert correction_history["policy_hash"] == bundle["post_submit_checker_policy"]["policy_hash"]
+    assert correction_history["required_checkers"] == bundle["post_submit_checker_policy"][
+        "required_checkers"
+    ]
+    assert correction_history["warning_checkers"] == []
+    assert correction_history["blocking_severities"] == ["critical", "high"]
+    assert correction_history["correction_reason"] == "redacted"
+    assert correction_history["correction_requested_by_role"] == "project_manager"
+    assert correction_history["correction_requested_by_actor"] == bundle[
+        "submission_artifact_policy"
+    ]["created_by"]
+    assert correction_history["correction_requested_at"]
     assert enqueued == [
         {
             "project_id": project["id"],
@@ -6545,11 +6561,80 @@ async def test_post_submit_checker_policy_correction_clears_unapproved_output(
     ]
 
     async with db_session.get_session_factory()() as session:
-        deleted_policy = await session.get(
+        superseded_policy = await session.get(
             PostSubmitCheckerPolicy,
             bundle["post_submit_checker_policy"]["id"],
         )
-    assert deleted_policy is None
+        assert superseded_policy is not None
+        assert superseded_policy.lifecycle_status == "superseded"
+        assert superseded_policy.correction_reason == "redacted"
+        assert superseded_policy.policy_body is not None
+        assert superseded_policy.policy_hash == bundle["post_submit_checker_policy"]["policy_hash"]
+        superseded_policy_id = superseded_policy.id
+
+        from app.workers.project_setup import project_setup_pipeline_actor
+
+        unchanged_service = ProjectService(
+            session,
+            agent_runtime=DeterministicTestProjectGuideAgentRuntime(),
+        )
+        with pytest.raises(PolicySetupBlocked, match="unchanged policy"):
+            await unchanged_service.run_post_submit_checker_policy_derivation_agent(
+                project_setup_pipeline_actor(),
+                project["id"],
+                guide["id"],
+                bundle["source_snapshot"]["id"],
+                bundle["effective_policy"]["id"],
+                bundle["pre_submit_checker_policy"]["id"],
+                body["setup_run"]["id"],
+            )
+
+        class CorrectionAwareRuntime(DeterministicTestProjectGuideAgentRuntime):
+            """Runtime proving bounded correction feedback reaches rederivation."""
+
+            async def derive_post_submit_checker_policy(
+                self,
+                material: GuideSourceMaterial,
+                context: PostSubmitCheckerPolicyDerivationContext,
+            ) -> PostSubmitCheckerPolicyDerivationResult:
+                """Return a changed policy after validating correction context."""
+                assert context.correction_feedback is not None
+                assert context.correction_feedback.superseded_policy_id == superseded_policy_id
+                assert context.correction_feedback.correction_reason == "redacted"
+                return PostSubmitCheckerPolicyDerivationResult(
+                    required_checkers=["check_acceptance_criteria_present"],
+                    warning_checkers=[],
+                    blocking_severities=["critical", "high"],
+                    reasons=[
+                        PostSubmitCheckerPolicyReason(
+                            checker_name="check_acceptance_criteria_present",
+                            rationale="Correction requires explicit acceptance criteria checks.",
+                            evidence_refs=[
+                                PostSubmitCheckerPolicyEvidenceRef(ref="project_guide")
+                            ],
+                        )
+                    ],
+                    unsupported_required_checks=[],
+                    setup_notes=["Applied bounded operator correction feedback."],
+                    agent_version="deterministic-test-runtime-v0.1",
+                )
+
+        service = ProjectService(session, agent_runtime=CorrectionAwareRuntime())
+        replacement, created, _ = await service.run_post_submit_checker_policy_derivation_agent(
+            project_setup_pipeline_actor(),
+            project["id"],
+            guide["id"],
+            bundle["source_snapshot"]["id"],
+            bundle["effective_policy"]["id"],
+            bundle["pre_submit_checker_policy"]["id"],
+            body["setup_run"]["id"],
+        )
+        assert created is True
+        assert replacement.id != superseded_policy_id
+        assert replacement.required_checkers == ["check_acceptance_criteria_present"]
+        persisted_replacement = await session.get(PostSubmitCheckerPolicy, replacement.id)
+        assert persisted_replacement is not None
+        assert persisted_replacement.supersedes_policy_id == superseded_policy_id
 
     activation = await project_client.post(
         f"/api/v1/projects/{project['id']}/guides/{guide['id']}/activate",
@@ -6643,6 +6728,29 @@ async def test_database_rejects_post_submit_checker_approved_by_non_setup_role(
         policy = await session.get(PostSubmitCheckerPolicy, bundle["post_submit_checker_policy"]["id"])
         assert policy is not None
         policy.approved_by_role = "worker"
+        with pytest.raises(IntegrityError):
+            await session.commit()
+        await session.rollback()
+
+
+async def test_database_rejects_superseded_post_submit_policy_without_correction_provenance(
+    project_client: AsyncClient,
+) -> None:
+    project = await create_project(project_client)
+    guide = await create_guide(project_client, project["id"], complete_guide_payload())
+    bundle = await create_approved_policy_bundle(
+        project_client,
+        project["id"],
+        guide["id"],
+        approve_post_submit_checker=False,
+    )
+    async with db_session.get_session_factory()() as session:
+        policy = await session.get(
+            PostSubmitCheckerPolicy,
+            bundle["post_submit_checker_policy"]["id"],
+        )
+        assert policy is not None
+        policy.lifecycle_status = "superseded"
         with pytest.raises(IntegrityError):
             await session.commit()
         await session.rollback()

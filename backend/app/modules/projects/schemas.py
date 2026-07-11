@@ -526,6 +526,20 @@ class PostSubmitCheckerPolicySetupSummaryResponse(BaseModel):
     created_at: datetime
 
 
+class PostSubmitCheckerPolicyCorrectionSummaryResponse(BaseModel):
+    """Operator-visible audit summary for one rejected compiled policy."""
+
+    policy_id: str
+    policy_hash: str | None
+    required_checkers: list[str]
+    warning_checkers: list[str]
+    blocking_severities: list[str]
+    correction_reason: str
+    correction_requested_by_role: str
+    correction_requested_by_actor: str
+    correction_requested_at: datetime
+
+
 class PostSubmitCheckerPolicySetupResponse(BaseModel):
     """Response schema for current post-submit checker policy setup state."""
 
@@ -535,6 +549,7 @@ class PostSubmitCheckerPolicySetupResponse(BaseModel):
     setup_run: ProjectSetupRunResponse
     post_submit_checker_policy: PostSubmitCheckerPolicySetupSummaryResponse | None
     derivation_input_summary: dict[str, Any]
+    correction_history: list[PostSubmitCheckerPolicyCorrectionSummaryResponse]
 
 
 class ReviewPolicyResponse(BaseModel):

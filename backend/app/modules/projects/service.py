@@ -25,6 +25,7 @@ from app.interfaces.project_agents import (
     GuideSourceMaterial,
     GuideSufficiencyAgentResult,
     PostSubmitCheckerCatalogEntry,
+    PostSubmitCheckerPolicyCorrectionFeedback,
     PostSubmitCheckerPolicyDerivationContext,
     PostSubmitCheckerPolicyDerivationResult,
     ProjectAgentRuntimeError,
@@ -77,6 +78,7 @@ from app.modules.projects.schemas import (
     PaymentPolicyInput,
     PaymentPolicyResponse,
     PostSubmitCheckerPolicyApproval,
+    PostSubmitCheckerPolicyCorrectionSummaryResponse,
     PostSubmitCheckerPolicyCorrectionRequest,
     PostSubmitCheckerPolicyResponse,
     PostSubmitCheckerPolicySetupResponse,
@@ -925,13 +927,19 @@ class ProjectService:
         effective_policy_id = policy.effective_policy_id
         pre_submit_checker_policy_id = policy.pre_submit_checker_policy_id
         now = datetime.now(UTC)
+        correction_reason = self._safe_bounded_summary_value(payload.correction_reason)
+        policy.lifecycle_status = "superseded"
+        policy.superseded_at = now
+        policy.correction_requested_by_role = self._approver_role(actor)
+        policy.correction_requested_by_actor = actor.actor_id
+        policy.correction_reason = correction_reason
         setup_run.status = "post_submit_setup_blocked"
         setup_run.current_step = "post_submit_checker_policy_approval"
         setup_run.output_post_submit_checker_policy_id = None
         setup_run.post_submit_derivation_summary = self._safe_post_submit_derivation_summary(
             {
                 "status": "correction_requested",
-                "reason": payload.correction_reason,
+                "reason": correction_reason,
                 "post_submit_checker_policy_id": previous_policy_id,
                 "correction_requested_by_role": self._approver_role(actor),
                 "correction_requested_by_actor": actor.actor_id,
@@ -942,7 +950,6 @@ class ProjectService:
         setup_run.error_summary = "post-submit checker policy correction requested"
         setup_run.finished_at = now
         await self._session.flush()
-        await self._repo.delete_post_submit_checker_policy(policy)
         await self._session.commit()
         await self._session.refresh(setup_run)
         await self._enqueue_post_submit_setup_continuation_after_commit(
@@ -1390,12 +1397,23 @@ class ProjectService:
             raise PolicySetupBlocked(
                 "compiled project pre-submit checker policy is required before post-submit derivation"
             )
+        superseded_policy = (
+            await self._repo.get_latest_superseded_post_submit_checker_policy(
+                project_id,
+                guide.version,
+            )
+        )
+        superseded_policy_id = superseded_policy.id if superseded_policy is not None else None
+        superseded_policy_hash = (
+            superseded_policy.policy_hash if superseded_policy is not None else None
+        )
 
         material = await self._guide_source_material(guide, snapshot)
         context = self._post_submit_derivation_context(
             sufficiency_report,
             effective_policy,
             pre_submit_checker_policy,
+            superseded_policy,
         )
         await self._session.rollback()
         try:
@@ -1457,6 +1475,13 @@ class ProjectService:
             )
         except PostSubmitCheckerCompilerError as exc:
             raise PolicySetupBlocked("post-submit checker policy compilation failed") from exc
+        if (
+            superseded_policy_hash is not None
+            and compiled_policy.policy_hash == superseded_policy_hash
+        ):
+            raise PolicySetupBlocked(
+                "post-submit checker policy correction produced unchanged policy"
+            )
         summary = self._safe_post_submit_derivation_summary(
             {
                 "status": "compiled",
@@ -1539,6 +1564,7 @@ class ProjectService:
             policy_hash=compiled_policy.policy_hash,
             policy_body=compiled_policy.policy_body,
             lifecycle_status="compiled",
+            supersedes_policy_id=superseded_policy_id,
             created_by=actor.actor_id,
         )
         try:
@@ -2791,7 +2817,41 @@ class ProjectService:
             setup_run=ProjectSetupRunResponse.model_validate(setup_run),
             post_submit_checker_policy=policy_summary,
             derivation_input_summary=await self._post_submit_derivation_input_summary(setup_run, policy),
+            correction_history=await self._post_submit_policy_correction_history(setup_run),
         )
+
+    async def _post_submit_policy_correction_history(
+        self,
+        setup_run: ProjectSetupRun,
+    ) -> list[PostSubmitCheckerPolicyCorrectionSummaryResponse]:
+        """Return bounded append-only correction provenance for setup operators."""
+        policies = await self._repo.list_superseded_post_submit_checker_policies(
+            setup_run.project_id,
+            setup_run.guide_version,
+        )
+        history: list[PostSubmitCheckerPolicyCorrectionSummaryResponse] = []
+        for policy in policies[:100]:
+            if (
+                policy.correction_reason is None
+                or policy.correction_requested_by_role is None
+                or policy.correction_requested_by_actor is None
+                or policy.superseded_at is None
+            ):
+                raise PolicySetupConflict("post-submit policy correction provenance is incomplete")
+            history.append(
+                PostSubmitCheckerPolicyCorrectionSummaryResponse(
+                    policy_id=policy.id,
+                    policy_hash=policy.policy_hash,
+                    required_checkers=policy.required_checkers,
+                    warning_checkers=policy.warning_checkers,
+                    blocking_severities=policy.blocking_severities,
+                    correction_reason=policy.correction_reason,
+                    correction_requested_by_role=policy.correction_requested_by_role,
+                    correction_requested_by_actor=policy.correction_requested_by_actor,
+                    correction_requested_at=policy.superseded_at,
+                )
+            )
+        return history
 
     async def _post_submit_derivation_input_summary(
         self,
@@ -3822,6 +3882,7 @@ class ProjectService:
         sufficiency_report: GuideSufficiencyReport,
         effective_policy: EffectiveProjectSubmissionArtifactPolicy,
         pre_submit_checker_policy: PreSubmitCheckerPolicy,
+        superseded_policy: PostSubmitCheckerPolicy | None,
     ) -> PostSubmitCheckerPolicyDerivationContext:
         """Build bounded server-owned context for post-submit derivation."""
         registered_names = default_checker_registry().names()
@@ -3866,6 +3927,18 @@ class ProjectService:
                 )
                 for name in sorted(registered_names)
             ],
+            correction_feedback=(
+                PostSubmitCheckerPolicyCorrectionFeedback(
+                    superseded_policy_id=superseded_policy.id,
+                    superseded_policy_hash=superseded_policy.policy_hash or "",
+                    required_checkers=superseded_policy.required_checkers,
+                    warning_checkers=superseded_policy.warning_checkers,
+                    blocking_severities=superseded_policy.blocking_severities,
+                    correction_reason=superseded_policy.correction_reason or "",
+                )
+                if superseded_policy is not None
+                else None
+            ),
         )
 
     def _validate_post_submit_derivation_result(

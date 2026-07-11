@@ -673,9 +673,52 @@ class ProjectRepository:
             select(PostSubmitCheckerPolicy).where(
                 PostSubmitCheckerPolicy.project_id == project_id,
                 PostSubmitCheckerPolicy.guide_version == guide_version,
+                PostSubmitCheckerPolicy.lifecycle_status.in_(["compiled", "approved"]),
             )
         )
         return result.scalar_one_or_none()
+
+    async def get_latest_superseded_post_submit_checker_policy(
+        self,
+        project_id: str,
+        guide_version: str,
+    ) -> PostSubmitCheckerPolicy | None:
+        """Load the latest rejected policy retained for correction provenance."""
+        result = await self._session.execute(
+            select(PostSubmitCheckerPolicy)
+            .where(
+                PostSubmitCheckerPolicy.project_id == project_id,
+                PostSubmitCheckerPolicy.guide_version == guide_version,
+                PostSubmitCheckerPolicy.lifecycle_status == "superseded",
+            )
+            .order_by(
+                PostSubmitCheckerPolicy.superseded_at.desc(),
+                PostSubmitCheckerPolicy.id.desc(),
+            )
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
+
+    async def list_superseded_post_submit_checker_policies(
+        self,
+        project_id: str,
+        guide_version: str,
+    ) -> Sequence[PostSubmitCheckerPolicy]:
+        """List retained correction records newest first for operator visibility."""
+        result = await self._session.execute(
+            select(PostSubmitCheckerPolicy)
+            .where(
+                PostSubmitCheckerPolicy.project_id == project_id,
+                PostSubmitCheckerPolicy.guide_version == guide_version,
+                PostSubmitCheckerPolicy.lifecycle_status == "superseded",
+            )
+            .order_by(
+                PostSubmitCheckerPolicy.superseded_at.desc(),
+                PostSubmitCheckerPolicy.id.desc(),
+            )
+            .limit(100)
+        )
+        return result.scalars().all()
 
     async def get_post_submit_checker_policy_by_id(
         self,
@@ -695,14 +738,6 @@ class ProjectRepository:
             .with_for_update()
         )
         return result.scalar_one_or_none()
-
-    async def delete_post_submit_checker_policy(
-        self,
-        policy: PostSubmitCheckerPolicy,
-    ) -> None:
-        """Delete an unapproved generated post-submit policy before regeneration."""
-        await self._session.delete(policy)
-        await self._session.flush()
 
     async def upsert_review_policy(self, policy: ReviewPolicy) -> ReviewPolicy:
         """Create or replace a review policy for one guide version.
