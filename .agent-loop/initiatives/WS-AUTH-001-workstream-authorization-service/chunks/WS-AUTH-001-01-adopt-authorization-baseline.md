@@ -111,7 +111,7 @@ exception.
 ## Not allowed
 
 ```text
-backend application code or backend tests beyond the two exact terminology-only
+backend application code or backend tests beyond the three exact terminology-only
 files allowed above; migrations and dependencies
 review/contribution/compensation implementation
 rewriting payment/reputation architecture beyond recording a later conflict

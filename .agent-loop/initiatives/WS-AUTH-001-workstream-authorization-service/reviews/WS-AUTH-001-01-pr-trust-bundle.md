@@ -46,7 +46,7 @@ wording uniformly instead of trying to interpret English negation.
 
 The authored diff contains docs, loop memory, diagram sources/generated
 companions, one scanner, one renderer, scanner tests, one additive CI step, and
-two exact backend files whose only authored changes replace human `worker`
+three exact backend files whose only authored changes replace human `worker`
 prompt/assertion wording with Contributor. It contains no authored runtime
 logic, schema, migration, dependency, package, or lockfile changes. Merged PR
 #90 code appears only through the latest-main merge. All eight imported sources,
