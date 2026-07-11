@@ -4,19 +4,15 @@
 
 - Active initiative: `WS-POL-002` - Post-Submit Checker Foundation
 - Active planning chunk: none
-- Active implementation chunk: `WS-POL-002-02` - Post-Submit Derivation Agent
-  And Resumable Setup Integration
-- Branch: `codex/ws-pol-002-02-post-submit-derivation`
-- Status: `WS-POL-002-01` merged through PR #87 as `ed52c21` on 2026-07-09.
-  `WS-POL-002-02` started after the user's explicit start signal.
-- Last merged implementation SHA: `438361a`
-- Last merge commit: `ed52c21`
-- Current gate: PR #88 for `WS-POL-002-02` is open. Internal review,
-  evidence, and external-review response are recorded; human merge review
-  requires green current-head GitHub checks and explicit user approval.
-- Next chunk: inactive until `WS-POL-002-02` is implemented, reviewed,
-  externally checked, merged by explicit human approval, and followed by memory
-  update.
+- Active implementation chunk: none
+- Branch: `main`
+- Status: `WS-POL-002-02` merged through PR #88 as `32af6a7` on 2026-07-11
+  after internal review, current-head GitHub checks, CodeRabbit, and explicit
+  human merge approval.
+- Last merged implementation SHA: `67fb3ca`
+- Last merge commit: `32af6a7`
+- Current gate: none; awaiting explicit user start for the next chunk.
+- Next chunk: `WS-POL-002-03` is inactive until the user explicitly starts it.
 
 ## Operating Rule
 

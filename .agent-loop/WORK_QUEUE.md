@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-POL-002-02` | Post-Submit Derivation Agent And Resumable Setup Integration | L1 | Active on `codex/ws-pol-002-02-post-submit-derivation` |
+| `WS-POL-002-03` | Server-Owned Policy Approval And Visibility APIs | L1 | Inactive until explicit user start |
 
 ## Completed
 
@@ -31,12 +31,11 @@
 | `WS-POL-001-16` | Terminal Benchmark Live API Drill | L1 | Merged through PR #84 as `a3d2a3f` on 2026-07-09 |
 | `WS-POL-002-PLAN` | Post-Submit Checker Foundation Planning | L1 | Merged through PR #85 as `3fc1a68` on 2026-07-09 |
 | `WS-POL-002-01` | Post-Submit Compiler Contract | L1 | Merged through PR #87 as `ed52c21` on 2026-07-09 |
+| `WS-POL-002-02` | Post-Submit Derivation Agent And Resumable Setup Integration | L1 | Merged through PR #88 as `32af6a7` on 2026-07-11 |
 
 ## Proposed Next
 
-Do not start the next chunk until `WS-POL-002-02` is implemented, reviewed,
-externally checked, merged by explicit human approval, and followed by memory
-update.
+Do not start `WS-POL-002-03` until the user gives an explicit start signal.
 
 ## Blocked
 

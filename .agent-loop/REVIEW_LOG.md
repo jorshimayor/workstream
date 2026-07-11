@@ -1,5 +1,41 @@
 # Review Log
 
+## WS-POL-002-02
+
+Status: merged through PR #88 on 2026-07-11.
+
+Merge commit: `32af6a7`
+
+Reviewed implementation SHA: `67fb3ca`
+
+Required reviewer tracks:
+
+- senior engineering
+- QA/test
+- security/auth
+- product/ops
+- architecture
+- CI integrity
+- docs
+- reuse/dedup
+- test delta
+
+Result: PASS after fixes; PR #88 external review addressed; GitHub checks passed.
+
+Scope: setup-time post-submit checker derivation, resumable setup continuation,
+generated project `PostSubmitCheckerPolicy` persistence, automatic contributor
+submission handoff to the pre-review gate, and repair-only `/finalize`
+semantics.
+
+Evidence: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/reviews/WS-POL-002-02-internal-review-evidence.md`
+
+External review response: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/reviews/WS-POL-002-02-external-review-response.md`
+
+Trust bundle: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/reviews/WS-POL-002-02-pr-trust-bundle.md`
+
+Next chunk: `WS-POL-002-03` server-owned policy approval and setup visibility
+APIs, inactive until explicit user start.
+
 ## WS-POL-002-01
 
 Status: merged through PR #87 on 2026-07-09.
