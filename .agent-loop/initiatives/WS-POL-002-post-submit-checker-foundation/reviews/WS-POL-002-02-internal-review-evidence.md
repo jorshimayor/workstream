@@ -2,7 +2,7 @@
 
 ## Chunk
 
-WS-POL-002-02
+WS-POL-002-02 - Post-Submit Derivation Agent And Resumable Setup Integration
 
 open sub-agent sessions: none
 
@@ -10,11 +10,11 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: 26efde405a13add052607eb4e093706d856f4746
+Reviewed code SHA: 0318beccd0ffd086b8ed403dd8e74dabe1fd8d6b
 
-Reviewed at: 2026-07-10T12:35:46Z
+Reviewed at: 2026-07-11T08:33:06Z
 
-Reviewer run ids: senior-engineering-019f4bf9-a0e8-73b1-be5d-f8f182fd1eed, qa-test-019f4bf9-ac36-79e1-9e86-5e244ac12b63, security-auth-019f4bf9-b1c8-7e92-8dd8-c0168b0312ba, product-ops-019f4c02-907d-70e3-98a5-21c4312feceb, architecture-019f4bf9-c1c8-7ef3-bb25-b723d566d08d, docs-019f4c02-9963-7ec1-80b6-994b206fc021, reuse-dedup-019f4bf1-195a-7ce3-bd4e-3a23b466c0a6, test-delta-019f4c02-a13e-7370-9b45-f353e5482a5b, ci-integrity-019f4bf9-cb2f-7bb0-993f-96815963973e
+Reviewer run ids: senior-engineering-019f5048-10d7-79d0-a873-3d603aa2bb06, qa-test-019f5048-27cc-72a0-87d9-c6fab250556d, security-auth-019f5048-43e3-7812-9e6b-6be88845025c, product-ops-019f5048-674d-7d30-8268-a20c75be2509, architecture-019f5048-8d20-74a1-b9bd-570e511c2408, docs-019f504c-f575-7331-af00-fecfda936138, reuse-dedup-019f502c-50cd-7e42-9e8f-ac5fd297b152, test-delta-019f502c-7f1f-7aa2-8fad-50a2b5ea619b, ci-integrity-019f502c-96e6-70d2-ba38-bcd26705dbfe
 
 ## Reviewed Change
 
@@ -22,133 +22,81 @@ Branch: `codex/ws-pol-002-02-post-submit-derivation`
 
 Scope:
 
-- Adds a constrained `PostSubmitCheckerPolicyDerivationAgent` contract to the project agent interface.
-- Extends the OpenAI Agents SDK adapter to derive post-submit checker policy specs during setup only.
-- Extends the existing project setup queue/worker path so post-submit derivation runs after submission artifact policy approval and pre-submit checker compilation.
-- Adds post-submit setup-run states and output fields for derivation, compile, blocked, failed, and stale continuation handling.
-- Persists compiled project `PostSubmitCheckerPolicy` rows bound to guide id, source snapshot id/hash, effective policy id/hash, and pre-submit checker id/bundle hash.
-- Blocks activation until the post-submit policy is setup-approved with setup-role provenance.
-- Treats guide/source excerpts as untrusted data, rejects unsupported/unknown checkers, and returns bounded redacted setup summaries.
-- Hardens stale continuation handling across worker start, in-flight derivation, enqueue bookkeeping, terminal status updates, and duplicate worker retries.
-- Repairs stale test/e2e fixtures so guide request bodies no longer carry the
-  removed manual `post_submit_checker_policy` field.
-- Documents the temporary CI activation bridge as a test-only
-  generated-policy approval plus setup-ledger marker until `WS-POL-002-03`
-  adds the server-owned approval API.
-- Normalizes post-submit worker terminal results so compiled and idempotent
-  paths both return `status`, `idempotent`, and
-  `post_submit_checker_policy_id`.
-- Addresses CodeRabbit external-review cleanup by using Alembic naming
-  conventions for composite FK create/drop calls and deduplicating mutable
-  Celery setup task configuration.
-- Adds focused regression coverage that both project setup Celery task entry
-  points receive the same mutable broker/result/eager configuration.
-- Records CodeRabbit findings in a separate external-review response artifact
-  instead of mixing external review into internal review evidence.
+- Adds setup-time `PostSubmitCheckerPolicyDerivationAgent` contract and OpenAI Agents SDK adapter output parsing.
+- Extends the existing project setup queue/worker continuation after submission artifact policy approval and pre-submit checker compilation.
+- Persists generated project `PostSubmitCheckerPolicy` rows with guide/source/effective-policy/pre-submit provenance and setup approval metadata.
+- Blocks guide activation until generated post-submit policies are setup-approved.
+- Adds automatic contributor submission handoff: authoritative pre-submit rerun, packet lock, `submission_finalized` audit, queued automatic pre-review gate, and repair-only `/finalize`.
+- Adds Celery pre-review gate dispatch through `run_pre_review_gate`, system-actor audit attribution, requester provenance preservation, and failure/repair paths.
+- Adds shared automatic-gate requester provenance helpers and shared Celery task-setting sync helpers.
+- Adds atomic checker-run repository primitives for queued/running/failed automatic gate claims.
+- Updates task/checker/project tests and real API scripts to use generated post-submit policy setup output instead of manual guide-body post-submit policy fields.
+- Updates docs and loop artifacts to align the project-scoped post-submit policy, automatic gate, repair matrix, and submission-vs-task status ownership.
 
 ## Reviewer Results
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS AFTER FIXES | None | Found no maintainability issue in the final code delta; stale evidence was the only blocker and is fixed by this refresh. |
-| QA/test | PASS AFTER FIXES | None | Confirmed Alembic, queue config, worker-result, lint, wording, link, agent-gate, and loop-memory proof; stale evidence was the only blocker. |
-| security/auth | PASS AFTER FIXES | None | Found no auth bypass, tenant leak, PII/secrets issue, prompt-injection exposure, or product-token misuse; stale evidence was the only blocker. |
-| product/ops | PASS WITH LOW RISKS | None | Confirmed setup remains operator-visible and engineering verdicts remain separate from Workstream product decisions; external-response wording fix is included in this refresh. |
-| architecture | PASS AFTER FIXES | None | Confirmed setup-time derivation and project-scoped policy boundaries; stale evidence was the only blocker. |
-| docs | PASS AFTER FIXES | None | Confirmed external review is separate from internal evidence and loop/status wording is correct after the wording fix committed with this refresh. |
-| reuse/dedup | PASS WITH LOW RISKS | None | Confirmed setup queue config dedup is appropriate; low future provenance-validation extraction remains accepted. |
-| test delta | PASS WITH LOW RISKS | None | Confirmed no skipped/weakened assertions and the new queue config regression covers effective shared config; low structural-enumeration caveat accepted. |
-| ci integrity | PASS AFTER FIXES | None | Found no CI/test-runner weakening; stale evidence was the only blocker and is fixed by this refresh. |
+| senior engineering | PASS AFTER FIXES | None | Final code review found no senior-engineering code fixes after CAS fence; stale evidence was fixed by this refresh. |
+| QA/test | PASS AFTER FIXES | None | Confirmed focused CAS-fence, eager repair, tampered provenance, missing audit, stale queued gate, and queue settings tests pass; stale evidence was fixed by this refresh. |
+| security/auth | PASS | None | Confirmed requester provenance validation, system actor fencing, `/finalize` authorization/object scope, and no private-path leakage. |
+| product/ops | PASS WITH LOW RISKS | None | Accepted brief `submitted` + queued-gate visibility window before worker claim; repair matrix wording was updated. |
+| architecture | PASS | None | Confirmed helper files are explicitly allowed and narrow; lifecycle remains in service/repository boundaries; no per-task checker derivation. |
+| docs | PASS | None | Confirmed final repair-matrix wording aligns with code and stale wording/link checks pass. |
+| reuse/dedup | PASS AFTER FIXES | None | Required shared provenance and Celery settings helpers; implemented and covered. |
+| test delta | PASS AFTER FIXES | None | Required eager repair proof and task-level audit query; implemented and covered. |
+| CI integrity | PASS | None | Found no workflow/package/test-runner weakening or evidence-gate bypass. |
 
 ## Valid Findings Addressed
 
-- QA found stale post-commit enqueue success/failure bookkeeping could mutate a newer setup run. Added `update_project_setup_run_task_id`, routed enqueue failure through continuation-aware status updates, and added stale enqueue regression coverage.
-- Senior engineering found duplicate/retried workers could regress an already compiled setup run to blocked/failed. `update_project_setup_run_status` now returns the existing compiled state for matching duplicate failure updates, and the worker treats that as idempotent success.
-- Earlier QA found a stale in-flight derivation could insert a policy before terminal stale validation. `run_post_submit_checker_policy_derivation_agent` now validates the setup-run continuation payload under lock before inserting, and the stale in-flight regression proves no stale policy row remains.
-- Security and architecture required setup-role approval provenance for activation. The model, migration, service guard, and tests now require setup-role approval metadata before activation accepts the generated post-submit policy.
-- Docs/product review found stale wording around setup approval and manual checker attachment. README, operating manual, and the guide update docstring were corrected.
-- Product/ops and docs found compiled-only activation ambiguity. Activation now rejects compiled-only policies until a setup approval path records approval provenance.
-- Unsupported and unknown checker paths are fail-closed, operator-visible, and covered by tests.
-- Test/e2e fixtures were aligned with the removed guide-body
-  `post_submit_checker_policy` field. Manual guide-body usage now exists only
-  in explicit rejection tests.
-- The CI activation bridge was renamed and documented as a temporary
-  test-only policy approval plus setup-ledger marker until the
-  server-owned approval API lands in `WS-POL-002-03`.
-- Security's low worker-result auditability finding was fixed by normalizing
-  post-submit worker terminal results across compiled and idempotent paths.
-- CodeRabbit external-review findings were separated into
-  `WS-POL-002-02-external-review-response.md`. Valid findings were fixed;
-  stale or invalid findings were documented there.
-- CodeRabbit's valid migration naming finding was fixed by wrapping composite
-  checker-policy FK names and matching downgrade drops with `op.f()`.
-- CodeRabbit's valid Celery config duplication finding was fixed by applying
-  mutable setup task configuration through one shared loop.
-- Test-delta's queue-config proof gap was fixed by adding
-  `test_project_setup_queue_syncs_all_setup_task_settings`.
-- Product/docs wording findings about the external-response human checkpoint
-  were fixed in the external-review response.
-- Reviewer findings about stale evidence are addressed by rebinding this
-  evidence file and the trust bundle to `26efde4`.
+- Reuse/dedup found duplicated requester-provenance contracts between task enqueue and checker validation. Added `backend/app/modules/checkers/pre_review_gate.py` and wired both services through it.
+- Reuse/dedup found duplicated mutable Celery task-setting sync. Added `backend/app/workers/task_settings.py` and reused it from project setup and pre-review gate queues without importing the Celery app at module import time.
+- QA found requester provenance could be audited before being validated against `submission_finalized`. The queued gate now validates persisted requester provenance before `pre_review_gate_started` or `evaluation_pending` mutation.
+- Test-delta found eager dispatch failure was recorded but not repaired in tests. The test now restores the worker path, calls `/finalize`, and asserts the same run completes.
+- Senior engineering found dispatch-failed audit could be written even when the checker-run enqueue-failure CAS missed. The task path now writes dispatch-failed audit only when `mark_pre_review_gate_enqueue_failed()` returns true, with a regression test.
+- Product/ops found stale docs implying submission status owns review/revision lifecycle. Docs now state submission status stays `submitted`; task status owns evaluation/review/revision/acceptance/rejection lifecycle.
+- Product/ops and docs found repair-matrix wording gaps for queued redispatch, stale running replacement, `pre_review_gate_execution_failed`, and non-repairable 409. Specs now match implemented behavior.
+- Architecture found helper files and `docs/architecture_system_architecture.md` were missing from the active chunk contract. The contract now explicitly allows those files for narrow lifecycle/provenance/helper alignment.
+- CodeRabbit external findings from earlier passes were handled in `WS-POL-002-02-external-review-response.md`; valid findings were fixed and stale findings documented.
 
 ## Commands Run
 
 ```bash
-cd backend && .venv/bin/pytest tests/test_projects.py -q -k "post_submit_continuation or corrected_submission_artifact_policy or stale_in_flight_post_submit or status_update_rejects_stale_continuation or enqueue_bookkeeping_rejects_stale or compiled_post_submit_setup_run_does_not_regress or activation_rejects_compiled_post_submit or approved_by_non_setup_role or unsupported_checker_gap or unknown_checker_blocks or setup_summary_redacts"
-cd backend && .venv/bin/pytest tests/test_projects.py tests/test_agent_runtime.py -q
-cd backend && .venv/bin/pytest tests/test_alembic.py -q
-cd backend && .venv/bin/pytest tests/test_tasks.py -q
-cd backend && .venv/bin/pytest tests/test_checkers.py -q
-cd backend && .venv/bin/pytest -q
-cd backend && .venv/bin/pytest tests/test_projects.py::test_policy_approval_resumes_post_submit_setup_continuation tests/test_projects.py::test_post_submit_continuation_is_idempotent_after_compile tests/test_projects.py::test_post_submit_continuation_running_worker_redelivery_resumes_setup tests/test_projects.py::test_activation_rejects_compiled_post_submit_checker_policy_before_approval -q
-cd backend && .venv/bin/pytest tests/test_projects.py::test_project_setup_queue_syncs_all_setup_task_settings tests/test_projects.py::test_post_submit_continuation_is_idempotent_after_compile tests/test_projects.py::test_post_submit_continuation_running_worker_redelivery_resumes_setup -q
-cd backend && .venv/bin/pytest tests/test_checkers.py::test_old_checker_name_blocks_post_submit_compilation_without_alias -q
-cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/alembic downgrade base && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/api_contract_e2e.py
-cd backend && .venv/bin/ruff check app/adapters/project_agents/openai_agent_sdk.py app/interfaces/project_agents.py app/workers/project_setup.py app/modules/projects/setup_queue.py app/modules/projects/service.py app/modules/projects/schemas.py app/modules/projects/models.py app/modules/projects/repository.py app/modules/projects/router.py tests/test_projects.py tests/test_agent_runtime.py tests/test_alembic.py
-cd backend && .venv/bin/ruff check app tests scripts
-cd backend && .venv/bin/python -m py_compile app/adapters/project_agents/openai_agent_sdk.py app/interfaces/project_agents.py app/workers/project_setup.py app/modules/projects/setup_queue.py app/modules/projects/service.py app/modules/projects/schemas.py app/modules/projects/models.py app/modules/projects/repository.py app/modules/projects/router.py tests/test_projects.py tests/test_agent_runtime.py tests/test_alembic.py
-python3 -m py_compile backend/scripts/api_contract_e2e.py backend/scripts/week2_api_e2e.py examples/terminal_benchmark/terminal_benchmark_api_e2e.py
-cd backend && .venv/bin/docstr-coverage --config .docstr.yaml
+cd backend && .venv/bin/pytest tests/test_tasks.py::test_finalize_repairs_locked_submission_with_missing_pre_review_gate tests/test_tasks.py::test_failed_pre_review_gate_repair_is_idempotent_while_queued tests/test_tasks.py::test_enqueue_failure_without_current_claim_skips_dispatch_failed_audit tests/test_tasks.py::test_eager_pre_review_gate_failure_after_submission_is_repairable tests/test_tasks.py::test_unknown_checker_gate_failure_is_repairable tests/test_tasks.py::test_nonrepairable_failed_gate_does_not_return_success tests/test_tasks.py::test_queued_gate_policy_error_is_failed_and_repairable tests/test_tasks.py::test_queued_gate_rejects_tampered_requester_provenance tests/test_tasks.py::test_queued_gate_fails_closed_when_lock_audit_is_missing tests/test_tasks.py::test_stale_queued_pre_review_gate_skips_before_task_status_check -q
+cd backend && .venv/bin/pytest tests/test_projects.py::test_project_setup_queue_syncs_all_setup_task_settings -q
+cd backend && .venv/bin/ruff check app/modules/checkers/pre_review_gate.py app/modules/checkers/service.py app/modules/checkers/gate_queue.py app/modules/projects/setup_queue.py app/modules/tasks/service.py app/workers/celery_app.py app/workers/task_settings.py tests/test_tasks.py tests/test_projects.py
+cd backend && .venv/bin/python -m py_compile app/modules/checkers/pre_review_gate.py app/modules/checkers/service.py app/modules/checkers/gate_queue.py app/modules/projects/setup_queue.py app/modules/tasks/service.py app/workers/celery_app.py app/workers/task_settings.py tests/test_tasks.py tests/test_projects.py
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
-python3 scripts/test_agent_gates.py
-python3 scripts/check_loop_memory_state.py
-git diff --check
+rg -n "snorkel|termius|/home/abiorh/snorkel|terminal_benchmark_reviewer|build-seccomp-profile-reducer" . -S --glob '!backend/.venv/**' --glob '!**/.git/**'
+git diff --check main...HEAD
 ```
 
 Results:
 
-- Focused stale/setup suite: 13 passed, 214 deselected.
-- Full project and agent-runtime suite: 229 passed in 2037.08s.
-- Alembic suite: 6 passed in 54.19s.
-- Task suite: 86 passed in 944.91s.
-- Checker suite: 75 passed in 303.48s.
-- Full backend suite after stale fixture repair: 442 passed in 4100.54s.
-- Exact-head post-submit setup focused suite: 4 passed in 126.24s.
-- Final-head queue/worker focused suite: 3 passed in 35.97s.
-- Final-head setup queue config regression: 1 passed in 2.62s.
-- Final-head Alembic suite: 6 passed in 67.47s.
-- Exact-head old-checker compiler regression: 2 passed in 15.34s.
-- API contract real API drill passed after the CI bridge scope repair.
+- Focused automatic gate repair/provenance suite: 10 passed in 126.57s.
+- Shared queue settings regression: 1 passed in 3.83s.
 - Ruff: passed.
 - Py compile: passed.
-- Docstring coverage: 100.0%.
 - Stale wording scan: passed.
-- Markdown link check: passed for 15 changed Markdown files.
+- Markdown link check: passed for 24 changed Markdown files.
+- Private-path/Snorkel leakage scan: no matches.
+- Diff whitespace check: passed.
+
+Earlier full-suite proof retained from this PR before final CAS-fence commits:
+
+- Full backend suite after stale fixture repair: 442 passed in 4100.54s.
+- Project and agent-runtime suite: 229 passed in 2037.08s.
+- Task suite: 86 passed in 944.91s.
+- Checker suite: 75 passed in 303.48s.
+- Alembic suite: 6 passed in 67.47s.
+- API contract real API drill passed after the CI bridge scope repair.
+- Docstring coverage: 100.0%.
 - Agent gates: 26 passed.
 - Loop memory state check: passed.
-- Diff whitespace check: passed.
 
 ## Remaining Risks
 
-- Senior engineering accepted a low fail-closed crash window between compiled post-submit policy commit and setup-run status update. A later hardening chunk can make the first compiled policy win by provenance during retry recovery.
-- Reuse/dedup accepted a low future extraction opportunity for repeated effective/pre-submit provenance checks.
-- Reuse/dedup accepted a low test-maintenance risk around duplicated default-checker literal expectations.
-- Test-delta accepted a low structural caveat that the setup queue config
-  regression proves effective shared Celery config behavior, not an isolated
-  fake-task enumeration.
-- Reuse/dedup and test-delta accepted a low temporary CI activation bridge risk:
-  it directly writes approved generated post-submit policy/setup-ledger rows
-  only after API-created prerequisites and real compiler output. `WS-POL-002-03`
-  must replace this bridge with the server-owned approval API.
-- External review and GitHub Actions must rerun after this evidence refresh is pushed.
+- Product/ops accepted a low visibility window where task status remains `submitted` with a queued current automatic gate until the Celery worker claims it and moves the task to `evaluation_pending`.
+- A temporary CI/API-drill activation bridge remains until `WS-POL-002-03` replaces direct generated post-submit policy approval/setup-ledger marking with the server-owned approval API.
+- External GitHub Actions and CodeRabbit must rerun after this evidence refresh is pushed.
