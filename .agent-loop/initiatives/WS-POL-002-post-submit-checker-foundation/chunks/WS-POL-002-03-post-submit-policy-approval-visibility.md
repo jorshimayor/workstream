@@ -59,7 +59,10 @@ backend/tests/test_projects.py
 backend/tests/test_auth.py
 docs/product_first_user_flows.md
 docs/operations_project_operating_manual.md
+docs/operations_queue_policy.md
 docs/architecture_data_model.md
+docs/architecture_lifecycle_state_machine.md
+docs/current_system_data_flow.html
 .agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/**
 .agent-loop/LOOP_STATE.md
 .agent-loop/WORK_QUEUE.md
