@@ -48,6 +48,10 @@ None for planning closure.
 of proposed architecture/data-model decisions D4-D10 and a separate
 implementation start signal.
 
+Internal review evidence is recorded at
+`reviews/WS-AUTH-001-PLAN-internal-review-evidence.md` and binds reviewed SHA
+`d5b0ca96cc8010ae136eb5a3295248cd04197d2f`.
+
 Production issuer configuration and legacy non-test actor classification are
 future implementation/live-proof inputs and are tracked explicitly in
 `DISCOVERY.md` and chunk stop conditions.

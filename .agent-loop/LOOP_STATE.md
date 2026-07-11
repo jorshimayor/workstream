@@ -6,14 +6,14 @@
 - Active planning chunk: `WS-AUTH-001-PLAN`
 - Active implementation chunk: none
 - Branch: `authorization-service`
-- Status: authorization planning started after the user adopted
-  `WS-AUTH-001`, retained `/api/v1`, prioritized auth before
-  `WS-POL-002-03`, and directed the agent to proceed.
+- Status: WS-AUTH-001 planning is internally reviewed and stopped at the L0
+  human checkpoint. D1-D3 are approved; D4-D10 require explicit approval.
 - Last merged implementation SHA: `67fb3ca`
 - Last merge commit: `32af6a7`
-- Current gate: planning artifacts and required internal plan review.
-- Next chunk: `WS-AUTH-001-01` remains proposed until planning closes and the
-  implementation start boundary is satisfied.
+- Current gate: explicit durable human approval of D4-D10. Planning evidence is
+  recorded at the WS-AUTH-001 internal review evidence path.
+- Next chunk: `WS-AUTH-001-01` remains proposed until D4-D10 approval and a
+  separate implementation start signal.
 - Paused initiative: `WS-POL-002`; chunk `WS-POL-002-03` must not start before
   the relevant authorization foundation and an explicit resume signal.
 
