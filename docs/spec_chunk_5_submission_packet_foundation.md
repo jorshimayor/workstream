@@ -143,6 +143,18 @@ packet immutable and binds durable checker runs to the locked
 `PostSubmitCheckerPolicy` id, version, hash, and body. The finalize endpoint is
 not the normal handoff from contributor work to evaluation.
 
+Repair outcomes:
+
+- no existing automatic gate run: enqueue the locked latest submission
+- queued or running automatic gate run: return the existing run without creating
+  another claim
+- `pre_review_gate_enqueue_failed`: requeue the same locked submission after the
+  queue/broker/eager-dispatch problem is corrected
+- `unknown_checker`: requeue after the missing checker registration or setup
+  defect is corrected
+- non-repairable failed automatic gate claim: return HTTP 409 with the current
+  failure code and no false success response
+
 ## Versioning Rules
 
 - the first packet for a task is version `1`
@@ -174,6 +186,9 @@ not the normal handoff from contributor work to evaluation.
   `submission_finalized` audit events in the same server-owned handoff
 - only the latest submission version for a task can enter or repair the automatic
   pre-review checker gate
+- queue or eager-dispatch failures after successful packet locking move the task
+  to `EVALUATION_PENDING`, record `pre_review_gate_enqueue_failed`, and preserve
+  requester provenance for repair
 - Chunk 5 submission status is `submitted`; automatic locking sets internal
   `locked_at` and does not change status
 
@@ -214,6 +229,8 @@ Chunk 5 writes task audit events with submission identifiers in `event_payload`.
 - Workstream stamps locked guide source snapshot ids/hashes, effective project submission artifact policy ids/hashes, project pre-submit checker policy ids/bundle hashes, and guide/checker/review/revision/payment policy versions from task context
 - task moves to `SUBMITTED`
 - submitted packet is automatically locked and enters the current post-submit checker gate
+- dispatch failures after packet locking are visible as repairable automatic
+  gate failures rather than failed contributor submissions
 - replacing an artifact creates a new submission version instead of mutating v1
 - submission audit events include task, worker, version, package, and artifact context
 - submission and immutability tests pass

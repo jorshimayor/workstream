@@ -138,4 +138,11 @@ provenance, and the checker routing context where applicable.
 - checker-caused revision does not create a human review decision
 - checker policy errors are structured in the automatic gate path; the repair
   endpoint is idempotent and may requeue a repairable locked submission claim
+- dispatch and eager-dispatch failures are recorded as
+  `pre_review_gate_enqueue_failed`, keep the locked packet in
+  `evaluation_pending`, and are repairable through `/finalize`
+- `unknown_checker` automatic gate failures are repairable after the missing
+  checker registration/setup issue is corrected
+- non-repairable failed automatic gate claims return HTTP 409 from `/finalize`
+  with an operator-visible next action instead of reporting false success
 - Postgres-backed integration tests cover the complete API flow
