@@ -13,7 +13,9 @@ PR #88 external checks and CodeRabbit comments.
 | CodeRabbit | Trivial | fixed | Deduplicated mutable Celery setup task configuration. |
 | CodeRabbit | Major | already satisfied | Migration 0014 explicitly rejects existing draft-era checker rows before adding non-null setup-provenance columns. |
 | CodeRabbit | Major | stale / not applied | `.agent-loop/REVIEW_LOG.md` line 23 describes already-merged PR #87, not current PR #88. |
-| CodeRabbit | Major | invalid / not applied | Internal engineering reviewer verdicts must remain `PASS`, `PASS WITH LOW RISKS`, or `PASS AFTER FIXES`; product review decision tokens are not used for engineering evidence. |
+| CodeRabbit | Major | invalid; clarified / not applied | Internal engineering reviewer verdicts must remain `PASS`, `PASS WITH LOW RISKS`, or `PASS AFTER FIXES`; product review decision tokens are not used for engineering evidence, and the evidence tables now say so explicitly. |
+| CodeRabbit | Major | fixed | Removed requester-provenance mismatch from automatic pre-review gate requeue eligibility. |
+| CodeRabbit | Minor | fixed | Clarified "required shared" grammar in the chunk contract. |
 
 ## Comments Addressed
 
@@ -118,7 +120,7 @@ Decision:
 
 ### Internal reviewer result values
 
-Status: not applied.
+Status: clarified; product-token rewrite not applied.
 
 Finding:
 
@@ -141,6 +143,51 @@ Evidence:
 - `scripts/check_internal_review_evidence.py` explicitly accepts
   `PASS`, `PASS AFTER FIXES`, and `PASS WITH LOW RISKS` and would reject the
   proposed product decision tokens in this evidence table.
+
+Follow-up:
+
+- Added explicit notes before the reviewer-result tables in the internal
+  evidence and PR trust bundle so the engineering verdict values are not
+  mistaken for Workstream product review decision values.
+
+### Requester-provenance mismatch requeue
+
+Status: addressed.
+
+Finding:
+
+- CodeRabbit found `requester_provenance_mismatch` in the automatic gate
+  retryable failure set.
+
+Decision:
+
+- Valid. A requester-provenance mismatch means the queued payload does not
+  match the locked submission audit trail. That is an integrity failure, not a
+  queue or setup defect.
+
+Fix:
+
+- Removed `requester_provenance_mismatch` from the retryable failure codes.
+- Updated the tampered-provenance regression test to assert `/finalize` returns
+  HTTP 409 and leaves the failed checker run terminal.
+- Updated the submission and pre-review gate specs to name provenance mismatch
+  as non-repairable through automatic requeue.
+
+### Chunk-contract grammar
+
+Status: addressed.
+
+Finding:
+
+- CodeRabbit flagged the phrase "required shared" in the chunk contract.
+
+Decision:
+
+- Valid wording cleanup.
+
+Fix:
+
+- Rephrased the sentence to "required that ... helpers be shared."
 
 ## Commands Rerun
 

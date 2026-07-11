@@ -96,9 +96,9 @@ artifact locking and `/finalize` as the normal submission handoff. The allowed
 scope therefore also includes `docs/architecture_system_architecture.md`, but
 only to align lifecycle wording with the implemented contributor-owned
 submission lock and repair-only automatic gate finalization boundary.
-Reuse/dedup review required shared requester-provenance and Celery task-setting
-helpers so the task enqueue path, checker worker validation path, and setup
-queue path do not drift. The allowed scope therefore also includes
+Reuse/dedup review required that requester-provenance and Celery task-setting
+helpers be shared so the task enqueue path, checker worker validation path,
+and setup queue path do not drift. The allowed scope therefore also includes
 `backend/app/modules/checkers/pre_review_gate.py` and
 `backend/app/workers/task_settings.py`, limited to shared automatic-gate
 provenance and worker task-setting contracts.

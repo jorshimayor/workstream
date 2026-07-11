@@ -1245,7 +1245,6 @@ class CheckerService:
             PRE_REVIEW_GATE_ENQUEUE_FAILURE_CODE,
             PRE_REVIEW_GATE_EXECUTION_FAILURE_CODE,
             PRE_REVIEW_GATE_UNKNOWN_CHECKER_FAILURE_CODE,
-            PRE_REVIEW_GATE_REQUESTER_PROVENANCE_MISMATCH_CODE,
         }
         is_retryable_failure = (
             checker_run.status == "failed"

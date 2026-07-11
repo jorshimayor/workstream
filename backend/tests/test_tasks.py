@@ -4945,16 +4945,23 @@ async def test_queued_gate_rejects_tampered_requester_provenance(
         f"/api/v1/submissions/{submission_id}/finalize",
         headers=auth_headers(),
     )
-    assert repair_response.status_code == 200, repair_response.text
+    assert repair_response.status_code == 409, repair_response.text
+    assert (
+        "automatic pre-review gate failure is not repairable through finalize"
+        in repair_response.json()["detail"]
+    )
 
     checker_runs_response = await task_client.get(
         f"/api/v1/submissions/{submission_id}/checker-runs",
         headers=auth_headers(),
     )
     assert checker_runs_response.status_code == 200, checker_runs_response.text
-    repaired_run = checker_runs_response.json()[0]
-    assert repaired_run["id"] == queued_run.id
-    assert repaired_run["status"] == "completed"
+    checker_runs = checker_runs_response.json()
+    assert len(checker_runs) == 1
+    unrepaired_run = checker_runs[0]
+    assert unrepaired_run["id"] == queued_run.id
+    assert unrepaired_run["status"] == "failed"
+    assert unrepaired_run["failure_code"] == "requester_provenance_mismatch"
 
 
 async def test_queued_gate_fails_closed_when_lock_audit_is_missing(

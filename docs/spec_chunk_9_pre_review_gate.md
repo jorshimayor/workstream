@@ -143,6 +143,10 @@ provenance, and the checker routing context where applicable.
   `evaluation_pending`, and are repairable through `/finalize`
 - `unknown_checker` automatic gate failures are repairable after the missing
   checker registration/setup issue is corrected
+- `requester_provenance_mismatch` automatic gate failures are terminal
+  integrity failures; operators inspect the locked submission audit,
+  checker-run failure details, and retained worker logs if available instead
+  of requeueing through `/finalize`
 - non-repairable failed automatic gate claims return HTTP 409 from `/finalize`
   with an operator-visible next action instead of reporting false success
 - Postgres-backed integration tests cover the complete API flow

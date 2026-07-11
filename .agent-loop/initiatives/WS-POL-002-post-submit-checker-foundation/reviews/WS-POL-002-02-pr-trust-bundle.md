@@ -147,6 +147,12 @@ Earlier PR proof retained:
 
 ## Reviewer Results
 
+These are Codex engineering-loop reviewer verdicts, not Workstream product
+review decisions. Product review decisions remain `accept`, `needs_revision`,
+and `reject`; internal reviewer agents report `PASS`, `PASS WITH LOW RISKS`,
+`PASS AFTER FIXES`, or `FAIL` so process evidence stays separate from product
+lifecycle records.
+
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
 | senior engineering | PASS AFTER FIXES | None | No final code issue after CAS fence; stale evidence fixed by this bundle. |

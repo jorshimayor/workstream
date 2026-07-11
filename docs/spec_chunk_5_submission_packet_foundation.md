@@ -158,6 +158,9 @@ Repair outcomes:
   defect that blocked automatic execution is corrected
 - `unknown_checker`: requeue after the missing checker registration or setup
   defect is corrected
+- `requester_provenance_mismatch`: terminal integrity failure; inspect the
+  locked submission audit, checker-run failure details, and retained worker
+  logs if available; do not requeue automatically
 - non-repairable failed automatic gate claim: return HTTP 409 with an
   operator-visible repair-blocked message and no false success response
 

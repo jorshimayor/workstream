@@ -20,7 +20,7 @@ Required reviewer tracks:
 - reuse/dedup
 - test delta
 
-Result: PASS after fixes; external review addressed; GitHub checks passed.
+Result: PASS after fixes; PR #87 external review addressed; GitHub checks passed.
 
 Scope: trusted post-submit compiler contract, version-stamped default-checker
 snapshots, canonical policy hashing, compile/parse validation, and regression
