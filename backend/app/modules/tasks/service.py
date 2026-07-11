@@ -18,7 +18,11 @@ from app.modules.checkers.compiler import (
     validate_compiled_pre_submit_checker_bundle,
 )
 from app.modules.checkers.gate_queue import PreReviewGateQueueError, enqueue_pre_review_gate
-from app.modules.checkers.service import CheckerService, CheckerServiceError
+from app.modules.checkers.service import (
+    CheckerService,
+    CheckerServiceError,
+    pre_review_gate_system_actor,
+)
 from app.modules.actors.models import ActorProfile
 from app.modules.actors.service import ActorService
 from app.modules.projects.models import (
@@ -951,10 +955,10 @@ class TaskService:
         except PreReviewGateQueueError as exc:
             await checker_service.mark_pre_review_gate_enqueue_failed(checker_run.id)
             await self._mark_pre_review_gate_dispatch_failed(
-                actor,
                 submission_id,
                 checker_run.id,
                 str(exc),
+                requester_payload,
             )
             if raise_on_failure:
                 raise SubmissionCheckerGateError(str(exc), 503) from exc
@@ -977,10 +981,10 @@ class TaskService:
 
     async def _mark_pre_review_gate_dispatch_failed(
         self,
-        actor: ActorContext,
         submission_id: str,
         checker_run_id: str,
         failure_message: str,
+        requester_payload: dict[str, str],
     ) -> None:
         """Move locked submission packets into the evaluation repair lane after dispatch failure."""
         submission = await self._get_submission(submission_id)
@@ -991,10 +995,12 @@ class TaskService:
             "checker_run_id": checker_run_id,
             "failure_code": "pre_review_gate_enqueue_failed",
             "failure_message": failure_message[:1000],
+            **requester_payload,
         }
+        system_actor = pre_review_gate_system_actor()
         if task.status == TASK_STATUS_SUBMITTED:
             await self._change_task_status(
-                actor,
+                system_actor,
                 task,
                 TASK_STATUS_EVALUATION_PENDING,
                 reason="automatic pre-review gate dispatch failed; operator repair required",
@@ -1003,7 +1009,7 @@ class TaskService:
             )
         else:
             await self._write_task_audit(
-                actor,
+                system_actor,
                 task,
                 event_type=PRE_REVIEW_GATE_DISPATCH_FAILED_EVENT_TYPE,
                 from_status=task.status,

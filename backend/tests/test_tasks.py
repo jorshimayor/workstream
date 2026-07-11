@@ -4011,6 +4011,8 @@ async def test_finalize_repairs_locked_submission_with_missing_pre_review_gate(
     assert task.status == "evaluation_pending"
     assert len(dispatch_failed_events) == 1
     assert dispatch_failed_events[0].event_payload["checker_run_id"] == failed_claim.id
+    assert dispatch_failed_events[0].actor_id == "workstream-system:pre-review-gate"
+    assert dispatch_failed_events[0].event_payload["requester_actor_id"] == actor_id("worker-one")
 
     monkeypatch.setattr(task_service_module, "enqueue_pre_review_gate", original_enqueue)
     worker_repair = await task_client.post(
@@ -4211,7 +4213,9 @@ async def test_eager_pre_review_gate_failure_after_submission_is_repairable(
     assert task is not None
     assert task.status == "evaluation_pending"
     assert dispatch_failed_event is not None
+    assert dispatch_failed_event.actor_id == "workstream-system:pre-review-gate"
     assert dispatch_failed_event.event_payload["checker_run_id"] == failed_run.id
+    assert dispatch_failed_event.event_payload["requester_actor_id"] == actor_id("worker-one")
 
 
 async def test_finalize_repairs_stale_running_pre_review_gate(
