@@ -110,9 +110,10 @@ review policy, revision policy, and payment policy are present. Compiled
 post-submit setup output carries exact source/effective/pre-submit provenance,
 but activation remains blocked until the policy is approved through the
 server-owned approval endpoint. A correction request only requeues regeneration;
-it does not satisfy activation. A task cannot enter `READY` until it also locks the guide source
-snapshot id/hash, effective project submission artifact policy hash, and project
-pre-submit checker bundle hash.
+it does not satisfy activation. A task cannot enter `READY` until it also locks
+the guide source snapshot id/hash, effective project submission artifact policy
+hash, project pre-submit checker bundle hash, and approved provenance-matched
+project post-submit checker policy reference.
 
 ### Task Screening Gate
 

@@ -78,7 +78,9 @@ Required before entering:
 - EffectiveProjectSubmissionArtifactPolicy hash persisted
 - project PreSubmitCheckerPolicy persisted with a compiled bundle hash and locked to that effective project submission artifact policy hash
 - task locked to GuideSourceSnapshot id/hash, EffectiveProjectSubmissionArtifactPolicy hash, and PreSubmitCheckerPolicy compiled bundle hash
-- PostSubmitCheckerPolicy present
+- approved generated project PostSubmitCheckerPolicy with matching guide,
+  source snapshot, effective project policy, and pre-submit checker provenance
+  locked in the task context
 - review policy present
 - revision policy present
 - payment policy present
