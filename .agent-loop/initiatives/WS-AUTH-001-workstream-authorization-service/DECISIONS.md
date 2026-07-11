@@ -27,15 +27,15 @@ not be built on authority rules that have been declared obsolete.
 ## L0 human approval boundary
 
 The user explicitly approved the authorization direction, source precedence,
-API namespace, and priority recorded in D1-D3 on 2026-07-11. The remaining
-architecture and data-model choices in D4-D10 are proposed planning decisions,
-not autonomous implementation authority. Their explicit human approval must be
-recorded durably before `WS-AUTH-001-01` becomes active. Every bounded
-implementation chunk is then L1 and retains its own human PR/merge checkpoint.
+API namespace, and priority recorded in D1-D3 on 2026-07-11. On 2026-07-11,
+after the planning and post-merge memory PRs merged, the user said "ok start" in
+direct response to the recorded D4-D10 approval and separate chunk-start gate.
+That response approves D4-D10 and starts only `WS-AUTH-001-01`. Every bounded
+implementation chunk remains L1 and retains its own human PR/merge checkpoint.
 
 ## D4: No dual canonical authority
 
-Status: planning decision derived from the adopted contract.
+Status: accepted by the user on 2026-07-11.
 
 Token roles may be retained as non-authoritative diagnostic input during a
 bounded migration only. A protected command must never accept either a token
@@ -44,7 +44,7 @@ authorization for complete resource surfaces and remove the old check.
 
 ## D5: Preserve historical actor identifiers where classification is safe
 
-Status: planning decision.
+Status: accepted by the user on 2026-07-11.
 
 Existing `ActorIdentity.actor_id` values for externally verified callers are
 UUID5 strings and are referenced throughout tasks, submissions, checker runs,
@@ -58,7 +58,7 @@ not actor IDs, and never become canonical profile IDs.
 
 ## D6: Existing typed profiles do not become grants
 
-Status: planning decision.
+Status: accepted by the user on 2026-07-11.
 
 Observed or active `worker`, `reviewer`, `admin`, or `project_manager` profile
 rows do not create `AdminRoleGrant` or `ProjectRoleGrant` records. Skills and
@@ -67,7 +67,7 @@ metadata model only when required by an existing workflow.
 
 ## D7: Internal workers use explicit system authority
 
-Status: planning decision.
+Status: accepted by the user on 2026-07-11.
 
 Project setup, pre-review gating, reconciliation, and repair work use fixed
 Workstream system principals and registered system permissions. They do not
@@ -75,7 +75,7 @@ receive fabricated human admin roles and do not become normal ActorProfiles.
 
 ## D8: Production issuer details remain configuration
 
-Status: planning decision.
+Status: accepted by the user on 2026-07-11.
 
 The token adapter will require explicit issuer, audience, JWKS URL, algorithm,
 scope, clock-skew, and cache configuration and will fail closed when incomplete.
@@ -84,7 +84,7 @@ deterministic adapter implementation with local JWKS fixtures.
 
 ## D9: Authority evidence is foundational
 
-Status: planning repair after internal review.
+Status: accepted by the user on 2026-07-11 after internal review repair.
 
 Request/correlation context, canonical idempotency records, and the shared
 append-only authority-event writer are introduced before canonical actor
@@ -95,7 +95,7 @@ or backfill the evidence model.
 
 ## D10: Legacy classification uses a versioned supported manifest
 
-Status: planning repair after internal review.
+Status: accepted by the user on 2026-07-11 after internal review repair.
 
 Non-empty legacy registries require a versioned JSON classification manifest
 processed by a supported management/preflight tool. Entries bind exact legacy
