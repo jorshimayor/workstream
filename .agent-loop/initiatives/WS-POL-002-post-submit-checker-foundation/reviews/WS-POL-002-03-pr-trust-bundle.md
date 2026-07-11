@@ -6,9 +6,9 @@
 
 ## Reviewed Revision
 
-Reviewed code SHA: `8414dbdffcbcec108f0e736a06e7bbc750eca18b`
+Reviewed code SHA: `e42b9506815a2eef155230928e791d5a737a6155`
 
-Reviewed at: `2026-07-11T15:07:06Z`
+Reviewed at: `2026-07-11T15:51:10Z`
 
 Internal review evidence:
 
@@ -50,6 +50,9 @@ worker submissions at runtime.
 - Made approval idempotent without rewriting existing approval provenance.
 - Made correction clear unapproved generated output, delete the compiled policy row, preserve correction metadata, and requeue the existing setup continuation.
 - Updated docs and loop state to reflect the new server-owned setup boundary.
+- Reconciled CodeRabbit-discovered loop-state drift so PR #90 is the current
+  `WS-POL-002-03` review chunk, while `WS-POL-002-04` and future WS-POL chunks
+  remain inactive until explicit starts.
 
 ## Design Chosen
 
@@ -149,10 +152,12 @@ External review response:
 
 - `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/reviews/WS-POL-002-03-external-review-response.md`
 
-CodeRabbit did not post actionable review threads on the latest pass because
-the review limit was reached. GitHub Actions failed only because the reviewed
-SHA became stale after `main` was merged into the PR branch. The evidence was
-rebound to the merged PR head and must rerun on the pushed repair commit.
+CodeRabbit and GitHub Actions passed on PR head
+`19680969d267c339907bc507ec37b22c65665298`. GitHub Actions had previously
+failed only because the reviewed SHA became stale after `main` was merged into
+the PR branch. The current review-response fixes are bound to non-evidence
+commit `e42b9506815a2eef155230928e791d5a737a6155` and must be pushed and
+checked again before merge.
 
 ## Remaining Risks
 

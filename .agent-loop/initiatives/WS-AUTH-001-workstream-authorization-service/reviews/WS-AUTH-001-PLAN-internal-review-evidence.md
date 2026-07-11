@@ -10,9 +10,9 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: 5739e1d6fc8df0fa620bd007c45e370530ac8d12
+Reviewed code SHA: e42b9506815a2eef155230928e791d5a737a6155
 
-Reviewed at: 2026-07-11T14:08:40Z
+Reviewed at: 2026-07-11T15:51:10Z
 
 Reviewer run IDs: senior-engineering=/root/pdf_attr_engineering_review; QA/test=/root/pdf_attr_quality_review; security/auth=/root/pdf_attr_ci_docs_security_review; product/ops=/root/pdf_attr_quality_review; architecture=/root/pdf_attr_engineering_review; docs=/root/pdf_attr_ci_docs_security_review; CI-integrity=/root/pdf_attr_ci_docs_security_review; reuse/dedup=/root/pdf_attr_engineering_review; test-delta=/root/pdf_attr_quality_review
 
@@ -34,9 +34,14 @@ Scope:
 - Preserved intermediate-release intake operability and revision obligations,
   assigned every temporary compatibility consumer and deletion owner, and
   prohibited test/CI/dependency bypasses.
-- Paused `WS-POL-002-03` and left every implementation chunk inactive.
+- At planning time, paused `WS-POL-002-03` and left every implementation chunk
+  inactive; `WS-POL-002-03` later resumed by explicit user start in PR #90.
 - Recorded D1-D3 as user-approved L0 direction and D4-D10 as an explicit human
   approval gate before `WS-AUTH-001-01` activation.
+- Reconciled PR #90 loop-state wording across WS-AUTH artifacts so historical
+  pause language does not remain an active blocker for the already-started
+  `WS-POL-002-03` chunk. Related wording touched `WS-AUTH-001-01`,
+  `WS-AUTH-001-12`, `WS-AUTH-001-16`, and `WS-AUTH-001-PLAN` records.
 
 ## Reviewer Results
 
@@ -116,4 +121,5 @@ Results:
 
 No implementation chunk is active. Do not activate `WS-AUTH-001-01` without
 explicit human approval of D4-D10 and a separate implementation start signal.
-Do not resume `WS-POL-002-03` while authorization remains the priority.
+Do not start future WS-POL chunks without explicit user start and authorization
+impact review.

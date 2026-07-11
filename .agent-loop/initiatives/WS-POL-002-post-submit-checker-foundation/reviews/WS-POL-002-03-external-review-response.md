@@ -8,6 +8,15 @@
   original evidence was bound, so the reviewed SHA was stale.
 - Rebound `WS-POL-002-03` internal review evidence and PR trust bundle to the
   merged PR head before this evidence-only repair commit.
+- CodeRabbit found stale/conflicting lifecycle state across `LOOP_STATE.md`,
+  `WORK_QUEUE.md`, `REVIEW_LOG.md`, WS-POL-002 status/chunk-map artifacts, and
+  product/operator docs.
+- Fixed the valid lifecycle-state comments by representing PR #90 as the current
+  `WS-POL-002-03` review chunk, removing duplicate or stale paused rows, and
+  marking future WS-POL work as separately gated.
+- Fixed the valid correction-flow comment by stating that correction requests
+  block activation, clear unapproved output, requeue regeneration, and do not
+  satisfy the approval gate.
 
 ## Comments Deferred
 
@@ -31,7 +40,7 @@ git diff --check
 
 ## Remaining Risks
 
-- CodeRabbit hit a review-limit warning on the latest pass and did not post
-  actionable review threads. A later `@coderabbitai review` may be needed when
-  review capacity resets.
-- GitHub Actions must rerun on the pushed repair commit.
+- CodeRabbit and GitHub Actions passed on PR head `19680969d267c339907bc507ec37b22c65665298`.
+- The current CodeRabbit-response fixes are bound to non-evidence commit
+  `e42b9506815a2eef155230928e791d5a737a6155` and must be pushed and checked
+  again before merge.

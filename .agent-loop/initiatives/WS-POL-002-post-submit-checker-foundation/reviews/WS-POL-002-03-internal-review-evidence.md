@@ -10,9 +10,9 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: 8414dbdffcbcec108f0e736a06e7bbc750eca18b
+Reviewed code SHA: e42b9506815a2eef155230928e791d5a737a6155
 
-Reviewed at: 2026-07-11T15:07:06Z
+Reviewed at: 2026-07-11T15:51:10Z
 
 Reviewer run ids: senior-engineering-019f5133-8882, qa-test-019f5133-9349, security-auth-019f5133-a018, product-ops-019f5133-b385, architecture-019f5133-cc0e, docs-019f5133-d78d, security-auth-rerun-019f513f-0255, product-ops-rerun-019f513e-fcdf, reuse-dedup-019f513f-0938, test-delta-019f513f-116c, ci-integrity-019f513f-1ce8
 
@@ -31,6 +31,11 @@ Scope:
 - Redacts raw source text, local paths, exact source hashes, source item refs, policy bodies, secrets, and credential-shaped values from setup visibility responses.
 - Adds negative authorization coverage for worker, reviewer, finance, and auditor roles.
 - Updates operator/product/data-model docs and active loop state for this chunk.
+- Reconciles CodeRabbit-discovered lifecycle drift across WS-POL-002 and
+  WS-AUTH-001 artifacts so `WS-POL-002-03` is the current PR #90 review chunk
+  and future WS-POL chunks remain separately gated. Related lifecycle wording
+  touched `WS-AUTH-001-01`, `WS-AUTH-001-12`, `WS-AUTH-001-16`, and
+  `WS-AUTH-001-PLAN` records.
 
 ## Reviewer Results
 
@@ -60,6 +65,13 @@ lifecycle records.
 - Added bounded `derivation_input_summary` so operators can see source/effective/pre-submit context without raw source material or policy bodies.
 - Changed product wording from "task display" to "operator-visible post-submit checker policy summary".
 - Expanded tests to assert no policy body, source item ref, source item hash, raw source hash, or guide text leaks in setup visibility responses.
+- Addressed CodeRabbit feedback that correction requests could be read as an
+  activation alternative; product and operator docs now state correction blocks
+  activation, clears unapproved output, and returns to regeneration.
+- Addressed CodeRabbit feedback that loop artifacts had conflicting
+  `WS-POL-002-03` lifecycle states; PR #90 is now represented as the active
+  user-review chunk, while `WS-POL-002-04` and future WS-POL work remain
+  inactive until explicit starts.
 
 ## Commands Run
 
@@ -71,6 +83,7 @@ cd backend && .venv/bin/pytest tests/test_alembic.py -q
 cd backend && .venv/bin/pytest tests/test_projects.py tests/test_auth.py -q
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
+python3 scripts/check_loop_memory_state.py
 git diff --check
 ```
 
@@ -83,17 +96,22 @@ Results:
 - Final project/auth suite: 254 passed in 2825.49s.
 - Stale wording scan: passed.
 - Markdown link check: passed.
+- Loop memory state check: passed.
 - Diff whitespace check: passed.
 
 Rebind note:
 
 - The PR branch was updated with current `main` after the original evidence was
   recorded. CI correctly failed the stale reviewed-SHA gate because non-evidence
-  files from `main` appeared above the prior reviewed commit. This evidence now
-  binds to the merged PR head before the evidence-only repair commit.
+  files from `main` appeared above the prior reviewed commit.
+- A later CodeRabbit pass found lifecycle-state drift between WS-POL and WS-AUTH
+  loop artifacts. This evidence now binds to the non-evidence commit that
+  reconciles those artifacts before this evidence-only rebind commit.
 
 ## Remaining Risks
 
-- GitHub Actions and CodeRabbit must rerun on the pushed PR head before human merge review.
+- GitHub Actions and CodeRabbit passed on PR head
+  `19680969d267c339907bc507ec37b22c65665298` before the local
+  CodeRabbit-response fixes. They must rerun after these fixes are pushed.
 - Project-scoped `project_manager` role grants remain future Workstream role-assignment work; this chunk keeps the current bootstrap authorization boundary and documents that limit.
 - `WS-POL-002-04` still owns runtime hardening for locked post-submit policy execution and routing.

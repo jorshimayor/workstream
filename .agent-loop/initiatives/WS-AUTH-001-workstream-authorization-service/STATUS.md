@@ -50,7 +50,7 @@ implementation start signal.
 
 Internal review evidence is recorded at
 `reviews/WS-AUTH-001-PLAN-internal-review-evidence.md` and binds reviewed SHA
-`54912769b8a066977d6dc62ec885b94a5ee05029`.
+`e42b9506815a2eef155230928e791d5a737a6155`.
 
 Production issuer configuration and legacy non-test actor classification are
 future implementation/live-proof inputs and are tracked explicitly in
