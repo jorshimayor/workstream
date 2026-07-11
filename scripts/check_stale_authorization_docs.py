@@ -116,7 +116,7 @@ RULES = (
         "TOKEN_ROLE_PRODUCT_AUTHORITY",
         re.compile(
             r"(?:token\s+roles?|roles?\s+(?:from|in)\s+(?:the\s+)?"
-            r"(?:(?:current|verified|bearer)\s+)*token).{0,100}"
+            r"(?:(?:current|verified|bearer)\s+)*token).{0,100}?"
             r"\b(?:grants?|authoriz(?:e[sd]?|ation)|permits?|allows?|approv(?:e[sd]?|al))\b",
             re.IGNORECASE,
         ),
@@ -125,7 +125,7 @@ RULES = (
     Rule(
         "NAMED_ROLE_TOKEN_AUTHORITY",
         re.compile(
-            r"\b(?:admin|project_manager|worker|reviewer|operator)\b.{0,24}\btoken\b.{0,80}"
+            r"\b(?:admin|project_manager|worker|reviewer|operator)\b.{0,24}?\btoken\b.{0,80}?"
             r"\b(?:can|may|must|grants?|authoriz(?:e[sd]?|ation)|permits?|allows?|approv(?:e[sd]?|al))\b",
             re.IGNORECASE,
         ),
@@ -134,7 +134,7 @@ RULES = (
     Rule(
         "TYPED_PROFILE_PRODUCT_AUTHORITY",
         re.compile(
-            r"ActorProfile.{0,60}\b(?:profile_type|type)\b.{0,80}"
+            r"ActorProfile.{0,60}?\b(?:profile_type|type)\b.{0,80}?"
             r"\b(?:grants?|authoriz(?:e[sd]?|ation)|permits?|allows?|approv(?:e[sd]?|al))\b",
             re.IGNORECASE,
         ),
@@ -199,13 +199,12 @@ def containing_line(text: str, offset: int) -> str:
     return text[start:] if end == -1 else text[start:end]
 
 
-def containing_statement(text: str, start: int, end: int) -> str:
-    """Return the bounded line or sentence containing a match."""
-    line = containing_line(text, start)
-    relative_start = start - (text.rfind("\n", 0, start) + 1)
-    sentence_start = line.rfind(".", 0, relative_start) + 1
-    sentence_end = line.find(".", max(relative_start, end - start))
-    return line[sentence_start:] if sentence_end == -1 else line[sentence_start:sentence_end]
+def match_is_negated(text: str, match: re.Match[str]) -> bool:
+    """Return whether negation directly qualifies the matched authority claim."""
+    if NEGATION_PATTERN.search(match.group(0)):
+        return True
+    prefix = text[max(0, match.start() - 16) : match.start()]
+    return bool(re.search(r"\b(?:no|neither)\s+$", prefix, re.IGNORECASE))
 
 
 def exempt_match(relative_path: str, rule: Rule, text: str, offset: int) -> bool:
@@ -221,9 +220,7 @@ def scan_text(relative_path: str, text: str) -> list[str]:
         for match in rule.pattern.finditer(text):
             if exempt_match(relative_path, rule, text, match.start()):
                 continue
-            if rule.allow_negated and NEGATION_PATTERN.search(
-                containing_statement(text, match.start(), match.end())
-            ):
+            if rule.allow_negated and match_is_negated(text, match):
                 continue
             failures.append(
                 f"{relative_path}:{line_number(text, match.start())}: {rule.code}"

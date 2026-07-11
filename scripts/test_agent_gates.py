@@ -922,6 +922,17 @@ def test_stale_authorization_rule_examples_are_rejected() -> None:
     for sample in canonical_negatives:
         assert gate.scan_text("docs/new_active_doc.md", sample) == [], sample
 
+    mixed_clause_bypasses = (
+        "A token role grants project access, but email does not.",
+        "A token role grants project access, not a typed profile.",
+        (
+            "ActorProfile with type worker authorizes task claim, but does not "
+            "authorize review."
+        ),
+    )
+    for sample in mixed_clause_bypasses:
+        assert gate.scan_text("docs/new_active_doc.md", sample), sample
+
 
 def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:
     """A new active doc fails without being added to a hardcoded corpus."""
