@@ -36,6 +36,7 @@ P1
 
 ```text
 docs/reference_specs/**
+.gitattributes
 .agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/**
 .agent-loop/LOOP_STATE.md
 .agent-loop/WORK_QUEUE.md
@@ -59,6 +60,8 @@ review, contribution, compensation, frontend, or WS-POL implementation
 - `docs/reference_specs/README.md` labels the imported files as immutable
   archival inputs, records the `/api/v1` override, and points to the future
   reconciled canonical specification without changing the eight hashed files.
+- Git attributes mark only the imported reference PDFs as binary so repository
+  diff/review tooling never decodes PDF bytes as UTF-8 text.
 - Intent, discovery, decisions, risks, plan, status, and chunk map are explicit.
 - Every implementation chunk has allowed files, exclusions, acceptance
   criteria, verification, reviewers, human focus, and stop conditions.
@@ -77,6 +80,7 @@ python3 scripts/check_markdown_links.py
 python3 scripts/check_loop_memory_state.py
 python3 scripts/check_internal_review_evidence.py
 sha256sum -c docs/reference_specs/SHA256SUMS
+git check-attr diff merge text -- docs/reference_specs/*.pdf | awk '$3 != "unset" { exit 1 }'
 git diff --check
 ```
 
