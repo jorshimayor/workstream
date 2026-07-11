@@ -7,18 +7,18 @@
 - Active implementation chunk: `WS-AUTH-001-01`
 - Branch: `codex/ws-auth-001-01-adopt-authorization-baseline`
 - Worktree: `/home/abiorh/flow/workstream-auth-001-01`
-- Status: WS-AUTH-001-01 implementation and all required internal reviews
-  passed at `6756e6c`; PR publication is pending.
-- Last merged implementation SHA: `67fb3ca`
-- Last merge commit: `14fb2160922274a6678fc7cb4ebb49c42aa0ac5b`
-- Current gate: publish the reviewed WS-AUTH-001-01 PR, observe external checks,
-  and stop for human review.
+- Status: PR #93 is published. Contributor terminology, CodeRabbit feedback, and
+  latest-main integration are being repaired and must be re-reviewed before the
+  next push.
+- Last merged implementation SHA: `1e20b79`
+- Last merge commit: `a7aa474`
+- Current gate: complete local repair evidence and required internal review,
+  push PR #93, observe external checks, and stop for human review.
 - Next chunk: `WS-AUTH-001-02` remains proposed and must not start
   automatically.
-- Parallel initiative: `WS-POL-002-03` is implemented and under external review
-  in PR #90. This worktree does not own or advance that chunk; `WS-POL-002-04`
-  remains inactive pending its merge, the authorization foundation, and a
-  separate explicit start signal.
+- Parallel initiative: `WS-POL-002-03` merged through PR #90 as `a7aa474`.
+  `WS-POL-002-04` remains inactive pending post-merge memory, the authorization
+  foundation, and a separate explicit start signal.
 
 ## Operating Rule
 

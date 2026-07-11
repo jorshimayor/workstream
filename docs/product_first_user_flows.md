@@ -16,10 +16,13 @@ The first user flows prove that Workstream can run real work from intake to acce
 10. Workstream persists the effective project submission artifact policy hash.
 11. Workstream compiles, persists, and locks the project `PreSubmitCheckerPolicy`.
 12. Workstream derives and compiles the project post-submit checker policy.
-13. An authorized covered Project Manager approves the current compiled post-submit checker policy.
-14. If correction is requested instead, Workstream clears unapproved compiled
-    output, preserves redacted derivation metadata, and requeues setup
-    continuation from post-submit derivation; activation remains blocked.
+13. An authorized covered Project Manager approves the current compiled
+    post-submit checker policy.
+14. If correction is requested instead, Workstream supersedes and retains the
+    unapproved compiled output, preserves its policy hash/body plus bounded
+    actor/reason/time and redacted derivation metadata, passes bounded correction
+    feedback to post-submit derivation, and requeues setup continuation. An
+    unchanged replacement fails closed, and activation remains blocked.
 15. An authorized covered Project Manager enables review policy.
 16. An authorized covered Project Manager enables revision policy.
 17. The owning compensation authority enables payment policy under its specification.
@@ -30,9 +33,10 @@ Acceptance:
 - Project cannot become active without guide, immutable guide source snapshot,
   passed or acknowledged guide sufficiency report for that immutable guide
   source snapshot, submission artifact policy, effective project submission
-  artifact policy hash, project pre-submit checker bundle hash, an approved,
-  current compiled post-submit checker policy, review policy, revision policy,
-  and payment policy.
+  artifact policy hash, project pre-submit checker bundle hash, an approved
+  current compiled project post-submit checker policy with matching guide,
+  source snapshot, effective project policy, and pre-submit checker provenance,
+  review policy, revision policy, and payment policy.
 - Normal setup starts from guide/source capture. Project Managers do not
   manually trigger sufficiency or derivation in the happy path.
 - Submission artifact policy is Workstream-derived and approved by an
@@ -49,7 +53,7 @@ Acceptance:
 2. The Project Manager creates a task with title, description, source reference, acceptance criteria, rejection criteria, deadline, and difficulty.
 3. Workstream validates the task source and reviewability fields, then confirms the task fits the active project guide and policy bundle.
 4. Task enters `SCREENING`.
-5. Screening locks the guide source snapshot id/hash, effective project submission artifact policy hash, and project pre-submit checker bundle hash, then confirms task contract, post-submit checker policy, review policy, revision policy, payment policy, and reviewability.
+5. Screening locks the guide source snapshot id/hash, effective project submission artifact policy hash, project pre-submit checker bundle hash, and approved provenance-matched project post-submit checker policy reference, then confirms the task contract, review policy, revision policy, payment policy, and reviewability.
 6. Task enters `READY`.
 
 Acceptance:

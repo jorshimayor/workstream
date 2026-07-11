@@ -122,7 +122,10 @@ The field cutover is explicitly owned as follows:
   `contributor_id` across storage, models, services, schemas, audits, and tests.
 - `WS-AUTH-001-14` renames submission ownership/attestation and checker-result
   visibility fields from legacy `worker_*` names to their `contributor_*`
-  equivalents across storage, models, services, schemas, audits, and tests.
+  equivalents across storage, models, services, schemas, audits, and tests. It
+  also renames the submission-policy JSON field `worker_facing_fix` to
+  `contributor_facing_fix` across derivation schemas, prompts, persistence, and
+  compatibility tests.
 - Revision replay is not implemented yet and must begin with
   `contributor_claim_status`; it must not introduce the legacy name.
 - Contribution and payment records are owned by WS-CON and must begin with

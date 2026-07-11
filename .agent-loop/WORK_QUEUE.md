@@ -6,12 +6,6 @@
 |---|---|---:|---|
 | `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Active in dedicated worktree after D4-D10 approval |
 
-## Parallel External Review
-
-| Chunk | Title | Risk | Status |
-|---|---|---:|---|
-| `WS-POL-002-03` | Server-Owned Policy Approval And Visibility APIs | L1 | Implemented separately; PR #90 open in external review |
-
 ## Planned Next
 
 No next chunk is active. Start requires the current chunk's human checkpoint,
@@ -43,13 +37,15 @@ memory update, and an explicit user signal.
 | `WS-POL-002-PLAN` | Post-Submit Checker Foundation Planning | L1 | Merged through PR #85 as `3fc1a68` on 2026-07-09 |
 | `WS-POL-002-01` | Post-Submit Compiler Contract | L1 | Merged through PR #87 as `ed52c21` on 2026-07-09 |
 | `WS-POL-002-02` | Post-Submit Derivation Agent And Resumable Setup Integration | L1 | Merged through PR #88 as `32af6a7` on 2026-07-11 |
+| `WS-POL-002-03` | Server-Owned Policy Approval And Visibility APIs | L1 | Merged through PR #90 as `a7aa474` on 2026-07-11 |
 | `WS-AUTH-001-PLAN` | Authorization Service Planning | L0 | Merged through PR #91 as `ad6d644` on 2026-07-11 |
 
 ## Proposed Next
 
 Execute only `WS-AUTH-001-01` in its dedicated worktree. Stop after internal
 review and PR preparation; do not start `WS-AUTH-001-02` or
-`WS-POL-002-04`. This worktree does not own or advance PR #90.
+`WS-POL-002-04`. PR #90 is merged; this worktree only reconciles its merged
+changes with the active authorization baseline.
 
 ## Blocked
 

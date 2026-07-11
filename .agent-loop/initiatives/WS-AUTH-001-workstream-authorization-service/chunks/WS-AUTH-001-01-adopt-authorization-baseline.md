@@ -90,6 +90,8 @@ docs/spec_*.md
 scripts/check_stale_authorization_docs.py
 scripts/render_authorization_docs.sh
 scripts/test_agent_gates.py
+backend/app/adapters/project_agents/openai_agent_sdk.py
+backend/tests/test_projects.py
 .github/workflows/agent-gates.yml
 .agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/**
 .agent-loop/LOOP_STATE.md
@@ -107,7 +109,8 @@ exception.
 ## Not allowed
 
 ```text
-backend application code, migrations, backend tests, dependencies
+backend application code or backend tests beyond the two exact terminology-only
+files allowed above; migrations and dependencies
 review/contribution/compensation implementation
 rewriting payment/reputation architecture beyond recording a later conflict
 adding permanent /v1 aliases
@@ -158,6 +161,9 @@ docs/reference_specs/SHA256SUMS
   contributor has an exact-project `submitter`, `reviewer`, or `both` grant.
   Celery, checker, setup, and background workers are internal services, not
   human product roles.
+- The project policy derivation prompt and its exact prompt-contract tests use
+  Contributor for human submitters. This wording-only repair does not change
+  schemas, persisted legacy field names, authorization, or runtime routing.
 - Every current operational override/repair command is inventoried and assigned
   a precise registered Project Manager or Operator permission for later chunks;
   any additive permission is approved in the ADR rather than invented in code.

@@ -46,8 +46,9 @@ Before releasing tasks:
 - generated project post-submit checker policy compiled, or unsupported checker gaps resolved
 - compiled project post-submit checker policy attached with source/effective/pre-submit provenance
 - current compiled project post-submit checker policy approved by an authorized
-  covered Project Manager; a correction request is a blocked setup state that
-  returns to regeneration
+  covered Project Manager; a correction request supersedes and retains the
+  unapproved policy, then returns the blocked setup state to correction-aware
+  regeneration
 - review policy attached
 - revision policy attached
 - payment policy attached
@@ -99,10 +100,12 @@ effective policy counts, pre-submit checker names/count, and registered
 post-submit checker catalog count. It does not return raw source text, local
 paths, replayable refs, exact source hashes, or compiled policy body internals.
 When an authorized covered Project Manager requests correction, Workstream
-clears the unapproved compiled output, preserves redacted derivation metadata,
-records safe correction provenance, and requeues setup continuation from
-post-submit derivation. Activation remains blocked until the regenerated current
-compiled policy is approved through the approval endpoint.
+supersedes and retains the unapproved compiled output, preserves its policy
+hash/body plus bounded actor/reason/time and redacted derivation metadata,
+supplies bounded correction feedback to the next derivation run, and requeues
+setup continuation from post-submit derivation. Activation remains blocked. An
+unchanged replacement fails closed; a changed replacement must be approved
+separately through the approval endpoint.
 
 ## v0.1 Quality Gates
 
@@ -115,11 +118,12 @@ pre-submit checker bundle hash, approved project post-submit checker policy,
 review policy, revision policy, and payment policy are present. Compiled
 post-submit setup output carries exact source/effective/pre-submit provenance,
 but activation remains blocked until the current compiled policy is approved
-through the server-owned approval endpoint. A correction request only requeues
-regeneration; it does not satisfy activation. A task cannot enter `READY` until
-it also locks the guide source
-snapshot id/hash, effective project submission artifact policy hash, and project
-pre-submit checker bundle hash.
+through the server-owned approval endpoint. A correction request supersedes the
+unapproved output and requeues correction-aware regeneration; it does not
+satisfy activation. A task cannot enter `READY` until it also locks the guide
+source snapshot id/hash, effective project submission artifact policy hash,
+project pre-submit checker bundle hash, and approved provenance-matched project
+post-submit checker policy reference.
 
 ### Task Screening Gate
 

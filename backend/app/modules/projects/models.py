@@ -133,7 +133,27 @@ class PostSubmitCheckerPolicy(Base):
             """,
             name="approval_provenance",
         ),
-        UniqueConstraint("project_id", "guide_version", name="uq_checker_policies_project_version"),
+        CheckConstraint(
+            """
+            lifecycle_status != 'superseded'
+            or (
+                superseded_at is not null
+                and superseded_by_role in ('admin', 'project_manager')
+                and superseded_by_actor is not null
+                and supersession_kind in ('correction_requested', 'upstream_policy_changed')
+                and supersession_reason is not null
+                and length(btrim(supersession_reason)) > 0
+            )
+            """,
+            name="correction_provenance",
+        ),
+        Index(
+            "uq_checker_policies_current_project_version",
+            "project_id",
+            "guide_version",
+            unique=True,
+            postgresql_where=text("lifecycle_status in ('compiled', 'approved')"),
+        ),
         UniqueConstraint(
             "id",
             "guide_version",
@@ -173,6 +193,15 @@ class PostSubmitCheckerPolicy(Base):
     approved_by_role: Mapped[str | None] = mapped_column(String(50))
     approved_by_actor: Mapped[str | None] = mapped_column(String(100))
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    supersedes_policy_id: Mapped[str | None] = mapped_column(
+        ForeignKey("checker_policies.id"),
+        index=True,
+    )
+    superseded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    superseded_by_role: Mapped[str | None] = mapped_column(String(50))
+    superseded_by_actor: Mapped[str | None] = mapped_column(String(100))
+    supersession_kind: Mapped[str | None] = mapped_column(String(50))
+    supersession_reason: Mapped[str | None] = mapped_column(Text)
     created_by: Mapped[str] = mapped_column(String(100), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

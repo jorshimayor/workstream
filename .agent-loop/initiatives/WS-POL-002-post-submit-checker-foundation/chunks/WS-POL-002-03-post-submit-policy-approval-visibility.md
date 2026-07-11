@@ -36,12 +36,15 @@ server-owned approval/correction path for compiled post-submit checker policies.
   policy hash under the current v0.1 bootstrap authorization boundary.
 - Setup-authorized admin or project_manager can approve or request setup
   correction for the generated project post-submit policy.
+- Correction supersedes rather than deletes the rejected compiled policy,
+  preserves actor/reason/hash/body provenance, supplies bounded feedback to
+  rederivation, and rejects an unchanged replacement.
 - Guide create/update continues to reject `post_submit_checker_policy` from
   clients.
 - Guide activation requires the approved compiled project
   `PostSubmitCheckerPolicy`.
-- Worker-facing APIs continue to hide internal policy body details.
-- Workers, reviewers, finance actors, and auditors are denied on new setup
+- Contributor-facing APIs continue to hide internal policy body details.
+- Submitters, reviewers, finance actors, and auditors are denied on new setup
   visibility and approval endpoints. Project-scoped project_manager grants are
   future Workstream role-assignment work, not part of WS-POL-002.
 
@@ -53,13 +56,19 @@ backend/app/modules/projects/service.py
 backend/app/modules/projects/schemas.py
 backend/app/modules/projects/repository.py
 backend/app/modules/projects/models.py
+backend/app/interfaces/project_agents.py
+backend/app/adapters/project_agents/openai_agent_sdk.py
 backend/alembic/versions/**
 backend/tests/test_alembic.py
 backend/tests/test_projects.py
 backend/tests/test_auth.py
 docs/product_first_user_flows.md
 docs/operations_project_operating_manual.md
+docs/operations_queue_policy.md
 docs/architecture_data_model.md
+docs/architecture_checker_framework.md
+docs/architecture_lifecycle_state_machine.md
+docs/current_system_data_flow.html
 .agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/**
 .agent-loop/LOOP_STATE.md
 .agent-loop/WORK_QUEUE.md
@@ -86,8 +95,8 @@ compatibility aliases for removed guide payload fields
   matches the guide/source context.
 - Approval provenance is immutable and records actor id, role, timestamp,
   source snapshot id/hash, and compiled policy hash.
-- API responses are role-scoped and do not leak internal policy body to workers.
-- Negative authorization tests cover worker, reviewer, finance, and auditor
+- API responses are role-scoped and do not leak internal policy body to contributors.
+- Negative authorization tests cover submitter, reviewer, finance, and auditor
   access. A future project-scoped role-assignment chunk must add unrelated
   project_manager denial once project-level roles exist.
 - Visibility responses redact raw source text, local paths, secrets,
@@ -121,7 +130,7 @@ git diff --check
 
 - Confirm there is one authoritative server-owned post-submit policy path.
 - Confirm obsolete manual payload fields are removed, not aliased.
-- Confirm visibility is useful for operators but safe for workers.
+- Confirm visibility is useful for operators but safe for contributors.
 
 ## Stop conditions
 

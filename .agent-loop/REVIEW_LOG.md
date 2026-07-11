@@ -19,6 +19,35 @@ Trust bundle: `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-serv
 Next chunk: `WS-AUTH-001-02` remains inactive pending merge, memory update, and
 an explicit user start.
 
+## WS-POL-002-03
+
+Status: merged through PR #90 on 2026-07-11 as `a7aa474`.
+
+Required reviewer tracks:
+
+- senior engineering
+- QA/test
+- security/auth
+- product/ops
+- architecture
+- CI integrity
+- docs
+- reuse/dedup
+- test delta
+
+Result: PASS after fixes; external review addressed and GitHub checks passed.
+
+Scope: server-owned post-submit checker policy setup visibility, approval, and
+correction APIs; safe operator summaries; immutable approval provenance; and
+negative authorization coverage for non-setup roles.
+
+Evidence: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/reviews/WS-POL-002-03-internal-review-evidence.md`
+
+Trust bundle: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/reviews/WS-POL-002-03-pr-trust-bundle.md`
+
+Next chunk: `WS-POL-002-04` remains inactive until post-merge memory is updated,
+the authorization foundation is proven, and the user provides an explicit start.
+
 ## WS-POL-002-02
 
 Status: merged through PR #88 on 2026-07-11.

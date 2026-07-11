@@ -38,6 +38,9 @@ backend/app/modules/tasks/schemas.py
 backend/app/modules/tasks/models.py
 backend/app/modules/actors/**
 backend/app/modules/checkers/**
+backend/app/modules/projects/schemas.py
+backend/app/modules/projects/service.py
+backend/app/adapters/project_agents/openai_agent_sdk.py
 backend/alembic/versions/0022_*.py
 backend/app/modules/authorization/**
 backend/app/api/deps/auth.py
@@ -89,9 +92,10 @@ legacy active-worker-profile or workflow-eligibility compatibility fallback
   use `contributor_id`, `contributor_attestation`, `contributor_message`,
   `contributor_suggested_fix`, `contributor_evidence_refs`, and
   `contributor_visible` across persistence, models, schemas, services, runner
-  contracts, audit payloads, and tests. Migration `0022` preserves all values,
-  supports downgrade, and removes the legacy storage names without public API
-  aliases.
+  contracts, audit payloads, and tests. Submission-policy JSON and derivation
+  contracts use `contributor_facing_fix`. Migration `0022` preserves all values,
+  supports downgrade, and removes legacy storage/property names without public
+  API aliases.
 - With the final consumer removed, the legacy `/api/v1/workers/me/profile`
   route, typed-profile activation service/schema, and token-role workflow
   observation fields plus the now-unused compatibility adapter/allowlist are

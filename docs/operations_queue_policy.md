@@ -41,7 +41,9 @@ Exit requirement:
 - acceptance criteria are concrete
 - effective project submission artifact policy hash locked
 - project `PreSubmitCheckerPolicy` compiled bundle hash locked
-- post-submit checker policy is attached
+- approved generated project `PostSubmitCheckerPolicy` is locked with matching
+  guide, source snapshot, effective project policy, and pre-submit checker
+  provenance
 - review policy is attached
 - revision policy is attached
 - payment policy is attached
@@ -220,7 +222,7 @@ Every operating day starts with:
 | Transition | Required Records |
 | --- | --- |
 | `DRAFT -> SCREENING` | project id, locked guide candidate, task source/description fields, acceptance and rejection criteria, payment policy |
-| `SCREENING -> READY` | screening decision, guide version lock, guide source snapshot id/hash lock, acceptance criteria, effective project submission artifact policy hash lock, project `PreSubmitCheckerPolicy` compiled bundle hash lock, post-submit checker policy, review policy, revision policy, payment policy |
+| `SCREENING -> READY` | screening decision, guide version lock, guide source snapshot id/hash lock, acceptance criteria, effective project submission artifact policy hash lock, project `PreSubmitCheckerPolicy` compiled bundle hash lock, approved generated project `PostSubmitCheckerPolicy` with matching provenance, review policy, revision policy, payment policy |
 | `IN_PROGRESS -> SUBMITTED` | blocking pre-submit checks passed, submission packet, artifact hash manifest, evidence references, contributor attestation |
 | `SUBMITTED -> EVALUATION_PENDING` | immutable submission version, locked post-submit checker policy id/version/hash/body copied from the task context |
 | `EVALUATION_PENDING -> REVIEW_PENDING` | checker run for exact submission version, readiness certificate, no blocking failures |
