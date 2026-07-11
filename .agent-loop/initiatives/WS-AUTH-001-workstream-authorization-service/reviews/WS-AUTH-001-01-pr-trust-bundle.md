@@ -73,8 +73,9 @@ approved.
 ## Tests And Checks
 
 - 31 agent-gate regression tests passed.
+- 234 project backend tests passed in 3576.81 seconds.
 - Stale authorization and Workstream wording scans passed.
-- Markdown links passed for 44 changed Markdown files.
+- Markdown links passed for 68 changed Markdown files.
 - Loop-memory validation and `git diff --check` passed.
 - Eight archival SHA-256 checks passed.
 - Python and renderer shell syntax passed.
@@ -89,9 +90,9 @@ directly without `continue-on-error`; no existing gate or threshold changed.
 ## Reviewer Results
 
 All required tracks passed against implementation freeze
-`6756e6cb397da5f813eca39fb738633bc24f2ab2`, and the administrative evidence
-bundle was reviewed at final bound SHA
-`35152a001e0689782f5c0d59615a59a89e6e2677`: senior engineering, QA/test,
+`2164e3b8192f5f5f9b54363a6b981a8799c20ac4`, and the administrative evidence
+state was reviewed at final bound SHA
+`34d3593e9a529eecb6b75ac164fbc665020c9ace`: senior engineering, QA/test,
 security/auth, product/ops, architecture, docs, reuse/dedup, CI integrity, and
 test delta. The circuit breaker accepted the documented atomic-docs size
 exception.

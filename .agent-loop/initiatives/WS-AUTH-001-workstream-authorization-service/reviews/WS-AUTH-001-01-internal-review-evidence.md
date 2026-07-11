@@ -10,17 +10,17 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: 35152a001e0689782f5c0d59615a59a89e6e2677
+Reviewed code SHA: 34d3593e9a529eecb6b75ac164fbc665020c9ace
 
-Reviewed at: 2026-07-11T17:49:00Z
+Reviewed at: 2026-07-11T19:39:12Z
 
 Reviewer run IDs: senior-engineering=/root/auth01_plan_engineering; QA/test=/root/auth01_plan_quality_ci; security/auth=/root/auth01_plan_security_product; product/ops=/root/auth01_plan_security_product; architecture=/root/auth01_plan_engineering; docs=/root/auth01_plan_security_product; CI-integrity=/root/auth01_plan_quality_ci; reuse/dedup=/root/auth01_plan_engineering; test-delta=/root/auth01_plan_quality_ci
 
 ## Reviewed Change
 
-Implementation freeze SHA: `6756e6cb397da5f813eca39fb738633bc24f2ab2`.
-Final reviewed SHA `35152a0` adds only loop/status/review evidence and the trust
-bundle around that unchanged implementation.
+Implementation freeze SHA: `2164e3b8192f5f5f9b54363a6b981a8799c20ac4`.
+Final reviewed SHA `34d3593` adds only loop/status/review state around that
+unchanged implementation.
 
 - Adopted ADR 0012 and the canonical authorization specification/runbook.
 - Preserved external Flow authentication ownership while assigning local
@@ -33,6 +33,11 @@ bundle around that unchanged implementation.
   roadmap, and durable-memory documents.
 - Added an active-document scanner, direct fail-closed Agent Gates invocation,
   independent regression fixtures, and a pinned local diagram renderer.
+- Reserved worker terminology for qualified Celery/checker/setup/system
+  processes; human actors and human-facing prompt wording use Contributor.
+- Merged latest `main` through PR #90, preserved its correction provenance and
+  activation guards, and moved the planned auth migration sequence after its
+  new `0015` migration.
 - Kept all eight imported reference inputs and their checksum/manifest records
   byte-immutable.
 - Incorporated PR #90 correction and activation semantics without importing or
@@ -42,15 +47,15 @@ bundle around that unchanged implementation.
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS WITH LOW RISKS | None | Large atomic docs adoption is justified; scanner is simpler after removing natural-language negation parsing. |
-| QA/test | PASS | None | All supplied token-role/profile authority bypasses fail closed; 31 independent gate tests pass. |
-| security/auth | PASS | None | External identity verification and local product authorization are separated; grants and recovery remain scoped. |
-| product/ops | PASS | None | Contributor/grant vocabulary, review-decision, correction, activation, and chunk-gating behavior remain correct. |
-| architecture | PASS | None | No backend, schema, migration, dependency, frontend, or immutable-source boundary drift. |
-| docs | PASS | None | Canonical/archival precedence, active corpus, diagrams, runbook, and lifecycle memory are consistent. |
+| senior engineering | PASS | None | Latest-main merge, scanner action families, migration sequence, scope, and trust state are coherent. |
+| QA/test | PASS | None | 31 independent gate tests and 234 project tests pass; no tests were weakened. |
+| security/auth | PASS | None | Internal workers remain fixed technical principals; human grants and actions fail the terminology gate. |
+| product/ops | PASS | None | Contributor vocabulary, PR #90 correction behavior, activation, and chunk gating remain correct. |
+| architecture | PASS | None | Auth migrations now follow main `0015` linearly through `0023`; no authored runtime-logic drift exists. |
+| docs | PASS | None | Canonical corpus, PR #90 merge state, diagrams, runbook, and lifecycle memory are consistent. |
 | CI integrity | PASS | None | Scanner invocation is direct and fail closed; no workflow step or threshold was weakened. |
 | reuse/dedup | PASS WITH LOW RISKS | None | Existing gate, discovery, rendering, and test conventions are reused without a new framework. |
-| test delta | PASS | None | Existing tests remain; independent fixtures cover every rule and all reviewer-supplied bypasses. |
+| test delta | PASS | None | Existing tests remain; independent fixtures cover worker vocabulary, identifiers, paths, and human-authority action families. |
 
 ## Valid Findings Addressed
 
@@ -70,6 +75,14 @@ bundle around that unchanged implementation.
   authority directly.
 - Added a renderer that pins PlantUML 1.2026.6 by SHA-256, strips PNG metadata,
   fixes the source epoch/PDF identifier, and writes only approved artifacts.
+- Replaced human `worker` terminology throughout the active corpus and the
+  project-policy derivation prompt while preserving technical worker wording.
+- Made technical-worker exemptions match-local and rejected human task, grant,
+  review-decision, acceptance/rejection, and revision actions.
+- Added explicit assignment/submission/checker terminology migration ownership
+  and renumbered the auth sequence to `0016`-`0023` after merged-main `0015`.
+- Addressed all valid CodeRabbit comments; retained user-approved `both` with
+  explicit guarded union semantics instead of renaming it.
 
 ## Commands Run
 
@@ -83,22 +96,24 @@ python3 -m py_compile scripts/check_stale_authorization_docs.py scripts/test_age
 bash -n scripts/render_authorization_docs.sh
 sha256sum -c docs/reference_specs/SHA256SUMS
 PLANTUML_JAR=/tmp/workstream-plantuml.jar scripts/render_authorization_docs.sh
-sha256sum -c /tmp/auth-artifacts.sha
+(cd backend && /home/abiorh/flow/workstream/backend/.venv/bin/python -m ruff check app/adapters/project_agents/openai_agent_sdk.py tests/test_projects.py)
+(cd backend && /home/abiorh/flow/workstream/backend/.venv/bin/python -m pytest -q tests/test_projects.py)
 git diff --check
 ```
 
-Results: all passed. The repeated local render produced stable hashes for both
-SVGs, all three PNGs, and the architecture brief PDF.
+Results: all passed. `test_projects.py` completed with 234 passing tests in
+3576.81 seconds. Markdown links passed for 68 changed Markdown files.
 
 ## Evidence Gate
 
 Evidence gate: PASS
 
-Scope exception: 58 files and more than 500 changed lines are accepted because
+Scope exception: 84 changed paths and more than 500 changed lines are accepted because
 this is one approved atomic active-document reconciliation plus its scanner,
-tests, CI step, and generated companions. Splitting would leave contradictory
-canonical authority documentation. No runtime or dependency boundary is mixed
-in.
+tests, CI step, generated companions, latest-main merge, and two exact
+terminology-only backend files. Splitting would leave contradictory canonical
+authority documentation. No authored runtime-logic or dependency boundary is
+mixed in.
 
 ## Remaining Risks
 
