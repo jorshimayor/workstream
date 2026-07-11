@@ -10,15 +10,15 @@
 - Status: `WS-POL-002-03` implemented and internally reviewed; pull request
   created at `https://github.com/Flow-Research/workstream/pull/90`.
 - Last merged implementation SHA: `67fb3ca`
-- Last merge commit: `32af6a7`
+- Last merge commit: `14fb216`
 - Current gate: external review, GitHub checks, and user review.
 - Next chunk: `WS-POL-002-04` remains inactive until `WS-POL-002-03` is merged
   by explicit human approval and memory is updated.
 - Checkpointed initiative: `WS-AUTH-001` - Workstream Authorization Service
 - Checkpointed planning artifact: `WS-AUTH-001-PLAN`
-- Status: WS-AUTH-001 planning is internally reviewed and stopped at the L0
-  human checkpoint. It is not the active implementation stream while PR #90 is
-  current.
+- Status: WS-AUTH-001 planning merged through PR #91, post-merge memory merged
+  through PR #92, and the initiative is stopped at the L0 human checkpoint. It
+  is not the active implementation stream while PR #90 is current.
 - Current gate: explicit durable human approval of D4-D10 before any
   authorization implementation chunk starts.
 - Next authorization chunk: `WS-AUTH-001-01` remains proposed until D4-D10

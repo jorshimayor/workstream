@@ -2,13 +2,17 @@
 
 ## Current status
 
-Planning and all required internal reviewer tracks passed after repair. The
+Planning merged through PR #91 as
+`ad6d6444e497b76d7cb925f3b0999ed4b74a3dac` after required internal reviews,
+Agent Gates, and Backend passed. CodeRabbit produced a walkthrough with no
+actionable findings, then its final check was cancelled when the PR closed. The
 initiative is stopped at the L0 human checkpoint: D1-D3 are approved; D4-D10
-require explicit durable approval before implementation activation.
+require explicit durable approval before implementation.
 
 ## Checkpointed planning artifact
 
-`WS-AUTH-001-PLAN`
+`WS-AUTH-001-PLAN` is merged and stopped at the L0 human checkpoint. No active
+planning chunk is running.
 
 ## Active implementation chunk
 
@@ -16,13 +20,13 @@ None.
 
 ## Current implementation branch
 
-`authorization-service`
+None.
 
 ## Chunk status
 
 | Chunk | Status | Branch | PR | Notes |
 |---|---|---|---:|---|
-| `WS-AUTH-001-PLAN` | Internally reviewed | `authorization-service` | - | L0 plan complete; D4-D10 human approval pending. |
+| `WS-AUTH-001-PLAN` | Merged | `authorization-service` | #91 | Merged as `ad6d644`; D4-D10 human approval pending. |
 | `WS-AUTH-001-01` | Proposed | - | - | Baseline adoption and repository contract reconciliation. |
 | `WS-AUTH-001-02` | Proposed | - | - | Verified issuer token and JWKS boundary. |
 | `WS-AUTH-001-03` | Proposed | - | - | Legacy actor classification preflight. |
@@ -50,7 +54,7 @@ implementation start signal.
 
 Internal review evidence is recorded at
 `reviews/WS-AUTH-001-PLAN-internal-review-evidence.md` and binds reviewed SHA
-`e42b9506815a2eef155230928e791d5a737a6155`.
+`7aed967da8783eb78e13805d4de00efadc8d0391`.
 
 Production issuer configuration and legacy non-test actor classification are
 future implementation/live-proof inputs and are tracked explicitly in

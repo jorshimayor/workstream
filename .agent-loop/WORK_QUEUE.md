@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-POL-002-03` | Server-Owned Policy Approval And Visibility APIs | L1 | Pull request #90 current; local CodeRabbit fixes complete; push and external checks pending |
+| `WS-POL-002-03` | Server-Owned Policy Approval And Visibility APIs | L1 | Pull request #90 current; current `main` merged locally; evidence rebind and external checks pending |
 
 ## Planned Next
 
@@ -15,9 +15,9 @@
 
 ## Human Checkpoints
 
-| Chunk | Title | Risk | Status |
+| Gate | Initiative | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-PLAN` | Authorization Service Planning | L0 | Stopped at human checkpoint; explicit D4-D10 approval required before implementation |
+| D4-D10 approval | `WS-AUTH-001` | L0 | Stopped at human checkpoint; explicit D4-D10 approval required before implementation |
 
 ## Completed
 
@@ -45,6 +45,7 @@
 | `WS-POL-002-PLAN` | Post-Submit Checker Foundation Planning | L1 | Merged through PR #85 as `3fc1a68` on 2026-07-09 |
 | `WS-POL-002-01` | Post-Submit Compiler Contract | L1 | Merged through PR #87 as `ed52c21` on 2026-07-09 |
 | `WS-POL-002-02` | Post-Submit Derivation Agent And Resumable Setup Integration | L1 | Merged through PR #88 as `32af6a7` on 2026-07-11 |
+| `WS-AUTH-001-PLAN` | Authorization Service Planning | L0 | Merged through PR #91 as `ad6d644` on 2026-07-11 |
 
 ## Proposed Next
 
