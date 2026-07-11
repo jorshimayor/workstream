@@ -2,7 +2,9 @@
 
 ## In Progress
 
-None.
+| Chunk | Title | Risk | Status |
+|---|---|---:|---|
+| `WS-ART-001-PLAN` | Immutable Artifact Storage And Flow Node Integration Planning | L1 | Active planning on a separate branch; no implementation chunk active |
 
 ## Planned Next
 
@@ -46,6 +48,10 @@ None.
 No implementation chunk is active. Do not start `WS-AUTH-001-02` or
 `WS-POL-002-04` automatically; each requires its recorded prerequisites and a
 separate explicit user start signal.
+
+Complete `WS-ART-001-PLAN`, run required planning reviewers, open its planning
+PR, and stop for human approval. Do not start `WS-ART-001-01` or edit Flow Node
+until the planning PR is merged and a separate explicit start signal is given.
 
 ## Blocked
 

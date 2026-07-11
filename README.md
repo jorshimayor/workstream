@@ -78,6 +78,7 @@ Workstream turns that operating knowledge into reusable infrastructure.
 - [Revision Replay](docs/operations_revision_replay.md)
 - [Roles And Permissions](docs/operations_roles_permissions.md)
 - [Authorization Service](docs/spec_authorization_service.md)
+- [Immutable Artifact Storage](docs/spec_artifact_storage_service.md)
 - [Authorization Operations](docs/operations_authorization_service.md)
 - [Payment And Reputation](docs/operations_payment_reputation.md)
 - [Risk Register](docs/risk_register.md)
@@ -121,6 +122,7 @@ Workstream turns that operating knowledge into reusable infrastructure.
 - [ADR 0010: Revision Context Rebase Is Controlled By Policy](docs/decision_0010_revision_context_rebase.md)
 - [ADR 0011: Submission Artifact Policy Drives Pre-Submit Intake](docs/decision_0011_submission_artifact_policy_drives_pre_submit.md)
 - [ADR 0012: Workstream Owns Product Authorization](docs/decision_0012_workstream_authorization_service.md)
+- [ADR 0013: Immutable Artifact Storage Boundary](docs/decision_0013_immutable_artifact_storage_boundary.md)
 
 ## Authorization Baseline
 
