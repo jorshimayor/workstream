@@ -982,7 +982,7 @@ class TaskService:
         checker_run_id: str,
         failure_message: str,
     ) -> None:
-        """Move accepted submissions into the evaluation repair lane after dispatch failure."""
+        """Move locked submission packets into the evaluation repair lane after dispatch failure."""
         submission = await self._get_submission(submission_id)
         task = await self._get_task(submission.task_id)
         event_payload = {

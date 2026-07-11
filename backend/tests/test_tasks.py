@@ -4158,6 +4158,62 @@ async def test_failed_pre_review_gate_repair_is_idempotent_while_queued(
     assert len(repair_events) == 1
 
 
+async def test_eager_pre_review_gate_failure_after_submission_is_repairable(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from app.modules.checkers.service import CheckerExecutionBlocked
+    from app.workers import checkers as checker_worker_module
+
+    project = await create_active_project(task_client)
+    started_task = await create_started_task(task_client, project["id"], monkeypatch)
+
+    async def fail_run_queued_gate(
+        self,
+        actor: ActorContext,
+        checker_run_id: str,
+        *,
+        requester_provenance: dict,
+    ):
+        raise CheckerExecutionBlocked("simulated eager worker failure")
+
+    monkeypatch.setattr(
+        checker_worker_module.CheckerService,
+        "run_queued_pre_review_gate",
+        fail_run_queued_gate,
+    )
+    create_response = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+    assert create_response.status_code == 201, create_response.text
+    submission_id = create_response.json()["id"]
+    assert create_response.json()["finalized_at"] is not None
+
+    async with db_session.get_session_factory()() as session:
+        failed_run = await session.scalar(
+            select(db_models.CheckerRun).where(
+                db_models.CheckerRun.submission_id == submission_id
+            )
+        )
+        task = await session.get(WorkstreamTask, started_task["id"])
+        dispatch_failed_event = await session.scalar(
+            select(AuditEvent).where(
+                AuditEvent.entity_id == started_task["id"],
+                AuditEvent.event_type == "pre_review_gate_dispatch_failed",
+            )
+        )
+
+    assert failed_run is not None
+    assert failed_run.status == "failed"
+    assert failed_run.failure_code == "pre_review_gate_enqueue_failed"
+    assert task is not None
+    assert task.status == "evaluation_pending"
+    assert dispatch_failed_event is not None
+    assert dispatch_failed_event.event_payload["checker_run_id"] == failed_run.id
+
+
 async def test_finalize_repairs_stale_running_pre_review_gate(
     task_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,

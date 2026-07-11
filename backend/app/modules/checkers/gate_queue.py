@@ -31,8 +31,10 @@ def enqueue_pre_review_gate(
         Celery task id.
 
     Raises:
-        PreReviewGateQueueError: If the broker cannot accept the job.
+        PreReviewGateQueueError: If the broker cannot accept the job, or eager
+            local execution fails before the dispatch boundary returns.
     """
+    settings = get_settings()
     try:
         from app.workers.checkers import run_pre_review_gate
 
@@ -43,6 +45,10 @@ def enqueue_pre_review_gate(
         )
     except (CeleryConfigurationError, CeleryError, KombuError, OSError) as exc:
         raise PreReviewGateQueueError("pre-review gate could not be enqueued") from exc
+    except Exception as exc:
+        if settings.celery_task_always_eager:
+            raise PreReviewGateQueueError("pre-review gate could not be enqueued") from exc
+        raise
     return result.id
 
 
