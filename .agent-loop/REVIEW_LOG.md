@@ -1,5 +1,29 @@
 # Review Log
 
+## WS-ART-001-PLAN
+
+Status: planning complete; awaiting PR publication and external/human review.
+
+Reviewed planning SHA: `cb3e3397c6dd4698ebed5f54efe8820688f23d16`
+
+Result: PASS after fixes across senior engineering, QA/test, security/auth,
+product/ops, architecture, docs, CI integrity, reuse/dedup, and test delta.
+All reviewer sessions were closed before publication.
+
+Scope: immutable artifact storage boundary, provider-neutral port, local and
+Flow Node adapters, exact-byte admission/binding/recovery, failure/migration
+matrices, clean legacy cutover, and ten bounded cross-repository chunk
+contracts. No runtime implementation changed.
+
+Evidence: `.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/reviews/WS-ART-001-PLAN-internal-review-evidence.md`
+
+Trust bundle: `.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/reviews/WS-ART-001-PLAN-pr-trust-bundle.md`
+
+External review: pending PR publication and must be recorded separately.
+
+Next chunk: `WS-ART-001-01` remains proposed and inactive until explicit human
+planning merge approval and a separate start signal.
+
 ## WS-AUTH-001-01
 
 Status: merged through PR #93 on 2026-07-11 as `772af1d`.

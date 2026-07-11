@@ -2,7 +2,9 @@
 
 ## Current Status
 
-Planning in progress on `codex/ws-art-001-artifact-storage-planning`.
+Planning complete and internally reviewed on
+`codex/ws-art-001-artifact-storage-planning`. The planning PR is the next gate;
+no implementation chunk is active.
 
 ## Active Chunk
 
