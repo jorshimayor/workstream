@@ -4,7 +4,8 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-POL-002-03` | Server-Owned Policy Approval And Visibility APIs | L1 | Inactive until explicit user start |
+| `WS-POL-002-03` | Server-Owned Policy Approval And Visibility APIs | L1 | Implemented; internal review complete; PR publication pending |
+| `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive until explicit user start after `WS-POL-002-03` merge |
 
 ## Completed
 
@@ -35,7 +36,8 @@
 
 ## Proposed Next
 
-Do not start `WS-POL-002-03` until the user gives an explicit start signal.
+Do not start `WS-POL-002-04` until `WS-POL-002-03` is externally reviewed,
+merged by explicit human approval, and followed by memory update.
 
 ## Blocked
 

@@ -1,5 +1,35 @@
 # Review Log
 
+## WS-POL-002-03
+
+Status: implemented and internally reviewed on branch
+`codex/ws-pol-002-03-post-submit-approval-visibility`; PR publication pending.
+
+Required reviewer tracks:
+
+- senior engineering
+- QA/test
+- security/auth
+- product/ops
+- architecture
+- CI integrity
+- docs
+- reuse/dedup
+- test delta
+
+Result: PASS after fixes; external review pending.
+
+Scope: server-owned post-submit checker policy setup visibility, approval, and
+correction APIs; safe operator summaries; immutable approval provenance; and
+negative authorization coverage for non-setup roles.
+
+Evidence: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/reviews/WS-POL-002-03-internal-review-evidence.md`
+
+Trust bundle: `.agent-loop/initiatives/WS-POL-002-post-submit-checker-foundation/reviews/WS-POL-002-03-pr-trust-bundle.md`
+
+Next chunk: `WS-POL-002-04` remains inactive until this PR is externally
+reviewed, merged by explicit human approval, and followed by memory update.
+
 ## WS-POL-002-02
 
 Status: merged through PR #88 on 2026-07-11.

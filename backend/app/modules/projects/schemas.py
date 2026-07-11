@@ -487,6 +487,56 @@ class PostSubmitCheckerPolicyResponse(BaseModel):
     created_at: datetime
 
 
+class PostSubmitCheckerPolicyApproval(BaseModel):
+    """Request schema for approving a compiled post-submit checker policy."""
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class PostSubmitCheckerPolicyCorrectionRequest(BaseModel):
+    """Request schema for requesting correction of a compiled post-submit policy."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    correction_reason: str = Field(min_length=1, max_length=2000)
+
+
+class PostSubmitCheckerPolicySetupSummaryResponse(BaseModel):
+    """Operator-visible summary for generated post-submit checker setup."""
+
+    id: str
+    project_id: str
+    guide_id: str
+    guide_version: str
+    source_snapshot_id: str
+    source_snapshot_hash_redacted: bool = True
+    effective_policy_id: str
+    effective_policy_hash: str
+    pre_submit_checker_policy_id: str
+    pre_submit_checker_bundle_hash: str
+    required_checkers: list[str]
+    warning_checkers: list[str]
+    blocking_severities: list[str]
+    policy_hash: str | None
+    lifecycle_status: str
+    approved_by_role: str | None
+    approved_by_actor: str | None
+    approved_at: datetime | None
+    created_by: str
+    created_at: datetime
+
+
+class PostSubmitCheckerPolicySetupResponse(BaseModel):
+    """Response schema for current post-submit checker policy setup state."""
+
+    project_id: str
+    guide_id: str
+    guide_version: str
+    setup_run: ProjectSetupRunResponse
+    post_submit_checker_policy: PostSubmitCheckerPolicySetupSummaryResponse | None
+    derivation_input_summary: dict[str, Any]
+
+
 class ReviewPolicyResponse(BaseModel):
     """Response schema for review policy records."""
 

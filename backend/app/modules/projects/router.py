@@ -25,6 +25,9 @@ from app.modules.projects.schemas import (
     ProjectGuideUpdate,
     ProjectResponse,
     ProjectSetupRunResponse,
+    PostSubmitCheckerPolicyApproval,
+    PostSubmitCheckerPolicyCorrectionRequest,
+    PostSubmitCheckerPolicySetupResponse,
     SubmissionArtifactPolicyApprove,
     SubmissionArtifactPolicyCreate,
     SubmissionArtifactPolicyResponse,
@@ -515,6 +518,79 @@ async def get_current_pre_submit_checker_policy(
             actor,
             project_id,
             guide_id,
+        )
+    except PermissionDenied as exc:
+        raise permission_http_error(exc) from exc
+    except ProjectServiceError as exc:
+        raise project_http_error(exc) from exc
+
+
+@router.get(
+    "/{project_id}/guides/{guide_id}/post-submit-checker-policy/setup",
+    response_model=PostSubmitCheckerPolicySetupResponse,
+)
+async def get_current_post_submit_checker_policy_setup(
+    project_id: str,
+    guide_id: str,
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> PostSubmitCheckerPolicySetupResponse:
+    """Return current generated post-submit checker setup status."""
+    try:
+        return await ProjectService(session).get_current_post_submit_checker_policy_setup(
+            actor,
+            project_id,
+            guide_id,
+        )
+    except PermissionDenied as exc:
+        raise permission_http_error(exc) from exc
+    except ProjectServiceError as exc:
+        raise project_http_error(exc) from exc
+
+
+@router.post(
+    "/{project_id}/guides/{guide_id}/post-submit-checker-policy/approve",
+    response_model=PostSubmitCheckerPolicySetupResponse,
+)
+async def approve_current_post_submit_checker_policy(
+    project_id: str,
+    guide_id: str,
+    payload: PostSubmitCheckerPolicyApproval,
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> PostSubmitCheckerPolicySetupResponse:
+    """Approve the current compiled project post-submit checker policy."""
+    try:
+        return await ProjectService(session).approve_current_post_submit_checker_policy(
+            actor,
+            project_id,
+            guide_id,
+            payload,
+        )
+    except PermissionDenied as exc:
+        raise permission_http_error(exc) from exc
+    except ProjectServiceError as exc:
+        raise project_http_error(exc) from exc
+
+
+@router.post(
+    "/{project_id}/guides/{guide_id}/post-submit-checker-policy/request-correction",
+    response_model=PostSubmitCheckerPolicySetupResponse,
+)
+async def request_post_submit_checker_policy_correction(
+    project_id: str,
+    guide_id: str,
+    payload: PostSubmitCheckerPolicyCorrectionRequest,
+    actor: Annotated[ActorContext, Depends(get_registered_actor)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> PostSubmitCheckerPolicySetupResponse:
+    """Request correction for the current compiled post-submit checker policy."""
+    try:
+        return await ProjectService(session).request_post_submit_checker_policy_correction(
+            actor,
+            project_id,
+            guide_id,
+            payload,
         )
     except PermissionDenied as exc:
         raise permission_http_error(exc) from exc

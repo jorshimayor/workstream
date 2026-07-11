@@ -737,8 +737,9 @@ and compiler continuation creates `compiled` records. Guide activation requires
 an `approved` generated policy with setup-role approval provenance and exact
 `source_snapshot_id/hash`, `effective_policy_id/hash`, and
 `pre_submit_checker_policy_id` plus pre-submit checker bundle hash matching the
-active setup context. `WS-POL-002-03` adds the server-owned approval/correction
-API that moves compiled post-submit policies into that approved state.
+active setup context. Server-owned approval/correction APIs move compiled
+post-submit policies into that approved state or clear unapproved generated
+output for regeneration.
 
 For generated setup, `PostSubmitCheckerPolicyDerivationAgent` runs only after a
 setup-authorized `admin` or `project_manager` approves the derived

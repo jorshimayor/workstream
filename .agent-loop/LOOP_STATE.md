@@ -4,15 +4,17 @@
 
 - Active initiative: `WS-POL-002` - Post-Submit Checker Foundation
 - Active planning chunk: none
-- Active implementation chunk: none
-- Branch: `main`
-- Status: `WS-POL-002-02` merged through PR #88 as `32af6a7` on 2026-07-11
-  after internal review, current-head GitHub checks, CodeRabbit, and explicit
-  human merge approval.
+- Active implementation chunk: `WS-POL-002-03` - Server-Owned Policy Approval
+  And Visibility APIs
+- Branch: `codex/ws-pol-002-03-post-submit-approval-visibility`
+- Status: `WS-POL-002-03` implemented and internally reviewed; evidence and PR
+  publication are in progress.
 - Last merged implementation SHA: `67fb3ca`
 - Last merge commit: `32af6a7`
-- Current gate: none; awaiting explicit user start for the next chunk.
-- Next chunk: `WS-POL-002-03` is inactive until the user explicitly starts it.
+- Current gate: evidence packaging, trust bundle, PR publication, external
+  review, and human merge checkpoint.
+- Next chunk: `WS-POL-002-04` remains inactive until `WS-POL-002-03` is merged
+  by explicit human approval and memory is updated.
 
 ## Operating Rule
 

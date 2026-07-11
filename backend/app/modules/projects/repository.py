@@ -684,6 +684,18 @@ class ProjectRepository:
         """Load a post-submit checker policy by id."""
         return await self._session.get(PostSubmitCheckerPolicy, policy_id)
 
+    async def lock_post_submit_checker_policy(
+        self,
+        policy_id: str,
+    ) -> PostSubmitCheckerPolicy | None:
+        """Load one post-submit checker policy with a transactional row lock."""
+        result = await self._session.execute(
+            select(PostSubmitCheckerPolicy)
+            .where(PostSubmitCheckerPolicy.id == policy_id)
+            .with_for_update()
+        )
+        return result.scalar_one_or_none()
+
     async def delete_post_submit_checker_policy(
         self,
         policy: PostSubmitCheckerPolicy,
