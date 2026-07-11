@@ -119,7 +119,7 @@ adding permanent /v1 aliases
 - Future WS-POL chunks remain gated by explicit start signals and authorization
   impact review.
 - Roadmap status names WS-AUTH-001 as current priority, records POL-002 chunks
-  01/02 merged and 03 handled separately in PR #90, and defers review
+  01/02 merged and 03 handled separately in PR #90, and defers authorization
   implementation until auth proof.
 - Canonical vocabulary distinguishes `worker` as a task-lifecycle persona and
   attribution term from `submitter` as the persisted exact-project grant.
