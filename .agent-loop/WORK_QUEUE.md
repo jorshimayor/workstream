@@ -42,10 +42,11 @@ memory update, and an explicit user signal.
 
 ## Proposed Next
 
-Execute only `WS-AUTH-001-01` in its dedicated worktree. Stop after internal
-review and PR preparation; do not start `WS-AUTH-001-02` or
-`WS-POL-002-04`. PR #90 is merged; this worktree only reconciles its merged
-changes with the active authorization baseline.
+Execute only `WS-AUTH-001-01` in its dedicated worktree. Rebind evidence after
+the latest-main merge, push PR #93, observe external checks, and stop for human
+review; do not start `WS-AUTH-001-02` or `WS-POL-002-04`. PR #90 and its PR #94
+memory update are merged; this worktree only reconciles them with the active
+authorization baseline.
 
 ## Blocked
 

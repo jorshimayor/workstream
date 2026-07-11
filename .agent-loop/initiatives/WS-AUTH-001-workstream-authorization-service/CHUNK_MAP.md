@@ -66,9 +66,9 @@ WS-AUTH-001-PLAN
 - Chunk 16 proves the complete initiative; it does not backfill missing audit
   or idempotency evidence.
 - `WS-POL-002-03` merged separately through PR #90 as `a7aa474`. This initiative
-  does not own it; `WS-POL-002-04` remains inactive until post-merge memory is
-  updated, the relevant project authorization cutover is complete, and the user
-  explicitly starts it.
+  does not own it; post-merge memory completed through PR #94. `WS-POL-002-04`
+  remains inactive until the relevant project authorization cutover is complete
+  and the user explicitly starts it.
 
 ## Stop condition
 

@@ -33,7 +33,8 @@ None.
 
 ## Active Implementation Chunk
 
-None. `WS-POL-002-04` remains inactive until a separate explicit user start.
+None. `WS-POL-002-04` remains inactive until authorization proof and a separate
+explicit user start.
 
 ## Current Implementation Branch
 
@@ -54,4 +55,4 @@ None for implementation. Post-merge memory is complete through PR #94.
 
 | Blocker | Owner | Next action |
 |---|---|---|
-| `WS-AUTH-001` foundation | Authorization proof must precede chunk 04 runtime hardening | Complete the relevant auth cutover, update post-merge memory, then require an explicit chunk 04 start |
+| `WS-AUTH-001` foundation | Authorization proof must precede chunk 04 runtime hardening | Complete the relevant auth cutover, then require an explicit chunk 04 start |

@@ -9,11 +9,13 @@ actionable findings, then its final check was cancelled when the PR closed.
 D4-D10 were explicitly approved and WS-AUTH-001-01 was started by the user on
 2026-07-11 in a fresh worktree from merged `main`. PR #93 is published. The
 branch now includes Contributor terminology repairs, CodeRabbit responses, and
-latest `main` through merged PR #90. Deterministic checks and all required
-internal reviewer tracks passed at `2164e3b`; final evidence binding is the
-remaining local gate before push. The GitHub Backend run then exposed one stale
-agent-runtime terminology assertion; the repair passed at `be0b836`, and its
-scope-count evidence passed at `b7dafb3`.
+latest `main` through merged PR #90 plus its PR #94 memory update. Deterministic
+checks and all required internal reviewer tracks passed at `2164e3b`; final
+evidence binding is the remaining local gate before push. The GitHub Backend run
+then exposed one stale agent-runtime terminology assertion; the repair passed at
+`be0b836`, and its scope-count evidence passed at `b7dafb3`. Latest-main memory
+integration at `f7c9774` requires current review and evidence rebinding before
+the next push.
 
 ## Active planning chunk
 
