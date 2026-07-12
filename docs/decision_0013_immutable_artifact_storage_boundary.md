@@ -2,8 +2,7 @@
 
 ## Status
 
-Proposed. It becomes accepted only when the planning PR is merged by explicit
-human approval.
+Accepted through explicit human approval of the WS-ART-001 planning PR.
 
 ## Context
 
@@ -42,10 +41,11 @@ checker truth or generic port types.
 Byte ingest is synchronous and streaming after an authorized upload-intent
 transaction commits and before the receipt transaction begins. Workstream
 computes SHA-256 and byte count independently. A stable idempotency key permits
-receipt lookup after a crash. Recovery can accept independently re-read bytes
-only against a persisted pre-ingest expected digest; otherwise the client must
-replay the exact bytes under the same key. A provider receipt alone is never
-content truth. Celery/outbox handles only replayable
+receipt lookup after a crash. Byte-less recovery can accept independently
+re-read bytes only after observed provider success and against both persisted
+pre-ingest expected SHA-256 and size. Ambiguous failure, cancellation, or an
+incomplete commitment requires exact replay under the same key. A provider
+receipt alone is never content truth. Celery/outbox handles only replayable
 metadata-only verification, retention, status, release, and reconciliation.
 
 Submission intake uses a sealed, server-generated artifact-set commitment and

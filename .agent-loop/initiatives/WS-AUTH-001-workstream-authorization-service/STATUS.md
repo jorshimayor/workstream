@@ -11,7 +11,9 @@ D4-D10 were explicitly approved and WS-AUTH-001-01 was started by the user on
 Agent Gates, Backend, and CodeRabbit, then merged through PR #93 as `772af1d` on
 2026-07-11. The user separately started `WS-AUTH-001-02` on 2026-07-11. Its
 preimplementation plan review passed, and the user explicitly approved D12's
-exact production dependency changes. Bounded runtime implementation is active.
+exact production dependency changes. After a coverage-priority pause, the user
+explicitly resumed AUTH in its separate worktree on 2026-07-12. Bounded runtime
+implementation evidence and review are active in parallel with coverage work.
 
 ## Active planning chunk
 
@@ -32,7 +34,7 @@ implementation active after preimplementation review and D12 approval.
 |---|---|---|---:|---|
 | `WS-AUTH-001-PLAN` | Merged | `authorization-service` | #91 | Merged as `ad6d644`; D4-D10 later approved. |
 | `WS-AUTH-001-01` | Merged | `codex/ws-auth-001-01-adopt-authorization-baseline` | #93 | Authorization baseline, Contributor terminology boundary, scanner, and repository contracts; merged as `772af1d`. |
-| `WS-AUTH-001-02` | In implementation | `codex/ws-auth-001-02-verified-issuer-token` | - | Preimplementation plan review passed; D12 approved. |
+| `WS-AUTH-001-02` | In implementation review | `codex/ws-auth-001-02-verified-issuer-token` | - | D12 approved; explicitly resumed in its separate worktree while coverage continues independently. |
 | `WS-AUTH-001-03` | Proposed | - | - | Legacy actor classification preflight. |
 | `WS-AUTH-001-04` | Proposed | - | - | Request, error, and API control foundation. |
 | `WS-AUTH-001-05` | Proposed | - | - | Authority evidence and idempotency foundation. |

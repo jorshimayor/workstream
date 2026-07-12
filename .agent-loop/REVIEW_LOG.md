@@ -1,5 +1,68 @@
 # Review Log
 
+## WS-QUAL-001-01A
+
+Status: merged through PR #103 on 2026-07-12 as `2901a3e`.
+
+Final reviewed implementation SHA: `d1582ec64b9176c5ead62f695c7a23b48e4c72b9`
+
+Final evidence-bound branch head: `8cd7616b497ceb46d8359c25de689192632dfee8`
+
+Scope: isolated least-privilege database runner, API guards, focused behavior
+tests, two-phase complete-suite CI, and database-testing runbook.
+
+User quality direction: behavior and safety proof outrank percentage gains;
+execution-only line-chasing tests are prohibited.
+
+Review findings: child credentials must not retain admin authority; destructive
+helpers must revalidate identifiers; collision proof must preserve an existing
+session; runner lifecycle tests and provisioned suite require explicit phases.
+
+Evidence: `.agent-loop/initiatives/WS-QUAL-001-backend-coverage-floor/reviews/WS-QUAL-001-01A-internal-review-evidence.md`
+
+Trust bundle: `.agent-loop/initiatives/WS-QUAL-001-backend-coverage-floor/reviews/WS-QUAL-001-01A-pr-trust-bundle.md`
+
+External response: `.agent-loop/initiatives/WS-QUAL-001-backend-coverage-floor/reviews/WS-QUAL-001-01A-external-review-response.md`
+
+Merge checks: Agent Gates, Backend, and CodeRabbit passed. CodeRabbit's valid
+contract, runbook, timeout, and reuse findings were repaired. Role-aware cleanup
+was retained with ownership justification and real-catalog behavior proof.
+
+Next: merge post-merge memory and stop. Do not start 01B automatically.
+
+## WS-QUAL-001-PLAN
+
+Status: merged through PR #99 on 2026-07-12 as `9046d52`.
+
+Final reviewed planning SHA: `0d9dd987d546c864fa8de7bae462e5e73a1b5ea9`
+
+Final evidence-bound branch head: `3da1769882e9f6db4c48ef3dba33da8380e6a613`
+
+Result: PASS after repairs across senior engineering, QA/test, security/auth,
+product/ops, architecture, docs, CI integrity, reuse/dedup, and test delta. All
+reviewer sessions are closed.
+
+Scope: plan a safe, non-decreasing path from the measured 78.26 percent
+diagnostic baseline to a permanent 90 percent full-backend application floor.
+No runtime, test, dependency, workflow, API, migration, or product behavior
+changed.
+
+Evidence:
+`.agent-loop/initiatives/WS-QUAL-001-backend-coverage-floor/reviews/WS-QUAL-001-PLAN-internal-review-evidence.md`
+
+Trust bundle:
+`.agent-loop/initiatives/WS-QUAL-001-backend-coverage-floor/reviews/WS-QUAL-001-PLAN-pr-trust-bundle.md`
+
+External response:
+`.agent-loop/initiatives/WS-QUAL-001-backend-coverage-floor/reviews/WS-QUAL-001-PLAN-external-review-response.md`
+
+External review: one valid CodeRabbit wording finding was addressed; the thread
+resolved, description check passed, and final Agent Gates/Backend/CodeRabbit
+checks passed before merge.
+
+Next: merge post-merge memory and stop. `WS-QUAL-001-01` remains inactive until
+that memory completes and the user gives a separate explicit start.
+
 ## WS-ART-001-PLAN
 
 Status: merged through PR #97 on 2026-07-12 as `8644a43`.
@@ -803,3 +866,40 @@ exact app-factory boundary before the repair edit. The amendment and all three
 test-only expectation files remain subject to the repeated full reviewer
 fanout. This is recorded as a process correction rather than represented as
 part of the original preimplementation allowlist.
+
+## 2026-07-12 - WS-ART-001-01 Merged
+
+[PR #101](https://github.com/Flow-Research/workstream/pull/101) merged into `main` as
+`050eb15eab8c57e6bc265477a5e92484d27a893c`.
+
+Reviewed implementation SHA:
+`5574bf59cf1cb86da76749e0cbc529036346fa8a`.
+
+Final evidence-bound branch head: `2b8c2a0`.
+
+Result: PASS after internal review, CodeRabbit repair, cancellation ownership
+hardening, and a CI-order fixture repair. Agent Gates, Backend, and CodeRabbit
+passed on the final head. The merge adds the provider-neutral immutable
+artifact domain and local development adapter; it does not add public artifact
+APIs, Flow Node integration, or product cutovers.
+
+Evidence: `.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/reviews/WS-ART-001-01-internal-review-evidence.md`
+
+External review response: `.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/reviews/WS-ART-001-01-external-review-response.md`
+
+Trust bundle: `.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/reviews/WS-ART-001-01-pr-trust-bundle.md`
+
+Next gate: merge the post-merge memory update and stop. `WS-ART-001-02`
+remains inactive pending a separate explicit user start.
+
+## 2026-07-12 - WS-AUTH-001-02 Resumed In Parallel Worktree
+
+The user explicitly authorized `WS-AUTH-001-02` to resume in
+`/home/abiorh/flow/workstream-auth-001-02` while coverage work continues in its
+separate worktree. This replaces the prior coverage-dependent pause but does
+not weaken AUTH evidence, internal review, or publication gates.
+
+Current gate: integrate current `main`, rerun deterministic implementation
+proof, run all required implementation reviewer tracks, repair valid findings,
+and prepare review evidence before any push or PR. Do not start
+`WS-AUTH-001-03`.

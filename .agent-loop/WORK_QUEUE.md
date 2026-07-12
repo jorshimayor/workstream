@@ -4,14 +4,14 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | In implementation; plan review passed and D12 approved |
+| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Resumed in its separate worktree; implementation evidence and internal review pending |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
-| `WS-ART-001-01` | Artifact Domain And Local Adapter | L1 | Inactive pending a separate explicit user start |
+| `WS-ART-001-02` | Flow Node Adapter And Reconciliation | L1 | Proposed; inactive pending separate explicit user start |
 
 ## Completed
 
@@ -43,15 +43,20 @@
 | `WS-AUTH-001-PLAN` | Authorization Service Planning | L0 | Merged through PR #91 as `ad6d644` on 2026-07-11 |
 | `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Merged through PR #93 as `772af1d` on 2026-07-11 |
 | `WS-ART-001-PLAN` | Immutable Artifact Storage And Flow Node Integration Planning | L1 | Merged through PR #97 as `8644a43` on 2026-07-12 |
+| `WS-QUAL-001-PLAN` | Backend Coverage Floor Planning | L1 | Merged through PR #99 as `9046d52` on 2026-07-12 |
+| `WS-ART-001-01` | Artifact Domain And Local Adapter | L1 | Merged through PR #101 as `050eb15` on 2026-07-12 |
+| `WS-QUAL-001-01A` | Isolated Database Runner | L1 | Merged through PR #103 as `2901a3e` on 2026-07-12 |
 
 ## Proposed Next
 
 `WS-AUTH-001-02` is the only active chunk. Do not start `WS-AUTH-001-03` or
 `WS-POL-002-04` automatically.
 
-`WS-ART-001-PLAN` and its post-merge memory are merged. Do not start
-`WS-ART-001-01`, edit Flow Node, or bypass its WS-AUTH dependency gates without
-a separate explicit start signal.
+`WS-ART-001-01` is merged. Do not start `WS-ART-001-02` or edit Flow Node until
+the user gives a separate explicit start signal.
+
+Coverage work proceeds independently in its own worktree and is not owned by
+this AUTH queue update.
 
 ## Blocked
 

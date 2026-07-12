@@ -40,10 +40,11 @@ bounded receipt. Workstream computes and trusts its own SHA-256 and byte count.
 5. Transaction B locks the session/item, compares digest/size, writes content,
    replica, and receipt records, then marks the item ready. Staging creates no
    `ArtifactBinding`.
-6. An optional expected SHA-256 is persisted before ingest as a client byte
-   commitment, not server truth. After a crash, recovery may reopen and
-   independently hash/count the provider object against that commitment. If no
-   pre-ingest commitment exists, the item becomes `replay_required` and the
+6. Optional expected SHA-256 and size are persisted before ingest as client byte
+   commitments, not server truth. After observed provider success, byte-less
+   recovery may independently hash/count the provider object only against both
+   commitments. Ambiguous failure, cancellation, or an incomplete commitment
+   makes the item `replay_required` and the
    client must replay the exact bytes under the same idempotency key; Workstream
    hashes the replay and the provider returns the existing exact-replay
    receipt. Receipt-only recovery never creates `ArtifactContent`, and no path

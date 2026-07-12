@@ -8,17 +8,20 @@
   JWKS Boundary
 - Branch: `codex/ws-auth-001-02-verified-issuer-token`
 - Worktree: `/home/abiorh/flow/workstream-auth-001-02`
-- Status: explicitly started by the user on 2026-07-11; preimplementation plan
-  review passed and D12 production dependencies were explicitly approved.
+- Status: explicitly resumed by the user on 2026-07-12 in this separate
+  worktree while backend coverage work continues in parallel; preimplementation
+  plan review passed and D12 production dependencies were explicitly approved.
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
-- Latest integrated `main` merge commit: `53f0c47`
+- Latest integrated `main` merge commit: `8829a7e`
 - Current gate: bounded implementation and evidence for `WS-AUTH-001-02`.
 - Next chunk: none; do not start `WS-AUTH-001-03` automatically.
-- Parallel initiative: `WS-ART-001-PLAN` merged through PR #97 as `8644a43`,
-  and its post-merge memory merged through PR #98 as `53f0c47`. No artifact
-  implementation chunk is active. `WS-ART-001-01` requires a separate explicit
-  user start and retains its recorded WS-AUTH dependency gates.
+- Parallel initiative: `WS-QUAL-001` continues in its own worktree. PR #104
+  merged the `WS-QUAL-001-01A` post-merge memory as `8829a7e`; later coverage
+  chunks remain independently owned and must not be edited from this worktree.
+- Parallel initiative: `WS-ART-001-01` merged through PR #101 as `050eb15`.
+  `WS-ART-001-02` remains proposed and inactive pending a separate explicit
+  user start.
 - Parallel initiative: `WS-POL-002-03` merged through PR #90 as `a7aa474`; its
   post-merge memory merged through PR #94 as `b1270d7`. `WS-POL-002-04` remains
   inactive pending the relevant authorization proof and a separate explicit
