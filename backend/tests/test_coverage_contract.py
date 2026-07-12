@@ -143,6 +143,8 @@ def test_application_coverage_pragma_is_rejected(tmp_path: Path, pragma: str) ->
         policy.validate_sources(tmp_path)
     (tmp_path / "app/a.py").write_text("MESSAGE = 'pragma: no cover'\n\"\"\"pragma: no cover\"\"\"\n", encoding="utf-8")
     policy.validate_sources(tmp_path)
+    (tmp_path / "app/a.py").write_text("# This documentation mentions pragma: no cover\n# notapragmanocover\nx = 1\n", encoding="utf-8")
+    policy.validate_sources(tmp_path)
 
 
 def test_canonical_evidence_accepts_bounded_non_secret_schema(tmp_path: Path) -> None:

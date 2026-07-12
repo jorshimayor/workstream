@@ -13,6 +13,7 @@ import sys
 import tokenize
 import tomllib
 
+from coverage.config import DEFAULT_EXCLUDE
 from run_isolated_tests import NAME_RE
 
 BACKEND = Path(__file__).resolve().parents[1]
@@ -104,7 +105,7 @@ def config_floor(path: Path) -> Decimal:
 def validate_sources(root: Path) -> None:
     for path in (root / "app").rglob("*.py"):
         tokens = tokenize.generate_tokens(StringIO(path.read_text(encoding="utf-8")).readline)
-        require(not any(token.type == tokenize.COMMENT and re.search(r"pragma\s*:?\s*no\s*cover", token.string, re.I) for token in tokens), "coverage_pragma")
+        require(not any(token.type == tokenize.COMMENT and re.search(DEFAULT_EXCLUDE[0], token.string) for token in tokens), "coverage_pragma")
 
 
 def evidence_data(data: dict, expected_head: str) -> dict:
