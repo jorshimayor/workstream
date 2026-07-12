@@ -2,10 +2,11 @@
 
 ## WS-QUAL-001-PLAN
 
-Status: internally reviewed; one valid CodeRabbit wording finding addressed and
-PR description expanded; fresh checks and human review pending.
+Status: merged through PR #99 on 2026-07-12 as `9046d52`.
 
-Reviewed planning SHA: `93c2f30c1cfa1d404cb04748c177fd4d8001cd30`
+Final reviewed planning SHA: `0d9dd987d546c864fa8de7bae462e5e73a1b5ea9`
+
+Final evidence-bound branch head: `3da1769882e9f6db4c48ef3dba33da8380e6a613`
 
 Result: PASS after repairs across senior engineering, QA/test, security/auth,
 product/ops, architecture, docs, CI integrity, reuse/dedup, and test delta. All
@@ -25,8 +26,12 @@ Trust bundle:
 External response:
 `.agent-loop/initiatives/WS-QUAL-001-backend-coverage-floor/reviews/WS-QUAL-001-PLAN-external-review-response.md`
 
-Next: external and human review, then stop. `WS-QUAL-001-01` remains inactive
-until plan merge, post-merge memory, and a separate explicit user start.
+External review: one valid CodeRabbit wording finding was addressed; the thread
+resolved, description check passed, and final Agent Gates/Backend/CodeRabbit
+checks passed before merge.
+
+Next: merge post-merge memory and stop. `WS-QUAL-001-01` remains inactive until
+that memory completes and the user gives a separate explicit start.
 
 ## WS-ART-001-PLAN
 

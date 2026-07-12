@@ -11,14 +11,14 @@ files.
 
 ## D2: No exclusion-based compliance
 
-Status: adopted for plan review.
+Status: accepted through planning PR #99 on 2026-07-12.
 
 Coverage may not be raised by omitting application modules, adding coverage
 suppression pragmas, or measuring only a favorable package subset.
 
 ## D3: Ratchet from a reproducible baseline
 
-Status: proposed for human approval.
+Status: accepted through planning PR #99 on 2026-07-12.
 
 Because current coverage is materially below 90 percent, implementation uses a
 non-decreasing enforced ratchet across bounded PRs and reaches 90 in the final
@@ -28,7 +28,7 @@ an execution strategy, not a reduction of the final requirement.
 
 ## D4: Coverage work pauses AUTH-02 publication
 
-Status: proposed for human approval.
+Status: accepted through planning PR #99 on 2026-07-12.
 
 AUTH-02 remains implemented on its own worktree but is not published while the
 new 90 percent repository requirement lacks an approved enforcement path. The

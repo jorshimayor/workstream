@@ -2,30 +2,28 @@
 
 ## Current State
 
-- Active initiative: `WS-QUAL-001` - Backend Coverage Floor
-- Active planning chunk: `WS-QUAL-001-PLAN`
+- Active initiative: none
+- Active planning chunk: none
 - Active implementation chunk: none
-- Branch: `codex/ws-qual-001-90-coverage`
+- Branch: `codex/ws-qual-001-plan-post-merge-memory`
 - Worktree: `/home/abiorh/flow/workstream-qual-001`
-- Status: planning started from the user's corrected requirement for at least
-  90 percent backend application coverage. Diagnostic AUTH-02 measurement was
-  78.26 percent after isolating the test database; circuit breaker requires a
-  separate initiative rather than expanding the auth PR.
+- Status: `WS-QUAL-001-PLAN` merged through PR #99 as `9046d52`. No coverage
+  implementation chunk is active.
 - Prior WS-ART reviewed planning SHA: `f7fbc33`
 - Prior WS-ART final evidence-bound planning branch head: `c069064`
 - WS-ART planning merge commit: `8644a43`
 - Prior WS-AUTH-001-01 reviewed implementation SHA: `be0b836`
 - Prior WS-AUTH-001-01 final merged branch head: `b5217e1`
-- Latest merged memory commit: `53f0c47`
-- WS-QUAL reviewed planning SHA: `93c2f30c1cfa1d404cb04748c177fd4d8001cd30`
-- Planning PR: `https://github.com/Flow-Research/workstream/pull/99` (draft)
-- Current gate: external checks and human approval for `WS-QUAL-001`; all
-  required internal tracks passed and no sessions remain.
-- Next chunk: `WS-QUAL-001-01` remains proposed and inactive until this plan is
-  reviewed, merged, and separately started by the user.
+- Latest merge commit: `9046d52`
+- WS-QUAL final reviewed planning SHA: `0d9dd987d546c864fa8de7bae462e5e73a1b5ea9`
+- WS-QUAL final evidence-bound branch head: `3da1769882e9f6db4c48ef3dba33da8380e6a613`
+- WS-QUAL planning merge commit: `9046d52f31c7c39f06e06c45c43783bb08a5181c`
+- Current gate: publish and merge this post-merge memory update, then stop.
+- Next chunk: `WS-QUAL-001-01` remains proposed and inactive until this memory
+  update is complete and the user gives a separate explicit start.
 - Paused implementation: `WS-AUTH-001-02` remains implemented on
   `codex/ws-auth-001-02-verified-issuer-token` and is paused before publication
-  while the coverage requirement receives a separate reviewable plan.
+  pending a separate explicit user resume signal after this memory update.
 - Parallel initiative: `WS-ART-001-PLAN` merged through PR #97 as `8644a43`,
   and its post-merge memory merged through PR #98 as `53f0c47`. No artifact
   implementation chunk is active.
