@@ -2,23 +2,30 @@
 
 ## Current State
 
-- Active initiative: none
-- Active planning chunk: none
+- Active initiative: `WS-QUAL-001` - Backend Coverage Floor
+- Active planning chunk: `WS-QUAL-001-PLAN`
 - Active implementation chunk: none
-- Branch: `codex/ws-art-001-plan-post-merge-memory`
-- Worktree: `/home/abiorh/flow/workstream`
-- Status: `WS-ART-001-PLAN` merged through PR #97 on 2026-07-12. No
-  application or Flow Node implementation has started.
+- Branch: `codex/ws-qual-001-90-coverage`
+- Worktree: `/home/abiorh/flow/workstream-qual-001`
+- Status: planning started from the user's corrected requirement for at least
+  90 percent backend application coverage. Diagnostic AUTH-02 measurement was
+  78.26 percent after isolating the test database; circuit breaker requires a
+  separate initiative rather than expanding the auth PR.
 - Reviewed planning SHA: `f7fbc33`
 - Final evidence-bound planning branch head: `c069064`
 - WS-ART planning merge commit: `8644a43`
 - Last reviewed implementation SHA: `be0b836`
 - Final merged WS-AUTH-001-01 branch head: `b5217e1`
 - Last merge commit: `8644a43`
-- Current gate: publish and merge the internally reviewed post-merge memory PR,
-  then stop.
-- Next chunk: `WS-ART-001-01` remains proposed and must not start until this
-  post-merge memory is complete and the user gives a separate explicit start.
+- Current gate: internal plan review and human approval for `WS-QUAL-001`.
+- Next chunk: `WS-QUAL-001-01` remains proposed and inactive until this plan is
+  reviewed, merged, and separately started by the user.
+- Paused implementation: `WS-AUTH-001-02` remains implemented on
+  `codex/ws-auth-001-02-verified-issuer-token` and is paused before publication
+  while the coverage requirement receives a separate reviewable plan.
+- Parallel initiative: `WS-ART-001-PLAN` merged through PR #97 as `8644a43`,
+  and its post-merge memory merged through PR #98 as `53f0c47`. No artifact
+  implementation chunk is active.
 - Parallel initiative: `WS-POL-002-03` merged through PR #90 as `a7aa474`; its
   post-merge memory merged through PR #94 as `b1270d7`. `WS-POL-002-04` remains
   inactive pending the relevant authorization proof and a separate explicit

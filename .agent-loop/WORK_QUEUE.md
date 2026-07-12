@@ -2,15 +2,18 @@
 
 ## In Progress
 
-None.
+| Chunk | Title | Risk | Status |
+|---|---|---:|---|
+| `WS-QUAL-001-PLAN` | Backend Coverage Floor Planning | L1 | In planning; internal review running |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Proposed but inactive until a separate explicit user start |
+| `WS-QUAL-001-01` | Coverage Harness And Baseline | L1 | Proposed; inactive pending plan approval and merge |
+| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Paused before publication pending coverage-plan resolution |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
-| `WS-ART-001-01` | Artifact Domain And Local Adapter | L1 | Proposed but inactive until post-merge memory completes and the user explicitly starts it |
+| `WS-ART-001-01` | Artifact Domain And Local Adapter | L1 | Proposed but inactive until the user explicitly starts it |
 
 ## Completed
 
@@ -45,13 +48,13 @@ None.
 
 ## Proposed Next
 
-No implementation chunk is active. Do not start `WS-AUTH-001-02` or
-`WS-POL-002-04` automatically; each requires its recorded prerequisites and a
-separate explicit user start signal.
+`WS-QUAL-001-PLAN` is the only active chunk. Do not implement
+`WS-QUAL-001-01`, resume `WS-AUTH-001-02`, or start another implementation
+chunk automatically.
 
-Complete and merge the WS-ART planning post-merge memory update, then stop. Do
-not start `WS-ART-001-01` or edit Flow Node until the user gives a separate
-explicit start signal.
+`WS-ART-001-PLAN` and its post-merge memory are merged. Do not start
+`WS-ART-001-01` or edit Flow Node until the user gives a separate explicit
+start signal.
 
 ## Blocked
 
