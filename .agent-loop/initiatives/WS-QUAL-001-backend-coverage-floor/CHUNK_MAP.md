@@ -2,7 +2,7 @@
 
 | Chunk | Scope | Risk | State |
 |---|---|---:|---|
-| `WS-QUAL-001-01` | Coverage harness, isolated database proof, clean main baseline, initial non-decreasing CI ratchet | L1 | Proposed; inactive pending plan approval |
+| `WS-QUAL-001-01` | Coverage harness, isolated database proof, clean main baseline, initial non-decreasing CI ratchet | L1 | Proposed; inactive pending post-merge memory and explicit user start |
 | `WS-QUAL-001-02` | Project setup/policy/correction service coverage; floor at least 82% | L1 | Inactive |
 | `WS-QUAL-001-03` | Project repository/router coverage; floor at least 84% | L1 | Inactive |
 | `WS-QUAL-001-04` | Task service/repository/router coverage; floor at least 86% | L1 | Inactive |
