@@ -4,15 +4,15 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01B1A-R1` | Parser Normalization Closure | L1 | Approved and active; implementation pending |
+| `WS-QUAL-001-01B1A-R2` | Canonical Coverage Grammar | L1 | Proposed; internal contract review pending |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01B1B` | Semantic Delta Guards | L1 | Inactive until 01B1A-R1 merge/memory and explicit user start |
-| `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Inactive until 01B1A-R1 and 01B1B merge/memory plus explicit user start |
-| `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B1A-R1, 01B1B, and 01B2 merge/memory plus explicit user start |
+| `WS-QUAL-001-01B1B` | Semantic Delta Guards | L1 | Inactive until 01B1A-R2 merge/memory and explicit user start |
+| `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Inactive until 01B1A-R2 and 01B1B merge/memory plus explicit user start |
+| `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B1A-R2, 01B1B, and 01B2 merge/memory plus explicit user start |
 | `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Resumed off-main in a separate worktree by explicit user direction; independent review required before PR/merge |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02` | Flow Node Adapter And Reconciliation | L1 | Proposed; inactive pending separate explicit user start |
@@ -53,7 +53,7 @@
 
 ## Proposed Next
 
-Review and implement only the 01B1A-R1 replacement on the coverage branch.
+Review and implement only the 01B1A-R2 replacement on the coverage branch.
 AUTH-02 may proceed independently in its existing worktree. Do not start 01B1B,
 01B2, chunk 02, or another implementation chunk automatically.
 
@@ -66,3 +66,4 @@ the user gives a separate explicit start signal.
 |---|---|---|
 | `WS-QUAL-001-01B1` | 496/500 lines after two semantic-integrity repair cycles | Superseded by the proposed 01B1A/01B1B split; do not resume |
 | `WS-QUAL-001-01B1A` | 394/400 lines after two parser-normalization repair cycles; final QA/security review found two valid bypass variants | Replan the parser boundary before any further implementation |
+| `WS-QUAL-001-01B1A-R1` | Additional valid false-positive finding outside its two-fix contract | Superseded by R2 canonical-grammar proposal; do not resume |

@@ -38,6 +38,11 @@ R1 contract review: PASS at `7901de94f4391c107c52ea8733ac72ad34ceb069`
 across all required tracks. Only R1 is active; any additional valid finding or
 size above 400 stops and replans the replacement.
 
+R1 implementation review: STOP at `c0fa4a2`. The two authorized fixes passed,
+but senior architecture/reuse review found the approximate matcher rejected
+comments the pinned coverage runtime includes. R2 proposes canonical regex
+reuse; no PR opened from R1.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract

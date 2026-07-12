@@ -136,3 +136,14 @@ evidence. Neither track edits the other's worktree. AUTH may prepare its PR in
 parallel but must satisfy the repository's current coverage gates before merge.
 The 01B1A-R1 replacement is limited to closing the two recorded parser bypasses
 without reopening semantic-delta or 01B2 scope.
+
+## D13: Reuse pinned coverage.py exclusion grammar
+
+Status: proposed corrective replacement under the user's direction to finish
+the coverage blockers; internal contract review pending.
+
+R1 correctly rejected the two named bypasses but used a broader approximate
+regex that rejected explanatory comments coverage.py would include. R2 replaces
+that approximation with `coverage.config.DEFAULT_EXCLUDE[0]` from the already
+pinned coverage runtime and adds positive/negative equivalence proof. This is a
+reuse correction, not new policy scope.

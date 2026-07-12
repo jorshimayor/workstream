@@ -1,6 +1,6 @@
 # Chunk Contract: WS-QUAL-001-01B2 Baseline Evidence And CI Ratchet
 
-Status: inactive until 01B1A-R1 and 01B1B merge, both post-merge memory updates
+Status: inactive until 01B1A-R2 and 01B1B merge, both post-merge memory updates
 complete, and the user gives a separate explicit start signal.
 
 ## Goal, Risk, And Budget

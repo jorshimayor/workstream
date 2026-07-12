@@ -2,7 +2,7 @@
 
 Parent: `WS-QUAL-001` Backend Coverage Floor
 
-Status: proposed and inactive until 01B1A-R1 merges, post-merge memory
+Status: proposed and inactive until 01B1A-R2 merges, post-merge memory
 completes, and the user gives a separate explicit start signal.
 
 ## Goal And Reason
