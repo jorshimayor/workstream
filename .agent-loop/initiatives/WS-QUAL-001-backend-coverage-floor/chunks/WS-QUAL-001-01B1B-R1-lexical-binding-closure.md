@@ -18,18 +18,40 @@ workflow/evidence mutation, `backend/app/**`, DB/API/product/AUTH behavior,
 skips/xfails, exclusions, and coverage-raising tests remain forbidden.
 
 The complete replacement candidate is capped at 300 non-memory lines from
-merge base. Stop above 270 before remaining work, above 300, or on any
-additional valid finding outside this exact corrective scope.
+merge base. The existing candidate is 223 lines. Forecast: replace the two
+file-global analyzers with one shared resolver for at most 30 net lines, add
+the binding/TestCase matrices for at most 40 net lines, and retain 7 lines of
+reserve. Checkpoint at or before 270 lines, before adding the remaining matrix;
+stop above 300 or if the forecast cannot preserve the required proof.
+
+R1 resets the stopped B1B repair count because its reviewed contract replaces
+the binding model. It permits at most two implementation-review repair cycles.
+Any valid same-class finding remaining after cycle two requires another stop
+and replan; any valid finding outside this corrective scope stops immediately.
 
 ## Acceptance Criteria
 
-- Resolve pytest/unittest modules, direct imports, and aliases by the lexical
-  scope and statement binding applicable at each executable call.
+- Implement one shared static binding resolver used by both weakening and
+  deleted-assertion analysis. It covers module, function, class, and nested
+  scopes; parameters; imports and aliases; simple/annotated/augmented
+  assignment and other name-store targets; and reassignment in statement
+  order. Function-local names are determined for the whole function;
+  `global`/`nonlocal` route to their declared scope, and method bodies do not
+  inherit the class namespace as a closure.
+- Bindings are classified as framework module/member, proven TestCase class or
+  instance, local, or ambiguous. Conditional paths merge classifications;
+  star imports, dynamic binding, or unresolved control-flow combinations that
+  can retain a framework classification fail closed. A definite parameter or
+  local reassignment is local before/after the relevant call as Python scope
+  and statement order require.
 - A local or parameter binding that shadows `pytest`, a module alias, or an
   imported `raises`/skip name must be treated as local, not framework behavior.
-- Detect genuine pytest skip/xfail/importorskip and unittest skip decorators,
-  exceptions, `self.skipTest`, `super().skipTest`, and proven TestCase-instance
-  receivers without classifying arbitrary local `.skipTest()` methods.
+- Detect genuine pytest skip/xfail/importorskip and unittest skip decorators
+  and exceptions. `self.skipTest` and `super().skipTest` are proven only inside
+  a class whose base resolves to `unittest.TestCase` or its direct alias;
+  another receiver is proven only when its binding comes from direct or
+  aliased `TestCase` construction. Arbitrary local `.skipTest()` methods remain
+  accepted.
 - Base-AST deleted assertion detection must apply the same lexical resolution
   to direct/imported/module-aliased `pytest.raises` while preserving multiline
   native/self assertions and inert/local-lookalike acceptance.
@@ -41,7 +63,8 @@ additional valid finding outside this exact corrective scope.
 ## Verification And Review
 
 Run the complete B1B verification command set plus adversarial nested-scope,
-parameter-shadow, assignment-shadow, and class/TestCase binding matrices.
+parameter-shadow, before/after assignment-shadow, conditional ambiguity,
+`global`/`nonlocal`, and recognized/unrecognized class/TestCase matrices.
 Required reviewers: senior engineering, QA/test, security/auth, product/ops,
 architecture, CI integrity, reuse/dedup, and test delta. Human focus: lexical
 false positives/negatives, no weakened expectations, and no B2/AUTH spill.
