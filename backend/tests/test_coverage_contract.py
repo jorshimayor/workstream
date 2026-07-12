@@ -36,9 +36,10 @@ def evidence(**updates) -> dict:
 
 
 def config_text(report: str = "", run: str = "", pin: str = "pytest-cov==7.1.0",
-                precision: int = 6, floor: int = 75) -> str:
+                precision: int = 6, floor: int | str = 75, dev: str | None = None) -> str:
+    dependencies = dev if dev is not None else f"['{pin}']"
     return (
-        f"[project.optional-dependencies]\ndev=['{pin}']\n[tool.coverage.run]\n{run}"
+        f"[project.optional-dependencies]\ndev={dependencies}\n[tool.coverage.run]\n{run}"
         f"\n[tool.coverage.report]\nprecision={precision}\nfail_under={floor}\n{report}"
     )
 
@@ -47,7 +48,8 @@ def coverage_file(tmp_path: Path, *, files: dict | None = None, covered=2, state
     root = tmp_path / "backend"
     (root / "app").mkdir(parents=True, exist_ok=True)
     (root / "app/a.py").write_text("x = 1\n", encoding="utf-8")
-    data = {"files": files if files is not None else {"app/a.py": {}},
+    summary = {"summary": {"covered_lines": covered, "num_statements": statements}}
+    data = {"files": files if files is not None else {"app/a.py": summary},
             "totals": {"covered_lines": covered, "num_statements": statements}}
     return write_json(tmp_path / "coverage.json", data), root
 
@@ -58,6 +60,16 @@ def test_compute_floor_validates_inventory_and_truncates(tmp_path: Path) -> None
     assert policy.six_place_percent(2, 3) == "66.666666"
     path, root = coverage_file(tmp_path, files={})
     with pytest.raises(policy.PolicyError, match="application_inventory_mismatch"):
+        policy.coverage_counts(path, root)
+
+
+@pytest.mark.parametrize(("files", "code"), [
+    ({"app/a.py": {}}, "invalid_file_coverage"),
+    ({"app/a.py": {"summary": {"covered_lines": 1, "num_statements": 3}}}, "coverage_totals_mismatch"),
+])
+def test_coverage_counts_reconciles_file_summaries(tmp_path: Path, files: dict, code: str) -> None:
+    path, root = coverage_file(tmp_path, files=files)
+    with pytest.raises(policy.PolicyError, match=code):
         policy.coverage_counts(path, root)
 
 
@@ -76,8 +88,15 @@ def test_intended_config_returns_exact_floor(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize(("kwargs", "code"), [
     ({"pin": "pytest-cov>=7"}, "pytest_cov_pin_missing"),
+    ({"pin": "pytest-cov==7.1.0-malicious"}, "pytest_cov_pin_missing"),
+    ({"dev": "'pytest-cov==7.1.0'"}, "invalid_coverage_config"),
     ({"precision": 5}, "coverage_precision_invalid"),
     ({"floor": 101}, "coverage_floor_invalid"),
+    ({"floor": "true"}, "coverage_floor_invalid"),
+    ({"floor": "'75'"}, "coverage_floor_invalid"),
+    ({"floor": "nan"}, "coverage_floor_invalid"),
+    ({"floor": "inf"}, "coverage_floor_invalid"),
+    ({"floor": "75.1234567"}, "coverage_floor_invalid"),
     ({"report": "omit=[]\n"}, "coverage_exclusion_config"),
     ({"run": "source=['app']\n"}, "coverage_exclusion_config"),
     ({"run": "include=[]\n"}, "coverage_exclusion_config"),
@@ -116,7 +135,8 @@ def test_canonical_evidence_accepts_bounded_non_secret_schema(tmp_path: Path) ->
     ({"database_name": "workstream_test"}, "evidence_database_invalid"),
     ({"alembic_head": "old"}, "evidence_alembic_invalid"),
     ({"python_version": ""}, "evidence_version_invalid"),
-    ({"python_version": "postgresql://secret"}, "evidence_secret"),
+    ({"python_version": "not-a-version"}, "evidence_version_invalid"),
+    ({"python_version": "alice:hunter2@db.internal"}, "evidence_version_invalid"),
 ])
 def test_evidence_schema_fails_closed(updates: dict, code: str) -> None:
     with pytest.raises(policy.PolicyError, match=code):
@@ -132,6 +152,14 @@ def test_runner_metadata_accepts_only_expected_tree_and_head(tmp_path: Path) -> 
     write_json(path, value)
     with pytest.raises(policy.PolicyError, match="metadata_tree_mismatch"):
         policy.runner_metadata(path, SHA, HEAD)
+
+
+def test_runner_metadata_rejects_matching_malformed_expectations(tmp_path: Path) -> None:
+    value = {"schema_version": 1, "database_name": "workstream_test_012345abcdef",
+             "alembic_head": "../head", "tree_sha": "not-a-sha"}
+    path = write_json(tmp_path / "metadata.json", value)
+    with pytest.raises(policy.PolicyError, match="metadata_alembic_mismatch"):
+        policy.runner_metadata(path, "not-a-sha", "../head")
 
 
 @pytest.mark.parametrize(("updates", "code"), [
@@ -153,6 +181,12 @@ def test_runner_metadata_fails_closed(tmp_path: Path, updates: dict, code: str) 
     ("import pytest\npytest.skip('disabled')", True),
     ("import pytest\n@pytest.mark.xfail\ndef test_x(): pass", True),
     ("import pytest\npytestmark = pytest.mark.skipif(True)", True),
+    ("from pytest import skip\nskip('disabled')", True),
+    ("from pytest import mark\n@mark.xfail\ndef test_x(): pass", True),
+    ("import pytest as pt\npt.importorskip('optional')", True),
+    ("import unittest as ut\n@ut.skipUnless(True, 'reason')\ndef test_x(): pass", True),
+    ("from unittest import expectedFailure\n@expectedFailure\ndef test_x(): pass", True),
+    ("from pytest import raises\nwith raises(ValueError): raise ValueError", False),
     ("def invalid(", True),
 ])
 def test_python_weakening_is_syntax_aware(tmp_path: Path, source: str, weak: bool) -> None:
@@ -190,8 +224,38 @@ def test_delta_accepts_inert_fixtures_and_agent_memory(monkeypatch, tmp_path: Pa
     policy.validate_delta("base", 2, {files[0]})
 
 
+def test_delta_detects_committed_deleted_pytest_raises_from_backend_cwd(
+    monkeypatch, tmp_path: Path,
+) -> None:
+    repo = tmp_path / "repo"
+    test = repo / "backend/tests/test_sample.py"
+    test.parent.mkdir(parents=True)
+    test.write_text(
+        "import pytest\n\ndef test_x():\n    with pytest.raises(ValueError):\n        raise ValueError\n",
+        encoding="utf-8",
+    )
+    subprocess.run(["git", "init", "-q", str(repo)], check=True)
+    subprocess.run(["git", "-C", str(repo), "config", "user.email", "test@example.invalid"], check=True)
+    subprocess.run(["git", "-C", str(repo), "config", "user.name", "Coverage Test"], check=True)
+    subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
+    subprocess.run(["git", "-C", str(repo), "commit", "-qm", "base"], check=True)
+    base = subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "HEAD"], check=True, text=True, capture_output=True,
+    ).stdout.strip()
+    test.write_text("def test_x():\n    raise ValueError\n", encoding="utf-8")
+    monkeypatch.setattr(policy, "REPO", repo)
+    monkeypatch.chdir(repo / "backend")
+    with pytest.raises(policy.PolicyError, match="deleted_assertion"):
+        policy.validate_delta(base, 500, {"backend/tests/test_sample.py"})
+
+
 def test_compute_cli_is_read_only_and_stable(tmp_path: Path) -> None:
-    files = {item.relative_to(policy.BACKEND).as_posix(): {} for item in (policy.BACKEND / "app").rglob("*.py")}
+    files = {
+        item.relative_to(policy.BACKEND).as_posix():
+            {"summary": {"covered_lines": 0, "num_statements": 0}}
+        for item in (policy.BACKEND / "app").rglob("*.py")
+    }
+    files[next(iter(files))]["summary"] = {"covered_lines": 2, "num_statements": 3}
     path = write_json(tmp_path / "coverage.json", {"files": files, "totals": {"covered_lines": 2, "num_statements": 3}})
     command = [sys.executable, str(SCRIPTS / "coverage_policy.py"), "--coverage-json", str(path)]
     result = subprocess.run([*command, "--compute-floor"], text=True, capture_output=True, check=False)
