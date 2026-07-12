@@ -4,7 +4,7 @@
 
 `WS-QUAL-001-01B1A-R2` post-merge memory
 
-PR: pending publication
+PR: `https://github.com/Flow-Research/workstream/pull/106`
 
 ## Goal
 

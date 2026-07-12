@@ -55,9 +55,10 @@
   complete 398/400-line scope proof passed with coverage.py 7.15.0
 - R2 implementation PR: `https://github.com/Flow-Research/workstream/pull/105`
 - R2 merge commit: `8a4182edb09970131aded73edf3428ac83fe60b9`
+- R2 post-merge memory PR: `https://github.com/Flow-Research/workstream/pull/106`
 
 ## Stop condition
 
-R2 is merged. Merge this post-merge memory update, then stop. AUTH-02 may
+R2 is merged. Review and merge memory PR #106, then stop. AUTH-02 may
 proceed independently off-main in its separate worktree. Do not start 01B1B,
 01B2, or chunk 02 without their separate checkpoints.
