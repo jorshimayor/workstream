@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01B1` | Coverage Policy Core | L1 | Implemented at 393/500; internal review pending |
+| none | none | - | No implementation chunk is active |
 
 ## Planned Next
 
@@ -52,8 +52,8 @@
 
 ## Proposed Next
 
-01B1 is the only active implementation chunk. Do not start 01B2, chunk 02,
-resume AUTH-02, or start another implementation chunk automatically.
+01B1 is blocked at its circuit breaker. Do not start a split repair, 01B2,
+chunk 02, resume AUTH-02, or start another implementation chunk automatically.
 
 `WS-ART-001-01` is merged. Do not start `WS-ART-001-02` or edit Flow Node until
 the user gives a separate explicit start signal.
@@ -62,4 +62,4 @@ the user gives a separate explicit start signal.
 
 | Chunk | Blocker | Next action |
 |---|---|---|
-| none | none | none |
+| `WS-QUAL-001-01B1` | 496/500 lines after two semantic-integrity repair cycles; final test-delta review found valid uncovered weakening and arithmetic cases | Review a smaller policy-core versus semantic-delta split, then require explicit user approval before implementation |

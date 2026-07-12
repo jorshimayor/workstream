@@ -6,11 +6,11 @@
 - Active planning chunk: none
 - Active implementation chunk: `WS-QUAL-001-01B1` - Coverage Policy Core
 - Branch: `codex/ws-qual-001-01b1-coverage-policy-core`
-- Status: the user started 01B after PR #104 merged. L1 plan review passed, but
-  implementation reached 480/500 lines before required config, CI, runbook, and
-  negative proof. The circuit breaker stopped code and proposes an 01B1/01B2
-  split. Internal review passed and the user explicitly approved starting only
-  01B1.
+- Status: 01B1 reached 496/500 lines and passed eight reviewer tracks at
+  `7bfe3a0`, but final test-delta review found unhandled `unittest.skipTest`,
+  aliased `pytest.raises` deletion, and missing arithmetic boundaries. This is
+  the second failed semantic-integrity repair cycle, so the chunk is blocked
+  for a reviewed split instead of weakening or compressing proof.
 - Prior WS-ART reviewed planning SHA: `f7fbc33`
 - Prior WS-ART final evidence-bound planning branch head: `c069064`
 - WS-ART planning merge commit: `8644a43`
@@ -32,8 +32,8 @@
 - WS-QUAL-001-01A merge commit: `2901a3ebe68b7c770ccb1ff06841d79ce0c20d94`
 - WS-QUAL-001-01A post-merge memory merge commit:
   `8829a7ec3aa5199aae0aecbe5fda030c42a051cd`
-- Current gate: deterministic 01B1 evidence passed; required internal review on
-  the committed implementation tree. 01B2 remains inactive.
+- Current gate: revise and internally review an 01B1 split proposal, then obtain
+  explicit user approval before more implementation. 01B2 remains inactive.
 - Next chunk: `WS-QUAL-001-02` remains inactive; do not start it automatically.
 - Paused implementation: `WS-AUTH-001-02` remains implemented on
   `codex/ws-auth-001-02-verified-issuer-token` and is paused before publication

@@ -1,7 +1,8 @@
 # Chunk Contract: WS-QUAL-001-01B1 Coverage Policy Core
 
-Status: internally reviewed and explicitly approved for implementation on
-2026-07-12. Implemented within scope; internal implementation review pending.
+Status: blocked on 2026-07-12 at 496/500 lines after two failed
+semantic-integrity repair cycles. A smaller reviewed split and explicit user
+approval are required before implementation resumes.
 
 ## Goal, Risk, And Budget
 

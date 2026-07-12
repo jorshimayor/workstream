@@ -2,16 +2,17 @@
 
 ## WS-QUAL-001-01B1
 
-Status: D8 split passed all internal plan reviewers at `599c7ef`; the user
-explicitly approved starting only 01B1 on 2026-07-12. Implementation is 393/500
-lines with 41 focused behavior tests passing; internal review is pending.
+Status: BLOCKED. Candidate `7bfe3a0` has 496/500 lines and 66 focused behavior
+tests. Senior engineering, QA, security, product/ops, architecture, CI, docs,
+and reuse passed, but final test-delta review found three valid gaps after the
+second semantic-integrity repair cycle.
 
 Scope: read-only coverage policy core, parameterized contract behavior tests,
 and truthful compute-floor documentation. No config, workflow, evidence, Git
 publication logic, production behavior, or coverage-raising tests.
 
-Next: implement, verify, internally review, and publish 01B1 only. Stop before
-01B2.
+Next: review a smaller policy-core versus semantic-delta split and obtain
+explicit user approval. No PR, 01B2, chunk 02, or AUTH resume is permitted.
 
 ## WS-QUAL-001-01B
 

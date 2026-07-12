@@ -88,3 +88,15 @@ memory by 01B2 for Git provenance, configured baseline evidence, CI ratchet,
 and operations. Each retains a separate 500-line cap, L1 review, PR, merge,
 memory, and explicit start checkpoint. No production or coverage-raising test
 scope is added.
+
+## D9: Stop 01B1 after repeated semantic-integrity findings
+
+Status: circuit breaker triggered on 2026-07-12; replacement split not approved.
+
+The 01B1 candidate reached 496/500 lines after two repair cycles. Eight review
+tracks passed, but final test-delta review still found executable unittest skip
+forms, aliased `pytest.raises` deletion, and missing successful arithmetic
+boundaries. These are valid acceptance-criterion gaps in the same repeated
+semantic-integrity class. The chunk must split again rather than compress tests
+or exceed its cap. No replacement chunk may start without internal plan review
+and explicit user approval.
