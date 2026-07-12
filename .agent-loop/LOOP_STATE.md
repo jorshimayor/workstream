@@ -6,7 +6,6 @@
 - Active planning chunk: none
 - Active implementation chunk: none
 - Branch: `codex/ws-qual-001-01a-post-merge-memory`
-- Worktree: `/home/abiorh/flow/workstream-qual-001`
 - Status: `WS-QUAL-001-01A` merged through PR #103; this branch records its
   post-merge memory. `WS-QUAL-001-01B` remains inactive.
 - Prior WS-ART reviewed planning SHA: `f7fbc33`

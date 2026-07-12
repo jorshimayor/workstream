@@ -4,7 +4,6 @@
 
 - Phase: `WS-QUAL-001-01A` post-merge memory
 - Branch: `codex/ws-qual-001-01a-post-merge-memory`
-- Worktree: `/home/abiorh/flow/workstream-qual-001`
 - Authoritative target: 90 percent complete backend application statement coverage
 - Diagnostic AUTH-02 baseline: 78.26 percent after database isolation repair
 - Final reviewed planning SHA: `0d9dd987d546c864fa8de7bae462e5e73a1b5ea9`
