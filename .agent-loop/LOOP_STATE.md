@@ -19,6 +19,8 @@
 - WS-QUAL final evidence-bound branch head: `3da1769882e9f6db4c48ef3dba33da8380e6a613`
 - WS-QUAL planning merge commit: `9046d52f31c7c39f06e06c45c43783bb08a5181c`
 - Current gate: publish and merge this post-merge memory update, then stop.
+- Post-merge memory PR: `https://github.com/Flow-Research/workstream/pull/100`
+  (ready for review).
 - Next chunk: `WS-QUAL-001-01` remains proposed and inactive until this memory
   update is complete and the user gives a separate explicit start.
 - Paused implementation: `WS-AUTH-001-02` remains implemented on

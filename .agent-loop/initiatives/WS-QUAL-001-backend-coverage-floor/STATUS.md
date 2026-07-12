@@ -14,6 +14,8 @@
 - Active implementation chunk: none
 - Planning PR: `https://github.com/Flow-Research/workstream/pull/99` (merged)
 - Next gate: post-merge memory, then explicit user start for one proposed chunk
+- Post-merge memory PR: `https://github.com/Flow-Research/workstream/pull/100`
+  (ready for review)
 
 ## Stop condition
 
