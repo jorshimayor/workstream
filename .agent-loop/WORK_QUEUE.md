@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| none | none | - | No implementation chunk is active |
+| `WS-QUAL-001-01B1A-R1` | Parser Normalization Closure | L1 | Proposed; internal contract review pending |
 
 ## Planned Next
 
@@ -13,7 +13,7 @@
 | `WS-QUAL-001-01B1B` | Semantic Delta Guards | L1 | Inactive until 01B1A merge/memory and explicit user start |
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Inactive until 01B1A and 01B1B merge/memory plus explicit user start |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B1A, 01B1B, and 01B2 merge/memory plus explicit user start |
-| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Implemented off-main; paused until WS-QUAL permanent 90% floor and final memory complete, then explicit resume |
+| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Resumed off-main in a separate worktree by explicit user direction; independent review required before PR/merge |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02` | Flow Node Adapter And Reconciliation | L1 | Proposed; inactive pending separate explicit user start |
 
@@ -53,9 +53,9 @@
 
 ## Proposed Next
 
-01B1A is blocked after two parser-normalization repair cycles. Do not continue
-it, start 01B1B or 01B2, resume AUTH-02, or start another implementation chunk
-automatically.
+Review and implement only the 01B1A-R1 replacement on the coverage branch.
+AUTH-02 may proceed independently in its existing worktree. Do not start 01B1B,
+01B2, chunk 02, or another implementation chunk automatically.
 
 `WS-ART-001-01` is merged. Do not start `WS-ART-001-02` or edit Flow Node until
 the user gives a separate explicit start signal.

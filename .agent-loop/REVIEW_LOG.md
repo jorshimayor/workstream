@@ -29,6 +29,11 @@ architecture, reuse, CI integrity, test delta, product/ops, and docs passed.
 QA and security found `pragma:nocover` and leading-space normalized duplicate
 pytest-cov bypasses after the second parser repair cycle. No PR opened.
 
+User direction: replan and fix the remaining coverage blockers while AUTH-02
+continues independently in its existing worktree. Proposed replacement
+`WS-QUAL-001-01B1A-R1` is limited to those two bypasses and preserves the full
+400-line parser candidate cap.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract

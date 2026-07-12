@@ -2,7 +2,7 @@
 
 ## Current state
 
-- Phase: `WS-QUAL-001-01B1A` blocked
+- Phase: `WS-QUAL-001-01B1A-R1` corrective contract review
 - Branch: `codex/ws-qual-001-01b1a-coverage-parser-core`
 - Authoritative target: 90 percent complete backend application statement coverage
 - Diagnostic AUTH-02 baseline: 78.26 percent after database isolation repair
@@ -42,8 +42,10 @@
 - 01B1A result: blocked at 394/400 after the second parser repair cycle;
   `pragma:nocover` and leading-space normalized duplicate pytest-cov
   requirements remain valid reviewer findings
+- Corrective direction: user explicitly authorized fixing the remaining
+  coverage blockers while AUTH continues in its separate worktree
 
 ## Stop condition
 
-No implementation chunk is active. Replan 01B1A before further implementation;
-do not start 01B1B, 01B2, chunk 02, or resume AUTH automatically.
+No coverage implementation chunk is active during R1 contract review. AUTH-02
+may proceed independently off-main. Do not start 01B1B, 01B2, or chunk 02.

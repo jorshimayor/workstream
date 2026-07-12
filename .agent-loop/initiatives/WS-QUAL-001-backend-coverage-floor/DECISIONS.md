@@ -125,3 +125,14 @@ normalized duplicate pytest-cov requirements. These are valid bypasses in the
 same parser-normalization class after two repairs. The task-chunk loop requires
 a stop and replan instead of a third repair cycle, even though the individual
 edits are small. No PR may open while required reviewers fail.
+
+## D12: Continue coverage and AUTH in isolated worktrees
+
+Status: explicitly directed by the user on 2026-07-12.
+
+Coverage remains isolated in `workstream-qual-001`; AUTH-02 resumes off-main in
+`workstream-auth-001-02`. Each track owns its branch, tests, reviewers, and
+evidence. Neither track edits the other's worktree. AUTH may prepare its PR in
+parallel but must satisfy the repository's current coverage gates before merge.
+The 01B1A-R1 replacement is limited to closing the two recorded parser bypasses
+without reopening semantic-delta or 01B2 scope.

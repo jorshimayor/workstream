@@ -3,7 +3,7 @@
 ## Current State
 
 - Active initiative: `WS-QUAL-001` - Backend Coverage Floor
-- Active planning chunk: none
+- Active planning chunk: `WS-QUAL-001-01B1A-R1` normalization closure
 - Active implementation chunk: none
 - Branch: `codex/ws-qual-001-01b1a-coverage-parser-core`
 - Status: 01B1 reached 496/500 lines and passed eight reviewer tracks at
@@ -33,13 +33,12 @@
 - WS-QUAL-001-01A merge commit: `2901a3ebe68b7c770ccb1ff06841d79ce0c20d94`
 - WS-QUAL-001-01A post-merge memory merge commit:
   `8829a7ec3aa5199aae0aecbe5fda030c42a051cd`
-- Current gate: 01B1A is blocked after two parser-normalization repair cycles.
-  Replan before further implementation; 01B1B and 01B2 remain inactive.
+- Current gate: review the user-authorized 01B1A-R1 replacement contract for
+  the two remaining normalization bypasses. 01B1B and 01B2 remain inactive.
 - Next chunk: `WS-QUAL-001-02` remains inactive; do not start it automatically.
-- Paused implementation: `WS-AUTH-001-02` remains implemented on
-  `codex/ws-auth-001-02-verified-issuer-token` and is paused before publication
-  until WS-QUAL completes through its permanent 90 percent CI floor and final
-  post-merge memory, then the user gives a separate explicit resume signal.
+- Parallel implementation: the user explicitly authorized `WS-AUTH-001-02` to
+  resume off-main in its separate worktree while coverage continues. AUTH must
+  satisfy its own chunk reviews and the current coverage gates before merge.
 - Parallel initiative: `WS-ART-001-01` merged through PR #101 as `050eb15`.
   `WS-ART-001-02` remains proposed and inactive pending a separate explicit
   user start.
