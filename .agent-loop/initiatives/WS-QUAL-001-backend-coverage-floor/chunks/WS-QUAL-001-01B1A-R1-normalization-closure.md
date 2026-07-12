@@ -27,8 +27,8 @@ guards, 01B1B/01B2 behavior, live config/workflow/evidence changes,
 coverage exclusions/pragmas, or coverage-raising tests.
 
 The complete replacement candidate remains capped at 400 implementation lines
-from merge base. Stop immediately above 400 or on any new same-class parser
-bypass after the corrective review.
+from merge base. Stop and replan immediately above 400 or on any additional
+valid finding beyond the two named fixes.
 
 ## Acceptance Criteria
 
