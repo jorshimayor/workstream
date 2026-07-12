@@ -47,7 +47,7 @@
 - R1 contract review: all required tracks passed at
   `7901de94f4391c107c52ea8733ac72ad34ceb069`
 - R1 implementation result: stopped at `c0fa4a2` because the approximate pragma
-  regex rejected comments that pinned coverage.py does not exclude
+  regex rejected comments that the installed coverage runtime does not exclude
 
 ## Stop condition
 

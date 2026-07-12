@@ -7,7 +7,7 @@ Status: proposed corrective replacement; internal contract review pending.
 ## Goal And Scope
 
 Complete the parser candidate by replacing the approximate pragma matcher with
-the already pinned coverage.py canonical default exclusion grammar. Preserve
+the installed coverage runtime's canonical default exclusion grammar. Preserve
 R1's verified requirement normalization and every prior 01B1A behavior.
 
 Risk: L1 test-policy integrity. SLA: P1. Allowed implementation files are
@@ -22,8 +22,9 @@ base. Stop above 400 or on any additional valid finding.
 
 ## Acceptance Criteria
 
-- Reuse `coverage.config.DEFAULT_EXCLUDE[0]` from the pinned coverage runtime
-  when inspecting COMMENT tokens; do not maintain an approximate pragma regex.
+- Reuse `coverage.config.DEFAULT_EXCLUDE[0]` from the installed coverage runtime
+  selected by the pinned pytest-cov toolchain when inspecting COMMENT tokens;
+  do not maintain an approximate pragma regex.
 - Reject comments coverage.py recognizes, including compact `pragma:nocover`.
 - Accept explanatory comments and substrings that canonical coverage.py does
   not recognize, including `This documentation mentions pragma: no cover` and
@@ -34,8 +35,9 @@ base. Stop above 400 or on any additional valid finding.
 
 ## Verification And Review
 
-Run the complete 01B1A command set and direct equivalence probes against the
-pinned canonical regex. Required reviewers: senior engineering, QA/test,
+Run the complete 01B1A command set, record the resolved coverage.py version,
+and run direct equivalence probes against that same runtime's canonical regex.
+Required reviewers: senior engineering, QA/test,
 security/auth, product/ops, architecture, CI integrity, docs, reuse/dedup, and
 test delta. Human focus: exact canonical reuse, false-positive/negative parity,
 and no scope expansion.
