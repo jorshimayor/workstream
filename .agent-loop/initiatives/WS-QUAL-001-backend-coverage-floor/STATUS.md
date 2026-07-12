@@ -57,5 +57,4 @@
 ## Stop condition
 
 R2 awaits evidence and PR publication. AUTH-02 may proceed independently
-off-main after the coverage publication gate closes. Do not start 01B1B, 01B2,
-or chunk 02.
+off-main in its separate worktree. Do not start 01B1B, 01B2, or chunk 02.

@@ -53,9 +53,9 @@
 
 ## Proposed Next
 
-Review and implement only the 01B1A-R2 replacement on the coverage branch.
+Finish R2 evidence, trust bundle, and PR publication on the coverage branch.
 AUTH-02 may proceed independently in its existing worktree. Do not start 01B1B,
-01B2, chunk 02, or another implementation chunk automatically.
+01B2, chunk 02, or another coverage implementation chunk automatically.
 
 `WS-ART-001-01` is merged. Do not start `WS-ART-001-02` or edit Flow Node until
 the user gives a separate explicit start signal.
