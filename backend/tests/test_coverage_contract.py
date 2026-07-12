@@ -100,7 +100,7 @@ def test_intended_config_returns_exact_floor(tmp_path: Path) -> None:
     ({"pin": "pytest-cov>=7"}, "pytest_cov_pin_missing"),
     ({"pin": "pytest-cov==7.1.0-malicious"}, "pytest_cov_pin_missing"),
     ({"dev": "['pytest-cov==7.1.0','pytest-cov>=9']"}, "pytest_cov_pin_missing"),
-    ({"dev": "['pytest-cov==7.1.0','PyTest_Cov>=9']"}, "pytest_cov_pin_missing"),
+    ({"dev": "['pytest-cov==7.1.0','PYTEST..COV>=9']"}, "pytest_cov_pin_missing"),
     ({"dev": "'pytest-cov==7.1.0'"}, "invalid_coverage_config"),
     ({"precision": 5}, "coverage_precision_invalid"),
     ({"floor": 101}, "coverage_floor_invalid"),
@@ -134,9 +134,10 @@ def test_config_rejects_malformed_tables(tmp_path: Path, text: str) -> None:
         policy.config_floor(path)
 
 
-def test_application_coverage_pragma_is_rejected(tmp_path: Path) -> None:
+@pytest.mark.parametrize("pragma", ["pragma no cover", "PRAGMA:NO COVER", "pragma:   no   cover"])
+def test_application_coverage_pragma_is_rejected(tmp_path: Path, pragma: str) -> None:
     (tmp_path / "app").mkdir()
-    (tmp_path / "app/a.py").write_text("x = 1  # pragma: no cover\n", encoding="utf-8")
+    (tmp_path / "app/a.py").write_text(f"x = 1  # {pragma}\n", encoding="utf-8")
     with pytest.raises(policy.PolicyError, match="coverage_pragma"):
         policy.validate_sources(tmp_path)
     (tmp_path / "app/a.py").write_text("MESSAGE = 'pragma: no cover'\n\"\"\"pragma: no cover\"\"\"\n", encoding="utf-8")

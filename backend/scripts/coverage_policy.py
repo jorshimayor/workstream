@@ -83,7 +83,7 @@ def config_floor(path: Path) -> Decimal:
         raise PolicyError("invalid_coverage_config") from exc
     require(isinstance(report, dict) and isinstance(run, dict), "invalid_coverage_config")
     require(isinstance(dev, list) and all(isinstance(item, str) for item in dev), "invalid_coverage_config")
-    pins = [item for item in dev if re.split(r"[<>=!~\s;\[]", item, 1)[0].lower().replace("_", "-").replace(".", "-") == "pytest-cov"]
+    pins = [item for item in dev if re.sub(r"[-_.]+", "-", re.split(r"[<>=!~\s;\[]", item, 1)[0].lower()) == "pytest-cov"]
     require(pins == ["pytest-cov==7.1.0"], "pytest_cov_pin_missing")
     forbidden = {"omit", "include", "source", "source_pkgs", "source_dirs", "exclude_lines", "exclude_also"}
     require(not forbidden.intersection(run), "coverage_exclusion_config")
@@ -104,7 +104,7 @@ def config_floor(path: Path) -> Decimal:
 def validate_sources(root: Path) -> None:
     for path in (root / "app").rglob("*.py"):
         tokens = tokenize.generate_tokens(StringIO(path.read_text(encoding="utf-8")).readline)
-        require(not any(token.type == tokenize.COMMENT and "pragma: no cover" in token.string.lower() for token in tokens), "coverage_pragma")
+        require(not any(token.type == tokenize.COMMENT and re.search(r"pragma\s*:?\s*no\s+cover", token.string, re.I) for token in tokens), "coverage_pragma")
 
 
 def evidence_data(data: dict, expected_head: str) -> dict:
