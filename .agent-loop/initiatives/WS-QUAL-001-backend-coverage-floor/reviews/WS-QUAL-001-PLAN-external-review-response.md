@@ -38,8 +38,10 @@ PR_HEAD_SHA=<final-head> python3 scripts/check_internal_review_evidence.py
 ```
 
 The static checks passed, including 31 agent-gate regression tests. The exact
-evidence gate is rerun after the evidence-only commit; fresh GitHub checks are
-required on the pushed final head.
+evidence gate passed on the evidence-only commit. GitHub Agent Gates run
+`29182719963` passed, and Backend run `29182719982` passed the full test and API
+drill sequence in 8 minutes 16 seconds. CodeRabbit passed, its description check
+passed, and the inline wording thread was automatically resolved.
 
 ## Remaining risks
 

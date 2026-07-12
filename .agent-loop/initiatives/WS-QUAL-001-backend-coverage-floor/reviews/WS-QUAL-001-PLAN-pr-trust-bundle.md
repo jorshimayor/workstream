@@ -103,7 +103,7 @@ Agent gate regression tests: 31 passed
 Diff hygiene: passed
 GitHub Agent Gates: passed
 GitHub Backend including tests and API drill: passed
-CodeRabbit: one valid wording comment addressed; fresh review pending
+CodeRabbit: valid wording comment addressed; thread resolved and description check passed
 ```
 
 ## Acceptance Criteria Proof
@@ -163,8 +163,8 @@ External response:
 
 | Source | Status | Notes |
 |---|---:|---|
-| CodeRabbit | Fix pushed | One valid grammar finding addressed; description expanded to the repository template. |
-| GitHub checks | Passed before external fix | Fresh checks required on the final evidence-bound head. |
+| CodeRabbit | PASS | Grammar thread resolved automatically; all five description/review checks passed. |
+| GitHub checks | PASS | Agent Gates and Backend, including tests and API drill, passed on external-fix head `1931196`. |
 
 ## CI And Gate Integrity
 
