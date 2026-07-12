@@ -1249,20 +1249,18 @@ async def test_local_adapter_startup_cleans_locked_abandoned_object_temp(tmp_pat
 
 @pytest.fixture
 def artifact_database_env(
-    monkeypatch: pytest.MonkeyPatch,
-    postgres_database_url: str,
+    isolated_database_env: str,
     migration_lock,
 ) -> Iterator[str]:
     """Reset PostgreSQL around artifact coordinator integration tests."""
-    monkeypatch.setenv("WORKSTREAM_DATABASE_URL", postgres_database_url)
     project_root = Path(__file__).resolve().parents[1]
     config = Config(str(project_root / "alembic.ini"))
     config.set_main_option("script_location", str(project_root / "alembic"))
     with migration_lock():
         command.downgrade(config, "base")
         command.upgrade(config, "head")
-        yield postgres_database_url
-        asyncio.run(_truncate_artifact_tables(postgres_database_url))
+        yield isolated_database_env
+        asyncio.run(_truncate_artifact_tables(isolated_database_env))
         command.downgrade(config, "base")
 
 
