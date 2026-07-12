@@ -12,9 +12,13 @@
   review passed and D12 production dependencies were explicitly approved.
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
-- Last merge commit: `772af1d`
+- Latest integrated `main` merge commit: `8644a43`
 - Current gate: bounded implementation and evidence for `WS-AUTH-001-02`.
 - Next chunk: none; do not start `WS-AUTH-001-03` automatically.
+- Parallel initiative: `WS-ART-001-PLAN` merged through PR #97 as `8644a43`;
+  no artifact implementation chunk is active. `WS-ART-001-01` requires a
+  separate explicit user start and retains its recorded WS-AUTH dependency
+  gates.
 - Parallel initiative: `WS-POL-002-03` merged through PR #90 as `a7aa474`; its
   post-merge memory merged through PR #94 as `b1270d7`. `WS-POL-002-04` remains
   inactive pending the relevant authorization proof and a separate explicit

@@ -11,6 +11,7 @@
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
+| `WS-ART-001-01` | Artifact Domain And Local Adapter Foundation | L1 | Inactive pending a separate explicit user start |
 
 ## Completed
 
@@ -41,11 +42,15 @@
 | `WS-POL-002-03` | Server-Owned Policy Approval And Visibility APIs | L1 | Merged through PR #90 as `a7aa474` on 2026-07-11 |
 | `WS-AUTH-001-PLAN` | Authorization Service Planning | L0 | Merged through PR #91 as `ad6d644` on 2026-07-11 |
 | `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Merged through PR #93 as `772af1d` on 2026-07-11 |
+| `WS-ART-001-PLAN` | Immutable Artifact Storage And Flow Node Integration Planning | L1 | Merged through PR #97 as `8644a43` on 2026-07-11 |
 
 ## Proposed Next
 
 `WS-AUTH-001-02` is the only active chunk. Do not start `WS-AUTH-001-03` or
 `WS-POL-002-04` automatically.
+
+`WS-ART-001-PLAN` is merged. Do not start `WS-ART-001-01`, edit Flow Node, or
+bypass its WS-AUTH dependency gates without a separate explicit start signal.
 
 ## Blocked
 

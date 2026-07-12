@@ -46,6 +46,64 @@ actor IDs or grants.
 The active-or-revoked link between one canonical issuer/opaque subject and one
 ActorProfile. Raw tokens, provider credentials, and full claims are not stored.
 
+## ArtifactUploadSession
+
+The task- or guide-scoped operational staging record that authorizes bounded
+artifact upload, sealing, expiry, and single-use consumption. It is not a
+submission and grants no review authority.
+
+## ArtifactContent
+
+Workstream's provider-neutral immutable content identity: server-computed
+SHA-256, byte count, and bounded media metadata. Provider CIDs and manifests are
+replica details, not this record's identity.
+
+## ArtifactUploadItem
+
+The per-item mutable upload-operation ledger inside an
+`ArtifactUploadSession`. It owns byte reservation, logical role, scoped
+idempotency, request digest, CAS state, provider operation reference, and the
+resulting `ArtifactContent`. It is not an `ArtifactBinding`.
+
+## ArtifactBinding
+
+The immutable logical association between `ArtifactContent` and one exact
+Workstream project/resource/logical role. Staging is not a binding. Replacement
+creates a new row with `supersedes_binding_id`; prior rows remain history. It
+records Workstream meaning and provenance, not storage-provider state.
+
+## ArtifactReplica
+
+One provider copy of `ArtifactContent`, identified by opaque provider artifact
+and optional manifest IDs. Verification, retention, availability, and integrity
+states belong here and do not create task or review states.
+
+## ArtifactOperationReceipt
+
+An append-only record of an idempotent storage-provider operation, canonical
+request/response digests, provider reference, bounded outcome, and timestamps.
+
+## ArtifactSetManifest
+
+The server-generated canonical description of a sealed upload session's content
+IDs, logical roles, trusted file facts, SHA-256 values, and byte counts. Every
+entry has a server-derived identity over all semantic fields, exact duplicate
+entries are rejected, and a total ordering makes the hash deterministic. Its
+hash commits only to that exact set. A separate pre-submit admission record
+binds the hash to actor, task, policy, checker, exact submission input, result,
+and expiry.
+
+## ReviewPacketManifest
+
+The future WS-REV-owned, system-generated packet presented to an authorized
+reviewer. It references general artifact bindings and is not implemented by the
+WS-ART storage foundation.
+
+## ReviewEvidenceArtifact
+
+The future WS-REV-owned reviewer attachment record. It references a verified
+general artifact binding and requires reviewer assignment/lease authority.
+
 ## AdminRoleGrant
 
 An immutable administrative authority record for Access Administrator,
@@ -80,7 +138,7 @@ The human-facing operating guide for a project. It contains the project instruct
 
 The Workstream-owned sufficiency record for a project guide version and source
 snapshot. It is normally produced by `ProjectGuideSufficiencyAgent`, but an
-an authorized covered Project Manager can create a manual report when needed.
+authorized covered Project Manager can create a manual report when needed.
 It records
 whether the guide passed, is blocked by gaps, or passed with warnings that an
 authorized covered Project Manager must acknowledge before activation. Manual reports
@@ -103,11 +161,12 @@ contract for what a contributor must submit. It is derived from open-ended proje
 guide material after guide sufficiency passes or passes with warnings, reviewed
 by an authorized covered Project Manager after any
 warnings are acknowledged, and attached to a project guide version. It defines
-required artifacts, evidence
-requirements, artifact hash requirements, allowed storage reference forms,
-forbidden artifacts, attestation requirements, and project-specific packaging
-rules. It can add or tighten requirements, but it cannot weaken Workstream's
-default submission artifact rules.
+required artifacts, evidence requirements, forbidden artifacts, attestation
+requirements, size limits, and project-specific packaging rules. It can add or
+tighten requirements, but it cannot weaken Workstream's default submission
+artifact rules. Server-generated manifests, SHA-256, and the configured storage
+provider are unconditional platform invariants rather than project policy
+choices.
 
 The project-specific policy row is still `SubmissionArtifactPolicy`; Workstream
 does not define a separate `ProjectSubmissionArtifactPolicy` type.
