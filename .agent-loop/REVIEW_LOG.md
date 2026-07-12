@@ -1,5 +1,31 @@
 # Review Log
 
+## WS-ART-001-PLAN
+
+Status: planning external review in progress on PR #97. Seven valid CodeRabbit
+findings were fixed locally; final evidence rebinding and fresh external checks
+remain before human review.
+
+Result: PASS after fixes across senior engineering, QA/test, security/auth,
+product/ops, architecture, docs, CI integrity, reuse/dedup, and test delta.
+All reviewer sessions were closed before publication.
+
+Scope: immutable artifact storage boundary, provider-neutral port, local and
+Flow Node adapters, exact-byte admission/binding/recovery, failure/migration
+matrices, clean legacy cutover, and ten bounded cross-repository chunk
+contracts. No runtime implementation changed.
+
+Evidence: `.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/reviews/WS-ART-001-PLAN-internal-review-evidence.md`
+
+Trust bundle: `.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/reviews/WS-ART-001-PLAN-pr-trust-bundle.md`
+
+External review: CodeRabbit posted seven actionable comments; all were fixed in
+`567a052`. Response:
+`.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/reviews/WS-ART-001-PLAN-external-review-response.md`
+
+Next chunk: `WS-ART-001-01` remains proposed and inactive until explicit human
+planning merge approval and a separate start signal.
+
 ## WS-AUTH-001-01
 
 Status: merged through PR #93 on 2026-07-11 as `772af1d`.
