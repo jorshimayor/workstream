@@ -2,8 +2,8 @@
 
 Parent: `WS-QUAL-001` Backend Coverage Floor
 
-Status: approved and active after all required contract reviewers passed at
-`7901de94f4391c107c52ea8733ac72ad34ceb069`.
+Status: stopped at `c0fa4a2` after an additional valid finding; superseded by
+01B1A-R2. Retain this contract as review history and do not resume it.
 
 ## Goal And Reason
 
