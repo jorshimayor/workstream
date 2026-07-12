@@ -3,8 +3,7 @@
 Parent: `WS-QUAL-001` Backend Coverage Floor
 
 Status: implemented within scope; all required implementation-review tracks
-passed at code candidate `40ac7a9b5a9319b0fdccef396aa82342b324e4c3`;
-published for human review in PR #105.
+passed at code candidate `40ac7a9b5a9319b0fdccef396aa82342b324e4c3`.
 
 ## Goal And Scope
 
