@@ -2,8 +2,8 @@
 
 Parent: `WS-QUAL-001` Backend Coverage Floor
 
-Status: proposed after the 01B1 circuit breaker; user approved the split
-direction on 2026-07-12; internal plan review pending.
+Status: approved and active. The user approved the split direction on
+2026-07-12 and all required plan-review tracks passed at `d181987`.
 
 ## Goal And Reason
 

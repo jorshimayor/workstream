@@ -18,6 +18,11 @@ User checkpoint: the user approved the proposed parser-core versus semantic-
 delta split direction on 2026-07-12. Internal plan review must pass before
 activating only 01B1A; 01B1B retains a later separate start checkpoint.
 
+Split review result: PASS at `d1819873e5ac353da3963771f70dc2be13bc72f9`
+across senior engineering, QA/test, security/auth, product/ops, architecture,
+CI integrity, docs, reuse/dedup, test delta, and circuit breaker. Only 01B1A is
+active; 01B1B and 01B2 retain later checkpoints.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract
