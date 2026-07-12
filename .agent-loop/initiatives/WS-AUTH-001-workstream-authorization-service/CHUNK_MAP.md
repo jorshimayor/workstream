@@ -72,6 +72,8 @@ WS-AUTH-001-PLAN
 
 ## Stop condition
 
-`WS-AUTH-001-01` merged through PR #93. Stop after this post-merge memory
-update. Do not start `WS-AUTH-001-02` or `WS-POL-002-04`; each requires a
-separate explicit user start signal and its recorded prerequisites.
+`WS-AUTH-001-01` merged through PR #93. `WS-AUTH-001-02` was subsequently
+implemented off-main but must not be resumed or published until WS-QUAL
+completes its permanent 90 percent CI floor and final post-merge memory, then
+the user gives an explicit resume signal. Do not start `WS-POL-002-04`; it
+retains its separate explicit start signal and recorded prerequisites.
