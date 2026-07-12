@@ -5,7 +5,7 @@
 Planning merged through PR #97 on 2026-07-12 as `8644a43`. The reviewed
 planning SHA is `f7fbc33`; the final evidence-bound branch head is `c069064`.
 Implementation chunk `WS-ART-001-01` is implemented and internally reviewed on
-its dedicated branch. The reviewed implementation SHA is `d67ccf1`. All nine
+its dedicated branch. The reviewed implementation SHA is `66729e4`. All nine
 required reviewer tracks passed and their sessions are closed. The chunk is
 ready for PR publication, external checks, and the user-owned approval gate.
 

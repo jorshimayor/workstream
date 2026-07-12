@@ -41,7 +41,11 @@ state before I/O and promotes facts only after verified provider success.
 - All nine required internal reviewer tracks passed after fixes; no reviewer
   session remains open.
 
-Reviewed code SHA: `d67ccf17c837a20c235ea16d9ca4a3110dd3e579`
+Reviewed code SHA: `66729e421cb729732b33210f63b0f81a5ccc0442`
+
+The first Backend run found a Settings-cache ordering bug in the artifact test
+fixture. The fixture now reuses the shared isolated database environment; the
+exact failing order passed 15 tests and four focused internal delta reviewers.
 
 ## External Review
 

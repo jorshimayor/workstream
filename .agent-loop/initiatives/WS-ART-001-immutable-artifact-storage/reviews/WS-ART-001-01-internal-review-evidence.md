@@ -10,11 +10,11 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: d67ccf17c837a20c235ea16d9ca4a3110dd3e579
+Reviewed code SHA: 66729e421cb729732b33210f63b0f81a5ccc0442
 
-Reviewed at: 2026-07-12T08:56:53Z
+Reviewed at: 2026-07-12T09:19:32Z
 
-Reviewer run IDs: senior-engineering=019f5412-7b62-7fa3-94a5-e16bc47d538b; QA/test=019f5412-64d7-7033-ac07-8c75c1e52684; security/auth=019f5412-87f9-72d3-bc37-c3abc1151a63; product/ops=019f554d-60b0-7321-9412-4fb71eb074f9; architecture=019f5412-5588-7c60-8bd9-da0a2fe46924; CI-integrity=019f554d-6633-7143-9c93-f10b0f565fe3; docs=019f554d-6ade-73d0-98ad-76e7d5a0474d; reuse/dedup=019f554d-73a7-7932-bf74-553d421590d6; test-delta=019f5565-2802-7462-b066-d178464cc479
+Reviewer run IDs: senior-engineering=019f5412-7b62-7fa3-94a5-e16bc47d538b,delta=019f559c-8426-7c62-b38e-b35b1c45d437; QA/test=019f5412-64d7-7033-ac07-8c75c1e52684,delta=019f559c-89b3-7c21-bf39-17cc84bb5dcc; security/auth=019f5412-87f9-72d3-bc37-c3abc1151a63; product/ops=019f554d-60b0-7321-9412-4fb71eb074f9; architecture=019f5412-5588-7c60-8bd9-da0a2fe46924; CI-integrity=019f554d-6633-7143-9c93-f10b0f565fe3,delta=019f559c-8fc9-7063-aaca-7e45a84b0675; docs=019f554d-6ade-73d0-98ad-76e7d5a0474d; reuse/dedup=019f554d-73a7-7932-bf74-553d421590d6; test-delta=019f5565-2802-7462-b066-d178464cc479,delta=019f559c-9a09-77d1-83d5-882a8faca75e
 
 ## Reviewed Change
 
@@ -65,6 +65,14 @@ passed with 90.26 percent artifact-subsystem coverage; 17 migration/config
 tests passed; 36 agent-gate tests passed; all stale, link, loop-memory, and diff
 checks passed. Focused reviewer reruns also passed the repaired migration,
 coordinator, ambiguous-replay, create-fault, and bounded-I/O cases.
+
+GitHub Backend CI initially exposed a full-suite ordering failure: the artifact
+database fixture set the database environment but could reuse a cached Settings
+object created by earlier configuration tests. Commit `66729e4` replaced that
+duplicate setup with the shared cache-aware `isolated_database_env` fixture.
+The exact config-first sequence plus all six coordinator tests then passed (15
+tests), and focused senior, QA, CI-integrity, and test-delta reviewers passed the
+repair with no findings.
 
 The repository-wide suite is intentionally not duplicated in this worktree
 while the separately authorized WS-QUAL agent runs that proof. GitHub Backend
