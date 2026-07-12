@@ -2,20 +2,19 @@
 
 ## Current Status
 
-Planning complete and internally reviewed on
-`codex/ws-art-001-artifact-storage-planning`. PR #97 is under external review;
-the seven initial CodeRabbit findings are fixed and final internal evidence is
-rebound. Fresh external checks remain. No implementation chunk is active.
+Planning merged through PR #97 on 2026-07-12 as `8644a43`. The reviewed
+planning SHA is `f7fbc33`; the final evidence-bound branch head is `c069064`.
+No implementation chunk is active.
 
 ## Active Chunk
 
-`WS-ART-001-PLAN` only.
+None.
 
 ## Proposed First Implementation Chunk
 
-`WS-ART-001-01` after planning review, external review, merge, memory update,
-and a separate explicit user approval. Product cutovers remain blocked on their
-named WS-AUTH dependencies even if internal storage foundations finish first.
+`WS-ART-001-01` after this post-merge memory update and a separate explicit user
+start. Product cutovers remain blocked on their named WS-AUTH dependencies even
+if internal storage foundations finish first.
 
 ## Parallel Work
 
@@ -33,5 +32,5 @@ Dependency gates:
 
 ## Stop Condition
 
-Stop after the planning PR. Do not edit Flow Node or implement an artifact
-chunk until the planning package is approved and merged.
+Stop after the post-merge memory update. Do not edit Flow Node or implement an
+artifact chunk until the user separately starts `WS-ART-001-01`.

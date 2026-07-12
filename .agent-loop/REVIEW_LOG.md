@@ -2,9 +2,11 @@
 
 ## WS-ART-001-PLAN
 
-Status: planning external review in progress on PR #97. Seven valid CodeRabbit
-findings were fixed locally; final evidence rebinding and fresh external checks
-remain before human review.
+Status: merged through PR #97 on 2026-07-12 as `8644a43`.
+
+Reviewed planning SHA: `f7fbc33`
+
+Final evidence-bound branch head: `c069064`
 
 Result: PASS after fixes across senior engineering, QA/test, security/auth,
 product/ops, architecture, docs, CI integrity, reuse/dedup, and test delta.
@@ -23,8 +25,12 @@ External review: CodeRabbit posted seven actionable comments; all were fixed in
 `567a052`. Response:
 `.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/reviews/WS-ART-001-PLAN-external-review-response.md`
 
-Next chunk: `WS-ART-001-01` remains proposed and inactive until explicit human
-planning merge approval and a separate start signal.
+Merge checks: Agent Gates and Backend passed on the final head. CodeRabbit's
+initial review findings were fixed; its final status check passed, while the
+last incremental narrative review was rate-limited and posted no new finding.
+
+Next chunk: `WS-ART-001-01` remains proposed and inactive until post-merge
+memory completes and the user provides a separate start signal.
 
 ## WS-AUTH-001-01
 
