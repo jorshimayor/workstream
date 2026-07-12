@@ -4,10 +4,8 @@
 from __future__ import annotations
 
 import argparse
-import ast
 from decimal import Decimal, InvalidOperation, ROUND_DOWN
 import json
-import os
 from pathlib import Path
 import re
 import sys
@@ -16,16 +14,11 @@ import tomllib
 from run_isolated_tests import NAME_RE
 
 BACKEND = Path(__file__).resolve().parents[1]
-REPO = BACKEND.parent
-sys.path.insert(0, str(REPO / "scripts"))
-from workstream_agent_gate import changed_files, diff_text, numstat  # noqa: E402
 
 SHA_RE = re.compile(r"[a-f0-9]{40}")
 DECIMAL_RE = re.compile(r"\d+\.\d{6}")
 VERSION_RE = re.compile(r"[0-9]+(?:\.[0-9]+){1,3}(?:[a-z0-9.+-]{0,20})?")
 ALEMBIC_RE = re.compile(r"[a-z0-9_]{1,64}")
-GLOBAL_MEMORY = {".agent-loop/LOOP_STATE.md", ".agent-loop/REVIEW_LOG.md", ".agent-loop/WORK_QUEUE.md"}
-QUAL_MEMORY = ".agent-loop/initiatives/WS-QUAL-001-backend-coverage-floor/"
 EVIDENCE_KEYS = set(
     "schema_version base_merge_sha measured_tree_sha covered_lines num_statements "
     "measured_percent configured_floor minimum_milestone python_version coverage_version "
@@ -145,52 +138,6 @@ def runner_metadata(path: Path, expected_tree: str, expected_head: str) -> dict:
     require(SHA_RE.fullmatch(expected_tree) and data.get("tree_sha") == expected_tree, "metadata_tree_mismatch")
     require("://" not in json.dumps(data), "metadata_secret")
     return data
-
-
-def weak_python(path: Path) -> bool:
-    try:
-        tree = ast.parse(path.read_text(encoding="utf-8"))
-    except (OSError, SyntaxError):
-        return True
-    blocked = {"skip", "skipif", "skipIf", "skipUnless", "xfail", "expectedFailure", "importorskip"}
-    modules, marks, names = {"pytest", "unittest"}, set(), set()
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            modules.update(alias.asname or alias.name for alias in node.names if alias.name in modules)
-        if isinstance(node, ast.ImportFrom) and node.module in modules:
-            for alias in node.names:
-                target = alias.asname or alias.name
-                if alias.name == "mark":
-                    marks.add(target)
-                elif alias.name in blocked:
-                    names.add(target)
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Name) and node.id in names:
-            return True
-        if isinstance(node, ast.Attribute) and node.attr in blocked:
-            root = ast.unparse(node.value).split(".", 1)[0]
-            if root in modules | marks:
-                return True
-    return False
-
-
-def validate_delta(base: str, max_lines: int, allowed: set[str]) -> None:
-    previous = Path.cwd()
-    try:
-        os.chdir(REPO)
-        files = changed_files(base, "HEAD")
-        _, _, rows = numstat(base, "HEAD")
-        tests = [path for path in files if path.startswith("backend/tests/") and path.endswith(".py")]
-        diff = diff_text(base, "HEAD", tests)
-    finally:
-        os.chdir(previous)
-    require(all(path in allowed or path in GLOBAL_MEMORY or path.startswith(QUAL_MEMORY) for path in files), "scope_violation")
-    size = sum(add + delete for path, add, delete in rows if not path.startswith(".agent-loop/"))
-    require(size <= max_lines, "implementation_size_exceeded")
-    require(not any(weak_python(REPO / path) for path in tests), "test_skip_or_xfail")
-    deleted = [line for line in diff.splitlines() if line.startswith("-") and not line.startswith("---")]
-    assertion = re.compile(r"^-\s*(assert\b|self\.assert\w+\(|with\s+pytest\.raises\()")
-    require(not any(assertion.search(line) for line in deleted), "deleted_assertion")
 
 
 def main() -> int:
