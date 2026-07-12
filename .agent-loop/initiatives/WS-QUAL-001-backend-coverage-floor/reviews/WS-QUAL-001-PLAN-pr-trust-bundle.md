@@ -135,11 +135,11 @@ CodeRabbit: one valid wording comment addressed; fresh review pending
 
 ## Internal Reviewer Results
 
-Reviewed code SHA: pending external-fix rebind
+Reviewed code SHA: `0d9dd987d546c864fa8de7bae462e5e73a1b5ea9`
 
-Reviewed at: pending external-fix rebind
+Reviewed at: `2026-07-12T06:27:02Z`
 
-Reviewer run IDs: pending external-fix rebind
+Reviewer run IDs: `ws-qual-001-plan-external-fix-senior-architecture-reuse/0d9dd987d546/2026-07-12`, `ws-qual-001-plan-external-fix-qa-ci-testdelta-0d9dd98-20260712T062655Z`, `WS-QUAL-001-PLAN/security-product-docs-external-fix/0d9dd987d546/2026-07-12T06:27:02Z`
 
 | Reviewer | Result | Blocking Findings | Notes |
 |---|---:|---|---|

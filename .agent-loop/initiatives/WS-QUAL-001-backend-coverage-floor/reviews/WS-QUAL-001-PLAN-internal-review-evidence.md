@@ -10,13 +10,15 @@ valid findings addressed: yes
 
 ## Reviewed revision
 
-Reviewed code SHA: 4596bd67293e68c6156c4b86bf9900df344fdaad
+Reviewed code SHA: 0d9dd987d546c864fa8de7bae462e5e73a1b5ea9
 
-Reviewed at: 2026-07-12T06:05:30Z
+Reviewed at: 2026-07-12T06:27:02Z
 
-Reviewer run IDs: ws-qual-001-plan-senior-architecture-reuse-rebind/4596bd67293e/2026-07-12-final, ws-qual-001-plan-qa-ci-testdelta-4596bd6-20260712T060516Z, WS-QUAL-001-PLAN/security-product-docs-rebind/4596bd67293e/2026-07-12T06:05:30Z
+Reviewer run IDs: ws-qual-001-plan-external-fix-senior-architecture-reuse/0d9dd987d546/2026-07-12, ws-qual-001-plan-external-fix-qa-ci-testdelta-0d9dd98-20260712T062655Z, WS-QUAL-001-PLAN/security-product-docs-external-fix/0d9dd987d546/2026-07-12T06:27:02Z
 
-After the reviewed SHA, only this internal review evidence file changed.
+After the reviewed SHA, only the internal evidence, trust bundle, and external
+review response changed to record the completed rebind and checks. No plan,
+chunk contract, runtime, test, dependency, or workflow file changed.
 
 ## Result
 

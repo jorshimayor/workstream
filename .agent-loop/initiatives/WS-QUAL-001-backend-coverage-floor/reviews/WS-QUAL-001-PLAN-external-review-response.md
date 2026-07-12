@@ -27,7 +27,19 @@ does not authorize `WS-QUAL-001-01` implementation.
 
 ## Commands rerun
 
-Pending final internal rebind and exact-head CI rerun after this response commit.
+```bash
+python3 scripts/check_loop_memory_state.py
+python3 scripts/check_stale_authorization_docs.py
+python3 scripts/check_stale_workstream_wording.py
+python3 scripts/check_markdown_links.py
+python3 scripts/test_agent_gates.py
+git diff --check
+PR_HEAD_SHA=<final-head> python3 scripts/check_internal_review_evidence.py
+```
+
+The static checks passed, including 31 agent-gate regression tests. The exact
+evidence gate is rerun after the evidence-only commit; fresh GitHub checks are
+required on the pushed final head.
 
 ## Remaining risks
 
