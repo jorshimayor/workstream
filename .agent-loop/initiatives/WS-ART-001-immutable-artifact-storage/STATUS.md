@@ -4,17 +4,21 @@
 
 Planning merged through PR #97 on 2026-07-12 as `8644a43`. The reviewed
 planning SHA is `f7fbc33`; the final evidence-bound branch head is `c069064`.
-No implementation chunk is active.
+Implementation chunk `WS-ART-001-01` is implemented and internally reviewed on
+its dedicated branch. The reviewed implementation SHA is `5574bf5`. All nine
+required reviewer tracks passed and their sessions are closed. The chunk is
+ready for PR publication, external checks, and the user-owned approval gate.
 
 ## Active Chunk
 
-None.
+`WS-ART-001-01`: artifact domain and local adapter, awaiting external and human
+review. Do not merge without explicit user approval.
 
 ## Proposed First Implementation Chunk
 
-`WS-ART-001-01` after this post-merge memory update and a separate explicit user
-start. Product cutovers remain blocked on their named WS-AUTH dependencies even
-if internal storage foundations finish first.
+`WS-ART-001-02` after `WS-ART-001-01` is merged through an explicit human
+checkpoint. Product cutovers remain blocked on their named WS-AUTH dependencies
+even if internal storage foundations finish first.
 
 ## Parallel Work
 
@@ -32,5 +36,5 @@ Dependency gates:
 
 ## Stop Condition
 
-Stop after the post-merge memory update. Do not edit Flow Node or implement an
-artifact chunk until the user separately starts `WS-ART-001-01`.
+Stop after the `WS-ART-001-01` PR reaches its human checkpoint. Do not begin
+`WS-ART-001-02` or edit Flow Node in this chunk.

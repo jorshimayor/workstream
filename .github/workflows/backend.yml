@@ -57,7 +57,15 @@ jobs:
 
       - name: Test
         working-directory: backend
-        run: pytest -q
+        run: pytest -q --cov=app --cov-report=term-missing --cov-fail-under=78
+
+      - name: Artifact foundation coverage
+        working-directory: backend
+        run: >-
+          coverage report
+          --include='app/adapters/artifacts/*,app/interfaces/artifacts.py,app/modules/artifacts/*'
+          --precision=2
+          --fail-under=90
 
       - name: API contract real API e2e
         working-directory: backend

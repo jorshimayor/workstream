@@ -2,9 +2,9 @@
 
 ## Status And Scope
 
-This is the proposed canonical target specification for WS-ART-001. It becomes
-controlling when ADR 0013 and the planning PR are explicitly approved. Until an
-owning cutover merges, current runtime schemas remain implementation evidence.
+This is the accepted canonical target specification for WS-ART-001. ADR 0013
+and the planning PR were explicitly approved. Runtime schemas change only when
+their owning cutover merges.
 
 It covers provider-neutral artifact storage, local/Flow Node interoperability,
 staging, exact-byte binding, checker artifacts, and recovery. It does not
@@ -72,18 +72,37 @@ attempt/correlation references, and provider/database timestamps.
 Async operations:
 
 ```text
-store(stream, expected_sha256, maximum_bytes, metadata, idempotency)
+store(stream, expected_sha256?, expected_size?, maximum_bytes, metadata, idempotency)
+recover_committed_store(store_request_with_expected_sha256_and_size)
 open(provider_artifact_id, byte_range?)
 stat(provider_artifact_id)
 verify(provider_artifact_id, expected_sha256, expected_size, idempotency)
-retain(provider_artifact_id, retention_class, idempotency)
+retain(provider_artifact_id, retention_reference, retention_class, idempotency)
 release(provider_artifact_id, retention_reference, idempotency)
-get_operation_receipt(idempotency)
+get_operation_receipt(service_principal, operation, idempotency_key)
 ```
+
+`open` and `stat` are provider-port reads over an already configured service
+client, so service identity is injected by the adapter or transport and is not
+a method argument. Mutating operations and receipt lookup carry explicit
+operation identity because their idempotency and audit scope depend on it.
 
 DTOs expose opaque provider IDs, SHA-256, size, media type, typed states, and
 stable errors. Provider-specific receipt details are bounded and never required
 for domain decisions.
+
+`retention_reference` is a Workstream-generated opaque reference owned by one
+authorized retention intent. `retain` is idempotent for the tuple of service
+principal, provider artifact, retention reference, retention class, and request
+digest. `release` must present that exact reference; it cannot release another
+reference or infer one from a retention class. Status reports bounded active
+reference summaries and the aggregate retention state without exposing product
+resource identifiers.
+
+Byte ranges use a zero-based `offset` and optional nonnegative `length` with an
+exclusive end. Offset equal to object size returns an empty stream; offset past
+the end is invalid. Partial reads do not claim full-object verification; only a
+full `verify` establishes the stored SHA-256 and byte count.
 
 Canonical JSON and SHA-256 operations reuse Workstream's shared
 `app.core.hashing.canonical_json_hash` implementation (extended centrally if
@@ -126,15 +145,121 @@ production fails closed.
    state and returns a receipt.
 4. Transaction B locks session/item, compares provider facts, and writes
    content/replica/receipt/item readiness. No resource binding exists yet.
-5. Optional expected SHA-256 is persisted before ingest as a client byte
-   commitment, not server truth. Crash recovery may independently open/hash/count
-   provider bytes against that commitment. Without a pre-ingest commitment, the
-   item becomes `replay_required` and the client must replay the exact bytes
-   under the same idempotency key; Workstream hashes the replay and the provider
-   returns the existing exact-replay receipt. Receipt-only recovery never
-   creates content. Altered commitment/receipt/object/replay bytes are
+5. Optional expected SHA-256 and size are persisted before ingest as client byte
+   commitments, not server truth. After Workstream observes provider success,
+   crash recovery may independently open/hash/count provider bytes only when
+   both commitments exist. An ambiguous provider exception or cancellation
+   always makes the item `replay_required`; the client must replay the exact
+   bytes under the same idempotency key. Workstream hashes the replay and the
+   provider returns the existing exact-replay receipt when an effect committed.
+   Receipt-only recovery never creates content. Altered persisted commitment, receipt,
+   object, or replay bytes are
    quarantined with `artifact_integrity_failure`; no background process guesses
    a local path.
+
+`ArtifactRepository` and `ArtifactIngestService` own this choreography.
+Transaction A locks the upload session and item, validates/reserves aggregate
+limits, increments CAS versions, and commits before the provider is called.
+The adapter has no SQLAlchemy, audit, or product-domain dependency. Transaction
+B re-locks the same records, validates the CAS/request digest, copies the
+provider receipt into append-only `ArtifactOperationReceipt`, creates or reuses
+the immutable content and replica records, and marks the item ready. Binding is
+not an ingest operation and is impossible in staging.
+
+Provider-owned idempotency receipts, Workstream operation-receipt rows, and
+shared `AuditEvent` rows are separate records. Binding, release, quarantine,
+and reconciliation transitions write their audit event through
+`AuditRepository` in the same Workstream database transaction as the owning
+state change. Automated recovery uses actor ID and subject
+`workstream.artifact.reconciler`, issuer `https://workstream.internal`, role
+`service`, claim snapshot
+`{"service_principal":"workstream.artifact.reconciler"}`, auth source
+`service`, and `is_dev_auth=false`; it never fabricates a human actor.
+
+### Local Adapter Commit And Recovery
+
+The local adapter uses only opaque validated identifiers beneath one configured
+non-symlink root. It creates directories as `0700` and files as `0600`, rejects
+links and non-regular files, never overwrites a published immutable object, and
+sanitizes all filesystem errors. Blocking opens, reads, writes, hashing,
+`fsync`, and directory synchronization run off the event loop. Reads and writes
+are subdivided to the configured buffer ceiling, never more than 1 MiB.
+
+One cross-process lock serializes each service/operation/idempotency scope.
+Retention mutations also acquire a provider-artifact lock so different
+idempotency keys cannot lose references through concurrent metadata updates. A
+new store performs this durable order:
+
+1. atomically persist a private operation-intent record containing the scoped
+   operation identity, canonical request digest, and reserved opaque provider
+   artifact ID;
+2. exclusively create a private temporary object;
+3. stream, hash, and count bytes; then finish writing and `fsync` the object;
+4. publish the immutable object with exclusive no-overwrite semantics and
+   `fsync` its parent directory;
+5. atomically publish and synchronize object metadata;
+6. atomically publish and synchronize the immutable idempotency receipt.
+
+Cancellation waits for any in-flight filesystem call to finish before closing
+and removing unpublished temporary state. Startup removes abandoned temporary
+files only while holding their operation lock. Exact replay fully consumes and
+independently hashes/counts the bytes before returning the existing
+object/receipt. A changed request digest fails before consuming or
+publishing another object. Normal store replay requires the exact byte replay
+under the same key and independently hashes the entire replay. Object-only
+recovery without client bytes is a separate recovery operation that requires
+both the persisted expected SHA-256 and size. A contributor's initial
+expected-digest mismatch is
+`artifact_input_mismatch`; altered persisted bytes, metadata, receipt, or
+recovery replay are `artifact_integrity_failure`. The adapter first durably
+quarantines its provider object and denies `open`. Before transaction B,
+Workstream fails the upload item and creates no content or replica. For an
+existing ready artifact, `ArtifactIngestService` separately marks the replica
+quarantined and writes its audit event in one database transaction;
+reconciliation closes a crash between provider and database transitions.
+Temp-only and object-only states are associated through the durable operation
+intent and are recoverable provider orphans; metadata-only and receipt-only
+states cannot promote Workstream content.
+
+The adapter pins the verified root with an open descriptor. Every object,
+metadata, receipt, intent, lock, temporary, and quarantine operation opens its
+parent directory relative to that descriptor with no-follow semantics and
+validates the opened file descriptor. Runtime subdirectory replacement fails
+closed instead of redirecting storage outside the configured root.
+
+Retention metadata records the creating service principal with each reference
+and class. Release requires that same owner. A durable retention intent
+precedes metadata mutation, allowing retry to reconstruct the immutable
+receipt after a crash between metadata and receipt publication.
+
+### Foundation Database Invariants
+
+- Upload-session states are `open`, `sealed`, `consumed`, `expired`, and
+  `cancelled`; item states are `reserved`, `uploading`, `provider_committed`,
+  `replay_required`, `ready`, `failed`, and `cancelled`.
+- Byte/item totals, reservations, limits, and CAS versions are nonnegative;
+  session aggregate reservation is enforced under the repository's row lock.
+- SHA-256 fields use exactly `sha256:` plus 64 lowercase hexadecimal digits.
+- Item idempotency is unique within its session and request-digest mismatch is
+  terminal. Content is unique by SHA-256 and byte count. A provider artifact ID
+  is unique within its adapter. Receipt operation/idempotency identity is
+  unique within its adapter and service principal and owns one request digest.
+- Replica verification, retention, availability, and integrity observations
+  use separate constrained states. Quarantined integrity cannot be opened or
+  promoted without a later audited repair operation.
+- Content and binding facts are immutable; receipts are append-only. PostgreSQL
+  update/delete guards enforce those guarantees. Bindings carry monotonic
+  `scope_version`; unique scope/version and unique non-null supersession keys
+  serialize concurrent inserts. A constraint trigger requires version one to
+  have no predecessor and later versions to point to the immediately prior
+  binding in the same project/resource/logical role. Currentness is the maximum
+  scope version and is not mutable state.
+- Provider operation receipts are unique by adapter, service principal,
+  operation, and idempotency key. The scope owns one canonical request digest.
+  Retention reference, class, and owner are structured fields, not only details.
+- Migration `0016` is additive. Upgrade from populated `0015` preserves every
+  legacy value and leaves all artifact tables empty. Downgrade refuses when an
+  artifact table contains rows; empty downgrade and re-upgrade are supported.
 
 Metadata-only provider operations use outbox/Celery. Bytes and credentials never
 enter outbox, Redis, or PostgreSQL.
@@ -216,7 +341,7 @@ GET  /api/v1/artifacts/{provider_artifact_id}/status
 POST /api/v1/artifacts/{provider_artifact_id}/verify
 PUT  /api/v1/artifacts/{provider_artifact_id}/retentions/{reference}
 DELETE /api/v1/artifacts/{provider_artifact_id}/retentions/{reference}
-GET  /api/v1/artifact-operations/{idempotency_key}
+GET  /api/v1/artifact-operations/{operation}/{idempotency_key}
 ```
 
 Successful new ingest is 201; exact replay is 200; accepted metadata-only
@@ -225,15 +350,18 @@ identity, 403 wrong audience/scope, 404 unknown provider artifact, 409
 idempotency mismatch or retention conflict, 413 limit exceeded, 422 digest or
 integrity mismatch, 429 throttled, and 503 provider unavailable.
 
-Idempotency records are scoped by service subject, operation, canonical request
-reference, and request digest. They remain available for the provider artifact's
+`service_principal`, operation, and idempotency key form the operation identity.
+The canonical request reference is request content covered by that identity's
+single request digest; changing the reference or digest returns a 409 mismatch,
+not a second operation. Records remain available for the provider artifact's
 lifetime and never less than 90 days. Auth, validation, conflict, and integrity
 failures are not retried. Transient timeout/429/5xx retries use full jitter,
 default five-second initial delay, five-minute cap, eight attempts, and a
 configurable 30-minute elapsed-time limit before operator-visible dead letter.
 
 Receipt outcomes are immutable. Verification moves from pending to verified or
-integrity-failed. Retention moves from unretained to retained and may reach
+failed; integrity mismatch separately moves `integrity_state` to `quarantined`.
+Retention moves from unretained to retained and may reach
 released only through an authorized reference-counted release. Availability is
 a mutable observation. Quarantined integrity can return to valid only through a
 new audited repair/verification receipt; history is never overwritten.
