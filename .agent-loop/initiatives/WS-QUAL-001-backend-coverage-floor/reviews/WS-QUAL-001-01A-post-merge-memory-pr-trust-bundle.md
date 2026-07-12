@@ -15,7 +15,8 @@ the coverage policy/baseline chunk or resuming AUTH.
 
 ## Scope Control
 
-Eight durable `.agent-loop` Markdown files plus this evidence/trust pair. No
+Eight durable state Markdown files plus this evidence/trust pair and external
+response. No
 runtime, schema, migration, test, workflow, dependency, coverage configuration,
 public API, or product behavior changed.
 
@@ -25,12 +26,13 @@ Loop-state, Markdown-link, stale Workstream, stale authorization, and diff
 checks passed. All required internal reviewer tracks passed after lifecycle
 wording repairs. No reviewer session remains open.
 
-Reviewed code SHA: `f0cd29508abed1bd0b94ffdb6c156d2f2b57b819`
+Reviewed code SHA: `50d3b7fe03146ec0b58d382c945d65e46d6c9f9a`
 
 ## External Review
 
-Pending publication of this memory-only PR. External findings will be recorded
-separately if any are posted.
+CodeRabbit's one portability finding was repaired by removing host-specific
+absolute worktree paths. All required internal tracks passed on the repair.
+Backend remains pending on PR #104; Agent Gates and CodeRabbit pass.
 
 ## Human Review Focus
 
