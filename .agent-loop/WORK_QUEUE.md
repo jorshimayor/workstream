@@ -4,13 +4,12 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| none | none | - | R2 post-merge memory only; no implementation chunk active |
+| `WS-QUAL-001-01B1B` | Semantic Delta Guards | L1 | Explicitly started; implementation active |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01B1B` | Semantic Delta Guards | L1 | Inactive until 01B1A-R2 merge/memory and explicit user start |
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Inactive until 01B1A-R2 and 01B1B merge/memory plus explicit user start |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B1A-R2, 01B1B, and 01B2 merge/memory plus explicit user start |
 | `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Resumed off-main in a separate worktree by explicit user direction; independent review required before PR/merge |
@@ -54,9 +53,9 @@
 
 ## Proposed Next
 
-Finish and merge R2 post-merge memory, then stop. AUTH-02 may proceed
-independently in its existing worktree. Do not start 01B1B, 01B2, chunk 02, or
-another coverage implementation chunk automatically.
+Implement and review only 01B1B. AUTH-02 proceeds independently in its existing
+worktree. Do not start 01B2, chunk 02, or another coverage implementation chunk
+automatically.
 
 `WS-ART-001-01` is merged. Do not start `WS-ART-001-02` or edit Flow Node until
 the user gives a separate explicit start signal.

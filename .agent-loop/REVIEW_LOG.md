@@ -53,6 +53,10 @@ R2 merge result: PR #105 merged to main as
 `8a4182edb09970131aded73edf3428ac83fe60b9` on 2026-07-12. Post-merge memory is
 the only active coverage work; 01B1B and 01B2 remain inactive.
 
+R2 memory result: PR #106 merged as `6dccb8e`. The user then explicitly started
+01B1B and confirmed coverage may run in parallel with AUTH in isolated
+worktrees. Only 01B1B is active on the coverage branch; 01B2 remains inactive.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract

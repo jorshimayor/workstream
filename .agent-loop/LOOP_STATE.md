@@ -4,8 +4,8 @@
 
 - Active initiative: `WS-QUAL-001` - Backend Coverage Floor
 - Active planning chunk: none
-- Active implementation chunk: none
-- Branch: `codex/ws-qual-001-01b1a-r2-post-merge-memory`
+- Active implementation chunk: `WS-QUAL-001-01B1B` semantic delta guards
+- Branch: `codex/ws-qual-001-01b1b-semantic-delta-guards`
 - Status: 01B1 reached 496/500 lines and passed eight reviewer tracks at
   `7bfe3a0`, but final test-delta review found unhandled `unittest.skipTest`,
   aliased `pytest.raises` deletion, and missing arithmetic boundaries. This is
@@ -16,7 +16,7 @@
 - WS-ART planning merge commit: `8644a43`
 - Prior WS-AUTH-001-01 reviewed implementation SHA: `be0b836`
 - Prior WS-AUTH-001-01 final merged branch head: `b5217e1`
-- Latest merge commit: `8a4182edb09970131aded73edf3428ac83fe60b9`
+- Latest merge commit: `6dccb8e632a6244ca575094be0e3338d49b15856`
 - WS-QUAL final reviewed planning SHA: `0d9dd987d546c864fa8de7bae462e5e73a1b5ea9`
 - WS-QUAL final evidence-bound branch head: `3da1769882e9f6db4c48ef3dba33da8380e6a613`
 - WS-QUAL planning merge commit: `9046d52f31c7c39f06e06c45c43783bb08a5181c`
@@ -33,8 +33,8 @@
 - WS-QUAL-001-01A merge commit: `2901a3ebe68b7c770ccb1ff06841d79ce0c20d94`
 - WS-QUAL-001-01A post-merge memory merge commit:
   `8829a7ec3aa5199aae0aecbe5fda030c42a051cd`
-- Current gate: R2 post-merge memory is PR #106; external checks and human
-  review are pending. 01B1B and 01B2 remain inactive.
+- Current gate: implement and internally review only 01B1B. 01B2 remains
+  inactive; AUTH-02 continues independently in its separate worktree.
 - Next chunk: `WS-QUAL-001-02` remains inactive; do not start it automatically.
 - Parallel implementation: the user explicitly authorized `WS-AUTH-001-02` to
   resume off-main in its separate worktree while coverage continues. AUTH must

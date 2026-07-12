@@ -2,8 +2,8 @@
 
 Parent: `WS-QUAL-001` Backend Coverage Floor
 
-Status: proposed and inactive until 01B1A-R2 merges, post-merge memory
-completes, and the user gives a separate explicit start signal.
+Status: explicitly started on 2026-07-13 after R2 and its post-merge memory
+merged. Implementation is active in an isolated coverage worktree.
 
 ## Goal And Reason
 
@@ -57,4 +57,5 @@ architecture, CI integrity, reuse/dedup, and test delta. Human focus: false
 negatives, false positives, root-path behavior, bounded memory scope, and no
 parser/01B2 redesign.
 
-Stop after this chunk. Do not start 01B2, chunk 02, or AUTH.
+Stop after this chunk. Do not start 01B2 or chunk 02. AUTH-02 may continue
+independently in its already-authorized worktree.
