@@ -9,7 +9,7 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from sqlalchemy import text
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.adapters.auth.dev import actor_id_from_external_identity
@@ -61,6 +61,12 @@ def test_current_schema_uses_project_policy_contract(
         "checker_policies.pre_submit_checker_bundle_hash",
         "payment_policies.base_amount",
         "payment_policies.currency",
+        "artifact_upload_sessions.id",
+        "artifact_upload_items.id",
+        "artifact_contents.sha256",
+        "artifact_bindings.scope_version",
+        "artifact_replicas.provider_artifact_id",
+        "artifact_operation_receipts.request_digest",
     }.issubset(columns)
     discarded_columns = {
         "projects.base_amount",
@@ -190,6 +196,98 @@ def test_actor_profile_registry_unique_constraints_are_enforced(
             command.downgrade(config, "base")
             command.upgrade(config, "head")
             asyncio.run(_assert_actor_registry_unique_constraints(isolated_database_env))
+        finally:
+            command.downgrade(config, "base")
+
+
+def test_artifact_foundation_upgrade_preserves_prior_head_and_promotes_nothing(
+    isolated_database_env: str,
+    migration_lock,
+) -> None:
+    """Upgrade populated 0015 data without interpreting legacy declarations."""
+    project_root = Path(__file__).resolve().parents[1]
+    config = Config(str(project_root / "alembic.ini"))
+    config.set_main_option("script_location", str(project_root / "alembic"))
+    project_id = str(uuid4())
+    runtime_ids = {
+        name: str(uuid4())
+        for name in (
+            "project",
+            "guide",
+            "snapshot",
+            "submission_policy",
+            "effective_policy",
+            "pre_submit_policy",
+            "policy",
+            "review_policy",
+            "revision_policy",
+            "payment_policy",
+            "task",
+            "submission",
+            "run",
+        )
+    }
+    with migration_lock():
+        try:
+            command.downgrade(config, "base")
+            command.upgrade(config, "0015_post_submit_correction")
+            asyncio.run(_seed_artifact_prior_head(isolated_database_env, project_id))
+            asyncio.run(_seed_artifact_prior_head_runtime_rows(isolated_database_env, runtime_ids))
+            before = asyncio.run(_artifact_prior_head_project(isolated_database_env, project_id))
+            runtime_before = asyncio.run(
+                _artifact_prior_head_runtime_rows(isolated_database_env, runtime_ids)
+            )
+            command.upgrade(config, "0016_artifact_domain")
+            after = asyncio.run(_artifact_prior_head_project(isolated_database_env, project_id))
+            runtime_after = asyncio.run(
+                _artifact_prior_head_runtime_rows(isolated_database_env, runtime_ids)
+            )
+            artifact_counts = asyncio.run(_artifact_table_counts(isolated_database_env))
+        finally:
+            command.downgrade(config, "base")
+
+    assert after == before
+    assert runtime_after == runtime_before
+    assert artifact_counts == {name: 0 for name in artifact_counts}
+
+
+def test_artifact_foundation_enforces_immutable_facts_and_guarded_downgrade(
+    isolated_database_env: str,
+    migration_lock,
+) -> None:
+    """Prove PostgreSQL rejects malformed/mutable facts and non-empty downgrade."""
+    project_root = Path(__file__).resolve().parents[1]
+    config = Config(str(project_root / "alembic.ini"))
+    config.set_main_option("script_location", str(project_root / "alembic"))
+    ids = {
+        name: str(uuid4())
+        for name in (
+            "project",
+            "content",
+            "session",
+            "item",
+            "replica",
+            "receipt",
+            "binding",
+            "binding_v2",
+        )
+    }
+    with migration_lock():
+        try:
+            command.downgrade(config, "base")
+            command.upgrade(config, "0016_artifact_domain")
+            asyncio.run(_assert_artifact_fact_guards(isolated_database_env, ids))
+            with pytest.raises(RuntimeError, match="non-empty artifact foundation"):
+                command.downgrade(config, "0015_post_submit_correction")
+            asyncio.run(_truncate_artifact_foundation(isolated_database_env))
+            command.downgrade(config, "0015_post_submit_correction")
+            command.upgrade(config, "0016_artifact_domain")
+            assert all(
+                count == 0
+                for count in asyncio.run(
+                    _artifact_table_counts(isolated_database_env)
+                ).values()
+            )
         finally:
             command.downgrade(config, "base")
 
@@ -813,6 +911,797 @@ async def _fetch_pre_provenance_post_submit_policy_hash(
             return await connection.scalar(
                 text("select policy_hash from checker_policies where id = :policy_id"),
                 {"policy_id": policy_id},
+            )
+    finally:
+        await engine.dispose()
+
+
+async def _seed_artifact_prior_head(database_url: str, project_id: str) -> None:
+    """Seed one representative legacy row at the previous migration head."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(
+                text(
+                    """
+                    insert into projects (id, name, slug, status)
+                    values (:id, 'Prior artifact project', :slug, 'draft')
+                    """
+                ),
+                {"id": project_id, "slug": f"prior-artifact-{project_id}"},
+            )
+    finally:
+        await engine.dispose()
+
+
+async def _seed_artifact_prior_head_runtime_rows(
+    database_url: str,
+    ids: dict[str, str],
+) -> None:
+    """Seed representative runtime rows valid at the 0015 migration head."""
+    snapshot_id = ids["snapshot"]
+    submission_policy_id = ids["submission_policy"]
+    effective_policy_id = ids["effective_policy"]
+    pre_submit_policy_id = ids["pre_submit_policy"]
+    review_policy_id = ids["review_policy"]
+    revision_policy_id = ids["revision_policy"]
+    payment_policy_id = ids["payment_policy"]
+    snapshot_hash = f"sha256:{'a' * 64}"
+    submission_policy_hash = f"sha256:{'b' * 64}"
+    effective_policy_hash = f"sha256:{'c' * 64}"
+    pre_submit_bundle_hash = f"sha256:{'d' * 64}"
+    post_submit_policy_hash = f"sha256:{'e' * 64}"
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(
+                text(
+                    """
+                    insert into projects (id, name, slug, status)
+                    values (:id, 'Artifact runtime project', :slug, 'active')
+                    """
+                ),
+                {"id": ids["project"], "slug": f"artifact-runtime-{ids['project']}"},
+            )
+            await connection.execute(
+                text(
+                    """
+                    insert into project_guides (
+                        id, project_id, version, status, content_markdown,
+                        created_by, approved_by
+                    )
+                    values (
+                        :id, :project_id, 'v1', 'active', '# Artifact runtime guide',
+                        'artifact-migration-test', 'artifact-migration-test'
+                    )
+                    """
+                ),
+                {"id": ids["guide"], "project_id": ids["project"]},
+            )
+            await connection.execute(
+                text(
+                    """
+                    insert into guide_source_snapshots (
+                        id, project_id, guide_id, guide_version,
+                        manifest_schema_version, manifest_json, bundle_hash, captured_by
+                    )
+                    values (
+                        :id, :project_id, :guide_id, 'v1', '1', '{}'::json,
+                        :bundle_hash, 'artifact-migration-test'
+                    )
+                    """
+                ),
+                {
+                    "id": snapshot_id,
+                    "project_id": ids["project"],
+                    "guide_id": ids["guide"],
+                    "bundle_hash": snapshot_hash,
+                },
+            )
+            await connection.execute(
+                text(
+                    """
+                    insert into submission_artifact_policies (
+                        id, project_id, guide_id, guide_version,
+                        source_snapshot_id, source_snapshot_hash, policy_version,
+                        lifecycle_status, policy_body, policy_hash, derivation_source,
+                        source_material_refs, created_by, approved_by_role,
+                        approved_by_actor, approved_at
+                    )
+                    values (
+                        :id, :project_id, :guide_id, 'v1', :snapshot_id,
+                        :snapshot_hash, 'v1', 'approved', '{}'::json, :policy_hash,
+                        'migration_test', '[]'::json, 'artifact-migration-test',
+                        'admin', 'artifact-migration-test', now()
+                    )
+                    """
+                ),
+                {
+                    "id": submission_policy_id,
+                    "project_id": ids["project"],
+                    "guide_id": ids["guide"],
+                    "snapshot_id": snapshot_id,
+                    "snapshot_hash": snapshot_hash,
+                    "policy_hash": submission_policy_hash,
+                },
+            )
+            await connection.execute(
+                text(
+                    """
+                    insert into effective_project_submission_artifact_policies (
+                        id, project_id, guide_id, guide_version,
+                        source_snapshot_id, source_snapshot_hash,
+                        submission_artifact_policy_id, submission_artifact_policy_hash,
+                        lifecycle_status, merge_algorithm_version, effective_policy,
+                        effective_policy_hash, created_by
+                    )
+                    values (
+                        :id, :project_id, :guide_id, 'v1', :snapshot_id,
+                        :snapshot_hash, :submission_policy_id, :submission_policy_hash,
+                        'approved', '1', '{}'::json, :effective_policy_hash,
+                        'artifact-migration-test'
+                    )
+                    """
+                ),
+                {
+                    "id": effective_policy_id,
+                    "project_id": ids["project"],
+                    "guide_id": ids["guide"],
+                    "snapshot_id": snapshot_id,
+                    "snapshot_hash": snapshot_hash,
+                    "submission_policy_id": submission_policy_id,
+                    "submission_policy_hash": submission_policy_hash,
+                    "effective_policy_hash": effective_policy_hash,
+                },
+            )
+            await connection.execute(
+                text(
+                    """
+                    insert into pre_submit_checker_policies (
+                        id, project_id, guide_id, guide_version,
+                        source_snapshot_id, source_snapshot_hash, effective_policy_id,
+                        effective_policy_hash, lifecycle_status, compiler_version,
+                        compiled_bundle, compiled_bundle_hash, checker_names,
+                        checker_configs, created_by
+                    )
+                    values (
+                        :id, :project_id, :guide_id, 'v1', :snapshot_id,
+                        :snapshot_hash, :effective_policy_id, :effective_policy_hash,
+                        'compiled', '1', '{}'::json, :bundle_hash, '[]'::json,
+                        '{}'::json, 'artifact-migration-test'
+                    )
+                    """
+                ),
+                {
+                    "id": pre_submit_policy_id,
+                    "project_id": ids["project"],
+                    "guide_id": ids["guide"],
+                    "snapshot_id": snapshot_id,
+                    "snapshot_hash": snapshot_hash,
+                    "effective_policy_id": effective_policy_id,
+                    "effective_policy_hash": effective_policy_hash,
+                    "bundle_hash": pre_submit_bundle_hash,
+                },
+            )
+            await connection.execute(
+                text(
+                    """
+                    insert into checker_policies (
+                        id, project_id, guide_id, guide_version,
+                        source_snapshot_id, source_snapshot_hash, effective_policy_id,
+                        effective_policy_hash, pre_submit_checker_policy_id,
+                        pre_submit_checker_bundle_hash, required_checkers,
+                        warning_checkers, blocking_severities, policy_hash, policy_body,
+                        lifecycle_status, approved_by_role, approved_by_actor,
+                        approved_at, created_by
+                    )
+                    values (
+                        :id, :project_id, :guide_id, 'v1', :snapshot_id,
+                        :snapshot_hash, :effective_policy_id, :effective_policy_hash,
+                        :pre_submit_policy_id, :pre_submit_bundle_hash,
+                        '["artifact_integrity"]'::json, '[]'::json, '["high"]'::json,
+                        :policy_hash, '{}'::json, 'approved', 'admin',
+                        'artifact-migration-test', now(), 'artifact-migration-test'
+                    )
+                    """
+                ),
+                {
+                    "id": ids["policy"],
+                    "project_id": ids["project"],
+                    "guide_id": ids["guide"],
+                    "snapshot_id": snapshot_id,
+                    "snapshot_hash": snapshot_hash,
+                    "effective_policy_id": effective_policy_id,
+                    "effective_policy_hash": effective_policy_hash,
+                    "pre_submit_policy_id": pre_submit_policy_id,
+                    "pre_submit_bundle_hash": pre_submit_bundle_hash,
+                    "policy_hash": post_submit_policy_hash,
+                },
+            )
+            await _seed_pre_provenance_policies_without_checker(
+                connection,
+                ids["project"],
+                review_policy_id,
+                revision_policy_id,
+                payment_policy_id,
+            )
+            lock_params = {
+                "project_id": ids["project"],
+                "post_policy_id": ids["policy"],
+                "post_policy_hash": post_submit_policy_hash,
+                "snapshot_id": snapshot_id,
+                "snapshot_hash": snapshot_hash,
+                "effective_policy_id": effective_policy_id,
+                "effective_policy_hash": effective_policy_hash,
+                "pre_submit_policy_id": pre_submit_policy_id,
+                "pre_submit_bundle_hash": pre_submit_bundle_hash,
+            }
+            await connection.execute(
+                text(
+                    """
+                    insert into workstream_tasks (
+                        id, project_id, locked_guide_version,
+                        locked_post_submit_checker_policy_id,
+                        locked_post_submit_checker_policy_version,
+                        locked_post_submit_checker_policy_hash,
+                        locked_post_submit_checker_policy_body,
+                        locked_review_policy_version, locked_revision_policy_version,
+                        locked_payment_policy_version, locked_guide_source_snapshot_id,
+                        locked_guide_source_snapshot_hash,
+                        locked_effective_project_submission_artifact_policy_id,
+                        locked_effective_project_submission_artifact_policy_hash,
+                        locked_pre_submit_checker_policy_id,
+                        locked_pre_submit_checker_bundle_hash, source_type, title,
+                        description, skill_tags, status, created_by
+                    )
+                    values (
+                        :id, :project_id, 'v1', :post_policy_id, 'v1',
+                        :post_policy_hash, '{}'::json, 'v1', 'v1', 'v1',
+                        :snapshot_id, :snapshot_hash, :effective_policy_id,
+                        :effective_policy_hash, :pre_submit_policy_id,
+                        :pre_submit_bundle_hash, 'manual', 'Artifact runtime task',
+                        'Representative task at migration 0015.', '[]'::json,
+                        'in_progress', 'artifact-migration-test'
+                    )
+                    """
+                ),
+                {"id": ids["task"], **lock_params},
+            )
+            await connection.execute(
+                text(
+                    """
+                    insert into submissions (
+                        id, task_id, worker_id, version, status, summary,
+                        package_hash, artifact_hash_manifest, worker_attestation,
+                        locked_guide_version, locked_post_submit_checker_policy_id,
+                        locked_post_submit_checker_policy_version,
+                        locked_post_submit_checker_policy_hash,
+                        locked_post_submit_checker_policy_body,
+                        locked_review_policy_version, locked_revision_policy_version,
+                        locked_payment_policy_version, locked_guide_source_snapshot_id,
+                        locked_guide_source_snapshot_hash,
+                        locked_effective_project_submission_artifact_policy_id,
+                        locked_effective_project_submission_artifact_policy_hash,
+                        locked_pre_submit_checker_policy_id,
+                        locked_pre_submit_checker_bundle_hash
+                    )
+                    values (
+                        :id, :task_id, 'artifact-worker', 1, 'submitted',
+                        'Representative submission at migration 0015.',
+                        'sha256:artifact-package', '[]'::json,
+                        'artifact migration attestation', 'v1', :post_policy_id,
+                        'v1', :post_policy_hash, '{}'::json, 'v1', 'v1', 'v1',
+                        :snapshot_id, :snapshot_hash, :effective_policy_id,
+                        :effective_policy_hash, :pre_submit_policy_id,
+                        :pre_submit_bundle_hash
+                    )
+                    """
+                ),
+                {"id": ids["submission"], "task_id": ids["task"], **lock_params},
+            )
+            await connection.execute(
+                text(
+                    """
+                    insert into checker_runs (
+                        id, task_id, submission_id, submission_version,
+                        trigger_source, status, routing_recommendation, outcome_source,
+                        triggered_by, triggered_by_subject, triggered_by_issuer,
+                        trigger_auth_source, attempt_number, is_current_for_submission,
+                        locked_guide_version, locked_post_submit_checker_policy_id,
+                        locked_post_submit_checker_policy_version,
+                        locked_post_submit_checker_policy_hash,
+                        locked_post_submit_checker_policy_body,
+                        locked_review_policy_version, locked_revision_policy_version,
+                        locked_payment_policy_version, package_hash,
+                        artifact_hash_manifest, artifact_manifest_hash, passed_count,
+                        warning_count, failed_count, blocking_count
+                    )
+                    values (
+                        :id, :task_id, :submission_id, 1, 'submission_lock',
+                        'completed', 'allow_review', 'auto_checker',
+                        'artifact-migration-test', 'artifact-migration-test',
+                        'flow-test', 'flow', 1, true, 'v1', :post_policy_id, 'v1',
+                        :post_policy_hash, '{}'::json, 'v1', 'v1', 'v1',
+                        'sha256:artifact-package', '[]'::json,
+                        'sha256:artifact-manifest', 1, 0, 0, 0
+                    )
+                    """
+                ),
+                {
+                    "id": ids["run"],
+                    "task_id": ids["task"],
+                    "submission_id": ids["submission"],
+                    **lock_params,
+                },
+            )
+    finally:
+        await engine.dispose()
+
+
+async def _seed_pre_provenance_policies_without_checker(
+    connection,
+    project_id: str,
+    review_policy_id: str,
+    revision_policy_id: str,
+    payment_policy_id: str,
+) -> None:
+    """Seed the non-checker guide policies needed by a locked task."""
+    await connection.execute(
+        text(
+            """
+            insert into review_policies (
+                id, project_id, guide_version, requires_second_review,
+                allowed_decisions, minimum_finding_fields
+            ) values (
+                :id, :project_id, 'v1', false,
+                '["accept", "needs_revision", "reject"]'::json, '[]'::json
+            )
+            """
+        ),
+        {"id": review_policy_id, "project_id": project_id},
+    )
+    await connection.execute(
+        text(
+            """
+            insert into revision_policies (
+                id, project_id, guide_version, max_revision_rounds,
+                revision_deadline_hours, auto_reject_after_limit,
+                allowed_resubmission_states
+            ) values (
+                :id, :project_id, 'v1', 7, 48, true, '["needs_revision"]'::json
+            )
+            """
+        ),
+        {"id": revision_policy_id, "project_id": project_id},
+    )
+    await connection.execute(
+        text(
+            """
+            insert into payment_policies (
+                id, project_id, guide_version, base_amount, currency, payout_type
+            ) values (:id, :project_id, 'v1', 25.00, 'USD', 'fixed')
+            """
+        ),
+        {"id": payment_policy_id, "project_id": project_id},
+    )
+
+
+async def _artifact_prior_head_project(database_url: str, project_id: str) -> dict[str, str]:
+    """Return exact prior-head project values for migration comparison."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.connect() as connection:
+            row = (
+                await connection.execute(
+                    text("select id, name, slug, status from projects where id = :id"),
+                    {"id": project_id},
+                )
+            ).mappings().one()
+            return dict(row)
+    finally:
+        await engine.dispose()
+
+
+async def _artifact_prior_head_runtime_rows(
+    database_url: str, ids: dict[str, str]
+) -> dict[str, dict]:
+    """Return every column from representative populated 0015 domain rows."""
+    table_ids = {
+        "projects": ids["project"],
+        "project_guides": ids["guide"],
+        "guide_source_snapshots": ids["snapshot"],
+        "submission_artifact_policies": ids["submission_policy"],
+        "effective_project_submission_artifact_policies": ids["effective_policy"],
+        "pre_submit_checker_policies": ids["pre_submit_policy"],
+        "checker_policies": ids["policy"],
+        "review_policies": ids["review_policy"],
+        "revision_policies": ids["revision_policy"],
+        "payment_policies": ids["payment_policy"],
+        "workstream_tasks": ids["task"],
+        "submissions": ids["submission"],
+        "checker_runs": ids["run"],
+    }
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.connect() as connection:
+            rows: dict[str, dict] = {}
+            for table_name, row_id in table_ids.items():
+                value = await connection.scalar(
+                    text(
+                        f"select row_to_json(selected) from "
+                        f"(select * from {table_name} where id = :id) selected"
+                    ),
+                    {"id": row_id},
+                )
+                assert isinstance(value, dict)
+                rows[table_name] = value
+            return rows
+    finally:
+        await engine.dispose()
+
+
+async def _artifact_table_counts(database_url: str) -> dict[str, int]:
+    """Return row counts for every additive artifact table."""
+    tables = (
+        "artifact_upload_sessions",
+        "artifact_upload_items",
+        "artifact_contents",
+        "artifact_bindings",
+        "artifact_replicas",
+        "artifact_operation_receipts",
+    )
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.connect() as connection:
+            counts: dict[str, int] = {}
+            for table in tables:
+                count = await connection.scalar(text(f"select count(*) from {table}"))
+                counts[table] = int(count or 0)
+            return counts
+    finally:
+        await engine.dispose()
+
+
+async def _assert_artifact_fact_guards(database_url: str, ids: dict[str, str]) -> None:
+    """Exercise digest and immutable-row guards directly in PostgreSQL."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(
+                text(
+                    """
+                    insert into projects (id, name, slug, status)
+                    values (:project_id, 'Artifact guards', :slug, 'draft')
+                    """
+                ),
+                {"project_id": ids["project"], "slug": f"guards-{ids['project']}"},
+            )
+            await connection.execute(
+                text(
+                    """
+                    insert into artifact_contents (id, sha256, byte_count)
+                    values (:content_id, :sha256, 0)
+                    """
+                ),
+                {"content_id": ids["content"], "sha256": "sha256:" + "0" * 64},
+            )
+            await connection.execute(
+                text(
+                    """
+                    insert into artifact_upload_sessions (
+                        id, actor_id, project_id, permitted_roles, state,
+                        maximum_bytes, current_bytes, reserved_bytes,
+                        maximum_items, current_items, reserved_items, expires_at, cas_version
+                    ) values (
+                        :id, 'actor', :project, '[]'::json, 'open',
+                        8, 0, 4, 1, 0, 1, now() + interval '1 hour', 0
+                    )
+                    """
+                ),
+                {"id": ids["session"], "project": ids["project"]},
+            )
+            await connection.execute(
+                text(
+                    """
+                    insert into artifact_upload_items (
+                        id, session_id, logical_role, display_name, reserved_bytes,
+                        idempotency_key, request_digest, state, cas_version
+                    ) values (
+                        :id, :session, 'packet', 'packet.bin', 4,
+                        'idem', :digest, 'reserved', 0
+                    )
+                    """
+                ),
+                {"id": ids["item"], "session": ids["session"], "digest": "sha256:" + "1" * 64},
+            )
+            await connection.execute(
+                text(
+                    """
+                    insert into artifact_replicas (
+                        id, content_id, adapter, provider_artifact_id,
+                        verification_state, retention_state, availability_state, integrity_state
+                    ) values (
+                        :id, :content, 'local', 'artifact-provider-id',
+                        'pending', 'unretained', 'available', 'valid'
+                    )
+                    """
+                ),
+                {"id": ids["replica"], "content": ids["content"]},
+            )
+            await connection.execute(
+                text(
+                    """
+                    insert into artifact_operation_receipts (
+                        id, upload_item_id, replica_id, adapter, service_principal,
+                        operation, idempotency_key, request_digest, response_digest,
+                        provider_receipt_id, provider_operation_reference, outcome, attempt_number,
+                        correlation_id, provider_recorded_at, details
+                    ) values (
+                        :id, :item, :replica, 'local', 'workstream.artifact',
+                        'store', 'idem', :request_digest, :response_digest,
+                        'provider-receipt', 'provider-operation', 'stored', 1,
+                        'correlation', now(), '{}'::json
+                    )
+                    """
+                ),
+                {
+                    "id": ids["receipt"],
+                    "item": ids["item"],
+                    "replica": ids["replica"],
+                    "request_digest": "sha256:" + "1" * 64,
+                    "response_digest": "sha256:" + "2" * 64,
+                },
+            )
+            await connection.execute(
+                text(
+                    """
+                    insert into artifact_bindings (
+                        id, content_id, project_id, resource_type, resource_id,
+                        logical_role, scope_version, actor_id, attribution_type
+                    ) values (
+                        :id, :content, :project, 'submission', 'submission-1',
+                        'packet', 1, 'actor', 'submitted_by'
+                    )
+                    """
+                ),
+                {"id": ids["binding"], "content": ids["content"], "project": ids["project"]},
+            )
+            await connection.execute(
+                text(
+                    """
+                    insert into artifact_bindings (
+                        id, content_id, project_id, resource_type, resource_id,
+                        logical_role, scope_version, actor_id, attribution_type,
+                        supersedes_binding_id
+                    ) values (
+                        :id, :content, :project, 'submission', 'submission-1',
+                        'packet', 2, 'actor', 'submitted_by', :predecessor
+                    )
+                    """
+                ),
+                {
+                    "id": ids["binding_v2"],
+                    "content": ids["content"],
+                    "project": ids["project"],
+                    "predecessor": ids["binding"],
+                },
+            )
+        with pytest.raises(DBAPIError):
+            async with engine.begin() as connection:
+                await connection.execute(
+                    text("update artifact_contents set byte_count = 1 where id = :id"),
+                    {"id": ids["content"]},
+                )
+        with pytest.raises(IntegrityError):
+            async with engine.begin() as connection:
+                await connection.execute(
+                    text(
+                        """
+                        insert into artifact_contents (id, sha256, byte_count)
+                        values (:id, 'SHA256:INVALID', 1)
+                        """
+                    ),
+                    {"id": str(uuid4())},
+                )
+        failing_statements = (
+            (
+                "update artifact_upload_sessions set state = 'unknown' where id = :id",
+                {"id": ids["session"]},
+            ),
+            (
+                "update artifact_upload_sessions set current_bytes = -1 where id = :id",
+                {"id": ids["session"]},
+            ),
+            (
+                "update artifact_upload_sessions set state = 'sealed', closed_at = null "
+                "where id = :id",
+                {"id": ids["session"]},
+            ),
+            (
+                "update artifact_upload_sessions set reserved_bytes = 9 where id = :id",
+                {"id": ids["session"]},
+            ),
+            (
+                "update artifact_upload_items set state = 'unknown' where id = :id",
+                {"id": ids["item"]},
+            ),
+            (
+                "update artifact_upload_items set reserved_bytes = -1 where id = :id",
+                {"id": ids["item"]},
+            ),
+            (
+                "update artifact_upload_items set cas_version = -1 where id = :id",
+                {"id": ids["item"]},
+            ),
+            (
+                "update artifact_upload_items set content_id = :content, "
+                "provider_operation_reference = 'op' where id = :id",
+                {"id": ids["item"], "content": ids["content"]},
+            ),
+            (
+                "update artifact_upload_items set state = 'ready' where id = :id",
+                {"id": ids["item"]},
+            ),
+            (
+                "update artifact_replicas set verification_state = 'trusted' where id = :id",
+                {"id": ids["replica"]},
+            ),
+            (
+                "update artifact_replicas set retention_state = 'held' where id = :id",
+                {"id": ids["replica"]},
+            ),
+            (
+                "update artifact_replicas set availability_state = 'online' where id = :id",
+                {"id": ids["replica"]},
+            ),
+            (
+                "update artifact_replicas set integrity_state = 'trusted' where id = :id",
+                {"id": ids["replica"]},
+            ),
+            (
+                "update artifact_operation_receipts set operation = 'copy' where id = :id",
+                {"id": ids["receipt"]},
+            ),
+            (
+                "update artifact_operation_receipts set attempt_number = 0 where id = :id",
+                {"id": ids["receipt"]},
+            ),
+            (
+                "update artifact_operation_receipts set outcome = 'verified' where id = :id",
+                {"id": ids["receipt"]},
+            ),
+            (
+                "delete from artifact_operation_receipts where id = :id",
+                {"id": ids["receipt"]},
+            ),
+            (
+                "update artifact_bindings set logical_role = 'other' where id = :id",
+                {"id": ids["binding"]},
+            ),
+            (
+                "delete from artifact_bindings where id = :id",
+                {"id": ids["binding_v2"]},
+            ),
+        )
+        for statement, parameters in failing_statements:
+            with pytest.raises(DBAPIError):
+                async with engine.begin() as connection:
+                    await connection.execute(text(statement), parameters)
+
+        duplicate_statements = (
+            (
+                "insert into artifact_contents (id, sha256, byte_count) "
+                "select :new_id, sha256, byte_count from artifact_contents where id = :id",
+                {"new_id": str(uuid4()), "id": ids["content"]},
+            ),
+            (
+                "insert into artifact_upload_items "
+                "(id, session_id, logical_role, display_name, reserved_bytes, "
+                "idempotency_key, request_digest, state, cas_version) "
+                "select :new_id, session_id, logical_role, display_name, reserved_bytes, "
+                "idempotency_key, request_digest, state, cas_version "
+                "from artifact_upload_items where id = :id",
+                {"new_id": str(uuid4()), "id": ids["item"]},
+            ),
+            (
+                "insert into artifact_replicas "
+                "(id, content_id, adapter, provider_artifact_id, verification_state, "
+                "retention_state, availability_state, integrity_state) "
+                "select :new_id, content_id, adapter, provider_artifact_id, "
+                "verification_state, retention_state, availability_state, integrity_state "
+                "from artifact_replicas where id = :id",
+                {"new_id": str(uuid4()), "id": ids["replica"]},
+            ),
+            (
+                "insert into artifact_operation_receipts "
+                "(id, upload_item_id, replica_id, adapter, service_principal, operation, "
+                "idempotency_key, request_digest, response_digest, provider_receipt_id, "
+                "provider_operation_reference, outcome, attempt_number, correlation_id, "
+                "provider_recorded_at, details) "
+                "select :new_id, upload_item_id, replica_id, adapter, service_principal, "
+                "operation, idempotency_key, request_digest, response_digest, "
+                "provider_receipt_id || '-duplicate', provider_operation_reference, outcome, "
+                "attempt_number, correlation_id || '-duplicate', provider_recorded_at, details "
+                "from artifact_operation_receipts where id = :id",
+                {"new_id": str(uuid4()), "id": ids["receipt"]},
+            ),
+        )
+        for statement, parameters in duplicate_statements:
+            with pytest.raises(IntegrityError):
+                async with engine.begin() as connection:
+                    await connection.execute(text(statement), parameters)
+
+        with pytest.raises(IntegrityError):
+            async with engine.begin() as connection:
+                await connection.execute(
+                    text(
+                        """
+                        insert into artifact_operation_receipts (
+                            id, replica_id, adapter, service_principal, operation,
+                            idempotency_key, request_digest, response_digest,
+                            provider_receipt_id, provider_operation_reference, outcome, attempt_number,
+                            correlation_id, retention_reference, retention_class,
+                            provider_recorded_at, details
+                        ) values (
+                            :id, :replica, 'local', 'workstream.artifact', 'retain',
+                            'retain-without-owner', :request_digest, :response_digest,
+                            'provider-receipt-retain', 'provider-retain', 'retained', 1,
+                            'correlation-retain',
+                            'reference', 'standard', now(), '{}'::json
+                        )
+                        """
+                    ),
+                    {
+                        "id": str(uuid4()),
+                        "replica": ids["replica"],
+                        "request_digest": "sha256:" + "3" * 64,
+                        "response_digest": "sha256:" + "4" * 64,
+                    },
+                )
+        with pytest.raises(DBAPIError):
+            async with engine.begin() as connection:
+                await connection.execute(
+                    text(
+                        """
+                        insert into artifact_bindings (
+                            id, content_id, project_id, resource_type, resource_id,
+                            logical_role, scope_version, actor_id, attribution_type,
+                            supersedes_binding_id
+                        ) values (
+                            :id, :content, :project, 'submission', 'submission-1',
+                            'packet', 3, 'actor', 'submitted_by', :wrong_predecessor
+                        )
+                        """
+                    ),
+                    {
+                        "id": str(uuid4()),
+                        "content": ids["content"],
+                        "project": ids["project"],
+                        "wrong_predecessor": ids["binding"],
+                    },
+                )
+    finally:
+        await engine.dispose()
+
+
+async def _truncate_artifact_foundation(database_url: str) -> None:
+    """Clear artifact rows after guarded-downgrade assertions."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(
+                text(
+                    """
+                    truncate table
+                        artifact_operation_receipts,
+                        artifact_replicas,
+                        artifact_bindings,
+                        artifact_upload_items,
+                        artifact_contents,
+                        artifact_upload_sessions
+                    cascade
+                    """
+                )
             )
     finally:
         await engine.dispose()

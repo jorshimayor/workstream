@@ -1093,6 +1093,97 @@ def test_agent_gates_runs_stale_authorization_docs_fail_closed() -> None:
     assert "continue-on-error" not in workflow
 
 
+def test_agent_gates_runs_stale_artifact_contracts_fail_closed() -> None:
+    """The Agent Gates workflow must retain the artifact-contract scanner."""
+    workflow = (ROOT / ".github/workflows/agent-gates.yml").read_text(encoding="utf-8")
+    command = "run: python3 scripts/check_stale_artifact_contracts.py"
+    assert workflow.count(command) == 1
+    assert "continue-on-error" not in workflow
+
+
+def test_backend_coverage_thresholds_are_regression_protected() -> None:
+    """Keep both the approved global floor and stricter artifact floor fail closed."""
+    workflow = (ROOT / ".github/workflows/backend.yml").read_text(encoding="utf-8")
+    assert workflow.count("--cov-fail-under=78") == 1
+    assert workflow.count("--fail-under=90") == 1
+    assert (
+        "--include='app/adapters/artifacts/*,app/interfaces/artifacts.py,"
+        "app/modules/artifacts/*'"
+    ) in workflow
+    assert "continue-on-error" not in workflow
+
+
+def test_stale_artifact_contracts_foundation_keeps_later_terms_inactive() -> None:
+    """Foundation checks generic neutrality without preempting later cutovers."""
+    gate = load_module(
+        "stale_artifact_contracts_foundation",
+        "scripts/check_stale_artifact_contracts.py",
+    )
+    assert gate.ARTIFACT_CONTRACT_PHASE == "foundation"
+    assert gate.scan_text(
+        "backend/app/modules/tasks/schemas.py",
+        "package_uri content_cid artifact_manifest_hash",
+        "foundation",
+    ) == []
+    failures = gate.scan_text(
+        "contracts/artifact-store/version_1/schema/example.json",
+        '{"cid": "provider-specific"}',
+        "foundation",
+    )
+    assert failures == [
+        "contracts/artifact-store/version_1/schema/example.json:1: "
+        "PROVIDER_SPECIFIC_GENERIC_INTERFACE"
+    ]
+
+
+def test_stale_artifact_contracts_active_later_phase_owns_only_reached_terms() -> None:
+    """A later phase rejects reached legacy terms while leaving future ones alone."""
+    gate = load_module(
+        "stale_artifact_contracts_later",
+        "scripts/check_stale_artifact_contracts.py",
+    )
+    guide_failures = gate.scan_text(
+        "backend/app/modules/projects/schemas.py",
+        "content_cid package_uri artifact_manifest_hash",
+        "guide_source_cutover",
+    )
+    assert guide_failures == [
+        "backend/app/modules/projects/schemas.py:1: LEGACY_GUIDE_CONTENT_CID"
+    ]
+    submission_failures = gate.scan_text(
+        "backend/app/modules/tasks/schemas.py",
+        "package_uri allowed_storage_schemes artifact_manifest_hash",
+        "submission_cutover",
+    )
+    assert submission_failures == [
+        "backend/app/modules/tasks/schemas.py:1: LEGACY_SUBMISSION_TRANSPORT",
+        "backend/app/modules/tasks/schemas.py:1: LEGACY_PROJECT_STORAGE_POLICY",
+    ]
+
+
+def test_stale_artifact_contracts_malformed_phase_fails_closed() -> None:
+    """Unknown or non-string phase markers cannot disable scanner rules."""
+    gate = load_module(
+        "stale_artifact_contracts_malformed",
+        "scripts/check_stale_artifact_contracts.py",
+    )
+    for phase in ("", "submission", "foundation ", None, 1):
+        try:
+            gate.rules_for_phase(phase)
+        except ValueError as exc:
+            assert "malformed artifact contract phase" in str(exc)
+        else:
+            raise AssertionError(f"malformed phase was accepted: {phase!r}")
+
+    original_phase = gate.ARTIFACT_CONTRACT_PHASE
+    gate.ARTIFACT_CONTRACT_PHASE = "unknown"
+    try:
+        with contextlib.redirect_stderr(io.StringIO()):
+            assert gate.main() == 1
+    finally:
+        gate.ARTIFACT_CONTRACT_PHASE = original_phase
+
+
 def main() -> int:
     """Run all local test functions."""
     tests = [
@@ -1127,6 +1218,11 @@ def main() -> int:
         test_stale_authorization_precedence_exemption_is_line_scoped,
         test_stale_authorization_history_allowlist_is_exact,
         test_agent_gates_runs_stale_authorization_docs_fail_closed,
+        test_agent_gates_runs_stale_artifact_contracts_fail_closed,
+        test_backend_coverage_thresholds_are_regression_protected,
+        test_stale_artifact_contracts_foundation_keeps_later_terms_inactive,
+        test_stale_artifact_contracts_active_later_phase_owns_only_reached_terms,
+        test_stale_artifact_contracts_malformed_phase_fails_closed,
     ]
     for test in tests:
         test()

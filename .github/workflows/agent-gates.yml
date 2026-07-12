@@ -31,6 +31,9 @@ jobs:
       - name: Stale authorization documentation check
         run: python3 scripts/check_stale_authorization_docs.py
 
+      - name: Stale artifact contract check
+        run: python3 scripts/check_stale_artifact_contracts.py
+
       - name: Agent gate regression tests
         run: python3 scripts/test_agent_gates.py
 

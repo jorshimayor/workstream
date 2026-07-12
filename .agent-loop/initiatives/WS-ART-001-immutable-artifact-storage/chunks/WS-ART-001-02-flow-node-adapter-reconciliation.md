@@ -26,8 +26,8 @@ token forwarding, or provider-triggered lifecycle transition.
 
 - Synchronous ingest follows D4 and independently compares SHA-256/size.
 - Crash after provider success/before receipt commit never trusts the receipt
-  alone. With a persisted expected digest, reconciliation independently
-  reopens/hashes/counts the object; without one, the item becomes
+  alone. With persisted expected SHA-256 and size, reconciliation independently
+  reopens/hashes/counts the object; with either commitment absent, the item becomes
   `replay_required` until exact client replay under the same idempotency key.
 - A development-only one-shot failpoint can interrupt after provider commit and
   before Workstream transaction B for deterministic proof. It requires the

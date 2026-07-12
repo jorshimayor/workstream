@@ -1,9 +1,9 @@
 # Decisions: WS-ART-001
 
-These are proposed target decisions. Existing accepted ADRs and current runtime
-specifications remain authoritative until this planning PR is approved and each
-owning cutover chunk merges. Flow Node repository documents control its internal
-implementation; the versioned provider contract controls interoperability.
+These are accepted target decisions. Existing runtime contracts change only
+through their owning implementation chunks. Flow Node repository documents
+control its internal implementation; the versioned provider contract controls
+interoperability.
 
 ## D1 - Ownership
 
@@ -35,8 +35,9 @@ states.
 
 ## D3 - Provider-Neutral Port
 
-`ArtifactStorePort` exposes immutable store/open/stat/verify/retain/release and
-operation-receipt semantics. It returns opaque provider artifact/manifest IDs;
+`ArtifactStorePort` exposes immutable store, confirmed-store recovery,
+open/stat/verify/retain/release, and operation-receipt semantics. It returns
+opaque provider artifact/manifest IDs;
 CID, DAG, block count, and recursive pin details remain bounded provider receipt
 data. Workstream checker truth uses binding/content IDs, SHA-256, and byte count.
 
@@ -55,11 +56,12 @@ transaction:
 5. transaction B locks the item/session, compares receipt digest/size, records
    content/replica/receipt, and marks the item ready; no resource binding exists
    yet;
-6. an optional client expected SHA-256 is persisted before ingest as a byte
-   commitment, never as server truth. If transaction B fails after provider
-   success, recovery may accept the object only by reopening it and matching
-   Workstream's independent hash/count to that persisted commitment. When no
-   pre-ingest commitment exists, the item becomes `replay_required`; the client
+6. optional client expected SHA-256 and size are persisted before ingest as byte
+   commitments, never as server truth. If transaction B fails after provider
+   success, byte-less recovery may accept the object only by reopening it and
+   matching Workstream's independent hash/count to both commitments. Ambiguous
+   provider failure, cancellation, or an incomplete commitment makes the item
+   `replay_required`; the client
    must replay the exact bytes under the same idempotency key so Workstream can
    recompute the stream and the provider can return the existing exact-replay
    receipt. Receipt-only recovery never creates `ArtifactContent`;
