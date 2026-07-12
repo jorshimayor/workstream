@@ -41,7 +41,7 @@ state before I/O and promotes facts only after verified provider success.
 - All nine required internal reviewer tracks passed after fixes; no reviewer
   session remains open.
 
-Reviewed code SHA: `66729e421cb729732b33210f63b0f81a5ccc0442`
+Reviewed code SHA: `5574bf59cf1cb86da76749e0cbc529036346fa8a`
 
 The first Backend run found a Settings-cache ordering bug in the artifact test
 fixture. The fixture now reuses the shared isolated database environment; the
@@ -49,8 +49,9 @@ exact failing order passed 15 tests and four focused internal delta reviewers.
 
 ## External Review
 
-Pending PR publication, GitHub CI, CodeRabbit, and human review. External review
-will be recorded separately from internal reviewer evidence.
+CodeRabbit's valid findings are addressed and recorded separately in
+`WS-ART-001-01-external-review-response.md`. Final current-head GitHub checks
+and human review remain pending.
 
 ## Human Review Focus
 
