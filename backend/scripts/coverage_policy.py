@@ -24,6 +24,8 @@ SHA_RE = re.compile(r"[a-f0-9]{40}")
 DECIMAL_RE = re.compile(r"\d+\.\d{6}")
 VERSION_RE = re.compile(r"[0-9]+(?:\.[0-9]+){1,3}(?:[a-z0-9.+-]{0,20})?")
 ALEMBIC_RE = re.compile(r"[a-z0-9_]{1,64}")
+GLOBAL_MEMORY = {".agent-loop/LOOP_STATE.md", ".agent-loop/REVIEW_LOG.md", ".agent-loop/WORK_QUEUE.md"}
+QUAL_MEMORY = ".agent-loop/initiatives/WS-QUAL-001-backend-coverage-floor/"
 EVIDENCE_KEYS = set(
     "schema_version base_merge_sha measured_tree_sha covered_lines num_statements "
     "measured_percent configured_floor minimum_milestone python_version coverage_version "
@@ -78,14 +80,17 @@ def config_floor(path: Path) -> Decimal:
     try:
         config = tomllib.loads(path.read_text(encoding="utf-8"))
         coverage = config["tool"]["coverage"]
+        require(isinstance(coverage, dict), "invalid_coverage_config")
         report = coverage["report"]
+        run = coverage.get("run", {})
         dev = config["project"]["optional-dependencies"]["dev"]
     except (OSError, KeyError, TypeError, tomllib.TOMLDecodeError) as exc:
         raise PolicyError("invalid_coverage_config") from exc
+    require(isinstance(report, dict) and isinstance(run, dict), "invalid_coverage_config")
     require(isinstance(dev, list) and all(isinstance(item, str) for item in dev), "invalid_coverage_config")
-    require("pytest-cov==7.1.0" in dev, "pytest_cov_pin_missing")
+    require([item for item in dev if item.startswith("pytest-cov")] == ["pytest-cov==7.1.0"], "pytest_cov_pin_missing")
     forbidden = {"omit", "include", "source", "exclude_lines", "exclude_also"}
-    require(not forbidden.intersection(coverage.get("run", {})), "coverage_exclusion_config")
+    require(not forbidden.intersection(run), "coverage_exclusion_config")
     require(not forbidden.intersection(report), "coverage_exclusion_config")
     require(report.get("precision") == 6, "coverage_precision_invalid")
     try:
@@ -149,7 +154,7 @@ def weak_python(path: Path) -> bool:
         return True
     blocked = {"skip", "skipif", "skipIf", "skipUnless", "xfail", "expectedFailure", "importorskip"}
     modules, marks, names = {"pytest", "unittest"}, set(), set()
-    for node in tree.body:
+    for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             modules.update(alias.asname or alias.name for alias in node.names if alias.name in modules)
         if isinstance(node, ast.ImportFrom) and node.module in modules:
@@ -179,7 +184,7 @@ def validate_delta(base: str, max_lines: int, allowed: set[str]) -> None:
         diff = diff_text(base, "HEAD", tests)
     finally:
         os.chdir(previous)
-    require(all(path in allowed or path.startswith(".agent-loop/") for path in files), "scope_violation")
+    require(all(path in allowed or path in GLOBAL_MEMORY or path.startswith(QUAL_MEMORY) for path in files), "scope_violation")
     size = sum(add + delete for path, add, delete in rows if not path.startswith(".agent-loop/"))
     require(size <= max_lines, "implementation_size_exceeded")
     require(not any(weak_python(REPO / path) for path in tests), "test_skip_or_xfail")

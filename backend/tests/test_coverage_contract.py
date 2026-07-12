@@ -61,8 +61,6 @@ def test_compute_floor_validates_inventory_and_truncates(tmp_path: Path) -> None
     path, root = coverage_file(tmp_path, files={})
     with pytest.raises(policy.PolicyError, match="application_inventory_mismatch"):
         policy.coverage_counts(path, root)
-
-
 @pytest.mark.parametrize(("files", "code"), [
     ({"app/a.py": {}}, "invalid_file_coverage"),
     ({"app/a.py": {"summary": {"covered_lines": 1, "num_statements": 3}}}, "coverage_totals_mismatch"),
@@ -89,6 +87,7 @@ def test_intended_config_returns_exact_floor(tmp_path: Path) -> None:
 @pytest.mark.parametrize(("kwargs", "code"), [
     ({"pin": "pytest-cov>=7"}, "pytest_cov_pin_missing"),
     ({"pin": "pytest-cov==7.1.0-malicious"}, "pytest_cov_pin_missing"),
+    ({"dev": "['pytest-cov==7.1.0','pytest-cov>=9']"}, "pytest_cov_pin_missing"),
     ({"dev": "'pytest-cov==7.1.0'"}, "invalid_coverage_config"),
     ({"precision": 5}, "coverage_precision_invalid"),
     ({"floor": 101}, "coverage_floor_invalid"),
@@ -106,6 +105,15 @@ def test_config_fails_closed(tmp_path: Path, kwargs: dict, code: str) -> None:
     path = tmp_path / "pyproject.toml"
     path.write_text(config_text(**kwargs), encoding="utf-8")
     with pytest.raises(policy.PolicyError, match=code):
+        policy.config_floor(path)
+@pytest.mark.parametrize("text", [
+    "[project.optional-dependencies]\ndev=['pytest-cov==7.1.0']\n[tool.coverage]\nreport=[]",
+    "[project.optional-dependencies]\ndev=['pytest-cov==7.1.0']\n[tool.coverage]\nrun='source'\n[tool.coverage.report]\nprecision=6\nfail_under=75",
+])
+def test_config_rejects_malformed_tables(tmp_path: Path, text: str) -> None:
+    path = tmp_path / "pyproject.toml"
+    path.write_text(text, encoding="utf-8")
+    with pytest.raises(policy.PolicyError, match="invalid_coverage_config"):
         policy.config_floor(path)
 
 
@@ -152,8 +160,6 @@ def test_runner_metadata_accepts_only_expected_tree_and_head(tmp_path: Path) -> 
     write_json(path, value)
     with pytest.raises(policy.PolicyError, match="metadata_tree_mismatch"):
         policy.runner_metadata(path, SHA, HEAD)
-
-
 def test_runner_metadata_rejects_matching_malformed_expectations(tmp_path: Path) -> None:
     value = {"schema_version": 1, "database_name": "workstream_test_012345abcdef",
              "alembic_head": "../head", "tree_sha": "not-a-sha"}
@@ -186,6 +192,9 @@ def test_runner_metadata_fails_closed(tmp_path: Path, updates: dict, code: str) 
     ("import pytest as pt\npt.importorskip('optional')", True),
     ("import unittest as ut\n@ut.skipUnless(True, 'reason')\ndef test_x(): pass", True),
     ("from unittest import expectedFailure\n@expectedFailure\ndef test_x(): pass", True),
+    ("def test_x():\n from pytest import skip\n skip('disabled')", True),
+    ("def test_x():\n import pytest as pt\n pt.xfail('disabled')", True),
+    ("if True:\n from pytest import mark as m\n @m.skip\n def test_x(): pass", True),
     ("from pytest import raises\nwith raises(ValueError): raise ValueError", False),
     ("def invalid(", True),
 ])
@@ -199,6 +208,7 @@ def test_python_weakening_is_syntax_aware(tmp_path: Path, source: str, weak: boo
     (["backend/app/a.py"], [], "", 5, "scope_violation"),
     (["backend/tests/test_ok.py"], [("backend/tests/test_ok.py", 6, 0)], "", 5, "implementation_size_exceeded"),
     (["backend/tests/test_ok.py"], [("backend/tests/test_ok.py", 1, 0)], "-assert value", 5, "deleted_assertion"),
+    ([".agent-loop/initiatives/WS-AUTH-001/PLAN.md"], [], "", 5, "scope_violation"),
 ])
 def test_delta_fails_closed(monkeypatch, tmp_path: Path, files, rows, diff, max_lines, code) -> None:
     test = tmp_path / "backend/tests/test_ok.py"
@@ -222,8 +232,6 @@ def test_delta_accepts_inert_fixtures_and_agent_memory(monkeypatch, tmp_path: Pa
     monkeypatch.setattr(policy, "numstat", lambda *_: (99, 0, [(files[0], 2, 0), (files[1], 97, 0)]))
     monkeypatch.setattr(policy, "diff_text", lambda *_: "-value = 'assert fixture'\n+assert value")
     policy.validate_delta("base", 2, {files[0]})
-
-
 def test_delta_detects_committed_deleted_pytest_raises_from_backend_cwd(
     monkeypatch, tmp_path: Path,
 ) -> None:
