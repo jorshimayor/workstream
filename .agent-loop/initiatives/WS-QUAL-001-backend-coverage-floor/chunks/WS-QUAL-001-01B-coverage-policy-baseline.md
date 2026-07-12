@@ -1,5 +1,8 @@
 # Chunk Contract: WS-QUAL-001-01B Coverage Policy And Baseline
 
+Status: implementation stopped by the 500-line circuit breaker. Superseded only
+if the proposed 01B1/01B2 split receives internal and explicit human approval.
+
 ## Goal
 
 Turn the isolated complete-backend coverage measurement into a reproducible,

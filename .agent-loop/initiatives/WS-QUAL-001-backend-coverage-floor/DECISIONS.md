@@ -73,3 +73,18 @@ underestimated by A1. The rejected A2 proposal would have raised the cap to
 1,100. Reviewers required `01A` for the least-privilege database lifecycle and
 `01B` for coverage policy/CI/evidence. The split preserves genuine proof without
 compressing safety code. Production scope and later chunks remain unchanged.
+
+## D8: Split 01B policy core from baseline and CI publication
+
+Status: proposed after the 2026-07-12 implementation circuit breaker; requires
+internal plan review and explicit human approval.
+
+The reviewed combined 01B contract proved larger than its 500-line boundary:
+policy plus 19 behavior tests reached 480 lines before configured coverage,
+workflow integration, the runbook, and several required negative cases. Further
+compression would weaken proof or readability. The proposed repair is 01B1 for
+pure policy parsing/arithmetic/schema/delta behavior, followed after merge and
+memory by 01B2 for Git provenance, configured baseline evidence, CI ratchet,
+and operations. Each retains a separate 500-line cap, L1 review, PR, merge,
+memory, and explicit start checkpoint. No production or coverage-raising test
+scope is added.

@@ -3,12 +3,13 @@
 ## Current State
 
 - Active initiative: `WS-QUAL-001` - Backend Coverage Floor
-- Active planning chunk: none
-- Active implementation chunk: `WS-QUAL-001-01B` - Coverage Policy And Baseline
+- Active planning chunk: `WS-QUAL-001-01B-SPLIT`
+- Active implementation chunk: none
 - Branch: `codex/ws-qual-001-01b-coverage-policy-baseline`
-- Status: PR #104 post-merge memory merged as `8829a7e`; the user explicitly
-  started 01B. Its missing chunk contract is drafted for L1 plan review before
-  implementation.
+- Status: the user started 01B after PR #104 merged. L1 plan review passed, but
+  implementation reached 480/500 lines before required config, CI, runbook, and
+  negative proof. The circuit breaker stopped code and proposes an 01B1/01B2
+  split for internal and human review.
 - Prior WS-ART reviewed planning SHA: `f7fbc33`
 - Prior WS-ART final evidence-bound planning branch head: `c069064`
 - WS-ART planning merge commit: `8644a43`
@@ -30,7 +31,8 @@
 - WS-QUAL-001-01A merge commit: `2901a3ebe68b7c770ccb1ff06841d79ce0c20d94`
 - WS-QUAL-001-01A post-merge memory merge commit:
   `8829a7ec3aa5199aae0aecbe5fda030c42a051cd`
-- Current gate: L1 plan review of the 01B contract before implementation.
+- Current gate: internal review and explicit human approval of the proposed
+  01B1/01B2 split; no executable draft remains.
 - Next chunk: `WS-QUAL-001-02` remains inactive; do not start it automatically.
 - Paused implementation: `WS-AUTH-001-02` remains implemented on
   `codex/ws-auth-001-02-verified-issuer-token` and is paused before publication

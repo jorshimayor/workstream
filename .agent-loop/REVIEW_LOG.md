@@ -2,15 +2,17 @@
 
 ## WS-QUAL-001-01B
 
-Status: user started the chunk after PR #104 merged. The missing bounded chunk
-contract is drafted; L1 plan review is required before implementation.
+Status: user started the chunk after PR #104 merged. Its repaired L1 contract
+passed plan review at `7a16ee4`, but implementation hit the hard circuit breaker
+at 480/500 lines before required config, CI, runbook, and negative proof.
 
 Scope: coverage policy, contract tests, configured initial floor, canonical CI
 validation, baseline evidence, and runbook only. No production or coverage-
 raising behavior tests.
 
-Next: plan review and repair, then implement only the approved 01B contract.
-Do not start chunk 02.
+Result: executable draft and partial candidate run were stopped and cleaned up.
+A policy-core versus baseline/CI split is proposed for internal and explicit
+human approval. Do not start either split chunk or chunk 02.
 
 ## WS-QUAL-001-01A
 

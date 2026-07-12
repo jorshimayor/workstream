@@ -4,13 +4,15 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01B` | Coverage Policy And Baseline | L1 | Contract drafted; L1 plan review required before implementation |
+| none | none | - | 01B circuit breaker; split planning only |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B merge, memory, and explicit user start |
+| `WS-QUAL-001-01B1` | Coverage Policy Core | L1 | Proposed; pending split review and explicit human approval |
+| `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Proposed after 01B1 merge/memory; not active |
+| `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until both 01B split chunks merge, memory completes, and explicit user start |
 | `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Implemented off-main; paused until WS-QUAL permanent 90% floor and final memory complete, then explicit resume |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02` | Flow Node Adapter And Reconciliation | L1 | Proposed; inactive pending separate explicit user start |
@@ -51,9 +53,9 @@
 
 ## Proposed Next
 
-`WS-QUAL-001-01B` is the only active implementation chunk. Do not start
-`WS-QUAL-001-02`, resume `WS-AUTH-001-02`, or start another implementation
-chunk automatically.
+No implementation chunk is active. Do not start either proposed 01B split
+chunk, `WS-QUAL-001-02`, resume AUTH-02, or start another implementation chunk
+without the required human checkpoint.
 
 `WS-ART-001-01` is merged. Do not start `WS-ART-001-02` or edit Flow Node until
 the user gives a separate explicit start signal.
