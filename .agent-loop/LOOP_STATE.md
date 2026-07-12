@@ -7,8 +7,9 @@
 - Active implementation chunk: `WS-QUAL-001-01A` - Isolated Database Runner
 - Branch: `codex/ws-qual-001-01-coverage-harness`
 - Worktree: `/home/abiorh/flow/workstream-qual-001`
-- Status: `WS-QUAL-001-01A` is active after the reviewed circuit-breaker split;
-  `WS-ART-001-01` and its post-merge memory are merged through PRs #101/#102.
+- Status: combined `WS-QUAL-001-01` exceeded its reviewed cap. All L1 reviewer
+  groups rejected A2 and required the accepted `01A` / `01B` split. `01A` is
+  active; `WS-ART-001-01` and its memory merged through PRs #101/#102.
 - Prior WS-ART reviewed planning SHA: `f7fbc33`
 - Prior WS-ART final evidence-bound planning branch head: `c069064`
 - WS-ART planning merge commit: `8644a43`
@@ -23,7 +24,7 @@
 - WS-ART-001-01 final evidence-bound branch head: `2b8c2a0`
 - WS-ART-001-01 merge commit: `050eb15eab8c57e6bc265477a5e92484d27a893c`
 - Implementation base SHA: `58d44596f614895964b82bb344e0ed98596eaae8`
-- Current gate: final rebased evidence and PR publication for `WS-QUAL-001-01A`.
+- Current gate: publish `WS-QUAL-001-01A`, then external and human review.
 - Next chunk: `WS-QUAL-001-01B` remains inactive until 01A merges and the user
   gives a separate explicit start; do not start `WS-QUAL-001-02` automatically.
 - Paused implementation: `WS-AUTH-001-02` remains implemented on

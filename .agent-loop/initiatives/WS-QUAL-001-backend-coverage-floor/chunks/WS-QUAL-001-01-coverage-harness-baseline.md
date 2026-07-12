@@ -1,5 +1,9 @@
 # Chunk Contract: WS-QUAL-001-01 Coverage Harness And Baseline
 
+Status: superseded by the reviewed `WS-QUAL-001-01A` / `WS-QUAL-001-01B`
+split after implementation exceeded 700 lines and exposed separate database
+authority and CI-policy boundaries. Do not execute this combined contract.
+
 ## Goal
 
 Create reproducible full-backend coverage measurement, isolate the test
@@ -134,8 +138,10 @@ test deletion or weakened assertions
   `diff_text` from the existing root `workstream_agent_gate.py` for allowed
   scope, binary/symlink/untracked detection, the implementation budget, deleted
   assertions, skip/xfail, selection narrowing, and coverage pragmas. It does not
-  duplicate Git parsing or create another broad agent gate. Boundary tests cover
-  500 vs 501; manual test-delta review remains required for semantic weakening.
+  duplicate Git parsing or create another broad agent gate. Parameterized tests
+  prove the default 500 cap passes at 500 and fails at 501, this chunk passes at
+  700 and fails at 701, and supplying 700 cannot mutate the stored/default cap
+  for later chunks. Manual test-delta review remains required for semantic weakening.
 - Metadata tests reject missing/malformed/extra keys, unsafe database names,
   absent or mismatched Alembic heads, stale/non-HEAD tree SHAs, and any URL or
   credential material; successful initialization binds the validated metadata
@@ -144,13 +150,15 @@ test deletion or weakened assertions
   are preferred; mocks may isolate subprocess/DB mechanics but may not replace
   the real catalog lifecycle proof.
 
-## Implementation line budget
+## Contract amendment A1: genuine-proof line budget
 
 Implementation lines are additions plus deletions outside `.agent-loop` against
-the merge base. Forecast: `coverage_policy.py` 120, `run_isolated_tests.py` 85,
-coverage tests 105, runner integration tests 55, API guard tests/edits 35,
-pyproject/conftest/workflow 20, runbook 60; total 480. Stop and replan before
-exceeding 500. The new policy dynamically loads the existing root gate helpers
+the merge base. Discovery showed the original 500-line forecast undercounted
+readable safety/error handling: the two scripts require 387 lines before tests.
+Revised forecast: control scripts 390, genuine behavior tests 190, API/config/
+workflow edits 45, runbook 55; total 680. Hard cap: 700. The added budget is
+reserved for behavior proof and safety handling, not scope expansion. Stop and
+split before exceeding 700. The new policy dynamically loads the existing root gate helpers
 from their canonical path and remains limited to coverage config, inventory,
 evidence, ratchet, coverage workflow integrity, allowed scope, and size/test
 delta controls required by this chunk.
@@ -167,6 +175,20 @@ before the later evidence-only commit. The canonical second pass runs against
 that exact clean commit. Evidence can therefore name the measured tree without
 self-reference.
 
+## Contract amendment A2: observed proof size
+
+The first executable implementation reached 923 lines before the complete
+ratchet and failure matrix was finished. The A1 estimate omitted the cost of
+real concurrent catalog presence/interruption proof, strict evidence/config/
+workflow negative cases, and the operator runbook. Compressing back to 700
+would remove named behavior assertions or make the safety scripts materially
+harder to review, contrary to D5 and the user's explicit behavior-first
+direction. The revised forecast is 1,050 lines with a hard cap of 1,100 for
+this chunk only. No production file, scope, exclusion, or later-chunk budget is
+added. Implementation remains stopped until engineering/architecture/reuse,
+QA/CI/test-delta, and security/product/docs reviewers approve this amendment;
+rejection requires splitting the chunk before further implementation.
+
 ## Verification commands
 
 ```bash
@@ -174,7 +196,7 @@ self-reference.
 (cd backend && .venv/bin/python -m ruff check tests scripts)
 (cd backend && tmp_dir=$(mktemp -d) && trap 'rm -rf "$tmp_dir"' EXIT && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-dsn> .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$tmp_dir/database.json" -- .venv/bin/python -m pytest -q --cov=app --cov-report=term-missing --cov-report=json:"$tmp_dir/coverage.json" --cov-fail-under=0 && .venv/bin/python scripts/coverage_policy.py --coverage-json "$tmp_dir/coverage.json" --database-metadata "$tmp_dir/database.json" --compute-floor)
 # Commit all final non-evidence files and configured six-decimal floor here.
-(cd backend && tmp_dir=$(mktemp -d) && trap 'rm -rf "$tmp_dir"' EXIT && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-dsn> .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$tmp_dir/database.json" -- .venv/bin/python -m pytest -q --cov=app --cov-report=term-missing --cov-report=json:"$tmp_dir/coverage.json" && .venv/bin/python scripts/coverage_policy.py --coverage-json "$tmp_dir/coverage.json" --database-metadata "$tmp_dir/database.json" --base-ref origin/main --initialize --minimum-milestone=<six-decimal-baseline> --max-implementation-lines=500 --check-test-delta)
+(cd backend && tmp_dir=$(mktemp -d) && trap 'rm -rf "$tmp_dir"' EXIT && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-dsn> .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$tmp_dir/database.json" -- .venv/bin/python -m pytest -q --cov=app --cov-report=term-missing --cov-report=json:"$tmp_dir/coverage.json" && .venv/bin/python scripts/coverage_policy.py --coverage-json "$tmp_dir/coverage.json" --database-metadata "$tmp_dir/database.json" --base-ref origin/main --initialize --minimum-milestone=<six-decimal-baseline> --max-implementation-lines=700 --check-test-delta)
 (cd backend && .venv/bin/python -m pytest -q tests/test_coverage_contract.py tests/test_api_contract_e2e.py)
 (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-dsn> .venv/bin/python -m pytest -q tests/test_isolated_database_runner.py)
 (cd backend && .venv/bin/python -m pip check)

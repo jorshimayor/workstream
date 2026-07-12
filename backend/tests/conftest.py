@@ -11,7 +11,6 @@ import pytest
 
 from app.core.config import get_settings
 
-DEFAULT_TEST_DATABASE_URL = "postgresql+asyncpg://workstream:workstream@localhost:5433/workstream"
 DDL_LOCK_DIRECTORY = Path("/tmp")
 
 
@@ -44,10 +43,10 @@ def migration_lock(postgres_database_url: str):
 
 @pytest.fixture
 def postgres_database_url() -> str:
-    return os.environ.get(
-        "WORKSTREAM_TEST_DATABASE_URL",
-        os.environ.get("WORKSTREAM_DATABASE_URL", DEFAULT_TEST_DATABASE_URL),
-    )
+    value = os.environ.get("WORKSTREAM_TEST_DATABASE_URL")
+    if not value:
+        pytest.fail("WORKSTREAM_TEST_DATABASE_URL is required for database-backed tests")
+    return value
 
 
 @pytest.fixture

@@ -1,18 +1,25 @@
 # Review Log
 
-## WS-QUAL-001-01
+## WS-QUAL-001-01A
 
-Status: explicitly started on 2026-07-12; repaired L1 preimplementation review
-passed across senior engineering, QA/test, security/auth, product/ops,
-architecture, CI integrity, docs, reuse/dedup, and test delta.
+Status: implementation and all required internal reviews passed; PR publication
+pending. The bound SHA is recorded in the internal review evidence.
 
-Scope: isolated database runner, coverage policy/inventory/ratchet, focused
-behavior tests, initial clean-main baseline, canonical CI command, and runbook.
+Scope: isolated least-privilege database runner, API guards, focused behavior
+tests, two-phase complete-suite CI, and database-testing runbook.
 
 User quality direction: behavior and safety proof outrank percentage gains;
 execution-only line-chasing tests are prohibited.
 
-Next: bounded implementation and evidence for chunk 01 only.
+Review findings: child credentials must not retain admin authority; destructive
+helpers must revalidate identifiers; collision proof must preserve an existing
+session; runner lifecycle tests and provisioned suite require explicit phases.
+
+Evidence: `.agent-loop/initiatives/WS-QUAL-001-backend-coverage-floor/reviews/WS-QUAL-001-01A-internal-review-evidence.md`
+
+Trust bundle: `.agent-loop/initiatives/WS-QUAL-001-backend-coverage-floor/reviews/WS-QUAL-001-01A-pr-trust-bundle.md`
+
+Next: external and human review of 01A only. Do not start 01B.
 
 ## WS-QUAL-001-PLAN
 

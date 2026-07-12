@@ -2,15 +2,15 @@
 
 ## Approach
 
-1. Establish reproducible measurement with `pytest-cov`, one safe test-database
-   provisioner, full `app` inventory proof, machine-readable evidence, and a
-   base-ref-enforced non-decreasing ratchet.
-2. Cover project setup/policy/correction service behavior and reach at least 82%.
-3. Cover project repository/router behavior and reach at least 84%.
-4. Cover task service/repository/router behavior and reach at least 86%.
-5. Cover checker service/runner/repository/router/worker behavior and reach at
+1. Establish the isolated least-privilege test-database provisioner.
+2. Establish reproducible `pytest-cov` measurement, full `app` inventory proof,
+   machine-readable evidence, and a base-ref-enforced non-decreasing ratchet.
+3. Cover project setup/policy/correction service behavior and reach at least 82%.
+4. Cover project repository/router behavior and reach at least 84%.
+5. Cover task service/repository/router behavior and reach at least 86%.
+6. Cover checker service/runner/repository/router/worker behavior and reach at
    least 88%.
-6. Close the enumerated adapter/core/worker gaps and set the permanent CI floor
+7. Close the enumerated adapter/core/worker gaps and set the permanent CI floor
    to exactly 90 percent or higher.
 
 Each implementation chunk changes tests and coverage configuration only. Any
@@ -67,11 +67,17 @@ Each chunk records added/modified/deleted/skipped tests and scans its diff for
 Tests reuse existing domain fixtures in their owning test file; copied database
 reset, actor/project/task factories, HTTP clients, and queue helpers are banned.
 
-The 500-line budget is additions plus deletions from the merge base across
+The default 500-line budget is additions plus deletions from the merge base across
 implementation/config/test/workflow/runbook files. `.agent-loop` planning,
 evidence, status, and trust-bundle lines are reported separately and excluded
 from that implementation-size numerator. The policy checker emits both counts
-and fails an implementation count above 500.
+and fails above the reviewed per-chunk cap supplied by the contract. Later
+chunks use the default 500 cap.
+
+The combined chunk 01 was split after all L1 reviewer groups rejected a proposed
+1,100-line cap. Chunk 01A retains the reviewed 700-line limit for the database
+lifecycle boundary. Chunk 01B consumes its CLI contract and keeps coverage/CI/
+evidence review independent. Later chunks retain the default 500-line cap.
 
 ## Alternatives rejected
 

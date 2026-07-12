@@ -46,3 +46,28 @@ as state, lifecycle, authorization, audit, queue/retry, HTTP, redaction, cleanup
 or fail-closed behavior. Execution-only tests added to hit lines or percentages
 are prohibited even if they increase coverage. Test-delta and product/ops
 reviewers must reject them.
+
+## D6: Chunk 01 uses a bounded 700-line exception for genuine proof
+
+Status: accepted from the user's D5 direction on 2026-07-12 after internal L1
+circuit-breaker review.
+
+The original 500-line forecast proved incompatible with the required owned-DB
+lifecycle, redaction, cleanup, ratchet, and negative behavior matrix: the two
+control scripts alone require 387 readable lines before tests, guards, workflow,
+and runbook. Chunk 01 may use at most 700 implementation lines, with the added
+budget reserved for behavior tests and safety/error handling. Allowed files and
+all production exclusions remain unchanged. Crossing 700 requires a split and a
+new human decision.
+
+## D7: Split database isolation from coverage policy
+
+Status: accepted on 2026-07-12 after all required L1 reviewer groups rejected A2.
+
+The executable harness reached 923 implementation lines before completing the
+required ratchet and negative behavior matrix. Real concurrency/interruption
+catalog proof, strict policy failure tests, and the operator runbook were
+underestimated by A1. The rejected A2 proposal would have raised the cap to
+1,100. Reviewers required `01A` for the least-privilege database lifecycle and
+`01B` for coverage policy/CI/evidence. The split preserves genuine proof without
+compressing safety code. Production scope and later chunks remain unchanged.

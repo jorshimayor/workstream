@@ -8,6 +8,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import socket
 import subprocess
 import sys
@@ -42,6 +43,7 @@ DEFAULT_FLOW_ISSUER = "https://auth.flow.local/e2e"
 DEFAULT_FLOW_AUDIENCE = "workstream-api"
 LOCAL_DATABASE_HOSTS = {"localhost", "127.0.0.1", "::1"}
 LOCAL_DATABASE_NAMES = {"workstream_test", "test_workstream"}
+DERIVED_DATABASE_NAME = re.compile(r"workstream_test_[a-f0-9]{12}")
 ASYNC_POSTGRES_SCHEMES = {"postgresql+asyncpg"}
 NONLOCAL_DATABASE_OVERRIDE_VALUE = "I_UNDERSTAND_THIS_WRITES_DATA"
 STRONG_ATTESTATION = (
@@ -441,7 +443,10 @@ def assert_local_database_url(database_url: str) -> None:
     is_local_async_postgres = (
         parsed.scheme in ASYNC_POSTGRES_SCHEMES
         and parsed.hostname in LOCAL_DATABASE_HOSTS
-        and database_name in LOCAL_DATABASE_NAMES
+        and (
+            database_name in LOCAL_DATABASE_NAMES
+            or DERIVED_DATABASE_NAME.fullmatch(database_name) is not None
+        )
     )
     override = os.environ.get("WORKSTREAM_ALLOW_NONLOCAL_E2E_DATABASE")
     if is_local_async_postgres or override == NONLOCAL_DATABASE_OVERRIDE_VALUE:
@@ -450,7 +455,7 @@ def assert_local_database_url(database_url: str) -> None:
         "Refusing to run API contract E2E against a non-local database. "
         "Use an async Postgres URL such as postgresql+asyncpg:// on "
         "localhost/127.0.0.1 with a local test database named "
-        "workstream_test or test_workstream, or set "
+        "workstream_test, test_workstream, or workstream_test_<12 lowercase hex>, or set "
         f"WORKSTREAM_ALLOW_NONLOCAL_E2E_DATABASE={NONLOCAL_DATABASE_OVERRIDE_VALUE}."
     )
 
