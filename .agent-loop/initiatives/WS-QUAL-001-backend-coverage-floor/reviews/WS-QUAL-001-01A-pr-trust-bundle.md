@@ -21,8 +21,8 @@ and safety proof outrank coverage percentage gains.
   cleanup failure, and URL redaction.
 - Changed Backend CI to a complete two-phase partition and retained main's 78
   percent whole-app and 90 percent artifact gates.
-- Added the backend testing runbook and a 300-minute job timeout based on measured
-  complete-suite runtime.
+- Added the backend testing runbook, a 210-minute child deadline, and a
+  240-minute job timeout based on measured complete-suite runtime.
 
 ## Design And Alternatives
 
@@ -41,8 +41,8 @@ coverage-policy implementation is changed. Chunk 01B remains inactive.
 
 ## Acceptance Proof
 
-- Final SHA `5d1951b19b383f3ad54e7b1217c9a7378b435902`.
-- 16 lifecycle tests passed on final SHA.
+- Final reviewed SHA `d1582ec64b9176c5ead62f695c7a23b48e4c72b9`.
+- 16 lifecycle tests and 14 API guard tests passed on final SHA.
 - 525 provisioned application tests passed; whole-app coverage is 79.25 percent.
 - Artifact subsystem coverage is 91.07 percent.
 - All 541 tests are executed exactly once across the two CI phases.
@@ -66,7 +66,10 @@ test delta. No sub-agent session remains open.
 
 ## External Review
 
-GitHub checks, CodeRabbit, and human review are pending.
+CodeRabbit posted seven requests. All valid contract, runbook, timeout, and
+reuse findings were repaired; role-aware cleanup was retained with explicit
+ownership justification and real-catalog proof. The initial Agent Gates wording
+failure was repaired. Final GitHub checks and human review remain pending.
 
 ## Remaining Risks And Follow-Up
 

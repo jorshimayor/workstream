@@ -24,7 +24,8 @@
 - WS-ART-001-01 final evidence-bound branch head: `2b8c2a0`
 - WS-ART-001-01 merge commit: `050eb15eab8c57e6bc265477a5e92484d27a893c`
 - Implementation base SHA: `58d44596f614895964b82bb344e0ed98596eaae8`
-- Current gate: publish `WS-QUAL-001-01A`, then external and human review.
+- Current gate: final GitHub checks and human review of PR #103 after
+  CodeRabbit repairs reviewed at `d1582ec64b9176c5ead62f695c7a23b48e4c72b9`.
 - Next chunk: `WS-QUAL-001-01B` remains inactive until 01A merges and the user
   gives a separate explicit start; do not start `WS-QUAL-001-02` automatically.
 - Paused implementation: `WS-AUTH-001-02` remains implemented on

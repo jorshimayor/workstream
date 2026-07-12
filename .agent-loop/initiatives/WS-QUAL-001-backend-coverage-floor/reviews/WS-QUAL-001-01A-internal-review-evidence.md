@@ -10,11 +10,13 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: `5d1951b19b383f3ad54e7b1217c9a7378b435902`
+Reviewed code SHA: `d1582ec64b9176c5ead62f695c7a23b48e4c72b9`
 
-Reviewed at: 2026-07-12T17:08:05Z
+Reviewed at: 2026-07-12T18:03:00Z
 
-Reviewer run IDs: engineering=`qual01a_final_engineering`; quality-ci=`qual01a_final_quality`; security-product-docs=`qual01a_final_security`; earlier repair cycles=`auth01_plan_engineering,auth01_plan_quality_ci,auth01_plan_security_product`
+Reviewer run IDs: external-repair engineering=`qual103_eng_review`;
+quality-ci=`qual103_qa_ci_review`; security-product-docs=`qual103_sec_ops_docs`;
+original implementation=`qual01a_final_engineering,qual01a_final_quality,qual01a_final_security`
 
 ## Reviewed Change
 
@@ -41,7 +43,7 @@ Reviewer run IDs: engineering=`qual01a_final_engineering`; quality-ci=`qual01a_f
 | security/auth | PASS AFTER FIXES | None | Admin authority is parent-only; destructive cleanup is ownership checked and exact. |
 | product/ops | PASS | None | Test infrastructure only; product lifecycle and actor behavior are unchanged. |
 | architecture | PASS | None | Database lifecycle is separated from inactive coverage-policy chunk 01B. |
-| CI integrity | PASS | None | Existing coverage gates remain hard; 300-minute timeout matches measured runtime without narrowing. |
+| CI integrity | PASS | None | Existing coverage gates remain hard; the 210-minute child deadline leaves a bounded 30-minute cleanup/job window. |
 | docs | PASS AFTER FIXES | None | Runbook covers credentials, two phases, timeout, cleanup, redaction, and troubleshooting. |
 | reuse/dedup | PASS | None | Existing gate helpers and parallel drill guards were not replaced by a second framework. |
 | test delta | PASS | None | No skips, xfails, exclusions, deleted assertions, or selection loss. |
@@ -49,7 +51,8 @@ Reviewer run IDs: engineering=`qual01a_final_engineering`; quality-ci=`qual01a_f
 ## Deterministic Evidence
 
 ```text
-Final SHA lifecycle suite: 16 passed in 348.94s
+Final SHA lifecycle suite: 16 passed in 200.74s
+API guard suite: 14 passed
 Focused final cleanup/migration cases: 4 passed in 25.24s
 Provisioned application suite: 525 passed in 11284.43s
 Whole-app coverage: 6466/8159 statements, 79.25% (floor 78%)
@@ -62,9 +65,10 @@ Catalog after successful runs: no derived database or role
 ```
 
 The 525-test application run was completed before the final cleanup-only repair.
-That repair changed only runner cleanup and lifecycle tests; QA/CI/test-delta
-review explicitly accepted the application result as applicable. The final SHA
-then passed all 16 lifecycle tests, including the repaired paths.
+Later external-review repairs changed only contracts, the runbook, CI timeout
+wiring, and reuse of the unchanged derived-name regex. QA/CI/test-delta review
+explicitly accepted the application result as applicable. The final SHA passed
+all 16 lifecycle tests and all 14 API guard cases.
 
 ## Findings Addressed
 
@@ -82,8 +86,9 @@ then passed all 16 lifecycle tests, including the repaired paths.
 
 ## Remaining Risks
 
-- The complete suite took 3:08:04 locally; CI now allows 300 minutes. Runtime
-  regression must trigger performance work, not skipped or narrowed tests.
+- The complete suite took 3:08:04 locally; CI gives the child 210 minutes and
+  the job 240 minutes. Runtime regression must trigger performance work, not
+  skipped or narrowed tests.
 - The whole backend is at 79.25 percent, not the required 90 percent. Inactive
   chunks 01B and 02-06 own the ratchet and genuine behavior gaps.
 - Host-level termination can prevent any process cleanup; the runbook and strict
