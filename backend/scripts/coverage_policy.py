@@ -158,20 +158,23 @@ def weak_python(path: Path) -> bool:
     except (OSError, SyntaxError):
         return True
     blocked = {"skip", "skipif", "skipIf", "skipUnless", "xfail", "expectedFailure", "importorskip", "skipTest", "SkipTest"}
-    modules, marks, names = {"pytest", "unittest"}, set(), set()
+    modules, marks, names = set(), set(), set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
-            modules.update(alias.asname or alias.name for alias in node.names if alias.name in {"pytest", "unittest"})
-        if isinstance(node, ast.ImportFrom) and node.module in {"pytest", "unittest"}:
+            modules.update(alias.asname or alias.name.split(".", 1)[0] for alias in node.names if alias.name.split(".", 1)[0] in {"pytest", "unittest"})
+        if isinstance(node, ast.ImportFrom) and node.module and node.module.split(".", 1)[0] in {"pytest", "unittest"}:
             for alias in node.names:
                 target = alias.asname or alias.name
-                marks.add(target) if alias.name == "mark" else names.add(target) if alias.name in blocked else None
+                if alias.name == "mark":
+                    marks.add(target)
+                elif alias.name in blocked:
+                    names.add(target)
     for node in ast.walk(tree):
         if isinstance(node, ast.Name) and node.id in names:
             return True
         if isinstance(node, ast.Attribute) and node.attr in blocked:
             root = ast.unparse(node.value).split(".", 1)[0]
-            if node.attr == "skipTest" or root in modules | marks:
+            if (node.attr == "skipTest" and root == "self") or root in modules | marks:
                 return True
     return False
 
@@ -192,14 +195,27 @@ def raises_aliases(source: str) -> set[str]:
 
 def has_deleted_assertion(diff: str, base_source: str) -> bool:
     deleted = [line for line in diff.splitlines() if line.startswith("-") and not line.startswith("---")]
-    assertion = re.compile(r"^-\s*(assert\b|self\.assert\w+\()")
     targets = "|".join(re.escape(target) for target in sorted(raises_aliases(base_source)))
     raises = re.compile(rf"^-.*(?<![\w.])(?:{targets})\s*\(")
-    return any(assertion.search(line) or raises.search(line) for line in deleted)
+    return any(line_has_assertion(line[1:]) or raises.search(line) for line in deleted)
+
+
+def line_has_assertion(source: str) -> bool:
+    tokens = []
+    try:
+        tokens.extend(tokenize.generate_tokens(StringIO(source).readline))
+    except tokenize.TokenError:
+        pass
+    values = [token.string for token in tokens if token.type not in {tokenize.STRING, tokenize.COMMENT}]
+    return "assert" in values or any(index > 0 and values[index - 1] == "self" and values[index] == "." and values[index + 1].startswith("assert") and values[index + 2] == "(" for index in range(len(values) - 2))
 
 
 def approved_memory(path: str) -> bool:
     return path in GLOBAL_MEMORY or path.startswith(QUAL_MEMORY)
+
+
+def has_test_rename(statuses: str) -> bool:
+    return any(parts[0].startswith("R") and any(path.startswith("backend/tests/") and path.endswith(".py") for path in parts[1:]) for parts in (line.split("\t") for line in statuses.splitlines()) if parts)
 
 
 def validate_delta(base: str, max_lines: int, allowed: set[str]) -> None:
@@ -209,11 +225,17 @@ def validate_delta(base: str, max_lines: int, allowed: set[str]) -> None:
         files = changed_files(base, "HEAD")
         _, _, rows = numstat(base, "HEAD")
         tests = [path for path in files if path.startswith("backend/tests/") and path.endswith(".py")]
+        statuses = "\n".join(
+            (maybe_run(["git", "diff", "--name-status", "--find-renames", f"{base}...HEAD"]),
+             maybe_run(["git", "diff", "--name-status", "--find-renames", "--cached"]),
+             maybe_run(["git", "diff", "--name-status", "--find-renames"]))
+        )
         diffs = {path: diff_text(base, "HEAD", [path]) for path in tests}
         sources = {path: maybe_run(["git", "show", f"{base}:{path}"]) for path in tests}
     finally:
         os.chdir(previous)
     require(all(path in allowed or approved_memory(path) for path in files), "scope_violation")
+    require(not has_test_rename(statuses), "test_rename")
     require(sum(add + delete for path, add, delete in rows if not approved_memory(path)) <= max_lines, "implementation_size_exceeded")
     require(not any(weak_python(REPO / path) for path in tests), "test_skip_or_xfail")
     require(not any(has_deleted_assertion(diffs[path], sources[path]) for path in tests), "deleted_assertion")

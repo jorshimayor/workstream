@@ -222,6 +222,10 @@ def test_runner_metadata_fails_closed(tmp_path: Path, updates: dict, code: str) 
     ("class T:\n def test_x(self): self.skipTest('disabled')", True),
     ("import unittest\nraise unittest.SkipTest('disabled')", True),
     ("from unittest import SkipTest\nraise SkipTest('disabled')", True),
+    ("from unittest.case import SkipTest as ST\nraise ST('disabled')", True),
+    ("import unittest.case as uc\nraise uc.SkipTest('disabled')", True),
+    ("class Local:\n def skip(self): pass\npytest = Local()\npytest.skip()", False),
+    ("class Local:\n def skipTest(self): pass\nlocal = Local()\nlocal.skipTest()", False),
     ("def invalid(", True),
 ])
 def test_python_weakening_is_syntax_aware(tmp_path: Path, source: str, weak: bool) -> None:
@@ -266,6 +270,8 @@ def test_delta_accepts_approved_memory_without_counting_it(monkeypatch, tmp_path
     "import pytest\n\ndef test_x():\n    with pytest.raises(ValueError):\n        raise ValueError\n",
     "import pytest as pt\n\ndef test_x():\n    with (pt.raises(ValueError)):\n        raise ValueError\n",
     "from pytest import raises as expect_raises\n\ndef test_x():\n    with other(), expect_raises(ValueError):\n        raise ValueError\n",
+    "def test_x():\n    if ready: assert result\n",
+    "class TestX:\n    def test_x(self):\n        value = self.assertEqual (1, 1)\n",
 ])
 def test_delta_detects_committed_deleted_raises_aliases(monkeypatch, tmp_path: Path, source: str) -> None:
     repo = tmp_path / "repo"
@@ -281,11 +287,35 @@ def test_delta_detects_committed_deleted_raises_aliases(monkeypatch, tmp_path: P
         ["git", "-C", str(repo), "rev-parse", "HEAD"], check=True, text=True, capture_output=True,
     ).stdout.strip()
     test.write_text("def test_x():\n    raise ValueError\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
+    subprocess.run(["git", "-C", str(repo), "commit", "-qm", "remove assertion"], check=True)
     monkeypatch.setattr(policy, "REPO", repo)
     monkeypatch.chdir(repo / "backend")
     with pytest.raises(policy.PolicyError, match="deleted_assertion"):
         policy.validate_delta(base, 300, {"backend/tests/test_sample.py"})
     assert Path.cwd() == repo / "backend"
+
+
+def test_delta_rejects_committed_test_rename(monkeypatch, tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    old = repo / "backend/tests/test_old.py"
+    old.parent.mkdir(parents=True)
+    filler = "\n".join(f"VALUE_{index} = {index}" for index in range(30))
+    old.write_text(f"import pytest as pt\n{filler}\nwith pt.raises(ValueError):\n    raise ValueError\n", encoding="utf-8")
+    subprocess.run(["git", "init", "-q", str(repo)], check=True)
+    subprocess.run(["git", "-C", str(repo), "config", "user.email", "test@example.invalid"], check=True)
+    subprocess.run(["git", "-C", str(repo), "config", "user.name", "Coverage Test"], check=True)
+    subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
+    subprocess.run(["git", "-C", str(repo), "commit", "-qm", "base"], check=True)
+    base = subprocess.run(["git", "-C", str(repo), "rev-parse", "HEAD"], check=True, text=True, capture_output=True).stdout.strip()
+    new = old.with_name("test_new.py")
+    subprocess.run(["git", "-C", str(repo), "mv", str(old.relative_to(repo)), str(new.relative_to(repo))], check=True)
+    new.write_text(f"{filler}\ndef test_x():\n    raise ValueError\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
+    subprocess.run(["git", "-C", str(repo), "commit", "-qm", "rename test"], check=True)
+    monkeypatch.setattr(policy, "REPO", repo)
+    with pytest.raises(policy.PolicyError, match="test_rename"):
+        policy.validate_delta(base, 300, {"backend/tests/test_new.py"})
 
 
 def test_compute_cli_is_read_only_and_stable(tmp_path: Path) -> None:
