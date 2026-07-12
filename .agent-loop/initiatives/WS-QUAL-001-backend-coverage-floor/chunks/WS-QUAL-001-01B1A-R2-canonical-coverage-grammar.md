@@ -2,7 +2,8 @@
 
 Parent: `WS-QUAL-001` Backend Coverage Floor
 
-Status: proposed corrective replacement; internal contract review pending.
+Status: approved and active after all required contract-review tracks passed at
+`6d500e8536e99fa847b77724ee4f211d0eaf4209`.
 
 ## Goal And Scope
 
