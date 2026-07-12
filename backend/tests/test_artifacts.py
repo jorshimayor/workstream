@@ -1699,17 +1699,44 @@ async def test_ingest_service_replays_ambiguous_provider_failure(
                 provider_commit_confirmed=True,
             )
 
-        async def cancel_recovery(*args) -> None:
-            del args
-            raise asyncio.CancelledError
+        recovery_started = asyncio.Event()
+        recovery_block = asyncio.Event()
 
-        monkeypatch.setattr(adapter, "recover_committed_store", cancel_recovery)
+        async def block_recovery(*args) -> None:
+            del args
+            recovery_started.set()
+            await recovery_block.wait()
+
+        monkeypatch.setattr(adapter, "recover_committed_store", block_recovery)
         async with factory() as session:
             service = ArtifactIngestService(session, adapter, adapter_name="local")
-            with pytest.raises(asyncio.CancelledError):
-                await service.reconcile_committed_item(
+            original_mark_recovery = service._mark_provider_recovery_required
+            cleanup_started = asyncio.Event()
+            cleanup_block = asyncio.Event()
+            cleanup_finished = asyncio.Event()
+
+            async def block_then_mark_recovery(*args, **kwargs) -> None:
+                cleanup_started.set()
+                await cleanup_block.wait()
+                await original_mark_recovery(*args, **kwargs)
+                cleanup_finished.set()
+
+            monkeypatch.setattr(
+                service, "_mark_provider_recovery_required", block_then_mark_recovery
+            )
+            reconcile_task = asyncio.create_task(
+                service.reconcile_committed_item(
                     reconcile_cancel_ids["item"], reconcile_cancel_request
                 )
+            )
+            await recovery_started.wait()
+            reconcile_task.cancel()
+            await cleanup_started.wait()
+            reconcile_task.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await reconcile_task
+            cleanup_block.set()
+            await asyncio.wait_for(cleanup_finished.wait(), timeout=1)
         async with factory() as session:
             item = await session.get(ArtifactUploadItem, reconcile_cancel_ids["item"])
             assert item is not None and item.state == "provider_committed"
