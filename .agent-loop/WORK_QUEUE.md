@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01B1A-R1` | Parser Normalization Closure | L1 | Proposed; internal contract review pending |
+| `WS-QUAL-001-01B1A-R1` | Parser Normalization Closure | L1 | Approved and active; implementation pending |
 
 ## Planned Next
 

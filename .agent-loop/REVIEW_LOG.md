@@ -34,6 +34,10 @@ continues independently in its existing worktree. Proposed replacement
 `WS-QUAL-001-01B1A-R1` is limited to those two bypasses and preserves the full
 400-line parser candidate cap.
 
+R1 contract review: PASS at `7901de94f4391c107c52ea8733ac72ad34ceb069`
+across all required tracks. Only R1 is active; any additional valid finding or
+size above 400 stops and replans the replacement.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract
