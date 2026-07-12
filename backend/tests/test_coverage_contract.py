@@ -67,9 +67,12 @@ def test_compute_floor_validates_inventory_and_truncates(tmp_path: Path) -> None
     (3, 3, "100.000000"),
     (2, 3, "66.666666"),
     (1, 7, "14.285714"),
+    (10**100 - 1, 10**100, "99.999999"),
 ])
 def test_six_place_percent_success_boundaries(covered: int, statements: int, expected: str) -> None:
     assert policy.six_place_percent(covered, statements) == expected
+
+
 @pytest.mark.parametrize(("files", "code"), [
     ({"app/a.py": {}}, "invalid_file_coverage"),
     ({"app/a.py": {"summary": {"covered_lines": 1, "num_statements": 3}}}, "coverage_totals_mismatch"),
@@ -97,6 +100,7 @@ def test_intended_config_returns_exact_floor(tmp_path: Path) -> None:
     ({"pin": "pytest-cov>=7"}, "pytest_cov_pin_missing"),
     ({"pin": "pytest-cov==7.1.0-malicious"}, "pytest_cov_pin_missing"),
     ({"dev": "['pytest-cov==7.1.0','pytest-cov>=9']"}, "pytest_cov_pin_missing"),
+    ({"dev": "['pytest-cov==7.1.0','PyTest_Cov>=9']"}, "pytest_cov_pin_missing"),
     ({"dev": "'pytest-cov==7.1.0'"}, "invalid_coverage_config"),
     ({"precision": 5}, "coverage_precision_invalid"),
     ({"floor": 101}, "coverage_floor_invalid"),
@@ -107,6 +111,8 @@ def test_intended_config_returns_exact_floor(tmp_path: Path) -> None:
     ({"floor": "75.1234567"}, "coverage_floor_invalid"),
     ({"report": "omit=[]\n"}, "coverage_exclusion_config"),
     ({"run": "source=['app']\n"}, "coverage_exclusion_config"),
+    ({"run": "source_pkgs=['app.modules.projects']\n"}, "coverage_exclusion_config"),
+    ({"run": "source_dirs=['app/modules/projects']\n"}, "coverage_exclusion_config"),
     ({"run": "include=[]\n"}, "coverage_exclusion_config"),
     ({"report": "exclude_lines=[]\n"}, "coverage_exclusion_config"),
 ])
@@ -115,6 +121,8 @@ def test_config_fails_closed(tmp_path: Path, kwargs: dict, code: str) -> None:
     path.write_text(config_text(**kwargs), encoding="utf-8")
     with pytest.raises(policy.PolicyError, match=code):
         policy.config_floor(path)
+
+
 @pytest.mark.parametrize("text", [
     "[project.optional-dependencies]\ndev=['pytest-cov==7.1.0']\n[tool.coverage]\nreport=[]",
     "[project.optional-dependencies]\ndev=['pytest-cov==7.1.0']\n[tool.coverage]\nrun='source'\n[tool.coverage.report]\nprecision=6\nfail_under=75",
@@ -131,6 +139,8 @@ def test_application_coverage_pragma_is_rejected(tmp_path: Path) -> None:
     (tmp_path / "app/a.py").write_text("x = 1  # pragma: no cover\n", encoding="utf-8")
     with pytest.raises(policy.PolicyError, match="coverage_pragma"):
         policy.validate_sources(tmp_path)
+    (tmp_path / "app/a.py").write_text("MESSAGE = 'pragma: no cover'\n\"\"\"pragma: no cover\"\"\"\n", encoding="utf-8")
+    policy.validate_sources(tmp_path)
 
 
 def test_canonical_evidence_accepts_bounded_non_secret_schema(tmp_path: Path) -> None:
@@ -169,6 +179,8 @@ def test_runner_metadata_accepts_only_expected_tree_and_head(tmp_path: Path) -> 
     write_json(path, value)
     with pytest.raises(policy.PolicyError, match="metadata_tree_mismatch"):
         policy.runner_metadata(path, SHA, HEAD)
+
+
 def test_runner_metadata_rejects_matching_malformed_expectations(tmp_path: Path) -> None:
     value = {"schema_version": 1, "database_name": "workstream_test_012345abcdef",
              "alembic_head": "../head", "tree_sha": "not-a-sha"}
