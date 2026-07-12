@@ -527,6 +527,9 @@ async def test_expired_jwks_cache_refreshes_during_longer_unknown_kid_cooldown(
 
     with pytest.raises(AuthVerificationUnavailableError):
         await verifier.verify(token)
+    clock[0] = 32.0
+    with pytest.raises(AuthVerificationUnavailableError, match="cooling down"):
+        await verifier.verify(token)
 
     assert len(requests) == 2
 
