@@ -53,8 +53,10 @@
 - R2 implementation candidate: `40ac7a9b5a9319b0fdccef396aa82342b324e4c3`
 - R2 implementation review: all required tracks passed; 58 focused tests and
   complete 398/400-line scope proof passed with coverage.py 7.15.0
+- R2 implementation PR: `https://github.com/Flow-Research/workstream/pull/105`
 
 ## Stop condition
 
-R2 awaits evidence and PR publication. AUTH-02 may proceed independently
-off-main in its separate worktree. Do not start 01B1B, 01B2, or chunk 02.
+R2 awaits external checks and human review in PR #105. AUTH-02 may proceed
+independently off-main in its separate worktree. Do not start 01B1B, 01B2, or
+chunk 02.

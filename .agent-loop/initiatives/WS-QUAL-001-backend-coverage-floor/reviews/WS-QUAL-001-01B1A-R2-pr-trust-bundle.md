@@ -4,7 +4,7 @@
 
 `WS-QUAL-001-01B1A-R2` - Canonical Coverage Grammar
 
-PR: pending publication
+PR: `https://github.com/Flow-Research/workstream/pull/105`
 
 ## Goal And Human-Approved Intent
 
