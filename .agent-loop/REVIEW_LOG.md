@@ -745,3 +745,29 @@ Final preimplementation plan-review result after repair:
 
 Current gate: no dependency or runtime implementation change until the user
 explicitly approves D12.
+
+## 2026-07-11 - WS-AUTH-001-02 D12 Approved
+
+The user explicitly approved D12 by replying "ok apporeved" after the repaired
+preimplementation plan passed every required review track. This approval
+authorizes adding `PyJWT[crypto]>=2.13,<3.0` and moving
+`httpx>=0.27,<1.0` from development to base dependencies for this chunk only.
+
+Current gate: bounded `WS-AUTH-001-02` implementation and evidence. Do not
+start `WS-AUTH-001-03`.
+
+During full-suite verification, the approved removal of email from canonical
+and compatibility auth contexts left one stale actor test expecting the dev
+token email to be persisted and returned. The chunk contract now explicitly
+allows `backend/tests/test_actors.py` only for that expectation correction; no
+actor service, persistence schema, or actor API implementation entered scope.
+Two task integration assertions carried the same stale expectation, so
+`backend/tests/test_tasks.py` is also allowed only for null identity-metadata
+expectations at the auth registration boundary.
+
+Required implementation review then identified that production startup
+validation belongs to `backend/app/main.py`; contract amendment A1 records that
+exact app-factory boundary before the repair edit. The amendment and all three
+test-only expectation files remain subject to the repeated full reviewer
+fanout. This is recorded as a process correction rather than represented as
+part of the original preimplementation allowlist.

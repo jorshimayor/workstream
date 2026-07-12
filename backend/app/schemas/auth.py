@@ -3,8 +3,66 @@
 from __future__ import annotations
 
 from typing import Any, Literal
+from uuid import NAMESPACE_URL, uuid5
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+
+
+SubjectKind = Literal["human", "service", "agent", "space"]
+
+
+class VerifiedIssuerToken(BaseModel):
+    """Canonical identity and coarse-access claims from a verified issuer token."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    issuer: str
+    subject: str
+    audience: tuple[str, ...]
+    expires_at: int
+    issued_at: int
+    not_before: int | None = None
+    token_id: str
+    subject_kind: SubjectKind
+    scopes: frozenset[str]
+
+
+class LegacyAuthorizationCompatibilityContext(BaseModel):
+    """Verified legacy roles for the bounded unmigrated dependency only."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    roles: tuple[str, ...] = ()
+    auth_source: Literal["flow", "dev_mock"]
+    is_dev_auth: bool = False
+
+
+class AuthVerificationResult(BaseModel):
+    """One verification result containing canonical and bounded legacy views."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    token: VerifiedIssuerToken
+    legacy: LegacyAuthorizationCompatibilityContext | None = None
+
+    def legacy_actor(self) -> "ActorContext":
+        """Build the temporary actor context for verified human callers only."""
+        if self.token.subject_kind != "human" or self.legacy is None:
+            raise ValueError("legacy authorization compatibility requires a human token")
+        return ActorContext(
+            actor_id=actor_id_from_external_identity(self.token.issuer, self.token.subject),
+            external_subject=self.token.subject,
+            external_issuer=self.token.issuer,
+            roles=self.legacy.roles,
+            claim_snapshot={"roles": self.legacy.roles},
+            auth_source=self.legacy.auth_source,
+            is_dev_auth=self.legacy.is_dev_auth,
+        )
+
+
+def actor_id_from_external_identity(issuer: str, subject: str) -> str:
+    """Build the historical stable actor identifier from issuer and subject."""
+    return str(uuid5(NAMESPACE_URL, f"{issuer}:{subject}"))
 
 
 def normalized_relationship_profile_claims(claim_snapshot: dict[str, Any]) -> list[dict[str, str]]:

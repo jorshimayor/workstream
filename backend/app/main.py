@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import math
+from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator
 from typing import Any
 
 from fastapi import FastAPI, Request
@@ -11,7 +13,19 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app.api.router import api_router
+from app.core.auth import build_auth_verifier
 from app.core.config import Settings, get_settings
+
+PRODUCTION_LIKE_ENVIRONMENTS = {"staging", "preview", "prod", "production"}
+
+
+@asynccontextmanager
+async def _application_lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Reject invalid production authentication configuration before serving."""
+    settings: Settings = app.state.settings
+    if settings.environment in PRODUCTION_LIKE_ENVIRONMENTS:
+        build_auth_verifier(settings)
+    yield
 
 
 def _validation_error_detail(error: dict[str, Any]) -> dict[str, Any]:
@@ -34,7 +48,9 @@ def _safe_validation_context(value: Any) -> Any:
         safe_context: dict[str, Any] = {}
         for key, item in value.items():
             if key in {"input", "error"}:
-                safe_context[key] = item.__class__.__name__ if isinstance(item, BaseException) else "redacted"
+                safe_context[key] = (
+                    item.__class__.__name__ if isinstance(item, BaseException) else "redacted"
+                )
                 continue
             safe_context[key] = _json_safe_validation_value(item)
         return safe_context
@@ -46,10 +62,7 @@ def _json_safe_validation_value(value: Any) -> Any:
     if isinstance(value, float) and not math.isfinite(value):
         return "non_finite_number"
     if isinstance(value, dict):
-        return {
-            key: _json_safe_validation_value(item)
-            for key, item in value.items()
-        }
+        return {key: _json_safe_validation_value(item) for key, item in value.items()}
     if isinstance(value, list):
         return [_json_safe_validation_value(item) for item in value]
     if isinstance(value, BaseException):
@@ -64,12 +77,11 @@ async def request_validation_exception_handler(
     """Return validation errors without echoing non-finite JSON values."""
     return JSONResponse(
         status_code=422,
-        content=jsonable_encoder({
-            "detail": [
-                _validation_error_detail(error)
-                for error in exc.errors()
-            ],
-        }),
+        content=jsonable_encoder(
+            {
+                "detail": [_validation_error_detail(error) for error in exc.errors()],
+            }
+        ),
     )
 
 
@@ -87,7 +99,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         title=settings.app_name,
         version=settings.app_version,
         debug=settings.debug,
+        lifespan=_application_lifespan,
     )
+    app.state.settings = settings
     app.add_exception_handler(
         RequestValidationError,
         request_validation_exception_handler,

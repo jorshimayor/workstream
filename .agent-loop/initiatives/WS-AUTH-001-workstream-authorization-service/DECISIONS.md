@@ -140,7 +140,7 @@ chunk completes.
 
 ## D12: Verified-token production dependencies
 
-Status: pending explicit human approval.
+Status: accepted by the user on 2026-07-11.
 
 `WS-AUTH-001-02` proposes two exact base dependency changes:
 
@@ -156,4 +156,5 @@ library has no safe equivalent for asymmetric JOSE verification, and
 hand-written JOSE or HTTP cryptography is outside the approved design. Chunk
 start does not imply dependency approval. No production dependency or runtime
 implementation may change until the user explicitly accepts D12 and that
-acceptance is recorded here.
+acceptance is recorded here. The user explicitly approved D12 by replying
+"ok apporeved" after the final preimplementation plan review passed.

@@ -3,9 +3,9 @@
 ## Purpose
 
 This runbook assigns ownership and stop conditions for the staged WS-AUTH-001
-authorization rollout. Commands and environment-specific values are added by
-their owning implementation chunks. Until then, this document is an operations
-contract, not executable production proof.
+authorization rollout. The verified-token configuration and evidence commands
+are executable contracts; later actor/grant sections remain staged until their
+owning implementation chunks.
 
 ## Ownership
 
@@ -24,23 +24,69 @@ contract, not executable production proof.
 
 ## Required Configuration
 
-Production token verification must fail closed unless all required values are
-explicitly configured:
+Platform security owns the following inventory. Production, staging, and
+preview fail closed when a required value is absent or outside its bound.
 
-- canonical issuer;
-- accepted audience;
-- JWKS URL;
-- pinned asymmetric algorithms;
-- human and service coarse scopes;
-- clock-skew bound;
-- JWKS connect/read/total timeouts;
-- JWKS response-size and key-count bounds;
-- cache TTL and stale-key policy;
-- introspection/revocation mode and its evidence source;
-- separately configured introspection endpoint/credentials when enabled.
+| Variable | Accepted value | Default/requirement |
+|---|---|---|
+| `WORKSTREAM_TOKEN_ISSUER` | Canonical HTTPS URL; no userinfo, query, or fragment | Required |
+| `WORKSTREAM_TOKEN_AUDIENCE` | Non-empty string | `workstream` |
+| `WORKSTREAM_TOKEN_JWKS_URL` | Canonical HTTPS URL; no userinfo, query, or fragment | Required |
+| `WORKSTREAM_TOKEN_ALGORITHMS` | One-family subset of `RS256,RS384,RS512,ES256,ES384,ES512,EdDSA` | Required; no symmetric algorithms |
+| `WORKSTREAM_REQUIRED_HUMAN_SCOPE` | One scope token | `workstream:access` |
+| `WORKSTREAM_REQUIRED_SERVICE_SCOPE` | One scope token | `workstream:service` |
+| `WORKSTREAM_TOKEN_CLOCK_SKEW_SECONDS` | Integer `0..300` | `30` |
+| `WORKSTREAM_TOKEN_MAX_BYTES` | Integer `512..32768` | `16384` |
+| `WORKSTREAM_TOKEN_HEADER_MAX_BYTES` | Integer `128..8192`, not above token max | `4096` |
+| `WORKSTREAM_TOKEN_PAYLOAD_MAX_BYTES` | Integer `256..24576`, not above token max | `12288` |
+| `WORKSTREAM_TOKEN_JWKS_CACHE_TTL_SECONDS` | Integer `30..3600` | `300` |
+| `WORKSTREAM_TOKEN_JWKS_MAX_RESPONSE_BYTES` | Integer `1024..1048576` | `262144` |
+| `WORKSTREAM_TOKEN_JWKS_MAX_KEYS` | Integer `1..100` | `20` |
+| `WORKSTREAM_TOKEN_UNKNOWN_KID_CACHE_TTL_SECONDS` | Integer `1..300` | `30` |
+| `WORKSTREAM_TOKEN_UNKNOWN_KID_CACHE_MAX_ENTRIES` | Integer `1..1000` | `100` |
+| `WORKSTREAM_TOKEN_JWKS_CONNECT_TIMEOUT_SECONDS` | Float `0.1..10` | `2` |
+| `WORKSTREAM_TOKEN_JWKS_READ_TIMEOUT_SECONDS` | Float `0.1..10` | `3` |
+| `WORKSTREAM_TOKEN_JWKS_WRITE_TIMEOUT_SECONDS` | Float `0.1..10` | `3` |
+| `WORKSTREAM_TOKEN_JWKS_POOL_TIMEOUT_SECONDS` | Float `0.1..10` | `1` |
+| `WORKSTREAM_TOKEN_JWKS_TOTAL_TIMEOUT_SECONDS` | Float `0.5..15` | `5` |
+| `WORKSTREAM_TOKEN_INTROSPECTION_MODE` | `disabled` or `required` | Required |
+| `WORKSTREAM_TOKEN_INTROSPECTION_DISABLED_REASON` | Issuer-policy evidence reference | Required in `disabled` mode |
+| `WORKSTREAM_TOKEN_INTROSPECTION_URL` | Canonical HTTPS URL | Required in `required` mode |
+| `WORKSTREAM_TOKEN_INTROSPECTION_CLIENT_ID` | Non-empty secret-backed identifier | Required in `required` mode |
+| `WORKSTREAM_TOKEN_INTROSPECTION_CLIENT_SECRET` | Non-empty secret value | Required in `required` mode |
+| `WORKSTREAM_TOKEN_INTROSPECTION_MAX_RESPONSE_BYTES` | Integer `256..262144` | `65536` |
+| `WORKSTREAM_TOKEN_INTROSPECTION_CONNECT_TIMEOUT_SECONDS` | Float `0.1..10` | `2` |
+| `WORKSTREAM_TOKEN_INTROSPECTION_READ_TIMEOUT_SECONDS` | Float `0.1..10` | `3` |
+| `WORKSTREAM_TOKEN_INTROSPECTION_WRITE_TIMEOUT_SECONDS` | Float `0.1..10` | `3` |
+| `WORKSTREAM_TOKEN_INTROSPECTION_POOL_TIMEOUT_SECONDS` | Float `0.1..10` | `1` |
+| `WORKSTREAM_TOKEN_INTROSPECTION_TOTAL_TIMEOUT_SECONDS` | Float `0.5..15` | `5` |
 
 Secrets, private keys, bearer tokens, full claims, and raw JWKS documents must
 not appear in committed configuration or evidence.
+
+Verification evidence:
+
+```bash
+tmp_venv="$(mktemp -d)"
+python3 -m venv "$tmp_venv"
+"$tmp_venv/bin/python" -m pip install -e ./backend
+"$tmp_venv/bin/python" -c 'import jwt, cryptography, httpx'
+"$tmp_venv/bin/python" -m pip check
+rm -rf "$tmp_venv"
+
+cd backend
+.venv/bin/python -m pytest -q tests/test_auth.py tests/test_config.py
+.venv/bin/python -m ruff check app tests scripts
+: "${WORKSTREAM_DATABASE_URL:?set a disposable migrated test database URL}"
+WORKSTREAM_DATABASE_URL="$WORKSTREAM_DATABASE_URL" .venv/bin/python -m pytest -q
+WORKSTREAM_DATABASE_URL="$WORKSTREAM_DATABASE_URL" .venv/bin/python scripts/api_contract_e2e.py
+cd ..
+python3 scripts/check_stale_workstream_wording.py
+python3 scripts/check_stale_authorization_docs.py
+python3 scripts/check_markdown_links.py
+python3 scripts/check_loop_memory_state.py
+git diff --check
+```
 
 ## JWKS Rotation And Outage
 
@@ -66,9 +112,15 @@ HMAC secret, development verifier, unsigned token, or unverified claim parsing.
 Production must select an explicit mode:
 
 - disabled only with documented issuer revocation/short-lifetime evidence;
-- bearer-token introspection only to a separately allowlisted HTTPS origin with
-  no redirects and strict time/response bounds; or
-- a documented issuer-supported identifier-only contract.
+- required bearer-token introspection only to a separately configured HTTPS
+  endpoint with OAuth client-secret Basic authentication, no redirects or
+  environment proxies, and strict time/response bounds.
+
+Required introspection responses contain `active=true`, `iss`, `sub`, `aud`,
+and `jti`; every identity value must match the already signature-verified
+token. Introspection cannot provide or replace identity, kind, scope, roles, or
+grants. Identifier-only introspection is not supported in this chunk. Platform
+security owns the client ID/secret, rotation, and revocation procedure.
 
 JWKS and introspection use separate clients and policies. Bearer tokens never
 reach JWKS endpoints, redirect targets, logs, traces, errors, or audit events.
@@ -169,9 +221,10 @@ compensation policy.
 
 Required bounded-cardinality metrics cover:
 
-- token verification and denial result;
-- JWKS cache hit, refresh, and failure;
-- introspection result;
+- `workstream_auth_verification_total{result}`;
+- `workstream_auth_jwks_cache_total{result}`;
+- `workstream_auth_jwks_refresh_total{result}`;
+- `workstream_auth_introspection_total{mode,result}`;
 - actor first access/conflict and actor/link state;
 - authorization allow/deny code and registered permission;
 - administrative/project grant state;
@@ -182,6 +235,16 @@ Alerts require an owner, diagnosis steps, safe recovery, escalation path, and
 evidence-retention period. Alert on sustained verification failure, unusable
 JWKS cache, repeated bootstrap/final-administrator denial, unusual grant
 mutation rate, invalidation backlog, and abnormal first-access conflicts.
+
+Platform security/on-call alerts when verification or refresh failures exceed
+5% for five minutes, when all JWKS refreshes fail for two consecutive cache
+windows, or when required introspection is unavailable for two minutes.
+Diagnosis checks the approved issuer configuration, HTTPS reachability, key
+rotation window, cache age, and introspection health without printing response
+bodies or credentials. Recovery restores the approved issuer endpoint/policy;
+it never enables HMAC, development auth, redirects, or an unpinned algorithm.
+Escalate to the release owner and security lead and retain redacted incident
+metrics/configuration evidence for the normal security incident period.
 
 Never use token, subject, email, `jti`, raw URL, key material, or unbounded
 resource IDs as metric labels.

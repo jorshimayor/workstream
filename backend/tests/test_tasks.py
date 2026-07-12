@@ -2165,8 +2165,8 @@ async def test_worker_profile_request_is_fail_closed_and_validated(
     assert identity.actor_id == actor_id(subject)
     assert identity.external_subject == subject
     assert identity.external_issuer == "flow-test"
-    assert identity.email == f"{subject}@example.test"
-    assert identity.display_name == "Worker Profile Validation"
+    assert identity.email is None
+    assert identity.display_name is None
     assert identity.last_seen_roles == ["worker"]
     assert [(profile.profile_type, profile.status, profile.scope_type, profile.scope_id) for profile in profiles] == [
         ("worker", "observed", "global", "global")
@@ -2229,8 +2229,8 @@ async def test_registered_claim_route_rejects_identity_spoof_fields(
     assert identity.actor_id == actor_id("worker-claim-overpost")
     assert identity.external_subject == "worker-claim-overpost"
     assert identity.external_issuer == "flow-test"
-    assert identity.email == "worker-claim-overpost@example.test"
-    assert identity.display_name == "Worker Claim Overpost"
+    assert identity.email is None
+    assert identity.display_name is None
     assert identity.last_seen_roles == ["worker"]
     assert [(profile.profile_type, profile.status, profile.skill_tags) for profile in profiles] == [
         ("worker", "active", ["stem"])

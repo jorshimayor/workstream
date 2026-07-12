@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Started; preimplementation plan review passed; runtime blocked pending D12 approval |
+| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | In implementation; plan review passed and D12 approved |
 
 ## Planned Next
 
@@ -51,4 +51,4 @@
 
 | Chunk | Blocker | Next action |
 |---|---|---|
-| `WS-AUTH-001-02` | Exact production dependency changes lack explicit human approval under D12 | User explicitly approves or rejects D12; approval must be recorded before dependency/runtime edits |
+| none | none | none |

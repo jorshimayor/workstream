@@ -111,6 +111,7 @@ The exact settings and accepted bounds are:
 | `WORKSTREAM_TOKEN_JWKS_POOL_TIMEOUT_SECONDS` | float `0.1..10` | `1` |
 | `WORKSTREAM_TOKEN_JWKS_TOTAL_TIMEOUT_SECONDS` | float `0.5..15` | `5` |
 | `WORKSTREAM_TOKEN_INTROSPECTION_MODE` | exactly `disabled` or `required` | required; no default |
+| `WORKSTREAM_TOKEN_INTROSPECTION_DISABLED_REASON` | non-empty issuer-policy evidence reference | required only in `disabled` mode |
 | `WORKSTREAM_TOKEN_INTROSPECTION_URL` | HTTPS URL without userinfo, query, or fragment | required only in `required` mode |
 | `WORKSTREAM_TOKEN_INTROSPECTION_CLIENT_ID` | non-empty secret-backed string | required only in `required` mode |
 | `WORKSTREAM_TOKEN_INTROSPECTION_CLIENT_SECRET` | non-empty secret-backed value | required only in `required` mode |
@@ -175,12 +176,15 @@ P1
 backend/pyproject.toml
 backend/app/core/config.py
 backend/app/core/auth.py
+backend/app/main.py
 backend/app/interfaces/auth.py
 backend/app/adapters/auth/**
 backend/app/api/deps/auth.py
 backend/app/schemas/auth.py
 backend/tests/test_auth.py
 backend/tests/test_config.py
+backend/tests/test_actors.py
+backend/tests/test_tasks.py
 backend/scripts/api_contract_e2e.py
 docs/operations_authorization_service.md
 .agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/**
@@ -198,6 +202,18 @@ project/task/checker authorization changes
 Workstream token issuance, login, sessions, or passwords
 trusting token role claims
 ```
+
+## Contract amendment A1
+
+Implementation evidence exposed two directly related boundaries omitted from
+the initial allowlist. `backend/tests/test_actors.py` and
+`backend/tests/test_tasks.py` contain the stale identity-metadata expectations
+created by the approved canonical-token minimization, and `backend/app/main.py`
+owns the required production startup rejection. They are allowed only for
+those exact purposes. The amendment is explicitly recorded as a process repair
+and requires the full reviewer fanout before PR publication; it does not
+authorize actor-service, persistence, route-policy, or unrelated app-factory
+changes.
 
 ## Acceptance criteria
 
@@ -256,7 +272,7 @@ trusting token role claims
 
 ```bash
 (tmp_venv="$(mktemp -d)" && trap 'rm -rf "$tmp_venv"' EXIT && python3 -m venv "$tmp_venv" && "$tmp_venv/bin/python" -m pip install -e ./backend && "$tmp_venv/bin/python" -c 'import jwt, cryptography, httpx' && "$tmp_venv/bin/python" -m pip check)
-(cd backend && WORKSTREAM_ENVIRONMENT=test .venv/bin/python -m pytest -q tests/test_auth.py tests/test_config.py)
+(cd backend && .venv/bin/python -m pytest -q tests/test_auth.py tests/test_config.py)
 (cd backend && .venv/bin/python -m ruff check app tests scripts)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python scripts/api_contract_e2e.py)
