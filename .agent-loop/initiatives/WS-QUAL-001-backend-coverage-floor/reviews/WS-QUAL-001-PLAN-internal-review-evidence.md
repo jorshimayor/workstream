@@ -1,25 +1,36 @@
 # Internal Review Evidence: WS-QUAL-001-PLAN
 
+## Chunk
+
+Planning contracts `WS-QUAL-001-01` through `WS-QUAL-001-06`.
+
+open sub-agent sessions: none
+
+valid findings addressed: yes
+
 ## Reviewed revision
 
-- Reviewed SHA: `93c2f30c1cfa1d404cb04748c177fd4d8001cd30`
-- Reviewed at: `2026-07-12T05:40:40Z`
-- Open sub-agent sessions: none
-- Valid findings addressed: yes
+Reviewed code SHA: 4596bd67293e68c6156c4b86bf9900df344fdaad
+
+Reviewed at: 2026-07-12T06:05:30Z
+
+Reviewer run IDs: ws-qual-001-plan-senior-architecture-reuse-rebind/4596bd67293e/2026-07-12-final, ws-qual-001-plan-qa-ci-testdelta-4596bd6-20260712T060516Z, WS-QUAL-001-PLAN/security-product-docs-rebind/4596bd67293e/2026-07-12T06:05:30Z
+
+After the reviewed SHA, only this internal review evidence file changed.
 
 ## Result
 
-| Track | Result | Final conclusion |
-|---|---:|---|
-| Senior engineering | PASS | Six bounded chunks, numeric floors, exact scopes, and deterministic size controls are reviewable. |
-| QA/test | PASS | DB-capable commands are isolated and tests require observable product outcomes. |
-| Security/auth | PASS | Local-only strict DB names, env-only credentials, redaction, owned cleanup, and no product/auth changes. |
-| Product/ops | PASS | Coverage tests must prove lifecycle, state, audit, queue, HTTP, and fail-closed outcomes. |
-| Architecture | PASS | One reusable provisioner/policy boundary; no production or migration scope. |
-| CI integrity | PASS | Precise non-decreasing ratchet, complete app inventory, existing-gate preservation, and no bypass path. |
-| Docs | PASS | Runbook requirements cover provisioning, cleanup, credentials, commands, ratchets, drills, and troubleshooting. |
-| Reuse/dedup | PASS | Existing domain fixtures remain canonical; copied reset/factory/client/queue helpers are forbidden. |
-| Test delta | PASS | Additive tests, deterministic delta scan, and no skip/xfail/assertion/exclusion weakening. |
+| Reviewer | Result | Blocking findings | Notes |
+|---|---:|---|---|
+| Senior engineering | PASS | None | Six bounded chunks, numeric floors, exact scopes, and deterministic size controls are reviewable. |
+| QA/test | PASS | None | DB-capable commands are isolated and tests require observable product outcomes. |
+| Security/auth | PASS | None | Local-only strict DB names, env-only credentials, redaction, owned cleanup, and no product/auth changes. |
+| Product/ops | PASS | None | Coverage tests must prove lifecycle, state, audit, queue, HTTP, and fail-closed outcomes. |
+| Architecture | PASS | None | One reusable provisioner and policy boundary; no production or migration scope. |
+| CI integrity | PASS | None | Precise non-decreasing ratchet, complete app inventory, existing-gate preservation, and no bypass path. |
+| Docs | PASS | None | Runbook requirements cover provisioning, cleanup, credentials, commands, ratchets, drills, and troubleshooting. |
+| Reuse/dedup | PASS | None | Existing domain fixtures remain canonical; copied reset, factory, client, and queue helpers are forbidden. |
+| Test delta | PASS | None | Additive tests, deterministic delta scan, and no skip, xfail, assertion, or exclusion weakening. |
 
 ## Findings repaired
 
