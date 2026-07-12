@@ -2,8 +2,8 @@
 
 Parent: `WS-QUAL-001` Backend Coverage Floor
 
-Status: approved and active after all required contract-review tracks passed at
-`6d500e8536e99fa847b77724ee4f211d0eaf4209`.
+Status: implemented within scope; all required implementation-review tracks
+passed at code candidate `40ac7a9b5a9319b0fdccef396aa82342b324e4c3`.
 
 ## Goal And Scope
 

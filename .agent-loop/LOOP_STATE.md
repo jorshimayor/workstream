@@ -4,7 +4,7 @@
 
 - Active initiative: `WS-QUAL-001` - Backend Coverage Floor
 - Active planning chunk: none
-- Active implementation chunk: `WS-QUAL-001-01B1A-R2` canonical coverage grammar
+- Active implementation chunk: none
 - Branch: `codex/ws-qual-001-01b1a-coverage-parser-core`
 - Status: 01B1 reached 496/500 lines and passed eight reviewer tracks at
   `7bfe3a0`, but final test-delta review found unhandled `unittest.skipTest`,
@@ -33,8 +33,8 @@
 - WS-QUAL-001-01A merge commit: `2901a3ebe68b7c770ccb1ff06841d79ce0c20d94`
 - WS-QUAL-001-01A post-merge memory merge commit:
   `8829a7ec3aa5199aae0aecbe5fda030c42a051cd`
-- Current gate: implement and review only approved R2. 01B1B and 01B2 remain
-  inactive.
+- Current gate: R2 implementation review passed; write internal evidence and
+  trust bundle, then publish the PR. 01B1B and 01B2 remain inactive.
 - Next chunk: `WS-QUAL-001-02` remains inactive; do not start it automatically.
 - Parallel implementation: the user explicitly authorized `WS-AUTH-001-02` to
   resume off-main in its separate worktree while coverage continues. AUTH must

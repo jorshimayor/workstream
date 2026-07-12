@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01B1A-R2` | Canonical Coverage Grammar | L1 | Approved and active; implementation pending |
+| `WS-QUAL-001-01B1A-R2` | Canonical Coverage Grammar | L1 | Implemented; all internal tracks pass; PR evidence pending |
 
 ## Planned Next
 
