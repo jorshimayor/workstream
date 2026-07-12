@@ -5,7 +5,7 @@
 | `WS-QUAL-001-01` | Combined harness/baseline contract | L1 | Split after circuit-breaker review |
 | `WS-QUAL-001-01A` | Isolated least-privilege database runner and two-phase complete-suite CI | L1 | Merged through PR #103 as `2901a3e` |
 | `WS-QUAL-001-01B` | Combined coverage policy, baseline, and CI ratchet | L1 | Circuit breaker triggered at 480/500 before required proof; split proposed |
-| `WS-QUAL-001-01B1` | Coverage policy core and contract tests | L1 | Proposed pending internal and human split approval |
+| `WS-QUAL-001-01B1` | Coverage policy core and contract tests | L1 | Explicitly approved; implementation active |
 | `WS-QUAL-001-01B2` | Git provenance, configured baseline evidence, and CI ratchet | L1 | Proposed after 01B1 merge and memory; inactive |
 | `WS-QUAL-001-02` | Project setup/policy/correction service coverage; floor at least 82% | L1 | Inactive |
 | `WS-QUAL-001-03` | Project repository/router coverage; floor at least 84% | L1 | Inactive |

@@ -76,8 +76,8 @@ compressing safety code. Production scope and later chunks remain unchanged.
 
 ## D8: Split 01B policy core from baseline and CI publication
 
-Status: proposed after the 2026-07-12 implementation circuit breaker; requires
-internal plan review and explicit human approval.
+Status: accepted after internal split review and explicit user approval on
+2026-07-12. Only 01B1 is started; 01B2 retains its later separate checkpoint.
 
 The reviewed combined 01B contract proved larger than its 500-line boundary:
 policy plus 19 behavior tests reached 480 lines before configured coverage,

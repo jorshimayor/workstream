@@ -2,15 +2,15 @@
 
 ## Current state
 
-- Phase: `WS-QUAL-001-01B` circuit-breaker replan
-- Branch: `codex/ws-qual-001-01b-coverage-policy-baseline`
+- Phase: `WS-QUAL-001-01B1` implementation
+- Branch: `codex/ws-qual-001-01b1-coverage-policy-core`
 - Authoritative target: 90 percent complete backend application statement coverage
 - Diagnostic AUTH-02 baseline: 78.26 percent after database isolation repair
 - Final reviewed planning SHA: `0d9dd987d546c864fa8de7bae462e5e73a1b5ea9`
 - Final evidence-bound branch head: `3da1769882e9f6db4c48ef3dba33da8380e6a613`
 - Planning merge commit: `9046d52f31c7c39f06e06c45c43783bb08a5181c`
 - Internal review: PASS after cleanup, signal, authority, CI, and split repairs
-- Active implementation chunk: none
+- Active implementation chunk: `WS-QUAL-001-01B1`
 - 01A implementation PR: `https://github.com/Flow-Research/workstream/pull/103` (merged)
 - 01A final reviewed implementation SHA: `d1582ec64b9176c5ead62f695c7a23b48e4c72b9`
 - 01A final evidence-bound branch head: `8cd7616b497ceb46d8359c25de689192632dfee8`
@@ -29,10 +29,11 @@
 - 01B plan review: PASS at `7a16ee4e851b1b10315e32d3f81957acc56bf316`
 - Circuit breaker: 480/500 implementation lines before configuration, workflow,
   runbook, and complete negative proof; executable draft removed
-- Proposed split: 01B1 policy core, then 01B2 baseline/CI ratchet
-- Next gate: internal split review and explicit human approval
+- Split review: PASS at `599c7ef1a55345cd54ab8b5b34351f59c52d60bc`
+- D8 approval: explicit user start of only 01B1 on 2026-07-12
+- Next gate: bounded 01B1 implementation, deterministic proof, and review
 
 ## Stop condition
 
-No implementation is authorized while the split is proposed. Do not start 01B1,
-01B2, or chunk 02 automatically; AUTH remains paused until coverage completes.
+Only 01B1 is authorized. Do not start 01B2 or chunk 02 automatically; AUTH
+remains paused until coverage completes.

@@ -1,5 +1,17 @@
 # Review Log
 
+## WS-QUAL-001-01B1
+
+Status: D8 split passed all internal plan reviewers at `599c7ef`; the user
+explicitly approved starting only 01B1 on 2026-07-12.
+
+Scope: read-only coverage policy core, parameterized contract behavior tests,
+and truthful compute-floor documentation. No config, workflow, evidence, Git
+publication logic, production behavior, or coverage-raising tests.
+
+Next: implement, verify, internally review, and publish 01B1 only. Stop before
+01B2.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract
