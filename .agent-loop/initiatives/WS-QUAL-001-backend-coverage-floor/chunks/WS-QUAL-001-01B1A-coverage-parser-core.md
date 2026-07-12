@@ -51,6 +51,9 @@ before remaining work; never compress assertions to fit.
 (cd backend && .venv/bin/python -m ruff check app tests scripts)
 (cd backend && .venv/bin/python -m pytest -q tests/test_coverage_contract.py)
 (cd backend && .venv/bin/python -m pip check)
+BASE_SHA="$(git merge-base HEAD origin/main)"
+test -z "$(git diff --name-only "$BASE_SHA"...HEAD | grep -Ev '^(backend/scripts/coverage_policy.py|backend/tests/test_coverage_contract.py|docs/operations_backend_testing.md|\.agent-loop/(LOOP_STATE.md|REVIEW_LOG.md|WORK_QUEUE.md|initiatives/WS-QUAL-001-backend-coverage-floor/.*))$')"
+test "$(git diff --numstat "$BASE_SHA"...HEAD -- backend/scripts/coverage_policy.py backend/tests/test_coverage_contract.py docs/operations_backend_testing.md | awk '{total += $1 + $2} END {print total + 0}')" -le 400
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_stale_authorization_docs.py
 python3 scripts/check_markdown_links.py

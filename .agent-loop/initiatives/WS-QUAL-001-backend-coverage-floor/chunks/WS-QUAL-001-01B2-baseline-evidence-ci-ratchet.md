@@ -1,7 +1,7 @@
 # Chunk Contract: WS-QUAL-001-01B2 Baseline Evidence And CI Ratchet
 
-Status: proposed after 01B1; inactive until 01B1 merge, memory, separate explicit
-start, internal contract review, and human approval of the split.
+Status: inactive until 01B1A and 01B1B merge, both post-merge memory updates
+complete, and the user gives a separate explicit start signal.
 
 ## Goal, Risk, And Budget
 

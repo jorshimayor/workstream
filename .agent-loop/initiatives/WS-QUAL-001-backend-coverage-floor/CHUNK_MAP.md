@@ -8,7 +8,7 @@
 | `WS-QUAL-001-01B1` | Combined parser and semantic-delta policy core | L1 | Blocked at 496/500 after two repair cycles; superseded by 01B1A/01B1B |
 | `WS-QUAL-001-01B1A` | Read-only coverage arithmetic and bounded policy parsers | L1 | Proposed; split review pending |
 | `WS-QUAL-001-01B1B` | Repository-delta and semantic test-integrity guards | L1 | Proposed after 01B1A merge and memory; inactive |
-| `WS-QUAL-001-01B2` | Git provenance, configured baseline evidence, and CI ratchet | L1 | Proposed after 01B1 merge and memory; inactive |
+| `WS-QUAL-001-01B2` | Git provenance, configured baseline evidence, and CI ratchet | L1 | Inactive until 01B1A and 01B1B merge/memory plus explicit user start |
 | `WS-QUAL-001-02` | Project setup/policy/correction service coverage; floor at least 82% | L1 | Inactive |
 | `WS-QUAL-001-03` | Project repository/router coverage; floor at least 84% | L1 | Inactive |
 | `WS-QUAL-001-04` | Task service/repository/router coverage; floor at least 86% | L1 | Inactive |

@@ -91,7 +91,8 @@ scope is added.
 
 ## D9: Stop 01B1 after repeated semantic-integrity findings
 
-Status: circuit breaker triggered on 2026-07-12; replacement split not approved.
+Status: circuit breaker triggered on 2026-07-12; replacement split direction
+approved by the user and pending internal split review.
 
 The 01B1 candidate reached 496/500 lines after two repair cycles. Eight review
 tracks passed, but final test-delta review still found executable unittest skip

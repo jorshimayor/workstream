@@ -24,7 +24,8 @@
 - WS-ART-001-01 reviewed implementation SHA: `5574bf59cf1cb86da76749e0cbc529036346fa8a`
 - WS-ART-001-01 final evidence-bound branch head: `2b8c2a0`
 - WS-ART-001-01 merge commit: `050eb15eab8c57e6bc265477a5e92484d27a893c`
-- Implementation base SHA: `58d44596f614895964b82bb344e0ed98596eaae8`
+- WS-QUAL-001-01A implementation base SHA: `58d44596f614895964b82bb344e0ed98596eaae8`
+- Current 01B split base SHA: `8829a7ec3aa5199aae0aecbe5fda030c42a051cd`
 - WS-QUAL-001-01A reviewed implementation SHA:
   `d1582ec64b9176c5ead62f695c7a23b48e4c72b9`
 - WS-QUAL-001-01A final evidence-bound head:
@@ -77,7 +78,7 @@ reputation, blockchain, frontend, or object-storage behavior.
 The merged `WS-POL-001-10` chunk was a corrective hardening chunk for the
 pre-submit live API drill. It fixed guide-version conflict mapping,
 guide-create source snapshot capture, active-guide checker summary visibility,
-worker self-profile onboarding, and failed pre-submit audit evidence. It did
+contributor self-profile onboarding, and failed pre-submit audit evidence. It did
 not change post-submit policy, review, revision, payment, reputation,
 blockchain, frontend, or agent-runtime behavior.
 

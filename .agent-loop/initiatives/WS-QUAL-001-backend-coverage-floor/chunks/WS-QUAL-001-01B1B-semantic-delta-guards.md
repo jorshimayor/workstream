@@ -45,8 +45,12 @@ remaining proof.
 
 ## Verification And Review
 
-Use the 01B1A verification commands plus real temporary-Git behavior tests and
-the root semantic delta validator against the merge base.
+Use the 01B1A lint, focused-test, dependency, stale-wording, link, and diff
+checks plus real temporary-Git behavior tests and this exact delta invocation:
+
+```text
+(cd backend && BASE_SHA="$(git merge-base HEAD origin/main)" .venv/bin/python -c 'import os, sys; sys.path.insert(0, "scripts"); import coverage_policy as policy; policy.validate_delta(os.environ["BASE_SHA"], 300, {"backend/scripts/coverage_policy.py", "backend/tests/test_coverage_contract.py"})')
+```
 
 Required reviewers: senior engineering, QA/test, security/auth, product/ops,
 architecture, CI integrity, reuse/dedup, and test delta. Human focus: false
