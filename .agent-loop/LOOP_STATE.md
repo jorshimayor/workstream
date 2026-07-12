@@ -18,8 +18,9 @@
 - Final merged WS-AUTH-001-01 branch head: `b5217e1`
 - Last merge commit: `8644a43`
 - Reviewed planning SHA: `93c2f30c1cfa1d404cb04748c177fd4d8001cd30`
-- Current gate: planning PR, external checks, and human approval for
-  `WS-QUAL-001`; all required internal tracks passed and no sessions remain.
+- Planning PR: `https://github.com/Flow-Research/workstream/pull/99` (draft)
+- Current gate: external checks and human approval for `WS-QUAL-001`; all
+  required internal tracks passed and no sessions remain.
 - Next chunk: `WS-QUAL-001-01` remains proposed and inactive until this plan is
   reviewed, merged, and separately started by the user.
 - Paused implementation: `WS-AUTH-001-02` remains implemented on

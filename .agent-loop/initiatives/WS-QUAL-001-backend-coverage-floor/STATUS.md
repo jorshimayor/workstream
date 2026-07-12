@@ -10,7 +10,8 @@
 - Reviewed planning SHA: `93c2f30c1cfa1d404cb04748c177fd4d8001cd30`
 - Internal review: all nine required tracks passed; no sessions remain open
 - Active implementation chunk: none
-- Next gate: planning PR, external checks, and explicit human approval
+- Planning PR: `https://github.com/Flow-Research/workstream/pull/99` (draft)
+- Next gate: external checks and explicit human approval
 
 ## Stop condition
 
