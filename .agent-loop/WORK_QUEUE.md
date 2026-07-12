@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-PLAN` | Backend Coverage Floor Planning | L1 | In planning; internal review running |
+| `WS-QUAL-001-PLAN` | Backend Coverage Floor Planning | L1 | Internally reviewed; planning PR pending |
 
 ## Planned Next
 
