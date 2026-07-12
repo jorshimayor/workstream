@@ -58,6 +58,10 @@ initialization, missing or malformed base/branch evidence is fatal.
 New tests must assert externally meaningful results: returned values, persisted
 state, emitted audit records, queued work, mapped HTTP errors, or fail-closed
 behavior. Pure branch execution without an outcome assertion is insufficient.
+Coverage percentage is a safety signal, not a reason to add a test. Every added
+test must identify the real behavior or safety invariant it protects and assert
+an observable outcome. Tests whose only value is executing previously uncovered
+lines are rejected even when they increase the measured percentage.
 Each chunk records added/modified/deleted/skipped tests and scans its diff for
 `skip`, `xfail`, deleted assertions, selection changes, and coverage pragmas.
 Tests reuse existing domain fixtures in their owning test file; copied database
@@ -82,15 +86,24 @@ and fails an implementation count above 500.
 
 ## Isolated database contract
 
-`WORKSTREAM_TEST_DATABASE_URL` is authoritative for tests. A shared test runner
-accepts an admin DSN only through `WORKSTREAM_TEST_ADMIN_DATABASE_URL`, validates
-local Postgres, derives `workstream_test_<12 lowercase hex>` from the canonical
-worktree path plus a nonce, provisions it, sets both test/runtime URLs only for
-the child process, terminates only owned-database connections, and drops it in a
-`finally` block. Identifiers are never interpolated without strict regex
-validation. CI's service database is already isolated per job. API drill guards
-accept the strict derived name but never use the nonlocal write-risk override
-for coverage proof.
+`WORKSTREAM_TEST_DATABASE_URL` is authoritative for tests. A shared runner
+accepts a parent-only admin DSN through `WORKSTREAM_TEST_ADMIN_DATABASE_URL` and
+requires exact scheme `postgresql+asyncpg` plus host `localhost`, `127.0.0.1`, or
+`::1`. It derives a name matching `^workstream_test_[a-f0-9]{12}$` from the
+canonical worktree path plus a nonce. The name must full-match before safely
+quoted identifier use; catalog values are parameterized.
+
+Ownership begins only after `CREATE DATABASE` succeeds. Collision or create
+failure never attaches to, terminates, or drops an existing database. Cleanup
+terminates sessions for the exact owned `datname` and drops only that database
+after child success, nonzero exit, timeout, or interruption.
+
+The child environment removes `WORKSTREAM_TEST_ADMIN_DATABASE_URL` and
+`WORKSTREAM_ALLOW_NONLOCAL_E2E_DATABASE`, overwrites both test/runtime database
+URLs with the derived target, and exposes no admin credential. Parent output and
+errors redact both credentialed admin and target URLs. CI's service database is
+already isolated per job. API drill guards accept the strict derived name; the
+runner makes the nonlocal override unavailable to ordinary coverage proof.
 
 ## Verification
 

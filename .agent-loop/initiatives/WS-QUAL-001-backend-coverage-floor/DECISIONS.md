@@ -35,3 +35,14 @@ new 90 percent repository requirement lacks an approved enforcement path. The
 pause avoids mixing roughly 849 statements of legacy coverage debt into an auth
 PR. Resumption requires an explicit user signal after the coverage plan is
 approved; this decision does not discard or redesign the auth implementation.
+
+## D5: Behavior proof outranks percentage gains
+
+Status: accepted by the user on 2026-07-12.
+
+Coverage is a safety signal, not the purpose of a test. Every new test must
+protect a real behavior or safety invariant and assert an observable result such
+as state, lifecycle, authorization, audit, queue/retry, HTTP, redaction, cleanup,
+or fail-closed behavior. Execution-only tests added to hit lines or percentages
+are prohibited even if they increase coverage. Test-delta and product/ops
+reviewers must reject them.

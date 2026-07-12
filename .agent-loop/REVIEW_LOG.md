@@ -1,5 +1,19 @@
 # Review Log
 
+## WS-QUAL-001-01
+
+Status: explicitly started on 2026-07-12; repaired L1 preimplementation review
+passed across senior engineering, QA/test, security/auth, product/ops,
+architecture, CI integrity, docs, reuse/dedup, and test delta.
+
+Scope: isolated database runner, coverage policy/inventory/ratchet, focused
+behavior tests, initial clean-main baseline, canonical CI command, and runbook.
+
+User quality direction: behavior and safety proof outrank percentage gains;
+execution-only line-chasing tests are prohibited.
+
+Next: bounded implementation and evidence for chunk 01 only.
+
 ## WS-QUAL-001-PLAN
 
 Status: merged through PR #99 on 2026-07-12 as `9046d52`.
