@@ -225,7 +225,9 @@ def test_runner_metadata_fails_closed(tmp_path: Path, updates: dict, code: str) 
     ("from unittest.case import SkipTest as ST\nraise ST('disabled')", True),
     ("import unittest.case as uc\nraise uc.SkipTest('disabled')", True),
     ("class Local:\n def skip(self): pass\npytest = Local()\npytest.skip()", False),
-    ("class Local:\n def skipTest(self): pass\nlocal = Local()\nlocal.skipTest()", False),
+    ("class Local:\n def skipTest(self): pass\nlocal = Local()\nlocal.skipTest()", True),
+    ("import unittest\nclass T(unittest.TestCase):\n def test_x(self): super().skipTest('disabled')", True),
+    ("import unittest\ncase = unittest.TestCase()\ncase.skipTest('disabled')", True),
     ("def invalid(", True),
 ])
 def test_python_weakening_is_syntax_aware(tmp_path: Path, source: str, weak: bool) -> None:
@@ -234,13 +236,13 @@ def test_python_weakening_is_syntax_aware(tmp_path: Path, source: str, weak: boo
     assert policy.weak_python(path) is weak
 
 
-@pytest.mark.parametrize(("files", "rows", "diff", "max_lines", "code"), [
-    (["backend/app/a.py"], [], "", 5, "scope_violation"),
-    ([".agent-loop/initiatives/WS-AUTH-001/PLAN.md"], [], "", 5, "scope_violation"),
-    (["backend/tests/test_ok.py"], [("backend/tests/test_ok.py", 6, 0)], "", 5, "implementation_size_exceeded"),
-    (["backend/tests/test_ok.py"], [("backend/tests/test_ok.py", 1, 0)], "-assert value", 5, "deleted_assertion"),
+@pytest.mark.parametrize(("files", "rows", "diff", "source", "max_lines", "code"), [
+    (["backend/app/a.py"], [], "", "", 5, "scope_violation"),
+    ([".agent-loop/initiatives/WS-AUTH-001/PLAN.md"], [], "", "", 5, "scope_violation"),
+    (["backend/tests/test_ok.py"], [("backend/tests/test_ok.py", 6, 0)], "", "", 5, "implementation_size_exceeded"),
+    (["backend/tests/test_ok.py"], [("backend/tests/test_ok.py", 1, 0)], "@@ -1 +0,0 @@\n-assert value", "assert value", 5, "deleted_assertion"),
 ])
-def test_delta_fails_closed(monkeypatch, tmp_path: Path, files, rows, diff, max_lines, code) -> None:
+def test_delta_fails_closed(monkeypatch, tmp_path: Path, files, rows, diff, source, max_lines, code) -> None:
     test = tmp_path / "backend/tests/test_ok.py"
     test.parent.mkdir(parents=True)
     test.write_text("value = 'skip xfail'\nassert value", encoding="utf-8")
@@ -248,7 +250,7 @@ def test_delta_fails_closed(monkeypatch, tmp_path: Path, files, rows, diff, max_
     monkeypatch.setattr(policy, "changed_files", lambda *_: files)
     monkeypatch.setattr(policy, "numstat", lambda *_: (0, 0, rows))
     monkeypatch.setattr(policy, "diff_text", lambda *_: diff)
-    monkeypatch.setattr(policy, "maybe_run", lambda *_: "")
+    monkeypatch.setattr(policy, "maybe_run", lambda *_: source)
     with pytest.raises(policy.PolicyError, match=code):
         policy.validate_delta("base", max_lines, {"backend/tests/test_ok.py"})
 
@@ -266,14 +268,16 @@ def test_delta_accepts_approved_memory_without_counting_it(monkeypatch, tmp_path
     policy.validate_delta("base", 2, {files[0]})
 
 
-@pytest.mark.parametrize("source", [
-    "import pytest\n\ndef test_x():\n    with pytest.raises(ValueError):\n        raise ValueError\n",
-    "import pytest as pt\n\ndef test_x():\n    with (pt.raises(ValueError)):\n        raise ValueError\n",
-    "from pytest import raises as expect_raises\n\ndef test_x():\n    with other(), expect_raises(ValueError):\n        raise ValueError\n",
-    "def test_x():\n    if ready: assert result\n",
-    "class TestX:\n    def test_x(self):\n        value = self.assertEqual (1, 1)\n",
+@pytest.mark.parametrize(("source", "replacement", "blocked"), [
+    ("import pytest\n\ndef test_x():\n    with pytest.raises(ValueError):\n        raise ValueError\n", "def test_x():\n    raise ValueError\n", True),
+    ("import pytest as pt\n\ndef test_x():\n    with (\n        pt\n        .raises(ValueError)\n    ):\n        raise ValueError\n", "def test_x():\n    raise ValueError\n", True),
+    ("from pytest import raises as expect\n\ndef test_x():\n    with (\n        expect\n        (ValueError)\n    ):\n        raise ValueError\n", "def test_x():\n    raise ValueError\n", True),
+    ("def test_x():\n    if ready: assert result\n", "def test_x():\n    raise ValueError\n", True),
+    ("class TestX:\n    def test_x(self):\n        value = (\n            self\n            .assertEqual(1, 1)\n        )\n", "def test_x():\n    raise ValueError\n", True),
+    ("MESSAGE = 'pytest.raises(ValueError)'\n# pytest.raises(ValueError)\ndef test_x():\n    assert True\n", "def test_x():\n    assert True\n", False),
+    ("class Local:\n    def raises(self, value): return value\npytest = Local()\npytest.raises(ValueError)\n", "class Local:\n    pass\n", False),
 ])
-def test_delta_detects_committed_deleted_raises_aliases(monkeypatch, tmp_path: Path, source: str) -> None:
+def test_delta_checks_committed_assertion_constructs(monkeypatch, tmp_path: Path, source: str, replacement: str, blocked: bool) -> None:
     repo = tmp_path / "repo"
     test = repo / "backend/tests/test_sample.py"
     test.parent.mkdir(parents=True)
@@ -286,12 +290,15 @@ def test_delta_detects_committed_deleted_raises_aliases(monkeypatch, tmp_path: P
     base = subprocess.run(
         ["git", "-C", str(repo), "rev-parse", "HEAD"], check=True, text=True, capture_output=True,
     ).stdout.strip()
-    test.write_text("def test_x():\n    raise ValueError\n", encoding="utf-8")
+    test.write_text(replacement, encoding="utf-8")
     subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
     subprocess.run(["git", "-C", str(repo), "commit", "-qm", "remove assertion"], check=True)
     monkeypatch.setattr(policy, "REPO", repo)
     monkeypatch.chdir(repo / "backend")
-    with pytest.raises(policy.PolicyError, match="deleted_assertion"):
+    if blocked:
+        with pytest.raises(policy.PolicyError, match="deleted_assertion"):
+            policy.validate_delta(base, 300, {"backend/tests/test_sample.py"})
+    else:
         policy.validate_delta(base, 300, {"backend/tests/test_sample.py"})
     assert Path.cwd() == repo / "backend"
 

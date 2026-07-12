@@ -174,7 +174,7 @@ def weak_python(path: Path) -> bool:
             return True
         if isinstance(node, ast.Attribute) and node.attr in blocked:
             root = ast.unparse(node.value).split(".", 1)[0]
-            if (node.attr == "skipTest" and root == "self") or root in modules | marks:
+            if node.attr == "skipTest" or root in modules | marks:
                 return True
     return False
 
@@ -183,31 +183,40 @@ def raises_aliases(source: str) -> set[str]:
     try:
         tree = ast.parse(source)
     except SyntaxError:
-        return {"pytest.raises"}
-    aliases = {"pytest.raises"}
+        return set()
+    aliases = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
-            aliases.update(f"{alias.asname}.raises" for alias in node.names if alias.name == "pytest" and alias.asname)
+            aliases.update(f"{alias.asname or 'pytest'}.raises" for alias in node.names if alias.name == "pytest")
         if isinstance(node, ast.ImportFrom) and node.module == "pytest":
             aliases.update(alias.asname or alias.name for alias in node.names if alias.name == "raises")
     return aliases
 
 
 def has_deleted_assertion(diff: str, base_source: str) -> bool:
-    deleted = [line for line in diff.splitlines() if line.startswith("-") and not line.startswith("---")]
-    targets = "|".join(re.escape(target) for target in sorted(raises_aliases(base_source)))
-    raises = re.compile(rf"^-.*(?<![\w.])(?:{targets})\s*\(")
-    return any(line_has_assertion(line[1:]) or raises.search(line) for line in deleted)
-
-
-def line_has_assertion(source: str) -> bool:
-    tokens = []
+    deleted, old_line = set(), 0
+    for line in diff.splitlines():
+        match = re.match(r"^@@ -(\d+)(?:,\d+)? \+", line)
+        if match:
+            old_line = int(match.group(1))
+        elif line.startswith("-") and not line.startswith("---"):
+            deleted.add(old_line)
+            old_line += 1
+        elif not line.startswith("+"):
+            old_line += 1
     try:
-        tokens.extend(tokenize.generate_tokens(StringIO(source).readline))
-    except tokenize.TokenError:
-        pass
-    values = [token.string for token in tokens if token.type not in {tokenize.STRING, tokenize.COMMENT}]
-    return "assert" in values or any(index > 0 and values[index - 1] == "self" and values[index] == "." and values[index + 1].startswith("assert") and values[index + 2] == "(" for index in range(len(values) - 2))
+        tree = ast.parse(base_source)
+    except SyntaxError:
+        return bool(deleted)
+    aliases = raises_aliases(base_source)
+    for node in ast.walk(tree):
+        assertion = isinstance(node, ast.Assert)
+        if isinstance(node, ast.Call):
+            target = ast.unparse(node.func)
+            assertion = target in aliases or (isinstance(node.func, ast.Attribute) and ast.unparse(node.func.value) == "self" and node.func.attr.startswith("assert"))
+        if assertion and deleted.intersection(range(node.lineno, node.end_lineno + 1)):
+            return True
+    return False
 
 
 def approved_memory(path: str) -> bool:
