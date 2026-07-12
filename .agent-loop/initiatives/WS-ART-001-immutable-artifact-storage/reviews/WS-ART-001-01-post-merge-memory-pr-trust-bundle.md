@@ -25,7 +25,7 @@ artifact-contract, and diff-hygiene checks passed. Senior engineering, QA/test,
 security/auth, product/ops, architecture, and docs reviewers passed. No reviewer
 session remains open.
 
-Reviewed code SHA: `5a0aba184ba55677ab6dcd916c8ce30b79a07592`
+Reviewed code SHA: `b29bd045eed0c9e800f8817a9d1aa1c8158377d5`
 
 ## External Review
 
