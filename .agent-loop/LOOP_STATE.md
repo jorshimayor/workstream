@@ -13,12 +13,12 @@
   plan review passed and D12 production dependencies were explicitly approved.
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
-- Latest integrated `main` merge commit: `8829a7e`
+- Latest integrated `main` merge commit: `8a4182e`
 - Current gate: bounded implementation and evidence for `WS-AUTH-001-02`.
 - Next chunk: none; do not start `WS-AUTH-001-03` automatically.
-- Parallel initiative: `WS-QUAL-001` continues in its own worktree. PR #104
-  merged the `WS-QUAL-001-01A` post-merge memory as `8829a7e`; later coverage
-  chunks remain independently owned and must not be edited from this worktree.
+- Parallel initiative: `WS-QUAL-001-01B1A-R2` merged through PR #105 as
+  `8a4182e`. Its post-merge memory and later coverage chunks remain independently
+  owned and must not be edited or started from this worktree.
 - Parallel initiative: `WS-ART-001-01` merged through PR #101 as `050eb15`.
   `WS-ART-001-02` remains proposed and inactive pending a separate explicit
   user start.
@@ -56,7 +56,7 @@ reputation, blockchain, frontend, or object-storage behavior.
 The merged `WS-POL-001-10` chunk was a corrective hardening chunk for the
 pre-submit live API drill. It fixed guide-version conflict mapping,
 guide-create source snapshot capture, active-guide checker summary visibility,
-worker self-profile onboarding, and failed pre-submit audit evidence. It did
+contributor self-profile onboarding, and failed pre-submit audit evidence. It did
 not change post-submit policy, review, revision, payment, reputation,
 blockchain, frontend, or agent-runtime behavior.
 

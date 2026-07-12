@@ -81,6 +81,13 @@ The combined chunk 01 was split after all L1 reviewer groups rejected a proposed
 lifecycle boundary. Chunk 01B consumes its CLI contract and keeps coverage/CI/
 evidence review independent. Later chunks retain the default 500-line cap.
 
+The blocked 01B1 candidate is further split by responsibility. `01B1A` owns
+read-only coverage arithmetic and config/evidence/metadata parsers. `01B1B`
+then owns repository-delta scope, executable weakening detection, and deleted-
+assertion proof. `01B2` remains the later configuration, evidence publication,
+and CI enforcement boundary. Each replacement chunk has its own review, PR,
+merge-memory, and start checkpoint.
+
 ## Alternatives rejected
 
 - Setting 90 immediately without tests: correctly makes every PR red and gives

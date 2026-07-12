@@ -10,6 +10,9 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
+| `WS-QUAL-001-01B1B` | Semantic Delta Guards | L1 | Inactive until 01B1A-R2 merge/memory and explicit user start |
+| `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Inactive until 01B1A-R2 and 01B1B merge/memory plus explicit user start |
+| `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B1A-R2, 01B1B, and 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02` | Flow Node Adapter And Reconciliation | L1 | Proposed; inactive pending separate explicit user start |
 
@@ -46,11 +49,15 @@
 | `WS-QUAL-001-PLAN` | Backend Coverage Floor Planning | L1 | Merged through PR #99 as `9046d52` on 2026-07-12 |
 | `WS-ART-001-01` | Artifact Domain And Local Adapter | L1 | Merged through PR #101 as `050eb15` on 2026-07-12 |
 | `WS-QUAL-001-01A` | Isolated Database Runner | L1 | Merged through PR #103 as `2901a3e` on 2026-07-12 |
+| `WS-QUAL-001-01B1A-R2` | Canonical Coverage Grammar | L1 | Merged through PR #105 as `8a4182e` on 2026-07-12; post-merge memory remains independently owned |
 
 ## Proposed Next
 
 `WS-AUTH-001-02` is the only active chunk. Do not start `WS-AUTH-001-03` or
 `WS-POL-002-04` automatically.
+
+Coverage R2 merged through PR #105. Do not start 01B1B, 01B2, chunk 02, or
+another coverage implementation chunk from this worktree.
 
 `WS-ART-001-01` is merged. Do not start `WS-ART-001-02` or edit Flow Node until
 the user gives a separate explicit start signal.
@@ -62,4 +69,6 @@ this AUTH queue update.
 
 | Chunk | Blocker | Next action |
 |---|---|---|
-| none | none | none |
+| `WS-QUAL-001-01B1` | 496/500 lines after two semantic-integrity repair cycles | Superseded by the proposed 01B1A/01B1B split; do not resume |
+| `WS-QUAL-001-01B1A` | 394/400 lines after two parser-normalization repair cycles; final QA/security review found two valid bypass variants | Replan the parser boundary before any further implementation |
+| `WS-QUAL-001-01B1A-R1` | Additional valid false-positive finding outside its two-fix contract | Superseded by R2 canonical-grammar proposal; do not resume |
