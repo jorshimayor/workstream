@@ -63,14 +63,21 @@ establishes the ratchet; it does not add tests merely to raise coverage.
     evidence/status/review path.
   - Updated later evidence: base evidence is present and branch evidence
     differs; the same merge-base and evidence-only descendant rules apply.
-  - Unchanged historical evidence or push-main where base equals `HEAD`: branch
-    evidence equals base/current evidence, so current measurement is validated
-    without pretending the historical measured tree is the current tree.
+  - Unchanged historical evidence: branch evidence equals base evidence, so the
+    current measurement is validated without pretending the historical measured
+    tree is the current tree.
 - In every state, runner metadata binds to the actual checkout `HEAD`, including
   a GitHub synthetic merge commit. A synthetic merge is accepted only when its
   tree differs from `measured_tree_sha` through enumerated evidence/status/review
   paths. Base advancement, rebase drift, or any executable change after the
   measured tree fails and requires remeasurement on a new implementation commit.
+- Pull-request validation compares with the fetched base branch. Push-main
+  validation compares with the exact nonzero `github.event.before` commit, never
+  `HEAD` itself. The initial baseline merge push may use bootstrap evidence when
+  that prior commit lacks evidence and `base_merge_sha` equals it. A missing,
+  zero, non-commit, or non-ancestor push base fails closed. Real Git tests prove
+  push-main rejects a reduced configured floor, reduced covered count, and
+  denominator drift even when branch evidence is edited consistently.
 - Enumerated post-measurement paths are the canonical baseline evidence,
   WS-QUAL review files, initiative `STATUS.md`/`CHUNK_MAP.md`, and global
   `LOOP_STATE.md`/`WORK_QUEUE.md`/`REVIEW_LOG.md`. No other path may differ in
@@ -79,6 +86,11 @@ establishes the ratchet; it does not add tests merely to raise coverage.
   when the application denominator is unchanged. Denominator changes fail
   closed and require explicit CI-integrity review in a separately amended
   contract rather than an implicit bypass.
+- For 01B initialization, `minimum_milestone` is derived from and must equal the
+  configured six-place baseline floor. Validation requires measured coverage
+  and configured floor to meet it, and prevents the milestone from decreasing
+  against base evidence. Later coverage chunks supply their contract milestone
+  explicitly when updating evidence.
 - The policy imports `changed_files`, `numstat`, and `diff_text` from the root
   `scripts/workstream_agent_gate.py`; it does not duplicate Git-diff parsing.
   It filters `.agent-loop/**` from the 500-line implementation numerator and
@@ -99,9 +111,10 @@ establishes the ratchet; it does not add tests merely to raise coverage.
   regression, denominator drift, stale metadata/tree SHA, unsafe database name,
   missing Alembic head, scope overflow, test weakening, CI bypasses, inert
   negative-fixture strings, evidence-only descendants, synthetic PR checkout,
-  base advancement/rebase drift, executable post-measurement change, and
-  push-main validation where base equals `HEAD`. Provenance cases use temporary
-  real Git repositories rather than mocks of Git output.
+  base advancement/rebase drift, executable post-measurement change, bootstrap
+  merge push, invalid/zero push base, and push-main floor/count/denominator
+  regression against the before SHA. Provenance cases use temporary real Git
+  repositories rather than mocks of Git output.
 - No test is added solely to execute uncovered application lines. This chunk's
   tests protect the coverage and CI policy boundary itself.
 - The runbook documents two-pass bootstrap, canonical validation, evidence
@@ -112,14 +125,16 @@ establishes the ratchet; it does not add tests merely to raise coverage.
 
 ## Bootstrap And Verification
 
-1. Run a threshold-disabled isolated candidate measurement into an OS temporary
-   directory and compute the candidate floor without writing evidence.
-2. Write final configuration, policy, tests, workflow, and runbook; commit every
-   non-evidence file.
-3. On that exact clean commit, run the canonical isolated complete suite with
+1. Implement the policy's read-only parsing and `--compute-floor` mode without
+   changing the configured floor or writing evidence.
+2. Run a threshold-disabled isolated candidate measurement into an OS temporary
+   directory and compute the candidate floor.
+3. Write final configuration, remaining policy validation, tests, workflow, and
+   runbook; commit every non-evidence file.
+4. On that exact clean commit, run the canonical isolated complete suite with
    the configured floor. Run local-only `--initialize` from the same coverage
    JSON and runner metadata, writing the canonical evidence path.
-4. Commit only evidence/status/review files after the reviewed implementation
+5. Commit only evidence/status/review files after the reviewed implementation
    SHA. Re-run default read-only validation and the internal evidence gate.
 
 ```text
