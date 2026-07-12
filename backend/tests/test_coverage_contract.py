@@ -207,6 +207,87 @@ def test_runner_metadata_fails_closed(tmp_path: Path, updates: dict, code: str) 
         policy.runner_metadata(path, SHA, HEAD)
 
 
+@pytest.mark.parametrize(("source", "weak"), [
+    ("value = 'pytest.skip and xfail are inert'", False),
+    ("import pytest\nwith pytest.raises(ValueError): raise ValueError", False),
+    ("import pytest as pt\nwith pt.raises(ValueError): raise ValueError", False),
+    ("from pytest import raises as expect\nwith expect(ValueError): raise ValueError", False),
+    ("import pytest\npytest.skip('disabled')", True),
+    ("import pytest\n@pytest.mark.xfail\ndef test_x(): pass", True),
+    ("def test_x():\n from pytest import skip\n skip('disabled')", True),
+    ("if True:\n from pytest import mark as m\n @m.skip\n def test_x(): pass", True),
+    ("import pytest as pt\npt.importorskip('optional')", True),
+    ("import unittest as ut\n@ut.skipUnless(True, 'reason')\ndef test_x(): pass", True),
+    ("from unittest import expectedFailure\n@expectedFailure\ndef test_x(): pass", True),
+    ("class T:\n def test_x(self): self.skipTest('disabled')", True),
+    ("import unittest\nraise unittest.SkipTest('disabled')", True),
+    ("from unittest import SkipTest\nraise SkipTest('disabled')", True),
+    ("def invalid(", True),
+])
+def test_python_weakening_is_syntax_aware(tmp_path: Path, source: str, weak: bool) -> None:
+    path = tmp_path / "test_policy.py"
+    path.write_text(source, encoding="utf-8")
+    assert policy.weak_python(path) is weak
+
+
+@pytest.mark.parametrize(("files", "rows", "diff", "max_lines", "code"), [
+    (["backend/app/a.py"], [], "", 5, "scope_violation"),
+    ([".agent-loop/initiatives/WS-AUTH-001/PLAN.md"], [], "", 5, "scope_violation"),
+    (["backend/tests/test_ok.py"], [("backend/tests/test_ok.py", 6, 0)], "", 5, "implementation_size_exceeded"),
+    (["backend/tests/test_ok.py"], [("backend/tests/test_ok.py", 1, 0)], "-assert value", 5, "deleted_assertion"),
+])
+def test_delta_fails_closed(monkeypatch, tmp_path: Path, files, rows, diff, max_lines, code) -> None:
+    test = tmp_path / "backend/tests/test_ok.py"
+    test.parent.mkdir(parents=True)
+    test.write_text("value = 'skip xfail'\nassert value", encoding="utf-8")
+    monkeypatch.setattr(policy, "REPO", tmp_path)
+    monkeypatch.setattr(policy, "changed_files", lambda *_: files)
+    monkeypatch.setattr(policy, "numstat", lambda *_: (0, 0, rows))
+    monkeypatch.setattr(policy, "diff_text", lambda *_: diff)
+    monkeypatch.setattr(policy, "maybe_run", lambda *_: "")
+    with pytest.raises(policy.PolicyError, match=code):
+        policy.validate_delta("base", max_lines, {"backend/tests/test_ok.py"})
+
+
+def test_delta_accepts_approved_memory_without_counting_it(monkeypatch, tmp_path: Path) -> None:
+    test = tmp_path / "backend/tests/test_ok.py"
+    test.parent.mkdir(parents=True)
+    test.write_text("value = 'skip and xfail are inert'\nassert value", encoding="utf-8")
+    files = ["backend/tests/test_ok.py", ".agent-loop/LOOP_STATE.md", f"{policy.QUAL_MEMORY}STATUS.md"]
+    monkeypatch.setattr(policy, "REPO", tmp_path)
+    monkeypatch.setattr(policy, "changed_files", lambda *_: files)
+    monkeypatch.setattr(policy, "numstat", lambda *_: (199, 0, [(files[0], 2, 0), (files[1], 97, 0), (files[2], 100, 0)]))
+    monkeypatch.setattr(policy, "diff_text", lambda *_: "+assert value")
+    monkeypatch.setattr(policy, "maybe_run", lambda *_: "")
+    policy.validate_delta("base", 2, {files[0]})
+
+
+@pytest.mark.parametrize("source", [
+    "import pytest\n\ndef test_x():\n    with pytest.raises(ValueError):\n        raise ValueError\n",
+    "import pytest as pt\n\ndef test_x():\n    with (pt.raises(ValueError)):\n        raise ValueError\n",
+    "from pytest import raises as expect_raises\n\ndef test_x():\n    with other(), expect_raises(ValueError):\n        raise ValueError\n",
+])
+def test_delta_detects_committed_deleted_raises_aliases(monkeypatch, tmp_path: Path, source: str) -> None:
+    repo = tmp_path / "repo"
+    test = repo / "backend/tests/test_sample.py"
+    test.parent.mkdir(parents=True)
+    test.write_text(source, encoding="utf-8")
+    subprocess.run(["git", "init", "-q", str(repo)], check=True)
+    subprocess.run(["git", "-C", str(repo), "config", "user.email", "test@example.invalid"], check=True)
+    subprocess.run(["git", "-C", str(repo), "config", "user.name", "Coverage Test"], check=True)
+    subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
+    subprocess.run(["git", "-C", str(repo), "commit", "-qm", "base"], check=True)
+    base = subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "HEAD"], check=True, text=True, capture_output=True,
+    ).stdout.strip()
+    test.write_text("def test_x():\n    raise ValueError\n", encoding="utf-8")
+    monkeypatch.setattr(policy, "REPO", repo)
+    monkeypatch.chdir(repo / "backend")
+    with pytest.raises(policy.PolicyError, match="deleted_assertion"):
+        policy.validate_delta(base, 300, {"backend/tests/test_sample.py"})
+    assert Path.cwd() == repo / "backend"
+
+
 def test_compute_cli_is_read_only_and_stable(tmp_path: Path) -> None:
     files = {
         item.relative_to(policy.BACKEND).as_posix():

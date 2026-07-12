@@ -4,9 +4,11 @@
 from __future__ import annotations
 
 import argparse
+import ast
 from decimal import Decimal, InvalidOperation
 from io import StringIO
 import json
+import os
 from pathlib import Path
 import re
 import sys
@@ -17,6 +19,9 @@ from coverage.config import DEFAULT_EXCLUDE
 from run_isolated_tests import NAME_RE
 
 BACKEND = Path(__file__).resolve().parents[1]
+REPO = BACKEND.parent
+sys.path.insert(0, str(REPO / "scripts"))
+from workstream_agent_gate import changed_files, diff_text, maybe_run, numstat  # noqa: E402
 
 SHA_RE = re.compile(r"[a-f0-9]{40}")
 DECIMAL_RE = re.compile(r"\d+\.\d{6}")
@@ -27,6 +32,8 @@ EVIDENCE_KEYS = set(
     "measured_percent configured_floor minimum_milestone python_version coverage_version "
     "pytest_cov_version database_name alembic_head".split()
 )
+GLOBAL_MEMORY = {".agent-loop/LOOP_STATE.md", ".agent-loop/REVIEW_LOG.md", ".agent-loop/WORK_QUEUE.md"}
+QUAL_MEMORY = ".agent-loop/initiatives/WS-QUAL-001-backend-coverage-floor/"
 
 
 class PolicyError(RuntimeError):
@@ -143,6 +150,73 @@ def runner_metadata(path: Path, expected_tree: str, expected_head: str) -> dict:
     require(SHA_RE.fullmatch(expected_tree) and data.get("tree_sha") == expected_tree, "metadata_tree_mismatch")
     require("://" not in json.dumps(data), "metadata_secret")
     return data
+
+
+def weak_python(path: Path) -> bool:
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+    except (OSError, SyntaxError):
+        return True
+    blocked = {"skip", "skipif", "skipIf", "skipUnless", "xfail", "expectedFailure", "importorskip", "skipTest", "SkipTest"}
+    modules, marks, names = {"pytest", "unittest"}, set(), set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            modules.update(alias.asname or alias.name for alias in node.names if alias.name in {"pytest", "unittest"})
+        if isinstance(node, ast.ImportFrom) and node.module in {"pytest", "unittest"}:
+            for alias in node.names:
+                target = alias.asname or alias.name
+                marks.add(target) if alias.name == "mark" else names.add(target) if alias.name in blocked else None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Name) and node.id in names:
+            return True
+        if isinstance(node, ast.Attribute) and node.attr in blocked:
+            root = ast.unparse(node.value).split(".", 1)[0]
+            if node.attr == "skipTest" or root in modules | marks:
+                return True
+    return False
+
+
+def raises_aliases(source: str) -> set[str]:
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return {"pytest.raises"}
+    aliases = {"pytest.raises"}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            aliases.update(f"{alias.asname}.raises" for alias in node.names if alias.name == "pytest" and alias.asname)
+        if isinstance(node, ast.ImportFrom) and node.module == "pytest":
+            aliases.update(alias.asname or alias.name for alias in node.names if alias.name == "raises")
+    return aliases
+
+
+def has_deleted_assertion(diff: str, base_source: str) -> bool:
+    deleted = [line for line in diff.splitlines() if line.startswith("-") and not line.startswith("---")]
+    assertion = re.compile(r"^-\s*(assert\b|self\.assert\w+\()")
+    targets = "|".join(re.escape(target) for target in sorted(raises_aliases(base_source)))
+    raises = re.compile(rf"^-.*(?<![\w.])(?:{targets})\s*\(")
+    return any(assertion.search(line) or raises.search(line) for line in deleted)
+
+
+def approved_memory(path: str) -> bool:
+    return path in GLOBAL_MEMORY or path.startswith(QUAL_MEMORY)
+
+
+def validate_delta(base: str, max_lines: int, allowed: set[str]) -> None:
+    previous = Path.cwd()
+    try:
+        os.chdir(REPO)
+        files = changed_files(base, "HEAD")
+        _, _, rows = numstat(base, "HEAD")
+        tests = [path for path in files if path.startswith("backend/tests/") and path.endswith(".py")]
+        diffs = {path: diff_text(base, "HEAD", [path]) for path in tests}
+        sources = {path: maybe_run(["git", "show", f"{base}:{path}"]) for path in tests}
+    finally:
+        os.chdir(previous)
+    require(all(path in allowed or approved_memory(path) for path in files), "scope_violation")
+    require(sum(add + delete for path, add, delete in rows if not approved_memory(path)) <= max_lines, "implementation_size_exceeded")
+    require(not any(weak_python(REPO / path) for path in tests), "test_skip_or_xfail")
+    require(not any(has_deleted_assertion(diffs[path], sources[path]) for path in tests), "deleted_assertion")
 
 
 def main() -> int:
