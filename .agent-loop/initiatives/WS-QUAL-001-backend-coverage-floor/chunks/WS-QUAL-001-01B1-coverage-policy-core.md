@@ -1,7 +1,7 @@
 # Chunk Contract: WS-QUAL-001-01B1 Coverage Policy Core
 
 Status: internally reviewed and explicitly approved for implementation on
-2026-07-12.
+2026-07-12. Implemented within scope; internal implementation review pending.
 
 ## Goal, Risk, And Budget
 

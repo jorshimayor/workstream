@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01B1` | Coverage Policy Core | L1 | Explicitly approved; implementation active |
+| `WS-QUAL-001-01B1` | Coverage Policy Core | L1 | Implemented at 393/500; internal review pending |
 
 ## Planned Next
 

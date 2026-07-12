@@ -25,6 +25,15 @@ It attempts to drop the owned database and ephemeral login after success,
 failure, timeout, or interruption. Host termination or a database error can
 prevent cleanup; recover manually with the database provisioning credential, targeting only the exact strict database and role names reported by local catalog inspection.
 
+## Candidate coverage floor
+
+`coverage_policy.py --compute-floor` is a read-only preparation command. Point
+`--coverage-json` at temporary complete-app coverage JSON; the command validates
+the application-file inventory and prints the exact statement percentage
+truncated to six places. It does not configure or enforce a floor, write
+evidence, connect to Postgres, or act as the CI coverage policy. Keep coverage
+JSON temporary and non-secret; 01B2 owns baseline publication and enforcement.
+
 ## Focused checks
 The API-guard tests are statically DB-free:
 

@@ -31,7 +31,8 @@
   runbook, and complete negative proof; executable draft removed
 - Split review: PASS at `599c7ef1a55345cd54ab8b5b34351f59c52d60bc`
 - D8 approval: explicit user start of only 01B1 on 2026-07-12
-- Next gate: bounded 01B1 implementation, deterministic proof, and review
+- 01B1 implementation: 393/500 lines; 41 focused tests passed; 582 total tests collected
+- Next gate: required internal review of the committed 01B1 implementation
 
 ## Stop condition
 

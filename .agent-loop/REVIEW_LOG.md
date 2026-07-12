@@ -3,7 +3,8 @@
 ## WS-QUAL-001-01B1
 
 Status: D8 split passed all internal plan reviewers at `599c7ef`; the user
-explicitly approved starting only 01B1 on 2026-07-12.
+explicitly approved starting only 01B1 on 2026-07-12. Implementation is 393/500
+lines with 41 focused behavior tests passing; internal review is pending.
 
 Scope: read-only coverage policy core, parameterized contract behavior tests,
 and truthful compute-floor documentation. No config, workflow, evidence, Git
