@@ -2,7 +2,8 @@
 
 ## WS-QUAL-001-PLAN
 
-Status: internally reviewed; external and human review pending.
+Status: internally reviewed; one valid CodeRabbit wording finding addressed and
+PR description expanded; fresh checks and human review pending.
 
 Reviewed planning SHA: `93c2f30c1cfa1d404cb04748c177fd4d8001cd30`
 
@@ -20,6 +21,9 @@ Evidence:
 
 Trust bundle:
 `.agent-loop/initiatives/WS-QUAL-001-backend-coverage-floor/reviews/WS-QUAL-001-PLAN-pr-trust-bundle.md`
+
+External response:
+`.agent-loop/initiatives/WS-QUAL-001-backend-coverage-floor/reviews/WS-QUAL-001-PLAN-external-review-response.md`
 
 Next: external and human review, then stop. `WS-QUAL-001-01` remains inactive
 until plan merge, post-merge memory, and a separate explicit user start.

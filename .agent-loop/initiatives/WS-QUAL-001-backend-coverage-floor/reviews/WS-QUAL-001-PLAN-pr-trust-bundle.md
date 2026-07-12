@@ -1,65 +1,203 @@
-# PR Trust Bundle: WS-QUAL-001-PLAN
+# Workstream PR Trust Bundle
 
-## Goal and intent
+## Chunk
+
+`WS-QUAL-001-PLAN` - Backend Coverage Floor Planning
+
+PR: `https://github.com/Flow-Research/workstream/pull/99`
+
+## Goal
 
 Plan a non-bypassable path from the measured backend coverage baseline to the
-user-required permanent 90 percent application floor.
+user-required permanent 90 percent application statement-coverage floor.
 
-The user corrected the requirement from 80 to 90 percent. The plan treats 90
-as repository-wide statement coverage under `backend/app`, not diff coverage.
+## Human-Approved Intent
 
-## What changed
+- Intent: `../INTENT.md`
+- Plan: `../PLAN.md`
+- Chunk map: `../CHUNK_MAP.md`
+- First proposed contract: `../chunks/WS-QUAL-001-01-coverage-harness-baseline.md`
+
+The user corrected the minimum from 80 to 90 percent. The plan applies that
+target repository-wide under `backend/app`, not only to changed files.
+
+## What Changed
 
 - Added intent, discovery, decisions, risks, plan, status, and six exact chunk
   contracts.
-- Recorded the clean isolated diagnostic: 5,660/7,232 statements, 78.26%, about
-  849 additional covered statements required for 90% on the AUTH-02 tree.
+- Recorded the isolated diagnostic: 5,660/7,232 statements, 78.26 percent, and
+  about 849 additional covered statements required for 90 percent on AUTH-02.
 - Defined safe per-worktree database isolation after a shared database caused
-  27 cascading migration errors; the isolated rerun passed 234/234 project tests.
-- Updated loop state and queue to show coverage planning active and AUTH-02
-  paused before publication.
+  27 cascading migration errors; an isolated rerun passed 234/234 project tests.
+- Defined non-decreasing floors through baseline, 82, 84, 86, 88, and 90 percent.
+- Updated active loop memory and paused AUTH-02 publication without changing its
+  implementation.
 
-## Design
+## Why It Changed
+
+The backend had no executable code-coverage threshold. Setting 90 percent
+immediately would make all PRs red while leaving roughly 849 statements of
+legacy debt inside an unrelated auth PR. The initiative creates a reviewable,
+non-gaming path to the permanent gate.
+
+## Design Chosen
 
 Use one coverage/database harness, then bounded additive test chunks for project
 service, project boundaries, tasks, checkers, and enumerated residual modules.
-The enforced floor never decreases and reaches at least 90 in chunk 06.
+Each chunk is capped at 500 implementation lines and cannot lower the precise
+configured floor.
 
-Rejected alternatives: a permanently red 90% gate without tests, diff-only
-coverage, application exclusions/pragmas, and one giant cross-domain PR.
+## Alternatives Rejected
 
-## Scope and product behavior
+- A permanently red 90 percent gate without the missing tests.
+- Diff-only coverage, which does not satisfy the repository-wide requirement.
+- Coverage exclusions, pragmas, or narrowed source measurement.
+- One giant cross-domain test PR.
 
-Planning and loop-memory files only. No application, test, dependency, workflow,
-migration, API, authorization, or product behavior changed.
+## Scope Control
+
+### Allowed Files Changed
+
+- `.agent-loop/LOOP_STATE.md`
+- `.agent-loop/REVIEW_LOG.md`
+- `.agent-loop/WORK_QUEUE.md`
+- `.agent-loop/initiatives/WS-QUAL-001-backend-coverage-floor/**`
+
+### Files Outside Contract
+
+- None.
+
+## Product Behavior
+
+- [x] No Workstream product behavior changed.
+- [ ] Product behavior changed and is explained here.
+
+No application, test, dependency, workflow, migration, API, authorization, or
+runtime file changed.
 
 ## Evidence
 
-- Reviewed SHA: `93c2f30c1cfa1d404cb04748c177fd4d8001cd30`
-- All nine required internal tracks passed after two repair rounds.
-- Stale wording, Markdown links, and diff hygiene passed.
-- Test delta: none in this planning PR.
-- CI integrity: no CI file changed; future contracts mechanically preserve all
-  existing gates and prohibit threshold regression or coverage gaming.
+### Commands Run
 
-## Remaining risks and follow-up
+```bash
+PR_HEAD_SHA=<head> python3 scripts/check_internal_review_evidence.py
+python3 scripts/check_loop_memory_state.py
+python3 scripts/check_stale_authorization_docs.py
+python3 scripts/check_stale_workstream_wording.py
+python3 scripts/check_markdown_links.py
+python3 scripts/test_agent_gates.py
+git diff --check
+gh run watch <agent-gates-run> --exit-status
+gh run watch <backend-run> --exit-status
+```
 
-- Chunk 01 must measure clean main and implement the reviewed harness before
-  domain coverage tests begin.
-- Each chunk can expose a production defect; that stops coverage work and
-  requires a separate corrective change.
-- Suite runtime is high, so isolation and exact-tree evidence are operationally
-  important; speed work cannot weaken lifecycle or migration proof.
+### Result Summary
 
-## Human review focus
+```text
+Internal review evidence gate: passed
+Loop memory state: passed
+Stale authorization documentation: passed
+Stale Workstream wording: passed
+Markdown links: passed for all changed Markdown files
+Agent gate regression tests: 31 passed
+Diff hygiene: passed
+GitHub Agent Gates: passed
+GitHub Backend including tests and API drill: passed
+CodeRabbit: one valid wording comment addressed; fresh review pending
+```
 
-- Whether staged 82/84/86/88/90 floors are credible and reviewable.
-- Whether DB ownership and credential/redaction rules are fail-closed.
-- Whether coverage inventory and base-ref comparison prevent gaming/regression.
-- Whether pausing AUTH-02 publication is the intended sequencing decision.
+## Acceptance Criteria Proof
 
-## Human ownership
+- [x] The complete `backend/app` inventory and anti-exclusion policy are defined.
+- [x] The database provisioner has strict local naming, owned cleanup, and
+  credential-redaction requirements.
+- [x] The ratchet records exact numerator/denominator and cannot decrease.
+- [x] Existing CI install, lint, docstring, complete test, and API drill gates
+  must remain present and non-bypassed.
+- [x] Six sequential chunks have exact scope, commands, reviewers, numeric exit
+  floors, 500-line budgets, and stop conditions.
+- [x] Production defects exposed by coverage tests require separate fixes.
+- [x] Post-merge memory and a new user start are required between chunks.
 
-Only the user may approve and merge this planning PR. Planning does not start
-`WS-QUAL-001-01`; implementation requires the merged plan, post-merge memory,
-and a separate explicit user start.
+## Test Delta
+
+### Tests Added
+
+- None; this PR is planning-only.
+
+### Tests Modified
+
+- None.
+
+### Tests Removed Or Skipped
+
+- None.
+
+## Internal Reviewer Results
+
+Reviewed code SHA: pending external-fix rebind
+
+Reviewed at: pending external-fix rebind
+
+Reviewer run IDs: pending external-fix rebind
+
+| Reviewer | Result | Blocking Findings | Notes |
+|---|---:|---|---|
+| Senior engineering | PASS | None | Six bounded chunks and deterministic controls are reviewable. |
+| QA/test | PASS | None | Isolated DB commands and outcome-based tests are required. |
+| Security/auth | PASS | None | Local DB, credential, redaction, and no-product-change boundaries pass. |
+| Product/ops | PASS | None | Lifecycle, state, audit, queue, HTTP, and fail-closed assertions are required. |
+| Architecture | PASS | None | One reusable provisioner and policy boundary; no runtime scope. |
+| CI integrity | PASS | None | Precise ratchet, inventory, existing gates, and bypass rejection pass. |
+| Docs | PASS | None | Runbook and durable sequencing requirements pass. |
+| Reuse/dedup | PASS | None | Existing fixtures remain canonical; copied helpers are forbidden. |
+| Test delta | PASS | None | Additive tests and deterministic weakening scans are required. |
+
+Internal evidence:
+`WS-QUAL-001-PLAN-internal-review-evidence.md`
+
+## External Review
+
+External response:
+`WS-QUAL-001-PLAN-external-review-response.md`
+
+| Source | Status | Notes |
+|---|---:|---|
+| CodeRabbit | Fix pushed | One valid grammar finding addressed; description expanded to the repository template. |
+| GitHub checks | Passed before external fix | Fresh checks required on the final evidence-bound head. |
+
+## CI And Gate Integrity
+
+- [x] No workflow weakening.
+- [x] No lint/test/docstring gate weakening.
+- [x] No coverage threshold weakening.
+- [x] No package script weakening.
+- [x] No unpinned new GitHub Action.
+- [x] Checkout credential persistence remains disabled.
+
+## Remaining Risks
+
+- Chunk 01 must measure clean main; the 78.26 percent value is diagnostic from
+  AUTH-02.
+- Coverage tests may expose production defects that require separate changes.
+- Suite runtime is high; performance work must not weaken isolation or proof.
+
+## Follow-Up Work
+
+After plan merge and post-merge memory, the user may explicitly start only
+`WS-QUAL-001-01`. Do not start later chunks or resume AUTH-02 automatically.
+
+## Human Review Focus
+
+- Staged 82/84/86/88/90 floors and 500-line chunk budgets.
+- DB ownership, credentials, cleanup, and redaction.
+- App inventory and base-ref enforcement against coverage gaming.
+- The proposed pause and later resumption of AUTH-02.
+
+## Human Merge Ownership
+
+- [x] I can explain what changed.
+- [x] I can explain why it changed.
+- [x] I know what could break.
+- [x] I accept the remaining planning risks.
+- [ ] The user explicitly approved this specific PR for merge.

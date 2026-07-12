@@ -47,7 +47,7 @@ After the reviewed SHA, only this internal review evidence file changed.
   comparisons; canonical pytest commands do not override the ratchet.
 - Required preservation of install, full Ruff, docstring, complete pytest, and
   API drill CI steps and rejection of bypass flags or test narrowing.
-- Required merged post-merge memory and a new user start between every chunk.
+- Require post-merge memory to be merged and a new user start between every chunk.
 
 ## Checks
 
