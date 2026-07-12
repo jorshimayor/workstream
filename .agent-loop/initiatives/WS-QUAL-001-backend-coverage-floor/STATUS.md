@@ -11,14 +11,14 @@
 - Planning merge commit: `9046d52f31c7c39f06e06c45c43783bb08a5181c`
 - Internal review: PASS after cleanup, signal, authority, CI, and split repairs
 - Active implementation chunk: `WS-QUAL-001-01B`
-- Implementation PR: `https://github.com/Flow-Research/workstream/pull/103` (merged)
-- Final reviewed implementation SHA: `d1582ec64b9176c5ead62f695c7a23b48e4c72b9`
-- Final evidence-bound branch head: `8cd7616b497ceb46d8359c25de689192632dfee8`
-- Implementation merge commit: `2901a3ebe68b7c770ccb1ff06841d79ce0c20d94`
+- 01A implementation PR: `https://github.com/Flow-Research/workstream/pull/103` (merged)
+- 01A final reviewed implementation SHA: `d1582ec64b9176c5ead62f695c7a23b48e4c72b9`
+- 01A final evidence-bound branch head: `8cd7616b497ceb46d8359c25de689192632dfee8`
+- 01A implementation merge commit: `2901a3ebe68b7c770ccb1ff06841d79ce0c20d94`
 - 01A post-merge memory PR: `https://github.com/Flow-Research/workstream/pull/104` (merged)
 - 01A post-merge memory commit: `8829a7ec3aa5199aae0aecbe5fda030c42a051cd`
 - Planning PR: `https://github.com/Flow-Research/workstream/pull/99` (merged)
-- Implementation base: `58d44596f614895964b82bb344e0ed98596eaae8`
+- 01A implementation base: `58d44596f614895964b82bb344e0ed98596eaae8`
 - Start signal: explicit user start on 2026-07-12
 - Split review: combined 01 rejected; 01A database boundary accepted for repair
 - Measured whole-app coverage: 79.25 percent; artifact scope: 91.07 percent

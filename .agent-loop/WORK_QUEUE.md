@@ -51,8 +51,9 @@
 
 ## Proposed Next
 
-No implementation chunk is active. Do not start `WS-QUAL-001-01B`, resume
-`WS-AUTH-001-02`, or start another implementation chunk automatically.
+`WS-QUAL-001-01B` is the only active implementation chunk. Do not start
+`WS-QUAL-001-02`, resume `WS-AUTH-001-02`, or start another implementation
+chunk automatically.
 
 `WS-ART-001-01` is merged. Do not start `WS-ART-001-02` or edit Flow Node until
 the user gives a separate explicit start signal.

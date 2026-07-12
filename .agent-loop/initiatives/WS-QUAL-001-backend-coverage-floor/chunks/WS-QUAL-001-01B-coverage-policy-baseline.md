@@ -26,9 +26,11 @@ establishes the ratchet; it does not add tests merely to raise coverage.
 
 ## Acceptance Criteria
 
-- `pytest-cov==7.1.0` remains an explicit development dependency. Coverage
-  measures statements for exactly `app`, with report precision six and one
-  configured `fail_under` equal to the initialized six-place baseline floor.
+- `pytest-cov==7.1.0` remains an explicit development dependency. Full-app
+  provisioned coverage measures statements for exactly `app`, with report
+  precision six and one configured `fail_under` equal to the initialized
+  six-place baseline floor. The separate artifact coverage report retains its
+  independent `--fail-under=90` gate.
 - Coverage policy inventories every `backend/app/**/*.py` file and requires a
   corresponding file entry in coverage JSON. It rejects missing files, a
   narrowed `--cov`, `omit`, `include`, `source`, `exclude_lines`,
@@ -43,36 +45,70 @@ establishes the ratchet; it does not add tests merely to raise coverage.
   `python_version`, `coverage_version`, `pytest_cov_version`, `database_name`,
   and `alembic_head`. Decimal strings have six places; SHAs are full lowercase
   hex; no URL, password, credential, or role secret is stored.
-- Initialization is allowed only when the merge base lacks baseline evidence.
-  It requires runner metadata for current `HEAD`, exactly one current Alembic
-  head, a strict derived database name, and a clean implementation tree before
-  writing evidence. Later validation requires branch and base evidence.
-- `measured_tree_sha` names the commit containing all final non-evidence code,
-  test, config, workflow, and runbook changes. Evidence/status/review-only
-  commits may follow it; executable changes after it invalidate the binding.
+- The CLI has three mutually exclusive modes. `--compute-floor` is read-only
+  and prints the truncated six-place candidate. `--initialize
+  --evidence-output <canonical-path>` is local-only, refuses `CI`, requires the
+  merge base to lack evidence, and writes evidence once. Default mode is
+  read-only validation through `--evidence <canonical-path>`; CI uses only this
+  mode and never creates or rewrites evidence. Success exits zero; every policy
+  violation exits two with `coverage-policy: <stable_code>` on stderr.
+- Initialization requires runner metadata `tree_sha` to equal the clean local
+  checkout `HEAD`, exactly one current Alembic head, and a strict derived
+  database name. It writes `measured_tree_sha=HEAD` and
+  `base_merge_sha=merge-base` before any evidence/status/review commit follows.
+- Validation supports three explicit evidence states:
+  - Bootstrap PR: base evidence is absent, branch evidence is present, its
+    `base_merge_sha` equals the merge base, its measured tree is an ancestor of
+    checkout `HEAD`, and every changed path after that tree is an enumerated
+    evidence/status/review path.
+  - Updated later evidence: base evidence is present and branch evidence
+    differs; the same merge-base and evidence-only descendant rules apply.
+  - Unchanged historical evidence or push-main where base equals `HEAD`: branch
+    evidence equals base/current evidence, so current measurement is validated
+    without pretending the historical measured tree is the current tree.
+- In every state, runner metadata binds to the actual checkout `HEAD`, including
+  a GitHub synthetic merge commit. A synthetic merge is accepted only when its
+  tree differs from `measured_tree_sha` through enumerated evidence/status/review
+  paths. Base advancement, rebase drift, or any executable change after the
+  measured tree fails and requires remeasurement on a new implementation commit.
+- Enumerated post-measurement paths are the canonical baseline evidence,
+  WS-QUAL review files, initiative `STATUS.md`/`CHUNK_MAP.md`, and global
+  `LOOP_STATE.md`/`WORK_QUEUE.md`/`REVIEW_LOG.md`. No other path may differ in
+  bootstrap or updated-evidence validation.
 - Base comparison prevents a lower configured floor or measured covered count
   when the application denominator is unchanged. Denominator changes fail
   closed and require explicit CI-integrity review in a separately amended
   contract rather than an implicit bypass.
 - The policy imports `changed_files`, `numstat`, and `diff_text` from the root
   `scripts/workstream_agent_gate.py`; it does not duplicate Git-diff parsing.
-  It enforces allowed scope, the 500-line implementation cap, and test-delta
-  integrity for deleted assertions, skips/xfail, selection narrowing, coverage
-  pragmas, and CI bypass tokens.
+  It filters `.agent-loop/**` from the 500-line implementation numerator and
+  enforces test-delta integrity. Python AST/config parsing identifies executable
+  skip/xfail usage; application source scanning identifies coverage pragmas;
+  parsed workflow steps identify selection narrowing and CI bypasses; filtered
+  diff text identifies deleted assertions. Inert fixture strings in policy tests
+  must not trigger, and the policy-test file receives no blanket exemption.
 - CI preserves install, full Ruff, docstring, all 16 runner lifecycle tests,
   all remaining provisioned tests, artifact 90 percent coverage, and the real
   API drill. The provisioned phase writes coverage JSON and runner metadata to
-  a shell-owned temporary directory, then runs the policy with no `|| true`,
-  `continue-on-error`, test narrowing, or threshold override.
+  a shell-owned temporary directory, then runs read-only validation with no
+  `|| true`, `continue-on-error`, test narrowing, or full-app threshold
+  override. The artifact subsystem's independent threshold remains required.
 - Policy tests assert stable diagnostics and exit codes for valid initialization
   and validation plus malformed/missing evidence, inventory loss, exclusion
   config/pragmas, narrowed coverage command, below-floor measurement, base
   regression, denominator drift, stale metadata/tree SHA, unsafe database name,
-  missing Alembic head, scope overflow, test weakening, and CI bypasses.
+  missing Alembic head, scope overflow, test weakening, CI bypasses, inert
+  negative-fixture strings, evidence-only descendants, synthetic PR checkout,
+  base advancement/rebase drift, executable post-measurement change, and
+  push-main validation where base equals `HEAD`. Provenance cases use temporary
+  real Git repositories rather than mocks of Git output.
 - No test is added solely to execute uncovered application lines. This chunk's
   tests protect the coverage and CI policy boundary itself.
 - The runbook documents two-pass bootstrap, canonical validation, evidence
-  updates, ratchet behavior, safe temporary outputs, and failure recovery.
+  updates, ratchet behavior, and failure recovery. The admin DSN is supplied
+  only through the environment/CI secret facility, never CLI arguments, files,
+  logs, or committed evidence. Only strict ephemeral database name and Alembic
+  metadata may persist; shell traps remove temporary coverage/runner files.
 
 ## Bootstrap And Verification
 
@@ -81,16 +117,20 @@ establishes the ratchet; it does not add tests merely to raise coverage.
 2. Write final configuration, policy, tests, workflow, and runbook; commit every
    non-evidence file.
 3. On that exact clean commit, run the canonical isolated complete suite with
-   the configured floor and initialize baseline evidence from the same coverage
-   JSON and runner metadata.
+   the configured floor. Run local-only `--initialize` from the same coverage
+   JSON and runner metadata, writing the canonical evidence path.
 4. Commit only evidence/status/review files after the reviewed implementation
-   SHA. Re-run policy validation and the internal evidence gate.
+   SHA. Re-run default read-only validation and the internal evidence gate.
 
 ```text
 (cd backend && .venv/bin/python -m pip check)
-(cd backend && .venv/bin/python -m ruff check tests scripts)
+(cd backend && .venv/bin/python -m ruff check app tests scripts)
 (cd backend && .venv/bin/python -m pytest -q tests/test_coverage_contract.py)
-(cd backend && tmp_dir=$(mktemp -d) && trap 'rm -rf "$tmp_dir"' EXIT && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-dsn> .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$tmp_dir/database.json" -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-report=json:"$tmp_dir/coverage.json" && .venv/bin/python scripts/coverage_policy.py --coverage-json "$tmp_dir/coverage.json" --database-metadata "$tmp_dir/database.json" --base-ref origin/main --minimum-milestone=<baseline> --max-implementation-lines=500 --check-test-delta)
+(cd backend && tmp_dir=$(mktemp -d) && trap 'rm -rf "$tmp_dir"' EXIT && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-dsn> .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$tmp_dir/database.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-report=json:"$tmp_dir/coverage.json" --cov-fail-under=0 && .venv/bin/python scripts/coverage_policy.py --coverage-json "$tmp_dir/coverage.json" --database-metadata "$tmp_dir/database.json" --base-ref origin/main --compute-floor)
+# Write final configuration and commit every non-evidence file.
+(cd backend && tmp_dir=$(mktemp -d) && trap 'rm -rf "$tmp_dir"' EXIT && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-dsn> .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$tmp_dir/database.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-report=json:"$tmp_dir/coverage.json" && .venv/bin/python scripts/coverage_policy.py --coverage-json "$tmp_dir/coverage.json" --database-metadata "$tmp_dir/database.json" --base-ref origin/main --initialize --evidence-output ../.agent-loop/initiatives/WS-QUAL-001-backend-coverage-floor/evidence/coverage-baseline.json --max-implementation-lines=500 --check-test-delta)
+# Commit evidence/status/review files only.
+(cd backend && tmp_dir=$(mktemp -d) && trap 'rm -rf "$tmp_dir"' EXIT && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-dsn> .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$tmp_dir/database.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-report=json:"$tmp_dir/coverage.json" && .venv/bin/python scripts/coverage_policy.py --coverage-json "$tmp_dir/coverage.json" --database-metadata "$tmp_dir/database.json" --base-ref origin/main --evidence ../.agent-loop/initiatives/WS-QUAL-001-backend-coverage-floor/evidence/coverage-baseline.json --max-implementation-lines=500 --check-test-delta)
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_stale_authorization_docs.py
 python3 scripts/check_markdown_links.py
