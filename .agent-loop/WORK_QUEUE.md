@@ -2,13 +2,15 @@
 
 ## In Progress
 
-None.
+| Chunk | Title | Risk | Status |
+|---|---|---:|---|
+| `WS-QUAL-001-01A` | Isolated Database Runner | L1 | Internally reviewed; PR publication pending |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01` | Coverage Harness And Baseline | L1 | Proposed; inactive pending separate explicit user start |
+| `WS-QUAL-001-01B` | Coverage Policy And Baseline | L1 | Inactive until 01A merge and explicit user start |
 | `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Paused before publication pending separate explicit user resume |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02` | Flow Node Adapter And Reconciliation | L1 | Proposed; inactive pending separate explicit user start |
@@ -48,9 +50,8 @@ None.
 
 ## Proposed Next
 
-No chunk is active. Do not implement `WS-QUAL-001-01`, resume
-`WS-AUTH-001-02`, or start another implementation chunk automatically. Each
-requires a separate explicit user signal after this memory update merges.
+`WS-QUAL-001-01A` is the only active chunk. Do not resume `WS-AUTH-001-02` or
+start another implementation chunk automatically.
 
 `WS-ART-001-01` is merged. Do not start `WS-ART-001-02` or edit Flow Node until
 the user gives a separate explicit start signal.

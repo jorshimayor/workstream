@@ -2,19 +2,21 @@
 
 ## Approach
 
-1. Establish reproducible measurement with `pytest-cov`, one safe test-database
-   provisioner, full `app` inventory proof, machine-readable evidence, and a
-   base-ref-enforced non-decreasing ratchet.
-2. Cover project setup/policy/correction service behavior and reach at least 82%.
-3. Cover project repository/router behavior and reach at least 84%.
-4. Cover task service/repository/router behavior and reach at least 86%.
-5. Cover checker service/runner/repository/router/worker behavior and reach at
+1. Establish the isolated least-privilege test-database provisioner.
+2. Establish reproducible `pytest-cov` measurement, full `app` inventory proof,
+   machine-readable evidence, and a base-ref-enforced non-decreasing ratchet.
+3. Cover project setup/policy/correction service behavior and reach at least 82%.
+4. Cover project repository/router behavior and reach at least 84%.
+5. Cover task service/repository/router behavior and reach at least 86%.
+6. Cover checker service/runner/repository/router/worker behavior and reach at
    least 88%.
-6. Close the enumerated adapter/core/worker gaps and set the permanent CI floor
+7. Close the enumerated adapter/core/worker gaps and set the permanent CI floor
    to exactly 90 percent or higher.
 
-Each implementation chunk changes tests and coverage configuration only. Any
-production defect exposed by a test stops that chunk and is repaired in a
+Each coverage-raising implementation chunk changes tests and coverage
+configuration only. Chunk 01A is the explicit exception for its isolated
+database runner, API drill guards, CI wiring, and operations runbook. Any
+production defect exposed by a test stops the active chunk and is repaired in a
 separately scoped change rather than hidden inside coverage work.
 
 ## Threshold policy
@@ -58,16 +60,26 @@ initialization, missing or malformed base/branch evidence is fatal.
 New tests must assert externally meaningful results: returned values, persisted
 state, emitted audit records, queued work, mapped HTTP errors, or fail-closed
 behavior. Pure branch execution without an outcome assertion is insufficient.
+Coverage percentage is a safety signal, not a reason to add a test. Every added
+test must identify the real behavior or safety invariant it protects and assert
+an observable outcome. Tests whose only value is executing previously uncovered
+lines are rejected even when they increase the measured percentage.
 Each chunk records added/modified/deleted/skipped tests and scans its diff for
 `skip`, `xfail`, deleted assertions, selection changes, and coverage pragmas.
 Tests reuse existing domain fixtures in their owning test file; copied database
 reset, actor/project/task factories, HTTP clients, and queue helpers are banned.
 
-The 500-line budget is additions plus deletions from the merge base across
+The default 500-line budget is additions plus deletions from the merge base across
 implementation/config/test/workflow/runbook files. `.agent-loop` planning,
 evidence, status, and trust-bundle lines are reported separately and excluded
 from that implementation-size numerator. The policy checker emits both counts
-and fails an implementation count above 500.
+and fails above the reviewed per-chunk cap supplied by the contract. Later
+chunks use the default 500 cap.
+
+The combined chunk 01 was split after all L1 reviewer groups rejected a proposed
+1,100-line cap. Chunk 01A retains the reviewed 700-line limit for the database
+lifecycle boundary. Chunk 01B consumes its CLI contract and keeps coverage/CI/
+evidence review independent. Later chunks retain the default 500-line cap.
 
 ## Alternatives rejected
 
@@ -82,15 +94,27 @@ and fails an implementation count above 500.
 
 ## Isolated database contract
 
-`WORKSTREAM_TEST_DATABASE_URL` is authoritative for tests. A shared test runner
-accepts an admin DSN only through `WORKSTREAM_TEST_ADMIN_DATABASE_URL`, validates
-local Postgres, derives `workstream_test_<12 lowercase hex>` from the canonical
-worktree path plus a nonce, provisions it, sets both test/runtime URLs only for
-the child process, terminates only owned-database connections, and drops it in a
-`finally` block. Identifiers are never interpolated without strict regex
-validation. CI's service database is already isolated per job. API drill guards
-accept the strict derived name but never use the nonlocal write-risk override
-for coverage proof.
+`WORKSTREAM_TEST_DATABASE_URL` is authoritative for tests. A shared runner
+accepts a parent-only admin DSN through `WORKSTREAM_TEST_ADMIN_DATABASE_URL` and
+requires exact scheme `postgresql+asyncpg` plus host `localhost`, `127.0.0.1`, or
+`::1`. It derives a name matching `^workstream_test_[a-f0-9]{12}$` from the
+canonical worktree path plus a nonce. The name must full-match before safely
+quoted identifier use; catalog values are parameterized.
+
+Ownership begins only after `CREATE DATABASE` succeeds. Collision or create
+failure never attaches to, terminates, or drops an existing database. After
+catalog ownership validation, cleanup terminates sessions for the exact owned
+`datname` and the runner-created unique ephemeral role, including a role session
+on the admin database that would otherwise block `DROP ROLE`. It drops only the
+owned database and role after child success, nonzero exit, timeout, or
+interruption; unrelated database and role sessions survive.
+
+The child environment removes `WORKSTREAM_TEST_ADMIN_DATABASE_URL` and
+`WORKSTREAM_ALLOW_NONLOCAL_E2E_DATABASE`, overwrites both test/runtime database
+URLs with the derived target, and exposes no admin credential. Parent output and
+errors redact both credentialed admin and target URLs. CI's service database is
+already isolated per job. API drill guards accept the strict derived name; the
+runner makes the nonlocal override unavailable to ordinary coverage proof.
 
 ## Verification
 
