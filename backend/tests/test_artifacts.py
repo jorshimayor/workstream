@@ -1733,10 +1733,12 @@ async def test_ingest_service_replays_ambiguous_provider_failure(
             reconcile_task.cancel()
             await cleanup_started.wait()
             reconcile_task.cancel()
+            await asyncio.sleep(0)
+            assert not reconcile_task.done()
+            cleanup_block.set()
             with pytest.raises(asyncio.CancelledError):
                 await reconcile_task
-            cleanup_block.set()
-            await asyncio.wait_for(cleanup_finished.wait(), timeout=1)
+            assert cleanup_finished.is_set()
         async with factory() as session:
             item = await session.get(ArtifactUploadItem, reconcile_cancel_ids["item"])
             assert item is not None and item.state == "provider_committed"
