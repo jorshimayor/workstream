@@ -9,7 +9,9 @@ actionable findings, then its final check was cancelled when the PR closed.
 D4-D10 were explicitly approved and WS-AUTH-001-01 was started by the user on
 2026-07-11. The final branch head `b5217e1` passed required internal reviews,
 Agent Gates, Backend, and CodeRabbit, then merged through PR #93 as `772af1d` on
-2026-07-11. This post-merge memory update does not activate another chunk.
+2026-07-11. `WS-AUTH-001-02` was later implemented off-main on
+`codex/ws-auth-001-02-verified-issuer-token` but remains paused before
+publication. It is not active and this memory update does not resume it.
 
 ## Active planning chunk
 
@@ -21,8 +23,9 @@ None.
 
 ## Current implementation branch
 
-None for implementation. Post-merge memory is isolated on
-`codex/ws-auth-001-01-post-merge-memory`.
+No active implementation branch. The completed off-main `WS-AUTH-001-02`
+implementation remains paused on
+`codex/ws-auth-001-02-verified-issuer-token`.
 
 ## Chunk status
 
@@ -30,7 +33,7 @@ None for implementation. Post-merge memory is isolated on
 |---|---|---|---:|---|
 | `WS-AUTH-001-PLAN` | Merged | `authorization-service` | #91 | Merged as `ad6d644`; D4-D10 later approved. |
 | `WS-AUTH-001-01` | Merged | `codex/ws-auth-001-01-adopt-authorization-baseline` | #93 | Authorization baseline, Contributor terminology boundary, scanner, and repository contracts; merged as `772af1d`. |
-| `WS-AUTH-001-02` | Proposed | - | - | Verified issuer token and JWKS boundary. |
+| `WS-AUTH-001-02` | Implemented off-main; paused | `codex/ws-auth-001-02-verified-issuer-token` | - | Do not publish until WS-QUAL completes its permanent 90% CI floor and final post-merge memory, then the user explicitly resumes AUTH. |
 | `WS-AUTH-001-03` | Proposed | - | - | Legacy actor classification preflight. |
 | `WS-AUTH-001-04` | Proposed | - | - | Request, error, and API control foundation. |
 | `WS-AUTH-001-05` | Proposed | - | - | Authority evidence and idempotency foundation. |
@@ -48,8 +51,10 @@ None for implementation. Post-merge memory is isolated on
 
 ## Blockers
 
-No blocker for the completed chunk. `WS-AUTH-001-02` remains inactive until a
-separate explicit user start.
+No blocker for the merged baseline chunk. `WS-AUTH-001-02` remains paused
+before publication until WS-QUAL completes through its permanent 90 percent CI
+floor and final post-merge memory, followed by a separate explicit user resume
+signal.
 
 Chunk review evidence is recorded at
 `reviews/WS-AUTH-001-01-internal-review-evidence.md`; external review response

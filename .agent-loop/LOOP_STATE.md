@@ -34,8 +34,8 @@
   the user gives a separate explicit start; do not start `WS-QUAL-001-02`.
 - Paused implementation: `WS-AUTH-001-02` remains implemented on
   `codex/ws-auth-001-02-verified-issuer-token` and is paused before publication
-  until the coverage initiative reaches its 90 percent target and the user
-  gives a separate explicit resume signal.
+  until WS-QUAL completes through its permanent 90 percent CI floor and final
+  post-merge memory, then the user gives a separate explicit resume signal.
 - Parallel initiative: `WS-ART-001-01` merged through PR #101 as `050eb15`.
   `WS-ART-001-02` remains proposed and inactive pending a separate explicit
   user start.

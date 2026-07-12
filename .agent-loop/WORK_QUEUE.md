@@ -11,7 +11,7 @@
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
 | `WS-QUAL-001-01B` | Coverage Policy And Baseline | L1 | Inactive until 01A memory merge and explicit user start |
-| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Paused until WS-QUAL reaches 90% and explicit user resume |
+| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Implemented off-main; paused until WS-QUAL permanent 90% floor and final memory complete, then explicit resume |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02` | Flow Node Adapter And Reconciliation | L1 | Proposed; inactive pending separate explicit user start |
 
