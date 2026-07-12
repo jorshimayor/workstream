@@ -13,8 +13,10 @@
 7. Close the enumerated adapter/core/worker gaps and set the permanent CI floor
    to exactly 90 percent or higher.
 
-Each implementation chunk changes tests and coverage configuration only. Any
-production defect exposed by a test stops that chunk and is repaired in a
+Each coverage-raising implementation chunk changes tests and coverage
+configuration only. Chunk 01A is the explicit exception for its isolated
+database runner, API drill guards, CI wiring, and operations runbook. Any
+production defect exposed by a test stops the active chunk and is repaired in a
 separately scoped change rather than hidden inside coverage work.
 
 ## Threshold policy
@@ -100,9 +102,12 @@ canonical worktree path plus a nonce. The name must full-match before safely
 quoted identifier use; catalog values are parameterized.
 
 Ownership begins only after `CREATE DATABASE` succeeds. Collision or create
-failure never attaches to, terminates, or drops an existing database. Cleanup
-terminates sessions for the exact owned `datname` and drops only that database
-after child success, nonzero exit, timeout, or interruption.
+failure never attaches to, terminates, or drops an existing database. After
+catalog ownership validation, cleanup terminates sessions for the exact owned
+`datname` and the runner-created unique ephemeral role, including a role session
+on the admin database that would otherwise block `DROP ROLE`. It drops only the
+owned database and role after child success, nonzero exit, timeout, or
+interruption; unrelated database and role sessions survive.
 
 The child environment removes `WORKSTREAM_TEST_ADMIN_DATABASE_URL` and
 `WORKSTREAM_ALLOW_NONLOCAL_E2E_DATABASE`, overwrites both test/runtime database

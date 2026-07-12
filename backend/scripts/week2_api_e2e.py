@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import os
-import re
 import subprocess
 import sys
 from pathlib import Path
@@ -19,6 +18,7 @@ from app.db import session as db_session
 from app.modules.checkers.models import CheckerResult, CheckerRun
 from app.modules.tasks.models import AuditEvent, EvidenceItem, Submission, WorkstreamTask
 from api_contract_e2e import (
+    DERIVED_DATABASE_NAME,
     alembic_config,
     api_environment as contract_api_environment,
     create_policy_bundle_for_guide,
@@ -55,7 +55,6 @@ DATABASE_URL_ENV = "WORKSTREAM_DATABASE_URL"
 TEST_DATABASE_URL_ENV = "WORKSTREAM_TEST_DATABASE_URL"
 LOCAL_DATABASE_HOSTS = {"localhost", "127.0.0.1", "::1"}
 LOCAL_DATABASE_NAMES = {"workstream_test", "test_workstream"}
-DERIVED_DATABASE_NAME = re.compile(r"workstream_test_[a-f0-9]{12}")
 ASYNC_POSTGRES_SCHEMES = {"postgresql+asyncpg"}
 NONLOCAL_DATABASE_OVERRIDE_VALUE = "I_UNDERSTAND_THIS_WRITES_DATA"
 STRONG_ATTESTATION = (

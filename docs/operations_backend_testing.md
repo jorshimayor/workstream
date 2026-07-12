@@ -1,8 +1,7 @@
 # Backend Testing Operations
-Workstream's backend suite uses a new local Postgres database per invocation. The
-provisioner owns a strict `workstream_test_<12 lowercase hex>` database, migrates it,
-and creates an ephemeral login without superuser, database/role creation, replication,
-or row-security-bypass authority. It drops both after success, failure, timeout, or interruption.
+Workstream's application tests run against a new local Postgres database per
+invocation. Provisioning and cleanup use the admin database; the application
+phase receives only a strict `workstream_test_<12 lowercase hex>` database and an ephemeral login without elevated authority.
 
 ## Local full suite
 Keep the admin URL in the environment with `postgresql+asyncpg` and a loopback host.
@@ -18,10 +17,13 @@ export WORKSTREAM_TEST_ADMIN_DATABASE_URL='postgresql+asyncpg://USER:PASSWORD@lo
 unset WORKSTREAM_TEST_ADMIN_DATABASE_URL
 ```
 
-Run both phases. The second can exceed three hours locally; CI allows 300 minutes.
+Run both phases. The second can exceed three hours locally; CI gives the child 210 minutes and the job 240 minutes so cleanup retains a bounded window.
 
 The runner removes the admin URL before child launch, overwrites both child database URLs,
 removes the nonlocal override, redacts complete URLs, and writes only credential-free metadata.
+It attempts to drop the owned database and ephemeral login after success,
+failure, timeout, or interruption. Host termination or a database error can
+prevent cleanup; recover manually with the admin login, targeting only the exact strict database and role names reported by local catalog inspection.
 
 ## Focused checks
 The API-guard tests are statically DB-free:

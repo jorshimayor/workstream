@@ -9,7 +9,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 300
+    timeout-minutes: 240
 
     services:
       postgres:
@@ -61,7 +61,7 @@ jobs:
           tmp_dir=$(mktemp -d)
           trap 'rm -rf "$tmp_dir"' EXIT
           python -m pytest -q tests/test_isolated_database_runner.py
-          python scripts/run_isolated_tests.py --metadata-json "$tmp_dir/database.json" -- python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78
+          python scripts/run_isolated_tests.py --metadata-json "$tmp_dir/database.json" --timeout-seconds 12600 -- python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78
 
       - name: Artifact foundation coverage
         working-directory: backend

@@ -189,9 +189,13 @@ added. Implementation remains stopped until engineering/architecture/reuse,
 QA/CI/test-delta, and security/product/docs reviewers approve this amendment;
 rejection requires splitting the chunk before further implementation.
 
-## Verification commands
+## Historical verification record
 
-```bash
+The combined contract is superseded and the following commands are
+non-executable historical context. Active verification lives in the separate
+01A and 01B chunk contracts.
+
+```text
 (cd backend && .venv/bin/python -m pip check)
 (cd backend && .venv/bin/python -m ruff check tests scripts)
 (cd backend && tmp_dir=$(mktemp -d) && trap 'rm -rf "$tmp_dir"' EXIT && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-dsn> .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$tmp_dir/database.json" -- .venv/bin/python -m pytest -q --cov=app --cov-report=term-missing --cov-report=json:"$tmp_dir/coverage.json" --cov-fail-under=0 && .venv/bin/python scripts/coverage_policy.py --coverage-json "$tmp_dir/coverage.json" --database-metadata "$tmp_dir/database.json" --compute-floor)

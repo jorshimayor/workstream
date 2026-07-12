@@ -8,7 +8,6 @@ import hashlib
 import hmac
 import json
 import os
-import re
 import socket
 import subprocess
 import sys
@@ -28,6 +27,7 @@ from app.modules.projects.post_submit_policy import (
     build_project_post_submit_checker_spec,
     compile_project_post_submit_checker_spec,
 )
+from run_isolated_tests import NAME_RE as DERIVED_DATABASE_NAME
 
 EXPECTED_DURABLE_CHECKERS = {
     "check_submission_packet",
@@ -43,7 +43,6 @@ DEFAULT_FLOW_ISSUER = "https://auth.flow.local/e2e"
 DEFAULT_FLOW_AUDIENCE = "workstream-api"
 LOCAL_DATABASE_HOSTS = {"localhost", "127.0.0.1", "::1"}
 LOCAL_DATABASE_NAMES = {"workstream_test", "test_workstream"}
-DERIVED_DATABASE_NAME = re.compile(r"workstream_test_[a-f0-9]{12}")
 ASYNC_POSTGRES_SCHEMES = {"postgresql+asyncpg"}
 NONLOCAL_DATABASE_OVERRIDE_VALUE = "I_UNDERSTAND_THIS_WRITES_DATA"
 STRONG_ATTESTATION = (
