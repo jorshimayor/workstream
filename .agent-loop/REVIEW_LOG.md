@@ -49,6 +49,10 @@ tests pass, complete implementation scope is 398/400 lines, and every required
 reviewer track passed with no remaining finding. Evidence/PR preparation is
 active; 01B1B and 01B2 remain inactive.
 
+R2 merge result: PR #105 merged to main as
+`8a4182edb09970131aded73edf3428ac83fe60b9` on 2026-07-12. Post-merge memory is
+the only active coverage work; 01B1B and 01B2 remain inactive.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract
