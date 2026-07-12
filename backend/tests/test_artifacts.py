@@ -1677,6 +1677,42 @@ async def test_ingest_service_replays_ambiguous_provider_failure(
         async with factory() as session:
             item = await session.get(ArtifactUploadItem, finalize_cancel_ids["item"])
             assert item is not None and item.state == "provider_committed"
+
+        reconcile_cancel_request = store_request(
+            key="reconcile-cancelled",
+            expected_sha256=request.expected_sha256,
+            expected_size=request.expected_size,
+            maximum_bytes=len(payload),
+        )
+        reconcile_cancel_ids = await _seed_reserved_item(factory, reconcile_cancel_request)
+        monkeypatch.setattr(adapter, "store", original_store)
+        async with factory() as session:
+            service = ArtifactIngestService(session, adapter, adapter_name="local")
+            fence = await service._start_provider_operation(
+                reconcile_cancel_ids["item"], reconcile_cancel_request
+            )
+            await adapter.store(byte_stream(payload), reconcile_cancel_request)
+            await service._mark_provider_recovery_required(
+                reconcile_cancel_ids["item"],
+                reconcile_cancel_request,
+                fence,
+                provider_commit_confirmed=True,
+            )
+
+        async def cancel_recovery(*args) -> None:
+            del args
+            raise asyncio.CancelledError
+
+        monkeypatch.setattr(adapter, "recover_committed_store", cancel_recovery)
+        async with factory() as session:
+            service = ArtifactIngestService(session, adapter, adapter_name="local")
+            with pytest.raises(asyncio.CancelledError):
+                await service.reconcile_committed_item(
+                    reconcile_cancel_ids["item"], reconcile_cancel_request
+                )
+        async with factory() as session:
+            item = await session.get(ArtifactUploadItem, reconcile_cancel_ids["item"])
+            assert item is not None and item.state == "provider_committed"
     finally:
         await engine.dispose()
 
