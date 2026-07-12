@@ -11,13 +11,13 @@
   90 percent backend application coverage. Diagnostic AUTH-02 measurement was
   78.26 percent after isolating the test database; circuit breaker requires a
   separate initiative rather than expanding the auth PR.
-- Reviewed planning SHA: `f7fbc33`
-- Final evidence-bound planning branch head: `c069064`
+- Prior WS-ART reviewed planning SHA: `f7fbc33`
+- Prior WS-ART final evidence-bound planning branch head: `c069064`
 - WS-ART planning merge commit: `8644a43`
-- Last reviewed implementation SHA: `be0b836`
-- Final merged WS-AUTH-001-01 branch head: `b5217e1`
-- Last merge commit: `8644a43`
-- Reviewed planning SHA: `93c2f30c1cfa1d404cb04748c177fd4d8001cd30`
+- Prior WS-AUTH-001-01 reviewed implementation SHA: `be0b836`
+- Prior WS-AUTH-001-01 final merged branch head: `b5217e1`
+- Latest merged memory commit: `53f0c47`
+- WS-QUAL reviewed planning SHA: `93c2f30c1cfa1d404cb04748c177fd4d8001cd30`
 - Planning PR: `https://github.com/Flow-Research/workstream/pull/99` (draft)
 - Current gate: external checks and human approval for `WS-QUAL-001`; all
   required internal tracks passed and no sessions remain.
