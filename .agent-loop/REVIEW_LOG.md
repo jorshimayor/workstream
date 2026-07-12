@@ -1,5 +1,68 @@
 # Review Log
 
+## WS-QUAL-001-01B1
+
+Status: BLOCKED. Candidate `7bfe3a0` has 496/500 lines and 66 focused behavior
+tests. Senior engineering, QA, security, product/ops, architecture, CI, docs,
+and reuse passed, but final test-delta review found three valid gaps after the
+second semantic-integrity repair cycle.
+
+Scope: read-only coverage policy core, parameterized contract behavior tests,
+and truthful compute-floor documentation. No config, workflow, evidence, Git
+publication logic, production behavior, or coverage-raising tests.
+
+Next: review a smaller policy-core versus semantic-delta split and obtain
+explicit user approval. No PR, 01B2, chunk 02, or AUTH resume is permitted.
+
+User checkpoint: the user approved the proposed parser-core versus semantic-
+delta split direction on 2026-07-12. Internal plan review must pass before
+activating only 01B1A; 01B1B retains a later separate start checkpoint.
+
+Split review result: PASS at `d1819873e5ac353da3963771f70dc2be13bc72f9`
+across senior engineering, QA/test, security/auth, product/ops, architecture,
+CI integrity, docs, reuse/dedup, test delta, and circuit breaker. Only 01B1A is
+active; 01B1B and 01B2 retain later checkpoints.
+
+Implementation review result: BLOCKED at
+`5af95751c554ad022128f78c9dd8c1190f38dec4`. Senior engineering,
+architecture, reuse, CI integrity, test delta, product/ops, and docs passed.
+QA and security found `pragma:nocover` and leading-space normalized duplicate
+pytest-cov bypasses after the second parser repair cycle. No PR opened.
+
+User direction: replan and fix the remaining coverage blockers while AUTH-02
+continues independently in its existing worktree. Proposed replacement
+`WS-QUAL-001-01B1A-R1` is limited to those two bypasses and preserves the full
+400-line parser candidate cap.
+
+R1 contract review: PASS at `7901de94f4391c107c52ea8733ac72ad34ceb069`
+across all required tracks. Only R1 is active; any additional valid finding or
+size above 400 stops and replans the replacement.
+
+R1 implementation review: STOP at `c0fa4a2`. The two authorized fixes passed,
+but senior architecture/reuse review found the approximate matcher rejected
+comments the installed coverage runtime includes. R2 proposes canonical regex
+reuse; no PR opened from R1.
+
+R2 implementation review: PASS at code candidate `40ac7a9`. The installed
+coverage.py 7.15.0 canonical grammar is reused directly, 58 focused behavior
+tests pass, complete implementation scope is 398/400 lines, and every required
+reviewer track passed with no remaining finding. Evidence/PR preparation is
+active; 01B1B and 01B2 remain inactive.
+
+## WS-QUAL-001-01B
+
+Status: user started the chunk after PR #104 merged. Its repaired L1 contract
+passed plan review at `7a16ee4`, but implementation hit the hard circuit breaker
+at 480/500 lines before required config, CI, runbook, and negative proof.
+
+Scope: coverage policy, contract tests, configured initial floor, canonical CI
+validation, baseline evidence, and runbook only. No production or coverage-
+raising behavior tests.
+
+Result: executable draft and partial candidate run were stopped and cleaned up.
+A policy-core versus baseline/CI split is proposed for internal and explicit
+human approval. Do not start either split chunk or chunk 02.
+
 ## WS-QUAL-001-01A
 
 Status: merged through PR #103 on 2026-07-12 as `2901a3e`.

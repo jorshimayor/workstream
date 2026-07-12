@@ -33,8 +33,9 @@ Status: accepted through planning PR #99 on 2026-07-12.
 AUTH-02 remains implemented on its own worktree but is not published while the
 new 90 percent repository requirement lacks an approved enforcement path. The
 pause avoids mixing roughly 849 statements of legacy coverage debt into an auth
-PR. Resumption requires an explicit user signal after the coverage plan is
-approved; this decision does not discard or redesign the auth implementation.
+PR. Resumption requires WS-QUAL to complete through its permanent 90 percent CI
+floor and final post-merge memory, followed by an explicit user signal. This
+decision does not discard or redesign the off-main auth implementation.
 
 ## D5: Behavior proof outranks percentage gains
 
@@ -72,3 +73,79 @@ underestimated by A1. The rejected A2 proposal would have raised the cap to
 1,100. Reviewers required `01A` for the least-privilege database lifecycle and
 `01B` for coverage policy/CI/evidence. The split preserves genuine proof without
 compressing safety code. Production scope and later chunks remain unchanged.
+
+## D8: Split 01B policy core from baseline and CI publication
+
+Status: accepted after internal split review and explicit user approval on
+2026-07-12. Only 01B1 is started; 01B2 retains its later separate checkpoint.
+
+The reviewed combined 01B contract proved larger than its 500-line boundary:
+policy plus 19 behavior tests reached 480 lines before configured coverage,
+workflow integration, the runbook, and several required negative cases. Further
+compression would weaken proof or readability. The proposed repair is 01B1 for
+pure policy parsing/arithmetic/schema/delta behavior, followed after merge and
+memory by 01B2 for Git provenance, configured baseline evidence, CI ratchet,
+and operations. Each retains a separate 500-line cap, L1 review, PR, merge,
+memory, and explicit start checkpoint. No production or coverage-raising test
+scope is added.
+
+## D9: Stop 01B1 after repeated semantic-integrity findings
+
+Status: circuit breaker triggered on 2026-07-12; replacement split direction
+approved by the user and pending internal split review.
+
+The 01B1 candidate reached 496/500 lines after two repair cycles. Eight review
+tracks passed, but final test-delta review still found executable unittest skip
+forms, aliased `pytest.raises` deletion, and missing successful arithmetic
+boundaries. These are valid acceptance-criterion gaps in the same repeated
+semantic-integrity class. The chunk must split again rather than compress tests
+or exceed its cap. No replacement chunk may start without internal plan review
+and explicit user approval.
+
+## D10: Split parsing from semantic repository-delta enforcement
+
+Status: direction explicitly approved by the user on 2026-07-12; internal split
+review pending.
+
+`01B1A` owns complete-app coverage arithmetic, intended configuration parsing,
+canonical evidence parsing, strict runner metadata parsing, application pragma
+validation, the compute-only CLI, and their behavior tests. `01B1B` separately
+owns Git-helper integration, bounded memory/scope accounting, executable
+skip/xfail detection, aliased assertion-deletion detection, and real repository
+regressions. `01B2` remains unchanged. This boundary keeps parser arithmetic
+independent from repository-diff semantics without weakening either proof set.
+
+## D11: Stop 01B1A after two parser-normalization repair cycles
+
+Status: circuit breaker triggered on 2026-07-12.
+
+The 01B1A candidate reached 394/400 lines and 56 focused tests. Final QA and
+security review still found accepted `pragma:nocover` comments and leading-space
+normalized duplicate pytest-cov requirements. These are valid bypasses in the
+same parser-normalization class after two repairs. The task-chunk loop requires
+a stop and replan instead of a third repair cycle, even though the individual
+edits are small. No PR may open while required reviewers fail.
+
+## D12: Continue coverage and AUTH in isolated worktrees
+
+Status: explicitly directed by the user on 2026-07-12.
+
+Coverage remains isolated in `workstream-qual-001`; AUTH-02 resumes off-main in
+`workstream-auth-001-02`. Each track owns its branch, tests, reviewers, and
+evidence. Neither track edits the other's worktree. AUTH may prepare its PR in
+parallel but must satisfy the repository's current coverage gates before merge.
+The 01B1A-R1 replacement is limited to closing the two recorded parser bypasses
+without reopening semantic-delta or 01B2 scope.
+
+## D13: Reuse the installed coverage runtime's exclusion grammar
+
+Status: proposed corrective replacement under the user's direction to finish
+the coverage blockers; internal contract review pending.
+
+R1 correctly rejected the two named bypasses but used a broader approximate
+regex that rejected explanatory comments coverage.py would include. R2 replaces
+that approximation with `coverage.config.DEFAULT_EXCLUDE[0]` from the installed
+coverage runtime selected by the pinned pytest-cov toolchain and adds
+positive/negative same-runtime equivalence proof. Coverage.py itself is not
+exactly pinned; R2 records the resolved version, while later 01B2 owns committed
+tool-version evidence. This is a reuse correction, not new policy scope.

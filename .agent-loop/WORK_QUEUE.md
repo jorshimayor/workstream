@@ -4,14 +4,16 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| none | none | - | Post-merge memory only; no implementation chunk active |
+| `WS-QUAL-001-01B1A-R2` | Canonical Coverage Grammar | L1 | Implemented; all internal tracks pass; PR evidence pending |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01B` | Coverage Policy And Baseline | L1 | Inactive until 01A memory merge and explicit user start |
-| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Implemented off-main; paused until WS-QUAL permanent 90% floor and final memory complete, then explicit resume |
+| `WS-QUAL-001-01B1B` | Semantic Delta Guards | L1 | Inactive until 01B1A-R2 merge/memory and explicit user start |
+| `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Inactive until 01B1A-R2 and 01B1B merge/memory plus explicit user start |
+| `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B1A-R2, 01B1B, and 01B2 merge/memory plus explicit user start |
+| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Resumed off-main in a separate worktree by explicit user direction; independent review required before PR/merge |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02` | Flow Node Adapter And Reconciliation | L1 | Proposed; inactive pending separate explicit user start |
 
@@ -51,8 +53,9 @@
 
 ## Proposed Next
 
-No implementation chunk is active. Do not start `WS-QUAL-001-01B`, resume
-`WS-AUTH-001-02`, or start another implementation chunk automatically.
+Finish R2 evidence, trust bundle, and PR publication on the coverage branch.
+AUTH-02 may proceed independently in its existing worktree. Do not start 01B1B,
+01B2, chunk 02, or another coverage implementation chunk automatically.
 
 `WS-ART-001-01` is merged. Do not start `WS-ART-001-02` or edit Flow Node until
 the user gives a separate explicit start signal.
@@ -61,4 +64,6 @@ the user gives a separate explicit start signal.
 
 | Chunk | Blocker | Next action |
 |---|---|---|
-| none | none | none |
+| `WS-QUAL-001-01B1` | 496/500 lines after two semantic-integrity repair cycles | Superseded by the proposed 01B1A/01B1B split; do not resume |
+| `WS-QUAL-001-01B1A` | 394/400 lines after two parser-normalization repair cycles; final QA/security review found two valid bypass variants | Replan the parser boundary before any further implementation |
+| `WS-QUAL-001-01B1A-R1` | Additional valid false-positive finding outside its two-fix contract | Superseded by R2 canonical-grammar proposal; do not resume |
