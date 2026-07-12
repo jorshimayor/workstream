@@ -54,6 +54,9 @@ def test_local_artifact_settings_and_resolver(tmp_path) -> None:
         artifact_stream_buffer_bytes=64,
     )
     assert resolve_artifact_store(settings).adapter_name == "local"
+    incomplete = settings.model_copy(update={"artifact_local_root": None})
+    with pytest.raises(ArtifactConfigurationError, match="root is not configured"):
+        resolve_artifact_store(incomplete)
 
 
 def test_flow_node_resolver_fails_until_adapter_chunk() -> None:

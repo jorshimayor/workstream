@@ -72,7 +72,7 @@ attempt/correlation references, and provider/database timestamps.
 Async operations:
 
 ```text
-store(stream, expected_sha256, expected_size, maximum_bytes, metadata, idempotency)
+store(stream, expected_sha256?, expected_size?, maximum_bytes, metadata, idempotency)
 recover_committed_store(store_request_with_expected_sha256_and_size)
 open(provider_artifact_id, byte_range?)
 stat(provider_artifact_id)
@@ -152,7 +152,7 @@ production fails closed.
    always makes the item `replay_required`; the client must replay the exact
    bytes under the same idempotency key. Workstream hashes the replay and the
    provider returns the existing exact-replay receipt when an effect committed.
-   Receipt-only recovery never creates content. Altered commitment, receipt,
+   Receipt-only recovery never creates content. Altered persisted commitment, receipt,
    object, or replay bytes are
    quarantined with `artifact_integrity_failure`; no background process guesses
    a local path.
@@ -350,7 +350,7 @@ identity, 403 wrong audience/scope, 404 unknown provider artifact, 409
 idempotency mismatch or retention conflict, 413 limit exceeded, 422 digest or
 integrity mismatch, 429 throttled, and 503 provider unavailable.
 
-Service subject, operation, and idempotency key form the operation identity.
+`service_principal`, operation, and idempotency key form the operation identity.
 The canonical request reference is request content covered by that identity's
 single request digest; changing the reference or digest returns a 409 mismatch,
 not a second operation. Records remain available for the provider artifact's
@@ -360,7 +360,8 @@ default five-second initial delay, five-minute cap, eight attempts, and a
 configurable 30-minute elapsed-time limit before operator-visible dead letter.
 
 Receipt outcomes are immutable. Verification moves from pending to verified or
-integrity-failed. Retention moves from unretained to retained and may reach
+failed; integrity mismatch separately moves `integrity_state` to `quarantined`.
+Retention moves from unretained to retained and may reach
 released only through an authorized reference-counted release. Availability is
 a mutable observation. Quarantined integrity can return to valid only through a
 new audited repair/verification receipt; history is never overwritten.

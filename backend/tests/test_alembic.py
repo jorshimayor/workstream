@@ -1513,8 +1513,7 @@ async def _assert_artifact_fact_guards(database_url: str, ids: dict[str, str]) -
                 {"id": ids["session"]},
             ),
             (
-                "update artifact_upload_sessions set state = 'sealed', closed_at = null "
-                "where id = :id",
+                "update artifact_upload_sessions set state = 'sealed' where id = :id",
                 {"id": ids["session"]},
             ),
             (

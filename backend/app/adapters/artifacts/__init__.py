@@ -21,7 +21,8 @@ def resolve_artifact_store(settings: Settings) -> ArtifactStore:
     if settings.artifact_store_backend == "local":
         from app.adapters.artifacts.local import LocalStorageAdapter
 
-        assert settings.artifact_local_root is not None
+        if settings.artifact_local_root is None:
+            raise ArtifactConfigurationError("local artifact root is not configured")
         return LocalStorageAdapter(
             root=settings.artifact_local_root,
             buffer_bytes=settings.artifact_stream_buffer_bytes,

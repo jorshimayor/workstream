@@ -664,10 +664,7 @@ class LocalStorageAdapter:
             key=idempotency_key,
             request_digest="sha256:" + "0" * 64,
         )
-        if not re.fullmatch(
-            r"[a-z0-9](?:[a-z0-9._-]{1,126}[a-z0-9])", service_principal
-        ) or len(service_principal) > 100:
-            raise ArtifactMalformedRequestError("service principal is invalid")
+        self._validate_service_principal(service_principal)
         self._validate_opaque(idempotency_key, "idempotency key")
         payload = await self._read_json_optional(
             self._path("receipts", self._scope_key(identity), ".json")
@@ -760,7 +757,11 @@ class LocalStorageAdapter:
             raise ArtifactMalformedRequestError("expected artifact size must be nonnegative")
         if request.expected_sha256 is not None:
             self._validate_digest(request.expected_sha256)
-        if not request.media_type or len(request.media_type) > 255:
+        if (
+            not request.media_type
+            or len(request.media_type) > 255
+            or any(ord(character) < 32 or ord(character) == 127 for character in request.media_type)
+        ):
             raise ArtifactMalformedRequestError("artifact media type is invalid")
         if len(request.metadata) > 32:
             raise ArtifactMalformedRequestError("artifact metadata exceeds its item limit")
@@ -780,11 +781,7 @@ class LocalStorageAdapter:
         """Validate operation identity and request commitment."""
         if identity.operation != expected_operation:
             raise ArtifactMalformedRequestError("artifact operation identity is invalid")
-        if not re.fullmatch(
-            r"[a-z0-9](?:[a-z0-9._-]{1,126}[a-z0-9])",
-            identity.service_principal,
-        ) or len(identity.service_principal) > 100:
-            raise ArtifactMalformedRequestError("service principal is invalid")
+        self._validate_service_principal(identity.service_principal)
         self._validate_opaque(identity.key, "idempotency key")
         self._validate_digest(identity.request_digest)
 
@@ -793,6 +790,14 @@ class LocalStorageAdapter:
         """Require one bounded provider-neutral opaque identifier."""
         if not re.fullmatch(r"(?!\.{1,2}$)[A-Za-z0-9][A-Za-z0-9._~-]{0,127}", value):
             raise ArtifactMalformedRequestError(f"{label} is invalid")
+
+    @staticmethod
+    def _validate_service_principal(value: str) -> None:
+        """Require one bounded provider-neutral service principal."""
+        if not re.fullmatch(r"[a-z0-9](?:[a-z0-9._-]{1,126}[a-z0-9])", value) or len(
+            value
+        ) > 100:
+            raise ArtifactMalformedRequestError("service principal is invalid")
 
     @staticmethod
     def _validate_retention_class(value: str) -> None:

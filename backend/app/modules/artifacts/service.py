@@ -148,8 +148,10 @@ class ArtifactIngestService:
             )
             raise
         except BaseException:
-            await self._mark_provider_recovery_required(
-                item_id, request, attempt_cas, provider_commit_confirmed=True
+            await asyncio.shield(
+                self._mark_provider_recovery_required(
+                    item_id, request, attempt_cas, provider_commit_confirmed=True
+                )
             )
             raise
 

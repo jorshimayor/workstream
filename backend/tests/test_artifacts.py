@@ -1147,6 +1147,11 @@ async def test_stream_and_operation_validation_rejects_invalid_inputs(tmp_path: 
         await adapter.store(
             byte_stream(b"x"), store_request(key="negative-size", expected_size=-1)
         )
+    control_media_request = replace(
+        store_request(key="control-media"), media_type="text/plain\ninvalid"
+    )
+    with pytest.raises(ArtifactMalformedRequestError, match="media type"):
+        await adapter.store(byte_stream(b"x"), control_media_request)
     wrong_operation = IdempotencyIdentity(
         "workstream.artifact.ingest",
         ArtifactOperation.RETAIN,
