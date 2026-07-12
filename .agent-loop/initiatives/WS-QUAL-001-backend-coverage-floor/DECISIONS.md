@@ -33,8 +33,9 @@ Status: accepted through planning PR #99 on 2026-07-12.
 AUTH-02 remains implemented on its own worktree but is not published while the
 new 90 percent repository requirement lacks an approved enforcement path. The
 pause avoids mixing roughly 849 statements of legacy coverage debt into an auth
-PR. Resumption requires an explicit user signal after the coverage plan is
-approved; this decision does not discard or redesign the auth implementation.
+PR. Resumption requires WS-QUAL to complete through its permanent 90 percent CI
+floor and final post-merge memory, followed by an explicit user signal. This
+decision does not discard or redesign the off-main auth implementation.
 
 ## D5: Behavior proof outranks percentage gains
 

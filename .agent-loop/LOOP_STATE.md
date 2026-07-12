@@ -4,16 +4,17 @@
 
 - Active initiative: `WS-QUAL-001` - Backend Coverage Floor
 - Active planning chunk: none
-- Active implementation chunk: none
-- Branch: `codex/ws-qual-001-01a-post-merge-memory`
-- Status: `WS-QUAL-001-01A` merged through PR #103; this branch records its
-  post-merge memory. `WS-QUAL-001-01B` remains inactive.
+- Active implementation chunk: `WS-QUAL-001-01B` - Coverage Policy And Baseline
+- Branch: `codex/ws-qual-001-01b-coverage-policy-baseline`
+- Status: PR #104 post-merge memory merged as `8829a7e`; the user explicitly
+  started 01B. Its missing chunk contract is drafted for L1 plan review before
+  implementation.
 - Prior WS-ART reviewed planning SHA: `f7fbc33`
 - Prior WS-ART final evidence-bound planning branch head: `c069064`
 - WS-ART planning merge commit: `8644a43`
 - Prior WS-AUTH-001-01 reviewed implementation SHA: `be0b836`
 - Prior WS-AUTH-001-01 final merged branch head: `b5217e1`
-- Latest merge commit: `2901a3ebe68b7c770ccb1ff06841d79ce0c20d94`
+- Latest merge commit: `8829a7ec3aa5199aae0aecbe5fda030c42a051cd`
 - WS-QUAL final reviewed planning SHA: `0d9dd987d546c864fa8de7bae462e5e73a1b5ea9`
 - WS-QUAL final evidence-bound branch head: `3da1769882e9f6db4c48ef3dba33da8380e6a613`
 - WS-QUAL planning merge commit: `9046d52f31c7c39f06e06c45c43783bb08a5181c`
@@ -27,10 +28,10 @@
 - WS-QUAL-001-01A final evidence-bound head:
   `8cd7616b497ceb46d8359c25de689192632dfee8`
 - WS-QUAL-001-01A merge commit: `2901a3ebe68b7c770ccb1ff06841d79ce0c20d94`
-- Current gate: internally review and publish post-merge memory, then human
-  review and merge.
-- Next chunk: `WS-QUAL-001-01B` remains inactive until this memory merges and
-  the user gives a separate explicit start; do not start `WS-QUAL-001-02`.
+- WS-QUAL-001-01A post-merge memory merge commit:
+  `8829a7ec3aa5199aae0aecbe5fda030c42a051cd`
+- Current gate: L1 plan review of the 01B contract before implementation.
+- Next chunk: `WS-QUAL-001-02` remains inactive; do not start it automatically.
 - Paused implementation: `WS-AUTH-001-02` remains implemented on
   `codex/ws-auth-001-02-verified-issuer-token` and is paused before publication
   until WS-QUAL completes through its permanent 90 percent CI floor and final

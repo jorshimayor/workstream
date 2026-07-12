@@ -1,5 +1,17 @@
 # Review Log
 
+## WS-QUAL-001-01B
+
+Status: user started the chunk after PR #104 merged. The missing bounded chunk
+contract is drafted; L1 plan review is required before implementation.
+
+Scope: coverage policy, contract tests, configured initial floor, canonical CI
+validation, baseline evidence, and runbook only. No production or coverage-
+raising behavior tests.
+
+Next: plan review and repair, then implement only the approved 01B contract.
+Do not start chunk 02.
+
 ## WS-QUAL-001-01A
 
 Status: merged through PR #103 on 2026-07-12 as `2901a3e`.
