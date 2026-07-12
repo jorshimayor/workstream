@@ -2,9 +2,7 @@
 
 ## In Progress
 
-| Chunk | Title | Risk | Status |
-|---|---|---:|---|
-| `WS-ART-001-PLAN` | Immutable Artifact Storage And Flow Node Integration Planning | L1 | Active planning on a separate branch; no implementation chunk active |
+None.
 
 ## Planned Next
 
@@ -12,6 +10,7 @@
 |---|---|---:|---|
 | `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Proposed but inactive until a separate explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
+| `WS-ART-001-01` | Artifact Domain And Local Adapter | L1 | Proposed but inactive until post-merge memory completes and the user explicitly starts it |
 
 ## Completed
 
@@ -42,6 +41,7 @@
 | `WS-POL-002-03` | Server-Owned Policy Approval And Visibility APIs | L1 | Merged through PR #90 as `a7aa474` on 2026-07-11 |
 | `WS-AUTH-001-PLAN` | Authorization Service Planning | L0 | Merged through PR #91 as `ad6d644` on 2026-07-11 |
 | `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Merged through PR #93 as `772af1d` on 2026-07-11 |
+| `WS-ART-001-PLAN` | Immutable Artifact Storage And Flow Node Integration Planning | L1 | Merged through PR #97 as `8644a43` on 2026-07-12 |
 
 ## Proposed Next
 
@@ -49,10 +49,9 @@ No implementation chunk is active. Do not start `WS-AUTH-001-02` or
 `WS-POL-002-04` automatically; each requires its recorded prerequisites and a
 separate explicit user start signal.
 
-Complete the external-review response, final evidence rebinding, and fresh
-checks for WS-ART planning PR #97, then stop for human approval. Do not start
-`WS-ART-001-01` or edit Flow Node until the planning PR is merged and a separate
-explicit start signal is given.
+Complete and merge the WS-ART planning post-merge memory update, then stop. Do
+not start `WS-ART-001-01` or edit Flow Node until the user gives a separate
+explicit start signal.
 
 ## Blocked
 
