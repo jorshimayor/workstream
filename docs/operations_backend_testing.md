@@ -23,7 +23,7 @@ The runner removes the admin URL before child launch, overwrites both child data
 removes the nonlocal override, redacts complete URLs, and writes only credential-free metadata.
 It attempts to drop the owned database and ephemeral login after success,
 failure, timeout, or interruption. Host termination or a database error can
-prevent cleanup; recover manually with the admin login, targeting only the exact strict database and role names reported by local catalog inspection.
+prevent cleanup; recover manually with the database provisioning credential, targeting only the exact strict database and role names reported by local catalog inspection.
 
 ## Focused checks
 The API-guard tests are statically DB-free:
@@ -46,4 +46,4 @@ WORKSTREAM_DATABASE_URL='postgresql+asyncpg://USER:PASSWORD@localhost:5433/works
 
 Do not use `WORKSTREAM_ALLOW_NONLOCAL_E2E_DATABASE` for ordinary proof.
 
-If provisioning fails, confirm the local admin can create/drop databases and roles, terminate owned sessions, and reach the named admin database. Diagnostics omit credentials.
+If provisioning fails, confirm the local PostgreSQL provisioning credential can create/drop databases and roles, terminate owned sessions, and reach the named admin database. Diagnostics omit credentials.
