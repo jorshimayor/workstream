@@ -8,7 +8,7 @@ None.
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01` | Coverage Harness And Baseline | L1 | Proposed; inactive pending post-merge memory and explicit user start |
+| `WS-QUAL-001-01` | Coverage Harness And Baseline | L1 | Proposed; inactive pending separate explicit user start |
 | `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Paused before publication pending separate explicit user resume |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02` | Flow Node Adapter And Reconciliation | L1 | Proposed; inactive pending separate explicit user start |

@@ -785,7 +785,7 @@ review.
 
 ## 2026-07-12 - WS-ART-001-01 Merged
 
-PR #101 merged into `main` as
+[PR #101](https://github.com/Flow-Research/workstream/pull/101) merged into `main` as
 `050eb15eab8c57e6bc265477a5e92484d27a893c`.
 
 Reviewed implementation SHA:

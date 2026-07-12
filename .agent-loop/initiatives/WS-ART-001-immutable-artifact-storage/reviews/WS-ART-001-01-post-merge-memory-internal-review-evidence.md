@@ -47,7 +47,9 @@ python3 scripts/check_stale_artifact_contracts.py
 git diff --check
 ```
 
-Results: all passed. The reviewed diff contains only four durable memory files.
+Results: all passed. The final diff contains seven files total: four durable
+memory files plus internal-review evidence, the trust bundle, and the external
+review response.
 
 ## Stop Condition
 
