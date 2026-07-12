@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01B1A-R2` | Canonical Coverage Grammar | L1 | Implemented; all internal tracks pass; PR evidence pending |
+| none | none | - | R2 post-merge memory only; no implementation chunk active |
 
 ## Planned Next
 
@@ -50,12 +50,13 @@
 | `WS-QUAL-001-PLAN` | Backend Coverage Floor Planning | L1 | Merged through PR #99 as `9046d52` on 2026-07-12 |
 | `WS-ART-001-01` | Artifact Domain And Local Adapter | L1 | Merged through PR #101 as `050eb15` on 2026-07-12 |
 | `WS-QUAL-001-01A` | Isolated Database Runner | L1 | Merged through PR #103 as `2901a3e` on 2026-07-12 |
+| `WS-QUAL-001-01B1A-R2` | Canonical Coverage Grammar | L1 | Merged through PR #105 as `8a4182e` on 2026-07-12 |
 
 ## Proposed Next
 
-Finish R2 evidence, trust bundle, and PR publication on the coverage branch.
-AUTH-02 may proceed independently in its existing worktree. Do not start 01B1B,
-01B2, chunk 02, or another coverage implementation chunk automatically.
+Finish and merge R2 post-merge memory, then stop. AUTH-02 may proceed
+independently in its existing worktree. Do not start 01B1B, 01B2, chunk 02, or
+another coverage implementation chunk automatically.
 
 `WS-ART-001-01` is merged. Do not start `WS-ART-001-02` or edit Flow Node until
 the user gives a separate explicit start signal.
