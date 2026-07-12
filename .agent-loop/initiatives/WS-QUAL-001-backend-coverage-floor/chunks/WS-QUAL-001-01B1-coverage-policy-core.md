@@ -11,8 +11,9 @@ changing the configured floor, CI, committed evidence, or application coverage.
 - Risk: L1 test-policy integrity; SLA P1
 - Implementation cap: 500 lines outside `.agent-loop`
 - Allowed: `backend/scripts/coverage_policy.py`,
-  `backend/tests/test_coverage_contract.py`, and WS-QUAL/global memory/reviews
-- Forbidden: pyproject/workflow/runbook/evidence changes, `backend/app/**`,
+  `backend/tests/test_coverage_contract.py`, `docs/operations_backend_testing.md`,
+  and WS-QUAL/global memory/reviews
+- Forbidden: pyproject/workflow/evidence changes, `backend/app/**`,
   runner/API drills, migrations, schemas, product/auth behavior, unrelated
   tests, skips/xfail, weakened assertions, exclusions, or coverage pragmas
 
@@ -32,6 +33,17 @@ changing the configured floor, CI, committed evidence, or application coverage.
   metadata, inventory loss, exclusions, arithmetic boundaries, unsafe names,
   secrets, scope overflow, assertion deletion, and syntax-aware weakening.
 - No test executes uncovered application code merely to increase percentage.
+- The runbook documents `--compute-floor` as read-only and preparatory: it uses
+  temporary non-secret coverage input, does not configure or enforce a floor,
+  does not write evidence, and is not the CI policy.
+
+## Allocation And Circuit Breaker
+
+Forecast: policy core 255 lines, parameterized behavior tests 210, runbook 20,
+other approved edits 15; hard total 500. Run the circuit breaker after parser,
+semantic-delta, and negative tests are complete and before runbook/final polish.
+Stop and split again at more than 465 lines before the remaining documented
+work, rather than compressing assertions or fail-closed logic.
 
 ## Verification And Review
 
