@@ -435,11 +435,11 @@ class FlowAuthVerifier:
     async def _resolve_key(self, kid: str) -> dict[str, Any]:
         now = self._monotonic()
         self._prune_negative_kids(now)
-        if now < self._refresh_retry_at:
-            raise AuthVerificationUnavailableError("issuer key refresh is cooling down")
         if now < self._cache_expires_at and kid in self._keys:
             self._metrics.jwks_cache("hit")
             return self._keys[kid]
+        if now < self._refresh_retry_at:
+            raise AuthVerificationUnavailableError("issuer key refresh is cooling down")
         if self._negative_kids.get(kid, 0.0) > now:
             self._metrics.jwks_cache("negative_hit")
             raise AuthVerificationError("token key identifier is unknown")
@@ -456,11 +456,11 @@ class FlowAuthVerifier:
         async with self._refresh_lock:
             now = self._monotonic()
             self._prune_negative_kids(now)
-            if now < self._refresh_retry_at:
-                raise AuthVerificationUnavailableError("issuer key refresh is cooling down")
             if now < self._cache_expires_at and kid in self._keys:
                 self._metrics.jwks_cache("hit")
                 return self._keys[kid]
+            if now < self._refresh_retry_at:
+                raise AuthVerificationUnavailableError("issuer key refresh is cooling down")
             if self._negative_kids.get(kid, 0.0) > now:
                 self._metrics.jwks_cache("negative_hit")
                 raise AuthVerificationError("token key identifier is unknown")

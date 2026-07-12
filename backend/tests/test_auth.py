@@ -534,6 +534,37 @@ async def test_expired_jwks_cache_refreshes_during_longer_unknown_kid_cooldown(
     assert len(requests) == 2
 
 
+async def test_refresh_failure_cooldown_preserves_valid_cached_key_hits(
+    rsa_signing_material: tuple[rsa.RSAPrivateKey, dict[str, Any]],
+) -> None:
+    private_key, jwk = rsa_signing_material
+    clock = [0.0]
+    requests: list[Request] = []
+
+    def outage_after_prime(request: Request) -> Response:
+        requests.append(request)
+        if len(requests) == 1:
+            return Response(200, json={"keys": [jwk]})
+        return Response(503)
+
+    verifier = FlowAuthVerifier(
+        production_verifier_settings(),
+        jwks_transport=MockTransport(outage_after_prime),
+        monotonic=lambda: clock[0],
+    )
+    valid_token = issue_asymmetric_token(private_key)
+    await verifier.verify(valid_token)
+    clock[0] = 31.0
+    with pytest.raises(AuthVerificationUnavailableError):
+        await verifier.verify(issue_asymmetric_token(private_key, kid="unknown-during-outage"))
+
+    clock[0] = 32.0
+    assert (await verifier.verify(valid_token)).token.token_id == "token-id-1"
+    with pytest.raises(AuthVerificationUnavailableError, match="cooling down"):
+        await verifier.verify(issue_asymmetric_token(private_key, kid="another-unknown"))
+    assert len(requests) == 2
+
+
 @pytest.mark.parametrize(
     ("claims", "message"),
     [
