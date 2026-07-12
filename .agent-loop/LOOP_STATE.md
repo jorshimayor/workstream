@@ -15,8 +15,8 @@
 - Last reviewed implementation SHA: `be0b836`
 - Final merged WS-AUTH-001-01 branch head: `b5217e1`
 - Last merge commit: `8644a43`
-- Current gate: record and review post-merge memory, merge that memory update,
-  and stop.
+- Current gate: publish and merge the internally reviewed post-merge memory PR,
+  then stop.
 - Next chunk: `WS-ART-001-01` remains proposed and must not start until this
   post-merge memory is complete and the user gives a separate explicit start.
 - Parallel initiative: `WS-POL-002-03` merged through PR #90 as `a7aa474`; its
