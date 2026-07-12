@@ -14,6 +14,10 @@ publication logic, production behavior, or coverage-raising tests.
 Next: review a smaller policy-core versus semantic-delta split and obtain
 explicit user approval. No PR, 01B2, chunk 02, or AUTH resume is permitted.
 
+User checkpoint: the user approved the proposed parser-core versus semantic-
+delta split direction on 2026-07-12. Internal plan review must pass before
+activating only 01B1A; 01B1B retains a later separate start checkpoint.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract

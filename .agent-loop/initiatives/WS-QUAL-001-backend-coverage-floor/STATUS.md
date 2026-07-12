@@ -2,7 +2,7 @@
 
 ## Current state
 
-- Phase: `WS-QUAL-001-01B1` circuit-breaker replanning
+- Phase: `WS-QUAL-001-01B1A/01B1B` split review
 - Branch: `codex/ws-qual-001-01b1-coverage-policy-core`
 - Authoritative target: 90 percent complete backend application statement coverage
 - Diagnostic AUTH-02 baseline: 78.26 percent after database isolation repair
@@ -36,10 +36,11 @@
 - Review result: blocked after the second semantic-integrity repair cycle;
   test-delta review still requires `skipTest`/`SkipTest`, aliased
   `pytest.raises` deletion, and 0/100/truncation arithmetic boundaries
-- Next gate: review a smaller 01B1 split and obtain explicit user approval
+- Replacement split direction: user approved on 2026-07-12; internal plan
+  review must pass before activating only 01B1A
 
 ## Stop condition
 
-No implementation chunk is active. Do not repair or split 01B1, start 01B2 or
-chunk 02, or resume AUTH automatically; the next reviewed split requires an
-explicit user checkpoint.
+No implementation chunk is active during split review. If the reviewed split
+matches D10, activate only 01B1A under the user's explicit approval. Do not
+start 01B1B, 01B2, chunk 02, or resume AUTH automatically.

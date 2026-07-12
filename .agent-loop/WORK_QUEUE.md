@@ -4,14 +4,15 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| none | none | - | No implementation chunk is active |
+| `WS-QUAL-001-01B1A` | Coverage Parser Core | L1 | Proposed; internal split review pending |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Proposed after 01B1 merge/memory; not active |
-| `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until both 01B split chunks merge, memory completes, and explicit user start |
+| `WS-QUAL-001-01B1B` | Semantic Delta Guards | L1 | Inactive until 01B1A merge/memory and explicit user start |
+| `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Inactive until 01B1A and 01B1B merge/memory plus explicit user start |
+| `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B1A, 01B1B, and 01B2 merge/memory plus explicit user start |
 | `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Implemented off-main; paused until WS-QUAL permanent 90% floor and final memory complete, then explicit resume |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02` | Flow Node Adapter And Reconciliation | L1 | Proposed; inactive pending separate explicit user start |
@@ -52,8 +53,9 @@
 
 ## Proposed Next
 
-01B1 is blocked at its circuit breaker. Do not start a split repair, 01B2,
-chunk 02, resume AUTH-02, or start another implementation chunk automatically.
+The user approved the 01B1A/01B1B split direction. Complete internal split
+review before activating 01B1A. Do not start 01B1B, 01B2, chunk 02, resume
+AUTH-02, or start another implementation chunk automatically.
 
 `WS-ART-001-01` is merged. Do not start `WS-ART-001-02` or edit Flow Node until
 the user gives a separate explicit start signal.
@@ -62,4 +64,4 @@ the user gives a separate explicit start signal.
 
 | Chunk | Blocker | Next action |
 |---|---|---|
-| `WS-QUAL-001-01B1` | 496/500 lines after two semantic-integrity repair cycles; final test-delta review found valid uncovered weakening and arithmetic cases | Review a smaller policy-core versus semantic-delta split, then require explicit user approval before implementation |
+| `WS-QUAL-001-01B1` | 496/500 lines after two semantic-integrity repair cycles | Superseded by the proposed 01B1A/01B1B split; do not resume |

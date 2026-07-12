@@ -100,3 +100,16 @@ boundaries. These are valid acceptance-criterion gaps in the same repeated
 semantic-integrity class. The chunk must split again rather than compress tests
 or exceed its cap. No replacement chunk may start without internal plan review
 and explicit user approval.
+
+## D10: Split parsing from semantic repository-delta enforcement
+
+Status: direction explicitly approved by the user on 2026-07-12; internal split
+review pending.
+
+`01B1A` owns complete-app coverage arithmetic, intended configuration parsing,
+canonical evidence parsing, strict runner metadata parsing, application pragma
+validation, the compute-only CLI, and their behavior tests. `01B1B` separately
+owns Git-helper integration, bounded memory/scope accounting, executable
+skip/xfail detection, aliased assertion-deletion detection, and real repository
+regressions. `01B2` remains unchanged. This boundary keeps parser arithmetic
+independent from repository-diff semantics without weakening either proof set.

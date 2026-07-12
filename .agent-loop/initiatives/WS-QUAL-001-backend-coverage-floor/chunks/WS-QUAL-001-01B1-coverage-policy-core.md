@@ -4,6 +4,9 @@ Status: blocked on 2026-07-12 at 496/500 lines after two failed
 semantic-integrity repair cycles. A smaller reviewed split and explicit user
 approval are required before implementation resumes.
 
+Superseded by proposed `WS-QUAL-001-01B1A` and `WS-QUAL-001-01B1B`; retain this
+contract as circuit-breaker history and do not resume it.
+
 ## Goal, Risk, And Budget
 
 Build a read-only, pure-function coverage policy core and behavior tests without

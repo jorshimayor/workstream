@@ -5,7 +5,9 @@
 | `WS-QUAL-001-01` | Combined harness/baseline contract | L1 | Split after circuit-breaker review |
 | `WS-QUAL-001-01A` | Isolated least-privilege database runner and two-phase complete-suite CI | L1 | Merged through PR #103 as `2901a3e` |
 | `WS-QUAL-001-01B` | Combined coverage policy, baseline, and CI ratchet | L1 | Circuit breaker triggered at 480/500 before required proof; split proposed |
-| `WS-QUAL-001-01B1` | Coverage policy core and contract tests | L1 | Blocked at 496/500 after two repair cycles; split review required |
+| `WS-QUAL-001-01B1` | Combined parser and semantic-delta policy core | L1 | Blocked at 496/500 after two repair cycles; superseded by 01B1A/01B1B |
+| `WS-QUAL-001-01B1A` | Read-only coverage arithmetic and bounded policy parsers | L1 | Proposed; split review pending |
+| `WS-QUAL-001-01B1B` | Repository-delta and semantic test-integrity guards | L1 | Proposed after 01B1A merge and memory; inactive |
 | `WS-QUAL-001-01B2` | Git provenance, configured baseline evidence, and CI ratchet | L1 | Proposed after 01B1 merge and memory; inactive |
 | `WS-QUAL-001-02` | Project setup/policy/correction service coverage; floor at least 82% | L1 | Inactive |
 | `WS-QUAL-001-03` | Project repository/router coverage; floor at least 84% | L1 | Inactive |
