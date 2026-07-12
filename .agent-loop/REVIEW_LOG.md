@@ -23,6 +23,12 @@ across senior engineering, QA/test, security/auth, product/ops, architecture,
 CI integrity, docs, reuse/dedup, test delta, and circuit breaker. Only 01B1A is
 active; 01B1B and 01B2 retain later checkpoints.
 
+Implementation review result: BLOCKED at
+`5af95751c554ad022128f78c9dd8c1190f38dec4`. Senior engineering,
+architecture, reuse, CI integrity, test delta, product/ops, and docs passed.
+QA and security found `pragma:nocover` and leading-space normalized duplicate
+pytest-cov bypasses after the second parser repair cycle. No PR opened.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract

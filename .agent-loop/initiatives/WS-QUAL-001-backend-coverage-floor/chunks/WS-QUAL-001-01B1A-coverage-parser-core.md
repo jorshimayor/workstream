@@ -2,8 +2,9 @@
 
 Parent: `WS-QUAL-001` Backend Coverage Floor
 
-Status: approved and active. The user approved the split direction on
-2026-07-12 and all required plan-review tracks passed at `d181987`.
+Status: blocked at 394/400 lines after two parser-normalization repair cycles.
+The remaining QA/security findings require replanning before implementation
+continues.
 
 ## Goal And Reason
 

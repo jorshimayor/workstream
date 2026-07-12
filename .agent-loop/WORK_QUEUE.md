@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01B1A` | Coverage Parser Core | L1 | Approved and active; implementation pending |
+| none | none | - | No implementation chunk is active |
 
 ## Planned Next
 
@@ -53,9 +53,9 @@
 
 ## Proposed Next
 
-The user approved the 01B1A/01B1B split and all plan reviewers passed at
-`d181987`. Implement and review only 01B1A. Do not start 01B1B, 01B2, chunk 02,
-resume AUTH-02, or start another implementation chunk automatically.
+01B1A is blocked after two parser-normalization repair cycles. Do not continue
+it, start 01B1B or 01B2, resume AUTH-02, or start another implementation chunk
+automatically.
 
 `WS-ART-001-01` is merged. Do not start `WS-ART-001-02` or edit Flow Node until
 the user gives a separate explicit start signal.
@@ -65,3 +65,4 @@ the user gives a separate explicit start signal.
 | Chunk | Blocker | Next action |
 |---|---|---|
 | `WS-QUAL-001-01B1` | 496/500 lines after two semantic-integrity repair cycles | Superseded by the proposed 01B1A/01B1B split; do not resume |
+| `WS-QUAL-001-01B1A` | 394/400 lines after two parser-normalization repair cycles; final QA/security review found two valid bypass variants | Replan the parser boundary before any further implementation |

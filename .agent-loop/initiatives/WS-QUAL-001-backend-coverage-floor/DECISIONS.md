@@ -114,3 +114,14 @@ owns Git-helper integration, bounded memory/scope accounting, executable
 skip/xfail detection, aliased assertion-deletion detection, and real repository
 regressions. `01B2` remains unchanged. This boundary keeps parser arithmetic
 independent from repository-diff semantics without weakening either proof set.
+
+## D11: Stop 01B1A after two parser-normalization repair cycles
+
+Status: circuit breaker triggered on 2026-07-12.
+
+The 01B1A candidate reached 394/400 lines and 56 focused tests. Final QA and
+security review still found accepted `pragma:nocover` comments and leading-space
+normalized duplicate pytest-cov requirements. These are valid bypasses in the
+same parser-normalization class after two repairs. The task-chunk loop requires
+a stop and replan instead of a third repair cycle, even though the individual
+edits are small. No PR may open while required reviewers fail.

@@ -2,7 +2,7 @@
 
 ## Current state
 
-- Phase: `WS-QUAL-001-01B1A` implementation
+- Phase: `WS-QUAL-001-01B1A` blocked
 - Branch: `codex/ws-qual-001-01b1a-coverage-parser-core`
 - Authoritative target: 90 percent complete backend application statement coverage
 - Diagnostic AUTH-02 baseline: 78.26 percent after database isolation repair
@@ -10,7 +10,7 @@
 - Final evidence-bound branch head: `3da1769882e9f6db4c48ef3dba33da8380e6a613`
 - Planning merge commit: `9046d52f31c7c39f06e06c45c43783bb08a5181c`
 - Internal review: PASS after cleanup, signal, authority, CI, and split repairs
-- Active implementation chunk: `WS-QUAL-001-01B1A`
+- Active implementation chunk: none
 - 01A implementation PR: `https://github.com/Flow-Research/workstream/pull/103` (merged)
 - 01A final reviewed implementation SHA: `d1582ec64b9176c5ead62f695c7a23b48e4c72b9`
 - 01A final evidence-bound branch head: `8cd7616b497ceb46d8359c25de689192632dfee8`
@@ -38,8 +38,12 @@
   `pytest.raises` deletion, and 0/100/truncation arithmetic boundaries
 - Replacement split direction: user approved on 2026-07-12; internal plan
   review passed at `d1819873e5ac353da3963771f70dc2be13bc72f9`
+- 01B1A reviewed candidate: `5af95751c554ad022128f78c9dd8c1190f38dec4`
+- 01B1A result: blocked at 394/400 after the second parser repair cycle;
+  `pragma:nocover` and leading-space normalized duplicate pytest-cov
+  requirements remain valid reviewer findings
 
 ## Stop condition
 
-Only 01B1A is active under the user's explicit approval. Do not start 01B1B,
-01B2, chunk 02, or resume AUTH automatically.
+No implementation chunk is active. Replan 01B1A before further implementation;
+do not start 01B1B, 01B2, chunk 02, or resume AUTH automatically.
