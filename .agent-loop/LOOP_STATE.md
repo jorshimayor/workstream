@@ -5,30 +5,32 @@
 - Active initiative: none
 - Active planning chunk: none
 - Active implementation chunk: none
-- Branch: `codex/ws-qual-001-plan-post-merge-memory`
-- Worktree: `/home/abiorh/flow/workstream-qual-001`
-- Status: `WS-QUAL-001-PLAN` merged through PR #99 as `9046d52`. No coverage
+- Branch: `codex/ws-art-001-01-post-merge-memory`
+- Worktree: `/home/abiorh/flow/workstream`
+- Status: `WS-ART-001-01` merged through PR #101 as `050eb15`. No artifact
   implementation chunk is active.
 - Prior WS-ART reviewed planning SHA: `f7fbc33`
 - Prior WS-ART final evidence-bound planning branch head: `c069064`
 - WS-ART planning merge commit: `8644a43`
 - Prior WS-AUTH-001-01 reviewed implementation SHA: `be0b836`
 - Prior WS-AUTH-001-01 final merged branch head: `b5217e1`
-- Latest merge commit: `9046d52`
+- Latest merge commit: `050eb15eab8c57e6bc265477a5e92484d27a893c`
 - WS-QUAL final reviewed planning SHA: `0d9dd987d546c864fa8de7bae462e5e73a1b5ea9`
 - WS-QUAL final evidence-bound branch head: `3da1769882e9f6db4c48ef3dba33da8380e6a613`
 - WS-QUAL planning merge commit: `9046d52f31c7c39f06e06c45c43783bb08a5181c`
-- Current gate: publish and merge this post-merge memory update, then stop.
-- Post-merge memory PR: `https://github.com/Flow-Research/workstream/pull/100`
-  (ready for review).
+- WS-QUAL post-merge memory merged through PR #100 as `58d4459`.
+- WS-ART-001-01 reviewed implementation SHA: `5574bf59cf1cb86da76749e0cbc529036346fa8a`
+- WS-ART-001-01 final evidence-bound branch head: `2b8c2a0`
+- WS-ART-001-01 merge commit: `050eb15eab8c57e6bc265477a5e92484d27a893c`
+- Current gate: publish and merge this WS-ART post-merge memory update, then stop.
 - Next chunk: `WS-QUAL-001-01` remains proposed and inactive until this memory
   update is complete and the user gives a separate explicit start.
 - Paused implementation: `WS-AUTH-001-02` remains implemented on
   `codex/ws-auth-001-02-verified-issuer-token` and is paused before publication
   pending a separate explicit user resume signal after this memory update.
-- Parallel initiative: `WS-ART-001-PLAN` merged through PR #97 as `8644a43`,
-  and its post-merge memory merged through PR #98 as `53f0c47`. No artifact
-  implementation chunk is active.
+- Parallel initiative: `WS-ART-001-01` merged through PR #101 as `050eb15`.
+  `WS-ART-001-02` remains proposed and inactive pending a separate explicit
+  user start.
 - Parallel initiative: `WS-POL-002-03` merged through PR #90 as `a7aa474`; its
   post-merge memory merged through PR #94 as `b1270d7`. `WS-POL-002-04` remains
   inactive pending the relevant authorization proof and a separate explicit

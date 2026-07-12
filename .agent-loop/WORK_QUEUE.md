@@ -8,10 +8,10 @@ None.
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01` | Coverage Harness And Baseline | L1 | Proposed; inactive pending post-merge memory and explicit user start |
+| `WS-QUAL-001-01` | Coverage Harness And Baseline | L1 | Proposed; inactive pending separate explicit user start |
 | `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Paused before publication pending separate explicit user resume |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
-| `WS-ART-001-01` | Artifact Domain And Local Adapter | L1 | Proposed but inactive until the user explicitly starts it |
+| `WS-ART-001-02` | Flow Node Adapter And Reconciliation | L1 | Proposed; inactive pending separate explicit user start |
 
 ## Completed
 
@@ -44,6 +44,7 @@ None.
 | `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Merged through PR #93 as `772af1d` on 2026-07-11 |
 | `WS-ART-001-PLAN` | Immutable Artifact Storage And Flow Node Integration Planning | L1 | Merged through PR #97 as `8644a43` on 2026-07-12 |
 | `WS-QUAL-001-PLAN` | Backend Coverage Floor Planning | L1 | Merged through PR #99 as `9046d52` on 2026-07-12 |
+| `WS-ART-001-01` | Artifact Domain And Local Adapter | L1 | Merged through PR #101 as `050eb15` on 2026-07-12 |
 
 ## Proposed Next
 
@@ -51,9 +52,8 @@ No chunk is active. Do not implement `WS-QUAL-001-01`, resume
 `WS-AUTH-001-02`, or start another implementation chunk automatically. Each
 requires a separate explicit user signal after this memory update merges.
 
-`WS-ART-001-PLAN` and its post-merge memory are merged. Do not start
-`WS-ART-001-01` or edit Flow Node until the user gives a separate explicit
-start signal.
+`WS-ART-001-01` is merged. Do not start `WS-ART-001-02` or edit Flow Node until
+the user gives a separate explicit start signal.
 
 ## Blocked
 

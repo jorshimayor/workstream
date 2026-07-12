@@ -782,3 +782,28 @@ compensation, frontend, and later authorization chunks remain inactive.
 Next gate: implement and verify only the WS-AUTH-001-01 contract, run all
 required internal reviewer tracks, prepare the trust bundle, and stop for human
 review.
+
+## 2026-07-12 - WS-ART-001-01 Merged
+
+[PR #101](https://github.com/Flow-Research/workstream/pull/101) merged into `main` as
+`050eb15eab8c57e6bc265477a5e92484d27a893c`.
+
+Reviewed implementation SHA:
+`5574bf59cf1cb86da76749e0cbc529036346fa8a`.
+
+Final evidence-bound branch head: `2b8c2a0`.
+
+Result: PASS after internal review, CodeRabbit repair, cancellation ownership
+hardening, and a CI-order fixture repair. Agent Gates, Backend, and CodeRabbit
+passed on the final head. The merge adds the provider-neutral immutable
+artifact domain and local development adapter; it does not add public artifact
+APIs, Flow Node integration, or product cutovers.
+
+Evidence: `.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/reviews/WS-ART-001-01-internal-review-evidence.md`
+
+External review response: `.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/reviews/WS-ART-001-01-external-review-response.md`
+
+Trust bundle: `.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/reviews/WS-ART-001-01-pr-trust-bundle.md`
+
+Next gate: merge the post-merge memory update and stop. `WS-ART-001-02`
+remains inactive pending a separate explicit user start.
