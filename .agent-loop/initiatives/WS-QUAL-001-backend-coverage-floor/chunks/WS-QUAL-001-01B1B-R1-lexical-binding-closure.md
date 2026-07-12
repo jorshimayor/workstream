@@ -2,8 +2,8 @@
 
 Parent: `WS-QUAL-001` Backend Coverage Floor
 
-Status: proposed corrective replacement after B1B's two-cycle circuit stop;
-internal contract review pending.
+Status: all ten internal plan-review tracks passed at `93e48b4`; explicitly
+started on 2026-07-13 for parallel implementation with AUTH.
 
 ## Goal And Scope
 

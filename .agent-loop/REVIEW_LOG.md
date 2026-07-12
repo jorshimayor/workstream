@@ -62,6 +62,11 @@ second repair, but QA/test-delta found valid lexical-shadow false positives and
 a weakened local-lookalike `skipTest` expectation. The two-cycle circuit rule
 stopped B1B at 223/300; B1B-R1 is proposed for exact lexical binding closure.
 
+B1B-R1 contract review: PASS at `93e48b4` across senior engineering, QA/test,
+security/auth, product/ops, architecture, CI integrity, docs, reuse/dedup, test
+delta, and circuit breaker. The user directed coverage and AUTH to continue in
+parallel; only B1B-R1 is active on the coverage branch.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract
