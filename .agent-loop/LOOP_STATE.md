@@ -14,7 +14,7 @@
 - WS-ART planning merge commit: `8644a43`
 - Last reviewed implementation SHA: `be0b836`
 - Final merged WS-AUTH-001-01 branch head: `b5217e1`
-- Last merge commit: `1d3e487`
+- Last merge commit: `8644a43`
 - Current gate: record and review post-merge memory, merge that memory update,
   and stop.
 - Next chunk: `WS-ART-001-01` remains proposed and must not start until this
