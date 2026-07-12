@@ -2,8 +2,11 @@
 
 ## WS-QUAL-001-01A
 
-Status: implementation and all required internal reviews passed; PR publication
-pending. The bound SHA is recorded in the internal review evidence.
+Status: merged through PR #103 on 2026-07-12 as `2901a3e`.
+
+Final reviewed implementation SHA: `d1582ec64b9176c5ead62f695c7a23b48e4c72b9`
+
+Final evidence-bound branch head: `8cd7616b497ceb46d8359c25de689192632dfee8`
 
 Scope: isolated least-privilege database runner, API guards, focused behavior
 tests, two-phase complete-suite CI, and database-testing runbook.
@@ -19,7 +22,13 @@ Evidence: `.agent-loop/initiatives/WS-QUAL-001-backend-coverage-floor/reviews/WS
 
 Trust bundle: `.agent-loop/initiatives/WS-QUAL-001-backend-coverage-floor/reviews/WS-QUAL-001-01A-pr-trust-bundle.md`
 
-Next: external and human review of 01A only. Do not start 01B.
+External response: `.agent-loop/initiatives/WS-QUAL-001-backend-coverage-floor/reviews/WS-QUAL-001-01A-external-review-response.md`
+
+Merge checks: Agent Gates, Backend, and CodeRabbit passed. CodeRabbit's valid
+contract, runbook, timeout, and reuse findings were repaired. Role-aware cleanup
+was retained with ownership justification and real-catalog behavior proof.
+
+Next: merge post-merge memory and stop. Do not start 01B automatically.
 
 ## WS-QUAL-001-PLAN
 

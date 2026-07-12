@@ -4,14 +4,14 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01A` | Isolated Database Runner | L1 | Internally reviewed; PR publication pending |
+| none | none | - | Post-merge memory only; no implementation chunk active |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01B` | Coverage Policy And Baseline | L1 | Inactive until 01A merge and explicit user start |
-| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Paused before publication pending separate explicit user resume |
+| `WS-QUAL-001-01B` | Coverage Policy And Baseline | L1 | Inactive until 01A memory merge and explicit user start |
+| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Paused until WS-QUAL reaches 90% and explicit user resume |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02` | Flow Node Adapter And Reconciliation | L1 | Proposed; inactive pending separate explicit user start |
 
@@ -47,11 +47,12 @@
 | `WS-ART-001-PLAN` | Immutable Artifact Storage And Flow Node Integration Planning | L1 | Merged through PR #97 as `8644a43` on 2026-07-12 |
 | `WS-QUAL-001-PLAN` | Backend Coverage Floor Planning | L1 | Merged through PR #99 as `9046d52` on 2026-07-12 |
 | `WS-ART-001-01` | Artifact Domain And Local Adapter | L1 | Merged through PR #101 as `050eb15` on 2026-07-12 |
+| `WS-QUAL-001-01A` | Isolated Database Runner | L1 | Merged through PR #103 as `2901a3e` on 2026-07-12 |
 
 ## Proposed Next
 
-`WS-QUAL-001-01A` is the only active chunk. Do not resume `WS-AUTH-001-02` or
-start another implementation chunk automatically.
+No implementation chunk is active. Do not start `WS-QUAL-001-01B`, resume
+`WS-AUTH-001-02`, or start another implementation chunk automatically.
 
 `WS-ART-001-01` is merged. Do not start `WS-ART-001-02` or edit Flow Node until
 the user gives a separate explicit start signal.

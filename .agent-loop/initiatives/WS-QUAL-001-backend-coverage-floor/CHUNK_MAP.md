@@ -3,8 +3,8 @@
 | Chunk | Scope | Risk | State |
 |---|---|---:|---|
 | `WS-QUAL-001-01` | Combined harness/baseline contract | L1 | Split after circuit-breaker review |
-| `WS-QUAL-001-01A` | Isolated least-privilege database runner and two-phase complete-suite CI | L1 | Internally reviewed; PR publication pending |
-| `WS-QUAL-001-01B` | Coverage policy, clean main baseline, and initial non-decreasing CI ratchet | L1 | Inactive until 01A merge and explicit start |
+| `WS-QUAL-001-01A` | Isolated least-privilege database runner and two-phase complete-suite CI | L1 | Merged through PR #103 as `2901a3e` |
+| `WS-QUAL-001-01B` | Coverage policy, clean main baseline, and initial non-decreasing CI ratchet | L1 | Inactive until 01A memory merge and explicit start |
 | `WS-QUAL-001-02` | Project setup/policy/correction service coverage; floor at least 82% | L1 | Inactive |
 | `WS-QUAL-001-03` | Project repository/router coverage; floor at least 84% | L1 | Inactive |
 | `WS-QUAL-001-04` | Task service/repository/router coverage; floor at least 86% | L1 | Inactive |

@@ -1,5 +1,8 @@
 # Chunk Contract: WS-QUAL-001-01A Isolated Database Runner
 
+Status: merged through PR #103 as
+`2901a3ebe68b7c770ccb1ff06841d79ce0c20d94` on 2026-07-12.
+
 ## Goal
 
 Provide one safe local Postgres provisioner so concurrent worktrees and CI jobs
