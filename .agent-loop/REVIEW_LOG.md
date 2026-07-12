@@ -57,6 +57,11 @@ R2 memory result: PR #106 merged as `6dccb8e`. The user then explicitly started
 01B1B and confirmed coverage may run in parallel with AUTH in isolated
 worktrees. Only 01B1B is active on the coverage branch; 01B2 remains inactive.
 
+B1B implementation review: BLOCKED at `10dff4f`. Engineering accepted the
+second repair, but QA/test-delta found valid lexical-shadow false positives and
+a weakened local-lookalike `skipTest` expectation. The two-cycle circuit rule
+stopped B1B at 223/300; B1B-R1 is proposed for exact lexical binding closure.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract

@@ -149,3 +149,16 @@ coverage runtime selected by the pinned pytest-cov toolchain and adds
 positive/negative same-runtime equivalence proof. Coverage.py itself is not
 exactly pinned; R2 records the resolved version, while later 01B2 owns committed
 tool-version evidence. This is a reuse correction, not new policy scope.
+
+## D14: Replace file-global semantic aliases with lexical binding
+
+Status: proposed after B1B's two-cycle circuit stop; internal contract review
+pending under the user's direction to keep coverage and AUTH running in
+parallel.
+
+The B1B candidate correctly handled committed renames and base-AST assertion
+spans, but file-global alias sets misclassified locally shadowed pytest names,
+and broad `.skipTest` detection caused a test expectation to be weakened. R1
+must resolve actual bindings by lexical scope, preserve arbitrary local
+lookalikes, and retain every passing Git/scope/size invariant. This is a
+corrective replacement, not B2 or application scope.

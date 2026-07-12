@@ -3,14 +3,14 @@
 ## Current State
 
 - Active initiative: `WS-QUAL-001` - Backend Coverage Floor
-- Active planning chunk: none
-- Active implementation chunk: `WS-QUAL-001-01B1B` semantic delta guards
+- Active planning chunk: `WS-QUAL-001-01B1B-R1` lexical binding closure
+- Active implementation chunk: none
 - Branch: `codex/ws-qual-001-01b1b-semantic-delta-guards`
-- Status: 01B1 reached 496/500 lines and passed eight reviewer tracks at
-  `7bfe3a0`, but final test-delta review found unhandled `unittest.skipTest`,
-  aliased `pytest.raises` deletion, and missing arithmetic boundaries. This is
-  the second failed semantic-integrity repair cycle, so the chunk is blocked
-  for a reviewed split instead of weakening or compressing proof.
+- Status: B1B stopped at 223/300 lines after its second binding/AST repair
+  cycle. Review at `10dff4f` found lexical-shadow false positives and a
+  weakened local-lookalike `skipTest` expectation. B1B-R1 is proposed as the
+  bounded lexical-binding replacement; no coverage implementation is active
+  until its contract passes internal review.
 - Prior WS-ART reviewed planning SHA: `f7fbc33`
 - Prior WS-ART final evidence-bound planning branch head: `c069064`
 - WS-ART planning merge commit: `8644a43`
@@ -33,8 +33,8 @@
 - WS-QUAL-001-01A merge commit: `2901a3ebe68b7c770ccb1ff06841d79ce0c20d94`
 - WS-QUAL-001-01A post-merge memory merge commit:
   `8829a7ec3aa5199aae0aecbe5fda030c42a051cd`
-- Current gate: implement and internally review only 01B1B. 01B2 remains
-  inactive; AUTH-02 continues independently in its separate worktree.
+- Current gate: review the B1B-R1 replacement after the B1B circuit stop. 01B2
+  remains inactive; AUTH-02 continues independently in its separate worktree.
 - Next chunk: `WS-QUAL-001-02` remains inactive; do not start it automatically.
 - Parallel implementation: the user explicitly authorized `WS-AUTH-001-02` to
   resume off-main in its separate worktree while coverage continues. AUTH must

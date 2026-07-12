@@ -2,8 +2,8 @@
 
 Parent: `WS-QUAL-001` Backend Coverage Floor
 
-Status: explicitly started on 2026-07-13 after R2 and its post-merge memory
-merged. Implementation is active in an isolated coverage worktree.
+Status: blocked at 223/300 after two binding/AST repair cycles; superseded by
+proposed B1B-R1. Retain as circuit-breaker history and do not resume.
 
 ## Goal And Reason
 

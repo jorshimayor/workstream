@@ -2,7 +2,7 @@
 
 ## Current state
 
-- Phase: `WS-QUAL-001-01B1B` implementation
+- Phase: `WS-QUAL-001-01B1B-R1` corrective contract review
 - Branch: `codex/ws-qual-001-01b1b-semantic-delta-guards`
 - Authoritative target: 90 percent complete backend application statement coverage
 - Diagnostic AUTH-02 baseline: 78.26 percent after database isolation repair
@@ -10,7 +10,7 @@
 - Final evidence-bound branch head: `3da1769882e9f6db4c48ef3dba33da8380e6a613`
 - Planning merge commit: `9046d52f31c7c39f06e06c45c43783bb08a5181c`
 - Internal review: PASS after cleanup, signal, authority, CI, and split repairs
-- Active implementation chunk: `WS-QUAL-001-01B1B`
+- Active implementation chunk: none
 - 01A implementation PR: `https://github.com/Flow-Research/workstream/pull/103` (merged)
 - 01A final reviewed implementation SHA: `d1582ec64b9176c5ead62f695c7a23b48e4c72b9`
 - 01A final evidence-bound branch head: `8cd7616b497ceb46d8359c25de689192632dfee8`
@@ -60,9 +60,12 @@
   `6dccb8e632a6244ca575094be0e3338d49b15856`
 - B1B start signal: explicit user direction on 2026-07-13 to run coverage and
   AUTH in parallel using isolated worktrees
+- B1B reviewed candidate: `10dff4fbbbefaec17e42cd31ca24593ee59209e2`
+- B1B result: circuit stop at 223/300 after the second binding repair cycle;
+  lexical shadowing remained false-positive and a local-lookalike expectation
+  was weakened to match broader behavior
 
 ## Stop condition
 
-Only B1B is active on the coverage branch. AUTH-02 proceeds independently
-off-main in its separate worktree. Do not start 01B2 or chunk 02 without their
-separate checkpoints.
+No coverage implementation is active during B1B-R1 contract review. AUTH-02
+proceeds independently off-main. Do not start 01B2 or chunk 02.
