@@ -36,12 +36,15 @@ All public routes use `/api/v1`. The archival short prefix is not an alias.
 - opaque subject;
 - audience;
 - issued-at, expiry, optional not-before;
-- token identifier when supplied;
+- mandatory token identifier (`jti`);
 - subject kind;
 - verified coarse scope.
 
 It contains no Workstream product role or permission. Email, display name,
 skills, reputation, and relationship metadata are never authorization keys.
+During the compatibility period, `/api/v1/auth/me` and actor registration do
+not copy issuer email or display name, and those response fields remain null.
+Canonical profile metadata is owned by the later actor-profile migration.
 
 Human first access may create a canonical human profile and identity link.
 Unknown service subjects, agents, and Spaces are denied without implicit

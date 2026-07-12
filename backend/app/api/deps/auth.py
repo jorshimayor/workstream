@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,6 +20,13 @@ from app.modules.actors.service import ActorRegistryError, ActorService
 from app.schemas.auth import ActorContext, AuthVerificationResult, VerifiedIssuerToken
 
 bearer_scheme = HTTPBearer(auto_error=False)
+
+
+def get_application_auth_verifier(request: Request) -> AuthVerifier:
+    """Return the verifier retained by this application instance."""
+    if request.app.state.settings.auth_provider == "dev":
+        return get_auth_verifier()
+    return request.app.state.auth_verifier
 
 
 def unauthorized(detail: str) -> HTTPException:
@@ -40,7 +47,7 @@ def unauthorized(detail: str) -> HTTPException:
 
 async def get_auth_verification_result(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
-    verifier: Annotated[AuthVerifier, Depends(get_auth_verifier)],
+    verifier: Annotated[AuthVerifier, Depends(get_application_auth_verifier)],
 ) -> AuthVerificationResult:
     """Verify the request bearer token once for derived auth dependencies.
 

@@ -11,21 +11,10 @@ from app.schemas.auth import (
     LegacyAuthorizationCompatibilityContext,
     VerifiedIssuerToken,
     actor_id_from_external_identity,
+    normalize_legacy_roles,
 )
 
 DEVELOPMENT_ENVIRONMENTS = {"local", "dev", "development", "test"}
-
-
-def parse_roles(raw_roles: str) -> tuple[str, ...]:
-    """Parse comma-separated role settings into normalized role names.
-
-    Args:
-        raw_roles: Comma-separated role string from configuration.
-
-    Returns:
-        Tuple of non-empty role names.
-    """
-    return tuple(role.strip() for role in raw_roles.split(",") if role.strip())
 
 
 class DevelopmentAuthVerifier:
@@ -67,7 +56,7 @@ class DevelopmentAuthVerifier:
         if token != self._settings.dev_auth_token:
             raise AuthVerificationError("invalid development auth token")
 
-        roles = parse_roles(self._settings.dev_auth_roles)
+        roles = normalize_legacy_roles(self._settings.dev_auth_roles)
         now = int(datetime.now(UTC).timestamp())
         return AuthVerificationResult(
             token=VerifiedIssuerToken(

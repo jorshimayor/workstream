@@ -187,6 +187,7 @@ backend/tests/test_actors.py
 backend/tests/test_tasks.py
 backend/scripts/api_contract_e2e.py
 docs/operations_authorization_service.md
+docs/spec_authorization_service.md
 .agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/**
 .agent-loop/LOOP_STATE.md
 .agent-loop/WORK_QUEUE.md
@@ -214,6 +215,14 @@ those exact purposes. The amendment is explicitly recorded as a process repair
 and requires the full reviewer fanout before PR publication; it does not
 authorize actor-service, persistence, route-policy, or unrelated app-factory
 changes.
+
+## Contract amendment A2
+
+Internal docs review found that canonical `docs/spec_authorization_service.md`
+still described the now-mandatory verified token identifier as optional. That
+file is allowed only to make `jti` mandatory and document that compatibility
+actor responses no longer copy issuer email or display name. This closes
+canonical contract drift; it does not change actor persistence or APIs.
 
 ## Acceptance criteria
 

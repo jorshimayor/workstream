@@ -13,7 +13,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app.api.router import api_router
-from app.core.auth import build_auth_verifier
+from app.core.auth import build_auth_verifier, cache_auth_verifier, prepare_auth_verifier
 from app.core.config import Settings, get_settings
 
 PRODUCTION_LIKE_ENVIRONMENTS = {"staging", "preview", "prod", "production"}
@@ -23,7 +23,10 @@ PRODUCTION_LIKE_ENVIRONMENTS = {"staging", "preview", "prod", "production"}
 async def _application_lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Reject invalid production authentication configuration before serving."""
     settings: Settings = app.state.settings
-    if settings.environment in PRODUCTION_LIKE_ENVIRONMENTS:
+    if (
+        settings.environment in PRODUCTION_LIKE_ENVIRONMENTS
+        and not app.state.auth_configuration_valid
+    ):
         build_auth_verifier(settings)
     yield
 
@@ -102,6 +105,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         lifespan=_application_lifespan,
     )
     app.state.settings = settings
+    app.state.auth_verifier, app.state.auth_configuration_valid = prepare_auth_verifier(settings)
+    cache_auth_verifier(settings, app.state.auth_verifier)
     app.add_exception_handler(
         RequestValidationError,
         request_validation_exception_handler,

@@ -21,7 +21,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 
 from app.adapters.auth.dev import DevelopmentAuthVerifier
-from app.adapters.auth.flow import FlowAuthVerifier, _normalize_roles
+from app.adapters.auth.flow import FlowAuthVerifier
 from app.adapters.auth.metrics import InProcessAuthVerifierMetrics
 from app.api.deps.auth import get_registered_actor
 from app.core.auth import clear_auth_verifier_cache
@@ -31,6 +31,7 @@ from app.db import session as db_session
 from app.interfaces.auth import AuthVerificationError, AuthVerificationUnavailableError
 from app.main import create_app
 from app.modules.actors.service import ActorService
+from app.schemas.auth import normalize_legacy_roles
 
 
 def _application_paths(app) -> set[str]:
@@ -631,8 +632,52 @@ async def test_malformed_tokens_fail_without_network(token: str) -> None:
     assert requests == []
 
 
+@pytest.mark.parametrize("limit", ["total", "header", "payload"])
+async def test_token_size_limits_fail_before_network(
+    rsa_signing_material: tuple[rsa.RSAPrivateKey, dict[str, Any]],
+    limit: str,
+) -> None:
+    private_key, jwk = rsa_signing_material
+    requests: list[Request] = []
+    overrides: dict[str, int] = {
+        "token_max_bytes": 4_096,
+        "token_header_max_bytes": 512,
+        "token_payload_max_bytes": 2_048,
+    }
+    token = issue_asymmetric_token(private_key)
+    if limit == "total":
+        overrides.update(
+            token_max_bytes=512,
+            token_header_max_bytes=128,
+            token_payload_max_bytes=256,
+        )
+        token = "x" * 513
+    elif limit == "header":
+        overrides["token_header_max_bytes"] = 128
+        token = replace_token_header(token, padding="x" * 200)
+    else:
+        overrides["token_payload_max_bytes"] = 256
+        token = issue_asymmetric_token(private_key, claims={"padding": "x" * 400})
+    verifier = FlowAuthVerifier(
+        production_verifier_settings(**overrides),
+        jwks_transport=jwks_transport(jwk, requests),
+    )
+
+    with pytest.raises(AuthVerificationError):
+        await verifier.verify(token)
+
+    assert requests == []
+
+
+@pytest.mark.parametrize(
+    ("claim", "within_delta", "beyond_delta"),
+    [("exp", -10, -60), ("iat", 10, 60), ("nbf", 10, 60)],
+)
 async def test_temporal_claims_honor_configured_skew(
     rsa_signing_material: tuple[rsa.RSAPrivateKey, dict[str, Any]],
+    claim: str,
+    within_delta: int,
+    beyond_delta: int,
 ) -> None:
     private_key, jwk = rsa_signing_material
     verifier = FlowAuthVerifier(
@@ -643,15 +688,11 @@ async def test_temporal_claims_honor_configured_skew(
 
     within_skew = issue_asymmetric_token(
         private_key,
-        claims={
-            "exp": int((now - timedelta(seconds=10)).timestamp()),
-            "iat": int((now + timedelta(seconds=10)).timestamp()),
-            "nbf": int((now + timedelta(seconds=10)).timestamp()),
-        },
+        claims={claim: int((now + timedelta(seconds=within_delta)).timestamp())},
     )
     beyond_skew = issue_asymmetric_token(
         private_key,
-        claims={"nbf": int((now + timedelta(seconds=60)).timestamp())},
+        claims={claim: int((now + timedelta(seconds=beyond_delta)).timestamp())},
     )
 
     assert (await verifier.verify(within_skew)).token.token_id == "token-id-1"
@@ -899,6 +940,52 @@ async def test_required_introspection_is_separate_bound_and_no_redirect(
     assert all(request.url.host != "attacker.test" for request in redirect_requests)
 
 
+async def test_jwks_and_introspection_use_distinct_owned_client_factories(
+    rsa_signing_material: tuple[rsa.RSAPrivateKey, dict[str, Any]],
+) -> None:
+    private_key, jwk = rsa_signing_material
+    clients: dict[str, list[AsyncClient]] = {"jwks": [], "introspection": []}
+
+    def factory(name: str, transport: MockTransport):
+        def build_client(**kwargs: Any) -> AsyncClient:
+            client = AsyncClient(transport=transport, **kwargs)
+            clients[name].append(client)
+            return client
+
+        return build_client
+
+    introspection_transport = MockTransport(
+        lambda request: Response(
+            200,
+            json={
+                "active": True,
+                "iss": "https://issuer.example.test",
+                "sub": "opaque-subject-1",
+                "aud": "workstream",
+                "jti": "token-id-1",
+            },
+        )
+    )
+    verifier = FlowAuthVerifier(
+        production_verifier_settings(
+            token_introspection_mode="required",
+            token_introspection_disabled_reason=None,
+            token_introspection_url="https://introspection.example.test/oauth/introspect",
+            token_introspection_client_id="workstream-client",
+            token_introspection_client_secret="client-secret",
+        ),
+        jwks_client_factory=factory("jwks", jwks_transport(jwk)),
+        introspection_client_factory=factory("introspection", introspection_transport),
+    )
+
+    await verifier.verify(issue_asymmetric_token(private_key))
+
+    assert len(clients["jwks"]) == 1
+    assert len(clients["introspection"]) == 1
+    assert clients["jwks"][0] is not clients["introspection"][0]
+    assert clients["jwks"][0].is_closed
+    assert clients["introspection"][0].is_closed
+
 @pytest.mark.parametrize(
     "response_override",
     [
@@ -922,6 +1009,36 @@ async def test_required_introspection_fails_closed_on_inactive_or_mismatch(
         "jti": "token-id-1",
     }
     response.update(response_override)
+    verifier = FlowAuthVerifier(
+        production_verifier_settings(
+            token_introspection_mode="required",
+            token_introspection_disabled_reason=None,
+            token_introspection_url="https://introspection.example.test/oauth/introspect",
+            token_introspection_client_id="workstream-client",
+            token_introspection_client_secret="client-secret",
+        ),
+        jwks_transport=jwks_transport(jwk),
+        introspection_transport=MockTransport(lambda request: Response(200, json=response)),
+    )
+
+    with pytest.raises(AuthVerificationError):
+        await verifier.verify(issue_asymmetric_token(private_key))
+
+
+@pytest.mark.parametrize("missing_field", ["iss", "sub", "aud", "jti"])
+async def test_required_introspection_rejects_missing_identity_fields(
+    rsa_signing_material: tuple[rsa.RSAPrivateKey, dict[str, Any]],
+    missing_field: str,
+) -> None:
+    private_key, jwk = rsa_signing_material
+    response = {
+        "active": True,
+        "iss": "https://issuer.example.test",
+        "sub": "opaque-subject-1",
+        "aud": "workstream",
+        "jti": "token-id-1",
+    }
+    response.pop(missing_field)
     verifier = FlowAuthVerifier(
         production_verifier_settings(
             token_introspection_mode="required",
@@ -1288,7 +1405,7 @@ async def test_flow_auth_verifier_boundary_rejects_unconfigured_verification() -
 
 
 async def test_flow_role_normalization_ignores_non_string_values() -> None:
-    assert _normalize_roles(
+    assert normalize_legacy_roles(
         [
             "worker",
             {"api_key": "must-not-persist"},
@@ -1297,6 +1414,24 @@ async def test_flow_role_normalization_ignores_non_string_values() -> None:
             "",
         ]
     ) == ("worker", "reviewer")
+
+
+async def test_dev_role_normalization_uses_bounded_compatibility_contract() -> None:
+    long_role = "x" * 129
+    roles = ",".join([*(f"role-{index}" for index in range(35)), long_role])
+    result = await DevelopmentAuthVerifier(
+        Settings(
+            environment="local",
+            auth_provider="dev",
+            dev_auth_token="local-token",
+            dev_auth_subject="subject",
+            dev_auth_issuer="issuer",
+            dev_auth_roles=roles,
+        )
+    ).verify("local-token")
+
+    assert result.legacy is not None
+    assert result.legacy.roles == tuple(f"role-{index}" for index in range(32))
 
 
 async def test_permission_policy_allows_required_role() -> None:

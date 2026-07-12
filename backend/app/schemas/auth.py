@@ -11,6 +11,22 @@ from pydantic import BaseModel, ConfigDict, Field
 SubjectKind = Literal["human", "service", "agent", "space"]
 
 
+def normalize_legacy_roles(value: Any) -> tuple[str, ...]:
+    """Normalize verified compatibility roles into a bounded tuple."""
+    if isinstance(value, str):
+        raw_roles = value.split(",")
+    elif isinstance(value, list | tuple | set):
+        raw_roles = value
+    else:
+        raw_roles = ()
+    roles = tuple(
+        role.strip()
+        for role in raw_roles
+        if isinstance(role, str) and 0 < len(role.strip()) <= 128
+    )
+    return roles[:32]
+
+
 class VerifiedIssuerToken(BaseModel):
     """Canonical identity and coarse-access claims from a verified issuer token."""
 

@@ -77,9 +77,12 @@ rm -rf "$tmp_venv"
 cd backend
 .venv/bin/python -m pytest -q tests/test_auth.py tests/test_config.py
 .venv/bin/python -m ruff check app tests scripts
-: "${WORKSTREAM_DATABASE_URL:?set a disposable migrated test database URL}"
-WORKSTREAM_DATABASE_URL="$WORKSTREAM_DATABASE_URL" .venv/bin/python -m pytest -q
-WORKSTREAM_DATABASE_URL="$WORKSTREAM_DATABASE_URL" .venv/bin/python scripts/api_contract_e2e.py
+: "${WORKSTREAM_TEST_DATABASE_URL:?set a disposable migrated test database URL}"
+WORKSTREAM_DATABASE_URL="$WORKSTREAM_TEST_DATABASE_URL" \
+  WORKSTREAM_TEST_DATABASE_URL="$WORKSTREAM_TEST_DATABASE_URL" \
+  .venv/bin/python -m pytest -q
+WORKSTREAM_DATABASE_URL="$WORKSTREAM_TEST_DATABASE_URL" \
+  .venv/bin/python scripts/api_contract_e2e.py
 cd ..
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_stale_authorization_docs.py
@@ -87,6 +90,13 @@ python3 scripts/check_markdown_links.py
 python3 scripts/check_loop_memory_state.py
 git diff --check
 ```
+
+During the compatibility period, `/api/v1/auth/me` and actor registration use
+only the verified issuer/subject plus bounded legacy roles. They do not copy
+issuer email or display name into actor storage or responses, so both response
+fields remain `null`. Consumers must not treat token identity metadata as a
+profile source of truth; canonical profile metadata belongs to the later actor
+profile migration.
 
 ## JWKS Rotation And Outage
 

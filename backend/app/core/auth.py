@@ -18,9 +18,9 @@ class _UnavailableAuthVerifier:
         raise AuthVerificationUnavailableError("token verification is unavailable")
 
 
-_cached_flow_settings: Settings | None = None
-_cached_flow_verifier: AuthVerifier | None = None
-_flow_cache_lock = Lock()
+_cached_settings: Settings | None = None
+_cached_verifier: AuthVerifier | None = None
+_auth_cache_lock = Lock()
 
 
 def build_auth_verifier(settings: Settings) -> AuthVerifier:
@@ -37,36 +37,45 @@ def build_auth_verifier(settings: Settings) -> AuthVerifier:
     return FlowAuthVerifier(settings)
 
 
+def prepare_auth_verifier(settings: Settings) -> tuple[AuthVerifier, bool]:
+    """Build a verifier and report whether its configuration is valid."""
+    try:
+        return build_auth_verifier(settings), True
+    except RuntimeError:
+        return _UnavailableAuthVerifier(), False
+
+
 def get_auth_verifier() -> AuthVerifier:
     """Return the process-lifetime auth verifier dependency.
 
     Returns:
         Auth verifier built from cached application settings.
     """
-    global _cached_flow_settings, _cached_flow_verifier
+    global _cached_settings, _cached_verifier
 
     settings = get_settings()
-    if settings.auth_provider == "dev":
-        try:
-            return build_auth_verifier(settings)
-        except RuntimeError:
-            return _UnavailableAuthVerifier()
-    with _flow_cache_lock:
-        if settings is _cached_flow_settings and _cached_flow_verifier is not None:
-            return _cached_flow_verifier
-        try:
-            verifier = build_auth_verifier(settings)
-        except RuntimeError:
-            verifier = _UnavailableAuthVerifier()
-        _cached_flow_settings = settings
-        _cached_flow_verifier = verifier
+    with _auth_cache_lock:
+        if settings is _cached_settings and _cached_verifier is not None:
+            return _cached_verifier
+        verifier = prepare_auth_verifier(settings)[0]
+        _cached_settings = settings
+        _cached_verifier = verifier
         return verifier
+
+
+def cache_auth_verifier(settings: Settings, verifier: AuthVerifier) -> None:
+    """Retain an application-built verifier in the process cache."""
+    global _cached_settings, _cached_verifier
+
+    with _auth_cache_lock:
+        _cached_settings = settings
+        _cached_verifier = verifier
 
 
 def clear_auth_verifier_cache() -> None:
     """Clear process verifier state for deterministic configuration tests."""
-    global _cached_flow_settings, _cached_flow_verifier
+    global _cached_settings, _cached_verifier
 
-    with _flow_cache_lock:
-        _cached_flow_settings = None
-        _cached_flow_verifier = None
+    with _auth_cache_lock:
+        _cached_settings = None
+        _cached_verifier = None

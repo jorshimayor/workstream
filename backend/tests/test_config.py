@@ -5,6 +5,7 @@ from pydantic import ValidationError
 
 from app.adapters.artifacts import resolve_artifact_store
 from app.adapters.auth.flow import FlowAuthVerifier
+from app.api.deps.auth import get_application_auth_verifier
 from app.core.auth import clear_auth_verifier_cache, get_auth_verifier
 from app.core.config import Settings, get_settings
 from app.interfaces.artifacts import ArtifactConfigurationError
@@ -135,8 +136,10 @@ async def test_valid_production_auth_configuration_allows_application_startup() 
         )
     )
 
+    retained_verifier = app.state.auth_verifier
     async with app.router.lifespan_context(app):
-        pass
+        assert app.state.auth_verifier is retained_verifier
+        assert get_application_auth_verifier(type("Request", (), {"app": app})()) is retained_verifier
 
 
 @pytest.mark.parametrize("environment", ["staging", "preview", "prod", "production"])

@@ -12,6 +12,7 @@ import time
 from collections import OrderedDict
 from collections.abc import Callable
 from datetime import UTC, datetime
+from functools import partial
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -20,12 +21,17 @@ import jwt
 
 from app.adapters.auth.metrics import AuthVerifierMetrics, InProcessAuthVerifierMetrics
 from app.core.config import Settings
-from app.interfaces.auth import AuthVerificationError, AuthVerificationUnavailableError
+from app.interfaces.auth import (
+    AuthHttpClientFactory,
+    AuthVerificationError,
+    AuthVerificationUnavailableError,
+)
 from app.schemas.auth import (
     AuthVerificationResult,
     LegacyAuthorizationCompatibilityContext,
     VerifiedIssuerToken,
     actor_id_from_external_identity,
+    normalize_legacy_roles,
 )
 
 LOCAL_FLOW_AUTH_ENVIRONMENTS = {"local", "dev", "development", "test"}
@@ -74,20 +80,6 @@ def _decode_json_segment(value: str, *, maximum_bytes: int) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise AuthVerificationError("malformed token JSON")
     return payload
-
-
-def _normalize_roles(value: Any) -> tuple[str, ...]:
-    """Normalize verified legacy role claims into a bounded tuple."""
-    if isinstance(value, str):
-        raw_roles = value.split(",")
-    elif isinstance(value, list | tuple | set):
-        raw_roles = value
-    else:
-        raw_roles = ()
-    roles = tuple(
-        role.strip() for role in raw_roles if isinstance(role, str) and 0 < len(role.strip()) <= 128
-    )
-    return roles[:32]
 
 
 def _normalize_audience(value: Any) -> tuple[str, ...]:
@@ -149,6 +141,8 @@ class FlowAuthVerifier:
         *,
         jwks_transport: httpx.AsyncBaseTransport | None = None,
         introspection_transport: httpx.AsyncBaseTransport | None = None,
+        jwks_client_factory: AuthHttpClientFactory | None = None,
+        introspection_client_factory: AuthHttpClientFactory | None = None,
         metrics: AuthVerifierMetrics | None = None,
         monotonic: Callable[[], float] = time.monotonic,
     ) -> None:
@@ -160,8 +154,18 @@ class FlowAuthVerifier:
 
         self._metrics = metrics or InProcessAuthVerifierMetrics()
         self._monotonic = monotonic
-        self._jwks_transport = jwks_transport
-        self._introspection_transport = introspection_transport
+        if jwks_transport is not None and jwks_client_factory is not None:
+            raise ValueError("JWKS transport and client factory are mutually exclusive")
+        if introspection_transport is not None and introspection_client_factory is not None:
+            raise ValueError("introspection transport and client factory are mutually exclusive")
+        self._jwks_client_factory = jwks_client_factory or partial(
+            httpx.AsyncClient,
+            transport=jwks_transport,
+        )
+        self._introspection_client_factory = introspection_client_factory or partial(
+            httpx.AsyncClient,
+            transport=introspection_transport,
+        )
         self._refresh_lock = asyncio.Lock()
         self._keys: dict[str, dict[str, Any]] = {}
         self._cache_expires_at = 0.0
@@ -426,7 +430,7 @@ class FlowAuthVerifier:
         legacy = None
         if subject_kind == "human":
             legacy = LegacyAuthorizationCompatibilityContext(
-                roles=_normalize_roles(claims.get("roles")),
+                roles=normalize_legacy_roles(claims.get("roles")),
                 auth_source=auth_source,
                 is_dev_auth=False,
             )
@@ -500,7 +504,7 @@ class FlowAuthVerifier:
                 self._settings.token_jwks_pool_timeout_seconds,
             ),
             total_timeout=self._settings.token_jwks_total_timeout_seconds,
-            transport=self._jwks_transport,
+            client_factory=self._jwks_client_factory,
         )
         raw_keys = payload.get("keys")
         if not isinstance(raw_keys, list) or not raw_keys:
@@ -583,7 +587,7 @@ class FlowAuthVerifier:
                     self._settings.token_introspection_pool_timeout_seconds,
                 ),
                 total_timeout=self._settings.token_introspection_total_timeout_seconds,
-                transport=self._introspection_transport,
+                client_factory=self._introspection_client_factory,
                 auth=(
                     self._settings.token_introspection_client_id,
                     self._settings.token_introspection_client_secret,
@@ -620,7 +624,7 @@ class FlowAuthVerifier:
         maximum_bytes: int,
         timeout: httpx.Timeout,
         total_timeout: float,
-        transport: httpx.AsyncBaseTransport | None,
+        client_factory: AuthHttpClientFactory,
         auth: tuple[str, str] | None = None,
         data: dict[str, str] | None = None,
     ) -> dict[str, Any]:
@@ -628,8 +632,7 @@ class FlowAuthVerifier:
         request_failed = False
         try:
             async with asyncio.timeout(total_timeout):
-                async with httpx.AsyncClient(
-                    transport=transport,
+                async with client_factory(
                     timeout=timeout,
                     limits=limits,
                     follow_redirects=False,

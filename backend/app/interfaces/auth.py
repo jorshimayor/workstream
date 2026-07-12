@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Protocol
 
+import httpx
+
 from app.schemas.auth import AuthVerificationResult
 
 
@@ -20,3 +22,17 @@ class AuthVerifier(Protocol):
 
     async def verify(self, token: str) -> AuthVerificationResult:
         """Verify a bearer token and return canonical and compatibility views."""
+
+
+class AuthHttpClientFactory(Protocol):
+    """Build one policy-configured HTTP client for a verifier operation."""
+
+    def __call__(
+        self,
+        *,
+        timeout: httpx.Timeout,
+        limits: httpx.Limits,
+        follow_redirects: bool,
+        trust_env: bool,
+    ) -> httpx.AsyncClient:
+        """Return a client whose lifecycle is owned by the caller."""
