@@ -157,11 +157,17 @@ BLOCKED = {"skip", "skipif", "skipIf", "skipUnless", "xfail", "expectedFailure",
 
 
 class Bindings(ast.NodeVisitor):
-    def __init__(self, table: symtable.SymbolTable) -> None:
+    def __init__(self, table: symtable.SymbolTable, future_annotations: bool) -> None:
         self.tables, self.child_positions = [table], [0]
         self.scopes, self.types, self.cases = [{}], ["module"], [False]
+        self.future_annotations, self.inline_depth = future_annotations, 0
         self.weak, self.raises = False, set()
 
+    def next_child(self) -> symtable.SymbolTable:
+        position = self.child_positions[-1]
+        if position >= len(self.tables[-1].get_children()):
+            raise SyntaxError("missing symbol table")
+        return self.tables[-1].get_children()[position]
     def enter(self, node: ast.AST, table_type: str, name: str, initial: dict[str, str]) -> None:
         children, position = self.tables[-1].get_children(), self.child_positions[-1]
         if position >= len(children):
@@ -175,7 +181,6 @@ class Bindings(ast.NodeVisitor):
         self.scopes.append(initial)
         self.types.append(table_type)
         self.cases.append(self.cases[-1])
-
     def leave(self) -> None:
         if self.child_positions[-1] != len(self.tables[-1].get_children()):
             raise SyntaxError("unused symbol table")
@@ -184,8 +189,7 @@ class Bindings(ast.NodeVisitor):
         self.scopes.pop()
         self.types.pop()
         self.cases.pop()
-
-    def put(self, name: str, kind: str) -> None:
+    def put(self, name: str, kind: str, offset: int = 0) -> None:
         try:
             symbol = self.tables[-1].lookup(name)
         except KeyError:
@@ -198,24 +202,24 @@ class Bindings(ast.NodeVisitor):
                     self.scopes[index][name] = kind
                     return
         else:
-            self.scopes[-1][name] = kind
-
+            self.scopes[-1 - offset][name] = kind
     def get(self, name: str) -> str:
         for index in range(len(self.scopes) - 1, -1, -1):
             if self.types[index] != "class" or index == len(self.scopes) - 1:
                 if name in self.scopes[index]:
                     return self.scopes[index][name]
         return "builtin" if name == "exec" else "local"
-
     def kind(self, node: ast.AST) -> str:
         if isinstance(node, ast.Name):
             return self.get(node.id)
-        if isinstance(node, ast.Call) and self.kind(node.func) == "testcase":
-            return "case"
+        if isinstance(node, ast.Call) and self.kind(node.func) in {"testcase", "ambiguous"}:
+            return "case" if self.kind(node.func) == "testcase" else "ambiguous"
         if isinstance(node, ast.Attribute):
             owner = self.kind(node.value)
             if (owner, node.attr) == ("pytest", "mark"):
                 return "mark"
+            if owner == "ambiguous" and node.attr in {"mark", "TestCase", "case"}:
+                return "ambiguous"
             if owner in {"pytest", "ambiguous"} and node.attr == "raises":
                 return "raises"
             if owner == "unittest" and node.attr in {"case", "TestCase"}:
@@ -223,14 +227,12 @@ class Bindings(ast.NodeVisitor):
             if owner in {"pytest", "unittest", "mark", "ambiguous"} and node.attr in BLOCKED:
                 return "blocked"
         return "local"
-
     def merge(self, states: list[list[dict[str, str]]]) -> None:
         for index, scope in enumerate(self.scopes):
             keys = set().union(*(state[index] for state in states))
             for name in keys:
                 values = {state[index].get(name, "local") for state in states}
                 scope[name] = values.pop() if len(values) == 1 else "ambiguous"
-
     def visit_Import(self, node: ast.Import) -> None:
         for alias in node.names:
             root = alias.name.split(".", 1)[0]
@@ -249,21 +251,29 @@ class Bindings(ast.NodeVisitor):
     def visit_Assign(self, node: ast.Assign) -> None:
         self.visit(node.value)
         for target in node.targets:
-            for item in ast.walk(target):
-                if isinstance(item, ast.Name):
-                    self.put(item.id, self.kind(node.value))
-
+            self.bind_target(target, self.kind(node.value))
+    def bind_target(self, node: ast.AST, kind: str) -> None:
+        if isinstance(node, ast.Name):
+            self.put(node.id, kind)
+        elif isinstance(node, ast.Starred):
+            self.bind_target(node.value, kind)
+        elif isinstance(node, (ast.Tuple, ast.List)):
+            for item in node.elts:
+                self.bind_target(item, kind)
     def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
-        self.visit(node.annotation)
+        if not self.future_annotations:
+            self.visit(node.annotation)
         if node.value:
             self.visit(node.value)
-        if isinstance(node.target, ast.Name):
-            self.put(node.target.id, self.kind(node.value) if node.value else "local")
-
+        self.bind_target(node.target, self.kind(node.value) if node.value else "local")
+    def visit_AugAssign(self, node: ast.AugAssign) -> None:
+        prior = self.kind(node.target)
+        self.visit(node.value)
+        self.bind_target(node.target, "local" if prior == "local" else "ambiguous")
     def visit_NamedExpr(self, node: ast.NamedExpr) -> None:
         self.visit(node.value)
         if isinstance(node.target, ast.Name):
-            self.put(node.target.id, self.kind(node.value))
+            self.put(node.target.id, self.kind(node.value), self.inline_depth)
 
     def visit_Name(self, node: ast.Name) -> None:
         if isinstance(node.ctx, ast.Store):
@@ -284,19 +294,59 @@ class Bindings(ast.NodeVisitor):
             self.visit(item)
         self.merge([left, self.scopes])
 
-    def visit_control(self, node: ast.AST) -> None:
-        before = [scope.copy() for scope in self.scopes]
-        self.generic_visit(node)
-        after = [scope.copy() for scope in self.scopes]
-        self.scopes = [scope.copy() for scope in before]
-        self.merge([before, after])
+    def run_path(self, items: list[ast.AST], start: list[dict[str, str]]) -> list[dict[str, str]]:
+        self.scopes = [scope.copy() for scope in start]
+        for item in items:
+            self.visit(item)
+        return [scope.copy() for scope in self.scopes]
 
-    visit_For = visit_control
-    visit_AsyncFor = visit_control
-    visit_While = visit_control
-    visit_Try = visit_control
-    visit_TryStar = visit_control
-    visit_Match = visit_control
+    def visit_For(self, node: ast.For) -> None:
+        self.visit(node.iter)
+        before = [scope.copy() for scope in self.scopes]
+        body = [node.target, *node.body]
+        self.merge([self.run_path(node.orelse, before), self.run_path([*body, *node.orelse], before), self.run_path(body, before)])
+
+    visit_AsyncFor = visit_For
+
+    def visit_While(self, node: ast.While) -> None:
+        self.visit(node.test)
+        before = [scope.copy() for scope in self.scopes]
+        self.merge([self.run_path(node.orelse, before), self.run_path([*node.body, *node.orelse], before), self.run_path(node.body, before)])
+
+    def visit_Try(self, node: ast.Try) -> None:
+        before = [scope.copy() for scope in self.scopes]
+        progress = [before]
+        for item in node.body:
+            progress.append(self.run_path([item], progress[-1]))
+        states = [self.run_path(node.orelse, progress[-1])]
+        states.extend(self.run_path([handler], incoming) for handler in node.handlers for incoming in progress)
+        self.scopes = [scope.copy() for scope in before]
+        self.merge(states)
+        for item in node.finalbody:
+            self.visit(item)
+
+    visit_TryStar = visit_Try
+
+    def visit_Match(self, node: ast.Match) -> None:
+        self.visit(node.subject)
+        before = [scope.copy() for scope in self.scopes]
+        paths = [[case.pattern, *([case.guard] if case.guard else []), *case.body] for case in node.cases]
+        self.merge([before, *(self.run_path(path, before) for path in paths)])
+
+    def visit_MatchAs(self, node: ast.MatchAs) -> None:
+        if node.name:
+            self.put(node.name, "local")
+        if node.pattern:
+            self.visit(node.pattern)
+
+    def visit_MatchStar(self, node: ast.MatchStar) -> None:
+        if node.name:
+            self.put(node.name, "local")
+
+    def visit_MatchMapping(self, node: ast.MatchMapping) -> None:
+        if node.rest:
+            self.put(node.rest, "local")
+        self.generic_visit(node)
 
     def visit_ExceptHandler(self, node: ast.ExceptHandler) -> None:
         if node.name:
@@ -317,15 +367,15 @@ class Bindings(ast.NodeVisitor):
         for item in (*node.args.defaults, *node.args.kw_defaults, *node.decorator_list):
             if item:
                 self.visit(item)
-        for item in (*node.args.posonlyargs, *node.args.args, *node.args.kwonlyargs):
-            if item.annotation:
-                self.visit(item.annotation)
-        if node.returns:
-            self.visit(node.returns)
+        if not self.future_annotations:
+            for item in (*node.args.posonlyargs, *node.args.args, *node.args.kwonlyargs):
+                if item.annotation:
+                    self.visit(item.annotation)
+            if node.returns:
+                self.visit(node.returns)
         self.weak |= any(self.kind(item) in {"blocked", "ambiguous"} for item in node.decorator_list)
         self.put(node.name, "local")
-        position = self.child_positions[-1]
-        child = self.tables[-1].get_children()[position]
+        child = self.next_child()
         self.enter(node, "function", node.name, {name: "local" for name in child.get_locals()})
         for item in node.body:
             self.visit(item)
@@ -337,8 +387,7 @@ class Bindings(ast.NodeVisitor):
         for item in (*node.args.defaults, *node.args.kw_defaults):
             if item:
                 self.visit(item)
-        position = self.child_positions[-1]
-        child = self.tables[-1].get_children()[position]
+        child = self.next_child()
         self.enter(node, "function", "lambda", {name: "local" for name in child.get_locals()})
         self.visit(node.body)
         self.leave()
@@ -360,14 +409,15 @@ class Bindings(ast.NodeVisitor):
         self.visit(generators[0].iter)
         names = {item.id for generator in generators for item in ast.walk(generator.target) if isinstance(item, ast.Name)}
         expected = {ast.GeneratorExp: "genexpr", ast.ListComp: "listcomp", ast.SetComp: "setcomp", ast.DictComp: "dictcomp"}[type(node)]
-        children, position = self.tables[-1].get_children(), self.child_positions[-1]
-        has_table = position < len(children) and (children[position].get_name(), children[position].get_lineno()) == (expected, node.lineno)
+        has_table = isinstance(node, ast.GeneratorExp)
         if has_table:
-            self.enter(node, "function", expected, {name: "local" for name in children[position].get_locals()})
+            child = self.next_child()
+            self.enter(node, "function", expected, {name: "local" for name in child.get_locals()})
         else:
             self.scopes.append({name: "local" for name in names})
             self.types.append("function")
             self.cases.append(self.cases[-1])
+            self.inline_depth += 1
         for generator in generators:
             if generator is not generators[0]:
                 self.visit(generator.iter)
@@ -378,6 +428,7 @@ class Bindings(ast.NodeVisitor):
         if has_table:
             self.leave()
         else:
+            self.inline_depth -= 1
             self.scopes.pop()
             self.types.pop()
             self.cases.pop()
@@ -389,7 +440,8 @@ class Bindings(ast.NodeVisitor):
 
 def analyze_python(source: str) -> tuple[ast.Module, Bindings]:
     tree = ast.parse(source)
-    bindings = Bindings(symtable.symtable(source, "<test>", "exec"))
+    future_annotations = any(isinstance(node, ast.ImportFrom) and node.module == "__future__" and any(alias.name == "annotations" for alias in node.names) for node in tree.body)
+    bindings = Bindings(symtable.symtable(source, "<test>", "exec"), future_annotations)
     bindings.visit(tree)
     if bindings.child_positions != [len(bindings.tables[0].get_children())]:
         raise SyntaxError("unused symbol table")

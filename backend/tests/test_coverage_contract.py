@@ -246,6 +246,19 @@ def test_runner_metadata_fails_closed(tmp_path: Path, updates: dict, code: str) 
     ("import pytest\nmatch value:\n case 1: pytest = object()\npytest.skip('ambiguous')", True),
     ("import pytest\nwith manager() as pytest: pytest.skip('local')", False),
     ("import pytest\nvalue: pytest.mark.skip = 1", True),
+    ("import pytest\npytest.foo = object()\npytest.skip()", True),
+    ("import pytest\npytest[0] = object()\npytest.skip()", True),
+    ("import pytest\npytest += object()\npytest.skip()", True),
+    ("p = object()\ntry:\n import pytest as p\nexcept Exception: p = object()\np.skip()", True),
+    ("p = object()\ntry:\n import pytest as p\n raise Error\nexcept Exception: p.skip()", True),
+    ("import pytest\ntry: pytest = object()\nexcept: pass\nfinally: pytest = object()\npytest.skip()", False),
+    ("p = object()\nmatch value:\n case 1: import pytest as p\n case _: p = object()\np.skip()", True),
+    ("p = object()\nfor x in xs: import pytest as p\nelse: p = object()\np.skip()", True),
+    ("import pytest\np = pytest\nif ready: p = object()\npytestmark = p.mark.skip", True),
+    ("import unittest\nu = unittest\nif ready: u = object()\ncase = u.TestCase()\ncase.skipTest()", True),
+    ("from __future__ import annotations\nimport pytest\ndef f(x: (lambda: pytest.skip())): pass\nclass C:\n x: (lambda: pytest.skip())", False),
+    ("import pytest\nmatch value:\n case pytest: pytest.skip()", False),
+    ("import pytest\ndef f():\n [[y for y in () if (pytest := object())] for x in ()]\n pytest.skip()", False),
     ("from pytest import mark\npytestmark = mark.skip", True),
     ("import pytest\npytestmark = [pytest.mark.xfail]", True),
     ("def test_x(exec): exec('local')", False),
@@ -313,6 +326,8 @@ def test_delta_accepts_approved_memory_without_counting_it(monkeypatch, tmp_path
     ("import pytest\ndef test_x(*pytest): pytest.raises(ValueError)\n", "import pytest\ndef test_x(*pytest): pass\n", False),
     ("import pytest\nvalues = [pytest.raises(ValueError) for pytest in ()]\n", "import pytest\nvalues = []\n", False),
     ("import pytest\ntry: pass\nexcept Exception as pytest: pytest.raises(ValueError)\n", "import pytest\ntry: pass\nexcept Exception: pass\n", False),
+    ("from __future__ import annotations\nimport pytest\ndef f(x: (lambda: pytest.raises(ValueError))): pass\n", "from __future__ import annotations\nimport pytest\ndef f(x): pass\n", False),
+    ("p = object()\ntry:\n import pytest as p\nexcept Exception: p = object()\nwith p.raises(ValueError): raise ValueError\n", "raise ValueError\n", True),
 ])
 def test_delta_checks_committed_assertion_constructs(monkeypatch, tmp_path: Path, source: str, replacement: str, blocked: bool) -> None:
     repo = tmp_path / "repo"
