@@ -217,6 +217,19 @@ matrix passes on isolated Python 3.11.15 and project Python 3.12.3. Ruff, pip,
 self-validation, scope, wording, memory, links, diff hygiene, and 546/600 raw
 lines pass. Internal implementation review is active.
 
+B1B-R9 cycle-zero review: FAIL at `5a971d8`. Reviewers found one related
+compatibility class: nested synthetic inline-comprehension frames masked module
+ownership on 3.12+, and Python 3.13 exposes renamed public PEP 695 symtable
+types.
+
+B1B-R9 cycle-one candidate:
+`a5395c173741ee584312e5b69e70676092ce9c46`. Synthetic versus real
+comprehension frames are distinguished by selected table identity, and child
+matching accepts both supported public symtable type families without version
+branches. Identical 165-test matrices pass on Python 3.11.15, 3.12.3, and
+3.13.3. Every deterministic gate passes at 553/600 raw lines. Final internal
+review is active; another valid finding stops R9.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract

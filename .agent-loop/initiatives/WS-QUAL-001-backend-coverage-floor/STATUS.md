@@ -41,6 +41,12 @@
   `5a971d80c38cbf856e9eee5bcd49fac6873c38c2`
 - R9 proof: identical 161-test matrices pass on Python 3.11.15 and 3.12.3;
   every deterministic gate passes at 546/600 raw lines.
+- R9 cycle-zero review: nested 3.12 inline scope and Python 3.13 public
+  symtable-type compatibility remained incomplete.
+- R9 cycle-one candidate:
+  `a5395c173741ee584312e5b69e70676092ce9c46`
+- R9 cycle-one proof: identical 165-test matrices pass on Python 3.11.15,
+  3.12.3, and 3.13.3; every deterministic gate passes at 553/600 raw lines.
 - 01A implementation PR: `https://github.com/Flow-Research/workstream/pull/103` (merged)
 - 01A final reviewed implementation SHA: `d1582ec64b9176c5ead62f695c7a23b48e4c72b9`
 - 01A final evidence-bound branch head: `8cd7616b497ceb46d8359c25de689192632dfee8`
