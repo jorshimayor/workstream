@@ -14,7 +14,7 @@ stopped.
 | `WS-AUTH-001-PLAN` | Authorization Service Planning | L0 | Merged through PR #91 as `ad6d644` |
 | `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Merged through PR #93 as `772af1d` |
 | `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Merged through PR #107 as `060b780` |
-| `WS-AUTH-001-03` | Legacy Actor Classification Preflight | L1 | Implementation and required internal review passed at `8e2ae48`; final evidence and ready PR publication active |
+| `WS-AUTH-001-03` | Legacy Actor Classification Preflight | L1 | Ready PR #109 published; external checks and human review active |
 | `WS-AUTH-001-04` | Request, Error, And API Control Foundation | L1 | Proposed |
 | `WS-AUTH-001-05` | Authority Evidence And Idempotency Foundation | L1 | Proposed |
 | `WS-AUTH-001-06` | Canonical Actor Profile And Identity Link | L1 | Proposed |
