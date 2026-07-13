@@ -119,3 +119,11 @@ conditions require strict Pydantic 2 schema-version-one models, canonical UUIDv5
 derivation, complete envelope checksums, privacy-bounded failures, read-only
 repeatable-read proof, crash-safe no-overwrite publication, and focused
 subsystem coverage of at least 90 percent while preserving the global baseline.
+
+## Implementation review status
+
+Implementation and required internal review passed on reviewed code SHA
+`8e2ae489834a3934d6ef507834139a1009dac2e6`. Focused isolated-PostgreSQL
+behavior proof is 57 passing tests with 92 percent combined statement coverage
+for the new classifier and CLI. The isolated database-runner lifecycle suite
+passes 16/16. Ready PR publication is the current gate; AUTH-04 remains inactive.

@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-03` | Legacy Actor Classification Preflight | L1 | Active after PR #107 merge and explicit user start; implementation/evidence in progress |
+| `WS-AUTH-001-03` | Legacy Actor Classification Preflight | L1 | Implementation and required internal review passed at `8e2ae48`; final evidence and ready PR publication active |
 
 ## Planned Next
 
@@ -54,8 +54,9 @@
 
 ## Proposed Next
 
-`WS-AUTH-001-03` is the only active AUTH chunk after the user's explicit start.
-Do not start `WS-AUTH-001-04` or `WS-POL-002-04` automatically.
+`WS-AUTH-001-03` is the only active AUTH chunk. Its implementation and required
+internal reviews are complete; final evidence and ready PR publication are in
+progress. Do not start `WS-AUTH-001-04` or `WS-POL-002-04` automatically.
 
 Coverage R2 merged through PR #105. Do not start 01B1B, 01B2, chunk 02, or
 another coverage implementation chunk from this worktree.

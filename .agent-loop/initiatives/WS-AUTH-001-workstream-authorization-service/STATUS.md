@@ -16,8 +16,9 @@ explicitly resumed AUTH in its separate worktree on 2026-07-12. Bounded runtime
 implementation and repair review are complete on reviewed code SHA `47dd5a7`;
 all required internal tracks passed and PR #107 merged as `060b780` on
 2026-07-13. The user then explicitly started `WS-AUTH-001-03`. Its L1
-preimplementation plan review passed with conditions, and bounded implementation
-and behavior evidence are active in the dedicated AUTH-03 worktree.
+preimplementation plan review passed with conditions. Bounded implementation,
+repair, and all required internal reviewer tracks now pass on reviewed code SHA
+`8e2ae48`; final evidence and ready PR publication are active.
 
 ## Active planning chunk
 
@@ -38,7 +39,7 @@ None.
 | `WS-AUTH-001-PLAN` | Merged | `authorization-service` | #91 | Merged as `ad6d644`; D4-D10 later approved. |
 | `WS-AUTH-001-01` | Merged | `codex/ws-auth-001-01-adopt-authorization-baseline` | #93 | Authorization baseline, Contributor terminology boundary, scanner, and repository contracts; merged as `772af1d`. |
 | `WS-AUTH-001-02` | Merged | `codex/ws-auth-001-02-verified-issuer-token` | #107 | Merged as `060b780`; reviewed code SHA `47dd5a7`. |
-| `WS-AUTH-001-03` | Active | `codex/ws-auth-001-03-legacy-actor-classification` | - | Explicitly started; L1 plan review passed with conditions. |
+| `WS-AUTH-001-03` | Internal review passed | `codex/ws-auth-001-03-legacy-actor-classification` | - | Reviewed code SHA `8e2ae48`; final evidence and ready PR publication active. |
 | `WS-AUTH-001-04` | Proposed | - | - | Request, error, and API control foundation. |
 | `WS-AUTH-001-05` | Proposed | - | - | Authority evidence and idempotency foundation. |
 | `WS-AUTH-001-06` | Proposed | - | - | Canonical actor profile and identity link. |
@@ -59,9 +60,10 @@ No current blocker. AUTH-03 requires no production identity payloads for
 deterministic implementation; non-test operators must later supply explicit
 classification evidence rather than inferred kinds.
 
-AUTH-03 review evidence and its PR trust bundle will be recorded after the
-deterministic evidence gate and required internal reviewer fanout. Prior AUTH-02
-evidence remains at `reviews/WS-AUTH-001-02-internal-review-evidence.md` and
+AUTH-03 review evidence and its PR trust bundle are recorded at
+`reviews/WS-AUTH-001-03-internal-review-evidence.md` and
+`reviews/WS-AUTH-001-03-pr-trust-bundle.md`. Prior AUTH-02 evidence remains at
+`reviews/WS-AUTH-001-02-internal-review-evidence.md` and
 `reviews/WS-AUTH-001-02-pr-trust-bundle.md`.
 
 Production issuer configuration and legacy non-test actor classification are
