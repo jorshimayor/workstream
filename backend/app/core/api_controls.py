@@ -303,11 +303,16 @@ def install_api_control_openapi(app: FastAPI) -> None:
                         parameters.append(parameter)
                 responses = operation.get("responses", {})
                 if path not in {"/health", "/api/v1/health"}:
-                    for status, description in {
+                    applicable_errors = {
                         "401": "Authentication failed.",
                         "403": "Permission denied.",
                         "503": "Identity verification unavailable.",
-                    }.items():
+                    }
+                    if "{" in path:
+                        applicable_errors["404"] = "Resource not found."
+                    if "{" in path and method in {"post", "put", "patch", "delete"}:
+                        applicable_errors["409"] = "Request conflict."
+                    for status, description in applicable_errors.items():
                         headers = dict(response_headers)
                         if status == "401":
                             headers["WWW-Authenticate"] = {"schema": {"type": "string"}}

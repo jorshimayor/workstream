@@ -287,16 +287,24 @@ async def test_not_found_method_not_allowed_and_unhandled_errors_are_private(
         method_not_allowed = await client.post("/health")
     failed = await _get(app, "/_test/boom")
 
-    for response, detail, code, message in [
-        (not_found, "Not Found", "resource_not_found", "Resource not found"),
+    for response, status_code, detail, code, message in [
+        (not_found, 404, "Not Found", "resource_not_found", "Resource not found"),
         (
             method_not_allowed,
+            405,
             "Method Not Allowed",
             "method_not_allowed",
             "Method not allowed",
         ),
-        (failed, "Internal server error", "internal_error", "Internal server error"),
+        (
+            failed,
+            500,
+            "Internal server error",
+            "internal_error",
+            "Internal server error",
+        ),
     ]:
+        assert response.status_code == status_code
         assert response.json() == {
             "detail": detail,
             "error": {
@@ -424,6 +432,17 @@ def test_openapi_documents_request_error_and_response_context() -> None:
     assert set(schema["paths"]["/health"]["get"]["responses"]) == {"200", "400", "500"}
     assert {"401", "403", "503"} <= set(
         schema["paths"]["/api/v1/auth/me"]["get"]["responses"]
+    )
+    assert {"404"} <= set(
+        schema["paths"]["/api/v1/tasks/{task_id}"]["get"]["responses"]
+    )
+    assert {"404", "409"} <= set(
+        schema["paths"]["/api/v1/tasks/{task_id}/claim"]["post"]["responses"]
+    )
+    assert {"404", "409"} <= set(
+        schema["paths"]["/api/v1/projects/{project_id}/guides/{guide_id}/activate"][
+            "post"
+        ]["responses"]
     )
     for path_item in schema["paths"].values():
         for method, operation in path_item.items():
