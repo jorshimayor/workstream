@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01B1B-R6` | Provenance Closure | L1 | Proposed after R5 cycle-zero stop; contract review pending |
+| `WS-QUAL-001-01B1B-R6` | Provenance Closure | L1 | Contract review passed at `bfb2d8e`; implementation active |
 
 ## Planned Next
 
@@ -53,8 +53,8 @@
 
 ## Proposed Next
 
-Review B1B-R6 before further coverage implementation. AUTH-02 proceeds
-independently in its existing worktree. Do not start 01B2 or chunk 02.
+Implement and review only B1B-R6. AUTH-02 proceeds independently in its
+existing worktree. Do not start 01B2 or chunk 02.
 
 `WS-ART-001-01` is merged. Do not start `WS-ART-001-02` or edit Flow Node until
 the user gives a separate explicit start signal.

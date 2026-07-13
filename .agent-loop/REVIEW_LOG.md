@@ -112,6 +112,10 @@ transitive loop/header, iterable target, exception/assignment ordering,
 summary-pruning, and `except*` gaps. At 641/650 the repairs and missing proof
 could not fit; B1B-R6 is proposed.
 
+B1B-R6 contract review: PASS at `bfb2d8e` across all ten required tracks. The
+fixed-point provenance/evaluation-order contract and 641/720/770/800 allocation
+passed; R6 implementation is active.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract
