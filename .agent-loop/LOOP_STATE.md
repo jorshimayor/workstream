@@ -38,7 +38,7 @@
 - WS-ART planning merge commit: `8644a43`
 - Prior WS-AUTH-001-01 reviewed implementation SHA: `be0b836`
 - Prior WS-AUTH-001-01 final merged branch head: `b5217e1`
-- Latest merge commit: `6dccb8e632a6244ca575094be0e3338d49b15856`
+- Latest integrated `main` merge commit: `060b780190435bc79464ae92fd9235a652f70e00`
 - WS-QUAL final reviewed planning SHA: `0d9dd987d546c864fa8de7bae462e5e73a1b5ea9`
 - WS-QUAL final evidence-bound branch head: `3da1769882e9f6db4c48ef3dba33da8380e6a613`
 - WS-QUAL planning merge commit: `9046d52f31c7c39f06e06c45c43783bb08a5181c`
@@ -56,12 +56,10 @@
 - WS-QUAL-001-01A post-merge memory merge commit:
   `8829a7ec3aa5199aae0aecbe5fda030c42a051cd`
 - Current gate: stop and replan the B1B replacement. No coverage implementation
-  is active. 01B2 remains inactive; AUTH-02 is independently published as ready
-  PR #107 with all GitHub checks passing.
+  is active. 01B2 remains inactive; AUTH-02 merged through PR #107 as `060b780`.
 - Next chunk: `WS-QUAL-001-02` remains inactive; do not start it automatically.
-- Parallel implementation: the user explicitly authorized `WS-AUTH-001-02` to
-  resume off-main in its separate worktree while coverage continues. AUTH must
-  satisfy its own chunk reviews and the current coverage gates before merge.
+- Parallel initiative: `WS-AUTH-001-02` merged through PR #107 as `060b780`.
+  `WS-AUTH-001-03` remains inactive pending a separate explicit start.
 - Parallel initiative: `WS-ART-001-01` merged through PR #101 as `050eb15`.
   `WS-ART-001-02` remains proposed and inactive pending a separate explicit
   user start.
