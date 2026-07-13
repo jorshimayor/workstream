@@ -212,7 +212,10 @@ class SyntaxPolicy(ast.NodeVisitor):
                 for alias in node.names:
                     root = alias.name.split(".", 1)[0]
                     if root in {"pytest", "unittest"}:
-                        self.own(alias.asname or root, root)
+                        name = alias.asname or root
+                        kind = "unittest_case" if alias.asname and alias.name == "unittest.case" else root if not alias.asname or alias.name == root else "local"
+                        if kind != "local":
+                            self.own(name, kind)
             elif isinstance(node, ast.ImportFrom) and node.level == 0:
                 root = (node.module or "").split(".", 1)[0]
                 if root in {"pytest", "unittest"}:
@@ -247,8 +250,18 @@ class SyntaxPolicy(ast.NodeVisitor):
             return self.owners[0].get(name, "local")
         if symbol and symbol.is_nonlocal():
             for index in range(len(self.owners) - 2, 0, -1):
-                if self.scope_types[index] != "class" and name in self.owners[index]:
+                if self.scope_types[index] == "class":
+                    continue
+                if name in self.owners[index]:
                     return self.owners[index][name]
+                if name in self.shadows[index]:
+                    return "local"
+                try:
+                    outer_symbol = self.tables[index].lookup(name)
+                except KeyError:
+                    outer_symbol = None
+                if outer_symbol and (outer_symbol.is_local() or outer_symbol.is_parameter() or outer_symbol.is_imported()):
+                    return "local"
             return "local"
         if symbol and (symbol.is_local() or symbol.is_parameter() or symbol.is_imported()):
             return "local"
@@ -318,7 +331,14 @@ class SyntaxPolicy(ast.NodeVisitor):
             for field in ("bound", "default_value"):
                 value = getattr(parameter, field, None)
                 if value:
+                    table_type = "TypeVar bound" if field == "bound" else "TypeVar default"
+                    self.tables.append(self.child(parameter, table_type, parameter.name))
+                    self.owners.append({})
+                    self.scope_types.append("function")
+                    self.shadows.append(set())
+                    self.cases.append(self.cases[-1])
                     self.visit(value)
+                    self.leave()
         return True
 
     def visit_Name(self, node: ast.Name) -> None:
@@ -350,8 +370,8 @@ class SyntaxPolicy(ast.NodeVisitor):
                 self.visit(value)
         type_scope = self.enter_type_params(node)
         if not self.future_annotations:
-            for argument in (*node.args.posonlyargs, *node.args.args, *node.args.kwonlyargs):
-                if argument.annotation:
+            for argument in (*node.args.posonlyargs, *node.args.args, *node.args.kwonlyargs, node.args.vararg, node.args.kwarg):
+                if argument and argument.annotation:
                     self.visit(argument.annotation)
             if node.returns:
                 self.visit(node.returns)
@@ -414,6 +434,7 @@ class SyntaxPolicy(ast.NodeVisitor):
     def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
         if node.value:
             self.visit(node.value)
+        self.visit(node.target)
         if not self.future_annotations:
             self.visit(node.annotation)
 
@@ -429,6 +450,7 @@ class SyntaxPolicy(ast.NodeVisitor):
         for index, generator in enumerate(node.generators):
             if index:
                 self.visit(generator.iter)
+            self.visit(generator.target)
             for condition in generator.ifs:
                 self.visit(condition)
         for value in ((node.key, node.value) if isinstance(node, ast.DictComp) else (node.elt,)):
