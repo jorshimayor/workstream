@@ -182,6 +182,18 @@ type-alias scopes are paired, and TestCase closures distinguish captured versus
 local `self`. Proof: 140 focused tests and every deterministic gate pass at
 498/700 raw lines. Internal re-review is active.
 
+B1B-R8 cycle-one review: FAIL at `1a13bea`. Reviewers reproduced TypeVar-bound
+child-scope mismatches, dotted aliased import overownership, nearer nonlocal
+barrier fallthrough, missed comprehension/annotated targets, and omitted
+vararg/kwarg annotations.
+
+B1B-R8 cycle-two candidate:
+`e2ac216a114bacb4115c7b44efa736e48cd500fb`. Bound/default child scopes are
+paired, dotted aliases are exact, nonlocal lookup stops at the nearest lexical
+binding, and every executable target and non-postponed argument annotation is
+visited. Proof: 157 focused tests and every deterministic gate pass at 537/700
+raw lines. Final internal review is active; another valid finding stops R8.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract

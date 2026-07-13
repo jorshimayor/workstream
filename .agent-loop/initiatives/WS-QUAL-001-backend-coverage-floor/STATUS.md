@@ -23,7 +23,13 @@
 - R8 cycle-one candidate:
   `1a13beaaf968a00a19c64e702b33026283cf0d22`
 - R8 cycle-one proof: 140 focused tests and every deterministic gate pass at
-  498/700 raw lines; internal re-review active.
+  498/700 raw lines.
+- R8 cycle-one review: TypeVar-bound scopes, dotted aliases, nearer nonlocal
+  barriers, executable targets, and vararg annotations remained incomplete.
+- R8 cycle-two candidate:
+  `e2ac216a114bacb4115c7b44efa736e48cd500fb`
+- R8 cycle-two proof: 157 focused tests and every deterministic gate pass at
+  537/700 raw lines; final internal review active.
 - 01A implementation PR: `https://github.com/Flow-Research/workstream/pull/103` (merged)
 - 01A final reviewed implementation SHA: `d1582ec64b9176c5ead62f695c7a23b48e4c72b9`
 - 01A final evidence-bound branch head: `8cd7616b497ceb46d8359c25de689192632dfee8`
