@@ -160,7 +160,7 @@ class Bindings(ast.NodeVisitor):
     def __init__(self, table: symtable.SymbolTable, future_annotations: bool) -> None:
         self.tables, self.child_positions = [table], [0]
         self.scopes, self.types, self.cases = [{}], ["module"], [False]
-        self.future_annotations, self.inline_depth = future_annotations, 0
+        self.future_annotations, self.inline_depths, self.comp_writes = future_annotations, [0], []
         self.weak, self.raises = False, set()
 
     def next_child(self) -> symtable.SymbolTable:
@@ -181,6 +181,7 @@ class Bindings(ast.NodeVisitor):
         self.scopes.append(initial)
         self.types.append(table_type)
         self.cases.append(self.cases[-1])
+        self.inline_depths.append(0)
     def leave(self) -> None:
         if self.child_positions[-1] != len(self.tables[-1].get_children()):
             raise SyntaxError("unused symbol table")
@@ -189,6 +190,7 @@ class Bindings(ast.NodeVisitor):
         self.scopes.pop()
         self.types.pop()
         self.cases.pop()
+        self.inline_depths.pop()
     def put(self, name: str, kind: str, offset: int = 0) -> None:
         try:
             symbol = self.tables[-1].lookup(name)
@@ -212,6 +214,9 @@ class Bindings(ast.NodeVisitor):
     def kind(self, node: ast.AST) -> str:
         if isinstance(node, ast.Name):
             return self.get(node.id)
+        if isinstance(node, (ast.Tuple, ast.List)):
+            kinds = {self.kind(item) for item in node.elts}
+            return kinds.pop() if len(kinds) == 1 else "ambiguous"
         if isinstance(node, ast.Call) and self.kind(node.func) in {"testcase", "ambiguous"}:
             return "case" if self.kind(node.func) == "testcase" else "ambiguous"
         if isinstance(node, ast.Attribute):
@@ -247,11 +252,24 @@ class Bindings(ast.NodeVisitor):
                 self.put(name, {"mark": "mark", "raises": "raises"}.get(alias.name, "blocked" if alias.name in BLOCKED else "local"))
             elif root == "unittest":
                 self.put(name, "testcase" if alias.name == "TestCase" else "blocked" if alias.name in BLOCKED else "local")
-
     def visit_Assign(self, node: ast.Assign) -> None:
         self.visit(node.value)
         for target in node.targets:
-            self.bind_target(target, self.kind(node.value))
+            self.assign_target(target, node.value)
+    def target_names(self, node: ast.AST) -> set[str]:
+        if isinstance(node, ast.Name):
+            return {node.id}
+        if isinstance(node, ast.Starred):
+            return self.target_names(node.value)
+        if isinstance(node, (ast.Tuple, ast.List)):
+            return set().union(*(self.target_names(item) for item in node.elts))
+        return set()
+    def assign_target(self, target: ast.AST, value: ast.AST) -> None:
+        if isinstance(target, (ast.Tuple, ast.List)) and isinstance(value, (ast.Tuple, ast.List)) and len(target.elts) == len(value.elts):
+            for child, item in zip(target.elts, value.elts, strict=True):
+                self.assign_target(child, item)
+        else:
+            self.bind_target(target, self.kind(value))
     def bind_target(self, node: ast.AST, kind: str) -> None:
         if isinstance(node, ast.Name):
             self.put(node.id, kind)
@@ -260,12 +278,17 @@ class Bindings(ast.NodeVisitor):
         elif isinstance(node, (ast.Tuple, ast.List)):
             for item in node.elts:
                 self.bind_target(item, kind)
+        elif isinstance(node, ast.Attribute):
+            self.visit(node.value)
+        elif isinstance(node, ast.Subscript):
+            self.visit(node.value)
+            self.visit(node.slice)
     def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
-        if not self.future_annotations:
+        if not self.future_annotations and self.types[-1] != "function":
             self.visit(node.annotation)
         if node.value:
             self.visit(node.value)
-        self.bind_target(node.target, self.kind(node.value) if node.value else "local")
+        self.assign_target(node.target, node.value) if node.value else self.bind_target(node.target, "local")
     def visit_AugAssign(self, node: ast.AugAssign) -> None:
         prior = self.kind(node.target)
         self.visit(node.value)
@@ -273,16 +296,16 @@ class Bindings(ast.NodeVisitor):
     def visit_NamedExpr(self, node: ast.NamedExpr) -> None:
         self.visit(node.value)
         if isinstance(node.target, ast.Name):
-            self.put(node.target.id, self.kind(node.value), self.inline_depth)
-
+            self.put(node.target.id, self.kind(node.value), self.inline_depths[-1])
+            if self.inline_depths[-1]:
+                for writes in self.comp_writes:
+                    writes.add(node.target.id)
     def visit_Name(self, node: ast.Name) -> None:
         if isinstance(node.ctx, ast.Store):
             self.put(node.id, "local")
-
     def visit_Attribute(self, node: ast.Attribute) -> None:
         self.weak |= self.kind(node) in {"blocked", "ambiguous"}
         self.generic_visit(node)
-
     def visit_If(self, node: ast.If) -> None:
         self.visit(node.test)
         before = [scope.copy() for scope in self.scopes]
@@ -293,35 +316,78 @@ class Bindings(ast.NodeVisitor):
         for item in node.orelse:
             self.visit(item)
         self.merge([left, self.scopes])
-
-    def run_path(self, items: list[ast.AST], start: list[dict[str, str]]) -> list[dict[str, str]]:
-        self.scopes = [scope.copy() for scope in start]
-        for item in items:
-            self.visit(item)
+    def state(self) -> list[dict[str, str]]:
         return [scope.copy() for scope in self.scopes]
+    def join(self, states: list[list[dict[str, str]]]) -> None:
+        self.scopes = [scope.copy() for scope in states[0]]
+        self.merge(states)
+    def loop_summary(self, nodes: list[ast.stmt]) -> set[str]:
+        names = set()
+        def inspect(node: ast.AST) -> None:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda, ast.ClassDef)):
+                return
+            if isinstance(node, ast.Import):
+                names.update(alias.asname or alias.name.split(".", 1)[0] for alias in node.names if alias.name.split(".", 1)[0] in {"pytest", "unittest"})
+            if isinstance(node, ast.ImportFrom) and (node.module or "").split(".", 1)[0] in {"pytest", "unittest"}:
+                names.update(alias.asname or alias.name for alias in node.names)
+            if isinstance(node, (ast.Assign, ast.AnnAssign, ast.NamedExpr)):
+                targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+                value = node.value
+                if value and any(self.get(item.id) not in {"local", "builtin"} for item in ast.walk(value) if isinstance(item, ast.Name)):
+                    names.update(*(self.target_names(target) for target in targets))
+            if isinstance(node, ast.AugAssign) and any(self.get(item.id) not in {"local", "builtin"} for item in ast.walk(node.value) if isinstance(item, ast.Name)):
+                names.update(self.target_names(node.target))
+            for child in ast.iter_child_nodes(node):
+                inspect(child)
+        for node in nodes:
+            inspect(node)
+        return names
 
     def visit_For(self, node: ast.For) -> None:
         self.visit(node.iter)
-        before = [scope.copy() for scope in self.scopes]
-        body = [node.target, *node.body]
-        self.merge([self.run_path(node.orelse, before), self.run_path([*body, *node.orelse], before), self.run_path(body, before)])
+        before = self.state()
+        for name in self.loop_summary(node.body):
+            self.put(name, "ambiguous")
+        self.bind_target(node.target, "local")
+        for item in node.body:
+            self.visit(item)
+        body = self.state()
+        self.join([before, body])
+        for item in node.orelse:
+            self.visit(item)
+        self.join([before, body, self.state()])
 
     visit_AsyncFor = visit_For
 
     def visit_While(self, node: ast.While) -> None:
         self.visit(node.test)
-        before = [scope.copy() for scope in self.scopes]
-        self.merge([self.run_path(node.orelse, before), self.run_path([*node.body, *node.orelse], before), self.run_path(node.body, before)])
+        before = self.state()
+        for name in self.loop_summary(node.body):
+            self.put(name, "ambiguous")
+        for item in node.body:
+            self.visit(item)
+        body = self.state()
+        self.join([before, body])
+        for item in node.orelse:
+            self.visit(item)
+        self.join([before, body, self.state()])
 
     def visit_Try(self, node: ast.Try) -> None:
-        before = [scope.copy() for scope in self.scopes]
-        progress = [before]
+        progress = [self.state()]
         for item in node.body:
-            progress.append(self.run_path([item], progress[-1]))
-        states = [self.run_path(node.orelse, progress[-1])]
-        states.extend(self.run_path([handler], incoming) for handler in node.handlers for incoming in progress)
-        self.scopes = [scope.copy() for scope in before]
-        self.merge(states)
+            self.visit(item)
+            progress.append(self.state())
+        for item in node.orelse:
+            self.visit(item)
+        states = [self.state()]
+        incoming = progress[0]
+        self.join(progress)
+        handler_incoming = self.state()
+        for handler in node.handlers:
+            self.scopes = [scope.copy() for scope in handler_incoming]
+            self.visit(handler)
+            states.append(self.state())
+        self.join(states or [incoming])
         for item in node.finalbody:
             self.visit(item)
 
@@ -329,9 +395,19 @@ class Bindings(ast.NodeVisitor):
 
     def visit_Match(self, node: ast.Match) -> None:
         self.visit(node.subject)
-        before = [scope.copy() for scope in self.scopes]
-        paths = [[case.pattern, *([case.guard] if case.guard else []), *case.body] for case in node.cases]
-        self.merge([before, *(self.run_path(path, before) for path in paths)])
+        incoming, states = self.state(), []
+        for case in node.cases:
+            self.scopes = [scope.copy() for scope in incoming]
+            self.visit(case.pattern)
+            if case.guard:
+                self.visit(case.guard)
+            failed = self.state()
+            for item in case.body:
+                self.visit(item)
+            states.append(self.state())
+            self.join([incoming, failed])
+            incoming = self.state()
+        self.join([incoming, *states])
 
     def visit_MatchAs(self, node: ast.MatchAs) -> None:
         if node.name:
@@ -407,9 +483,10 @@ class Bindings(ast.NodeVisitor):
     def visit_comprehension_scope(self, node: ast.ListComp | ast.SetComp | ast.DictComp | ast.GeneratorExp) -> None:
         generators = node.generators
         self.visit(generators[0].iter)
-        names = {item.id for generator in generators for item in ast.walk(generator.target) if isinstance(item, ast.Name)}
+        names = set().union(*(self.target_names(generator.target) for generator in generators))
         expected = {ast.GeneratorExp: "genexpr", ast.ListComp: "listcomp", ast.SetComp: "setcomp", ast.DictComp: "dictcomp"}[type(node)]
         has_table = isinstance(node, ast.GeneratorExp)
+        self.comp_writes.append(set())
         if has_table:
             child = self.next_child()
             self.enter(node, "function", expected, {name: "local" for name in child.get_locals()})
@@ -417,10 +494,12 @@ class Bindings(ast.NodeVisitor):
             self.scopes.append({name: "local" for name in names})
             self.types.append("function")
             self.cases.append(self.cases[-1])
-            self.inline_depth += 1
+            self.inline_depths[-1] += 1
+        before = self.state()
         for generator in generators:
             if generator is not generators[0]:
                 self.visit(generator.iter)
+            self.bind_target(generator.target, "local")
             for condition in generator.ifs:
                 self.visit(condition)
         for value in ((node.key, node.value) if isinstance(node, ast.DictComp) else (node.elt,)):
@@ -428,10 +507,15 @@ class Bindings(ast.NodeVisitor):
         if has_table:
             self.leave()
         else:
-            self.inline_depth -= 1
+            self.inline_depths[-1] -= 1
             self.scopes.pop()
             self.types.pop()
             self.cases.pop()
+        writes = self.comp_writes.pop()
+        after = self.state()
+        self.join([before[:-1] if len(before) > len(after) else before, after])
+        for name in writes:
+            self.put(name, "ambiguous", self.inline_depths[-1])
     visit_ListComp = visit_comprehension_scope
     visit_SetComp = visit_comprehension_scope
     visit_DictComp = visit_comprehension_scope
