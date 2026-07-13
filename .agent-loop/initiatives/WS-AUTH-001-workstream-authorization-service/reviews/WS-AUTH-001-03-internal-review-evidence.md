@@ -135,5 +135,7 @@ before merge.
 
 ## Stop Condition
 
-Stop after ready PR publication for external checks and explicit human review.
-Do not merge or start `WS-AUTH-001-04` automatically.
+Ready PR #109 is published at
+`https://github.com/Flow-Research/workstream/pull/109`. Stop for external checks
+and explicit human review. Do not merge or start `WS-AUTH-001-04`
+automatically.

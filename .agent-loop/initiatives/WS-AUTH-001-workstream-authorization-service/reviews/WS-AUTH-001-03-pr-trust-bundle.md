@@ -117,8 +117,9 @@ findings were repaired and re-reviewed. Only documented low risks remain.
 
 ## External Review
 
-GitHub checks, CodeRabbit, and explicit human review are pending ready PR
-publication.
+Ready PR #109 is open at
+`https://github.com/Flow-Research/workstream/pull/109`. Agent Gates pass;
+GitHub Backend CI, CodeRabbit, and explicit human review are pending.
 
 ## Remaining Risks
 

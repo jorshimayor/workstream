@@ -9,13 +9,12 @@
 - Branch: `codex/ws-auth-001-03-legacy-actor-classification`
 - Worktree: `/home/abiorh/flow/workstream-auth-001-03`
 - Status: AUTH-03 implementation and required internal review are complete on
-  reviewed code SHA `8e2ae48`; all valid findings are repaired and the PR
-  evidence bundle is being finalized for publication.
+  reviewed code SHA `8e2ae48`; all valid findings are repaired and ready PR
+  #109 is open at `https://github.com/Flow-Research/workstream/pull/109`.
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
 - Latest integrated `main` merge commit: `060b780`
-- Current gate: final deterministic gates and ready PR publication for external
-  checks and explicit human review.
+- Current gate: PR #109 external checks and explicit human review.
 - Next chunk: none; do not start `WS-AUTH-001-04` automatically.
 - Parallel initiative: `WS-QUAL-001-01B1A-R2` merged through PR #105 as
   `8a4182e`, and its post-merge memory merged through PR #106 as `6dccb8e`.
