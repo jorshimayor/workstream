@@ -121,11 +121,15 @@ BaseHTTPMiddleware, response-body buffering, or response JSON rewriting
   most eight integer or string components, with strings capped at 64 ASCII
   characters and unsupported components replaced by `redacted`. The nested
   details shape is `{"errors": [...], "truncated": <boolean>}`.
-- The compatibility `detail` remains a list and preserves the tested `loc` and
-  `input="redacted"` behavior, but applies the same 20-error/eight-location/
-  64-character bounds, uses constant `msg="Invalid value"`, and emits only
-  `type`, `loc`, `msg`, and `input`. It never exposes submitted values, exception
-  text, validation context, URLs, or provider data.
+- The compatibility `detail` remains the existing sanitized list in original
+  order for the first 20 errors. Preserve every currently emitted safe
+  field/value and validator message, including tested `loc`, constant-redacted
+  `input`, and class-name-only exception context. Only the 20-item list cap is
+  new; do not truncate locations/messages or remove fields from these retained
+  compatibility entries. Submitted input, exception values, and non-finite
+  numbers continue to use the existing redaction/JSON-safety helpers. The strict
+  eight-location/64-character/type-only privacy shape applies only to nested
+  `error.details`.
 - Unhandled errors use a constant message, empty details, and
   `retryable=false` in both debug and non-debug modes. No exception, SQL,
   token, claim, provider response, secret, or PII enters a response or log.
