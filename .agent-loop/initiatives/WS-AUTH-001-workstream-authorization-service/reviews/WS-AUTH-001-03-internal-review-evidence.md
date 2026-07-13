@@ -10,11 +10,13 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: a70b89c91a8950eabaa750e340d4f853529d66f0
+Reviewed code SHA: 8c5334c1635694689ef4a7fb11c572bd6a871e09
 
-Reviewed implementation SHA: `8e2ae489834a3934d6ef507834139a1009dac2e6`
+Original implementation SHA: `8e2ae489834a3934d6ef507834139a1009dac2e6`
 
-Reviewed at: 2026-07-13T08:23:57Z
+External repair implementation SHA: `4923b677f0a928d77792084c3edc4569b8c28e7b`
+
+Reviewed at: 2026-07-13T08:55:20Z
 
 Reviewer run IDs: plan-review=WS-AUTH-001-03-PLAN-20260713;
 senior-engineering=WS-AUTH-001-03-IMPLEMENTATION-ENG-SEC-20260713;
@@ -35,9 +37,15 @@ Evidence-binding re-review run IDs:
 engineering-security=WS-AUTH-001-03-EVIDENCE-ENG-SEC-20260713;
 qa-test-ci=WS-AUTH-001-03-EVIDENCE-QA-CI-20260713
 
-The reviewed implementation remains `8e2ae48`. Merge integration `0ae502b`
-incorporates PR #108 without changing AUTH or QA implementation/test blobs;
-reviewed lifecycle head `a70b89c` resolves the two memory conflicts and gates.
+External-repair re-review run IDs:
+engineering-security=WS-AUTH-001-03-EXTERNAL-ENG-SEC-20260713T085520Z;
+qa-test-ci=WS-AUTH-001-03-EXTERNAL-QA-CI-20260713T085307Z
+
+Original implementation `8e2ae48` remains the classifier foundation. Merge
+integration `0ae502b` incorporates PR #108 without changing its implementation
+or test blobs; lifecycle head `a70b89c` resolves the merge conflicts. External
+repair `4923b67` preserves primary CLI failures across cleanup failure, and
+reviewed code head `8c5334c` reconciles its exact proof and durable evidence.
 
 ## Reviewed Change
 
@@ -87,6 +95,8 @@ reviewed lifecycle head `a70b89c` resolves the two memory conflicts and gates.
 - Rolled back a newly linked destination when directory `fsync` fails.
 - Prevented engine-cleanup exceptions from overriding bounded CLI output or
   exposing database details.
+- Preserved interruption, domain, and unexpected primary errors and their exit
+  codes when engine cleanup also fails.
 - Proved actual PostgreSQL `repeatable read`, `transaction_read_only=on`, and
   invisibility of a concurrent committed actor in the established snapshot.
 
@@ -100,7 +110,10 @@ reviewed lifecycle head `a70b89c` resolves the two memory conflicts and gates.
 (cd backend && docstr-coverage --config .docstr.yaml)
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_stale_authorization_docs.py
+python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/check_markdown_links.py
+python3 scripts/check_loop_memory_state.py
+(PYTHONPATH="$PWD/backend" pytest -q scripts/test_agent_gates.py)
 git diff --check
 ```
 
@@ -114,6 +127,7 @@ Results:
 - Ruff, stale wording, stale authorization docs, Markdown links, docstring
   coverage, and diff checks: passed;
 - isolated-runner lifecycle test rerun: 16 passed;
+- Agent Gates self-tests: 36 passed;
 - repository-wide coverage and complete-suite proof: intentionally delegated to
   GitHub Backend CI under the user's explicit direction; the unchanged
   `--cov-fail-under=78` gate remains mandatory.

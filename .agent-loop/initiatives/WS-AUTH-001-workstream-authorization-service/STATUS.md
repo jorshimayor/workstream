@@ -18,9 +18,10 @@ all required internal tracks passed and PR #107 merged as `060b780` on
 2026-07-13. The user then explicitly started `WS-AUTH-001-03`. Its L1
 preimplementation plan review passed with conditions. Bounded implementation,
 repair, and all required internal reviewer tracks now pass on reviewed code SHA
-`8e2ae48`. PR #108 merged to `main` as `5c47aba`; that main revision is
-integrated into AUTH, whose lifecycle reconciliation was reviewed at `a70b89c`.
-Ready PR #109 is open for external checks and explicit human review.
+`8c5334c`, including external repair implementation `4923b67`. PR #108 merged
+to `main` as `5c47aba`; that main revision is integrated into AUTH, whose prior
+lifecycle reconciliation was reviewed at `a70b89c`. Ready PR #109 is open for
+rerun GitHub checks and explicit human review.
 
 ## Active planning chunk
 
@@ -41,7 +42,7 @@ None.
 | `WS-AUTH-001-PLAN` | Merged | `authorization-service` | #91 | Merged as `ad6d644`; D4-D10 later approved. |
 | `WS-AUTH-001-01` | Merged | `codex/ws-auth-001-01-adopt-authorization-baseline` | #93 | Authorization baseline, Contributor terminology boundary, scanner, and repository contracts; merged as `772af1d`. |
 | `WS-AUTH-001-02` | Merged | `codex/ws-auth-001-02-verified-issuer-token` | #107 | Merged as `060b780`; reviewed code SHA `47dd5a7`. |
-| `WS-AUTH-001-03` | In review | `codex/ws-auth-001-03-legacy-actor-classification` | #109 | Reviewed code SHA `8e2ae48`; all required internal tracks pass. |
+| `WS-AUTH-001-03` | In review | `codex/ws-auth-001-03-legacy-actor-classification` | #109 | Reviewed code SHA `8c5334c`; external repair `4923b67`; all required internal tracks pass. |
 | `WS-AUTH-001-04` | Proposed | - | - | Request, error, and API control foundation. |
 | `WS-AUTH-001-05` | Proposed | - | - | Authority evidence and idempotency foundation. |
 | `WS-AUTH-001-06` | Proposed | - | - | Canonical actor profile and identity link. |

@@ -24,6 +24,8 @@ independent, and AUTH-04 remains inactive pending a separate post-merge start.
   identity projection.
 - Added deterministic canonical checksums and a future migration verifier.
 - Added a dry-run-first CLI with private, atomic, immutable envelope export.
+- Preserved the primary CLI failure and exit code when engine cleanup also
+  fails.
 - Added adversarial file, JSON, UUID, mismatch, TOCTOU, concurrency, privacy,
   and CLI behavior tests.
 - Expanded the authorization operations runbook and reconciled AUTH loop memory.
@@ -109,18 +111,19 @@ initiative raises that floor toward the authoritative 90 percent target.
 
 ## Reviewer Results
 
-All required tracks pass implementation SHA
-`8e2ae489834a3934d6ef507834139a1009dac2e6`. Merge integration `0ae502b`
-incorporates PR #108 without changing reviewed AUTH or QA implementation/test
-blobs, and final lifecycle head `a70b89c` passed engineering, security, QA,
-test-delta, CI, product, and docs re-review. Initial High and Medium findings
-were repaired and re-reviewed. Only documented low risks remain.
+All required tracks pass reviewed code SHA
+`8c5334c1635694689ef4a7fb11c572bd6a871e09`. Original implementation
+`8e2ae48` supplies the classifier foundation; merge integration `0ae502b`
+incorporates PR #108; prior lifecycle head `a70b89c` resolves its conflicts;
+and external repair `4923b67` preserves primary CLI failures across cleanup
+failure. Engineering, security, QA, test-delta, CI, product, docs, architecture,
+and reuse re-review passed with no remaining findings.
 
 ## External Review
 
 Ready PR #109 is open at
-`https://github.com/Flow-Research/workstream/pull/109`. Agent Gates pass;
-GitHub Backend CI, CodeRabbit, and explicit human review are pending.
+`https://github.com/Flow-Research/workstream/pull/109`. Local Agent Gates pass;
+rerun GitHub Backend CI, CodeRabbit, and explicit human review are pending.
 
 ## Remaining Risks
 
