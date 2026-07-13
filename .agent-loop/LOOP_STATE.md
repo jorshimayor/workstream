@@ -8,15 +8,19 @@
 - Branch: `codex/ws-auth-001-04b-postgres-rate-controls`
 - Worktree: `/home/abiorh/flow/workstream-auth-001-04b`
 - Status: AUTH-04A post-merge memory merged through PR #112 as `7749f54`; the
-  user explicitly started AUTH-04B, whose L1 preimplementation review is active.
+  user explicitly started AUTH-04B; its implementation candidate is entering
+  required internal review after deterministic evidence passed.
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
 - Latest integrated `main` merge commit: `7749f54`
-- Current gate: bounded AUTH-04B implementation and deterministic evidence under
-  the reviewed contract at `b5dceb1`.
+- Current gate: required AUTH-04B implementation review against an immutable
+  candidate SHA; no PR until all valid findings are resolved.
+- Size checkpoint: implementation is 409 changed non-comment production lines; the
+  required 350-line inspection passed and scope is frozen below the 500 stop.
 - Next chunk: none; do not start `WS-AUTH-001-05` automatically.
-- `WS-AUTH-001-04B` is active for planning/review only. AUTH-05 and later chunks
-  remain inactive.
+- Focused evidence: 93 owned tests pass at 99 percent aggregate changed-runtime
+  coverage; the isolated PostgreSQL concurrency/migration proofs and real API
+  E2E pass. AUTH-05 and later chunks remain inactive.
 - Parallel initiative: `WS-QUAL-001-01B2` is paused at the user's direction so
   AUTH receives the laptop's test capacity. Its last official whole-app result
   remains `6466/8159` statements (`79.249908%`); no replacement evidence exists.

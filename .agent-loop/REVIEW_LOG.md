@@ -12,6 +12,24 @@ Bounded AUTH-04B implementation is authorized under the 350-line checkpoint and
 500-line hard stop. Named dependencies remain unattached; AUTH-05 and all
 product authority changes remain inactive.
 
+`backend/tests/test_auth.py` was added as a test-only scope amendment after its
+canonical-verification consumer allowlist correctly detected the new unattached
+rate dependency. Only that expected inventory may change; auth runtime, routes,
+compatibility behavior, and authority remain out of scope.
+
+The implementation candidate passed 93 owned tests with 99 percent aggregate
+coverage across config, dependency, model, repository, and service modules.
+Real PostgreSQL proofs passed for atomic concurrency, durable denial, expiry,
+saturation, pruning, exact schema, and guarded downgrade. The real API E2E and
+all stale-wording, authorization-doc, artifact-contract, link, loop-state,
+ruff, and diff checks pass. Required implementation review is the current gate.
+
+The first production pass reached 408 changed non-comment lines. The mandatory
+350-line checkpoint inspected every production path and froze scope to the
+approved config, unattached dependencies, model, repository, service, model
+registration, and `0017` migration. Ninety-two lines remain before the hard
+stop; tests, docs, and evidence do not count.
+
 ## 2026-07-13 - WS-AUTH-001-04B Contract Repair Required
 
 Required L1 preimplementation review rejected activation head `5ed410d` before

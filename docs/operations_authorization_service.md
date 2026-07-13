@@ -60,6 +60,11 @@ preview fail closed when a required value is absent or outside its bound.
 | `WORKSTREAM_TOKEN_INTROSPECTION_WRITE_TIMEOUT_SECONDS` | Float `0.1..10` | `3` |
 | `WORKSTREAM_TOKEN_INTROSPECTION_POOL_TIMEOUT_SECONDS` | Float `0.1..10` | `1` |
 | `WORKSTREAM_TOKEN_INTROSPECTION_TOTAL_TIMEOUT_SECONDS` | Float `0.5..15` | `5` |
+| `WORKSTREAM_API_RATE_LIMIT_KEY_SECRET` | Canonical padded RFC 4648 Base64 decoding to `32..64` bytes | Optional until a protected route is attached; then required |
+| `WORKSTREAM_API_FIRST_ACCESS_RATE_LIMIT` | Integer `1..10000` | `10` |
+| `WORKSTREAM_API_FIRST_ACCESS_RATE_WINDOW_SECONDS` | Integer `1..3600` | `60` |
+| `WORKSTREAM_API_ADMIN_MUTATION_RATE_LIMIT` | Integer `1..10000` | `30` |
+| `WORKSTREAM_API_ADMIN_MUTATION_RATE_WINDOW_SECONDS` | Integer `1..3600` | `60` |
 
 Secrets, private keys, bearer tokens, full claims, and raw JWKS documents must
 not appear in committed configuration or evidence.
@@ -143,6 +148,48 @@ Use the correlation ID to join operator evidence. Never add bearer tokens,
 claims, subjects, emails, SQL, provider bodies, exception text, or secrets to
 responses or logs. AUTH-04A does not activate rate controls, grant APIs, or new
 product authority; those remain owned by later separately reviewed chunks.
+
+## PostgreSQL Rate Controls
+
+AUTH-04B provides unattached dependencies for future first-access and
+authority-management mutations. No production route is rate limited by this
+chunk. When an owning route attaches one, every replica must use the same
+secret and settings. Missing secret or database access fails the dependency
+closed with retryable HTTP 503; an exhausted window returns retryable HTTP 429
+with an integer `Retry-After`.
+
+Generate the secret outside the repository and store it in the deployment
+secret manager:
+
+```bash
+python3 -c 'import base64,secrets; print(base64.b64encode(secrets.token_bytes(32)).decode())'
+```
+
+Counters store only the server-owned scope and an HMAC-SHA256 digest of the
+verified issuer/subject. They do not store raw identity, actor, token, claim,
+role, email, or network values. Consumption uses database time and commits in
+an independent session before the protected mutation may continue or return
+429, so downstream rollback does not restore allowance.
+
+Secret rotation intentionally creates a new digest space. Before rotating:
+
+1. Quiesce every protected write for at least the largest effective
+   pre-rotation window configured on any replica.
+2. Rotate every replica while writes remain quiesced; mixed-secret replicas
+   must not serve protected writes.
+3. Delete only rows expired by PostgreSQL time:
+
+```sql
+DELETE FROM api_rate_control_counters
+WHERE window_expires_at <= statement_timestamp();
+```
+
+4. Confirm all replicas use the new secret, then resume protected writes.
+
+Runtime consumption opportunistically deletes at most 100 expired other rows.
+On idle systems, operators may run the same expired-only SQL cleanup. Never
+delete active rows to recover capacity, and never downgrade migration `0017`
+while the table is nonempty; the guarded downgrade refuses and rolls back.
 
 ## JWKS Rotation And Outage
 

@@ -39,6 +39,7 @@ backend/app/modules/api_controls/service.py
 backend/app/db/models.py
 backend/alembic/versions/0017_api_controls.py
 backend/tests/test_api_rate_controls.py
+backend/tests/test_auth.py
 backend/tests/test_config.py
 backend/tests/test_alembic.py
 backend/scripts/api_contract_e2e.py
@@ -218,6 +219,12 @@ python3 scripts/test_agent_gates.py
 git diff --unified=0 origin/main...HEAD -- backend/tests | (! rg '^-(.*assert|.*pytest\.raises|.*pytest\.mark\.(skip|xfail)|.*skipTest)')
 git diff --check
 ```
+
+`backend/tests/test_auth.py` was added as a test-only scope amendment after the
+implemented canonical-verification consumer correctly tripped its static
+consumer allowlist. The amendment may update only that allowlist for the new
+unattached `api/deps/api_controls.py` consumer; it does not permit auth runtime,
+route, compatibility, or authority changes.
 
 ## Required reviewers
 

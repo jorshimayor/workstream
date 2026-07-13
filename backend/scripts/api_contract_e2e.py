@@ -20,8 +20,15 @@ from uuid import uuid4
 import httpx
 from alembic import command
 from alembic.config import Config
+from pydantic import SecretStr
+from sqlalchemy import text
 
 from app.db import session as db_session
+from app.modules.api_controls.service import (
+    FIRST_ACCESS_SCOPE,
+    RateControlService,
+    rate_key_digest,
+)
 from app.modules.projects.models import PostSubmitCheckerPolicy, ProjectSetupRun
 from app.modules.projects.post_submit_policy import (
     build_project_post_submit_checker_spec,
@@ -210,8 +217,60 @@ def api_environment() -> dict[str, str]:
     env["WORKSTREAM_CELERY_TASK_ALWAYS_EAGER"] = "true"
     env["WORKSTREAM_CELERY_BROKER_URL"] = "memory://"
     env["WORKSTREAM_CELERY_RESULT_BACKEND_URL"] = "cache+memory://"
+    env.setdefault(
+        "WORKSTREAM_API_RATE_LIMIT_KEY_SECRET",
+        base64.b64encode(os.urandom(32)).decode("ascii"),
+    )
     env["PYTHONPATH"] = str(project_root())
     return env
+
+
+async def exercise_rate_control_contract(env: dict[str, str]) -> None:
+    """Prove one durable denial without exposing the pseudonymous key."""
+    subject = f"api-contract-rate-{uuid4()}"
+    secret = SecretStr(env["WORKSTREAM_API_RATE_LIMIT_KEY_SECRET"])
+    service = RateControlService()
+    first = await service.consume(
+        control_scope=FIRST_ACCESS_SCOPE,
+        issuer=DEFAULT_FLOW_ISSUER,
+        subject=subject,
+        limit=1,
+        window_seconds=60,
+        secret=secret,
+    )
+    denied = await service.consume(
+        control_scope=FIRST_ACCESS_SCOPE,
+        issuer=DEFAULT_FLOW_ISSUER,
+        subject=subject,
+        limit=1,
+        window_seconds=60,
+        secret=secret,
+    )
+    assert first.allowed is True and first.request_count == 1
+    assert denied.allowed is False and denied.request_count == 2
+    assert 1 <= denied.retry_after <= 60
+
+    digest = rate_key_digest(secret, FIRST_ACCESS_SCOPE, DEFAULT_FLOW_ISSUER, subject)
+    async with db_session.get_session_factory()() as session:
+        row = (
+            await session.execute(
+                text(
+                    "select control_scope, key_digest, request_count "
+                    "from api_rate_control_counters "
+                    "where control_scope = :scope and key_digest = :digest"
+                ),
+                {"scope": FIRST_ACCESS_SCOPE, "digest": digest},
+            )
+        ).one()
+        assert tuple(row) == (FIRST_ACCESS_SCOPE, digest, 2)
+        await session.execute(
+            text(
+                "delete from api_rate_control_counters "
+                "where control_scope = :scope and key_digest = :digest"
+            ),
+            {"scope": FIRST_ACCESS_SCOPE, "digest": digest},
+        )
+        await session.commit()
 
 
 def start_api_server(port: int, env: dict[str, str]) -> tuple[subprocess.Popen, Path]:
@@ -1320,6 +1379,7 @@ async def main(env: dict[str, str]) -> None:
         env: Environment variables for the API server.
     """
     await db_session.dispose_engine()
+    await exercise_rate_control_contract(env)
 
     port = find_free_port()
     base_url = f"http://127.0.0.1:{port}"

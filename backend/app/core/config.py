@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import base64
+import binascii
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -76,6 +78,11 @@ class Settings(BaseSettings):
     celery_result_backend_url: str | None = None
     celery_task_always_eager: bool = False
     actor_registry_refresh_interval_seconds: int = Field(default=300, ge=0, le=86_400)
+    api_rate_limit_key_secret: SecretStr | None = None
+    api_first_access_rate_limit: int = Field(default=10, ge=1, le=10_000)
+    api_first_access_rate_window_seconds: int = Field(default=60, ge=1, le=3_600)
+    api_admin_mutation_rate_limit: int = Field(default=30, ge=1, le=10_000)
+    api_admin_mutation_rate_window_seconds: int = Field(default=60, ge=1, le=3_600)
     artifact_store_backend: Literal["disabled", "local", "flow_node"] = "disabled"
     artifact_local_root: Path | None = None
     artifact_retention_policy_version: str | None = None
@@ -86,7 +93,18 @@ class Settings(BaseSettings):
         env_prefix="WORKSTREAM_",
         env_file=".env",
         extra="ignore",
+        hide_input_in_errors=True,
     )
+
+    @field_validator("api_rate_limit_key_secret")
+    @classmethod
+    def validate_api_rate_limit_key_secret(
+        cls, value: SecretStr | None
+    ) -> SecretStr | None:
+        """Require canonical bounded Base64 while retaining redacted storage."""
+        if value is not None:
+            decode_api_rate_limit_key_secret(value)
+        return value
 
     @model_validator(mode="after")
     def validate_artifact_storage(self) -> Settings:
@@ -120,3 +138,16 @@ def get_settings() -> Settings:
         Settings resolved from environment variables and optional ``.env``.
     """
     return Settings()
+
+
+def decode_api_rate_limit_key_secret(value: SecretStr) -> bytes:
+    """Decode one canonical padded Base64 rate-control key."""
+    secret = value.get_secret_value()
+    try:
+        encoded = secret.encode("ascii")
+        decoded = base64.b64decode(encoded, validate=True)
+    except (UnicodeEncodeError, binascii.Error, ValueError) as exc:
+        raise ValueError("invalid API rate limit key secret") from exc
+    if not 32 <= len(decoded) <= 64 or base64.b64encode(decoded) != encoded:
+        raise ValueError("invalid API rate limit key secret")
+    return decoded

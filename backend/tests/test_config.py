@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import base64
+
 import pytest
 from pydantic import ValidationError
 
@@ -23,6 +25,59 @@ def test_default_settings_are_fail_closed(monkeypatch: pytest.MonkeyPatch) -> No
     assert settings.auth_provider == "flow"
     assert settings.database_url is None
     assert settings.dev_auth_token is None
+    assert settings.api_rate_limit_key_secret is None
+    assert settings.api_first_access_rate_limit == 10
+    assert settings.api_first_access_rate_window_seconds == 60
+    assert settings.api_admin_mutation_rate_limit == 30
+    assert settings.api_admin_mutation_rate_window_seconds == 60
+
+
+def test_rate_limit_secret_is_canonical_and_redacted() -> None:
+    encoded = base64.b64encode(bytes(range(32))).decode("ascii")
+    settings = Settings(api_rate_limit_key_secret=encoded)
+
+    assert settings.api_rate_limit_key_secret is not None
+    assert settings.api_rate_limit_key_secret.get_secret_value() == encoded
+    assert encoded not in repr(settings)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "",
+        " ",
+        "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=\n",
+        "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+        base64.b64encode(bytes(31)).decode("ascii"),
+        base64.b64encode(bytes(65)).decode("ascii"),
+        "\u00e9" * 44,
+    ],
+)
+def test_rate_limit_secret_rejects_invalid_values_without_echo(value: str) -> None:
+    with pytest.raises(ValidationError) as caught:
+        Settings(api_rate_limit_key_secret=value)
+    rendered = str(caught.value)
+    assert "input_value" not in rendered
+    if value.strip():
+        assert value not in rendered
+
+
+@pytest.mark.parametrize(
+    ("field_name", "value"),
+    [
+        ("api_first_access_rate_limit", 0),
+        ("api_first_access_rate_limit", 10_001),
+        ("api_admin_mutation_rate_limit", 0),
+        ("api_admin_mutation_rate_limit", 10_001),
+        ("api_first_access_rate_window_seconds", 0),
+        ("api_first_access_rate_window_seconds", 3_601),
+        ("api_admin_mutation_rate_window_seconds", 0),
+        ("api_admin_mutation_rate_window_seconds", 3_601),
+    ],
+)
+def test_rate_limit_numeric_bounds_are_enforced(field_name: str, value: int) -> None:
+    with pytest.raises(ValidationError):
+        Settings(**{field_name: value})
 
 
 def test_settings_reject_unknown_environment() -> None:
