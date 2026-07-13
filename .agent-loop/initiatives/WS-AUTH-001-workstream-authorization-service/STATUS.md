@@ -14,7 +14,7 @@ preimplementation plan review passed, and the user explicitly approved D12's
 exact production dependency changes. After a coverage-priority pause, the user
 explicitly resumed AUTH in its separate worktree on 2026-07-12. Bounded runtime
 implementation and repair review are complete on reviewed code SHA `47dd5a7`;
-all required internal tracks pass and PR publication evidence is pending.
+all required internal tracks pass and ready PR #107 is published.
 
 ## Active planning chunk
 
@@ -36,7 +36,7 @@ publication after D12 approval.
 |---|---|---|---:|---|
 | `WS-AUTH-001-PLAN` | Merged | `authorization-service` | #91 | Merged as `ad6d644`; D4-D10 later approved. |
 | `WS-AUTH-001-01` | Merged | `codex/ws-auth-001-01-adopt-authorization-baseline` | #93 | Authorization baseline, Contributor terminology boundary, scanner, and repository contracts; merged as `772af1d`. |
-| `WS-AUTH-001-02` | Internal review passed | `codex/ws-auth-001-02-verified-issuer-token` | - | Reviewed code SHA `47dd5a7`; evidence and trust bundle prepared for ready PR publication. |
+| `WS-AUTH-001-02` | Ready PR; external review | `codex/ws-auth-001-02-verified-issuer-token` | #107 | Reviewed code SHA `47dd5a7`; internal and evidence review passed. |
 | `WS-AUTH-001-03` | Proposed | - | - | Legacy actor classification preflight. |
 | `WS-AUTH-001-04` | Proposed | - | - | Request, error, and API control foundation. |
 | `WS-AUTH-001-05` | Proposed | - | - | Authority evidence and idempotency foundation. |

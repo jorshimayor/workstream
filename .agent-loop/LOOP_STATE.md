@@ -9,12 +9,12 @@
 - Branch: `codex/ws-auth-001-02-verified-issuer-token`
 - Worktree: `/home/abiorh/flow/workstream-auth-001-02`
 - Status: implementation and repair review complete; all required internal
-  tracks pass on reviewed code SHA `47dd5a7`; PR publication evidence pending.
+  tracks pass on reviewed code SHA `47dd5a7`; ready PR #107 is published.
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
 - Latest integrated `main` merge commit: `6dccb8e`
-- Current gate: validate durable review evidence, publish a ready PR, and stop
-  for external checks and human review.
+- Current gate: external checks and explicit human review on PR #107. Do not
+  merge or start the next chunk automatically.
 - Next chunk: none; do not start `WS-AUTH-001-03` automatically.
 - Parallel initiative: `WS-QUAL-001-01B1A-R2` merged through PR #105 as
   `8a4182e`, and its post-merge memory merged through PR #106 as `6dccb8e`.

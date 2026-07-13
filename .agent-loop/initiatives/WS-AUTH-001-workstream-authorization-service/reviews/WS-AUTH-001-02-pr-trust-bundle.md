@@ -111,8 +111,8 @@ test delta. First-cycle findings were repaired and independently re-reviewed.
 
 ## External Review
 
-Not yet published. GitHub checks, CodeRabbit, and human review begin after this
-evidence-bound branch is pushed and the ready PR is opened.
+Ready PR #107 is published. GitHub checks, CodeRabbit, and explicit human
+review remain pending.
 
 ## Remaining Risks
 
