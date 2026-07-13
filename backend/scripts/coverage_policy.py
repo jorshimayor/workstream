@@ -161,7 +161,7 @@ class Bindings(ast.NodeVisitor):
         self.tables, self.child_positions = [table], [0]
         self.scopes, self.types, self.cases = [{}], ["module"], [False]
         self.future_annotations, self.inline_depths, self.comp_writes = future_annotations, [0], []
-        self.weak, self.raises = False, set()
+        self.weak, self.raises, self.suppressed, self.consume_genexpr = False, set(), 0, 0
 
     def next_child(self) -> symtable.SymbolTable:
         position = self.child_positions[-1]
@@ -192,6 +192,8 @@ class Bindings(ast.NodeVisitor):
         self.cases.pop()
         self.inline_depths.pop()
     def put(self, name: str, kind: str, offset: int = 0) -> None:
+        if self.suppressed:
+            return
         try:
             symbol = self.tables[-1].lookup(name)
         except KeyError:
@@ -214,11 +216,19 @@ class Bindings(ast.NodeVisitor):
     def kind(self, node: ast.AST, bindings: dict[str, str] | None = None) -> str:
         if isinstance(node, ast.Name):
             return (bindings or {}).get(node.id, self.get(node.id))
+        if isinstance(node, ast.Starred):
+            return self.kind(node.value, bindings)
+        if isinstance(node, ast.IfExp):
+            kinds = {self.kind(node.body, bindings), self.kind(node.orelse, bindings)}
+            return kinds.pop() if len(kinds) == 1 else "ambiguous"
+        if isinstance(node, ast.BoolOp):
+            kinds = {self.kind(item, bindings) for item in node.values}
+            return kinds.pop() if len(kinds) == 1 else "ambiguous"
         if isinstance(node, (ast.Tuple, ast.List, ast.Set)):
             kinds = {self.kind(item, bindings) for item in node.elts}
             return "local" if not kinds else kinds.pop() if len(kinds) == 1 else "ambiguous"
         if isinstance(node, ast.Dict):
-            kinds = {self.kind(item, bindings) for item in node.keys if item}
+            kinds = {self.kind(item or value, bindings) for item, value in zip(node.keys, node.values, strict=True)}
             return "local" if not kinds else kinds.pop() if len(kinds) == 1 else "ambiguous"
         if isinstance(node, ast.Call) and self.kind(node.func, bindings) in {"testcase", "ambiguous"}:
             return "case" if self.kind(node.func, bindings) == "testcase" else "ambiguous"
@@ -302,6 +312,8 @@ class Bindings(ast.NodeVisitor):
             return node.elts[0], environment
         if isinstance(node, ast.Dict) and len(node.keys) == 1 and node.keys[0]:
             return node.keys[0], environment
+        if isinstance(node, ast.Dict) and len(node.keys) == 1 and node.keys[0] is None:
+            return self.element_provenance(node.values[0], environment)
         if isinstance(node, (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)):
             for generator in node.generators:
                 value, source = self.element_provenance(generator.iter, environment)
@@ -331,7 +343,8 @@ class Bindings(ast.NodeVisitor):
         if isinstance(node.ctx, ast.Store):
             self.put(node.id, "local")
     def visit_Attribute(self, node: ast.Attribute) -> None:
-        self.weak |= self.kind(node) in {"blocked", "ambiguous"}
+        if not self.suppressed:
+            self.weak |= self.kind(node) in {"blocked", "ambiguous"}
         self.generic_visit(node)
     def visit_If(self, node: ast.If) -> None:
         self.visit(node.test)
@@ -365,7 +378,7 @@ class Bindings(ast.NodeVisitor):
         def inspect_comp(expression: ast.ListComp | ast.SetComp | ast.DictComp | ast.GeneratorExp, consume: bool) -> None:
             for generator in expression.generators:
                 inspect(generator.iter)
-                if isinstance(generator.iter, (ast.Tuple, ast.List, ast.Set)) and not generator.iter.elts:
+                if isinstance(generator.iter, (ast.Tuple, ast.List, ast.Set)) and not generator.iter.elts or isinstance(generator.iter, ast.Dict) and not generator.iter.keys:
                     return
                 if consume:
                     for condition in generator.ifs:
@@ -395,38 +408,74 @@ class Bindings(ast.NodeVisitor):
                     inspect(item)
                 if any(self.kind(base, bindings) in {"testcase", "ambiguous"} for base in node.bases):
                     record_kind(node.name, "testcase")
-                body: list[ast.AST] = []
-                def collect(item: ast.AST) -> None:
-                    if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
-                        return
-                    body.append(item)
-                    for child in ast.iter_child_nodes(item):
-                        collect(child)
-                for item in node.body:
-                    collect(item)
-                globals_ = {name for item in body if isinstance(item, ast.Global) for name in item.names}
-                for item in body:
-                    if isinstance(item, (ast.Assign, ast.AnnAssign, ast.NamedExpr)):
-                        targets = item.targets if isinstance(item, ast.Assign) else [item.target]
-                        for target in targets:
-                            if self.target_names(target) & globals_ and item.value:
-                                record(target, item.value)
-                    if isinstance(item, ast.Import):
-                        for alias in item.names:
-                            name = alias.asname or alias.name.split(".", 1)[0]
-                            if name in globals_ and alias.name.split(".", 1)[0] in {"pytest", "unittest"}:
-                                record_kind(name, alias.name.split(".", 1)[0])
-                    if isinstance(item, ast.ImportFrom) and (item.module or "").split(".", 1)[0] in {"pytest", "unittest"}:
-                        for alias in item.names:
-                            if (alias.asname or alias.name) in globals_:
-                                record_kind(alias.asname or alias.name, "raises" if alias.name == "raises" else "blocked")
-                    if isinstance(item, ast.AugAssign) and self.target_names(item.target) & globals_:
-                        record(item.target, item.value)
+                def declarations(items: list[ast.stmt]) -> set[str]:
+                    names: set[str] = set()
+                    def collect(item: ast.AST) -> None:
+                        if isinstance(item, ast.Global):
+                            names.update(item.names)
+                        elif not isinstance(item, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+                            for child in ast.iter_child_nodes(item):
+                                collect(child)
+                    for item in items:
+                        collect(item)
+                    return names
+                globals_, state = declarations(node.body), {name: bindings.get(name, self.get(name)) for name in declarations(node.body)}
+                def set_target(target: ast.AST, value: ast.AST, current: dict[str, str]) -> None:
+                    kind = self.kind(value, {**bindings, **current})
+                    for name in self.target_names(target) & globals_:
+                        current[name] = kind
+                def transfer(items: list[ast.stmt], current: dict[str, str]) -> dict[str, str]:
+                    for item in items:
+                        if isinstance(item, ast.ClassDef):
+                            inspect(item)
+                            current.update({name: bindings.get(name, current[name]) for name in globals_})
+                        elif isinstance(item, ast.Assign):
+                            inspect(item.value)
+                            for target in item.targets:
+                                set_target(target, item.value, current)
+                        elif isinstance(item, (ast.AnnAssign, ast.NamedExpr)) and item.value:
+                            inspect(item.value)
+                            set_target(item.target, item.value, current)
+                        elif isinstance(item, ast.Import):
+                            for alias in item.names:
+                                name, root = alias.asname or alias.name.split(".", 1)[0], alias.name.split(".", 1)[0]
+                                if name in globals_:
+                                    current[name] = root if root in {"pytest", "unittest"} else "local"
+                        elif isinstance(item, ast.ImportFrom):
+                            root = (item.module or "").split(".", 1)[0]
+                            for alias in item.names:
+                                name = alias.asname or alias.name
+                                if name in globals_:
+                                    current[name] = {"mark": "mark", "raises": "raises", "TestCase": "testcase"}.get(alias.name, "blocked" if root in {"pytest", "unittest"} and alias.name in BLOCKED else "local")
+                        elif isinstance(item, ast.AugAssign) and self.target_names(item.target) & globals_:
+                            inspect(item.value)
+                            for name in self.target_names(item.target) & globals_:
+                                current[name] = "local" if current[name] == self.kind(item.value, {**bindings, **current}) == "local" else "ambiguous"
+                        elif isinstance(item, ast.If):
+                            inspect(item.test)
+                            left, right = transfer(item.body, current.copy()), transfer(item.orelse, current.copy())
+                            current = {name: left[name] if left[name] == right[name] else "ambiguous" for name in globals_}
+                        elif isinstance(item, (ast.For, ast.AsyncFor, ast.While)):
+                            inspect(item.iter if isinstance(item, (ast.For, ast.AsyncFor)) else item.test)
+                            body = transfer(item.body, current.copy())
+                            current = {name: current[name] if current[name] == body[name] else "ambiguous" for name in globals_}
+                            current = transfer(item.orelse, current)
+                        elif isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                            inspect(item)
+                        else:
+                            for child in ast.iter_child_nodes(item):
+                                inspect(child)
+                    return current
+                state = transfer(node.body, state)
+                for name, kind in state.items():
+                    record_kind(name, kind)
                 return
             if isinstance(node, ast.Call):
                 for argument in node.args:
-                    if isinstance(argument, ast.GeneratorExp):
-                        inspect_comp(argument, True)
+                    eager = isinstance(node.func, ast.Name) and node.func.id in {"all", "any", "dict", "frozenset", "list", "max", "min", "next", "set", "sum", "tuple"}
+                    expression = argument.value if isinstance(argument, ast.Starred) else argument
+                    if isinstance(expression, ast.GeneratorExp) and (eager or isinstance(argument, ast.Starred)):
+                        inspect_comp(expression, True)
             if isinstance(node, (ast.For, ast.AsyncFor)) and isinstance(node.iter, ast.GeneratorExp):
                 inspect_comp(node.iter, True)
             if isinstance(node, ast.GeneratorExp):
@@ -466,7 +515,9 @@ class Bindings(ast.NodeVisitor):
         return {name for name, kind in bindings.items() if kind != "local"}
 
     def visit_For(self, node: ast.For) -> None:
+        self.consume_genexpr += 1
         self.visit(node.iter)
+        self.consume_genexpr -= 1
         before = self.state()
         for name in self.loop_summary(node.body):
             self.put(name, "ambiguous")
@@ -579,13 +630,22 @@ class Bindings(ast.NodeVisitor):
 
     def visit_Call(self, node: ast.Call) -> None:
         kind = self.kind(node.func)
-        self.weak |= kind in {"blocked", "ambiguous"} or kind == "builtin" and isinstance(node.func, ast.Name) and node.func.id == "exec"
-        if kind in {"raises", "ambiguous"}:
+        if not self.suppressed:
+            self.weak |= kind in {"blocked", "ambiguous"} or kind == "builtin" and isinstance(node.func, ast.Name) and node.func.id == "exec"
+        if not self.suppressed and kind in {"raises", "ambiguous"}:
             self.raises.add((node.lineno, node.end_lineno))
-        if isinstance(node.func, ast.Attribute) and node.func.attr == "skipTest":
+        if not self.suppressed and isinstance(node.func, ast.Attribute) and node.func.attr == "skipTest":
             value = node.func.value
             self.weak |= self.kind(value) in {"case", "ambiguous"} or self.cases[-1] and (isinstance(value, ast.Name) and value.id == "self" or isinstance(value, ast.Call) and isinstance(value.func, ast.Name) and value.func.id == "super")
-        self.generic_visit(node)
+        self.visit(node.func)
+        eager = isinstance(node.func, ast.Name) and node.func.id in {"all", "any", "dict", "frozenset", "list", "max", "min", "next", "set", "sum", "tuple"}
+        for argument in node.args:
+            consumed = isinstance(argument, ast.Starred) and isinstance(argument.value, ast.GeneratorExp) or eager and isinstance(argument, ast.GeneratorExp)
+            self.consume_genexpr += consumed
+            self.visit(argument)
+            self.consume_genexpr -= consumed
+        for keyword in node.keywords:
+            self.visit(keyword.value)
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         for item in (*node.args.defaults, *node.args.kw_defaults, *node.decorator_list):
@@ -644,16 +704,27 @@ class Bindings(ast.NodeVisitor):
             self.types.append("function")
             self.cases.append(self.cases[-1])
             self.inline_depths[-1] += 1
-        before = self.state()
+        before, unreachable, lazy = self.state(), False, isinstance(node, ast.GeneratorExp) and not self.consume_genexpr
+        self.suppressed += lazy
         for index, generator in enumerate(generators):
             if generator is not generators[0]:
+                self.suppressed += unreachable
                 self.visit(generator.iter)
-            value, bindings = self.element_provenance(generator.iter, first_bindings if index == 0 else None)
+                self.suppressed -= unreachable
+            value, bindings, empty = (*self.element_provenance(generator.iter, first_bindings if index == 0 else None), isinstance(generator.iter, (ast.Tuple, ast.List, ast.Set)) and not generator.iter.elts or isinstance(generator.iter, ast.Dict) and not generator.iter.keys)
+            self.suppressed += unreachable or empty
             self.assign_target(generator.target, value, bindings)
+            self.suppressed -= unreachable or empty
+            unreachable |= empty
+            self.suppressed += unreachable
             for condition in generator.ifs:
                 self.visit(condition)
+            self.suppressed -= unreachable
+        self.suppressed += unreachable
         for value in ((node.key, node.value) if isinstance(node, ast.DictComp) else (node.elt,)):
             self.visit(value)
+        self.suppressed -= unreachable
+        self.suppressed -= lazy
         if has_table:
             self.leave()
         else:
