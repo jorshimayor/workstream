@@ -29,8 +29,14 @@ MAX_VALIDATION_ERRORS = 20
 MAX_VALIDATION_LOCATION_PARTS = 8
 MAX_VALIDATION_CODE_LENGTH = 64
 ERROR_RESPONSE_HEADERS = {
-    "X-Request-ID": {"schema": {"type": "string", "format": "uuid"}},
-    "X-Correlation-ID": {"schema": {"type": "string", "format": "uuid"}},
+    "X-Request-ID": {
+        "required": True,
+        "schema": {"type": "string", "format": "uuid"},
+    },
+    "X-Correlation-ID": {
+        "required": True,
+        "schema": {"type": "string", "format": "uuid"},
+    },
 }
 DEFAULT_ERROR_RESPONSES = {
     status_code: {
@@ -40,22 +46,8 @@ DEFAULT_ERROR_RESPONSES = {
     }
     for status_code, description in {
         400: "Invalid request.",
-        401: "Authentication failed.",
-        403: "Permission denied.",
-        404: "Resource not found.",
-        405: "Method not allowed.",
-        409: "Request conflict.",
-        422: "Request validation failed.",
-        429: "Rate limit exceeded.",
         500: "Internal server error.",
-        503: "Service unavailable.",
     }.items()
-}
-DEFAULT_ERROR_RESPONSES[401]["headers"]["WWW-Authenticate"] = {
-    "schema": {"type": "string"}
-}
-DEFAULT_ERROR_RESPONSES[429]["headers"]["Retry-After"] = {
-    "schema": {"type": "integer", "minimum": 1}
 }
 
 

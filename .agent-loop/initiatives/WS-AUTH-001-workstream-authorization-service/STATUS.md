@@ -25,8 +25,11 @@ CodeRabbit passed on final branch head `43ffbfe`, then explicit human approval
 merged PR #109 to `main` as `f06532e` on 2026-07-13. AUTH-03 post-merge memory
 merged through PR #110 as `1864867`. The user then explicitly started AUTH-04.
 Required L1 plan review rejected the combined request/error/rate-control scope
-before runtime edits and required a split. Only AUTH-04A contract repair and
-preimplementation re-review are now active; AUTH-04B is inactive.
+before runtime edits and required a split. AUTH-04A's final repaired contract
+passed both required preimplementation reviews at `f98bbfc`. Implementation
+candidate `2a129f4` then entered required internal review; valid OpenAPI,
+logging, behavior-proof, and lifecycle-evidence findings are under repair.
+AUTH-04B remains inactive.
 
 ## Active planning chunk
 
@@ -34,8 +37,8 @@ None.
 
 ## Active implementation chunk
 
-`WS-AUTH-001-04A` - Request And Error Context. Runtime edits remain gated on
-the required repaired-contract preimplementation re-review.
+`WS-AUTH-001-04A` - Request And Error Context. Implementation repair is active
+under the reviewed contract; no later chunk is active.
 
 ## Current implementation branch
 
@@ -50,7 +53,7 @@ the required repaired-contract preimplementation re-review.
 | `WS-AUTH-001-02` | Merged | `codex/ws-auth-001-02-verified-issuer-token` | #107 | Merged as `060b780`; reviewed code SHA `47dd5a7`. |
 | `WS-AUTH-001-03` | Merged | `codex/ws-auth-001-03-legacy-actor-classification` | #109 | Merged as `f06532e`; reviewed code `8c5334c`; final branch head `43ffbfe`. |
 | `WS-AUTH-001-04` | Split | `codex/ws-auth-001-04-request-api-controls` | - | Parent split before runtime implementation. |
-| `WS-AUTH-001-04A` | Active | `codex/ws-auth-001-04-request-api-controls` | - | Repaired contract awaiting required preimplementation re-review; no runtime edit yet. |
+| `WS-AUTH-001-04A` | In review | `codex/ws-auth-001-04-request-api-controls` | - | Repaired contract passed at `f98bbfc`; implementation repair active after review of `2a129f4`. |
 | `WS-AUTH-001-04B` | Inactive | - | - | PostgreSQL rate controls; requires 04A merge/memory and separate explicit start. |
 | `WS-AUTH-001-05` | Proposed | - | - | Authority evidence and idempotency foundation. |
 | `WS-AUTH-001-06` | Proposed | - | - | Canonical actor profile and identity link. |
@@ -68,9 +71,10 @@ the required repaired-contract preimplementation re-review.
 ## Blockers
 
 No external blocker. The combined AUTH-04 plan failed its internal gate and was
-split before runtime edits. AUTH-04A must pass repaired-contract review before
-implementation. AUTH-04B later owns the migration corrected from the now-owned
-`0016` prefix to `0017` on current main, but remains inactive. Non-test
+split before runtime edits. AUTH-04A's repaired contract passed at `f98bbfc`;
+valid implementation-review findings must pass repair review before PR.
+AUTH-04B later owns the migration corrected from the now-owned `0016` prefix to
+`0017` on current main, but remains inactive. Non-test
 operators must later supply explicit classification evidence rather than
 inferred kinds before the owning canonical actor migration.
 

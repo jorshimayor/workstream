@@ -4,14 +4,14 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-04A` | Request And Error Context | L1 | Active; repaired contract awaiting required preimplementation re-review |
+| `WS-AUTH-001-04A` | Request And Error Context | L1 | Implementation repair under required internal review |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
 | `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Inactive until 04A merge/memory and a separate explicit user start |
-| `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Inactive pending explicit user start |
+| `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Paused for AUTH priority; no valid replacement baseline yet |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02` | Flow Node Adapter And Reconciliation | L1 | Proposed; inactive pending separate explicit user start |

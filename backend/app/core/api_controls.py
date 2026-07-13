@@ -38,8 +38,6 @@ class ApiErrorResponse(BaseModel):
 
     error: ApiError
     detail: Any | None = None
-    code: str | None = None
-    details: dict[str, Any] | None = None
 
 
 class StructuredHTTPException(HTTPException):
@@ -232,6 +230,10 @@ class RequestContextMiddleware:
                     extra={"correlation_id": correlation_id},
                 )
                 return
+            LOGGER.error(
+                "request_failed_before_response_start",
+                extra={"correlation_id": correlation_id},
+            )
             response = error_response(
                 Request(scope, receive),
                 status_code=500,
@@ -285,7 +287,7 @@ def install_api_control_openapi(app: FastAPI) -> None:
             },
         }
         methods = {"get", "put", "post", "delete", "options", "head", "patch", "trace"}
-        for path_item in schema.get("paths", {}).values():
+        for path, path_item in schema.get("paths", {}).items():
             for method, operation in path_item.items():
                 if method not in methods:
                     continue
@@ -299,7 +301,31 @@ def install_api_control_openapi(app: FastAPI) -> None:
                     identity = (parameter["in"], parameter["name"].lower())
                     if identity not in present:
                         parameters.append(parameter)
-                for response in operation.get("responses", {}).values():
+                responses = operation.get("responses", {})
+                if path not in {"/health", "/api/v1/health"}:
+                    for status, description in {
+                        "401": "Authentication failed.",
+                        "403": "Permission denied.",
+                        "503": "Identity verification unavailable.",
+                    }.items():
+                        headers = dict(response_headers)
+                        if status == "401":
+                            headers["WWW-Authenticate"] = {"schema": {"type": "string"}}
+                        responses.setdefault(
+                            status,
+                            {
+                                "description": description,
+                                "headers": headers,
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/ApiErrorResponse"
+                                        }
+                                    }
+                                },
+                            },
+                        )
+                for response in responses.values():
                     headers = response.setdefault("headers", {})
                     for name, header_schema in response_headers.items():
                         headers.setdefault(name, header_schema)

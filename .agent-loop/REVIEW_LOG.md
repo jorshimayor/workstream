@@ -1,5 +1,25 @@
 # Review Log
 
+## 2026-07-13 - WS-AUTH-001-04A Implementation Review Repair
+
+The final repaired 04A contract passed both required preimplementation review
+tracks at exact commit `f98bbfc` before runtime implementation began. The
+implementation crossed the 350 non-comment production-line checkpoint; scope
+was inspected and frozen to the approved request/error boundary, with no rate
+control, schema migration, grant, role, or product-authority work. The durable
+checkpoint record was omitted at that time and is repaired here. The candidate
+remains below the 500-line hard stop; 04B and later chunks are inactive.
+
+Required implementation review of exact head `2a129f4` passed security,
+product authority, test-delta, CI-integrity, ASGI architecture, and shared
+adapter-boundary checks, but rejected publication pending truthful per-route
+OpenAPI, required response-header metadata, bounded pre-response failure
+logging, complete real-ASGI error/schema/inventory proof, and synchronized loop
+state. Those valid findings are in the first bounded repair cycle. A full-suite
+run against `2a129f4` was stopped after findings made that exact-head evidence
+obsolete; its partial output contained one unidentified failure and is not
+completion evidence.
+
 ## 2026-07-13 - WS-AUTH-001-04 Split Required Before Implementation
 
 Required L1 plan review rejected the combined request/error/rate-control parent

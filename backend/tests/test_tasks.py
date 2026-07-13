@@ -809,8 +809,8 @@ def test_submission_create_openapi_documents_domain_error() -> None:
     assert {"$ref": "#/components/schemas/HTTPValidationError"} in response_422["oneOf"]
     domain_schema = next(option for option in response_422["oneOf"] if "properties" in option)
     assert domain_schema["properties"]["code"]["enum"] == ["pre_submission_checker_failed"]
-    assert "details" in domain_schema["properties"]
-    assert "error" in domain_schema["required"]
+    assert set(domain_schema["required"]) == {"code", "details", "error"}
+    assert domain_schema["additionalProperties"] is False
 
 
 def test_task_context_openapi_documents_locked_context_domain_error() -> None:
@@ -823,8 +823,8 @@ def test_task_context_openapi_documents_locked_context_domain_error() -> None:
     assert {"$ref": "#/components/schemas/HTTPValidationError"} in response_422["oneOf"]
     domain_schema = next(option for option in response_422["oneOf"] if "properties" in option)
     assert domain_schema["properties"]["code"]["enum"] == ["task_locked_context_invalid"]
-    assert "details" in domain_schema["properties"]
-    assert "error" in domain_schema["required"]
+    assert set(domain_schema["required"]) == {"code", "details", "error"}
+    assert domain_schema["additionalProperties"] is False
 
 
 def test_task_locked_context_constraints_bind_task_submission_and_hashes() -> None:
@@ -1608,6 +1608,7 @@ async def test_task_context_apis_fail_closed_when_locked_context_is_missing(
     )
 
     assert response.status_code == 422
+    assert set(response.json()) == {"code", "details", "error"}
     assert response.json()["code"] == "task_locked_context_invalid"
     assert response.json()["error"]["code"] == "task_locked_context_invalid"
     assert response.json()["error"]["details"] == response.json()["details"]
@@ -1897,6 +1898,7 @@ async def test_submission_runtime_uses_locked_project_policy_not_task_required_f
 
     assert non_contract_artifact_response.status_code == 422, non_contract_artifact_response.text
     detail = non_contract_artifact_response.json()
+    assert set(detail) == {"code", "details", "error"}
     assert detail["code"] == "pre_submission_checker_failed"
     assert detail["error"]["code"] == "pre_submission_checker_failed"
     assert detail["error"]["details"] == detail["details"]

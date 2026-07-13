@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from hashlib import sha256
 from typing import Annotated
 from uuid import UUID, uuid4
 
@@ -12,7 +13,7 @@ from pydantic import BaseModel, Field, field_validator
 import pytest
 from starlette.requests import Request
 
-from app.core.api_controls import error_response
+from app.core.api_controls import ApiErrorResponse, error_response
 from app.core.config import Settings
 from app.main import create_app
 
@@ -233,8 +234,10 @@ async def test_background_failure_is_bounded_after_response_start(
     ("status_code", "code", "message", "retryable"),
     [
         (400, "invalid_request", "Invalid request", False),
+        (401, "invalid_token", "Invalid bearer token", False),
         (403, "permission_not_granted", "Permission not granted", False),
         (409, "conflict", "Request conflict", False),
+        (422, "invalid_request", "Invalid request", False),
         (429, "rate_limit_exceeded", "Rate limit exceeded", True),
         (503, "service_unavailable", "Service unavailable", True),
     ],
@@ -260,6 +263,7 @@ async def test_http_errors_use_stable_mapping_and_preserve_legacy_detail(
         "correlation_id": response.headers["x-correlation-id"],
         "retryable": retryable,
     }
+    ApiErrorResponse.model_validate(response.json())
     if status_code == 429:
         assert response.headers["retry-after"] == "9"
 
@@ -267,6 +271,7 @@ async def test_http_errors_use_stable_mapping_and_preserve_legacy_detail(
 @pytest.mark.parametrize("debug", [False, True])
 async def test_not_found_method_not_allowed_and_unhandled_errors_are_private(
     debug: bool,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     app = create_app(Settings(debug=debug))
 
@@ -282,19 +287,36 @@ async def test_not_found_method_not_allowed_and_unhandled_errors_are_private(
         method_not_allowed = await client.post("/health")
     failed = await _get(app, "/_test/boom")
 
-    assert (not_found.status_code, not_found.json()["error"]["code"]) == (
-        404,
-        "resource_not_found",
+    for response, detail, code, message in [
+        (not_found, "Not Found", "resource_not_found", "Resource not found"),
+        (
+            method_not_allowed,
+            "Method Not Allowed",
+            "method_not_allowed",
+            "Method not allowed",
+        ),
+        (failed, "Internal server error", "internal_error", "Internal server error"),
+    ]:
+        assert response.json() == {
+            "detail": detail,
+            "error": {
+                "code": code,
+                "message": message,
+                "details": {},
+                "correlation_id": response.headers["x-correlation-id"],
+                "retryable": False,
+            },
+        }
+        ApiErrorResponse.model_validate(response.json())
+
+    failure_record = next(
+        record
+        for record in caplog.records
+        if record.message == "request_failed_before_response_start"
     )
-    assert (method_not_allowed.status_code, method_not_allowed.json()["error"]["code"]) == (
-        405,
-        "method_not_allowed",
-    )
-    assert failed.status_code == 500
-    assert failed.json()["detail"] == "Internal server error"
-    assert failed.json()["error"]["code"] == "internal_error"
-    assert failed.json()["error"]["retryable"] is False
+    assert failure_record.correlation_id == failed.headers["x-correlation-id"]
     assert "secret" not in failed.text
+    assert "secret" not in caplog.text
 
 
 class ManyInvalidValues(BaseModel):
@@ -374,6 +396,35 @@ def test_openapi_documents_request_error_and_response_context() -> None:
         "retryable",
     }
     assert "error" in validation_schema["required"]
+    response_schema = schema["components"]["schemas"]["ApiErrorResponse"]
+    assert response_schema["required"] == ["error"]
+    assert set(response_schema["properties"]) == {"error", "detail"}
+    assert response_schema["additionalProperties"] is False
+    methods = {"get", "put", "post", "delete", "options", "head", "patch", "trace"}
+    route_inventory = sorted(
+        f"{method.upper()} {path}"
+        for path, path_item in schema["paths"].items()
+        for method in path_item
+        if method in methods
+    )
+    protected_inventory = sorted(
+        f"{method.upper()} {path}"
+        for path, path_item in schema["paths"].items()
+        for method, operation in path_item.items()
+        if method in methods and operation.get("security")
+    )
+    assert len(route_inventory) == 46
+    assert sha256("\n".join(route_inventory).encode()).hexdigest() == (
+        "991f50d0dd6009e96c1cd8d0a8b6f403d6f48d81bb247075c103a9d74341425b"
+    )
+    assert len(protected_inventory) == 44
+    assert sha256("\n".join(protected_inventory).encode()).hexdigest() == (
+        "ae15e39df8b1710e16b9c20cfa588a8ee8f96a98505f34e1cbcc5fe4c96a17d4"
+    )
+    assert set(schema["paths"]["/health"]["get"]["responses"]) == {"200", "400", "500"}
+    assert {"401", "403", "503"} <= set(
+        schema["paths"]["/api/v1/auth/me"]["get"]["responses"]
+    )
     for path_item in schema["paths"].values():
         for method, operation in path_item.items():
             if method not in {"get", "put", "post", "delete", "options", "head", "patch"}:
@@ -384,3 +435,5 @@ def test_openapi_documents_request_error_and_response_context() -> None:
             assert {"X-Request-ID", "X-Correlation-ID"} <= request_headers
             for response in operation["responses"].values():
                 assert {"X-Request-ID", "X-Correlation-ID"} <= set(response["headers"])
+                assert response["headers"]["X-Request-ID"]["required"] is True
+                assert response["headers"]["X-Correlation-ID"]["required"] is True
