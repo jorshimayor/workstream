@@ -15,8 +15,9 @@
   stopped at implementation review `d4cef1d`: the 348/350 candidate omitted
   standard Python scope and control-flow cases, and proof could not fit its
   two-line reserve. R3 is proposed to use stdlib `symtable` for lexical facts
-  with bounded AST value flow under the normal 500-line L1 cap. All ten plan
-  tracks passed at `245ab58`; R3 implementation is active.
+  with bounded AST value flow under the normal 500-line L1 cap. Cycle-zero
+  review at `10ca508` found path joins, chained ambiguity, binding targets, and
+  future-annotation gaps; cycle-one contract clarification is under review.
 - Prior WS-ART reviewed planning SHA: `f7fbc33`
 - Prior WS-ART final evidence-bound planning branch head: `c069064`
 - WS-ART planning merge commit: `8644a43`
@@ -39,8 +40,8 @@
 - WS-QUAL-001-01A merge commit: `2901a3ebe68b7c770ccb1ff06841d79ce0c20d94`
 - WS-QUAL-001-01A post-merge memory merge commit:
   `8829a7ec3aa5199aae0aecbe5fda030c42a051cd`
-- Current gate: implement and internally review only B1B-R3. 01B2 remains
-  inactive; AUTH-02 continues independently in its separate worktree.
+- Current gate: review the B1B-R3 cycle-one contract clarification before its
+  bounded repair. 01B2 remains inactive; AUTH-02 continues independently.
 - Next chunk: `WS-QUAL-001-02` remains inactive; do not start it automatically.
 - Parallel implementation: the user explicitly authorized `WS-AUTH-001-02` to
   resume off-main in its separate worktree while coverage continues. AUTH must

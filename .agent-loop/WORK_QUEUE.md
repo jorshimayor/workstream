@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01B1B-R3` | Symtable Lexical Binding Closure | L1 | Contract review passed at `245ab58`; implementation active |
+| `WS-QUAL-001-01B1B-R3` | Symtable Lexical Binding Closure | L1 | Cycle-zero review failed at `10ca508`; cycle-one contract clarification pending review |
 
 ## Planned Next
 

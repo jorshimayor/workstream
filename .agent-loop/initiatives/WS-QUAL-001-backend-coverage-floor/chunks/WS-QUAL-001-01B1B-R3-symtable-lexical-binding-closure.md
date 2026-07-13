@@ -2,8 +2,8 @@
 
 Parent: `WS-QUAL-001` Backend Coverage Floor
 
-Status: all ten internal plan-review tracks passed at `245ab58`; implementation
-started under the user's parallel coverage/AUTH direction on 2026-07-13.
+Status: cycle-zero implementation review failed at `10ca508`; cycle-one
+contract clarification pending internal review before bounded repair.
 
 ## Scope And Allocation
 
@@ -31,10 +31,19 @@ scope finding stops/replans.
   table type, normalized name, and line, consume each child exactly once, and
   fail closed on missing, mismatched, or extra children; do not use a
   collision-prone `(name, line)` lookup.
+- On the locked Python 3.12 runtime, list/set/dict comprehensions are compiler-
+  inlined and emit no child table. Isolate only their AST binding targets while
+  leaving outer iterable evaluation in the parent scope. Generator expressions
+  must consume a validated `genexpr` child. Any unexpected emitted child or
+  missing/mismatched generator child fails closed.
 - AST value flow classifies framework modules/members, TestCase class/instance,
   local, and ambiguity. Imports, assignment/annotation/named expressions,
   decorators, `pytestmark` scalar/list forms, and If/loop/try/match joins are
   handled; paths retaining framework provenance fail closed.
+- Try handlers, match cases, loop body/else, and equivalent alternatives are
+  evaluated from independent incoming states before joining. Attribute and
+  subscript assignment bases are loads, not binding targets; augmented writes
+  and match captures follow their actual symbol-table ownership.
 - Detect genuine skip/xfail/importorskip and unittest behavior. `skipTest`
   requires a resolved TestCase receiver or ambiguous path retaining one;
   arbitrary locals remain accepted. Builtin `exec` fails closed, while a
@@ -43,6 +52,8 @@ scope finding stops/replans.
   multiline calls and every scope/shadow/control case. Preserve inert strings,
   committed rename rejection, base-line mapping, root helpers, cwd restoration,
   exact memory scope, and size enforcement. No weakened tests.
+- With `from __future__ import annotations`, non-executable annotations are not
+  traversed as runtime expressions or paired to nonexistent child tables.
 
 ## Verification And Review
 

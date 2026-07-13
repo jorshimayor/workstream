@@ -84,8 +84,13 @@
   `245ab58b371788c02ecfda2c11c5acf859b8c318`
 - B1B-R3 start signal: continuing the user's explicit parallel coverage/AUTH
   direction after internal contract approval on 2026-07-13
+- B1B-R3 cycle-zero candidate: `10ca5086c52435f41f33e25cae0f94f454e30c8e`
+- B1B-R3 cycle-zero result: 468/500; cycle-one findings cover independent
+  try/match/loop paths, chained ambiguity, actual binding targets, augmented
+  assignment/match captures, future annotations, and inlined comprehension
+  contract precision
 
 ## Stop condition
 
-Only B1B-R3 is active on the coverage branch. AUTH-02 proceeds independently
-off-main. Do not start 01B2 or chunk 02.
+B1B-R3 cycle-one contract clarification is under review before implementation
+resumes. AUTH-02 proceeds independently off-main. Do not start 01B2 or chunk 02.
