@@ -14,6 +14,7 @@ import coverage_policy as policy  # noqa: E402
 
 HEAD = "0016_artifact_domain"
 SHA = "a" * 40
+PEP695_INVALID = sys.version_info < (3, 12)
 
 
 def write_json(path: Path, value: dict, *, canonical: bool = False) -> Path:
@@ -267,11 +268,11 @@ def test_runner_metadata_fails_closed(tmp_path: Path, updates: dict, code: str) 
     ("import pytest as p\nimport unittest as p\nprint(p)\nprint(p.foo)", False),
     ("from pytest import raises as f\nfrom unittest import TestCase as f\nprint(f)", False),
     ("import pytest as p\nimport unittest as p\np.skip()", True),
-    ("def f[T](): pass\nclass C[T]: pass\ntype A[T] = list[T]", False),
+    ("def f[T](): pass\nclass C[T]: pass\ntype A[T] = list[T]", PEP695_INVALID),
     ("import pytest\ndef f[T: pytest.skip()](): pass", True),
-    ("import pytest\ndef f[pytest](): pytest.skip()", False),
-    ("import pytest\ntype Alias[pytest] = pytest.skip", False),
-    ("def f[T: (lambda: int)](): pass\nclass C[T: (x for x in ())]: pass\ntype A[T: (lambda: int)] = T", False),
+    ("import pytest\ndef f[pytest](): pytest.skip()", PEP695_INVALID),
+    ("import pytest\ntype Alias[pytest] = pytest.skip", PEP695_INVALID),
+    ("def f[T: (lambda: int)](): pass\nclass C[T: (x for x in ())]: pass\ntype A[T: (lambda: int)] = T", PEP695_INVALID),
     ("import pytest\ndef f[T: (lambda: pytest.skip())](): pass", True),
     ("import unittest\nclass T(unittest.TestCase):\n def outer(self):\n  def inner(self): self.skipTest()", False),
     ("import unittest\nclass T(unittest.TestCase):\n def outer(self):\n  def inner(): self.skipTest()", True),
@@ -283,6 +284,10 @@ def test_runner_metadata_fails_closed(tmp_path: Path, updates: dict, code: str) 
     ("import pytest\ndef f(*args: pytest.skip()): pass", True),
     ("import pytest\ndef f(**kwargs: pytest.mark.xfail): pass", True),
     ("from __future__ import annotations\nimport pytest\ndef f(*args: pytest.skip()): pass", False),
+    ("import pytest\n{(lambda: pytest.skip())() for pytest in ()}", False),
+    ("import pytest\n{pytest: (lambda: pytest.skip())() for pytest in ()}", False),
+    ("[(lambda value: value)(1) for _ in ()]", False),
+    ("import pytest\n[(lambda: pytest.skip())() for _ in ()]", True),
 ])
 def test_python_weakening_uses_lexical_syntax(tmp_path: Path, source: str, weak: bool) -> None:
     path = tmp_path / "test_policy.py"

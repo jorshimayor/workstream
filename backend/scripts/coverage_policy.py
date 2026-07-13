@@ -174,14 +174,16 @@ class SyntaxPolicy(ast.NodeVisitor):
         self.assertion_ranges: set[tuple[int, int]] = set()
         self.seed(tree.body)
 
-    def child(self, node: ast.AST, table_type: str, name: str) -> symtable.SymbolTable:
+    def child(self, node: ast.AST, table_type: str, name: str, *, required: bool = True) -> symtable.SymbolTable | None:
         children = [child for child in self.tables[-1].get_children() if (child.get_type(), child.get_name(), child.get_lineno()) == (table_type, name, node.lineno)]
         key = (id(self.tables[-1]), table_type, name, node.lineno)
         index = self.child_counts.get(key, 0)
         if index < len(children):
             self.child_counts[key] = index + 1
             return children[index]
-        raise SyntaxError("symbol table mismatch")
+        if required:
+            raise SyntaxError("symbol table mismatch")
+        return None
 
     def scope_nodes(self, items: list[ast.stmt]):
         def walk(node: ast.AST):
@@ -441,7 +443,9 @@ class SyntaxPolicy(ast.NodeVisitor):
     def visit_comprehension_scope(self, node: ast.ListComp | ast.SetComp | ast.DictComp | ast.GeneratorExp) -> None:
         self.visit(node.generators[0].iter)
         names = set().union(*(target_names(generator.target) for generator in node.generators))
-        table = self.child(node, "function", "genexpr") if isinstance(node, ast.GeneratorExp) else self.tables[-1]
+        expected = {ast.ListComp: "listcomp", ast.SetComp: "setcomp", ast.DictComp: "dictcomp", ast.GeneratorExp: "genexpr"}[type(node)]
+        child = self.child(node, "function", expected, required=isinstance(node, ast.GeneratorExp))
+        table = child or self.tables[-1]
         self.tables.append(table)
         self.owners.append({})
         self.scope_types.append("comprehension")
