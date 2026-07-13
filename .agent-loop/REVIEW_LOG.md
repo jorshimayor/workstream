@@ -169,6 +169,19 @@ Pre-review proof: 117 focused tests, Ruff, `pip check`, self-applied delta
 validation, stale wording/auth docs, loop memory, Markdown links, diff hygiene,
 and 412/700 raw candidate lines pass. Internal implementation review is active.
 
+B1B-R8 cycle-zero review: FAIL at `3acf572`. Reviewers reproduced unknown
+direct-import false ownership, missed exact `unittest.case` chains, enclosing
+shadow fallthrough, conflicting-owner overblocking, Python 3.12 type-parameter
+scope mismatches, and nested TestCase receiver shadowing.
+
+B1B-R8 cycle-one candidate:
+`1a13beaaf968a00a19c64e702b33026283cf0d22`. Framework ownership now retains
+sets of known paths, outer lexical bindings are barriers, exact unittest case
+namespaces are preserved, unknown members remain local, PEP 695 function/class/
+type-alias scopes are paired, and TestCase closures distinguish captured versus
+local `self`. Proof: 140 focused tests and every deterministic gate pass at
+498/700 raw lines. Internal re-review is active.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract

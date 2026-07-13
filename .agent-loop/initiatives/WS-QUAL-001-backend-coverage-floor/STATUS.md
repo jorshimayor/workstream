@@ -18,6 +18,12 @@
   `3acf57281da4638476e70d7ed118e24413c1d20b`
 - R8 pre-review proof: 117 focused tests, Ruff, `pip check`, self-applied delta
   validation, repository documentation gates, and 412/700 raw lines pass.
+- R8 cycle-zero review: bounded direct-import, enclosing-shadow,
+  `unittest.case`, conflicting-owner, PEP 695, and TestCase receiver gaps found.
+- R8 cycle-one candidate:
+  `1a13beaaf968a00a19c64e702b33026283cf0d22`
+- R8 cycle-one proof: 140 focused tests and every deterministic gate pass at
+  498/700 raw lines; internal re-review active.
 - 01A implementation PR: `https://github.com/Flow-Research/workstream/pull/103` (merged)
 - 01A final reviewed implementation SHA: `d1582ec64b9176c5ead62f695c7a23b48e4c72b9`
 - 01A final evidence-bound branch head: `8cd7616b497ceb46d8359c25de689192632dfee8`
