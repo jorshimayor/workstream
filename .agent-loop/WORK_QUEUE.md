@@ -4,15 +4,14 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-03` | Legacy Actor Classification Preflight | L1 | Active in isolated AUTH worktree after user start; plan review running |
-| `WS-QUAL-001-01B1B-R10` | TypeVar Child Order | L1 | Ready PR #108 published; external checks and human review active |
+| `WS-AUTH-001-03` | Legacy Actor Classification Preflight | L1 | Ready PR #109 published; external checks and human review active |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Inactive until B1B replacement merge/memory plus explicit user start |
-| `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until B1B replacement and 01B2 merge/memory plus explicit user start |
+| `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Inactive pending explicit user start |
+| `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02` | Flow Node Adapter And Reconciliation | L1 | Proposed; inactive pending separate explicit user start |
 
@@ -45,18 +44,22 @@
 | `WS-POL-002-03` | Server-Owned Policy Approval And Visibility APIs | L1 | Merged through PR #90 as `a7aa474` on 2026-07-11 |
 | `WS-AUTH-001-PLAN` | Authorization Service Planning | L0 | Merged through PR #91 as `ad6d644` on 2026-07-11 |
 | `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Merged through PR #93 as `772af1d` on 2026-07-11 |
-| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Merged through PR #107 as `060b780` on 2026-07-13 |
+| `WS-QUAL-001-01B1B-R10` | TypeVar Child Order | L1 | Merged through PR #108 as `5c47aba` on 2026-07-13 |
 | `WS-ART-001-PLAN` | Immutable Artifact Storage And Flow Node Integration Planning | L1 | Merged through PR #97 as `8644a43` on 2026-07-12 |
 | `WS-QUAL-001-PLAN` | Backend Coverage Floor Planning | L1 | Merged through PR #99 as `9046d52` on 2026-07-12 |
 | `WS-ART-001-01` | Artifact Domain And Local Adapter | L1 | Merged through PR #101 as `050eb15` on 2026-07-12 |
 | `WS-QUAL-001-01A` | Isolated Database Runner | L1 | Merged through PR #103 as `2901a3e` on 2026-07-12 |
 | `WS-QUAL-001-01B1A-R2` | Canonical Coverage Grammar | L1 | Merged through PR #105 as `8a4182e` on 2026-07-12; post-merge memory merged through PR #106 as `6dccb8e` |
+| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Merged through PR #107 as `060b780` on 2026-07-13 |
 
 ## Proposed Next
 
-R10 is the reviewed replacement for the stopped B1B-R8/R9 attempts. Publish
-only R10 for human review. AUTH-03 continues independently in its isolated
-worktree. Do not start 01B2, chunk 02, or POL-002-04 automatically.
+`WS-AUTH-001-03` is the only active AUTH chunk. Its implementation, required
+internal reviews, evidence, and ready PR #109 are complete. Do not start
+`WS-AUTH-001-04` or `WS-POL-002-04` automatically.
+
+Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
+coverage implementation chunk from this worktree.
 
 `WS-ART-001-01` is merged. Do not start `WS-ART-001-02` or edit Flow Node until
 the user gives a separate explicit start signal.

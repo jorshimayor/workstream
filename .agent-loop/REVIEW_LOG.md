@@ -1,5 +1,38 @@
 # Review Log
 
+## 2026-07-13 - WS-AUTH-001-03 Internal Review Passed
+
+Reviewed code SHA `8e2ae489834a3934d6ef507834139a1009dac2e6` passed senior
+engineering, QA/test, security/auth, product/ops, architecture, CI integrity,
+docs, reuse/dedup, and test-delta review. The first candidate's valid
+worktree-custody, mutable-ORM, file-permission, canonical-byte, bounded-error,
+JSON-size, issuer-validation, durability, and PostgreSQL-isolation findings were
+repaired and re-reviewed with no remaining Critical, High, or Medium findings.
+
+Focused evidence is 57 passing tests against isolated PostgreSQL with 92 percent
+combined statement coverage for the new classifier and CLI. The isolated
+database-runner lifecycle suite passes 16/16. Ruff, stale wording, stale
+authorization docs, Markdown links, docstring coverage, and diff checks pass.
+GitHub Backend CI must still provide the unchanged repository-wide
+`--cov-fail-under=78` complete-suite proof before merge. AUTH-04 remains inactive.
+
+## 2026-07-13 - WS-AUTH-001-03 Started After AUTH-02 Merge
+
+PR #107 merged `WS-AUTH-001-02` to main as `060b780`. The user explicitly
+started `WS-AUTH-001-03` while coverage work continues independently in its own
+worktree. AUTH-03 runs on
+`codex/ws-auth-001-03-legacy-actor-classification` at
+`/home/abiorh/flow/workstream-auth-001-03`.
+
+Preimplementation L1 plan review returned PASS WITH CONDITIONS. The conditions
+are incorporated into the implementation boundary: no identity inference,
+canonical UUIDv5 and exact issuer/subject matching, strict bounded JSON,
+complete envelope and live-row checksums, privacy-bounded output/errors,
+read-only repeatable-read database proof, crash-safe private no-overwrite file
+publication, environment-variable-only future Alembic handoff, and genuine
+behavior coverage at or above 90 percent for the new subsystem. No schema,
+grant, role, actor-state, or later AUTH chunk changes are active.
+
 ## WS-QUAL-001-01B1
 
 Status: BLOCKED. Candidate `7bfe3a0` has 496/500 lines and 66 focused behavior
@@ -264,6 +297,17 @@ Three further valid comments require truthful nine-track/circuit-breaker
 wording, R7-R9 supersession state, and fail-closed deleted-assertion behavior
 when base-source retrieval fails. The bounded repair adds a direct regression
 test and must pass deterministic proof plus internal review before publication.
+
+B1B-R10 merge: PR #108 merged to `main` as `5c47aba`. Its reviewed syntax-only
+test-integrity policy is now integrated; 01B2 and coverage chunk 02 remain
+inactive pending their separate explicit start gates.
+
+AUTH-03 external review: CodeRabbit reported five lifecycle/evidence wording
+issues and one cleanup precedence bug. Repair implementation `4923b67`
+addresses all six, passes 59 focused behavior tests at 90.12 percent combined
+coverage, and passed all required internal reviewer tracks. Its raw-exception
+logging nitpick is rejected because confidential identity, database, or path
+values must not enter logs. Final evidence binding and GitHub checks remain.
 
 ## WS-QUAL-001-01B
 

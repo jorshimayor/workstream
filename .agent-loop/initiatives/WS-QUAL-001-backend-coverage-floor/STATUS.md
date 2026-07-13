@@ -2,15 +2,15 @@
 
 ## Current state
 
-- Phase: `WS-QUAL-001-01B1B-R10` external and human review
-- Branch: `codex/ws-qual-001-01b1b-semantic-delta-guards`
+- Phase: `WS-QUAL-001-01B1B-R10` merged; post-merge memory reconciled
+- Historical implementation branch: `codex/ws-qual-001-01b1b-semantic-delta-guards`
 - Authoritative target: 90 percent complete backend application statement coverage
 - Diagnostic AUTH-02 baseline: 78.26 percent after database isolation repair
 - Final reviewed planning SHA: `0d9dd987d546c864fa8de7bae462e5e73a1b5ea9`
 - Final evidence-bound branch head: `3da1769882e9f6db4c48ef3dba33da8380e6a613`
 - Planning merge commit: `9046d52f31c7c39f06e06c45c43783bb08a5181c`
 - Internal review: PASS after cleanup, signal, authority, CI, and split repairs
-- Active implementation chunk: `WS-QUAL-001-01B1B-R10`
+- Active implementation chunk: none
 - R8 reviewed contract SHA: `9d72e42cf52f0d2da44dc37216fa38b3542dc2c1`
 - R8 start signal: user's 2026-07-13 instruction to fix the blocking coverage
   gate after AUTH-02 merged; implementation activated after plan review passed.
@@ -63,7 +63,8 @@
 - R10 external repair: code/test change is `4bcf910`; all nine required reviewer
   tracks and the circuit breaker pass at `7e192b8` after evidence-provenance
   repair.
-- R10 ready PR: `https://github.com/Flow-Research/workstream/pull/108`
+- R10 implementation PR: `https://github.com/Flow-Research/workstream/pull/108`
+  (merged as `5c47aba`)
 - 01A implementation PR: `https://github.com/Flow-Research/workstream/pull/103` (merged)
 - 01A final reviewed implementation SHA: `d1582ec64b9176c5ead62f695c7a23b48e4c72b9`
 - 01A final evidence-bound branch head: `8cd7616b497ceb46d8359c25de689192632dfee8`
@@ -192,7 +193,6 @@
 
 ## Stop condition
 
-R10 implementation and required internal reviews are complete; publish only
-the reviewed R10 PR. AUTH-02 merged through PR #107 and AUTH-03 is independently
-active in its isolated worktree after explicit user start. Do not start 01B2 or
-chunk 02 before R10 merge, post-merge memory, and the required start gate.
+R10 merged through PR #108 as `5c47aba`; this AUTH convergence records its
+post-merge memory. AUTH-03 remains independently active at ready PR #109. Do not
+start 01B2 or chunk 02 without a separate explicit user start.

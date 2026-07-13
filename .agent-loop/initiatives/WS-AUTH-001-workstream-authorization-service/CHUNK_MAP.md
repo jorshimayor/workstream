@@ -13,8 +13,8 @@ stopped.
 |---|---|---:|---|
 | `WS-AUTH-001-PLAN` | Authorization Service Planning | L0 | Merged through PR #91 as `ad6d644` |
 | `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Merged through PR #93 as `772af1d` |
-| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Internal review passed at `47dd5a7`; PR publication evidence pending |
-| `WS-AUTH-001-03` | Legacy Actor Classification Preflight | L1 | Proposed |
+| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Merged through PR #107 as `060b780` |
+| `WS-AUTH-001-03` | Legacy Actor Classification Preflight | L1 | Ready PR #109 published; external checks and human review active |
 | `WS-AUTH-001-04` | Request, Error, And API Control Foundation | L1 | Proposed |
 | `WS-AUTH-001-05` | Authority Evidence And Idempotency Foundation | L1 | Proposed |
 | `WS-AUTH-001-06` | Canonical Actor Profile And Identity Link | L1 | Proposed |
@@ -72,8 +72,10 @@ WS-AUTH-001-PLAN
 
 ## Stop condition
 
-`WS-AUTH-001-01` merged through PR #93. The user explicitly resumed
-`WS-AUTH-001-02` in its separate worktree on 2026-07-12 while coverage work
-continues independently. Do not publish until deterministic proof and all
-required implementation reviewers pass. Do not start `WS-POL-002-04`; it
-retains its separate explicit start signal and recorded prerequisites.
+`WS-AUTH-001-02` merged through PR #107 as `060b780`. The user explicitly
+started `WS-AUTH-001-03` in its separate worktree while coverage work continues
+independently. Deterministic focused proof and all required implementation
+reviewers pass at `8e2ae48`; PR #109 external checks and explicit human review
+are the current gate. Do not
+start `WS-AUTH-001-04` or `WS-POL-002-04`; both retain separate explicit start
+signals and prerequisites.

@@ -163,6 +163,34 @@ Non-empty legacy registries require the supported classification tool and a
 versioned JSON manifest. Each entry binds the exact legacy actor ID, issuer,
 opaque subject, and subject kind.
 
+Platform security owns the manifest and envelope. Both files contain
+confidential identity-linking evidence even though the command report is
+redacted. Store them in an environment-specific owner-only directory outside
+the repository, every linked worktree, and the Git common directory. Do not
+attach either file to tickets, CI logs, PRs, or engineering-loop evidence.
+
+Manifest schema version 1 has exactly this shape:
+
+```json
+{
+  "schema_version": 1,
+  "classifications": [
+    {
+      "actor_id": "00000000-0000-5000-8000-000000000000",
+      "issuer": "https://issuer.example.invalid",
+      "subject": "opaque-subject-from-the-legacy-row",
+      "subject_kind": "human"
+    }
+  ]
+}
+```
+
+`subject_kind` is only `human` or `service`. The actor ID must be the canonical
+UUIDv5 derived by the existing registry from the byte-exact HTTPS issuer and
+case-sensitive opaque subject. Operators must classify from authoritative
+issuer records; email, subject syntax, token roles, profile rows, and manual SQL
+are not classification evidence.
+
 The tool must:
 
 - support dry-run;
@@ -173,10 +201,68 @@ The tool must:
 - write no grants;
 - emit a bounded remediation report.
 
-The migration recomputes the live digest inside its transaction and aborts on
-mismatch. After upgrade, only the recorded classification version/checksum and
-migration state are required for downgrade. Manual SQL classification is not a
-supported path.
+Prepare a restricted directory and validate without writing an envelope:
+
+```bash
+cd backend
+WORKSTREAM_DATABASE_URL='<target async Postgres URL>' \
+  .venv/bin/python scripts/legacy_actor_classification.py \
+  --manifest /secure/workstream/prod/legacy-actor-manifest-v1.json
+```
+
+Dry-run is the default. An empty registry needs no manifest and returns an
+explicit empty proof. A non-empty registry without a manifest fails closed. The
+JSON report contains only row count, mode, empty status, checksums, and the
+non-secret database binding; stderr uses stable error codes and does not render
+identity values, paths, database names, or connection URLs.
+
+After the dry-run report is reviewed, export one write-once envelope:
+
+```bash
+cd backend
+WORKSTREAM_DATABASE_URL='<target async Postgres URL>' \
+  .venv/bin/python scripts/legacy_actor_classification.py \
+  --manifest /secure/workstream/prod/legacy-actor-manifest-v1.json \
+  --output /secure/workstream/prod/legacy-actor-classification-v1.json \
+  --generated-at 2026-07-13T12:30:00Z
+```
+
+`--generated-at` is an explicit UTC RFC3339 second so the same reviewed inputs
+produce byte-identical evidence. Export writes mode `0600` through a
+crash-safe, atomic no-overwrite publish. Repeating the exact command is
+idempotent only when the existing regular file has identical bytes and private
+permissions. A different existing file, symlink, relative path, repository
+path, or Git-directory path fails closed.
+
+The envelope contains schema version, sorted classifications, live source-row
+digest, canonical manifest digest, generated-at, database binding, and a digest
+over the complete envelope. The binding hashes PostgreSQL database name and
+database OID. It is a non-secret same-cluster wrong-database guard, not a
+globally unique deployment identity. A clone, restore, or database recreation
+requires a fresh dry run and envelope even when the human environment label is
+unchanged.
+
+The later actor-schema migration must locate this envelope only through:
+
+```bash
+export WORKSTREAM_LEGACY_ACTOR_CLASSIFICATION_FILE=/secure/workstream/prod/legacy-actor-classification-v1.json
+```
+
+Do not set the variable or run the future migration until its owning reviewed
+AUTH chunk is deployed. That migration must load the strict envelope, recompute
+the complete live row-set digest and database binding inside its transaction,
+and abort on checksum, TOCTOU, missing/extra row, identity, or binding mismatch.
+The envelope never creates grants and is not a supported ad hoc migration path.
+
+On validation failure, correct the authoritative manifest or target database,
+rerun dry-run, and export to a new secure path when the evidence bytes change.
+Never edit an envelope or bypass the failure with SQL. Rollback stops at the
+pre-migration schema boundary; it does not restore obsolete authority. Retain
+the envelope only through migration verification and the approved rollback
+window. After the migration records the schema version, manifest checksum,
+envelope checksum, source-row checksum, and migration result durably, delete
+the identity-bearing manifest and envelope from operator storage and retain
+only the bounded report and durable checksum record.
 
 ## Staged Rollout
 

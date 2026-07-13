@@ -14,7 +14,14 @@ preimplementation plan review passed, and the user explicitly approved D12's
 exact production dependency changes. After a coverage-priority pause, the user
 explicitly resumed AUTH in its separate worktree on 2026-07-12. Bounded runtime
 implementation and repair review are complete on reviewed code SHA `47dd5a7`;
-all required internal tracks pass and ready PR #107 is published.
+all required internal tracks passed and PR #107 merged as `060b780` on
+2026-07-13. The user then explicitly started `WS-AUTH-001-03`. Its L1
+preimplementation plan review passed with conditions. Bounded implementation,
+repair, and all required internal reviewer tracks now pass on reviewed code SHA
+`8c5334c`, including external repair implementation `4923b67`. PR #108 merged
+to `main` as `5c47aba`; that main revision is integrated into AUTH, whose prior
+lifecycle reconciliation was reviewed at `a70b89c`. Ready PR #109 is open for
+rerun GitHub checks and explicit human review.
 
 ## Active planning chunk
 
@@ -22,13 +29,11 @@ None.
 
 ## Active implementation chunk
 
-No implementation edits are active. `WS-AUTH-001-02` - Verified Issuer Token
-And JWKS Boundary has passed internal review and is awaiting evidence-bound PR
-publication after D12 approval.
+`WS-AUTH-001-03` - Legacy Actor Classification Preflight.
 
 ## Current implementation branch
 
-`codex/ws-auth-001-02-verified-issuer-token`.
+`codex/ws-auth-001-03-legacy-actor-classification`.
 
 ## Chunk status
 
@@ -36,8 +41,8 @@ publication after D12 approval.
 |---|---|---|---:|---|
 | `WS-AUTH-001-PLAN` | Merged | `authorization-service` | #91 | Merged as `ad6d644`; D4-D10 later approved. |
 | `WS-AUTH-001-01` | Merged | `codex/ws-auth-001-01-adopt-authorization-baseline` | #93 | Authorization baseline, Contributor terminology boundary, scanner, and repository contracts; merged as `772af1d`. |
-| `WS-AUTH-001-02` | Ready PR; external review | `codex/ws-auth-001-02-verified-issuer-token` | #107 | Reviewed code SHA `47dd5a7`; internal and evidence review passed. |
-| `WS-AUTH-001-03` | Proposed | - | - | Legacy actor classification preflight. |
+| `WS-AUTH-001-02` | Merged | `codex/ws-auth-001-02-verified-issuer-token` | #107 | Merged as `060b780`; reviewed code SHA `47dd5a7`. |
+| `WS-AUTH-001-03` | In review | `codex/ws-auth-001-03-legacy-actor-classification` | #109 | Reviewed code SHA `8c5334c`; external repair `4923b67`; all required internal tracks pass. |
 | `WS-AUTH-001-04` | Proposed | - | - | Request, error, and API control foundation. |
 | `WS-AUTH-001-05` | Proposed | - | - | Authority evidence and idempotency foundation. |
 | `WS-AUTH-001-06` | Proposed | - | - | Canonical actor profile and identity link. |
@@ -54,11 +59,16 @@ publication after D12 approval.
 
 ## Blockers
 
-No current blocker. D12 was explicitly approved before dependency or runtime
-implementation edits began.
+No implementation blocker. AUTH-03 requires no production identity payloads
+for deterministic implementation; non-test operators must later supply explicit
+classification evidence rather than inferred kinds. PR #109 external checks,
+explicit human review, and repository-wide coverage proof remain pending merge
+gates.
 
-Current chunk review evidence is recorded at
-`reviews/WS-AUTH-001-02-internal-review-evidence.md`; PR trust evidence is at
+AUTH-03 review evidence and its PR trust bundle are recorded at
+`reviews/WS-AUTH-001-03-internal-review-evidence.md` and
+`reviews/WS-AUTH-001-03-pr-trust-bundle.md`. Prior AUTH-02 evidence remains at
+`reviews/WS-AUTH-001-02-internal-review-evidence.md` and
 `reviews/WS-AUTH-001-02-pr-trust-bundle.md`.
 
 Production issuer configuration and legacy non-test actor classification are
