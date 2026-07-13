@@ -3,8 +3,8 @@
 ## Current State
 
 - Active initiative: `WS-QUAL-001` - Backend Coverage Floor
-- Active planning chunk: `WS-QUAL-001-01B1B-R5` single-pass abstract flow
-- Active implementation chunk: none
+- Active planning chunk: none
+- Active implementation chunk: `WS-QUAL-001-01B1B-R5` single-pass abstract flow
 - Branch: `codex/ws-qual-001-01b1b-semantic-delta-guards`
 - Status: B1B stopped at 223/300 lines after its second binding/AST repair
   cycle. Review at `10dff4f` found lexical-shadow false positives and a
@@ -20,7 +20,8 @@
   future-annotation gaps. R3 stopped before cycle-one edits because the 32-line
   reserve lacked credible proof. R4 stopped at `06a6d61` after review found AST
   replay corrupting symbol-table consumption, target/unpack bypasses, and
-  optional comprehension effects. R5 is proposed as a single-pass flow repair.
+  optional comprehension effects. R5 passed all ten plan tracks at `5672971`;
+  single-pass implementation is active.
 - Prior WS-ART reviewed planning SHA: `f7fbc33`
 - Prior WS-ART final evidence-bound planning branch head: `c069064`
 - WS-ART planning merge commit: `8644a43`
@@ -43,8 +44,8 @@
 - WS-QUAL-001-01A merge commit: `2901a3ebe68b7c770ccb1ff06841d79ce0c20d94`
 - WS-QUAL-001-01A post-merge memory merge commit:
   `8829a7ec3aa5199aae0aecbe5fda030c42a051cd`
-- Current gate: review the B1B-R5 replacement. 01B2 remains inactive; AUTH-02
-  continues independently.
+- Current gate: implement and internally review only B1B-R5. 01B2 remains
+  inactive; AUTH-02 continues independently.
 - Next chunk: `WS-QUAL-001-02` remains inactive; do not start it automatically.
 - Parallel implementation: the user explicitly authorized `WS-AUTH-001-02` to
   resume off-main in its separate worktree while coverage continues. AUTH must

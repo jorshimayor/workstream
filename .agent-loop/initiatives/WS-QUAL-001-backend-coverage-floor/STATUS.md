@@ -2,7 +2,7 @@
 
 ## Current state
 
-- Phase: `WS-QUAL-001-01B1B-R5` corrective contract review
+- Phase: `WS-QUAL-001-01B1B-R5` implementation
 - Branch: `codex/ws-qual-001-01b1b-semantic-delta-guards`
 - Authoritative target: 90 percent complete backend application statement coverage
 - Diagnostic AUTH-02 baseline: 78.26 percent after database isolation repair
@@ -10,7 +10,7 @@
 - Final evidence-bound branch head: `3da1769882e9f6db4c48ef3dba33da8380e6a613`
 - Planning merge commit: `9046d52f31c7c39f06e06c45c43783bb08a5181c`
 - Internal review: PASS after cleanup, signal, authority, CI, and split repairs
-- Active implementation chunk: none
+- Active implementation chunk: `WS-QUAL-001-01B1B-R5`
 - 01A implementation PR: `https://github.com/Flow-Research/workstream/pull/103` (merged)
 - 01A final reviewed implementation SHA: `d1582ec64b9176c5ead62f695c7a23b48e4c72b9`
 - 01A final evidence-bound branch head: `8cd7616b497ceb46d8359c25de689192632dfee8`
@@ -101,8 +101,11 @@
   corrupted ordinal symtable consumption; loop fixed points, target loads,
   unpack provenance, inline ownership, and optional comprehension effects
   remained incomplete.
+- B1B-R5 reviewed contract SHA: `5672971`
+- B1B-R5 start signal: continuing the user's explicit parallel coverage/AUTH
+  direction after internal contract approval on 2026-07-13
 
 ## Stop condition
 
-No coverage implementation is active during B1B-R5 contract review. AUTH-02
-proceeds independently off-main. Do not start 01B2 or chunk 02.
+Only B1B-R5 is active on the coverage branch. AUTH-02 proceeds independently
+off-main. Do not start 01B2 or chunk 02.

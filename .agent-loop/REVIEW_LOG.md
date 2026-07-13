@@ -103,6 +103,10 @@ replay/symtable corruption, missing loop-carried effects, target-load and unpack
 bypasses, nested inline ownership, and optional comprehension mistakes. At
 535/550 the fixes plus proof could not fit; B1B-R5 is proposed.
 
+B1B-R5 contract review: PASS at `5672971` across all ten required tracks. The
+single-consumption/cursor-neutral-summary boundary and 535/600/630/650
+allocation passed; R5 implementation is active.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract
