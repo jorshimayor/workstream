@@ -333,10 +333,11 @@ class SyntaxPolicy(ast.NodeVisitor):
         self.shadows.append({parameter.name for parameter in parameters})
         self.cases.append(self.cases[-1])
         for parameter in parameters:
+            public_children = any(child.get_type() == "type variable" and (child.get_name(), child.get_lineno()) == (parameter.name, parameter.lineno) for child in self.tables[-1].get_children())
             for field in ("bound", "default_value"):
                 value = getattr(parameter, field, None)
                 if value:
-                    table_types = {"TypeVar bound", "type variable"} if field == "bound" else {"TypeVar default", "type variable"}
+                    table_types = {"type variable"} if public_children else {"TypeVar bound" if field == "bound" else "TypeVar default"}
                     self.tables.append(self.child(parameter, table_types, parameter.name))
                     self.owners.append({})
                     self.scope_types.append("function")

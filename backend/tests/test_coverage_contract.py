@@ -323,6 +323,29 @@ def test_deleted_assertions_use_syntax(source: str, line: int, blocked: bool) ->
     assert policy.has_deleted_assertion(diff, source) is blocked
 
 
+@pytest.mark.parametrize(("clean", "weakening", "assertion"), [
+    ("def f[T: (lambda: int) = (x for x in ())](): pass", "import pytest\ndef f[T: (lambda: int) = (pytest.skip() for _ in ())](): pass", "import pytest\ndef f[T: (lambda: int) = (pytest.raises(ValueError) for _ in ())](): pass"),
+    ("def f[T: (x for x in ()) = (lambda: int)](): pass", "import pytest\ndef f[T: (pytest.skip() for _ in ()) = (lambda: int)](): pass", "import pytest\ndef f[T: (pytest.raises(ValueError) for _ in ()) = (lambda: int)](): pass"),
+    ("class C[T: (lambda: int) = (x for x in ())]: pass", "import pytest\nclass C[T: (lambda: int) = (pytest.skip() for _ in ())]: pass", "import pytest\nclass C[T: (lambda: int) = (pytest.raises(ValueError) for _ in ())]: pass"),
+    ("class C[T: (x for x in ()) = (lambda: int)]: pass", "import pytest\nclass C[T: (pytest.skip() for _ in ()) = (lambda: int)]: pass", "import pytest\nclass C[T: (pytest.raises(ValueError) for _ in ()) = (lambda: int)]: pass"),
+    ("type A[T: (lambda: int) = (x for x in ())] = T", "import pytest\ntype A[T: (lambda: int) = (pytest.skip() for _ in ())] = T", "import pytest\ntype A[T: (lambda: int) = (pytest.raises(ValueError) for _ in ())] = T"),
+    ("type A[T: (x for x in ()) = (lambda: int)] = T", "import pytest\ntype A[T: (pytest.skip() for _ in ()) = (lambda: int)] = T", "import pytest\ntype A[T: (pytest.raises(ValueError) for _ in ()) = (lambda: int)] = T"),
+])
+def test_typevar_bound_default_child_order(clean: str, weakening: str, assertion: str) -> None:
+    if sys.version_info < (3, 13):
+        for source in (clean, weakening, assertion):
+            with pytest.raises(SyntaxError):
+                policy.analyze_python(source)
+        return
+    assert policy.analyze_python(clean)[1].weak is False
+    assert policy.analyze_python(weakening)[1].weak is True
+    analysis = policy.analyze_python(assertion)[1]
+    assert analysis.assertion_ranges
+    line = next(iter(analysis.assertion_ranges))[0]
+    deleted = assertion.splitlines()[line - 1]
+    assert policy.has_deleted_assertion(f"@@ -{line},1 +{line},0 @@\n-{deleted}", assertion)
+
+
 @pytest.mark.parametrize(("files", "rows", "source", "diff", "code"), [
     (["backend/app/a.py"], [], "", "", "scope_violation"),
     (["backend/tests/test_ok.py"], [("backend/tests/test_ok.py", 701, 0)], "assert True", "", "implementation_size_exceeded"),
