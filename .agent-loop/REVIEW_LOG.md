@@ -94,6 +94,10 @@ B1B-R3 cycle-one plan review: STOPPED. QA accepted the clarified behavior, but
 engineering found no credible way to fit complete repairs plus regressions in
 32 lines. No executable repair was made. R4 is proposed with measured room.
 
+B1B-R4 contract review: PASS at `ac2bcc6` across all ten required tracks. The
+468/515/535/550 allocation and complete control/value-flow contract passed; R4
+implementation is active.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract
