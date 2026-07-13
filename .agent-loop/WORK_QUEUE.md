@@ -5,6 +5,7 @@
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
 | `WS-AUTH-001-03` | Legacy Actor Classification Preflight | L1 | Active in isolated AUTH worktree after user start; plan review running |
+| `WS-QUAL-001-01B1B-R10` | TypeVar Child Order | L1 | All plan tracks passed at `c42a67a`; implementation active |
 
 ## Planned Next
 
@@ -12,7 +13,6 @@
 |---|---|---:|---|
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Inactive until B1B replacement merge/memory plus explicit user start |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until B1B replacement and 01B2 merge/memory plus explicit user start |
-| `WS-QUAL-001-01B1B-R10` | TypeVar Child Order | L1 | Proposed after R9 final stop; contract review active |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02` | Flow Node Adapter And Reconciliation | L1 | Proposed; inactive pending separate explicit user start |
 
