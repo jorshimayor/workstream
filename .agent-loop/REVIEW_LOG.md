@@ -1,5 +1,82 @@
 # Review Log
 
+## 2026-07-13 - WS-AUTH-001-04A Internal Review Passed
+
+All required implementation tracks pass on production SHA `cdcaf77`.
+Test-validation head `47241cf` added one genuine real-ASGI scalar
+validation-context branch assertion. A later test-only repair establishes and
+restores logging capture after in-process Alembic configuration disables an
+existing logger. Exact-head test-delta review confirmed identical production
+blobs and retained every earlier result; the final reviewed test revision is
+bound in the internal review evidence. Valid OpenAPI, response-header,
+pre-response logging, real-ASGI behavior, inventory, compatibility, and memory
+findings were repaired without rate controls, schema, grants, roles, routes, or
+product-authority changes.
+
+Focused evidence is 235 passing tests. Changed-file statement coverage is
+98.08 percent for API controls, 90.82 percent for the application factory,
+90.70 percent for auth dependencies, and 92.36 percent for the task router. The
+API drill, isolated-runner lifecycle suite, Ruff, docstring threshold, stale
+scans, Markdown links, Agent Gates, additive test-delta scan, and diff hygiene
+pass. A complete isolated backend regression run exposed an Alembic logging
+state leak after 114 passing tests; the affected real-ASGI test now establishes
+and restores its logging capture precondition, and the exact failing order
+passes. GitHub Backend owns the complete-suite rerun before merge. The official
+separate whole-app coverage baseline remains 79.249908 percent; no replacement
+is claimed.
+
+## 2026-07-13 - WS-AUTH-001-04A Implementation Review Repair
+
+The final repaired 04A contract passed both required preimplementation review
+tracks at exact commit `f98bbfc` before runtime implementation began. The
+implementation crossed the 350 non-comment production-line checkpoint; scope
+was inspected and frozen to the approved request/error boundary, with no rate
+control, schema migration, grant, role, or product-authority work. The durable
+checkpoint record was omitted at that time and is repaired here. The candidate
+remains below the 500-line hard stop; 04B and later chunks are inactive.
+
+Required implementation review of exact head `2a129f4` passed security,
+product authority, test-delta, CI-integrity, ASGI architecture, and shared
+adapter-boundary checks, but rejected publication pending truthful per-route
+OpenAPI, required response-header metadata, bounded pre-response failure
+logging, complete real-ASGI error/schema/inventory proof, and synchronized loop
+state. Those valid findings are in the first bounded repair cycle. A full-suite
+run against `2a129f4` was stopped after findings made that exact-head evidence
+obsolete; its partial output contained one unidentified failure and is not
+completion evidence.
+
+## 2026-07-13 - WS-AUTH-001-04 Split Required Before Implementation
+
+Required L1 plan review rejected the combined request/error/rate-control parent
+contract before any runtime edit. The valid findings required exact ASGI header
+behavior and OpenAPI compatibility for request/error context, plus an
+independent committed PostgreSQL transaction, database-time atomic upsert,
+privacy-key framing, and migration proof for rate controls.
+
+The parent is split into `WS-AUTH-001-04A` Request And Error Context and
+`WS-AUTH-001-04B` PostgreSQL Rate Controls. Only 04A contract repair and
+preimplementation re-review are active. 04B requires 04A merge/memory and a
+separate explicit user start. No runtime implementation was written under the
+failed combined plan.
+
+The first split re-review passed senior/architecture/security/product/docs/reuse
+at `f01427a` but QA/CI/test-delta required one more 04A contract repair: exact
+per-branch errors and invalid-ID behavior, bounded validation shapes,
+CI-equivalent isolated-runner/docstring proof, per-file coverage, and additive
+test-delta evidence. Runtime implementation remains gated on that re-review.
+
+## 2026-07-13 - WS-AUTH-001-04 Started
+
+PR #110 merged AUTH-03 post-merge memory to `main` as `1864867` after Backend,
+Agent Gates, CodeRabbit, internal review, and explicit human approval passed.
+The user then explicitly started `WS-AUTH-001-04` in the isolated worktree
+`/home/abiorh/flow/workstream-auth-001-04` on branch
+`codex/ws-auth-001-04-request-api-controls`.
+
+AUTH-04 is L1/P1 authentication infrastructure. Discovery and required
+preimplementation plan review must pass before runtime edits. AUTH-05,
+POL-002-04, and all QA implementation chunks remain inactive.
+
 ## 2026-07-13 - WS-AUTH-001-03 Merged
 
 PR #109 merged `WS-AUTH-001-03` to `main` as `f06532e` after final branch head

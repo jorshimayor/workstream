@@ -4,22 +4,23 @@
 
 - Active initiative: `WS-AUTH-001` - Workstream Authorization Service
 - Active planning chunk: none
-- Active implementation chunk: none
-- Branch: `codex/ws-auth-001-03-post-merge-memory`
-- Worktree: `/home/abiorh/flow/workstream-authorization-service`
-- Status: AUTH-03 merged through PR #109 as `f06532e` after Backend, Agent
-  Gates, CodeRabbit, internal review, and explicit human approval passed.
+- Active implementation chunk: `WS-AUTH-001-04A` - Request And Error Context
+- Branch: `codex/ws-auth-001-04-request-api-controls`
+- Worktree: `/home/abiorh/flow/workstream-auth-001-04`
+- Status: AUTH-04A implementation and required internal repair review pass on
+  production SHA `cdcaf77`; final reviewed candidate `4fd6db9` includes only
+  additive scalar-context and logging-state behavior-test repairs plus evidence.
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
-- Latest integrated `main` merge commit: `f06532e`
-- Current gate: publish and merge the AUTH-03 post-merge memory update, then
-  stop.
-- Next chunk: none; `WS-AUTH-001-04` remains proposed and inactive pending a
-  separate explicit user start after this memory update merges.
-- Parallel initiative: `WS-QUAL-001-01B1B-R10` merged through PR #108 as
-  `5c47aba`, and this convergence records its post-merge memory. B2 remains
-  inactive pending a separate explicit user start; coverage chunk 02 remains
-  inactive pending B2 merge/memory and its separate explicit start.
+- Latest integrated `main` merge commit: `1864867`
+- Current gate: publish the ready PR, then require GitHub Backend, Agent Gates,
+  CodeRabbit, and explicit human review before merge.
+- Next chunk: none; do not start `WS-AUTH-001-05` automatically.
+- `WS-AUTH-001-04B` is inactive until AUTH-04A merges, memory is updated, and
+  the user gives its separate explicit start signal.
+- Parallel initiative: `WS-QUAL-001-01B2` is paused at the user's direction so
+  AUTH receives the laptop's test capacity. Its last official whole-app result
+  remains `6466/8159` statements (`79.249908%`); no replacement evidence exists.
 - Parallel initiative: `WS-ART-001-01` merged through PR #101 as `050eb15`.
   `WS-ART-001-02` remains proposed and inactive pending a separate explicit
   user start.

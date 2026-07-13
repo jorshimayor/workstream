@@ -4,14 +4,14 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| - | No active implementation chunk | - | AUTH-03 post-merge memory in progress; no product implementation active |
+| `WS-AUTH-001-04A` | Request And Error Context | L1 | Internal review passed; ready PR publication active, complete GitHub checks required before merge |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-04` | Request, Error, And API Control Foundation | L1 | Proposed; inactive pending AUTH-03 memory merge and explicit user start |
-| `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Inactive pending explicit user start |
+| `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Inactive until 04A merge/memory and a separate explicit user start |
+| `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Paused for AUTH priority; no valid replacement baseline yet |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02` | Flow Node Adapter And Reconciliation | L1 | Proposed; inactive pending separate explicit user start |
@@ -56,10 +56,11 @@
 
 ## Proposed Next
 
-`WS-AUTH-001-03` merged through PR #109 as `f06532e` after all required checks
-and reviews passed. Its post-merge memory update is active; no AUTH product
-implementation is active. Do not start `WS-AUTH-001-04` or `WS-POL-002-04`
-automatically.
+`WS-AUTH-001-03` post-merge memory merged through PR #110 as `1864867`. The user
+explicitly started parent `WS-AUTH-001-04`. Required plan review split it before
+runtime implementation. Only child `WS-AUTH-001-04A` contract repair and
+re-review are active in its isolated worktree. Do not start 04B, AUTH-05, or
+POL-002-04 automatically.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.

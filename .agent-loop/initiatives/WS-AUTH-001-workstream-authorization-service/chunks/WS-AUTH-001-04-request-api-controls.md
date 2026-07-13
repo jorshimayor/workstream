@@ -1,5 +1,11 @@
 # Chunk Contract: WS-AUTH-001-04 - Request, Error, And API Control Foundation
 
+## Status
+
+Split before implementation after required plan review. This parent is not an
+implementation contract. Its authorized children are `WS-AUTH-001-04A` and
+`WS-AUTH-001-04B`; only 04A is currently active.
+
 ## Parent initiative
 
 `WS-AUTH-001` - Workstream Authorization Service
@@ -38,7 +44,7 @@ backend/app/core/api_controls.py
 backend/app/core/config.py
 backend/app/modules/api_controls/**
 backend/app/db/models.py
-backend/alembic/versions/0016_*.py
+backend/alembic/versions/0017_*.py
 backend/tests/test_app.py
 backend/tests/test_auth.py
 backend/tests/test_alembic.py
@@ -63,7 +69,16 @@ dependency overrides that bypass the real request path
 
 - Every request has validated request/correlation IDs with safe generation and
   propagation rules.
+- `X-Request-ID` and `X-Correlation-ID` accept one canonical UUID value each;
+  absent request IDs are generated, absent correlation IDs reuse the effective
+  request ID, and malformed/duplicate values fail as `invalid_request` without
+  reflecting the supplied bytes.
+- Successful and error responses return the effective request/correlation IDs
+  in headers. The structured error object contains the correlation ID only.
 - Errors use a stable envelope without raw exception, token, claims, or PII.
+- The envelope is `error.code/message/details/correlation_id/retryable`.
+  Existing `detail`, `code`, and `details` fields remain additively compatible
+  during the bounded migration so current intake clients and tests do not break.
 - Postgres-backed rate controls work across replicas, use privacy-safe keys and
   database time, and are configurable for first access/admin mutations.
 - `backend/app/modules/api_controls` owns feature models, persistence queries,
@@ -73,6 +88,15 @@ dependency overrides that bypass the real request path
   controls fail closed without bypassing protected operations.
 - Migration owns counter constraints/indexes/database-time fields and proves
   prior-head upgrade, downgrade, and re-upgrade.
+- The rate-control table has one atomic fixed-window counter per control scope
+  and HMAC-SHA256 subject key. The repository owns PostgreSQL upsert/database
+  time; the service owns key derivation and limit decisions.
+- Rate-control invocation without its configured secret or with unavailable
+  persistence returns a retryable safe 503. Exceeded controls return a stable
+  retryable 429 with a bounded `Retry-After` value.
+- AUTH-04 exposes named first-access and admin-mutation control dependencies for
+  their later owning endpoints but does not attach them to unrelated legacy
+  reads or implement those future endpoints.
 - Full backend suite and the intentionally updated API contract drill preserve
   the existing intake lifecycle and error compatibility.
 
@@ -111,3 +135,19 @@ database-time semantics, and unchanged product authority.
 
 Stop if rate controls require a new production dependency without explicit
 human approval or if existing intake assertions must be weakened.
+
+## Activation
+
+AUTH-03 post-merge memory merged through PR #110 as `1864867`. The user
+explicitly started AUTH-04 on 2026-07-13. Discovery found that parallel artifact
+work already owns migration `0016`, so this chunk uses additive migration
+`0017_api_controls` from `0016_artifact_domain`; this is a sequence correction,
+not a scope expansion.
+
+## Split implementation plan
+
+1. Implement and merge 04A request/error context under its repaired contract.
+2. Update post-merge memory and stop.
+3. Start 04B only after a separate explicit user signal; implement its durable
+   rate controls and migration under its own reviewed contract.
+4. Do not start AUTH-05 automatically after either child.

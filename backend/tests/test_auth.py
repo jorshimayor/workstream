@@ -28,6 +28,7 @@ from app.core.auth import clear_auth_verifier_cache
 from app.core.config import Settings, get_settings
 from app.core.permissions import PermissionDenied, require_any_role
 from app.db import session as db_session
+from app.db.session import get_db_session
 from app.interfaces.auth import AuthVerificationError, AuthVerificationUnavailableError
 from app.main import create_app
 from app.modules.actors.service import ActorService
@@ -716,9 +717,12 @@ async def test_service_and_agent_tokens_receive_no_legacy_authority(
             scope="workstream:service",
         )
     )
-    agent = await verifier.verify(
-        issue_asymmetric_token(private_key, subject_kind="agent", scope="agent:identity")
+    agent_token = issue_asymmetric_token(
+        private_key,
+        subject_kind="agent",
+        scope="agent:identity",
     )
+    agent = await verifier.verify(agent_token)
     space = await verifier.verify(
         issue_asymmetric_token(private_key, subject_kind="space", scope="space:identity")
     )
@@ -729,6 +733,35 @@ async def test_service_and_agent_tokens_receive_no_legacy_authority(
     with pytest.raises(HTTPException) as exc_info:
         await get_registered_actor(agent, None)  # type: ignore[arg-type]
     assert exc_info.value.status_code == 403
+    assert exc_info.value.error_code == "unsupported_subject_kind"
+
+    app = create_app(production_verifier_settings())
+    app.state.auth_verifier = verifier
+
+    async def no_database_session():
+        yield None
+
+    app.dependency_overrides[get_db_session] = no_database_session
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as client:
+        response = await client.get(
+            "/api/v1/auth/me",
+            headers={"Authorization": f"Bearer {agent_token}"},
+        )
+
+    assert response.status_code == 403
+    assert response.json() == {
+        "detail": "Unsupported subject kind",
+        "error": {
+            "code": "unsupported_subject_kind",
+            "message": "Unsupported subject kind",
+            "details": {},
+            "correlation_id": response.headers["x-correlation-id"],
+            "retryable": False,
+        },
+    }
 
     with pytest.raises(AuthVerificationError, match="service scope"):
         await verifier.verify(
@@ -1205,6 +1238,13 @@ async def test_missing_bearer_token_is_rejected() -> None:
     assert response.status_code == 401
     assert response.json()["detail"] == "Missing bearer token"
     assert response.headers["www-authenticate"] == "Bearer"
+    assert response.json()["error"] == {
+        "code": "missing_token",
+        "message": "Missing bearer token",
+        "details": {},
+        "correlation_id": response.headers["x-correlation-id"],
+        "retryable": False,
+    }
 
 
 async def test_invalid_bearer_token_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1226,6 +1266,8 @@ async def test_invalid_bearer_token_is_rejected(monkeypatch: pytest.MonkeyPatch)
 
     assert response.status_code == 401
     assert response.json()["detail"] == "Invalid bearer token"
+    assert response.json()["error"]["code"] == "invalid_token"
+    assert response.json()["error"]["retryable"] is False
 
 
 async def test_invalid_production_verifier_configuration_is_service_unavailable() -> None:
@@ -1242,6 +1284,8 @@ async def test_invalid_production_verifier_configuration_is_service_unavailable(
 
     assert response.status_code == 503
     assert response.json()["detail"] == "Identity verification unavailable"
+    assert response.json()["error"]["code"] == "identity_verification_unavailable"
+    assert response.json()["error"]["retryable"] is True
 
 
 async def test_valid_dev_token_resolves_actor_context(
@@ -1314,6 +1358,9 @@ async def test_auth_me_maps_actor_registry_failure_to_service_unavailable(
 
     assert response.status_code == 503
     assert response.json()["detail"] == "Actor registry unavailable"
+    assert response.json()["error"]["code"] == "service_unavailable"
+    assert response.json()["error"]["message"] == "Service unavailable"
+    assert response.json()["error"]["retryable"] is True
 
 
 async def test_actor_id_uses_subject_and_issuer_not_email() -> None:
