@@ -85,7 +85,7 @@ snapshot isolation under a concurrent commit.
 
 ## Tests And Checks
 
-- 57 repaired focused behavior tests passed against isolated PostgreSQL.
+- 60 repaired focused behavior tests passed against isolated PostgreSQL.
 - New classifier plus CLI coverage is 92 percent combined.
 - Repository-wide Ruff, stale wording, stale authorization docs, Markdown
   links, docstring coverage, and `git diff --check` pass.

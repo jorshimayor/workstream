@@ -106,9 +106,10 @@ git diff --check
 
 Results:
 
-- repaired focused Postgres and file/CLI behavior matrix: 57 passed;
+- repaired focused Postgres and file/CLI behavior matrix: 60 passed;
 - focused classifier plus CLI statement coverage: 92 percent combined;
-- pure classifier/CLI behavior matrix: 56 passed;
+- pure classifier/CLI behavior matrix: 59 passed at 90.12 percent combined
+  statement coverage;
 - full actor/classification surface before final bounded repair: 61 passed;
 - Ruff, stale wording, stale authorization docs, Markdown links, docstring
   coverage, and diff checks: passed;

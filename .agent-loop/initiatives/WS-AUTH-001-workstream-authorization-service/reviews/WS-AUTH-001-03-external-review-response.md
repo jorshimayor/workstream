@@ -24,7 +24,24 @@ None.
 
 ## Commands Rerun
 
-Pending focused proof and fresh internal review of the external repair.
+```bash
+PYTHONPATH="$PWD/backend" pytest -q backend/tests/test_actor_legacy_classification.py
+PYTHONPATH="$PWD/backend" pytest -q backend/tests/test_actor_legacy_classification.py --cov=app.modules.actors.legacy_classification --cov=scripts.legacy_actor_classification --cov-report=term-missing --cov-fail-under=90
+(cd backend && isolated-runner pytest -q tests/test_actor_legacy_classification.py tests/test_actors.py::test_legacy_classification_snapshot_is_complete_and_read_only --cov=app.modules.actors.legacy_classification --cov=scripts.legacy_actor_classification --cov-report=term-missing)
+ruff check backend/scripts/legacy_actor_classification.py backend/tests/test_actor_legacy_classification.py
+python3 scripts/check_stale_workstream_wording.py
+python3 scripts/check_stale_authorization_docs.py
+python3 scripts/check_stale_artifact_contracts.py
+python3 scripts/check_markdown_links.py
+python3 scripts/check_loop_memory_state.py
+git diff --check
+```
+
+- Pure behavior matrix: 59 passed at 90.12 percent combined coverage.
+- Isolated-PostgreSQL behavior matrix: 60 passed at 92 percent combined
+  coverage.
+- All required internal reviewer tracks passed after evidence reconciliation.
+- GitHub checks and explicit human review remain pending merge gates.
 
 ## Remaining Risks
 

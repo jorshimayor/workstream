@@ -127,7 +127,7 @@ and prior reviewed lifecycle revision `a70b89c91a8950eabaa750e340d4f853529d66f0`
 passed the required internal reviews. External repair implementation
 `4923b677f0a928d77792084c3edc4569b8c28e7b` preserves the primary CLI failure
 when engine cleanup also fails and passed fresh internal review. Focused
-isolated-PostgreSQL behavior proof remains 57 passing tests with 92 percent
+isolated-PostgreSQL behavior proof is 60 passing tests with 92 percent
 combined statement coverage for the classifier and CLI; the pure repair matrix
 is 59 passing tests at 90.12 percent combined coverage. The isolated
 database-runner lifecycle suite passes 16/16. PR #109 external checks and
