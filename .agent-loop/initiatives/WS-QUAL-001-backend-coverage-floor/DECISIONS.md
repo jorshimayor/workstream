@@ -211,3 +211,14 @@ summaries instead of replay, and applies mandatory regions afterward. Assignment
 target loading/binding and comprehension ownership share one recursive helper.
 This is a replacement architecture for existing findings, not new product/B2/
 AUTH/config/workflow/evidence scope.
+
+## D19: Close provenance transitively with evaluation-order proof
+
+Status: proposed after R5's cycle-zero stop; internal contract review pending.
+
+R5 repaired semantic replay but its loop summary was a one-step heuristic.
+R6 replaces duplicate RHS walks with one shared cursor-neutral provenance
+summary evaluated to closure, including outer-executed nested-scope headers.
+It also funds exact iterable-to-target propagation, Python evaluation order,
+and distinct sequential `except*` handling. The 800-line cap is restricted to
+these reproduced integrity gaps and their tests.

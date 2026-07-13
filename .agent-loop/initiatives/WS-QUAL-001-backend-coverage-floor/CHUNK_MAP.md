@@ -14,8 +14,9 @@
 | `WS-QUAL-001-01B1B-R2` | Measured lexical binding closure | L1 | Blocked at 348/350 after cycle-zero proof-fit failure |
 | `WS-QUAL-001-01B1B-R3` | Stdlib symtable lexical closure | L1 | Blocked at 468/500 before cycle-one repair |
 | `WS-QUAL-001-01B1B-R4` | Complete symtable control/value flow | L1 | Blocked at 535/550 after cycle-zero review |
-| `WS-QUAL-001-01B1B-R5` | Single-pass abstract flow closure | L1 | Contract review passed; implementation active |
-| `WS-QUAL-001-01B2` | Git provenance, configured baseline evidence, and CI ratchet | L1 | Inactive until B1B-R5 merge/memory plus explicit user start |
+| `WS-QUAL-001-01B1B-R5` | Single-pass abstract flow closure | L1 | Blocked at 641/650 after cycle-zero review |
+| `WS-QUAL-001-01B1B-R6` | Transitive provenance closure | L1 | Proposed; internal contract review pending |
+| `WS-QUAL-001-01B2` | Git provenance, configured baseline evidence, and CI ratchet | L1 | Inactive until B1B-R6 merge/memory plus explicit user start |
 | `WS-QUAL-001-02` | Project setup/policy/correction service coverage; floor at least 82% | L1 | Inactive |
 | `WS-QUAL-001-03` | Project repository/router coverage; floor at least 84% | L1 | Inactive |
 | `WS-QUAL-001-04` | Task service/repository/router coverage; floor at least 86% | L1 | Inactive |

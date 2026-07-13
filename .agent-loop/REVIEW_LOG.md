@@ -107,6 +107,11 @@ B1B-R5 contract review: PASS at `5672971` across all ten required tracks. The
 single-consumption/cursor-neutral-summary boundary and 535/600/630/650
 allocation passed; R5 implementation is active.
 
+B1B-R5 implementation review: BLOCKED at `5f59f40`. Review reproduced
+transitive loop/header, iterable target, exception/assignment ordering,
+summary-pruning, and `except*` gaps. At 641/650 the repairs and missing proof
+could not fit; B1B-R6 is proposed.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract
