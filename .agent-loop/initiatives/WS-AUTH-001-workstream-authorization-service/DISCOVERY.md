@@ -156,3 +156,60 @@ Production deployment inputs remain externally supplied:
 - Append-only audit facts for lifecycle and authority changes.
 - Fixed internal system actors for server-owned automation.
 - One PR-sized chunk at a time with deterministic evidence and internal review.
+
+## AUTH-04 Delta Discovery (2026-07-13)
+
+### Current behavior
+
+- `backend/app/main.py` only customizes FastAPI request-validation errors. It
+  has no request/correlation context, HTTP/unhandled exception envelope, or
+  response ID headers.
+- Existing HTTP errors primarily expose FastAPI `detail`. Two bounded task
+  domain errors expose top-level `code/details`; existing tests rely on these
+  fields, so AUTH-04 must add the canonical nested envelope without deleting
+  compatibility fields.
+- `backend/app/api/deps/auth.py` already distinguishes missing, invalid, and
+  unavailable authentication conditions internally, but its public responses
+  do not carry stable machine codes or correlation evidence.
+- No rate-control model, query, service, or dependency exists. Redis is Celery
+  delivery infrastructure and is not an authority or API-control store.
+- No first-access or admin-mutation endpoint exists yet. Their control
+  dependencies must be prepared here and attached only by the later owning
+  chunks; unrelated legacy reads must not consume those limits.
+
+### Current migration and ownership boundary
+
+- Current `main` migration head is `0016_artifact_domain`; the original AUTH-04
+  `0016_*` filename allowance is stale after parallel artifact integration.
+- AUTH-04 therefore owns `0017_api_controls` with down revision
+  `0016_artifact_domain`.
+- Existing feature modules use `models -> repository -> service`, with
+  `backend/app/db/models.py` importing feature models for Alembic metadata.
+  `backend/app/modules/api_controls` must follow that pattern and own SQL and
+  transaction behavior.
+
+### Required compatibility and security properties
+
+- Request/correlation headers require bounded canonical UUID parsing, duplicate
+  rejection, safe generation, and no reflection of invalid bytes.
+- The adopted fallback envelope is
+  `error.code/message/details/correlation_id/retryable`; raw exceptions, token
+  material, claims, provider responses, SQL, secrets, and PII are excluded.
+- Existing `detail` and coded-domain fields remain additive compatibility
+  surfaces in this chunk; current intake assertions may not be weakened.
+- Privacy-safe rate keys require keyed HMAC rather than persisted raw issuer,
+  subject, actor, token, network, or email values.
+- Cross-replica fixed-window increments require one PostgreSQL atomic upsert
+  driven by database time. Missing configuration or database failure must fail
+  closed for the protected dependency.
+
+### Proof gaps owned by AUTH-04
+
+- Header absence/propagation, malformed/duplicate values, success and every
+  error class, unhandled exception redaction, and legacy-field compatibility.
+- Allowed, exact-limit, exceeded, expiry-reset, concurrent, cross-session,
+  distinct-scope/key, missing-secret, and database-unavailable rate behavior.
+- Prior-head upgrade, downgrade, re-upgrade, constraints, unique key, indexes,
+  and database-time fields for migration `0017`.
+- Full backend and API-contract regression proof without modifying product
+  authorization or attaching future controls to unrelated routes.

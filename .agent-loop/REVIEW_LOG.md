@@ -1,5 +1,17 @@
 # Review Log
 
+## 2026-07-13 - WS-AUTH-001-04 Started
+
+PR #110 merged AUTH-03 post-merge memory to `main` as `1864867` after Backend,
+Agent Gates, CodeRabbit, internal review, and explicit human approval passed.
+The user then explicitly started `WS-AUTH-001-04` in the isolated worktree
+`/home/abiorh/flow/workstream-auth-001-04` on branch
+`codex/ws-auth-001-04-request-api-controls`.
+
+AUTH-04 is L1/P1 authentication infrastructure. Discovery and required
+preimplementation plan review must pass before runtime edits. AUTH-05,
+POL-002-04, and all QA implementation chunks remain inactive.
+
 ## 2026-07-13 - WS-AUTH-001-03 Merged
 
 PR #109 merged `WS-AUTH-001-03` to `main` as `f06532e` after final branch head

@@ -23,7 +23,8 @@ to `main` as `5c47aba`; that main revision is integrated into AUTH, whose prior
 lifecycle reconciliation was reviewed at `a70b89c`. Backend, Agent Gates, and
 CodeRabbit passed on final branch head `43ffbfe`, then explicit human approval
 merged PR #109 to `main` as `f06532e` on 2026-07-13. AUTH-03 post-merge memory
-is active; AUTH-04 remains inactive.
+merged through PR #110 as `1864867`. The user then explicitly started AUTH-04;
+discovery and required L1 preimplementation review are active.
 
 ## Active planning chunk
 
@@ -31,12 +32,12 @@ None.
 
 ## Active implementation chunk
 
-None.
+`WS-AUTH-001-04` - Request, Error, And API Control Foundation. Runtime edits
+remain gated on the required preimplementation review.
 
 ## Current implementation branch
 
-None. Post-merge memory uses `codex/ws-auth-001-03-post-merge-memory` and makes
-no product implementation change.
+`codex/ws-auth-001-04-request-api-controls`.
 
 ## Chunk status
 
@@ -46,7 +47,7 @@ no product implementation change.
 | `WS-AUTH-001-01` | Merged | `codex/ws-auth-001-01-adopt-authorization-baseline` | #93 | Authorization baseline, Contributor terminology boundary, scanner, and repository contracts; merged as `772af1d`. |
 | `WS-AUTH-001-02` | Merged | `codex/ws-auth-001-02-verified-issuer-token` | #107 | Merged as `060b780`; reviewed code SHA `47dd5a7`. |
 | `WS-AUTH-001-03` | Merged | `codex/ws-auth-001-03-legacy-actor-classification` | #109 | Merged as `f06532e`; reviewed code `8c5334c`; final branch head `43ffbfe`. |
-| `WS-AUTH-001-04` | Proposed | - | - | Request, error, and API control foundation. |
+| `WS-AUTH-001-04` | Active | `codex/ws-auth-001-04-request-api-controls` | - | Discovery and required preimplementation review active; no runtime edit yet. |
 | `WS-AUTH-001-05` | Proposed | - | - | Authority evidence and idempotency foundation. |
 | `WS-AUTH-001-06` | Proposed | - | - | Canonical actor profile and identity link. |
 | `WS-AUTH-001-07` | Proposed | - | - | Authorization kernel and permissions. |
@@ -62,11 +63,11 @@ no product implementation change.
 
 ## Blockers
 
-No active implementation blocker because no AUTH product chunk is active.
-AUTH-04 remains proposed and may start only after this memory update merges and
-the user gives a separate explicit start signal. Non-test operators must later
-supply explicit classification evidence rather than inferred kinds before the
-owning canonical actor migration.
+No current blocker. AUTH-04 must pass preimplementation review before runtime
+edits. Discovery corrected its migration from the now-owned `0016` prefix to
+`0017` on current main. Non-test operators must later supply explicit
+classification evidence rather than inferred kinds before the owning canonical
+actor migration.
 
 AUTH-03 review evidence and its PR trust bundle are recorded at
 `reviews/WS-AUTH-001-03-internal-review-evidence.md` and

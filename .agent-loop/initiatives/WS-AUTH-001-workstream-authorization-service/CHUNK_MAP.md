@@ -15,7 +15,7 @@ stopped.
 | `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Merged through PR #93 as `772af1d` |
 | `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Merged through PR #107 as `060b780` |
 | `WS-AUTH-001-03` | Legacy Actor Classification Preflight | L1 | Merged through PR #109 as `f06532e` |
-| `WS-AUTH-001-04` | Request, Error, And API Control Foundation | L1 | Proposed |
+| `WS-AUTH-001-04` | Request, Error, And API Control Foundation | L1 | Started; preimplementation review active |
 | `WS-AUTH-001-05` | Authority Evidence And Idempotency Foundation | L1 | Proposed |
 | `WS-AUTH-001-06` | Canonical Actor Profile And Identity Link | L1 | Proposed |
 | `WS-AUTH-001-07` | Authorization Kernel And Permission Registry | L1 | Proposed |
@@ -72,8 +72,7 @@ WS-AUTH-001-PLAN
 
 ## Stop condition
 
-`WS-AUTH-001-03` merged through PR #109 as `f06532e` after deterministic proof,
-all required internal reviewers, Backend, Agent Gates, CodeRabbit, and explicit
-human approval passed. Its post-merge memory update is the current gate. Do not
-start `WS-AUTH-001-04` or `WS-POL-002-04`; both retain separate explicit start
-signals and prerequisites.
+AUTH-03 post-merge memory merged through PR #110 as `1864867`. The user
+explicitly started AUTH-04; its discovery and required L1 preimplementation
+review are the current gate. Do not start AUTH-05 or POL-002-04; both retain
+separate explicit start signals and prerequisites.
