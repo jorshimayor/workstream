@@ -150,6 +150,14 @@ flow behind declared globals and qualifies framework imports by root. Proof is
 278 focused tests, Ruff, and 920/950 candidate lines. Final review is active;
 any additional valid finding stops R7 under its two-cycle rule.
 
+B1B-R7 cycle-two review: STOP at `5fcd9bb`. Reviewers confirmed the prior
+findings were repaired but reproduced transparent-wrapper provenance/emptiness,
+qualified and async consumers, sequential builtin shadowing, relative-import
+classification, class handler/guard and local-walrus effects, method consumers,
+and argument-role precision gaps. The compressed two-case-per-line matrix was
+also rejected as unreviewable. Under the approved two-cycle rule, do not repair
+R7 again or publish it. Replan a replacement with a readable test budget.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract

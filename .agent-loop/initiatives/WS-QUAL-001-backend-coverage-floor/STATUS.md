@@ -2,7 +2,7 @@
 
 ## Current state
 
-- Phase: `WS-QUAL-001-01B1B-R7` implementation
+- Phase: B1B replacement replan required
 - Branch: `codex/ws-qual-001-01b1b-semantic-delta-guards`
 - Authoritative target: 90 percent complete backend application statement coverage
 - Diagnostic AUTH-02 baseline: 78.26 percent after database isolation repair
@@ -10,7 +10,7 @@
 - Final evidence-bound branch head: `3da1769882e9f6db4c48ef3dba33da8380e6a613`
 - Planning merge commit: `9046d52f31c7c39f06e06c45c43783bb08a5181c`
 - Internal review: PASS after cleanup, signal, authority, CI, and split repairs
-- Active implementation chunk: `WS-QUAL-001-01B1B-R7`
+- Active implementation chunk: none
 - 01A implementation PR: `https://github.com/Flow-Research/workstream/pull/103` (merged)
 - 01A final reviewed implementation SHA: `d1582ec64b9176c5ead62f695c7a23b48e4c72b9`
 - 01A final evidence-bound branch head: `8cd7616b497ceb46d8359c25de689192632dfee8`
@@ -131,9 +131,14 @@
 - B1B-R7 cycle-two candidate:
   `5fcd9bb99a733fea9d6b05411ea26c4563375d61`
 - B1B-R7 cycle-two proof: 278 focused behavior tests and Ruff passed at
-  920/950 candidate lines; final internal re-review active.
+  920/950 candidate lines.
+- B1B-R7 final result: stopped after cycle-two review found valid adjacent
+  transparent-wrapper, qualified/async consumer, sequential shadowing,
+  relative-import, class-expression, method-consumer, and readability gaps.
+  No R7 PR may be opened; a replacement requires a reviewed plan and start.
 
 ## Stop condition
 
-Only B1B-R7 internal re-review is active on the coverage branch. AUTH-02 is
-independently published as ready PR #107. Do not start 01B2 or chunk 02.
+No coverage implementation is active. AUTH-02 is independently published as
+ready PR #107 with all checks passing. Do not start a B1B replacement, 01B2,
+or chunk 02 without the required reviewed contract and start gate.

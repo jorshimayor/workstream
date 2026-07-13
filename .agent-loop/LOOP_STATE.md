@@ -4,7 +4,7 @@
 
 - Active initiative: `WS-QUAL-001` - Backend Coverage Floor
 - Active planning chunk: none
-- Active implementation chunk: `WS-QUAL-001-01B1B-R7` iterable provenance
+- Active implementation chunk: none
 - Branch: `codex/ws-qual-001-01b1b-semantic-delta-guards`
 - Status: B1B stopped at 223/300 lines after its second binding/AST repair
   cycle. Review at `10dff4f` found lexical-shadow false positives and a
@@ -29,8 +29,10 @@
   conditional provenance, empty-dict reachability, and class-global transfer
   gaps. Cycle-one review at `a8e1e78` found incomplete structural consumption,
   empty-comprehension provenance, and class-control/import boundary gaps. The
-  final permitted repair is bound at `5fcd9bb`; fresh internal review is active
-  after 278 focused behavior tests and the 920/950-line gate passed.
+  final permitted repair is bound at `5fcd9bb`; review found transparent-wrapper
+  provenance, sequential/qualified/async consumer, relative-import, and nested
+  class-expression gaps. R7 is stopped under its two-cycle rule. A replacement
+  must be replanned and approved before implementation.
 - Prior WS-ART reviewed planning SHA: `f7fbc33`
 - Prior WS-ART final evidence-bound planning branch head: `c069064`
 - WS-ART planning merge commit: `8644a43`
@@ -53,8 +55,9 @@
 - WS-QUAL-001-01A merge commit: `2901a3ebe68b7c770ccb1ff06841d79ce0c20d94`
 - WS-QUAL-001-01A post-merge memory merge commit:
   `8829a7ec3aa5199aae0aecbe5fda030c42a051cd`
-- Current gate: internally re-review only B1B-R7 cycle two. 01B2 remains
-  inactive; AUTH-02 is independently published as ready PR #107.
+- Current gate: stop and replan the B1B replacement. No coverage implementation
+  is active. 01B2 remains inactive; AUTH-02 is independently published as ready
+  PR #107 with all GitHub checks passing.
 - Next chunk: `WS-QUAL-001-02` remains inactive; do not start it automatically.
 - Parallel implementation: the user explicitly authorized `WS-AUTH-001-02` to
   resume off-main in its separate worktree while coverage continues. AUTH must
