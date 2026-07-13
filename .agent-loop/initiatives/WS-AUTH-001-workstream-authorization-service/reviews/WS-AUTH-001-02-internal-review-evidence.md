@@ -103,8 +103,9 @@ Results:
 
 Evidence gate: PASS
 
-Scope exception: 25 changed files and 2,727 inserted/deleted lines exceed the
-ordinary PR-size preference because this approved L1 chunk atomically owns the
+Scope exception: 25 changed files, 2,727 additions, and 344 deletions (3,071
+total changed lines) exceed the ordinary PR-size preference because this
+approved L1 chunk atomically owns the
 external-token contract, bounded JWKS/introspection implementation, exhaustive
 negative proof matrix, compatibility boundary, metrics, configuration, API
 drill, and operator contract. Splitting those coupled security guarantees would

@@ -22,8 +22,9 @@ None.
 
 ## Active implementation chunk
 
-`WS-AUTH-001-02` - Verified Issuer Token And JWKS Boundary; bounded runtime
-implementation active after preimplementation review and D12 approval.
+No implementation edits are active. `WS-AUTH-001-02` - Verified Issuer Token
+And JWKS Boundary has passed internal review and is awaiting evidence-bound PR
+publication after D12 approval.
 
 ## Current implementation branch
 

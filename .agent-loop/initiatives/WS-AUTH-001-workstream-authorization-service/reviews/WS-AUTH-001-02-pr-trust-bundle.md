@@ -14,8 +14,9 @@ authority from issuer role claims.
 
 The user explicitly started AUTH-02, approved D12's exact production
 dependencies, and later explicitly resumed this work in its separate worktree.
-Only AUTH-02 is active; later AUTH, policy, coverage, review, and contribution
-chunks are not activated.
+This AUTH branch activates only AUTH-02; it does not activate later AUTH,
+policy, coverage, review, or contribution chunks. Separately authorized
+coverage work remains independently owned in its own worktree.
 
 ## What Changed And Why
 
@@ -80,8 +81,8 @@ startup, dev-fixture exclusion, compatibility allowlists, and API behavior.
 
 ## Tests And Checks
 
-- 130 focused auth/config and changed legacy tests passed with disposable
-  PostgreSQL.
+- 130 tests passed with disposable PostgreSQL: every auth/config test plus
+  three additional changed actor/task test nodes.
 - 680 full backend tests passed in 7653.15 seconds.
 - The real API contract drill passed.
 - Clean base dependency install/import and `pip check` passed.
@@ -90,10 +91,11 @@ startup, dev-fixture exclusion, compatibility allowlists, and API behavior.
 
 ## Test Delta
 
-No tests were removed, skipped, xfailed, or weakened. Three stale expectations
-now assert null identity metadata, and the exact changed-test delta passes
-independently. New tests exercise previously uncovered security branches rather
-than mirroring implementation internals.
+No tests were removed, skipped, xfailed, or weakened. Null identity-metadata
+expectations changed across five test functions: two are in the complete
+auth/config run and three are the additional actor/task nodes. The exact
+changed-test delta passes independently. New tests exercise previously
+uncovered security branches rather than mirroring implementation internals.
 
 ## CI Integrity
 
