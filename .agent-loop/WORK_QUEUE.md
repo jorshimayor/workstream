@@ -4,15 +4,15 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Implementation and internal repair review complete; PR publication evidence pending |
+| `WS-AUTH-001-03` | Legacy Actor Classification Preflight | L1 | Active in isolated AUTH worktree after user start; plan review running |
+| `WS-QUAL-001-01B1B-R10` | TypeVar Child Order | L1 | Ready PR #108 published; external checks and human review active |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01B1B` | Semantic Delta Guards | L1 | Inactive until 01B1A-R2 merge/memory and explicit user start |
-| `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Inactive until 01B1A-R2 and 01B1B merge/memory plus explicit user start |
-| `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B1A-R2, 01B1B, and 01B2 merge/memory plus explicit user start |
+| `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Inactive until B1B replacement merge/memory plus explicit user start |
+| `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until B1B replacement and 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02` | Flow Node Adapter And Reconciliation | L1 | Proposed; inactive pending separate explicit user start |
 
@@ -45,6 +45,7 @@
 | `WS-POL-002-03` | Server-Owned Policy Approval And Visibility APIs | L1 | Merged through PR #90 as `a7aa474` on 2026-07-11 |
 | `WS-AUTH-001-PLAN` | Authorization Service Planning | L0 | Merged through PR #91 as `ad6d644` on 2026-07-11 |
 | `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Merged through PR #93 as `772af1d` on 2026-07-11 |
+| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Merged through PR #107 as `060b780` on 2026-07-13 |
 | `WS-ART-001-PLAN` | Immutable Artifact Storage And Flow Node Integration Planning | L1 | Merged through PR #97 as `8644a43` on 2026-07-12 |
 | `WS-QUAL-001-PLAN` | Backend Coverage Floor Planning | L1 | Merged through PR #99 as `9046d52` on 2026-07-12 |
 | `WS-ART-001-01` | Artifact Domain And Local Adapter | L1 | Merged through PR #101 as `050eb15` on 2026-07-12 |
@@ -53,11 +54,9 @@
 
 ## Proposed Next
 
-`WS-AUTH-001-02` is the only active chunk. Do not start `WS-AUTH-001-03` or
-`WS-POL-002-04` automatically.
-
-Coverage R2 merged through PR #105. Do not start 01B1B, 01B2, chunk 02, or
-another coverage implementation chunk from this worktree.
+R10 is the reviewed replacement for the stopped B1B-R8/R9 attempts. Publish
+only R10 for human review. AUTH-03 continues independently in its isolated
+worktree. Do not start 01B2, chunk 02, or POL-002-04 automatically.
 
 `WS-ART-001-01` is merged. Do not start `WS-ART-001-02` or edit Flow Node until
 the user gives a separate explicit start signal.
@@ -72,3 +71,13 @@ this AUTH queue update.
 | `WS-QUAL-001-01B1` | 496/500 lines after two semantic-integrity repair cycles | Superseded by the proposed 01B1A/01B1B split; do not resume |
 | `WS-QUAL-001-01B1A` | 394/400 lines after two parser-normalization repair cycles; final QA/security review found two valid bypass variants | Replan the parser boundary before any further implementation |
 | `WS-QUAL-001-01B1A-R1` | Additional valid false-positive finding outside its two-fix contract | Superseded by R2 canonical-grammar proposal; do not resume |
+| `WS-QUAL-001-01B1B` | 223/300 after two binding/AST repair cycles; final test-delta review found lexical-shadow false positives and a weakened local-skipTest expectation | Superseded through stopped R1-R9 by reviewed B1B-R10; do not resume |
+| `WS-QUAL-001-01B1B-R7` | Final review after two repair cycles found wrapper provenance, qualified/async consumer, relative-import, class-expression, and readability gaps | Superseded by reviewed B1B-R10; do not repair in place |
+| `WS-QUAL-001-01B1B-R8` | Final QA found Python 3.11 comprehension symtable incompatibility after two repairs | Superseded by reviewed B1B-R10; do not repair in place |
+| `WS-QUAL-001-01B1B-R9` | Final review found shared Python 3.13 TypeVar bound/default child ordinals | Superseded by reviewed B1B-R10; do not repair in place |
+| `WS-QUAL-001-01B1B-R1` | Shared resolver measured 282 lines before its required behavior matrix, exceeding the 270 checkpoint and making the 300 cap infeasible | Superseded through stopped R2-R9 by reviewed B1B-R10; no implementation draft retained |
+| `WS-QUAL-001-01B1B-R2` | 348/350 candidate failed cycle-zero implementation review on standard lexical/control-flow cases with only two lines reserve | Superseded through stopped R3-R9 by reviewed B1B-R10; do not repair in place |
+| `WS-QUAL-001-01B1B-R3` | 468/500 cycle-zero candidate; required control/value-flow repair plus tests did not credibly fit 32 lines | Superseded through stopped R4-R9 by reviewed B1B-R10; no cycle-one code edit made |
+| `WS-QUAL-001-01B1B-R4` | 535/550 cycle-zero candidate replayed AST scopes and missed target/unpack/comprehension semantics | Superseded through stopped R5-R9 by reviewed B1B-R10; do not repair in place |
+| `WS-QUAL-001-01B1B-R5` | 641/650 cycle-zero candidate; provenance closure/evaluation order/except-star proof could not fit nine lines | Superseded through stopped R6-R9 by reviewed B1B-R10; do not repair in place |
+| `WS-QUAL-001-01B1B-R6` | 800/800 cycle-one candidate; iterable abstraction and class-global proof remained incomplete | Superseded through stopped R7-R9 by reviewed B1B-R10; do not repair in place |

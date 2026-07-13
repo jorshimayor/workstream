@@ -2,24 +2,81 @@
 
 ## Current State
 
-- Active initiative: `WS-AUTH-001` - Workstream Authorization Service
+- Active initiative: `WS-QUAL-001` - Backend Coverage Floor
 - Active planning chunk: none
-- Active implementation chunk: `WS-AUTH-001-02` - Verified Issuer Token And
-  JWKS Boundary
-- Branch: `codex/ws-auth-001-02-verified-issuer-token`
-- Worktree: `/home/abiorh/flow/workstream-auth-001-02`
-- Status: implementation and repair review complete; all required internal
-  tracks pass on reviewed code SHA `47dd5a7`; ready PR #107 is published.
-- Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
-- Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
-- Latest integrated `main` merge commit: `6dccb8e`
-- Current gate: external checks and explicit human review on PR #107. Do not
-  merge or start the next chunk automatically.
-- Next chunk: none; do not start `WS-AUTH-001-03` automatically.
-- Parallel initiative: `WS-QUAL-001-01B1A-R2` merged through PR #105 as
-  `8a4182e`, and its post-merge memory merged through PR #106 as `6dccb8e`.
-  Later coverage chunks remain inactive and must not be edited or started from
-  this worktree.
+- Active implementation chunk: `WS-QUAL-001-01B1B-R10` TypeVar child order
+- Branch: `codex/ws-qual-001-01b1b-semantic-delta-guards`
+- Status: B1B stopped at 223/300 lines after its second binding/AST repair
+  cycle. Review at `10dff4f` found lexical-shadow false positives and a
+  weakened local-lookalike `skipTest` expectation. B1B-R1 was proposed as the
+  bounded lexical-binding replacement. R1 passed plan review but stopped at its
+  first size checkpoint: the shared resolver alone measured 282 lines before
+  its required matrix, so its 300-line cap could not preserve proof. R2 is
+  stopped at implementation review `d4cef1d`: the 348/350 candidate omitted
+  standard Python scope and control-flow cases, and proof could not fit its
+  two-line reserve. R3 is proposed to use stdlib `symtable` for lexical facts
+  with bounded AST value flow under the normal 500-line L1 cap. Cycle-zero
+  review at `10ca508` found path joins, chained ambiguity, binding targets, and
+  future-annotation gaps. R3 stopped before cycle-one edits because the 32-line
+  reserve lacked credible proof. R4 stopped at `06a6d61` after review found AST
+  replay corrupting symbol-table consumption, target/unpack bypasses, and
+  optional comprehension effects. R5 stopped at `5f59f40`: review found
+  non-transitive loop summaries, evaluation-order/iterable-target bypasses, and
+  incorrect `except*` flow. R6 stopped at `68174d1`: review found incomplete
+  comprehension/set/dict element provenance, structural generator consumption,
+  and class-global bindings. R7 passed all ten plan tracks at `f0134aa`.
+  Cycle-zero review at `26a4e6e` found lazy-generator, unpacked provenance,
+  conditional provenance, empty-dict reachability, and class-global transfer
+  gaps. Cycle-one review at `a8e1e78` found incomplete structural consumption,
+  empty-comprehension provenance, and class-control/import boundary gaps. The
+  final permitted repair is bound at `5fcd9bb`; review found transparent-wrapper
+  provenance, sequential/qualified/async consumer, relative-import, and nested
+  class-expression gaps. R7 is stopped under its two-cycle rule. R8 now proposes
+  a bounded syntactic policy with no runtime execution model. All required plan
+  tracks passed at `9d72e42`. The implementation is bound at `3acf572`; 117
+  focused tests and the exact 412/700 delta gate passed. Cycle-zero review found
+  bounded lexical namespace/scope gaps; the cycle-one repair is bound at
+  `1a13bea`. Cycle-one review found five bounded syntax traversal gaps. The
+  final permitted repair is bound at `e2ac216`; final QA found Python 3.11
+  comprehension symtable incompatibility. R8 is stopped. R9 proposes only the
+  dual-version scope-pairing closure. Implementation is bound at `5a971d8`;
+  initial dual-version proof passed at `5a971d8`. Review found nested 3.12 inline
+  and Python 3.13 public scope-name gaps. The one permitted repair is bound at
+  `a5395c1`; identical 165-test matrices pass on Python 3.11, 3.12, and 3.13 at
+  553/600 raw lines. Final review found Python 3.13 bound/default children need
+  one shared public ordinal. R9 is stopped; all R10 plan tracks passed at
+  `c42a67a`. The reviewed external repair passes identical 172-test matrices
+  on Python 3.11, 3.12, and 3.13 at 584/620 raw lines. All nine required
+  reviewer tracks and the circuit breaker pass at `7e192b8`; ready PR #108 is
+  under external and human review.
+- Prior WS-ART reviewed planning SHA: `f7fbc33`
+- Prior WS-ART final evidence-bound planning branch head: `c069064`
+- WS-ART planning merge commit: `8644a43`
+- Prior WS-AUTH-001-01 reviewed implementation SHA: `be0b836`
+- Prior WS-AUTH-001-01 final merged branch head: `b5217e1`
+- Latest integrated `main` merge commit: `060b780190435bc79464ae92fd9235a652f70e00`
+- WS-QUAL final reviewed planning SHA: `0d9dd987d546c864fa8de7bae462e5e73a1b5ea9`
+- WS-QUAL final evidence-bound branch head: `3da1769882e9f6db4c48ef3dba33da8380e6a613`
+- WS-QUAL planning merge commit: `9046d52f31c7c39f06e06c45c43783bb08a5181c`
+- WS-QUAL post-merge memory merged through PR #100 as `58d4459`.
+- WS-ART-001-01 reviewed implementation SHA: `5574bf59cf1cb86da76749e0cbc529036346fa8a`
+- WS-ART-001-01 final evidence-bound branch head: `2b8c2a0`
+- WS-ART-001-01 merge commit: `050eb15eab8c57e6bc265477a5e92484d27a893c`
+- WS-QUAL-001-01A implementation base SHA: `58d44596f614895964b82bb344e0ed98596eaae8`
+- Current 01B split base SHA: `8829a7ec3aa5199aae0aecbe5fda030c42a051cd`
+- WS-QUAL-001-01A reviewed implementation SHA:
+  `d1582ec64b9176c5ead62f695c7a23b48e4c72b9`
+- WS-QUAL-001-01A final evidence-bound head:
+  `8cd7616b497ceb46d8359c25de689192632dfee8`
+- WS-QUAL-001-01A merge commit: `2901a3ebe68b7c770ccb1ff06841d79ce0c20d94`
+- WS-QUAL-001-01A post-merge memory merge commit:
+  `8829a7ec3aa5199aae0aecbe5fda030c42a051cd`
+- Current gate: external checks and human review on ready PR #108. 01B2 remains
+  inactive; AUTH-02 merged through PR #107 as `060b780`.
+- Next chunk: `WS-QUAL-001-02` remains inactive; do not start it automatically.
+- Parallel initiative: `WS-AUTH-001-02` merged through PR #107 as `060b780`.
+  `WS-AUTH-001-03` is active after explicit user start in isolated worktree
+  `workstream-auth-001-03`; its plan repair and implementation run independently.
 - Parallel initiative: `WS-ART-001-01` merged through PR #101 as `050eb15`.
   `WS-ART-001-02` remains proposed and inactive pending a separate explicit
   user start.

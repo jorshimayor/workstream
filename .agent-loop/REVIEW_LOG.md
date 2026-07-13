@@ -53,6 +53,218 @@ R2 merge result: PR #105 merged to main as
 `8a4182edb09970131aded73edf3428ac83fe60b9` on 2026-07-12. Post-merge memory is
 the only active coverage work; 01B1B and 01B2 remain inactive.
 
+R2 memory result: PR #106 merged as `6dccb8e`. The user then explicitly started
+01B1B and confirmed coverage may run in parallel with AUTH in isolated
+worktrees. Only 01B1B is active on the coverage branch; 01B2 remains inactive.
+
+B1B implementation review: BLOCKED at `10dff4f`. Engineering accepted the
+second repair, but QA/test-delta found valid lexical-shadow false positives and
+a weakened local-lookalike `skipTest` expectation. The two-cycle circuit rule
+stopped B1B at 223/300; B1B-R1 is proposed for exact lexical binding closure.
+
+B1B-R1 contract review: PASS at `93e48b4` across senior engineering, QA/test,
+security/auth, product/ops, architecture, CI integrity, docs, reuse/dedup, test
+delta, and circuit breaker. The user directed coverage and AUTH to continue in
+parallel; only B1B-R1 is active on the coverage branch.
+
+B1B-R1 size checkpoint: STOPPED before implementation commit. The shared
+resolver draft measured 282 lines before the required behavior matrix, above
+the 270 checkpoint and incompatible with the 300 cap. The draft was discarded;
+B1B-R2 is proposed with a measured 350-line cap and unchanged behavior scope.
+
+B1B-R2 contract review: PASS at `8a5fc4a` across all ten required tracks. Its
+measured 223/290/340/350 allocation, 310 checkpoint, lexical behavior, finite
+repair rule, and B2/AUTH boundaries passed. R2 implementation is active.
+
+B1B-R2 implementation review: BLOCKED at `d4cef1d`. Product/docs, security, and
+CI passed; engineering, architecture, reuse, QA, test-delta, and circuit failed
+on reproduced stdlib scope/control-flow gaps. At 348/350, valid fixes plus tests
+could not fit. R3 is proposed around stdlib `symtable`; no in-place repair.
+
+B1B-R3 contract review: PASS at `245ab58` across all ten required tracks.
+Stdlib lexical ownership, ordinal scope pairing, full regression scope, the
+348/420/480/500 allocation, and B2/AUTH boundaries passed. R3 is active.
+
+B1B-R3 cycle-zero implementation review: FAIL at `10ca508` with 468/500 lines.
+Cycle one must close independent control paths, chained ambiguity, exact store
+targets, future annotations, and Python 3.12 inlined-comprehension semantics.
+No repair starts until the clarified contract passes internal review.
+
+B1B-R3 cycle-one plan review: STOPPED. QA accepted the clarified behavior, but
+engineering found no credible way to fit complete repairs plus regressions in
+32 lines. No executable repair was made. R4 is proposed with measured room.
+
+B1B-R4 contract review: PASS at `ac2bcc6` across all ten required tracks. The
+468/515/535/550 allocation and complete control/value-flow contract passed; R4
+implementation is active.
+
+B1B-R4 implementation review: BLOCKED at `06a6d61`. Review reproduced AST
+replay/symtable corruption, missing loop-carried effects, target-load and unpack
+bypasses, nested inline ownership, and optional comprehension mistakes. At
+535/550 the fixes plus proof could not fit; B1B-R5 is proposed.
+
+B1B-R5 contract review: PASS at `5672971` across all ten required tracks. The
+single-consumption/cursor-neutral-summary boundary and 535/600/630/650
+allocation passed; R5 implementation is active.
+
+B1B-R5 implementation review: BLOCKED at `5f59f40`. Review reproduced
+transitive loop/header, iterable target, exception/assignment ordering,
+summary-pruning, and `except*` gaps. At 641/650 the repairs and missing proof
+could not fit; B1B-R6 is proposed.
+
+B1B-R6 contract review: PASS at `bfb2d8e` across all ten required tracks. The
+fixed-point provenance/evaluation-order contract and 641/720/770/800 allocation
+passed; R6 implementation is active.
+
+B1B-R6 cycle-one implementation review: BLOCKED at `68174d1`. Review reproduced
+comprehension/set/dict iterable provenance, structural consumption, nested
+reachability, and class-global binding gaps. At 800/800 no valid repair and
+proof fit; B1B-R7 is proposed.
+
+B1B-R7 contract review: PASS at `f0134aa` across all ten required tracks. The
+recursive iterable/structural consumption contract and 800/870/920/950
+allocation passed; R7 implementation is active.
+
+B1B-R7 cycle-zero review: FAIL at `26a4e6e`. Engineering and QA reproduced
+lazy generator body effects, starred/dict-unpack and conditional provenance
+bypasses, empty-dict reachability, and class-global boundary/sequencing gaps.
+
+B1B-R7 cycle-one candidate: `a8e1e789f0421c35ecd6f23b9778379fb4b01156`.
+The repair preserves lazy unknown-call genexpr bodies, recognizes structural
+and known eager consumption, closes recursive unpack/conditional provenance,
+walks literal-empty clauses, and makes declared class-global transfer
+sequential and class-local. Proof is 254 focused tests, Ruff, `pip check`, diff
+hygiene, and exactly 950/950 candidate lines. Fresh internal review is active.
+
+B1B-R7 cycle-one review: FAIL at `a8e1e78`. Reviewers reproduced binding-blind
+eager-call classification, missed comprehension/display/unpack/`yield from`
+consumption, nested lazy over-consumption, empty-comprehension provenance, and
+class control/import boundary leaks.
+
+B1B-R7 cycle-two candidate: `5fcd9bb99a733fea9d6b05411ea26c4563375d61`.
+One binding-aware consumption path now covers eager builtins, transparent
+iterator wrappers, comprehensions, star displays/calls, sequence unpacking,
+loops, and `yield from` without consuming nested yielded generators. Empty
+comprehensions produce local provenance; class transfer keeps nested control
+flow behind declared globals and qualifies framework imports by root. Proof is
+278 focused tests, Ruff, and 920/950 candidate lines. Final review is active;
+any additional valid finding stops R7 under its two-cycle rule.
+
+B1B-R7 cycle-two review: STOP at `5fcd9bb`. Reviewers confirmed the prior
+findings were repaired but reproduced transparent-wrapper provenance/emptiness,
+qualified and async consumers, sequential builtin shadowing, relative-import
+classification, class handler/guard and local-walrus effects, method consumers,
+and argument-role precision gaps. The compressed two-case-per-line matrix was
+also rejected as unreviewable. Under the approved two-cycle rule, do not repair
+R7 again or publish it. Replan a replacement with a readable test budget.
+
+B1B-R8 contract review: PASS at `9d72e42` across all ten required tracks after
+clarifying monotone lexical ownership, simple alias closure, exact TestCase
+syntax, merged-main restoration, readable matrices, and raw scope/size gates.
+
+B1B-R8 implementation candidate:
+`3acf57281da4638476e70d7ed118e24413c1d20b`. The R2-R7 interpreter delta was
+removed and replaced by conservative framework-qualified syntax detection.
+Pre-review proof: 117 focused tests, Ruff, `pip check`, self-applied delta
+validation, stale wording/auth docs, loop memory, Markdown links, diff hygiene,
+and 412/700 raw candidate lines pass. Internal implementation review is active.
+
+B1B-R8 cycle-zero review: FAIL at `3acf572`. Reviewers reproduced unknown
+direct-import false ownership, missed exact `unittest.case` chains, enclosing
+shadow fallthrough, conflicting-owner overblocking, Python 3.12 type-parameter
+scope mismatches, and nested TestCase receiver shadowing.
+
+B1B-R8 cycle-one candidate:
+`1a13beaaf968a00a19c64e702b33026283cf0d22`. Framework ownership now retains
+sets of known paths, outer lexical bindings are barriers, exact unittest case
+namespaces are preserved, unknown members remain local, PEP 695 function/class/
+type-alias scopes are paired, and TestCase closures distinguish captured versus
+local `self`. Proof: 140 focused tests and every deterministic gate pass at
+498/700 raw lines. Internal re-review is active.
+
+B1B-R8 cycle-one review: FAIL at `1a13bea`. Reviewers reproduced TypeVar-bound
+child-scope mismatches, dotted aliased import overownership, nearer nonlocal
+barrier fallthrough, missed comprehension/annotated targets, and omitted
+vararg/kwarg annotations.
+
+B1B-R8 cycle-two candidate:
+`e2ac216a114bacb4115c7b44efa736e48cd500fb`. Bound/default child scopes are
+paired, dotted aliases are exact, nonlocal lookup stops at the nearest lexical
+binding, and every executable target and non-postponed argument annotation is
+visited. Proof: 157 focused tests and every deterministic gate pass at 537/700
+raw lines. Final internal review is active; another valid finding stops R8.
+
+B1B-R8 final review: STOP at `e2ac216`. Engineering, security, product, docs,
+architecture, reuse, and all deterministic 3.12 gates passed. Final QA
+reproduced one supported-version defect: Python 3.11 gives list/set/dict
+comprehensions child symtables, so nested clean lexical scopes can mismatch and
+fail closed. The two-cycle rule forbids another R8 repair.
+
+B1B-R9 proposal: introspect matching comprehension child tables so Python 3.11
+enters them and Python 3.12+ uses inlined scope, with isolated dual-version
+proof. No syntax-policy, Python-floor, workflow, dependency, B2, or application
+change is permitted. Internal contract review is active.
+
+B1B-R9 contract review: PASS at `4da0880` across all ten required tracks after
+making the isolated Python 3.11 backend environment, interpreter assertion,
+600-line cap, self-validator, and test-preservation rules executable.
+
+B1B-R9 implementation candidate:
+`5a971d80c38cbf856e9eee5bcd49fac6873c38c2`. Comprehension scope selection now
+enters an optional stdlib list/set/dict child when present and otherwise uses
+the containing inlined scope; genexpr remains required. The identical 161-test
+matrix passes on isolated Python 3.11.15 and project Python 3.12.3. Ruff, pip,
+self-validation, scope, wording, memory, links, diff hygiene, and 546/600 raw
+lines pass. Internal implementation review is active.
+
+B1B-R9 cycle-zero review: FAIL at `5a971d8`. Reviewers found one related
+compatibility class: nested synthetic inline-comprehension frames masked module
+ownership on 3.12+, and Python 3.13 exposes renamed public PEP 695 symtable
+types.
+
+B1B-R9 cycle-one candidate:
+`a5395c173741ee584312e5b69e70676092ce9c46`. Synthetic versus real
+comprehension frames are distinguished by selected table identity, and child
+matching accepts both supported public symtable type families without version
+branches. Identical 165-test matrices pass on Python 3.11.15, 3.12.3, and
+3.13.3. Every deterministic gate passes at 553/600 raw lines. Final internal
+review is active; another valid finding stops R9.
+
+B1B-R9 final review: STOP at `a5395c1`. The comprehension repair and identical
+165-test Python 3.11/3.12/3.13 matrices passed, but Python 3.13 TypeVar bounds
+and defaults share identical public child identifiers. Separate field keys can
+select the first child twice when nested scope shapes differ. R9's one-repair
+rule forbids another edit.
+
+B1B-R10 proposal: consume public TypeVar children through one shared AST-order
+ordinal while retaining distinct legacy families, with mixed bound/default
+proof on Python 3.13 and invalid-syntax fail-closed expectations on 3.11/3.12.
+No comprehension, policy, config, dependency, workflow, or application change
+is permitted. Internal contract review is active.
+
+B1B-R10 contract review: PASS at `c42a67a` across all required tracks after
+requiring successful `analyze_python` traversal before owned outcomes can pass.
+
+B1B-R10 implementation candidate:
+`15d0b80e776f5be12cacc5dbe5226ffe3992dcfd`. Public `type variable` bound and
+default children now share one AST-order ordinal; legacy families remain
+distinct. Clean, skip, and raises-deletion mixed-shape fixtures cover both
+orders across generic functions, classes, and type aliases. Identical 171-test
+matrices pass on Python 3.11.15, 3.12.3, and 3.13.3. Every deterministic gate
+passes at 577/620 raw lines. All required implementation tracks passed. The
+final evidence review found only structured-evidence and stale-memory defects;
+those are repaired before PR publication without changing reviewed code.
+
+B1B-R10 publication: ready PR #108 published at
+`https://github.com/Flow-Research/workstream/pull/108`. External checks and
+human review are active; B2 remains inactive.
+
+B1B-R10 external review: CodeRabbit's provenance comment was already repaired.
+Three further valid comments require truthful nine-track/circuit-breaker
+wording, R7-R9 supersession state, and fail-closed deleted-assertion behavior
+when base-source retrieval fails. The bounded repair adds a direct regression
+test and must pass deterministic proof plus internal review before publication.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract
