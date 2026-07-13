@@ -3,8 +3,8 @@
 ## Current State
 
 - Active initiative: `WS-AUTH-001` - Workstream Authorization Service
-- Active planning chunk: `WS-AUTH-001-04B` - PostgreSQL Rate Controls
-- Active implementation chunk: none
+- Active planning chunk: none
+- Active implementation chunk: `WS-AUTH-001-04B` - PostgreSQL Rate Controls
 - Branch: `codex/ws-auth-001-04b-postgres-rate-controls`
 - Worktree: `/home/abiorh/flow/workstream-auth-001-04b`
 - Status: AUTH-04A post-merge memory merged through PR #112 as `7749f54`; the
@@ -12,8 +12,8 @@
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
 - Latest integrated `main` merge commit: `7749f54`
-- Current gate: repair the rejected AUTH-04B contract and pass exact-head
-  preimplementation re-review; no runtime edit is permitted before that pass.
+- Current gate: bounded AUTH-04B implementation and deterministic evidence under
+  the reviewed contract at `b5dceb1`.
 - Next chunk: none; do not start `WS-AUTH-001-05` automatically.
 - `WS-AUTH-001-04B` is active for planning/review only. AUTH-05 and later chunks
   remain inactive.

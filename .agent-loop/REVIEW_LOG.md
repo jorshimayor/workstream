@@ -1,5 +1,17 @@
 # Review Log
 
+## 2026-07-13 - WS-AUTH-001-04B Repaired Contract Passed
+
+Required senior engineering, architecture, security/data, QA/test, CI-integrity,
+test-delta, product/ops, docs, and reuse review passed exact repaired-contract
+head `b5dceb1`. The second repair closed optional-secret, missing-database,
+lock-order, oversized-identity, exact-setting/constraint, same-clock timestamp,
+and cross-replica rotation gaps without runtime edits.
+
+Bounded AUTH-04B implementation is authorized under the 350-line checkpoint and
+500-line hard stop. Named dependencies remain unattached; AUTH-05 and all
+product authority changes remain inactive.
+
 ## 2026-07-13 - WS-AUTH-001-04B Contract Repair Required
 
 Required L1 preimplementation review rejected activation head `5ed410d` before

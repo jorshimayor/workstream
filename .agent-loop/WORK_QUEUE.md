@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Initial preimplementation review rejected ambiguity; repaired-contract re-review active, runtime gated |
+| `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Repaired contract passed at `b5dceb1`; bounded implementation active |
 
 ## Planned Next
 

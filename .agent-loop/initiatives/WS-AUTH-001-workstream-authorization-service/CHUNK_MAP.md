@@ -17,7 +17,7 @@ stopped.
 | `WS-AUTH-001-03` | Legacy Actor Classification Preflight | L1 | Merged through PR #109 as `f06532e` |
 | `WS-AUTH-001-04` | Request, Error, And API Control Foundation | L1 | Split before implementation into 04A and 04B |
 | `WS-AUTH-001-04A` | Request And Error Context | L1 | Merged through PR #111 as `90c9a28` |
-| `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Explicitly started; required preimplementation review active |
+| `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Repaired contract passed at `b5dceb1`; bounded implementation active |
 | `WS-AUTH-001-05` | Authority Evidence And Idempotency Foundation | L1 | Proposed |
 | `WS-AUTH-001-06` | Canonical Actor Profile And Identity Link | L1 | Proposed |
 | `WS-AUTH-001-07` | Authorization Kernel And Permission Registry | L1 | Proposed |
@@ -82,4 +82,6 @@ explicitly started parent AUTH-04. Required plan review split it before runtime
 implementation. AUTH-04A merged through PR #111 as `90c9a28`, and its
 post-merge memory merged through PR #112 as `7749f54`. The user explicitly
 started AUTH-04B; required preimplementation review is the current gate and no
-runtime edit is permitted before it passes. Do not start AUTH-05 or POL-002-04.
+runtime edit was permitted before it passed. The second repaired contract passed
+at `b5dceb1`; bounded AUTH-04B implementation is active. Do not start AUTH-05 or
+POL-002-04.

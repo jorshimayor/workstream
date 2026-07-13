@@ -2,9 +2,9 @@
 
 ## Status
 
-Active for contract repair after required preimplementation review rejected the
-first activated revision. No runtime edit is permitted until repaired-contract
-re-review passes.
+Active for bounded implementation. Required preimplementation review passed the
+second repaired contract at `b5dceb1`; the 350-line checkpoint and 500-line hard
+stop apply.
 
 ## Parent initiative
 
@@ -243,4 +243,4 @@ git diff --check
 
 AUTH-04A post-merge memory merged through PR #112 as `7749f54`. The user
 explicitly started AUTH-04B on 2026-07-13. Required L1 preimplementation review
-must pass before runtime edits.
+passed the second repaired contract at `b5dceb1` before runtime edits.
