@@ -17,7 +17,7 @@
 | `WS-QUAL-001-01B1B-R5` | Single-pass abstract flow closure | L1 | Blocked at 641/650 after cycle-zero review |
 | `WS-QUAL-001-01B1B-R6` | Transitive provenance closure | L1 | Blocked at 800/800 after cycle-one review |
 | `WS-QUAL-001-01B1B-R7` | Recursive iterable provenance | L1 | Stopped after final two-cycle review; do not resume |
-| `WS-QUAL-001-01B1B-R8` | Conservative syntactic integrity policy | L1 | Contract repair review active; implementation inactive |
+| `WS-QUAL-001-01B1B-R8` | Conservative syntactic integrity policy | L1 | All plan tracks passed at `9d72e42`; implementation active |
 | `WS-QUAL-001-01B2` | Git provenance, configured baseline evidence, and CI ratchet | L1 | Inactive until B1B-R8 merge/memory plus explicit user start |
 | `WS-QUAL-001-02` | Project setup/policy/correction service coverage; floor at least 82% | L1 | Inactive |
 | `WS-QUAL-001-03` | Project repository/router coverage; floor at least 84% | L1 | Inactive |

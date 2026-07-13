@@ -2,7 +2,7 @@
 
 ## Current state
 
-- Phase: `WS-QUAL-001-01B1B-R8` contract review
+- Phase: `WS-QUAL-001-01B1B-R8` implementation
 - Branch: `codex/ws-qual-001-01b1b-semantic-delta-guards`
 - Authoritative target: 90 percent complete backend application statement coverage
 - Diagnostic AUTH-02 baseline: 78.26 percent after database isolation repair
@@ -10,7 +10,10 @@
 - Final evidence-bound branch head: `3da1769882e9f6db4c48ef3dba33da8380e6a613`
 - Planning merge commit: `9046d52f31c7c39f06e06c45c43783bb08a5181c`
 - Internal review: PASS after cleanup, signal, authority, CI, and split repairs
-- Active implementation chunk: none
+- Active implementation chunk: `WS-QUAL-001-01B1B-R8`
+- R8 reviewed contract SHA: `9d72e42cf52f0d2da44dc37216fa38b3542dc2c1`
+- R8 start signal: user's 2026-07-13 instruction to fix the blocking coverage
+  gate after AUTH-02 merged; implementation activated after plan review passed.
 - 01A implementation PR: `https://github.com/Flow-Research/workstream/pull/103` (merged)
 - 01A final reviewed implementation SHA: `d1582ec64b9176c5ead62f695c7a23b48e4c72b9`
 - 01A final evidence-bound branch head: `8cd7616b497ceb46d8359c25de689192632dfee8`

@@ -4,13 +4,12 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| None | No implementation active | - | B1B replacement requires reviewed contract; AUTH-02 merged through PR #107 |
+| `WS-QUAL-001-01B1B-R8` | Syntactic Integrity Policy | L1 | All plan tracks passed at `9d72e42`; implementation active |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01B1B-R8` | Syntactic Integrity Policy | L1 | Contract proposed after R7 stop; internal plan review active; implementation inactive |
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Inactive until B1B replacement merge/memory plus explicit user start |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until B1B replacement and 01B2 merge/memory plus explicit user start |
 | `WS-AUTH-001-03` | Local Authorization Grant Store | L1 | Inactive pending separate explicit start after AUTH-02 merge/memory |

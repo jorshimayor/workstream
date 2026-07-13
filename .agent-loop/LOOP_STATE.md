@@ -3,8 +3,8 @@
 ## Current State
 
 - Active initiative: `WS-QUAL-001` - Backend Coverage Floor
-- Active planning chunk: `WS-QUAL-001-01B1B-R8` syntactic integrity policy
-- Active implementation chunk: none
+- Active planning chunk: none
+- Active implementation chunk: `WS-QUAL-001-01B1B-R8` syntactic integrity policy
 - Branch: `codex/ws-qual-001-01b1b-semantic-delta-guards`
 - Status: B1B stopped at 223/300 lines after its second binding/AST repair
   cycle. Review at `10dff4f` found lexical-shadow false positives and a
@@ -32,8 +32,8 @@
   final permitted repair is bound at `5fcd9bb`; review found transparent-wrapper
   provenance, sequential/qualified/async consumer, relative-import, and nested
   class-expression gaps. R7 is stopped under its two-cycle rule. R8 now proposes
-  a bounded syntactic policy with no runtime execution model; plan review is
-  active and implementation remains inactive.
+  a bounded syntactic policy with no runtime execution model. All required plan
+  tracks passed at `9d72e42`; only R8 implementation is active.
 - Prior WS-ART reviewed planning SHA: `f7fbc33`
 - Prior WS-ART final evidence-bound planning branch head: `c069064`
 - WS-ART planning merge commit: `8644a43`
@@ -56,8 +56,8 @@
 - WS-QUAL-001-01A merge commit: `2901a3ebe68b7c770ccb1ff06841d79ce0c20d94`
 - WS-QUAL-001-01A post-merge memory merge commit:
   `8829a7ec3aa5199aae0aecbe5fda030c42a051cd`
-- Current gate: internally review the R8 contract. No coverage implementation is
-  active. 01B2 remains inactive; AUTH-02 merged through PR #107 as `060b780`.
+- Current gate: implement and internally review only R8. 01B2 remains inactive;
+  AUTH-02 merged through PR #107 as `060b780`.
 - Next chunk: `WS-QUAL-001-02` remains inactive; do not start it automatically.
 - Parallel initiative: `WS-AUTH-001-02` merged through PR #107 as `060b780`.
   `WS-AUTH-001-03` remains inactive pending a separate explicit start.
