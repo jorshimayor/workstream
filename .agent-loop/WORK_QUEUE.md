@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| None | No implementation active | - | R9 compatibility contract review active |
+| `WS-QUAL-001-01B1B-R9` | Python 3.11 Scope Compatibility | L1 | All plan tracks passed at `4da0880`; implementation active |
 
 ## Planned Next
 
@@ -13,7 +13,6 @@
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Inactive until B1B replacement merge/memory plus explicit user start |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until B1B replacement and 01B2 merge/memory plus explicit user start |
 | `WS-AUTH-001-03` | Local Authorization Grant Store | L1 | Inactive pending separate explicit start after AUTH-02 merge/memory |
-| `WS-QUAL-001-01B1B-R9` | Python 3.11 Scope Compatibility | L1 | Proposed after R8 final stop; plan review active; implementation inactive |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02` | Flow Node Adapter And Reconciliation | L1 | Proposed; inactive pending separate explicit user start |
 

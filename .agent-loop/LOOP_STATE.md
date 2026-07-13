@@ -3,8 +3,8 @@
 ## Current State
 
 - Active initiative: `WS-QUAL-001` - Backend Coverage Floor
-- Active planning chunk: `WS-QUAL-001-01B1B-R9` Python 3.11 scope compatibility
-- Active implementation chunk: none
+- Active planning chunk: none
+- Active implementation chunk: `WS-QUAL-001-01B1B-R9` Python 3.11 scope compatibility
 - Branch: `codex/ws-qual-001-01b1b-semantic-delta-guards`
 - Status: B1B stopped at 223/300 lines after its second binding/AST repair
   cycle. Review at `10dff4f` found lexical-shadow false positives and a
@@ -39,7 +39,7 @@
   `1a13bea`. Cycle-one review found five bounded syntax traversal gaps. The
   final permitted repair is bound at `e2ac216`; final QA found Python 3.11
   comprehension symtable incompatibility. R8 is stopped. R9 proposes only the
-  dual-version scope-pairing closure; plan review is active.
+  dual-version scope-pairing closure; implementation is active after plan PASS.
 - Prior WS-ART reviewed planning SHA: `f7fbc33`
 - Prior WS-ART final evidence-bound planning branch head: `c069064`
 - WS-ART planning merge commit: `8644a43`
@@ -62,7 +62,8 @@
 - WS-QUAL-001-01A merge commit: `2901a3ebe68b7c770ccb1ff06841d79ce0c20d94`
 - WS-QUAL-001-01A post-merge memory merge commit:
   `8829a7ec3aa5199aae0aecbe5fda030c42a051cd`
-- Current gate: internally review only R9. 01B2 remains inactive;
+- Current gate: implement and internally review only R9 after all plan tracks
+  passed at `4da0880`. 01B2 remains inactive;
   AUTH-02 merged through PR #107 as `060b780`.
 - Next chunk: `WS-QUAL-001-02` remains inactive; do not start it automatically.
 - Parallel initiative: `WS-AUTH-001-02` merged through PR #107 as `060b780`.
