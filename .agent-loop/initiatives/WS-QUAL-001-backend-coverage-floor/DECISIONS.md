@@ -247,5 +247,10 @@ security purpose: framework-qualified weakening syntax is forbidden in changed
 tests, and syntactic assertion constructs cannot be deleted. It deliberately
 does not decide whether syntax executes. False-positive risk is bounded by exact
 absolute-import ownership, stdlib lexical scopes, relative-import exclusion,
-and local-lookalike tests. This smaller gate must finish before B2 and the
+and local-lookalike tests. Ownership is monotone within a scope and propagates
+only through cycle-safe simple Name-to-framework Name/Attribute aliases; no
+container, unpacking, comprehension, iteration, call return, wrapper value,
+statement order, reachability, or runtime inference is admitted. Execution
+contexts cannot hide an already-owned construct and cannot create ownership.
+This smaller gate must finish before B2 and the
 coverage-raising service chunks can move the repository toward 90 percent.

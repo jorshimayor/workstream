@@ -2,7 +2,7 @@
 
 ## Current state
 
-- Phase: B1B replacement replan required
+- Phase: `WS-QUAL-001-01B1B-R8` contract review
 - Branch: `codex/ws-qual-001-01b1b-semantic-delta-guards`
 - Authoritative target: 90 percent complete backend application statement coverage
 - Diagnostic AUTH-02 baseline: 78.26 percent after database isolation repair

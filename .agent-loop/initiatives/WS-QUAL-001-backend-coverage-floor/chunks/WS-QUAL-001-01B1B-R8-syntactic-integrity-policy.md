@@ -25,31 +25,55 @@ Not allowed: `backend/app/**`, coverage-raising tests, skips/xfails/exclusions,
 configuration, workflows, evidence baselines, B2, chunk 02, AUTH-03, product
 runtime, dependencies, public docs, or spreadsheet exports.
 
-The implementation delta from merged main is capped at 700 added/deleted lines
-across the policy and contract-test files. Checkpoint at 600. Tests must keep one
-case per physical line, stay reviewable without generated/encoded fixtures, and
-must not be compacted to satisfy the cap. Stop above 700.
+The implementation base is merged-main SHA
+`060b780190435bc79464ae92fd9235a652f70e00`. Its raw added-plus-deleted delta is
+capped at 700 lines across the policy and contract-test files, with the same
+metric used for the 600-line checkpoint. Tests must keep one case per physical
+line, stay reviewable without generated/encoded fixtures, and must not be
+compacted to satisfy the cap. Stop above 700.
 
 ## Acceptance Criteria
 
-- Absolute `pytest` and `unittest` imports, aliases, and direct imports establish
-  framework ownership. Relative imports such as `from .pytest` remain local.
-- Python lexical scopes use stdlib `symtable`; local parameters and declarations
-  shadow outer framework names, while explicit global/nonlocal ownership remains
-  visible. Bounded direct aliases may propagate framework ownership, but no
-  control-flow fixed point or runtime value model is permitted.
-- Known skip/xfail/importorskip/SkipTest/skipTest/pytestmark constructs are
-  rejected wherever they occur syntactically once their root is framework-owned.
-  Reachability, generator laziness, async iteration, wrappers, qualified
-  builtins, and consumer argument roles cannot change the result.
+- Same-scope absolute `pytest` and `unittest` imports, aliases, and direct imports
+  establish monotone framework ownership regardless of statement order,
+  reassignment, branch, or reachability. Relative imports and imports whose
+  absolute root is not exactly `pytest` or `unittest` remain local.
+- Python lexical scopes use stdlib `symtable`. Parameters and declarations in a
+  nested scope shadow inherited ownership; explicit global/nonlocal names retain
+  their resolved owner. A finite, cycle-safe alias closure covers only simple
+  `Name = framework-owned Name` and `Name = framework-owned Attribute` aliases.
+  Containers, unpacking, comprehensions, iteration, calls/returns, wrapper
+  values, and arbitrary attributes never create ownership.
+- Once a construct's root is framework-owned, dead branches, empty
+  comprehensions, lazy/async generators, wrappers, qualified/arbitrary
+  consumers, and argument position cannot suppress detection. Those contexts do
+  not themselves create ownership; no statement-order, reachability, class
+  transfer, consumer, or runtime-value inference is permitted.
+- Reject `pytest.skip`, `pytest.xfail`, `pytest.importorskip`,
+  `pytest.mark.skip/skipif/xfail`, pytestmark assignments resolving to those
+  marks, `unittest.skip/skipIf/skipUnless/expectedFailure`, `SkipTest`, and
+  `TestCase`/syntactic-`self.skipTest` constructs.
 - Native `assert`, framework-owned `pytest.raises`/imported `raises`, and
-  unittest `self.assert*` calls are recognized syntactically in the base file
-  for deleted-assertion protection, independent of runtime reachability.
+  syntactic `self.assert*` calls are recognized in the base file for
+  deleted-assertion protection, independent of runtime reachability. The
+  receiver must be exactly the name `self`; unrelated receivers remain clean.
 - Strings, comments, annotations under postponed evaluation, relative imports,
   local lookalikes, shadowed names, and unrelated methods remain clean.
-- Preserve repository root/cwd behavior, committed rename checks, scope and size
-  enforcement, metadata parsing, canonical coverage grammar, and all R2 tests.
-- No test expectation is weakened merely to match broader detection.
+- Preserve every test present on base SHA `060b780` unchanged and passing,
+  including repository root/cwd, committed rename, scope/size, metadata,
+  canonical grammar, invalid-syntax fail-closed, native assertion, and lexical
+  local-lookalike behavior.
+- Retire R2-R7 branch-only reachability, iterator-consumption, sequential-value,
+  and control-flow expectations. Map every discovered weakening construct into
+  the R8 conservative syntax matrix, including skip and deleted-assertion
+  variants; this intentional contract replacement is not test weakening. Do not
+  remove, skip, xfail, weaken, or compress merged-main tests or assertions.
+- The positive matrix covers dead/empty/lazy/async/wrapper/qualified/arbitrary
+  contexts after ownership. Negatives cover strings, comments, postponed
+  annotations, relative imports, local lookalikes, nested lexical shadows,
+  unrelated attributes, reassignment invariance, alias chains/cycles, and
+  global/nonlocal ownership. Mirror it for native assert, owned/imported raises,
+  and exact-receiver `self.assert*` deletion.
 
 ## Verification And Review
 
@@ -64,6 +88,10 @@ backend/.venv/bin/python scripts/check_stale_authorization_docs.py
 backend/.venv/bin/python scripts/check_loop_memory_state.py
 backend/.venv/bin/python scripts/check_markdown_links.py
 git diff --check
+git merge-base --is-ancestor 060b780190435bc79464ae92fd9235a652f70e00 HEAD
+test -z "$(git diff --name-only 060b780190435bc79464ae92fd9235a652f70e00...HEAD | grep -Ev '^(backend/scripts/coverage_policy.py|backend/tests/test_coverage_contract.py|\.agent-loop/(LOOP_STATE.md|REVIEW_LOG.md|WORK_QUEUE.md|initiatives/WS-QUAL-001-backend-coverage-floor/.*))$')"
+test "$(git diff --numstat 060b780190435bc79464ae92fd9235a652f70e00...HEAD -- backend/scripts/coverage_policy.py backend/tests/test_coverage_contract.py | awk '{total += $1 + $2} END {print total + 0}')" -le 700
+cd backend && BASE_SHA=060b780190435bc79464ae92fd9235a652f70e00 .venv/bin/python -c 'import os, sys; sys.path.insert(0, "scripts"); import coverage_policy as policy; policy.validate_delta(os.environ["BASE_SHA"], 700, {"backend/scripts/coverage_policy.py", "backend/tests/test_coverage_contract.py"})'
 ```
 
 Required reviewers: senior engineering, QA/test, security/auth, product/ops,
