@@ -14,6 +14,12 @@ preimplementation re-review are active. 04B requires 04A merge/memory and a
 separate explicit user start. No runtime implementation was written under the
 failed combined plan.
 
+The first split re-review passed senior/architecture/security/product/docs/reuse
+at `f01427a` but QA/CI/test-delta required one more 04A contract repair: exact
+per-branch errors and invalid-ID behavior, bounded validation shapes,
+CI-equivalent isolated-runner/docstring proof, per-file coverage, and additive
+test-delta evidence. Runtime implementation remains gated on that re-review.
+
 ## 2026-07-13 - WS-AUTH-001-04 Started
 
 PR #110 merged AUTH-03 post-merge memory to `main` as `1864867` after Backend,

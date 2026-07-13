@@ -58,11 +58,14 @@ BaseHTTPMiddleware, response-body buffering, or response JSON rewriting
 - Accept zero or one value for each ID. Reject repeated fields, including
   identical duplicates, and reject comma-joined values.
 - An accepted ID is exactly 36 ASCII characters and the canonical lowercase,
-  hyphenated, non-nil RFC 4122 rendering of a UUID with version 1 through 8.
+  hyphenated, non-nil RFC 9562 UUID rendering with RFC variant and version 1
+  through 8.
 - Generate UUIDv4 for a missing request ID. A missing correlation ID reuses the
   effective request ID.
-- Invalid ID input produces a bounded `invalid_request` response with a fresh
-  safe request/correlation pair; supplied bytes are never reflected.
+- Invalid ID input short-circuits before any route or dependency runs and
+  returns HTTP 400 `invalid_request`. Generate one fresh UUIDv4 and use it as
+  both the safe request ID and safe correlation ID; supplied bytes are never
+  reflected.
 - Store effective IDs only on the request's ASGI scope state. Concurrent
   requests must not share context.
 - Every response, including malformed-ID, 404, 405, validation, authentication,
@@ -80,19 +83,49 @@ BaseHTTPMiddleware, response-body buffering, or response JSON rewriting
 - Add the object for explicit API errors, `HTTPException`, request validation,
   coded task-domain JSON errors, auth missing/invalid/unavailable conditions,
   404, 405, 409, 422, future 429/503 errors, and unhandled 500 responses.
-- Default mappings are: 400/422 `invalid_request`, 401 `invalid_token`, 403
-  `permission_not_granted`, 404 `resource_not_found`, 405
-  `method_not_allowed`, 409 `conflict`, 429 `rate_limit_exceeded`, 503
-  `service_unavailable`, and 500 `internal_error`. Existing auth branches may
-  emit a more specific already-adopted stable code.
+- Use the following exact branch mappings. Every unspecified `details` value is
+  `{}`. Compatibility `detail`, status, and headers remain as stated below.
+
+| Condition | HTTP | Code | Canonical message | Details | Retryable |
+|---|---:|---|---|---|---|
+| invalid request/correlation ID | 400 | `invalid_request` | `Invalid request identifier` | `{}` | false |
+| request validation | 422 | `invalid_request` | `Request validation failed` | bounded validation summary | false |
+| missing bearer token | 401 | `missing_token` | `Missing bearer token` | `{}` | false |
+| invalid bearer token | 401 | `invalid_token` | `Invalid bearer token` | `{}` | false |
+| verifier unavailable | 503 | `identity_verification_unavailable` | `Identity verification unavailable` | `{}` | true |
+| unsupported verified subject kind | 403 | `unsupported_subject_kind` | `Unsupported subject kind` | `{}` | false |
+| actor registry unavailable | 503 | `service_unavailable` | `Service unavailable` | `{}` | true |
+| coded pre-submit failure | 422 | `pre_submission_checker_failed` | `Pre-submission checks failed` | exact legacy domain details | false |
+| coded locked-context failure | 422 | `task_locked_context_invalid` | `Task locked context is invalid` | exact legacy domain details | false |
+| other HTTP 400 | 400 | `invalid_request` | `Invalid request` | `{}` | false |
+| other HTTP 401 | 401 | `invalid_token` | `Invalid bearer token` | `{}` | false |
+| other HTTP 403 | 403 | `permission_not_granted` | `Permission not granted` | `{}` | false |
+| other HTTP 404 | 404 | `resource_not_found` | `Resource not found` | `{}` | false |
+| other HTTP 405 | 405 | `method_not_allowed` | `Method not allowed` | `{}` | false |
+| other HTTP 409 | 409 | `conflict` | `Request conflict` | `{}` | false |
+| other HTTP 422 | 422 | `invalid_request` | `Invalid request` | `{}` | false |
+| future HTTP 429 | 429 | `rate_limit_exceeded` | `Rate limit exceeded` | `{}` | true |
+| other HTTP 503 | 503 | `service_unavailable` | `Service unavailable` | `{}` | true |
+| unhandled exception | 500 | `internal_error` | `Internal server error` | `{}` | false |
+
+- Actor-registry domain exceptions retain their existing status and top-level
+  `detail`; their nested code/message/retryable values use the matching generic
+  status row unless the exact unavailable branch above applies.
 - Existing top-level `detail`, `code`, and `details` fields remain present with
   their current types and values. Coded task responses mirror their top-level
   `code/details` into the nested object.
 - Preserve status codes and compatibility headers, including exact
   `WWW-Authenticate` and future `Retry-After` values.
-- Validation uses a constant safe message and only the framework's already
-  redacted, bounded validation-location/type information. It never exposes
-  submitted input values.
+- Validation returns at most 20 errors. Each nested item contains only `type`
+  and `loc`: `type` is capped at 64 ASCII code characters; `loc` contains at
+  most eight integer or string components, with strings capped at 64 ASCII
+  characters and unsupported components replaced by `redacted`. The nested
+  details shape is `{"errors": [...], "truncated": <boolean>}`.
+- The compatibility `detail` remains a list and preserves the tested `loc` and
+  `input="redacted"` behavior, but applies the same 20-error/eight-location/
+  64-character bounds, uses constant `msg="Invalid value"`, and emits only
+  `type`, `loc`, `msg`, and `input`. It never exposes submitted values, exception
+  text, validation context, URLs, or provider data.
 - Unhandled errors use a constant message, empty details, and
   `retryable=false` in both debug and non-debug modes. No exception, SQL,
   token, claim, provider response, secret, or PII enters a response or log.
@@ -124,16 +157,23 @@ BaseHTTPMiddleware, response-body buffering, or response JSON rewriting
 - Exact legacy field/status/header preservation and bounded redaction.
 - OpenAPI response-schema validation plus unchanged path/method and dependency
   consumer inventories.
+- Test-delta evidence proves existing test files only gain assertions/fixtures:
+  no assertion, `pytest.raises`, skip/xfail marker, or `skipTest` line is removed
+  or relaxed. New behavior runs through real FastAPI routes and ASGI transport,
+  not direct handler-only tests or dependency overrides that bypass middleware.
 
 ## Verification commands
 
 ```bash
 (cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/python -m pytest -q tests/test_api_controls.py tests/test_app.py tests/test_auth.py tests/test_tasks.py)
-(cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/python -m pytest -q --cov=app.core.api_controls --cov=app.main --cov-report=term-missing --cov-fail-under=90 tests/test_api_controls.py tests/test_app.py tests/test_auth.py tests/test_tasks.py)
+(cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/python -m pytest -q --cov=app --cov-report=term-missing tests/test_api_controls.py tests/test_app.py tests/test_auth.py tests/test_tasks.py)
+(cd backend && for file in app/core/api_controls.py app/main.py app/api/deps/auth.py app/modules/tasks/router.py; do .venv/bin/coverage report --include="$file" --precision=2 --fail-under=90; done)
+(cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<admin-db> .venv/bin/python -m pytest -q tests/test_isolated_database_runner.py)
 (cd backend && .venv/bin/python scripts/run_isolated_tests.py --metadata-json <temp-metadata-json> --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78)
 (cd backend && .venv/bin/python scripts/run_isolated_tests.py --metadata-json <temp-metadata-json> --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py)
 (cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/python scripts/api_contract_e2e.py)
 (cd backend && .venv/bin/python -m ruff check app tests scripts)
+(cd backend && .venv/bin/docstr-coverage --config .docstr.yaml)
 python3 scripts/check_loop_memory_state.py
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_stale_authorization_docs.py
@@ -141,6 +181,7 @@ python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/check_markdown_links.py
 python3 scripts/check_internal_review_evidence.py
 python3 scripts/test_agent_gates.py
+git diff --unified=0 origin/main...HEAD -- backend/tests | (! rg '^-(.*assert|.*pytest\.raises|.*pytest\.mark\.(skip|xfail)|.*skipTest)')
 git diff --check
 ```
 
