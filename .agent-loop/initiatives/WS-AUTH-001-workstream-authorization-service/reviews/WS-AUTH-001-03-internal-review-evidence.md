@@ -10,11 +10,11 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: db123f7d06cadf433f02f1210ab7927b85a26b61
+Reviewed code SHA: a70b89c91a8950eabaa750e340d4f853529d66f0
 
 Reviewed implementation SHA: `8e2ae489834a3934d6ef507834139a1009dac2e6`
 
-Reviewed at: 2026-07-13T06:06:51Z
+Reviewed at: 2026-07-13T08:23:57Z
 
 Reviewer run IDs: plan-review=/root/auth03_parallel/auth03_plan_review;
 senior-engineering=/root/auth03_parallel/auth03_eng_sec_review;
@@ -27,9 +27,17 @@ qa-test=/root/auth03_parallel/auth03_plan_review;
 test-delta=/root/auth03_parallel/auth03_plan_review;
 ci-integrity=/root/auth03_parallel/auth03_plan_review
 
+Merge-resolution review run IDs:
+engineering-security=/root/auth03_parallel/auth03_eng_sec_review@2026-07-13T08:22:34Z;
+qa-test-ci=/root/auth03_parallel/auth03_plan_review@2026-07-13T08:23:57Z
+
 Evidence-binding re-review run IDs:
 engineering-security=/root/auth03_parallel/auth03_eng_sec_review;
 qa-test-ci=/root/auth03_parallel/auth03_plan_review
+
+The reviewed implementation remains `8e2ae48`. Merge integration `0ae502b`
+incorporates PR #108 without changing AUTH or QA implementation/test blobs;
+reviewed lifecycle head `a70b89c` resolves the two memory conflicts and gates.
 
 ## Reviewed Change
 

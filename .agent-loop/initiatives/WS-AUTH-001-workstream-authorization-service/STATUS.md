@@ -18,7 +18,8 @@ all required internal tracks passed and PR #107 merged as `060b780` on
 2026-07-13. The user then explicitly started `WS-AUTH-001-03`. Its L1
 preimplementation plan review passed with conditions. Bounded implementation,
 repair, and all required internal reviewer tracks now pass on reviewed code SHA
-`8e2ae48`; ready PR #109 is open for external checks and explicit human review.
+`8e2ae48`. Main through PR #108 is integrated at reviewed lifecycle head
+`a70b89c`; ready PR #109 is open for external checks and explicit human review.
 
 ## Active planning chunk
 

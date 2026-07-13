@@ -110,10 +110,11 @@ initiative raises that floor toward the authoritative 90 percent target.
 ## Reviewer Results
 
 All required tracks pass implementation SHA
-`8e2ae489834a3934d6ef507834139a1009dac2e6`, and the final evidence-bound
-revision `db123f7d06cadf433f02f1210ab7927b85a26b61` passed engineering,
-security, QA, test-delta, and CI evidence re-review. Initial High and Medium
-findings were repaired and re-reviewed. Only documented low risks remain.
+`8e2ae489834a3934d6ef507834139a1009dac2e6`. Merge integration `0ae502b`
+incorporates PR #108 without changing reviewed AUTH or QA implementation/test
+blobs, and final lifecycle head `a70b89c` passed engineering, security, QA,
+test-delta, CI, product, and docs re-review. Initial High and Medium findings
+were repaired and re-reviewed. Only documented low risks remain.
 
 ## External Review
 
