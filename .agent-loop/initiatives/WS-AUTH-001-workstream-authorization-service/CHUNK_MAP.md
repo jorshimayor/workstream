@@ -75,6 +75,7 @@ WS-AUTH-001-PLAN
 `WS-AUTH-001-02` merged through PR #107 as `060b780`. The user explicitly
 started `WS-AUTH-001-03` in its separate worktree while coverage work continues
 independently. Deterministic focused proof and all required implementation
-reviewers pass at `8e2ae48`; ready PR publication is the current gate. Do not
+reviewers pass at `8e2ae48`; PR #109 external checks and explicit human review
+are the current gate. Do not
 start `WS-AUTH-001-04` or `WS-POL-002-04`; both retain separate explicit start
 signals and prerequisites.

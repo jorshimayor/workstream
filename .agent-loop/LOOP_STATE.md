@@ -17,8 +17,9 @@
 - Current gate: PR #109 external checks and explicit human review.
 - Next chunk: none; do not start `WS-AUTH-001-04` automatically.
 - Parallel initiative: `WS-QUAL-001-01B1B-R10` merged through PR #108 as
-  `5c47aba`. B2 and coverage chunk 02 remain inactive pending post-merge
-  memory and a separate explicit user start.
+  `5c47aba`, and this convergence records its post-merge memory. B2 remains
+  inactive pending a separate explicit user start; coverage chunk 02 remains
+  inactive pending B2 merge/memory and its separate explicit start.
 - Parallel initiative: `WS-ART-001-01` merged through PR #101 as `050eb15`.
   `WS-ART-001-02` remains proposed and inactive pending a separate explicit
   user start.

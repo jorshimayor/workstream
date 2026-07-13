@@ -10,8 +10,8 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Inactive until R10 post-merge memory plus explicit user start |
-| `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until R10 post-merge memory and 01B2 merge/memory plus explicit user start |
+| `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Inactive pending explicit user start |
+| `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02` | Flow Node Adapter And Reconciliation | L1 | Proposed; inactive pending separate explicit user start |
 
