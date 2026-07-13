@@ -109,11 +109,11 @@ initiative raises that floor toward the authoritative 90 percent target.
 
 ## Reviewer Results
 
-All required tracks pass reviewed code SHA
-`8e2ae489834a3934d6ef507834139a1009dac2e6`: senior engineering, QA/test,
-security/auth, product/ops, architecture, docs, reuse/dedup, CI integrity, and
-test delta. Initial High and Medium findings were repaired and re-reviewed.
-Only documented low risks remain.
+All required tracks pass implementation SHA
+`8e2ae489834a3934d6ef507834139a1009dac2e6`, and the final evidence-bound
+revision `db123f7d06cadf433f02f1210ab7927b85a26b61` passed engineering,
+security, QA, test-delta, and CI evidence re-review. Initial High and Medium
+findings were repaired and re-reviewed. Only documented low risks remain.
 
 ## External Review
 

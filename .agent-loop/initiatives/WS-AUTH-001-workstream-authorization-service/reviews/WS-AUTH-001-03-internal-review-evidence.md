@@ -10,9 +10,11 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: 8e2ae489834a3934d6ef507834139a1009dac2e6
+Reviewed code SHA: db123f7d06cadf433f02f1210ab7927b85a26b61
 
-Reviewed at: 2026-07-13T05:58:01Z
+Reviewed implementation SHA: `8e2ae489834a3934d6ef507834139a1009dac2e6`
+
+Reviewed at: 2026-07-13T06:06:51Z
 
 Reviewer run IDs: plan-review=/root/auth03_parallel/auth03_plan_review;
 senior-engineering=/root/auth03_parallel/auth03_eng_sec_review;
@@ -24,6 +26,10 @@ reuse-dedup=/root/auth03_parallel/auth03_eng_sec_review;
 qa-test=/root/auth03_parallel/auth03_plan_review;
 test-delta=/root/auth03_parallel/auth03_plan_review;
 ci-integrity=/root/auth03_parallel/auth03_plan_review
+
+Evidence-binding re-review run IDs:
+engineering-security=/root/auth03_parallel/auth03_eng_sec_review;
+qa-test-ci=/root/auth03_parallel/auth03_plan_review
 
 ## Reviewed Change
 
