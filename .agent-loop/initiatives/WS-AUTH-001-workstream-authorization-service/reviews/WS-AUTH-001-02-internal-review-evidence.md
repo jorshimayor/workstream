@@ -10,13 +10,16 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: 47dd5a77c588d1b2b4e7f00489faf4c633f26aa2
+Reviewed code SHA: ad15c05ef24d08b38f9965080344b25cd3ba6ac1
 
-Reviewed at: 2026-07-13T02:22:10Z
+Reviewed at: 2026-07-13T02:42:50Z
 
-Reviewer run IDs: senior-engineering=/root/auth02_parallel_resume/auth02_eng_arch_review; architecture=/root/auth02_parallel_resume/auth02_eng_arch_review; reuse-dedup=/root/auth02_parallel_resume/auth02_eng_arch_review; security-auth=/root/auth02_parallel_resume/auth02_eng_arch_review; product-ops=/root/auth02_parallel_resume/auth02_eng_arch_review; docs=/root/auth02_parallel_resume/auth02_eng_arch_review; qa-test=/root/auth02_parallel_resume/auth02_qa_ci_review; test-delta=/root/auth02_parallel_resume/auth02_qa_ci_review; ci-integrity=/root/auth02_parallel_resume/auth02_qa_ci_review
+Reviewer run IDs: senior-engineering=/root/auth02_parallel_resume/auth02_eng_arch_review; architecture=/root/auth02_parallel_resume/auth02_eng_arch_review; reuse-dedup=/root/auth02_parallel_resume/auth02_eng_arch_review; security-auth=/root/auth02_parallel_resume/auth02_eng_arch_review; product-ops=/root/auth02_parallel_resume/auth02_eng_arch_review; docs=/root/auth02_parallel_resume/auth02_eng_arch_review; qa-test=/root/auth02_parallel_resume/auth02_qa_ci_review; test-delta=/root/auth02_parallel_resume/auth02_qa_ci_review; ci-integrity=/root/auth02_parallel_resume/auth02_qa_ci_review; evidence-engineering=/root/auth02_evidence_eng; evidence-qa=/root/auth02_evidence_qa
 
 ## Reviewed Change
+
+Reviewed implementation SHA: `47dd5a77c588d1b2b4e7f00489faf4c633f26aa2`.
+Final reviewed evidence-bound SHA: `ad15c05ef24d08b38f9965080344b25cd3ba6ac1`.
 
 - Added pinned asymmetric JWT verification with mandatory issuer, audience,
   temporal, `jti`, subject-kind, and coarse-scope claims.
