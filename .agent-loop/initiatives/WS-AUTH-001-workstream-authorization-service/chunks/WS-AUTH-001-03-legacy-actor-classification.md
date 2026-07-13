@@ -130,5 +130,7 @@ when engine cleanup also fails and passed fresh internal review. Focused
 isolated-PostgreSQL behavior proof is 60 passing tests with 92 percent
 combined statement coverage for the classifier and CLI; the pure repair matrix
 is 59 passing tests at 90.12 percent combined coverage. The isolated
-database-runner lifecycle suite passes 16/16. PR #109 external checks and
-explicit human review are the current gate; AUTH-04 remains inactive.
+database-runner lifecycle suite passes 16/16. Backend, Agent Gates, and
+CodeRabbit passed on final branch head `43ffbfe`; explicit human approval then
+merged PR #109 to `main` as `f06532e` on 2026-07-13. Post-merge memory is the
+current gate; AUTH-04 remains inactive pending its separate explicit start.

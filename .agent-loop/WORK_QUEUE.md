@@ -4,12 +4,13 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-03` | Legacy Actor Classification Preflight | L1 | Ready PR #109 published; external checks and human review active |
+| - | No active implementation chunk | - | AUTH-03 post-merge memory in progress; no product implementation active |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
+| `WS-AUTH-001-04` | Request, Error, And API Control Foundation | L1 | Proposed; inactive pending AUTH-03 memory merge and explicit user start |
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Inactive pending explicit user start |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
@@ -51,12 +52,14 @@
 | `WS-QUAL-001-01A` | Isolated Database Runner | L1 | Merged through PR #103 as `2901a3e` on 2026-07-12 |
 | `WS-QUAL-001-01B1A-R2` | Canonical Coverage Grammar | L1 | Merged through PR #105 as `8a4182e` on 2026-07-12; post-merge memory merged through PR #106 as `6dccb8e` |
 | `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Merged through PR #107 as `060b780` on 2026-07-13 |
+| `WS-AUTH-001-03` | Legacy Actor Classification Preflight | L1 | Merged through PR #109 as `f06532e` on 2026-07-13 |
 
 ## Proposed Next
 
-`WS-AUTH-001-03` is the only active AUTH chunk. Its implementation, required
-internal reviews, evidence, and ready PR #109 are complete. Do not start
-`WS-AUTH-001-04` or `WS-POL-002-04` automatically.
+`WS-AUTH-001-03` merged through PR #109 as `f06532e` after all required checks
+and reviews passed. Its post-merge memory update is active; no AUTH product
+implementation is active. Do not start `WS-AUTH-001-04` or `WS-POL-002-04`
+automatically.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.

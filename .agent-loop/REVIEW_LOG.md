@@ -1,5 +1,17 @@
 # Review Log
 
+## 2026-07-13 - WS-AUTH-001-03 Merged
+
+PR #109 merged `WS-AUTH-001-03` to `main` as `f06532e` after final branch head
+`43ffbfe` passed Backend, Agent Gates, CodeRabbit, all required internal
+reviewers, and explicit human approval. Reviewed code head `8c5334c` includes
+external repair implementation `4923b67`, which preserves the primary CLI
+failure and exit code when database cleanup also fails.
+
+The current work is post-merge memory only. `WS-AUTH-001-04` remains proposed
+and inactive pending this memory update merge and a separate explicit user
+start. No AUTH product implementation is active.
+
 ## 2026-07-13 - WS-AUTH-001-03 Internal Review Passed
 
 Reviewed code SHA `8e2ae489834a3934d6ef507834139a1009dac2e6` passed senior

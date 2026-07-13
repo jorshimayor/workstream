@@ -20,8 +20,10 @@ preimplementation plan review passed with conditions. Bounded implementation,
 repair, and all required internal reviewer tracks now pass on reviewed code SHA
 `8c5334c`, including external repair implementation `4923b67`. PR #108 merged
 to `main` as `5c47aba`; that main revision is integrated into AUTH, whose prior
-lifecycle reconciliation was reviewed at `a70b89c`. Ready PR #109 is open for
-rerun GitHub checks and explicit human review.
+lifecycle reconciliation was reviewed at `a70b89c`. Backend, Agent Gates, and
+CodeRabbit passed on final branch head `43ffbfe`, then explicit human approval
+merged PR #109 to `main` as `f06532e` on 2026-07-13. AUTH-03 post-merge memory
+is active; AUTH-04 remains inactive.
 
 ## Active planning chunk
 
@@ -29,11 +31,12 @@ None.
 
 ## Active implementation chunk
 
-`WS-AUTH-001-03` - Legacy Actor Classification Preflight.
+None.
 
 ## Current implementation branch
 
-`codex/ws-auth-001-03-legacy-actor-classification`.
+None. Post-merge memory uses `codex/ws-auth-001-03-post-merge-memory` and makes
+no product implementation change.
 
 ## Chunk status
 
@@ -42,7 +45,7 @@ None.
 | `WS-AUTH-001-PLAN` | Merged | `authorization-service` | #91 | Merged as `ad6d644`; D4-D10 later approved. |
 | `WS-AUTH-001-01` | Merged | `codex/ws-auth-001-01-adopt-authorization-baseline` | #93 | Authorization baseline, Contributor terminology boundary, scanner, and repository contracts; merged as `772af1d`. |
 | `WS-AUTH-001-02` | Merged | `codex/ws-auth-001-02-verified-issuer-token` | #107 | Merged as `060b780`; reviewed code SHA `47dd5a7`. |
-| `WS-AUTH-001-03` | In review | `codex/ws-auth-001-03-legacy-actor-classification` | #109 | Reviewed code SHA `8c5334c`; external repair `4923b67`; all required internal tracks pass. |
+| `WS-AUTH-001-03` | Merged | `codex/ws-auth-001-03-legacy-actor-classification` | #109 | Merged as `f06532e`; reviewed code `8c5334c`; final branch head `43ffbfe`. |
 | `WS-AUTH-001-04` | Proposed | - | - | Request, error, and API control foundation. |
 | `WS-AUTH-001-05` | Proposed | - | - | Authority evidence and idempotency foundation. |
 | `WS-AUTH-001-06` | Proposed | - | - | Canonical actor profile and identity link. |
@@ -59,11 +62,11 @@ None.
 
 ## Blockers
 
-No implementation blocker. AUTH-03 requires no production identity payloads
-for deterministic implementation; non-test operators must later supply explicit
-classification evidence rather than inferred kinds. PR #109 external checks,
-explicit human review, and repository-wide coverage proof remain pending merge
-gates.
+No active implementation blocker because no AUTH product chunk is active.
+AUTH-04 remains proposed and may start only after this memory update merges and
+the user gives a separate explicit start signal. Non-test operators must later
+supply explicit classification evidence rather than inferred kinds before the
+owning canonical actor migration.
 
 AUTH-03 review evidence and its PR trust bundle are recorded at
 `reviews/WS-AUTH-001-03-internal-review-evidence.md` and
