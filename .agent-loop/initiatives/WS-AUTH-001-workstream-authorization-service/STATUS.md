@@ -13,7 +13,8 @@ Agent Gates, Backend, and CodeRabbit, then merged through PR #93 as `772af1d` on
 preimplementation plan review passed, and the user explicitly approved D12's
 exact production dependency changes. After a coverage-priority pause, the user
 explicitly resumed AUTH in its separate worktree on 2026-07-12. Bounded runtime
-implementation evidence and review are active in parallel with coverage work.
+implementation and repair review are complete on reviewed code SHA `47dd5a7`;
+all required internal tracks pass and PR publication evidence is pending.
 
 ## Active planning chunk
 
@@ -34,7 +35,7 @@ implementation active after preimplementation review and D12 approval.
 |---|---|---|---:|---|
 | `WS-AUTH-001-PLAN` | Merged | `authorization-service` | #91 | Merged as `ad6d644`; D4-D10 later approved. |
 | `WS-AUTH-001-01` | Merged | `codex/ws-auth-001-01-adopt-authorization-baseline` | #93 | Authorization baseline, Contributor terminology boundary, scanner, and repository contracts; merged as `772af1d`. |
-| `WS-AUTH-001-02` | In implementation review | `codex/ws-auth-001-02-verified-issuer-token` | - | D12 approved; explicitly resumed in its separate worktree while coverage continues independently. |
+| `WS-AUTH-001-02` | Internal review passed | `codex/ws-auth-001-02-verified-issuer-token` | - | Reviewed code SHA `47dd5a7`; evidence and trust bundle prepared for ready PR publication. |
 | `WS-AUTH-001-03` | Proposed | - | - | Legacy actor classification preflight. |
 | `WS-AUTH-001-04` | Proposed | - | - | Request, error, and API control foundation. |
 | `WS-AUTH-001-05` | Proposed | - | - | Authority evidence and idempotency foundation. |
@@ -55,9 +56,9 @@ implementation active after preimplementation review and D12 approval.
 No current blocker. D12 was explicitly approved before dependency or runtime
 implementation edits began.
 
-Chunk review evidence is recorded at
-`reviews/WS-AUTH-001-01-internal-review-evidence.md`; external review response
-and PR trust evidence are recorded alongside it.
+Current chunk review evidence is recorded at
+`reviews/WS-AUTH-001-02-internal-review-evidence.md`; PR trust evidence is at
+`reviews/WS-AUTH-001-02-pr-trust-bundle.md`.
 
 Production issuer configuration and legacy non-test actor classification are
 future implementation/live-proof inputs and are tracked explicitly in

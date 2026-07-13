@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Resumed in its separate worktree; implementation evidence and internal review pending |
+| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Implementation and internal repair review complete; PR publication evidence pending |
 
 ## Planned Next
 
