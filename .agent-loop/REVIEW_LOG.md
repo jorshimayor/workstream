@@ -259,6 +259,12 @@ B1B-R10 publication: ready PR #108 published at
 `https://github.com/Flow-Research/workstream/pull/108`. External checks and
 human review are active; B2 remains inactive.
 
+B1B-R10 external review: CodeRabbit's provenance comment was already repaired.
+Three further valid comments require truthful nine-track/circuit-breaker
+wording, R7-R9 supersession state, and fail-closed deleted-assertion behavior
+when base-source retrieval fails. The bounded repair adds a direct regression
+test and must pass deterministic proof plus internal review before publication.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract

@@ -28,14 +28,16 @@ here; B2 owns mandatory GitHub enforcement after this PR merges.
 
 ## Verification
 
-The identical 171-test matrix passes on Python 3.11.15, 3.12.3, and 3.13.3.
+The identical 172-test matrix passes on Python 3.11, 3.12, and 3.13.
 Ruff, dependency integrity, self-validation, exact scope, ancestry, wording,
-memory, links, and diff hygiene pass. All ten required internal reviewer tracks
-pass at `15d0b80e776f5be12cacc5dbe5226ffe3992dcfd`.
+memory, links, and diff hygiene pass. All nine required internal reviewer tracks
+and the circuit breaker pass at
+`15d0b80e776f5be12cacc5dbe5226ffe3992dcfd`.
 
 ## Risk And Human Focus
 
 - The policy is intentionally conservative once syntax is framework-owned.
+- Deleted test lines fail closed when base-source retrieval fails.
 - Local parameters/declarations, relative imports, unknown framework members,
   unrelated attributes, and non-TestCase `self.skipTest` remain clean.
 - Human review should confirm the syntax-only boundary, cross-version symtable

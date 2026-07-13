@@ -506,6 +506,8 @@ def has_deleted_assertion(diff: str, base_source: str) -> bool:
             old_line += 1
         elif not line.startswith("+"):
             old_line += 1
+    if deleted and not base_source:
+        return True
     try:
         analysis = analyze_python(base_source)[1]
     except SyntaxError:

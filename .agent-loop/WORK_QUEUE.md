@@ -72,9 +72,9 @@ this AUTH queue update.
 | `WS-QUAL-001-01B1A` | 394/400 lines after two parser-normalization repair cycles; final QA/security review found two valid bypass variants | Replan the parser boundary before any further implementation |
 | `WS-QUAL-001-01B1A-R1` | Additional valid false-positive finding outside its two-fix contract | Superseded by R2 canonical-grammar proposal; do not resume |
 | `WS-QUAL-001-01B1B` | 223/300 after two binding/AST repair cycles; final test-delta review found lexical-shadow false positives and a weakened local-skipTest expectation | Superseded through stopped R1-R9 by reviewed B1B-R10; do not resume |
-| `WS-QUAL-001-01B1B-R7` | Final review after two repair cycles found wrapper provenance, qualified/async consumer, relative-import, class-expression, and readability gaps | Stop; replan B1B-R8 with a smaller explicit policy boundary |
-| `WS-QUAL-001-01B1B-R8` | Final QA found Python 3.11 comprehension symtable incompatibility after two repairs | Stop; superseded by narrow dual-version R9 proposal |
-| `WS-QUAL-001-01B1B-R9` | Final review found shared Python 3.13 TypeVar bound/default child ordinals | Stop; superseded by narrow R10 proposal |
+| `WS-QUAL-001-01B1B-R7` | Final review after two repair cycles found wrapper provenance, qualified/async consumer, relative-import, class-expression, and readability gaps | Superseded by reviewed B1B-R10; do not repair in place |
+| `WS-QUAL-001-01B1B-R8` | Final QA found Python 3.11 comprehension symtable incompatibility after two repairs | Superseded by reviewed B1B-R10; do not repair in place |
+| `WS-QUAL-001-01B1B-R9` | Final review found shared Python 3.13 TypeVar bound/default child ordinals | Superseded by reviewed B1B-R10; do not repair in place |
 | `WS-QUAL-001-01B1B-R1` | Shared resolver measured 282 lines before its required behavior matrix, exceeding the 270 checkpoint and making the 300 cap infeasible | Superseded through stopped R2-R9 by reviewed B1B-R10; no implementation draft retained |
 | `WS-QUAL-001-01B1B-R2` | 348/350 candidate failed cycle-zero implementation review on standard lexical/control-flow cases with only two lines reserve | Superseded through stopped R3-R9 by reviewed B1B-R10; do not repair in place |
 | `WS-QUAL-001-01B1B-R3` | 468/500 cycle-zero candidate; required control/value-flow repair plus tests did not credibly fit 32 lines | Superseded through stopped R4-R9 by reviewed B1B-R10; no cycle-one code edit made |

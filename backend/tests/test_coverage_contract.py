@@ -323,6 +323,11 @@ def test_deleted_assertions_use_syntax(source: str, line: int, blocked: bool) ->
     assert policy.has_deleted_assertion(diff, source) is blocked
 
 
+def test_deleted_assertions_fail_closed_without_base_source() -> None:
+    assert policy.has_deleted_assertion("@@ -1,1 +1,0 @@\n-assert result", "") is True
+    assert policy.has_deleted_assertion("", "") is False
+
+
 @pytest.mark.parametrize(("clean", "weakening", "assertion"), [
     ("def f[T: (lambda: int) = (x for x in ())](): pass", "import pytest\ndef f[T: (lambda: int) = (pytest.skip() for _ in ())](): pass", "import pytest\ndef f[T: (lambda: int) = (pytest.raises(ValueError) for _ in ())](): pass"),
     ("def f[T: (x for x in ()) = (lambda: int)](): pass", "import pytest\ndef f[T: (pytest.skip() for _ in ()) = (lambda: int)](): pass", "import pytest\ndef f[T: (pytest.raises(ValueError) for _ in ()) = (lambda: int)](): pass"),

@@ -56,9 +56,10 @@
   implementation activated after all plan tracks passed.
 - R10 implementation candidate:
   `15d0b80e776f5be12cacc5dbe5226ffe3992dcfd`
-- R10 proof: identical 171-test matrices pass on Python 3.11.15, 3.12.3, and
-  3.13.3; every deterministic gate passes at 577/620 raw lines.
-- R10 internal review: all ten required tracks passed at reviewed code SHA
+- R10 external-repair proof: identical 172-test matrices pass on Python 3.11,
+  3.12, and 3.13; Ruff and dependency integrity pass at 584/620 raw lines.
+- R10 internal review: all nine required reviewer tracks and the circuit breaker
+  passed at reviewed code SHA
   `15d0b80e776f5be12cacc5dbe5226ffe3992dcfd`; external review is active.
 - R10 ready PR: `https://github.com/Flow-Research/workstream/pull/108`
 - 01A implementation PR: `https://github.com/Flow-Research/workstream/pull/103` (merged)
