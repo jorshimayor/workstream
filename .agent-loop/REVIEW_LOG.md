@@ -194,6 +194,17 @@ binding, and every executable target and non-postponed argument annotation is
 visited. Proof: 157 focused tests and every deterministic gate pass at 537/700
 raw lines. Final internal review is active; another valid finding stops R8.
 
+B1B-R8 final review: STOP at `e2ac216`. Engineering, security, product, docs,
+architecture, reuse, and all deterministic 3.12 gates passed. Final QA
+reproduced one supported-version defect: Python 3.11 gives list/set/dict
+comprehensions child symtables, so nested clean lexical scopes can mismatch and
+fail closed. The two-cycle rule forbids another R8 repair.
+
+B1B-R9 proposal: introspect matching comprehension child tables so Python 3.11
+enters them and Python 3.12+ uses inlined scope, with isolated dual-version
+proof. No syntax-policy, Python-floor, workflow, dependency, B2, or application
+change is permitted. Internal contract review is active.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract

@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01B1B-R8` | Syntactic Integrity Policy | L1 | All plan tracks passed at `9d72e42`; implementation active |
+| None | No implementation active | - | R9 compatibility contract review active |
 
 ## Planned Next
 
@@ -13,6 +13,7 @@
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Inactive until B1B replacement merge/memory plus explicit user start |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until B1B replacement and 01B2 merge/memory plus explicit user start |
 | `WS-AUTH-001-03` | Local Authorization Grant Store | L1 | Inactive pending separate explicit start after AUTH-02 merge/memory |
+| `WS-QUAL-001-01B1B-R9` | Python 3.11 Scope Compatibility | L1 | Proposed after R8 final stop; plan review active; implementation inactive |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02` | Flow Node Adapter And Reconciliation | L1 | Proposed; inactive pending separate explicit user start |
 
@@ -72,6 +73,7 @@ this AUTH queue update.
 | `WS-QUAL-001-01B1A-R1` | Additional valid false-positive finding outside its two-fix contract | Superseded by R2 canonical-grammar proposal; do not resume |
 | `WS-QUAL-001-01B1B` | 223/300 after two binding/AST repair cycles; final test-delta review found lexical-shadow false positives and a weakened local-skipTest expectation | Replaced through stopped R1-R6 by current proposed B1B-R7; do not resume |
 | `WS-QUAL-001-01B1B-R7` | Final review after two repair cycles found wrapper provenance, qualified/async consumer, relative-import, class-expression, and readability gaps | Stop; replan B1B-R8 with a smaller explicit policy boundary |
+| `WS-QUAL-001-01B1B-R8` | Final QA found Python 3.11 comprehension symtable incompatibility after two repairs | Stop; superseded by narrow dual-version R9 proposal |
 | `WS-QUAL-001-01B1B-R1` | Shared resolver measured 282 lines before its required behavior matrix, exceeding the 270 checkpoint and making the 300 cap infeasible | Replaced through stopped R2-R6 by current proposed B1B-R7; no implementation draft retained |
 | `WS-QUAL-001-01B1B-R2` | 348/350 candidate failed cycle-zero implementation review on standard lexical/control-flow cases with only two lines reserve | Replaced through stopped R3-R6 by current proposed B1B-R7; do not repair in place |
 | `WS-QUAL-001-01B1B-R3` | 468/500 cycle-zero candidate; required control/value-flow repair plus tests did not credibly fit 32 lines | Replaced through stopped R4-R6 by current proposed B1B-R7; no cycle-one code edit made |
