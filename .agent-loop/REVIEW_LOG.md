@@ -67,6 +67,11 @@ security/auth, product/ops, architecture, CI integrity, docs, reuse/dedup, test
 delta, and circuit breaker. The user directed coverage and AUTH to continue in
 parallel; only B1B-R1 is active on the coverage branch.
 
+B1B-R1 size checkpoint: STOPPED before implementation commit. The shared
+resolver draft measured 282 lines before the required behavior matrix, above
+the 270 checkpoint and incompatible with the 300 cap. The draft was discarded;
+B1B-R2 is proposed with a measured 350-line cap and unchanged behavior scope.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract

@@ -162,3 +162,16 @@ and broad `.skipTest` detection caused a test expectation to be weakened. R1
 must resolve actual bindings by lexical scope, preserve arbitrary local
 lookalikes, and retain every passing Git/scope/size invariant. This is a
 corrective replacement, not B2 or application scope.
+
+## D15: Use measured lexical-binding allocation
+
+Status: proposed after R1's first implementation checkpoint; internal contract
+review pending.
+
+R1's shared resolver draft measured 282 total implementation lines before its
+required adversarial matrix, so the reviewed 300-line cap could not preserve
+proof. The draft was discarded. R2 retains the identical behavior and file
+scope with a 350-line cap allocated from measured code: 290 lines through the
+lint-clean resolver, 50 lines for the matrix, and 10 reserve. This changes only
+the evidence-backed size boundary; it does not admit B2, AUTH, application,
+configuration, workflow, evidence, documentation, or coverage-raising scope.

@@ -2,8 +2,9 @@
 
 Parent: `WS-QUAL-001` Backend Coverage Floor
 
-Status: all ten internal plan-review tracks passed at `93e48b4`; explicitly
-started on 2026-07-13 for parallel implementation with AUTH.
+Status: stopped at the first size checkpoint. The resolver-only draft measured
+282 lines before the required matrix, so the 300-line cap could not preserve
+proof. Superseded by B1B-R2; do not resume.
 
 ## Goal And Scope
 

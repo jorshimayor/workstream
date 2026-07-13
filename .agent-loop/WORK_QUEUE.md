@@ -4,14 +4,14 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01B1B-R1` | Lexical Binding Closure | L1 | Contract review passed at `93e48b4`; implementation active |
+| `WS-QUAL-001-01B1B-R2` | Measured Lexical Binding Closure | L1 | Proposed after R1 size checkpoint; contract review pending |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Inactive until B1B-R1 merge/memory plus explicit user start |
-| `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until B1B-R1 and 01B2 merge/memory plus explicit user start |
+| `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Inactive until B1B-R2 merge/memory plus explicit user start |
+| `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until B1B-R2 and 01B2 merge/memory plus explicit user start |
 | `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Resumed off-main in a separate worktree by explicit user direction; independent review required before PR/merge |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02` | Flow Node Adapter And Reconciliation | L1 | Proposed; inactive pending separate explicit user start |
@@ -53,8 +53,8 @@
 
 ## Proposed Next
 
-Implement and review only B1B-R1. AUTH-02 proceeds independently in its
-existing worktree. Do not start 01B2 or chunk 02.
+Review B1B-R2 before further coverage implementation. AUTH-02 proceeds
+independently in its existing worktree. Do not start 01B2 or chunk 02.
 
 `WS-ART-001-01` is merged. Do not start `WS-ART-001-02` or edit Flow Node until
 the user gives a separate explicit start signal.
@@ -67,3 +67,4 @@ the user gives a separate explicit start signal.
 | `WS-QUAL-001-01B1A` | 394/400 lines after two parser-normalization repair cycles; final QA/security review found two valid bypass variants | Replan the parser boundary before any further implementation |
 | `WS-QUAL-001-01B1A-R1` | Additional valid false-positive finding outside its two-fix contract | Superseded by R2 canonical-grammar proposal; do not resume |
 | `WS-QUAL-001-01B1B` | 223/300 after two binding/AST repair cycles; final test-delta review found lexical-shadow false positives and a weakened local-skipTest expectation | Superseded by proposed B1B-R1; do not resume |
+| `WS-QUAL-001-01B1B-R1` | Shared resolver measured 282 lines before its required behavior matrix, exceeding the 270 checkpoint and making the 300 cap infeasible | Superseded by proposed B1B-R2; no implementation draft retained |

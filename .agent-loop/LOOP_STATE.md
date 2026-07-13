@@ -3,14 +3,16 @@
 ## Current State
 
 - Active initiative: `WS-QUAL-001` - Backend Coverage Floor
-- Active planning chunk: none
-- Active implementation chunk: `WS-QUAL-001-01B1B-R1` lexical binding closure
+- Active planning chunk: `WS-QUAL-001-01B1B-R2` measured lexical closure
+- Active implementation chunk: none
 - Branch: `codex/ws-qual-001-01b1b-semantic-delta-guards`
 - Status: B1B stopped at 223/300 lines after its second binding/AST repair
   cycle. Review at `10dff4f` found lexical-shadow false positives and a
   weakened local-lookalike `skipTest` expectation. B1B-R1 is proposed as the
-  bounded lexical-binding replacement. Its contract passed all ten internal
-  plan-review tracks at `93e48b4`; implementation is active.
+  bounded lexical-binding replacement. R1 passed plan review but stopped at its
+  first size checkpoint: the shared resolver alone measured 282 lines before
+  its required matrix, so its 300-line cap could not preserve proof. R2 is
+  proposed with a measured 350-line cap; no oversized draft was retained.
 - Prior WS-ART reviewed planning SHA: `f7fbc33`
 - Prior WS-ART final evidence-bound planning branch head: `c069064`
 - WS-ART planning merge commit: `8644a43`
@@ -33,7 +35,7 @@
 - WS-QUAL-001-01A merge commit: `2901a3ebe68b7c770ccb1ff06841d79ce0c20d94`
 - WS-QUAL-001-01A post-merge memory merge commit:
   `8829a7ec3aa5199aae0aecbe5fda030c42a051cd`
-- Current gate: implement and internally review only B1B-R1. 01B2 remains
+- Current gate: internally review the measured B1B-R2 replacement. 01B2 remains
   inactive; AUTH-02 continues independently in its separate worktree.
 - Next chunk: `WS-QUAL-001-02` remains inactive; do not start it automatically.
 - Parallel implementation: the user explicitly authorized `WS-AUTH-001-02` to
