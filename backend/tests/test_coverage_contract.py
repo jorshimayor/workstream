@@ -208,199 +208,111 @@ def test_runner_metadata_fails_closed(tmp_path: Path, updates: dict, code: str) 
 
 
 @pytest.mark.parametrize(("source", "weak"), [
-    ("value = 'pytest.skip and xfail are inert'", False), ("import pytest\nwith pytest.raises(ValueError): raise ValueError", False),
-    ("import pytest as pt\nwith pt.raises(ValueError): raise ValueError", False), ("from pytest import raises as expect\nwith expect(ValueError): raise ValueError", False),
-    ("import pytest\npytest.skip('disabled')", True), ("import pytest\n@pytest.mark.xfail\ndef test_x(): pass", True),
-    ("def test_x():\n from pytest import skip\n skip('disabled')", True), ("if True:\n from pytest import mark as m\n @m.skip\n def test_x(): pass", True),
-    ("import pytest as pt\npt.importorskip('optional')", True), ("import unittest as ut\n@ut.skipUnless(True, 'reason')\ndef test_x(): pass", True),
-    ("from unittest import expectedFailure\n@expectedFailure\ndef test_x(): pass", True), ("class T:\n def test_x(self): self.skipTest('disabled')", False),
-    ("import unittest\nraise unittest.SkipTest('disabled')", True), ("from unittest import SkipTest\nraise SkipTest('disabled')", True),
-    ("from unittest.case import SkipTest as ST\nraise ST('disabled')", True), ("import unittest.case as uc\nraise uc.SkipTest('disabled')", True),
-    ("class Local:\n def skip(self): pass\npytest = Local()\npytest.skip()", False), ("class Local:\n def skipTest(self): pass\nlocal = Local()\nlocal.skipTest()", False),
-    ("import pytest\ndef test_x(pytest): pytest.skip('local')", False), ("import pytest\ndef test_x():\n pytest.skip('local')\n pytest = object()", False),
-    ("import pytest\ndef outer():\n def test_x(): pytest.skip('disabled')", True), ("import pytest\ndef outer():\n pytest = object()\n def test_x(): pytest.skip('local')", False),
-    ("import pytest\nclass T:\n pytest = object()\n def test_x(self): pytest.skip('disabled')", True), ("import pytest\ndef test_x():\n global pytest\n pytest.skip('disabled')\n pytest = object()", True),
-    ("def outer():\n import pytest\n def test_x():\n  nonlocal pytest\n  pytest.skip('disabled')\n  pytest = object()", True), ("import pytest\nif ready: pytest = object()\npytest.skip('ambiguous')", True),
-    ("from pytest import skip\nif ready: skip = print\nskip('ambiguous')", True), ("import pytest\nif ready: pytest = object()\nelse: pytest = object()\npytest.skip('local')", False),
-    ("import pytest\ndef test_x(*pytest, **options): pytest.skip('local')", False), ("import pytest\ntest_x = lambda pytest: pytest.skip('local')", False),
-    ("import pytest\nvalues = [pytest.skip() for pytest in ()]", False), ("import pytest\nvalues = [pytest for pytest in ()]\npytest.skip('disabled')", True),
-    ("import pytest\ntry: pass\nexcept Exception as pytest: pytest.skip('local')", False), ("import pytest\nfor _ in (): pytest = object()\npytest.skip('ambiguous')", True),
-    ("import pytest\ntry: pytest = object()\nexcept Exception: pass\npytest.skip('ambiguous')", True), ("import pytest\nmatch value:\n case 1: pytest = object()\npytest.skip('ambiguous')", True),
-    ("import pytest\nwith manager() as pytest: pytest.skip('local')", False), ("import pytest\nvalue: pytest.mark.skip = 1", True),
-    ("import pytest\npytest.foo = object()\npytest.skip()", True), ("import pytest\npytest[0] = object()\npytest.skip()", True),
-    ("import pytest\npytest += object()\npytest.skip()", True), ("p = object()\ntry:\n import pytest as p\nexcept Exception: p = object()\np.skip()", True),
-    ("p = object()\ntry:\n import pytest as p\n raise Error\nexcept Exception: p.skip()", True), ("import pytest\ntry: pytest = object()\nexcept: pass\nfinally: pytest = object()\npytest.skip()", False),
-    ("p = object()\nmatch value:\n case 1: import pytest as p\n case _: p = object()\np.skip()", True), ("p = object()\nfor x in xs: import pytest as p\nelse: p = object()\np.skip()", True),
-    ("import pytest\np = pytest\nif ready: p = object()\npytestmark = p.mark.skip", True), ("import unittest\nu = unittest\nif ready: u = object()\ncase = u.TestCase()\ncase.skipTest()", True),
-    ("from __future__ import annotations\nimport pytest\ndef f(x: (lambda: pytest.skip())): pass\nclass C:\n x: (lambda: pytest.skip())", False), ("import pytest\nmatch value:\n case pytest: pytest.skip()", False),
-    ("import pytest\ndef f():\n [[y for y in () if (pytest := object())] for x in ()]\n pytest.skip()", True), ("for x in xs:\n def local(): pass", False),
-    ("while ready:\n local = lambda: 1", False), ("try: pass\nexcept Exception:\n def local(): pass", False),
-    ("p = object()\nfor x in xs:\n p.skip()\n import pytest as p", True), ("p = object()\nwhile ready:\n p.skip()\n import pytest as p", True),
-    ("p = object()\nfor x in xs:\n p.skip()\n import os, pytest as p", True), ("import pytest\np = object()\nfor x in xs:\n p.skip()\n p += pytest", True),
-    ("import pytest\npytest.skip().field = 1", True), ("import pytest\ntarget[pytest.skip()] = 1", True),
-    ("import pytest\n[pytest.skip() for pytest.field in xs]", True), ("import pytest\n[x for target[pytest.skip()] in xs]", True),
-    ("import pytest\np, = (pytest,)\np.skip()", True), ("import pytest\n(p, (q,)) = (pytest, (pytest,))\nq.skip()", True),
-    ("import pytest\n[(pytest := object()) for _ in ()]\npytest.skip()", True), ("import pytest\n((pytest := object()) for _ in ())\npytest.skip()", True),
-    ("import pytest\n[lambda: ((p := pytest), p.skip()) for _ in xs]", True), ("import pytest as pa\np = object()\nmatch x:\n case 1 if (p := pa) and False: pass\n case _: p.skip()", True),
-    ("import pytest\ndef f():\n value: pytest.mark.skip", False), ("q = object(); p = object()\nfor x in xs:\n q.skip(); import pytest as p; q = p", True),
-    ("import pytest as pa\np = object()\nfor x in xs:\n p.skip()\n def f(v = (p := pa)): pass", True), ("import unittest\ncase = object()\nfor x in xs:\n case.skipTest()\n class C(unittest.TestCase): pass\n case = C()", True),
-    ("import pytest\ndef f():\n q = Local()\n for x in xs:\n  q.skip()\n  marker: (q := pytest)", False), ("import pytest\nq = Local()\nfor x in xs:\n q.skip()\n ((q := pytest) for _ in ())", False),
-    ("import pytest\nq = Local()\nfor x in xs:\n q.skip()\n [y for y in ys if (q := pytest)]", True), ("import pytest\nq = Local()\nfor x in xs:\n q.skip()\n [y for y in () if (q := pytest)]", False),
-    ("import pytest as pa\np = Local()\nfor x in xs:\n p.skip()\n def f(v: (p := pa)): pass", True), ("import pytest\nfor p in (pytest,): p.skip()", True),
-    ("import pytest\n[p.skip() for p in (pytest,)]", True), ("import pytest\nfor (p, (q,)) in ((pytest, (pytest,)),): q.skip()", True),
-    ("import pytest as p\nvalue: (p := object()) = p.skip()", True), ("import pytest as p\nitems[p.skip()] += (p := object())", True),
-    ("import pytest\ntry: pass\nexcept pytest.skip() as pytest: pass", True), ("p = object()\ntry: raise ExceptionGroup('x', [ValueError(), TypeError()])\nexcept* ValueError: import pytest as p\nexcept* TypeError: p.skip()", True),
-    ("try:\n def f(): pass\nexcept Exception: pass", False), ("try: pass\nexcept Exception: pass\nelse: f = lambda: 1", False),
-    ("try: pass\nfinally: values = (x for x in ())", False), ("for x in xs: pass\nelse:\n def f(): pass", False),
-    ("match x:\n case 1: f = lambda: 1", False), ("match x:\n case 1 if all(y for y in ()): pass", False),
-    ("import pytest as pa\np = Local()\nfor x in xs:\n p.skip()\n list((p := pa) for _ in (1,))", True), ("items[next(x for x in ())] += 1", False),
-    ("items[(lambda: 1)()] += 1", False), ("import pytest as pa\np = Local()\ntry: raise TypeError()\nexcept ((p := pa), ValueError)[1]: pass\nexcept TypeError: p.skip()", True),
-    ("import pytest\nfor p in (pytest for _ in (0,)): p.skip()", True), ("import pytest\n[p.skip() for p in (pytest for _ in (0,))]", True),
-    ("import pytest\nfor p, q in ((pytest, Local()),): q.skip()", False), ("import pytest\np = Local()\nfor x in xs:\n p.skip()\n class C:\n  global p\n  p = pytest", True),
-    ("while ready: pass\nelse: values = (x for x in ())", False), ("try:\n def f(): pass\n raise ExceptionGroup('x', [ValueError()])\nexcept* ValueError: pass", False),
-    ("try: raise ExceptionGroup('x', [ValueError(), TypeError()])\nexcept* ValueError: f = lambda: 1\nexcept* TypeError: values = (x for x in ())", False), ("try: pass\nexcept* ValueError: pass\nelse:\n def f(): pass", False),
-    ("try: raise ExceptionGroup('x', [ValueError()])\nexcept* ValueError: pass\nfinally: f = lambda: 1", False), ("import pytest\nfor p in (x for x in (pytest,)): p.skip()", True),
-    ("import pytest\nfor p in [x for x in (pytest,)]: p.skip()", True), ("import pytest\n[p.skip() for p in (x for x in (pytest,))]", True),
-    ("import pytest\nfor p in {pytest}: p.skip()", True), ("import pytest\nfor p in {pytest: 1}: p.skip()", True),
-    ("import pytest\nfor p, q in ((pytest, Local()),): q.skip()", False), ("import pytest as pa\np = Local()\nfor x in xs:\n p.skip()\n for _ in ((p := pa) for y in (1,)): pass", True),
-    ("import pytest\nq = Local()\nfor z in zs:\n q.skip()\n [(q := pytest) for x in (1,) for y in ()]", False), ("p = Local()\nfor x in xs:\n p.skip()\n class C:\n  global p\n  import pytest as p", True),
-    ("import pytest\np = Local()\nfor x in xs:\n p.skip()\n class C:\n  global p\n  p += pytest", True), ("import pytest\nfor p in {x for x in (pytest,)}: p.skip()", True),
-    ("import pytest\nfor p in {x: 1 for x in (pytest,)}: p.skip()", True), ("import pytest\nfor marker in (x.mark for x in (pytest,)): marker.skip", True),
-    ("import unittest\nfor case in (u.TestCase() for u in (unittest,)): case.skipTest()", True), ("import pytest\nfor p, q in ((x, Local()) for x in (pytest,)): q.skip()", False),
-    ("p = print\nfor x in xs:\n p(ValueError)\n class C:\n  global p\n  from pytest import raises as p", True), ("import pytest\np = Local()\nfor x in xs:\n p.skip()\n class C: p = pytest", False),
-    ("import pytest\nvalue: pytest.mark.skip", True), ("from pytest import mark\npytestmark = mark.skip", True),
-    ("import pytest\npytestmark = [pytest.mark.xfail]", True), ("def test_x(exec): exec('local')", False),
-    ("import pytest\nclass A:\n pytest = object()\n class B:\n  pytest.skip('disabled')", True), ("import pytest\na = (pytest for pytest in ()); b = (pytest.skip() for _ in ())", False),
-    ("import pytest\nconsume((pytest.skip() for _ in (1,)))", False), ("import pytest\nconsume(value=(pytest.skip() for _ in (1,)))", False),
-    ("import pytest\nconsume(*(pytest.skip() for _ in (1,)))", True), ("import pytest\nlist(pytest.skip() for _ in (1,))", True),
-    ("import pytest\n[q for x in (1,) for y in {} if pytest.skip()]", False), ("import pytest\np = pytest if ready else pytest\np.skip()", True),
-    ("import pytest\nfor p in (*[pytest],): p.skip()", True), ("import pytest\nfor p in [*[pytest]]: p.skip()", True),
-    ("import pytest\nfor p in {*{pytest}}: p.skip()", True), ("import pytest\nfor p in {**{pytest: 1}}: p.skip()", True),
-    ("case = object()\nfor _ in xs:\n class C:\n  global case\n  from unittest import TestCase as case\n case().skipTest()", True), ("import pytest\np = Local()\nfor _ in xs:\n p.skip()\n class A:\n  global p\n  class B: p = pytest", False),
-    ("import pytest\np = Local()\nfor _ in xs:\n p.skip()\n class A:\n  global p\n  p = pytest\n  p = Local()", False), ("import pytest\na = lambda pytest: pytest.skip(); b = lambda: pytest.skip()", True),
-    ("import pytest\ndef test_x(pytest): pytest.skip()\ndef test_x(): pytest.skip()", True), ("import unittest\nclass T(unittest.TestCase):\n def test_x(self): super().skipTest('disabled')", True),
-    ("import unittest\ncase: unittest.TestCase = unittest.TestCase()\ncase.skipTest('disabled')", True), ("import unittest\ncase = unittest.TestCase()\nif ready: case = object()\ncase.skipTest('ambiguous')", True),
-    ("from unittest import TestCase as Case\ncase = Case()\ncase.skipTest('disabled')", True), ("import unittest\ncase = unittest.TestCase()\ncase.skipTest('disabled')", True),
-    ("import pytest\n[x for x in (pytest.skip() for _ in (1,))]", True), ("import pytest\n[*(pytest.skip() for _ in (1,))]", True),
-    ("import pytest\n(*(pytest.skip() for _ in (1,)),)", True), ("import pytest\n{*(pytest.skip() for _ in (1,))}", True),
-    ("import pytest\nsorted(pytest.skip() for _ in (1,))", True), ("import pytest\nbytearray(pytest.skip() for _ in (1,))", True),
-    ("import pytest\ndef f(): yield from (pytest.skip() for _ in (1,))", True), ("import pytest\nlist((pytest.skip() for _ in (1,)) for _ in (1,))", False),
-    ("import pytest\nlist = consume\nlist(pytest.skip() for _ in (1,))", False), ("import pytest\nconsume(*iter(pytest.skip() for _ in (1,)))", True),
-    ("import pytest\nfor p in [pytest for _ in ()]: p.skip()", False), ("import pytest\nfor p in [pytest for x in (1,) for y in ()]: p.skip()", False),
-    ("import pytest\na, = (pytest.skip() for _ in (1,))", True), ("import pytest\na, *b = (pytest.skip() for _ in (1,))", True),
-    ("import pytest\np=Local()\nfor _ in xs:\n p.skip()\n class C:\n  try: p=pytest\n  except: pass", False), ("import pytest\np=Local()\nfor _ in xs:\n p.skip()\n class C:\n  with manager(): p=pytest", False),
-    ("case=object()\nfor _ in xs:\n case.skipTest()\n class C:\n  global case\n  from local import TestCase as case", False), ("p=print\nfor _ in xs:\n p(ValueError)\n class C:\n  global p\n  from local import raises as p", False),
-    ("def invalid(", True),
+    ("import pytest\npytest.skip('disabled')", True),
+    ("import pytest as pt\npt.xfail('disabled')", True),
+    ("from pytest import skip as stop\nstop('disabled')", True),
+    ("import pytest\npytest.importorskip('optional')", True),
+    ("import pytest\n@pytest.mark.skip\ndef test_x(): pass", True),
+    ("from pytest import mark\npytestmark = mark.skipif", True),
+    ("import unittest\n@unittest.skipUnless(True, 'reason')\ndef test_x(): pass", True),
+    ("from unittest import expectedFailure\n@expectedFailure\ndef test_x(): pass", True),
+    ("from unittest.case import SkipTest\nraise SkipTest('disabled')", True),
+    ("import unittest.case as uc\nraise uc.SkipTest('disabled')", True),
+    ("import unittest\nunittest.TestCase.skipTest", True),
+    ("import unittest\nclass T(unittest.TestCase):\n def test_x(self): self.skipTest('disabled')", True),
+    ("from unittest import TestCase as Case\nclass T(Case):\n def test_x(self): super().skipTest('disabled')", True),
+    ("from pytest import *", True),
+    ("import pytest\nif False: pytest.skip('dead')", True),
+    ("import pytest\n[pytest.skip() for _ in ()]", True),
+    ("import pytest\nvalue = (pytest.skip() for _ in ())", True),
+    ("import pytest\nasync def f(xs): return [pytest.skip() async for _ in xs]", True),
+    ("import pytest\nconsume(value=(pytest.skip() for _ in ()))", True),
+    ("import pytest\npytest = Local()\npytest.skip()", True),
+    ("import pytest\np = pytest\nq = p\nq.skip()", True),
+    ("import pytest\na = b\nb = a\nb = pytest\na.skip()", True),
+    ("import pytest, unittest\ncontrol = pytest.raises\ncontrol = unittest.skip\ncontrol()", True),
+    ("import pytest\ndef f():\n global pytest\n pytest.skip()", True),
+    ("def outer():\n import pytest\n def inner(): pytest.skip()", True),
+    ("def outer():\n import pytest\n def inner():\n  nonlocal pytest\n  pytest.skip()", True),
+    ("value = 'pytest.skip and xfail are inert'\n# pytest.skip()", False),
+    ("from .pytest import skip\nskip()", False),
+    ("from local import pytest\npytest.skip()", False),
+    ("import pytest\ndef f(pytest): pytest.skip()", False),
+    ("import pytest\ndef f():\n pytest.skip()\n pytest = Local()", False),
+    ("import pytest\n[pytest.skip() for pytest in ()]", False),
+    ("a = b\nb = a\na.skip()", False),
+    ("class Local:\n def test_x(self): self.skipTest()", False),
+    ("from unittest import TestCase\ncase = TestCase()\ncase.skipTest()", False),
+    ("class Local:\n def skip(self): pass\nlocal = Local()\nlocal.skip()", False),
+    ("from __future__ import annotations\nimport pytest\nvalue: pytest.mark.skip", False),
+    ("import pytest\np = (pytest,)\np.skip()", False),
+    ("import pytest\np = build(pytest)\np.skip()", False),
 ])
-def test_python_weakening_is_syntax_aware(tmp_path: Path, source: str, weak: bool) -> None:
+def test_python_weakening_uses_lexical_syntax(tmp_path: Path, source: str, weak: bool) -> None:
     path = tmp_path / "test_policy.py"
     path.write_text(source, encoding="utf-8")
     assert policy.weak_python(path) is weak
 
 
-@pytest.mark.parametrize(("files", "rows", "diff", "source", "max_lines", "code"), [
-    (["backend/app/a.py"], [], "", "", 5, "scope_violation"), ([".agent-loop/initiatives/WS-AUTH-001/PLAN.md"], [], "", "", 5, "scope_violation"),
-    (["backend/tests/test_ok.py"], [("backend/tests/test_ok.py", 6, 0)], "", "", 5, "implementation_size_exceeded"), (["backend/tests/test_ok.py"], [("backend/tests/test_ok.py", 1, 0)], "@@ -1 +0,0 @@\n-assert value", "assert value", 5, "deleted_assertion"),
+@pytest.mark.parametrize(("source", "line", "blocked"), [
+    ("assert result\n", 1, True),
+    ("import pytest\npytest.raises(ValueError)\n", 2, True),
+    ("from pytest import raises as expect\nexpect(ValueError)\n", 2, True),
+    ("import pytest\nif False: pytest.raises(ValueError)\n", 2, True),
+    ("import pytest\nvalue = (pytest.raises(ValueError) for _ in ())\n", 2, True),
+    ("class T:\n def test_x(self): self.assertEqual(1, 1)\n", 2, True),
+    ("class T:\n def test_x(other): other.assertEqual(1, 1)\n", 2, False),
+    ("from .pytest import raises\nraises(ValueError)\n", 2, False),
+    ("MESSAGE = 'pytest.raises(ValueError)'\n", 1, False),
+    ("def invalid(\n", 1, True),
 ])
-def test_delta_fails_closed(monkeypatch, tmp_path: Path, files, rows, diff, source, max_lines, code) -> None:
+def test_deleted_assertions_use_syntax(source: str, line: int, blocked: bool) -> None:
+    deleted = source.splitlines()[line - 1]
+    diff = f"@@ -{line},1 +{line},0 @@\n-{deleted}"
+    assert policy.has_deleted_assertion(diff, source) is blocked
+
+
+@pytest.mark.parametrize(("files", "rows", "source", "diff", "code"), [
+    (["backend/app/a.py"], [], "", "", "scope_violation"),
+    (["backend/tests/test_ok.py"], [("backend/tests/test_ok.py", 701, 0)], "assert True", "", "implementation_size_exceeded"),
+    (["backend/tests/test_ok.py"], [("backend/tests/test_ok.py", 1, 0)], "import pytest\npytest.skip()", "", "test_skip_or_xfail"),
+    (["backend/tests/test_ok.py"], [("backend/tests/test_ok.py", 1, 0)], "assert value", "@@ -1,1 +1,0 @@\n-assert value", "deleted_assertion"),
+])
+def test_delta_fails_closed(monkeypatch, tmp_path: Path, files, rows, source, diff, code) -> None:
     test = tmp_path / "backend/tests/test_ok.py"
     test.parent.mkdir(parents=True)
-    test.write_text("value = 'skip xfail'\nassert value", encoding="utf-8")
+    test.write_text(source, encoding="utf-8")
     monkeypatch.setattr(policy, "REPO", tmp_path)
     monkeypatch.setattr(policy, "changed_files", lambda *_: files)
     monkeypatch.setattr(policy, "numstat", lambda *_: (0, 0, rows))
     monkeypatch.setattr(policy, "diff_text", lambda *_: diff)
-    monkeypatch.setattr(policy, "maybe_run", lambda *_: source)
+    monkeypatch.setattr(policy, "maybe_run", lambda command: source if command[:2] == ["git", "show"] else "")
     with pytest.raises(policy.PolicyError, match=code):
-        policy.validate_delta("base", max_lines, {"backend/tests/test_ok.py"})
+        policy.validate_delta("base", 700, {"backend/tests/test_ok.py"})
 
 
-def test_delta_accepts_approved_memory_without_counting_it(monkeypatch, tmp_path: Path) -> None:
+def test_delta_accepts_memory_and_restores_cwd(monkeypatch, tmp_path: Path) -> None:
     test = tmp_path / "backend/tests/test_ok.py"
     test.parent.mkdir(parents=True)
-    test.write_text("value = 'skip and xfail are inert'\nassert value", encoding="utf-8")
+    test.write_text("assert value", encoding="utf-8")
     files = ["backend/tests/test_ok.py", ".agent-loop/LOOP_STATE.md", f"{policy.QUAL_MEMORY}STATUS.md"]
     monkeypatch.setattr(policy, "REPO", tmp_path)
     monkeypatch.setattr(policy, "changed_files", lambda *_: files)
-    monkeypatch.setattr(policy, "numstat", lambda *_: (199, 0, [(files[0], 2, 0), (files[1], 97, 0), (files[2], 100, 0)]))
+    monkeypatch.setattr(policy, "numstat", lambda *_: (0, 0, [(files[0], 1, 0), (files[1], 100, 0), (files[2], 100, 0)]))
     monkeypatch.setattr(policy, "diff_text", lambda *_: "+assert value")
-    monkeypatch.setattr(policy, "maybe_run", lambda *_: "")
-    policy.validate_delta("base", 2, {files[0]})
+    monkeypatch.setattr(policy, "maybe_run", lambda command: "assert value" if command[:2] == ["git", "show"] else "")
+    previous = Path.cwd()
+    policy.validate_delta("base", 1, {files[0]})
+    assert Path.cwd() == previous
 
 
-@pytest.mark.parametrize(("source", "replacement", "blocked"), [
-    ("import pytest\n\ndef test_x():\n    with pytest.raises(ValueError):\n        raise ValueError\n", "def test_x():\n    raise ValueError\n", True), ("import pytest as pt\n\ndef test_x():\n    with (\n        pt\n        .raises(ValueError)\n    ):\n        raise ValueError\n", "def test_x():\n    raise ValueError\n", True),
-    ("from pytest import raises as expect\n\ndef test_x():\n    with (\n        expect\n        (ValueError)\n    ):\n        raise ValueError\n", "def test_x():\n    raise ValueError\n", True), ("def test_x():\n    if ready: assert result\n", "def test_x():\n    raise ValueError\n", True),
-    ("class TestX:\n    def test_x(self):\n        value = (\n            self\n            .assertEqual(1, 1)\n        )\n", "def test_x():\n    raise ValueError\n", True), ("MESSAGE = 'pytest.raises(ValueError)'\n# pytest.raises(ValueError)\ndef test_x():\n    assert True\n", "def test_x():\n    assert True\n", False),
-    ("class Local:\n    def raises(self, value): return value\npytest = Local()\npytest.raises(ValueError)\n", "class Local:\n    pass\n", False), ("import pytest\ndef test_x(pytest):\n    with pytest.raises(ValueError): raise ValueError\n", "import pytest\ndef test_x(pytest): raise ValueError\n", False),
-    ("from pytest import raises\ndef test_x(raises):\n    with raises(ValueError): raise ValueError\n", "from pytest import raises\ndef test_x(raises): raise ValueError\n", False), ("from pytest import raises\nif ready: raises = print\nwith raises(ValueError): raise ValueError\n", "raise ValueError\n", True),
-    ("import pytest\ntest_x = lambda pytest: pytest.raises(ValueError)\n", "import pytest\ntest_x = lambda pytest: None\n", False), ("import pytest\ndef test_x(*pytest): pytest.raises(ValueError)\n", "import pytest\ndef test_x(*pytest): pass\n", False),
-    ("import pytest\nvalues = [pytest.raises(ValueError) for pytest in ()]\n", "import pytest\nvalues = []\n", False), ("import pytest\ntry: pass\nexcept Exception as pytest: pytest.raises(ValueError)\n", "import pytest\ntry: pass\nexcept Exception: pass\n", False),
-    ("from __future__ import annotations\nimport pytest\ndef f(x: (lambda: pytest.raises(ValueError))): pass\n", "from __future__ import annotations\nimport pytest\ndef f(x): pass\n", False), ("p = object()\ntry:\n import pytest as p\nexcept Exception: p = object()\nwith p.raises(ValueError): raise ValueError\n", "raise ValueError\n", True),
-    ("import pytest\nr, = (pytest.raises,)\nwith r(ValueError): raise ValueError\n", "raise ValueError\n", True), ("r = print\nfor x in xs:\n with r(ValueError): raise ValueError\n from pytest import raises as r\n", "raise ValueError\n", True),
-    ("import pytest\n[(pytest := object()) for _ in ()]\nwith pytest.raises(ValueError): raise ValueError\n", "raise ValueError\n", True), ("q = print; p = print\nfor x in xs:\n with q(ValueError): raise ValueError\n from pytest import raises as p\n q = p\n", "raise ValueError\n", True),
-    ("import pytest\nfor r in (pytest.raises,):\n with r(ValueError): raise ValueError\n", "raise ValueError\n", True), ("import pytest\n[pytest.raises(ValueError) for pytest in (pytest,)]\n", "import pytest\n", True),
-    ("import pytest as p\nvalue: (p := object()) = p.raises(ValueError)\n", "value = None\n", True), ("import pytest as p\nitems[p.raises(ValueError)] += (p := object())\n", "items[0] += object()\n", True),
-    ("import pytest\ntry: pass\nexcept pytest.raises(ValueError) as pytest: pass\n", "try: pass\nexcept ValueError: pass\n", True), ("r = print\ntry: raise ExceptionGroup('x', [ValueError(), TypeError()])\nexcept* ValueError: from pytest import raises as r\nexcept* TypeError: r(ValueError)\n", "pass\n", True),
-    ("import pytest\nfor r in (pytest.raises for _ in (0,)):\n with r(ValueError): raise ValueError\n", "raise ValueError\n", True), ("import pytest\n[r(ValueError) for r in (pytest.raises for _ in (0,))]\n", "import pytest\n", True),
-    ("import pytest as pa\np = print\ntry: raise TypeError()\nexcept ((p := pa), ValueError)[1]: pass\nexcept TypeError: p.raises(ValueError)\n", "raise ValueError\n", True), ("import pytest as pa\np = print\nfor x in xs:\n p(ValueError)\n list((p := pa.raises) for _ in (1,))\n", "raise ValueError\n", True),
-    ("import pytest\nfor r in (x for x in (pytest.raises,)):\n r(ValueError)\n", "raise ValueError\n", True), ("import pytest\nfor r in [x for x in (pytest.raises,)]:\n r(ValueError)\n", "raise ValueError\n", True),
-    ("import pytest\n[r(ValueError) for r in (x for x in (pytest.raises,))]\n", "import pytest\n", True), ("import pytest\nfor r in {pytest.raises}: r(ValueError)\n", "raise ValueError\n", True),
-    ("import pytest\nfor r in {pytest.raises: 1}: r(ValueError)\n", "raise ValueError\n", True), ("import pytest\nfor r in (x.raises for x in (pytest,)): r(ValueError)\n", "raise ValueError\n", True),
-    ("p = print\nfor x in xs:\n p(ValueError)\n class C:\n  global p\n  from pytest import raises as p\n", "raise ValueError\n", True), ("import pytest as pa\np = print\nfor x in xs:\n p(ValueError)\n for _ in ((p := pa.raises) for y in (1,)): pass\n", "raise ValueError\n", True),
-    ("import pytest\nvalue = (pytest.raises(ValueError) for _ in (1,))\n", "pass\n", False), ("import pytest\nconsume(*(pytest.raises(ValueError) for _ in (1,)))\n", "pass\n", True),
-    ("import pytest\nr = pytest.raises if ready else pytest.raises\nr(ValueError)\n", "pass\n", True), ("import pytest\nfor r in (*[pytest.raises],): r(ValueError)\n", "pass\n", True),
-    ("import pytest\nfor r in {**{pytest.raises: 1}}: r(ValueError)\n", "pass\n", True),
-    ("import pytest\nsorted(pytest.raises(ValueError) for _ in (1,))\n", "pass\n", True), ("import pytest\n[*(pytest.raises(ValueError) for _ in (1,))]\n", "pass\n", True),
-    ("import pytest\n[x for x in (pytest.raises(ValueError) for _ in (1,))]\n", "pass\n", True), ("import pytest\ndef f(): yield from (pytest.raises(ValueError) for _ in (1,))\n", "pass\n", True),
-    ("import pytest\na, = (pytest.raises(ValueError) for _ in (1,))\n", "pass\n", True), ("from local import raises\nraises(ValueError)\n", "pass\n", False),
+@pytest.mark.parametrize(("statuses", "renamed"), [
+    ("R100\tbackend/tests/test_old.py\tbackend/tests/test_new.py", True),
+    ("R100\tdocs/old.md\tdocs/new.md", False),
+    ("M\tbackend/tests/test_ok.py", False),
 ])
-def test_delta_checks_committed_assertion_constructs(monkeypatch, tmp_path: Path, source: str, replacement: str, blocked: bool) -> None:
-    repo = tmp_path / "repo"
-    test = repo / "backend/tests/test_sample.py"
-    test.parent.mkdir(parents=True)
-    test.write_text(source, encoding="utf-8")
-    subprocess.run(["git", "init", "-q", str(repo)], check=True)
-    subprocess.run(["git", "-C", str(repo), "config", "user.email", "test@example.invalid"], check=True)
-    subprocess.run(["git", "-C", str(repo), "config", "user.name", "Coverage Test"], check=True)
-    subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
-    subprocess.run(["git", "-C", str(repo), "commit", "-qm", "base"], check=True)
-    base = subprocess.run(
-        ["git", "-C", str(repo), "rev-parse", "HEAD"], check=True, text=True, capture_output=True,
-    ).stdout.strip()
-    test.write_text(replacement, encoding="utf-8")
-    subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
-    subprocess.run(["git", "-C", str(repo), "commit", "-qm", "remove assertion"], check=True)
-    monkeypatch.setattr(policy, "REPO", repo)
-    monkeypatch.chdir(repo / "backend")
-    if blocked:
-        with pytest.raises(policy.PolicyError, match="deleted_assertion"):
-            policy.validate_delta(base, 300, {"backend/tests/test_sample.py"})
-    else:
-        policy.validate_delta(base, 300, {"backend/tests/test_sample.py"})
-    assert Path.cwd() == repo / "backend"
-
-
-def test_delta_rejects_committed_test_rename(monkeypatch, tmp_path: Path) -> None:
-    repo = tmp_path / "repo"
-    old = repo / "backend/tests/test_old.py"
-    old.parent.mkdir(parents=True)
-    filler = "\n".join(f"VALUE_{index} = {index}" for index in range(30))
-    old.write_text(f"import pytest as pt\n{filler}\nwith pt.raises(ValueError):\n    raise ValueError\n", encoding="utf-8")
-    subprocess.run(["git", "init", "-q", str(repo)], check=True)
-    subprocess.run(["git", "-C", str(repo), "config", "user.email", "test@example.invalid"], check=True)
-    subprocess.run(["git", "-C", str(repo), "config", "user.name", "Coverage Test"], check=True)
-    subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
-    subprocess.run(["git", "-C", str(repo), "commit", "-qm", "base"], check=True)
-    base = subprocess.run(["git", "-C", str(repo), "rev-parse", "HEAD"], check=True, text=True, capture_output=True).stdout.strip()
-    new = old.with_name("test_new.py")
-    subprocess.run(["git", "-C", str(repo), "mv", str(old.relative_to(repo)), str(new.relative_to(repo))], check=True)
-    new.write_text(f"{filler}\ndef test_x():\n    raise ValueError\n", encoding="utf-8")
-    subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
-    subprocess.run(["git", "-C", str(repo), "commit", "-qm", "rename test"], check=True)
-    monkeypatch.setattr(policy, "REPO", repo)
-    with pytest.raises(policy.PolicyError, match="test_rename"):
-        policy.validate_delta(base, 300, {"backend/tests/test_new.py"})
+def test_test_rename_detection(statuses: str, renamed: bool) -> None:
+    assert policy.has_test_rename(statuses) is renamed
 
 
 def test_compute_cli_is_read_only_and_stable(tmp_path: Path) -> None:
