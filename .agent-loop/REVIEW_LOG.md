@@ -158,6 +158,17 @@ and argument-role precision gaps. The compressed two-case-per-line matrix was
 also rejected as unreviewable. Under the approved two-cycle rule, do not repair
 R7 again or publish it. Replan a replacement with a readable test budget.
 
+B1B-R8 contract review: PASS at `9d72e42` across all ten required tracks after
+clarifying monotone lexical ownership, simple alias closure, exact TestCase
+syntax, merged-main restoration, readable matrices, and raw scope/size gates.
+
+B1B-R8 implementation candidate:
+`3acf57281da4638476e70d7ed118e24413c1d20b`. The R2-R7 interpreter delta was
+removed and replaced by conservative framework-qualified syntax detection.
+Pre-review proof: 117 focused tests, Ruff, `pip check`, self-applied delta
+validation, stale wording/auth docs, loop memory, Markdown links, diff hygiene,
+and 412/700 raw candidate lines pass. Internal implementation review is active.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract

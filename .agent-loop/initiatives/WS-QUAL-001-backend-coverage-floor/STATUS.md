@@ -14,6 +14,10 @@
 - R8 reviewed contract SHA: `9d72e42cf52f0d2da44dc37216fa38b3542dc2c1`
 - R8 start signal: user's 2026-07-13 instruction to fix the blocking coverage
   gate after AUTH-02 merged; implementation activated after plan review passed.
+- R8 implementation candidate:
+  `3acf57281da4638476e70d7ed118e24413c1d20b`
+- R8 pre-review proof: 117 focused tests, Ruff, `pip check`, self-applied delta
+  validation, repository documentation gates, and 412/700 raw lines pass.
 - 01A implementation PR: `https://github.com/Flow-Research/workstream/pull/103` (merged)
 - 01A final reviewed implementation SHA: `d1582ec64b9176c5ead62f695c7a23b48e4c72b9`
 - 01A final evidence-bound branch head: `8cd7616b497ceb46d8359c25de689192632dfee8`

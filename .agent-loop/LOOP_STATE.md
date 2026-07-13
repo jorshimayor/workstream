@@ -33,7 +33,8 @@
   provenance, sequential/qualified/async consumer, relative-import, and nested
   class-expression gaps. R7 is stopped under its two-cycle rule. R8 now proposes
   a bounded syntactic policy with no runtime execution model. All required plan
-  tracks passed at `9d72e42`; only R8 implementation is active.
+  tracks passed at `9d72e42`. The implementation is bound at `3acf572`; 117
+  focused tests and the exact 412/700 delta gate pass; internal review is active.
 - Prior WS-ART reviewed planning SHA: `f7fbc33`
 - Prior WS-ART final evidence-bound planning branch head: `c069064`
 - WS-ART planning merge commit: `8644a43`
