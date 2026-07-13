@@ -175,3 +175,16 @@ scope with a 350-line cap allocated from measured code: 290 lines through the
 lint-clean resolver, 50 lines for the matrix, and 10 reserve. This changes only
 the evidence-backed size boundary; it does not admit B2, AUTH, application,
 configuration, workflow, evidence, documentation, or coverage-raising scope.
+
+## D16: Delegate lexical facts to Python's symbol table
+
+Status: proposed after R2's cycle-zero proof-fit stop; internal contract review
+pending.
+
+R2 proved that a partial AST symbol engine misses lambda, vararg, comprehension,
+exception-target, nested-class, and control-flow semantics. R3 uses stdlib
+`symtable` as the authority for lexical namespaces and layers only bounded AST
+framework-value flow and joins on top. The normal 500-line L1 cap provides room
+for the reproduced regression matrix without compression. This remains semantic
+test-integrity scope only; B2, AUTH, application, configuration, workflow,
+evidence, documentation, and coverage-raising tests remain forbidden.

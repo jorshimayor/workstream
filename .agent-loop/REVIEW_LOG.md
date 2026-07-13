@@ -76,6 +76,11 @@ B1B-R2 contract review: PASS at `8a5fc4a` across all ten required tracks. Its
 measured 223/290/340/350 allocation, 310 checkpoint, lexical behavior, finite
 repair rule, and B2/AUTH boundaries passed. R2 implementation is active.
 
+B1B-R2 implementation review: BLOCKED at `d4cef1d`. Product/docs, security, and
+CI passed; engineering, architecture, reuse, QA, test-delta, and circuit failed
+on reproduced stdlib scope/control-flow gaps. At 348/350, valid fixes plus tests
+could not fit. R3 is proposed around stdlib `symtable`; no in-place repair.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract

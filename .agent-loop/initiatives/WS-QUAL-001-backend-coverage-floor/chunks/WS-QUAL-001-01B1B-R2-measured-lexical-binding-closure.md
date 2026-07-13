@@ -2,8 +2,9 @@
 
 Parent: `WS-QUAL-001` Backend Coverage Floor
 
-Status: all ten internal plan-review tracks passed at `8a5fc4a`; implementation
-started under the user's parallel coverage/AUTH direction on 2026-07-13.
+Status: blocked at 348/350 during cycle-zero implementation review. Standard
+lexical/control-flow proof could not fit the two-line reserve. Superseded by
+B1B-R3; retain as review history and do not repair in place.
 
 ## Scope And Budget
 
