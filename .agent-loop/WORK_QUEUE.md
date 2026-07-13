@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| none | none | - | R2 post-merge memory only; no implementation chunk active |
+| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Implementation and internal repair review complete; PR publication evidence pending |
 
 ## Planned Next
 
@@ -13,7 +13,6 @@
 | `WS-QUAL-001-01B1B` | Semantic Delta Guards | L1 | Inactive until 01B1A-R2 merge/memory and explicit user start |
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Inactive until 01B1A-R2 and 01B1B merge/memory plus explicit user start |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B1A-R2, 01B1B, and 01B2 merge/memory plus explicit user start |
-| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Resumed off-main in a separate worktree by explicit user direction; independent review required before PR/merge |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02` | Flow Node Adapter And Reconciliation | L1 | Proposed; inactive pending separate explicit user start |
 
@@ -50,16 +49,21 @@
 | `WS-QUAL-001-PLAN` | Backend Coverage Floor Planning | L1 | Merged through PR #99 as `9046d52` on 2026-07-12 |
 | `WS-ART-001-01` | Artifact Domain And Local Adapter | L1 | Merged through PR #101 as `050eb15` on 2026-07-12 |
 | `WS-QUAL-001-01A` | Isolated Database Runner | L1 | Merged through PR #103 as `2901a3e` on 2026-07-12 |
-| `WS-QUAL-001-01B1A-R2` | Canonical Coverage Grammar | L1 | Merged through PR #105 as `8a4182e` on 2026-07-12 |
+| `WS-QUAL-001-01B1A-R2` | Canonical Coverage Grammar | L1 | Merged through PR #105 as `8a4182e` on 2026-07-12; post-merge memory merged through PR #106 as `6dccb8e` |
 
 ## Proposed Next
 
-Finish and merge R2 post-merge memory, then stop. AUTH-02 may proceed
-independently in its existing worktree. Do not start 01B1B, 01B2, chunk 02, or
-another coverage implementation chunk automatically.
+`WS-AUTH-001-02` is the only active chunk. Do not start `WS-AUTH-001-03` or
+`WS-POL-002-04` automatically.
+
+Coverage R2 merged through PR #105. Do not start 01B1B, 01B2, chunk 02, or
+another coverage implementation chunk from this worktree.
 
 `WS-ART-001-01` is merged. Do not start `WS-ART-001-02` or edit Flow Node until
 the user gives a separate explicit start signal.
+
+Coverage work proceeds independently in its own worktree and is not owned by
+this AUTH queue update.
 
 ## Blocked
 

@@ -2,43 +2,24 @@
 
 ## Current State
 
-- Active initiative: `WS-QUAL-001` - Backend Coverage Floor
+- Active initiative: `WS-AUTH-001` - Workstream Authorization Service
 - Active planning chunk: none
-- Active implementation chunk: none
-- Branch: `codex/ws-qual-001-01b1a-r2-post-merge-memory`
-- Status: 01B1 reached 496/500 lines and passed eight reviewer tracks at
-  `7bfe3a0`, but final test-delta review found unhandled `unittest.skipTest`,
-  aliased `pytest.raises` deletion, and missing arithmetic boundaries. This is
-  the second failed semantic-integrity repair cycle, so the chunk is blocked
-  for a reviewed split instead of weakening or compressing proof.
-- Prior WS-ART reviewed planning SHA: `f7fbc33`
-- Prior WS-ART final evidence-bound planning branch head: `c069064`
-- WS-ART planning merge commit: `8644a43`
-- Prior WS-AUTH-001-01 reviewed implementation SHA: `be0b836`
-- Prior WS-AUTH-001-01 final merged branch head: `b5217e1`
-- Latest merge commit: `8a4182edb09970131aded73edf3428ac83fe60b9`
-- WS-QUAL final reviewed planning SHA: `0d9dd987d546c864fa8de7bae462e5e73a1b5ea9`
-- WS-QUAL final evidence-bound branch head: `3da1769882e9f6db4c48ef3dba33da8380e6a613`
-- WS-QUAL planning merge commit: `9046d52f31c7c39f06e06c45c43783bb08a5181c`
-- WS-QUAL post-merge memory merged through PR #100 as `58d4459`.
-- WS-ART-001-01 reviewed implementation SHA: `5574bf59cf1cb86da76749e0cbc529036346fa8a`
-- WS-ART-001-01 final evidence-bound branch head: `2b8c2a0`
-- WS-ART-001-01 merge commit: `050eb15eab8c57e6bc265477a5e92484d27a893c`
-- WS-QUAL-001-01A implementation base SHA: `58d44596f614895964b82bb344e0ed98596eaae8`
-- Current 01B split base SHA: `8829a7ec3aa5199aae0aecbe5fda030c42a051cd`
-- WS-QUAL-001-01A reviewed implementation SHA:
-  `d1582ec64b9176c5ead62f695c7a23b48e4c72b9`
-- WS-QUAL-001-01A final evidence-bound head:
-  `8cd7616b497ceb46d8359c25de689192632dfee8`
-- WS-QUAL-001-01A merge commit: `2901a3ebe68b7c770ccb1ff06841d79ce0c20d94`
-- WS-QUAL-001-01A post-merge memory merge commit:
-  `8829a7ec3aa5199aae0aecbe5fda030c42a051cd`
-- Current gate: R2 post-merge memory is PR #106; external checks and human
-  review are pending. 01B1B and 01B2 remain inactive.
-- Next chunk: `WS-QUAL-001-02` remains inactive; do not start it automatically.
-- Parallel implementation: the user explicitly authorized `WS-AUTH-001-02` to
-  resume off-main in its separate worktree while coverage continues. AUTH must
-  satisfy its own chunk reviews and the current coverage gates before merge.
+- Active implementation chunk: `WS-AUTH-001-02` - Verified Issuer Token And
+  JWKS Boundary
+- Branch: `codex/ws-auth-001-02-verified-issuer-token`
+- Worktree: `/home/abiorh/flow/workstream-auth-001-02`
+- Status: implementation and repair review complete; all required internal
+  tracks pass on reviewed code SHA `47dd5a7`; ready PR #107 is published.
+- Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
+- Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
+- Latest integrated `main` merge commit: `6dccb8e`
+- Current gate: external checks and explicit human review on PR #107. Do not
+  merge or start the next chunk automatically.
+- Next chunk: none; do not start `WS-AUTH-001-03` automatically.
+- Parallel initiative: `WS-QUAL-001-01B1A-R2` merged through PR #105 as
+  `8a4182e`, and its post-merge memory merged through PR #106 as `6dccb8e`.
+  Later coverage chunks remain inactive and must not be edited or started from
+  this worktree.
 - Parallel initiative: `WS-ART-001-01` merged through PR #101 as `050eb15`.
   `WS-ART-001-02` remains proposed and inactive pending a separate explicit
   user start.

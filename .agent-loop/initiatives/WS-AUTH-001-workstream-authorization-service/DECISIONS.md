@@ -137,3 +137,24 @@ Each owning migration preserves values and immutable attribution, uses only a
 bounded transitional storage compatibility layer inside the migration chunk,
 exposes no legacy public API alias, and removes the old column/name before that
 chunk completes.
+
+## D12: Verified-token production dependencies
+
+Status: accepted by the user on 2026-07-11.
+
+`WS-AUTH-001-02` proposes two exact base dependency changes:
+
+- add `PyJWT[crypto]>=2.13,<3.0` for maintained JOSE/JWK parsing and asymmetric
+  signature verification; and
+- move the existing `httpx>=0.27,<1.0` requirement from the development extra
+  to base dependencies for separately controlled async JWKS and introspection
+  clients.
+
+PyJWT's network JWKS client will not be used because Workstream owns redirect,
+timeout, streaming-size, cache, and transport-injection policy. The standard
+library has no safe equivalent for asymmetric JOSE verification, and
+hand-written JOSE or HTTP cryptography is outside the approved design. Chunk
+start does not imply dependency approval. No production dependency or runtime
+implementation may change until the user explicitly accepts D12 and that
+acceptance is recorded here. The user explicitly approved D12 by replying
+"ok apporeved" after the final preimplementation plan review passed.

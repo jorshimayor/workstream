@@ -13,7 +13,7 @@ stopped.
 |---|---|---:|---|
 | `WS-AUTH-001-PLAN` | Authorization Service Planning | L0 | Merged through PR #91 as `ad6d644` |
 | `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Merged through PR #93 as `772af1d` |
-| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Implemented off-main; paused before publication until WS-QUAL permanent 90% floor and final memory complete, then explicit resume |
+| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Internal review passed at `47dd5a7`; PR publication evidence pending |
 | `WS-AUTH-001-03` | Legacy Actor Classification Preflight | L1 | Proposed |
 | `WS-AUTH-001-04` | Request, Error, And API Control Foundation | L1 | Proposed |
 | `WS-AUTH-001-05` | Authority Evidence And Idempotency Foundation | L1 | Proposed |
@@ -72,8 +72,8 @@ WS-AUTH-001-PLAN
 
 ## Stop condition
 
-`WS-AUTH-001-01` merged through PR #93. `WS-AUTH-001-02` was subsequently
-implemented off-main but must not be resumed or published until WS-QUAL
-completes its permanent 90 percent CI floor and final post-merge memory, then
-the user gives an explicit resume signal. Do not start `WS-POL-002-04`; it
+`WS-AUTH-001-01` merged through PR #93. The user explicitly resumed
+`WS-AUTH-001-02` in its separate worktree on 2026-07-12 while coverage work
+continues independently. Do not publish until deterministic proof and all
+required implementation reviewers pass. Do not start `WS-POL-002-04`; it
 retains its separate explicit start signal and recorded prerequisites.

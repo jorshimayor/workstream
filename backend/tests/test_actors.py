@@ -354,7 +354,7 @@ async def test_worker_profile_activation_is_explicit_and_audited(
     assert body["profile_type"] == "worker"
     assert body["status"] == "active"
     assert body["skill_tags"] == ["stem", "finance"]
-    assert body["email"] == "explicit-worker@example.test"
+    assert body["email"] is None
     repeat_response = await actor_client.post(
         "/api/v1/workers/me/profile",
         headers=auth_headers(),

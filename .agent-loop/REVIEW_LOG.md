@@ -880,6 +880,60 @@ Next gate: implement and verify only the WS-AUTH-001-01 contract, run all
 required internal reviewer tracks, prepare the trust bundle, and stop for human
 review.
 
+## 2026-07-11 - WS-AUTH-001-02 Started; Dependency Gate Open
+
+The user explicitly started `WS-AUTH-001-02` by saying "now we start" after the
+WS-AUTH-001-01 post-merge memory was merged.
+
+Initial plan review found no safe standard-library or current production
+dependency path for asymmetric JOSE verification and policy-controlled async
+HTTP. D12 therefore proposes adding `PyJWT[crypto]>=2.13,<3.0` and moving the
+existing `httpx>=0.27,<1.0` requirement from development to base dependencies.
+The review also required explicit network lifecycle, cache concurrency,
+introspection, compatibility, metrics, and negative-test contracts; those
+details were added to the chunk contract.
+
+Final preimplementation plan-review result after repair:
+
+- senior engineering: PASS
+- architecture: PASS
+- reuse/dedup: PASS
+- QA/test: PASS
+- CI integrity: PASS
+- test delta: PASS
+- docs: PASS
+- security/auth: PASS
+- product/ops: PASS
+
+Current gate: no dependency or runtime implementation change until the user
+explicitly approves D12.
+
+## 2026-07-11 - WS-AUTH-001-02 D12 Approved
+
+The user explicitly approved D12 by replying "ok apporeved" after the repaired
+preimplementation plan passed every required review track. This approval
+authorizes adding `PyJWT[crypto]>=2.13,<3.0` and moving
+`httpx>=0.27,<1.0` from development to base dependencies for this chunk only.
+
+Current gate: bounded `WS-AUTH-001-02` implementation and evidence. Do not
+start `WS-AUTH-001-03`.
+
+During full-suite verification, the approved removal of email from canonical
+and compatibility auth contexts left one stale actor test expecting the dev
+token email to be persisted and returned. The chunk contract now explicitly
+allows `backend/tests/test_actors.py` only for that expectation correction; no
+actor service, persistence schema, or actor API implementation entered scope.
+Two task integration assertions carried the same stale expectation, so
+`backend/tests/test_tasks.py` is also allowed only for null identity-metadata
+expectations at the auth registration boundary.
+
+Required implementation review then identified that production startup
+validation belongs to `backend/app/main.py`; contract amendment A1 records that
+exact app-factory boundary before the repair edit. The amendment and all three
+test-only expectation files remain subject to the repeated full reviewer
+fanout. This is recorded as a process correction rather than represented as
+part of the original preimplementation allowlist.
+
 ## 2026-07-12 - WS-ART-001-01 Merged
 
 [PR #101](https://github.com/Flow-Research/workstream/pull/101) merged into `main` as
@@ -904,3 +958,36 @@ Trust bundle: `.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/rev
 
 Next gate: merge the post-merge memory update and stop. `WS-ART-001-02`
 remains inactive pending a separate explicit user start.
+
+## 2026-07-12 - WS-AUTH-001-02 Resumed In Parallel Worktree
+
+The user explicitly authorized `WS-AUTH-001-02` to resume in
+`/home/abiorh/flow/workstream-auth-001-02` while coverage work continues in its
+separate worktree. This replaces the prior coverage-dependent pause but does
+not weaken AUTH evidence, internal review, or publication gates.
+
+Current gate: integrate current `main`, rerun deterministic implementation
+proof, run all required implementation reviewer tracks, repair valid findings,
+and prepare review evidence before any push or PR. Do not start
+`WS-AUTH-001-03`.
+
+## 2026-07-13 - WS-AUTH-001-02 Internal Review Passed
+
+Reviewed code SHA: `47dd5a77c588d1b2b4e7f00489faf4c633f26aa2`.
+
+The fail-closed issuer-token, JWKS, introspection, compatibility, metrics, and
+application-verifier boundary passed all required internal tracks after repair:
+senior engineering, QA/test, security/auth, product/ops, architecture, docs, CI
+integrity, reuse/dedup, and test delta.
+
+Deterministic proof passed: 130 focused and changed tests, 680 full backend
+tests, the real API contract drill, clean base dependency installation/import,
+Ruff, dependency integrity, wording, authorization-doc, Markdown, loop-memory,
+docstring, and diff gates.
+
+Evidence: `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/reviews/WS-AUTH-001-02-internal-review-evidence.md`
+
+Trust bundle: `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/reviews/WS-AUTH-001-02-pr-trust-bundle.md`
+
+Current gate: validate evidence, publish one ready PR, and stop for external
+checks and explicit human review. Do not merge or start `WS-AUTH-001-03`.
