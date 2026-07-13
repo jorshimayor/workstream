@@ -264,25 +264,31 @@ class Bindings(ast.NodeVisitor):
         if isinstance(node, (ast.Tuple, ast.List)):
             return set().union(*(self.target_names(item) for item in node.elts))
         return set()
-    def assign_target(self, target: ast.AST, value: ast.AST) -> None:
+    def assign_target(self, target: ast.AST, value: ast.AST, bindings: dict[str, str] | None = None) -> None:
         if isinstance(target, (ast.Tuple, ast.List)) and isinstance(value, (ast.Tuple, ast.List)) and len(target.elts) == len(value.elts):
             for child, item in zip(target.elts, value.elts, strict=True):
-                self.assign_target(child, item)
+                self.assign_target(child, item, bindings)
         else:
-            self.bind_target(target, self.kind(value))
-    def bind_target(self, node: ast.AST, kind: str) -> None:
+            self.bind_target(target, self.kind(value, bindings))
+    def bind_target(self, node: ast.AST, kind: str, evaluate: bool = True) -> None:
         if isinstance(node, ast.Name):
             self.put(node.id, kind)
         elif isinstance(node, ast.Starred):
-            self.bind_target(node.value, kind)
+            self.bind_target(node.value, kind, evaluate)
         elif isinstance(node, (ast.Tuple, ast.List)):
             for item in node.elts:
-                self.bind_target(item, kind)
-        elif isinstance(node, ast.Attribute):
+                self.bind_target(item, kind, evaluate)
+        elif evaluate and isinstance(node, ast.Attribute):
             self.visit(node.value)
-        elif isinstance(node, ast.Subscript):
+        elif evaluate and isinstance(node, ast.Subscript):
             self.visit(node.value)
             self.visit(node.slice)
+    def iterable_value(self, node: ast.AST) -> ast.AST:
+        if isinstance(node, (ast.Tuple, ast.List)) and len(node.elts) == 1:
+            return node.elts[0]
+        if isinstance(node, (ast.ListComp, ast.SetComp, ast.GeneratorExp)):
+            return node.elt
+        return node.key if isinstance(node, ast.DictComp) else node
     def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
         if node.value:
             self.visit(node.value)
@@ -293,7 +299,7 @@ class Bindings(ast.NodeVisitor):
         prior = self.kind(node.target)
         self.bind_target(node.target, prior)
         self.visit(node.value)
-        self.bind_target(node.target, "local" if prior == "local" else "ambiguous")
+        self.bind_target(node.target, "local" if prior == "local" else "ambiguous", False)
     def visit_NamedExpr(self, node: ast.NamedExpr) -> None:
         self.visit(node.value)
         if isinstance(node.target, ast.Name):
@@ -329,6 +335,10 @@ class Bindings(ast.NodeVisitor):
             if kind != previous:
                 bindings[name] = kind if previous == "local" and kind != "local" else "ambiguous"
         def record(target: ast.AST, value: ast.AST) -> None:
+            if isinstance(target, (ast.Tuple, ast.List)) and isinstance(value, (ast.Tuple, ast.List)) and len(target.elts) == len(value.elts):
+                for child, item in zip(target.elts, value.elts, strict=True):
+                    record(child, item)
+                return
             kind = self.kind(value, bindings)
             for name in self.target_names(target):
                 record_kind(name, kind)
@@ -354,7 +364,31 @@ class Bindings(ast.NodeVisitor):
                     inspect(item)
                 if any(self.kind(base, bindings) in {"testcase", "ambiguous"} for base in node.bases):
                     record_kind(node.name, "testcase")
+                body: list[ast.AST] = []
+                def collect(item: ast.AST) -> None:
+                    if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+                        return
+                    body.append(item)
+                    for child in ast.iter_child_nodes(item):
+                        collect(child)
+                for item in node.body:
+                    collect(item)
+                globals_ = {name for item in body if isinstance(item, ast.Global) for name in item.names}
+                for item in body:
+                    if isinstance(item, (ast.Assign, ast.AnnAssign, ast.NamedExpr)):
+                        targets = item.targets if isinstance(item, ast.Assign) else [item.target]
+                        for target in targets:
+                            if self.target_names(target) & globals_ and item.value:
+                                record(target, item.value)
                 return
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in {"all", "any", "list", "max", "min", "next", "set", "sum", "tuple"}:
+                for argument in node.args:
+                    if isinstance(argument, ast.GeneratorExp):
+                        for generator in argument.generators:
+                            inspect(generator.iter)
+                            for condition in generator.ifs:
+                                inspect(condition)
+                        inspect(argument.elt)
             if isinstance(node, ast.GeneratorExp):
                 inspect(node.generators[0].iter)
                 return
@@ -400,7 +434,7 @@ class Bindings(ast.NodeVisitor):
         before = self.state()
         for name in self.loop_summary(node.body):
             self.put(name, "ambiguous")
-        self.bind_target(node.target, self.kind(node.iter))
+        self.assign_target(node.target, self.iterable_value(node.iter))
         for item in node.body:
             self.visit(item)
         body = self.state()
@@ -432,17 +466,23 @@ class Bindings(ast.NodeVisitor):
         for item in node.orelse:
             self.visit(item)
         states = [self.state()]
-        incoming = progress[0]
         self.join(progress)
         handler_incoming = self.state()
         for handler in node.handlers:
             self.scopes = [scope.copy() for scope in handler_incoming]
-            self.visit(handler)
+            if handler.type:
+                self.visit(handler.type)
+            failed = self.state()
+            if handler.name:
+                self.put(handler.name, "local")
+            for item in handler.body:
+                self.visit(item)
             states.append(self.state())
-        self.join(states or [incoming])
+            self.join([handler_incoming, failed])
+            handler_incoming = self.state()
+        self.join(states)
         for item in node.finalbody:
             self.visit(item)
-
     def visit_TryStar(self, node: ast.TryStar) -> None:
         progress = [self.state()]
         for item in node.body:
@@ -554,7 +594,8 @@ class Bindings(ast.NodeVisitor):
     def visit_comprehension_scope(self, node: ast.ListComp | ast.SetComp | ast.DictComp | ast.GeneratorExp) -> None:
         generators = node.generators
         self.visit(generators[0].iter)
-        first_kind = self.kind(generators[0].iter)
+        first_value = self.iterable_value(generators[0].iter)
+        first_bindings = {item.id: self.get(item.id) for item in ast.walk(first_value) if isinstance(item, ast.Name)}
         names = set().union(*(self.target_names(generator.target) for generator in generators))
         expected = {ast.GeneratorExp: "genexpr", ast.ListComp: "listcomp", ast.SetComp: "setcomp", ast.DictComp: "dictcomp"}[type(node)]
         has_table = isinstance(node, ast.GeneratorExp)
@@ -571,7 +612,8 @@ class Bindings(ast.NodeVisitor):
         for index, generator in enumerate(generators):
             if generator is not generators[0]:
                 self.visit(generator.iter)
-            self.bind_target(generator.target, first_kind if index == 0 else self.kind(generator.iter))
+            value = self.iterable_value(generator.iter)
+            self.assign_target(generator.target, value, first_bindings if index == 0 else None)
             for condition in generator.ifs:
                 self.visit(condition)
         for value in ((node.key, node.value) if isinstance(node, ast.DictComp) else (node.elt,)):
