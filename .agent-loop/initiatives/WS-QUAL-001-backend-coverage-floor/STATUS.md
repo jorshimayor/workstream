@@ -2,7 +2,7 @@
 
 ## Current state
 
-- Phase: `WS-QUAL-001-01B1B-R10` PR publication
+- Phase: `WS-QUAL-001-01B1B-R10` external and human review
 - Branch: `codex/ws-qual-001-01b1b-semantic-delta-guards`
 - Authoritative target: 90 percent complete backend application statement coverage
 - Diagnostic AUTH-02 baseline: 78.26 percent after database isolation repair
@@ -59,7 +59,8 @@
 - R10 proof: identical 171-test matrices pass on Python 3.11.15, 3.12.3, and
   3.13.3; every deterministic gate passes at 577/620 raw lines.
 - R10 internal review: all ten required tracks passed at reviewed code SHA
-  `15d0b80e776f5be12cacc5dbe5226ffe3992dcfd`; evidence/PR preparation active.
+  `15d0b80e776f5be12cacc5dbe5226ffe3992dcfd`; external review is active.
+- R10 ready PR: `https://github.com/Flow-Research/workstream/pull/108`
 - 01A implementation PR: `https://github.com/Flow-Research/workstream/pull/103` (merged)
 - 01A final reviewed implementation SHA: `d1582ec64b9176c5ead62f695c7a23b48e4c72b9`
 - 01A final evidence-bound branch head: `8cd7616b497ceb46d8359c25de689192632dfee8`

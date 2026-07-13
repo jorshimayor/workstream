@@ -47,7 +47,7 @@
   one shared public ordinal. R9 is stopped; all R10 plan tracks passed at
   `c42a67a`. Reviewed implementation `15d0b80` passes identical 171-test
   matrices on Python 3.11, 3.12, and 3.13 at 577/620 raw lines. All required
-  internal tracks pass; evidence binding and PR publication are active.
+  internal tracks pass; ready PR #108 is published for external and human review.
 - Prior WS-ART reviewed planning SHA: `f7fbc33`
 - Prior WS-ART final evidence-bound planning branch head: `c069064`
 - WS-ART planning merge commit: `8644a43`
@@ -70,8 +70,8 @@
 - WS-QUAL-001-01A merge commit: `2901a3ebe68b7c770ccb1ff06841d79ce0c20d94`
 - WS-QUAL-001-01A post-merge memory merge commit:
   `8829a7ec3aa5199aae0aecbe5fda030c42a051cd`
-- Current gate: publish only the reviewed R10 PR. 01B2 remains inactive;
-  AUTH-02 merged through PR #107 as `060b780`.
+- Current gate: external checks and human review on ready PR #108. 01B2 remains
+  inactive; AUTH-02 merged through PR #107 as `060b780`.
 - Next chunk: `WS-QUAL-001-02` remains inactive; do not start it automatically.
 - Parallel initiative: `WS-AUTH-001-02` merged through PR #107 as `060b780`.
   `WS-AUTH-001-03` is active after explicit user start in isolated worktree
