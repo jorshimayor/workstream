@@ -81,6 +81,10 @@ CI passed; engineering, architecture, reuse, QA, test-delta, and circuit failed
 on reproduced stdlib scope/control-flow gaps. At 348/350, valid fixes plus tests
 could not fit. R3 is proposed around stdlib `symtable`; no in-place repair.
 
+B1B-R3 contract review: PASS at `245ab58` across all ten required tracks.
+Stdlib lexical ownership, ordinal scope pairing, full regression scope, the
+348/420/480/500 allocation, and B2/AUTH boundaries passed. R3 is active.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract
