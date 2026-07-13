@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-04A` | Request And Error Context | L1 | Internal review passed; ready PR publication active, complete GitHub checks required before merge |
+| - | No active implementation chunk | - | AUTH-04A post-merge memory in progress; no product implementation active |
 
 ## Planned Next
 
@@ -53,14 +53,14 @@
 | `WS-QUAL-001-01B1A-R2` | Canonical Coverage Grammar | L1 | Merged through PR #105 as `8a4182e` on 2026-07-12; post-merge memory merged through PR #106 as `6dccb8e` |
 | `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Merged through PR #107 as `060b780` on 2026-07-13 |
 | `WS-AUTH-001-03` | Legacy Actor Classification Preflight | L1 | Merged through PR #109 as `f06532e` on 2026-07-13 |
+| `WS-AUTH-001-04A` | Request And Error Context | L1 | Merged through PR #111 as `90c9a28` on 2026-07-13 |
 
 ## Proposed Next
 
-`WS-AUTH-001-03` post-merge memory merged through PR #110 as `1864867`. The user
-explicitly started parent `WS-AUTH-001-04`. Required plan review split it before
-runtime implementation. Only child `WS-AUTH-001-04A` contract repair and
-re-review are active in its isolated worktree. Do not start 04B, AUTH-05, or
-POL-002-04 automatically.
+`WS-AUTH-001-04A` merged through PR #111 as `90c9a28` after all required checks
+and reviews passed. Its post-merge memory update is active; no AUTH product
+implementation is active. Do not start 04B, AUTH-05, or POL-002-04
+automatically.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.

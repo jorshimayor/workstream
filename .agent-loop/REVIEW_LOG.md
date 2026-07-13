@@ -1,5 +1,17 @@
 # Review Log
 
+## 2026-07-13 - WS-AUTH-001-04A Merged
+
+PR #111 merged `WS-AUTH-001-04A` to `main` as `90c9a28` after final branch head
+`36c4aa5` passed Backend, Agent Gates, CodeRabbit, all required internal
+reviewers, and explicit human approval. Reviewed production head `cdcaf77`
+contains the request/error implementation; reviewed candidate `4fd6db9`
+contains only its additive behavior-test repairs and lifecycle evidence.
+
+The current work is post-merge memory only. `WS-AUTH-001-04B` remains inactive
+pending this memory update merge and a separate explicit user start. No AUTH
+product implementation is active.
+
 ## 2026-07-13 - WS-AUTH-001-04A Internal Review Passed
 
 All required implementation tracks pass on production SHA `cdcaf77`.

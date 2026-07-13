@@ -218,3 +218,10 @@ legacy compatibility, OpenAPI truth, and unchanged product authority.
 The user explicitly started parent AUTH-04 on 2026-07-13. Required plan review
 split it before implementation. Only this repaired 04A contract is active;
 runtime edits remain gated on its required preimplementation re-review.
+
+## Merge result
+
+PR #111 merged the reviewed AUTH-04A implementation to `main` as `90c9a28` on
+2026-07-13 after Backend, Agent Gates, CodeRabbit, all required internal
+reviewers, and explicit human approval passed. Final branch head was `36c4aa5`;
+reviewed production head was `cdcaf77`. AUTH-04B and AUTH-05 remain inactive.

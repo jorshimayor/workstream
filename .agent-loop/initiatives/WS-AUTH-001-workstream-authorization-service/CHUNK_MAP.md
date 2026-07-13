@@ -16,8 +16,8 @@ stopped.
 | `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Merged through PR #107 as `060b780` |
 | `WS-AUTH-001-03` | Legacy Actor Classification Preflight | L1 | Merged through PR #109 as `f06532e` |
 | `WS-AUTH-001-04` | Request, Error, And API Control Foundation | L1 | Split before implementation into 04A and 04B |
-| `WS-AUTH-001-04A` | Request And Error Context | L1 | Internally reviewed; ready PR publication active and complete GitHub checks required |
-| `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Inactive pending 04A merge/memory and separate explicit start |
+| `WS-AUTH-001-04A` | Request And Error Context | L1 | Merged through PR #111 as `90c9a28` |
+| `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Inactive pending 04A memory merge and separate explicit start |
 | `WS-AUTH-001-05` | Authority Evidence And Idempotency Foundation | L1 | Proposed |
 | `WS-AUTH-001-06` | Canonical Actor Profile And Identity Link | L1 | Proposed |
 | `WS-AUTH-001-07` | Authorization Kernel And Permission Registry | L1 | Proposed |
@@ -79,9 +79,8 @@ WS-AUTH-001-PLAN
 
 AUTH-03 post-merge memory merged through PR #110 as `1864867`. The user
 explicitly started parent AUTH-04. Required plan review split it before runtime
-implementation. AUTH-04A's repaired-contract review passed at `f98bbfc`;
-production review passed at `cdcaf77`, and the final test-only revision is
-bound in internal review evidence after exact-head confirmation. Ready PR
-publication and complete GitHub checks are the current gate.
+implementation. AUTH-04A merged through PR #111 as `90c9a28` after required
+internal review, Backend, Agent Gates, CodeRabbit, and explicit human approval
+passed. Its post-merge memory update is the current gate.
 Do not start AUTH-04B, AUTH-05, or POL-002-04; each retains its separate start
 signal and prerequisites.

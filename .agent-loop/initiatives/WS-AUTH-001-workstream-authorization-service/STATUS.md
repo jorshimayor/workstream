@@ -32,7 +32,9 @@ logging, behavior-proof, and lifecycle-evidence findings were repaired; all
 required tracks pass on production SHA `cdcaf77`, and final test-only head
 `4fd6db9` passed exact-head confirmation for the additive scalar-context and
 logging-state behavior-test repairs plus lifecycle evidence.
-AUTH-04B remains inactive.
+Backend, Agent Gates, and CodeRabbit passed on final branch head `36c4aa5`, then
+explicit human approval merged PR #111 to `main` as `90c9a28` on 2026-07-13.
+AUTH-04A post-merge memory is active; AUTH-04B remains inactive.
 
 ## Active planning chunk
 
@@ -40,13 +42,12 @@ None.
 
 ## Active implementation chunk
 
-`WS-AUTH-001-04A` - Request And Error Context. Internal review passed and ready
-PR publication is active. Complete GitHub checks remain required before merge.
-No later chunk is active.
+None.
 
 ## Current implementation branch
 
-`codex/ws-auth-001-04-request-api-controls`.
+None. Post-merge memory uses `codex/ws-auth-001-04a-post-merge-memory` and makes
+no product implementation change.
 
 ## Chunk status
 
@@ -57,7 +58,7 @@ No later chunk is active.
 | `WS-AUTH-001-02` | Merged | `codex/ws-auth-001-02-verified-issuer-token` | #107 | Merged as `060b780`; reviewed code SHA `47dd5a7`. |
 | `WS-AUTH-001-03` | Merged | `codex/ws-auth-001-03-legacy-actor-classification` | #109 | Merged as `f06532e`; reviewed code `8c5334c`; final branch head `43ffbfe`. |
 | `WS-AUTH-001-04` | Split | `codex/ws-auth-001-04-request-api-controls` | - | Parent split before runtime implementation. |
-| `WS-AUTH-001-04A` | Internally reviewed | `codex/ws-auth-001-04-request-api-controls` | - | Production review passed at `cdcaf77`; final reviewed candidate `4fd6db9` confirmed. |
+| `WS-AUTH-001-04A` | Merged | `codex/ws-auth-001-04-request-api-controls` | #111 | Merged as `90c9a28`; production review `cdcaf77`; final branch head `36c4aa5`. |
 | `WS-AUTH-001-04B` | Inactive | - | - | PostgreSQL rate controls; requires 04A merge/memory and separate explicit start. |
 | `WS-AUTH-001-05` | Proposed | - | - | Authority evidence and idempotency foundation. |
 | `WS-AUTH-001-06` | Proposed | - | - | Canonical actor profile and identity link. |
@@ -74,15 +75,16 @@ No later chunk is active.
 
 ## Blockers
 
-No external blocker. The combined AUTH-04 plan failed its internal gate and was
-split before runtime edits. AUTH-04A's repaired contract passed at `f98bbfc`;
-valid implementation-review findings passed repair review. A local complete
-run exposed and reproduced an Alembic logging-state test interaction; its exact
-order now passes, and GitHub Backend owns complete-suite proof before merge.
-AUTH-04B later owns the migration corrected from the now-owned `0016` prefix to
-`0017` on current main, but remains inactive. Non-test
+No active implementation blocker because no AUTH product chunk is active.
+AUTH-04B may start only after this memory update merges and the user gives a
+separate explicit start signal. It later owns migration `0017`, following the
+now-owned `0016` prefix on current main. Non-test
 operators must later supply explicit classification evidence rather than
 inferred kinds before the owning canonical actor migration.
+
+AUTH-04A review evidence and its PR trust bundle are recorded at
+`reviews/WS-AUTH-001-04A-internal-review-evidence.md` and
+`reviews/WS-AUTH-001-04A-pr-trust-bundle.md`.
 
 AUTH-03 review evidence and its PR trust bundle are recorded at
 `reviews/WS-AUTH-001-03-internal-review-evidence.md` and
