@@ -38,6 +38,11 @@ R9 has one repair cycle. Any unrelated finding or size failure stops it.
   3.11 and retain their existing semantic expectations on Python 3.12+.
 - Preserve every R8 behavior and deterministic gate. No execution, value,
   reachability, consumer, or provenance model may be added.
+- Preserve every merged-main and R8 case and assertion. Only PEP 695 expected
+  results may be version-conditional: fail-closed invalid syntax on 3.11 versus
+  the existing semantic expectation on 3.12+. Do not remove, skip, xfail,
+  weaken, compress, or reduce the non-PEP matrix/test count on either version.
+  Every new R9 case occupies one physical line.
 
 ## Verification And Review
 
@@ -45,7 +50,11 @@ Run the existing 3.12 focused/Ruff/pip/self-validation/documentation/scope/raw
 delta gates, plus a Python 3.11 focused run using an isolated uv environment:
 
 ```text
-uv run --python 3.11 --with pytest --with coverage python -m pytest -q backend/tests/test_coverage_contract.py
+uv run --no-project --isolated --python 3.11 --with-editable 'backend[dev]' python -c 'import sys; assert sys.version_info[:2] == (3, 11)'
+uv run --no-project --isolated --python 3.11 --with-editable 'backend[dev]' python -m pytest -q backend/tests/test_coverage_contract.py
+test -z "$(git diff --name-only 060b780190435bc79464ae92fd9235a652f70e00...HEAD | grep -Ev '^(backend/scripts/coverage_policy.py|backend/tests/test_coverage_contract.py|\.agent-loop/(LOOP_STATE.md|REVIEW_LOG.md|WORK_QUEUE.md|initiatives/WS-QUAL-001-backend-coverage-floor/.*))$')"
+test "$(git diff --numstat 060b780190435bc79464ae92fd9235a652f70e00...HEAD -- backend/scripts/coverage_policy.py backend/tests/test_coverage_contract.py | awk '{total += $1 + $2} END {print total + 0}')" -le 600
+cd backend && BASE_SHA=060b780190435bc79464ae92fd9235a652f70e00 .venv/bin/python -c 'import os, sys; sys.path.insert(0, "scripts"); import coverage_policy as policy; policy.validate_delta(os.environ["BASE_SHA"], 600, {"backend/scripts/coverage_policy.py", "backend/tests/test_coverage_contract.py"})'
 ```
 
 Required reviewers: senior engineering, QA/test, security/auth, product/ops,
