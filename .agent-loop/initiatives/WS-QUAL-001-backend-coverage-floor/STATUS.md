@@ -2,8 +2,8 @@
 
 ## Current state
 
-- Phase: `WS-QUAL-001-01B1A-R2` evidence and PR preparation
-- Branch: `codex/ws-qual-001-01b1a-coverage-parser-core`
+- Phase: `WS-QUAL-001-01B1A-R2` post-merge memory
+- Branch: `codex/ws-qual-001-01b1a-r2-post-merge-memory`
 - Authoritative target: 90 percent complete backend application statement coverage
 - Diagnostic AUTH-02 baseline: 78.26 percent after database isolation repair
 - Final reviewed planning SHA: `0d9dd987d546c864fa8de7bae462e5e73a1b5ea9`
@@ -54,9 +54,11 @@
 - R2 implementation review: all required tracks passed; 58 focused tests and
   complete 398/400-line scope proof passed with coverage.py 7.15.0
 - R2 implementation PR: `https://github.com/Flow-Research/workstream/pull/105`
+- R2 merge commit: `8a4182edb09970131aded73edf3428ac83fe60b9`
+- R2 post-merge memory PR: `https://github.com/Flow-Research/workstream/pull/106`
 
 ## Stop condition
 
-R2 awaits external checks and human review in PR #105. AUTH-02 may proceed
-independently off-main in its separate worktree. Do not start 01B1B, 01B2, or
-chunk 02.
+R2 is merged. Review and merge memory PR #106, then stop. AUTH-02 may
+proceed independently off-main in its separate worktree. Do not start 01B1B,
+01B2, or chunk 02 without their separate checkpoints.

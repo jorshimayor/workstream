@@ -13,12 +13,13 @@
   plan review passed and D12 production dependencies were explicitly approved.
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
-- Latest integrated `main` merge commit: `8a4182e`
+- Latest integrated `main` merge commit: `6dccb8e`
 - Current gate: bounded implementation and evidence for `WS-AUTH-001-02`.
 - Next chunk: none; do not start `WS-AUTH-001-03` automatically.
 - Parallel initiative: `WS-QUAL-001-01B1A-R2` merged through PR #105 as
-  `8a4182e`. Its post-merge memory and later coverage chunks remain independently
-  owned and must not be edited or started from this worktree.
+  `8a4182e`, and its post-merge memory merged through PR #106 as `6dccb8e`.
+  Later coverage chunks remain inactive and must not be edited or started from
+  this worktree.
 - Parallel initiative: `WS-ART-001-01` merged through PR #101 as `050eb15`.
   `WS-ART-001-02` remains proposed and inactive pending a separate explicit
   user start.
