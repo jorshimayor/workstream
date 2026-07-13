@@ -300,10 +300,16 @@ async def request_json(
     Raises:
         AssertionError: If the response status does not match.
     """
+    request_id = str(uuid4())
+    correlation_id = str(uuid4())
+    headers = {} if token is None else auth_headers(token)
+    headers.update(
+        {"X-Request-ID": request_id, "X-Correlation-ID": correlation_id}
+    )
     response = await client.request(
         method,
         path,
-        headers={} if token is None else auth_headers(token),
+        headers=headers,
         json=payload,
     )
     if response.status_code != expected_status:
@@ -322,6 +328,15 @@ async def request_json(
         ) from exc
     if not isinstance(body, dict | list):
         raise AssertionError(f"{method} {path} returned non-JSON payload: {body!r}")
+    if response.headers.get("x-request-id") != request_id:
+        raise AssertionError(f"{method} {path} did not preserve the request ID")
+    if response.headers.get("x-correlation-id") != correlation_id:
+        raise AssertionError(f"{method} {path} did not preserve the correlation ID")
+    if expected_status >= 400:
+        if not isinstance(body, dict) or body.get("error", {}).get(
+            "correlation_id"
+        ) != correlation_id:
+            raise AssertionError(f"{method} {path} returned invalid error context")
     print(f"PASS {method} {path} -> {response.status_code}")
     return body
 

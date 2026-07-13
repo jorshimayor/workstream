@@ -4,11 +4,12 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps.auth import get_registered_actor
+from app.core.api_controls import error_response
 from app.core.permissions import PermissionDenied
 from app.db.session import get_db_session
 from app.modules.actors.schemas import ActorProfileActivationRequest, ActorProfileResponse
@@ -30,17 +31,19 @@ from app.schemas.auth import ActorContext
 
 router = APIRouter(tags=["tasks"])
 
+CANONICAL_ERROR_OBJECT_SCHEMA = {"$ref": "#/components/schemas/ApiError"}
 PRE_SUBMIT_DOMAIN_ERROR_RESPONSE_SCHEMA = {
     "oneOf": [
         {
             "type": "object",
-            "required": ["code", "details"],
+            "required": ["code", "details", "error"],
             "properties": {
                 "code": {
                     "type": "string",
                     "enum": ["pre_submission_checker_failed"],
                 },
                 "details": {"type": "object"},
+                "error": CANONICAL_ERROR_OBJECT_SCHEMA,
             },
             "additionalProperties": False,
         },
@@ -51,13 +54,14 @@ TASK_LOCKED_CONTEXT_DOMAIN_ERROR_RESPONSE_SCHEMA = {
     "oneOf": [
         {
             "type": "object",
-            "required": ["code", "details"],
+            "required": ["code", "details", "error"],
             "properties": {
                 "code": {
                     "type": "string",
                     "enum": ["task_locked_context_invalid"],
                 },
                 "details": {"type": "object"},
+                "error": CANONICAL_ERROR_OBJECT_SCHEMA,
             },
             "additionalProperties": False,
         },
@@ -78,14 +82,21 @@ def task_http_error(exc: TaskServiceError) -> HTTPException:
     return HTTPException(status_code=exc.status_code, detail=str(exc))
 
 
-def task_domain_error_response(exc: TaskServiceError) -> JSONResponse:
+def task_domain_error_response(request: Request, exc: TaskServiceError) -> JSONResponse:
     """Convert a coded domain error into the public API error body."""
-    return JSONResponse(
+    code = getattr(exc, "code")
+    details = getattr(exc, "details", None) or {}
+    message = {
+        "pre_submission_checker_failed": "Pre-submission checks failed",
+        "task_locked_context_invalid": "Task locked context is invalid",
+    }[code]
+    return error_response(
+        request,
         status_code=exc.status_code,
-        content={
-            "code": getattr(exc, "code"),
-            "details": getattr(exc, "details", None) or {},
-        },
+        code=code,
+        message=message,
+        details=details,
+        compatibility={"code": code, "details": details},
     )
 
 
@@ -180,6 +191,7 @@ async def get_task(
     },
 )
 async def get_task_work_context(
+    request: Request,
     task_id: str,
     actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
@@ -191,7 +203,7 @@ async def get_task_work_context(
         raise permission_http_error(exc) from exc
     except TaskServiceError as exc:
         if getattr(exc, "code", None) is not None:
-            return task_domain_error_response(exc)
+            return task_domain_error_response(request, exc)
         raise task_http_error(exc) from exc
 
 
@@ -211,6 +223,7 @@ async def get_task_work_context(
     },
 )
 async def get_task_submission_requirements(
+    request: Request,
     task_id: str,
     actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
@@ -222,7 +235,7 @@ async def get_task_submission_requirements(
         raise permission_http_error(exc) from exc
     except TaskServiceError as exc:
         if getattr(exc, "code", None) is not None:
-            return task_domain_error_response(exc)
+            return task_domain_error_response(request, exc)
         raise task_http_error(exc) from exc
 
 
@@ -242,6 +255,7 @@ async def get_task_submission_requirements(
     },
 )
 async def get_task_locked_context(
+    request: Request,
     task_id: str,
     actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
@@ -253,7 +267,7 @@ async def get_task_locked_context(
         raise permission_http_error(exc) from exc
     except TaskServiceError as exc:
         if getattr(exc, "code", None) is not None:
-            return task_domain_error_response(exc)
+            return task_domain_error_response(request, exc)
         raise task_http_error(exc) from exc
 
 
@@ -370,6 +384,7 @@ async def start_task(
     },
 )
 async def create_submission(
+    request: Request,
     task_id: str,
     payload: SubmissionCreate,
     actor: Annotated[ActorContext, Depends(get_registered_actor)],
@@ -382,7 +397,7 @@ async def create_submission(
         raise permission_http_error(exc) from exc
     except TaskServiceError as exc:
         if getattr(exc, "code", None) is not None:
-            return task_domain_error_response(exc)
+            return task_domain_error_response(request, exc)
         raise task_http_error(exc) from exc
 
 

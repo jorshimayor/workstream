@@ -9,6 +9,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.api_controls import StructuredHTTPException
 from app.core.auth import get_auth_verifier
 from app.db.session import get_db_session
 from app.interfaces.auth import (
@@ -29,7 +30,7 @@ def get_application_auth_verifier(request: Request) -> AuthVerifier:
     return request.app.state.auth_verifier
 
 
-def unauthorized(detail: str) -> HTTPException:
+def unauthorized(detail: str, *, error_code: str) -> HTTPException:
     """Build a bearer-auth unauthorized response.
 
     Args:
@@ -38,9 +39,11 @@ def unauthorized(detail: str) -> HTTPException:
     Returns:
         HTTP exception with the bearer challenge header.
     """
-    return HTTPException(
+    return StructuredHTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail=detail,
+        error_code=error_code,
+        error_message=detail,
         headers={"WWW-Authenticate": "Bearer"},
     )
 
@@ -62,17 +65,20 @@ async def get_auth_verification_result(
         HTTPException: If the bearer token is missing or invalid.
     """
     if credentials is None:
-        raise unauthorized("Missing bearer token")
+        raise unauthorized("Missing bearer token", error_code="missing_token")
 
     try:
         return await verifier.verify(credentials.credentials)
     except AuthVerificationUnavailableError as exc:
-        raise HTTPException(
+        raise StructuredHTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Identity verification unavailable",
+            error_code="identity_verification_unavailable",
+            error_message="Identity verification unavailable",
+            retryable=True,
         ) from exc
     except AuthVerificationError as exc:
-        raise unauthorized("Invalid bearer token") from exc
+        raise unauthorized("Invalid bearer token", error_code="invalid_token") from exc
 
 
 async def get_current_actor(
@@ -97,9 +103,11 @@ async def get_registered_actor(
         this token-derived context, not persisted profile rows.
     """
     if result.token.subject_kind != "human" or result.legacy is None:
-        raise HTTPException(
+        raise StructuredHTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Unsupported subject kind",
+            error_code="unsupported_subject_kind",
+            error_message="Unsupported subject kind",
         )
     actor = result.legacy_actor()
     try:
@@ -109,8 +117,11 @@ async def get_registered_actor(
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
     except SQLAlchemyError as exc:
         await session.rollback()
-        raise HTTPException(
+        raise StructuredHTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Actor registry unavailable",
+            error_code="service_unavailable",
+            error_message="Service unavailable",
+            retryable=True,
         ) from exc
     return actor

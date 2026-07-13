@@ -98,6 +98,52 @@ fields remain `null`. Consumers must not treat token identity metadata as a
 profile source of truth; canonical profile metadata belongs to the later actor
 profile migration.
 
+## Request And Error Context
+
+Clients may send one `X-Request-ID` and one `X-Correlation-ID`. Each supplied
+value must be a canonical lowercase, hyphenated, non-nil RFC 9562 UUID using the
+RFC variant and version 1 through 8. A missing request ID is generated as
+UUIDv4; a missing correlation ID reuses the effective request ID. Duplicate,
+comma-joined, malformed, non-ASCII, nil, or unsupported-version values stop
+before route/dependency execution with HTTP 400 `invalid_request`. That response
+uses one newly generated UUIDv4 for both safe headers and never reflects the
+rejected bytes.
+
+Every success and error response returns the effective IDs in
+`X-Request-ID` and `X-Correlation-ID`. Application-supplied response values for
+those headers are overwritten. Status, content length, duplicate unrelated
+headers, `WWW-Authenticate`, `Retry-After`, streaming chunks, and background
+work remain unchanged.
+
+Errors add this canonical object while retaining the existing top-level
+`detail` or domain `code/details` compatibility fields:
+
+```json
+{
+  "error": {
+    "code": "invalid_request",
+    "message": "Request validation failed",
+    "details": {},
+    "correlation_id": "00000000-0000-4000-8000-000000000001",
+    "retryable": false
+  }
+}
+```
+
+The authentication boundary uses `missing_token`, `invalid_token`,
+`identity_verification_unavailable`, and `unsupported_subject_kind` for their
+exact branches. Verification/registry unavailability is retryable; invalid
+credentials, unsupported kinds, validation, permission, not-found, conflict,
+and internal application errors are not. The canonical nested validation
+summary is capped at 20 errors with type/location evidence only. Existing
+sanitized validator messages remain solely in the bounded compatibility
+`detail` list.
+
+Use the correlation ID to join operator evidence. Never add bearer tokens,
+claims, subjects, emails, SQL, provider bodies, exception text, or secrets to
+responses or logs. AUTH-04A does not activate rate controls, grant APIs, or new
+product authority; those remain owned by later separately reviewed chunks.
+
 ## JWKS Rotation And Outage
 
 Rotation procedure:

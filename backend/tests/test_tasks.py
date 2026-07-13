@@ -21,6 +21,7 @@ from sqlalchemy.schema import CreateIndex
 from app.adapters.auth.dev import actor_id_from_external_identity
 from app.core.config import get_settings
 from app.core.hashing import canonical_json_hash
+from app.core.permissions import PermissionDenied
 from app.db import models as db_models
 from app.db import session as db_session
 from app.db.base import Base
@@ -52,6 +53,7 @@ from app.modules.tasks.models import (
     WorkstreamTask,
 )
 from app.modules.tasks.repository import TaskRepository
+from app.modules.tasks.service import TaskService, TaskServiceError
 from app.schemas.auth import ActorContext
 
 
@@ -808,6 +810,7 @@ def test_submission_create_openapi_documents_domain_error() -> None:
     domain_schema = next(option for option in response_422["oneOf"] if "properties" in option)
     assert domain_schema["properties"]["code"]["enum"] == ["pre_submission_checker_failed"]
     assert "details" in domain_schema["properties"]
+    assert "error" in domain_schema["required"]
 
 
 def test_task_context_openapi_documents_locked_context_domain_error() -> None:
@@ -821,6 +824,7 @@ def test_task_context_openapi_documents_locked_context_domain_error() -> None:
     domain_schema = next(option for option in response_422["oneOf"] if "properties" in option)
     assert domain_schema["properties"]["code"]["enum"] == ["task_locked_context_invalid"]
     assert "details" in domain_schema["properties"]
+    assert "error" in domain_schema["required"]
 
 
 def test_task_locked_context_constraints_bind_task_submission_and_hashes() -> None:
@@ -909,6 +913,67 @@ def test_task_locked_context_constraints_bind_task_submission_and_hashes() -> No
     assert "ck_submissions_post_submit_policy_lock_complete" in {
         constraint.name for constraint in Submission.__table__.constraints
     }
+
+
+async def test_task_router_service_errors_use_canonical_request_context(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def fail_with_service_error(*_args, **_kwargs):
+        raise TaskServiceError("bounded task failure")
+
+    cases = [
+        ("create_task", "POST", "/api/v1/projects/project-id/tasks", complete_task_payload()),
+        ("get_task", "GET", "/api/v1/tasks/task-id", None),
+        ("get_task_work_context", "GET", "/api/v1/tasks/task-id/work-context", None),
+        (
+            "get_task_submission_requirements",
+            "GET",
+            "/api/v1/tasks/task-id/submission-requirements",
+            None,
+        ),
+        ("get_task_locked_context", "GET", "/api/v1/tasks/task-id/locked-context", None),
+        ("move_to_screening", "POST", "/api/v1/tasks/task-id/screen", None),
+        ("release_to_ready", "POST", "/api/v1/tasks/task-id/release", None),
+        ("claim_task", "POST", "/api/v1/tasks/task-id/claim", None),
+        ("start_task", "POST", "/api/v1/tasks/task-id/start", None),
+        (
+            "create_submission",
+            "POST",
+            "/api/v1/tasks/task-id/submissions",
+            complete_submission_payload(),
+        ),
+        ("list_task_submissions", "GET", "/api/v1/tasks/task-id/submissions", None),
+        ("get_submission", "GET", "/api/v1/submissions/submission-id", None),
+        ("finalize_submission", "POST", "/api/v1/submissions/submission-id/finalize", None),
+        ("list_task_audit_events", "GET", "/api/v1/tasks/task-id/audit-events", None),
+    ]
+
+    for service_method, method, path, payload in cases:
+        monkeypatch.setattr(TaskService, service_method, fail_with_service_error)
+        response = await task_client.request(
+            method,
+            path,
+            headers=auth_headers(),
+            json=payload,
+        )
+
+        assert response.status_code == 400
+        assert response.json()["detail"] == "bounded task failure"
+        assert response.json()["error"]["code"] == "invalid_request"
+        assert response.json()["error"]["correlation_id"] == response.headers[
+            "x-correlation-id"
+        ]
+
+    async def fail_with_permission_error(*_args, **_kwargs):
+        raise PermissionDenied("bounded permission failure")
+
+    monkeypatch.setattr(TaskService, "get_task", fail_with_permission_error)
+    denied = await task_client.get("/api/v1/tasks/task-id", headers=auth_headers())
+
+    assert denied.status_code == 403
+    assert denied.json()["detail"] == "bounded permission failure"
+    assert denied.json()["error"]["code"] == "permission_not_granted"
 
 
 async def test_actor_profile_services_update_existing_actor_rows(task_database_env: str) -> None:
@@ -1544,6 +1609,8 @@ async def test_task_context_apis_fail_closed_when_locked_context_is_missing(
 
     assert response.status_code == 422
     assert response.json()["code"] == "task_locked_context_invalid"
+    assert response.json()["error"]["code"] == "task_locked_context_invalid"
+    assert response.json()["error"]["details"] == response.json()["details"]
     assert "locked_guide_version" in response.json()["details"]["missing_fields"]
 
 
@@ -1831,6 +1898,8 @@ async def test_submission_runtime_uses_locked_project_policy_not_task_required_f
     assert non_contract_artifact_response.status_code == 422, non_contract_artifact_response.text
     detail = non_contract_artifact_response.json()
     assert detail["code"] == "pre_submission_checker_failed"
+    assert detail["error"]["code"] == "pre_submission_checker_failed"
+    assert detail["error"]["details"] == detail["details"]
     required_files = next(
         result
         for result in detail["details"]["results"]
