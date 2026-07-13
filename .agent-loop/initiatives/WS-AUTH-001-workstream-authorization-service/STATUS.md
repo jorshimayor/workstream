@@ -83,3 +83,10 @@ AUTH-03 review evidence and its PR trust bundle are recorded at
 Production issuer configuration and legacy non-test actor classification are
 future implementation/live-proof inputs and are tracked explicitly in
 `DISCOVERY.md` and chunk stop conditions.
+
+The user accepted D13 on 2026-07-13: the target provider-neutral boundary is
+`IdentityIssuerVerifier`, extending the shared `ExternalServiceAdapter`
+convention and using its typed factory. The current verifier/configuration
+names remain functional migration inputs. The atomic AUTH adoption requires
+its own reviewed chunk after `WS-ART-001-01C` installs the shared foundation;
+it is not part of the size-capped AUTH-04A request/error implementation.

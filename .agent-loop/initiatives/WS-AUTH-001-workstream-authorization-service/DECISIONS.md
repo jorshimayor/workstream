@@ -158,3 +158,32 @@ start does not imply dependency approval. No production dependency or runtime
 implementation may change until the user explicitly accepts D12 and that
 acceptance is recorded here. The user explicitly approved D12 by replying
 "ok apporeved" after the final preimplementation plan review passed.
+
+## D13: Identity issuer is the stable verification boundary
+
+Status: accepted by the user on 2026-07-13.
+
+Workstream depends on one provider-neutral `IdentityIssuerVerifier` capability
+port. It extends the repository-wide `ExternalServiceAdapter` convention and
+is constructed through the typed
+`ExternalServiceAdapterFactory[IdentityIssuerVerifier]` foundation being
+prepared by `WS-ART-001-01C`. AUTH must adopt that merged shared foundation; it
+must not create a second generic adapter registry or factory.
+
+The `/auth` dependency and product authorization layers must not change when an
+additional external identity issuer is configured. Issuer-specific discovery,
+JWKS, signature, claim, and introspection behavior remains behind explicit
+adapter registration, construction, and configuration; it does not become a
+second internal auth system or grant Workstream product authority.
+
+The current `AuthVerifier` port, `FlowAuthVerifier` adapter, and `flow_auth_*`
+configuration names are migration inputs rather than the target vocabulary.
+Their rename must be one bounded, atomic specification and implementation
+chunk covering the port, adapter, factory, configuration compatibility,
+tests, operator documentation, and stale-name proof. AUTH-04A does not absorb
+that cross-cutting rename because its reviewed request/error scope is already
+at the production size circuit breaker. The owning follow-up chunk is blocked
+until the shared convention merges, and must then remove the old AUTH factory
+entry point and migrate all callers in one clean cut. It must be planned and
+reviewed before implementation; no compatibility factory alias, duplicate
+verifier, service locator, or public login/session API may be introduced.
