@@ -34,11 +34,14 @@ required tracks pass on production SHA `cdcaf77`, and final test-only head
 logging-state behavior-test repairs plus lifecycle evidence.
 Backend, Agent Gates, and CodeRabbit passed on final branch head `36c4aa5`, then
 explicit human approval merged PR #111 to `main` as `90c9a28` on 2026-07-13.
-AUTH-04A post-merge memory is active; AUTH-04B remains inactive.
+AUTH-04A post-merge memory merged through PR #112 as `7749f54`. The user then
+explicitly started AUTH-04B; its required L1 preimplementation review is active
+and runtime edits remain gated.
 
 ## Active planning chunk
 
-None.
+`WS-AUTH-001-04B` - PostgreSQL Rate Controls. Planning/review only; runtime
+implementation has not started.
 
 ## Active implementation chunk
 
@@ -46,8 +49,7 @@ None.
 
 ## Current implementation branch
 
-None. Post-merge memory uses `codex/ws-auth-001-04a-post-merge-memory` and makes
-no product implementation change.
+`codex/ws-auth-001-04b-postgres-rate-controls`.
 
 ## Chunk status
 
@@ -59,7 +61,7 @@ no product implementation change.
 | `WS-AUTH-001-03` | Merged | `codex/ws-auth-001-03-legacy-actor-classification` | #109 | Merged as `f06532e`; reviewed code `8c5334c`; final branch head `43ffbfe`. |
 | `WS-AUTH-001-04` | Split | `codex/ws-auth-001-04-request-api-controls` | - | Parent split before runtime implementation. |
 | `WS-AUTH-001-04A` | Merged | `codex/ws-auth-001-04-request-api-controls` | #111 | Merged as `90c9a28`; production review `cdcaf77`; final branch head `36c4aa5`. |
-| `WS-AUTH-001-04B` | Inactive | - | - | PostgreSQL rate controls; requires 04A merge/memory and separate explicit start. |
+| `WS-AUTH-001-04B` | Preimplementation review | `codex/ws-auth-001-04b-postgres-rate-controls` | - | Explicitly started after 04A memory merged; runtime gated on required review. |
 | `WS-AUTH-001-05` | Proposed | - | - | Authority evidence and idempotency foundation. |
 | `WS-AUTH-001-06` | Proposed | - | - | Canonical actor profile and identity link. |
 | `WS-AUTH-001-07` | Proposed | - | - | Authorization kernel and permissions. |
@@ -75,9 +77,8 @@ no product implementation change.
 
 ## Blockers
 
-No active implementation blocker because no AUTH product chunk is active.
-AUTH-04B may start only after this memory update merges and the user gives a
-separate explicit start signal. It later owns migration `0017`, following the
+No external blocker. AUTH-04B runtime implementation is internally gated until
+its L1 preimplementation review passes. It owns migration `0017`, following the
 now-owned `0016` prefix on current main. Non-test
 operators must later supply explicit classification evidence rather than
 inferred kinds before the owning canonical actor migration.

@@ -1,5 +1,17 @@
 # Review Log
 
+## 2026-07-13 - WS-AUTH-001-04B Started
+
+PR #112 merged AUTH-04A post-merge memory to `main` as `7749f54` after Backend,
+Agent Gates, CodeRabbit, required internal review, and explicit human approval
+passed. The user then explicitly started `WS-AUTH-001-04B` in the isolated
+worktree `/home/abiorh/flow/workstream-auth-001-04b` on branch
+`codex/ws-auth-001-04b-postgres-rate-controls`.
+
+AUTH-04B is L1/P1 authorization infrastructure. Its existing bounded contract
+must pass required preimplementation review before runtime edits. AUTH-05,
+POL-002-04, and QA implementation remain inactive.
+
 ## 2026-07-13 - WS-AUTH-001-04A Merged
 
 PR #111 merged `WS-AUTH-001-04A` to `main` as `90c9a28` after final branch head

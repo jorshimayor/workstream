@@ -2,8 +2,9 @@
 
 ## Status
 
-Inactive. This contract requires AUTH-04A merge/memory, a separate explicit
-user start, and required preimplementation review before any runtime edit.
+Active for required preimplementation review after AUTH-04A merge/memory and
+the user's separate explicit start. No runtime edit is permitted until review
+passes.
 
 ## Parent initiative
 
@@ -149,3 +150,9 @@ git diff --check
 - Stop if a raw identity or token-derived value would be persisted or logged.
 - Stop if production changes exceed the size circuit breaker.
 - Stop after 04B; do not start AUTH-05 automatically.
+
+## Activation
+
+AUTH-04A post-merge memory merged through PR #112 as `7749f54`. The user
+explicitly started AUTH-04B on 2026-07-13. Required L1 preimplementation review
+must pass before runtime edits.

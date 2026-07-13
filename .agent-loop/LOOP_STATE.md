@@ -3,21 +3,20 @@
 ## Current State
 
 - Active initiative: `WS-AUTH-001` - Workstream Authorization Service
-- Active planning chunk: none
+- Active planning chunk: `WS-AUTH-001-04B` - PostgreSQL Rate Controls
 - Active implementation chunk: none
-- Branch: `codex/ws-auth-001-04a-post-merge-memory`
-- Worktree: `/home/abiorh/flow/workstream-authorization-service`
-- Status: AUTH-04A merged through PR #111 as `90c9a28` after Backend, Agent
-  Gates, CodeRabbit, required internal review, and explicit human approval
-  passed.
+- Branch: `codex/ws-auth-001-04b-postgres-rate-controls`
+- Worktree: `/home/abiorh/flow/workstream-auth-001-04b`
+- Status: AUTH-04A post-merge memory merged through PR #112 as `7749f54`; the
+  user explicitly started AUTH-04B, whose L1 preimplementation review is active.
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
-- Latest integrated `main` merge commit: `90c9a28`
-- Current gate: publish and merge the AUTH-04A post-merge memory update, then
-  stop.
+- Latest integrated `main` merge commit: `7749f54`
+- Current gate: required AUTH-04B preimplementation review; no runtime edit is
+  permitted until the contract passes.
 - Next chunk: none; do not start `WS-AUTH-001-05` automatically.
-- `WS-AUTH-001-04B` is inactive until this memory update merges and the user
-  gives its separate explicit start signal.
+- `WS-AUTH-001-04B` is active for planning/review only. AUTH-05 and later chunks
+  remain inactive.
 - Parallel initiative: `WS-QUAL-001-01B2` is paused at the user's direction so
   AUTH receives the laptop's test capacity. Its last official whole-app result
   remains `6466/8159` statements (`79.249908%`); no replacement evidence exists.

@@ -4,13 +4,12 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| - | No active implementation chunk | - | AUTH-04A post-merge memory in progress; no product implementation active |
+| `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Explicitly started; required preimplementation review active, runtime gated |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Inactive until 04A merge/memory and a separate explicit user start |
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Paused for AUTH priority; no valid replacement baseline yet |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
@@ -57,10 +56,10 @@
 
 ## Proposed Next
 
-`WS-AUTH-001-04A` merged through PR #111 as `90c9a28` after all required checks
-and reviews passed. Its post-merge memory update is active; no AUTH product
-implementation is active. Do not start 04B, AUTH-05, or POL-002-04
-automatically.
+`WS-AUTH-001-04A` post-merge memory merged through PR #112 as `7749f54`. The
+user explicitly started `WS-AUTH-001-04B`; only its required preimplementation
+review is active, and runtime edits remain gated. Do not start AUTH-05 or
+POL-002-04 automatically.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.
