@@ -39,7 +39,8 @@ explicitly started AUTH-04B; its required L1 preimplementation review is active
 and rejected the first activated contract before runtime edits. The second
 repaired contract passed all required tracks at `b5dceb1`; bounded runtime
 implementation and deterministic evidence are complete, and the candidate is
-entering required internal review.
+in one bounded repair cycle after exact-head internal review rejected
+`62dd18e`.
 
 ## Active planning chunk
 
@@ -64,7 +65,7 @@ required internal review; AUTH-05 remains inactive.
 | `WS-AUTH-001-03` | Merged | `codex/ws-auth-001-03-legacy-actor-classification` | #109 | Merged as `f06532e`; reviewed code `8c5334c`; final branch head `43ffbfe`. |
 | `WS-AUTH-001-04` | Split | `codex/ws-auth-001-04-request-api-controls` | - | Parent split before runtime implementation. |
 | `WS-AUTH-001-04A` | Merged | `codex/ws-auth-001-04-request-api-controls` | #111 | Merged as `90c9a28`; production review `cdcaf77`; final branch head `36c4aa5`. |
-| `WS-AUTH-001-04B` | Internal review | `codex/ws-auth-001-04b-postgres-rate-controls` | - | 409 production lines; 93 owned tests and real API E2E pass; required reviewers pending. |
+| `WS-AUTH-001-04B` | Repair | `codex/ws-auth-001-04b-postgres-rate-controls` | - | `62dd18e` failed required review; secret, Unicode, downgrade-lock, synchronization, and missing-proof repairs active. |
 | `WS-AUTH-001-05` | Proposed | - | - | Authority evidence and idempotency foundation. |
 | `WS-AUTH-001-06` | Proposed | - | - | Canonical actor profile and identity link. |
 | `WS-AUTH-001-07` | Proposed | - | - | Authorization kernel and permissions. |
@@ -80,7 +81,7 @@ required internal review; AUTH-05 remains inactive.
 
 ## Blockers
 
-No external blocker. AUTH-04B implementation review is active under its passed
+No external blocker. AUTH-04B internal repair is active under its passed
 repaired L1 contract. It owns migration `0017`, following the
 now-owned `0016` prefix on current main. Non-test
 operators must later supply explicit classification evidence rather than

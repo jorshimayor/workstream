@@ -57,7 +57,9 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Drop only an empty rate-control table."""
-    has_rows = op.get_bind().execute(
+    bind = op.get_bind()
+    bind.execute(sa.text("lock table api_rate_control_counters in access exclusive mode"))
+    has_rows = bind.execute(
         sa.text("select exists(select 1 from api_rate_control_counters)")
     ).scalar_one()
     if has_rows:

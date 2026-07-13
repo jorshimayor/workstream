@@ -50,8 +50,11 @@ def rate_key_digest(
     """Derive the exact privacy key for one verified external identity."""
     if control_scope not in RATE_SCOPES:
         raise ValueError("unsupported rate control scope")
-    issuer_bytes = issuer.encode("utf-8")
-    subject_bytes = subject.encode("utf-8")
+    try:
+        issuer_bytes = issuer.encode("utf-8")
+        subject_bytes = subject.encode("utf-8")
+    except UnicodeEncodeError:
+        raise RateControlUnavailableError("rate control unavailable") from None
     if not 1 <= len(issuer_bytes) <= MAX_IDENTITY_BYTES or not 1 <= len(
         subject_bytes
     ) <= MAX_IDENTITY_BYTES:

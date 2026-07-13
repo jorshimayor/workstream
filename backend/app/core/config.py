@@ -8,7 +8,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, SecretStr, field_validator, model_validator
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -96,15 +96,11 @@ class Settings(BaseSettings):
         hide_input_in_errors=True,
     )
 
-    @field_validator("api_rate_limit_key_secret")
-    @classmethod
-    def validate_api_rate_limit_key_secret(
-        cls, value: SecretStr | None
-    ) -> SecretStr | None:
-        """Require canonical bounded Base64 while retaining redacted storage."""
-        if value is not None:
-            decode_api_rate_limit_key_secret(value)
-        return value
+    def __init__(self, **values: object) -> None:
+        """Validate secret material after Pydantic has discarded raw input."""
+        super().__init__(**values)
+        if self.api_rate_limit_key_secret is not None:
+            decode_api_rate_limit_key_secret(self.api_rate_limit_key_secret)
 
     @model_validator(mode="after")
     def validate_artifact_storage(self) -> Settings:

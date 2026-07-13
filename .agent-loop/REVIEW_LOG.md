@@ -2,6 +2,15 @@
 
 ## 2026-07-13 - WS-AUTH-001-04B Repaired Contract Passed
 
+Implementation candidate `62dd18e` failed required exact-head review. Valid
+findings were structured Pydantic secret retention, unpaired-surrogate identity
+500s, a concurrent downgrade custody race, unsynchronized database tests,
+incomplete downstream-rollback/session-open/prune/database-clock evidence, no
+representative 0016 artifact row, and tests mistakenly placed in the prior
+AUTH-04A file instead of the contract-owned rate-control file. One bounded
+repair cycle moves the tests, closes each runtime/migration issue, adds exact
+proof, and requires full-suite coverage plus exact-head re-review.
+
 Required senior engineering, architecture, security/data, QA/test, CI-integrity,
 test-delta, product/ops, docs, and reuse review passed exact repaired-contract
 head `b5dceb1`. The second repair closed optional-secret, missing-database,

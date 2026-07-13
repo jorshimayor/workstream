@@ -8,13 +8,13 @@
 - Branch: `codex/ws-auth-001-04b-postgres-rate-controls`
 - Worktree: `/home/abiorh/flow/workstream-auth-001-04b`
 - Status: AUTH-04A post-merge memory merged through PR #112 as `7749f54`; the
-  user explicitly started AUTH-04B; its implementation candidate is entering
-  required internal review after deterministic evidence passed.
+  user explicitly started AUTH-04B. Exact-head review rejected candidate
+  `62dd18e`; one bounded repair cycle is active.
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
 - Latest integrated `main` merge commit: `7749f54`
-- Current gate: required AUTH-04B implementation review against an immutable
-  candidate SHA; no PR until all valid findings are resolved.
+- Current gate: deterministic repair evidence, then exact-head re-review; no PR
+  until every valid finding is resolved.
 - Size checkpoint: implementation is 409 changed non-comment production lines; the
   required 350-line inspection passed and scope is frozen below the 500 stop.
 - Next chunk: none; do not start `WS-AUTH-001-05` automatically.

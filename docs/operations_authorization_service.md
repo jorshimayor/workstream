@@ -189,7 +189,9 @@ WHERE window_expires_at <= statement_timestamp();
 Runtime consumption opportunistically deletes at most 100 expired other rows.
 On idle systems, operators may run the same expired-only SQL cleanup. Never
 delete active rows to recover capacity, and never downgrade migration `0017`
-while the table is nonempty; the guarded downgrade refuses and rolls back.
+while the table is nonempty; the guarded downgrade takes an exclusive table
+lock, refuses, and rolls back. Quiesce every protected write before attempting
+the downgrade so waiting writers cannot resume against a removed table.
 
 ## JWKS Rotation And Outage
 

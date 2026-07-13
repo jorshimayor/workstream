@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 import json
 from pathlib import Path
+import threading
+import time
 from uuid import uuid4
 
 import pytest
@@ -301,6 +304,7 @@ def test_api_rate_control_schema_preserves_domain_and_guards_downgrade(
     config = Config(str(project_root / "alembic.ini"))
     config.set_main_option("script_location", str(project_root / "alembic"))
     project_id = str(uuid4())
+    artifact_id = str(uuid4())
     digest = bytes(range(32))
 
     with migration_lock():
@@ -312,18 +316,53 @@ def test_api_rate_control_schema_preserves_domain_and_guards_downgrade(
             before = asyncio.run(
                 _artifact_prior_head_project(isolated_database_env, project_id)
             )
+            artifact_before = asyncio.run(
+                _seed_and_fetch_0016_artifact(isolated_database_env, artifact_id)
+            )
 
             command.upgrade(config, "0017_api_controls")
             after = asyncio.run(
                 _artifact_prior_head_project(isolated_database_env, project_id)
+            )
+            artifact_after = asyncio.run(
+                _fetch_0016_artifact(isolated_database_env, artifact_id)
             )
             schema = asyncio.run(_api_rate_control_schema(isolated_database_env))
             asyncio.run(_assert_api_rate_control_guards(isolated_database_env, digest))
 
             with pytest.raises(RuntimeError, match="non-empty API rate controls"):
                 command.downgrade(config, "0016_artifact_domain")
-            refused_state = asyncio.run(_api_rate_control_state(isolated_database_env))
 
+            asyncio.run(_clear_api_rate_controls(isolated_database_env))
+            inserted = threading.Event()
+            release_insert = threading.Event()
+            downgrade_started = threading.Event()
+
+            def guarded_downgrade() -> None:
+                downgrade_started.set()
+                command.downgrade(config, "0016_artifact_domain")
+
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                insert_future = pool.submit(
+                    asyncio.run,
+                    _insert_rate_control_until_released(
+                        isolated_database_env,
+                        digest,
+                        inserted,
+                        release_insert,
+                    ),
+                )
+                assert inserted.wait(timeout=5)
+                downgrade_future = pool.submit(guarded_downgrade)
+                assert downgrade_started.wait(timeout=5)
+                time.sleep(0.2)
+                assert downgrade_future.done() is False
+                release_insert.set()
+                insert_future.result(timeout=5)
+                with pytest.raises(RuntimeError, match="non-empty API rate controls"):
+                    downgrade_future.result(timeout=5)
+
+            refused_state = asyncio.run(_api_rate_control_state(isolated_database_env))
             asyncio.run(_clear_api_rate_controls(isolated_database_env))
             command.downgrade(config, "0016_artifact_domain")
             downgraded_state = asyncio.run(
@@ -332,9 +371,11 @@ def test_api_rate_control_schema_preserves_domain_and_guards_downgrade(
             command.upgrade(config, "0017_api_controls")
         finally:
             asyncio.run(_clear_api_rate_controls(isolated_database_env))
+            asyncio.run(_truncate_artifact_foundation(isolated_database_env))
             command.downgrade(config, "base")
 
     assert after == before
+    assert artifact_after == artifact_before
     assert schema == {
         "columns": {
             "control_scope:character varying:NO",
@@ -1822,6 +1863,73 @@ async def _api_rate_control_schema(database_url: str) -> dict[str, set[str]]:
                 "constraints": set(constraints),
                 "indexes": set(indexes),
             }
+    finally:
+        await engine.dispose()
+
+
+async def _seed_and_fetch_0016_artifact(
+    database_url: str, artifact_id: str
+) -> dict[str, object]:
+    """Seed one representative 0016 row and return its exact persisted value."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(
+                text(
+                    "insert into artifact_contents "
+                    "(id, sha256, byte_count, media_type, normalized_display_name) "
+                    "values (:id, :sha256, 17, 'text/plain', 'rate-migration.txt')"
+                ),
+                {"id": artifact_id, "sha256": "sha256:" + "7" * 64},
+            )
+    finally:
+        await engine.dispose()
+    return await _fetch_0016_artifact(database_url, artifact_id)
+
+
+async def _fetch_0016_artifact(
+    database_url: str, artifact_id: str
+) -> dict[str, object]:
+    """Fetch the representative 0016 artifact-domain row."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            row = (
+                await connection.execute(
+                    text(
+                        "select id, sha256, byte_count, media_type, "
+                        "normalized_display_name from artifact_contents where id = :id"
+                    ),
+                    {"id": artifact_id},
+                )
+            ).mappings().one()
+            return dict(row)
+    finally:
+        await engine.dispose()
+
+
+async def _insert_rate_control_until_released(
+    database_url: str,
+    digest: bytes,
+    inserted: threading.Event,
+    release: threading.Event,
+) -> None:
+    """Hold an uncommitted writer until the downgrade is waiting on its lock."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(
+                text(
+                    "insert into api_rate_control_counters "
+                    "(control_scope, key_digest, window_started_at, window_expires_at, "
+                    "request_count, updated_at) values "
+                    "('first_access', :digest, statement_timestamp(), "
+                    "statement_timestamp() + interval '1 minute', 1, statement_timestamp())"
+                ),
+                {"digest": digest},
+            )
+            inserted.set()
+            assert await asyncio.to_thread(release.wait, 5)
     finally:
         await engine.dispose()
 

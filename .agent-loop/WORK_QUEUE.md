@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Implementation candidate evidence passed; required internal review pending |
+| `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Candidate `62dd18e` failed internal review; bounded repair/evidence active |
 
 ## Planned Next
 

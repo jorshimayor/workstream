@@ -54,10 +54,12 @@ def test_rate_limit_secret_is_canonical_and_redacted() -> None:
     ],
 )
 def test_rate_limit_secret_rejects_invalid_values_without_echo(value: str) -> None:
-    with pytest.raises(ValidationError) as caught:
+    with pytest.raises(ValueError, match="^invalid API rate limit key secret$") as caught:
         Settings(api_rate_limit_key_secret=value)
-    rendered = str(caught.value)
-    assert "input_value" not in rendered
+    assert not isinstance(caught.value, ValidationError)
+    rendered = f"{caught.value!s} {caught.value!r}"
+    assert not hasattr(caught.value, "errors")
+    assert not hasattr(caught.value, "json")
     if value.strip():
         assert value not in rendered
 
