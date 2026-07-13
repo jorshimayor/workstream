@@ -34,6 +34,12 @@ one repair cycle; any unrelated finding stops it.
   functions, classes, and type aliases; owned weakening syntax remains detected.
 - Python 3.13 fixtures test clean and owned mixed bound/default forms. The same
   source is invalid-syntax fail-closed on Python 3.11/3.12.
+- On Python 3.13 every mixed-shape fixture must first call `analyze_python`
+  successfully, so fail-closed `SyntaxError` cannot satisfy a positive. Cover
+  bound-lambda/default-genexpr and bound-genexpr/default-lambda orders across
+  generic functions, classes, and type aliases. Clean forms remain clean;
+  framework-owned skip forms set `weak=True`; framework-owned `pytest.raises`
+  forms produce a concrete assertion range and block deletion.
 - Preserve all 165 R9 cases/assertions and every syntax-policy behavior. Do not
   add execution/value/provenance logic or change comprehension selection.
 
