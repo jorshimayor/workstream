@@ -1,22 +1,22 @@
 # WS-QUAL-001-01B1B-R10 Internal Review Evidence
 
-Open sub-agent sessions: active external-repair re-review
+Open sub-agent sessions: none
 
-Valid findings addressed: pending final external-repair re-review
+Valid findings addressed: yes
 
-Reviewed code SHA: `5878689670fa101ba49f92577b2ccddbaea28c39`
+Reviewed code SHA: `7e192b8fa0e522c240d66ef81ccf9532c080e30a`
 
-Reviewed at: 2026-07-13T05:47:56Z
+Reviewed at: 2026-07-13T06:00:46Z
 
 Reviewer run IDs: engineering=`/root/qual_r7_final_eng`;
-QA=`WS-QUAL-001-01B1B-R10-QA-EXT-20260713T054756Z`; security=pending
+QA/security/product/docs/test-delta=`WS-QUAL-001-01B1B-R10-EVIDENCE-SYNC-20260713T060046Z`
 
 ## Binding
 
 - Base: `060b780190435bc79464ae92fd9235a652f70e00`
 - Original implementation: `15d0b80e776f5be12cacc5dbe5226ffe3992dcfd`
 - External-repair implementation: `4bcf910ac6b46904a7408360dc1c1d4d7df9ee2e`
-- Current review head: `5878689670fa101ba49f92577b2ccddbaea28c39`
+- Final reviewed head: `7e192b8fa0e522c240d66ef81ccf9532c080e30a`
 - Contract: `WS-QUAL-001-01B1B-R10 TypeVar Child Order`
 - Raw policy/test delta: 584/620 added-plus-deleted lines
 
@@ -40,18 +40,18 @@ inlined comprehensions, and Python 3.13 shared public TypeVar child ordering.
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| Senior engineering | PASS | None | External repair passes at `5878689`. |
-| QA/test | Pending | Evidence provenance | Re-review required after provenance repair. |
-| Security/auth | Pending | Review pending | Fresh external-repair review required. |
+| Senior engineering | PASS | None | External repair passes at final reviewed head. |
+| QA/test | PASS AFTER FIXES | None | Fail-closed regression and 172-test matrix pass. |
+| Security/auth | PASS AFTER FIXES | None | No auth behavior changed; ambiguity fails closed. |
 | Product/ops | PASS | None | No Workstream product lifecycle or human-role behavior changes. |
 | Architecture | PASS | None | External repair remains separate from CI ratchet and coverage raising. |
 | CI integrity | PASS | None | No workflow, threshold, exclusion, or dependency is weakened. |
-| Docs | Pending | Evidence provenance | Re-review required after provenance repair. |
+| Docs | PASS AFTER FIXES | None | Implementation, repair, and evidence SHAs are distinct. |
 | Reuse/dedup | PASS | None | The two-line repair reuses the existing deletion parser. |
 | Test delta | PASS | None | Additive regression has no skip, xfail, or assertion weakening. |
 
-Circuit breaker passed at 584/620 raw policy-and-test lines. Final QA and
-security review remain active before this evidence can be rebound and pushed.
+Circuit breaker passed at 584/620 raw policy-and-test lines. No valid internal
+finding or reviewer session remains for the external repair.
 
 ## Scope Integrity
 

@@ -60,9 +60,9 @@
   3.12, and 3.13; Ruff and dependency integrity pass at 584/620 raw lines.
 - R10 original internal review: nine required reviewer tracks and the circuit
   breaker passed at `15d0b80e776f5be12cacc5dbe5226ffe3992dcfd`.
-- R10 external repair: code/test change is `4bcf910`; engineering, architecture,
-  CI, reuse, and circuit tracks pass at `5878689`; QA and security re-review are
-  active after evidence-provenance repair.
+- R10 external repair: code/test change is `4bcf910`; all nine required reviewer
+  tracks and the circuit breaker pass at `7e192b8` after evidence-provenance
+  repair.
 - R10 ready PR: `https://github.com/Flow-Research/workstream/pull/108`
 - 01A implementation PR: `https://github.com/Flow-Research/workstream/pull/103` (merged)
 - 01A final reviewed implementation SHA: `d1582ec64b9176c5ead62f695c7a23b48e4c72b9`
