@@ -125,7 +125,13 @@
 - B1B-R7 cycle-one candidate:
   `a8e1e789f0421c35ecd6f23b9778379fb4b01156`
 - B1B-R7 cycle-one proof: 254 focused behavior tests, Ruff, `pip check`, diff
-  hygiene, and exact 950/950 candidate lines passed; internal re-review active.
+  hygiene, and exact 950/950 candidate lines passed.
+- B1B-R7 cycle-one review: structural consumption, empty-comprehension
+  provenance, and class-control/import boundaries remained incomplete.
+- B1B-R7 cycle-two candidate:
+  `5fcd9bb99a733fea9d6b05411ea26c4563375d61`
+- B1B-R7 cycle-two proof: 278 focused behavior tests and Ruff passed at
+  920/950 candidate lines; final internal re-review active.
 
 ## Stop condition
 

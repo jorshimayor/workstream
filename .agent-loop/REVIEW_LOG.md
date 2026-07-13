@@ -136,6 +136,20 @@ walks literal-empty clauses, and makes declared class-global transfer
 sequential and class-local. Proof is 254 focused tests, Ruff, `pip check`, diff
 hygiene, and exactly 950/950 candidate lines. Fresh internal review is active.
 
+B1B-R7 cycle-one review: FAIL at `a8e1e78`. Reviewers reproduced binding-blind
+eager-call classification, missed comprehension/display/unpack/`yield from`
+consumption, nested lazy over-consumption, empty-comprehension provenance, and
+class control/import boundary leaks.
+
+B1B-R7 cycle-two candidate: `5fcd9bb99a733fea9d6b05411ea26c4563375d61`.
+One binding-aware consumption path now covers eager builtins, transparent
+iterator wrappers, comprehensions, star displays/calls, sequence unpacking,
+loops, and `yield from` without consuming nested yielded generators. Empty
+comprehensions produce local provenance; class transfer keeps nested control
+flow behind declared globals and qualifies framework imports by root. Proof is
+278 focused tests, Ruff, and 920/950 candidate lines. Final review is active;
+any additional valid finding stops R7 under its two-cycle rule.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract
