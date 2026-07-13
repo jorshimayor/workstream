@@ -174,9 +174,10 @@ class SyntaxPolicy(ast.NodeVisitor):
         self.assertion_ranges: set[tuple[int, int]] = set()
         self.seed(tree.body)
 
-    def child(self, node: ast.AST, table_type: str, name: str, *, required: bool = True) -> symtable.SymbolTable | None:
-        children = [child for child in self.tables[-1].get_children() if (child.get_type(), child.get_name(), child.get_lineno()) == (table_type, name, node.lineno)]
-        key = (id(self.tables[-1]), table_type, name, node.lineno)
+    def child(self, node: ast.AST, table_type: str | set[str], name: str, *, required: bool = True) -> symtable.SymbolTable | None:
+        table_types = {table_type} if isinstance(table_type, str) else table_type
+        children = [child for child in self.tables[-1].get_children() if child.get_type() in table_types and (child.get_name(), child.get_lineno()) == (name, node.lineno)]
+        key = (id(self.tables[-1]), "|".join(sorted(table_types)), name, node.lineno)
         index = self.child_counts.get(key, 0)
         if index < len(children):
             self.child_counts[key] = index + 1
@@ -274,6 +275,8 @@ class SyntaxPolicy(ast.NodeVisitor):
                 return self.owners[index][name]
             if name in self.shadows[index]:
                 return "local"
+            if self.scope_types[index] == "comprehension" and self.tables[index] is self.tables[index - 1]:
+                continue
             try:
                 outer_symbol = self.tables[index].lookup(name)
             except KeyError:
@@ -324,7 +327,7 @@ class SyntaxPolicy(ast.NodeVisitor):
         if not parameters:
             return False
         name = node.name.id if isinstance(node, ast.TypeAlias) else node.name
-        self.tables.append(self.child(node, "type parameter", name))
+        self.tables.append(self.child(node, {"type parameter", "type parameters"}, name))
         self.owners.append({})
         self.scope_types.append("function")
         self.shadows.append({parameter.name for parameter in parameters})
@@ -333,8 +336,8 @@ class SyntaxPolicy(ast.NodeVisitor):
             for field in ("bound", "default_value"):
                 value = getattr(parameter, field, None)
                 if value:
-                    table_type = "TypeVar bound" if field == "bound" else "TypeVar default"
-                    self.tables.append(self.child(parameter, table_type, parameter.name))
+                    table_types = {"TypeVar bound", "type variable"} if field == "bound" else {"TypeVar default", "type variable"}
+                    self.tables.append(self.child(parameter, table_types, parameter.name))
                     self.owners.append({})
                     self.scope_types.append("function")
                     self.shadows.append(set())

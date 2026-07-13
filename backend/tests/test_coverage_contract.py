@@ -288,6 +288,9 @@ def test_runner_metadata_fails_closed(tmp_path: Path, updates: dict, code: str) 
     ("import pytest\n{pytest: (lambda: pytest.skip())() for pytest in ()}", False),
     ("[(lambda value: value)(1) for _ in ()]", False),
     ("import pytest\n[(lambda: pytest.skip())() for _ in ()]", True),
+    ("import pytest\n[[pytest.skip() for _ in ()] for _ in ()]", True),
+    ("import pytest\n{{pytest.skip() for _ in ()} for _ in ()}", True),
+    ("import pytest\n{key: {pytest.skip(): value for value in ()} for key in ()}", True),
 ])
 def test_python_weakening_uses_lexical_syntax(tmp_path: Path, source: str, weak: bool) -> None:
     path = tmp_path / "test_policy.py"
@@ -310,6 +313,7 @@ def test_python_weakening_uses_lexical_syntax(tmp_path: Path, source: str, weak:
     ("import pytest\n[x for target[pytest.raises(ValueError)] in xs]\n", 2, True),
     ("import pytest\ntarget[pytest.raises(ValueError)]: int = 1\n", 2, True),
     ("import pytest\ndef f(*args: pytest.raises(ValueError)): pass\n", 2, True),
+    ("import pytest\n[[pytest.raises(ValueError) for _ in ()] for _ in ()]\n", 2, True),
     ("MESSAGE = 'pytest.raises(ValueError)'\n", 1, False),
     ("def invalid(\n", 1, True),
 ])
