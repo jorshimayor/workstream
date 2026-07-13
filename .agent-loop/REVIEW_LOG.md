@@ -72,6 +72,10 @@ resolver draft measured 282 lines before the required behavior matrix, above
 the 270 checkpoint and incompatible with the 300 cap. The draft was discarded;
 B1B-R2 is proposed with a measured 350-line cap and unchanged behavior scope.
 
+B1B-R2 contract review: PASS at `8a5fc4a` across all ten required tracks. Its
+measured 223/290/340/350 allocation, 310 checkpoint, lexical behavior, finite
+repair rule, and B2/AUTH boundaries passed. R2 implementation is active.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract
