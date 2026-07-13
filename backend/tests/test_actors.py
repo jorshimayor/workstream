@@ -15,11 +15,45 @@ from app.adapters.auth.dev import actor_id_from_external_identity
 from app.core.config import get_settings
 from app.db import session as db_session
 from app.main import create_app
+from app.modules.actors.legacy_classification import snapshot_legacy_actors
 from app.modules.actors.models import ActorIdentity, ActorProfile
 from app.modules.actors.schemas import ActorProfileActivationRequest
 from app.modules.actors.service import ActorService
 from app.modules.tasks.models import AuditEvent
 from app.schemas.auth import ActorContext
+
+
+async def test_legacy_classification_snapshot_is_complete_and_read_only(
+    actor_database_env: str,
+) -> None:
+    """Read exact legacy identity rows without changing registry state."""
+    issuer = "https://issuer.example.test"
+    subject = "opaque-legacy-subject"
+    actor_id = actor_id_from_external_identity(issuer, subject)
+    async with db_session.get_session_factory()() as session:
+        session.add(
+            ActorIdentity(
+                actor_id=actor_id,
+                external_subject=subject,
+                external_issuer=issuer,
+                display_name=None,
+                email=None,
+                last_seen_roles=[],
+                last_claim_snapshot={},
+                auth_source="flow",
+                is_dev_auth=False,
+            )
+        )
+        await session.commit()
+
+    snapshot = await snapshot_legacy_actors(db_session.get_engine())
+
+    assert [(row.actor_id, row.issuer, row.subject) for row in snapshot.rows] == [
+        (actor_id, issuer, subject)
+    ]
+    assert snapshot.database_binding.startswith("postgres-v1:")
+    async with db_session.get_session_factory()() as session:
+        assert len((await session.execute(select(ActorIdentity))).scalars().all()) == 1
 
 
 @pytest.fixture

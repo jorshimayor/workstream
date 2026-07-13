@@ -1,5 +1,22 @@
 # Review Log
 
+## 2026-07-13 - WS-AUTH-001-03 Started After AUTH-02 Merge
+
+PR #107 merged `WS-AUTH-001-02` to main as `060b780`. The user explicitly
+started `WS-AUTH-001-03` while coverage work continues independently in its own
+worktree. AUTH-03 runs on
+`codex/ws-auth-001-03-legacy-actor-classification` at
+`/home/abiorh/flow/workstream-auth-001-03`.
+
+Preimplementation L1 plan review returned PASS WITH CONDITIONS. The conditions
+are incorporated into the implementation boundary: no identity inference,
+canonical UUIDv5 and exact issuer/subject matching, strict bounded JSON,
+complete envelope and live-row checksums, privacy-bounded output/errors,
+read-only repeatable-read database proof, crash-safe private no-overwrite file
+publication, environment-variable-only future Alembic handoff, and genuine
+behavior coverage at or above 90 percent for the new subsystem. No schema,
+grant, role, actor-state, or later AUTH chunk changes are active.
+
 ## WS-QUAL-001-01B1
 
 Status: BLOCKED. Candidate `7bfe3a0` has 496/500 lines and 66 focused behavior

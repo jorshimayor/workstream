@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Implementation and internal repair review complete; PR publication evidence pending |
+| `WS-AUTH-001-03` | Legacy Actor Classification Preflight | L1 | Active after PR #107 merge and explicit user start; implementation/evidence in progress |
 
 ## Planned Next
 
@@ -50,11 +50,12 @@
 | `WS-ART-001-01` | Artifact Domain And Local Adapter | L1 | Merged through PR #101 as `050eb15` on 2026-07-12 |
 | `WS-QUAL-001-01A` | Isolated Database Runner | L1 | Merged through PR #103 as `2901a3e` on 2026-07-12 |
 | `WS-QUAL-001-01B1A-R2` | Canonical Coverage Grammar | L1 | Merged through PR #105 as `8a4182e` on 2026-07-12; post-merge memory merged through PR #106 as `6dccb8e` |
+| `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Merged through PR #107 as `060b780` on 2026-07-13 |
 
 ## Proposed Next
 
-`WS-AUTH-001-02` is the only active chunk. Do not start `WS-AUTH-001-03` or
-`WS-POL-002-04` automatically.
+`WS-AUTH-001-03` is the only active AUTH chunk after the user's explicit start.
+Do not start `WS-AUTH-001-04` or `WS-POL-002-04` automatically.
 
 Coverage R2 merged through PR #105. Do not start 01B1B, 01B2, chunk 02, or
 another coverage implementation chunk from this worktree.

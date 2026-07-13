@@ -4,18 +4,19 @@
 
 - Active initiative: `WS-AUTH-001` - Workstream Authorization Service
 - Active planning chunk: none
-- Active implementation chunk: `WS-AUTH-001-02` - Verified Issuer Token And
-  JWKS Boundary
-- Branch: `codex/ws-auth-001-02-verified-issuer-token`
-- Worktree: `/home/abiorh/flow/workstream-auth-001-02`
-- Status: implementation and repair review complete; all required internal
-  tracks pass on reviewed code SHA `47dd5a7`; ready PR #107 is published.
+- Active implementation chunk: `WS-AUTH-001-03` - Legacy Actor Classification
+  Preflight
+- Branch: `codex/ws-auth-001-03-legacy-actor-classification`
+- Worktree: `/home/abiorh/flow/workstream-auth-001-03`
+- Status: PR #107 merged as `060b780`; post-merge memory is reconciled here.
+  The user explicitly started AUTH-03 and its L1 preimplementation plan review
+  passed with conditions now bound into implementation.
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
-- Latest integrated `main` merge commit: `6dccb8e`
-- Current gate: external checks and explicit human review on PR #107. Do not
-  merge or start the next chunk automatically.
-- Next chunk: none; do not start `WS-AUTH-001-03` automatically.
+- Latest integrated `main` merge commit: `060b780`
+- Current gate: bounded AUTH-03 implementation, deterministic evidence, and
+  required internal review.
+- Next chunk: none; do not start `WS-AUTH-001-04` automatically.
 - Parallel initiative: `WS-QUAL-001-01B1A-R2` merged through PR #105 as
   `8a4182e`, and its post-merge memory merged through PR #106 as `6dccb8e`.
   Later coverage chunks remain inactive and must not be edited or started from

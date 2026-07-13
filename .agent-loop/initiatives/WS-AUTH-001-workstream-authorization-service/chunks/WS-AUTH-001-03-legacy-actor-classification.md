@@ -110,3 +110,12 @@ privacy-bounded, and unusable as a grant or ad hoc migration bypass.
 
 Stop if any existing subject kind must be inferred or if the only workable path
 requires manual SQL or production identity-provider payloads.
+
+## Activation
+
+The user explicitly started this chunk after PR #107 merged as `060b780` on
+2026-07-13. L1 preimplementation plan review returned PASS WITH CONDITIONS; the
+conditions require strict Pydantic 2 schema-version-one models, canonical UUIDv5
+derivation, complete envelope checksums, privacy-bounded failures, read-only
+repeatable-read proof, crash-safe no-overwrite publication, and focused
+subsystem coverage of at least 90 percent while preserving the global baseline.
