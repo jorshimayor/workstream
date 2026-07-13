@@ -21,7 +21,7 @@ weakening constructs are rejected and assertion deletion is protected.
 - `backend/tests/test_coverage_contract.py`
 - WS-QUAL/global loop memory, contracts, decisions, and review evidence
 
-The 20-file reviewed branch diff contains 1,772 additions and 39 deletions.
+The 22-file final branch diff contains 1,906 additions and 39 deletions.
 Only 577 raw lines belong to the policy/test implementation; the remainder is
 the retained R1-R10 planning, stop, and review history. No CI workflow is enabled
 here; B2 owns mandatory GitHub enforcement after this PR merges.
