@@ -233,3 +233,19 @@ uses one recursive element-provenance function for literal containers,
 set/dict keys, and nested comprehension/genexpr environments. Control summaries
 use the same abstraction to decide structural consumption/reachability. The
 950-line cap funds only these reproduced semantic gaps and regressions.
+
+## D21: Enforce syntax integrity instead of predicting execution
+
+Status: proposed after R7's mandatory two-cycle stop; internal contract review
+pending.
+
+R1-R7 demonstrated that exact reachability, value provenance, iterator
+consumption, builtin behavior, and class control flow constitute an unbounded
+Python abstract interpreter. That work did not raise backend coverage and kept
+the measured application baseline at 79.25 percent. R8 narrows B1B to its actual
+security purpose: framework-qualified weakening syntax is forbidden in changed
+tests, and syntactic assertion constructs cannot be deleted. It deliberately
+does not decide whether syntax executes. False-positive risk is bounded by exact
+absolute-import ownership, stdlib lexical scopes, relative-import exclusion,
+and local-lookalike tests. This smaller gate must finish before B2 and the
+coverage-raising service chunks can move the repository toward 90 percent.

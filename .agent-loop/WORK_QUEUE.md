@@ -10,7 +10,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01B1B-R8` | Bounded Semantic Delta Guard Replacement | L1 | Replan required after R7 two-cycle stop; implementation inactive |
+| `WS-QUAL-001-01B1B-R8` | Syntactic Integrity Policy | L1 | Contract proposed after R7 stop; internal plan review active; implementation inactive |
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Inactive until B1B replacement merge/memory plus explicit user start |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until B1B replacement and 01B2 merge/memory plus explicit user start |
 | `WS-AUTH-001-03` | Local Authorization Grant Store | L1 | Inactive pending separate explicit start after AUTH-02 merge/memory |
