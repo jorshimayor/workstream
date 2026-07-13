@@ -124,7 +124,7 @@ evidence-bound branch is pushed and the ready PR is opened.
 
 ## Follow-Up Work
 
-AUTH-03 and all later initiatives remain inactive until this PR is externally
+AUTH-03 and all later AUTH chunks remain inactive until this PR is externally
 reviewed, explicitly merged by the user, and post-merge memory is completed.
 
 ## Human Review Focus

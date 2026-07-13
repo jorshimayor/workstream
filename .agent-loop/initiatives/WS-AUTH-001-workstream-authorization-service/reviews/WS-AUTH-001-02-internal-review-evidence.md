@@ -49,7 +49,7 @@ Reviewer run IDs: senior-engineering=/root/auth02_parallel_resume/auth02_eng_arc
 | docs | PASS | None | Runbook evidence commands are executable, `jti` is mandatory, and null compatibility metadata behavior is explicit. |
 | CI integrity | PASS | None | No workflow, threshold, ignore, skip, or bypass change; the approved dependency move installs cleanly. |
 | reuse/dedup | PASS WITH LOW RISKS | None | Shared bounded role normalization replaces adapter drift; an unused compatibility wrapper remains low-risk cleanup. |
-| test delta | PASS | None | No removed, skipped, xfailed, or weakened tests; all three changed metadata tests pass independently. |
+| test delta | PASS | None | No removed, skipped, xfailed, or weakened tests; all three additional changed actor/task metadata nodes pass independently. |
 
 ## Valid Findings Addressed
 
