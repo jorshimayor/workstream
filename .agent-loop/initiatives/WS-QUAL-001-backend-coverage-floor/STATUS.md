@@ -50,7 +50,7 @@
 - R9 final result: stopped because Python 3.13 bound/default TypeVar children
   share public identifiers and require one ordered ordinal.
 - R10 direction: shared public TypeVar ordinal with mixed-shape Python 3.13
-  proof; implementation inactive pending contract review.
+  proof; the contract subsequently passed review and implementation activated.
 - R10 reviewed contract SHA: `c42a67add8e68e646d64eb2bc5b4e2d86502d150`
 - R10 start signal: user's instruction to keep AUTH and coverage moving;
   implementation activated after all plan tracks passed.
@@ -188,6 +188,7 @@
 
 ## Stop condition
 
-No coverage implementation is active. AUTH-02 is independently published as
-ready PR #107 with all checks passing. Do not start a B1B replacement, 01B2,
-or chunk 02 without the required reviewed contract and start gate.
+R10 implementation and required internal reviews are complete; publish only
+the reviewed R10 PR. AUTH-02 merged through PR #107 and AUTH-03 is independently
+active in its isolated worktree after explicit user start. Do not start 01B2 or
+chunk 02 before R10 merge, post-merge memory, and the required start gate.

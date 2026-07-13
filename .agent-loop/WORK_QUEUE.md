@@ -54,8 +54,9 @@
 
 ## Proposed Next
 
-Replan and internally review only B1B-R8. Do not implement it until its contract
-passes review. Do not start AUTH-03, 01B2, chunk 02, or POL-002-04 automatically.
+R10 is the reviewed replacement for the stopped B1B-R8/R9 attempts. Publish
+only R10 for human review. AUTH-03 continues independently in its isolated
+worktree. Do not start 01B2, chunk 02, or POL-002-04 automatically.
 
 `WS-ART-001-01` is merged. Do not start `WS-ART-001-02` or edit Flow Node until
 the user gives a separate explicit start signal.

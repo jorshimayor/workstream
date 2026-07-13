@@ -74,7 +74,8 @@
   AUTH-02 merged through PR #107 as `060b780`.
 - Next chunk: `WS-QUAL-001-02` remains inactive; do not start it automatically.
 - Parallel initiative: `WS-AUTH-001-02` merged through PR #107 as `060b780`.
-  `WS-AUTH-001-03` remains inactive pending a separate explicit start.
+  `WS-AUTH-001-03` is active after explicit user start in isolated worktree
+  `workstream-auth-001-03`; its plan repair and implementation run independently.
 - Parallel initiative: `WS-ART-001-01` merged through PR #101 as `050eb15`.
   `WS-ART-001-02` remains proposed and inactive pending a separate explicit
   user start.
