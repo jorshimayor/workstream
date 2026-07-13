@@ -11,6 +11,7 @@ import json
 import os
 from pathlib import Path
 import re
+import symtable
 import sys
 import tokenize
 import tomllib
@@ -155,46 +156,57 @@ def runner_metadata(path: Path, expected_tree: str, expected_head: str) -> dict:
 BLOCKED = {"skip", "skipif", "skipIf", "skipUnless", "xfail", "expectedFailure", "importorskip", "SkipTest"}
 
 
-def scope_bindings(nodes: list[ast.stmt]) -> tuple[set[str], dict[str, str]]:
-    names, routes = set(), {}
-    def collect(node: ast.AST) -> None:
-        if isinstance(node, (ast.Global, ast.Nonlocal)):
-            routes.update({name: type(node).__name__.lower() for name in node.names})
-        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-            names.add(node.name)
-        else:
-            if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
-                names.add(node.id)
-            if isinstance(node, (ast.Import, ast.ImportFrom)):
-                names.update(alias.asname or alias.name.split(".", 1)[0] for alias in node.names)
-            for child in ast.iter_child_nodes(node):
-                collect(child)
-    for node in nodes:
-        collect(node)
-    return names, routes
-
-
 class Bindings(ast.NodeVisitor):
-    def __init__(self) -> None:
-        self.scopes, self.types, self.cases, self.routes = [{}], ["module"], [False], [{}]
+    def __init__(self, table: symtable.SymbolTable) -> None:
+        self.tables, self.child_positions = [table], [0]
+        self.scopes, self.types, self.cases = [{}], ["module"], [False]
         self.weak, self.raises = False, set()
+
+    def enter(self, node: ast.AST, table_type: str, name: str, initial: dict[str, str]) -> None:
+        children, position = self.tables[-1].get_children(), self.child_positions[-1]
+        if position >= len(children):
+            raise SyntaxError("missing symbol table")
+        child = children[position]
+        if (child.get_type(), child.get_name(), child.get_lineno()) != (table_type, name, node.lineno):
+            raise SyntaxError("symbol table mismatch")
+        self.child_positions[-1] += 1
+        self.tables.append(child)
+        self.child_positions.append(0)
+        self.scopes.append(initial)
+        self.types.append(table_type)
+        self.cases.append(self.cases[-1])
+
+    def leave(self) -> None:
+        if self.child_positions[-1] != len(self.tables[-1].get_children()):
+            raise SyntaxError("unused symbol table")
+        self.tables.pop()
+        self.child_positions.pop()
+        self.scopes.pop()
+        self.types.pop()
+        self.cases.pop()
+
     def put(self, name: str, kind: str) -> None:
-        route = self.routes[-1].get(name)
-        if route == "global":
+        try:
+            symbol = self.tables[-1].lookup(name)
+        except KeyError:
+            symbol = None
+        if len(self.tables) > 1 and symbol and symbol.is_global():
             self.scopes[0][name] = kind
-        elif route == "nonlocal":
+        elif symbol and symbol.is_nonlocal():
             for index in range(len(self.scopes) - 2, 0, -1):
                 if self.types[index] == "function" and name in self.scopes[index]:
                     self.scopes[index][name] = kind
                     return
         else:
             self.scopes[-1][name] = kind
+
     def get(self, name: str) -> str:
         for index in range(len(self.scopes) - 1, -1, -1):
-            if self.types[index] != "class" or "function" not in self.types[index + 1:]:
+            if self.types[index] != "class" or index == len(self.scopes) - 1:
                 if name in self.scopes[index]:
                     return self.scopes[index][name]
-        return "local"
+        return "builtin" if name == "exec" else "local"
+
     def kind(self, node: ast.AST) -> str:
         if isinstance(node, ast.Name):
             return self.get(node.id)
@@ -211,6 +223,14 @@ class Bindings(ast.NodeVisitor):
             if owner in {"pytest", "unittest", "mark", "ambiguous"} and node.attr in BLOCKED:
                 return "blocked"
         return "local"
+
+    def merge(self, states: list[list[dict[str, str]]]) -> None:
+        for index, scope in enumerate(self.scopes):
+            keys = set().union(*(state[index] for state in states))
+            for name in keys:
+                values = {state[index].get(name, "local") for state in states}
+                scope[name] = values.pop() if len(values) == 1 else "ambiguous"
+
     def visit_Import(self, node: ast.Import) -> None:
         for alias in node.names:
             root = alias.name.split(".", 1)[0]
@@ -225,77 +245,154 @@ class Bindings(ast.NodeVisitor):
                 self.put(name, {"mark": "mark", "raises": "raises"}.get(alias.name, "blocked" if alias.name in BLOCKED else "local"))
             elif root == "unittest":
                 self.put(name, "testcase" if alias.name == "TestCase" else "blocked" if alias.name in BLOCKED else "local")
+
     def visit_Assign(self, node: ast.Assign) -> None:
         self.visit(node.value)
         for target in node.targets:
             for item in ast.walk(target):
                 if isinstance(item, ast.Name):
                     self.put(item.id, self.kind(node.value))
+
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
+        self.visit(node.annotation)
+        if node.value:
+            self.visit(node.value)
+        if isinstance(node.target, ast.Name):
+            self.put(node.target.id, self.kind(node.value) if node.value else "local")
+
+    def visit_NamedExpr(self, node: ast.NamedExpr) -> None:
+        self.visit(node.value)
+        if isinstance(node.target, ast.Name):
+            self.put(node.target.id, self.kind(node.value))
+
     def visit_Name(self, node: ast.Name) -> None:
         if isinstance(node.ctx, ast.Store):
             self.put(node.id, "local")
+
+    def visit_Attribute(self, node: ast.Attribute) -> None:
+        self.weak |= self.kind(node) in {"blocked", "ambiguous"}
+        self.generic_visit(node)
+
     def visit_If(self, node: ast.If) -> None:
         self.visit(node.test)
-        before = self.scopes[-1].copy()
+        before = [scope.copy() for scope in self.scopes]
         for item in node.body:
             self.visit(item)
-        left = self.scopes[-1].copy()
-        self.scopes[-1] = before.copy()
+        left = [scope.copy() for scope in self.scopes]
+        self.scopes = [scope.copy() for scope in before]
         for item in node.orelse:
             self.visit(item)
-        right = self.scopes[-1]
-        self.scopes[-1] = {name: left.get(name, before.get(name, "local")) if left.get(name, before.get(name)) == right.get(name, before.get(name)) else "ambiguous" for name in before.keys() | left.keys() | right.keys()}
+        self.merge([left, self.scopes])
+
+    def visit_control(self, node: ast.AST) -> None:
+        before = [scope.copy() for scope in self.scopes]
+        self.generic_visit(node)
+        after = [scope.copy() for scope in self.scopes]
+        self.scopes = [scope.copy() for scope in before]
+        self.merge([before, after])
+
+    visit_For = visit_control
+    visit_AsyncFor = visit_control
+    visit_While = visit_control
+    visit_Try = visit_control
+    visit_TryStar = visit_control
+    visit_Match = visit_control
+
+    def visit_ExceptHandler(self, node: ast.ExceptHandler) -> None:
+        if node.name:
+            self.put(node.name, "local")
+        self.generic_visit(node)
+
     def visit_Call(self, node: ast.Call) -> None:
         kind = self.kind(node.func)
-        self.weak |= kind in {"blocked", "ambiguous"} or isinstance(node.func, ast.Name) and node.func.id == "exec"
+        self.weak |= kind in {"blocked", "ambiguous"} or kind == "builtin" and isinstance(node.func, ast.Name) and node.func.id == "exec"
         if kind in {"raises", "ambiguous"}:
             self.raises.add((node.lineno, node.end_lineno))
         if isinstance(node.func, ast.Attribute) and node.func.attr == "skipTest":
             value = node.func.value
-            self.weak |= self.kind(value) == "case" or self.cases[-1] and (isinstance(value, ast.Name) and value.id == "self" or isinstance(value, ast.Call) and isinstance(value.func, ast.Name) and value.func.id == "super")
+            self.weak |= self.kind(value) in {"case", "ambiguous"} or self.cases[-1] and (isinstance(value, ast.Name) and value.id == "self" or isinstance(value, ast.Call) and isinstance(value.func, ast.Name) and value.func.id == "super")
         self.generic_visit(node)
+
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
-        for item in (*node.decorator_list, *node.args.defaults, *node.args.kw_defaults):
+        for item in (*node.args.defaults, *node.args.kw_defaults, *node.decorator_list):
             if item:
                 self.visit(item)
+        for item in (*node.args.posonlyargs, *node.args.args, *node.args.kwonlyargs):
+            if item.annotation:
+                self.visit(item.annotation)
+        if node.returns:
+            self.visit(node.returns)
         self.weak |= any(self.kind(item) in {"blocked", "ambiguous"} for item in node.decorator_list)
         self.put(node.name, "local")
-        args = (*node.args.posonlyargs, *node.args.args, *node.args.kwonlyargs)
-        names, routes = scope_bindings(node.body)
-        self.scopes.append({name: "local" for name in (names | {arg.arg for arg in args}) - routes.keys()})
-        self.types.append("function")
-        self.cases.append(self.cases[-1])
-        self.routes.append(routes)
+        position = self.child_positions[-1]
+        child = self.tables[-1].get_children()[position]
+        self.enter(node, "function", node.name, {name: "local" for name in child.get_locals()})
         for item in node.body:
             self.visit(item)
-        self.scopes.pop()
-        self.types.pop()
-        self.cases.pop()
-        self.routes.pop()
+        self.leave()
 
     visit_AsyncFunctionDef = visit_FunctionDef
 
+    def visit_Lambda(self, node: ast.Lambda) -> None:
+        for item in (*node.args.defaults, *node.args.kw_defaults):
+            if item:
+                self.visit(item)
+        position = self.child_positions[-1]
+        child = self.tables[-1].get_children()[position]
+        self.enter(node, "function", "lambda", {name: "local" for name in child.get_locals()})
+        self.visit(node.body)
+        self.leave()
+
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
-        for item in (*node.decorator_list, *node.bases):
+        for item in (*node.decorator_list, *node.bases, *(keyword.value for keyword in node.keywords)):
             self.visit(item)
         self.weak |= any(self.kind(item) in {"blocked", "ambiguous"} for item in node.decorator_list)
         is_case = any(self.kind(base) == "testcase" for base in node.bases)
         self.put(node.name, "testcase" if is_case else "local")
-        self.scopes.append({})
-        self.types.append("class")
-        self.cases.append(is_case)
-        self.routes.append({})
+        self.enter(node, "class", node.name, {})
+        self.cases[-1] = is_case
         for item in node.body:
             self.visit(item)
-        self.scopes.pop()
-        self.types.pop()
-        self.cases.pop()
-        self.routes.pop()
+        self.leave()
+
+    def visit_comprehension_scope(self, node: ast.ListComp | ast.SetComp | ast.DictComp | ast.GeneratorExp) -> None:
+        generators = node.generators
+        self.visit(generators[0].iter)
+        names = {item.id for generator in generators for item in ast.walk(generator.target) if isinstance(item, ast.Name)}
+        expected = {ast.GeneratorExp: "genexpr", ast.ListComp: "listcomp", ast.SetComp: "setcomp", ast.DictComp: "dictcomp"}[type(node)]
+        children, position = self.tables[-1].get_children(), self.child_positions[-1]
+        has_table = position < len(children) and (children[position].get_name(), children[position].get_lineno()) == (expected, node.lineno)
+        if has_table:
+            self.enter(node, "function", expected, {name: "local" for name in children[position].get_locals()})
+        else:
+            self.scopes.append({name: "local" for name in names})
+            self.types.append("function")
+            self.cases.append(self.cases[-1])
+        for generator in generators:
+            if generator is not generators[0]:
+                self.visit(generator.iter)
+            for condition in generator.ifs:
+                self.visit(condition)
+        for value in ((node.key, node.value) if isinstance(node, ast.DictComp) else (node.elt,)):
+            self.visit(value)
+        if has_table:
+            self.leave()
+        else:
+            self.scopes.pop()
+            self.types.pop()
+            self.cases.pop()
+    visit_ListComp = visit_comprehension_scope
+    visit_SetComp = visit_comprehension_scope
+    visit_DictComp = visit_comprehension_scope
+    visit_GeneratorExp = visit_comprehension_scope
 
 
 def analyze_python(source: str) -> tuple[ast.Module, Bindings]:
-    tree, bindings = ast.parse(source), Bindings()
+    tree = ast.parse(source)
+    bindings = Bindings(symtable.symtable(source, "<test>", "exec"))
     bindings.visit(tree)
+    if bindings.child_positions != [len(bindings.tables[0].get_children())]:
+        raise SyntaxError("unused symbol table")
     return tree, bindings
 
 
