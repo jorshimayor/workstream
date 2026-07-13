@@ -4,12 +4,13 @@ Open sub-agent sessions: none
 
 Valid findings addressed: yes
 
-Reviewed code SHA: `38380f25406472da9cc42cab432b259866b38d51`
+Reviewed code SHA: `42fa930bfe4ab86cba49c27ec8e91f4a65393ef9`
 
-Reviewed at: 2026-07-13T05:22:23Z
+Reviewed at: 2026-07-13T05:30:13Z
 
 Reviewer run IDs: `qual_r7_final_eng`; `qual_r7_final_qa`;
-`qual_r7_final_sec`; `qual_r8_plan_eng/final-r10-binding-review@38380f2`
+`qual_r7_final_sec`;
+`WS-QUAL-001-01B1B-R10-QA-PUB-REBIND-20260713T053013Z`
 
 ## Binding
 
