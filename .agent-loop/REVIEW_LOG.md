@@ -242,6 +242,17 @@ proof on Python 3.13 and invalid-syntax fail-closed expectations on 3.11/3.12.
 No comprehension, policy, config, dependency, workflow, or application change
 is permitted. Internal contract review is active.
 
+B1B-R10 contract review: PASS at `c42a67a` across all required tracks after
+requiring successful `analyze_python` traversal before owned outcomes can pass.
+
+B1B-R10 implementation candidate:
+`15d0b80e776f5be12cacc5dbe5226ffe3992dcfd`. Public `type variable` bound and
+default children now share one AST-order ordinal; legacy families remain
+distinct. Clean, skip, and raises-deletion mixed-shape fixtures cover both
+orders across generic functions, classes, and type aliases. Identical 171-test
+matrices pass on Python 3.11.15, 3.12.3, and 3.13.3. Every deterministic gate
+passes at 577/620 raw lines. Internal implementation review is active.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract

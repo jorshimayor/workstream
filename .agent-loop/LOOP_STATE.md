@@ -45,7 +45,9 @@
   `a5395c1`; identical 165-test matrices pass on Python 3.11, 3.12, and 3.13 at
   553/600 raw lines. Final review found Python 3.13 bound/default children need
   one shared public ordinal. R9 is stopped; all R10 plan tracks passed at
-  `c42a67a` and implementation is active.
+  `c42a67a`. Implementation is bound at `15d0b80`; identical 171-test matrices
+  pass on Python 3.11, 3.12, and 3.13 at 577/620 raw lines. Internal review is
+  active.
 - Prior WS-ART reviewed planning SHA: `f7fbc33`
 - Prior WS-ART final evidence-bound planning branch head: `c069064`
 - WS-ART planning merge commit: `8644a43`

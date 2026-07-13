@@ -54,6 +54,10 @@
 - R10 reviewed contract SHA: `c42a67add8e68e646d64eb2bc5b4e2d86502d150`
 - R10 start signal: user's instruction to keep AUTH and coverage moving;
   implementation activated after all plan tracks passed.
+- R10 implementation candidate:
+  `15d0b80e776f5be12cacc5dbe5226ffe3992dcfd`
+- R10 proof: identical 171-test matrices pass on Python 3.11.15, 3.12.3, and
+  3.13.3; every deterministic gate passes at 577/620 raw lines.
 - 01A implementation PR: `https://github.com/Flow-Research/workstream/pull/103` (merged)
 - 01A final reviewed implementation SHA: `d1582ec64b9176c5ead62f695c7a23b48e4c72b9`
 - 01A final evidence-bound branch head: `8cd7616b497ceb46d8359c25de689192632dfee8`
