@@ -214,8 +214,11 @@ class Bindings(ast.NodeVisitor):
     def kind(self, node: ast.AST, bindings: dict[str, str] | None = None) -> str:
         if isinstance(node, ast.Name):
             return (bindings or {}).get(node.id, self.get(node.id))
-        if isinstance(node, (ast.Tuple, ast.List)):
+        if isinstance(node, (ast.Tuple, ast.List, ast.Set)):
             kinds = {self.kind(item, bindings) for item in node.elts}
+            return "local" if not kinds else kinds.pop() if len(kinds) == 1 else "ambiguous"
+        if isinstance(node, ast.Dict):
+            kinds = {self.kind(item, bindings) for item in node.keys if item}
             return "local" if not kinds else kinds.pop() if len(kinds) == 1 else "ambiguous"
         if isinstance(node, ast.Call) and self.kind(node.func, bindings) in {"testcase", "ambiguous"}:
             return "case" if self.kind(node.func, bindings) == "testcase" else "ambiguous"
@@ -283,12 +286,29 @@ class Bindings(ast.NodeVisitor):
         elif evaluate and isinstance(node, ast.Subscript):
             self.visit(node.value)
             self.visit(node.slice)
-    def iterable_value(self, node: ast.AST) -> ast.AST:
-        if isinstance(node, (ast.Tuple, ast.List)) and len(node.elts) == 1:
-            return node.elts[0]
-        if isinstance(node, (ast.ListComp, ast.SetComp, ast.GeneratorExp)):
-            return node.elt
-        return node.key if isinstance(node, ast.DictComp) else node
+    def target_bindings(self, target: ast.AST, value: ast.AST, bindings: dict[str, str]) -> None:
+        if isinstance(target, (ast.Tuple, ast.List)) and isinstance(value, (ast.Tuple, ast.List)) and len(target.elts) == len(value.elts):
+            for child, item in zip(target.elts, value.elts, strict=True):
+                self.target_bindings(child, item, bindings)
+        else:
+            for name in self.target_names(target):
+                bindings[name] = self.kind(value, bindings)
+    def element_provenance(self, node: ast.AST, bindings: dict[str, str] | None = None) -> tuple[ast.AST, dict[str, str]]:
+        environment = dict(bindings or {})
+        for item in ast.walk(node):
+            if isinstance(item, ast.Name):
+                environment.setdefault(item.id, self.get(item.id))
+        if isinstance(node, (ast.Tuple, ast.List, ast.Set)) and len(node.elts) == 1:
+            return node.elts[0], environment
+        if isinstance(node, ast.Dict) and len(node.keys) == 1 and node.keys[0]:
+            return node.keys[0], environment
+        if isinstance(node, (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)):
+            for generator in node.generators:
+                value, source = self.element_provenance(generator.iter, environment)
+                self.target_bindings(generator.target, value, source)
+                environment.update(source)
+            return (node.key if isinstance(node, ast.DictComp) else node.elt), environment
+        return node, environment
     def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
         if node.value:
             self.visit(node.value)
@@ -342,6 +362,17 @@ class Bindings(ast.NodeVisitor):
             kind = self.kind(value, bindings)
             for name in self.target_names(target):
                 record_kind(name, kind)
+        def inspect_comp(expression: ast.ListComp | ast.SetComp | ast.DictComp | ast.GeneratorExp, consume: bool) -> None:
+            for generator in expression.generators:
+                inspect(generator.iter)
+                if isinstance(generator.iter, (ast.Tuple, ast.List, ast.Set)) and not generator.iter.elts:
+                    return
+                if consume:
+                    for condition in generator.ifs:
+                        inspect(condition)
+            if consume:
+                for value in ((expression.key, expression.value) if isinstance(expression, ast.DictComp) else (expression.elt,)):
+                    inspect(value)
         def inspect(node: ast.AST) -> None:
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 for item in (*node.args.defaults, *node.args.kw_defaults, *node.decorator_list):
@@ -380,24 +411,29 @@ class Bindings(ast.NodeVisitor):
                         for target in targets:
                             if self.target_names(target) & globals_ and item.value:
                                 record(target, item.value)
+                    if isinstance(item, ast.Import):
+                        for alias in item.names:
+                            name = alias.asname or alias.name.split(".", 1)[0]
+                            if name in globals_ and alias.name.split(".", 1)[0] in {"pytest", "unittest"}:
+                                record_kind(name, alias.name.split(".", 1)[0])
+                    if isinstance(item, ast.ImportFrom) and (item.module or "").split(".", 1)[0] in {"pytest", "unittest"}:
+                        for alias in item.names:
+                            if (alias.asname or alias.name) in globals_:
+                                record_kind(alias.asname or alias.name, "raises" if alias.name == "raises" else "blocked")
+                    if isinstance(item, ast.AugAssign) and self.target_names(item.target) & globals_:
+                        record(item.target, item.value)
                 return
-            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in {"all", "any", "list", "max", "min", "next", "set", "sum", "tuple"}:
+            if isinstance(node, ast.Call):
                 for argument in node.args:
                     if isinstance(argument, ast.GeneratorExp):
-                        for generator in argument.generators:
-                            inspect(generator.iter)
-                            for condition in generator.ifs:
-                                inspect(condition)
-                        inspect(argument.elt)
+                        inspect_comp(argument, True)
+            if isinstance(node, (ast.For, ast.AsyncFor)) and isinstance(node.iter, ast.GeneratorExp):
+                inspect_comp(node.iter, True)
             if isinstance(node, ast.GeneratorExp):
-                inspect(node.generators[0].iter)
+                inspect_comp(node, False)
                 return
             if isinstance(node, (ast.ListComp, ast.SetComp, ast.DictComp)):
-                inspect(node.generators[0].iter)
-                if not isinstance(node.generators[0].iter, (ast.Tuple, ast.List)) or node.generators[0].iter.elts:
-                    for child in ast.iter_child_nodes(node):
-                        if child is not node.generators[0].iter:
-                            inspect(child)
+                inspect_comp(node, True)
                 return
             if isinstance(node, ast.AnnAssign) and self.types[-1] == "function":
                 if node.value:
@@ -434,7 +470,8 @@ class Bindings(ast.NodeVisitor):
         before = self.state()
         for name in self.loop_summary(node.body):
             self.put(name, "ambiguous")
-        self.assign_target(node.target, self.iterable_value(node.iter))
+        value, bindings = self.element_provenance(node.iter)
+        self.assign_target(node.target, value, bindings)
         for item in node.body:
             self.visit(item)
         body = self.state()
@@ -594,8 +631,7 @@ class Bindings(ast.NodeVisitor):
     def visit_comprehension_scope(self, node: ast.ListComp | ast.SetComp | ast.DictComp | ast.GeneratorExp) -> None:
         generators = node.generators
         self.visit(generators[0].iter)
-        first_value = self.iterable_value(generators[0].iter)
-        first_bindings = {item.id: self.get(item.id) for item in ast.walk(first_value) if isinstance(item, ast.Name)}
+        first_value, first_bindings = self.element_provenance(generators[0].iter)
         names = set().union(*(self.target_names(generator.target) for generator in generators))
         expected = {ast.GeneratorExp: "genexpr", ast.ListComp: "listcomp", ast.SetComp: "setcomp", ast.DictComp: "dictcomp"}[type(node)]
         has_table = isinstance(node, ast.GeneratorExp)
@@ -612,8 +648,8 @@ class Bindings(ast.NodeVisitor):
         for index, generator in enumerate(generators):
             if generator is not generators[0]:
                 self.visit(generator.iter)
-            value = self.iterable_value(generator.iter)
-            self.assign_target(generator.target, value, first_bindings if index == 0 else None)
+            value, bindings = self.element_provenance(generator.iter, first_bindings if index == 0 else None)
+            self.assign_target(generator.target, value, bindings)
             for condition in generator.ifs:
                 self.visit(condition)
         for value in ((node.key, node.value) if isinstance(node, ast.DictComp) else (node.elt,)):
