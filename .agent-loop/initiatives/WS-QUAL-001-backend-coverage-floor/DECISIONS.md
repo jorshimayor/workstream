@@ -188,3 +188,14 @@ framework-value flow and joins on top. The normal 500-line L1 cap provides room
 for the reproduced regression matrix without compression. This remains semantic
 test-integrity scope only; B2, AUTH, application, configuration, workflow,
 evidence, documentation, and coverage-raising tests remain forbidden.
+
+## D17: Fund complete control-flow proof instead of compressing cycle one
+
+Status: proposed after R3's proof-fit stop; internal contract review pending.
+
+R3's 468/500 candidate left 32 lines, while measured review requires roughly
+47 policy lines and 20 regression lines after replacement savings. R4 uses a
+550-line cap: existing 468, policy through 515, tests through 535, and 15
+reserve. The added budget closes already-reproduced semantic behavior only; it
+does not admit B2, AUTH, app, config, workflow, evidence, docs, or coverage-
+raising tests.

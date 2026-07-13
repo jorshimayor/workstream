@@ -90,6 +90,10 @@ Cycle one must close independent control paths, chained ambiguity, exact store
 targets, future annotations, and Python 3.12 inlined-comprehension semantics.
 No repair starts until the clarified contract passes internal review.
 
+B1B-R3 cycle-one plan review: STOPPED. QA accepted the clarified behavior, but
+engineering found no credible way to fit complete repairs plus regressions in
+32 lines. No executable repair was made. R4 is proposed with measured room.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract

@@ -2,7 +2,7 @@
 
 ## Current state
 
-- Phase: `WS-QUAL-001-01B1B-R3` implementation
+- Phase: `WS-QUAL-001-01B1B-R4` corrective contract review
 - Branch: `codex/ws-qual-001-01b1b-semantic-delta-guards`
 - Authoritative target: 90 percent complete backend application statement coverage
 - Diagnostic AUTH-02 baseline: 78.26 percent after database isolation repair
@@ -10,7 +10,7 @@
 - Final evidence-bound branch head: `3da1769882e9f6db4c48ef3dba33da8380e6a613`
 - Planning merge commit: `9046d52f31c7c39f06e06c45c43783bb08a5181c`
 - Internal review: PASS after cleanup, signal, authority, CI, and split repairs
-- Active implementation chunk: `WS-QUAL-001-01B1B-R3`
+- Active implementation chunk: none
 - 01A implementation PR: `https://github.com/Flow-Research/workstream/pull/103` (merged)
 - 01A final reviewed implementation SHA: `d1582ec64b9176c5ead62f695c7a23b48e4c72b9`
 - 01A final evidence-bound branch head: `8cd7616b497ceb46d8359c25de689192632dfee8`
@@ -89,8 +89,11 @@
   try/match/loop paths, chained ambiguity, actual binding targets, augmented
   assignment/match captures, future annotations, and inlined comprehension
   contract precision
+- B1B-R3 final result: stopped before cycle-one implementation because the
+  complete repair and adversarial proof did not credibly fit the 32-line
+  reserve; no post-`10ca508` executable edit was made
 
 ## Stop condition
 
-B1B-R3 cycle-one contract clarification is under review before implementation
-resumes. AUTH-02 proceeds independently off-main. Do not start 01B2 or chunk 02.
+No coverage implementation is active during B1B-R4 contract review. AUTH-02
+proceeds independently off-main. Do not start 01B2 or chunk 02.

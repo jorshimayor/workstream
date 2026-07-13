@@ -2,8 +2,8 @@
 
 Parent: `WS-QUAL-001` Backend Coverage Floor
 
-Status: cycle-zero implementation review failed at `10ca508`; cycle-one
-contract clarification pending internal review before bounded repair.
+Status: blocked at 468/500 after cycle-zero review. Cycle-one repair lacked
+credible proof within 32 lines, so no repair was attempted. Superseded by R4.
 
 ## Scope And Allocation
 

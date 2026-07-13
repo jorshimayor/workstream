@@ -4,14 +4,14 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01B1B-R3` | Symtable Lexical Binding Closure | L1 | Cycle-zero review failed at `10ca508`; cycle-one contract clarification pending review |
+| `WS-QUAL-001-01B1B-R4` | Complete Symtable Control Flow | L1 | Proposed after R3 proof-fit stop; internal contract review pending |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Inactive until B1B-R3 merge/memory plus explicit user start |
-| `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until B1B-R3 and 01B2 merge/memory plus explicit user start |
+| `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Inactive until B1B-R4 merge/memory plus explicit user start |
+| `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until B1B-R4 and 01B2 merge/memory plus explicit user start |
 | `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Resumed off-main in a separate worktree by explicit user direction; independent review required before PR/merge |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02` | Flow Node Adapter And Reconciliation | L1 | Proposed; inactive pending separate explicit user start |
@@ -53,8 +53,8 @@
 
 ## Proposed Next
 
-Implement and review only B1B-R3. AUTH-02 proceeds independently in its
-existing worktree. Do not start 01B2 or chunk 02.
+Review B1B-R4 before further coverage implementation. AUTH-02 proceeds
+independently in its existing worktree. Do not start 01B2 or chunk 02.
 
 `WS-ART-001-01` is merged. Do not start `WS-ART-001-02` or edit Flow Node until
 the user gives a separate explicit start signal.
@@ -69,3 +69,4 @@ the user gives a separate explicit start signal.
 | `WS-QUAL-001-01B1B` | 223/300 after two binding/AST repair cycles; final test-delta review found lexical-shadow false positives and a weakened local-skipTest expectation | Replaced through stopped R1/R2 by current proposed B1B-R3; do not resume |
 | `WS-QUAL-001-01B1B-R1` | Shared resolver measured 282 lines before its required behavior matrix, exceeding the 270 checkpoint and making the 300 cap infeasible | Replaced through stopped R2 by current proposed B1B-R3; no implementation draft retained |
 | `WS-QUAL-001-01B1B-R2` | 348/350 candidate failed cycle-zero implementation review on standard lexical/control-flow cases with only two lines reserve | Superseded by proposed B1B-R3; do not repair in place |
+| `WS-QUAL-001-01B1B-R3` | 468/500 cycle-zero candidate; required control/value-flow repair plus tests did not credibly fit 32 lines | Superseded by proposed B1B-R4; no cycle-one code edit made |

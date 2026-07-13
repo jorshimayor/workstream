@@ -3,8 +3,8 @@
 ## Current State
 
 - Active initiative: `WS-QUAL-001` - Backend Coverage Floor
-- Active planning chunk: none
-- Active implementation chunk: `WS-QUAL-001-01B1B-R3` symtable lexical closure
+- Active planning chunk: `WS-QUAL-001-01B1B-R4` complete symtable control flow
+- Active implementation chunk: none
 - Branch: `codex/ws-qual-001-01b1b-semantic-delta-guards`
 - Status: B1B stopped at 223/300 lines after its second binding/AST repair
   cycle. Review at `10dff4f` found lexical-shadow false positives and a
@@ -17,7 +17,8 @@
   two-line reserve. R3 is proposed to use stdlib `symtable` for lexical facts
   with bounded AST value flow under the normal 500-line L1 cap. Cycle-zero
   review at `10ca508` found path joins, chained ambiguity, binding targets, and
-  future-annotation gaps; cycle-one contract clarification is under review.
+  future-annotation gaps. R3 stopped before cycle-one edits because the 32-line
+  reserve lacked credible proof. R4 is proposed at a measured 550-line cap.
 - Prior WS-ART reviewed planning SHA: `f7fbc33`
 - Prior WS-ART final evidence-bound planning branch head: `c069064`
 - WS-ART planning merge commit: `8644a43`
@@ -40,8 +41,8 @@
 - WS-QUAL-001-01A merge commit: `2901a3ebe68b7c770ccb1ff06841d79ce0c20d94`
 - WS-QUAL-001-01A post-merge memory merge commit:
   `8829a7ec3aa5199aae0aecbe5fda030c42a051cd`
-- Current gate: review the B1B-R3 cycle-one contract clarification before its
-  bounded repair. 01B2 remains inactive; AUTH-02 continues independently.
+- Current gate: review the B1B-R4 replacement before implementation. 01B2
+  remains inactive; AUTH-02 continues independently.
 - Next chunk: `WS-QUAL-001-02` remains inactive; do not start it automatically.
 - Parallel implementation: the user explicitly authorized `WS-AUTH-001-02` to
   resume off-main in its separate worktree while coverage continues. AUTH must
