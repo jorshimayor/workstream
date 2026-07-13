@@ -303,10 +303,11 @@ test-integrity policy is now integrated; 01B2 and coverage chunk 02 remain
 inactive pending their separate explicit start gates.
 
 AUTH-03 external review: CodeRabbit reported five lifecycle/evidence wording
-issues and one cleanup precedence bug. All are valid and under bounded repair.
-Its raw-exception logging nitpick is rejected because confidential identity,
-database, or path values must not enter logs. Fresh focused proof and internal
-review are required before the repair is pushed to PR #109.
+issues and one cleanup precedence bug. Repair implementation `4923b67`
+addresses all six, passes 59 focused behavior tests at 90.12 percent combined
+coverage, and passed all required internal reviewer tracks. Its raw-exception
+logging nitpick is rejected because confidential identity, database, or path
+values must not enter logs. Final evidence binding and GitHub checks remain.
 
 ## WS-QUAL-001-01B
 
