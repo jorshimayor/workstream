@@ -7,14 +7,14 @@
 - Active implementation chunk: `WS-AUTH-001-04A` - Request And Error Context
 - Branch: `codex/ws-auth-001-04-request-api-controls`
 - Worktree: `/home/abiorh/flow/workstream-auth-001-04`
-- Status: AUTH-04A repaired-contract preimplementation review passed at
-  `f98bbfc`; implementation candidate `2a129f4` entered internal review and is
-  undergoing bounded reviewer repair.
+- Status: AUTH-04A implementation and required internal repair review pass on
+  production SHA `cdcaf77`; final test-only head `47241cf` also passed exact-head
+  test-delta confirmation.
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
 - Latest integrated `main` merge commit: `1864867`
-- Current gate: repair valid internal-review findings, rerun deterministic
-  evidence, and obtain exact-head internal review before PR publication.
+- Current gate: publish the ready PR, then require GitHub Backend, Agent Gates,
+  CodeRabbit, and explicit human review before merge.
 - Next chunk: none; do not start `WS-AUTH-001-05` automatically.
 - `WS-AUTH-001-04B` is inactive until AUTH-04A merges, memory is updated, and
   the user gives its separate explicit start signal.

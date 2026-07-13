@@ -1,5 +1,27 @@
 # Review Log
 
+## 2026-07-13 - WS-AUTH-001-04A Internal Review Passed
+
+All required implementation tracks pass on production SHA `cdcaf77`. Final
+test-only head `47241cf` adds one genuine real-ASGI scalar validation-context
+branch assertion; exact-head test-delta review confirmed identical production
+blobs and retained every earlier result. Valid OpenAPI, response-header,
+pre-response logging, real-ASGI behavior, inventory, compatibility, and memory
+findings were repaired without rate controls, schema, grants, roles, routes, or
+product-authority changes.
+
+Focused evidence is 235 passing tests. Changed-file statement coverage is
+98.08 percent for API controls, 90.82 percent for the application factory,
+90.70 percent for auth dependencies, and 92.36 percent for the task router. The
+API drill, isolated-runner lifecycle suite, Ruff, docstring threshold, stale
+scans, Markdown links, Agent Gates, additive test-delta scan, and diff hygiene
+pass. A complete isolated backend regression run exposed an Alembic logging
+state leak after 114 passing tests; the affected real-ASGI test now establishes
+and restores its logging capture precondition, and the exact failing order
+passes. GitHub Backend owns the complete-suite rerun before merge. The official
+separate whole-app coverage baseline remains 79.249908 percent; no replacement
+is claimed.
+
 ## 2026-07-13 - WS-AUTH-001-04A Implementation Review Repair
 
 The final repaired 04A contract passed both required preimplementation review

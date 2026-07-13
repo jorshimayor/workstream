@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-04A` | Request And Error Context | L1 | Implementation repair under required internal review |
+| `WS-AUTH-001-04A` | Request And Error Context | L1 | Internal review passed; ready PR publication active, complete GitHub checks required before merge |
 
 ## Planned Next
 

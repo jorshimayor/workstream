@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from hashlib import sha256
+import logging
 from typing import Annotated
 from uuid import UUID, uuid4
 
@@ -210,7 +211,12 @@ async def test_streaming_and_background_responses_keep_context() -> None:
 
 async def test_background_failure_is_bounded_after_response_start(
     caplog: pytest.LogCaptureFixture,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    logger = logging.getLogger("app.core.api_controls")
+    # In-process Alembic tests disable existing loggers through fileConfig.
+    monkeypatch.setattr(logger, "disabled", False)
+    caplog.set_level(logging.ERROR, logger=logger.name)
     app = create_app()
 
     @app.get("/_test/background-failure")
@@ -272,7 +278,11 @@ async def test_http_errors_use_stable_mapping_and_preserve_legacy_detail(
 async def test_not_found_method_not_allowed_and_unhandled_errors_are_private(
     debug: bool,
     caplog: pytest.LogCaptureFixture,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    logger = logging.getLogger("app.core.api_controls")
+    monkeypatch.setattr(logger, "disabled", False)
+    caplog.set_level(logging.ERROR, logger=logger.name)
     app = create_app(Settings(debug=debug))
 
     @app.get("/_test/boom")
