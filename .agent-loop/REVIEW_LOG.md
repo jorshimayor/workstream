@@ -98,6 +98,11 @@ B1B-R4 contract review: PASS at `ac2bcc6` across all ten required tracks. The
 468/515/535/550 allocation and complete control/value-flow contract passed; R4
 implementation is active.
 
+B1B-R4 implementation review: BLOCKED at `06a6d61`. Review reproduced AST
+replay/symtable corruption, missing loop-carried effects, target-load and unpack
+bypasses, nested inline ownership, and optional comprehension mistakes. At
+535/550 the fixes plus proof could not fit; B1B-R5 is proposed.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract

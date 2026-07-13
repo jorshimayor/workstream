@@ -199,3 +199,15 @@ R3's 468/500 candidate left 32 lines, while measured review requires roughly
 reserve. The added budget closes already-reproduced semantic behavior only; it
 does not admit B2, AUTH, app, config, workflow, evidence, docs, or coverage-
 raising tests.
+
+## D18: Separate single syntax consumption from abstract state joins
+
+Status: proposed after R4's cycle-zero stop; internal contract review pending.
+
+R4 replayed AST subtrees to simulate paths, which is incompatible with ordinal
+symtable child consumption. R5 visits every syntax node once. It joins incoming
+abstract states before a handler/case, uses conservative loop-carried binding
+summaries instead of replay, and applies mandatory regions afterward. Assignment
+target loading/binding and comprehension ownership share one recursive helper.
+This is a replacement architecture for existing findings, not new product/B2/
+AUTH/config/workflow/evidence scope.
