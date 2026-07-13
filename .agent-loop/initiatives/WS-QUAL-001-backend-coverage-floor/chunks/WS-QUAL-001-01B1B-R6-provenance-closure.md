@@ -2,8 +2,8 @@
 
 Parent: `WS-QUAL-001` Backend Coverage Floor
 
-Status: all ten internal plan-review tracks passed at `bfb2d8e`; implementation
-started under the user's parallel coverage/AUTH direction on 2026-07-13.
+Status: blocked at 800/800 after cycle-one implementation review. Superseded by
+B1B-R7; retain as review history and do not repair in place.
 
 ## Scope And Allocation
 

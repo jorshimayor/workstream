@@ -116,6 +116,11 @@ B1B-R6 contract review: PASS at `bfb2d8e` across all ten required tracks. The
 fixed-point provenance/evaluation-order contract and 641/720/770/800 allocation
 passed; R6 implementation is active.
 
+B1B-R6 cycle-one implementation review: BLOCKED at `68174d1`. Review reproduced
+comprehension/set/dict iterable provenance, structural consumption, nested
+reachability, and class-global binding gaps. At 800/800 no valid repair and
+proof fit; B1B-R7 is proposed.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract

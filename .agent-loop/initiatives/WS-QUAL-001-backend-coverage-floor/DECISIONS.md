@@ -222,3 +222,14 @@ summary evaluated to closure, including outer-executed nested-scope headers.
 It also funds exact iterable-to-target propagation, Python evaluation order,
 and distinct sequential `except*` handling. The 800-line cap is restricted to
 these reproduced integrity gaps and their tests.
+
+## D20: Use one recursive iterable-element abstraction
+
+Status: proposed after R6's hard-cap stop; internal contract review pending.
+
+R6 closed binding fixed points but substituted raw comprehension elements
+without their target environment and special-cased generator consumers. R7
+uses one recursive element-provenance function for literal containers,
+set/dict keys, and nested comprehension/genexpr environments. Control summaries
+use the same abstraction to decide structural consumption/reachability. The
+950-line cap funds only these reproduced semantic gaps and regressions.
