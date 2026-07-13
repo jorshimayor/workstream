@@ -255,7 +255,7 @@ passes at 577/620 raw lines. All required implementation tracks passed. The
 final evidence review found only structured-evidence and stale-memory defects;
 those are repaired before PR publication without changing reviewed code.
 
-B1B-R10 publication: ready PR #108 opened at
+B1B-R10 publication: ready PR #108 published at
 `https://github.com/Flow-Research/workstream/pull/108`. External checks and
 human review are active; B2 remains inactive.
 
