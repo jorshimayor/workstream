@@ -9,11 +9,18 @@ errors, real concurrency counts, transactional downgrade refusal, or expired
 pseudonymous-row retention.
 
 The repaired contract specifies canonical Base64 secret material, exact framed
-HMAC input and bounds, `BYTEA(32)` persistence, one clock-bound saturating
+HMAC input and bounds, `BYTEA` persistence guarded to 32 bytes, one clock-bound saturating
 upsert, dedicated committed sessions, canonical 429/503 behavior, bounded
 pruning plus operator cleanup, exact migration custody, real-ASGI/concurrency
 proof, per-file 90 percent coverage, and additive test-delta evidence. Runtime
 remains gated on exact-head re-review.
+
+First repaired head `78e2170` resolved the original security/data ambiguities
+but failed re-review on optional-secret syntax, missing-database mapping,
+prune-before-upsert lock ordering, exact setting/constraint names, same-clock
+`updated_at`, and local oversized-identity handling. This second repair is the
+final in-place contract cycle for those classes; another failure stops and
+replans before runtime code.
 
 ## 2026-07-13 - WS-AUTH-001-04B Started
 

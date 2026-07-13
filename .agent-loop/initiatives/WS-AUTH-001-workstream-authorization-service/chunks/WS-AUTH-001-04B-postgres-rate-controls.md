@@ -67,9 +67,13 @@ AUTH-05 or later chunk implementation
   `window_expires_at TIMESTAMPTZ`, `request_count BIGINT`, and
   `updated_at TIMESTAMPTZ`, all non-null. The composite primary key is
   `(control_scope, key_digest)`; there is no actor or surrogate identifier.
-- Name and enforce the composite primary key, exact server scope-token check,
-  `octet_length(key_digest) = 32`, `request_count between 1 and
-  9223372036854775807`, and `window_started_at < window_expires_at`. Create
+- Name the constraints `pk_api_rate_control_counters`,
+  `ck_api_rate_control_counters_scope_token`,
+  `ck_api_rate_control_counters_digest_length`,
+  `ck_api_rate_control_counters_request_count`, and
+  `ck_api_rate_control_counters_window_order`. They enforce the composite key,
+  exact scope tokens, `octet_length(key_digest) = 32`, `request_count between 1
+  and 9223372036854775807`, and `window_started_at < window_expires_at`. Create
   `ix_api_rate_control_counters_window_expires_at`, which is consumed by the
   pruning query.
 - Windows are first-consumption-anchored fixed windows. One PostgreSQL upsert
@@ -80,7 +84,9 @@ AUTH-05 or later chunk implementation
   request_count + 1 END`; never evaluate max plus one. New expiry is database
   now plus parameterized `make_interval(secs => :window_seconds)`.
 - The one statement returns the CTE database now, persisted window start/end,
-  and persisted count. All ORM timestamps are timezone aware.
+  and persisted count. `updated_at` is set to that same CTE database timestamp
+  on insert, expiry reset, ordinary increment, and saturated denial. All ORM
+  timestamps are timezone aware.
 - Counts `1..limit` allow. Count `limit+1` and later deny and remain durably
   consumed. `Retry-After` is the ceiling of remaining database-time seconds,
   clamped to integer `1..window_seconds`; application time is never consulted.
@@ -91,9 +97,12 @@ AUTH-05 or later chunk implementation
   429 only after the committed decision returns. Downstream rollback cannot
   undo consumption.
 - Session-open, prune, execute, and commit `SQLAlchemyError` failures map to one
-  local unavailable error and then a constant retryable structured 503. A
-  failed transaction is rolled back without overriding the stable error.
-  Cancellation and other `BaseException` values propagate.
+  local unavailable error and then a constant retryable structured 503. The
+  existing `get_session_factory()` missing-database `RuntimeError` maps narrowly
+  by its exact stable configuration failure; every other `RuntimeError` is
+  re-raised. A failed transaction is rolled back without overriding the stable
+  error. Cancellation and other `BaseException` values propagate. Tests cover
+  absent database configuration separately from open/execute/commit failures.
 
 ## Privacy and configuration contract
 
@@ -114,28 +123,34 @@ AUTH-05 or later chunk implementation
   tests that do not calculate expected values through the production helper.
 - Persist only scope and digest. Never persist or log raw issuer, subject,
   actor ID, email, role, token, claims, or network address.
-- Add `api_rate_limit_key_secret: SecretStr | None` with no default. Present
+- Add `api_rate_limit_key_secret: SecretStr | None = None`; there is no non-null
+  fallback and no generated secret. Present
   malformed, non-ASCII, noncanonical, whitespace-bearing, too-short, or
   too-long values fail settings construction.
-- Defaults are first-access `10/60s` and admin-mutation `30/60s`, with limit
-  bounds `1..10000` and window bounds `1..3600`.
+- Exact numeric settings are `api_first_access_rate_limit=10`,
+  `api_first_access_rate_window_seconds=60`,
+  `api_admin_mutation_rate_limit=30`, and
+  `api_admin_mutation_rate_window_seconds=60`, with limit bounds `1..10000` and
+  window bounds `1..3600`.
 - Missing secret remains startup-compatible while no route is attached, but
   invoking a protected dependency without it returns structured HTTP 503 with
   code `service_unavailable`, message/detail `Service unavailable`, empty
   details, and `retryable=true`. Database unavailability uses the same response.
 - Secret rotation intentionally resets effective counters. The runbook requires
-  quiescing every protected write for at least the largest configured window,
-  rotating every replica while writes remain quiesced, pruning expired rows,
-  and only then resuming. Mixed-secret replicas must never serve protected
-  writes.
+  quiescing every protected write for at least the largest effective
+  pre-rotation window configured on any replica, rotating every replica while
+  writes remain quiesced, pruning expired rows, and only then resuming.
+  Mixed-secret replicas must never serve protected writes.
 
 ## Retention contract
 
 - The service owns bounded opportunistic pruning in the same dedicated
-  transaction before its upsert: delete at most 100 rows ordered by expiry whose
-  `window_expires_at <= statement_timestamp()`, using row locking with
-  `SKIP LOCKED`, while excluding the exact key being consumed so its expiry-reset
-  branch remains atomic and observable.
+  transaction after its upsert: delete at most 100 other rows ordered by expiry
+  whose `window_expires_at <= statement_timestamp()`, using row locking with
+  `SKIP LOCKED`. Upsert-first lock ordering ensures a concurrently consumed key
+  is already active/locked and skipped rather than creating a two-key lock
+  cycle. A synchronized two-expired-key PostgreSQL test proves no deadlock or
+  503.
 - Expired rows are no longer rate authority. The runbook owns an operator
   cleanup command for idle systems and secret rotation; it deletes only expired
   rows by database time. Tests prove pruning is bounded, concurrent-safe, and
@@ -150,6 +165,9 @@ AUTH-05 or later chunk implementation
   `ActorContext`, `get_registered_actor`, actor ID, roles, email, or an
   issuer-specific adapter. Scope, limit, and window are server constants plus
   validated settings.
+- A verified issuer or subject outside the local 1..4096 UTF-8 byte boundary is
+  treated as the same non-echoing local unavailable condition and structured
+  retryable `service_unavailable` 503, never an unhandled 500.
 - A denied dependency raises `StructuredHTTPException` 429 with code
   `rate_limit_exceeded`, message/detail `Rate limit exceeded`, empty details,
   `retryable=true`, and canonical integer `Retry-After`. Reuse 04A handlers and
