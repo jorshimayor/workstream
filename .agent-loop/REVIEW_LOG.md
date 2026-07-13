@@ -230,6 +230,18 @@ branches. Identical 165-test matrices pass on Python 3.11.15, 3.12.3, and
 3.13.3. Every deterministic gate passes at 553/600 raw lines. Final internal
 review is active; another valid finding stops R9.
 
+B1B-R9 final review: STOP at `a5395c1`. The comprehension repair and identical
+165-test Python 3.11/3.12/3.13 matrices passed, but Python 3.13 TypeVar bounds
+and defaults share identical public child identifiers. Separate field keys can
+select the first child twice when nested scope shapes differ. R9's one-repair
+rule forbids another edit.
+
+B1B-R10 proposal: consume public TypeVar children through one shared AST-order
+ordinal while retaining distinct legacy families, with mixed bound/default
+proof on Python 3.13 and invalid-syntax fail-closed expectations on 3.11/3.12.
+No comprehension, policy, config, dependency, workflow, or application change
+is permitted. Internal contract review is active.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract

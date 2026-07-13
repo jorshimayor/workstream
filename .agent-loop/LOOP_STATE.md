@@ -3,8 +3,8 @@
 ## Current State
 
 - Active initiative: `WS-QUAL-001` - Backend Coverage Floor
-- Active planning chunk: none
-- Active implementation chunk: `WS-QUAL-001-01B1B-R9` Python 3.11 scope compatibility
+- Active planning chunk: `WS-QUAL-001-01B1B-R10` TypeVar child order
+- Active implementation chunk: none
 - Branch: `codex/ws-qual-001-01b1b-semantic-delta-guards`
 - Status: B1B stopped at 223/300 lines after its second binding/AST repair
   cycle. Review at `10dff4f` found lexical-shadow false positives and a
@@ -43,7 +43,8 @@
   initial dual-version proof passed at `5a971d8`. Review found nested 3.12 inline
   and Python 3.13 public scope-name gaps. The one permitted repair is bound at
   `a5395c1`; identical 165-test matrices pass on Python 3.11, 3.12, and 3.13 at
-  553/600 raw lines. Final internal review is active.
+  553/600 raw lines. Final review found Python 3.13 bound/default children need
+  one shared public ordinal. R9 is stopped; R10 contract review is active.
 - Prior WS-ART reviewed planning SHA: `f7fbc33`
 - Prior WS-ART final evidence-bound planning branch head: `c069064`
 - WS-ART planning merge commit: `8644a43`
@@ -66,8 +67,7 @@
 - WS-QUAL-001-01A merge commit: `2901a3ebe68b7c770ccb1ff06841d79ce0c20d94`
 - WS-QUAL-001-01A post-merge memory merge commit:
   `8829a7ec3aa5199aae0aecbe5fda030c42a051cd`
-- Current gate: implement and internally review only R9 after all plan tracks
-  passed at `4da0880`. 01B2 remains inactive;
+- Current gate: internally review only R10. 01B2 remains inactive;
   AUTH-02 merged through PR #107 as `060b780`.
 - Next chunk: `WS-QUAL-001-02` remains inactive; do not start it automatically.
 - Parallel initiative: `WS-AUTH-001-02` merged through PR #107 as `060b780`.
