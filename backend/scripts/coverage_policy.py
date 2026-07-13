@@ -152,45 +152,158 @@ def runner_metadata(path: Path, expected_tree: str, expected_head: str) -> dict:
     return data
 
 
+BLOCKED = {"skip", "skipif", "skipIf", "skipUnless", "xfail", "expectedFailure", "importorskip", "SkipTest"}
+
+
+def scope_bindings(nodes: list[ast.stmt]) -> tuple[set[str], dict[str, str]]:
+    names, routes = set(), {}
+    def collect(node: ast.AST) -> None:
+        if isinstance(node, (ast.Global, ast.Nonlocal)):
+            routes.update({name: type(node).__name__.lower() for name in node.names})
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            names.add(node.name)
+        else:
+            if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+                names.add(node.id)
+            if isinstance(node, (ast.Import, ast.ImportFrom)):
+                names.update(alias.asname or alias.name.split(".", 1)[0] for alias in node.names)
+            for child in ast.iter_child_nodes(node):
+                collect(child)
+    for node in nodes:
+        collect(node)
+    return names, routes
+
+
+class Bindings(ast.NodeVisitor):
+    def __init__(self) -> None:
+        self.scopes, self.types, self.cases, self.routes = [{}], ["module"], [False], [{}]
+        self.weak, self.raises = False, set()
+    def put(self, name: str, kind: str) -> None:
+        route = self.routes[-1].get(name)
+        if route == "global":
+            self.scopes[0][name] = kind
+        elif route == "nonlocal":
+            for index in range(len(self.scopes) - 2, 0, -1):
+                if self.types[index] == "function" and name in self.scopes[index]:
+                    self.scopes[index][name] = kind
+                    return
+        else:
+            self.scopes[-1][name] = kind
+    def get(self, name: str) -> str:
+        for index in range(len(self.scopes) - 1, -1, -1):
+            if self.types[index] != "class" or "function" not in self.types[index + 1:]:
+                if name in self.scopes[index]:
+                    return self.scopes[index][name]
+        return "local"
+    def kind(self, node: ast.AST) -> str:
+        if isinstance(node, ast.Name):
+            return self.get(node.id)
+        if isinstance(node, ast.Call) and self.kind(node.func) == "testcase":
+            return "case"
+        if isinstance(node, ast.Attribute):
+            owner = self.kind(node.value)
+            if (owner, node.attr) == ("pytest", "mark"):
+                return "mark"
+            if owner in {"pytest", "ambiguous"} and node.attr == "raises":
+                return "raises"
+            if owner == "unittest" and node.attr in {"case", "TestCase"}:
+                return "unittest" if node.attr == "case" else "testcase"
+            if owner in {"pytest", "unittest", "mark", "ambiguous"} and node.attr in BLOCKED:
+                return "blocked"
+        return "local"
+    def visit_Import(self, node: ast.Import) -> None:
+        for alias in node.names:
+            root = alias.name.split(".", 1)[0]
+            self.put(alias.asname or root, root if root in {"pytest", "unittest"} else "local")
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
+        root = (node.module or "").split(".", 1)[0]
+        for alias in node.names:
+            name = alias.asname or alias.name
+            if alias.name == "*" and root in {"pytest", "unittest"}:
+                self.weak = True
+            elif root == "pytest":
+                self.put(name, {"mark": "mark", "raises": "raises"}.get(alias.name, "blocked" if alias.name in BLOCKED else "local"))
+            elif root == "unittest":
+                self.put(name, "testcase" if alias.name == "TestCase" else "blocked" if alias.name in BLOCKED else "local")
+    def visit_Assign(self, node: ast.Assign) -> None:
+        self.visit(node.value)
+        for target in node.targets:
+            for item in ast.walk(target):
+                if isinstance(item, ast.Name):
+                    self.put(item.id, self.kind(node.value))
+    def visit_Name(self, node: ast.Name) -> None:
+        if isinstance(node.ctx, ast.Store):
+            self.put(node.id, "local")
+    def visit_If(self, node: ast.If) -> None:
+        self.visit(node.test)
+        before = self.scopes[-1].copy()
+        for item in node.body:
+            self.visit(item)
+        left = self.scopes[-1].copy()
+        self.scopes[-1] = before.copy()
+        for item in node.orelse:
+            self.visit(item)
+        right = self.scopes[-1]
+        self.scopes[-1] = {name: left.get(name, before.get(name, "local")) if left.get(name, before.get(name)) == right.get(name, before.get(name)) else "ambiguous" for name in before.keys() | left.keys() | right.keys()}
+    def visit_Call(self, node: ast.Call) -> None:
+        kind = self.kind(node.func)
+        self.weak |= kind in {"blocked", "ambiguous"} or isinstance(node.func, ast.Name) and node.func.id == "exec"
+        if kind in {"raises", "ambiguous"}:
+            self.raises.add((node.lineno, node.end_lineno))
+        if isinstance(node.func, ast.Attribute) and node.func.attr == "skipTest":
+            value = node.func.value
+            self.weak |= self.kind(value) == "case" or self.cases[-1] and (isinstance(value, ast.Name) and value.id == "self" or isinstance(value, ast.Call) and isinstance(value.func, ast.Name) and value.func.id == "super")
+        self.generic_visit(node)
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        for item in (*node.decorator_list, *node.args.defaults, *node.args.kw_defaults):
+            if item:
+                self.visit(item)
+        self.weak |= any(self.kind(item) in {"blocked", "ambiguous"} for item in node.decorator_list)
+        self.put(node.name, "local")
+        args = (*node.args.posonlyargs, *node.args.args, *node.args.kwonlyargs)
+        names, routes = scope_bindings(node.body)
+        self.scopes.append({name: "local" for name in (names | {arg.arg for arg in args}) - routes.keys()})
+        self.types.append("function")
+        self.cases.append(self.cases[-1])
+        self.routes.append(routes)
+        for item in node.body:
+            self.visit(item)
+        self.scopes.pop()
+        self.types.pop()
+        self.cases.pop()
+        self.routes.pop()
+
+    visit_AsyncFunctionDef = visit_FunctionDef
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        for item in (*node.decorator_list, *node.bases):
+            self.visit(item)
+        self.weak |= any(self.kind(item) in {"blocked", "ambiguous"} for item in node.decorator_list)
+        is_case = any(self.kind(base) == "testcase" for base in node.bases)
+        self.put(node.name, "testcase" if is_case else "local")
+        self.scopes.append({})
+        self.types.append("class")
+        self.cases.append(is_case)
+        self.routes.append({})
+        for item in node.body:
+            self.visit(item)
+        self.scopes.pop()
+        self.types.pop()
+        self.cases.pop()
+        self.routes.pop()
+
+
+def analyze_python(source: str) -> tuple[ast.Module, Bindings]:
+    tree, bindings = ast.parse(source), Bindings()
+    bindings.visit(tree)
+    return tree, bindings
+
+
 def weak_python(path: Path) -> bool:
     try:
-        tree = ast.parse(path.read_text(encoding="utf-8"))
+        return analyze_python(path.read_text(encoding="utf-8"))[1].weak
     except (OSError, SyntaxError):
         return True
-    blocked = {"skip", "skipif", "skipIf", "skipUnless", "xfail", "expectedFailure", "importorskip", "skipTest", "SkipTest"}
-    modules, marks, names = set(), set(), set()
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            modules.update(alias.asname or alias.name.split(".", 1)[0] for alias in node.names if alias.name.split(".", 1)[0] in {"pytest", "unittest"})
-        if isinstance(node, ast.ImportFrom) and node.module and node.module.split(".", 1)[0] in {"pytest", "unittest"}:
-            for alias in node.names:
-                target = alias.asname or alias.name
-                if alias.name == "mark":
-                    marks.add(target)
-                elif alias.name in blocked:
-                    names.add(target)
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Name) and node.id in names:
-            return True
-        if isinstance(node, ast.Attribute) and node.attr in blocked:
-            root = ast.unparse(node.value).split(".", 1)[0]
-            if node.attr == "skipTest" or root in modules | marks:
-                return True
-    return False
-
-
-def raises_aliases(source: str) -> set[str]:
-    try:
-        tree = ast.parse(source)
-    except SyntaxError:
-        return set()
-    aliases = set()
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            aliases.update(f"{alias.asname or 'pytest'}.raises" for alias in node.names if alias.name == "pytest")
-        if isinstance(node, ast.ImportFrom) and node.module == "pytest":
-            aliases.update(alias.asname or alias.name for alias in node.names if alias.name == "raises")
-    return aliases
 
 
 def has_deleted_assertion(diff: str, base_source: str) -> bool:
@@ -205,15 +318,13 @@ def has_deleted_assertion(diff: str, base_source: str) -> bool:
         elif not line.startswith("+"):
             old_line += 1
     try:
-        tree = ast.parse(base_source)
+        tree, analysis = analyze_python(base_source)
     except SyntaxError:
         return bool(deleted)
-    aliases = raises_aliases(base_source)
     for node in ast.walk(tree):
         assertion = isinstance(node, ast.Assert)
         if isinstance(node, ast.Call):
-            target = ast.unparse(node.func)
-            assertion = target in aliases or (isinstance(node.func, ast.Attribute) and ast.unparse(node.func.value) == "self" and node.func.attr.startswith("assert"))
+            assertion = (node.lineno, node.end_lineno) in analysis.raises or (isinstance(node.func, ast.Attribute) and ast.unparse(node.func.value) == "self" and node.func.attr.startswith("assert"))
         if assertion and deleted.intersection(range(node.lineno, node.end_lineno + 1)):
             return True
     return False
