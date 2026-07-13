@@ -8,8 +8,8 @@
 - Branch: `codex/ws-auth-001-04-request-api-controls`
 - Worktree: `/home/abiorh/flow/workstream-auth-001-04`
 - Status: AUTH-04A implementation and required internal repair review pass on
-  production SHA `cdcaf77`; final test-only head `47241cf` also passed exact-head
-  test-delta confirmation.
+  production SHA `cdcaf77`; final reviewed candidate `4fd6db9` includes only
+  additive scalar-context and logging-state behavior-test repairs plus evidence.
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
 - Latest integrated `main` merge commit: `1864867`

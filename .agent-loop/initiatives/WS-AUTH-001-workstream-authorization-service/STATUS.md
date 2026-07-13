@@ -30,7 +30,8 @@ passed both required preimplementation reviews at `f98bbfc`. Implementation
 candidate `2a129f4` then entered required internal review. Valid OpenAPI,
 logging, behavior-proof, and lifecycle-evidence findings were repaired; all
 required tracks pass on production SHA `cdcaf77`, and final test-only head
-`47241cf` passed exact-head confirmation.
+`4fd6db9` passed exact-head confirmation for the additive scalar-context and
+logging-state behavior-test repairs plus lifecycle evidence.
 AUTH-04B remains inactive.
 
 ## Active planning chunk
@@ -56,7 +57,7 @@ No later chunk is active.
 | `WS-AUTH-001-02` | Merged | `codex/ws-auth-001-02-verified-issuer-token` | #107 | Merged as `060b780`; reviewed code SHA `47dd5a7`. |
 | `WS-AUTH-001-03` | Merged | `codex/ws-auth-001-03-legacy-actor-classification` | #109 | Merged as `f06532e`; reviewed code `8c5334c`; final branch head `43ffbfe`. |
 | `WS-AUTH-001-04` | Split | `codex/ws-auth-001-04-request-api-controls` | - | Parent split before runtime implementation. |
-| `WS-AUTH-001-04A` | Internally reviewed | `codex/ws-auth-001-04-request-api-controls` | - | Production review passed at `cdcaf77`; final test-only head `47241cf` confirmed. |
+| `WS-AUTH-001-04A` | Internally reviewed | `codex/ws-auth-001-04-request-api-controls` | - | Production review passed at `cdcaf77`; final reviewed candidate `4fd6db9` confirmed. |
 | `WS-AUTH-001-04B` | Inactive | - | - | PostgreSQL rate controls; requires 04A merge/memory and separate explicit start. |
 | `WS-AUTH-001-05` | Proposed | - | - | Authority evidence and idempotency foundation. |
 | `WS-AUTH-001-06` | Proposed | - | - | Canonical actor profile and identity link. |

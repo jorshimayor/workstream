@@ -98,8 +98,9 @@ baseline; this chunk's changed-file threshold is at least 90 percent.
 
 Senior engineering, QA/test, security/auth, product/ops, architecture, CI
 integrity, docs, reuse/dedup, and test-delta review pass. Production was reviewed
-at `cdcaf77`; final test-only head `47241cf` received exact-head confirmation
-with identical production blobs and no weakened tests.
+at `cdcaf77`; final reviewed candidate `4fd6db9` received exact-head confirmation
+for both additive test repairs with identical production blobs and no weakened
+tests.
 
 ## External Review
 

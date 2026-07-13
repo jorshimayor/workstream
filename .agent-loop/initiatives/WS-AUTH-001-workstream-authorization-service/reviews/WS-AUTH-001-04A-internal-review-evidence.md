@@ -10,21 +10,21 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: `47241cf8eb1c444910d4f4ba911cbc1e5447ef03`
+Reviewed code SHA: `4fd6db9ebe9911d30ec85657903b71707fc3bbfb`
 
 Reviewed production SHA: `cdcaf77f4a73d091afd54232f378f9a2831376c5`
 
-Reviewed at: 2026-07-13T19:15:16Z
+Reviewed at: 2026-07-13T19:34:02Z
 
-Reviewer run IDs: engineering-architecture=AUTH-04A-FINAL-ENG-ARCH-20260713;
-qa-ci-test-delta=AUTH-04A-FINAL-QA-CI-20260713;
-security-product-docs-reuse=AUTH-04A-FINAL-SEC-PROD-20260713;
-test-only-confirmation=AUTH-04A-FINAL-TEST-DELTA-20260713
+Reviewer run IDs: engineering-architecture=AUTH-04A-4FD6DB9-ENG-ARCH-20260713;
+qa-ci-test-delta=AUTH-04A-4FD6DB9-QA-CI-20260713;
+security-product-docs-reuse=AUTH-04A-4FD6DB9-SEC-PROD-20260713
 
-The final revision differs from the reviewed production SHA only by one
-additive real-ASGI validation test that exercises scalar validation context.
-The final test-delta review confirmed identical production blobs and retained
-the complete prior review results.
+The final revision differs from the reviewed production SHA only by additive
+real-ASGI test changes: scalar validation context is exercised, and logging
+tests establish and restore capture after in-process Alembic configuration
+disables an existing logger. Final test-delta review confirmed identical
+production blobs and retained the complete prior review results.
 
 ## Reviewed Change
 
