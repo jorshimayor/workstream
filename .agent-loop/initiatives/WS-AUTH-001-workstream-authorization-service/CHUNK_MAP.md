@@ -15,7 +15,9 @@ stopped.
 | `WS-AUTH-001-01` | Adopt Authorization Baseline And Repository Contracts | L1 | Merged through PR #93 as `772af1d` |
 | `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Merged through PR #107 as `060b780` |
 | `WS-AUTH-001-03` | Legacy Actor Classification Preflight | L1 | Merged through PR #109 as `f06532e` |
-| `WS-AUTH-001-04` | Request, Error, And API Control Foundation | L1 | Started; preimplementation review active |
+| `WS-AUTH-001-04` | Request, Error, And API Control Foundation | L1 | Split before implementation into 04A and 04B |
+| `WS-AUTH-001-04A` | Request And Error Context | L1 | Active; repaired contract awaiting preimplementation re-review |
+| `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Inactive pending 04A merge/memory and separate explicit start |
 | `WS-AUTH-001-05` | Authority Evidence And Idempotency Foundation | L1 | Proposed |
 | `WS-AUTH-001-06` | Canonical Actor Profile And Identity Link | L1 | Proposed |
 | `WS-AUTH-001-07` | Authorization Kernel And Permission Registry | L1 | Proposed |
@@ -36,7 +38,8 @@ WS-AUTH-001-PLAN
 -> WS-AUTH-001-01
 -> WS-AUTH-001-02
 -> WS-AUTH-001-03
--> WS-AUTH-001-04
+-> WS-AUTH-001-04A
+-> WS-AUTH-001-04B
 -> WS-AUTH-001-05
 -> WS-AUTH-001-06
 -> WS-AUTH-001-07
@@ -55,7 +58,9 @@ WS-AUTH-001-PLAN
 
 - Chunk 02 authenticates tokens but grants no product authority.
 - Chunk 03 provides a supported classification gate before schema migration.
-- Chunk 04 establishes request/error/rate controls.
+- Parent chunk 04 was split before implementation. Chunk 04A establishes
+  request/correlation and additive error compatibility; chunk 04B later owns
+  durable PostgreSQL rate controls and its migration.
 - Chunk 05 evolves the shared audit path and idempotency before mutations.
 - Chunk 06 establishes canonical actor resolution while preserving only the
   enumerated non-authoritative legacy workflow-eligibility consumers required
@@ -73,6 +78,7 @@ WS-AUTH-001-PLAN
 ## Stop condition
 
 AUTH-03 post-merge memory merged through PR #110 as `1864867`. The user
-explicitly started AUTH-04; its discovery and required L1 preimplementation
-review are the current gate. Do not start AUTH-05 or POL-002-04; both retain
-separate explicit start signals and prerequisites.
+explicitly started parent AUTH-04. Required plan review split it before runtime
+implementation. AUTH-04A contract repair and re-review are the current gate.
+Do not start AUTH-04B, AUTH-05, or POL-002-04; each retains its separate start
+signal and prerequisites.

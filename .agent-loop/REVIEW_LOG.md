@@ -1,5 +1,19 @@
 # Review Log
 
+## 2026-07-13 - WS-AUTH-001-04 Split Required Before Implementation
+
+Required L1 plan review rejected the combined request/error/rate-control parent
+contract before any runtime edit. The valid findings required exact ASGI header
+behavior and OpenAPI compatibility for request/error context, plus an
+independent committed PostgreSQL transaction, database-time atomic upsert,
+privacy-key framing, and migration proof for rate controls.
+
+The parent is split into `WS-AUTH-001-04A` Request And Error Context and
+`WS-AUTH-001-04B` PostgreSQL Rate Controls. Only 04A contract repair and
+preimplementation re-review are active. 04B requires 04A merge/memory and a
+separate explicit user start. No runtime implementation was written under the
+failed combined plan.
+
 ## 2026-07-13 - WS-AUTH-001-04 Started
 
 PR #110 merged AUTH-03 post-merge memory to `main` as `1864867` after Backend,

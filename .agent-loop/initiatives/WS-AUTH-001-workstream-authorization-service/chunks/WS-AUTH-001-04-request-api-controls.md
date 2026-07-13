@@ -1,5 +1,11 @@
 # Chunk Contract: WS-AUTH-001-04 - Request, Error, And API Control Foundation
 
+## Status
+
+Split before implementation after required plan review. This parent is not an
+implementation contract. Its authorized children are `WS-AUTH-001-04A` and
+`WS-AUTH-001-04B`; only 04A is currently active.
+
 ## Parent initiative
 
 `WS-AUTH-001` - Workstream Authorization Service
@@ -138,17 +144,10 @@ work already owns migration `0016`, so this chunk uses additive migration
 `0017_api_controls` from `0016_artifact_domain`; this is a sequence correction,
 not a scope expansion.
 
-## Implementation Plan
+## Split implementation plan
 
-1. Add pure request-context/error primitives and one ASGI middleware that
-   validates IDs, normalizes all JSON error responses additively, preserves
-   response headers, and bounds unhandled failures.
-2. Add feature-owned rate-control model, repository, service, and dependencies
-   with HMAC privacy keys, atomic PostgreSQL fixed windows, database time,
-   stable exceeded/unavailable errors, and no public endpoint activation.
-3. Add migration `0017_api_controls`, model registration, bounded settings,
-   request/error/rate behavior tests, migration round-trip proof, and the
-   intentionally updated API contract drill.
-4. Run focused and full isolated-PostgreSQL proof, at least 90 percent coverage
-   for the new subsystem, repository gates, all required internal reviewers,
-   evidence validation, and one ready PR. Do not start AUTH-05.
+1. Implement and merge 04A request/error context under its repaired contract.
+2. Update post-merge memory and stop.
+3. Start 04B only after a separate explicit user signal; implement its durable
+   rate controls and migration under its own reviewed contract.
+4. Do not start AUTH-05 automatically after either child.

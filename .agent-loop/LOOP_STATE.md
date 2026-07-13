@@ -4,17 +4,20 @@
 
 - Active initiative: `WS-AUTH-001` - Workstream Authorization Service
 - Active planning chunk: none
-- Active implementation chunk: `WS-AUTH-001-04` - Request, Error, And API
-  Control Foundation
+- Active implementation chunk: `WS-AUTH-001-04A` - Request And Error Context
 - Branch: `codex/ws-auth-001-04-request-api-controls`
 - Worktree: `/home/abiorh/flow/workstream-auth-001-04`
 - Status: AUTH-03 post-merge memory merged through PR #110 as `1864867`; the
-  user explicitly started AUTH-04 and its L1 preimplementation review is active.
+  user explicitly started AUTH-04. Required plan review split the parent before
+  implementation; only AUTH-04A contract repair and re-review are active.
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
 - Latest integrated `main` merge commit: `1864867`
-- Current gate: AUTH-04 discovery and required preimplementation plan review.
+- Current gate: AUTH-04A repaired contract and required preimplementation plan
+  re-review. No runtime edit is permitted until it passes.
 - Next chunk: none; do not start `WS-AUTH-001-05` automatically.
+- `WS-AUTH-001-04B` is inactive until AUTH-04A merges, memory is updated, and
+  the user gives its separate explicit start signal.
 - Parallel initiative: `WS-QUAL-001-01B1B-R10` merged through PR #108 as
   `5c47aba`, and this convergence records its post-merge memory. B2 remains
   inactive pending a separate explicit user start; coverage chunk 02 remains

@@ -4,12 +4,13 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-04` | Request, Error, And API Control Foundation | L1 | Started; discovery and preimplementation review active |
+| `WS-AUTH-001-04A` | Request And Error Context | L1 | Active; repaired contract awaiting required preimplementation re-review |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
+| `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Inactive until 04A merge/memory and a separate explicit user start |
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Inactive pending explicit user start |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
@@ -56,9 +57,10 @@
 ## Proposed Next
 
 `WS-AUTH-001-03` post-merge memory merged through PR #110 as `1864867`. The user
-explicitly started only `WS-AUTH-001-04`; discovery and preimplementation review
-are active in its isolated worktree. Do not start `WS-AUTH-001-05` or
-`WS-POL-002-04` automatically.
+explicitly started parent `WS-AUTH-001-04`. Required plan review split it before
+runtime implementation. Only child `WS-AUTH-001-04A` contract repair and
+re-review are active in its isolated worktree. Do not start 04B, AUTH-05, or
+POL-002-04 automatically.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.

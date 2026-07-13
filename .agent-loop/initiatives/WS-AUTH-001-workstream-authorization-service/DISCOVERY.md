@@ -213,3 +213,17 @@ Production deployment inputs remain externally supplied:
   and database-time fields for migration `0017`.
 - Full backend and API-contract regression proof without modifying product
   authorization or attaching future controls to unrelated routes.
+
+### Required plan-review split
+
+The first combined AUTH-04 plan failed required preimplementation review before
+any runtime edit. Request/error compatibility and durable rate consumption each
+need an independently reviewable contract and production-code budget.
+
+- `WS-AUTH-001-04A` owns pure-ASGI request/correlation context, bounded additive
+  error envelopes, legacy response/header compatibility, and OpenAPI proof.
+- `WS-AUTH-001-04B` later owns HMAC-keyed PostgreSQL counters, a dedicated
+  committed transaction, atomic database-time windows, `0017_api_controls`,
+  configuration failure behavior, and migration/concurrency proof.
+- 04B is not activated by this split. It requires 04A merge/memory and a
+  separate explicit user start.
