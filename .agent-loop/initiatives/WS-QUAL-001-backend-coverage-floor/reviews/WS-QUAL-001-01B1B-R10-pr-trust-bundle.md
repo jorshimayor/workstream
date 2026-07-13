@@ -30,9 +30,11 @@ here; B2 owns mandatory GitHub enforcement after this PR merges.
 
 The identical 172-test matrix passes on Python 3.11, 3.12, and 3.13.
 Ruff, dependency integrity, self-validation, exact scope, ancestry, wording,
-memory, links, and diff hygiene pass. All nine required internal reviewer tracks
-and the circuit breaker pass at
-`15d0b80e776f5be12cacc5dbe5226ffe3992dcfd`.
+memory, links, and diff hygiene pass. The original implementation passed all
+nine reviewer tracks and the circuit breaker at `15d0b80`. The external-repair
+code is `4bcf910`; its final evidence head remains under QA/security re-review
+after engineering, architecture, CI, reuse, and circuit tracks passed at
+`5878689`.
 
 ## Risk And Human Focus
 

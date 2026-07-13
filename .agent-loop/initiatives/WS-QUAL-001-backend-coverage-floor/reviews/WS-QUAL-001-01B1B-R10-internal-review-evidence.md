@@ -1,29 +1,30 @@
 # WS-QUAL-001-01B1B-R10 Internal Review Evidence
 
-Open sub-agent sessions: none
+Open sub-agent sessions: active external-repair re-review
 
-Valid findings addressed: yes
+Valid findings addressed: pending final external-repair re-review
 
-Reviewed code SHA: `42fa930bfe4ab86cba49c27ec8e91f4a65393ef9`
+Reviewed code SHA: `5878689670fa101ba49f92577b2ccddbaea28c39`
 
-Reviewed at: 2026-07-13T05:30:13Z
+Reviewed at: 2026-07-13T05:47:56Z
 
-Reviewer run IDs: `qual_r7_final_eng`; `qual_r7_final_qa`;
-`qual_r7_final_sec`;
-`WS-QUAL-001-01B1B-R10-QA-PUB-REBIND-20260713T053013Z`
+Reviewer run IDs: engineering=`/root/qual_r7_final_eng`;
+QA=`WS-QUAL-001-01B1B-R10-QA-EXT-20260713T054756Z`; security=pending
 
 ## Binding
 
 - Base: `060b780190435bc79464ae92fd9235a652f70e00`
-- Reviewed code: `15d0b80e776f5be12cacc5dbe5226ffe3992dcfd`
+- Original implementation: `15d0b80e776f5be12cacc5dbe5226ffe3992dcfd`
+- External-repair implementation: `4bcf910ac6b46904a7408360dc1c1d4d7df9ee2e`
+- Current review head: `5878689670fa101ba49f92577b2ccddbaea28c39`
 - Contract: `WS-QUAL-001-01B1B-R10 TypeVar Child Order`
-- Raw policy/test delta: 577/620 added-plus-deleted lines
+- Raw policy/test delta: 584/620 added-plus-deleted lines
 
 ## Behavior Proof
 
-- Python 3.11.15 isolated `backend[dev]`: 171 passed
-- Python 3.12.3 project environment: 171 passed
-- Python 3.13.3 isolated `backend[dev]`: 171 passed
+- Python 3.11 isolated `backend[dev]`: 172 passed
+- Python 3.12 project environment: 172 passed
+- Python 3.13 isolated `backend[dev]`: 172 passed
 - Ruff: passed
 - `pip check`: passed
 - Self-applied `validate_delta(..., 620, exact_allowed_files)`: passed
@@ -39,19 +40,18 @@ inlined comprehensions, and Python 3.13 shared public TypeVar child ordering.
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| Senior engineering | PASS | None | Bounded syntax-only policy is maintainable and fail closed. |
-| QA/test | PASS | None | The 171-test matrix covers supported versions and adversarial syntax. |
-| Security/auth | PASS | None | The policy changes no auth or production behavior and rejects ambiguity. |
+| Senior engineering | PASS | None | External repair passes at `5878689`. |
+| QA/test | Pending | Evidence provenance | Re-review required after provenance repair. |
+| Security/auth | Pending | Review pending | Fresh external-repair review required. |
 | Product/ops | PASS | None | No Workstream product lifecycle or human-role behavior changes. |
-| Architecture | PASS | None | Policy-core scope remains separate from CI ratchet and coverage raising. |
+| Architecture | PASS | None | External repair remains separate from CI ratchet and coverage raising. |
 | CI integrity | PASS | None | No workflow, threshold, exclusion, or dependency is weakened. |
-| Docs | PASS | None | Contract, status, evidence, and trust bundle describe the bounded behavior. |
-| Reuse/dedup | PASS | None | Uses stdlib AST and symtable facts without a duplicate execution model. |
-| Test delta | PASS | None | Additive behavior tests contain no skip, xfail, or assertion weakening. |
+| Docs | Pending | Evidence provenance | Re-review required after provenance repair. |
+| Reuse/dedup | PASS | None | The two-line repair reuses the existing deletion parser. |
+| Test delta | PASS | None | Additive regression has no skip, xfail, or assertion weakening. |
 
-Circuit breaker passed at 577/620 raw policy-and-test lines. The final
-evidence review found and this revision addresses only structured evidence and
-stale lifecycle wording; it found no implementation or behavior-test defect.
+Circuit breaker passed at 584/620 raw policy-and-test lines. Final QA and
+security review remain active before this evidence can be rebound and pushed.
 
 ## Scope Integrity
 
