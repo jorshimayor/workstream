@@ -154,6 +154,8 @@ def runner_metadata(path: Path, expected_tree: str, expected_head: str) -> dict:
 
 
 BLOCKED = {"skip", "skipif", "skipIf", "skipUnless", "xfail", "expectedFailure", "importorskip", "SkipTest"}
+EAGER_ITERATORS = {"all", "any", "bytearray", "bytes", "dict", "frozenset", "list", "max", "min", "next", "set", "sorted", "sum", "tuple"}
+LAZY_ITERATORS = {"enumerate", "filter", "iter", "map", "reversed", "zip"}
 
 
 class Bindings(ast.NodeVisitor):
@@ -213,6 +215,27 @@ class Bindings(ast.NodeVisitor):
                 if name in self.scopes[index]:
                     return self.scopes[index][name]
         return "builtin" if name == "exec" else "local"
+    def builtin(self, node: ast.AST, names: set[str]) -> bool:
+        if not isinstance(node, ast.Name) or node.id not in names:
+            return False
+        try:
+            symbol = self.tables[-1].lookup(node.id)
+        except KeyError:
+            return True
+        return not (symbol.is_assigned() or symbol.is_imported() or symbol.is_parameter())
+    def visit_iterated(self, node: ast.AST) -> None:
+        if isinstance(node, ast.GeneratorExp):
+            previous, self.consume_genexpr = self.consume_genexpr, 1
+            self.visit(node)
+            self.consume_genexpr = previous
+        elif isinstance(node, ast.Call) and self.builtin(node.func, LAZY_ITERATORS):
+            self.visit(node.func)
+            for index, argument in enumerate(node.args):
+                (self.visit if node.func.id == "map" and index == 0 or node.func.id == "filter" and index == 0 else self.visit_iterated)(argument)
+            for keyword in node.keywords:
+                self.visit(keyword.value)
+        else:
+            self.visit(node)
     def kind(self, node: ast.AST, bindings: dict[str, str] | None = None) -> str:
         if isinstance(node, ast.Name):
             return (bindings or {}).get(node.id, self.get(node.id))
@@ -266,7 +289,7 @@ class Bindings(ast.NodeVisitor):
             elif root == "unittest":
                 self.put(name, "testcase" if alias.name == "TestCase" else "blocked" if alias.name in BLOCKED else "local")
     def visit_Assign(self, node: ast.Assign) -> None:
-        self.visit(node.value)
+        (self.visit_iterated if any(isinstance(target, (ast.Tuple, ast.List)) for target in node.targets) else self.visit)(node.value)
         for target in node.targets:
             self.assign_target(target, node.value)
     def target_names(self, node: ast.AST) -> set[str]:
@@ -303,6 +326,8 @@ class Bindings(ast.NodeVisitor):
         else:
             for name in self.target_names(target):
                 bindings[name] = self.kind(value, bindings)
+    def empty_iterable(self, node: ast.AST) -> bool:
+        return isinstance(node, (ast.Tuple, ast.List, ast.Set)) and not node.elts or isinstance(node, ast.Dict) and not node.keys
     def element_provenance(self, node: ast.AST, bindings: dict[str, str] | None = None) -> tuple[ast.AST, dict[str, str]]:
         environment = dict(bindings or {})
         for item in ast.walk(node):
@@ -316,6 +341,8 @@ class Bindings(ast.NodeVisitor):
             return self.element_provenance(node.values[0], environment)
         if isinstance(node, (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)):
             for generator in node.generators:
+                if self.empty_iterable(generator.iter):
+                    return ast.Constant(None), environment
                 value, source = self.element_provenance(generator.iter, environment)
                 self.target_bindings(generator.target, value, source)
                 environment.update(source)
@@ -346,6 +373,10 @@ class Bindings(ast.NodeVisitor):
         if not self.suppressed:
             self.weak |= self.kind(node) in {"blocked", "ambiguous"}
         self.generic_visit(node)
+    def visit_Starred(self, node: ast.Starred) -> None:
+        (self.visit_iterated if isinstance(node.ctx, ast.Load) else self.visit)(node.value)
+    def visit_YieldFrom(self, node: ast.YieldFrom) -> None:
+        self.visit_iterated(node.value)
     def visit_If(self, node: ast.If) -> None:
         self.visit(node.test)
         before = [scope.copy() for scope in self.scopes]
@@ -378,7 +409,7 @@ class Bindings(ast.NodeVisitor):
         def inspect_comp(expression: ast.ListComp | ast.SetComp | ast.DictComp | ast.GeneratorExp, consume: bool) -> None:
             for generator in expression.generators:
                 inspect(generator.iter)
-                if isinstance(generator.iter, (ast.Tuple, ast.List, ast.Set)) and not generator.iter.elts or isinstance(generator.iter, ast.Dict) and not generator.iter.keys:
+                if self.empty_iterable(generator.iter):
                     return
                 if consume:
                     for condition in generator.ifs:
@@ -386,6 +417,14 @@ class Bindings(ast.NodeVisitor):
             if consume:
                 for value in ((expression.key, expression.value) if isinstance(expression, ast.DictComp) else (expression.elt,)):
                     inspect(value)
+        def inspect_iterated(node: ast.AST) -> None:
+            if isinstance(node, ast.GeneratorExp):
+                inspect_comp(node, True)
+            elif isinstance(node, ast.Call) and self.builtin(node.func, LAZY_ITERATORS):
+                for index, argument in enumerate(node.args):
+                    (inspect if node.func.id in {"map", "filter"} and index == 0 else inspect_iterated)(argument)
+            else:
+                inspect(node)
         def inspect(node: ast.AST) -> None:
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 for item in (*node.args.defaults, *node.args.kw_defaults, *node.decorator_list):
@@ -446,7 +485,7 @@ class Bindings(ast.NodeVisitor):
                             for alias in item.names:
                                 name = alias.asname or alias.name
                                 if name in globals_:
-                                    current[name] = {"mark": "mark", "raises": "raises", "TestCase": "testcase"}.get(alias.name, "blocked" if root in {"pytest", "unittest"} and alias.name in BLOCKED else "local")
+                                    current[name] = ({"mark": "mark", "raises": "raises"}.get(alias.name, "blocked" if alias.name in BLOCKED else "local") if root == "pytest" else "testcase" if root == "unittest" and alias.name == "TestCase" else "blocked" if root == "unittest" and alias.name in BLOCKED else "local")
                         elif isinstance(item, ast.AugAssign) and self.target_names(item.target) & globals_:
                             inspect(item.value)
                             for name in self.target_names(item.target) & globals_:
@@ -460,11 +499,25 @@ class Bindings(ast.NodeVisitor):
                             body = transfer(item.body, current.copy())
                             current = {name: current[name] if current[name] == body[name] else "ambiguous" for name in globals_}
                             current = transfer(item.orelse, current)
+                        elif isinstance(item, (ast.Try, ast.TryStar)):
+                            success = transfer(item.orelse, transfer(item.body, current.copy()))
+                            states = [success, current, *(transfer(handler.body, current.copy()) for handler in item.handlers)]
+                            current = {name: states[0][name] if all(state[name] == states[0][name] for state in states) else "ambiguous" for name in globals_}
+                            current = transfer(item.finalbody, current)
+                        elif isinstance(item, (ast.With, ast.AsyncWith)):
+                            for context in item.items:
+                                inspect(context.context_expr)
+                            current = transfer(item.body, current)
+                        elif isinstance(item, ast.Match):
+                            inspect(item.subject)
+                            states = [current, *(transfer(case.body, current.copy()) for case in item.cases)]
+                            current = {name: states[0][name] if all(state[name] == states[0][name] for state in states) else "ambiguous" for name in globals_}
                         elif isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
                             inspect(item)
                         else:
                             for child in ast.iter_child_nodes(item):
-                                inspect(child)
+                                if not isinstance(child, ast.stmt):
+                                    inspect(child)
                     return current
                 state = transfer(node.body, state)
                 for name, kind in state.items():
@@ -472,12 +525,14 @@ class Bindings(ast.NodeVisitor):
                 return
             if isinstance(node, ast.Call):
                 for argument in node.args:
-                    eager = isinstance(node.func, ast.Name) and node.func.id in {"all", "any", "dict", "frozenset", "list", "max", "min", "next", "set", "sum", "tuple"}
                     expression = argument.value if isinstance(argument, ast.Starred) else argument
-                    if isinstance(expression, ast.GeneratorExp) and (eager or isinstance(argument, ast.Starred)):
-                        inspect_comp(expression, True)
-            if isinstance(node, (ast.For, ast.AsyncFor)) and isinstance(node.iter, ast.GeneratorExp):
-                inspect_comp(node.iter, True)
+                    if self.builtin(node.func, EAGER_ITERATORS) or isinstance(argument, ast.Starred):
+                        inspect_iterated(expression)
+            if isinstance(node, (ast.For, ast.AsyncFor)):
+                inspect_iterated(node.iter)
+            if isinstance(node, (ast.Starred, ast.YieldFrom)):
+                inspect_iterated(node.value)
+                return
             if isinstance(node, ast.GeneratorExp):
                 inspect_comp(node, False)
                 return
@@ -515,9 +570,7 @@ class Bindings(ast.NodeVisitor):
         return {name for name, kind in bindings.items() if kind != "local"}
 
     def visit_For(self, node: ast.For) -> None:
-        self.consume_genexpr += 1
-        self.visit(node.iter)
-        self.consume_genexpr -= 1
+        self.visit_iterated(node.iter)
         before = self.state()
         for name in self.loop_summary(node.body):
             self.put(name, "ambiguous")
@@ -638,12 +691,8 @@ class Bindings(ast.NodeVisitor):
             value = node.func.value
             self.weak |= self.kind(value) in {"case", "ambiguous"} or self.cases[-1] and (isinstance(value, ast.Name) and value.id == "self" or isinstance(value, ast.Call) and isinstance(value.func, ast.Name) and value.func.id == "super")
         self.visit(node.func)
-        eager = isinstance(node.func, ast.Name) and node.func.id in {"all", "any", "dict", "frozenset", "list", "max", "min", "next", "set", "sum", "tuple"}
         for argument in node.args:
-            consumed = isinstance(argument, ast.Starred) and isinstance(argument.value, ast.GeneratorExp) or eager and isinstance(argument, ast.GeneratorExp)
-            self.consume_genexpr += consumed
-            self.visit(argument)
-            self.consume_genexpr -= consumed
+            (self.visit_iterated if isinstance(argument, ast.Starred) or self.builtin(node.func, EAGER_ITERATORS) else self.visit)(argument)
         for keyword in node.keywords:
             self.visit(keyword.value)
 
@@ -690,7 +739,11 @@ class Bindings(ast.NodeVisitor):
 
     def visit_comprehension_scope(self, node: ast.ListComp | ast.SetComp | ast.DictComp | ast.GeneratorExp) -> None:
         generators = node.generators
-        self.visit(generators[0].iter)
+        incoming = self.consume_genexpr
+        consumed = not isinstance(node, ast.GeneratorExp) or bool(incoming)
+        if isinstance(node, ast.GeneratorExp):
+            self.consume_genexpr = 0
+        (self.visit_iterated if consumed else self.visit)(generators[0].iter)
         first_value, first_bindings = self.element_provenance(generators[0].iter)
         names = set().union(*(self.target_names(generator.target) for generator in generators))
         expected = {ast.GeneratorExp: "genexpr", ast.ListComp: "listcomp", ast.SetComp: "setcomp", ast.DictComp: "dictcomp"}[type(node)]
@@ -704,14 +757,14 @@ class Bindings(ast.NodeVisitor):
             self.types.append("function")
             self.cases.append(self.cases[-1])
             self.inline_depths[-1] += 1
-        before, unreachable, lazy = self.state(), False, isinstance(node, ast.GeneratorExp) and not self.consume_genexpr
+        before, unreachable, lazy = self.state(), False, not consumed
         self.suppressed += lazy
         for index, generator in enumerate(generators):
             if generator is not generators[0]:
                 self.suppressed += unreachable
-                self.visit(generator.iter)
+                (self.visit_iterated if consumed else self.visit)(generator.iter)
                 self.suppressed -= unreachable
-            value, bindings, empty = (*self.element_provenance(generator.iter, first_bindings if index == 0 else None), isinstance(generator.iter, (ast.Tuple, ast.List, ast.Set)) and not generator.iter.elts or isinstance(generator.iter, ast.Dict) and not generator.iter.keys)
+            value, bindings, empty = (*self.element_provenance(generator.iter, first_bindings if index == 0 else None), self.empty_iterable(generator.iter))
             self.suppressed += unreachable or empty
             self.assign_target(generator.target, value, bindings)
             self.suppressed -= unreachable or empty
@@ -737,6 +790,7 @@ class Bindings(ast.NodeVisitor):
         self.join([before[:-1] if len(before) > len(after) else before, after])
         for name in writes:
             self.put(name, "ambiguous", self.inline_depths[-1])
+        self.consume_genexpr = incoming
     visit_ListComp = visit_comprehension_scope
     visit_SetComp = visit_comprehension_scope
     visit_DictComp = visit_comprehension_scope
