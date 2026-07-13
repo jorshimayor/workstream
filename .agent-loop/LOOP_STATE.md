@@ -39,7 +39,9 @@
   `1a13bea`. Cycle-one review found five bounded syntax traversal gaps. The
   final permitted repair is bound at `e2ac216`; final QA found Python 3.11
   comprehension symtable incompatibility. R8 is stopped. R9 proposes only the
-  dual-version scope-pairing closure; implementation is active after plan PASS.
+  dual-version scope-pairing closure. Implementation is bound at `5a971d8`;
+  identical 161-test matrices pass on Python 3.11.15 and 3.12.3 at 546/600 raw
+  lines. Internal implementation review is active.
 - Prior WS-ART reviewed planning SHA: `f7fbc33`
 - Prior WS-ART final evidence-bound planning branch head: `c069064`
 - WS-ART planning merge commit: `8644a43`

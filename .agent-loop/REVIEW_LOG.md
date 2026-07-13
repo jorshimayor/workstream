@@ -205,6 +205,18 @@ enters them and Python 3.12+ uses inlined scope, with isolated dual-version
 proof. No syntax-policy, Python-floor, workflow, dependency, B2, or application
 change is permitted. Internal contract review is active.
 
+B1B-R9 contract review: PASS at `4da0880` across all ten required tracks after
+making the isolated Python 3.11 backend environment, interpreter assertion,
+600-line cap, self-validator, and test-preservation rules executable.
+
+B1B-R9 implementation candidate:
+`5a971d80c38cbf856e9eee5bcd49fac6873c38c2`. Comprehension scope selection now
+enters an optional stdlib list/set/dict child when present and otherwise uses
+the containing inlined scope; genexpr remains required. The identical 161-test
+matrix passes on isolated Python 3.11.15 and project Python 3.12.3. Ruff, pip,
+self-validation, scope, wording, memory, links, diff hygiene, and 546/600 raw
+lines pass. Internal implementation review is active.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract
