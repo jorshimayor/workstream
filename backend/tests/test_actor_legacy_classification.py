@@ -8,11 +8,15 @@ import json
 import os
 from pathlib import Path
 import stat
+import subprocess
+import sys
+from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
 from pydantic import ValidationError
 
+from app.modules.actors import legacy_classification as legacy_classification_module
 from app.modules.actors.legacy_classification import (
     CLASSIFICATION_FILE_ENV,
     MAX_CLASSIFICATION_FILE_BYTES,
@@ -87,6 +91,7 @@ def envelope() -> LegacyActorClassificationEnvelope:
 def write_json(path: Path, value: object) -> None:
     """Write test JSON without relying on production serialization."""
     path.write_text(json.dumps(value), encoding="utf-8")
+    os.chmod(path, 0o600)
 
 
 def test_manifest_and_row_hashes_are_order_independent() -> None:
@@ -105,12 +110,14 @@ def test_manifest_and_row_hashes_are_order_independent() -> None:
     "field,value",
     [
         ("subject_kind", "agent"),
-        ("subject_kind", "worker"),
+        ("subject_kind", "unknown"),
         ("actor_id", str(uuid4())),
         ("actor_id", ACTOR_ID.upper()),
         ("issuer", "http://issuer.example.test"),
         ("issuer", "https://user@issuer.example.test"),
         ("issuer", "https://issuer.example.test?key=value"),
+        ("issuer", "https://issuer.example.test:abc"),
+        ("issuer", "https://issuer example.test"),
         ("subject", ""),
         ("subject", "   "),
     ],
@@ -154,11 +161,14 @@ def test_manifest_rejects_duplicate_actor_and_external_identity() -> None:
         b'{"schema_version":NaN,"classifications":[]}',
         b'{"schema_version":Infinity,"classifications":[]}',
         b'{not-json}',
+        b'{"schema_version":1e9999,"classifications":[]}',
+        (b'{"schema_version":' + b"9" * 4_301 + b',"classifications":[]}'),
     ],
 )
 def test_manifest_loader_rejects_ambiguous_or_nonfinite_json(tmp_path: Path, raw: bytes) -> None:
     path = tmp_path / "manifest.json"
     path.write_bytes(raw)
+    os.chmod(path, 0o600)
 
     with pytest.raises(LegacyClassificationError, match="^invalid_json$"):
         load_manifest(path)
@@ -186,6 +196,7 @@ def test_manifest_loader_rejects_unknown_fields_without_echoing_identity(tmp_pat
 def test_manifest_loader_rejects_oversized_and_symlink_files(tmp_path: Path) -> None:
     oversized = tmp_path / "oversized.json"
     oversized.write_bytes(b" " * (MAX_CLASSIFICATION_FILE_BYTES + 1))
+    os.chmod(oversized, 0o600)
     target = tmp_path / "target.json"
     write_json(target, {"schema_version": 1, "classifications": []})
     symlink = tmp_path / "manifest-link.json"
@@ -195,6 +206,26 @@ def test_manifest_loader_rejects_oversized_and_symlink_files(tmp_path: Path) -> 
         load_manifest(oversized)
     with pytest.raises(LegacyClassificationError, match="^classification_file_unavailable$"):
         load_manifest(symlink)
+
+
+def test_manifest_loader_rejects_file_owned_by_another_user(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "manifest.json"
+    write_json(path, {"schema_version": 1, "classifications": []})
+    original_fstat = os.fstat
+
+    def foreign_owner(descriptor: int) -> SimpleNamespace:
+        metadata = original_fstat(descriptor)
+        return SimpleNamespace(
+            st_mode=metadata.st_mode,
+            st_size=metadata.st_size,
+            st_uid=os.geteuid() + 1,
+        )
+
+    monkeypatch.setattr(os, "fstat", foreign_owner)
+    with pytest.raises(LegacyClassificationError, match="^invalid_classification_file$"):
+        load_manifest(path)
 
 
 def test_empty_registry_needs_no_manifest_and_rejects_stale_entries() -> None:
@@ -332,9 +363,9 @@ def test_database_binding_is_stable_and_does_not_disclose_database_name() -> Non
 def test_publish_is_mode_0600_no_overwrite_and_byte_idempotent(tmp_path: Path) -> None:
     destination = tmp_path / "classification-envelope.json"
     repository = tmp_path / "repository"
-    git_common = tmp_path / "common-git"
+    git_common = tmp_path / "main" / ".git"
     repository.mkdir()
-    git_common.mkdir()
+    git_common.mkdir(parents=True)
 
     assert publish_envelope(
         destination,
@@ -365,11 +396,12 @@ def test_publish_rejects_relative_repo_git_symlink_and_permissive_existing_paths
     tmp_path: Path,
 ) -> None:
     repository = tmp_path / "repository"
-    git_common = tmp_path / "common-git"
+    git_common = tmp_path / "main" / ".git"
     outside = tmp_path / "outside"
     repository.mkdir()
-    git_common.mkdir()
+    git_common.mkdir(parents=True)
     outside.mkdir()
+    os.chmod(outside, 0o700)
 
     for destination in (
         Path("relative.json"),
@@ -408,19 +440,98 @@ def test_publish_rejects_relative_repo_git_symlink_and_permissive_existing_paths
         )
 
 
+def test_publish_rejects_main_and_every_registered_linked_worktree(tmp_path: Path) -> None:
+    main = tmp_path / "main"
+    common_git = main / ".git"
+    current = tmp_path / "current"
+    other = tmp_path / "other"
+    common_git.mkdir(parents=True)
+    current.mkdir()
+    other.mkdir()
+    for name, root in (("current", current), ("other", other)):
+        metadata = common_git / "worktrees" / name
+        metadata.mkdir(parents=True)
+        (root / ".git").write_text("linked marker", encoding="utf-8")
+        (metadata / "gitdir").write_text(f"{root / '.git'}\n", encoding="utf-8")
+
+    for destination in (main / "leak.json", current / "leak.json", other / "leak.json"):
+        with pytest.raises(LegacyClassificationError, match="^output_path_inside_repository$"):
+            publish_envelope(
+                destination,
+                envelope(),
+                repository_root=current,
+                git_common_dir=common_git,
+            )
+
+
+def test_loaders_require_owner_only_input_permissions(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "manifest.json"
+    envelope_path = tmp_path / "envelope.json"
+    write_json(manifest_path, {"schema_version": 1, "classifications": []})
+    envelope_path.write_bytes(canonical_envelope_bytes(envelope()))
+    os.chmod(manifest_path, 0o644)
+    os.chmod(envelope_path, 0o640)
+
+    with pytest.raises(LegacyClassificationError, match="^invalid_classification_file$"):
+        load_manifest(manifest_path)
+    with pytest.raises(LegacyClassificationError, match="^invalid_classification_file$"):
+        load_envelope(envelope_path)
+
+
+def test_publish_requires_owner_only_output_directory(tmp_path: Path) -> None:
+    repository = tmp_path / "repository"
+    git_common = tmp_path / "main" / ".git"
+    shared = tmp_path / "shared"
+    repository.mkdir()
+    git_common.mkdir(parents=True)
+    shared.mkdir(mode=0o770)
+
+    with pytest.raises(LegacyClassificationError, match="^output_parent_insecure$"):
+        publish_envelope(
+            shared / "envelope.json",
+            envelope(),
+            repository_root=repository,
+            git_common_dir=git_common,
+        )
+
 def test_failed_atomic_publish_leaves_no_destination_or_temporary_file(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     destination = tmp_path / "classification-envelope.json"
     repository = tmp_path / "repository"
-    git_common = tmp_path / "common-git"
+    git_common = tmp_path / "main" / ".git"
     repository.mkdir()
-    git_common.mkdir()
+    git_common.mkdir(parents=True)
 
     def fail_link(*_args, **_kwargs) -> None:
         raise OSError("simulated publish interruption")
 
     monkeypatch.setattr(os, "link", fail_link)
+    with pytest.raises(LegacyClassificationError, match="^output_publish_failed$"):
+        publish_envelope(
+            destination,
+            envelope(),
+            repository_root=repository,
+            git_common_dir=git_common,
+        )
+
+    assert not destination.exists()
+    assert not list(tmp_path.glob(".workstream-legacy-classification-*"))
+
+
+def test_post_link_fsync_failure_rolls_back_published_destination(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    destination = tmp_path / "classification-envelope.json"
+    repository = tmp_path / "repository"
+    git_common = tmp_path / "main" / ".git"
+    repository.mkdir()
+    git_common.mkdir(parents=True)
+
+    def fail_fsync(_path: Path) -> None:
+        raise OSError("simulated directory fsync failure")
+
+    monkeypatch.setattr(legacy_classification_module, "_fsync_directory", fail_fsync)
     with pytest.raises(LegacyClassificationError, match="^output_publish_failed$"):
         publish_envelope(
             destination,
@@ -473,6 +584,25 @@ def test_migration_handoff_reads_process_environment(
     )
 
 
+def test_migration_verifier_import_does_not_require_live_actor_orm() -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            (
+                "import sys; "
+                "sys.modules['app.modules.actors.models'] = None; "
+                "import app.modules.actors.legacy_classification"
+            ),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+
+
 def test_envelope_loader_rejects_unknown_or_tampered_payload_without_echo(tmp_path: Path) -> None:
     path = tmp_path / "envelope.json"
     payload = envelope().model_dump(mode="json")
@@ -491,6 +621,15 @@ def test_envelope_loader_rejects_duplicate_classifications(tmp_path: Path) -> No
     payload = envelope().model_dump(mode="json")
     payload["classifications"] *= 2
     write_json(path, payload)
+
+    with pytest.raises(LegacyClassificationError, match="^invalid_envelope$"):
+        load_envelope(path)
+
+
+def test_envelope_loader_requires_exact_canonical_bytes(tmp_path: Path) -> None:
+    path = tmp_path / "envelope.json"
+    path.write_text(json.dumps(envelope().model_dump(mode="json"), indent=7), encoding="utf-8")
+    os.chmod(path, 0o600)
 
     with pytest.raises(LegacyClassificationError, match="^invalid_envelope$"):
         load_envelope(path)
@@ -613,5 +752,26 @@ def test_cli_main_bounds_unexpected_failures(
     assert SUBJECT not in captured.err
     assert json.loads(captured.err) == {
         "error": "database_operation_failed",
+        "status": "error",
+    }
+
+
+def test_cli_main_bounds_database_cleanup_failures(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    async def successful(_args) -> dict:
+        return {"status": "valid"}
+
+    async def fail_cleanup() -> None:
+        raise RuntimeError(SUBJECT)
+
+    monkeypatch.setattr(classification_cli, "_execute", successful)
+    monkeypatch.setattr(classification_cli, "dispose_engine", fail_cleanup)
+
+    assert classification_cli.main([]) == 2
+    captured = capsys.readouterr()
+    assert SUBJECT not in captured.err
+    assert json.loads(captured.err) == {
+        "error": "database_cleanup_failed",
         "status": "error",
     }

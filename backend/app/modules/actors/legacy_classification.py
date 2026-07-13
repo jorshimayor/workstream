@@ -6,6 +6,7 @@ from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -16,10 +17,8 @@ from urllib.parse import urlsplit
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
-from sqlalchemy import select, text
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine
-
-from app.modules.actors.models import ActorIdentity
 
 MANIFEST_SCHEMA_VERSION = 1
 CLASSIFICATION_FILE_ENV = "WORKSTREAM_LEGACY_ACTOR_CLASSIFICATION_FILE"
@@ -66,9 +65,17 @@ def _validate_sha256(value: str) -> str:
 
 def _validate_issuer(value: str) -> str:
     """Validate issuer shape without changing its identity bytes."""
-    if len(value) > MAX_ISSUER_CHARACTERS or value.strip() != value:
+    if (
+        len(value) > MAX_ISSUER_CHARACTERS
+        or value.strip() != value
+        or any(character.isspace() or ord(character) < 0x20 for character in value)
+    ):
         raise ValueError("invalid issuer")
     parsed = urlsplit(value)
+    try:
+        parsed.port
+    except ValueError:
+        raise ValueError("invalid issuer") from None
     if (
         parsed.scheme != "https"
         or not parsed.hostname
@@ -335,6 +342,14 @@ def _reject_nonfinite(_value: str) -> None:
     raise LegacyClassificationError("invalid_json")
 
 
+def _finite_json_float(value: str) -> float:
+    """Parse a JSON float only when the runtime result remains finite."""
+    parsed = float(value)
+    if not math.isfinite(parsed):
+        raise LegacyClassificationError("invalid_json")
+    return parsed
+
+
 def _strict_json(data: bytes) -> Any:
     """Parse bounded JSON without duplicate keys or non-finite values."""
     try:
@@ -342,10 +357,11 @@ def _strict_json(data: bytes) -> Any:
             data,
             object_pairs_hook=_duplicate_object_pairs,
             parse_constant=_reject_nonfinite,
+            parse_float=_finite_json_float,
         )
     except LegacyClassificationError:
         raise
-    except (UnicodeDecodeError, json.JSONDecodeError, RecursionError):
+    except (UnicodeDecodeError, ValueError, json.JSONDecodeError, RecursionError):
         raise LegacyClassificationError("invalid_json") from None
 
 
@@ -358,7 +374,12 @@ def _read_bounded_regular_file(path: Path) -> bytes:
         raise LegacyClassificationError("classification_file_unavailable") from None
     try:
         metadata = os.fstat(descriptor)
-        if not stat.S_ISREG(metadata.st_mode) or metadata.st_size > MAX_CLASSIFICATION_FILE_BYTES:
+        if (
+            not stat.S_ISREG(metadata.st_mode)
+            or metadata.st_uid != os.geteuid()
+            or metadata.st_mode & 0o077
+            or metadata.st_size > MAX_CLASSIFICATION_FILE_BYTES
+        ):
             raise LegacyClassificationError("invalid_classification_file")
         chunks: list[bytes] = []
         remaining = MAX_CLASSIFICATION_FILE_BYTES + 1
@@ -395,11 +416,13 @@ def load_manifest(path: Path) -> LegacyActorClassificationManifest:
 def load_envelope(path: Path) -> LegacyActorClassificationEnvelope:
     """Load one strict, bounded confidential classification envelope."""
     try:
-        parsed = _strict_json(_read_bounded_regular_file(path))
+        raw = _read_bounded_regular_file(path)
+        parsed = _strict_json(raw)
         envelope = LegacyActorClassificationEnvelope.model_validate_json(
             _canonical_json_bytes(parsed), strict=True
         )
-        if len(canonical_envelope_bytes(envelope)) > MAX_CLASSIFICATION_FILE_BYTES:
+        canonical = canonical_envelope_bytes(envelope)
+        if len(canonical) > MAX_CLASSIFICATION_FILE_BYTES or raw != canonical:
             raise LegacyClassificationError("invalid_envelope")
         return envelope
     except LegacyClassificationError:
@@ -539,11 +562,10 @@ async def read_legacy_actor_snapshot(connection: AsyncConnection) -> LegacyActor
         )
     ).one()
     result = await connection.execute(
-        select(
-            ActorIdentity.actor_id,
-            ActorIdentity.external_issuer,
-            ActorIdentity.external_subject,
-        ).order_by(ActorIdentity.actor_id.asc())
+        text(
+            "SELECT actor_id, external_issuer, external_subject "
+            "FROM actor_identities ORDER BY actor_id ASC"
+        )
     )
     try:
         rows = tuple(
@@ -575,19 +597,54 @@ def _path_within(path: Path, parent: Path) -> bool:
     return True
 
 
+def _protected_repository_roots(repository_root: Path, git_common_dir: Path) -> tuple[Path, ...]:
+    """Discover the main and every registered linked worktree root."""
+    try:
+        roots = {repository_root.resolve(strict=True), git_common_dir.resolve(strict=True)}
+        if git_common_dir.name != ".git":
+            raise LegacyClassificationError("git_directory_unavailable")
+        roots.add(git_common_dir.parent.resolve(strict=True))
+        worktree_metadata = git_common_dir / "worktrees"
+        if worktree_metadata.exists():
+            for entry in worktree_metadata.iterdir():
+                gitdir_marker = entry / "gitdir"
+                raw_gitdir = gitdir_marker.read_text(encoding="utf-8").strip()
+                worktree_gitdir = Path(raw_gitdir)
+                if not worktree_gitdir.is_absolute():
+                    worktree_gitdir = gitdir_marker.parent / worktree_gitdir
+                resolved_gitdir = worktree_gitdir.resolve(strict=True)
+                if resolved_gitdir.name != ".git":
+                    raise LegacyClassificationError("git_directory_unavailable")
+                roots.add(resolved_gitdir.parent)
+    except LegacyClassificationError:
+        raise
+    except OSError:
+        raise LegacyClassificationError("git_directory_unavailable") from None
+    return tuple(sorted(roots))
+
+
 def _validate_output_path(path: Path, *, repository_root: Path, git_common_dir: Path) -> Path:
     """Validate a secure envelope destination outside repository state."""
     if not path.is_absolute():
         raise LegacyClassificationError("output_path_not_absolute")
     try:
         parent = path.parent.resolve(strict=True)
-        repository = repository_root.resolve(strict=True)
-        common_git = git_common_dir.resolve(strict=True)
+        protected_roots = _protected_repository_roots(repository_root, git_common_dir)
     except OSError:
         raise LegacyClassificationError("output_parent_unavailable") from None
     destination = parent / path.name
-    if _path_within(destination, repository) or _path_within(destination, common_git):
+    if any(_path_within(destination, protected) for protected in protected_roots):
         raise LegacyClassificationError("output_path_inside_repository")
+    try:
+        parent_metadata = os.stat(parent, follow_symlinks=False)
+    except OSError:
+        raise LegacyClassificationError("output_parent_unavailable") from None
+    if (
+        not stat.S_ISDIR(parent_metadata.st_mode)
+        or parent_metadata.st_uid != os.geteuid()
+        or parent_metadata.st_mode & 0o077
+    ):
+        raise LegacyClassificationError("output_parent_insecure")
     try:
         metadata = os.lstat(destination)
     except FileNotFoundError:
@@ -652,7 +709,15 @@ def publish_envelope(
             if _existing_output_matches(destination, content):
                 return False
             raise LegacyClassificationError("output_already_exists") from None
-        _fsync_directory(destination.parent)
+        try:
+            _fsync_directory(destination.parent)
+        except OSError:
+            try:
+                destination.unlink()
+                _fsync_directory(destination.parent)
+            except OSError:
+                pass
+            raise LegacyClassificationError("output_publish_failed") from None
         return True
     except OSError:
         raise LegacyClassificationError("output_publish_failed") from None

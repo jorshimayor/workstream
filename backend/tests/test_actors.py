@@ -9,12 +9,13 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, text
 
 from app.adapters.auth.dev import actor_id_from_external_identity
 from app.core.config import get_settings
 from app.db import session as db_session
 from app.main import create_app
+from app.modules.actors import legacy_classification as legacy_classification_module
 from app.modules.actors.legacy_classification import snapshot_legacy_actors
 from app.modules.actors.models import ActorIdentity, ActorProfile
 from app.modules.actors.schemas import ActorProfileActivationRequest
@@ -25,6 +26,7 @@ from app.schemas.auth import ActorContext
 
 async def test_legacy_classification_snapshot_is_complete_and_read_only(
     actor_database_env: str,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Read exact legacy identity rows without changing registry state."""
     issuer = "https://issuer.example.test"
@@ -46,14 +48,63 @@ async def test_legacy_classification_snapshot_is_complete_and_read_only(
         )
         await session.commit()
 
+    observed_transaction: dict[str, str] = {}
+    original_reader = legacy_classification_module.read_legacy_actor_snapshot
+
+    async def inspect_transaction(connection):
+        snapshot = await original_reader(connection)
+        observed_transaction["isolation"] = (
+            await connection.exec_driver_sql("SHOW transaction_isolation")
+        ).scalar_one()
+        observed_transaction["read_only"] = (
+            await connection.exec_driver_sql("SHOW transaction_read_only")
+        ).scalar_one()
+        return snapshot
+
+    monkeypatch.setattr(
+        legacy_classification_module,
+        "read_legacy_actor_snapshot",
+        inspect_transaction,
+    )
     snapshot = await snapshot_legacy_actors(db_session.get_engine())
 
     assert [(row.actor_id, row.issuer, row.subject) for row in snapshot.rows] == [
         (actor_id, issuer, subject)
     ]
     assert snapshot.database_binding.startswith("postgres-v1:")
+    assert observed_transaction == {"isolation": "repeatable read", "read_only": "on"}
     async with db_session.get_session_factory()() as session:
         assert len((await session.execute(select(ActorIdentity))).scalars().all()) == 1
+
+    engine = db_session.get_engine()
+    async with engine.connect() as connection:
+        connection = await connection.execution_options(isolation_level="REPEATABLE READ")
+        async with connection.begin():
+            await connection.exec_driver_sql("SET TRANSACTION READ ONLY")
+            initial_count = (
+                await connection.execute(text("SELECT count(*) FROM actor_identities"))
+            ).scalar_one()
+            concurrent_subject = "concurrent-legacy-subject"
+            async with db_session.get_session_factory()() as session:
+                session.add(
+                    ActorIdentity(
+                        actor_id=actor_id_from_external_identity(issuer, concurrent_subject),
+                        external_subject=concurrent_subject,
+                        external_issuer=issuer,
+                        display_name=None,
+                        email=None,
+                        last_seen_roles=[],
+                        last_claim_snapshot={},
+                        auth_source="flow",
+                        is_dev_auth=False,
+                    )
+                )
+                await session.commit()
+            repeated_count = (
+                await connection.execute(text("SELECT count(*) FROM actor_identities"))
+            ).scalar_one()
+
+    assert initial_count == repeated_count == 1
 
 
 @pytest.fixture

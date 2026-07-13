@@ -95,25 +95,41 @@ async def _execute(args: argparse.Namespace) -> dict:
 
 def main(argv: list[str] | None = None) -> int:
     """Run the dry-run-first classification workflow."""
+    result = 0
+    stdout_message: str | None = None
+    stderr_message: str | None = None
     try:
         args = _parser().parse_args(argv)
         report = asyncio.run(_execute(args))
-        print(json.dumps(report, allow_nan=False, separators=(",", ":"), sort_keys=True))
-        return 0
-    except LegacyClassificationError as exc:
-        print(
-            json.dumps({"error": exc.code, "status": "error"}, separators=(",", ":")),
-            file=sys.stderr,
+        stdout_message = json.dumps(
+            report,
+            allow_nan=False,
+            separators=(",", ":"),
+            sort_keys=True,
         )
-        return 2
+    except LegacyClassificationError as exc:
+        stderr_message = json.dumps(
+            {"error": exc.code, "status": "error"},
+            separators=(",", ":"),
+        )
+        result = 2
     except KeyboardInterrupt:
-        print('{"error":"interrupted","status":"error"}', file=sys.stderr)
-        return 130
+        stderr_message = '{"error":"interrupted","status":"error"}'
+        result = 130
     except Exception:
-        print('{"error":"database_operation_failed","status":"error"}', file=sys.stderr)
-        return 2
-    finally:
+        stderr_message = '{"error":"database_operation_failed","status":"error"}'
+        result = 2
+    try:
         asyncio.run(dispose_engine())
+    except Exception:
+        stdout_message = None
+        stderr_message = '{"error":"database_cleanup_failed","status":"error"}'
+        result = 2
+    if stdout_message is not None:
+        print(stdout_message)
+    if stderr_message is not None:
+        print(stderr_message, file=sys.stderr)
+    return result
 
 
 if __name__ == "__main__":
