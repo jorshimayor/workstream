@@ -29,8 +29,12 @@ The implementation base is merged-main SHA
 `060b780190435bc79464ae92fd9235a652f70e00`. Its raw added-plus-deleted delta is
 capped at 700 lines across the policy and contract-test files, with the same
 metric used for the 600-line checkpoint. Tests must keep one case per physical
-line, stay reviewable without generated/encoded fixtures, and must not be
-compacted to satisfy the cap. Stop above 700.
+line for every new or replacement R8 matrix entry, stay reviewable without
+generated/encoded fixtures, and must not be compacted to satisfy the cap.
+Merged-main formatting remains unchanged. The first implementation step restores
+the branch-only R2-R7 policy/test delta to base `060b780`, preserving every base
+test, before adding R8. Apply the checkpoint and cap to that resulting candidate
+delta. Stop above 700.
 
 ## Acceptance Criteria
 
@@ -52,7 +56,11 @@ compacted to satisfy the cap. Stop above 700.
 - Reject `pytest.skip`, `pytest.xfail`, `pytest.importorskip`,
   `pytest.mark.skip/skipif/xfail`, pytestmark assignments resolving to those
   marks, `unittest.skip/skipIf/skipUnless/expectedFailure`, `SkipTest`, and
-  `TestCase`/syntactic-`self.skipTest` constructs.
+  framework-owned `unittest.TestCase.skipTest`. Reject `self.skipTest` and
+  `super().skipTest` only inside a class whose syntactic base resolves through
+  the lexical alias closure to framework-owned `unittest.TestCase`. Keep the
+  same syntax in unrelated classes clean. `case = TestCase(); case.skipTest()`
+  is outside R8 because call-return provenance is intentionally retired.
 - Native `assert`, framework-owned `pytest.raises`/imported `raises`, and
   syntactic `self.assert*` calls are recognized in the base file for
   deleted-assertion protection, independent of runtime reachability. The
@@ -69,11 +77,12 @@ compacted to satisfy the cap. Stop above 700.
   variants; this intentional contract replacement is not test weakening. Do not
   remove, skip, xfail, weaken, or compress merged-main tests or assertions.
 - The positive matrix covers dead/empty/lazy/async/wrapper/qualified/arbitrary
-  contexts after ownership. Negatives cover strings, comments, postponed
-  annotations, relative imports, local lookalikes, nested lexical shadows,
-  unrelated attributes, reassignment invariance, alias chains/cycles, and
-  global/nonlocal ownership. Mirror it for native assert, owned/imported raises,
-  and exact-receiver `self.assert*` deletion.
+  contexts after ownership, owned-name reassignment invariance,
+  framework-rooted alias chains/cycles, and resolved global/nonlocal uses.
+  Negatives cover strings, comments, postponed annotations, relative imports,
+  local lookalikes, unowned cycles, nested parameter/local shadowing, and
+  unrelated attributes. Mirror it for native assert, owned/imported raises, and
+  exact-receiver `self.assert*` deletion.
 
 ## Verification And Review
 
