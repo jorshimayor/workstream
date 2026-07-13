@@ -1,5 +1,20 @@
 # Review Log
 
+## 2026-07-13 - WS-AUTH-001-04B Contract Repair Required
+
+Required L1 preimplementation review rejected activation head `5ed410d` before
+any runtime edit. The contract did not bind exact HMAC/secret bytes, overflow-
+safe SQL, database-time boundaries, dedicated commit ownership, dependency
+errors, real concurrency counts, transactional downgrade refusal, or expired
+pseudonymous-row retention.
+
+The repaired contract specifies canonical Base64 secret material, exact framed
+HMAC input and bounds, `BYTEA(32)` persistence, one clock-bound saturating
+upsert, dedicated committed sessions, canonical 429/503 behavior, bounded
+pruning plus operator cleanup, exact migration custody, real-ASGI/concurrency
+proof, per-file 90 percent coverage, and additive test-delta evidence. Runtime
+remains gated on exact-head re-review.
+
 ## 2026-07-13 - WS-AUTH-001-04B Started
 
 PR #112 merged AUTH-04A post-merge memory to `main` as `7749f54` after Backend,

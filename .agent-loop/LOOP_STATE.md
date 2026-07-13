@@ -12,8 +12,8 @@
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
 - Latest integrated `main` merge commit: `7749f54`
-- Current gate: required AUTH-04B preimplementation review; no runtime edit is
-  permitted until the contract passes.
+- Current gate: repair the rejected AUTH-04B contract and pass exact-head
+  preimplementation re-review; no runtime edit is permitted before that pass.
 - Next chunk: none; do not start `WS-AUTH-001-05` automatically.
 - `WS-AUTH-001-04B` is active for planning/review only. AUTH-05 and later chunks
   remain inactive.

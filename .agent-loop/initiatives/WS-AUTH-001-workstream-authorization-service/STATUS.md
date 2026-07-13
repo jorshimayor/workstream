@@ -36,12 +36,13 @@ Backend, Agent Gates, and CodeRabbit passed on final branch head `36c4aa5`, then
 explicit human approval merged PR #111 to `main` as `90c9a28` on 2026-07-13.
 AUTH-04A post-merge memory merged through PR #112 as `7749f54`. The user then
 explicitly started AUTH-04B; its required L1 preimplementation review is active
-and runtime edits remain gated.
+and rejected the first activated contract before runtime edits. Repaired-
+contract re-review is active; runtime remains gated.
 
 ## Active planning chunk
 
-`WS-AUTH-001-04B` - PostgreSQL Rate Controls. Planning/review only; runtime
-implementation has not started.
+`WS-AUTH-001-04B` - PostgreSQL Rate Controls. Repaired-contract review only;
+runtime implementation has not started.
 
 ## Active implementation chunk
 
@@ -61,7 +62,7 @@ None.
 | `WS-AUTH-001-03` | Merged | `codex/ws-auth-001-03-legacy-actor-classification` | #109 | Merged as `f06532e`; reviewed code `8c5334c`; final branch head `43ffbfe`. |
 | `WS-AUTH-001-04` | Split | `codex/ws-auth-001-04-request-api-controls` | - | Parent split before runtime implementation. |
 | `WS-AUTH-001-04A` | Merged | `codex/ws-auth-001-04-request-api-controls` | #111 | Merged as `90c9a28`; production review `cdcaf77`; final branch head `36c4aa5`. |
-| `WS-AUTH-001-04B` | Preimplementation review | `codex/ws-auth-001-04b-postgres-rate-controls` | - | Explicitly started after 04A memory merged; runtime gated on required review. |
+| `WS-AUTH-001-04B` | Contract re-review | `codex/ws-auth-001-04b-postgres-rate-controls` | - | Initial review rejected ambiguity; repaired contract is under exact-head review and runtime remains gated. |
 | `WS-AUTH-001-05` | Proposed | - | - | Authority evidence and idempotency foundation. |
 | `WS-AUTH-001-06` | Proposed | - | - | Canonical actor profile and identity link. |
 | `WS-AUTH-001-07` | Proposed | - | - | Authorization kernel and permissions. |
@@ -78,7 +79,7 @@ None.
 ## Blockers
 
 No external blocker. AUTH-04B runtime implementation is internally gated until
-its L1 preimplementation review passes. It owns migration `0017`, following the
+its repaired L1 contract passes re-review. It owns migration `0017`, following the
 now-owned `0016` prefix on current main. Non-test
 operators must later supply explicit classification evidence rather than
 inferred kinds before the owning canonical actor migration.
