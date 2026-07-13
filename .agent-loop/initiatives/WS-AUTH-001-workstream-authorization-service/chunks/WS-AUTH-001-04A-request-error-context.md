@@ -216,8 +216,9 @@ legacy compatibility, OpenAPI truth, and unchanged product authority.
 ## Activation
 
 The user explicitly started parent AUTH-04 on 2026-07-13. Required plan review
-split it before implementation. Only this repaired 04A contract is active;
-runtime edits remain gated on its required preimplementation re-review.
+split it before implementation. Only this repaired 04A contract was activated,
+and runtime edits began only after its required preimplementation re-review
+passed.
 
 ## Merge result
 
