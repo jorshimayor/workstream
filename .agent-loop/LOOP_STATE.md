@@ -24,8 +24,11 @@
   non-transitive loop summaries, evaluation-order/iterable-target bypasses, and
   incorrect `except*` flow. R6 stopped at `68174d1`: review found incomplete
   comprehension/set/dict element provenance, structural generator consumption,
-  and class-global bindings. R7 passed all ten plan tracks at `f0134aa`; its
-  shared iterable abstraction implementation is active.
+  and class-global bindings. R7 passed all ten plan tracks at `f0134aa`.
+  Cycle-zero review at `26a4e6e` found lazy-generator, unpacked provenance,
+  conditional provenance, empty-dict reachability, and class-global transfer
+  gaps. The cycle-one repair is bound at `a8e1e78`; fresh internal review is
+  active after 254 focused behavior tests and the exact 950-line gate passed.
 - Prior WS-ART reviewed planning SHA: `f7fbc33`
 - Prior WS-ART final evidence-bound planning branch head: `c069064`
 - WS-ART planning merge commit: `8644a43`
@@ -48,8 +51,8 @@
 - WS-QUAL-001-01A merge commit: `2901a3ebe68b7c770ccb1ff06841d79ce0c20d94`
 - WS-QUAL-001-01A post-merge memory merge commit:
   `8829a7ec3aa5199aae0aecbe5fda030c42a051cd`
-- Current gate: implement and internally review only B1B-R7. 01B2 remains
-  inactive; AUTH-02 continues independently.
+- Current gate: internally re-review only B1B-R7 cycle one. 01B2 remains
+  inactive; AUTH-02 is independently published as ready PR #107.
 - Next chunk: `WS-QUAL-001-02` remains inactive; do not start it automatically.
 - Parallel implementation: the user explicitly authorized `WS-AUTH-001-02` to
   resume off-main in its separate worktree while coverage continues. AUTH must

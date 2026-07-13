@@ -118,8 +118,16 @@
 - B1B-R7 reviewed contract SHA: `f0134aa`
 - B1B-R7 start signal: continuing the user's explicit parallel coverage/AUTH
   direction after internal contract approval on 2026-07-13
+- B1B-R7 cycle-zero candidate: `26a4e6e`
+- B1B-R7 cycle-zero result: lazy unknown-call genexpr bodies, unpacked and
+  conditional provenance, empty-dict reachability, and class-global transfer
+  remained incomplete.
+- B1B-R7 cycle-one candidate:
+  `a8e1e789f0421c35ecd6f23b9778379fb4b01156`
+- B1B-R7 cycle-one proof: 254 focused behavior tests, Ruff, `pip check`, diff
+  hygiene, and exact 950/950 candidate lines passed; internal re-review active.
 
 ## Stop condition
 
-Only B1B-R7 is active on the coverage branch. AUTH-02 proceeds independently
-off-main. Do not start 01B2 or chunk 02.
+Only B1B-R7 internal re-review is active on the coverage branch. AUTH-02 is
+independently published as ready PR #107. Do not start 01B2 or chunk 02.

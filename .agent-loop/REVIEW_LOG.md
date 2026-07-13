@@ -125,6 +125,17 @@ B1B-R7 contract review: PASS at `f0134aa` across all ten required tracks. The
 recursive iterable/structural consumption contract and 800/870/920/950
 allocation passed; R7 implementation is active.
 
+B1B-R7 cycle-zero review: FAIL at `26a4e6e`. Engineering and QA reproduced
+lazy generator body effects, starred/dict-unpack and conditional provenance
+bypasses, empty-dict reachability, and class-global boundary/sequencing gaps.
+
+B1B-R7 cycle-one candidate: `a8e1e789f0421c35ecd6f23b9778379fb4b01156`.
+The repair preserves lazy unknown-call genexpr bodies, recognizes structural
+and known eager consumption, closes recursive unpack/conditional provenance,
+walks literal-empty clauses, and makes declared class-global transfer
+sequential and class-local. Proof is 254 focused tests, Ruff, `pip check`, diff
+hygiene, and exactly 950/950 candidate lines. Fresh internal review is active.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract
