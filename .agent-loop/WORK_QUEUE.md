@@ -66,5 +66,5 @@ the user gives a separate explicit start signal.
 | `WS-QUAL-001-01B1` | 496/500 lines after two semantic-integrity repair cycles | Superseded by the proposed 01B1A/01B1B split; do not resume |
 | `WS-QUAL-001-01B1A` | 394/400 lines after two parser-normalization repair cycles; final QA/security review found two valid bypass variants | Replan the parser boundary before any further implementation |
 | `WS-QUAL-001-01B1A-R1` | Additional valid false-positive finding outside its two-fix contract | Superseded by R2 canonical-grammar proposal; do not resume |
-| `WS-QUAL-001-01B1B` | 223/300 after two binding/AST repair cycles; final test-delta review found lexical-shadow false positives and a weakened local-skipTest expectation | Superseded by proposed B1B-R1; do not resume |
+| `WS-QUAL-001-01B1B` | 223/300 after two binding/AST repair cycles; final test-delta review found lexical-shadow false positives and a weakened local-skipTest expectation | Replaced through stopped R1 by proposed B1B-R2; do not resume |
 | `WS-QUAL-001-01B1B-R1` | Shared resolver measured 282 lines before its required behavior matrix, exceeding the 270 checkpoint and making the 300 cap infeasible | Superseded by proposed B1B-R2; no implementation draft retained |

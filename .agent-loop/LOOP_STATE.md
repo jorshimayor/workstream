@@ -8,7 +8,7 @@
 - Branch: `codex/ws-qual-001-01b1b-semantic-delta-guards`
 - Status: B1B stopped at 223/300 lines after its second binding/AST repair
   cycle. Review at `10dff4f` found lexical-shadow false positives and a
-  weakened local-lookalike `skipTest` expectation. B1B-R1 is proposed as the
+  weakened local-lookalike `skipTest` expectation. B1B-R1 was proposed as the
   bounded lexical-binding replacement. R1 passed plan review but stopped at its
   first size checkpoint: the shared resolver alone measured 282 lines before
   its required matrix, so its 300-line cap could not preserve proof. R2 is
