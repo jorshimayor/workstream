@@ -378,13 +378,21 @@ async def test_validation_summary_redacts_unsupported_location_parts() -> None:
     @app.get("/_test/unsupported-location")
     async def unsupported_location() -> None:
         raise RequestValidationError(
-            [{"type": "value_error", "loc": ("query", None), "input": "secret"}]
+            [
+                {
+                    "type": "value_error",
+                    "loc": ("query", None),
+                    "input": "secret",
+                    "ctx": "bounded context",
+                }
+            ]
         )
 
     response = await _get(app, "/_test/unsupported-location")
 
     assert response.status_code == 422
     assert response.json()["detail"][0]["loc"] == ["query", None]
+    assert response.json()["detail"][0]["ctx"] == "bounded context"
     assert response.json()["error"]["details"]["errors"][0]["loc"] == [
         "query",
         "redacted",
