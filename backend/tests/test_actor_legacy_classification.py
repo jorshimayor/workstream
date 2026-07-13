@@ -122,9 +122,7 @@ def test_manifest_and_row_hashes_are_order_independent() -> None:
         ("subject", "   "),
     ],
 )
-def test_classification_rejects_unsupported_or_noncanonical_values(
-    field: str, value: str
-) -> None:
+def test_classification_rejects_unsupported_or_noncanonical_values(field: str, value: str) -> None:
     payload = {
         "actor_id": ACTOR_ID,
         "issuer": ISSUER,
@@ -160,7 +158,7 @@ def test_manifest_rejects_duplicate_actor_and_external_identity() -> None:
         b'{"schema_version":1,"schema_version":1,"classifications":[]}',
         b'{"schema_version":NaN,"classifications":[]}',
         b'{"schema_version":Infinity,"classifications":[]}',
-        b'{not-json}',
+        b"{not-json}",
         b'{"schema_version":1e9999,"classifications":[]}',
         (b'{"schema_version":' + b"9" * 4_301 + b',"classifications":[]}'),
     ],
@@ -329,9 +327,7 @@ def test_envelope_verification_recomputes_manifest_and_row_digests() -> None:
     original["envelope_sha256"] = hashlib.sha256(
         json.dumps(unsigned, separators=(",", ":"), sort_keys=True).encode()
     ).hexdigest()
-    manifest_tampered = LegacyActorClassificationEnvelope.model_validate_json(
-        json.dumps(original)
-    )
+    manifest_tampered = LegacyActorClassificationEnvelope.model_validate_json(json.dumps(original))
     with pytest.raises(LegacyClassificationError, match="^manifest_checksum_mismatch$"):
         verify_envelope(
             manifest_tampered,
@@ -494,6 +490,7 @@ def test_publish_requires_owner_only_output_directory(tmp_path: Path) -> None:
             git_common_dir=git_common,
         )
 
+
 def test_failed_atomic_publish_leaves_no_destination_or_temporary_file(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -577,9 +574,7 @@ def test_migration_handoff_reads_process_environment(
     monkeypatch.setenv(CLASSIFICATION_FILE_ENV, str(path))
 
     assert (
-        load_migration_envelope_from_environment(
-            (legacy_row(),), database_binding=DATABASE_BINDING
-        )
+        load_migration_envelope_from_environment((legacy_row(),), database_binding=DATABASE_BINDING)
         == envelope()
     )
 
@@ -775,3 +770,34 @@ def test_cli_main_bounds_database_cleanup_failures(
         "error": "database_cleanup_failed",
         "status": "error",
     }
+
+
+@pytest.mark.parametrize(
+    ("primary_failure", "expected_result", "expected_error"),
+    [
+        (KeyboardInterrupt(), 130, "interrupted"),
+        (LegacyClassificationError("generated_at_required"), 2, "generated_at_required"),
+        (RuntimeError(SUBJECT), 2, "database_operation_failed"),
+    ],
+)
+def test_cli_cleanup_preserves_primary_failure(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    primary_failure: BaseException,
+    expected_result: int,
+    expected_error: str,
+) -> None:
+    async def fail(_args) -> dict:
+        raise primary_failure
+
+    async def fail_cleanup() -> None:
+        raise RuntimeError(SUBJECT)
+
+    monkeypatch.setattr(classification_cli, "_execute", fail)
+    monkeypatch.setattr(classification_cli, "dispose_engine", fail_cleanup)
+
+    assert classification_cli.main([]) == expected_result
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert SUBJECT not in captured.err
+    assert json.loads(captured.err) == {"error": expected_error, "status": "error"}

@@ -18,8 +18,9 @@ all required internal tracks passed and PR #107 merged as `060b780` on
 2026-07-13. The user then explicitly started `WS-AUTH-001-03`. Its L1
 preimplementation plan review passed with conditions. Bounded implementation,
 repair, and all required internal reviewer tracks now pass on reviewed code SHA
-`8e2ae48`. Main through PR #108 is integrated at reviewed lifecycle head
-`a70b89c`; ready PR #109 is open for external checks and explicit human review.
+`8e2ae48`. PR #108 merged to `main` as `5c47aba`; that main revision is
+integrated into AUTH, whose lifecycle reconciliation was reviewed at `a70b89c`.
+Ready PR #109 is open for external checks and explicit human review.
 
 ## Active planning chunk
 
@@ -57,9 +58,11 @@ None.
 
 ## Blockers
 
-No current blocker. AUTH-03 requires no production identity payloads for
-deterministic implementation; non-test operators must later supply explicit
-classification evidence rather than inferred kinds.
+No implementation blocker. AUTH-03 requires no production identity payloads
+for deterministic implementation; non-test operators must later supply explicit
+classification evidence rather than inferred kinds. PR #109 external checks,
+explicit human review, and repository-wide coverage proof remain pending merge
+gates.
 
 AUTH-03 review evidence and its PR trust bundle are recorded at
 `reviews/WS-AUTH-001-03-internal-review-evidence.md` and

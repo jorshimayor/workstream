@@ -122,9 +122,10 @@ subsystem coverage of at least 90 percent while preserving the global baseline.
 
 ## Implementation review status
 
-Implementation and required internal review passed on reviewed code SHA
-`8e2ae489834a3934d6ef507834139a1009dac2e6`. Focused isolated-PostgreSQL
-behavior proof is 57 passing tests with 92 percent combined statement coverage
-for the new classifier and CLI. The isolated database-runner lifecycle suite
-passes 16/16. PR #109 external checks and explicit human review are the current
-gate; AUTH-04 remains inactive.
+Implementation SHA `8e2ae489834a3934d6ef507834139a1009dac2e6`
+and reviewed lifecycle revision `a70b89c91a8950eabaa750e340d4f853529d66f0`
+passed the required internal reviews. Focused isolated-PostgreSQL behavior proof
+is 57 passing tests with 92 percent combined statement coverage for the new
+classifier and CLI. The isolated database-runner lifecycle suite passes 16/16.
+PR #109 external checks and explicit human review are the current gate; AUTH-04
+remains inactive.

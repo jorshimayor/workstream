@@ -3,7 +3,7 @@
 ## Current state
 
 - Phase: `WS-QUAL-001-01B1B-R10` merged; post-merge memory reconciled
-- Branch: `codex/ws-qual-001-01b1b-semantic-delta-guards`
+- Historical implementation branch: `codex/ws-qual-001-01b1b-semantic-delta-guards`
 - Authoritative target: 90 percent complete backend application statement coverage
 - Diagnostic AUTH-02 baseline: 78.26 percent after database isolation repair
 - Final reviewed planning SHA: `0d9dd987d546c864fa8de7bae462e5e73a1b5ea9`

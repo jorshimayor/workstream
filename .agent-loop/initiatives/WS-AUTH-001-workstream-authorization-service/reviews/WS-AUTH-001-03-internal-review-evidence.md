@@ -16,24 +16,24 @@ Reviewed implementation SHA: `8e2ae489834a3934d6ef507834139a1009dac2e6`
 
 Reviewed at: 2026-07-13T08:23:57Z
 
-Reviewer run IDs: plan-review=/root/auth03_parallel/auth03_plan_review;
-senior-engineering=/root/auth03_parallel/auth03_eng_sec_review;
-architecture=/root/auth03_parallel/auth03_eng_sec_review;
-security-auth=/root/auth03_parallel/auth03_eng_sec_review;
-product-ops=/root/auth03_parallel/auth03_eng_sec_review;
-docs=/root/auth03_parallel/auth03_eng_sec_review;
-reuse-dedup=/root/auth03_parallel/auth03_eng_sec_review;
-qa-test=/root/auth03_parallel/auth03_plan_review;
-test-delta=/root/auth03_parallel/auth03_plan_review;
-ci-integrity=/root/auth03_parallel/auth03_plan_review
+Reviewer run IDs: plan-review=WS-AUTH-001-03-PLAN-20260713;
+senior-engineering=WS-AUTH-001-03-IMPLEMENTATION-ENG-SEC-20260713;
+architecture=WS-AUTH-001-03-IMPLEMENTATION-ENG-SEC-20260713;
+security-auth=WS-AUTH-001-03-IMPLEMENTATION-ENG-SEC-20260713;
+product-ops=WS-AUTH-001-03-IMPLEMENTATION-ENG-SEC-20260713;
+docs=WS-AUTH-001-03-IMPLEMENTATION-ENG-SEC-20260713;
+reuse-dedup=WS-AUTH-001-03-IMPLEMENTATION-ENG-SEC-20260713;
+qa-test=WS-AUTH-001-03-IMPLEMENTATION-QA-CI-20260713;
+test-delta=WS-AUTH-001-03-IMPLEMENTATION-QA-CI-20260713;
+ci-integrity=WS-AUTH-001-03-IMPLEMENTATION-QA-CI-20260713
 
 Merge-resolution review run IDs:
-engineering-security=/root/auth03_parallel/auth03_eng_sec_review@2026-07-13T08:22:34Z;
-qa-test-ci=/root/auth03_parallel/auth03_plan_review@2026-07-13T08:23:57Z
+engineering-security=WS-AUTH-001-03-MERGE-ENG-SEC-20260713T082234Z;
+qa-test-ci=WS-AUTH-001-03-MERGE-QA-CI-20260713T082357Z
 
 Evidence-binding re-review run IDs:
-engineering-security=/root/auth03_parallel/auth03_eng_sec_review;
-qa-test-ci=/root/auth03_parallel/auth03_plan_review
+engineering-security=WS-AUTH-001-03-EVIDENCE-ENG-SEC-20260713;
+qa-test-ci=WS-AUTH-001-03-EVIDENCE-QA-CI-20260713
 
 The reviewed implementation remains `8e2ae48`. Merge integration `0ae502b`
 incorporates PR #108 without changing AUTH or QA implementation/test blobs;

@@ -122,9 +122,10 @@ def main(argv: list[str] | None = None) -> int:
     try:
         asyncio.run(dispose_engine())
     except Exception:
-        stdout_message = None
-        stderr_message = '{"error":"database_cleanup_failed","status":"error"}'
-        result = 2
+        if result == 0:
+            stdout_message = None
+            stderr_message = '{"error":"database_cleanup_failed","status":"error"}'
+            result = 2
     if stdout_message is not None:
         print(stdout_message)
     if stderr_message is not None:
