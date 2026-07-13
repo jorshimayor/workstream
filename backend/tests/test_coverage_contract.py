@@ -238,6 +238,8 @@ def test_runner_metadata_fails_closed(tmp_path: Path, updates: dict, code: str) 
     ("from .pytest import skip\nskip()", False),
     ("from local import pytest\npytest.skip()", False),
     ("import pytest\ndef f(pytest): pytest.skip()", False),
+    ("import pytest\na = lambda pytest: pytest.skip(); b = lambda: pytest.skip()", True),
+    ("import pytest\nvalues = (lambda: pytest.skip() for _ in ())", True),
     ("import pytest\ndef f():\n pytest.skip()\n pytest = Local()", False),
     ("import pytest\n[pytest.skip() for pytest in ()]", False),
     ("a = b\nb = a\na.skip()", False),
