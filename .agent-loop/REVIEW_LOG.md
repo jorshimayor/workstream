@@ -121,6 +121,10 @@ comprehension/set/dict iterable provenance, structural consumption, nested
 reachability, and class-global binding gaps. At 800/800 no valid repair and
 proof fit; B1B-R7 is proposed.
 
+B1B-R7 contract review: PASS at `f0134aa` across all ten required tracks. The
+recursive iterable/structural consumption contract and 800/870/920/950
+allocation passed; R7 implementation is active.
+
 ## WS-QUAL-001-01B
 
 Status: user started the chunk after PR #104 merged. Its repaired L1 contract

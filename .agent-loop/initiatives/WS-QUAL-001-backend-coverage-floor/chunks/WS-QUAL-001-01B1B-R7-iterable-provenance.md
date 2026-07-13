@@ -2,8 +2,8 @@
 
 Parent: `WS-QUAL-001` Backend Coverage Floor
 
-Status: proposed after R6's hard-cap circuit stop; internal contract review
-pending.
+Status: all ten internal plan-review tracks passed at `f0134aa`; implementation
+started under the user's parallel coverage/AUTH direction on 2026-07-13.
 
 ## Scope And Allocation
 
