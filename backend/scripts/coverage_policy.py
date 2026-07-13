@@ -194,14 +194,14 @@ class SyntaxPolicy(ast.NodeVisitor):
 
     def import_kind(self, root: str, name: str) -> str:
         if root == "pytest":
-            return {"mark": "mark", "raises": "raises"}.get(name, "blocked" if name in BLOCKED else "pytest")
+            return {"mark": "mark", "raises": "raises"}.get(name, "blocked" if name in BLOCKED else "local")
         if root == "unittest":
-            return "testcase" if name == "TestCase" else "blocked" if name in BLOCKED else "unittest"
+            return "testcase" if name == "TestCase" else "blocked" if name in BLOCKED else "unittest_case" if name == "case" else "local"
         return "local"
 
     def own(self, name: str, kind: str) -> bool:
         previous = self.owners[-1].get(name)
-        merged = kind if previous in {None, kind} else "ambiguous"
+        merged = "|".join(sorted((set((previous or "").split("|")) | set(kind.split("|"))) - {""}))
         self.owners[-1][name] = merged
         return merged != previous
 
@@ -240,7 +240,7 @@ class SyntaxPolicy(ast.NodeVisitor):
         if name in self.shadows[-1]:
             return "local"
         try:
-            symbol = self.tables[-1].lookup(name)
+            symbol = None if self.scope_types[-1] == "comprehension" else self.tables[-1].lookup(name)
         except KeyError:
             symbol = None
         if symbol and symbol.is_global():
@@ -253,27 +253,40 @@ class SyntaxPolicy(ast.NodeVisitor):
         if symbol and (symbol.is_local() or symbol.is_parameter() or symbol.is_imported()):
             return "local"
         for index in range(len(self.owners) - 2, -1, -1):
-            if self.scope_types[index] != "class" and name in self.owners[index]:
+            if self.scope_types[index] == "class":
+                continue
+            if name in self.owners[index]:
                 return self.owners[index][name]
+            if name in self.shadows[index]:
+                return "local"
+            try:
+                outer_symbol = self.tables[index].lookup(name)
+            except KeyError:
+                outer_symbol = None
+            if outer_symbol and (outer_symbol.is_local() or outer_symbol.is_parameter() or outer_symbol.is_imported()):
+                return "local"
         return "local"
 
     def kind(self, node: ast.AST) -> str:
         if isinstance(node, ast.Name):
             return self.get(node.id)
         if isinstance(node, ast.Attribute):
-            owner = self.kind(node.value)
-            if owner == "pytest" and node.attr == "mark":
-                return "mark"
-            if owner == "pytest" and node.attr == "raises":
-                return "raises"
-            if owner == "unittest" and node.attr == "TestCase":
-                return "testcase"
-            if owner in {"pytest", "unittest", "mark"} and node.attr in BLOCKED:
-                return "blocked"
-            if owner == "testcase" and node.attr == "skipTest":
-                return "blocked"
-            if owner == "ambiguous":
-                return "ambiguous"
+            result: set[str] = set()
+            for owner in self.kind(node.value).split("|"):
+                if owner == "pytest" and node.attr == "mark":
+                    result.add("mark")
+                elif owner == "pytest" and node.attr == "raises":
+                    result.add("raises")
+                elif owner == "unittest" and node.attr == "case":
+                    result.add("unittest_case")
+                elif owner in {"unittest", "unittest_case"} and node.attr == "TestCase":
+                    result.add("testcase")
+                elif owner in {"pytest", "unittest", "unittest_case", "mark"} and node.attr in BLOCKED:
+                    result.add("blocked")
+                elif owner == "testcase" and node.attr == "skipTest":
+                    result.add("blocked")
+            if result:
+                return "|".join(sorted(result))
         return "local"
 
     def enter(self, node: ast.AST, table_type: str, name: str, body: list[ast.stmt]) -> None:
@@ -281,7 +294,7 @@ class SyntaxPolicy(ast.NodeVisitor):
         self.owners.append({})
         self.scope_types.append(table_type)
         self.shadows.append(set())
-        self.cases.append(self.cases[-1])
+        self.cases.append(False)
         self.seed(body)
 
     def leave(self) -> None:
@@ -291,19 +304,36 @@ class SyntaxPolicy(ast.NodeVisitor):
         self.shadows.pop()
         self.cases.pop()
 
+    def enter_type_params(self, node: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef | ast.TypeAlias) -> bool:
+        parameters = getattr(node, "type_params", [])
+        if not parameters:
+            return False
+        name = node.name.id if isinstance(node, ast.TypeAlias) else node.name
+        self.tables.append(self.child(node, "type parameter", name))
+        self.owners.append({})
+        self.scope_types.append("function")
+        self.shadows.append({parameter.name for parameter in parameters})
+        self.cases.append(self.cases[-1])
+        for parameter in parameters:
+            for field in ("bound", "default_value"):
+                value = getattr(parameter, field, None)
+                if value:
+                    self.visit(value)
+        return True
+
     def visit_Name(self, node: ast.Name) -> None:
-        if isinstance(node.ctx, ast.Load) and self.get(node.id) in {"blocked", "ambiguous"}:
+        if isinstance(node.ctx, ast.Load) and "blocked" in self.get(node.id).split("|"):
             self.weak = True
 
     def visit_Attribute(self, node: ast.Attribute) -> None:
-        if self.kind(node) in {"blocked", "ambiguous"}:
+        if "blocked" in self.kind(node).split("|"):
             self.weak = True
         if node.attr == "skipTest" and self.cases[-1]:
             self.weak |= isinstance(node.value, ast.Name) and node.value.id == "self" or isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name) and node.value.func.id == "super"
         self.generic_visit(node)
 
     def visit_Call(self, node: ast.Call) -> None:
-        if self.kind(node.func) in {"raises", "ambiguous"}:
+        if "raises" in self.kind(node.func).split("|"):
             self.assertion_ranges.add((node.lineno, node.end_lineno))
         if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id == "self" and node.func.attr.startswith("assert"):
             self.assertion_ranges.add((node.lineno, node.end_lineno))
@@ -314,9 +344,11 @@ class SyntaxPolicy(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        parent_case, direct_method = self.cases[-1], self.scope_types[-1] == "class" and self.cases[-1]
         for value in (*node.decorator_list, *node.args.defaults, *node.args.kw_defaults):
             if value:
                 self.visit(value)
+        type_scope = self.enter_type_params(node)
         if not self.future_annotations:
             for argument in (*node.args.posonlyargs, *node.args.args, *node.args.kwonlyargs):
                 if argument.annotation:
@@ -324,9 +356,16 @@ class SyntaxPolicy(ast.NodeVisitor):
             if node.returns:
                 self.visit(node.returns)
         self.enter(node, "function", node.name, node.body)
+        try:
+            self_symbol = self.tables[-1].lookup("self")
+        except KeyError:
+            self_symbol = None
+        self.cases[-1] = direct_method or parent_case and not (self_symbol and (self_symbol.is_local() or self_symbol.is_parameter()))
         for item in node.body:
             self.visit(item)
         self.leave()
+        if type_scope:
+            self.leave()
 
     visit_AsyncFunctionDef = visit_FunctionDef
 
@@ -334,19 +373,43 @@ class SyntaxPolicy(ast.NodeVisitor):
         for value in (*node.args.defaults, *node.args.kw_defaults):
             if value:
                 self.visit(value)
+        parent_case = self.cases[-1]
         self.enter(node, "function", "lambda", [])
+        try:
+            self_symbol = self.tables[-1].lookup("self")
+        except KeyError:
+            self_symbol = None
+        self.cases[-1] = parent_case and not (self_symbol and (self_symbol.is_local() or self_symbol.is_parameter()))
         self.visit(node.body)
         self.leave()
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
-        for value in (*node.decorator_list, *node.bases, *(keyword.value for keyword in node.keywords)):
+        for value in node.decorator_list:
             self.visit(value)
-        is_case = any(self.kind(base) in {"testcase", "ambiguous"} for base in node.bases)
+        type_scope = self.enter_type_params(node)
+        for value in (*node.bases, *(keyword.value for keyword in node.keywords)):
+            self.visit(value)
+        is_case = any("testcase" in self.kind(base).split("|") for base in node.bases)
         self.enter(node, "class", node.name, node.body)
         self.cases[-1] = is_case
         for item in node.body:
             self.visit(item)
         self.leave()
+        if type_scope:
+            self.leave()
+
+    def visit_TypeAlias(self, node: ast.TypeAlias) -> None:
+        type_scope = self.enter_type_params(node)
+        name = node.name.id
+        self.tables.append(self.child(node, "type alias", name))
+        self.owners.append({})
+        self.scope_types.append("function")
+        self.shadows.append(set())
+        self.cases.append(False)
+        self.visit(node.value)
+        self.leave()
+        if type_scope:
+            self.leave()
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
         if node.value:
@@ -360,9 +423,9 @@ class SyntaxPolicy(ast.NodeVisitor):
         table = self.child(node, "function", "genexpr") if isinstance(node, ast.GeneratorExp) else self.tables[-1]
         self.tables.append(table)
         self.owners.append({})
-        self.scope_types.append("function")
+        self.scope_types.append("comprehension")
         self.shadows.append(names)
-        self.cases.append(self.cases[-1])
+        self.cases.append(self.cases[-1] and "self" not in names)
         for index, generator in enumerate(node.generators):
             if index:
                 self.visit(generator.iter)
