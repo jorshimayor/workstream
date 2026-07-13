@@ -25,8 +25,12 @@ scope finding stops/replans.
 
 - `symtable` is authoritative for module/function/lambda/comprehension/class
   namespaces, parameters including varargs/kwargs, whole-function locals,
-  globals/nonlocals, exception/loop/with targets, and class non-closure. Scope
-  table mapping must be deterministic and fail closed if ambiguous.
+  globals/nonlocals, exception/loop/with targets, and class non-closure.
+- Within each parent scope, pair AST scope-creating nodes with
+  `SymbolTable.get_children()` in source traversal ordinal. Validate expected
+  table type, normalized name, and line, consume each child exactly once, and
+  fail closed on missing, mismatched, or extra children; do not use a
+  collision-prone `(name, line)` lookup.
 - AST value flow classifies framework modules/members, TestCase class/instance,
   local, and ambiguity. Imports, assignment/annotation/named expressions,
   decorators, `pytestmark` scalar/list forms, and If/loop/try/match joins are
@@ -44,7 +48,9 @@ scope finding stops/replans.
 
 Run all B1B checks and regressions for lambda, varargs/kwargs, comprehensions,
 exception targets, nested classes, annotations, loops/try/match, `pytestmark`,
-shadowed `exec`, TestCase ambiguity, and deleted raises. Required reviewers:
+shadowed `exec`, TestCase ambiguity, and deleted raises. Include two same-line
+lambdas/comprehensions and repeated same-name definitions to prove ordinal
+scope-table pairing. Required reviewers:
 senior engineering, QA/test, security/auth, product/ops, architecture, CI
 integrity, reuse/dedup, and test delta.
 
