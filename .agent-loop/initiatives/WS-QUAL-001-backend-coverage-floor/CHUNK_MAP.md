@@ -19,7 +19,7 @@
 | `WS-QUAL-001-01B1B-R7` | Recursive iterable provenance | L1 | Stopped after final two-cycle review; do not resume |
 | `WS-QUAL-001-01B1B-R8` | Conservative syntactic integrity policy | L1 | Stopped after final review found Python 3.11 scope incompatibility |
 | `WS-QUAL-001-01B1B-R9` | Python 3.11 comprehension scope compatibility | L1 | Stopped after final Python 3.13 TypeVar child-order finding |
-| `WS-QUAL-001-01B1B-R10` | Python 3.13 TypeVar child order | L1 | All plan tracks passed at `c42a67a`; implementation active |
+| `WS-QUAL-001-01B1B-R10` | Python 3.13 TypeVar child order | L1 | Implementation/internal review passed at `15d0b80`; PR publication pending |
 | `WS-QUAL-001-01B2` | Git provenance, configured baseline evidence, and CI ratchet | L1 | Inactive until B1B-R10 merge/memory plus explicit user start |
 | `WS-QUAL-001-02` | Project setup/policy/correction service coverage; floor at least 82% | L1 | Inactive |
 | `WS-QUAL-001-03` | Project repository/router coverage; floor at least 84% | L1 | Inactive |

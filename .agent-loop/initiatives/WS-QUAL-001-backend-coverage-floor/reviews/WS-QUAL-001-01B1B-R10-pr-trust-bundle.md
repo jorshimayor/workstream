@@ -1,0 +1,49 @@
+# WS-QUAL-001-01B1B-R10 PR Trust Bundle
+
+## Intent
+
+Finish the semantic test-integrity gate without embedding a Python execution
+model. The final policy is conservative syntax ownership: known pytest/unittest
+weakening constructs are rejected and assertion deletion is protected.
+
+## Design
+
+- Exact absolute framework imports and finite simple aliases establish monotone
+  lexical ownership.
+- Runtime reachability, values, containers, consumers, and provenance do not.
+- Stdlib symtable supplies lexical scopes across Python 3.11-3.13.
+- Capability-based child selection supports Python 3.11 comprehension tables,
+  Python 3.12+ inlining, and Python 3.13 public TypeVar child ordering.
+
+## Scope
+
+- `backend/scripts/coverage_policy.py`
+- `backend/tests/test_coverage_contract.py`
+- WS-QUAL/global loop memory, contracts, decisions, and review evidence
+
+The 20-file reviewed branch diff contains 1,772 additions and 39 deletions.
+Only 577 raw lines belong to the policy/test implementation; the remainder is
+the retained R1-R10 planning, stop, and review history. No CI workflow is enabled
+here; B2 owns mandatory GitHub enforcement after this PR merges.
+
+## Verification
+
+The identical 171-test matrix passes on Python 3.11.15, 3.12.3, and 3.13.3.
+Ruff, dependency integrity, self-validation, exact scope, ancestry, wording,
+memory, links, and diff hygiene pass. All ten required internal reviewer tracks
+pass at `15d0b80e776f5be12cacc5dbe5226ffe3992dcfd`.
+
+## Risk And Human Focus
+
+- The policy is intentionally conservative once syntax is framework-owned.
+- Local parameters/declarations, relative imports, unknown framework members,
+  unrelated attributes, and non-TestCase `self.skipTest` remain clean.
+- Human review should confirm the syntax-only boundary, cross-version symtable
+  selection, readable behavior matrix, and absence of CI/config/application
+  drift.
+
+## Follow-Up Gate
+
+Stop after human review and merge. B2 remains inactive until this PR and its
+post-merge memory are merged and the user explicitly starts B2. Coverage stays
+at the measured 79.25 percent until B2 and coverage-raising chunks 02-06 run.

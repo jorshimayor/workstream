@@ -5,7 +5,7 @@
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
 | `WS-AUTH-001-03` | Legacy Actor Classification Preflight | L1 | Active in isolated AUTH worktree after user start; plan review running |
-| `WS-QUAL-001-01B1B-R10` | TypeVar Child Order | L1 | All plan tracks passed at `c42a67a`; implementation active |
+| `WS-QUAL-001-01B1B-R10` | TypeVar Child Order | L1 | Implementation and all internal tracks pass at `15d0b80`; PR publication pending |
 
 ## Planned Next
 

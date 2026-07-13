@@ -45,9 +45,9 @@
   `a5395c1`; identical 165-test matrices pass on Python 3.11, 3.12, and 3.13 at
   553/600 raw lines. Final review found Python 3.13 bound/default children need
   one shared public ordinal. R9 is stopped; all R10 plan tracks passed at
-  `c42a67a`. Implementation is bound at `15d0b80`; identical 171-test matrices
-  pass on Python 3.11, 3.12, and 3.13 at 577/620 raw lines. Internal review is
-  active.
+  `c42a67a`. Reviewed implementation `15d0b80` passes identical 171-test
+  matrices on Python 3.11, 3.12, and 3.13 at 577/620 raw lines. All required
+  internal tracks pass; evidence binding and PR publication are active.
 - Prior WS-ART reviewed planning SHA: `f7fbc33`
 - Prior WS-ART final evidence-bound planning branch head: `c069064`
 - WS-ART planning merge commit: `8644a43`
@@ -70,7 +70,7 @@
 - WS-QUAL-001-01A merge commit: `2901a3ebe68b7c770ccb1ff06841d79ce0c20d94`
 - WS-QUAL-001-01A post-merge memory merge commit:
   `8829a7ec3aa5199aae0aecbe5fda030c42a051cd`
-- Current gate: implement and internally review only R10. 01B2 remains inactive;
+- Current gate: publish only the reviewed R10 PR. 01B2 remains inactive;
   AUTH-02 merged through PR #107 as `060b780`.
 - Next chunk: `WS-QUAL-001-02` remains inactive; do not start it automatically.
 - Parallel initiative: `WS-AUTH-001-02` merged through PR #107 as `060b780`.
