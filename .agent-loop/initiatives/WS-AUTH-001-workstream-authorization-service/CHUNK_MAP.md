@@ -80,8 +80,8 @@ WS-AUTH-001-PLAN
 AUTH-03 post-merge memory merged through PR #110 as `1864867`. The user
 explicitly started parent AUTH-04. Required plan review split it before runtime
 implementation. AUTH-04A's repaired-contract review passed at `f98bbfc`;
-production review passed at `cdcaf77`, and final test-only head `47241cf` passed
-exact-head confirmation. Ready PR publication and complete GitHub checks are
-the current gate.
+production review passed at `cdcaf77`, and the final test-only revision is
+bound in internal review evidence after exact-head confirmation. Ready PR
+publication and complete GitHub checks are the current gate.
 Do not start AUTH-04B, AUTH-05, or POL-002-04; each retains its separate start
 signal and prerequisites.

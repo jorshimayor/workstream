@@ -2,10 +2,13 @@
 
 ## 2026-07-13 - WS-AUTH-001-04A Internal Review Passed
 
-All required implementation tracks pass on production SHA `cdcaf77`. Final
-test-only head `47241cf` adds one genuine real-ASGI scalar validation-context
-branch assertion; exact-head test-delta review confirmed identical production
-blobs and retained every earlier result. Valid OpenAPI, response-header,
+All required implementation tracks pass on production SHA `cdcaf77`.
+Test-validation head `47241cf` added one genuine real-ASGI scalar
+validation-context branch assertion. A later test-only repair establishes and
+restores logging capture after in-process Alembic configuration disables an
+existing logger. Exact-head test-delta review confirmed identical production
+blobs and retained every earlier result; the final reviewed test revision is
+bound in the internal review evidence. Valid OpenAPI, response-header,
 pre-response logging, real-ASGI behavior, inventory, compatibility, and memory
 findings were repaired without rate controls, schema, grants, roles, routes, or
 product-authority changes.
