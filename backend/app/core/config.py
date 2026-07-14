@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import binascii
+import json
 import os
 from collections.abc import Mapping
 from functools import lru_cache
@@ -122,6 +123,31 @@ class Settings(BaseSettings):
         return super().model_validate(obj, **kwargs)
 
     @classmethod
+    def model_validate_json(
+        cls,
+        json_data: str | bytes | bytearray,
+        **kwargs: object,
+    ) -> Self:
+        """Sanitize JSON secret input before Pydantic retains the document."""
+        try:
+            parsed = json.loads(json_data)
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            raise ValueError("invalid settings JSON") from None
+        if isinstance(parsed, Mapping) and "api_rate_limit_key_secret" in parsed:
+            return cls.model_validate(parsed, **kwargs)
+        return super().model_validate_json(json_data, **kwargs)
+
+    @classmethod
+    def model_validate_strings(cls, obj: object, **kwargs: object) -> Self:
+        """Sanitize string-mapping secret input before structured validation."""
+        if isinstance(obj, Mapping) and "api_rate_limit_key_secret" in obj:
+            sanitized = dict(obj)
+            secret = _extract_api_rate_limit_key_secret(sanitized)
+            sanitized["api_rate_limit_key_secret"] = secret
+            return super().model_validate_strings(sanitized, **kwargs)
+        return super().model_validate_strings(obj, **kwargs)
+
+    @classmethod
     def settings_customise_sources(
         cls,
         settings_cls: type[BaseSettings],
@@ -184,8 +210,14 @@ def _extract_api_rate_limit_key_secret(values: dict[str, object]) -> SecretStr |
         env_file = values.get("_env_file", ".env")
         if env_file is not None:
             env_encoding = values.get("_env_file_encoding", "utf-8")
-            dotenv = dotenv_values(env_file, encoding=env_encoding)
-            raw_value = dotenv.get("WORKSTREAM_API_RATE_LIMIT_KEY_SECRET", missing)
+            env_files = (
+                (env_file,)
+                if isinstance(env_file, (str, os.PathLike))
+                else tuple(env_file)
+            )
+            for path in env_files:
+                dotenv = dotenv_values(path, encoding=env_encoding)
+                raw_value = dotenv.get("WORKSTREAM_API_RATE_LIMIT_KEY_SECRET", raw_value)
     if raw_value is missing or raw_value is None:
         return None
     if isinstance(raw_value, SecretStr):

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import json
 from pathlib import Path
 
 import pytest
@@ -64,6 +65,26 @@ def test_rate_limit_secret_loads_from_environment_and_dotenv(
     assert env_settings.api_rate_limit_key_secret.get_secret_value() == env_encoded
     assert dotenv_settings.api_rate_limit_key_secret is not None
     assert dotenv_settings.api_rate_limit_key_secret.get_secret_value() == dotenv_encoded
+
+
+def test_rate_limit_secret_loads_from_layered_dotenv_files(tmp_path: Path) -> None:
+    first_encoded = base64.b64encode(bytes(range(32))).decode("ascii")
+    second_encoded = base64.b64encode(bytes(range(1, 33))).decode("ascii")
+    first = tmp_path / "first.env"
+    second = tmp_path / "second.env"
+    first.write_text(
+        f"WORKSTREAM_API_RATE_LIMIT_KEY_SECRET={first_encoded}\n",
+        encoding="utf-8",
+    )
+    second.write_text(
+        f"WORKSTREAM_API_RATE_LIMIT_KEY_SECRET={second_encoded}\n",
+        encoding="utf-8",
+    )
+
+    settings = Settings(_env_file=(first, second))
+
+    assert settings.api_rate_limit_key_secret is not None
+    assert settings.api_rate_limit_key_secret.get_secret_value() == second_encoded
 
 
 def test_rate_limit_secret_is_absent_from_unrelated_structured_errors() -> None:
@@ -132,6 +153,62 @@ def test_model_validate_rate_limit_secret_is_absent_from_unrelated_errors() -> N
 
     assert encoded not in repr(caught.value.errors())
     assert encoded not in caught.value.json()
+
+
+@pytest.mark.parametrize("method_name", ["model_validate_json", "model_validate_strings"])
+def test_alternate_validation_loads_rate_limit_secret(method_name: str) -> None:
+    encoded = base64.b64encode(bytes(range(32))).decode("ascii")
+    payload = {"api_rate_limit_key_secret": encoded}
+    method = getattr(Settings, method_name)
+
+    settings = method(json.dumps(payload) if method_name.endswith("json") else payload)
+
+    assert settings.api_rate_limit_key_secret is not None
+    assert settings.api_rate_limit_key_secret.get_secret_value() == encoded
+
+
+@pytest.mark.parametrize("method_name", ["model_validate_json", "model_validate_strings"])
+def test_alternate_validation_rejects_rate_limit_secret_without_echo(
+    method_name: str,
+) -> None:
+    invalid = "not-a-canonical-secret"
+    payload = {"api_rate_limit_key_secret": invalid}
+    method = getattr(Settings, method_name)
+
+    with pytest.raises(ValueError, match="^invalid API rate limit key secret$") as caught:
+        method(json.dumps(payload) if method_name.endswith("json") else payload)
+
+    assert not isinstance(caught.value, ValidationError)
+    assert invalid not in f"{caught.value!s} {caught.value!r}"
+
+
+@pytest.mark.parametrize("method_name", ["model_validate_json", "model_validate_strings"])
+def test_alternate_validation_secret_is_absent_from_unrelated_errors(
+    method_name: str,
+) -> None:
+    encoded = base64.b64encode(bytes(range(32))).decode("ascii")
+    payload = {
+        "api_rate_limit_key_secret": encoded,
+        "artifact_store_backend": "flow_node",
+    }
+    method = getattr(Settings, method_name)
+
+    with pytest.raises(ValidationError) as caught:
+        method(json.dumps(payload) if method_name.endswith("json") else payload)
+
+    assert encoded not in repr(caught.value.errors())
+    assert encoded not in caught.value.json()
+
+
+def test_model_validate_json_rejects_malformed_document_without_echo() -> None:
+    invalid = "not-a-canonical-secret"
+    payload = f'{{"api_rate_limit_key_secret":"{invalid}"'
+
+    with pytest.raises(ValueError, match="^invalid settings JSON$") as caught:
+        Settings.model_validate_json(payload)
+
+    assert not isinstance(caught.value, ValidationError)
+    assert invalid not in f"{caught.value!s} {caught.value!r}"
 
 
 @pytest.mark.parametrize(

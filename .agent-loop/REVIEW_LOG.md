@@ -19,12 +19,27 @@ service principals, exact resource authorization evidence, and never derives
 authority from a credential or receipt. No artifact runtime or AUTH-05 behavior
 is activated.
 
-Repair evidence is 78 migration-inclusive isolated PostgreSQL behavior tests,
+Initial repair evidence is 78 migration-inclusive isolated PostgreSQL behavior tests,
 69 focused rate-control/config tests at 98 percent subsystem coverage, and the
 real API contract E2E. Ruff, docstring coverage, stale authorization/artifact/
 Workstream wording, Markdown links, loop memory, diff integrity, and all 36
-agent-gate tests pass. The repaired production delta is 437 non-comment lines,
+agent-gate tests pass. The repaired production delta is 465 non-comment lines,
 below the 500-line hard stop. Exact-SHA internal re-review is the current gate.
+
+Exact-head review of `0b9d0fe` passed QA, CI integrity, and test delta, but
+senior engineering and security found the same retention class in
+`model_validate_json` and `model_validate_strings`; malformed JSON could also
+retain its complete document. Senior engineering additionally found that the
+manual secret source did not preserve BaseSettings' supported layered-dotenv
+precedence. The final bounded repair covers those public entry points, rejects
+malformed JSON with a constant non-retaining error, and resolves layered dotenv
+files in order. Exact-SHA re-review remains mandatory before publication.
+
+Final repair evidence adds 77 focused behavior tests at 98 percent subsystem
+coverage, 56 direct configuration tests, and the exact AUTH-04B migration test
+passing against a fresh isolated database. The production delta is 465
+non-comment lines and remains below the 500-line hard stop. All static gates
+continue to pass.
 
 ## 2026-07-13 - WS-AUTH-001-04B Repaired Contract Passed
 

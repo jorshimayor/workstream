@@ -132,8 +132,11 @@ AUTH-05 or later chunk implementation
   and no generated secret. Present
   malformed, non-ASCII, noncanonical, whitespace-bearing, too-short, or
   too-long values fail settings construction. Unrelated Pydantic failures and
-  the alternate `model_validate` entry point must not retain the raw key in
-  structured error APIs.
+  alternate `model_validate`, `model_validate_json`, and
+  `model_validate_strings` entry points must not retain the raw key in
+  structured error APIs. Malformed settings JSON fails with a constant error
+  that does not retain the supplied document. Layered dotenv files preserve
+  BaseSettings' later-file precedence.
 - Exact numeric settings are `api_first_access_rate_limit=10`,
   `api_first_access_rate_window_seconds=60`,
   `api_admin_mutation_rate_limit=30`, and
