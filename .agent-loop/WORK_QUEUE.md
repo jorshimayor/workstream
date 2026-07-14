@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-05A` | Shared Audit Ownership And Append-Only Authority Evidence | L1 | Repaired contract passed at `7cc6058`; bounded runtime repair and focused evidence |
+| `WS-AUTH-001-05A` | Shared Audit Ownership And Append-Only Authority Evidence | L1 | 1000-line circuit-breaker amendment review; runtime draft discarded at prior 650 stop |
 
 ## Planned Next
 

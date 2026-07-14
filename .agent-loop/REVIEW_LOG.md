@@ -1,12 +1,23 @@
 # Review Log
 
+## 2026-07-14 - WS-AUTH-001-05A Circuit Breaker Reopened
+
+The first post-approval exact-registry dry run reached 689 changed non-comment
+production lines before readable PostgreSQL parity was complete, crossing the
+650 hard stop. The uncommitted runtime draft was discarded and the tree
+returned to the 484-line approved implementation checkpoint. Splitting typed
+and database enforcement into separately mergeable PRs would leave an
+incomplete security boundary, so the user approved a 1000-line hard stop
+with the existing 500-line inspection, 120-character migration line gate, and
+no SQL packing. Runtime work remains paused for exact-SHA amendment review.
+
 ## 2026-07-14 - WS-AUTH-001-05A Repaired Contract Review Passed
 
 The exact contract at `7cc6058` passed senior engineering, architecture,
 product/ops, docs, reuse, QA, CI/test-delta, and security/privacy review. It
 locks closed envelope/reason/fact registries, cross-field project integrity,
 non-echoing Mapping/JSON admission, identical typed/direct-SQL behavior,
-readable SQL, focused regressions, and the additions-plus-deletions 500/650
+readable SQL, focused regressions, and the then-approved 500/650
 circuit breaker. Bounded runtime repair may proceed; AUTH-05B remains inactive.
 
 ## 2026-07-14 - WS-AUTH-001-05A Repaired Contract Review Failed

@@ -48,8 +48,11 @@ explicitly started AUTH-05. Required L1 plan review rejected the combined
 audit/idempotency contract before runtime edits and required children 05A and
 05B. The first repaired AUTH-05A contract passed at `7a9023b`, but exact-SHA
 implementation review demonstrated that closed privacy registries and readable
-typed/SQL parity require a repaired 650-line contract. Contract re-review is
-complete at `7cc6058`; bounded runtime repair and focused evidence are active.
+typed/SQL parity require a larger readable contract. The repaired contract
+passed at `7cc6058`, but its 650-line hard stop halted the first exact-registry
+dry run at 689 lines before database parity was complete. A human-approved
+1000-line ceiling amendment is under review; no runtime repair proceeds until
+it passes.
 
 ## Active planning chunk
 

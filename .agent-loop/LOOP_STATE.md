@@ -16,10 +16,11 @@
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
 - Latest integrated `main` merge commit: `97cd0f5`
-- Current gate: AUTH-05A bounded runtime repair and focused evidence after the
-  repaired contract passed exact-SHA review at `7cc6058`.
+- Current gate: AUTH-05A 1000-line circuit-breaker amendment review after the
+  650-line runtime dry run stopped without committing production edits.
 - Size checkpoint: AUTH-05A has a reviewer-required 500-line inspection and
-  650-line production hard stop; security SQL may not be packed to satisfy it.
+  1000-line production hard stop after the closed typed/SQL matrix dry run;
+  security SQL may not be packed to satisfy it.
   AUTH-05B retains its separate 350/500 boundary.
 - Next chunk: AUTH-05B remains inactive until AUTH-05A merges, post-merge memory
   is reconciled, and the user gives a separate explicit start. AUTH-06 remains
