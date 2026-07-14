@@ -458,9 +458,10 @@ The adapter uses conditional no-overwrite semantics. A precondition failure is
 an exact replay candidate, not success. The adapter heads and then opens the
 existing object; Workstream independently verifies it before reuse.
 
-The dedicated AWS bucket policy also denies `s3:PutObject` unless
-`s3:if-none-match` equals `*`. Adapter conformance is not the immutability
-boundary by itself. The production harness attempts an unconditional overwrite
+The dedicated AWS bucket policy also denies `s3:PutObject` when the
+`If-None-Match` header is absent; S3 requires the present value to be `*` for
+this operation. Adapter conformance is not the immutability boundary by itself.
+The production harness attempts an unconditional overwrite
 with the runtime role, requires an explicit denial, and proves the original
 object bytes remain unchanged.
 
@@ -475,25 +476,58 @@ prefix and only the actions required for conditional put, head, and get. It has
 no delete, copy, list, bucket administration, lifecycle mutation, public-access
 mutation, or cross-prefix permission. AWS uses a least-privilege role/policy.
 
-Production activation defines and validates this principal/action matrix:
+Production activation uses these exact resource templates:
 
-| Principal | Allowed authority |
-|---|---|
-| Workstream runtime role | conditional put plus head/get on the exact completed-object prefix |
-| deployment readiness role | read-only bucket policy, ACL, public-access, lifecycle, and IAM-analysis operations; no object data plane |
-| deployment negative-test role | no bucket or object authority |
-| infrastructure bootstrap principal | provisioning only; never supplied to Workstream or the readiness harness and denied object data-plane authority by bucket policy |
+```text
+BUCKET_ARN = arn:${AWS_PARTITION}:s3:::${BUCKET}
+OBJECT_ARN = arn:${AWS_PARTITION}:s3:::${BUCKET}/${PRIVATE_PREFIX}/sha256/*
+RUNTIME_ROLE_ARN = configured Workstream runtime IAM role ARN
+RUNTIME_POLICY_ARN = the one configured customer-managed runtime policy ARN
+```
 
-The bucket policy contains an explicit deny boundary for object actions by every
-principal other than the exact runtime role, plus the conditional-write deny.
-Identity policies therefore cannot grant an unexpected same-account or
-same-organization role object access. The deployment-only Chunk 07 harness
-proves effective Block Public Access, policy/ACL state, the exact deny
-statements, internal and external Access Analyzer/IAM evaluation, and any
-strictly required AWS service-principal exception. It runs live anonymous,
-negative-test-role, and readiness-role read/write/delete denials against a known
-object. Bootstrap-principal denial is proved through policy/IAM evaluation only;
-bootstrap credentials are never supplied to the harness.
+The principal/action matrix is closed:
+
+| Principal | Exact allowed IAM actions | Exact resource |
+|---|---|---|
+| Workstream runtime role | `s3:PutObject`, `s3:GetObject` (`HeadObject` uses `s3:GetObject`) | `OBJECT_ARN` only |
+| deployment readiness role | `s3:GetBucketPolicy`, `s3:GetBucketPolicyStatus`, `s3:GetBucketAcl`, `s3:GetBucketPublicAccessBlock`, `s3:GetBucketOwnershipControls`, `s3:GetBucketVersioning`, `s3:GetLifecycleConfiguration`, `s3:GetEncryptionConfiguration` | `BUCKET_ARN` only |
+| deployment readiness role | `iam:GetRole`, `iam:ListRolePolicies`, `iam:ListAttachedRolePolicies` | `RUNTIME_ROLE_ARN` only |
+| deployment readiness role | `iam:GetPolicy`, `iam:GetPolicyVersion` | `RUNTIME_POLICY_ARN` only |
+| deployment readiness role | `access-analyzer:ValidatePolicy`, `access-analyzer:CheckAccessNotGranted`, `access-analyzer:CheckNoPublicAccess` | `*` because these policy-check APIs do not support a narrower resource in this contract |
+| deployment negative-test role | no S3, IAM, or Access Analyzer action | none |
+| infrastructure bootstrap principal | no Workstream-defined allow statement and no proof credential; environment-owned provisioning only | outside the Workstream runtime/probe policy |
+
+`sts:GetCallerIdentity` is called by each proof executor to bind observed
+identity and requires no identity-policy grant. The runtime policy contains
+exactly the two listed S3 actions. It contains no wildcard S3 action and no
+`DeleteObject`, `DeleteObjectVersion`, `CopyObject`, ACL, tagging, multipart,
+list, bucket-administration, lifecycle, or public-access action. The readiness
+role contains no S3 object action. v0.1 uses bucket-default SSE-S3 (`AES256`),
+which the readiness probe verifies, and grants no KMS action.
+
+The bucket policy must contain these exact deny boundaries:
+
+1. `DenyInsecureTransport`: deny `s3:*` on `BUCKET_ARN` and `OBJECT_ARN` when
+   `Bool: {"aws:SecureTransport": "false"}`.
+2. `DenyNonRuntimeObjectData`: deny `s3:*` on `OBJECT_ARN` to `Principal: "*"`
+   when `ArnNotEquals: {"aws:PrincipalArn": RUNTIME_ROLE_ARN}`.
+3. `DenyUnconditionalPut`: deny `s3:PutObject` on `OBJECT_ARN` to
+   `Principal: "*"` when
+   `Null: {"s3:if-none-match": "true"}`. SigV4 and the S3 API require the
+   present `If-None-Match` value to be `*` for this operation.
+
+Identity policies therefore cannot grant an unexpected same-account,
+same-organization, or external role object access. The deployment-only Chunk
+07 proof rejects any extra runtime/readiness allow action, resource, attached
+policy, inline policy, or bucket-policy exception. It validates the canonical
+policy documents, all four Block Public Access flags, bucket-owner-enforced
+object ownership, ACL state, SSE-S3 encryption, lifecycle safety, and the three
+deny statements. Access Analyzer custom checks prove no public access and no
+access outside the exact actions/resources above. Live anonymous,
+negative-test-role, and readiness-role `GetObject`, `PutObject`, and
+`DeleteObject` calls against a known object must all deny. Bootstrap-principal
+denial is proved through policy evaluation only; bootstrap credentials are
+never supplied.
 
 The same deployment proof reads the provider lifecycle configuration and fails
 activation when any enabled rule can delete/expire a completed object under the
@@ -544,6 +578,15 @@ as trusted during the maximum 15-minute validity window. v0.1 does not claim
 protection from a malicious cloud administrator and does not require S3 Object
 Lock; changing that threat boundary requires a separate human-approved
 architecture decision.
+
+Before each AWS call, PostgreSQL time must show
+`activation_remaining_ttl >= operation_total_deadline + persistence_margin +
+clock_safety_margin`. The terminal transaction reloads the same activation and
+requires it still to match and remain unexpired before committing any success,
+receipt, replica, verification result, or audit success. If a put may have
+succeeded but activation expires before terminal commit, the durable put
+attempt remains acknowledgement-unknown and can only be resolved after fresh
+activation; no stale proof authorizes a terminal fact.
 
 ### Integrity Rules
 

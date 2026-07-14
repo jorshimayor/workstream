@@ -69,6 +69,7 @@ HISTORICAL_PATHS = {
     "docs/spec_week2_checker_framework.md",
 }
 AGENT_LOOP_INITIATIVE_PREFIX = ".agent-loop/initiatives/"
+ACTIVE_POLICY_PREFIX = ".agent-loop/policies/"
 ACTIVE_LOOP_PATHS = {
     ".agent-loop/LOOP_STATE.md",
     ".agent-loop/MEMORY.md",
@@ -424,6 +425,7 @@ def path_is_scannable(relative_path: str, root: Path = ROOT) -> bool:
         and (
             not relative_path.startswith(".agent-loop/")
             or relative_path in ACTIVE_LOOP_PATHS
+            or relative_path.startswith(ACTIVE_POLICY_PREFIX)
             or relative_path.startswith(active_prefixes)
         )
         and relative_path != "scripts/check_stale_artifact_contracts.py"
@@ -435,6 +437,8 @@ def path_is_active_contract(relative_path: str, root: Path = ROOT) -> bool:
     if relative_path == ".agent-loop/REVIEW_LOG.md":
         return False
     if relative_path in {"AGENTS.md", "README.md", *ACTIVE_LOOP_PATHS}:
+        return True
+    if relative_path.startswith(ACTIVE_POLICY_PREFIX):
         return True
     if relative_path.startswith("docs/"):
         return (

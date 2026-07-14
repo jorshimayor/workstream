@@ -1708,6 +1708,20 @@ def test_stale_artifact_contracts_scan_only_current_initiatives() -> None:
         "docs/spec_chunk_3_project_guide_foundation.md"
     )
     assert gate.path_is_scannable("docs/spec_artifact_storage_service.md")
+    assert gate.path_is_scannable(
+        ".agent-loop/policies/repository-engineering-policy.md"
+    )
+    assert gate.path_is_active_contract(
+        ".agent-loop/policies/repository-engineering-policy.md"
+    )
+    assert gate.scan_text(
+        ".agent-loop/policies/repository-engineering-policy.md",
+        "File storage: Cloudflare R2 is the hosted production provider.",
+        "foundation",
+    ) == [
+        ".agent-loop/policies/repository-engineering-policy.md:1: "
+        "ACTIVE_R2_V01_PLAN"
+    ]
 
     original_root = gate.ROOT
     try:
@@ -1896,6 +1910,155 @@ def test_artifact_chunk_verification_commands_are_isolated_and_rerunnable() -> N
         assert cleanup.returncode == 0, cleanup.stderr
 
 
+def test_artifact_action_registry_has_exact_owned_mappings() -> None:
+    """Artifact ActionIds have one canonical PermissionId and chunk owner."""
+    text = (ROOT / "docs/spec_authorization_service.md").read_text(encoding="utf-8")
+    section = text.split(
+        "The following table is the single source of truth", maxsplit=1
+    )[1].split("The fixed internal service identities", maxsplit=1)[0]
+    rows = re.findall(
+        r"^\| `([^`]+)` \| `([^`]+)` \| .* \| .* \| `([^`]+)` \|$",
+        section,
+        re.MULTILINE,
+    )
+    expected = {
+        ("artifact.binding.read", "artifact.binding.read", "02D"),
+        ("artifact.replica.read", "artifact.replica.read", "02D"),
+        ("artifact.receipt.read", "artifact.receipt.read", "02D"),
+        (
+            "artifact.verification_job.read",
+            "artifact.verification_job.read",
+            "02D",
+        ),
+        (
+            "artifact.verification_job.retry",
+            "artifact.verification_job.retry",
+            "02D",
+        ),
+        (
+            "artifact.recovery_attempt.read",
+            "artifact.recovery_attempt.read",
+            "02D",
+        ),
+        ("artifact.audit.read", "artifact.audit.read", "02D"),
+        (
+            "operations.artifact_storage_admission.read",
+            "operations.status.read",
+            "02D",
+        ),
+        (
+            "artifact.guide_source.ingest",
+            "artifact.guide_source.ingest",
+            "03",
+        ),
+        ("artifact.guide_source.read", "artifact.guide_source.read", "03"),
+        (
+            "artifact.upload_session.create",
+            "artifact.upload_session.create",
+            "04A",
+        ),
+        (
+            "artifact.upload_session.read",
+            "artifact.upload_session.read",
+            "04A",
+        ),
+        ("artifact.upload_item.write", "artifact.upload_item.write", "04A"),
+        (
+            "artifact.upload_session.seal",
+            "artifact.upload_session.seal",
+            "04A",
+        ),
+        (
+            "artifact.upload_session.cancel",
+            "artifact.upload_session.cancel",
+            "04A",
+        ),
+        (
+            "artifact.upload_session.expire",
+            "artifact.upload_session.expire",
+            "04A",
+        ),
+        (
+            "artifact.guide_source.binding.create",
+            "artifact.binding.create",
+            "03",
+        ),
+        (
+            "artifact.submission.binding.create",
+            "artifact.binding.create",
+            "05",
+        ),
+        (
+            "artifact.checker_output.binding.create",
+            "artifact.binding.create",
+            "06B",
+        ),
+        (
+            "artifact.verification.execute",
+            "artifact.verification.execute",
+            "02D",
+        ),
+        (
+            "artifact.pending_work.scan",
+            "artifact.pending_work.scan",
+            "02D",
+        ),
+        (
+            "artifact.put_attempt.resolve",
+            "artifact.put_attempt.resolve",
+            "02D",
+        ),
+        (
+            "artifact.pre_submit.checker_input.materialize",
+            "artifact.checker_input.materialize",
+            "04B",
+        ),
+        (
+            "artifact.post_submit.checker_input.materialize",
+            "artifact.checker_input.materialize",
+            "06A",
+        ),
+        (
+            "artifact.checker_output.write",
+            "artifact.checker_output.write",
+            "06B",
+        ),
+    }
+    assert len(rows) == len({action for action, _, _ in rows})
+    assert set(rows) == expected
+    assert "artifact.operator.admission_usage.read" not in text
+
+
+def test_aws_artifact_activation_contract_is_exact_and_time_bounded() -> None:
+    """The AWS proof contract fixes actions, denies, identities, and TTL."""
+    spec = (ROOT / "docs/spec_artifact_storage_service.md").read_text(
+        encoding="utf-8"
+    )
+    chunk = (
+        ROOT
+        / ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/chunks/"
+        "WS-ART-001-07-recovery-live-proof.md"
+    ).read_text(encoding="utf-8")
+    for required in (
+        "`s3:PutObject`, `s3:GetObject`",
+        "`s3:GetBucketPolicy`",
+        "`s3:GetBucketPublicAccessBlock`",
+        "`s3:GetLifecycleConfiguration`",
+        "`iam:ListRolePolicies`",
+        "`iam:ListAttachedRolePolicies`",
+        "`access-analyzer:CheckAccessNotGranted`",
+        '`ArnNotEquals: {"aws:PrincipalArn": RUNTIME_ROLE_ARN}`',
+        '`Null: {"s3:if-none-match": "true"}`',
+        "operation_total_deadline + persistence_margin +",
+        "clock_safety_margin",
+    ):
+        assert required in spec
+    assert "s3:if-none-match` equals `*" not in spec
+    assert "aws_runtime_immutability_probe" in chunk
+    assert "aws_negative_access_probe" in chunk
+    assert "aws_activation_coordinator" in chunk
+
+
 def main() -> int:
     """Run all local test functions."""
     tests = [
@@ -1941,6 +2104,8 @@ def main() -> int:
         test_stale_artifact_contracts_scan_only_current_initiatives,
         test_stale_artifact_contracts_remove_flow_node_at_store_cutover,
         test_artifact_chunk_verification_commands_are_isolated_and_rerunnable,
+        test_artifact_action_registry_has_exact_owned_mappings,
+        test_aws_artifact_activation_contract_is_exact_and_time_bounded,
     ]
     for test in tests:
         test()

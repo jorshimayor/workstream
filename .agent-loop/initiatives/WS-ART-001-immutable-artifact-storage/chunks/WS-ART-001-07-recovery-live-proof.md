@@ -64,11 +64,15 @@ without direct database inspection or Terminal Benchmark product coupling.
   independent negative-access job with its short-lived OIDC role. No proof
   executor can assume another proof role; bootstrap credentials are never
   supplied.
-- the dedicated bucket policy denies object data-plane actions for every
-  principal other than the exact runtime role and denies runtime `PutObject`
-  unless `s3:if-none-match` is `*`. Internal/external Access Analyzer or
-  equivalent IAM evaluation proves the boundary for same-account,
-  same-organization, and external principals;
+- the runtime policy allows exactly `s3:PutObject` and `s3:GetObject` on the
+  completed-object ARN. The readiness policy and resources match the canonical
+  S3/IAM/Access Analyzer read/check list in the storage specification, and the
+  negative role has no S3/IAM/Analyzer action. Any extra action, resource,
+  inline/attached policy, or exception fails proof;
+- the bucket policy exactly enforces insecure-transport denial, non-runtime
+  `s3:*` denial on the completed-object ARN through `aws:PrincipalArn`, and
+  `s3:PutObject` denial when `Null: {"s3:if-none-match": "true"}`. S3 requires
+  the present header value to be `*`;
 - live anonymous, negative-test-role, and readiness-role calls cannot read,
   write, or delete a known object. Bootstrap-principal denial is proved by
   policy/IAM evaluation without supplying bootstrap credentials. An
@@ -88,6 +92,10 @@ without direct database inspection or Terminal Benchmark product coupling.
   activation. Proof validity is capped at 15 minutes and all probes plus
   coordination are scheduled every 5 minutes. Missing, stale, mismatched, or
   expired proof fails closed before I/O;
+- every AWS call requires remaining activation TTL greater than or equal to its
+  total operation deadline plus persistence and clock margins. Its terminal
+  transaction rechecks the same activation; expiry permits no terminal success,
+  receipt, replica, verification, or audit fact;
 - v0.1 explicitly trusts authorized cloud administrators inside that bounded
   validity window and does not require S3 Object Lock;
 - all AWS policy, principal, public-access, and lifecycle inspection lives in

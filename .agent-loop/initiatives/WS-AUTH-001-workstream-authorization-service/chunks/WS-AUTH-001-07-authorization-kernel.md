@@ -115,6 +115,15 @@ review/compensation permissions beyond registered future definitions
   another domain's target, facts, guards, or composer. Active definitions
   require the owning domain contract, canonical composer, surface declaration,
   and behavior tests.
+- AUTH-07 registers every artifact-related planned `ActionId` in the canonical
+  table in `docs/spec_authorization_service.md` with its exact approved
+  `PermissionId` and owner. The 73-identifier count applies to PermissionIds,
+  not ActionIds. Registration is reserved metadata only: AUTH does not invent
+  artifact resource facts, guards, composers, or executable authority.
+- `operations.artifact_storage_admission.read` is an operations-status action
+  mapped to the already approved `operations.status.read` PermissionId and the
+  deployment artifact-storage namespace. It is not an alias for any
+  `artifact.*` permission and grants no read/write access to artifact content.
 - Artifact permissions are registered with typed/PostgreSQL audit parity here,
   but remain reserved and non-executable until their owning WS-ART activation
   row in `docs/spec_authorization_service.md` supplies the feature resource

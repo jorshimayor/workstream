@@ -31,6 +31,8 @@ planning and guardrails only.
   `.agent-loop/WORK_QUEUE.md`, `.agent-loop/REVIEW_LOG.md`, and
   `.agent-loop/policies/engineering-review-policy.md` only where the planning
   contract requires durable state or clarification;
+- `.agent-loop/policies/repository-engineering-policy.md` only to align its
+  active storage-provider rule with this amendment;
 - `scripts/check_stale_artifact_contracts.py`,
   `scripts/agent-gate-requirements.txt`, focused gate tests, and exact
   Agent Gates/backend coverage workflow controls.

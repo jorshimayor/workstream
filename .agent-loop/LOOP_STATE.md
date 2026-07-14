@@ -8,10 +8,10 @@
 - Branch: `codex/ws-art-001-object-storage-planning-amendment`
 - Worktree: `/home/abiorh/flow/workstream`
 - Latest integrated `main` merge commit: `eba7e2b` from PR #118.
-- Status: planning repair only. Candidates `e641588` and `e14376c` passed
+- Status: planning repair only. Candidates `e641588`, `e14376c`, and `d2cd73a` passed
   deterministic gates but failed exact-head senior engineering, architecture,
-  QA/test, and security/auth review. Every reviewer session was closed and all
-  valid findings are being repaired before a new immutable review SHA is
+  QA/test, and/or security/auth review. Every reviewer session was closed and
+  all valid findings are being repaired before a new immutable review SHA is
   created.
 - Current gate: finish the bounded repair, rerun deterministic proof, review one
   exact SHA through every required internal track, record evidence/trust bundle,

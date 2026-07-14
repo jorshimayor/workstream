@@ -119,10 +119,11 @@ assumes the existing bytes are correct. v0.1 rejects objects above 512 MiB
 before I/O. Multipart is deferred until a separate contract proves its
 conditional-completion and recovery semantics.
 
-The AWS bucket policy independently denies `PutObject` unless
-`s3:if-none-match` is `*`. Live proof attempts an unconditional overwrite with
-the runtime role, requires denial, and verifies that the original bytes remain
-unchanged. This protects immutability even if adapter code omits its condition.
+The AWS bucket policy independently denies `PutObject` when the
+`If-None-Match` header is absent; S3 requires a present value of `*` for this
+operation. Live proof attempts an unconditional overwrite with the runtime
+role, requires denial, and verifies that the original bytes remain unchanged.
+This protects immutability even if adapter code omits its condition.
 
 Runtime credentials are restricted to the exact bucket/prefix and required
 put/head/get actions. Delete, copy, list, bucket administration, lifecycle, and
@@ -133,16 +134,15 @@ deployment identity inspects provider lifecycle configuration and blocks
 activation when an enabled AWS expiration or noncurrent-version-expiration rule
 can match the completed-object prefix.
 
-The AWS principal matrix is exact: the runtime role has conditional put plus
-head/get on the completed-object prefix; an OIDC-assumed readiness role has
-policy/ACL/public-access/lifecycle/IAM-analysis authority but no object data
-plane; an independently OIDC-assumed negative-test role has no bucket
-authority; and the bootstrap principal provisions infrastructure but is never
-passed to Workstream or a probe. Bucket policy denies object actions to every
-principal except the runtime role. Internal/external IAM evaluation and live
-anonymous/readiness/negative-role calls prove the data-plane boundary.
-Bootstrap denial is proved by policy/IAM evaluation without supplying bootstrap
-credentials.
+The canonical specification locks the exact IAM manifest: runtime allows only
+`s3:PutObject` and `s3:GetObject` on the completed-object ARN; readiness allows
+only the named bucket/IAM/Access Analyzer read/check actions on the named
+bucket, runtime role, runtime policy, or required `*` policy-check resource;
+negative allows no S3/IAM/Analyzer action. The bucket policy has exact insecure-
+transport, non-runtime-object, and missing-conditional-header deny statements.
+Bootstrap authority is environment-owned and never supplied to Workstream or a
+probe. Chunk 07 rejects every extra allow action, resource, inline/attached
+policy, or bucket-policy exception.
 
 AWS configuration added in 02B1 is not production-instantiable. Chunk 07 runs
 three non-interchangeable proof executors: readiness under its OIDC role,
@@ -162,6 +162,10 @@ configuration/policy drift fails before provider I/O with
 `artifact_provider_live_proof_required`. Authorized infrastructure
 administrators are trusted within that bounded window. S3 Object Lock is not a
 v0.1 requirement and would require a separate human-approved decision.
+Every call also requires enough remaining activation TTL for its total
+operation deadline plus persistence and clock margins. The terminal transaction
+rechecks the same activation; expiry after an ambiguous put preserves the
+durable acknowledgement-unknown attempt rather than committing a terminal fact.
 
 ## Ingest Transactions
 

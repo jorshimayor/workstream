@@ -87,6 +87,12 @@ product adapter bindings or callback endpoints
   `workstream.artifact.checker_output`. Their exact ActionId assignments are
   the closed service-identity matrix in `docs/spec_authorization_service.md`;
   no principal receives the union of the allowlist.
+- AUTH-09 assigns only exact registered ActionIds from that table. Generic
+  PermissionIds such as `artifact.binding.create` and
+  `artifact.checker_input.materialize` are never executable action names and
+  are never granted as an implicit union of their mapped actions. A planned
+  assignment remains inert until its owning WS-ART chunk activates the action's
+  canonical resource composer, guards, surface, and behavior proof.
 - Startup parity tests fail closed when any fixed artifact service actor,
   identity link, action registration, PermissionId mapping, or exact assignment
   is missing or extra. Negative tests prove each identity is denied all artifact

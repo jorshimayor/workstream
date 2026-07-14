@@ -38,12 +38,12 @@ owns MinIO and AWS S3. There is no active R2 chunk.
 
 ## Gate
 
-Candidates `e6415886a2474af899eb433c4b42eabea8e794c7` and
-`e14376c896f9225a152e932de8789517814ef082` passed deterministic planning
-checks but failed exact-head senior engineering, architecture, QA/test, and
-security/auth review. Every session was closed and neither result is reusable
-approval. Repair is active on integrated main `eba7e2b` and remains
-planning-only.
+Candidates `e6415886a2474af899eb433c4b42eabea8e794c7`,
+`e14376c896f9225a152e932de8789517814ef082`, and
+`d2cd73a0debe73930a8311a37b45f3aff4315f11` passed deterministic planning
+checks but failed one or more exact-head required review tracks. Every session
+was closed and none of those results is reusable approval. Repair is active on
+integrated main `eba7e2b` and remains planning-only.
 
 The repair closes the raw-port/orchestrator bypass, pre-replica acknowledgement
 gap, namespace first-writer race, caller-assembled quota scope, AWS activation

@@ -1,5 +1,19 @@
 # Review Log
 
+## 2026-07-14 - WS-ART-001 Third Exact-Head Review Failed
+
+Planning candidate `d2cd73a0debe73930a8311a37b45f3aff4315f11` passed the
+deterministic gates and senior engineering review; QA/test returned pass with
+low risks and no findings. Architecture and security/auth failed the candidate.
+All four `gpt-5.5` high reviewer sessions were closed; no result is reused as
+approval.
+
+Valid findings require one canonical reserved `ActionId` mapping table aligned
+with AUTH-07/AUTH-09, removal of the artifact-prefixed operations-status action,
+active repository-policy scanning, exact AWS IAM actions/resources/condition
+keys, and provider-operation deadlines bounded by activation remaining TTL plus
+a terminal freshness recheck. Repair remains planning-only.
+
 ## 2026-07-14 - WS-ART-001 Second Exact-Head Review Failed
 
 Planning candidate `e14376c896f9225a152e932de8789517814ef082` passed the

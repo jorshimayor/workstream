@@ -2,7 +2,7 @@
 
 | Risk | Severity | Mitigation |
 |---|---:|---|
-| Existing key overwritten by concurrent upload or adapter regression | Critical | Content-addressed key, conditional no-overwrite write, bucket-policy deny unless `s3:if-none-match` is `*`, concurrency tests, and live unconditional-overwrite denial proving original bytes unchanged. |
+| Existing key overwritten by concurrent upload or adapter regression | Critical | Content-addressed key, conditional no-overwrite write, bucket-policy deny when `If-None-Match` is absent, S3-required `*` header value, concurrency tests, and live unconditional-overwrite denial proving original bytes unchanged. |
 | First writer poisons a known digest key | Critical | Every source is server-hashed in bounded scratch before provider I/O; the port accepts only a sealed committed source; cross-project adversarial tests prove no client-selected digest can choose a key. |
 | Provider acknowledgement accepted without exact bytes | Critical | Independent complete-object read/hash before bindability. |
 | Multipart semantics diverge across providers | High | v0.1 uses conditional single-request put with a 512 MiB hard limit; multipart is deferred. |
@@ -17,6 +17,7 @@
 | Deployment silently reads or writes another storage namespace | Critical | One singleton namespace row is atomically claimed or validated before I/O; replicas and put attempts bind its fingerprint, and mismatch requires a maintenance migration. |
 | Provider acknowledgement is lost before a replica exists | Critical | Transaction A persists a fenced `ArtifactPutAttempt`; a scanner resolves it through read-only observation and full hash without replaying a write. |
 | AWS configuration becomes active without live proof | Critical | Separate caller-ARN-bound readiness/runtime/negative probe records feed a credential-free coordinator; startup and every I/O require an exact activation refreshed every 5 minutes and expiring within 15 minutes. MinIO proof cannot create it. |
+| AWS operation outlives its activation proof | Critical | Admission requires remaining activation TTL to cover the total I/O deadline plus persistence/clock margins, and the terminal transaction rechecks the same unexpired activation. |
 | Registered permission is mistaken for executable artifact authority | Critical | AUTH registry/grant/principal setup and feature activation are paired; each WS-ART chunk supplies canonical resources, guards, surfaces, tests, and terminal transaction revalidation. |
 | Broker publication failure strands verification/recovery | High | Periodic PostgreSQL scanner with bounded SLA and duplicate-safe publication. |
 | Duplicate/stale Celery execution writes terminal state | Critical | PostgreSQL clock, fresh executor UUID, generation fencing, and zero-row stale finalization rollback. |

@@ -206,7 +206,8 @@ permissions or inferring authority. Artifact actions activate only through the
 paired feature model below; AUTH-12, AUTH-14, and AUTH-15 do not activate or
 attach artifact actions on behalf of WS-ART.
 
-These are 73 approved authorization identifiers. AUTH-05A's current typed and
+These are 73 approved `PermissionId` values. `ActionId` values are a separate
+closed registry layer and are not included in that permission count. AUTH-05A's current typed and
 PostgreSQL audit registry accepts 49. The three approved Operator recovery
 identifiers `operations.task.start_override`,
 `operations.submission_gate.repair`, and `operations.checker.retry`, plus the
@@ -221,7 +222,7 @@ The paired artifact activation matrix is closed:
 
 | Owning WS-ART chunk | Actions activated by that chunk |
 |---|---|
-| `WS-ART-001-02D` | Operator binding/replica/receipt/verification-job/recovery-attempt/audit reads; `artifact.operator.admission_usage.read` mapped to `operations.status.read`; verification retry; `artifact.verification.execute`; `artifact.pending_work.scan`; and `artifact.put_attempt.resolve` |
+| `WS-ART-001-02D` | Operator binding/replica/receipt/verification-job/recovery-attempt/audit reads; the operations-domain `operations.artifact_storage_admission.read` action mapped to `operations.status.read`; verification retry; `artifact.verification.execute`; `artifact.pending_work.scan`; and `artifact.put_attempt.resolve` |
 | `WS-ART-001-03` | `artifact.guide_source.ingest`, `artifact.guide_source.read`, and `artifact.guide_source.binding.create` mapped to `artifact.binding.create` |
 | `WS-ART-001-04A` | upload-session create/read/seal/cancel/expire and upload-item write |
 | `WS-ART-001-04B` | `artifact.pre_submit.checker_input.materialize` mapped to `artifact.checker_input.materialize` |
@@ -234,6 +235,41 @@ definition, and AUTH-09's applicable fixed service principal to be present
 first. Feature code receives centralized decisions; it never queries grants or
 constructs permission identifiers dynamically.
 
+The following table is the single source of truth for reserved artifact-related
+`ActionId` metadata. AUTH-07 registers each row as `planned`; the owning WS-ART
+chunk may activate it only with its canonical resource composer, guards,
+surface declaration, and behavior tests. A mapping is not a permission alias:
+authorization still evaluates the listed registered `PermissionId` against the
+listed canonical resource and principal class.
+
+| ActionId | PermissionId | Principal class | Canonical resource | Owning WS-ART chunk |
+|---|---|---|---|---|
+| `artifact.binding.read` | `artifact.binding.read` | Operator | artifact binding | `02D` |
+| `artifact.replica.read` | `artifact.replica.read` | Operator | artifact replica | `02D` |
+| `artifact.receipt.read` | `artifact.receipt.read` | Operator | artifact receipt | `02D` |
+| `artifact.verification_job.read` | `artifact.verification_job.read` | Operator | verification job | `02D` |
+| `artifact.verification_job.retry` | `artifact.verification_job.retry` | Operator | exhausted verification job | `02D` |
+| `artifact.recovery_attempt.read` | `artifact.recovery_attempt.read` | Operator | recovery attempt | `02D` |
+| `artifact.audit.read` | `artifact.audit.read` | Operator | artifact audit scope | `02D` |
+| `operations.artifact_storage_admission.read` | `operations.status.read` | Operator | deployment artifact-storage namespace | `02D` |
+| `artifact.guide_source.ingest` | `artifact.guide_source.ingest` | authorized project actor | guide-source snapshot item | `03` |
+| `artifact.guide_source.read` | `artifact.guide_source.read` | fixed guide-reader service | guide-source snapshot item | `03` |
+| `artifact.upload_session.create` | `artifact.upload_session.create` | assigned contributor | task | `04A` |
+| `artifact.upload_session.read` | `artifact.upload_session.read` | assigned contributor | upload session | `04A` |
+| `artifact.upload_item.write` | `artifact.upload_item.write` | assigned contributor | upload item | `04A` |
+| `artifact.upload_session.seal` | `artifact.upload_session.seal` | assigned contributor | upload session | `04A` |
+| `artifact.upload_session.cancel` | `artifact.upload_session.cancel` | assigned contributor | upload session | `04A` |
+| `artifact.upload_session.expire` | `artifact.upload_session.expire` | fixed scheduler service | upload session | `04A` |
+| `artifact.guide_source.binding.create` | `artifact.binding.create` | fixed binding service | guide-source snapshot item | `03` |
+| `artifact.submission.binding.create` | `artifact.binding.create` | fixed binding service | submission | `05` |
+| `artifact.checker_output.binding.create` | `artifact.binding.create` | fixed binding service | checker run | `06B` |
+| `artifact.verification.execute` | `artifact.verification.execute` | fixed verifier service | verification job | `02D` |
+| `artifact.pending_work.scan` | `artifact.pending_work.scan` | fixed scheduler service | system pending-work scope | `02D` |
+| `artifact.put_attempt.resolve` | `artifact.put_attempt.resolve` | fixed put-resolver service | put attempt | `02D` |
+| `artifact.pre_submit.checker_input.materialize` | `artifact.checker_input.materialize` | fixed materializer service | sealed upload session and task | `04B` |
+| `artifact.post_submit.checker_input.materialize` | `artifact.checker_input.materialize` | fixed materializer service | checker run and immutable bindings | `06A` |
+| `artifact.checker_output.write` | `artifact.checker_output.write` | fixed checker-output service | checker run | `06B` |
+
 The fixed internal service identities and their complete artifact action sets
 are also closed:
 
@@ -241,7 +277,7 @@ are also closed:
 |---|---|
 | `workstream.artifact.verifier` | `artifact.verification.execute` |
 | `workstream.artifact.put_resolver` | `artifact.put_attempt.resolve` |
-| `workstream.artifact.scheduler` | `artifact.pending_work.scan`, upload-session expiry action mapped to `artifact.upload_session.expire` |
+| `workstream.artifact.scheduler` | `artifact.pending_work.scan`, `artifact.upload_session.expire` |
 | `workstream.artifact.binding` | `artifact.guide_source.binding.create`, `artifact.submission.binding.create`, `artifact.checker_output.binding.create` |
 | `workstream.artifact.guide_reader` | `artifact.guide_source.read` |
 | `workstream.artifact.materializer` | `artifact.pre_submit.checker_input.materialize`, `artifact.post_submit.checker_input.materialize` |

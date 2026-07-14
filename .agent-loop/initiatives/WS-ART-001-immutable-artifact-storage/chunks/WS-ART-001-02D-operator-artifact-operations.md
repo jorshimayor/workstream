@@ -58,7 +58,7 @@ cutover. Chunk 07 owns every live AWS provider inspection.
   `artifact.verification.execute`, and ambiguous put resolution uses only
   `artifact.put_attempt.resolve`.
 - `GET /api/v1/operator/artifacts/admission-usage` uses the exact
-  `artifact.operator.admission_usage.read` ActionId mapped to existing
+  `operations.artifact_storage_admission.read` ActionId mapped to existing
   `operations.status.read`; it exposes bounded current usage/limits and cannot
   release charges, mutate configuration, or create work.
 - internal verification uses a provisioned service principal with
