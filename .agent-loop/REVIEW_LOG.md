@@ -1,5 +1,12 @@
 # Review Log
 
+## 2026-07-14 - WS-AUTH-001-04B Ready PR Published
+
+Ready PR #113 is open at
+`https://github.com/Flow-Research/workstream/pull/113`. GitHub Backend, Agent
+Gates, CodeRabbit, and explicit human review are the current gate. Publication
+is not merge approval; AUTH-05 and artifact runtime remain inactive.
+
 ## 2026-07-14 - WS-AUTH-001-04B Internal Review Passed
 
 All required tracks pass final SHA `922778b`; reviewed production SHA is

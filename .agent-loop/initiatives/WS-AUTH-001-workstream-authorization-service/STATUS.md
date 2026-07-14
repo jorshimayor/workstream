@@ -40,7 +40,8 @@ the first activated contract before runtime edits. The second
 repaired contract passed all required tracks at `b5dceb1`; bounded runtime
 implementation and deterministic evidence are complete, and the candidate is
 internally approved at final SHA `922778b`; reviewed production SHA is
-`67484b5`. Ready PR publication is the current gate.
+`67484b5`. Ready PR #113 is open; GitHub checks, CodeRabbit, and explicit human
+review are the current gate.
 
 ## Active planning chunk
 
@@ -65,7 +66,7 @@ remains inactive.
 | `WS-AUTH-001-03` | Merged | `codex/ws-auth-001-03-legacy-actor-classification` | #109 | Merged as `f06532e`; reviewed code `8c5334c`; final branch head `43ffbfe`. |
 | `WS-AUTH-001-04` | Split | `codex/ws-auth-001-04-request-api-controls` | - | Parent split before runtime implementation. |
 | `WS-AUTH-001-04A` | Merged | `codex/ws-auth-001-04-request-api-controls` | #111 | Merged as `90c9a28`; production review `cdcaf77`; final branch head `36c4aa5`. |
-| `WS-AUTH-001-04B` | Ready PR | `codex/ws-auth-001-04b-postgres-rate-controls` | - | All required tracks pass final `922778b`; production review `67484b5`. |
+| `WS-AUTH-001-04B` | External review | `codex/ws-auth-001-04b-postgres-rate-controls` | #113 | All required tracks pass final `922778b`; production review `67484b5`. |
 | `WS-AUTH-001-05` | Proposed | - | - | Authority evidence and idempotency foundation. |
 | `WS-AUTH-001-06` | Proposed | - | - | Canonical actor profile and identity link. |
 | `WS-AUTH-001-07` | Proposed | - | - | Authorization kernel and permissions. |

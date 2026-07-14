@@ -8,13 +8,12 @@
 - Branch: `codex/ws-auth-001-04b-postgres-rate-controls`
 - Worktree: `/home/abiorh/flow/workstream-auth-001-04b`
 - Status: AUTH-04B implementation and all required internal review tracks pass
-  final SHA `922778b`; reviewed production SHA is `67484b5`. PR publication is
-  ready.
+  final implementation SHA `922778b`; reviewed production SHA is `67484b5`.
+  Ready PR #113 is open.
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
 - Latest integrated `main` merge commit: `7749f54`
-- Current gate: ready PR publication, GitHub checks, CodeRabbit, and explicit
-  human review.
+- Current gate: GitHub checks, CodeRabbit, and explicit human review on PR #113.
 - Size checkpoint: implementation is 480 changed non-comment production lines;
   the required 350-line inspection passed and the 500-line hard stop holds.
 - Next chunk: none; do not start `WS-AUTH-001-05` automatically.

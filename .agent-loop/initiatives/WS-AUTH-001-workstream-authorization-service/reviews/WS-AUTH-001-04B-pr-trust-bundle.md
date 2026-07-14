@@ -65,8 +65,8 @@ tests and review memory only.
 
 ## External Review
 
-GitHub Backend, Agent Gates, CodeRabbit, and explicit human review begin after
-ready PR publication. None replaces the completed internal review.
+Ready PR #113 is open. GitHub Backend, Agent Gates, CodeRabbit, and explicit
+human review are pending. None replaces the completed internal review.
 
 ## Remaining Risks
 

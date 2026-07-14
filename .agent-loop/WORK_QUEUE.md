@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Internal review passed at `922778b`; ready PR publication |
+| `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Internal review passed; PR #113 in external review |
 
 ## Planned Next
 
@@ -58,8 +58,8 @@
 
 `WS-AUTH-001-04A` post-merge memory merged through PR #112 as `7749f54`. The
 user explicitly started `WS-AUTH-001-04B`; all required internal review tracks
-pass and ready PR publication is the current gate. Do not start AUTH-05 or
-POL-002-04 automatically.
+pass and ready PR #113 is in external review. Do not start AUTH-05 or POL-002-04
+automatically.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.
