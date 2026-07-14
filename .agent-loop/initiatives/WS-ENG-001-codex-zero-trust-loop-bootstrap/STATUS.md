@@ -6,7 +6,7 @@
 - `WS-ENG-001-02`: implementation complete and all required internal reviewer
   tracks passed at `8670005`; PR evidence/publication is pending
 - Merge commit: `b9fe19b96109e9786e1d6d89488abfbe68a05d4a`
-- Reviewed code SHA: `8670005639b5d080d3adceca840b8fae4addc115`
+- Reviewed implementation SHA: `8670005639b5d080d3adceca840b8fae4addc115`
 - Current gate: bind review evidence, publish the ready PR, and complete external
   and explicit human review
 - Next chunk: inactive
