@@ -134,6 +134,38 @@ async def _stored_rate_row(factory, scope: str, digest: bytes):
         ).one()
 
 
+async def _insert_counter_row(
+    session,
+    scope: str,
+    digest: bytes,
+    *,
+    started_offset: int,
+    expires_offset: int,
+    request_count: int,
+    updated_offset: int = 0,
+) -> None:
+    await session.execute(
+        text(
+            "insert into api_rate_control_counters "
+            "(control_scope, key_digest, window_started_at, window_expires_at, "
+            "request_count, updated_at) values "
+            "(:scope, :digest, "
+            "statement_timestamp() + make_interval(secs => :started_offset), "
+            "statement_timestamp() + make_interval(secs => :expires_offset), "
+            ":request_count, "
+            "statement_timestamp() + make_interval(secs => :updated_offset))"
+        ),
+        {
+            "scope": scope,
+            "digest": digest,
+            "started_offset": started_offset,
+            "expires_offset": expires_offset,
+            "request_count": request_count,
+            "updated_offset": updated_offset,
+        },
+    )
+
+
 async def test_rate_control_commits_fixed_window_denials_and_resets_expiry(
     rate_control_factory,
 ) -> None:
@@ -268,15 +300,13 @@ async def test_rate_control_concurrency_has_no_lost_or_rolled_back_consumption(
         RATE_SECRET, FIRST_ACCESS_SCOPE, RATE_ISSUER, independent_subject
     )
     async with rate_control_factory() as outer:
-        await outer.execute(
-            text(
-                "insert into api_rate_control_counters "
-                "(control_scope, key_digest, window_started_at, window_expires_at, "
-                "request_count, updated_at) values "
-                "(:scope, :digest, statement_timestamp(), "
-                "statement_timestamp() + interval '1 minute', 1, statement_timestamp())"
-            ),
-            {"scope": FIRST_ACCESS_SCOPE, "digest": probe_digest},
+        await _insert_counter_row(
+            outer,
+            FIRST_ACCESS_SCOPE,
+            probe_digest,
+            started_offset=0,
+            expires_offset=60,
+            request_count=1,
         )
         independent = await service.consume(
             control_scope=FIRST_ACCESS_SCOPE,
@@ -308,31 +338,23 @@ async def test_rate_control_saturates_bigint_and_prunes_only_bounded_other_rows(
     service = RateControlService(rate_control_factory)
     digest = rate_key_digest(RATE_SECRET, FIRST_ACCESS_SCOPE, RATE_ISSUER, "saturated")
     async with rate_control_factory() as session:
-        await session.execute(
-            text(
-                "insert into api_rate_control_counters "
-                "(control_scope, key_digest, window_started_at, window_expires_at, "
-                "request_count, updated_at) values "
-                "(:scope, :digest, statement_timestamp(), "
-                "statement_timestamp() + interval '1 minute', 9223372036854775807, "
-                "statement_timestamp())"
-            ),
-            {"scope": FIRST_ACCESS_SCOPE, "digest": digest},
+        await _insert_counter_row(
+            session,
+            FIRST_ACCESS_SCOPE,
+            digest,
+            started_offset=0,
+            expires_offset=60,
+            request_count=9_223_372_036_854_775_807,
         )
         for value in range(125):
-            await session.execute(
-                text(
-                    "insert into api_rate_control_counters "
-                    "(control_scope, key_digest, window_started_at, window_expires_at, "
-                    "request_count, updated_at) values "
-                    "(:scope, :digest, statement_timestamp() - interval '2 minutes', "
-                    "statement_timestamp() - interval '1 minute', 1, "
-                    "statement_timestamp() - interval '1 minute')"
-                ),
-                {
-                    "scope": ADMIN_MUTATION_SCOPE,
-                    "digest": value.to_bytes(32, "big"),
-                },
+            await _insert_counter_row(
+                session,
+                ADMIN_MUTATION_SCOPE,
+                value.to_bytes(32, "big"),
+                started_offset=-120,
+                expires_offset=-60,
+                request_count=1,
+                updated_offset=-60,
             )
         await session.commit()
 
@@ -363,21 +385,14 @@ async def test_concurrent_expired_keys_do_not_deadlock_during_pruning(
     subjects = ("expired-a", "expired-b")
     async with rate_control_factory() as session:
         for subject in subjects:
-            await session.execute(
-                text(
-                    "insert into api_rate_control_counters "
-                    "(control_scope, key_digest, window_started_at, window_expires_at, "
-                    "request_count, updated_at) values "
-                    "(:scope, :digest, statement_timestamp() - interval '2 seconds', "
-                    "statement_timestamp() - interval '1 second', 5, "
-                    "statement_timestamp() - interval '1 second')"
-                ),
-                {
-                    "scope": FIRST_ACCESS_SCOPE,
-                    "digest": rate_key_digest(
-                        RATE_SECRET, FIRST_ACCESS_SCOPE, RATE_ISSUER, subject
-                    ),
-                },
+            await _insert_counter_row(
+                session,
+                FIRST_ACCESS_SCOPE,
+                rate_key_digest(RATE_SECRET, FIRST_ACCESS_SCOPE, RATE_ISSUER, subject),
+                started_offset=-2,
+                expires_offset=-1,
+                request_count=5,
+                updated_offset=-1,
             )
         await session.commit()
 

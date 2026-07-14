@@ -373,6 +373,7 @@ def test_api_rate_control_schema_preserves_domain_and_guards_downgrade(
             asyncio.run(_clear_api_rate_controls(isolated_database_env))
             asyncio.run(_truncate_artifact_foundation(isolated_database_env))
             command.downgrade(config, "base")
+            command.upgrade(config, "head")
 
     assert after == before
     assert artifact_after == artifact_before

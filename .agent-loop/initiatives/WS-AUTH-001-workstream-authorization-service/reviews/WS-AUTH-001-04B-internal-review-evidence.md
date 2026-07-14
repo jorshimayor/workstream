@@ -73,6 +73,8 @@ that the boundary test fails the prior recoverable-`SecretStr` behavior.
   config 97, model 100, repository 100, and service 99 percent;
 - final direct configuration/object-graph suite: 59 passed;
 - exact AUTH-04B migration test: 1 passed, 8 deselected;
+- Backend CI repair order (AUTH-04B migration test followed by rate suite):
+  22 passed; the migration test restores Alembic head after cleanup;
 - earlier migration-inclusive repaired matrix: 78 passed;
 - real API contract E2E: passed;
 - Ruff, docstring threshold, stale wording, authorization docs, artifact
@@ -82,6 +84,8 @@ that the boundary test fails the prior recoverable-`SecretStr` behavior.
 The repository-wide local coverage run was interrupted by the host shutdown and
 is not claimed. GitHub Backend retains the unchanged 78 percent global floor;
 the materially changed subsystem exceeds the required 90 percent threshold.
+The first PR Backend run reached 82.12 percent but failed on test-owned schema
+cleanup; the bounded test isolation repair requires a final Backend rerun.
 
 ## Evidence Gate
 

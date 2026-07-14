@@ -9,6 +9,13 @@
 Provide privacy-keyed, cross-replica PostgreSQL rate controls for future first
 access and authority mutations without attaching them to production routes.
 
+## Human-Approved Intent
+
+The user explicitly started AUTH-04B after AUTH-04A and its post-merge memory
+merged. The approved boundary is a cross-replica PostgreSQL rate-control
+foundation only: dependencies remain unattached, product authority remains in
+later AUTH chunks, and only the user may approve PR merge.
+
 ## What Changed
 
 - Added atomic database-time fixed-window counters with durable denial,
@@ -45,12 +52,26 @@ schema constraints, migration races, and representative artifact preservation.
 Secret tests traverse structured error objects and complete exception graphs
 and instrument the BaseSettings boundary directly.
 
-## Tests And Checks
+## Acceptance Criteria Proof
+
+- PostgreSQL owns one clock-bound atomic upsert, durable denial, saturation,
+  and bounded lock-safe pruning.
+- Persistence contains only exact scope and a 32-byte HMAC digest.
+- Constructor, environment, layered dotenv, and all public validation methods
+  retain no raw or recoverable secret in structured errors or exception graphs.
+- Migration proof covers populated `0016` preservation, exact schema guards,
+  refusal on nonempty downgrade, writer races, empty downgrade, and re-upgrade.
+- Route/dependency inventory proves neither new dependency is attached.
+- Artifact adapter I/O remains inactive behind central AUTH-07/AUTH-09 gates.
+
+## Evidence Commands And Results
 
 - 77 focused isolated PostgreSQL tests passed at 97 percent changed-subsystem
   statement coverage.
 - 59 final configuration/object-graph tests passed.
 - Exact AUTH-04B migration and real API E2E passed.
+- The exact CI failure order now passes 22/22 after the migration test restores
+  Alembic head following destructive cleanup.
 - Ruff, docstring threshold, stale scans, links, loop memory, 36 Agent Gates,
   additive test delta, and diff hygiene passed.
 - GitHub Backend must provide the unchanged repository-wide 78 percent floor;
@@ -58,15 +79,33 @@ and instrument the BaseSettings boundary directly.
 
 ## Reviewer Results
 
-Senior engineering, QA/test, security/auth, privacy/data, product/ops,
-architecture, CI integrity, docs, reuse/dedup, and test-delta tracks pass final
-SHA `922778b`. Reviewed production SHA is `67484b5`; the final delta is additive
-tests and review memory only.
+| Reviewer | Result | Blocking findings |
+|---|---:|---|
+| Senior engineering / architecture / docs / reuse | PASS | None |
+| QA / test delta / CI integrity | PASS | None |
+| Security / privacy / product ops | PASS | None |
+
+Reviewed implementation SHA is `922778b`; reviewed production SHA is
+`67484b5`. Later reviewed heads contain only tests, evidence, and lifecycle
+memory unless explicitly recorded in the external-review response.
+
+## CI And Gate Integrity
+
+- [x] No workflow, threshold, exclusion, skip, or coverage bypass changed.
+- [x] Changed AUTH-04B subsystem remains above 90 percent coverage.
+- [x] Repository docstring gate passes at 95.8 percent.
+- [x] Internal evidence, loop memory, stale scans, links, and Agent Gates pass.
+- [ ] Backend must pass the repaired exact PR head at the 78 percent global floor.
+- [ ] Explicit human review and merge approval remain pending.
 
 ## External Review
 
-Ready PR #113 is open. GitHub Backend, Agent Gates, CodeRabbit, and explicit
-human review are pending. None replaces the completed internal review.
+Ready PR #113 is open. Agent Gates passed on the prior published head.
+CodeRabbit completed its available review with one valid test-deduplication
+nit addressed; its later incremental review was rate-limited. The first Backend
+run reached 82.12 percent coverage but exposed test-owned schema cleanup. All
+final-head external checks and explicit human review remain pending. None
+replaces the completed internal review.
 
 ## Remaining Risks
 

@@ -1,5 +1,19 @@
 # Review Log
 
+## 2026-07-14 - WS-AUTH-001-04B Backend CI Repair
+
+PR #113 Backend reached 82.12 percent repository coverage but failed because
+the final AUTH-04B Alembic test left the shared isolated database at `base`.
+Pytest's CI discovery order then entered `test_api_rate_controls.py` without
+table `api_rate_control_counters`. The owning migration test now restores
+Alembic `head` after its destructive cleanup. The exact failing
+`test_alembic.py -> test_api_rate_controls.py` order is required repair proof;
+no runtime, migration, coverage threshold, or workflow changes are permitted.
+CodeRabbit posted one valid test-deduplication nit, now addressed through a
+transaction-preserving shared insert helper. Its PR-description template
+warning is addressed in the trust bundle; its docstring heuristic is superseded
+by the passing repository-owned 95.8 percent docstring gate.
+
 ## 2026-07-14 - WS-AUTH-001-04B Ready PR Published
 
 Ready PR #113 is open at
