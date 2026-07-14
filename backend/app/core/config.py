@@ -4,12 +4,20 @@ from __future__ import annotations
 
 import base64
 import binascii
+import os
+from collections.abc import Mapping
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Self
 
-from pydantic import Field, SecretStr, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from dotenv import dotenv_values
+from pydantic import Field, PrivateAttr, SecretStr, model_validator
+from pydantic_settings import (
+    BaseSettings,
+    DotEnvSettingsSource,
+    PydanticBaseSettingsSource,
+    SettingsConfigDict,
+)
 
 
 class Settings(BaseSettings):
@@ -78,7 +86,6 @@ class Settings(BaseSettings):
     celery_result_backend_url: str | None = None
     celery_task_always_eager: bool = False
     actor_registry_refresh_interval_seconds: int = Field(default=300, ge=0, le=86_400)
-    api_rate_limit_key_secret: SecretStr | None = None
     api_first_access_rate_limit: int = Field(default=10, ge=1, le=10_000)
     api_first_access_rate_window_seconds: int = Field(default=60, ge=1, le=3_600)
     api_admin_mutation_rate_limit: int = Field(default=30, ge=1, le=10_000)
@@ -96,11 +103,42 @@ class Settings(BaseSettings):
         hide_input_in_errors=True,
     )
 
+    _api_rate_limit_key_secret: SecretStr | None = PrivateAttr(default=None)
+
     def __init__(self, **values: object) -> None:
-        """Validate secret material after Pydantic has discarded raw input."""
+        """Remove rate-control secret material before structured validation."""
+        secret = _extract_api_rate_limit_key_secret(values)
         super().__init__(**values)
-        if self.api_rate_limit_key_secret is not None:
-            decode_api_rate_limit_key_secret(self.api_rate_limit_key_secret)
+        self._api_rate_limit_key_secret = secret
+
+    @classmethod
+    def model_validate(cls, obj: object, **kwargs: object) -> Self:
+        """Sanitize secret-bearing mappings before Pydantic retains input."""
+        if isinstance(obj, Mapping) and "api_rate_limit_key_secret" in obj:
+            sanitized = dict(obj)
+            secret = _extract_api_rate_limit_key_secret(sanitized)
+            sanitized["api_rate_limit_key_secret"] = secret
+            return super().model_validate(sanitized, **kwargs)
+        return super().model_validate(obj, **kwargs)
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
+        """Keep the manually resolved rate key out of dotenv validation input."""
+        if isinstance(dotenv_settings, DotEnvSettingsSource):
+            dotenv_settings.env_vars.pop("workstream_api_rate_limit_key_secret", None)
+        return init_settings, env_settings, dotenv_settings, file_secret_settings
+
+    @property
+    def api_rate_limit_key_secret(self) -> SecretStr | None:
+        """Return the validated, redacted rate-control key setting."""
+        return self._api_rate_limit_key_secret
 
     @model_validator(mode="after")
     def validate_artifact_storage(self) -> Settings:
@@ -134,6 +172,30 @@ def get_settings() -> Settings:
         Settings resolved from environment variables and optional ``.env``.
     """
     return Settings()
+
+
+def _extract_api_rate_limit_key_secret(values: dict[str, object]) -> SecretStr | None:
+    """Resolve and validate the key without entering Pydantic's input graph."""
+    missing = object()
+    raw_value = values.pop("api_rate_limit_key_secret", missing)
+    if raw_value is missing:
+        raw_value = os.environ.get("WORKSTREAM_API_RATE_LIMIT_KEY_SECRET", missing)
+    if raw_value is missing:
+        env_file = values.get("_env_file", ".env")
+        if env_file is not None:
+            env_encoding = values.get("_env_file_encoding", "utf-8")
+            dotenv = dotenv_values(env_file, encoding=env_encoding)
+            raw_value = dotenv.get("WORKSTREAM_API_RATE_LIMIT_KEY_SECRET", missing)
+    if raw_value is missing or raw_value is None:
+        return None
+    if isinstance(raw_value, SecretStr):
+        secret = raw_value
+    elif isinstance(raw_value, str):
+        secret = SecretStr(raw_value)
+    else:
+        raise ValueError("invalid API rate limit key secret")
+    decode_api_rate_limit_key_secret(secret)
+    return secret
 
 
 def decode_api_rate_limit_key_secret(value: SecretStr) -> bytes:

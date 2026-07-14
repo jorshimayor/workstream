@@ -1,5 +1,31 @@
 # Review Log
 
+## 2026-07-14 - WS-AUTH-001-04B Exact-Head Review Repair
+
+Required implementation review at `8f54fd9` passed QA, CI integrity, and test
+delta with 72 fresh isolated PostgreSQL tests. Senior engineering and security
+rejected PR publication because unrelated Pydantic validation errors could
+retain the raw rate-control secret through structured error APIs. Security also
+found that the canonical inactive artifact plan did not yet enforce D14's
+central authorization prerequisite for adapter I/O.
+
+The bounded repair removes the secret from Pydantic's public field graph before
+all structured validation while preserving constructor, environment, and dotenv
+loading. Regression tests inspect `errors()` and `json()` and cover
+`model_validate`. The user-directed artifact ownership clarification amends only
+the canonical ART plan and inactive chunk contract: mechanics may be developed
+independently, but production dispatch requires AUTH-07 permissions, AUTH-09
+service principals, exact resource authorization evidence, and never derives
+authority from a credential or receipt. No artifact runtime or AUTH-05 behavior
+is activated.
+
+Repair evidence is 78 migration-inclusive isolated PostgreSQL behavior tests,
+69 focused rate-control/config tests at 98 percent subsystem coverage, and the
+real API contract E2E. Ruff, docstring coverage, stale authorization/artifact/
+Workstream wording, Markdown links, loop memory, diff integrity, and all 36
+agent-gate tests pass. The repaired production delta is 437 non-comment lines,
+below the 500-line hard stop. Exact-SHA internal re-review is the current gate.
+
 ## 2026-07-13 - WS-AUTH-001-04B Repaired Contract Passed
 
 Implementation candidate `62dd18e` failed required exact-head review. Valid

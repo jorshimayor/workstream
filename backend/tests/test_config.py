@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
@@ -17,6 +18,7 @@ from app.main import create_app
 def test_default_settings_are_fail_closed(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("WORKSTREAM_DATABASE_URL", raising=False)
     monkeypatch.delenv("WORKSTREAM_DEV_AUTH_TOKEN", raising=False)
+    monkeypatch.delenv("WORKSTREAM_API_RATE_LIMIT_KEY_SECRET", raising=False)
 
     settings = Settings()
 
@@ -39,6 +41,97 @@ def test_rate_limit_secret_is_canonical_and_redacted() -> None:
     assert settings.api_rate_limit_key_secret is not None
     assert settings.api_rate_limit_key_secret.get_secret_value() == encoded
     assert encoded not in repr(settings)
+
+
+def test_rate_limit_secret_loads_from_environment_and_dotenv(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    env_encoded = base64.b64encode(bytes(range(32))).decode("ascii")
+    dotenv_encoded = base64.b64encode(bytes(range(1, 33))).decode("ascii")
+    (tmp_path / ".env").write_text(
+        f"WORKSTREAM_API_RATE_LIMIT_KEY_SECRET={dotenv_encoded}\n",
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("WORKSTREAM_API_RATE_LIMIT_KEY_SECRET", env_encoded)
+
+    env_settings = Settings()
+    monkeypatch.delenv("WORKSTREAM_API_RATE_LIMIT_KEY_SECRET")
+    dotenv_settings = Settings()
+
+    assert env_settings.api_rate_limit_key_secret is not None
+    assert env_settings.api_rate_limit_key_secret.get_secret_value() == env_encoded
+    assert dotenv_settings.api_rate_limit_key_secret is not None
+    assert dotenv_settings.api_rate_limit_key_secret.get_secret_value() == dotenv_encoded
+
+
+def test_rate_limit_secret_is_absent_from_unrelated_structured_errors() -> None:
+    encoded = base64.b64encode(bytes(range(32))).decode("ascii")
+
+    with pytest.raises(ValidationError) as caught:
+        Settings(
+            api_rate_limit_key_secret=encoded,
+            artifact_store_backend="flow_node",
+        )
+
+    assert encoded not in repr(caught.value.errors())
+    assert encoded not in caught.value.json()
+
+
+def test_environment_rate_limit_secret_is_absent_from_unrelated_structured_errors(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    encoded = base64.b64encode(bytes(range(32))).decode("ascii")
+    monkeypatch.setenv("WORKSTREAM_API_RATE_LIMIT_KEY_SECRET", encoded)
+
+    with pytest.raises(ValidationError) as caught:
+        Settings(artifact_store_backend="flow_node")
+
+    assert encoded not in repr(caught.value.errors())
+    assert encoded not in caught.value.json()
+
+
+def test_dotenv_rate_limit_secret_is_absent_from_unrelated_structured_errors(
+    tmp_path: Path,
+) -> None:
+    encoded = base64.b64encode(bytes(range(32))).decode("ascii")
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        f"WORKSTREAM_API_RATE_LIMIT_KEY_SECRET={encoded}\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValidationError) as caught:
+        Settings(_env_file=env_file, artifact_store_backend="flow_node")
+
+    assert encoded not in repr(caught.value.errors())
+    assert encoded not in caught.value.json()
+
+
+def test_model_validate_rejects_rate_limit_secret_without_structured_echo() -> None:
+    invalid = "not-a-canonical-secret"
+
+    with pytest.raises(ValueError, match="^invalid API rate limit key secret$") as caught:
+        Settings.model_validate({"api_rate_limit_key_secret": invalid})
+
+    assert not isinstance(caught.value, ValidationError)
+    assert invalid not in f"{caught.value!s} {caught.value!r}"
+
+
+def test_model_validate_rate_limit_secret_is_absent_from_unrelated_errors() -> None:
+    encoded = base64.b64encode(bytes(range(32))).decode("ascii")
+
+    with pytest.raises(ValidationError) as caught:
+        Settings.model_validate(
+            {
+                "api_rate_limit_key_secret": encoded,
+                "artifact_store_backend": "flow_node",
+            }
+        )
+
+    assert encoded not in repr(caught.value.errors())
+    assert encoded not in caught.value.json()
 
 
 @pytest.mark.parametrize(

@@ -261,7 +261,12 @@ approval, locking, and deterministic checker compilation.
 
 ## WS-AUTH Dependencies
 
-- Internal artifact foundations and Flow Node work may proceed independently.
+- Internal artifact schemas and adapter mechanics may proceed independently,
+  but production dispatch and every external adapter I/O remain disabled until
+  `WS-AUTH-001-07` defines the exact operation permission and
+  `WS-AUTH-001-09` provisions the calling service principal. Each dispatch must
+  carry a central authorization decision for the exact operation and resource;
+  an adapter credential or provider receipt never creates authority.
 - Guide source API cutover waits for WS-AUTH project mutation cutover
   (`WS-AUTH-001-12`) or its approved replacement.
 - Upload session and submission cutovers wait for task/submission/checker

@@ -45,6 +45,8 @@ backend/tests/test_alembic.py
 backend/scripts/api_contract_e2e.py
 docs/operations_authorization_service.md
 docs/architecture_data_model.md
+.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/PLAN.md
+.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/chunks/WS-ART-001-02-flow-node-adapter-reconciliation.md
 .agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/**
 .agent-loop/LOOP_STATE.md
 .agent-loop/WORK_QUEUE.md
@@ -124,10 +126,14 @@ AUTH-05 or later chunk implementation
   tests that do not calculate expected values through the production helper.
 - Persist only scope and digest. Never persist or log raw issuer, subject,
   actor ID, email, role, token, claims, or network address.
-- Add `api_rate_limit_key_secret: SecretStr | None = None`; there is no non-null
-  fallback and no generated secret. Present
+- Expose `api_rate_limit_key_secret` as `SecretStr | None`, backed by private
+  settings storage after constructor, environment, or dotenv input is removed
+  from Pydantic's structured validation graph. There is no non-null fallback
+  and no generated secret. Present
   malformed, non-ASCII, noncanonical, whitespace-bearing, too-short, or
-  too-long values fail settings construction.
+  too-long values fail settings construction. Unrelated Pydantic failures and
+  the alternate `model_validate` entry point must not retain the raw key in
+  structured error APIs.
 - Exact numeric settings are `api_first_access_rate_limit=10`,
   `api_first_access_rate_window_seconds=60`,
   `api_admin_mutation_rate_limit=30`, and
