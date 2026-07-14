@@ -28,6 +28,7 @@ AGENTS.md
 .agent-loop/policies/repository-engineering-policy.md
 .agent-loop/templates/PR_TRUST_BUNDLE.md
 .agent-loop/merge-intents/**
+.agent-loop/keys/**
 .agent-loop/initiatives/WS-ENG-001-codex-zero-trust-loop-bootstrap/**
 .github/pull_request_template.md
 .github/workflows/agent-gates.yml
@@ -58,8 +59,13 @@ execution of pull-request-head code with write credentials
 - `main` remains protected and human-approved.
 - The workflow runs only trusted code already merged to `main`.
 - Generated state is written to `automation/loop-memory`, not `main`.
+- Organization policy disables deploy keys, so the workflow signs every
+  canonical generated file with an Actions-only Ed25519 private key and
+  verifies the signature before trusting existing branch state.
 - One newly added, immutable merge-intent JSON file supplies bounded chunk and
   next-gate metadata from the reviewed PR head.
+- This chunk's immutable merge intent anchors empty-state bootstrap; the first
+  successful run reconciles from that activation commit through its target.
 - The updater validates repository, base branch, merge SHA, intent schema,
   check conclusions, idempotency, and monotonic merge history.
 - Missing, modified, duplicate, or malformed merge intent fails closed; the
@@ -71,8 +77,8 @@ execution of pull-request-head code with write credentials
 
 - [ ] A push to `main` reconciles every unrecorded first-parent commit through
       its target SHA on `automation/loop-memory`.
-- [ ] The state branch contains canonical JSON, rendered Markdown, and an
-      append-only JSONL merge ledger.
+- [ ] The state branch contains canonical JSON, rendered Markdown, an
+      append-only JSONL merge ledger, and a valid signature over all three.
 - [ ] Replaying the same merge is idempotent.
 - [ ] An older merge cannot replace newer live state.
 - [ ] Missing/malformed PR metadata, wrong repository/base/SHA, or ambiguous
@@ -80,7 +86,8 @@ execution of pull-request-head code with write credentials
       attention required rather than misreported as passing.
 - [ ] The workflow has no pull-request-head checkout and no write to `main`.
 - [ ] Workflow permissions are limited to contents, pull requests, checks, and
-      commit statuses.
+      commit statuses; generated state is signed and verified with the reviewed
+      public key before branch data is trusted.
 - [ ] PR templates require one newly added machine-readable merge-intent file.
 - [ ] Agent policy removes manual post-merge PR/reviewer requirements when the
       canonical automation succeeds.

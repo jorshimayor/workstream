@@ -23,6 +23,7 @@ The trusted `Loop Memory` workflow records:
 - `.agent-loop/STATE.json`
 - `.agent-loop/LOOP_STATE.md`
 - `.agent-loop/MERGE_LOG.jsonl`
+- `.agent-loop/STATE.sig`
 
 on `automation/loop-memory`.
 
@@ -55,7 +56,8 @@ automation succeeds.
 - Do not bury decisions in conversation only.
 - If a repeated issue appears, suggest policy/skill update.
 - Generated state is exempt from repeated review only on
-  `automation/loop-memory` and only when written by the trusted workflow.
+  `automation/loop-memory`, only when written by the trusted workflow, and only
+  while its public-key signature verifies.
 - If automation fails, send the documented `loop-memory-replay`
   `repository_dispatch` with the exact merge SHA after correcting permissions.
   Merge-intent content is immutable after merge; do not edit generated state.

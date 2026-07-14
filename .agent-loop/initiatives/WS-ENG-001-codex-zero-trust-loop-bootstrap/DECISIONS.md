@@ -18,6 +18,9 @@
   names, or chat history.
 - Run the write-capable workflow only from trusted code already merged to
   `main`; never use `pull_request_target` or pull-request-head execution.
+- Authenticate all generated state with an Actions-only Ed25519 key and a
+  reviewed public key because organization policy disables deploy-key writer
+  restriction for the automation branch.
 
 ## Deferred
 

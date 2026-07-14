@@ -101,7 +101,11 @@ def generated_state_failures(root: Path) -> list[str]:
         "entry_hash",
     }
     for entry in ledger:
-        if not isinstance(entry, dict) or set(entry) != expected_keys:
+        if (
+            not isinstance(entry, dict)
+            or set(entry) != expected_keys
+            or entry.get("schema_version") != 1
+        ):
             failures.append(".agent-loop/MERGE_LOG.jsonl: invalid entry schema")
             break
         record = entry.get("record")

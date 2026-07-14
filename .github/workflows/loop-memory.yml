@@ -36,9 +36,15 @@ jobs:
       - name: Prepare generated state branch
         id: state
         shell: bash
+        env:
+          LOOP_MEMORY_SIGNING_KEY: ${{ secrets.LOOP_MEMORY_SIGNING_KEY }}
         run: |
           set -euo pipefail
           gh auth setup-git
+          private_key="${RUNNER_TEMP}/loop-memory-signing-key.pem"
+          printf '%s\n' "${LOOP_MEMORY_SIGNING_KEY}" > "${private_key}"
+          chmod 600 "${private_key}"
+          echo "LOOP_MEMORY_PRIVATE_KEY=${private_key}" >> "${GITHUB_ENV}"
           state_dir="${RUNNER_TEMP}/loop-memory-state"
           if git ls-remote --exit-code --heads origin "refs/heads/${STATE_BRANCH}" >/dev/null; then
             git clone --depth 1 --single-branch --branch "${STATE_BRANCH}" \
@@ -48,6 +54,11 @@ jobs:
             git -C "${state_dir}" init --initial-branch "${STATE_BRANCH}"
             git -C "${state_dir}" remote add origin \
               "https://github.com/${GITHUB_REPOSITORY}.git"
+          fi
+          if [[ -f "${state_dir}/.agent-loop/STATE.json" ]]; then
+            python3 scripts/update_post_merge_memory.py verify-state \
+              --state-root "${state_dir}" \
+              --public-key .agent-loop/keys/loop-memory-signing-public.pem
           fi
           echo "state_dir=${state_dir}" >> "${GITHUB_OUTPUT}"
 
@@ -66,19 +77,17 @@ jobs:
               'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["source"]["main_sha"])' \
               "${state_dir}/.agent-loop/STATE.json")
           fi
-          merge_shas=()
-          if [[ -z "${current_sha}" ]]; then
-            merge_shas=("${MERGE_SHA}")
-          elif git merge-base --is-ancestor "${MERGE_SHA}" "${current_sha}"; then
-            echo "Canonical state already contains this main commit."
-          elif git merge-base --is-ancestor "${current_sha}" "${MERGE_SHA}"; then
-            mapfile -t merge_shas < <(
-              git rev-list --reverse --first-parent "${current_sha}..${MERGE_SHA}"
-            )
-          else
-            echo "Canonical state is not on the target main ancestry." >&2
-            exit 1
+          plan_file=$(mktemp)
+          plan_args=(
+            plan-commits
+            --repository-root .
+            --target-sha "${MERGE_SHA}"
+          )
+          if [[ -n "${current_sha}" ]]; then
+            plan_args+=(--current-sha "${current_sha}")
           fi
+          python3 scripts/update_post_merge_memory.py "${plan_args[@]}" > "${plan_file}"
+          mapfile -t merge_shas < "${plan_file}"
           for merge_sha in "${merge_shas[@]}"; do
             python3 scripts/update_post_merge_memory.py update \
               --repository "${GITHUB_REPOSITORY}" \
@@ -87,9 +96,16 @@ jobs:
           done
 
       - name: Validate generated state
-        run: >-
-          python3 scripts/check_loop_memory_state.py
-          --state-root "${{ steps.state.outputs.state_dir }}"
+        shell: bash
+        run: |
+          set -euo pipefail
+          state_dir="${{ steps.state.outputs.state_dir }}"
+          python3 scripts/update_post_merge_memory.py sign-state \
+            --state-root "${state_dir}" \
+            --private-key "${LOOP_MEMORY_PRIVATE_KEY}"
+          python3 scripts/update_post_merge_memory.py verify-state \
+            --state-root "${state_dir}" \
+            --public-key .agent-loop/keys/loop-memory-signing-public.pem
 
       - name: Commit generated state branch
         shell: bash
@@ -99,7 +115,8 @@ jobs:
           git -C "${state_dir}" add \
             .agent-loop/STATE.json \
             .agent-loop/LOOP_STATE.md \
-            .agent-loop/MERGE_LOG.jsonl
+            .agent-loop/MERGE_LOG.jsonl \
+            .agent-loop/STATE.sig
           if git -C "${state_dir}" diff --cached --quiet; then
             echo "Loop memory is already current."
             exit 0

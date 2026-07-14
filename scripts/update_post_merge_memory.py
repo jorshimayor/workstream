@@ -10,6 +10,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -24,7 +25,9 @@ STATE_BRANCH = "automation/loop-memory"
 STATE_PATH = Path(".agent-loop/STATE.json")
 RENDERED_PATH = Path(".agent-loop/LOOP_STATE.md")
 LEDGER_PATH = Path(".agent-loop/MERGE_LOG.jsonl")
+SIGNATURE_PATH = Path(".agent-loop/STATE.sig")
 INTENT_PREFIX = ".agent-loop/merge-intents/"
+BOOTSTRAP_INTENT_PATH = f"{INTENT_PREFIX}WS-ENG-001-02.json"
 ID_PATTERN = re.compile(r"^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$")
 REPOSITORY_PATTERN = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
@@ -176,14 +179,19 @@ def parse_loop_metadata(intent_text: str) -> LoopMetadata:
     )
 
 
-def _validate_repository_and_sha(repository: str, merge_sha: str) -> None:
-    """Validate untrusted workflow inputs before constructing API paths."""
-    if not REPOSITORY_PATTERN.fullmatch(repository):
-        raise LoopMemoryError("repository must be owner/name")
+def _validate_sha(merge_sha: str) -> None:
+    """Validate one untrusted Git commit identifier."""
     if not SHA_PATTERN.fullmatch(merge_sha):
         raise LoopMemoryError(
             "merge SHA must contain 40 lowercase hexadecimal characters"
         )
+
+
+def _validate_repository_and_sha(repository: str, merge_sha: str) -> None:
+    """Validate untrusted workflow inputs before constructing API paths."""
+    if not REPOSITORY_PATTERN.fullmatch(repository):
+        raise LoopMemoryError("repository must be owner/name")
+    _validate_sha(merge_sha)
 
 
 def _intent_path(metadata: LoopMetadata) -> str:
@@ -269,6 +277,81 @@ def validate_local_merge_intent(repository_root: Path, base_ref: str) -> LoopMet
     if path != _intent_path(metadata):
         raise LoopMemoryError("merge-intent path does not match its chunk_id")
     return metadata
+
+
+def _git_lines(repository_root: Path, arguments: list[str], failure: str) -> list[str]:
+    """Run one read-only Git query and return its non-empty output lines."""
+    result = subprocess.run(
+        ["git", "-C", str(repository_root), *arguments],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if result.returncode != 0:
+        raise LoopMemoryError(failure)
+    return [line for line in result.stdout.splitlines() if line]
+
+
+def _is_ancestor(repository_root: Path, ancestor: str, descendant: str) -> bool:
+    """Return whether one commit is an ancestor, failing on an invalid Git query."""
+    result = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(repository_root),
+            "merge-base",
+            "--is-ancestor",
+            ancestor,
+            descendant,
+        ],
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if result.returncode not in (0, 1):
+        raise LoopMemoryError("cannot resolve main commit ancestry")
+    return result.returncode == 0
+
+
+def plan_reconciliation_commits(
+    repository_root: Path, target_sha: str, current_sha: str | None
+) -> list[str]:
+    """List every first-parent commit needed to reach one protected-main target."""
+    _validate_sha(target_sha)
+    if current_sha:
+        _validate_sha(current_sha)
+        if _is_ancestor(repository_root, target_sha, current_sha):
+            return []
+        if not _is_ancestor(repository_root, current_sha, target_sha):
+            raise LoopMemoryError("canonical state is not on the target main ancestry")
+        return _git_lines(
+            repository_root,
+            ["rev-list", "--reverse", "--first-parent", f"{current_sha}..{target_sha}"],
+            "cannot enumerate unrecorded main commits",
+        )
+
+    bootstrap_commits = _git_lines(
+        repository_root,
+        [
+            "rev-list",
+            "--reverse",
+            "--first-parent",
+            target_sha,
+            "--",
+            BOOTSTRAP_INTENT_PATH,
+        ],
+        "cannot resolve the loop-memory bootstrap commit",
+    )
+    if len(bootstrap_commits) != 1 or not SHA_PATTERN.fullmatch(bootstrap_commits[0]):
+        raise LoopMemoryError("target main history has no unique loop-memory bootstrap")
+    bootstrap_sha = bootstrap_commits[0]
+    successors = _git_lines(
+        repository_root,
+        ["rev-list", "--reverse", "--first-parent", f"{bootstrap_sha}..{target_sha}"],
+        "cannot enumerate commits after the loop-memory bootstrap",
+    )
+    return [bootstrap_sha, *successors]
 
 
 def _latest_named(
@@ -688,6 +771,88 @@ def validate_generated_state(state_root: Path) -> None:
         raise LoopMemoryError("rendered loop state does not match canonical JSON")
 
 
+def _signature_payload(state_root: Path) -> bytes:
+    """Return an unambiguous payload covering every canonical generated file."""
+    payload = bytearray(b"workstream-loop-memory-signature-v1\0")
+    for relative_path in (STATE_PATH, RENDERED_PATH, LEDGER_PATH):
+        path_bytes = relative_path.as_posix().encode("ascii")
+        content = (state_root / relative_path).read_bytes()
+        payload.extend(len(path_bytes).to_bytes(4, "big"))
+        payload.extend(path_bytes)
+        payload.extend(len(content).to_bytes(8, "big"))
+        payload.extend(content)
+    return bytes(payload)
+
+
+def sign_generated_state(state_root: Path, private_key: Path) -> None:
+    """Sign validated generated state with the Actions-only Ed25519 key."""
+    validate_generated_state(state_root)
+    with tempfile.NamedTemporaryFile() as payload_file:
+        payload_file.write(_signature_payload(state_root))
+        payload_file.flush()
+        result = subprocess.run(
+            [
+                "openssl",
+                "pkeyutl",
+                "-sign",
+                "-rawin",
+                "-inkey",
+                str(private_key),
+                "-in",
+                payload_file.name,
+            ],
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    if result.returncode != 0 or len(result.stdout) != 64:
+        raise LoopMemoryError("cannot sign generated loop memory")
+    _atomic_write(
+        state_root / SIGNATURE_PATH,
+        base64.b64encode(result.stdout).decode("ascii") + "\n",
+    )
+
+
+def verify_generated_state_signature(state_root: Path, public_key: Path) -> None:
+    """Verify canonical generated files against the reviewed public key."""
+    validate_generated_state(state_root)
+    try:
+        encoded_signature = (state_root / SIGNATURE_PATH).read_text(encoding="ascii")
+        signature = base64.b64decode(encoded_signature.strip(), validate=True)
+    except (OSError, UnicodeDecodeError, ValueError) as exc:
+        raise LoopMemoryError("generated loop-memory signature is unreadable") from exc
+    if len(signature) != 64:
+        raise LoopMemoryError("generated loop-memory signature has an invalid length")
+    with (
+        tempfile.NamedTemporaryFile() as signature_file,
+        tempfile.NamedTemporaryFile() as payload_file,
+    ):
+        signature_file.write(signature)
+        signature_file.flush()
+        payload_file.write(_signature_payload(state_root))
+        payload_file.flush()
+        result = subprocess.run(
+            [
+                "openssl",
+                "pkeyutl",
+                "-verify",
+                "-rawin",
+                "-pubin",
+                "-inkey",
+                str(public_key),
+                "-sigfile",
+                signature_file.name,
+                "-in",
+                payload_file.name,
+            ],
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    if result.returncode != 0:
+        raise LoopMemoryError("generated loop-memory signature verification failed")
+
+
 def _assert_state_branch(state_root: Path) -> None:
     """Refuse to write generated memory outside its dedicated branch."""
     result = subprocess.run(
@@ -710,6 +875,11 @@ def build_parser() -> argparse.ArgumentParser:
     validate_intent.add_argument("--repository-root", type=Path, default=Path("."))
     validate_intent.add_argument("--base-ref", required=True)
 
+    plan_commits = subparsers.add_parser("plan-commits")
+    plan_commits.add_argument("--repository-root", type=Path, default=Path("."))
+    plan_commits.add_argument("--target-sha", required=True)
+    plan_commits.add_argument("--current-sha")
+
     update = subparsers.add_parser("update")
     update.add_argument("--repository", required=True)
     update.add_argument("--merge-sha", required=True)
@@ -719,6 +889,14 @@ def build_parser() -> argparse.ArgumentParser:
 
     validate_state = subparsers.add_parser("validate-state")
     validate_state.add_argument("--state-root", type=Path, required=True)
+
+    sign_state = subparsers.add_parser("sign-state")
+    sign_state.add_argument("--state-root", type=Path, required=True)
+    sign_state.add_argument("--private-key", type=Path, required=True)
+
+    verify_state = subparsers.add_parser("verify-state")
+    verify_state.add_argument("--state-root", type=Path, required=True)
+    verify_state.add_argument("--public-key", type=Path, required=True)
 
     show = subparsers.add_parser("show")
     show.add_argument("--state-root", type=Path, required=True)
@@ -735,6 +913,13 @@ def main(argv: list[str] | None = None) -> int:
                 args.base_ref,
             )
             print(f"Merge intent passed for {metadata.chunk_id}.")
+        elif args.command == "plan-commits":
+            for merge_sha in plan_reconciliation_commits(
+                args.repository_root,
+                args.target_sha,
+                args.current_sha,
+            ):
+                print(merge_sha)
         elif args.command == "update":
             _assert_state_branch(args.state_root)
             token = os.environ.get(args.token_env, "")
@@ -750,6 +935,12 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "validate-state":
             validate_generated_state(args.state_root)
             print("Generated loop memory state passed.")
+        elif args.command == "sign-state":
+            sign_generated_state(args.state_root, args.private_key)
+            print("Generated loop memory state signed.")
+        elif args.command == "verify-state":
+            verify_generated_state_signature(args.state_root, args.public_key)
+            print("Generated loop memory state signature passed.")
         elif args.command == "show":
             validate_generated_state(args.state_root)
             print((args.state_root / RENDERED_PATH).read_text(encoding="utf-8"), end="")

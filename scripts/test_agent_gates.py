@@ -1089,6 +1089,130 @@ def test_post_merge_state_is_idempotent_and_monotonic() -> None:
             raise AssertionError("older merge replaced live state")
 
 
+def test_post_merge_reconciliation_bootstraps_and_recovers_every_commit() -> None:
+    """Empty and existing state both enumerate the complete first-parent range."""
+    updater = load_module(
+        "post_merge_reconciliation", "scripts/update_post_merge_memory.py"
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        subprocess.run(
+            ["git", "init", "--initial-branch", "main", str(root)],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        subprocess.run(
+            ["git", "-C", str(root), "config", "user.email", "test@example.test"],
+            check=True,
+        )
+        subprocess.run(
+            ["git", "-C", str(root), "config", "user.name", "Test"], check=True
+        )
+
+        readme = root / "README.md"
+        readme.write_text("base\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(root), "add", "README.md"], check=True)
+        subprocess.run(
+            ["git", "-C", str(root), "commit", "-m", "base"],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        base_sha = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "HEAD"],
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+        ).stdout.strip()
+
+        subprocess.run(
+            ["git", "-C", str(root), "switch", "-c", "feature"],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        intent_path = root / updater.BOOTSTRAP_INTENT_PATH
+        intent_path.parent.mkdir(parents=True)
+        intent_path.write_text(valid_loop_intent(), encoding="utf-8")
+        subprocess.run(
+            ["git", "-C", str(root), "add", updater.BOOTSTRAP_INTENT_PATH],
+            check=True,
+        )
+        subprocess.run(
+            ["git", "-C", str(root), "commit", "-m", "automation"],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        subprocess.run(
+            ["git", "-C", str(root), "switch", "main"],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        subprocess.run(
+            ["git", "-C", str(root), "merge", "--no-ff", "feature", "-m", "activate"],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        activation_sha = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "HEAD"],
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+        ).stdout.strip()
+
+        readme.write_text("base\nlater\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(root), "add", "README.md"], check=True)
+        subprocess.run(
+            ["git", "-C", str(root), "commit", "-m", "later"],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        target_sha = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "HEAD"],
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+        ).stdout.strip()
+
+        assert updater.plan_reconciliation_commits(root, target_sha, None) == [
+            activation_sha,
+            target_sha,
+        ]
+        assert updater.plan_reconciliation_commits(
+            root, target_sha, activation_sha
+        ) == [target_sha]
+        assert updater.plan_reconciliation_commits(root, target_sha, target_sha) == []
+        assert_loop_error(
+            updater,
+            lambda: updater.plan_reconciliation_commits(root, base_sha, None),
+            "no unique loop-memory bootstrap",
+        )
+
+        subprocess.run(
+            ["git", "-C", str(root), "switch", "-c", "divergent", activation_sha],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        (root / "divergent.txt").write_text("other\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(root), "add", "divergent.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(root), "commit", "-m", "divergent"],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        divergent_sha = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "HEAD"],
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+        ).stdout.strip()
+        assert_loop_error(
+            updater,
+            lambda: updater.plan_reconciliation_commits(
+                root, divergent_sha, target_sha
+            ),
+            "not on the target main ancestry",
+        )
+
+
 def test_post_merge_collection_binds_exact_pr_and_checks() -> None:
     """The collector binds one main merge SHA and final-head check evidence."""
     updater = load_module(
@@ -1197,10 +1321,87 @@ def test_generated_loop_memory_validator_detects_drift() -> None:
         root = Path(tmpdir)
         updater.apply_merge_record(root, loop_record(updater))
         assert checker.generated_state_failures(root) == []
-        (root / updater.RENDERED_PATH).write_text("stale\n", encoding="utf-8")
+        rendered_path = root / updater.RENDERED_PATH
+        rendered_path.write_text(
+            rendered_path.read_text(encoding="utf-8") + "Tampered next gate.\n",
+            encoding="utf-8",
+        )
+        assert_loop_error(
+            updater,
+            lambda: updater.validate_generated_state(root),
+            "rendered loop state does not match",
+        )
+        rendered_path.write_text("stale\n", encoding="utf-8")
         failures = checker.generated_state_failures(root)
         assert any("merge SHA" in failure for failure in failures)
         assert any("completed chunk" in failure for failure in failures)
+
+
+def test_generated_loop_memory_signature_authenticates_every_canonical_file() -> None:
+    """Only the Actions-held private key can authenticate generated branch state."""
+    updater = load_module("post_merge_signature", "scripts/update_post_merge_memory.py")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        private_key = root / "private.pem"
+        public_key = root / "public.pem"
+        subprocess.run(
+            ["openssl", "genpkey", "-algorithm", "ED25519", "-out", private_key],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        subprocess.run(
+            [
+                "openssl",
+                "pkey",
+                "-in",
+                private_key,
+                "-pubout",
+                "-out",
+                public_key,
+            ],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        updater.apply_merge_record(root, loop_record(updater))
+        updater.sign_generated_state(root, private_key)
+        updater.verify_generated_state_signature(root, public_key)
+
+        updater.apply_merge_record(
+            root,
+            loop_record(
+                updater,
+                sha="c" * 40,
+                first_parent_sha="a" * 40,
+                pr_number=121,
+            ),
+        )
+        assert_loop_error(
+            updater,
+            lambda: updater.verify_generated_state_signature(root, public_key),
+            "signature verification failed",
+        )
+        updater.sign_generated_state(root, private_key)
+
+        signature_path = root / updater.SIGNATURE_PATH
+        signature_path.write_text("invalid\n", encoding="ascii")
+        assert_loop_error(
+            updater,
+            lambda: updater.verify_generated_state_signature(root, public_key),
+            "signature is unreadable",
+        )
+        updater.sign_generated_state(root, private_key)
+        (root / updater.RENDERED_PATH).write_text(
+            (root / updater.RENDERED_PATH).read_text(encoding="utf-8")
+            + "forged but unsigned\n",
+            encoding="utf-8",
+        )
+        assert_loop_error(
+            updater,
+            lambda: updater.verify_generated_state_signature(root, public_key),
+            "rendered loop state does not match",
+        )
 
 
 def test_generated_loop_memory_escapes_markdown_metadata() -> None:
@@ -1228,11 +1429,15 @@ def test_loop_memory_workflow_isolated_write_boundary() -> None:
     assert "persist-credentials: false" in workflow
     assert "contents: write" in workflow
     assert "pull-requests: read" in workflow
+    assert "LOOP_MEMORY_SIGNING_KEY" in workflow
+    assert "verify-state" in workflow
+    assert ".agent-loop/STATE.sig" in workflow
     assert "HEAD:refs/heads/${STATE_BRANCH}" in workflow
     assert "HEAD:refs/heads/main" not in workflow
     assert "gh pr create" not in workflow
-    assert "git rev-list --reverse --first-parent" in workflow
-    assert 'git merge-base --is-ancestor "${MERGE_SHA}" "${current_sha}"' in workflow
+    assert "plan-commits" in workflow
+    assert "--current-sha" in workflow
+    assert "update_post_merge_memory.py sign-state" in workflow
     assert "validate-merge-intent" in agent_gates
     assert "github.event.pull_request.body" not in agent_gates
 
@@ -1839,6 +2044,18 @@ def test_full_merge_ledger_hash_chain_detects_history_tampering() -> None:
             for failure in checker.generated_state_failures(root)
         )
 
+        ledger_path.write_text("\n".join(original_lines) + "\n", encoding="utf-8")
+        schema_tampered = [json.loads(line) for line in original_lines]
+        schema_tampered[0]["schema_version"] = 999
+        ledger_path.write_text(
+            "".join(f"{json.dumps(entry)}\n" for entry in schema_tampered),
+            encoding="utf-8",
+        )
+        assert any(
+            "invalid entry schema" in failure
+            for failure in checker.generated_state_failures(root)
+        )
+
 
 def test_merge_ledger_rejects_schema_record_and_ancestry_corruption() -> None:
     """Every ledger envelope and first-parent link is validated before state changes."""
@@ -2218,8 +2435,10 @@ def main() -> int:
         test_loop_memory_state_accepts_merged_fixture,
         test_post_merge_metadata_is_strict_and_bounded,
         test_post_merge_state_is_idempotent_and_monotonic,
+        test_post_merge_reconciliation_bootstraps_and_recovers_every_commit,
         test_post_merge_collection_binds_exact_pr_and_checks,
         test_generated_loop_memory_validator_detects_drift,
+        test_generated_loop_memory_signature_authenticates_every_canonical_file,
         test_generated_loop_memory_escapes_markdown_metadata,
         test_loop_memory_workflow_isolated_write_boundary,
         test_post_merge_input_and_check_validation_fail_closed,

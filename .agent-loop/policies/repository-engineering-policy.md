@@ -34,7 +34,7 @@ pytest -q
 | Submission/checker lifecycle | `backend/app/modules/submissions`, `backend/app/modules/checkers` | Pre-submit blocking gates and post-submit checker records stay separate. |
 | Persistence | `backend/app/db`, module models/repositories | Use async SQLAlchemy repositories and Alembic migrations. |
 | CI/review gates | `.github/workflows`, `scripts/`, `.agent-loop/` | Gates may be strengthened; weakening requires explicit human approval. |
-| Generated merge memory | `automation/loop-memory` | Trusted `main` automation owns canonical live state; humans and agents do not edit this branch manually. |
+| Generated merge memory | `automation/loop-memory` | Trusted `main` automation owns signed canonical live state; humans and agents do not edit this branch manually or trust it without signature verification. |
 
 ## Dependency Policy
 
