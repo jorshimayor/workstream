@@ -2,9 +2,10 @@
 
 ## Status
 
-Bounded runtime repair and focused evidence. Repaired contract review passed on
-`7cc6058`; the readable exact-registry dry run stopped at the prior ceiling, and
-the human-approved 1000-line amendment passed at `611abfc`.
+Runtime repair and focused evidence. Repaired contract review passed on
+`7cc6058`; the earlier numeric amendments passed at `611abfc`, and the human
+subsequently replaced the line ceiling with this chunk's semantic scope,
+acceptance criteria, behavior evidence, and required-review gates.
 
 ## Parent initiative
 
@@ -19,15 +20,14 @@ event and existing task/checker behavior.
 ## Risk and circuit breaker
 
 - Risk: L1 / SLA P1.
-- Inspect scope at 500 changed non-comment production lines.
-- Hard stop at 1000 changed non-comment production lines, counting
-  `backend/app/**` plus migration code; tests and evidence do not justify
-  exceeding the production limit.
+- Scope is bounded by this chunk's allowed files, explicit non-goals, acceptance
+  criteria, and AUTH-05A ownership boundary rather than a production-line cap.
+- Stop and replan if implementation crosses into AUTH-05B, authorization
+  evaluation, grant lifecycle, route activation, or another subsystem boundary.
 - Security SQL must remain reviewable as named functions and multiline logical
-  clauses. Long-line packing does not reduce the circuit-breaker numerator and
-  is prohibited.
-- This one-time ceiling repair is limited to the reviewer-required privacy and
-  causation controls; it does not reactivate AUTH-05B scope.
+  clauses; line packing is prohibited.
+- The scope amendment is limited to AUTH-05A's required privacy, custody,
+  registry, causation, and parity controls; it does not reactivate AUTH-05B.
 - A readable typed-registry dry run reached 689 changed lines before the SQL
   matrix was complete. The draft was discarded. Typed and database enforcement
   are one atomic security boundary, so they are not split across mergeable PRs.
@@ -356,8 +356,6 @@ python3 scripts/check_internal_review_evidence.py
 changed_production_lines=$(git diff --unified=0 origin/main...HEAD -- backend/app backend/alembic | \
   awk '/^\+\+\+|^---/{next} /^[+-]/{line=substr($0,2); if (line !~ /^[[:space:]]*($|#)/) n++} END{print n+0}')
 printf 'AUTH-05A changed production lines: %s\n' "$changed_production_lines"
-if test "$changed_production_lines" -gt 500; then printf 'AUTH-05A inspection required\n'; fi
-test "$changed_production_lines" -le 1000
 awk 'length($0) > 120 { print FNR ":" $0; bad=1 } END { exit bad }' \
   backend/alembic/versions/0018_authority_audit_evidence.py
 if git diff --unified=0 origin/main...HEAD -- backend/tests | \

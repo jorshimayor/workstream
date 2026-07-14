@@ -121,7 +121,7 @@ def upgrade() -> None:
         create function authority_facts_are_safe(facts json)
         returns boolean language sql immutable strict as $$
           select json_typeof(facts) = 'object'
-            and (select count(*) from json_each(facts)) <= 8
+            and (select count(*) = count(distinct key) and count(*) <= 8 from json_each(facts))
             and not exists (
               select 1 from json_each(facts) item
               where item.key not in (
@@ -156,7 +156,7 @@ def upgrade() -> None:
         create function authority_grant_facts_are_safe(
           facts json, roles text[], expected_status text,
           expected_effective boolean, envelope_project_id text
-        ) returns boolean language sql immutable strict as $$
+        ) returns boolean language sql immutable as $$
           select authority_facts_are_safe(facts)
             and facts->>'role' = any(roles)
             and facts->>'status' = expected_status
@@ -378,7 +378,7 @@ def upgrade() -> None:
         "audit_events",
         f"""
         event_domain <> 'authority' or (
-          entity_type in ({entity_tokens}) and entity_id ~ '{uuid_pattern}'
+          id ~ '{uuid_pattern}' and entity_type in ({entity_tokens}) and entity_id ~ '{uuid_pattern}'
           and (
             (actor_ref_kind in ('legacy_actor', 'actor_profile') and actor_id ~ '{uuid_pattern}')
             or (actor_ref_kind = 'system_principal' and actor_id = 'workstream:system:bootstrap')
@@ -446,7 +446,12 @@ def upgrade() -> None:
         event_domain <> 'authority'
         or event_type not in (
           'SensitiveAuthorizationAllowed', 'SensitiveAuthorizationDenied',
-          'AuthorityInvalidationRequested'
+          'AuthorityInvalidationRequested', 'AdminRoleGrantIssueDenied',
+          'LastAccessAdministratorOperationDenied'
+        )
+        or (
+          event_type in ('AdminRoleGrantIssueDenied', 'LastAccessAdministratorOperationDenied')
+          and denial_code is not null
         )
         or (
           event_type = 'SensitiveAuthorizationAllowed' and permission_id is not null

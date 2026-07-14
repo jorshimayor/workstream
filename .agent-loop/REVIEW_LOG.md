@@ -1,5 +1,13 @@
 # Review Log
 
+## 2026-07-14 - WS-AUTH-001-05A Semantic Scope Amendment
+
+The human replaced AUTH-05A's numeric production-line ceiling with the approved
+chunk contract as the controlling boundary. Allowed files, explicit non-goals,
+acceptance criteria, behavior evidence, and required internal review now govern
+scope. Readable SQL remains mandatory; AUTH-05B, route activation, permission
+evaluation, and grant lifecycle implementation remain inactive.
+
 ## 2026-07-14 - WS-AUTH-001-05A Circuit Breaker Amendment Passed
 
 The human-approved AUTH-05A-only 500-line inspection and 1000-line hard stop

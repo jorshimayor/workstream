@@ -38,7 +38,8 @@ def _assert_value_not_retained(value: object, forbidden: str, seen: set[int] | N
             _assert_value_not_retained(item, forbidden, seen)
     elif isinstance(value, Mapping):
         for key, item in value.items():
-            _assert_value_not_retained((key, item), forbidden, seen)
+            _assert_value_not_retained(key, forbidden, seen)
+            _assert_value_not_retained(item, forbidden, seen)
     elif isinstance(value, (list, tuple, set)):
         for item in value:
             _assert_value_not_retained(item, forbidden, seen)
@@ -132,8 +133,301 @@ def _authority_input(event_type: AuthorityEventType, **overrides) -> AuthorityAu
     return AuthorityAuditEventInput(**values)
 
 
+def _authority_event_matrix() -> list[dict]:
+    """Return every closed event with one valid and one fact-invalid shape."""
+    project_id = str(uuid4())
+    system_active = {
+        "status": "active",
+        "role": "access_administrator",
+        "scope_type": "system",
+        "effective": True,
+    }
+    project_active = {
+        "status": "active",
+        "role": "submitter",
+        "scope_type": "project",
+        "scope_id": project_id,
+        "effective": True,
+    }
+
+    def row(event_type, entity_type, reason, before, after, invalid_after, **extra):
+        event_id = uuid4()
+        return {
+            "event_id": event_id,
+            "event_type": event_type,
+            "entity_type": entity_type,
+            "entity_id": str(event_id)
+            if entity_type in {"authorization_decision", "authority_invalidation"}
+            else str(uuid4()),
+            "actor_ref_kind": ActorReferenceKind.SYSTEM_PRINCIPAL,
+            "actor_ref": "workstream:system:bootstrap",
+            "request_id": uuid4(),
+            "correlation_id": uuid4(),
+            "reason": reason,
+            "before_facts": before,
+            "after_facts": after,
+            "invalid_patch": {"after_facts": invalid_after},
+            **extra,
+        }
+
+    rows = [
+        row(
+            AuthorityEventType.ACTOR_PROFILE_PROVISIONED,
+            "actor_profile",
+            "automatic_first_access",
+            None,
+            {
+                "status": "active",
+                "subject_kind": "human",
+                "provisioning_method": "automatic_first_access",
+            },
+            {
+                "status": "active",
+                "subject_kind": "service",
+                "provisioning_method": "automatic_first_access",
+            },
+        ),
+        row(
+            AuthorityEventType.SERVICE_ACTOR_PROVISIONED,
+            "actor_profile",
+            "manual_service_provisioning",
+            None,
+            {
+                "status": "active",
+                "subject_kind": "service",
+                "provisioning_method": "manual_service_provisioning",
+            },
+            {
+                "status": "active",
+                "subject_kind": "human",
+                "provisioning_method": "manual_service_provisioning",
+            },
+        ),
+        row(
+            AuthorityEventType.ACTOR_IDENTITY_LINKED,
+            "actor_identity_link",
+            "identity_lifecycle_change",
+            None,
+            {"status": "active", "subject_kind": "human"},
+            {"status": "revoked", "subject_kind": "human"},
+        ),
+        row(
+            AuthorityEventType.ACTOR_IDENTITY_LINK_REVOKED,
+            "actor_identity_link",
+            "identity_lifecycle_change",
+            {"status": "active"},
+            {"status": "revoked"},
+            {"status": "active"},
+        ),
+        row(
+            AuthorityEventType.ACTOR_IDENTITY_LINK_REACTIVATED,
+            "actor_identity_link",
+            "identity_lifecycle_change",
+            {"status": "revoked"},
+            {"status": "active"},
+            {"status": "suspended"},
+        ),
+        row(
+            AuthorityEventType.ACTOR_PROFILE_SUSPENDED,
+            "actor_profile",
+            "security_response",
+            {"status": "active"},
+            {"status": "suspended"},
+            {"status": "deactivated"},
+        ),
+        row(
+            AuthorityEventType.ACTOR_PROFILE_REACTIVATED,
+            "actor_profile",
+            "administrative_correction",
+            {"status": "suspended"},
+            {"status": "active"},
+            {"status": "deactivated"},
+        ),
+        row(
+            AuthorityEventType.ACTOR_PROFILE_DEACTIVATED,
+            "actor_profile",
+            "security_response",
+            {"status": "active"},
+            {"status": "deactivated"},
+            {"status": "suspended"},
+        ),
+        row(
+            AuthorityEventType.INITIAL_ACCESS_ADMIN_BOOTSTRAPPED,
+            "admin_role_grant",
+            "initial_access_bootstrap",
+            None,
+            system_active,
+            system_active | {"effective": False},
+        ),
+        row(
+            AuthorityEventType.ADMIN_ROLE_GRANT_ISSUED,
+            "admin_role_grant",
+            "authority_assignment",
+            None,
+            system_active,
+            system_active | {"status": "revoked"},
+        ),
+        row(
+            AuthorityEventType.ADMIN_ROLE_GRANT_REVOKED,
+            "admin_role_grant",
+            "authority_revocation",
+            system_active,
+            system_active | {"status": "revoked", "effective": False},
+            system_active | {"role": "operator", "status": "revoked", "effective": False},
+        ),
+        row(
+            AuthorityEventType.ADMIN_ROLE_GRANT_ISSUE_DENIED,
+            "admin_role_grant",
+            "authorization_policy_denial",
+            None,
+            None,
+            {"allowed": False},
+            denial_code="admin_role_grant_exists",
+        ),
+        row(
+            AuthorityEventType.LAST_ACCESS_ADMIN_OPERATION_DENIED,
+            "admin_role_grant",
+            "authorization_policy_denial",
+            None,
+            None,
+            {"allowed": False},
+            denial_code="last_access_administrator",
+        ),
+        row(
+            AuthorityEventType.PROJECT_ROLE_QUALIFICATION_CAPTURED,
+            "qualification_snapshot",
+            "qualification_evidence_captured",
+            None,
+            {"status": "captured"},
+            {"status": "active"},
+            project_id=project_id,
+        ),
+        row(
+            AuthorityEventType.PROJECT_ROLE_GRANT_ISSUED,
+            "project_role_grant",
+            "authority_assignment",
+            None,
+            project_active,
+            {
+                "status": "active",
+                "role": "submitter",
+                "scope_type": "system",
+                "effective": True,
+            },
+            project_id=project_id,
+        ),
+        row(
+            AuthorityEventType.PROJECT_ROLE_GRANT_REPLACED,
+            "project_role_grant",
+            "authority_replacement",
+            project_active,
+            project_active | {"role": "reviewer"},
+            project_active | {"scope_id": str(uuid4()), "role": "reviewer"},
+            project_id=project_id,
+        ),
+        row(
+            AuthorityEventType.PROJECT_ROLE_GRANT_REVOKED,
+            "project_role_grant",
+            "authority_revocation",
+            project_active,
+            project_active | {"status": "revoked", "effective": False},
+            project_active | {"role": "reviewer", "status": "revoked", "effective": False},
+            project_id=project_id,
+        ),
+        row(
+            AuthorityEventType.SENSITIVE_AUTHORIZATION_ALLOWED,
+            "authorization_decision",
+            "authorization_evaluation",
+            None,
+            {"allowed": True},
+            {"allowed": False},
+            permission_id="actor.profile.read_any",
+        ),
+        row(
+            AuthorityEventType.SENSITIVE_AUTHORIZATION_DENIED,
+            "authorization_decision",
+            "authorization_evaluation",
+            None,
+            {"allowed": False},
+            {"allowed": True},
+            permission_id="actor.profile.read_any",
+            denial_code="actor_suspended",
+        ),
+    ]
+    rows[11]["invalid_patch"] = {"denial_code": None}
+    rows[12]["invalid_patch"] = {"denial_code": None}
+    rows.append(
+        row(
+            AuthorityEventType.AUTHORITY_INVALIDATION_REQUESTED,
+            "authority_invalidation",
+            "authority_state_changed",
+            {"effective": True},
+            {"effective": False},
+            {"effective": True},
+            invalidation_cause_event_id=rows[0]["event_id"],
+            invalidation_target_kind="actor_profile",
+            invalidation_target_ref=str(uuid4()),
+        )
+    )
+    return rows
+
+
+def _authority_sql_values(candidate: dict) -> dict:
+    """Convert one shared matrix row into direct-SQL bind values."""
+    value = candidate.copy()
+    value.pop("invalid_patch", None)
+    optional = (
+        "target_actor_ref_kind",
+        "target_actor_ref",
+        "matched_grant_id",
+        "permission_id",
+        "project_id",
+        "resource_type",
+        "resource_id",
+        "target_ref_kind",
+        "target_ref_id",
+        "denial_code",
+        "idempotency_reference",
+        "invalidation_cause_event_id",
+        "invalidation_target_kind",
+        "invalidation_target_ref",
+    )
+    return {
+        **{key: value.get(key) for key in optional},
+        "id": str(value["event_id"]),
+        "entity_type": value["entity_type"],
+        "entity_id": value["entity_id"],
+        "event_type": value["event_type"].value,
+        "actor_ref_kind": value["actor_ref_kind"].value,
+        "actor_id": value["actor_ref"],
+        "request_id": str(value["request_id"]),
+        "correlation_id": str(value["correlation_id"]),
+        "reason": value["reason"],
+        "invalidation_cause_event_id": str(value["invalidation_cause_event_id"])
+        if value.get("invalidation_cause_event_id") is not None
+        else None,
+        "before_facts": json.dumps(value["before_facts"])
+        if value.get("before_facts") is not None
+        else None,
+        "after_facts": json.dumps(value["after_facts"])
+        if value.get("after_facts") is not None
+        else None,
+    }
+
+
 def test_authority_input_rejects_unbounded_or_inconsistent_evidence() -> None:
     secret = "secret-bearer-value"
+
+    class HostileMapping(Mapping):
+        def __getitem__(self, key):
+            raise KeyError(key)
+
+        def __iter__(self):
+            raise RuntimeError(secret)
+
+        def __len__(self):
+            return 1
+
     payload = _authority_input(AuthorityEventType.SENSITIVE_AUTHORIZATION_ALLOWED).model_dump(
         mode="json"
     ) | {"raw_token": secret}
@@ -150,12 +444,28 @@ def test_authority_input_rejects_unbounded_or_inconsistent_evidence() -> None:
     with pytest.raises(TypeError, match="invalid authority audit input") as caught:
         AuthorityAuditEventInput.model_validate_json(json.dumps(payload))
     _assert_value_not_retained(caught.value, secret)
+    with pytest.raises(TypeError, match="invalid authority audit input") as caught:
+        AuthorityAuditEventInput.model_validate(HostileMapping())
+    _assert_value_not_retained(caught.value, secret)
 
     safe = _authority_input(AuthorityEventType.SENSITIVE_AUTHORIZATION_ALLOWED).model_dump(
         mode="json"
     )
-    assert AuthorityAuditEventInput.model_validate_json(json.dumps(safe)).model_dump(mode="json") == safe
-    for raw in ("{secret-bearer-value", '"secret-bearer-value"', '["secret-bearer-value"]'):
+    assert (
+        AuthorityAuditEventInput.model_validate_json(json.dumps(safe)).model_dump(mode="json")
+        == safe
+    )
+    duplicate = json.dumps(safe).replace('"allowed": true', '"allowed": false, "allowed": true')
+    for raw in (
+        "{secret-bearer-value",
+        '"secret-bearer-value"',
+        '["secret-bearer-value"]',
+        "0",
+        "true",
+        "false",
+        "null",
+        duplicate,
+    ):
         for document in (raw, raw.encode(), bytearray(raw.encode())):
             with pytest.raises(TypeError, match="invalid authority audit input") as caught:
                 AuthorityAuditEventInput.model_validate_json(document)
@@ -163,7 +473,10 @@ def test_authority_input_rejects_unbounded_or_inconsistent_evidence() -> None:
 
     for patch, forbidden in (
         (
-            {"actor_ref_kind": ActorReferenceKind.LEGACY_ACTOR, "actor_ref": "provider@example.com"},
+            {
+                "actor_ref_kind": ActorReferenceKind.LEGACY_ACTOR,
+                "actor_ref": "provider@example.com",
+            },
             "provider@example.com",
         ),
         ({"after_facts": {"allowed": "secret-bearer-value"}}, secret),
@@ -177,8 +490,12 @@ def test_authority_input_rejects_unbounded_or_inconsistent_evidence() -> None:
         ({"permission_id": [secret]}, secret),
     ):
         candidate = safe | patch
+        for constructor in constructors:
+            with pytest.raises(TypeError, match="invalid authority audit input") as caught:
+                constructor(candidate)
+            _assert_value_not_retained(caught.value, forbidden)
         with pytest.raises(TypeError, match="invalid authority audit input") as caught:
-            AuthorityAuditEventInput.model_validate(candidate)
+            AuthorityAuditEventInput.model_validate_json(json.dumps(candidate))
         _assert_value_not_retained(caught.value, forbidden)
     with pytest.raises(ValidationError, match="resource ID requires"):
         _authority_input(
@@ -257,6 +574,78 @@ def test_authority_input_enforces_grant_scope_matrix() -> None:
     }
     with pytest.raises(ValidationError, match="scope"):
         AuthorityAuditEventInput.model_validate(replacement)
+    with pytest.raises(ValidationError, match="project resource"):
+        AuthorityAuditEventInput.model_validate(
+            source
+            | {
+                "resource_type": "project",
+                "resource_id": str(uuid4()),
+            }
+        )
+
+
+async def test_authority_event_matrix_has_typed_direct_sql_parity(audit_factory) -> None:
+    """Every registered event accepts and rejects the same fact shape at both boundaries."""
+    insert = text(
+        "insert into audit_events "
+        "(id, entity_type, entity_id, event_type, actor_id, actor_roles, claim_snapshot, "
+        "auth_source, is_dev_auth, event_payload, event_domain, event_version, actor_ref_kind, "
+        "request_id, correlation_id, target_actor_ref_kind, target_actor_ref, matched_grant_id, "
+        "permission_id, project_id, resource_type, resource_id, target_ref_kind, target_ref_id, "
+        "reason, denial_code, idempotency_reference, invalidation_cause_event_id, "
+        "invalidation_target_kind, invalidation_target_ref, before_facts, after_facts) values "
+        "(:id, :entity_type, :entity_id, :event_type, :actor_id, '[]', '{}', "
+        "'local_authority', false, '{}', 'authority', 1, :actor_ref_kind, :request_id, "
+        ":correlation_id, :target_actor_ref_kind, :target_actor_ref, :matched_grant_id, "
+        ":permission_id, :project_id, :resource_type, :resource_id, :target_ref_kind, "
+        ":target_ref_id, :reason, :denial_code, :idempotency_reference, "
+        ":invalidation_cause_event_id, :invalidation_target_kind, :invalidation_target_ref, "
+        "cast(:before_facts as json), cast(:after_facts as json))"
+    )
+    cases = _authority_event_matrix()
+    assert {case["event_type"] for case in cases} == set(AuthorityEventType)
+
+    async with audit_factory() as session:
+        for case in cases:
+            candidate = {key: value for key, value in case.items() if key != "invalid_patch"}
+            assert (
+                AuthorityAuditEventInput.model_validate(candidate).event_type == case["event_type"]
+            )
+            await session.execute(insert, _authority_sql_values(candidate))
+        await session.commit()
+
+        for case in cases:
+            event_id = uuid4()
+            candidate = {
+                **{key: value for key, value in case.items() if key != "invalid_patch"},
+                **case["invalid_patch"],
+                "event_id": event_id,
+            }
+            if candidate["entity_type"] in {"authorization_decision", "authority_invalidation"}:
+                candidate["entity_id"] = str(event_id)
+            with pytest.raises(ValidationError):
+                AuthorityAuditEventInput.model_validate(candidate)
+            with pytest.raises(IntegrityError):
+                await session.execute(insert, _authority_sql_values(candidate))
+            await session.rollback()
+
+
+async def test_authority_service_readmits_mutated_inputs_without_retention(audit_factory) -> None:
+    """The service never forwards post-validation mutations to SQLAlchemy."""
+    secret = "secret-bearer-value"
+    values = [
+        _authority_input(AuthorityEventType.SENSITIVE_AUTHORIZATION_ALLOWED),
+        _authority_input(AuthorityEventType.SENSITIVE_AUTHORIZATION_ALLOWED),
+    ]
+    values[0].actor_ref = secret
+    values[1].after_facts["allowed"] = secret
+
+    async with audit_factory() as session:
+        for value in values:
+            with pytest.raises(TypeError, match="invalid authority audit input") as caught:
+                await AuditService(session).add_authority_event(value)
+            _assert_value_not_retained(caught.value, secret)
+            assert await session.get(AuditEvent, str(value.event_id)) is None
 
 
 async def test_authority_writer_persists_typed_privacy_neutral_events(audit_factory) -> None:
@@ -474,13 +863,16 @@ async def test_database_rejects_malformed_and_mutated_audit_rows(audit_factory) 
             "request_id, correlation_id, permission_id, reason, after_facts) values "
             "(:id, :entity_type, :id, 'SensitiveAuthorizationAllowed', :actor_id, '[]', '{}', "
             "'local_authority', false, '{}', 'authority', 1, :actor_kind, :request_id, "
-            ":correlation_id, 'actor.profile.read_any', :reason, cast(:facts as json))"
+            ":correlation_id, :permission_id, :reason, cast(:facts as json))"
         )
         for patch in (
             {"actor_kind": "legacy_actor", "actor_id": "provider@example.com"},
             {"facts": '{"decision_code":"https://issuer.test"}'},
             {"facts": '{"allowed":"secret-bearer-value"}'},
+            {"facts": '{"allowed":false,"allowed":true}'},
             {"entity_type": "provider@example.com"},
+            {"id": "secret-bearer-value"},
+            {"permission_id": "secret-bearer-value"},
             {"reason": "secret-bearer-value"},
         ):
             with pytest.raises(IntegrityError):
@@ -491,6 +883,7 @@ async def test_database_rejects_malformed_and_mutated_audit_rows(audit_factory) 
                     "request_id": str(uuid4()),
                     "correlation_id": str(uuid4()),
                     "entity_type": "authorization_decision",
+                    "permission_id": "actor.profile.read_any",
                     "reason": "authorization_evaluation",
                     "facts": '{"allowed":true}',
                 }
@@ -504,11 +897,12 @@ async def test_database_rejects_malformed_and_mutated_audit_rows(audit_factory) 
             "insert into audit_events "
             "(id, entity_type, entity_id, event_type, actor_id, actor_roles, claim_snapshot, "
             "auth_source, is_dev_auth, event_payload, event_domain, event_version, actor_ref_kind, "
-            "request_id, correlation_id, project_id, reason, after_facts) values "
+            "request_id, correlation_id, project_id, resource_type, resource_id, reason, "
+            "after_facts) values "
             "(:id, 'admin_role_grant', :entity_id, 'AdminRoleGrantIssued', "
             "'workstream:system:bootstrap', '[]', '{}', 'local_authority', false, '{}', "
             "'authority', 1, 'system_principal', :request_id, :correlation_id, :project_id, "
-            "'authority_assignment', cast(:facts as json))"
+            ":resource_type, :resource_id, 'authority_assignment', cast(:facts as json))"
         )
         project_id = str(uuid4())
 
@@ -519,6 +913,8 @@ async def test_database_rejects_malformed_and_mutated_audit_rows(audit_factory) 
                 "request_id": str(uuid4()),
                 "correlation_id": str(uuid4()),
                 "project_id": scope_project_id,
+                "resource_type": "project" if scope_project_id is not None else None,
+                "resource_id": scope_project_id,
                 "facts": facts,
             }
 
@@ -532,9 +928,19 @@ async def test_database_rejects_malformed_and_mutated_audit_rows(audit_factory) 
             }
         )
         await session.execute(grant_insert, grant_values(valid_facts))
+        system_facts = json.dumps(
+            {
+                "status": "active",
+                "role": "access_administrator",
+                "scope_type": "system",
+                "effective": True,
+            }
+        )
+        await session.execute(grant_insert, grant_values(system_facts, scope_project_id=None))
         await session.commit()
         for values in (
             grant_values(valid_facts.replace(project_id, str(uuid4()))),
+            grant_values(valid_facts) | {"resource_id": str(uuid4())},
             grant_values(valid_facts.replace("project_manager", "access_administrator")),
             grant_values(
                 json.dumps(
@@ -574,3 +980,16 @@ async def test_database_rejects_malformed_and_mutated_audit_rows(audit_factory) 
                     },
                 )
             await session.rollback()
+        self_id = str(uuid4())
+        with pytest.raises(IntegrityError):
+            await session.execute(
+                invalidation_insert,
+                {
+                    "id": self_id,
+                    "request_id": str(uuid4()),
+                    "correlation_id": str(uuid4()),
+                    "cause_id": self_id,
+                    "target_ref": str(uuid4()),
+                },
+            )
+        await session.rollback()

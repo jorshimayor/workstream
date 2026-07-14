@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-05A` | Shared Audit Ownership And Append-Only Authority Evidence | L1 | 1000-line amendment passed at `611abfc`; bounded runtime repair/evidence |
+| `WS-AUTH-001-05A` | Shared Audit Ownership And Append-Only Authority Evidence | L1 | Human-approved semantic chunk boundary; runtime repair/evidence |
 
 ## Planned Next
 

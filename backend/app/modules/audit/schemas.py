@@ -138,6 +138,13 @@ def _registered(value: object, values: frozenset[str] | set[str]) -> bool:
     return isinstance(value, str) and value in values
 
 
+def _unique_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    value = dict(pairs)
+    if len(value) != len(pairs):
+        raise ValueError
+    return value
+
+
 def _facts(value: object) -> dict[str, object] | None:
     if value is None:
         return None
@@ -250,8 +257,18 @@ class AuthorityAuditEventInput(BaseModel):
     @classmethod
     def admit_privacy_safe_input(cls, value: object) -> object:
         """Reject unsafe input before Pydantic can retain rejected values."""
-        if not isinstance(value, Mapping) or set(value) - cls.model_fields.keys():
+        try:
+            admitted = cls._inspect_privacy_safe_input(value)
+        except Exception:  # noqa: BLE001 - hostile Mapping methods are untrusted input
+            admitted = None
+        if admitted is None:
             raise TypeError("invalid authority audit input")
+        return admitted
+
+    @classmethod
+    def _inspect_privacy_safe_input(cls, value: object) -> dict | None:
+        if not isinstance(value, Mapping) or set(value) - cls.model_fields.keys():
+            return None
         data = dict(value)
         event_raw = _enum_value(data.get("event_type"), AuthorityEventType)
         kind = _enum_value(data.get("actor_ref_kind"), ActorReferenceKind)
@@ -290,17 +307,15 @@ class AuthorityAuditEventInput(BaseModel):
         invalid |= target_kind is not None and (
             _enum_value(target_kind, ActorReferenceKind) != "actor_profile" or _uuid(target_ref) is None
         )
-        if invalid:
-            raise TypeError("invalid authority audit input")
-        return data
+        return None if invalid else data
 
     @classmethod
     def model_validate_json(cls, json_data: str | bytes | bytearray, **kwargs: Any) -> Self:
         """Parse JSON without retaining malformed or non-object input."""
         try:
-            value = json.loads(json_data)
-        except (json.JSONDecodeError, UnicodeDecodeError, TypeError):
-            raise TypeError("invalid authority audit input") from None
+            value = json.loads(json_data, object_pairs_hook=_unique_object)
+        except (json.JSONDecodeError, UnicodeDecodeError, TypeError, ValueError):
+            value = None
         if not isinstance(value, Mapping):
             raise TypeError("invalid authority audit input")
         return super().model_validate_json(json_data, **kwargs)
@@ -332,6 +347,12 @@ class AuthorityAuditEventInput(BaseModel):
         elif self.event_type == AuthorityEventType.SENSITIVE_AUTHORIZATION_DENIED:
             if self.permission_id is None or self.denial_code is None or invalidation or self.idempotency_reference:
                 raise ValueError("invalid denied authorization evidence")
+        elif self.event_type in {
+            AuthorityEventType.ADMIN_ROLE_GRANT_ISSUE_DENIED,
+            AuthorityEventType.LAST_ACCESS_ADMIN_OPERATION_DENIED,
+        }:
+            if self.denial_code is None:
+                raise ValueError("denied authority operation requires denial code")
         elif self.event_type == AuthorityEventType.AUTHORITY_INVALIDATION_REQUESTED:
             if self.invalidation_cause_event_id is None or self.invalidation_target_kind is None or self.denial_code:
                 raise ValueError("invalid authority invalidation evidence")
