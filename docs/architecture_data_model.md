@@ -107,9 +107,23 @@ every operation that could remove the final effective Access Administrator.
 
 ### Authority Idempotency And Invalidation
 
-Canonical idempotency records bind operation, actor, request hash, committed
-result, and replay status. Authority invalidation events are written atomically
-with grant/profile/link changes and drive bounded reconciliation.
+`authority_idempotency_records` binds one client key to the exact actor-kind,
+opaque actor reference, closed mutation operation, canonical request digest,
+and typed committed resource reference. The unique actor-scoped namespace
+serializes concurrent retries. New rows begin `pending`; a deferred PostgreSQL
+guard prevents that state from committing, and immutable database triggers
+permit only one evidence-backed transition to `committed`.
+
+The raw request and response body are never stored. Replay returns only an
+internal resource type/UUID, optional positive version, and exact successful
+status; route-owning code must reload and reauthorize that resource before
+external disclosure. New linked audit rows use an actor-bound composite foreign
+key while the `NOT VALID` migration preserves pre-foundation forward references.
+Every committed authority mutation has exactly one concrete success event and
+one causally linked `AuthorityInvalidationRequested` event in `audit_events`.
+This foundation persists the request digest and typed replay reference only; no cache, queue,
+background job processor, or consumer
+acts on invalidation yet.
 
 ### API Rate Control Counter
 

@@ -440,6 +440,28 @@ metrics/configuration evidence for the normal security incident period.
 Never use token, subject, email, `jti`, raw URL, key material, or unbounded
 resource IDs as metric labels.
 
+## Authority Mutation Idempotency
+
+Service-actor creation, administrative/project grant issue or revocation,
+actor suspension/reactivation/deactivation, and identity-link
+revocation/reactivation require a canonical UUID idempotency key. The namespace
+is actor-kind, opaque actor reference, closed operation, and key. Reusing that
+namespace with a different canonical request produces `idempotency_mismatch`
+without exposing the stored digest, record, or response.
+
+Reservation must be the first database write. Business state, one concrete
+success event, one linked invalidation event, and the typed replay reference
+commit in the same caller-owned transaction. The authorization repository and
+service never commit, roll back, open a second session, expire a pending row, or
+steal a claim. On mismatch the caller rolls back the reservation transaction,
+starts a clean transaction on the same injected session, commits exactly one
+privacy-bounded denial event, and then translates the conflict.
+
+A replay reference is internal only. Before responding, the future route owner
+must load the canonical resource and evaluate current authority again. There is
+currently no invalidation consumer or backlog processor; the durable event is
+foundation evidence for the owning later chunk.
+
 ## Authority Audit Custody
 
 Authority decisions and invalidation requests use the shared `audit_events`
