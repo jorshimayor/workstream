@@ -87,7 +87,7 @@ coverage report --include='app/modules/projects/*' --precision=2 --fail-under=90
 coverage report --include='app/modules/tasks/*' --precision=2 --fail-under=90
 coverage report --include='app/modules/checkers/*' --precision=2 --fail-under=90
 coverage report --include='app/adapters/project_agents/*,app/interfaces/project_agents.py' --precision=2 --fail-under=90
-python -m pytest examples/artifact_lifecycle/tests -q --cov=examples/artifact_lifecycle/proof_tools --cov-report=term-missing --cov-fail-under=90
+python -m pytest ../examples/artifact_lifecycle/tests -q --cov=../examples/artifact_lifecycle/proof_tools --cov-report=term-missing --cov-fail-under=90
 ```
 
 ## Verification

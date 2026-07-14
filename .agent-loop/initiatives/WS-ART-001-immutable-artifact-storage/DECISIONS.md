@@ -123,3 +123,25 @@ Pre-cutover caller-declared `r2` and `r2://` values are legacy input, not an R2
 provider contract. Chunk 03 removes direct provider schemes from guide-source
 identity. Chunk 05 removes the remaining values with the legacy submission
 transport. No compatibility path remains after either cutover.
+
+## D18 - Generic Durable-Storage Admission
+
+Chunk 02C1 installs one PostgreSQL-owned admission service before guide,
+contributor, or checker-output ingest activates. Every producer reserves all
+applicable task, producer, project, and deployment byte charges after
+Workstream computes canonical SHA-256 and exact size and before provider I/O.
+Charges are unique by scope and content identity and transition through
+`provisional`, `completed`, or `released` with CAS protection. Provisional and
+completed charges count. Ambiguous outcomes remain provisional; only fresh
+authoritative absence releases a charge, and replay must reacquire capacity.
+Confirmed, quarantined, and integrity-mismatched bytes remain completed and
+charged while v0.1 has no physical deletion.
+
+## D19 - Upload-Session Slot Expiry
+
+Contributor open-session slots are separate from retained-byte admission.
+Chunk 04A owns PostgreSQL-clock periodic Celery expiry and lazy expiry before
+new-session admission. Both paths use the fixed system permission
+`artifact.upload_session.expire` and one atomic terminal transition that
+releases the slot exactly once. Cancellation or expiry never releases a
+completed durable-byte charge.

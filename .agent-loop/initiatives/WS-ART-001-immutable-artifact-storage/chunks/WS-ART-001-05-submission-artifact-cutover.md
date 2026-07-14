@@ -22,11 +22,16 @@ enter `evaluation_pending` without manager finalization.
 - `.github/workflows/backend.yml` only to expand the exact 90 percent scoped gate
 - `scripts/test_agent_gates.py` only to assert the exact workflow command,
   source set, threshold, and cumulative retention
-- `backend/scripts/week2_api_e2e.py` only to migrate its submission handoff
-  from the removed `/finalize` route
+- `backend/scripts/week2_api_e2e.py` to migrate its complete upload,
+  pre-submit, and submission flow from legacy transport fields and the removed
+  `/finalize` route
 - `backend/scripts/api_contract_e2e.py` only to migrate project-policy,
   submission request, and response assertions from legacy storage fields to
   upload-session/admission semantics
+- `examples/terminal_benchmark/terminal_benchmark_api_e2e.py` only to migrate
+  its private local fixture and manual API example from removed transport and
+  storage-policy fields; this sanitized local example is not CI or acceptance
+  proof, and Chunk 07 owns standalone executable proof
 - `scripts/check_stale_artifact_contracts.py` and its focused tests only to
   advance the marker to `submission_cutover`
 - related docs/chunk memory
@@ -76,8 +81,8 @@ enter `evaluation_pending` without manager finalization.
   repository command below; `scripts/test_agent_gates.py` fails on workflow
   command, source-set, threshold, or cumulative-retention drift.
 - the stale-contract phase advances to `submission_cutover`; active docs and
-  project/task/checker contracts contain no caller-owned `local://`, `s3://`,
-  or `r2://` references and the phase scan passes.
+  project/task/checker contracts contain no caller-owned provider URI
+  references and the phase scan passes.
 
 ## Exact CI Coverage Gates
 
@@ -101,6 +106,7 @@ docker compose up -d --wait postgres redis minio
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
 (cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/week2_api_e2e.py)
 (cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/api_contract_e2e.py)
+(cd backend && .venv/bin/python -m py_compile ../examples/terminal_benchmark/terminal_benchmark_api_e2e.py)
 (cd backend && .venv/bin/ruff check app tests)
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/test_agent_gates.py
@@ -116,3 +122,5 @@ reuse/dedup, CI integrity, test delta, and docs.
 - Does contributor intent produce and lock exactly one submission version?
 - Is all manager finalization removed from the normal path?
 - Is pre-submit payload binding authoritative and race-safe?
+- Are all active API callers migrated without treating the private local
+  Terminal Benchmark example as reproducible proof?

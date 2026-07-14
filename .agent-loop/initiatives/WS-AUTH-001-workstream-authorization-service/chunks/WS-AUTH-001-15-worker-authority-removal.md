@@ -74,7 +74,8 @@ review/contribution/compensation implementation
 - Internal jobs use fixed system principals and registered system permissions.
 - Artifact workers use only their exact registered actions:
   `artifact.binding.create`, `artifact.verification.execute`,
-  `artifact.pending_work.scan`, `artifact.guide_source.read`,
+  `artifact.pending_work.scan`, `artifact.upload_session.expire`,
+  `artifact.guide_source.read`,
   `artifact.checker_input.materialize`, and `artifact.checker_output.write`.
   None implies another, and no generic reconciliation permission exists.
 - Project setup is verification/removal-only here; its behavioral cutover

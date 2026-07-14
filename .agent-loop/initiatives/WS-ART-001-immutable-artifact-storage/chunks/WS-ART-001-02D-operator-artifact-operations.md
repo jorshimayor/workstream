@@ -47,9 +47,9 @@ profile or product cutover.
   respectively, `artifact.binding.read`, `artifact.replica.read`,
   `artifact.receipt.read`, `artifact.verification_job.read`, and
   `artifact.recovery_attempt.read`; provider-job retry uses
-  `artifact.verification_job.retry`, recovery execution uses
-  `artifact.recovery_attempt.execute`, and artifact audit listing uses
-  `artifact.audit.read`.
+  `artifact.verification_job.retry`, and artifact audit listing uses
+  `artifact.audit.read`. The retry route creates the recovery-attempt envelope
+  and retry job; Celery execution uses only `artifact.verification.execute`.
 - internal verification uses a provisioned service principal with
   `artifact.verification.execute`; periodic scan publication uses
   `artifact.pending_work.scan`. These permissions remain separate and do not

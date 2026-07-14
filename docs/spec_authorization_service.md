@@ -176,7 +176,6 @@ artifact.receipt.read
 artifact.verification_job.read
 artifact.verification_job.retry
 artifact.recovery_attempt.read
-artifact.recovery_attempt.execute
 artifact.audit.read
 artifact.guide_source.ingest
 artifact.upload_session.create
@@ -184,6 +183,7 @@ artifact.upload_session.read
 artifact.upload_item.write
 artifact.upload_session.seal
 artifact.upload_session.cancel
+artifact.upload_session.expire
 artifact.binding.create
 artifact.verification.execute
 artifact.pending_work.scan

@@ -460,7 +460,6 @@ Example:
     "artifact_hash_algorithm": "sha256",
     "maximum_file_size_bytes": 52428800,
     "maximum_package_size_bytes": 104857600,
-    "allowed_storage_schemes": ["local", "s3", "r2"],
     "packaging": {
       "package_required": true,
       "allowed_package_formats": ["zip"]

@@ -12,7 +12,7 @@ manifests without running pre-submit or creating submissions.
 
 - artifact upload-session/item/set models and one migration;
 - artifact repository/service/router/schemas for upload, inspect, seal, and
-  logical cancellation APIs;
+  logical cancellation APIs and internal upload-session expiry;
 - trusted archive/media inspection helpers;
 - artifact call sites consuming exact decisions already delivered by the
   approved WS-AUTH dependency; no Authorization Service owner files;
@@ -46,12 +46,19 @@ manifests without running pre-submit or creating submissions.
   SHA-256 commitment, expected byte count, and streamed file;
 - Workstream prepares and hashes the complete stream, rejects mismatch before
   provider I/O, and derives the key only from the server commitment;
-- PostgreSQL atomically enforces configured open-session and cumulative unique
-  stored-byte quotas at task, actor, project, and deployment scope. Session
-  slots are reserved at creation; byte charges are reserved after canonical
-  hashing and before provider I/O. Cancelled, expired, and unbound completed
-  bytes remain charged in v0.1, while exact deduplicated content is charged once
-  per applicable scope;
+- PostgreSQL atomically enforces configured open-session slots at task, actor,
+  project, and deployment scope; contributor item bytes use the generic 02C1
+  admission service at task, authenticated actor, project, and deployment
+  scope after canonical hashing and before provider I/O;
+- PostgreSQL-clock expiry is owned by a bounded periodic Celery scanner and is
+  also applied lazily before new-session admission. Both paths require the
+  fixed internal permission `artifact.upload_session.expire`; one atomic
+  terminal transition releases each open-session slot exactly once, and stale
+  scanner execution cannot release it again;
+- cancellation and expiry release only the open-session slot. Provisional and
+  completed byte charges follow the generic admission state machine;
+  cancelled, expired, and unbound completed bytes remain charged in v0.1,
+  while exact deduplicated content is charged once per applicable scope;
 - every item is independently verified before it can be sealed;
 - limits cover item count, aggregate/per-file bytes, archive expansion, entry
   count, path safety, nesting, and compression ratio;
@@ -60,7 +67,8 @@ manifests without running pre-submit or creating submissions.
 - cancellation is logical and cannot delete shared completed bytes;
 - race tests cover upload/seal/cancel/expiry conflicts, repeated-session quota
   exhaustion, concurrent quota admission without oversubscription, terminal
-  session-slot release, retained charges for cancelled/expired/unbound content,
+  session-slot release by periodic and lazy expiry, retained charges for
+  cancelled/expired/unbound content,
   and first-writer and cross-project digest-key poisoning attempts;
 - changed subsystem coverage is at least 90 percent and repository coverage
   remains at least 78 percent;

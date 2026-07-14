@@ -89,7 +89,8 @@ Positive:
 - capability methods remain typed and domain-specific;
 - provider selection cannot leak into product services;
 - local/test and production implementations use the same capability contract;
-- AWS S3, R2, and a future Flow Node adapter do not require product rewrites.
+- AWS S3 and a future Flow Node adapter do not require product rewrites;
+  Cloudflare R2 is deferred and would require its own later approved initiative.
 
 Tradeoffs:
 

@@ -40,6 +40,10 @@ lease, assignment, or decision.
 
 - checker logs and generated outputs use the same bounded prepared-artifact
   path, are independently verified, and bind to the exact checker run;
+- checker output ingest reserves task, project, fixed checker-service-principal,
+  and deployment byte charges through the generic 02C1 admission service. It
+  never consumes or attributes the contributor actor's quota and does not own a
+  checker-specific quota ledger;
 - checker output ingestion requires `artifact.checker_output.write`, and its
   resulting immutable binding separately requires `artifact.binding.create`;
 - reservations are cross-process, bounded, deadline constrained, and cleaned

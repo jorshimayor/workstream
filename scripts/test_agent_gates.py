@@ -44,6 +44,16 @@ FOUNDATION_ARTIFACT_COVERAGE_COMMAND = (
     "--include='app/adapters/artifacts/*,app/interfaces/artifacts.py,"
     "app/modules/artifacts/*' --precision=2 --fail-under=90"
 )
+BACKEND_FULL_SUITE_COVERAGE_COMMAND = "\n".join(
+    (
+        'metadata_dir="$(mktemp -d)"',
+        "trap 'rm -rf \"$metadata_dir\"' EXIT",
+        "python scripts/run_isolated_tests.py "
+        '--metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- '
+        "python -m pytest -q --ignore=tests/test_isolated_database_runner.py "
+        "--cov=app --cov-report=term-missing --cov-fail-under=78",
+    )
+)
 
 
 def artifact_contract_phase_for(coverage_phase: str) -> str:
@@ -75,7 +85,7 @@ def artifact_coverage_commands_for(coverage_phase: str) -> tuple[str, ...]:
     assert len(matches) == 1, (coverage_phase, matches)
     contract = matches[0].read_text(encoding="utf-8")
     section = re.search(
-        r"## Exact CI Coverage Gates\n\n```bash\n(.*?)\n```",
+        r"## Exact CI Coverage Gates?\n\n```bash\n(.*?)\n```",
         contract,
         re.DOTALL,
     )
@@ -1220,11 +1230,14 @@ def test_backend_coverage_thresholds_are_regression_protected() -> None:
     assert len(full_suite_steps) == 1
     full_suite_run = full_suite_steps[0]["run"]
     assert full_suite_steps[0].get("working-directory") == "backend"
+    assert full_suite_steps[0].get("env") == {
+        "WORKSTREAM_TEST_ADMIN_DATABASE_URL": (
+            "postgresql+asyncpg://workstream:workstream@localhost:5433/postgres"
+        )
+    }
     for forbidden_key in ("if", "continue-on-error", "shell"):
         assert forbidden_key not in full_suite_steps[0]
-    assert 'metadata_dir="$(mktemp -d)"' in full_suite_run
-    assert "trap 'rm -rf \"$metadata_dir\"' EXIT" in full_suite_run
-    assert '--metadata-json "$metadata_dir/result.json"' in full_suite_run
+    assert full_suite_run.strip() == BACKEND_FULL_SUITE_COVERAGE_COMMAND
     assert "/tmp/workstream-database.json" not in workflow
     full_suite_index = steps.index(full_suite_steps[0])
     expected_coverage = artifact_coverage_commands_for(ARTIFACT_COVERAGE_PHASE)
@@ -1304,6 +1317,18 @@ def test_stale_artifact_contracts_active_later_phase_owns_only_reached_terms() -
     ) == [
         "backend/scripts/api_contract_e2e.py:1: LEGACY_PROJECT_STORAGE_POLICY"
     ]
+    for active_caller in (
+        "backend/scripts/week2_api_e2e.py",
+        "examples/terminal_benchmark/terminal_benchmark_api_e2e.py",
+    ):
+        assert gate.scan_text(
+            active_caller,
+            'package_uri = "local://fixture"',
+            "submission_cutover",
+        ) == [
+            f"{active_caller}:1: LEGACY_SUBMISSION_TRANSPORT",
+            f"{active_caller}:1: LEGACY_CALLER_STORAGE_SCHEME",
+        ]
 
 
 def test_stale_artifact_contracts_malformed_phase_fails_closed() -> None:
@@ -1340,6 +1365,16 @@ def test_stale_artifact_contracts_enforce_aws_first_v01() -> None:
         "AWS S3 or Cloudflare R2 are supported production providers.",
         "foundation",
     ) == ["docs/spec_artifact_storage_service.md:1: ACTIVE_R2_V01_PLAN"]
+    for active_statement in (
+        "Cloudflare R2 is an eligible object-store provider.",
+        "Enable R2 for hosted deployments.",
+        "R2 is supported for hosted deployments.",
+    ):
+        assert gate.scan_text(
+            "docs/spec_artifact_storage_service.md",
+            active_statement,
+            "foundation",
+        ) == ["docs/spec_artifact_storage_service.md:1: ACTIVE_R2_V01_PLAN"]
     assert gate.scan_text(
         "docs/spec_artifact_storage_service.md",
         "Cloudflare R2 is deferred; AWS S3 is the v0.1 production provider.",
@@ -1363,6 +1398,8 @@ def test_stale_artifact_contracts_enforce_aws_first_v01() -> None:
         'endpoint = os.environ["WORKSTREAM_R2_ENDPOINT"]',
         'endpoint = "https://account.r2.cloudflarestorage.com"',
         "artifact_store = CloudflareArtifactStore()",
+        "artifact_store = CloudflareS3CompatibleArtifactStore()",
+        'artifact_provider = "cloudflare"',
     ):
         assert gate.scan_text(
             "backend/app/core/config.py",
@@ -1409,6 +1446,11 @@ def test_stale_artifact_contracts_enforce_aws_first_v01() -> None:
             "CHUNK_MAP.md:1: ACTIVE_R2_V01_PLAN"
         )
     ]
+    assert gate.scan_text(
+        ".agent-loop/WORK_QUEUE.md",
+        "WS-QUAL-001-01B1B-R2 implementation review superseded.",
+        "foundation",
+    ) == []
 
 
 def test_stale_artifact_contracts_scan_only_current_initiatives() -> None:
@@ -1507,6 +1549,16 @@ def test_artifact_chunk_verification_commands_are_isolated_and_rerunnable() -> N
             "submission_cutover",
             "checker_cutover",
         }
+        assert artifact_coverage_commands_for(phase)
+    gate = load_module(
+        "stale_artifact_contracts_phase_binding",
+        "scripts/check_stale_artifact_contracts.py",
+    )
+    assert artifact_contract_phase_for(ARTIFACT_COVERAGE_PHASE) == (
+        gate.ARTIFACT_CONTRACT_PHASE
+    )
+    mismatched_phase = "02A3" if ARTIFACT_COVERAGE_PHASE == "foundation" else "foundation"
+    assert artifact_contract_phase_for(mismatched_phase) != gate.ARTIFACT_CONTRACT_PHASE
     with tempfile.TemporaryDirectory() as temp_dir:
         cleanup = subprocess.run(
             [

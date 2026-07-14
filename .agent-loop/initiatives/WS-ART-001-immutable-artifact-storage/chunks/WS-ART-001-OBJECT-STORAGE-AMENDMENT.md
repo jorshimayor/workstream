@@ -52,6 +52,9 @@ planning and guardrails only.
   is not production eligible;
 - every untrusted byte source is server-hashed before provider I/O and the v2
   port accepts only a sealed `CommittedArtifactSource`;
+- Chunk 02C1 owns one generic durable-byte admission ledger before any guide,
+  contributor, or checker-output cutover; 04A owns only contributor
+  upload-session slot expiry in addition to consuming that shared ledger;
 - R2 has no provider adapter, credential issuer, provider profile, deployment
   service, or implementation chunk. Existing caller-declared `r2://` transport
   values are legacy input contracts owned by the clean Chunks 03 and 05
@@ -62,7 +65,12 @@ planning and guardrails only.
   coverage, and the 78 percent repository floor; deferred Flow Node commands
   remain placeholders until mandatory discovery activates that initiative;
 - active-doc stale checks are discovery-based and historical evidence/reference
-  paths are explicitly excluded;
+  paths are explicitly excluded; active provider clauses accept R2 only when
+  they explicitly keep it deferred/outside v0.1, and runtime Cloudflare/R2
+  symbols fail closed;
+- every artifact coverage phase is parsed from its contract, bound to the
+  stale-contract phase marker, and the backend full-suite coverage step is
+  checked as one exact command and environment contract;
 - no application/runtime files differ from the planning chunk base.
 
 ## Verification

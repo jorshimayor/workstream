@@ -139,13 +139,16 @@ activation uses a separate read-only deployment identity to inspect AWS
 lifecycle rules and fails if an enabled expiration/deletion rule can intersect
 that prefix. A separate approved initiative must define physical deletion.
 
-Because completed bytes are retained, Workstream enforces durable storage
-admission in PostgreSQL before provider I/O. Open-session counts and cumulative
-unique completed bytes are atomically bounded at task, actor, project, and
-deployment scope. Cancelled, expired, and unbound completed content remains
-charged until a separately approved physical-deletion lifecycle exists. Exact
-deduplicated content is charged once per applicable scope; concurrent
-reservations cannot oversubscribe a limit.
+Because completed bytes are retained, one generic Workstream admission service
+enforces durable storage quotas in PostgreSQL before every provider write.
+Applicable task, producer, project, and deployment charges are atomically
+bounded. Provisional and completed charges count; ambiguous provider outcomes
+remain provisional until deterministic recovery confirms existence or absence.
+Only confirmed absence releases a charge. Cancelled, expired, unbound,
+quarantined, and integrity-mismatched completed content remains charged until a
+separately approved physical-deletion lifecycle exists. Exact deduplicated
+content is charged once per applicable scope; concurrent reservations cannot
+oversubscribe a limit.
 
 ## Recovery
 

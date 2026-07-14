@@ -98,15 +98,12 @@ Default artifact rules:
 
 Default storage rules:
 
-> Pre-cutover contract: the URI scheme rules below describe the current caller
-> payload only until `WS-ART-001-05` activates submission cutover. That chunk
-> removes caller-supplied storage references completely; clients then submit
-> bytes through Workstream upload sessions and receive only Workstream IDs.
-
-- allowed schemes: `local://`, `s3://`, `r2://`
-- persisted references must be Workstream-issued opaque object references or validated object-storage adapter references
-- signed URLs, raw local filesystem paths, credentials, query strings, bucket secrets, and token-bearing references are rejected before persistence
-- normalization is allowed only for already-approved adapter references that contain no secrets, credentials, or query material
+- clients submit bytes through Workstream upload sessions and receive only
+  Workstream artifact IDs
+- persisted product references are immutable Workstream artifact bindings
+- signed URLs, raw local filesystem paths, provider references, credentials,
+  query strings, bucket secrets, and token-bearing references are rejected
+  before persistence
 
 Default forbidden artifacts:
 

@@ -25,7 +25,7 @@ active ArtifactStore v1 contract and runtime behavior remain unchanged.
 
 - changing the active ArtifactStore interface or factory wiring;
 - schema or Alembic changes;
-- S3 SDK, provider configuration, MinIO, AWS, R2, or Flow Node;
+- no S3 SDK, provider configuration, MinIO, AWS, R2, or Flow Node;
 - product routes or guide/task/submission/checker/review cutovers;
 - compatibility adapter, second active factory path, or fallback constructor.
 
@@ -64,6 +64,7 @@ coverage report --include='app/core/config.py' --precision=2 --fail-under=90
 ## Verification
 
 ```bash
+docker compose up -d --wait postgres redis
 (cd backend && .venv/bin/ruff check app tests)
 (cd backend && .venv/bin/pytest tests/test_artifact_preparation.py tests/test_local_artifact_store.py tests/test_config.py -q --cov=app.modules.artifacts --cov=app.adapters.artifacts.local --cov=app.core.config --cov-report=term-missing --cov-fail-under=90)
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))

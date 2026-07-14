@@ -76,8 +76,7 @@ R2_RUNTIME_PATTERN = re.compile(
     r"(?:\br2(?:[_A-Za-z0-9]+)?\b|"
     r"\b[A-Za-z][A-Za-z0-9_]*r2[A-Za-z0-9_]*\b|"
     r"r2\.cloudflarestorage\.com|"
-    r"\bCloudflare(?:ArtifactStore|ObjectStore|Storage|Client|Adapter|"
-    r"Provider|Profile|Credential)[A-Za-z0-9_]*\b)",
+    r"\bCloudflare[A-Za-z0-9_]*\b|\bcloudflare\b)",
     re.IGNORECASE,
 )
 LEGACY_R2_RUNTIME_LINES = {
@@ -142,6 +141,8 @@ LIVE_RULE_PATHS = {
         "backend/app/modules/tasks/",
         "backend/app/modules/checkers/",
         "backend/scripts/api_contract_e2e.py",
+        "backend/scripts/week2_api_e2e.py",
+        "examples/terminal_benchmark/terminal_benchmark_api_e2e.py",
     ),
     "LEGACY_PROJECT_STORAGE_POLICY": (
         "backend/app/adapters/project_agents/",
@@ -150,6 +151,8 @@ LIVE_RULE_PATHS = {
         "backend/app/modules/checkers/",
         "backend/app/modules/tasks/",
         "backend/scripts/api_contract_e2e.py",
+        "backend/scripts/week2_api_e2e.py",
+        "examples/terminal_benchmark/terminal_benchmark_api_e2e.py",
     ),
     "LEGACY_STORAGE_COMPILER_PRIMITIVE": (
         "backend/app/adapters/project_agents/",
@@ -157,6 +160,8 @@ LIVE_RULE_PATHS = {
         "backend/app/modules/projects/",
         "backend/app/modules/checkers/",
         "backend/app/modules/tasks/",
+        "backend/scripts/week2_api_e2e.py",
+        "examples/terminal_benchmark/terminal_benchmark_api_e2e.py",
     ),
     "LEGACY_CHECKER_ARTIFACT_COPY": (
         "backend/app/modules/tasks/",
@@ -211,12 +216,7 @@ RULES = (
     Rule(
         "ACTIVE_R2_V01_PLAN",
         "foundation",
-        re.compile(
-            r"(?:\bWS-ART-001-02B[23]\b|"
-            r"(?:Cloudflare\s+)?R2[^.;!?\n]{0,160}\bproduction\b|"
-            r"\bproduction\b[^.;!?\n]{0,160}(?:Cloudflare\s+)?R2\b)",
-            re.IGNORECASE,
-        ),
+        re.compile(r"(?:\bWS-ART-001-02B[23]\b|\b(?:Cloudflare\s+)?R2\b)", re.IGNORECASE),
     ),
     Rule(
         "OBSOLETE_FLOW_NODE_PLAN",
@@ -317,6 +317,8 @@ def path_is_scannable(relative_path: str, root: Path = ROOT) -> bool:
 
 def path_is_active_contract(relative_path: str, root: Path = ROOT) -> bool:
     """Return whether a path carries current artifact architecture wording."""
+    if relative_path in {".agent-loop/REVIEW_LOG.md", ".agent-loop/WORK_QUEUE.md"}:
+        return False
     if relative_path in {"AGENTS.md", "README.md", *ACTIVE_LOOP_PATHS}:
         return True
     if relative_path.startswith("docs/"):
@@ -351,9 +353,65 @@ def rule_applies_to_path(rule: Rule, relative_path: str, root: Path = ROOT) -> b
                 "backend/app/modules/tasks/",
                 "backend/app/modules/checkers/",
                 "backend/scripts/api_contract_e2e.py",
+                "backend/scripts/week2_api_e2e.py",
+                "examples/terminal_benchmark/terminal_benchmark_api_e2e.py",
             )
         )
     return True
+
+
+def has_explicit_r2_deferral(line_text: str) -> bool:
+    """Accept only clauses that unambiguously keep R2 outside active v0.1."""
+    if re.search(r"\b(?:but|however|yet)\b", line_text, re.IGNORECASE):
+        return False
+    return bool(
+        re.search(
+            r"(?:\b(?:Cloudflare\s+)?R2\b[^\n]{0,240}"
+            r"\b(?:is\s+)?(?:deferred|not\s+(?:an?\s+)?v0\.1|outside\s+v0\.1|"
+            r"ha(?:s|ve)\s+no\s+active|ha(?:s|ve)\s+no\s+provider|"
+            r"ha(?:s|ve)\s+no\s+v0\.1|"
+            r"is\s+removed|values?\s+are\s+legacy|requires\s+(?:a\s+)?"
+            r"separate(?:ly)?\s+approved)\b|"
+            r"\bdefer(?:red|s|ring)?\b[^\n]{0,80}\b(?:Cloudflare\s+)?R2\b|"
+            r"\b(?:no|remove(?:d|s)?)\b[^\n]{0,80}\b(?:Cloudflare\s+)?R2\b|"
+            r"\blater\s+(?:approved\s+)?(?:Cloudflare\s+)?R2\s+adoption\b)",
+            line_text,
+            re.IGNORECASE,
+        )
+    )
+
+
+def is_r2_provider_reference(line_text: str) -> bool:
+    """Distinguish Cloudflare R2 storage from unrelated revision/risk labels."""
+    if re.search(r"\bCloudflare\s+R2\b|\br2://", line_text, re.IGNORECASE):
+        return True
+    return bool(
+        re.search(r"\bR2\b", line_text, re.IGNORECASE)
+        and re.search(
+            r"\b(?:object|storage|store|provider|credential|runtime|adapter|"
+            r"production|v0\.1|hosted|enable|support|eligible|dependency|"
+            r"implementation|transport|endpoint|sidecar|secret|deployment|"
+            r"AWS|S3|MinIO|Flow\s+Node)\b",
+            line_text,
+            re.IGNORECASE,
+        )
+    )
+
+
+def clause_around(text: str, offset: int) -> str:
+    """Return the bounded sentence/clause containing an artifact term."""
+    lower_bound = max(0, offset - 320)
+    upper_bound = min(len(text), offset + 320)
+    before = text[lower_bound:offset]
+    after = text[offset:upper_bound]
+    delimiters = re.compile(r"[;!?]|(?<!\d)\.(?!\d)")
+    previous_matches = list(delimiters.finditer(before))
+    following_match = delimiters.search(after)
+    start = (
+        lower_bound + previous_matches[-1].end() if previous_matches else lower_bound
+    )
+    end = offset + following_match.end() if following_match else upper_bound
+    return " ".join(text[start:end].split())
 
 
 def scan_text(relative_path: str, text: str, phase: str, root: Path = ROOT) -> list[str]:
@@ -365,6 +423,15 @@ def scan_text(relative_path: str, text: str, phase: str, root: Path = ROOT) -> l
         for match in rule.pattern.finditer(text):
             line = text.count("\n", 0, match.start()) + 1
             line_text = text.splitlines()[line - 1]
+            if rule.code == "ACTIVE_R2_V01_PLAN":
+                if match.group(0).upper().startswith("WS-ART-001-02B"):
+                    failures.append(f"{relative_path}:{line}: {rule.code}")
+                    continue
+                clause_text = clause_around(text, match.start())
+                if not is_r2_provider_reference(clause_text):
+                    continue
+                if has_explicit_r2_deferral(clause_text):
+                    continue
             if rule.code == "OBSOLETE_FLOW_NODE_PLAN" and re.search(
                 r"\b(?:defer(?:red|s)?|supersed(?:ed|es)?|preserv(?:ed|es)?|"
                 r"not (?:a )?v0\.1|cannot block|outside v0\.1)\b",

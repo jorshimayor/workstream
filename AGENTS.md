@@ -36,7 +36,9 @@ Workstream is how Flow measures, certifies, and coordinates useful human-agent w
 - Execution is async-first; do not document synchronous-first checkers or jobs.
 - FastAPI background tasks are acceptable for simple local v0.1 jobs; use Celery or equivalent durable workers when retries, scheduling, isolation, or distributed execution are needed.
 - Postgres is the record database.
-- Local filesystem storage is acceptable only behind an object-storage abstraction compatible with R2/S3-style storage.
+- Local filesystem storage is acceptable only behind the provider-neutral
+  `ArtifactStore`; AWS S3 is the v0.1 hosted provider and MinIO proves its
+  protocol locally and in CI.
 - Bounded private ephemeral processing scratch is not artifact storage. It may
   use local files only through the canonical `ArtifactScratchManager` with
   aggregate quotas, crash cleanup, and no durable product reference.

@@ -27,7 +27,7 @@ configuration. No compatibility path remains after this PR.
 
 ## Not Allowed
 
-- S3 SDK, S3 adapter, MinIO, AWS, R2, or Flow Node implementation;
+- no S3 SDK, S3 adapter, MinIO, AWS, R2, or Flow Node implementation;
 - public or Operator routes or Celery verification/publication jobs;
 - guide, task, submission, checker, review, payment, or reputation cutover;
 - compatibility alias, dual factory, service locator, plugin discovery, or

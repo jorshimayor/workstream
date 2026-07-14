@@ -4,17 +4,19 @@ Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02B1
 
 ## Goal
 
-Add durable complete-object verification publication, PostgreSQL execution
-fencing, immutable observations, and receipts without recovery attempts,
-Operator routes, or product cutovers.
+Add the generic durable-storage admission ledger, durable complete-object
+verification publication, PostgreSQL execution fencing, immutable
+observations, and receipts without recovery attempts, Operator routes, or
+product cutovers.
 
 ## Allowed Files
 
-- one verification migration;
-- artifact verification models, schemas, repository, service, and contracts;
+- one artifact-foundation migration;
+- artifact admission and verification models, schemas, repository, service,
+  and contracts;
 - Celery verification task and periodic publication scanner;
-- `backend/app/core/config.py` for scanner SLA, execution lease, complete-read
-  deadline, and persistence margin;
+- `backend/app/core/config.py` for durable byte limits, scanner SLA, execution
+  lease, complete-read deadline, and persistence margin;
 - generic audit repository only when existing audit support is insufficient;
 - focused PostgreSQL/Celery/artifact tests;
 - `.github/workflows/backend.yml` only to expand the exact 90 percent scoped gate;
@@ -35,6 +37,21 @@ Operator routes, or product cutovers.
 
 - provider acknowledgement yields `stored_pending_verification`, never a
   bindable replica;
+- every durable producer must atomically reserve all applicable task,
+  producer, project, and deployment byte charges after canonical hashing and
+  before provider I/O; guide, contributor, and checker chunks consume this one
+  admission service rather than implementing producer-specific quota logic;
+- an admission charge is unique by scope and canonical content identity and
+  uses the CAS-protected states `provisional`, `completed`, and `released`;
+  provisional and completed charges count, exact replay is deduplicated, and
+  concurrent same-content reservations cannot double-charge or oversubscribe;
+- provider acknowledgement or a fresh complete-object observation completes a
+  provisional charge; ambiguous outcomes remain provisional until recovery,
+  authoritative absence releases the charge, and replay must atomically
+  reacquire released capacity before provider I/O;
+- confirmed, quarantined, or integrity-mismatched content remains completed
+  and charged because v0.1 has no physical deletion; stale CAS/executor state
+  cannot release or complete a charge;
 - Celery performs a fresh complete-object read and verifies Workstream SHA-256
   and byte count;
 - a periodic PostgreSQL scanner republishes pending and expired work within a

@@ -83,7 +83,8 @@ The checker validates:
 - artifact names are unique
 - artifact hashes are present
 - production artifact hashes use `sha256:<64 lowercase hex>`
-- evidence items with local/R2/S3 object references include hashes
+- pre-cutover evidence storage references include hashes; `WS-ART-001-05`
+  replaces caller transport references with Workstream artifact bindings
 - evidence items with `type = external_reference` may omit `uri` and `hash` in Chunk 8
 
 This checker does not download object-store content in Chunk 8. Content-addressed object verification remains an object-storage adapter concern for a later chunk.

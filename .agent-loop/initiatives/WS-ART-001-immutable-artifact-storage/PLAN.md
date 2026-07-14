@@ -103,19 +103,21 @@ can match the completed-object prefix.
 2. Workstream prepares the complete untrusted source in bounded private scratch,
    computes digest and size, and rejects a mismatched client commitment before
    provider I/O.
-3. PostgreSQL atomically reserves open-session capacity and unique-byte charges
-   at every applicable task, actor, project, and deployment scope. Any exceeded
-   scope fails before provider I/O. Completed-byte charges remain durable in
-   v0.1 even when the session expires, is cancelled, or never gains a binding.
+3. PostgreSQL atomically reserves unique-byte charges at every applicable task,
+   producer, project, and deployment scope. Contributor upload-session slots
+   are a separate 04A reservation. Any exceeded scope fails before provider
+   I/O. Provisional and completed byte charges count; exact replay and
+   concurrent same-content reservations cannot double-charge or oversubscribe.
 4. Transaction A reserves the upload item and commits the server-computed
    digest, size, media type, operation identity, request digest, and CAS values.
 5. Workstream passes the sealed `CommittedArtifactSource` to the injected
    adapter outside the transaction.
 6. The adapter conditionally stores under the content-addressed key or resolves
    an exact replay candidate.
-7. Transaction B records provider acknowledgement, sets the item to
-   `stored_pending_verification`, and creates the replica with pending
-   verification and unknown availability/integrity; no binding exists.
+7. Transaction B records provider acknowledgement, completes the provisional
+   admission charges, sets the item to `stored_pending_verification`, and
+   creates the replica with pending verification and unknown
+   availability/integrity; no binding exists.
 8. A durable verification job is committed in PostgreSQL and published to
    Celery after commit. A periodic scanner republishes pending work within the
    configured SLA.
@@ -123,10 +125,12 @@ can match the completed-object prefix.
    records a verification receipt. Only a matching object becomes `ready` and
    bindable. Missing or changed bytes become unavailable/quarantined.
 
-Provider acknowledgement loss is recovered by deterministic key plus fresh
-head/read. If no object exists, the item becomes `replay_required`; the client
-must replay the exact bytes under the same operation identity. Workstream never
-stores upload bytes in Postgres, Redis, or Celery payloads.
+Provider acknowledgement loss keeps admission charges provisional and is
+recovered by deterministic key plus fresh head/read. If authoritative
+observation proves no object exists, the charges become released and the item
+becomes `replay_required`; exact replay must atomically reacquire capacity
+before another provider call. A confirmed object completes the charges.
+Workstream never stores upload bytes in Postgres, Redis, or Celery payloads.
 
 Before binding, an object confirmed missing returns its reserved upload item to
 `replay_required`, and only the original authorized uploader may replay the
@@ -168,11 +172,14 @@ bindings and logical release eligibility, but no runtime path calls
 The production bucket must not have an automatic deletion rule for the
 Workstream prefix.
 
-Retention is paired with durable admission control. PostgreSQL bounds open
-sessions and cumulative unique completed bytes for every applicable task,
-actor, project, and deployment. Charges use canonical content identity to avoid
-double-charging exact deduplicated replay within one scope. Cancellation,
-expiry, and absence of a binding do not release completed-byte charges.
+Retention is paired with durable admission control installed in Chunk 02C1
+before any product ingest cutover. PostgreSQL bounds cumulative unique
+provisional and completed bytes for every applicable task, producer, project,
+and deployment. Charges use canonical content identity to avoid double-charging
+exact deduplicated replay within one scope. Cancellation, expiry, absence of a
+binding, quarantine, and integrity mismatch do not release completed-byte
+charges. Only fresh authoritative absence releases a provisional charge;
+replay must reacquire it atomically.
 
 Physical deletion, garbage collection, legal hold, and retention windows are a
 later explicit initiative. This removes destructive storage behavior from the
@@ -366,8 +373,8 @@ to this initiative.
 
 Before the product cutovers, guide-source validation, task schemas,
 project-policy schemas, checker messages, the API drill, tests, and the
-submission-artifact-policy template still expose legacy caller declarations
-using `r2` or `r2://`. They are not provider support. Chunk 03 removes direct
+submission-artifact-policy template still expose legacy caller provider
+declarations that have no active v0.1 provider meaning. Chunk 03 removes direct
 provider schemes from guide-source identity. Chunk 05 deletes the remaining
 caller transport as part of the submission binding clean cut. Later code must
 not preserve an alias, fallback, or compatibility parser.

@@ -25,7 +25,7 @@ approval or reusable evidence. Its source remains on branch
 `WS-ART-001-OBJECT-STORAGE-AMENDMENT` is planning-only. It updates intent,
 architecture, ADR/spec, chunk contracts, durable memory, and deterministic
 stale-contract protection. It does not edit runtime code, configure AWS S3,
-operate Flow Node, add R2, or activate artifact routes.
+operate Flow Node, add a deferred provider, or activate artifact routes.
 
 ## Next Proposed Chunk
 
