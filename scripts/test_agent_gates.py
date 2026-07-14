@@ -9,6 +9,7 @@ from __future__ import annotations
 import contextlib
 import importlib.util
 import io
+import json
 import os
 import subprocess
 import sys
@@ -56,7 +57,9 @@ def test_required_tracks_expand_for_loop_and_ci_paths() -> None:
 
 def test_backend_config_paths_require_review_evidence() -> None:
     """Migration and backend tooling paths cannot bypass review evidence."""
-    gate = load_module("review_gate_backend_paths", "scripts/check_internal_review_evidence.py")
+    gate = load_module(
+        "review_gate_backend_paths", "scripts/check_internal_review_evidence.py"
+    )
     assert gate.is_relevant("backend/alembic/versions/0001_init.py")
     assert gate.is_relevant("backend/alembic.ini")
     assert gate.is_relevant("backend/pyproject.toml")
@@ -71,7 +74,9 @@ def test_backend_config_paths_require_review_evidence() -> None:
 
 def test_review_evidence_files_are_not_relevant_changes() -> None:
     """Review evidence files satisfy the gate without requiring more evidence."""
-    gate = load_module("review_gate_relevance", "scripts/check_internal_review_evidence.py")
+    gate = load_module(
+        "review_gate_relevance", "scripts/check_internal_review_evidence.py"
+    )
     assert not gate.is_relevant(".agent-loop/initiatives/example/reviews/review.md")
     assert not gate.is_relevant("docs/internal_reviews/example.md")
     assert not gate.is_internal_review_evidence_path("docs/internal_reviews/example.md")
@@ -85,7 +90,9 @@ def test_review_evidence_files_are_not_relevant_changes() -> None:
 
 def test_evidence_requires_completed_yes_statements() -> None:
     """Evidence must contain affirmative completion statements."""
-    gate = load_module("review_gate_statements", "scripts/check_internal_review_evidence.py")
+    gate = load_module(
+        "review_gate_statements", "scripts/check_internal_review_evidence.py"
+    )
     original_changed_files = gate.changed_files
     gate.changed_files = lambda: []
     required = ("senior engineering", "qa/test")
@@ -116,7 +123,12 @@ def test_evidence_requires_completed_yes_statements() -> None:
                 "open sub-agent sessions: none\nvalid findings addressed: yes\n",
                 encoding="utf-8",
             )
-            assert gate.validate_evidence(strong, required, enforce_reviewed_revision=False) == []
+            assert (
+                gate.validate_evidence(
+                    strong, required, enforce_reviewed_revision=False
+                )
+                == []
+            )
     finally:
         gate.changed_files = original_changed_files
 
@@ -155,7 +167,12 @@ def test_evidence_must_reference_changed_chunk() -> None:
                 "open sub-agent sessions: none\nvalid findings addressed: yes\n",
                 encoding="utf-8",
             )
-            assert gate.validate_evidence(evidence, required, enforce_reviewed_revision=False) == []
+            assert (
+                gate.validate_evidence(
+                    evidence, required, enforce_reviewed_revision=False
+                )
+                == []
+            )
     finally:
         gate.changed_files = original_changed_files
 
@@ -178,8 +195,12 @@ def test_evidence_rejects_pending_or_blocking_reviewer_rows() -> None:
                 "open sub-agent sessions: none\nvalid findings addressed: yes\n",
                 encoding="utf-8",
             )
-            missing = gate.validate_evidence(evidence, required, enforce_reviewed_revision=False)
-            assert any("qa/test reviewer result must be one of" in item for item in missing)
+            missing = gate.validate_evidence(
+                evidence, required, enforce_reviewed_revision=False
+            )
+            assert any(
+                "qa/test reviewer result must be one of" in item for item in missing
+            )
             assert "qa/test blocking findings must be none" in missing
     finally:
         gate.changed_files = original_changed_files
@@ -187,7 +208,9 @@ def test_evidence_rejects_pending_or_blocking_reviewer_rows() -> None:
 
 def test_evidence_accepts_exact_pass_and_approved_na_results() -> None:
     """Reviewer result values are exact, with explicit N/A reason support."""
-    gate = load_module("review_gate_exact_results", "scripts/check_internal_review_evidence.py")
+    gate = load_module(
+        "review_gate_exact_results", "scripts/check_internal_review_evidence.py"
+    )
     required = ("senior engineering",)
     text = (
         "| Reviewer | Result | Blocking findings | Notes |\n"
@@ -203,7 +226,9 @@ def test_evidence_accepts_exact_pass_and_approved_na_results() -> None:
         "| senior engineering | bypass | None | malformed |\n"
     )
     missing = gate.validate_reviewer_rows(bad_text.lower(), required)
-    assert any("senior engineering reviewer result must be one of" in item for item in missing)
+    assert any(
+        "senior engineering reviewer result must be one of" in item for item in missing
+    )
 
     optional_bad_text = (
         "| Reviewer | Result | Blocking findings | Notes |\n"
@@ -214,7 +239,9 @@ def test_evidence_accepts_exact_pass_and_approved_na_results() -> None:
     )
     missing = gate.validate_reviewer_rows(optional_bad_text.lower(), required)
     assert any("docs reviewer result must be one of" in item for item in missing)
-    assert any("ci integrity reviewer result must be one of" in item for item in missing)
+    assert any(
+        "ci integrity reviewer result must be one of" in item for item in missing
+    )
 
     unrelated_table_text = (
         "| Reviewer | Result | Blocking findings | Notes |\n"
@@ -238,7 +265,9 @@ def test_evidence_accepts_exact_pass_and_approved_na_results() -> None:
 
 def test_evidence_rejects_na_for_required_tracks() -> None:
     """Required reviewer tracks must pass and cannot be bypassed with N/A."""
-    gate = load_module("review_gate_required_na", "scripts/check_internal_review_evidence.py")
+    gate = load_module(
+        "review_gate_required_na", "scripts/check_internal_review_evidence.py"
+    )
     required = ("security/auth", "architecture")
     text = (
         "| Reviewer | Result | Blocking findings | Notes |\n"
@@ -253,7 +282,9 @@ def test_evidence_rejects_na_for_required_tracks() -> None:
 
 def test_evidence_reviewed_revision_allows_only_evidence_status_changes() -> None:
     """Evidence must be bound to a reviewed SHA and only status files may follow."""
-    gate = load_module("review_gate_revision_binding", "scripts/check_internal_review_evidence.py")
+    gate = load_module(
+        "review_gate_revision_binding", "scripts/check_internal_review_evidence.py"
+    )
     original_git = gate.git
     original_git_ok = gate.git_ok
     reviewed = "a" * 40
@@ -291,7 +322,10 @@ def test_evidence_reviewed_revision_allows_only_evidence_status_changes() -> Non
 
 def test_evidence_reviewed_revision_rejects_late_implementation_changes() -> None:
     """Implementation changes after the reviewed SHA invalidate evidence."""
-    gate = load_module("review_gate_revision_rejects_late_changes", "scripts/check_internal_review_evidence.py")
+    gate = load_module(
+        "review_gate_revision_rejects_late_changes",
+        "scripts/check_internal_review_evidence.py",
+    )
     original_git = gate.git
     original_git_ok = gate.git_ok
     reviewed = "a" * 40
@@ -326,7 +360,10 @@ def test_evidence_reviewed_revision_rejects_late_implementation_changes() -> Non
 
 def test_evidence_reviewed_revision_rejects_dirty_tree_changes() -> None:
     """Staged, unstaged, and untracked implementation changes invalidate evidence."""
-    gate = load_module("review_gate_revision_rejects_dirty", "scripts/check_internal_review_evidence.py")
+    gate = load_module(
+        "review_gate_revision_rejects_dirty",
+        "scripts/check_internal_review_evidence.py",
+    )
     original_git = gate.git
     original_git_ok = gate.git_ok
     reviewed = "a" * 40
@@ -365,7 +402,10 @@ def test_evidence_reviewed_revision_rejects_dirty_tree_changes() -> None:
 
 def test_evidence_reviewed_revision_rejects_invalid_provenance() -> None:
     """Reviewed at and reviewer run IDs must contain concrete values."""
-    gate = load_module("review_gate_revision_blank_provenance", "scripts/check_internal_review_evidence.py")
+    gate = load_module(
+        "review_gate_revision_blank_provenance",
+        "scripts/check_internal_review_evidence.py",
+    )
     original_git = gate.git
     original_git_ok = gate.git_ok
     reviewed = "a" * 40
@@ -386,7 +426,9 @@ def test_evidence_reviewed_revision_rejects_invalid_provenance() -> None:
     gate.git = fake_git
     gate.git_ok = lambda *args: True
     try:
-        text = f"Reviewed code SHA: {reviewed}\nReviewed at:\nReviewer run IDs:\n".lower()
+        text = (
+            f"Reviewed code SHA: {reviewed}\nReviewed at:\nReviewer run IDs:\n".lower()
+        )
         missing = gate.validate_reviewed_revision(text)
         assert "reviewed at" in missing
         assert "reviewer run ids" in missing
@@ -413,7 +455,9 @@ def test_evidence_reviewed_revision_rejects_invalid_provenance() -> None:
 
 def test_evidence_main_fails_closed_on_unresolved_base_ref() -> None:
     """Configured base refs must resolve before the evidence gate can pass."""
-    gate = load_module("review_gate_base_ref", "scripts/check_internal_review_evidence.py")
+    gate = load_module(
+        "review_gate_base_ref", "scripts/check_internal_review_evidence.py"
+    )
     original_env = os.environ.get("INTERNAL_REVIEW_BASE_REF")
     original_git_ok = gate.git_ok
     os.environ["INTERNAL_REVIEW_BASE_REF"] = "missing-base"
@@ -431,7 +475,9 @@ def test_evidence_main_fails_closed_on_unresolved_base_ref() -> None:
 
 def test_evidence_main_passes_with_complete_evidence_and_pr_head() -> None:
     """The full evidence gate passes when evidence is complete and bound to PR_HEAD_SHA."""
-    gate = load_module("review_gate_main_complete", "scripts/check_internal_review_evidence.py")
+    gate = load_module(
+        "review_gate_main_complete", "scripts/check_internal_review_evidence.py"
+    )
     original_env = {
         "INTERNAL_REVIEW_BASE_REF": os.environ.get("INTERNAL_REVIEW_BASE_REF"),
         "INTERNAL_REVIEW_CHUNK_ID": os.environ.get("INTERNAL_REVIEW_CHUNK_ID"),
@@ -443,8 +489,7 @@ def test_evidence_main_passes_with_complete_evidence_and_pr_head() -> None:
     reviewed = "a" * 40
     local_head = "b" * 40
     evidence = (
-        ROOT
-        / ".agent-loop/initiatives/test-agent-gate/"
+        ROOT / ".agent-loop/initiatives/test-agent-gate/"
         "reviews/test-agent-gate-internal-review-evidence.md"
     )
 
@@ -494,7 +539,10 @@ def test_evidence_main_passes_with_complete_evidence_and_pr_head() -> None:
             "| reuse/dedup | PASS | None | checked |\n",
             encoding="utf-8",
         )
-        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+        with (
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
             assert gate.main() == 0
     finally:
         gate.git = original_git
@@ -512,14 +560,16 @@ def test_evidence_main_passes_with_complete_evidence_and_pr_head() -> None:
 
 def test_evidence_main_rejects_external_response_without_internal_evidence() -> None:
     """External review responses do not satisfy required internal evidence."""
-    gate = load_module("review_gate_external_response_only", "scripts/check_internal_review_evidence.py")
+    gate = load_module(
+        "review_gate_external_response_only",
+        "scripts/check_internal_review_evidence.py",
+    )
     original_env = os.environ.get("INTERNAL_REVIEW_BASE_REF")
     original_git = gate.git
     original_git_ok = gate.git_ok
     original_changed_files = gate.changed_files
     external_response = (
-        ROOT
-        / ".agent-loop/initiatives/test-agent-gate/"
+        ROOT / ".agent-loop/initiatives/test-agent-gate/"
         "reviews/test-agent-gate-external-review-response.md"
     )
 
@@ -542,7 +592,10 @@ def test_evidence_main_rejects_external_response_without_internal_evidence() -> 
             "# External Review Response\n\n## Source\n\nCodeRabbit\n",
             encoding="utf-8",
         )
-        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+        with (
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
             assert gate.main() == 1
     finally:
         gate.git = original_git
@@ -559,7 +612,9 @@ def test_evidence_main_rejects_external_response_without_internal_evidence() -> 
 
 def test_evidence_main_reports_missing_evidence_file() -> None:
     """Changed evidence paths that no longer exist produce structured failure."""
-    gate = load_module("review_gate_missing_evidence_file", "scripts/check_internal_review_evidence.py")
+    gate = load_module(
+        "review_gate_missing_evidence_file", "scripts/check_internal_review_evidence.py"
+    )
     original_changed_files = gate.changed_files
     gate.changed_files = lambda: [
         "scripts/workstream_agent_gate.py",
@@ -700,7 +755,11 @@ def test_stale_wording_patterns_catch_variants() -> None:
             "PreSubmitCheckerPolicy snapshot/" + "hash",
         ]
     )
-    matches = [pattern.pattern for pattern in stale.FORBIDDEN_PATTERNS if pattern.search(sample)]
+    matches = [
+        pattern.pattern
+        for pattern in stale.FORBIDDEN_PATTERNS
+        if pattern.search(sample)
+    ]
     assert set(matches) == {
         "task-" + "production control plane",
         "garden " + "roadmap",
@@ -739,14 +798,18 @@ def test_stale_wording_patterns_catch_variants() -> None:
         ]
     )
     case_variant_matches = [
-        pattern.pattern for pattern in stale.FORBIDDEN_PATTERNS if pattern.search(case_variant_sample)
+        pattern.pattern
+        for pattern in stale.FORBIDDEN_PATTERNS
+        if pattern.search(case_variant_sample)
     ]
     assert {
         "Approved" + "TaskArtifactBinding",
         "Effective" + "TaskSubmissionArtifactPolicy",
         "Project" + "PreSubmitCheckerSpec",
     }.issubset(set(case_variant_matches))
-    failures = stale.forbidden_path_failures([Path(".claude/settings.json"), Path("CLAUDE.md")])
+    failures = stale.forbidden_path_failures(
+        [Path(".claude/settings.json"), Path("CLAUDE.md")]
+    )
     assert len(failures) == 2
 
 
@@ -764,8 +827,12 @@ def test_stale_wording_skips_only_docs_internal_reviews_prefix() -> None:
         (root / "docs/internal_reviews").mkdir(parents=True)
         (root / "other/internal_reviews").mkdir(parents=True)
         (root / "active").mkdir()
-        (root / "docs/internal_reviews/archive.md").write_text("old review\n", encoding="utf-8")
-        (root / "other/internal_reviews/file.md").write_text("active review\n", encoding="utf-8")
+        (root / "docs/internal_reviews/archive.md").write_text(
+            "old review\n", encoding="utf-8"
+        )
+        (root / "other/internal_reviews/file.md").write_text(
+            "active review\n", encoding="utf-8"
+        )
         (root / "active/file.md").write_text("active doc\n", encoding="utf-8")
 
         def fake_check_output(cmd: list[str], text: bool) -> str:
@@ -815,7 +882,9 @@ def test_stale_wording_catches_multiline_legacy_status_reconstruction() -> None:
 
 def test_loop_memory_state_rejects_pre_merge_status() -> None:
     """Main loop memory must not keep pre-merge checkpoint language."""
-    checker = load_module("loop_memory_state_rejects", "scripts/check_loop_memory_state.py")
+    checker = load_module(
+        "loop_memory_state_rejects", "scripts/check_loop_memory_state.py"
+    )
     original_root = checker.ROOT
     original_status_files = checker.INITIATIVE_STATUS_FILES
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -849,7 +918,9 @@ def test_loop_memory_state_rejects_pre_merge_status() -> None:
 
 def test_loop_memory_state_accepts_merged_fixture() -> None:
     """Merged loop memory fixtures should pass the main-only guard."""
-    checker = load_module("loop_memory_state_accepts", "scripts/check_loop_memory_state.py")
+    checker = load_module(
+        "loop_memory_state_accepts", "scripts/check_loop_memory_state.py"
+    )
     original_root = checker.ROOT
     original_status_files = checker.INITIATIVE_STATUS_FILES
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -876,6 +947,603 @@ def test_loop_memory_state_accepts_merged_fixture() -> None:
         try:
             with contextlib.redirect_stdout(io.StringIO()):
                 assert checker.main() == 0
+        finally:
+            checker.ROOT = original_root
+            checker.INITIATIVE_STATUS_FILES = original_status_files
+
+
+def valid_loop_marker() -> str:
+    """Return one valid machine-readable PR marker fixture."""
+    return (
+        "<!-- workstream-loop-state\n"
+        '{"schema_version":1,"initiative_id":"WS-AUTH-001",'
+        '"chunk_id":"WS-AUTH-001-06","chunk_title":"Canonical Actor Profile",'
+        '"next_chunk_id":"WS-AUTH-001-07","next_chunk_title":"Authorization Kernel",'
+        '"next_requires_explicit_start":true}\n'
+        "-->"
+    )
+
+
+def loop_record(
+    module, *, sha: str = "a" * 40, merged_at: str = "2026-07-14T20:00:00Z"
+) -> dict:
+    """Return one complete generated-state fixture."""
+    metadata = module.parse_loop_metadata(valid_loop_marker())
+    return {
+        "schema_version": 1,
+        "repository": "Flow-Research/workstream",
+        "state_branch": "automation/loop-memory",
+        "updated_at": merged_at,
+        "source": {
+            "main_sha": sha,
+            "pr_number": 120,
+            "pr_url": "https://github.com/Flow-Research/workstream/pull/120",
+            "pr_title": "Canonical actor profile",
+            "head_sha": "b" * 40,
+            "head_ref": "codex/ws-auth-001-06",
+            "merged_at": merged_at,
+            "merged_by": "manager",
+        },
+        "completed_chunk": module.asdict(metadata),
+        "active": {"planning_chunk": None, "implementation_chunk": None},
+        "gate": {
+            "status": "stopped_after_merge",
+            "next_chunk_id": metadata.next_chunk_id,
+            "next_chunk_title": metadata.next_chunk_title,
+            "next_requires_explicit_start": True,
+        },
+        "checks": {
+            "required": {
+                name: {"kind": "check_run", "conclusion": "success", "url": None}
+                for name in module.REQUIRED_CHECKS
+            },
+            "all_required_passed": True,
+        },
+    }
+
+
+def test_post_merge_metadata_is_strict_and_bounded() -> None:
+    """PR metadata rejects ambiguity, unknown keys, and inconsistent chunk facts."""
+    updater = load_module("post_merge_metadata", "scripts/update_post_merge_memory.py")
+    metadata = updater.parse_loop_metadata(valid_loop_marker())
+    assert metadata.initiative_id == "WS-AUTH-001"
+    assert metadata.chunk_id == "WS-AUTH-001-06"
+    assert metadata.next_requires_explicit_start is True
+
+    invalid_bodies = [
+        "",
+        valid_loop_marker() + valid_loop_marker(),
+        valid_loop_marker().replace('"schema_version":1', '"schema_version":2'),
+        valid_loop_marker().replace(
+            '"chunk_id":"WS-AUTH-001-06"', '"chunk_id":"WS-POL-002-04"'
+        ),
+        valid_loop_marker().replace(
+            '"next_chunk_title":"Authorization Kernel"', '"next_chunk_title":null'
+        ),
+        valid_loop_marker().replace(
+            '"schema_version":1', '"schema_version":1,"unexpected":true'
+        ),
+    ]
+    for body in invalid_bodies:
+        try:
+            updater.parse_loop_metadata(body)
+        except updater.LoopMemoryError:
+            continue
+        raise AssertionError(f"invalid marker passed: {body}")
+
+
+def test_post_merge_state_is_idempotent_and_monotonic() -> None:
+    """Generated state accepts one merge, replays exactly, and rejects older/conflicting data."""
+    updater = load_module("post_merge_state", "scripts/update_post_merge_memory.py")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        record = loop_record(updater)
+        assert updater.apply_merge_record(root, record) is True
+        assert updater.apply_merge_record(root, record) is False
+        updater.validate_generated_state(root)
+
+        conflict = json.loads(json.dumps(record))
+        conflict["source"]["pr_title"] = "Conflicting title"
+        try:
+            updater.apply_merge_record(root, conflict)
+        except updater.LoopMemoryError as exc:
+            assert "different state" in str(exc)
+        else:
+            raise AssertionError("conflicting replay passed")
+
+        older = loop_record(updater, sha="c" * 40, merged_at="2026-07-14T19:59:59Z")
+        try:
+            updater.apply_merge_record(root, older)
+        except updater.LoopMemoryError as exc:
+            assert "not newer" in str(exc)
+        else:
+            raise AssertionError("older merge replaced live state")
+
+
+def test_post_merge_collection_binds_exact_pr_and_checks() -> None:
+    """The collector binds one main merge SHA and final-head check evidence."""
+    updater = load_module(
+        "post_merge_collection", "scripts/update_post_merge_memory.py"
+    )
+    merge_sha = "a" * 40
+    head_sha = "b" * 40
+    responses = {
+        f"/repos/Flow-Research/workstream/commits/{merge_sha}/pulls?per_page=100": [
+            {
+                "number": 120,
+                "state": "closed",
+                "merged_at": "2026-07-14T20:00:00Z",
+                "merge_commit_sha": merge_sha,
+                "html_url": "https://github.com/Flow-Research/workstream/pull/120",
+                "title": "Canonical actor profile",
+                "body": valid_loop_marker(),
+                "base": {"ref": "main"},
+                "head": {"sha": head_sha, "ref": "codex/ws-auth-001-06"},
+                "merged_by": {"login": "manager"},
+            }
+        ],
+        "/repos/Flow-Research/workstream/pulls/120": {
+            "number": 120,
+            "state": "closed",
+            "merged_at": "2026-07-14T20:00:00Z",
+            "merge_commit_sha": merge_sha,
+            "html_url": "https://github.com/Flow-Research/workstream/pull/120",
+            "title": "Canonical actor profile",
+            "body": valid_loop_marker(),
+            "base": {"ref": "main"},
+            "head": {"sha": head_sha, "ref": "codex/ws-auth-001-06"},
+            "merged_by": {"login": "manager"},
+        },
+        f"/repos/Flow-Research/workstream/commits/{head_sha}/check-runs?per_page=100": {
+            "check_runs": [
+                {
+                    "name": "agent-gates",
+                    "conclusion": "success",
+                    "completed_at": "2026-07-14T19:50:00Z",
+                    "details_url": "https://example.test/gates",
+                },
+                {
+                    "name": "test",
+                    "conclusion": "success",
+                    "completed_at": "2026-07-14T19:51:00Z",
+                    "details_url": "https://example.test/test",
+                },
+            ]
+        },
+        f"/repos/Flow-Research/workstream/commits/{head_sha}/status?per_page=100": {
+            "statuses": [
+                {
+                    "context": "CodeRabbit",
+                    "state": "success",
+                    "updated_at": "2026-07-14T19:52:00Z",
+                    "target_url": "https://example.test/review",
+                }
+            ]
+        },
+    }
+
+    class FakeClient:
+        def get_json(self, path: str):
+            return responses[path]
+
+    record = updater.collect_merge_record(
+        FakeClient(), "Flow-Research/workstream", merge_sha
+    )
+    assert record["source"]["main_sha"] == merge_sha
+    assert record["source"]["head_sha"] == head_sha
+    assert record["completed_chunk"]["chunk_id"] == "WS-AUTH-001-06"
+    assert record["checks"]["all_required_passed"] is True
+
+
+def test_generated_loop_memory_validator_detects_drift() -> None:
+    """The independent validator detects ledger and rendered-state drift."""
+    updater = load_module(
+        "post_merge_validator_updater", "scripts/update_post_merge_memory.py"
+    )
+    checker = load_module("post_merge_validator", "scripts/check_loop_memory_state.py")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        updater.apply_merge_record(root, loop_record(updater))
+        assert checker.generated_state_failures(root) == []
+        (root / updater.RENDERED_PATH).write_text("stale\n", encoding="utf-8")
+        failures = checker.generated_state_failures(root)
+        assert any("merge SHA" in failure for failure in failures)
+        assert any("completed chunk" in failure for failure in failures)
+
+
+def test_generated_loop_memory_escapes_markdown_metadata() -> None:
+    """PR and chunk titles cannot inject generated Markdown structure."""
+    updater = load_module(
+        "post_merge_markdown_escape", "scripts/update_post_merge_memory.py"
+    )
+    record = loop_record(updater)
+    record["source"]["pr_title"] = "Title [link](https://unsafe.test) `code`"
+    record["completed_chunk"]["chunk_title"] = "Chunk <unsafe>"
+    rendered = updater.render_state(record)
+    assert "Title \\[link\\](https://unsafe.test) \\`code\\`" in rendered
+    assert "Chunk &lt;unsafe&gt;" in rendered
+
+
+def test_loop_memory_workflow_isolated_write_boundary() -> None:
+    """The write-capable workflow runs on trusted main and targets only the state branch."""
+    workflow = (ROOT / ".github/workflows/loop-memory.yml").read_text(encoding="utf-8")
+    agent_gates = (ROOT / ".github/workflows/agent-gates.yml").read_text(
+        encoding="utf-8"
+    )
+    assert "pull_request_target" not in workflow
+    assert "persist-credentials: false" in workflow
+    assert "contents: write" in workflow
+    assert "pull-requests: read" in workflow
+    assert "HEAD:refs/heads/${STATE_BRANCH}" in workflow
+    assert "HEAD:refs/heads/main" not in workflow
+    assert "gh pr create" not in workflow
+    assert "validate-pr-body" in agent_gates
+    assert "PR_BODY: ${{ github.event.pull_request.body }}" in agent_gates
+
+
+def assert_loop_error(module, callback, expected: str) -> None:
+    """Assert one loop-memory operation fails with a bounded diagnostic."""
+    try:
+        callback()
+    except module.LoopMemoryError as exc:
+        assert expected in str(exc)
+        return
+    raise AssertionError(f"expected LoopMemoryError containing {expected!r}")
+
+
+def test_post_merge_input_and_check_validation_fail_closed() -> None:
+    """Untrusted identifiers, payload types, and incomplete checks remain bounded."""
+    updater = load_module(
+        "post_merge_input_validation", "scripts/update_post_merge_memory.py"
+    )
+    assert_loop_error(
+        updater, lambda: updater.parse_loop_metadata(None), "must be text"
+    )
+    assert_loop_error(
+        updater,
+        lambda: updater.parse_loop_metadata(
+            valid_loop_marker().replace(
+                '"chunk_title":"Canonical Actor Profile"', '"chunk_title":7'
+            )
+        ),
+        "chunk_title must be a string",
+    )
+    assert_loop_error(
+        updater,
+        lambda: updater.parse_loop_metadata(
+            valid_loop_marker().replace("Canonical Actor Profile", "Bad\\nTitle")
+        ),
+        "single-line string",
+    )
+    assert_loop_error(
+        updater,
+        lambda: updater.parse_loop_metadata(
+            valid_loop_marker().replace("WS-AUTH-001-06", "bad id")
+        ),
+        "canonical lifecycle identifier",
+    )
+    assert_loop_error(
+        updater,
+        lambda: updater.parse_loop_metadata(
+            valid_loop_marker().replace(
+                '"next_requires_explicit_start":true',
+                '"next_requires_explicit_start":"yes"',
+            )
+        ),
+        "must be a boolean",
+    )
+    assert_loop_error(
+        updater,
+        lambda: updater._validate_repository_and_sha("invalid", "a" * 40),
+        "owner/name",
+    )
+    assert_loop_error(
+        updater,
+        lambda: updater._validate_repository_and_sha(
+            "Flow-Research/workstream", "A" * 40
+        ),
+        "lowercase hexadecimal",
+    )
+
+    evidence = updater._check_evidence(
+        [
+            {
+                "name": "test",
+                "conclusion": "failure",
+                "completed_at": "2026-01-01T00:00:00Z",
+            },
+            {
+                "name": "test",
+                "conclusion": "success",
+                "completed_at": "2026-01-01T00:01:00Z",
+            },
+        ],
+        [],
+    )
+    assert evidence["required"]["test"]["conclusion"] == "success"
+    assert evidence["required"]["agent-gates"]["kind"] == "missing"
+    assert evidence["all_required_passed"] is False
+
+
+def test_github_client_bounds_success_and_network_failure() -> None:
+    """The stdlib client authenticates JSON requests and hides transport detail on failure."""
+    updater = load_module(
+        "post_merge_github_client", "scripts/update_post_merge_memory.py"
+    )
+    assert_loop_error(updater, lambda: updater.GitHubClient(""), "token is required")
+    original_urlopen = updater.urllib.request.urlopen
+
+    class Response(io.StringIO):
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            self.close()
+
+    captured = {}
+
+    def successful(request, timeout):
+        captured["authorization"] = request.headers["Authorization"]
+        captured["timeout"] = timeout
+        return Response('{"ok":true}')
+
+    try:
+        updater.urllib.request.urlopen = successful
+        client = updater.GitHubClient("secret", "https://api.example.test/")
+        assert client.get_json("/state") == {"ok": True}
+        assert captured == {"authorization": "Bearer secret", "timeout": 30}
+
+        def failed(_request, timeout=None):
+            assert timeout == 30
+            raise updater.urllib.error.URLError("secret transport detail")
+
+        updater.urllib.request.urlopen = failed
+        assert_loop_error(
+            updater, lambda: client.get_json("/state"), "GitHub API request failed"
+        )
+    finally:
+        updater.urllib.request.urlopen = original_urlopen
+
+
+def test_post_merge_collection_rejects_ambiguous_or_mismatched_prs() -> None:
+    """Collector errors never guess across missing, ambiguous, or inconsistent PR facts."""
+    updater = load_module(
+        "post_merge_collection_errors", "scripts/update_post_merge_memory.py"
+    )
+    repository = "Flow-Research/workstream"
+    merge_sha = "a" * 40
+    association_path = f"/repos/{repository}/commits/{merge_sha}/pulls?per_page=100"
+    valid_association = {
+        "number": 120,
+        "state": "closed",
+        "merged_at": "2026-07-14T20:00:00Z",
+        "merge_commit_sha": merge_sha,
+        "base": {"ref": "main"},
+    }
+
+    class FakeClient:
+        def __init__(self, responses):
+            self.responses = responses
+
+        def get_json(self, path: str):
+            return self.responses[path]
+
+    for payload, expected in (
+        ({}, "not a list"),
+        ([], "exactly one"),
+        ([valid_association, valid_association], "exactly one"),
+    ):
+        client = FakeClient({association_path: payload})
+        assert_loop_error(
+            updater,
+            lambda client=client: updater.collect_merge_record(
+                client, repository, merge_sha
+            ),
+            expected,
+        )
+
+    no_number = dict(valid_association)
+    no_number["number"] = 0
+    assert_loop_error(
+        updater,
+        lambda: updater.collect_merge_record(
+            FakeClient({association_path: [no_number]}), repository, merge_sha
+        ),
+        "positive number",
+    )
+    assert_loop_error(
+        updater,
+        lambda: updater.collect_merge_record(
+            FakeClient(
+                {
+                    association_path: [valid_association],
+                    f"/repos/{repository}/pulls/120": [],
+                }
+            ),
+            repository,
+            merge_sha,
+        ),
+        "not an object",
+    )
+    mismatched = dict(valid_association)
+    mismatched.update(
+        {
+            "merge_commit_sha": "c" * 40,
+            "body": valid_loop_marker(),
+            "head": {"sha": "b" * 40},
+        }
+    )
+    assert_loop_error(
+        updater,
+        lambda: updater.collect_merge_record(
+            FakeClient(
+                {
+                    association_path: [valid_association],
+                    f"/repos/{repository}/pulls/120": mismatched,
+                }
+            ),
+            repository,
+            merge_sha,
+        ),
+        "do not match",
+    )
+
+
+def test_post_merge_state_rejects_corrupt_files_and_cli_misuse() -> None:
+    """Corrupt generated files and wrong-branch CLI writes fail closed."""
+    updater = load_module(
+        "post_merge_corrupt_state", "scripts/update_post_merge_memory.py"
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        assert_loop_error(
+            updater,
+            lambda: updater.validate_generated_state(root),
+            "state file is missing",
+        )
+
+        state_path = root / updater.STATE_PATH
+        state_path.parent.mkdir(parents=True)
+        state_path.write_text("[]\n", encoding="utf-8")
+        assert_loop_error(
+            updater, lambda: updater.validate_generated_state(root), "JSON object"
+        )
+        state_path.write_text("{invalid\n", encoding="utf-8")
+        assert_loop_error(
+            updater,
+            lambda: updater.validate_generated_state(root),
+            "cannot read generated state",
+        )
+
+        state_path.write_text(json.dumps(loop_record(updater)), encoding="utf-8")
+        ledger_path = root / updater.LEDGER_PATH
+        ledger_path.write_text("[]\n", encoding="utf-8")
+        assert_loop_error(
+            updater, lambda: updater.validate_generated_state(root), "JSON objects"
+        )
+        ledger_path.write_text("{invalid\n", encoding="utf-8")
+        assert_loop_error(
+            updater,
+            lambda: updater.validate_generated_state(root),
+            "cannot read merge ledger",
+        )
+
+        subprocess.run(
+            ["git", "init", "--initial-branch", "wrong", str(root)],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        assert_loop_error(
+            updater, lambda: updater._assert_state_branch(root), "must be checked out"
+        )
+
+        body_file = root / "body.md"
+        body_file.write_text(valid_loop_marker(), encoding="utf-8")
+        with contextlib.redirect_stdout(io.StringIO()):
+            assert (
+                updater.main(["validate-pr-body", "--body-file", str(body_file)]) == 0
+            )
+        with contextlib.redirect_stderr(io.StringIO()):
+            assert (
+                updater.main(["validate-pr-body", "--body-env", "MISSING_LOOP_BODY"])
+                == 1
+            )
+        with contextlib.redirect_stderr(io.StringIO()):
+            assert updater.main(["validate-state", "--state-root", str(root)]) == 1
+
+
+def test_post_merge_cli_updates_and_shows_generated_state() -> None:
+    """The CLI update, validation, and display modes operate on the dedicated branch."""
+    updater = load_module("post_merge_cli", "scripts/update_post_merge_memory.py")
+    original_client = updater.GitHubClient
+    original_collect = updater.collect_merge_record
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        subprocess.run(
+            ["git", "init", "--initial-branch", updater.STATE_BRANCH, str(root)],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        os.environ["TEST_GITHUB_TOKEN"] = "secret"
+        updater.GitHubClient = lambda _token, _api_url: SimpleNamespace()
+        updater.collect_merge_record = lambda _client, _repository, _sha: loop_record(
+            updater
+        )
+        try:
+            with contextlib.redirect_stdout(io.StringIO()) as output:
+                assert (
+                    updater.main(
+                        [
+                            "update",
+                            "--repository",
+                            "Flow-Research/workstream",
+                            "--merge-sha",
+                            "a" * 40,
+                            "--state-root",
+                            str(root),
+                            "--token-env",
+                            "TEST_GITHUB_TOKEN",
+                        ]
+                    )
+                    == 0
+                )
+            assert "updated for PR #120" in output.getvalue()
+            with contextlib.redirect_stdout(io.StringIO()):
+                assert updater.main(["validate-state", "--state-root", str(root)]) == 0
+            with contextlib.redirect_stdout(io.StringIO()) as output:
+                assert updater.main(["show", "--state-root", str(root)]) == 0
+            assert "Generated Workstream Loop State" in output.getvalue()
+        finally:
+            updater.GitHubClient = original_client
+            updater.collect_merge_record = original_collect
+            os.environ.pop("TEST_GITHUB_TOKEN", None)
+
+
+def test_generated_loop_memory_validator_covers_corruption_matrix() -> None:
+    """Independent state validation reports each generated-file corruption family."""
+    updater = load_module(
+        "post_merge_corruption_updater", "scripts/update_post_merge_memory.py"
+    )
+    checker = load_module(
+        "post_merge_corruption_checker", "scripts/check_loop_memory_state.py"
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        assert len(checker.generated_state_failures(root)) == 3
+        (root / ".agent-loop").mkdir()
+        for relative in checker.GENERATED_FILES:
+            (root / relative).write_text("not-json\n", encoding="utf-8")
+        assert "unreadable" in checker.generated_state_failures(root)[0]
+
+        (root / checker.GENERATED_FILES[0]).write_text("[]\n", encoding="utf-8")
+        (root / checker.GENERATED_FILES[2]).write_text("{}\n", encoding="utf-8")
+        assert "expected a JSON object" in checker.generated_state_failures(root)[0]
+
+        valid_root = root / "valid"
+        updater.apply_merge_record(valid_root, loop_record(updater))
+        with contextlib.redirect_stdout(io.StringIO()):
+            assert checker.main(["--state-root", str(valid_root)]) == 0
+
+        state_path = valid_root / updater.STATE_PATH
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+        state["schema_version"] = 2
+        state["state_branch"] = "main"
+        state_path.write_text(json.dumps(state), encoding="utf-8")
+        failures = checker.generated_state_failures(valid_root)
+        assert any("schema version" in failure for failure in failures)
+        assert any("unexpected state branch" in failure for failure in failures)
+        assert any("ledger tail" in failure for failure in failures)
+        with contextlib.redirect_stderr(io.StringIO()):
+            assert checker.main(["--state-root", str(valid_root)]) == 1
+
+    original_root = checker.ROOT
+    original_status_files = checker.INITIATIVE_STATUS_FILES
+    with tempfile.TemporaryDirectory() as tmpdir:
+        checker.ROOT = Path(tmpdir)
+        checker.INITIATIVE_STATUS_FILES = ()
+        try:
+            with contextlib.redirect_stderr(io.StringIO()):
+                assert checker.main() == 1
         finally:
             checker.ROOT = original_root
             checker.INITIATIVE_STATUS_FILES = original_status_files
@@ -989,10 +1657,7 @@ def test_stale_authorization_rule_examples_are_rejected() -> None:
         "Celery supports queues, but human workers submit tasks.",
         "Human workers use Celery.",
         "The Celery worker claims a human task using submitter authority.",
-        (
-            "The system worker receives a reviewer grant and records a review "
-            "decision."
-        ),
+        ("The system worker receives a reviewer grant and records a review decision."),
         "The setup worker is a human product role.",
         "The system worker has a reviewer grant.",
         "The Celery worker may review a contributor submission.",
@@ -1033,9 +1698,7 @@ def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:
         )
         assert active in gate.discover_documents(root)
         assert diagram in gate.discover_documents(root)
-        assert gate.scan(root) == [
-            "docs/new_active_doc.md:1: NON_CANONICAL_API_PREFIX"
-        ]
+        assert gate.scan(root) == ["docs/new_active_doc.md:1: NON_CANONICAL_API_PREFIX"]
 
         active.write_text("POST /api/v1/projects\n", encoding="utf-8")
         assert gate.scan(root) == []
@@ -1047,7 +1710,9 @@ def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:
         )
         failures = gate.scan(root)
         assert any(item.endswith("TOKEN_ROLE_PRODUCT_AUTHORITY") for item in failures)
-        assert any(item.endswith("TYPED_PROFILE_PRODUCT_AUTHORITY") for item in failures)
+        assert any(
+            item.endswith("TYPED_PROFILE_PRODUCT_AUTHORITY") for item in failures
+        )
 
         active.write_text("POST /api/v1/projects\n", encoding="utf-8")
         diagram.write_text("Workstream --> API : POST /v1/projects\n", encoding="utf-8")
@@ -1062,17 +1727,13 @@ def test_stale_authorization_precedence_exemption_is_line_scoped() -> None:
         "stale_authorization_docs_precedence",
         "scripts/check_stale_authorization_docs.py",
     )
-    marker = (
-        "archival input uses `/v1`. WS-AUTH-001 takes precedence over the current"
-    )
+    marker = "archival input uses `/v1`. WS-AUTH-001 takes precedence over the current"
     assert gate.scan_text("docs/reference_specs/README.md", marker) == []
     failures = gate.scan_text(
         "docs/reference_specs/README.md",
         marker + "\nClients call POST /v1/projects.\n",
     )
-    assert failures == [
-        "docs/reference_specs/README.md:2: NON_CANONICAL_API_PREFIX"
-    ]
+    assert failures == ["docs/reference_specs/README.md:2: NON_CANONICAL_API_PREFIX"]
 
 
 def test_stale_authorization_history_allowlist_is_exact() -> None:
@@ -1120,11 +1781,14 @@ def test_stale_artifact_contracts_foundation_keeps_later_terms_inactive() -> Non
         "scripts/check_stale_artifact_contracts.py",
     )
     assert gate.ARTIFACT_CONTRACT_PHASE == "foundation"
-    assert gate.scan_text(
-        "backend/app/modules/tasks/schemas.py",
-        "package_uri content_cid artifact_manifest_hash",
-        "foundation",
-    ) == []
+    assert (
+        gate.scan_text(
+            "backend/app/modules/tasks/schemas.py",
+            "package_uri content_cid artifact_manifest_hash",
+            "foundation",
+        )
+        == []
+    )
     failures = gate.scan_text(
         "contracts/artifact-store/version_1/schema/example.json",
         '{"cid": "provider-specific"}',
@@ -1213,6 +1877,18 @@ def main() -> int:
         test_stale_wording_catches_multiline_legacy_status_reconstruction,
         test_loop_memory_state_rejects_pre_merge_status,
         test_loop_memory_state_accepts_merged_fixture,
+        test_post_merge_metadata_is_strict_and_bounded,
+        test_post_merge_state_is_idempotent_and_monotonic,
+        test_post_merge_collection_binds_exact_pr_and_checks,
+        test_generated_loop_memory_validator_detects_drift,
+        test_generated_loop_memory_escapes_markdown_metadata,
+        test_loop_memory_workflow_isolated_write_boundary,
+        test_post_merge_input_and_check_validation_fail_closed,
+        test_github_client_bounds_success_and_network_failure,
+        test_post_merge_collection_rejects_ambiguous_or_mismatched_prs,
+        test_post_merge_state_rejects_corrupt_files_and_cli_misuse,
+        test_post_merge_cli_updates_and_shows_generated_state,
+        test_generated_loop_memory_validator_covers_corruption_matrix,
         test_stale_authorization_rule_examples_are_rejected,
         test_stale_authorization_discovery_includes_new_untracked_docs,
         test_stale_authorization_precedence_exemption_is_line_scoped,

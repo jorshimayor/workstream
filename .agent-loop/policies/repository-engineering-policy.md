@@ -34,6 +34,7 @@ pytest -q
 | Submission/checker lifecycle | `backend/app/modules/submissions`, `backend/app/modules/checkers` | Pre-submit blocking gates and post-submit checker records stay separate. |
 | Persistence | `backend/app/db`, module models/repositories | Use async SQLAlchemy repositories and Alembic migrations. |
 | CI/review gates | `.github/workflows`, `scripts/`, `.agent-loop/` | Gates may be strengthened; weakening requires explicit human approval. |
+| Generated merge memory | `automation/loop-memory` | Trusted `main` automation owns canonical live state; humans and agents do not edit this branch manually. |
 
 ## Dependency Policy
 
@@ -46,3 +47,4 @@ pytest -q
 - Keep PRs chunk-sized.
 - Do not weaken CI, tests, docstring coverage, internal review evidence, or auth defaults.
 - Do not use chat memory as the source of truth. Update docs, ADRs, templates, policies, or loop memory.
+- Review and approve an implementation PR once. After merge, rely on the canonical automation branch; do not create a second PR or repeat reviewer fanout solely to restate merge metadata.

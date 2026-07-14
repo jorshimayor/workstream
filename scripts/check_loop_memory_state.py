@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import argparse
+import json
 import re
 import sys
 from pathlib import Path
@@ -36,13 +38,22 @@ FORBIDDEN_PATTERNS = (
         "merged main cannot instruct pushing reviewed revision",
     ),
     (
-        re.compile(r"CodeRabbit, then stop for the user-owned merge decision", re.IGNORECASE),
+        re.compile(
+            r"CodeRabbit, then stop for the user-owned merge decision", re.IGNORECASE
+        ),
         "merged main cannot wait for external review before merge",
     ),
     (
-        re.compile(r"\|\s*`[^`]+`\s*\|[^|]+\|[^|]+\|\s*In progress\s*\|", re.IGNORECASE),
+        re.compile(
+            r"\|\s*`[^`]+`\s*\|[^|]+\|[^|]+\|\s*In progress\s*\|", re.IGNORECASE
+        ),
         "merged main cannot keep a completed chunk in active In progress state",
     ),
+)
+GENERATED_FILES = (
+    ".agent-loop/STATE.json",
+    ".agent-loop/LOOP_STATE.md",
+    ".agent-loop/MERGE_LOG.jsonl",
 )
 
 
@@ -53,8 +64,67 @@ def checked_paths() -> list[Path]:
     return paths
 
 
-def main() -> int:
-    """Fail when loop memory on main still describes a pre-merge checkpoint."""
+def generated_state_failures(root: Path) -> list[str]:
+    """Return consistency failures for generated automation-branch state."""
+    paths = [root / path for path in GENERATED_FILES]
+    missing = [path for path in paths if not path.is_file()]
+    if missing:
+        return [
+            f"{path.relative_to(root)}: missing generated loop memory file"
+            for path in missing
+        ]
+    try:
+        state = json.loads(paths[0].read_text(encoding="utf-8"))
+        ledger = [
+            json.loads(line)
+            for line in paths[2].read_text(encoding="utf-8").splitlines()
+            if line
+        ]
+        rendered = paths[1].read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        return [f"generated loop memory is unreadable: {exc.__class__.__name__}"]
+    if not isinstance(state, dict):
+        return [".agent-loop/STATE.json: expected a JSON object"]
+    failures: list[str] = []
+    if state.get("schema_version") != 1:
+        failures.append(".agent-loop/STATE.json: unsupported schema version")
+    if state.get("state_branch") != "automation/loop-memory":
+        failures.append(".agent-loop/STATE.json: unexpected state branch")
+    if not ledger or ledger[-1] != state:
+        failures.append(
+            ".agent-loop/MERGE_LOG.jsonl: ledger tail does not match live state"
+        )
+    source = state.get("source", {})
+    chunk = state.get("completed_chunk", {})
+    for value, label in (
+        (source.get("main_sha"), "merge SHA"),
+        (chunk.get("chunk_id"), "completed chunk"),
+    ):
+        if not isinstance(value, str) or f"`{value}`" not in rendered:
+            failures.append(f".agent-loop/LOOP_STATE.md: missing generated {label}")
+    return failures
+
+
+def build_parser() -> argparse.ArgumentParser:
+    """Build the loop-memory validator parser."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--state-root", type=Path)
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Validate generated state or legacy main memory."""
+    args = build_parser().parse_args([] if argv is None else argv)
+    if args.state_root:
+        failures = generated_state_failures(args.state_root)
+        if failures:
+            print("Generated loop memory state is invalid:", file=sys.stderr)
+            for failure in failures:
+                print(f"- {failure}", file=sys.stderr)
+            return 1
+        print("Generated loop memory state check passed.")
+        return 0
+
     failures: list[str] = []
     for path in checked_paths():
         if not path.exists():
@@ -76,4 +146,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main(sys.argv[1:]))

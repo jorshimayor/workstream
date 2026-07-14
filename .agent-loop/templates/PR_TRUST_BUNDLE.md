@@ -7,6 +7,13 @@ in sync with this template.
 
 `<CHUNK_ID>` — `<TITLE>`
 
+<!-- workstream-loop-state
+{"schema_version":1,"initiative_id":"<INITIATIVE_ID>","chunk_id":"<CHUNK_ID>","chunk_title":"<TITLE>","next_chunk_id":null,"next_chunk_title":null,"next_requires_explicit_start":true}
+-->
+
+Replace every placeholder in the marker. Use JSON `null` for no next chunk.
+This exact marker drives trusted post-merge state generation.
+
 ## Goal
 
 What this PR is meant to accomplish.

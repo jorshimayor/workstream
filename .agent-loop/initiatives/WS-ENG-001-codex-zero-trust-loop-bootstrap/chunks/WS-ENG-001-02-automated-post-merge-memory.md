@@ -71,8 +71,9 @@ execution of pull-request-head code with write credentials
       append-only JSONL merge ledger.
 - [ ] Replaying the same merge is idempotent.
 - [ ] An older merge cannot replace newer live state.
-- [ ] Missing/malformed PR metadata, wrong repository/base/SHA, failed checks,
-      or ambiguous associated PRs fail closed.
+- [ ] Missing/malformed PR metadata, wrong repository/base/SHA, or ambiguous
+      associated PRs fail closed; missing or failed checks are recorded as
+      attention required rather than misreported as passing.
 - [ ] The workflow has no pull-request-head checkout and no write to `main`.
 - [ ] Workflow permissions are limited to contents, pull requests, and checks.
 - [ ] PR templates expose the exact machine-readable marker.

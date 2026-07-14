@@ -5,18 +5,85 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      merge_sha:
+        description: Exact merged main SHA to replay
+        required: true
+        type: string
 
 permissions:
-  contents: read
+  checks: read
+  contents: write
+  pull-requests: read
+  statuses: read
+
+concurrency:
+  group: workstream-loop-memory
+  cancel-in-progress: false
 
 jobs:
   loop-memory:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GITHUB_TOKEN: ${{ github.token }}
+      MERGE_SHA: ${{ github.event_name == 'push' && github.sha || inputs.merge_sha }}
+      STATE_BRANCH: automation/loop-memory
 
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           persist-credentials: false
+          fetch-depth: 0
 
-      - name: Loop memory state check
-        run: python3 scripts/check_loop_memory_state.py
+      - name: Prepare generated state branch
+        id: state
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          state_dir="${RUNNER_TEMP}/loop-memory-state"
+          if git ls-remote --exit-code --heads origin "refs/heads/${STATE_BRANCH}" >/dev/null; then
+            git clone --depth 1 --single-branch --branch "${STATE_BRANCH}" \
+              "https://github.com/${GITHUB_REPOSITORY}.git" "${state_dir}"
+          else
+            mkdir -p "${state_dir}"
+            git -C "${state_dir}" init --initial-branch "${STATE_BRANCH}"
+            git -C "${state_dir}" remote add origin \
+              "https://github.com/${GITHUB_REPOSITORY}.git"
+          fi
+          echo "state_dir=${state_dir}" >> "${GITHUB_OUTPUT}"
+
+      - name: Generate exact merged state
+        run: >-
+          python3 scripts/update_post_merge_memory.py update
+          --repository "${GITHUB_REPOSITORY}"
+          --merge-sha "${MERGE_SHA}"
+          --state-root "${{ steps.state.outputs.state_dir }}"
+
+      - name: Validate generated state
+        run: >-
+          python3 scripts/check_loop_memory_state.py
+          --state-root "${{ steps.state.outputs.state_dir }}"
+
+      - name: Commit generated state branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          state_dir="${{ steps.state.outputs.state_dir }}"
+          git -C "${state_dir}" add \
+            .agent-loop/STATE.json \
+            .agent-loop/LOOP_STATE.md \
+            .agent-loop/MERGE_LOG.jsonl
+          if git -C "${state_dir}" diff --cached --quiet; then
+            echo "Loop memory is already current."
+            exit 0
+          fi
+          pr_number=$(python3 -c \
+            'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["source"]["pr_number"])' \
+            "${state_dir}/.agent-loop/STATE.json")
+          git -C "${state_dir}" config user.name "workstream-loop-memory[bot]"
+          git -C "${state_dir}" config user.email \
+            "workstream-loop-memory[bot]@users.noreply.github.com"
+          git -C "${state_dir}" commit -m "chore(loop-memory): record PR #${pr_number}"
+          git -C "${state_dir}" push origin "HEAD:refs/heads/${STATE_BRANCH}"
