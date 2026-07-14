@@ -10,10 +10,11 @@ from alembic import command
 from alembic.config import Config
 import pytest
 from sqlalchemy import text
-from sqlalchemy.exc import DBAPIError
+from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.modules.audit.schemas import ActorReferenceKind, AuthorityAuditEventInput, AuthorityEventType
+from app.modules.audit.service import AuditService
 from app.modules.authorization.schemas import (
     ActorIdentityLinkReactivateRequest,
     ActorIdentityLinkRevokeRequest,
@@ -116,6 +117,158 @@ def _success(
     )
 
 
+def _operation_success(
+    claim: AuthorityClaimHandle,
+    request,
+    response: AuthorityResponseReference,
+) -> AuthorityAuditEventInput:
+    """Build the exact concrete success evidence for one canonical operation case."""
+    event, permission, reason = {
+        AuthorityOperation.SERVICE_ACTOR_CREATE: (
+            AuthorityEventType.SERVICE_ACTOR_PROVISIONED,
+            "actor.service.provision",
+            "manual_service_provisioning",
+        ),
+        AuthorityOperation.ADMIN_ROLE_GRANT_ISSUE: (
+            AuthorityEventType.ADMIN_ROLE_GRANT_ISSUED,
+            "admin_role.grant",
+            "authority_assignment",
+        ),
+        AuthorityOperation.ADMIN_ROLE_GRANT_REVOKE: (
+            AuthorityEventType.ADMIN_ROLE_GRANT_REVOKED,
+            "admin_role.revoke",
+            "authority_revocation",
+        ),
+        AuthorityOperation.PROJECT_ROLE_GRANT_ISSUE: (
+            AuthorityEventType.PROJECT_ROLE_GRANT_REPLACED
+            if getattr(request, "replaced_grant_id", None)
+            else AuthorityEventType.PROJECT_ROLE_GRANT_ISSUED,
+            "project.role_grant.manage",
+            "authority_replacement"
+            if getattr(request, "replaced_grant_id", None)
+            else "authority_assignment",
+        ),
+        AuthorityOperation.PROJECT_ROLE_GRANT_REVOKE: (
+            AuthorityEventType.PROJECT_ROLE_GRANT_REVOKED,
+            "project.role_grant.manage",
+            "authority_revocation",
+        ),
+        AuthorityOperation.ACTOR_PROFILE_SUSPEND: (
+            AuthorityEventType.ACTOR_PROFILE_SUSPENDED,
+            "actor.profile.suspend",
+            "security_response",
+        ),
+        AuthorityOperation.ACTOR_PROFILE_REACTIVATE: (
+            AuthorityEventType.ACTOR_PROFILE_REACTIVATED,
+            "actor.profile.reactivate",
+            "administrative_correction",
+        ),
+        AuthorityOperation.ACTOR_PROFILE_DEACTIVATE: (
+            AuthorityEventType.ACTOR_PROFILE_DEACTIVATED,
+            "actor.profile.deactivate",
+            "security_response",
+        ),
+        AuthorityOperation.ACTOR_IDENTITY_LINK_REVOKE: (
+            AuthorityEventType.ACTOR_IDENTITY_LINK_REVOKED,
+            "actor.identity_link.revoke",
+            "identity_lifecycle_change",
+        ),
+        AuthorityOperation.ACTOR_IDENTITY_LINK_REACTIVATE: (
+            AuthorityEventType.ACTOR_IDENTITY_LINK_REACTIVATED,
+            "actor.identity_link.reactivate",
+            "identity_lifecycle_change",
+        ),
+    }[request.operation]
+    before_facts = None
+    after_facts = None
+    project_id = None
+    target_actor = None
+    matched_grant = None
+    if isinstance(request, ServiceActorCreateRequest):
+        after_facts = {
+            "status": "active",
+            "subject_kind": "service",
+            "provisioning_method": "manual_service_provisioning",
+        }
+    elif isinstance(request, AdminRoleGrantIssueRequest):
+        target_actor = request.target_actor_id
+        project_id = request.scope_project_id
+        after_facts = {
+            "status": "active",
+            "role": request.role.value,
+            "scope_type": request.scope_type.value,
+            "effective": True,
+        }
+        if project_id:
+            after_facts["scope_id"] = str(project_id)
+    elif isinstance(request, AdminRoleGrantRevokeRequest):
+        before_facts = {
+            "status": "active",
+            "role": "access_administrator",
+            "scope_type": "system",
+            "effective": True,
+        }
+        after_facts = before_facts | {"status": "revoked", "effective": False}
+    elif isinstance(request, ProjectRoleGrantIssueRequest):
+        project_id = request.project_id
+        target_actor = request.target_actor_id
+        matched_grant = request.replaced_grant_id
+        after_facts = {
+            "status": "active",
+            "role": request.role.value,
+            "scope_type": "project",
+            "scope_id": str(project_id),
+            "effective": True,
+        }
+        if matched_grant:
+            before_facts = after_facts | {"role": "reviewer"}
+    elif isinstance(request, ProjectRoleGrantRevokeRequest):
+        project_id = request.project_id
+        before_facts = {
+            "status": "active",
+            "role": "submitter",
+            "scope_type": "project",
+            "scope_id": str(project_id),
+            "effective": True,
+        }
+        after_facts = before_facts | {"status": "revoked", "effective": False}
+    elif isinstance(request, ActorProfileSuspendRequest):
+        before_facts, after_facts = {"status": "active"}, {"status": "suspended"}
+    elif isinstance(request, ActorProfileReactivateRequest):
+        before_facts, after_facts = {"status": "suspended"}, {"status": "active"}
+    elif isinstance(request, ActorProfileDeactivateRequest):
+        before_facts, after_facts = {"status": "active"}, {"status": "deactivated"}
+    elif isinstance(request, ActorIdentityLinkRevokeRequest):
+        before_facts, after_facts = {"status": "active"}, {"status": "revoked"}
+    elif isinstance(request, ActorIdentityLinkReactivateRequest):
+        before_facts, after_facts = {"status": "revoked"}, {"status": "active"}
+
+    event_id = uuid4()
+    return AuthorityAuditEventInput(
+        event_id=event_id,
+        event_type=event,
+        entity_type=response.resource_type.value,
+        entity_id=str(response.resource_id),
+        actor_ref_kind=claim.actor_ref_kind,
+        actor_ref=claim.actor_ref,
+        request_id=uuid4(),
+        correlation_id=uuid4(),
+        target_actor_ref_kind=ActorReferenceKind.ACTOR_PROFILE if target_actor else None,
+        target_actor_ref=str(target_actor) if target_actor else None,
+        matched_grant_id=str(matched_grant) if matched_grant else None,
+        permission_id=permission,
+        project_id=str(project_id) if project_id else None,
+        resource_type=response.resource_type.value,
+        resource_id=str(response.resource_id),
+        target_ref_kind=response.resource_type.value,
+        target_ref_id=str(response.resource_id),
+        reason=reason,
+        idempotency_reference=claim.record_id,
+        before_facts=before_facts,
+        after_facts=after_facts,
+    )
+
+
 async def _claim(service: AuthorityMutationService, actor: UUID, key: UUID, request):
     result = await service.reserve(
         idempotency_key=key,
@@ -183,6 +336,187 @@ async def test_claim_completion_and_exact_replay_have_one_evidence_pair(
 
 
 @pytest.mark.asyncio
+async def test_committed_record_rejects_additional_success_and_invalidation(
+    authorization_factory,
+) -> None:
+    actor, key, request = uuid4(), uuid4(), _request()
+    async with authorization_factory() as session:
+        service = AuthorityMutationService(session)
+        claim = await _claim(service, actor, key, request)
+        completed = await _complete(service, claim, request)
+        await session.commit()
+
+    async with authorization_factory() as session:
+        service = AuthorityMutationService(session)
+        extra_success = _success(claim, request)
+        with pytest.raises(IntegrityError, match="committed authority idempotency is closed"):
+            await service.complete(
+                claim=claim,
+                request=request.model_dump(),
+                response=completed.response,
+                success=extra_success,
+                invalidation=AuthorityInvalidationContext(
+                    event_id=uuid4(),
+                    request_id=extra_success.request_id,
+                    correlation_id=extra_success.correlation_id,
+                ),
+            )
+        await session.rollback()
+
+    async with authorization_factory() as session:
+        cause_id = await session.scalar(
+            text(
+                "select id from audit_events where idempotency_reference=:id "
+                "and event_type='ActorProfileSuspended'"
+            ),
+            {"id": claim.record_id},
+        )
+        context_id, request_id, correlation_id = uuid4(), uuid4(), uuid4()
+        invalidation = AuthorityAuditEventInput(
+            event_id=context_id,
+            event_type=AuthorityEventType.AUTHORITY_INVALIDATION_REQUESTED,
+            entity_type="authority_invalidation",
+            entity_id=str(context_id),
+            actor_ref_kind=claim.actor_ref_kind,
+            actor_ref=claim.actor_ref,
+            request_id=request_id,
+            correlation_id=correlation_id,
+            permission_id="actor.profile.suspend",
+            resource_type="actor_profile",
+            resource_id=str(request.actor_profile_id),
+            reason="authority_state_changed",
+            idempotency_reference=claim.record_id,
+            invalidation_cause_event_id=UUID(cause_id),
+            invalidation_target_kind="actor_profile",
+            invalidation_target_ref=str(request.actor_profile_id),
+            before_facts={"effective": True},
+            after_facts={"effective": False},
+        )
+        with pytest.raises(IntegrityError, match="committed authority idempotency is closed"):
+            await AuditService(session).add_authority_event(invalidation)
+        await session.rollback()
+
+    async with authorization_factory() as session:
+        assert await session.scalar(
+            text("select count(*) from audit_events where idempotency_reference=:id"),
+            {"id": claim.record_id},
+        ) == 2
+
+
+@pytest.mark.asyncio
+async def test_completion_rejects_resource_and_project_not_bound_to_request(
+    authorization_factory,
+) -> None:
+    actor, key, request = uuid4(), uuid4(), _request()
+    wrong_request = _request()
+    async with authorization_factory() as session:
+        service = AuthorityMutationService(session)
+        claim = await _claim(service, actor, key, request)
+        wrong_success = _success(claim, wrong_request)
+        with pytest.raises(TypeError, match="invalid authority completion input"):
+            await service.complete(
+                claim=claim,
+                request=request.model_dump(),
+                response=AuthorityResponseReference(
+                    resource_type=AuthorityResourceType.ACTOR_PROFILE,
+                    resource_id=wrong_request.actor_profile_id,
+                    http_status=200,
+                ),
+                success=wrong_success,
+                invalidation=AuthorityInvalidationContext(
+                    event_id=uuid4(),
+                    request_id=wrong_success.request_id,
+                    correlation_id=wrong_success.correlation_id,
+                ),
+            )
+        await session.rollback()
+
+    project_request = ProjectRoleGrantIssueRequest(
+        operation=AuthorityOperation.PROJECT_ROLE_GRANT_ISSUE,
+        project_id=uuid4(),
+        target_actor_id=uuid4(),
+        role=ProjectRole.SUBMITTER,
+        reason_digest=DIGEST,
+    )
+    wrong_project = project_request.model_copy(update={"project_id": uuid4()})
+    async with authorization_factory() as session:
+        service = AuthorityMutationService(session)
+        claim = await _claim(service, actor, uuid4(), project_request)
+        response = AuthorityResponseReference(
+            resource_type=AuthorityResourceType.PROJECT_ROLE_GRANT,
+            resource_id=uuid4(),
+            http_status=201,
+        )
+        success = _operation_success(claim, wrong_project, response)
+        with pytest.raises(TypeError, match="invalid authority completion input"):
+            await service.complete(
+                claim=claim,
+                request=project_request.model_dump(),
+                response=response,
+                success=success,
+                invalidation=AuthorityInvalidationContext(
+                    event_id=uuid4(),
+                    request_id=success.request_id,
+                    correlation_id=success.correlation_id,
+                ),
+            )
+        await session.rollback()
+
+
+@pytest.mark.asyncio
+async def test_database_rejects_cross_actor_entity_and_cause_context_bypasses(
+    authorization_factory,
+) -> None:
+    actor, request = uuid4(), _request()
+    async with authorization_factory() as session:
+        service = AuthorityMutationService(session)
+        claim = await _claim(service, actor, uuid4(), request)
+        cross_actor = _success(claim, request).model_copy(update={"actor_ref": str(uuid4())})
+        with pytest.raises(IntegrityError, match="idempotency reference"):
+            await AuditService(session).add_authority_event(cross_actor)
+        await session.rollback()
+
+    async with authorization_factory() as session:
+        service = AuthorityMutationService(session)
+        claim = await _claim(service, actor, uuid4(), request)
+        wrong_entity = _success(claim, request).model_copy(
+            update={"entity_type": "admin_role_grant"}
+        )
+        with pytest.raises(IntegrityError, match="success event does not match operation"):
+            await AuditService(session).add_authority_event(wrong_entity)
+        await session.rollback()
+
+    async with authorization_factory() as session:
+        service = AuthorityMutationService(session)
+        claim = await _claim(service, actor, uuid4(), request)
+        success = _success(claim, request)
+        await AuditService(session).add_authority_event(success)
+        event_id = uuid4()
+        wrong_context = AuthorityAuditEventInput(
+            event_id=event_id,
+            event_type=AuthorityEventType.AUTHORITY_INVALIDATION_REQUESTED,
+            entity_type="authority_invalidation",
+            entity_id=str(event_id),
+            actor_ref_kind=claim.actor_ref_kind,
+            actor_ref=claim.actor_ref,
+            request_id=uuid4(),
+            correlation_id=success.correlation_id,
+            permission_id="actor.profile.suspend",
+            resource_type="actor_profile",
+            resource_id=str(request.actor_profile_id),
+            reason="authority_state_changed",
+            idempotency_reference=claim.record_id,
+            invalidation_cause_event_id=success.event_id,
+            invalidation_target_kind="actor_profile",
+            invalidation_target_ref=str(request.actor_profile_id),
+            before_facts={"effective": True},
+            after_facts={"effective": False},
+        )
+        with pytest.raises(IntegrityError, match="invalid linked authority cause"):
+            await AuditService(session).add_authority_event(wrong_context)
+        await session.rollback()
+
+@pytest.mark.asyncio
 async def test_pending_commit_fails_and_rollback_allows_retry(authorization_factory) -> None:
     actor, key, request = uuid4(), uuid4(), _request()
     async with authorization_factory() as session:
@@ -227,11 +561,13 @@ async def test_mismatch_is_private_and_denial_uses_clean_transaction(authorizati
     actor, key, request = uuid4(), uuid4(), _request()
     async with authorization_factory() as session:
         service = AuthorityMutationService(session)
-        await _complete(service, await _claim(service, actor, key, request), request)
+        claim = await _claim(service, actor, key, request)
+        await _complete(service, claim, request)
         await session.commit()
     different = _request()
     async with authorization_factory() as session:
-        result = await AuthorityMutationService(session).reserve(
+        service = AuthorityMutationService(session)
+        result = await service.reserve(
             idempotency_key=key,
             actor_ref_kind=ActorReferenceKind.ACTOR_PROFILE,
             actor_ref=str(actor),
@@ -240,8 +576,6 @@ async def test_mismatch_is_private_and_denial_uses_clean_transaction(authorizati
         assert isinstance(result, MismatchedReservation)
         assert result.model_dump() == {"outcome": "mismatch"}
         await session.rollback()
-    async with authorization_factory() as session:
-        service = AuthorityMutationService(session)
         denial_id = await service.record_mismatch_denial(
             actor_ref_kind=ActorReferenceKind.ACTOR_PROFILE,
             actor_ref=str(actor),
@@ -251,10 +585,24 @@ async def test_mismatch_is_private_and_denial_uses_clean_transaction(authorizati
             ),
         )
         await session.commit()
-        denial = await session.scalar(
-            text("select denial_code from audit_events where id=:id"), {"id": str(denial_id)}
+        denial = (
+            await session.execute(
+                text(
+                    "select denial_code, idempotency_reference, resource_type, resource_id, "
+                    "count(*) over () from audit_events where id=:id"
+                ),
+                {"id": str(denial_id)},
+            )
+        ).one()
+        linked = await session.scalar(
+            text(
+                "select count(*) from audit_events where idempotency_reference=:id "
+                "and event_type in ('ActorProfileSuspended','AuthorityInvalidationRequested')"
+            ),
+            {"id": claim.record_id},
         )
-    assert denial == "idempotency_mismatch"
+    assert denial == ("idempotency_mismatch", None, "actor_profile", str(different.actor_profile_id), 1)
+    assert linked == 2
 
 
 def test_request_admission_is_frozen_bounded_and_nonretaining() -> None:
@@ -274,6 +622,38 @@ def test_request_admission_is_frozen_bounded_and_nonretaining() -> None:
             parse_authority_request(value)
         assert secret not in str(caught.value)
         assert secret not in repr(caught.value.args)
+        assert caught.value.__cause__ is None
+        assert caught.value.__context__ is None
+
+    for construct in (
+        lambda: ActorProfileSuspendRequest(
+            operation=AuthorityOperation.ACTOR_PROFILE_SUSPEND,
+            actor_profile_id=uuid4(),
+            reason_digest=secret,
+        ),
+        lambda: ActorProfileSuspendRequest.model_validate(
+            {
+                "operation": AuthorityOperation.ACTOR_PROFILE_SUSPEND,
+                "actor_profile_id": uuid4(),
+                "reason_digest": secret,
+            }
+        ),
+        lambda: ActorProfileSuspendRequest.model_validate_json(
+            '{"operation":"actor_profile.suspend","actor_profile_id":"'
+            + str(uuid4())
+            + '","reason_digest":"'
+            + secret
+            + '"}'
+        ),
+        lambda: derive_reason_digest("\ud800" + secret),
+        lambda: derive_service_identity_digest("https://identity.example", "\ud800" + secret),
+        lambda: derive_service_profile_digest("\ud800" + secret, "approved"),
+    ):
+        with pytest.raises(TypeError) as caught:
+            construct()
+        assert secret not in str(caught.value)
+        assert secret not in repr(caught.value.args)
+        assert secret not in repr(caught.value.__dict__)
         assert caught.value.__cause__ is None
         assert caught.value.__context__ is None
 
@@ -369,6 +749,179 @@ def test_every_operation_has_one_strict_canonical_request_variant() -> None:
 
 
 @pytest.mark.asyncio
+async def test_all_operation_and_replacement_mappings_commit_one_linked_pair(
+    authorization_factory,
+) -> None:
+    project, actor, resource = uuid4(), uuid4(), uuid4()
+    requests = [
+        ServiceActorCreateRequest(
+            operation=AuthorityOperation.SERVICE_ACTOR_CREATE,
+            identity_reference_digest=derive_service_identity_digest(
+                "https://identity.flowresearch.tech", "opaque-service-subject"
+            ),
+            profile_payload_digest=derive_service_profile_digest("Adapter", "Approved"),
+        ),
+        AdminRoleGrantIssueRequest(
+            operation=AuthorityOperation.ADMIN_ROLE_GRANT_ISSUE,
+            target_actor_id=actor,
+            role=AdminRole.PROJECT_MANAGER,
+            scope_type=AdminScope.PROJECT,
+            scope_project_id=project,
+            reason_digest=DIGEST,
+        ),
+        AdminRoleGrantRevokeRequest(
+            operation=AuthorityOperation.ADMIN_ROLE_GRANT_REVOKE,
+            grant_id=resource,
+            reason_digest=DIGEST,
+        ),
+        ProjectRoleGrantIssueRequest(
+            operation=AuthorityOperation.PROJECT_ROLE_GRANT_ISSUE,
+            project_id=project,
+            target_actor_id=actor,
+            role=ProjectRole.SUBMITTER,
+            reason_digest=DIGEST,
+        ),
+        ProjectRoleGrantIssueRequest(
+            operation=AuthorityOperation.PROJECT_ROLE_GRANT_ISSUE,
+            project_id=project,
+            target_actor_id=actor,
+            role=ProjectRole.SUBMITTER,
+            replaced_grant_id=resource,
+            reason_digest=DIGEST,
+        ),
+        ProjectRoleGrantRevokeRequest(
+            operation=AuthorityOperation.PROJECT_ROLE_GRANT_REVOKE,
+            project_id=project,
+            grant_id=resource,
+            reason_digest=DIGEST,
+        ),
+        ActorProfileSuspendRequest(
+            operation=AuthorityOperation.ACTOR_PROFILE_SUSPEND,
+            actor_profile_id=resource,
+            reason_digest=DIGEST,
+        ),
+        ActorProfileReactivateRequest(
+            operation=AuthorityOperation.ACTOR_PROFILE_REACTIVATE,
+            actor_profile_id=resource,
+            reason_digest=DIGEST,
+        ),
+        ActorProfileDeactivateRequest(
+            operation=AuthorityOperation.ACTOR_PROFILE_DEACTIVATE,
+            actor_profile_id=resource,
+            reason_digest=DIGEST,
+        ),
+        ActorIdentityLinkRevokeRequest(
+            operation=AuthorityOperation.ACTOR_IDENTITY_LINK_REVOKE,
+            identity_link_id=resource,
+            reason_digest=DIGEST,
+        ),
+        ActorIdentityLinkReactivateRequest(
+            operation=AuthorityOperation.ACTOR_IDENTITY_LINK_REACTIVATE,
+            identity_link_id=resource,
+            reason_digest=DIGEST,
+        ),
+    ]
+    resource_types = {
+        AuthorityOperation.SERVICE_ACTOR_CREATE: AuthorityResourceType.ACTOR_PROFILE,
+        AuthorityOperation.ADMIN_ROLE_GRANT_ISSUE: AuthorityResourceType.ADMIN_ROLE_GRANT,
+        AuthorityOperation.ADMIN_ROLE_GRANT_REVOKE: AuthorityResourceType.ADMIN_ROLE_GRANT,
+        AuthorityOperation.PROJECT_ROLE_GRANT_ISSUE: AuthorityResourceType.PROJECT_ROLE_GRANT,
+        AuthorityOperation.PROJECT_ROLE_GRANT_REVOKE: AuthorityResourceType.PROJECT_ROLE_GRANT,
+        AuthorityOperation.ACTOR_PROFILE_SUSPEND: AuthorityResourceType.ACTOR_PROFILE,
+        AuthorityOperation.ACTOR_PROFILE_REACTIVATE: AuthorityResourceType.ACTOR_PROFILE,
+        AuthorityOperation.ACTOR_PROFILE_DEACTIVATE: AuthorityResourceType.ACTOR_PROFILE,
+        AuthorityOperation.ACTOR_IDENTITY_LINK_REVOKE: AuthorityResourceType.ACTOR_IDENTITY_LINK,
+        AuthorityOperation.ACTOR_IDENTITY_LINK_REACTIVATE: AuthorityResourceType.ACTOR_IDENTITY_LINK,
+    }
+    create_operations = {
+        AuthorityOperation.SERVICE_ACTOR_CREATE,
+        AuthorityOperation.ADMIN_ROLE_GRANT_ISSUE,
+        AuthorityOperation.PROJECT_ROLE_GRANT_ISSUE,
+    }
+    record_ids = []
+    async with authorization_factory() as session:
+        service = AuthorityMutationService(session)
+        for request in requests:
+            claim = await _claim(service, uuid4(), uuid4(), request)
+            response_id = (
+                uuid4()
+                if request.operation in create_operations
+                else getattr(
+                    request,
+                    "grant_id",
+                    getattr(request, "actor_profile_id", getattr(request, "identity_link_id", None)),
+                )
+            )
+            response = AuthorityResponseReference(
+                resource_type=resource_types[request.operation],
+                resource_id=response_id,
+                version=1,
+                http_status=201 if request.operation in create_operations else 200,
+            )
+            success = _operation_success(claim, request, response)
+            completed = await service.complete(
+                claim=claim,
+                request=request.model_dump(),
+                response=response,
+                success=success,
+                invalidation=AuthorityInvalidationContext(
+                    event_id=uuid4(),
+                    request_id=success.request_id,
+                    correlation_id=success.correlation_id,
+                ),
+            )
+            assert completed.response == response
+            record_ids.append(claim.record_id)
+            await session.commit()
+        counts = (
+            await session.execute(
+                text(
+                    "select idempotency_reference, count(*) from audit_events "
+                    "where idempotency_reference = any(:records) "
+                    "group by idempotency_reference"
+                ),
+                {"records": record_ids},
+            )
+        ).all()
+    assert len(counts) == len(requests)
+    assert {count for _, count in counts} == {2}
+
+
+@pytest.mark.asyncio
+async def test_issue_mismatch_derives_project_and_omits_nonexistent_grant_resource(
+    authorization_factory,
+) -> None:
+    project = uuid4()
+    request = ProjectRoleGrantIssueRequest(
+        operation=AuthorityOperation.PROJECT_ROLE_GRANT_ISSUE,
+        project_id=project,
+        target_actor_id=uuid4(),
+        role=ProjectRole.REVIEWER,
+        reason_digest=DIGEST,
+    )
+    context = AuthorityMismatchContext(
+        event_id=uuid4(), request_id=uuid4(), correlation_id=uuid4()
+    )
+    async with authorization_factory() as session:
+        event_id = await AuthorityMutationService(session).record_mismatch_denial(
+            actor_ref_kind=ActorReferenceKind.ACTOR_PROFILE,
+            actor_ref=str(uuid4()),
+            request=request.model_dump(),
+            context=context,
+        )
+        await session.commit()
+        row = (
+            await session.execute(
+                text(
+                    "select project_id, resource_type, resource_id from audit_events where id=:id"
+                ),
+                {"id": str(event_id)},
+            )
+        ).one()
+    assert row == (str(project), None, None)
+
+
+@pytest.mark.asyncio
 async def test_failure_after_evidence_flush_rolls_back_claim_and_events(
     authorization_factory, monkeypatch
 ) -> None:
@@ -376,6 +929,17 @@ async def test_failure_after_evidence_flush_rolls_back_claim_and_events(
     async with authorization_factory() as session:
         service = AuthorityMutationService(session)
         claim = await _claim(service, actor, key, request)
+        synthetic_id = uuid4()
+        await service.record_mismatch_denial(
+            actor_ref_kind=claim.actor_ref_kind,
+            actor_ref=claim.actor_ref,
+            request=request.model_dump(),
+            context=AuthorityMismatchContext(
+                event_id=synthetic_id,
+                request_id=uuid4(),
+                correlation_id=uuid4(),
+            ),
+        )
 
         async def fail_completion(*_args, **_kwargs):
             raise RuntimeError("injected completion failure")
@@ -392,6 +956,10 @@ async def test_failure_after_evidence_flush_rolls_back_claim_and_events(
         assert await session.scalar(
             text("select count(*) from audit_events where idempotency_reference=:id"),
             {"id": claim.record_id},
+        ) == 0
+        assert await session.scalar(
+            text("select count(*) from audit_events where id=:id"),
+            {"id": str(synthetic_id)},
         ) == 0
 
 
@@ -474,22 +1042,37 @@ async def test_concurrent_exact_and_mismatched_retries_serialize_at_unique_names
 
 
 @pytest.mark.asyncio
-async def test_same_key_is_isolated_by_actor_reference_kind(authorization_factory) -> None:
+async def test_same_key_is_isolated_independently_by_actor_and_reference_kind(
+    authorization_factory,
+) -> None:
     key, request = uuid4(), _request()
-    async with authorization_factory() as first, authorization_factory() as second:
+    actor = str(uuid4())
+    async with (
+        authorization_factory() as first,
+        authorization_factory() as second,
+        authorization_factory() as third,
+    ):
         one = await AuthorityMutationService(first).reserve(
             idempotency_key=key,
             actor_ref_kind=ActorReferenceKind.ACTOR_PROFILE,
-            actor_ref=str(uuid4()),
+            actor_ref=actor,
             request=request.model_dump(),
         )
         two = await AuthorityMutationService(second).reserve(
             idempotency_key=key,
             actor_ref_kind=ActorReferenceKind.LEGACY_ACTOR,
+            actor_ref=actor,
+            request=request.model_dump(),
+        )
+        three = await AuthorityMutationService(third).reserve(
+            idempotency_key=key,
+            actor_ref_kind=ActorReferenceKind.ACTOR_PROFILE,
             actor_ref=str(uuid4()),
             request=request.model_dump(),
         )
         assert isinstance(one, ClaimedReservation)
         assert isinstance(two, ClaimedReservation)
+        assert isinstance(three, ClaimedReservation)
         await first.rollback()
         await second.rollback()
+        await third.rollback()

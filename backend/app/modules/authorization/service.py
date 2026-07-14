@@ -16,7 +16,13 @@ from app.modules.audit.schemas import (
 from app.modules.audit.service import AuditService
 from app.modules.authorization.repository import AuthorityIdempotencyRepository
 from app.modules.authorization.schemas import (
+    ActorIdentityLinkReactivateRequest,
+    ActorIdentityLinkRevokeRequest,
+    ActorProfileDeactivateRequest,
+    ActorProfileReactivateRequest,
+    ActorProfileSuspendRequest,
     AdminRoleGrantIssueRequest,
+    AdminRoleGrantRevokeRequest,
     AuthorityClaimHandle,
     AuthorityCompletionResult,
     AuthorityInvalidationContext,
@@ -27,6 +33,8 @@ from app.modules.authorization.schemas import (
     AuthorityResourceType,
     AuthorityResponseReference,
     ProjectRoleGrantIssueRequest,
+    ProjectRoleGrantRevokeRequest,
+    ServiceActorCreateRequest,
     parse_authority_request,
 )
 
@@ -153,10 +161,15 @@ class AuthorityMutationService:
             and success.actor_ref == claim.actor_ref
             and success.idempotency_reference == claim.record_id
             and success.permission_id == spec.permission
+            and success.entity_type == spec.resource_type.value
+            and success.entity_id == str(response.resource_id)
             and success.resource_type == spec.resource_type.value
             and success.resource_id == str(response.resource_id)
+            and success.target_ref_kind == spec.resource_type.value
+            and success.target_ref_id == str(response.resource_id)
             and response.resource_type == spec.resource_type
             and response.http_status == spec.http_status
+            and _request_matches_success(mutation, response, success)
             and success.request_id == invalidation.request_id
             and success.correlation_id == invalidation.correlation_id
         )
@@ -203,7 +216,7 @@ class AuthorityMutationService:
         """Append privacy-safe mismatch evidence in a caller-started clean transaction."""
         mutation: AuthorityMutationRequest = parse_authority_request(request)
         spec = _EVIDENCE[mutation.operation]
-        resource_id = _request_resource_id(mutation)
+        resource_id = _existing_request_resource_id(mutation)
         event = AuthorityAuditEventInput(
             event_id=context.event_id,
             event_type=AuthorityEventType.SENSITIVE_AUTHORIZATION_DENIED,
@@ -214,7 +227,7 @@ class AuthorityMutationService:
             request_id=context.request_id,
             correlation_id=context.correlation_id,
             permission_id=spec.permission,
-            project_id=str(context.project_id) if context.project_id else None,
+            project_id=_request_project_id(mutation),
             resource_type=spec.resource_type.value if resource_id else None,
             resource_id=str(resource_id) if resource_id else None,
             reason="authorization_evaluation",
@@ -225,12 +238,67 @@ class AuthorityMutationService:
         return context.event_id
 
 
-def _request_resource_id(request: AuthorityMutationRequest) -> UUID | None:
-    """Return only an existing mutation target; creates intentionally return none."""
+def _existing_request_resource_id(request: AuthorityMutationRequest) -> UUID | None:
+    """Return an existing mutated resource; issue/create operations return none."""
     for field in ("grant_id", "actor_profile_id", "identity_link_id"):
         value = getattr(request, field, None)
         if value is not None:
             return value
+    return None
+
+
+def _request_project_id(request: AuthorityMutationRequest) -> str | None:
+    """Derive project audit scope only from the canonical request."""
     if isinstance(request, AdminRoleGrantIssueRequest):
-        return request.target_actor_id
-    return getattr(request, "project_id", None)
+        project_id = request.scope_project_id
+    else:
+        project_id = getattr(request, "project_id", None)
+    return str(project_id) if project_id is not None else None
+
+
+def _request_matches_success(
+    request: AuthorityMutationRequest,
+    response: AuthorityResponseReference,
+    success: AuthorityAuditEventInput,
+) -> bool:
+    """Bind the canonical request target and scope to its concrete success evidence."""
+    resource_id = response.resource_id
+    if isinstance(request, ServiceActorCreateRequest):
+        return success.project_id is None and success.target_actor_ref is None
+    if isinstance(request, AdminRoleGrantIssueRequest):
+        facts = success.after_facts or {}
+        return (
+            success.target_actor_ref_kind == ActorReferenceKind.ACTOR_PROFILE
+            and success.target_actor_ref == str(request.target_actor_id)
+            and success.project_id
+            == (str(request.scope_project_id) if request.scope_project_id else None)
+            and success.matched_grant_id is None
+            and facts.get("role") == request.role.value
+            and facts.get("scope_type") == request.scope_type.value
+            and facts.get("scope_id")
+            == (str(request.scope_project_id) if request.scope_project_id else None)
+        )
+    if isinstance(request, AdminRoleGrantRevokeRequest):
+        return resource_id == request.grant_id
+    if isinstance(request, ProjectRoleGrantIssueRequest):
+        facts = success.after_facts or {}
+        return (
+            success.target_actor_ref_kind == ActorReferenceKind.ACTOR_PROFILE
+            and success.target_actor_ref == str(request.target_actor_id)
+            and success.project_id == str(request.project_id)
+            and success.matched_grant_id
+            == (str(request.replaced_grant_id) if request.replaced_grant_id else None)
+            and facts.get("role") == request.role.value
+            and facts.get("scope_type") == "project"
+            and facts.get("scope_id") == str(request.project_id)
+        )
+    if isinstance(request, ProjectRoleGrantRevokeRequest):
+        return resource_id == request.grant_id and success.project_id == str(request.project_id)
+    if isinstance(
+        request,
+        (ActorProfileSuspendRequest, ActorProfileReactivateRequest, ActorProfileDeactivateRequest),
+    ):
+        return resource_id == request.actor_profile_id and success.project_id is None
+    if isinstance(request, (ActorIdentityLinkRevokeRequest, ActorIdentityLinkReactivateRequest)):
+        return resource_id == request.identity_link_id and success.project_id is None
+    return False

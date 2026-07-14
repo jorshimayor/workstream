@@ -204,6 +204,9 @@ def _create_functions_and_triggers() -> None:
           select * into record_row from authority_idempotency_records
           where id=new.idempotency_reference and actor_ref_kind=new.actor_ref_kind and actor_ref=new.actor_id;
           if not found then raise exception 'invalid authority idempotency reference' using errcode='23503'; end if;
+          if record_row.status <> 'pending' then
+            raise exception 'committed authority idempotency is closed' using errcode='23514';
+          end if;
           expected_permission := case record_row.operation
             when 'service_actor.create' then 'actor.service.provision'
             when 'admin_role_grant.issue' then 'admin_role.grant'
@@ -229,22 +232,51 @@ def _create_functions_and_triggers() -> None:
             if not found or cause_row.idempotency_reference is distinct from record_row.id
                or cause_row.actor_ref_kind is distinct from new.actor_ref_kind
                or cause_row.actor_id is distinct from new.actor_id
+               or cause_row.permission_id is distinct from new.permission_id
                or cause_row.resource_type is distinct from new.invalidation_target_kind
-               or cause_row.resource_id is distinct from new.invalidation_target_ref then
+               or cause_row.resource_id is distinct from new.invalidation_target_ref
+               or cause_row.resource_type is distinct from new.resource_type
+               or cause_row.resource_id is distinct from new.resource_id
+               or cause_row.target_ref_kind is distinct from cause_row.resource_type
+               or cause_row.target_ref_id is distinct from cause_row.resource_id
+               or cause_row.request_id is distinct from new.request_id
+               or cause_row.correlation_id is distinct from new.correlation_id
+               or cause_row.project_id is distinct from new.project_id
+               or new.entity_type <> 'authority_invalidation'
+               or new.entity_id <> new.id
+               or not (
+                 (record_row.operation='service_actor.create' and cause_row.event_type='ServiceActorProvisioned') or
+                 (record_row.operation='admin_role_grant.issue' and cause_row.event_type='AdminRoleGrantIssued') or
+                 (record_row.operation='admin_role_grant.revoke' and cause_row.event_type='AdminRoleGrantRevoked') or
+                 (record_row.operation='project_role_grant.issue' and cause_row.event_type in ('ProjectRoleGrantIssued','ProjectRoleGrantReplaced')) or
+                 (record_row.operation='project_role_grant.revoke' and cause_row.event_type='ProjectRoleGrantRevoked') or
+                 (record_row.operation='actor_profile.suspend' and cause_row.event_type='ActorProfileSuspended') or
+                 (record_row.operation='actor_profile.reactivate' and cause_row.event_type='ActorProfileReactivated') or
+                 (record_row.operation='actor_profile.deactivate' and cause_row.event_type='ActorProfileDeactivated') or
+                 (record_row.operation='actor_identity_link.revoke' and cause_row.event_type='ActorIdentityLinkRevoked') or
+                 (record_row.operation='actor_identity_link.reactivate' and cause_row.event_type='ActorIdentityLinkReactivated')) then
               raise exception 'invalid linked authority cause' using errcode='23514';
             end if;
-          elsif not (
-            (record_row.operation='service_actor.create' and new.event_type='ServiceActorProvisioned') or
-            (record_row.operation='admin_role_grant.issue' and new.event_type='AdminRoleGrantIssued') or
-            (record_row.operation='admin_role_grant.revoke' and new.event_type='AdminRoleGrantRevoked') or
-            (record_row.operation='project_role_grant.issue' and new.event_type in ('ProjectRoleGrantIssued','ProjectRoleGrantReplaced')) or
-            (record_row.operation='project_role_grant.revoke' and new.event_type='ProjectRoleGrantRevoked') or
-            (record_row.operation='actor_profile.suspend' and new.event_type='ActorProfileSuspended') or
-            (record_row.operation='actor_profile.reactivate' and new.event_type='ActorProfileReactivated') or
-            (record_row.operation='actor_profile.deactivate' and new.event_type='ActorProfileDeactivated') or
-            (record_row.operation='actor_identity_link.revoke' and new.event_type='ActorIdentityLinkRevoked') or
-            (record_row.operation='actor_identity_link.reactivate' and new.event_type='ActorIdentityLinkReactivated')) then
-            raise exception 'authority success event does not match operation' using errcode='23514';
+          else
+            if new.entity_type <> expected_resource or new.entity_id <> new.resource_id
+               or new.target_ref_kind is distinct from expected_resource
+               or new.target_ref_id is distinct from new.resource_id
+               or new.invalidation_cause_event_id is not null
+               or new.invalidation_target_kind is not null
+               or new.invalidation_target_ref is not null
+               or not (
+                 (record_row.operation='service_actor.create' and new.event_type='ServiceActorProvisioned') or
+                 (record_row.operation='admin_role_grant.issue' and new.event_type='AdminRoleGrantIssued') or
+                 (record_row.operation='admin_role_grant.revoke' and new.event_type='AdminRoleGrantRevoked') or
+                 (record_row.operation='project_role_grant.issue' and new.event_type in ('ProjectRoleGrantIssued','ProjectRoleGrantReplaced')) or
+                 (record_row.operation='project_role_grant.revoke' and new.event_type='ProjectRoleGrantRevoked') or
+                 (record_row.operation='actor_profile.suspend' and new.event_type='ActorProfileSuspended') or
+                 (record_row.operation='actor_profile.reactivate' and new.event_type='ActorProfileReactivated') or
+                 (record_row.operation='actor_profile.deactivate' and new.event_type='ActorProfileDeactivated') or
+                 (record_row.operation='actor_identity_link.revoke' and new.event_type='ActorIdentityLinkRevoked') or
+                 (record_row.operation='actor_identity_link.reactivate' and new.event_type='ActorIdentityLinkReactivated')) then
+              raise exception 'authority success event does not match operation' using errcode='23514';
+            end if;
           end if; return new;
         end $$
         """

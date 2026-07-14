@@ -535,6 +535,9 @@ def test_authority_idempotency_schema_preserves_audit_and_guards_downgrade(
                     isolated_database_env, record_id, actor_id, target_id
                 )
             )
+            immutable = asyncio.run(
+                _authority_idempotency_immutable_writes(isolated_database_env, record_id)
+            )
             with pytest.raises(RuntimeError, match="non-empty authority idempotency"):
                 command.downgrade(config, "0018_authority_audit_evidence")
             refused = asyncio.run(_authority_idempotency_state(isolated_database_env, orphan_event))
@@ -543,7 +546,9 @@ def test_authority_idempotency_schema_preserves_audit_and_guards_downgrade(
                     isolated_database_env, record_id, orphan_event=None
                 )
             )
-            command.downgrade(config, "0018_authority_audit_evidence")
+            downgrade_lock_observed = _authority_downgrade_waits_for_writer(
+                config, isolated_database_env
+            )
             preserved = asyncio.run(_authority_idempotency_state(isolated_database_env, orphan_event))
             command.upgrade(config, "0019_authority_idempotency")
             restored = asyncio.run(_authority_idempotency_schema(isolated_database_env))
@@ -588,6 +593,13 @@ def test_authority_idempotency_schema_preserves_audit_and_guards_downgrade(
         "audit_trigger": True,
     }
     assert invalid == {"initial_committed": True, "pending_commit": True, "new_orphan": True}
+    assert immutable == {
+        "update": True,
+        "delete": True,
+        "truncate": True,
+        "database_timestamps": True,
+    }
+    assert downgrade_lock_observed is True
     assert refused == {"revision": "0019_authority_idempotency", "records": 1, "orphan": 1}
     assert preserved == {"revision": "0018_authority_audit_evidence", "records": None, "orphan": 1}
 
@@ -2600,11 +2612,12 @@ async def _insert_committed_authority_idempotency(
             await connection.execute(
                 text(
                     f"insert into audit_events (id,entity_type,entity_id,event_type,actor_id,{common},"
-                    "before_facts,after_facts) values (:id,'actor_profile',:target,"
+                    "target_ref_kind,target_ref_id,before_facts,after_facts) values "
+                    "(:id,'actor_profile',:target,"
                     "'ActorProfileSuspended',:actor,'[]','{}','local_authority',false,'{}',"
                     "'authority',1,'actor_profile',:request,:correlation,'actor.profile.suspend',"
                     "'actor_profile',:target,'security_response',:record,"
-                    "cast(:before_facts as json),cast(:after_facts as json))"
+                    "'actor_profile',:target,cast(:before_facts as json),cast(:after_facts as json))"
                 ),
                 {
                     "id": success_id,
@@ -2675,6 +2688,99 @@ async def _authority_idempotency_state(database_url: str, orphan_event: str) -> 
         await engine.dispose()
 
 
+async def _authority_idempotency_immutable_writes(
+    database_url: str, record_id: str
+) -> dict[str, bool]:
+    """Prove committed rows are immutable and carry database-owned timestamps."""
+    engine = create_async_engine(database_url)
+    results: dict[str, bool] = {}
+    try:
+        statements = {
+            "update": "update authority_idempotency_records set response_http_status=200 where id=:id",
+            "delete": "delete from authority_idempotency_records where id=:id",
+            "truncate": "truncate authority_idempotency_records",
+        }
+        for name, statement in statements.items():
+            try:
+                async with engine.begin() as connection:
+                    await connection.execute(text(statement), {"id": record_id})
+            except DBAPIError:
+                results[name] = True
+            else:
+                results[name] = False
+        async with engine.connect() as connection:
+            results["database_timestamps"] = bool(
+                await connection.scalar(
+                    text(
+                        "select created_at is not null and committed_at is not null "
+                        "and committed_at >= created_at from authority_idempotency_records "
+                        "where id=:id"
+                    ),
+                    {"id": record_id},
+                )
+            )
+        return results
+    finally:
+        await engine.dispose()
+
+
+def _authority_downgrade_waits_for_writer(config: Config, database_url: str) -> bool:
+    """Observe downgrade waiting for the deterministic writer-blocking table lock."""
+    writer_ready = threading.Event()
+    release_writer = threading.Event()
+
+    async def hold_writer_lock() -> None:
+        engine = create_async_engine(database_url)
+        try:
+            async with engine.connect() as connection:
+                transaction = await connection.begin()
+                await connection.execute(
+                    text("lock table authority_idempotency_records in row exclusive mode")
+                )
+                writer_ready.set()
+                await asyncio.to_thread(release_writer.wait)
+                await transaction.rollback()
+        finally:
+            await engine.dispose()
+
+    async def observe_downgrade_lock() -> bool:
+        engine = create_async_engine(database_url)
+        try:
+            async with engine.connect() as connection:
+                for _ in range(5000):
+                    waiting = await connection.scalar(
+                        text(
+                            "select exists(select 1 from pg_locks locks "
+                            "join pg_class relation on relation.oid=locks.relation "
+                            "where relation.relname='authority_idempotency_records' "
+                            "and locks.mode='AccessExclusiveLock' and not locks.granted)"
+                        )
+                    )
+                    if waiting:
+                        return True
+                    await asyncio.sleep(0)
+            return False
+        finally:
+            await engine.dispose()
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        writer = executor.submit(asyncio.run, hold_writer_lock())
+        if not writer_ready.wait(timeout=5):
+            release_writer.set()
+            writer.result(timeout=5)
+            return False
+        downgrade = executor.submit(
+            command.downgrade, config, "0018_authority_audit_evidence"
+        )
+        try:
+            observed = asyncio.run(observe_downgrade_lock())
+        finally:
+            release_writer.set()
+        writer.result(timeout=10)
+        downgrade.result(timeout=10)
+        return observed
+
+
 async def _remove_authority_idempotency_fixture(
     database_url: str, record_id: str, *, orphan_event: str | None
 ) -> None:
@@ -2688,6 +2794,10 @@ async def _remove_authority_idempotency_fixture(
                     "table_name='authority_idempotency_records')"
                 )
             )
+            if exists:
+                await connection.execute(
+                    text("lock table authority_idempotency_records in access exclusive mode")
+                )
             await connection.execute(text("lock table audit_events in access exclusive mode"))
             await connection.execute(
                 text("alter table audit_events disable trigger audit_events_reject_update_delete")
@@ -2704,9 +2814,6 @@ async def _remove_authority_idempotency_fixture(
                 text("alter table audit_events enable trigger audit_events_reject_update_delete")
             )
             if exists:
-                await connection.execute(
-                    text("lock table authority_idempotency_records in access exclusive mode")
-                )
                 await connection.execute(
                     text(
                         "alter table authority_idempotency_records disable trigger "

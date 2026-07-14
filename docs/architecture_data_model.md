@@ -121,7 +121,8 @@ external disclosure. New linked audit rows use an actor-bound composite foreign
 key while the `NOT VALID` migration preserves pre-foundation forward references.
 Every committed authority mutation has exactly one concrete success event and
 one causally linked `AuthorityInvalidationRequested` event in `audit_events`.
-This foundation persists the request only; no cache, queue, background job processor, or consumer
+This foundation persists the request digest and typed replay reference only; no cache, queue,
+background job processor, or consumer
 acts on invalidation yet.
 
 ### API Rate Control Counter

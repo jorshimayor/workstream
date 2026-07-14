@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from enum import StrEnum
 import json
 import re
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal, Self
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
@@ -76,6 +76,40 @@ class CanonicalAuthorityRequest(BaseModel):
     model_config = _MODEL_CONFIG
 
     operation: AuthorityOperation
+
+    def __init__(self, **data: object) -> None:
+        """Construct only from values that pass without exposing diagnostics."""
+        accepted = True
+        try:
+            super().__init__(**data)
+        except Exception:  # noqa: BLE001 - rejected values must not escape diagnostics
+            accepted = False
+        if not accepted:
+            raise TypeError("invalid authority mutation request")
+
+    @classmethod
+    def model_validate(cls, obj: object, **kwargs: Any) -> Self:
+        """Validate an object while replacing detailed diagnostics with one error."""
+        admitted = None
+        try:
+            admitted = super().model_validate(obj, **kwargs)
+        except Exception:  # noqa: BLE001 - rejected values must not escape diagnostics
+            admitted = None
+        if admitted is None:
+            raise TypeError("invalid authority mutation request")
+        return admitted
+
+    @classmethod
+    def model_validate_json(cls, json_data: str | bytes | bytearray, **kwargs: Any) -> Self:
+        """Validate JSON while replacing detailed diagnostics with one error."""
+        admitted = None
+        try:
+            admitted = super().model_validate_json(json_data, **kwargs)
+        except Exception:  # noqa: BLE001 - rejected values must not escape diagnostics
+            admitted = None
+        if admitted is None:
+            raise TypeError("invalid authority mutation request")
+        return admitted
 
 
 class ServiceActorCreateRequest(CanonicalAuthorityRequest):
@@ -214,37 +248,54 @@ def parse_authority_request(value: object) -> AuthorityMutationRequest:
 
 def derive_reason_digest(reason: object) -> str:
     """Derive an internal digest from one bounded human mutation reason."""
-    valid = isinstance(reason, str) and 1 <= len(reason.encode("utf-8")) <= 500
-    if not valid:
+    digest = None
+    try:
+        if type(reason) is str and 1 <= len(reason.encode("utf-8")) <= 500:
+            digest = canonical_json_hash({"reason": reason})
+    except Exception:  # noqa: BLE001 - raw human text must not escape diagnostics
+        digest = None
+    if digest is None:
         raise TypeError("invalid authority reason")
-    return canonical_json_hash({"reason": reason})
+    return digest
 
 
 def derive_service_identity_digest(issuer: object, subject: object) -> str:
     """Derive an internal identity reference from verified normalized facts."""
-    valid = (
-        isinstance(issuer, str)
-        and issuer.startswith("https://")
-        and 1 <= len(issuer.encode("utf-8")) <= 500
-        and isinstance(subject, str)
-        and 1 <= len(subject.encode("utf-8")) <= 200
-    )
-    if not valid:
+    digest = None
+    try:
+        if (
+            type(issuer) is str
+            and issuer.startswith("https://")
+            and 1 <= len(issuer.encode("utf-8")) <= 500
+            and type(subject) is str
+            and 1 <= len(subject.encode("utf-8")) <= 200
+        ):
+            digest = canonical_json_hash({"issuer": issuer, "subject": subject})
+    except Exception:  # noqa: BLE001 - verified identity text must not escape diagnostics
+        digest = None
+    if digest is None:
         raise TypeError("invalid verified service identity")
-    return canonical_json_hash({"issuer": issuer, "subject": subject})
+    return digest
 
 
 def derive_service_profile_digest(display_name: object, grant_reason: object) -> str:
     """Derive an internal digest from bounded service profile request facts."""
-    valid = (
-        isinstance(display_name, str)
-        and 1 <= len(display_name.encode("utf-8")) <= 200
-        and isinstance(grant_reason, str)
-        and 1 <= len(grant_reason.encode("utf-8")) <= 500
-    )
-    if not valid:
+    digest = None
+    try:
+        if (
+            type(display_name) is str
+            and 1 <= len(display_name.encode("utf-8")) <= 200
+            and type(grant_reason) is str
+            and 1 <= len(grant_reason.encode("utf-8")) <= 500
+        ):
+            digest = canonical_json_hash(
+                {"display_name": display_name, "grant_reason": grant_reason}
+            )
+    except Exception:  # noqa: BLE001 - raw profile text must not escape diagnostics
+        digest = None
+    if digest is None:
         raise TypeError("invalid service profile request")
-    return canonical_json_hash({"display_name": display_name, "grant_reason": grant_reason})
+    return digest
 
 
 class AuthorityResponseReference(BaseModel):
@@ -315,7 +366,6 @@ class AuthorityMismatchContext(BaseModel):
     event_id: UUID
     request_id: UUID
     correlation_id: UUID
-    project_id: UUID | None = None
 
 
 class AuthorityCompletionResult(BaseModel):
