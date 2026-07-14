@@ -813,8 +813,12 @@ def sign_generated_state(state_root: Path, private_key: Path) -> None:
     )
 
 
-def verify_generated_state_signature(state_root: Path, public_key: Path) -> None:
-    """Verify canonical generated files against the reviewed public key."""
+def verify_generated_state_signature(
+    state_root: Path,
+    public_key: Path,
+    expected_main_sha: str | None = None,
+) -> None:
+    """Verify canonical generated files, signature, and optional main freshness."""
     validate_generated_state(state_root)
     try:
         encoded_signature = (state_root / SIGNATURE_PATH).read_text(encoding="ascii")
@@ -851,6 +855,16 @@ def verify_generated_state_signature(state_root: Path, public_key: Path) -> None
         )
     if result.returncode != 0:
         raise LoopMemoryError("generated loop-memory signature verification failed")
+    if expected_main_sha is not None:
+        _validate_sha(expected_main_sha)
+        state = _load_json(state_root / STATE_PATH)
+        if (
+            state is None
+            or state.get("source", {}).get("main_sha") != expected_main_sha
+        ):
+            raise LoopMemoryError(
+                "generated loop memory is not current for protected main"
+            )
 
 
 def _assert_state_branch(state_root: Path) -> None:
@@ -897,6 +911,7 @@ def build_parser() -> argparse.ArgumentParser:
     verify_state = subparsers.add_parser("verify-state")
     verify_state.add_argument("--state-root", type=Path, required=True)
     verify_state.add_argument("--public-key", type=Path, required=True)
+    verify_state.add_argument("--expected-main-sha")
 
     show = subparsers.add_parser("show")
     show.add_argument("--state-root", type=Path, required=True)
@@ -939,7 +954,11 @@ def main(argv: list[str] | None = None) -> int:
             sign_generated_state(args.state_root, args.private_key)
             print("Generated loop memory state signed.")
         elif args.command == "verify-state":
-            verify_generated_state_signature(args.state_root, args.public_key)
+            verify_generated_state_signature(
+                args.state_root,
+                args.public_key,
+                args.expected_main_sha,
+            )
             print("Generated loop memory state signature passed.")
         elif args.command == "show":
             validate_generated_state(args.state_root)

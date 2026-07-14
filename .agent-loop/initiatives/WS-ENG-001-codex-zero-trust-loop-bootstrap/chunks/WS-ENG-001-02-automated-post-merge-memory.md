@@ -61,7 +61,9 @@ execution of pull-request-head code with write credentials
 - Generated state is written to `automation/loop-memory`, not `main`.
 - Organization policy disables deploy keys, so the workflow signs every
   canonical generated file with an Actions-only Ed25519 private key and
-  verifies the signature before trusting existing branch state.
+  verifies the signature before trusting existing branch state. Final
+  verification also binds state to the protected-main target; invalid branch
+  state is discarded and rebuilt from the immutable bootstrap.
 - One newly added, immutable merge-intent JSON file supplies bounded chunk and
   next-gate metadata from the reviewed PR head.
 - This chunk's immutable merge intent anchors empty-state bootstrap; the first

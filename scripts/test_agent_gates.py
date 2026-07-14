@@ -1367,22 +1367,44 @@ def test_generated_loop_memory_signature_authenticates_every_canonical_file() ->
         updater.apply_merge_record(root, loop_record(updater))
         updater.sign_generated_state(root, private_key)
         updater.verify_generated_state_signature(root, public_key)
-
-        updater.apply_merge_record(
-            root,
-            loop_record(
-                updater,
-                sha="c" * 40,
-                first_parent_sha="a" * 40,
-                pr_number=121,
-            ),
+        signed_paths = (
+            updater.STATE_PATH,
+            updater.RENDERED_PATH,
+            updater.LEDGER_PATH,
+            updater.SIGNATURE_PATH,
         )
+        old_signed_snapshot = {
+            path: (root / path).read_bytes() for path in signed_paths
+        }
+
+        successor = loop_record(
+            updater,
+            sha="c" * 40,
+            first_parent_sha="a" * 40,
+            pr_number=121,
+        )
+        updater.apply_merge_record(root, successor)
         assert_loop_error(
             updater,
             lambda: updater.verify_generated_state_signature(root, public_key),
             "signature verification failed",
         )
         updater.sign_generated_state(root, private_key)
+        updater.verify_generated_state_signature(root, public_key, "c" * 40)
+
+        for path, content in old_signed_snapshot.items():
+            (root / path).write_bytes(content)
+        updater.verify_generated_state_signature(root, public_key)
+        assert_loop_error(
+            updater,
+            lambda: updater.verify_generated_state_signature(
+                root, public_key, "c" * 40
+            ),
+            "not current for protected main",
+        )
+        updater.apply_merge_record(root, successor)
+        updater.sign_generated_state(root, private_key)
+        updater.verify_generated_state_signature(root, public_key, "c" * 40)
 
         signature_path = root / updater.SIGNATURE_PATH
         signature_path.write_text("invalid\n", encoding="ascii")
@@ -1432,6 +1454,8 @@ def test_loop_memory_workflow_isolated_write_boundary() -> None:
     assert "LOOP_MEMORY_SIGNING_KEY" in workflow
     assert "verify-state" in workflow
     assert ".agent-loop/STATE.sig" in workflow
+    assert "Discarding unauthenticated generated state" in workflow
+    assert "--expected-main-sha" in workflow
     assert "HEAD:refs/heads/${STATE_BRANCH}" in workflow
     assert "HEAD:refs/heads/main" not in workflow
     assert "gh pr create" not in workflow

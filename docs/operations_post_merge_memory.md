@@ -15,7 +15,9 @@ only write target is `automation/loop-memory`. The branch blocks deletion and
 non-fast-forward updates. Because organization policy disables deploy keys, the
 workflow also signs all canonical generated files with an Actions-only Ed25519
 private key. The reviewed public key on `main` lets operators reject any branch
-write that did not come from trusted automation.
+write that did not come from trusted automation, while an expected protected-
+`main` SHA rejects replay of an older valid signed snapshot. Invalid branch
+state is discarded and deterministically rebuilt from the immutable bootstrap.
 
 The generated branch contains:
 
@@ -70,7 +72,8 @@ git show origin/automation/loop-memory:.agent-loop/STATE.json
 git show origin/automation/loop-memory:.agent-loop/LOOP_STATE.md
 python3 scripts/update_post_merge_memory.py verify-state \
   --state-root <checked-out-state-branch> \
-  --public-key .agent-loop/keys/loop-memory-signing-public.pem
+  --public-key .agent-loop/keys/loop-memory-signing-public.pem \
+  --expected-main-sha "$(git rev-parse origin/main)"
 ```
 
 ## Recovery
