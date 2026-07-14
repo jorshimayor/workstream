@@ -55,22 +55,23 @@ semantic scope, acceptance criteria, behavior evidence, and review gates;
 runtime repair, deterministic evidence, and required reviews then completed.
 Backend passed 949 tests at 82.77 percent global coverage, Agent Gates and
 CodeRabbit passed, and explicit human approval merged PR #115 as `8e1cde6` on
-2026-07-14.
+2026-07-14. AUTH-05A post-merge memory then merged through PR #116 as `ab49b73`.
+The user requested action/resource catalogue reconciliation before AUTH-05B.
+That docs-only work passed required internal reviews, Backend, Agent Gates, and
+CodeRabbit; explicit human approval merged PR #117 as `4c5d4fc` on 2026-07-14.
 
 ## Active planning chunk
 
-`WS-AUTH-001-CAT` - Action And Resource Catalogue Reconciliation. This is a
-docs/specification-only mapping of a proposed catalogue against the adopted
-repository; it changes no runtime, migration, or permission identifier.
+None. CAT post-merge memory is active; no planning chunk is active.
 
 ## Active implementation chunk
 
-None. AUTH-05B remains inactive until the catalogue reconciliation merges and
-its post-merge memory/stop checkpoint is recorded.
+None. AUTH-05B's start signal is recorded and it remains inactive only until CAT
+post-merge memory merges.
 
 ## Current implementation branch
 
-`codex/ws-auth-001-action-catalogue-reconciliation` in
+`codex/ws-auth-001-cat-post-merge-memory` in
 `/home/abiorh/flow/workstream-authorization-service`.
 
 ## Chunk status
@@ -86,8 +87,8 @@ its post-merge memory/stop checkpoint is recorded.
 | `WS-AUTH-001-04B` | Merged | `codex/ws-auth-001-04b-postgres-rate-controls` | #113 | Merged as `05a63c8`; production review `67484b5`; final branch head `94fb2fe`. |
 | `WS-AUTH-001-05` | Split | `codex/ws-auth-001-05-authority-evidence` | - | Parent split before implementation into 05A and 05B. |
 | `WS-AUTH-001-05A` | Merged | `codex/ws-auth-001-05-authority-evidence` | #115 | Merged as `8e1cde6`; reviewed code `ea16fd8`; final branch head `d023952`. |
-| `WS-AUTH-001-CAT` | Ready for PR | `codex/ws-auth-001-action-catalogue-reconciliation` | - | Required internal reviews and docs gates pass; runtime permission registry is unchanged. |
-| `WS-AUTH-001-05B` | Inactive | - | - | Start signal received; activate after CAT merge and post-merge memory. |
+| `WS-AUTH-001-CAT` | Merged | `codex/ws-auth-001-action-catalogue-reconciliation` | #117 | Merged as `4c5d4fc`; final branch head `5b4ec96`. |
+| `WS-AUTH-001-05B` | Inactive | - | - | Start signal received; activate after CAT post-merge memory merges. |
 | `WS-AUTH-001-06` | Proposed | - | - | Canonical actor profile and identity link. |
 | `WS-AUTH-001-07` | Proposed | - | - | Authorization kernel and permissions. |
 | `WS-AUTH-001-08` | Proposed | - | - | Bootstrap and administrative grants. |
@@ -117,8 +118,8 @@ permission identifiers remain approved, including
 `operations.checker.retry`; the three recovery identifiers receive persisted
 parity only in their owning later chunks. `WS-AUTH-001-CAT` retains only safe
 registry/conformance rules. This is a scope decision, not an AUTH-05B runtime
-blocker; AUTH-05B begins after the docs-only amendment merges and its post-merge
-memory/stop checkpoint is recorded.
+blocker. PR #117 is merged; AUTH-05B begins after this post-merge memory update
+merges, without another start signal.
 
 AUTH-04B review evidence and its PR trust bundle are recorded at
 `reviews/WS-AUTH-001-04B-internal-review-evidence.md` and

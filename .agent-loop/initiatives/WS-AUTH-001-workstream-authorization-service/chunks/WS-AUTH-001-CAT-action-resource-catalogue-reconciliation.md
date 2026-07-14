@@ -1,5 +1,10 @@
 # Chunk Contract: WS-AUTH-001-CAT - Action And Resource Catalogue Reconciliation
 
+## Status
+
+Merged through PR #117 as `4c5d4fc` on 2026-07-14 after required internal
+reviews, Backend, Agent Gates, CodeRabbit, and explicit human approval passed.
+
 ## Parent initiative
 
 `WS-AUTH-001` - Workstream Authorization Service
