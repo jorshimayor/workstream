@@ -2,9 +2,10 @@
 
 ## Status
 
-Contract repair and re-review after exact-SHA privacy findings. The initial
-implementation review proved that safe typed/SQL parity did not fit the
-original ceiling without compressing security-sensitive SQL.
+Bounded runtime repair and focused evidence. Repaired contract review passed on
+exact SHA `7cc6058` after the initial implementation review proved that safe
+typed/SQL parity did not fit the original ceiling without compressing
+security-sensitive SQL.
 
 ## Parent initiative
 

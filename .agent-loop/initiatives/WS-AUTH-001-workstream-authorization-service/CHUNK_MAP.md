@@ -19,7 +19,7 @@ stopped.
 | `WS-AUTH-001-04A` | Request And Error Context | L1 | Merged through PR #111 as `90c9a28` |
 | `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Merged through PR #113 as `05a63c8` |
 | `WS-AUTH-001-05` | Authority Evidence And Idempotency Foundation | L1 | Split before implementation into 05A and 05B |
-| `WS-AUTH-001-05A` | Shared Audit Ownership And Append-Only Authority Evidence | L1 | Contract repair/re-review after exact-SHA privacy findings |
+| `WS-AUTH-001-05A` | Shared Audit Ownership And Append-Only Authority Evidence | L1 | Repaired contract passed at `7cc6058`; runtime repair/evidence |
 | `WS-AUTH-001-05B` | Authority Idempotency And Invalidation Foundation | L1 | Inactive pending 05A merge/memory and separate explicit start |
 | `WS-AUTH-001-06` | Canonical Actor Profile And Identity Link | L1 | Proposed |
 | `WS-AUTH-001-07` | Authorization Kernel And Permission Registry | L1 | Proposed |
@@ -99,5 +99,5 @@ approval passed. AUTH-04B post-merge memory then merged through PR #114 as
 rejected the combined contract before runtime edits and required 05A/05B.
 The first 05A implementation review proved the original 500-line ceiling
 incompatible with readable typed/database privacy parity. Repaired 05A contract
-review is the current gate; 05B remains inactive. Do not start AUTH-06 or
-POL-002-04.
+review passed at `7cc6058`; bounded runtime repair is active. 05B remains
+inactive. Do not start AUTH-06 or POL-002-04.
