@@ -1,5 +1,22 @@
 # Review Log
 
+## 2026-07-14 - WS-ART-001 Fourth Exact-Head Review Failed
+
+Planning candidate `b5279be1da1b61c161166903d6144719cf29a17e` passed the
+deterministic gates and architecture review. Senior engineering and
+security/auth found no remaining design defect but correctly noted that final
+review evidence and the PR trust bundle did not yet exist. QA/test found one
+valid High issue: the AWS authorization regression test asserted selected
+substrings instead of proving the principal/action/resource and bucket-deny
+matrices were closed. All four `gpt-5.5` high reviewer sessions were closed;
+none of these results is reusable approval.
+
+The repair converts the bucket-deny rules to a machine-checkable closed matrix
+and makes the gate reject extra S3/IAM actions, extra resources, wildcard
+grants, and altered condition operators or values. Final evidence remains a
+post-review artifact and will be created only after every required exact-head
+reviewer passes.
+
 ## 2026-07-14 - WS-ART-001 Third Exact-Head Review Failed
 
 Planning candidate `d2cd73a0debe73930a8311a37b45f3aff4315f11` passed the

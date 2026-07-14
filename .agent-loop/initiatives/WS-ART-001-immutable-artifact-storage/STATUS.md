@@ -41,7 +41,10 @@ owns MinIO and AWS S3. There is no active R2 chunk.
 Candidates `e6415886a2474af899eb433c4b42eabea8e794c7`,
 `e14376c896f9225a152e932de8789517814ef082`, and
 `d2cd73a0debe73930a8311a37b45f3aff4315f11` passed deterministic planning
-checks but failed one or more exact-head required review tracks. Every session
+checks but failed one or more exact-head required review tracks. Candidate
+`b5279be1da1b61c161166903d6144719cf29a17e` then passed architecture and had no
+remaining senior/security design finding, but QA/test found that its AWS
+authorization regression test was not a closed-matrix assertion. Every session
 was closed and none of those results is reusable approval. Repair is active on
 integrated main `eba7e2b` and remains planning-only.
 
@@ -53,7 +56,9 @@ coverage omissions. The second repair also separates admission, verification,
 and recovery chunks; closes dependency-manifest/frontend/Work Queue scanning;
 defines separate caller-ARN-bound AWS proof executors; adds per-I/O activation
 freshness; and closes service-action, materialization, checker-output binding,
-Operator recovery, and capacity-visibility ownership. A new immutable SHA will be recorded only after
-deterministic checks and every required internal reviewer pass. External PR
-review and explicit human merge approval remain later gates. No later chunk
-starts automatically.
+Operator recovery, and capacity-visibility ownership. The current repair makes
+the principal/action/resource and bucket-deny matrices machine-checkable and
+rejects extra grants, resources, wildcard actions, or altered condition keys. A
+new immutable SHA will be recorded only after deterministic checks and every
+required internal reviewer pass. External PR review and explicit human merge
+approval remain later gates. No later chunk starts automatically.

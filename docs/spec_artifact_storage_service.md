@@ -489,13 +489,16 @@ The principal/action matrix is closed:
 
 | Principal | Exact allowed IAM actions | Exact resource |
 |---|---|---|
-| Workstream runtime role | `s3:PutObject`, `s3:GetObject` (`HeadObject` uses `s3:GetObject`) | `OBJECT_ARN` only |
+| Workstream runtime role | `s3:PutObject`, `s3:GetObject` | `OBJECT_ARN` only |
 | deployment readiness role | `s3:GetBucketPolicy`, `s3:GetBucketPolicyStatus`, `s3:GetBucketAcl`, `s3:GetBucketPublicAccessBlock`, `s3:GetBucketOwnershipControls`, `s3:GetBucketVersioning`, `s3:GetLifecycleConfiguration`, `s3:GetEncryptionConfiguration` | `BUCKET_ARN` only |
 | deployment readiness role | `iam:GetRole`, `iam:ListRolePolicies`, `iam:ListAttachedRolePolicies` | `RUNTIME_ROLE_ARN` only |
 | deployment readiness role | `iam:GetPolicy`, `iam:GetPolicyVersion` | `RUNTIME_POLICY_ARN` only |
 | deployment readiness role | `access-analyzer:ValidatePolicy`, `access-analyzer:CheckAccessNotGranted`, `access-analyzer:CheckNoPublicAccess` | `*` because these policy-check APIs do not support a narrower resource in this contract |
 | deployment negative-test role | no S3, IAM, or Access Analyzer action | none |
 | infrastructure bootstrap principal | no Workstream-defined allow statement and no proof credential; environment-owned provisioning only | outside the Workstream runtime/probe policy |
+
+`HeadObject` uses the runtime role's `s3:GetObject` permission; it does not add
+another IAM action to the closed matrix.
 
 `sts:GetCallerIdentity` is called by each proof executor to bind observed
 identity and requires no identity-policy grant. The runtime policy contains
@@ -505,16 +508,17 @@ list, bucket-administration, lifecycle, or public-access action. The readiness
 role contains no S3 object action. v0.1 uses bucket-default SSE-S3 (`AES256`),
 which the readiness probe verifies, and grants no KMS action.
 
-The bucket policy must contain these exact deny boundaries:
+The bucket-policy deny matrix is closed:
 
-1. `DenyInsecureTransport`: deny `s3:*` on `BUCKET_ARN` and `OBJECT_ARN` when
-   `Bool: {"aws:SecureTransport": "false"}`.
-2. `DenyNonRuntimeObjectData`: deny `s3:*` on `OBJECT_ARN` to `Principal: "*"`
-   when `ArnNotEquals: {"aws:PrincipalArn": RUNTIME_ROLE_ARN}`.
-3. `DenyUnconditionalPut`: deny `s3:PutObject` on `OBJECT_ARN` to
-   `Principal: "*"` when
-   `Null: {"s3:if-none-match": "true"}`. SigV4 and the S3 API require the
-   present `If-None-Match` value to be `*` for this operation.
+| Sid | Effect | Exact actions | Exact resources | Exact principal | Exact condition |
+|---|---|---|---|---|---|
+| `DenyInsecureTransport` | Deny | `s3:*` | `BUCKET_ARN`, `OBJECT_ARN` | `*` | `Bool: {"aws:SecureTransport": "false"}` |
+| `DenyNonRuntimeObjectData` | Deny | `s3:*` | `OBJECT_ARN` | `*` | `ArnNotEquals: {"aws:PrincipalArn": RUNTIME_ROLE_ARN}` |
+| `DenyUnconditionalPut` | Deny | `s3:PutObject` | `OBJECT_ARN` | `*` | `Null: {"s3:if-none-match": "true"}` |
+
+No additional statement may weaken, bypass, or create an exception to these
+denies. For `DenyUnconditionalPut`, SigV4 and the S3 API require the present
+`If-None-Match` value to be `*` for this operation.
 
 Identity policies therefore cannot grant an unexpected same-account,
 same-organization, or external role object access. The deployment-only Chunk

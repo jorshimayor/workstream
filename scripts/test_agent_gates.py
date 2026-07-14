@@ -2029,6 +2029,134 @@ def test_artifact_action_registry_has_exact_owned_mappings() -> None:
     assert "artifact.operator.admission_usage.read" not in text
 
 
+def _markdown_contract_table(
+    text: str,
+    header: str,
+) -> list[tuple[str, ...]]:
+    """Parse one closed Markdown contract table by its exact header."""
+    lines = text.splitlines()
+    header_index = lines.index(header)
+    separator = lines[header_index + 1]
+    assert re.fullmatch(r"\|(?:---\|)+", separator)
+    rows: list[tuple[str, ...]] = []
+    for line in lines[header_index + 2 :]:
+        if not line.startswith("|"):
+            break
+        rows.append(tuple(cell.strip() for cell in line.strip("|").split("|")))
+    assert rows
+    return rows
+
+
+def _code_tokens(cell: str) -> tuple[str, ...]:
+    """Return ordered inline-code values from one Markdown table cell."""
+    return tuple(re.findall(r"`([^`]+)`", cell))
+
+
+def _assert_exact_aws_artifact_authorization_contract(spec: str) -> None:
+    """Require the AWS principal and bucket-deny matrices to be closed."""
+    principal_rows = _markdown_contract_table(
+        spec,
+        "| Principal | Exact allowed IAM actions | Exact resource |",
+    )
+    expected_principal_rows = {
+        (
+            "Workstream runtime role",
+            ("s3:PutObject", "s3:GetObject"),
+            ("OBJECT_ARN",),
+        ),
+        (
+            "deployment readiness role",
+            (
+                "s3:GetBucketPolicy",
+                "s3:GetBucketPolicyStatus",
+                "s3:GetBucketAcl",
+                "s3:GetBucketPublicAccessBlock",
+                "s3:GetBucketOwnershipControls",
+                "s3:GetBucketVersioning",
+                "s3:GetLifecycleConfiguration",
+                "s3:GetEncryptionConfiguration",
+            ),
+            ("BUCKET_ARN",),
+        ),
+        (
+            "deployment readiness role",
+            ("iam:GetRole", "iam:ListRolePolicies", "iam:ListAttachedRolePolicies"),
+            ("RUNTIME_ROLE_ARN",),
+        ),
+        (
+            "deployment readiness role",
+            ("iam:GetPolicy", "iam:GetPolicyVersion"),
+            ("RUNTIME_POLICY_ARN",),
+        ),
+        (
+            "deployment readiness role",
+            (
+                "access-analyzer:ValidatePolicy",
+                "access-analyzer:CheckAccessNotGranted",
+                "access-analyzer:CheckNoPublicAccess",
+            ),
+            ("*",),
+        ),
+        ("deployment negative-test role", (), ()),
+        ("infrastructure bootstrap principal", (), ()),
+    }
+    actual_principal_rows = {
+        (principal, _code_tokens(actions), _code_tokens(resources))
+        for principal, actions, resources in principal_rows
+    }
+    assert len(actual_principal_rows) == len(principal_rows)
+    assert actual_principal_rows == expected_principal_rows
+    negative_actions = next(
+        actions
+        for principal, actions, _ in principal_rows
+        if principal == "deployment negative-test role"
+    )
+    assert negative_actions == "no S3, IAM, or Access Analyzer action"
+
+    deny_rows = _markdown_contract_table(
+        spec,
+        "| Sid | Effect | Exact actions | Exact resources | Exact principal | Exact condition |",
+    )
+    actual_denies = {
+        (
+            _code_tokens(sid),
+            effect,
+            _code_tokens(actions),
+            _code_tokens(resources),
+            _code_tokens(principal),
+            _code_tokens(condition),
+        )
+        for sid, effect, actions, resources, principal, condition in deny_rows
+    }
+    assert len(actual_denies) == len(deny_rows)
+    assert actual_denies == {
+        (
+            ("DenyInsecureTransport",),
+            "Deny",
+            ("s3:*",),
+            ("BUCKET_ARN", "OBJECT_ARN"),
+            ("*",),
+            ('Bool: {"aws:SecureTransport": "false"}',),
+        ),
+        (
+            ("DenyNonRuntimeObjectData",),
+            "Deny",
+            ("s3:*",),
+            ("OBJECT_ARN",),
+            ("*",),
+            ('ArnNotEquals: {"aws:PrincipalArn": RUNTIME_ROLE_ARN}',),
+        ),
+        (
+            ("DenyUnconditionalPut",),
+            "Deny",
+            ("s3:PutObject",),
+            ("OBJECT_ARN",),
+            ("*",),
+            ('Null: {"s3:if-none-match": "true"}',),
+        ),
+    }
+
+
 def test_aws_artifact_activation_contract_is_exact_and_time_bounded() -> None:
     """The AWS proof contract fixes actions, denies, identities, and TTL."""
     spec = (ROOT / "docs/spec_artifact_storage_service.md").read_text(
@@ -2039,24 +2167,52 @@ def test_aws_artifact_activation_contract_is_exact_and_time_bounded() -> None:
         / ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/chunks/"
         "WS-ART-001-07-recovery-live-proof.md"
     ).read_text(encoding="utf-8")
-    for required in (
-        "`s3:PutObject`, `s3:GetObject`",
-        "`s3:GetBucketPolicy`",
-        "`s3:GetBucketPublicAccessBlock`",
-        "`s3:GetLifecycleConfiguration`",
-        "`iam:ListRolePolicies`",
-        "`iam:ListAttachedRolePolicies`",
-        "`access-analyzer:CheckAccessNotGranted`",
-        '`ArnNotEquals: {"aws:PrincipalArn": RUNTIME_ROLE_ARN}`',
-        '`Null: {"s3:if-none-match": "true"}`',
-        "operation_total_deadline + persistence_margin +",
-        "clock_safety_margin",
-    ):
-        assert required in spec
+    _assert_exact_aws_artifact_authorization_contract(spec)
+    assert "operation_total_deadline + persistence_margin +" in spec
+    assert "clock_safety_margin" in spec
     assert "s3:if-none-match` equals `*" not in spec
     assert "aws_runtime_immutability_probe" in chunk
     assert "aws_negative_access_probe" in chunk
     assert "aws_activation_coordinator" in chunk
+
+    mutations = (
+        (
+            "`s3:PutObject`, `s3:GetObject` | `OBJECT_ARN` only |",
+            "`s3:PutObject`, `s3:GetObject`, `s3:ListBucket` | `OBJECT_ARN` only |",
+        ),
+        (
+            "`s3:PutObject`, `s3:GetObject` | `OBJECT_ARN` only |",
+            "`s3:PutObject`, `s3:GetObject`, `s3:DeleteObject` | `OBJECT_ARN` only |",
+        ),
+        (
+            "`s3:PutObject`, `s3:GetObject` | `OBJECT_ARN` only |",
+            "`s3:*` | `OBJECT_ARN` only |",
+        ),
+        (
+            "`iam:GetRole`, `iam:ListRolePolicies`, `iam:ListAttachedRolePolicies`",
+            "`iam:GetRole`, `iam:ListRolePolicies`, `iam:ListAttachedRolePolicies`, `iam:GetUser`",
+        ),
+        (
+            "`RUNTIME_ROLE_ARN` only",
+            "`RUNTIME_ROLE_ARN`, `RUNTIME_POLICY_ARN`",
+        ),
+        (
+            '`ArnNotEquals: {"aws:PrincipalArn": RUNTIME_ROLE_ARN}`',
+            '`StringNotEquals: {"aws:PrincipalArn": RUNTIME_ROLE_ARN}`',
+        ),
+        (
+            '`Null: {"s3:if-none-match": "true"}`',
+            '`Null: {"s3:if-none-match": "false"}`',
+        ),
+    )
+    for current, unsafe in mutations:
+        assert current in spec
+        mutated = spec.replace(current, unsafe, 1)
+        try:
+            _assert_exact_aws_artifact_authorization_contract(mutated)
+        except AssertionError:
+            continue
+        raise AssertionError(f"unsafe AWS contract mutation was accepted: {unsafe}")
 
 
 def main() -> int:
