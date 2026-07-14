@@ -10,6 +10,7 @@ import contextlib
 import importlib.util
 import io
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -1180,7 +1181,20 @@ def test_agent_gate_dependencies_and_workflow_are_pinned() -> None:
 
 def test_backend_coverage_thresholds_are_regression_protected() -> None:
     """Keep both the approved global floor and stricter artifact floor fail closed."""
-    workflow = (ROOT / ".github/workflows/backend.yml").read_text(encoding="utf-8")
+    workflow_path = ROOT / ".github/workflows/backend.yml"
+    workflow = workflow_path.read_text(encoding="utf-8")
+    parsed_workflow = yaml.safe_load(workflow)
+    full_suite_steps = [
+        step
+        for step in parsed_workflow["jobs"]["test"]["steps"]
+        if step.get("name") == "Backend full-suite coverage"
+    ]
+    assert len(full_suite_steps) == 1
+    full_suite_run = full_suite_steps[0]["run"]
+    assert 'metadata_dir="$(mktemp -d)"' in full_suite_run
+    assert "trap 'rm -rf \"$metadata_dir\"' EXIT" in full_suite_run
+    assert '--metadata-json "$metadata_dir/result.json"' in full_suite_run
+    assert "/tmp/workstream-database.json" not in workflow
     assert workflow.count("--cov-fail-under=78") == 1
     assert (
         "--cov=app --cov-report=term-missing --cov-fail-under=78"
@@ -1281,10 +1295,25 @@ def test_stale_artifact_contracts_enforce_aws_first_v01() -> None:
         "foundation",
     ) == []
     assert gate.scan_text(
+        "docs/spec_artifact_storage_service.md",
+        "Cloudflare R2 is deferred but remains a production provider.",
+        "foundation",
+    ) == ["docs/spec_artifact_storage_service.md:1: ACTIVE_R2_V01_PLAN"]
+    assert gate.scan_text(
         "backend/app/core/config.py",
         'artifact_provider_profile = "cloudflare_r2"',
         "foundation",
     ) == ["backend/app/core/config.py:1: DEFERRED_R2_RUNTIME"]
+    for runtime_value in (
+        'artifact_provider_profile = "r2"',
+        "artifact_store = R2ArtifactStore()",
+        'endpoint = os.environ["WORKSTREAM_R2_ENDPOINT"]',
+    ):
+        assert gate.scan_text(
+            "backend/app/core/config.py",
+            runtime_value,
+            "foundation",
+        ) == ["backend/app/core/config.py:1: DEFERRED_R2_RUNTIME"]
     assert gate.scan_text(
         (
             ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/"
@@ -1300,15 +1329,15 @@ def test_stale_artifact_contracts_enforce_aws_first_v01() -> None:
     ]
 
 
-def test_stale_artifact_contracts_scan_parallel_active_initiatives() -> None:
-    """Parallel Work Queue rows activate both initiatives without scanning history."""
+def test_stale_artifact_contracts_scan_only_current_initiatives() -> None:
+    """Work Queue activation scans current initiatives without scanning history."""
     gate = load_module(
         "stale_artifact_contracts_parallel",
         "scripts/check_stale_artifact_contracts.py",
     )
     prefixes = gate.active_initiative_prefixes()
-    assert any("WS-AUTH-001-workstream-authorization-service" in item for item in prefixes)
     assert any("WS-ART-001-immutable-artifact-storage" in item for item in prefixes)
+    assert not any("WS-AUTH-001-workstream-authorization-service" in item for item in prefixes)
     assert gate.path_is_scannable(
         ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/PLAN.md"
     )
@@ -1354,6 +1383,35 @@ def test_artifact_chunk_verification_commands_are_isolated_and_rerunnable() -> N
         assert contract.count('metadata_dir="$(mktemp -d)"') == 1
         assert contract.count("trap 'rm -rf \"$metadata_dir\"' EXIT") == 1
         assert contract.count('--metadata-json "$metadata_dir/result.json"') == 1
+        verification_match = re.search(
+            r"## Verification\n\n```bash\n(.*?)\n```",
+            contract,
+            re.DOTALL,
+        )
+        assert verification_match is not None, matches[0]
+        verification = verification_match.group(1)
+        syntax = subprocess.run(
+            ["bash", "-n"],
+            input=verification,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        assert syntax.returncode == 0, (matches[0], syntax.stderr)
+        for command in verification.splitlines():
+            assert not command.startswith("cd backend &&"), (matches[0], command)
+            if "cd backend &&" in command:
+                assert command.startswith("(cd backend &&") or " && (cd backend &&" in command, (
+                    matches[0],
+                    command,
+                )
+        metadata_command = next(
+            command
+            for command in verification.splitlines()
+            if command.startswith('metadata_dir="$(mktemp -d)"')
+        )
+        assert "run_isolated_tests.py" in metadata_command
         assert artifact_contract_phase_for(phase) in {
             "foundation",
             "artifact_store_cutover",
@@ -1405,7 +1463,7 @@ def main() -> int:
         test_stale_artifact_contracts_active_later_phase_owns_only_reached_terms,
         test_stale_artifact_contracts_malformed_phase_fails_closed,
         test_stale_artifact_contracts_enforce_aws_first_v01,
-        test_stale_artifact_contracts_scan_parallel_active_initiatives,
+        test_stale_artifact_contracts_scan_only_current_initiatives,
         test_stale_artifact_contracts_remove_flow_node_at_store_cutover,
         test_artifact_chunk_verification_commands_are_isolated_and_rerunnable,
     ]

@@ -77,10 +77,6 @@ token role fallback or authorization pagination after unfiltered counts
 - Hidden project/resource existence is not leaked through errors or totals.
 - No migrated query uses `require_any_role()` or token roles.
 - Full backend suite and API contract drill pass.
-- Project-guide source ingestion uses the exact project-scoped
-  `artifact.guide_source.ingest` permission. Project visibility alone does not
-  authorize byte ingestion, and this chunk does not grant direct provider
-  access.
 
 ## Verification commands
 

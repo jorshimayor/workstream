@@ -154,14 +154,8 @@ RULES = (
         "foundation",
         re.compile(
             r"(?:\bWS-ART-001-02B[23]\b|"
-            r"AWS S3\s+(?:or|and)\s+(?:Cloudflare\s+)?R2"
-            r"[^.!?\n]{0,100}\bproduction\b|"
-            r"\bproduction\b[^.!?\n]{0,100}AWS S3\s+(?:or|and)\s+"
-            r"(?:Cloudflare\s+)?R2|"
-            r"(?:Cloudflare\s+)?R2[^.!?\n]{0,80}\bproduction\s+"
-            r"(?:provider|profile|option|backend|store)|"
-            r"\bproduction\s+(?:provider|profile|option|backend|store)"
-            r"[^.!?\n]{0,80}(?:Cloudflare\s+)?R2\b)",
+            r"(?:Cloudflare\s+)?R2[^.;!?\n]{0,160}\bproduction\b|"
+            r"\bproduction\b[^.;!?\n]{0,160}(?:Cloudflare\s+)?R2\b)",
             re.IGNORECASE,
         ),
     ),
@@ -306,12 +300,6 @@ def scan_text(relative_path: str, text: str, phase: str, root: Path = ROOT) -> l
         for match in rule.pattern.finditer(text):
             line = text.count("\n", 0, match.start()) + 1
             line_text = text.splitlines()[line - 1]
-            if rule.code == "ACTIVE_R2_V01_PLAN" and re.search(
-                r"\b(?:defer(?:red|s)?|no active|not a v0\.1|outside v0\.1)\b",
-                line_text,
-                re.IGNORECASE,
-            ):
-                continue
             if rule.code == "OBSOLETE_FLOW_NODE_PLAN" and re.search(
                 r"\b(?:defer(?:red|s)?|supersed(?:ed|es)?|preserv(?:ed|es)?|"
                 r"not (?:a )?v0\.1|cannot block|outside v0\.1)\b",
@@ -324,7 +312,9 @@ def scan_text(relative_path: str, text: str, phase: str, root: Path = ROOT) -> l
         R2_RUNTIME_FILENAMES
     ):
         for match in re.finditer(
-            r"\b(?:cloudflare_r2|r2_credential|r2-credential)\b",
+            r"(?:\b(?:cloudflare[_-]?r2|r2[_-]?credential)\b|"
+            r"\bR2ArtifactStore\b|\bWORKSTREAM_R2_[A-Z0-9_]+\b|"
+            r"[\"']r2[\"'])",
             text,
             re.IGNORECASE,
         ):

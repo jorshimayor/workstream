@@ -23,9 +23,10 @@ planning and guardrails only.
 - `.agent-loop/initiatives/FN-ART-002-deferred-flow-node-artifact-store/`;
 - `docs/spec_authorization_service.md` and
   `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/`
-  `DECISIONS.md`, `STATUS.md`, `CHUNK_MAP.md`, and proposed WS-AUTH contracts
-  `07`, `08`, `09`, `11`, `14`, and `15` only to register and map the exact
-  artifact permissions that later WS-ART chunks consume;
+  `DECISIONS.md`, `STATUS.md`, `CHUNK_MAP.md`, the completed `04B` contract only
+  to repair its stale WS-ART reference, and proposed WS-AUTH contracts `07`,
+  `08`, `09`, `12`, `14`, and `15` only to register and map the exact artifact
+  permissions that later WS-ART chunks consume;
 - `.agent-loop/MEMORY.md`, `.agent-loop/LOOP_STATE.md`,
   `.agent-loop/WORK_QUEUE.md`, `.agent-loop/REVIEW_LOG.md`, and
   `.agent-loop/policies/engineering-review-policy.md` only where the planning
@@ -51,7 +52,10 @@ planning and guardrails only.
   is not production eligible;
 - every untrusted byte source is server-hashed before provider I/O and the v2
   port accepts only a sealed `CommittedArtifactSource`;
-- R2 has no active credential, runtime, deployment, or implementation contract;
+- R2 has no provider adapter, credential issuer, provider profile, deployment
+  service, or implementation chunk. Existing caller-declared `r2://` transport
+  values are legacy input contracts owned by the clean Chunk 05 cutover and are
+  removed there without an alias or compatibility path;
 - deferred Flow Node is fully planned but absent from the v0.1 dependency graph;
 - active v0.1 implementation is split into reviewable L1 chunks with exact
   scope, acceptance criteria, runnable commands, 90 percent changed-subsystem
@@ -64,13 +68,13 @@ planning and guardrails only.
 ## Verification
 
 ```bash
-git diff --check origin/main...HEAD
-python3 scripts/check_markdown_links.py --changed-only origin/main...HEAD
+git diff --check ab49b731b1774421af5088a6063461b7b7f29f86...HEAD
+python3 scripts/check_markdown_links.py --changed-only ab49b731b1774421af5088a6063461b7b7f29f86...HEAD
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_stale_authorization_docs.py
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/test_agent_gates.py
-git diff --name-only origin/main...HEAD -- backend/app backend/alembic backend/pyproject.toml docker-compose.yml
+git diff --name-only ab49b731b1774421af5088a6063461b7b7f29f86...HEAD -- backend/app backend/alembic backend/pyproject.toml docker-compose.yml
 ```
 
 The final command must print no paths.

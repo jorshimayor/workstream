@@ -67,7 +67,8 @@ review/compensation permissions beyond registered future definitions
 - Permission identifiers are a closed registered enum/value set.
 - The closed registry includes every exact artifact permission in
   `docs/spec_authorization_service.md`: Operator reads/retry/recovery/audit,
-  guide-source ingest, contributor upload-session/item/seal actions, binding,
+  guide-source ingest, contributor upload-session create/read/item/seal/cancel
+  actions, binding,
   verification, pending-work scan, guide-source read, checker-input
   materialization, and checker-output write. Broad `operations.*` permissions
   are not aliases for artifact authority.

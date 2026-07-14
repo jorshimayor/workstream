@@ -64,6 +64,9 @@ unscoped project-manager access or token role fallback
   only covered projects.
 - Project policy actions use registered permissions and transaction-local grant
   revalidation.
+- Project-guide source ingestion uses the exact project-scoped
+  `artifact.guide_source.ingest` permission. Project visibility alone does not
+  authorize byte ingestion, and this chunk grants no direct provider access.
 - Approval provenance records matched local grant/actor/scope while preserving
   historical bootstrap provenance.
 - Migration `0021` adds matched local grant/scope provenance and ownership

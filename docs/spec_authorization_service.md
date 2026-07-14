@@ -180,8 +180,10 @@ artifact.recovery_attempt.execute
 artifact.audit.read
 artifact.guide_source.ingest
 artifact.upload_session.create
+artifact.upload_session.read
 artifact.upload_item.write
 artifact.upload_session.seal
+artifact.upload_session.cancel
 artifact.binding.create
 artifact.verification.execute
 artifact.pending_work.scan
@@ -199,7 +201,7 @@ Operator permissions do not authorize internal execution, and internal service
 permissions do not authorize Operator APIs. AUTH-07 owns this closed registry,
 AUTH-08 owns the Operator grant definitions, AUTH-09 owns the service
 principals, and WS-ART consumes the resulting decisions without registering
-permissions or inferring authority. AUTH-11 maps project-guide source ingest,
+permissions or inferring authority. AUTH-12 maps project-guide source ingest,
 AUTH-14 maps contributor upload actions, and AUTH-15 maps fixed system-worker
 actions for binding, verification, pending-work publication, guide-source reads,
 and checker input/output artifact handling.

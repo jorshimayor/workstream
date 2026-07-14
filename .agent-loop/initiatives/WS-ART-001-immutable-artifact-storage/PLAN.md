@@ -353,3 +353,9 @@ perform current provider discovery, satisfy the same ArtifactStore v2
 conformance contract, and define an explicit no-fallback maintenance cutover.
 No R2 credential issuer, sidecar, runtime profile, or deployment proof belongs
 to this initiative.
+
+Before Chunk 05, task schemas, project-policy schemas, checker messages, tests,
+and the submission-artifact-policy template still expose legacy caller
+transport declarations using `r2` or `r2://`. They are not provider support.
+Chunk 05 deletes that caller contract as part of the submission binding clean
+cut; later code must not preserve an alias, fallback, or compatibility parser.

@@ -41,8 +41,8 @@ owns MinIO and AWS S3. There is no active R2 chunk.
 The committed amendment is in exact-head internal repair and review. Prior
 review established the canonical pre/post-submit materializer, coverage-phase
 binding, and scratch-cleanup ownership. The AWS-first repair removes the R2
-issuer boundary and closes AUTH, source-ingestion, WS-REV, and rerunnable-test
-dependencies. A
+issuer boundary, maps exact AUTH ownership, constrains source ingestion,
+preserves WS-REV ownership, and makes verification commands rerunnable. A
 final immutable SHA will be recorded only after all required reviewers pass.
 The remaining gate is complete exact-head internal reviewer fanout and evidence,
 external PR review, and explicit human merge approval. No later chunk starts

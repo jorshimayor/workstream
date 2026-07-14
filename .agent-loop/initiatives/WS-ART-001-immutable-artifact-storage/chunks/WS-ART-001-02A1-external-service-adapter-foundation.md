@@ -56,10 +56,9 @@ coverage report --include='app/interfaces/external_services.py' --precision=2 --
 ## Verification
 
 ```bash
-cd backend && .venv/bin/ruff check app tests
-cd backend && .venv/bin/pytest tests/test_external_service_adapters.py -q --cov=app.interfaces.external_services --cov-report=term-missing --cov-fail-under=90
-metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT
-cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78
+(cd backend && .venv/bin/ruff check app tests)
+(cd backend && .venv/bin/pytest tests/test_external_service_adapters.py -q --cov=app.interfaces.external_services --cov-report=term-missing --cov-fail-under=90)
+metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78)
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/test_agent_gates.py
 ```

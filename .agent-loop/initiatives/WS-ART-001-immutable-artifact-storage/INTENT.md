@@ -19,8 +19,8 @@ MinIO                        local and CI protocol proof
 
 Flow Node is not a v0.1 dependency. It remains a separately planned future
 `ArtifactStore` implementation and does not run, deploy, or block Workstream
-v0.1. Cloudflare R2 production is also deferred and has no v0.1 runtime profile,
-credential service, or configuration path.
+v0.1. Cloudflare R2 is also deferred and has no v0.1 runtime profile,
+credential service, configuration path, or deployment.
 
 Provider selection is not a hot switch for populated storage. Each replica
 records immutable provider profile and storage namespace; changing providers
@@ -107,8 +107,8 @@ v0.1 contribution lifecycle.
 
 - S3-compatible object storage for v0.1 and deferred Flow Node: approved on
   2026-07-14.
-- AWS S3 as the only v0.1 production provider, with R2 deferred: approved on
-  2026-07-14 after exact-head review exposed the R2 parent-credential boundary.
+- AWS S3 as the only v0.1 production provider: approved on 2026-07-14. R2 was
+  deferred after exact-head review exposed its parent-credential boundary.
 - One typed repository-wide external-service adapter/factory convention was
   explicitly approved during this planning work. WS-ART migrates only
   ArtifactStore; auth and agent-runtime owners decide and execute their own

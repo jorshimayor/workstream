@@ -75,7 +75,7 @@ Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.
 
 `WS-ART-001-01` is merged. The parallel planning amendment makes AWS S3 the
-only v0.1 production provider and defers R2 plus Flow Node. Do not start 02A1
+only v0.1 production provider. R2 and Flow Node are deferred. Do not start 02A1
 until the amendment merges and the user gives a separate explicit start signal.
 
 Coverage work proceeds independently in its own worktree and is not owned by

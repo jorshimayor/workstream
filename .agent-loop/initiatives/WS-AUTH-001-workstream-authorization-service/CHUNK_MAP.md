@@ -77,7 +77,7 @@ WS-AUTH-001-PLAN
   reconciliation remain mechanically owned by the artifact subsystem but must
   receive centralized AUTH decisions. Chunk 07 owns the permission registry,
   chunk 08 owns Operator grant definitions, chunk 09 owns fixed artifact service
-  principals, chunk 11 maps project-guide source ingest, chunk 14 maps
+  principals, chunk 12 maps project-guide source ingest, chunk 14 maps
   contributor upload actions, and chunk 15 maps exact artifact worker actions.
   WS-ART-001-02D starts only after AUTH-15 and attaches Operator plus internal-
   service enforcement to its own routes/jobs; later WS-ART product cutovers

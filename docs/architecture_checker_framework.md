@@ -352,6 +352,19 @@ Draft packet
 
 The checker run must bind to one immutable submission version. If the contributor uploads a replacement file, the platform creates a new submission version and reruns checks.
 
+`evaluation_pending` is the persisted state while post-submit checker execution
+or infrastructure retry is active. After checker results, immutable output/log
+artifact bindings, and completion facts commit atomically, the checker subsystem
+preserves the routes above: passing work moves to `review_pending`, while
+contributor-fixable blocking failures may move to `needs_revision` with
+`outcome_source = auto_checker`. Artifact-storage cutover changes how exact
+bytes and checker outputs are persisted; it does not redesign these routes.
+
+`review_pending` marks readiness for the separately owned WS-REV lifecycle.
+WS-REV alone creates `ReviewPacketManifest`, review queues, reviewer leases,
+assignments, and review decisions. Checker completion facts and general
+`ArtifactBinding` records are inputs to that later boundary, not review records.
+
 Checker failures are not human review decisions. They do not `accept` or `reject` work. Contributor-fixable blocking failures can route the task to user-facing `needs_revision`, with `outcome_source = auto_checker` and no review decision id. Human review can also produce `needs_revision` later, but that records `outcome_source = human_review` and a review decision id.
 
 If a checker crashes or cannot run because of platform infrastructure, the

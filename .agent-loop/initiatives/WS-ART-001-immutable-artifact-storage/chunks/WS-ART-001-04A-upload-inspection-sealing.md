@@ -35,9 +35,11 @@ manifests without running pre-submit or creating submissions.
 
 - only the assigned contributor with exact task authorization can create or
   mutate a live task upload session;
-- create, item write, and seal call the distinct task-scoped permissions
-  `artifact.upload_session.create`, `artifact.upload_item.write`, and
-  `artifact.upload_session.seal` delivered by AUTH-14; none implies another;
+- create, read, item write, seal, and cancel call the distinct task-scoped
+  permissions `artifact.upload_session.create`,
+  `artifact.upload_session.read`, `artifact.upload_item.write`,
+  `artifact.upload_session.seal`, and `artifact.upload_session.cancel`
+  delivered by AUTH-14; none implies another;
 - every ID-addressed read/mutation uses concealed deny/not-found behavior and
   is tested across actors, projects, revocation, terminal states, and random IDs;
 - upload requires a server-approved logical role, bounded display name, client
@@ -75,10 +77,9 @@ coverage report --include='app/adapters/project_agents/*,app/interfaces/project_
 
 ```bash
 docker compose up -d --wait postgres redis minio
-cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest tests/test_alembic.py tests/test_artifact_upload_api.py -q --cov=app.modules.artifacts --cov-report=term-missing --cov-fail-under=90
-metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT
-cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78
-cd backend && .venv/bin/ruff check app tests
+(cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest tests/test_alembic.py tests/test_artifact_upload_api.py -q --cov=app.modules.artifacts --cov-report=term-missing --cov-fail-under=90)
+metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78)
+(cd backend && .venv/bin/ruff check app tests)
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/test_agent_gates.py
 ```

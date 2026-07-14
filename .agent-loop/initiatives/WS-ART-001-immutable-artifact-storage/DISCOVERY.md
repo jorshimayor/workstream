@@ -117,3 +117,11 @@ parent-credential and credential-issuer boundary that was not required to ship
 v0.1. The user selected AWS S3 as the only production provider. R2 therefore
 has no active runtime profile, credential service, deployment proof, or chunk;
 later adoption requires separate discovery and approval.
+
+The current pre-cutover application still accepts `r2://` and `r2` as
+caller-declared storage transport values in task, project-policy, checker, and
+template contracts. Those values do not select a Workstream R2 provider and do
+not prove that Workstream can store or retrieve R2 bytes. They are inventoried
+legacy input contracts. Chunk 05 removes them completely when submissions move
+to sealed artifact-set bindings; no compatibility alias remains after that
+cutover.
