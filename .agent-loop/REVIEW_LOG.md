@@ -1,5 +1,18 @@
 # Review Log
 
+## 2026-07-14 - WS-AUTH-001-04B Merged
+
+PR #113 merged `WS-AUTH-001-04B` to `main` as `05a63c8` after final branch head
+`94fb2fe` passed Backend, Agent Gates, CodeRabbit, all required internal
+reviewers, and explicit human approval. Reviewed production head `67484b5`
+contains the rate-control implementation; reviewed candidate `922778b`
+contains the final implementation/test evidence before publication repair.
+
+GitHub Backend passed 937 tests at 82.15 percent repository coverage and the
+artifact-foundation coverage check at 91.07 percent. The current work is
+post-merge memory only. AUTH-05 remains inactive pending this memory update
+merge and a separate explicit user start.
+
 ## 2026-07-14 - WS-AUTH-001-04B Backend CI Repair
 
 PR #113 Backend reached 82.12 percent repository coverage but failed because

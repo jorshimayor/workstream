@@ -4,22 +4,25 @@
 
 - Active initiative: `WS-AUTH-001` - Workstream Authorization Service
 - Active planning chunk: none
-- Active implementation chunk: `WS-AUTH-001-04B` - PostgreSQL Rate Controls
-- Branch: `codex/ws-auth-001-04b-postgres-rate-controls`
-- Worktree: `/home/abiorh/flow/workstream-auth-001-04b`
-- Status: AUTH-04B implementation and all required internal review tracks pass
-  final implementation SHA `922778b`; reviewed production SHA is `67484b5`.
-  Ready PR #113 is open.
+- Active implementation chunk: none
+- Branch: `codex/ws-auth-001-04b-post-merge-memory`
+- Worktree: `/home/abiorh/flow/workstream-authorization-service`
+- Status: AUTH-04B merged through PR #113 as `05a63c8` after Backend, Agent
+  Gates, CodeRabbit, required internal review, and explicit human approval
+  passed.
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
-- Latest integrated `main` merge commit: `7749f54`
-- Current gate: GitHub checks, CodeRabbit, and explicit human review on PR #113.
+- Latest integrated `main` merge commit: `05a63c8`
+- Current gate: publish and merge the AUTH-04B post-merge memory update, then
+  stop.
 - Size checkpoint: implementation is 480 changed non-comment production lines;
   the required 350-line inspection passed and the 500-line hard stop holds.
 - Next chunk: none; do not start `WS-AUTH-001-05` automatically.
 - Focused evidence: 77 isolated rate/config tests pass at 97 percent subsystem
-  coverage, 59 final config/object-graph tests pass, the exact migration proof
-  and real API E2E pass. AUTH-05 and later chunks remain inactive.
+  coverage, 59 final config/object-graph tests pass, and the exact migration
+  proof and real API E2E pass. Final GitHub Backend passed 937 tests at 82.15
+  percent global coverage and 91.07 percent artifact-foundation coverage.
+  AUTH-05 and later chunks remain inactive.
 - Parallel initiative: `WS-QUAL-001-01B2` is paused at the user's direction so
   AUTH receives the laptop's test capacity. Its last official whole-app result
   remains `6466/8159` statements (`79.249908%`); no replacement evidence exists.
