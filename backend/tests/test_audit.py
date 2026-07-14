@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from pathlib import Path
 from uuid import UUID, uuid4
+from collections.abc import Mapping
+import json
 
 from alembic import command
 from alembic.config import Config
 from pydantic import ValidationError
 import pytest
-from sqlalchemy import text
+from sqlalchemy import delete, text
 from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
@@ -19,6 +21,25 @@ from app.modules.audit.schemas import (
 )
 from app.modules.audit.service import AuditService
 from app.modules.tasks.models import AuditEvent
+
+
+def _assert_value_not_retained(value: object, forbidden: str, seen: set[int] | None = None) -> None:
+    """Traverse public exception state and prove rejected input is absent."""
+    seen = seen or set()
+    if id(value) in seen:
+        return
+    seen.add(id(value))
+    if isinstance(value, str):
+        assert forbidden not in value
+    elif isinstance(value, BaseException):
+        for item in (value.args, vars(value), value.__cause__, value.__context__):
+            _assert_value_not_retained(item, forbidden, seen)
+    elif isinstance(value, Mapping):
+        for key, item in value.items():
+            _assert_value_not_retained((key, item), forbidden, seen)
+    elif isinstance(value, (list, tuple, set)):
+        for item in value:
+            _assert_value_not_retained(item, forbidden, seen)
 
 
 @pytest.fixture
@@ -36,28 +57,41 @@ def audit_database_env(postgres_database_url: str, migration_lock) -> str:
 async def audit_factory(audit_database_env: str):
     """Provide independent sessions over the isolated migrated database."""
     engine = create_async_engine(audit_database_env)
+    async with engine.connect() as connection:
+        existing = set(
+            (
+                await connection.execute(
+                    text("select id from audit_events where event_domain = 'authority'")
+                )
+            ).scalars()
+        )
     try:
         yield async_sessionmaker(engine, expire_on_commit=False)
     finally:
         async with engine.begin() as connection:
-            await connection.execute(
-                text("lock table audit_events in access exclusive mode")
-            )
-            await connection.execute(
-                text(
-                    "alter table audit_events disable trigger "
-                    "audit_events_reject_update_delete"
+            created = (
+                set(
+                    (
+                        await connection.execute(
+                            text("select id from audit_events where event_domain = 'authority'")
+                        )
+                    ).scalars()
                 )
+                - existing
             )
-            await connection.execute(
-                text("delete from audit_events where event_domain = 'authority'")
-            )
-            await connection.execute(
-                text(
-                    "alter table audit_events enable trigger "
-                    "audit_events_reject_update_delete"
+            if created:
+                await connection.execute(text("lock table audit_events in access exclusive mode"))
+                await connection.execute(
+                    text(
+                        "alter table audit_events disable trigger audit_events_reject_update_delete"
+                    )
                 )
-            )
+                await connection.execute(delete(AuditEvent).where(AuditEvent.id.in_(created)))
+                await connection.execute(
+                    text(
+                        "alter table audit_events enable trigger audit_events_reject_update_delete"
+                    )
+                )
         await engine.dispose()
 
 
@@ -77,11 +111,27 @@ def _authority_input(event_type: AuthorityEventType, **overrides) -> AuthorityAu
 
 
 def test_authority_input_rejects_unbounded_or_inconsistent_evidence() -> None:
-    with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
-        _authority_input(
-            AuthorityEventType.SENSITIVE_AUTHORIZATION_ALLOWED,
-            raw_token="must-never-enter-evidence",
-        )
+    secret = "secret-bearer-value"
+    payload = _authority_input(AuthorityEventType.SENSITIVE_AUTHORIZATION_ALLOWED).model_dump(
+        mode="json"
+    ) | {"raw_token": secret}
+    constructors = (
+        lambda: AuthorityAuditEventInput(**payload),
+        lambda: AuthorityAuditEventInput.model_validate(payload),
+        lambda: AuthorityAuditEventInput.model_validate_json(json.dumps(payload)),
+    )
+    for constructor in constructors:
+        with pytest.raises(TypeError, match="unexpected authority audit fields") as caught:
+            constructor()
+        _assert_value_not_retained(caught.value, secret)
+    for patch in (
+        {"actor_ref_kind": ActorReferenceKind.LEGACY_ACTOR, "actor_ref": "provider@example.com"},
+        {"before_facts": {"status": "eyJ.raw.token"}},
+        {"before_facts": {"decision_code": "https://issuer.example/private"}},
+        {"reason": "See https://issuer.example/private"},
+    ):
+        with pytest.raises(ValidationError):
+            _authority_input(AuthorityEventType.SENSITIVE_AUTHORIZATION_ALLOWED, **patch)
     with pytest.raises(ValidationError, match="reference fields must be paired"):
         _authority_input(
             AuthorityEventType.SENSITIVE_AUTHORIZATION_ALLOWED,
@@ -110,6 +160,16 @@ def test_authority_input_rejects_unbounded_or_inconsistent_evidence() -> None:
         )
     with pytest.raises(ValidationError, match="invalidation evidence"):
         _authority_input(AuthorityEventType.AUTHORITY_INVALIDATION_REQUESTED)
+    event_id = uuid4()
+    with pytest.raises(ValidationError, match="own event"):
+        _authority_input(
+            AuthorityEventType.AUTHORITY_INVALIDATION_REQUESTED,
+            event_id=event_id,
+            permission_id=None,
+            invalidation_cause_event_id=event_id,
+            invalidation_target_kind="actor",
+            invalidation_target_ref=str(uuid4()),
+        )
 
 
 async def test_authority_writer_persists_typed_privacy_neutral_events(audit_factory) -> None:
@@ -139,8 +199,7 @@ async def test_authority_writer_persists_typed_privacy_neutral_events(audit_fact
     async with audit_factory() as session:
         service = AuditService(session)
         stored = [
-            await service.add_authority_event(value)
-            for value in (allowed, denied, invalidation)
+            await service.add_authority_event(value) for value in (allowed, denied, invalidation)
         ]
         await session.commit()
 
@@ -201,6 +260,60 @@ async def test_authority_event_rollback_leaves_no_row(audit_factory) -> None:
         await session.rollback()
     async with audit_factory() as session:
         assert await session.get(AuditEvent, str(value.event_id)) is None
+
+
+async def test_authority_invalidation_requires_an_existing_authority_cause(audit_factory) -> None:
+    legacy_id = str(uuid4())
+    invalidation = _authority_input(
+        AuthorityEventType.AUTHORITY_INVALIDATION_REQUESTED,
+        permission_id=None,
+        invalidation_cause_event_id=uuid4(),
+        invalidation_target_kind="actor",
+        invalidation_target_ref=str(uuid4()),
+    )
+    async with audit_factory() as session:
+        with pytest.raises(ValueError, match="existing authority event"):
+            await AuditService(session).add_authority_event(invalidation)
+        await AuditRepository(session).add_audit_event(
+            AuditEvent(
+                id=legacy_id,
+                entity_type="task",
+                entity_id=str(uuid4()),
+                event_type="task_created",
+                actor_id="legacy",
+                external_subject="opaque",
+                external_issuer="https://issuer.test",
+                actor_roles=[],
+                claim_snapshot={},
+                auth_source="verified_token",
+                is_dev_auth=False,
+                event_payload={},
+            )
+        )
+        invalidation.invalidation_cause_event_id = UUID(legacy_id)
+        with pytest.raises(ValueError, match="existing authority event"):
+            await AuditService(session).add_authority_event(invalidation)
+        assert await session.get(AuditEvent, str(invalidation.event_id)) is None
+
+
+async def test_legacy_repository_rejects_unvalidated_authority_rows(audit_factory) -> None:
+    raw = AuditEvent(
+        id=str(uuid4()),
+        entity_type="actor",
+        entity_id=str(uuid4()),
+        event_type="SensitiveAuthorizationAllowed",
+        actor_id="provider@example.com",
+        actor_roles=[],
+        claim_snapshot={},
+        auth_source="local_authority",
+        is_dev_auth=False,
+        event_payload={},
+        event_domain="authority",
+    )
+    async with audit_factory() as session:
+        with pytest.raises(ValueError, match="typed audit service"):
+            await AuditRepository(session).add_audit_event(raw)
+        assert raw not in session
 
 
 async def test_database_rejects_malformed_and_mutated_audit_rows(audit_factory) -> None:
@@ -269,3 +382,58 @@ async def test_database_rejects_malformed_and_mutated_audit_rows(audit_factory) 
                 {"id": str(uuid4()), "entity_id": str(uuid4())},
             )
         await session.rollback()
+        insert = text(
+            "insert into audit_events "
+            "(id, entity_type, entity_id, event_type, actor_id, actor_roles, claim_snapshot, "
+            "auth_source, is_dev_auth, event_payload, event_domain, event_version, actor_ref_kind, "
+            "request_id, correlation_id, permission_id, before_facts) values "
+            "(:id, 'actor', :entity_id, 'SensitiveAuthorizationAllowed', :actor_id, '[]', '{}', "
+            "'local_authority', false, '{}', 'authority', 1, :actor_kind, :request_id, "
+            ":correlation_id, 'actor.manage', cast(:facts as json))"
+        )
+        for actor_kind, actor_id, facts in (
+            ("legacy_actor", "provider@example.com", "{}"),
+            (
+                "system_principal",
+                "workstream:system:test",
+                '{"decision_code":"https://issuer.test"}',
+            ),
+            ("system_principal", "workstream:system:test", '{"status":"eyJ.raw.token"}'),
+        ):
+            with pytest.raises(IntegrityError):
+                await session.execute(
+                    insert,
+                    {
+                        "id": str(uuid4()),
+                        "entity_id": str(uuid4()),
+                        "actor_id": actor_id,
+                        "actor_kind": actor_kind,
+                        "request_id": str(uuid4()),
+                        "correlation_id": str(uuid4()),
+                        "facts": facts,
+                    },
+                )
+            await session.rollback()
+        invalidation_insert = text(
+            "insert into audit_events (id, entity_type, entity_id, event_type, actor_id, "
+            "actor_roles, claim_snapshot, auth_source, is_dev_auth, event_payload, event_domain, "
+            "event_version, actor_ref_kind, request_id, correlation_id, invalidation_cause_event_id, "
+            "invalidation_target_kind, invalidation_target_ref) values (:id, 'actor', :entity_id, "
+            "'AuthorityInvalidationRequested', 'workstream:system:test', '[]', '{}', "
+            "'local_authority', false, '{}', 'authority', 1, 'system_principal', :request_id, "
+            ":correlation_id, :cause_id, 'actor', :target_ref)"
+        )
+        for cause_id in (str(uuid4()), legacy_id):
+            with pytest.raises(IntegrityError):
+                await session.execute(
+                    invalidation_insert,
+                    {
+                        "id": str(uuid4()),
+                        "entity_id": str(uuid4()),
+                        "request_id": str(uuid4()),
+                        "correlation_id": str(uuid4()),
+                        "cause_id": cause_id,
+                        "target_ref": str(uuid4()),
+                    },
+                )
+            await session.rollback()
