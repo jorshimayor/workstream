@@ -321,6 +321,15 @@ class Rule:
 
 RULES = (
     Rule(
+        "STALE_AWS_RUNTIME_NO_LIST",
+        "foundation",
+        re.compile(
+            r"\bRuntime credentials\b[^.!?\n]{0,180}"
+            r"\b(?:cannot|must not|do not)\b[^.!?\n]{0,80}\blist\b",
+            re.IGNORECASE,
+        ),
+    ),
+    Rule(
         "AMBIGUOUS_S3_ADAPTER_NAME",
         "foundation",
         re.compile(r"\bS3ArtifactStore\b"),

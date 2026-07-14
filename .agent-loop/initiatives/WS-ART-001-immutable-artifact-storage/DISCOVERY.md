@@ -99,8 +99,10 @@ job is eventually published even if the first broker call fails.
 - The S3 endpoint is trusted configuration. Production requires HTTPS and a
   private bucket; localhost HTTP is allowed only in local/test MinIO.
 - No public bucket, custom-domain cache, or client-visible object key is used.
-- Runtime credentials are bucket/prefix/action scoped and cannot delete, list,
-  copy, or administer provider configuration.
+- Runtime credentials are bucket/prefix/action scoped. They cannot delete,
+  copy, or administer provider configuration. AWS has bucket-level
+  `s3:ListBucket` only so missing `HeadObject` can return 404; the port and
+  application expose and call no object-list operation.
 - Production release evidence proves AWS public-access controls, lifecycle
   safety, and anonymous-read denial.
 

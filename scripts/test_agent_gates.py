@@ -1533,6 +1533,24 @@ def test_stale_artifact_contracts_enforce_aws_first_v01() -> None:
         "stale_artifact_contracts_aws_first",
         "scripts/check_stale_artifact_contracts.py",
     )
+    discovery_path = (
+        ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/"
+        "DISCOVERY.md"
+    )
+    assert gate.scan_text(
+        discovery_path,
+        "Runtime credentials are scoped and cannot delete, "
+        + "list, or copy.",
+        "foundation",
+    ) == [f"{discovery_path}:1: STALE_AWS_RUNTIME_NO_LIST"]
+    assert gate.scan_text(
+        discovery_path,
+        (
+            "Runtime credentials cannot delete or copy. AWS has s3:ListBucket "
+            "only for missing-key classification; the app calls no list API."
+        ),
+        "foundation",
+    ) == []
     assert gate.scan_text(
         "docs/spec_artifact_storage_service.md",
         "AWS S3 or Cloudflare R2 are supported production providers.",

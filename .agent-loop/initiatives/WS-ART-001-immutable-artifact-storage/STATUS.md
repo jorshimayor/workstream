@@ -56,6 +56,12 @@ bucket, the exact bucket-level permission only for trustworthy 404
 classification, no application object-list operation, fail-closed 403 mapping,
 and mandatory live missing-key proof before activation.
 
+Candidate `acc4476537a61d18f3b416bc2fec3a5d276b58dc` then passed
+security/auth and QA/test, while architecture reported only low risk, but
+senior engineering found one active discovery sentence still claiming runtime
+could not list. All sessions were closed. The current repair aligns discovery
+and adds a deterministic stale-contract rule for that exact contradiction.
+
 The repair closes the raw-port/orchestrator bypass, pre-replica acknowledgement
 gap, namespace first-writer race, caller-assembled quota scope, AWS activation
 and principal boundary, AUTH action-activation ownership, terminal service

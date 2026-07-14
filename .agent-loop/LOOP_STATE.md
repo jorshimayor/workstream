@@ -9,12 +9,12 @@
 - Worktree: `/home/abiorh/flow/workstream`
 - Latest integrated `main` merge commit: `eba7e2b` from PR #118.
 - Status: planning repair only. Candidates `e641588`, `e14376c`, `d2cd73a`,
-  `b5279be`, and `cb1c0dc` passed deterministic gates but failed one or more
-  exact-head required review tracks. The fifth candidate passed senior,
-  architecture, and QA/test but security/auth correctly found that AWS masks a
-  missing `HeadObject` as 403 without bucket-list permission. Every reviewer
-  session was closed and the valid AWS absence-classification finding is being
-  repaired before a new immutable review SHA is created.
+  `b5279be`, `cb1c0dc`, and `acc4476` passed deterministic gates but failed one
+  or more exact-head required review tracks. The sixth candidate's canonical
+  AWS contract was sound, but active discovery still contradicted its exact
+  bucket-list permission. Every reviewer session was closed; the wording and
+  missing stale-contract rule are being repaired before a new immutable review
+  SHA is created.
 - Current gate: finish the bounded repair, rerun deterministic proof, review one
   exact SHA through every required internal track, record evidence/trust bundle,
   then stop for external and human review. No storage runtime implementation is
