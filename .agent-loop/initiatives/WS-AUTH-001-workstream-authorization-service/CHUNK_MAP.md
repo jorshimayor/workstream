@@ -20,7 +20,8 @@ stopped.
 | `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Merged through PR #113 as `05a63c8` |
 | `WS-AUTH-001-05` | Authority Evidence And Idempotency Foundation | L1 | Split before implementation into 05A and 05B |
 | `WS-AUTH-001-05A` | Shared Audit Ownership And Append-Only Authority Evidence | L1 | Merged through PR #115 as `8e1cde6` |
-| `WS-AUTH-001-05B` | Authority Idempotency And Invalidation Foundation | L1 | Inactive pending post-merge memory and separate explicit start |
+| `WS-AUTH-001-CAT` | Action And Resource Catalogue Reconciliation | L1 | Internal review passed; ready PR pending |
+| `WS-AUTH-001-05B` | Authority Idempotency And Invalidation Foundation | L1 | Start signal received; inactive until CAT merge and post-merge memory |
 | `WS-AUTH-001-06` | Canonical Actor Profile And Identity Link | L1 | Proposed |
 | `WS-AUTH-001-07` | Authorization Kernel And Permission Registry | L1 | Proposed |
 | `WS-AUTH-001-08` | Bootstrap And Administrative Role Grants | L1 | Proposed |
@@ -43,6 +44,7 @@ WS-AUTH-001-PLAN
 -> WS-AUTH-001-04A
 -> WS-AUTH-001-04B
 -> WS-AUTH-001-05A
+-> WS-AUTH-001-CAT
 -> WS-AUTH-001-05B
 -> WS-AUTH-001-06
 -> WS-AUTH-001-07
@@ -67,6 +69,9 @@ WS-AUTH-001-PLAN
 - Parent chunk 05 was split before implementation. Chunk 05A owns shared audit
   schema/writer custody and append-only authority evidence; chunk 05B owns
   idempotency and typed invalidation orchestration.
+- The docs-only catalogue reconciliation between 05A and 05B adopts a staged
+  typed action/resource registry for future chunks without changing the merged
+  permission/audit catalogue or starting runtime implementation.
 - Chunk 06 establishes canonical actor resolution while preserving only the
   enumerated non-authoritative legacy workflow-eligibility consumers required
   for intermediate-release operability.
@@ -101,6 +106,7 @@ The first 05A implementation review proved the original numeric ceiling
 incompatible with readable typed/database privacy parity. Repaired 05A contract
 review passed at `7cc6058`; the user subsequently replaced the line cap with
 the semantic AUTH-05A boundary. Required reviews and checks passed, and explicit
-human approval merged PR #115 as `8e1cde6` on 2026-07-14. Post-merge memory is
-active. 05B remains inactive pending a separate explicit user start. Do not
-start AUTH-06 or POL-002-04.
+human approval merged PR #115 as `8e1cde6` on 2026-07-14, followed by merged
+post-merge memory. The user has now given the AUTH-05B start signal; 05B remains
+inactive only until `WS-AUTH-001-CAT` merges and its post-merge memory is
+recorded. Do not start AUTH-06 or POL-002-04.

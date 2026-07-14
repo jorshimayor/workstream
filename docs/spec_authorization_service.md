@@ -174,8 +174,72 @@ audit.read
 audit.export
 ```
 
+These are 52 approved authorization identifiers. AUTH-05A's current typed and
+PostgreSQL audit registry accepts 49; the three approved Operator recovery
+identifiers `operations.task.start_override`,
+`operations.submission_gate.repair`, and `operations.checker.retry` are reserved
+planned metadata and cannot become active actions until AUTH-13/14 add matching
+typed/SQL audit parity with upgrade, downgrade, and preserved-history proof.
+
 Adding a permission requires a specification/ADR update and human approval.
 Routers cannot invent identifiers or evaluate grant unions.
+
+### Action And Resource Registration
+
+The permission catalog is consumed through a closed, typed action registry.
+Each active action definition has its own stable `ActionId` and binds one
+approved `PermissionId` to:
+
+- one canonical authorization target resource type;
+- the rule for resolving that target, including the existing parent or `system`
+  target used when the requested operation creates a new resource;
+- the allowed human or service principal class and authority-candidate sources;
+- registered global, resource, ownership, assignment, separation-of-duties, and
+  lifecycle guards; and
+- the closed, typed resource facts required by each guard; and
+- whether authority must be revalidated inside the committing transaction.
+
+Multiple closed actions may map to one approved broad permission while having
+different canonical targets and guards. For example, create and update actions
+may share an approved management permission but target an existing parent and
+an existing child respectively. Routes declare `ActionId`, never an arbitrary
+permission/target pair. Splitting a broad permission into new permission tokens
+still requires the separate approval and migration rule above.
+
+The registry does not own domain persistence or state transitions. Feature
+repositories return their domain records, and feature application services or
+feature-owned loaders compose the bounded `ResourceContext`. Loader
+implementations may be registered at the application composition root, but the
+authorization module must not duplicate feature queries or import a parallel
+resource repository. Resource contexts use closed per-resource variants rather
+than a free-form attribute bag. Registration rejects undeclared facts, and
+authorization fails closed when a required fact is absent or has the wrong
+type. Request bodies, query values, and path combinations remain untrusted
+hints; canonical parent, project, owner, assignment, and state facts come from
+PostgreSQL.
+
+Each protected FastAPI route and asynchronous command declares one primary
+registered action. That declaration selects the authorization target and
+mandatory guards; it does not replace domain invariants or permit a route-local
+secondary policy. Internal jobs declare fixed Workstream service authority and
+never serialize a human bearer token as executable authority. Collection
+actions authorize and filter against their canonical parent scope before
+counts, cursors, facets, or distinct values are computed.
+
+Registration and completeness are staged with the approved chunk map. Chunk 07
+introduces the types and registry. Reserved action metadata contains only the
+stable `ActionId`, approved `PermissionId`, owning specification/chunk, and
+`planned` availability; it is not executable and does not predefine a
+foreign-domain target, facts, or guards. Every route-owning chunk from 07
+through 15 may promote an action to active only when its owning domain contract,
+feature-owned resource composition, surface declaration, and behavior tests
+exist. Each such chunk generates a manifest-delta proof for every surface it
+migrates. Chunk 16 aggregates and verifies the complete route/command manifest
+rather than first discovering missing declarations there.
+Resources and transitions owned by WS-REV, WS-CON, or the artifact-storage
+specification are not invented by AUTH; their owning specification must first
+approve the resource facts and operation before a corresponding permission is
+added under the approval rule above.
 
 ## Authorization Algorithm
 
@@ -196,6 +260,15 @@ For every protected operation:
 
 Authorization decisions are request-scoped and are not cached across requests.
 List filtering occurs before counts and pagination cursors.
+
+`AuthorizationDecision` carries the stable `ActionId` in addition to permission,
+resource, scope, matched authority, and denial information. The action identifier
+is included in bounded logs/metrics and every action-based allowed or denied
+authority event emitted by AUTH-07 or a later chunk. AUTH-07 adds nullable
+historical storage and exact typed/SQL registry parity; legacy rows remain null,
+while new action-based decision events must contain a registered identifier. A
+new action identifier requires the same approved typed/PostgreSQL registry and
+migration treatment as a permission.
 
 ## Separation And Recovery Rules
 
@@ -261,6 +334,7 @@ Authority events are append-only and include, when applicable:
 - schema/event version;
 - request and correlation identifiers;
 - acting and target actor references;
+- registered action identifier for action-based decisions;
 - matched grant and permission;
 - exact project/resource reference;
 - required reason;
@@ -345,6 +419,17 @@ Each owning chunk must prove:
   contract drill;
 - no test skip, xfail, assertion weakening, dependency override, fabricated
   authorization context, or direct grant insertion as product proof.
+- every protected route and asynchronous command migrated by that chunk has one
+  primary registered action declaration, a canonical target derived through its
+  owning feature boundary, and allow/deny tests for its mandatory guards.
+
+Final chunk 16 proof includes a generated `/api/v1` route and asynchronous
+command manifest. It fails closed on an unknown permission or resource type, a
+duplicate or missing primary declaration, or an unregistered guard. The manifest
+is conformance evidence, not a second policy source.
+
+Each activating chunk must also prove its authorization-subsystem changes at or
+above 90 percent coverage and preserve the repository-wide 78 percent baseline.
 
 The final live drill must operate through supported APIs/commands without
 direct database authority edits.

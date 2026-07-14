@@ -2,13 +2,15 @@
 
 ## In Progress
 
-None.
+| Chunk | Title | Risk | Status |
+|---|---|---:|---|
+| `WS-AUTH-001-CAT` | Action And Resource Catalogue Reconciliation | L1 | Internal review passed; ready PR pending |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-05B` | Authority Idempotency And Invalidation Foundation | L1 | Inactive pending post-merge memory merge and separate explicit user start |
+| `WS-AUTH-001-05B` | Authority Idempotency And Invalidation Foundation | L1 | Start signal received; inactive until CAT merge and post-merge memory |
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Paused for AUTH priority; no valid replacement baseline yet |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |

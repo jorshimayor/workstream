@@ -74,6 +74,12 @@ starting WS-POL-002-03 automatically
 - Tokens, raw claims, JWKS bodies, secrets, and unnecessary PII are absent from
   logs, errors, audit, and committed evidence.
 - Table-driven tests cover every permission role/scope allow and deny case.
+- A generated conformance manifest covers every protected `/api/v1` route and
+  asynchronous command with exactly one primary registered action, canonical
+  resource type, and owning feature loader/composer. Unknown or missing
+  permissions, resources, guards, or declarations fail closed; the manifest is
+  evidence generated from the registry and surface declarations, not a second
+  policy source.
 - PostgreSQL tests cover provisioning, grant, final-admin, revocation/command,
   and idempotency races.
 - Live drill proves bootstrap, scoped admin grants, submitter/reviewer grants,
@@ -110,6 +116,10 @@ python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
 python3 scripts/check_internal_review_evidence.py
 (cd backend && .venv/bin/python -m ruff check app tests scripts)
+(cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q \
+  tests/test_authorization.py tests/test_auth.py tests/test_actors.py \
+  tests/test_projects.py tests/test_tasks.py tests/test_checkers.py \
+  --cov=app.modules.authorization --cov-report=term-missing --cov-fail-under=90)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python scripts/api_contract_e2e.py)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python scripts/auth_api_e2e.py)

@@ -69,6 +69,11 @@ token role fallback or authorization pagination after unfiltered counts
   Each role has exact-project allow, cross-project deny, minimal-field,
   concealed-not-found, and pre-filtered count/cursor tests.
 - Canonical project scope is resolved before filtering, counts, and cursors.
+- Every migrated project read/list route declares one primary registered action
+  and its canonical project or collection-parent target; permission strings and
+  secondary role policy do not live in the router.
+- Generated OpenAPI/command manifest-delta tests prove every protected project
+  read/list surface migrated here has exactly one active `ActionId` declaration.
 - ProjectRepository remains the canonical project/guide/source persistence
   query owner and returns domain records. The project application service or a
   feature-owned resource loader composes ResourceContext; persistence does not
@@ -82,6 +87,9 @@ token role fallback or authorization pagination after unfiltered counts
 
 ```bash
 (cd backend && .venv/bin/python -m ruff check app tests scripts)
+(cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q \
+  tests/test_authorization.py tests/test_auth.py tests/test_projects.py \
+  --cov=app.modules.authorization --cov-report=term-missing --cov-fail-under=90)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python scripts/api_contract_e2e.py)
 python3 scripts/check_stale_workstream_wording.py

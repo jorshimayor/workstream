@@ -1,5 +1,17 @@
 # Review Log
 
+## 2026-07-14 - WS-AUTH-001-CAT Internal Review Passed
+
+The proposed action/resource catalogue failed initial repository mapping because
+it claimed unapproved precedence, used `/v1`, conflicted with the merged audit
+registry, and invented cross-domain resources. The rejected root file was
+removed. Only validated rules were adopted through D15 and owning future chunk
+contracts. Repaired review now passes senior engineering, architecture, docs,
+QA/test, security/auth/privacy, and product/ops. Documentation and diff gates
+pass. The ready PR is pending external and explicit human review; AUTH-05B stays
+inactive until this docs-only amendment merges and its post-merge memory/stop
+checkpoint is recorded.
+
 ## 2026-07-14 - WS-AUTH-001-05A Merged
 
 PR #115 merged through explicit human approval as `8e1cde6`. Final GitHub
