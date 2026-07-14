@@ -1,5 +1,181 @@
 # Review Log
 
+## 2026-07-14 - WS-AUTH-001-04B Backend CI Repair
+
+PR #113 Backend reached 82.12 percent repository coverage but failed because
+the final AUTH-04B Alembic test left the shared isolated database at `base`.
+Pytest's CI discovery order then entered `test_api_rate_controls.py` without
+table `api_rate_control_counters`. The owning migration test now restores
+Alembic `head` after its destructive cleanup. The exact failing
+`test_alembic.py -> test_api_rate_controls.py` order is required repair proof;
+no runtime, migration, coverage threshold, or workflow changes are permitted.
+CodeRabbit posted one valid test-deduplication nit, now addressed through a
+transaction-preserving shared insert helper. Its PR-description template
+warning is addressed in the trust bundle; its docstring heuristic is superseded
+by the passing repository-owned 95.8 percent docstring gate.
+
+## 2026-07-14 - WS-AUTH-001-04B Ready PR Published
+
+Ready PR #113 is open at
+`https://github.com/Flow-Research/workstream/pull/113`. GitHub Backend, Agent
+Gates, CodeRabbit, and explicit human review are the current gate. Publication
+is not merge approval; AUTH-05 and artifact runtime remain inactive.
+
+## 2026-07-14 - WS-AUTH-001-04B Internal Review Passed
+
+All required tracks pass final SHA `922778b`; reviewed production SHA is
+`67484b5`. Senior engineering, architecture, docs, reuse, QA/test, CI integrity,
+test delta, security/auth, privacy/data, and product/ops found no remaining
+blocker. The final test-only proof instruments the BaseSettings boundary and
+would fail the prior recoverable-`SecretStr` implementation. Evidence and the
+PR trust bundle are recorded under the AUTH initiative reviews directory.
+
+Ready PR publication and external GitHub checks are the current gate. AUTH-05,
+artifact runtime, and all route attachments remain inactive.
+
+## 2026-07-14 - WS-AUTH-001-04B Exact-Head Review Repair
+
+Required implementation review at `8f54fd9` passed QA, CI integrity, and test
+delta with 72 fresh isolated PostgreSQL tests. Senior engineering and security
+rejected PR publication because unrelated Pydantic validation errors could
+retain the raw rate-control secret through structured error APIs. Security also
+found that the canonical inactive artifact plan did not yet enforce D14's
+central authorization prerequisite for adapter I/O.
+
+The bounded repair removes the secret from Pydantic's public field graph before
+all structured validation while preserving constructor, environment, and dotenv
+loading. Regression tests inspect `errors()` and `json()` and cover
+`model_validate`. The user-directed artifact ownership clarification amends only
+the canonical ART plan and inactive chunk contract: mechanics may be developed
+independently, but production dispatch requires AUTH-07 permissions, AUTH-09
+service principals, exact resource authorization evidence, and never derives
+authority from a credential or receipt. No artifact runtime or AUTH-05 behavior
+is activated.
+
+Initial repair evidence is 78 migration-inclusive isolated PostgreSQL behavior tests,
+69 focused rate-control/config tests at 98 percent subsystem coverage, and the
+real API contract E2E. Ruff, docstring coverage, stale authorization/artifact/
+Workstream wording, Markdown links, loop memory, diff integrity, and all 36
+agent-gate tests pass. The repaired production delta is 465 non-comment lines,
+below the 500-line hard stop. Exact-SHA internal re-review is the current gate.
+
+Exact-head review of `0b9d0fe` passed QA, CI integrity, and test delta, but
+senior engineering and security found the same retention class in
+`model_validate_json` and `model_validate_strings`; malformed JSON could also
+retain its complete document. Senior engineering additionally found that the
+manual secret source did not preserve BaseSettings' supported layered-dotenv
+precedence. The final bounded repair covers those public entry points, rejects
+malformed JSON with a constant non-retaining error, and resolves layered dotenv
+files in order. Exact-SHA re-review remains mandatory before publication.
+
+Final repair evidence adds 77 focused behavior tests at 98 percent subsystem
+coverage, 56 direct configuration tests, and the exact AUTH-04B migration test
+passing against a fresh isolated database. The production delta is 480
+non-comment lines and remains below the 500-line hard stop. All static gates
+continue to pass.
+
+Exact-head review of `629d10c` found that rendered redaction was still weaker
+than object-graph non-retention: Pydantic-version-dependent error input could
+retain a recoverable `SecretStr`, malformed JSON remained reachable through
+`JSONDecodeError.__context__`, and non-ASCII rejection chained a
+`UnicodeEncodeError` containing the original key. The final privacy repair
+passes only `None` into Pydantic, assigns the private validated key after
+successful validation, and raises constant parse/decode failures outside catch
+scopes. Tests traverse structured errors and complete exception cause/context
+graphs rather than checking rendered output alone.
+
+The object-graph repair passes 77 focused behavior tests at 97 percent
+subsystem coverage. The final production delta is 480 non-comment lines, below
+the 500-line hard stop.
+
+QA passed runtime and CI integrity at `67484b5` but rejected the test proof:
+the recursive helper did not traverse `ValidationError.errors()`, so rendered
+redaction could hide a recoverable `SecretStr` on another Pydantic version. The
+test-only repair now traverses the actual structured error objects and
+instruments the `BaseSettings` boundary for mapping, JSON, and string-mapping
+validation, asserting that only `None` crosses into Pydantic. This
+deterministically fails the prior implementation that forwarded `SecretStr`.
+
+## 2026-07-13 - WS-AUTH-001-04B Repaired Contract Passed
+
+Implementation candidate `62dd18e` failed required exact-head review. Valid
+findings were structured Pydantic secret retention, unpaired-surrogate identity
+500s, a concurrent downgrade custody race, unsynchronized database tests,
+incomplete downstream-rollback/session-open/prune/database-clock evidence, no
+representative 0016 artifact row, and tests mistakenly placed in the prior
+AUTH-04A file instead of the contract-owned rate-control file. One bounded
+repair cycle moves the tests, closes each runtime/migration issue, adds exact
+proof, and requires full-suite coverage plus exact-head re-review.
+
+The repository-wide coverage run for repair head `2d70581` was interrupted by
+the host shutdown on 2026-07-14 and produced no valid result. Under the current
+repository rule and the chunk's laptop-capacity clause, local evidence must
+prove the materially changed AUTH-04B subsystem remains at least 90 percent;
+GitHub CI owns the unchanged repository-wide 78 percent gate. No interrupted
+result is treated as evidence.
+
+Required senior engineering, architecture, security/data, QA/test, CI-integrity,
+test-delta, product/ops, docs, and reuse review passed exact repaired-contract
+head `b5dceb1`. The second repair closed optional-secret, missing-database,
+lock-order, oversized-identity, exact-setting/constraint, same-clock timestamp,
+and cross-replica rotation gaps without runtime edits.
+
+Bounded AUTH-04B implementation is authorized under the 350-line checkpoint and
+500-line hard stop. Named dependencies remain unattached; AUTH-05 and all
+product authority changes remain inactive.
+
+`backend/tests/test_auth.py` was added as a test-only scope amendment after its
+canonical-verification consumer allowlist correctly detected the new unattached
+rate dependency. Only that expected inventory may change; auth runtime, routes,
+compatibility behavior, and authority remain out of scope.
+
+The implementation candidate passed 93 owned tests with 99 percent aggregate
+coverage across config, dependency, model, repository, and service modules.
+Real PostgreSQL proofs passed for atomic concurrency, durable denial, expiry,
+saturation, pruning, exact schema, and guarded downgrade. The real API E2E and
+all stale-wording, authorization-doc, artifact-contract, link, loop-state,
+ruff, and diff checks pass. Required implementation review is the current gate.
+
+The first production pass reached 408 changed non-comment lines. The mandatory
+350-line checkpoint inspected every production path and froze scope to the
+approved config, unattached dependencies, model, repository, service, model
+registration, and `0017` migration. Ninety-two lines remain before the hard
+stop; tests, docs, and evidence do not count.
+
+## 2026-07-13 - WS-AUTH-001-04B Contract Repair Required
+
+Required L1 preimplementation review rejected activation head `5ed410d` before
+any runtime edit. The contract did not bind exact HMAC/secret bytes, overflow-
+safe SQL, database-time boundaries, dedicated commit ownership, dependency
+errors, real concurrency counts, transactional downgrade refusal, or expired
+pseudonymous-row retention.
+
+The repaired contract specifies canonical Base64 secret material, exact framed
+HMAC input and bounds, `BYTEA` persistence guarded to 32 bytes, one clock-bound saturating
+upsert, dedicated committed sessions, canonical 429/503 behavior, bounded
+pruning plus operator cleanup, exact migration custody, real-ASGI/concurrency
+proof, per-file 90 percent coverage, and additive test-delta evidence. Runtime
+remains gated on exact-head re-review.
+
+First repaired head `78e2170` resolved the original security/data ambiguities
+but failed re-review on optional-secret syntax, missing-database mapping,
+prune-before-upsert lock ordering, exact setting/constraint names, same-clock
+`updated_at`, and local oversized-identity handling. This second repair is the
+final in-place contract cycle for those classes; another failure stops and
+replans before runtime code.
+
+## 2026-07-13 - WS-AUTH-001-04B Started
+
+PR #112 merged AUTH-04A post-merge memory to `main` as `7749f54` after Backend,
+Agent Gates, CodeRabbit, required internal review, and explicit human approval
+passed. The user then explicitly started `WS-AUTH-001-04B` in the isolated
+worktree `/home/abiorh/flow/workstream-auth-001-04b` on branch
+`codex/ws-auth-001-04b-postgres-rate-controls`.
+
+AUTH-04B is L1/P1 authorization infrastructure. Its existing bounded contract
+must pass required preimplementation review before runtime edits. AUTH-05,
+POL-002-04, and QA implementation remain inactive.
+
 ## 2026-07-13 - WS-AUTH-001-04A Merged
 
 PR #111 merged `WS-AUTH-001-04A` to `main` as `90c9a28` after final branch head

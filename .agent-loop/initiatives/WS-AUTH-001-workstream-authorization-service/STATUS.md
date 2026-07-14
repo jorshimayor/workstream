@@ -34,7 +34,14 @@ required tracks pass on production SHA `cdcaf77`, and final test-only head
 logging-state behavior-test repairs plus lifecycle evidence.
 Backend, Agent Gates, and CodeRabbit passed on final branch head `36c4aa5`, then
 explicit human approval merged PR #111 to `main` as `90c9a28` on 2026-07-13.
-AUTH-04A post-merge memory is active; AUTH-04B remains inactive.
+AUTH-04A post-merge memory merged through PR #112 as `7749f54`. The user then
+explicitly started AUTH-04B; its required L1 preimplementation review rejected
+the first activated contract before runtime edits. The second
+repaired contract passed all required tracks at `b5dceb1`; bounded runtime
+implementation and deterministic evidence are complete, and the candidate is
+internally approved at final SHA `922778b`; reviewed production SHA is
+`67484b5`. Ready PR #113 is open; GitHub checks, CodeRabbit, and explicit human
+review are the current gate.
 
 ## Active planning chunk
 
@@ -42,12 +49,12 @@ None.
 
 ## Active implementation chunk
 
-None.
+`WS-AUTH-001-04B` - PostgreSQL Rate Controls. Internal review passed; AUTH-05
+remains inactive.
 
 ## Current implementation branch
 
-None. Post-merge memory uses `codex/ws-auth-001-04a-post-merge-memory` and makes
-no product implementation change.
+`codex/ws-auth-001-04b-postgres-rate-controls`.
 
 ## Chunk status
 
@@ -59,7 +66,7 @@ no product implementation change.
 | `WS-AUTH-001-03` | Merged | `codex/ws-auth-001-03-legacy-actor-classification` | #109 | Merged as `f06532e`; reviewed code `8c5334c`; final branch head `43ffbfe`. |
 | `WS-AUTH-001-04` | Split | `codex/ws-auth-001-04-request-api-controls` | - | Parent split before runtime implementation. |
 | `WS-AUTH-001-04A` | Merged | `codex/ws-auth-001-04-request-api-controls` | #111 | Merged as `90c9a28`; production review `cdcaf77`; final branch head `36c4aa5`. |
-| `WS-AUTH-001-04B` | Inactive | - | - | PostgreSQL rate controls; requires 04A merge/memory and separate explicit start. |
+| `WS-AUTH-001-04B` | External review | `codex/ws-auth-001-04b-postgres-rate-controls` | #113 | All required tracks pass final `922778b`; production review `67484b5`. |
 | `WS-AUTH-001-05` | Proposed | - | - | Authority evidence and idempotency foundation. |
 | `WS-AUTH-001-06` | Proposed | - | - | Canonical actor profile and identity link. |
 | `WS-AUTH-001-07` | Proposed | - | - | Authorization kernel and permissions. |
@@ -75,12 +82,15 @@ no product implementation change.
 
 ## Blockers
 
-No active implementation blocker because no AUTH product chunk is active.
-AUTH-04B may start only after this memory update merges and the user gives a
-separate explicit start signal. It later owns migration `0017`, following the
+No external blocker. AUTH-04B internal review passed under its repaired L1
+contract. It owns migration `0017`, following the
 now-owned `0016` prefix on current main. Non-test
 operators must later supply explicit classification evidence rather than
 inferred kinds before the owning canonical actor migration.
+
+AUTH-04B review evidence and its PR trust bundle are recorded at
+`reviews/WS-AUTH-001-04B-internal-review-evidence.md` and
+`reviews/WS-AUTH-001-04B-pr-trust-bundle.md`.
 
 AUTH-04A review evidence and its PR trust bundle are recorded at
 `reviews/WS-AUTH-001-04A-internal-review-evidence.md` and

@@ -187,3 +187,28 @@ until the shared convention merges, and must then remove the old AUTH factory
 entry point and migrate all callers in one clean cut. It must be planned and
 reviewed before implementation; no compatibility factory alias, duplicate
 verifier, service locator, or public login/session API may be introduced.
+
+## D14: Artifact operations use centralized authorization
+
+Status: accepted by the user on 2026-07-14.
+
+The artifact subsystem owns upload/storage, retention, replication, integrity,
+and reconciliation mechanics behind the shared object-storage adapter
+foundation. It does not own or infer product authority. Every human-initiated
+or internal-service artifact operation must be authorized by Workstream's one
+central authorization kernel using an operation-specific permission and the
+exact project/resource scope before an adapter performs external I/O.
+
+Human callers resolve through canonical `ActorProfile`, identity-link status,
+and the applicable administrative or exact-project contributor grant. Artifact
+storage, retention, and reconciliation services authenticate as explicitly
+provisioned service principals with registered system permissions; they are not
+Contributors and never receive fabricated human roles. Upload, read, retain,
+release/delete, replicate, verify, and reconcile authority are distinct and do
+not imply one another.
+
+The authorization decision and operation receipt must share bounded request/
+correlation evidence, resource identity, operation, and service principal.
+Receipts prove that storage work occurred; they do not create authority. Exact
+permission tokens and route ownership are locked in the owning AUTH cutover
+chunk contracts. AUTH-04B adds no artifact permission or route attachment.

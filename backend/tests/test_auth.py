@@ -1203,10 +1203,11 @@ def test_legacy_compatibility_dependency_has_fixed_consumer_allowlist() -> None:
     }
     assert {
         path for path, source in sources.items() if "get_auth_verification_result" in source
-    } == {"api/deps/auth.py"}
+    } == {"api/deps/api_controls.py", "api/deps/auth.py"}
     assert {path for path, source in sources.items() if "AuthVerificationResult" in source} == {
         "adapters/auth/dev.py",
         "adapters/auth/flow.py",
+        "api/deps/api_controls.py",
         "api/deps/auth.py",
         "core/auth.py",
         "interfaces/auth.py",

@@ -17,7 +17,7 @@ stopped.
 | `WS-AUTH-001-03` | Legacy Actor Classification Preflight | L1 | Merged through PR #109 as `f06532e` |
 | `WS-AUTH-001-04` | Request, Error, And API Control Foundation | L1 | Split before implementation into 04A and 04B |
 | `WS-AUTH-001-04A` | Request And Error Context | L1 | Merged through PR #111 as `90c9a28` |
-| `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Inactive pending 04A memory merge and separate explicit start |
+| `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Internal review passed; PR #113 in external review |
 | `WS-AUTH-001-05` | Authority Evidence And Idempotency Foundation | L1 | Proposed |
 | `WS-AUTH-001-06` | Canonical Actor Profile And Identity Link | L1 | Proposed |
 | `WS-AUTH-001-07` | Authorization Kernel And Permission Registry | L1 | Proposed |
@@ -68,6 +68,11 @@ WS-AUTH-001-PLAN
 - Chunk 07 provides the single authorization engine before grant APIs.
 - Chunks 08-10 establish local grant truth before product cutover.
 - Chunks 11-15 migrate bounded complete product/system surfaces.
+- Artifact upload, read, retention, release/delete, replication, integrity, and
+  reconciliation remain mechanically owned by the artifact subsystem but must
+  receive centralized AUTH decisions. Chunk 07 owns the permission-registry
+  boundary, chunk 09 owns artifact service principals, the applicable 11-15
+  resource cutovers attach enforcement, and chunk 16 proves no bypass remains.
 - Chunk 16 proves the complete initiative; it does not backfill missing audit
   or idempotency evidence.
 - `WS-POL-002-03` merged separately through PR #90 as `a7aa474`. This initiative
@@ -79,8 +84,9 @@ WS-AUTH-001-PLAN
 
 AUTH-03 post-merge memory merged through PR #110 as `1864867`. The user
 explicitly started parent AUTH-04. Required plan review split it before runtime
-implementation. AUTH-04A merged through PR #111 as `90c9a28` after required
-internal review, Backend, Agent Gates, CodeRabbit, and explicit human approval
-passed. Its post-merge memory update is the current gate.
-Do not start AUTH-04B, AUTH-05, or POL-002-04; each retains its separate start
-signal and prerequisites.
+implementation. AUTH-04A merged through PR #111 as `90c9a28`, and its
+post-merge memory merged through PR #112 as `7749f54`. The user explicitly
+started AUTH-04B. Its repaired contract passed at `b5dceb1`; bounded
+implementation and all required internal review tracks pass final SHA
+`922778b`. Ready PR #113 is in external review. Stop; do not start AUTH-05 or
+POL-002-04.

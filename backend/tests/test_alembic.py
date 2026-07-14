@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 import json
 from pathlib import Path
+import threading
+import time
 from uuid import uuid4
 
 import pytest
@@ -290,6 +293,121 @@ def test_artifact_foundation_enforces_immutable_facts_and_guarded_downgrade(
             )
         finally:
             command.downgrade(config, "base")
+
+
+def test_api_rate_control_schema_preserves_domain_and_guards_downgrade(
+    isolated_database_env: str,
+    migration_lock,
+) -> None:
+    """Prove 0017 schema guards, preservation, and transactional downgrade refusal."""
+    project_root = Path(__file__).resolve().parents[1]
+    config = Config(str(project_root / "alembic.ini"))
+    config.set_main_option("script_location", str(project_root / "alembic"))
+    project_id = str(uuid4())
+    artifact_id = str(uuid4())
+    digest = bytes(range(32))
+
+    with migration_lock():
+        try:
+            command.downgrade(config, "base")
+            command.upgrade(config, "0015_post_submit_correction")
+            asyncio.run(_seed_artifact_prior_head(isolated_database_env, project_id))
+            command.upgrade(config, "0016_artifact_domain")
+            before = asyncio.run(
+                _artifact_prior_head_project(isolated_database_env, project_id)
+            )
+            artifact_before = asyncio.run(
+                _seed_and_fetch_0016_artifact(isolated_database_env, artifact_id)
+            )
+
+            command.upgrade(config, "0017_api_controls")
+            after = asyncio.run(
+                _artifact_prior_head_project(isolated_database_env, project_id)
+            )
+            artifact_after = asyncio.run(
+                _fetch_0016_artifact(isolated_database_env, artifact_id)
+            )
+            schema = asyncio.run(_api_rate_control_schema(isolated_database_env))
+            asyncio.run(_assert_api_rate_control_guards(isolated_database_env, digest))
+
+            with pytest.raises(RuntimeError, match="non-empty API rate controls"):
+                command.downgrade(config, "0016_artifact_domain")
+
+            asyncio.run(_clear_api_rate_controls(isolated_database_env))
+            inserted = threading.Event()
+            release_insert = threading.Event()
+            downgrade_started = threading.Event()
+
+            def guarded_downgrade() -> None:
+                downgrade_started.set()
+                command.downgrade(config, "0016_artifact_domain")
+
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                insert_future = pool.submit(
+                    asyncio.run,
+                    _insert_rate_control_until_released(
+                        isolated_database_env,
+                        digest,
+                        inserted,
+                        release_insert,
+                    ),
+                )
+                assert inserted.wait(timeout=5)
+                downgrade_future = pool.submit(guarded_downgrade)
+                assert downgrade_started.wait(timeout=5)
+                time.sleep(0.2)
+                assert downgrade_future.done() is False
+                release_insert.set()
+                insert_future.result(timeout=5)
+                with pytest.raises(RuntimeError, match="non-empty API rate controls"):
+                    downgrade_future.result(timeout=5)
+
+            refused_state = asyncio.run(_api_rate_control_state(isolated_database_env))
+            asyncio.run(_clear_api_rate_controls(isolated_database_env))
+            command.downgrade(config, "0016_artifact_domain")
+            downgraded_state = asyncio.run(
+                _api_rate_control_state(isolated_database_env)
+            )
+            command.upgrade(config, "0017_api_controls")
+        finally:
+            asyncio.run(_clear_api_rate_controls(isolated_database_env))
+            asyncio.run(_truncate_artifact_foundation(isolated_database_env))
+            command.downgrade(config, "base")
+            command.upgrade(config, "head")
+
+    assert after == before
+    assert artifact_after == artifact_before
+    assert schema == {
+        "columns": {
+            "control_scope:character varying:NO",
+            "key_digest:bytea:NO",
+            "window_started_at:timestamp with time zone:NO",
+            "window_expires_at:timestamp with time zone:NO",
+            "request_count:bigint:NO",
+            "updated_at:timestamp with time zone:NO",
+        },
+        "constraints": {
+            "pk_api_rate_control_counters",
+            "ck_api_rate_control_counters_scope_token",
+            "ck_api_rate_control_counters_digest_length",
+            "ck_api_rate_control_counters_request_count",
+            "ck_api_rate_control_counters_window_order",
+        },
+        "indexes": {
+            "pk_api_rate_control_counters",
+            "ix_api_rate_control_counters_window_expires_at",
+        },
+    }
+    assert refused_state == {
+        "revision": "0017_api_controls",
+        "table_exists": True,
+        "row_count": 1,
+    }
+    assert downgraded_state == {
+        "revision": "0016_artifact_domain",
+        "table_exists": False,
+        "row_count": None,
+    }
 
 
 async def _fetch_columns(database_url: str) -> set[str]:
@@ -1702,5 +1820,189 @@ async def _truncate_artifact_foundation(database_url: str) -> None:
                     """
                 )
             )
+    finally:
+        await engine.dispose()
+
+
+async def _api_rate_control_schema(database_url: str) -> dict[str, set[str]]:
+    """Return the exact public schema contract for the rate table."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            columns = (
+                await connection.execute(
+                    text(
+                        "select column_name, data_type, is_nullable "
+                        "from information_schema.columns "
+                        "where table_schema = 'public' "
+                        "and table_name = 'api_rate_control_counters'"
+                    )
+                )
+            ).all()
+            constraints = (
+                await connection.execute(
+                    text(
+                        "select conname from pg_constraint "
+                        "where conrelid = 'api_rate_control_counters'::regclass"
+                    )
+                )
+            ).scalars()
+            indexes = (
+                await connection.execute(
+                    text(
+                        "select indexname from pg_indexes "
+                        "where schemaname = 'public' "
+                        "and tablename = 'api_rate_control_counters'"
+                    )
+                )
+            ).scalars()
+            return {
+                "columns": {
+                    f"{row.column_name}:{row.data_type}:{row.is_nullable}"
+                    for row in columns
+                },
+                "constraints": set(constraints),
+                "indexes": set(indexes),
+            }
+    finally:
+        await engine.dispose()
+
+
+async def _seed_and_fetch_0016_artifact(
+    database_url: str, artifact_id: str
+) -> dict[str, object]:
+    """Seed one representative 0016 row and return its exact persisted value."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(
+                text(
+                    "insert into artifact_contents "
+                    "(id, sha256, byte_count, media_type, normalized_display_name) "
+                    "values (:id, :sha256, 17, 'text/plain', 'rate-migration.txt')"
+                ),
+                {"id": artifact_id, "sha256": "sha256:" + "7" * 64},
+            )
+    finally:
+        await engine.dispose()
+    return await _fetch_0016_artifact(database_url, artifact_id)
+
+
+async def _fetch_0016_artifact(
+    database_url: str, artifact_id: str
+) -> dict[str, object]:
+    """Fetch the representative 0016 artifact-domain row."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            row = (
+                await connection.execute(
+                    text(
+                        "select id, sha256, byte_count, media_type, "
+                        "normalized_display_name from artifact_contents where id = :id"
+                    ),
+                    {"id": artifact_id},
+                )
+            ).mappings().one()
+            return dict(row)
+    finally:
+        await engine.dispose()
+
+
+async def _insert_rate_control_until_released(
+    database_url: str,
+    digest: bytes,
+    inserted: threading.Event,
+    release: threading.Event,
+) -> None:
+    """Hold an uncommitted writer until the downgrade is waiting on its lock."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(
+                text(
+                    "insert into api_rate_control_counters "
+                    "(control_scope, key_digest, window_started_at, window_expires_at, "
+                    "request_count, updated_at) values "
+                    "('first_access', :digest, statement_timestamp(), "
+                    "statement_timestamp() + interval '1 minute', 1, statement_timestamp())"
+                ),
+                {"digest": digest},
+            )
+            inserted.set()
+            assert await asyncio.to_thread(release.wait, 5)
+    finally:
+        await engine.dispose()
+
+
+async def _assert_api_rate_control_guards(database_url: str, digest: bytes) -> None:
+    """Insert one valid counter and reject every malformed direct variant."""
+    engine = create_async_engine(database_url)
+    insert_sql = text(
+        "insert into api_rate_control_counters "
+        "(control_scope, key_digest, window_started_at, window_expires_at, "
+        "request_count, updated_at) values "
+        "(:scope, :digest, statement_timestamp(), "
+        "statement_timestamp() + make_interval(secs => :seconds), "
+        ":count, statement_timestamp())"
+    )
+    valid = {
+        "scope": "first_access",
+        "digest": digest,
+        "seconds": 60,
+        "count": 1,
+    }
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(insert_sql, valid)
+
+        invalid = [
+            {**valid, "scope": "caller_supplied", "digest": bytes([1]) * 32},
+            {**valid, "digest": bytes(31)},
+            {**valid, "digest": bytes([2]) * 32, "count": 0},
+            {**valid, "digest": bytes([3]) * 32, "seconds": 0},
+            valid,
+        ]
+        for values in invalid:
+            with pytest.raises(IntegrityError):
+                async with engine.begin() as connection:
+                    await connection.execute(insert_sql, values)
+    finally:
+        await engine.dispose()
+
+
+async def _api_rate_control_state(database_url: str) -> dict[str, object]:
+    """Return revision, table existence, and row count after migration actions."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            revision = await connection.scalar(text("select version_num from alembic_version"))
+            exists = await connection.scalar(
+                text("select to_regclass('public.api_rate_control_counters') is not null")
+            )
+            count = None
+            if exists:
+                count = await connection.scalar(
+                    text("select count(*) from api_rate_control_counters")
+                )
+            return {
+                "revision": revision,
+                "table_exists": exists,
+                "row_count": count,
+            }
+    finally:
+        await engine.dispose()
+
+
+async def _clear_api_rate_controls(database_url: str) -> None:
+    """Clear rate rows only when the migration table exists."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            exists = await connection.scalar(
+                text("select to_regclass('public.api_rate_control_counters') is not null")
+            )
+            if exists:
+                await connection.execute(text("delete from api_rate_control_counters"))
     finally:
         await engine.dispose()

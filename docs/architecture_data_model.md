@@ -111,6 +111,22 @@ Canonical idempotency records bind operation, actor, request hash, committed
 result, and replay status. Authority invalidation events are written atomically
 with grant/profile/link changes and drive bounded reconciliation.
 
+### API Rate Control Counter
+
+`api_rate_control_counters` is a cross-replica fixed-window control for future
+first-access and authority-management mutations. Its composite key is the
+server-owned `control_scope` plus a 32-byte HMAC-SHA256 `key_digest` derived
+from the exact verified issuer and opaque subject. It stores database-time
+window start/expiry, a saturating `BIGINT` request count, and database-time
+update evidence. It has no actor/profile foreign key or surrogate identifier
+and stores no raw issuer, subject, email, role, token, claim, or network data.
+
+One PostgreSQL upsert atomically inserts, increments, saturates, or resets an
+expired counter using a single statement timestamp. Consumption and bounded
+expired-row pruning commit in a short independent session before a route may
+continue. These counters are abuse controls, not identity, grants, product
+authority, audit events, or a replacement for exact authorization checks.
+
 ### Legacy Migration
 
 Existing external `ActorIdentity.actor_id` UUIDs may become canonical profile

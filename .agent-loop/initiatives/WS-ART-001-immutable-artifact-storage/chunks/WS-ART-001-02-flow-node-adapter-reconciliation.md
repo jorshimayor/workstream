@@ -5,7 +5,9 @@ Parent: `WS-ART-001` | Repository: Workstream | Risk: L1 | SLA: P1
 ## Goal
 
 Implement `FlowNodeAdapter`, metadata-only operation outbox/reconciliation,
-pinned provider delivery, and local integration.
+pinned provider delivery, and local integration. Production dispatch remains
+disabled until the central AUTH permission and service-principal prerequisites
+are merged.
 
 ## Allowed Files
 
@@ -20,7 +22,8 @@ pinned provider delivery, and local integration.
 ## Not Allowed
 
 No byte payload in DB/Redis/outbox, product cutover, provider fallback, human
-token forwarding, or provider-triggered lifecycle transition.
+token forwarding, provider-triggered lifecycle transition, or adapter I/O that
+bypasses a central authorization decision for the exact operation and resource.
 
 ## Acceptance Criteria
 
@@ -38,6 +41,11 @@ token forwarding, or provider-triggered lifecycle transition.
   visibility.
 - Reconciliation, quarantine, retain, and release product audit events use the
   shared `AuditRepository`; provider receipts remain operation evidence only.
+- Production upload, read, retain, release/delete, replicate, verify, and
+  reconcile dispatch requires the exact permission from `WS-AUTH-001-07` and an
+  explicitly provisioned service principal from `WS-AUTH-001-09`. Mechanical
+  adapter work may be tested before those chunks merge, but production dispatch
+  stays disabled and no receipt or adapter credential creates authority.
 - Concurrent dispatch/reconcile has one monotonic provider effect and one
   canonical receipt outcome; row counts are asserted.
 - Same v1 vectors pass LocalStorageAdapter and a Flow Node image pinned by full
@@ -48,9 +56,10 @@ token forwarding, or provider-triggered lifecycle transition.
   populated-state preservation, empty downgrade, and re-upgrade are owned and
   proved in `test_alembic.py`; otherwise the chunk records that no migration was
   created.
-- Compose health proves adapter-level authenticated ingest/retrieve/status from
-  Workstream's service principal directly through `FlowNodeAdapter`; it does not
-  claim a public Workstream artifact API before the product cutover.
+- Compose health proves test-only adapter mechanics for ingest/retrieve/status.
+  Production service-principal dispatch additionally requires central AUTH
+  decision evidence and remains disabled before the owning AUTH cutovers; this
+  chunk does not claim a public Workstream artifact API.
 
 ## Verification
 
