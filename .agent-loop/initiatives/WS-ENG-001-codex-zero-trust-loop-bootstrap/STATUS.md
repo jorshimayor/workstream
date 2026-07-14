@@ -3,9 +3,11 @@
 ## Current
 
 - `WS-ENG-001-01`: merged through PR #23 on 2026-06-20; complete
+- `WS-ENG-001-02`: active by explicit user request; implementation is bounded
+  by its approved automated post-merge memory contract
 - Merge commit: `b9fe19b96109e9786e1d6d89488abfbe68a05d4a`
 - Reviewed code SHA: `b22b940ee50956c9c7bfd0e681ffac727b6ff82c`
-- Current gate: stopped after merge memory update
+- Current gate: implement and review `WS-ENG-001-02`
 - Next chunk: inactive
 
 ## Last Update
@@ -19,5 +21,5 @@ memory has been updated on `main`.
 
 ## Next Required Event
 
-No active chunk. Start the next Workstream chunk only after intent, discovery,
-plan, chunk map, and chunk contract are approved.
+Implement only `WS-ENG-001-02`. Do not start another engineering or product
+chunk automatically.
