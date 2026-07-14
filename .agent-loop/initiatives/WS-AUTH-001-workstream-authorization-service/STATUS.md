@@ -40,8 +40,10 @@ the first activated contract before runtime edits. The second
 repaired contract passed all required tracks at `b5dceb1`; bounded runtime
 implementation and deterministic evidence are complete, and the candidate is
 internally approved at final SHA `922778b`; reviewed production SHA is
-`67484b5`. Ready PR #113 is open; GitHub checks, CodeRabbit, and explicit human
-review are the current gate.
+`67484b5`. The Backend CI isolation repair passed exact review at `4fb846c`.
+Final branch head `94fb2fe` passed Backend, Agent Gates, and CodeRabbit, then
+explicit human approval merged PR #113 to `main` as `05a63c8` on 2026-07-14.
+AUTH-04B post-merge memory is active; AUTH-05 remains inactive.
 
 ## Active planning chunk
 
@@ -49,12 +51,12 @@ None.
 
 ## Active implementation chunk
 
-`WS-AUTH-001-04B` - PostgreSQL Rate Controls. Internal review passed; AUTH-05
-remains inactive.
+None.
 
 ## Current implementation branch
 
-`codex/ws-auth-001-04b-postgres-rate-controls`.
+None. Post-merge memory uses `codex/ws-auth-001-04b-post-merge-memory` and makes
+no product implementation change.
 
 ## Chunk status
 
@@ -66,7 +68,7 @@ remains inactive.
 | `WS-AUTH-001-03` | Merged | `codex/ws-auth-001-03-legacy-actor-classification` | #109 | Merged as `f06532e`; reviewed code `8c5334c`; final branch head `43ffbfe`. |
 | `WS-AUTH-001-04` | Split | `codex/ws-auth-001-04-request-api-controls` | - | Parent split before runtime implementation. |
 | `WS-AUTH-001-04A` | Merged | `codex/ws-auth-001-04-request-api-controls` | #111 | Merged as `90c9a28`; production review `cdcaf77`; final branch head `36c4aa5`. |
-| `WS-AUTH-001-04B` | External review | `codex/ws-auth-001-04b-postgres-rate-controls` | #113 | All required tracks pass final `922778b`; production review `67484b5`. |
+| `WS-AUTH-001-04B` | Merged | `codex/ws-auth-001-04b-postgres-rate-controls` | #113 | Merged as `05a63c8`; production review `67484b5`; final branch head `94fb2fe`. |
 | `WS-AUTH-001-05` | Proposed | - | - | Authority evidence and idempotency foundation. |
 | `WS-AUTH-001-06` | Proposed | - | - | Canonical actor profile and identity link. |
 | `WS-AUTH-001-07` | Proposed | - | - | Authorization kernel and permissions. |
@@ -82,8 +84,9 @@ remains inactive.
 
 ## Blockers
 
-No external blocker. AUTH-04B internal review passed under its repaired L1
-contract. It owns migration `0017`, following the
+No active implementation blocker because no AUTH product chunk is active.
+AUTH-05 may start only after this memory update merges and the user gives a
+separate explicit start signal. AUTH-04B owns migration `0017`, following the
 now-owned `0016` prefix on current main. Non-test
 operators must later supply explicit classification evidence rather than
 inferred kinds before the owning canonical actor migration.

@@ -2,9 +2,8 @@
 
 ## Status
 
-Active for bounded implementation. Required preimplementation review passed the
-second repaired contract at `b5dceb1`; the 350-line checkpoint and 500-line hard
-stop apply.
+Merged through PR #113 as `05a63c8` on 2026-07-14 after required internal
+review, Backend, Agent Gates, CodeRabbit, and explicit human approval passed.
 
 ## Parent initiative
 
@@ -261,3 +260,11 @@ route, compatibility, or authority changes.
 AUTH-04A post-merge memory merged through PR #112 as `7749f54`. The user
 explicitly started AUTH-04B on 2026-07-13. Required L1 preimplementation review
 passed the second repaired contract at `b5dceb1` before runtime edits.
+
+## Merge result
+
+Final branch head `94fb2fe` merged to `main` through PR #113 as `05a63c8`.
+GitHub Backend passed 937 tests at 82.15 percent global coverage, artifact
+foundation coverage passed at 91.07 percent, and Agent Gates and CodeRabbit
+passed. AUTH-05 remains inactive pending this post-merge memory update and a
+separate explicit user start.

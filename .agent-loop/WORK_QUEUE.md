@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Internal review passed; PR #113 in external review |
+| - | No active implementation chunk | - | AUTH-04B post-merge memory in progress; no product implementation active |
 
 ## Planned Next
 
@@ -53,13 +53,13 @@
 | `WS-AUTH-001-02` | Verified Issuer Token And JWKS Boundary | L1 | Merged through PR #107 as `060b780` on 2026-07-13 |
 | `WS-AUTH-001-03` | Legacy Actor Classification Preflight | L1 | Merged through PR #109 as `f06532e` on 2026-07-13 |
 | `WS-AUTH-001-04A` | Request And Error Context | L1 | Merged through PR #111 as `90c9a28` on 2026-07-13 |
+| `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Merged through PR #113 as `05a63c8` on 2026-07-14 |
 
 ## Proposed Next
 
-`WS-AUTH-001-04A` post-merge memory merged through PR #112 as `7749f54`. The
-user explicitly started `WS-AUTH-001-04B`; all required internal review tracks
-pass and ready PR #113 is in external review. Do not start AUTH-05 or POL-002-04
-automatically.
+`WS-AUTH-001-04B` merged through PR #113 as `05a63c8` after all required checks
+and reviews passed. Its post-merge memory update is active; no AUTH product
+implementation is active. Do not start AUTH-05 or POL-002-04 automatically.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.
