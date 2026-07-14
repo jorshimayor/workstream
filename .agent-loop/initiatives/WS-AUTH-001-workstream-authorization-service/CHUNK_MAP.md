@@ -99,5 +99,6 @@ approval passed. AUTH-04B post-merge memory then merged through PR #114 as
 rejected the combined contract before runtime edits and required 05A/05B.
 The first 05A implementation review proved the original 500-line ceiling
 incompatible with readable typed/database privacy parity. Repaired 05A contract
-review passed at `7cc6058`; bounded runtime repair is active. 05B remains
-inactive. Do not start AUTH-06 or POL-002-04.
+review passed at `7cc6058`; the 1000-line circuit-breaker amendment is under
+review and runtime is paused. 05B remains inactive. Do not start AUTH-06 or
+POL-002-04.
