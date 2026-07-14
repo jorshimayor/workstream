@@ -2,14 +2,13 @@
 
 ## In Progress
 
-| Chunk | Title | Risk | Status |
-|---|---|---:|---|
-| `WS-AUTH-001-05A` | Shared Audit Ownership And Append-Only Authority Evidence | L1 | Human-approved semantic chunk boundary; runtime repair/evidence |
+None.
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
+| `WS-AUTH-001-05B` | Authority Idempotency And Invalidation Foundation | L1 | Inactive pending post-merge memory merge and separate explicit user start |
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Paused for AUTH priority; no valid replacement baseline yet |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
@@ -54,13 +53,15 @@
 | `WS-AUTH-001-03` | Legacy Actor Classification Preflight | L1 | Merged through PR #109 as `f06532e` on 2026-07-13 |
 | `WS-AUTH-001-04A` | Request And Error Context | L1 | Merged through PR #111 as `90c9a28` on 2026-07-13 |
 | `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Merged through PR #113 as `05a63c8` on 2026-07-14 |
+| `WS-AUTH-001-05A` | Shared Audit Ownership And Append-Only Authority Evidence | L1 | Merged through PR #115 as `8e1cde6` on 2026-07-14 |
 
 ## Proposed Next
 
-AUTH-04B post-merge memory merged through PR #114 as `97cd0f5`. The user
-explicitly started AUTH-05. Required plan review rejected the combined contract
-before runtime edits and required children 05A/05B. Only 05A contract repair is
-active. Do not implement 05B, AUTH-06, or POL-002-04 automatically.
+AUTH-05A merged through PR #115 as `8e1cde6` after required internal reviews,
+Backend, Agent Gates, CodeRabbit, and explicit human approval passed. AUTH-05B
+remains inactive until this post-merge memory merges and the user gives a
+separate explicit start. Do not implement AUTH-05B, AUTH-06, or POL-002-04
+automatically.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.

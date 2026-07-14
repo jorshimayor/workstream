@@ -52,7 +52,10 @@ typed/SQL parity require a larger readable contract. The repaired contract
 passed at `7cc6058`, but numeric hard stops repeatedly interrupted the atomic
 typed/database parity boundary. The human replaced the line cap with AUTH-05A's
 semantic scope, acceptance criteria, behavior evidence, and review gates;
-runtime repair and focused evidence are active.
+runtime repair, deterministic evidence, and required reviews then completed.
+Backend passed 949 tests at 82.77 percent global coverage, Agent Gates and
+CodeRabbit passed, and explicit human approval merged PR #115 as `8e1cde6` on
+2026-07-14.
 
 ## Active planning chunk
 
@@ -60,12 +63,13 @@ None.
 
 ## Active implementation chunk
 
-`WS-AUTH-001-05A` - Shared Audit Ownership And Append-Only Authority Evidence.
+None. Post-merge memory for `WS-AUTH-001-05A` is active; no implementation
+chunk is active.
 
 ## Current implementation branch
 
-`codex/ws-auth-001-05-authority-evidence` in
-`/home/abiorh/flow/workstream-auth-001-05`.
+`codex/ws-auth-001-05a-post-merge-memory` in
+`/home/abiorh/flow/workstream-authorization-service`.
 
 ## Chunk status
 
@@ -79,8 +83,8 @@ None.
 | `WS-AUTH-001-04A` | Merged | `codex/ws-auth-001-04-request-api-controls` | #111 | Merged as `90c9a28`; production review `cdcaf77`; final branch head `36c4aa5`. |
 | `WS-AUTH-001-04B` | Merged | `codex/ws-auth-001-04b-postgres-rate-controls` | #113 | Merged as `05a63c8`; production review `67484b5`; final branch head `94fb2fe`. |
 | `WS-AUTH-001-05` | Split | `codex/ws-auth-001-05-authority-evidence` | - | Parent split before implementation into 05A and 05B. |
-| `WS-AUTH-001-05A` | Runtime repair/evidence | `codex/ws-auth-001-05-authority-evidence` | - | Human-approved semantic chunk boundary; repair active. |
-| `WS-AUTH-001-05B` | Inactive | - | - | Idempotency and invalidation; requires 05A merge/memory and separate explicit start. |
+| `WS-AUTH-001-05A` | Merged | `codex/ws-auth-001-05-authority-evidence` | #115 | Merged as `8e1cde6`; reviewed code `ea16fd8`; final branch head `d023952`. |
+| `WS-AUTH-001-05B` | Inactive | - | - | Idempotency and invalidation; requires post-merge memory and separate explicit start. |
 | `WS-AUTH-001-06` | Proposed | - | - | Canonical actor profile and identity link. |
 | `WS-AUTH-001-07` | Proposed | - | - | Authorization kernel and permissions. |
 | `WS-AUTH-001-08` | Proposed | - | - | Bootstrap and administrative grants. |
@@ -95,15 +99,10 @@ None.
 
 ## Blockers
 
-AUTH-05A has no preimplementation blocker under its human-approved semantic
-chunk boundary. The combined AUTH-05 contract was
-rejected before code changes because migration `0017` is already owned by
-AUTH-04B and the shared-audit plus idempotency scope was not reviewable as one
-L1 change. Repaired AUTH-05A owns migration `0018`; AUTH-05B later owns
-migration `0019`. Exact-SHA review found valid arbitrary fact/reason privacy,
-non-dict Mapping retention, DB token-parity, cause-contract ambiguity, and SQL
-auditability findings; the repaired contract owns their closure without
-reactivating 05B. Non-test
+AUTH-05A has no remaining blocker and is merged. The combined AUTH-05 contract
+was rejected before runtime changes because shared audit evidence and
+idempotency/invalidation were not reviewable as one L1 change. AUTH-05A owns
+migration `0018`; inactive AUTH-05B later owns migration `0019`. Non-test
 operators must later supply explicit classification evidence rather than
 inferred kinds before the owning canonical actor migration.
 

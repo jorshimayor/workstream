@@ -2,10 +2,9 @@
 
 ## Status
 
-Runtime repair and focused evidence. Repaired contract review passed on
-`7cc6058`; the earlier numeric amendments passed at `611abfc`, and the human
-subsequently replaced the line ceiling with this chunk's semantic scope,
-acceptance criteria, behavior evidence, and required-review gates.
+Merged through PR #115 as `8e1cde6` on 2026-07-14 after required internal
+reviews, Backend, Agent Gates, CodeRabbit, and explicit human approval passed.
+Reviewed code SHA: `ea16fd8`; final branch head: `d023952`.
 
 ## Parent initiative
 
