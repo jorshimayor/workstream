@@ -38,41 +38,22 @@ owns MinIO and AWS S3. There is no active R2 chunk.
 
 ## Gate
 
-Candidates `e6415886a2474af899eb433c4b42eabea8e794c7`,
-`e14376c896f9225a152e932de8789517814ef082`, and
-`d2cd73a0debe73930a8311a37b45f3aff4315f11` passed deterministic planning
-checks but failed one or more exact-head required review tracks. Candidate
-`b5279be1da1b61c161166903d6144719cf29a17e` then passed architecture and had no
-remaining senior/security design finding, but QA/test found that its AWS
-authorization regression test was not a closed-matrix assertion. Every session
-was closed and none of those results is reusable approval. Repair is active on
-integrated main `eba7e2b` and remains planning-only.
+Publication-state SHA `8f29e46f84415b3506d211e3229f224e6ad4e085`
+passed every required internal track: senior engineering, architecture,
+QA/test, security/auth, product/ops, reuse/dedup, CI integrity, test delta, and
+docs. Every reviewer used `gpt-5.5` with high reasoning and every reviewer
+session is closed.
 
-Candidate `cb1c0dc9d77ec9e10e47c084627fc1a4064e0896` later passed senior
-engineering, architecture, and QA/test but failed security/auth because AWS
-masks missing `HeadObject` responses as 403 without `s3:ListBucket`. All four
-sessions were closed. The active repair uses a dedicated Workstream artifact
-bucket, the exact bucket-level permission only for trustworthy 404
-classification, no application object-list operation, fail-closed 403 mapping,
-and mandatory live missing-key proof before activation.
+Deterministic proof passes: Ruff; stale artifact, authorization, and Workstream
+wording scans; loop-memory state; 73 changed Markdown links; diff hygiene; the
+runtime-scope guard; and 44 agent-gate regression tests in a PEP 668-safe,
+hash-pinned temporary environment.
 
-Candidate `acc4476537a61d18f3b416bc2fec3a5d276b58dc` then passed
-security/auth and QA/test, while architecture reported only low risk, but
-senior engineering found one active discovery sentence still claiming runtime
-could not list. All sessions were closed. The current repair aligns discovery
-and adds a deterministic stale-contract rule for that exact contradiction.
+Evidence:
 
-The repair closes the raw-port/orchestrator bypass, pre-replica acknowledgement
-gap, namespace first-writer race, caller-assembled quota scope, AWS activation
-and principal boundary, AUTH action-activation ownership, terminal service
-authority race, stale-scanner discovery/history/runtime gaps, and cumulative
-coverage omissions. The second repair also separates admission, verification,
-and recovery chunks; closes dependency-manifest/frontend/Work Queue scanning;
-defines separate caller-ARN-bound AWS proof executors; adds per-I/O activation
-freshness; and closes service-action, materialization, checker-output binding,
-Operator recovery, and capacity-visibility ownership. The current repair makes
-the principal/action/resource and bucket-deny matrices machine-checkable and
-rejects extra grants, resources, wildcard actions, or altered condition keys. A
-new immutable SHA will be recorded only after deterministic checks and every
-required internal reviewer pass. External PR review and explicit human merge
-approval remain later gates. No later chunk starts automatically.
+- `reviews/WS-ART-001-OBJECT-STORAGE-AMENDMENT-internal-review-evidence.md`
+- `reviews/WS-ART-001-OBJECT-STORAGE-AMENDMENT-pr-trust-bundle.md`
+
+The current gate is external review and explicit human merge approval. GitHub
+checks and CodeRabbit remain separate from internal review. Do not merge without
+the user's approval, and do not start `WS-ART-001-02A1` automatically.

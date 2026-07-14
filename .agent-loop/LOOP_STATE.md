@@ -8,17 +8,14 @@
 - Branch: `codex/ws-art-001-object-storage-planning-amendment`
 - Worktree: `/home/abiorh/flow/workstream`
 - Latest integrated `main` merge commit: `eba7e2b` from PR #118.
-- Status: planning repair only. Candidates `e641588`, `e14376c`, `d2cd73a`,
-  `b5279be`, `cb1c0dc`, and `acc4476` passed deterministic gates but failed one
-  or more exact-head required review tracks. The sixth candidate's canonical
-  AWS contract was sound, but active discovery still contradicted its exact
-  bucket-list permission. Every reviewer session was closed; the wording and
-  missing stale-contract rule are being repaired before a new immutable review
-  SHA is created.
-- Current gate: finish the bounded repair, rerun deterministic proof, review one
-  exact SHA through every required internal track, record evidence/trust bundle,
-  then stop for external and human review. No storage runtime implementation is
-  active.
+- Status: internal review complete for the AWS-first planning amendment.
+  Publication-state SHA `8f29e46f84415b3506d211e3229f224e6ad4e085`
+  passed senior engineering, architecture, QA/test, security/auth, product/ops,
+  reuse/dedup, CI integrity, test delta, and docs review. Every reviewer used
+  `gpt-5.5` with high reasoning and every reviewer session is closed.
+- Current gate: evidence and the PR trust bundle are recorded. Publish one ready
+  PR, wait for CodeRabbit and GitHub checks, then stop for explicit human review
+  and merge approval. No storage runtime implementation is active.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
