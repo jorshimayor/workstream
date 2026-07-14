@@ -1,5 +1,21 @@
 # Review Log
 
+## 2026-07-14 - WS-ART-001 Second Exact-Head Review Failed
+
+Planning candidate `e14376c896f9225a152e932de8789517814ef082` passed the
+deterministic planning gates but failed exact-head senior engineering,
+architecture, QA/test, and security/auth review. All four reviewer sessions
+were closed; this result is not reusable approval.
+
+Valid findings require dependency-manifest/frontend/migration and live Work
+Queue scanner coverage, separate AWS readiness/runtime/negative probe custody,
+per-I/O activation freshness, exact service-identity action assignments, narrow
+Operator recovery/admission-usage capabilities, complete pre/post-submit and
+checker-output action ownership, exact deferred Flow Node v2 observation
+semantics, and splitting admission, verification, and recovery into independent
+chunks. Repair remains planning-only; no artifact runtime implementation is
+active.
+
 ## 2026-07-14 - WS-ART-001 Object Storage Exact-Head Review Failed
 
 Planning candidate `e6415886a2474af899eb433c4b42eabea8e794c7` passed the

@@ -51,7 +51,8 @@ enter `evaluation_pending` without manager finalization.
 
 ## Acceptance Criteria
 
-- immutable submission binding creation requires the fixed service permission
+- immutable submission binding creation declares
+  `artifact.submission.binding.create`, mapped to the fixed service permission
   `artifact.binding.create`; submission creation authority does not imply it;
 
 - request body contains only summary, contributor attestation, and upload

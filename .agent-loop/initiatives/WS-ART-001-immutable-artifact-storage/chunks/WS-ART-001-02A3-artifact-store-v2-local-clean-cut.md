@@ -60,7 +60,9 @@ configuration. No compatibility path remains after this PR.
 - one active factory path exists; only internal `ArtifactStorageOrchestrator`
   receives writable `ArtifactStore`. Product modules receive only the exact
   guide-ingest, contributor-upload, binding, two-method materialization,
-  checker-output, or Operator-read protocols. AST architecture tests reject raw
+  checker-output, Operator-read, or Operator-recovery protocols. The Operator
+  read protocol includes bounded admission-usage inspection; the recovery
+  protocol exposes only reason-bound verification retry. AST architecture tests reject raw
   port imports, broad orchestrator injection through FastAPI/Celery composition,
   and provider mutation/observation calls from product modules;
 - API-process startup cleanup runs once before accepting artifact work, and a

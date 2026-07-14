@@ -29,6 +29,7 @@ ARTIFACT_COVERAGE_ORDER = (
     "02B1",
     "02C1",
     "02C2",
+    "02C3",
     "02D",
     "03",
     "04A",
@@ -65,6 +66,7 @@ ARTIFACT_COVERAGE_COMMAND_OWNERS = {
         "--precision=2 --fail-under=90",
     ),
     "02C2": (),
+    "02C3": (),
     "02D": (
         "coverage report --include='app/api/router.py' "
         "--precision=2 --fail-under=90",
@@ -1540,6 +1542,7 @@ def test_stale_artifact_contracts_enforce_aws_first_v01() -> None:
         "Cloudflare R2 is an eligible object-store provider.",
         "Enable R2 for hosted deployments.",
         "R2 is supported for hosted deployments.",
+        "R2 is deferred outside v0.1, although it is the hosted provider.",
     ):
         assert gate.scan_text(
             "docs/spec_artifact_storage_service.md",
@@ -1595,7 +1598,12 @@ def test_stale_artifact_contracts_enforce_aws_first_v01() -> None:
         ) == ["backend/app/core/config.py:1: DEFERRED_R2_RUNTIME"]
     for runtime_path, runtime_value in (
         ("backend/app/integrations/storage.py", 'provider = "r2"'),
+        ("backend/alembic/versions/9999_r2.py", 'provider = "r2"'),
+        ("backend/pyproject.toml", 'cloudflare-r2 = "1.0"'),
+        ("backend/uv.lock", 'name = "cloudflare-r2"'),
+        ("backend/requirements-storage.txt", "cloudflare-r2==1.0"),
         ("backend/scripts/storage_runtime.py", 'provider = "cloudflare_r2"'),
+        ("frontend/src/config.ts", 'provider = "cloudflare_r2"'),
         ("services/object_storage/config.py", 'provider = "cloudflare_r2"'),
         (".github/workflows/backend.yml", "WORKSTREAM_R2_ENDPOINT: secret"),
         ("Dockerfile", "ENV WORKSTREAM_R2_ENDPOINT=secret"),
@@ -1632,6 +1640,9 @@ def test_stale_artifact_contracts_enforce_aws_first_v01() -> None:
     assert gate.path_is_scannable("ops/runtime.yaml")
     assert gate.path_is_scannable("config/artifact.toml")
     assert gate.path_is_scannable("helm/storage.tpl")
+    assert gate.path_is_scannable("backend/pyproject.toml")
+    assert gate.path_is_scannable("backend/uv.lock")
+    assert gate.path_is_scannable("frontend/src/config.ts")
     assert gate.path_is_scannable("docs/diagrams/rendered/workstream_context.svg")
     assert gate.scan_text(
         "docs/diagrams/rendered/workstream_context.svg",
@@ -1653,11 +1664,22 @@ def test_stale_artifact_contracts_enforce_aws_first_v01() -> None:
             "CHUNK_MAP.md:1: ACTIVE_R2_V01_PLAN"
         )
     ]
+    completed_only_queue = (
+        "# Work Queue\n\n## In Progress\n\nNone.\n\n"
+        "## Planned Next\n\nNone.\n\n## Completed\n\n"
+        "Cloudflare R2 is the hosted production provider.\n"
+    )
     assert gate.scan_text(
-        ".agent-loop/WORK_QUEUE.md",
-        "WS-QUAL-001-01B1B-R2 implementation review superseded.",
-        "foundation",
+        ".agent-loop/WORK_QUEUE.md", completed_only_queue, "foundation"
     ) == []
+    active_queue = (
+        "# Work Queue\n\n## In Progress\n\n"
+        "Cloudflare R2 is the hosted production provider.\n\n"
+        "## Planned Next\n\nNone.\n\n## Completed\n\nNone.\n"
+    )
+    assert gate.scan_text(
+        ".agent-loop/WORK_QUEUE.md", active_queue, "foundation"
+    ) == [".agent-loop/WORK_QUEUE.md:5: ACTIVE_R2_V01_PLAN"]
 
 
 def test_stale_artifact_contracts_scan_only_current_initiatives() -> None:
@@ -1751,6 +1773,8 @@ def test_stale_artifact_contracts_remove_flow_node_at_store_cutover() -> None:
         "Flow Node is deferred but remains the v0.1 production provider.",
         "Flow Node is preserved as the v0.1 production provider.",
         "Flow Node is deferred, but continues as an approved hosted backend.",
+        "Flow Node is deferred and enabled as a production backend.",
+        "Flow Node is deferred, yet supported as the hosted backend.",
     ):
         assert gate.scan_text(
             "docs/decision_0013_immutable_artifact_storage_boundary.md",

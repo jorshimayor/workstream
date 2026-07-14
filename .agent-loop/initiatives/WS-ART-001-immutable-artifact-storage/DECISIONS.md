@@ -138,6 +138,9 @@ completed charges count. Ambiguous outcomes remain provisional; only fresh
 authoritative absence releases a charge, and replay must reacquire capacity.
 Confirmed, quarantined, and integrity-mismatched bytes remain completed and
 charged while v0.1 has no physical deletion.
+Operators receive bounded read-only admission-usage visibility and alerts.
+Quota expansion is a reviewed configuration/runbook operation; it never
+releases or edits an authoritative charge.
 
 ## D19 - Upload-Session Slot Expiry
 
@@ -179,9 +182,10 @@ anonymous and unapproved authenticated principals.
 
 Only `ArtifactStorageOrchestrator` receives `ArtifactStore`. Product modules
 receive closed ingest, upload, binding, materialization, checker-output, or
-Operator-read capabilities with server-owned request shapes. They cannot inject
-the orchestrator, choose adapters/provider references/namespaces/content IDs,
-or assemble admission scopes.
+Operator-read/recovery capabilities with server-owned request shapes. Operator
+read includes bounded admission usage; recovery exposes only reason-bound
+verification retry. They cannot inject the orchestrator, choose adapters/
+provider references/namespaces/content IDs, or assemble admission scopes.
 
 ## D24 - Durable Put Attempt
 
@@ -204,8 +208,12 @@ second artifact activation path.
 ## D26 - AWS Release Activation
 
 02B1 adds validated AWS configuration and provider-proof support but production
-composition remains unavailable. Chunk 07 alone writes an immutable,
-release-bound `ArtifactProviderActivation` after conditional-write,
-principal-boundary, public-access, lifecycle, and negative-call proof. Missing,
-expired, or mismatched proof fails production startup. MinIO conformance never
-activates AWS.
+composition remains unavailable. Chunk 07 uses separate readiness, actual
+runtime-workload, and negative-role executors that write immutable caller-ARN-
+bound `ArtifactProviderProbeResult` rows. A credential-free coordinator writes
+the release-bound `ArtifactProviderActivation` only from one matching,
+unexpired pass of each type. Startup and every AWS I/O require that activation;
+proof is refreshed every 5 minutes and expires within 15 minutes. MinIO
+conformance never activates AWS. Authorized cloud administrators are trusted
+inside the bounded validity window; S3 Object Lock is outside v0.1 unless a new
+human-approved decision changes that threat boundary.

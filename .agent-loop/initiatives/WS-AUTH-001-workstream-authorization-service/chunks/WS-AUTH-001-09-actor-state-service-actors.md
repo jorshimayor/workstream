@@ -80,6 +80,17 @@ product adapter bindings or callback endpoints
   `artifact.binding.create`, `artifact.guide_source.read`,
   `artifact.checker_input.materialize`, and `artifact.checker_output.write`.
   Operator reads/retry and contributor ingest/upload actions are excluded.
+- The fixed identities are `workstream.artifact.verifier`,
+  `workstream.artifact.put_resolver`, `workstream.artifact.scheduler`,
+  `workstream.artifact.binding`, `workstream.artifact.guide_reader`,
+  `workstream.artifact.materializer`, and
+  `workstream.artifact.checker_output`. Their exact ActionId assignments are
+  the closed service-identity matrix in `docs/spec_authorization_service.md`;
+  no principal receives the union of the allowlist.
+- Startup parity tests fail closed when any fixed artifact service actor,
+  identity link, action registration, PermissionId mapping, or exact assignment
+  is missing or extra. Negative tests prove each identity is denied all artifact
+  actions outside its matrix row.
 - Agent and Space subjects remain unsupported and unpersisted.
 - Every mutation is idempotent, reasoned, and audited without token material.
 - Mixed concurrent link-revoke, grant-revoke, suspend, and deactivate attempts

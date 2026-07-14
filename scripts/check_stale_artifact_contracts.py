@@ -78,6 +78,7 @@ ACTIVE_LOOP_PATHS = {
 TEXT_SUFFIXES = {
     ".html",
     ".json",
+    ".lock",
     ".md",
     ".puml",
     ".py",
@@ -97,7 +98,10 @@ FOUNDATION_INTERFACE_PATHS = {
 FOUNDATION_INTERFACE_PREFIXES = ("contracts/artifact-store/",)
 DEFERRED_PROVIDER_RUNTIME_PREFIXES = (
     "backend/app/",
+    "backend/alembic/",
     "backend/scripts/",
+    "backend/requirements",
+    "frontend/",
     ".github/workflows/",
     "config/",
     "docker/",
@@ -111,6 +115,17 @@ DEFERRED_PROVIDER_RUNTIME_PREFIXES = (
     "helm/",
     "charts/",
 )
+DEFERRED_PROVIDER_RUNTIME_PATHS = {
+    "backend/pyproject.toml",
+    "backend/Pipfile",
+    "backend/Pipfile.lock",
+    "backend/poetry.lock",
+    "backend/uv.lock",
+    "package.json",
+    "package-lock.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+}
 R2_RUNTIME_FILENAMES = (
     "compose.",
     "docker-compose.",
@@ -125,7 +140,11 @@ R2_RUNTIME_PATTERN = re.compile(
     re.IGNORECASE,
 )
 R2_ACTIVATION_PATTERN = re.compile(
-    r"(?:\b(?:enable|activate|support|use)\s+(?:Cloudflare\s+)?R2\b|"
+    r"(?:\b(?:Cloudflare\s+)?R2\b(?:[^.;!?]|\.(?=\d)){0,120}\bdeferred\b"
+    r"(?:[^.;!?]|\.(?=\d)){0,80}"
+    r"\b(?:but|yet|although|and)\b\s+(?:it\s+)?(?:is\s+)?(?:the\s+|an?\s+)?"
+    r"(?:eligible|enabled|supported|active|production|hosted)\b|"
+    r"\b(?:enable|activate|support|use)\s+(?:Cloudflare\s+)?R2\b|"
     r"\b(?:Cloudflare\s+)?R2\b[^.;!?]{0,180}"
     r"(?:\b(?:is|are|remains?|becomes?)\s+"
     r"(?!not\b|outside\b|deferred\b)[^.;!?]{0,50}"
@@ -135,7 +154,11 @@ R2_ACTIVATION_PATTERN = re.compile(
     re.IGNORECASE,
 )
 FLOW_NODE_ACTIVATION_PATTERN = re.compile(
-    r"(?:\bFlow\s+Node\b[^.;!?]{0,180}\b"
+    r"(?:\bFlow\s+Node\b(?:[^.;!?]|\.(?=\d)){0,120}\bdeferred\b"
+    r"(?:[^.;!?]|\.(?=\d)){0,80}"
+    r"\b(?:but|yet|although|and)\b\s+(?:it\s+)?(?:is\s+)?(?:the\s+|an?\s+)?"
+    r"(?:eligible|enabled|supported|active|production|hosted)\b|"
+    r"\bFlow\s+Node\b[^.;!?]{0,180}\b"
     r"(?:remains?|preserved\s+as|is)\b[^.;!?]{0,60}"
     r"\bv0\.1\s+production\s+(?:artifact\s+)?provider\b|"
     r"\b(?:enable|activate|support|use)\s+Flow\s+Node\b|"
@@ -391,6 +414,7 @@ def path_is_scannable(relative_path: str, root: Path = ROOT) -> bool:
         path.suffix.lower() in TEXT_SUFFIXES
         or path.name.startswith(R2_RUNTIME_FILENAMES)
         or relative_path.startswith(DEFERRED_PROVIDER_RUNTIME_PREFIXES)
+        or relative_path in DEFERRED_PROVIDER_RUNTIME_PATHS
     )
     return (
         is_text_path
@@ -408,7 +432,7 @@ def path_is_scannable(relative_path: str, root: Path = ROOT) -> bool:
 
 def path_is_active_contract(relative_path: str, root: Path = ROOT) -> bool:
     """Return whether a path carries current artifact architecture wording."""
-    if relative_path in {".agent-loop/REVIEW_LOG.md", ".agent-loop/WORK_QUEUE.md"}:
+    if relative_path == ".agent-loop/REVIEW_LOG.md":
         return False
     if relative_path in {"AGENTS.md", "README.md", *ACTIVE_LOOP_PATHS}:
         return True
@@ -420,6 +444,20 @@ def path_is_active_contract(relative_path: str, root: Path = ROOT) -> bool:
     return relative_path.startswith(active_initiative_prefixes(root)) and "/reviews/" not in (
         relative_path
     )
+
+
+def active_work_queue_text(text: str) -> str:
+    """Keep only live Work Queue sections while preserving source line numbers."""
+    active_headings = {"## In Progress", "## Planned Next"}
+    section = ""
+    output: list[str] = []
+    for line in text.splitlines(keepends=True):
+        if line.startswith("## "):
+            section = line.strip()
+        output.append(line if section in active_headings else "\n" if line.endswith("\n") else "")
+    if not active_headings.issubset(set(text.splitlines())):
+        raise ValueError("malformed Work Queue headings")
+    return "".join(output)
 
 
 def rule_applies_to_path(rule: Rule, relative_path: str, root: Path = ROOT) -> bool:
@@ -530,6 +568,8 @@ def clause_around(text: str, offset: int) -> str:
 def scan_text(relative_path: str, text: str, phase: str, root: Path = ROOT) -> list[str]:
     """Return deterministic stale-contract failures for one text file."""
     failures: list[str] = []
+    if relative_path == ".agent-loop/WORK_QUEUE.md":
+        text = active_work_queue_text(text)
     normalized_text = text.replace(r"\n", "  ")
     for rule in rules_for_phase(phase):
         if not rule_applies_to_path(rule, relative_path, root):
@@ -556,9 +596,11 @@ def scan_text(relative_path: str, text: str, phase: str, root: Path = ROOT) -> l
                 if has_explicit_flow_node_deferral(clause_text):
                     continue
             failures.append(f"{relative_path}:{line}: {rule.code}")
-    is_r2_runtime_path = relative_path.startswith(
-        DEFERRED_PROVIDER_RUNTIME_PREFIXES
-    ) or Path(relative_path).name.startswith(R2_RUNTIME_FILENAMES)
+    is_r2_runtime_path = (
+        relative_path.startswith(DEFERRED_PROVIDER_RUNTIME_PREFIXES)
+        or relative_path in DEFERRED_PROVIDER_RUNTIME_PATHS
+        or Path(relative_path).name.startswith(R2_RUNTIME_FILENAMES)
+    )
     if is_r2_runtime_path:
         for match in R2_RUNTIME_PATTERN.finditer(normalized_text):
             line = normalized_text.count("\n", 0, match.start()) + 1

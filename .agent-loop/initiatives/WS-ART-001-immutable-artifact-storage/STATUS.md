@@ -38,17 +38,22 @@ owns MinIO and AWS S3. There is no active R2 chunk.
 
 ## Gate
 
-Candidate `e6415886a2474af899eb433c4b42eabea8e794c7` passed deterministic
-planning checks but failed exact-head senior engineering, architecture,
-QA/test, and security/auth review. Every session was closed and the result is
-not reusable approval. Repair is active on integrated main `eba7e2b` and remains
+Candidates `e6415886a2474af899eb433c4b42eabea8e794c7` and
+`e14376c896f9225a152e932de8789517814ef082` passed deterministic planning
+checks but failed exact-head senior engineering, architecture, QA/test, and
+security/auth review. Every session was closed and neither result is reusable
+approval. Repair is active on integrated main `eba7e2b` and remains
 planning-only.
 
 The repair closes the raw-port/orchestrator bypass, pre-replica acknowledgement
 gap, namespace first-writer race, caller-assembled quota scope, AWS activation
 and principal boundary, AUTH action-activation ownership, terminal service
 authority race, stale-scanner discovery/history/runtime gaps, and cumulative
-coverage omissions. A new immutable SHA will be recorded only after
+coverage omissions. The second repair also separates admission, verification,
+and recovery chunks; closes dependency-manifest/frontend/Work Queue scanning;
+defines separate caller-ARN-bound AWS proof executors; adds per-I/O activation
+freshness; and closes service-action, materialization, checker-output binding,
+Operator recovery, and capacity-visibility ownership. A new immutable SHA will be recorded only after
 deterministic checks and every required internal reviewer pass. External PR
 review and explicit human merge approval remain later gates. No later chunk
 starts automatically.

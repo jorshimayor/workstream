@@ -1,6 +1,6 @@
-# Chunk Contract: WS-ART-001-02C2 Recovery Attempt And Idempotency Chain
+# Chunk Contract: WS-ART-001-02C3 Recovery Attempt And Idempotency Chain
 
-Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02C1
+Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02C2
 
 Artifact contract phase: `artifact_store_cutover`
 
@@ -36,7 +36,7 @@ retry-job chain without exposing routes or changing product lifecycle state.
   verification job, and initiation audit;
 - the attempt stores distinct `source_verification_job_id` and
   `retry_verification_job_id`; only the retry job is executable and owns the
-  02C1 executor/generation fence;
+  02C2 executor/generation fence;
 - idempotency scope is requester, source job, recovery class, and client key,
   with a canonical request digest;
 - exact replay returns original attempt/source/retry IDs; changed replay

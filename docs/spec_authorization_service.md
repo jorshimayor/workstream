@@ -221,17 +221,39 @@ The paired artifact activation matrix is closed:
 
 | Owning WS-ART chunk | Actions activated by that chunk |
 |---|---|
-| `WS-ART-001-02D` | Operator binding/replica/receipt/verification-job/recovery-attempt/audit reads, verification retry, `artifact.verification.execute`, `artifact.pending_work.scan`, and `artifact.put_attempt.resolve` |
-| `WS-ART-001-03` | `artifact.guide_source.ingest`, `artifact.guide_source.read`, and the guide-source binding action mapped to `artifact.binding.create` |
+| `WS-ART-001-02D` | Operator binding/replica/receipt/verification-job/recovery-attempt/audit reads; `artifact.operator.admission_usage.read` mapped to `operations.status.read`; verification retry; `artifact.verification.execute`; `artifact.pending_work.scan`; and `artifact.put_attempt.resolve` |
+| `WS-ART-001-03` | `artifact.guide_source.ingest`, `artifact.guide_source.read`, and `artifact.guide_source.binding.create` mapped to `artifact.binding.create` |
 | `WS-ART-001-04A` | upload-session create/read/seal/cancel/expire and upload-item write |
-| `WS-ART-001-05` | the submission binding action mapped to `artifact.binding.create` |
-| `WS-ART-001-06A` | `artifact.checker_input.materialize` |
-| `WS-ART-001-06B` | `artifact.checker_output.write` |
+| `WS-ART-001-04B` | `artifact.pre_submit.checker_input.materialize` mapped to `artifact.checker_input.materialize` |
+| `WS-ART-001-05` | `artifact.submission.binding.create` mapped to `artifact.binding.create` |
+| `WS-ART-001-06A` | `artifact.post_submit.checker_input.materialize` mapped to `artifact.checker_input.materialize` |
+| `WS-ART-001-06B` | `artifact.checker_output.write` and `artifact.checker_output.binding.create` mapped to `artifact.binding.create` using the checker-run resource |
 
 Every row requires AUTH-07's registry, AUTH-08's applicable Operator grant
 definition, and AUTH-09's applicable fixed service principal to be present
 first. Feature code receives centralized decisions; it never queries grants or
 constructs permission identifiers dynamically.
+
+The fixed internal service identities and their complete artifact action sets
+are also closed:
+
+| Service identity | Allowed artifact actions |
+|---|---|
+| `workstream.artifact.verifier` | `artifact.verification.execute` |
+| `workstream.artifact.put_resolver` | `artifact.put_attempt.resolve` |
+| `workstream.artifact.scheduler` | `artifact.pending_work.scan`, upload-session expiry action mapped to `artifact.upload_session.expire` |
+| `workstream.artifact.binding` | `artifact.guide_source.binding.create`, `artifact.submission.binding.create`, `artifact.checker_output.binding.create` |
+| `workstream.artifact.guide_reader` | `artifact.guide_source.read` |
+| `workstream.artifact.materializer` | `artifact.pre_submit.checker_input.materialize`, `artifact.post_submit.checker_input.materialize` |
+| `workstream.artifact.checker_output` | `artifact.checker_output.write` |
+
+AUTH-09 persists these exact service actors and assignments before any WS-ART
+execution chunk activates them. Composition startup proves registry, service
+actor, action, and PermissionId parity and fails closed on a missing or extra
+assignment. Negative authorization tests prove each service identity is denied
+every artifact action outside its row. Human authorization remains attached to
+the initiating product command; an internal service identity never inherits a
+human grant or role.
 
 Adding a permission requires a specification/ADR update and human approval.
 Routers cannot invent identifiers or evaluate grant unions.

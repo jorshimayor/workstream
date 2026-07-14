@@ -47,7 +47,8 @@ authorized Workstream artifact reader.
   02C1; it neither bypasses admission nor owns a guide-specific quota ledger.
 - project-guide source ingestion requires `artifact.guide_source.ingest`, setup
   reads require the fixed service permission `artifact.guide_source.read`, and
-  binding creation requires `artifact.binding.create`; this chunk supplies each
+  binding creation declares `artifact.guide_source.binding.create`, mapped to
+  `artifact.binding.create`; this chunk supplies each
   action's canonical resource composer, guards, surface declaration, and tests
   against the AUTH-07 registry and AUTH-09 service principal. None implies
   another.

@@ -11,9 +11,10 @@ Each chunk is one PR. No later chunk starts automatically.
 | `WS-ART-001-02A2` | Add bounded committed-source preparation and inactive scratch-cleanup mechanics without changing the active v1 port. | L1 | Proposed after 02A1 |
 | `WS-ART-001-02A3` | Replace ArtifactStore v1 with byte-only v2, activate API-startup and Celery Beat scratch cleanup, migrate schema/callers/factory, and remove `flow_node` in one atomic clean cut. | L1 | Proposed after 02A2 |
 | `WS-ART-001-02B1` | Implement the S3-compatible adapter, MinIO integration, and AWS S3 production profile. | L1 | Proposed after 02A3 |
-| `WS-ART-001-02C1` | Add generic durable-storage admission, verification publication, PostgreSQL execution fencing, complete-object observation, and immutable receipts without recovery attempts or routes. | L1 | Proposed after 02B1 |
-| `WS-ART-001-02C2` | Add the recovery-attempt model and exact idempotent source-job to retry-job chain without public or Operator routes. | L1 | Proposed after 02C1 |
-| `WS-ART-001-02D` | Add exact authorized Operator content/job/retry/recovery/audit APIs and production-readiness checks; provider profiles remain inactive. | L1 | Proposed after 02C2 plus merged AUTH-07/08/09 |
+| `WS-ART-001-02C1` | Add the generic durable-byte admission ledger and durable put-attempt state foundation without provider execution. | L1 | Proposed after 02B1 |
+| `WS-ART-001-02C2` | Add put resolution, verification publication, complete-object observation, immutable receipts, and PostgreSQL execution fencing without recovery attempts or routes. | L1 | Proposed after 02C1 |
+| `WS-ART-001-02C3` | Add the recovery-attempt model and exact idempotent source-job to retry-job chain without public or Operator routes. | L1 | Proposed after 02C2 |
+| `WS-ART-001-02D` | Add exact authorized Operator content/job/retry/recovery/audit APIs and production-readiness checks; provider profiles remain inactive. | L1 | Proposed after 02C3 plus merged AUTH-07/08/09 |
 | `WS-ART-001-03` | Store and bind guide-source bytes; add same-snapshot setup recovery through the authorized artifact reader. | L1 | Proposed after 02D |
 | `WS-ART-001-04A` | Add task-scoped upload sessions/items, trusted archive inspection, independent verification, immutable sealing, and artifact-set manifests. | L1 | Proposed after 03 |
 | `WS-ART-001-04B` | Execute authoritative pre-submit against sealed artifact sets and persist exact admissions with bounded infrastructure continuation. | L1 | Proposed after 04A |
@@ -30,8 +31,9 @@ OBJECT-STORAGE-AMENDMENT
 -> 02A2 committed-source preparation and LocalStorage internals
 -> 02A3 ArtifactStore v2/LocalStorage/schema clean cut
 -> 02B1 S3-compatible adapter, MinIO, and AWS profile
--> 02C1 generic durable-storage admission, verification publication, and fencing
--> 02C2 recovery attempt and idempotency chain
+-> 02C1 generic durable-byte admission and put-attempt foundation
+-> 02C2 put resolution, verification publication, and fencing
+-> 02C3 recovery attempt and idempotency chain
 -> 02D Operator and production readiness
 -> 03 guide source cutover
 -> 04A upload/inspection/sealing

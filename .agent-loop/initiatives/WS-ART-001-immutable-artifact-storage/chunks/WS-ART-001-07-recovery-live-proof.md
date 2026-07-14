@@ -58,10 +58,12 @@ without direct database inspection or Terminal Benchmark product coupling.
   proven safely.
 - Operator observes jobs, retries with a reason, and reads terminal recovery
   through APIs only.
-- LocalStorage and real MinIO pass conformance. The AWS harness uses one
-  short-lived OIDC-assumed read-only readiness role; the runtime role uses its
-  configured workload identity; a separate OIDC-assumed negative-test role has
-  no bucket authority; bootstrap credentials are never supplied to the harness.
+- LocalStorage and real MinIO pass conformance. AWS proof is split across a
+  readiness job with its short-lived OIDC role, a runtime-immutability command
+  executed inside the actual deployed Workstream workload identity, and an
+  independent negative-access job with its short-lived OIDC role. No proof
+  executor can assume another proof role; bootstrap credentials are never
+  supplied.
 - the dedicated bucket policy denies object data-plane actions for every
   principal other than the exact runtime role and denies runtime `PutObject`
   unless `s3:if-none-match` is `*`. Internal/external Access Analyzer or
@@ -73,11 +75,21 @@ without direct database inspection or Terminal Benchmark product coupling.
   unconditional runtime overwrite is denied and the original bytes remain
   unchanged. Policy/ACL/public-access and completed-prefix lifecycle proof must
   also pass;
-- after all proofs, the harness writes an immutable
-  `ArtifactProviderActivation` bound to release, namespace fingerprint, role
-  ARNs, bucket-policy digest, proof version/result, database time, and expiry.
-  Production startup requires an exact unexpired match. Unproved or stale AWS
-  remains uninstantiable;
+- each executor obtains its STS caller ARN and writes one append-only
+  `ArtifactProviderProbeResult` bound to probe type, expected/observed ARN,
+  release, namespace fingerprint, policy digest, common challenge nonce, proof
+  version/result, bounded evidence digest, PostgreSQL times, and expiry;
+- a credential-free activation coordinator with database authority validates
+  one matching unexpired readiness, runtime-immutability, and negative-access
+  pass plus bootstrap-principal policy evaluation before writing an immutable
+  `ArtifactProviderActivation`. It has no AWS credentials and performs no
+  provider call;
+- production startup and every AWS provider I/O require an exact unexpired
+  activation. Proof validity is capped at 15 minutes and all probes plus
+  coordination are scheduled every 5 minutes. Missing, stale, mismatched, or
+  expired proof fails closed before I/O;
+- v0.1 explicitly trusts authorized cloud administrators inside that bounded
+  validity window and does not require S3 Object Lock;
 - all AWS policy, principal, public-access, and lifecycle inspection lives in
   this deployment-only proof harness, not `ArtifactStore` or a product service;
 - no test-only route or control exists in the production application image.
@@ -121,7 +133,10 @@ backend/.venv/bin/python -m examples.artifact_lifecycle.proof_tools.real_api_dri
 (cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest tests/test_artifact_store_conformance.py tests/test_artifact_real_api.py -q --cov=app.modules.artifacts --cov=app.adapters.artifacts --cov-report=term-missing --cov-fail-under=90)
 backend/.venv/bin/python -m pytest examples/artifact_lifecycle/tests -q --cov=examples/artifact_lifecycle/proof_tools --cov-report=term-missing --cov-fail-under=90
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
-WORKSTREAM_ARTIFACT_PROOF_PROFILE=aws_s3 backend/.venv/bin/python -m examples.artifact_lifecycle.proof_tools.provider_live_smoke
+WORKSTREAM_ARTIFACT_PROOF_PROFILE=aws_s3_readiness backend/.venv/bin/python -m examples.artifact_lifecycle.proof_tools.aws_readiness_probe
+WORKSTREAM_ARTIFACT_PROOF_PROFILE=aws_s3_runtime backend/.venv/bin/python -m examples.artifact_lifecycle.proof_tools.aws_runtime_immutability_probe
+WORKSTREAM_ARTIFACT_PROOF_PROFILE=aws_s3_negative backend/.venv/bin/python -m examples.artifact_lifecycle.proof_tools.aws_negative_access_probe
+WORKSTREAM_ARTIFACT_PROOF_PROFILE=aws_s3_activation backend/.venv/bin/python -m examples.artifact_lifecycle.proof_tools.aws_activation_coordinator
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/check_markdown_links.py
 python3 scripts/test_agent_gates.py

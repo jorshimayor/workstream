@@ -40,9 +40,10 @@ when artifact infrastructure is temporarily unavailable.
 
 - authoritative pre-submit executes the task's locked project checker against
   the exact sealed artifact-set hash;
-- checker workspace creation requires the fixed service permission
-  `artifact.checker_input.materialize`; contributor upload permissions do not
-  authorize materialization;
+- checker workspace creation declares
+  `artifact.pre_submit.checker_input.materialize`, mapped to the fixed service
+  permission `artifact.checker_input.materialize`; contributor upload
+  permissions do not authorize materialization;
 - pre-submit passes a provider-neutral materialization request for the sealed
   upload artifact set and resolves only its verified `ready` items; it does not
   require or create a product binding before submission creation. Post-submit

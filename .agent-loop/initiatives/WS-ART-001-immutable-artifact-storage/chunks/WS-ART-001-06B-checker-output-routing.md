@@ -47,7 +47,9 @@ lease, assignment, or decision.
   never consumes or attributes the contributor actor's quota and does not own a
   checker-specific quota ledger;
 - checker output ingestion requires `artifact.checker_output.write`, and its
-  resulting immutable binding separately requires `artifact.binding.create`;
+  resulting immutable binding declares `artifact.checker_output.binding.create`,
+  targets the canonical checker-run resource, and maps separately to
+  `artifact.binding.create`;
 - reservations are cross-process, bounded, deadline constrained, and cleaned
   only when expired; slow-active, cancellation, and crash cases are tested;
 - non-reproducible crash replay fails the old checker attempt and uses a new

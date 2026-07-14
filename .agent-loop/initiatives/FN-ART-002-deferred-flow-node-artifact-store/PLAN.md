@@ -3,7 +3,8 @@
 ## Sequence
 
 1. Isolate the minimum Flow Node byte-service binary and storage primitives.
-2. Add a private authenticated API implementing immutable put/recover/open/head.
+2. Add a private authenticated API implementing immutable
+   put/observe-put-result/open/head.
 3. Run Workstream-owned ArtifactStore v2 conformance vectors against it.
 4. Implement `FlowNodeArtifactStore` through ADR 0014's typed factory.
 5. Perform an explicit maintenance cutover with byte migration and full
@@ -15,6 +16,10 @@ Flow Node owns private bytes and protocol observations only. Workstream owns
 authorization, content identity, bindings, receipts, lifecycle, audit,
 verification truth, jobs, and recovery. CID/DAG/block details remain bounded
 provider observations and never enter the generic content contract.
+The future adapter implements the exact v2 `put`, read-only
+`observe_put_result`, `open`, and `head` semantics. Observation resolves the
+deterministic object identity and reports bounded state; it never asks Flow Node
+to replay, recover, overwrite, or otherwise mutate a provider write.
 
 ## Cutover Rule
 

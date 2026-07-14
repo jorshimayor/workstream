@@ -18,9 +18,10 @@
 | `WS-ART-001-02A2` | Committed Source And Local Preparation | L1 | Inactive until 02A1 merge and explicit user start |
 | `WS-ART-001-02A3` | ArtifactStore v2 Local Clean Cut | L1 | Inactive until 02A2 merge and explicit user start |
 | `WS-ART-001-02B1` | S3-Compatible MinIO And AWS | L1 | Inactive until 02A3 merge and explicit user start |
-| `WS-ART-001-02C1` | Verification Publication And Fencing | L1 | Inactive until 02B1 merge and explicit user start |
-| `WS-ART-001-02C2` | Recovery Attempt And Idempotency Chain | L1 | Inactive until 02C1 merge and explicit user start |
-| `WS-ART-001-02D` | Operator Artifact Operations And AWS Readiness | L1 | Inactive until 02C2 and exact AUTH prerequisites |
+| `WS-ART-001-02C1` | Admission And Put-Attempt Foundation | L1 | Inactive until 02B1 merge and explicit user start |
+| `WS-ART-001-02C2` | Verification Publication And Fencing | L1 | Inactive until 02C1 merge and explicit user start |
+| `WS-ART-001-02C3` | Recovery Attempt And Idempotency Chain | L1 | Inactive until 02C2 merge and explicit user start |
+| `WS-ART-001-02D` | Operator Artifact Operations And AWS Readiness | L1 | Inactive until 02C3 and exact AUTH prerequisites |
 
 ## Completed
 

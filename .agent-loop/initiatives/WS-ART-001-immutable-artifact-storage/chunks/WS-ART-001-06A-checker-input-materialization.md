@@ -45,9 +45,10 @@ bounded isolated checker workspaces.
   IDs and reuses the canonical materializer that pre-submit invoked with a
   sealed-ready upload-set source; both are closed forms of the same typed
   materialization request;
-- the fixed checker service principal requires
-  `artifact.checker_input.materialize`; binding creation separately requires
-  `artifact.binding.create` and neither permission implies the other;
+- the fixed checker service principal declares
+  `artifact.post_submit.checker_input.materialize`, mapped to
+  `artifact.checker_input.materialize`; it does not authorize any binding-create
+  action;
 - each hash and byte count is recomputed during materialization before checker
   execution;
 - workspace allocation uses the shared aggregate ledger/quota, private

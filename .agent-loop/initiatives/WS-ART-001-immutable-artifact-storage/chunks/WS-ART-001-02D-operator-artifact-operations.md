@@ -1,6 +1,6 @@
 # Chunk Contract: WS-ART-001-02D Operator Artifact Operations
 
-Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02C2 and AUTH-09
+Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02C3 and AUTH-09
 
 Artifact contract phase: `artifact_store_cutover`
 
@@ -13,7 +13,8 @@ cutover. Chunk 07 owns every live AWS provider inspection.
 ## Allowed Files
 
 - artifact router and public/internal schemas
-- artifact service/repository read and retry methods
+- `ArtifactOperatorReadPort` read/admission-usage implementation and
+  `ArtifactOperatorRecoveryPort.retry_verification` implementation
 - API router composition root
 - static provider-profile readiness prerequisites/status; profiles remain
   inactive and this chunk performs no AWS policy/lifecycle API inspection
@@ -40,8 +41,8 @@ cutover. Chunk 07 owns every live AWS provider inspection.
 ## Acceptance Criteria
 
 - exact Operator APIs exist for resource-scoped binding discovery, replicas,
-  receipts, verification job, retry, recovery-attempt read, and artifact audit
-  listing.
+  receipts, verification job, retry, recovery-attempt read, artifact audit
+  listing, and read-only admission usage.
 - AUTH-07, AUTH-08, and AUTH-09 are merged before this chunk starts, providing
   the complete typed/SQL action registry, Operator grants, and fixed service
   principals. This paired feature chunk supplies canonical artifact resources,
@@ -56,6 +57,10 @@ cutover. Chunk 07 owns every live AWS provider inspection.
   and retry job; Celery verification uses only
   `artifact.verification.execute`, and ambiguous put resolution uses only
   `artifact.put_attempt.resolve`.
+- `GET /api/v1/operator/artifacts/admission-usage` uses the exact
+  `artifact.operator.admission_usage.read` ActionId mapped to existing
+  `operations.status.read`; it exposes bounded current usage/limits and cannot
+  release charges, mutate configuration, or create work.
 - internal verification uses a provisioned service principal with
   `artifact.verification.execute`; periodic scan publication uses
   `artifact.pending_work.scan`. These permissions remain separate and do not
@@ -89,8 +94,8 @@ cutover. Chunk 07 owns every live AWS provider inspection.
   `artifact_provider_live_proof_required`; the activation schema and production
   composition guard do not exist until Chunk 07. Invalid profiles fail closed.
 - exact internal service-principal authorization activates every verification
-  provider read, periodic scan publication, and recovery job; no 02C1 or 02C2
-  mechanic runs before this gate.
+  provider read, periodic scan publication, and recovery job; no 02C1, 02C2,
+  or 02C3 mechanic runs before this gate.
 - readiness exposes static configured prerequisites and remains inactive.
   Chunk 07's deployment-only harness owns bucket-policy/principal-boundary,
   credential, anonymous-read-negative, completed-prefix lifecycle, and AWS
@@ -99,6 +104,9 @@ cutover. Chunk 07 owns every live AWS provider inspection.
   activation record and enables production composition after live proof.
 - readiness does not write or mutate provider objects.
 - real HTTP tests prove the full Operator path without direct database reads.
+- metrics and alerts cover admission pressure at each configured scope; the
+  operations runbook defines configuration-driven quota expansion and incident
+  rollback without charge deletion or database editing.
 - changed subsystem coverage is at least 90 percent and repository coverage
   does not decrease.
 - backend CI installs this chunk's exact focused 90 percent gate, preserves

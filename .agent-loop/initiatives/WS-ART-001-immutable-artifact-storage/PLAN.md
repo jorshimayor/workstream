@@ -33,6 +33,7 @@ ArtifactBindingPort
 ArtifactMaterializationPort
 CheckerArtifactOutputPort
 ArtifactOperatorReadPort
+ArtifactOperatorRecoveryPort
 ```
 
 Their requests contain canonical Workstream IDs and authorized byte sources,
@@ -134,21 +135,33 @@ can match the completed-object prefix.
 
 The AWS principal matrix is exact: the runtime role has conditional put plus
 head/get on the completed-object prefix; an OIDC-assumed readiness role has
-policy/ACL/public-access/lifecycle/IAM-analysis and activation-record authority
-but no object data plane; an OIDC-assumed negative-test role has no bucket
+policy/ACL/public-access/lifecycle/IAM-analysis authority but no object data
+plane; an independently OIDC-assumed negative-test role has no bucket
 authority; and the bootstrap principal provisions infrastructure but is never
-passed to Workstream or the harness. Bucket policy denies object actions to
-every principal except the runtime role. Internal and external IAM evaluation
-plus live anonymous/readiness/negative-role calls prove the data-plane boundary.
+passed to Workstream or a probe. Bucket policy denies object actions to every
+principal except the runtime role. Internal/external IAM evaluation and live
+anonymous/readiness/negative-role calls prove the data-plane boundary.
 Bootstrap denial is proved by policy/IAM evaluation without supplying bootstrap
-credentials to the harness.
+credentials.
 
-AWS configuration added in 02B1 is not production-instantiable. Chunk 07 alone
-adds `ArtifactProviderActivation` and the production composition guard after
-live proof. The immutable record binds release, namespace fingerprint, role
-ARNs, bucket-policy digest, proof version/result, database proof time, and
-expiry. A missing, stale, or mismatched record fails startup with
-`artifact_provider_live_proof_required`.
+AWS configuration added in 02B1 is not production-instantiable. Chunk 07 runs
+three non-interchangeable proof executors: readiness under its OIDC role,
+runtime immutability inside the actual workload identity, and negative access
+under an independent OIDC role. Each writes an append-only
+`ArtifactProviderProbeResult` bound to its STS-observed caller ARN, expected
+ARN, release, namespace fingerprint, policy digest, common nonce, proof
+version, database times, expiry, result, and evidence digest. No executor can
+assume another proof identity.
+
+A credential-free coordinator with database authority creates
+`ArtifactProviderActivation` only from one matching unexpired pass result of
+each type plus bootstrap-principal policy evaluation. Production startup and
+every AWS I/O require an exact unexpired activation. Proof validity is at most
+15 minutes and the three probes/coordinator run every 5 minutes; expiry or
+configuration/policy drift fails before provider I/O with
+`artifact_provider_live_proof_required`. Authorized infrastructure
+administrators are trusted within that bounded window. S3 Object Lock is not a
+v0.1 requirement and would require a separate human-approved decision.
 
 ## Ingest Transactions
 
@@ -413,7 +426,7 @@ atomicity.
   stale finalization, and cross-resource authorization all have tests.
 - New or changed backend subsystems remain at least 90 percent covered; the
   repository baseline cannot decrease.
-- The 14 implementation chunk contracts define one ordered deterministic
+- The 15 implementation chunk contracts define one ordered deterministic
   coverage table. Backend CI first runs the one exact full-suite
   `--cov=app --cov-report=term-missing --cov-fail-under=78` command. Stable,
   dedicated `coverage report --include=... --fail-under=90` steps then enforce

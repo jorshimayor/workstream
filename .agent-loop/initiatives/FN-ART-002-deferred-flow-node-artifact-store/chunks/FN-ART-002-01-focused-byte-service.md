@@ -24,8 +24,9 @@ put/read/head with bounded streaming and atomic publication.
 
 ## Acceptance Criteria
 
-- only immutable put/recover/open/range/head runtime capabilities are linked and
-  reachable.
+- only immutable put/read-only-observe-put-result/open/range/head runtime
+  capabilities are linked and reachable; observation never replays or mutates a
+  write.
 - streams, object counts, request sizes, timeouts, and concurrency are bounded.
 - immutable publication and exact replay are crash-safe and never overwrite.
 - provider-specific CID/DAG facts remain internal observations.

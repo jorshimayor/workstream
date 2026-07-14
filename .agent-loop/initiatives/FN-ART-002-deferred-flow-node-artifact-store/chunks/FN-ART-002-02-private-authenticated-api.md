@@ -30,7 +30,9 @@ service authentication, TLS, quotas, and redaction.
 - human and unrelated service subjects are denied.
 - TLS is required and credentials rotate without product-schema changes.
 - errors/logs never retain tokens, keys, raw bytes, or internal paths.
-- put/recover/open/range/head semantics are deterministic and bounded.
+- put/observe-put-result/open/range/head semantics are deterministic and
+  bounded; observe-put-result is read-only and cannot recover, replay, or
+  mutate a write.
 
 ## Verification
 
