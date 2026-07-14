@@ -32,8 +32,10 @@ AWS S3 is the only v0.1 production provider. Each replica persists immutable
 provider profile and storage-namespace identity. Switching a populated
 deployment requires a separately approved complete-copy, verification, and
 maintenance cutover; it is not a hot configuration toggle. AWS becomes
-production-eligible only after private-bucket, least-privilege, lifecycle, and
-anonymous-read-negative live proof succeeds.
+production-eligible only after private-bucket, exact trusted-principal,
+least-privilege, lifecycle, anonymous-read-negative, and unapproved-
+authenticated-principal negative live proof succeeds in the deployment-only
+Chunk 07 harness.
 
 Cloudflare R2 and Flow Node are not v0.1 dependencies. Later approved
 initiatives may implement the same `ArtifactStore` port and conformance
@@ -70,8 +72,9 @@ exactly one allowlisted method: `assume-role-with-web-identity`,
 Workstream constrains the credential resolver to that selected method and
 rejects explicit credentials, ambient access keys, file/process/login/SSO
 sources, legacy EC2/Boto sources, and every unselected workload provider before
-loading credentials. Static credentials are limited to local/CI MinIO. No R2
-credential issuer, sidecar, secret contract, or runtime profile exists in v0.1.
+loading credentials. Static credentials are limited to local/CI MinIO.
+Cloudflare R2 is deferred; this initiative defines no credential issuer,
+sidecar, secret contract, or runtime profile for it.
 
 ## ArtifactStore Contract
 
@@ -194,8 +197,10 @@ contribution, payment exposure, or reputation effect.
 
 Artifact storage follows ADR 0014. `LocalStorageAdapter` and
 `S3CompatibleArtifactStore` are explicitly registered through
-`ExternalServiceAdapterFactory[ArtifactStore]`. Product services and Celery
-receive only the port through composition-root dependency injection.
+`ExternalServiceAdapterFactory[ArtifactStore]`. Only artifact-storage
+orchestration receives the writable port through composition-root dependency
+injection. Product modules and Celery jobs receive typed artifact
+ingest/read/materialization operations instead.
 
 There is no service locator, runtime plugin discovery, concrete-adapter import
 in product services, fallback constructor, compatibility alias, or dual factory

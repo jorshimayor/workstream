@@ -43,6 +43,7 @@ TEXT_SUFFIXES = {
     ".py",
     ".rst",
     ".sh",
+    ".svg",
     ".tf",
     ".toml",
     ".txt",
@@ -54,10 +55,11 @@ FOUNDATION_INTERFACE_PATHS = {
     "backend/app/modules/artifacts/contracts.py",
 }
 FOUNDATION_INTERFACE_PREFIXES = ("contracts/artifact-store/",)
-R2_RUNTIME_PREFIXES = (
+DEFERRED_PROVIDER_RUNTIME_PREFIXES = (
     "backend/app/",
+    "backend/scripts/",
     ".github/workflows/",
-    "services/r2_credential_issuer/",
+    "services/",
     "deploy/",
     "deployment/",
     "infra/",
@@ -77,6 +79,29 @@ R2_RUNTIME_PATTERN = re.compile(
     r"\b[A-Za-z][A-Za-z0-9_]*r2[A-Za-z0-9_]*\b|"
     r"r2\.cloudflarestorage\.com|"
     r"\bCloudflare[A-Za-z0-9_]*\b|\bcloudflare\b)",
+    re.IGNORECASE,
+)
+R2_ACTIVATION_PATTERN = re.compile(
+    r"(?:\b(?:enable|activate|support|use)\s+(?:Cloudflare\s+)?R2\b|"
+    r"\b(?:Cloudflare\s+)?R2\b[^.;!?]{0,180}"
+    r"(?:\b(?:is|are|remains?|becomes?)\s+"
+    r"(?!not\b|outside\b|deferred\b)[^.;!?]{0,50}"
+    r"\b(?:eligible|enabled|supported|active|production|hosted)\b|"
+    r"\b(?:for|in)\s+(?:v0\.1|production|hosted)\b|"
+    r"\b(?:v0\.1|production|hosted)\s+(?:object[- ]store\s+)?provider\b))",
+    re.IGNORECASE,
+)
+FLOW_NODE_ACTIVATION_PATTERN = re.compile(
+    r"(?:\bFlow\s+Node\b[^.;!?]{0,180}\b"
+    r"(?:remains?|preserved\s+as|is)\b[^.;!?]{0,60}"
+    r"\bv0\.1\s+production\s+(?:artifact\s+)?provider\b|"
+    r"\b(?:enable|activate|support|use)\s+Flow\s+Node\b|"
+    r"\bFlow\s+Node\b[^.;!?]{0,180}"
+    r"(?:\b(?:is|are|remains?|becomes?|preserved\s+as)\s+"
+    r"(?!not\b|outside\b|deferred\b)[^.;!?]{0,50}"
+    r"\b(?:eligible|enabled|supported|active|production|hosted)\b|"
+    r"\b(?:for|in)\s+(?:v0\.1|production|hosted)\b|"
+    r"\b(?:v0\.1|production|hosted)\s+(?:artifact\s+)?provider\b))",
     re.IGNORECASE,
 )
 LEGACY_R2_RUNTIME_LINES = {
@@ -112,6 +137,12 @@ LEGACY_R2_RUNTIME_LINES = {
             '"Add sha256:<token> hash values for evidence objects stored in local, R2, or S3 storage.",',
         ),
     ),
+    "backend/scripts/api_contract_e2e.py": (
+        (
+            "submission_cutover",
+            '"allowed_storage_schemes": ["local", "s3", "r2"],',
+        ),
+    ),
     "backend/app/modules/tasks/schemas.py": (
         (
             "submission_cutover",
@@ -129,9 +160,7 @@ LEGACY_R2_RUNTIME_LINES = {
 }
 LIVE_RULE_PATHS = {
     "LEGACY_FLOW_NODE_RUNTIME": (
-        "backend/app/core/config.py",
-        "backend/app/interfaces/",
-        "backend/app/adapters/artifacts/",
+        *DEFERRED_PROVIDER_RUNTIME_PREFIXES,
     ),
     "LEGACY_GUIDE_CONTENT_CID": (
         "backend/app/interfaces/project_agents.py",
@@ -300,7 +329,7 @@ def path_is_scannable(relative_path: str, root: Path = ROOT) -> bool:
     is_text_path = (
         path.suffix.lower() in TEXT_SUFFIXES
         or path.name.startswith(R2_RUNTIME_FILENAMES)
-        or (not path.suffix and relative_path.startswith(R2_RUNTIME_PREFIXES))
+        or relative_path.startswith(DEFERRED_PROVIDER_RUNTIME_PREFIXES)
     )
     return (
         is_text_path
@@ -362,7 +391,7 @@ def rule_applies_to_path(rule: Rule, relative_path: str, root: Path = ROOT) -> b
 
 def has_explicit_r2_deferral(line_text: str) -> bool:
     """Accept only clauses that unambiguously keep R2 outside active v0.1."""
-    if re.search(r"\b(?:but|however|yet)\b", line_text, re.IGNORECASE):
+    if R2_ACTIVATION_PATTERN.search(line_text):
         return False
     return bool(
         re.search(
@@ -370,12 +399,28 @@ def has_explicit_r2_deferral(line_text: str) -> bool:
             r"\b(?:is\s+)?(?:deferred|not\s+(?:an?\s+)?v0\.1|outside\s+v0\.1|"
             r"ha(?:s|ve)\s+no\s+active|ha(?:s|ve)\s+no\s+provider|"
             r"ha(?:s|ve)\s+no\s+v0\.1|"
-            r"is\s+removed|values?\s+are\s+legacy|requires\s+(?:a\s+)?"
-            r"separate(?:ly)?\s+approved)\b|"
+            r"is\s+removed|(?:values?|tokens?|inputs?)\s+are\s+legacy|"
+            r"legacy\s+input)\b|"
             r"\bdefer(?:red|s|ring)?\b[^\n]{0,80}\b(?:Cloudflare\s+)?R2\b|"
             r"\b(?:no|remove(?:d|s)?)\b[^\n]{0,80}\b(?:Cloudflare\s+)?R2\b|"
             r"\blater\s+(?:approved\s+)?(?:Cloudflare\s+)?R2\s+adoption\b)",
             line_text,
+            re.IGNORECASE,
+        )
+    )
+
+
+def has_explicit_flow_node_deferral(clause_text: str) -> bool:
+    """Accept Flow Node wording only when it cannot activate v0.1."""
+    if FLOW_NODE_ACTIVATION_PATTERN.search(clause_text):
+        return False
+    return bool(
+        re.search(
+            r"(?:\bFlow\s+Node\b[^\n]{0,180}\b(?:is\s+)?"
+            r"(?:deferred|not\s+(?:an?\s+)?v0\.1|outside\s+v0\.1|"
+            r"cannot\s+block|has\s+no\s+active|superseded)\b|"
+            r"\bdefer(?:red|s|ring)?\b[^\n]{0,80}\bFlow\s+Node\b)",
+            clause_text,
             re.IGNORECASE,
         )
     )
@@ -417,35 +462,33 @@ def clause_around(text: str, offset: int) -> str:
 def scan_text(relative_path: str, text: str, phase: str, root: Path = ROOT) -> list[str]:
     """Return deterministic stale-contract failures for one text file."""
     failures: list[str] = []
+    normalized_text = text.replace(r"\n", "  ")
     for rule in rules_for_phase(phase):
         if not rule_applies_to_path(rule, relative_path, root):
             continue
-        for match in rule.pattern.finditer(text):
-            line = text.count("\n", 0, match.start()) + 1
+        for match in rule.pattern.finditer(normalized_text):
+            line = normalized_text.count("\n", 0, match.start()) + 1
             line_text = text.splitlines()[line - 1]
             if rule.code == "ACTIVE_R2_V01_PLAN":
                 if match.group(0).upper().startswith("WS-ART-001-02B"):
                     failures.append(f"{relative_path}:{line}: {rule.code}")
                     continue
-                clause_text = clause_around(text, match.start())
+                clause_text = clause_around(normalized_text, match.start())
                 if not is_r2_provider_reference(clause_text):
                     continue
                 if has_explicit_r2_deferral(clause_text):
                     continue
-            if rule.code == "OBSOLETE_FLOW_NODE_PLAN" and re.search(
-                r"\b(?:defer(?:red|s)?|supersed(?:ed|es)?|preserv(?:ed|es)?|"
-                r"not (?:a )?v0\.1|cannot block|outside v0\.1)\b",
-                line_text,
-                re.IGNORECASE,
-            ):
-                continue
+            if rule.code == "OBSOLETE_FLOW_NODE_PLAN":
+                clause_text = clause_around(normalized_text, match.start())
+                if has_explicit_flow_node_deferral(clause_text):
+                    continue
             failures.append(f"{relative_path}:{line}: {rule.code}")
     is_r2_runtime_path = relative_path.startswith(
-        R2_RUNTIME_PREFIXES
+        DEFERRED_PROVIDER_RUNTIME_PREFIXES
     ) or Path(relative_path).name.startswith(R2_RUNTIME_FILENAMES)
     if is_r2_runtime_path:
-        for match in R2_RUNTIME_PATTERN.finditer(text):
-            line = text.count("\n", 0, match.start()) + 1
+        for match in R2_RUNTIME_PATTERN.finditer(normalized_text):
+            line = normalized_text.count("\n", 0, match.start()) + 1
             line_text = text.splitlines()[line - 1].strip()
             if any(
                 phase_index(phase) < phase_index(removal_phase)

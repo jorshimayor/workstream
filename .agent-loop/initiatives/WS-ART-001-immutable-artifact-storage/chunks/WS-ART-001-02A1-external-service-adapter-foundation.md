@@ -2,6 +2,8 @@
 
 Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after amendment merge
 
+Artifact contract phase: `foundation`
+
 ## Goal
 
 Install only ADR 0014's small typed external-service adapter and factory

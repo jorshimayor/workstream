@@ -11,7 +11,10 @@
 | Secret retained in settings errors/logs/jobs | Critical | Secret-safe settings boundary, redaction/object-graph tests, no credential persistence. |
 | Wrong AWS credential source is accepted | Critical | Production selects one allowlisted workload-identity method, verifies the resolved method, and rejects explicit or unselected ambient credential sources before provider I/O. |
 | Public bucket leaks evidence | Critical | AWS deployment proof checks Block Public Access, policy/ACL state, and anonymous-read denial. |
+| Unapproved AWS principal reaches private evidence | Critical | Chunk 07 defines the complete trusted-principal set, fails on any extra resource-based grant, and proves read/write/delete denial with an unapproved authenticated role. |
 | Runtime credential can destroy evidence | Critical | Exact bucket/prefix/action scope; denied delete/copy/list/admin/lifecycle/public-access actions; negative tests. |
+| Product code bypasses artifact admission through the raw port | Critical | Only artifact-storage orchestration receives writable ArtifactStore; static architecture tests reject other put/recover_put call sites. |
+| Deployment silently reads or writes another storage namespace | Critical | Startup and every provider operation fence adapter/profile/namespace identity against persisted replicas; mismatch fails closed and requires a maintenance migration. |
 | Broker publication failure strands verification/recovery | High | Periodic PostgreSQL scanner with bounded SLA and duplicate-safe publication. |
 | Duplicate/stale Celery execution writes terminal state | Critical | PostgreSQL clock, fresh executor UUID, generation fencing, and zero-row stale finalization rollback. |
 | Slow progressive read outlives execution lease | High | End-to-end verification deadline shorter than lease by a persistence margin. |

@@ -4,8 +4,8 @@
 
 After explicit human merge approval, ADR 0013 and
 `docs/spec_artifact_storage_service.md` are the canonical v0.1 artifact
-contract. The earlier Flow Node-first plan is superseded for v0.1 and preserved
-only as deferred initiative input.
+contract. The earlier provider plan is superseded for v0.1 and retained only as
+deferred initiative input.
 
 ## Architecture
 
@@ -18,6 +18,11 @@ FastAPI / Celery composition roots
 -> ArtifactService orchestration
 -> PostgreSQL metadata, bindings, receipts, audit, and recovery
 ```
+
+Only the artifact-storage orchestration service receives the writable
+`ArtifactStore` capability. Guide, task, submission, checker, and review
+modules receive typed ingest, read, or materialization operations so they
+cannot bypass admission, receipts, verification, binding, or audit.
 
 `ArtifactStore` exposes only immutable byte-provider behavior:
 

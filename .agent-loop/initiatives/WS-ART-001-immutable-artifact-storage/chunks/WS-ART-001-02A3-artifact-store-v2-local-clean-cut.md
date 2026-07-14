@@ -2,6 +2,8 @@
 
 Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02A2
 
+Artifact contract phase: `artifact_store_cutover`
+
 ## Goal
 
 Atomically replace ArtifactStore v1 with the byte-only v2 contract, migrate
@@ -42,13 +44,19 @@ configuration. No compatibility path remains after this PR.
 - the migration removes provider retention/receipt semantics, adds immutable
   provider profile/storage namespace, and rebuilds or explicitly refuses
   incompatible pre-production rows;
+- startup and every replica read/write fail closed when the configured adapter
+  identity, provider profile, or storage namespace differs from persisted
+  deployment/replica identity. v0.1 uses one namespace fence, not a
+  per-operation router or hot provider switch;
 - upload state includes `replay_required`; provider acknowledgement creates
   `stored_pending_verification` and `pending/unknown/unknown`, never bindability;
 - v1 verify/retain/release/provider-receipt methods are absent from active code;
 - backend values are exactly `disabled|local|s3_compatible`; unimplemented
   `s3_compatible` fails typed, `flow_node` is rejected, and local is refused in
   production;
-- one active factory path exists and every caller uses it;
+- one active factory path exists; only the artifact orchestration service
+  receives writable `ArtifactStore`, and static tests reject `put` or
+  `recover_put` calls from product modules;
 - API-process startup cleanup runs once before accepting artifact work, and a
   named Celery Beat task owns periodic stale-scratch cleanup; both invoke the
   02A2 cleanup service, while neither creates a product claim or review lease;

@@ -2,6 +2,8 @@
 
 Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 06A and AUTH-15
 
+Artifact contract phase: `checker_cutover`
+
 ## Goal
 
 Ingest checker logs and generated outputs as canonical verified artifacts and
@@ -81,9 +83,9 @@ coverage report --include='app/core/config.py' --precision=2 --fail-under=90
 coverage report --include='app/workers/*' --precision=2 --fail-under=90
 coverage report --include='app/api/router.py' --precision=2 --fail-under=90
 coverage report --include='app/modules/projects/*' --precision=2 --fail-under=90
+coverage report --include='app/adapters/project_agents/*,app/interfaces/project_agents.py' --precision=2 --fail-under=90
 coverage report --include='app/modules/tasks/*' --precision=2 --fail-under=90
 coverage report --include='app/modules/checkers/*' --precision=2 --fail-under=90
-coverage report --include='app/adapters/project_agents/*,app/interfaces/project_agents.py' --precision=2 --fail-under=90
 ```
 
 ## Verification

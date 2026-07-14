@@ -2,6 +2,8 @@
 
 Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02A3
 
+Artifact contract phase: `artifact_store_cutover`
+
 ## Goal
 
 Implement `S3CompatibleArtifactStore`, prove it against real MinIO, and add the
@@ -52,6 +54,9 @@ credential-delivery contract.
 - dependency tests assert the exact async SDK pair; upgrades require a separate
   credential/provider-behavior review;
 - real digest-pinned MinIO and LocalStorage pass the same v2 conformance suite;
+- startup and operation tests reject configured adapter/profile/namespace
+  mismatch against persisted deployment or replica identity; no request is
+  routed to a second namespace;
 - adversarial first-writer and cross-project tests prove that a client-selected
   digest cannot occupy another content key;
 - focused changed-subsystem coverage is at least 90 percent and repository

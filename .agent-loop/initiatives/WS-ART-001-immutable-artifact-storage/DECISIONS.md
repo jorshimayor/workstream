@@ -79,10 +79,12 @@ access.
 
 S3CompatibleArtifactStore and LocalStorageAdapter are registered explicitly
 through
-`ExternalServiceAdapterFactory[ArtifactStore]`. Product services and Celery
-receive the port through composition-root dependency injection. No service
-locator, plugin discovery, concrete import, fallback constructor, or dual
-factory exists.
+`ExternalServiceAdapterFactory[ArtifactStore]`. Only the artifact-storage
+orchestration service receives the writable port through composition-root
+dependency injection. Product modules and Celery jobs receive typed artifact
+operations from that owner. No service locator, plugin discovery, concrete
+import, fallback constructor, dual factory, or bypassing writable-port
+injection exists.
 
 ## D13 - Private S3 Deployment
 
@@ -145,3 +147,28 @@ new-session admission. Both paths use the fixed system permission
 `artifact.upload_session.expire` and one atomic terminal transition that
 releases the slot exactly once. Cancellation or expiry never releases a
 completed durable-byte charge.
+
+## D20 - Closed Materialization Sources
+
+The provider-neutral materializer accepts exactly one sealed upload artifact
+set whose items are all `ready` before submission creation, or immutable
+`ArtifactBinding` IDs after submission creation. Staging never creates a
+premature product binding. Both forms resolve through phase-specific
+authorization, stream exact provider bytes, and recompute SHA-256 and byte
+count before a checker receives a read-only workspace.
+
+## D21 - Configured Storage Namespace Fence
+
+Startup, read, and write paths validate one configured adapter identity,
+provider profile, and storage namespace against persisted replicas. A mismatch
+fails closed; no request may route to a second namespace. Changing a populated
+deployment requires a separate verified maintenance migration.
+
+## D22 - AWS Readiness Ownership
+
+Provider-readiness inspection is not part of `ArtifactStore` and is not called
+by product services. Chunk 02D exposes only static prerequisite status. Chunk
+07 owns the deployment-only AWS harness that verifies the exact trusted
+principal set, effective Block Public Access, policy/ACL state, Access Analyzer
+findings, lifecycle safety, and negative read/write/delete behavior for
+anonymous and unapproved authenticated principals.

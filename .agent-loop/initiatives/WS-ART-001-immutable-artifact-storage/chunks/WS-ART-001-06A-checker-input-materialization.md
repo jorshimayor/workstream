@@ -2,6 +2,8 @@
 
 Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 05 and AUTH-15
 
+Artifact contract phase: `submission_cutover`
+
 ## Goal
 
 Persist post-submit checker input snapshots and reuse the canonical authorized
@@ -39,8 +41,10 @@ bounded isolated checker workspaces.
   binding/content IDs, hashes/sizes, locked policy/checker versions, and checker
   implementation identity;
 - pre-submit and post-submit input prove the same artifact-set hash;
-- the runner receives only authorized Workstream bindings and reuses the same
-  canonical materializer used by pre-submit;
+- the post-submit runner receives only authorized immutable Workstream binding
+  IDs and reuses the canonical materializer that pre-submit invoked with a
+  sealed-ready upload-set source; both are closed forms of the same typed
+  materialization request;
 - the fixed checker service principal requires
   `artifact.checker_input.materialize`; binding creation separately requires
   `artifact.binding.create` and neither permission implies the other;
@@ -72,9 +76,9 @@ coverage report --include='app/core/config.py' --precision=2 --fail-under=90
 coverage report --include='app/workers/*' --precision=2 --fail-under=90
 coverage report --include='app/api/router.py' --precision=2 --fail-under=90
 coverage report --include='app/modules/projects/*' --precision=2 --fail-under=90
+coverage report --include='app/adapters/project_agents/*,app/interfaces/project_agents.py' --precision=2 --fail-under=90
 coverage report --include='app/modules/tasks/*' --precision=2 --fail-under=90
 coverage report --include='app/modules/checkers/*' --precision=2 --fail-under=90
-coverage report --include='app/adapters/project_agents/*,app/interfaces/project_agents.py' --precision=2 --fail-under=90
 ```
 
 ## Verification

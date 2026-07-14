@@ -93,8 +93,9 @@ job is eventually published even if the first broker call fails.
 - S3 credentials authorize transport only and never imply product authority.
 - Credentials come from deployment secret injection and never enter Postgres,
   Redis, Celery payloads, logs, receipts, or API responses.
-- Product services consume `ArtifactStore` by dependency injection and never
-  import the S3 implementation.
+- Only artifact-storage orchestration consumes the writable `ArtifactStore`
+  through dependency injection and never imports the S3 implementation.
+  Product modules and Celery jobs consume typed artifact operations instead.
 - The S3 endpoint is trusted configuration. Production requires HTTPS and a
   private bucket; localhost HTTP is allowed only in local/test MinIO.
 - No public bucket, custom-domain cache, or client-visible object key is used.
@@ -118,11 +119,11 @@ v0.1. The user selected AWS S3 as the only production provider. R2 therefore
 has no active runtime profile, credential service, deployment proof, or chunk;
 later adoption requires separate discovery and approval.
 
-The current pre-cutover application still accepts legacy `r2://` and `r2`
-caller-declared values in guide-source, task, project-policy, checker, API-drill,
-and template contracts that have no active v0.1 provider meaning and do not
-prove that Workstream can store or retrieve provider bytes. They are
-inventoried legacy input contracts. Chunk 03 removes direct provider schemes
-from guide-source identity. Chunk 05 removes the remaining caller storage
-transport when submissions move to sealed artifact-set bindings. No
-compatibility alias remains after either owning cutover.
+The current pre-cutover application still accepts legacy caller-declared
+provider schemes in guide-source, task, project-policy, checker, API-drill, and
+template contracts. Those values have no active v0.1 provider meaning and do
+not prove that Workstream can store or retrieve provider bytes. Chunk 03
+removes direct provider schemes from guide-source identity. Chunk 05 removes
+the remaining caller storage transport when submissions move to sealed
+artifact-set bindings. No compatibility alias remains after either owning
+cutover.

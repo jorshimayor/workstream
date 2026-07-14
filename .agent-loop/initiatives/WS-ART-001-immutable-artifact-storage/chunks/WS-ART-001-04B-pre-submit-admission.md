@@ -2,6 +2,8 @@
 
 Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 04A, AUTH-14, and AUTH-15
 
+Artifact contract phase: `upload_admission`
+
 ## Goal
 
 Execute the task's locked project pre-submit checker against one sealed
@@ -41,10 +43,13 @@ when artifact infrastructure is temporarily unavailable.
 - checker workspace creation requires the fixed service permission
   `artifact.checker_input.materialize`; contributor upload permissions do not
   authorize materialization;
-- pre-submit resolves only authorized Workstream bindings through the shared
-  materializer, reserves its complete checker workspace in the canonical
-  scratch ledger, and recomputes every SHA-256 and byte count while reading the
-  exact provider bytes;
+- pre-submit passes a provider-neutral materialization request for the sealed
+  upload artifact set and resolves only its verified `ready` items; it does not
+  require or create a product binding before submission creation. Post-submit
+  later uses the same materializer with immutable binding IDs;
+- the shared materializer reserves its complete checker workspace in the
+  canonical scratch ledger and recomputes every SHA-256 and byte count while
+  reading the exact provider bytes;
 - a mismatch fails closed as an artifact incident before checker execution;
   verified files are sealed read-only before the checker receives the workspace
   handle, and the handle cannot expose provider references or credentials;
@@ -85,9 +90,9 @@ coverage report --include='app/core/config.py' --precision=2 --fail-under=90
 coverage report --include='app/workers/*' --precision=2 --fail-under=90
 coverage report --include='app/api/router.py' --precision=2 --fail-under=90
 coverage report --include='app/modules/projects/*' --precision=2 --fail-under=90
+coverage report --include='app/adapters/project_agents/*,app/interfaces/project_agents.py' --precision=2 --fail-under=90
 coverage report --include='app/modules/tasks/*' --precision=2 --fail-under=90
 coverage report --include='app/modules/checkers/*' --precision=2 --fail-under=90
-coverage report --include='app/adapters/project_agents/*,app/interfaces/project_agents.py' --precision=2 --fail-under=90
 ```
 
 ## Verification

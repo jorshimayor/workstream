@@ -2,6 +2,8 @@
 
 Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02A1
 
+Artifact contract phase: `foundation`
+
 ## Goal
 
 Add the bounded `PreparedArtifact`/`CommittedArtifactSource` boundary and

@@ -2,18 +2,21 @@
 
 Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02C2 and AUTH-15
 
+Artifact contract phase: `artifact_store_cutover`
+
 ## Goal
 
-Expose exact authorized Operator read/retry/recovery/audit APIs and add
-fail-closed production-readiness inspection without activating a provider
-profile or product cutover.
+Expose exact authorized Operator read/retry/recovery/audit APIs and static
+production-readiness status without activating a provider profile or product
+cutover. Chunk 07 owns every live AWS provider inspection.
 
 ## Allowed Files
 
 - artifact router and public/internal schemas
 - artifact service/repository read and retry methods
 - API router composition root
-- S3-compatible provider-profile readiness checks; profiles remain inactive
+- static provider-profile readiness prerequisites/status; profiles remain
+  inactive and this chunk performs no AWS policy/lifecycle API inspection
 - artifact call sites consuming the exact existing Authorization Service
   permissions mapped below; no Authorization Service owner files
 - focused route, authorization, redaction, readiness, and real-API tests
@@ -56,6 +59,11 @@ profile or product cutover.
   imply one another.
 - every route calls an exact Authorization Service action/resource decision;
   broad role checks are not authority.
+- immediately before the retry transaction commits, Workstream revalidates the
+  actor state, identity link, Operator grant, exact permission/resource, and
+  expected source-job state inside that transaction. Revocation or suspension
+  rolls back with no recovery attempt, retry job, or initiation-success audit;
+  race tests cover each authority input;
 - retry requires a reason, client idempotency key, and expected source-job CAS
   version, accepts
   only exhausted terminal `provider_unavailable`, and returns `202` with
@@ -74,10 +82,11 @@ profile or product cutover.
 - exact internal service-principal authorization activates every verification
   provider read, periodic scan publication, and recovery job; no 02C1 or 02C2
   mechanic runs before this gate.
-- readiness exposes every prerequisite for private-bucket, credential,
-  anonymous-read-negative, and completed-prefix lifecycle proof, but no profile
-  becomes production-active in this chunk. Chunk 07 owns live proof and
-  AWS activation.
+- readiness exposes static configured prerequisites and remains inactive.
+  Chunk 07's deployment-only harness owns bucket-policy/principal-boundary,
+  credential, anonymous-read-negative, completed-prefix lifecycle, and AWS
+  activation proof; neither `ArtifactStore` nor a product service gains a
+  provider-administration method.
 - readiness does not write or mutate provider objects.
 - real HTTP tests prove the full Operator path without direct database reads.
 - changed subsystem coverage is at least 90 percent and repository coverage

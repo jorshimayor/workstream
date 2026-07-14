@@ -21,7 +21,6 @@ import yaml
 
 
 ROOT = Path(__file__).resolve().parents[1]
-ARTIFACT_COVERAGE_PHASE = "foundation"
 ARTIFACT_COVERAGE_ORDER = (
     "foundation",
     "02A1",
@@ -44,6 +43,50 @@ FOUNDATION_ARTIFACT_COVERAGE_COMMAND = (
     "--include='app/adapters/artifacts/*,app/interfaces/artifacts.py,"
     "app/modules/artifacts/*' --precision=2 --fail-under=90"
 )
+ARTIFACT_COVERAGE_COMMAND_OWNERS = {
+    "foundation": (FOUNDATION_ARTIFACT_COVERAGE_COMMAND,),
+    "02A1": (
+        "coverage report --include='app/interfaces/external_services.py' "
+        "--precision=2 --fail-under=90",
+    ),
+    "02A2": (
+        "coverage report --include='app/core/config.py' "
+        "--precision=2 --fail-under=90",
+    ),
+    "02A3": (
+        "coverage report --include='app/workers/*' "
+        "--precision=2 --fail-under=90",
+    ),
+    "02B1": (),
+    "02C1": (),
+    "02C2": (),
+    "02D": (
+        "coverage report --include='app/api/router.py' "
+        "--precision=2 --fail-under=90",
+    ),
+    "03": (
+        "coverage report --include='app/modules/projects/*' "
+        "--precision=2 --fail-under=90",
+        "coverage report "
+        "--include='app/adapters/project_agents/*,app/interfaces/project_agents.py' "
+        "--precision=2 --fail-under=90",
+    ),
+    "04A": (),
+    "04B": (
+        "coverage report --include='app/modules/tasks/*' "
+        "--precision=2 --fail-under=90",
+        "coverage report --include='app/modules/checkers/*' "
+        "--precision=2 --fail-under=90",
+    ),
+    "05": (),
+    "06A": (),
+    "06B": (),
+    "07": (
+        "python -m pytest ../examples/artifact_lifecycle/tests -q "
+        "--cov=../examples/artifact_lifecycle/proof_tools "
+        "--cov-report=term-missing --cov-fail-under=90",
+    ),
+}
 BACKEND_FULL_SUITE_COVERAGE_COMMAND = "\n".join(
     (
         'metadata_dir="$(mktemp -d)"',
@@ -73,24 +116,85 @@ def artifact_contract_phase_for(coverage_phase: str) -> str:
     return phase
 
 
-def artifact_coverage_commands_for(coverage_phase: str) -> tuple[str, ...]:
-    """Return the cumulative exact coverage commands for one artifact phase."""
-    if coverage_phase == "foundation":
-        return (FOUNDATION_ARTIFACT_COVERAGE_COMMAND,)
+def artifact_chunk_contract(coverage_phase: str) -> Path:
+    """Return the one contract that owns an implementation coverage phase."""
+    assert coverage_phase != "foundation"
     chunk_root = (
         ROOT
         / ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/chunks"
     )
     matches = sorted(chunk_root.glob(f"WS-ART-001-{coverage_phase}-*.md"))
     assert len(matches) == 1, (coverage_phase, matches)
-    contract = matches[0].read_text(encoding="utf-8")
+    return matches[0]
+
+
+def artifact_contract_coverage_commands_for(coverage_phase: str) -> tuple[str, ...]:
+    """Parse the cumulative coverage commands declared by one chunk contract."""
+    if coverage_phase == "foundation":
+        return (FOUNDATION_ARTIFACT_COVERAGE_COMMAND,)
+    contract_path = artifact_chunk_contract(coverage_phase)
+    contract = contract_path.read_text(encoding="utf-8")
     section = re.search(
         r"## Exact CI Coverage Gates?\n\n```bash\n(.*?)\n```",
         contract,
         re.DOTALL,
     )
-    assert section is not None, matches[0]
+    assert section is not None, contract_path
     return tuple(line for line in section.group(1).splitlines() if line)
+
+
+def artifact_expected_coverage_commands_for(coverage_phase: str) -> tuple[str, ...]:
+    """Build the independently owned cumulative 90 percent coverage contract."""
+    active_index = ARTIFACT_COVERAGE_ORDER.index(coverage_phase)
+    commands: list[str] = []
+    for phase in ARTIFACT_COVERAGE_ORDER[: active_index + 1]:
+        commands.extend(ARTIFACT_COVERAGE_COMMAND_OWNERS[phase])
+    assert len(commands) == len(set(commands)), commands
+    return tuple(commands)
+
+
+def artifact_declared_contract_phase_for(coverage_phase: str) -> str:
+    """Read the machine-readable stale-contract phase from a chunk contract."""
+    contract = artifact_chunk_contract(coverage_phase).read_text(encoding="utf-8")
+    matches = re.findall(r"^Artifact contract phase: `([^`]+)`$", contract, re.MULTILINE)
+    assert len(matches) == 1, (coverage_phase, matches)
+    return matches[0]
+
+
+def active_artifact_coverage_phase() -> str:
+    """Derive the active or most recently completed artifact phase from the queue."""
+    queue = (ROOT / ".agent-loop/WORK_QUEUE.md").read_text(encoding="utf-8")
+    in_progress = queue.split("## In Progress", maxsplit=1)[1].split(
+        "## Planned Next",
+        maxsplit=1,
+    )[0]
+    active_chunks = [
+        chunk
+        for chunk in re.findall(r"\| `([^`]+)` \|", in_progress)
+        if chunk.startswith("WS-ART-001-")
+    ]
+    assert len(active_chunks) <= 1, active_chunks
+    if active_chunks:
+        active = active_chunks[0]
+        if active == "WS-ART-001-OBJECT-STORAGE-AMENDMENT":
+            return "foundation"
+        phase = active.removeprefix("WS-ART-001-")
+        assert phase in ARTIFACT_COVERAGE_ORDER, phase
+        return phase
+
+    completed = queue.split("## Completed", maxsplit=1)[1].split(
+        "## Proposed Next",
+        maxsplit=1,
+    )[0]
+    completed_phases = {
+        chunk.removeprefix("WS-ART-001-")
+        for chunk in re.findall(r"\| `([^`]+)` \|", completed)
+        if chunk.startswith("WS-ART-001-")
+        and chunk.removeprefix("WS-ART-001-") in ARTIFACT_COVERAGE_ORDER
+    }
+    if not completed_phases:
+        return "foundation"
+    return max(completed_phases, key=ARTIFACT_COVERAGE_ORDER.index)
 
 
 def load_module(name: str, path: str):
@@ -1240,7 +1344,31 @@ def test_backend_coverage_thresholds_are_regression_protected() -> None:
     assert full_suite_run.strip() == BACKEND_FULL_SUITE_COVERAGE_COMMAND
     assert "/tmp/workstream-database.json" not in workflow
     full_suite_index = steps.index(full_suite_steps[0])
-    expected_coverage = artifact_coverage_commands_for(ARTIFACT_COVERAGE_PHASE)
+    isolated_steps = [
+        step for step in steps if step.get("name") == "Isolated database runner test"
+    ]
+    assert len(isolated_steps) == 1
+    isolated_step = isolated_steps[0]
+    assert isolated_step == {
+        "name": "Isolated database runner test",
+        "working-directory": "backend",
+        "env": {
+            "WORKSTREAM_TEST_ADMIN_DATABASE_URL": (
+                "postgresql+asyncpg://workstream:workstream@localhost:5433/postgres"
+            )
+        },
+        "run": "python -m pytest -q tests/test_isolated_database_runner.py",
+    }
+    assert steps.index(isolated_step) < full_suite_index
+    active_phase = active_artifact_coverage_phase()
+    expected_coverage = artifact_expected_coverage_commands_for(active_phase)
+    actual_coverage = tuple(
+        str(step.get("run", "")).strip()
+        for step in steps
+        if str(step.get("run", "")).strip().startswith("coverage report ")
+        and "--fail-under=90" in str(step.get("run", ""))
+    )
+    assert actual_coverage == expected_coverage
     for command in expected_coverage:
         matches = [step for step in steps if str(step.get("run", "")).strip() == command]
         assert len(matches) == 1, (command, matches)
@@ -1249,19 +1377,56 @@ def test_backend_coverage_thresholds_are_regression_protected() -> None:
         assert coverage_step.get("working-directory") == "backend"
         for forbidden_key in ("if", "continue-on-error", "shell", "env"):
             assert forbidden_key not in coverage_step
-    later_commands = artifact_coverage_commands_for("06B")
+    later_commands = artifact_expected_coverage_commands_for("06B")
     assert later_commands[0] == FOUNDATION_ARTIFACT_COVERAGE_COMMAND
     assert any("app/modules/checkers/*" in command for command in later_commands)
     assert workflow.count("--cov-fail-under=78") == 1
     assert (
         "--cov=app --cov-report=term-missing --cov-fail-under=78"
     ) in workflow
-    assert workflow.count("--fail-under=90") == 1
-    assert (
-        "--include='app/adapters/artifacts/*,app/interfaces/artifacts.py,"
-        "app/modules/artifacts/*'"
-    ) in workflow
+    assert workflow.count("--fail-under=90") == len(expected_coverage)
     assert "continue-on-error" not in workflow
+
+
+def test_artifact_coverage_phase_is_derived_from_work_queue() -> None:
+    """The queue, not a second hardcoded active-phase marker, drives CI gates."""
+    global ROOT
+    original_root = ROOT
+    try:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ROOT = Path(tmpdir)
+            loop_dir = ROOT / ".agent-loop"
+            loop_dir.mkdir()
+            queue = loop_dir / "WORK_QUEUE.md"
+            queue.write_text(
+                "# Work Queue\n\n"
+                "## In Progress\n\n"
+                "| Chunk | Title | Risk | Status |\n"
+                "|---|---|---:|---|\n"
+                "| `WS-ART-001-02A3` | cutover | L1 | active |\n\n"
+                "## Planned Next\n\n"
+                "## Completed\n\n"
+                "## Proposed Next\n",
+                encoding="utf-8",
+            )
+            assert active_artifact_coverage_phase() == "02A3"
+
+            queue.write_text(
+                "# Work Queue\n\n"
+                "## In Progress\n\n"
+                "| Chunk | Title | Risk | Status |\n"
+                "|---|---|---:|---|\n\n"
+                "## Planned Next\n\n"
+                "## Completed\n\n"
+                "| Chunk | Title | Risk | Status |\n"
+                "|---|---|---:|---|\n"
+                "| `WS-ART-001-02A2` | preparation | L1 | merged |\n\n"
+                "## Proposed Next\n",
+                encoding="utf-8",
+            )
+            assert active_artifact_coverage_phase() == "02A2"
+    finally:
+        ROOT = original_root
 
 
 def test_stale_artifact_contracts_foundation_keeps_later_terms_inactive() -> None:
@@ -1315,7 +1480,8 @@ def test_stale_artifact_contracts_active_later_phase_owns_only_reached_terms() -
         '"allowed_storage_schemes": ["local", "s3", "r2"]',
         "submission_cutover",
     ) == [
-        "backend/scripts/api_contract_e2e.py:1: LEGACY_PROJECT_STORAGE_POLICY"
+        "backend/scripts/api_contract_e2e.py:1: LEGACY_PROJECT_STORAGE_POLICY",
+        "backend/scripts/api_contract_e2e.py:1: DEFERRED_R2_RUNTIME",
     ]
     for active_caller in (
         "backend/scripts/week2_api_e2e.py",
@@ -1385,6 +1551,21 @@ def test_stale_artifact_contracts_enforce_aws_first_v01() -> None:
         "Cloudflare R2 is deferred but remains a production provider.",
         "foundation",
     ) == ["docs/spec_artifact_storage_service.md:1: ACTIVE_R2_V01_PLAN"]
+    for mixed_statement in (
+        (
+            "Cloudflare R2 is deferred to v0.2 and Cloudflare R2 is supported "
+            "for v0.1 production."
+        ),
+        (
+            "Cloudflare R2 is a v0.1 production provider and requires a "
+            "separately approved runbook."
+        ),
+    ):
+        assert gate.scan_text(
+            "docs/spec_artifact_storage_service.md",
+            mixed_statement,
+            "foundation",
+        ) == ["docs/spec_artifact_storage_service.md:1: ACTIVE_R2_V01_PLAN"]
     assert gate.scan_text(
         "backend/app/core/config.py",
         'artifact_provider_profile = "cloudflare_r2"',
@@ -1408,10 +1589,14 @@ def test_stale_artifact_contracts_enforce_aws_first_v01() -> None:
         ) == ["backend/app/core/config.py:1: DEFERRED_R2_RUNTIME"]
     for runtime_path, runtime_value in (
         ("backend/app/integrations/storage.py", 'provider = "r2"'),
+        ("backend/scripts/storage_runtime.py", 'provider = "cloudflare_r2"'),
+        ("services/object_storage/config.py", 'provider = "cloudflare_r2"'),
         (".github/workflows/backend.yml", "WORKSTREAM_R2_ENDPOINT: secret"),
         ("Dockerfile", "ENV WORKSTREAM_R2_ENDPOINT=secret"),
         (".env.example", "WORKSTREAM_R2_ENDPOINT=secret"),
         ("deploy/config", 'provider = "r2"'),
+        ("deploy/r2.conf", 'provider = "r2"'),
+        ("helm/storage.tpl", 'provider = "r2"'),
     ):
         assert gate.scan_text(runtime_path, runtime_value, "foundation") == [
             f"{runtime_path}:1: DEFERRED_R2_RUNTIME"
@@ -1433,6 +1618,16 @@ def test_stale_artifact_contracts_enforce_aws_first_v01() -> None:
     assert gate.path_is_scannable("Dockerfile")
     assert gate.path_is_scannable(".env.example")
     assert gate.path_is_scannable("deploy/config")
+    assert gate.path_is_scannable("deploy/r2.conf")
+    assert gate.path_is_scannable("helm/storage.tpl")
+    assert gate.path_is_scannable("docs/diagrams/rendered/workstream_context.svg")
+    assert gate.scan_text(
+        "docs/diagrams/rendered/workstream_context.svg",
+        "Object Storage\\nR2/S3-compatible later",
+        "foundation",
+    ) == [
+        "docs/diagrams/rendered/workstream_context.svg:1: ACTIVE_R2_V01_PLAN"
+    ]
     assert gate.scan_text(
         (
             ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/"
@@ -1491,6 +1686,27 @@ def test_stale_artifact_contracts_remove_flow_node_at_store_cutover() -> None:
         "Flow Node is deferred and is not a v0.1 dependency.",
         "foundation",
     ) == []
+    for active_statement in (
+        "Flow Node is deferred but remains the v0.1 production provider.",
+        "Flow Node is preserved as the v0.1 production provider.",
+    ):
+        assert gate.scan_text(
+            "docs/decision_0013_immutable_artifact_storage_boundary.md",
+            active_statement,
+            "foundation",
+        ) == [
+            "docs/decision_0013_immutable_artifact_storage_boundary.md:1: "
+            "OBSOLETE_FLOW_NODE_PLAN"
+        ]
+    for runtime_path in (
+        "backend/app/modules/artifacts/service.py",
+        "backend/app/workers/artifacts.py",
+    ):
+        assert gate.scan_text(
+            runtime_path,
+            'provider = "flow_node"',
+            "artifact_store_cutover",
+        ) == [f"{runtime_path}:1: LEGACY_FLOW_NODE_RUNTIME"]
 
 
 def test_artifact_chunk_verification_commands_are_isolated_and_rerunnable() -> None:
@@ -1541,7 +1757,8 @@ def test_artifact_chunk_verification_commands_are_isolated_and_rerunnable() -> N
         if phase in {"03", "05"}:
             assert "backend/scripts/api_contract_e2e.py" in contract
             assert "scripts/api_contract_e2e.py" in verification
-        assert artifact_contract_phase_for(phase) in {
+        expected_contract_phase = artifact_contract_phase_for(phase)
+        assert expected_contract_phase in {
             "foundation",
             "artifact_store_cutover",
             "guide_source_cutover",
@@ -1549,15 +1766,17 @@ def test_artifact_chunk_verification_commands_are_isolated_and_rerunnable() -> N
             "submission_cutover",
             "checker_cutover",
         }
-        assert artifact_coverage_commands_for(phase)
+        assert artifact_declared_contract_phase_for(phase) == expected_contract_phase
+        assert artifact_contract_coverage_commands_for(
+            phase
+        ) == artifact_expected_coverage_commands_for(phase)
     gate = load_module(
         "stale_artifact_contracts_phase_binding",
         "scripts/check_stale_artifact_contracts.py",
     )
-    assert artifact_contract_phase_for(ARTIFACT_COVERAGE_PHASE) == (
-        gate.ARTIFACT_CONTRACT_PHASE
-    )
-    mismatched_phase = "02A3" if ARTIFACT_COVERAGE_PHASE == "foundation" else "foundation"
+    active_phase = active_artifact_coverage_phase()
+    assert artifact_contract_phase_for(active_phase) == gate.ARTIFACT_CONTRACT_PHASE
+    mismatched_phase = "02A3" if active_phase == "foundation" else "foundation"
     assert artifact_contract_phase_for(mismatched_phase) != gate.ARTIFACT_CONTRACT_PHASE
     with tempfile.TemporaryDirectory() as temp_dir:
         cleanup = subprocess.run(
@@ -1619,6 +1838,7 @@ def main() -> int:
         test_agent_gates_runs_stale_artifact_contracts_fail_closed,
         test_agent_gate_dependencies_and_workflow_are_pinned,
         test_backend_coverage_thresholds_are_regression_protected,
+        test_artifact_coverage_phase_is_derived_from_work_queue,
         test_stale_artifact_contracts_foundation_keeps_later_terms_inactive,
         test_stale_artifact_contracts_active_later_phase_owns_only_reached_terms,
         test_stale_artifact_contracts_malformed_phase_fails_closed,

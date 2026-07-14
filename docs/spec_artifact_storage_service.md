@@ -30,6 +30,12 @@ Product services never import a concrete storage adapter. Replicas persist
 provider profile and storage namespace, so changing a populated deployment
 requires an explicit verified migration rather than a hot endpoint switch.
 
+Only the artifact-storage orchestration service receives the writable
+`ArtifactStore` port. Guide, task, submission, checker, and review owners call
+typed artifact ingest/read/materialization services. Static architecture tests
+reject any other `put` or `recover_put` call site so admission, receipts,
+verification, and audit cannot be bypassed.
+
 ## Ownership
 
 | Concern | Owner |
@@ -336,18 +342,24 @@ prefix and only the actions required for conditional put, head, and get. It has
 no delete, copy, list, bucket administration, lifecycle mutation, public-access
 mutation, or cross-prefix permission. AWS uses a least-privilege role/policy.
 
-Production activation requires AWS deployment proof that checks effective Block
-Public Access plus policy/ACL state and runs an anonymous-read negative test
-against a known object.
+Production activation defines the complete trusted AWS principal set: the exact
+Workstream runtime role, the separate read-only readiness role, and only the
+AWS service principals strictly required by the dedicated bucket policy. The
+deployment-only Chunk 07 harness proves effective Block Public Access,
+policy/ACL state, and Access Analyzer findings; fails on any resource-based
+grant outside that set; and runs anonymous plus unapproved-authenticated-role
+negative read, write, and delete tests against a known object.
 
 The same deployment proof reads the provider lifecycle configuration and fails
 activation when any enabled rule can delete/expire a completed object under the
 configured private prefix. AWS inspection covers `Expiration` and
 `NoncurrentVersionExpiration` for every rule whose filter can intersect the
 prefix. Storage-class transitions and abort-incomplete-multipart rules are not
-completed-object deletion. These checks use a separate
-read-only deployment identity; the runtime principal is not granted bucket
+completed-object deletion. These checks use the separate read-only deployment
+identity in the Chunk 07 harness; the runtime principal is not granted bucket
 administration merely to inspect policy or lifecycle configuration.
+Provider-readiness inspection is not part of `ArtifactStore` and is not called
+by a product service.
 
 AWS S3 remains inactive until its own live proof succeeds. MinIO protocol
 conformance never activates production AWS.
@@ -377,15 +389,18 @@ in the v2 clean cut. No compatibility adapter or dual format remains.
 2. Workstream writes the complete untrusted source to bounded private scratch,
    computes digest/size, and rejects a mismatched client commitment before any
    provider call.
-3. Transaction A reserves the item and commits the server-computed digest,
-   size, media type, operation identity, canonical request digest, limits, and
-   CAS.
-4. Workstream passes the sealed `CommittedArtifactSource` to the adapter outside
+3. Transaction A atomically reserves every applicable durable-storage scope
+   charge as `provisional`, reserves the item, and commits the server-computed
+   digest, size, media type, operation identity, canonical request digest,
+   limits, and CAS. Any quota failure rolls back all reservations.
+4. Workstream passes the sealed `CommittedArtifactSource` from the artifact
+   orchestration service to the adapter outside
    the transaction.
 5. The adapter conditionally stores or resolves an exact replay candidate.
-6. Transaction B validates the reservation/CAS, records content, replica, and
-   operation receipt, sets the item to `stored_pending_verification`, and sets
-   the replica to `pending/unknown/unknown`.
+6. Transaction B validates the reservation/CAS, completes every provisional
+   charge, records content, replica, and operation receipt, sets the item to
+   `stored_pending_verification`, and sets the replica to
+   `pending/unknown/unknown`.
 7. The transaction creates an outbox/publication obligation for one
    verification job.
 8. Celery independently opens and hashes the complete object.
@@ -394,6 +409,13 @@ in the v2 clean cut. No compatibility adapter or dual format remains.
 
 No provider call occurs inside a PostgreSQL transaction. No product binding is
 created before independent verification.
+
+Acknowledgement loss leaves charges provisional while deterministic-key
+recovery performs a fresh observation. A confirmed object completes the same
+charges. Fresh authoritative absence releases them and moves the item to exact
+replay; replay must atomically reacquire every applicable charge before another
+provider call. Integrity-mismatched or quarantined existing bytes remain
+completed and charged.
 
 ### Prepared Byte Sources
 
@@ -435,15 +457,19 @@ crash, stale cleanup, and symlink/non-regular entries.
 The same canonical `ArtifactScratchManager` also owns checker-workspace
 allocations. Authoritative pre-submit introduces one authorized artifact
 materializer, and post-submit reuses it without a second workspace manager.
-The materializer accepts only authorized Workstream bindings, reserves the
-complete workspace against the same aggregate ledger and quotas, streams exact
-provider bytes into private no-follow paths, and recomputes SHA-256 and byte
-count for every file. Any mismatch becomes an artifact incident before checker
-execution. After successful verification, files are sealed read-only before the
-checker receives an opaque workspace handle. Success, failure, cancellation,
-and crash/stale cleanup use the same API-startup and Celery Beat ownership; a
-checker never receives provider references, credentials, or a writable verified
-input.
+The provider-neutral `ArtifactMaterializationRequest` has two closed source
+forms: a sealed upload artifact set whose items are all `ready`, used before a
+submission binding exists, and immutable `ArtifactBinding` IDs, used after
+submission creation. Source resolution is phase-specific and authorized;
+staging never creates a premature product binding. The materializer reserves
+the complete workspace against the same aggregate ledger and quotas, streams
+exact provider bytes into private no-follow paths, and recomputes SHA-256 and
+byte count for every file. Any mismatch becomes an artifact incident before
+checker execution. After successful verification, files are sealed read-only
+before the checker receives an opaque workspace handle. Success, failure,
+cancellation, and crash/stale cleanup use the same API-startup and Celery Beat
+ownership; a checker never receives provider references, credentials, or a
+writable verified input.
 
 After ambiguous provider completion, recovery first calls `recover_put` with
 the persisted commitment; it does not regenerate bytes speculatively. If no

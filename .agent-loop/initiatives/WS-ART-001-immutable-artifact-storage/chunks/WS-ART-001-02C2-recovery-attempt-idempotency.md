@@ -2,6 +2,8 @@
 
 Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02C1
 
+Artifact contract phase: `artifact_store_cutover`
+
 ## Goal
 
 Add the durable recovery-attempt envelope and exact idempotent source-job to

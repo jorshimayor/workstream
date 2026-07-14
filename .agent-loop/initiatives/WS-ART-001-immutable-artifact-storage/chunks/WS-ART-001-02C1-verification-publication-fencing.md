@@ -2,6 +2,8 @@
 
 Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02B1
 
+Artifact contract phase: `artifact_store_cutover`
+
 ## Goal
 
 Add the generic durable-storage admission ledger, durable complete-object
@@ -30,8 +32,8 @@ product cutovers.
 - guide, task, submission, checker, or review cutover;
 - provider mutation replay, overwrite, delete, retain, or release;
 - task-claim or reviewer-lease changes;
-- production dispatch before the exact internal Authorization Service decision
-  and service principal are owned by 02D.
+- production dispatch before AUTH-07/09/15 register the exact system principal
+  and permissions and 02D attaches and activates their enforcement.
 
 ## Acceptance Criteria
 
@@ -41,6 +43,9 @@ product cutovers.
   producer, project, and deployment byte charges after canonical hashing and
   before provider I/O; guide, contributor, and checker chunks consume this one
   admission service rather than implementing producer-specific quota logic;
+- only the artifact orchestration service can invoke writable `ArtifactStore`;
+  architecture tests prove every `put` and `recover_put` crosses generic
+  admission, receipts, and verification publication;
 - an admission charge is unique by scope and canonical content identity and
   uses the CAS-protected states `provisional`, `completed`, and `released`;
   provisional and completed charges count, exact replay is deduplicated, and

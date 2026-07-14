@@ -2,6 +2,8 @@
 
 Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 03, AUTH-14, and AUTH-15
 
+Artifact contract phase: `guide_source_cutover`
+
 ## Goal
 
 Add contributor-authorized task upload sessions/items, trusted archive

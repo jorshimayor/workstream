@@ -2,6 +2,8 @@
 
 Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 06B
 
+Artifact contract phase: `checker_cutover`
+
 ## Goal
 
 Prove the complete artifact lifecycle through real HTTP APIs, PostgreSQL,
@@ -56,9 +58,14 @@ without direct database inspection or Terminal Benchmark product coupling.
   through APIs only.
 - LocalStorage and real MinIO pass conformance. AWS S3 requires a
   workload-identity private live smoke, least-privilege negative-action
-  proof, anonymous-read denial, and read-only proof that no enabled lifecycle
-  deletion/expiration rule can match the completed-object prefix before that
-  profile is declared production-eligible. Unproved AWS remains inactive.
+  proof, anonymous-read denial, a declared trusted principal set, policy/ACL
+  and Access Analyzer proof that no resource-based grant exists outside that
+  set, negative read/write/delete tests using an unapproved authenticated role,
+  and read-only proof that no enabled lifecycle deletion/expiration rule can
+  match the completed-object prefix before that profile is declared
+  production-eligible. Unproved AWS remains inactive.
+- all AWS policy, principal, public-access, and lifecycle inspection lives in
+  this deployment-only proof harness, not `ArtifactStore` or a product service;
 - no test-only route or control exists in the production application image.
 - the evidence PDF is concise, structured, redacted, and includes request/
   response summaries, async timelines, immutable hashes, failures, and final
@@ -84,9 +91,9 @@ coverage report --include='app/core/config.py' --precision=2 --fail-under=90
 coverage report --include='app/workers/*' --precision=2 --fail-under=90
 coverage report --include='app/api/router.py' --precision=2 --fail-under=90
 coverage report --include='app/modules/projects/*' --precision=2 --fail-under=90
+coverage report --include='app/adapters/project_agents/*,app/interfaces/project_agents.py' --precision=2 --fail-under=90
 coverage report --include='app/modules/tasks/*' --precision=2 --fail-under=90
 coverage report --include='app/modules/checkers/*' --precision=2 --fail-under=90
-coverage report --include='app/adapters/project_agents/*,app/interfaces/project_agents.py' --precision=2 --fail-under=90
 python -m pytest ../examples/artifact_lifecycle/tests -q --cov=../examples/artifact_lifecycle/proof_tools --cov-report=term-missing --cov-fail-under=90
 ```
 

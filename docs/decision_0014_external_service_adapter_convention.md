@@ -61,9 +61,12 @@ generic service locators are forbidden.
 
 Settings parse and validate provider-specific configuration. Runtime provider
 selection and concrete construction occur only in the typed capability
-factory. Product APIs, services, Celery tasks, checkers, and repositories
-receive the capability port through dependency injection. They do not import
-concrete adapters, inspect provider-selection settings, or call provider APIs
+factory. The one owning integration/orchestration service receives the raw
+capability port through dependency injection. Product APIs, product services,
+Celery tasks, checkers, and repositories receive typed domain operations from
+that owner and do not receive a writable transport port when doing so could
+bypass product policy, admission, persistence, or audit. No caller imports
+concrete adapters, inspects provider-selection settings, or calls provider APIs
 directly.
 
 Adapters own provider transport, provider authentication injection, bounded
@@ -80,6 +83,11 @@ point and callers in one clean cut.
 
 No compatibility alias, fallback constructor, dual registration path, or
 service-locator shim is retained.
+
+For artifact storage, only the artifact-storage orchestration service receives
+the writable `ArtifactStore`. Guide, task, submission, and checker modules use
+typed artifact ingest/read/materialization services so every `put` and
+`recover_put` crosses durable admission, receipts, and lifecycle enforcement.
 
 ## Consequences
 

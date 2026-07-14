@@ -2,6 +2,8 @@
 
 Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02D, AUTH-12, and AUTH-15
 
+Artifact contract phase: `guide_source_cutover`
+
 ## Goal
 
 Store every guide-source item as immutable artifact content, bind the canonical
