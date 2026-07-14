@@ -38,7 +38,7 @@ backend/app/api/router.py
 backend/app/db/models.py
 backend/scripts/bootstrap_access_administrator.py
 backend/app/modules/audit/**
-backend/alembic/versions/0019_*.py
+backend/alembic/versions/0022_*.py
 backend/tests/test_actors.py
 backend/tests/test_auth.py
 backend/tests/test_alembic.py
@@ -98,6 +98,11 @@ deleting revoked grants
   `GET /api/v1/actors/{actor_profile_id}/admin-role-grants`, and
   `POST /api/v1/admin-role-grants/{grant_id}/revoke` have
   allow/deny/scope/privacy/rate-limit/replay tests.
+- Each protected route and bootstrap command declares one active `ActionId`.
+  Reads map to `admin_role.read`; issue/bootstrap maps to `admin_role.grant`;
+  revoke maps to `admin_role.revoke`. Canonical scope resources and target-actor
+  guards are loaded independently, and generated manifest-delta tests prove
+  every surface introduced here has exactly one declaration.
 - Migration tests cover immutable revoked history, prior-head upgrade,
   downgrade, and preserved attribution.
 - Runbook assigns bootstrap custody, environment access, dry-run/evidence,
@@ -110,6 +115,9 @@ deleting revoked grants
 (cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic downgrade -1)
 (cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic upgrade head)
 (cd backend && .venv/bin/python -m ruff check app tests scripts)
+(cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q \
+  tests/test_authorization.py tests/test_auth.py tests/test_actors.py \
+  --cov=app.modules.authorization --cov-report=term-missing --cov-fail-under=90)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python scripts/api_contract_e2e.py)
 python3 scripts/check_stale_workstream_wording.py

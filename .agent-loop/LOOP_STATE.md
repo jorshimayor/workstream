@@ -3,21 +3,25 @@
 ## Current State
 
 - Active initiative: `WS-AUTH-001` - Workstream Authorization Service
-- Active planning chunk: none
+- Active planning chunk: `WS-AUTH-001-CAT` - Action And Resource Catalogue
+  Reconciliation
 - Active implementation chunk: none
-- Branch: `codex/ws-auth-001-05a-post-merge-memory`
+- Branch: `codex/ws-auth-001-action-catalogue-reconciliation`
 - Worktree: `/home/abiorh/flow/workstream-authorization-service`
-- Status: AUTH-05A passed required internal reviews, Backend, Agent Gates, and
-  CodeRabbit. The user explicitly approved and merged PR #115 as `8e1cde6` on
-  2026-07-14. Post-merge memory is the only active work.
+- Status: AUTH-05A and its post-merge memory are merged. The user requested
+  repository mapping of a proposed action/resource catalogue and directed that
+  only validated rules be copied into canonical docs and owning future chunks.
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
-- Latest integrated `main` merge commit: `8e1cde6`
-- Current gate: post-merge memory and stop; no implementation chunk is active.
-- Scope checkpoint: AUTH-05A is complete. AUTH-05B remains a separate inactive
-  chunk and its contract does not authorize implementation.
-- Next chunk: AUTH-05B requires this memory update to merge and a separate
-  explicit user start. AUTH-06 and later chunks remain inactive.
+- Latest integrated `main` merge commit: `ab49b73`
+- Current gate: internal review passed; ready PR, GitHub checks, CodeRabbit, and
+  explicit human merge remain. No runtime implementation chunk is active.
+- Scope checkpoint: the 52 approved identifiers and `/api/v1` namespace remain
+  unchanged. AUTH-05A's 49-identifier audit base remains runtime truth until the
+  three planned recovery identifiers receive typed/SQL parity in AUTH-13/14.
+- Next chunk: the user explicitly directed AUTH-05B to continue after this
+  reconciliation. It remains inactive until this docs-only chunk merges and its
+  post-merge memory/stop checkpoint is recorded.
 - Focused evidence: the audit/delegation suite passed 11 tests at 94.55 percent
   audit-subsystem coverage. Final GitHub Backend passed 949 tests at 82.77
   percent global coverage and 91.07 percent artifact-foundation coverage.

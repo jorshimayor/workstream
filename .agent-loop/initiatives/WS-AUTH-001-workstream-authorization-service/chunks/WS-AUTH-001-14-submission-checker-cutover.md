@@ -41,8 +41,9 @@ backend/app/modules/checkers/**
 backend/app/modules/projects/schemas.py
 backend/app/modules/projects/service.py
 backend/app/adapters/project_agents/openai_agent_sdk.py
-backend/alembic/versions/0023_*.py
+backend/alembic/versions/0026_*.py
 backend/app/modules/authorization/**
+backend/app/modules/audit/**
 backend/app/api/deps/auth.py
 backend/tests/test_tasks.py
 backend/tests/test_checkers.py
@@ -75,11 +76,23 @@ legacy active-worker-profile or workflow-eligibility compatibility fallback
   `artifact.upload_item.write`, `artifact.upload_session.seal`, and
   `artifact.upload_session.cancel` permissions. Each action is independent;
   submission authority does not imply an unregistered storage permission.
+- Submission creation authorizes against its existing active assignment; every
+  migrated submission/checker/audit route declares one primary registered
+  action against a feature-owned canonical target and keeps artifact bytes and
+  unnecessary actor data outside `ResourceContext` and authority evidence.
+- Generated OpenAPI/command manifest-delta tests prove every protected
+  submission/checker/audit surface migrated here has exactly one active
+  `ActionId` declaration.
 - Manager repair/checker triggers require covered project permissions.
 - Project Manager repair uses covered `project.task.manage`; Operator recovery
   uses distinct `operations.submission_gate.repair` and
   `operations.checker.retry` permissions. Each path requires a reason and
   records matched grant/permission without granting general project authority.
+- Before `operations.submission_gate.repair` or `operations.checker.retry`
+  becomes active, migration `0026` and the typed audit schema add both already
+  approved identifiers to the 50-item post-AUTH-13 audit base. Upgrade,
+  downgrade, re-upgrade, and direct-SQL parity tests preserve earlier audit rows
+  and establish exact 52-identifier typed/PostgreSQL parity.
 - Contributor reads preserve ownership, hidden-result redaction, and concealed
   not-found behavior.
 - Audit reads expose only permission-appropriate bounded fields before counts.
@@ -98,7 +111,7 @@ legacy active-worker-profile or workflow-eligibility compatibility fallback
   `contributor_suggested_fix`, `contributor_evidence_refs`, and
   `contributor_visible` across persistence, models, schemas, services, runner
   contracts, audit payloads, and tests. Submission-policy JSON and derivation
-  contracts use `contributor_facing_fix`. Migration `0023` preserves all values,
+  contracts use `contributor_facing_fix`. Migration `0026` preserves all values,
   supports downgrade, and removes legacy storage/property names without public
   API aliases.
 - With the final consumer removed, the legacy `/api/v1/workers/me/profile`
@@ -120,6 +133,10 @@ legacy active-worker-profile or workflow-eligibility compatibility fallback
 
 ```bash
 (cd backend && .venv/bin/python -m ruff check app tests scripts)
+(cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q \
+  tests/test_authorization.py tests/test_auth.py tests/test_tasks.py \
+  tests/test_checkers.py --cov=app.modules.authorization \
+  --cov-report=term-missing --cov-fail-under=90)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python scripts/api_contract_e2e.py)
 (cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic upgrade head)

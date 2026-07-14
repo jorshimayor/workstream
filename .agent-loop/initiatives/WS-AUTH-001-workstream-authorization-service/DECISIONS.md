@@ -212,3 +212,63 @@ correlation evidence, resource identity, operation, and service principal.
 Receipts prove that storage work occurred; they do not create authority. Exact
 permission tokens and route ownership are locked in the owning AUTH cutover
 chunk contracts. AUTH-04B adds no artifact permission or route attachment.
+
+## D15: Adopt a staged typed action and resource catalogue
+
+Status: accepted by the user on 2026-07-14 after repository mapping and internal
+design review.
+
+AUTH-07 introduces a closed typed action registry. Each active `ActionId` binds
+one already approved `PermissionId` to one canonical authorization target,
+candidate authority sources, mandatory guards, principal class, and
+transaction-revalidation rule. Multiple closed actions may map to one retained
+broad permission while using distinct targets and guards; routes cannot supply
+arbitrary permission/target pairs. Creates authorize against an existing parent
+or `system` target. Feature
+repositories remain persistence owners; feature application services or
+feature-owned loaders compose closed, typed per-resource `ResourceContext`
+variants and register at the composition root without making AUTH a second
+domain-query layer. Guard definitions declare their required resource facts;
+unknown, missing, extra, or mistyped facts fail closed.
+
+Each protected route or asynchronous command declares one primary registered
+action as its authorization entry point. Domain invariants remain owned by the
+feature service. Human bearer tokens are never executable worker authority,
+and collection filtering occurs before counts or cursors. Catalogue adoption is
+staged: AUTH-07 owns types and its own current definitions, every route-owning
+AUTH-07 through AUTH-15 chunk owns declarations during its feature cutover, and
+AUTH-16 owns the aggregate generated route/command completeness manifest and
+final no-bypass proof.
+
+Reserved planned metadata contains only stable `ActionId`, approved
+`PermissionId`, owning specification/chunk, and availability. It cannot
+authorize and does not predefine a foreign-domain target, facts, guards, or
+composer. An owning cutover chunk activates an action only with its adopted
+domain contract, canonical resource composer, route or command declaration,
+allow/deny behavior proof, and generated manifest-delta proof.
+
+`ActionId` is security-significant evidence. AUTH-07 adds it to
+`AuthorizationDecision`, bounded logs/metrics, and allowed/denied authority
+events with exact typed/PostgreSQL registry parity. Historical events may remain
+null; every AUTH-07-or-later action-based decision event requires a registered
+identifier. Planned IDs can be registered before activation because they encode
+only identifier, approved permission, owner, and availability, not foreign
+resource design.
+
+The reviewed proposal did not receive independent normative precedence. Its
+`/v1` prefix, broad-permission replacement, compatibility deletion, and invented
+artifact, review, contribution, and compensation resources were rejected. The
+adopted `/api/v1` namespace and 52 approved permission identifiers remain
+unchanged. AUTH-05A currently enforces a 49-identifier typed/PostgreSQL audit
+base; the three already approved Operator recovery identifiers remain planned
+and non-executable until AUTH-13/14 add them to typed/SQL audit parity and
+activate their owning actions. Other permission additions or renames still
+require an approved specification/ADR change, typed and PostgreSQL registry
+migration, audit-history treatment, cutover ownership, and rollback proof.
+WS-REV, WS-CON, and the artifact-storage specification continue to own their
+resources and state transitions.
+
+Migration custody is reconciled with merged main: AUTH-05A owns `0018`, AUTH-05B
+solely owns `0019`, AUTH-06 uses `0020`, AUTH-07 action evidence uses `0021`,
+AUTH-08 uses `0022`, AUTH-10 uses `0023`, AUTH-12 uses `0024`, AUTH-13 uses
+`0025`, and AUTH-14 uses `0026`.
