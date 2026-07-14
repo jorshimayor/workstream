@@ -444,7 +444,7 @@ atomicity.
   changes only reports for newly owned surfaces; it never freezes a partial
   test list for a package that later expands. Independently executable
   services/examples have their own exact test-and-coverage steps.
-- `ARTIFACT_COVERAGE_PHASE` advances only after
+- The active artifact implementation coverage phase advances only after
   `scripts/test_agent_gates.py` proves each expected step occurs exactly once in
   the backend `test` job, after the full-suite test step, without job/step
   conditions, `continue-on-error`, shell overrides, hidden step environment, or
