@@ -89,4 +89,3 @@ Results:
   repository-secret update. A mismatch fails closed before push.
 - The first live workflow run remains external evidence and must pass before
   this process change is considered operationally proven.
-
