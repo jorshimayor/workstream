@@ -7,21 +7,20 @@
 - Active implementation chunk: `WS-AUTH-001-04B` - PostgreSQL Rate Controls
 - Branch: `codex/ws-auth-001-04b-postgres-rate-controls`
 - Worktree: `/home/abiorh/flow/workstream-auth-001-04b`
-- Status: AUTH-04A post-merge memory merged through PR #112 as `7749f54`; the
-  user explicitly started AUTH-04B. Exact-head review rejected candidate
-  `62dd18e`; repair head `2d70581` plus artifact-authorization intent is being
-  bound to final evidence before exact-head re-review.
+- Status: AUTH-04B implementation and all required internal review tracks pass
+  final SHA `922778b`; reviewed production SHA is `67484b5`. PR publication is
+  ready.
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
 - Latest integrated `main` merge commit: `7749f54`
-- Current gate: final focused coverage and exact-head re-review; no PR until
-  every valid finding is resolved.
-- Size checkpoint: implementation is 409 changed non-comment production lines; the
-  required 350-line inspection passed and scope is frozen below the 500 stop.
+- Current gate: ready PR publication, GitHub checks, CodeRabbit, and explicit
+  human review.
+- Size checkpoint: implementation is 480 changed non-comment production lines;
+  the required 350-line inspection passed and the 500-line hard stop holds.
 - Next chunk: none; do not start `WS-AUTH-001-05` automatically.
-- Focused evidence: 93 owned tests pass at 99 percent aggregate changed-runtime
-  coverage; the isolated PostgreSQL concurrency/migration proofs and real API
-  E2E pass. AUTH-05 and later chunks remain inactive.
+- Focused evidence: 77 isolated rate/config tests pass at 97 percent subsystem
+  coverage, 59 final config/object-graph tests pass, the exact migration proof
+  and real API E2E pass. AUTH-05 and later chunks remain inactive.
 - Parallel initiative: `WS-QUAL-001-01B2` is paused at the user's direction so
   AUTH receives the laptop's test capacity. Its last official whole-app result
   remains `6466/8159` statements (`79.249908%`); no replacement evidence exists.

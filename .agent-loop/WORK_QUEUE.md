@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Bounded repair behavior passed; final coverage and exact-head re-review pending |
+| `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Internal review passed at `922778b`; ready PR publication |
 
 ## Planned Next
 

@@ -39,7 +39,8 @@ explicitly started AUTH-04B; its required L1 preimplementation review is active
 and rejected the first activated contract before runtime edits. The second
 repaired contract passed all required tracks at `b5dceb1`; bounded runtime
 implementation and deterministic evidence are complete, and the candidate is
-in final repair evidence after exact-head internal review rejected `62dd18e`.
+internally approved at final SHA `922778b`; reviewed production SHA is
+`67484b5`. Ready PR publication is the current gate.
 
 ## Active planning chunk
 
@@ -47,8 +48,8 @@ None.
 
 ## Active implementation chunk
 
-`WS-AUTH-001-04B` - PostgreSQL Rate Controls. Implementation candidate under
-required internal review; AUTH-05 remains inactive.
+`WS-AUTH-001-04B` - PostgreSQL Rate Controls. Internal review passed; AUTH-05
+remains inactive.
 
 ## Current implementation branch
 
@@ -64,7 +65,7 @@ required internal review; AUTH-05 remains inactive.
 | `WS-AUTH-001-03` | Merged | `codex/ws-auth-001-03-legacy-actor-classification` | #109 | Merged as `f06532e`; reviewed code `8c5334c`; final branch head `43ffbfe`. |
 | `WS-AUTH-001-04` | Split | `codex/ws-auth-001-04-request-api-controls` | - | Parent split before runtime implementation. |
 | `WS-AUTH-001-04A` | Merged | `codex/ws-auth-001-04-request-api-controls` | #111 | Merged as `90c9a28`; production review `cdcaf77`; final branch head `36c4aa5`. |
-| `WS-AUTH-001-04B` | Re-review pending | `codex/ws-auth-001-04b-postgres-rate-controls` | - | Repair behavior and migration proofs pass; final subsystem coverage and exact-head reviewers pending. |
+| `WS-AUTH-001-04B` | Ready PR | `codex/ws-auth-001-04b-postgres-rate-controls` | - | All required tracks pass final `922778b`; production review `67484b5`. |
 | `WS-AUTH-001-05` | Proposed | - | - | Authority evidence and idempotency foundation. |
 | `WS-AUTH-001-06` | Proposed | - | - | Canonical actor profile and identity link. |
 | `WS-AUTH-001-07` | Proposed | - | - | Authorization kernel and permissions. |
@@ -80,11 +81,15 @@ required internal review; AUTH-05 remains inactive.
 
 ## Blockers
 
-No external blocker. AUTH-04B internal repair is active under its passed
-repaired L1 contract. It owns migration `0017`, following the
+No external blocker. AUTH-04B internal review passed under its repaired L1
+contract. It owns migration `0017`, following the
 now-owned `0016` prefix on current main. Non-test
 operators must later supply explicit classification evidence rather than
 inferred kinds before the owning canonical actor migration.
+
+AUTH-04B review evidence and its PR trust bundle are recorded at
+`reviews/WS-AUTH-001-04B-internal-review-evidence.md` and
+`reviews/WS-AUTH-001-04B-pr-trust-bundle.md`.
 
 AUTH-04A review evidence and its PR trust bundle are recorded at
 `reviews/WS-AUTH-001-04A-internal-review-evidence.md` and
