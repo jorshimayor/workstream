@@ -9,6 +9,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.modules.audit.repository import AuditRepository
 from app.modules.tasks.models import (
     AuditEvent,
     EvidenceItem,
@@ -28,6 +29,7 @@ class TaskRepository:
             session: Async SQLAlchemy session for the current unit of work.
         """
         self._session = session
+        self._audit_repository = AuditRepository(session)
 
     async def add_task(self, task: WorkstreamTask) -> WorkstreamTask:
         """Persist a new task and refresh generated database fields.
@@ -207,10 +209,7 @@ class TaskRepository:
         Returns:
             Persisted audit event model.
         """
-        self._session.add(event)
-        await self._session.flush()
-        await self._session.refresh(event)
-        return event
+        return await self._audit_repository.add_audit_event(event)
 
     async def list_audit_events(self, entity_type: str, entity_id: str) -> Sequence[AuditEvent]:
         """List audit events for one entity in creation order.
@@ -222,9 +221,4 @@ class TaskRepository:
         Returns:
             Matching audit events ordered by creation time.
         """
-        result = await self._session.execute(
-            select(AuditEvent)
-            .where(AuditEvent.entity_type == entity_type, AuditEvent.entity_id == entity_id)
-            .order_by(AuditEvent.created_at.asc(), AuditEvent.id.asc())
-        )
-        return result.scalars().all()
+        return await self._audit_repository.list_audit_events(entity_type, entity_id)

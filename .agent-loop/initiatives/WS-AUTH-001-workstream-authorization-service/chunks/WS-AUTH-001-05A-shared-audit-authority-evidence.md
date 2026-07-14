@@ -2,8 +2,8 @@
 
 ## Status
 
-Active for contract repair and required preimplementation review. Runtime edits
-remain prohibited until that review passes.
+Active implementation and deterministic evidence. Repaired preimplementation
+review passed on contract head `7a9023b`.
 
 ## Parent initiative
 

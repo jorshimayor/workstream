@@ -440,6 +440,37 @@ metrics/configuration evidence for the normal security incident period.
 Never use token, subject, email, `jti`, raw URL, key material, or unbounded
 resource IDs as metric labels.
 
+## Authority Audit Custody
+
+Authority decisions and invalidation requests use the shared `audit_events`
+ledger. Database triggers reject normal `UPDATE`, `DELETE`, and `TRUNCATE` for
+both lifecycle and authority rows. There is no runtime flag, session setting,
+or application-user bypass. Authority timestamps come from the database, and
+the application writer joins the caller's transaction so evidence cannot
+commit separately from the authority mutation it explains.
+
+Production must run Workstream with a dedicated non-owner database role that
+has no DDL, trigger-management, table-owner, superuser, or bypass privileges.
+Release verification must fail if the application credential owns
+`audit_events` or can disable its triggers. Schema migration credentials are
+separate and unavailable to the running service.
+
+Owner-level maintenance is exceptional and requires an approved change record,
+an outage or writer drain, and an explicit list of rows and purpose. The
+database owner must:
+
+1. begin one transaction and take `ACCESS EXCLUSIVE` lock on `audit_events`;
+2. record the pre-change row count and trigger state without exporting private data;
+3. disable only the named mutation trigger needed for the approved operation;
+4. perform only the listed maintenance statements and verify affected IDs/counts;
+5. re-enable the trigger before commit and prove all three audit triggers enabled;
+6. retain redacted change evidence and return credentials to controlled storage.
+
+Do not use owner maintenance to revise authority history, erase a denial, or
+fabricate evidence. Normal migration downgrade refuses while authority rows
+exist; destructive cleanup requires a separately reviewed retention or legal
+procedure and is not an application operation.
+
 ## Incident Response
 
 For suspected authority misuse:

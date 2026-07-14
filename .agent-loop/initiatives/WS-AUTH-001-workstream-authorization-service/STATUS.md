@@ -46,17 +46,16 @@ explicit human approval merged PR #113 to `main` as `05a63c8` on 2026-07-14.
 AUTH-04B post-merge memory merged through PR #114 as `97cd0f5`. The user then
 explicitly started AUTH-05. Required L1 plan review rejected the combined
 audit/idempotency contract before runtime edits and required children 05A and
-05B. Contract repair and re-review are active; no runtime implementation is
-active.
+05B. The repaired AUTH-05A contract passed at `7a9023b`; its bounded runtime
+implementation and deterministic evidence are active.
 
 ## Active planning chunk
 
-`WS-AUTH-001-05A` - Shared Audit Ownership And Append-Only Authority Evidence.
-Contract repair and required preimplementation re-review only.
+None.
 
 ## Active implementation chunk
 
-None.
+`WS-AUTH-001-05A` - Shared Audit Ownership And Append-Only Authority Evidence.
 
 ## Current implementation branch
 
@@ -75,7 +74,7 @@ None.
 | `WS-AUTH-001-04A` | Merged | `codex/ws-auth-001-04-request-api-controls` | #111 | Merged as `90c9a28`; production review `cdcaf77`; final branch head `36c4aa5`. |
 | `WS-AUTH-001-04B` | Merged | `codex/ws-auth-001-04b-postgres-rate-controls` | #113 | Merged as `05a63c8`; production review `67484b5`; final branch head `94fb2fe`. |
 | `WS-AUTH-001-05` | Split | `codex/ws-auth-001-05-authority-evidence` | - | Parent split before implementation into 05A and 05B. |
-| `WS-AUTH-001-05A` | Contract review | `codex/ws-auth-001-05-authority-evidence` | - | Shared audit ownership and append-only authority evidence; runtime edits prohibited pending review. |
+| `WS-AUTH-001-05A` | Implementation/evidence | `codex/ws-auth-001-05-authority-evidence` | - | Repaired contract passed at `7a9023b`; shared audit ownership and append-only authority evidence active. |
 | `WS-AUTH-001-05B` | Inactive | - | - | Idempotency and invalidation; requires 05A merge/memory and separate explicit start. |
 | `WS-AUTH-001-06` | Proposed | - | - | Canonical actor profile and identity link. |
 | `WS-AUTH-001-07` | Proposed | - | - | Authorization kernel and permissions. |
@@ -91,11 +90,11 @@ None.
 
 ## Blockers
 
-AUTH-05A runtime implementation is blocked on repaired-contract review. The
-combined AUTH-05 contract was rejected before code changes because migration
-`0017` is already owned by AUTH-04B and the shared-audit plus idempotency scope
-was not reviewable as one L1 change. AUTH-05A now owns proposed migration
-`0018`; AUTH-05B later owns proposed migration `0019`. Non-test
+AUTH-05A has no preimplementation blocker. The combined AUTH-05 contract was
+rejected before code changes because migration `0017` is already owned by
+AUTH-04B and the shared-audit plus idempotency scope was not reviewable as one
+L1 change. Repaired AUTH-05A owns migration `0018`; AUTH-05B later owns
+migration `0019`. Non-test
 operators must later supply explicit classification evidence rather than
 inferred kinds before the owning canonical actor migration.
 

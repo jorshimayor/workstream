@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.tasks.models import AuditEvent
@@ -31,3 +34,14 @@ class AuditRepository:
         await self._session.flush()
         await self._session.refresh(event)
         return event
+
+    async def list_audit_events(
+        self, entity_type: str, entity_id: str
+    ) -> Sequence[AuditEvent]:
+        """List events for one entity in database creation order."""
+        result = await self._session.execute(
+            select(AuditEvent)
+            .where(AuditEvent.entity_type == entity_type, AuditEvent.entity_id == entity_id)
+            .order_by(AuditEvent.created_at.asc(), AuditEvent.id.asc())
+        )
+        return result.scalars().all()

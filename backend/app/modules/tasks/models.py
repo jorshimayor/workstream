@@ -18,6 +18,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    Uuid,
     text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -453,7 +454,7 @@ class EvidenceItem(Base):
 
 
 class AuditEvent(Base):
-    """Audit event for actor-attributed task lifecycle changes."""
+    """Shared append-only lifecycle and authority audit evidence."""
 
     __tablename__ = "audit_events"
 
@@ -464,8 +465,8 @@ class AuditEvent(Base):
     from_status: Mapped[str | None] = mapped_column(String(30))
     to_status: Mapped[str | None] = mapped_column(String(30))
     actor_id: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
-    external_subject: Mapped[str] = mapped_column(String(200), nullable=False)
-    external_issuer: Mapped[str] = mapped_column(String(200), nullable=False)
+    external_subject: Mapped[str | None] = mapped_column(String(200))
+    external_issuer: Mapped[str | None] = mapped_column(String(200))
     actor_roles: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     claim_snapshot: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     auth_source: Mapped[str] = mapped_column(String(30), nullable=False)
@@ -473,3 +474,27 @@ class AuditEvent(Base):
     reason: Mapped[str | None] = mapped_column(Text)
     event_payload: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    event_domain: Mapped[str] = mapped_column(
+        String(24), nullable=False, default="legacy_lifecycle", server_default="legacy_lifecycle"
+    )
+    event_version: Mapped[int | None] = mapped_column(Integer)
+    occurred_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    actor_ref_kind: Mapped[str | None] = mapped_column(String(32))
+    request_id: Mapped[str | None] = mapped_column(Uuid(as_uuid=False))
+    correlation_id: Mapped[str | None] = mapped_column(Uuid(as_uuid=False))
+    target_actor_ref_kind: Mapped[str | None] = mapped_column(String(32))
+    target_actor_ref: Mapped[str | None] = mapped_column(String(100))
+    matched_grant_id: Mapped[str | None] = mapped_column(String(100))
+    permission_id: Mapped[str | None] = mapped_column(String(120))
+    project_id: Mapped[str | None] = mapped_column(String(36))
+    resource_type: Mapped[str | None] = mapped_column(String(80))
+    resource_id: Mapped[str | None] = mapped_column(String(100))
+    target_ref_kind: Mapped[str | None] = mapped_column(String(32))
+    target_ref_id: Mapped[str | None] = mapped_column(String(100))
+    denial_code: Mapped[str | None] = mapped_column(String(80))
+    idempotency_reference: Mapped[str | None] = mapped_column(Uuid(as_uuid=False))
+    invalidation_cause_event_id: Mapped[str | None] = mapped_column(String(36))
+    invalidation_target_kind: Mapped[str | None] = mapped_column(String(32))
+    invalidation_target_ref: Mapped[str | None] = mapped_column(String(100))
+    before_facts: Mapped[dict | None] = mapped_column(JSON(none_as_null=True))
+    after_facts: Mapped[dict | None] = mapped_column(JSON(none_as_null=True))

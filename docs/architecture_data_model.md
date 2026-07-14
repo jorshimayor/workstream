@@ -1497,16 +1497,26 @@ Fields:
 
 Audit events are append-only.
 
-`actor_roles` and `claim_snapshot` are legacy-only columns. New authority events
-must leave them empty and use only the bounded actor, matched grant/permission,
-scope, resource, reason, and before/after fields. Raw claims and unnecessary
-profile data are prohibited.
+Authority evidence extends the same row with `event_domain`, `event_version`,
+database-owned `occurred_at`, request/correlation IDs, an actor-reference
+namespace, and optional bounded target actor, matched grant, permission,
+project, resource, denial, invalidation, idempotency-reference, and shallow
+before/after fact fields. It does not create a parallel event table.
+
+`actor_roles`, `claim_snapshot`, and `event_payload` are legacy-only data
+surfaces. Authority rows keep them at `[]`, `{}`, and `{}` respectively, use
+`auth_source = local_authority`, and leave external issuer, external subject,
+and lifecycle status fields null. They never store tokens, claims, emails,
+request bodies, issuer URLs, key material, or policy bodies. Typed validation
+and database constraints reject mixed legacy/authority shapes.
 
 v0.1 audit storage is the existing Workstream `audit_events` ledger. Task
 Lifecycle events and authority events share the canonical audit repository so
 operators can reconstruct why an actor was allowed or denied. Authority events
 record bounded actor, matched grant/permission, scope, resource, reason, and
-before/after facts without raw claims or unnecessary profile data.
+before/after facts without raw claims or unnecessary profile data. The shared
+repository participates in its caller's transaction and does not commit or
+open an independent session.
 
 ## Required Invariants
 

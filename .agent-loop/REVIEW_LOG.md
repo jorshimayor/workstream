@@ -1,5 +1,16 @@
 # Review Log
 
+## 2026-07-14 - WS-AUTH-001-05A Preimplementation Review Passed
+
+The repaired AUTH-05A contract passed required senior engineering,
+QA/CI/test-delta, security/privacy, product/ops, architecture, docs, and reuse
+review at `7a9023b`. The contract fixes migration ownership at `0018`, retains
+the existing `audit_events` ledger and `AuditRepository` as sole persistence
+owner, defines exact legacy/authority compatibility and bounded event shapes,
+and requires unconditional normal-DML append-only triggers plus downgrade and
+production-role custody proof. Bounded implementation and deterministic
+evidence are active; AUTH-05B remains inactive.
+
 ## 2026-07-14 - WS-AUTH-001-05 Plan Review Split Required
 
 After AUTH-04B post-merge memory merged through PR #114 as `97cd0f5`, the user

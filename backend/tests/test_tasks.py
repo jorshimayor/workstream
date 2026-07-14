@@ -7,13 +7,14 @@ from collections.abc import AsyncIterator, Iterator
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
 from alembic import command
 from alembic.config import Config
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import inspect, select
+from sqlalchemy import inspect, select, text
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.schema import CreateIndex
@@ -55,6 +56,47 @@ from app.modules.tasks.models import (
 from app.modules.tasks.repository import TaskRepository
 from app.modules.tasks.service import TaskService, TaskServiceError
 from app.schemas.auth import ActorContext
+
+
+async def test_task_repository_delegates_audit_persistence() -> None:
+    """Keep legacy task audit methods as same-session shared-writer adapters."""
+    session = MagicMock()
+    repository = TaskRepository(session)
+    event = MagicMock(spec=AuditEvent)
+    persisted = MagicMock(spec=AuditEvent)
+    listed = [persisted]
+    repository._audit_repository.add_audit_event = AsyncMock(return_value=persisted)
+    repository._audit_repository.list_audit_events = AsyncMock(return_value=listed)
+
+    assert repository._audit_repository._session is session
+    assert await repository.add_audit_event(event) is persisted
+    assert await repository.list_audit_events("task", "task-1") is listed
+    repository._audit_repository.add_audit_event.assert_awaited_once_with(event)
+    repository._audit_repository.list_audit_events.assert_awaited_once_with(
+        "task", "task-1"
+    )
+
+
+async def delete_audit_fixture_as_owner(session, event_id: str) -> None:
+    """Construct missing-evidence corruption under explicit test-owner custody."""
+    await session.execute(text("lock table audit_events in access exclusive mode"))
+    await session.execute(
+        text(
+            "alter table audit_events disable trigger "
+            "audit_events_reject_update_delete"
+        )
+    )
+    await session.execute(
+        text("delete from audit_events where id = :event_id"),
+        {"event_id": event_id},
+    )
+    await session.execute(
+        text(
+            "alter table audit_events enable trigger "
+            "audit_events_reject_update_delete"
+        )
+    )
+    await session.commit()
 
 
 @pytest.fixture
@@ -4821,8 +4863,7 @@ async def test_manual_checker_run_cannot_bypass_failed_automatic_gate(
         )
         assert queued_run is not None
         assert lock_audit is not None
-        await session.delete(lock_audit)
-        await session.commit()
+        await delete_audit_fixture_as_owner(session, lock_audit.id)
 
     with pytest.raises(CheckerExecutionBlocked):
         run_pre_review_gate.run(
@@ -5075,8 +5116,7 @@ async def test_queued_gate_fails_closed_when_lock_audit_is_missing(
         )
         assert queued_run is not None
         assert lock_audit is not None
-        await session.delete(lock_audit)
-        await session.commit()
+        await delete_audit_fixture_as_owner(session, lock_audit.id)
 
     with pytest.raises(CheckerExecutionBlocked):
         run_pre_review_gate.run(
