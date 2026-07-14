@@ -1,5 +1,26 @@
 # Review Log
 
+## 2026-07-14 - WS-AUTH-001-CAT CodeRabbit Response
+
+CodeRabbit raised two valid consistency findings on PR #117. The repair makes
+`STATUS.md` explicitly preserve all 52 approved identifiers beside AUTH-05A's
+49-identifier persisted audit base and removes the stale second AUTH-05B start
+requirement from `WORK_QUEUE.md`. The received start signal remains gated only
+by CAT merge and its post-merge memory/stop checkpoint. Internal repair review
+and repository gates are rerun before publication.
+
+## 2026-07-14 - WS-AUTH-001-CAT Internal Review Passed
+
+The proposed action/resource catalogue failed initial repository mapping because
+it claimed unapproved precedence, used `/v1`, conflicted with the merged audit
+registry, and invented cross-domain resources. The rejected root file was
+removed. Only validated rules were adopted through D15 and owning future chunk
+contracts. Repaired review now passes senior engineering, architecture, docs,
+QA/test, security/auth/privacy, and product/ops. Documentation and diff gates
+pass. The ready PR is pending external and explicit human review; AUTH-05B stays
+inactive until this docs-only amendment merges and its post-merge memory/stop
+checkpoint is recorded.
+
 ## 2026-07-14 - WS-AUTH-001-05A Merged
 
 PR #115 merged through explicit human approval as `8e1cde6`. Final GitHub

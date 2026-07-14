@@ -72,6 +72,11 @@ review/contribution/compensation implementation
 ## Acceptance criteria
 
 - Internal jobs use fixed system principals and registered system permissions.
+- Every remaining asynchronous command declares one primary registered action,
+  canonical feature-owned target, and fixed service principal. Serialized human
+  identity is provenance only and never executable command authority.
+- Generated command-manifest delta tests prove every protected asynchronous
+  surface migrated here has exactly one active `ActionId` declaration.
 - Project setup is verification/removal-only here; its behavioral cutover
   remains owned by chunk 12.
 - Serialized requester context is evidence only; actor-attributed commits reload
@@ -97,6 +102,10 @@ review/contribution/compensation implementation
 python3 scripts/check_stale_authorization.py
 python3 scripts/test_agent_gates.py
 (cd backend && .venv/bin/python -m ruff check app tests scripts)
+(cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q \
+  tests/test_authorization.py tests/test_auth.py tests/test_tasks.py \
+  tests/test_checkers.py --cov=app.modules.authorization \
+  --cov-report=term-missing --cov-fail-under=90)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python scripts/api_contract_e2e.py)
 python3 scripts/check_stale_workstream_wording.py

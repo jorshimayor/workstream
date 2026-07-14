@@ -39,8 +39,9 @@ backend/app/modules/tasks/repository.py
 backend/app/modules/tasks/schemas.py
 backend/app/modules/tasks/models.py
 backend/app/modules/tasks/lifecycle.py
-backend/alembic/versions/0022_*.py
+backend/alembic/versions/0025_*.py
 backend/app/modules/authorization/**
+backend/app/modules/audit/**
 backend/app/api/deps/auth.py
 backend/app/workers/authority_reconciliation.py
 backend/app/workers/celery_app.py
@@ -74,11 +75,21 @@ token role or legacy active-worker-profile fallback
   authorization DTOs, and authorization does not duplicate task queries.
 - Submitter/both grant for the exact project is required for queue/claim/start,
   plus existing task availability, assignment, ownership, and state guards.
+- Every migrated task/assignment route or reconciliation command declares one
+  primary registered action against the canonically loaded project, task, or
+  assignment target. Feature-owned TaskRepository facts remain authoritative.
+- Generated OpenAPI/command manifest-delta tests prove every protected
+  task/assignment surface migrated here has exactly one active `ActionId`
+  declaration.
 - Administrative roles alone cannot claim contributor work.
 - Existing Project Manager task management remains project-scoped. The
   reasoned start override is separately authorized as
   `operations.task.start_override` for Operator recovery; matched permission,
   scope, reason, and audit event distinguish the two paths.
+- Before `operations.task.start_override` becomes active, migration `0025` and
+  the typed audit schema add that already approved identifier to the 49-item
+  AUTH-05A audit base. Upgrade/downgrade/re-upgrade and direct-SQL parity tests
+  preserve all prior audit rows and reject unknown identifiers.
 - Operator `operations.status.read` exposes a read-only cross-project task-queue
   operational projection with bounded fields; it does not grant task mutation.
   Audit Authority `audit.read` exposes only covered task evidence. Both paths
@@ -112,7 +123,7 @@ token role or legacy active-worker-profile fallback
   remains bounded only because chunk 14 still owns the final submission
   compatibility consumer; task queue/claim/start no longer depend on it.
 - The assignment persistence column, model/schema/service fields, response
-  contract, and new audit payload keys use `contributor_id`. Migration `0022`
+  contract, and new audit payload keys use `contributor_id`. Migration `0025`
   preserves every existing assignment owner, supports downgrade, and removes
   the legacy storage name without exposing a public compatibility alias.
 - Full backend suite and API contract drill pass.
@@ -126,6 +137,9 @@ token role or legacy active-worker-profile fallback
 
 ```bash
 (cd backend && .venv/bin/python -m ruff check app tests scripts)
+(cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q \
+  tests/test_authorization.py tests/test_auth.py tests/test_tasks.py \
+  --cov=app.modules.authorization --cov-report=term-missing --cov-fail-under=90)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python scripts/api_contract_e2e.py)
 (cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic upgrade head)

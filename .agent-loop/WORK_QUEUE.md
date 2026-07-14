@@ -2,13 +2,15 @@
 
 ## In Progress
 
-None.
+| Chunk | Title | Risk | Status |
+|---|---|---:|---|
+| `WS-AUTH-001-CAT` | Action And Resource Catalogue Reconciliation | L1 | Internal review passed; ready PR pending |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-05B` | Authority Idempotency And Invalidation Foundation | L1 | Inactive pending post-merge memory merge and separate explicit user start |
+| `WS-AUTH-001-05B` | Authority Idempotency And Invalidation Foundation | L1 | Start signal received; inactive until CAT merge and post-merge memory |
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Paused for AUTH priority; no valid replacement baseline yet |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
@@ -58,10 +60,11 @@ None.
 ## Proposed Next
 
 AUTH-05A merged through PR #115 as `8e1cde6` after required internal reviews,
-Backend, Agent Gates, CodeRabbit, and explicit human approval passed. AUTH-05B
-remains inactive until this post-merge memory merges and the user gives a
-separate explicit start. Do not implement AUTH-05B, AUTH-06, or POL-002-04
-automatically.
+Backend, Agent Gates, CodeRabbit, and explicit human approval passed. The user
+has given the AUTH-05B start signal. AUTH-05B remains inactive only until
+`WS-AUTH-001-CAT` merges and its post-merge memory/stop checkpoint is recorded;
+no second start signal is required. Do not start AUTH-05B before those gates, or
+start AUTH-06 or POL-002-04 automatically.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.

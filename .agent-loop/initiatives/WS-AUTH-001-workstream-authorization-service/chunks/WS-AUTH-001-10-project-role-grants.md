@@ -39,7 +39,7 @@ backend/app/modules/projects/repository.py
 backend/app/api/router.py
 backend/app/db/models.py
 backend/app/modules/audit/**
-backend/alembic/versions/0020_*.py
+backend/alembic/versions/0023_*.py
 backend/tests/test_actors.py
 backend/tests/test_projects.py
 backend/tests/test_auth.py
@@ -98,6 +98,10 @@ project/task/checker authorization cutover
 - `POST/GET /api/v1/projects/{project_id}/role-grants`, grant detail, and grant
   revoke routes have multi-role, self-revoke, scope, privacy, rate-limit,
   replay, and negative tests.
+- Every protected grant/candidate route declares one active `ActionId` mapped to
+  `project.role_grant.read` or `project.role_grant.manage` against the
+  canonically loaded project/grant target. Generated manifest-delta tests prove
+  every surface introduced here has exactly one declaration.
 - Contributor-candidate lookup has covered-manager allow, uncovered/cross-
   project deny, pagination/count concealment, minimal-field, rate-limit, and
   inactive/non-human exclusion tests; no UUID must be recovered from logs or
@@ -113,6 +117,10 @@ project/task/checker authorization cutover
 (cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic downgrade -1)
 (cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic upgrade head)
 (cd backend && .venv/bin/python -m ruff check app tests)
+(cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q \
+  tests/test_authorization.py tests/test_auth.py tests/test_actors.py \
+  tests/test_projects.py --cov=app.modules.authorization \
+  --cov-report=term-missing --cov-fail-under=90)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python scripts/api_contract_e2e.py)
 python3 scripts/check_stale_workstream_wording.py

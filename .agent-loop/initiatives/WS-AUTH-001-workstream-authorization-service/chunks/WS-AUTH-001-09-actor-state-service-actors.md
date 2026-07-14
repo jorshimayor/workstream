@@ -77,6 +77,10 @@ product adapter bindings or callback endpoints
   actor identity-link read, identity-link revoke/reactivate, and service actor
   create/list/detail routes from the adopted contract have
   allow/deny/privacy/rate-limit/replay tests.
+- Every protected actor/link/service route declares one active `ActionId` mapped
+  to the existing actor profile, identity-link, or service-provision permission
+  and its canonically loaded target. Generated manifest-delta tests prove every
+  surface introduced here has exactly one declaration.
 - Suspension/link-revocation events explicitly require consuming lifecycle
   reconciliation; task assignment consumption belongs to chunk 13 and review
   lease consumption remains deferred to WS-REV-001.
@@ -85,6 +89,9 @@ product adapter bindings or callback endpoints
 
 ```bash
 (cd backend && .venv/bin/python -m ruff check app tests)
+(cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q \
+  tests/test_authorization.py tests/test_auth.py tests/test_actors.py \
+  --cov=app.modules.authorization --cov-report=term-missing --cov-fail-under=90)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python scripts/api_contract_e2e.py)
 python3 scripts/check_stale_workstream_wording.py

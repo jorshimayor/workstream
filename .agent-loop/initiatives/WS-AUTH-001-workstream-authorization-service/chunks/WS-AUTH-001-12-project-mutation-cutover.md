@@ -37,7 +37,7 @@ backend/app/modules/projects/**
 backend/app/modules/authorization/**
 backend/app/api/deps/auth.py
 backend/app/workers/project_setup.py
-backend/alembic/versions/0021_*.py
+backend/alembic/versions/0024_*.py
 backend/tests/test_projects.py
 backend/tests/test_auth.py
 backend/tests/test_alembic.py
@@ -64,9 +64,18 @@ unscoped project-manager access or token role fallback
   only covered projects.
 - Project policy actions use registered permissions and transaction-local grant
   revalidation.
+- Every migrated project mutation and setup command declares one primary
+  registered action and authorizes against `system`, an existing project, or the
+  exact existing parent policy resource defined by the owning project model.
+  It does not collapse guide, source-snapshot, submission-policy, checker-policy,
+  review-policy, revision-policy, or payment-policy records into an invented
+  generic policy resource.
+- Generated OpenAPI/command manifest-delta tests prove every protected project
+  mutation/setup surface migrated here has exactly one active `ActionId`
+  declaration.
 - Approval provenance records matched local grant/actor/scope while preserving
   historical bootstrap provenance.
-- Migration `0021` adds matched local grant/scope provenance and ownership
+- Migration `0024` adds matched local grant/scope provenance and ownership
   constraints to project policy approval records without rewriting historical
   bootstrap values; prior-head upgrade, downgrade, and re-upgrade preserve
   readable history.
@@ -82,6 +91,9 @@ unscoped project-manager access or token role fallback
 (cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic downgrade -1)
 (cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic upgrade head)
 (cd backend && .venv/bin/python -m ruff check app tests scripts)
+(cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q \
+  tests/test_authorization.py tests/test_auth.py tests/test_projects.py \
+  --cov=app.modules.authorization --cov-report=term-missing --cov-fail-under=90)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python scripts/api_contract_e2e.py)
 python3 scripts/check_stale_workstream_wording.py

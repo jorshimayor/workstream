@@ -59,16 +59,18 @@ CodeRabbit passed, and explicit human approval merged PR #115 as `8e1cde6` on
 
 ## Active planning chunk
 
-None.
+`WS-AUTH-001-CAT` - Action And Resource Catalogue Reconciliation. This is a
+docs/specification-only mapping of a proposed catalogue against the adopted
+repository; it changes no runtime, migration, or permission identifier.
 
 ## Active implementation chunk
 
-None. Post-merge memory for `WS-AUTH-001-05A` is active; no implementation
-chunk is active.
+None. AUTH-05B remains inactive until the catalogue reconciliation merges and
+its post-merge memory/stop checkpoint is recorded.
 
 ## Current implementation branch
 
-`codex/ws-auth-001-05a-post-merge-memory` in
+`codex/ws-auth-001-action-catalogue-reconciliation` in
 `/home/abiorh/flow/workstream-authorization-service`.
 
 ## Chunk status
@@ -84,7 +86,8 @@ chunk is active.
 | `WS-AUTH-001-04B` | Merged | `codex/ws-auth-001-04b-postgres-rate-controls` | #113 | Merged as `05a63c8`; production review `67484b5`; final branch head `94fb2fe`. |
 | `WS-AUTH-001-05` | Split | `codex/ws-auth-001-05-authority-evidence` | - | Parent split before implementation into 05A and 05B. |
 | `WS-AUTH-001-05A` | Merged | `codex/ws-auth-001-05-authority-evidence` | #115 | Merged as `8e1cde6`; reviewed code `ea16fd8`; final branch head `d023952`. |
-| `WS-AUTH-001-05B` | Inactive | - | - | Idempotency and invalidation; requires post-merge memory and separate explicit start. |
+| `WS-AUTH-001-CAT` | Ready for PR | `codex/ws-auth-001-action-catalogue-reconciliation` | - | Required internal reviews and docs gates pass; runtime permission registry is unchanged. |
+| `WS-AUTH-001-05B` | Inactive | - | - | Start signal received; activate after CAT merge and post-merge memory. |
 | `WS-AUTH-001-06` | Proposed | - | - | Canonical actor profile and identity link. |
 | `WS-AUTH-001-07` | Proposed | - | - | Authorization kernel and permissions. |
 | `WS-AUTH-001-08` | Proposed | - | - | Bootstrap and administrative grants. |
@@ -105,6 +108,17 @@ idempotency/invalidation were not reviewable as one L1 change. AUTH-05A owns
 migration `0018`; inactive AUTH-05B later owns migration `0019`. Non-test
 operators must later supply explicit classification evidence rather than
 inferred kinds before the owning canonical actor migration.
+
+The proposed external catalogue cannot be adopted as a normative handoff: it
+conflicts with `/api/v1`, AUTH-05A's merged 49-identifier persisted audit base,
+current project and artifact models, and staged domain ownership. All 52
+permission identifiers remain approved, including
+`operations.task.start_override`, `operations.submission_gate.repair`, and
+`operations.checker.retry`; the three recovery identifiers receive persisted
+parity only in their owning later chunks. `WS-AUTH-001-CAT` retains only safe
+registry/conformance rules. This is a scope decision, not an AUTH-05B runtime
+blocker; AUTH-05B begins after the docs-only amendment merges and its post-merge
+memory/stop checkpoint is recorded.
 
 AUTH-04B review evidence and its PR trust bundle are recorded at
 `reviews/WS-AUTH-001-04B-internal-review-evidence.md` and
