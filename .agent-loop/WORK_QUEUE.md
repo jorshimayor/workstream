@@ -4,13 +4,13 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-CAT` | Action And Resource Catalogue Reconciliation | L1 | Internal review passed; ready PR pending |
+| `WS-AUTH-001-CAT-MEMORY` | Catalogue Post-Merge Memory | L1 | PR #117 merge confirmed; memory update active |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-05B` | Authority Idempotency And Invalidation Foundation | L1 | Start signal received; inactive until CAT merge and post-merge memory |
+| `WS-AUTH-001-05B` | Authority Idempotency And Invalidation Foundation | L1 | Start signal received; activate after CAT post-merge memory merges |
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Paused for AUTH priority; no valid replacement baseline yet |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
@@ -56,15 +56,16 @@
 | `WS-AUTH-001-04A` | Request And Error Context | L1 | Merged through PR #111 as `90c9a28` on 2026-07-13 |
 | `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Merged through PR #113 as `05a63c8` on 2026-07-14 |
 | `WS-AUTH-001-05A` | Shared Audit Ownership And Append-Only Authority Evidence | L1 | Merged through PR #115 as `8e1cde6` on 2026-07-14 |
+| `WS-AUTH-001-CAT` | Action And Resource Catalogue Reconciliation | L1 | Merged through PR #117 as `4c5d4fc` on 2026-07-14 |
 
 ## Proposed Next
 
 AUTH-05A merged through PR #115 as `8e1cde6` after required internal reviews,
 Backend, Agent Gates, CodeRabbit, and explicit human approval passed. The user
 has given the AUTH-05B start signal. AUTH-05B remains inactive only until
-`WS-AUTH-001-CAT` merges and its post-merge memory/stop checkpoint is recorded;
-no second start signal is required. Do not start AUTH-05B before those gates, or
-start AUTH-06 or POL-002-04 automatically.
+the CAT post-merge memory update merges; no second start signal is required. Do
+not start AUTH-05B before that final memory gate, or start AUTH-06 or POL-002-04
+automatically.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.
