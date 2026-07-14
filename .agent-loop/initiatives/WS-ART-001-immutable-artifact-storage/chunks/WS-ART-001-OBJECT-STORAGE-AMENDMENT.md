@@ -87,6 +87,7 @@ python3 scripts/check_markdown_links.py --changed-only ab49b731b1774421af5088a60
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_stale_authorization_docs.py
 python3 scripts/check_stale_artifact_contracts.py
+python3 -m pip install --require-hashes -r scripts/agent-gate-requirements.txt
 python3 scripts/test_agent_gates.py
 git diff --name-only ab49b731b1774421af5088a6063461b7b7f29f86...HEAD -- backend/app backend/alembic backend/pyproject.toml docker-compose.yml
 ```

@@ -1537,12 +1537,23 @@ def test_stale_artifact_contracts_enforce_aws_first_v01() -> None:
         ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/"
         "DISCOVERY.md"
     )
+    runtime_credentials = "Runtime " + "credentials"
     assert gate.scan_text(
         discovery_path,
-        "Runtime credentials are scoped and cannot delete, "
+        runtime_credentials + " are scoped and cannot delete, "
         + "list, or copy.",
         "foundation",
     ) == [f"{discovery_path}:1: STALE_AWS_RUNTIME_NO_LIST"]
+    for stale_statement in (
+        runtime_credentials + " are scoped and could not list objects.",
+        runtime_credentials + " are scoped and cannot delete,\nlist, or copy.",
+        runtime_credentials + " are scoped. They cannot delete, list, or copy.",
+    ):
+        assert gate.scan_text(
+            discovery_path,
+            stale_statement,
+            "foundation",
+        ) == [f"{discovery_path}:1: STALE_AWS_RUNTIME_NO_LIST"]
     assert gate.scan_text(
         discovery_path,
         (

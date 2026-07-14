@@ -5,13 +5,13 @@
 Planning candidate `acc4476537a61d18f3b416bc2fec3a5d276b58dc` passed
 security/auth and QA/test, and architecture found only a low documentation
 cleanup, but senior engineering failed the active `DISCOVERY.md` contradiction:
-it still said runtime credentials could not list after the canonical AWS
-contract added exact bucket-level `s3:ListBucket`. All four `gpt-5.5` high
+it still denied the bucket-list capability required by the canonical AWS
+contract. All four `gpt-5.5` high
 reviewer sessions were closed; none of these results is reusable approval.
 
 The repair distinguishes IAM-level missing-key classification from the absent
 application/port list operation and adds a foundation scanner rule plus
-regression test so the stale “runtime cannot list” contract cannot return.
+regression test so the stale no-list contract cannot return.
 
 ## 2026-07-14 - WS-ART-001 Fifth Exact-Head Review Failed
 

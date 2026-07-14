@@ -324,8 +324,11 @@ RULES = (
         "STALE_AWS_RUNTIME_NO_LIST",
         "foundation",
         re.compile(
-            r"\bRuntime credentials\b[^.!?\n]{0,180}"
-            r"\b(?:cannot|must not|do not)\b[^.!?\n]{0,80}\blist\b",
+            r"\bRuntime credentials\b(?:"
+            r"[^.!?]{0,180}\b(?:cannot|could not|must not|do not)\b"
+            r"[^.!?]{0,80}\blist\b|"
+            r"[^.!?]{0,180}[.!?]\s+They\s+"
+            r"(?:cannot|could not|must not|do not)\b[^.!?]{0,80}\blist\b)",
             re.IGNORECASE,
         ),
     ),
