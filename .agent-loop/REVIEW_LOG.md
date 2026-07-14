@@ -1,5 +1,21 @@
 # Review Log
 
+## 2026-07-14 - WS-AUTH-001-05 Plan Review Split Required
+
+After AUTH-04B post-merge memory merged through PR #114 as `97cd0f5`, the user
+explicitly started AUTH-05. Required L1 engineering, QA/CI, and
+security/privacy/product plan review rejected the combined contract before any
+runtime edit. Migration `0017` is already owned by AUTH-04B, dedicated audit and
+authorization tests were absent, and shared audit custody plus idempotency and
+invalidation were not credibly reviewable as one sub-500-line production diff.
+
+The repaired plan splits AUTH-05 into 05A shared audit ownership/append-only
+authority evidence on migration `0018`, then 05B idempotency/invalidation on
+`0019`. Both retain caller-owned transactions, focused 90 percent subsystem
+coverage, the global 78 percent CI floor, full reviewer fanout, and separate
+human merge/start gates. No runtime implementation is active pending repaired
+contract review.
+
 ## 2026-07-14 - WS-AUTH-001-04B Merged
 
 PR #113 merged `WS-AUTH-001-04B` to `main` as `05a63c8` after final branch head

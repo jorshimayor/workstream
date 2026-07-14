@@ -18,7 +18,9 @@ stopped.
 | `WS-AUTH-001-04` | Request, Error, And API Control Foundation | L1 | Split before implementation into 04A and 04B |
 | `WS-AUTH-001-04A` | Request And Error Context | L1 | Merged through PR #111 as `90c9a28` |
 | `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Merged through PR #113 as `05a63c8` |
-| `WS-AUTH-001-05` | Authority Evidence And Idempotency Foundation | L1 | Proposed |
+| `WS-AUTH-001-05` | Authority Evidence And Idempotency Foundation | L1 | Split before implementation into 05A and 05B |
+| `WS-AUTH-001-05A` | Shared Audit Ownership And Append-Only Authority Evidence | L1 | Contract repair and preimplementation re-review |
+| `WS-AUTH-001-05B` | Authority Idempotency And Invalidation Foundation | L1 | Inactive pending 05A merge/memory and separate explicit start |
 | `WS-AUTH-001-06` | Canonical Actor Profile And Identity Link | L1 | Proposed |
 | `WS-AUTH-001-07` | Authorization Kernel And Permission Registry | L1 | Proposed |
 | `WS-AUTH-001-08` | Bootstrap And Administrative Role Grants | L1 | Proposed |
@@ -40,7 +42,8 @@ WS-AUTH-001-PLAN
 -> WS-AUTH-001-03
 -> WS-AUTH-001-04A
 -> WS-AUTH-001-04B
--> WS-AUTH-001-05
+-> WS-AUTH-001-05A
+-> WS-AUTH-001-05B
 -> WS-AUTH-001-06
 -> WS-AUTH-001-07
 -> WS-AUTH-001-08
@@ -61,7 +64,9 @@ WS-AUTH-001-PLAN
 - Parent chunk 04 was split before implementation. Chunk 04A establishes
   request/correlation and additive error compatibility; chunk 04B later owns
   durable PostgreSQL rate controls and its migration.
-- Chunk 05 evolves the shared audit path and idempotency before mutations.
+- Parent chunk 05 was split before implementation. Chunk 05A owns shared audit
+  schema/writer custody and append-only authority evidence; chunk 05B owns
+  idempotency and typed invalidation orchestration.
 - Chunk 06 establishes canonical actor resolution while preserving only the
   enumerated non-authoritative legacy workflow-eligibility consumers required
   for intermediate-release operability.
@@ -89,5 +94,8 @@ post-merge memory merged through PR #112 as `7749f54`. The user explicitly
 started AUTH-04B. Its repaired contract passed at `b5dceb1`; bounded
 implementation and all required internal review tracks passed, and PR #113
 merged as `05a63c8` after Backend, Agent Gates, CodeRabbit, and explicit human
-approval passed. AUTH-04B post-merge memory is the current gate. Stop; do not
-start AUTH-05 or POL-002-04.
+approval passed. AUTH-04B post-merge memory then merged through PR #114 as
+`97cd0f5`, and the user explicitly started AUTH-05. Required plan review
+rejected the combined contract before runtime edits and required 05A/05B.
+Repaired contract review is the current gate. Do not implement either child
+until its own review passes, and do not start AUTH-06 or POL-002-04.

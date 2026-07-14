@@ -43,11 +43,16 @@ internally approved at final SHA `922778b`; reviewed production SHA is
 `67484b5`. The Backend CI isolation repair passed exact review at `4fb846c`.
 Final branch head `94fb2fe` passed Backend, Agent Gates, and CodeRabbit, then
 explicit human approval merged PR #113 to `main` as `05a63c8` on 2026-07-14.
-AUTH-04B post-merge memory is active; AUTH-05 remains inactive.
+AUTH-04B post-merge memory merged through PR #114 as `97cd0f5`. The user then
+explicitly started AUTH-05. Required L1 plan review rejected the combined
+audit/idempotency contract before runtime edits and required children 05A and
+05B. Contract repair and re-review are active; no runtime implementation is
+active.
 
 ## Active planning chunk
 
-None.
+`WS-AUTH-001-05A` - Shared Audit Ownership And Append-Only Authority Evidence.
+Contract repair and required preimplementation re-review only.
 
 ## Active implementation chunk
 
@@ -55,8 +60,8 @@ None.
 
 ## Current implementation branch
 
-None. Post-merge memory uses `codex/ws-auth-001-04b-post-merge-memory` and makes
-no product implementation change.
+`codex/ws-auth-001-05-authority-evidence` in
+`/home/abiorh/flow/workstream-auth-001-05`.
 
 ## Chunk status
 
@@ -69,7 +74,9 @@ no product implementation change.
 | `WS-AUTH-001-04` | Split | `codex/ws-auth-001-04-request-api-controls` | - | Parent split before runtime implementation. |
 | `WS-AUTH-001-04A` | Merged | `codex/ws-auth-001-04-request-api-controls` | #111 | Merged as `90c9a28`; production review `cdcaf77`; final branch head `36c4aa5`. |
 | `WS-AUTH-001-04B` | Merged | `codex/ws-auth-001-04b-postgres-rate-controls` | #113 | Merged as `05a63c8`; production review `67484b5`; final branch head `94fb2fe`. |
-| `WS-AUTH-001-05` | Proposed | - | - | Authority evidence and idempotency foundation. |
+| `WS-AUTH-001-05` | Split | `codex/ws-auth-001-05-authority-evidence` | - | Parent split before implementation into 05A and 05B. |
+| `WS-AUTH-001-05A` | Contract review | `codex/ws-auth-001-05-authority-evidence` | - | Shared audit ownership and append-only authority evidence; runtime edits prohibited pending review. |
+| `WS-AUTH-001-05B` | Inactive | - | - | Idempotency and invalidation; requires 05A merge/memory and separate explicit start. |
 | `WS-AUTH-001-06` | Proposed | - | - | Canonical actor profile and identity link. |
 | `WS-AUTH-001-07` | Proposed | - | - | Authorization kernel and permissions. |
 | `WS-AUTH-001-08` | Proposed | - | - | Bootstrap and administrative grants. |
@@ -84,10 +91,11 @@ no product implementation change.
 
 ## Blockers
 
-No active implementation blocker because no AUTH product chunk is active.
-AUTH-05 may start only after this memory update merges and the user gives a
-separate explicit start signal. AUTH-04B owns migration `0017`, following the
-now-owned `0016` prefix on current main. Non-test
+AUTH-05A runtime implementation is blocked on repaired-contract review. The
+combined AUTH-05 contract was rejected before code changes because migration
+`0017` is already owned by AUTH-04B and the shared-audit plus idempotency scope
+was not reviewable as one L1 change. AUTH-05A now owns proposed migration
+`0018`; AUTH-05B later owns proposed migration `0019`. Non-test
 operators must later supply explicit classification evidence rather than
 inferred kinds before the owning canonical actor migration.
 

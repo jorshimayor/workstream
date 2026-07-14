@@ -3,21 +3,23 @@
 ## Current State
 
 - Active initiative: `WS-AUTH-001` - Workstream Authorization Service
-- Active planning chunk: none
+- Active planning chunk: `WS-AUTH-001-05A` - Shared Audit Ownership And
+  Append-Only Authority Evidence
 - Active implementation chunk: none
-- Branch: `codex/ws-auth-001-04b-post-merge-memory`
-- Worktree: `/home/abiorh/flow/workstream-authorization-service`
-- Status: AUTH-04B merged through PR #113 as `05a63c8` after Backend, Agent
-  Gates, CodeRabbit, required internal review, and explicit human approval
-  passed.
+- Branch: `codex/ws-auth-001-05-authority-evidence`
+- Worktree: `/home/abiorh/flow/workstream-auth-001-05`
+- Status: AUTH-04B post-merge memory merged through PR #114 as `97cd0f5`.
+  The user explicitly started AUTH-05. Required L1 plan review rejected the
+  combined contract before runtime edits and required the 05A/05B split.
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
-- Latest integrated `main` merge commit: `05a63c8`
-- Current gate: publish and merge the AUTH-04B post-merge memory update, then
-  stop.
-- Size checkpoint: implementation is 480 changed non-comment production lines;
-  the required 350-line inspection passed and the 500-line hard stop holds.
-- Next chunk: none; do not start `WS-AUTH-001-05` automatically.
+- Latest integrated `main` merge commit: `97cd0f5`
+- Current gate: repair and re-review the AUTH-05A and AUTH-05B contracts before
+  any runtime edit.
+- Size checkpoint: each child has a 350-line inspection and a 500-line
+  production hard stop.
+- Next chunk: AUTH-05A only after its repaired preimplementation review passes.
+  AUTH-05B and AUTH-06 remain inactive.
 - Focused evidence: 77 isolated rate/config tests pass at 97 percent subsystem
   coverage, 59 final config/object-graph tests pass, and the exact migration
   proof and real API E2E pass. Final GitHub Backend passed 937 tests at 82.15
