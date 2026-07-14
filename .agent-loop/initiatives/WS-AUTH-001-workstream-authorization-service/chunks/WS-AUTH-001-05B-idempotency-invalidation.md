@@ -160,9 +160,12 @@ trap 'rm -rf "$tmp_dir"' EXIT
   --metadata-json "$tmp_dir/05b-coverage.json" --timeout-seconds 1800 -- \
   .venv/bin/python -m pytest -q tests/test_authorization.py tests/test_audit.py \
   --cov=app.modules.authorization --cov-report=term-missing --cov-fail-under=90
+.venv/bin/python -m pytest -q tests/test_isolated_database_runner.py
 .venv/bin/python scripts/run_isolated_tests.py \
   --metadata-json "$tmp_dir/05b-full.json" --timeout-seconds 10800 -- \
-  .venv/bin/python -m pytest -q tests --cov=app --cov-report=term-missing \
+  .venv/bin/python -m pytest -q tests \
+  --ignore=tests/test_isolated_database_runner.py \
+  --cov=app --cov-report=term-missing \
   --cov-fail-under=78
 .venv/bin/docstr-coverage --config .docstr.yaml
 cd ..
