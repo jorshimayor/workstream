@@ -2,10 +2,9 @@
 
 ## Status
 
-Circuit-breaker amendment review. Repaired contract review passed on exact SHA
-`7cc6058`, but a readable exact-registry dry run crossed the then-current 650
-hard stop before PostgreSQL parity was complete. The draft was discarded;
-runtime work is paused pending review of the human-approved 1000-line ceiling.
+Bounded runtime repair and focused evidence. Repaired contract review passed on
+`7cc6058`; the readable exact-registry dry run stopped at the prior ceiling, and
+the human-approved 1000-line amendment passed at `611abfc`.
 
 ## Parent initiative
 

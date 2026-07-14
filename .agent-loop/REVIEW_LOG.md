@@ -1,5 +1,14 @@
 # Review Log
 
+## 2026-07-14 - WS-AUTH-001-05A Circuit Breaker Amendment Passed
+
+The human-approved AUTH-05A-only 500-line inspection and 1000-line hard stop
+passed all required exact-SHA reviewers at `611abfc`. Review confirmed the typed
+and PostgreSQL privacy matrices must remain atomic, the incomplete 689-line
+draft was discarded, SQL packing remains prohibited, focused behavior and 90
+percent subsystem coverage gates remain, and AUTH-05B stays inactive. Bounded
+runtime repair may resume.
+
 ## 2026-07-14 - WS-AUTH-001-05A Circuit Breaker Reopened
 
 The first post-approval exact-registry dry run reached 689 changed non-comment

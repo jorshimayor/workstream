@@ -51,8 +51,8 @@ implementation review demonstrated that closed privacy registries and readable
 typed/SQL parity require a larger readable contract. The repaired contract
 passed at `7cc6058`, but its 650-line hard stop halted the first exact-registry
 dry run at 689 lines before database parity was complete. A human-approved
-1000-line ceiling amendment is under review; no runtime repair proceeds until
-it passes.
+1000-line ceiling amendment passed at `611abfc`; bounded runtime repair and
+focused evidence are active.
 
 ## Active planning chunk
 
@@ -79,7 +79,7 @@ None.
 | `WS-AUTH-001-04A` | Merged | `codex/ws-auth-001-04-request-api-controls` | #111 | Merged as `90c9a28`; production review `cdcaf77`; final branch head `36c4aa5`. |
 | `WS-AUTH-001-04B` | Merged | `codex/ws-auth-001-04b-postgres-rate-controls` | #113 | Merged as `05a63c8`; production review `67484b5`; final branch head `94fb2fe`. |
 | `WS-AUTH-001-05` | Split | `codex/ws-auth-001-05-authority-evidence` | - | Parent split before implementation into 05A and 05B. |
-| `WS-AUTH-001-05A` | Circuit-breaker amendment review | `codex/ws-auth-001-05-authority-evidence` | - | Runtime paused; human-approved 1000-line ceiling under exact-SHA review. |
+| `WS-AUTH-001-05A` | Runtime repair/evidence | `codex/ws-auth-001-05-authority-evidence` | - | Human-approved 1000-line ceiling passed at `611abfc`; bounded repair active. |
 | `WS-AUTH-001-05B` | Inactive | - | - | Idempotency and invalidation; requires 05A merge/memory and separate explicit start. |
 | `WS-AUTH-001-06` | Proposed | - | - | Canonical actor profile and identity link. |
 | `WS-AUTH-001-07` | Proposed | - | - | Authorization kernel and permissions. |
@@ -95,8 +95,8 @@ None.
 
 ## Blockers
 
-AUTH-05A runtime repair is paused until exact-SHA review passes the human-approved
-1000-line circuit-breaker amendment. The combined AUTH-05 contract was
+AUTH-05A has no preimplementation blocker after the human-approved 1000-line
+circuit-breaker amendment passed at `611abfc`. The combined AUTH-05 contract was
 rejected before code changes because migration `0017` is already owned by
 AUTH-04B and the shared-audit plus idempotency scope was not reviewable as one
 L1 change. Repaired AUTH-05A owns migration `0018`; AUTH-05B later owns
