@@ -1,17 +1,20 @@
 # Chunk Contract: WS-ART-001-06B Checker Output And Post-Submit Routing
 
-Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 06A
+Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 06A and AUTH-15
 
 ## Goal
 
 Ingest checker logs and generated outputs as canonical verified artifacts and
-route successful post-submit execution to the approved WS-REV boundary.
+persist successful post-submit completion while the task remains
+`evaluation_pending`. Review routing begins only after a separately approved
+WS-REV handoff contract exists.
 
 ## Allowed Files
 
 - checker result/log/output models, migration, repository, service, and worker;
 - prepared-artifact ingestion and binding for checker log/output roles;
-- existing checker lifecycle handoff to the named WS-REV contract;
+- the persisted checker-completion boundary consumed by a later approved
+  WS-REV handoff contract;
 - checker/artifact call sites consuming exact decisions and service principals
   already delivered by approved WS-AUTH dependencies; no Authorization Service
   owner files;
@@ -36,6 +39,8 @@ route successful post-submit execution to the approved WS-REV boundary.
 
 - checker logs and generated outputs use the same bounded prepared-artifact
   path, are independently verified, and bind to the exact checker run;
+- checker output ingestion requires `artifact.checker_output.write`, and its
+  resulting immutable binding separately requires `artifact.binding.create`;
 - reservations are cross-process, bounded, deadline constrained, and cleaned
   only when expired; slow-active, cancellation, and crash cases are tested;
 - non-reproducible crash replay fails the old checker attempt and uses a new
@@ -44,8 +49,9 @@ route successful post-submit execution to the approved WS-REV boundary.
   Workstream defaults remain included;
 - transient provider failure keeps `evaluation_pending` and uses checker
   infrastructure retry; it creates no product decision;
-- successful execution provides only system-generated review packet inputs to
-  the WS-REV boundary and does not implement review ownership;
+- successful execution persists system-generated review packet inputs and stops
+  before reviewer routing; it does not invent a WS-REV state or implement
+  review ownership;
 - changed subsystem coverage is at least 90 percent and repository coverage
   remains at least 78 percent;
 - backend CI installs this chunk's exact focused 90 percent gate, preserves
@@ -67,7 +73,6 @@ coverage report --include='app/modules/projects/*' --precision=2 --fail-under=90
 coverage report --include='app/modules/tasks/*' --precision=2 --fail-under=90
 coverage report --include='app/modules/checkers/*' --precision=2 --fail-under=90
 coverage report --include='app/adapters/project_agents/*,app/interfaces/project_agents.py' --precision=2 --fail-under=90
-python -m pytest services/r2_credential_issuer/tests -q --cov=services/r2_credential_issuer/src --cov-report=term-missing --cov-fail-under=90
 ```
 
 ## Verification
@@ -75,7 +80,8 @@ python -m pytest services/r2_credential_issuer/tests -q --cov=services/r2_creden
 ```bash
 docker compose up -d --wait postgres redis minio
 cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest tests/test_alembic.py tests/test_checker_artifacts.py tests/test_post_submit_checkers.py -q --cov=app.modules.checkers --cov=app.modules.artifacts --cov-report=term-missing --cov-fail-under=90
-cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json /tmp/ws-art-06b-coverage.json --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78
+metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT
+cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78
 cd backend && .venv/bin/ruff check app tests
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/test_agent_gates.py

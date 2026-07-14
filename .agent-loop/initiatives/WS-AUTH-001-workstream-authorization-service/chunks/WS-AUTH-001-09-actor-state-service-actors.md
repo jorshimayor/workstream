@@ -69,6 +69,9 @@ product adapter bindings or callback endpoints
   authority lock.
 - Unknown services are denied without persistence.
 - Access Administrator can pre-provision a service profile/link with reason.
+- Artifact system principals are fixed service identities, never human/admin
+  grants. Their eventual permissions are drawn only from the closed registry;
+  AUTH-15 owns attaching those principals to artifact worker call sites.
 - Agent and Space subjects remain unsupported and unpersisted.
 - Every mutation is idempotent, reasoned, and audited without token material.
 - Mixed concurrent link-revoke, grant-revoke, suspend, and deactivate attempts

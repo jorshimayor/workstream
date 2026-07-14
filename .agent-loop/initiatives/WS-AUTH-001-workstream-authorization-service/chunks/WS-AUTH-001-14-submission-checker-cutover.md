@@ -70,6 +70,10 @@ legacy active-worker-profile or workflow-eligibility compatibility fallback
 
 - Exact-project submitter/both grant plus active assignment is required to
   create submissions; admin roles alone cannot submit.
+- Contributor artifact staging uses the exact task-scoped
+  `artifact.upload_session.create`, `artifact.upload_item.write`, and
+  `artifact.upload_session.seal` permissions. Each action is independent;
+  submission authority does not imply an unregistered storage permission.
 - Manager repair/checker triggers require covered project permissions.
 - Project Manager repair uses covered `project.task.manage`; Operator recovery
   uses distinct `operations.submission_gate.repair` and

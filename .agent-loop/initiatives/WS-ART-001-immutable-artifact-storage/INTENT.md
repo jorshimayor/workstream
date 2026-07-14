@@ -13,12 +13,14 @@ Workstream will use one provider-neutral `ArtifactStore` capability:
 ```text
 LocalStorageAdapter          development and focused unit tests
 S3CompatibleArtifactStore    integration and production
-AWS S3 or Cloudflare R2      production provider selected by configuration
+AWS S3                       v0.1 production provider
+MinIO                        local and CI protocol proof
 ```
 
 Flow Node is not a v0.1 dependency. It remains a separately planned future
 `ArtifactStore` implementation and does not run, deploy, or block Workstream
-v0.1.
+v0.1. Cloudflare R2 production is also deferred and has no v0.1 runtime profile,
+credential service, or configuration path.
 
 Provider selection is not a hot switch for populated storage. Each replica
 records immutable provider profile and storage namespace; changing providers
@@ -63,9 +65,9 @@ audit, and recovery coordination. The object provider stores bytes only.
 ## Why S3-Compatible Object Storage First
 
 S3-compatible storage already supplies durable private object storage, range
-reads, and conditional writes. AWS S3 and Cloudflare
-R2 are both valid production providers behind the same adapter. Workstream
-should build its product semantics instead of first operating a new storage
+reads, and conditional writes. AWS S3 provides the v0.1 production service,
+while MinIO proves the protocol locally and in CI. Workstream should build its
+product semantics instead of first operating a new storage or credential
 service.
 
 Flow Node remains strategically useful, but extracting, authenticating,
@@ -75,6 +77,7 @@ v0.1 contribution lifecycle.
 ## Non-Goals
 
 - no Flow Node runtime or adapter implementation;
+- no Cloudflare R2 runtime profile or credential issuer;
 - no public artifact publication or CDN path;
 - no presigned or browser-direct uploads;
 - no provider-side legal hold, pin, retain, or release API;
@@ -87,7 +90,8 @@ v0.1 contribution lifecycle.
 
 - one conformance suite runs against LocalStorage and an S3-compatible MinIO
   service;
-- production configuration profiles are proven for AWS S3 and Cloudflare R2;
+- the AWS S3 production profile is proven through private-bucket,
+  least-privilege, lifecycle, and anonymous-read-negative checks;
 - conditional concurrent writes cannot overwrite an existing object;
 - adversarial first-writer input cannot occupy a client-selected digest key;
 - complete-object verification catches changed, truncated, missing, or
@@ -103,6 +107,8 @@ v0.1 contribution lifecycle.
 
 - S3-compatible object storage for v0.1 and deferred Flow Node: approved on
   2026-07-14.
+- AWS S3 as the only v0.1 production provider, with R2 deferred: approved on
+  2026-07-14 after exact-head review exposed the R2 parent-credential boundary.
 - One typed repository-wide external-service adapter/factory convention was
   explicitly approved during this planning work. WS-ART migrates only
   ArtifactStore; auth and agent-runtime owners decide and execute their own

@@ -34,34 +34,27 @@ For v0.1:
 The v2 port must therefore replace v1 in one clean cut. No adapter alias or
 compatibility shim is required because Workstream is still pre-production.
 
-## S3-Compatible Provider Facts Used By The Plan
+## AWS S3 Provider Facts Used By The Plan
 
-- AWS S3 defines the native protocol contract. Cloudflare R2 exposes a
-  compatible subset and strong read-after-write, metadata, listing, and delete
-  consistency through its S3 API.
-- R2 supports conditional `PutObject`, `HeadObject`, `GetObject`, and range
-  reads. Its documented conditional-header support does not establish atomic
-  conditional multipart completion parity with AWS S3.
-- Cloudflare R2 action/path-scoped temporary credentials expire and require a
-  refresh lifecycle. Workstream can consume them through the standard AWS SDK
-  container-credential endpoint contract. Production therefore needs an
-  explicitly owned issuer; Chunk 02B2 implements that isolated service and
-  Chunk 02B3 owns Workstream integration. The issuer owns the parent secret
-  access key and local signing. Cloudflare reuses the
-  parent access-key ID as the temporary access-key ID, but Workstream never
-  receives the parent secret/signing key.
-- R2 does not support S3 Object Lock through the S3 compatibility API.
-- R2 does not support `x-amz-sdk-checksum-algorithm`; Workstream must not depend
-  on that feature for portable SHA-256 verification.
-- R2 supports `Content-MD5`, but ETag is not the Workstream SHA-256 contract.
+- AWS S3 defines the production protocol contract and supports conditional
+  writes, object head, full/range reads, workload identity, Block Public
+  Access, bucket policy, and lifecycle inspection.
+- Workstream independently computes SHA-256; ETag and provider metadata are not
+  content identity.
+- Production credentials come from one explicitly allowlisted AWS workload
+  identity method. Static access keys are limited to local/CI MinIO.
+- v0.1 uses one conditional single-request put and rejects objects above the
+  hard size limit. Multipart completion is deferred until separately designed
+  and proven.
+- MinIO is protocol proof, not evidence that an AWS deployment is private or
+  correctly authorized. AWS requires its own live readiness proof.
 
 Canonical references:
 
-- https://developers.cloudflare.com/r2/reference/consistency/
-- https://developers.cloudflare.com/r2/api/s3/api/
-- https://developers.cloudflare.com/r2/api/s3/temporary-credentials/
-- https://developers.cloudflare.com/r2/api/error-codes/
 - https://docs.aws.amazon.com/AmazonS3/latest/userguide/conditional-writes.html
+- https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html
+- https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lifecycle-mgmt.html
+- https://docs.aws.amazon.com/sdkref/latest/guide/standardized-credentials.html
 
 ## v0.1 Storage Algorithm
 
@@ -107,8 +100,8 @@ job is eventually published even if the first broker call fails.
 - No public bucket, custom-domain cache, or client-visible object key is used.
 - Runtime credentials are bucket/prefix/action scoped and cannot delete, list,
   copy, or administer provider configuration.
-- Production release evidence proves AWS public-access controls or R2 public-
-  domain disablement and an anonymous-read denial.
+- Production release evidence proves AWS public-access controls, lifecycle
+  safety, and anonymous-read denial.
 
 ## Deferred Flow Node
 
@@ -116,3 +109,11 @@ The previous Flow Node analysis is preserved on branch
 `codex/ws-art-001-fn01-isolation-amendment`. A new deferred initiative will
 retain the provider-conformance, focused-service, adapter, and migration plan.
 It cannot block or modify v0.1 S3-compatible object-storage work.
+
+## Deferred R2
+
+Exact-head internal review found that the dual-provider plan introduced an R2
+parent-credential and credential-issuer boundary that was not required to ship
+v0.1. The user selected AWS S3 as the only production provider. R2 therefore
+has no active runtime profile, credential service, deployment proof, or chunk;
+later adoption requires separate discovery and approval.

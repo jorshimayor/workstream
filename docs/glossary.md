@@ -247,7 +247,7 @@ Proof supporting task completion or review decision. Examples: logs, hashes, tes
 The provider-neutral typed capability through which Workstream stores and reads
 private immutable bytes. `LocalStorageAdapter` implements it for development
 and focused tests. `S3CompatibleArtifactStore` implements it for MinIO
-integration and AWS S3 or Cloudflare R2 production deployments. Providers do
+integration and AWS S3 v0.1 production deployments. Providers do
 not own Workstream authorization, binding, lifecycle, audit, or integrity
 decisions.
 
@@ -267,9 +267,9 @@ job owns those infrastructure coordination fields.
 
 ## S3-Compatible Artifact Store
 
-The single object-storage adapter that implements `ArtifactStore` using the S3
-protocol. AWS S3 and Cloudflare R2 are supported production providers selected
-by configuration; MinIO is used for local and CI integration proof.
+The object-storage adapter that implements `ArtifactStore` using the S3
+protocol. AWS S3 is the v0.1 production provider; MinIO is used for local and CI
+integration proof. Cloudflare R2 is deferred to a separate approved initiative.
 
 ## Payment Ledger
 

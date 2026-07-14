@@ -65,10 +65,12 @@ review/compensation permissions beyond registered future definitions
 ## Acceptance criteria
 
 - Permission identifiers are a closed registered enum/value set.
-- The closed registry includes the exact artifact read, retry, recovery,
-  audit, verification, reconciliation, and pending-work scan permissions in
-  `docs/spec_authorization_service.md`; broad `operations.*` permissions are
-  not aliases for artifact authority.
+- The closed registry includes every exact artifact permission in
+  `docs/spec_authorization_service.md`: Operator reads/retry/recovery/audit,
+  guide-source ingest, contributor upload-session/item/seal actions, binding,
+  verification, pending-work scan, guide-source read, checker-input
+  materialization, and checker-output write. Broad `operations.*` permissions
+  are not aliases for artifact authority.
 - Request context contains verified identity plus current local actor/grant state
   and correlation/request IDs.
 - Authorization resolves actor/link state, grant candidates, canonical project,

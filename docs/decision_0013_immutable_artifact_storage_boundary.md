@@ -2,8 +2,9 @@
 
 ## Status
 
-Accepted. Amended on 2026-07-14 to use S3-compatible object storage for v0.1
-and defer Flow Node to a separate optional adapter initiative.
+Accepted. Amended on 2026-07-14 to use AWS S3 as the only v0.1 production
+object store, MinIO for local/CI protocol proof, and defer Cloudflare R2 and
+Flow Node to separate optional adapter initiatives.
 
 ## Context
 
@@ -23,22 +24,20 @@ Workstream uses the provider-neutral `ArtifactStore` capability:
 ```text
 LocalStorageAdapter          development and focused unit tests
 S3CompatibleArtifactStore    integration and production
-  AWS S3                     supported production provider
-  Cloudflare R2              supported production provider
+  AWS S3                     v0.1 production provider
   MinIO                      local and CI integration provider
 ```
 
-AWS S3 and Cloudflare R2 are equally valid production choices. Initial provider
-selection changes configuration, not product services or APIs. Each replica
-persists immutable provider profile and storage-namespace identity. Switching a
-populated deployment requires a separately approved complete-copy,
-verification, and maintenance cutover; it is not a hot configuration toggle.
-Each provider profile becomes production-eligible only after its own private-
-bucket, least-privilege, and anonymous-read-negative live proof succeeds.
+AWS S3 is the only v0.1 production provider. Each replica persists immutable
+provider profile and storage-namespace identity. Switching a populated
+deployment requires a separately approved complete-copy, verification, and
+maintenance cutover; it is not a hot configuration toggle. AWS becomes
+production-eligible only after private-bucket, least-privilege, lifecycle, and
+anonymous-read-negative live proof succeeds.
 
-Flow Node is not a v0.1 dependency. A later approved initiative may implement
-the same `ArtifactStore` port and conformance contract. Workstream does not run,
-deploy, or maintain Flow Node for v0.1.
+Cloudflare R2 and Flow Node are not v0.1 dependencies. Later approved
+initiatives may implement the same `ArtifactStore` port and conformance
+contract. Workstream does not run, deploy, or maintain either for v0.1.
 
 ## Ownership
 
@@ -65,35 +64,14 @@ authorization decision. PostgreSQL records its evidence but grants no authority.
 Provider credentials are transport credentials. They are never product
 authority and never replace an Authorization Service decision.
 
-R2 production uses only refreshable action/path-scoped temporary credentials
-served through the standard SDK container-credential endpoint contract. A
-deployment-owned issuer implemented and independently packaged from this
-repository signs them, fixes account/bucket/prefix/
-actions/TTL/audience server-side, and owns the parent secret access key/signing
-material. Cloudflare local signing reuses the parent access-key ID as the
-temporary access-key ID; Workstream may receive that non-secret ID but never
-receives or stores the parent secret, never signs credentials, and cannot widen
-the scope. AWS production credential mode `aws_workload_identity` selects
+AWS production credential mode `aws_workload_identity` selects
 exactly one allowlisted method: `assume-role-with-web-identity`,
 `container-role`, or `iam-role`.
 Workstream constrains the credential resolver to that selected method and
 rejects explicit credentials, ambient access keys, file/process/login/SSO
 sources, legacy EC2/Boto sources, and every unselected workload provider before
-loading credentials. Static credentials are limited to local/CI MinIO.
-
-The issuer is an infrastructure process, not a product service. It is built from
-locked source and a digest-pinned non-root image, has no public port or product
-authority, reads parent material only from private reloadable deployment files,
-and emits no secret-bearing logs or persistence. Its implementation, rotation,
-isolation, audit, availability, and live R2 proof are owned by Chunk 02B2;
-Workstream integration is owned separately by Chunk 02B3.
-
-The issuer's parent token is restricted to the exact Cloudflare account and
-artifact bucket with the narrowest non-admin minting permission; cross-bucket
-authority is forbidden and rotation/revocation are proved. Compose uses
-`network_mode: service:<workstream-service>` and Kubernetes uses the same Pod,
-so the issuer's loopback listener shares Workstream's network namespace without
-a bridge DNS endpoint or host port.
+loading credentials. Static credentials are limited to local/CI MinIO. No R2
+credential issuer, sidecar, secret contract, or runtime profile exists in v0.1.
 
 ## ArtifactStore Contract
 
@@ -128,8 +106,8 @@ precondition failure starts exact existing-object recovery; it is never treated
 as proof that the object is correct.
 
 v0.1 uses one conditional `PutObject` request and enforces a 512 MiB hard
-maximum per object. Multipart upload is deferred until AWS S3 and R2 have one
-separately proven atomic no-overwrite algorithm.
+maximum per object. Multipart upload is deferred until a separate initiative
+proves its atomic no-overwrite and recovery algorithm.
 
 Workstream streams bytes through its API/service boundary. v0.1 does not issue
 presigned URLs, expose provider credentials, or permit browser-to-provider
@@ -145,8 +123,7 @@ Only a matching replica becomes bindable.
 
 ETag, provider checksum metadata, object metadata, and provider acknowledgement
 are not canonical Workstream integrity facts. This rule keeps the same contract
-portable across AWS S3, Cloudflare R2, MinIO, LocalStorage, and a future Flow
-Node adapter.
+portable across AWS S3, MinIO, LocalStorage, and future provider adapters.
 
 ## Privacy And Retention
 
@@ -158,7 +135,7 @@ v0.1 performs no physical deletion of completed objects. PostgreSQL may record
 logical reference state, but there is no runtime provider delete, retain,
 release, garbage-collection, or legal-hold emulation API. Bucket lifecycle
 rules must not delete the Workstream completed-object prefix. Production
-activation uses a separate read-only deployment identity to inspect AWS and R2
+activation uses a separate read-only deployment identity to inspect AWS
 lifecycle rules and fails if an enabled expiration/deletion rule can intersect
 that prefix. A separate approved initiative must define physical deletion.
 
@@ -247,7 +224,7 @@ search is outside WS-ART-001.
 
 Positive:
 
-- AWS S3 and R2 remain interchangeable production options;
+- AWS S3 ships without coupling product services to a concrete adapter;
 - Workstream proves exact bytes independently of provider-specific metadata;
 - checkers and reviewers can reference the same immutable content;
 - v0.1 avoids operating an unnecessary storage service;
@@ -257,5 +234,5 @@ Tradeoffs:
 
 - Workstream must operate durable verification and recovery jobs;
 - completed-object deletion is intentionally deferred;
-- AWS S3 and R2 configuration profiles need separate live smoke proof;
+- AWS S3 needs a live private-bucket and workload-identity smoke proof;
 - product cutovers wait for their named Authorization Service dependencies.

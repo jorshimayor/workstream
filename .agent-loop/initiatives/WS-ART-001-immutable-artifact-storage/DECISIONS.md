@@ -2,14 +2,14 @@
 
 ## D1 - v0.1 Provider
 
-AWS S3 and Cloudflare R2 are both supported production providers through one
-`S3CompatibleArtifactStore`. Initial provider selection is configuration only.
-Every replica persists immutable provider profile and storage namespace; a
-populated deployment changes provider only through a separate verified
-maintenance migration. MinIO proves the S3-compatible contract locally and in
-CI. Each AWS S3 or R2 profile becomes production-eligible only after its own
-private-bucket, least-privilege, and anonymous-read-negative live proof.
-LocalStorage remains a development/test adapter. Flow Node is deferred.
+AWS S3 is the only v0.1 production provider through
+`S3CompatibleArtifactStore`. Every replica persists immutable provider profile
+and storage namespace; a populated deployment changes provider only through a
+separate verified maintenance migration. MinIO proves the S3 protocol locally
+and in CI. AWS S3 becomes production-eligible only after private-bucket,
+least-privilege, lifecycle, and anonymous-read-negative live proof.
+LocalStorage remains a development/test adapter. Cloudflare R2 and Flow Node
+are deferred and have no active runtime configuration or implementation chunk.
 
 ## D2 - Provider Boundary
 
@@ -86,21 +86,13 @@ factory exists.
 
 ## D13 - Private S3 Deployment
 
-Production uses HTTPS and a private bucket. No public bucket, custom-domain
-cache, signed URL, provider object key, endpoint, or credential appears in an
-API response. R2 Object Lock and unsupported checksum extensions are not
-assumed.
-
-R2 production uses only refreshable action/path-scoped temporary credentials
-served through the standard SDK container-credential endpoint contract. Chunk
-02B2 implements a deployment-owned issuer as a locked, digest-pinned, non-root
-infrastructure service; Chunk 02B3 connects Workstream to its exact image. The
-issuer signs credentials, fixes scope server-side, and owns the parent secret
-access key/signing material. Cloudflare local signing reuses
-the parent access-key ID as the temporary access-key ID; Workstream may receive
-that non-secret ID but never receives or stores the parent secret, signs
-credentials, or implements a broker protocol. Static credentials are local/CI
-MinIO only.
+Production uses HTTPS, a private AWS S3 bucket, Block Public Access, and an
+allowlisted AWS workload-identity credential method. No public bucket, signed
+URL, provider object key, endpoint, or credential appears in an API response.
+Runtime authority is restricted to the exact bucket/prefix and required
+put/head/get actions. Delete, copy, list, lifecycle mutation, bucket
+administration, and public-access mutation are denied. Static credentials are
+local/CI MinIO only.
 
 ## D14 - Clean Cut
 
@@ -118,3 +110,11 @@ external fleet activation barrier.
 `FN-ART-002` keeps a full future adapter plan. It is inactive, does not operate
 Flow Node, and cannot block the S3-compatible v0.1. Later adoption requires the
 same v2 conformance suite and an explicit no-fallback maintenance cutover.
+
+## D17 - Deferred R2
+
+Cloudflare R2 is not a v0.1 production provider. This initiative contains no
+R2 credential issuer, sidecar, runtime profile, secret contract, deployment
+proof, or active chunk. Any later R2 adoption requires a separate approved
+initiative, current provider discovery, the ArtifactStore v2 conformance suite,
+and an explicit no-fallback maintenance cutover.

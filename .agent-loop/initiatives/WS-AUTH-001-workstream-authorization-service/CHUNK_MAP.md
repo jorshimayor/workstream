@@ -75,12 +75,14 @@ WS-AUTH-001-PLAN
 - Chunks 11-15 migrate bounded complete product/system surfaces.
 - Artifact upload, read, retention, release/delete, replication, integrity, and
   reconciliation remain mechanically owned by the artifact subsystem but must
-  receive centralized AUTH decisions. Chunk 07 owns the permission-registry
-  boundary, chunk 08 owns Operator grant definitions, and chunk 09 owns artifact
-  service principals. After those three chunks merge, WS-ART-001-02D attaches
-  the first artifact Operator and internal-service enforcement to its own
-  routes/jobs; applicable AUTH chunks 11-15 attach their separately owned
-  product surfaces, and chunk 16 proves no bypass remains.
+  receive centralized AUTH decisions. Chunk 07 owns the permission registry,
+  chunk 08 owns Operator grant definitions, chunk 09 owns fixed artifact service
+  principals, chunk 11 maps project-guide source ingest, chunk 14 maps
+  contributor upload actions, and chunk 15 maps exact artifact worker actions.
+  WS-ART-001-02D starts only after AUTH-15 and attaches Operator plus internal-
+  service enforcement to its own routes/jobs; later WS-ART product cutovers
+  consume those already delivered decisions, and AUTH-16 proves no bypass
+  remains.
 - Chunk 16 proves the complete initiative; it does not backfill missing audit
   or idempotency evidence.
 - `WS-POL-002-03` merged separately through PR #90 as `a7aa474`. This initiative

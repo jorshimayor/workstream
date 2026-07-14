@@ -1,6 +1,6 @@
 # Chunk Contract: WS-ART-001-06A Checker Input And Materialization
 
-Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 05
+Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 05 and AUTH-15
 
 ## Goal
 
@@ -41,6 +41,9 @@ bounded isolated checker workspaces.
 - pre-submit and post-submit input prove the same artifact-set hash;
 - the runner receives only authorized Workstream bindings and reuses the same
   canonical materializer used by pre-submit;
+- the fixed checker service principal requires
+  `artifact.checker_input.materialize`; binding creation separately requires
+  `artifact.binding.create` and neither permission implies the other;
 - each hash and byte count is recomputed during materialization before checker
   execution;
 - workspace allocation uses the shared aggregate ledger/quota, private
@@ -72,7 +75,6 @@ coverage report --include='app/modules/projects/*' --precision=2 --fail-under=90
 coverage report --include='app/modules/tasks/*' --precision=2 --fail-under=90
 coverage report --include='app/modules/checkers/*' --precision=2 --fail-under=90
 coverage report --include='app/adapters/project_agents/*,app/interfaces/project_agents.py' --precision=2 --fail-under=90
-python -m pytest services/r2_credential_issuer/tests -q --cov=services/r2_credential_issuer/src --cov-report=term-missing --cov-fail-under=90
 ```
 
 ## Verification
@@ -80,7 +82,8 @@ python -m pytest services/r2_credential_issuer/tests -q --cov=services/r2_creden
 ```bash
 docker compose up -d --wait postgres redis minio
 cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest tests/test_alembic.py tests/test_checker_artifacts.py tests/test_checker_materialization.py tests/test_artifact_scratch_manager.py -q --cov=app.modules.checkers --cov=app.modules.artifacts --cov-report=term-missing --cov-fail-under=90
-cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json /tmp/ws-art-06a-coverage.json --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78
+metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT
+cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78
 cd backend && .venv/bin/ruff check app tests
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/test_agent_gates.py

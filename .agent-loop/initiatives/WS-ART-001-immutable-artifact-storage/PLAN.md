@@ -14,7 +14,7 @@ FastAPI / Celery composition roots
 -> ExternalServiceAdapterFactory[ArtifactStore]
 -> ArtifactStore v2 byte capability
    -> LocalStorageAdapter       local and focused tests
-   -> S3CompatibleArtifactStore MinIO integration; AWS S3 or R2 production
+   -> S3CompatibleArtifactStore MinIO integration; AWS S3 production
 -> ArtifactService orchestration
 -> PostgreSQL metadata, bindings, receipts, audit, and recovery
 ```
@@ -39,12 +39,11 @@ URL, or provider receipt lookup. Workstream performs full verification through
 
 - `disabled`: no artifact runtime activation;
 - `local`: local/development/test only;
-- `s3_compatible`: one S3-protocol adapter. AWS S3 and Cloudflare R2 are valid
-  initial production providers selected by configuration; MinIO is the local
-  and CI integration-test service. Every replica persists immutable provider
-  profile and storage-namespace identity. A populated deployment cannot switch
-  endpoint/provider without a separate verified migration and maintenance
-  cutover.
+- `s3_compatible`: one S3-protocol adapter. AWS S3 is the only v0.1 production
+  provider; MinIO is the local and CI integration-test service. Every replica
+  persists immutable provider profile and storage-namespace identity. A
+  populated deployment cannot switch endpoint/provider without a separate
+  verified migration and maintenance cutover.
 
 The old `flow_node` value is removed without alias or fallback. Flow Node later
 registers as a new provider only through its separately approved initiative.
@@ -60,40 +59,12 @@ provider is loaded, verifies the resolved method, and rejects explicit
 credentials, ambient access keys, file/process/login/SSO sources, legacy
 EC2/Boto sources, and every unselected workload provider. Chunk 02B1 pins
 `aiobotocore==3.7.0` and `botocore==1.43.0`; SDK upgrades require an explicit
-dependency and credential-behavior review. R2 production uses the SDK's standard
-container-credential endpoint contract. Chunk 02B2 implements the small
-deployment-owned issuer as an independently packaged, locked, digest-pinned,
-non-root service in this repository; Chunk 02B3 connects Workstream to its exact
-release image. The issuer locally signs short-lived, exact-action and
-exact-prefix R2 credentials from a parent secret that never enters the
-Workstream process. Workstream configures only a
-pinned loopback endpoint and a mounted bearer-token file; the sidecar fixes the
-account, bucket, prefix, actions, minimum/maximum TTL, and audience server-side.
-The parent token is limited to the exact Cloudflare account and artifact bucket,
-uses the narrowest non-admin permission capable of minting that fixed child
-scope, cannot cross buckets, and has explicit rotation/revocation proof. Compose
-uses `network_mode: service:<workstream-service>` and Kubernetes uses the same
-Pod so the issuer and Workstream share one network namespace; bridge DNS and
-host ports are forbidden.
-The sidecar's minimum issued TTL exceeds the pinned SDK advisory window plus
-request and scheduling margin. During the advisory window, refresh failure may
-continue with the still-valid cached set. During the mandatory window, refresh
-failure propagates and blocks provider I/O before nominal expiry; expired
-credentials are never used. Workstream never extends validity or performs a
-per-request sidecar liveness check. R2 startup rejects every higher-precedence
-ambient AWS credential source, explicitly including
-`AWS_CONTAINER_CREDENTIALS_RELATIVE_URI` and direct
-`AWS_CONTAINER_AUTHORIZATION_TOKEN`. It verifies the exact configured full
-loopback URI, exact mounted token-file path, and resolved container-provider
-method; poisoned environment/profile/metadata inputs fail closed. No
-Workstream broker client, route, or credential-signing code exists. Issuer
-scope, parent-secret and bearer-token file injection/reload, image provenance,
-private-network isolation, secret-free audit, availability, rotation, and live
-R2 security proof are owned by 02B2. MinIO static credentials are local/CI only. The
-endpoint is optional for native AWS S3 and explicit for R2/MinIO. AWS requires
-an explicit region; R2 uses `auto`; MinIO uses its configured region. Production
-requires HTTPS, a non-local resolved endpoint, and backend `s3_compatible`.
-Secrets and resolved credentials are never persisted or retained by errors.
+dependency and credential-behavior review. MinIO static credentials are
+local/CI only. The endpoint is omitted for native AWS S3 and explicit for
+MinIO. AWS requires an explicit region and production requires HTTPS, a
+non-local resolved endpoint, and backend `s3_compatible`. Secrets and resolved
+credentials are never persisted or retained by errors. Cloudflare R2 has no
+v0.1 runtime profile, credential service, or configuration path.
 
 ## Immutable Object Identity
 
@@ -114,17 +85,17 @@ Workstream stores the key only as an opaque provider object reference.
 The S3 adapter uses one conditional no-overwrite `PutObject`. A precondition
 failure triggers exact existing-object recovery; it never overwrites and never
 assumes the existing bytes are correct. v0.1 rejects objects above 512 MiB
-before I/O. Multipart is deferred because AWS S3 and R2 do not yet have one
-documented conditional-completion contract that this plan can prove.
+before I/O. Multipart is deferred until a separate contract proves its
+conditional-completion and recovery semantics.
 
 Runtime credentials are restricted to the exact bucket/prefix and required
 put/head/get actions. Delete, copy, list, bucket administration, lifecycle, and
 public-access mutation are denied. Production release separately proves AWS
-Block Public Access/policy/ACL state or R2 `r2.dev`/custom-domain disablement,
-plus anonymous-read denial against a known object. A separate read-only
+Block Public Access/policy/ACL state plus anonymous-read denial against a known
+object. A separate read-only
 deployment identity inspects provider lifecycle configuration and blocks
-activation when an enabled AWS expiration/noncurrent-version-expiration or R2
-delete-object transition can match the completed-object prefix.
+activation when an enabled AWS expiration or noncurrent-version-expiration rule
+can match the completed-object prefix.
 
 ## Ingest Transactions
 
@@ -165,7 +136,8 @@ replaces or rebinds the bytes. A digest/size mismatch on an existing key is
 also unrecoverable in v0.1 and becomes a security incident; Workstream never
 overwrites that key.
 
-Contributor uploads, fetched guide content, and generated checker logs/outputs
+Contributor uploads, authorized caller-supplied guide bytes, and generated
+checker logs/outputs
 all use the same bounded two-pass `PreparedArtifact` scratch boundary. The first
 pass uses private ephemeral local scratch to hash/count; the second pass exposes
 a sealed `CommittedArtifactSource` to ArtifactStore. No caller can pass an
@@ -193,8 +165,8 @@ The production bucket must not have an automatic deletion rule for the
 Workstream prefix.
 
 Physical deletion, garbage collection, legal hold, and retention windows are a
-later explicit initiative. This avoids pretending that R2 Object Lock exists
-and removes destructive storage behavior from the first production cutover.
+later explicit initiative. This removes destructive storage behavior from the
+first production cutover.
 
 ## Server-Generated Artifact Set
 
@@ -341,17 +313,15 @@ atomicity.
 - LocalStorage and MinIO run one ArtifactStore v2 conformance suite.
 - Testcontainers or CI service containers use real S3 API calls; provider
   behavior is not monkeypatched for integration proof.
-- AWS S3 and R2 readiness use separate configuration profiles and live private-
-  bucket smoke proofs with no committed credentials. Each profile remains
-  inactive until its own proof succeeds; neither provider's proof activates the
-  other.
+- AWS S3 readiness uses a live private-bucket smoke proof with workload identity
+  and no committed credentials. MinIO conformance does not activate AWS.
 - Concurrent conditional put, acknowledgement loss, oversized-object refusal,
   truncation, changed bytes, missing object, range read, timeout, throttle,
   broker failure, periodic republish, duplicate Celery delivery, expired lease,
   stale finalization, and cross-resource authorization all have tests.
 - New or changed backend subsystems remain at least 90 percent covered; the
   repository baseline cannot decrease.
-- The 16 implementation chunk contracts define one ordered deterministic
+- The 14 implementation chunk contracts define one ordered deterministic
   coverage table. Backend CI first runs the one exact full-suite
   `--cov=app --cov-report=term-missing --cov-fail-under=78` command. Stable,
   dedicated `coverage report --include=... --fail-under=90` steps then enforce
@@ -375,3 +345,11 @@ provider and Workstream adapter. It starts only after the S3-compatible v0.1 is
 proven and the user explicitly approves that initiative. It must implement the same
 ArtifactStore v2 conformance contract and use an explicit maintenance cutover;
 it may not add a dual-runtime fallback to v0.1.
+
+## Deferred R2 Adapter
+
+Cloudflare R2 is outside the v0.1 dependency graph. A later initiative must
+perform current provider discovery, satisfy the same ArtifactStore v2
+conformance contract, and define an explicit no-fallback maintenance cutover.
+No R2 credential issuer, sidecar, runtime profile, or deployment proof belongs
+to this initiative.

@@ -4,10 +4,10 @@ Initiative: `WS-ART-001` | Risk: L1 | Status: Active planning only
 
 ## Goal
 
-Replace the Flow Node-first v0.1 plan with one provider-neutral object-storage
-contract supporting AWS S3 and Cloudflare R2 through one S3-compatible adapter,
-MinIO for local/CI proof, LocalStorage for focused development, and a separately
-deferred Flow Node adapter plan. It also records the user's separately explicit
+Replace the deferred Flow Node-first v0.1 plan with one provider-neutral object-storage
+contract using AWS S3 as the only production provider, MinIO for local/CI
+protocol proof, LocalStorage for focused development, and separately deferred
+R2 and Flow Node adapter plans. It also records the user's separately explicit
 repository-wide external-service adapter convention while leaving every
 non-artifact capability migration to its own initiative. This chunk changes
 planning and guardrails only.
@@ -23,10 +23,9 @@ planning and guardrails only.
 - `.agent-loop/initiatives/FN-ART-002-deferred-flow-node-artifact-store/`;
 - `docs/spec_authorization_service.md` and
   `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/`
-  `DECISIONS.md`, `STATUS.md`, `CHUNK_MAP.md`, the completed `WS-AUTH-001-04B`
-  contract, and proposed `WS-AUTH-001-07` contract only to replace the stale
-  shared-adapter dependency and register the exact artifact permissions that
-  WS-ART consumes after AUTH-07/08/09 merge;
+  `DECISIONS.md`, `STATUS.md`, `CHUNK_MAP.md`, and proposed WS-AUTH contracts
+  `07`, `08`, `09`, `11`, `14`, and `15` only to register and map the exact
+  artifact permissions that later WS-ART chunks consume;
 - `.agent-loop/MEMORY.md`, `.agent-loop/LOOP_STATE.md`,
   `.agent-loop/WORK_QUEUE.md`, `.agent-loop/REVIEW_LOG.md`, and
   `.agent-loop/policies/engineering-review-policy.md` only where the planning
@@ -39,7 +38,7 @@ planning and guardrails only.
 
 - backend application, migration, product dependency, Compose service, or
   product-runtime workflow implementation;
-- active ArtifactStore, LocalStorage, S3, R2, MinIO, Flow Node, Celery, API,
+- active ArtifactStore, LocalStorage, S3, MinIO, Flow Node, Celery, API,
   authorization, guide, task, submission, checker, or review behavior changes;
 - backward-compatibility aliases, dual providers, runtime fallbacks, or product
   role/decision changes;
@@ -47,15 +46,13 @@ planning and guardrails only.
 
 ## Acceptance Criteria
 
-- AWS S3 and R2 are peer production options behind one
+- AWS S3 is the only v0.1 production provider behind
   `S3CompatibleArtifactStore`; MinIO is local/CI protocol proof and LocalStorage
   is not production eligible;
 - every untrusted byte source is server-hashed before provider I/O and the v2
   port accepts only a sealed `CommittedArtifactSource`;
-- R2 credential delivery has a concrete standard SDK container-endpoint
-  contract and an owning implementation chunk without putting parent secrets or
-  signing code in Workstream;
-- Flow Node is fully planned but absent from the v0.1 dependency graph;
+- R2 has no active credential, runtime, deployment, or implementation contract;
+- deferred Flow Node is fully planned but absent from the v0.1 dependency graph;
 - active v0.1 implementation is split into reviewable L1 chunks with exact
   scope, acceptance criteria, runnable commands, 90 percent changed-subsystem
   coverage, and the 78 percent repository floor; deferred Flow Node commands
@@ -87,5 +84,5 @@ reuse/dedup, CI integrity, test delta, and docs.
 
 - Is object storage simpler than operating Flow Node while preserving future
   portability?
-- Can AWS S3 and R2 both work without separate product architectures?
+- Is AWS S3 production-ready without coupling product services to its adapter?
 - Are implementation chunks narrow enough to review and stop independently?

@@ -10,7 +10,8 @@ but failed internal review on recovery/API completeness. Before repair, the user
 approved a first-principle change on 2026-07-14:
 
 ```text
-v0.1 production bytes -> S3CompatibleArtifactStore -> AWS S3 or Cloudflare R2
+v0.1 production bytes -> S3CompatibleArtifactStore -> AWS S3
+local/CI proof bytes   -> S3CompatibleArtifactStore -> MinIO
 development bytes     -> LocalStorageAdapter
 future optional bytes -> Flow Node adapter initiative
 ```
@@ -23,8 +24,8 @@ approval or reusable evidence. Its source remains on branch
 
 `WS-ART-001-OBJECT-STORAGE-AMENDMENT` is planning-only. It updates intent,
 architecture, ADR/spec, chunk contracts, durable memory, and deterministic
-stale-contract protection. It does not edit runtime code, configure AWS S3/R2, operate
-Flow Node, or activate artifact routes.
+stale-contract protection. It does not edit runtime code, configure AWS S3,
+operate Flow Node, add R2, or activate artifact routes.
 
 ## Next Proposed Chunk
 
@@ -33,15 +34,15 @@ explicitly. It installs only the shared typed external-service adapter/factory
 foundation. `02A2` adds committed-source preparation and narrows LocalStorage
 internals without changing the active port. `02A3` performs the atomic
 ArtifactStore v2/LocalStorage/schema cut and removes `flow_node`. `02B1` then
-owns MinIO/AWS S3, `02B2` owns the isolated deployment R2 credential issuer,
-and `02B3` owns Workstream's R2 container-credential integration.
+owns MinIO and AWS S3. There is no active R2 chunk.
 
 ## Gate
 
 The committed amendment is in exact-head internal repair and review. Prior
 review established the canonical pre/post-submit materializer, coverage-phase
-binding, R2 scope/network isolation, and scratch-cleanup ownership. Current
-candidate closes structured deployment-configuration and CI-environment gaps. A
+binding, and scratch-cleanup ownership. The AWS-first repair removes the R2
+issuer boundary and closes AUTH, source-ingestion, WS-REV, and rerunnable-test
+dependencies. A
 final immutable SHA will be recorded only after all required reviewers pass.
 The remaining gate is complete exact-head internal reviewer fanout and evidence,
 external PR review, and explicit human merge approval. No later chunk starts

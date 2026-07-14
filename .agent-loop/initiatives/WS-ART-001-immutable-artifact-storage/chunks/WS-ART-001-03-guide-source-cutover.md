@@ -1,6 +1,6 @@
 # Chunk Contract: WS-ART-001-03 Guide Source Artifact Cutover
 
-Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02D
+Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02D, AUTH-11, and AUTH-15
 
 ## Goal
 
@@ -28,7 +28,7 @@ authorized Workstream artifact reader.
 
 - task/submission/checker/review cutover;
 - temporary signed URL persisted as source identity;
-- direct setup-agent access to AWS S3, R2, MinIO, or LocalStorage;
+- direct setup-agent access to AWS S3, MinIO, or LocalStorage;
 - provider references or credentials in agent prompts/reports/APIs;
 - arbitrary external-source adapter expansion;
 - changes to the shared preparation manager or storage adapter contract;
@@ -38,9 +38,16 @@ authorized Workstream artifact reader.
 
 - each snapshot item references `ArtifactContent`, not `content_cid` or a
   provider object reference.
-- URL/import retrieval is sanitized and ingested before the durable snapshot
-  manifest is created.
-- fetched bytes use the bounded two-pass `PreparedArtifact` scratch boundary;
+- project-guide source ingestion requires `artifact.guide_source.ingest`, setup
+  reads require the fixed service permission `artifact.guide_source.read`, and
+  binding creation requires `artifact.binding.create`; all are delivered by
+  AUTH-11/AUTH-15 before this chunk and none implies another.
+- v0.1 accepts authorized caller-supplied or approved import-pipeline bytes.
+  A durable URL may be recorded as a source reference, but this chunk performs
+  no network retrieval. Server-side URL fetching requires a separate approved
+  external-source adapter with explicit SSRF, redirect, DNS/IP, private-network,
+  timeout, media-type, and size controls.
+- supplied bytes use the bounded two-pass `PreparedArtifact` scratch boundary;
   a cross-process ledger reserves the full 512 MiB maximum before writing and
   enforces aggregate byte/file/concurrency limits and a minimum-free-space
   floor. One total deadline is shorter than reservation TTL, cleanup removes
@@ -87,7 +94,6 @@ coverage report --include='app/workers/*' --precision=2 --fail-under=90
 coverage report --include='app/api/router.py' --precision=2 --fail-under=90
 coverage report --include='app/modules/projects/*' --precision=2 --fail-under=90
 coverage report --include='app/adapters/project_agents/*,app/interfaces/project_agents.py' --precision=2 --fail-under=90
-python -m pytest services/r2_credential_issuer/tests -q --cov=services/r2_credential_issuer/src --cov-report=term-missing --cov-fail-under=90
 ```
 
 ## Verification
@@ -95,7 +101,8 @@ python -m pytest services/r2_credential_issuer/tests -q --cov=services/r2_creden
 ```bash
 docker compose up -d --wait postgres redis minio
 cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest tests/test_alembic.py tests/test_projects.py tests/test_project_setup.py tests/test_guide_artifacts.py -q --cov=app.modules.projects --cov=app.modules.artifacts --cov-report=term-missing --cov-fail-under=90
-cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json /tmp/ws-art-03-coverage.json --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78
+metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT
+cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78
 cd backend && .venv/bin/ruff check app tests
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/test_agent_gates.py

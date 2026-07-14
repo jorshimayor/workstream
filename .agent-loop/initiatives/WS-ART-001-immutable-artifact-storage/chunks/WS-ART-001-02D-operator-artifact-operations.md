@@ -1,6 +1,6 @@
 # Chunk Contract: WS-ART-001-02D Operator Artifact Operations
 
-Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02C2 and AUTH-09
+Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02C2 and AUTH-15
 
 ## Goal
 
@@ -39,9 +39,10 @@ profile or product cutover.
 - exact Operator APIs exist for resource-scoped binding discovery, replicas,
   receipts, verification job, retry, recovery-attempt read, and artifact audit
   listing.
-- AUTH-07, AUTH-08, and AUTH-09 are merged before this chunk starts, providing
-  the authorization kernel, administrative grants, and service principals;
-  this chunk registers no permission and creates no authority fallback.
+- AUTH-07, AUTH-08, AUTH-09, and AUTH-15 are merged before this chunk starts,
+  providing the registry, Operator grants, service principals, and exact
+  artifact worker permissions; this chunk registers no permission and creates
+  no authority fallback.
 - binding, replica, receipt, verification-job, and recovery-attempt reads use,
   respectively, `artifact.binding.read`, `artifact.replica.read`,
   `artifact.receipt.read`, `artifact.verification_job.read`, and
@@ -49,11 +50,10 @@ profile or product cutover.
   `artifact.verification_job.retry`, recovery execution uses
   `artifact.recovery_attempt.execute`, and artifact audit listing uses
   `artifact.audit.read`.
-- internal verification/reconciliation uses a provisioned service principal
-  with `artifact.verification.execute` or
-  `artifact.reconciliation.execute`, according to the exact job; periodic scan
-  publication uses `artifact.pending_work.scan`. These permissions remain
-  separate and do not imply one another.
+- internal verification uses a provisioned service principal with
+  `artifact.verification.execute`; periodic scan publication uses
+  `artifact.pending_work.scan`. These permissions remain separate and do not
+  imply one another.
 - every route calls an exact Authorization Service action/resource decision;
   broad role checks are not authority.
 - retry requires a reason, client idempotency key, and expected source-job CAS
@@ -69,15 +69,15 @@ profile or product cutover.
 - cross-project and unauthorized callers are denied without leaking existence.
 - responses are bounded, paginated where needed, and contain no provider
   internals or secrets.
-- AWS S3 and R2 production profiles instantiate the same adapter through the
-  typed factory; LocalStorage and invalid profiles fail closed.
+- the AWS S3 production profile instantiates the adapter through the typed
+  factory; LocalStorage and invalid production profiles fail closed.
 - exact internal service-principal authorization activates every verification
   provider read, periodic scan publication, and recovery job; no 02C1 or 02C2
   mechanic runs before this gate.
 - readiness exposes every prerequisite for private-bucket, credential,
   anonymous-read-negative, and completed-prefix lifecycle proof, but no profile
   becomes production-active in this chunk. Chunk 07 owns live proof and
-  activation for each provider independently.
+  AWS activation.
 - readiness does not write or mutate provider objects.
 - real HTTP tests prove the full Operator path without direct database reads.
 - changed subsystem coverage is at least 90 percent and repository coverage
@@ -95,7 +95,6 @@ coverage report --include='app/interfaces/external_services.py' --precision=2 --
 coverage report --include='app/core/config.py' --precision=2 --fail-under=90
 coverage report --include='app/workers/*' --precision=2 --fail-under=90
 coverage report --include='app/api/router.py' --precision=2 --fail-under=90
-python -m pytest services/r2_credential_issuer/tests -q --cov=services/r2_credential_issuer/src --cov-report=term-missing --cov-fail-under=90
 ```
 
 ## Verification
@@ -103,7 +102,8 @@ python -m pytest services/r2_credential_issuer/tests -q --cov=services/r2_creden
 ```bash
 docker compose up -d --wait postgres redis minio
 cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest tests/test_artifact_operator_api.py tests/test_artifact_authorization.py tests/test_config.py -q --cov=app.modules.artifacts --cov=app.adapters.artifacts --cov=app.api.router --cov-report=term-missing --cov-fail-under=90
-cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json /tmp/ws-art-02d-coverage.json --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78
+metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT
+cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78
 cd backend && .venv/bin/ruff check app tests
 python3 scripts/check_stale_authorization_docs.py
 python3 scripts/check_stale_artifact_contracts.py
@@ -119,5 +119,4 @@ reuse/dedup, CI integrity, test delta, and docs.
 
 - Are the Operator actions and resources exact?
 - Can operations be understood without database access?
-- Do readiness results keep AWS S3 and R2 inactive until their separate live
-  proofs succeed?
+- Do readiness results keep AWS S3 inactive until its live proof succeeds?

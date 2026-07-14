@@ -1,6 +1,6 @@
 # Chunk Contract: WS-ART-001-05 Submission Artifact Cutover
 
-Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 04B
+Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 04B, AUTH-14, and AUTH-15
 
 ## Goal
 
@@ -40,6 +40,9 @@ enter `evaluation_pending` without manager finalization.
   changes.
 
 ## Acceptance Criteria
+
+- immutable submission binding creation requires the fixed service permission
+  `artifact.binding.create`; submission creation authority does not imply it;
 
 - request body contains only summary, contributor attestation, and upload
   session ID.
@@ -85,7 +88,6 @@ coverage report --include='app/modules/projects/*' --precision=2 --fail-under=90
 coverage report --include='app/modules/tasks/*' --precision=2 --fail-under=90
 coverage report --include='app/modules/checkers/*' --precision=2 --fail-under=90
 coverage report --include='app/adapters/project_agents/*,app/interfaces/project_agents.py' --precision=2 --fail-under=90
-python -m pytest services/r2_credential_issuer/tests -q --cov=services/r2_credential_issuer/src --cov-report=term-missing --cov-fail-under=90
 ```
 
 ## Verification
@@ -93,7 +95,8 @@ python -m pytest services/r2_credential_issuer/tests -q --cov=services/r2_creden
 ```bash
 docker compose up -d --wait postgres redis minio
 cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest tests/test_alembic.py tests/test_submission_api.py tests/test_submission_concurrency.py tests/test_projects.py tests/test_checkers.py -q --cov=app.modules.tasks --cov=app.modules.artifacts --cov=app.modules.projects --cov=app.modules.checkers --cov=app.adapters.project_agents --cov=app.interfaces.project_agents --cov=app.workers --cov-report=term-missing --cov-fail-under=90
-cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json /tmp/ws-art-05-coverage.json --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78
+metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT
+cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78
 cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/week2_api_e2e.py
 cd backend && .venv/bin/ruff check app tests
 python3 scripts/check_stale_artifact_contracts.py

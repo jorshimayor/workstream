@@ -5,7 +5,7 @@ Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 06B
 ## Goal
 
 Prove the complete artifact lifecycle through real HTTP APIs, PostgreSQL,
-Redis/Celery, LocalStorage, MinIO, and secret-free AWS S3/R2 readiness profiles
+Redis/Celery, LocalStorage, MinIO, and a secret-free AWS S3 readiness profile
 without direct database inspection or Terminal Benchmark product coupling.
 
 ## Allowed Files
@@ -26,7 +26,7 @@ without direct database inspection or Terminal Benchmark product coupling.
 
 - new product behavior or schema;
 - Snorkel/Termius paths, names, private material, or live work references;
-- committed AWS/R2 credentials or provider object references;
+- committed AWS credentials or provider object references;
 - direct database setup/inspection as proof of API behavior;
 - Flow Node runtime;
 - production test hooks, corruption routes, or unbounded logs in Git.
@@ -49,12 +49,11 @@ without direct database inspection or Terminal Benchmark product coupling.
   proven safely.
 - Operator observes jobs, retries with a reason, and reads terminal recovery
   through APIs only.
-- LocalStorage and real MinIO pass conformance. AWS S3 and R2 each require a
-  credential-injected private live smoke, least-privilege negative-action
+- LocalStorage and real MinIO pass conformance. AWS S3 requires a
+  workload-identity private live smoke, least-privilege negative-action
   proof, anonymous-read denial, and read-only proof that no enabled lifecycle
   deletion/expiration rule can match the completed-object prefix before that
-  profile is declared production-eligible. An unproved profile remains
-  inactive, not implicitly supported.
+  profile is declared production-eligible. Unproved AWS remains inactive.
 - no test-only route or control exists in the production application image.
 - the evidence PDF is concise, structured, redacted, and includes request/
   response summaries, async timelines, immutable hashes, failures, and final
@@ -83,7 +82,6 @@ coverage report --include='app/modules/projects/*' --precision=2 --fail-under=90
 coverage report --include='app/modules/tasks/*' --precision=2 --fail-under=90
 coverage report --include='app/modules/checkers/*' --precision=2 --fail-under=90
 coverage report --include='app/adapters/project_agents/*,app/interfaces/project_agents.py' --precision=2 --fail-under=90
-python -m pytest services/r2_credential_issuer/tests -q --cov=services/r2_credential_issuer/src --cov-report=term-missing --cov-fail-under=90
 python -m pytest examples/artifact_lifecycle/tests -q --cov=examples/artifact_lifecycle/proof_tools --cov-report=term-missing --cov-fail-under=90
 ```
 
@@ -94,9 +92,9 @@ docker compose -f examples/artifact_lifecycle/docker-compose.yml up -d --build -
 backend/.venv/bin/python -m examples.artifact_lifecycle.proof_tools.real_api_drill
 (cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest tests/test_artifact_store_conformance.py tests/test_artifact_real_api.py -q --cov=app.modules.artifacts --cov=app.adapters.artifacts --cov-report=term-missing --cov-fail-under=90)
 backend/.venv/bin/python -m pytest examples/artifact_lifecycle/tests -q --cov=examples/artifact_lifecycle/proof_tools --cov-report=term-missing --cov-fail-under=90
-(cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json /tmp/ws-art-07-coverage.json --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78)
+metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT
+(cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78)
 WORKSTREAM_ARTIFACT_PROOF_PROFILE=aws_s3 backend/.venv/bin/python -m examples.artifact_lifecycle.proof_tools.provider_live_smoke
-WORKSTREAM_ARTIFACT_PROOF_PROFILE=cloudflare_r2 backend/.venv/bin/python -m examples.artifact_lifecycle.proof_tools.provider_live_smoke
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/check_markdown_links.py
 python3 scripts/test_agent_gates.py
@@ -112,4 +110,4 @@ reuse/dedup, CI integrity, test delta, and docs.
 - Does the proof resemble real human/API use rather than database-assisted
   testing?
 - Is all example material standalone and legally safe?
-- Are AWS S3 and R2 both viable without claiming unexecuted provider proof?
+- Is AWS S3 viability proved without claiming unexecuted provider proof?
