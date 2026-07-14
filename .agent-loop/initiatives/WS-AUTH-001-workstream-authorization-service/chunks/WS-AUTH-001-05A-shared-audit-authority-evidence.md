@@ -84,15 +84,47 @@ token from the adopted specification. Authority rows require:
 
 Authority rows never persist external issuer, external subject, token roles,
 claim snapshots, request bodies, raw tokens, JWKS documents, secrets, emails,
-or URLs. Legacy claim fields are nullable only to permit authority rows and
-must be `NULL`, `[]`, or `{}` as appropriate for the authority domain.
-Conditional database constraints reject mixed legacy/authority shapes.
+or URLs. Conditional database constraints reject mixed legacy/authority
+shapes using this exact compatibility matrix:
+
+- existing `id` remains the event ID, `event_type` remains the typed event
+  token, and `created_at` remains the legacy timestamp;
+- existing `actor_id` stores the stable local acting reference and the new
+  actor-reference-kind field supplies its namespace;
+- existing `entity_type`/`entity_id` remain the primary audited aggregate
+  reference; optional project/resource fields provide additional exact scope;
+- existing `reason` may carry only the bounded authority reason;
+- `from_status` and `to_status` are `NULL` because typed before/after facts own
+  authority state transitions;
+- `external_subject` and `external_issuer` are `NULL`;
+- `actor_roles = '[]'`, `claim_snapshot = '{}'`,
+  `auth_source = 'local_authority'`, and `is_dev_auth = false`;
+- `event_payload = '{}'`; authority evidence cannot use the legacy JSON payload
+  as an unbounded escape hatch.
+
+Only the external subject/issuer columns become nullable for the conditional
+authority shape. Existing legacy rows and writers retain all current values
+and non-authority requirements.
 
 Reference/type/reason tokens have explicit length and character bounds.
 Before/after facts are JSON objects with at most 16 allowlisted scalar keys,
 no nested containers, and at most 4096 encoded bytes per object. The typed
 writer applies per-event allowed-key sets; database checks enforce object type
 and byte bounds.
+
+AUTH-05A behavior tests exercise these exact foundation shapes:
+
+- `SensitiveAuthorizationAllowed` requires permission and forbids denial code,
+  invalidation cause/target, and idempotency reference;
+- `SensitiveAuthorizationDenied` requires permission plus a bounded denial
+  code and forbids invalidation cause/target and idempotency reference;
+- `AuthorityInvalidationRequested` requires cause-event ID plus all-or-none
+  target kind/reference, forbids denial code, and reserves a `NULL`
+  idempotency reference until AUTH-05B.
+
+Resource type/ID, target actor kind/reference, and invalidation target
+kind/reference are each all-or-none pairs in typed validation and database
+constraints.
 
 ## Shared writer and append-only custody
 
@@ -143,16 +175,31 @@ and byte bounds.
 ## Verification
 
 ```bash
-(cd backend && .venv/bin/python -m ruff check app tests)
-(cd backend && isolated PostgreSQL: pytest -q tests/test_alembic.py::<0018-proof> tests/test_audit.py tests/test_tasks.py::<delegation-proof>)
-(cd backend && focused AUTH-05A coverage >= 90 percent)
-(cd backend && isolated full suite --cov=app --cov-fail-under=78)
-(cd backend && .venv/bin/docstr-coverage --config .docstr.yaml)
+cd backend
+tmp_dir=$(mktemp -d)
+trap 'rm -rf "$tmp_dir"' EXIT
+.venv/bin/python scripts/run_isolated_tests.py --metadata-json "$tmp_dir/05a.json" --timeout-seconds 1800 -- \
+  .venv/bin/python -m pytest -q \
+  tests/test_alembic.py::test_authority_audit_schema_preserves_legacy_and_guards_downgrade \
+  tests/test_audit.py \
+  tests/test_tasks.py::test_task_repository_delegates_audit_persistence
+.venv/bin/python scripts/run_isolated_tests.py --metadata-json "$tmp_dir/05a-coverage.json" --timeout-seconds 1800 -- \
+  .venv/bin/python -m pytest -q tests/test_audit.py \
+  tests/test_tasks.py::test_task_repository_delegates_audit_persistence \
+  --cov=app.modules.audit --cov-report=term-missing --cov-fail-under=90
+.venv/bin/python scripts/run_isolated_tests.py --metadata-json "$tmp_dir/full.json" --timeout-seconds 12600 -- \
+  .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py \
+  --cov=app --cov-report=term-missing --cov-fail-under=78
+.venv/bin/ruff check app tests
+.venv/bin/docstr-coverage --config .docstr.yaml
+cd ..
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_stale_authorization_docs.py
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/check_markdown_links.py
 python3 scripts/check_internal_review_evidence.py
+if git diff --unified=0 origin/main...HEAD -- backend/tests | \
+  rg '^-(.*assert|.*pytest\.raises|.*pytest\.mark\.(skip|xfail)|.*skipTest)'; then exit 1; fi
 git diff --check
 ```
 

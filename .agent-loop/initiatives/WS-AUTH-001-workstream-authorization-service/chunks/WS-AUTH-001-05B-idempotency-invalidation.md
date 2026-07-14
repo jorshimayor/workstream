@@ -25,7 +25,6 @@ denial, and invalidation orchestration on the shared AUTH-05A audit envelope.
 
 ```text
 backend/app/modules/authorization/**
-backend/app/modules/audit/**
 backend/app/db/models.py
 backend/alembic/versions/0019_authority_idempotency.py
 backend/tests/test_authorization.py
@@ -54,8 +53,9 @@ repository/service commit, rollback, or parallel session creation
 
 ## Idempotency schema and namespace
 
-Migration `0019_authority_idempotency` revises AUTH-05A's `0018` migration and
-creates `authority_idempotency_records`. Each record contains:
+Migration `0019_authority_idempotency` uses exact
+`down_revision = "0018_authority_audit_evidence"` and creates
+`authority_idempotency_records`. Each record contains:
 
 - UUID primary key and canonical UUID idempotency key;
 - actor reference kind plus stable opaque actor reference;
@@ -186,4 +186,7 @@ and caller-owned transaction boundaries.
 
 Stop if exact concurrency cannot serialize without a committed pending row,
 denial evidence requires committing unrelated work, a route/grant/permission
-must be introduced, or tests/CI must be weakened.
+must be introduced, or tests/CI must be weakened. AUTH-05B consumes the merged
+05A audit envelope and sole-writer contract without modifying its schema,
+triggers, constraints, repository, or writer. A missing audit primitive requires
+stop and replan rather than reopening 05A custody.
