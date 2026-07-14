@@ -13,13 +13,13 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: `415202826759fd015fffff00448b086a1d16f919`
+Reviewed code SHA: `fdd1f3db353993bf489fda45b4c7c3ae8eef858c`
 
-Reviewed at: 2026-07-14T14:54:46Z
+Reviewed at: 2026-07-14T15:16:43Z
 
-Reviewer run IDs: senior-engineering-architecture-docs=WS-AUTH-001-CAT-ENG-20260714;
-qa-test=WS-AUTH-001-CAT-QA-20260714;
-security-auth-privacy-product-ops=WS-AUTH-001-CAT-SEC-20260714
+Reviewer run IDs: senior-engineering-architecture-docs=WS-AUTH-001-CAT-EXT-ENG-20260714;
+qa-test=WS-AUTH-001-CAT-EXT-QA-20260714;
+security-auth-privacy-product-ops=WS-AUTH-001-CAT-EXT-SEC-20260714
 
 ## Scope
 
@@ -83,6 +83,13 @@ Validated design material was retained only after repair:
 
 All reviewer sessions completed. No unresolved findings remain.
 
+## External repair confirmation
+
+The three required internal reviewer groups re-reviewed exact repair SHA
+`fdd1f3db353993bf489fda45b4c7c3ae8eef858c` and passed. External findings and
+their dispositions remain separately recorded in
+`WS-AUTH-001-CAT-external-review-response.md`.
+
 ## Deterministic evidence
 
 Passed:
@@ -92,6 +99,8 @@ python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_stale_authorization_docs.py
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/check_markdown_links.py
+python3 scripts/check_internal_review_evidence.py
+python3 scripts/check_loop_memory_state.py
 git diff --check
 ```
 
