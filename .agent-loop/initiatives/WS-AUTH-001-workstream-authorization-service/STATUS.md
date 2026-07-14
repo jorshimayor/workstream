@@ -59,19 +59,22 @@ CodeRabbit passed, and explicit human approval merged PR #115 as `8e1cde6` on
 The user requested action/resource catalogue reconciliation before AUTH-05B.
 That docs-only work passed required internal reviews, Backend, Agent Gates, and
 CodeRabbit; explicit human approval merged PR #117 as `4c5d4fc` on 2026-07-14.
+Its post-merge memory merged through PR #118 as `eba7e2b`. AUTH-05B is active;
+its repaired L1 plan passed senior engineering, QA/test, and
+security/auth/privacy review before runtime edits.
 
 ## Active planning chunk
 
-None. CAT post-merge memory is active; no planning chunk is active.
+None. AUTH-05B implementation is active under its approved repaired contract.
 
 ## Active implementation chunk
 
-None. AUTH-05B's start signal is recorded and it remains inactive only until CAT
-post-merge memory merges.
+`WS-AUTH-001-05B` is active. Its repaired L1 plan passed and bounded runtime
+implementation is in progress.
 
 ## Current implementation branch
 
-`codex/ws-auth-001-cat-post-merge-memory` in
+`codex/ws-auth-001-05b-idempotency-invalidation` in
 `/home/abiorh/flow/workstream-authorization-service`.
 
 ## Chunk status
@@ -88,7 +91,7 @@ post-merge memory merges.
 | `WS-AUTH-001-05` | Split | `codex/ws-auth-001-05-authority-evidence` | - | Parent split before implementation into 05A and 05B. |
 | `WS-AUTH-001-05A` | Merged | `codex/ws-auth-001-05-authority-evidence` | #115 | Merged as `8e1cde6`; reviewed code `ea16fd8`; final branch head `d023952`. |
 | `WS-AUTH-001-CAT` | Merged | `codex/ws-auth-001-action-catalogue-reconciliation` | #117 | Merged as `4c5d4fc`; final branch head `5b4ec96`. |
-| `WS-AUTH-001-05B` | Inactive | - | - | Start signal received; activate after CAT post-merge memory merges. |
+| `WS-AUTH-001-05B` | Active | `codex/ws-auth-001-05b-idempotency-invalidation` | - | Repaired L1 plan passed; bounded implementation active. |
 | `WS-AUTH-001-06` | Proposed | - | - | Canonical actor profile and identity link. |
 | `WS-AUTH-001-07` | Proposed | - | - | Authorization kernel and permissions. |
 | `WS-AUTH-001-08` | Proposed | - | - | Bootstrap and administrative grants. |
@@ -103,10 +106,11 @@ post-merge memory merges.
 
 ## Blockers
 
-AUTH-05A has no remaining blocker and is merged. The combined AUTH-05 contract
+AUTH-05A and CAT post-merge memory have no remaining blocker and are merged.
+The combined AUTH-05 contract
 was rejected before runtime changes because shared audit evidence and
 idempotency/invalidation were not reviewable as one L1 change. AUTH-05A owns
-migration `0018`; inactive AUTH-05B later owns migration `0019`. Non-test
+migration `0018`; active AUTH-05B owns migration `0019`. Non-test
 operators must later supply explicit classification evidence rather than
 inferred kinds before the owning canonical actor migration.
 
@@ -118,8 +122,8 @@ permission identifiers remain approved, including
 `operations.checker.retry`; the three recovery identifiers receive persisted
 parity only in their owning later chunks. `WS-AUTH-001-CAT` retains only safe
 registry/conformance rules. This is a scope decision, not an AUTH-05B runtime
-blocker. PR #117 is merged; AUTH-05B begins after this post-merge memory update
-merges, without another start signal.
+blocker. PR #118 is merged and AUTH-05B is active. Its current gate is repaired
+L1 plan approval, not an external dependency or another user signal.
 
 AUTH-04B review evidence and its PR trust bundle are recorded at
 `reviews/WS-AUTH-001-04B-internal-review-evidence.md` and
