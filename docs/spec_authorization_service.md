@@ -230,10 +230,11 @@ The paired artifact activation matrix is closed:
 | `WS-ART-001-06A` | `artifact.post_submit.checker_input.materialize` mapped to `artifact.checker_input.materialize` |
 | `WS-ART-001-06B` | `artifact.checker_output.write` and `artifact.checker_output.binding.create` mapped to `artifact.binding.create` using the checker-run resource |
 
-Every row requires AUTH-07's registry, AUTH-08's applicable Operator grant
-definition, and AUTH-09's applicable fixed service principal to be present
-first. Feature code receives centralized decisions; it never queries grants or
-constructs permission identifiers dynamically.
+Every row requires AUTH-07's registry first. A row with an Operator principal
+also requires its AUTH-08 grant definition; a row with a fixed service
+principal also requires its AUTH-09 service-actor assignment. Feature code
+receives centralized decisions; it never queries grants or constructs
+permission identifiers dynamically.
 
 The following table is the single source of truth for reserved artifact-related
 `ActionId` metadata. AUTH-07 registers each row as `planned`; the owning WS-ART
