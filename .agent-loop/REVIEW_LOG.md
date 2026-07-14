@@ -55,6 +55,14 @@ The object-graph repair passes 77 focused behavior tests at 97 percent
 subsystem coverage. The final production delta is 480 non-comment lines, below
 the 500-line hard stop.
 
+QA passed runtime and CI integrity at `67484b5` but rejected the test proof:
+the recursive helper did not traverse `ValidationError.errors()`, so rendered
+redaction could hide a recoverable `SecretStr` on another Pydantic version. The
+test-only repair now traverses the actual structured error objects and
+instruments the `BaseSettings` boundary for mapping, JSON, and string-mapping
+validation, asserting that only `None` crosses into Pydantic. This
+deterministically fails the prior implementation that forwarded `SecretStr`.
+
 ## 2026-07-13 - WS-AUTH-001-04B Repaired Contract Passed
 
 Implementation candidate `62dd18e` failed required exact-head review. Valid

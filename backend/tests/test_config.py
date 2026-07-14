@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 from pydantic import SecretStr, ValidationError
+from pydantic_settings import BaseSettings
 
 from app.adapters.artifacts import resolve_artifact_store
 from app.adapters.auth.flow import FlowAuthVerifier
@@ -29,6 +30,8 @@ def _assert_secret_not_retained(value: object, secret: str, seen: set[int] | Non
     elif isinstance(value, SecretStr):
         assert value.get_secret_value() != secret
     elif isinstance(value, BaseException):
+        if isinstance(value, ValidationError):
+            _assert_secret_not_retained(value.errors(), secret, seen)
         _assert_secret_not_retained(value.args, secret, seen)
         _assert_secret_not_retained(vars(value), secret, seen)
         _assert_secret_not_retained(value.__cause__, secret, seen)
@@ -185,6 +188,45 @@ def test_model_validate_rate_limit_secret_is_absent_from_unrelated_errors() -> N
     assert encoded not in repr(caught.value.errors())
     assert encoded not in caught.value.json()
     _assert_secret_not_retained(caught.value, encoded)
+
+
+@pytest.mark.parametrize(
+    ("method_name", "base_method_name"),
+    [
+        ("model_validate", "model_validate"),
+        ("model_validate_json", "model_validate"),
+        ("model_validate_strings", "model_validate_strings"),
+    ],
+)
+def test_alternate_validation_never_passes_secret_into_pydantic(
+    monkeypatch: pytest.MonkeyPatch,
+    method_name: str,
+    base_method_name: str,
+) -> None:
+    encoded = base64.b64encode(bytes(range(32))).decode("ascii")
+    observed: dict[str, object] = {}
+
+    class PydanticBoundaryReached(Exception):
+        pass
+
+    def capture_input(
+        cls: type[BaseSettings],
+        obj: object,
+        **kwargs: object,
+    ) -> BaseSettings:
+        observed["input"] = obj
+        raise PydanticBoundaryReached
+
+    monkeypatch.setattr(BaseSettings, base_method_name, classmethod(capture_input))
+    payload = {"api_rate_limit_key_secret": encoded}
+    method = getattr(Settings, method_name)
+
+    with pytest.raises(PydanticBoundaryReached):
+        method(json.dumps(payload) if method_name.endswith("json") else payload)
+
+    assert isinstance(observed["input"], Mapping)
+    assert observed["input"]["api_rate_limit_key_secret"] is None
+    _assert_secret_not_retained(observed, encoded)
 
 
 @pytest.mark.parametrize("method_name", ["model_validate_json", "model_validate_strings"])
