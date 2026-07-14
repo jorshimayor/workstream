@@ -147,11 +147,25 @@ result to an API error. Denials are not stored as successful replay results.
 ## Verification
 
 ```bash
-(cd backend && .venv/bin/python -m ruff check app tests)
-(cd backend && isolated PostgreSQL: pytest -q tests/test_alembic.py::<0019-proof> tests/test_authorization.py tests/test_audit.py)
-(cd backend && focused AUTH-05B coverage >= 90 percent)
-(cd backend && isolated full suite --cov=app --cov-fail-under=78)
-(cd backend && .venv/bin/docstr-coverage --config .docstr.yaml)
+cd backend
+tmp_dir=$(mktemp -d)
+trap 'rm -rf "$tmp_dir"' EXIT
+.venv/bin/python -m ruff check app tests
+.venv/bin/python scripts/run_isolated_tests.py \
+  --metadata-json "$tmp_dir/05b.json" --timeout-seconds 1800 -- \
+  .venv/bin/python -m pytest -q \
+  tests/test_alembic.py::test_authority_idempotency_schema_preserves_audit_and_guards_downgrade \
+  tests/test_authorization.py tests/test_audit.py
+.venv/bin/python scripts/run_isolated_tests.py \
+  --metadata-json "$tmp_dir/05b-coverage.json" --timeout-seconds 1800 -- \
+  .venv/bin/python -m pytest -q tests/test_authorization.py tests/test_audit.py \
+  --cov=app.modules.authorization --cov-report=term-missing --cov-fail-under=90
+.venv/bin/python scripts/run_isolated_tests.py \
+  --metadata-json "$tmp_dir/05b-full.json" --timeout-seconds 10800 -- \
+  .venv/bin/python -m pytest -q tests --cov=app --cov-report=term-missing \
+  --cov-fail-under=78
+.venv/bin/docstr-coverage --config .docstr.yaml
+cd ..
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_stale_authorization_docs.py
 python3 scripts/check_stale_artifact_contracts.py

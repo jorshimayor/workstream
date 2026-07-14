@@ -17,6 +17,7 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import inspect, select, text
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.schema import CreateIndex
 
 from app.adapters.auth.dev import actor_id_from_external_identity
@@ -77,7 +78,7 @@ async def test_task_repository_delegates_audit_persistence() -> None:
     )
 
 
-async def delete_audit_fixture_as_owner(session, event_id: str) -> None:
+async def delete_audit_fixture_as_owner(session: AsyncSession, event_id: str) -> None:
     """Construct missing-evidence corruption under explicit test-owner custody."""
     await session.execute(text("lock table audit_events in access exclusive mode"))
     await session.execute(

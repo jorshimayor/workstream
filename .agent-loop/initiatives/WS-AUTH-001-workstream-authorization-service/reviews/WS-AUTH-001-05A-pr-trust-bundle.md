@@ -105,7 +105,13 @@ and security/auth review with no remaining findings.
 
 ## External Review
 
-GitHub Actions and CodeRabbit are pending PR publication.
+CodeRabbit run `30676bdc-7525-4deb-8f9e-a87d42c64f92` produced four
+actionable comments. The response replaces positional reason mapping with
+explicit event keys, types the task audit cleanup session, makes the inactive
+AUTH-05B verification block executable, and records AUTH-05A-specific reviewer
+references. The generic CodeRabbit docstring warning is not applicable because
+the repository's configured docstring gate passes at 95.1 percent. GitHub
+Backend CI remains the final full-suite gate.
 
 ## Remaining Risks
 

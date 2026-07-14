@@ -102,7 +102,14 @@ class ActorReferenceKind(StrEnum):
 _REASONS = {
     AuthorityEventType.ACTOR_PROFILE_PROVISIONED: {"automatic_first_access"},
     AuthorityEventType.SERVICE_ACTOR_PROVISIONED: {"manual_service_provisioning"},
-    **dict.fromkeys(tuple(AuthorityEventType)[2:5], {"identity_lifecycle_change"}),
+    **dict.fromkeys(
+        (
+            AuthorityEventType.ACTOR_IDENTITY_LINKED,
+            AuthorityEventType.ACTOR_IDENTITY_LINK_REVOKED,
+            AuthorityEventType.ACTOR_IDENTITY_LINK_REACTIVATED,
+        ),
+        {"identity_lifecycle_change"},
+    ),
     AuthorityEventType.ACTOR_PROFILE_SUSPENDED: {"security_response", "administrative_correction"},
     AuthorityEventType.ACTOR_PROFILE_REACTIVATED: {"administrative_correction"},
     AuthorityEventType.ACTOR_PROFILE_DEACTIVATED: {"security_response", "administrative_correction"},

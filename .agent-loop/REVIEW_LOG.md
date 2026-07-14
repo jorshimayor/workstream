@@ -1,5 +1,15 @@
 # Review Log
 
+## 2026-07-14 - WS-AUTH-001-05A CodeRabbit Response
+
+CodeRabbit run `30676bdc-7525-4deb-8f9e-a87d42c64f92` produced four actionable
+comments on PR #115. The response makes the inactive AUTH-05B verification
+commands executable, replaces fragile positional event mapping with explicit
+identity-link event keys, types the task audit fixture session, and replaces
+misleading reused-agent names with AUTH-05A-specific review references. Focused
+behavior, Ruff, stale authorization docs, Markdown links, and diff integrity
+pass. Exact-SHA internal re-review is required before publication of the repair.
+
 ## 2026-07-14 - WS-AUTH-001-05A Semantic Scope Amendment
 
 The human replaced AUTH-05A's numeric production-line ceiling with the approved
