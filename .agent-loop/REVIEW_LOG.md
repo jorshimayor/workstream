@@ -11,6 +11,12 @@ nodes, deterministic size/line checks, and symmetric additive test-delta
 checks. The contract was repaired without runtime edits and requires a new
 exact-SHA review.
 
+Review of `2cd0fbe` then caught contradictory UUID rules for permission targets,
+resource-ID nullability, admin role/scope compatibility, optional-versus-required
+reason wording, and state-versus-decision fact meaning. It also required exact
+added-plus-deleted size arithmetic and reuse of the repository's AST-aware test
+weakening detector. Those contract defects were repaired before runtime work.
+
 ## 2026-07-14 - WS-AUTH-001-05A Contract Reopened By Exact-SHA Review
 
 Exact-SHA review of implementation repair `6fbb1f8` closed append-only,

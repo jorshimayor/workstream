@@ -83,7 +83,7 @@ token from the adopted specification. Authority rows require:
 - optional target actor reference with all-or-none kind/reference presence;
 - optional matched-grant, permission, project, resource type/id, and target
   grant/link reference;
-- optional closed reason code and denial code;
+- required authority reason classification and optional denial code;
 - optional idempotency-record reference;
 - optional invalidation cause event and invalidation target kind/id;
 - typed shallow before/after fact objects.
@@ -117,12 +117,12 @@ Every authority string/reference field has one normative form:
 | Field | Allowed value |
 |---|---|
 | `entity_type` | `actor_profile`, `actor_identity_link`, `admin_role_grant`, `qualification_snapshot`, `project_role_grant`, `authorization_decision`, or `authority_invalidation` |
-| `entity_id`, `matched_grant_id`, `project_id`, `resource_id`, `target_ref_id`, `invalidation_target_ref` | canonical lowercase UUID; nullable optional fields remain nullable |
+| `entity_id`, `matched_grant_id`, `project_id`, `resource_id` | canonical lowercase UUID; nullable optional fields remain nullable; decision/invalidation `entity_id` equals its event ID |
 | acting `legacy_actor` or `actor_profile` reference | canonical lowercase UUID |
 | acting `system_principal` reference | `workstream:system:bootstrap`; additional principals require an approved registry change |
 | target actor | kind `actor_profile` plus canonical lowercase UUID |
 | `resource_type` | `actor_profile`, `actor_identity_link`, `admin_role_grant`, `project`, `project_role_grant`, `task`, `submission`, `review`, `contribution`, `compensation_award`, `compensation_delivery`, `operations`, or `audit_event` |
-| target/invalidation kind | `actor_profile`, `actor_identity_link`, `admin_role_grant`, `qualification_snapshot`, `project_role_grant`, `authorization_decision`, or `permission_registry` |
+| target/invalidation kind and reference | `actor_profile`, `actor_identity_link`, `admin_role_grant`, `qualification_snapshot`, or `project_role_grant` uses a canonical UUID; `permission_registry` uses one registered `permission_id` below |
 | UUID envelope fields | native/canonical UUID for event, request, correlation, idempotency, and cause references |
 
 `permission_id` is closed to the exact specification Section 11 catalog:
@@ -179,14 +179,16 @@ required and event-compatible as follows:
 | sensitive allow/deny | `authorization_evaluation` |
 | invalidation request | `authority_state_changed` |
 
-Before/after facts are JSON objects with at most seven allowlisted scalar keys,
+Before/after facts are JSON objects with at most eight allowlisted scalar keys,
 no nested containers, and at most 4096 encoded bytes. The only fact keys and
 values are: `status` in `active`, `suspended`, `deactivated`, `revoked`, or
 `captured`; `subject_kind` in `human` or `service`; `provisioning_method` in
 `automatic_first_access` or `manual_service_provisioning`; `role` in
 `access_administrator`, `operator`, `project_manager`, `finance_authority`,
 `audit_authority`, `submitter`, `reviewer`, or `both`; `scope_type` in `system`
-or `project`; `scope_id` as a canonical UUID; and `effective` as boolean.
+or `project`; `scope_id` as a canonical UUID; and `effective` and `allowed` as
+booleans. `effective` describes persisted authority state; `allowed` describes
+an authorization decision and they are not interchangeable.
 
 The event-specific fact matrix is exact:
 
@@ -202,12 +204,14 @@ The event-specific fact matrix is exact:
 | project grant replaced | prior active role/scope with `effective=true` | replacement active role/scope with `effective=true` |
 | admin/project grant revoked | active role/scope with `effective=true` | same role/scope, `status=revoked`, `effective=false` |
 | qualification snapshot captured | `NULL` | `status=captured` |
-| grant operation denied or last-admin denial | `NULL` | `effective=false` |
-| sensitive allowed/denied | `NULL` | `effective=true` / `effective=false` |
+| grant operation denied or last-admin denial | `NULL` | `NULL`; `denial_code` carries the attempted-operation result |
+| sensitive allowed/denied | `NULL` | `allowed=true` / `allowed=false` |
 | invalidation requested | `effective=true` | `effective=false` |
 
-For grant facts, admin roles use `system` or `project`; project roles use
-`project`; `scope_id` is absent for system scope and required for project scope.
+For grant facts, `access_administrator` and `operator` use only `system`;
+`project_manager`, `finance_authority`, and `audit_authority` use `system` or
+`project`; `submitter`, `reviewer`, and `both` use only `project`. `scope_id` is
+absent for system scope and required for project scope.
 Typed validation and database constraints enforce the identical envelope and
 fact matrices. Table-driven tests execute the same positive and negative cases
 through Pydantic and direct SQL; lexical bounds alone are insufficient.
@@ -246,9 +250,10 @@ an existing authority event visible in the caller transaction. The typed
 service and database insertion boundary enforce that rule without activating
 an invalidation consumer or AUTH-05B replay behavior.
 
-Resource type/ID, target actor kind/reference, and invalidation target
-kind/reference are each all-or-none pairs in typed validation and database
-constraints.
+Target actor kind/reference and target/invalidation kind/reference are
+all-or-none pairs. `resource_id` requires `resource_type`, but `resource_type`
+may have a `NULL` ID for a system-wide decision as allowed by the adopted
+`AuthorizationDecision` contract.
 
 ## Shared writer and append-only custody
 
@@ -325,14 +330,30 @@ python3 scripts/check_stale_authorization_docs.py
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/check_markdown_links.py
 python3 scripts/check_internal_review_evidence.py
-test "$(git diff --unified=0 origin/main...HEAD -- backend/app backend/alembic | \
-  awk '/^\+\+\+|^---/{next} /^\+/{line=substr($0,2); if (line !~ /^[[:space:]]*($|#)/) n++} END{print n+0}')" -le 650
+changed_production_lines=$(git diff --unified=0 origin/main...HEAD -- backend/app backend/alembic | \
+  awk '/^\+\+\+|^---/{next} /^[+-]/{line=substr($0,2); if (line !~ /^[[:space:]]*($|#)/) n++} END{print n+0}')
+printf 'AUTH-05A changed production lines: %s\n' "$changed_production_lines"
+if test "$changed_production_lines" -gt 500; then printf 'AUTH-05A inspection required\n'; fi
+test "$changed_production_lines" -le 650
 awk 'length($0) > 120 { print FNR ":" $0; bad=1 } END { exit bad }' \
   backend/alembic/versions/0018_authority_audit_evidence.py
+.venv/bin/python - <<'PY'
+from pathlib import Path
+import subprocess
+import sys
+
+sys.path.insert(0, "scripts")
+from coverage_policy import weak_python  # noqa: E402
+
+paths = subprocess.check_output(
+    ["git", "diff", "--relative", "--name-only", "origin/main...HEAD", "--", "tests"],
+    text=True,
+).splitlines()
+blocked = [path for path in paths if path.endswith(".py") and weak_python(Path(path))]
+raise SystemExit(f"test weakening: {blocked}" if blocked else 0)
+PY
 if git diff --unified=0 origin/main...HEAD -- backend/tests | \
   rg '^-(.*assert|.*pytest\.raises|.*pytest\.mark\.(skip|xfail)|.*pytest\.(skip|xfail)|.*skipTest)'; then exit 1; fi
-if git diff --unified=0 origin/main...HEAD -- backend/tests | \
-  rg '^\+(.*pytest\.mark\.(skip|xfail)|.*pytest\.(skip|xfail)|.*skipTest)'; then exit 1; fi
 git diff --check
 ```
 
