@@ -704,7 +704,7 @@ async def test_authority_service_readmits_mutated_inputs_without_retention(audit
                 with pytest.raises(TypeError, match="invalid authority audit input") as caught:
                     await AuditService(session).add_authority_event(value)
             _assert_value_not_retained(caught.value, secret)
-            _assert_value_not_retained(caught_warnings, secret)
+            assert caught_warnings == []
             assert await session.get(AuditEvent, str(value.event_id)) is None
 
 
