@@ -118,8 +118,10 @@ class Settings(BaseSettings):
         if isinstance(obj, Mapping) and "api_rate_limit_key_secret" in obj:
             sanitized = dict(obj)
             secret = _extract_api_rate_limit_key_secret(sanitized)
-            sanitized["api_rate_limit_key_secret"] = secret
-            return super().model_validate(sanitized, **kwargs)
+            sanitized["api_rate_limit_key_secret"] = None
+            settings = super().model_validate(sanitized, **kwargs)
+            settings._api_rate_limit_key_secret = secret
+            return settings
         return super().model_validate(obj, **kwargs)
 
     @classmethod
@@ -129,10 +131,14 @@ class Settings(BaseSettings):
         **kwargs: object,
     ) -> Self:
         """Sanitize JSON secret input before Pydantic retains the document."""
+        malformed = False
         try:
             parsed = json.loads(json_data)
         except (json.JSONDecodeError, UnicodeDecodeError):
-            raise ValueError("invalid settings JSON") from None
+            malformed = True
+            parsed = None
+        if malformed:
+            raise ValueError("invalid settings JSON")
         if isinstance(parsed, Mapping) and "api_rate_limit_key_secret" in parsed:
             return cls.model_validate(parsed, **kwargs)
         return super().model_validate_json(json_data, **kwargs)
@@ -143,8 +149,10 @@ class Settings(BaseSettings):
         if isinstance(obj, Mapping) and "api_rate_limit_key_secret" in obj:
             sanitized = dict(obj)
             secret = _extract_api_rate_limit_key_secret(sanitized)
-            sanitized["api_rate_limit_key_secret"] = secret
-            return super().model_validate_strings(sanitized, **kwargs)
+            sanitized["api_rate_limit_key_secret"] = None
+            settings = super().model_validate_strings(sanitized, **kwargs)
+            settings._api_rate_limit_key_secret = secret
+            return settings
         return super().model_validate_strings(obj, **kwargs)
 
     @classmethod
@@ -233,11 +241,18 @@ def _extract_api_rate_limit_key_secret(values: dict[str, object]) -> SecretStr |
 def decode_api_rate_limit_key_secret(value: SecretStr) -> bytes:
     """Decode one canonical padded Base64 rate-control key."""
     secret = value.get_secret_value()
+    if not secret.isascii():
+        raise ValueError("invalid API rate limit key secret")
+    invalid = False
     try:
         encoded = secret.encode("ascii")
         decoded = base64.b64decode(encoded, validate=True)
-    except (UnicodeEncodeError, binascii.Error, ValueError) as exc:
-        raise ValueError("invalid API rate limit key secret") from exc
+    except (binascii.Error, ValueError):
+        invalid = True
+        encoded = b""
+        decoded = b""
+    if invalid:
+        raise ValueError("invalid API rate limit key secret")
     if not 32 <= len(decoded) <= 64 or base64.b64encode(decoded) != encoded:
         raise ValueError("invalid API rate limit key secret")
     return decoded

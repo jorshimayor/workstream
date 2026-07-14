@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import base64
 import json
+from collections.abc import Mapping
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
+from pydantic import SecretStr, ValidationError
 
 from app.adapters.artifacts import resolve_artifact_store
 from app.adapters.auth.flow import FlowAuthVerifier
@@ -14,6 +15,31 @@ from app.core.auth import clear_auth_verifier_cache, get_auth_verifier
 from app.core.config import Settings, get_settings
 from app.interfaces.artifacts import ArtifactConfigurationError
 from app.main import create_app
+
+
+def _assert_secret_not_retained(value: object, secret: str, seen: set[int] | None = None) -> None:
+    """Assert a secret is unreachable through an error's public object graph."""
+    if seen is None:
+        seen = set()
+    if id(value) in seen:
+        return
+    seen.add(id(value))
+    if isinstance(value, str):
+        assert secret not in value
+    elif isinstance(value, SecretStr):
+        assert value.get_secret_value() != secret
+    elif isinstance(value, BaseException):
+        _assert_secret_not_retained(value.args, secret, seen)
+        _assert_secret_not_retained(vars(value), secret, seen)
+        _assert_secret_not_retained(value.__cause__, secret, seen)
+        _assert_secret_not_retained(value.__context__, secret, seen)
+    elif isinstance(value, Mapping):
+        for key, item in value.items():
+            _assert_secret_not_retained(key, secret, seen)
+            _assert_secret_not_retained(item, secret, seen)
+    elif isinstance(value, (list, tuple, set)):
+        for item in value:
+            _assert_secret_not_retained(item, secret, seen)
 
 
 def test_default_settings_are_fail_closed(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -42,6 +68,7 @@ def test_rate_limit_secret_is_canonical_and_redacted() -> None:
     assert settings.api_rate_limit_key_secret is not None
     assert settings.api_rate_limit_key_secret.get_secret_value() == encoded
     assert encoded not in repr(settings)
+    assert "api_rate_limit_key_secret" not in settings.model_dump()
 
 
 def test_rate_limit_secret_loads_from_environment_and_dotenv(
@@ -98,6 +125,7 @@ def test_rate_limit_secret_is_absent_from_unrelated_structured_errors() -> None:
 
     assert encoded not in repr(caught.value.errors())
     assert encoded not in caught.value.json()
+    _assert_secret_not_retained(caught.value, encoded)
 
 
 def test_environment_rate_limit_secret_is_absent_from_unrelated_structured_errors(
@@ -111,6 +139,7 @@ def test_environment_rate_limit_secret_is_absent_from_unrelated_structured_error
 
     assert encoded not in repr(caught.value.errors())
     assert encoded not in caught.value.json()
+    _assert_secret_not_retained(caught.value, encoded)
 
 
 def test_dotenv_rate_limit_secret_is_absent_from_unrelated_structured_errors(
@@ -128,6 +157,7 @@ def test_dotenv_rate_limit_secret_is_absent_from_unrelated_structured_errors(
 
     assert encoded not in repr(caught.value.errors())
     assert encoded not in caught.value.json()
+    _assert_secret_not_retained(caught.value, encoded)
 
 
 def test_model_validate_rejects_rate_limit_secret_without_structured_echo() -> None:
@@ -138,6 +168,7 @@ def test_model_validate_rejects_rate_limit_secret_without_structured_echo() -> N
 
     assert not isinstance(caught.value, ValidationError)
     assert invalid not in f"{caught.value!s} {caught.value!r}"
+    _assert_secret_not_retained(caught.value, invalid)
 
 
 def test_model_validate_rate_limit_secret_is_absent_from_unrelated_errors() -> None:
@@ -153,6 +184,7 @@ def test_model_validate_rate_limit_secret_is_absent_from_unrelated_errors() -> N
 
     assert encoded not in repr(caught.value.errors())
     assert encoded not in caught.value.json()
+    _assert_secret_not_retained(caught.value, encoded)
 
 
 @pytest.mark.parametrize("method_name", ["model_validate_json", "model_validate_strings"])
@@ -180,6 +212,7 @@ def test_alternate_validation_rejects_rate_limit_secret_without_echo(
 
     assert not isinstance(caught.value, ValidationError)
     assert invalid not in f"{caught.value!s} {caught.value!r}"
+    _assert_secret_not_retained(caught.value, invalid)
 
 
 @pytest.mark.parametrize("method_name", ["model_validate_json", "model_validate_strings"])
@@ -198,6 +231,7 @@ def test_alternate_validation_secret_is_absent_from_unrelated_errors(
 
     assert encoded not in repr(caught.value.errors())
     assert encoded not in caught.value.json()
+    _assert_secret_not_retained(caught.value, encoded)
 
 
 def test_model_validate_json_rejects_malformed_document_without_echo() -> None:
@@ -209,6 +243,9 @@ def test_model_validate_json_rejects_malformed_document_without_echo() -> None:
 
     assert not isinstance(caught.value, ValidationError)
     assert invalid not in f"{caught.value!s} {caught.value!r}"
+    assert caught.value.__cause__ is None
+    assert caught.value.__context__ is None
+    _assert_secret_not_retained(caught.value, invalid)
 
 
 @pytest.mark.parametrize(
@@ -232,6 +269,7 @@ def test_rate_limit_secret_rejects_invalid_values_without_echo(value: str) -> No
     assert not hasattr(caught.value, "json")
     if value.strip():
         assert value not in rendered
+        _assert_secret_not_retained(caught.value, value)
 
 
 @pytest.mark.parametrize(

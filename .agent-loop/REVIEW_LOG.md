@@ -37,9 +37,23 @@ files in order. Exact-SHA re-review remains mandatory before publication.
 
 Final repair evidence adds 77 focused behavior tests at 98 percent subsystem
 coverage, 56 direct configuration tests, and the exact AUTH-04B migration test
-passing against a fresh isolated database. The production delta is 465
+passing against a fresh isolated database. The production delta is 480
 non-comment lines and remains below the 500-line hard stop. All static gates
 continue to pass.
+
+Exact-head review of `629d10c` found that rendered redaction was still weaker
+than object-graph non-retention: Pydantic-version-dependent error input could
+retain a recoverable `SecretStr`, malformed JSON remained reachable through
+`JSONDecodeError.__context__`, and non-ASCII rejection chained a
+`UnicodeEncodeError` containing the original key. The final privacy repair
+passes only `None` into Pydantic, assigns the private validated key after
+successful validation, and raises constant parse/decode failures outside catch
+scopes. Tests traverse structured errors and complete exception cause/context
+graphs rather than checking rendered output alone.
+
+The object-graph repair passes 77 focused behavior tests at 97 percent
+subsystem coverage. The final production delta is 480 non-comment lines, below
+the 500-line hard stop.
 
 ## 2026-07-13 - WS-AUTH-001-04B Repaired Contract Passed
 
