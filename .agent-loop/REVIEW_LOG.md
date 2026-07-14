@@ -11,6 +11,13 @@ AUTH-04A file instead of the contract-owned rate-control file. One bounded
 repair cycle moves the tests, closes each runtime/migration issue, adds exact
 proof, and requires full-suite coverage plus exact-head re-review.
 
+The repository-wide coverage run for repair head `2d70581` was interrupted by
+the host shutdown on 2026-07-14 and produced no valid result. Under the current
+repository rule and the chunk's laptop-capacity clause, local evidence must
+prove the materially changed AUTH-04B subsystem remains at least 90 percent;
+GitHub CI owns the unchanged repository-wide 78 percent gate. No interrupted
+result is treated as evidence.
+
 Required senior engineering, architecture, security/data, QA/test, CI-integrity,
 test-delta, product/ops, docs, and reuse review passed exact repaired-contract
 head `b5dceb1`. The second repair closed optional-secret, missing-database,

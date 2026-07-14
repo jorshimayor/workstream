@@ -68,6 +68,11 @@ WS-AUTH-001-PLAN
 - Chunk 07 provides the single authorization engine before grant APIs.
 - Chunks 08-10 establish local grant truth before product cutover.
 - Chunks 11-15 migrate bounded complete product/system surfaces.
+- Artifact upload, read, retention, release/delete, replication, integrity, and
+  reconciliation remain mechanically owned by the artifact subsystem but must
+  receive centralized AUTH decisions. Chunk 07 owns the permission-registry
+  boundary, chunk 09 owns artifact service principals, the applicable 11-15
+  resource cutovers attach enforcement, and chunk 16 proves no bypass remains.
 - Chunk 16 proves the complete initiative; it does not backfill missing audit
   or idempotency evidence.
 - `WS-POL-002-03` merged separately through PR #90 as `a7aa474`. This initiative

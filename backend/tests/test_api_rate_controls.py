@@ -20,6 +20,7 @@ from app.api.deps.auth import get_auth_verification_result
 from app.core.config import Settings
 from app.main import create_app
 from app.modules.api_controls import service as rate_service_module
+from app.modules.api_controls.models import ApiRateControlCounter
 from app.modules.api_controls.repository import ApiRateControlRepository, ConsumedCounter
 from app.modules.api_controls.service import (
     ADMIN_MUTATION_SCOPE,
@@ -35,6 +36,33 @@ RATE_SECRET_TEXT = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8="
 RATE_SECRET = SecretStr(RATE_SECRET_TEXT)
 RATE_ISSUER = "https://issuer.example.test"
 RATE_SUBJECT = "opaque-subject"
+
+
+def test_rate_control_orm_model_matches_the_migration_contract() -> None:
+    table = ApiRateControlCounter.__table__
+
+    assert list(table.columns) == [
+        table.c.control_scope,
+        table.c.key_digest,
+        table.c.window_started_at,
+        table.c.window_expires_at,
+        table.c.request_count,
+        table.c.updated_at,
+    ]
+    assert {column.name for column in table.primary_key.columns} == {
+        "control_scope",
+        "key_digest",
+    }
+    assert {constraint.name for constraint in table.constraints} == {
+        "pk_api_rate_control_counters",
+        "ck_api_rate_control_counters_scope_token",
+        "ck_api_rate_control_counters_digest_length",
+        "ck_api_rate_control_counters_request_count",
+        "ck_api_rate_control_counters_window_order",
+    }
+    assert {index.name for index in table.indexes} == {
+        "ix_api_rate_control_counters_window_expires_at"
+    }
 
 
 @pytest.fixture

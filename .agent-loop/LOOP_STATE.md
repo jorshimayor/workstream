@@ -9,12 +9,13 @@
 - Worktree: `/home/abiorh/flow/workstream-auth-001-04b`
 - Status: AUTH-04A post-merge memory merged through PR #112 as `7749f54`; the
   user explicitly started AUTH-04B. Exact-head review rejected candidate
-  `62dd18e`; one bounded repair cycle is active.
+  `62dd18e`; repair head `2d70581` plus artifact-authorization intent is being
+  bound to final evidence before exact-head re-review.
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
 - Latest integrated `main` merge commit: `7749f54`
-- Current gate: deterministic repair evidence, then exact-head re-review; no PR
-  until every valid finding is resolved.
+- Current gate: final focused coverage and exact-head re-review; no PR until
+  every valid finding is resolved.
 - Size checkpoint: implementation is 409 changed non-comment production lines; the
   required 350-line inspection passed and scope is frozen below the 500 stop.
 - Next chunk: none; do not start `WS-AUTH-001-05` automatically.
