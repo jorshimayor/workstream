@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from types import MappingProxyType
 from uuid import UUID, uuid4
+import warnings
 
 from alembic import command
 from alembic.config import Config
@@ -451,11 +452,48 @@ def test_authority_input_rejects_unbounded_or_inconsistent_evidence() -> None:
     safe = _authority_input(AuthorityEventType.SENSITIVE_AUTHORIZATION_ALLOWED).model_dump(
         mode="json"
     )
+    safe_python = _authority_input(
+        AuthorityEventType.SENSITIVE_AUTHORIZATION_ALLOWED
+    ).model_dump()
+
+    class ChangingMapping(Mapping):
+        def __init__(self):
+            self.iterations = 0
+
+        def __getitem__(self, key):
+            return safe_python[key] if key in safe_python else secret
+
+        def __iter__(self):
+            self.iterations += 1
+            keys = (
+                safe_python
+                if self.iterations == 1
+                else safe_python | {"raw_token": secret}
+            )
+            return iter(keys)
+
+        def __len__(self):
+            return len(safe_python)
+
+    class HostileBytearray(bytearray):
+        def decode(self, *args, **kwargs):
+            raise RuntimeError(secret)
+
+    class LyingBytearray(bytearray):
+        def decode(self, *args, **kwargs):
+            return json.dumps(safe)
+
+    changing = ChangingMapping()
+    assert AuthorityAuditEventInput.model_validate(changing).event_type == safe_python["event_type"]
+    assert changing.iterations == 1
     assert (
         AuthorityAuditEventInput.model_validate_json(json.dumps(safe)).model_dump(mode="json")
         == safe
     )
-    duplicate = json.dumps(safe).replace('"allowed": true', '"allowed": false, "allowed": true')
+    duplicate = json.dumps(safe).replace(
+        '"allowed": true',
+        '"allowed": false, "allowed": true, "raw_token": "secret-bearer-value"',
+    )
     for raw in (
         "{secret-bearer-value",
         '"secret-bearer-value"',
@@ -470,6 +508,10 @@ def test_authority_input_rejects_unbounded_or_inconsistent_evidence() -> None:
             with pytest.raises(TypeError, match="invalid authority audit input") as caught:
                 AuthorityAuditEventInput.model_validate_json(document)
             _assert_value_not_retained(caught.value, secret)
+    for document in (HostileBytearray(b"{}"), LyingBytearray(duplicate.encode())):
+        with pytest.raises(TypeError, match="invalid authority audit input") as caught:
+            AuthorityAuditEventInput.model_validate_json(document)
+        _assert_value_not_retained(caught.value, secret)
 
     for patch, forbidden in (
         (
@@ -633,18 +675,36 @@ async def test_authority_event_matrix_has_typed_direct_sql_parity(audit_factory)
 async def test_authority_service_readmits_mutated_inputs_without_retention(audit_factory) -> None:
     """The service never forwards post-validation mutations to SQLAlchemy."""
     secret = "secret-bearer-value"
+
+    class HostileFacts(Mapping):
+        def __getitem__(self, key):
+            raise KeyError(key)
+
+        def __iter__(self):
+            raise RuntimeError(secret)
+
+        def __len__(self):
+            return 1
+
+        def __repr__(self):
+            return f"<{secret}>"
+
     values = [
+        _authority_input(AuthorityEventType.SENSITIVE_AUTHORIZATION_ALLOWED),
         _authority_input(AuthorityEventType.SENSITIVE_AUTHORIZATION_ALLOWED),
         _authority_input(AuthorityEventType.SENSITIVE_AUTHORIZATION_ALLOWED),
     ]
     values[0].actor_ref = secret
     values[1].after_facts["allowed"] = secret
+    values[2].after_facts = HostileFacts()
 
     async with audit_factory() as session:
         for value in values:
-            with pytest.raises(TypeError, match="invalid authority audit input") as caught:
-                await AuditService(session).add_authority_event(value)
+            with warnings.catch_warnings(record=True) as caught_warnings:
+                with pytest.raises(TypeError, match="invalid authority audit input") as caught:
+                    await AuditService(session).add_authority_event(value)
             _assert_value_not_retained(caught.value, secret)
+            _assert_value_not_retained(caught_warnings, secret)
             assert await session.get(AuditEvent, str(value.event_id)) is None
 
 

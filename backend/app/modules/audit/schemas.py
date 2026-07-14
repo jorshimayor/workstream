@@ -267,9 +267,11 @@ class AuthorityAuditEventInput(BaseModel):
 
     @classmethod
     def _inspect_privacy_safe_input(cls, value: object) -> dict | None:
-        if not isinstance(value, Mapping) or set(value) - cls.model_fields.keys():
+        if not isinstance(value, Mapping):
             return None
         data = dict(value)
+        if set(data) - cls.model_fields.keys():
+            return None
         event_raw = _enum_value(data.get("event_type"), AuthorityEventType)
         kind = _enum_value(data.get("actor_ref_kind"), ActorReferenceKind)
         event = AuthorityEventType(event_raw) if event_raw else None
@@ -313,12 +315,17 @@ class AuthorityAuditEventInput(BaseModel):
     def model_validate_json(cls, json_data: str | bytes | bytearray, **kwargs: Any) -> Self:
         """Parse JSON without retaining malformed or non-object input."""
         try:
-            value = json.loads(json_data, object_pairs_hook=_unique_object)
-        except (json.JSONDecodeError, UnicodeDecodeError, TypeError, ValueError):
+            snapshot = (
+                str.encode(json_data)
+                if isinstance(json_data, str)
+                else memoryview(json_data).tobytes()
+            )
+            value = json.loads(snapshot, object_pairs_hook=_unique_object)
+        except Exception:  # noqa: BLE001 - hostile buffer methods are untrusted input
             value = None
         if not isinstance(value, Mapping):
             raise TypeError("invalid authority audit input")
-        return super().model_validate_json(json_data, **kwargs)
+        return super().model_validate_json(json.dumps(value, separators=(",", ":")), **kwargs)
 
     @model_validator(mode="after")
     def validate_shape(self) -> Self:

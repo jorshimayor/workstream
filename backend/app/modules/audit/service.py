@@ -16,7 +16,13 @@ class AuditService:
 
     async def add_authority_event(self, value: AuthorityAuditEventInput) -> AuditEvent:
         """Persist one validated authority event without committing its transaction."""
-        value = AuthorityAuditEventInput.model_validate(value.model_dump())
+        try:
+            fields = dict(object.__getattribute__(value, "__dict__"))
+        except Exception:  # noqa: BLE001 - the service boundary accepts no caller diagnostics
+            fields = None
+        if fields is None:
+            raise TypeError("invalid authority audit input")
+        value = AuthorityAuditEventInput.model_validate(fields)
         cause_id = value.invalidation_cause_event_id
         if cause_id is not None and await self._repository.get_authority_event(str(cause_id)) is None:
             raise ValueError("invalidation cause must be an existing authority event")
