@@ -119,9 +119,10 @@ has no active runtime profile, credential service, deployment proof, or chunk;
 later adoption requires separate discovery and approval.
 
 The current pre-cutover application still accepts `r2://` and `r2` as
-caller-declared storage transport values in task, project-policy, checker, and
-template contracts. Those values do not select a Workstream R2 provider and do
-not prove that Workstream can store or retrieve R2 bytes. They are inventoried
-legacy input contracts. Chunk 05 removes them completely when submissions move
-to sealed artifact-set bindings; no compatibility alias remains after that
-cutover.
+caller-declared values in guide-source, task, project-policy, checker, API-drill,
+and template contracts. Those values do not select a Workstream R2 provider and
+do not prove that Workstream can store or retrieve R2 bytes. They are
+inventoried legacy input contracts. Chunk 03 removes direct provider schemes
+from guide-source identity. Chunk 05 removes the remaining caller storage
+transport when submissions move to sealed artifact-set bindings. No
+compatibility alias remains after either owning cutover.

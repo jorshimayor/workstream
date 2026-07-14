@@ -17,6 +17,8 @@ authorized Workstream artifact reader.
 - project/artifact call sites consuming exact decisions already delivered by
   the approved WS-AUTH dependency; no Authorization Service owner files
 - focused migration, route, setup-agent, and real-API tests
+- `backend/scripts/api_contract_e2e.py` only to migrate its guide-source
+  snapshot request from caller hash metadata to authoritative byte ingest
 - `.github/workflows/backend.yml` only to expand the exact 90 percent scoped gate
 - `scripts/test_agent_gates.py` only to assert the exact workflow command,
   source set, threshold, and cumulative retention
@@ -47,6 +49,9 @@ authorized Workstream artifact reader.
   no network retrieval. Server-side URL fetching requires a separate approved
   external-source adapter with explicit SSRF, redirect, DNS/IP, private-network,
   timeout, media-type, and size controls.
+- caller guide-source schemes `s3` and `r2` are removed from
+  `ALLOWED_SOURCE_REF_SCHEMES`; source identity cannot be a provider object
+  reference, and no compatibility alias remains.
 - supplied bytes use the bounded two-pass `PreparedArtifact` scratch boundary;
   a cross-process ledger reserves the full 512 MiB maximum before writing and
   enforces aggregate byte/file/concurrency limits and a minimum-free-space
@@ -101,7 +106,8 @@ coverage report --include='app/adapters/project_agents/*,app/interfaces/project_
 ```bash
 docker compose up -d --wait postgres redis minio
 (cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest tests/test_alembic.py tests/test_projects.py tests/test_project_setup.py tests/test_guide_artifacts.py -q --cov=app.modules.projects --cov=app.modules.artifacts --cov-report=term-missing --cov-fail-under=90)
-metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78)
+(metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
+(cd backend && WORKSTREAM_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/python scripts/api_contract_e2e.py)
 (cd backend && .venv/bin/ruff check app tests)
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/test_agent_gates.py

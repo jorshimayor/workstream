@@ -39,6 +39,11 @@ ARTIFACT_COVERAGE_ORDER = (
     "06B",
     "07",
 )
+FOUNDATION_ARTIFACT_COVERAGE_COMMAND = (
+    "coverage report "
+    "--include='app/adapters/artifacts/*,app/interfaces/artifacts.py,"
+    "app/modules/artifacts/*' --precision=2 --fail-under=90"
+)
 
 
 def artifact_contract_phase_for(coverage_phase: str) -> str:
@@ -56,6 +61,26 @@ def artifact_contract_phase_for(coverage_phase: str) -> str:
     if active_index >= ARTIFACT_COVERAGE_ORDER.index("06B"):
         phase = "checker_cutover"
     return phase
+
+
+def artifact_coverage_commands_for(coverage_phase: str) -> tuple[str, ...]:
+    """Return the cumulative exact coverage commands for one artifact phase."""
+    if coverage_phase == "foundation":
+        return (FOUNDATION_ARTIFACT_COVERAGE_COMMAND,)
+    chunk_root = (
+        ROOT
+        / ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/chunks"
+    )
+    matches = sorted(chunk_root.glob(f"WS-ART-001-{coverage_phase}-*.md"))
+    assert len(matches) == 1, (coverage_phase, matches)
+    contract = matches[0].read_text(encoding="utf-8")
+    section = re.search(
+        r"## Exact CI Coverage Gates\n\n```bash\n(.*?)\n```",
+        contract,
+        re.DOTALL,
+    )
+    assert section is not None, matches[0]
+    return tuple(line for line in section.group(1).splitlines() if line)
 
 
 def load_module(name: str, path: str):
@@ -1184,17 +1209,36 @@ def test_backend_coverage_thresholds_are_regression_protected() -> None:
     workflow_path = ROOT / ".github/workflows/backend.yml"
     workflow = workflow_path.read_text(encoding="utf-8")
     parsed_workflow = yaml.safe_load(workflow)
+    test_job = parsed_workflow["jobs"]["test"]
+    assert set(test_job) == {"runs-on", "timeout-minutes", "services", "steps"}
+    steps = test_job["steps"]
     full_suite_steps = [
         step
-        for step in parsed_workflow["jobs"]["test"]["steps"]
+        for step in steps
         if step.get("name") == "Backend full-suite coverage"
     ]
     assert len(full_suite_steps) == 1
     full_suite_run = full_suite_steps[0]["run"]
+    assert full_suite_steps[0].get("working-directory") == "backend"
+    for forbidden_key in ("if", "continue-on-error", "shell"):
+        assert forbidden_key not in full_suite_steps[0]
     assert 'metadata_dir="$(mktemp -d)"' in full_suite_run
     assert "trap 'rm -rf \"$metadata_dir\"' EXIT" in full_suite_run
     assert '--metadata-json "$metadata_dir/result.json"' in full_suite_run
     assert "/tmp/workstream-database.json" not in workflow
+    full_suite_index = steps.index(full_suite_steps[0])
+    expected_coverage = artifact_coverage_commands_for(ARTIFACT_COVERAGE_PHASE)
+    for command in expected_coverage:
+        matches = [step for step in steps if str(step.get("run", "")).strip() == command]
+        assert len(matches) == 1, (command, matches)
+        coverage_step = matches[0]
+        assert steps.index(coverage_step) > full_suite_index
+        assert coverage_step.get("working-directory") == "backend"
+        for forbidden_key in ("if", "continue-on-error", "shell", "env"):
+            assert forbidden_key not in coverage_step
+    later_commands = artifact_coverage_commands_for("06B")
+    assert later_commands[0] == FOUNDATION_ARTIFACT_COVERAGE_COMMAND
+    assert any("app/modules/checkers/*" in command for command in later_commands)
     assert workflow.count("--cov-fail-under=78") == 1
     assert (
         "--cov=app --cov-report=term-missing --cov-fail-under=78"
@@ -1253,6 +1297,13 @@ def test_stale_artifact_contracts_active_later_phase_owns_only_reached_terms() -
         "backend/app/modules/tasks/schemas.py:1: LEGACY_SUBMISSION_TRANSPORT",
         "backend/app/modules/tasks/schemas.py:1: LEGACY_PROJECT_STORAGE_POLICY",
     ]
+    assert gate.scan_text(
+        "backend/scripts/api_contract_e2e.py",
+        '"allowed_storage_schemes": ["local", "s3", "r2"]',
+        "submission_cutover",
+    ) == [
+        "backend/scripts/api_contract_e2e.py:1: LEGACY_PROJECT_STORAGE_POLICY"
+    ]
 
 
 def test_stale_artifact_contracts_malformed_phase_fails_closed() -> None:
@@ -1306,14 +1357,45 @@ def test_stale_artifact_contracts_enforce_aws_first_v01() -> None:
     ) == ["backend/app/core/config.py:1: DEFERRED_R2_RUNTIME"]
     for runtime_value in (
         'artifact_provider_profile = "r2"',
+        'r2_endpoint = "https://example.invalid"',
         "artifact_store = R2ArtifactStore()",
+        "client = R2Client()",
         'endpoint = os.environ["WORKSTREAM_R2_ENDPOINT"]',
+        'endpoint = "https://account.r2.cloudflarestorage.com"',
+        "artifact_store = CloudflareArtifactStore()",
     ):
         assert gate.scan_text(
             "backend/app/core/config.py",
             runtime_value,
             "foundation",
         ) == ["backend/app/core/config.py:1: DEFERRED_R2_RUNTIME"]
+    for runtime_path, runtime_value in (
+        ("backend/app/integrations/storage.py", 'provider = "r2"'),
+        (".github/workflows/backend.yml", "WORKSTREAM_R2_ENDPOINT: secret"),
+        ("Dockerfile", "ENV WORKSTREAM_R2_ENDPOINT=secret"),
+        (".env.example", "WORKSTREAM_R2_ENDPOINT=secret"),
+        ("deploy/config", 'provider = "r2"'),
+    ):
+        assert gate.scan_text(runtime_path, runtime_value, "foundation") == [
+            f"{runtime_path}:1: DEFERRED_R2_RUNTIME"
+        ]
+    legacy_source_line = (
+        'ALLOWED_SOURCE_REF_SCHEMES = {"https", "http", "repo", "inline", '
+        '"import", "s3", "r2"}'
+    )
+    assert gate.scan_text(
+        "backend/app/modules/projects/service.py",
+        legacy_source_line,
+        "foundation",
+    ) == []
+    assert gate.scan_text(
+        "backend/app/modules/projects/service.py",
+        legacy_source_line,
+        "guide_source_cutover",
+    ) == ["backend/app/modules/projects/service.py:1: DEFERRED_R2_RUNTIME"]
+    assert gate.path_is_scannable("Dockerfile")
+    assert gate.path_is_scannable(".env.example")
+    assert gate.path_is_scannable("deploy/config")
     assert gate.scan_text(
         (
             ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/"
@@ -1409,9 +1491,14 @@ def test_artifact_chunk_verification_commands_are_isolated_and_rerunnable() -> N
         metadata_command = next(
             command
             for command in verification.splitlines()
-            if command.startswith('metadata_dir="$(mktemp -d)"')
+            if command.startswith('(metadata_dir="$(mktemp -d)"')
         )
         assert "run_isolated_tests.py" in metadata_command
+        assert metadata_command.endswith("))")
+        assert "alembic upgrade head" not in verification
+        if phase in {"03", "05"}:
+            assert "backend/scripts/api_contract_e2e.py" in contract
+            assert "scripts/api_contract_e2e.py" in verification
         assert artifact_contract_phase_for(phase) in {
             "foundation",
             "artifact_store_cutover",
@@ -1420,6 +1507,27 @@ def test_artifact_chunk_verification_commands_are_isolated_and_rerunnable() -> N
             "submission_cutover",
             "checker_cutover",
         }
+    with tempfile.TemporaryDirectory() as temp_dir:
+        cleanup = subprocess.run(
+            [
+                "bash",
+                "-c",
+                (
+                    "for run in 1 2; do "
+                    f'(metadata_dir="$(mktemp -d -p {temp_dir})" && '
+                    "trap 'rm -rf \"$metadata_dir\"' EXIT && "
+                    'test -d "$metadata_dir"); '
+                    "done; "
+                    f'test -z "$(find {temp_dir} -mindepth 1 -maxdepth 1 '
+                    '-print -quit)"'
+                ),
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+        )
+        assert cleanup.returncode == 0, cleanup.stderr
 
 
 def main() -> int:

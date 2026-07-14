@@ -54,8 +54,8 @@ planning and guardrails only.
   port accepts only a sealed `CommittedArtifactSource`;
 - R2 has no provider adapter, credential issuer, provider profile, deployment
   service, or implementation chunk. Existing caller-declared `r2://` transport
-  values are legacy input contracts owned by the clean Chunk 05 cutover and are
-  removed there without an alias or compatibility path;
+  values are legacy input contracts owned by the clean Chunks 03 and 05
+  cutovers and are removed there without an alias or compatibility path;
 - deferred Flow Node is fully planned but absent from the v0.1 dependency graph;
 - active v0.1 implementation is split into reviewable L1 chunks with exact
   scope, acceptance criteria, runnable commands, 90 percent changed-subsystem

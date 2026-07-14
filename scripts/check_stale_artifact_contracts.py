@@ -55,8 +55,8 @@ FOUNDATION_INTERFACE_PATHS = {
 }
 FOUNDATION_INTERFACE_PREFIXES = ("contracts/artifact-store/",)
 R2_RUNTIME_PREFIXES = (
-    "backend/app/core/",
-    "backend/app/adapters/artifacts/",
+    "backend/app/",
+    ".github/workflows/",
     "services/r2_credential_issuer/",
     "deploy/",
     "deployment/",
@@ -70,7 +70,64 @@ R2_RUNTIME_FILENAMES = (
     "compose.",
     "docker-compose.",
     "Dockerfile",
+    ".env",
 )
+R2_RUNTIME_PATTERN = re.compile(
+    r"(?:\br2(?:[_A-Za-z0-9]+)?\b|"
+    r"\b[A-Za-z][A-Za-z0-9_]*r2[A-Za-z0-9_]*\b|"
+    r"r2\.cloudflarestorage\.com|"
+    r"\bCloudflare(?:ArtifactStore|ObjectStore|Storage|Client|Adapter|"
+    r"Provider|Profile|Credential)[A-Za-z0-9_]*\b)",
+    re.IGNORECASE,
+)
+LEGACY_R2_RUNTIME_LINES = {
+    "backend/app/modules/projects/service.py": (
+        (
+            "guide_source_cutover",
+            'ALLOWED_SOURCE_REF_SCHEMES = {"https", "http", "repo", "inline", "import", "s3", "r2"}',
+        ),
+        (
+            "submission_cutover",
+            'DEFAULT_ALLOWED_STORAGE_SCHEMES = ["local", "s3", "r2"]',
+        ),
+    ),
+    "backend/app/modules/projects/schemas.py": (
+        (
+            "submission_cutover",
+            'allowed_storage_schemes: list[Literal["local", "s3", "r2"]] = Field(',
+        ),
+        (
+            "submission_cutover",
+            'default_factory=lambda: ["local", "s3", "r2"]',
+        ),
+    ),
+    "backend/app/adapters/project_agents/openai_agent_sdk.py": (
+        (
+            "submission_cutover",
+            '"allowed_storage_schemes": ["local", "s3", "r2"],',
+        ),
+    ),
+    "backend/app/modules/checkers/runner.py": (
+        (
+            "submission_cutover",
+            '"Add sha256:<token> hash values for evidence objects stored in local, R2, or S3 storage.",',
+        ),
+    ),
+    "backend/app/modules/tasks/schemas.py": (
+        (
+            "submission_cutover",
+            'ALLOWED_STORAGE_URI_PREFIXES = ("local://", "s3://", "r2://")',
+        ),
+        (
+            "submission_cutover",
+            'raise ValueError("uri must be a local, R2, or S3 object reference")',
+        ),
+        (
+            "submission_cutover",
+            'if matching_prefix in {"s3://", "r2://"} and (not parsed.netloc or not parsed.path.strip("/")):',
+        ),
+    ),
+}
 LIVE_RULE_PATHS = {
     "LEGACY_FLOW_NODE_RUNTIME": (
         "backend/app/core/config.py",
@@ -84,6 +141,7 @@ LIVE_RULE_PATHS = {
     "LEGACY_SUBMISSION_TRANSPORT": (
         "backend/app/modules/tasks/",
         "backend/app/modules/checkers/",
+        "backend/scripts/api_contract_e2e.py",
     ),
     "LEGACY_PROJECT_STORAGE_POLICY": (
         "backend/app/adapters/project_agents/",
@@ -91,6 +149,7 @@ LIVE_RULE_PATHS = {
         "backend/app/modules/projects/",
         "backend/app/modules/checkers/",
         "backend/app/modules/tasks/",
+        "backend/scripts/api_contract_e2e.py",
     ),
     "LEGACY_STORAGE_COMPILER_PRIMITIVE": (
         "backend/app/adapters/project_agents/",
@@ -238,8 +297,13 @@ def path_is_scannable(relative_path: str, root: Path = ROOT) -> bool:
         relative_path.startswith(AGENT_LOOP_INITIATIVE_PREFIX)
         and "/reviews/" in relative_path
     )
-    return (
+    is_text_path = (
         path.suffix.lower() in TEXT_SUFFIXES
+        or path.name.startswith(R2_RUNTIME_FILENAMES)
+        or (not path.suffix and relative_path.startswith(R2_RUNTIME_PREFIXES))
+    )
+    return (
+        is_text_path
         and not relative_path.startswith(HISTORICAL_PREFIXES)
         and not is_review_history
         and (
@@ -286,6 +350,7 @@ def rule_applies_to_path(rule: Rule, relative_path: str, root: Path = ROOT) -> b
                 "backend/app/modules/projects/",
                 "backend/app/modules/tasks/",
                 "backend/app/modules/checkers/",
+                "backend/scripts/api_contract_e2e.py",
             )
         )
     return True
@@ -308,19 +373,24 @@ def scan_text(relative_path: str, text: str, phase: str, root: Path = ROOT) -> l
             ):
                 continue
             failures.append(f"{relative_path}:{line}: {rule.code}")
-    if relative_path.startswith(R2_RUNTIME_PREFIXES) or Path(relative_path).name.startswith(
-        R2_RUNTIME_FILENAMES
-    ):
-        for match in re.finditer(
-            r"(?:\b(?:cloudflare[_-]?r2|r2[_-]?credential)\b|"
-            r"\bR2ArtifactStore\b|\bWORKSTREAM_R2_[A-Z0-9_]+\b|"
-            r"[\"']r2[\"'])",
-            text,
-            re.IGNORECASE,
-        ):
+    is_r2_runtime_path = relative_path.startswith(
+        R2_RUNTIME_PREFIXES
+    ) or Path(relative_path).name.startswith(R2_RUNTIME_FILENAMES)
+    if is_r2_runtime_path:
+        for match in R2_RUNTIME_PATTERN.finditer(text):
             line = text.count("\n", 0, match.start()) + 1
+            line_text = text.splitlines()[line - 1].strip()
+            if any(
+                phase_index(phase) < phase_index(removal_phase)
+                and line_text == allowed_line
+                for removal_phase, allowed_line in LEGACY_R2_RUNTIME_LINES.get(
+                    relative_path,
+                    (),
+                )
+            ):
+                continue
             failures.append(f"{relative_path}:{line}: DEFERRED_R2_RUNTIME")
-    return failures
+    return list(dict.fromkeys(failures))
 
 
 def git_lines(root: Path, *args: str) -> list[str]:

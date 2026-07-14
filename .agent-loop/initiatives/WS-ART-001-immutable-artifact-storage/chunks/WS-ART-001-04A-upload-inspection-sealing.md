@@ -46,14 +46,22 @@ manifests without running pre-submit or creating submissions.
   SHA-256 commitment, expected byte count, and streamed file;
 - Workstream prepares and hashes the complete stream, rejects mismatch before
   provider I/O, and derives the key only from the server commitment;
+- PostgreSQL atomically enforces configured open-session and cumulative unique
+  stored-byte quotas at task, actor, project, and deployment scope. Session
+  slots are reserved at creation; byte charges are reserved after canonical
+  hashing and before provider I/O. Cancelled, expired, and unbound completed
+  bytes remain charged in v0.1, while exact deduplicated content is charged once
+  per applicable scope;
 - every item is independently verified before it can be sealed;
 - limits cover item count, aggregate/per-file bytes, archive expansion, entry
   count, path safety, nesting, and compression ratio;
 - sealing row-locks the session/items, requires verified replicas, creates a
   deterministic manifest/hash, and is idempotent under exact replay;
 - cancellation is logical and cannot delete shared completed bytes;
-- race tests cover upload/seal/cancel/expiry conflicts and first-writer and
-  cross-project digest-key poisoning attempts;
+- race tests cover upload/seal/cancel/expiry conflicts, repeated-session quota
+  exhaustion, concurrent quota admission without oversubscription, terminal
+  session-slot release, retained charges for cancelled/expired/unbound content,
+  and first-writer and cross-project digest-key poisoning attempts;
 - changed subsystem coverage is at least 90 percent and repository coverage
   remains at least 78 percent;
 - backend CI installs this chunk's exact focused 90 percent gate, preserves
@@ -78,7 +86,7 @@ coverage report --include='app/adapters/project_agents/*,app/interfaces/project_
 ```bash
 docker compose up -d --wait postgres redis minio
 (cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest tests/test_alembic.py tests/test_artifact_upload_api.py -q --cov=app.modules.artifacts --cov-report=term-missing --cov-fail-under=90)
-metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78)
+(metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
 (cd backend && .venv/bin/ruff check app tests)
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/test_agent_gates.py

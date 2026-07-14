@@ -103,19 +103,23 @@ can match the completed-object prefix.
 2. Workstream prepares the complete untrusted source in bounded private scratch,
    computes digest and size, and rejects a mismatched client commitment before
    provider I/O.
-3. Transaction A reserves the upload item and commits the server-computed
+3. PostgreSQL atomically reserves open-session capacity and unique-byte charges
+   at every applicable task, actor, project, and deployment scope. Any exceeded
+   scope fails before provider I/O. Completed-byte charges remain durable in
+   v0.1 even when the session expires, is cancelled, or never gains a binding.
+4. Transaction A reserves the upload item and commits the server-computed
    digest, size, media type, operation identity, request digest, and CAS values.
-4. Workstream passes the sealed `CommittedArtifactSource` to the injected
+5. Workstream passes the sealed `CommittedArtifactSource` to the injected
    adapter outside the transaction.
-5. The adapter conditionally stores under the content-addressed key or resolves
+6. The adapter conditionally stores under the content-addressed key or resolves
    an exact replay candidate.
-6. Transaction B records provider acknowledgement, sets the item to
+7. Transaction B records provider acknowledgement, sets the item to
    `stored_pending_verification`, and creates the replica with pending
    verification and unknown availability/integrity; no binding exists.
-7. A durable verification job is committed in PostgreSQL and published to
+8. A durable verification job is committed in PostgreSQL and published to
    Celery after commit. A periodic scanner republishes pending work within the
    configured SLA.
-8. Celery opens the complete object, computes SHA-256 and size, and atomically
+9. Celery opens the complete object, computes SHA-256 and size, and atomically
    records a verification receipt. Only a matching object becomes `ready` and
    bindable. Missing or changed bytes become unavailable/quarantined.
 
@@ -163,6 +167,12 @@ bindings and logical release eligibility, but no runtime path calls
 `DeleteObject`, configures provider lifecycle deletion, or exposes a delete API.
 The production bucket must not have an automatic deletion rule for the
 Workstream prefix.
+
+Retention is paired with durable admission control. PostgreSQL bounds open
+sessions and cumulative unique completed bytes for every applicable task,
+actor, project, and deployment. Charges use canonical content identity to avoid
+double-charging exact deduplicated replay within one scope. Cancellation,
+expiry, and absence of a binding do not release completed-byte charges.
 
 Physical deletion, garbage collection, legal hold, and retention windows are a
 later explicit initiative. This removes destructive storage behavior from the
@@ -354,8 +364,10 @@ conformance contract, and define an explicit no-fallback maintenance cutover.
 No R2 credential issuer, sidecar, runtime profile, or deployment proof belongs
 to this initiative.
 
-Before Chunk 05, task schemas, project-policy schemas, checker messages, tests,
-and the submission-artifact-policy template still expose legacy caller
-transport declarations using `r2` or `r2://`. They are not provider support.
-Chunk 05 deletes that caller contract as part of the submission binding clean
-cut; later code must not preserve an alias, fallback, or compatibility parser.
+Before the product cutovers, guide-source validation, task schemas,
+project-policy schemas, checker messages, the API drill, tests, and the
+submission-artifact-policy template still expose legacy caller declarations
+using `r2` or `r2://`. They are not provider support. Chunk 03 removes direct
+provider schemes from guide-source identity. Chunk 05 deletes the remaining
+caller transport as part of the submission binding clean cut. Later code must
+not preserve an alias, fallback, or compatibility parser.

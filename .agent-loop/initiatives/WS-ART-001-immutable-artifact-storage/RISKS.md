@@ -16,6 +16,7 @@
 | Duplicate/stale Celery execution writes terminal state | Critical | PostgreSQL clock, fresh executor UUID, generation fencing, and zero-row stale finalization rollback. |
 | Slow progressive read outlives execution lease | High | End-to-end verification deadline shorter than lease by a persistence margin. |
 | Concurrent prepared artifacts exhaust worker disk | High | Full-max pre-reservation, dedicated quota, cross-process ledger, bounded concurrency, free-space floor, and deadline-before-TTL cleanup. |
+| Repeated valid sessions create unbounded retained provider bytes | Critical | PostgreSQL atomically caps open sessions and cumulative unique completed bytes at task, actor, project, and deployment scope before provider I/O; cancelled, expired, and unbound completed content remains charged. |
 | Recovery replay or ancestor reuse creates multiple jobs | High | Canonical request digest plus a lifetime unique source-job constraint return original IDs on exact replay, reject different-key/concurrent reuse, and require chain progression through the immediate retry job. |
 | Operator cannot observe retry completion | High | Authorized recovery-attempt GET includes immutable source-job and current retry-job status plus audit IDs. |
 | Storage failure becomes contributor failure or review decision | Critical | Stable infrastructure errors; no accept/needs_revision/reject, contribution, payment, or reputation effect. |

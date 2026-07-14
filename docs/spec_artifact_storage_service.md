@@ -62,6 +62,25 @@ idempotency key, CAS version, content ID, failure code, and timestamps.
 States are `reserved`, `uploading`, `replay_required`,
 `stored_pending_verification`, `ready`, `failed`, and `cancelled`.
 
+### ArtifactStorageAdmissionLedger
+
+A PostgreSQL-owned quota ledger prevents valid credentials from creating
+unbounded durable storage. Configured limits cover open upload sessions and
+cumulative unique completed bytes at task, actor, project, and deployment
+scope. Session creation atomically reserves an open-session slot. After
+Workstream prepares the complete source and knows its canonical SHA-256 and
+exact size, one transaction reserves every applicable byte charge before any
+provider `put` call.
+
+Byte charges are unique by scope plus canonical content identity so exact
+deduplicated replay is not charged twice within the same scope. A distinct
+content identity is charged at every applicable scope. Completed bytes remain
+charged when a session is cancelled or expires and when content is not yet
+bound, because v0.1 has no physical deletion. Open-session slots are released
+only by a terminal session transition. PostgreSQL row locks and unique
+constraints make concurrent reservation fail closed without oversubscription.
+Provider I/O never starts when any scope lacks capacity.
+
 ### ArtifactContent
 
 An immutable provider-neutral fact identified by canonical SHA-256 and exact

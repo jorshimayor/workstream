@@ -97,7 +97,7 @@ docker compose -f examples/artifact_lifecycle/docker-compose.yml up -d --build -
 backend/.venv/bin/python -m examples.artifact_lifecycle.proof_tools.real_api_drill
 (cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest tests/test_artifact_store_conformance.py tests/test_artifact_real_api.py -q --cov=app.modules.artifacts --cov=app.adapters.artifacts --cov-report=term-missing --cov-fail-under=90)
 backend/.venv/bin/python -m pytest examples/artifact_lifecycle/tests -q --cov=examples/artifact_lifecycle/proof_tools --cov-report=term-missing --cov-fail-under=90
-metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78)
+(metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
 WORKSTREAM_ARTIFACT_PROOF_PROFILE=aws_s3 backend/.venv/bin/python -m examples.artifact_lifecycle.proof_tools.provider_live_smoke
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/check_markdown_links.py

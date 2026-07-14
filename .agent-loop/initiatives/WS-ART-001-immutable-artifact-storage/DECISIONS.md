@@ -119,6 +119,7 @@ proof, or active chunk. Any later R2 adoption requires a separate approved
 initiative, current provider discovery, the ArtifactStore v2 conformance suite,
 and an explicit no-fallback maintenance cutover.
 
-Pre-cutover caller-declared `r2` and `r2://` values are legacy transport input,
-not an R2 provider contract. Chunk 05 removes those values with the legacy
-submission transport. No compatibility path remains after that cutover.
+Pre-cutover caller-declared `r2` and `r2://` values are legacy input, not an R2
+provider contract. Chunk 03 removes direct provider schemes from guide-source
+identity. Chunk 05 removes the remaining values with the legacy submission
+transport. No compatibility path remains after either cutover.
