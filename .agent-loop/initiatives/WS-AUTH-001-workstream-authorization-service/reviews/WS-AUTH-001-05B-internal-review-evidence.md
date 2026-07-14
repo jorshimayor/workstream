@@ -37,7 +37,7 @@ Reviewer run IDs: `auth04b_final_eng`, `auth04b_final_qa`,
 | ci integrity | PASS | none | CI policy, thresholds, dependencies, and exclusions are unchanged. |
 | docs | PASS | none | Architecture and operations documentation match the implementation. |
 | reuse/dedup | PASS | none | Existing hash and shared audit abstractions are reused. |
-| test delta | PASS | none | Additive behavior tests replace no assertion, raises guard, skip, or xfail. |
+| test delta | PASS | none | Existing audit assertions were adapted for mandatory idempotency linkage and positive operation coverage was strengthened; no coverage was weakened. |
 
 ## Findings Resolved
 

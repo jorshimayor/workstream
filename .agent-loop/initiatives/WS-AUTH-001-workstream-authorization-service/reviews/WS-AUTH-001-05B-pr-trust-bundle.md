@@ -99,8 +99,10 @@ invalidation event.
 
 ## Test Delta
 
-Tests are additive or strengthened. No assertion, raises guard, skip, xfail,
-coverage threshold, or test selection was removed or weakened.
+Tests are additive or strengthened. Existing audit assertions were adapted for
+mandatory idempotency linkage, and positive operation coverage replaced weaker
+assertions. No raises guard, skip, xfail, coverage threshold, or test selection
+was removed or weakened.
 
 ## CI Integrity
 

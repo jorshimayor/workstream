@@ -109,6 +109,6 @@ the semantic AUTH-05A boundary. Required reviews and checks passed, and explicit
 human approval merged PR #115 as `8e1cde6` on 2026-07-14, followed by merged
 post-merge memory. `WS-AUTH-001-CAT` then merged through PR #117 as `4c5d4fc`
 after Backend, Agent Gates, CodeRabbit, and explicit human approval passed. The
-CAT post-merge memory merged through PR #118 as `eba7e2b`; AUTH-05B's repaired
-L1 plan passed and bounded implementation is active. Do not start AUTH-06 or
-POL-002-04.
+CAT post-merge memory merged through PR #118 as `eba7e2b`; AUTH-05B runtime SHA
+`e083890` is internally reviewed, and PR publication is pending. Do not start
+AUTH-06 or POL-002-04.

@@ -124,8 +124,9 @@ permission identifiers remain approved, including
 `operations.checker.retry`; the three recovery identifiers receive persisted
 parity only in their owning later chunks. `WS-AUTH-001-CAT` retains only safe
 registry/conformance rules. This is a scope decision, not an AUTH-05B runtime
-blocker. PR #118 is merged and AUTH-05B is active. Its current gate is repaired
-L1 plan approval, not an external dependency or another user signal.
+blocker. PR #118 is merged, and AUTH-05B runtime SHA `e083890` is internally
+reviewed. Its current gate is PR publication and external checks; AUTH-06 and
+POL-002-04 remain inactive.
 
 AUTH-04B review evidence and its PR trust bundle are recorded at
 `reviews/WS-AUTH-001-04B-internal-review-evidence.md` and
