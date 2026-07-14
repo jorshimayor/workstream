@@ -10,15 +10,15 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: `f08aa9e82cfc504461239161ab4b04e598533452`
+Reviewed code SHA: `4fb846c76029dc0bebb11ef90982207f162b54c9`
 
 Reviewed production SHA: `67484b508637b7fc893e441e7afb5f5b34dd7715`
 
-Reviewed at: 2026-07-14T02:42:37Z
+Reviewed at: 2026-07-14T04:39:18Z
 
-Reviewer run IDs: engineering-architecture-docs-reuse=AUTH-04B-F08AA9E-ENG-20260714;
-qa-ci-test-delta=AUTH-04B-F08AA9E-QA-20260714;
-security-privacy-product=AUTH-04B-F08AA9E-SEC-20260714
+Reviewer run IDs: engineering-architecture-docs-reuse=AUTH-04B-4FB846C-ENG-20260714;
+qa-ci-test-delta=AUTH-04B-4FB846C-QA-20260714;
+security-privacy-product=AUTH-04B-4FB846C-SEC-20260714
 
 The final SHA differs from the reviewed production SHA only by additive tests
 and review memory. Exact-head review confirmed identical production blobs and
