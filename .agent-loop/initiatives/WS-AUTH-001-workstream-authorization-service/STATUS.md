@@ -110,11 +110,15 @@ operators must later supply explicit classification evidence rather than
 inferred kinds before the owning canonical actor migration.
 
 The proposed external catalogue cannot be adopted as a normative handoff: it
-conflicts with `/api/v1`, the merged 49-permission audit constraint, current
-project and artifact models, and staged domain ownership. `WS-AUTH-001-CAT`
-retains only safe registry/conformance rules. This is a scope decision, not an
-AUTH-05B runtime blocker; AUTH-05B begins after the docs-only amendment merges
-and its post-merge memory/stop checkpoint is recorded.
+conflicts with `/api/v1`, AUTH-05A's merged 49-identifier persisted audit base,
+current project and artifact models, and staged domain ownership. All 52
+permission identifiers remain approved, including
+`operations.task.start_override`, `operations.submission_gate.repair`, and
+`operations.checker.retry`; the three recovery identifiers receive persisted
+parity only in their owning later chunks. `WS-AUTH-001-CAT` retains only safe
+registry/conformance rules. This is a scope decision, not an AUTH-05B runtime
+blocker; AUTH-05B begins after the docs-only amendment merges and its post-merge
+memory/stop checkpoint is recorded.
 
 AUTH-04B review evidence and its PR trust bundle are recorded at
 `reviews/WS-AUTH-001-04B-internal-review-evidence.md` and

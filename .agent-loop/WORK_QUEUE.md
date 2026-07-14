@@ -60,10 +60,11 @@
 ## Proposed Next
 
 AUTH-05A merged through PR #115 as `8e1cde6` after required internal reviews,
-Backend, Agent Gates, CodeRabbit, and explicit human approval passed. AUTH-05B
-remains inactive until this post-merge memory merges and the user gives a
-separate explicit start. Do not implement AUTH-05B, AUTH-06, or POL-002-04
-automatically.
+Backend, Agent Gates, CodeRabbit, and explicit human approval passed. The user
+has given the AUTH-05B start signal. AUTH-05B remains inactive only until
+`WS-AUTH-001-CAT` merges and its post-merge memory/stop checkpoint is recorded;
+no second start signal is required. Do not start AUTH-05B before those gates, or
+start AUTH-06 or POL-002-04 automatically.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.

@@ -1,5 +1,14 @@
 # Review Log
 
+## 2026-07-14 - WS-AUTH-001-CAT CodeRabbit Response
+
+CodeRabbit raised two valid consistency findings on PR #117. The repair makes
+`STATUS.md` explicitly preserve all 52 approved identifiers beside AUTH-05A's
+49-identifier persisted audit base and removes the stale second AUTH-05B start
+requirement from `WORK_QUEUE.md`. The received start signal remains gated only
+by CAT merge and its post-merge memory/stop checkpoint. Internal repair review
+and repository gates are rerun before publication.
+
 ## 2026-07-14 - WS-AUTH-001-CAT Internal Review Passed
 
 The proposed action/resource catalogue failed initial repository mapping because

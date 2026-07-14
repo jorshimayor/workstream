@@ -65,7 +65,11 @@ product/ops passed after all valid findings were repaired. Full details are in
 
 ## External Review
 
-Pending GitHub checks, CodeRabbit, and human review.
+Backend and Agent Gates passed. CodeRabbit raised two valid documentation
+consistency comments: preserve the 52-approved/49-persisted distinction and
+remove a stale second AUTH-05B start requirement. Both are repaired and recorded
+in `WS-AUTH-001-CAT-external-review-response.md`; CodeRabbit re-review and human
+review remain.
 
 ## Remaining Risks And Follow-Up
 
