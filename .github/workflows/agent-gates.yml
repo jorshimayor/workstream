@@ -24,10 +24,10 @@ jobs:
 
       - name: Post-merge loop metadata
         env:
-          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_REF: ${{ github.base_ref }}
         run: >-
-          python3 scripts/update_post_merge_memory.py validate-pr-body
-          --body-env PR_BODY
+          python3 scripts/update_post_merge_memory.py validate-merge-intent
+          --base-ref "origin/${BASE_REF}"
 
       - name: Markdown link check
         run: python3 scripts/check_markdown_links.py

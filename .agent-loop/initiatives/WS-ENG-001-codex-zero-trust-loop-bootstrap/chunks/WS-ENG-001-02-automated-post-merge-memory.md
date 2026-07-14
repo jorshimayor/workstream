@@ -27,6 +27,7 @@ AGENTS.md
 .agents/skills/memory-update/SKILL.md
 .agent-loop/policies/repository-engineering-policy.md
 .agent-loop/templates/PR_TRUST_BUNDLE.md
+.agent-loop/merge-intents/**
 .agent-loop/initiatives/WS-ENG-001-codex-zero-trust-loop-bootstrap/**
 .github/pull_request_template.md
 .github/workflows/agent-gates.yml
@@ -57,16 +58,19 @@ execution of pull-request-head code with write credentials
 - `main` remains protected and human-approved.
 - The workflow runs only trusted code already merged to `main`.
 - Generated state is written to `automation/loop-memory`, not `main`.
-- A machine-readable PR marker supplies bounded chunk and next-gate metadata.
-- The updater validates repository, base branch, merge SHA, marker schema,
+- One newly added, immutable merge-intent JSON file supplies bounded chunk and
+  next-gate metadata from the reviewed PR head.
+- The updater validates repository, base branch, merge SHA, intent schema,
   check conclusions, idempotency, and monotonic merge history.
-- Missing or malformed metadata fails closed; it never guesses authority state.
+- Missing, modified, duplicate, or malformed merge intent fails closed; the
+  updater never derives authority state from mutable PR prose.
 - Generated state updates are process output, not implementation chunks, and
   are exempt from reviewer fanout only on the dedicated automation branch.
 
 ## Acceptance Criteria
 
-- [ ] A push to `main` records its merged PR on `automation/loop-memory`.
+- [ ] A push to `main` reconciles every unrecorded first-parent commit through
+      its target SHA on `automation/loop-memory`.
 - [ ] The state branch contains canonical JSON, rendered Markdown, and an
       append-only JSONL merge ledger.
 - [ ] Replaying the same merge is idempotent.
@@ -75,13 +79,15 @@ execution of pull-request-head code with write credentials
       associated PRs fail closed; missing or failed checks are recorded as
       attention required rather than misreported as passing.
 - [ ] The workflow has no pull-request-head checkout and no write to `main`.
-- [ ] Workflow permissions are limited to contents, pull requests, and checks.
-- [ ] PR templates expose the exact machine-readable marker.
+- [ ] Workflow permissions are limited to contents, pull requests, checks, and
+      commit statuses.
+- [ ] PR templates require one newly added machine-readable merge-intent file.
 - [ ] Agent policy removes manual post-merge PR/reviewer requirements when the
       canonical automation succeeds.
 - [ ] A documented manual retry exists for workflow/operator failure.
-- [ ] Unit tests cover parsing, validation, replay, ordering, rendering, and
-      workflow integrity.
+- [ ] Unit tests cover parsing, immutable intent binding, validation, replay,
+      first-parent reconciliation, full-ledger integrity, rendering, pending
+      reruns, and workflow integrity.
 - [ ] Existing internal-review, coverage, lint, and product gates are not
       weakened.
 

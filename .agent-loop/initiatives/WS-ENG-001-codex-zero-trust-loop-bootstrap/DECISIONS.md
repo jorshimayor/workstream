@@ -13,8 +13,9 @@
   reviewable chunk.
 - Store canonical live merge state on `automation/loop-memory` so protected
   `main` is never bypassed and generated bookkeeping needs no PR.
-- Require strict JSON lifecycle metadata in every PR body rather than deriving
-  chunk or next-gate intent from prose, branch names, or chat history.
+- Require one strict, newly added merge-intent JSON file in every reviewed PR
+  rather than deriving chunk or next-gate intent from mutable prose, branch
+  names, or chat history.
 - Run the write-capable workflow only from trusted code already merged to
   `main`; never use `pull_request_target` or pull-request-head execution.
 

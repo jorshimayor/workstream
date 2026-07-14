@@ -7,13 +7,11 @@ in sync when the trust-bundle structure changes.
 
 `<chunk-id>` - `<title>`
 
-<!-- workstream-loop-state
-{"schema_version":1,"initiative_id":"<initiative-id>","chunk_id":"<chunk-id>","chunk_title":"<title>","next_chunk_id":null,"next_chunk_title":null,"next_requires_explicit_start":true}
--->
+Merge intent: `.agent-loop/merge-intents/<chunk-id>.json`
 
-Replace every placeholder in the marker. Use JSON `null` for no next chunk.
-The marker is consumed by trusted post-merge automation and fails closed when
-missing, duplicated, malformed, or inconsistent.
+Add exactly one new merge-intent file in this PR. It must contain the chunk,
+title, next chunk or JSON `null`, and explicit-start requirement. Post-merge
+automation reads that immutable file from the reviewed final head.
 
 ## Goal
 

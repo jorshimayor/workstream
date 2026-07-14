@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -90,7 +91,49 @@ def generated_state_failures(root: Path) -> list[str]:
         failures.append(".agent-loop/STATE.json: unsupported schema version")
     if state.get("state_branch") != "automation/loop-memory":
         failures.append(".agent-loop/STATE.json: unexpected state branch")
-    if not ledger or ledger[-1] != state:
+    previous_hash = None
+    previous_main_sha = None
+    ledger_records = []
+    expected_keys = {
+        "schema_version",
+        "previous_entry_hash",
+        "record",
+        "entry_hash",
+    }
+    for entry in ledger:
+        if not isinstance(entry, dict) or set(entry) != expected_keys:
+            failures.append(".agent-loop/MERGE_LOG.jsonl: invalid entry schema")
+            break
+        record = entry.get("record")
+        if not isinstance(record, dict):
+            failures.append(
+                ".agent-loop/MERGE_LOG.jsonl: entry record is not an object"
+            )
+            break
+        payload = (
+            f"{previous_hash or ''}\n"
+            f"{json.dumps(record, sort_keys=True, separators=(',', ':'), ensure_ascii=True)}"
+        ).encode("utf-8")
+        expected_hash = hashlib.sha256(payload).hexdigest()
+        if (
+            entry.get("previous_entry_hash") != previous_hash
+            or entry.get("entry_hash") != expected_hash
+        ):
+            failures.append(".agent-loop/MERGE_LOG.jsonl: hash chain is invalid")
+            break
+        source = record.get("source", {})
+        if (
+            previous_main_sha is not None
+            and source.get("first_parent_sha") != previous_main_sha
+        ):
+            failures.append(
+                ".agent-loop/MERGE_LOG.jsonl: first-parent chain is invalid"
+            )
+            break
+        previous_hash = expected_hash
+        previous_main_sha = source.get("main_sha")
+        ledger_records.append(record)
+    if not ledger_records or ledger_records[-1] != state:
         failures.append(
             ".agent-loop/MERGE_LOG.jsonl: ledger tail does not match live state"
         )

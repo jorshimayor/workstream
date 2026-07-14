@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import argparse
+import base64
+import hashlib
 import json
 import os
 import re
 import subprocess
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import asdict, dataclass
 from datetime import datetime
@@ -21,10 +24,7 @@ STATE_BRANCH = "automation/loop-memory"
 STATE_PATH = Path(".agent-loop/STATE.json")
 RENDERED_PATH = Path(".agent-loop/LOOP_STATE.md")
 LEDGER_PATH = Path(".agent-loop/MERGE_LOG.jsonl")
-MARKER_PATTERN = re.compile(
-    r"<!--\s*workstream-loop-state\s*(?P<payload>\{.*?\})\s*-->",
-    re.DOTALL,
-)
+INTENT_PREFIX = ".agent-loop/merge-intents/"
 ID_PATTERN = re.compile(r"^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$")
 REPOSITORY_PATTERN = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
@@ -86,6 +86,19 @@ class GitHubClient:
                 f"GitHub API request failed ({status}) for {path}"
             ) from exc
 
+    def get_paginated(self, path: str) -> list[Any]:
+        """Return all items from a bounded GitHub list endpoint."""
+        items: list[Any] = []
+        separator = "&" if "?" in path else "?"
+        for page in range(1, 101):
+            payload = self.get_json(f"{path}{separator}per_page=100&page={page}")
+            if not isinstance(payload, list):
+                raise LoopMemoryError("paginated GitHub response is not a list")
+            items.extend(payload)
+            if len(payload) < 100:
+                return items
+        raise LoopMemoryError("paginated GitHub response exceeded 100 pages")
+
 
 def _bounded_text(value: Any, field: str, maximum: int = 160) -> str:
     """Validate one bounded single-line metadata string."""
@@ -111,25 +124,16 @@ def _optional_id(value: Any, field: str) -> str | None:
     return normalized
 
 
-def parse_loop_metadata(body: str) -> LoopMetadata:
-    """Parse and strictly validate one PR loop-state marker."""
-    if not isinstance(body, str):
-        raise LoopMemoryError("pull request body must be text")
-    matches = list(MARKER_PATTERN.finditer(body))
-    if len(matches) != 1:
-        raise LoopMemoryError(
-            "pull request body must contain exactly one workstream-loop-state marker"
-        )
+def parse_loop_metadata(intent_text: str) -> LoopMetadata:
+    """Parse and strictly validate one committed merge-intent document."""
+    if not isinstance(intent_text, str):
+        raise LoopMemoryError("merge intent must be text")
     try:
-        payload = json.loads(matches[0].group("payload"))
+        payload = json.loads(intent_text)
     except json.JSONDecodeError as exc:
-        raise LoopMemoryError(
-            "workstream-loop-state marker must contain valid JSON"
-        ) from exc
+        raise LoopMemoryError("merge intent must contain valid JSON") from exc
     if not isinstance(payload, dict) or set(payload) != REQUIRED_METADATA_KEYS:
-        raise LoopMemoryError(
-            "workstream-loop-state marker has missing or unexpected keys"
-        )
+        raise LoopMemoryError("merge intent has missing or unexpected keys")
     if payload["schema_version"] != SCHEMA_VERSION:
         raise LoopMemoryError(
             f"unsupported loop-state schema version: {payload['schema_version']!r}"
@@ -182,6 +186,91 @@ def _validate_repository_and_sha(repository: str, merge_sha: str) -> None:
         )
 
 
+def _intent_path(metadata: LoopMetadata) -> str:
+    """Return the only canonical repository path for one merge intent."""
+    return f"{INTENT_PREFIX}{metadata.chunk_id}.json"
+
+
+def load_committed_merge_intent(
+    client: GitHubClient,
+    repository: str,
+    pr_number: int,
+    head_sha: str,
+) -> tuple[LoopMetadata, str, str]:
+    """Load the one newly added merge intent from the reviewed PR head."""
+    files = client.get_paginated(f"/repos/{repository}/pulls/{pr_number}/files")
+    intent_changes = [
+        item
+        for item in files
+        if isinstance(item, dict)
+        and isinstance(item.get("filename"), str)
+        and item["filename"].startswith(INTENT_PREFIX)
+    ]
+    if len(intent_changes) != 1 or intent_changes[0].get("status") != "added":
+        raise LoopMemoryError(
+            "merged pull request must add exactly one merge-intent file"
+        )
+    path = intent_changes[0]["filename"]
+    encoded_path = urllib.parse.quote(path, safe="/")
+    payload = client.get_json(
+        f"/repos/{repository}/contents/{encoded_path}?ref={head_sha}"
+    )
+    if not isinstance(payload, dict) or payload.get("encoding") != "base64":
+        raise LoopMemoryError("merge-intent content response has an invalid shape")
+    blob_sha = payload.get("sha")
+    content = payload.get("content")
+    if not isinstance(blob_sha, str) or not SHA_PATTERN.fullmatch(blob_sha):
+        raise LoopMemoryError("merge-intent blob has no canonical SHA")
+    if not isinstance(content, str):
+        raise LoopMemoryError("merge-intent blob has no encoded content")
+    try:
+        normalized_content = re.sub(r"[ \t\r\n]", "", content)
+        raw = base64.b64decode(normalized_content, validate=True)
+        if len(raw) > 8192:
+            raise LoopMemoryError("merge-intent document exceeds 8192 bytes")
+        text = raw.decode("utf-8")
+    except (ValueError, UnicodeDecodeError) as exc:
+        raise LoopMemoryError("merge-intent content is not valid base64 UTF-8") from exc
+    metadata = parse_loop_metadata(text)
+    if path != _intent_path(metadata):
+        raise LoopMemoryError("merge-intent path does not match its chunk_id")
+    return metadata, path, blob_sha
+
+
+def validate_local_merge_intent(repository_root: Path, base_ref: str) -> LoopMetadata:
+    """Validate one newly added merge intent in the local PR diff."""
+    result = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(repository_root),
+            "diff",
+            "--name-status",
+            f"{base_ref}...HEAD",
+            "--",
+            INTENT_PREFIX,
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if result.returncode != 0:
+        raise LoopMemoryError(f"cannot resolve merge-intent base ref {base_ref!r}")
+    changes = [line.split("\t", 1) for line in result.stdout.splitlines() if line]
+    if len(changes) != 1 or len(changes[0]) != 2 or changes[0][0] != "A":
+        raise LoopMemoryError("pull request must add exactly one merge-intent file")
+    path = changes[0][1]
+    intent_path = repository_root / path
+    try:
+        metadata = parse_loop_metadata(intent_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError) as exc:
+        raise LoopMemoryError("cannot read local merge-intent file") from exc
+    if path != _intent_path(metadata):
+        raise LoopMemoryError("merge-intent path does not match its chunk_id")
+    return metadata
+
+
 def _latest_named(
     items: list[dict[str, Any]], name_key: str, time_key: str
 ) -> dict[str, dict[str, Any]]:
@@ -203,7 +292,7 @@ def _check_evidence(
     check_runs: list[dict[str, Any]], statuses: list[dict[str, Any]]
 ) -> dict[str, Any]:
     """Build bounded required-check evidence without treating it as merge authority."""
-    latest_checks = _latest_named(check_runs, "name", "completed_at")
+    latest_checks = _latest_named(check_runs, "name", "started_at")
     latest_statuses = _latest_named(statuses, "context", "updated_at")
     observed: dict[str, dict[str, str | None]] = {}
     for name in REQUIRED_CHECKS:
@@ -266,10 +355,29 @@ def collect_merge_record(
         raise LoopMemoryError(
             "full pull request facts do not match the associated merge"
         )
-    metadata = parse_loop_metadata(pr.get("body") or "")
     head_sha = pr.get("head", {}).get("sha")
     if not isinstance(head_sha, str) or not SHA_PATTERN.fullmatch(head_sha):
         raise LoopMemoryError("merged pull request has no canonical head SHA")
+    metadata, intent_path, intent_blob_sha = load_committed_merge_intent(
+        client,
+        repository,
+        pr_number,
+        head_sha,
+    )
+
+    commit_payload = client.get_json(f"/repos/{repository}/commits/{merge_sha}")
+    parents = (
+        commit_payload.get("parents") if isinstance(commit_payload, dict) else None
+    )
+    if (
+        not isinstance(parents, list)
+        or not parents
+        or not isinstance(parents[0], dict)
+        or not isinstance(parents[0].get("sha"), str)
+        or not SHA_PATTERN.fullmatch(parents[0]["sha"])
+    ):
+        raise LoopMemoryError("merged main commit has no canonical first parent")
+    first_parent_sha = parents[0]["sha"]
 
     check_payload = client.get_json(
         f"/repos/{repository}/commits/{head_sha}/check-runs?per_page=100"
@@ -304,6 +412,7 @@ def collect_merge_record(
         "updated_at": merged_at,
         "source": {
             "main_sha": merge_sha,
+            "first_parent_sha": first_parent_sha,
             "pr_number": pr_number,
             "pr_url": expected_pr_url,
             "pr_title": _bounded_text(
@@ -315,6 +424,8 @@ def collect_merge_record(
             ),
             "merged_at": merged_at,
             "merged_by": merged_by,
+            "intent_path": intent_path,
+            "intent_blob_sha": intent_blob_sha,
         },
         "completed_chunk": asdict(metadata),
         "active": {"planning_chunk": None, "implementation_chunk": None},
@@ -375,6 +486,7 @@ def render_state(state: dict[str, Any]) -> str:
             f"- Merge commit: `{source['main_sha']}`",
             f"- Final PR head: `{source['head_sha']}`",
             f"- Merged at: `{source['merged_at']}` by `{source['merged_by']}`",
+            f"- Merge intent: `{source['intent_path']}` at blob `{source['intent_blob_sha']}`",
             f"- Completed chunk: `{completed['chunk_id']}` - "
             f"{_markdown_text(completed['chunk_title'])}",
             "- Active planning chunk: none",
@@ -448,6 +560,59 @@ def _load_ledger(path: Path) -> list[dict[str, Any]]:
     return records
 
 
+def _ledger_hash(previous_hash: str | None, record: dict[str, Any]) -> str:
+    """Return the deterministic hash for one chained ledger entry."""
+    payload = f"{previous_hash or ''}\n{_canonical_json(record)}".encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _ledger_entry(record: dict[str, Any], previous_hash: str | None) -> dict[str, Any]:
+    """Wrap a merge record in one append-only hash-chain entry."""
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "previous_entry_hash": previous_hash,
+        "record": record,
+        "entry_hash": _ledger_hash(previous_hash, record),
+    }
+
+
+def _validate_ledger_entries(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Validate the full ledger hash and first-parent chains."""
+    records: list[dict[str, Any]] = []
+    previous_hash: str | None = None
+    previous_main_sha: str | None = None
+    expected_keys = {
+        "schema_version",
+        "previous_entry_hash",
+        "record",
+        "entry_hash",
+    }
+    for entry in entries:
+        if set(entry) != expected_keys or entry.get("schema_version") != SCHEMA_VERSION:
+            raise LoopMemoryError("merge ledger entry has an invalid schema")
+        record = entry.get("record")
+        if not isinstance(record, dict):
+            raise LoopMemoryError("merge ledger entry record must be a JSON object")
+        if entry.get("previous_entry_hash") != previous_hash:
+            raise LoopMemoryError("merge ledger previous hash chain is invalid")
+        expected_hash = _ledger_hash(previous_hash, record)
+        if entry.get("entry_hash") != expected_hash:
+            raise LoopMemoryError("merge ledger entry hash is invalid")
+        source = record.get("source", {})
+        if (
+            previous_main_sha is not None
+            and source.get("first_parent_sha") != previous_main_sha
+        ):
+            raise LoopMemoryError("merge ledger first-parent chain is invalid")
+        main_sha = source.get("main_sha")
+        if not isinstance(main_sha, str) or not SHA_PATTERN.fullmatch(main_sha):
+            raise LoopMemoryError("merge ledger record has no canonical main SHA")
+        records.append(record)
+        previous_hash = expected_hash
+        previous_main_sha = main_sha
+    return records
+
+
 def apply_merge_record(state_root: Path, record: dict[str, Any]) -> bool:
     """Apply one monotonic, idempotent merge record to a state directory."""
     state_path = state_root / STATE_PATH
@@ -455,12 +620,18 @@ def apply_merge_record(state_root: Path, record: dict[str, Any]) -> bool:
     rendered_path = state_root / RENDERED_PATH
     existing = _load_json(state_path)
     ledger = _load_ledger(ledger_path)
+    records = _validate_ledger_entries(ledger)
     merge_sha = record["source"]["main_sha"]
+
+    if existing is not None and (
+        not records or _canonical_json(records[-1]) != _canonical_json(existing)
+    ):
+        raise LoopMemoryError("canonical state does not match the merge ledger tail")
 
     duplicate = next(
         (
             entry
-            for entry in ledger
+            for entry in records
             if entry.get("source", {}).get("main_sha") == merge_sha
         ),
         None,
@@ -476,16 +647,15 @@ def apply_merge_record(state_root: Path, record: dict[str, Any]) -> bool:
         return False
 
     if existing is not None:
-        current_time = _parse_timestamp(
-            existing.get("source", {}).get("merged_at"), "current merged_at"
-        )
-        new_time = _parse_timestamp(
-            record.get("source", {}).get("merged_at"), "new merged_at"
-        )
-        if new_time < current_time:
-            raise LoopMemoryError("merge record is not newer than canonical live state")
+        if record.get("source", {}).get("first_parent_sha") != existing.get(
+            "source", {}
+        ).get("main_sha"):
+            raise LoopMemoryError(
+                "merge record is not the direct first-parent successor"
+            )
 
-    ledger.append(record)
+    previous_hash = ledger[-1]["entry_hash"] if ledger else None
+    ledger.append(_ledger_entry(record, previous_hash))
     _atomic_write(state_path, _canonical_json(record, pretty=True))
     _atomic_write(rendered_path, render_state(record))
     _atomic_write(
@@ -508,7 +678,8 @@ def validate_generated_state(state_root: Path) -> None:
         state.get("repository", ""), state.get("source", {}).get("main_sha", "")
     )
     ledger = _load_ledger(state_root / LEDGER_PATH)
-    if not ledger or _canonical_json(ledger[-1]) != _canonical_json(state):
+    records = _validate_ledger_entries(ledger)
+    if not records or _canonical_json(records[-1]) != _canonical_json(state):
         raise LoopMemoryError("merge ledger tail does not match canonical state")
     rendered_path = state_root / RENDERED_PATH
     if not rendered_path.exists() or rendered_path.read_text(
@@ -530,26 +701,14 @@ def _assert_state_branch(state_root: Path) -> None:
         raise LoopMemoryError(f"state root must be checked out on {STATE_BRANCH}")
 
 
-def _body_from_args(args: argparse.Namespace) -> str:
-    """Load PR body from one explicit CLI source."""
-    if args.body_file:
-        return Path(args.body_file).read_text(encoding="utf-8")
-    if args.body_env:
-        value = os.environ.get(args.body_env)
-        if value is None:
-            raise LoopMemoryError(f"environment variable {args.body_env} is missing")
-        return value
-    raise LoopMemoryError("one PR body source is required")
-
-
 def build_parser() -> argparse.ArgumentParser:
     """Build the command-line parser."""
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    validate_body = subparsers.add_parser("validate-pr-body")
-    validate_body.add_argument("--body-file")
-    validate_body.add_argument("--body-env")
+    validate_intent = subparsers.add_parser("validate-merge-intent")
+    validate_intent.add_argument("--repository-root", type=Path, default=Path("."))
+    validate_intent.add_argument("--base-ref", required=True)
 
     update = subparsers.add_parser("update")
     update.add_argument("--repository", required=True)
@@ -570,9 +729,12 @@ def main(argv: list[str] | None = None) -> int:
     """Run metadata validation, state update, validation, or display."""
     args = build_parser().parse_args(argv)
     try:
-        if args.command == "validate-pr-body":
-            metadata = parse_loop_metadata(_body_from_args(args))
-            print(f"Loop metadata passed for {metadata.chunk_id}.")
+        if args.command == "validate-merge-intent":
+            metadata = validate_local_merge_intent(
+                args.repository_root,
+                args.base_ref,
+            )
+            print(f"Merge intent passed for {metadata.chunk_id}.")
         elif args.command == "update":
             _assert_state_branch(args.state_root)
             token = os.environ.get(args.token_env, "")

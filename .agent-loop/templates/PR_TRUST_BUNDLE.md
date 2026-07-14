@@ -7,12 +7,11 @@ in sync with this template.
 
 `<CHUNK_ID>` — `<TITLE>`
 
-<!-- workstream-loop-state
-{"schema_version":1,"initiative_id":"<INITIATIVE_ID>","chunk_id":"<CHUNK_ID>","chunk_title":"<TITLE>","next_chunk_id":null,"next_chunk_title":null,"next_requires_explicit_start":true}
--->
+Merge intent: `.agent-loop/merge-intents/<CHUNK_ID>.json`
 
-Replace every placeholder in the marker. Use JSON `null` for no next chunk.
-This exact marker drives trusted post-merge state generation.
+Add exactly one new merge-intent file in this PR. It must contain the chunk,
+title, next chunk or JSON `null`, and explicit-start requirement. Trusted
+post-merge automation reads that immutable file from the reviewed final head.
 
 ## Goal
 

@@ -6,6 +6,7 @@ dependencies installed before it can protect the repository process.
 
 from __future__ import annotations
 
+import base64
 import contextlib
 import importlib.util
 import io
@@ -14,6 +15,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import textwrap
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -952,23 +954,31 @@ def test_loop_memory_state_accepts_merged_fixture() -> None:
             checker.INITIATIVE_STATUS_FILES = original_status_files
 
 
-def valid_loop_marker() -> str:
-    """Return one valid machine-readable PR marker fixture."""
+def valid_loop_intent() -> str:
+    """Return one valid committed merge-intent JSON fixture."""
     return (
-        "<!-- workstream-loop-state\n"
         '{"schema_version":1,"initiative_id":"WS-AUTH-001",'
         '"chunk_id":"WS-AUTH-001-06","chunk_title":"Canonical Actor Profile",'
         '"next_chunk_id":"WS-AUTH-001-07","next_chunk_title":"Authorization Kernel",'
         '"next_requires_explicit_start":true}\n'
-        "-->"
     )
 
 
+def updater_base64(value: str) -> str:
+    """Return GitHub-contents-style base64 text."""
+    return base64.b64encode(value.encode("utf-8")).decode("ascii")
+
+
 def loop_record(
-    module, *, sha: str = "a" * 40, merged_at: str = "2026-07-14T20:00:00Z"
+    module,
+    *,
+    sha: str = "a" * 40,
+    first_parent_sha: str = "0" * 40,
+    merged_at: str = "2026-07-14T20:00:00Z",
+    pr_number: int = 120,
 ) -> dict:
     """Return one complete generated-state fixture."""
-    metadata = module.parse_loop_metadata(valid_loop_marker())
+    metadata = module.parse_loop_metadata(valid_loop_intent())
     return {
         "schema_version": 1,
         "repository": "Flow-Research/workstream",
@@ -976,13 +986,16 @@ def loop_record(
         "updated_at": merged_at,
         "source": {
             "main_sha": sha,
-            "pr_number": 120,
-            "pr_url": "https://github.com/Flow-Research/workstream/pull/120",
+            "first_parent_sha": first_parent_sha,
+            "pr_number": pr_number,
+            "pr_url": f"https://github.com/Flow-Research/workstream/pull/{pr_number}",
             "pr_title": "Canonical actor profile",
             "head_sha": "b" * 40,
             "head_ref": "codex/ws-auth-001-06",
             "merged_at": merged_at,
             "merged_by": "manager",
+            "intent_path": ".agent-loop/merge-intents/WS-AUTH-001-06.json",
+            "intent_blob_sha": "d" * 40,
         },
         "completed_chunk": module.asdict(metadata),
         "active": {"planning_chunk": None, "implementation_chunk": None},
@@ -1005,22 +1018,22 @@ def loop_record(
 def test_post_merge_metadata_is_strict_and_bounded() -> None:
     """PR metadata rejects ambiguity, unknown keys, and inconsistent chunk facts."""
     updater = load_module("post_merge_metadata", "scripts/update_post_merge_memory.py")
-    metadata = updater.parse_loop_metadata(valid_loop_marker())
+    metadata = updater.parse_loop_metadata(valid_loop_intent())
     assert metadata.initiative_id == "WS-AUTH-001"
     assert metadata.chunk_id == "WS-AUTH-001-06"
     assert metadata.next_requires_explicit_start is True
 
     invalid_bodies = [
         "",
-        valid_loop_marker() + valid_loop_marker(),
-        valid_loop_marker().replace('"schema_version":1', '"schema_version":2'),
-        valid_loop_marker().replace(
+        valid_loop_intent() + valid_loop_intent(),
+        valid_loop_intent().replace('"schema_version":1', '"schema_version":2'),
+        valid_loop_intent().replace(
             '"chunk_id":"WS-AUTH-001-06"', '"chunk_id":"WS-POL-002-04"'
         ),
-        valid_loop_marker().replace(
+        valid_loop_intent().replace(
             '"next_chunk_title":"Authorization Kernel"', '"next_chunk_title":null'
         ),
-        valid_loop_marker().replace(
+        valid_loop_intent().replace(
             '"schema_version":1', '"schema_version":1,"unexpected":true'
         ),
     ]
@@ -1029,7 +1042,7 @@ def test_post_merge_metadata_is_strict_and_bounded() -> None:
             updater.parse_loop_metadata(body)
         except updater.LoopMemoryError:
             continue
-        raise AssertionError(f"invalid marker passed: {body}")
+        raise AssertionError(f"invalid merge intent passed: {body}")
 
 
 def test_post_merge_state_is_idempotent_and_monotonic() -> None:
@@ -1051,11 +1064,27 @@ def test_post_merge_state_is_idempotent_and_monotonic() -> None:
         else:
             raise AssertionError("conflicting replay passed")
 
-        older = loop_record(updater, sha="c" * 40, merged_at="2026-07-14T19:59:59Z")
+        successor = loop_record(
+            updater,
+            sha="c" * 40,
+            first_parent_sha="a" * 40,
+            merged_at="2026-07-14T20:00:00Z",
+            pr_number=121,
+        )
+        assert updater.apply_merge_record(root, successor) is True
+        updater.validate_generated_state(root)
+
+        older = loop_record(
+            updater,
+            sha="e" * 40,
+            first_parent_sha="0" * 40,
+            merged_at="2026-07-14T19:59:59Z",
+            pr_number=119,
+        )
         try:
             updater.apply_merge_record(root, older)
         except updater.LoopMemoryError as exc:
-            assert "not newer" in str(exc)
+            assert "direct first-parent successor" in str(exc)
         else:
             raise AssertionError("older merge replaced live state")
 
@@ -1076,7 +1105,6 @@ def test_post_merge_collection_binds_exact_pr_and_checks() -> None:
                 "merge_commit_sha": merge_sha,
                 "html_url": "https://github.com/Flow-Research/workstream/pull/120",
                 "title": "Canonical actor profile",
-                "body": valid_loop_marker(),
                 "base": {"ref": "main"},
                 "head": {"sha": head_sha, "ref": "codex/ws-auth-001-06"},
                 "merged_by": {"login": "manager"},
@@ -1089,22 +1117,41 @@ def test_post_merge_collection_binds_exact_pr_and_checks() -> None:
             "merge_commit_sha": merge_sha,
             "html_url": "https://github.com/Flow-Research/workstream/pull/120",
             "title": "Canonical actor profile",
-            "body": valid_loop_marker(),
             "base": {"ref": "main"},
             "head": {"sha": head_sha, "ref": "codex/ws-auth-001-06"},
             "merged_by": {"login": "manager"},
+        },
+        "/repos/Flow-Research/workstream/pulls/120/files?per_page=100&page=1": [
+            {
+                "filename": ".agent-loop/merge-intents/WS-AUTH-001-06.json",
+                "status": "added",
+            }
+        ],
+        (
+            "/repos/Flow-Research/workstream/contents/"
+            ".agent-loop/merge-intents/WS-AUTH-001-06.json"
+            f"?ref={head_sha}"
+        ): {
+            "encoding": "base64",
+            "sha": "d" * 40,
+            "content": updater_base64(valid_loop_intent()),
+        },
+        f"/repos/Flow-Research/workstream/commits/{merge_sha}": {
+            "parents": [{"sha": "0" * 40}]
         },
         f"/repos/Flow-Research/workstream/commits/{head_sha}/check-runs?per_page=100": {
             "check_runs": [
                 {
                     "name": "agent-gates",
                     "conclusion": "success",
+                    "started_at": "2026-07-14T19:49:00Z",
                     "completed_at": "2026-07-14T19:50:00Z",
                     "details_url": "https://example.test/gates",
                 },
                 {
                     "name": "test",
                     "conclusion": "success",
+                    "started_at": "2026-07-14T19:50:00Z",
                     "completed_at": "2026-07-14T19:51:00Z",
                     "details_url": "https://example.test/test",
                 },
@@ -1126,11 +1173,16 @@ def test_post_merge_collection_binds_exact_pr_and_checks() -> None:
         def get_json(self, path: str):
             return responses[path]
 
+        def get_paginated(self, path: str):
+            return responses[f"{path}?per_page=100&page=1"]
+
     record = updater.collect_merge_record(
         FakeClient(), "Flow-Research/workstream", merge_sha
     )
     assert record["source"]["main_sha"] == merge_sha
     assert record["source"]["head_sha"] == head_sha
+    assert record["source"]["first_parent_sha"] == "0" * 40
+    assert record["source"]["intent_blob_sha"] == "d" * 40
     assert record["completed_chunk"]["chunk_id"] == "WS-AUTH-001-06"
     assert record["checks"]["all_required_passed"] is True
 
@@ -1171,14 +1223,18 @@ def test_loop_memory_workflow_isolated_write_boundary() -> None:
         encoding="utf-8"
     )
     assert "pull_request_target" not in workflow
+    assert "workflow_dispatch" not in workflow
+    assert "repository_dispatch" in workflow
     assert "persist-credentials: false" in workflow
     assert "contents: write" in workflow
     assert "pull-requests: read" in workflow
     assert "HEAD:refs/heads/${STATE_BRANCH}" in workflow
     assert "HEAD:refs/heads/main" not in workflow
     assert "gh pr create" not in workflow
-    assert "validate-pr-body" in agent_gates
-    assert "PR_BODY: ${{ github.event.pull_request.body }}" in agent_gates
+    assert "git rev-list --reverse --first-parent" in workflow
+    assert 'git merge-base --is-ancestor "${MERGE_SHA}" "${current_sha}"' in workflow
+    assert "validate-merge-intent" in agent_gates
+    assert "github.event.pull_request.body" not in agent_gates
 
 
 def assert_loop_error(module, callback, expected: str) -> None:
@@ -1202,7 +1258,7 @@ def test_post_merge_input_and_check_validation_fail_closed() -> None:
     assert_loop_error(
         updater,
         lambda: updater.parse_loop_metadata(
-            valid_loop_marker().replace(
+            valid_loop_intent().replace(
                 '"chunk_title":"Canonical Actor Profile"', '"chunk_title":7'
             )
         ),
@@ -1211,21 +1267,21 @@ def test_post_merge_input_and_check_validation_fail_closed() -> None:
     assert_loop_error(
         updater,
         lambda: updater.parse_loop_metadata(
-            valid_loop_marker().replace("Canonical Actor Profile", "Bad\\nTitle")
+            valid_loop_intent().replace("Canonical Actor Profile", "Bad\\nTitle")
         ),
         "single-line string",
     )
     assert_loop_error(
         updater,
         lambda: updater.parse_loop_metadata(
-            valid_loop_marker().replace("WS-AUTH-001-06", "bad id")
+            valid_loop_intent().replace("WS-AUTH-001-06", "bad id")
         ),
         "canonical lifecycle identifier",
     )
     assert_loop_error(
         updater,
         lambda: updater.parse_loop_metadata(
-            valid_loop_marker().replace(
+            valid_loop_intent().replace(
                 '"next_requires_explicit_start":true',
                 '"next_requires_explicit_start":"yes"',
             )
@@ -1249,18 +1305,20 @@ def test_post_merge_input_and_check_validation_fail_closed() -> None:
         [
             {
                 "name": "test",
-                "conclusion": "failure",
-                "completed_at": "2026-01-01T00:00:00Z",
+                "conclusion": "success",
+                "status": "completed",
+                "started_at": "2026-01-01T00:00:00Z",
             },
             {
                 "name": "test",
-                "conclusion": "success",
-                "completed_at": "2026-01-01T00:01:00Z",
+                "conclusion": None,
+                "status": "in_progress",
+                "started_at": "2026-01-01T00:01:00Z",
             },
         ],
         [],
     )
-    assert evidence["required"]["test"]["conclusion"] == "success"
+    assert evidence["required"]["test"]["conclusion"] == "in_progress"
     assert evidence["required"]["agent-gates"]["kind"] == "missing"
     assert evidence["all_required_passed"] is False
 
@@ -1303,6 +1361,122 @@ def test_github_client_bounds_success_and_network_failure() -> None:
         )
     finally:
         updater.urllib.request.urlopen = original_urlopen
+
+
+def test_github_client_pagination_is_complete_and_bounded() -> None:
+    """List collection follows every page and rejects invalid or unbounded payloads."""
+    updater = load_module(
+        "post_merge_github_pagination", "scripts/update_post_merge_memory.py"
+    )
+    client = updater.GitHubClient("secret")
+    requested = []
+
+    def two_pages(path: str):
+        requested.append(path)
+        return list(range(100)) if path.endswith("page=1") else ["last"]
+
+    client.get_json = two_pages
+    assert client.get_paginated("/pulls?state=closed")[-1] == "last"
+    assert requested == [
+        "/pulls?state=closed&per_page=100&page=1",
+        "/pulls?state=closed&per_page=100&page=2",
+    ]
+
+    client.get_json = lambda _path: {"items": []}
+    assert_loop_error(
+        client_module := updater, lambda: client.get_paginated("/pulls"), "not a list"
+    )
+
+    calls = 0
+
+    def endless(_path: str):
+        nonlocal calls
+        calls += 1
+        return [None] * 100
+
+    client.get_json = endless
+    assert_loop_error(
+        client_module,
+        lambda: client.get_paginated("/pulls"),
+        "exceeded 100 pages",
+    )
+    assert calls == 100
+
+
+def test_committed_merge_intent_fails_closed_on_untrusted_github_payloads() -> None:
+    """The reviewed-head intent loader rejects ambiguous, corrupt, and mismatched files."""
+    updater = load_module(
+        "post_merge_intent_payloads", "scripts/update_post_merge_memory.py"
+    )
+    repository = "Flow-Research/workstream"
+    head_sha = "b" * 40
+    canonical_path = ".agent-loop/merge-intents/WS-AUTH-001-06.json"
+
+    class FakeClient:
+        def __init__(self, files, content=None):
+            self.files = files
+            self.content = content
+
+        def get_paginated(self, _path: str):
+            return self.files
+
+        def get_json(self, _path: str):
+            return self.content
+
+    added = [{"filename": canonical_path, "status": "added"}]
+    valid_content = {
+        "encoding": "base64",
+        "sha": "d" * 40,
+        "content": "\n".join(
+            textwrap.wrap(updater_base64(valid_loop_intent()), width=60)
+        ),
+    }
+    metadata, path, blob_sha = updater.load_committed_merge_intent(
+        FakeClient(added, valid_content), repository, 120, head_sha
+    )
+    assert metadata.chunk_id == "WS-AUTH-001-06"
+    assert (path, blob_sha) == (canonical_path, "d" * 40)
+
+    cases = [
+        ([], valid_content, "exactly one"),
+        (
+            [{"filename": canonical_path, "status": "modified"}],
+            valid_content,
+            "exactly one",
+        ),
+        (added, [], "invalid shape"),
+        (added, {**valid_content, "sha": "bad"}, "canonical SHA"),
+        (added, {**valid_content, "content": 7}, "no encoded content"),
+        (added, {**valid_content, "content": "not base64"}, "base64 UTF-8"),
+        (
+            added,
+            {**valid_content, "content": base64.b64encode(b"\xff").decode("ascii")},
+            "base64 UTF-8",
+        ),
+        (
+            added,
+            {**valid_content, "content": base64.b64encode(b"x" * 8193).decode("ascii")},
+            "exceeds 8192 bytes",
+        ),
+        (
+            [
+                {
+                    "filename": ".agent-loop/merge-intents/WS-AUTH-001-07.json",
+                    "status": "added",
+                }
+            ],
+            valid_content,
+            "path does not match",
+        ),
+    ]
+    for files, content, expected in cases:
+        assert_loop_error(
+            updater,
+            lambda files=files, content=content: updater.load_committed_merge_intent(
+                FakeClient(files, content), repository, 120, head_sha
+            ),
+            expected,
+        )
 
 
 def test_post_merge_collection_rejects_ambiguous_or_mismatched_prs() -> None:
@@ -1369,7 +1543,7 @@ def test_post_merge_collection_rejects_ambiguous_or_mismatched_prs() -> None:
     mismatched.update(
         {
             "merge_commit_sha": "c" * 40,
-            "body": valid_loop_marker(),
+            "body": valid_loop_intent(),
             "head": {"sha": "b" * 40},
         }
     )
@@ -1437,15 +1611,81 @@ def test_post_merge_state_rejects_corrupt_files_and_cli_misuse() -> None:
             updater, lambda: updater._assert_state_branch(root), "must be checked out"
         )
 
-        body_file = root / "body.md"
-        body_file.write_text(valid_loop_marker(), encoding="utf-8")
+        intent_repo = root / "intent-repo"
+        subprocess.run(
+            ["git", "init", "--initial-branch", "main", str(intent_repo)],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(intent_repo),
+                "config",
+                "user.email",
+                "test@example.test",
+            ],
+            check=True,
+        )
+        subprocess.run(
+            ["git", "-C", str(intent_repo), "config", "user.name", "Test"],
+            check=True,
+        )
+        (intent_repo / "README.md").write_text("base\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(intent_repo), "add", "README.md"], check=True)
+        subprocess.run(
+            ["git", "-C", str(intent_repo), "commit", "-m", "base"],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        subprocess.run(
+            ["git", "-C", str(intent_repo), "switch", "-c", "feature"],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        intent_path = intent_repo / ".agent-loop/merge-intents/WS-AUTH-001-06.json"
+        intent_path.parent.mkdir(parents=True)
+        intent_path.write_text(valid_loop_intent(), encoding="utf-8")
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(intent_repo),
+                "add",
+                intent_path.relative_to(intent_repo),
+            ],
+            check=True,
+        )
+        subprocess.run(
+            ["git", "-C", str(intent_repo), "commit", "-m", "intent"],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
         with contextlib.redirect_stdout(io.StringIO()):
             assert (
-                updater.main(["validate-pr-body", "--body-file", str(body_file)]) == 0
+                updater.main(
+                    [
+                        "validate-merge-intent",
+                        "--repository-root",
+                        str(intent_repo),
+                        "--base-ref",
+                        "main",
+                    ]
+                )
+                == 0
             )
         with contextlib.redirect_stderr(io.StringIO()):
             assert (
-                updater.main(["validate-pr-body", "--body-env", "MISSING_LOOP_BODY"])
+                updater.main(
+                    [
+                        "validate-merge-intent",
+                        "--repository-root",
+                        str(intent_repo),
+                        "--base-ref",
+                        "missing",
+                    ]
+                )
                 == 1
             )
         with contextlib.redirect_stderr(io.StringIO()):
@@ -1547,6 +1787,105 @@ def test_generated_loop_memory_validator_covers_corruption_matrix() -> None:
         finally:
             checker.ROOT = original_root
             checker.INITIATIVE_STATUS_FILES = original_status_files
+
+
+def test_full_merge_ledger_hash_chain_detects_history_tampering() -> None:
+    """Mutation or deletion of a non-tail ledger entry is detected independently."""
+    updater = load_module(
+        "post_merge_history_updater", "scripts/update_post_merge_memory.py"
+    )
+    checker = load_module(
+        "post_merge_history_checker", "scripts/check_loop_memory_state.py"
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        first = loop_record(updater)
+        second = loop_record(
+            updater,
+            sha="c" * 40,
+            first_parent_sha="a" * 40,
+            merged_at="2026-07-14T20:01:00Z",
+            pr_number=121,
+        )
+        updater.apply_merge_record(root, first)
+        updater.apply_merge_record(root, second)
+        ledger_path = root / updater.LEDGER_PATH
+        original_lines = ledger_path.read_text(encoding="utf-8").splitlines()
+
+        tampered = [json.loads(line) for line in original_lines]
+        tampered[0]["record"]["source"]["pr_title"] = "tampered"
+        ledger_path.write_text(
+            "".join(f"{json.dumps(entry)}\n" for entry in tampered),
+            encoding="utf-8",
+        )
+        assert_loop_error(
+            updater,
+            lambda: updater.validate_generated_state(root),
+            "entry hash is invalid",
+        )
+        assert any(
+            "hash chain" in failure
+            for failure in checker.generated_state_failures(root)
+        )
+
+        ledger_path.write_text(f"{original_lines[1]}\n", encoding="utf-8")
+        assert_loop_error(
+            updater,
+            lambda: updater.validate_generated_state(root),
+            "previous hash chain is invalid",
+        )
+        assert any(
+            "hash chain" in failure
+            for failure in checker.generated_state_failures(root)
+        )
+
+
+def test_merge_ledger_rejects_schema_record_and_ancestry_corruption() -> None:
+    """Every ledger envelope and first-parent link is validated before state changes."""
+    updater = load_module(
+        "post_merge_ledger_corruption", "scripts/update_post_merge_memory.py"
+    )
+    assert_loop_error(
+        updater,
+        lambda: updater._validate_ledger_entries([{}]),
+        "invalid schema",
+    )
+    invalid_record = {
+        "schema_version": 1,
+        "previous_entry_hash": None,
+        "record": [],
+        "entry_hash": "bad",
+    }
+    assert_loop_error(
+        updater,
+        lambda: updater._validate_ledger_entries([invalid_record]),
+        "JSON object",
+    )
+
+    bad_sha_record = loop_record(updater)
+    bad_sha_record["source"]["main_sha"] = "not-a-sha"
+    assert_loop_error(
+        updater,
+        lambda: updater._validate_ledger_entries(
+            [updater._ledger_entry(bad_sha_record, None)]
+        ),
+        "canonical main SHA",
+    )
+
+    first = loop_record(updater)
+    second = loop_record(
+        updater,
+        sha="c" * 40,
+        first_parent_sha="f" * 40,
+        pr_number=121,
+    )
+    first_entry = updater._ledger_entry(first, None)
+    second_entry = updater._ledger_entry(second, first_entry["entry_hash"])
+    assert_loop_error(
+        updater,
+        lambda: updater._validate_ledger_entries([first_entry, second_entry]),
+        "first-parent chain",
+    )
 
 
 def test_stale_authorization_rule_examples_are_rejected() -> None:
@@ -1885,10 +2224,14 @@ def main() -> int:
         test_loop_memory_workflow_isolated_write_boundary,
         test_post_merge_input_and_check_validation_fail_closed,
         test_github_client_bounds_success_and_network_failure,
+        test_github_client_pagination_is_complete_and_bounded,
+        test_committed_merge_intent_fails_closed_on_untrusted_github_payloads,
         test_post_merge_collection_rejects_ambiguous_or_mismatched_prs,
         test_post_merge_state_rejects_corrupt_files_and_cli_misuse,
         test_post_merge_cli_updates_and_shows_generated_state,
         test_generated_loop_memory_validator_covers_corruption_matrix,
+        test_full_merge_ledger_hash_chain_detects_history_tampering,
+        test_merge_ledger_rejects_schema_record_and_ancestry_corruption,
         test_stale_authorization_rule_examples_are_rejected,
         test_stale_authorization_discovery_includes_new_untracked_docs,
         test_stale_authorization_precedence_exemption_is_line_scoped,

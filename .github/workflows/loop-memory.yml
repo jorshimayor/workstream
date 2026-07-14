@@ -4,12 +4,9 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
-    inputs:
-      merge_sha:
-        description: Exact merged main SHA to replay
-        required: true
-        type: string
+  repository_dispatch:
+    types:
+      - loop-memory-replay
 
 permissions:
   checks: read
@@ -27,7 +24,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GITHUB_TOKEN: ${{ github.token }}
-      MERGE_SHA: ${{ github.event_name == 'push' && github.sha || inputs.merge_sha }}
+      MERGE_SHA: ${{ github.event_name == 'push' && github.sha || github.event.client_payload.merge_sha }}
       STATE_BRANCH: automation/loop-memory
 
     steps:
@@ -54,12 +51,40 @@ jobs:
           fi
           echo "state_dir=${state_dir}" >> "${GITHUB_OUTPUT}"
 
-      - name: Generate exact merged state
-        run: >-
-          python3 scripts/update_post_merge_memory.py update
-          --repository "${GITHUB_REPOSITORY}"
-          --merge-sha "${MERGE_SHA}"
-          --state-root "${{ steps.state.outputs.state_dir }}"
+      - name: Reconcile every unrecorded main commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          state_dir="${{ steps.state.outputs.state_dir }}"
+          if [[ ! "${MERGE_SHA}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Invalid merge SHA." >&2
+            exit 1
+          fi
+          current_sha=""
+          if [[ -f "${state_dir}/.agent-loop/STATE.json" ]]; then
+            current_sha=$(python3 -c \
+              'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["source"]["main_sha"])' \
+              "${state_dir}/.agent-loop/STATE.json")
+          fi
+          merge_shas=()
+          if [[ -z "${current_sha}" ]]; then
+            merge_shas=("${MERGE_SHA}")
+          elif git merge-base --is-ancestor "${MERGE_SHA}" "${current_sha}"; then
+            echo "Canonical state already contains this main commit."
+          elif git merge-base --is-ancestor "${current_sha}" "${MERGE_SHA}"; then
+            mapfile -t merge_shas < <(
+              git rev-list --reverse --first-parent "${current_sha}..${MERGE_SHA}"
+            )
+          else
+            echo "Canonical state is not on the target main ancestry." >&2
+            exit 1
+          fi
+          for merge_sha in "${merge_shas[@]}"; do
+            python3 scripts/update_post_merge_memory.py update \
+              --repository "${GITHUB_REPOSITORY}" \
+              --merge-sha "${merge_sha}" \
+              --state-root "${state_dir}"
+          done
 
       - name: Validate generated state
         run: >-

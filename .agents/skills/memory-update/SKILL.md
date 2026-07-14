@@ -10,7 +10,7 @@ generated state after merge.
 
 ## Before Merge
 
-- Put one valid `workstream-loop-state` JSON marker in the PR body.
+- Add one `.agent-loop/merge-intents/<chunk-id>.json` file to the reviewed PR.
 - Record the initiative, completed chunk, title, next chunk or `null`, and
   whether the next chunk requires a separate explicit start.
 - Keep implementation/specification memory in the owning PR where it can be
@@ -56,5 +56,6 @@ automation succeeds.
 - If a repeated issue appears, suggest policy/skill update.
 - Generated state is exempt from repeated review only on
   `automation/loop-memory` and only when written by the trusted workflow.
-- If automation fails, use `workflow_dispatch` with the exact merge SHA after
-  correcting metadata or permissions. Do not hand-edit generated state.
+- If automation fails, send the documented `loop-memory-replay`
+  `repository_dispatch` with the exact merge SHA after correcting permissions.
+  Merge-intent content is immutable after merge; do not edit generated state.

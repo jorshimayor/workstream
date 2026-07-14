@@ -50,7 +50,7 @@ Workstream is how Flow measures, certifies, and coordinates useful human-agent w
 - CodeRabbit, CI, and GitHub review are external checks. They supplement internal reviewer agents; they do not replace them.
 - Do not open, push, or ask for review on a PR until required internal reviewer tracks have run for the chunk, all valid findings are addressed or documented, and no sub-agent sessions remain open.
 - Do not merge a PR unless the user explicitly approves that specific PR for merge.
-- Every PR body must contain one valid `workstream-loop-state` JSON marker so the merge workflow can record the completed chunk and its next explicit gate without inferring intent from prose.
+- Every PR must add exactly one `.agent-loop/merge-intents/<chunk-id>.json` file so the merge workflow can record the completed chunk and its next explicit gate from reviewed, immutable commit content rather than mutable PR prose.
 - New or materially changed backend subsystems must remain at or above 90
   percent test coverage. Until the dedicated global-coverage work reaches 90
   percent, CI must also preserve the current repository-wide 78 percent

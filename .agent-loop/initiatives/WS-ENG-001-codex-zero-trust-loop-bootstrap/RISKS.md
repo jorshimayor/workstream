@@ -11,7 +11,7 @@
 | Write-capable workflow is tricked into executing PR code | Critical | Trigger only from protected-main push or explicit replay, run the updater from trusted `main`, disable checkout credential persistence, and never use `pull_request_target`. |
 | Automation writes to protected `main` | Critical | Hard-code and test `automation/loop-memory` as the sole push ref; do not create, approve, or merge a bot PR. |
 | Concurrent merges race and overwrite state | High | Serialize workflow runs, enforce monotonic merge timestamps, reject conflicting duplicate SHAs, and keep an append-only ledger. |
-| Missing PR metadata forces intent inference | High | Agent Gates requires one strict JSON marker; updater fails closed on missing, duplicate, malformed, or inconsistent metadata. |
+| Missing PR metadata forces intent inference | High | Agent Gates requires one newly added strict merge-intent JSON file; updater reloads its reviewed head blob and fails closed on missing, modified, duplicate, malformed, or inconsistent metadata. |
 | A required check is missing or failed despite merge | High | Record observed conclusions and mark generated integrity as attention required; never report missing evidence as passed. |
-| Automation permissions or transient GitHub failure prevent update | Medium | Preserve idempotent `workflow_dispatch` replay by exact merge SHA; do not hand-edit generated state. |
+| Automation permissions or transient GitHub failure prevent update | Medium | Preserve idempotent trusted-default-branch `repository_dispatch` replay by exact merge SHA; do not hand-edit generated state. |
 | Generated branch is edited manually | High | Declare workflow-only ownership, validate JSON/render/ledger agreement, and reject conflicting replay state. |
