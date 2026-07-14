@@ -99,7 +99,7 @@ file changed. GitHub checks must pass before merge.
 
 ## Reviewer Results
 
-Exact SHA `44901286b5c867a414cc39a9ccff5307bd23ad52` passed senior engineering,
+Exact SHA `ea16fd8bd2d9bc38b37c12003e51416c08a56678` passed senior engineering,
 architecture, reuse/dedup, docs, product/ops, QA/test, CI integrity, test delta,
 and security/auth review with no remaining findings.
 
@@ -109,9 +109,11 @@ CodeRabbit run `30676bdc-7525-4deb-8f9e-a87d42c64f92` produced four
 actionable comments. The response replaces positional reason mapping with
 explicit event keys, types the task audit cleanup session, makes the inactive
 AUTH-05B verification block executable, and records AUTH-05A-specific reviewer
-references. The generic CodeRabbit docstring warning is not applicable because
-the repository's configured docstring gate passes at 95.1 percent. GitHub
-Backend CI remains the final full-suite gate.
+references. Internal QA additionally aligned the full-suite example with
+Backend CI by running isolation-runner self-tests outside the isolated suite.
+The generic CodeRabbit docstring warning is not applicable because the
+repository's configured docstring gate passes at 95.1 percent. GitHub Backend
+CI remains the final full-suite gate.
 
 ## Remaining Risks
 

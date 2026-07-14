@@ -1,8 +1,8 @@
 # WS-AUTH-001-05A Internal Review Evidence
 
-Reviewed code SHA: `44901286b5c867a414cc39a9ccff5307bd23ad52`
-Reviewed at: `2026-07-14T12:45:18Z`
-Reviewer run IDs: `AUTH-05A-4490128-eng-final`, `AUTH-05A-4490128-qa-final`, `AUTH-05A-4490128-security-final`
+Reviewed code SHA: `ea16fd8bd2d9bc38b37c12003e51416c08a56678`
+Reviewed at: `2026-07-14T13:18:49Z`
+Reviewer run IDs: `AUTH-05A-ea16fd8-eng-external-fix`, `AUTH-05A-ea16fd8-qa-external-fix`, `AUTH-05A-ea16fd8-security-external-fix`
 
 ## Deterministic Evidence
 
@@ -46,7 +46,10 @@ Review cycles repaired valid findings covering system-scope SQL `NULL`
 semantics, canonical UUID event IDs, duplicate JSON keys, denial codes,
 typed/direct-SQL event parity, mutable-model service custody, warning and
 exception retention, state-changing top-level and nested mappings, and mutable
-JSON buffers. Every repair has focused behavior proof.
+JSON buffers. External review repairs removed positional event coupling, typed
+the task cleanup session, and made the inactive AUTH-05B verification block
+executable and consistent with Backend CI. Every repair has focused behavior
+proof.
 
 Valid findings addressed: yes
 
@@ -54,5 +57,6 @@ Open sub-agent sessions: none
 
 ## Remaining Gate
 
-External GitHub checks, CodeRabbit review, and explicit human merge approval
-remain pending. AUTH-05B and later authorization chunks remain inactive.
+GitHub Backend and CodeRabbit follow-up checks plus explicit human merge
+approval remain pending. AUTH-05B and later authorization chunks remain
+inactive.
