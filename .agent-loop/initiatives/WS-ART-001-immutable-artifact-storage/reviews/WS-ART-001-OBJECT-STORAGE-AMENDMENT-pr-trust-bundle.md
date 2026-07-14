@@ -102,8 +102,10 @@ artifact metadata and provenance, not artifact bytes.
 - [x] Cumulative 90 percent subsystem coverage and the 78 percent repository
   floor cannot be silently weakened.
 - [x] No backend runtime path entered the planning chunk.
-- [x] All nine internal reviewer tracks passed exact SHA
-  `8f29e46f84415b3506d211e3229f224e6ad4e085`.
+- [x] All nine internal reviewer tracks reviewed exact SHA
+  `1545d9aa37329c13efa53f7ad9076ffca1fbfaf6`; the expected evidence/status
+  findings are closed by the permitted post-review files in this publication
+  commit.
 
 ## Tests And Checks Run
 
@@ -128,7 +130,7 @@ Result summary:
 ```text
 Ruff passed.
 Stale artifact, authorization, and wording scans passed.
-Loop-memory and 73 changed Markdown link checks passed.
+Loop-memory and 75 changed Markdown link checks passed.
 44 agent-gate regression tests passed in a hash-pinned temporary environment.
 Diff hygiene passed; runtime-scope guard printed no paths.
 ```
@@ -170,22 +172,22 @@ External review response file will be created after external comments exist:
 
 ## Reviewer Results
 
-Reviewed code SHA: 8f29e46f84415b3506d211e3229f224e6ad4e085
+Reviewed code SHA: 1545d9aa37329c13efa53f7ad9076ffca1fbfaf6
 
-Reviewed at: 2026-07-14T19:56:49Z
+Reviewed at: 2026-07-14T21:53:01Z
 
-Reviewer run IDs: senior-engineering=019f622a-d6d9-7992-8363-2bd65e69dcaa; architecture=019f622a-e357-7ab1-ad29-fae832d112ed; QA/test=019f622b-0089-7a32-9fb7-64bb063f2a97; security/auth=019f622b-2040-7c21-aa63-ed0879a126d0; product/ops=019f622f-efed-7d53-a998-84301da54454; reuse/dedup=019f622f-f6de-7431-a44c-6d26c0195bec; CI-integrity=019f6230-0105-7d33-8d69-e1288c9005c9; test-delta=019f6230-0cca-7a23-8716-dd253d5de7f9; docs=019f6230-1621-7c31-904b-43eeca5c3a2a
+Reviewer run IDs: senior-engineering=019f6291-c957-74c1-afb2-a34334693c8b; architecture=019f6291-cd22-7f61-8ca5-b3a6dd25fe47; QA/test=019f6291-d20a-7132-ae35-4384d1a207ad; security/auth=019f6291-db98-7332-ae5e-f6b2959a7242; product/ops=019f6295-e4f5-7762-b6cb-3e0e84475f6e; reuse/dedup=019f6295-e9e2-73f0-80c3-869fb2feb748; CI-integrity=019f6295-eff7-7ff3-9923-b904489c2d4c; test-delta=019f6295-f6b5-7811-9192-a58e6294e808; docs=019f629b-0765-7a72-a68a-29e7e95fed5f
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS | None | Publication-state exact SHA passed. |
-| QA/test | PASS | None | Exact-head provenance and gate behavior passed. |
+| senior engineering | PASS | None | Merge-resolution exact SHA passed. |
+| QA/test | PASS WITH LOW RISKS | None | Exact-SHA evidence rebind passed closure review; only conservative state/provenance lows remain. |
 | security/auth | PASS | None | No security regression or unowned authority surface. |
-| product/ops | PASS | None | No product workflow or decision drift. |
-| architecture | PASS | None | Provider and capability boundaries remain sound. |
+| product/ops | PASS WITH LOW RISKS | None | Amendment status now reflects the post-merge checkpoint; the unchanged queue wording remains conservatively behind. |
+| architecture | PASS WITH LOW RISKS | None | Provider and capability boundaries remain sound; stale gate wording was corrected. |
 | CI integrity | PASS | None | No gate or coverage weakening. |
 | docs | PASS | None | Active terminology and durable state are consistent. |
-| reuse/dedup | PASS | None | Equality-guarded standalone scanner data accepted. |
+| reuse/dedup | PASS WITH LOW RISKS | None | Equality-guarded standalone scanner data accepted. |
 | test delta | PASS | None | No removed, skipped, or weakened test. |
 
 Internal evidence:

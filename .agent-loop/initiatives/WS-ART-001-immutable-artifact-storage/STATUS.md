@@ -38,14 +38,15 @@ owns MinIO and AWS S3. There is no active R2 chunk.
 
 ## Gate
 
-Publication-state SHA `8f29e46f84415b3506d211e3229f224e6ad4e085`
-passed every required internal track: senior engineering, architecture,
-QA/test, security/auth, product/ops, reuse/dedup, CI integrity, test delta, and
-docs. Every reviewer used `gpt-5.5` with high reasoning and every reviewer
-session is closed.
+Merge SHA `1545d9aa37329c13efa53f7ad9076ffca1fbfaf6` received every
+required internal track after `main` advanced through AUTH-05B PR #119: senior
+engineering, architecture, QA/test, security/auth, product/ops, reuse/dedup, CI
+integrity, test delta, and docs. Valid evidence/status findings are closed in
+the permitted post-review files. Every reviewer used `gpt-5.5` with high
+reasoning and every reviewer session is closed.
 
 Deterministic proof passes: Ruff; stale artifact, authorization, and Workstream
-wording scans; loop-memory state; 73 changed Markdown links; diff hygiene; the
+wording scans; loop-memory state; 75 changed Markdown links; diff hygiene; the
 runtime-scope guard; and 44 agent-gate regression tests in a PEP 668-safe,
 hash-pinned temporary environment.
 

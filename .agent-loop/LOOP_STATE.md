@@ -8,14 +8,13 @@
 - Branch: `codex/ws-art-001-object-storage-planning-amendment`
 - Worktree: `/home/abiorh/flow/workstream`
 - Latest integrated `main` merge commit: `ad71c7e` from PR #119.
-- Status: PR #120 is open. Its pre-integration publication state passed every
-  required internal track and GitHub CI, but `main` advanced through AUTH-05B
-  PR #119. The bounded three-file merge resolution must receive fresh exact-SHA
-  review before the branch is pushed again.
-- Current gate: commit the conflict resolution, rerun deterministic proof and
-  all required `gpt-5.5` high reviewer tracks, rebind evidence, then push and
-  stop for external and explicit human review. No storage runtime implementation
-  is active.
+- Status: PR #120's branch integrates AUTH-05B PR #119 through merge SHA
+  `1545d9aa37329c13efa53f7ad9076ffca1fbfaf6`. The bounded three-file conflict
+  resolution passed deterministic proof and every required `gpt-5.5` high
+  reviewer track; all reviewer sessions are closed.
+- Current gate: publish the evidence-bound branch, wait for fresh GitHub checks
+  and external review, then stop for explicit human review and merge approval.
+  No storage runtime implementation is active.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
