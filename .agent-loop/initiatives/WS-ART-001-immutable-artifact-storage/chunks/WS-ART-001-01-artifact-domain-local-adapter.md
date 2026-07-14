@@ -53,8 +53,9 @@ Provider-owned local receipts, append-only Workstream
 `ArtifactOperationReceipt` rows, and shared `AuditEvent` rows are three distinct
 records. Binding, release, quarantine, and reconciliation write audit evidence
 in the same caller-owned database transaction as their domain transition.
-Automated reconciliation is attributed to the service principal
-`workstream.artifact.reconciler`, not to a fabricated human actor.
+This merged v1 chunk used automated reconciliation. The object-storage
+amendment supersedes that runtime concept: future v2 provider observation is
+attributed to `workstream.artifact.verifier`, never to a fabricated human actor.
 
 ### Provider Contract
 

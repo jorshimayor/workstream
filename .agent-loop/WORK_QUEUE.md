@@ -2,7 +2,9 @@
 
 ## In Progress
 
-None.
+| Chunk | Title | Risk | Status |
+|---|---|---:|---|
+| `WS-ART-001-OBJECT-STORAGE-AMENDMENT` | AWS-First Object Storage Planning Amendment | L1 | Parallel planning only; no runtime implementation active |
 
 ## Planned Next
 
@@ -12,7 +14,13 @@ None.
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Paused for AUTH priority; no valid replacement baseline yet |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
-| `WS-ART-001-02` | Flow Node Adapter And Reconciliation | L1 | Proposed; inactive pending separate explicit user start |
+| `WS-ART-001-02A1` | External Service Adapter Foundation | L1 | Proposed only after amendment merge and explicit user start |
+| `WS-ART-001-02A2` | Committed Source And Local Preparation | L1 | Inactive until 02A1 merge and explicit user start |
+| `WS-ART-001-02A3` | ArtifactStore v2 Local Clean Cut | L1 | Inactive until 02A2 merge and explicit user start |
+| `WS-ART-001-02B1` | S3-Compatible MinIO And AWS | L1 | Inactive until 02A3 merge and explicit user start |
+| `WS-ART-001-02C1` | Verification Publication And Fencing | L1 | Inactive until 02B1 merge and explicit user start |
+| `WS-ART-001-02C2` | Recovery Attempt And Idempotency Chain | L1 | Inactive until 02C1 merge and explicit user start |
+| `WS-ART-001-02D` | Operator Artifact Operations And AWS Readiness | L1 | Inactive until 02C2 and exact AUTH prerequisites |
 
 ## Completed
 
@@ -66,8 +74,9 @@ automatically.
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.
 
-`WS-ART-001-01` is merged. Do not start `WS-ART-001-02` or edit Flow Node until
-the user gives a separate explicit start signal.
+`WS-ART-001-01` is merged. The parallel planning amendment makes AWS S3 the
+only v0.1 production provider and defers R2 plus Flow Node. Do not start 02A1
+until the amendment merges and the user gives a separate explicit start signal.
 
 Coverage work proceeds independently in its own worktree and is not owned by
 this AUTH queue update.

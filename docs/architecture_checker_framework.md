@@ -198,7 +198,9 @@ Workstream default submission artifact rules require:
 - contributor attestation
 - safe relative artifact paths
 - production artifact hashes shaped as `sha256:<64 lowercase hex>`
-- validated `local://`, `s3://`, or `r2://` storage references
+- pre-cutover only: validated `local://`, `s3://`, or `r2://` storage
+  references; `WS-ART-001-05` removes caller-supplied storage references and
+  checkers then consume Workstream artifact bindings only
 - no credentials, signed URLs, query strings, raw local filesystem paths, or token-bearing references
 - no default forbidden artifacts such as `.env`, `.git`, private keys, credentials, secrets, tokens, `.pem`, `.key`, or `node_modules`
 

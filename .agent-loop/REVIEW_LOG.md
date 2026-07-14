@@ -11,6 +11,24 @@ post-merge memory merges and the user gives a separate explicit start.
 Senior engineering, docs, architecture, reuse, product/ops, QA/CI/test-delta,
 and security/auth/privacy review passed for this memory-only reconciliation.
 
+## 2026-07-14 - WS-ART-001 AWS-First Replan Approved
+
+Exact-head architecture, senior-engineering, QA/test, and security/auth review
+of planning candidate `70679ab` failed. All four sessions were closed. Valid
+findings were unresolved AUTH ownership for later artifact actions, an
+over-broad speculative reconciliation permission, R2 parent-credential and
+per-workload sidecar risk, undefined guide-URL retrieval security, a missing
+concrete WS-REV handoff dependency, and non-rerunnable coverage metadata paths.
+
+Cloudflare's current contract confirms that temporary credentials derive from a
+parent R2 API token and cannot exceed that parent's permissions. The user
+therefore approved the simpler boundary: AWS S3 is the only v0.1 production
+provider, MinIO remains local/CI protocol proof, LocalStorage remains focused
+development, and R2 plus Flow Node are deferred. The planning branch is rebased
+onto integrated `main` at `8e1cde6`; no artifact runtime implementation is
+active. The amended exact SHA must pass every required internal reviewer before
+PR publication.
+
 ## 2026-07-14 - WS-AUTH-001-05A CodeRabbit Response
 
 CodeRabbit run `30676bdc-7525-4deb-8f9e-a87d42c64f92` produced four actionable

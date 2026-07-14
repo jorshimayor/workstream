@@ -25,8 +25,12 @@
   AUTH receives the laptop's test capacity. Its last official whole-app result
   remains `6466/8159` statements (`79.249908%`); no replacement evidence exists.
 - Parallel initiative: `WS-ART-001-01` merged through PR #101 as `050eb15`.
-  `WS-ART-001-02` remains proposed and inactive pending a separate explicit
-  user start.
+  `WS-ART-001-OBJECT-STORAGE-AMENDMENT` is active as planning only on
+  `codex/ws-art-001-object-storage-planning-amendment`, rebased onto integrated
+  `main` at `8e1cde6`. The user approved AWS S3 as the only v0.1 production
+  provider; MinIO remains local/CI proof, LocalStorage remains focused
+  development, and R2 plus Flow Node are deferred. Exact-head contract repair
+  and internal review are required before 02A1 can start.
 - Parallel initiative: `WS-POL-002-03` merged through PR #90 as `a7aa474`; its
   post-merge memory merged through PR #94 as `b1270d7`. `WS-POL-002-04` remains
   inactive pending the relevant authorization proof and a separate explicit

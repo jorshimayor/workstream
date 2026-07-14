@@ -65,6 +65,10 @@ review/compensation permissions beyond registered future definitions
 ## Acceptance criteria
 
 - Permission identifiers are a closed registered enum/value set.
+- The closed registry includes the exact artifact read, retry, recovery,
+  audit, verification, reconciliation, and pending-work scan permissions in
+  `docs/spec_authorization_service.md`; broad `operations.*` permissions are
+  not aliases for artifact authority.
 - Request context contains verified identity plus current local actor/grant state
   and correlation/request IDs.
 - Authorization resolves actor/link state, grant candidates, canonical project,
@@ -111,7 +115,8 @@ git diff --check
 ## Human review focus
 
 Review deny-by-default ordering, permission matrix completeness, canonical
-resource scope, concealment behavior, and transaction-local revalidation.
+resource scope, artifact permission separation, concealment behavior, and
+transaction-local revalidation.
 
 ## Stop conditions
 

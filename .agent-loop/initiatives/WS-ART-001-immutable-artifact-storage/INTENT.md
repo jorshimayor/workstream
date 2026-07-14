@@ -1,130 +1,112 @@
 # Intent: WS-ART-001 Immutable Artifact Storage
 
-## Problem Being Solved
+## Problem
 
-Workstream currently records caller-supplied artifact URIs and hashes without
-owning the exact bytes. Flow Node contains content-addressed storage primitives,
-but its REST API does not use them and is not a production Workstream boundary.
+Workstream records artifact URIs and caller-declared hashes without owning the
+exact bytes. Pre-submit checks, post-submit checks, reviewers, revisions, and
+audit records therefore cannot prove that they consumed one immutable artifact.
 
-## Why This Work Matters
+## Approved v0.1 Direction
 
-Pre-submit and post-submit checks, reviewers, revisions, and audit records must
-all reference the same immutable bytes. A declared hash or local path is not
-evidence that Workstream stored, verified, retained, or checked those bytes.
-
-## Current Behavior
-
-- Guide source manifests and hashes are stored in Postgres; source bytes are not.
-- Submission requests accept `package_uri`, `package_hash`, artifact hash lists,
-  and evidence URIs from contributors.
-- Checkers validate metadata declarations and cannot retrieve exact bytes.
-- Flow Node REST publish computes a CID and records metadata but does not store
-  bytes through its existing DAG/block service.
-- No runtime `ArtifactStorePort`, `ArtifactBinding`, `LocalStorageAdapter`, or
-  `FlowNodeAdapter` exists in Workstream.
-
-## Target Behavior
+Workstream will use one provider-neutral `ArtifactStore` capability:
 
 ```text
-client bytes
--> Workstream-authorized streaming upload
--> ArtifactStorePort
--> LocalStorageAdapter (development/CI) or FlowNodeAdapter (production)
--> Workstream-computed digest/size + provider receipt
--> ArtifactUploadItem + ArtifactContent + ArtifactReplica
--> sealed artifact-set commitment
--> immutable ArtifactBinding created at exact resource attachment
--> exact content locked to guide/submission/checker/review context
+LocalStorageAdapter          development and focused unit tests
+S3CompatibleArtifactStore    integration and production
+AWS S3 or Cloudflare R2      production provider selected by configuration
 ```
 
-Workstream owns artifact meaning, actor/project/resource provenance,
-authorization, lifecycle bindings, operation intent, and receipt history. A
-storage provider owns immutable bytes and provider operation facts. Flow Node
-implements storage, verification, retention, and retrieval without owning
-Workstream product provenance.
+Flow Node is not a v0.1 dependency. It remains a separately planned future
+`ArtifactStore` implementation and does not run, deploy, or block Workstream
+v0.1.
 
-## Design Chosen
+Provider selection is not a hot switch for populated storage. Each replica
+records immutable provider profile and storage namespace; changing providers
+requires a separate verified migration and maintenance cutover.
 
-- Separate upload-session/item, provider-neutral content, immutable logical
-  binding, provider-replica, and append-only receipt records. Staging is owned
-  by the upload item and never represented as a binding.
-- Use `ReviewPacketManifest` for the system-generated reviewer packet and
-  `ReviewEvidenceArtifact` for reviewer attachments; both reference
-  `ArtifactBinding`.
-- Stream uploads through Workstream in v0.1. Do not introduce direct-upload or
-  presigned capability complexity before the authority path is proven.
-- Persist Workstream-computed SHA-256 and byte count independently of opaque
-  provider identifiers. Flow Node CID/DAG details remain provider receipts.
-- Require full-provider-object verification and durable retention; Flow Node
-  maps these to bounded recursive DAG verification and pinning.
-- Keep Workstream evidence private and disable Flow Node network announcement by
-  default.
-- Add a focused Flow Node build/runtime target through ordinary PRs to Flow Node
-  `main`; the deployed target contains only the Workstream evidence surface
-  while the broader Flow Node product remains preserved.
-- Make a clean pre-production cutover. Remove obsolete URI/hash contracts and
-  rebuild incompatible local data; do not add compatibility aliases.
+## Success State
 
-## Alternatives Considered
+```text
+authorized bytes
+-> bounded server preparation and SHA-256/byte count
+-> optional client commitment comparison
+-> private Workstream upload stream
+-> content-addressed S3-compatible object key
+-> independent complete-object verification
+-> immutable ArtifactContent and ArtifactReplica facts
+-> sealed artifact-set commitment
+-> ArtifactBinding to guide, submission, checker input, log, or output
+```
 
-- Trust contributor URIs and hashes: rejected because checkers cannot prove the
-  bytes.
-- Store artifact bytes in Postgres: rejected because Postgres owns lifecycle
-  state, not object bytes.
-- Let clients upload directly to Flow Node immediately: deferred because secure
-  one-time upload capabilities add an unnecessary second authority path.
-- Copy Flow Node storage code into Workstream: rejected because it breaks the
-  external evidence boundary.
-- Keep every existing Flow Node feature in the Workstream deployment: rejected;
-  the focused runtime target must expose only required evidence capabilities.
+PostgreSQL stores metadata, bindings, operation receipts, lifecycle state,
+audit, and recovery coordination. The object provider stores bytes only.
 
-## Boundaries Preserved
+## First-Principle Constraints
 
-- Identity Issuer authenticates; Workstream authorizes product access.
-- Human bearer tokens are never forwarded to Flow Node.
-- Workstream remains the sole lifecycle authority.
-- Flow Node cannot accept, reject, route, or advance work.
-- PostgreSQL stores bindings and receipts, never artifact bytes.
-- Redis remains coordination, never canonical evidence state.
+- Workstream computes and verifies canonical SHA-256 and byte count.
+- Production writes use only Workstream's server-computed SHA-256 and byte
+  count; any client commitment is checked before provider I/O.
+- Object keys contain no customer filename, project, task, actor, or secret.
+- The production bucket is private and is never exposed through a public or
+  cached domain.
+- Clients do not receive provider credentials, signed URLs, or direct-upload
+  authority in v0.1.
+- Provider success does not make bytes bindable. A complete independent read
+  and hash must pass first.
+- Workstream references and audit records are not encoded as provider tags,
+  retention references, or object metadata.
+- v0.1 performs no physical object deletion. Release and garbage collection
+  require a later approved deletion-policy initiative.
+- Local storage is forbidden in staging and production.
+- No compatibility alias or dual provider-construction path is retained.
 
-## Expected Risks
+## Why S3-Compatible Object Storage First
 
-- Cross-repository contract drift.
-- Partial DAG pinning or verification.
-- Checking different bytes from those later submitted.
-- Provider outage being misclassified as contributor failure.
-- Artifact disclosure through retrieval or provider status surfaces.
-- Large uploads exhausting API memory or worker capacity.
-- Legacy pre-production records conflicting with the clean schema.
+S3-compatible storage already supplies durable private object storage, range
+reads, and conditional writes. AWS S3 and Cloudflare
+R2 are both valid production providers behind the same adapter. Workstream
+should build its product semantics instead of first operating a new storage
+service.
 
-## What Must Not Change
+Flow Node remains strategically useful, but extracting, authenticating,
+hardening, deploying, and integrating it is unnecessary to prove Workstream's
+v0.1 contribution lifecycle.
 
-- Review decision values remain `accept`, `needs_revision`, and `reject`.
-- WS-AUTH authority remains local grants plus resource/lifecycle guards.
-- Existing checker outcome meaning is not redesigned in storage foundation
-  chunks.
-- The broader Flow Node product remains intact; only the focused deployed target
-  excludes unrelated capabilities.
-- No blockchain settlement, marketplace, or public artifact publication.
+## Non-Goals
 
-## How This Will Be Proven
+- no Flow Node runtime or adapter implementation;
+- no public artifact publication or CDN path;
+- no presigned or browser-direct uploads;
+- no provider-side legal hold, pin, retain, or release API;
+- no physical deletion or garbage collection;
+- no semantic search;
+- no review packet or reviewer evidence implementation, which remains WS-REV;
+- no payment, reputation, blockchain, or marketplace expansion.
 
-- One adapter contract suite runs against local and Flow Node adapters.
-- Ingest/retrieve proves byte-for-byte equality for small, multi-chunk, and tree
-  artifacts.
-- Workstream-computed SHA-256 and byte count are compared with provider facts.
-- Recursive pin and corruption/missing-block tests pass.
-- Pre-submit failure creates no submission and cannot swap checked bytes.
-- Post-submit checker input references the same immutable binding.
-- Flow Node outage produces stable `artifact_storage_unavailable` on existing
-  owning records, never a new task/review state, contributor failure, review
-  decision, contribution, compensation, or reputation event.
-- Unauthorized retrieval leaks no artifact metadata or counts.
-- Docker Compose runs Postgres, Redis, Workstream, Celery, and focused Flow Node
-  locally for a real API drill.
+## Proof
 
-## Human Decisions Required
+- one conformance suite runs against LocalStorage and an S3-compatible MinIO
+  service;
+- production configuration profiles are proven for AWS S3 and Cloudflare R2;
+- conditional concurrent writes cannot overwrite an existing object;
+- adversarial first-writer input cannot occupy a client-selected digest key;
+- complete-object verification catches changed, truncated, missing, or
+  mismatched bytes;
+- broker publication failure is recovered by a periodic PostgreSQL scanner;
+- Operator retry is authorized, reason-bound, observable, and executed only by
+  Celery under PostgreSQL generation fencing;
+- guide, pre-submit, post-submit, and reviewer-facing records resolve the same
+  immutable content commitment;
+- the final real API drill runs without direct database inspection.
 
-- Approve this plan and each implementation chunk separately.
-- Approve the eventual production service-token issuer/audience configuration.
-- Approve retention/legal-hold policy and quotas before production ingestion.
+## Human Decisions
+
+- S3-compatible object storage for v0.1 and deferred Flow Node: approved on
+  2026-07-14.
+- One typed repository-wide external-service adapter/factory convention was
+  explicitly approved during this planning work. WS-ART migrates only
+  ArtifactStore; auth and agent-runtime owners decide and execute their own
+  later clean cuts.
+- Physical deletion: explicitly deferred.
+- Each implementation chunk still requires a separate explicit start and
+  explicit merge approval.

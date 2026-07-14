@@ -45,7 +45,7 @@ backend/scripts/api_contract_e2e.py
 docs/operations_authorization_service.md
 docs/architecture_data_model.md
 .agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/PLAN.md
-.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/chunks/WS-ART-001-02-flow-node-adapter-reconciliation.md
+.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/chunks/WS-ART-001-02A1-external-service-adapter-foundation.md
 .agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/**
 .agent-loop/LOOP_STATE.md
 .agent-loop/WORK_QUEUE.md

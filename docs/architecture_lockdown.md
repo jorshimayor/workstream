@@ -1,6 +1,6 @@
 # Architecture Lockdown
 
-Last updated: 2026-06-06
+Last updated: 2026-07-14
 
 ## Purpose
 
@@ -147,6 +147,30 @@ In v0.1, this is enforced through:
 - reputation events tied to outcomes
 
 An explicit owner-agent execution workspace is later work.
+
+### Immutable Artifact Storage
+
+Workstream stores guide material, submission artifacts, checker inputs, checker
+logs, and checker outputs through the provider-neutral `ArtifactStore` port.
+
+```text
+LocalStorageAdapter          development and focused tests only
+S3CompatibleArtifactStore    AWS S3 or Cloudflare R2 in production
+MinIO                        local and CI S3-compatible integration proof
+```
+
+AWS S3 and Cloudflare R2 are configuration choices behind the same adapter.
+Neither provider owns product identity, authorization, lifecycle, bindings,
+audit, or integrity truth. PostgreSQL owns those facts; object storage owns
+private immutable bytes.
+
+Provider acknowledgement, ETag, and provider checksum metadata are not enough
+to bind content. Workstream independently reads, hashes, and counts the complete
+object before it becomes bindable. Production clients receive no provider
+credentials, object references, signed URLs, or direct-upload authority.
+
+v0.1 performs no physical deletion of completed artifacts. Flow Node is a
+separate deferred adapter initiative and is not a v0.1 runtime dependency.
 
 ### Contribution Records
 

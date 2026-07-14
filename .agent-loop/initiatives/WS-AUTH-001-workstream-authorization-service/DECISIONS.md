@@ -167,7 +167,7 @@ Workstream depends on one provider-neutral `IdentityIssuerVerifier` capability
 port. It extends the repository-wide `ExternalServiceAdapter` convention and
 is constructed through the typed
 `ExternalServiceAdapterFactory[IdentityIssuerVerifier]` foundation being
-prepared by `WS-ART-001-01C`. AUTH must adopt that merged shared foundation; it
+prepared by `WS-ART-001-02A1`. AUTH must adopt that merged shared foundation; it
 must not create a second generic adapter registry or factory.
 
 The `/auth` dependency and product authorization layers must not change when an

@@ -170,9 +170,29 @@ operations.task.start_override
 operations.submission_gate.repair
 operations.checker.retry
 
+artifact.binding.read
+artifact.replica.read
+artifact.receipt.read
+artifact.verification_job.read
+artifact.verification_job.retry
+artifact.recovery_attempt.read
+artifact.recovery_attempt.execute
+artifact.audit.read
+artifact.verification.execute
+artifact.reconciliation.execute
+artifact.pending_work.scan
+
 audit.read
 audit.export
 ```
+
+Artifact permissions are deliberately resource- and operation-specific.
+`artifact.*.read` permissions do not authorize retry or recovery, human
+Operator permissions do not authorize internal execution, and internal service
+permissions do not authorize Operator APIs. AUTH-07 owns this closed registry,
+AUTH-08 owns the Operator grant definitions, AUTH-09 owns the service
+principals, and WS-ART consumes the resulting decisions without registering
+permissions or inferring authority.
 
 Adding a permission requires a specification/ADR update and human approval.
 Routers cannot invent identifiers or evaluate grant unions.

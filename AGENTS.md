@@ -37,7 +37,17 @@ Workstream is how Flow measures, certifies, and coordinates useful human-agent w
 - FastAPI background tasks are acceptable for simple local v0.1 jobs; use Celery or equivalent durable workers when retries, scheduling, isolation, or distributed execution are needed.
 - Postgres is the record database.
 - Local filesystem storage is acceptable only behind an object-storage abstraction compatible with R2/S3-style storage.
+- Bounded private ephemeral processing scratch is not artifact storage. It may
+  use local files only through the canonical `ArtifactScratchManager` with
+  aggregate quotas, crash cleanup, and no durable product reference.
 - Do not expand into blockchain settlement, marketplace, external source adapters, automated routing, or agent workspace until the internal loop is proven.
+- External integrations must follow ADR 0014: extend the shared
+  `ExternalServiceAdapter` convention through a typed capability port and use a
+  typed `ExternalServiceAdapterFactory[TAdapter]` with explicit
+  composition-root registration. Do not add ad hoc factories, runtime plugin
+  discovery, generic service locators, concrete-adapter imports in product
+  services, compatibility aliases, fallback constructors, or dual factory
+  paths.
 - Every non-trivial task starts with the smallest applicable loop artifact: an initiative plan for large work, or a chunk contract for bounded work.
 - Do not implement a chunk until its allowed files, not-allowed changes, acceptance criteria, risk class, verification commands, and required reviewers are explicit.
 - Do not begin the next chunk automatically after finishing the current chunk.

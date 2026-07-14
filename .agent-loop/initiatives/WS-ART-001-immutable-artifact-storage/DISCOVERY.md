@@ -1,99 +1,118 @@
-# Discovery: WS-ART-001 Immutable Artifact Storage
+# Discovery: WS-ART-001 S3-Compatible Object Storage Amendment
 
-## Repositories Inspected
+## Repository State
 
-- Workstream behavior was inspected after PR #93 (`772af1d`) and the planning
-  diff was rebased/revalidated on `main` after PR #96 (`1d3e487`).
-- Flow Node `main` at `2399eb4`.
+- `WS-ART-001-01` merged through PR #101 as `050eb15`.
+- `backend/app/interfaces/artifacts.py` defines `ArtifactStore`.
+- `backend/app/adapters/artifacts/local.py` implements LocalStorage.
+- `backend/app/modules/artifacts/service.py` coordinates provider I/O outside
+  PostgreSQL transactions.
+- `backend/app/modules/artifacts/models.py` already contains upload, content,
+  replica, receipt, and binding foundations.
+- `backend/app/adapters/artifacts/__init__.py` has one resolver with a dormant
+  `flow_node` branch that always fails.
+- `backend/app/core/config.py` accepts `disabled|local|flow_node`; no
+  S3-compatible object-storage configuration exists.
+- `backend/pyproject.toml` has no asynchronous S3 SDK dependency.
+- `docker-compose.yml` contains Postgres and Redis but no S3-compatible local
+  service.
 
-## Workstream Current Behavior
+## Contract Mismatch Found
 
-- `backend/app/modules/projects/models.py` stores
-  `GuideSourceSnapshot`/`GuideSourceSnapshotItem` metadata and optional
-  `content_cid`; it does not ingest source bytes.
-- `ProjectService._create_guide_source_snapshot_model` builds a canonical JSON
-  manifest from supplied material and stores it in Postgres.
-- `SubmissionCreate` accepts `package_uri`, `package_hash`,
-  `artifact_hash_manifest`, and evidence URIs.
-- `TaskService.create_submission` persists those declarations directly.
-- `CheckerService._build_checker_run` copies declared hashes; checker workers
-  have no artifact adapter.
-- `checker.runner._evidence_integrity_outcome` validates declaration shape, not
-  stored bytes.
-- No artifact module, storage port, storage adapter, outbox, provider receipt,
-  or authorized artifact retrieval API exists.
+The merged v1 port makes providers own `verify`, `retain`, `release`, and
+operation receipts. Those methods reflect the earlier Flow Node design and are
+not the correct boundary for S3-compatible byte storage.
 
-## Flow Node Current Behavior
+For v0.1:
 
-Useful primitives:
+- provider operations are immutable conditional put, open/range read, and
+  head/status;
+- Workstream independently verifies bytes through the read port;
+- PostgreSQL owns operation receipts, bindings, reference state, and audit;
+- physical delete is absent.
 
-- `ContentId`: CIDv1 with SHA-256 and verification.
-- `BlockStore`: RocksDB immutable blocks and single-block pin state.
-- `DagBuilder`/`DagReader`: chunking, DAG-CBOR manifests, and reconstruction.
-- `storage::content::ContentService`: real publish and fetch behavior.
-- local/network providers and low-level round-trip tests.
+The v2 port must therefore replace v1 in one clean cut. No adapter alias or
+compatibility shim is required because Workstream is still pre-production.
 
-Disconnected runtime:
+## S3-Compatible Provider Facts Used By The Plan
 
-- REST uses `storage::content::api_service::ContentService`, a second class with
-  the same name that only writes metadata.
-- `POST /api/v1/content/publish` does not store bytes in the block store.
-- `GET /api/v1/content/{cid}` returns metadata, not bytes.
-- No verify, recursive pin, receipt, provenance, or Workstream artifact routes.
-- Existing REST routes are public; the JWT extractor is unused.
-- `Node`/`AppState` do not share the real block store/content service used by
-  the network manager.
-- Pinning one root block does not protect child chunks.
-- Search can turn provider failure into an empty success response.
+- AWS S3 defines the native protocol contract. Cloudflare R2 exposes a
+  compatible subset and strong read-after-write, metadata, listing, and delete
+  consistency through its S3 API.
+- R2 supports conditional `PutObject`, `HeadObject`, `GetObject`, and range
+  reads. Its documented conditional-header support does not establish atomic
+  conditional multipart completion parity with AWS S3.
+- Cloudflare R2 action/path-scoped temporary credentials expire and require a
+  refresh lifecycle. Workstream can consume them through the standard AWS SDK
+  container-credential endpoint contract. Production therefore needs an
+  explicitly owned issuer; Chunk 02B2 implements that isolated service and
+  Chunk 02B3 owns Workstream integration. The issuer owns the parent secret
+  access key and local signing. Cloudflare reuses the
+  parent access-key ID as the temporary access-key ID, but Workstream never
+  receives the parent secret/signing key.
+- R2 does not support S3 Object Lock through the S3 compatibility API.
+- R2 does not support `x-amz-sdk-checksum-algorithm`; Workstream must not depend
+  on that feature for portable SHA-256 verification.
+- R2 supports `Content-MD5`, but ETag is not the Workstream SHA-256 contract.
 
-## Existing Contracts To Reconcile
+Canonical references:
 
-- ADR 0008 requires an object-storage abstraction and rejects local paths as
-  business contracts.
-- `docs/reference_specs/WS-IMP-001...` defines `ArtifactStorePort`,
-  `SemanticIndexPort`, `ArtifactBinding`, Flow Node failure semantics, and local
-  adapter parity, but is archival input rather than the canonical runtime spec.
-- The updated WS-AUTH baseline requires Workstream-local authorization and
-  explicit service principals; human tokens are not provider credentials.
+- https://developers.cloudflare.com/r2/reference/consistency/
+- https://developers.cloudflare.com/r2/api/s3/api/
+- https://developers.cloudflare.com/r2/api/s3/temporary-credentials/
+- https://developers.cloudflare.com/r2/api/error-codes/
+- https://docs.aws.amazon.com/AmazonS3/latest/userguide/conditional-writes.html
 
-## Data And Contract Gaps
+## v0.1 Storage Algorithm
 
-- Caller-declared hashes are not authoritative; some tests use invalid tokens
-  such as `sha256:package-v1`.
-- `package_uri`, evidence `uri`, `content_cid`, and hash-manifest entries overlap
-  without one artifact identity.
-- Evidence rows use `delete-orphan`; provider retention must not inherit that
-  deletion behavior.
-- No checker input snapshot binds a run to retrieved bytes.
-- Checker logs/results have no artifact identity.
-- Review packet/evidence models are not implemented yet.
-- No storage environment configuration rejects local storage in production.
+1. Prepare every untrusted source completely, compute Workstream SHA-256 and
+   exact size, and reject any mismatched client commitment before provider I/O.
+2. Seal that commitment with the exact second-pass stream.
+3. Derive the private key
+   `artifacts/sha256/<first-two-hex>/<remaining-hex>`.
+4. Upload with one conditional no-overwrite `PutObject`; reject objects above
+   the v0.1 512 MiB hard maximum before provider I/O.
+5. Treat a precondition failure as a replay candidate, not success.
+6. Head the existing object, then independently stream and hash the complete
+   object before accepting it.
+7. Mark the replica bindable only after SHA-256 and size match.
 
-## Security And Operational Risks
+## Recovery Simplification
 
-- Flow Node routes are unauthenticated.
-- Flow Node DAG publishing announces to DHT/GossipSub by default; evaluation
-  evidence must remain private.
-- Manifest CID and original-byte digest have different meanings.
-- Manifest timestamps can make otherwise identical manifests differ.
-- Provider failure must not become “no results” or contributor failure.
-- External calls cannot hold Workstream lifecycle transactions open.
-- At-least-once dispatch requires idempotent provider operations and immutable
-  receipts.
+The S3-compatible object-storage design removes provider retain/release and
+physical delete from v0.1.
+Durable background work has one class:
 
-## Conventions To Preserve
+- `provider_observation`: complete-object verification through fresh read;
 
-- FastAPI/Pydantic/SQLAlchemy/Alembic in Workstream.
-- Rust/Axum and existing DAG/block primitives in Flow Node.
-- PostgreSQL for Workstream lifecycle state.
-- Celery/Redis for durable Workstream background execution.
-- `/api/v1` route namespace.
-- No backward compatibility for rejected pre-production contracts.
+There is no exact provider replay, destructive requeue, or ambiguous logical
+provider effect in v0.1 recovery.
 
-## Unknowns Deferred To Owning Chunks
+Operator authorization creates a reason-bound recovery envelope and linked
+verification job. The job is the sole Celery execution owner. PostgreSQL
+coordinates its invocations with a fixed lease, fresh executor UUID, and
+generation fence. A periodic PostgreSQL scanner guarantees that a committed
+job is eventually published even if the first broker call fails.
 
-- Final production Flow Node issuer/audience and optional mTLS.
-- Retention duration, legal hold, and deletion policy.
-- Whether remote peer retrieval is enabled after local evidence storage is
-  proven.
-- Whether semantic indexing is enabled for every artifact kind.
+## Security Boundaries
+
+- Authorization Service owns product decisions.
+- S3 credentials authorize transport only and never imply product authority.
+- Credentials come from deployment secret injection and never enter Postgres,
+  Redis, Celery payloads, logs, receipts, or API responses.
+- Product services consume `ArtifactStore` by dependency injection and never
+  import the S3 implementation.
+- The S3 endpoint is trusted configuration. Production requires HTTPS and a
+  private bucket; localhost HTTP is allowed only in local/test MinIO.
+- No public bucket, custom-domain cache, or client-visible object key is used.
+- Runtime credentials are bucket/prefix/action scoped and cannot delete, list,
+  copy, or administer provider configuration.
+- Production release evidence proves AWS public-access controls or R2 public-
+  domain disablement and an anonymous-read denial.
+
+## Deferred Flow Node
+
+The previous Flow Node analysis is preserved on branch
+`codex/ws-art-001-fn01-isolation-amendment`. A new deferred initiative will
+retain the provider-conformance, focused-service, adapter, and migration plan.
+It cannot block or modify v0.1 S3-compatible object-storage work.
