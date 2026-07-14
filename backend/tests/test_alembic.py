@@ -508,6 +508,90 @@ def test_authority_audit_schema_preserves_legacy_and_guards_downgrade(
     }
 
 
+def test_authority_idempotency_schema_preserves_audit_and_guards_downgrade(
+    isolated_database_env: str,
+    migration_lock,
+) -> None:
+    """Prove 0019 state, linkage, forward compatibility, and downgrade custody."""
+    project_root = Path(__file__).resolve().parents[1]
+    config = Config(str(project_root / "alembic.ini"))
+    config.set_main_option("script_location", str(project_root / "alembic"))
+    orphan_event, orphan_ref = str(uuid4()), str(uuid4())
+    record_id, actor_id, target_id = str(uuid4()), str(uuid4()), str(uuid4())
+
+    with migration_lock():
+        try:
+            command.downgrade(config, "0018_authority_audit_evidence")
+            asyncio.run(
+                _insert_pre_0019_forward_reference(
+                    isolated_database_env, orphan_event, orphan_ref
+                )
+            )
+            command.upgrade(config, "0019_authority_idempotency")
+            schema = asyncio.run(_authority_idempotency_schema(isolated_database_env))
+            invalid = asyncio.run(_authority_idempotency_invalid_writes(isolated_database_env))
+            asyncio.run(
+                _insert_committed_authority_idempotency(
+                    isolated_database_env, record_id, actor_id, target_id
+                )
+            )
+            with pytest.raises(RuntimeError, match="non-empty authority idempotency"):
+                command.downgrade(config, "0018_authority_audit_evidence")
+            refused = asyncio.run(_authority_idempotency_state(isolated_database_env, orphan_event))
+            asyncio.run(
+                _remove_authority_idempotency_fixture(
+                    isolated_database_env, record_id, orphan_event=None
+                )
+            )
+            command.downgrade(config, "0018_authority_audit_evidence")
+            preserved = asyncio.run(_authority_idempotency_state(isolated_database_env, orphan_event))
+            command.upgrade(config, "0019_authority_idempotency")
+            restored = asyncio.run(_authority_idempotency_schema(isolated_database_env))
+        finally:
+            command.upgrade(config, "head")
+            asyncio.run(
+                _remove_authority_idempotency_fixture(
+                    isolated_database_env, record_id, orphan_event=orphan_event
+                )
+            )
+
+    assert schema == restored
+    assert schema == {
+        "columns": {
+            "actor_ref:varchar:NO", "actor_ref_kind:varchar:NO", "committed_at:timestamptz:YES",
+            "created_at:timestamptz:NO", "id:uuid:NO", "idempotency_key:uuid:NO",
+            "operation:varchar:NO", "request_digest:varchar:NO", "response_http_status:int2:YES",
+            "response_resource_id:uuid:YES", "response_resource_type:varchar:YES",
+            "response_resource_version:int8:YES", "status:varchar:NO",
+        },
+        "constraints": {
+            "authority_idempotency_pending_guard",
+            "ck_authority_idempotency_records_actor_kind",
+            "ck_authority_idempotency_records_actor_reference",
+            "ck_authority_idempotency_records_operation",
+            "ck_authority_idempotency_records_request_digest",
+            "ck_authority_idempotency_records_response_status",
+            "ck_authority_idempotency_records_response_type",
+            "ck_authority_idempotency_records_response_version",
+            "ck_authority_idempotency_records_state_shape",
+            "ck_authority_idempotency_records_status",
+            "pk_authority_idempotency_records",
+            "uq_authority_idempotency_records_actor_reference",
+            "uq_authority_idempotency_records_replay_namespace",
+        },
+        "triggers": {
+            "authority_idempotency_guard",
+            "authority_idempotency_pending_guard",
+            "authority_idempotency_reject_truncate",
+        },
+        "audit_fk_validated": False,
+        "audit_trigger": True,
+    }
+    assert invalid == {"initial_committed": True, "pending_commit": True, "new_orphan": True}
+    assert refused == {"revision": "0019_authority_idempotency", "records": 1, "orphan": 1}
+    assert preserved == {"revision": "0018_authority_audit_evidence", "records": None, "orphan": 1}
+
+
 async def _fetch_columns(database_url: str) -> set[str]:
     """Return current public table columns as table.column names."""
     engine = create_async_engine(database_url)
@@ -2346,5 +2430,298 @@ async def _remove_authority_audit_fixture(database_url: str, event_id: str) -> N
             await connection.execute(
                 text("alter table audit_events enable trigger audit_events_reject_update_delete")
             )
+    finally:
+        await engine.dispose()
+
+
+async def _insert_pre_0019_forward_reference(
+    database_url: str, event_id: str, reference: str
+) -> None:
+    """Seed the forward reference that 0019's NOT VALID FK must preserve."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(
+                text(
+                    "insert into audit_events (id, entity_type, entity_id, event_type, actor_id, "
+                    "actor_roles, claim_snapshot, auth_source, is_dev_auth, event_payload, "
+                    "event_domain, event_version, actor_ref_kind, request_id, correlation_id, "
+                    "permission_id, reason, idempotency_reference, after_facts) values "
+                    "(:id, 'authorization_decision', :id, 'SensitiveAuthorizationAllowed', "
+                    ":actor, '[]'::json, '{}'::json, 'local_authority', false, '{}'::json, "
+                    "'authority', 1, 'actor_profile', :request, :correlation, "
+                    "'actor.profile.read_any', 'authorization_evaluation', :reference, "
+                    "'{\"allowed\": true}'::json)"
+                ),
+                {
+                    "id": event_id,
+                    "actor": str(uuid4()),
+                    "request": str(uuid4()),
+                    "correlation": str(uuid4()),
+                    "reference": reference,
+                },
+            )
+    finally:
+        await engine.dispose()
+
+
+async def _authority_idempotency_schema(database_url: str) -> dict[str, object]:
+    """Return the exact 0019 schema and audit-link surface."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            columns = set(
+                (
+                    await connection.execute(
+                        text(
+                            "select column_name || ':' || udt_name || ':' || is_nullable "
+                            "from information_schema.columns where table_schema='public' "
+                            "and table_name='authority_idempotency_records'"
+                        )
+                    )
+                ).scalars()
+            )
+            constraints = set(
+                (
+                    await connection.execute(
+                        text(
+                            "select conname from pg_constraint where "
+                            "conrelid='authority_idempotency_records'::regclass"
+                        )
+                    )
+                ).scalars()
+            )
+            triggers = set(
+                (
+                    await connection.execute(
+                        text(
+                            "select tgname from pg_trigger where "
+                            "tgrelid='authority_idempotency_records'::regclass and not tgisinternal"
+                        )
+                    )
+                ).scalars()
+            )
+            return {
+                "columns": columns,
+                "constraints": constraints,
+                "triggers": triggers,
+                "audit_fk_validated": await connection.scalar(
+                    text(
+                        "select convalidated from pg_constraint where "
+                        "conname='fk_audit_events_authority_idempotency'"
+                    )
+                ),
+                "audit_trigger": bool(
+                    await connection.scalar(
+                        text(
+                            "select exists(select 1 from pg_trigger where "
+                            "tgname='audit_events_validate_idempotency' and not tgisinternal)"
+                        )
+                    )
+                ),
+            }
+    finally:
+        await engine.dispose()
+
+
+async def _authority_idempotency_invalid_writes(database_url: str) -> dict[str, bool]:
+    """Prove invalid initial state, durable pending, and new orphan fail closed."""
+    engine = create_async_engine(database_url)
+    results: dict[str, bool] = {}
+    try:
+        for name, statement, values in (
+            (
+                "initial_committed",
+                "insert into authority_idempotency_records (id,idempotency_key,actor_ref_kind,"
+                "actor_ref,operation,request_digest,status,response_resource_type,"
+                "response_resource_id,response_http_status,committed_at) values "
+                "(:id,:key,'actor_profile',:actor,'actor_profile.suspend',:digest,'committed',"
+                "'actor_profile',:resource,200,statement_timestamp())",
+                {"id": str(uuid4()), "key": str(uuid4()), "actor": str(uuid4()),
+                 "resource": str(uuid4()), "digest": "sha256:" + "a" * 64},
+            ),
+            (
+                "pending_commit",
+                "insert into authority_idempotency_records (id,idempotency_key,actor_ref_kind,"
+                "actor_ref,operation,request_digest,status) values "
+                "(:id,:key,'actor_profile',:actor,'actor_profile.suspend',:digest,'pending')",
+                {"id": str(uuid4()), "key": str(uuid4()), "actor": str(uuid4()),
+                 "digest": "sha256:" + "a" * 64},
+            ),
+            (
+                "new_orphan",
+                "insert into audit_events (id,entity_type,entity_id,event_type,actor_id,"
+                "actor_roles,claim_snapshot,auth_source,is_dev_auth,event_payload,event_domain,"
+                "event_version,actor_ref_kind,request_id,correlation_id,permission_id,reason,"
+                "idempotency_reference,after_facts) values (:id,'authorization_decision',:id,"
+                "'SensitiveAuthorizationAllowed',:actor,'[]','{}','local_authority',false,'{}',"
+                "'authority',1,'actor_profile',:request,:correlation,'actor.profile.read_any',"
+                "'authorization_evaluation',:reference,cast(:facts as json))",
+                {"id": str(uuid4()), "actor": str(uuid4()), "request": str(uuid4()),
+                 "correlation": str(uuid4()), "reference": str(uuid4()),
+                 "facts": json.dumps({"allowed": True})},
+            ),
+        ):
+            try:
+                async with engine.begin() as connection:
+                    await connection.execute(text(statement), values)
+            except DBAPIError:
+                results[name] = True
+            else:
+                results[name] = False
+        return results
+    finally:
+        await engine.dispose()
+
+
+async def _insert_committed_authority_idempotency(
+    database_url: str, record_id: str, actor_id: str, target_id: str
+) -> None:
+    """Insert one complete actor-suspension reservation and evidence pair."""
+    engine = create_async_engine(database_url)
+    success_id, invalidation_id = str(uuid4()), str(uuid4())
+    request_id, correlation_id = str(uuid4()), str(uuid4())
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(
+                text(
+                    "insert into authority_idempotency_records (id,idempotency_key,actor_ref_kind,"
+                    "actor_ref,operation,request_digest,status) values "
+                    "(:id,:key,'actor_profile',:actor,'actor_profile.suspend',:digest,'pending')"
+                ),
+                {"id": record_id, "key": str(uuid4()), "actor": actor_id,
+                 "digest": "sha256:" + "a" * 64},
+            )
+            common = (
+                "actor_roles,claim_snapshot,auth_source,is_dev_auth,event_payload,event_domain,"
+                "event_version,actor_ref_kind,request_id,correlation_id,permission_id,"
+                "resource_type,resource_id,reason,idempotency_reference"
+            )
+            await connection.execute(
+                text(
+                    f"insert into audit_events (id,entity_type,entity_id,event_type,actor_id,{common},"
+                    "before_facts,after_facts) values (:id,'actor_profile',:target,"
+                    "'ActorProfileSuspended',:actor,'[]','{}','local_authority',false,'{}',"
+                    "'authority',1,'actor_profile',:request,:correlation,'actor.profile.suspend',"
+                    "'actor_profile',:target,'security_response',:record,"
+                    "cast(:before_facts as json),cast(:after_facts as json))"
+                ),
+                {
+                    "id": success_id,
+                    "target": target_id,
+                    "actor": actor_id,
+                    "request": request_id,
+                    "correlation": correlation_id,
+                    "record": record_id,
+                    "before_facts": json.dumps({"status": "active"}),
+                    "after_facts": json.dumps({"status": "suspended"}),
+                },
+            )
+            await connection.execute(
+                text(
+                    f"insert into audit_events (id,entity_type,entity_id,event_type,actor_id,{common},"
+                    "invalidation_cause_event_id,invalidation_target_kind,invalidation_target_ref,"
+                    "before_facts,after_facts) values (:id,'authority_invalidation',:id,"
+                    "'AuthorityInvalidationRequested',:actor,'[]','{}','local_authority',false,'{}',"
+                    "'authority',1,'actor_profile',:request,:correlation,'actor.profile.suspend',"
+                    "'actor_profile',:target,'authority_state_changed',:record,:cause,'actor_profile',"
+                    ":target,cast(:before_facts as json),cast(:after_facts as json))"
+                ),
+                {
+                    "id": invalidation_id,
+                    "target": target_id,
+                    "actor": actor_id,
+                    "request": request_id,
+                    "correlation": correlation_id,
+                    "record": record_id,
+                    "cause": success_id,
+                    "before_facts": json.dumps({"effective": True}),
+                    "after_facts": json.dumps({"effective": False}),
+                },
+            )
+            await connection.execute(
+                text(
+                    "update authority_idempotency_records set status='committed',"
+                    "response_resource_type='actor_profile',response_resource_id=:target,"
+                    "response_resource_version=1,response_http_status=200 where id=:id"
+                ),
+                {"id": record_id, "target": target_id},
+            )
+    finally:
+        await engine.dispose()
+
+
+async def _authority_idempotency_state(database_url: str, orphan_event: str) -> dict[str, object]:
+    """Return revision, optional record count, and preserved orphan count."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            exists = await connection.scalar(
+                text(
+                    "select exists(select 1 from information_schema.tables where "
+                    "table_name='authority_idempotency_records')"
+                )
+            )
+            return {
+                "revision": await connection.scalar(text("select version_num from alembic_version")),
+                "records": await connection.scalar(
+                    text("select count(*) from authority_idempotency_records")
+                ) if exists else None,
+                "orphan": await connection.scalar(
+                    text("select count(*) from audit_events where id=:id"), {"id": orphan_event}
+                ),
+            }
+    finally:
+        await engine.dispose()
+
+
+async def _remove_authority_idempotency_fixture(
+    database_url: str, record_id: str, *, orphan_event: str | None
+) -> None:
+    """Owner-only cleanup for immutable 0019 fixtures."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            exists = await connection.scalar(
+                text(
+                    "select exists(select 1 from information_schema.tables where "
+                    "table_name='authority_idempotency_records')"
+                )
+            )
+            await connection.execute(text("lock table audit_events in access exclusive mode"))
+            await connection.execute(
+                text("alter table audit_events disable trigger audit_events_reject_update_delete")
+            )
+            await connection.execute(
+                text("delete from audit_events where idempotency_reference=:record"),
+                {"record": record_id},
+            )
+            if orphan_event:
+                await connection.execute(
+                    text("delete from audit_events where id=:id"), {"id": orphan_event}
+                )
+            await connection.execute(
+                text("alter table audit_events enable trigger audit_events_reject_update_delete")
+            )
+            if exists:
+                await connection.execute(
+                    text("lock table authority_idempotency_records in access exclusive mode")
+                )
+                await connection.execute(
+                    text(
+                        "alter table authority_idempotency_records disable trigger "
+                        "authority_idempotency_guard"
+                    )
+                )
+                await connection.execute(
+                    text("delete from authority_idempotency_records where id=:id"),
+                    {"id": record_id},
+                )
+                await connection.execute(
+                    text(
+                        "alter table authority_idempotency_records enable trigger "
+                        "authority_idempotency_guard"
+                    )
+                )
     finally:
         await engine.dispose()
