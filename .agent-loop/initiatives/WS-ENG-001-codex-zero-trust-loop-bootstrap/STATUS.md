@@ -7,6 +7,7 @@
   tracks passed at `8670005`; PR evidence/publication is pending
 - Merge commit: `b9fe19b96109e9786e1d6d89488abfbe68a05d4a`
 - Reviewed implementation SHA: `8670005639b5d080d3adceca840b8fae4addc115`
+- Reviewed publication-memory SHA: `0ed5783f3a381cbad445631388ceb8352959b0ae`
 - Current gate: bind review evidence, publish the ready PR, and complete external
   and explicit human review
 - Next chunk: inactive
