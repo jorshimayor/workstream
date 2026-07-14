@@ -55,20 +55,9 @@ jobs:
             git -C "${state_dir}" remote add origin \
               "https://github.com/${GITHUB_REPOSITORY}.git"
           fi
-          if [[ -f "${state_dir}/.agent-loop/STATE.json" ||
-                -f "${state_dir}/.agent-loop/MERGE_LOG.jsonl" ||
-                -f "${state_dir}/.agent-loop/STATE.sig" ]]; then
-            if ! python3 scripts/update_post_merge_memory.py verify-state \
-              --state-root "${state_dir}" \
-              --public-key .agent-loop/keys/loop-memory-signing-public.pem; then
-              echo "Discarding unauthenticated generated state and rebuilding."
-              rm -f \
-                "${state_dir}/.agent-loop/STATE.json" \
-                "${state_dir}/.agent-loop/LOOP_STATE.md" \
-                "${state_dir}/.agent-loop/MERGE_LOG.jsonl" \
-                "${state_dir}/.agent-loop/STATE.sig"
-            fi
-          fi
+          python3 scripts/update_post_merge_memory.py prepare-state \
+            --state-root "${state_dir}" \
+            --public-key .agent-loop/keys/loop-memory-signing-public.pem
           echo "state_dir=${state_dir}" >> "${GITHUB_OUTPUT}"
 
       - name: Reconcile every unrecorded main commit
@@ -122,7 +111,7 @@ jobs:
         run: |
           set -euo pipefail
           state_dir="${{ steps.state.outputs.state_dir }}"
-          git -C "${state_dir}" add \
+          git -C "${state_dir}" add -f -- \
             .agent-loop/STATE.json \
             .agent-loop/LOOP_STATE.md \
             .agent-loop/MERGE_LOG.jsonl \

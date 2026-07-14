@@ -12,6 +12,7 @@ import importlib.util
 import io
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -1426,6 +1427,36 @@ def test_generated_loop_memory_signature_authenticates_every_canonical_file() ->
         )
 
 
+def test_generated_loop_memory_prepare_recovers_hostile_path_types() -> None:
+    """Directories and symlinks cannot wedge deterministic state reconstruction."""
+    updater = load_module(
+        "post_merge_prepare_state", "scripts/update_post_merge_memory.py"
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        public_key = root / "unused-public.pem"
+        state_directory = root / updater.STATE_PATH
+        state_directory.mkdir(parents=True)
+        (state_directory / "placeholder").write_text("hostile\n", encoding="utf-8")
+        outside = root / "outside"
+        outside.mkdir()
+        sentinel = outside / "sentinel"
+        sentinel.write_text("preserve\n", encoding="utf-8")
+        (root / updater.SIGNATURE_PATH).symlink_to(sentinel)
+
+        assert updater.prepare_generated_state_root(root, public_key) is False
+        assert not state_directory.exists()
+        assert not (root / updater.SIGNATURE_PATH).exists()
+        assert sentinel.read_text(encoding="utf-8") == "preserve\n"
+
+        agent_loop = root / updater.STATE_PATH.parent
+        shutil.rmtree(agent_loop)
+        agent_loop.symlink_to(outside, target_is_directory=True)
+        assert updater.prepare_generated_state_root(root, public_key) is False
+        assert agent_loop.is_dir() and not agent_loop.is_symlink()
+        assert sentinel.read_text(encoding="utf-8") == "preserve\n"
+
+
 def test_generated_loop_memory_escapes_markdown_metadata() -> None:
     """PR and chunk titles cannot inject generated Markdown structure."""
     updater = load_module(
@@ -1452,9 +1483,9 @@ def test_loop_memory_workflow_isolated_write_boundary() -> None:
     assert "contents: write" in workflow
     assert "pull-requests: read" in workflow
     assert "LOOP_MEMORY_SIGNING_KEY" in workflow
-    assert "verify-state" in workflow
+    assert "prepare-state" in workflow
     assert ".agent-loop/STATE.sig" in workflow
-    assert "Discarding unauthenticated generated state" in workflow
+    assert 'git -C "${state_dir}" add -f --' in workflow
     assert "--expected-main-sha" in workflow
     assert "HEAD:refs/heads/${STATE_BRANCH}" in workflow
     assert "HEAD:refs/heads/main" not in workflow
@@ -2463,6 +2494,7 @@ def main() -> int:
         test_post_merge_collection_binds_exact_pr_and_checks,
         test_generated_loop_memory_validator_detects_drift,
         test_generated_loop_memory_signature_authenticates_every_canonical_file,
+        test_generated_loop_memory_prepare_recovers_hostile_path_types,
         test_generated_loop_memory_escapes_markdown_metadata,
         test_loop_memory_workflow_isolated_write_boundary,
         test_post_merge_input_and_check_validation_fail_closed,

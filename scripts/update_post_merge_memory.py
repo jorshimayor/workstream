@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -867,6 +868,38 @@ def verify_generated_state_signature(
             )
 
 
+def _remove_path(path: Path) -> None:
+    """Remove one fixed generated path without following symbolic links."""
+    if path.is_symlink() or not path.is_dir():
+        path.unlink(missing_ok=True)
+    else:
+        shutil.rmtree(path)
+
+
+def prepare_generated_state_root(state_root: Path, public_key: Path) -> bool:
+    """Authenticate existing state or clear fixed paths for bootstrap rebuild."""
+    agent_loop = state_root / STATE_PATH.parent
+    if agent_loop.is_symlink() or (agent_loop.exists() and not agent_loop.is_dir()):
+        _remove_path(agent_loop)
+        agent_loop.mkdir(parents=True)
+        return False
+    agent_loop.mkdir(parents=True, exist_ok=True)
+
+    generated_paths = tuple(
+        state_root / path
+        for path in (STATE_PATH, RENDERED_PATH, LEDGER_PATH, SIGNATURE_PATH)
+    )
+    if not any(path.exists() or path.is_symlink() for path in generated_paths):
+        return False
+    try:
+        verify_generated_state_signature(state_root, public_key)
+    except (LoopMemoryError, OSError):
+        for path in generated_paths:
+            _remove_path(path)
+        return False
+    return True
+
+
 def _assert_state_branch(state_root: Path) -> None:
     """Refuse to write generated memory outside its dedicated branch."""
     result = subprocess.run(
@@ -912,6 +945,10 @@ def build_parser() -> argparse.ArgumentParser:
     verify_state.add_argument("--state-root", type=Path, required=True)
     verify_state.add_argument("--public-key", type=Path, required=True)
     verify_state.add_argument("--expected-main-sha")
+
+    prepare_state = subparsers.add_parser("prepare-state")
+    prepare_state.add_argument("--state-root", type=Path, required=True)
+    prepare_state.add_argument("--public-key", type=Path, required=True)
 
     show = subparsers.add_parser("show")
     show.add_argument("--state-root", type=Path, required=True)
@@ -960,6 +997,13 @@ def main(argv: list[str] | None = None) -> int:
                 args.expected_main_sha,
             )
             print("Generated loop memory state signature passed.")
+        elif args.command == "prepare-state":
+            authenticated = prepare_generated_state_root(
+                args.state_root,
+                args.public_key,
+            )
+            outcome = "authenticated" if authenticated else "ready for rebuild"
+            print(f"Generated loop memory state is {outcome}.")
         elif args.command == "show":
             validate_generated_state(args.state_root)
             print((args.state_root / RENDERED_PATH).read_text(encoding="utf-8"), end="")
