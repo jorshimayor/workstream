@@ -1,5 +1,22 @@
 # Review Log
 
+## 2026-07-14 - WS-AUTH-001-05A Contract Reopened By Exact-SHA Review
+
+Exact-SHA review of implementation repair `6fbb1f8` closed append-only,
+repository ownership, canonical actor-reference, and invalidation-cause
+integrity concerns, but found valid remaining privacy and auditability gaps.
+Arbitrary reason/fact strings could still impersonate opaque secrets, rejected
+known values and non-dict mappings remained recoverable through structured
+Pydantic errors, direct SQL did not enforce every typed token bound, and the
+500-line ceiling had encouraged unreadable security SQL.
+
+The repaired contract raises only AUTH-05A's ceiling to 650, prohibits
+long-line packing, requires closed reason/fact registries, requires a
+non-echoing pre-admission boundary for every Mapping, clarifies invalidation
+cause integrity versus inactive idempotency replay, and requires typed/direct
+SQL parity. No further runtime repair is permitted until required L1 contract
+review passes; AUTH-05B remains inactive.
+
 ## 2026-07-14 - WS-AUTH-001-05A Preimplementation Review Passed
 
 The repaired AUTH-05A contract passed required senior engineering,

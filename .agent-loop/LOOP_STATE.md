@@ -10,14 +10,16 @@
 - Worktree: `/home/abiorh/flow/workstream-auth-001-05`
 - Status: AUTH-04B post-merge memory merged through PR #114 as `97cd0f5`.
   The user explicitly started AUTH-05. Required L1 review rejected the combined
-  contract, then passed repaired AUTH-05A at `7a9023b`; bounded implementation
-  and deterministic evidence are active.
+  contract, then passed the first repaired AUTH-05A contract at `7a9023b`.
+  Exact-SHA implementation review reopened the contract for closed privacy
+  registries, non-echoing mapping admission, typed/SQL parity, and readable SQL.
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
 - Latest integrated `main` merge commit: `97cd0f5`
-- Current gate: AUTH-05A implementation evidence and exact-head internal review.
-- Size checkpoint: each child has a 350-line inspection and a 500-line
-  production hard stop.
+- Current gate: AUTH-05A repaired-contract internal review.
+- Size checkpoint: AUTH-05A has a reviewer-required 500-line inspection and
+  650-line production hard stop; security SQL may not be packed to satisfy it.
+  AUTH-05B retains its separate 350/500 boundary.
 - Next chunk: AUTH-05B remains inactive until AUTH-05A merges, post-merge memory
   is reconciled, and the user gives a separate explicit start. AUTH-06 remains
   inactive.

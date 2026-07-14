@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-05A` | Shared Audit Ownership And Append-Only Authority Evidence | L1 | Repaired contract passed at `7a9023b`; bounded implementation and evidence active |
+| `WS-AUTH-001-05A` | Shared Audit Ownership And Append-Only Authority Evidence | L1 | Contract re-review for closed privacy registries and readable SQL |
 
 ## Planned Next
 

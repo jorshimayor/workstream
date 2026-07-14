@@ -2,8 +2,9 @@
 
 ## Status
 
-Active implementation and deterministic evidence. Repaired preimplementation
-review passed on contract head `7a9023b`.
+Contract repair and re-review after exact-SHA privacy findings. The initial
+implementation review proved that safe typed/SQL parity did not fit the
+original ceiling without compressing security-sensitive SQL.
 
 ## Parent initiative
 
@@ -18,10 +19,15 @@ event and existing task/checker behavior.
 ## Risk and circuit breaker
 
 - Risk: L1 / SLA P1.
-- Inspect scope at 350 changed non-comment production lines.
-- Hard stop at 500 changed non-comment production lines, counting
+- Inspect scope at 500 changed non-comment production lines.
+- Hard stop at 650 changed non-comment production lines, counting
   `backend/app/**` plus migration code; tests and evidence do not justify
   exceeding the production limit.
+- Security SQL must remain reviewable as named functions and multiline logical
+  clauses. Long-line packing does not reduce the circuit-breaker numerator and
+  is prohibited.
+- This one-time ceiling repair is limited to the reviewer-required privacy and
+  causation controls; it does not reactivate AUTH-05B scope.
 
 ## Allowed files
 
@@ -77,7 +83,7 @@ token from the adopted specification. Authority rows require:
 - optional target actor reference with all-or-none kind/reference presence;
 - optional matched-grant, permission, project, resource type/id, and target
   grant/link reference;
-- optional bounded reason and denial code;
+- optional closed reason code and denial code;
 - optional idempotency-record reference;
 - optional invalidation cause event and invalidation target kind/id;
 - typed shallow before/after fact objects.
@@ -93,7 +99,7 @@ shapes using this exact compatibility matrix:
   actor-reference-kind field supplies its namespace;
 - existing `entity_type`/`entity_id` remain the primary audited aggregate
   reference; optional project/resource fields provide additional exact scope;
-- existing `reason` may carry only the bounded authority reason;
+- existing `reason` may carry only a registered authority reason code;
 - `from_status` and `to_status` are `NULL` because typed before/after facts own
   authority state transitions;
 - `external_subject` and `external_issuer` are `NULL`;
@@ -106,11 +112,29 @@ Only the external subject/issuer columns become nullable for the conditional
 authority shape. Existing legacy rows and writers retain all current values
 and non-authority requirements.
 
-Reference/type/reason tokens have explicit length and character bounds.
-Before/after facts are JSON objects with at most 16 allowlisted scalar keys,
-no nested containers, and at most 4096 encoded bytes per object. The typed
-writer applies per-event allowed-key sets; database checks enforce object type
-and byte bounds.
+Reference/type tokens have explicit length and character bounds. Reason is not
+free text: 05A registers only `automatic_first_access`,
+`manual_service_provisioning`, `identity_link_change`, `actor_status_change`,
+`authority_grant_change`, `qualification_decision`,
+`permission_not_effective`, and `invalidation_requested`.
+
+Before/after facts are JSON objects with at most 16 allowlisted scalar keys, no
+nested containers, and at most 4096 encoded bytes per object. Values are not
+arbitrary bounded strings. `effective` is boolean; `scope_id` is a canonical
+UUID; `subject_kind`, `provisioning_method`, `link_status`, `role_id`,
+`scope_type`, `qualification_status`, `decision_code`, `status`, and
+`target_status` use closed per-key registries derived from the adopted
+specification. Typed validation and database constraints enforce the same key,
+type, and value registries. Direct SQL cannot persist provider subjects,
+emails, URLs, JWT-shaped values, or opaque token-like substitutes through
+entity/type/reference, reason, or fact fields.
+
+The typed admission layer inspects every `collections.abc.Mapping`, including
+non-dict mappings, before Pydantic owns rejected values. Unknown fields and
+privacy-invalid known values raise one stable non-echoing error. Constructor,
+`model_validate`, and `model_validate_json` tests traverse structured errors,
+arguments, causes, contexts, and public object graphs to prove forbidden input
+is not retained.
 
 AUTH-05A behavior tests exercise these exact foundation shapes:
 
@@ -123,12 +147,18 @@ AUTH-05A behavior tests exercise these exact foundation shapes:
   target kind/reference, forbids denial code, and permits an optional canonical
   UUID idempotency reference for later AUTH-05B orchestration.
 
-The 05A envelope and database constraints are final for this field: no foreign
-key exists before AUTH-05B, and 05A introduces no lookup or replay behavior.
-Tests persist both `NULL` foundation use and a syntactically valid non-NULL
-future reference without creating an idempotency record. AUTH-05B consumes this
-existing field without changing audit schema, constraints, repository, or
-writer behavior.
+The 05A envelope and database constraints are final for the idempotency-reference
+field: it has no foreign key to an idempotency table before AUTH-05B, and 05A
+introduces no idempotency lookup or replay behavior. Tests persist both `NULL`
+foundation use and a syntactically valid non-NULL future reference without
+creating an idempotency record. AUTH-05B consumes this existing field without
+changing audit schema, constraints, repository, or writer behavior.
+
+Invalidation causation is a separate integrity boundary. Self, nonexistent,
+and legacy-domain cause references are rejected; an invalidation cause must be
+an existing authority event visible in the caller transaction. The typed
+service and database insertion boundary enforce that rule without activating
+an invalidation consumer or AUTH-05B replay behavior.
 
 Resource type/ID, target actor kind/reference, and invalidation target
 kind/reference are each all-or-none pairs in typed validation and database
@@ -173,6 +203,10 @@ constraints.
   behaviorally unchanged.
 - Typed allowed, denied, and invalidation authority event shapes persist only
   bounded non-sensitive evidence and reject malformed/mixed shapes.
+- Rejected provider/email/URL/token-like inputs are absent from every public
+  exception object graph for dict and non-dict mapping inputs.
+- Typed and direct-SQL paths enforce closed reason/fact registries and matching
+  entity/type/reference privacy bounds.
 - Application-role normal DML cannot update, delete, or truncate any audit row.
 - Shared-writer tests instrument `AuditRepository` and prove TaskRepository
   compatibility methods pass the same session/event and return the shared
