@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-05B` | Authority Idempotency And Invalidation Foundation | L1 | Active; repaired L1 plan passed, implementation in progress |
+| `WS-AUTH-001-05B` | Authority Idempotency And Invalidation Foundation | L1 | Implemented; internal review complete; PR publication pending |
 
 ## Planned Next
 
@@ -62,8 +62,9 @@
 ## Proposed Next
 
 AUTH-05A merged through PR #115 as `8e1cde6`, and CAT plus its post-merge memory
-merged through PRs #117 and #118. AUTH-05B's repaired L1 plan passed and bounded
-implementation is active. Do not start AUTH-06 or POL-002-04 automatically.
+merged through PRs #117 and #118. AUTH-05B implementation and internal review
+are complete; PR publication is pending. Do not start AUTH-06 or POL-002-04
+automatically.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.

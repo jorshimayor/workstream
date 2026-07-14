@@ -9,19 +9,20 @@
 - Branch: `codex/ws-auth-001-05b-idempotency-invalidation`
 - Worktree: `/home/abiorh/flow/workstream-authorization-service`
 - Status: CAT post-merge memory merged through PR #118 as `eba7e2b` on
-  2026-07-14. `WS-AUTH-001-05B` is active; its repaired L1 plan passed senior
-  engineering, QA/test, and security/auth/privacy review.
+  2026-07-14. `WS-AUTH-001-05B` implementation and repair are complete at
+  reviewed runtime SHA `e083890`; every required internal review track passed.
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
 - Latest integrated `main` merge commit: `eba7e2b`
-- Current gate: bounded AUTH-05B implementation and deterministic evidence.
+- Current gate: PR publication, GitHub checks, CodeRabbit, and human review.
 - Scope checkpoint: the 52 approved identifiers and `/api/v1` namespace remain
   unchanged. AUTH-05A's 49-identifier audit base remains runtime truth until the
   three planned recovery identifiers receive typed/SQL parity in AUTH-13/14.
 - Next chunk: `WS-AUTH-001-06` remains inactive. Do not start it automatically.
-- Focused evidence: the audit/delegation suite passed 11 tests at 94.55 percent
-  audit-subsystem coverage. Final GitHub Backend passed 949 tests at 82.77
-  percent global coverage and 91.07 percent artifact-foundation coverage.
+- Focused evidence: 26 AUTH-05B authorization/audit/migration tests passed at
+  96.88 percent authorization-subsystem coverage. The prior main Backend result
+  remains 949 tests at 82.77 percent global coverage and 91.07 percent
+  artifact-foundation coverage; GitHub CI will produce the new full result.
 - Parallel initiative: `WS-QUAL-001-01B2` is paused at the user's direction so
   AUTH receives the laptop's test capacity. Its last official whole-app result
   remains `6466/8159` statements (`79.249908%`); no replacement evidence exists.

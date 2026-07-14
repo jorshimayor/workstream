@@ -21,7 +21,7 @@ stopped.
 | `WS-AUTH-001-05` | Authority Evidence And Idempotency Foundation | L1 | Split before implementation into 05A and 05B |
 | `WS-AUTH-001-05A` | Shared Audit Ownership And Append-Only Authority Evidence | L1 | Merged through PR #115 as `8e1cde6` |
 | `WS-AUTH-001-CAT` | Action And Resource Catalogue Reconciliation | L1 | Merged through PR #117 as `4c5d4fc` |
-| `WS-AUTH-001-05B` | Authority Idempotency And Invalidation Foundation | L1 | Active; repaired L1 plan passed, implementation in progress |
+| `WS-AUTH-001-05B` | Authority Idempotency And Invalidation Foundation | L1 | Implemented and internally reviewed; PR publication pending |
 | `WS-AUTH-001-06` | Canonical Actor Profile And Identity Link | L1 | Proposed |
 | `WS-AUTH-001-07` | Authorization Kernel And Permission Registry | L1 | Proposed |
 | `WS-AUTH-001-08` | Bootstrap And Administrative Role Grants | L1 | Proposed |
