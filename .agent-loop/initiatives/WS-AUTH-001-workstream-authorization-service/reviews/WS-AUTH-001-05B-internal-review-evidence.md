@@ -1,7 +1,8 @@
 # WS-AUTH-001-05B Internal Review Evidence
 
-Reviewed code SHA: `e0838908dfa19227fab2f73e32c9b0c94dd39bb4`
-Reviewed at: `2026-07-14T17:54:25Z`
+Reviewed code SHA: `b4f9b83524b7e28f2b0fd18f397e3256661a26c4`
+Reviewed runtime SHA: `e0838908dfa19227fab2f73e32c9b0c94dd39bb4`
+Reviewed at: `2026-07-14T19:55:06Z`
 Reviewer run IDs: `auth04b_final_eng`, `auth04b_final_qa`,
 `auth04b_final_security`
 
