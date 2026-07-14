@@ -7,15 +7,15 @@
 - Active implementation chunk: none
 - Branch: `codex/ws-art-001-object-storage-planning-amendment`
 - Worktree: `/home/abiorh/flow/workstream`
-- Latest integrated `main` merge commit: `eba7e2b` from PR #118.
-- Status: internal review complete for the AWS-first planning amendment.
-  Publication-state SHA `8f29e46f84415b3506d211e3229f224e6ad4e085`
-  passed senior engineering, architecture, QA/test, security/auth, product/ops,
-  reuse/dedup, CI integrity, test delta, and docs review. Every reviewer used
-  `gpt-5.5` with high reasoning and every reviewer session is closed.
-- Current gate: evidence and the PR trust bundle are recorded. Publish one ready
-  PR, wait for CodeRabbit and GitHub checks, then stop for explicit human review
-  and merge approval. No storage runtime implementation is active.
+- Latest integrated `main` merge commit: `ad71c7e` from PR #119.
+- Status: PR #120 is open. Its pre-integration publication state passed every
+  required internal track and GitHub CI, but `main` advanced through AUTH-05B
+  PR #119. The bounded three-file merge resolution must receive fresh exact-SHA
+  review before the branch is pushed again.
+- Current gate: commit the conflict resolution, rerun deterministic proof and
+  all required `gpt-5.5` high reviewer tracks, rebind evidence, then push and
+  stop for external and explicit human review. No storage runtime implementation
+  is active.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
@@ -26,9 +26,9 @@
   each owning WS-ART feature chunk activates only its own canonical actions.
 - Next artifact chunk: `WS-ART-001-02A1` remains inactive until this amendment
   merges and the user gives a separate explicit start signal.
-- Parallel authorization work: `WS-AUTH-001-05B` has a recorded start signal and
-  remains owned by `/home/abiorh/flow/workstream-authorization-service`; do not
-  implement it from this artifact worktree.
+- Parallel authorization work: `WS-AUTH-001-05B` merged through PR #119 as
+  `ad71c7e`. `WS-AUTH-001-06` remains inactive pending post-merge memory and a
+  separate explicit user start.
 - Parallel coverage work: `WS-QUAL-001-01B2` remains paused. Its last official
   whole-app result is `6466/8159` statements (`79.249908%`); no replacement
   evidence exists.

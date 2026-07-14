@@ -651,8 +651,10 @@ def test_authority_input_enforces_grant_scope_matrix() -> None:
         )
 
 
-async def test_authority_event_matrix_has_typed_direct_sql_parity(audit_factory) -> None:
-    """Every registered event accepts and rejects the same fact shape at both boundaries."""
+async def test_authority_event_matrix_preserves_shapes_and_requires_idempotency_links(
+    audit_factory,
+) -> None:
+    """Preserve 05A shapes while 05B-linked mutations fail closed without a claim."""
     insert = text(
         "insert into audit_events "
         "(id, entity_type, entity_id, event_type, actor_id, actor_roles, claim_snapshot, "
@@ -671,6 +673,20 @@ async def test_authority_event_matrix_has_typed_direct_sql_parity(audit_factory)
     )
     cases = _authority_event_matrix()
     assert {case["event_type"] for case in cases} == set(AuthorityEventType)
+    linked = {
+        AuthorityEventType.SERVICE_ACTOR_PROVISIONED,
+        AuthorityEventType.ADMIN_ROLE_GRANT_ISSUED,
+        AuthorityEventType.ADMIN_ROLE_GRANT_REVOKED,
+        AuthorityEventType.PROJECT_ROLE_GRANT_ISSUED,
+        AuthorityEventType.PROJECT_ROLE_GRANT_REPLACED,
+        AuthorityEventType.PROJECT_ROLE_GRANT_REVOKED,
+        AuthorityEventType.ACTOR_PROFILE_SUSPENDED,
+        AuthorityEventType.ACTOR_PROFILE_REACTIVATED,
+        AuthorityEventType.ACTOR_PROFILE_DEACTIVATED,
+        AuthorityEventType.ACTOR_IDENTITY_LINK_REVOKED,
+        AuthorityEventType.ACTOR_IDENTITY_LINK_REACTIVATED,
+        AuthorityEventType.AUTHORITY_INVALIDATION_REQUESTED,
+    }
 
     async with audit_factory() as session:
         for case in cases:
@@ -678,8 +694,13 @@ async def test_authority_event_matrix_has_typed_direct_sql_parity(audit_factory)
             assert (
                 AuthorityAuditEventInput.model_validate(candidate).event_type == case["event_type"]
             )
-            await session.execute(insert, _authority_sql_values(candidate))
-        await session.commit()
+            if case["event_type"] in linked:
+                with pytest.raises(IntegrityError, match="idempotency reference"):
+                    await session.execute(insert, _authority_sql_values(candidate))
+                await session.rollback()
+            else:
+                await session.execute(insert, _authority_sql_values(candidate))
+                await session.commit()
 
         for case in cases:
             event_id = uuid4()
@@ -782,29 +803,46 @@ async def test_authority_writer_persists_typed_privacy_neutral_events(audit_fact
 
     async with audit_factory() as session:
         service = AuditService(session)
-        stored = [
-            await service.add_authority_event(value) for value in (allowed, denied, invalidation)
-        ]
+        stored = [await service.add_authority_event(value) for value in (allowed, denied)]
         await session.commit()
+        stored_values = [
+            {
+                "event_type": event.event_type,
+                "occurred_at": event.occurred_at,
+                "event_domain": event.event_domain,
+                "event_version": event.event_version,
+                "external_subject": event.external_subject,
+                "external_issuer": event.external_issuer,
+                "actor_roles": event.actor_roles,
+                "claim_snapshot": event.claim_snapshot,
+                "event_payload": event.event_payload,
+                "auth_source": event.auth_source,
+                "is_dev_auth": event.is_dev_auth,
+                "idempotency_reference": event.idempotency_reference,
+            }
+            for event in stored
+        ]
+        with pytest.raises(IntegrityError, match="idempotency reference"):
+            await service.add_authority_event(invalidation)
+        await session.rollback()
 
-    assert [event.event_type for event in stored] == [
+    assert [event["event_type"] for event in stored_values] == [
         "SensitiveAuthorizationAllowed",
         "SensitiveAuthorizationDenied",
-        "AuthorityInvalidationRequested",
     ]
-    assert all(event.occurred_at is not None for event in stored)
-    for event in stored:
-        assert event.event_domain == "authority"
-        assert event.event_version == 1
-        assert event.external_subject is None
-        assert event.external_issuer is None
-        assert event.actor_roles == []
-        assert event.claim_snapshot == {}
-        assert event.event_payload == {}
-        assert event.auth_source == "local_authority"
-        assert event.is_dev_auth is False
-    assert stored[0].idempotency_reference is None
-    assert UUID(stored[2].idempotency_reference) == future_idempotency
+    assert all(event["occurred_at"] is not None for event in stored_values)
+    for event in stored_values:
+        assert event["event_domain"] == "authority"
+        assert event["event_version"] == 1
+        assert event["external_subject"] is None
+        assert event["external_issuer"] is None
+        assert event["actor_roles"] == []
+        assert event["claim_snapshot"] == {}
+        assert event["event_payload"] == {}
+        assert event["auth_source"] == "local_authority"
+        assert event["is_dev_auth"] is False
+    assert stored_values[0]["idempotency_reference"] is None
+    assert future_idempotency is not None
 
 
 async def test_legacy_writer_and_reader_remain_compatible(audit_factory) -> None:
@@ -1037,7 +1075,9 @@ async def test_database_rejects_malformed_and_mutated_audit_rows(audit_factory) 
                 "effective": True,
             }
         )
-        await session.execute(grant_insert, grant_values(valid_facts))
+        with pytest.raises(IntegrityError, match="idempotency reference"):
+            await session.execute(grant_insert, grant_values(valid_facts))
+        await session.rollback()
         system_facts = json.dumps(
             {
                 "status": "active",
@@ -1046,8 +1086,9 @@ async def test_database_rejects_malformed_and_mutated_audit_rows(audit_factory) 
                 "effective": True,
             }
         )
-        await session.execute(grant_insert, grant_values(system_facts, scope_project_id=None))
-        await session.commit()
+        with pytest.raises(IntegrityError, match="idempotency reference"):
+            await session.execute(grant_insert, grant_values(system_facts, scope_project_id=None))
+        await session.rollback()
         for values in (
             grant_values(valid_facts.replace(project_id, str(uuid4()))),
             grant_values(valid_facts) | {"resource_id": str(uuid4())},

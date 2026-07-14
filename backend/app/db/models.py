@@ -10,6 +10,7 @@ from app.modules.artifacts.models import (  # noqa: F401
     ArtifactUploadItem,
     ArtifactUploadSession,
 )
+from app.modules.authorization.models import AuthorityIdempotencyRecord  # noqa: F401
 from app.modules.checkers.models import CheckerResult, CheckerRun  # noqa: F401
 from app.modules.projects.models import (  # noqa: F401
     EffectiveProjectSubmissionArtifactPolicy,

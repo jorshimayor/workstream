@@ -108,6 +108,38 @@ authority revalidation, cumulative coverage ownership for `app/main.py` and
 explicit history without missing runtime configuration paths. Repair remains
 planning-only on integrated main `eba7e2b`; no storage runtime chunk is active.
 
+## 2026-07-14 - WS-AUTH-001-05B Internal Review Passed
+
+Reviewed runtime SHA `e083890` passed senior engineering, architecture,
+product/ops, docs, reuse/dedup, QA/test, test delta, CI integrity, and
+security/auth/privacy review after repair. Valid findings closed committed-row
+evidence injection, request/result target substitution, incomplete linked-event
+context, mismatch scope/resource semantics, rejected-value retention, and
+missing migration/operation behavior proof. The focused suite passed 26 tests
+at 96.88 percent authorization-subsystem coverage. PR publication and external
+checks remain pending; AUTH-06 is inactive.
+
+## 2026-07-14 - WS-AUTH-001-05B Repaired Plan Passed
+
+The repaired L1 plan passes senior engineering, QA/test, and
+security/auth/privacy review. The approved contract closes the ten-operation
+registry, strict canonical request variants, actor-bound audit linkage,
+single-use claim state machine, immutable database enforcement, clean mismatch
+transaction, exact event counts, migration compatibility, and hostile-input
+privacy evidence. Bounded runtime implementation may begin; AUTH-06 remains
+inactive.
+
+## 2026-07-14 - WS-AUTH-001-05B L1 Plan Review Repair
+
+PR #118 merged CAT post-merge memory as `eba7e2b`, satisfying the recorded
+AUTH-05B activation gate. The first 05B L1 preimplementation review rejected
+runtime edits until the contract closed the exact operation registry, strict
+canonical request/response/result types, opaque claim ownership, committed-row
+immutability, clean mismatch-denial transaction, narrow invalidation ownership,
+and deterministic downgrade guard. The repair also replaces the numeric line
+ceiling with the user-directed semantic chunk boundary. Runtime code remains
+unmodified pending repaired plan approval.
+
 ## 2026-07-14 - WS-AUTH-001-CAT Merged
 
 PR #117 merged through explicit human approval as `4c5d4fc`. Final branch head
