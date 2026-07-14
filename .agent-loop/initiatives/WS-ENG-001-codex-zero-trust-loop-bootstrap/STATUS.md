@@ -3,23 +3,25 @@
 ## Current
 
 - `WS-ENG-001-01`: merged through PR #23 on 2026-06-20; complete
-- `WS-ENG-001-02`: active by explicit user request; implementation is bounded
-  by its approved automated post-merge memory contract
+- `WS-ENG-001-02`: implementation complete and all required internal reviewer
+  tracks passed at `8670005`; PR evidence/publication is pending
 - Merge commit: `b9fe19b96109e9786e1d6d89488abfbe68a05d4a`
-- Reviewed code SHA: `b22b940ee50956c9c7bfd0e681ffac727b6ff82c`
-- Current gate: implement and review `WS-ENG-001-02`
+- Reviewed code SHA: `8670005639b5d080d3adceca840b8fae4addc115`
+- Current gate: bind review evidence, publish the ready PR, and complete external
+  and explicit human review
 - Next chunk: inactive
 
 ## Last Update
 
-Bootstrap branch created from `origin/main`. Dirty files in the original checkout
-were left untouched in their existing branch. Internal reviewer findings were
-addressed in the internal evidence artifact. CodeRabbit, GitHub checks, and human
-PR feedback were separated into the external review response artifact. Internal
-review evidence is bound to the reviewed code SHA. PR #23 is merged, and the loop
-memory has been updated on `main`.
+The automated memory implementation reconciles from an immutable bootstrap,
+binds lifecycle intent to reviewed-head JSON, authenticates canonical state with
+Ed25519, rejects stale signed snapshots against protected `main`, and rebuilds
+malformed or hostile branch state. Fifty-five focused behavior tests pass;
+updater and independent-checker branch coverage are 90.79 and 94.41 percent.
+Live `main` protection now requires Agent Gates and Backend test with stale
+approval dismissal. The generated branch blocks deletion and force-push.
 
 ## Next Required Event
 
-Implement only `WS-ENG-001-02`. Do not start another engineering or product
-chunk automatically.
+Publish only `WS-ENG-001-02`. Do not start another engineering or product chunk
+automatically.
