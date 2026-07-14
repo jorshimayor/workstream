@@ -211,7 +211,12 @@ The event-specific fact matrix is exact:
 For grant facts, `access_administrator` and `operator` use only `system`;
 `project_manager`, `finance_authority`, and `audit_authority` use `system` or
 `project`; `submitter`, `reviewer`, and `both` use only `project`. `scope_id` is
-absent for system scope and required for project scope.
+absent for system scope and required for project scope. System-scope grant
+evidence has `project_id = NULL`. Project-scope grant evidence requires
+`project_id`, and every before/after `scope_id` equals that envelope value;
+replacement retains the same scope ID before and after. When
+`resource_type = project` and `resource_id` is present, `resource_id` also
+equals `project_id`. Typed and direct-SQL paths enforce these cross-field rules.
 Typed validation and database constraints enforce the identical envelope and
 fact matrices. Table-driven tests execute the same positive and negative cases
 through Pydantic and direct SQL; lexical bounds alone are insufficient.
@@ -324,19 +329,6 @@ trap 'rm -rf "$tmp_dir"' EXIT
   --cov=app.modules.audit --cov-report=term-missing --cov-fail-under=90
 .venv/bin/ruff check app tests
 .venv/bin/docstr-coverage --config .docstr.yaml
-cd ..
-python3 scripts/check_stale_workstream_wording.py
-python3 scripts/check_stale_authorization_docs.py
-python3 scripts/check_stale_artifact_contracts.py
-python3 scripts/check_markdown_links.py
-python3 scripts/check_internal_review_evidence.py
-changed_production_lines=$(git diff --unified=0 origin/main...HEAD -- backend/app backend/alembic | \
-  awk '/^\+\+\+|^---/{next} /^[+-]/{line=substr($0,2); if (line !~ /^[[:space:]]*($|#)/) n++} END{print n+0}')
-printf 'AUTH-05A changed production lines: %s\n' "$changed_production_lines"
-if test "$changed_production_lines" -gt 500; then printf 'AUTH-05A inspection required\n'; fi
-test "$changed_production_lines" -le 650
-awk 'length($0) > 120 { print FNR ":" $0; bad=1 } END { exit bad }' \
-  backend/alembic/versions/0018_authority_audit_evidence.py
 .venv/bin/python - <<'PY'
 from pathlib import Path
 import subprocess
@@ -352,6 +344,19 @@ paths = subprocess.check_output(
 blocked = [path for path in paths if path.endswith(".py") and weak_python(Path(path))]
 raise SystemExit(f"test weakening: {blocked}" if blocked else 0)
 PY
+cd ..
+python3 scripts/check_stale_workstream_wording.py
+python3 scripts/check_stale_authorization_docs.py
+python3 scripts/check_stale_artifact_contracts.py
+python3 scripts/check_markdown_links.py
+python3 scripts/check_internal_review_evidence.py
+changed_production_lines=$(git diff --unified=0 origin/main...HEAD -- backend/app backend/alembic | \
+  awk '/^\+\+\+|^---/{next} /^[+-]/{line=substr($0,2); if (line !~ /^[[:space:]]*($|#)/) n++} END{print n+0}')
+printf 'AUTH-05A changed production lines: %s\n' "$changed_production_lines"
+if test "$changed_production_lines" -gt 500; then printf 'AUTH-05A inspection required\n'; fi
+test "$changed_production_lines" -le 650
+awk 'length($0) > 120 { print FNR ":" $0; bad=1 } END { exit bad }' \
+  backend/alembic/versions/0018_authority_audit_evidence.py
 if git diff --unified=0 origin/main...HEAD -- backend/tests | \
   rg '^-(.*assert|.*pytest\.raises|.*pytest\.mark\.(skip|xfail)|.*pytest\.(skip|xfail)|.*skipTest)'; then exit 1; fi
 git diff --check

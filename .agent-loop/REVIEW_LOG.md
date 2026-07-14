@@ -16,6 +16,12 @@ resource-ID nullability, admin role/scope compatibility, optional-versus-require
 reason wording, and state-versus-decision fact meaning. It also required exact
 added-plus-deleted size arithmetic and reuse of the repository's AST-aware test
 weakening detector. Those contract defects were repaired before runtime work.
+QA then found the AST command below the repository-root directory change; the
+command was moved into its executable backend-relative position before final
+contract review.
+Senior review also required project-scoped grant facts to match the envelope
+project, replacement facts to retain one scope, system-scope grant evidence to
+omit project scope, and project resources to agree with the envelope project.
 
 ## 2026-07-14 - WS-AUTH-001-05A Contract Reopened By Exact-SHA Review
 
