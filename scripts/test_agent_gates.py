@@ -1,7 +1,7 @@
 """Regression tests for Workstream agent gate helpers.
 
-Run with plain Python so the agent-gates workflow does not need test
-dependencies installed before it can protect the repository process.
+Run with plain Python after installing the hash-pinned agent-gate dependencies;
+the gate remains independent of the backend test environment.
 """
 
 from __future__ import annotations
