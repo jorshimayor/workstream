@@ -4,31 +4,23 @@
 
 - Active initiative: `WS-AUTH-001` - Workstream Authorization Service
 - Active planning chunk: none
-- Active implementation chunk: `WS-AUTH-001-05A` - Shared Audit Ownership And
-  Append-Only Authority Evidence
-- Branch: `codex/ws-auth-001-05-authority-evidence`
-- Worktree: `/home/abiorh/flow/workstream-auth-001-05`
-- Status: AUTH-04B post-merge memory merged through PR #114 as `97cd0f5`.
-  The user explicitly started AUTH-05. Required L1 review rejected the combined
-  contract, then passed the first repaired AUTH-05A contract at `7a9023b`.
-  Exact-SHA implementation review reopened the contract for closed privacy
-  registries, non-echoing mapping admission, typed/SQL parity, and readable SQL.
+- Active implementation chunk: none
+- Branch: `codex/ws-auth-001-05a-post-merge-memory`
+- Worktree: `/home/abiorh/flow/workstream-authorization-service`
+- Status: AUTH-05A passed required internal reviews, Backend, Agent Gates, and
+  CodeRabbit. The user explicitly approved and merged PR #115 as `8e1cde6` on
+  2026-07-14. Post-merge memory is the only active work.
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
-- Latest integrated `main` merge commit: `97cd0f5`
-- Current gate: AUTH-05A runtime repair and focused evidence under the
-  human-approved semantic chunk boundary.
-- Scope checkpoint: allowed files, non-goals, acceptance criteria, behavior
-  evidence, and required review bound AUTH-05A; there is no numeric line cap.
-  AUTH-05B remains a separate inactive chunk.
-- Next chunk: AUTH-05B remains inactive until AUTH-05A merges, post-merge memory
-  is reconciled, and the user gives a separate explicit start. AUTH-06 remains
-  inactive.
-- Focused evidence: 77 isolated rate/config tests pass at 97 percent subsystem
-  coverage, 59 final config/object-graph tests pass, and the exact migration
-  proof and real API E2E pass. Final GitHub Backend passed 937 tests at 82.15
+- Latest integrated `main` merge commit: `8e1cde6`
+- Current gate: post-merge memory and stop; no implementation chunk is active.
+- Scope checkpoint: AUTH-05A is complete. AUTH-05B remains a separate inactive
+  chunk and its contract does not authorize implementation.
+- Next chunk: AUTH-05B requires this memory update to merge and a separate
+  explicit user start. AUTH-06 and later chunks remain inactive.
+- Focused evidence: the audit/delegation suite passed 11 tests at 94.55 percent
+  audit-subsystem coverage. Final GitHub Backend passed 949 tests at 82.77
   percent global coverage and 91.07 percent artifact-foundation coverage.
-  AUTH-05 and later chunks remain inactive.
 - Parallel initiative: `WS-QUAL-001-01B2` is paused at the user's direction so
   AUTH receives the laptop's test capacity. Its last official whole-app result
   remains `6466/8159` statements (`79.249908%`); no replacement evidence exists.

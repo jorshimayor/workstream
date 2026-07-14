@@ -1,5 +1,16 @@
 # Review Log
 
+## 2026-07-14 - WS-AUTH-001-05A Merged
+
+PR #115 merged through explicit human approval as `8e1cde6`. Final GitHub
+checks passed: Backend ran 949 tests at 82.77 percent global coverage, Agent
+Gates passed, and CodeRabbit passed after all actionable comments were
+addressed. The audit/delegation focused suite passed 11 tests at 94.55 percent
+audit-subsystem coverage. AUTH-05A is complete; AUTH-05B remains inactive until
+post-merge memory merges and the user gives a separate explicit start.
+Senior engineering, docs, architecture, reuse, product/ops, QA/CI/test-delta,
+and security/auth/privacy review passed for this memory-only reconciliation.
+
 ## 2026-07-14 - WS-AUTH-001-05A CodeRabbit Response
 
 CodeRabbit run `30676bdc-7525-4deb-8f9e-a87d42c64f92` produced four actionable
@@ -8,7 +19,8 @@ commands executable, replaces fragile positional event mapping with explicit
 identity-link event keys, types the task audit fixture session, and replaces
 misleading reused-agent names with AUTH-05A-specific review references. Focused
 behavior, Ruff, stale authorization docs, Markdown links, and diff integrity
-pass. Exact-SHA internal re-review is required before publication of the repair.
+pass. Exact-SHA internal re-review passed at `ea16fd8` before publication of the
+repair.
 
 ## 2026-07-14 - WS-AUTH-001-05A Semantic Scope Amendment
 
