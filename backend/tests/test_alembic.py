@@ -476,6 +476,7 @@ def test_authority_audit_schema_preserves_legacy_and_guards_downgrade(
         },
         "constraints": {
             "ck_audit_events_authority_privacy_bounds",
+            "ck_audit_events_authority_registries",
             "ck_audit_events_authority_tokens",
             "ck_audit_events_domain_shape",
             "ck_audit_events_fact_bounds",
@@ -497,6 +498,8 @@ def test_authority_audit_schema_preserves_legacy_and_guards_downgrade(
         },
         "functions": {
             "authority_facts_are_safe",
+            "authority_grant_facts_are_safe",
+            "authority_event_facts_are_safe",
             "reject_audit_event_mutation",
             "set_authority_audit_database_time",
         },
@@ -2246,7 +2249,8 @@ async def _authority_audit_schema(database_url: str) -> dict[str, object]:
                     await connection.execute(
                         text(
                             "select proname from pg_proc where proname in "
-                            "('authority_facts_are_safe', 'reject_audit_event_mutation', "
+                            "('authority_facts_are_safe', 'authority_grant_facts_are_safe', "
+                            "'authority_event_facts_are_safe', 'reject_audit_event_mutation', "
                             "'set_authority_audit_database_time')"
                         )
                     )
@@ -2283,15 +2287,16 @@ async def _insert_authority_audit_fixture(database_url: str, event_id: str):
                     "(id, entity_type, entity_id, event_type, actor_id, actor_roles, "
                     "claim_snapshot, auth_source, is_dev_auth, event_payload, event_domain, "
                     "event_version, occurred_at, actor_ref_kind, request_id, correlation_id, "
-                    "permission_id) values (:id, 'actor', :entity_id, "
-                    "'SensitiveAuthorizationAllowed', 'workstream:system:test', '[]'::json, "
+                    "permission_id, reason, after_facts) values (:id, "
+                    "'authorization_decision', :id, 'SensitiveAuthorizationAllowed', "
+                    "'workstream:system:bootstrap', '[]'::json, "
                     "'{}'::json, 'local_authority', false, '{}'::json, 'authority', 1, "
                     "'2000-01-01T00:00:00Z', 'system_principal', :request_id, "
-                    ":correlation_id, 'actor.manage') returning occurred_at"
+                    ":correlation_id, 'actor.profile.read_any', "
+                    "'authorization_evaluation', '{\"allowed\": true}') returning occurred_at"
                 ),
                 {
                     "id": event_id,
-                    "entity_id": str(uuid4()),
                     "request_id": str(uuid4()),
                     "correlation_id": str(uuid4()),
                 },
