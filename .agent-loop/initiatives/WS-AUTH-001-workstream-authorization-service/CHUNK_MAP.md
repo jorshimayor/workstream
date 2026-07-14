@@ -20,8 +20,8 @@ stopped.
 | `WS-AUTH-001-04B` | PostgreSQL Rate Controls | L1 | Merged through PR #113 as `05a63c8` |
 | `WS-AUTH-001-05` | Authority Evidence And Idempotency Foundation | L1 | Split before implementation into 05A and 05B |
 | `WS-AUTH-001-05A` | Shared Audit Ownership And Append-Only Authority Evidence | L1 | Merged through PR #115 as `8e1cde6` |
-| `WS-AUTH-001-CAT` | Action And Resource Catalogue Reconciliation | L1 | Internal review passed; ready PR pending |
-| `WS-AUTH-001-05B` | Authority Idempotency And Invalidation Foundation | L1 | Start signal received; inactive until CAT merge and post-merge memory |
+| `WS-AUTH-001-CAT` | Action And Resource Catalogue Reconciliation | L1 | Merged through PR #117 as `4c5d4fc` |
+| `WS-AUTH-001-05B` | Authority Idempotency And Invalidation Foundation | L1 | Start signal received; activate after CAT post-merge memory merges |
 | `WS-AUTH-001-06` | Canonical Actor Profile And Identity Link | L1 | Proposed |
 | `WS-AUTH-001-07` | Authorization Kernel And Permission Registry | L1 | Proposed |
 | `WS-AUTH-001-08` | Bootstrap And Administrative Role Grants | L1 | Proposed |
@@ -107,6 +107,7 @@ incompatible with readable typed/database privacy parity. Repaired 05A contract
 review passed at `7cc6058`; the user subsequently replaced the line cap with
 the semantic AUTH-05A boundary. Required reviews and checks passed, and explicit
 human approval merged PR #115 as `8e1cde6` on 2026-07-14, followed by merged
-post-merge memory. The user has now given the AUTH-05B start signal; 05B remains
-inactive only until `WS-AUTH-001-CAT` merges and its post-merge memory is
-recorded. Do not start AUTH-06 or POL-002-04.
+post-merge memory. `WS-AUTH-001-CAT` then merged through PR #117 as `4c5d4fc`
+after Backend, Agent Gates, CodeRabbit, and explicit human approval passed. The
+AUTH-05B start signal is recorded; 05B may activate after CAT post-merge memory
+merges, without another start signal. Do not start AUTH-06 or POL-002-04.

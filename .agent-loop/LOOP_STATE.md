@@ -3,25 +3,24 @@
 ## Current State
 
 - Active initiative: `WS-AUTH-001` - Workstream Authorization Service
-- Active planning chunk: `WS-AUTH-001-CAT` - Action And Resource Catalogue
-  Reconciliation
+- Active planning chunk: none
 - Active implementation chunk: none
-- Branch: `codex/ws-auth-001-action-catalogue-reconciliation`
+- Branch: `codex/ws-auth-001-cat-post-merge-memory`
 - Worktree: `/home/abiorh/flow/workstream-authorization-service`
-- Status: AUTH-05A and its post-merge memory are merged. The user requested
-  repository mapping of a proposed action/resource catalogue and directed that
-  only validated rules be copied into canonical docs and owning future chunks.
+- Status: `WS-AUTH-001-CAT` passed required internal reviews, Backend, Agent
+  Gates, CodeRabbit, and explicit human approval, then merged through PR #117 as
+  `4c5d4fc` on 2026-07-14. Post-merge memory is the only active work.
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
-- Latest integrated `main` merge commit: `ab49b73`
-- Current gate: internal review passed; ready PR, GitHub checks, CodeRabbit, and
-  explicit human merge remain. No runtime implementation chunk is active.
+- Latest integrated `main` merge commit: `4c5d4fc`
+- Current gate: CAT post-merge memory and stop; no runtime implementation chunk
+  is active.
 - Scope checkpoint: the 52 approved identifiers and `/api/v1` namespace remain
   unchanged. AUTH-05A's 49-identifier audit base remains runtime truth until the
   three planned recovery identifiers receive typed/SQL parity in AUTH-13/14.
 - Next chunk: the user explicitly directed AUTH-05B to continue after this
-  reconciliation. It remains inactive until this docs-only chunk merges and its
-  post-merge memory/stop checkpoint is recorded.
+  reconciliation. Its start signal is recorded and it may activate after this
+  post-merge memory update merges, without another start signal.
 - Focused evidence: the audit/delegation suite passed 11 tests at 94.55 percent
   audit-subsystem coverage. Final GitHub Backend passed 949 tests at 82.77
   percent global coverage and 91.07 percent artifact-foundation coverage.

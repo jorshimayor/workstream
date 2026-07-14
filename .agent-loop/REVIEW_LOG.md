@@ -1,5 +1,15 @@
 # Review Log
 
+## 2026-07-14 - WS-AUTH-001-CAT Merged
+
+PR #117 merged through explicit human approval as `4c5d4fc`. Final branch head
+`5b4ec96` passed Backend, Agent Gates, CodeRabbit, and all required internal
+review tracks. The docs-only reconciliation preserves 52 approved identifiers,
+the current 49-identifier persisted audit base, exact ActionId evidence, staged
+domain ownership, per-chunk conformance, and 90 percent AUTH coverage gates.
+AUTH-05B's start signal is recorded; it may activate after this post-merge memory
+update merges, without another start signal.
+
 ## 2026-07-14 - WS-AUTH-001-CAT CodeRabbit Response
 
 CodeRabbit raised two valid consistency findings on PR #117. The repair makes
