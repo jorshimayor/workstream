@@ -1,5 +1,20 @@
 # Review Log
 
+## 2026-07-14 - WS-ART-001 Fifth Exact-Head Review Failed
+
+Planning candidate `cb1c0dc9d77ec9e10e47c084627fc1a4064e0896` passed senior
+engineering, architecture, and QA/test but failed security/auth. All four
+`gpt-5.5` high reviewer sessions were closed; none of these results is reusable
+approval.
+
+The valid High finding is AWS-specific: without `s3:ListBucket`, S3 masks a
+missing `HeadObject` as 403, so the planned resolver could not distinguish
+authoritative absence from denied access. The bounded repair keeps the bucket
+dedicated, grants `s3:ListBucket` only on that bucket for missing-key response
+classification, keeps object listing outside the port/application, treats
+every 403 as provider unavailable, and requires live 404 proof before AWS
+activation.
+
 ## 2026-07-14 - WS-ART-001 Fourth Exact-Head Review Failed
 
 Planning candidate `b5279be1da1b61c161166903d6144719cf29a17e` passed the

@@ -65,10 +65,11 @@ without direct database inspection or Terminal Benchmark product coupling.
   executor can assume another proof role; bootstrap credentials are never
   supplied.
 - the runtime policy allows exactly `s3:PutObject` and `s3:GetObject` on the
-  completed-object ARN. The readiness policy and resources match the canonical
-  S3/IAM/Access Analyzer read/check list in the storage specification, and the
-  negative role has no S3/IAM/Analyzer action. Any extra action, resource,
-  inline/attached policy, or exception fails proof;
+  completed-object ARN plus `s3:ListBucket` on the dedicated bucket ARN solely
+  so a missing `HeadObject` can return 404. The readiness policy and resources
+  match the canonical S3/IAM/Access Analyzer read/check list in the storage
+  specification, and the negative role has no S3/IAM/Analyzer action. Any
+  extra action, resource, inline/attached policy, or exception fails proof;
 - the bucket policy exactly enforces insecure-transport denial, non-runtime
   `s3:*` denial on the completed-object ARN through `aws:PrincipalArn`, and
   `s3:PutObject` denial when `Null: {"s3:if-none-match": "true"}`. S3 requires
@@ -77,8 +78,9 @@ without direct database inspection or Terminal Benchmark product coupling.
   write, or delete a known object. Bootstrap-principal denial is proved by
   policy/IAM evaluation without supplying bootstrap credentials. An
   unconditional runtime overwrite is denied and the original bytes remain
-  unchanged. Policy/ACL/public-access and completed-prefix lifecycle proof must
-  also pass;
+  unchanged. A runtime `HeadObject` against a nonexistent opaque challenge key
+  must return 404; 403 or any other result fails activation. Policy/ACL/public-
+  access and completed-prefix lifecycle proof must also pass;
 - each executor obtains its STS caller ARN and writes one append-only
   `ArtifactProviderProbeResult` bound to probe type, expected/observed ARN,
   release, namespace fingerprint, policy digest, common challenge nonce, proof

@@ -403,7 +403,8 @@ Configuration includes:
 - provider profile `aws_s3` or `minio`;
 - explicit AWS or configured MinIO region;
 - omitted endpoint URL for native AWS S3 and required endpoint for MinIO;
-- private bucket and private prefix;
+- dedicated private Workstream artifact bucket and private prefix; the bucket
+  contains no other application's objects;
 - addressing style;
 - credential mode, optional access-key ID/secret/session token, and no resolved
   credential persistence;
@@ -471,10 +472,12 @@ and provider-specific finalization algorithms are deferred. A future multipart
 initiative must prove one atomic no-overwrite and recovery algorithm against
 AWS S3 before changing this limit.
 
-The runtime principal is restricted to the exact bucket and completed-object
-prefix and only the actions required for conditional put, head, and get. It has
-no delete, copy, list, bucket administration, lifecycle mutation, public-access
-mutation, or cross-prefix permission. AWS uses a least-privilege role/policy.
+The runtime principal is restricted to the dedicated bucket and completed-
+object prefix and only the actions required for conditional put, head, get, and
+trustworthy missing-object classification. It has no delete, copy, object-list
+operation in Workstream, bucket administration, lifecycle mutation, public-
+access mutation, or cross-prefix object permission. AWS uses a least-privilege
+role/policy.
 
 Production activation uses these exact resource templates:
 
@@ -490,6 +493,7 @@ The principal/action matrix is closed:
 | Principal | Exact allowed IAM actions | Exact resource |
 |---|---|---|
 | Workstream runtime role | `s3:PutObject`, `s3:GetObject` | `OBJECT_ARN` only |
+| Workstream runtime role | `s3:ListBucket` | `BUCKET_ARN` only |
 | deployment readiness role | `s3:GetBucketPolicy`, `s3:GetBucketPolicyStatus`, `s3:GetBucketAcl`, `s3:GetBucketPublicAccessBlock`, `s3:GetBucketOwnershipControls`, `s3:GetBucketVersioning`, `s3:GetLifecycleConfiguration`, `s3:GetEncryptionConfiguration` | `BUCKET_ARN` only |
 | deployment readiness role | `iam:GetRole`, `iam:ListRolePolicies`, `iam:ListAttachedRolePolicies` | `RUNTIME_ROLE_ARN` only |
 | deployment readiness role | `iam:GetPolicy`, `iam:GetPolicyVersion` | `RUNTIME_POLICY_ARN` only |
@@ -497,16 +501,25 @@ The principal/action matrix is closed:
 | deployment negative-test role | no S3, IAM, or Access Analyzer action | none |
 | infrastructure bootstrap principal | no Workstream-defined allow statement and no proof credential; environment-owned provisioning only | outside the Workstream runtime/probe policy |
 
-`HeadObject` uses the runtime role's `s3:GetObject` permission; it does not add
-another IAM action to the closed matrix.
+`HeadObject` uses the runtime role's `s3:GetObject` permission. AWS returns 404
+for a missing key only when the caller also has `s3:ListBucket`; without it, a
+missing key is masked as 403. The bucket-level permission therefore exists only
+so `HeadObject` can produce authoritative absence for this dedicated bucket.
+`ArtifactStore` has no list method and Workstream never calls `ListObjects` or
+`ListObjectsV2`. A 403 is always `provider_unavailable`, never `missing`.
+The IAM permission technically permits the runtime principal to enumerate this
+dedicated bucket if that principal is compromised; AWS offers no narrower
+permission that also enables missing-key 404 classification. The bucket and
+opaque hash-only key namespace are therefore mandatory containment boundaries.
 
 `sts:GetCallerIdentity` is called by each proof executor to bind observed
 identity and requires no identity-policy grant. The runtime policy contains
-exactly the two listed S3 actions. It contains no wildcard S3 action and no
-`DeleteObject`, `DeleteObjectVersion`, `CopyObject`, ACL, tagging, multipart,
-list, bucket-administration, lifecycle, or public-access action. The readiness
-role contains no S3 object action. v0.1 uses bucket-default SSE-S3 (`AES256`),
-which the readiness probe verifies, and grants no KMS action.
+exactly the three listed S3 actions on their exact resource classes. It contains
+no wildcard S3 action and no `DeleteObject`, `DeleteObjectVersion`,
+`CopyObject`, ACL, tagging, multipart, bucket-administration, lifecycle, or
+public-access action. The readiness role contains no S3 object action. v0.1
+uses bucket-default SSE-S3 (`AES256`), which the readiness probe verifies, and
+grants no KMS action.
 
 The bucket-policy deny matrix is closed:
 
@@ -551,7 +564,7 @@ assumes another proof role:
 | Probe | Execution identity and boundary |
 |---|---|
 | readiness | independent deployment job with the short-lived OIDC readiness role; policy/ACL/public-access/lifecycle/IAM inspection only |
-| runtime immutability | command executed inside the deployed Workstream runtime workload identity; conditional write, unconditional-overwrite denial, head/get, and byte-preservation proof only |
+| runtime immutability | command executed inside the deployed Workstream runtime workload identity; conditional write, unconditional-overwrite denial, missing-key 404, head/get, and byte-preservation proof only |
 | negative access | independent deployment job with the short-lived OIDC negative-test role; known-object read/write/delete denials only |
 
 The readiness role cannot assume the runtime or negative-test role. The
@@ -979,9 +992,10 @@ bytes in PostgreSQL.
 - workload-identity failure, periodic re-publication, duplicate Celery delivery, expired
   execution lease, a continuously progressing stream that exceeds the total
   deadline, stale finalization, and Operator retry are covered;
-- least-privilege runtime credentials, denied delete/list/admin actions, AWS
-  public-access controls, lifecycle safety, and anonymous-read denial are
-  covered by deployment proof;
+- least-privilege runtime credentials, exact bucket-scoped `s3:ListBucket` for
+  missing-key classification, absence of an application object-list surface,
+  denied delete/admin actions, AWS public-access controls, lifecycle safety,
+  and anonymous-read denial are covered by deployment proof;
 - cross-resource authorization and secret non-retention are covered;
 - new or materially changed backend subsystems remain at least 90 percent
   covered and repository coverage does not fall below the current baseline;

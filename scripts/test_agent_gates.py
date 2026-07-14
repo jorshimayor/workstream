@@ -2065,6 +2065,11 @@ def _assert_exact_aws_artifact_authorization_contract(spec: str) -> None:
             ("OBJECT_ARN",),
         ),
         (
+            "Workstream runtime role",
+            ("s3:ListBucket",),
+            ("BUCKET_ARN",),
+        ),
+        (
             "deployment readiness role",
             (
                 "s3:GetBucketPolicy",
@@ -2170,15 +2175,25 @@ def test_aws_artifact_activation_contract_is_exact_and_time_bounded() -> None:
     _assert_exact_aws_artifact_authorization_contract(spec)
     assert "operation_total_deadline + persistence_margin +" in spec
     assert "clock_safety_margin" in spec
+    assert "A 403 is always `provider_unavailable`, never `missing`" in spec
     assert "s3:if-none-match` equals `*" not in spec
     assert "aws_runtime_immutability_probe" in chunk
     assert "aws_negative_access_probe" in chunk
     assert "aws_activation_coordinator" in chunk
+    assert "nonexistent opaque challenge key" in chunk
 
     mutations = (
         (
             "`s3:PutObject`, `s3:GetObject` | `OBJECT_ARN` only |",
             "`s3:PutObject`, `s3:GetObject`, `s3:ListBucket` | `OBJECT_ARN` only |",
+        ),
+        (
+            "| Workstream runtime role | `s3:ListBucket` | `BUCKET_ARN` only |\n",
+            "",
+        ),
+        (
+            "| Workstream runtime role | `s3:ListBucket` | `BUCKET_ARN` only |",
+            "| Workstream runtime role | `s3:ListBucket` | `OBJECT_ARN` only |",
         ),
         (
             "`s3:PutObject`, `s3:GetObject` | `OBJECT_ARN` only |",

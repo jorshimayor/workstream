@@ -88,13 +88,15 @@ injection exists.
 
 ## D13 - Private S3 Deployment
 
-Production uses HTTPS, a private AWS S3 bucket, Block Public Access, and an
-allowlisted AWS workload-identity credential method. No public bucket, signed
-URL, provider object key, endpoint, or credential appears in an API response.
-Runtime authority is restricted to the exact bucket/prefix and required
-put/head/get actions. Delete, copy, list, lifecycle mutation, bucket
-administration, and public-access mutation are denied. Static credentials are
-local/CI MinIO only.
+Production uses HTTPS, a dedicated private AWS S3 bucket, Block Public Access,
+and an allowlisted AWS workload-identity credential method. No public bucket,
+signed URL, provider object key, endpoint, or credential appears in an API
+response.
+Runtime authority is restricted to put/get on the completed-object ARN and
+bucket-level `s3:ListBucket` only for trustworthy missing-key `HeadObject`
+classification. The port exposes no list method and Workstream calls no object-
+list API. Delete, copy, lifecycle mutation, bucket administration, and public-
+access mutation are denied. Static credentials are local/CI MinIO only.
 
 ## D14 - Clean Cut
 
@@ -217,3 +219,14 @@ proof is refreshed every 5 minutes and expires within 15 minutes. MinIO
 conformance never activates AWS. Authorized cloud administrators are trusted
 inside the bounded validity window; S3 Object Lock is outside v0.1 unless a new
 human-approved decision changes that threat boundary.
+
+## D27 - AWS Missing-Object Classification
+
+The AWS production bucket is dedicated to Workstream artifact objects. The
+runtime role receives `s3:PutObject` and `s3:GetObject` on the completed-object
+ARN plus `s3:ListBucket` on the bucket ARN only because S3 otherwise masks a
+missing `HeadObject` result as 403. `ArtifactStore` has no list method and
+Workstream never calls `ListObjects` or `ListObjectsV2`. The adapter maps only
+404 to missing; 403 always means provider unavailable. Chunk 07 must prove a
+nonexistent opaque challenge key returns 404 under the actual runtime identity
+before AWS activation.

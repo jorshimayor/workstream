@@ -37,6 +37,16 @@ least-privilege, lifecycle, anonymous-read-negative, and unapproved-
 authenticated-principal negative live proof succeeds in the deployment-only
 Chunk 07 harness.
 
+The AWS bucket is dedicated to Workstream artifact objects. The runtime role
+has `s3:PutObject` and `s3:GetObject` on the completed-object ARN plus
+`s3:ListBucket` on the bucket ARN solely so `HeadObject` can distinguish a
+missing key as 404 rather than masking it as 403. `ArtifactStore` exposes no
+list operation, Workstream never calls an object-list API, and every 403 remains
+provider unavailable rather than evidence of absence. The runtime principal can
+technically enumerate opaque hashes in this dedicated bucket; that accepted
+v0.1 risk is recorded explicitly because AWS provides no narrower permission
+that still yields trustworthy missing-key 404 responses.
+
 Cloudflare R2 and Flow Node are not v0.1 dependencies. Later approved
 initiatives may implement the same `ArtifactStore` port and conformance
 contract. Workstream does not run, deploy, or maintain either for v0.1.

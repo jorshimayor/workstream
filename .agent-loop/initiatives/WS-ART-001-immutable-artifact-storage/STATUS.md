@@ -48,6 +48,14 @@ authorization regression test was not a closed-matrix assertion. Every session
 was closed and none of those results is reusable approval. Repair is active on
 integrated main `eba7e2b` and remains planning-only.
 
+Candidate `cb1c0dc9d77ec9e10e47c084627fc1a4064e0896` later passed senior
+engineering, architecture, and QA/test but failed security/auth because AWS
+masks missing `HeadObject` responses as 403 without `s3:ListBucket`. All four
+sessions were closed. The active repair uses a dedicated Workstream artifact
+bucket, the exact bucket-level permission only for trustworthy 404
+classification, no application object-list operation, fail-closed 403 mapping,
+and mandatory live missing-key proof before activation.
+
 The repair closes the raw-port/orchestrator bypass, pre-replica acknowledgement
 gap, namespace first-writer race, caller-assembled quota scope, AWS activation
 and principal boundary, AUTH action-activation ownership, terminal service

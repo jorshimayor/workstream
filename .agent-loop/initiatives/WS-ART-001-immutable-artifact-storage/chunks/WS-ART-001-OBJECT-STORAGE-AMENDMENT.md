@@ -52,6 +52,10 @@ planning and guardrails only.
 - AWS S3 is the only v0.1 production provider behind
   `S3CompatibleArtifactStore`; MinIO is local/CI protocol proof and LocalStorage
   is not production eligible;
+- AWS production uses a dedicated Workstream artifact bucket. Runtime IAM
+  allows put/get only on the completed-object ARN and `s3:ListBucket` only on
+  that bucket so missing `HeadObject` returns 404; the port/application exposes
+  no object-list operation and every 403 remains provider unavailable;
 - every untrusted byte source is server-hashed before provider I/O and the v2
   port accepts only a sealed `CommittedArtifactSource`;
 - Chunk 02C1 owns one generic durable-byte admission ledger before any guide,

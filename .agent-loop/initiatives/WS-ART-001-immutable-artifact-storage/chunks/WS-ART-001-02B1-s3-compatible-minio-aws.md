@@ -38,6 +38,8 @@ credential-delivery contract.
   identity-free key and cannot accept an arbitrary stream/digest pair;
 - one conditional no-overwrite `PutObject` handles concurrent same-content
   writes, and a precondition failure remains an unverified replay candidate;
+- AWS `HeadObject` maps 404 to missing and every 403 to provider unavailable;
+  the adapter exposes and calls no object-list operation;
 - objects above 512 MiB fail before provider I/O and multipart is absent;
 - ETag/provider checksums are not Workstream integrity facts;
 - native AWS endpoint omission with explicit region and MinIO endpoint/region

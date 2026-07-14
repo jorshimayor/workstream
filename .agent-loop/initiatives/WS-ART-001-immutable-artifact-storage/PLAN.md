@@ -125,8 +125,11 @@ operation. Live proof attempts an unconditional overwrite with the runtime
 role, requires denial, and verifies that the original bytes remain unchanged.
 This protects immutability even if adapter code omits its condition.
 
-Runtime credentials are restricted to the exact bucket/prefix and required
-put/head/get actions. Delete, copy, list, bucket administration, lifecycle, and
+Runtime credentials are restricted to the dedicated Workstream artifact bucket
+and completed-object prefix. They allow put/get on the object ARN and
+`s3:ListBucket` on the bucket ARN only so a missing `HeadObject` returns 404
+rather than an ambiguous 403. The port exposes no list method and Workstream
+never calls a list API. Delete, copy, bucket administration, lifecycle, and
 public-access mutation are denied. Production release separately proves AWS
 Block Public Access/policy/ACL state plus anonymous-read denial against a known
 object. A separate read-only
@@ -135,7 +138,9 @@ activation when an enabled AWS expiration or noncurrent-version-expiration rule
 can match the completed-object prefix.
 
 The canonical specification locks the exact IAM manifest: runtime allows only
-`s3:PutObject` and `s3:GetObject` on the completed-object ARN; readiness allows
+`s3:PutObject` and `s3:GetObject` on the completed-object ARN plus
+`s3:ListBucket` on the dedicated bucket ARN for trustworthy absence
+classification; readiness allows
 only the named bucket/IAM/Access Analyzer read/check actions on the named
 bucket, runtime role, runtime policy, or required `*` policy-check resource;
 negative allows no S3/IAM/Analyzer action. The bucket policy has exact insecure-
