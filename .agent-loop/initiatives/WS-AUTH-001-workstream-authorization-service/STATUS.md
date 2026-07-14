@@ -35,8 +35,8 @@ logging-state behavior-test repairs plus lifecycle evidence.
 Backend, Agent Gates, and CodeRabbit passed on final branch head `36c4aa5`, then
 explicit human approval merged PR #111 to `main` as `90c9a28` on 2026-07-13.
 AUTH-04A post-merge memory merged through PR #112 as `7749f54`. The user then
-explicitly started AUTH-04B; its required L1 preimplementation review is active
-and rejected the first activated contract before runtime edits. The second
+explicitly started AUTH-04B; its required L1 preimplementation review rejected
+the first activated contract before runtime edits. The second
 repaired contract passed all required tracks at `b5dceb1`; bounded runtime
 implementation and deterministic evidence are complete, and the candidate is
 internally approved at final SHA `922778b`; reviewed production SHA is
