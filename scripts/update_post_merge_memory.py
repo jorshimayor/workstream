@@ -893,7 +893,17 @@ def prepare_generated_state_root(state_root: Path, public_key: Path) -> bool:
         return False
     try:
         verify_generated_state_signature(state_root, public_key)
-    except (LoopMemoryError, OSError):
+    except (
+        LoopMemoryError,
+        OSError,
+        UnicodeError,
+        AttributeError,
+        TypeError,
+        KeyError,
+        IndexError,
+        ValueError,
+        RecursionError,
+    ):
         for path in generated_paths:
             _remove_path(path)
         return False

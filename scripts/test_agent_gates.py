@@ -1449,6 +1449,20 @@ def test_generated_loop_memory_prepare_recovers_hostile_path_types() -> None:
         assert not (root / updater.SIGNATURE_PATH).exists()
         assert sentinel.read_text(encoding="utf-8") == "preserve\n"
 
+        updater.apply_merge_record(root, loop_record(updater))
+        (root / updater.RENDERED_PATH).write_bytes(b"\xff\xfe")
+        assert updater.prepare_generated_state_root(root, public_key) is False
+        assert not (root / updater.RENDERED_PATH).exists()
+
+        updater.apply_merge_record(root, loop_record(updater))
+        malformed_state = loop_record(updater)
+        malformed_state["source"] = []
+        (root / updater.STATE_PATH).write_text(
+            json.dumps(malformed_state), encoding="utf-8"
+        )
+        assert updater.prepare_generated_state_root(root, public_key) is False
+        assert not (root / updater.STATE_PATH).exists()
+
         agent_loop = root / updater.STATE_PATH.parent
         shutil.rmtree(agent_loop)
         agent_loop.symlink_to(outside, target_is_directory=True)
