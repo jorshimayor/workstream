@@ -114,13 +114,21 @@ and byte bounds.
 
 AUTH-05A behavior tests exercise these exact foundation shapes:
 
-- `SensitiveAuthorizationAllowed` requires permission and forbids denial code,
-  invalidation cause/target, and idempotency reference;
+- `SensitiveAuthorizationAllowed` requires permission, forbids denial code and
+  invalidation cause/target, and permits an optional canonical UUID
+  idempotency reference for later AUTH-05B orchestration;
 - `SensitiveAuthorizationDenied` requires permission plus a bounded denial
   code and forbids invalidation cause/target and idempotency reference;
 - `AuthorityInvalidationRequested` requires cause-event ID plus all-or-none
-  target kind/reference, forbids denial code, and reserves a `NULL`
-  idempotency reference until AUTH-05B.
+  target kind/reference, forbids denial code, and permits an optional canonical
+  UUID idempotency reference for later AUTH-05B orchestration.
+
+The 05A envelope and database constraints are final for this field: no foreign
+key exists before AUTH-05B, and 05A introduces no lookup or replay behavior.
+Tests persist both `NULL` foundation use and a syntactically valid non-NULL
+future reference without creating an idempotency record. AUTH-05B consumes this
+existing field without changing audit schema, constraints, repository, or
+writer behavior.
 
 Resource type/ID, target actor kind/reference, and invalidation target
 kind/reference are each all-or-none pairs in typed validation and database
