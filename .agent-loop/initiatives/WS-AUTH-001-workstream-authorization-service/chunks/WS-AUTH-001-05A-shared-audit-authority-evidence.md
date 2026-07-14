@@ -79,7 +79,7 @@ token from the adopted specification. Authority rows require:
 - database-owned `occurred_at`;
 - `request_id` and `correlation_id` UUIDs;
 - namespaced acting reference kind (`legacy_actor`, `actor_profile`, or
-  `system_principal`) plus stable opaque reference;
+  `system_principal`) plus the exact local reference defined below;
 - optional target actor reference with all-or-none kind/reference presence;
 - optional matched-grant, permission, project, resource type/id, and target
   grant/link reference;
@@ -112,36 +112,122 @@ Only the external subject/issuer columns become nullable for the conditional
 authority shape. Existing legacy rows and writers retain all current values
 and non-authority requirements.
 
-Reference/type tokens have explicit length and character bounds. Reason is not
-free text: 05A registers only `automatic_first_access`,
-`manual_service_provisioning`, `identity_link_change`, `actor_status_change`,
-`authority_grant_change`, `qualification_decision`,
-`permission_not_effective`, and `invalidation_requested`.
+Every authority string/reference field has one normative form:
 
-Before/after facts are JSON objects with at most 16 allowlisted scalar keys, no
-nested containers, and at most 4096 encoded bytes per object. Values are not
-arbitrary bounded strings. `effective` is boolean; `scope_id` is a canonical
-UUID; `subject_kind`, `provisioning_method`, `link_status`, `role_id`,
-`scope_type`, `qualification_status`, `decision_code`, `status`, and
-`target_status` use closed per-key registries derived from the adopted
-specification. Typed validation and database constraints enforce the same key,
-type, and value registries. Direct SQL cannot persist provider subjects,
-emails, URLs, JWT-shaped values, or opaque token-like substitutes through
-entity/type/reference, reason, or fact fields.
+| Field | Allowed value |
+|---|---|
+| `entity_type` | `actor_profile`, `actor_identity_link`, `admin_role_grant`, `qualification_snapshot`, `project_role_grant`, `authorization_decision`, or `authority_invalidation` |
+| `entity_id`, `matched_grant_id`, `project_id`, `resource_id`, `target_ref_id`, `invalidation_target_ref` | canonical lowercase UUID; nullable optional fields remain nullable |
+| acting `legacy_actor` or `actor_profile` reference | canonical lowercase UUID |
+| acting `system_principal` reference | `workstream:system:bootstrap`; additional principals require an approved registry change |
+| target actor | kind `actor_profile` plus canonical lowercase UUID |
+| `resource_type` | `actor_profile`, `actor_identity_link`, `admin_role_grant`, `project`, `project_role_grant`, `task`, `submission`, `review`, `contribution`, `compensation_award`, `compensation_delivery`, `operations`, or `audit_event` |
+| target/invalidation kind | `actor_profile`, `actor_identity_link`, `admin_role_grant`, `qualification_snapshot`, `project_role_grant`, `authorization_decision`, or `permission_registry` |
+| UUID envelope fields | native/canonical UUID for event, request, correlation, idempotency, and cause references |
+
+`permission_id` is closed to the exact specification Section 11 catalog:
+`actor.profile.read_self`, `actor.profile.update_self`,
+`actor.profile.read_any`, `actor.profile.suspend`, `actor.profile.reactivate`,
+`actor.profile.deactivate`, `actor.identity_link.read`,
+`actor.identity_link.revoke`, `actor.identity_link.reactivate`,
+`actor.service.provision`, `admin_role.read`, `admin_role.grant`,
+`admin_role.revoke`, `project.create`, `project.read`, `project.update`,
+`project.archive`, `project.guide.manage`, `project.effective_policy.manage`,
+`project.task.manage`, `project.review_policy.manage`,
+`project.role_grant.read`, `project.role_grant.manage`, `task.queue.read`,
+`task.claim`, `submission.create`, `submission.read_own`,
+`submission.read_for_review`, `review.queue.read`, `review.queue.inspect`,
+`review.claim`, `review.release`, `review.decline_preference`,
+`review.decision`, `review.lease.force_release`, `review.chain.read`,
+`contribution.read_self`, `contribution.read_project`,
+`compensation.policy.manage`, `compensation.adapter_binding.manage`,
+`compensation.award.read`, `compensation.delivery.reconcile`,
+`operations.status.read`, `operations.timer.run`,
+`operations.reconcile.run`, `operations.outbox.retry`,
+`operations.projection.rebuild`, `audit.read`, and `audit.export`.
+
+`denial_code` is closed to the exact specification Section 22 codes. The
+authority writer may use only: `required_scope_missing`,
+`unsupported_subject_kind`, `service_actor_not_provisioned`,
+`identity_link_revoked`, `actor_suspended`, `actor_deactivated`,
+`permission_not_granted`, `scope_not_authorized`, `self_grant_forbidden`,
+`self_role_revoke_forbidden`, `resource_guard_denied`, `actor_not_found`,
+`grant_not_found`, `resource_not_found`, `actor_already_suspended`,
+`actor_not_suspended`, `actor_deactivated_terminal`,
+`last_access_administrator`, `admin_role_grant_exists`,
+`project_role_grant_exists`, `identity_link_conflict`,
+`resource_project_mismatch`, `idempotency_mismatch`, `invalid_role_scope`,
+`invalid_project_role`, or `qualification_snapshot_invalid`.
+
+Audit `reason` is a privacy-safe classification, not operator-entered text and
+not a replacement for the required rationale stored on the owning domain row.
+The writer never copies domain reason text into audit evidence. Reason is
+required and event-compatible as follows:
+
+| Event group | Allowed reason classification |
+|---|---|
+| human/service provisioning | `automatic_first_access` / `manual_service_provisioning`, respectively |
+| identity link create/revoke/reactivate | `identity_lifecycle_change` |
+| actor suspend/deactivate | `security_response` or `administrative_correction` |
+| actor reactivate | `administrative_correction` |
+| initial Access Administrator bootstrap | `initial_access_bootstrap` |
+| admin/project grant issue | `authority_assignment` |
+| project grant replacement | `authority_replacement` |
+| admin/project grant revoke | `authority_revocation` |
+| admin grant/last-admin denial | `authorization_policy_denial` |
+| qualification snapshot | `qualification_evidence_captured` |
+| sensitive allow/deny | `authorization_evaluation` |
+| invalidation request | `authority_state_changed` |
+
+Before/after facts are JSON objects with at most seven allowlisted scalar keys,
+no nested containers, and at most 4096 encoded bytes. The only fact keys and
+values are: `status` in `active`, `suspended`, `deactivated`, `revoked`, or
+`captured`; `subject_kind` in `human` or `service`; `provisioning_method` in
+`automatic_first_access` or `manual_service_provisioning`; `role` in
+`access_administrator`, `operator`, `project_manager`, `finance_authority`,
+`audit_authority`, `submitter`, `reviewer`, or `both`; `scope_type` in `system`
+or `project`; `scope_id` as a canonical UUID; and `effective` as boolean.
+
+The event-specific fact matrix is exact:
+
+| Event group | Before facts | After facts |
+|---|---|---|
+| human/service provisioning | `NULL` | `status=active`, matching `subject_kind` and `provisioning_method` |
+| identity linked | `NULL` | `status=active`, `subject_kind` |
+| identity revoked/reactivated | `status=active` / `status=revoked` | `status=revoked` / `status=active` |
+| actor suspended/reactivated | `status=active` / `status=suspended` | `status=suspended` / `status=active` |
+| actor deactivated | `status=active` or `suspended` | `status=deactivated` |
+| initial admin bootstrap | `NULL` | `status=active`, `role=access_administrator`, `scope_type=system`, `effective=true` |
+| admin/project grant issued | `NULL` | `status=active`, applicable `role`/scope, `effective=true` |
+| project grant replaced | prior active role/scope with `effective=true` | replacement active role/scope with `effective=true` |
+| admin/project grant revoked | active role/scope with `effective=true` | same role/scope, `status=revoked`, `effective=false` |
+| qualification snapshot captured | `NULL` | `status=captured` |
+| grant operation denied or last-admin denial | `NULL` | `effective=false` |
+| sensitive allowed/denied | `NULL` | `effective=true` / `effective=false` |
+| invalidation requested | `effective=true` | `effective=false` |
+
+For grant facts, admin roles use `system` or `project`; project roles use
+`project`; `scope_id` is absent for system scope and required for project scope.
+Typed validation and database constraints enforce the identical envelope and
+fact matrices. Table-driven tests execute the same positive and negative cases
+through Pydantic and direct SQL; lexical bounds alone are insufficient.
 
 The typed admission layer inspects every `collections.abc.Mapping`, including
 non-dict mappings, before Pydantic owns rejected values. Unknown fields and
-privacy-invalid known values raise one stable non-echoing error. Constructor,
-`model_validate`, and `model_validate_json` tests traverse structured errors,
-arguments, causes, contexts, and public object graphs to prove forbidden input
-is not retained.
+privacy-invalid known values raise one stable non-echoing error. A sanitized
+`AuthorityAuditEventInput.model_validate_json` override replaces malformed,
+scalar, list, string, bytes, and bytearray decode/type failures with that same
+value-free error instead of exposing a decoder `.doc` or Pydantic input.
+Constructor, `model_validate`, and `model_validate_json` tests traverse
+structured errors, arguments, causes, contexts, and public object graphs to
+prove forbidden input is not retained.
 
 AUTH-05A behavior tests exercise these exact foundation shapes:
 
 - `SensitiveAuthorizationAllowed` requires permission, forbids denial code and
   invalidation cause/target, and permits an optional canonical UUID
   idempotency reference for later AUTH-05B orchestration;
-- `SensitiveAuthorizationDenied` requires permission plus a bounded denial
+- `SensitiveAuthorizationDenied` requires permission plus a registered denial
   code and forbids invalidation cause/target and idempotency reference;
 - `AuthorityInvalidationRequested` requires cause-event ID plus all-or-none
   target kind/reference, forbids denial code, and permits an optional canonical
@@ -224,14 +310,13 @@ trap 'rm -rf "$tmp_dir"' EXIT
   .venv/bin/python -m pytest -q \
   tests/test_alembic.py::test_authority_audit_schema_preserves_legacy_and_guards_downgrade \
   tests/test_audit.py \
-  tests/test_tasks.py::test_task_repository_delegates_audit_persistence
+  tests/test_tasks.py::test_task_repository_delegates_audit_persistence \
+  tests/test_tasks.py::test_manual_checker_run_cannot_bypass_failed_automatic_gate \
+  tests/test_tasks.py::test_queued_gate_fails_closed_when_lock_audit_is_missing
 .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$tmp_dir/05a-coverage.json" --timeout-seconds 1800 -- \
   .venv/bin/python -m pytest -q tests/test_audit.py \
   tests/test_tasks.py::test_task_repository_delegates_audit_persistence \
   --cov=app.modules.audit --cov-report=term-missing --cov-fail-under=90
-.venv/bin/python scripts/run_isolated_tests.py --metadata-json "$tmp_dir/full.json" --timeout-seconds 12600 -- \
-  .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py \
-  --cov=app --cov-report=term-missing --cov-fail-under=78
 .venv/bin/ruff check app tests
 .venv/bin/docstr-coverage --config .docstr.yaml
 cd ..
@@ -240,14 +325,22 @@ python3 scripts/check_stale_authorization_docs.py
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/check_markdown_links.py
 python3 scripts/check_internal_review_evidence.py
+test "$(git diff --unified=0 origin/main...HEAD -- backend/app backend/alembic | \
+  awk '/^\+\+\+|^---/{next} /^\+/{line=substr($0,2); if (line !~ /^[[:space:]]*($|#)/) n++} END{print n+0}')" -le 650
+awk 'length($0) > 120 { print FNR ":" $0; bad=1 } END { exit bad }' \
+  backend/alembic/versions/0018_authority_audit_evidence.py
 if git diff --unified=0 origin/main...HEAD -- backend/tests | \
-  rg '^-(.*assert|.*pytest\.raises|.*pytest\.mark\.(skip|xfail)|.*skipTest)'; then exit 1; fi
+  rg '^-(.*assert|.*pytest\.raises|.*pytest\.mark\.(skip|xfail)|.*pytest\.(skip|xfail)|.*skipTest)'; then exit 1; fi
+if git diff --unified=0 origin/main...HEAD -- backend/tests | \
+  rg '^\+(.*pytest\.mark\.(skip|xfail)|.*pytest\.(skip|xfail)|.*skipTest)'; then exit 1; fi
 git diff --check
 ```
 
 Run the exact migration node before audit/delegation tests on the same isolated
-database. Test delta must be additive: no assertion, raises, skip, xfail,
-threshold, workflow, or exclusion weakening.
+database. Do not repeat the multi-hour local full suite after focused repairs;
+GitHub Backend CI remains the final repository-wide `--cov-fail-under=78` gate.
+Test delta must be additive: no assertion, raises, skip, xfail, threshold,
+workflow, or exclusion weakening.
 
 ## Required reviewers
 

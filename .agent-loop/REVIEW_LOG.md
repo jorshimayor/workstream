@@ -1,5 +1,16 @@
 # Review Log
 
+## 2026-07-14 - WS-AUTH-001-05A Repaired Contract Review Failed
+
+Required review of contract `c93cf14` rejected implicit security registries.
+Senior engineering, QA, and security agreed that exact event-to-reason,
+event-to-fact, permission, denial, and reference matrices must be normative;
+lexical bounds and "spec-derived" values were insufficient. Review also
+required sanitized malformed-JSON handling, the two known checker regression
+nodes, deterministic size/line checks, and symmetric additive test-delta
+checks. The contract was repaired without runtime edits and requires a new
+exact-SHA review.
+
 ## 2026-07-14 - WS-AUTH-001-05A Contract Reopened By Exact-SHA Review
 
 Exact-SHA review of implementation repair `6fbb1f8` closed append-only,
