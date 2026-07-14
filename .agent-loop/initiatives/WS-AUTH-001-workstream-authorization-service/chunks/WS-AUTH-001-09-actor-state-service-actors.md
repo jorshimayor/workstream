@@ -70,8 +70,16 @@ product adapter bindings or callback endpoints
 - Unknown services are denied without persistence.
 - Access Administrator can pre-provision a service profile/link with reason.
 - Artifact system principals are fixed service identities, never human/admin
-  grants. Their eventual permissions are drawn only from the closed registry;
-  AUTH-15 owns attaching those principals to artifact worker call sites.
+  grants. Their eventual permissions are drawn only from the closed registry.
+  This chunk provisions the identities but does not attach them to artifact
+  call sites; each owning WS-ART chunk activates its exact service action after
+  the feature resource facts and guards exist.
+- The artifact service-principal allowlist is limited to
+  `artifact.verification.execute`, `artifact.pending_work.scan`,
+  `artifact.put_attempt.resolve`, `artifact.upload_session.expire`,
+  `artifact.binding.create`, `artifact.guide_source.read`,
+  `artifact.checker_input.materialize`, and `artifact.checker_output.write`.
+  Operator reads/retry and contributor ingest/upload actions are excluded.
 - Agent and Space subjects remain unsupported and unpersisted.
 - Every mutation is idempotent, reasoned, and audited without token material.
 - Mixed concurrent link-revoke, grant-revoke, suspend, and deactivate attempts

@@ -86,8 +86,9 @@ service-locator shim is retained.
 
 For artifact storage, only the artifact-storage orchestration service receives
 the writable `ArtifactStore`. Guide, task, submission, and checker modules use
-typed artifact ingest/read/materialization services so every `put` and
-`recover_put` crosses durable admission, receipts, and lifecycle enforcement.
+typed artifact ingest/read/materialization services so every `put` and read-only
+`observe_put_result` crosses durable admission, receipts, and lifecycle
+enforcement.
 
 ## Consequences
 

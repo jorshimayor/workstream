@@ -13,6 +13,8 @@ configuration. No compatibility path remains after this PR.
 ## Allowed Files
 
 - `backend/app/interfaces/artifacts.py`;
+- `backend/app/interfaces/artifact_operations.py` for the closed product
+  capability protocols and request types;
 - artifact adapter registration and LocalStorage public adapter surface;
 - artifact composition root and `backend/app/core/config.py`;
 - artifact models, contracts, repository, and service that own v1 semantics;
@@ -37,26 +39,30 @@ configuration. No compatibility path remains after this PR.
 
 ## Acceptance Criteria
 
-- ArtifactStore exposes only `put(CommittedArtifactSource)`,
-  `recover_put(ArtifactCommitment)`, `open`, and `head`;
+- ArtifactStore exposes only `put(CommittedArtifactSource)`, read-only
+  `observe_put_result(ArtifactCommitment)`, `open`, and `head`;
 - LocalStorage implements v2 with exclusive immutable publication, range reads,
   exact replay, bounded async I/O, and sanitized errors;
 - the migration removes provider retention/receipt semantics, adds immutable
   provider profile/storage namespace, and rebuilds or explicitly refuses
   incompatible pre-production rows;
-- startup and every replica read/write fail closed when the configured adapter
-  identity, provider profile, or storage namespace differs from persisted
-  deployment/replica identity. v0.1 uses one namespace fence, not a
-  per-operation router or hot provider switch;
+- one immutable singleton `ArtifactStorageNamespace` stores the canonical
+  non-secret namespace fingerprint. Startup and every provider operation
+  insert-or-validate it transactionally before I/O; concurrent differing first
+  writers prove one winner and one pre-I/O failure. Every replica references it.
+  v0.1 uses one deployment fence, not a per-operation router or hot switch;
 - upload state includes `replay_required`; provider acknowledgement creates
   `stored_pending_verification` and `pending/unknown/unknown`, never bindability;
 - v1 verify/retain/release/provider-receipt methods are absent from active code;
 - backend values are exactly `disabled|local|s3_compatible`; unimplemented
   `s3_compatible` fails typed, `flow_node` is rejected, and local is refused in
   production;
-- one active factory path exists; only the artifact orchestration service
-  receives writable `ArtifactStore`, and static tests reject `put` or
-  `recover_put` calls from product modules;
+- one active factory path exists; only internal `ArtifactStorageOrchestrator`
+  receives writable `ArtifactStore`. Product modules receive only the exact
+  guide-ingest, contributor-upload, binding, two-method materialization,
+  checker-output, or Operator-read protocols. AST architecture tests reject raw
+  port imports, broad orchestrator injection through FastAPI/Celery composition,
+  and provider mutation/observation calls from product modules;
 - API-process startup cleanup runs once before accepting artifact work, and a
   named Celery Beat task owns periodic stale-scratch cleanup; both invoke the
   02A2 cleanup service, while neither creates a product claim or review lease;
@@ -77,13 +83,14 @@ coverage report --include='app/adapters/artifacts/*,app/interfaces/artifacts.py,
 coverage report --include='app/interfaces/external_services.py' --precision=2 --fail-under=90
 coverage report --include='app/core/config.py' --precision=2 --fail-under=90
 coverage report --include='app/workers/*' --precision=2 --fail-under=90
+coverage report --include='app/main.py' --precision=2 --fail-under=90
 ```
 
 ## Verification
 
 ```bash
 docker compose up -d --wait postgres redis
-(cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest tests/test_alembic.py tests/test_artifacts.py tests/test_config.py tests/test_artifact_store_conformance.py -q --cov=app.adapters.artifacts --cov=app.interfaces.artifacts --cov=app.modules.artifacts --cov=app.core.config --cov-report=term-missing --cov-fail-under=90)
+(cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest tests/test_alembic.py tests/test_artifacts.py tests/test_config.py tests/test_artifact_store_conformance.py -q --cov=app.adapters.artifacts --cov=app.interfaces.artifacts --cov=app.modules.artifacts --cov=app.core.config --cov=app.main --cov-report=term-missing --cov-fail-under=90)
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
 (cd backend && .venv/bin/ruff check app tests)
 python3 scripts/check_stale_artifact_contracts.py

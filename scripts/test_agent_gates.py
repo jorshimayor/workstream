@@ -56,9 +56,14 @@ ARTIFACT_COVERAGE_COMMAND_OWNERS = {
     "02A3": (
         "coverage report --include='app/workers/*' "
         "--precision=2 --fail-under=90",
+        "coverage report --include='app/main.py' "
+        "--precision=2 --fail-under=90",
     ),
     "02B1": (),
-    "02C1": (),
+    "02C1": (
+        "coverage report --include='app/modules/audit/*' "
+        "--precision=2 --fail-under=90",
+    ),
     "02C2": (),
     "02D": (
         "coverage report --include='app/api/router.py' "
@@ -1560,6 +1565,7 @@ def test_stale_artifact_contracts_enforce_aws_first_v01() -> None:
             "Cloudflare R2 is a v0.1 production provider and requires a "
             "separately approved runbook."
         ),
+        "Cloudflare R2 is deferred in name only but shall ship alongside AWS S3.",
     ):
         assert gate.scan_text(
             "docs/spec_artifact_storage_service.md",
@@ -1596,6 +1602,9 @@ def test_stale_artifact_contracts_enforce_aws_first_v01() -> None:
         (".env.example", "WORKSTREAM_R2_ENDPOINT=secret"),
         ("deploy/config", 'provider = "r2"'),
         ("deploy/r2.conf", 'provider = "r2"'),
+        ("docker/minio/config.sh", 'provider = "r2"'),
+        ("ops/runtime.yaml", 'provider: "cloudflare_r2"'),
+        ("config/artifact.toml", 'provider = "r2"'),
         ("helm/storage.tpl", 'provider = "r2"'),
     ):
         assert gate.scan_text(runtime_path, runtime_value, "foundation") == [
@@ -1619,6 +1628,9 @@ def test_stale_artifact_contracts_enforce_aws_first_v01() -> None:
     assert gate.path_is_scannable(".env.example")
     assert gate.path_is_scannable("deploy/config")
     assert gate.path_is_scannable("deploy/r2.conf")
+    assert gate.path_is_scannable("docker/minio/config.sh")
+    assert gate.path_is_scannable("ops/runtime.yaml")
+    assert gate.path_is_scannable("config/artifact.toml")
     assert gate.path_is_scannable("helm/storage.tpl")
     assert gate.path_is_scannable("docs/diagrams/rendered/workstream_context.svg")
     assert gate.scan_text(
@@ -1649,20 +1661,69 @@ def test_stale_artifact_contracts_enforce_aws_first_v01() -> None:
 
 
 def test_stale_artifact_contracts_scan_only_current_initiatives() -> None:
-    """Work Queue activation scans current initiatives without scanning history."""
+    """Work Queue activation scans every live initiative without history."""
     gate = load_module(
         "stale_artifact_contracts_parallel",
         "scripts/check_stale_artifact_contracts.py",
     )
     prefixes = gate.active_initiative_prefixes()
     assert any("WS-ART-001-immutable-artifact-storage" in item for item in prefixes)
-    assert not any("WS-AUTH-001-workstream-authorization-service" in item for item in prefixes)
+    assert any("WS-AUTH-001-workstream-authorization-service" in item for item in prefixes)
     assert gate.path_is_scannable(
         ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/PLAN.md"
     )
     assert not gate.path_is_scannable(
         ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/reviews/old.md"
     )
+
+    auth_gate = load_module(
+        "stale_authorization_docs_history",
+        "scripts/check_stale_authorization_docs.py",
+    )
+    assert gate.HISTORICAL_PATHS == set(auth_gate.HISTORICAL_PATHS)
+    assert not gate.path_is_scannable("docs/spec_chunk_3_project_guide_foundation.md")
+    assert not gate.path_is_active_contract(
+        "docs/spec_chunk_3_project_guide_foundation.md"
+    )
+    assert gate.path_is_scannable("docs/spec_artifact_storage_service.md")
+
+    original_root = gate.ROOT
+    try:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            (root / ".agent-loop/initiatives/WS-ART-001-artifacts").mkdir(
+                parents=True
+            )
+            (root / ".agent-loop/initiatives/WS-AUTH-001-auth").mkdir(parents=True)
+            (root / ".agent-loop/WORK_QUEUE.md").write_text(
+                "# Work Queue\n\n"
+                "## In Progress\n\n"
+                "| Chunk | Title |\n|---|---|\n"
+                "| `WS-AUTH-001-05B` | auth |\n\n"
+                "## Planned Next\n\n"
+                "| Chunk | Title |\n|---|---|\n"
+                "| `WS-ART-001-02A1` | artifacts |\n\n"
+                "## Completed\n\n"
+                "| Chunk | Title |\n|---|---|\n",
+                encoding="utf-8",
+            )
+            prefixes = gate.active_initiative_prefixes(root)
+            assert prefixes == (
+                ".agent-loop/initiatives/WS-ART-001-artifacts/",
+                ".agent-loop/initiatives/WS-AUTH-001-auth/",
+            )
+            (root / ".agent-loop/WORK_QUEUE.md").write_text(
+                "# Work Queue\n\n## In Progress\n\n## Completed\n",
+                encoding="utf-8",
+            )
+            try:
+                gate.active_initiative_prefixes(root)
+            except ValueError as exc:
+                assert "malformed Work Queue headings" in str(exc)
+            else:
+                raise AssertionError("malformed live queue headings were accepted")
+    finally:
+        gate.ROOT = original_root
 
 
 def test_stale_artifact_contracts_remove_flow_node_at_store_cutover() -> None:
@@ -1689,6 +1750,7 @@ def test_stale_artifact_contracts_remove_flow_node_at_store_cutover() -> None:
     for active_statement in (
         "Flow Node is deferred but remains the v0.1 production provider.",
         "Flow Node is preserved as the v0.1 production provider.",
+        "Flow Node is deferred, but continues as an approved hosted backend.",
     ):
         assert gate.scan_text(
             "docs/decision_0013_immutable_artifact_storage_boundary.md",
@@ -1711,6 +1773,15 @@ def test_stale_artifact_contracts_remove_flow_node_at_store_cutover() -> None:
 
 def test_artifact_chunk_verification_commands_are_isolated_and_rerunnable() -> None:
     """Every implementation contract owns a cleaned unique metadata path."""
+    assert (
+        "coverage report --include='app/main.py' --precision=2 --fail-under=90"
+        in ARTIFACT_COVERAGE_COMMAND_OWNERS["02A3"]
+    )
+    assert (
+        "coverage report --include='app/modules/audit/*' "
+        "--precision=2 --fail-under=90"
+        in ARTIFACT_COVERAGE_COMMAND_OWNERS["02C1"]
+    )
     chunk_root = (
         ROOT
         / ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/chunks"

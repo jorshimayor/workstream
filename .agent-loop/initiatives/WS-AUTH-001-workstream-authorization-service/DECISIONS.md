@@ -209,9 +209,13 @@ not imply one another.
 
 The authorization decision and operation receipt must share bounded request/
 correlation evidence, resource identity, operation, and service principal.
-Receipts prove that storage work occurred; they do not create authority. Exact
-permission tokens and route ownership are locked in the owning AUTH cutover
-chunk contracts. AUTH-04B adds no artifact permission or route attachment.
+Receipts prove that storage work occurred; they do not create authority. AUTH-07
+registers exact artifact permissions, AUTH-08 defines applicable Operator
+grants, and AUTH-09 provisions fixed service principals. Each owning WS-ART
+feature chunk supplies the canonical resource composer, guards, surface
+declaration, and behavior tests that activate its exact actions. AUTH-12,
+AUTH-14, and AUTH-15 are not alternate artifact activation paths. AUTH-04B adds
+no artifact permission or route attachment.
 
 ## D15: Adopt a staged typed action and resource catalogue
 
@@ -258,11 +262,13 @@ resource design.
 The reviewed proposal did not receive independent normative precedence. Its
 `/v1` prefix, broad-permission replacement, compatibility deletion, and invented
 artifact, review, contribution, and compensation resources were rejected. The
-adopted `/api/v1` namespace and 52 approved permission identifiers remain
-unchanged. AUTH-05A currently enforces a 49-identifier typed/PostgreSQL audit
-base; the three already approved Operator recovery identifiers remain planned
-and non-executable until AUTH-13/14 add them to typed/SQL audit parity and
-activate their owning actions. Other permission additions or renames still
+adopted `/api/v1` namespace and original 52 approved permission identifiers
+were unchanged by that catalogue review. The later approved artifact-storage
+contract adds 21 exact identifiers, making the current closed total 73.
+AUTH-05A currently enforces a 49-identifier typed/PostgreSQL audit base; the
+three already approved Operator recovery identifiers and 21 artifact
+identifiers remain planned and non-executable until AUTH-07 adds typed/SQL audit
+parity and the paired owning feature activates each action. Other permission additions or renames still
 require an approved specification/ADR change, typed and PostgreSQL registry
 migration, audit-history treatment, cutover ownership, and rollback proof.
 WS-REV, WS-CON, and the artifact-storage specification continue to own their

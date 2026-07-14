@@ -15,7 +15,8 @@ without direct database inspection or Terminal Benchmark product coupling.
 - real API drill under `examples/artifact_lifecycle/proof_tools/` using
   standalone sanitized fixture material
 - professional generated evidence report inputs and committed bounded PDF
-- provider conformance/readiness harness and operations runbook
+- provider conformance/readiness harness, immutable provider-activation record,
+  production composition-root activation check, and operations runbook
 - focused proof-only tests under `examples/artifact_lifecycle/tests/` that
   cannot load in production and are excluded from the executable-tooling
   coverage source
@@ -26,7 +27,8 @@ without direct database inspection or Terminal Benchmark product coupling.
 
 ## Not Allowed
 
-- new product behavior or schema;
+- new product lifecycle behavior; only the provider-activation schema and
+  production composition guard defined by this contract are allowed;
 - Snorkel/Termius paths, names, private material, or live work references;
 - committed AWS credentials or provider object references;
 - direct database setup/inspection as proof of API behavior;
@@ -56,14 +58,26 @@ without direct database inspection or Terminal Benchmark product coupling.
   proven safely.
 - Operator observes jobs, retries with a reason, and reads terminal recovery
   through APIs only.
-- LocalStorage and real MinIO pass conformance. AWS S3 requires a
-  workload-identity private live smoke, least-privilege negative-action
-  proof, anonymous-read denial, a declared trusted principal set, policy/ACL
-  and Access Analyzer proof that no resource-based grant exists outside that
-  set, negative read/write/delete tests using an unapproved authenticated role,
-  and read-only proof that no enabled lifecycle deletion/expiration rule can
-  match the completed-object prefix before that profile is declared
-  production-eligible. Unproved AWS remains inactive.
+- LocalStorage and real MinIO pass conformance. The AWS harness uses one
+  short-lived OIDC-assumed read-only readiness role; the runtime role uses its
+  configured workload identity; a separate OIDC-assumed negative-test role has
+  no bucket authority; bootstrap credentials are never supplied to the harness.
+- the dedicated bucket policy denies object data-plane actions for every
+  principal other than the exact runtime role and denies runtime `PutObject`
+  unless `s3:if-none-match` is `*`. Internal/external Access Analyzer or
+  equivalent IAM evaluation proves the boundary for same-account,
+  same-organization, and external principals;
+- live anonymous, negative-test-role, and readiness-role calls cannot read,
+  write, or delete a known object. Bootstrap-principal denial is proved by
+  policy/IAM evaluation without supplying bootstrap credentials. An
+  unconditional runtime overwrite is denied and the original bytes remain
+  unchanged. Policy/ACL/public-access and completed-prefix lifecycle proof must
+  also pass;
+- after all proofs, the harness writes an immutable
+  `ArtifactProviderActivation` bound to release, namespace fingerprint, role
+  ARNs, bucket-policy digest, proof version/result, database time, and expiry.
+  Production startup requires an exact unexpired match. Unproved or stale AWS
+  remains uninstantiable;
 - all AWS policy, principal, public-access, and lifecycle inspection lives in
   this deployment-only proof harness, not `ArtifactStore` or a product service;
 - no test-only route or control exists in the production application image.
@@ -89,6 +103,8 @@ coverage report --include='app/adapters/artifacts/*,app/interfaces/artifacts.py,
 coverage report --include='app/interfaces/external_services.py' --precision=2 --fail-under=90
 coverage report --include='app/core/config.py' --precision=2 --fail-under=90
 coverage report --include='app/workers/*' --precision=2 --fail-under=90
+coverage report --include='app/main.py' --precision=2 --fail-under=90
+coverage report --include='app/modules/audit/*' --precision=2 --fail-under=90
 coverage report --include='app/api/router.py' --precision=2 --fail-under=90
 coverage report --include='app/modules/projects/*' --precision=2 --fail-under=90
 coverage report --include='app/adapters/project_agents/*,app/interfaces/project_agents.py' --precision=2 --fail-under=90

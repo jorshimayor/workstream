@@ -1,6 +1,6 @@
 # Chunk Contract: WS-ART-001-04A Upload, Inspection, And Sealing
 
-Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 03, AUTH-14, and AUTH-15
+Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 03
 
 Artifact contract phase: `guide_source_cutover`
 
@@ -41,7 +41,8 @@ manifests without running pre-submit or creating submissions.
   permissions `artifact.upload_session.create`,
   `artifact.upload_session.read`, `artifact.upload_item.write`,
   `artifact.upload_session.seal`, and `artifact.upload_session.cancel`
-  delivered by AUTH-14; none implies another;
+  activated here through the central AUTH kernel with feature-owned canonical
+  resource facts and guards; none implies another;
 - every ID-addressed read/mutation uses concealed deny/not-found behavior and
   is tested across actors, projects, revocation, terminal states, and random IDs;
 - upload requires a server-approved logical role, bounded display name, client
@@ -86,6 +87,8 @@ coverage report --include='app/adapters/artifacts/*,app/interfaces/artifacts.py,
 coverage report --include='app/interfaces/external_services.py' --precision=2 --fail-under=90
 coverage report --include='app/core/config.py' --precision=2 --fail-under=90
 coverage report --include='app/workers/*' --precision=2 --fail-under=90
+coverage report --include='app/main.py' --precision=2 --fail-under=90
+coverage report --include='app/modules/audit/*' --precision=2 --fail-under=90
 coverage report --include='app/api/router.py' --precision=2 --fail-under=90
 coverage report --include='app/modules/projects/*' --precision=2 --fail-under=90
 coverage report --include='app/adapters/project_agents/*,app/interfaces/project_agents.py' --precision=2 --fail-under=90

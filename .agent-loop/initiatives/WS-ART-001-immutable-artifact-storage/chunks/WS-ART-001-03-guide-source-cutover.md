@@ -1,6 +1,6 @@
 # Chunk Contract: WS-ART-001-03 Guide Source Artifact Cutover
 
-Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02D, AUTH-12, and AUTH-15
+Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02D
 
 Artifact contract phase: `guide_source_cutover`
 
@@ -47,8 +47,10 @@ authorized Workstream artifact reader.
   02C1; it neither bypasses admission nor owns a guide-specific quota ledger.
 - project-guide source ingestion requires `artifact.guide_source.ingest`, setup
   reads require the fixed service permission `artifact.guide_source.read`, and
-  binding creation requires `artifact.binding.create`; all are delivered by
-  AUTH-12/AUTH-15 before this chunk and none implies another.
+  binding creation requires `artifact.binding.create`; this chunk supplies each
+  action's canonical resource composer, guards, surface declaration, and tests
+  against the AUTH-07 registry and AUTH-09 service principal. None implies
+  another.
 - v0.1 accepts authorized caller-supplied or approved import-pipeline bytes.
   A durable URL may be recorded as a source reference, but this chunk performs
   no network retrieval. Server-side URL fetching requires a separate approved
@@ -104,6 +106,8 @@ coverage report --include='app/adapters/artifacts/*,app/interfaces/artifacts.py,
 coverage report --include='app/interfaces/external_services.py' --precision=2 --fail-under=90
 coverage report --include='app/core/config.py' --precision=2 --fail-under=90
 coverage report --include='app/workers/*' --precision=2 --fail-under=90
+coverage report --include='app/main.py' --precision=2 --fail-under=90
+coverage report --include='app/modules/audit/*' --precision=2 --fail-under=90
 coverage report --include='app/api/router.py' --precision=2 --fail-under=90
 coverage report --include='app/modules/projects/*' --precision=2 --fail-under=90
 coverage report --include='app/adapters/project_agents/*,app/interfaces/project_agents.py' --precision=2 --fail-under=90

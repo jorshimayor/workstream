@@ -6,8 +6,9 @@ Artifact contract phase: `artifact_store_cutover`
 
 ## Goal
 
-Implement `S3CompatibleArtifactStore`, prove it against real MinIO, and add the
-AWS S3 production profile. R2 is deferred and has no active runtime profile or
+Implement `S3CompatibleArtifactStore`, prove it against real MinIO, and add
+validated AWS S3 configuration plus deployment-proof support without making AWS
+production-instantiable. R2 is deferred and has no active runtime profile or
 credential-delivery contract.
 
 ## Allowed Files
@@ -54,6 +55,10 @@ credential-delivery contract.
 - dependency tests assert the exact async SDK pair; upgrades require a separate
   credential/provider-behavior review;
 - real digest-pinned MinIO and LocalStorage pass the same v2 conformance suite;
+- the application factory can instantiate only LocalStorage and MinIO in this
+  chunk. Valid AWS configuration remains runtime-ineligible with the stable
+  `artifact_provider_live_proof_required` startup failure; only Chunk 07 may
+  add the immutable activation record and production composition guard;
 - startup and operation tests reject configured adapter/profile/namespace
   mismatch against persisted deployment or replica identity; no request is
   routed to a second namespace;
@@ -73,6 +78,7 @@ coverage report --include='app/adapters/artifacts/*,app/interfaces/artifacts.py,
 coverage report --include='app/interfaces/external_services.py' --precision=2 --fail-under=90
 coverage report --include='app/core/config.py' --precision=2 --fail-under=90
 coverage report --include='app/workers/*' --precision=2 --fail-under=90
+coverage report --include='app/main.py' --precision=2 --fail-under=90
 ```
 
 ## Verification

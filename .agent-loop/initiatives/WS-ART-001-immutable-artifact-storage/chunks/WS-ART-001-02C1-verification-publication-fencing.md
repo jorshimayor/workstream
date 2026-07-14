@@ -6,10 +6,10 @@ Artifact contract phase: `artifact_store_cutover`
 
 ## Goal
 
-Add the generic durable-storage admission ledger, durable complete-object
-verification publication, PostgreSQL execution fencing, immutable
-observations, and receipts without recovery attempts, Operator routes, or
-product cutovers.
+Add the generic durable-storage admission ledger, durable put-attempt resolution,
+durable complete-object verification publication, PostgreSQL execution fencing,
+immutable observations, and receipts without Operator recovery envelopes,
+routes, or product cutovers.
 
 ## Allowed Files
 
@@ -39,13 +39,14 @@ product cutovers.
 
 - provider acknowledgement yields `stored_pending_verification`, never a
   bindable replica;
-- every durable producer must atomically reserve all applicable task,
-  producer, project, and deployment byte charges after canonical hashing and
-  before provider I/O; guide, contributor, and checker chunks consume this one
-  admission service rather than implementing producer-specific quota logic;
+- every producer calls one closed guide, contributor, or checker-output request.
+  Artifact orchestration loads canonical records and derives all applicable
+  task, producer, project, and deployment scopes after hashing and before I/O;
+  no caller can supply or omit a scope collection;
 - only the artifact orchestration service can invoke writable `ArtifactStore`;
-  architecture tests prove every `put` and `recover_put` crosses generic
-  admission, receipts, and verification publication;
+  architecture tests prove every `put` and read-only `observe_put_result`
+  crosses admission, durable put-attempt state, receipts, and verification
+  publication, and reject broad orchestrator injection;
 - an admission charge is unique by scope and canonical content identity and
   uses the CAS-protected states `provisional`, `completed`, and `released`;
   provisional and completed charges count, exact replay is deduplicated, and
@@ -57,14 +58,24 @@ product cutovers.
 - confirmed, quarantined, or integrity-mismatched content remains completed
   and charged because v0.1 has no physical deletion; stale CAS/executor state
   cannot release or complete a charge;
+- Transaction A creates `ArtifactPutAttempt` before provider I/O. It owns the
+  commitment, namespace, charges, item/output target, executor, lease,
+  generation, and CAS until Transaction B completes;
+- a bounded scanner publishes prepared, acknowledgement-unknown, and expired
+  in-flight attempts. The fixed resolver performs only read-only observation
+  and complete hashing; matching bytes complete Transaction B once, absence
+  releases charges and requires caller replay, mismatch quarantines, and no
+  background path repeats a write;
 - Celery performs a fresh complete-object read and verifies Workstream SHA-256
   and byte count;
 - a periodic PostgreSQL scanner republishes pending and expired work within a
   configured SLA and duplicate publication is harmless;
 - acquisition uses PostgreSQL time, a fresh executor UUID, lease expiry, and an
   atomically incremented execution generation;
-- terminal writes require matching executor and generation; stale executors
-  write no state, receipt, or audit fact;
+- terminal put-resolution and verification writes require matching executor and
+  generation plus current service actor/link/action/resource authority
+  revalidated inside the same terminal transaction; stale or revoked executors
+  write no state, receipt, replica/attempt, recovery, or audit fact;
 - the result matrix handles verified, missing, integrity mismatch, provider
   unavailable, conflict, and stale executor outcomes;
 - missing yields `missing/unavailable/unknown`; integrity mismatch yields
@@ -88,13 +99,15 @@ coverage report --include='app/adapters/artifacts/*,app/interfaces/artifacts.py,
 coverage report --include='app/interfaces/external_services.py' --precision=2 --fail-under=90
 coverage report --include='app/core/config.py' --precision=2 --fail-under=90
 coverage report --include='app/workers/*' --precision=2 --fail-under=90
+coverage report --include='app/main.py' --precision=2 --fail-under=90
+coverage report --include='app/modules/audit/*' --precision=2 --fail-under=90
 ```
 
 ## Verification
 
 ```bash
 docker compose up -d --wait postgres redis minio
-(cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest tests/test_alembic.py tests/test_artifact_verification.py tests/test_config.py -q --cov=app.modules.artifacts --cov=app.core.config --cov-report=term-missing --cov-fail-under=90)
+(cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest tests/test_alembic.py tests/test_artifact_verification.py tests/test_config.py -q --cov=app.modules.artifacts --cov=app.modules.audit --cov=app.core.config --cov-report=term-missing --cov-fail-under=90)
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
 (cd backend && .venv/bin/ruff check app tests)
 python3 scripts/check_stale_artifact_contracts.py

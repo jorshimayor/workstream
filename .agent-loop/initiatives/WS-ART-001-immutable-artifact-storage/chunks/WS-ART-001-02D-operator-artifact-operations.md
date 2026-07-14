@@ -1,6 +1,6 @@
 # Chunk Contract: WS-ART-001-02D Operator Artifact Operations
 
-Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02C2 and AUTH-15
+Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02C2 and AUTH-09
 
 Artifact contract phase: `artifact_store_cutover`
 
@@ -42,9 +42,10 @@ cutover. Chunk 07 owns every live AWS provider inspection.
 - exact Operator APIs exist for resource-scoped binding discovery, replicas,
   receipts, verification job, retry, recovery-attempt read, and artifact audit
   listing.
-- AUTH-07, AUTH-08, AUTH-09, and AUTH-15 are merged before this chunk starts,
-  providing the registry, Operator grants, service principals, and exact
-  artifact worker permissions; this chunk registers no permission and creates
+- AUTH-07, AUTH-08, and AUTH-09 are merged before this chunk starts, providing
+  the complete typed/SQL action registry, Operator grants, and fixed service
+  principals. This paired feature chunk supplies canonical artifact resources,
+  guards, surfaces, and decision calls; it registers no permission and creates
   no authority fallback.
 - binding, replica, receipt, verification-job, and recovery-attempt reads use,
   respectively, `artifact.binding.read`, `artifact.replica.read`,
@@ -52,7 +53,9 @@ cutover. Chunk 07 owns every live AWS provider inspection.
   `artifact.recovery_attempt.read`; provider-job retry uses
   `artifact.verification_job.retry`, and artifact audit listing uses
   `artifact.audit.read`. The retry route creates the recovery-attempt envelope
-  and retry job; Celery execution uses only `artifact.verification.execute`.
+  and retry job; Celery verification uses only
+  `artifact.verification.execute`, and ambiguous put resolution uses only
+  `artifact.put_attempt.resolve`.
 - internal verification uses a provisioned service principal with
   `artifact.verification.execute`; periodic scan publication uses
   `artifact.pending_work.scan`. These permissions remain separate and do not
@@ -64,6 +67,10 @@ cutover. Chunk 07 owns every live AWS provider inspection.
   expected source-job state inside that transaction. Revocation or suspension
   rolls back with no recovery attempt, retry job, or initiation-success audit;
   race tests cover each authority input;
+- verification and put-resolution workers revalidate current fixed service
+  actor, identity link, exact action/resource, executor, and generation inside
+  every terminal mutation transaction; suspension/revocation races write no
+  terminal state, receipt, replica/attempt, recovery, or audit fact;
 - retry requires a reason, client idempotency key, and expected source-job CAS
   version, accepts
   only exhausted terminal `provider_unavailable`, and returns `202` with
@@ -77,8 +84,10 @@ cutover. Chunk 07 owns every live AWS provider inspection.
 - cross-project and unauthorized callers are denied without leaking existence.
 - responses are bounded, paginated where needed, and contain no provider
   internals or secrets.
-- the AWS S3 production profile instantiates the adapter through the typed
-  factory; LocalStorage and invalid production profiles fail closed.
+- LocalStorage and MinIO instantiate through the typed factory in their allowed
+  environments. AWS S3 production remains uninstantiable with
+  `artifact_provider_live_proof_required`; the activation schema and production
+  composition guard do not exist until Chunk 07. Invalid profiles fail closed.
 - exact internal service-principal authorization activates every verification
   provider read, periodic scan publication, and recovery job; no 02C1 or 02C2
   mechanic runs before this gate.
@@ -86,7 +95,8 @@ cutover. Chunk 07 owns every live AWS provider inspection.
   Chunk 07's deployment-only harness owns bucket-policy/principal-boundary,
   credential, anonymous-read-negative, completed-prefix lifecycle, and AWS
   activation proof; neither `ArtifactStore` nor a product service gains a
-  provider-administration method.
+  provider-administration method. Chunk 07 alone creates a matching immutable
+  activation record and enables production composition after live proof.
 - readiness does not write or mutate provider objects.
 - real HTTP tests prove the full Operator path without direct database reads.
 - changed subsystem coverage is at least 90 percent and repository coverage
@@ -103,6 +113,8 @@ coverage report --include='app/adapters/artifacts/*,app/interfaces/artifacts.py,
 coverage report --include='app/interfaces/external_services.py' --precision=2 --fail-under=90
 coverage report --include='app/core/config.py' --precision=2 --fail-under=90
 coverage report --include='app/workers/*' --precision=2 --fail-under=90
+coverage report --include='app/main.py' --precision=2 --fail-under=90
+coverage report --include='app/modules/audit/*' --precision=2 --fail-under=90
 coverage report --include='app/api/router.py' --precision=2 --fail-under=90
 ```
 

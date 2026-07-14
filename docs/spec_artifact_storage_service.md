@@ -30,11 +30,12 @@ Product services never import a concrete storage adapter. Replicas persist
 provider profile and storage namespace, so changing a populated deployment
 requires an explicit verified migration rather than a hot endpoint switch.
 
-Only the artifact-storage orchestration service receives the writable
+Only the internal `ArtifactStorageOrchestrator` receives the writable
 `ArtifactStore` port. Guide, task, submission, checker, and review owners call
-typed artifact ingest/read/materialization services. Static architecture tests
-reject any other `put` or `recover_put` call site so admission, receipts,
-verification, and audit cannot be bypassed.
+the closed capability ports defined below. Composition roots may construct the
+orchestrator but cannot expose it as a FastAPI dependency or Celery task
+parameter. Static architecture tests reject raw-port imports, orchestrator
+injection, and provider mutation calls outside the artifact-storage module.
 
 ## Ownership
 
@@ -73,7 +74,7 @@ States are `reserved`, `uploading`, `replay_required`,
 A PostgreSQL-owned generic admission service prevents every ingest producer
 from creating unbounded durable storage. It is installed before guide,
 contributor, or checker-output cutover and is the only path to provider `put` or
-`recover_put`. Configured limits cover cumulative unique bytes at every
+`observe_put_result`. Configured limits cover cumulative unique bytes at every
 applicable task, producer, project, and deployment scope. After Workstream
 prepares the complete source and knows its canonical SHA-256 and exact size, one
 transaction reserves every applicable scope charge before provider I/O.
@@ -103,8 +104,39 @@ producer type/reference, state, CAS version, reservation/completion/release
 timestamps, and the operation identity that created it. Limits are explicit
 configuration for task, producer, project, and deployment scopes; a missing or
 nonpositive required limit fails startup rather than creating an unbounded
-scope. Repository and service methods accept the full applicable scope set and
-commit all reservations or none.
+scope. Product callers never supply scope collections. They submit one of the
+closed producer requests defined below; artifact orchestration loads the
+authoritative project, task, upload-session, checker-run, actor/service, and
+deployment facts, derives the complete `AdmissionScopeSet` internally, and
+commits all reservations or none. A missing canonical relationship fails before
+provider I/O rather than silently omitting a quota scope.
+
+### ArtifactPutAttempt
+
+One durable attempt owns the gap between Transaction A and Transaction B.
+Fields include producer request type/reference, upload item or system output
+reference, content commitment, deterministic object identity, admission-charge
+references, operation/request digests, status, next-run time, executor UUID,
+database-clock lease expiry, execution generation, bounded terminal result,
+receipt/replica references, CAS version, and timestamps.
+
+Statuses are `prepared`, `put_in_flight`, `acknowledgement_unknown`,
+`object_confirmed`, `absent_replay_required`, `integrity_mismatch`,
+`provider_unavailable`, and `conflict`. Transaction A creates `prepared` before
+provider I/O. Claiming the attempt sets `put_in_flight` with a fresh executor,
+lease, and generation. Provider acknowledgement completes Transaction B.
+Timeout, cancellation, process loss, or an expired in-flight lease leaves a
+durable resolution target; it never relies on an `ArtifactReplica` or
+`ArtifactVerificationJob` already existing.
+
+A bounded PostgreSQL scanner publishes `prepared`,
+`acknowledgement_unknown`, and expired `put_in_flight` attempts. The resolver
+uses read-only `observe_put_result`, then opens and hashes any observed object.
+Matching bytes complete the original charges and Transaction B facts exactly
+once. Authoritative absence releases charges and moves the item to
+`replay_required`. Mismatched bytes remain charged, quarantine the key, and
+create an incident. Terminal writes require matching executor and generation.
+No background resolver performs another provider write.
 
 Contributor upload sessions also reserve open-session slots at task, actor,
 project, and deployment scope. PostgreSQL-clock expiry is owned by one bounded
@@ -153,6 +185,37 @@ item when applicable, and quarantines access; it never returns to pending.
 
 Provider references are internal. They never appear in contributor, reviewer,
 project-owner, or public API responses.
+
+### ArtifactStorageNamespace
+
+One immutable deployment-level row fences every provider operation before any
+replica exists. Its singleton key is fixed. It records backend, adapter name,
+provider profile, a canonical non-secret namespace descriptor, and
+`namespace_fingerprint = sha256(canonical_json(descriptor))`. The descriptor
+contains the normalized provider identity needed to distinguish LocalStorage,
+MinIO, and AWS S3, including region, bucket or private-root identity, normalized
+endpoint identity where applicable, private prefix, and addressing style; it
+contains no credential or resolved secret.
+
+Startup and every provider operation transactionally insert-or-validate this
+singleton before I/O. A concurrent first writer claims the namespace; a loser
+with a different fingerprint fails before provider access. Replicas and put
+attempts reference the namespace row and fingerprint. A populated deployment
+cannot change it without a separately reviewed maintenance migration.
+
+### ArtifactProviderActivation
+
+One immutable production-release proof permits the AWS S3 composition root to
+instantiate its adapter. It records release ID, storage-namespace ID and
+fingerprint, AWS account/region, runtime and readiness role ARNs, canonical
+bucket-policy digest, proof-suite version, proof result, PostgreSQL proof time,
+expiry, and superseded activation ID. It contains no credential. LocalStorage
+and MinIO never create this record.
+
+The deployment harness writes the record only after every Chunk 07 proof passes.
+Production startup requires one unexpired successful record matching the exact
+release and namespace fingerprint. A changed release, namespace, role, policy,
+or expired proof fails startup until the harness runs again.
 
 ### ArtifactBinding
 
@@ -222,7 +285,7 @@ The asynchronous port is:
 
 ```text
 put(source: CommittedArtifactSource)
-recover_put(commitment: ArtifactCommitment)
+observe_put_result(commitment: ArtifactCommitment)
 open(provider_object_ref, byte_range?)
 head(provider_object_ref)
 ```
@@ -230,8 +293,10 @@ head(provider_object_ref)
 `CommittedArtifactSource` contains the server-computed canonical digest, exact
 size, media type, and bounded second-pass stream as one sealed value. Only the
 Workstream preparation service constructs it; callers cannot pair an arbitrary
-stream with an arbitrary digest. `put` and `recover_put` return opaque provider
-references and bounded protocol observations. `open` returns a bounded
+stream with an arbitrary digest. `put` returns an opaque provider reference and
+bounded protocol observation. `observe_put_result` is read-only: it resolves
+the deterministic object identity and returns a bounded observation without
+replaying a write. `open` returns a bounded
 asynchronous byte stream. `head` returns
 existence, exact provider-reported size when available, media type when
 available, and bounded metadata needed for protocol handling.
@@ -239,6 +304,42 @@ available, and bounded metadata needed for protocol handling.
 The port has no `verify`, `retain`, `release`, delete, list, signed URL, search,
 product binding, SQLAlchemy, audit, authorization, or provider-receipt lookup.
 Workstream verifies using `open` and owns receipts in PostgreSQL.
+
+## Product Capability Ports
+
+Product modules receive only these narrow asynchronous capabilities:
+
+```text
+GuideArtifactIngestPort.ingest(GuideArtifactIngestRequest)
+ContributorArtifactUploadPort.create/read/write/seal/cancel(...)
+ArtifactBindingPort.bind_verified(ArtifactBindingCreateRequest)
+ArtifactMaterializationPort.materialize_ready_upload_set(ReadyUploadSetRequest)
+ArtifactMaterializationPort.materialize_bindings(BindingMaterializationRequest)
+CheckerArtifactOutputPort.store(CheckerOutputArtifactRequest)
+ArtifactOperatorReadPort.list/get(...)
+```
+
+`GuideArtifactIngestRequest` contains the authenticated actor context, project
+and guide-source snapshot item IDs, logical role, authorized byte source, and
+optional client commitment. `ReadyUploadSetRequest` contains task ID, sealed
+upload-session ID, locked policy/checker context, and authorization context.
+`BindingMaterializationRequest` contains task/submission/checker-run context and
+immutable binding IDs. `CheckerOutputArtifactRequest` contains the fixed
+service actor, task/submission/checker-run IDs, logical role, and generated byte
+source. `ArtifactBindingCreateRequest` contains the verified content IDs and
+canonical product resource facts that own the binding.
+
+None accepts an adapter, provider object reference, storage namespace, caller-
+assembled quota scopes, arbitrary resource type, or caller-selected server
+content ID. The implementation resolves canonical relationships, authorization
+resources, producer identity, and admission scopes inside artifact
+orchestration. The internal orchestrator is not itself a product capability.
+
+FastAPI and Celery composition roots construct the selected `ArtifactStore`,
+then construct one internal orchestrator, then expose only the required narrow
+port to each route/service/task. Architecture tests parse imports, constructor
+annotations, dependency providers, and Celery task parameters; checking only
+textual `put` call sites is insufficient.
 
 ### Range Semantics
 
@@ -331,6 +432,12 @@ The adapter uses conditional no-overwrite semantics. A precondition failure is
 an exact replay candidate, not success. The adapter heads and then opens the
 existing object; Workstream independently verifies it before reuse.
 
+The dedicated AWS bucket policy also denies `s3:PutObject` unless
+`s3:if-none-match` equals `*`. Adapter conformance is not the immutability
+boundary by itself. The production harness attempts an unconditional overwrite
+with the runtime role, requires an explicit denial, and proves the original
+object bytes remain unchanged.
+
 v0.1 uses conditional single-request `PutObject` only and enforces
 `expected_size <= 512 MiB` before I/O. Multipart upload, CopyObject publication,
 and provider-specific finalization algorithms are deferred. A future multipart
@@ -342,13 +449,25 @@ prefix and only the actions required for conditional put, head, and get. It has
 no delete, copy, list, bucket administration, lifecycle mutation, public-access
 mutation, or cross-prefix permission. AWS uses a least-privilege role/policy.
 
-Production activation defines the complete trusted AWS principal set: the exact
-Workstream runtime role, the separate read-only readiness role, and only the
-AWS service principals strictly required by the dedicated bucket policy. The
-deployment-only Chunk 07 harness proves effective Block Public Access,
-policy/ACL state, and Access Analyzer findings; fails on any resource-based
-grant outside that set; and runs anonymous plus unapproved-authenticated-role
-negative read, write, and delete tests against a known object.
+Production activation defines and validates this principal/action matrix:
+
+| Principal | Allowed authority |
+|---|---|
+| Workstream runtime role | conditional put plus head/get on the exact completed-object prefix |
+| deployment readiness role | read-only bucket policy, ACL, public-access, lifecycle, and IAM-analysis operations; no object data plane |
+| deployment negative-test role | no bucket or object authority |
+| infrastructure bootstrap principal | provisioning only; never supplied to Workstream or the readiness harness and denied object data-plane authority by bucket policy |
+
+The bucket policy contains an explicit deny boundary for object actions by every
+principal other than the exact runtime role, plus the conditional-write deny.
+Identity policies therefore cannot grant an unexpected same-account or
+same-organization role object access. The deployment-only Chunk 07 harness
+proves effective Block Public Access, policy/ACL state, the exact deny
+statements, internal and external Access Analyzer/IAM evaluation, and any
+strictly required AWS service-principal exception. It runs live anonymous,
+negative-test-role, and readiness-role read/write/delete denials against a known
+object. Bootstrap-principal denial is proved through policy/IAM evaluation only;
+bootstrap credentials are never supplied to the harness.
 
 The same deployment proof reads the provider lifecycle configuration and fails
 activation when any enabled rule can delete/expire a completed object under the
@@ -361,8 +480,15 @@ administration merely to inspect policy or lifecycle configuration.
 Provider-readiness inspection is not part of `ArtifactStore` and is not called
 by a product service.
 
-AWS S3 remains inactive until its own live proof succeeds. MinIO protocol
-conformance never activates production AWS.
+AWS S3 remains uninstantiable by a production composition root until its own
+live proof writes a current immutable `ArtifactProviderActivation` through the
+deployment command's database authority, bound to the
+release ID, namespace fingerprint, runtime/readiness role ARNs, bucket-policy
+digest, proof result, and PostgreSQL time. The deployment harness runs under a
+short-lived OIDC-assumed readiness role on every release; it never receives the
+runtime, negative-test, or bootstrap credentials. Production startup requires
+an exact matching, unexpired activation record. MinIO protocol conformance never
+activates production AWS.
 
 ### Integrity Rules
 
@@ -389,14 +515,17 @@ in the v2 clean cut. No compatibility adapter or dual format remains.
 2. Workstream writes the complete untrusted source to bounded private scratch,
    computes digest/size, and rejects a mismatched client commitment before any
    provider call.
-3. Transaction A atomically reserves every applicable durable-storage scope
+3. Transaction A atomically claims or validates the deployment storage
+   namespace, derives and reserves every applicable durable-storage scope
    charge as `provisional`, reserves the item, and commits the server-computed
    digest, size, media type, operation identity, canonical request digest,
-   limits, and CAS. Any quota failure rolls back all reservations.
+   limits, one `ArtifactPutAttempt`, and CAS. Any quota or namespace failure
+   rolls back all reservations.
 4. Workstream passes the sealed `CommittedArtifactSource` from the artifact
    orchestration service to the adapter outside
    the transaction.
-5. The adapter conditionally stores or resolves an exact replay candidate.
+5. The claimed attempt is set to `put_in_flight`; the adapter conditionally
+   stores or resolves an exact replay candidate.
 6. Transaction B validates the reservation/CAS, completes every provisional
    charge, records content, replica, and operation receipt, sets the item to
    `stored_pending_verification`, and sets the replica to
@@ -410,12 +539,14 @@ in the v2 clean cut. No compatibility adapter or dual format remains.
 No provider call occurs inside a PostgreSQL transaction. No product binding is
 created before independent verification.
 
-Acknowledgement loss leaves charges provisional while deterministic-key
-recovery performs a fresh observation. A confirmed object completes the same
-charges. Fresh authoritative absence releases them and moves the item to exact
-replay; replay must atomically reacquire every applicable charge before another
-provider call. Integrity-mismatched or quarantined existing bytes remain
-completed and charged.
+Acknowledgement loss leaves the durable put attempt and charges provisional.
+The attempt scanner publishes resolution after an ambiguous outcome or expired
+execution lease. Resolution performs a fresh read-only observation and full
+hash. A confirmed object completes the same charges and Transaction B facts.
+Fresh authoritative absence releases them and moves the item to exact replay;
+replay must atomically reacquire every applicable charge before another provider
+call. Integrity-mismatched or quarantined existing bytes remain completed and
+charged.
 
 ### Prepared Byte Sources
 
@@ -457,11 +588,12 @@ crash, stale cleanup, and symlink/non-regular entries.
 The same canonical `ArtifactScratchManager` also owns checker-workspace
 allocations. Authoritative pre-submit introduces one authorized artifact
 materializer, and post-submit reuses it without a second workspace manager.
-The provider-neutral `ArtifactMaterializationRequest` has two closed source
-forms: a sealed upload artifact set whose items are all `ready`, used before a
-submission binding exists, and immutable `ArtifactBinding` IDs, used after
-submission creation. Source resolution is phase-specific and authorized;
-staging never creates a premature product binding. The materializer reserves
+The materializer exposes two separate methods, not one caller-selected source
+union: `materialize_ready_upload_set` accepts a sealed upload artifact set whose
+items are all `ready` before a submission binding exists, and
+`materialize_bindings` accepts immutable `ArtifactBinding` IDs after submission
+creation. Source resolution is phase-specific and authorized; staging never
+creates a premature product binding. The materializer reserves
 the complete workspace against the same aggregate ledger and quotas, streams
 exact provider bytes into private no-follow paths, and recomputes SHA-256 and
 byte count for every file. Any mismatch becomes an artifact incident before
@@ -471,16 +603,17 @@ cancellation, and crash/stale cleanup use the same API-startup and Celery Beat
 ownership; a checker never receives provider references, credentials, or a
 writable verified input.
 
-After ambiguous provider completion, recovery first calls `recover_put` with
-the persisted commitment; it does not regenerate bytes speculatively. If no
-object exists and the owning durable source can be regenerated, Workstream
-prepares it again and compares the complete digest/size. Identical bytes may
-replay the original operation. Changed bytes abandon the old operation and
-create a new source snapshot/setup generation or checker-run attempt; they
-never reuse the old operation, snapshot, or binding identity. A generator that
-cannot reproduce exact bytes fails its old infrastructure attempt instead of
-fabricating replay. Bytes are never placed in PostgreSQL, Redis, Celery
-payloads, logs, or audit.
+After ambiguous provider completion, the durable put-attempt resolver first
+calls read-only `observe_put_result` with the persisted commitment; it does not
+regenerate bytes or replay a mutation. If authoritative absence is confirmed
+and the owning durable source can be regenerated, the original caller may
+prepare it again and compare the complete digest/size. Identical bytes may
+replay the original operation after admission capacity is reacquired. Changed
+bytes abandon the old operation and create a new source snapshot/setup
+generation or checker-run attempt; they never reuse the old operation, snapshot,
+or binding identity. A generator that cannot reproduce exact bytes fails its old
+infrastructure attempt instead of fabricating replay. Bytes are never placed in
+PostgreSQL, Redis, Celery payloads, logs, or audit.
 
 ## Durable Publication And Execution
 
@@ -499,6 +632,12 @@ uses no heartbeat.
 
 Terminal writes require the same executor UUID and generation. A zero-row
 update means the execution is stale; it writes no terminal state or audit event.
+Put-attempt resolution and verification both resolve a current fixed service
+actor/link and exact action/resource when execution starts, then revalidate that
+authority inside the same transaction as terminal CAS, receipt,
+replica/attempt, recovery, and audit writes. Suspension, revocation, resource
+drift, stale executor, or generation mismatch writes no terminal fact. Race
+tests cover each authority input for both service-execution mutation classes.
 
 ## Verification Result Matrix
 
@@ -612,11 +751,15 @@ admissions. After retry-after or storage recovery, the contributor continues
 that same exact attempt without Project Manager or Operator approval.
 
 Before authoritative pre-submit invokes the checker, the shared authorized
-materializer reads every bound object into a canonical scratch-manager
-workspace, recomputes its SHA-256 and byte count, compares them with the binding,
-and seals verified files read-only. The checker executes only that verified
-workspace. A mismatch is an artifact incident; quota exhaustion or transient
-read failure is infrastructure state and creates no checker result or admission.
+materializer resolves every `ready` item in the sealed upload artifact set,
+reads its content through the referenced verified replica into a canonical
+scratch-manager workspace, recomputes SHA-256 and byte count, and compares them
+with the upload-item/content commitment. No `ArtifactBinding` exists at this
+stage. The checker executes only that verified read-only workspace. Post-submit
+materialization instead resolves immutable binding IDs and compares bytes with
+their bound content commitments. A mismatch is an artifact incident; quota
+exhaustion or transient read failure is infrastructure state and creates no
+checker result or admission.
 
 After cutover, the public request is:
 

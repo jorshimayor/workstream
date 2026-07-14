@@ -24,11 +24,29 @@ Only the artifact-storage orchestration service receives the writable
 modules receive typed ingest, read, or materialization operations so they
 cannot bypass admission, receipts, verification, binding, or audit.
 
+Those product capabilities are closed and operation-specific:
+
+```text
+GuideArtifactIngestPort
+ContributorArtifactUploadPort
+ArtifactBindingPort
+ArtifactMaterializationPort
+CheckerArtifactOutputPort
+ArtifactOperatorReadPort
+```
+
+Their requests contain canonical Workstream IDs and authorized byte sources,
+never adapters, provider references, storage namespaces, caller-assembled quota
+scopes, arbitrary resource types, or caller-selected content IDs. Composition
+roots may construct `ArtifactStorageOrchestrator`, but cannot expose it as a
+route dependency or Celery argument. Architecture tests inspect imports,
+constructor annotations, dependency providers, and Celery parameters.
+
 `ArtifactStore` exposes only immutable byte-provider behavior:
 
 ```text
 put(source: CommittedArtifactSource)
-recover_put(commitment: ArtifactCommitment)
+observe_put_result(commitment: ArtifactCommitment)
 open(provider_object_ref, optional_range)
 head(provider_object_ref)
 ```
@@ -52,6 +70,13 @@ URL, or provider receipt lookup. Workstream performs full verification through
 
 The old `flow_node` value is removed without alias or fallback. Flow Node later
 registers as a new provider only through its separately approved initiative.
+
+One immutable deployment-level `ArtifactStorageNamespace` singleton records
+backend, adapter, provider profile, canonical non-secret namespace descriptor,
+and descriptor hash. Startup and every provider operation atomically
+insert-or-validate it before I/O. A different concurrent first writer loses and
+fails closed. A populated deployment changes namespace only through a reviewed
+maintenance migration.
 
 S3 settings are explicit and secret-safe: endpoint URL, provider-specific
 region, bucket, private prefix, addressing style, credential mode, optional
@@ -93,6 +118,11 @@ assumes the existing bytes are correct. v0.1 rejects objects above 512 MiB
 before I/O. Multipart is deferred until a separate contract proves its
 conditional-completion and recovery semantics.
 
+The AWS bucket policy independently denies `PutObject` unless
+`s3:if-none-match` is `*`. Live proof attempts an unconditional overwrite with
+the runtime role, requires denial, and verifies that the original bytes remain
+unchanged. This protects immutability even if adapter code omits its condition.
+
 Runtime credentials are restricted to the exact bucket/prefix and required
 put/head/get actions. Delete, copy, list, bucket administration, lifecycle, and
 public-access mutation are denied. Production release separately proves AWS
@@ -101,6 +131,24 @@ object. A separate read-only
 deployment identity inspects provider lifecycle configuration and blocks
 activation when an enabled AWS expiration or noncurrent-version-expiration rule
 can match the completed-object prefix.
+
+The AWS principal matrix is exact: the runtime role has conditional put plus
+head/get on the completed-object prefix; an OIDC-assumed readiness role has
+policy/ACL/public-access/lifecycle/IAM-analysis and activation-record authority
+but no object data plane; an OIDC-assumed negative-test role has no bucket
+authority; and the bootstrap principal provisions infrastructure but is never
+passed to Workstream or the harness. Bucket policy denies object actions to
+every principal except the runtime role. Internal and external IAM evaluation
+plus live anonymous/readiness/negative-role calls prove the data-plane boundary.
+Bootstrap denial is proved by policy/IAM evaluation without supplying bootstrap
+credentials to the harness.
+
+AWS configuration added in 02B1 is not production-instantiable. Chunk 07 alone
+adds `ArtifactProviderActivation` and the production composition guard after
+live proof. The immutable record binds release, namespace fingerprint, role
+ARNs, bucket-policy digest, proof version/result, database proof time, and
+expiry. A missing, stale, or mismatched record fails startup with
+`artifact_provider_live_proof_required`.
 
 ## Ingest Transactions
 
@@ -113,11 +161,17 @@ can match the completed-object prefix.
    are a separate 04A reservation. Any exceeded scope fails before provider
    I/O. Provisional and completed byte charges count; exact replay and
    concurrent same-content reservations cannot double-charge or oversubscribe.
+   Product callers do not assemble this set; artifact orchestration derives it
+   from authoritative actor/service, project, task, upload-session or
+   checker-run, and deployment records. A missing required relationship fails
+   before provider I/O.
 4. Transaction A reserves the upload item and commits the server-computed
    digest, size, media type, operation identity, request digest, and CAS values.
 5. Workstream passes the sealed `CommittedArtifactSource` to the injected
    adapter outside the transaction.
-6. The adapter conditionally stores under the content-addressed key or resolves
+6. Transaction A also persists an `ArtifactPutAttempt` before I/O. A claimed
+   attempt records executor, database-clock lease, and execution generation;
+   the adapter conditionally stores under the content-addressed key or resolves
    an exact replay candidate.
 7. Transaction B records provider acknowledgement, completes the provisional
    admission charges, sets the item to `stored_pending_verification`, and
@@ -130,11 +184,14 @@ can match the completed-object prefix.
    records a verification receipt. Only a matching object becomes `ready` and
    bindable. Missing or changed bytes become unavailable/quarantined.
 
-Provider acknowledgement loss keeps admission charges provisional and is
-recovered by deterministic key plus fresh head/read. If authoritative
-observation proves no object exists, the charges become released and the item
-becomes `replay_required`; exact replay must atomically reacquire capacity
-before another provider call. A confirmed object completes the charges.
+Provider acknowledgement loss keeps the durable put attempt and admission
+charges provisional. A PostgreSQL scanner publishes ambiguous and expired
+in-flight attempts; a fixed service principal runs read-only
+`observe_put_result` plus a complete hash. Matching bytes complete Transaction B
+once, authoritative absence releases charges and makes the item
+`replay_required`, and mismatched bytes quarantine the key. No background
+resolver repeats a provider write. Exact replay after absence must atomically
+reacquire capacity before another provider call.
 Workstream never stores upload bytes in Postgres, Redis, or Celery payloads.
 
 Before binding, an object confirmed missing returns its reserved upload item to
@@ -251,6 +308,19 @@ PostgreSQL coordinates invocations using a fresh
 incremented execution generation. Terminal verification, recovery-envelope
 result, and terminal audit commit in one fenced transaction. A stale executor
 updates zero rows and writes no terminal facts.
+
+Put-attempt resolution follows the same rule. Both worker classes revalidate
+the current fixed service actor, identity link, exact action/resource,
+executor, and generation inside the same transaction as terminal state,
+receipt/replica/attempt, recovery, and audit writes. Revocation, suspension,
+resource drift, or stale execution updates zero rows and writes no terminal
+fact.
+
+AUTH-07 registers the closed artifact permissions, AUTH-08 defines applicable
+Operator grants, and AUTH-09 provisions the fixed service principal. Each
+WS-ART feature chunk activates only its own actions by supplying canonical
+resource composition, guards, surface declarations, and behavior tests. Later
+AUTH-12, AUTH-14, and AUTH-15 are not alternate artifact activation paths.
 
 Complete reads have an end-to-end verification deadline derived from the 512
 MiB maximum and minimum supported throughput. The deadline is shorter than the

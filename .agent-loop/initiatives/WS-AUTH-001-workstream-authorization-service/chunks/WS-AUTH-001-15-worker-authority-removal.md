@@ -72,12 +72,9 @@ review/contribution/compensation implementation
 ## Acceptance criteria
 
 - Internal jobs use fixed system principals and registered system permissions.
-- Artifact workers use only their exact registered actions:
-  `artifact.binding.create`, `artifact.verification.execute`,
-  `artifact.pending_work.scan`, `artifact.upload_session.expire`,
-  `artifact.guide_source.read`,
-  `artifact.checker_input.materialize`, and `artifact.checker_output.write`.
-  None implies another, and no generic reconciliation permission exists.
+- Artifact service actions are activated by their owning WS-ART chunks after
+  AUTH-07 registration and AUTH-09 service-principal provisioning. This chunk
+  does not attach artifact permissions or create a second activation path.
 - Every remaining asynchronous command declares one primary registered action,
   canonical feature-owned target, and fixed service principal. Serialized human
   identity is provenance only and never executable command authority.

@@ -28,6 +28,46 @@ HISTORICAL_PREFIXES = (
     "docs/internal_reviews/",
     "docs/reference_specs/",
 )
+# Keep exact historical exceptions aligned with the authorization wording gate.
+# Prefixes above remain useful for review/reference trees, while this set covers
+# standalone closed records and implemented plans outside those trees.
+HISTORICAL_PATHS = {
+    "docs/checker_trial_failure_catalog.md",
+    "docs/internal_reviews/2026-06-11_chunk9_pre_review_gate.md",
+    "docs/internal_reviews/2026-06-11_revision_context_rebase.md",
+    "docs/internal_reviews/2026-06-12_chunk10_checker_trial.md",
+    "docs/internal_reviews/2026-06-12_week2_closeout_real_api_drill.md",
+    "docs/internal_reviews/2026-06-13_week1_week2_deterministic_hardening.md",
+    "docs/internal_reviews/2026-06-16_submission_artifact_policy_architecture.md",
+    "docs/reference_specs/WS-AUTH-001-actor-profile-role-and-authorization-service-specification.md",
+    "docs/reference_specs/WS-IMP-001-workstream-v0.1-coding-agent-implementation-specification.md",
+    "docs/reference_specs/WS-REV-001-review-lifecycle-specification.md",
+    "docs/review_adversarial_quality_review.md",
+    "docs/review_architecture_review.md",
+    "docs/review_closure.md",
+    "docs/review_final_adversarial_review.md",
+    "docs/review_final_architecture_review.md",
+    "docs/review_final_product_strategy_review.md",
+    "docs/review_operations_review.md",
+    "docs/review_process_baseline_operations_review.md",
+    "docs/review_process_pattern_baseline_review.md",
+    "docs/review_product_strategy_review.md",
+    "docs/review_systems_architecture_review.md",
+    "docs/roadmap_30_day_master_plan.md",
+    "docs/roadmap_day_by_day_execution_plan.md",
+    "docs/roadmap_pilot_plan.md",
+    "docs/roadmap_week1_backend_plan.md",
+    "docs/spec_chunk_1_backend_scaffold.md",
+    "docs/spec_chunk_3_project_guide_foundation.md",
+    "docs/spec_chunk_4_task_queue_assignment.md",
+    "docs/spec_chunk_5_submission_packet_foundation.md",
+    "docs/spec_chunk_6_checker_contract_records.md",
+    "docs/spec_chunk_7_checker_runner_registry.md",
+    "docs/spec_chunk_8_submission_artifact_policy_checkers.md",
+    "docs/spec_chunk_9_pre_review_gate.md",
+    "docs/spec_chunk_10_checker_trial.md",
+    "docs/spec_week2_checker_framework.md",
+}
 AGENT_LOOP_INITIATIVE_PREFIX = ".agent-loop/initiatives/"
 ACTIVE_LOOP_PATHS = {
     ".agent-loop/LOOP_STATE.md",
@@ -59,6 +99,9 @@ DEFERRED_PROVIDER_RUNTIME_PREFIXES = (
     "backend/app/",
     "backend/scripts/",
     ".github/workflows/",
+    "config/",
+    "docker/",
+    "ops/",
     "services/",
     "deploy/",
     "deployment/",
@@ -102,6 +145,18 @@ FLOW_NODE_ACTIVATION_PATTERN = re.compile(
     r"\b(?:eligible|enabled|supported|active|production|hosted)\b|"
     r"\b(?:for|in)\s+(?:v0\.1|production|hosted)\b|"
     r"\b(?:v0\.1|production|hosted)\s+(?:artifact\s+)?provider\b))",
+    re.IGNORECASE,
+)
+R2_DEFERRAL_OVERRIDE_PATTERN = re.compile(
+    r"\b(?:Cloudflare\s+)?R2\b[^.;!?]{0,160}\b(?:shall|will|must|continues?|"
+    r"ship(?:s|ped)?|deploy(?:s|ed)?)\b[^.;!?]{0,100}\b(?:active|"
+    r"backend|hosted|production|provider|runtime|ship|deploy|alongside)\b",
+    re.IGNORECASE,
+)
+FLOW_NODE_DEFERRAL_OVERRIDE_PATTERN = re.compile(
+    r"\bFlow\s+Node\b[^.;!?]{0,160}\b(?:shall|will|must|continues?|"
+    r"ship(?:s|ped)?|deploy(?:s|ed)?)\b[^.;!?]{0,100}\b(?:active|"
+    r"backend|hosted|production|provider|runtime|ship|deploy|alongside)\b",
     re.IGNORECASE,
 )
 LEGACY_R2_RUNTIME_LINES = {
@@ -200,7 +255,7 @@ LIVE_RULE_PATHS = {
 
 
 def active_initiative_prefixes(root: Path = ROOT) -> tuple[str, ...]:
-    """Derive live initiative directories from every in-progress queue row."""
+    """Derive live initiative directories from in-progress and planned rows."""
     queue_path = root / ".agent-loop/WORK_QUEUE.md"
     if not queue_path.is_file():
         return ()
@@ -210,11 +265,15 @@ def active_initiative_prefixes(root: Path = ROOT) -> tuple[str, ...]:
             "## Planned Next",
             maxsplit=1,
         )[0]
+        planned_next = queue.split("## Planned Next", maxsplit=1)[1].split(
+            "## Completed",
+            maxsplit=1,
+        )[0]
     except IndexError as exc:
         raise ValueError("malformed Work Queue headings") from exc
     initiative_ids = {
         match.group(1)
-        for chunk in re.findall(r"\| `([^`]+)` \|", in_progress)
+        for chunk in re.findall(r"\| `([^`]+)` \|", in_progress + planned_next)
         if (match := re.match(r"([A-Z]+-[A-Z]+-\d+)", chunk))
     }
     initiative_root = root / AGENT_LOOP_INITIATIVE_PREFIX
@@ -253,7 +312,9 @@ RULES = (
         re.compile(
             r"(?:\bFN-ART-001\b|\bWS-ART-001-02-flow-node-adapter|"
             r"Flow Node[^.!?\n]{0,80}\b(?:v0\.1|production)\b|"
-            r"\b(?:v0\.1|production)\b[^.!?\n]{0,80}Flow Node)",
+            r"\b(?:v0\.1|production)\b[^.!?\n]{0,80}Flow Node|"
+            r"Flow Node[^.!?\n]{0,180}\b(?:hosted|active|enabled|supported)\s+"
+            r"(?:backend|provider|runtime)\b)",
             re.IGNORECASE,
         ),
     ),
@@ -334,6 +395,7 @@ def path_is_scannable(relative_path: str, root: Path = ROOT) -> bool:
     return (
         is_text_path
         and not relative_path.startswith(HISTORICAL_PREFIXES)
+        and relative_path not in HISTORICAL_PATHS
         and not is_review_history
         and (
             not relative_path.startswith(".agent-loop/")
@@ -351,7 +413,10 @@ def path_is_active_contract(relative_path: str, root: Path = ROOT) -> bool:
     if relative_path in {"AGENTS.md", "README.md", *ACTIVE_LOOP_PATHS}:
         return True
     if relative_path.startswith("docs/"):
-        return not relative_path.startswith(HISTORICAL_PREFIXES)
+        return (
+            not relative_path.startswith(HISTORICAL_PREFIXES)
+            and relative_path not in HISTORICAL_PATHS
+        )
     return relative_path.startswith(active_initiative_prefixes(root)) and "/reviews/" not in (
         relative_path
     )
@@ -391,7 +456,9 @@ def rule_applies_to_path(rule: Rule, relative_path: str, root: Path = ROOT) -> b
 
 def has_explicit_r2_deferral(line_text: str) -> bool:
     """Accept only clauses that unambiguously keep R2 outside active v0.1."""
-    if R2_ACTIVATION_PATTERN.search(line_text):
+    if R2_ACTIVATION_PATTERN.search(line_text) or R2_DEFERRAL_OVERRIDE_PATTERN.search(
+        line_text
+    ):
         return False
     return bool(
         re.search(
@@ -412,7 +479,9 @@ def has_explicit_r2_deferral(line_text: str) -> bool:
 
 def has_explicit_flow_node_deferral(clause_text: str) -> bool:
     """Accept Flow Node wording only when it cannot activate v0.1."""
-    if FLOW_NODE_ACTIVATION_PATTERN.search(clause_text):
+    if FLOW_NODE_ACTIVATION_PATTERN.search(
+        clause_text
+    ) or FLOW_NODE_DEFERRAL_OVERRIDE_PATTERN.search(clause_text):
         return False
     return bool(
         re.search(
@@ -435,8 +504,7 @@ def is_r2_provider_reference(line_text: str) -> bool:
         and re.search(
             r"\b(?:object|storage|store|provider|credential|runtime|adapter|"
             r"production|v0\.1|hosted|enable|support|eligible|dependency|"
-            r"implementation|transport|endpoint|sidecar|secret|deployment|"
-            r"AWS|S3|MinIO|Flow\s+Node)\b",
+            r"transport|endpoint|sidecar|secret|deployment)\b",
             line_text,
             re.IGNORECASE,
         )
@@ -474,7 +542,12 @@ def scan_text(relative_path: str, text: str, phase: str, root: Path = ROOT) -> l
                     failures.append(f"{relative_path}:{line}: {rule.code}")
                     continue
                 clause_text = clause_around(normalized_text, match.start())
-                if not is_r2_provider_reference(clause_text):
+                provider_reference_text = (
+                    clause_text
+                    if "cloudflare" in match.group(0).lower() or r"\n" in line_text
+                    else line_text
+                )
+                if not is_r2_provider_reference(provider_reference_text):
                     continue
                 if has_explicit_r2_deferral(clause_text):
                     continue

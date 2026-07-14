@@ -2,38 +2,36 @@
 
 ## Current State
 
-- Active initiative: `WS-AUTH-001` - Workstream Authorization Service
-- Active planning chunk: none
+- Active initiative in this worktree: `WS-ART-001` - Immutable Artifact Storage
+- Active planning chunk: `WS-ART-001-OBJECT-STORAGE-AMENDMENT`
 - Active implementation chunk: none
-- Branch: `codex/ws-auth-001-cat-post-merge-memory`
-- Worktree: `/home/abiorh/flow/workstream-authorization-service`
-- Status: `WS-AUTH-001-CAT` passed required internal reviews, Backend, Agent
-  Gates, CodeRabbit, and explicit human approval, then merged through PR #117 as
-  `4c5d4fc` on 2026-07-14. Post-merge memory is the only active work.
-- Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
-- Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
-- Latest integrated `main` merge commit: `4c5d4fc`
-- Current gate: CAT post-merge memory and stop; no runtime implementation chunk
-  is active.
-- Scope checkpoint: the 52 approved identifiers and `/api/v1` namespace remain
-  unchanged. AUTH-05A's 49-identifier audit base remains runtime truth until the
-  three planned recovery identifiers receive typed/SQL parity in AUTH-13/14.
-- Next chunk: the user explicitly directed AUTH-05B to continue after this
-  reconciliation. Its start signal is recorded and it may activate after this
-  post-merge memory update merges, without another start signal.
-- Focused evidence: the audit/delegation suite passed 11 tests at 94.55 percent
-  audit-subsystem coverage. Final GitHub Backend passed 949 tests at 82.77
-  percent global coverage and 91.07 percent artifact-foundation coverage.
-- Parallel initiative: `WS-QUAL-001-01B2` is paused at the user's direction so
-  AUTH receives the laptop's test capacity. Its last official whole-app result
-  remains `6466/8159` statements (`79.249908%`); no replacement evidence exists.
-- Parallel initiative: `WS-ART-001-01` merged through PR #101 as `050eb15`.
-  `WS-ART-001-OBJECT-STORAGE-AMENDMENT` is active as planning only on
-  `codex/ws-art-001-object-storage-planning-amendment`, rebased onto integrated
-  `main` at `8e1cde6`. The user approved AWS S3 as the only v0.1 production
-  provider; MinIO remains local/CI proof, LocalStorage remains focused
-  development, and R2 plus Flow Node are deferred. Exact-head contract repair
-  and internal review are required before 02A1 can start.
+- Branch: `codex/ws-art-001-object-storage-planning-amendment`
+- Worktree: `/home/abiorh/flow/workstream`
+- Latest integrated `main` merge commit: `eba7e2b` from PR #118.
+- Status: planning repair only. Candidate `e641588` passed deterministic gates
+  but failed exact-head senior engineering, architecture, QA/test, and
+  security/auth review. All four sessions were closed and their valid findings
+  are being repaired before a new immutable review SHA is created.
+- Current gate: finish the bounded repair, rerun deterministic proof, review one
+  exact SHA through every required internal track, record evidence/trust bundle,
+  then stop for external and human review. No storage runtime implementation is
+  active.
+- Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
+  local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
+  Flow Node are deferred. Product modules receive narrow artifact capabilities,
+  and AWS cannot instantiate in production without release-bound live proof.
+- Authorization checkpoint: the approved catalogue contains 73 identifiers,
+  including 21 artifact permissions. AUTH-07 registers them, AUTH-08 defines
+  applicable Operator grants, AUTH-09 provisions fixed service principals, and
+  each owning WS-ART feature chunk activates only its own canonical actions.
+- Next artifact chunk: `WS-ART-001-02A1` remains inactive until this amendment
+  merges and the user gives a separate explicit start signal.
+- Parallel authorization work: `WS-AUTH-001-05B` has a recorded start signal and
+  remains owned by `/home/abiorh/flow/workstream-authorization-service`; do not
+  implement it from this artifact worktree.
+- Parallel coverage work: `WS-QUAL-001-01B2` remains paused. Its last official
+  whole-app result is `6466/8159` statements (`79.249908%`); no replacement
+  evidence exists.
 - Parallel initiative: `WS-POL-002-03` merged through PR #90 as `a7aa474`; its
   post-merge memory merged through PR #94 as `b1270d7`. `WS-POL-002-04` remains
   inactive pending the relevant authorization proof and a separate explicit

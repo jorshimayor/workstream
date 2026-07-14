@@ -20,7 +20,7 @@ authorization evidence, and recovery state.
 ## D3 - ArtifactStore v2
 
 ArtifactStore v2 accepts only a server-sealed `CommittedArtifactSource`, plus
-committed-put recovery, open/range, and head. v1 provider
+read-only committed-put observation, open/range, and head. v1 provider
 verify/retain/release/receipt methods are removed without compatibility aliases.
 Workstream verifies by reading exact bytes.
 
@@ -159,9 +159,11 @@ count before a checker receives a read-only workspace.
 
 ## D21 - Configured Storage Namespace Fence
 
-Startup, read, and write paths validate one configured adapter identity,
-provider profile, and storage namespace against persisted replicas. A mismatch
-fails closed; no request may route to a second namespace. Changing a populated
+One immutable deployment-level `ArtifactStorageNamespace` is atomically
+claimed or validated before startup and every provider operation. Its
+fingerprint covers the canonical non-secret adapter/profile/namespace
+descriptor, and replicas and put attempts reference it. A different concurrent
+first writer or later configuration fails before I/O. Changing a populated
 deployment requires a separate verified maintenance migration.
 
 ## D22 - AWS Readiness Ownership
@@ -172,3 +174,38 @@ by product services. Chunk 02D exposes only static prerequisite status. Chunk
 principal set, effective Block Public Access, policy/ACL state, Access Analyzer
 findings, lifecycle safety, and negative read/write/delete behavior for
 anonymous and unapproved authenticated principals.
+
+## D23 - Closed Product Capability Ports
+
+Only `ArtifactStorageOrchestrator` receives `ArtifactStore`. Product modules
+receive closed ingest, upload, binding, materialization, checker-output, or
+Operator-read capabilities with server-owned request shapes. They cannot inject
+the orchestrator, choose adapters/provider references/namespaces/content IDs,
+or assemble admission scopes.
+
+## D24 - Durable Put Attempt
+
+Transaction A creates `ArtifactPutAttempt` before provider I/O. It owns
+ambiguous acknowledgement and process-loss recovery before a replica or
+verification job exists. Resolution is read-only through
+`observe_put_result`; no background worker replays a write. Terminal writes are
+fenced by executor and generation and revalidate fixed service authority in the
+same transaction.
+
+## D25 - Paired Authorization Activation
+
+AUTH-07 registers artifact permissions, AUTH-08 owns applicable Operator grant
+definitions, and AUTH-09 provisions fixed service principals. Registry or
+principal presence alone is non-executable. Each WS-ART feature chunk activates
+only its exact actions by supplying canonical resource facts, guards, surface
+declarations, and behavior tests. AUTH-12, AUTH-14, and AUTH-15 do not provide a
+second artifact activation path.
+
+## D26 - AWS Release Activation
+
+02B1 adds validated AWS configuration and provider-proof support but production
+composition remains unavailable. Chunk 07 alone writes an immutable,
+release-bound `ArtifactProviderActivation` after conditional-write,
+principal-boundary, public-access, lifecycle, and negative-call proof. Missing,
+expired, or mismatched proof fails production startup. MinIO conformance never
+activates AWS.

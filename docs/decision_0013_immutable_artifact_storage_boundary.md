@@ -82,7 +82,7 @@ The v0.1 port exposes only immutable byte-provider behavior:
 
 ```text
 put(source: CommittedArtifactSource)
-recover_put(commitment: ArtifactCommitment)
+observe_put_result(commitment: ArtifactCommitment)
 open(provider_object_ref, optional_range)
 head(provider_object_ref)
 ```

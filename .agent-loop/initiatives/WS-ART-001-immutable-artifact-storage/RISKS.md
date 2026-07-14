@@ -2,7 +2,7 @@
 
 | Risk | Severity | Mitigation |
 |---|---:|---|
-| Existing key overwritten by concurrent upload | Critical | Content-addressed key plus conditional no-overwrite write and concurrency tests. |
+| Existing key overwritten by concurrent upload or adapter regression | Critical | Content-addressed key, conditional no-overwrite write, bucket-policy deny unless `s3:if-none-match` is `*`, concurrency tests, and live unconditional-overwrite denial proving original bytes unchanged. |
 | First writer poisons a known digest key | Critical | Every source is server-hashed in bounded scratch before provider I/O; the port accepts only a sealed committed source; cross-project adversarial tests prove no client-selected digest can choose a key. |
 | Provider acknowledgement accepted without exact bytes | Critical | Independent complete-object read/hash before bindability. |
 | Multipart semantics diverge across providers | High | v0.1 uses conditional single-request put with a 512 MiB hard limit; multipart is deferred. |
@@ -11,10 +11,13 @@
 | Secret retained in settings errors/logs/jobs | Critical | Secret-safe settings boundary, redaction/object-graph tests, no credential persistence. |
 | Wrong AWS credential source is accepted | Critical | Production selects one allowlisted workload-identity method, verifies the resolved method, and rejects explicit or unselected ambient credential sources before provider I/O. |
 | Public bucket leaks evidence | Critical | AWS deployment proof checks Block Public Access, policy/ACL state, and anonymous-read denial. |
-| Unapproved AWS principal reaches private evidence | Critical | Chunk 07 defines the complete trusted-principal set, fails on any extra resource-based grant, and proves read/write/delete denial with an unapproved authenticated role. |
+| Unapproved AWS principal reaches private evidence | Critical | Exact runtime/readiness/negative/bootstrap matrix, bucket-policy deny for non-runtime object principals, internal/external IAM evaluation, and anonymous/same-account/same-organization/external negative proof. |
 | Runtime credential can destroy evidence | Critical | Exact bucket/prefix/action scope; denied delete/copy/list/admin/lifecycle/public-access actions; negative tests. |
-| Product code bypasses artifact admission through the raw port | Critical | Only artifact-storage orchestration receives writable ArtifactStore; static architecture tests reject other put/recover_put call sites. |
-| Deployment silently reads or writes another storage namespace | Critical | Startup and every provider operation fence adapter/profile/namespace identity against persisted replicas; mismatch fails closed and requires a maintenance migration. |
+| Product code bypasses artifact admission through the raw port or broad orchestration injection | Critical | Only internal artifact-storage orchestration receives writable ArtifactStore; static architecture tests reject raw-port imports, broad orchestrator injection, and put/observe calls outside that module. |
+| Deployment silently reads or writes another storage namespace | Critical | One singleton namespace row is atomically claimed or validated before I/O; replicas and put attempts bind its fingerprint, and mismatch requires a maintenance migration. |
+| Provider acknowledgement is lost before a replica exists | Critical | Transaction A persists a fenced `ArtifactPutAttempt`; a scanner resolves it through read-only observation and full hash without replaying a write. |
+| AWS configuration becomes active without live proof | Critical | Production composition requires an exact unexpired release/namespace/role/policy-bound `ArtifactProviderActivation`; MinIO proof cannot create it. |
+| Registered permission is mistaken for executable artifact authority | Critical | AUTH registry/grant/principal setup and feature activation are paired; each WS-ART chunk supplies canonical resources, guards, surfaces, tests, and terminal transaction revalidation. |
 | Broker publication failure strands verification/recovery | High | Periodic PostgreSQL scanner with bounded SLA and duplicate-safe publication. |
 | Duplicate/stale Celery execution writes terminal state | Critical | PostgreSQL clock, fresh executor UUID, generation fencing, and zero-row stale finalization rollback. |
 | Slow progressive read outlives execution lease | High | End-to-end verification deadline shorter than lease by a persistence margin. |

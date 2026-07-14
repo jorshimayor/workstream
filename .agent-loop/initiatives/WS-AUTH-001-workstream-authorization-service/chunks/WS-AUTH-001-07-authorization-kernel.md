@@ -73,7 +73,7 @@ review/compensation permissions beyond registered future definitions
   `docs/spec_authorization_service.md`: Operator reads/retry/recovery/audit,
   guide-source ingest, contributor upload-session create/read/item/seal/cancel
   actions, binding,
-  verification, pending-work scan, guide-source read, checker-input
+  verification, pending-work scan, put-attempt resolution, guide-source read, checker-input
   materialization, and checker-output write. Broad `operations.*` permissions
   are not aliases for artifact authority.
 - A closed typed action registry gives each active `ActionId` one approved
@@ -115,6 +115,11 @@ review/compensation permissions beyond registered future definitions
   another domain's target, facts, guards, or composer. Active definitions
   require the owning domain contract, canonical composer, surface declaration,
   and behavior tests.
+- Artifact permissions are registered with typed/PostgreSQL audit parity here,
+  but remain reserved and non-executable until their owning WS-ART activation
+  row in `docs/spec_authorization_service.md` supplies the feature resource
+  composer, guards, surface declaration, and behavior tests. AUTH-12, AUTH-14,
+  and AUTH-15 are not alternate artifact activation paths.
 - `AuthorizationDecision`, bounded logs/metrics, and every action-based allowed
   or denied authority event carry the stable `ActionId`. Migration `0021`
   preserves historical nulls, establishes exact typed/PostgreSQL action-registry

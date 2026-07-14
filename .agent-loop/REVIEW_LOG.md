@@ -1,5 +1,21 @@
 # Review Log
 
+## 2026-07-14 - WS-ART-001 Object Storage Exact-Head Review Failed
+
+Planning candidate `e6415886a2474af899eb433c4b42eabea8e794c7` passed the
+deterministic planning gates but failed exact-head senior engineering,
+architecture, QA/test, and security/auth review. All four sub-agent sessions
+were closed; this result is not reusable approval.
+
+Valid findings require closed product capability ports, a durable pre-replica
+put-attempt owner, atomic singleton namespace fencing, server-derived admission
+scopes, release-bound AWS activation, a complete AWS principal and conditional-
+write boundary, paired AUTH/WS-ART action activation, transaction-local service
+authority revalidation, cumulative coverage ownership for `app/main.py` and
+`app/modules/audit/*`, and a live/planned stale-contract scanner that excludes
+explicit history without missing runtime configuration paths. Repair remains
+planning-only on integrated main `eba7e2b`; no storage runtime chunk is active.
+
 ## 2026-07-14 - WS-AUTH-001-CAT Merged
 
 PR #117 merged through explicit human approval as `4c5d4fc`. Final branch head

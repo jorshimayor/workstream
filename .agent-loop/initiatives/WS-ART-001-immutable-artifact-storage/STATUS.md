@@ -38,12 +38,17 @@ owns MinIO and AWS S3. There is no active R2 chunk.
 
 ## Gate
 
-The committed amendment is in exact-head internal repair and review. Prior
-review established the canonical pre/post-submit materializer, coverage-phase
-binding, and scratch-cleanup ownership. The AWS-first repair removes the R2
-issuer boundary, maps exact AUTH ownership, constrains source ingestion,
-preserves WS-REV ownership, and makes verification commands rerunnable. A
-final immutable SHA will be recorded only after all required reviewers pass.
-The remaining gate is complete exact-head internal reviewer fanout and evidence,
-external PR review, and explicit human merge approval. No later chunk starts
-automatically.
+Candidate `e6415886a2474af899eb433c4b42eabea8e794c7` passed deterministic
+planning checks but failed exact-head senior engineering, architecture,
+QA/test, and security/auth review. Every session was closed and the result is
+not reusable approval. Repair is active on integrated main `eba7e2b` and remains
+planning-only.
+
+The repair closes the raw-port/orchestrator bypass, pre-replica acknowledgement
+gap, namespace first-writer race, caller-assembled quota scope, AWS activation
+and principal boundary, AUTH action-activation ownership, terminal service
+authority race, stale-scanner discovery/history/runtime gaps, and cumulative
+coverage omissions. A new immutable SHA will be recorded only after
+deterministic checks and every required internal reviewer pass. External PR
+review and explicit human merge approval remain later gates. No later chunk
+starts automatically.

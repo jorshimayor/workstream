@@ -187,6 +187,7 @@ artifact.upload_session.expire
 artifact.binding.create
 artifact.verification.execute
 artifact.pending_work.scan
+artifact.put_attempt.resolve
 artifact.guide_source.read
 artifact.checker_input.materialize
 artifact.checker_output.write
@@ -201,19 +202,36 @@ Operator permissions do not authorize internal execution, and internal service
 permissions do not authorize Operator APIs. AUTH-07 owns this closed registry,
 AUTH-08 owns the Operator grant definitions, AUTH-09 owns the service
 principals, and WS-ART consumes the resulting decisions without registering
-permissions or inferring authority. AUTH-12 maps project-guide source ingest,
-AUTH-14 maps contributor upload actions, and AUTH-15 maps fixed system-worker
-actions for binding, verification, pending-work publication, guide-source reads,
-and checker input/output artifact handling.
+permissions or inferring authority. Artifact actions activate only through the
+paired feature model below; AUTH-12, AUTH-14, and AUTH-15 do not activate or
+attach artifact actions on behalf of WS-ART.
 
-These are 72 approved authorization identifiers. AUTH-05A's current typed and
+These are 73 approved authorization identifiers. AUTH-05A's current typed and
 PostgreSQL audit registry accepts 49. The three approved Operator recovery
 identifiers `operations.task.start_override`,
 `operations.submission_gate.repair`, and `operations.checker.retry`, plus the
-20 artifact identifiers above, are reserved planned metadata. They cannot
-become active actions until their owning AUTH chunks add matching typed/SQL
-audit parity and the owning artifact feature supplies its canonical resource
-composer, guards, surface declaration, and behavior tests.
+21 artifact identifiers above, are reserved planned metadata. AUTH-07 adds
+their matching typed/SQL audit parity without making them executable. An
+artifact action becomes active only when the owning WS-ART chunk supplies its
+canonical resource composer, guards, surface declaration, behavior tests, and
+transaction-local revalidation where required. Both halves are mandatory;
+registry presence alone never grants authority.
+
+The paired artifact activation matrix is closed:
+
+| Owning WS-ART chunk | Actions activated by that chunk |
+|---|---|
+| `WS-ART-001-02D` | Operator binding/replica/receipt/verification-job/recovery-attempt/audit reads, verification retry, `artifact.verification.execute`, `artifact.pending_work.scan`, and `artifact.put_attempt.resolve` |
+| `WS-ART-001-03` | `artifact.guide_source.ingest`, `artifact.guide_source.read`, and the guide-source binding action mapped to `artifact.binding.create` |
+| `WS-ART-001-04A` | upload-session create/read/seal/cancel/expire and upload-item write |
+| `WS-ART-001-05` | the submission binding action mapped to `artifact.binding.create` |
+| `WS-ART-001-06A` | `artifact.checker_input.materialize` |
+| `WS-ART-001-06B` | `artifact.checker_output.write` |
+
+Every row requires AUTH-07's registry, AUTH-08's applicable Operator grant
+definition, and AUTH-09's applicable fixed service principal to be present
+first. Feature code receives centralized decisions; it never queries grants or
+constructs permission identifiers dynamically.
 
 Adding a permission requires a specification/ADR update and human approval.
 Routers cannot invent identifiers or evaluate grant unions.

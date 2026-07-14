@@ -1,6 +1,6 @@
 # Chunk Contract: WS-ART-001-06B Checker Output And Post-Submit Routing
 
-Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 06A and AUTH-15
+Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 06A
 
 Artifact contract phase: `checker_cutover`
 
@@ -81,6 +81,8 @@ coverage report --include='app/adapters/artifacts/*,app/interfaces/artifacts.py,
 coverage report --include='app/interfaces/external_services.py' --precision=2 --fail-under=90
 coverage report --include='app/core/config.py' --precision=2 --fail-under=90
 coverage report --include='app/workers/*' --precision=2 --fail-under=90
+coverage report --include='app/main.py' --precision=2 --fail-under=90
+coverage report --include='app/modules/audit/*' --precision=2 --fail-under=90
 coverage report --include='app/api/router.py' --precision=2 --fail-under=90
 coverage report --include='app/modules/projects/*' --precision=2 --fail-under=90
 coverage report --include='app/adapters/project_agents/*,app/interfaces/project_agents.py' --precision=2 --fail-under=90
