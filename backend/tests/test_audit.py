@@ -483,9 +483,34 @@ def test_authority_input_rejects_unbounded_or_inconsistent_evidence() -> None:
         def decode(self, *args, **kwargs):
             return json.dumps(safe)
 
+    class ChangingFacts(Mapping):
+        def __init__(self):
+            self.iterations = 0
+
+        def __getitem__(self, key):
+            return True if key == "allowed" else secret
+
+        def __iter__(self):
+            self.iterations += 1
+            return iter(("allowed",) if self.iterations == 1 else ("raw_token",))
+
+        def __len__(self):
+            return 1
+
+        def __repr__(self):
+            return f"<{secret}>"
+
     changing = ChangingMapping()
     assert AuthorityAuditEventInput.model_validate(changing).event_type == safe_python["event_type"]
     assert changing.iterations == 1
+    changing_facts = ChangingFacts()
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        normalized = AuthorityAuditEventInput.model_validate(
+            safe_python | {"after_facts": changing_facts}
+        )
+    assert normalized.after_facts == {"allowed": True}
+    assert changing_facts.iterations == 1
+    assert caught_warnings == []
     assert (
         AuthorityAuditEventInput.model_validate_json(json.dumps(safe)).model_dump(mode="json")
         == safe
@@ -689,6 +714,23 @@ async def test_authority_service_readmits_mutated_inputs_without_retention(audit
         def __repr__(self):
             return f"<{secret}>"
 
+    class ChangingFacts(Mapping):
+        def __init__(self):
+            self.iterations = 0
+
+        def __getitem__(self, key):
+            return True if key == "allowed" else secret
+
+        def __iter__(self):
+            self.iterations += 1
+            return iter(("allowed",) if self.iterations == 1 else ("raw_token",))
+
+        def __len__(self):
+            return 1
+
+        def __repr__(self):
+            return f"<{secret}>"
+
     values = [
         _authority_input(AuthorityEventType.SENSITIVE_AUTHORIZATION_ALLOWED),
         _authority_input(AuthorityEventType.SENSITIVE_AUTHORIZATION_ALLOWED),
@@ -697,6 +739,9 @@ async def test_authority_service_readmits_mutated_inputs_without_retention(audit
     values[0].actor_ref = secret
     values[1].after_facts["allowed"] = secret
     values[2].after_facts = HostileFacts()
+    valid_hostile_repr = _authority_input(AuthorityEventType.SENSITIVE_AUTHORIZATION_ALLOWED)
+    changing_facts = ChangingFacts()
+    valid_hostile_repr.after_facts = changing_facts
 
     async with audit_factory() as session:
         for value in values:
@@ -706,6 +751,11 @@ async def test_authority_service_readmits_mutated_inputs_without_retention(audit
             _assert_value_not_retained(caught.value, secret)
             assert caught_warnings == []
             assert await session.get(AuditEvent, str(value.event_id)) is None
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            stored = await AuditService(session).add_authority_event(valid_hostile_repr)
+        assert stored.after_facts == {"allowed": True}
+        assert changing_facts.iterations == 1
+        assert caught_warnings == []
 
 
 async def test_authority_writer_persists_typed_privacy_neutral_events(audit_factory) -> None:

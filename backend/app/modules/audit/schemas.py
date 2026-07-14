@@ -148,11 +148,13 @@ def _unique_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
 def _facts(value: object) -> dict[str, object] | None:
     if value is None:
         return None
-    if not isinstance(value, Mapping) or len(value) > 8:
-        return None
-    if not set(value).issubset(frozenset(_FACT_VALUES) | {"effective", "allowed", "scope_id"}):
+    if not isinstance(value, Mapping):
         return None
     data = dict(value)
+    if len(data) > 8 or not set(data).issubset(
+        frozenset(_FACT_VALUES) | {"effective", "allowed", "scope_id"}
+    ):
+        return None
     for key, item in data.items():
         if key in {"effective", "allowed"} and type(item) is not bool:
             return None
@@ -276,6 +278,8 @@ class AuthorityAuditEventInput(BaseModel):
         kind = _enum_value(data.get("actor_ref_kind"), ActorReferenceKind)
         event = AuthorityEventType(event_raw) if event_raw else None
         actor_ref = data.get("actor_ref")
+        before_facts = _facts(data.get("before_facts"))
+        after_facts = _facts(data.get("after_facts"))
         uuid_fields = (
             "event_id", "entity_id", "request_id", "correlation_id", "matched_grant_id",
             "project_id", "resource_id", "idempotency_reference", "invalidation_cause_event_id",
@@ -295,8 +299,8 @@ class AuthorityAuditEventInput(BaseModel):
             or data.get("invalidation_target_kind") is not None
             and not _registered(data["invalidation_target_kind"], _UUID_TARGET_KINDS | {"permission_registry"})
             or event is not None and not _registered(data.get("reason"), _REASONS[event])
-            or _facts(data.get("before_facts")) is None and data.get("before_facts") is not None
-            or _facts(data.get("after_facts")) is None and data.get("after_facts") is not None
+            or before_facts is None and data.get("before_facts") is not None
+            or after_facts is None and data.get("after_facts") is not None
         )
         for prefix in ("target_ref", "invalidation_target"):
             ref_kind = data.get(f"{prefix}_kind")
@@ -309,7 +313,11 @@ class AuthorityAuditEventInput(BaseModel):
         invalid |= target_kind is not None and (
             _enum_value(target_kind, ActorReferenceKind) != "actor_profile" or _uuid(target_ref) is None
         )
-        return None if invalid else data
+        if invalid:
+            return None
+        data["before_facts"] = before_facts
+        data["after_facts"] = after_facts
+        return data
 
     @classmethod
     def model_validate_json(cls, json_data: str | bytes | bytearray, **kwargs: Any) -> Self:
