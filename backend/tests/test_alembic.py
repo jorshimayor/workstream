@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.adapters.auth.dev import actor_id_from_external_identity
 
+
 def test_alembic_upgrade_and_downgrade(isolated_database_env: str, migration_lock) -> None:
     project_root = Path(__file__).resolve().parents[1]
     config = Config(str(project_root / "alembic.ini"))
@@ -143,7 +144,9 @@ def test_post_submit_policy_upgrade_blocks_pre_provenance_runtime_rows(
     config = Config(str(project_root / "alembic.ini"))
     config.set_main_option("script_location", str(project_root / "alembic"))
 
-    ids = {name: str(uuid4()) for name in ("project", "guide", "policy", "task", "submission", "run")}
+    ids = {
+        name: str(uuid4()) for name in ("project", "guide", "policy", "task", "submission", "run")
+    }
     with migration_lock():
         try:
             command.downgrade(config, "base")
@@ -287,9 +290,7 @@ def test_artifact_foundation_enforces_immutable_facts_and_guarded_downgrade(
             command.upgrade(config, "0016_artifact_domain")
             assert all(
                 count == 0
-                for count in asyncio.run(
-                    _artifact_table_counts(isolated_database_env)
-                ).values()
+                for count in asyncio.run(_artifact_table_counts(isolated_database_env)).values()
             )
         finally:
             command.downgrade(config, "base")
@@ -313,20 +314,14 @@ def test_api_rate_control_schema_preserves_domain_and_guards_downgrade(
             command.upgrade(config, "0015_post_submit_correction")
             asyncio.run(_seed_artifact_prior_head(isolated_database_env, project_id))
             command.upgrade(config, "0016_artifact_domain")
-            before = asyncio.run(
-                _artifact_prior_head_project(isolated_database_env, project_id)
-            )
+            before = asyncio.run(_artifact_prior_head_project(isolated_database_env, project_id))
             artifact_before = asyncio.run(
                 _seed_and_fetch_0016_artifact(isolated_database_env, artifact_id)
             )
 
             command.upgrade(config, "0017_api_controls")
-            after = asyncio.run(
-                _artifact_prior_head_project(isolated_database_env, project_id)
-            )
-            artifact_after = asyncio.run(
-                _fetch_0016_artifact(isolated_database_env, artifact_id)
-            )
+            after = asyncio.run(_artifact_prior_head_project(isolated_database_env, project_id))
+            artifact_after = asyncio.run(_fetch_0016_artifact(isolated_database_env, artifact_id))
             schema = asyncio.run(_api_rate_control_schema(isolated_database_env))
             asyncio.run(_assert_api_rate_control_guards(isolated_database_env, digest))
 
@@ -365,9 +360,7 @@ def test_api_rate_control_schema_preserves_domain_and_guards_downgrade(
             refused_state = asyncio.run(_api_rate_control_state(isolated_database_env))
             asyncio.run(_clear_api_rate_controls(isolated_database_env))
             command.downgrade(config, "0016_artifact_domain")
-            downgraded_state = asyncio.run(
-                _api_rate_control_state(isolated_database_env)
-            )
+            downgraded_state = asyncio.run(_api_rate_control_state(isolated_database_env))
             command.upgrade(config, "0017_api_controls")
         finally:
             asyncio.run(_clear_api_rate_controls(isolated_database_env))
@@ -407,6 +400,111 @@ def test_api_rate_control_schema_preserves_domain_and_guards_downgrade(
         "revision": "0016_artifact_domain",
         "table_exists": False,
         "row_count": None,
+    }
+
+
+def test_authority_audit_schema_preserves_legacy_and_guards_downgrade(
+    isolated_database_env: str,
+    migration_lock,
+) -> None:
+    """Prove 0018 preserves legacy evidence and refuses destructive downgrade."""
+    project_root = Path(__file__).resolve().parents[1]
+    config = Config(str(project_root / "alembic.ini"))
+    config.set_main_option("script_location", str(project_root / "alembic"))
+    legacy_id = str(uuid4())
+    authority_id = str(uuid4())
+
+    with migration_lock():
+        try:
+            command.downgrade(config, "base")
+            command.upgrade(config, "0017_api_controls")
+            before = asyncio.run(_seed_and_fetch_legacy_audit(isolated_database_env, legacy_id))
+
+            command.upgrade(config, "0018_authority_audit_evidence")
+            after = asyncio.run(_fetch_audit_row(isolated_database_env, legacy_id))
+            schema = asyncio.run(_authority_audit_schema(isolated_database_env))
+            occurred_at = asyncio.run(
+                _insert_authority_audit_fixture(isolated_database_env, authority_id)
+            )
+
+            with pytest.raises(RuntimeError, match="non-empty authority audit"):
+                command.downgrade(config, "0017_api_controls")
+            refused = asyncio.run(_authority_audit_state(isolated_database_env))
+
+            asyncio.run(_remove_authority_audit_fixture(isolated_database_env, authority_id))
+            command.downgrade(config, "0017_api_controls")
+            downgraded = asyncio.run(_fetch_audit_row(isolated_database_env, legacy_id))
+            command.upgrade(config, "0018_authority_audit_evidence")
+            restored_schema = asyncio.run(_authority_audit_schema(isolated_database_env))
+        finally:
+            asyncio.run(_remove_authority_audit_fixture(isolated_database_env, authority_id))
+            command.downgrade(config, "base")
+            command.upgrade(config, "head")
+
+    assert after == {**before, "event_domain": "legacy_lifecycle"}
+    assert downgraded == before
+    assert occurred_at.year >= 2026
+    assert refused == {
+        "revision": "0018_authority_audit_evidence",
+        "authority_rows": 1,
+    }
+    assert schema == restored_schema
+    assert schema == {
+        "columns": {
+            "actor_ref_kind:varchar:YES",
+            "after_facts:json:YES",
+            "before_facts:json:YES",
+            "correlation_id:uuid:YES",
+            "denial_code:varchar:YES",
+            "event_domain:varchar:NO",
+            "event_version:int4:YES",
+            "idempotency_reference:uuid:YES",
+            "invalidation_cause_event_id:varchar:YES",
+            "invalidation_target_kind:varchar:YES",
+            "invalidation_target_ref:varchar:YES",
+            "matched_grant_id:varchar:YES",
+            "occurred_at:timestamptz:YES",
+            "permission_id:varchar:YES",
+            "project_id:varchar:YES",
+            "request_id:uuid:YES",
+            "resource_id:varchar:YES",
+            "resource_type:varchar:YES",
+            "target_actor_ref:varchar:YES",
+            "target_actor_ref_kind:varchar:YES",
+            "target_ref_id:varchar:YES",
+            "target_ref_kind:varchar:YES",
+        },
+        "constraints": {
+            "ck_audit_events_authority_privacy_bounds",
+            "ck_audit_events_authority_registries",
+            "ck_audit_events_authority_tokens",
+            "ck_audit_events_domain_shape",
+            "ck_audit_events_fact_bounds",
+            "ck_audit_events_foundation_shapes",
+            "ck_audit_events_reference_pairs",
+            "fk_audit_events_invalidation_cause",
+        },
+        "indexes": {
+            "ix_audit_events_actor_ref",
+            "ix_audit_events_correlation_id",
+            "ix_audit_events_occurred_at",
+            "ix_audit_events_project_id",
+            "ix_audit_events_request_id",
+        },
+        "triggers": {
+            "audit_events_reject_truncate",
+            "audit_events_reject_update_delete",
+            "audit_events_set_authority_time",
+        },
+        "functions": {
+            "authority_facts_are_safe",
+            "authority_grant_facts_are_safe",
+            "authority_event_facts_are_safe",
+            "reject_audit_event_mutation",
+            "set_authority_audit_database_time",
+        },
+        "legacy_default": True,
+        "external_identity_nullable": True,
     }
 
 
@@ -899,7 +997,9 @@ async def _seed_pre_provenance_runtime_rows(database_url: str, ids: dict[str, st
         await engine.dispose()
 
 
-async def _seed_pre_provenance_policies(connection, project_id: str, checker_policy_id: str) -> None:
+async def _seed_pre_provenance_policies(
+    connection, project_id: str, checker_policy_id: str
+) -> None:
     """Seed v0.1 guide policies required by locked task foreign keys."""
     await connection.execute(
         text(
@@ -1410,11 +1510,15 @@ async def _artifact_prior_head_project(database_url: str, project_id: str) -> di
     try:
         async with engine.connect() as connection:
             row = (
-                await connection.execute(
-                    text("select id, name, slug, status from projects where id = :id"),
-                    {"id": project_id},
+                (
+                    await connection.execute(
+                        text("select id, name, slug, status from projects where id = :id"),
+                        {"id": project_id},
+                    )
                 )
-            ).mappings().one()
+                .mappings()
+                .one()
+            )
             return dict(row)
     finally:
         await engine.dispose()
@@ -1858,8 +1962,7 @@ async def _api_rate_control_schema(database_url: str) -> dict[str, set[str]]:
             ).scalars()
             return {
                 "columns": {
-                    f"{row.column_name}:{row.data_type}:{row.is_nullable}"
-                    for row in columns
+                    f"{row.column_name}:{row.data_type}:{row.is_nullable}" for row in columns
                 },
                 "constraints": set(constraints),
                 "indexes": set(indexes),
@@ -1868,9 +1971,7 @@ async def _api_rate_control_schema(database_url: str) -> dict[str, set[str]]:
         await engine.dispose()
 
 
-async def _seed_and_fetch_0016_artifact(
-    database_url: str, artifact_id: str
-) -> dict[str, object]:
+async def _seed_and_fetch_0016_artifact(database_url: str, artifact_id: str) -> dict[str, object]:
     """Seed one representative 0016 row and return its exact persisted value."""
     engine = create_async_engine(database_url)
     try:
@@ -1888,22 +1989,24 @@ async def _seed_and_fetch_0016_artifact(
     return await _fetch_0016_artifact(database_url, artifact_id)
 
 
-async def _fetch_0016_artifact(
-    database_url: str, artifact_id: str
-) -> dict[str, object]:
+async def _fetch_0016_artifact(database_url: str, artifact_id: str) -> dict[str, object]:
     """Fetch the representative 0016 artifact-domain row."""
     engine = create_async_engine(database_url)
     try:
         async with engine.begin() as connection:
             row = (
-                await connection.execute(
-                    text(
-                        "select id, sha256, byte_count, media_type, "
-                        "normalized_display_name from artifact_contents where id = :id"
-                    ),
-                    {"id": artifact_id},
+                (
+                    await connection.execute(
+                        text(
+                            "select id, sha256, byte_count, media_type, "
+                            "normalized_display_name from artifact_contents where id = :id"
+                        ),
+                        {"id": artifact_id},
+                    )
                 )
-            ).mappings().one()
+                .mappings()
+                .one()
+            )
             return dict(row)
     finally:
         await engine.dispose()
@@ -2004,5 +2107,244 @@ async def _clear_api_rate_controls(database_url: str) -> None:
             )
             if exists:
                 await connection.execute(text("delete from api_rate_control_counters"))
+    finally:
+        await engine.dispose()
+
+
+async def _seed_and_fetch_legacy_audit(database_url: str, event_id: str) -> dict[str, object]:
+    """Insert one prior-head lifecycle event and return its legacy fields."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(
+                text(
+                    "insert into audit_events "
+                    "(id, entity_type, entity_id, event_type, from_status, to_status, "
+                    "actor_id, external_subject, external_issuer, actor_roles, "
+                    "claim_snapshot, auth_source, is_dev_auth, reason, event_payload) "
+                    "values (:id, 'task', :entity_id, 'task_created', null, 'draft', "
+                    "'legacy-actor', 'opaque-subject', 'https://issuer.example.test', "
+                    "'[\"project_manager\"]'::json, '{\"bounded\": true}'::json, "
+                    "'verified_token', false, 'created', '{\"source\": \"manual\"}'::json)"
+                ),
+                {"id": event_id, "entity_id": str(uuid4())},
+            )
+    finally:
+        await engine.dispose()
+    return await _fetch_audit_row(database_url, event_id)
+
+
+async def _fetch_audit_row(database_url: str, event_id: str) -> dict[str, object]:
+    """Fetch stable legacy fields and the authority domain when it exists."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            has_domain = await connection.scalar(
+                text(
+                    "select exists(select 1 from information_schema.columns "
+                    "where table_name = 'audit_events' and column_name = 'event_domain')"
+                )
+            )
+            domain = ", event_domain" if has_domain else ""
+            row = (
+                (
+                    await connection.execute(
+                        text(
+                            "select id, entity_type, entity_id, event_type, from_status, "
+                            "to_status, actor_id, external_subject, external_issuer, "
+                            "actor_roles, claim_snapshot, auth_source, is_dev_auth, reason, "
+                            f"event_payload{domain} from audit_events where id = :id"
+                        ),
+                        {"id": event_id},
+                    )
+                )
+                .mappings()
+                .one()
+            )
+            return dict(row)
+    finally:
+        await engine.dispose()
+
+
+async def _authority_audit_schema(database_url: str) -> dict[str, object]:
+    """Return the exact 0018 authority-audit schema surface."""
+    new_columns = {
+        "event_domain",
+        "event_version",
+        "occurred_at",
+        "actor_ref_kind",
+        "request_id",
+        "correlation_id",
+        "target_actor_ref_kind",
+        "target_actor_ref",
+        "matched_grant_id",
+        "permission_id",
+        "project_id",
+        "resource_type",
+        "resource_id",
+        "target_ref_kind",
+        "target_ref_id",
+        "denial_code",
+        "idempotency_reference",
+        "invalidation_cause_event_id",
+        "invalidation_target_kind",
+        "invalidation_target_ref",
+        "before_facts",
+        "after_facts",
+    }
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            columns = (
+                (
+                    await connection.execute(
+                        text(
+                            "select column_name, udt_name, is_nullable, column_default "
+                            "from information_schema.columns where table_schema = 'public' "
+                            "and table_name = 'audit_events'"
+                        )
+                    )
+                )
+                .mappings()
+                .all()
+            )
+            by_name = {row["column_name"]: row for row in columns}
+            constraints = set(
+                (
+                    await connection.execute(
+                        text(
+                            "select conname from pg_constraint where "
+                            "conrelid = 'audit_events'::regclass "
+                            "and (conname like 'ck_audit_events_%' or "
+                            "conname = 'fk_audit_events_invalidation_cause')"
+                        )
+                    )
+                ).scalars()
+            )
+            indexes = set(
+                (
+                    await connection.execute(
+                        text(
+                            "select indexname from pg_indexes where schemaname = 'public' "
+                            "and tablename = 'audit_events' and indexname in "
+                            "('ix_audit_events_request_id', 'ix_audit_events_correlation_id', "
+                            "'ix_audit_events_occurred_at', 'ix_audit_events_project_id', "
+                            "'ix_audit_events_actor_ref')"
+                        )
+                    )
+                ).scalars()
+            )
+            triggers = set(
+                (
+                    await connection.execute(
+                        text(
+                            "select tgname from pg_trigger where "
+                            "tgrelid = 'audit_events'::regclass and not tgisinternal"
+                        )
+                    )
+                ).scalars()
+            )
+            functions = set(
+                (
+                    await connection.execute(
+                        text(
+                            "select proname from pg_proc where proname in "
+                            "('authority_facts_are_safe', 'authority_grant_facts_are_safe', "
+                            "'authority_event_facts_are_safe', 'reject_audit_event_mutation', "
+                            "'set_authority_audit_database_time')"
+                        )
+                    )
+                ).scalars()
+            )
+            return {
+                "columns": {
+                    f"{name}:{by_name[name]['udt_name']}:{by_name[name]['is_nullable']}"
+                    for name in new_columns
+                },
+                "constraints": constraints,
+                "indexes": indexes,
+                "triggers": triggers,
+                "functions": functions,
+                "legacy_default": "legacy_lifecycle"
+                in (by_name["event_domain"]["column_default"] or ""),
+                "external_identity_nullable": all(
+                    by_name[name]["is_nullable"] == "YES"
+                    for name in ("external_subject", "external_issuer")
+                ),
+            }
+    finally:
+        await engine.dispose()
+
+
+async def _insert_authority_audit_fixture(database_url: str, event_id: str):
+    """Insert valid authority evidence while proving database-owned time."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            return await connection.scalar(
+                text(
+                    "insert into audit_events "
+                    "(id, entity_type, entity_id, event_type, actor_id, actor_roles, "
+                    "claim_snapshot, auth_source, is_dev_auth, event_payload, event_domain, "
+                    "event_version, occurred_at, actor_ref_kind, request_id, correlation_id, "
+                    "permission_id, reason, after_facts) values (:id, "
+                    "'authorization_decision', :id, 'SensitiveAuthorizationAllowed', "
+                    "'workstream:system:bootstrap', '[]'::json, "
+                    "'{}'::json, 'local_authority', false, '{}'::json, 'authority', 1, "
+                    "'2000-01-01T00:00:00Z', 'system_principal', :request_id, "
+                    ":correlation_id, 'actor.profile.read_any', "
+                    "'authorization_evaluation', '{\"allowed\": true}') returning occurred_at"
+                ),
+                {
+                    "id": event_id,
+                    "request_id": str(uuid4()),
+                    "correlation_id": str(uuid4()),
+                },
+            )
+    finally:
+        await engine.dispose()
+
+
+async def _authority_audit_state(database_url: str) -> dict[str, object]:
+    """Return migration revision and retained authority evidence count."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            return {
+                "revision": await connection.scalar(
+                    text("select version_num from alembic_version")
+                ),
+                "authority_rows": await connection.scalar(
+                    text("select count(*) from audit_events where event_domain = 'authority'")
+                ),
+            }
+    finally:
+        await engine.dispose()
+
+
+async def _remove_authority_audit_fixture(database_url: str, event_id: str) -> None:
+    """Perform explicit owner-only fixture cleanup under the documented lock."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            has_domain = await connection.scalar(
+                text(
+                    "select exists(select 1 from information_schema.columns "
+                    "where table_name = 'audit_events' and column_name = 'event_domain')"
+                )
+            )
+            if not has_domain:
+                return
+            await connection.execute(text("lock table audit_events in access exclusive mode"))
+            await connection.execute(
+                text("alter table audit_events disable trigger audit_events_reject_update_delete")
+            )
+            await connection.execute(
+                text("delete from audit_events where id = :id and event_domain = 'authority'"),
+                {"id": event_id},
+            )
+            await connection.execute(
+                text("alter table audit_events enable trigger audit_events_reject_update_delete")
+            )
     finally:
         await engine.dispose()

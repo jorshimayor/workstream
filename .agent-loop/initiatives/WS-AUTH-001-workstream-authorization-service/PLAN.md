@@ -130,7 +130,8 @@ proving the same token role alone no longer authorizes.
    evidence workflow.
 4. Establish request/correlation context, structured errors, and API rate
    controls.
-5. Evolve shared audit evidence and add canonical idempotency/invalidation.
+5. Evolve shared audit evidence in 05A, then add canonical
+   idempotency/invalidation in 05B.
 6. Migrate to canonical profile/link semantics and first-human resolution.
 7. Implement the minimal registered permission and AuthorizationService kernel
    before protected authority-management APIs.

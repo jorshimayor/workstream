@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| - | No active implementation chunk | - | AUTH-04B post-merge memory in progress; no product implementation active |
+| `WS-AUTH-001-05A` | Shared Audit Ownership And Append-Only Authority Evidence | L1 | Human-approved semantic chunk boundary; runtime repair/evidence |
 
 ## Planned Next
 
@@ -57,9 +57,10 @@
 
 ## Proposed Next
 
-`WS-AUTH-001-04B` merged through PR #113 as `05a63c8` after all required checks
-and reviews passed. Its post-merge memory update is active; no AUTH product
-implementation is active. Do not start AUTH-05 or POL-002-04 automatically.
+AUTH-04B post-merge memory merged through PR #114 as `97cd0f5`. The user
+explicitly started AUTH-05. Required plan review rejected the combined contract
+before runtime edits and required children 05A/05B. Only 05A contract repair is
+active. Do not implement 05B, AUTH-06, or POL-002-04 automatically.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.

@@ -157,6 +157,24 @@ Production deployment inputs remain externally supplied:
 - Fixed internal system actors for server-owned automation.
 - One PR-sized chunk at a time with deterministic evidence and internal review.
 
+## AUTH-05 Delta Discovery (2026-07-14)
+
+- Current migration head is `0017_api_controls`; the original AUTH-05
+  `0017_*` allowance collides and cannot be implemented.
+- `AuditEvent` remains in `tasks.models`. `AuditRepository` owns a shared insert
+  implementation, while `TaskRepository` still duplicates insert/read logic
+  used by task/checker services.
+- Legacy audit rows require non-null external issuer/subject, token-role, and
+  claim fields. Authority events need a conditional privacy-safe envelope that
+  preserves legacy rows without copying those identity-provider fields.
+- The combined shared-audit schema/writer, append-only database custody,
+  idempotency state machine, and concurrency proof cross two persistent
+  subsystem boundaries. Required L1 plan review split them into 05A (`0018`)
+  and 05B (`0019`) before runtime implementation.
+- D13 provider-neutral verifier adoption does not block either child and remains
+  a separate reviewed chunk after the shared external-service adapter
+  foundation exists.
+
 ## AUTH-04 Delta Discovery (2026-07-13)
 
 ### Current behavior

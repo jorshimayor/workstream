@@ -1,5 +1,119 @@
 # Review Log
 
+## 2026-07-14 - WS-AUTH-001-05A CodeRabbit Response
+
+CodeRabbit run `30676bdc-7525-4deb-8f9e-a87d42c64f92` produced four actionable
+comments on PR #115. The response makes the inactive AUTH-05B verification
+commands executable, replaces fragile positional event mapping with explicit
+identity-link event keys, types the task audit fixture session, and replaces
+misleading reused-agent names with AUTH-05A-specific review references. Focused
+behavior, Ruff, stale authorization docs, Markdown links, and diff integrity
+pass. Exact-SHA internal re-review is required before publication of the repair.
+
+## 2026-07-14 - WS-AUTH-001-05A Semantic Scope Amendment
+
+The human replaced AUTH-05A's numeric production-line ceiling with the approved
+chunk contract as the controlling boundary. Allowed files, explicit non-goals,
+acceptance criteria, behavior evidence, and required internal review now govern
+scope. Readable SQL remains mandatory; AUTH-05B, route activation, permission
+evaluation, and grant lifecycle implementation remain inactive.
+
+## 2026-07-14 - WS-AUTH-001-05A Circuit Breaker Amendment Passed
+
+The human-approved AUTH-05A-only 500-line inspection and 1000-line hard stop
+passed all required exact-SHA reviewers at `611abfc`. Review confirmed the typed
+and PostgreSQL privacy matrices must remain atomic, the incomplete 689-line
+draft was discarded, SQL packing remains prohibited, focused behavior and 90
+percent subsystem coverage gates remain, and AUTH-05B stays inactive. Bounded
+runtime repair may resume.
+
+## 2026-07-14 - WS-AUTH-001-05A Circuit Breaker Reopened
+
+The first post-approval exact-registry dry run reached 689 changed non-comment
+production lines before readable PostgreSQL parity was complete, crossing the
+650 hard stop. The uncommitted runtime draft was discarded and the tree
+returned to the 484-line approved implementation checkpoint. Splitting typed
+and database enforcement into separately mergeable PRs would leave an
+incomplete security boundary, so the user approved a 1000-line hard stop
+with the existing 500-line inspection, 120-character migration line gate, and
+no SQL packing. Runtime work remains paused for exact-SHA amendment review.
+
+## 2026-07-14 - WS-AUTH-001-05A Repaired Contract Review Passed
+
+The exact contract at `7cc6058` passed senior engineering, architecture,
+product/ops, docs, reuse, QA, CI/test-delta, and security/privacy review. It
+locks closed envelope/reason/fact registries, cross-field project integrity,
+non-echoing Mapping/JSON admission, identical typed/direct-SQL behavior,
+readable SQL, focused regressions, and the then-approved 500/650
+circuit breaker. Bounded runtime repair may proceed; AUTH-05B remains inactive.
+
+## 2026-07-14 - WS-AUTH-001-05A Repaired Contract Review Failed
+
+Required review of contract `c93cf14` rejected implicit security registries.
+Senior engineering, QA, and security agreed that exact event-to-reason,
+event-to-fact, permission, denial, and reference matrices must be normative;
+lexical bounds and "spec-derived" values were insufficient. Review also
+required sanitized malformed-JSON handling, the two known checker regression
+nodes, deterministic size/line checks, and symmetric additive test-delta
+checks. The contract was repaired without runtime edits and requires a new
+exact-SHA review.
+
+Review of `2cd0fbe` then caught contradictory UUID rules for permission targets,
+resource-ID nullability, admin role/scope compatibility, optional-versus-required
+reason wording, and state-versus-decision fact meaning. It also required exact
+added-plus-deleted size arithmetic and reuse of the repository's AST-aware test
+weakening detector. Those contract defects were repaired before runtime work.
+QA then found the AST command below the repository-root directory change; the
+command was moved into its executable backend-relative position before final
+contract review.
+Senior review also required project-scoped grant facts to match the envelope
+project, replacement facts to retain one scope, system-scope grant evidence to
+omit project scope, and project resources to agree with the envelope project.
+
+## 2026-07-14 - WS-AUTH-001-05A Contract Reopened By Exact-SHA Review
+
+Exact-SHA review of implementation repair `6fbb1f8` closed append-only,
+repository ownership, canonical actor-reference, and invalidation-cause
+integrity concerns, but found valid remaining privacy and auditability gaps.
+Arbitrary reason/fact strings could still impersonate opaque secrets, rejected
+known values and non-dict mappings remained recoverable through structured
+Pydantic errors, direct SQL did not enforce every typed token bound, and the
+500-line ceiling had encouraged unreadable security SQL.
+
+The repaired contract raises only AUTH-05A's ceiling to 650, prohibits
+long-line packing, requires closed reason/fact registries, requires a
+non-echoing pre-admission boundary for every Mapping, clarifies invalidation
+cause integrity versus inactive idempotency replay, and requires typed/direct
+SQL parity. No further runtime repair is permitted until required L1 contract
+review passes; AUTH-05B remains inactive.
+
+## 2026-07-14 - WS-AUTH-001-05A Preimplementation Review Passed
+
+The repaired AUTH-05A contract passed required senior engineering,
+QA/CI/test-delta, security/privacy, product/ops, architecture, docs, and reuse
+review at `7a9023b`. The contract fixes migration ownership at `0018`, retains
+the existing `audit_events` ledger and `AuditRepository` as sole persistence
+owner, defines exact legacy/authority compatibility and bounded event shapes,
+and requires unconditional normal-DML append-only triggers plus downgrade and
+production-role custody proof. Bounded implementation and deterministic
+evidence are active; AUTH-05B remains inactive.
+
+## 2026-07-14 - WS-AUTH-001-05 Plan Review Split Required
+
+After AUTH-04B post-merge memory merged through PR #114 as `97cd0f5`, the user
+explicitly started AUTH-05. Required L1 engineering, QA/CI, and
+security/privacy/product plan review rejected the combined contract before any
+runtime edit. Migration `0017` is already owned by AUTH-04B, dedicated audit and
+authorization tests were absent, and shared audit custody plus idempotency and
+invalidation were not credibly reviewable as one sub-500-line production diff.
+
+The repaired plan splits AUTH-05 into 05A shared audit ownership/append-only
+authority evidence on migration `0018`, then 05B idempotency/invalidation on
+`0019`. Both retain caller-owned transactions, focused 90 percent subsystem
+coverage, the global 78 percent CI floor, full reviewer fanout, and separate
+human merge/start gates. No runtime implementation is active pending repaired
+contract review.
+
 ## 2026-07-14 - WS-AUTH-001-04B Merged
 
 PR #113 merged `WS-AUTH-001-04B` to `main` as `05a63c8` after final branch head

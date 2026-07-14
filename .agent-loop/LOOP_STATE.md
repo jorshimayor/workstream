@@ -4,20 +4,26 @@
 
 - Active initiative: `WS-AUTH-001` - Workstream Authorization Service
 - Active planning chunk: none
-- Active implementation chunk: none
-- Branch: `codex/ws-auth-001-04b-post-merge-memory`
-- Worktree: `/home/abiorh/flow/workstream-authorization-service`
-- Status: AUTH-04B merged through PR #113 as `05a63c8` after Backend, Agent
-  Gates, CodeRabbit, required internal review, and explicit human approval
-  passed.
+- Active implementation chunk: `WS-AUTH-001-05A` - Shared Audit Ownership And
+  Append-Only Authority Evidence
+- Branch: `codex/ws-auth-001-05-authority-evidence`
+- Worktree: `/home/abiorh/flow/workstream-auth-001-05`
+- Status: AUTH-04B post-merge memory merged through PR #114 as `97cd0f5`.
+  The user explicitly started AUTH-05. Required L1 review rejected the combined
+  contract, then passed the first repaired AUTH-05A contract at `7a9023b`.
+  Exact-SHA implementation review reopened the contract for closed privacy
+  registries, non-echoing mapping admission, typed/SQL parity, and readable SQL.
 - Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
 - Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
-- Latest integrated `main` merge commit: `05a63c8`
-- Current gate: publish and merge the AUTH-04B post-merge memory update, then
-  stop.
-- Size checkpoint: implementation is 480 changed non-comment production lines;
-  the required 350-line inspection passed and the 500-line hard stop holds.
-- Next chunk: none; do not start `WS-AUTH-001-05` automatically.
+- Latest integrated `main` merge commit: `97cd0f5`
+- Current gate: AUTH-05A runtime repair and focused evidence under the
+  human-approved semantic chunk boundary.
+- Scope checkpoint: allowed files, non-goals, acceptance criteria, behavior
+  evidence, and required review bound AUTH-05A; there is no numeric line cap.
+  AUTH-05B remains a separate inactive chunk.
+- Next chunk: AUTH-05B remains inactive until AUTH-05A merges, post-merge memory
+  is reconciled, and the user gives a separate explicit start. AUTH-06 remains
+  inactive.
 - Focused evidence: 77 isolated rate/config tests pass at 97 percent subsystem
   coverage, 59 final config/object-graph tests pass, and the exact migration
   proof and real API E2E pass. Final GitHub Backend passed 937 tests at 82.15
