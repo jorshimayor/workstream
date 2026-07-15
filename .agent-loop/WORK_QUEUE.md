@@ -5,6 +5,10 @@
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
 | `WS-AUTH-001-07A` | Closed Permission And Action Catalogue | L1 | Review/revision amendment internally approved at `160af8a`; PR #126 external/human review pending |
+| `WS-ART-001-02A1` | External Service Adapter Foundation | L1 | Active after explicit user start on 2026-07-15 |
+
+Live post-merge state remains read from signed `automation/loop-memory`
+output. This authored queue records the separately approved parallel chunks.
 
 ## Planned Next
 
@@ -14,7 +18,6 @@
 | `WS-AUTH-001-07B` | Deny-By-Default Kernel And Self-Action Cutover | L1 | Inactive until 07A merge/memory and explicit user start |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
-| `WS-ART-001-02A1` | External Service Adapter Foundation | L1 | Inactive until a separate explicit user start |
 | `WS-ART-001-02A2` | Committed Source And Local Preparation | L1 | Inactive until 02A1 merge and explicit user start |
 | `WS-ART-001-02A3` | ArtifactStore v2 Local Clean Cut | L1 | Inactive until 02A2 merge and explicit user start |
 | `WS-ART-001-02B1` | S3-Compatible MinIO And AWS | L1 | Inactive until 02A3 merge and explicit user start |
@@ -82,8 +85,8 @@ Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.
 
 `WS-ART-001-01` and the AWS-first planning amendment are merged. R2 and Flow
-Node are deferred. Do not start 02A1 until the user gives a separate explicit
-start signal.
+Node are deferred. The user explicitly started 02A1 on 2026-07-15; do not start
+02A2 automatically.
 
 Coverage work proceeds independently in its own worktree and is not owned by
 this AUTH queue update.

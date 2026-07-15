@@ -1,6 +1,6 @@
-# Chunk Contract: WS-ART-001-02A1 External Service Adapter Foundation
+# Chunk Contract: WS-ART-001-02A1 - External Service Adapter Foundation
 
-Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after amendment merge
+Initiative: `WS-ART-001` | Risk: L1 | Status: Active after explicit user start on 2026-07-15
 
 Artifact contract phase: `foundation`
 
@@ -18,6 +18,9 @@ this chunk.
 - `.github/workflows/backend.yml` only to add the exact 90 percent scoped gate
 - `scripts/test_agent_gates.py` only to assert the exact workflow command,
   source set, threshold, and cumulative retention
+- `.agent-loop/merge-intents/WS-ART-001-02A1.json`
+- `WS-ART-001-02A2` chunk heading only, to make the declared successor title
+  machine-verifiable by the schema-v2 merge-memory validator
 - directly related ADR 0014, glossary, and chunk memory
 
 ## Not Allowed
@@ -35,6 +38,9 @@ this chunk.
 - `ExternalServiceAdapter` contains only immutable capability/provider identity
   and root configuration, availability, and protocol error semantics shared by
   every external capability.
+- Root errors retain only stable codes/categories and sanitized adapter
+  identity. They do not retain raw settings, credentials, payloads, or original
+  transport exceptions in public attributes, text, or representation.
 - `ExternalServiceAdapterFactory[TAdapter]` supports explicit typed
   registration and construction and fails closed on duplicate and unknown
   providers.

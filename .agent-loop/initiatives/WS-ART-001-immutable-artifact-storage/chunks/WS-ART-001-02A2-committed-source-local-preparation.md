@@ -1,4 +1,4 @@
-# Chunk Contract: WS-ART-001-02A2 Committed Source And Local Preparation
+# Chunk Contract: WS-ART-001-02A2 - Committed Source And Local Preparation
 
 Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02A1
 
