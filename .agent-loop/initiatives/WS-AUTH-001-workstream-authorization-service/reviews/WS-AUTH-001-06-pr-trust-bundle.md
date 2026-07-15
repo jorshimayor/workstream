@@ -101,6 +101,10 @@ authorization remains unchanged until the grant and evaluator cutovers.
 - Focused actor/auth/task/project/checker/rate-control behavior and migration
   suites passed; final coverage data includes the repaired static inventory and
   added repeated-access, unavailable-control, and compatibility assertions.
+- GitHub Backend reached 983 passed tests and 83.11 percent repository coverage.
+  Its only failure was the OpenAPI inventory still expecting the pre-AUTH-06
+  route set; all 27 API-control tests pass with the two protected actor routes
+  represented in the strict counts and hashes.
 - Ruff, stale wording, stale authorization docs, changed Markdown links, diff
   integrity, all 71 engineering-loop agent-gate tests, loop-memory state, and
   the schema-v2 AUTH-06 merge-intent validator passed.
@@ -122,7 +126,8 @@ still enforce the repository-wide 78 percent baseline.
 
 ## Reviewer Results
 
-Exact reviewed SHA `abd76c995e51645b61d4d3ac07f1ff82ab6eb740` passed senior
+Exact reviewed code SHA `25d9455f6dca41b207a0ba3aaba8de9cc2683a17`
+passed senior
 engineering, QA/test, security/auth, product/ops, architecture, CI integrity,
 docs, reuse/dedup, and test-delta review with no blocking findings.
 
@@ -132,7 +137,7 @@ CodeRabbit's seven inline findings and three nitpicks were triaged. All valid
 runtime, migration, lifecycle, privacy, test-harness, and test-contract findings
 were repaired. Its generic diff-local docstring percentage is not the
 repository's configured gate and required no narration-only churn. GitHub checks,
-the next CodeRabbit head, and human review remain pending.
+the next CodeRabbit head, the Backend rerun, and human review remain pending.
 
 ## Remaining Risks
 

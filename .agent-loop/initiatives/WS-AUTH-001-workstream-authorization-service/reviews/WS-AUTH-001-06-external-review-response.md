@@ -36,6 +36,9 @@ CodeRabbit run: `099fb3fe-cd93-453a-9445-e0e483fe3b79`
 10. Touched Contributor-facing task prose no longer describes a human actor as
     a worker; legacy wire and storage identifiers remain under their declared
     later cutover.
+11. GitHub Backend's only failure was the strict OpenAPI inventory retaining the
+    pre-AUTH-06 counts and hashes. The contract now includes the two protected
+    actor self-service operations without relaxing either fingerprint.
 
 ## Comments Deferred
 
@@ -58,6 +61,7 @@ tradeoff explicit.
 ```text
 pytest focused AUTH-06 migration/concurrency/lifecycle behavior
 pytest test_actor_legacy_classification.py test_actors.py --cov=app.modules.actors --cov-branch
+pytest test_api_controls.py
 python backend/scripts/api_contract_e2e.py
 ruff check app tests alembic/versions/0020_canonical_actor_profile.py scripts/api_contract_e2e.py
 python3 scripts/test_agent_gates.py
@@ -73,8 +77,10 @@ git diff --check
 - Real Postgres API contract: passed through migration `0020` and the complete
   current task intake drill.
 - Integrated engineering-loop gates: 71 passed; schema-v2 merge intent passed.
-- All required internal reviewer tracks passed on reviewed SHA
-  `abd76c995e51645b61d4d3ac07f1ff82ab6eb740`.
+- GitHub Backend: 983 passed, one repaired OpenAPI inventory failure, and 83.11
+  percent repository coverage; all 27 API-control tests pass after repair.
+- All required internal reviewer tracks passed on reviewed code SHA
+  `25d9455f6dca41b207a0ba3aaba8de9cc2683a17`.
 
 ## Remaining Risks
 
