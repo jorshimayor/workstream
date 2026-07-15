@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-07A` | Closed Permission And Action Catalogue | L1 | Review/revision amendment internally approved at `160af8a`; PR #126 external/human review pending |
+| `WS-AUTH-001-07B` | Deny-By-Default Kernel And Self-Action Cutover | L1 | Implementation and focused evidence in progress after explicit user start |
 | `WS-ART-001-02A1` | External Service Adapter Foundation | L1 | Active after explicit user start on 2026-07-15 |
 
 Live post-merge state remains read from signed `automation/loop-memory`
@@ -15,7 +15,7 @@ output. This authored queue records the separately approved parallel chunks.
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Paused for AUTH priority; no valid replacement baseline yet |
-| `WS-AUTH-001-07B` | Deny-By-Default Kernel And Self-Action Cutover | L1 | Inactive until 07A merge/memory and explicit user start |
+| `WS-AUTH-001-08` | Bootstrap And Administrative Role Grants | L1 | Inactive until 07B merge/memory and explicit user start |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02A2` | Committed Source And Local Preparation | L1 | Inactive until 02A1 merge and explicit user start |

@@ -1,14 +1,17 @@
 from __future__ import annotations
 
+import ast
 import asyncio
 from collections import UserDict
 from collections.abc import Mapping
+import inspect
 from pathlib import Path
 from uuid import UUID, uuid4
 
 from alembic import command
 from alembic.config import Config
 import pytest
+from pydantic import ValidationError
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
@@ -61,6 +64,19 @@ from app.modules.authorization.schemas import (
     parse_authority_request,
 )
 from app.modules.authorization.service import AuthorityMutationService
+from app.modules.authorization.kernel import AuthorizationService
+from app.modules.authorization.runtime import (
+    ActorKind,
+    ActorSelfResourceContext,
+    ActorStatus,
+    AuthorizationContext,
+    AuthorizationDecision,
+    AuthorizationDenied,
+    AuthorizationDenialCode,
+    IdentityLinkStatus,
+    MatchedAuthorityKind,
+    SystemResourceContext,
+)
 
 DIGEST = "sha256:" + "a" * 64
 
@@ -165,10 +181,11 @@ def test_closed_permission_and_action_catalogue_is_exact_and_non_executable() ->
     assert len(ACTION_IDS) == len(ACTION_DEFINITIONS) == len(ACTION_BY_ID) == 50
     assert set(ACTION_BY_ID) == ACTION_IDS
     assert {definition.owner for definition in ACTION_DEFINITIONS} == set(ActionOwner)
-    assert all(
-        definition.availability is ActionAvailability.PLANNED
+    assert {
+        definition.action_id
         for definition in ACTION_DEFINITIONS
-    )
+        if definition.availability is ActionAvailability.ACTIVE
+    } == {ActionId.ACTOR_PROFILE_READ_SELF, ActionId.ACTOR_PROFILE_UPDATE_SELF}
     assert {
         definition.action_id.value: (
             definition.permission_id.value,
@@ -176,8 +193,11 @@ def test_closed_permission_and_action_catalogue_is_exact_and_non_executable() ->
         )
         for definition in ACTION_DEFINITIONS
     } == expected
+    assert resolve_executable_action(ActionId.ACTOR_PROFILE_READ_SELF).permission_id is (
+        PermissionId.ACTOR_PROFILE_READ_SELF
+    )
     with pytest.raises(ValueError, match="not active"):
-        resolve_executable_action(ActionId.ACTOR_PROFILE_READ_SELF)
+        resolve_executable_action(ActionId.REVIEW_QUEUE_READ)
     with pytest.raises(TypeError):
         ACTION_BY_ID[ActionId.ACTOR_PROFILE_READ_SELF] = ACTION_DEFINITIONS[0]
 
@@ -210,7 +230,7 @@ def test_closed_permission_and_action_catalogue_is_exact_and_non_executable() ->
                     ActionAvailability.ACTIVE,
                 ),
             ),
-            "must remain planned",
+            "active action boundary mismatch",
         ),
         (
             ACTION_DEFINITIONS[:-1]
@@ -268,6 +288,385 @@ def test_action_catalogue_construction_fails_closed(
 ) -> None:
     with pytest.raises(RuntimeError, match=message):
         _index_actions(definitions)
+
+
+def _runtime_context(
+    *,
+    actor_status: ActorStatus = ActorStatus.ACTIVE,
+    link_status: IdentityLinkStatus = IdentityLinkStatus.ACTIVE,
+    actor_kind: ActorKind = ActorKind.HUMAN,
+) -> AuthorizationContext:
+    return AuthorizationContext(
+        actor_profile_id=uuid4(),
+        actor_kind=actor_kind,
+        actor_status=actor_status,
+        identity_link_id=uuid4(),
+        identity_link_status=link_status,
+        request_id=uuid4(),
+        correlation_id=uuid4(),
+    )
+
+
+class _DecisionEvidence:
+    def __init__(self) -> None:
+        self.events: list[AuthorityAuditEventInput] = []
+
+    async def add_authority_event(self, event: AuthorityAuditEventInput) -> None:
+        self.events.append(event)
+
+
+def _runtime_service(
+    context: AuthorizationContext,
+    *,
+    revalidate=None,
+) -> tuple[AuthorizationService, _DecisionEvidence]:
+    service = AuthorizationService(object(), context, revalidate_actor_self=revalidate)  # type: ignore[arg-type]
+    evidence = _DecisionEvidence()
+    service._audit = evidence  # type: ignore[assignment]
+    return service, evidence
+
+
+def test_authorization_runtime_contracts_are_strict_and_two_argument() -> None:
+    context = _runtime_context()
+    assert tuple(inspect.signature(AuthorizationService.require).parameters) == (
+        "self",
+        "action_id",
+        "resource_context",
+    )
+    with pytest.raises(ValidationError):
+        AuthorizationContext(
+            **context.model_dump(),
+            roles=("admin",),
+        )
+    with pytest.raises(ValidationError):
+        ActorSelfResourceContext(
+            resource_type="actor_profile",
+            resource_id=context.actor_profile_id,
+            requested_fields=("display_name", "display_name"),
+        )
+    with pytest.raises(ValidationError):
+        ActorSelfResourceContext(
+            resource_type="actor_profile",
+            resource_id=str(context.actor_profile_id),
+            requested_fields=(),
+        )
+
+
+def test_feature_authorization_import_boundary_rejects_persistence_and_private_helpers() -> None:
+    app_root = Path(__file__).resolve().parents[1] / "app"
+    forbidden: list[tuple[str, str]] = []
+    for relative in ("modules/actors/service.py", "api/routes/auth.py"):
+        tree = ast.parse((app_root / relative).read_text(), filename=relative)
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.ImportFrom) or node.module is None:
+                continue
+            if node.module in {
+                "app.modules.authorization.models",
+                "app.modules.authorization.repository",
+            } or node.module.startswith("app.modules.authorization._"):
+                forbidden.append((relative, node.module))
+    assert forbidden == []
+
+
+async def test_authorization_kernel_allows_only_exact_actor_self_actions() -> None:
+    context = _runtime_context()
+    service, evidence = _runtime_service(context)
+    resource = ActorSelfResourceContext(
+        resource_type="actor_profile",
+        resource_id=context.actor_profile_id,
+        requested_fields=(),
+    )
+
+    decision = await service.require(ActionId.ACTOR_PROFILE_READ_SELF, resource)
+
+    assert decision.allowed is True
+    assert decision.action_id is ActionId.ACTOR_PROFILE_READ_SELF
+    assert decision.permission_id is PermissionId.ACTOR_PROFILE_READ_SELF
+    assert decision.revalidated is False
+    assert len(evidence.events) == 1
+    assert evidence.events[0].action_id is ActionId.ACTOR_PROFILE_READ_SELF
+    assert evidence.events[0].after_facts == {"allowed": True}
+
+
+@pytest.mark.parametrize(
+    ("action", "resource", "expected"),
+    [
+        (
+            ActionId.REVIEW_QUEUE_READ,
+            SystemResourceContext(resource_type="system", resource_id="workstream:system"),
+            AuthorizationDenialCode.ACTION_UNAVAILABLE,
+        ),
+        (
+            ActionId.ACTOR_PROFILE_READ_SELF,
+            SystemResourceContext(resource_type="system", resource_id="workstream:system"),
+            AuthorizationDenialCode.RESOURCE_GUARD_DENIED,
+        ),
+    ],
+)
+async def test_authorization_kernel_denies_planned_and_system_actions(
+    action,
+    resource,
+    expected: AuthorizationDenialCode,
+) -> None:
+    service, evidence = _runtime_service(_runtime_context())
+
+    with pytest.raises(AuthorizationDenied) as exc_info:
+        await service.require(action, resource)
+
+    assert exc_info.value.decision.denial_code is expected
+    assert exc_info.value.public_code in {"permission_not_granted", "resource_guard_denied"}
+    assert evidence.events[0].event_type is AuthorityEventType.SENSITIVE_AUTHORIZATION_DENIED
+
+
+async def test_unknown_action_denies_without_fabricated_evidence() -> None:
+    context = _runtime_context()
+    service, evidence = _runtime_service(context)
+    resource = ActorSelfResourceContext(
+        resource_type="actor_profile",
+        resource_id=context.actor_profile_id,
+        requested_fields=(),
+    )
+
+    with pytest.raises(AuthorizationDenied) as exc_info:
+        await service.require("unknown.action", resource)  # type: ignore[arg-type]
+
+    assert exc_info.value.decision.action_id is None
+    assert exc_info.value.decision.permission_id is None
+    assert exc_info.value.decision.denial_code is AuthorizationDenialCode.UNKNOWN_ACTION
+    assert exc_info.value.public_code == "permission_not_granted"
+    assert evidence.events == []
+
+
+async def test_denial_is_restaged_with_the_same_bounded_identity() -> None:
+    context = _runtime_context()
+    service, evidence = _runtime_service(context)
+    resource = SystemResourceContext(resource_type="system", resource_id="workstream:system")
+    with pytest.raises(AuthorizationDenied) as exc_info:
+        await service.require(ActionId.REVIEW_QUEUE_READ, resource)
+    original = evidence.events.pop()
+
+    await service.restage_denial(exc_info.value.decision)
+
+    assert len(evidence.events) == 1
+    assert evidence.events[0].event_id == original.event_id
+    assert evidence.events[0].request_id == original.request_id
+    assert evidence.events[0].action_id == original.action_id
+
+    allowed_service, _ = _runtime_service(context)
+    allowed_resource = ActorSelfResourceContext(
+        resource_type="actor_profile",
+        resource_id=context.actor_profile_id,
+        requested_fields=(),
+    )
+    allowed = await allowed_service.require(ActionId.ACTOR_PROFILE_READ_SELF, allowed_resource)
+    with pytest.raises(TypeError, match="invalid authorization denial evidence"):
+        await allowed_service.restage_denial(allowed)
+
+
+@pytest.mark.parametrize(
+    ("action", "resource_factory", "actor_kind", "expected"),
+    [
+        (
+            ActionId.ACTOR_PROFILE_READ_SELF,
+            lambda context: ActorSelfResourceContext(
+                resource_type="actor_profile",
+                resource_id=uuid4(),
+                requested_fields=(),
+            ),
+            ActorKind.HUMAN,
+            AuthorizationDenialCode.RESOURCE_GUARD_DENIED,
+        ),
+        (
+            ActionId.ACTOR_PROFILE_READ_SELF,
+            lambda context: ActorSelfResourceContext(
+                resource_type="actor_profile",
+                resource_id=context.actor_profile_id,
+                requested_fields=("display_name",),
+            ),
+            ActorKind.HUMAN,
+            AuthorizationDenialCode.RESOURCE_GUARD_DENIED,
+        ),
+        (
+            ActionId.ACTOR_PROFILE_UPDATE_SELF,
+            lambda context: ActorSelfResourceContext(
+                resource_type="actor_profile",
+                resource_id=context.actor_profile_id,
+                requested_fields=(),
+            ),
+            ActorKind.HUMAN,
+            AuthorizationDenialCode.RESOURCE_GUARD_DENIED,
+        ),
+        (
+            ActionId.ACTOR_PROFILE_READ_SELF,
+            lambda context: ActorSelfResourceContext(
+                resource_type="actor_profile",
+                resource_id=context.actor_profile_id,
+                requested_fields=(),
+            ),
+            ActorKind.SERVICE,
+            AuthorizationDenialCode.PERMISSION_NOT_GRANTED,
+        ),
+    ],
+)
+async def test_actor_self_guards_fail_closed(
+    action: ActionId,
+    resource_factory,
+    actor_kind: ActorKind,
+    expected: AuthorizationDenialCode,
+) -> None:
+    context = _runtime_context(actor_kind=actor_kind)
+
+    async def revalidate(current, _resource):
+        return current
+
+    service, evidence = _runtime_service(context, revalidate=revalidate)
+    with pytest.raises(AuthorizationDenied) as exc_info:
+        await service.require(action, resource_factory(context))
+    assert exc_info.value.decision.denial_code is expected
+    assert evidence.events[0].denial_code == expected.value
+
+
+def test_authorization_decision_and_denial_reject_incoherent_outcomes() -> None:
+    context = _runtime_context()
+    base = {
+        "decision_id": uuid4(),
+        "action_id": ActionId.ACTOR_PROFILE_READ_SELF,
+        "permission_id": PermissionId.ACTOR_PROFILE_READ_SELF,
+        "resource_type": "actor_profile",
+        "resource_id": context.actor_profile_id,
+        "revalidated": False,
+        "request_id": context.request_id,
+        "correlation_id": context.correlation_id,
+    }
+    with pytest.raises(ValidationError):
+        AuthorizationDecision(
+            **base,
+            allowed=True,
+            denial_code=AuthorizationDenialCode.PERMISSION_NOT_GRANTED,
+            matched_authority_kind=None,
+        )
+    with pytest.raises(ValidationError):
+        AuthorizationDecision(
+            **base,
+            allowed=True,
+            denial_code=None,
+            matched_authority_kind=None,
+        )
+    with pytest.raises(ValidationError):
+        AuthorizationDecision(
+            **{**base, "permission_id": None},
+            allowed=False,
+            denial_code=AuthorizationDenialCode.PERMISSION_NOT_GRANTED,
+            matched_authority_kind=None,
+        )
+    allowed = AuthorizationDecision(
+        **base,
+        allowed=True,
+        denial_code=None,
+        matched_authority_kind=MatchedAuthorityKind.ACTOR_SELF,
+    )
+    with pytest.raises(TypeError, match="requires a denied decision"):
+        AuthorizationDenied(allowed)
+
+
+async def test_authorization_state_is_not_cached_across_requests() -> None:
+    active = _runtime_context()
+    resource = ActorSelfResourceContext(
+        resource_type="actor_profile",
+        resource_id=active.actor_profile_id,
+        requested_fields=(),
+    )
+    first, _ = _runtime_service(active)
+    assert (await first.require(ActionId.ACTOR_PROFILE_READ_SELF, resource)).allowed is True
+    revoked = active.model_copy(
+        update={
+            "identity_link_status": IdentityLinkStatus.REVOKED,
+            "request_id": uuid4(),
+            "correlation_id": uuid4(),
+        }
+    )
+    second, _ = _runtime_service(revoked)
+    with pytest.raises(AuthorizationDenied) as exc_info:
+        await second.require(ActionId.ACTOR_PROFILE_READ_SELF, resource)
+    assert exc_info.value.decision.denial_code is AuthorizationDenialCode.IDENTITY_LINK_REVOKED
+
+
+@pytest.mark.parametrize(
+    ("actor_status", "link_status", "action", "expected"),
+    [
+        (
+            ActorStatus.ACTIVE,
+            IdentityLinkStatus.REVOKED,
+            ActionId.ACTOR_PROFILE_READ_SELF,
+            AuthorizationDenialCode.IDENTITY_LINK_REVOKED,
+        ),
+        (
+            ActorStatus.DEACTIVATED,
+            IdentityLinkStatus.ACTIVE,
+            ActionId.ACTOR_PROFILE_READ_SELF,
+            AuthorizationDenialCode.ACTOR_DEACTIVATED,
+        ),
+        (
+            ActorStatus.SUSPENDED,
+            IdentityLinkStatus.ACTIVE,
+            ActionId.ACTOR_PROFILE_UPDATE_SELF,
+            AuthorizationDenialCode.ACTOR_SUSPENDED,
+        ),
+    ],
+)
+async def test_authorization_kernel_preserves_lifecycle_denial_precedence(
+    actor_status: ActorStatus,
+    link_status: IdentityLinkStatus,
+    action: ActionId,
+    expected: AuthorizationDenialCode,
+) -> None:
+    context = _runtime_context(actor_status=actor_status, link_status=link_status)
+
+    async def revalidate(_context, _resource):
+        return context
+
+    service, evidence = _runtime_service(context, revalidate=revalidate)
+    fields = ("display_name",) if action is ActionId.ACTOR_PROFILE_UPDATE_SELF else ()
+    resource = ActorSelfResourceContext(
+        resource_type="actor_profile",
+        resource_id=context.actor_profile_id,
+        requested_fields=fields,
+    )
+
+    with pytest.raises(AuthorizationDenied) as exc_info:
+        await service.require(action, resource)
+
+    assert exc_info.value.decision.denial_code is expected
+    assert evidence.events[0].action_id is action
+    assert evidence.events[0].denial_code == expected.value
+
+
+async def test_actor_self_update_requires_transaction_revalidation() -> None:
+    context = _runtime_context()
+    resource = ActorSelfResourceContext(
+        resource_type="actor_profile",
+        resource_id=context.actor_profile_id,
+        requested_fields=("contact_email",),
+    )
+    without_recheck, _ = _runtime_service(context)
+    with pytest.raises(AuthorizationDenied) as exc_info:
+        await without_recheck.require(ActionId.ACTOR_PROFILE_UPDATE_SELF, resource)
+    assert exc_info.value.decision.denial_code is AuthorizationDenialCode.RESOURCE_GUARD_DENIED
+
+    calls = 0
+
+    async def revalidate(current, supplied_resource):
+        nonlocal calls
+        calls += 1
+        assert supplied_resource is resource
+        return current
+
+    service, evidence = _runtime_service(context, revalidate=revalidate)
+    decision = await service.require(ActionId.ACTOR_PROFILE_UPDATE_SELF, resource)
+    assert calls == 1
+    assert decision.allowed is True
+    assert decision.revalidated is True
+    assert evidence.events[0].permission_id is PermissionId.ACTOR_PROFILE_UPDATE_SELF
 
 
 @pytest.fixture

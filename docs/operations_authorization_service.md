@@ -477,11 +477,13 @@ resource loader, lifecycle guards, negative tests, and evidence path exist.
 
 ### Catalogue And Action-Evidence Staging
 
-AUTH-07A installs exactly 74 PermissionIds and 50 planned ActionIds. Planned
-entries contain only action, permission, owner, and availability; they are not
-executable and must not receive deployment configuration, principals, resource
-facts, or guards. Startup validation failure is a release blocker, not a reason
-to skip or relax catalogue checks.
+The catalogue contains exactly 74 PermissionIds and 50 ActionIds. AUTH-07B
+activates only `actor.profile.read_self` and `actor.profile.update_self`; the
+other 48 entries remain planned and non-executable. Planned entries contain
+only action, permission, owner, and availability and must not receive
+deployment configuration, principals, resource facts, or guards. Startup
+validation failure is a release blocker, not a reason to relax catalogue
+checks.
 
 Migration `0021` preserves historical audit rows with null `action_id`. Inspect
 non-null action evidence only by bounded ActionId, request/correlation IDs, and
@@ -514,9 +516,35 @@ exclusive audit-table lock before these checks and keeps it through destructive
 DDL. If any forward evidence exists, stop and recover forward rather than
 discarding it.
 
-AUTH-07B later activates only canonical actor self-read and self-update. Admin
-definition reads wait for AUTH-08 grant truth, and project capability context
-waits for AUTH-10 exact-project grants and canonical project composition.
+Canonical actor self-read and self-update are now the only active actions.
+Admin definition reads wait for AUTH-08 grant truth, and project capability
+context waits for AUTH-10 exact-project grants and canonical project
+composition.
+
+## Actor Self Decision Operations
+
+`GET /api/v1/actors/me` declares `actor.profile.read_self`; it permits an
+active identity link with an active or suspended human actor and commits only
+the bounded read-decision evidence after authorization. `PATCH
+/api/v1/actors/me` declares `actor.profile.update_self`; it locks the exact
+identity link first and actor profile second, rechecks current state, mutates
+only `display_name` or `contact_email`, and commits mutation plus allow evidence
+once. The authorization kernel never commits or rolls back.
+
+Self routes return explicit 403 errors because the caller owns the target:
+`identity_link_revoked`, then `actor_deactivated`, then `actor_suspended` for an
+update. A correction to lifecycle state takes effect on the next request; no
+decision cache survives a request. Token role changes do not affect either
+self action. Unknown and planned actions appear publicly only as
+`permission_not_granted`.
+
+For diagnosis, query authority-domain `authorization_decision` rows by bounded
+request/correlation ID and exact ActionId. Confirm the mapped PermissionId,
+actor-profile resource reference, `allowed` fact, and denial code. Do not log or
+export issuer subjects, bearer tokens, display names, contact emails, or token
+roles. If a denied PATCH occurs, the route transaction is rolled back and the
+same frozen denial is committed from a clean transaction; a changed decision
+ID or concurrent display-field mutation is an incident signal.
 
 ## Rollback
 

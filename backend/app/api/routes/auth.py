@@ -11,12 +11,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps.auth import (
     actor_registry_http_error,
     actor_registry_unavailable_error,
-    get_canonical_actor,
     get_registered_actor,
 )
+from app.api.deps.authorization import get_authorization_actor, get_authorization_service
 from app.db.session import get_db_session
 from app.modules.actors.schemas import ActorProfileSelfResponse, ActorProfileUpdateRequest
 from app.modules.actors.service import ActorRegistryError, ActorService, ResolvedActor
+from app.modules.authorization.catalogue import ActionId
+from app.modules.authorization.kernel import AuthorizationService
 from app.schemas.auth import ActorContext, ActorResponse
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -38,26 +40,46 @@ async def read_current_actor(
     return ActorResponse.from_actor(actor)
 
 
-@actors_router.get("/me", response_model=ActorProfileSelfResponse)
+@actors_router.get(
+    "/me",
+    response_model=ActorProfileSelfResponse,
+    openapi_extra={"x-workstream-action-id": ActionId.ACTOR_PROFILE_READ_SELF.value},
+)
 async def read_current_actor_profile(
-    resolved: Annotated[ResolvedActor, Depends(get_canonical_actor)],
+    resolved: Annotated[ResolvedActor, Depends(get_authorization_actor)],
+    authorization: Annotated[AuthorizationService, Depends(get_authorization_service)],
 ) -> ActorProfileSelfResponse:
     """Return the caller's canonical Contributor-domain profile."""
     try:
+        await authorization.require(
+            ActionId.ACTOR_PROFILE_READ_SELF,
+            ActorService.actor_self_resource(resolved.profile.id, frozenset()),
+        )
         return ActorService.self_response(resolved.profile)
     except ActorRegistryError as exc:
         raise actor_registry_http_error(exc) from exc
 
 
-@actors_router.patch("/me", response_model=ActorProfileSelfResponse)
+@actors_router.patch(
+    "/me",
+    response_model=ActorProfileSelfResponse,
+    openapi_extra={"x-workstream-action-id": ActionId.ACTOR_PROFILE_UPDATE_SELF.value},
+)
 async def update_current_actor_profile(
     payload: ActorProfileUpdateRequest,
-    resolved: Annotated[ResolvedActor, Depends(get_canonical_actor)],
+    resolved: Annotated[ResolvedActor, Depends(get_authorization_actor)],
+    authorization: Annotated[AuthorizationService, Depends(get_authorization_service)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> ActorProfileSelfResponse:
     """Update only the caller-owned canonical display fields."""
     try:
-        return await ActorService(session).update_self(resolved, payload)
+        await authorization.require(
+            ActionId.ACTOR_PROFILE_UPDATE_SELF,
+            ActorService.actor_self_resource(resolved.profile.id, payload.model_fields_set),
+        )
+        response = await ActorService(session).update_self(resolved, payload)
+        await session.commit()
+        return response
     except ActorRegistryError as exc:
         await session.rollback()
         raise actor_registry_http_error(exc) from exc

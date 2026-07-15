@@ -31,6 +31,7 @@ from app.modules.audit.schemas import (
     AuthorityEventType,
 )
 from app.modules.audit.service import AuditService
+from app.modules.authorization.runtime import ActorSelfResourceContext
 from app.modules.tasks.models import AuditEvent
 from app.schemas.auth import ActorContext, VerifiedIssuerToken, actor_id_from_external_identity
 
@@ -102,6 +103,21 @@ class ActorService:
         self._validate_link(token, link, profile)
         return ResolvedActor(profile=profile, identity_link=link)
 
+    async def find_actor_for_authorization(
+        self,
+        token: VerifiedIssuerToken,
+    ) -> ResolvedActor | None:
+        """Load an exact linked actor while leaving lifecycle denial to AUTH."""
+        link = await self._repo.get_identity_link(token.issuer, token.subject)
+        if link is None:
+            return None
+        profile = await self._repo.get_actor_profile(link.actor_profile_id)
+        if profile is None:
+            raise RuntimeError("identity link references a missing actor profile")
+        if link.subject_kind != token.subject_kind or profile.actor_kind != token.subject_kind:
+            raise UnsupportedSubjectKind("Subject kind does not match actor")
+        return ResolvedActor(profile=profile, identity_link=link)
+
     async def resolve_verified_actor(
         self,
         token: VerifiedIssuerToken,
@@ -156,12 +172,53 @@ class ActorService:
         await self._session.refresh(link)
         return ResolvedActor(profile=profile, identity_link=link)
 
+    async def resolve_actor_for_authorization(
+        self,
+        token: VerifiedIssuerToken,
+        *,
+        request_id: UUID,
+        correlation_id: UUID,
+    ) -> ResolvedActor:
+        """Resolve self authorization without preempting lifecycle decisions."""
+        resolved = await self.find_actor_for_authorization(token)
+        if resolved is None:
+            return await self.resolve_verified_actor(
+                token,
+                request_id=request_id,
+                correlation_id=correlation_id,
+            )
+        return resolved
+
+    async def lock_actor_self_for_authorization(
+        self,
+        resolved: ResolvedActor,
+    ) -> ResolvedActor:
+        """Lock the exact link then its profile and reject identity drift."""
+        link = await self._repo.get_identity_link_by_id(
+            resolved.identity_link.id,
+            for_update=True,
+        )
+        if link is None:
+            raise RuntimeError("resolved identity link disappeared")
+        profile = await self._repo.get_actor_profile(link.actor_profile_id, for_update=True)
+        if profile is None:
+            raise RuntimeError("identity link references a missing actor profile")
+        if (
+            link.actor_profile_id != resolved.profile.id
+            or link.issuer != resolved.identity_link.issuer
+            or link.subject != resolved.identity_link.subject
+            or link.subject_kind != resolved.identity_link.subject_kind
+            or profile.id != resolved.profile.id
+        ):
+            raise RuntimeError("resolved actor identity changed")
+        return ResolvedActor(profile=profile, identity_link=link)
+
     async def update_self(
         self,
         resolved: ResolvedActor,
         payload: ActorProfileUpdateRequest,
     ) -> ActorProfileSelfResponse:
-        """Update only the active human actor's owned display fields."""
+        """Stage only the authorized human actor's owned display fields."""
         profile = await self._repo.get_actor_profile(resolved.profile.id, for_update=True)
         if profile is None:
             raise RuntimeError("resolved actor profile disappeared")
@@ -171,9 +228,21 @@ class ActorService:
         if "contact_email" in payload.model_fields_set:
             profile.contact_email = payload.contact_email
         profile.updated_at = func.now()
-        await self._session.commit()
+        await self._session.flush()
         await self._session.refresh(profile)
         return self.self_response(profile)
+
+    @staticmethod
+    def actor_self_resource(
+        actor_profile_id: str,
+        requested_fields: set[str] | frozenset[str],
+    ) -> ActorSelfResourceContext:
+        """Compose closed server-owned facts for one actor self operation."""
+        return ActorSelfResourceContext(
+            resource_type="actor_profile",
+            resource_id=UUID(actor_profile_id),
+            requested_fields=tuple(sorted(requested_fields)),
+        )
 
     async def refresh_legacy_identity(self, actor: ActorContext) -> LegacyActorIdentity:
         """Persist token observations only in the non-authoritative compatibility table."""
