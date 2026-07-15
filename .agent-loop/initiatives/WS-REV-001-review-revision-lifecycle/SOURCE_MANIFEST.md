@@ -4,8 +4,8 @@
 
 | File | SHA-256 | Status |
 |---|---|---|
-| `docs/reference_specs/WS-REV-001-review-lifecycle-specification(2).md` | `fffadc271c267801250b044edc570e515a250eff48afdc64f9c1f8753e6ab058` | Newest revised candidate; includes Markdown-only section 4.6 action mapping; not yet canonically adopted |
-| `docs/reference_specs/WS-REV-001-review-lifecycle-specification(2).pdf` | `8c053bc752a7b0c64e04b3eda1873bb5dbc02bbdfef84bd17d07cbbf01bce2fd` | Revised archival companion; does not contain Markdown section 4.6 and is not a generated twin |
+| `docs/reference_specs/WS-REV-001-review-lifecycle-specification.md` | `fffadc271c267801250b044edc570e515a250eff48afdc64f9c1f8753e6ab058` | Canonical revised archival input; includes Markdown-only section 4.6 action mapping; not yet actively adopted |
+| `docs/reference_specs/WS-REV-001-review-lifecycle-specification.pdf` | `8c053bc752a7b0c64e04b3eda1873bb5dbc02bbdfef84bd17d07cbbf01bce2fd` | Canonical revised archival companion; does not contain Markdown section 4.6 and is not a generated twin |
 
 ## Normative repository constraints
 
@@ -26,12 +26,17 @@
 - `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/`
 - `.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/`
 
-AUTH-07A discovery was refreshed from clean commit
-`3ab25cf3b1e99336c635a318101375bb4bebdf91` in
-`/home/abiorh/flow/workstream-auth-001-07`. Pull merge `3e09e99` now contains
-trusted-main merge `e9d72a1`, which includes that reviewed catalogue/audit
-foundation. Later AUTH definition-of-done chunks and the four additive REV
-actions remain future runtime gates.
+AUTH-07A discovery from `3ab25cf3b1e99336c635a318101375bb4bebdf91`
+was refreshed against merged AUTH-07B at trusted-main
+`90eca12f6398f2ef168e634244d912765572c3e5`. AUTH-07B installs the minimal
+deny-by-default kernel and makes 2 of 50 ActionIds active; the remaining 48,
+including all 20 existing revised-spec submission/review actions, stay planned.
+The amended but unmerged AUTH-08 contract projects 57 actions after AUTH-08: 9
+active and 48 planned. The four additive REV actions then require exact 57-to-61
+typed catalogue/owner/PostgreSQL parity, producing 9 active and 52 planned. All
+24 REV dependencies stay inactive until their owning REV chunks activate them.
+AUTH-08 runtime/merge, later AUTH definition-of-done chunks, and AUTH-owned
+kernel transaction/error/timestamp repairs remain runtime gates.
 
 ## Cross-worktree discovery evidence
 
@@ -53,13 +58,12 @@ substitute for that merge.
 
 ## Adoption note
 
-The tracked WS-REV filenames refer to the first archival pair and their hashes
-remain in `docs/reference_specs/README.md` and `docs/reference_specs/SHA256SUMS`.
-The revised pair is a second supplied archival generation, not a replacement or
-a reproducible Markdown/PDF build. Within that generation, the current Markdown
+The revised supplied WS-REV pair now occupies the canonical filenames and its
+hashes are recorded in `docs/reference_specs/README.md` and
+`docs/reference_specs/SHA256SUMS`; no duplicate `(2)` path remains. The Markdown
 is newer than the PDF because its section 4.6 closed action table is absent from
-PDF text extraction. Chunk 01 preserves and hashes both files unchanged, records
-their provenance/status differences, and creates
+PDF text extraction. Chunk 01 preserves and hashes both canonical files
+unchanged, records their provenance/status differences, and creates
 `docs/spec_review_lifecycle.md` as the reconciled active normative contract.
-Neither WS-REV generation nor either WS-IMP archival file is edited to express
-active repository policy.
+Neither WS-REV archival file nor either WS-IMP archival file is edited to
+express active repository policy.

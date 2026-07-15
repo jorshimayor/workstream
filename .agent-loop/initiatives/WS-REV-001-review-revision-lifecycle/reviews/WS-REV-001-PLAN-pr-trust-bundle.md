@@ -19,8 +19,11 @@ sequence, and publication of this planning chunk. The approval does not start
 
 ## What Changed
 
-- Reconciled merged AUTH-07A actor, contributor, permission, and action
-  contracts plus the exact AUTH-owned 50-to-54 action-parity dependency.
+- Reconciled merged AUTH-07B actor, minimal-kernel, contributor, permission, and
+  action contracts plus the prospective AUTH-owned 57-to-61 action-parity gate
+  after unmerged AUTH-08.
+- Added hard AUTH-owned repair gates for generic dependency auto-commit,
+  decision-evidence SQL error mapping, and canonical verification timestamps.
 - Reconciled ART and CON ownership boundaries without importing sibling runtime
   code or treating uncommitted sibling work as merged contracts.
 - Added a generation-aware joint lifecycle release-control chunk, phase graph,
@@ -31,7 +34,7 @@ sequence, and publication of this planning chunk. The approval does not start
 
 ## Why It Changed
 
-Trusted `main` now contains AUTH-07A and the shared ADR-0014 adapter foundation.
+Trusted `main` now contains AUTH-07B and the shared ADR-0014 adapter foundation.
 The plan needed exact canonical identities, action accounting, integration
 ownership, and an operable joint activation/shutdown contract before runtime
 work could safely begin.
@@ -54,10 +57,10 @@ durable fenced finalization.
 
 ## Scope Control
 
-Only the initiative planning tree and its single existing merge intent are in
-scope. No backend, active product documentation, reference specification,
-dependency, migration, or runtime behavior changes are included. User-owned
-reference-file replacements remain local and excluded from publication.
+Only the initiative planning tree, its single existing merge intent, and the
+exact canonical WS-REV reference filename/checksum repair are in scope. No
+backend, active product documentation, dependency, migration, or runtime
+behavior changes are included.
 
 ## Product Behavior
 
@@ -84,9 +87,15 @@ python3 scripts/check_internal_review_evidence.py
 python3 scripts/test_agent_gates.py
 ```
 
-The AUTH/REV accounting check proves 74 PermissionIds, 50 currently registered
-planned ActionIds, 20 revised-spec actions already present, four gated additive
-actions, and 24 total WS-REV dependencies.
+The AUTH/REV accounting check proves 74 PermissionIds and 50 registered
+ActionIds split into 2 active actor-self actions and 48 planned actions. All 20
+existing revised-spec actions are present but planned, four additive actions are
+absent and gated, and all 24 WS-REV dependencies are inactive.
+
+AUTH-08 remains unmerged. Its amended contract projects 57 actions with 9 active
+and 48 planned; the four later REV additions require exact 57-to-61 parity and
+produce 9 active and 52 planned while all 24 REV dependencies remain inactive
+until their owning chunks.
 
 ## Test Delta
 
@@ -106,8 +115,9 @@ and reviewer run IDs are recorded in the internal-review evidence and review log
 
 ## External Review
 
-Pending PR checks and human review. External review supplements but does not
-replace the completed internal reviewer tracks.
+The earlier PR revision passed Backend, Agent Gates, and CodeRabbit. The
+AUTH-07B/ART dependency refresh requires new checks and human review before the
+PR is updated or merged.
 
 ## Remaining Risks
 
@@ -115,6 +125,10 @@ AUTH, ART, CON, shared-outbox, digest/context, compensation, drain-observation,
 and dispatch/callback contracts remain hard merged-SHA gates at their owning
 chunks. Joint lifecycle activation remains Operator-controlled and cannot occur
 until recovery, operations, and live-drill proof are complete.
+
+AUTH must also repair generic dependency auto-commit, authorization-evidence
+SQL error mapping, and canonical verification timestamps before any REV runtime
+consumer is activated.
 
 ## Follow-Up Work
 

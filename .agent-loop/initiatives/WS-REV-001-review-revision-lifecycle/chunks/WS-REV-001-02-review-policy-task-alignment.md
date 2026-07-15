@@ -9,6 +9,14 @@ and the existing versioned Submission with WS-REV without adding review queues.
 
 L1 schema, policy, and lifecycle.
 
+## Preconditions
+
+- Current trusted main contains the merged WS-AUTH definition of done.
+- AUTH-owned regression proof removes generic authorization-dependency
+  auto-commit, maps decision-evidence SQL failure to the stable retryable 503,
+  and restores AUTH's documented canonical verification-timestamp semantics.
+- This chunk consumes those contracts but changes no AUTH implementation.
+
 ## Allowed files
 
 ```text
@@ -37,6 +45,8 @@ synthetic reject from checker, deadline, or revision limit
 
 ## Acceptance criteria
 
+- Dependency refresh records the exact merged AUTH repair SHA and proves every
+  precondition above before migration or runtime edits begin.
 - Review policy stores task-lockable preference, lease, capacity=1,
   self-review=false, close-task reject, and finding-evidence settings.
 - Existing policy rows receive an explicit safe migration rule; unsafe data

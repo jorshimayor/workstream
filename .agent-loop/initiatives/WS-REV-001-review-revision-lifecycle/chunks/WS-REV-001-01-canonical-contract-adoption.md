@@ -2,9 +2,10 @@
 
 ## Goal
 
-Preserve both supplied WS-REV generations as byte-immutable archival inputs,
-create one reconciled active review-lifecycle contract, and align precedence
-material before runtime implementation.
+Preserve the supplied revised WS-REV Markdown/PDF pair at its canonical
+filenames as byte-immutable archival input, create one reconciled active
+review-lifecycle contract, and align precedence material before runtime
+implementation.
 
 ## Risk class
 
@@ -13,10 +14,8 @@ L1 specification and architecture boundary.
 ## Allowed files
 
 ```text
-docs/reference_specs/WS-REV-001-review-lifecycle-specification.md only to restore recorded archival bytes
-docs/reference_specs/WS-REV-001-review-lifecycle-specification.pdf only to restore recorded archival bytes
-docs/reference_specs/WS-REV-001-review-lifecycle-specification(2).md addition-only archival bytes
-docs/reference_specs/WS-REV-001-review-lifecycle-specification(2).pdf addition-only archival bytes
+docs/reference_specs/WS-REV-001-review-lifecycle-specification.md only to preserve recorded revised archival bytes
+docs/reference_specs/WS-REV-001-review-lifecycle-specification.pdf only to preserve recorded revised archival bytes
 docs/reference_specs/README.md
 docs/reference_specs/SHA256SUMS
 docs/spec_review_lifecycle.md
@@ -59,17 +58,16 @@ backend/app/**
 backend/alembic/**
 backend/tests/**
 AUTH, ART, or CON runtime implementation
-modification or replacement of any supplied archival reference byte; original
-restoration and second-generation addition must exactly match recorded hashes
+modification or replacement of any supplied archival reference byte
 new provider choice
 frontend work
 ```
 
 ## Acceptance criteria
 
-- Both supplied WS-REV Markdown/PDF generations and the WS-IMP pair remain
+- The supplied revised WS-REV Markdown/PDF pair and the WS-IMP pair remain
   byte-for-byte unchanged, separately hashed, and provenance-labelled as
-  archival inputs. No one-sided archival-pair edit occurs.
+  archival inputs. No `(2)` duplicate filename or one-sided pair edit remains.
 - Provenance explicitly records that the newest revised Markdown contains
   section 4.6's closed action/permission table while its PDF companion does not;
   adoption reconciles that difference without editing either archival file.
@@ -86,6 +84,14 @@ frontend work
   an intentional backward rebase, and the reviewer consumes
   the context stamped on the leased Submission without a separate guide/rebase.
 - Permission additions are assigned to WS-AUTH ownership, not implemented here.
+- The active contract records merged AUTH-07B as 74 PermissionIds and 50
+  ActionIds split into 2 active actor-self actions and 48 planned actions. It
+  does not describe the authorization kernel as absent and does not treat any
+  of the 24 REV dependencies as active.
+- The active contract makes AUTH-owned repair of generic dependency auto-commit,
+  authorization-evidence SQL error mapping, and canonical verification
+  timestamp regression a hard gate before REV runtime consumption. Chunk 01
+  changes no AUTH implementation.
 - The active action table contains 24 dependencies. The four additions are
   `review.revision_obligation.close -> project.task.manage` for a covered
   Project Manager, `review.revision_context.repair -> project.task.manage` for a covered Project
@@ -93,9 +99,12 @@ frontend work
   for an Operator, plus
   `review.lifecycle.activation.manage -> operations.reconcile.run` for an
   Operator. Chunk 01 documents their typed resource/guard contract, while
-  AUTH owns typed catalogue/owner and PostgreSQL audit-parity migration from 50
-  to exactly 54 actions. The three closure/repair actions gate chunk 11 and the
-  lifecycle-control action gates 12A; no new PermissionId is introduced.
+  AUTH owns typed catalogue/owner and PostgreSQL audit-parity migration from 57
+  to exactly 61 actions after AUTH-08 establishes 57 actions (9 active, 48
+  planned). The resulting 61 contains 9 active and 52 planned; all 24 REV
+  dependencies stay inactive until their owning REV chunks. The three
+  closure/repair actions gate chunk 11 and the lifecycle-control action gates
+  12A; no new PermissionId is introduced.
 - A stale-contract scanner rejects active Flow Node production, `/v1`, full
   reviewer backlog, legacy severity, synthetic reject, direct
   payment/reputation, and bypass wording without scanning archival bytes as

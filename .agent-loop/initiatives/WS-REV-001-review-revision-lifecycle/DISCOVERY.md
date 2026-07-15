@@ -3,10 +3,9 @@
 ## Sources reviewed
 
 - Revised Markdown source:
-  `docs/reference_specs/WS-REV-001-review-lifecycle-specification(2).md`
+  `docs/reference_specs/WS-REV-001-review-lifecycle-specification.md`
 - Revised 52-page PDF:
-  `docs/reference_specs/WS-REV-001-review-lifecycle-specification(2).pdf`
-- Tracked prior WS-REV source and PDF at `HEAD`
+  `docs/reference_specs/WS-REV-001-review-lifecycle-specification.pdf`
 - `WS-AUTH-001`, `WS-CON-001`, `WS-IMP-001`, architecture lockdown, ADRs,
   operations docs, current initiative plans, migrations, backend modules, and
   tests
@@ -19,8 +18,10 @@ The Markdown has 149 headings. PDF text extraction covers the base lifecycle,
 evidence, projection, and error contract but does not contain Markdown section
 4.6's closed action/permission table. The current Markdown is therefore newer
 than its 52-page PDF companion; neither is treated as a generated twin. Both are
-materially newer than the tracked archival pair and chunk 01 records the
-one-sided section before producing the reconciled active contract.
+the authoritative supplied pair. The temporary `(2)` filenames were a local
+duplicate-name accident; their contents were restored to the canonical paths,
+and the duplicate paths were removed. Chunk 01 records the one-sided section
+before producing the reconciled active contract.
 
 ## Current proven behavior
 
@@ -47,13 +48,14 @@ one-sided section before producing the reconciled active contract.
 
 ## Authorization boundary
 
-- The original discovery base was `f599551`, which merged AUTH-06. Pull merge
-  `3e09e99` now contains trusted main `e9d72a1`, including merged AUTH-07A and
-  ADR-0014's shared external-adapter foundation.
+- The original discovery base was `f599551`, which merged AUTH-06. Local pull
+  merge `e59e2bb` now contains trusted main `90eca12`, including merged AUTH-07B
+  and ADR-0014's shared external-adapter foundation.
 - Authority audit and mutation idempotency foundations exist.
-- The authorization kernel, admin and project grants, actor state/service actor
-  administration, product cutovers, and conformance proof remain later
-  WS-AUTH chunks at this snapshot.
+- The request-scoped deny-by-default kernel exists and only actor self-read and
+  self-update are active. Admin/project grants, actor state/service actor
+  administration, product cutovers, and conformance proof remain later WS-AUTH
+  chunks.
 - Product services still consume legacy `ActorContext`, role helpers, and
   `LegacyWorkflowEligibility`.
 - Review/task/contribution lineage must store canonical human
@@ -65,24 +67,31 @@ one-sided section before producing the reconciled active contract.
   `ArtifactOperatorRecoveryPort`; WS-REV must not add another recovery
   permission or implementation.
 
-The clean AUTH-07A branch was reread at commit
-`3ab25cf3b1e99336c635a318101375bb4bebdf91` after the user called out its
-changes. That reviewed commit is now included by trusted-main merge `e9d72a1`.
-It implements exactly 50 closed ActionIds, including canonical
-`submission.create` and 19 review-owned actions,
-and leaves feature resource composition and activation with WS-REV. AUTH-13/14
+AUTH-07A catalogue input at `3ab25cf3b1e99336c635a318101375bb4bebdf91`
+is superseded as the live snapshot by merged AUTH-07B `90eca12f6398f2ef168e634244d912765572c3e5`.
+AUTH-07B retains exactly 50 closed ActionIds, activates only two actor-self
+actions, and leaves 48 planned. Canonical `submission.create` plus the original
+19 review-owned actions all remain planned/inactive. AUTH-13/14
 also establish the final `TaskAssignment.contributor_id` and
 `Submission.contributor_id` names and authority-loss replacement-assignee
 behavior. The four later revision-obligation-close, repair, legacy-close, and
-joint-lifecycle-activation ActionIds in this plan are absent from that 50-action
-catalogue and remain explicit AUTH-owned additions before their owning chunks.
-They must expand AUTH's typed catalogue/owner and PostgreSQL audit parity from
-50 to exactly 54; enum-only registration is not runtime authority.
+joint-lifecycle-activation ActionIds remain explicit AUTH-owned additions before
+their owning chunks. AUTH-08 is not merged: its amended contract projects a
+57-action baseline with 9 active and 48 planned. After that exact merge, REV's
+four additions must expand typed catalogue/owner and PostgreSQL audit parity
+from 57 to exactly 61, with 9 active and 52 planned. Enum-only registration is
+not runtime authority, and all 24 REV dependencies remain inactive until their
+owning REV chunks activate them.
 
-Review implementation must therefore wait for the WS-AUTH definition of done,
-then consume `AuthorizationService.require(action_id, resource_context)`, canonical resource
-contexts, decision links, revocation invalidation, and provisioned system
-actors without importing grant persistence into the review module.
+The merged kernel has three consumption blockers found during the REV dependency
+review: successful dependency teardown commits any open request-session
+transaction; evidence-write SQL errors can escape as raw 500 responses; and
+existing actor self requests no longer advance `ActorProfile.last_seen_at` and
+`ActorIdentityLink.last_verified_at`. Review implementation must therefore wait
+for WS-AUTH definition of done plus AUTH-owned repair proof, then consume
+`AuthorizationService.require(action_id, resource_context)`, canonical resource
+contexts, decision links, revocation invalidation, and provisioned system actors
+without importing grant persistence into the review module.
 
 ## Artifact boundary
 

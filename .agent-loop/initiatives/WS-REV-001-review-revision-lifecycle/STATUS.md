@@ -2,8 +2,10 @@
 
 ## Current status
 
-Discovery, planning, and fresh internal plan review are complete on
-`codex/ws-rev-001-plan`. No application implementation chunk is active.
+Discovery and planning are complete on `codex/ws-rev-001-plan`. An AUTH-07B
+dependency refresh is complete; the final planning publication refresh remains
+parked while ART PR #129 is conflict-blocked and until it refreshes from main
+and merges. No application implementation chunk is active.
 
 The revised WS-REV Markdown and PDF have been read end to end and reconciled
 structurally. Provenance records the current Markdown-only section 4.6 action
@@ -19,19 +21,26 @@ exact interleaving, canonical actor boundary,
 PaymentPolicy-removal dependency, remaining digest/context and downgrade gates,
 and joint REV-13 activation obligations without importing sibling code.
 
-## Dependency state at discovery
+## Dependency state at latest refresh
 
-- Planning base merge `3e09e99` contains trusted main `e9d72a1`; the pull was a
-  clean merge and retained every user-owned reference change. Reviewed planning
-  revision `706158d` builds on that base. Main now includes merged AUTH-07A plus
-  the shared ADR-0014 `ExternalServiceAdapter` foundation.
-- WS-AUTH authorization kernel, grants, product cutovers, and final proof are
-  still required before WS-REV runtime work.
-- Merged AUTH-07A commit `3ab25cf` was reviewed as planning input: 74
-  PermissionIds, 50 registered planned ActionIds, final contributor field names, and
-  authority-loss revision reassignment. Its 50 actions
-  do not include REV's later revision-obligation-close, repair, legacy-close, or
-  lifecycle-activation additions; AUTH must migrate exact audit parity to 54.
+- Local pull merge `e59e2bb` contains trusted main `90eca12`, including merged
+  AUTH-07B and the shared ADR-0014 `ExternalServiceAdapter` foundation. The pull
+  was conflict-free and retained every user-owned reference change.
+- AUTH-07B installs the request-scoped deny-by-default kernel and activates only
+  `actor.profile.read_self` and `actor.profile.update_self`. The merged catalogue
+  remains 74 PermissionIds and 50 ActionIds: 2 active and 48 planned. All 20
+  existing revised-spec submission/review actions remain planned, and the four
+  later REV additions remain absent, so all 24 REV dependencies are inactive.
+- WS-AUTH grants, actor/service administration, product cutovers, the four-action
+  57-to-61 parity migration, and final proof are still required before WS-REV
+  runtime work. AUTH-08 is amended but unmerged; after its expected 57-action
+  state (9 active, 48 planned), the four REV additions produce 61 actions (9
+  active, 52 planned) while all 24 REV dependencies remain inactive.
+- AUTH-07B cannot yet be consumed by REV: its generic dependency teardown can
+  commit any open shared-session transaction, authorization-evidence SQL errors
+  are not consistently mapped to retryable 503 responses, and the cut-over
+  actor-self routes no longer advance canonical verification timestamps. AUTH
+  owns those repairs and their PostgreSQL/API regression proof.
 - WS-ART provider-neutral v2, S3-compatible provider, admission/cutover,
   checker routing, recovery, and live proof are still required before review
   evidence integration.
@@ -46,17 +55,20 @@ must be re-read when each dependent WS-REV chunk is activated.
 ## Active chunk
 
 `WS-REV-001-PLAN` only. Earlier post-clarification reviewer passes remain
-historical evidence. After the main pull, the AUTH/CON reconciliation and new
+historical evidence. After the first main pull, the AUTH/CON reconciliation and new
 12A joint release-control contract received fresh senior engineering, QA/test,
 security/auth, product/ops, architecture, docs, and reuse/dedup review. Every
 track passes after fixes with no residual blocking finding. Planning is
 human-approved for PR publication. D6, reviewer-current precedence, coherent
 joint activation, and the overall chunk sequence were approved on 2026-07-15.
 
-The internal-review evidence file is complete and bound to approved planning
-commit `706158d8078da508eb022749fb011db5725a45ef`. SHA freshness is verified
-before the branch is pushed. User-owned reference-file changes remain outside
-this chunk and outside its publication commits.
+The previous internal-review evidence is bound to approved planning commit
+`706158d8078da508eb022749fb011db5725a45ef`. The later AUTH-07B/main merge and
+dependency repair deliberately make that publication binding stale. Evidence
+will be re-reviewed and rebound only after ART PR #129 merges and the final
+dependency refresh is complete. The supplied revised reference contents are now
+restored to the canonical Markdown/PDF filenames with matching checksum
+metadata; the accidental `(2)` paths are removed.
 
 ## Human clarification recorded
 
@@ -80,6 +92,7 @@ this chunk and outside its publication commits.
 
 ## Stop condition
 
-Publish only `WS-REV-001-PLAN`. Do not start `WS-REV-001-01` or runtime
-implementation in this PR; the merge intent requires a separate post-merge
-start gate.
+Do not push a refreshed `WS-REV-001-PLAN` while ART PR #129 remains
+conflict-blocked or until its merged contracts are reconciled. Do not start
+`WS-REV-001-01` or runtime implementation; the merge intent requires a separate
+post-merge start gate.

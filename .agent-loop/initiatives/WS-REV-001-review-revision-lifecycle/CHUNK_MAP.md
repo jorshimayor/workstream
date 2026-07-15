@@ -10,9 +10,9 @@ explicit start signal.
 
 | Chunk | Title | Risk | Gate | Status |
 |---|---|---:|---|---|
-| `WS-REV-001-PLAN` | Review And Revision Lifecycle Planning | L0 | None | Human-approved; PR publication active |
+| `WS-REV-001-PLAN` | Review And Revision Lifecycle Planning | L0 | None | Human-approved; parked for ART PR #129 conflict resolution and merge |
 | `WS-REV-001-01` | Canonical Contract Adoption And Dependency Conformance | L1 | Plan approval; current dependency refresh | Proposed |
-| `WS-REV-001-02` | Locked Review Policy And Task Lifecycle Alignment | L1 | AUTH DoD; ART contract stable; D6 behavior approved | Proposed |
+| `WS-REV-001-02` | Locked Review Policy And Task Lifecycle Alignment | L1 | AUTH DoD plus AUTH-07B transaction/error/timestamp repair proof; ART contract stable; D6 behavior approved | Proposed |
 | `WS-REV-001-03` | Review Queue And Lease Persistence | L1 | 02 merged; WS-CON-03B compensation-policy persistence merged | Proposed |
 | `WS-REV-001-04` | Immutable Review, Findings, And Replay Persistence | L1 | 03 merged; WS-CON-02A shared outbox persistence and 02C lifecycle-audit participant merged | Proposed |
 | `WS-REV-001-05` | Checker Admission, Preferred Routing, And Queue Views | L1 | 04; ART submission/checker cutover; AUTH queue reads | Proposed |
@@ -24,7 +24,7 @@ explicit start signal.
 | `WS-REV-001-10` | WS-CON Atomic Integration And Hidden API Composition | L1 | 09B; WS-CON-03C exact lineage/digest schema and WS-CON-07 atomic participant merged | Proposed |
 | `WS-REV-001-11` | Admin Overrides, Revocation Recovery, And Reconciliation | L1 | 10; AUTH invalidation plus merged revision-obligation-close/repair/legacy-close ActionIds; ART operator recovery port | Proposed |
 | `WS-REV-001-12` | Snapshot Projection, Notifications, And Observability | L1 | 11; ART projection; outbox foundation | Proposed |
-| `WS-REV-001-12A` | Joint Lifecycle Release-Control Foundation | L1 | 12 review drain-observation port; exact WS-CON-11 hidden-readiness manifest; AUTH exact 54-action parity including lifecycle control; CON dispatch/callback fence hooks plus fulfillment/outbox drain-observation port | Proposed |
+| `WS-REV-001-12A` | Joint Lifecycle Release-Control Foundation | L1 | 12 review drain-observation port; exact WS-CON-11 hidden-readiness manifest; AUTH exact 61-action parity (9 active, 52 planned) including inactive lifecycle control before this owning chunk; CON dispatch/callback fence hooks plus fulfillment/outbox drain-observation port | Proposed |
 | `WS-REV-001-13` | Coherent Public Activation, Live API Drill, And Release Proof | L1 | 12A; AUTH/ART/CON/outbox live readiness | Proposed |
 
 ## Dependency order
@@ -37,7 +37,8 @@ External initiative gates are inserted without changing same-initiative
 successor order:
 
 ```text
-AUTH definition of done + ART stable contracts
+AUTH definition of done + AUTH-07B transaction/error/timestamp repair proof
+  + ART stable contracts
   -> WS-REV-001-02
 
 WS-REV-001-02
@@ -95,5 +96,6 @@ workflow, script, dependency, or coverage gate changes.
 
 ## Stop condition
 
-Planning is approved for publication. Do not start 01 automatically; its
+Planning is approved but its refresh is parked while ART PR #129 is
+conflict-blocked and until it merges. Do not start 01 automatically; its
 merge-intent gate remains separate.

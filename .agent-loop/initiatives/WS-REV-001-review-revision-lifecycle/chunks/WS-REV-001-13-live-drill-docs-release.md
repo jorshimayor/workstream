@@ -99,8 +99,14 @@ reputation formula or deferred product scope
   or mismatched mappings fail preflight and startup. The CON-11 manifest supplies
   the same fields for every joint contribution/compensation command.
 - AUTH preflight also proves the four additive actions migrated typed catalogue,
-  owner mapping, and PostgreSQL audit parity together from 50 to exactly 54,
-  with no missing or extra action.
+  owner mapping, and PostgreSQL audit parity together from 57 to exactly 61,
+  with 9 active and 52 planned, no missing or extra action, and no REV action
+  activated before its owning chunk.
+- AUTH preflight proves its reusable dependency has no generic success
+  auto-commit, every REV read/mutation owns its explicit transaction boundary,
+  authorization-evidence SQL failures produce a retryable 503 without partial
+  state, and successful existing-actor GET/PATCH access matches AUTH's repaired,
+  documented verification-timestamp semantics.
 - Final registration exposes coherent current-work, claim, release, decline,
   context, decision, revision preparation/evidence, chain, and authorized admin
   operations alongside the existing canonical task resubmission endpoint.

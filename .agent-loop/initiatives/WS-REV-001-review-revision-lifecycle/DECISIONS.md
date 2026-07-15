@@ -26,6 +26,13 @@ authorization, direct grant reads, raw provider paths, concrete provider
 imports, compatibility aliases, fallback constructors, and dual factory paths
 are prohibited.
 
+AUTH remains the transaction-composition owner for its FastAPI dependency.
+Before REV consumes that dependency, generic successful teardown must not
+commit an open feature transaction, evidence persistence failures must use the
+stable retryable service-unavailable contract, and successful canonical actor
+access must preserve verification timestamps. REV records and gates these
+requirements; it does not patch AUTH implementation locally.
+
 ### D4 - Review Offer Is Server Selected
 
 The reviewer current-work endpoint returns exactly one of active lease, next

@@ -93,10 +93,11 @@ Material repairs included:
 ## Post-Main Release-Control Final Review - 2026-07-15
 
 `git pull --no-rebase origin main` merged trusted main `e9d72a1` into REV HEAD
-`3e09e99` without conflict. AUTH-07A is now merged foundation rather than
-unmerged discovery evidence. The four later REV actions remain AUTH-owned and
-must migrate typed catalogue, owner mapping, and PostgreSQL audit parity from 50
-to exactly 54.
+`3e09e99` without conflict. AUTH-07A became merged foundation rather than
+unmerged discovery evidence. The later amended AUTH-08 contract supersedes the
+old catalogue arithmetic: after AUTH-08's prospective 57 actions (9 active, 48
+planned), the four REV additions require 57-to-61 typed catalogue, owner, and
+PostgreSQL audit parity, producing 9 active and 52 planned.
 
 The first fresh review failed because shutdown persistence had no executable
 owner. Chunk 12A was added, then repaired through repeated zero-trust review:
@@ -118,3 +119,45 @@ All valid findings are closed. The human approved D6, reviewer-current
 precedence, coherent activation, the sequence, and planning publication on
 2026-07-15. Dependency merges, planning merge, and the successor's separate
 post-merge start gate still prevent runtime implementation.
+
+## AUTH-07B Dependency Refresh - 2026-07-15
+
+Trusted main `90eca12` merges AUTH-07B. REV reviewed the merged runtime before
+updating its dependency snapshot. The kernel shape, canonical actor boundary,
+deny-by-default action handling, exact two active self actions, update lock
+order, and bounded denial evidence are compatible with the planned boundary.
+
+The dependency is not yet safe for REV consumption:
+
+- High: `get_authorization_service` commits any open request-session transaction
+  during generic successful teardown, so future feature work could be committed
+  without its owning service or route doing so.
+- Medium: SQL failure while `AuthorizationService.require` stages decision
+  evidence can escape the dependency as an unstructured 500 on self-read.
+- Medium: the actor-self cutover returns existing actors without advancing
+  `ActorProfile.last_seen_at` or `ActorIdentityLink.last_verified_at`.
+
+REV owns no repair in AUTH code. PLAN, DECISIONS, RISKS, CHUNK_MAP, chunk 01,
+the first AUTH-consuming chunk 05, and final chunk 13 now fail closed on
+AUTH-owned repair and regression proof. The catalogue snapshot is corrected to
+74 PermissionIds and 50 ActionIds split into 2 active actor-self actions and 48
+planned actions; every one of the 24 REV action dependencies remains inactive.
+
+Review tracks: senior engineering/architecture/reuse found the generic commit
+and error mapping defects; QA/product confirmed the error and timestamp
+regressions; security/auth found no separate canonical identity, action parity,
+or denial privacy defect. Ruff and 24 focused authorization tests passed
+locally; merged PR #130's Backend, Agent Gates, and CodeRabbit checks passed.
+Database integration was not rerun locally because the isolated test database
+URL was not configured.
+
+PR #128 remains parked and its local main merge is not pushed. ART PR #129 is
+currently conflict-blocked despite approval and green checks; it must refresh
+from main and merge before the final dependency refresh, reviewer pass, SHA
+binding, and PR update.
+
+The human also corrected the reference-file ownership decision: the revised
+supplied Markdown/PDF contents belong at the canonical WS-REV filenames. The
+temporary `(2)` paths were removed, canonical hashes were refreshed in the
+reference README/SHA256SUMS, and no second archival generation remains in the
+active plan.
