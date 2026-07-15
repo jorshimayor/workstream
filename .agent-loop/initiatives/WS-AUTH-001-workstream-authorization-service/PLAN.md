@@ -15,7 +15,7 @@ Bearer token
 -> ActorResolver
 -> ActorIdentityLink + ActorProfile
 -> request-scoped AuthorizationContext
--> AuthorizationService.require(permission, ResourceContext, uow)
+-> AuthorizationService.require(ActionId, typed ResourceContext)
 -> AdminRoleGrant / ProjectRoleGrant candidates
 -> canonical project and ownership resolution
 -> actor, resource, and lifecycle guards

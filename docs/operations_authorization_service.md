@@ -498,8 +498,10 @@ planned. Initial and revision submission share `submission.create`, and no
 revision-specific permission or preparation action exists.
 
 Review code must consume the request-scoped public
-`AuthorizationService.require(action_id, typed_resource_context, uow=...)`
-boundary. It must not query grants, import AUTH persistence, select raw
+`AuthorizationService.require(action_id, typed_resource_context)` boundary.
+The service's bound caller-owned `AsyncSession` is the only transaction source;
+the method accepts no session or `uow` argument. Review code must not query
+grants, import AUTH persistence, select raw
 PermissionIds, or implement permission unions. Artifact recovery remains the
 ART-owned `artifact.verification_job.retry` action through
 `ArtifactOperatorRecoveryPort`; shared outbox dispatch/retry remains outside

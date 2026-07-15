@@ -20,7 +20,6 @@ caller-owned `AsyncSession`. Feature application services call only:
 decision = await authorization_service.require(
     action_id,
     typed_resource_context,
-    uow=caller_session,
 )
 ```
 
@@ -129,9 +128,10 @@ to 404. Feature-owned concealment matrices begin in their owning cutover chunks.
   PermissionId, allowed/denial code, resource reference, matched authority kind,
   revalidation status, request ID, and correlation ID.
 - Unknown permissions, unknown actions, and every planned action deny.
-- The public feature interface has the exact request-scoped `require` contract
-  above; import-boundary tests reject feature imports of AUTH persistence or
-  private evaluation helpers and reject raw permission/candidate/guard input.
+- The public feature interface has the exact two-argument request-scoped
+  `require` contract above. An API-signature test rejects any session or `uow`
+  argument, and import-boundary tests reject feature imports of AUTH persistence
+  or private evaluation helpers and reject raw permission/candidate/guard input.
 - System scope is not superuser authority.
 - Default human authority is exactly the two self candidates above. Token role
   changes do not alter either decision.

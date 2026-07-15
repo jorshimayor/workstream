@@ -45,7 +45,7 @@ external bearer token
 -> ActorResolver
 -> ActorProfile + ActorIdentityLink
 -> AuthorizationContext
--> AuthorizationService.require(permission, ResourceContext, AsyncSession)
+-> AuthorizationService.require(ActionId, typed ResourceContext)
 -> candidate grants
 -> resource and lifecycle guards
 -> allow or stable denial

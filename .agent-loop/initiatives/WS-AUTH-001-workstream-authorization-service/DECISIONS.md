@@ -338,8 +338,9 @@ the originating AUTH mutation, while missed recovery uses the planned
 AUTH-07B must expose one stable public feature boundary: a request-scoped
 `AuthorizationService` bound to the current `AuthorizationContext` and
 caller-owned `AsyncSession`. Feature modules call
-`require(action_id, typed_resource_context, uow=...)`; the service returns and
-stages one bounded decision, never commits, and never accepts a raw
+`require(action_id, typed_resource_context)`; the bound session is the only
+transaction source. The service returns and stages one bounded decision, never
+commits, and never accepts a raw
 PermissionId, candidate grant, or guard. REV owns its ResourceContext composers
 and lifecycle invariants and may import only that public AUTH interface and
 closed types, never AUTH persistence or grant queries.
