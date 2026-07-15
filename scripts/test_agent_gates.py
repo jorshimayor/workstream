@@ -2132,6 +2132,14 @@ def test_loop_memory_schema_v2_rejection_matrix_is_fail_closed() -> None:
             ),
             "must" if field != "initiative_id" else "required",
         )
+    oversized_id = "WS-" + ("A" * 78)
+    oversized_metadata = dict(metadata_payload)
+    oversized_metadata["initiative_id"] = oversized_id
+    assert_loop_error(
+        updater,
+        lambda: updater.parse_loop_metadata(json.dumps(oversized_metadata)),
+        "bounded single-line",
+    )
 
     class RemoteClient:
         def __init__(self, tree, returned_sha: str = "e" * 40):
@@ -2270,12 +2278,15 @@ def test_loop_memory_schema_v2_rejection_matrix_is_fail_closed() -> None:
         lambda value: value.clear(),
         lambda value: value.update(schema_version=1),
         lambda value: value.update(initiative_id="bad"),
+        lambda value: value.update(initiative_id="WS-" + ("A" * 78)),
+        lambda value: value.update(chunk_id="WS-AUTH-" + ("A" * 73)),
         lambda value: value.update(chunk_id="WS-ART-001-01"),
         lambda value: value.update(chunk_title=""),
         lambda value: value.update(chunk_title="x" * 161),
         lambda value: value.update(chunk_title="valid\ninjected"),
         lambda value: value.update(next_chunk_title=None),
         lambda value: value.update(next_chunk_id="WS-ART-001-02"),
+        lambda value: value.update(next_chunk_id="WS-AUTH-" + ("A" * 73)),
         lambda value: value.update(next_chunk_title=7),
         lambda value: value.update(next_chunk_title="x" * 161),
         lambda value: value.update(next_requires_explicit_start="yes"),
@@ -2369,6 +2380,8 @@ def test_loop_memory_workflow_isolated_write_boundary() -> None:
     assert "EVENT_SHA" in workflow
     assert "TARGET_SHA" in workflow
     assert "MERGE_SHA" not in workflow
+    assert "github.event.client_payload.target_sha" in workflow
+    assert "github.event.client_payload.merge_sha" not in workflow
     job_environment = workflow.split("    steps:", 1)[0]
     assert "GH_TOKEN:" not in job_environment
     assert "GITHUB_TOKEN:" not in job_environment

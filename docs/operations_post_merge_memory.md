@@ -90,7 +90,7 @@ error, replay trusted default-branch automation with:
 ```bash
 gh api --method POST repos/Flow-Research/workstream/dispatches \
   -f event_type=loop-memory-replay \
-  -F client_payload[merge_sha]="$(git rev-parse origin/main)"
+  -F client_payload[target_sha]="$(git rev-parse origin/main)"
 ```
 
 `repository_dispatch` always selects the workflow from the default branch;

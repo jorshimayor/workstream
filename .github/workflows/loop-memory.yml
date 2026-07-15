@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       EVENT_NAME: ${{ github.event_name }}
-      EVENT_SHA: ${{ github.event_name == 'push' && github.sha || github.event.client_payload.merge_sha }}
+      EVENT_SHA: ${{ github.event_name == 'push' && github.sha || github.event.client_payload.target_sha }}
       STATE_BRANCH: automation/loop-memory
 
     steps:

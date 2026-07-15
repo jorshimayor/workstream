@@ -112,6 +112,11 @@ def _is_bounded_single_line(value: object, maximum: int) -> bool:
     )
 
 
+def _is_valid_lifecycle_id(value: object) -> bool:
+    """Return whether one lifecycle ID has canonical syntax and bounds."""
+    return _is_bounded_single_line(value, 80) and bool(ID_PATTERN.fullmatch(value))
+
+
 def _metadata_failures(metadata: object, label: str) -> list[str]:
     """Independently validate one completed-chunk metadata object."""
     expected = {
@@ -132,11 +137,10 @@ def _metadata_failures(metadata: object, label: str) -> list[str]:
     chunk_id = metadata.get("chunk_id")
     next_chunk_id = metadata.get("next_chunk_id")
     next_chunk_title = metadata.get("next_chunk_title")
-    if not isinstance(initiative_id, str) or not ID_PATTERN.fullmatch(initiative_id):
+    if not _is_valid_lifecycle_id(initiative_id):
         failures.append(f"{label}: invalid initiative id")
     if (
-        not isinstance(chunk_id, str)
-        or not ID_PATTERN.fullmatch(chunk_id)
+        not _is_valid_lifecycle_id(chunk_id)
         or not isinstance(initiative_id, str)
         or not chunk_id.startswith(f"{initiative_id}-")
     ):
@@ -146,8 +150,7 @@ def _metadata_failures(metadata: object, label: str) -> list[str]:
     if (next_chunk_id is None) != (next_chunk_title is None):
         failures.append(f"{label}: incomplete next chunk metadata")
     if next_chunk_id is not None and (
-        not isinstance(next_chunk_id, str)
-        or not ID_PATTERN.fullmatch(next_chunk_id)
+        not _is_valid_lifecycle_id(next_chunk_id)
         or not isinstance(initiative_id, str)
         or not next_chunk_id.startswith(f"{initiative_id}-")
     ):
