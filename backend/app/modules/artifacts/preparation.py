@@ -166,6 +166,8 @@ class ArtifactScratchManager:
         self._root = root.resolve(strict=False)
         self._limits = limits
         self._root_marker_content = self._marker_content(limits)
+        self._pending_allocation_releases: dict[str, _ScratchReservation] = {}
+        self._pending_readers: dict[int, BinaryIO] = {}
         expected_root = self._initialize_root(root)
         self._root_fd = os.open(
             self._root,
@@ -192,6 +194,11 @@ class ArtifactScratchManager:
         """Return immutable limits shared by every process using this root."""
         return self._limits
 
+    @property
+    def pending_cleanup_count(self) -> int:
+        """Return manager-owned cleanup retained before service handoff."""
+        return len(self._pending_allocation_releases) + len(self._pending_readers)
+
     async def allocate(self) -> tuple[_ScratchReservation, int]:
         """Reserve the full hard maximum before creating one private file."""
         task = asyncio.create_task(asyncio.to_thread(self._allocate_sync))
@@ -212,7 +219,7 @@ class ArtifactScratchManager:
                         asyncio.to_thread(self._release_sync, reservation)
                     )
                 except BaseException:
-                    pass
+                    self._pending_allocation_releases[reservation.reservation_id] = reservation
             raise cancellation
 
     async def seal_for_read(self, reservation: _ScratchReservation, descriptor: int) -> BinaryIO:
@@ -220,6 +227,7 @@ class ArtifactScratchManager:
         task = asyncio.create_task(
             asyncio.to_thread(self._seal_for_read_sync, reservation, descriptor)
         )
+        reader: BinaryIO | None = None
         try:
             return await asyncio.shield(task)
         except asyncio.CancelledError as cancellation:
@@ -227,6 +235,8 @@ class ArtifactScratchManager:
                 reader = await await_cancellation_resistant(task)
                 await await_cancellation_resistant(asyncio.to_thread(reader.close))
             except BaseException:
+                if reader is not None:
+                    self._pending_readers[id(reader)] = reader
                 raise cancellation from None
             raise
 
@@ -252,8 +262,41 @@ class ArtifactScratchManager:
             raise ValueError("scratch cleanup time is invalid")
         return await self._run_io(self._cleanup_stale_sync, now)
 
+    async def retry_pending_cleanup(self) -> int:
+        """Retry manager-owned cleanup retained before service handoff."""
+        cleaned = 0
+        for reader_id, reader in tuple(self._pending_readers.items()):
+
+            async def close_reader() -> None:
+                """Close one retained reader and clear manager ownership."""
+                await self._run_io(reader.close)
+                self._pending_readers.pop(reader_id, None)
+
+            try:
+                await await_completion_preserving_cancellation(close_reader())
+            except Exception:
+                continue
+            else:
+                cleaned += 1
+        for reservation_id, reservation in tuple(self._pending_allocation_releases.items()):
+
+            async def release_reservation() -> None:
+                """Release one retained reservation and clear manager ownership."""
+                await self._run_io(self._release_sync, reservation)
+                self._pending_allocation_releases.pop(reservation_id, None)
+
+            try:
+                await await_completion_preserving_cancellation(release_reservation())
+            except Exception:
+                continue
+            else:
+                cleaned += 1
+        return cleaned
+
     def close(self) -> None:
         """Release pinned scratch directory descriptors."""
+        if self.pending_cleanup_count:
+            raise ArtifactScratchIntegrityError("artifact scratch cleanup is still pending")
         files_fd = getattr(self, "_files_fd", -1)
         root_fd = getattr(self, "_root_fd", -1)
         if files_fd >= 0:
@@ -508,7 +551,12 @@ class ArtifactScratchManager:
                 os.fsync(self._files_fd)
             except BaseException:
                 if descriptor is not None:
-                    os.close(descriptor)
+                    descriptor_to_close = descriptor
+                    descriptor = None
+                    try:
+                        os.close(descriptor_to_close)
+                    except BaseException:
+                        pass
                     self._unlink_regular_optional(filename, tolerate_sync_failure=True)
                 remaining = [
                     entry
@@ -884,7 +932,7 @@ class ArtifactPreparationService:
     @property
     def pending_cleanup_count(self) -> int:
         """Return failed unhanded cleanups retained for explicit retry."""
-        return len(self._pending_cleanup)
+        return len(self._pending_cleanup) + self._manager.pending_cleanup_count
 
     async def prepare(
         self,
@@ -1093,6 +1141,7 @@ class ArtifactPreparationService:
                 self._release_unhanded_preparation(pending)
             ):
                 cleaned += 1
+        cleaned += await self._manager.retry_pending_cleanup()
         return cleaned
 
     @staticmethod

@@ -1247,6 +1247,50 @@ async def test_allocation_close_failure_still_releases_reservation(
 
 
 @pytest.mark.asyncio
+async def test_cancelled_allocation_retains_failed_release_for_retry(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Keep cleanup ownership when cancellation-time ledger release fails."""
+    manager = ArtifactScratchManager(root=tmp_path / "scratch", limits=preparation_limits())
+    allocation_started = threading.Event()
+    finish_allocation = threading.Event()
+    original_allocate = manager._allocate_sync
+    original_release = manager._release_sync
+    release_attempts = 0
+
+    def delayed_allocate() -> tuple[object, int]:
+        result = original_allocate()
+        allocation_started.set()
+        finish_allocation.wait(timeout=5)
+        return result
+
+    def fail_release_once(reservation: object) -> None:
+        nonlocal release_attempts
+        release_attempts += 1
+        if release_attempts == 1:
+            raise OSError(errno.EIO, "injected allocation release failure")
+        original_release(reservation)
+
+    monkeypatch.setattr(manager, "_allocate_sync", delayed_allocate)
+    monkeypatch.setattr(manager, "_release_sync", fail_release_once)
+    task = asyncio.create_task(manager.allocate())
+    assert await asyncio.to_thread(allocation_started.wait, 5)
+    task.cancel()
+    finish_allocation.set()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+    assert manager.pending_cleanup_count == 1
+    assert (await manager.usage()).reservation_count == 1
+    assert await manager.retry_pending_cleanup() == 1
+    assert manager.pending_cleanup_count == 0
+    assert (await manager.usage()).reservation_count == 0
+    assert list((tmp_path / "scratch" / "files").iterdir()) == []
+    manager.close()
+
+
+@pytest.mark.asyncio
 async def test_cancelled_seal_closes_read_descriptor_after_write_close_failure(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -1346,6 +1390,96 @@ async def test_fdopen_failure_closes_anonymous_read_descriptor(
 
     await manager.release(reservation)
     assert (await manager.usage()).reservation_count == 0
+    manager.close()
+
+
+@pytest.mark.asyncio
+async def test_cancelled_seal_retains_failed_reader_close_for_retry(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Retain the sealed reader when cancellation-time close fails."""
+    manager = ArtifactScratchManager(root=tmp_path / "scratch", limits=preparation_limits())
+    service = ArtifactPreparationService(manager)
+    reservation, write_descriptor = await manager.allocate()
+    original_seal = manager._seal_for_read_sync
+    seal_finished = threading.Event()
+    finish_handoff = threading.Event()
+
+    class FailOnceReader:
+        def __init__(self, reader: BinaryIO) -> None:
+            self.reader = reader
+            self.close_attempts = 0
+
+        def close(self) -> None:
+            self.close_attempts += 1
+            if self.close_attempts == 1:
+                raise OSError(errno.EIO, "injected reader close failure")
+            self.reader.close()
+
+    wrapped: FailOnceReader | None = None
+
+    def delayed_seal(reservation_value: object, descriptor: int) -> Any:
+        nonlocal wrapped
+        reader = original_seal(reservation_value, descriptor)
+        wrapped = FailOnceReader(reader)
+        seal_finished.set()
+        finish_handoff.wait(timeout=5)
+        return wrapped
+
+    monkeypatch.setattr(manager, "_seal_for_read_sync", delayed_seal)
+    task = asyncio.create_task(manager.seal_for_read(reservation, write_descriptor))
+    assert await asyncio.to_thread(seal_finished.wait, 5)
+    task.cancel()
+    finish_handoff.set()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+    assert wrapped is not None
+    assert wrapped.close_attempts == 1
+    assert service.pending_cleanup_count == 1
+    await manager.release(reservation)
+    assert await service.retry_pending_cleanup() == 1
+    assert wrapped.close_attempts == 2
+    assert wrapped.reader.closed
+    assert service.pending_cleanup_count == 0
+    manager.close()
+
+
+@pytest.mark.asyncio
+async def test_allocation_rollback_continues_after_descriptor_close_failure(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Remove the file and ledger reservation after a late close error."""
+    manager = ArtifactScratchManager(root=tmp_path / "scratch", limits=preparation_limits())
+    original_fsync = os.fsync
+    original_close = os.close
+    sync_failed = False
+    close_failed = False
+
+    def fail_file_directory_sync(descriptor: int) -> None:
+        nonlocal sync_failed
+        if descriptor == manager._files_fd and not sync_failed:
+            sync_failed = True
+            raise OSError(errno.EIO, "injected file directory sync failure")
+        original_fsync(descriptor)
+
+    def close_then_fail(descriptor: int) -> None:
+        nonlocal close_failed
+        if sync_failed and not close_failed:
+            original_close(descriptor)
+            close_failed = True
+            raise OSError(errno.EIO, "injected rollback close failure")
+        original_close(descriptor)
+
+    monkeypatch.setattr(os, "fsync", fail_file_directory_sync)
+    monkeypatch.setattr(os, "close", close_then_fail)
+    with pytest.raises(OSError, match="file directory sync failure"):
+        await manager.allocate()
+    assert sync_failed and close_failed
+    assert (await manager.usage()).reservation_count == 0
+    assert list((tmp_path / "scratch" / "files").iterdir()) == []
     manager.close()
 
 

@@ -5,7 +5,9 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncIterator
 from dataclasses import replace
+import errno
 import hashlib
+import os
 from pathlib import Path
 import threading
 
@@ -15,6 +17,7 @@ from app.adapters.artifacts.local import LocalStorageAdapter
 from app.interfaces.artifacts import (
     ArtifactIntegrityError,
     ArtifactOperation,
+    ArtifactStoreUnavailableError,
     IdempotencyIdentity,
     StoreArtifactRequest,
     canonical_store_request_digest,
@@ -316,4 +319,43 @@ async def test_object_only_recovery_still_requires_exact_replay_without_commitme
         await adapter.store(byte_stream(b"wrong"), request)
     assert list((tmp_path / "artifacts" / "objects").iterdir()) == []
     assert len(list((tmp_path / "artifacts" / "quarantine").iterdir())) == 1
+    adapter.close()
+
+
+@pytest.mark.asyncio
+async def test_failed_write_unlinks_temporary_after_close_failure(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Do not leave active-v1 temporary bytes after a late close error."""
+    adapter = LocalStorageAdapter(root=tmp_path / "artifacts", buffer_bytes=2)
+    request = store_request()
+    original_open = adapter._open_exclusive
+    original_close = os.close
+    opened_descriptor: int | None = None
+    close_failed = False
+
+    def capture_open(path: Path) -> int:
+        nonlocal opened_descriptor
+        opened_descriptor = original_open(path)
+        return opened_descriptor
+
+    async def fail_write(*_: object) -> tuple[str, int]:
+        raise OSError(errno.EIO, "injected artifact write failure")
+
+    def close_then_fail(descriptor: int) -> None:
+        nonlocal close_failed
+        if descriptor == opened_descriptor and not close_failed:
+            original_close(descriptor)
+            close_failed = True
+            raise OSError(errno.EIO, "injected temporary close failure")
+        original_close(descriptor)
+
+    monkeypatch.setattr(adapter, "_open_exclusive", capture_open)
+    monkeypatch.setattr(adapter, "_write_bounded_stream_to_private_file", fail_write)
+    monkeypatch.setattr(os, "close", close_then_fail)
+    with pytest.raises(ArtifactStoreUnavailableError, match="local artifact operation failed"):
+        await adapter.store(byte_stream(b"hello"), request)
+    assert close_failed
+    assert list((tmp_path / "artifacts" / "tmp").iterdir()) == []
     adapter.close()

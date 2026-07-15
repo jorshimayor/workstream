@@ -827,6 +827,7 @@ class LocalStorageAdapter:
         final = self._path("objects", provider_id, ".blob")
         handle = await self._run_io(self._open_exclusive, temporary)
         write_complete = False
+        close_complete = False
         try:
             sha256, total = await self._write_bounded_stream_to_private_file(
                 stream,
@@ -835,9 +836,12 @@ class LocalStorageAdapter:
             )
             write_complete = True
         finally:
-            await self._run_io(os.close, handle)
-            if not write_complete:
-                await self._run_io(self._unlink_optional, temporary)
+            try:
+                await self._run_io(os.close, handle)
+                close_complete = True
+            finally:
+                if not write_complete or not close_complete:
+                    await self._run_io(self._unlink_optional, temporary)
         if request.expected_sha256 is not None and sha256 != request.expected_sha256:
             await self._run_io(self._unlink_optional, temporary)
             raise ArtifactInputMismatchError("artifact bytes do not match expected digest")
