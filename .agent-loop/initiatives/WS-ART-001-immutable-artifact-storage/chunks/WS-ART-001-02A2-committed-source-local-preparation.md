@@ -1,6 +1,6 @@
 # Chunk Contract: WS-ART-001-02A2 - Committed Source And Local Preparation
 
-Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02A1
+Initiative: `WS-ART-001` | Risk: L1 | Status: Active after explicit user start on 2026-07-15
 
 Artifact contract phase: `foundation`
 
@@ -35,13 +35,18 @@ active ArtifactStore v1 contract and runtime behavior remain unchanged.
 
 - every initially uncommitted source can be written once to private bounded
   scratch while Workstream computes SHA-256 and exact byte count;
-- any supplied client digest/size commitment is compared before provider I/O;
+- the new inactive preparation boundary compares any supplied client
+  digest/size commitment before a future v2 provider call; active v1 runtime
+  remains unchanged until the `02A3` clean cut;
 - only the preparation service can construct a sealed
   `CommittedArtifactSource`, whose stream and server-computed commitment cannot
   be paired independently;
-- the cross-process ledger reserves the full 512 MiB maximum before file
+- a database-independent cross-process filesystem ledger under the dedicated
+  private scratch root reserves the full 512 MiB maximum before file
   creation and enforces aggregate bytes, files, concurrency, free-space floor,
   deadline-before-TTL, locked cleanup, and no-follow/private-file behavior;
+- scratch coordination never uses PostgreSQL, Redis, product records, or the
+  durable artifact-storage namespace;
 - tests include concurrent processes, quota and disk exhaustion, cancellation,
   crash cleanup, symlink/non-regular rejection, and adversarial client digest
   mismatch with zero provider calls;
@@ -68,7 +73,7 @@ coverage report --include='app/core/config.py' --precision=2 --fail-under=90
 ```bash
 docker compose up -d --wait postgres redis
 (cd backend && .venv/bin/ruff check app tests)
-(cd backend && .venv/bin/pytest tests/test_artifact_preparation.py tests/test_local_artifact_store.py tests/test_config.py -q --cov=app.modules.artifacts --cov=app.adapters.artifacts.local --cov=app.core.config --cov-report=term-missing --cov-fail-under=90)
+(cd backend && .venv/bin/pytest tests/test_artifact_preparation.py tests/test_local_artifact_store.py tests/test_config.py -q --cov=app.modules.artifacts.preparation --cov=app.modules.artifacts.sources --cov=app.core.config --cov-report=term-missing --cov-fail-under=90)
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/test_agent_gates.py
@@ -85,3 +90,20 @@ reuse/dedup, CI integrity, test delta, and docs.
 - Are scratch limits safe across multiple API/Celery processes?
 - Did this remain a preparatory refactor rather than a second runtime path?
 - Are cleanup mechanics testable without silently activating a new worker?
+
+## Cross-Initiative Compatibility
+
+Read-only audits against the active authorization, review, and contribution
+worktrees establish these boundaries:
+
+- this chunk performs no authorization and declares no actor, action,
+  permission, resource, grant, or service-principal authority;
+- later active artifact operations must use canonical `ActorProfile.id` and the
+  authorization service's closed action, permission, and service-identity
+  contracts;
+- WS-REV continues to own reviewer packet/evidence records and receives only
+  verified Workstream `ArtifactBinding` references through future narrow
+  capabilities, never this scratch boundary or a concrete adapter;
+- WS-CON's proposed contribution-evidence capabilities and action are a future
+  separately approved ART prerequisite. They are intentionally not implemented
+  or frozen by `02A2`.

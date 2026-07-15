@@ -96,6 +96,32 @@ class Settings(BaseSettings):
     artifact_retention_policy_version: str | None = None
     artifact_maximum_bytes: int = Field(default=512 * 1024 * 1024, gt=0)
     artifact_stream_buffer_bytes: int = Field(default=1024 * 1024, gt=0, le=1024 * 1024)
+    artifact_scratch_root: Path | None = None
+    artifact_scratch_aggregate_reserved_bytes: int = Field(
+        default=4 * 512 * 1024 * 1024,
+        ge=512 * 1024 * 1024,
+    )
+    artifact_scratch_maximum_files: int = Field(default=8, ge=1, le=1024)
+    artifact_scratch_maximum_concurrency: int = Field(default=4, ge=1, le=1024)
+    artifact_scratch_minimum_free_bytes: int = Field(
+        default=512 * 1024 * 1024,
+        ge=0,
+    )
+    artifact_scratch_reservation_ttl_seconds: float = Field(
+        default=2400.0,
+        gt=0.0,
+        le=86_400.0,
+    )
+    artifact_preparation_total_deadline_seconds: float = Field(
+        default=1800.0,
+        gt=0.0,
+        le=7200.0,
+    )
+    artifact_scratch_cleanup_margin_seconds: float = Field(
+        default=300.0,
+        gt=0.0,
+        le=3600.0,
+    )
 
     model_config = SettingsConfigDict(
         env_prefix="WORKSTREAM_",
@@ -184,6 +210,25 @@ class Settings(BaseSettings):
         Raises:
             ValueError: If enabled artifact storage is unsafe or incomplete.
         """
+        if self.artifact_scratch_maximum_concurrency > self.artifact_scratch_maximum_files:
+            raise ValueError("artifact scratch concurrency cannot exceed its file limit")
+        if (
+            self.artifact_preparation_total_deadline_seconds
+            + self.artifact_scratch_cleanup_margin_seconds
+            >= self.artifact_scratch_reservation_ttl_seconds
+        ):
+            raise ValueError("artifact preparation deadline must expire before scratch TTL")
+        if self.artifact_scratch_root is not None and self.artifact_local_root is not None:
+            scratch_root = self.artifact_scratch_root.resolve(strict=False)
+            local_root = self.artifact_local_root.resolve(strict=False)
+            if (
+                scratch_root == local_root
+                or scratch_root.is_relative_to(local_root)
+                or local_root.is_relative_to(scratch_root)
+            ):
+                raise ValueError(
+                    "artifact scratch and durable local storage roots must be separate"
+                )
         if self.artifact_store_backend == "disabled":
             return self
         if not self.artifact_retention_policy_version or not (
@@ -218,11 +263,7 @@ def _extract_api_rate_limit_key_secret(values: dict[str, object]) -> SecretStr |
         env_file = values.get("_env_file", ".env")
         if env_file is not None:
             env_encoding = values.get("_env_file_encoding", "utf-8")
-            env_files = (
-                (env_file,)
-                if isinstance(env_file, (str, os.PathLike))
-                else tuple(env_file)
-            )
+            env_files = (env_file,) if isinstance(env_file, (str, os.PathLike)) else tuple(env_file)
             for path in env_files:
                 dotenv = dotenv_values(path, encoding=env_encoding)
                 raw_value = dotenv.get("WORKSTREAM_API_RATE_LIMIT_KEY_SECRET", raw_value)

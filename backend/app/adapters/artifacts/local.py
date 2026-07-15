@@ -828,28 +828,18 @@ class LocalStorageAdapter:
         temporary = self._path("tmp", f"{provider_id}_{uuid4().hex}", ".part")
         final = self._path("objects", provider_id, ".blob")
         handle = await self._run_io(self._open_exclusive, temporary)
-        digest = hashlib.sha256()
-        total = 0
         write_complete = False
         try:
-            async for source_chunk in stream:
-                if not isinstance(source_chunk, bytes):
-                    raise ArtifactInputMismatchError("artifact stream must yield bytes")
-                view = memoryview(source_chunk)
-                for offset in range(0, len(view), self._buffer_bytes):
-                    chunk = view[offset : offset + self._buffer_bytes]
-                    total += len(chunk)
-                    if total > request.maximum_bytes:
-                        raise ArtifactLimitExceededError("artifact exceeds maximum bytes")
-                    digest.update(chunk)
-                    await self._run_io(self._write_all, handle, chunk)
-            await self._run_io(os.fsync, handle)
+            sha256, total = await self._write_bounded_stream_to_private_file(
+                stream,
+                handle,
+                request.maximum_bytes,
+            )
             write_complete = True
         finally:
             await self._run_io(os.close, handle)
             if not write_complete:
                 await self._run_io(self._unlink_optional, temporary)
-        sha256 = f"sha256:{digest.hexdigest()}"
         if request.expected_sha256 is not None and sha256 != request.expected_sha256:
             await self._run_io(self._unlink_optional, temporary)
             raise ArtifactInputMismatchError("artifact bytes do not match expected digest")
@@ -862,6 +852,29 @@ class LocalStorageAdapter:
             await self._run_io(self._unlink_optional, temporary)
             raise
         return sha256, total
+
+    async def _write_bounded_stream_to_private_file(
+        self,
+        stream: AsyncIterable[bytes],
+        descriptor: int,
+        maximum_bytes: int,
+    ) -> tuple[str, int]:
+        """Hash and write one bounded stream to an already-private file."""
+        digest = hashlib.sha256()
+        total = 0
+        async for source_chunk in stream:
+            if not isinstance(source_chunk, bytes):
+                raise ArtifactInputMismatchError("artifact stream must yield bytes")
+            view = memoryview(source_chunk)
+            for offset in range(0, len(view), self._buffer_bytes):
+                chunk = view[offset : offset + self._buffer_bytes]
+                total += len(chunk)
+                if total > maximum_bytes:
+                    raise ArtifactLimitExceededError("artifact exceeds maximum bytes")
+                digest.update(chunk)
+                await self._run_io(self._write_all, descriptor, chunk)
+        await self._run_io(os.fsync, descriptor)
+        return f"sha256:{digest.hexdigest()}", total
 
     async def _consume_stream(
         self, stream: AsyncIterable[bytes], maximum_bytes: int

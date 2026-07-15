@@ -446,7 +446,9 @@ async def test_valid_production_auth_configuration_allows_application_startup() 
     retained_verifier = app.state.auth_verifier
     async with app.router.lifespan_context(app):
         assert app.state.auth_verifier is retained_verifier
-        assert get_application_auth_verifier(type("Request", (), {"app": app})()) is retained_verifier
+        assert (
+            get_application_auth_verifier(type("Request", (), {"app": app})()) is retained_verifier
+        )
 
 
 @pytest.mark.parametrize("environment", ["staging", "preview", "prod", "production"])
@@ -480,6 +482,39 @@ def test_local_artifact_settings_and_resolver(tmp_path) -> None:
     incomplete = settings.model_copy(update={"artifact_local_root": None})
     with pytest.raises(ArtifactConfigurationError, match="root is not configured"):
         resolve_artifact_store(incomplete)
+
+
+def test_artifact_scratch_settings_are_bounded_and_separate(tmp_path) -> None:
+    """Validate the inactive scratch boundary without activating a runtime path."""
+    settings = Settings(
+        artifact_scratch_root=tmp_path / "scratch",
+        artifact_scratch_aggregate_reserved_bytes=2 * 512 * 1024 * 1024,
+        artifact_scratch_maximum_files=4,
+        artifact_scratch_maximum_concurrency=2,
+        artifact_scratch_minimum_free_bytes=128 * 1024 * 1024,
+        artifact_scratch_reservation_ttl_seconds=2400,
+        artifact_preparation_total_deadline_seconds=1800,
+        artifact_scratch_cleanup_margin_seconds=300,
+    )
+    assert settings.artifact_scratch_root == tmp_path / "scratch"
+    assert settings.artifact_scratch_maximum_concurrency == 2
+
+    with pytest.raises(ValidationError, match="concurrency cannot exceed"):
+        Settings(
+            artifact_scratch_maximum_files=1,
+            artifact_scratch_maximum_concurrency=2,
+        )
+    with pytest.raises(ValidationError, match="deadline must expire before"):
+        Settings(
+            artifact_scratch_reservation_ttl_seconds=600,
+            artifact_preparation_total_deadline_seconds=500,
+            artifact_scratch_cleanup_margin_seconds=100,
+        )
+    with pytest.raises(ValidationError, match="roots must be separate"):
+        Settings(
+            artifact_local_root=tmp_path / "artifacts",
+            artifact_scratch_root=tmp_path / "artifacts" / "scratch",
+        )
 
 
 def test_flow_node_resolver_fails_until_adapter_chunk() -> None:

@@ -1,4 +1,4 @@
-# Chunk Contract: WS-ART-001-02A3 ArtifactStore v2 Local Clean Cut
+# Chunk Contract: WS-ART-001-02A3 - ArtifactStore v2 Local Clean Cut
 
 Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02A2
 
