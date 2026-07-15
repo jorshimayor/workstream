@@ -352,7 +352,7 @@ counts, cursors, facets, or distinct values are computed.
 
 Registration and completeness are staged with the approved chunk map. Chunk
 07A introduces the identifiers and planned registry; 07B introduces the kernel
-and first active self actions. Reserved action metadata contains only the
+and first active self-actions. Reserved action metadata contains only the
 stable `ActionId`, approved `PermissionId`, owning specification/chunk, and
 `planned` availability; it is not executable and does not predefine a
 foreign-domain target, facts, or guards. Every route-owning chunk from 07B

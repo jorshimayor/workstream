@@ -3641,6 +3641,18 @@ _ACTION_EVIDENCE_INSERT = text(
     "'{\"allowed\": false}'::json)"
 )
 
+_ALLOWED_ACTION_EVIDENCE_INSERT = text(
+    "insert into audit_events "
+    "(id, entity_type, entity_id, event_type, actor_id, actor_roles, claim_snapshot, "
+    "auth_source, is_dev_auth, event_payload, event_domain, event_version, actor_ref_kind, "
+    "request_id, correlation_id, permission_id, action_id, reason, after_facts) "
+    "values (:id, 'authorization_decision', :id, 'SensitiveAuthorizationAllowed', "
+    "'workstream:system:bootstrap', '[]'::json, '{}'::json, 'local_authority', false, "
+    "'{}'::json, 'authority', 1, 'system_principal', :request_id, :correlation_id, "
+    ":permission_id, :action_id, 'authorization_evaluation', "
+    "'{\"allowed\": true}'::json)"
+)
+
 
 def _action_evidence_values(
     action_id: str | None, permission_id: str
@@ -3723,7 +3735,7 @@ async def _authorization_action_row(
 
 
 async def _assert_authorization_action_sql_pairs(database_url: str) -> None:
-    """Prove all exact pairs persist as denied evidence and invalid pairs fail."""
+    """Prove exact pair closure without freezing typed availability in SQL."""
     engine = create_async_engine(database_url)
     try:
         for definition in ACTION_DEFINITIONS:
@@ -3731,6 +3743,17 @@ async def _assert_authorization_action_sql_pairs(database_url: str) -> None:
                 transaction = await connection.begin()
                 await connection.execute(
                     _ACTION_EVIDENCE_INSERT,
+                    _action_evidence_values(
+                        definition.action_id.value, definition.permission_id.value
+                    ),
+                )
+                await transaction.rollback()
+
+        for definition in ACTION_DEFINITIONS:
+            async with engine.connect() as connection:
+                transaction = await connection.begin()
+                await connection.execute(
+                    _ALLOWED_ACTION_EVIDENCE_INSERT,
                     _action_evidence_values(
                         definition.action_id.value, definition.permission_id.value
                     ),

@@ -221,6 +221,7 @@ def upgrade() -> None:
     _create_registry_constraint(PERMISSIONS)
     _create_privacy_constraint(PERMISSIONS)
 
+    # Availability is typed lifecycle state; SQL remains stable across owner activation.
     pair_tokens = _pair_tokens()
     op.create_check_constraint(
         "authorization_action_evidence",

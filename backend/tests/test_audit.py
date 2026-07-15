@@ -23,7 +23,7 @@ from app.modules.audit.schemas import (
     AuthorityEventType,
 )
 from app.modules.audit.service import AuditService
-from app.modules.authorization.catalogue import ActionId, PermissionId
+from app.modules.authorization.catalogue import ACTION_DEFINITIONS, ActionId, PermissionId
 from app.modules.tasks.models import AuditEvent
 
 
@@ -159,12 +159,13 @@ def test_action_aware_audit_input_enforces_mapping_and_planned_availability() ->
             action_id=None,
             denial_code="permission_not_granted",
         )
-    with pytest.raises(ValidationError, match="planned action"):
-        _authority_input(
-            AuthorityEventType.SENSITIVE_AUTHORIZATION_ALLOWED,
-            permission_id="artifact.binding.read",
-            action_id="artifact.binding.read",
-        )
+    for definition in ACTION_DEFINITIONS:
+        with pytest.raises(ValidationError, match="planned action"):
+            _authority_input(
+                AuthorityEventType.SENSITIVE_AUTHORIZATION_ALLOWED,
+                permission_id=definition.permission_id,
+                action_id=definition.action_id,
+            )
     with pytest.raises(TypeError, match="invalid authority audit input"):
         _authority_input(
             AuthorityEventType.SENSITIVE_AUTHORIZATION_DENIED,
