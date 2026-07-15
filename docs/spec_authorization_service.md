@@ -170,16 +170,127 @@ operations.task.start_override
 operations.submission_gate.repair
 operations.checker.retry
 
+artifact.binding.read
+artifact.replica.read
+artifact.receipt.read
+artifact.verification_job.read
+artifact.verification_job.retry
+artifact.recovery_attempt.read
+artifact.audit.read
+artifact.guide_source.ingest
+artifact.upload_session.create
+artifact.upload_session.read
+artifact.upload_item.write
+artifact.upload_session.seal
+artifact.upload_session.cancel
+artifact.upload_session.expire
+artifact.binding.create
+artifact.verification.execute
+artifact.pending_work.scan
+artifact.put_attempt.resolve
+artifact.guide_source.read
+artifact.checker_input.materialize
+artifact.checker_output.write
+
 audit.read
 audit.export
 ```
 
-These are 52 approved authorization identifiers. AUTH-05A's current typed and
-PostgreSQL audit registry accepts 49; the three approved Operator recovery
+Artifact permissions are deliberately resource- and operation-specific.
+`artifact.*.read` permissions do not authorize retry or recovery, human
+Operator permissions do not authorize internal execution, and internal service
+permissions do not authorize Operator APIs. AUTH-07 owns this closed registry,
+AUTH-08 owns the Operator grant definitions, AUTH-09 owns the service
+principals, and WS-ART consumes the resulting decisions without registering
+permissions or inferring authority. Artifact actions activate only through the
+paired feature model below; AUTH-12, AUTH-14, and AUTH-15 do not activate or
+attach artifact actions on behalf of WS-ART.
+
+These are 73 approved `PermissionId` values. `ActionId` values are a separate
+closed registry layer and are not included in that permission count. AUTH-05A's current typed and
+PostgreSQL audit registry accepts 49. The three approved Operator recovery
 identifiers `operations.task.start_override`,
-`operations.submission_gate.repair`, and `operations.checker.retry` are reserved
-planned metadata and cannot become active actions until AUTH-13/14 add matching
-typed/SQL audit parity with upgrade, downgrade, and preserved-history proof.
+`operations.submission_gate.repair`, and `operations.checker.retry`, plus the
+21 artifact identifiers above, are reserved planned metadata. AUTH-07 adds
+their matching typed/SQL audit parity without making them executable. An
+artifact action becomes active only when the owning WS-ART chunk supplies its
+canonical resource composer, guards, surface declaration, behavior tests, and
+transaction-local revalidation where required. Both halves are mandatory;
+registry presence alone never grants authority.
+
+The paired artifact activation matrix is closed:
+
+| Owning WS-ART chunk | Actions activated by that chunk |
+|---|---|
+| `WS-ART-001-02D` | Operator binding/replica/receipt/verification-job/recovery-attempt/audit reads; the operations-domain `operations.artifact_storage_admission.read` action mapped to `operations.status.read`; verification retry; `artifact.verification.execute`; `artifact.pending_work.scan`; and `artifact.put_attempt.resolve` |
+| `WS-ART-001-03` | `artifact.guide_source.ingest`, `artifact.guide_source.read`, and `artifact.guide_source.binding.create` mapped to `artifact.binding.create` |
+| `WS-ART-001-04A` | upload-session create/read/seal/cancel/expire and upload-item write |
+| `WS-ART-001-04B` | `artifact.pre_submit.checker_input.materialize` mapped to `artifact.checker_input.materialize` |
+| `WS-ART-001-05` | `artifact.submission.binding.create` mapped to `artifact.binding.create` |
+| `WS-ART-001-06A` | `artifact.post_submit.checker_input.materialize` mapped to `artifact.checker_input.materialize` |
+| `WS-ART-001-06B` | `artifact.checker_output.write` and `artifact.checker_output.binding.create` mapped to `artifact.binding.create` using the checker-run resource |
+
+Every row requires AUTH-07's registry first. A row with an Operator principal
+also requires its AUTH-08 grant definition; a row with a fixed service
+principal also requires its AUTH-09 service-actor assignment. Feature code
+receives centralized decisions; it never queries grants or constructs
+permission identifiers dynamically.
+
+The following table is the single source of truth for reserved artifact-related
+`ActionId` metadata. AUTH-07 registers each row as `planned`; the owning WS-ART
+chunk may activate it only with its canonical resource composer, guards,
+surface declaration, and behavior tests. A mapping is not a permission alias:
+authorization still evaluates the listed registered `PermissionId` against the
+listed canonical resource and principal class.
+
+| ActionId | PermissionId | Principal class | Canonical resource | Owning WS-ART chunk |
+|---|---|---|---|---|
+| `artifact.binding.read` | `artifact.binding.read` | Operator | artifact binding | `02D` |
+| `artifact.replica.read` | `artifact.replica.read` | Operator | artifact replica | `02D` |
+| `artifact.receipt.read` | `artifact.receipt.read` | Operator | artifact receipt | `02D` |
+| `artifact.verification_job.read` | `artifact.verification_job.read` | Operator | verification job | `02D` |
+| `artifact.verification_job.retry` | `artifact.verification_job.retry` | Operator | exhausted verification job | `02D` |
+| `artifact.recovery_attempt.read` | `artifact.recovery_attempt.read` | Operator | recovery attempt | `02D` |
+| `artifact.audit.read` | `artifact.audit.read` | Operator | artifact audit scope | `02D` |
+| `operations.artifact_storage_admission.read` | `operations.status.read` | Operator | deployment artifact-storage namespace | `02D` |
+| `artifact.guide_source.ingest` | `artifact.guide_source.ingest` | authorized project actor | guide-source snapshot item | `03` |
+| `artifact.guide_source.read` | `artifact.guide_source.read` | fixed guide-reader service | guide-source snapshot item | `03` |
+| `artifact.upload_session.create` | `artifact.upload_session.create` | assigned contributor | task | `04A` |
+| `artifact.upload_session.read` | `artifact.upload_session.read` | assigned contributor | upload session | `04A` |
+| `artifact.upload_item.write` | `artifact.upload_item.write` | assigned contributor | upload item | `04A` |
+| `artifact.upload_session.seal` | `artifact.upload_session.seal` | assigned contributor | upload session | `04A` |
+| `artifact.upload_session.cancel` | `artifact.upload_session.cancel` | assigned contributor | upload session | `04A` |
+| `artifact.upload_session.expire` | `artifact.upload_session.expire` | fixed scheduler service | upload session | `04A` |
+| `artifact.guide_source.binding.create` | `artifact.binding.create` | fixed binding service | guide-source snapshot item | `03` |
+| `artifact.submission.binding.create` | `artifact.binding.create` | fixed binding service | submission | `05` |
+| `artifact.checker_output.binding.create` | `artifact.binding.create` | fixed binding service | checker run | `06B` |
+| `artifact.verification.execute` | `artifact.verification.execute` | fixed verifier service | verification job | `02D` |
+| `artifact.pending_work.scan` | `artifact.pending_work.scan` | fixed scheduler service | system pending-work scope | `02D` |
+| `artifact.put_attempt.resolve` | `artifact.put_attempt.resolve` | fixed put-resolver service | put attempt | `02D` |
+| `artifact.pre_submit.checker_input.materialize` | `artifact.checker_input.materialize` | fixed materializer service | sealed upload session and task | `04B` |
+| `artifact.post_submit.checker_input.materialize` | `artifact.checker_input.materialize` | fixed materializer service | checker run and immutable bindings | `06A` |
+| `artifact.checker_output.write` | `artifact.checker_output.write` | fixed checker-output service | checker run | `06B` |
+
+The fixed internal service identities and their complete artifact action sets
+are also closed:
+
+| Service identity | Allowed artifact actions |
+|---|---|
+| `workstream.artifact.verifier` | `artifact.verification.execute` |
+| `workstream.artifact.put_resolver` | `artifact.put_attempt.resolve` |
+| `workstream.artifact.scheduler` | `artifact.pending_work.scan`, `artifact.upload_session.expire` |
+| `workstream.artifact.binding` | `artifact.guide_source.binding.create`, `artifact.submission.binding.create`, `artifact.checker_output.binding.create` |
+| `workstream.artifact.guide_reader` | `artifact.guide_source.read` |
+| `workstream.artifact.materializer` | `artifact.pre_submit.checker_input.materialize`, `artifact.post_submit.checker_input.materialize` |
+| `workstream.artifact.checker_output` | `artifact.checker_output.write` |
+
+AUTH-09 persists these exact service actors and assignments before any WS-ART
+execution chunk activates them. Composition startup proves registry, service
+actor, action, and PermissionId parity and fails closed on a missing or extra
+assignment. Negative authorization tests prove each service identity is denied
+every artifact action outside its row. Human authorization remains attached to
+the initiating product command; an internal service identity never inherits a
+human grant or role.
 
 Adding a permission requires a specification/ADR update and human approval.
 Routers cannot invent identifiers or evaluate grant unions.

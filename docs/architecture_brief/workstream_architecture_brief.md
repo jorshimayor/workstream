@@ -40,7 +40,7 @@ Current v0.1 is backend-first and internal-loop-first. External source adapters,
 | Flow auth boundary | Workstream verifies Flow-issued tokens. It does not own login, signup, password reset, password storage, or primary sessions. |
 | Modular monolith | FastAPI remains one deployable backend while keeping routers, services, repositories, ports, and adapters separate. |
 | Postgres record database | Local, CI, and production-like development use Postgres as the record database. |
-| Object-storage abstraction | Local filesystem storage is allowed only behind an R2/S3-compatible storage interface. |
+| Object-storage abstraction | Local filesystem storage is allowed only behind the provider-neutral `ArtifactStore`; AWS S3 is the v0.1 hosted provider and MinIO is the local/CI protocol proof. |
 | Async-first execution | Long-running checker work does not block request/response paths. |
 | Contribution before payment | Accepted work creates a durable contribution record before payment status or reputation events. |
 
@@ -84,7 +84,7 @@ The container view shows the first 30-day implementation. It is intentionally sm
 | FastAPI backend | API contracts, workflow rules, auth dependency, lifecycle guards, module orchestration, and audit writes. |
 | Celery worker boundary | Durable project setup, checker, and background product-job execution. FastAPI background tasks are not the Workstream product-job boundary. |
 | Checker runner | Executes automated checks and stores checker results. |
-| Storage interface | Keeps file/evidence semantics stable while local storage can later move to R2/S3-compatible object storage. |
+| Storage interface | Keeps file/evidence semantics stable while local storage and the hosted AWS S3 profile implement the same provider-neutral port. |
 | Postgres | Durable record database for the full Workstream lifecycle. |
 
 <div class="page-break"></div>

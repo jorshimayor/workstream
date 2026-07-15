@@ -69,6 +69,34 @@ product adapter bindings or callback endpoints
   authority lock.
 - Unknown services are denied without persistence.
 - Access Administrator can pre-provision a service profile/link with reason.
+- Artifact system principals are fixed service identities, never human/admin
+  grants. Their eventual permissions are drawn only from the closed registry.
+  This chunk provisions the identities but does not attach them to artifact
+  call sites; each owning WS-ART chunk activates its exact service action after
+  the feature resource facts and guards exist.
+- The artifact service-principal allowlist is limited to
+  `artifact.verification.execute`, `artifact.pending_work.scan`,
+  `artifact.put_attempt.resolve`, `artifact.upload_session.expire`,
+  `artifact.binding.create`, `artifact.guide_source.read`,
+  `artifact.checker_input.materialize`, and `artifact.checker_output.write`.
+  Operator reads/retry and contributor ingest/upload actions are excluded.
+- The fixed identities are `workstream.artifact.verifier`,
+  `workstream.artifact.put_resolver`, `workstream.artifact.scheduler`,
+  `workstream.artifact.binding`, `workstream.artifact.guide_reader`,
+  `workstream.artifact.materializer`, and
+  `workstream.artifact.checker_output`. Their exact ActionId assignments are
+  the closed service-identity matrix in `docs/spec_authorization_service.md`;
+  no principal receives the union of the allowlist.
+- AUTH-09 assigns only exact registered ActionIds from that table. Generic
+  PermissionIds such as `artifact.binding.create` and
+  `artifact.checker_input.materialize` are never executable action names and
+  are never granted as an implicit union of their mapped actions. A planned
+  assignment remains inert until its owning WS-ART chunk activates the action's
+  canonical resource composer, guards, surface, and behavior proof.
+- Startup parity tests fail closed when any fixed artifact service actor,
+  identity link, action registration, PermissionId mapping, or exact assignment
+  is missing or extra. Negative tests prove each identity is denied all artifact
+  actions outside its matrix row.
 - Agent and Space subjects remain unsupported and unpersisted.
 - Every mutation is idempotent, reasoned, and audited without token material.
 - Mixed concurrent link-revoke, grant-revoke, suspend, and deactivate attempts

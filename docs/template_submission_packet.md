@@ -52,7 +52,7 @@ and do not return review decision values: `accept`, `needs_revision`, or
 
 | Type | Label | URI Or Reference | Hash | Proves Which Artifact Or Claim |
 | --- | --- | --- | --- | --- |
-| `<type>` | `<label>` | `<local/s3/r2 object reference>` | `sha256:<64 lowercase hex>` | `<claim>` |
+| `<type>` | `<label>` | `<Workstream artifact binding ID>` | `sha256:<64 lowercase hex>` | `<claim>` |
 
 When relevant, include the command, environment, dataset/version, or generation settings that produced the evidence.
 

@@ -55,8 +55,8 @@ submission and grants no review authority.
 ## ArtifactContent
 
 Workstream's provider-neutral immutable content identity: server-computed
-SHA-256, byte count, and bounded media metadata. Provider CIDs and manifests are
-replica details, not this record's identity.
+SHA-256, byte count, and bounded media metadata. Opaque provider identifiers and
+protocol observations are replica details, not this record's identity.
 
 ## ArtifactUploadItem
 
@@ -75,8 +75,9 @@ records Workstream meaning and provenance, not storage-provider state.
 ## ArtifactReplica
 
 One provider copy of `ArtifactContent`, identified by opaque provider artifact
-and optional manifest IDs. Verification, retention, availability, and integrity
-states belong here and do not create task or review states.
+and optional bounded protocol observations. Verification, availability, and
+integrity states belong here and do not create task or review states. Logical
+Workstream references are represented only by `ArtifactBinding`.
 
 ## ArtifactOperationReceipt
 
@@ -240,6 +241,35 @@ A resubmission record showing how each prior review finding was addressed.
 ## Evidence
 
 Proof supporting task completion or review decision. Examples: logs, hashes, tests, screenshots, diffs, notes.
+
+## Artifact Store
+
+The provider-neutral typed capability through which Workstream stores and reads
+private immutable bytes. `LocalStorageAdapter` implements it for development
+and focused tests. `S3CompatibleArtifactStore` implements it for MinIO
+integration and AWS S3 v0.1 production deployments. Providers do
+not own Workstream authorization, binding, lifecycle, audit, or integrity
+decisions.
+
+## Artifact Verification Job
+
+A durable Celery request to read and hash a complete stored object before its
+replica becomes bindable. PostgreSQL coordinates execution with an executor
+UUID, lease expiry, and generation fencing. This infrastructure lease is not a
+contributor task claim or reviewer lease.
+
+## Artifact Recovery Attempt
+
+A reason- and idempotency-bound Operator authorization/audit envelope with
+distinct source and retry verification job IDs. It is not executable work and
+owns no Celery executor, execution lease, or generation; the retry verification
+job owns those infrastructure coordination fields.
+
+## S3-Compatible Artifact Store
+
+The object-storage adapter that implements `ArtifactStore` using the S3
+protocol. AWS S3 is the v0.1 production provider; MinIO is used for local and CI
+integration proof. Cloudflare R2 is deferred to a separate approved initiative.
 
 ## Payment Ledger
 
