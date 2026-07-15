@@ -25,12 +25,15 @@ approval or reusable evidence. Its source remains on branch
 
 ## Active Work
 
-`WS-ART-001-02A2` is active after explicit user start. It adds only the inactive
+`WS-ART-001-02A2` implementation and internal review are complete at reviewed
+SHA `d8b8c8abc7c6dd8cf254d0c8b3d5d7c066c01b46`. All nine required reviewer
+tracks pass and every session is closed. The chunk adds only the inactive
 bounded preparation/committed-source boundary, private filesystem scratch
 ledger and deterministic cleanup mechanics, LocalStorage private helper
-refactoring, settings, and proof. Active ArtifactStore v1 behavior and factory
-wiring remain unchanged. The ledger is database-independent scratch
-coordination and never product or durable artifact state.
+refactoring, settings, documentation, and proof. Active ArtifactStore v1
+behavior and factory wiring remain unchanged. The ledger is
+database-independent scratch coordination and never product or durable artifact
+state.
 
 ## Next Proposed Chunk
 
@@ -41,5 +44,6 @@ owns MinIO and AWS S3. There is no active R2 chunk.
 
 ## Gate
 
-PR #127 is merged. `WS-ART-001-02A2` is active after explicit user start. No
-later artifact chunk starts automatically, and only the user may approve merge.
+PR #127 is merged. `WS-ART-001-02A2` is ready for publication, external checks,
+and the human merge checkpoint. No later artifact chunk starts automatically,
+and only the user may approve merge.
