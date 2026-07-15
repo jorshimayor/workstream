@@ -10,6 +10,7 @@ import errno
 import fcntl
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -104,7 +105,10 @@ class ArtifactPreparationLimits:
             self.cleanup_margin_seconds,
         )
         if any(
-            isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or value <= 0
+            or (isinstance(value, float) and not math.isfinite(value))
             for value in durations
         ):
             raise ValueError("artifact preparation durations are invalid")
@@ -261,7 +265,6 @@ class ArtifactScratchManager:
         if _ROOT_MARKER in entries:
             if ".ledger.lock" not in entries:
                 raise ValueError("artifact scratch root marker is invalid")
-            self._validate_existing_root_marker()
         self._validate_layout_entries(
             entries,
             allow_marked_ledger_temps=True,
@@ -275,13 +278,16 @@ class ArtifactScratchManager:
         try:
             self._assert_private_file_descriptor(descriptor, expected_mode=0o600)
             fcntl.flock(descriptor, fcntl.LOCK_EX)
-            self._cleanup_ledger_temps_locked()
             self._initialize_layout_locked()
         finally:
             fcntl.flock(descriptor, fcntl.LOCK_UN)
             os.close(descriptor)
 
     def _initialize_layout_locked(self) -> None:
+        entries = set(os.listdir(self._root_fd))
+        if _ROOT_MARKER in entries:
+            self._validate_existing_root_marker()
+        self._cleanup_ledger_temps_locked()
         entries = set(os.listdir(self._root_fd))
         self._validate_layout_entries(entries, allow_marked_ledger_temps=False)
         marker_created = False
@@ -310,7 +316,6 @@ class ArtifactScratchManager:
             os.fsync(self._root_fd)
         else:
             os.close(descriptor)
-            self._validate_existing_root_marker()
         if "files" not in entries:
             try:
                 os.mkdir("files", mode=0o700, dir_fd=self._root_fd)

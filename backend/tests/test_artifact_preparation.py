@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncIterator
 import errno
+import fcntl
 import hashlib
 import multiprocessing
 import os
@@ -356,17 +357,64 @@ def test_cross_process_root_initialization_is_race_safe(tmp_path: Path) -> None:
         sender.close()
         processes.append(process)
         receivers.append(receiver)
+    results: list[str | None] = []
     start.set()
-    results = [receiver.recv() for receiver in receivers]
-    for receiver in receivers:
-        receiver.close()
-    for process in processes:
-        process.join(timeout=15)
-        assert process.exitcode == 0
+    try:
+        for receiver in receivers:
+            assert receiver.poll(10), "scratch initializer did not publish a result"
+            results.append(receiver.recv())
+    finally:
+        for receiver in receivers:
+            receiver.close()
+        for process in processes:
+            process.join(timeout=15)
+            if process.is_alive():
+                process.kill()
+                process.join()
+    assert [process.exitcode for process in processes] == [0, 0]
     assert results == [None, None]
     manager = ArtifactScratchManager(root=root, limits=preparation_limits())
     assert manager._root_fd >= 0
     manager.close()
+
+
+def test_initializer_validates_live_marker_only_after_acquiring_lock(tmp_path: Path) -> None:
+    """Wait for an in-progress marker publication before validating its bytes."""
+    context = multiprocessing.get_context("spawn")
+    root = tmp_path / "shared-scratch"
+    root.mkdir(mode=0o700)
+    marker = root / ".workstream-artifact-scratch-v1"
+    marker.write_bytes(b"")
+    marker.chmod(0o600)
+    lock = root / ".ledger.lock"
+    lock.touch(mode=0o600)
+    lock_descriptor = os.open(lock, os.O_RDWR)
+    fcntl.flock(lock_descriptor, fcntl.LOCK_EX)
+    start = context.Event()
+    receiver, sender = context.Pipe(duplex=False)
+    limits = preparation_limits()
+    process = context.Process(
+        target=_initialize_shared_scratch_root,
+        args=(str(root), limits, start, sender),
+    )
+    process.start()
+    sender.close()
+    try:
+        start.set()
+        assert not receiver.poll(0.2)
+        marker.write_bytes(ArtifactScratchManager._marker_content(limits))
+        fcntl.flock(lock_descriptor, fcntl.LOCK_UN)
+        assert receiver.poll(10), "scratch initializer did not publish a result"
+        assert receiver.recv() is None
+    finally:
+        fcntl.flock(lock_descriptor, fcntl.LOCK_UN)
+        os.close(lock_descriptor)
+        receiver.close()
+        process.join(timeout=15)
+        if process.is_alive():
+            process.kill()
+            process.join()
+    assert process.exitcode == 0
 
 
 @pytest.mark.asyncio
@@ -466,8 +514,18 @@ async def test_crash_reservation_is_discovered_and_cleaned_deterministically(
         args=(str(tmp_path / "scratch"), limits, send),
     )
     process.start()
-    expires_at = await asyncio.to_thread(receive.recv)
-    await asyncio.to_thread(process.join, 10)
+    send.close()
+    try:
+        assert await asyncio.to_thread(receive.poll, 10), (
+            "crashed scratch process did not publish its reservation"
+        )
+        expires_at = receive.recv()
+        await asyncio.to_thread(process.join, 10)
+    finally:
+        receive.close()
+        if process.is_alive():
+            process.kill()
+            process.join()
     assert process.exitcode == 0
     manager = ArtifactScratchManager(root=tmp_path / "scratch", limits=limits)
     assert await manager.stale_reservation_ids(now_unix_ns=expires_at - 1) == ()
@@ -604,6 +662,9 @@ def test_limits_and_roots_fail_closed(tmp_path: Path) -> None:
         ({"stream_buffer_bytes": 0}, "buffer"),
         ({"maximum_source_bytes": HARD_MAXIMUM_ARTIFACT_BYTES + 1}, "512 MiB"),
         ({"reservation_ttl_seconds": True}, "durations"),
+        ({"reservation_ttl_seconds": float("nan")}, "durations"),
+        ({"reservation_ttl_seconds": float("inf")}, "durations"),
+        ({"reservation_ttl_seconds": float("-inf")}, "durations"),
         ({"maximum_files": 1.5}, "integer limits"),
     ],
 )
