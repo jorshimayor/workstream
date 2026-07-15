@@ -1,6 +1,6 @@
-# Chunk Contract: WS-ART-001 Object Storage Planning Amendment
+# Chunk Contract: WS-ART-001-OBJECT-STORAGE-AMENDMENT - Object Storage Planning Amendment
 
-Initiative: `WS-ART-001` | Risk: L1 | Status: Active planning only
+Initiative: `WS-ART-001` | Risk: L1 | Status: Merged through PR #120
 
 ## Goal
 

@@ -185,17 +185,17 @@ def parse_loop_metadata(intent_text: str) -> LoopMetadata:
     )
 
 
-def _validate_sha(merge_sha: str) -> None:
+def _validate_sha(merge_sha: Any) -> None:
     """Validate one untrusted Git commit identifier."""
-    if not SHA_PATTERN.fullmatch(merge_sha):
+    if not isinstance(merge_sha, str) or not SHA_PATTERN.fullmatch(merge_sha):
         raise LoopMemoryError(
             "merge SHA must contain 40 lowercase hexadecimal characters"
         )
 
 
-def _validate_repository_and_sha(repository: str, merge_sha: str) -> None:
+def _validate_repository_and_sha(repository: Any, merge_sha: Any) -> None:
     """Validate untrusted workflow inputs before constructing API paths."""
-    if not REPOSITORY_PATTERN.fullmatch(repository):
+    if not isinstance(repository, str) or not REPOSITORY_PATTERN.fullmatch(repository):
         raise LoopMemoryError("repository must be owner/name")
     _validate_sha(merge_sha)
 

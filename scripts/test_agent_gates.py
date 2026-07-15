@@ -1069,6 +1069,7 @@ def test_loop_memory_state_rejects_pre_merge_status() -> None:
     )
     original_root = checker.ROOT
     original_status_files = checker.INITIATIVE_STATUS_FILES
+    original_contract_files = checker.STATUS_BEARING_CONTRACT_FILES
     with tempfile.TemporaryDirectory() as tmpdir:
         root = Path(tmpdir)
         (root / ".agent-loop/initiatives/example").mkdir(parents=True)
@@ -1090,12 +1091,14 @@ def test_loop_memory_state_rejects_pre_merge_status() -> None:
         )
         checker.ROOT = root
         checker.INITIATIVE_STATUS_FILES = (".agent-loop/initiatives/example/STATUS.md",)
+        checker.STATUS_BEARING_CONTRACT_FILES = ()
         try:
             with contextlib.redirect_stderr(io.StringIO()):
                 assert checker.main() == 1
         finally:
             checker.ROOT = original_root
             checker.INITIATIVE_STATUS_FILES = original_status_files
+            checker.STATUS_BEARING_CONTRACT_FILES = original_contract_files
 
 
 def test_loop_memory_state_accepts_merged_fixture() -> None:
@@ -1105,6 +1108,7 @@ def test_loop_memory_state_accepts_merged_fixture() -> None:
     )
     original_root = checker.ROOT
     original_status_files = checker.INITIATIVE_STATUS_FILES
+    original_contract_files = checker.STATUS_BEARING_CONTRACT_FILES
     with tempfile.TemporaryDirectory() as tmpdir:
         root = Path(tmpdir)
         (root / ".agent-loop/initiatives/example").mkdir(parents=True)
@@ -1126,12 +1130,14 @@ def test_loop_memory_state_accepts_merged_fixture() -> None:
         )
         checker.ROOT = root
         checker.INITIATIVE_STATUS_FILES = (".agent-loop/initiatives/example/STATUS.md",)
+        checker.STATUS_BEARING_CONTRACT_FILES = ()
         try:
             with contextlib.redirect_stdout(io.StringIO()):
                 assert checker.main() == 0
         finally:
             checker.ROOT = original_root
             checker.INITIATIVE_STATUS_FILES = original_status_files
+            checker.STATUS_BEARING_CONTRACT_FILES = original_contract_files
 
 
 def test_loop_memory_state_rejects_known_merged_pr_staleness() -> None:
@@ -1147,7 +1153,10 @@ def test_loop_memory_state_rejects_known_merged_pr_staleness() -> None:
         ),
         "| `WS-AUTH-001-05B` | In review | branch | - | pending |",
         "PR #120's branch is ready for review.",
-        "`WS-ART-001-OBJECT-STORAGE-AMENDMENT` is Active planning.",
+        (
+            "# Chunk Contract: WS-ART-001-OBJECT-STORAGE-AMENDMENT\n"
+            "Status: Active planning only"
+        ),
         "PR #122 remains active.",
     )
     for sample in stale_samples:
@@ -2263,6 +2272,11 @@ def test_loop_memory_schema_v2_rejection_matrix_is_fail_closed() -> None:
     base = loop_record(updater)
     record_mutations = (
         (lambda row: row.update(state_branch="main"), "state branch"),
+        (lambda row: row.update(repository=7), "repository must be owner/name"),
+        (
+            lambda row: row["source"].update(main_sha=None),
+            "40 lowercase hexadecimal",
+        ),
         (lambda row: row["source"].update(pr_number=True), "positive PR number"),
         (lambda row: row["source"].update(pr_url="https://invalid"), "PR URL"),
         (lambda row: row.update(updated_at="2026-07-14T20:01:00Z"), "updated_at"),

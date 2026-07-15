@@ -21,6 +21,12 @@ INITIATIVE_STATUS_FILES = tuple(
     str(path.relative_to(ROOT))
     for path in (ROOT / ".agent-loop/initiatives").glob("*/STATUS.md")
 )
+STATUS_BEARING_CONTRACT_FILES = (
+    (
+        ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/chunks/"
+        "WS-ART-001-OBJECT-STORAGE-AMENDMENT.md"
+    ),
+)
 FORBIDDEN_PATTERNS = (
     (re.compile(r"PR #\d+ open", re.IGNORECASE), "merged main cannot list an open PR"),
     (
@@ -72,8 +78,8 @@ FORBIDDEN_PATTERNS = (
     ),
     (
         re.compile(
-            r"`WS-ART-001-OBJECT-STORAGE-AMENDMENT`[^\n]*Active planning",
-            re.IGNORECASE,
+            r"WS-ART-001-OBJECT-STORAGE-AMENDMENT.{0,200}Active planning",
+            re.IGNORECASE | re.DOTALL,
         ),
         "PR #120 is merged; the artifact amendment cannot remain active",
     ),
@@ -99,6 +105,7 @@ def checked_paths() -> list[Path]:
     """Return loop memory paths that must not contain pre-merge state."""
     paths = [ROOT / path for path in CHECKED_FILES]
     paths.extend(ROOT / path for path in INITIATIVE_STATUS_FILES)
+    paths.extend(ROOT / path for path in STATUS_BEARING_CONTRACT_FILES)
     return paths
 
 
