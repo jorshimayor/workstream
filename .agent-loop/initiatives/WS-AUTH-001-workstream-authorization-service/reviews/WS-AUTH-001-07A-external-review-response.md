@@ -11,7 +11,7 @@ CodeRabbit run: `920d63e5-f8b3-4525-9e61-18b44373ed1d`
 1. Corrected the specification compound noun from `self actions` to
    `self-actions`.
 2. Made the approved availability boundary explicit in code and behavior
-   evidence. Typed validation rejects allowed evidence for every one of the 30
+   evidence. Typed validation rejects allowed evidence for every one of the 50
    currently planned actions. PostgreSQL accepts exact registered allowed pairs
    because migration `0021` is intentionally availability-neutral across later
    owner activation.
@@ -26,7 +26,7 @@ able to activate its two self-actions through reviewed typed code without an
 unowned migration `0022`. PostgreSQL therefore owns stable identifier, exact
 mapping, and decision-event shape; typed catalogue validation owns temporal
 availability. The direct SQL and typed tests now prove both sides of that
-boundary for all 30 actions.
+boundary for all 50 actions.
 
 ## Non-Actionable Review Output
 
