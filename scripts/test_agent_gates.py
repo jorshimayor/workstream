@@ -1069,6 +1069,7 @@ def test_loop_memory_state_rejects_pre_merge_status() -> None:
     )
     original_root = checker.ROOT
     original_status_files = checker.INITIATIVE_STATUS_FILES
+    original_contract_files = checker.STATUS_BEARING_CONTRACT_FILES
     with tempfile.TemporaryDirectory() as tmpdir:
         root = Path(tmpdir)
         (root / ".agent-loop/initiatives/example").mkdir(parents=True)
@@ -1090,12 +1091,14 @@ def test_loop_memory_state_rejects_pre_merge_status() -> None:
         )
         checker.ROOT = root
         checker.INITIATIVE_STATUS_FILES = (".agent-loop/initiatives/example/STATUS.md",)
+        checker.STATUS_BEARING_CONTRACT_FILES = ()
         try:
             with contextlib.redirect_stderr(io.StringIO()):
                 assert checker.main() == 1
         finally:
             checker.ROOT = original_root
             checker.INITIATIVE_STATUS_FILES = original_status_files
+            checker.STATUS_BEARING_CONTRACT_FILES = original_contract_files
 
 
 def test_loop_memory_state_accepts_merged_fixture() -> None:
@@ -1105,6 +1108,7 @@ def test_loop_memory_state_accepts_merged_fixture() -> None:
     )
     original_root = checker.ROOT
     original_status_files = checker.INITIATIVE_STATUS_FILES
+    original_contract_files = checker.STATUS_BEARING_CONTRACT_FILES
     with tempfile.TemporaryDirectory() as tmpdir:
         root = Path(tmpdir)
         (root / ".agent-loop/initiatives/example").mkdir(parents=True)
@@ -1126,27 +1130,117 @@ def test_loop_memory_state_accepts_merged_fixture() -> None:
         )
         checker.ROOT = root
         checker.INITIATIVE_STATUS_FILES = (".agent-loop/initiatives/example/STATUS.md",)
+        checker.STATUS_BEARING_CONTRACT_FILES = ()
         try:
             with contextlib.redirect_stdout(io.StringIO()):
                 assert checker.main() == 0
         finally:
             checker.ROOT = original_root
             checker.INITIATIVE_STATUS_FILES = original_status_files
+            checker.STATUS_BEARING_CONTRACT_FILES = original_contract_files
+
+
+def test_loop_memory_state_rejects_known_merged_pr_staleness() -> None:
+    """Known PR #119/#120/#122 facts cannot regress to pending or active."""
+    checker = load_module(
+        "loop_memory_known_merge_staleness", "scripts/check_loop_memory_state.py"
+    )
+    stale_samples = (
+        "AUTH-05B runtime is reviewed; publication is pending.",
+        (
+            "AUTH-05B runtime SHA is internally reviewed. Its current gate is "
+            "PR publication and external checks."
+        ),
+        "| `WS-AUTH-001-05B` | In review | branch | - | pending |",
+        "PR #120's branch is ready for review.",
+        (
+            "# Chunk Contract: WS-ART-001-OBJECT-STORAGE-AMENDMENT\n"
+            "Status: Active planning only"
+        ),
+        "PR #122 remains active.",
+        "PR publication and external review remain pending.",
+        "PR publication and external checks remain pending.",
+    )
+    for sample in stale_samples:
+        assert any(
+            pattern.search(sample) for pattern, _message in checker.FORBIDDEN_PATTERNS
+        ), sample
+    valid_candidates = (
+        "`WS-AUTH-001-06` remains inactive until explicit user start.",
+        "`WS-ART-001-02A1` remains inactive until explicit user start.",
+    )
+    for sample in valid_candidates:
+        assert not any(
+            pattern.search(sample) for pattern, _message in checker.FORBIDDEN_PATTERNS
+        ), sample
 
 
 def valid_loop_intent() -> str:
     """Return one valid committed merge-intent JSON fixture."""
     return (
-        '{"schema_version":1,"initiative_id":"WS-AUTH-001",'
+        '{"schema_version":2,"initiative_id":"WS-AUTH-001",'
         '"chunk_id":"WS-AUTH-001-06","chunk_title":"Canonical Actor Profile",'
         '"next_chunk_id":"WS-AUTH-001-07","next_chunk_title":"Authorization Kernel",'
         '"next_requires_explicit_start":true}\n'
     )
 
 
+def test_pr_templates_share_merge_intent_contract() -> None:
+    """Both human templates must state the same schema-v2 merge-intent contract."""
+
+    def merge_intent_contract(path: Path) -> str:
+        text = path.read_text(encoding="utf-8")
+        start = text.index("Add exactly one new schema-v2 merge-intent file")
+        end = text.index("\n## Goal", start)
+        return " ".join(text[start:end].split())
+
+    assert merge_intent_contract(
+        ROOT / ".agent-loop/templates/PR_TRUST_BUNDLE.md"
+    ) == merge_intent_contract(ROOT / ".github/pull_request_template.md")
+
+
 def updater_base64(value: str) -> str:
     """Return GitHub-contents-style base64 text."""
     return base64.b64encode(value.encode("utf-8")).decode("ascii")
+
+
+def sign_loop_state_with_domain(
+    updater, root: Path, private_key: Path, domain: bytes
+) -> None:
+    """Sign canonical generated state with one explicit test signature domain."""
+    payload = bytearray(domain)
+    for relative_path in (
+        updater.STATE_PATH,
+        updater.RENDERED_PATH,
+        updater.LEDGER_PATH,
+    ):
+        path_bytes = relative_path.as_posix().encode("ascii")
+        content = (root / relative_path).read_bytes()
+        payload.extend(len(path_bytes).to_bytes(4, "big"))
+        payload.extend(path_bytes)
+        payload.extend(len(content).to_bytes(8, "big"))
+        payload.extend(content)
+    with tempfile.NamedTemporaryFile() as payload_file:
+        payload_file.write(payload)
+        payload_file.flush()
+        signed = subprocess.run(
+            [
+                "openssl",
+                "pkeyutl",
+                "-sign",
+                "-rawin",
+                "-inkey",
+                str(private_key),
+                "-in",
+                payload_file.name,
+            ],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        ).stdout
+    (root / updater.SIGNATURE_PATH).write_text(
+        base64.b64encode(signed).decode("ascii") + "\n", encoding="ascii"
+    )
 
 
 def loop_record(
@@ -1160,7 +1254,7 @@ def loop_record(
     """Return one complete generated-state fixture."""
     metadata = module.parse_loop_metadata(valid_loop_intent())
     return {
-        "schema_version": 1,
+        "schema_version": module.SCHEMA_VERSION,
         "repository": "Flow-Research/workstream",
         "state_branch": "automation/loop-memory",
         "updated_at": merged_at,
@@ -1206,7 +1300,10 @@ def test_post_merge_metadata_is_strict_and_bounded() -> None:
     invalid_bodies = [
         "",
         valid_loop_intent() + valid_loop_intent(),
-        valid_loop_intent().replace('"schema_version":1', '"schema_version":2'),
+        valid_loop_intent().replace('"schema_version":2', '"schema_version":1'),
+        valid_loop_intent().replace('"schema_version":2', '"schema_version":2.0'),
+        valid_loop_intent().replace('"schema_version":2', '"schema_version":"2"'),
+        valid_loop_intent().replace('"schema_version":2', '"schema_version":true'),
         valid_loop_intent().replace(
             '"chunk_id":"WS-AUTH-001-06"', '"chunk_id":"WS-POL-002-04"'
         ),
@@ -1214,7 +1311,7 @@ def test_post_merge_metadata_is_strict_and_bounded() -> None:
             '"next_chunk_title":"Authorization Kernel"', '"next_chunk_title":null'
         ),
         valid_loop_intent().replace(
-            '"schema_version":1', '"schema_version":1,"unexpected":true'
+            '"schema_version":2', '"schema_version":2,"unexpected":true'
         ),
     ]
     for body in invalid_bodies:
@@ -1223,6 +1320,196 @@ def test_post_merge_metadata_is_strict_and_bounded() -> None:
         except updater.LoopMemoryError:
             continue
         raise AssertionError(f"invalid merge intent passed: {body}")
+
+    assert_loop_error(
+        updater,
+        lambda: updater.parse_loop_metadata(
+            valid_loop_intent().replace("WS-AUTH-001-07", "WS-ART-001-02A1")
+        ),
+        "next_chunk_id must belong",
+    )
+
+
+def test_next_chunk_contract_binding_is_exact_locally_and_remotely() -> None:
+    """A non-null successor resolves to one same-title reviewed contract."""
+    updater = load_module(
+        "post_merge_successor_contract", "scripts/update_post_merge_memory.py"
+    )
+    metadata = updater.parse_loop_metadata(valid_loop_intent())
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        contract = (
+            root
+            / ".agent-loop/initiatives/WS-AUTH-001-example/chunks/"
+            "WS-AUTH-001-07-authorization-kernel.md"
+        )
+        contract.parent.mkdir(parents=True)
+        contract.write_text(
+            "# Chunk Contract: WS-AUTH-001-07 - Authorization Kernel\n",
+            encoding="utf-8",
+        )
+        updater._validate_local_successor_contract(root, metadata)
+
+        contract.write_text(
+            "# Chunk Contract: WS-AUTH-001-07 - Wrong Title\n", encoding="utf-8"
+        )
+        assert_loop_error(
+            updater,
+            lambda: updater._validate_local_successor_contract(root, metadata),
+            "heading does not match",
+        )
+        contract.unlink()
+        assert_loop_error(
+            updater,
+            lambda: updater._validate_local_successor_contract(root, metadata),
+            "exactly one chunk contract",
+        )
+        foreign_contract = (
+            root
+            / ".agent-loop/initiatives/WS-ART-001-example/chunks/"
+            "WS-AUTH-001-07-authorization-kernel.md"
+        )
+        foreign_contract.parent.mkdir(parents=True)
+        foreign_contract.write_text(
+            "# Chunk Contract: WS-AUTH-001-07 - Authorization Kernel\n",
+            encoding="utf-8",
+        )
+        assert_loop_error(
+            updater,
+            lambda: updater._validate_local_successor_contract(root, metadata),
+            "another initiative directory",
+        )
+        foreign_contract.unlink()
+        spoof_contract = (
+            root
+            / ".agent-loop/initiatives/WS-AUTH-001-spoof/chunks/"
+            "WS-AUTH-001-07-authorization-kernel.md"
+        )
+        spoof_contract.parent.mkdir(parents=True)
+        spoof_contract.write_text(
+            "# Chunk Contract: WS-AUTH-001-07 - Authorization Kernel\n",
+            encoding="utf-8",
+        )
+        assert_loop_error(
+            updater,
+            lambda: updater._validate_local_successor_contract(root, metadata),
+            "exactly one initiative directory",
+        )
+        spoof_contract.unlink()
+        spoof_contract.parent.rmdir()
+        spoof_contract.parent.parent.rmdir()
+        contract.write_text(
+            "# Chunk Contract: WS-AUTH-001-07 - Authorization Kernel\n",
+            encoding="utf-8",
+        )
+        foreign_contract.parent.mkdir(parents=True, exist_ok=True)
+        foreign_contract.write_text(
+            "# Chunk Contract: WS-AUTH-001-07 - Authorization Kernel\n",
+            encoding="utf-8",
+        )
+        assert_loop_error(
+            updater,
+            lambda: updater._validate_local_successor_contract(root, metadata),
+            "another initiative directory",
+        )
+        foreign_contract.unlink()
+        duplicate = (
+            contract.parent / "WS-AUTH-001-07-copy.md"
+        )
+        duplicate.write_text(contract.read_text(encoding="utf-8"), encoding="utf-8")
+        assert_loop_error(
+            updater,
+            lambda: updater._validate_local_successor_contract(root, metadata),
+            "exactly one chunk contract",
+        )
+
+    class RemoteClient:
+        def __init__(self, tree, contract_text: str, returned_sha: str = "e" * 40):
+            self.tree = tree
+            self.contract_text = contract_text
+            self.returned_sha = returned_sha
+
+        def get_json(self, path: str):
+            if "/git/trees/" in path:
+                return self.tree
+            return {
+                "encoding": "base64",
+                "sha": self.returned_sha,
+                "content": updater_base64(self.contract_text),
+            }
+
+    tree_item = {
+        "type": "blob",
+        "path": (
+            ".agent-loop/initiatives/WS-AUTH-001-example/chunks/"
+            "WS-AUTH-001-07-authorization-kernel.md"
+        ),
+        "sha": "e" * 40,
+    }
+    foreign_tree_item = dict(tree_item)
+    foreign_tree_item["path"] = foreign_tree_item["path"].replace(
+        "WS-AUTH-001-example", "WS-ART-001-example"
+    )
+    spoof_tree_item = dict(tree_item)
+    spoof_tree_item["path"] = spoof_tree_item["path"].replace(
+        "WS-AUTH-001-example", "WS-AUTH-001-spoof"
+    )
+    non_contract_tree_item = dict(tree_item)
+    non_contract_tree_item["path"] = non_contract_tree_item["path"].removesuffix(
+        ".md"
+    ) + ".txt"
+    valid_tree = {
+        "truncated": False,
+        "tree": [non_contract_tree_item, tree_item],
+    }
+    updater._validate_remote_successor_contract(
+        RemoteClient(
+            valid_tree,
+            "# Chunk Contract: WS-AUTH-001-07 - Authorization Kernel\n",
+        ),
+        "Flow-Research/workstream",
+        "b" * 40,
+        metadata,
+    )
+    remote_cases = (
+        ({"truncated": True, "tree": [tree_item]}, "Authorization Kernel", "incomplete"),
+        ({"truncated": False, "tree": []}, "Authorization Kernel", "exactly one"),
+        (
+            {"truncated": False, "tree": [foreign_tree_item]},
+            "Authorization Kernel",
+            "exactly one reviewed-head initiative directory",
+        ),
+        (
+            {"truncated": False, "tree": [tree_item, foreign_tree_item]},
+            "Authorization Kernel",
+            "another reviewed-head initiative directory",
+        ),
+        (
+            {"truncated": False, "tree": [tree_item, spoof_tree_item]},
+            "Authorization Kernel",
+            "exactly one reviewed-head initiative directory",
+        ),
+        (
+            {"truncated": False, "tree": [tree_item, dict(tree_item)]},
+            "Authorization Kernel",
+            "exactly one",
+        ),
+        (valid_tree, "Wrong Title", "heading does not match"),
+    )
+    for tree, title, expected in remote_cases:
+        assert_loop_error(
+            updater,
+            lambda tree=tree, title=title: updater._validate_remote_successor_contract(
+                RemoteClient(
+                    tree,
+                    f"# Chunk Contract: WS-AUTH-001-07 - {title}\n",
+                ),
+                "Flow-Research/workstream",
+                "b" * 40,
+                metadata,
+            ),
+            expected,
+        )
 
 
 def test_post_merge_state_is_idempotent_and_monotonic() -> None:
@@ -1393,6 +1680,104 @@ def test_post_merge_reconciliation_bootstraps_and_recovers_every_commit() -> Non
         )
 
 
+def test_loop_memory_target_resolution_rejects_stale_replays() -> None:
+    """Dispatch must be current; queued push may only reconcile forward."""
+    updater = load_module(
+        "post_merge_target_resolution", "scripts/update_post_merge_memory.py"
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        subprocess.run(
+            ["git", "init", "--initial-branch", "main", str(root)],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        subprocess.run(
+            ["git", "-C", str(root), "config", "user.email", "test@example.test"],
+            check=True,
+        )
+        subprocess.run(
+            ["git", "-C", str(root), "config", "user.name", "Test"], check=True
+        )
+        tracked = root / "state.txt"
+        tracked.write_text("one\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(root), "add", "state.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(root), "commit", "-m", "one"],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        first = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "HEAD"],
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+        ).stdout.strip()
+        tracked.write_text("two\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(root), "add", "state.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(root), "commit", "-m", "two"],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        current = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "HEAD"],
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+        ).stdout.strip()
+        assert (
+            updater.resolve_reconciliation_target(root, "push", first, current)
+            == current
+        )
+        assert (
+            updater.resolve_reconciliation_target(
+                root, "repository_dispatch", current, current
+            )
+            == current
+        )
+        assert_loop_error(
+            updater,
+            lambda: updater.resolve_reconciliation_target(
+                root, "repository_dispatch", first, current
+            ),
+            "replay target is stale",
+        )
+
+        subprocess.run(
+            ["git", "-C", str(root), "switch", "-c", "divergent", first],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        (root / "other.txt").write_text("other\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(root), "add", "other.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(root), "commit", "-m", "divergent"],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        divergent = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "HEAD"],
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+        ).stdout.strip()
+        assert_loop_error(
+            updater,
+            lambda: updater.resolve_reconciliation_target(
+                root, "push", divergent, current
+            ),
+            "not on current protected-main ancestry",
+        )
+        assert_loop_error(
+            updater,
+            lambda: updater.resolve_reconciliation_target(
+                root, "manual", current, current
+            ),
+            "unsupported loop-memory event",
+        )
+
+
 def test_post_merge_collection_binds_exact_pr_and_checks() -> None:
     """The collector binds one main merge SHA and final-head check evidence."""
     updater = load_module(
@@ -1471,6 +1856,26 @@ def test_post_merge_collection_binds_exact_pr_and_checks() -> None:
                 }
             ]
         },
+        f"/repos/Flow-Research/workstream/git/trees/{head_sha}?recursive=1": {
+            "truncated": False,
+            "tree": [
+                {
+                    "type": "blob",
+                    "path": (
+                        ".agent-loop/initiatives/WS-AUTH-001-example/chunks/"
+                        "WS-AUTH-001-07-authorization-kernel.md"
+                    ),
+                    "sha": "e" * 40,
+                }
+            ],
+        },
+        f"/repos/Flow-Research/workstream/git/blobs/{'e' * 40}": {
+            "encoding": "base64",
+            "sha": "e" * 40,
+            "content": updater_base64(
+                "# Chunk Contract: WS-AUTH-001-07 - Authorization Kernel\n"
+            ),
+        },
     }
 
     class FakeClient:
@@ -1513,8 +1918,9 @@ def test_generated_loop_memory_validator_detects_drift() -> None:
         )
         rendered_path.write_text("stale\n", encoding="utf-8")
         failures = checker.generated_state_failures(root)
-        assert any("merge SHA" in failure for failure in failures)
-        assert any("completed chunk" in failure for failure in failures)
+        assert failures == [
+            ".agent-loop/LOOP_STATE.md: rendered state does not match canonical JSON"
+        ]
 
 
 def test_generated_loop_memory_signature_authenticates_every_canonical_file() -> None:
@@ -1606,6 +2012,487 @@ def test_generated_loop_memory_signature_authenticates_every_canonical_file() ->
         )
 
 
+def test_schema_v1_signed_state_is_discarded_before_clean_v2_bootstrap() -> None:
+    """A valid old-domain signature cannot preserve any schema-v1 state."""
+    updater = load_module(
+        "post_merge_v1_clean_cut", "scripts/update_post_merge_memory.py"
+    )
+    checker = load_module(
+        "post_merge_v1_clean_cut_checker", "scripts/check_loop_memory_state.py"
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        private_key = root / "private.pem"
+        public_key = root / "public.pem"
+        subprocess.run(
+            ["openssl", "genpkey", "-algorithm", "ED25519", "-out", private_key],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        subprocess.run(
+            ["openssl", "pkey", "-in", private_key, "-pubout", "-out", public_key],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        rejected_v1_state = loop_record(updater)
+        rejected_v1_state["schema_version"] = 1
+        rejected_v1_state["completed_chunk"]["schema_version"] = 1
+        rejected_v1_state["completed_chunk"]["next_chunk_id"] = "WS-ART-001-02A1"
+        rejected_v1_state["completed_chunk"]["next_chunk_title"] = "External Adapter"
+        rejected_v1_state["gate"]["next_chunk_id"] = "WS-ART-001-02A1"
+        rejected_v1_state["gate"]["next_chunk_title"] = "External Adapter"
+        entry = {
+            "schema_version": 1,
+            "previous_entry_hash": None,
+            "record": rejected_v1_state,
+            "entry_hash": updater._ledger_hash(None, rejected_v1_state),
+        }
+        agent_loop = root / ".agent-loop"
+        agent_loop.mkdir()
+        (root / updater.STATE_PATH).write_text(
+            updater._canonical_json(rejected_v1_state, pretty=True), encoding="utf-8"
+        )
+        (root / updater.RENDERED_PATH).write_text(
+            updater.render_state(rejected_v1_state), encoding="utf-8"
+        )
+        (root / updater.LEDGER_PATH).write_text(
+            f"{updater._canonical_json(entry)}\n", encoding="utf-8"
+        )
+        sign_loop_state_with_domain(
+            updater,
+            root,
+            private_key,
+            b"workstream-loop-memory-signature-v1\0",
+        )
+        sentinel = agent_loop / "preserved.txt"
+        sentinel.write_text("not generated\n", encoding="utf-8")
+
+        assert updater.prepare_generated_state_root(root, public_key) is False
+        for generated_path in (
+            updater.STATE_PATH,
+            updater.RENDERED_PATH,
+            updater.LEDGER_PATH,
+            updater.SIGNATURE_PATH,
+        ):
+            assert not (root / generated_path).exists()
+        assert sentinel.read_text(encoding="utf-8") == "not generated\n"
+
+        current = loop_record(updater)
+        updater.apply_merge_record(root, current)
+        updater.sign_generated_state(root, private_key)
+        updater.verify_generated_state_signature(
+            root, public_key, current["source"]["main_sha"]
+        )
+        assert checker.generated_state_failures(root) == []
+
+
+def test_schema_v1_ledger_and_signature_domains_fail_independently() -> None:
+    """V2 state rejects an isolated v1 ledger envelope and v1 signature domain."""
+    updater = load_module(
+        "post_merge_v1_isolated_rejection", "scripts/update_post_merge_memory.py"
+    )
+    checker = load_module(
+        "post_merge_v1_isolated_checker", "scripts/check_loop_memory_state.py"
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        ledger_root = root / "ledger"
+        updater.apply_merge_record(ledger_root, loop_record(updater))
+        ledger_path = ledger_root / updater.LEDGER_PATH
+        ledger_entry = json.loads(ledger_path.read_text(encoding="utf-8"))
+        ledger_entry["schema_version"] = 1
+        ledger_path.write_text(
+            f"{updater._canonical_json(ledger_entry)}\n", encoding="utf-8"
+        )
+        assert_loop_error(
+            updater,
+            lambda: updater.validate_generated_state(ledger_root),
+            "ledger entry has an invalid schema",
+        )
+        assert any(
+            "invalid entry schema" in failure
+            for failure in checker.generated_state_failures(ledger_root)
+        )
+
+        signature_root = root / "signature"
+        updater.apply_merge_record(signature_root, loop_record(updater))
+        updater.validate_generated_state(signature_root)
+        private_key = root / "private.pem"
+        public_key = root / "public.pem"
+        subprocess.run(
+            ["openssl", "genpkey", "-algorithm", "ED25519", "-out", private_key],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        subprocess.run(
+            ["openssl", "pkey", "-in", private_key, "-pubout", "-out", public_key],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        sign_loop_state_with_domain(
+            updater,
+            signature_root,
+            private_key,
+            b"workstream-loop-memory-signature-v1\0",
+        )
+        assert_loop_error(
+            updater,
+            lambda: updater.verify_generated_state_signature(
+                signature_root, public_key, "a" * 40
+            ),
+            "signature verification failed",
+        )
+
+
+def test_live_and_historical_records_reject_cross_initiative_gates() -> None:
+    """Hash-consistent state still fails when lifecycle authority crosses initiatives."""
+    updater = load_module(
+        "post_merge_cross_scope_state", "scripts/update_post_merge_memory.py"
+    )
+    checker = load_module(
+        "post_merge_cross_scope_checker", "scripts/check_loop_memory_state.py"
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        record = loop_record(updater)
+        record["completed_chunk"]["next_chunk_id"] = "WS-ART-001-02A1"
+        record["completed_chunk"]["next_chunk_title"] = "External Adapter"
+        record["gate"]["next_chunk_id"] = "WS-ART-001-02A1"
+        record["gate"]["next_chunk_title"] = "External Adapter"
+        entry = updater._ledger_entry(record, None)
+        (root / updater.STATE_PATH).parent.mkdir(parents=True)
+        (root / updater.STATE_PATH).write_text(
+            updater._canonical_json(record, pretty=True), encoding="utf-8"
+        )
+        (root / updater.RENDERED_PATH).write_text(
+            updater.render_state(record), encoding="utf-8"
+        )
+        (root / updater.LEDGER_PATH).write_text(
+            f"{updater._canonical_json(entry)}\n", encoding="utf-8"
+        )
+        assert_loop_error(
+            updater,
+            lambda: updater.validate_generated_state(root),
+            "next_chunk_id must belong",
+        )
+        failures = checker.generated_state_failures(root)
+        assert any("next chunk does not belong" in failure for failure in failures)
+
+        valid = loop_record(updater)
+        invalid_gate = json.loads(json.dumps(valid))
+        invalid_gate["gate"]["next_chunk_title"] = "Mismatched"
+        entry = updater._ledger_entry(invalid_gate, None)
+        (root / updater.STATE_PATH).write_text(
+            updater._canonical_json(invalid_gate, pretty=True), encoding="utf-8"
+        )
+        (root / updater.RENDERED_PATH).write_text(
+            updater.render_state(invalid_gate), encoding="utf-8"
+        )
+        (root / updater.LEDGER_PATH).write_text(
+            f"{updater._canonical_json(entry)}\n", encoding="utf-8"
+        )
+        assert_loop_error(
+            updater,
+            lambda: updater.validate_generated_state(root),
+            "next gate does not match",
+        )
+        assert any(
+            "next gate does not match" in failure
+            for failure in checker.generated_state_failures(root)
+        )
+
+
+def test_loop_memory_schema_v2_rejection_matrix_is_fail_closed() -> None:
+    """Schema-v2 trust boundaries reject malformed metadata and state records."""
+    updater = load_module(
+        "post_merge_v2_rejection_matrix", "scripts/update_post_merge_memory.py"
+    )
+    checker = load_module(
+        "post_merge_v2_checker_matrix", "scripts/check_loop_memory_state.py"
+    )
+
+    no_successor_text = valid_loop_intent().replace(
+        '"next_chunk_id":"WS-AUTH-001-07","next_chunk_title":"Authorization Kernel"',
+        '"next_chunk_id":null,"next_chunk_title":null',
+    )
+    no_successor = updater.parse_loop_metadata(no_successor_text)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        updater._validate_local_successor_contract(root, no_successor)
+        updater._validate_remote_successor_contract(
+            SimpleNamespace(get_json=lambda _path: None),
+            "Flow-Research/workstream",
+            "a" * 40,
+            no_successor,
+        )
+        no_successor_record = loop_record(updater)
+        no_successor_record["completed_chunk"] = updater.asdict(no_successor)
+        no_successor_record["gate"] = {
+            "status": "stopped_after_merge",
+            "next_chunk_id": None,
+            "next_chunk_title": None,
+            "next_requires_explicit_start": True,
+        }
+        assert updater.apply_merge_record(root, no_successor_record) is True
+        assert updater.apply_merge_record(root, no_successor_record) is False
+        updater.validate_generated_state(root)
+        assert "Next chunk: none recorded" in (
+            root / updater.RENDERED_PATH
+        ).read_text(encoding="utf-8")
+        assert checker.generated_state_failures(root) == []
+
+        private_key = root / "private.pem"
+        public_key = root / "public.pem"
+        subprocess.run(
+            ["openssl", "genpkey", "-algorithm", "ED25519", "-out", private_key],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        subprocess.run(
+            ["openssl", "pkey", "-in", private_key, "-pubout", "-out", public_key],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        updater.sign_generated_state(root, private_key)
+        updater.verify_generated_state_signature(root, public_key, "a" * 40)
+        assert checker.generated_state_failures(root) == []
+
+    assert updater._contract_title("not a contract\n", "WS-AUTH-001-07") is None
+    assert (
+        updater._contract_title(
+            "# Chunk Contract: WS-AUTH-001-07 Authorization Kernel\n",
+            "WS-AUTH-001-07",
+        )
+        is None
+    )
+    assert (
+        updater._contract_title(
+            "# Chunk Contract: WS-AUTH-001-07\n", "WS-AUTH-001-07"
+        )
+        is None
+    )
+    assert (
+        updater._initiative_directory_from_path(
+        ".agent-loop/initiatives/WS-AUTH-001-example/chunks/WS-AUTH-001-07.md",
+        "WS-AUTH-001",
+        )
+        == "WS-AUTH-001-example"
+    )
+    assert (
+        updater._initiative_directory_from_path(
+        ".agent-loop/initiatives/WS-ART-001-example/chunks/WS-AUTH-001-07.md",
+        "WS-AUTH-001",
+        )
+        is None
+    )
+    assert updater._is_chunk_contract_path(
+        ".agent-loop/initiatives/WS-AUTH-001-example/chunks/WS-AUTH-001-07.md",
+        "WS-AUTH-001-example",
+    )
+    assert not updater._is_chunk_contract_path(
+        ".agent-loop/initiatives/WS-AUTH-001-example/chunks/WS-AUTH-001-07.txt",
+        "WS-AUTH-001-example",
+    )
+
+    metadata_payload = json.loads(valid_loop_intent())
+    metadata_mutations = (
+        ("initiative_id", None),
+        ("chunk_title", ""),
+        ("next_chunk_title", 7),
+        ("next_requires_explicit_start", "yes"),
+    )
+    for field, value in metadata_mutations:
+        malformed = dict(metadata_payload)
+        malformed[field] = value
+        assert_loop_error(
+            updater,
+            lambda malformed=malformed: updater.parse_loop_metadata(
+                json.dumps(malformed)
+            ),
+            "must" if field != "initiative_id" else "required",
+        )
+    oversized_id = "WS-" + ("A" * 78)
+    oversized_metadata = dict(metadata_payload)
+    oversized_metadata["initiative_id"] = oversized_id
+    assert_loop_error(
+        updater,
+        lambda: updater.parse_loop_metadata(json.dumps(oversized_metadata)),
+        "bounded single-line",
+    )
+
+    class RemoteClient:
+        def __init__(self, tree, returned_sha: str = "e" * 40):
+            self.tree = tree
+            self.returned_sha = returned_sha
+
+        def get_json(self, path: str):
+            if "/git/trees/" in path:
+                return self.tree
+            return {
+                "encoding": "base64",
+                "sha": self.returned_sha,
+                "content": updater_base64(
+                    "# Chunk Contract: WS-AUTH-001-07 - Authorization Kernel\n"
+                ),
+            }
+
+    valid_item = {
+        "type": "blob",
+        "path": (
+            ".agent-loop/initiatives/WS-AUTH-001-example/chunks/"
+            "WS-AUTH-001-07-authorization-kernel.md"
+        ),
+        "sha": "e" * 40,
+    }
+    assert_loop_error(
+        updater,
+        lambda: updater._validate_remote_successor_contract(
+            RemoteClient(
+                {
+                    "truncated": False,
+                    "tree": [None, {"type": "tree"}, {"type": "blob"}, valid_item],
+                },
+                returned_sha="f" * 40,
+            ),
+            "Flow-Research/workstream",
+            "a" * 40,
+            updater.parse_loop_metadata(valid_loop_intent()),
+        ),
+        "identity does not match",
+    )
+    invalid_sha_item = dict(valid_item)
+    invalid_sha_item["sha"] = "invalid"
+    assert_loop_error(
+        updater,
+        lambda: updater._validate_remote_successor_contract(
+            RemoteClient({"truncated": False, "tree": [invalid_sha_item]}),
+            "Flow-Research/workstream",
+            "a" * 40,
+            updater.parse_loop_metadata(valid_loop_intent()),
+        ),
+        "canonical blob SHA",
+    )
+
+    assert_loop_error(
+        updater,
+        lambda: updater._git_lines(Path("/not/a/repository"), ["status"], "git failed"),
+        "git failed",
+    )
+    assert_loop_error(
+        updater,
+        lambda: updater._is_ancestor(
+            Path("/not/a/repository"), "a" * 40, "b" * 40
+        ),
+        "cannot resolve main commit ancestry",
+    )
+    assert updater._latest_named(
+        [
+            {},
+            {"name": "gate", "started_at": "2026-01-02"},
+            {"name": "gate", "started_at": "2026-01-01"},
+        ],
+        "name",
+        "started_at",
+    )["gate"]["started_at"] == "2026-01-02"
+    for value, expected in (
+        (None, "ISO timestamp"),
+        ("not-a-time", "ISO timestamp"),
+        ("2026-07-14T20:00:00", "timezone"),
+    ):
+        assert_loop_error(
+            updater,
+            lambda value=value: updater._parse_timestamp(value, "time"),
+            expected,
+        )
+
+    base = loop_record(updater)
+    record_mutations = (
+        (lambda row: row.update(schema_version=2.0), "invalid schema"),
+        (lambda row: row.update(schema_version="2"), "invalid schema"),
+        (lambda row: row.update(schema_version=True), "invalid schema"),
+        (lambda row: row.update(state_branch="main"), "state branch"),
+        (lambda row: row.update(repository=7), "repository must be owner/name"),
+        (
+            lambda row: row["source"].update(main_sha=None),
+            "40 lowercase hexadecimal",
+        ),
+        (lambda row: row["source"].update(pr_number=True), "positive PR number"),
+        (lambda row: row["source"].update(pr_url="https://invalid"), "PR URL"),
+        (lambda row: row.update(updated_at="2026-07-14T20:01:00Z"), "updated_at"),
+        (lambda row: row.update(completed_chunk=[]), "JSON object"),
+        (
+            lambda row: row["completed_chunk"].update(chunk_title="valid\ninjected"),
+            "single-line",
+        ),
+        (lambda row: row["source"].update(intent_path="wrong"), "intent path"),
+        (lambda row: row.update(active={}), "active chunk state"),
+        (lambda row: row.update(checks=[]), "check evidence"),
+        (lambda row: row["checks"].update(required={}), "required-check"),
+        (
+            lambda row: row["checks"]["required"].update({"agent-gates": []}),
+            "invalid for agent-gates",
+        ),
+        (
+            lambda row: row["checks"]["required"]["agent-gates"].update(kind=7),
+            "kind is invalid",
+        ),
+        (
+            lambda row: row["checks"]["required"]["agent-gates"].update(
+                conclusion=7
+            ),
+            "conclusion is invalid",
+        ),
+        (
+            lambda row: row["checks"]["required"]["agent-gates"].update(url=7),
+            "URL is invalid",
+        ),
+        (
+            lambda row: row["checks"].update(all_required_passed=False),
+            "aggregate check evidence",
+        ),
+    )
+    for mutate, expected in record_mutations:
+        malformed = json.loads(json.dumps(base))
+        mutate(malformed)
+        assert_loop_error(
+            updater,
+            lambda malformed=malformed: updater._validate_record(malformed),
+            expected,
+        )
+        assert checker._record_failures(malformed, "record")
+
+    metadata_failure_mutations = (
+        lambda value: value.clear(),
+        lambda value: value.update(schema_version=1),
+        lambda value: value.update(schema_version=2.0),
+        lambda value: value.update(schema_version="2"),
+        lambda value: value.update(schema_version=True),
+        lambda value: value.update(initiative_id="bad"),
+        lambda value: value.update(initiative_id="WS-" + ("A" * 78)),
+        lambda value: value.update(chunk_id="WS-AUTH-" + ("A" * 73)),
+        lambda value: value.update(chunk_id="WS-ART-001-01"),
+        lambda value: value.update(chunk_title=""),
+        lambda value: value.update(chunk_title="x" * 161),
+        lambda value: value.update(chunk_title="valid\ninjected"),
+        lambda value: value.update(next_chunk_title=None),
+        lambda value: value.update(next_chunk_id="WS-ART-001-02"),
+        lambda value: value.update(next_chunk_id="WS-AUTH-" + ("A" * 73)),
+        lambda value: value.update(next_chunk_title=7),
+        lambda value: value.update(next_chunk_title="x" * 161),
+        lambda value: value.update(next_requires_explicit_start="yes"),
+    )
+    for mutate in metadata_failure_mutations:
+        malformed = json.loads(json.dumps(base["completed_chunk"]))
+        mutate(malformed)
+        assert checker._metadata_failures(malformed, "metadata")
+
+
 def test_generated_loop_memory_prepare_recovers_hostile_path_types() -> None:
     """Directories and symlinks cannot wedge deterministic state reconstruction."""
     updater = load_module(
@@ -1673,9 +2560,13 @@ def test_loop_memory_workflow_isolated_write_boundary() -> None:
     assert "workflow_dispatch" not in workflow
     assert "repository_dispatch" in workflow
     assert "persist-credentials: false" in workflow
+    assert "ref: main" in workflow
     assert "contents: write" in workflow
     assert "pull-requests: read" in workflow
     assert "LOOP_MEMORY_SIGNING_KEY" in workflow
+    assert workflow.count("LOOP_MEMORY_SIGNING_KEY:") == 1
+    assert "LOOP_MEMORY_PRIVATE_KEY" not in workflow
+    assert 'trap \'rm -f "${private_key}"\' EXIT' in workflow
     assert "prepare-state" in workflow
     assert ".agent-loop/STATE.sig" in workflow
     assert 'git -C "${state_dir}" add -f --' in workflow
@@ -1684,8 +2575,32 @@ def test_loop_memory_workflow_isolated_write_boundary() -> None:
     assert "HEAD:refs/heads/main" not in workflow
     assert "gh pr create" not in workflow
     assert "plan-commits" in workflow
+    assert "resolve-target" in workflow
+    assert "EVENT_SHA" in workflow
+    assert "TARGET_SHA" in workflow
+    assert "MERGE_SHA" not in workflow
+    assert "github.event.client_payload.target_sha" in workflow
+    assert "github.event.client_payload.merge_sha" not in workflow
+    job_environment = workflow.split("    steps:", 1)[0]
+    assert "GH_TOKEN:" not in job_environment
+    assert "GITHUB_TOKEN:" not in job_environment
+    assert workflow.count("GH_TOKEN: ${{ github.token }}") == 3
+    assert workflow.count("GITHUB_TOKEN: ${{ github.token }}") == 1
+    assert "replay target is stale" in (
+        ROOT / "scripts/update_post_merge_memory.py"
+    ).read_text(encoding="utf-8")
     assert "--current-sha" in workflow
     assert "update_post_merge_memory.py sign-state" in workflow
+    assert "check_loop_memory_state.py" in workflow
+    assert workflow.index("Resolve trusted protected-main target") < workflow.index(
+        "Prepare generated state branch"
+    )
+    assert workflow.index("prepare-state") < workflow.index("plan-commits")
+    assert workflow.index("plan-commits") < workflow.index("sign-state")
+    assert workflow.index("sign-state") < workflow.index("--expected-main-sha")
+    assert workflow.index("--expected-main-sha") < workflow.index(
+        "check_loop_memory_state.py"
+    )
     assert "validate-merge-intent" in agent_gates
     assert "github.event.pull_request.body" not in agent_gates
 
@@ -1873,7 +2788,29 @@ def test_committed_merge_intent_fails_closed_on_untrusted_github_payloads() -> N
         def get_paginated(self, _path: str):
             return self.files
 
-        def get_json(self, _path: str):
+        def get_json(self, path: str):
+            if "/git/trees/" in path:
+                return {
+                    "truncated": False,
+                    "tree": [
+                        {
+                            "type": "blob",
+                            "path": (
+                                ".agent-loop/initiatives/WS-AUTH-001-example/chunks/"
+                                "WS-AUTH-001-07-authorization-kernel.md"
+                            ),
+                            "sha": "e" * 40,
+                        }
+                    ],
+                }
+            if "/git/blobs/" in path:
+                return {
+                    "encoding": "base64",
+                    "sha": "e" * 40,
+                    "content": updater_base64(
+                        "# Chunk Contract: WS-AUTH-001-07 - Authorization Kernel\n"
+                    ),
+                }
             return self.content
 
     added = [{"filename": canonical_path, "status": "added"}]
@@ -2100,6 +3037,16 @@ def test_post_merge_state_rejects_corrupt_files_and_cli_misuse() -> None:
         intent_path = intent_repo / ".agent-loop/merge-intents/WS-AUTH-001-06.json"
         intent_path.parent.mkdir(parents=True)
         intent_path.write_text(valid_loop_intent(), encoding="utf-8")
+        contract_path = (
+            intent_repo
+            / ".agent-loop/initiatives/WS-AUTH-001-example/chunks/"
+            "WS-AUTH-001-07-authorization-kernel.md"
+        )
+        contract_path.parent.mkdir(parents=True)
+        contract_path.write_text(
+            "# Chunk Contract: WS-AUTH-001-07 - Authorization Kernel\n",
+            encoding="utf-8",
+        )
         subprocess.run(
             [
                 "git",
@@ -2107,6 +3054,7 @@ def test_post_merge_state_rejects_corrupt_files_and_cli_misuse() -> None:
                 str(intent_repo),
                 "add",
                 intent_path.relative_to(intent_repo),
+                contract_path.relative_to(intent_repo),
             ],
             check=True,
         )
@@ -2218,8 +3166,23 @@ def test_generated_loop_memory_validator_covers_corruption_matrix() -> None:
             assert checker.main(["--state-root", str(valid_root)]) == 0
 
         state_path = valid_root / updater.STATE_PATH
+        ledger_path = valid_root / updater.LEDGER_PATH
+        valid_ledger_text = ledger_path.read_text(encoding="utf-8")
+        for malformed_schema_version in (2.0, "2", True):
+            malformed_ledger = json.loads(valid_ledger_text)
+            malformed_ledger["schema_version"] = malformed_schema_version
+            ledger_path.write_text(
+                f"{json.dumps(malformed_ledger)}\n",
+                encoding="utf-8",
+            )
+            assert any(
+                "invalid entry schema" in failure
+                for failure in checker.generated_state_failures(valid_root)
+            )
+        ledger_path.write_text(valid_ledger_text, encoding="utf-8")
+
         state = json.loads(state_path.read_text(encoding="utf-8"))
-        state["schema_version"] = 2
+        state["schema_version"] = 1
         state["state_branch"] = "main"
         state_path.write_text(json.dumps(state), encoding="utf-8")
         failures = checker.generated_state_failures(valid_root)
@@ -2315,8 +3278,18 @@ def test_merge_ledger_rejects_schema_record_and_ancestry_corruption() -> None:
         lambda: updater._validate_ledger_entries([{}]),
         "invalid schema",
     )
+    for malformed_schema_version in (2.0, "2", True):
+        malformed_envelope = updater._ledger_entry(loop_record(updater), None)
+        malformed_envelope["schema_version"] = malformed_schema_version
+        assert_loop_error(
+            updater,
+            lambda malformed_envelope=malformed_envelope: updater._validate_ledger_entries(
+                [malformed_envelope]
+            ),
+            "invalid schema",
+        )
     invalid_record = {
-        "schema_version": 1,
+        "schema_version": updater.SCHEMA_VERSION,
         "previous_entry_hash": None,
         "record": [],
         "entry_hash": "bad",
@@ -2334,7 +3307,7 @@ def test_merge_ledger_rejects_schema_record_and_ancestry_corruption() -> None:
         lambda: updater._validate_ledger_entries(
             [updater._ledger_entry(bad_sha_record, None)]
         ),
-        "canonical main SHA",
+        "lowercase hexadecimal",
     )
 
     first = loop_record(updater)
@@ -3577,12 +4550,20 @@ def main() -> int:
         test_stale_wording_catches_multiline_legacy_status_reconstruction,
         test_loop_memory_state_rejects_pre_merge_status,
         test_loop_memory_state_accepts_merged_fixture,
+        test_loop_memory_state_rejects_known_merged_pr_staleness,
+        test_pr_templates_share_merge_intent_contract,
         test_post_merge_metadata_is_strict_and_bounded,
+        test_next_chunk_contract_binding_is_exact_locally_and_remotely,
         test_post_merge_state_is_idempotent_and_monotonic,
         test_post_merge_reconciliation_bootstraps_and_recovers_every_commit,
+        test_loop_memory_target_resolution_rejects_stale_replays,
         test_post_merge_collection_binds_exact_pr_and_checks,
         test_generated_loop_memory_validator_detects_drift,
         test_generated_loop_memory_signature_authenticates_every_canonical_file,
+        test_schema_v1_signed_state_is_discarded_before_clean_v2_bootstrap,
+        test_schema_v1_ledger_and_signature_domains_fail_independently,
+        test_live_and_historical_records_reject_cross_initiative_gates,
+        test_loop_memory_schema_v2_rejection_matrix_is_fail_closed,
         test_generated_loop_memory_prepare_recovers_hostile_path_types,
         test_generated_loop_memory_escapes_markdown_metadata,
         test_loop_memory_workflow_isolated_write_boundary,

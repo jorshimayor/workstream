@@ -21,6 +21,11 @@
 - Authenticate all generated state with an Actions-only Ed25519 key and a
   reviewed public key because organization policy disables deploy-key writer
   restriction for the automation branch.
+- Scope a non-null merge-intent successor to the completed chunk's own
+  initiative. Cross-initiative priority remains in human-owned planning and
+  cannot be asserted by immutable post-merge metadata.
+- Reject schema v1 everywhere and start the replacement signed ledger from the
+  `WS-ENG-001-03` schema-v2 merge intent.
 
 ## Deferred
 

@@ -9,9 +9,10 @@ in sync with this template.
 
 Merge intent: `.agent-loop/merge-intents/<CHUNK_ID>.json`
 
-Add exactly one new merge-intent file in this PR. It must contain the chunk,
-title, next chunk or JSON `null`, and explicit-start requirement. Trusted
-post-merge automation reads that immutable file from the reviewed final head.
+Add exactly one new schema-v2 merge-intent file in this PR. It must contain the
+chunk, title, same-initiative next chunk or JSON `null`, and explicit-start
+requirement. Trusted post-merge automation reads that immutable file from the
+reviewed final head. A merge intent never prioritizes another initiative.
 
 ## Goal
 
