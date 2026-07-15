@@ -1,5 +1,17 @@
 # Review Log
 
+## 2026-07-15 - WS-AUTH-001-07B Internal Review Passed
+
+Exact implementation SHA `aabc0f4c0131c53600750258a0bec8be404c7b90`
+passed senior engineering, architecture/reuse, security/auth, product/ops,
+docs, QA/test, test-delta, and CI-integrity review after all valid findings were
+repaired. The request-scoped kernel exposes only `require`, explicitly denies
+active-but-unimplemented actions, binds denial restaging to the exact pending
+decision, and cuts actor self-read/self-update over without token-role or grant
+authority. The focused suite passed 210 tests at 94.65 percent branch coverage;
+real API E2E and all static repository gates passed. Ready PR publication is
+pending; AUTH-08 remains inactive.
+
 ## 2026-07-15 - WS-AUTH-001-07A Canonical Review Amendment Passed
 
 Exact reviewed head `160af8afd030f042ee72ec963e6f47cd8b7d4c9a` reserves

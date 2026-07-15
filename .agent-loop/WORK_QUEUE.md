@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-07B` | Deny-By-Default Kernel And Self-Action Cutover | L1 | Implementation and focused evidence in progress after explicit user start |
+| `WS-AUTH-001-07B` | Deny-By-Default Kernel And Self-Action Cutover | L1 | Internally approved at `aabc0f4`; ready PR publication pending |
 | `WS-ART-001-02A1` | External Service Adapter Foundation | L1 | Active after explicit user start on 2026-07-15 |
 
 Live post-merge state remains read from signed `automation/loop-memory`
@@ -79,7 +79,8 @@ AUTH-05A merged through PR #115 as `8e1cde6`, and CAT plus its post-merge memory
 merged through PRs #117 and #118. AUTH-05B merged through PR #119 as `ad71c7e`.
 AUTH-06 merged through PR #124 as `f599551`, and the user explicitly started
 AUTH-07. Required L1 review split it into 07A/07B before runtime implementation.
-Do not start 07B, AUTH-08, or POL-002-04 automatically.
+AUTH-07B was explicitly started and is internally approved; do not start
+AUTH-08 or POL-002-04 automatically.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.

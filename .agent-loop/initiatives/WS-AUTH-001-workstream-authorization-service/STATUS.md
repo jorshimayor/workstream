@@ -78,8 +78,9 @@ ownership files were incomplete. Parent AUTH-07 is now split into 07A catalogue
 and audit parity, followed by 07B kernel and actor self-action cutover. AUTH-07A
 merged through PR #126 as `e9d72a1`; signed schema-v2 state verified that merge,
 and the user explicitly started AUTH-07B. Its required L1 preimplementation
-review passed with conditions; implementation and focused evidence are in
-progress.
+review passed with conditions. Implementation, deterministic evidence, review
+repair, and all required internal reviewer tracks pass at `aabc0f4`; ready PR
+publication is pending.
 
 ## Active planning chunk
 
@@ -111,7 +112,7 @@ None.
 | `WS-AUTH-001-06` | Merged | `codex/ws-auth-001-06-canonical-actor-profile` | #124 | Merged as `f599551`; final PR head `4a2193f`. |
 | `WS-AUTH-001-07` | Split | `codex/ws-auth-001-07-authorization-kernel` | - | Required L1 review rejected the combined contract before runtime edits. |
 | `WS-AUTH-001-07A` | Merged | `codex/ws-auth-001-07-authorization-kernel` | #126 | Merged as `e9d72a1`; 74 permissions, 50 planned actions, and action-aware audit parity only. |
-| `WS-AUTH-001-07B` | In implementation | `codex/ws-auth-001-07b-deny-default-kernel` | - | Required L1 preimplementation review passed; focused evidence in progress. |
+| `WS-AUTH-001-07B` | Internally approved | `codex/ws-auth-001-07b-deny-default-kernel` | - | Reviewed at `aabc0f4`; ready PR publication pending. |
 | `WS-AUTH-001-08` | Proposed | - | - | Bootstrap and administrative grants. |
 | `WS-AUTH-001-09` | Proposed | - | - | Actor/link states and service actors. |
 | `WS-AUTH-001-10` | Proposed | - | - | Project contributor grants. |
