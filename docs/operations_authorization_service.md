@@ -486,9 +486,16 @@ to skip or relax catalogue checks.
 Migration `0021` preserves historical audit rows with null `action_id`. Inspect
 non-null action evidence only by bounded ActionId, request/correlation IDs, and
 resource references; do not export event payloads or actor identity-link data
-for routine diagnosis. Downgrade is allowed only while every action ID remains
-null. If action-aware evidence exists, stop and recover forward rather than
-discarding it.
+for routine diagnosis. Every action must carry its catalogue-mapped PermissionId,
+and every permission added after migration `0018` must carry one of its mapped
+actions. Planned actions can record bounded denial evidence but cannot record an
+allowed decision through the typed writer.
+
+Downgrade is allowed only while every action ID remains null and no permission
+outside migration `0018`'s historical 49-value set exists. The migration takes
+an exclusive audit-table lock before both checks and keeps it through
+destructive DDL. If either kind of forward evidence exists, stop and recover
+forward rather than discarding it.
 
 AUTH-07B later activates only canonical actor self-read and self-update. Admin
 definition reads wait for AUTH-08 grant truth, and project capability context

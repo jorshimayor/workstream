@@ -15,6 +15,21 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.modules.audit.schemas import ActorReferenceKind, AuthorityAuditEventInput, AuthorityEventType
 from app.modules.audit.service import AuditService
+from app.modules.authorization.catalogue import (
+    ACTION_BY_ID,
+    ACTION_DEFINITIONS,
+    ACTION_IDS,
+    HISTORICAL_PERMISSION_IDS,
+    NEW_PERMISSION_IDS,
+    PERMISSION_IDS,
+    ActionAvailability,
+    ActionDefinition,
+    ActionId,
+    ActionOwner,
+    PermissionId,
+    _index_actions,
+    resolve_executable_action,
+)
 from app.modules.authorization.schemas import (
     ActorIdentityLinkReactivateRequest,
     ActorIdentityLinkRevokeRequest,
@@ -48,6 +63,119 @@ from app.modules.authorization.schemas import (
 from app.modules.authorization.service import AuthorityMutationService
 
 DIGEST = "sha256:" + "a" * 64
+
+
+def test_closed_permission_and_action_catalogue_is_exact_and_non_executable() -> None:
+    expected = {
+        "actor.profile.read_self": ("actor.profile.read_self", "WS-AUTH-001-07B"),
+        "actor.profile.update_self": ("actor.profile.update_self", "WS-AUTH-001-07B"),
+        "operations.task.start_override": ("operations.task.start_override", "WS-AUTH-001-13"),
+        "operations.submission_gate.repair": ("operations.submission_gate.repair", "WS-AUTH-001-14"),
+        "operations.checker.retry": ("operations.checker.retry", "WS-AUTH-001-14"),
+        "artifact.binding.read": ("artifact.binding.read", "WS-ART-001-02D"),
+        "artifact.replica.read": ("artifact.replica.read", "WS-ART-001-02D"),
+        "artifact.receipt.read": ("artifact.receipt.read", "WS-ART-001-02D"),
+        "artifact.verification_job.read": ("artifact.verification_job.read", "WS-ART-001-02D"),
+        "artifact.verification_job.retry": ("artifact.verification_job.retry", "WS-ART-001-02D"),
+        "artifact.recovery_attempt.read": ("artifact.recovery_attempt.read", "WS-ART-001-02D"),
+        "artifact.audit.read": ("artifact.audit.read", "WS-ART-001-02D"),
+        "operations.artifact_storage_admission.read": ("operations.status.read", "WS-ART-001-02D"),
+        "artifact.guide_source.ingest": ("artifact.guide_source.ingest", "WS-ART-001-03"),
+        "artifact.guide_source.read": ("artifact.guide_source.read", "WS-ART-001-03"),
+        "artifact.upload_session.create": ("artifact.upload_session.create", "WS-ART-001-04A"),
+        "artifact.upload_session.read": ("artifact.upload_session.read", "WS-ART-001-04A"),
+        "artifact.upload_item.write": ("artifact.upload_item.write", "WS-ART-001-04A"),
+        "artifact.upload_session.seal": ("artifact.upload_session.seal", "WS-ART-001-04A"),
+        "artifact.upload_session.cancel": ("artifact.upload_session.cancel", "WS-ART-001-04A"),
+        "artifact.upload_session.expire": ("artifact.upload_session.expire", "WS-ART-001-04A"),
+        "artifact.guide_source.binding.create": ("artifact.binding.create", "WS-ART-001-03"),
+        "artifact.submission.binding.create": ("artifact.binding.create", "WS-ART-001-05"),
+        "artifact.checker_output.binding.create": ("artifact.binding.create", "WS-ART-001-06B"),
+        "artifact.verification.execute": ("artifact.verification.execute", "WS-ART-001-02D"),
+        "artifact.pending_work.scan": ("artifact.pending_work.scan", "WS-ART-001-02D"),
+        "artifact.put_attempt.resolve": ("artifact.put_attempt.resolve", "WS-ART-001-02D"),
+        "artifact.pre_submit.checker_input.materialize": (
+            "artifact.checker_input.materialize",
+            "WS-ART-001-04B",
+        ),
+        "artifact.post_submit.checker_input.materialize": (
+            "artifact.checker_input.materialize",
+            "WS-ART-001-06A",
+        ),
+        "artifact.checker_output.write": ("artifact.checker_output.write", "WS-ART-001-06B"),
+    }
+    assert len(PERMISSION_IDS) == 73
+    assert len(HISTORICAL_PERMISSION_IDS) == 49
+    assert len(NEW_PERMISSION_IDS) == 24
+    assert len(ACTION_IDS) == len(ACTION_DEFINITIONS) == len(ACTION_BY_ID) == 30
+    assert set(ACTION_BY_ID) == ACTION_IDS
+    assert {definition.owner for definition in ACTION_DEFINITIONS} == set(ActionOwner)
+    assert all(
+        definition.availability is ActionAvailability.PLANNED
+        for definition in ACTION_DEFINITIONS
+    )
+    assert {
+        definition.action_id.value: (
+            definition.permission_id.value,
+            definition.owner.value,
+        )
+        for definition in ACTION_DEFINITIONS
+    } == expected
+    with pytest.raises(ValueError, match="not active"):
+        resolve_executable_action(ActionId.ACTOR_PROFILE_READ_SELF)
+    with pytest.raises(TypeError):
+        ACTION_BY_ID[ActionId.ACTOR_PROFILE_READ_SELF] = ACTION_DEFINITIONS[0]
+
+
+@pytest.mark.parametrize(
+    "definitions, message",
+    [
+        (ACTION_DEFINITIONS[:-1], "incomplete"),
+        (ACTION_DEFINITIONS[:-1] + (ACTION_DEFINITIONS[0],), "incomplete"),
+        (
+            ACTION_DEFINITIONS[:-1]
+            + (
+                ActionDefinition(
+                    ActionId.ARTIFACT_CHECKER_OUTPUT_WRITE,
+                    PermissionId.ARTIFACT_CHECKER_OUTPUT_WRITE,
+                    ActionOwner.ART_02D,
+                    ActionAvailability.PLANNED,
+                ),
+            ),
+            "metadata mismatch",
+        ),
+        (
+            ACTION_DEFINITIONS[:-1]
+            + (
+                ActionDefinition(
+                    ActionId.ARTIFACT_CHECKER_OUTPUT_WRITE,
+                    PermissionId.ARTIFACT_CHECKER_OUTPUT_WRITE,
+                    ActionOwner.ART_06B,
+                    ActionAvailability.ACTIVE,
+                ),
+            ),
+            "must remain planned",
+        ),
+        (
+            ACTION_DEFINITIONS[:-1]
+            + (
+                ActionDefinition(
+                    ActionId.ARTIFACT_CHECKER_OUTPUT_WRITE,
+                    "unknown.permission",  # type: ignore[arg-type]
+                    ActionOwner.ART_06B,
+                    ActionAvailability.PLANNED,
+                ),
+            ),
+            "invalid row",
+        ),
+    ],
+)
+def test_action_catalogue_construction_fails_closed(
+    definitions: tuple[ActionDefinition, ...],
+    message: str,
+) -> None:
+    with pytest.raises(RuntimeError, match=message):
+        _index_actions(definitions)
 
 
 @pytest.fixture

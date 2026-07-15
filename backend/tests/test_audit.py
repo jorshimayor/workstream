@@ -23,6 +23,7 @@ from app.modules.audit.schemas import (
     AuthorityEventType,
 )
 from app.modules.audit.service import AuditService
+from app.modules.authorization.catalogue import ActionId, PermissionId
 from app.modules.tasks.models import AuditEvent
 
 
@@ -132,6 +133,76 @@ def _authority_input(event_type: AuthorityEventType, **overrides) -> AuthorityAu
     }
     values.update(overrides)
     return AuthorityAuditEventInput(**values)
+
+
+def test_action_aware_audit_input_enforces_mapping_and_planned_availability() -> None:
+    denied = _authority_input(
+        AuthorityEventType.SENSITIVE_AUTHORIZATION_DENIED,
+        permission_id="artifact.binding.read",
+        action_id="artifact.binding.read",
+        denial_code="permission_not_granted",
+    )
+    assert denied.action_id is ActionId.ARTIFACT_BINDING_READ
+    assert denied.permission_id is PermissionId.ARTIFACT_BINDING_READ
+
+    with pytest.raises(ValidationError, match="action permission"):
+        _authority_input(
+            AuthorityEventType.SENSITIVE_AUTHORIZATION_DENIED,
+            permission_id="artifact.replica.read",
+            action_id="artifact.binding.read",
+            denial_code="permission_not_granted",
+        )
+    with pytest.raises(ValidationError, match="new permission requires"):
+        _authority_input(
+            AuthorityEventType.SENSITIVE_AUTHORIZATION_DENIED,
+            permission_id="artifact.binding.read",
+            action_id=None,
+            denial_code="permission_not_granted",
+        )
+    with pytest.raises(ValidationError, match="planned action"):
+        _authority_input(
+            AuthorityEventType.SENSITIVE_AUTHORIZATION_ALLOWED,
+            permission_id="artifact.binding.read",
+            action_id="artifact.binding.read",
+        )
+    with pytest.raises(TypeError, match="invalid authority audit input"):
+        _authority_input(
+            AuthorityEventType.SENSITIVE_AUTHORIZATION_DENIED,
+            permission_id="artifact.binding.read",
+            action_id="unknown.action",
+            denial_code="permission_not_granted",
+        )
+    event_id = uuid4()
+    with pytest.raises(ValidationError, match="action requires authorization decision"):
+        AuthorityAuditEventInput(
+            event_id=event_id,
+            event_type=AuthorityEventType.ADMIN_ROLE_GRANT_ISSUE_DENIED,
+            entity_type="admin_role_grant",
+            entity_id=str(uuid4()),
+            actor_ref_kind=ActorReferenceKind.SYSTEM_PRINCIPAL,
+            actor_ref="workstream:system:bootstrap",
+            request_id=uuid4(),
+            correlation_id=uuid4(),
+            permission_id="actor.profile.read_self",
+            action_id="actor.profile.read_self",
+            reason="authorization_policy_denial",
+            denial_code="permission_not_granted",
+        )
+
+
+async def test_planned_action_denial_persists_with_bounded_mapping(audit_factory) -> None:
+    value = _authority_input(
+        AuthorityEventType.SENSITIVE_AUTHORIZATION_DENIED,
+        permission_id="artifact.binding.read",
+        action_id="artifact.binding.read",
+        denial_code="permission_not_granted",
+    )
+    async with audit_factory() as session:
+        stored = await AuditService(session).add_authority_event(value)
+        await session.commit()
+
+    assert stored.action_id == "artifact.binding.read"
+    assert stored.permission_id == "artifact.binding.read"
 
 
 def _authority_event_matrix() -> list[dict]:
@@ -555,6 +626,7 @@ def test_authority_input_rejects_unbounded_or_inconsistent_evidence() -> None:
         ({"reason": "secret-bearer-value"}, secret),
         ({"entity_type": "secret-bearer-value"}, secret),
         ({"permission_id": [secret]}, secret),
+        ({"action_id": [secret]}, secret),
     ):
         candidate = safe | patch
         for constructor in constructors:

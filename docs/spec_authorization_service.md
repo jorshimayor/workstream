@@ -224,6 +224,12 @@ AUTH-07A also reserves `actor.profile.read_self` and
 later supplies their complete active definitions and self-route behavior proof
 without changing migration `0021`.
 
+Migration `0021` is availability-neutral. PostgreSQL enforces the closed
+ActionId set, authorization-decision event shape, exact ActionId-to-PermissionId
+mapping, and the requirement that every post-`0018` permission carry a mapped
+action. Typed catalogue validation separately rejects allowed evidence until an
+owning chunk changes an action from `planned` to `active`.
+
 The paired artifact activation matrix is closed:
 
 | Owning WS-ART chunk | Actions activated by that chunk |

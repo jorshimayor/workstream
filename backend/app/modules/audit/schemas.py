@@ -10,6 +10,16 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.modules.authorization.catalogue import (
+    ACTION_BY_ID,
+    ACTION_IDS,
+    NEW_PERMISSION_IDS,
+    PERMISSION_IDS,
+    ActionAvailability,
+    ActionId,
+    PermissionId,
+)
+
 _ENTITY_TYPES = frozenset(
     {
         "actor_profile",
@@ -28,21 +38,6 @@ _RESOURCE_TYPES = frozenset(
 )
 _UUID_TARGET_KINDS = frozenset(
     {"actor_profile", "actor_identity_link", "admin_role_grant", "qualification_snapshot", "project_role_grant"}
-)
-_PERMISSIONS = frozenset(
-    """actor.profile.read_self actor.profile.update_self actor.profile.read_any
-    actor.profile.suspend actor.profile.reactivate actor.profile.deactivate
-    actor.identity_link.read actor.identity_link.revoke actor.identity_link.reactivate
-    actor.service.provision admin_role.read admin_role.grant admin_role.revoke project.create
-    project.read project.update project.archive project.guide.manage project.effective_policy.manage
-    project.task.manage project.review_policy.manage project.role_grant.read
-    project.role_grant.manage task.queue.read task.claim submission.create submission.read_own
-    submission.read_for_review review.queue.read review.queue.inspect review.claim review.release
-    review.decline_preference review.decision review.lease.force_release review.chain.read
-    contribution.read_self contribution.read_project compensation.policy.manage
-    compensation.adapter_binding.manage compensation.award.read compensation.delivery.reconcile
-    operations.status.read operations.timer.run operations.reconcile.run operations.outbox.retry
-    operations.projection.rebuild audit.read audit.export""".split()
 )
 _DENIAL_CODES = frozenset(
     """required_scope_missing unsupported_subject_kind service_actor_not_provisioned
@@ -247,7 +242,8 @@ class AuthorityAuditEventInput(BaseModel):
     target_actor_ref_kind: ActorReferenceKind | None = None
     target_actor_ref: Annotated[str, Field(max_length=120)] | None = None
     matched_grant_id: str | None = None
-    permission_id: str | None = None
+    permission_id: PermissionId | None = None
+    action_id: ActionId | None = None
     project_id: str | None = None
     resource_type: str | None = None
     resource_id: str | None = None
@@ -298,7 +294,8 @@ class AuthorityAuditEventInput(BaseModel):
             or kind is None
             or (kind == "system_principal" and actor_ref != "workstream:system:bootstrap")
             or (kind != "system_principal" and _uuid(actor_ref) is None)
-            or data.get("permission_id") is not None and not _registered(data["permission_id"], _PERMISSIONS)
+            or data.get("permission_id") is not None and not _registered(data["permission_id"], PERMISSION_IDS)
+            or data.get("action_id") is not None and not _registered(data["action_id"], ACTION_IDS)
             or data.get("denial_code") is not None and not _registered(data["denial_code"], _DENIAL_CODES)
             or data.get("resource_type") is not None and not _registered(data["resource_type"], _RESOURCE_TYPES)
             or data.get("target_ref_kind") is not None
@@ -314,7 +311,7 @@ class AuthorityAuditEventInput(BaseModel):
             ref = data.get(f"{prefix}_ref" if prefix == "invalidation_target" else f"{prefix}_id")
             invalid |= (ref_kind is None) != (ref is None)
             invalid |= _registered(ref_kind, _UUID_TARGET_KINDS) and ref is not None and _uuid(ref) is None
-            invalid |= ref_kind == "permission_registry" and not _registered(ref, _PERMISSIONS)
+            invalid |= ref_kind == "permission_registry" and not _registered(ref, PERMISSION_IDS)
         target_kind, target_ref = data.get("target_actor_ref_kind"), data.get("target_actor_ref")
         invalid |= (target_kind is None) != (target_ref is None)
         invalid |= target_kind is not None and (
@@ -322,6 +319,10 @@ class AuthorityAuditEventInput(BaseModel):
         )
         if invalid:
             return None
+        if data.get("permission_id") is not None:
+            data["permission_id"] = PermissionId(data["permission_id"])
+        if data.get("action_id") is not None:
+            data["action_id"] = ActionId(data["action_id"])
         data["before_facts"] = before_facts
         data["after_facts"] = after_facts
         return data
@@ -363,9 +364,21 @@ class AuthorityAuditEventInput(BaseModel):
         if before and after and "scope_id" in before and before.get("scope_id") != after.get("scope_id"):
             raise ValueError("replacement cannot change project scope")
         invalidation = self.invalidation_cause_event_id is not None or self.invalidation_target_kind
+        action = ACTION_BY_ID.get(self.action_id) if self.action_id is not None else None
+        if action is not None and action.permission_id is not self.permission_id:
+            raise ValueError("action permission does not match catalogue")
+        if self.permission_id in NEW_PERMISSION_IDS and action is None:
+            raise ValueError("new permission requires registered action")
+        if self.action_id is not None and self.event_type not in {
+            AuthorityEventType.SENSITIVE_AUTHORIZATION_ALLOWED,
+            AuthorityEventType.SENSITIVE_AUTHORIZATION_DENIED,
+        }:
+            raise ValueError("action requires authorization decision event")
         if self.event_type == AuthorityEventType.SENSITIVE_AUTHORIZATION_ALLOWED:
             if self.permission_id is None or self.denial_code is not None or invalidation:
                 raise ValueError("invalid allowed authorization evidence")
+            if action is not None and action.availability is ActionAvailability.PLANNED:
+                raise ValueError("planned action cannot produce allowed evidence")
         elif self.event_type == AuthorityEventType.SENSITIVE_AUTHORIZATION_DENIED:
             if self.permission_id is None or self.denial_code is None or invalidation or self.idempotency_reference:
                 raise ValueError("invalid denied authorization evidence")
