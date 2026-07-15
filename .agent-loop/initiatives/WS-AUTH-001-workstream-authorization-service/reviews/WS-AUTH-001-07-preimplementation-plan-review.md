@@ -18,7 +18,7 @@ these verdicts.
 ## Valid repair
 
 - Split parent AUTH-07 into AUTH-07A and AUTH-07B.
-- AUTH-07A owns exactly 73 PermissionIds, 28 four-field planned ActionIds, and
+- AUTH-07A owns exactly 73 PermissionIds, 30 four-field planned ActionIds, and
   migration `0021` action-aware audit parity. No action is executable.
 - AUTH-07B owns the minimal deny-by-default kernel and activates exactly
   `actor.profile.read_self` and `actor.profile.update_self` on the existing

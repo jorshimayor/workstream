@@ -477,7 +477,7 @@ resource loader, lifecycle guards, negative tests, and evidence path exist.
 
 ### Catalogue And Action-Evidence Staging
 
-AUTH-07A installs exactly 73 PermissionIds and 28 planned ActionIds. Planned
+AUTH-07A installs exactly 73 PermissionIds and 30 planned ActionIds. Planned
 entries contain only action, permission, owner, and availability; they are not
 executable and must not receive deployment configuration, principals, resource
 facts, or guards. Startup validation failure is a release blocker, not a reason

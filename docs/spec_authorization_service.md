@@ -219,6 +219,11 @@ canonical resource composer, guards, surface declaration, behavior tests, and
 transaction-local revalidation where required. Both halves are mandatory;
 registry presence alone never grants authority.
 
+AUTH-07A also reserves `actor.profile.read_self` and
+`actor.profile.update_self` as four-field planned action metadata. AUTH-07B
+later supplies their complete active definitions and self-route behavior proof
+without changing migration `0021`.
+
 The paired artifact activation matrix is closed:
 
 | Owning WS-ART chunk | Actions activated by that chunk |

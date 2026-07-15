@@ -291,8 +291,9 @@ combined AUTH-07 contract placed grant-backed administrative APIs before
 AUTH-08, project capability composition before AUTH-10, and mixed the audit
 migration with executable kernel/API behavior. No runtime code had started.
 
-AUTH-07A now owns only the exact 73-PermissionId catalogue, 28 four-field
-planned ActionId definitions, and action-aware audit migration `0021`. AUTH-07B
+AUTH-07A now owns only the exact 73-PermissionId catalogue, 30 four-field
+planned ActionId definitions, including both later self actions, and
+action-aware audit migration `0021`. AUTH-07B
 later owns the minimal deny-by-default kernel and activates only
 `actor.profile.read_self` and `actor.profile.update_self`. Permission and
 admin-role definition APIs move to AUTH-08; project-scoped authorization

@@ -7,7 +7,7 @@
 ## Goal
 
 Create one closed typed catalogue for all 73 approved PermissionIds and the
-exact reserved recovery/artifact ActionIds, then add typed and PostgreSQL action
+exact reserved self/recovery/artifact ActionIds, then add typed and PostgreSQL action
 evidence parity without making any action executable.
 
 ## Why this chunk exists
@@ -56,45 +56,48 @@ dynamic permissions or policy language
 public permission/admin-role/context APIs
 ```
 
-## Exact reserved ActionIds
+## Exact planned action catalogue
 
-The catalogue registers the following as `planned`; none can authorize:
+The owner is a full canonical chunk ID. The closed owner set is exactly the
+distinct values in this table; abbreviations, free-form domains, and aliases
+are invalid. Every row has `availability=planned` and cannot authorize.
 
-```text
-operations.task.start_override
-operations.submission_gate.repair
-operations.checker.retry
-artifact.binding.read
-artifact.replica.read
-artifact.receipt.read
-artifact.verification_job.read
-artifact.verification_job.retry
-artifact.recovery_attempt.read
-artifact.audit.read
-operations.artifact_storage_admission.read
-artifact.guide_source.ingest
-artifact.guide_source.read
-artifact.upload_session.create
-artifact.upload_session.read
-artifact.upload_item.write
-artifact.upload_session.seal
-artifact.upload_session.cancel
-artifact.upload_session.expire
-artifact.guide_source.binding.create
-artifact.submission.binding.create
-artifact.checker_output.binding.create
-artifact.verification.execute
-artifact.pending_work.scan
-artifact.put_attempt.resolve
-artifact.pre_submit.checker_input.materialize
-artifact.post_submit.checker_input.materialize
-artifact.checker_output.write
-```
+| ActionId | PermissionId | Owner | Availability |
+|---|---|---|---|
+| `actor.profile.read_self` | `actor.profile.read_self` | `WS-AUTH-001-07B` | `planned` |
+| `actor.profile.update_self` | `actor.profile.update_self` | `WS-AUTH-001-07B` | `planned` |
+| `operations.task.start_override` | `operations.task.start_override` | `WS-AUTH-001-13` | `planned` |
+| `operations.submission_gate.repair` | `operations.submission_gate.repair` | `WS-AUTH-001-14` | `planned` |
+| `operations.checker.retry` | `operations.checker.retry` | `WS-AUTH-001-14` | `planned` |
+| `artifact.binding.read` | `artifact.binding.read` | `WS-ART-001-02D` | `planned` |
+| `artifact.replica.read` | `artifact.replica.read` | `WS-ART-001-02D` | `planned` |
+| `artifact.receipt.read` | `artifact.receipt.read` | `WS-ART-001-02D` | `planned` |
+| `artifact.verification_job.read` | `artifact.verification_job.read` | `WS-ART-001-02D` | `planned` |
+| `artifact.verification_job.retry` | `artifact.verification_job.retry` | `WS-ART-001-02D` | `planned` |
+| `artifact.recovery_attempt.read` | `artifact.recovery_attempt.read` | `WS-ART-001-02D` | `planned` |
+| `artifact.audit.read` | `artifact.audit.read` | `WS-ART-001-02D` | `planned` |
+| `operations.artifact_storage_admission.read` | `operations.status.read` | `WS-ART-001-02D` | `planned` |
+| `artifact.guide_source.ingest` | `artifact.guide_source.ingest` | `WS-ART-001-03` | `planned` |
+| `artifact.guide_source.read` | `artifact.guide_source.read` | `WS-ART-001-03` | `planned` |
+| `artifact.upload_session.create` | `artifact.upload_session.create` | `WS-ART-001-04A` | `planned` |
+| `artifact.upload_session.read` | `artifact.upload_session.read` | `WS-ART-001-04A` | `planned` |
+| `artifact.upload_item.write` | `artifact.upload_item.write` | `WS-ART-001-04A` | `planned` |
+| `artifact.upload_session.seal` | `artifact.upload_session.seal` | `WS-ART-001-04A` | `planned` |
+| `artifact.upload_session.cancel` | `artifact.upload_session.cancel` | `WS-ART-001-04A` | `planned` |
+| `artifact.upload_session.expire` | `artifact.upload_session.expire` | `WS-ART-001-04A` | `planned` |
+| `artifact.guide_source.binding.create` | `artifact.binding.create` | `WS-ART-001-03` | `planned` |
+| `artifact.submission.binding.create` | `artifact.binding.create` | `WS-ART-001-05` | `planned` |
+| `artifact.checker_output.binding.create` | `artifact.binding.create` | `WS-ART-001-06B` | `planned` |
+| `artifact.verification.execute` | `artifact.verification.execute` | `WS-ART-001-02D` | `planned` |
+| `artifact.pending_work.scan` | `artifact.pending_work.scan` | `WS-ART-001-02D` | `planned` |
+| `artifact.put_attempt.resolve` | `artifact.put_attempt.resolve` | `WS-ART-001-02D` | `planned` |
+| `artifact.pre_submit.checker_input.materialize` | `artifact.checker_input.materialize` | `WS-ART-001-04B` | `planned` |
+| `artifact.post_submit.checker_input.materialize` | `artifact.checker_input.materialize` | `WS-ART-001-06A` | `planned` |
+| `artifact.checker_output.write` | `artifact.checker_output.write` | `WS-ART-001-06B` | `planned` |
 
-Each planned definition stores only `action_id`, its approved `permission_id`,
-the owning specification/chunk, and `availability=planned`. Principal class,
-resource facts, guards, composers, concealment, and revalidation are activation
-blueprints owned by later chunks and are not registered here.
+Each definition stores only these four fields. Principal class, resource facts,
+guards, composers, concealment, and revalidation are activation blueprints
+owned by later chunks and are not registered here.
 
 ## Acceptance criteria
 
@@ -102,7 +105,7 @@ blueprints owned by later chunks and are not registered here.
   values in `docs/spec_authorization_service.md`.
 - Existing audit validation consumes that source rather than maintaining a
   second permission literal set.
-- A frozen action catalogue contains exactly the 28 planned ActionIds above,
+- A frozen action catalogue contains exactly the 30 planned ActionIds above,
   with exact approved PermissionId mapping, owner, and availability.
 - Catalogue construction fails on duplicate or unknown actions, unknown
   permissions, invalid owners, invalid availability, missing approved entries,
@@ -114,11 +117,21 @@ blueprints owned by later chunks and are not registered here.
 - Migration `0021` adds nullable `audit_events.action_id`, preserves all
   historical rows as null, and constrains every non-null value to the registered
   ActionId set.
+- A non-null `action_id` is valid only for `SensitiveAuthorizationAllowed` or
+  `SensitiveAuthorizationDenied`; unrelated authority/lifecycle events must
+  remain null.
+- Migration `0021` replaces the 49-value permission constraint with exact
+  73-value typed/PostgreSQL parity without changing historical values.
 - `AuthorityAuditEventInput` admits a bounded registered `action_id`; unknown
   values fail before rejected input can escape diagnostics.
 - Existing non-action authority events remain valid with null `action_id`.
 - Downgrade refuses to discard any non-null action evidence. A clean database
-  with only null action IDs can downgrade and re-upgrade.
+  with only null action IDs can downgrade, restores the exact prior 49-value
+  permission constraint, drops the action column/constraint, and re-upgrades.
+- Downgrade takes `LOCK audit_events IN ACCESS EXCLUSIVE MODE` before checking
+  for non-null action evidence or changing constraints. Deterministic
+  independent-session proof shows a concurrent insert cannot pass between the
+  check and destructive DDL.
 - Direct SQL proves unknown ActionIds fail and registered ActionIds persist.
 - The canonical specification separates four-field planned registry metadata
   from later feature activation blueprints.
@@ -131,14 +144,17 @@ blueprints owned by later chunks and are not registered here.
 
 ```bash
 (cd backend && .venv/bin/python -m ruff check app tests alembic/versions/0021_authorization_action_evidence.py)
-(cd backend && WORKSTREAM_TEST_DATABASE_URL=<isolated-test-db> \
+(cd backend && tmp_dir=$(mktemp -d) && trap 'rm -rf "$tmp_dir"' EXIT && \
+  .venv/bin/coverage erase && \
+  WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-dsn> \
+  .venv/bin/python scripts/run_isolated_tests.py \
+  --metadata-json "$tmp_dir/07a.json" --timeout-seconds 1800 -- \
   .venv/bin/python -m pytest -q tests/test_authorization.py tests/test_audit.py \
   tests/test_alembic.py --cov=app.modules.authorization \
-  --cov=app.modules.audit --cov-branch --cov-report=term-missing \
-  --cov-fail-under=90)
-(cd backend && WORKSTREAM_TEST_DATABASE_URL=<isolated-test-db> \
-  .venv/bin/python scripts/run_isolated_tests.py tests/test_authorization.py \
-  tests/test_audit.py tests/test_alembic.py)
+  --cov=app.modules.audit --cov-branch --cov-report= --cov-fail-under=0 && \
+  .venv/bin/coverage report --include='app/modules/authorization/*' \
+  --fail-under=90 && \
+  .venv/bin/coverage report --include='app/modules/audit/*' --fail-under=90)
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_stale_authorization_docs.py
 python3 scripts/check_markdown_links.py
@@ -150,7 +166,7 @@ percent floor.
 
 ## Human review focus
 
-Review exact 73-permission parity, exact 28-action planned mapping, inability to
+Review exact 73-permission parity, exact 30-action planned mapping, inability to
 execute planned actions, audit privacy, PostgreSQL constraint parity, historical
 null preservation, and guarded downgrade.
 

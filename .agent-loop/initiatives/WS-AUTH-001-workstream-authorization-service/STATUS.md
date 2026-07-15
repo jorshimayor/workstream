@@ -127,12 +127,13 @@ inferred kinds before the owning canonical actor migration.
 
 The proposed external catalogue cannot be adopted as a normative handoff: it
 conflicts with `/api/v1`, AUTH-05A's merged 49-identifier persisted audit base,
-current project and artifact models, and staged domain ownership. All 52
-permission identifiers remain approved, including
+current project and artifact models, and staged domain ownership. All 73
+permission identifiers are approved, including
 `operations.task.start_override`, `operations.submission_gate.repair`, and
-`operations.checker.retry`; the three recovery identifiers receive persisted
-parity only in their owning later chunks. `WS-AUTH-001-CAT` retains only safe
-registry/conformance rules. This is a scope decision, not an AUTH-05B runtime
+`operations.checker.retry`; AUTH-07A gives those recovery identifiers exact
+typed/PostgreSQL parity while AUTH-13/14 retain action activation and feature
+behavior ownership. `WS-AUTH-001-CAT` retains only safe registry/conformance
+rules. This is a scope decision, not an AUTH-05B runtime
 blocker. PR #118, AUTH-05B PR #119, and AUTH-06 PR #124 are merged. AUTH-07 has
 an explicit user start. Required review split it before runtime implementation;
 the repaired 07A contract is at its L1 plan-review gate. AUTH-07B and

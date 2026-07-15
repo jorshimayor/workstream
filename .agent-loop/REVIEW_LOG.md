@@ -22,6 +22,17 @@ The bounded repair splits parent AUTH-07 into 07A closed catalogue/action-aware
 audit parity and 07B minimal kernel/actor self-action cutover. The repaired 07A
 contract must pass fresh L1 plan review before implementation.
 
+## 2026-07-15 - WS-AUTH-001-07A First Repaired Plan Failed
+
+Exact-SHA review of `581ecd7` confirmed the split and deferrals but found four
+remaining blockers: migration `0021` omitted the two AUTH-07B self ActionIds,
+the planned catalogue lacked one exact mapping/owner table, AUTH-13/14 still
+claimed later permission-registry migrations, and combined coverage could hide
+a sub-90 materially changed subsystem. QA additionally corrected the isolated
+database runner invocation, while security required an exclusive audit-table
+lock before downgrade evidence checks. No runtime code was written. The second
+repair closes those exact findings and requires another fresh exact-SHA review.
+
 ## 2026-07-15 - WS-ENG-001-02 Internal Review Passed
 
 Reviewed implementation SHA `8670005` passed senior engineering,

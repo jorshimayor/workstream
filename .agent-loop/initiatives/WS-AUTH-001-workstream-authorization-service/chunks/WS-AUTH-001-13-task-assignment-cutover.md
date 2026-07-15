@@ -86,10 +86,13 @@ token role or legacy active-worker-profile fallback
   reasoned start override is separately authorized as
   `operations.task.start_override` for Operator recovery; matched permission,
   scope, reason, and audit event distinguish the two paths.
-- Before `operations.task.start_override` becomes active, migration `0025` and
-  the typed audit schema add that already approved identifier to the 49-item
-  AUTH-05A audit base. Upgrade/downgrade/re-upgrade and direct-SQL parity tests
-  preserve all prior audit rows and reject unknown identifiers.
+- AUTH-07A migration `0021` already gives
+  `operations.task.start_override` PermissionId/ActionId typed and PostgreSQL
+  parity as planned metadata. This chunk promotes the action only with its task
+  resource composer, Operator candidate, guards, surface declaration, reason,
+  evidence, and behavior tests. Migration `0025` owns task/assignment and
+  Contributor-field schema changes only; it does not change the permission or
+  action registry.
 - Operator `operations.status.read` exposes a read-only cross-project task-queue
   operational projection with bounded fields; it does not grant task mutation.
   Audit Authority `audit.read` exposes only covered task evidence. Both paths
