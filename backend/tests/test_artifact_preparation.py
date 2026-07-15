@@ -573,6 +573,47 @@ async def test_preparation_cancellation_releases_file_and_reservation(
 
 
 @pytest.mark.asyncio
+async def test_repeated_preparation_cancellation_cannot_interrupt_cleanup(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Protect failed-prepare close and release as one ownership handoff."""
+    manager = ArtifactScratchManager(root=tmp_path / "scratch", limits=preparation_limits())
+    service = ArtifactPreparationService(manager)
+    source_started = asyncio.Event()
+    never = asyncio.Event()
+    release_started = asyncio.Event()
+    finish_release = asyncio.Event()
+    original_release = manager.release
+
+    async def blocked_stream() -> AsyncIterator[bytes]:
+        yield b"first"
+        source_started.set()
+        await never.wait()
+
+    async def delayed_release(reservation: object) -> None:
+        release_started.set()
+        await finish_release.wait()
+        await original_release(reservation)
+
+    monkeypatch.setattr(manager, "release", delayed_release)
+    task = asyncio.create_task(service.prepare(blocked_stream(), media_type="text/plain"))
+    await asyncio.wait_for(source_started.wait(), timeout=1)
+    task.cancel()
+    await asyncio.wait_for(release_started.wait(), timeout=1)
+    task.cancel()
+    await asyncio.sleep(0)
+    finish_release.set()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+    assert (await manager.usage()).reservation_count == 0
+    assert list((tmp_path / "scratch" / "files").iterdir()) == []
+    assert service._active == {}
+    manager.close()
+
+
+@pytest.mark.asyncio
 async def test_post_seal_cancellation_releases_reader_and_reservation(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

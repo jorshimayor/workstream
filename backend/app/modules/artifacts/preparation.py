@@ -892,14 +892,14 @@ class ArtifactPreparationService:
                 ) from None
             raise ArtifactStoreUnavailableError("artifact preparation failed") from None
         finally:
-            if descriptor is not None:
-                await self._close_descriptor(descriptor)
             if not handoff_ready and reservation is not None:
-                try:
-                    if reader is not None:
-                        await self._run_io(reader.close)
-                finally:
-                    await self._manager.release(reservation)
+                await await_cancellation_resistant(
+                    self._release_unhanded_preparation(
+                        reservation=reservation,
+                        descriptor=descriptor,
+                        reader=reader,
+                    )
+                )
         assert reservation is not None and reader is not None
         commitment = ArtifactCommitment(
             sha256=sha256,
@@ -974,6 +974,22 @@ class ArtifactPreparationService:
         await self._run_io(active.reader.close)
         await self._manager.release(active.reservation)
         self._active.pop(binding, None)
+
+    async def _release_unhanded_preparation(
+        self,
+        *,
+        reservation: _ScratchReservation,
+        descriptor: int | None,
+        reader: BinaryIO | None,
+    ) -> None:
+        """Close source ownership and release its reservation as one handoff."""
+        try:
+            if descriptor is not None:
+                await self._close_descriptor(descriptor)
+            if reader is not None:
+                await self._run_io(reader.close)
+        finally:
+            await self._manager.release(reservation)
 
     @staticmethod
     def _validate_client_commitment(
