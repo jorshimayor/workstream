@@ -1,8 +1,8 @@
 # WS-AUTH-001-07A Internal Review Evidence
 
-Reviewed code SHA: `f35f71b375f4498e8d7943dcb674bdbb910a8f2a`
-Reviewed runtime SHA: `478a819236b9cff1e1d7b61203015691ce0aaf45`
-Reviewed at: `2026-07-15T10:58:49Z`
+Reviewed code SHA: `6287f57936c5e1ec7621bcbf07ff45ee40f0ee91`
+Reviewed runtime SHA: `6287f57936c5e1ec7621bcbf07ff45ee40f0ee91`
+Reviewed at: `2026-07-15T11:33:28Z`
 Reviewer run IDs: `auth06_final_ci`, `auth06_final_docs`,
 `auth06_final_test_delta`
 
@@ -24,6 +24,10 @@ Reviewer run IDs: `auth06_final_ci`, `auth06_final_docs`,
 - Direct SQL accepts all 30 exact action/permission pairs as denied evidence,
   rejects all 30 wrong registered-permission pairs, and rejects all 24 new
   permissions without a mapped action.
+- External-review repair proves typed validation rejects allowed evidence for
+  all 30 planned actions while PostgreSQL accepts all 30 exact allowed pairs as
+  availability-neutral storage. The targeted isolated migration test passed in
+  100.95 seconds at `6287f57`.
 - Ruff, stale Workstream wording, stale authorization documentation, changed
   Markdown links, loop-memory state, and diff integrity passed.
 - No workflow, dependency, test skip, coverage exclusion, package script, or
@@ -55,6 +59,11 @@ upgrade and clean downgrade with null action evidence.
 The final exact-head review confirmed that `478a819..f35f71b` contains only six
 lifecycle/merge-intent files, records the evidence accurately, and keeps
 `WS-AUTH-001-07B` inactive until merge, signed memory, and explicit human start.
+
+External repair review at `6287f57` confirmed CodeRabbit's proposed denial-only
+SQL constraint would contradict the approved availability-neutral migration
+contract. The accepted grammar fix and expanded PR description introduce no
+runtime authority, and no prior negative behavior proof was weakened.
 
 Valid findings addressed: yes
 

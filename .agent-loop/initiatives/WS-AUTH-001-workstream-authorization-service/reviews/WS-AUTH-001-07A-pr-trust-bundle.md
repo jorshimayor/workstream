@@ -63,8 +63,8 @@ this PR does not change any coverage threshold or exclusion.
 
 ## Reviewer Results
 
-Reviewed lifecycle head `f35f71b375f4498e8d7943dcb674bdbb910a8f2a`
-and runtime SHA `478a819236b9cff1e1d7b61203015691ce0aaf45` passed
+Reviewed external-repair head `6287f57936c5e1ec7621bcbf07ff45ee40f0ee91`
+and original runtime candidate `478a819236b9cff1e1d7b61203015691ce0aaf45` passed
 senior engineering, QA/test, security/auth, product/ops, architecture, CI
 integrity, docs, reuse/dedup, and test-delta review with no remaining findings.
 
