@@ -216,17 +216,22 @@ def _contract_title(contract_text: str, chunk_id: str) -> str | None:
     return title or None
 
 
-def _is_owned_chunk_contract_path(path: str, initiative_id: str) -> bool:
-    """Return whether one contract path belongs to the declared initiative."""
+def _initiative_directory_from_path(path: str, initiative_id: str) -> str | None:
+    """Return the matching top-level initiative directory from one path."""
     if not path.startswith(CHUNK_CONTRACT_ROOT):
-        return False
-    parts = path[len(CHUNK_CONTRACT_ROOT) :].split("/")
-    if len(parts) != 3 or parts[1] != "chunks":
-        return False
-    initiative_directory = parts[0]
-    return initiative_directory == initiative_id or initiative_directory.startswith(
+        return None
+    initiative_directory = path[len(CHUNK_CONTRACT_ROOT) :].split("/", 1)[0]
+    if initiative_directory == initiative_id or initiative_directory.startswith(
         f"{initiative_id}-"
-    )
+    ):
+        return initiative_directory
+    return None
+
+
+def _is_chunk_contract_path(path: str, initiative_directory: str) -> bool:
+    """Return whether one path is a direct child of one canonical chunks directory."""
+    prefix = f"{CHUNK_CONTRACT_ROOT}{initiative_directory}/chunks/"
+    return path.startswith(prefix) and "/" not in path[len(prefix) :]
 
 
 def _validate_local_successor_contract(
@@ -236,13 +241,24 @@ def _validate_local_successor_contract(
     if metadata.next_chunk_id is None:
         return
     initiatives_root = repository_root / CHUNK_CONTRACT_ROOT
+    initiative_directories = sorted(
+        path.name
+        for path in initiatives_root.iterdir()
+        if path.is_dir()
+        and (
+            path.name == metadata.initiative_id
+            or path.name.startswith(f"{metadata.initiative_id}-")
+        )
+    )
+    if len(initiative_directories) != 1:
+        raise LoopMemoryError(
+            "initiative_id must resolve to exactly one initiative directory"
+        )
+    chunks_root = initiatives_root / initiative_directories[0] / "chunks"
     candidates = sorted(
         path
-        for path in initiatives_root.glob("*/chunks/*.md")
-        if _is_owned_chunk_contract_path(
-            path.relative_to(repository_root).as_posix(), metadata.initiative_id
-        )
-        and (
+        for path in chunks_root.glob("*.md")
+        if (
             path.name == f"{metadata.next_chunk_id}.md"
             or path.name.startswith(f"{metadata.next_chunk_id}-")
         )
@@ -300,6 +316,23 @@ def _validate_remote_successor_contract(
         or not isinstance(tree.get("tree"), list)
     ):
         raise LoopMemoryError("reviewed-head repository tree is incomplete")
+    initiative_directories = sorted(
+        {
+            initiative_directory
+            for item in tree["tree"]
+            if isinstance(item, dict) and isinstance(item.get("path"), str)
+            if (
+                initiative_directory := _initiative_directory_from_path(
+                    item["path"], metadata.initiative_id
+                )
+            )
+        }
+    )
+    if len(initiative_directories) != 1:
+        raise LoopMemoryError(
+            "initiative_id must resolve to exactly one reviewed-head initiative directory"
+        )
+    initiative_directory = initiative_directories[0]
     candidates = []
     for item in tree["tree"]:
         if not isinstance(item, dict) or item.get("type") != "blob":
@@ -310,7 +343,7 @@ def _validate_remote_successor_contract(
             continue
         name = path.rsplit("/", 1)[-1]
         if (
-            _is_owned_chunk_contract_path(path, metadata.initiative_id)
+            _is_chunk_contract_path(path, initiative_directory)
             and (
                 name == f"{metadata.next_chunk_id}.md"
                 or name.startswith(f"{metadata.next_chunk_id}-")

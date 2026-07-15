@@ -1313,16 +1313,31 @@ def test_next_chunk_contract_binding_is_exact_locally_and_remotely() -> None:
             "exactly one chunk contract",
         )
         foreign_contract.unlink()
+        spoof_contract = (
+            root
+            / ".agent-loop/initiatives/WS-AUTH-001-spoof/chunks/"
+            "WS-AUTH-001-07-authorization-kernel.md"
+        )
+        spoof_contract.parent.mkdir(parents=True)
+        spoof_contract.write_text(
+            "# Chunk Contract: WS-AUTH-001-07 - Authorization Kernel\n",
+            encoding="utf-8",
+        )
+        assert_loop_error(
+            updater,
+            lambda: updater._validate_local_successor_contract(root, metadata),
+            "exactly one initiative directory",
+        )
+        spoof_contract.unlink()
+        spoof_contract.parent.rmdir()
+        spoof_contract.parent.parent.rmdir()
         contract.write_text(
             "# Chunk Contract: WS-AUTH-001-07 - Authorization Kernel\n",
             encoding="utf-8",
         )
         duplicate = (
-            root
-            / ".agent-loop/initiatives/WS-AUTH-001-duplicate/chunks/"
-            "WS-AUTH-001-07-copy.md"
+            contract.parent / "WS-AUTH-001-07-copy.md"
         )
-        duplicate.parent.mkdir(parents=True)
         duplicate.write_text(contract.read_text(encoding="utf-8"), encoding="utf-8")
         assert_loop_error(
             updater,
@@ -1357,6 +1372,10 @@ def test_next_chunk_contract_binding_is_exact_locally_and_remotely() -> None:
     foreign_tree_item["path"] = foreign_tree_item["path"].replace(
         "WS-AUTH-001-example", "WS-ART-001-example"
     )
+    spoof_tree_item = dict(tree_item)
+    spoof_tree_item["path"] = spoof_tree_item["path"].replace(
+        "WS-AUTH-001-example", "WS-AUTH-001-spoof"
+    )
     valid_tree = {"truncated": False, "tree": [foreign_tree_item, tree_item]}
     updater._validate_remote_successor_contract(
         RemoteClient(
@@ -1374,6 +1393,11 @@ def test_next_chunk_contract_binding_is_exact_locally_and_remotely() -> None:
             {"truncated": False, "tree": [foreign_tree_item]},
             "Authorization Kernel",
             "exactly one",
+        ),
+        (
+            {"truncated": False, "tree": [tree_item, spoof_tree_item]},
+            "Authorization Kernel",
+            "exactly one reviewed-head initiative directory",
         ),
         (
             {"truncated": False, "tree": [tree_item, dict(tree_item)]},
@@ -2106,13 +2130,23 @@ def test_loop_memory_schema_v2_rejection_matrix_is_fail_closed() -> None:
         )
         is None
     )
-    assert updater._is_owned_chunk_contract_path(
+    assert (
+        updater._initiative_directory_from_path(
         ".agent-loop/initiatives/WS-AUTH-001-example/chunks/WS-AUTH-001-07.md",
         "WS-AUTH-001",
+        )
+        == "WS-AUTH-001-example"
     )
-    assert not updater._is_owned_chunk_contract_path(
+    assert (
+        updater._initiative_directory_from_path(
         ".agent-loop/initiatives/WS-ART-001-example/chunks/WS-AUTH-001-07.md",
         "WS-AUTH-001",
+        )
+        is None
+    )
+    assert updater._is_chunk_contract_path(
+        ".agent-loop/initiatives/WS-AUTH-001-example/chunks/WS-AUTH-001-07.md",
+        "WS-AUTH-001-example",
     )
 
     metadata_payload = json.loads(valid_loop_intent())
