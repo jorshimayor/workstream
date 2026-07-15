@@ -475,6 +475,25 @@ For each chunk:
 Do not cut over a resource family until its local actor, grant, permission,
 resource loader, lifecycle guards, negative tests, and evidence path exist.
 
+### Catalogue And Action-Evidence Staging
+
+AUTH-07A installs exactly 73 PermissionIds and 28 planned ActionIds. Planned
+entries contain only action, permission, owner, and availability; they are not
+executable and must not receive deployment configuration, principals, resource
+facts, or guards. Startup validation failure is a release blocker, not a reason
+to skip or relax catalogue checks.
+
+Migration `0021` preserves historical audit rows with null `action_id`. Inspect
+non-null action evidence only by bounded ActionId, request/correlation IDs, and
+resource references; do not export event payloads or actor identity-link data
+for routine diagnosis. Downgrade is allowed only while every action ID remains
+null. If action-aware evidence exists, stop and recover forward rather than
+discarding it.
+
+AUTH-07B later activates only canonical actor self-read and self-update. Admin
+definition reads wait for AUTH-08 grant truth, and project capability context
+waits for AUTH-10 exact-project grants and canonical project composition.
+
 ## Rollback
 
 Rollback stops rather than bypasses authorization. A deployment may roll back

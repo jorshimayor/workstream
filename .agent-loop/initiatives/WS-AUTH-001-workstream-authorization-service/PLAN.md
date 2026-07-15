@@ -133,8 +133,9 @@ proving the same token role alone no longer authorizes.
 5. Evolve shared audit evidence in 05A, then add canonical
    idempotency/invalidation in 05B.
 6. Migrate to canonical profile/link semantics and first-human resolution.
-7. Implement the minimal registered permission and AuthorizationService kernel
-   before protected authority-management APIs.
+7. Register the closed permission/action catalogue with audit parity in 07A,
+   then implement the minimal AuthorizationService kernel and canonical actor
+   self-action cutover in 07B before protected authority-management APIs.
 8. Implement bootstrap, `AuthorityControl`, and immutable admin-role grants.
 9. Implement actor/link state administration and controlled service actors.
 10. Implement qualification snapshots and exact-project contributor grants.

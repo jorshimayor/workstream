@@ -4,13 +4,14 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-07` | Authorization Kernel And Permission Registry | L1 | Explicitly started by the user after AUTH-06 merge; L1 discovery and plan review in progress |
+| `WS-AUTH-001-07A` | Closed Permission And Action Catalogue | L1 | Parent AUTH-07 split before runtime implementation; repaired contract in required L1 plan review |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Paused for AUTH priority; no valid replacement baseline yet |
+| `WS-AUTH-001-07B` | Deny-By-Default Kernel And Self-Action Cutover | L1 | Inactive until 07A merge/memory and explicit user start |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02A1` | External Service Adapter Foundation | L1 | Inactive until a separate explicit user start |
@@ -74,7 +75,8 @@
 AUTH-05A merged through PR #115 as `8e1cde6`, and CAT plus its post-merge memory
 merged through PRs #117 and #118. AUTH-05B merged through PR #119 as `ad71c7e`.
 AUTH-06 merged through PR #124 as `f599551`, and the user explicitly started
-AUTH-07. Do not start AUTH-08 or POL-002-04 automatically.
+AUTH-07. Required L1 review split it into 07A/07B before runtime implementation.
+Do not start 07B, AUTH-08, or POL-002-04 automatically.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.

@@ -9,6 +9,19 @@ started `WS-AUTH-001-07` on branch
 read-only discovery and required plan review; runtime implementation has not
 started.
 
+## 2026-07-15 - WS-AUTH-001-07 Combined Plan Rejected
+
+Architecture/reuse and security/auth/product/docs reviewers failed the combined
+contract; QA/test and CI integrity passed only with blocking conditions. The
+contract required grant-backed admin reads before AUTH-08, project capabilities
+before AUTH-10, omitted the audit ORM and actor-route ownership files, and did
+not define exact active actions, denial precedence, transaction ownership, or
+coverage-compatible verification. No runtime code was written.
+
+The bounded repair splits parent AUTH-07 into 07A closed catalogue/action-aware
+audit parity and 07B minimal kernel/actor self-action cutover. The repaired 07A
+contract must pass fresh L1 plan review before implementation.
+
 ## 2026-07-15 - WS-ENG-001-02 Internal Review Passed
 
 Reviewed implementation SHA `8670005` passed senior engineering,

@@ -7,8 +7,8 @@
   `automation/loop-memory`.
 - Active initiative: `WS-AUTH-001` - Workstream Authorization Service
 - Active planning chunk: none
-- Active implementation chunk: `WS-AUTH-001-07` - Authorization Kernel And
-  Permission Registry
+- Active implementation chunk: `WS-AUTH-001-07A` - Closed Permission And Action
+  Catalogue
 - Current branch: `codex/ws-auth-001-07-authorization-kernel`
 - Start basis: the user explicitly started AUTH-07 after PR #124 merged AUTH-06
   as `f599551`; signed merge state required a separate explicit start.
@@ -17,7 +17,8 @@
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: L1 discovery and plan review before runtime implementation.
+- Current gate: repaired 07A contract in required L1 plan review; no runtime
+  implementation has started.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
@@ -29,9 +30,10 @@
 - Next artifact candidate: `WS-ART-001-02A1` remains inactive until the user
   gives a separate explicit start signal.
 - Authorization checkpoint: `WS-AUTH-001-06` merged through PR #124 as
-  `f599551`. The user separately started `WS-AUTH-001-07`; AUTH-08 remains
-  inactive until AUTH-07 merges, automated memory completes, and the user gives
-  another explicit start.
+  `f599551`. The user separately started parent `WS-AUTH-001-07`; required L1
+  review split it into 07A/07B before runtime implementation. AUTH-07B and
+  AUTH-08 remain inactive until their predecessor merges, automated memory
+  completes, and the user gives another explicit start.
 - Parallel coverage work: `WS-QUAL-001-01B2` remains paused. Its last official
   whole-app result is `6466/8159` statements (`79.249908%`); no replacement
   evidence exists.

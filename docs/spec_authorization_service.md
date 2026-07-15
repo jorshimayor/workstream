@@ -199,8 +199,9 @@ audit.export
 Artifact permissions are deliberately resource- and operation-specific.
 `artifact.*.read` permissions do not authorize retry or recovery, human
 Operator permissions do not authorize internal execution, and internal service
-permissions do not authorize Operator APIs. AUTH-07 owns this closed registry,
-AUTH-08 owns the Operator grant definitions, AUTH-09 owns the service
+permissions do not authorize Operator APIs. AUTH-07A owns this closed registry,
+AUTH-07B introduces the central kernel, AUTH-08 owns the Operator grant
+definitions, AUTH-09 owns the service
 principals, and WS-ART consumes the resulting decisions without registering
 permissions or inferring authority. Artifact actions activate only through the
 paired feature model below; AUTH-12, AUTH-14, and AUTH-15 do not activate or
@@ -211,7 +212,7 @@ closed registry layer and are not included in that permission count. AUTH-05A's 
 PostgreSQL audit registry accepts 49. The three approved Operator recovery
 identifiers `operations.task.start_override`,
 `operations.submission_gate.repair`, and `operations.checker.retry`, plus the
-21 artifact identifiers above, are reserved planned metadata. AUTH-07 adds
+21 artifact identifiers above, are reserved planned metadata. AUTH-07A adds
 their matching typed/SQL audit parity without making them executable. An
 artifact action becomes active only when the owning WS-ART chunk supplies its
 canonical resource composer, guards, surface declaration, behavior tests, and
@@ -230,18 +231,19 @@ The paired artifact activation matrix is closed:
 | `WS-ART-001-06A` | `artifact.post_submit.checker_input.materialize` mapped to `artifact.checker_input.materialize` |
 | `WS-ART-001-06B` | `artifact.checker_output.write` and `artifact.checker_output.binding.create` mapped to `artifact.binding.create` using the checker-run resource |
 
-Every row requires AUTH-07's registry first. A row with an Operator principal
+Every row requires AUTH-07A's registry and AUTH-07B's kernel first. A row with an Operator principal
 also requires its AUTH-08 grant definition; a row with a fixed service
 principal also requires its AUTH-09 service-actor assignment. Feature code
 receives centralized decisions; it never queries grants or constructs
 permission identifiers dynamically.
 
-The following table is the single source of truth for reserved artifact-related
-`ActionId` metadata. AUTH-07 registers each row as `planned`; the owning WS-ART
-chunk may activate it only with its canonical resource composer, guards,
-surface declaration, and behavior tests. A mapping is not a permission alias:
-authorization still evaluates the listed registered `PermissionId` against the
-listed canonical resource and principal class.
+The following table is the single source of truth for the owning WS-ART activation blueprint for
+artifact-related `ActionId` values. AUTH-07A registers only each row's stable
+`ActionId`, approved `PermissionId`, owning WS-ART chunk, and `planned`
+availability. Its principal-class and canonical-resource columns are not AUTH
+registry fields and are not executable authority; the owning WS-ART chunk must
+adopt them with its canonical resource composer, guards, surface declaration,
+and behavior tests before activation. A mapping is not a permission alias.
 
 | ActionId | PermissionId | Principal class | Canonical resource | Owning WS-ART chunk |
 |---|---|---|---|---|
@@ -337,11 +339,12 @@ never serialize a human bearer token as executable authority. Collection
 actions authorize and filter against their canonical parent scope before
 counts, cursors, facets, or distinct values are computed.
 
-Registration and completeness are staged with the approved chunk map. Chunk 07
-introduces the types and registry. Reserved action metadata contains only the
+Registration and completeness are staged with the approved chunk map. Chunk
+07A introduces the identifiers and planned registry; 07B introduces the kernel
+and first active self actions. Reserved action metadata contains only the
 stable `ActionId`, approved `PermissionId`, owning specification/chunk, and
 `planned` availability; it is not executable and does not predefine a
-foreign-domain target, facts, or guards. Every route-owning chunk from 07
+foreign-domain target, facts, or guards. Every route-owning chunk from 07B
 through 15 may promote an action to active only when its owning domain contract,
 feature-owned resource composition, surface declaration, and behavior tests
 exist. Each such chunk generates a manifest-delta proof for every surface it
@@ -375,9 +378,10 @@ List filtering occurs before counts and pagination cursors.
 `AuthorizationDecision` carries the stable `ActionId` in addition to permission,
 resource, scope, matched authority, and denial information. The action identifier
 is included in bounded logs/metrics and every action-based allowed or denied
-authority event emitted by AUTH-07 or a later chunk. AUTH-07 adds nullable
+authority event emitted by AUTH-07B or a later chunk. AUTH-07A adds nullable
 historical storage and exact typed/SQL registry parity; legacy rows remain null,
-while new action-based decision events must contain a registered identifier. A
+while new AUTH-07B-or-later action-based decision events must contain a
+registered identifier. A
 new action identifier requires the same approved typed/PostgreSQL registry and
 migration treatment as a permission.
 
@@ -480,6 +484,12 @@ POST /api/v1/projects/{project_id}/role-grants/{grant_id}/revoke
 
 Exact request/response/error contracts are introduced by their owning chunks.
 No route may accept role or scope from request JSON as canonical authority.
+
+AUTH-07B cuts only existing `GET|PATCH /api/v1/actors/me` behavior over to the
+kernel. Permission and admin-role definition reads begin in AUTH-08 after
+bootstrap and administrative-grant truth exists. Project-scoped
+`GET /api/v1/actors/me/authorization-context` begins in AUTH-10 after
+exact-project grant and canonical project capability composition exists.
 
 ## Migration And Compatibility
 
