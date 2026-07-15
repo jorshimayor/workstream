@@ -66,7 +66,7 @@ this PR does not change any coverage threshold or exclusion.
 
 ## Reviewer Results
 
-Reviewed exact evidence head `f5af7986c7b85a4b45fbf21ee9f0a265c5c45177`
+Reviewed exact merged head `6f1b7ce5171d763cff2b5d6393784f80d4248187`
 and runtime amendment `3365e67e7b44195069a5c7645fdee0af1d4e0180` passed
 senior engineering, QA/test, security/auth, product/ops, architecture, CI
 integrity, docs, reuse/dedup, and test-delta review with no remaining findings.

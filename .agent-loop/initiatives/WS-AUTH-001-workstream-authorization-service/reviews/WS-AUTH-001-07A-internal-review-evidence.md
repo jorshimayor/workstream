@@ -1,6 +1,6 @@
 # WS-AUTH-001-07A Internal Review Evidence
 
-Reviewed code SHA: `f5af7986c7b85a4b45fbf21ee9f0a265c5c45177`
+Reviewed code SHA: `6f1b7ce5171d763cff2b5d6393784f80d4248187`
 Reviewed runtime SHA: `3365e67e7b44195069a5c7645fdee0af1d4e0180`
 Reviewed at: `2026-07-15T12:51:26Z`
 Reviewer run IDs: `auth06_final_ci`, `auth06_final_docs`,
@@ -67,7 +67,9 @@ planned action dependencies without runtime authority. Exact-head repair
 `160af8a` removes duplicate session authority: the request-scoped service binds
 the caller-owned session once and exposes only
 `require(action_id, typed_resource_context)`. Evidence-only head `f5af798` then
-passed exact lifecycle, docs, and test-evidence review.
+passed exact lifecycle, docs, and test-evidence review. Latest-main merge and
+checkpoint repair head `6f1b7ce` then passed merge-integrity, architecture, QA,
+CI, lifecycle, and docs confirmation without AUTH runtime changes.
 
 Valid findings addressed: yes
 
