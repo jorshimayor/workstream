@@ -42,7 +42,7 @@ activated.
 
 ## Design Chosen
 
-External identity is keyed only by normalized issuer and subject. Human profile
+External identity is keyed only by exact, bounded issuer and subject. Human profile
 state is separate from identity links and defaults to active without assigning
 a role. First creation is serialized with a PostgreSQL advisory transaction
 lock. Runtime repositories do not own commits or sessions, and authority events
@@ -84,19 +84,26 @@ authorization remains unchanged until the grant and evaluator cutovers.
   provenance.
 - Migration upgrade, classification, constraints, indexes, privacy, guarded
   downgrade, re-upgrade, and terminal deactivation behavior have direct tests.
+- Downgrade copies current canonical display fields, including a cleared email,
+  so pre-AUTH-06 code cannot resurrect stale private data.
 - Rate-control and audit failures roll back actor state and evidence together.
-- Legacy activation is idempotent and audits only actual changes.
+- Legacy activation is serialized and idempotent and audits only actual changes.
+- Work-context claim, start, and submit affordances require the same current
+  compatibility role and active eligibility as their mutation gates.
 
 ## Tests And Checks Run
 
-- Actor subsystem branch coverage: 90.0929 percent.
-- High-risk migration rerun: 3 passed in 57.32 seconds.
+- Actor subsystem branch coverage: 90.1031 percent across 804 statements and
+  166 branches; 83 actor/classification behavior tests passed in 706.29 seconds.
+- External-review migration, concurrency, lifecycle, exact-anchor, privacy, and
+  zero-side-effect scenarios passed on the integrated branch.
 - Real Postgres API contract: passed end to end through migration `0020`.
 - Focused actor/auth/task/project/checker/rate-control behavior and migration
   suites passed; final coverage data includes the repaired static inventory and
   added repeated-access, unavailable-control, and compatibility assertions.
 - Ruff, stale wording, stale authorization docs, changed Markdown links, diff
-  integrity, and all 63 engineering-loop agent-gate tests passed.
+  integrity, all 71 engineering-loop agent-gate tests, loop-memory state, and
+  the schema-v2 AUTH-06 merge-intent validator passed.
 - The multi-hour repository suite was not repeated locally. GitHub Backend owns
   the authoritative full-suite result and repository-wide 78 percent floor.
 
@@ -115,13 +122,17 @@ still enforce the repository-wide 78 percent baseline.
 
 ## Reviewer Results
 
-Exact reviewed SHA `13cd665ffc683d59e83bca70f370080067ef3fe9` passed senior
+Exact reviewed SHA `abd76c995e51645b61d4d3ac07f1ff82ab6eb740` passed senior
 engineering, QA/test, security/auth, product/ops, architecture, CI integrity,
 docs, reuse/dedup, and test-delta review with no blocking findings.
 
 ## External Review
 
-Pending GitHub checks, CodeRabbit, and human review.
+CodeRabbit's seven inline findings and three nitpicks were triaged. All valid
+runtime, migration, lifecycle, privacy, test-harness, and test-contract findings
+were repaired. Its generic diff-local docstring percentage is not the
+repository's configured gate and required no narration-only churn. GitHub checks,
+the next CodeRabbit head, and human review remain pending.
 
 ## Remaining Risks
 

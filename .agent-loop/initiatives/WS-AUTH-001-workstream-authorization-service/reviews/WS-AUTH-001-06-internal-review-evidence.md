@@ -1,8 +1,8 @@
 # WS-AUTH-001-06 Internal Review Evidence
 
-Reviewed code SHA: `13cd665ffc683d59e83bca70f370080067ef3fe9`
-Reviewed runtime SHA: `13cd665ffc683d59e83bca70f370080067ef3fe9`
-Reviewed at: `2026-07-15T05:20:21Z`
+Reviewed code SHA: `abd76c995e51645b61d4d3ac07f1ff82ab6eb740`
+Reviewed runtime SHA: `abd76c995e51645b61d4d3ac07f1ff82ab6eb740`
+Reviewed at: `2026-07-15T06:34:00Z`
 Reviewer run IDs: `auth06_final_senior`, `auth06_qa_review`,
 `auth06_security_review`, `auth06_product_ops_review`,
 `auth06_final_architecture`, `auth06_final_ci`, `auth06_final_docs`,
@@ -10,24 +10,22 @@ Reviewer run IDs: `auth06_final_senior`, `auth06_qa_review`,
 
 ## Deterministic Evidence
 
-- Actor subsystem branch coverage reached 90.0929 percent across 803
+- Actor subsystem branch coverage reached 90.1031 percent across 804
   statements and 166 branches, above the required 90 percent gate.
-- The broad actor, authentication, task, project, checker, rate-control, and
-  migration coverage run completed 186 behavior tests before one static
-  allowlist assertion exposed the new shared rate-control module. The allowlist
-  was repaired, its focused proof passed, and three additional behavior tests
-  strengthened repeated access, unavailable rate control, and idempotent legacy
-  activation before the final coverage report.
-- High-risk migration rerun: 3 passed in 57.32 seconds, covering terminal-state
-  downgrade refusal, privacy-safe invalid-row handling, and classified identity
-  and attribution preservation.
+- Final actor and legacy-classification coverage run: 83 passed in 706.29
+  seconds, including synchronized compatibility activation, rollback, privacy,
+  exact-anchor, and lifecycle behavior.
+- External-review database proof passed six migration, concurrency, and
+  lifecycle scenarios together; the repaired role-without-submit-access case
+  then passed separately against the integrated branch.
 - Real Postgres API contract passed through migration `0020`, actor
-  provisioning, compatibility projection, task claim/start/submission, and
-  authorization denials.
+  provisioning, response privacy, compatibility projection, task
+  claim/start/submission, and authorization denials.
 - Ruff passed for backend application, tests, migration, and API contract code.
 - Stale Workstream wording, stale authorization documentation, changed Markdown
   links, and `git diff --check` passed.
-- All 63 engineering-loop agent-gate tests passed.
+- All 71 integrated engineering-loop agent-gate tests passed, and the schema-v2
+  merge intent resolves the exact same-initiative AUTH-07 successor.
 - No workflow, dependency, coverage threshold, skip, exclusion, or package
   script changed. GitHub Backend remains authoritative for the repository-wide
   78 percent floor; the multi-hour full suite was not repeated locally.
@@ -51,9 +49,10 @@ Reviewer run IDs: `auth06_final_senior`, `auth06_qa_review`,
 Review repair closed stale eligibility on assigned task start, operator-override
 regression, deactivated-profile access, non-human zero-write proof, rate-control
 unavailability, mid-audit rollback, repeated-access timestamp behavior,
-idempotent compatibility activation, migration index and downgrade gaps,
-invalid-row privacy, claim-bound inconsistency, duplicate error mapping, and
-active-document legacy terminology.
+idempotent and serialized compatibility activation, migration ID/downgrade
+gaps, invalid-row privacy, exact-anchor validation, lifecycle affordance drift,
+fixture cleanup safety, duplicate error mapping, and human-facing legacy
+terminology.
 
 Valid findings addressed: yes
 
