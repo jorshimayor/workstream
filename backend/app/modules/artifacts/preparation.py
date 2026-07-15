@@ -152,13 +152,14 @@ class ArtifactScratchManager:
         self._root = root.resolve(strict=False)
         self._limits = limits
         self._root_marker_content = self._marker_content(limits)
-        self._initialize_root(root)
+        expected_root = self._initialize_root(root)
         self._root_fd = os.open(
             self._root,
             os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0),
         )
         self._files_fd = -1
         try:
+            self._assert_opened_root(self._root_fd, expected_root=expected_root)
             self._initialize_layout()
             self._files_fd = self._open_directory("files")
             with self._locked_ledger():
@@ -239,7 +240,7 @@ class ArtifactScratchManager:
             os.close(root_fd)
             self._root_fd = -1
 
-    def _initialize_root(self, configured_root: Path) -> None:
+    def _initialize_root(self, configured_root: Path) -> os.stat_result:
         if configured_root.is_symlink():
             raise ValueError("artifact scratch root must not be a symlink")
         created = False
@@ -259,6 +260,19 @@ class ArtifactScratchManager:
             raise ValueError("existing artifact scratch root is not private")
         if configured_root.resolve() != self._root or not configured_root.is_dir():
             raise ValueError("artifact scratch root must be a dedicated directory")
+        return details
+
+    @staticmethod
+    def _assert_opened_root(descriptor: int, *, expected_root: os.stat_result) -> None:
+        details = os.fstat(descriptor)
+        if (
+            not stat_module.S_ISDIR(details.st_mode)
+            or details.st_uid != os.geteuid()
+            or details.st_mode & 0o777 != 0o700
+            or details.st_dev != expected_root.st_dev
+            or details.st_ino != expected_root.st_ino
+        ):
+            raise ValueError("artifact scratch root changed during initialization")
 
     def _initialize_layout(self) -> None:
         entries = set(os.listdir(self._root_fd))

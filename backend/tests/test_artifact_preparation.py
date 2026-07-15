@@ -385,6 +385,39 @@ def test_cross_process_root_initialization_is_race_safe(tmp_path: Path) -> None:
     manager.close()
 
 
+def test_initializer_rejects_root_swapped_between_validation_and_open(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Bind the opened root descriptor to the directory that was validated."""
+    root = tmp_path / "scratch"
+    replacement = tmp_path / "replacement"
+    replacement.mkdir(mode=0o700)
+    parked = tmp_path / "parked"
+    original_open = os.open
+    swapped = False
+
+    def swap_root_before_open(
+        path: str | bytes | os.PathLike[str] | os.PathLike[bytes],
+        flags: int,
+        mode: int = 0o777,
+        *,
+        dir_fd: int | None = None,
+    ) -> int:
+        nonlocal swapped
+        if not swapped and dir_fd is None and Path(path) == root.resolve():
+            root.rename(parked)
+            replacement.rename(root)
+            swapped = True
+        return original_open(path, flags, mode, dir_fd=dir_fd)
+
+    monkeypatch.setattr(os, "open", swap_root_before_open)
+    with pytest.raises(ValueError, match="changed during initialization"):
+        ArtifactScratchManager(root=root, limits=preparation_limits())
+    assert swapped
+    assert parked.is_dir()
+
+
 def test_initializer_validates_live_marker_only_after_acquiring_lock(tmp_path: Path) -> None:
     """Wait for an in-progress marker publication before validating its bytes."""
     context = multiprocessing.get_context("spawn")
