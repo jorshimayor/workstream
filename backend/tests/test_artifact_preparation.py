@@ -184,6 +184,8 @@ async def test_preparation_seals_exact_commitment_and_single_stream(tmp_path: Pa
 
 def test_committed_sources_cannot_be_publicly_assembled() -> None:
     """Reject caller-selected commitment and stream pairing."""
+    from app.modules.artifacts.sources import _COMMITTED_SOURCE_SEAL
+
     commitment = ArtifactCommitment(
         sha256="sha256:" + "0" * 64,
         byte_count=0,
@@ -211,8 +213,8 @@ def test_committed_sources_cannot_be_publicly_assembled() -> None:
     forged._owner = owner
     forged._binding = object()
     forged._commitment = commitment
-    forged._seal = object()
-    with pytest.raises(RuntimeError, match="unavailable"):
+    forged._seal = _COMMITTED_SOURCE_SEAL
+    with pytest.raises(ArtifactScratchIntegrityError, match="unavailable"):
         forged.stream()
 
 
@@ -1175,6 +1177,52 @@ async def test_repeated_allocation_cancellation_cannot_interrupt_cleanup(
 
     assert (await manager.usage()).reservation_count == 0
     assert list((tmp_path / "scratch" / "files").iterdir()) == []
+    manager.close()
+
+
+@pytest.mark.asyncio
+async def test_allocation_close_failure_still_releases_reservation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Release allocation ownership even when descriptor close reports failure."""
+    manager = ArtifactScratchManager(root=tmp_path / "scratch", limits=preparation_limits())
+    started = threading.Event()
+    finish_allocation = threading.Event()
+    original_allocate = manager._allocate_sync
+    original_close = os.close
+    allocated_descriptor: int | None = None
+    close_failed = False
+
+    def delayed_allocate() -> tuple[object, int]:
+        nonlocal allocated_descriptor
+        result = original_allocate()
+        allocated_descriptor = result[1]
+        started.set()
+        finish_allocation.wait(timeout=5)
+        return result
+
+    def fail_allocated_close(descriptor: int) -> None:
+        nonlocal close_failed
+        if descriptor == allocated_descriptor and not close_failed:
+            close_failed = True
+            raise OSError(errno.EIO, "injected descriptor close failure")
+        original_close(descriptor)
+
+    monkeypatch.setattr(manager, "_allocate_sync", delayed_allocate)
+    monkeypatch.setattr(os, "close", fail_allocated_close)
+    task = asyncio.create_task(manager.allocate())
+    assert await asyncio.to_thread(started.wait, 5)
+    task.cancel()
+    finish_allocation.set()
+    with pytest.raises(OSError, match="descriptor close failure"):
+        await task
+
+    assert close_failed
+    assert (await manager.usage()).reservation_count == 0
+    assert list((tmp_path / "scratch" / "files").iterdir()) == []
+    assert allocated_descriptor is not None
+    original_close(allocated_descriptor)
     manager.close()
 
 

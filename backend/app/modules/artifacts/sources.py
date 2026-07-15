@@ -29,6 +29,13 @@ class _PreparedArtifactOwner(Protocol):
     def claim_prepared_commitment(self, binding: object) -> ArtifactCommitment:
         """Claim the server-computed commitment for one registered binding."""
 
+    def validates_committed_source(
+        self,
+        binding: object,
+        commitment: ArtifactCommitment,
+    ) -> bool:
+        """Return whether this exact binding and commitment remain service-owned."""
+
 
 @final
 @dataclass(frozen=True, slots=True)
@@ -96,8 +103,18 @@ class CommittedArtifactSource:
         return self._owner.open_committed_stream(self._binding, self._commitment)
 
     def _assert_sealed(self) -> None:
-        if getattr(self, "_seal", None) is not _COMMITTED_SOURCE_SEAL:
-            raise RuntimeError("committed artifact source is unavailable")
+        from app.modules.artifacts.preparation import (
+            ArtifactPreparationService,
+            ArtifactScratchIntegrityError,
+        )
+
+        owner = getattr(self, "_owner", None)
+        if (
+            getattr(self, "_seal", None) is not _COMMITTED_SOURCE_SEAL
+            or type(owner) is not ArtifactPreparationService
+            or not owner.validates_committed_source(self._binding, self._commitment)
+        ):
+            raise ArtifactScratchIntegrityError("committed artifact source is unavailable")
 
     def __repr__(self) -> str:
         """Avoid exposing scratch identifiers or paths."""

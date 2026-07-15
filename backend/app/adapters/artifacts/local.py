@@ -162,7 +162,7 @@ class LocalStorageAdapter:
             )
         except asyncio.CancelledError:
             if lock is not None:
-                await self._cleanup_unpublished(scope)
+                await await_cancellation_resistant(self._cleanup_unpublished(scope))
             raise
         except (
             ArtifactInputMismatchError,
@@ -175,7 +175,7 @@ class LocalStorageAdapter:
             raise ArtifactStoreUnavailableError("local artifact operation failed") from exc
         finally:
             if lock is not None:
-                await self._run_io(self._release_lock, lock)
+                await await_cancellation_resistant(self._run_io(self._release_lock, lock))
 
     async def _recover_or_replay(
         self,

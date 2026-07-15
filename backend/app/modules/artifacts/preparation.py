@@ -193,8 +193,12 @@ class ArtifactScratchManager:
             return await asyncio.shield(task)
         except asyncio.CancelledError:
             reservation, descriptor = await await_cancellation_resistant(task)
-            os.close(descriptor)
-            await await_cancellation_resistant(asyncio.to_thread(self._release_sync, reservation))
+            try:
+                os.close(descriptor)
+            finally:
+                await await_cancellation_resistant(
+                    asyncio.to_thread(self._release_sync, reservation)
+                )
             raise
 
     async def seal_for_read(self, reservation: _ScratchReservation, descriptor: int) -> BinaryIO:
@@ -940,6 +944,19 @@ class ArtifactPreparationService:
             raise ArtifactScratchIntegrityError("prepared artifact source is unavailable")
         active.handle_issued = True
         return active.commitment
+
+    def validates_committed_source(
+        self,
+        binding: object,
+        commitment: ArtifactCommitment,
+    ) -> bool:
+        """Confirm one sealed value still maps to its live preparation."""
+        active = self._active.get(binding)
+        return (
+            active is not None
+            and active.handle_issued
+            and active.commitment is commitment
+        )
 
     def open_committed_stream(
         self,

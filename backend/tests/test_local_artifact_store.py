@@ -135,3 +135,47 @@ async def test_private_lock_releases_after_repeated_cancellation(
         await task
     assert released.is_set()
     adapter.close()
+
+
+@pytest.mark.asyncio
+async def test_store_cleanup_survives_repeated_cancellation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Complete public-store cleanup and lock release before cancellation escapes."""
+    adapter = LocalStorageAdapter(root=tmp_path / "artifacts", buffer_bytes=2)
+    request = store_request()
+    write_started = asyncio.Event()
+    never = asyncio.Event()
+    cleanup_started = asyncio.Event()
+    finish_cleanup = asyncio.Event()
+    original_write_stream = adapter._write_stream
+    original_cleanup = adapter._cleanup_unpublished
+
+    async def blocked_write(*_: object) -> tuple[str, int]:
+        write_started.set()
+        await never.wait()
+        raise AssertionError("blocked write unexpectedly resumed")
+
+    async def delayed_cleanup(scope: str) -> None:
+        cleanup_started.set()
+        await finish_cleanup.wait()
+        await original_cleanup(scope)
+
+    monkeypatch.setattr(adapter, "_write_stream", blocked_write)
+    monkeypatch.setattr(adapter, "_cleanup_unpublished", delayed_cleanup)
+    task = asyncio.create_task(adapter.store(byte_stream(b"hello"), request))
+    await asyncio.wait_for(write_started.wait(), timeout=1)
+    task.cancel()
+    await asyncio.wait_for(cleanup_started.wait(), timeout=1)
+    task.cancel()
+    await asyncio.sleep(0)
+    finish_cleanup.set()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+    assert list((tmp_path / "artifacts" / "tmp").iterdir()) == []
+    monkeypatch.setattr(adapter, "_write_stream", original_write_stream)
+    stored = await adapter.store(byte_stream(b"hello"), request)
+    assert stored.sha256 == request.expected_sha256
+    adapter.close()

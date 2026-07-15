@@ -14,6 +14,9 @@ active ArtifactStore v1 contract and runtime behavior remain unchanged.
 
 - new provider-neutral committed-source and scratch-preparation modules under
   `backend/app/modules/artifacts/`;
+- one shared repeated-cancellation helper in
+  `backend/app/core/cancellation.py`, with minimal adoption by the existing
+  artifact ingest service and LocalStorage private ownership handoffs;
 - LocalStorage private byte/file helpers only, while preserving its active v1
   public behavior;
 - artifact preparation settings in `backend/app/core/config.py`;
