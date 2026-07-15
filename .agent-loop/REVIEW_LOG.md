@@ -1,5 +1,16 @@
 # Review Log
 
+## 2026-07-15 - WS-AUTH-001-07A Repaired Plan Passed
+
+Exact-SHA `beb85ac` passed senior engineering, architecture/reuse,
+security/auth, product/ops, docs, QA/test, test-delta, and CI-integrity review.
+The final contract keeps planned/active availability in typed validation while
+PostgreSQL enforces registered identifiers, decision-event use, exact
+action-to-permission mapping, post-`0018` permission pairing, and guarded
+downgrade custody. Seventy-one agent-gate tests and all static documentation
+checks passed. Bounded AUTH-07A implementation may begin; AUTH-07B remains
+inactive.
+
 ## 2026-07-15 - WS-AUTH-001-07A Third Repaired Plan Failed
 
 Exact-SHA architecture/reuse and CI review of `8690ef5` passed all prior

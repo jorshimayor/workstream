@@ -17,8 +17,9 @@
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: repaired 07A contract in required L1 plan review; no runtime
-  implementation has started.
+- Current gate: AUTH-07A's repaired L1 contract passed every required
+  preimplementation review at `beb85ac`; bounded runtime implementation may
+  start.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,

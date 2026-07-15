@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-07A` | Closed Permission And Action Catalogue | L1 | Parent AUTH-07 split before runtime implementation; repaired contract in required L1 plan review |
+| `WS-AUTH-001-07A` | Closed Permission And Action Catalogue | L1 | Repaired contract passed required L1 plan review at `beb85ac`; bounded implementation active |
 
 ## Planned Next
 
