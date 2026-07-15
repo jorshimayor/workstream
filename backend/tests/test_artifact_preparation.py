@@ -60,6 +60,19 @@ def preparation_limits(**changes: Any) -> ArtifactPreparationLimits:
     return ArtifactPreparationLimits(**values)
 
 
+def _join_or_kill_process(
+    process: multiprocessing.Process,
+    *,
+    timeout: float = 10,
+) -> None:
+    """Bound child shutdown, including the fallback wait after termination."""
+    process.join(timeout=timeout)
+    if process.is_alive():
+        process.kill()
+        process.join(timeout=timeout)
+    assert not process.is_alive(), "child process did not terminate"
+
+
 def _hold_cross_process_reservation(
     root: str,
     limits: ArtifactPreparationLimits,
@@ -280,10 +293,7 @@ async def test_cross_process_ledger_prevents_concurrent_oversubscription(
         manager.close()
     finally:
         release.set()
-        await asyncio.to_thread(process.join, 10)
-        if process.is_alive():
-            process.kill()
-            process.join()
+        await asyncio.to_thread(_join_or_kill_process, process)
     assert process.exitcode == 0
 
 
@@ -367,10 +377,7 @@ def test_cross_process_root_initialization_is_race_safe(tmp_path: Path) -> None:
         for receiver in receivers:
             receiver.close()
         for process in processes:
-            process.join(timeout=15)
-            if process.is_alive():
-                process.kill()
-                process.join()
+            _join_or_kill_process(process, timeout=15)
     assert [process.exitcode for process in processes] == [0, 0]
     assert results == [None, None]
     manager = ArtifactScratchManager(root=root, limits=preparation_limits())
@@ -410,10 +417,7 @@ def test_initializer_validates_live_marker_only_after_acquiring_lock(tmp_path: P
         fcntl.flock(lock_descriptor, fcntl.LOCK_UN)
         os.close(lock_descriptor)
         receiver.close()
-        process.join(timeout=15)
-        if process.is_alive():
-            process.kill()
-            process.join()
+        _join_or_kill_process(process, timeout=15)
     assert process.exitcode == 0
 
 
@@ -502,10 +506,7 @@ async def test_initialization_waits_for_live_ledger_publication(tmp_path: Path) 
         manager.close()
     finally:
         release.set()
-        await asyncio.to_thread(process.join, 10)
-        if process.is_alive():
-            process.kill()
-            process.join()
+        await asyncio.to_thread(_join_or_kill_process, process)
     assert process.exitcode == 0
 
 
@@ -578,12 +579,9 @@ async def test_crash_reservation_is_discovered_and_cleaned_deterministically(
             "crashed scratch process did not publish its reservation"
         )
         expires_at = receive.recv()
-        await asyncio.to_thread(process.join, 10)
     finally:
         receive.close()
-        if process.is_alive():
-            process.kill()
-            process.join()
+        await asyncio.to_thread(_join_or_kill_process, process)
     assert process.exitcode == 0
     manager = ArtifactScratchManager(root=tmp_path / "scratch", limits=limits)
     assert await manager.stale_reservation_ids(now_unix_ns=expires_at - 1) == ()
