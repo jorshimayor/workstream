@@ -24,9 +24,11 @@ approval or reusable evidence. Its source remains on branch
 
 ## Active Work
 
-`WS-ART-001-02A1` is the active implementation chunk. It installs only the
-shared typed external-service adapter/factory foundation and does not migrate
-any capability.
+`WS-ART-001-02A1` implementation and all nine required internal reviewer tracks
+are complete at reviewed code SHA `8224d8c`. The chunk installs only the shared
+typed external-service adapter/factory foundation and does not migrate any
+capability. It is ready for PR publication, GitHub Backend CI, external review,
+and the human merge checkpoint.
 
 ## Next Proposed Chunk
 
@@ -39,5 +41,5 @@ owns MinIO and AWS S3. There is no active R2 chunk.
 
 ## Gate
 
-PR #120 is merged. `WS-ART-001-02A1` is active after the explicit user start.
-No later artifact chunk starts automatically.
+PR #120 is merged. `WS-ART-001-02A1` awaits external and human review. No later
+artifact chunk starts automatically, and only the user may approve merge.
