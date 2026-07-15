@@ -124,6 +124,11 @@ def _is_valid_lifecycle_id(value: object) -> bool:
     return _is_bounded_single_line(value, 80) and bool(ID_PATTERN.fullmatch(value))
 
 
+def _is_current_schema_version(value: object) -> bool:
+    """Return whether value is exactly the supported integer schema version."""
+    return type(value) is int and value == SCHEMA_VERSION
+
+
 def _metadata_failures(metadata: object, label: str) -> list[str]:
     """Independently validate one completed-chunk metadata object."""
     expected = {
@@ -138,7 +143,7 @@ def _metadata_failures(metadata: object, label: str) -> list[str]:
     if not isinstance(metadata, dict) or set(metadata) != expected:
         return [f"{label}: invalid completed-chunk schema"]
     failures: list[str] = []
-    if metadata.get("schema_version") != SCHEMA_VERSION:
+    if not _is_current_schema_version(metadata.get("schema_version")):
         failures.append(f"{label}: unsupported completed-chunk schema version")
     initiative_id = metadata.get("initiative_id")
     chunk_id = metadata.get("chunk_id")
@@ -187,7 +192,7 @@ def _record_failures(record: object, label: str) -> list[str]:
     if not isinstance(record, dict) or set(record) != expected:
         return [f"{label}: invalid record schema"]
     failures: list[str] = []
-    if record.get("schema_version") != SCHEMA_VERSION:
+    if not _is_current_schema_version(record.get("schema_version")):
         failures.append(f"{label}: unsupported schema version")
     if record.get("state_branch") != STATE_BRANCH:
         failures.append(f"{label}: unexpected state branch")
@@ -399,7 +404,7 @@ def generated_state_failures(root: Path) -> list[str]:
         if (
             not isinstance(entry, dict)
             or set(entry) != expected_keys
-            or entry.get("schema_version") != SCHEMA_VERSION
+            or not _is_current_schema_version(entry.get("schema_version"))
         ):
             failures.append(f"{label}: invalid entry schema")
             break

@@ -1246,6 +1246,9 @@ def test_post_merge_metadata_is_strict_and_bounded() -> None:
         "",
         valid_loop_intent() + valid_loop_intent(),
         valid_loop_intent().replace('"schema_version":2', '"schema_version":1'),
+        valid_loop_intent().replace('"schema_version":2', '"schema_version":2.0'),
+        valid_loop_intent().replace('"schema_version":2', '"schema_version":"2"'),
+        valid_loop_intent().replace('"schema_version":2', '"schema_version":true'),
         valid_loop_intent().replace(
             '"chunk_id":"WS-AUTH-001-06"', '"chunk_id":"WS-POL-002-04"'
         ),
@@ -1385,7 +1388,14 @@ def test_next_chunk_contract_binding_is_exact_locally_and_remotely() -> None:
     spoof_tree_item["path"] = spoof_tree_item["path"].replace(
         "WS-AUTH-001-example", "WS-AUTH-001-spoof"
     )
-    valid_tree = {"truncated": False, "tree": [foreign_tree_item, tree_item]}
+    non_contract_tree_item = dict(tree_item)
+    non_contract_tree_item["path"] = non_contract_tree_item["path"].removesuffix(
+        ".md"
+    ) + ".txt"
+    valid_tree = {
+        "truncated": False,
+        "tree": [foreign_tree_item, non_contract_tree_item, tree_item],
+    }
     updater._validate_remote_successor_contract(
         RemoteClient(
             valid_tree,
@@ -2157,6 +2167,10 @@ def test_loop_memory_schema_v2_rejection_matrix_is_fail_closed() -> None:
         ".agent-loop/initiatives/WS-AUTH-001-example/chunks/WS-AUTH-001-07.md",
         "WS-AUTH-001-example",
     )
+    assert not updater._is_chunk_contract_path(
+        ".agent-loop/initiatives/WS-AUTH-001-example/chunks/WS-AUTH-001-07.txt",
+        "WS-AUTH-001-example",
+    )
 
     metadata_payload = json.loads(valid_loop_intent())
     metadata_mutations = (
@@ -2271,6 +2285,9 @@ def test_loop_memory_schema_v2_rejection_matrix_is_fail_closed() -> None:
 
     base = loop_record(updater)
     record_mutations = (
+        (lambda row: row.update(schema_version=2.0), "invalid schema"),
+        (lambda row: row.update(schema_version="2"), "invalid schema"),
+        (lambda row: row.update(schema_version=True), "invalid schema"),
         (lambda row: row.update(state_branch="main"), "state branch"),
         (lambda row: row.update(repository=7), "repository must be owner/name"),
         (
@@ -2325,6 +2342,9 @@ def test_loop_memory_schema_v2_rejection_matrix_is_fail_closed() -> None:
     metadata_failure_mutations = (
         lambda value: value.clear(),
         lambda value: value.update(schema_version=1),
+        lambda value: value.update(schema_version=2.0),
+        lambda value: value.update(schema_version="2"),
+        lambda value: value.update(schema_version=True),
         lambda value: value.update(initiative_id="bad"),
         lambda value: value.update(initiative_id="WS-" + ("A" * 78)),
         lambda value: value.update(chunk_id="WS-AUTH-" + ("A" * 73)),
@@ -3018,6 +3038,21 @@ def test_generated_loop_memory_validator_covers_corruption_matrix() -> None:
             assert checker.main(["--state-root", str(valid_root)]) == 0
 
         state_path = valid_root / updater.STATE_PATH
+        ledger_path = valid_root / updater.LEDGER_PATH
+        valid_ledger_text = ledger_path.read_text(encoding="utf-8")
+        for malformed_schema_version in (2.0, "2", True):
+            malformed_ledger = json.loads(valid_ledger_text)
+            malformed_ledger["schema_version"] = malformed_schema_version
+            ledger_path.write_text(
+                f"{json.dumps(malformed_ledger)}\n",
+                encoding="utf-8",
+            )
+            assert any(
+                "invalid entry schema" in failure
+                for failure in checker.generated_state_failures(valid_root)
+            )
+        ledger_path.write_text(valid_ledger_text, encoding="utf-8")
+
         state = json.loads(state_path.read_text(encoding="utf-8"))
         state["schema_version"] = 1
         state["state_branch"] = "main"
@@ -3115,6 +3150,16 @@ def test_merge_ledger_rejects_schema_record_and_ancestry_corruption() -> None:
         lambda: updater._validate_ledger_entries([{}]),
         "invalid schema",
     )
+    for malformed_schema_version in (2.0, "2", True):
+        malformed_envelope = updater._ledger_entry(loop_record(updater), None)
+        malformed_envelope["schema_version"] = malformed_schema_version
+        assert_loop_error(
+            updater,
+            lambda malformed_envelope=malformed_envelope: updater._validate_ledger_entries(
+                [malformed_envelope]
+            ),
+            "invalid schema",
+        )
     invalid_record = {
         "schema_version": updater.SCHEMA_VERSION,
         "previous_entry_hash": None,

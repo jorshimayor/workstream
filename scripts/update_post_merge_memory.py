@@ -129,6 +129,11 @@ def _optional_id(value: Any, field: str) -> str | None:
     return normalized
 
 
+def _is_current_schema_version(value: Any) -> bool:
+    """Return whether value is exactly the supported integer schema version."""
+    return type(value) is int and value == SCHEMA_VERSION
+
+
 def parse_loop_metadata(intent_text: str) -> LoopMetadata:
     """Parse and strictly validate one committed merge-intent document."""
     if not isinstance(intent_text, str):
@@ -139,7 +144,7 @@ def parse_loop_metadata(intent_text: str) -> LoopMetadata:
         raise LoopMemoryError("merge intent must contain valid JSON") from exc
     if not isinstance(payload, dict) or set(payload) != REQUIRED_METADATA_KEYS:
         raise LoopMemoryError("merge intent has missing or unexpected keys")
-    if payload["schema_version"] != SCHEMA_VERSION:
+    if not _is_current_schema_version(payload["schema_version"]):
         raise LoopMemoryError(
             f"unsupported loop-state schema version: {payload['schema_version']!r}"
         )
@@ -231,7 +236,11 @@ def _initiative_directory_from_path(path: str, initiative_id: str) -> str | None
 def _is_chunk_contract_path(path: str, initiative_directory: str) -> bool:
     """Return whether one path is a direct child of one canonical chunks directory."""
     prefix = f"{CHUNK_CONTRACT_ROOT}{initiative_directory}/chunks/"
-    return path.startswith(prefix) and "/" not in path[len(prefix) :]
+    return (
+        path.startswith(prefix)
+        and "/" not in path[len(prefix) :]
+        and path.endswith(".md")
+    )
 
 
 def _validate_local_successor_contract(
@@ -853,7 +862,9 @@ def _validate_record(record: dict[str, Any]) -> LoopMetadata:
         "gate",
         "checks",
     }
-    if set(record) != expected_record_keys or record.get("schema_version") != SCHEMA_VERSION:
+    if set(record) != expected_record_keys or not _is_current_schema_version(
+        record.get("schema_version")
+    ):
         raise LoopMemoryError("loop-memory record has an invalid schema")
     if record.get("state_branch") != STATE_BRANCH:
         raise LoopMemoryError("loop-memory record has an invalid state branch")
@@ -960,7 +971,9 @@ def _validate_ledger_entries(entries: list[dict[str, Any]]) -> list[dict[str, An
         "entry_hash",
     }
     for entry in entries:
-        if set(entry) != expected_keys or entry.get("schema_version") != SCHEMA_VERSION:
+        if set(entry) != expected_keys or not _is_current_schema_version(
+            entry.get("schema_version")
+        ):
             raise LoopMemoryError("merge ledger entry has an invalid schema")
         record = entry.get("record")
         if not isinstance(record, dict):
