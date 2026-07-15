@@ -72,6 +72,25 @@ def test_root_errors_are_stable_bounded_and_secret_safe() -> None:
         assert set(vars(error)) == {"identity"}
 
 
+def test_root_errors_drop_noncanonical_identity_without_retaining_it() -> None:
+    """Runtime misuse cannot attach a secret-bearing object to a shared error."""
+    secret = "token=do-not-retain"
+
+    class SecretBearingIdentity:
+        def __repr__(self) -> str:
+            return secret
+
+    for malformed_identity in (secret, SecretBearingIdentity()):
+        error = ExternalServiceConfigurationError(
+            cast(ExternalServiceAdapterIdentity, malformed_identity)
+        )
+
+        assert error.identity is None
+        assert secret not in str(error)
+        assert secret not in repr(error)
+        assert set(vars(error)) == {"identity"}
+
+
 def test_factory_registers_and_constructs_one_typed_provider() -> None:
     """An explicit provider registration constructs an identity-matched adapter."""
     factory = ExternalServiceAdapterFactory[ExampleAdapter]("artifact_store")
@@ -211,3 +230,25 @@ def test_factory_preserves_already_sanitized_root_errors() -> None:
     with pytest.raises(ExternalServiceUnavailableError) as captured:
         factory.create("local")
     assert captured.value is expected
+
+
+def test_factory_preserves_root_error_only_after_identity_is_sanitized() -> None:
+    """A malformed shared error cannot smuggle constructor secrets through the factory."""
+    secret = "credential=do-not-retain"
+    expected = ExternalServiceConfigurationError(
+        cast(ExternalServiceAdapterIdentity, secret)
+    )
+
+    def invalid_configuration() -> ExampleAdapter:
+        raise expected
+
+    factory = ExternalServiceAdapterFactory[ExampleAdapter]("artifact_store")
+    factory.register("local", invalid_configuration)
+
+    with pytest.raises(ExternalServiceConfigurationError) as captured:
+        factory.create("local")
+
+    assert captured.value is expected
+    assert captured.value.identity is None
+    assert secret not in str(captured.value)
+    assert secret not in repr(captured.value)

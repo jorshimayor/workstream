@@ -20,7 +20,9 @@ class ExternalServiceAdapterError(Exception):
 
     def __init__(self, identity: ExternalServiceAdapterIdentity | None = None) -> None:
         """Create an error containing only bounded adapter identity."""
-        self.identity = identity
+        self.identity = (
+            identity if isinstance(identity, ExternalServiceAdapterIdentity) else None
+        )
         super().__init__(self.code)
 
 
