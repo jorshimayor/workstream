@@ -1484,6 +1484,164 @@ async def test_allocation_rollback_continues_after_descriptor_close_failure(
 
 
 @pytest.mark.asyncio
+async def test_allocation_rollback_failure_is_retained_for_retry(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Retain a published reservation when rollback ledger persistence fails."""
+    manager = ArtifactScratchManager(root=tmp_path / "scratch", limits=preparation_limits())
+    original_fsync = os.fsync
+    original_write_ledger = manager._write_ledger
+    sync_failed = False
+    rollback_failed = False
+
+    def fail_file_directory_sync(descriptor: int) -> None:
+        nonlocal sync_failed
+        if descriptor == manager._files_fd and not sync_failed:
+            sync_failed = True
+            raise OSError(errno.EIO, "injected file directory sync failure")
+        original_fsync(descriptor)
+
+    def fail_rollback_ledger(payload: dict[str, object]) -> None:
+        nonlocal rollback_failed
+        if sync_failed and payload.get("reservations") == [] and not rollback_failed:
+            rollback_failed = True
+            raise OSError(errno.EIO, "injected rollback ledger failure")
+        original_write_ledger(payload)
+
+    monkeypatch.setattr(os, "fsync", fail_file_directory_sync)
+    monkeypatch.setattr(manager, "_write_ledger", fail_rollback_ledger)
+    with pytest.raises(ArtifactScratchIntegrityError, match="cleanup is pending"):
+        await manager.allocate()
+    assert sync_failed and rollback_failed
+    assert manager.pending_cleanup_count == 1
+    assert (await manager.usage()).reservation_count == 1
+    assert list((tmp_path / "scratch" / "files").iterdir()) == []
+
+    monkeypatch.setattr(manager, "_write_ledger", original_write_ledger)
+    assert await manager.retry_pending_cleanup() == 1
+    assert manager.pending_cleanup_count == 0
+    assert (await manager.usage()).reservation_count == 0
+    manager.close()
+
+
+@pytest.mark.asyncio
+async def test_ambiguous_ledger_publication_is_retained_for_retry(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Retain ownership when ledger publication and rollback both fail."""
+    manager = ArtifactScratchManager(root=tmp_path / "scratch", limits=preparation_limits())
+    original_write_ledger = manager._write_ledger
+    publication_failed = False
+    rollback_failed = False
+
+    def fail_after_publication_then_fail_rollback(payload: dict[str, object]) -> None:
+        nonlocal publication_failed, rollback_failed
+        reservations = payload.get("reservations")
+        if reservations and not publication_failed:
+            original_write_ledger(payload)
+            publication_failed = True
+            raise OSError(errno.EIO, "injected ambiguous publication failure")
+        if publication_failed and reservations == [] and not rollback_failed:
+            rollback_failed = True
+            raise OSError(errno.EIO, "injected publication rollback failure")
+        original_write_ledger(payload)
+
+    monkeypatch.setattr(manager, "_write_ledger", fail_after_publication_then_fail_rollback)
+    with pytest.raises(ArtifactScratchIntegrityError, match="cleanup is pending"):
+        await manager.allocate()
+    assert publication_failed and rollback_failed
+    assert manager.pending_cleanup_count == 1
+    assert (await manager.usage()).reservation_count == 1
+
+    monkeypatch.setattr(manager, "_write_ledger", original_write_ledger)
+    assert await manager.retry_pending_cleanup() == 1
+    assert manager.pending_cleanup_count == 0
+    assert (await manager.usage()).reservation_count == 0
+    manager.close()
+
+
+@pytest.mark.asyncio
+async def test_manager_close_rejects_live_prepared_reservation(tmp_path: Path) -> None:
+    """Do not invalidate directory ownership while a prepared handle is live."""
+    manager = ArtifactScratchManager(root=tmp_path / "scratch", limits=preparation_limits())
+    service = ArtifactPreparationService(manager)
+    prepared = await service.prepare(byte_stream(b"data"), media_type="text/plain")
+    with pytest.raises(ArtifactScratchIntegrityError, match="cleanup is still pending"):
+        manager.close()
+
+    await prepared.close()
+    assert (await manager.usage()).reservation_count == 0
+    manager.close()
+
+
+def test_manager_close_never_retries_ambiguous_directory_descriptor(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Poison directory fd slots before an ambiguous close can be retried."""
+    manager = ArtifactScratchManager(root=tmp_path / "scratch", limits=preparation_limits())
+    original_close = os.close
+    target = manager._files_fd
+    failed = False
+
+    def close_then_fail(descriptor: int) -> None:
+        nonlocal failed
+        if descriptor == target and not failed:
+            original_close(descriptor)
+            failed = True
+            raise OSError(errno.EIO, "injected directory close failure")
+        original_close(descriptor)
+
+    monkeypatch.setattr(os, "close", close_then_fail)
+    with pytest.raises(OSError, match="directory close failure"):
+        manager.close()
+    reused_descriptor = os.open("/dev/null", os.O_RDONLY)
+    try:
+        manager.close()
+        os.fstat(reused_descriptor)
+    finally:
+        os.close(reused_descriptor)
+
+
+@pytest.mark.asyncio
+async def test_unhanded_reader_remains_owned_until_close_succeeds(tmp_path: Path) -> None:
+    """Retry a sealed reader close before clearing its pending owner."""
+    manager = ArtifactScratchManager(root=tmp_path / "scratch", limits=preparation_limits())
+    service = ArtifactPreparationService(manager)
+    reservation, descriptor = await manager.allocate()
+    reader = await manager.seal_for_read(reservation, descriptor)
+
+    class FailOnceReader:
+        def __init__(self, wrapped: BinaryIO) -> None:
+            self.wrapped = wrapped
+            self.close_attempts = 0
+
+        def close(self) -> None:
+            self.close_attempts += 1
+            if self.close_attempts == 1:
+                raise OSError(errno.EIO, "injected unhanded reader close failure")
+            self.wrapped.close()
+
+    failing_reader = FailOnceReader(reader)
+    pending = SimpleNamespace(
+        reservation=reservation,
+        descriptor=None,
+        reader=failing_reader,
+    )
+    assert not await service._release_unhanded_preparation(pending)
+    assert pending.reader is failing_reader
+    assert service.pending_cleanup_count == 1
+    assert await service.retry_pending_cleanup() == 1
+    assert pending.reader is None
+    assert failing_reader.close_attempts == 2
+    assert failing_reader.wrapped.closed
+    assert service.pending_cleanup_count == 0
+    manager.close()
+
+
+@pytest.mark.asyncio
 async def test_closed_preparation_rejects_stream_and_is_idempotent(tmp_path: Path) -> None:
     """Make closed source handles unusable without duplicating cleanup."""
     manager = ArtifactScratchManager(

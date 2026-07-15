@@ -158,6 +158,14 @@ class _PendingPreparationCleanup:
     reader: BinaryIO | None
 
 
+class _AllocationCleanupRequired(ArtifactScratchIntegrityError):
+    """Carry a failed allocation reservation into manager-owned retry state."""
+
+    def __init__(self, reservation: _ScratchReservation) -> None:
+        super().__init__("failed artifact scratch allocation cleanup is pending")
+        self.reservation = reservation
+
+
 class ArtifactScratchManager:
     """Coordinate bounded scratch files across API and Celery processes."""
 
@@ -166,6 +174,7 @@ class ArtifactScratchManager:
         self._root = root.resolve(strict=False)
         self._limits = limits
         self._root_marker_content = self._marker_content(limits)
+        self._owned_reservations: dict[str, _ScratchReservation] = {}
         self._pending_allocation_releases: dict[str, _ScratchReservation] = {}
         self._pending_readers: dict[int, BinaryIO] = {}
         expected_root = self._initialize_root(root)
@@ -203,10 +212,15 @@ class ArtifactScratchManager:
         """Reserve the full hard maximum before creating one private file."""
         task = asyncio.create_task(asyncio.to_thread(self._allocate_sync))
         try:
-            return await asyncio.shield(task)
+            reservation, descriptor = await asyncio.shield(task)
         except asyncio.CancelledError as cancellation:
             try:
                 reservation, descriptor = await await_cancellation_resistant(task)
+            except _AllocationCleanupRequired as exc:
+                self._pending_allocation_releases[exc.reservation.reservation_id] = (
+                    exc.reservation
+                )
+                raise cancellation from None
             except BaseException:
                 raise cancellation from None
             try:
@@ -221,6 +235,11 @@ class ArtifactScratchManager:
                 except BaseException:
                     self._pending_allocation_releases[reservation.reservation_id] = reservation
             raise cancellation
+        except _AllocationCleanupRequired as exc:
+            self._pending_allocation_releases[exc.reservation.reservation_id] = exc.reservation
+            raise
+        self._owned_reservations[reservation.reservation_id] = reservation
+        return reservation, descriptor
 
     async def seal_for_read(self, reservation: _ScratchReservation, descriptor: int) -> BinaryIO:
         """Close the first pass and pin one private read-only second-pass file."""
@@ -243,6 +262,7 @@ class ArtifactScratchManager:
     async def release(self, reservation: _ScratchReservation) -> None:
         """Remove one scratch file and reservation under the ledger lock."""
         await self._run_io(self._release_sync, reservation)
+        self._owned_reservations.pop(reservation.reservation_id, None)
 
     async def usage(self) -> ArtifactScratchUsage:
         """Return aggregate reservation facts without filenames or paths."""
@@ -260,7 +280,11 @@ class ArtifactScratchManager:
         now = time.time_ns() if now_unix_ns is None else now_unix_ns
         if type(now) is not int or now < 0:
             raise ValueError("scratch cleanup time is invalid")
-        return await self._run_io(self._cleanup_stale_sync, now)
+        cleaned_reservation_ids = await self._run_io(self._cleanup_stale_sync, now)
+        for reservation_id in cleaned_reservation_ids:
+            self._owned_reservations.pop(reservation_id, None)
+            self._pending_allocation_releases.pop(reservation_id, None)
+        return len(cleaned_reservation_ids)
 
     async def retry_pending_cleanup(self) -> int:
         """Retry manager-owned cleanup retained before service handoff."""
@@ -295,16 +319,22 @@ class ArtifactScratchManager:
 
     def close(self) -> None:
         """Release pinned scratch directory descriptors."""
-        if self.pending_cleanup_count:
+        if self.pending_cleanup_count or self._owned_reservations:
             raise ArtifactScratchIntegrityError("artifact scratch cleanup is still pending")
         files_fd = getattr(self, "_files_fd", -1)
         root_fd = getattr(self, "_root_fd", -1)
-        if files_fd >= 0:
-            os.close(files_fd)
-            self._files_fd = -1
-        if root_fd >= 0:
-            os.close(root_fd)
-            self._root_fd = -1
+        self._files_fd = -1
+        self._root_fd = -1
+        failure: BaseException | None = None
+        for descriptor in (files_fd, root_fd):
+            if descriptor < 0:
+                continue
+            try:
+                os.close(descriptor)
+            except BaseException as exc:
+                failure = failure or exc
+        if failure is not None:
+            raise failure
 
     def _initialize_root(self, configured_root: Path) -> os.stat_result:
         if configured_root.is_symlink():
@@ -534,10 +564,13 @@ class ArtifactScratchManager:
             try:
                 self._write_ledger({"version": _LEDGER_VERSION, "reservations": entries})
             except BaseException:
-                self._restore_failed_reservation_ledger(
-                    reservation.reservation_id,
-                    previous_entries,
-                )
+                try:
+                    self._restore_failed_reservation_ledger(
+                        reservation.reservation_id,
+                        previous_entries,
+                    )
+                except BaseException as cleanup_error:
+                    raise _AllocationCleanupRequired(reservation) from cleanup_error
                 raise
             descriptor: int | None = None
             try:
@@ -550,6 +583,7 @@ class ArtifactScratchManager:
                 self._assert_private_file_descriptor(descriptor, expected_mode=0o600)
                 os.fsync(self._files_fd)
             except BaseException:
+                file_created = descriptor is not None
                 if descriptor is not None:
                     descriptor_to_close = descriptor
                     descriptor = None
@@ -557,13 +591,19 @@ class ArtifactScratchManager:
                         os.close(descriptor_to_close)
                     except BaseException:
                         pass
-                    self._unlink_regular_optional(filename, tolerate_sync_failure=True)
-                remaining = [
-                    entry
-                    for entry in entries
-                    if entry["reservation_id"] != reservation.reservation_id
-                ]
-                self._write_ledger({"version": _LEDGER_VERSION, "reservations": remaining})
+                try:
+                    if file_created:
+                        self._unlink_regular_optional(filename, tolerate_sync_failure=True)
+                    remaining = [
+                        entry
+                        for entry in entries
+                        if entry["reservation_id"] != reservation.reservation_id
+                    ]
+                    self._write_ledger(
+                        {"version": _LEDGER_VERSION, "reservations": remaining}
+                    )
+                except BaseException as cleanup_error:
+                    raise _AllocationCleanupRequired(reservation) from cleanup_error
                 raise
             return reservation, descriptor
 
@@ -686,7 +726,7 @@ class ArtifactScratchManager:
                 )
             )
 
-    def _cleanup_stale_sync(self, now_unix_ns: int) -> int:
+    def _cleanup_stale_sync(self, now_unix_ns: int) -> tuple[str, ...]:
         with self._locked_ledger():
             ledger = self._read_ledger()
             entries = list(ledger["reservations"])
@@ -706,7 +746,7 @@ class ArtifactScratchManager:
                         ],
                     }
                 )
-            return len(stale)
+            return tuple(entry["reservation_id"] for entry in stale)
 
     @contextmanager
     def _locked_ledger(self) -> Iterator[None]:
@@ -1118,8 +1158,8 @@ class ArtifactPreparationService:
                 await self._close_descriptor(descriptor)
             if pending.reader is not None:
                 reader = pending.reader
-                pending.reader = None
                 await self._run_io(reader.close)
+                pending.reader = None
         except Exception:
             failed = True
         try:
