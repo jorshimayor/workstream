@@ -143,7 +143,7 @@ async def get_authorization_service(
     except AuthorizationDenied as exc:
         await session.rollback()
         try:
-            await service.restage_denial(exc.decision)
+            await service._restage_denial(exc.decision)
             await session.commit()
         except SQLAlchemyError as persistence_error:
             await session.rollback()

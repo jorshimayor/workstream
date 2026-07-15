@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.modules.audit.schemas import ActorReferenceKind, AuthorityAuditEventInput, AuthorityEventType
 from app.modules.audit.service import AuditService
+from app.modules.authorization import kernel as authorization_kernel
 from app.modules.authorization.catalogue import (
     ACTION_BY_ID,
     ACTION_DEFINITIONS,
@@ -328,6 +329,12 @@ def _runtime_service(
 
 def test_authorization_runtime_contracts_are_strict_and_two_argument() -> None:
     context = _runtime_context()
+    public_methods = {
+        name
+        for name, member in inspect.getmembers(AuthorizationService, inspect.isfunction)
+        if not name.startswith("_")
+    }
+    assert public_methods == {"require"}
     assert tuple(inspect.signature(AuthorizationService.require).parameters) == (
         "self",
         "action_id",
@@ -418,6 +425,35 @@ async def test_authorization_kernel_denies_planned_and_system_actions(
     assert evidence.events[0].event_type is AuthorityEventType.SENSITIVE_AUTHORIZATION_DENIED
 
 
+async def test_authorization_kernel_denies_active_action_without_implemented_authority(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    context = _runtime_context()
+    service, evidence = _runtime_service(context)
+    resource = ActorSelfResourceContext(
+        resource_type="actor_profile",
+        resource_id=context.actor_profile_id,
+        requested_fields=(),
+    )
+    active_unhandled = ActionDefinition(
+        action_id=ActionId.REVIEW_QUEUE_READ,
+        permission_id=PermissionId.REVIEW_QUEUE_READ,
+        owner=ActionOwner.REV_05,
+        availability=ActionAvailability.ACTIVE,
+    )
+    monkeypatch.setattr(
+        authorization_kernel,
+        "ACTION_BY_ID",
+        {**ACTION_BY_ID, active_unhandled.action_id: active_unhandled},
+    )
+
+    with pytest.raises(AuthorizationDenied) as exc_info:
+        await service.require(active_unhandled.action_id, resource)
+
+    assert exc_info.value.decision.denial_code is AuthorizationDenialCode.ACTION_UNAVAILABLE
+    assert evidence.events[0].event_type is AuthorityEventType.SENSITIVE_AUTHORIZATION_DENIED
+
+
 async def test_unknown_action_denies_without_fabricated_evidence() -> None:
     context = _runtime_context()
     service, evidence = _runtime_service(context)
@@ -445,7 +481,7 @@ async def test_denial_is_restaged_with_the_same_bounded_identity() -> None:
         await service.require(ActionId.REVIEW_QUEUE_READ, resource)
     original = evidence.events.pop()
 
-    await service.restage_denial(exc_info.value.decision)
+    await service._restage_denial(exc_info.value.decision)
 
     assert len(evidence.events) == 1
     assert evidence.events[0].event_id == original.event_id
@@ -460,7 +496,11 @@ async def test_denial_is_restaged_with_the_same_bounded_identity() -> None:
     )
     allowed = await allowed_service.require(ActionId.ACTOR_PROFILE_READ_SELF, allowed_resource)
     with pytest.raises(TypeError, match="invalid authorization denial evidence"):
-        await allowed_service.restage_denial(allowed)
+        await allowed_service._restage_denial(allowed)
+
+    other_service, _ = _runtime_service(context)
+    with pytest.raises(TypeError, match="invalid authorization denial evidence"):
+        await other_service._restage_denial(exc_info.value.decision)
 
 
 @pytest.mark.parametrize(
@@ -558,6 +598,13 @@ def test_authorization_decision_and_denial_reject_incoherent_outcomes() -> None:
             allowed=False,
             denial_code=AuthorizationDenialCode.PERMISSION_NOT_GRANTED,
             matched_authority_kind=None,
+        )
+    with pytest.raises(ValidationError, match="allowed decisions require"):
+        AuthorizationDecision(
+            **{**base, "action_id": None, "permission_id": None},
+            allowed=True,
+            denial_code=None,
+            matched_authority_kind=MatchedAuthorityKind.ACTOR_SELF,
         )
     allowed = AuthorizationDecision(
         **base,

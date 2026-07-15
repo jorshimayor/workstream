@@ -94,14 +94,11 @@ class ActorService:
 
     async def find_verified_actor(self, token: VerifiedIssuerToken) -> ResolvedActor | None:
         """Return a canonical actor for an existing exact identity link."""
-        link = await self._repo.get_identity_link(token.issuer, token.subject)
-        if link is None:
+        resolved = await self.find_actor_for_authorization(token)
+        if resolved is None:
             return None
-        profile = await self._repo.get_actor_profile(link.actor_profile_id)
-        if profile is None:
-            raise RuntimeError("identity link references a missing actor profile")
-        self._validate_link(token, link, profile)
-        return ResolvedActor(profile=profile, identity_link=link)
+        self._validate_link(token, resolved.identity_link, resolved.profile)
+        return resolved
 
     async def find_actor_for_authorization(
         self,

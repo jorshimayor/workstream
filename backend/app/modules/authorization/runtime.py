@@ -122,6 +122,8 @@ class AuthorizationDecision(BaseModel):
             raise ValueError("authorization authority match is inconsistent")
         if (self.action_id is None) != (self.permission_id is None):
             raise ValueError("action and permission must be present together")
+        if self.allowed and self.action_id is None:
+            raise ValueError("allowed decisions require action and permission")
         return self
 
 

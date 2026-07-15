@@ -49,6 +49,7 @@ class AuthorizationService:
         self._audit = AuditService(session)
         self._context = context
         self._revalidate_actor_self = revalidate_actor_self
+        self._pending_denial: AuthorizationDecision | None = None
 
     async def require(
         self,
@@ -56,6 +57,7 @@ class AuthorizationService:
         resource_context: AuthorizationResourceContext,
     ) -> AuthorizationDecision:
         """Return an allowed decision or raise one bounded, evidenced denial."""
+        self._pending_denial = None
         action = ACTION_BY_ID.get(action_id) if isinstance(action_id, ActionId) else None
         context = self._context
         revalidated = False
@@ -84,18 +86,21 @@ class AuthorizationService:
         )
         await self._stage_decision(decision, context.actor_profile_id)
         if not decision.allowed:
+            self._pending_denial = decision
             raise AuthorizationDenied(decision)
         return decision
 
-    async def restage_denial(self, decision: AuthorizationDecision) -> None:
-        """Restage one unchanged denial after the caller rolled back its transaction."""
+    async def _restage_denial(self, decision: AuthorizationDecision) -> None:
+        """Restage the exact pending denial after composition-root rollback."""
         if (
             decision.allowed
+            or decision is not self._pending_denial
             or decision.request_id != self._context.request_id
             or decision.correlation_id != self._context.correlation_id
         ):
             raise TypeError("invalid authorization denial evidence")
         await self._stage_decision(decision, self._context.actor_profile_id)
+        self._pending_denial = None
 
     @staticmethod
     def _denial(
@@ -118,6 +123,11 @@ class AuthorizationService:
         if action is None:
             return AuthorizationDenialCode.UNKNOWN_ACTION
         if action.availability is not ActionAvailability.ACTIVE:
+            return AuthorizationDenialCode.ACTION_UNAVAILABLE
+        if action.action_id not in {
+            ActionId.ACTOR_PROFILE_READ_SELF,
+            ActionId.ACTOR_PROFILE_UPDATE_SELF,
+        }:
             return AuthorizationDenialCode.ACTION_UNAVAILABLE
         if not isinstance(resource, ActorSelfResourceContext):
             return AuthorizationDenialCode.RESOURCE_GUARD_DENIED
