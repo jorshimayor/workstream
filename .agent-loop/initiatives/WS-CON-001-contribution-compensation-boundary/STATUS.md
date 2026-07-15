@@ -3,8 +3,8 @@
 ## Current status
 
 Base planning passed its earlier review. The latest merged AUTH-07B executable
-kernel reconciliation and resulting AUTH/CON activation-boundary repair are
-under fresh internal review. Application code is unchanged.
+kernel reconciliation and resulting AUTH/CON activation-boundary repair passed
+fresh internal review. Application code is unchanged.
 The reconciled working Markdown transcription, supplied generation-2 PDF,
 original archival PDF, current backend, active docs, merged WS-AUTH
 authorization catalogue, and active parallel WS-REV plan delta have been mapped.
@@ -25,7 +25,7 @@ implementation is active.
 
 | Chunk | Status | Branch | PR | Notes |
 |---|---|---|---:|---|
-| `WS-CON-001-PLAN` | AUTH-07B boundary re-review pending | `codex/ws-con-001-plan` | - | Approved D2 removal remains split into 05A/05B; current refresh records merged AUTH-07B at `90eca12`, exact AUTH executable gates, archive-scanner ownership, and non-consumable REV head `e59e2bb`. |
+| `WS-CON-001-PLAN` | Reviewed; human approval gate | `codex/ws-con-001-plan` | - | Approved D2 removal remains split into 05A/05B; reviewed refresh records merged AUTH-07B at `90eca12`, exact AUTH executable gates, archive-scanner ownership, and non-consumable REV head `e59e2bb`. |
 | `WS-CON-001-01` | Proposed | - | - | No runtime work. |
 | `WS-CON-001-02A` through `11` | Proposed | - | - | Each requires separate explicit start; REV-13 owns final activation. |
 

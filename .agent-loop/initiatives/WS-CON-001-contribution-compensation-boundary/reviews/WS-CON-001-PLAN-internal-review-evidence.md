@@ -1,5 +1,105 @@
 # Internal Review Evidence: WS-CON-001-PLAN
 
+## 2026-07-15 AUTH-07B Executable-Boundary Reconciliation
+
+This addendum is the current authoritative review state. It supersedes the
+older trusted-main SHA, AUTH runtime assumptions, activation choreography and
+parallel-REV freshness statements below. The reviewed plan is based on trusted
+`main` `90eca12f6398f2ef168e634244d912765572c3e5` (merged AUTH-07B).
+
+Reviewed code SHA: 31f7350be4a964faed4f3f0487a53de65c3f6840
+
+Reviewed planning-tree SHA-256:
+`07f8ed891ff15302b7b1a8e223cc122d98298d99ab0dd35660699866fff63cac`
+
+The tree digest excludes this evidence file and includes the final initiative
+status. It is reproduced from the initiative directory with:
+
+```bash
+find . -type f ! -path './reviews/WS-CON-001-PLAN-internal-review-evidence.md' -print0 | sort -z | xargs -0 sha256sum | sha256sum
+```
+
+Reviewed at: 2026-07-15T20:22:23Z
+
+Reviewer run IDs: architecture/senior/reuse=`/root/plan_arch_senior`;
+QA/test/product/ops/docs=`/root/plan_qa_product_docs`;
+security/auth/privacy=`/root/plan_security_auth`
+
+| Reviewer | Result | Blocking findings | Notes |
+|---|---|---|---|
+| senior engineering | PASS | None | Activation waves, prepared mutation seams, transaction ownership and chunk boundaries are executable. |
+| QA/test | PASS | None | Local gates, failure cases, races, real-kernel denial and post-activation proof are explicit. |
+| security/auth | PASS | None | Canonical identifiers, grants, fixed service identities, one-decision semantics and AUTH-only activation are coherent. |
+| product/ops | PASS | None | Complete PaymentPolicy removal, legacy-row human gate, callback/delivery behavior and release dependencies remain explicit. |
+| architecture | PASS | None | Review choreography is non-circular; outbox, ART, REV, AUTH and CON ownership boundaries do not cross. |
+| CI integrity | N/A - with approved reason | None | This delta changes planning Markdown only and does not modify CI, dependencies, tests or coverage gates. |
+| docs | PASS | None | Trusted-main facts, sibling freshness, source provenance, blockers and ownership language are truthful. |
+| reuse/dedup | PASS | None | The plan reuses the central prepared protocol, shared dispatcher, ART capability, `workstream.artifact.binding` and existing grants/permissions. |
+| test delta | N/A - with approved reason | None | No runtime test file changed; every later runtime chunk still requires test-delta review and retained evidence. |
+
+Open sub-agent sessions: none
+
+Valid findings addressed: yes
+
+- Recorded the exact merged AUTH-07B state: 74 PermissionIds, 50 ActionIds,
+  two active and 48 planned actions. All 23 proposed WS-CON ActionIds remain
+  absent. The two proposed service-only PermissionIds remain absent.
+- Kept authorization implementation entirely AUTH-owned: catalogue/owner/audit
+  parity, closed typed contexts, evaluator dispatch, matched authority, grant
+  loading/revalidation, service actors/assignments, composition dependencies and
+  availability changes.
+- Added an AUTH-owned D10 prepared-mutation protocol for every `T` operation:
+  authority rows lock first, an opaque caller-session-bound handle is finalized
+  once against locked product facts, one decision is staged, and AUTH never
+  commits. Missing, reused, mismatched and cross-session/action handles deny.
+- Repaired activation into registration -> hidden fail-closed feature behavior
+  -> AUTH evaluator/activation waves. Review actions add the required REV-owned
+  composition stage: AUTH registration -> CON capability/participant -> REV
+  hidden composition while planned -> AUTH activation -> later readiness/public
+  activation.
+- Added the missing upstream dependency that `task.claim` has an existing
+  PermissionId but no ActionId. AUTH-13 or a reviewed AUTH successor must order
+  registration/typed-prepared contract, task resource behavior and evaluator/
+  activation before CON-05A.
+- Required the callback ActionId/new PermissionId and active binding-specific
+  service actor/link/exact assignment before CON-04A so binding creation is
+  executable while the callback action remains planned. Binding retirement
+  remains planned until its CON-10B dependency guards exist and a later AUTH
+  gate activates it.
+- Put the D10 call site in CON-02B before OutboxEvent claim and made the active
+  `outbox.dispatch` evaluator/assignment proof a local CON-08A gate.
+- Repaired evidence ownership: CON prepares authority and locks only CON facts;
+  ART locks/composes admission facts and performs the one final evaluation in
+  durable Transaction A without commit/provider I/O. Provider continuation is
+  post-commit under ART authority. The exact action reuses the existing fixed
+  `workstream.artifact.binding` principal and existing
+  `artifact.binding.create` PermissionId.
+- Recorded sibling REV head `e59e2bbe823bc0ee2b0e59ff35f8352349618b2e`
+  as non-consumable until its AUTH-07B choreography, outbox claim wording,
+  source SHA and commit-bound evidence are refreshed and reviewed.
+- Preserved the approved complete PaymentPolicy semantic cutover and physical
+  removal. Only the legacy-row rebuild-versus-classified-backfill choice remains
+  a human decision.
+
+Deterministic evidence passed: `git diff --check`; Markdown links for 38 changed
+Markdown files; stale Workstream wording; artifact-contract state; loop-memory
+state; 71 agent-gate tests; and direct AUTH catalogue/runtime assertions for the
+counts, availability, absent WS-CON IDs, absent service permissions,
+`task.claim`, resource variants and matched-authority state. The authorization
+stale-doc scan continues to flag exactly ten `HUMAN_WORKER_VOCABULARY`
+occurrences in the explicitly non-canonical working transcription; CON-01 owns
+its exact byte-preserving archival rename/classification and active-spec
+reconciliation. This is not a waiver for an active document.
+
+The focused async AUTH test environment was unavailable at final rerun because
+this worktree's `backend/.venv` lacked an interpreter/plugin installation. That
+does not weaken the planning proof: runtime files are byte-unchanged from
+trusted main, the catalogue assertion passed with the available interpreter,
+and no runtime completion is claimed.
+
+Application/runtime code changed: no. The original PDF deletion remains an
+unstaged user-worktree change and is excluded from both reviewed commits.
+
 ## 2026-07-15 Final Trusted-Main And Parallel-Dependency Review
 
 This addendum is the current authoritative review state and supersedes older
