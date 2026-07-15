@@ -448,6 +448,33 @@ def test_marker_publication_failure_rolls_back_for_retry(
     manager.close()
 
 
+def test_marker_fsync_failure_rolls_back_for_retry(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Remove a marker whose first durability sync fails so retry remains possible."""
+    root = tmp_path / "scratch"
+    original_fsync = os.fsync
+    fsync_calls = 0
+
+    def fail_first_fsync(descriptor: int) -> None:
+        nonlocal fsync_calls
+        fsync_calls += 1
+        if fsync_calls == 1:
+            raise OSError("injected marker fsync failure")
+        original_fsync(descriptor)
+
+    monkeypatch.setattr(os, "fsync", fail_first_fsync)
+    with pytest.raises(OSError, match="injected marker fsync failure"):
+        ArtifactScratchManager(root=root, limits=preparation_limits())
+    assert not (root / ".workstream-artifact-scratch-v1").exists()
+
+    monkeypatch.setattr(os, "fsync", original_fsync)
+    manager = ArtifactScratchManager(root=root, limits=preparation_limits())
+    assert (root / ".workstream-artifact-scratch-v1").is_file()
+    manager.close()
+
+
 @pytest.mark.asyncio
 async def test_initialization_waits_for_live_ledger_publication(tmp_path: Path) -> None:
     """Accept a valid transient ledger file only through the held ledger lock."""
