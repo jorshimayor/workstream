@@ -2292,8 +2292,18 @@ async def test_active_worker_profile_without_worker_token_cannot_claim(
 ) -> None:
     project = await create_active_project(task_client)
     ready_task = await create_ready_task(task_client, project["id"])
-    await seed_worker_profile("worker-role-missing")
-    set_dev_actor(monkeypatch, roles="project_manager", subject="worker-role-missing")
+    set_dev_actor(monkeypatch, roles="worker", subject="project-manager-subject")
+    activation = await task_client.post(
+        "/api/v1/workers/me/profile",
+        headers=auth_headers(),
+        json={"skill_tags": []},
+    )
+    assert activation.status_code == 200, activation.text
+    set_dev_actor(
+        monkeypatch,
+        roles="project_manager",
+        subject="project-manager-subject",
+    )
 
     response = await task_client.post(
         f"/api/v1/tasks/{ready_task['id']}/claim",

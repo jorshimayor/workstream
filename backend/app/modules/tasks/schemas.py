@@ -120,7 +120,7 @@ class EvidenceItemCreate(BaseModel):
 
 
 class ArtifactHashEntry(BaseModel):
-    """Structured artifact hash entry supplied by a worker."""
+    """Structured artifact hash entry supplied by a Contributor."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -187,7 +187,7 @@ class TaskResponse(BaseModel):
 
 
 class TaskProjectContext(BaseModel):
-    """Worker-safe project summary for a task context response."""
+    """Contributor-safe project summary for a task context response."""
 
     id: str
     name: str
@@ -196,7 +196,7 @@ class TaskProjectContext(BaseModel):
 
 
 class TaskWorkerTaskContext(BaseModel):
-    """Worker-safe task summary for work-context responses."""
+    """Contributor-safe task summary for work-context responses."""
 
     id: str
     project_id: str
@@ -219,7 +219,7 @@ class TaskWorkerTaskContext(BaseModel):
 
 
 class TaskGuideContext(BaseModel):
-    """Worker-safe guide material locked to a task."""
+    """Contributor-safe guide material locked to a task."""
 
     id: str
     version: str
@@ -229,19 +229,19 @@ class TaskGuideContext(BaseModel):
 
 
 class TaskReviewPolicyContext(BaseModel):
-    """Worker-safe review policy summary for the locked guide version."""
+    """Contributor-safe review policy summary for the locked guide version."""
 
     guide_version: str
 
 
 class TaskRevisionPolicyContext(BaseModel):
-    """Worker-safe revision policy summary for the locked guide version."""
+    """Contributor-safe revision policy summary for the locked guide version."""
 
     guide_version: str
 
 
 class TaskPaymentPolicyContext(BaseModel):
-    """Worker-safe payment terms stamped onto the task at screening."""
+    """Contributor-safe payment terms stamped onto the task at screening."""
 
     guide_version: str
     base_amount: Decimal | None
@@ -260,7 +260,7 @@ class TaskWorkerLifecycleContext(BaseModel):
 
 
 class TaskWorkContextResponse(BaseModel):
-    """Worker-safe context needed before doing task work."""
+    """Contributor-safe context needed before doing task work."""
 
     task: TaskWorkerTaskContext
     project: TaskProjectContext
@@ -312,7 +312,7 @@ class StorageReferenceRules(BaseModel):
 
 
 class SubmissionRequirementsResponse(BaseModel):
-    """Worker-safe exact submission requirements for a locked task."""
+    """Contributor-safe exact submission requirements for a locked task."""
 
     task_id: str
     project_id: str

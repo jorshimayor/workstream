@@ -175,7 +175,7 @@ class TaskValidationError(TaskServiceError):
 
 
 class TaskAssignmentConflict(TaskServiceError):
-    """Raised when a task already has an active worker assignment."""
+    """Raised when a task already has an active Contributor assignment."""
 
     status_code = 409
 
@@ -391,7 +391,7 @@ class TaskService:
         actor: ActorContext,
         task_id: str,
     ) -> SubmissionRequirementsResponse:
-        """Return exact worker submission requirements for a locked task.
+        """Return exact Contributor submission requirements for a locked task.
 
         Args:
             actor: Verified Flow actor context for the current request.
