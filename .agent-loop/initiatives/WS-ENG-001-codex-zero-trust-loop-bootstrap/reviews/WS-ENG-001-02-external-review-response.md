@@ -2,7 +2,7 @@
 
 ## Current State
 
-- Pull request: pending publication
+- Pull request: #122, ready for review
 - GitHub Agent Gates: pending
 - GitHub Backend: pending
 - CodeRabbit: pending

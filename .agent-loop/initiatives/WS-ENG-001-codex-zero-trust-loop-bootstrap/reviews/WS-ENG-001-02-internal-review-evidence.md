@@ -10,11 +10,11 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: 0ed5783f3a381cbad445631388ceb8352959b0ae
+Reviewed code SHA: 501890305167223fd50d42484adc75c6fae99bd2
 
-Reviewed at: 2026-07-14T23:19:13Z
+Reviewed at: 2026-07-15T00:17:05Z
 
-Reviewer run IDs: auth04b_final_eng/0ed5783, auth04b_final_qa/0ed5783, auth04b_final_security/0ed5783
+Reviewer run IDs: auth04b_final_eng/5018903, auth04b_final_qa/5018903, auth04b_final_security/5018903
 
 After the reviewed SHA, only this review evidence, its trust bundle, the
 external-review placeholder, and owning initiative status changed. No workflow,
@@ -24,9 +24,9 @@ generator, validator, test, policy, signing key, or merge intent changed.
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS AFTER FIXES | None remaining | Empty-state bootstrap, exact no-op validation, signed freshness, and hostile-state rebuild are coherent and maintainable. |
-| qa/test | PASS AFTER FIXES | None remaining | Fifty-five unique runner tests pass and cover the recovery, ordering, pending-check, ledger, render, and signature behaviors. |
-| security/auth | PASS AFTER FIXES | None remaining | Trusted-default-branch replay, immutable intent, signing, expected-main binding, bounded cleanup, secret handling, and sole write ref pass. |
+| senior engineering | PASS AFTER FIXES | None remaining | Exact integrated head retains coherent empty-state bootstrap, exact no-op validation, signed freshness, hostile-state rebuild, and current-main changes. |
+| qa/test | PASS AFTER FIXES | None remaining | Sixty-three unique runner tests pass; the exact parent test union retains every automation and current-main artifact test. |
+| security/auth | PASS AFTER FIXES | None remaining | Exact integrated head preserves trusted-default-branch replay, immutable intent, signing, expected-main binding, bounded cleanup, secret handling, and sole write ref. |
 | product/ops | PASS AFTER FIXES | None remaining | The manager reviews one implementation PR; generated bookkeeping no longer creates a second review cycle. |
 | architecture | PASS AFTER FIXES | None remaining | Generated state remains isolated from protected main and Workstream product/runtime authority. |
 | ci integrity | PASS AFTER FIXES | None remaining | Existing gates remain; main now requires Agent Gates and Backend test with stale approvals dismissed. |
@@ -71,8 +71,8 @@ git diff --check
 
 Results:
 
-- Plain-Python runner: 55 tests passed.
-- Pytest: 55 tests passed.
+- Plain-Python runner: 63 tests passed.
+- Pytest: 63 tests passed.
 - Branch coverage: updater 90.79 percent; independent checker 94.41 percent;
   combined 91.40 percent.
 - Compilation, YAML parsing, stale wording, stale authorization, stale artifact,
