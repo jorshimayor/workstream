@@ -76,8 +76,11 @@ That review rejected the combined AUTH-07 contract before runtime edits because
 grant-backed/project APIs preceded their authority sources and the audit/API
 ownership files were incomplete. Parent AUTH-07 is now split into 07A catalogue
 and audit parity, followed by 07B kernel and actor self-action cutover. AUTH-07A
-is published as PR #126 and awaits external checks and explicit human approval;
-AUTH-07B remains inactive.
+merged through PR #126 as `e9d72a1`; signed schema-v2 state verified that merge,
+and the user explicitly started AUTH-07B. Its required L1 preimplementation
+review passed with conditions. Implementation, deterministic evidence, review
+repair, and all required internal reviewer tracks pass at `aabc0f4`; ready PR
+publication is pending.
 
 ## Active planning chunk
 
@@ -85,11 +88,11 @@ None.
 
 ## Active implementation chunk
 
-`WS-AUTH-001-07A` - Closed Permission And Action Catalogue.
+`WS-AUTH-001-07B` - Deny-By-Default Kernel And Self-Action Cutover.
 
 ## Current implementation branch
 
-`codex/ws-auth-001-07-authorization-kernel`
+`codex/ws-auth-001-07b-deny-default-kernel`
 
 ## Chunk status
 
@@ -108,8 +111,8 @@ None.
 | `WS-AUTH-001-05B` | Merged | `codex/ws-auth-001-05b-idempotency-invalidation` | #119 | Merged as `ad71c7e`; reviewed runtime SHA `e083890`. |
 | `WS-AUTH-001-06` | Merged | `codex/ws-auth-001-06-canonical-actor-profile` | #124 | Merged as `f599551`; final PR head `4a2193f`. |
 | `WS-AUTH-001-07` | Split | `codex/ws-auth-001-07-authorization-kernel` | - | Required L1 review rejected the combined contract before runtime edits. |
-| `WS-AUTH-001-07A` | Internally approved | `codex/ws-auth-001-07-authorization-kernel` | #126 | Reviewed amendment `160af8a`; 74 permissions, 50 planned actions, and action-aware audit parity only. |
-| `WS-AUTH-001-07B` | Proposed | - | - | Inactive until 07A merge/memory and explicit user start. |
+| `WS-AUTH-001-07A` | Merged | `codex/ws-auth-001-07-authorization-kernel` | #126 | Merged as `e9d72a1`; 74 permissions, 50 planned actions, and action-aware audit parity only. |
+| `WS-AUTH-001-07B` | Internally approved | `codex/ws-auth-001-07b-deny-default-kernel` | - | Reviewed at `aabc0f4`; ready PR publication pending. |
 | `WS-AUTH-001-08` | Proposed | - | - | Bootstrap and administrative grants. |
 | `WS-AUTH-001-09` | Proposed | - | - | Actor/link states and service actors. |
 | `WS-AUTH-001-10` | Proposed | - | - | Project contributor grants. |
@@ -143,9 +146,9 @@ blocker. PR #118, AUTH-05B PR #119, and AUTH-06 PR #124 are merged. AUTH-07 has
 an explicit user start. Required review split it before runtime implementation;
 the repaired 07A contract passed all required tracks at `beb85ac`; implementation
 and repair passed at `478a819`, and the review/revision amendment passed at
-`160af8a`. AUTH-07B and
-POL-002-04 remain inactive until separate explicit human starts and their
-authorization prerequisites.
+`160af8a`. AUTH-07A then merged through PR #126. AUTH-07B has an explicit user
+start and no prerequisite blocker; POL-002-04 remains inactive pending its own
+authorization prerequisites and explicit start.
 
 AUTH-04B review evidence and its PR trust bundle are recorded at
 `reviews/WS-AUTH-001-04B-internal-review-evidence.md` and

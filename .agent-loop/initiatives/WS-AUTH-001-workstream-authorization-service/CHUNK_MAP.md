@@ -24,8 +24,8 @@ stopped.
 | `WS-AUTH-001-05B` | Authority Idempotency And Invalidation Foundation | L1 | Merged through PR #119 as `ad71c7e` |
 | `WS-AUTH-001-06` | Canonical Actor Profile And Identity Link | L1 | Merged through PR #124 as `f599551` |
 | `WS-AUTH-001-07` | Authorization Kernel And Permission Registry | L1 | Split before implementation after required L1 plan review |
-| `WS-AUTH-001-07A` | Closed Permission And Action Catalogue | L1 | Implementation and repair internally approved at `478a819`; PR pending |
-| `WS-AUTH-001-07B` | Deny-By-Default Kernel And Self-Action Cutover | L1 | Inactive until 07A merge/memory and explicit user start |
+| `WS-AUTH-001-07A` | Closed Permission And Action Catalogue | L1 | Merged through PR #126 as `e9d72a1` |
+| `WS-AUTH-001-07B` | Deny-By-Default Kernel And Self-Action Cutover | L1 | Internally approved at `aabc0f4`; ready PR publication pending |
 | `WS-AUTH-001-08` | Bootstrap And Administrative Role Grants | L1 | Proposed |
 | `WS-AUTH-001-09` | Actor State, Identity Revocation, And Service Actors | L1 | Proposed |
 | `WS-AUTH-001-10` | Project Qualification And Contributor Role Grants | L1 | Proposed |
@@ -125,5 +125,6 @@ CAT post-merge memory merged through PR #118 as `eba7e2b`; AUTH-05B then merged
 through PR #119 as `ad71c7e`. AUTH-06 merged through PR #124 as `f599551`, its
 signed automated memory completed, and the user explicitly started AUTH-07.
 Required L1 review rejected the combined contract before runtime edits and
-required 07A/07B. Do not start 07B, AUTH-08, or POL-002-04 without a separate
-explicit user start after their prerequisites complete.
+required 07A/07B. AUTH-07B was separately started and is internally approved;
+do not start AUTH-08 or POL-002-04 without a separate explicit user start after
+their prerequisites complete.

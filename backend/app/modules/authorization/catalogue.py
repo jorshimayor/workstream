@@ -194,11 +194,19 @@ def _planned(
     return ActionDefinition(action_id, permission_id, owner, ActionAvailability.PLANNED)
 
 
+def _active(
+    action_id: ActionId,
+    permission_id: PermissionId,
+    owner: ActionOwner,
+) -> ActionDefinition:
+    return ActionDefinition(action_id, permission_id, owner, ActionAvailability.ACTIVE)
+
+
 ACTION_DEFINITIONS = (
-    _planned(
+    _active(
         ActionId.ACTOR_PROFILE_READ_SELF, PermissionId.ACTOR_PROFILE_READ_SELF, ActionOwner.AUTH_07B
     ),
-    _planned(
+    _active(
         ActionId.ACTOR_PROFILE_UPDATE_SELF,
         PermissionId.ACTOR_PROFILE_UPDATE_SELF,
         ActionOwner.AUTH_07B,
@@ -464,8 +472,16 @@ def _index_actions(
         raise RuntimeError("authorization action catalogue is incomplete")
     if len(HISTORICAL_PERMISSION_IDS) != 49 or len(NEW_PERMISSION_IDS) != 25:
         raise RuntimeError("authorization permission boundary mismatch")
-    if any(definition.availability is not ActionAvailability.PLANNED for definition in definitions):
-        raise RuntimeError("AUTH-07A actions must remain planned")
+    active_actions = {
+        ActionId.ACTOR_PROFILE_READ_SELF,
+        ActionId.ACTOR_PROFILE_UPDATE_SELF,
+    }
+    if {
+        definition.action_id
+        for definition in definitions
+        if definition.availability is ActionAvailability.ACTIVE
+    } != active_actions:
+        raise RuntimeError("authorization active action boundary mismatch")
     if set(definitions) != set(ACTION_DEFINITIONS):
         raise RuntimeError("authorization action metadata mismatch")
     if {definition.owner for definition in definitions} != set(ActionOwner):

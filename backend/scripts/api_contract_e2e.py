@@ -1087,6 +1087,16 @@ async def exercise_api_contract(base_url: str, env: dict[str, str]) -> None:
         assert "issuer" not in canonical_actor
         assert "subject" not in canonical_actor
         assert "roles" not in canonical_actor
+        updated_actor = await request_json(
+            client,
+            "PATCH",
+            "/api/v1/actors/me",
+            worker_token,
+            {"display_name": "Real API Contributor"},
+        )
+        assert updated_actor["display_name"] == "Real API Contributor"
+        assert updated_actor["admin_roles"] == []
+        assert updated_actor["project_role_grants"] == []
         worker_profile = await request_json(
             client,
             "POST",

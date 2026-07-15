@@ -41,6 +41,7 @@ from app.modules.actors.service import (
 )
 from app.modules.api_controls.service import RateControlDecision, RateControlUnavailableError
 from app.modules.audit.service import AuditService
+from app.modules.authorization.catalogue import ActionId
 from app.modules.tasks.models import AuditEvent
 from app.schemas.auth import (
     ActorContext,
@@ -390,6 +391,27 @@ async def test_patch_actors_me_maps_database_failure_to_retryable_unavailable(
     assert response.status_code == 503
     assert response.json()["error"]["code"] == "service_unavailable"
     assert response.json()["error"]["retryable"] is True
+    async with db_session.get_session_factory()() as session:
+        update_evidence = await session.scalar(
+            select(func.count())
+            .select_from(AuditEvent)
+            .where(AuditEvent.action_id == ActionId.ACTOR_PROFILE_UPDATE_SELF.value)
+        )
+    assert update_evidence == 0
+
+
+async def test_missing_bearer_has_no_actor_self_decision_evidence(
+    actor_client: AsyncClient,
+) -> None:
+    response = await actor_client.get("/api/v1/actors/me")
+    assert response.status_code == 401
+    async with db_session.get_session_factory()() as session:
+        decisions = await session.scalar(
+            select(func.count())
+            .select_from(AuditEvent)
+            .where(AuditEvent.entity_type == "authorization_decision")
+        )
+    assert decisions == 0
 
 
 async def test_suspended_profile_is_readable_but_not_mutable(
@@ -415,6 +437,15 @@ async def test_suspended_profile_is_readable_but_not_mutable(
     )
     assert patch.status_code == 403
     assert patch.json()["error"]["code"] == "actor_suspended"
+    async with db_session.get_session_factory()() as session:
+        denial = await session.scalar(
+            select(AuditEvent).where(
+                AuditEvent.action_id == ActionId.ACTOR_PROFILE_UPDATE_SELF.value,
+                AuditEvent.denial_code == "actor_suspended",
+            )
+        )
+    assert denial is not None
+    assert denial.resource_id == actor_profile_id
 
 
 async def test_revoked_identity_link_is_denied_by_actor_api(
@@ -437,6 +468,14 @@ async def test_revoked_identity_link_is_denied_by_actor_api(
     denied = await actor_client.get("/api/v1/actors/me", headers=auth_headers())
     assert denied.status_code == 403
     assert denied.json()["error"]["code"] == "identity_link_revoked"
+    async with db_session.get_session_factory()() as session:
+        denial = await session.scalar(
+            select(AuditEvent).where(
+                AuditEvent.action_id == ActionId.ACTOR_PROFILE_READ_SELF.value,
+                AuditEvent.denial_code == "identity_link_revoked",
+            )
+        )
+    assert denial is not None
 
 
 async def test_deactivated_actor_is_denied_by_actor_self_api(
@@ -457,6 +496,14 @@ async def test_deactivated_actor_is_denied_by_actor_self_api(
     denied = await actor_client.get("/api/v1/actors/me", headers=auth_headers())
     assert denied.status_code == 403
     assert denied.json()["error"]["code"] == "actor_deactivated"
+    async with db_session.get_session_factory()() as session:
+        denial = await session.scalar(
+            select(AuditEvent).where(
+                AuditEvent.action_id == ActionId.ACTOR_PROFILE_READ_SELF.value,
+                AuditEvent.denial_code == "actor_deactivated",
+            )
+        )
+    assert denial is not None
 
 
 @pytest.mark.parametrize(
@@ -488,6 +535,64 @@ async def test_nonhuman_actor_self_api_denials_create_nothing(
     async with db_session.get_session_factory()() as session:
         assert await session.scalar(select(func.count()).select_from(ActorProfile)) == 0
         assert await session.scalar(select(func.count()).select_from(ActorIdentityLink)) == 0
+        assert (
+            await session.scalar(
+                select(func.count())
+                .select_from(AuditEvent)
+                .where(AuditEvent.entity_type == "authorization_decision")
+            )
+            == 0
+        )
+
+
+async def test_revocation_wins_synchronized_actor_update_recheck(
+    actor_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    created = await actor_client.get("/api/v1/actors/me", headers=auth_headers())
+    actor_profile_id = created.json()["actor_profile_id"]
+    lock_attempted = asyncio.Event()
+    original_lock = ActorService.lock_actor_self_for_authorization
+
+    async def observed_lock(self, resolved):
+        lock_attempted.set()
+        return await original_lock(self, resolved)
+
+    monkeypatch.setattr(ActorService, "lock_actor_self_for_authorization", observed_lock)
+    async with db_session.get_session_factory()() as revoker:
+        link = await revoker.scalar(
+            select(ActorIdentityLink)
+            .where(ActorIdentityLink.actor_profile_id == actor_profile_id)
+            .with_for_update()
+        )
+        assert link is not None
+        link.status = "revoked"
+        link.revoked_by = actor_profile_id
+        link.revoked_at = func.now()
+        link.revoked_reason = "security response"
+        patch_task = asyncio.create_task(
+            actor_client.patch(
+                "/api/v1/actors/me",
+                headers=auth_headers(),
+                json={"display_name": "Must Not Persist"},
+            )
+        )
+        await lock_attempted.wait()
+        await revoker.commit()
+
+    denied = await patch_task
+    assert denied.status_code == 403
+    assert denied.json()["error"]["code"] == "identity_link_revoked"
+    async with db_session.get_session_factory()() as session:
+        profile = await session.get(ActorProfile, actor_profile_id)
+        denial = await session.scalar(
+            select(AuditEvent).where(
+                AuditEvent.action_id == ActionId.ACTOR_PROFILE_UPDATE_SELF.value,
+                AuditEvent.denial_code == "identity_link_revoked",
+            )
+        )
+    assert profile is not None and profile.display_name is None
+    assert denial is not None and denial.after_facts == {"allowed": False}
 
 
 async def test_actor_api_accepts_verifier_identity_bounds(
