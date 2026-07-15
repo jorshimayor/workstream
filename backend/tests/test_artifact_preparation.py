@@ -573,6 +573,43 @@ async def test_preparation_cancellation_releases_file_and_reservation(
 
 
 @pytest.mark.asyncio
+async def test_post_seal_cancellation_releases_reader_and_reservation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Retain service ownership until the sealed handle can be returned."""
+    manager = ArtifactScratchManager(root=tmp_path / "scratch", limits=preparation_limits())
+    service = ArtifactPreparationService(manager)
+    exiting_timeout = asyncio.Event()
+    block_exit = asyncio.Event()
+
+    class ExitGate:
+        async def __aenter__(self) -> None:
+            return None
+
+        async def __aexit__(
+            self,
+            exc_type: type[BaseException] | None,
+            exc: BaseException | None,
+            traceback: object | None,
+        ) -> None:
+            exiting_timeout.set()
+            await block_exit.wait()
+
+    monkeypatch.setattr(asyncio, "timeout_at", lambda _: ExitGate())
+    task = asyncio.create_task(service.prepare(byte_stream(b"sealed"), media_type="text/plain"))
+    await asyncio.wait_for(exiting_timeout.wait(), timeout=1)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+    assert (await manager.usage()).reservation_count == 0
+    assert list((tmp_path / "scratch" / "files").iterdir()) == []
+    assert service._active == {}
+    manager.close()
+
+
+@pytest.mark.asyncio
 async def test_preparation_deadline_releases_scratch(tmp_path: Path) -> None:
     """Map a total deadline to stable infrastructure failure and cleanup."""
     limits = preparation_limits(

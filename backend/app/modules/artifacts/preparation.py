@@ -858,6 +858,7 @@ class ArtifactPreparationService:
         reservation: _ScratchReservation | None = None
         descriptor: int | None = None
         reader: BinaryIO | None = None
+        handoff_ready = False
         try:
             async with asyncio.timeout_at(deadline):
                 reservation, descriptor = await self._manager.allocate()
@@ -886,6 +887,7 @@ class ArtifactPreparationService:
                 descriptor_to_seal = descriptor
                 descriptor = None
                 reader = await self._manager.seal_for_read(reservation, descriptor_to_seal)
+            handoff_ready = True
         except TimeoutError:
             raise ArtifactPreparationDeadlineError(
                 "artifact preparation deadline exceeded"
@@ -899,8 +901,12 @@ class ArtifactPreparationService:
         finally:
             if descriptor is not None:
                 await self._close_descriptor(descriptor)
-            if reader is None and reservation is not None:
-                await self._manager.release(reservation)
+            if not handoff_ready and reservation is not None:
+                try:
+                    if reader is not None:
+                        await self._run_io(reader.close)
+                finally:
+                    await self._manager.release(reservation)
         assert reservation is not None and reader is not None
         commitment = ArtifactCommitment(
             sha256=sha256,
