@@ -1247,6 +1247,50 @@ async def test_allocation_close_failure_still_releases_reservation(
 
 
 @pytest.mark.asyncio
+async def test_cancelled_seal_closes_read_descriptor_after_write_close_failure(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Preserve cancellation and dispose the anonymous read descriptor once."""
+    manager = ArtifactScratchManager(root=tmp_path / "scratch", limits=preparation_limits())
+    reservation, write_descriptor = await manager.allocate()
+    original_close = os.close
+    close_started = threading.Event()
+    finish_close = threading.Event()
+    write_close_failed = False
+    closed_after_failure: list[int] = []
+
+    def close_then_fail(descriptor: int) -> None:
+        nonlocal write_close_failed
+        if descriptor == write_descriptor and not write_close_failed:
+            close_started.set()
+            finish_close.wait(timeout=5)
+            original_close(descriptor)
+            write_close_failed = True
+            raise OSError(errno.EIO, "ambiguous write descriptor close failure")
+        if write_close_failed:
+            closed_after_failure.append(descriptor)
+        original_close(descriptor)
+
+    monkeypatch.setattr(os, "close", close_then_fail)
+    task = asyncio.create_task(manager.seal_for_read(reservation, write_descriptor))
+    assert await asyncio.to_thread(close_started.wait, 5)
+    task.cancel()
+    finish_close.set()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+    assert write_close_failed
+    assert len(closed_after_failure) == 1
+    with pytest.raises(OSError) as closed_error:
+        os.fstat(closed_after_failure[0])
+    assert closed_error.value.errno == errno.EBADF
+    await manager.release(reservation)
+    assert (await manager.usage()).reservation_count == 0
+    manager.close()
+
+
+@pytest.mark.asyncio
 async def test_closed_preparation_rejects_stream_and_is_idempotent(tmp_path: Path) -> None:
     """Make closed source handles unusable without duplicating cleanup."""
     manager = ArtifactScratchManager(

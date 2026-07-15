@@ -17,7 +17,10 @@ import time
 from typing import Any, BinaryIO, Iterator
 from uuid import uuid4
 
-from app.core.cancellation import await_cancellation_resistant
+from app.core.cancellation import (
+    await_cancellation_resistant,
+    run_blocking_cancellation_resistant,
+)
 from app.core.hashing import canonical_json_hash
 from app.interfaces.artifacts import (
     ArtifactByteRange,
@@ -189,10 +192,7 @@ class LocalStorageAdapter:
         receipt_json = await self._read_json_optional(self._path("receipts", scope, ".json"))
         metadata = await self._read_json_optional(self._path("metadata", provider_id, ".json"))
         expected = intent.get("expected_sha256")
-        object_exists = await self._object_exists(provider_id)
-        if metadata is None and object_exists:
-            return await self._recover_without_replay(request, intent, scope)
-        if metadata is None:
+        if metadata is None and not await self._object_exists(provider_id):
             if receipt_json is not None:
                 self._receipt_from_json(receipt_json)
                 raise ArtifactIntegrityError("artifact receipt has no committed object")
@@ -218,6 +218,24 @@ class LocalStorageAdapter:
         if intent.get("expected_size") is not None and replay_size != intent["expected_size"]:
             await self._quarantine_provider_object(provider_id, "replay_size_mismatch")
             raise ArtifactIntegrityError("artifact replay size does not match its commitment")
+
+        if metadata is None:
+            observed_sha256, observed_size = await self._hash_object(provider_id)
+            if observed_sha256 != replay_sha256 or observed_size != replay_size:
+                await self._quarantine_provider_object(provider_id, "recovery_mismatch")
+                raise ArtifactIntegrityError("artifact recovery commitment failed")
+            if intent.get("expected_size") is not None and observed_size != intent["expected_size"]:
+                await self._quarantine_provider_object(provider_id, "recovery_size_mismatch")
+                raise ArtifactIntegrityError("artifact recovery size commitment failed")
+            metadata = self._new_metadata(
+                provider_artifact_id=provider_id,
+                sha256=observed_sha256,
+                byte_count=observed_size,
+                media_type=intent.get("media_type"),
+            )
+            await self._write_json_exclusive(
+                self._path("metadata", provider_id, ".json"), metadata
+            )
 
         if replay_sha256 != metadata.get("sha256") or replay_size != metadata.get("byte_count"):
             await self._quarantine_provider_object(provider_id, "replay_mismatch")
@@ -290,13 +308,7 @@ class LocalStorageAdapter:
         if not await self._object_exists(provider_id):
             raise ArtifactIntegrityError("committed artifact object is missing")
         observed_sha256, observed_size = await self._hash_object(provider_id)
-        if (
-            request.expected_sha256 is not None
-            and observed_sha256 != request.expected_sha256
-        ) or (
-            request.expected_size is not None
-            and observed_size != request.expected_size
-        ):
+        if observed_sha256 != request.expected_sha256 or observed_size != request.expected_size:
             await self._quarantine_provider_object(provider_id, "recovery_mismatch")
             raise ArtifactIntegrityError("artifact recovery commitment failed")
         metadata_path = self._path("metadata", provider_id, ".json")
@@ -1331,15 +1343,7 @@ class LocalStorageAdapter:
 
     async def _run_io(self, function: Any, *args: Any) -> Any:
         """Complete one blocking filesystem call before propagating cancellation."""
-        task = asyncio.create_task(asyncio.to_thread(function, *args))
-        try:
-            return await asyncio.shield(task)
-        except asyncio.CancelledError as cancellation:
-            try:
-                await await_cancellation_resistant(task)
-            except BaseException:
-                raise cancellation from None
-            raise
+        return await run_blocking_cancellation_resistant(function, *args)
 
     async def _acquire_lock_async(self, scope: str) -> tuple[Any, int]:
         """Acquire a lock without leaking it when task cancellation wins the race."""

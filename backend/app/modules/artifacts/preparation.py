@@ -25,7 +25,10 @@ from app.interfaces.artifacts import (
     ArtifactLimitExceededError,
     ArtifactStoreUnavailableError,
 )
-from app.core.cancellation import await_cancellation_resistant
+from app.core.cancellation import (
+    await_cancellation_resistant,
+    run_blocking_cancellation_resistant,
+)
 from app.modules.artifacts.sources import (
     ArtifactCommitment,
     CommittedArtifactSource,
@@ -210,9 +213,12 @@ class ArtifactScratchManager:
         )
         try:
             return await asyncio.shield(task)
-        except asyncio.CancelledError:
-            reader = await await_cancellation_resistant(task)
-            await await_cancellation_resistant(asyncio.to_thread(reader.close))
+        except asyncio.CancelledError as cancellation:
+            try:
+                reader = await await_cancellation_resistant(task)
+                await await_cancellation_resistant(asyncio.to_thread(reader.close))
+            except BaseException:
+                raise cancellation from None
             raise
 
     async def release(self, reservation: _ScratchReservation) -> None:
@@ -554,10 +560,24 @@ class ArtifactScratchManager:
                 os.fsync(self._files_fd)
         except BaseException:
             if read_descriptor is not None:
-                os.close(read_descriptor)
+                descriptor_to_close = read_descriptor
+                read_descriptor = None
+                try:
+                    os.close(descriptor_to_close)
+                except BaseException:
+                    pass
             raise
-        finally:
+        try:
             os.close(descriptor)
+        except BaseException:
+            if read_descriptor is not None:
+                descriptor_to_close = read_descriptor
+                read_descriptor = None
+                try:
+                    os.close(descriptor_to_close)
+                except BaseException:
+                    pass
+            raise
         assert read_descriptor is not None
         return os.fdopen(read_descriptor, "rb", buffering=0)
 
@@ -829,15 +849,7 @@ class ArtifactScratchManager:
 
     @staticmethod
     async def _run_io(function: Any, *args: Any) -> Any:
-        task = asyncio.create_task(asyncio.to_thread(function, *args))
-        try:
-            return await asyncio.shield(task)
-        except asyncio.CancelledError as cancellation:
-            try:
-                await await_cancellation_resistant(task)
-            except BaseException:
-                raise cancellation from None
-            raise
+        return await run_blocking_cancellation_resistant(function, *args)
 
 
 class ArtifactPreparationService:

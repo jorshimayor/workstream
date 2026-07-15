@@ -13,6 +13,7 @@ import pytest
 
 from app.adapters.artifacts.local import LocalStorageAdapter
 from app.interfaces.artifacts import (
+    ArtifactIntegrityError,
     ArtifactOperation,
     IdempotencyIdentity,
     StoreArtifactRequest,
@@ -205,13 +206,21 @@ async def test_store_cleanup_survives_repeated_cancellation(
 
 
 @pytest.mark.asyncio
-async def test_store_recovers_committed_object_before_reading_retry_stream(
+async def test_object_only_recovery_still_requires_exact_replay_without_commitment(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Recover provider-first after cancellation without trusting retry bytes."""
+    """Preserve active-v1 exact replay when no client commitment exists."""
     adapter = LocalStorageAdapter(root=tmp_path / "artifacts", buffer_bytes=2)
-    request = store_request()
+    committed_request = store_request()
+    request = replace(committed_request, expected_sha256=None, expected_size=None)
+    request = replace(
+        request,
+        idempotency=replace(
+            request.idempotency,
+            request_digest=canonical_store_request_digest(request),
+        ),
+    )
     original_write_json = adapter._write_json_exclusive
     interrupted = False
 
@@ -228,11 +237,8 @@ async def test_store_recovers_committed_object_before_reading_retry_stream(
     assert interrupted
 
     monkeypatch.setattr(adapter, "_write_json_exclusive", original_write_json)
-    recovered = await adapter.store(byte_stream(b"wrong"), request)
-    assert recovered.replayed
-    assert recovered.sha256 == request.expected_sha256
-    assert b"".join(
-        [chunk async for chunk in adapter.open(recovered.provider_artifact_id)]
-    ) == b"hello"
-    assert list((tmp_path / "artifacts" / "quarantine").iterdir()) == []
+    with pytest.raises(ArtifactIntegrityError, match="recovery commitment failed"):
+        await adapter.store(byte_stream(b"wrong"), request)
+    assert list((tmp_path / "artifacts" / "objects").iterdir()) == []
+    assert len(list((tmp_path / "artifacts" / "quarantine").iterdir())) == 1
     adapter.close()
