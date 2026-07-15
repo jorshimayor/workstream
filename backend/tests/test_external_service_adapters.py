@@ -80,7 +80,16 @@ def test_root_errors_drop_noncanonical_identity_without_retaining_it() -> None:
         def __repr__(self) -> str:
             return secret
 
-    for malformed_identity in (secret, SecretBearingIdentity()):
+    class SecretBearingIdentitySubclass(ExternalServiceAdapterIdentity):
+        def __init__(self) -> None:
+            super().__init__("artifact_store", "local")
+            object.__setattr__(self, "secret", secret)
+
+    for malformed_identity in (
+        secret,
+        SecretBearingIdentity(),
+        SecretBearingIdentitySubclass(),
+    ):
         error = ExternalServiceConfigurationError(
             cast(ExternalServiceAdapterIdentity, malformed_identity)
         )
@@ -170,6 +179,29 @@ def test_factory_rejects_identity_mismatch() -> None:
     assert str(error.value) == "external_service_adapter_identity_mismatch"
 
 
+def test_factory_rejects_noncanonical_identity_that_claims_equality() -> None:
+    """Adapter-controlled equality cannot bypass canonical identity validation."""
+
+    class EqualityBypass:
+        def __eq__(self, other: object) -> bool:
+            return True
+
+    class EqualityBypassAdapter:
+        @property
+        def identity(self) -> object:
+            return EqualityBypass()
+
+    factory = ExternalServiceAdapterFactory[EqualityBypassAdapter]("artifact_store")
+    factory.register("local", EqualityBypassAdapter)
+
+    with pytest.raises(ExternalServiceAdapterIdentityMismatchError) as captured:
+        factory.create("local")
+
+    assert captured.value.identity == ExternalServiceAdapterIdentity(
+        "artifact_store", "local"
+    )
+
+
 def test_factory_maps_untrusted_constructor_failure_without_retaining_it() -> None:
     """Unexpected constructor errors become stable errors without secret chaining."""
     secret = "access_key=do-not-retain"
@@ -216,8 +248,8 @@ def test_factory_maps_identity_validation_failure_without_retaining_it() -> None
     assert set(vars(error)) == {"identity"}
 
 
-def test_factory_preserves_already_sanitized_root_errors() -> None:
-    """Capability constructors may return one stable shared failure unchanged."""
+def test_factory_remaps_already_sanitized_root_errors() -> None:
+    """Capability constructor failures leave through a fresh stable root error."""
     identity = ExternalServiceAdapterIdentity("artifact_store", "local")
     expected = ExternalServiceUnavailableError(identity)
 
@@ -229,10 +261,36 @@ def test_factory_preserves_already_sanitized_root_errors() -> None:
 
     with pytest.raises(ExternalServiceUnavailableError) as captured:
         factory.create("local")
-    assert captured.value is expected
+    assert captured.value is not expected
+    assert captured.value.identity == identity
+    assert captured.value.__cause__ is None
+    assert captured.value.__context__ is None
 
 
-def test_factory_preserves_root_error_only_after_identity_is_sanitized() -> None:
+def test_factory_remaps_protocol_and_base_root_errors() -> None:
+    """Every shared constructor-error category leaves as a fresh bounded error."""
+    identity = ExternalServiceAdapterIdentity("artifact_store", "local")
+
+    for error_type in (ExternalServiceProtocolError, ExternalServiceAdapterError):
+        expected = error_type(identity)
+
+        def root_failure() -> ExampleAdapter:
+            raise expected
+
+        factory = ExternalServiceAdapterFactory[ExampleAdapter]("artifact_store")
+        factory.register("local", root_failure)
+
+        with pytest.raises(error_type) as captured:
+            factory.create("local")
+
+        assert type(captured.value) is error_type
+        assert captured.value is not expected
+        assert captured.value.identity == identity
+        assert captured.value.__cause__ is None
+        assert captured.value.__context__ is None
+
+
+def test_factory_remaps_root_error_only_after_identity_is_sanitized() -> None:
     """A malformed shared error cannot smuggle constructor secrets through the factory."""
     secret = "credential=do-not-retain"
     expected = ExternalServiceConfigurationError(
@@ -248,7 +306,34 @@ def test_factory_preserves_root_error_only_after_identity_is_sanitized() -> None
     with pytest.raises(ExternalServiceConfigurationError) as captured:
         factory.create("local")
 
-    assert captured.value is expected
-    assert captured.value.identity is None
+    assert captured.value is not expected
+    assert captured.value.identity == ExternalServiceAdapterIdentity(
+        "artifact_store", "local"
+    )
     assert secret not in str(captured.value)
     assert secret not in repr(captured.value)
+
+
+def test_factory_removes_secret_bearing_root_error_context() -> None:
+    """Provider exceptions cannot leave through a shared root error chain."""
+    secret = "token=do-not-retain"
+    identity = ExternalServiceAdapterIdentity("artifact_store", "local")
+
+    def chained_failure() -> ExampleAdapter:
+        try:
+            raise RuntimeError(secret)
+        except RuntimeError:
+            raise ExternalServiceUnavailableError(identity)
+
+    factory = ExternalServiceAdapterFactory[ExampleAdapter]("artifact_store")
+    factory.register("local", chained_failure)
+
+    with pytest.raises(ExternalServiceUnavailableError) as captured:
+        factory.create("local")
+
+    error = captured.value
+    assert error.identity == identity
+    assert error.__cause__ is None
+    assert error.__context__ is None
+    assert secret not in str(error)
+    assert secret not in repr(error)

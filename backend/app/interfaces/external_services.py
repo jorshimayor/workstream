@@ -20,9 +20,7 @@ class ExternalServiceAdapterError(Exception):
 
     def __init__(self, identity: ExternalServiceAdapterIdentity | None = None) -> None:
         """Create an error containing only bounded adapter identity."""
-        self.identity = (
-            identity if isinstance(identity, ExternalServiceAdapterIdentity) else None
-        )
+        self.identity = identity if type(identity) is ExternalServiceAdapterIdentity else None
         super().__init__(self.code)
 
 
@@ -126,14 +124,27 @@ class ExternalServiceAdapterFactory(Generic[AdapterT]):
         if constructor is None:
             raise UnknownExternalServiceProviderError(expected_identity)
 
+        sanitized_error: ExternalServiceAdapterError | None = None
         construction_validation_failed = False
         try:
             adapter = constructor()
-            identity_matches = getattr(adapter, "identity", None) == expected_identity
+            actual_identity = getattr(adapter, "identity", None)
+            identity_matches = (
+                type(actual_identity) is ExternalServiceAdapterIdentity
+                and actual_identity == expected_identity
+            )
+        except ExternalServiceUnavailableError:
+            sanitized_error = ExternalServiceUnavailableError(expected_identity)
+        except ExternalServiceProtocolError:
+            sanitized_error = ExternalServiceProtocolError(expected_identity)
+        except ExternalServiceConfigurationError:
+            sanitized_error = ExternalServiceConfigurationError(expected_identity)
         except ExternalServiceAdapterError:
-            raise
+            sanitized_error = ExternalServiceAdapterError(expected_identity)
         except Exception:
             construction_validation_failed = True
+        if sanitized_error is not None:
+            raise sanitized_error from None
         if construction_validation_failed:
             raise ExternalServiceConfigurationError(expected_identity)
 
