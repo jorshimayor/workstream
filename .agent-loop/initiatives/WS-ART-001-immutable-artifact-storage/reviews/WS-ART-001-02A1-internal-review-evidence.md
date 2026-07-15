@@ -82,7 +82,7 @@ python3 scripts/update_post_merge_memory.py validate-merge-intent \
 git diff --check
 ```
 
-Results: Ruff passed; repository docstring coverage passed at 95.4 percent; 15
+Results: Ruff passed; repository docstring coverage passed at 94.5 percent; 15
 focused tests passed with 100 percent coverage of
 `app/interfaces/external_services.py`; 71 agent-gate tests passed; stale
 artifact, stale Workstream wording, Markdown link, merge-intent, and diff

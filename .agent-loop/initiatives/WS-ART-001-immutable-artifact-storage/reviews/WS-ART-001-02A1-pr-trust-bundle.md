@@ -75,7 +75,7 @@ and artifact runtime behavior remain unchanged.
 ## Tests And Test Delta
 
 - 15 focused tests passed at 100 percent foundation coverage.
-- Ruff, 95.4 percent docstring coverage, 71 agent gates, stale scans, links,
+- Ruff, 94.5 percent docstring coverage, 71 agent gates, stale scans, links,
   merge-intent validation, and diff hygiene passed.
 - No test was removed, skipped, weakened, or excluded.
 - The local full suite was stopped after passing beyond 79 percent because of
