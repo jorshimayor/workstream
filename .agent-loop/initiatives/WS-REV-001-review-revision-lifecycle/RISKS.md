@@ -1,0 +1,34 @@
+# Risks: WS-REV-001 Review And Revision Lifecycle
+
+| ID | Risk | Severity | Mitigation |
+|---|---|---:|---|
+| R1 | Parallel AUTH/ART changes make a planned interface stale | High | Every runtime chunk starts with a main-SHA dependency refresh and plan review; consume only merged contracts. |
+| R2 | Revised reference activates Flow Node against locked AWS policy | High | Correct normative wording in the contract-adoption chunk before runtime implementation. |
+| R3 | Duplicate `SubmissionVersion` fragments identity and history | High | Extend existing `Submission`; migration and architecture tests prohibit a duplicate table. |
+| R4 | Reviewer claim or decision bypasses current authorization | Critical | Require transaction-aware centralized decisions, canonical resource loaders, revocation races, and security review. |
+| R5 | Remote storage calls under database locks cause contention or ambiguous commits | High | Preflight outside locks, stabilize binding facts inside transactions, and project only post-commit. |
+| R6 | Artifact outage is misclassified as contributor fault | Critical | Stable 503/integrity errors, no Review/task adverse state, outage audit, and failure-mode tests. |
+| R7 | Queue and lease races create duplicate work or multiple reviewer capacity | Critical | PostgreSQL partial uniqueness, targeted row locks, database time, and real concurrent tests. |
+| R8 | Revision replay mutates prior findings or misses blocking work | High | Immutable response/resolution rows, database uniqueness, full unresolved-finding validation, and chain tests. |
+| R9 | Legacy revision policy fabricates `reject` | High | D6 plus a human decision on limit/deadline behavior before policy alignment. |
+| R10 | Public decisions commit without contributions/awards | Critical | Keep every route disabled until WS-CON freeze/atomic participant pass integration tests and final activation preflight succeeds. |
+| R11 | Shared audit or outbox is duplicated badly | High | Freeze and merge the shared outbox contract before chunk 04; block rather than create a review-private replacement. |
+| R12 | Reviewer endpoint leaks queue depth or enables cherry-picking | High | Server selects one offer; separate admin inspection; authorization and privacy tests. |
+| R13 | Review snapshot becomes a competing source of truth | High | PostgreSQL-only canonical writes, deterministic projection, reauthorization on search, rebuild tests. |
+| R14 | Large cross-domain PRs become unreviewable | High | Separate persistence, routing, leases, evidence, decisions, replay, recovery, projection, and proof chunks. |
+| R15 | Existing docs continue to define conflicting finding/revision semantics | Medium | Contract-adoption and final documentation chunks update docs, templates, glossary, and reference precedence. |
+| R16 | Migration numbering collides with parallel agents | High | Allocate migration identifiers only when the chunk starts from current main; never pre-reserve a number in this plan. |
+| R17 | Operational timers rely on Celery delivery or web-server time for correctness | High | Database-time transitions, lazy recovery on requests, idempotent sweeps, and reconciliation. |
+| R18 | Finding text or artifact details leak into logs/metrics | High | Bounded audit projections, no raw content/provider secrets, cardinality controls, and security review. |
+| R19 | Half-built public routes expose claims or private context before recovery and operations are coherent | Critical | Keep every lifecycle router absent from production composition through 12; activate the complete set atomically in 13 and test intermediate OpenAPI absence. |
+| R20 | Cross-domain transactions deadlock under claim, decision, revocation, expiry, or reconciliation races | Critical | Freeze one AUTH-to-WS-CON lock order, sort same-type rows, use bounded database-classified retries, and test both permutations with independent Postgres sessions. |
+| R21 | Historical submissions are indiscriminately queued without current checker/artifact proof | High | No queue backfill in schema migration; later audited admission is limited to unambiguous latest eligible rows and fails closed otherwise. |
+| R22 | Review duplicates task submission/checker/audit/outbox/worker mechanics or creates repository cycles | High | Use caller-transaction task participants, typed checker admission/context ports, the shared audit ledger/dispatcher, canonical hashing, one explicit composition assembly, and existing Celery/session utilities with import-boundary tests. |
+| R23 | Rebased submissions pass service checks but fail or drift at checker, queue, preparation, or contribution constraints | Critical | Replace task-equality FKs as one reviewed migration, bind checkers to Submission context, root each non-branching preparation episode in its Review, persist the exact admitting CheckerRun, and derive WS-CON only from constrained immutable lineage. |
+| R24 | Invalid preparation or legacy needs_revision state strands work indefinitely or tempts synthetic history repair | High | Provide only a reason-bound successor repair for valid episodes, fail closed on legacy missing roots, and use an Operator-only evidence-linked terminal closure that creates no Review or contribution. |
+| R25 | UUID-shaped external, legacy, or service identity is stored as a human reviewer/submitter | Critical | Require canonical `ActorProfile.id` FKs, human-kind and current-status revalidation, explicit actor-reference kinds in audit, and direct-SQL/cross-kind tests. |
+| R26 | Forward/backward guide rebase silently changes compensation | Critical | Keep compensation outside preparation/Submission/checker context; freeze submitter terms on TaskAssignment and reviewer terms per ReviewLease; test both rebase directions. |
+| R27 | Contribution evidence trusts an unconstrained caller package hash | Critical | Block CON-03C/REV-10 until ART, CON, and REV adopt one immutable verified packet-digest field, representation, derivation, and DB binding. |
+| R28 | Review routes activate without the complete contribution/compensation surface or stale dependency manifest | Critical | Consume the exact CON-11 readiness manifest and register/drill review, contribution, and compensation routes only in REV-13. |
+| R29 | AUTH authority-loss reassignment strands a Review-rooted revision episode or rewrites source attribution | Critical | Preserve reviewed-assignment lineage, append one atomic preparation successor for the replacement target assignment, deny the old contributor, and race replacement against repair/submission. |
+| R30 | A hidden preparation migration blocks the still-public legacy revision route before coherent activation | Critical | Land nullable/conditional preparation schema in 09A, then install the global `NOT VALID` rule with the route cutover in REV-13 and prove no raw IntegrityError. |

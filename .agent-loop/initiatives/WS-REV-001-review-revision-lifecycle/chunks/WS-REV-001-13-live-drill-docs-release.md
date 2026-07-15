@@ -1,0 +1,212 @@
+# Chunk Contract: WS-REV-001-13
+
+## Goal
+
+Perform fail-closed public lifecycle activation, run privacy-safe HTTP-visible
+conformance drills, close active documentation, and prove the complete backend
+review/revision lifecycle.
+
+## Risk class
+
+L1 release proof and documentation closure.
+
+## Allowed files
+
+```text
+backend/scripts/review_lifecycle_{stack_preflight,live_drill,validate_evidence}.py
+backend/tests/test_{reviews,contributions,compensation,authorization,api_contract_e2e,review_lifecycle_live_drill}.py only for final conformance gaps
+backend/app/api/router.py only for one joint review/contribution/compensation registration
+backend/app/modules/reviews/router.py only for final activation conformance
+backend/app/modules/contributions/router.py only for final activation conformance
+backend/app/modules/compensation/router.py only for final activation conformance
+backend/app/modules/tasks/{schemas,service,router}.py only for Task Context/preparation acknowledgment and strict canonical revision cutover
+backend/app/composition/review_lifecycle.py only for final fail-closed participant activation
+backend/alembic/versions/<activation-next>_strict_revision_cutover.py
+backend/tests/test_alembic.py only for final revision-cutover migration proof
+docs/architecture_*.md
+docs/architecture_brief/**
+docs/diagrams/**
+docs/operations_*.md
+docs/product_brief.md
+docs/product_principles.md
+docs/principles.md
+docs/product_first_user_flows.md
+docs/glossary.md
+docs/roles_permissions.md
+docs/template_review_packet.md
+docs/template_revision_replay.md
+docs/template_prior_feedback_checklist.md
+docs/template_task_status.md
+docs/template_project_guide.md
+docs/template_task.md
+docs/current_system_data_flow.html
+README.md
+.agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/**
+.agent-loop/merge-intents/WS-REV-001-13.json
+```
+
+## Not allowed
+
+```text
+new lifecycle behavior hidden inside proof scripts
+frontend implementation
+real secrets, private artifact content, local absolute paths, or personal IDs
+provider or authorization bypass for the drill
+reputation formula or deferred product scope
+```
+
+## Acceptance criteria
+
+- HTTP drill proves first submission, needs revision, revision preparation,
+  response evidence, preferred return, preference expiry/takeover, and accept.
+- Separate drills prove reject, lease expiry, grant revocation during lease,
+  finding evidence, artifact unavailable/integrity failure/recovery, projection
+  retry, and WS-CON atomicity.
+- Separate drills prove reason-bound preparation repair after guide correction,
+  stale-head/concurrent repair behavior, and audited legacy unrecoverable closure
+  without a fabricated Review or contribution.
+- Reconciliation proof runs duplicate/concurrent scans, closure, and a controlled
+  post-resolution recurrence and verifies one unresolved fingerprint generation,
+  one resolution, stable alert/outbox effects, and generation N+1 only after the
+  prior finding is resolved.
+- Database and API audit evidence agree; no direct database mutation creates
+  the claimed lifecycle result.
+- Before registration, stack preflight proves merged AUTH/ART/CON, shared
+  outbox, workers/schedules, MinIO protocol, migrations, and reconciliation are
+  live. Production composition fails closed when any mandatory participant is
+  absent.
+- Preflight consumes WS-CON-11's exact merged SHA, migration head, ActionId and
+  service-actor assignment, ART capability, outbox/worker, and handler manifest.
+  Missing, extra, stale, or mismatched entries block startup and activation.
+- A separate REV-owned activation manifest covers every human endpoint and
+  asynchronous command with exact ActionId, PermissionId mapping, resource
+  composer owner, allowed principal kind, service ActorProfile/system-principal
+  assignment, and transaction-revalidation rule. It includes at least
+  `review.preference_expiry.run`, `review.lease_expiry.run`,
+  `review.reconcile.run`, `review.artifact_reference.reconcile`, and
+  `review.projection.rebuild`; missing, extra, stale, or mismatched mappings fail
+  preflight and startup.
+- Final registration exposes coherent current-work, claim, release, decline,
+  context, decision, revision preparation/evidence, chain, and authorized admin
+  operations alongside the existing canonical task resubmission endpoint.
+  Rollback first closes admission through existing deployment-owned route and
+  worker controls, then drains/revokes active leases. It fences new fulfillment
+  dispatch while allowing authenticated callbacks and already committed
+  awards/outbox work to drain under their original identities, then disables
+  routes, workers, and service assignments in manifest order without deleting
+  pending immutable work. Queued review work remains durable and auditable for
+  forward reactivation. REV-13 does not invent an application-owned persisted
+  shutdown coordinator or attempt schema downgrade after post-cutover rows exist.
+- The same PR registers the reviewed contribution/compensation binding and
+  policy operations, contribution/award/evidence reads, fulfillment callback,
+  and bounded Finance/Operator operations under `/api/v1`. No review-only,
+  contribution-only, `/v1` alias, or optional-participant activation occurs
+  earlier.
+- API proof includes the exact Project Manager D6 obligation-close and repair
+  routes plus Operator legacy-close, their registered AUTH mappings/resource
+  composers, PM cross-project/not-reached denial, Operator D6 denial,
+  non-Operator legacy-close denial, stale/crossed head or finding denial, exact
+  replay, and changed-replay conflict.
+- Activation registers only the review-owned evidence-intake routes and installs
+  frozen-preparation acknowledgment as an internal lifecycle guard of the
+  existing canonical task submission command. The same commit unlocks that
+  command's prepared, structured-response branch, removes the legacy
+  direct-revision path, and adds neither a contributor/reviewer preparation
+  route nor a second reviews resubmission route. The only preparation mutation
+  route is the privileged chunk-11 successor-repair command. First submissions
+  remain behaviorally unchanged.
+- The same composition cutover makes the AUTH-13 replacement-assignment command
+  depend on the typed review preparation-transfer participant whenever a
+  Review-rooted revision obligation exists. The binding is non-optional: startup
+  and the command fail closed if it is absent, and assignment plus preparation
+  successor commit or roll back together. Tests cover absent binding, injected
+  failure after each participant, replay, stale head, and concurrent
+  replacement/repair/submission. Rollback first fences replacement assignment
+  and drains in-flight commands; it never removes the participant while the
+  AUTH-13 command can create a target assignment.
+- The same atomic cutover migration adds the named PostgreSQL `NOT VALID` check
+  requiring version 1 or a non-null preparation reference. Existing version>1
+  rows remain immutable/readable, while every new or updated post-cutover row is
+  checked. The service maps missing/stale preparation to a stable domain error;
+  no `IntegrityError` escapes. Migration/API tests prove the pre-cutover legacy
+  branch works before upgrade, the route and database guard switch together,
+  new unprepared revisions fail, prepared revisions succeed, direct SQL cannot
+  forge a legacy exemption, and downgrade is refused once post-cutover rows
+  depend on the rule.
+- Deployment does not pretend Alembic and process replacement are simultaneous.
+  The runbook fences legacy version>1 submission writes, drains and verifies no
+  old-writer transaction/process remains, applies the migration, starts and
+  verifies the prepared branch plus mandatory replacement-transfer binding, and
+  only then reopens revision and replacement-assignment admission. First-version
+  submissions may remain open if they cannot enter the fenced path. A live
+  ordering test holds an old writer at the fence and proves it cannot cross the
+  migration/reopen boundary or leak an IntegrityError.
+- Existing Task Context responses expose the frozen current preparation ID,
+  digest, guide/policy versions, and change summary during `needs_revision`.
+  The canonical submission request acknowledges preparation ID/digest; neither
+  request mutates preparation state.
+- Full conformance suite, lint, docs, coverage, stale scans, and link checks pass.
+- The joint drill also proves compensation binding/policy setup, TaskAssignment
+  and ReviewLease freezes, reviewer contribution for all three decisions,
+  accept-only submitter contribution, a second revision Review, paid and
+  explicit-unpaid awards, outbound delivery/callback ordering, suspended or
+  retired binding behavior, contribution-evidence privacy/rebuild,
+  Finance-versus-Operator denials, atomic rollback, adapter/storage outage,
+  replay, and reconciliation.
+- Forward and backward Project Guide rebase leave the TaskAssignment
+  compensation freeze unchanged; each new ReviewLease freezes reviewer terms
+  independently and decision-neutral reviewer awards agree across
+  `accept`/`needs_revision`/`reject` for the same frozen terms.
+- Active docs use blocking/advisory findings, server-selected offer semantics,
+  controlled rebase, canonical decisions, WS-CON boundaries, AWS S3/MinIO, and
+  deferred reputation consistently.
+- Evidence report contains only placeholder paths/IDs and approved bounded
+  excerpts.
+- A terminology/retirement matrix covers every review object and removes active
+  high/medium/low, full-backlog, direct payment/reputation, and checker-as-human-
+  decision wording. PlantUML, architecture brief PDF, and linked generated
+  derivatives are regenerated and diff-verified.
+- Initiative status, risks, decisions, review evidence, and trust bundle record
+  what is proven and any explicitly deferred residual work.
+
+## Verification
+
+```text
+cd backend && alembic upgrade head
+cd backend && pytest -q tests/test_alembic.py tests/test_reviews.py tests/test_contributions.py tests/test_compensation.py tests/test_authorization.py tests/test_api_contract_e2e.py tests/test_review_lifecycle_live_drill.py
+cd backend && ruff check app tests scripts
+cd backend && docstr-coverage --config .docstr.yaml
+docker compose up -d --wait postgres redis minio
+cd backend && python scripts/review_lifecycle_live_drill.py --start-api-worker-beat --run-live-preflight --require-postgres --require-workers --require-minio --require-auth --require-con --require-outbox --base-url http://127.0.0.1:8000 --require-real-http --artifact-backend s3_compatible --evidence-out ../.agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/evidence/live-drill.json
+cd backend && python scripts/review_lifecycle_validate_evidence.py ../.agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/evidence/live-drill.json
+(metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
+cd backend && coverage report --include='app/modules/reviews/*,app/workers/reviews.py' --precision=2 --fail-under=90
+./docs/diagrams/render_plantuml.sh
+./docs/architecture_brief/render_pdf.sh
+git diff --exit-code -- docs/diagrams docs/architecture_brief
+sha256sum -c docs/reference_specs/SHA256SUMS
+git check-attr diff merge text -- docs/reference_specs/*.pdf | awk '$3 != "unset" {bad=1} END {exit bad}'
+python3 scripts/check_internal_review_evidence.py
+python3 scripts/check_markdown_links.py
+python3 scripts/check_stale_workstream_wording.py
+python3 scripts/check_stale_review_contracts.py
+python3 scripts/check_stale_artifact_contracts.py
+python3 scripts/check_stale_authorization_docs.py
+git diff --check
+```
+
+## Required reviewers
+
+Senior engineering, QA/test, security/auth, product/ops, architecture, docs,
+reuse/dedup, test-delta, and CI integrity if proof or coverage tooling changes.
+
+## Human review focus
+
+Evidence authenticity, no bypass, complete failure coverage, privacy scrub, and
+clear distinction between proven lifecycle and deferred frontend/reputation.
+
+## Stop condition
+
+After merge and automated memory, mark the initiative complete only if every
+definition-of-done item is proven. Do not start a frontend successor
+automatically.
