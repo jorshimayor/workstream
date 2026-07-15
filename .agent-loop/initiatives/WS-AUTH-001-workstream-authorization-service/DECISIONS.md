@@ -350,20 +350,34 @@ closed types, never AUTH persistence or grant queries.
 Status: accepted as the required L1 contract repair after AUTH-08's explicit
 start on 2026-07-15.
 
-AUTH-08 adds no PermissionId. It adds exactly `admin_role.read`,
-`admin_role.grant`, and `admin_role.revoke` as ActionIds owned by AUTH-08 and
-mapped one-to-one to the existing permissions. They activate only with the
-one-time local bootstrap, exact five-role permission matrix, immutable
+AUTH-08 adds no PermissionId. It adds exactly seven ActionIds owned by AUTH-08:
+`authorization.permission_catalogue.read`,
+`authorization.admin_role_definitions.read`, `admin_role_grant.list`,
+`actor.admin_role_grant_history.read`, `admin_role_grant.issue`,
+`admin_role_grant.revoke`, and `admin_role_grant.bootstrap`. They map to the
+existing `admin_role.read`, `admin_role.grant`, or `admin_role.revoke`
+permissions. This preserves D15's one canonical target, candidate, guard set,
+and principal type per action instead of collapsing definition reads, scoped
+history reads, human mutations, and the local trust root. They activate only
+with the one-time local bootstrap, exact five-role permission matrix, immutable
 AdminRoleGrant persistence, grant-backed central-kernel evaluation, scoped
 definition/history APIs, audit/idempotency parity, and final-administrator
 locking in the same reviewed chunk. The merged 50-action catalogue therefore
-becomes 53 actions with exactly five active actions after AUTH-08; every other
+becomes 57 actions with exactly nine active actions after AUTH-08; every other
 action remains planned.
 
-The local bootstrap command declares `admin_role.grant` in its command
+The local bootstrap command declares `admin_role_grant.bootstrap` in its command
 manifest but does not fabricate a bearer AuthorizationContext or human grant.
 HTTP surfaces continue to use only request-scoped
 `AuthorizationService.require(action_id, typed_resource_context)`. System scope
 is not superuser authority, token roles never become candidates, and AUTH-09
 remains the owner of actor/link lifecycle mutations that must later reuse the
 AuthorityControl-first final-administrator lock order.
+
+For the two admin-grant mutations, this decision supersedes AUTH-05B's generic
+grant-resource `effective=true -> false` invalidation placeholder. Issue
+invalidates the target actor authority projection `false -> true`; revoke
+invalidates it `true -> false`. AUTH-08 must update typed and PostgreSQL audit
+validation together and prove both directions. Human-readable bounded grant and
+revocation reasons live on immutable AdminRoleGrant history; request digests
+remain in idempotency evidence, and audit reasons remain closed classifications.

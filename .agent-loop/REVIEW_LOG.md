@@ -5,7 +5,8 @@
 PR #130 merged AUTH-07B as `90eca12`; signed schema-v2 memory passed and the
 user explicitly started AUTH-08. Required security/architecture, QA/product,
 and senior/CI/docs preimplementation review rejected the inherited AUTH-08
-contract before runtime edits. It omitted the three administrative ActionIds,
+contract before runtime edits. It omitted the surface-specific administrative
+ActionIds,
 definition APIs, exact role matrix, grant-backed decision fields, bootstrap
 trust-root semantics, lock/revalidation order, invalidation direction, scoped
 read privacy, migration rollback custody, and required proof files. The

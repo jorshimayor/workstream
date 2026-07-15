@@ -25,7 +25,7 @@
   and AWS cannot instantiate in production without release-bound live proof.
 - Authorization checkpoint: merged main contains 74 PermissionIds and 50
   ActionIds, with only the two actor-self actions active. The repaired AUTH-08
-  contract proposes exactly three administrative actions, the five-role
+  contract proposes exactly seven administrative actions, the five-role
   matrix, and durable grants; runtime has not started. AUTH-09 provisions fixed
   service principals, and
   each owning WS-ART feature chunk activates only its own canonical actions.
