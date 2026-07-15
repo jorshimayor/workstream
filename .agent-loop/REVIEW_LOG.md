@@ -1,5 +1,16 @@
 # Review Log
 
+## 2026-07-15 - WS-AUTH-001-08 Initial Plan Rejected
+
+PR #130 merged AUTH-07B as `90eca12`; signed schema-v2 memory passed and the
+user explicitly started AUTH-08. Required security/architecture, QA/product,
+and senior/CI/docs preimplementation review rejected the inherited AUTH-08
+contract before runtime edits. It omitted the three administrative ActionIds,
+definition APIs, exact role matrix, grant-backed decision fields, bootstrap
+trust-root semantics, lock/revalidation order, invalidation direction, scoped
+read privacy, migration rollback custody, and required proof files. The
+contract is repaired and must pass fresh exact-head L1 review before code.
+
 ## 2026-07-15 - WS-AUTH-001-07B Internal Review Passed
 
 Exact implementation SHA `aabc0f4c0131c53600750258a0bec8be404c7b90`

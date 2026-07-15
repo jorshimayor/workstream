@@ -344,3 +344,26 @@ commits, and never accepts a raw
 PermissionId, candidate grant, or guard. REV owns its ResourceContext composers
 and lifecycle invariants and may import only that public AUTH interface and
 closed types, never AUTH persistence or grant queries.
+
+## D18: Administrative actions and grants activate together in AUTH-08
+
+Status: accepted as the required L1 contract repair after AUTH-08's explicit
+start on 2026-07-15.
+
+AUTH-08 adds no PermissionId. It adds exactly `admin_role.read`,
+`admin_role.grant`, and `admin_role.revoke` as ActionIds owned by AUTH-08 and
+mapped one-to-one to the existing permissions. They activate only with the
+one-time local bootstrap, exact five-role permission matrix, immutable
+AdminRoleGrant persistence, grant-backed central-kernel evaluation, scoped
+definition/history APIs, audit/idempotency parity, and final-administrator
+locking in the same reviewed chunk. The merged 50-action catalogue therefore
+becomes 53 actions with exactly five active actions after AUTH-08; every other
+action remains planned.
+
+The local bootstrap command declares `admin_role.grant` in its command
+manifest but does not fabricate a bearer AuthorizationContext or human grant.
+HTTP surfaces continue to use only request-scoped
+`AuthorizationService.require(action_id, typed_resource_context)`. System scope
+is not superuser authority, token roles never become candidates, and AUTH-09
+remains the owner of actor/link lifecycle mutations that must later reuse the
+AuthorityControl-first final-administrator lock order.

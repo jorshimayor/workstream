@@ -6,19 +6,23 @@
 
 ## Goal
 
-Implement the one-time local bootstrap operation, `AuthorityControl`, immutable
-AdminRoleGrants, scope compatibility, grant/revoke APIs, idempotency, and
-concurrency-safe final-access-administrator protection.
+Implement the one-time local Access Administrator bootstrap, the closed
+administrative role/permission definitions, immutable `AdminRoleGrant`
+history, grant-backed central authorization, scoped read/issue/revoke APIs,
+idempotency, and concurrency-safe final-administrator protection.
 
 ## Why this chunk exists
 
-Workstream needs durable administrative authority before project permissions
-or product surfaces can stop using token roles.
+Workstream needs durable administrative authority before actor administration,
+project grants, or product surfaces can stop using token roles. AUTH-07B left
+only actor self actions active; this chunk adds the exact administrative trust
+root and no product cutover.
 
 ## Approved plan reference
 
 - INTENT: `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/INTENT.md`
 - PLAN: `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/PLAN.md`
+- DECISIONS: `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/DECISIONS.md`
 - CHUNK_MAP: `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/CHUNK_MAP.md`
 
 ## Risk class
@@ -34,17 +38,28 @@ P1
 ```text
 backend/app/modules/actors/**
 backend/app/modules/authorization/**
+backend/app/modules/audit/**
+backend/app/modules/projects/repository.py
+backend/app/api/deps/authorization.py
 backend/app/api/router.py
 backend/app/db/models.py
 backend/scripts/bootstrap_access_administrator.py
-backend/app/modules/audit/**
-backend/alembic/versions/0022_*.py
-backend/tests/test_actors.py
-backend/tests/test_auth.py
-backend/tests/test_alembic.py
 backend/scripts/api_contract_e2e.py
+backend/alembic/versions/0022_*.py
+backend/tests/test_authorization.py
+backend/tests/test_audit.py
+backend/tests/test_auth.py
+backend/tests/test_actors.py
+backend/tests/test_alembic.py
+backend/tests/test_api_controls.py
+backend/tests/test_api_rate_controls.py
+backend/tests/test_app.py
+backend/tests/test_projects.py
+docs/spec_authorization_service.md
 docs/operations_authorization_service.md
+docs/operations_roles_permissions.md
 .agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/**
+.agent-loop/merge-intents/WS-AUTH-001-08.json
 .agent-loop/LOOP_STATE.md
 .agent-loop/WORK_QUEUE.md
 .agent-loop/REVIEW_LOG.md
@@ -54,76 +69,401 @@ docs/operations_authorization_service.md
 
 ```text
 public bootstrap endpoint or shared bootstrap bearer secret
-project contributor grants
+project contributor grants or qualification state
+actor/link lifecycle mutation APIs owned by AUTH-09
 product surface cutover
 self-grant or self-revoke
-service actors receiving admin grants
-deleting revoked grants
+service actors receiving human administrative grants
+deleting grants or audit/idempotency history
+token-role authority, client-supplied permissions, or request-supplied project authority
+cross-request decision cache, second policy engine, or second unit of work
+CI workflow, dependency, coverage-floor, skip, xfail, or exclusion changes
 ```
+
+## Exact action additions and surfaces
+
+AUTH-08 adds exactly three `ActionId` values, an `AUTH_08` owner, and three
+active catalogue rows. The catalogue becomes exactly 53 actions, of which only
+the two AUTH-07B actor-self actions and these three AUTH-08 actions are active.
+No PermissionId is added or renamed.
+
+| Surface | ActionId | PermissionId | Primary typed resource | Candidate | Guards and revalidation |
+|---|---|---|---|---|---|
+| `GET /api/v1/authorization/permissions` | `admin_role.read` | `admin_role.read` | system `permission_catalogue` definition | system Access Administrator or system Audit Authority | exact registered definitions only; no grant or personal data |
+| `GET /api/v1/authorization/admin-role-definitions` | `admin_role.read` | `admin_role.read` | system `admin_role_definitions` definition | system Access Administrator or system Audit Authority | exact five-role matrix and scope compatibility only |
+| `GET /api/v1/admin-role-grants` | `admin_role.read` | `admin_role.read` | canonical system or exact-project grant collection | system Access Administrator; system/exact-project Audit Authority whose scope covers the collection | filter before total/cursor; no broader-scope rows |
+| `GET /api/v1/actors/{actor_profile_id}/admin-role-grants` | `admin_role.read` | `admin_role.read` | canonical actor grant collection plus required scope selector | system Access Administrator; system/exact-project Audit Authority whose scope covers returned rows | target selector is canonicalized; concealed rows never affect total/cursor |
+| `POST /api/v1/admin-role-grants` | `admin_role.grant` | `admin_role.grant` | target-human plus canonical system/exact-project grant selector | system Access Administrator | no self-grant; active human target with at least one active identity link; role/scope compatibility; exact project exists |
+| `POST /api/v1/admin-role-grants/{grant_id}/revoke` | `admin_role.revoke` | `admin_role.revoke` | loaded active admin grant | system Access Administrator | no self-revoke; active grant; final Access Administrator remains; caller and matched grant revalidated under lock |
+| local bootstrap command manifest | `admin_role.grant` | `admin_role.grant` | fixed bootstrap target-human selector | irreversible `AuthorityControl` bootstrap state, not a human grant | no fabricated bearer context or public kernel bypass; domain evidence only |
+
+Every HTTP operation declares exactly one `x-workstream-action-id`. The local
+command exports one typed manifest constant checked against the same catalogue.
+Bootstrap does not fabricate an `AuthorizationContext`, matched human grant, or
+`SensitiveAuthorizationAllowed` decision. Its deliberate trust-root exception
+is confined to the local command and fixed `workstream:system:bootstrap`
+principal.
+
+Migration `0022` replaces the PostgreSQL exact action/permission pair constraint
+with the 53-pair catalogue and restores the exact 50-pair `0021` constraint on
+clean downgrade. Downgrade refuses when any AUTH-08 action evidence or
+administrative grant/idempotency history exists.
+
+## Closed administrative role matrix
+
+The implementation exposes one immutable typed mapping from each role to the
+following exact PermissionIds. These are permission candidates only; planned
+actions remain non-executable until their owning chunks activate them and add
+canonical resources and guards. System scope is never superuser authority.
+
+### `access_administrator`
+
+```text
+actor.profile.read_any
+actor.profile.suspend
+actor.profile.reactivate
+actor.profile.deactivate
+actor.identity_link.read
+actor.identity_link.revoke
+actor.identity_link.reactivate
+actor.service.provision
+admin_role.read
+admin_role.grant
+admin_role.revoke
+audit.read
+audit.export
+```
+
+### `operator`
+
+```text
+project.read
+review.queue.inspect
+review.lease.force_release
+contribution.read_project
+compensation.award.read
+operations.status.read
+operations.timer.run
+operations.reconcile.run
+operations.outbox.retry
+operations.projection.rebuild
+operations.task.start_override
+operations.submission_gate.repair
+operations.checker.retry
+artifact.binding.read
+artifact.replica.read
+artifact.receipt.read
+artifact.verification_job.read
+artifact.verification_job.retry
+artifact.recovery_attempt.read
+artifact.audit.read
+audit.read
+```
+
+The seven artifact permissions above are the complete human Operator artifact
+set. Operator receives no artifact ingest, upload, binding-create,
+verification-execute, pending-scan, put-resolution, guide-read, checker-input,
+or checker-output permission.
+
+### `project_manager`
+
+```text
+project.create
+project.read
+project.update
+project.archive
+project.guide.manage
+project.effective_policy.manage
+project.task.manage
+project.review_policy.manage
+project.role_grant.read
+project.role_grant.manage
+review.queue.inspect
+contribution.read_project
+compensation.award.read
+audit.read
+```
+
+`project.create` is a candidate only from a system-scoped Project Manager
+grant. Every other candidate is limited to the covered project.
+
+### `finance_authority`
+
+```text
+project.read
+contribution.read_project
+compensation.policy.manage
+compensation.adapter_binding.manage
+compensation.award.read
+compensation.delivery.reconcile
+audit.read
+```
+
+### `audit_authority`
+
+```text
+actor.profile.read_any
+actor.identity_link.read
+admin_role.read
+project.read
+project.role_grant.read
+review.queue.inspect
+review.chain.read
+contribution.read_project
+compensation.award.read
+artifact.binding.read
+artifact.replica.read
+artifact.receipt.read
+artifact.verification_job.read
+artifact.recovery_attempt.read
+artifact.audit.read
+artifact.guide_source.read
+audit.read
+audit.export
+```
+
+Access Administrator and Operator grants are system-only. Project Manager,
+Finance Authority, and Audit Authority grants may be system-scoped or cover one
+exact canonical project. Table-driven tests prove every exact set and every
+excluded permission. Only Access Administrator supplies `admin_role.grant` or
+`admin_role.revoke`; only Access Administrator and Audit Authority supply
+`admin_role.read`, subject to the resource scope above.
+
+## Runtime and decision contract
+
+- The feature interface remains exactly
+  `await authorization_service.require(action_id, typed_resource_context)`.
+- The service remains request-scoped, binds the caller-owned `AsyncSession`,
+  and never commits or creates another session.
+- Admin resource contexts contain bounded lookup selectors. Because grants are
+  AUTH-owned resources, the central service canonicalizes the selected actor,
+  grant, and grant collection itself. Exact-project selectors are resolved
+  through the existing ProjectRepository; request/path project IDs are never
+  accepted as authority facts.
+- Grant-backed decisions add only bounded `matched_grant_id` and
+  `matched_scope_project_id` fields. Audit evidence records the exact matched
+  grant and canonical project when applicable.
+- Effective admin candidates are active grants whose role contains the exact
+  permission, whose system/project scope covers the canonical resource, whose
+  target is an active human ActorProfile with at least one active identity
+  link, and whose request identity link remains active.
+- Reads reload candidates per request. Mutations lock and revalidate the exact
+  caller identity link, caller profile, and matched Access Administrator grant
+  in the committing transaction. Replays reauthorize current authority before
+  returning the stored response reference.
+- Evaluation order is link lifecycle, actor lifecycle, registered/active
+  action, candidate grant and scope, then canonical resource existence and
+  guards. Unauthorized callers cannot distinguish absent from concealed actor,
+  project, or grant selectors.
+- Unknown, planned, wrong-resource, wrong-scope, inactive-grant, and
+  unimplemented actions fail closed. Token roles never enter a candidate set.
+
+## AuthorityControl, bootstrap, and lock order
+
+Migration `0022` creates and seeds exactly one `AuthorityControl(id=1)` row with
+`bootstrap_completed=false`, `bootstrap_grant_id=NULL`, and `version=0`.
+Runtime cannot insert, delete, reset, or replace it. Execution atomically moves
+it once to `bootstrap_completed=true`, the created grant ID, and `version=1`.
+Current grant state never reopens bootstrap.
+
+An effective Access Administrator is exactly an active, system-scoped
+`access_administrator` grant targeting an active human profile with at least
+one active identity link. Bootstrap target eligibility uses the same actor and
+identity-link facts.
+
+All bootstrap and admin grant mutations intentionally serialize in this order:
+
+```text
+idempotency reservation when HTTP
+-> AuthorityControl(id=1) FOR UPDATE
+-> exact caller identity link and ActorProfile when HTTP
+-> exact matched Access Administrator grant when HTTP
+-> target grant, target ActorProfile/identity-link selector, then project row
+-> state, evidence, invalidation, and idempotency completion
+-> one route/command-owned commit
+```
+
+The shared lock is acquired even for non-Access-Administrator grant mutations
+to preserve one global order. AUTH-09 must reuse this control-first order for
+profile suspension/deactivation and identity-link revocation; those mutations
+are not implemented here.
+
+The local command is:
+
+```text
+python -m scripts.bootstrap_access_administrator \
+  --actor-profile-id <uuid> (--dry-run | --execute)
+```
+
+`--dry-run` performs bounded read-only eligibility checks, never locks in a
+promise, never changes state, and outputs only JSON containing `result_code`,
+`actor_profile_id`, and `would_change`. `--execute` is the only state-changing
+mode and outputs `result_code`, `actor_profile_id`, `grant_id`, and `changed`.
+No issuer, subject, email, display name, token, or reason text is emitted.
+Exit codes are 0 success/eligible dry-run, 2 invalid or ineligible target, 3
+already bootstrapped/concurrent loser, and 1 infrastructure failure.
+
+Execution locks AuthorityControl first, validates the target, creates one
+system Access Administrator grant attributed to
+`workstream:system:bootstrap`, marks the irreversible control state, writes
+`InitialAccessAdministratorBootstrapped`, and commits once. Later and losing
+attempts use stable `admin_role_grant_exists`, roll back the losing transaction,
+then commit one `AdminRoleGrantIssueDenied` event in a clean transaction before
+exit 3. Bootstrap is never an idempotent replay and has no HTTP route or secret.
+
+## AdminRoleGrant persistence and migration
+
+`AdminRoleGrant` stores a UUID ID, target actor ID, role, scope type, optional
+project FK, status, version, creation attribution, reason digest, database-time
+timestamps, and complete optional revocation attribution. Normal grants use
+`granted_by_actor_profile_id`; bootstrap alone uses the mutually exclusive fixed
+system-principal attribution. Revocation always records the acting human,
+reason digest, and database time.
+
+Database enforcement includes:
+
+- human target and actor existence FKs, plus project FK when project-scoped;
+- role/scope compatibility and attribution XOR constraints;
+- one active system grant per `(target_actor_id, role)` and one active project
+  grant per `(target_actor_id, role, scope_project_id)` through separate partial
+  unique indexes;
+- immutable identity, target, role, scope, creator, reason, and creation fields;
+- only one legal `active/version=1` to `revoked/version=2` transition with all
+  revocation fields set together;
+- triggers rejecting delete, truncate, reset of AuthorityControl, later grant
+  updates, or incomplete revocation;
+- indexes for effective-candidate, target-history, project-scope, and final
+  Access Administrator queries.
+
+Upgrade from `0021` fails closed if orphan bootstrap/admin-grant success history
+or admin-grant idempotency history already exists without canonical grant rows.
+Clean downgrade is allowed only while bootstrap remains incomplete and no
+AdminRoleGrant, AUTH-08 action evidence, AUTH-08 domain evidence, or admin-grant
+idempotency row exists. Otherwise recovery proceeds forward.
+
+## API request, response, privacy, and replay contract
+
+- Both mutation routes require a UUID `Idempotency-Key` header and a human
+  reason of 1-500 UTF-8 bytes; only its canonical digest persists.
+- Issue accepts target actor ID, role, scope type, and optional project ID.
+  Revoke accepts only the path grant ID plus reason.
+- Mutation responses are the stable bounded authority response reference:
+  `resource_type`, `resource_id`, `version`, and original HTTP status. Issue is
+  201/version 1; revoke is 200/version 2. Exact replay returns that same
+  reference even if a later operation changed current grant state.
+- Same key/digest reauthorizes and replays. Same key/different digest returns
+  `idempotency_mismatch`. A different key for an already-active identical grant
+  returns `admin_role_grant_exists`. Revoking an already-revoked grant with a
+  new key returns `admin_role_grant_not_active`.
+- Self-grant and self-revoke return `self_authority_change`; final Access
+  Administrator removal returns `last_access_administrator`; invalid/non-human
+  targets and invalid scopes fail closed without personal or project leakage.
+- POST routes use the existing admin-mutation rate-control dependency. GET
+  routes use the existing authenticated read control and are not idempotent
+  operations.
+- Grant collection reads require `scope_type=system` with no project ID or
+  `scope_type=project` with one canonical project ID. They accept status
+  `active|revoked|all`, limit 1-100 (default 50), and an opaque
+  `(created_at,id)` cursor. Results order by creation time then ID. Actor history
+  uses the same required scope selector. Authorization filtering occurs before
+  items, total, and next cursor are calculated.
+- Responses contain only grant ID, target actor ID, role, scope, status,
+  version, grantor/revoker reference kind and bounded reference, reason digests,
+  and database timestamps. They never include issuer, subject, token claims,
+  email, display name, raw reason, or project details.
+
+## Atomic mutation and denial evidence
+
+HTTP issue/revoke follows one caller-session sequence: reserve first, lock
+AuthorityControl, call the central kernel (which revalidates caller/grant and
+canonicalizes the target selector), mutate, write success and invalidation,
+complete idempotency, then commit once. Reservation outcomes are not exposed
+until current authorization succeeds.
+
+Issue invalidates the target actor authority projection from
+`effective=false` to `effective=true`; revoke invalidates that same target
+actor projection from `effective=true` to `effective=false`. The invalidation
+targets the actor profile, not a newly issued grant. `AuthorityMutationService`
+must verify the direction and target from the exact operation/request/success
+facts. Success, invalidation, state, and idempotency completion are atomic.
+
+On authorization denial, guard denial, mismatch, or business conflict, the
+composition root rolls back all reservation, staged allow, and state writes,
+then records only the exact unchanged central denial plus any required bounded
+domain-denial event in a clean transaction. Self/duplicate issue records
+`AdminRoleGrantIssueDenied`; self/inactive revoke records
+`AdminRoleGrantRevokeDenied`; final-admin revoke additionally records
+`LastAccessAdministratorOperationDenied`. Bootstrap conflict records only its
+domain denial because it has no human authorization decision. Generic
+unauthorized/concealed requests record only the central denial.
 
 ## Acceptance criteria
 
-- Bootstrap is a local management operation for an existing active human.
-- Bootstrap locks `AuthorityControl(id = 1) FOR UPDATE` before checking for an
-  effective administrator, then creates the initial grant, one-time state, and
-  audited success atomically in that transaction.
-- Bootstrap succeeds exactly once and records the fixed system bootstrap actor.
-- Every later bootstrap attempt fails with the stable conflict and is audited;
-  bootstrap is never treated as an idempotent replay.
-- Five admin roles and their system/project scope compatibility are enforced.
-- Operator grant definitions map only `artifact.binding.read`,
-  `artifact.replica.read`, `artifact.receipt.read`,
-  `artifact.verification_job.read`, `artifact.verification_job.retry`,
-  `artifact.recovery_attempt.read` and `artifact.audit.read`; they grant no
-  artifact ingest, binding, verification,
-  scan, guide-read, or checker materialization/write authority.
-- Only an effective Access Administrator issues/revokes admin grants.
-- Admin-grant create/revoke identical replay is idempotent; mismatched replay
-  is rejected.
-- State, idempotency result, authority event, and invalidation event commit
-  atomically for every grant/revoke operation.
-- Self-grant and self-revoke are denied.
-- The shared `AuthorityControl` row serializes bootstrap and every operation
-  that can remove the final effective Access Administrator.
-- Migration enforces `AuthorityControl(id = 1)`, role/scope compatibility,
-  active-grant partial uniqueness, ownership FKs, supporting indexes, and
-  database-time timestamps.
-- A PostgreSQL concurrency test runs simultaneous bootstrap attempts for
-  different target profiles and proves exactly one grant, one audited success,
-  and one audited stable conflict. Additional concurrent tests prove at least
-  one effective Access Administrator remains.
-- Bootstrap, self-grant/self-revoke, and final-administrator denials emit their
-  specified authority events in the owning transaction.
-- `POST/GET /api/v1/admin-role-grants`,
-  `GET /api/v1/actors/{actor_profile_id}/admin-role-grants`, and
-  `POST /api/v1/admin-role-grants/{grant_id}/revoke` have
-  allow/deny/scope/privacy/rate-limit/replay tests.
-- Each protected route and bootstrap command declares one active `ActionId`.
-  Reads map to `admin_role.read`; issue/bootstrap maps to `admin_role.grant`;
-  revoke maps to `admin_role.revoke`. Canonical scope resources and target-actor
-  guards are loaded independently, and generated manifest-delta tests prove
-  every surface introduced here has exactly one declaration.
-- Migration tests cover immutable revoked history, prior-head upgrade,
-  downgrade, and preserved attribution.
+- All exact action, role-matrix, runtime, bootstrap, persistence, API,
+  transaction, privacy, and evidence rules above are implemented.
+- Permission and admin-role definition endpoints return the exact immutable
+  registered data and no runtime grant state.
+- Only an effective system Access Administrator issues or revokes grants; Audit
+  Authority remains read-only and scope-filtered.
+- Bootstrap succeeds exactly once for an existing authenticatable active human
+  and records one grant/control transition/success event atomically.
+- No public bootstrap route, secret, SQL instruction, or alternate policy
+  service exists.
+- Same-key issue/revoke replay commits no duplicate mutation, success, or
+  invalidation evidence and still reauthorizes current authority.
+- PostgreSQL independent-session barrier tests without sleeps prove: different-
+  target bootstrap yields one success and one committed conflict; same-key
+  issue yields one commit plus replay; different-key duplicate issue yields one
+  grant plus one conflict; two administrators concurrently revoking each other
+  leave at least one authenticatable effective Access Administrator; revoke
+  versus an authorized command has one serial outcome.
+- Migration tests prove direct-SQL constraints/triggers, prior-head
+  `0021 -> 0022 -> 0021 -> 0022` on an empty forward state, non-empty downgrade
+  refusal, immutable revoked history, and preserved attribution.
+- Real signed issuer-token API tests use the canonical actor/authorization
+  dependencies with no dependency overrides, token-role authority, or direct
+  grant inserts as product proof. The supported bootstrap command is used to
+  establish the first administrator.
+- OpenAPI and command manifest tests prove every introduced surface has exactly
+  one active action and no bootstrap HTTP route exists.
+- Materially changed authorization, dependency, and route behavior remains at
+  or above 90 percent branch-aware focused coverage. Global CI preserves the
+  repository-wide 78 percent floor. No test is skipped, weakened, or excluded.
 - Runbook assigns bootstrap custody, environment access, dry-run/evidence,
-  retry/failure handling, and rollback responsibility.
+  retry/failure handling, rollback responsibility, and post-bootstrap
+  verification.
 
 ## Verification commands
 
 ```bash
-(cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic upgrade head)
-(cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic downgrade -1)
-(cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic upgrade head)
+(cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-db> \
+  .venv/bin/python scripts/run_isolated_tests.py -- \
+  .venv/bin/python -m pytest -q tests/test_alembic.py)
 (cd backend && .venv/bin/python -m ruff check app tests scripts)
-(cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q \
-  tests/test_authorization.py tests/test_auth.py tests/test_actors.py \
-  --cov=app.modules.authorization --cov-report=term-missing --cov-fail-under=90)
-(cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q)
-(cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python scripts/api_contract_e2e.py)
+(cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-db> \
+  .venv/bin/python scripts/run_isolated_tests.py -- \
+  .venv/bin/python -m pytest -q tests/test_authorization.py tests/test_audit.py \
+  tests/test_auth.py tests/test_actors.py tests/test_api_controls.py \
+  tests/test_api_rate_controls.py tests/test_projects.py tests/test_app.py \
+  --cov=app.modules.authorization --cov=app.api.deps.authorization \
+  --cov-branch --cov-report=term-missing --cov-fail-under=90)
+(cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-db> \
+  .venv/bin/python scripts/run_isolated_tests.py -- \
+  .venv/bin/python -m pytest -q)
+(cd backend && WORKSTREAM_TEST_DATABASE_URL=<isolated-test-db> \
+  WORKSTREAM_DATABASE_URL=<isolated-test-db> \
+  .venv/bin/python scripts/api_contract_e2e.py)
 python3 scripts/check_stale_workstream_wording.py
+python3 scripts/check_stale_authorization_docs.py
 python3 scripts/check_markdown_links.py
+python3 scripts/check_internal_review_evidence.py
+python3 scripts/check_loop_memory_state.py
+python3 scripts/update_post_merge_memory.py validate-merge-intent --base-ref origin/main
 git diff --check
 ```
+
+GitHub Backend remains authoritative for the full suite and repository-wide 78
+percent floor.
 
 ## Required reviewers
 
@@ -139,10 +479,14 @@ git diff --check
 
 ## Human review focus
 
-Review bootstrap exposure, idempotency, role/scope matrix, and the exact lock
-used for final-admin safety.
+Review bootstrap exposure, exact role/permission sets, action activation,
+scope-filtered disclosure, idempotency/replay authorization, invalidation
+direction, database immutability, the global lock order, and final Access
+Administrator concurrency safety.
 
 ## Stop conditions
 
-Stop if bootstrap requires SQL edits, a public secret, or final-admin safety is
-implemented by an unlocked count.
+Stop if bootstrap requires SQL edits or a public secret; token roles become
+authority; a project selector is trusted without canonical resolution; final-
+administrator safety uses an unlocked count; replay skips current
+authorization; grant history must be deleted; or tests/CI must be weakened.
