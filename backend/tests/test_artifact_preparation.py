@@ -417,6 +417,37 @@ def test_initializer_validates_live_marker_only_after_acquiring_lock(tmp_path: P
     assert process.exitcode == 0
 
 
+def test_marker_publication_failure_rolls_back_for_retry(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Remove a partial first marker so a later initializer can retry safely."""
+    root = tmp_path / "scratch"
+    original_write_all = ArtifactScratchManager._write_all
+
+    def fail_marker_write(descriptor: int, chunk: memoryview) -> None:
+        os.write(descriptor, chunk[:1])
+        raise OSError("injected marker write failure")
+
+    monkeypatch.setattr(
+        ArtifactScratchManager,
+        "_write_all",
+        staticmethod(fail_marker_write),
+    )
+    with pytest.raises(OSError, match="injected marker write failure"):
+        ArtifactScratchManager(root=root, limits=preparation_limits())
+    assert not (root / ".workstream-artifact-scratch-v1").exists()
+
+    monkeypatch.setattr(
+        ArtifactScratchManager,
+        "_write_all",
+        staticmethod(original_write_all),
+    )
+    manager = ArtifactScratchManager(root=root, limits=preparation_limits())
+    assert (root / ".workstream-artifact-scratch-v1").is_file()
+    manager.close()
+
+
 @pytest.mark.asyncio
 async def test_initialization_waits_for_live_ledger_publication(tmp_path: Path) -> None:
     """Accept a valid transient ledger file only through the held ledger lock."""

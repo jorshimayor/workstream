@@ -311,7 +311,14 @@ class ArtifactScratchManager:
                 self._assert_private_file_descriptor(descriptor, expected_mode=0o600)
                 self._write_all(descriptor, memoryview(self._root_marker_content))
                 os.fsync(descriptor)
-            finally:
+            except BaseException:
+                os.close(descriptor)
+                try:
+                    os.unlink(_ROOT_MARKER, dir_fd=self._root_fd)
+                finally:
+                    os.fsync(self._root_fd)
+                raise
+            else:
                 os.close(descriptor)
             os.fsync(self._root_fd)
         else:
