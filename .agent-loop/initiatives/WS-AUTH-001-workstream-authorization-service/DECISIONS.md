@@ -390,11 +390,16 @@ The reusable authorization dependency never commits an arbitrary open feature
 transaction during successful teardown. Every protected route explicitly owns
 the commit of its read/mutation plus authorization evidence, while dependency
 teardown rolls back unfinished work. Authorization-evidence SQL failures map at
-that composition boundary to the existing retryable 503 `service_unavailable`
-envelope without partial evidence or business state.
+that composition boundary through a typed `AuthorizationEvidenceUnavailable`
+to the existing retryable 503 `service_unavailable` envelope without partial
+evidence or business state. Feature SQL errors remain route-owned. Route commit
+failures use the same public retryable envelope but are not mislabeled as audit
+failures, and rollback every staged participant before retry.
 
 For an existing actor, a successful protected request advances canonical
-`ActorProfile.last_seen_at` and `ActorIdentityLink.last_verified_at` in that
-route-owned transaction. Authorization denial or persistence failure rolls the
-staged timestamp changes back. This restores verification recency without
-letting denied requests manufacture successful-use evidence.
+`ActorProfile.last_seen_at` and `ActorIdentityLink.last_verified_at` after
+authorization in that route-owned transaction. The link-then-profile update
+uses `GREATEST(current_value, clock_timestamp())` so crossed commits cannot
+regress recency. Authorization denial or persistence failure rolls the staged
+timestamp changes back. This restores verification recency without letting
+denied requests manufacture successful-use evidence.

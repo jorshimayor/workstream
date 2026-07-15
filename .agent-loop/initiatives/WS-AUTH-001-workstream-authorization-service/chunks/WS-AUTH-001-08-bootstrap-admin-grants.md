@@ -282,17 +282,22 @@ consumers:
   its own read-plus-decision or mutation-plus-decision unit. Dependency teardown
   rolls back any transaction a route left open, so a forgotten/deferred feature
   commit cannot be rescued by dependency ordering.
-- Any `SQLAlchemyError` raised while staging allow or deny decision evidence is
-  rolled back and mapped once at the authorization composition boundary to the
-  existing retryable 503 `service_unavailable` envelope. GET/PATCH fault tests
-  prove no partial decision evidence, timestamp change, or business mutation.
+- The kernel/audit boundary catches `SQLAlchemyError` only around its own allow
+  or deny evidence write and raises a typed `AuthorizationEvidenceUnavailable`.
+  The authorization composition dependency catches only that typed exception,
+  rolls back, and maps it once to the existing retryable 503
+  `service_unavailable` envelope. Feature persistence errors remain owned by
+  feature routes and cannot be relabeled as evidence failures.
 - For an existing actor, successful protected GET/PATCH access advances both
   `ActorProfile.last_seen_at` and `ActorIdentityLink.last_verified_at` once in
-  the route-owned transaction. Kernel denial or evidence/business persistence
-  failure rolls both back. First-access provisioning retains its existing
-  atomic actor/link creation behavior. Repeated API tests prove monotonic
-  database-time advancement and unchanged timestamps after denied/failed
-  requests.
+  the route-owned transaction after authorization. The update follows the
+  declared identity-link-then-profile lock order and uses execution-time
+  `GREATEST(current_value, clock_timestamp())`, never transaction-start
+  `now()`. Kernel denial or evidence/business persistence failure rolls both
+  back. First-access provisioning retains its existing atomic actor/link
+  creation behavior. Repeated and independent-session crossed-commit API tests
+  prove monotonic database-time advancement and unchanged timestamps after
+  denied/failed requests.
 
 ## AuthorityControl, bootstrap, and lock order
 
@@ -426,7 +431,8 @@ idempotency row exists. Otherwise recovery proceeds forward.
 
   | Condition | HTTP/code |
   |---|---|
-  | malformed body, cursor, status, limit, or list scope/project combination | 400 `invalid_request` |
+  | malformed Pydantic body/query fields, including status, limit, UUID, or enum | 422 `invalid_request` |
+  | malformed opaque cursor or domain-parsed incompatible list scope/project combination | 400 `invalid_request` |
   | role incompatible with a structurally valid system/project scope | 422 `invalid_role_scope` |
   | caller has no candidate permission | 403 `permission_not_granted` |
   | caller's effective grant does not cover the selected project scope | 403 `scope_not_authorized` |
@@ -533,6 +539,10 @@ restaged as a denial.
   rollback of forgotten commits, stable retryable evidence-failure 503s, no
   partial state, and the exact successful/denied/failed verification-timestamp
   semantics before any new admin route is treated as consumable.
+- GET/PATCH/issue/revoke commit-failure tests prove rollback, retryable 503
+  `service_unavailable`, zero partial decision/domain/idempotency/business/
+  timestamp state, and a subsequent successful retry whose timestamps advance
+  exactly once.
 - Materially changed authorization, dependency, and route behavior remains at
   or above 90 percent branch-aware focused coverage. Global CI preserves the
   repository-wide 78 percent floor. No test is skipped, weakened, or excluded.
