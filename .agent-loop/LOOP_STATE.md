@@ -29,8 +29,10 @@
   `review.queue.override` permission. AUTH-07 registers them, AUTH-08 defines
   applicable Operator grants, AUTH-09 provisions fixed service principals, and
   each owning WS-ART feature chunk activates only its own canonical actions.
-- Next artifact candidate: `WS-ART-001-02A1` remains inactive until the user
-  gives a separate explicit start signal.
+- Parallel artifact checkpoint: `WS-ART-001-02A1` was explicitly started and
+  merged through PR #127 as `f64a8e5`; it is at the post-merge memory/stop
+  checkpoint. `WS-ART-001-02A2` remains inactive until signed memory completes
+  and the user gives a separate explicit start signal.
 - Authorization checkpoint: `WS-AUTH-001-06` merged through PR #124 as
   `f599551`. The user separately started parent `WS-AUTH-001-07`; required L1
   review split it into 07A/07B before runtime implementation. AUTH-07B and
