@@ -7,6 +7,12 @@ in sync with this template.
 
 `<CHUNK_ID>` — `<TITLE>`
 
+Merge intent: `.agent-loop/merge-intents/<CHUNK_ID>.json`
+
+Add exactly one new merge-intent file in this PR. It must contain the chunk,
+title, next chunk or JSON `null`, and explicit-start requirement. Trusted
+post-merge automation reads that immutable file from the reviewed final head.
+
 ## Goal
 
 What this PR is meant to accomplish.

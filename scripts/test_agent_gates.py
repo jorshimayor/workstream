@@ -6,14 +6,18 @@ the gate remains independent of the backend test environment.
 
 from __future__ import annotations
 
+import base64
 import contextlib
 import importlib.util
 import io
+import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
+import textwrap
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -51,25 +55,20 @@ ARTIFACT_COVERAGE_COMMAND_OWNERS = {
         "--precision=2 --fail-under=90",
     ),
     "02A2": (
-        "coverage report --include='app/core/config.py' "
-        "--precision=2 --fail-under=90",
+        "coverage report --include='app/core/config.py' --precision=2 --fail-under=90",
     ),
     "02A3": (
-        "coverage report --include='app/workers/*' "
-        "--precision=2 --fail-under=90",
-        "coverage report --include='app/main.py' "
-        "--precision=2 --fail-under=90",
+        "coverage report --include='app/workers/*' --precision=2 --fail-under=90",
+        "coverage report --include='app/main.py' --precision=2 --fail-under=90",
     ),
     "02B1": (),
     "02C1": (
-        "coverage report --include='app/modules/audit/*' "
-        "--precision=2 --fail-under=90",
+        "coverage report --include='app/modules/audit/*' --precision=2 --fail-under=90",
     ),
     "02C2": (),
     "02C3": (),
     "02D": (
-        "coverage report --include='app/api/router.py' "
-        "--precision=2 --fail-under=90",
+        "coverage report --include='app/api/router.py' --precision=2 --fail-under=90",
     ),
     "03": (
         "coverage report --include='app/modules/projects/*' "
@@ -80,8 +79,7 @@ ARTIFACT_COVERAGE_COMMAND_OWNERS = {
     ),
     "04A": (),
     "04B": (
-        "coverage report --include='app/modules/tasks/*' "
-        "--precision=2 --fail-under=90",
+        "coverage report --include='app/modules/tasks/*' --precision=2 --fail-under=90",
         "coverage report --include='app/modules/checkers/*' "
         "--precision=2 --fail-under=90",
     ),
@@ -127,8 +125,7 @@ def artifact_chunk_contract(coverage_phase: str) -> Path:
     """Return the one contract that owns an implementation coverage phase."""
     assert coverage_phase != "foundation"
     chunk_root = (
-        ROOT
-        / ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/chunks"
+        ROOT / ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/chunks"
     )
     matches = sorted(chunk_root.glob(f"WS-ART-001-{coverage_phase}-*.md"))
     assert len(matches) == 1, (coverage_phase, matches)
@@ -163,7 +160,9 @@ def artifact_expected_coverage_commands_for(coverage_phase: str) -> tuple[str, .
 def artifact_declared_contract_phase_for(coverage_phase: str) -> str:
     """Read the machine-readable stale-contract phase from a chunk contract."""
     contract = artifact_chunk_contract(coverage_phase).read_text(encoding="utf-8")
-    matches = re.findall(r"^Artifact contract phase: `([^`]+)`$", contract, re.MULTILINE)
+    matches = re.findall(
+        r"^Artifact contract phase: `([^`]+)`$", contract, re.MULTILINE
+    )
     assert len(matches) == 1, (coverage_phase, matches)
     return matches[0]
 
@@ -240,7 +239,9 @@ def test_required_tracks_expand_for_loop_and_ci_paths() -> None:
 
 def test_backend_config_paths_require_review_evidence() -> None:
     """Migration and backend tooling paths cannot bypass review evidence."""
-    gate = load_module("review_gate_backend_paths", "scripts/check_internal_review_evidence.py")
+    gate = load_module(
+        "review_gate_backend_paths", "scripts/check_internal_review_evidence.py"
+    )
     assert gate.is_relevant("backend/alembic/versions/0001_init.py")
     assert gate.is_relevant("backend/alembic.ini")
     assert gate.is_relevant("backend/pyproject.toml")
@@ -255,7 +256,9 @@ def test_backend_config_paths_require_review_evidence() -> None:
 
 def test_review_evidence_files_are_not_relevant_changes() -> None:
     """Review evidence files satisfy the gate without requiring more evidence."""
-    gate = load_module("review_gate_relevance", "scripts/check_internal_review_evidence.py")
+    gate = load_module(
+        "review_gate_relevance", "scripts/check_internal_review_evidence.py"
+    )
     assert not gate.is_relevant(".agent-loop/initiatives/example/reviews/review.md")
     assert not gate.is_relevant("docs/internal_reviews/example.md")
     assert not gate.is_internal_review_evidence_path("docs/internal_reviews/example.md")
@@ -269,7 +272,9 @@ def test_review_evidence_files_are_not_relevant_changes() -> None:
 
 def test_evidence_requires_completed_yes_statements() -> None:
     """Evidence must contain affirmative completion statements."""
-    gate = load_module("review_gate_statements", "scripts/check_internal_review_evidence.py")
+    gate = load_module(
+        "review_gate_statements", "scripts/check_internal_review_evidence.py"
+    )
     original_changed_files = gate.changed_files
     gate.changed_files = lambda: []
     required = ("senior engineering", "qa/test")
@@ -300,7 +305,12 @@ def test_evidence_requires_completed_yes_statements() -> None:
                 "open sub-agent sessions: none\nvalid findings addressed: yes\n",
                 encoding="utf-8",
             )
-            assert gate.validate_evidence(strong, required, enforce_reviewed_revision=False) == []
+            assert (
+                gate.validate_evidence(
+                    strong, required, enforce_reviewed_revision=False
+                )
+                == []
+            )
     finally:
         gate.changed_files = original_changed_files
 
@@ -339,7 +349,12 @@ def test_evidence_must_reference_changed_chunk() -> None:
                 "open sub-agent sessions: none\nvalid findings addressed: yes\n",
                 encoding="utf-8",
             )
-            assert gate.validate_evidence(evidence, required, enforce_reviewed_revision=False) == []
+            assert (
+                gate.validate_evidence(
+                    evidence, required, enforce_reviewed_revision=False
+                )
+                == []
+            )
     finally:
         gate.changed_files = original_changed_files
 
@@ -362,8 +377,12 @@ def test_evidence_rejects_pending_or_blocking_reviewer_rows() -> None:
                 "open sub-agent sessions: none\nvalid findings addressed: yes\n",
                 encoding="utf-8",
             )
-            missing = gate.validate_evidence(evidence, required, enforce_reviewed_revision=False)
-            assert any("qa/test reviewer result must be one of" in item for item in missing)
+            missing = gate.validate_evidence(
+                evidence, required, enforce_reviewed_revision=False
+            )
+            assert any(
+                "qa/test reviewer result must be one of" in item for item in missing
+            )
             assert "qa/test blocking findings must be none" in missing
     finally:
         gate.changed_files = original_changed_files
@@ -371,7 +390,9 @@ def test_evidence_rejects_pending_or_blocking_reviewer_rows() -> None:
 
 def test_evidence_accepts_exact_pass_and_approved_na_results() -> None:
     """Reviewer result values are exact, with explicit N/A reason support."""
-    gate = load_module("review_gate_exact_results", "scripts/check_internal_review_evidence.py")
+    gate = load_module(
+        "review_gate_exact_results", "scripts/check_internal_review_evidence.py"
+    )
     required = ("senior engineering",)
     text = (
         "| Reviewer | Result | Blocking findings | Notes |\n"
@@ -387,7 +408,9 @@ def test_evidence_accepts_exact_pass_and_approved_na_results() -> None:
         "| senior engineering | bypass | None | malformed |\n"
     )
     missing = gate.validate_reviewer_rows(bad_text.lower(), required)
-    assert any("senior engineering reviewer result must be one of" in item for item in missing)
+    assert any(
+        "senior engineering reviewer result must be one of" in item for item in missing
+    )
 
     optional_bad_text = (
         "| Reviewer | Result | Blocking findings | Notes |\n"
@@ -398,7 +421,9 @@ def test_evidence_accepts_exact_pass_and_approved_na_results() -> None:
     )
     missing = gate.validate_reviewer_rows(optional_bad_text.lower(), required)
     assert any("docs reviewer result must be one of" in item for item in missing)
-    assert any("ci integrity reviewer result must be one of" in item for item in missing)
+    assert any(
+        "ci integrity reviewer result must be one of" in item for item in missing
+    )
 
     unrelated_table_text = (
         "| Reviewer | Result | Blocking findings | Notes |\n"
@@ -422,7 +447,9 @@ def test_evidence_accepts_exact_pass_and_approved_na_results() -> None:
 
 def test_evidence_rejects_na_for_required_tracks() -> None:
     """Required reviewer tracks must pass and cannot be bypassed with N/A."""
-    gate = load_module("review_gate_required_na", "scripts/check_internal_review_evidence.py")
+    gate = load_module(
+        "review_gate_required_na", "scripts/check_internal_review_evidence.py"
+    )
     required = ("security/auth", "architecture")
     text = (
         "| Reviewer | Result | Blocking findings | Notes |\n"
@@ -437,7 +464,9 @@ def test_evidence_rejects_na_for_required_tracks() -> None:
 
 def test_evidence_reviewed_revision_allows_only_evidence_status_changes() -> None:
     """Evidence must be bound to a reviewed SHA and only status files may follow."""
-    gate = load_module("review_gate_revision_binding", "scripts/check_internal_review_evidence.py")
+    gate = load_module(
+        "review_gate_revision_binding", "scripts/check_internal_review_evidence.py"
+    )
     original_git = gate.git
     original_git_ok = gate.git_ok
     reviewed = "a" * 40
@@ -475,7 +504,10 @@ def test_evidence_reviewed_revision_allows_only_evidence_status_changes() -> Non
 
 def test_evidence_reviewed_revision_rejects_late_implementation_changes() -> None:
     """Implementation changes after the reviewed SHA invalidate evidence."""
-    gate = load_module("review_gate_revision_rejects_late_changes", "scripts/check_internal_review_evidence.py")
+    gate = load_module(
+        "review_gate_revision_rejects_late_changes",
+        "scripts/check_internal_review_evidence.py",
+    )
     original_git = gate.git
     original_git_ok = gate.git_ok
     reviewed = "a" * 40
@@ -510,7 +542,10 @@ def test_evidence_reviewed_revision_rejects_late_implementation_changes() -> Non
 
 def test_evidence_reviewed_revision_rejects_dirty_tree_changes() -> None:
     """Staged, unstaged, and untracked implementation changes invalidate evidence."""
-    gate = load_module("review_gate_revision_rejects_dirty", "scripts/check_internal_review_evidence.py")
+    gate = load_module(
+        "review_gate_revision_rejects_dirty",
+        "scripts/check_internal_review_evidence.py",
+    )
     original_git = gate.git
     original_git_ok = gate.git_ok
     reviewed = "a" * 40
@@ -549,7 +584,10 @@ def test_evidence_reviewed_revision_rejects_dirty_tree_changes() -> None:
 
 def test_evidence_reviewed_revision_rejects_invalid_provenance() -> None:
     """Reviewed at and reviewer run IDs must contain concrete values."""
-    gate = load_module("review_gate_revision_blank_provenance", "scripts/check_internal_review_evidence.py")
+    gate = load_module(
+        "review_gate_revision_blank_provenance",
+        "scripts/check_internal_review_evidence.py",
+    )
     original_git = gate.git
     original_git_ok = gate.git_ok
     reviewed = "a" * 40
@@ -570,7 +608,9 @@ def test_evidence_reviewed_revision_rejects_invalid_provenance() -> None:
     gate.git = fake_git
     gate.git_ok = lambda *args: True
     try:
-        text = f"Reviewed code SHA: {reviewed}\nReviewed at:\nReviewer run IDs:\n".lower()
+        text = (
+            f"Reviewed code SHA: {reviewed}\nReviewed at:\nReviewer run IDs:\n".lower()
+        )
         missing = gate.validate_reviewed_revision(text)
         assert "reviewed at" in missing
         assert "reviewer run ids" in missing
@@ -597,7 +637,9 @@ def test_evidence_reviewed_revision_rejects_invalid_provenance() -> None:
 
 def test_evidence_main_fails_closed_on_unresolved_base_ref() -> None:
     """Configured base refs must resolve before the evidence gate can pass."""
-    gate = load_module("review_gate_base_ref", "scripts/check_internal_review_evidence.py")
+    gate = load_module(
+        "review_gate_base_ref", "scripts/check_internal_review_evidence.py"
+    )
     original_env = os.environ.get("INTERNAL_REVIEW_BASE_REF")
     original_git_ok = gate.git_ok
     os.environ["INTERNAL_REVIEW_BASE_REF"] = "missing-base"
@@ -615,7 +657,9 @@ def test_evidence_main_fails_closed_on_unresolved_base_ref() -> None:
 
 def test_evidence_main_passes_with_complete_evidence_and_pr_head() -> None:
     """The full evidence gate passes when evidence is complete and bound to PR_HEAD_SHA."""
-    gate = load_module("review_gate_main_complete", "scripts/check_internal_review_evidence.py")
+    gate = load_module(
+        "review_gate_main_complete", "scripts/check_internal_review_evidence.py"
+    )
     original_env = {
         "INTERNAL_REVIEW_BASE_REF": os.environ.get("INTERNAL_REVIEW_BASE_REF"),
         "INTERNAL_REVIEW_CHUNK_ID": os.environ.get("INTERNAL_REVIEW_CHUNK_ID"),
@@ -627,8 +671,7 @@ def test_evidence_main_passes_with_complete_evidence_and_pr_head() -> None:
     reviewed = "a" * 40
     local_head = "b" * 40
     evidence = (
-        ROOT
-        / ".agent-loop/initiatives/test-agent-gate/"
+        ROOT / ".agent-loop/initiatives/test-agent-gate/"
         "reviews/test-agent-gate-internal-review-evidence.md"
     )
 
@@ -678,7 +721,10 @@ def test_evidence_main_passes_with_complete_evidence_and_pr_head() -> None:
             "| reuse/dedup | PASS | None | checked |\n",
             encoding="utf-8",
         )
-        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+        with (
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
             assert gate.main() == 0
     finally:
         gate.git = original_git
@@ -696,14 +742,16 @@ def test_evidence_main_passes_with_complete_evidence_and_pr_head() -> None:
 
 def test_evidence_main_rejects_external_response_without_internal_evidence() -> None:
     """External review responses do not satisfy required internal evidence."""
-    gate = load_module("review_gate_external_response_only", "scripts/check_internal_review_evidence.py")
+    gate = load_module(
+        "review_gate_external_response_only",
+        "scripts/check_internal_review_evidence.py",
+    )
     original_env = os.environ.get("INTERNAL_REVIEW_BASE_REF")
     original_git = gate.git
     original_git_ok = gate.git_ok
     original_changed_files = gate.changed_files
     external_response = (
-        ROOT
-        / ".agent-loop/initiatives/test-agent-gate/"
+        ROOT / ".agent-loop/initiatives/test-agent-gate/"
         "reviews/test-agent-gate-external-review-response.md"
     )
 
@@ -726,7 +774,10 @@ def test_evidence_main_rejects_external_response_without_internal_evidence() -> 
             "# External Review Response\n\n## Source\n\nCodeRabbit\n",
             encoding="utf-8",
         )
-        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+        with (
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
             assert gate.main() == 1
     finally:
         gate.git = original_git
@@ -743,7 +794,9 @@ def test_evidence_main_rejects_external_response_without_internal_evidence() -> 
 
 def test_evidence_main_reports_missing_evidence_file() -> None:
     """Changed evidence paths that no longer exist produce structured failure."""
-    gate = load_module("review_gate_missing_evidence_file", "scripts/check_internal_review_evidence.py")
+    gate = load_module(
+        "review_gate_missing_evidence_file", "scripts/check_internal_review_evidence.py"
+    )
     original_changed_files = gate.changed_files
     gate.changed_files = lambda: [
         "scripts/workstream_agent_gate.py",
@@ -884,7 +937,11 @@ def test_stale_wording_patterns_catch_variants() -> None:
             "PreSubmitCheckerPolicy snapshot/" + "hash",
         ]
     )
-    matches = [pattern.pattern for pattern in stale.FORBIDDEN_PATTERNS if pattern.search(sample)]
+    matches = [
+        pattern.pattern
+        for pattern in stale.FORBIDDEN_PATTERNS
+        if pattern.search(sample)
+    ]
     assert set(matches) == {
         "task-" + "production control plane",
         "garden " + "roadmap",
@@ -923,14 +980,18 @@ def test_stale_wording_patterns_catch_variants() -> None:
         ]
     )
     case_variant_matches = [
-        pattern.pattern for pattern in stale.FORBIDDEN_PATTERNS if pattern.search(case_variant_sample)
+        pattern.pattern
+        for pattern in stale.FORBIDDEN_PATTERNS
+        if pattern.search(case_variant_sample)
     ]
     assert {
         "Approved" + "TaskArtifactBinding",
         "Effective" + "TaskSubmissionArtifactPolicy",
         "Project" + "PreSubmitCheckerSpec",
     }.issubset(set(case_variant_matches))
-    failures = stale.forbidden_path_failures([Path(".claude/settings.json"), Path("CLAUDE.md")])
+    failures = stale.forbidden_path_failures(
+        [Path(".claude/settings.json"), Path("CLAUDE.md")]
+    )
     assert len(failures) == 2
 
 
@@ -948,8 +1009,12 @@ def test_stale_wording_skips_only_docs_internal_reviews_prefix() -> None:
         (root / "docs/internal_reviews").mkdir(parents=True)
         (root / "other/internal_reviews").mkdir(parents=True)
         (root / "active").mkdir()
-        (root / "docs/internal_reviews/archive.md").write_text("old review\n", encoding="utf-8")
-        (root / "other/internal_reviews/file.md").write_text("active review\n", encoding="utf-8")
+        (root / "docs/internal_reviews/archive.md").write_text(
+            "old review\n", encoding="utf-8"
+        )
+        (root / "other/internal_reviews/file.md").write_text(
+            "active review\n", encoding="utf-8"
+        )
         (root / "active/file.md").write_text("active doc\n", encoding="utf-8")
 
         def fake_check_output(cmd: list[str], text: bool) -> str:
@@ -999,7 +1064,9 @@ def test_stale_wording_catches_multiline_legacy_status_reconstruction() -> None:
 
 def test_loop_memory_state_rejects_pre_merge_status() -> None:
     """Main loop memory must not keep pre-merge checkpoint language."""
-    checker = load_module("loop_memory_state_rejects", "scripts/check_loop_memory_state.py")
+    checker = load_module(
+        "loop_memory_state_rejects", "scripts/check_loop_memory_state.py"
+    )
     original_root = checker.ROOT
     original_status_files = checker.INITIATIVE_STATUS_FILES
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1033,7 +1100,9 @@ def test_loop_memory_state_rejects_pre_merge_status() -> None:
 
 def test_loop_memory_state_accepts_merged_fixture() -> None:
     """Merged loop memory fixtures should pass the main-only guard."""
-    checker = load_module("loop_memory_state_accepts", "scripts/check_loop_memory_state.py")
+    checker = load_module(
+        "loop_memory_state_accepts", "scripts/check_loop_memory_state.py"
+    )
     original_root = checker.ROOT
     original_status_files = checker.INITIATIVE_STATUS_FILES
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1063,6 +1132,1225 @@ def test_loop_memory_state_accepts_merged_fixture() -> None:
         finally:
             checker.ROOT = original_root
             checker.INITIATIVE_STATUS_FILES = original_status_files
+
+
+def valid_loop_intent() -> str:
+    """Return one valid committed merge-intent JSON fixture."""
+    return (
+        '{"schema_version":1,"initiative_id":"WS-AUTH-001",'
+        '"chunk_id":"WS-AUTH-001-06","chunk_title":"Canonical Actor Profile",'
+        '"next_chunk_id":"WS-AUTH-001-07","next_chunk_title":"Authorization Kernel",'
+        '"next_requires_explicit_start":true}\n'
+    )
+
+
+def updater_base64(value: str) -> str:
+    """Return GitHub-contents-style base64 text."""
+    return base64.b64encode(value.encode("utf-8")).decode("ascii")
+
+
+def loop_record(
+    module,
+    *,
+    sha: str = "a" * 40,
+    first_parent_sha: str = "0" * 40,
+    merged_at: str = "2026-07-14T20:00:00Z",
+    pr_number: int = 120,
+) -> dict:
+    """Return one complete generated-state fixture."""
+    metadata = module.parse_loop_metadata(valid_loop_intent())
+    return {
+        "schema_version": 1,
+        "repository": "Flow-Research/workstream",
+        "state_branch": "automation/loop-memory",
+        "updated_at": merged_at,
+        "source": {
+            "main_sha": sha,
+            "first_parent_sha": first_parent_sha,
+            "pr_number": pr_number,
+            "pr_url": f"https://github.com/Flow-Research/workstream/pull/{pr_number}",
+            "pr_title": "Canonical actor profile",
+            "head_sha": "b" * 40,
+            "head_ref": "codex/ws-auth-001-06",
+            "merged_at": merged_at,
+            "merged_by": "manager",
+            "intent_path": ".agent-loop/merge-intents/WS-AUTH-001-06.json",
+            "intent_blob_sha": "d" * 40,
+        },
+        "completed_chunk": module.asdict(metadata),
+        "active": {"planning_chunk": None, "implementation_chunk": None},
+        "gate": {
+            "status": "stopped_after_merge",
+            "next_chunk_id": metadata.next_chunk_id,
+            "next_chunk_title": metadata.next_chunk_title,
+            "next_requires_explicit_start": True,
+        },
+        "checks": {
+            "required": {
+                name: {"kind": "check_run", "conclusion": "success", "url": None}
+                for name in module.REQUIRED_CHECKS
+            },
+            "all_required_passed": True,
+        },
+    }
+
+
+def test_post_merge_metadata_is_strict_and_bounded() -> None:
+    """PR metadata rejects ambiguity, unknown keys, and inconsistent chunk facts."""
+    updater = load_module("post_merge_metadata", "scripts/update_post_merge_memory.py")
+    metadata = updater.parse_loop_metadata(valid_loop_intent())
+    assert metadata.initiative_id == "WS-AUTH-001"
+    assert metadata.chunk_id == "WS-AUTH-001-06"
+    assert metadata.next_requires_explicit_start is True
+
+    invalid_bodies = [
+        "",
+        valid_loop_intent() + valid_loop_intent(),
+        valid_loop_intent().replace('"schema_version":1', '"schema_version":2'),
+        valid_loop_intent().replace(
+            '"chunk_id":"WS-AUTH-001-06"', '"chunk_id":"WS-POL-002-04"'
+        ),
+        valid_loop_intent().replace(
+            '"next_chunk_title":"Authorization Kernel"', '"next_chunk_title":null'
+        ),
+        valid_loop_intent().replace(
+            '"schema_version":1', '"schema_version":1,"unexpected":true'
+        ),
+    ]
+    for body in invalid_bodies:
+        try:
+            updater.parse_loop_metadata(body)
+        except updater.LoopMemoryError:
+            continue
+        raise AssertionError(f"invalid merge intent passed: {body}")
+
+
+def test_post_merge_state_is_idempotent_and_monotonic() -> None:
+    """Generated state accepts one merge, replays exactly, and rejects older/conflicting data."""
+    updater = load_module("post_merge_state", "scripts/update_post_merge_memory.py")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        record = loop_record(updater)
+        assert updater.apply_merge_record(root, record) is True
+        assert updater.apply_merge_record(root, record) is False
+        updater.validate_generated_state(root)
+
+        conflict = json.loads(json.dumps(record))
+        conflict["source"]["pr_title"] = "Conflicting title"
+        try:
+            updater.apply_merge_record(root, conflict)
+        except updater.LoopMemoryError as exc:
+            assert "different state" in str(exc)
+        else:
+            raise AssertionError("conflicting replay passed")
+
+        successor = loop_record(
+            updater,
+            sha="c" * 40,
+            first_parent_sha="a" * 40,
+            merged_at="2026-07-14T20:00:00Z",
+            pr_number=121,
+        )
+        assert updater.apply_merge_record(root, successor) is True
+        updater.validate_generated_state(root)
+
+        older = loop_record(
+            updater,
+            sha="e" * 40,
+            first_parent_sha="0" * 40,
+            merged_at="2026-07-14T19:59:59Z",
+            pr_number=119,
+        )
+        try:
+            updater.apply_merge_record(root, older)
+        except updater.LoopMemoryError as exc:
+            assert "direct first-parent successor" in str(exc)
+        else:
+            raise AssertionError("older merge replaced live state")
+
+
+def test_post_merge_reconciliation_bootstraps_and_recovers_every_commit() -> None:
+    """Empty and existing state both enumerate the complete first-parent range."""
+    updater = load_module(
+        "post_merge_reconciliation", "scripts/update_post_merge_memory.py"
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        subprocess.run(
+            ["git", "init", "--initial-branch", "main", str(root)],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        subprocess.run(
+            ["git", "-C", str(root), "config", "user.email", "test@example.test"],
+            check=True,
+        )
+        subprocess.run(
+            ["git", "-C", str(root), "config", "user.name", "Test"], check=True
+        )
+
+        readme = root / "README.md"
+        readme.write_text("base\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(root), "add", "README.md"], check=True)
+        subprocess.run(
+            ["git", "-C", str(root), "commit", "-m", "base"],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        base_sha = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "HEAD"],
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+        ).stdout.strip()
+
+        subprocess.run(
+            ["git", "-C", str(root), "switch", "-c", "feature"],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        intent_path = root / updater.BOOTSTRAP_INTENT_PATH
+        intent_path.parent.mkdir(parents=True)
+        intent_path.write_text(valid_loop_intent(), encoding="utf-8")
+        subprocess.run(
+            ["git", "-C", str(root), "add", updater.BOOTSTRAP_INTENT_PATH],
+            check=True,
+        )
+        subprocess.run(
+            ["git", "-C", str(root), "commit", "-m", "automation"],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        subprocess.run(
+            ["git", "-C", str(root), "switch", "main"],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        subprocess.run(
+            ["git", "-C", str(root), "merge", "--no-ff", "feature", "-m", "activate"],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        activation_sha = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "HEAD"],
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+        ).stdout.strip()
+
+        readme.write_text("base\nlater\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(root), "add", "README.md"], check=True)
+        subprocess.run(
+            ["git", "-C", str(root), "commit", "-m", "later"],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        target_sha = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "HEAD"],
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+        ).stdout.strip()
+
+        assert updater.plan_reconciliation_commits(root, target_sha, None) == [
+            activation_sha,
+            target_sha,
+        ]
+        assert updater.plan_reconciliation_commits(
+            root, target_sha, activation_sha
+        ) == [target_sha]
+        assert updater.plan_reconciliation_commits(root, target_sha, target_sha) == []
+        assert_loop_error(
+            updater,
+            lambda: updater.plan_reconciliation_commits(root, base_sha, None),
+            "no unique loop-memory bootstrap",
+        )
+
+        subprocess.run(
+            ["git", "-C", str(root), "switch", "-c", "divergent", activation_sha],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        (root / "divergent.txt").write_text("other\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(root), "add", "divergent.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(root), "commit", "-m", "divergent"],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        divergent_sha = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "HEAD"],
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+        ).stdout.strip()
+        assert_loop_error(
+            updater,
+            lambda: updater.plan_reconciliation_commits(
+                root, divergent_sha, target_sha
+            ),
+            "not on the target main ancestry",
+        )
+
+
+def test_post_merge_collection_binds_exact_pr_and_checks() -> None:
+    """The collector binds one main merge SHA and final-head check evidence."""
+    updater = load_module(
+        "post_merge_collection", "scripts/update_post_merge_memory.py"
+    )
+    merge_sha = "a" * 40
+    head_sha = "b" * 40
+    responses = {
+        f"/repos/Flow-Research/workstream/commits/{merge_sha}/pulls?per_page=100": [
+            {
+                "number": 120,
+                "state": "closed",
+                "merged_at": "2026-07-14T20:00:00Z",
+                "merge_commit_sha": merge_sha,
+                "html_url": "https://github.com/Flow-Research/workstream/pull/120",
+                "title": "Canonical actor profile",
+                "base": {"ref": "main"},
+                "head": {"sha": head_sha, "ref": "codex/ws-auth-001-06"},
+                "merged_by": {"login": "manager"},
+            }
+        ],
+        "/repos/Flow-Research/workstream/pulls/120": {
+            "number": 120,
+            "state": "closed",
+            "merged_at": "2026-07-14T20:00:00Z",
+            "merge_commit_sha": merge_sha,
+            "html_url": "https://github.com/Flow-Research/workstream/pull/120",
+            "title": "Canonical actor profile",
+            "base": {"ref": "main"},
+            "head": {"sha": head_sha, "ref": "codex/ws-auth-001-06"},
+            "merged_by": {"login": "manager"},
+        },
+        "/repos/Flow-Research/workstream/pulls/120/files?per_page=100&page=1": [
+            {
+                "filename": ".agent-loop/merge-intents/WS-AUTH-001-06.json",
+                "status": "added",
+            }
+        ],
+        (
+            "/repos/Flow-Research/workstream/contents/"
+            ".agent-loop/merge-intents/WS-AUTH-001-06.json"
+            f"?ref={head_sha}"
+        ): {
+            "encoding": "base64",
+            "sha": "d" * 40,
+            "content": updater_base64(valid_loop_intent()),
+        },
+        f"/repos/Flow-Research/workstream/commits/{merge_sha}": {
+            "parents": [{"sha": "0" * 40}]
+        },
+        f"/repos/Flow-Research/workstream/commits/{head_sha}/check-runs?per_page=100": {
+            "check_runs": [
+                {
+                    "name": "agent-gates",
+                    "conclusion": "success",
+                    "started_at": "2026-07-14T19:49:00Z",
+                    "completed_at": "2026-07-14T19:50:00Z",
+                    "details_url": "https://example.test/gates",
+                },
+                {
+                    "name": "test",
+                    "conclusion": "success",
+                    "started_at": "2026-07-14T19:50:00Z",
+                    "completed_at": "2026-07-14T19:51:00Z",
+                    "details_url": "https://example.test/test",
+                },
+            ]
+        },
+        f"/repos/Flow-Research/workstream/commits/{head_sha}/status?per_page=100": {
+            "statuses": [
+                {
+                    "context": "CodeRabbit",
+                    "state": "success",
+                    "updated_at": "2026-07-14T19:52:00Z",
+                    "target_url": "https://example.test/review",
+                }
+            ]
+        },
+    }
+
+    class FakeClient:
+        def get_json(self, path: str):
+            return responses[path]
+
+        def get_paginated(self, path: str):
+            return responses[f"{path}?per_page=100&page=1"]
+
+    record = updater.collect_merge_record(
+        FakeClient(), "Flow-Research/workstream", merge_sha
+    )
+    assert record["source"]["main_sha"] == merge_sha
+    assert record["source"]["head_sha"] == head_sha
+    assert record["source"]["first_parent_sha"] == "0" * 40
+    assert record["source"]["intent_blob_sha"] == "d" * 40
+    assert record["completed_chunk"]["chunk_id"] == "WS-AUTH-001-06"
+    assert record["checks"]["all_required_passed"] is True
+
+
+def test_generated_loop_memory_validator_detects_drift() -> None:
+    """The independent validator detects ledger and rendered-state drift."""
+    updater = load_module(
+        "post_merge_validator_updater", "scripts/update_post_merge_memory.py"
+    )
+    checker = load_module("post_merge_validator", "scripts/check_loop_memory_state.py")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        updater.apply_merge_record(root, loop_record(updater))
+        assert checker.generated_state_failures(root) == []
+        rendered_path = root / updater.RENDERED_PATH
+        rendered_path.write_text(
+            rendered_path.read_text(encoding="utf-8") + "Tampered next gate.\n",
+            encoding="utf-8",
+        )
+        assert_loop_error(
+            updater,
+            lambda: updater.validate_generated_state(root),
+            "rendered loop state does not match",
+        )
+        rendered_path.write_text("stale\n", encoding="utf-8")
+        failures = checker.generated_state_failures(root)
+        assert any("merge SHA" in failure for failure in failures)
+        assert any("completed chunk" in failure for failure in failures)
+
+
+def test_generated_loop_memory_signature_authenticates_every_canonical_file() -> None:
+    """Only the Actions-held private key can authenticate generated branch state."""
+    updater = load_module("post_merge_signature", "scripts/update_post_merge_memory.py")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        private_key = root / "private.pem"
+        public_key = root / "public.pem"
+        subprocess.run(
+            ["openssl", "genpkey", "-algorithm", "ED25519", "-out", private_key],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        subprocess.run(
+            [
+                "openssl",
+                "pkey",
+                "-in",
+                private_key,
+                "-pubout",
+                "-out",
+                public_key,
+            ],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        updater.apply_merge_record(root, loop_record(updater))
+        updater.sign_generated_state(root, private_key)
+        updater.verify_generated_state_signature(root, public_key)
+        signed_paths = (
+            updater.STATE_PATH,
+            updater.RENDERED_PATH,
+            updater.LEDGER_PATH,
+            updater.SIGNATURE_PATH,
+        )
+        old_signed_snapshot = {
+            path: (root / path).read_bytes() for path in signed_paths
+        }
+
+        successor = loop_record(
+            updater,
+            sha="c" * 40,
+            first_parent_sha="a" * 40,
+            pr_number=121,
+        )
+        updater.apply_merge_record(root, successor)
+        assert_loop_error(
+            updater,
+            lambda: updater.verify_generated_state_signature(root, public_key),
+            "signature verification failed",
+        )
+        updater.sign_generated_state(root, private_key)
+        updater.verify_generated_state_signature(root, public_key, "c" * 40)
+
+        for path, content in old_signed_snapshot.items():
+            (root / path).write_bytes(content)
+        updater.verify_generated_state_signature(root, public_key)
+        assert_loop_error(
+            updater,
+            lambda: updater.verify_generated_state_signature(
+                root, public_key, "c" * 40
+            ),
+            "not current for protected main",
+        )
+        updater.apply_merge_record(root, successor)
+        updater.sign_generated_state(root, private_key)
+        updater.verify_generated_state_signature(root, public_key, "c" * 40)
+
+        signature_path = root / updater.SIGNATURE_PATH
+        signature_path.write_text("invalid\n", encoding="ascii")
+        assert_loop_error(
+            updater,
+            lambda: updater.verify_generated_state_signature(root, public_key),
+            "signature is unreadable",
+        )
+        updater.sign_generated_state(root, private_key)
+        (root / updater.RENDERED_PATH).write_text(
+            (root / updater.RENDERED_PATH).read_text(encoding="utf-8")
+            + "forged but unsigned\n",
+            encoding="utf-8",
+        )
+        assert_loop_error(
+            updater,
+            lambda: updater.verify_generated_state_signature(root, public_key),
+            "rendered loop state does not match",
+        )
+
+
+def test_generated_loop_memory_prepare_recovers_hostile_path_types() -> None:
+    """Directories and symlinks cannot wedge deterministic state reconstruction."""
+    updater = load_module(
+        "post_merge_prepare_state", "scripts/update_post_merge_memory.py"
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        public_key = root / "unused-public.pem"
+        state_directory = root / updater.STATE_PATH
+        state_directory.mkdir(parents=True)
+        (state_directory / "placeholder").write_text("hostile\n", encoding="utf-8")
+        outside = root / "outside"
+        outside.mkdir()
+        sentinel = outside / "sentinel"
+        sentinel.write_text("preserve\n", encoding="utf-8")
+        (root / updater.SIGNATURE_PATH).symlink_to(sentinel)
+
+        assert updater.prepare_generated_state_root(root, public_key) is False
+        assert not state_directory.exists()
+        assert not (root / updater.SIGNATURE_PATH).exists()
+        assert sentinel.read_text(encoding="utf-8") == "preserve\n"
+
+        updater.apply_merge_record(root, loop_record(updater))
+        (root / updater.RENDERED_PATH).write_bytes(b"\xff\xfe")
+        assert updater.prepare_generated_state_root(root, public_key) is False
+        assert not (root / updater.RENDERED_PATH).exists()
+
+        updater.apply_merge_record(root, loop_record(updater))
+        malformed_state = loop_record(updater)
+        malformed_state["source"] = []
+        (root / updater.STATE_PATH).write_text(
+            json.dumps(malformed_state), encoding="utf-8"
+        )
+        assert updater.prepare_generated_state_root(root, public_key) is False
+        assert not (root / updater.STATE_PATH).exists()
+
+        agent_loop = root / updater.STATE_PATH.parent
+        shutil.rmtree(agent_loop)
+        agent_loop.symlink_to(outside, target_is_directory=True)
+        assert updater.prepare_generated_state_root(root, public_key) is False
+        assert agent_loop.is_dir() and not agent_loop.is_symlink()
+        assert sentinel.read_text(encoding="utf-8") == "preserve\n"
+
+
+def test_generated_loop_memory_escapes_markdown_metadata() -> None:
+    """PR and chunk titles cannot inject generated Markdown structure."""
+    updater = load_module(
+        "post_merge_markdown_escape", "scripts/update_post_merge_memory.py"
+    )
+    record = loop_record(updater)
+    record["source"]["pr_title"] = "Title [link](https://unsafe.test) `code`"
+    record["completed_chunk"]["chunk_title"] = "Chunk <unsafe>"
+    rendered = updater.render_state(record)
+    assert "Title \\[link\\](https://unsafe.test) \\`code\\`" in rendered
+    assert "Chunk &lt;unsafe&gt;" in rendered
+
+
+def test_loop_memory_workflow_isolated_write_boundary() -> None:
+    """The write-capable workflow runs on trusted main and targets only the state branch."""
+    workflow = (ROOT / ".github/workflows/loop-memory.yml").read_text(encoding="utf-8")
+    agent_gates = (ROOT / ".github/workflows/agent-gates.yml").read_text(
+        encoding="utf-8"
+    )
+    assert "pull_request_target" not in workflow
+    assert "workflow_dispatch" not in workflow
+    assert "repository_dispatch" in workflow
+    assert "persist-credentials: false" in workflow
+    assert "contents: write" in workflow
+    assert "pull-requests: read" in workflow
+    assert "LOOP_MEMORY_SIGNING_KEY" in workflow
+    assert "prepare-state" in workflow
+    assert ".agent-loop/STATE.sig" in workflow
+    assert 'git -C "${state_dir}" add -f --' in workflow
+    assert "--expected-main-sha" in workflow
+    assert "HEAD:refs/heads/${STATE_BRANCH}" in workflow
+    assert "HEAD:refs/heads/main" not in workflow
+    assert "gh pr create" not in workflow
+    assert "plan-commits" in workflow
+    assert "--current-sha" in workflow
+    assert "update_post_merge_memory.py sign-state" in workflow
+    assert "validate-merge-intent" in agent_gates
+    assert "github.event.pull_request.body" not in agent_gates
+
+
+def assert_loop_error(module, callback, expected: str) -> None:
+    """Assert one loop-memory operation fails with a bounded diagnostic."""
+    try:
+        callback()
+    except module.LoopMemoryError as exc:
+        assert expected in str(exc)
+        return
+    raise AssertionError(f"expected LoopMemoryError containing {expected!r}")
+
+
+def test_post_merge_input_and_check_validation_fail_closed() -> None:
+    """Untrusted identifiers, payload types, and incomplete checks remain bounded."""
+    updater = load_module(
+        "post_merge_input_validation", "scripts/update_post_merge_memory.py"
+    )
+    assert_loop_error(
+        updater, lambda: updater.parse_loop_metadata(None), "must be text"
+    )
+    assert_loop_error(
+        updater,
+        lambda: updater.parse_loop_metadata(
+            valid_loop_intent().replace(
+                '"chunk_title":"Canonical Actor Profile"', '"chunk_title":7'
+            )
+        ),
+        "chunk_title must be a string",
+    )
+    assert_loop_error(
+        updater,
+        lambda: updater.parse_loop_metadata(
+            valid_loop_intent().replace("Canonical Actor Profile", "Bad\\nTitle")
+        ),
+        "single-line string",
+    )
+    assert_loop_error(
+        updater,
+        lambda: updater.parse_loop_metadata(
+            valid_loop_intent().replace("WS-AUTH-001-06", "bad id")
+        ),
+        "canonical lifecycle identifier",
+    )
+    assert_loop_error(
+        updater,
+        lambda: updater.parse_loop_metadata(
+            valid_loop_intent().replace(
+                '"next_requires_explicit_start":true',
+                '"next_requires_explicit_start":"yes"',
+            )
+        ),
+        "must be a boolean",
+    )
+    assert_loop_error(
+        updater,
+        lambda: updater._validate_repository_and_sha("invalid", "a" * 40),
+        "owner/name",
+    )
+    assert_loop_error(
+        updater,
+        lambda: updater._validate_repository_and_sha(
+            "Flow-Research/workstream", "A" * 40
+        ),
+        "lowercase hexadecimal",
+    )
+
+    evidence = updater._check_evidence(
+        [
+            {
+                "name": "test",
+                "conclusion": "success",
+                "status": "completed",
+                "started_at": "2026-01-01T00:00:00Z",
+            },
+            {
+                "name": "test",
+                "conclusion": None,
+                "status": "in_progress",
+                "started_at": "2026-01-01T00:01:00Z",
+            },
+        ],
+        [],
+    )
+    assert evidence["required"]["test"]["conclusion"] == "in_progress"
+    assert evidence["required"]["agent-gates"]["kind"] == "missing"
+    assert evidence["all_required_passed"] is False
+
+
+def test_github_client_bounds_success_and_network_failure() -> None:
+    """The stdlib client authenticates JSON requests and hides transport detail on failure."""
+    updater = load_module(
+        "post_merge_github_client", "scripts/update_post_merge_memory.py"
+    )
+    assert_loop_error(updater, lambda: updater.GitHubClient(""), "token is required")
+    original_urlopen = updater.urllib.request.urlopen
+
+    class Response(io.StringIO):
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            self.close()
+
+    captured = {}
+
+    def successful(request, timeout):
+        captured["authorization"] = request.headers["Authorization"]
+        captured["timeout"] = timeout
+        return Response('{"ok":true}')
+
+    try:
+        updater.urllib.request.urlopen = successful
+        client = updater.GitHubClient("secret", "https://api.example.test/")
+        assert client.get_json("/state") == {"ok": True}
+        assert captured == {"authorization": "Bearer secret", "timeout": 30}
+
+        def failed(_request, timeout=None):
+            assert timeout == 30
+            raise updater.urllib.error.URLError("secret transport detail")
+
+        updater.urllib.request.urlopen = failed
+        assert_loop_error(
+            updater, lambda: client.get_json("/state"), "GitHub API request failed"
+        )
+    finally:
+        updater.urllib.request.urlopen = original_urlopen
+
+
+def test_github_client_pagination_is_complete_and_bounded() -> None:
+    """List collection follows every page and rejects invalid or unbounded payloads."""
+    updater = load_module(
+        "post_merge_github_pagination", "scripts/update_post_merge_memory.py"
+    )
+    client = updater.GitHubClient("secret")
+    requested = []
+
+    def two_pages(path: str):
+        requested.append(path)
+        return list(range(100)) if path.endswith("page=1") else ["last"]
+
+    client.get_json = two_pages
+    assert client.get_paginated("/pulls?state=closed")[-1] == "last"
+    assert requested == [
+        "/pulls?state=closed&per_page=100&page=1",
+        "/pulls?state=closed&per_page=100&page=2",
+    ]
+
+    client.get_json = lambda _path: {"items": []}
+    assert_loop_error(
+        client_module := updater, lambda: client.get_paginated("/pulls"), "not a list"
+    )
+
+    calls = 0
+
+    def endless(_path: str):
+        nonlocal calls
+        calls += 1
+        return [None] * 100
+
+    client.get_json = endless
+    assert_loop_error(
+        client_module,
+        lambda: client.get_paginated("/pulls"),
+        "exceeded 100 pages",
+    )
+    assert calls == 100
+
+
+def test_committed_merge_intent_fails_closed_on_untrusted_github_payloads() -> None:
+    """The reviewed-head intent loader rejects ambiguous, corrupt, and mismatched files."""
+    updater = load_module(
+        "post_merge_intent_payloads", "scripts/update_post_merge_memory.py"
+    )
+    repository = "Flow-Research/workstream"
+    head_sha = "b" * 40
+    canonical_path = ".agent-loop/merge-intents/WS-AUTH-001-06.json"
+
+    class FakeClient:
+        def __init__(self, files, content=None):
+            self.files = files
+            self.content = content
+
+        def get_paginated(self, _path: str):
+            return self.files
+
+        def get_json(self, _path: str):
+            return self.content
+
+    added = [{"filename": canonical_path, "status": "added"}]
+    valid_content = {
+        "encoding": "base64",
+        "sha": "d" * 40,
+        "content": "\n".join(
+            textwrap.wrap(updater_base64(valid_loop_intent()), width=60)
+        ),
+    }
+    metadata, path, blob_sha = updater.load_committed_merge_intent(
+        FakeClient(added, valid_content), repository, 120, head_sha
+    )
+    assert metadata.chunk_id == "WS-AUTH-001-06"
+    assert (path, blob_sha) == (canonical_path, "d" * 40)
+
+    cases = [
+        ([], valid_content, "exactly one"),
+        (
+            [{"filename": canonical_path, "status": "modified"}],
+            valid_content,
+            "exactly one",
+        ),
+        (added, [], "invalid shape"),
+        (added, {**valid_content, "sha": "bad"}, "canonical SHA"),
+        (added, {**valid_content, "content": 7}, "no encoded content"),
+        (added, {**valid_content, "content": "not base64"}, "base64 UTF-8"),
+        (
+            added,
+            {**valid_content, "content": base64.b64encode(b"\xff").decode("ascii")},
+            "base64 UTF-8",
+        ),
+        (
+            added,
+            {**valid_content, "content": base64.b64encode(b"x" * 8193).decode("ascii")},
+            "exceeds 8192 bytes",
+        ),
+        (
+            [
+                {
+                    "filename": ".agent-loop/merge-intents/WS-AUTH-001-07.json",
+                    "status": "added",
+                }
+            ],
+            valid_content,
+            "path does not match",
+        ),
+    ]
+    for files, content, expected in cases:
+        assert_loop_error(
+            updater,
+            lambda files=files, content=content: updater.load_committed_merge_intent(
+                FakeClient(files, content), repository, 120, head_sha
+            ),
+            expected,
+        )
+
+
+def test_post_merge_collection_rejects_ambiguous_or_mismatched_prs() -> None:
+    """Collector errors never guess across missing, ambiguous, or inconsistent PR facts."""
+    updater = load_module(
+        "post_merge_collection_errors", "scripts/update_post_merge_memory.py"
+    )
+    repository = "Flow-Research/workstream"
+    merge_sha = "a" * 40
+    association_path = f"/repos/{repository}/commits/{merge_sha}/pulls?per_page=100"
+    valid_association = {
+        "number": 120,
+        "state": "closed",
+        "merged_at": "2026-07-14T20:00:00Z",
+        "merge_commit_sha": merge_sha,
+        "base": {"ref": "main"},
+    }
+
+    class FakeClient:
+        def __init__(self, responses):
+            self.responses = responses
+
+        def get_json(self, path: str):
+            return self.responses[path]
+
+    for payload, expected in (
+        ({}, "not a list"),
+        ([], "exactly one"),
+        ([valid_association, valid_association], "exactly one"),
+    ):
+        client = FakeClient({association_path: payload})
+        assert_loop_error(
+            updater,
+            lambda client=client: updater.collect_merge_record(
+                client, repository, merge_sha
+            ),
+            expected,
+        )
+
+    no_number = dict(valid_association)
+    no_number["number"] = 0
+    assert_loop_error(
+        updater,
+        lambda: updater.collect_merge_record(
+            FakeClient({association_path: [no_number]}), repository, merge_sha
+        ),
+        "positive number",
+    )
+    assert_loop_error(
+        updater,
+        lambda: updater.collect_merge_record(
+            FakeClient(
+                {
+                    association_path: [valid_association],
+                    f"/repos/{repository}/pulls/120": [],
+                }
+            ),
+            repository,
+            merge_sha,
+        ),
+        "not an object",
+    )
+    mismatched = dict(valid_association)
+    mismatched.update(
+        {
+            "merge_commit_sha": "c" * 40,
+            "body": valid_loop_intent(),
+            "head": {"sha": "b" * 40},
+        }
+    )
+    assert_loop_error(
+        updater,
+        lambda: updater.collect_merge_record(
+            FakeClient(
+                {
+                    association_path: [valid_association],
+                    f"/repos/{repository}/pulls/120": mismatched,
+                }
+            ),
+            repository,
+            merge_sha,
+        ),
+        "do not match",
+    )
+
+
+def test_post_merge_state_rejects_corrupt_files_and_cli_misuse() -> None:
+    """Corrupt generated files and wrong-branch CLI writes fail closed."""
+    updater = load_module(
+        "post_merge_corrupt_state", "scripts/update_post_merge_memory.py"
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        assert_loop_error(
+            updater,
+            lambda: updater.validate_generated_state(root),
+            "state file is missing",
+        )
+
+        state_path = root / updater.STATE_PATH
+        state_path.parent.mkdir(parents=True)
+        state_path.write_text("[]\n", encoding="utf-8")
+        assert_loop_error(
+            updater, lambda: updater.validate_generated_state(root), "JSON object"
+        )
+        state_path.write_text("{invalid\n", encoding="utf-8")
+        assert_loop_error(
+            updater,
+            lambda: updater.validate_generated_state(root),
+            "cannot read generated state",
+        )
+
+        state_path.write_text(json.dumps(loop_record(updater)), encoding="utf-8")
+        ledger_path = root / updater.LEDGER_PATH
+        ledger_path.write_text("[]\n", encoding="utf-8")
+        assert_loop_error(
+            updater, lambda: updater.validate_generated_state(root), "JSON objects"
+        )
+        ledger_path.write_text("{invalid\n", encoding="utf-8")
+        assert_loop_error(
+            updater,
+            lambda: updater.validate_generated_state(root),
+            "cannot read merge ledger",
+        )
+
+        subprocess.run(
+            ["git", "init", "--initial-branch", "wrong", str(root)],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        assert_loop_error(
+            updater, lambda: updater._assert_state_branch(root), "must be checked out"
+        )
+
+        intent_repo = root / "intent-repo"
+        subprocess.run(
+            ["git", "init", "--initial-branch", "main", str(intent_repo)],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(intent_repo),
+                "config",
+                "user.email",
+                "test@example.test",
+            ],
+            check=True,
+        )
+        subprocess.run(
+            ["git", "-C", str(intent_repo), "config", "user.name", "Test"],
+            check=True,
+        )
+        (intent_repo / "README.md").write_text("base\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(intent_repo), "add", "README.md"], check=True)
+        subprocess.run(
+            ["git", "-C", str(intent_repo), "commit", "-m", "base"],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        subprocess.run(
+            ["git", "-C", str(intent_repo), "switch", "-c", "feature"],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        intent_path = intent_repo / ".agent-loop/merge-intents/WS-AUTH-001-06.json"
+        intent_path.parent.mkdir(parents=True)
+        intent_path.write_text(valid_loop_intent(), encoding="utf-8")
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(intent_repo),
+                "add",
+                intent_path.relative_to(intent_repo),
+            ],
+            check=True,
+        )
+        subprocess.run(
+            ["git", "-C", str(intent_repo), "commit", "-m", "intent"],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        with contextlib.redirect_stdout(io.StringIO()):
+            assert (
+                updater.main(
+                    [
+                        "validate-merge-intent",
+                        "--repository-root",
+                        str(intent_repo),
+                        "--base-ref",
+                        "main",
+                    ]
+                )
+                == 0
+            )
+        with contextlib.redirect_stderr(io.StringIO()):
+            assert (
+                updater.main(
+                    [
+                        "validate-merge-intent",
+                        "--repository-root",
+                        str(intent_repo),
+                        "--base-ref",
+                        "missing",
+                    ]
+                )
+                == 1
+            )
+        with contextlib.redirect_stderr(io.StringIO()):
+            assert updater.main(["validate-state", "--state-root", str(root)]) == 1
+
+
+def test_post_merge_cli_updates_and_shows_generated_state() -> None:
+    """The CLI update, validation, and display modes operate on the dedicated branch."""
+    updater = load_module("post_merge_cli", "scripts/update_post_merge_memory.py")
+    original_client = updater.GitHubClient
+    original_collect = updater.collect_merge_record
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        subprocess.run(
+            ["git", "init", "--initial-branch", updater.STATE_BRANCH, str(root)],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        os.environ["TEST_GITHUB_TOKEN"] = "secret"
+        updater.GitHubClient = lambda _token, _api_url: SimpleNamespace()
+        updater.collect_merge_record = lambda _client, _repository, _sha: loop_record(
+            updater
+        )
+        try:
+            with contextlib.redirect_stdout(io.StringIO()) as output:
+                assert (
+                    updater.main(
+                        [
+                            "update",
+                            "--repository",
+                            "Flow-Research/workstream",
+                            "--merge-sha",
+                            "a" * 40,
+                            "--state-root",
+                            str(root),
+                            "--token-env",
+                            "TEST_GITHUB_TOKEN",
+                        ]
+                    )
+                    == 0
+                )
+            assert "updated for PR #120" in output.getvalue()
+            with contextlib.redirect_stdout(io.StringIO()):
+                assert updater.main(["validate-state", "--state-root", str(root)]) == 0
+            with contextlib.redirect_stdout(io.StringIO()) as output:
+                assert updater.main(["show", "--state-root", str(root)]) == 0
+            assert "Generated Workstream Loop State" in output.getvalue()
+        finally:
+            updater.GitHubClient = original_client
+            updater.collect_merge_record = original_collect
+            os.environ.pop("TEST_GITHUB_TOKEN", None)
+
+
+def test_generated_loop_memory_validator_covers_corruption_matrix() -> None:
+    """Independent state validation reports each generated-file corruption family."""
+    updater = load_module(
+        "post_merge_corruption_updater", "scripts/update_post_merge_memory.py"
+    )
+    checker = load_module(
+        "post_merge_corruption_checker", "scripts/check_loop_memory_state.py"
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        assert len(checker.generated_state_failures(root)) == 3
+        (root / ".agent-loop").mkdir()
+        for relative in checker.GENERATED_FILES:
+            (root / relative).write_text("not-json\n", encoding="utf-8")
+        assert "unreadable" in checker.generated_state_failures(root)[0]
+
+        (root / checker.GENERATED_FILES[0]).write_text("[]\n", encoding="utf-8")
+        (root / checker.GENERATED_FILES[2]).write_text("{}\n", encoding="utf-8")
+        assert "expected a JSON object" in checker.generated_state_failures(root)[0]
+
+        valid_root = root / "valid"
+        updater.apply_merge_record(valid_root, loop_record(updater))
+        with contextlib.redirect_stdout(io.StringIO()):
+            assert checker.main(["--state-root", str(valid_root)]) == 0
+
+        state_path = valid_root / updater.STATE_PATH
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+        state["schema_version"] = 2
+        state["state_branch"] = "main"
+        state_path.write_text(json.dumps(state), encoding="utf-8")
+        failures = checker.generated_state_failures(valid_root)
+        assert any("schema version" in failure for failure in failures)
+        assert any("unexpected state branch" in failure for failure in failures)
+        assert any("ledger tail" in failure for failure in failures)
+        with contextlib.redirect_stderr(io.StringIO()):
+            assert checker.main(["--state-root", str(valid_root)]) == 1
+
+    original_root = checker.ROOT
+    original_status_files = checker.INITIATIVE_STATUS_FILES
+    with tempfile.TemporaryDirectory() as tmpdir:
+        checker.ROOT = Path(tmpdir)
+        checker.INITIATIVE_STATUS_FILES = ()
+        try:
+            with contextlib.redirect_stderr(io.StringIO()):
+                assert checker.main() == 1
+        finally:
+            checker.ROOT = original_root
+            checker.INITIATIVE_STATUS_FILES = original_status_files
+
+
+def test_full_merge_ledger_hash_chain_detects_history_tampering() -> None:
+    """Mutation or deletion of a non-tail ledger entry is detected independently."""
+    updater = load_module(
+        "post_merge_history_updater", "scripts/update_post_merge_memory.py"
+    )
+    checker = load_module(
+        "post_merge_history_checker", "scripts/check_loop_memory_state.py"
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        first = loop_record(updater)
+        second = loop_record(
+            updater,
+            sha="c" * 40,
+            first_parent_sha="a" * 40,
+            merged_at="2026-07-14T20:01:00Z",
+            pr_number=121,
+        )
+        updater.apply_merge_record(root, first)
+        updater.apply_merge_record(root, second)
+        ledger_path = root / updater.LEDGER_PATH
+        original_lines = ledger_path.read_text(encoding="utf-8").splitlines()
+
+        tampered = [json.loads(line) for line in original_lines]
+        tampered[0]["record"]["source"]["pr_title"] = "tampered"
+        ledger_path.write_text(
+            "".join(f"{json.dumps(entry)}\n" for entry in tampered),
+            encoding="utf-8",
+        )
+        assert_loop_error(
+            updater,
+            lambda: updater.validate_generated_state(root),
+            "entry hash is invalid",
+        )
+        assert any(
+            "hash chain" in failure
+            for failure in checker.generated_state_failures(root)
+        )
+
+        ledger_path.write_text(f"{original_lines[1]}\n", encoding="utf-8")
+        assert_loop_error(
+            updater,
+            lambda: updater.validate_generated_state(root),
+            "previous hash chain is invalid",
+        )
+        assert any(
+            "hash chain" in failure
+            for failure in checker.generated_state_failures(root)
+        )
+
+        ledger_path.write_text("\n".join(original_lines) + "\n", encoding="utf-8")
+        schema_tampered = [json.loads(line) for line in original_lines]
+        schema_tampered[0]["schema_version"] = 999
+        ledger_path.write_text(
+            "".join(f"{json.dumps(entry)}\n" for entry in schema_tampered),
+            encoding="utf-8",
+        )
+        assert any(
+            "invalid entry schema" in failure
+            for failure in checker.generated_state_failures(root)
+        )
+
+
+def test_merge_ledger_rejects_schema_record_and_ancestry_corruption() -> None:
+    """Every ledger envelope and first-parent link is validated before state changes."""
+    updater = load_module(
+        "post_merge_ledger_corruption", "scripts/update_post_merge_memory.py"
+    )
+    assert_loop_error(
+        updater,
+        lambda: updater._validate_ledger_entries([{}]),
+        "invalid schema",
+    )
+    invalid_record = {
+        "schema_version": 1,
+        "previous_entry_hash": None,
+        "record": [],
+        "entry_hash": "bad",
+    }
+    assert_loop_error(
+        updater,
+        lambda: updater._validate_ledger_entries([invalid_record]),
+        "JSON object",
+    )
+
+    bad_sha_record = loop_record(updater)
+    bad_sha_record["source"]["main_sha"] = "not-a-sha"
+    assert_loop_error(
+        updater,
+        lambda: updater._validate_ledger_entries(
+            [updater._ledger_entry(bad_sha_record, None)]
+        ),
+        "canonical main SHA",
+    )
+
+    first = loop_record(updater)
+    second = loop_record(
+        updater,
+        sha="c" * 40,
+        first_parent_sha="f" * 40,
+        pr_number=121,
+    )
+    first_entry = updater._ledger_entry(first, None)
+    second_entry = updater._ledger_entry(second, first_entry["entry_hash"])
+    assert_loop_error(
+        updater,
+        lambda: updater._validate_ledger_entries([first_entry, second_entry]),
+        "first-parent chain",
+    )
 
 
 def test_stale_authorization_rule_examples_are_rejected() -> None:
@@ -1173,10 +2461,7 @@ def test_stale_authorization_rule_examples_are_rejected() -> None:
         "Celery supports queues, but human workers submit tasks.",
         "Human workers use Celery.",
         "The Celery worker claims a human task using submitter authority.",
-        (
-            "The system worker receives a reviewer grant and records a review "
-            "decision."
-        ),
+        ("The system worker receives a reviewer grant and records a review decision."),
         "The setup worker is a human product role.",
         "The system worker has a reviewer grant.",
         "The Celery worker may review a contributor submission.",
@@ -1217,9 +2502,7 @@ def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:
         )
         assert active in gate.discover_documents(root)
         assert diagram in gate.discover_documents(root)
-        assert gate.scan(root) == [
-            "docs/new_active_doc.md:1: NON_CANONICAL_API_PREFIX"
-        ]
+        assert gate.scan(root) == ["docs/new_active_doc.md:1: NON_CANONICAL_API_PREFIX"]
 
         active.write_text("POST /api/v1/projects\n", encoding="utf-8")
         assert gate.scan(root) == []
@@ -1231,7 +2514,9 @@ def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:
         )
         failures = gate.scan(root)
         assert any(item.endswith("TOKEN_ROLE_PRODUCT_AUTHORITY") for item in failures)
-        assert any(item.endswith("TYPED_PROFILE_PRODUCT_AUTHORITY") for item in failures)
+        assert any(
+            item.endswith("TYPED_PROFILE_PRODUCT_AUTHORITY") for item in failures
+        )
 
         active.write_text("POST /api/v1/projects\n", encoding="utf-8")
         diagram.write_text("Workstream --> API : POST /v1/projects\n", encoding="utf-8")
@@ -1246,17 +2531,13 @@ def test_stale_authorization_precedence_exemption_is_line_scoped() -> None:
         "stale_authorization_docs_precedence",
         "scripts/check_stale_authorization_docs.py",
     )
-    marker = (
-        "archival input uses `/v1`. WS-AUTH-001 takes precedence over the current"
-    )
+    marker = "archival input uses `/v1`. WS-AUTH-001 takes precedence over the current"
     assert gate.scan_text("docs/reference_specs/README.md", marker) == []
     failures = gate.scan_text(
         "docs/reference_specs/README.md",
         marker + "\nClients call POST /v1/projects.\n",
     )
-    assert failures == [
-        "docs/reference_specs/README.md:2: NON_CANONICAL_API_PREFIX"
-    ]
+    assert failures == ["docs/reference_specs/README.md:2: NON_CANONICAL_API_PREFIX"]
 
 
 def test_stale_authorization_history_allowlist_is_exact() -> None:
@@ -1310,11 +2591,14 @@ def test_agent_gate_dependencies_and_workflow_are_pinned() -> None:
         and step.get("with", {}).get("python-version") == "3.12"
         for step in steps
     )
-    assert sum(
-        step.get("run")
-        == "python -m pip install --require-hashes -r scripts/agent-gate-requirements.txt"
-        for step in steps
-    ) == 1
+    assert (
+        sum(
+            step.get("run")
+            == "python -m pip install --require-hashes -r scripts/agent-gate-requirements.txt"
+            for step in steps
+        )
+        == 1
+    )
     assert all("continue-on-error" not in step for step in steps)
     requirements = (ROOT / "scripts/agent-gate-requirements.txt").read_text(
         encoding="utf-8"
@@ -1334,9 +2618,7 @@ def test_backend_coverage_thresholds_are_regression_protected() -> None:
     assert set(test_job) == {"runs-on", "timeout-minutes", "services", "steps"}
     steps = test_job["steps"]
     full_suite_steps = [
-        step
-        for step in steps
-        if step.get("name") == "Backend full-suite coverage"
+        step for step in steps if step.get("name") == "Backend full-suite coverage"
     ]
     assert len(full_suite_steps) == 1
     full_suite_run = full_suite_steps[0]["run"]
@@ -1377,7 +2659,9 @@ def test_backend_coverage_thresholds_are_regression_protected() -> None:
     )
     assert actual_coverage == expected_coverage
     for command in expected_coverage:
-        matches = [step for step in steps if str(step.get("run", "")).strip() == command]
+        matches = [
+            step for step in steps if str(step.get("run", "")).strip() == command
+        ]
         assert len(matches) == 1, (command, matches)
         coverage_step = matches[0]
         assert steps.index(coverage_step) > full_suite_index
@@ -1388,9 +2672,7 @@ def test_backend_coverage_thresholds_are_regression_protected() -> None:
     assert later_commands[0] == FOUNDATION_ARTIFACT_COVERAGE_COMMAND
     assert any("app/modules/checkers/*" in command for command in later_commands)
     assert workflow.count("--cov-fail-under=78") == 1
-    assert (
-        "--cov=app --cov-report=term-missing --cov-fail-under=78"
-    ) in workflow
+    assert ("--cov=app --cov-report=term-missing --cov-fail-under=78") in workflow
     assert workflow.count("--fail-under=90") == len(expected_coverage)
     assert "continue-on-error" not in workflow
 
@@ -1443,11 +2725,14 @@ def test_stale_artifact_contracts_foundation_keeps_later_terms_inactive() -> Non
         "scripts/check_stale_artifact_contracts.py",
     )
     assert gate.ARTIFACT_CONTRACT_PHASE == "foundation"
-    assert gate.scan_text(
-        "backend/app/modules/tasks/schemas.py",
-        "package_uri content_cid artifact_manifest_hash",
-        "foundation",
-    ) == []
+    assert (
+        gate.scan_text(
+            "backend/app/modules/tasks/schemas.py",
+            "package_uri content_cid artifact_manifest_hash",
+            "foundation",
+        )
+        == []
+    )
     failures = gate.scan_text(
         "contracts/artifact-store/version_1/schema/example.json",
         '{"cid": "provider-specific"}',
@@ -1534,14 +2819,12 @@ def test_stale_artifact_contracts_enforce_aws_first_v01() -> None:
         "scripts/check_stale_artifact_contracts.py",
     )
     discovery_path = (
-        ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/"
-        "DISCOVERY.md"
+        ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/DISCOVERY.md"
     )
     runtime_credentials = "Runtime " + "credentials"
     assert gate.scan_text(
         discovery_path,
-        runtime_credentials + " are scoped and cannot delete, "
-        + "list, or copy.",
+        runtime_credentials + " are scoped and cannot delete, " + "list, or copy.",
         "foundation",
     ) == [f"{discovery_path}:1: STALE_AWS_RUNTIME_NO_LIST"]
     for stale_statement in (
@@ -1554,14 +2837,17 @@ def test_stale_artifact_contracts_enforce_aws_first_v01() -> None:
             stale_statement,
             "foundation",
         ) == [f"{discovery_path}:1: STALE_AWS_RUNTIME_NO_LIST"]
-    assert gate.scan_text(
-        discovery_path,
-        (
-            "Runtime credentials cannot delete or copy. AWS has s3:ListBucket "
-            "only for missing-key classification; the app calls no list API."
-        ),
-        "foundation",
-    ) == []
+    assert (
+        gate.scan_text(
+            discovery_path,
+            (
+                "Runtime credentials cannot delete or copy. AWS has s3:ListBucket "
+                "only for missing-key classification; the app calls no list API."
+            ),
+            "foundation",
+        )
+        == []
+    )
     assert gate.scan_text(
         "docs/spec_artifact_storage_service.md",
         "AWS S3 or Cloudflare R2 are supported production providers.",
@@ -1578,11 +2864,14 @@ def test_stale_artifact_contracts_enforce_aws_first_v01() -> None:
             active_statement,
             "foundation",
         ) == ["docs/spec_artifact_storage_service.md:1: ACTIVE_R2_V01_PLAN"]
-    assert gate.scan_text(
-        "docs/spec_artifact_storage_service.md",
-        "Cloudflare R2 is deferred; AWS S3 is the v0.1 production provider.",
-        "foundation",
-    ) == []
+    assert (
+        gate.scan_text(
+            "docs/spec_artifact_storage_service.md",
+            "Cloudflare R2 is deferred; AWS S3 is the v0.1 production provider.",
+            "foundation",
+        )
+        == []
+    )
     assert gate.scan_text(
         "docs/spec_artifact_storage_service.md",
         "Cloudflare R2 is deferred but remains a production provider.",
@@ -1651,11 +2940,14 @@ def test_stale_artifact_contracts_enforce_aws_first_v01() -> None:
         'ALLOWED_SOURCE_REF_SCHEMES = {"https", "http", "repo", "inline", '
         '"import", "s3", "r2"}'
     )
-    assert gate.scan_text(
-        "backend/app/modules/projects/service.py",
-        legacy_source_line,
-        "foundation",
-    ) == []
+    assert (
+        gate.scan_text(
+            "backend/app/modules/projects/service.py",
+            legacy_source_line,
+            "foundation",
+        )
+        == []
+    )
     assert gate.scan_text(
         "backend/app/modules/projects/service.py",
         legacy_source_line,
@@ -1677,14 +2969,9 @@ def test_stale_artifact_contracts_enforce_aws_first_v01() -> None:
         "docs/diagrams/rendered/workstream_context.svg",
         "Object Storage\\nR2/S3-compatible later",
         "foundation",
-    ) == [
-        "docs/diagrams/rendered/workstream_context.svg:1: ACTIVE_R2_V01_PLAN"
-    ]
+    ) == ["docs/diagrams/rendered/workstream_context.svg:1: ACTIVE_R2_V01_PLAN"]
     assert gate.scan_text(
-        (
-            ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/"
-            "CHUNK_MAP.md"
-        ),
+        (".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/CHUNK_MAP.md"),
         "WS-ART-001-02B2",
         "foundation",
     ) == [
@@ -1698,17 +2985,18 @@ def test_stale_artifact_contracts_enforce_aws_first_v01() -> None:
         "## Planned Next\n\nNone.\n\n## Completed\n\n"
         "Cloudflare R2 is the hosted production provider.\n"
     )
-    assert gate.scan_text(
-        ".agent-loop/WORK_QUEUE.md", completed_only_queue, "foundation"
-    ) == []
+    assert (
+        gate.scan_text(".agent-loop/WORK_QUEUE.md", completed_only_queue, "foundation")
+        == []
+    )
     active_queue = (
         "# Work Queue\n\n## In Progress\n\n"
         "Cloudflare R2 is the hosted production provider.\n\n"
         "## Planned Next\n\nNone.\n\n## Completed\n\nNone.\n"
     )
-    assert gate.scan_text(
-        ".agent-loop/WORK_QUEUE.md", active_queue, "foundation"
-    ) == [".agent-loop/WORK_QUEUE.md:5: ACTIVE_R2_V01_PLAN"]
+    assert gate.scan_text(".agent-loop/WORK_QUEUE.md", active_queue, "foundation") == [
+        ".agent-loop/WORK_QUEUE.md:5: ACTIVE_R2_V01_PLAN"
+    ]
 
 
 def test_stale_artifact_contracts_scan_only_current_initiatives() -> None:
@@ -1719,7 +3007,9 @@ def test_stale_artifact_contracts_scan_only_current_initiatives() -> None:
     )
     prefixes = gate.active_initiative_prefixes()
     assert any("WS-ART-001-immutable-artifact-storage" in item for item in prefixes)
-    assert any("WS-AUTH-001-workstream-authorization-service" in item for item in prefixes)
+    assert any(
+        "WS-AUTH-001-workstream-authorization-service" in item for item in prefixes
+    )
     assert gate.path_is_scannable(
         ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/PLAN.md"
     )
@@ -1747,18 +3037,13 @@ def test_stale_artifact_contracts_scan_only_current_initiatives() -> None:
         ".agent-loop/policies/repository-engineering-policy.md",
         "File storage: Cloudflare R2 is the hosted production provider.",
         "foundation",
-    ) == [
-        ".agent-loop/policies/repository-engineering-policy.md:1: "
-        "ACTIVE_R2_V01_PLAN"
-    ]
+    ) == [".agent-loop/policies/repository-engineering-policy.md:1: ACTIVE_R2_V01_PLAN"]
 
     original_root = gate.ROOT
     try:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
-            (root / ".agent-loop/initiatives/WS-ART-001-artifacts").mkdir(
-                parents=True
-            )
+            (root / ".agent-loop/initiatives/WS-ART-001-artifacts").mkdir(parents=True)
             (root / ".agent-loop/initiatives/WS-AUTH-001-auth").mkdir(parents=True)
             (root / ".agent-loop/WORK_QUEUE.md").write_text(
                 "# Work Queue\n\n"
@@ -1797,21 +3082,27 @@ def test_stale_artifact_contracts_remove_flow_node_at_store_cutover() -> None:
         "stale_artifact_contracts_store_cutover",
         "scripts/check_stale_artifact_contracts.py",
     )
-    assert gate.scan_text(
-        "backend/app/core/config.py",
-        'artifact_store_backend = "flow_node"',
-        "foundation",
-    ) == []
+    assert (
+        gate.scan_text(
+            "backend/app/core/config.py",
+            'artifact_store_backend = "flow_node"',
+            "foundation",
+        )
+        == []
+    )
     assert gate.scan_text(
         "backend/app/core/config.py",
         'artifact_store_backend = "flow_node"',
         "artifact_store_cutover",
     ) == ["backend/app/core/config.py:1: LEGACY_FLOW_NODE_RUNTIME"]
-    assert gate.scan_text(
-        "docs/decision_0013_immutable_artifact_storage_boundary.md",
-        "Flow Node is deferred and is not a v0.1 dependency.",
-        "foundation",
-    ) == []
+    assert (
+        gate.scan_text(
+            "docs/decision_0013_immutable_artifact_storage_boundary.md",
+            "Flow Node is deferred and is not a v0.1 dependency.",
+            "foundation",
+        )
+        == []
+    )
     for active_statement in (
         "Flow Node is deferred but remains the v0.1 production provider.",
         "Flow Node is preserved as the v0.1 production provider.",
@@ -1846,12 +3137,10 @@ def test_artifact_chunk_verification_commands_are_isolated_and_rerunnable() -> N
     )
     assert (
         "coverage report --include='app/modules/audit/*' "
-        "--precision=2 --fail-under=90"
-        in ARTIFACT_COVERAGE_COMMAND_OWNERS["02C1"]
+        "--precision=2 --fail-under=90" in ARTIFACT_COVERAGE_COMMAND_OWNERS["02C1"]
     )
     chunk_root = (
-        ROOT
-        / ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/chunks"
+        ROOT / ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/chunks"
     )
     for phase in ARTIFACT_COVERAGE_ORDER[1:]:
         matches = sorted(chunk_root.glob(f"WS-ART-001-{phase}-*.md"))
@@ -1880,7 +3169,10 @@ def test_artifact_chunk_verification_commands_are_isolated_and_rerunnable() -> N
         for command in verification.splitlines():
             assert not command.startswith("cd backend &&"), (matches[0], command)
             if "cd backend &&" in command:
-                assert command.startswith("(cd backend &&") or " && (cd backend &&" in command, (
+                assert (
+                    command.startswith("(cd backend &&")
+                    or " && (cd backend &&" in command
+                ), (
                     matches[0],
                     command,
                 )
@@ -2193,12 +3485,9 @@ def _assert_exact_aws_artifact_authorization_contract(spec: str) -> None:
 
 def test_aws_artifact_activation_contract_is_exact_and_time_bounded() -> None:
     """The AWS proof contract fixes actions, denies, identities, and TTL."""
-    spec = (ROOT / "docs/spec_artifact_storage_service.md").read_text(
-        encoding="utf-8"
-    )
+    spec = (ROOT / "docs/spec_artifact_storage_service.md").read_text(encoding="utf-8")
     chunk = (
-        ROOT
-        / ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/chunks/"
+        ROOT / ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/chunks/"
         "WS-ART-001-07-recovery-live-proof.md"
     ).read_text(encoding="utf-8")
     _assert_exact_aws_artifact_authorization_contract(spec)
@@ -2288,6 +3577,25 @@ def main() -> int:
         test_stale_wording_catches_multiline_legacy_status_reconstruction,
         test_loop_memory_state_rejects_pre_merge_status,
         test_loop_memory_state_accepts_merged_fixture,
+        test_post_merge_metadata_is_strict_and_bounded,
+        test_post_merge_state_is_idempotent_and_monotonic,
+        test_post_merge_reconciliation_bootstraps_and_recovers_every_commit,
+        test_post_merge_collection_binds_exact_pr_and_checks,
+        test_generated_loop_memory_validator_detects_drift,
+        test_generated_loop_memory_signature_authenticates_every_canonical_file,
+        test_generated_loop_memory_prepare_recovers_hostile_path_types,
+        test_generated_loop_memory_escapes_markdown_metadata,
+        test_loop_memory_workflow_isolated_write_boundary,
+        test_post_merge_input_and_check_validation_fail_closed,
+        test_github_client_bounds_success_and_network_failure,
+        test_github_client_pagination_is_complete_and_bounded,
+        test_committed_merge_intent_fails_closed_on_untrusted_github_payloads,
+        test_post_merge_collection_rejects_ambiguous_or_mismatched_prs,
+        test_post_merge_state_rejects_corrupt_files_and_cli_misuse,
+        test_post_merge_cli_updates_and_shows_generated_state,
+        test_generated_loop_memory_validator_covers_corruption_matrix,
+        test_full_merge_ledger_hash_chain_detects_history_tampering,
+        test_merge_ledger_rejects_schema_record_and_ancestry_corruption,
         test_stale_authorization_rule_examples_are_rejected,
         test_stale_authorization_discovery_includes_new_untracked_docs,
         test_stale_authorization_precedence_exemption_is_line_scoped,

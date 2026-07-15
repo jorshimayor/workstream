@@ -29,6 +29,13 @@ jobs:
           BASE_REF: ${{ github.base_ref }}
         run: python3 scripts/workstream_agent_gate.py --base "origin/${BASE_REF}" --head HEAD --format markdown
 
+      - name: Post-merge loop metadata
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: >-
+          python3 scripts/update_post_merge_memory.py validate-merge-intent
+          --base-ref "origin/${BASE_REF}"
+
       - name: Markdown link check
         run: python3 scripts/check_markdown_links.py
 

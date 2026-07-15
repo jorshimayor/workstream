@@ -7,6 +7,12 @@ in sync when the trust-bundle structure changes.
 
 `<chunk-id>` - `<title>`
 
+Merge intent: `.agent-loop/merge-intents/<chunk-id>.json`
+
+Add exactly one new merge-intent file in this PR. It must contain the chunk,
+title, next chunk or JSON `null`, and explicit-start requirement. Post-merge
+automation reads that immutable file from the reviewed final head.
+
 ## Goal
 
 ## Human-Approved Intent
