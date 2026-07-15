@@ -1,7 +1,10 @@
 # WS-AUTH-001-07B Internal Review Evidence
 
+Reviewed code SHA: `80316164b654ab1ad410bf822cf02aec0bfc60c1`
 Reviewed implementation SHA: `aabc0f4c0131c53600750258a0bec8be404c7b90`
 Reviewed at: `2026-07-15T18:04:51Z`
+Reviewer run IDs: auth07b-final-senior-ci-docs,
+auth07b-final-qa-product, auth07b-final-security-arch
 Reviewer tracks: senior engineering, QA/test, security/auth, product/ops,
 architecture, CI integrity, docs, reuse/dedup, and test delta
 
