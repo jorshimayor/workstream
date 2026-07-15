@@ -41,6 +41,7 @@ backend/app/modules/authorization/**
 backend/app/modules/audit/**
 backend/app/modules/projects/repository.py
 backend/app/api/deps/authorization.py
+backend/app/api/routes/auth.py
 backend/app/api/router.py
 backend/app/db/models.py
 backend/scripts/bootstrap_access_administrator.py
@@ -271,6 +272,28 @@ by their existing WS-ART/AUTH-09 contracts.
 - Unknown, planned, wrong-resource, wrong-scope, inactive-grant, and
   unimplemented actions fail closed. Token roles never enter a candidate set.
 
+## Shared dependency repair required before new consumers
+
+AUTH-08 repairs three confirmed merged AUTH-07B regressions before adding admin
+consumers:
+
+- `get_authorization_service` never commits an arbitrary open shared-session
+  transaction on successful teardown. Each protected route explicitly commits
+  its own read-plus-decision or mutation-plus-decision unit. Dependency teardown
+  rolls back any transaction a route left open, so a forgotten/deferred feature
+  commit cannot be rescued by dependency ordering.
+- Any `SQLAlchemyError` raised while staging allow or deny decision evidence is
+  rolled back and mapped once at the authorization composition boundary to the
+  existing retryable 503 `service_unavailable` envelope. GET/PATCH fault tests
+  prove no partial decision evidence, timestamp change, or business mutation.
+- For an existing actor, successful protected GET/PATCH access advances both
+  `ActorProfile.last_seen_at` and `ActorIdentityLink.last_verified_at` once in
+  the route-owned transaction. Kernel denial or evidence/business persistence
+  failure rolls both back. First-access provisioning retains its existing
+  atomic actor/link creation behavior. Repeated API tests prove monotonic
+  database-time advancement and unchanged timestamps after denied/failed
+  requests.
+
 ## AuthorityControl, bootstrap, and lock order
 
 Migration `0022` creates and seeds exactly one `AuthorityControl(id=1)` row with
@@ -399,8 +422,22 @@ idempotency row exists. Otherwise recovery proceeds forward.
 - Exact public statuses are 403 `self_grant_forbidden`, 403
   `self_role_revoke_forbidden`, 404 `grant_not_found`, 409
   `last_access_administrator`, 409 `admin_role_grant_exists`, and 409
-  `idempotency_mismatch`. Invalid/non-human targets and invalid scopes fail
-  closed under the adopted error registry without personal or project leakage.
+  `idempotency_mismatch`. All remaining selector/target outcomes are closed:
+
+  | Condition | HTTP/code |
+  |---|---|
+  | malformed body, cursor, status, limit, or list scope/project combination | 400 `invalid_request` |
+  | role incompatible with a structurally valid system/project scope | 422 `invalid_role_scope` |
+  | caller has no candidate permission | 403 `permission_not_granted` |
+  | caller's effective grant does not cover the selected project scope | 403 `scope_not_authorized` |
+  | authorized issue target actor is absent, non-human, inactive, or has no active identity link | 404 `actor_not_found` |
+  | authorized selected grant is absent or inactive | 404 `grant_not_found` |
+  | authorized canonical project is absent | 404 `resource_not_found` |
+
+  Authority and scope evaluation precede target existence, so unauthorized
+  callers never learn which target condition occurred. Table-driven API tests
+  cover every row, invalid list-scope combinations, and identical concealment
+  envelopes.
 - POST routes reuse the independently committed durable `admin_mutation` rate
   control before the product-authority unit of work. Authenticated GET routes
   consume no dedicated rate-control bucket in AUTH-08 and are not idempotent
@@ -445,8 +482,10 @@ Denial orchestration has three separate paths:
 - a kernel or resource-guard denial rolls back, then restages only that exact
   pending central decision; self-grant and self-revoke are central denials using
   `self_grant_forbidden` and `self_role_revoke_forbidden`;
-- an idempotency mismatch rolls back any staged allow and uses only the existing
-  action-bound AUTH-05B mismatch denial; and
+- an idempotency mismatch rolls back any staged allow and extends the AUTH-05B
+  mismatch context/service to validate and persist the exact registered
+  `admin_role_grant.issue` or `admin_role_grant.revoke` ActionId with its mapped
+  permission; typed and PostgreSQL tests reject missing/wrong pairs; and
 - a post-allow business conflict rolls back the staged allow and state, then
   commits only its registered domain event in a clean transaction.
 
@@ -490,6 +529,10 @@ restaged as a denial.
   establish the first administrator.
 - OpenAPI and command manifest tests prove every introduced surface has exactly
   one active action and no bootstrap HTTP route exists.
+- Shared-dependency regression tests prove explicit route commit ownership,
+  rollback of forgotten commits, stable retryable evidence-failure 503s, no
+  partial state, and the exact successful/denied/failed verification-timestamp
+  semantics before any new admin route is treated as consumable.
 - Materially changed authorization, dependency, and route behavior remains at
   or above 90 percent branch-aware focused coverage. Global CI preserves the
   repository-wide 78 percent floor. No test is skipped, weakened, or excluded.

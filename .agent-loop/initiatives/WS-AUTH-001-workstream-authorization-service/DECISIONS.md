@@ -381,3 +381,20 @@ invalidates it `true -> false`. AUTH-08 must update typed and PostgreSQL audit
 validation together and prove both directions. Human-readable bounded grant and
 revocation reasons live on immutable AdminRoleGrant history; request digests
 remain in idempotency evidence, and audit reasons remain closed classifications.
+
+## D19: Protected routes own commit and successful verification timestamps
+
+Status: accepted after read-only AUTH-07B consumer review on 2026-07-15.
+
+The reusable authorization dependency never commits an arbitrary open feature
+transaction during successful teardown. Every protected route explicitly owns
+the commit of its read/mutation plus authorization evidence, while dependency
+teardown rolls back unfinished work. Authorization-evidence SQL failures map at
+that composition boundary to the existing retryable 503 `service_unavailable`
+envelope without partial evidence or business state.
+
+For an existing actor, a successful protected request advances canonical
+`ActorProfile.last_seen_at` and `ActorIdentityLink.last_verified_at` in that
+route-owned transaction. Authorization denial or persistence failure rolls the
+staged timestamp changes back. This restores verification recency without
+letting denied requests manufacture successful-use evidence.

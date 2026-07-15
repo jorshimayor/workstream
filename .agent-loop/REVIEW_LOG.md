@@ -12,6 +12,13 @@ trust-root semantics, lock/revalidation order, invalidation direction, scoped
 read privacy, migration rollback custody, and required proof files. The
 contract is repaired and must pass fresh exact-head L1 review before code.
 
+A separate read-only WS-REV consumer review then confirmed three inherited
+AUTH-07B integration defects: generic dependency teardown could commit
+feature-owned work, decision-evidence SQL failures could escape as unstructured
+500s, and successful existing-actor self routes no longer advanced canonical
+verification timestamps. D19 and the AUTH-08 contract now require those repairs
+and regression proof before new admin consumers activate.
+
 ## 2026-07-15 - WS-AUTH-001-07B Internal Review Passed
 
 Exact implementation SHA `aabc0f4c0131c53600750258a0bec8be404c7b90`
