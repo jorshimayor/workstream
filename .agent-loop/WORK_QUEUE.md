@@ -2,8 +2,12 @@
 
 ## In Progress
 
-None. This authored queue does not select a global next chunk; live post-merge
-state is read from signed `automation/loop-memory` output.
+| Chunk | Title | Risk | Status |
+|---|---|---:|---|
+| `WS-ART-001-02A1` | External Service Adapter Foundation | L1 | Active after explicit user start on 2026-07-15 |
+
+Live post-merge state remains read from signed `automation/loop-memory`
+output. This authored queue records the separately approved active chunk.
 
 ## Planned Next
 
@@ -13,7 +17,6 @@ state is read from signed `automation/loop-memory` output.
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Paused for AUTH priority; no valid replacement baseline yet |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
-| `WS-ART-001-02A1` | External Service Adapter Foundation | L1 | Inactive until a separate explicit user start |
 | `WS-ART-001-02A2` | Committed Source And Local Preparation | L1 | Inactive until 02A1 merge and explicit user start |
 | `WS-ART-001-02A3` | ArtifactStore v2 Local Clean Cut | L1 | Inactive until 02A2 merge and explicit user start |
 | `WS-ART-001-02B1` | S3-Compatible MinIO And AWS | L1 | Inactive until 02A3 merge and explicit user start |

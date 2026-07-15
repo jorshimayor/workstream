@@ -76,6 +76,14 @@ jobs:
           --precision=2
           --fail-under=90
 
+      - name: External service adapter coverage
+        working-directory: backend
+        run: >-
+          coverage report
+          --include='app/interfaces/external_services.py'
+          --precision=2
+          --fail-under=90
+
       - name: API contract real API e2e
         working-directory: backend
         env:

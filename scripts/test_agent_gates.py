@@ -4179,7 +4179,9 @@ def test_artifact_chunk_verification_commands_are_isolated_and_rerunnable() -> N
     )
     active_phase = active_artifact_coverage_phase()
     assert artifact_contract_phase_for(active_phase) == gate.ARTIFACT_CONTRACT_PHASE
-    mismatched_phase = "02A3" if active_phase == "foundation" else "foundation"
+    mismatched_phase = (
+        "02A3" if gate.ARTIFACT_CONTRACT_PHASE == "foundation" else "foundation"
+    )
     assert artifact_contract_phase_for(mismatched_phase) != gate.ARTIFACT_CONTRACT_PHASE
     with tempfile.TemporaryDirectory() as temp_dir:
         cleanup = subprocess.run(
