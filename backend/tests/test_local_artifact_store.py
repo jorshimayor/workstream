@@ -95,6 +95,29 @@ async def test_private_io_finishes_after_repeated_cancellation(tmp_path: Path) -
 
 
 @pytest.mark.asyncio
+async def test_private_io_preserves_cancellation_after_late_failure(tmp_path: Path) -> None:
+    """Keep active-v1 cancellation semantics when blocking I/O later fails."""
+    adapter = LocalStorageAdapter(root=tmp_path / "artifacts", buffer_bytes=2)
+    started = threading.Event()
+    finish = threading.Event()
+
+    def failing_io() -> None:
+        started.set()
+        finish.wait(timeout=5)
+        raise OSError("late filesystem failure")
+
+    task = asyncio.create_task(adapter._run_io(failing_io))
+    assert await asyncio.to_thread(started.wait, 5)
+    task.cancel()
+    await asyncio.sleep(0)
+    task.cancel()
+    finish.set()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    adapter.close()
+
+
+@pytest.mark.asyncio
 async def test_private_lock_releases_after_repeated_cancellation(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -178,4 +201,38 @@ async def test_store_cleanup_survives_repeated_cancellation(
     monkeypatch.setattr(adapter, "_write_stream", original_write_stream)
     stored = await adapter.store(byte_stream(b"hello"), request)
     assert stored.sha256 == request.expected_sha256
+    adapter.close()
+
+
+@pytest.mark.asyncio
+async def test_store_recovers_committed_object_before_reading_retry_stream(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Recover provider-first after cancellation without trusting retry bytes."""
+    adapter = LocalStorageAdapter(root=tmp_path / "artifacts", buffer_bytes=2)
+    request = store_request()
+    original_write_json = adapter._write_json_exclusive
+    interrupted = False
+
+    async def cancel_before_metadata(path: Path, value: dict[str, object]) -> None:
+        nonlocal interrupted
+        if path.parent.name == "metadata" and not interrupted:
+            interrupted = True
+            raise asyncio.CancelledError
+        await original_write_json(path, value)
+
+    monkeypatch.setattr(adapter, "_write_json_exclusive", cancel_before_metadata)
+    with pytest.raises(asyncio.CancelledError):
+        await adapter.store(byte_stream(b"hello"), request)
+    assert interrupted
+
+    monkeypatch.setattr(adapter, "_write_json_exclusive", original_write_json)
+    recovered = await adapter.store(byte_stream(b"wrong"), request)
+    assert recovered.replayed
+    assert recovered.sha256 == request.expected_sha256
+    assert b"".join(
+        [chunk async for chunk in adapter.open(recovered.provider_artifact_id)]
+    ) == b"hello"
+    assert list((tmp_path / "artifacts" / "quarantine").iterdir()) == []
     adapter.close()

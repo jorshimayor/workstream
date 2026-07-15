@@ -33,8 +33,16 @@ class _PreparedArtifactOwner(Protocol):
         self,
         binding: object,
         commitment: ArtifactCommitment,
+        source: CommittedArtifactSource,
     ) -> bool:
         """Return whether this exact binding and commitment remain service-owned."""
+
+    def register_committed_source(
+        self,
+        binding: object,
+        source: CommittedArtifactSource,
+    ) -> None:
+        """Bind the exact service-minted source identity once."""
 
 
 @final
@@ -112,7 +120,7 @@ class CommittedArtifactSource:
         if (
             getattr(self, "_seal", None) is not _COMMITTED_SOURCE_SEAL
             or type(owner) is not ArtifactPreparationService
-            or not owner.validates_committed_source(self._binding, self._commitment)
+            or not owner.validates_committed_source(self._binding, self._commitment, self)
         ):
             raise ArtifactScratchIntegrityError("committed artifact source is unavailable")
 
@@ -153,6 +161,7 @@ class PreparedArtifact:
         source._binding = binding
         source._commitment = commitment
         source._seal = _COMMITTED_SOURCE_SEAL
+        owner.register_committed_source(binding, source)
         prepared._committed_source = source
         return prepared
 

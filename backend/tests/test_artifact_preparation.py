@@ -219,6 +219,26 @@ def test_committed_sources_cannot_be_publicly_assembled() -> None:
 
 
 @pytest.mark.asyncio
+async def test_live_committed_source_cannot_be_cloned(tmp_path: Path) -> None:
+    """Bind validation to the exact source object minted by preparation."""
+    manager = ArtifactScratchManager(root=tmp_path / "scratch", limits=preparation_limits())
+    service = ArtifactPreparationService(manager)
+    prepared = await service.prepare(byte_stream(b"data"), media_type="text/plain")
+    source = prepared.committed_source
+    clone = object.__new__(CommittedArtifactSource)
+    clone._owner = source._owner
+    clone._binding = source._binding
+    clone._commitment = source._commitment
+    clone._seal = source._seal
+
+    with pytest.raises(ArtifactScratchIntegrityError, match="unavailable"):
+        clone.stream()
+    async with prepared as committed:
+        assert b"".join([chunk async for chunk in committed.stream()]) == b"data"
+    manager.close()
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("mismatch", ["digest", "size"])
 async def test_client_commitment_mismatch_prevents_provider_call(
     tmp_path: Path,
@@ -1317,6 +1337,39 @@ async def test_failed_preparation_retains_cleanup_for_retry(
     assert service.pending_cleanup_count == 0
     assert (await manager.usage()).reservation_count == 0
     assert release_attempts == 2
+    manager.close()
+
+
+@pytest.mark.asyncio
+async def test_failed_descriptor_close_is_never_retried(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Do not retain a raw fd after close reports an ambiguous POSIX failure."""
+    manager = ArtifactScratchManager(root=tmp_path / "scratch", limits=preparation_limits())
+    service = ArtifactPreparationService(manager)
+    original_close = service._close_descriptor
+
+    async def close_then_fail(descriptor: int) -> None:
+        await original_close(descriptor)
+        raise OSError(errno.EIO, "ambiguous descriptor close failure")
+
+    monkeypatch.setattr(service, "_close_descriptor", close_then_fail)
+    with pytest.raises(ArtifactInputMismatchError, match="expected digest"):
+        await service.prepare(
+            byte_stream(b"data"),
+            media_type="text/plain",
+            expected_sha256="sha256:" + "0" * 64,
+        )
+    assert service.pending_cleanup_count == 1
+    reused_descriptor = os.open("/dev/null", os.O_RDONLY)
+    try:
+        assert await service.retry_pending_cleanup() == 1
+        os.fstat(reused_descriptor)
+    finally:
+        os.close(reused_descriptor)
+    assert service.pending_cleanup_count == 0
+    assert (await manager.usage()).reservation_count == 0
     manager.close()
 
 

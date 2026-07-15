@@ -28,6 +28,7 @@ from app.interfaces.artifacts import (
 from app.core.cancellation import await_cancellation_resistant
 from app.modules.artifacts.sources import (
     ArtifactCommitment,
+    CommittedArtifactSource,
     PreparedArtifact,
 )
 
@@ -143,6 +144,7 @@ class _ActivePreparation:
     deadline: float
     handle_issued: bool = False
     stream_claimed: bool = False
+    source: CommittedArtifactSource | None = None
 
 
 @dataclass(slots=True)
@@ -830,8 +832,11 @@ class ArtifactScratchManager:
         task = asyncio.create_task(asyncio.to_thread(function, *args))
         try:
             return await asyncio.shield(task)
-        except asyncio.CancelledError:
-            await await_cancellation_resistant(task)
+        except asyncio.CancelledError as cancellation:
+            try:
+                await await_cancellation_resistant(task)
+            except BaseException:
+                raise cancellation from None
             raise
 
 
@@ -949,6 +954,7 @@ class ArtifactPreparationService:
         self,
         binding: object,
         commitment: ArtifactCommitment,
+        source: CommittedArtifactSource,
     ) -> bool:
         """Confirm one sealed value still maps to its live preparation."""
         active = self._active.get(binding)
@@ -956,7 +962,19 @@ class ArtifactPreparationService:
             active is not None
             and active.handle_issued
             and active.commitment is commitment
+            and active.source is source
         )
+
+    def register_committed_source(
+        self,
+        binding: object,
+        source: CommittedArtifactSource,
+    ) -> None:
+        """Bind the exact service-minted source identity once."""
+        active = self._active.get(binding)
+        if active is None or not active.handle_issued or active.source is not None:
+            raise ArtifactScratchIntegrityError("prepared artifact source is unavailable")
+        active.source = source
 
     def open_committed_stream(
         self,
@@ -1015,11 +1033,13 @@ class ArtifactPreparationService:
         failed = False
         try:
             if pending.descriptor is not None:
-                await self._close_descriptor(pending.descriptor)
+                descriptor = pending.descriptor
                 pending.descriptor = None
+                await self._close_descriptor(descriptor)
             if pending.reader is not None:
-                await self._run_io(pending.reader.close)
+                reader = pending.reader
                 pending.reader = None
+                await self._run_io(reader.close)
         except Exception:
             failed = True
         try:
