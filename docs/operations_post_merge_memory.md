@@ -33,7 +33,7 @@ Every PR adds exactly one immutable file at
 
 ```json
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "initiative_id": "WS-AUTH-001",
   "chunk_id": "WS-AUTH-001-06",
   "chunk_title": "Canonical Actor Profile And Identity Link",
@@ -44,9 +44,13 @@ Every PR adds exactly one immutable file at
 ```
 
 Agent Gates rejects missing, modified, duplicate, malformed, unknown-key,
-mismatched path/chunk, or incomplete next-chunk metadata before merge. The
-post-merge updater fetches this exact added file from the reviewed final head;
-PR-body edits cannot substitute lifecycle authority.
+mismatched path/chunk, or incomplete next-chunk metadata before merge. A
+non-null next chunk must belong to the same initiative and resolve to exactly
+one chunk contract whose heading has the same ID and title. A null value means
+the initiative declares no successor; it never selects another initiative.
+The post-merge updater fetches this exact added file and the referenced
+successor contract from the reviewed final head. PR-body edits cannot
+substitute lifecycle authority.
 
 The protected `main` branch requires `agent-gates` and Backend `test`, and it
 dismisses stale approvals after a new push. A changed intent therefore needs
@@ -55,10 +59,12 @@ fresh checks and human review before merge.
 ## Normal Operation
 
 1. The manager reviews and merges the normal PR.
-2. `Loop Memory` resolves every unrecorded first-parent commit through the
-   protected-main SHA. On first use, the immutable `WS-ENG-001-02` merge intent
-   anchors the activation commit; later runs start from the canonical ledger
-   tail. Canceled or out-of-order events therefore cannot lose a merge.
+2. `Loop Memory` resolves the current protected-main SHA before reading or
+   clearing generated state. The immutable `WS-ENG-001-03` schema-v2 merge
+   intent anchors the replacement ledger; later runs start from its canonical
+   tail. A queued push may reconcile forward only when its event SHA is an
+   ancestor of current protected `main`. A replay must name current protected
+   `main` exactly.
 3. The updater validates the committed merge intent and records observed
    Backend, Agent Gates, and CodeRabbit conclusions from each final PR head.
 4. The workflow commits generated files directly to `automation/loop-memory`.
@@ -84,14 +90,17 @@ error, replay trusted default-branch automation with:
 ```bash
 gh api --method POST repos/Flow-Research/workstream/dispatches \
   -f event_type=loop-memory-replay \
-  -F client_payload[merge_sha]=<40-character-merged-main-sha>
+  -F client_payload[target_sha]="$(git rev-parse origin/main)"
 ```
 
 `repository_dispatch` always selects the workflow from the default branch;
-callers cannot choose feature-branch workflow code for the write token. Replays
-are idempotent and reconcile skipped intermediate commits. Invalid immutable
-intent requires an explicit corrective engineering PR; generated files must
-not be edited by hand.
+callers cannot choose feature-branch workflow code for the write token. Stale
+replay SHAs fail closed before generated state is inspected. Replays are
+idempotent and reconcile skipped intermediate commits. Schema-v1 generated
+state and signatures are rejected and the four fixed generated paths are
+cleared before the schema-v2 bootstrap; no schema-v1 intent is parsed or
+normalized. Invalid immutable schema-v2 intent requires an explicit corrective
+engineering PR; generated files must not be edited by hand.
 
 ## Review Policy
 

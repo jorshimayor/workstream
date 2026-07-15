@@ -21,14 +21,15 @@ from pathlib import Path
 from typing import Any
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 STATE_BRANCH = "automation/loop-memory"
 STATE_PATH = Path(".agent-loop/STATE.json")
 RENDERED_PATH = Path(".agent-loop/LOOP_STATE.md")
 LEDGER_PATH = Path(".agent-loop/MERGE_LOG.jsonl")
 SIGNATURE_PATH = Path(".agent-loop/STATE.sig")
 INTENT_PREFIX = ".agent-loop/merge-intents/"
-BOOTSTRAP_INTENT_PATH = f"{INTENT_PREFIX}WS-ENG-001-02.json"
+BOOTSTRAP_INTENT_PATH = f"{INTENT_PREFIX}WS-ENG-001-03.json"
+CHUNK_CONTRACT_ROOT = ".agent-loop/initiatives/"
 ID_PATTERN = re.compile(r"^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$")
 REPOSITORY_PATTERN = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
@@ -128,6 +129,11 @@ def _optional_id(value: Any, field: str) -> str | None:
     return normalized
 
 
+def _is_current_schema_version(value: Any) -> bool:
+    """Return whether value is exactly the supported integer schema version."""
+    return type(value) is int and value == SCHEMA_VERSION
+
+
 def parse_loop_metadata(intent_text: str) -> LoopMetadata:
     """Parse and strictly validate one committed merge-intent document."""
     if not isinstance(intent_text, str):
@@ -138,7 +144,7 @@ def parse_loop_metadata(intent_text: str) -> LoopMetadata:
         raise LoopMemoryError("merge intent must contain valid JSON") from exc
     if not isinstance(payload, dict) or set(payload) != REQUIRED_METADATA_KEYS:
         raise LoopMemoryError("merge intent has missing or unexpected keys")
-    if payload["schema_version"] != SCHEMA_VERSION:
+    if not _is_current_schema_version(payload["schema_version"]):
         raise LoopMemoryError(
             f"unsupported loop-state schema version: {payload['schema_version']!r}"
         )
@@ -165,6 +171,10 @@ def parse_loop_metadata(intent_text: str) -> LoopMetadata:
         raise LoopMemoryError(
             "next_chunk_id and next_chunk_title must both be null or both be set"
         )
+    if next_chunk_id is not None and not next_chunk_id.startswith(
+        f"{initiative_id}-"
+    ):
+        raise LoopMemoryError("next_chunk_id must belong to initiative_id")
     explicit_start = payload["next_requires_explicit_start"]
     if not isinstance(explicit_start, bool):
         raise LoopMemoryError("next_requires_explicit_start must be a boolean")
@@ -180,17 +190,17 @@ def parse_loop_metadata(intent_text: str) -> LoopMetadata:
     )
 
 
-def _validate_sha(merge_sha: str) -> None:
+def _validate_sha(merge_sha: Any) -> None:
     """Validate one untrusted Git commit identifier."""
-    if not SHA_PATTERN.fullmatch(merge_sha):
+    if not isinstance(merge_sha, str) or not SHA_PATTERN.fullmatch(merge_sha):
         raise LoopMemoryError(
             "merge SHA must contain 40 lowercase hexadecimal characters"
         )
 
 
-def _validate_repository_and_sha(repository: str, merge_sha: str) -> None:
+def _validate_repository_and_sha(repository: Any, merge_sha: Any) -> None:
     """Validate untrusted workflow inputs before constructing API paths."""
-    if not REPOSITORY_PATTERN.fullmatch(repository):
+    if not isinstance(repository, str) or not REPOSITORY_PATTERN.fullmatch(repository):
         raise LoopMemoryError("repository must be owner/name")
     _validate_sha(merge_sha)
 
@@ -198,6 +208,204 @@ def _validate_repository_and_sha(repository: str, merge_sha: str) -> None:
 def _intent_path(metadata: LoopMetadata) -> str:
     """Return the only canonical repository path for one merge intent."""
     return f"{INTENT_PREFIX}{metadata.chunk_id}.json"
+
+
+def _contract_title(contract_text: str, chunk_id: str) -> str | None:
+    """Return the title from one canonical chunk-contract heading."""
+    lines = contract_text.splitlines()
+    first_line = lines[0] if lines else ""
+    prefix = f"# Chunk Contract: {chunk_id} - "
+    if not first_line.startswith(prefix):
+        return None
+    title = first_line[len(prefix) :].strip()
+    return title or None
+
+
+def _initiative_directory_from_path(path: str, initiative_id: str) -> str | None:
+    """Return the matching top-level initiative directory from one path."""
+    if not path.startswith(CHUNK_CONTRACT_ROOT):
+        return None
+    initiative_directory = path[len(CHUNK_CONTRACT_ROOT) :].split("/", 1)[0]
+    if initiative_directory == initiative_id or initiative_directory.startswith(
+        f"{initiative_id}-"
+    ):
+        return initiative_directory
+    return None
+
+
+def _is_chunk_contract_path(path: str, initiative_directory: str) -> bool:
+    """Return whether one path is a direct child of one canonical chunks directory."""
+    prefix = f"{CHUNK_CONTRACT_ROOT}{initiative_directory}/chunks/"
+    return (
+        path.startswith(prefix)
+        and "/" not in path[len(prefix) :]
+        and path.endswith(".md")
+    )
+
+
+def _successor_contract_name_matches(name: str, chunk_id: str) -> bool:
+    """Return whether one Markdown filename claims a successor chunk ID."""
+    return name == f"{chunk_id}.md" or (
+        name.startswith(f"{chunk_id}-") and name.endswith(".md")
+    )
+
+
+def _validate_local_successor_contract(
+    repository_root: Path, metadata: LoopMetadata
+) -> None:
+    """Bind a non-null successor to one matching local chunk contract."""
+    if metadata.next_chunk_id is None:
+        return
+    initiatives_root = repository_root / CHUNK_CONTRACT_ROOT
+    initiative_directories = sorted(
+        path.name
+        for path in initiatives_root.iterdir()
+        if path.is_dir()
+        and (
+            path.name == metadata.initiative_id
+            or path.name.startswith(f"{metadata.initiative_id}-")
+        )
+    )
+    if len(initiative_directories) != 1:
+        raise LoopMemoryError(
+            "initiative_id must resolve to exactly one initiative directory"
+        )
+    initiative_directory = initiative_directories[0]
+    all_candidates = sorted(
+        path
+        for path in initiatives_root.glob("*/chunks/*.md")
+        if _successor_contract_name_matches(path.name, metadata.next_chunk_id)
+    )
+    foreign_candidates = [
+        path
+        for path in all_candidates
+        if path.parent.parent.name != initiative_directory
+    ]
+    if foreign_candidates:
+        raise LoopMemoryError(
+            "next_chunk_id must not exist under another initiative directory"
+        )
+    chunks_root = initiatives_root / initiative_directory / "chunks"
+    candidates = sorted(
+        path
+        for path in chunks_root.glob("*.md")
+        if _successor_contract_name_matches(path.name, metadata.next_chunk_id)
+    )
+    if len(candidates) != 1:
+        raise LoopMemoryError(
+            "next_chunk_id must resolve to exactly one chunk contract"
+        )
+    try:
+        title = _contract_title(
+            candidates[0].read_text(encoding="utf-8"), metadata.next_chunk_id
+        )
+    except (OSError, UnicodeDecodeError) as exc:
+        raise LoopMemoryError("cannot read next chunk contract") from exc
+    if title != metadata.next_chunk_title:
+        raise LoopMemoryError("next chunk contract heading does not match intent")
+
+
+def _decode_github_blob(payload: Any, label: str, maximum: int) -> tuple[str, str]:
+    """Decode one bounded GitHub base64 blob response."""
+    if not isinstance(payload, dict) or payload.get("encoding") != "base64":
+        raise LoopMemoryError(f"{label} content response has an invalid shape")
+    blob_sha = payload.get("sha")
+    content = payload.get("content")
+    if not isinstance(blob_sha, str) or not SHA_PATTERN.fullmatch(blob_sha):
+        raise LoopMemoryError(f"{label} blob has no canonical SHA")
+    if not isinstance(content, str):
+        raise LoopMemoryError(f"{label} blob has no encoded content")
+    try:
+        normalized_content = re.sub(r"[ \t\r\n]", "", content)
+        raw = base64.b64decode(normalized_content, validate=True)
+        if len(raw) > maximum:
+            raise LoopMemoryError(f"{label} document exceeds {maximum} bytes")
+        text = raw.decode("utf-8")
+    except (ValueError, UnicodeDecodeError) as exc:
+        raise LoopMemoryError(f"{label} content is not valid base64 UTF-8") from exc
+    return text, blob_sha
+
+
+def _validate_remote_successor_contract(
+    client: GitHubClient,
+    repository: str,
+    head_sha: str,
+    metadata: LoopMetadata,
+) -> None:
+    """Bind a non-null successor to one contract on the reviewed PR head."""
+    if metadata.next_chunk_id is None:
+        return
+    tree = client.get_json(
+        f"/repos/{repository}/git/trees/{head_sha}?recursive=1"
+    )
+    if (
+        not isinstance(tree, dict)
+        or tree.get("truncated") is not False
+        or not isinstance(tree.get("tree"), list)
+    ):
+        raise LoopMemoryError("reviewed-head repository tree is incomplete")
+    initiative_directories = sorted(
+        {
+            initiative_directory
+            for item in tree["tree"]
+            if isinstance(item, dict) and isinstance(item.get("path"), str)
+            if (
+                initiative_directory := _initiative_directory_from_path(
+                    item["path"], metadata.initiative_id
+                )
+            )
+        }
+    )
+    if len(initiative_directories) != 1:
+        raise LoopMemoryError(
+            "initiative_id must resolve to exactly one reviewed-head initiative directory"
+        )
+    initiative_directory = initiative_directories[0]
+    candidates = []
+    foreign_candidates = []
+    for item in tree["tree"]:
+        if not isinstance(item, dict) or item.get("type") != "blob":
+            continue
+        path = item.get("path")
+        blob_sha = item.get("sha")
+        if not isinstance(path, str) or not isinstance(blob_sha, str):
+            continue
+        name = path.rsplit("/", 1)[-1]
+        if not _successor_contract_name_matches(name, metadata.next_chunk_id):
+            continue
+        relative = path.removeprefix(CHUNK_CONTRACT_ROOT)
+        parts = relative.split("/")
+        if (
+            not path.startswith(CHUNK_CONTRACT_ROOT)
+            or len(parts) != 3
+            or parts[1] != "chunks"
+        ):
+            continue
+        if parts[0] != initiative_directory:
+            foreign_candidates.append((path, blob_sha))
+        elif _is_chunk_contract_path(path, initiative_directory):
+            candidates.append((path, blob_sha))
+    if foreign_candidates:
+        raise LoopMemoryError(
+            "next_chunk_id must not exist under another reviewed-head initiative directory"
+        )
+    if len(candidates) != 1:
+        raise LoopMemoryError(
+            "next_chunk_id must resolve to exactly one reviewed-head chunk contract"
+        )
+    _, blob_sha = candidates[0]
+    if not SHA_PATTERN.fullmatch(blob_sha):
+        raise LoopMemoryError("next chunk contract has no canonical blob SHA")
+    contract_text, returned_sha = _decode_github_blob(
+        client.get_json(f"/repos/{repository}/git/blobs/{blob_sha}"),
+        "next chunk contract",
+        262144,
+    )
+    if returned_sha != blob_sha:
+        raise LoopMemoryError("next chunk contract blob identity does not match tree")
+    title = _contract_title(contract_text, metadata.next_chunk_id)
+    if title != metadata.next_chunk_title:
+        raise LoopMemoryError("next chunk contract heading does not match intent")
 
 
 def load_committed_merge_intent(
@@ -224,25 +432,11 @@ def load_committed_merge_intent(
     payload = client.get_json(
         f"/repos/{repository}/contents/{encoded_path}?ref={head_sha}"
     )
-    if not isinstance(payload, dict) or payload.get("encoding") != "base64":
-        raise LoopMemoryError("merge-intent content response has an invalid shape")
-    blob_sha = payload.get("sha")
-    content = payload.get("content")
-    if not isinstance(blob_sha, str) or not SHA_PATTERN.fullmatch(blob_sha):
-        raise LoopMemoryError("merge-intent blob has no canonical SHA")
-    if not isinstance(content, str):
-        raise LoopMemoryError("merge-intent blob has no encoded content")
-    try:
-        normalized_content = re.sub(r"[ \t\r\n]", "", content)
-        raw = base64.b64decode(normalized_content, validate=True)
-        if len(raw) > 8192:
-            raise LoopMemoryError("merge-intent document exceeds 8192 bytes")
-        text = raw.decode("utf-8")
-    except (ValueError, UnicodeDecodeError) as exc:
-        raise LoopMemoryError("merge-intent content is not valid base64 UTF-8") from exc
+    text, blob_sha = _decode_github_blob(payload, "merge-intent", 8192)
     metadata = parse_loop_metadata(text)
     if path != _intent_path(metadata):
         raise LoopMemoryError("merge-intent path does not match its chunk_id")
+    _validate_remote_successor_contract(client, repository, head_sha, metadata)
     return metadata, path, blob_sha
 
 
@@ -277,6 +471,7 @@ def validate_local_merge_intent(repository_root: Path, base_ref: str) -> LoopMet
         raise LoopMemoryError("cannot read local merge-intent file") from exc
     if path != _intent_path(metadata):
         raise LoopMemoryError("merge-intent path does not match its chunk_id")
+    _validate_local_successor_contract(repository_root, metadata)
     return metadata
 
 
@@ -353,6 +548,30 @@ def plan_reconciliation_commits(
         "cannot enumerate commits after the loop-memory bootstrap",
     )
     return [bootstrap_sha, *successors]
+
+
+def resolve_reconciliation_target(
+    repository_root: Path,
+    event_name: str,
+    event_sha: str,
+    current_main_sha: str,
+) -> str:
+    """Bind one workflow event to the current protected-main commit."""
+    _validate_sha(event_sha)
+    _validate_sha(current_main_sha)
+    if event_name == "repository_dispatch":
+        if event_sha != current_main_sha:
+            raise LoopMemoryError(
+                "replay target is stale; dispatch current protected-main SHA"
+            )
+        return current_main_sha
+    if event_name == "push":
+        if not _is_ancestor(repository_root, event_sha, current_main_sha):
+            raise LoopMemoryError(
+                "push event SHA is not on current protected-main ancestry"
+            )
+        return current_main_sha
+    raise LoopMemoryError("unsupported loop-memory event")
 
 
 def _latest_named(
@@ -660,6 +879,116 @@ def _ledger_entry(record: dict[str, Any], previous_hash: str | None) -> dict[str
     }
 
 
+def _validate_record(record: dict[str, Any]) -> LoopMetadata:
+    """Validate one complete schema-v2 live-state or ledger record."""
+    expected_record_keys = {
+        "schema_version",
+        "repository",
+        "state_branch",
+        "updated_at",
+        "source",
+        "completed_chunk",
+        "active",
+        "gate",
+        "checks",
+    }
+    if set(record) != expected_record_keys or not _is_current_schema_version(
+        record.get("schema_version")
+    ):
+        raise LoopMemoryError("loop-memory record has an invalid schema")
+    if record.get("state_branch") != STATE_BRANCH:
+        raise LoopMemoryError("loop-memory record has an invalid state branch")
+
+    source = record.get("source")
+    expected_source_keys = {
+        "main_sha",
+        "first_parent_sha",
+        "pr_number",
+        "pr_url",
+        "pr_title",
+        "head_sha",
+        "head_ref",
+        "merged_at",
+        "merged_by",
+        "intent_path",
+        "intent_blob_sha",
+    }
+    if not isinstance(source, dict) or set(source) != expected_source_keys:
+        raise LoopMemoryError("loop-memory source has an invalid schema")
+    repository = record.get("repository")
+    _validate_repository_and_sha(repository, source.get("main_sha", ""))
+    _validate_sha(source.get("first_parent_sha", ""))
+    _validate_sha(source.get("head_sha", ""))
+    _validate_sha(source.get("intent_blob_sha", ""))
+    pr_number = source.get("pr_number")
+    if not isinstance(pr_number, int) or isinstance(pr_number, bool) or pr_number <= 0:
+        raise LoopMemoryError("loop-memory source has no positive PR number")
+    if source.get("pr_url") != f"https://github.com/{repository}/pull/{pr_number}":
+        raise LoopMemoryError("loop-memory source has an invalid PR URL")
+    for field, maximum in (
+        ("pr_title", 240),
+        ("head_ref", 240),
+        ("merged_by", 160),
+    ):
+        _bounded_text(source.get(field), field, maximum=maximum)
+    merged_at = source.get("merged_at")
+    _parse_timestamp(merged_at, "merged_at")
+    if record.get("updated_at") != merged_at:
+        raise LoopMemoryError("loop-memory updated_at does not match merged_at")
+
+    completed = record.get("completed_chunk")
+    if not isinstance(completed, dict):
+        raise LoopMemoryError("completed_chunk must be a JSON object")
+    metadata = parse_loop_metadata(_canonical_json(completed))
+    if source.get("intent_path") != _intent_path(metadata):
+        raise LoopMemoryError("loop-memory intent path does not match completed chunk")
+
+    active = record.get("active")
+    if active != {"planning_chunk": None, "implementation_chunk": None}:
+        raise LoopMemoryError("post-merge active chunk state must be empty")
+    gate = record.get("gate")
+    expected_gate = {
+        "status": "stopped_after_merge",
+        "next_chunk_id": metadata.next_chunk_id,
+        "next_chunk_title": metadata.next_chunk_title,
+        "next_requires_explicit_start": metadata.next_requires_explicit_start,
+    }
+    if gate != expected_gate:
+        raise LoopMemoryError("next gate does not match completed chunk metadata")
+
+    checks = record.get("checks")
+    if not isinstance(checks, dict) or set(checks) != {
+        "required",
+        "all_required_passed",
+    }:
+        raise LoopMemoryError("loop-memory check evidence has an invalid schema")
+    required = checks.get("required")
+    if not isinstance(required, dict) or set(required) != set(REQUIRED_CHECKS):
+        raise LoopMemoryError("loop-memory required-check evidence is incomplete")
+    for name in REQUIRED_CHECKS:
+        result = required[name]
+        if not isinstance(result, dict) or set(result) != {
+            "kind",
+            "conclusion",
+            "url",
+        }:
+            raise LoopMemoryError(f"loop-memory check evidence is invalid for {name}")
+        if not isinstance(result.get("kind"), str):
+            raise LoopMemoryError(f"loop-memory check kind is invalid for {name}")
+        if result.get("conclusion") is not None and not isinstance(
+            result.get("conclusion"), str
+        ):
+            raise LoopMemoryError(f"loop-memory check conclusion is invalid for {name}")
+        if result.get("url") is not None and not isinstance(result.get("url"), str):
+            raise LoopMemoryError(f"loop-memory check URL is invalid for {name}")
+    all_passed = all(
+        required[name].get("conclusion") == "success" for name in REQUIRED_CHECKS
+    )
+    if checks.get("all_required_passed") is not all_passed:
+        raise LoopMemoryError("loop-memory aggregate check evidence is inconsistent")
+    return metadata
+
+
 def _validate_ledger_entries(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Validate the full ledger hash and first-parent chains."""
     records: list[dict[str, Any]] = []
@@ -672,11 +1001,14 @@ def _validate_ledger_entries(entries: list[dict[str, Any]]) -> list[dict[str, An
         "entry_hash",
     }
     for entry in entries:
-        if set(entry) != expected_keys or entry.get("schema_version") != SCHEMA_VERSION:
+        if set(entry) != expected_keys or not _is_current_schema_version(
+            entry.get("schema_version")
+        ):
             raise LoopMemoryError("merge ledger entry has an invalid schema")
         record = entry.get("record")
         if not isinstance(record, dict):
             raise LoopMemoryError("merge ledger entry record must be a JSON object")
+        _validate_record(record)
         if entry.get("previous_entry_hash") != previous_hash:
             raise LoopMemoryError("merge ledger previous hash chain is invalid")
         expected_hash = _ledger_hash(previous_hash, record)
@@ -699,6 +1031,7 @@ def _validate_ledger_entries(entries: list[dict[str, Any]]) -> list[dict[str, An
 
 def apply_merge_record(state_root: Path, record: dict[str, Any]) -> bool:
     """Apply one monotonic, idempotent merge record to a state directory."""
+    _validate_record(record)
     state_path = state_root / STATE_PATH
     ledger_path = state_root / LEDGER_PATH
     rendered_path = state_root / RENDERED_PATH
@@ -753,14 +1086,7 @@ def validate_generated_state(state_root: Path) -> None:
     state = _load_json(state_root / STATE_PATH)
     if state is None:
         raise LoopMemoryError("generated state file is missing")
-    if (
-        state.get("schema_version") != SCHEMA_VERSION
-        or state.get("state_branch") != STATE_BRANCH
-    ):
-        raise LoopMemoryError("generated state schema or branch is invalid")
-    _validate_repository_and_sha(
-        state.get("repository", ""), state.get("source", {}).get("main_sha", "")
-    )
+    _validate_record(state)
     ledger = _load_ledger(state_root / LEDGER_PATH)
     records = _validate_ledger_entries(ledger)
     if not records or _canonical_json(records[-1]) != _canonical_json(state):
@@ -774,7 +1100,7 @@ def validate_generated_state(state_root: Path) -> None:
 
 def _signature_payload(state_root: Path) -> bytes:
     """Return an unambiguous payload covering every canonical generated file."""
-    payload = bytearray(b"workstream-loop-memory-signature-v1\0")
+    payload = bytearray(b"workstream-loop-memory-signature-v2\0")
     for relative_path in (STATE_PATH, RENDERED_PATH, LEDGER_PATH):
         path_bytes = relative_path.as_posix().encode("ascii")
         content = (state_root / relative_path).read_bytes()
@@ -937,6 +1263,14 @@ def build_parser() -> argparse.ArgumentParser:
     plan_commits.add_argument("--target-sha", required=True)
     plan_commits.add_argument("--current-sha")
 
+    resolve_target = subparsers.add_parser("resolve-target")
+    resolve_target.add_argument("--repository-root", type=Path, default=Path("."))
+    resolve_target.add_argument(
+        "--event-name", choices=("push", "repository_dispatch"), required=True
+    )
+    resolve_target.add_argument("--event-sha", required=True)
+    resolve_target.add_argument("--current-main-sha", required=True)
+
     update = subparsers.add_parser("update")
     update.add_argument("--repository", required=True)
     update.add_argument("--merge-sha", required=True)
@@ -982,6 +1316,15 @@ def main(argv: list[str] | None = None) -> int:
                 args.current_sha,
             ):
                 print(merge_sha)
+        elif args.command == "resolve-target":
+            print(
+                resolve_reconciliation_target(
+                    args.repository_root,
+                    args.event_name,
+                    args.event_sha,
+                    args.current_main_sha,
+                )
+            )
         elif args.command == "update":
             _assert_state_branch(args.state_root)
             token = os.environ.get(args.token_env, "")
