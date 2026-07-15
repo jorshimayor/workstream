@@ -29,6 +29,7 @@ from app.modules.artifacts.preparation import (
     ArtifactScratchCapacityError,
     ArtifactScratchIntegrityError,
     ArtifactScratchManager,
+    ArtifactScratchUsage,
 )
 from app.modules.artifacts.sources import (
     ArtifactCommitment,
@@ -764,6 +765,7 @@ async def test_cleanup_rejects_symlink_and_non_regular_scratch_entries(
     else:
         scratch_file.rmdir()
     assert await manager.cleanup_stale(now_unix_ns=reservation.expires_at_unix_ns) == 1
+    await manager.release(reservation)
     manager.close()
 
 
@@ -938,9 +940,12 @@ async def test_directory_fsync_failure_rolls_back_file_and_reservation(
         limits=preparation_limits(),
     )
     original_fsync = os.fsync
+    failed = False
 
     def fail_files_directory(descriptor: int) -> None:
-        if descriptor == manager._files_fd:
+        nonlocal failed
+        if descriptor == manager._files_fd and not failed:
+            failed = True
             raise OSError(errno.EIO, "directory fsync failed")
         original_fsync(descriptor)
 
@@ -1526,6 +1531,39 @@ async def test_allocation_rollback_failure_is_retained_for_retry(
 
 
 @pytest.mark.asyncio
+async def test_allocation_rollback_sync_failure_retains_ledger_ownership(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Keep retry custody until rollback deletion is directory-durable."""
+    manager = ArtifactScratchManager(root=tmp_path / "scratch", limits=preparation_limits())
+    original_fsync = os.fsync
+    file_directory_syncs = 0
+
+    def fail_publication_and_rollback_sync(descriptor: int) -> None:
+        nonlocal file_directory_syncs
+        if descriptor == manager._files_fd:
+            file_directory_syncs += 1
+            if file_directory_syncs <= 2:
+                raise OSError(errno.EIO, "injected file directory sync failure")
+        original_fsync(descriptor)
+
+    monkeypatch.setattr(os, "fsync", fail_publication_and_rollback_sync)
+    with pytest.raises(ArtifactScratchIntegrityError, match="cleanup is pending"):
+        await manager.allocate()
+    assert file_directory_syncs == 2
+    assert manager.pending_cleanup_count == 1
+    assert (await manager.usage()).reservation_count == 1
+    assert list((tmp_path / "scratch" / "files").iterdir()) == []
+
+    assert await manager.retry_pending_cleanup() == 1
+    assert file_directory_syncs == 3
+    assert manager.pending_cleanup_count == 0
+    assert (await manager.usage()).reservation_count == 0
+    manager.close()
+
+
+@pytest.mark.asyncio
 async def test_ambiguous_ledger_publication_is_retained_for_retry(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -1574,6 +1612,54 @@ async def test_manager_close_rejects_live_prepared_reservation(tmp_path: Path) -
     await prepared.close()
     assert (await manager.usage()).reservation_count == 0
     manager.close()
+
+
+@pytest.mark.asyncio
+async def test_stale_cleanup_preserves_live_preparation_shutdown_ownership(
+    tmp_path: Path,
+) -> None:
+    """Keep a local live handle as shutdown owner after shared stale cleanup."""
+    manager = ArtifactScratchManager(root=tmp_path / "scratch", limits=preparation_limits())
+    service = ArtifactPreparationService(manager)
+    prepared = await service.prepare(byte_stream(b"data"), media_type="text/plain")
+    expires_at = next(iter(manager._owned_reservations.values())).expires_at_unix_ns
+
+    assert await manager.cleanup_stale(now_unix_ns=expires_at) == 1
+    assert (await manager.usage()).reservation_count == 0
+    with pytest.raises(ArtifactScratchIntegrityError, match="cleanup is still pending"):
+        manager.close()
+
+    await prepared.close()
+    manager.close()
+
+
+@pytest.mark.asyncio
+async def test_manager_close_rejects_in_flight_operation_and_closed_reuse(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Fence directory descriptors across operations and final shutdown."""
+    manager = ArtifactScratchManager(root=tmp_path / "scratch", limits=preparation_limits())
+    original_usage = manager._usage_sync
+    started = threading.Event()
+    unblock = threading.Event()
+
+    def blocked_usage() -> ArtifactScratchUsage:
+        started.set()
+        assert unblock.wait(5), "usage operation was not released"
+        return original_usage()
+
+    monkeypatch.setattr(manager, "_usage_sync", blocked_usage)
+    usage_task = asyncio.create_task(manager.usage())
+    assert await asyncio.to_thread(started.wait, 2), "usage operation did not start"
+    with pytest.raises(ArtifactScratchIntegrityError, match="cleanup is still pending"):
+        manager.close()
+    unblock.set()
+    assert (await usage_task).reservation_count == 0
+
+    manager.close()
+    with pytest.raises(ArtifactScratchIntegrityError, match="manager is closed"):
+        await manager.usage()
 
 
 def test_manager_close_never_retries_ambiguous_directory_descriptor(

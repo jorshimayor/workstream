@@ -111,6 +111,7 @@ class CommittedArtifactSource:
         return self._owner.open_committed_stream(self._binding, self._commitment)
 
     def _assert_sealed(self) -> None:
+        """Require this source to remain bound to its minting preparation service."""
         from app.modules.artifacts.preparation import (
             ArtifactPreparationService,
             ArtifactScratchIntegrityError,
