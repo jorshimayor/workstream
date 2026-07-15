@@ -206,6 +206,42 @@ async def test_store_cleanup_survives_repeated_cancellation(
 
 
 @pytest.mark.asyncio
+async def test_store_preserves_cancellation_during_final_lock_release(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Finish final lock release without converting cancellation into success."""
+    adapter = LocalStorageAdapter(root=tmp_path / "artifacts", buffer_bytes=2)
+    request = store_request()
+    release_started = threading.Event()
+    finish_release = threading.Event()
+    released = threading.Event()
+    original_release = adapter._release_lock
+
+    def delayed_release(lock: tuple[object, int]) -> None:
+        release_started.set()
+        finish_release.wait(timeout=5)
+        original_release(lock)
+        released.set()
+
+    monkeypatch.setattr(adapter, "_release_lock", delayed_release)
+    task = asyncio.create_task(adapter.store(byte_stream(b"hello"), request))
+    assert await asyncio.to_thread(release_started.wait, 5)
+    task.cancel()
+    await asyncio.sleep(0)
+    task.cancel()
+    finish_release.set()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert released.is_set()
+
+    monkeypatch.setattr(adapter, "_release_lock", original_release)
+    replay = await adapter.store(byte_stream(b"hello"), request)
+    assert replay.replayed
+    adapter.close()
+
+
+@pytest.mark.asyncio
 async def test_object_only_recovery_still_requires_exact_replay_without_commitment(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

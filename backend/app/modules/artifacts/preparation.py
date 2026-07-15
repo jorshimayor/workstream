@@ -566,6 +566,10 @@ class ArtifactScratchManager:
                     os.close(descriptor_to_close)
                 except BaseException:
                     pass
+            try:
+                os.close(descriptor)
+            except BaseException:
+                pass
             raise
         try:
             os.close(descriptor)

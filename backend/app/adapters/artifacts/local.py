@@ -178,7 +178,7 @@ class LocalStorageAdapter:
             raise ArtifactStoreUnavailableError("local artifact operation failed") from exc
         finally:
             if lock is not None:
-                await await_cancellation_resistant(self._run_io(self._release_lock, lock))
+                await self._run_io(self._release_lock, lock)
 
     async def _recover_or_replay(
         self,

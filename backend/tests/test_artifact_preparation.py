@@ -1291,6 +1291,37 @@ async def test_cancelled_seal_closes_read_descriptor_after_write_close_failure(
 
 
 @pytest.mark.asyncio
+async def test_seal_failure_closes_first_pass_descriptor(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Keep write-descriptor ownership inside sealing on every failure path."""
+    manager = ArtifactScratchManager(root=tmp_path / "scratch", limits=preparation_limits())
+    reservation, write_descriptor = await manager.allocate()
+    original_fsync = os.fsync
+    failed = False
+
+    def fail_first_pass_sync(descriptor: int) -> None:
+        nonlocal failed
+        if descriptor == write_descriptor and not failed:
+            failed = True
+            raise OSError(errno.EIO, "injected first-pass sync failure")
+        original_fsync(descriptor)
+
+    monkeypatch.setattr(os, "fsync", fail_first_pass_sync)
+    with pytest.raises(OSError, match="first-pass sync failure"):
+        await manager.seal_for_read(reservation, write_descriptor)
+    assert failed
+    with pytest.raises(OSError) as closed_error:
+        os.fstat(write_descriptor)
+    assert closed_error.value.errno == errno.EBADF
+
+    await manager.release(reservation)
+    assert (await manager.usage()).reservation_count == 0
+    manager.close()
+
+
+@pytest.mark.asyncio
 async def test_closed_preparation_rejects_stream_and_is_idempotent(tmp_path: Path) -> None:
     """Make closed source handles unusable without duplicating cleanup."""
     manager = ArtifactScratchManager(
