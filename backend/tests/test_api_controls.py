@@ -457,6 +457,16 @@ def test_openapi_documents_request_error_and_response_context() -> None:
     assert {"404", "409"} <= set(
         schema["paths"]["/api/v1/tasks/{task_id}/claim"]["post"]["responses"]
     )
+    action_declarations = {
+        f"{method.upper()} {path}": operation["x-workstream-action-id"]
+        for path, path_item in schema["paths"].items()
+        for method, operation in path_item.items()
+        if method in methods and "x-workstream-action-id" in operation
+    }
+    assert action_declarations == {
+        "GET /api/v1/actors/me": "actor.profile.read_self",
+        "PATCH /api/v1/actors/me": "actor.profile.update_self",
+    }
     assert {"404", "409"} <= set(
         schema["paths"]["/api/v1/projects/{project_id}/guides/{guide_id}/activate"][
             "post"

@@ -52,6 +52,7 @@ backend/app/api/routes/auth.py
 backend/app/api/router.py
 backend/app/schemas/auth.py
 backend/tests/test_authorization.py
+backend/tests/test_audit.py
 backend/tests/test_auth.py
 backend/tests/test_actors.py
 backend/tests/test_api_controls.py

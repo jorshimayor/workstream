@@ -215,18 +215,17 @@ approved Operator recovery identifiers, 21 artifact identifiers, and
 `review.queue.override` are the exact 25 post-`0020` permissions. AUTH-07A adds
 their matching typed/SQL audit parity without making them executable.
 
-The closed action registry contains 50 planned rows: two actor-self actions,
-three Operator recovery actions, 25 artifact actions, canonical
+The closed action registry contains 50 rows: two active actor-self actions,
+plus 48 planned rows covering three Operator recovery actions, 25 artifact actions, canonical
 `submission.create`, and 19 review actions. An action becomes active only when
 its owning chunk supplies its canonical resource composer, guards, surface or
 command declaration, behavior tests, and transaction-local revalidation where
 required. Both halves are mandatory; registry presence alone never grants
 authority.
 
-AUTH-07A also reserves `actor.profile.read_self` and
-`actor.profile.update_self` as four-field planned action metadata. AUTH-07B
-later supplies their complete active definitions and self-route behavior proof
-without changing migration `0021`.
+AUTH-07B activates `actor.profile.read_self` and `actor.profile.update_self`
+with strict self-resource facts and request-scoped behavior proof without
+changing migration `0021`. All other registered actions remain planned.
 
 The submission/review dependency matrix is closed. AUTH-07A registers only the
 four stable planned fields shown here; resource facts, candidates, guards, and
@@ -415,7 +414,8 @@ added under the approval rule above.
 For every protected operation:
 
 1. Verify the external token through the existing verifier boundary.
-2. Resolve an active identity link and active actor profile.
+2. Resolve the canonical identity link and actor profile without preempting the
+   action's lifecycle guards.
 3. Build request-scoped `AuthorizationContext` without token-role authority.
 4. Load the canonical resource through its owning repository/service.
 5. Compose `ResourceContext` in the application service.
@@ -429,6 +429,23 @@ For every protected operation:
 
 Authorization decisions are request-scoped and are not cached across requests.
 List filtering occurs before counts and pagination cursors.
+
+For the two active self actions, the default human authority source is
+`actor_self`; token roles and client-supplied permissions never enter the
+context. Self-read requires an active link and an active or suspended actor.
+Self-update additionally locks the exact link followed by its linked profile,
+rebuilds current context inside the caller transaction, and requires an active
+actor plus a non-empty subset of `display_name` and `contact_email`. Revoked
+links, deactivated actors, and suspended updates deny in that order. Planned
+and unknown actions deny as `permission_not_granted` at public boundaries, and
+a system resource grants no implicit authority.
+
+`AuthorizationService.require(action_id, typed_resource_context)` has exactly
+those two method arguments because the request context, caller-owned
+`AsyncSession`, and actor-self revalidator are constructor-bound. The service
+stages one bounded decision event and never commits. A denied mutation rolls
+back first, then restages the unchanged denial in a clean transaction so no
+business mutation can share a denial commit.
 
 `AuthorizationDecision` carries the stable `ActionId` in addition to permission,
 resource, scope, matched authority, and denial information. The action identifier

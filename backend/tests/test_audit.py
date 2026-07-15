@@ -23,7 +23,12 @@ from app.modules.audit.schemas import (
     AuthorityEventType,
 )
 from app.modules.audit.service import AuditService
-from app.modules.authorization.catalogue import ACTION_DEFINITIONS, ActionId, PermissionId
+from app.modules.authorization.catalogue import (
+    ACTION_DEFINITIONS,
+    ActionAvailability,
+    ActionId,
+    PermissionId,
+)
 from app.modules.tasks.models import AuditEvent
 
 
@@ -135,7 +140,7 @@ def _authority_input(event_type: AuthorityEventType, **overrides) -> AuthorityAu
     return AuthorityAuditEventInput(**values)
 
 
-def test_action_aware_audit_input_enforces_mapping_and_planned_availability() -> None:
+def test_action_aware_audit_input_enforces_mapping_and_action_availability() -> None:
     denied = _authority_input(
         AuthorityEventType.SENSITIVE_AUTHORIZATION_DENIED,
         permission_id="artifact.binding.read",
@@ -159,13 +164,27 @@ def test_action_aware_audit_input_enforces_mapping_and_planned_availability() ->
             action_id=None,
             denial_code="permission_not_granted",
         )
+    allowed_action_ids: set[ActionId] = set()
     for definition in ACTION_DEFINITIONS:
-        with pytest.raises(ValidationError, match="planned action"):
-            _authority_input(
+        if definition.availability is ActionAvailability.PLANNED:
+            with pytest.raises(ValidationError, match="planned action"):
+                _authority_input(
+                    AuthorityEventType.SENSITIVE_AUTHORIZATION_ALLOWED,
+                    permission_id=definition.permission_id,
+                    action_id=definition.action_id,
+                )
+        else:
+            allowed = _authority_input(
                 AuthorityEventType.SENSITIVE_AUTHORIZATION_ALLOWED,
                 permission_id=definition.permission_id,
                 action_id=definition.action_id,
             )
+            assert allowed.action_id is not None
+            allowed_action_ids.add(allowed.action_id)
+    assert allowed_action_ids == {
+        ActionId.ACTOR_PROFILE_READ_SELF,
+        ActionId.ACTOR_PROFILE_UPDATE_SELF,
+    }
     with pytest.raises(TypeError, match="invalid authority audit input"):
         _authority_input(
             AuthorityEventType.SENSITIVE_AUTHORIZATION_DENIED,

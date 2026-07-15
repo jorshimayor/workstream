@@ -49,6 +49,18 @@ class ActorRepository:
             query = query.with_for_update()
         return await self._session.scalar(query.execution_options(populate_existing=True))
 
+    async def get_identity_link_by_id(
+        self,
+        identity_link_id: str,
+        *,
+        for_update: bool = False,
+    ) -> ActorIdentityLink | None:
+        """Load one canonical identity link by its internal identifier."""
+        query = select(ActorIdentityLink).where(ActorIdentityLink.id == identity_link_id)
+        if for_update:
+            query = query.with_for_update()
+        return await self._session.scalar(query.execution_options(populate_existing=True))
+
     async def get_actor_profile(
         self,
         actor_profile_id: str,
