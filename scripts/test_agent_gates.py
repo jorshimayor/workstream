@@ -2368,6 +2368,9 @@ def test_loop_memory_workflow_isolated_write_boundary() -> None:
     assert "contents: write" in workflow
     assert "pull-requests: read" in workflow
     assert "LOOP_MEMORY_SIGNING_KEY" in workflow
+    assert workflow.count("LOOP_MEMORY_SIGNING_KEY:") == 1
+    assert "LOOP_MEMORY_PRIVATE_KEY" not in workflow
+    assert 'trap \'rm -f "${private_key}"\' EXIT' in workflow
     assert "prepare-state" in workflow
     assert ".agent-loop/STATE.sig" in workflow
     assert 'git -C "${state_dir}" add -f --' in workflow
