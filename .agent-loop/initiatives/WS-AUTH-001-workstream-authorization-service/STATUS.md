@@ -83,7 +83,8 @@ repair, and all required internal reviewer tracks passed, then PR #130 merged
 as `90eca12`. Signed schema-v2 memory verified that merge and stopped at
 AUTH-08. The user explicitly started AUTH-08. Its inherited L1 contract failed
 initial security/architecture, QA/product, and senior/CI/docs review before
-runtime edits; the repaired contract is awaiting fresh exact-head review.
+runtime edits. The repaired contract passed all required preimplementation
+tracks at `cbe7c6c`; bounded AUTH-08 implementation is active.
 
 ## Active planning chunk
 
@@ -116,7 +117,7 @@ None.
 | `WS-AUTH-001-07` | Split | `codex/ws-auth-001-07-authorization-kernel` | - | Required L1 review rejected the combined contract before runtime edits. |
 | `WS-AUTH-001-07A` | Merged | `codex/ws-auth-001-07-authorization-kernel` | #126 | Merged as `e9d72a1`; 74 permissions, 50 planned actions, and action-aware audit parity only. |
 | `WS-AUTH-001-07B` | Merged | `codex/ws-auth-001-07b-deny-default-kernel` | #130 | Merged as `90eca12`; signed memory passed. |
-| `WS-AUTH-001-08` | Contract repair | `codex/ws-auth-001-08-bootstrap-admin-grants` | - | Explicitly started; initial L1 review failed before runtime edits; repaired contract awaiting review. |
+| `WS-AUTH-001-08` | Implementing | `codex/ws-auth-001-08-bootstrap-admin-grants` | - | Exact-head L1 plan review passed at `cbe7c6c`; runtime implementation active. |
 | `WS-AUTH-001-09` | Proposed | - | - | Actor/link states and service actors. |
 | `WS-AUTH-001-10` | Proposed | - | - | Project contributor grants. |
 | `WS-AUTH-001-11` | Proposed | - | - | Project identity/guide/source/read cutover. |

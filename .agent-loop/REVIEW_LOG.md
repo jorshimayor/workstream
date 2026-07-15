@@ -1,5 +1,13 @@
 # Review Log
 
+## 2026-07-15 - WS-AUTH-001-08 Plan Review Passed
+
+All required preimplementation tracks passed the repaired AUTH-08 contract at
+exact clean SHA `cbe7c6c3552f3a26feda20c959e6dcd4bbe16a89`. Security/auth,
+architecture, QA/test, product/ops, senior engineering, CI integrity, docs,
+reuse/dedup, and circuit breaker report no open findings. Runtime implementation
+may begin within the reviewed contract; AUTH-09 remains inactive.
+
 ## 2026-07-15 - WS-AUTH-001-08 Initial Plan Rejected
 
 PR #130 merged AUTH-07B as `90eca12`; signed schema-v2 memory passed and the

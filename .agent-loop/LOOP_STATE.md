@@ -17,8 +17,9 @@
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: AUTH-08 runtime implementation is blocked until its repaired L1
-  contract passes fresh exact-head preimplementation review.
+- Current gate: AUTH-08 repaired L1 contract passed exact-head preimplementation
+  review at `cbe7c6c`; bounded runtime implementation and deterministic evidence
+  are active.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
@@ -26,7 +27,7 @@
 - Authorization checkpoint: merged main contains 74 PermissionIds and 50
   ActionIds, with only the two actor-self actions active. The repaired AUTH-08
   contract proposes exactly seven administrative actions, the five-role
-  matrix, and durable grants; runtime has not started. AUTH-09 provisions fixed
+  matrix, and durable grants; implementation is active. AUTH-09 provisions fixed
   service principals, and
   each owning WS-ART feature chunk activates only its own canonical actions.
 - Parallel artifact checkpoint: `WS-ART-001-02A1` was explicitly started and

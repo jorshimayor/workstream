@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-08` | Bootstrap And Administrative Role Grants | L1 | Explicitly started; repaired contract awaiting fresh L1 review |
+| `WS-AUTH-001-08` | Bootstrap And Administrative Role Grants | L1 | L1 plan review passed at `cbe7c6c`; implementation active |
 | `WS-ART-001-02A1` | External Service Adapter Foundation | L1 | Active after explicit user start on 2026-07-15 |
 
 Live post-merge state remains read from signed `automation/loop-memory`
