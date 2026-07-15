@@ -8,11 +8,14 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps.auth import get_registered_actor
+from app.api.deps.auth import actor_registry_http_error, get_registered_actor
 from app.core.api_controls import error_response
 from app.core.permissions import PermissionDenied
 from app.db.session import get_db_session
-from app.modules.actors.schemas import ActorProfileActivationRequest, ActorProfileResponse
+from app.modules.actors.schemas import (
+    LegacyWorkflowEligibilityActivationRequest,
+    LegacyWorkflowEligibilityResponse,
+)
 from app.modules.actors.service import ActorRegistryError, ActorService
 from app.modules.tasks.schemas import (
     AuditEventResponse,
@@ -112,27 +115,18 @@ def permission_http_error(exc: PermissionDenied) -> HTTPException:
     return HTTPException(status_code=403, detail=str(exc))
 
 
-def actor_registry_http_error(exc: ActorRegistryError) -> HTTPException:
-    """Convert an actor-registry failure into an HTTP error."""
-    return HTTPException(status_code=exc.status_code, detail=str(exc))
-
-
 @router.post(
     "/workers/me/profile",
-    response_model=ActorProfileResponse,
+    response_model=LegacyWorkflowEligibilityResponse,
 )
 async def ensure_worker_profile(
-    payload: ActorProfileActivationRequest,
+    payload: LegacyWorkflowEligibilityActivationRequest,
     actor: Annotated[ActorContext, Depends(get_registered_actor)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
-) -> ActorProfileResponse:
-    """Create or refresh the current worker profile from trusted Flow identity."""
+) -> LegacyWorkflowEligibilityResponse:
+    """Activate bounded legacy intake metadata without creating authority."""
     try:
-        return await ActorService(session).activate_worker_profile(
-            actor,
-            payload,
-            identity_already_refreshed=True,
-        )
+        return await ActorService(session).activate_legacy_workflow_eligibility(actor, payload)
     except PermissionDenied as exc:
         raise permission_http_error(exc) from exc
     except ActorRegistryError as exc:
@@ -183,9 +177,7 @@ async def get_task(
         422: {
             "description": "Locked task context is missing or inconsistent.",
             "content": {
-                "application/json": {
-                    "schema": TASK_LOCKED_CONTEXT_DOMAIN_ERROR_RESPONSE_SCHEMA
-                }
+                "application/json": {"schema": TASK_LOCKED_CONTEXT_DOMAIN_ERROR_RESPONSE_SCHEMA}
             },
         }
     },
@@ -215,9 +207,7 @@ async def get_task_work_context(
         422: {
             "description": "Locked task context is missing or inconsistent.",
             "content": {
-                "application/json": {
-                    "schema": TASK_LOCKED_CONTEXT_DOMAIN_ERROR_RESPONSE_SCHEMA
-                }
+                "application/json": {"schema": TASK_LOCKED_CONTEXT_DOMAIN_ERROR_RESPONSE_SCHEMA}
             },
         }
     },
@@ -247,9 +237,7 @@ async def get_task_submission_requirements(
         422: {
             "description": "Locked task context is missing or inconsistent.",
             "content": {
-                "application/json": {
-                    "schema": TASK_LOCKED_CONTEXT_DOMAIN_ERROR_RESPONSE_SCHEMA
-                }
+                "application/json": {"schema": TASK_LOCKED_CONTEXT_DOMAIN_ERROR_RESPONSE_SCHEMA}
             },
         }
     },

@@ -439,13 +439,13 @@ def test_openapi_documents_request_error_and_response_context() -> None:
         for method, operation in path_item.items()
         if method in methods and operation.get("security")
     )
-    assert len(route_inventory) == 46
+    assert len(route_inventory) == 48
     assert sha256("\n".join(route_inventory).encode()).hexdigest() == (
-        "991f50d0dd6009e96c1cd8d0a8b6f403d6f48d81bb247075c103a9d74341425b"
+        "fa394a491b7e24f53f373e7ff54f4699d72d04a1ab88c79b53f70ffb48f2592e"
     )
-    assert len(protected_inventory) == 44
+    assert len(protected_inventory) == 46
     assert sha256("\n".join(protected_inventory).encode()).hexdigest() == (
-        "ae15e39df8b1710e16b9c20cfa588a8ee8f96a98505f34e1cbcc5fe4c96a17d4"
+        "faa2176c8b222a6e3ae216b5d1dfd1c1b5a4c436045b13d3d2d8e7de5818706e"
     )
     assert set(schema["paths"]["/health"]["get"]["responses"]) == {"200", "400", "500"}
     assert {"401", "403", "503"} <= set(

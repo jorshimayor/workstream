@@ -3,10 +3,11 @@ from __future__ import annotations
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import json
+import os
 from pathlib import Path
 import threading
 import time
-from uuid import uuid4
+from uuid import NAMESPACE_URL, uuid4, uuid5
 
 import pytest
 from alembic import command
@@ -16,6 +17,23 @@ from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.adapters.auth.dev import actor_id_from_external_identity
+from app.modules.actors.legacy_classification import (
+    CLASSIFICATION_FILE_ENV,
+    LegacyActorClassification,
+    LegacyActorClassificationManifest,
+    LegacyActorRow,
+    LegacyClassificationError,
+    build_envelope,
+    canonical_envelope_bytes,
+    database_binding_identifier,
+)
+
+
+def _alembic_config() -> Config:
+    project_root = Path(__file__).resolve().parents[1]
+    config = Config(str(project_root / "alembic.ini"))
+    config.set_main_option("script_location", str(project_root / "alembic"))
+    return config
 
 
 def test_alembic_upgrade_and_downgrade(isolated_database_env: str, migration_lock) -> None:
@@ -165,7 +183,7 @@ def test_post_submit_policy_upgrade_blocks_pre_provenance_runtime_rows(
     assert columns_exist is False
 
 
-def test_actor_profile_registry_removes_obsolete_profile_tables(
+def test_canonical_actor_registry_separates_authority_from_legacy_workflow_metadata(
     isolated_database_env: str,
     migration_lock,
 ) -> None:
@@ -182,10 +200,184 @@ def test_actor_profile_registry_removes_obsolete_profile_tables(
         finally:
             command.downgrade(config, "base")
 
-    assert "actor_identities" in table_names
     assert "actor_profiles" in table_names
+    assert "actor_identity_links" in table_names
+    assert "legacy_actor_identities" in table_names
+    assert "legacy_workflow_eligibility" in table_names
+    assert "actor_identities" not in table_names
     assert "worker_profiles" not in table_names
     assert "reviewer_profiles" not in table_names
+
+
+def test_canonical_actor_upgrade_rejects_unclassified_legacy_rows(
+    isolated_database_env: str,
+    migration_lock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Fail closed before changing tables when non-empty legacy data is ambiguous."""
+    config = _alembic_config()
+    actor_id = actor_id_from_external_identity(
+        "https://identity.test",
+        "unclassified-human",
+    )
+    monkeypatch.delenv(CLASSIFICATION_FILE_ENV, raising=False)
+    with migration_lock():
+        try:
+            command.downgrade(config, "base")
+            command.upgrade(config, "0019_authority_idempotency")
+            asyncio.run(
+                _seed_pre_0020_actor(
+                    isolated_database_env,
+                    actor_id=actor_id,
+                    subject="unclassified-human",
+                )
+            )
+
+            with pytest.raises(
+                LegacyClassificationError,
+                match="^classification_file_not_configured$",
+            ):
+                command.upgrade(config, "0020_canonical_actor_profile")
+
+            state = asyncio.run(_pre_0020_actor_state(isolated_database_env, actor_id))
+        finally:
+            command.downgrade(config, "base")
+
+    assert state == {"revision": "0019_authority_idempotency", "legacy_rows": 1}
+
+
+def test_canonical_actor_upgrade_redacts_invalid_legacy_row_values(
+    isolated_database_env: str,
+    migration_lock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Keep invalid source identity values out of migration diagnostics."""
+    config = _alembic_config()
+    raw_actor_id = "raw-private-invalid-actor-id"
+    monkeypatch.delenv(CLASSIFICATION_FILE_ENV, raising=False)
+    with migration_lock():
+        try:
+            command.downgrade(config, "base")
+            command.upgrade(config, "0019_authority_idempotency")
+            asyncio.run(
+                _seed_pre_0020_actor(
+                    isolated_database_env,
+                    actor_id=raw_actor_id,
+                    subject="raw-private-subject",
+                )
+            )
+            with pytest.raises(LegacyClassificationError) as captured:
+                command.upgrade(config, "0020_canonical_actor_profile")
+            assert str(captured.value) == "invalid_source_rows"
+            assert raw_actor_id not in str(captured.value)
+            state = asyncio.run(_pre_0020_actor_state(isolated_database_env, raw_actor_id))
+        finally:
+            command.downgrade(config, "base")
+
+    assert state == {"revision": "0019_authority_idempotency", "legacy_rows": 1}
+
+
+def test_canonical_actor_classified_upgrade_preserves_identity_and_attribution(
+    isolated_database_env: str,
+    migration_lock,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Consume bound evidence once and downgrade later without the external file."""
+    config = _alembic_config()
+    issuer = "https://identity.test"
+    subject = "classified-human"
+    actor_id = actor_id_from_external_identity(issuer, subject)
+    audit_event_id = str(uuid4())
+    envelope_path = tmp_path / "classification-envelope.json"
+    with migration_lock():
+        try:
+            command.downgrade(config, "base")
+            command.upgrade(config, "0019_authority_idempotency")
+            asyncio.run(
+                _seed_pre_0020_actor(
+                    isolated_database_env,
+                    actor_id=actor_id,
+                    subject=subject,
+                    audit_event_id=audit_event_id,
+                )
+            )
+            binding = asyncio.run(_legacy_database_binding(isolated_database_env))
+            row = LegacyActorRow(actor_id=actor_id, issuer=issuer, subject=subject)
+            envelope = build_envelope(
+                LegacyActorClassificationManifest(
+                    schema_version=1,
+                    classifications=(
+                        LegacyActorClassification(
+                            actor_id=actor_id,
+                            issuer=issuer,
+                            subject=subject,
+                            subject_kind="human",
+                        ),
+                    ),
+                ),
+                (row,),
+                database_binding=binding,
+                generated_at="2026-07-15T12:00:00Z",
+            )
+            envelope_path.write_bytes(canonical_envelope_bytes(envelope))
+            os.chmod(envelope_path, 0o600)
+            monkeypatch.setenv(CLASSIFICATION_FILE_ENV, str(envelope_path))
+
+            command.upgrade(config, "0020_canonical_actor_profile")
+            upgraded = asyncio.run(
+                _canonical_actor_migration_state(
+                    isolated_database_env,
+                    actor_id,
+                    audit_event_id,
+                )
+            )
+            asyncio.run(
+                _update_canonical_actor_display_fields(
+                    isolated_database_env,
+                    actor_id,
+                    display_name="Canonical Human",
+                    contact_email=None,
+                )
+            )
+            envelope_path.unlink()
+            monkeypatch.delenv(CLASSIFICATION_FILE_ENV, raising=False)
+            command.downgrade(config, "0019_authority_idempotency")
+            restored = asyncio.run(_pre_0020_actor_state(isolated_database_env, actor_id))
+            restored_display = asyncio.run(
+                _pre_0020_actor_display_fields(isolated_database_env, actor_id)
+            )
+            with pytest.raises(
+                LegacyClassificationError,
+                match="^classification_file_not_configured$",
+            ):
+                command.upgrade(config, "0020_canonical_actor_profile")
+            reupgrade_rejected = asyncio.run(
+                _pre_0020_actor_state(isolated_database_env, actor_id)
+            )
+        finally:
+            command.downgrade(config, "base")
+
+    assert upgraded == {
+        "profile_id": actor_id,
+        "actor_kind": "human",
+        "display_name": None,
+        "contact_email": None,
+        "identity_link_id": str(
+            uuid5(NAMESPACE_URL, f"workstream:identity-link:{actor_id}")
+        ),
+        "identity_subject": subject,
+        "legacy_profile_type": "worker",
+        "audit_actor_id": actor_id,
+        "classified_count": 1,
+        "source_checksum": envelope.source_row_set_sha256,
+    }
+    assert restored == {"revision": "0019_authority_idempotency", "legacy_rows": 1}
+    assert restored_display == {
+        "display_name": "Canonical Human",
+        "email": None,
+    }
+    assert reupgrade_rejected == restored
 
 
 def test_actor_profile_registry_unique_constraints_are_enforced(
@@ -202,6 +394,48 @@ def test_actor_profile_registry_unique_constraints_are_enforced(
             command.downgrade(config, "base")
             command.upgrade(config, "head")
             asyncio.run(_assert_actor_registry_unique_constraints(isolated_database_env))
+        finally:
+            command.downgrade(config, "base")
+
+
+def test_canonical_actor_downgrade_refuses_nonactive_authority_state(
+    isolated_database_env: str,
+    migration_lock,
+) -> None:
+    """Prevent rollback from silently restoring revoked or inactive actors."""
+    config = _alembic_config()
+    actor_id = actor_id_from_external_identity("https://identity.test", "rollback-guard")
+    with migration_lock():
+        try:
+            command.downgrade(config, "base")
+            command.upgrade(config, "head")
+            asyncio.run(
+                _seed_canonical_actor_for_downgrade_guard(
+                    isolated_database_env, actor_id
+                )
+            )
+            for state in ("revoked", "suspended", "deactivated"):
+                asyncio.run(
+                    _set_canonical_actor_guard_state(
+                        isolated_database_env, actor_id, state
+                    )
+                )
+                with pytest.raises(
+                    RuntimeError,
+                    match="^canonical actor downgrade refused: inactive authority state$",
+                ):
+                    command.downgrade(config, "0019_authority_idempotency")
+                assert asyncio.run(_current_revision(isolated_database_env)) == (
+                    "0020_canonical_actor_profile"
+                )
+                asyncio.run(
+                    _reset_canonical_actor_guard_state(
+                        isolated_database_env,
+                        actor_id,
+                        owner_reset=state == "deactivated",
+                    )
+                )
+            command.downgrade(config, "0019_authority_idempotency")
         finally:
             command.downgrade(config, "base")
 
@@ -646,181 +880,600 @@ async def _fetch_table_names(database_url: str) -> set[str]:
         await engine.dispose()
 
 
-async def _assert_actor_registry_unique_constraints(database_url: str) -> None:
-    """Insert duplicates and prove actor registry unique constraints reject them."""
+async def _seed_pre_0020_actor(
+    database_url: str,
+    *,
+    actor_id: str,
+    subject: str,
+    audit_event_id: str | None = None,
+) -> None:
+    """Seed one valid legacy identity, typed profile, and optional attribution."""
     engine = create_async_engine(database_url)
-    actor_id = actor_id_from_external_identity("flow-test", "unique-actor")
     try:
         async with engine.begin() as connection:
             await connection.execute(
                 text(
-                    """
-                    insert into actor_identities (
-                        actor_id,
-                        external_subject,
-                        external_issuer,
-                        display_name,
-                        email,
-                        last_seen_roles,
-                        last_claim_snapshot,
-                        auth_source,
-                        is_dev_auth
-                    )
-                    values (
-                        :actor_id,
-                        'unique-actor',
-                        'flow-test',
-                        'Unique Actor',
-                        'unique@example.test',
-                        cast(:roles as json),
-                        cast(:claim_snapshot as json),
-                        'dev_mock',
-                        true
-                    )
-                    """
+                    "insert into actor_identities "
+                    "(actor_id,external_subject,external_issuer,display_name,email,"
+                    "last_seen_roles,last_claim_snapshot,auth_source,is_dev_auth) values "
+                    "(:actor,:subject,'https://identity.test','Legacy Human',"
+                    "'legacy@example.test','[\"worker\"]'::json,'{}'::json,'flow',false)"
                 ),
-                {
-                    "actor_id": actor_id,
-                    "roles": json.dumps(["worker"]),
-                    "claim_snapshot": json.dumps({"roles": ["worker"]}),
-                },
+                {"actor": actor_id, "subject": subject},
             )
             await connection.execute(
                 text(
-                    """
-                    insert into actor_profiles (
-                        id,
-                        actor_id,
-                        profile_type,
-                        status,
-                        skill_tags,
-                        scope_type,
-                        scope_id,
-                        profile_metadata
-                    )
-                    values (
-                        :id,
-                        :actor_id,
-                        'worker',
-                        'observed',
-                        cast(:skill_tags as json),
-                        'global',
-                        'global',
-                        cast(:profile_metadata as json)
-                    )
-                    """
+                    "insert into actor_profiles "
+                    "(id,actor_id,profile_type,status,skill_tags,scope_type,scope_id,"
+                    "profile_metadata) values "
+                    "(:id,:actor,'worker','active','[\"stem\"]'::json,'global','global',"
+                    "'{\"source\":\"legacy\"}'::json)"
                 ),
-                {
-                    "id": str(uuid4()),
-                    "actor_id": actor_id,
-                    "skill_tags": json.dumps([]),
-                    "profile_metadata": json.dumps({}),
-                },
+                {"id": str(uuid4()), "actor": actor_id},
             )
-
-        duplicate_actor_id = text(
-            """
-            insert into actor_identities (
-                actor_id,
-                external_subject,
-                external_issuer,
-                last_seen_roles,
-                last_claim_snapshot,
-                auth_source,
-                is_dev_auth
-            )
-            values (
-                :actor_id,
-                'different-subject',
-                'flow-test',
-                cast(:roles as json),
-                cast(:claim_snapshot as json),
-                'dev_mock',
-                true
-            )
-            """
-        )
-        duplicate_external_identity = text(
-            """
-            insert into actor_identities (
-                actor_id,
-                external_subject,
-                external_issuer,
-                last_seen_roles,
-                last_claim_snapshot,
-                auth_source,
-                is_dev_auth
-            )
-            values (
-                :actor_id,
-                'unique-actor',
-                'flow-test',
-                cast(:roles as json),
-                cast(:claim_snapshot as json),
-                'dev_mock',
-                true
-            )
-            """
-        )
-        duplicate_profile_scope = text(
-            """
-            insert into actor_profiles (
-                id,
-                actor_id,
-                profile_type,
-                status,
-                skill_tags,
-                scope_type,
-                scope_id,
-                profile_metadata
-            )
-            values (
-                :id,
-                :actor_id,
-                'worker',
-                'observed',
-                cast(:skill_tags as json),
-                'global',
-                'global',
-                cast(:profile_metadata as json)
-            )
-            """
-        )
-        await _expect_integrity_error(
-            engine,
-            duplicate_actor_id,
-            {
-                "actor_id": actor_id,
-                "roles": json.dumps([]),
-                "claim_snapshot": json.dumps({}),
-            },
-        )
-        await _expect_integrity_error(
-            engine,
-            duplicate_external_identity,
-            {
-                "actor_id": actor_id_from_external_identity("flow-test", "other-unique-actor"),
-                "roles": json.dumps([]),
-                "claim_snapshot": json.dumps({}),
-            },
-        )
-        await _expect_integrity_error(
-            engine,
-            duplicate_profile_scope,
-            {
-                "id": str(uuid4()),
-                "actor_id": actor_id,
-                "skill_tags": json.dumps([]),
-                "profile_metadata": json.dumps({}),
-            },
-        )
+            if audit_event_id is not None:
+                await connection.execute(
+                    text(
+                        "insert into audit_events "
+                        "(id,entity_type,entity_id,event_type,actor_id,external_subject,"
+                        "external_issuer,actor_roles,claim_snapshot,auth_source,is_dev_auth,"
+                        "reason,event_payload) values "
+                        "(:id,'task','legacy-task','task_created',:actor,:subject,"
+                        "'https://identity.test','[\"worker\"]'::json,'{}'::json,'flow',"
+                        "false,'migration attribution proof','{}'::json)"
+                    ),
+                    {"id": audit_event_id, "actor": actor_id, "subject": subject},
+                )
     finally:
         await engine.dispose()
 
 
+async def _legacy_database_binding(database_url: str) -> str:
+    """Return the classification binding for the current isolated database."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.connect() as connection:
+            database_name, database_oid = (
+                await connection.execute(
+                    text(
+                        "select current_database(), oid from pg_database "
+                        "where datname=current_database()"
+                    )
+                )
+            ).one()
+        return database_binding_identifier(database_name, database_oid)
+    finally:
+        await engine.dispose()
+
+
+async def _pre_0020_actor_state(database_url: str, actor_id: str) -> dict[str, object]:
+    """Return prior-head revision and retained legacy actor count."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.connect() as connection:
+            return {
+                "revision": await connection.scalar(
+                    text("select version_num from alembic_version")
+                ),
+                "legacy_rows": await connection.scalar(
+                    text("select count(*) from actor_identities where actor_id=:actor"),
+                    {"actor": actor_id},
+                ),
+            }
+    finally:
+        await engine.dispose()
+
+
+async def _pre_0020_actor_display_fields(
+    database_url: str,
+    actor_id: str,
+) -> dict[str, str | None]:
+    """Return restored legacy display fields after canonical downgrade."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.connect() as connection:
+            row = (
+                await connection.execute(
+                    text(
+                        "select display_name,email from actor_identities "
+                        "where actor_id=:actor"
+                    ),
+                    {"actor": actor_id},
+                )
+            ).one()
+            return {"display_name": row.display_name, "email": row.email}
+    finally:
+        await engine.dispose()
+
+
+async def _update_canonical_actor_display_fields(
+    database_url: str,
+    actor_id: str,
+    *,
+    display_name: str | None,
+    contact_email: str | None,
+) -> None:
+    """Apply canonical self-service fields before downgrade proof."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(
+                text(
+                    "update actor_profiles set display_name=:display_name, "
+                    "contact_email=:contact_email,updated_at=now() where id=:actor"
+                ),
+                {
+                    "actor": actor_id,
+                    "display_name": display_name,
+                    "contact_email": contact_email,
+                },
+            )
+    finally:
+        await engine.dispose()
+
+
+async def _canonical_actor_migration_state(
+    database_url: str,
+    actor_id: str,
+    audit_event_id: str,
+) -> dict[str, object]:
+    """Return canonical, compatibility, evidence, and attribution migration facts."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.connect() as connection:
+            profile = (
+                await connection.execute(
+                    text(
+                        "select id,actor_kind,display_name,contact_email "
+                        "from actor_profiles where id=:actor"
+                    ),
+                    {"actor": actor_id},
+                )
+            ).one()
+            identity_link = (
+                await connection.execute(
+                    text(
+                        "select id,subject from actor_identity_links "
+                        "where actor_profile_id=:actor"
+                    ),
+                    {"actor": actor_id},
+                )
+            ).one()
+            legacy_profile_type = await connection.scalar(
+                text(
+                    "select profile_type from legacy_workflow_eligibility "
+                    "where actor_id=:actor"
+                ),
+                {"actor": actor_id},
+            )
+            audit_actor_id = await connection.scalar(
+                text("select actor_id from audit_events where id=:event"),
+                {"event": audit_event_id},
+            )
+            migration_state = (
+                await connection.execute(
+                    text(
+                        "select classified_count,source_row_set_sha256 "
+                        "from actor_profile_migration_state where id=1"
+                    )
+                )
+            ).one()
+            return {
+                "profile_id": profile.id,
+                "actor_kind": profile.actor_kind,
+                "display_name": profile.display_name,
+                "contact_email": profile.contact_email,
+                "identity_link_id": identity_link.id,
+                "identity_subject": identity_link.subject,
+                "legacy_profile_type": legacy_profile_type,
+                "audit_actor_id": audit_actor_id,
+                "classified_count": migration_state.classified_count,
+                "source_checksum": migration_state.source_row_set_sha256,
+            }
+    finally:
+        await engine.dispose()
+
+
+async def _current_revision(database_url: str) -> str:
+    """Return the exact current Alembic revision."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.connect() as connection:
+            return str(await connection.scalar(text("select version_num from alembic_version")))
+    finally:
+        await engine.dispose()
+
+
+async def _seed_canonical_actor_for_downgrade_guard(
+    database_url: str,
+    actor_id: str,
+) -> None:
+    """Seed one complete active canonical actor for rollback guard tests."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            await _insert_canonical_actor(connection, actor_id, "rollback-guard", "human")
+    finally:
+        await engine.dispose()
+
+
+async def _set_canonical_actor_guard_state(
+    database_url: str,
+    actor_id: str,
+    state: str,
+) -> None:
+    """Put one actor in a reviewed rollback stop state."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            if state == "revoked":
+                await connection.execute(
+                    text(
+                        "update actor_identity_links set status='revoked', "
+                        "revoked_by=:actor, revoked_at=now(), revoked_reason='test guard' "
+                        "where actor_profile_id=:actor"
+                    ),
+                    {"actor": actor_id},
+                )
+            elif state == "suspended":
+                await connection.execute(
+                    text(
+                        "update actor_profiles set status='suspended', suspended_by=:actor, "
+                        "suspended_at=now(), suspension_reason='test guard' where id=:actor"
+                    ),
+                    {"actor": actor_id},
+                )
+            elif state == "deactivated":
+                await connection.execute(
+                    text(
+                        "update actor_profiles set status='deactivated', deactivated_by=:actor, "
+                        "deactivated_at=now(), deactivation_reason='test guard' where id=:actor"
+                    ),
+                    {"actor": actor_id},
+                )
+            else:
+                raise AssertionError(f"unknown test state: {state}")
+    finally:
+        await engine.dispose()
+
+
+async def _reset_canonical_actor_guard_state(
+    database_url: str,
+    actor_id: str,
+    *,
+    owner_reset: bool,
+) -> None:
+    """Restore test-owned state after proving the migration refuses it."""
+    engine = create_async_engine(database_url)
+    history_guard_disabled = False
+    try:
+        try:
+            if owner_reset:
+                async with engine.begin() as connection:
+                    await connection.execute(
+                        text(
+                            "alter table actor_profiles disable trigger "
+                            "actor_profile_history_guard"
+                        )
+                    )
+                history_guard_disabled = True
+            async with engine.begin() as connection:
+                await connection.execute(
+                    text(
+                        "update actor_profiles set status='active', suspended_by=null, "
+                        "suspended_at=null, suspension_reason=null, deactivated_by=null, "
+                        "deactivated_at=null, deactivation_reason=null where id=:actor"
+                    ),
+                    {"actor": actor_id},
+                )
+                await connection.execute(
+                    text(
+                        "update actor_identity_links set status='active', revoked_by=null, "
+                        "revoked_at=null, revoked_reason=null where actor_profile_id=:actor"
+                    ),
+                    {"actor": actor_id},
+                )
+        finally:
+            if history_guard_disabled:
+                async with engine.begin() as connection:
+                    await connection.execute(
+                        text(
+                            "alter table actor_profiles enable trigger "
+                            "actor_profile_history_guard"
+                        )
+                    )
+    finally:
+        await engine.dispose()
+
+
+async def _assert_actor_registry_unique_constraints(database_url: str) -> None:
+    """Prove canonical indexes, constraints, timestamps, and history guards."""
+    engine = create_async_engine(database_url)
+    actor_id = actor_id_from_external_identity("https://identity.test", "unique-actor")
+    try:
+        async with engine.begin() as connection:
+            await _insert_canonical_actor(connection, actor_id, "unique-actor", "human")
+            index_rows = (
+                await connection.execute(
+                    text(
+                        "select indexname,indexdef from pg_indexes "
+                        "where schemaname=current_schema() and "
+                        "tablename in ('actor_profiles','actor_identity_links')"
+                    )
+                )
+            ).all()
+            indexes = {row.indexname: row.indexdef for row in index_rows}
+            assert "(status, actor_kind)" in indexes[
+                "ix_actor_profiles_status_actor_kind"
+            ]
+            assert "(last_seen_at)" in indexes["ix_actor_profiles_last_seen_at"]
+            assert "(issuer, subject, status)" in indexes[
+                "ix_actor_identity_links_issuer_subject_status"
+            ]
+            assert "ix_actor_profiles_actor_kind" not in indexes
+            assert "ix_actor_profiles_status" not in indexes
+            assert "ix_actor_identity_links_status" not in indexes
+            timestamps = (
+                await connection.execute(
+                    text(
+                        "select p.created_at,p.updated_at,l.linked_at,l.last_verified_at "
+                        "from actor_profiles p join actor_identity_links l "
+                        "on l.actor_profile_id=p.id where p.id=:actor"
+                    ),
+                    {"actor": actor_id},
+                )
+            ).one()
+            assert all(value is not None and value.tzinfo is not None for value in timestamps)
+
+        await _expect_integrity_error(
+            engine,
+            text(
+                "insert into actor_profiles "
+                "(id,actor_kind,status,provisioning_method,created_by) values "
+                "(:actor,'human','active','automatic_first_access',:actor)"
+            ),
+            {"actor": actor_id},
+        )
+        await _expect_integrity_error(
+            engine,
+            text(
+                "insert into actor_identity_links "
+                "(id,actor_profile_id,issuer,subject,subject_kind,status,linked_by) values "
+                "(:id,:actor,'https://identity.test','second-link','human','active',:actor)"
+            ),
+            {"id": str(uuid4()), "actor": actor_id},
+        )
+
+        invalid_profiles = (
+            ("not-a-uuid", "human", "active", "automatic_first_access", {}),
+            (str(uuid4()), "agent", "active", "automatic_first_access", {}),
+            (str(uuid4()), "human", "unknown", "automatic_first_access", {}),
+            (str(uuid4()), "human", "active", "manual_service_provisioning", {}),
+            (
+                str(uuid4()),
+                "human",
+                "suspended",
+                "automatic_first_access",
+                {},
+            ),
+        )
+        for invalid_id, kind, status, method, lifecycle in invalid_profiles:
+            await _expect_integrity_error(
+                engine,
+                text(
+                    "insert into actor_profiles "
+                    "(id,actor_kind,status,provisioning_method,created_by) values "
+                    "(:id,:kind,:status,:method,:id)"
+                ),
+                {
+                    "id": invalid_id,
+                    "kind": kind,
+                    "status": status,
+                    "method": method,
+                    **lifecycle,
+                },
+            )
+
+        invalid_links = (
+            {"link_id": "not-a-uuid"},
+            {"issuer": " "},
+            {"link_subject": " "},
+            {"subject_kind": "agent"},
+            {"status": "unknown"},
+            {"status": "revoked"},
+        )
+        for position, overrides in enumerate(invalid_links):
+            await _expect_invalid_canonical_pair(
+                engine,
+                subject=f"invalid-link-{position}",
+                **overrides,
+            )
+
+        await _expect_dbapi_error(
+            engine,
+            text("update actor_profiles set actor_kind='service' where id=:actor"),
+            {"actor": actor_id},
+        )
+        await _expect_dbapi_error(
+            engine,
+            text(
+                "update actor_identity_links set subject='changed' "
+                "where actor_profile_id=:actor"
+            ),
+            {"actor": actor_id},
+        )
+        await _expect_dbapi_error(
+            engine,
+            text("delete from actor_profiles where id=:actor"),
+            {"actor": actor_id},
+        )
+        await _expect_dbapi_error(
+            engine,
+            text("delete from actor_identity_links where actor_profile_id=:actor"),
+            {"actor": actor_id},
+        )
+        orphan_id = actor_id_from_external_identity(
+            "https://identity.test", "orphan-profile"
+        )
+        await _expect_integrity_error(
+            engine,
+            text(
+                "insert into actor_profiles "
+                "(id,actor_kind,status,provisioning_method,created_by) values "
+                "(:actor,'human','active','automatic_first_access',:actor)"
+            ),
+            {"actor": orphan_id},
+        )
+
+        connection = await engine.connect()
+        transaction = await connection.begin()
+        try:
+            await connection.execute(
+                text(
+                    "update actor_profiles set status='deactivated', "
+                    "deactivated_by=:actor,deactivated_at=now(),"
+                    "deactivation_reason='terminal proof' where id=:actor"
+                ),
+                {"actor": actor_id},
+            )
+            with pytest.raises(DBAPIError):
+                await connection.execute(
+                    text(
+                        "update actor_profiles set status='active',deactivated_by=null,"
+                        "deactivated_at=null,deactivation_reason=null where id=:actor"
+                    ),
+                    {"actor": actor_id},
+                )
+        finally:
+            await transaction.rollback()
+            await connection.close()
+
+        width_actor_id = actor_id_from_external_identity(
+            "https://identity.test", "s" * 200
+        )
+        async with engine.begin() as connection:
+            await _insert_canonical_actor(connection, width_actor_id, "s" * 200, "human")
+        oversized_actor_id = actor_id_from_external_identity(
+            "https://identity.test", "s" * 201
+        )
+        with pytest.raises(DBAPIError):
+            async with engine.begin() as connection:
+                await _insert_canonical_actor(
+                    connection, oversized_actor_id, "s" * 201, "human"
+                )
+
+        other_actor_id = actor_id_from_external_identity(
+            "https://identity.test", "other-unique-actor"
+        )
+        with pytest.raises(IntegrityError):
+            async with engine.begin() as connection:
+                await _insert_canonical_actor(
+                    connection,
+                    other_actor_id,
+                    "unique-actor",
+                    "human",
+                )
+
+        mismatched_actor_id = actor_id_from_external_identity(
+            "https://identity.test", "kind-mismatch"
+        )
+        with pytest.raises(IntegrityError):
+            async with engine.begin() as connection:
+                await _insert_canonical_actor(
+                    connection,
+                    mismatched_actor_id,
+                    "kind-mismatch",
+                    "service",
+                    link_kind="human",
+                )
+    finally:
+        await engine.dispose()
+
+
+async def _insert_canonical_actor(
+    connection,
+    actor_id: str,
+    subject: str,
+    actor_kind: str,
+    *,
+    link_kind: str | None = None,
+) -> None:
+    """Insert a complete profile-link pair in one deferred-constraint transaction."""
+    provisioning = (
+        "automatic_first_access"
+        if actor_kind == "human"
+        else "manual_service_provisioning"
+    )
+    await connection.execute(
+        text(
+            "insert into actor_profiles "
+            "(id,actor_kind,status,provisioning_method,created_by) values "
+            "(:actor,:kind,'active',:provisioning,:actor)"
+        ),
+        {"actor": actor_id, "kind": actor_kind, "provisioning": provisioning},
+    )
+    await connection.execute(
+        text(
+            "insert into actor_identity_links "
+            "(id,actor_profile_id,issuer,subject,subject_kind,status,linked_by) values "
+            "(:id,:actor,'https://identity.test',:subject,:kind,'active',:actor)"
+        ),
+        {
+            "id": str(uuid4()),
+            "actor": actor_id,
+            "subject": subject,
+            "kind": link_kind or actor_kind,
+        },
+    )
+
+
+async def _expect_invalid_canonical_pair(
+    engine,
+    *,
+    subject: str,
+    link_id: str | None = None,
+    issuer: str = "https://identity.test",
+    link_subject: str | None = None,
+    subject_kind: str = "human",
+    status: str = "active",
+) -> None:
+    """Assert that a malformed identity link cannot commit with its profile."""
+    actor_id = actor_id_from_external_identity("https://identity.test", subject)
+    with pytest.raises(IntegrityError):
+        async with engine.begin() as connection:
+            await connection.execute(
+                text(
+                    "insert into actor_profiles "
+                    "(id,actor_kind,status,provisioning_method,created_by) values "
+                    "(:actor,'human','active','automatic_first_access',:actor)"
+                ),
+                {"actor": actor_id},
+            )
+            await connection.execute(
+                text(
+                    "insert into actor_identity_links "
+                    "(id,actor_profile_id,issuer,subject,subject_kind,status,linked_by) "
+                    "values (:id,:actor,:issuer,:subject,:kind,:status,:actor)"
+                ),
+                {
+                    "id": link_id or str(uuid4()),
+                    "actor": actor_id,
+                    "issuer": issuer,
+                    "subject": subject if link_subject is None else link_subject,
+                    "kind": subject_kind,
+                    "status": status,
+                },
+            )
 async def _expect_integrity_error(engine, statement, params: dict) -> None:
     """Assert that one SQL statement raises a database integrity error."""
     with pytest.raises(IntegrityError):
+        async with engine.begin() as connection:
+            await connection.execute(statement, params)
+
+
+async def _expect_dbapi_error(engine, statement, params: dict) -> None:
+    """Assert that one statement is rejected by a database trigger or constraint."""
+    with pytest.raises(DBAPIError):
         async with engine.begin() as connection:
             await connection.execute(statement, params)
 

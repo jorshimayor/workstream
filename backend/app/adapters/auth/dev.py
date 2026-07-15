@@ -9,6 +9,7 @@ from app.interfaces.auth import AuthVerificationError
 from app.schemas.auth import (
     AuthVerificationResult,
     LegacyAuthorizationCompatibilityContext,
+    MAX_VERIFIED_IDENTITY_ANCHOR_CHARACTERS,
     VerifiedIssuerToken,
     actor_id_from_external_identity,
     normalize_legacy_roles,
@@ -34,11 +35,23 @@ class DevelopmentAuthVerifier:
             raise RuntimeError("development auth cannot run in production")
         if not settings.dev_auth_token:
             raise RuntimeError("WORKSTREAM_DEV_AUTH_TOKEN must be set for development auth")
-        if not settings.dev_auth_subject:
+        subject = settings.dev_auth_subject or ""
+        if (
+            not subject.strip()
+            or subject != subject.strip()
+            or len(subject) > MAX_VERIFIED_IDENTITY_ANCHOR_CHARACTERS
+        ):
             raise RuntimeError("WORKSTREAM_DEV_AUTH_SUBJECT must be set for development auth")
-        if not settings.dev_auth_issuer:
+        issuer = settings.dev_auth_issuer or ""
+        if (
+            not issuer.strip()
+            or issuer != issuer.strip()
+            or len(issuer) > MAX_VERIFIED_IDENTITY_ANCHOR_CHARACTERS
+        ):
             raise RuntimeError("WORKSTREAM_DEV_AUTH_ISSUER must be set for development auth")
         self._settings = settings
+        self._subject = subject
+        self._issuer = issuer
 
     async def verify(self, token: str) -> AuthVerificationResult:
         """Verify a local bearer token and return canonical and legacy views.
@@ -60,8 +73,8 @@ class DevelopmentAuthVerifier:
         now = int(datetime.now(UTC).timestamp())
         return AuthVerificationResult(
             token=VerifiedIssuerToken(
-                issuer=self._settings.dev_auth_issuer,
-                subject=self._settings.dev_auth_subject,
+                issuer=self._issuer,
+                subject=self._subject,
                 audience=("workstream",),
                 expires_at=now + int(timedelta(days=1).total_seconds()),
                 issued_at=now,

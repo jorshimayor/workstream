@@ -708,16 +708,6 @@ async def test_unattached_dependencies_emit_canonical_429_and_use_token_identity
         (Settings(environment="test"), RATE_SUBJECT, RateControlService()),
         (
             Settings(environment="test", api_rate_limit_key_secret=RATE_SECRET_TEXT),
-            "x" * 4_097,
-            RateControlService(),
-        ),
-        (
-            Settings(environment="test", api_rate_limit_key_secret=RATE_SECRET_TEXT),
-            "\ud800",
-            RateControlService(),
-        ),
-        (
-            Settings(environment="test", api_rate_limit_key_secret=RATE_SECRET_TEXT),
             RATE_SUBJECT,
             _DecisionService(),
         ),

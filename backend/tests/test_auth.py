@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import asyncio
 import base64
 import hashlib
@@ -48,6 +49,76 @@ def _application_paths(app) -> set[str]:
     return paths
 
 
+def test_legacy_submitter_eligibility_adapter_has_a_shrinking_static_allowlist() -> None:
+    """Confine the temporary bridge to its owner, lifecycle view, and intake gates."""
+    app_root = Path(__file__).resolve().parents[1] / "app"
+    compatibility_name = "LegacyWorkflowEligibilityCompatibility"
+    consumers: set[str] = set()
+    for path in app_root.rglob("*.py"):
+        tree = ast.parse(path.read_text(), filename=str(path))
+        defines_compatibility = any(
+            isinstance(node, ast.ClassDef) and node.name == compatibility_name
+            for node in ast.walk(tree)
+        )
+        imports_compatibility = any(
+            isinstance(node, ast.ImportFrom)
+            and any(alias.name == compatibility_name for alias in node.names)
+            for node in ast.walk(tree)
+        )
+        calls_compatibility = any(
+            isinstance(node, ast.Call)
+            and (
+                isinstance(node.func, ast.Name)
+                and node.func.id == compatibility_name
+                or isinstance(node.func, ast.Attribute)
+                and node.func.attr == compatibility_name
+            )
+            for node in ast.walk(tree)
+        )
+        if defines_compatibility or imports_compatibility or calls_compatibility:
+            consumers.add(path.relative_to(app_root).as_posix())
+
+    task_service_tree = ast.parse(
+        (app_root / "modules/tasks/service.py").read_text(),
+        filename="modules/tasks/service.py",
+    )
+    compatibility_calls: list[tuple[str, str]] = []
+    task_service_class = next(
+        node
+        for node in task_service_tree.body
+        if isinstance(node, ast.ClassDef) and node.name == "TaskService"
+    )
+    for method in task_service_class.body:
+        if not isinstance(method, ast.AsyncFunctionDef | ast.FunctionDef):
+            continue
+        compatibility_calls.extend(
+            (method.name, node.func.attr)
+            for node in ast.walk(method)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr
+            in {
+                "_require_legacy_submitter_eligibility",
+                "get_active_submitter_eligibility",
+            }
+        )
+
+    assert consumers == {
+        "modules/actors/service.py",
+        "modules/tasks/service.py",
+    }
+    assert sorted(compatibility_calls) == [
+        (
+            "_require_legacy_submitter_eligibility",
+            "get_active_submitter_eligibility",
+        ),
+        ("claim_task", "_require_legacy_submitter_eligibility"),
+        ("create_submission", "_require_legacy_submitter_eligibility"),
+        ("get_task_work_context", "get_active_submitter_eligibility"),
+        ("start_task", "_require_legacy_submitter_eligibility"),
+    ]
+
+
 @pytest.fixture(autouse=True)
 def clear_settings_cache() -> None:
     get_settings.cache_clear()
@@ -62,22 +133,39 @@ def auth_database_env(
     monkeypatch: pytest.MonkeyPatch,
     postgres_database_url: str,
     migration_lock,
+    reset_test_database_state,
 ) -> Iterator[str]:
     """Run auth route persistence tests against a migrated Postgres schema."""
     monkeypatch.setenv("WORKSTREAM_DATABASE_URL", postgres_database_url)
+    monkeypatch.setenv(
+        "WORKSTREAM_API_RATE_LIMIT_KEY_SECRET",
+        "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+    )
     get_settings.cache_clear()
     asyncio.run(db_session.dispose_engine())
 
     project_root = Path(__file__).resolve().parents[1]
     config = Config(str(project_root / "alembic.ini"))
     config.set_main_option("script_location", str(project_root / "alembic"))
-    with migration_lock():
-        command.downgrade(config, "base")
-        command.upgrade(config, "head")
-        yield postgres_database_url
-        command.downgrade(config, "base")
-    asyncio.run(db_session.dispose_engine())
-    get_settings.cache_clear()
+    try:
+        with migration_lock():
+            command.downgrade(config, "base")
+            try:
+                command.upgrade(config, "head")
+                yield postgres_database_url
+            finally:
+                try:
+                    asyncio.run(reset_test_database_state(postgres_database_url))
+                finally:
+                    try:
+                        asyncio.run(db_session.dispose_engine())
+                    finally:
+                        command.downgrade(config, "base")
+    finally:
+        try:
+            asyncio.run(db_session.dispose_engine())
+        finally:
+            get_settings.cache_clear()
 
 
 def _base64url_int(value: int) -> str:
@@ -231,6 +319,67 @@ async def test_local_hmac_fixture_uses_final_claim_shape() -> None:
     assert result.token.token_id == "local-token-id"
     assert result.legacy is not None
     assert result.legacy.roles == ("reviewer",)
+
+
+async def test_flow_auth_rejects_subject_above_persisted_identity_bound() -> None:
+    secret = "local-test-secret"
+    now = int(datetime.now(UTC).timestamp())
+    verifier = FlowAuthVerifier(
+        Settings(
+            environment="test",
+            auth_provider="flow",
+            flow_auth_issuer="https://issuer.local.test",
+            flow_auth_audience="workstream",
+            flow_auth_local_hmac_secret=secret,
+        )
+    )
+    token = issue_local_hmac_token(
+        secret,
+        {
+            "iss": "https://issuer.local.test",
+            "sub": "s" * 201,
+            "aud": "workstream",
+            "exp": now + 300,
+            "iat": now,
+            "jti": "oversized-subject",
+            "subject_kind": "human",
+            "scope": "workstream:access",
+        },
+    )
+
+    with pytest.raises(AuthVerificationError, match="token subject is required"):
+        await verifier.verify(token)
+
+
+@pytest.mark.parametrize("subject", ["   ", " padded-subject "])
+async def test_flow_auth_rejects_subject_whitespace_before_persistence(subject: str) -> None:
+    secret = "local-test-secret"
+    now = int(datetime.now(UTC).timestamp())
+    verifier = FlowAuthVerifier(
+        Settings(
+            environment="test",
+            auth_provider="flow",
+            flow_auth_issuer="https://issuer.local.test",
+            flow_auth_audience="workstream",
+            flow_auth_local_hmac_secret=secret,
+        )
+    )
+    token = issue_local_hmac_token(
+        secret,
+        {
+            "iss": "https://issuer.local.test",
+            "sub": subject,
+            "aud": "workstream",
+            "exp": now + 300,
+            "iat": now,
+            "jti": "whitespace-subject",
+            "subject_kind": "human",
+            "scope": "workstream:access",
+        },
+    )
+
+    with pytest.raises(AuthVerificationError, match="token subject is required"):
+        await verifier.verify(token)
 
 
 @pytest.mark.parametrize("environment", ["staging", "preview", "prod", "production"])
@@ -731,7 +880,7 @@ async def test_service_and_agent_tokens_receive_no_legacy_authority(
     assert agent.legacy is None
     assert space.legacy is None
     with pytest.raises(HTTPException) as exc_info:
-        await get_registered_actor(agent, None)  # type: ignore[arg-type]
+        await get_registered_actor(agent, None, None)  # type: ignore[arg-type]
     assert exc_info.value.status_code == 403
     assert exc_info.value.error_code == "unsupported_subject_kind"
 
@@ -1019,6 +1168,7 @@ async def test_jwks_and_introspection_use_distinct_owned_client_factories(
     assert clients["jwks"][0].is_closed
     assert clients["introspection"][0].is_closed
 
+
 @pytest.mark.parametrize(
     "response_override",
     [
@@ -1209,6 +1359,7 @@ def test_legacy_compatibility_dependency_has_fixed_consumer_allowlist() -> None:
         "adapters/auth/flow.py",
         "api/deps/api_controls.py",
         "api/deps/auth.py",
+        "api/deps/rate_controls.py",
         "core/auth.py",
         "interfaces/auth.py",
         "schemas/auth.py",
@@ -1342,10 +1493,10 @@ async def test_auth_me_maps_actor_registry_failure_to_service_unavailable(
     monkeypatch.setenv("WORKSTREAM_DEV_AUTH_ROLES", "worker")
     get_settings.cache_clear()
 
-    async def fail_register_actor(self, actor):
+    async def fail_resolve_actor(self, token, *, request_id, correlation_id):
         raise SQLAlchemyError("registry unavailable")
 
-    monkeypatch.setattr(ActorService, "register_actor", fail_register_actor)
+    monkeypatch.setattr(ActorService, "resolve_verified_actor", fail_resolve_actor)
     app = create_app()
 
     async with AsyncClient(
@@ -1445,6 +1596,45 @@ def test_dev_auth_requires_explicit_identity_fields(
 
     with pytest.raises(RuntimeError, match=error_message):
         DevelopmentAuthVerifier(settings)
+
+
+@pytest.mark.parametrize(
+    ("field_name", "error_message"),
+    [
+        ("dev_auth_subject", "WORKSTREAM_DEV_AUTH_SUBJECT must be set"),
+        ("dev_auth_issuer", "WORKSTREAM_DEV_AUTH_ISSUER must be set"),
+    ],
+)
+def test_dev_auth_rejects_whitespace_only_identity_anchors(
+    field_name: str,
+    error_message: str,
+) -> None:
+    values = {
+        "environment": "local",
+        "auth_provider": "dev",
+        "dev_auth_token": "local-token",
+        "dev_auth_subject": "subject",
+        "dev_auth_issuer": "issuer",
+    }
+    values[field_name] = " \t "
+
+    with pytest.raises(RuntimeError, match=error_message):
+        DevelopmentAuthVerifier(Settings(**values))
+
+
+@pytest.mark.parametrize("field_name", ["dev_auth_subject", "dev_auth_issuer"])
+def test_dev_auth_rejects_surrounding_identity_anchor_whitespace(field_name: str) -> None:
+    values = {
+        "environment": "local",
+        "auth_provider": "dev",
+        "dev_auth_token": "local-token",
+        "dev_auth_subject": "subject",
+        "dev_auth_issuer": "issuer",
+    }
+    values[field_name] = f" {values[field_name]} "
+
+    with pytest.raises(RuntimeError, match=f"WORKSTREAM_{field_name.upper()}"):
+        DevelopmentAuthVerifier(Settings(**values))
 
 
 async def test_flow_auth_verifier_boundary_rejects_unconfigured_verification() -> None:

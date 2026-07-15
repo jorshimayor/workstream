@@ -1,467 +1,392 @@
-"""Service layer for actor identity registration and profile eligibility."""
+"""Canonical actor resolution and bounded legacy workflow compatibility."""
 
 from __future__ import annotations
 
-from collections.abc import Iterable
-from datetime import UTC, datetime, timedelta
-from uuid import uuid4
+from dataclasses import dataclass
+from uuid import UUID, uuid4
 
 from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import get_settings
 from app.core.permissions import require_any_role
-from app.modules.audit.repository import AuditRepository
 from app.modules.actors.models import (
-    ACTOR_PROFILE_TYPES,
     GLOBAL_PROFILE_SCOPE_ID,
     GLOBAL_PROFILE_SCOPE_TYPE,
-    ActorIdentity,
+    ActorIdentityLink,
     ActorProfile,
+    LegacyActorIdentity,
+    LegacyWorkflowEligibility,
 )
 from app.modules.actors.repository import ActorRepository
-from app.modules.actors.schemas import ActorProfileActivationRequest, ActorProfileResponse
+from app.modules.actors.schemas import (
+    ActorProfileSelfResponse,
+    ActorProfileUpdateRequest,
+    LegacyWorkflowEligibilityActivationRequest,
+    LegacyWorkflowEligibilityResponse,
+)
+from app.modules.audit.repository import AuditRepository
+from app.modules.audit.schemas import (
+    ActorReferenceKind,
+    AuthorityAuditEventInput,
+    AuthorityEventType,
+)
+from app.modules.audit.service import AuditService
 from app.modules.tasks.models import AuditEvent
-from app.schemas.auth import ActorContext, normalized_relationship_profile_claims, sanitized_claim_snapshot
-
-TOKEN_OBSERVED_PROFILE_TYPES = {"worker", "reviewer", "admin", "project_manager"}
+from app.schemas.auth import ActorContext, VerifiedIssuerToken, actor_id_from_external_identity
 
 
 class ActorRegistryError(Exception):
-    """Base error for actor registry failures."""
+    """Stable actor-resolution failure safe for API translation."""
 
     status_code = 400
+    code = "actor_registry_error"
+
+
+class UnsupportedSubjectKind(ActorRegistryError):
+    status_code = 403
+    code = "unsupported_subject_kind"
+
+
+class ServiceActorNotProvisioned(ActorRegistryError):
+    status_code = 403
+    code = "service_actor_not_provisioned"
+
+
+class IdentityLinkRevoked(ActorRegistryError):
+    status_code = 403
+    code = "identity_link_revoked"
+
+
+class ActorSuspended(ActorRegistryError):
+    status_code = 403
+    code = "actor_suspended"
+
+
+class ActorDeactivated(ActorRegistryError):
+    status_code = 403
+    code = "actor_deactivated"
 
 
 class ActorProfileDisabled(ActorRegistryError):
-    """Raised when an explicit profile workflow tries to use a disabled profile."""
+    """Temporary compatibility denial for a disabled eligibility row."""
 
     status_code = 403
+    code = "legacy_workflow_eligibility_disabled"
+
+
+@dataclass(frozen=True)
+class ResolvedActor:
+    """Canonical profile and exact verified identity link for one request."""
+
+    profile: ActorProfile
+    identity_link: ActorIdentityLink
 
 
 class ActorService:
-    """Coordinates actor identity and profile registry rules."""
+    """Resolve canonical actors and own first-human provisioning transactions."""
 
     def __init__(self, session: AsyncSession) -> None:
-        """Create a service instance bound to one database session.
-
-        Args:
-            session: Async SQLAlchemy session for the current request.
-        """
         self._session = session
         self._repo = ActorRepository(session)
-        self._audit_repo = AuditRepository(session)
+        self._audit = AuditService(session)
+        self._legacy_audit = AuditRepository(session)
 
-    async def register_actor(self, actor: ActorContext) -> ActorIdentity:
-        """Create or refresh identity and observed profiles for a verified actor.
+    async def find_verified_actor(self, token: VerifiedIssuerToken) -> ResolvedActor | None:
+        """Return a canonical actor for an existing exact identity link."""
+        link = await self._repo.get_identity_link(token.issuer, token.subject)
+        if link is None:
+            return None
+        profile = await self._repo.get_actor_profile(link.actor_profile_id)
+        if profile is None:
+            raise RuntimeError("identity link references a missing actor profile")
+        self._validate_link(token, link, profile)
+        return ResolvedActor(profile=profile, identity_link=link)
 
-        Args:
-            actor: Trusted actor context returned by Flow token verification.
+    async def resolve_verified_actor(
+        self,
+        token: VerifiedIssuerToken,
+        *,
+        request_id: UUID,
+        correlation_id: UUID,
+    ) -> ResolvedActor:
+        """Resolve an existing actor or atomically provision one verified human."""
+        resolved = await self.find_verified_actor(token)
+        if resolved is not None:
+            return await self._touch_verified_actor(resolved)
+        if token.subject_kind == "service":
+            raise ServiceActorNotProvisioned("Service actor is not provisioned")
+        if token.subject_kind != "human":
+            raise UnsupportedSubjectKind("Unsupported subject kind")
 
-        Returns:
-            Persisted actor identity.
-        """
-        incoming_identity = self._identity_from_actor(actor)
-        existing_identity = await self._repo.get_identity(actor.actor_id, populate_existing=True)
-        if await self._can_skip_registry_refresh(actor, incoming_identity, existing_identity):
-            if existing_identity is None:
-                raise RuntimeError("actor registry freshness check returned an empty identity")
-            return existing_identity
+        await self._repo.lock_external_identity(token.issuer, token.subject)
+        resolved = await self.find_verified_actor(token)
+        if resolved is not None:
+            return await self._touch_verified_actor(resolved)
 
-        identity = await self._repo.upsert_identity(incoming_identity)
-        for profile_type in self._observed_profile_types(actor.roles):
-            await self.ensure_observed_profile(
-                actor,
-                profile_type=profile_type,
-                scope_type=GLOBAL_PROFILE_SCOPE_TYPE,
-                scope_id=GLOBAL_PROFILE_SCOPE_ID,
-                profile_metadata={"source": "verified_token_role"},
-                identity_already_refreshed=True,
-            )
-        for relationship in self._trusted_relationship_profiles(actor):
-            await self.ensure_observed_profile(
-                actor,
-                profile_type=relationship["profile_type"],
-                scope_type=relationship["scope_type"],
-                scope_id=relationship["scope_id"],
-                profile_metadata=relationship["profile_metadata"],
-                identity_already_refreshed=True,
-            )
+        profile_id = actor_id_from_external_identity(token.issuer, token.subject)
+        profile = ActorProfile(
+            id=profile_id,
+            actor_kind="human",
+            status="active",
+            provisioning_method="automatic_first_access",
+            display_name=None,
+            contact_email=None,
+            created_by=profile_id,
+            last_seen_at=func.now(),
+        )
+        link = ActorIdentityLink(
+            id=str(uuid4()),
+            actor_profile_id=profile_id,
+            issuer=token.issuer,
+            subject=token.subject,
+            subject_kind="human",
+            status="active",
+            linked_by=profile_id,
+        )
+        await self._repo.add_actor_profile(profile)
+        await self._repo.add_identity_link(link)
+        await self._write_provisioning_events(
+            profile,
+            link,
+            request_id=request_id,
+            correlation_id=correlation_id,
+        )
         await self._session.commit()
-        await self._session.refresh(identity)
+        await self._session.refresh(profile)
+        await self._session.refresh(link)
+        return ResolvedActor(profile=profile, identity_link=link)
+
+    async def update_self(
+        self,
+        resolved: ResolvedActor,
+        payload: ActorProfileUpdateRequest,
+    ) -> ActorProfileSelfResponse:
+        """Update only the active human actor's owned display fields."""
+        profile = await self._repo.get_actor_profile(resolved.profile.id, for_update=True)
+        if profile is None:
+            raise RuntimeError("resolved actor profile disappeared")
+        self._require_active_human(profile)
+        if "display_name" in payload.model_fields_set:
+            profile.display_name = payload.display_name
+        if "contact_email" in payload.model_fields_set:
+            profile.contact_email = payload.contact_email
+        profile.updated_at = func.now()
+        await self._session.commit()
+        await self._session.refresh(profile)
+        return self.self_response(profile)
+
+    async def refresh_legacy_identity(self, actor: ActorContext) -> LegacyActorIdentity:
+        """Persist token observations only in the non-authoritative compatibility table."""
+        identity = await self._repo.upsert_legacy_identity(self._legacy_identity_from_actor(actor))
+        await self._session.commit()
         return identity
 
-    async def ensure_observed_profile(
+    async def activate_legacy_workflow_eligibility(
         self,
         actor: ActorContext,
-        *,
-        profile_type: str,
-        scope_type: str,
-        scope_id: str,
-        profile_metadata: dict | None = None,
-        identity_already_refreshed: bool = False,
-    ) -> ActorProfile:
-        """Create or refresh an observed profile without changing eligibility.
-
-        Args:
-            actor: Trusted actor context.
-            profile_type: Profile type to observe.
-            scope_type: Profile scope namespace.
-            scope_id: Profile scope identifier.
-            profile_metadata: Non-authoritative metadata to store.
-            identity_already_refreshed: Whether the caller already refreshed
-                the trusted identity in the current request.
-
-        Returns:
-            Persisted actor profile.
-        """
-        self._validate_profile_type(profile_type)
-        if not identity_already_refreshed:
-            await self._repo.upsert_identity(self._identity_from_actor(actor))
-        existing = await self._repo.get_profile(actor.actor_id, profile_type, scope_type, scope_id)
-        if existing is None:
-            inserted = await self._repo.insert_profile_if_absent(
-                ActorProfile(
-                    id=str(uuid4()),
-                    actor_id=actor.actor_id,
-                    profile_type=profile_type,
-                    status="observed",
-                    skill_tags=[],
-                    scope_type=scope_type,
-                    scope_id=scope_id,
-                    profile_metadata=profile_metadata or {},
-                )
-            )
-            profile = await self._repo.get_profile(actor.actor_id, profile_type, scope_type, scope_id)
-            if profile is None:
-                raise RuntimeError("actor profile insert did not return a persisted row")
-            if inserted:
-                await self._write_profile_audit(
-                    actor,
-                    profile,
-                    event_type="actor_profile_observed",
-                    from_status=None,
-                    to_status=profile.status,
-                    event_payload={"profile_metadata": profile.profile_metadata},
-                )
-            return profile
-
-        if existing.status != "observed":
-            return existing
-
-        next_metadata = existing.profile_metadata if profile_metadata is None else profile_metadata
-        if existing.profile_metadata == next_metadata:
-            return existing
-
-        previous_metadata = dict(existing.profile_metadata or {})
-        existing.profile_metadata = next_metadata
-        existing.updated_at = func.now()
-        await self._write_profile_audit(
-            actor,
-            existing,
-            event_type="actor_profile_observation_refreshed",
-            from_status=existing.status,
-            to_status=existing.status,
-            event_payload={
-                "previous_profile_metadata": previous_metadata,
-                "profile_metadata": existing.profile_metadata,
-            },
-        )
-        return existing
-
-    async def activate_worker_profile(
-        self,
-        actor: ActorContext,
-        payload: ActorProfileActivationRequest,
-        *,
-        identity_already_refreshed: bool = False,
-    ) -> ActorProfileResponse:
-        """Activate or refresh the current actor's worker profile.
-
-        Args:
-            actor: Trusted actor context.
-            payload: Worker-owned profile fields.
-            identity_already_refreshed: Whether the request dependency already
-                refreshed the identity row.
-
-        Returns:
-            Profile response joined with trusted identity metadata.
-
-        Raises:
-            ActorProfileDisabled: If the worker profile has been disabled.
-        """
+        payload: LegacyWorkflowEligibilityActivationRequest,
+    ) -> LegacyWorkflowEligibilityResponse:
+        """Activate temporary submitter intake metadata without creating authority."""
         require_any_role(actor, {"worker"})
-        identity = await self._identity_for_profile_mutation(
-            actor,
-            identity_already_refreshed=identity_already_refreshed,
+        await self._repo.lock_external_identity(
+            actor.external_issuer,
+            actor.external_subject,
         )
-        profile = await self._repo.get_profile(
+        identity = await self._repo.upsert_legacy_identity(self._legacy_identity_from_actor(actor))
+        eligibility = await self._repo.get_legacy_eligibility(
             actor.actor_id,
             "worker",
             GLOBAL_PROFILE_SCOPE_TYPE,
             GLOBAL_PROFILE_SCOPE_ID,
         )
-        if profile is None:
-            inserted = await self._repo.insert_profile_if_absent(
-                ActorProfile(
-                    id=str(uuid4()),
-                    actor_id=actor.actor_id,
-                    profile_type="worker",
-                    status="active",
-                    skill_tags=payload.skill_tags,
-                    scope_type=GLOBAL_PROFILE_SCOPE_TYPE,
-                    scope_id=GLOBAL_PROFILE_SCOPE_ID,
-                    profile_metadata={"source": "worker_profile_api"},
-                )
+        previous_status = None
+        previous_tags: list[str] = []
+        inserted = False
+        if eligibility is None:
+            eligibility = LegacyWorkflowEligibility(
+                id=str(uuid4()),
+                actor_id=actor.actor_id,
+                profile_type="worker",
+                status="active",
+                skill_tags=payload.skill_tags,
+                scope_type=GLOBAL_PROFILE_SCOPE_TYPE,
+                scope_id=GLOBAL_PROFILE_SCOPE_ID,
+                profile_metadata={"source": "legacy_worker_profile_api"},
             )
-            profile = await self._repo.get_profile(
+            inserted = await self._repo.insert_legacy_eligibility_if_absent(eligibility)
+            eligibility = await self._repo.get_legacy_eligibility(
                 actor.actor_id,
                 "worker",
                 GLOBAL_PROFILE_SCOPE_TYPE,
                 GLOBAL_PROFILE_SCOPE_ID,
             )
-            if profile is None:
-                raise RuntimeError("worker actor profile insert did not return a persisted row")
-            if inserted:
-                await self._write_profile_audit(
-                    actor,
-                    profile,
-                    event_type="actor_profile_activated",
-                    from_status=None,
-                    to_status="active",
-                    event_payload={"skill_tags": profile.skill_tags},
-                )
+            if eligibility is None:
+                raise RuntimeError("legacy eligibility insert did not return a row")
         else:
-            if profile.status == "disabled":
-                raise ActorProfileDisabled("worker profile is disabled")
-            from_status = profile.status
-            previous_tags = list(profile.skill_tags)
-            profile.status = "active"
-            profile.skill_tags = payload.skill_tags
-            profile.profile_metadata = {
-                **(profile.profile_metadata or {}),
-                "source": "worker_profile_api",
-            }
-            if from_status != profile.status or previous_tags != profile.skill_tags:
-                await self._write_profile_audit(
-                    actor,
-                    profile,
-                    event_type="actor_profile_activated",
-                    from_status=from_status,
-                    to_status=profile.status,
-                    event_payload={
-                        "previous_skill_tags": previous_tags,
-                        "skill_tags": profile.skill_tags,
-                    },
-                )
-        await self._session.commit()
-        await self._session.refresh(identity)
-        await self._session.refresh(profile)
-        return self._profile_response(profile, identity)
+            if eligibility.status == "disabled":
+                raise ActorProfileDisabled("Legacy workflow eligibility is disabled")
+            previous_status = eligibility.status
+            previous_tags = list(eligibility.skill_tags)
+            eligibility.status = "active"
+            eligibility.skill_tags = payload.skill_tags
+            eligibility.profile_metadata = {"source": "legacy_worker_profile_api"}
+            eligibility.updated_at = func.now()
 
-    async def get_active_profile(self, actor_id: str, profile_type: str) -> ActorProfile | None:
-        """Load an active global profile when workflow eligibility requires it.
-
-        Args:
-            actor_id: Stable actor id.
-            profile_type: Profile type required by the workflow.
-
-        Returns:
-            Active profile when present; otherwise ``None``.
-        """
-        profile = await self._repo.get_profile(
-            actor_id,
-            profile_type,
-            GLOBAL_PROFILE_SCOPE_TYPE,
-            GLOBAL_PROFILE_SCOPE_ID,
-        )
-        if profile is None or profile.status != "active":
-            return None
-        return profile
-
-    async def _can_skip_registry_refresh(
-        self,
-        actor: ActorContext,
-        incoming_identity: ActorIdentity,
-        existing_identity: ActorIdentity | None,
-    ) -> bool:
-        """Return whether actor registry persistence can be skipped safely."""
-        if existing_identity is None:
-            return False
-        interval_seconds = get_settings().actor_registry_refresh_interval_seconds
-        if interval_seconds <= 0:
-            return False
-        if not self._identity_claims_match(existing_identity, incoming_identity):
-            return False
-        if not self._identity_seen_recently(existing_identity.last_seen_at, interval_seconds):
-            return False
-        required_profiles = [
-            {
-                "profile_type": profile_type,
-                "scope_type": GLOBAL_PROFILE_SCOPE_TYPE,
-                "scope_id": GLOBAL_PROFILE_SCOPE_ID,
-                "profile_metadata": {"source": "verified_token_role"},
-            }
-            for profile_type in self._observed_profile_types(actor.roles)
-        ]
-        required_profiles.extend(self._trusted_relationship_profiles(actor))
-        if not required_profiles:
-            return True
-
-        existing_profiles = {
-            (profile.profile_type, profile.scope_type, profile.scope_id): profile
-            for profile in await self._repo.list_profiles(actor.actor_id)
-        }
-        for required_profile in required_profiles:
-            profile = existing_profiles.get(
-                (
-                    required_profile["profile_type"],
-                    required_profile["scope_type"],
-                    required_profile["scope_id"],
-                )
+        if (
+            inserted
+            or previous_status != eligibility.status
+            or previous_tags != eligibility.skill_tags
+        ):
+            await self._write_legacy_eligibility_audit(
+                actor,
+                eligibility,
+                from_status=previous_status,
             )
-            if profile is None:
-                return False
-            if (
-                profile.status == "observed"
-                and profile.profile_metadata != required_profile.get("profile_metadata")
-            ):
-                return False
-        return True
-
-    def _identity_claims_match(
-        self,
-        existing_identity: ActorIdentity,
-        incoming_identity: ActorIdentity,
-    ) -> bool:
-        """Return whether stored identity fields match the trusted actor claims."""
-        return (
-            existing_identity.external_subject == incoming_identity.external_subject
-            and existing_identity.external_issuer == incoming_identity.external_issuer
-            and existing_identity.display_name == incoming_identity.display_name
-            and existing_identity.email == incoming_identity.email
-            and existing_identity.last_seen_roles == incoming_identity.last_seen_roles
-            and existing_identity.last_claim_snapshot == incoming_identity.last_claim_snapshot
-            and existing_identity.auth_source == incoming_identity.auth_source
-            and existing_identity.is_dev_auth == incoming_identity.is_dev_auth
+        await self._session.commit()
+        await self._session.refresh(eligibility)
+        return LegacyWorkflowEligibilityResponse(
+            id=eligibility.id,
+            actor_id=eligibility.actor_id,
+            profile_type=eligibility.profile_type,
+            status=eligibility.status,
+            skill_tags=list(eligibility.skill_tags),
+            scope_type=eligibility.scope_type,
+            scope_id=eligibility.scope_id,
+            profile_metadata=dict(eligibility.profile_metadata),
+            external_subject=identity.external_subject,
+            external_issuer=identity.external_issuer,
+            created_at=eligibility.created_at,
+            updated_at=eligibility.updated_at,
         )
 
-    def _identity_seen_recently(
-        self,
-        last_seen_at: datetime | None,
-        interval_seconds: int,
-    ) -> bool:
-        """Return whether an identity row is still within the refresh window."""
-        if last_seen_at is None:
-            return False
-        comparable_last_seen = last_seen_at
-        if comparable_last_seen.tzinfo is None:
-            comparable_last_seen = comparable_last_seen.replace(tzinfo=UTC)
-        return datetime.now(UTC) - comparable_last_seen <= timedelta(seconds=interval_seconds)
+    @staticmethod
+    def self_response(profile: ActorProfile) -> ActorProfileSelfResponse:
+        """Build the fixed no-grants Contributor-domain response."""
+        if profile.actor_kind != "human":
+            raise UnsupportedSubjectKind("Unsupported subject kind")
+        if profile.status == "deactivated":
+            raise ActorDeactivated("Actor is deactivated")
+        return ActorProfileSelfResponse(
+            actor_profile_id=profile.id,
+            actor_kind="human",
+            status=profile.status,
+            display_name=profile.display_name,
+            contact_email=profile.contact_email,
+            created_at=profile.created_at,
+            updated_at=profile.updated_at,
+            last_seen_at=profile.last_seen_at,
+        )
 
-    async def _identity_for_profile_mutation(
-        self,
-        actor: ActorContext,
-        *,
-        identity_already_refreshed: bool,
-    ) -> ActorIdentity:
-        """Return the current identity row for a profile mutation."""
-        if not identity_already_refreshed:
-            return await self._repo.upsert_identity(self._identity_from_actor(actor))
+    async def _touch_verified_actor(self, resolved: ResolvedActor) -> ResolvedActor:
+        """Persist database-time verification for one existing actor."""
+        await self._repo.touch_verified_actor(resolved.profile, resolved.identity_link)
+        await self._session.commit()
+        await self._session.refresh(resolved.profile)
+        await self._session.refresh(resolved.identity_link)
+        return resolved
 
-        identity = await self._repo.get_identity(actor.actor_id, populate_existing=True)
-        if identity is not None:
-            return identity
-        return await self._repo.upsert_identity(self._identity_from_actor(actor))
-
-    def _identity_from_actor(self, actor: ActorContext) -> ActorIdentity:
-        """Build an identity model from trusted actor claims."""
-        return ActorIdentity(
+    @staticmethod
+    def _legacy_identity_from_actor(actor: ActorContext) -> LegacyActorIdentity:
+        """Project privacy-bounded compatibility fields from verified context."""
+        return LegacyActorIdentity(
             actor_id=actor.actor_id,
             external_subject=actor.external_subject,
             external_issuer=actor.external_issuer,
-            display_name=actor.display_name,
-            email=actor.email,
+            display_name=None,
+            email=None,
             last_seen_roles=list(actor.roles),
-            last_claim_snapshot=sanitized_claim_snapshot(actor.claim_snapshot),
+            last_claim_snapshot={"roles": list(actor.roles)},
             auth_source=actor.auth_source,
             is_dev_auth=actor.is_dev_auth,
         )
 
-    def _profile_response(
-        self,
+    @staticmethod
+    def _validate_link(
+        token: VerifiedIssuerToken,
+        link: ActorIdentityLink,
         profile: ActorProfile,
-        identity: ActorIdentity,
-    ) -> ActorProfileResponse:
-        """Build a profile response from profile and identity rows."""
-        return ActorProfileResponse(
-            id=profile.id,
-            actor_id=profile.actor_id,
-            profile_type=profile.profile_type,
-            status=profile.status,
-            skill_tags=profile.skill_tags,
-            scope_type=profile.scope_type,
-            scope_id=profile.scope_id,
-            profile_metadata=profile.profile_metadata,
-            external_subject=identity.external_subject,
-            external_issuer=identity.external_issuer,
-            display_name=identity.display_name,
-            email=identity.email,
-            created_at=profile.created_at,
-            updated_at=profile.updated_at,
-        )
-
-    def _observed_profile_types(self, roles: Iterable[str]) -> list[str]:
-        """Return profile types that may be observed from verified token roles."""
-        profile_types: list[str] = []
-        for role in roles:
-            if role in TOKEN_OBSERVED_PROFILE_TYPES and role not in profile_types:
-                profile_types.append(role)
-        return profile_types
-
-    def _trusted_relationship_profiles(self, actor: ActorContext) -> list[dict]:
-        """Extract trusted scoped relationship profiles from actor claims.
-
-        Returns:
-            Sanitized project-owner relationship profile claims.
-        """
-        profiles: list[dict] = []
-        for raw_profile in normalized_relationship_profile_claims(actor.claim_snapshot):
-            profiles.append(
-                {
-                    "profile_type": raw_profile["profile_type"],
-                    "scope_type": raw_profile["scope_type"],
-                    "scope_id": raw_profile["scope_id"],
-                    "profile_metadata": {"source": "trusted_relationship_claim"},
-                }
-            )
-        return profiles
-
-    def _validate_profile_type(self, profile_type: str) -> None:
-        """Validate profile type before persistence."""
-        if profile_type not in ACTOR_PROFILE_TYPES:
-            raise ValueError(f"unsupported actor profile type: {profile_type}")
-
-    async def _write_profile_audit(
-        self,
-        actor: ActorContext,
-        profile: ActorProfile,
-        *,
-        event_type: str,
-        from_status: str | None,
-        to_status: str | None,
-        event_payload: dict,
     ) -> None:
-        """Write audit evidence for profile eligibility changes."""
-        audit = actor.audit_context()
-        await self._audit_repo.add_audit_event(
-            AuditEvent(
-                id=str(uuid4()),
+        if link.subject_kind != token.subject_kind or profile.actor_kind != token.subject_kind:
+            raise UnsupportedSubjectKind("Subject kind does not match actor")
+        if link.status != "active":
+            raise IdentityLinkRevoked("Identity link is revoked")
+
+    @staticmethod
+    def _require_active_human(profile: ActorProfile) -> None:
+        if profile.actor_kind != "human":
+            raise UnsupportedSubjectKind("Unsupported subject kind")
+        if profile.status == "suspended":
+            raise ActorSuspended("Actor is suspended")
+        if profile.status == "deactivated":
+            raise ActorDeactivated("Actor is deactivated")
+
+    async def _write_provisioning_events(
+        self,
+        profile: ActorProfile,
+        link: ActorIdentityLink,
+        *,
+        request_id: UUID,
+        correlation_id: UUID,
+    ) -> None:
+        common = {
+            "actor_ref_kind": ActorReferenceKind.ACTOR_PROFILE,
+            "actor_ref": profile.id,
+            "request_id": request_id,
+            "correlation_id": correlation_id,
+            "target_actor_ref_kind": ActorReferenceKind.ACTOR_PROFILE,
+            "target_actor_ref": profile.id,
+        }
+        await self._audit.add_authority_event(
+            AuthorityAuditEventInput(
+                event_id=uuid4(),
+                event_type=AuthorityEventType.ACTOR_PROFILE_PROVISIONED,
                 entity_type="actor_profile",
                 entity_id=profile.id,
-                event_type=event_type,
+                resource_type="actor_profile",
+                resource_id=profile.id,
+                target_ref_kind="actor_profile",
+                target_ref_id=profile.id,
+                reason="automatic_first_access",
+                after_facts={
+                    "status": "active",
+                    "subject_kind": "human",
+                    "provisioning_method": "automatic_first_access",
+                },
+                **common,
+            )
+        )
+        await self._audit.add_authority_event(
+            AuthorityAuditEventInput(
+                event_id=uuid4(),
+                event_type=AuthorityEventType.ACTOR_IDENTITY_LINKED,
+                entity_type="actor_identity_link",
+                entity_id=link.id,
+                resource_type="actor_identity_link",
+                resource_id=link.id,
+                target_ref_kind="actor_identity_link",
+                target_ref_id=link.id,
+                reason="identity_lifecycle_change",
+                after_facts={"status": "active", "subject_kind": "human"},
+                **common,
+            )
+        )
+
+    async def _write_legacy_eligibility_audit(
+        self,
+        actor: ActorContext,
+        eligibility: LegacyWorkflowEligibility,
+        *,
+        from_status: str | None,
+    ) -> None:
+        audit = actor.audit_context()
+        await self._legacy_audit.add_audit_event(
+            AuditEvent(
+                id=str(uuid4()),
+                entity_type="legacy_workflow_eligibility",
+                entity_id=eligibility.id,
+                event_type="legacy_workflow_eligibility_activated",
                 from_status=from_status,
-                to_status=to_status,
+                to_status=eligibility.status,
                 actor_id=audit.actor_id,
                 external_subject=audit.external_subject,
                 external_issuer=audit.external_issuer,
@@ -469,13 +394,29 @@ class ActorService:
                 claim_snapshot=audit.claim_snapshot,
                 auth_source=audit.auth_source,
                 is_dev_auth=audit.is_dev_auth,
-                reason=None,
-                event_payload={
-                    "actor_id": profile.actor_id,
-                    "profile_type": profile.profile_type,
-                    "scope_type": profile.scope_type,
-                    "scope_id": profile.scope_id,
-                    **event_payload,
-                },
+                reason="legacy_intake_compatibility",
+                event_payload={"skill_tags": list(eligibility.skill_tags)},
             )
         )
+
+
+class LegacyWorkflowEligibilityCompatibility:
+    """Enumerated read-only bridge for task eligibility during staged cutover."""
+
+    def __init__(self, session: AsyncSession) -> None:
+        self._repository = ActorRepository(session)
+
+    async def get_active_submitter_eligibility(
+        self,
+        actor_profile_id: str,
+    ) -> LegacyWorkflowEligibility | None:
+        """Return active legacy submitter metadata without granting permission."""
+        eligibility = await self._repository.get_legacy_eligibility(
+            actor_profile_id,
+            "worker",
+            GLOBAL_PROFILE_SCOPE_TYPE,
+            GLOBAL_PROFILE_SCOPE_ID,
+        )
+        if eligibility is None or eligibility.status != "active":
+            return None
+        return eligibility

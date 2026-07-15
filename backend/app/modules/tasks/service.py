@@ -27,8 +27,8 @@ from app.modules.checkers.service import (
     CheckerServiceError,
     pre_review_gate_system_actor,
 )
-from app.modules.actors.models import ActorProfile
-from app.modules.actors.service import ActorService
+from app.modules.actors.models import LegacyWorkflowEligibility
+from app.modules.actors.service import LegacyWorkflowEligibilityCompatibility
 from app.modules.projects.models import (
     EffectiveProjectSubmissionArtifactPolicy,
     GuideSourceSnapshot,
@@ -175,13 +175,13 @@ class TaskValidationError(TaskServiceError):
 
 
 class TaskAssignmentConflict(TaskServiceError):
-    """Raised when a task already has an active worker assignment."""
+    """Raised when a task already has an active Contributor assignment."""
 
     status_code = 409
 
 
-class WorkerEligibilityRequired(TaskServiceError):
-    """Raised when a worker tries to claim without active worker profile eligibility."""
+class LegacySubmitterEligibilityRequired(TaskServiceError):
+    """Raised when a submitter lacks temporary legacy workflow eligibility."""
 
     status_code = 403
 
@@ -269,7 +269,7 @@ class TaskService:
         self._session = session
         self._repo = TaskRepository(session)
         self._project_repo = ProjectRepository(session)
-        self._actor_service = ActorService(session)
+        self._legacy_workflow_eligibility = LegacyWorkflowEligibilityCompatibility(session)
 
     async def create_task(
         self,
@@ -354,14 +354,14 @@ class TaskService:
         actor: ActorContext,
         task_id: str,
     ) -> TaskWorkContextResponse:
-        """Return worker-safe work context from the task's locked provenance.
+        """Return Contributor-safe work context from the task's locked provenance.
 
         Args:
             actor: Verified Flow actor context for the current request.
             task_id: Task whose context should be returned.
 
         Returns:
-            Worker-facing task, guide, policy, and lifecycle context.
+            Contributor-facing task, guide, policy, and lifecycle context.
 
         Raises:
             PermissionDenied: If the actor cannot view tasks.
@@ -372,21 +372,33 @@ class TaskService:
         task = await self._get_task(task_id)
         await self._ensure_task_visible(actor, task)
         context = await self._load_locked_task_context(task)
-        return self._work_context_response(actor, task, context)
+        eligibility = (
+            await self._legacy_workflow_eligibility.get_active_submitter_eligibility(
+                actor.actor_id
+            )
+        )
+        return self._work_context_response(
+            actor,
+            task,
+            context,
+            has_active_submitter_eligibility=(
+                "worker" in actor.roles and eligibility is not None
+            ),
+        )
 
     async def get_task_submission_requirements(
         self,
         actor: ActorContext,
         task_id: str,
     ) -> SubmissionRequirementsResponse:
-        """Return exact worker submission requirements for a locked task.
+        """Return exact Contributor submission requirements for a locked task.
 
         Args:
             actor: Verified Flow actor context for the current request.
             task_id: Task whose locked requirements should be returned.
 
         Returns:
-            Worker-facing submission artifact requirements.
+            Contributor-facing submission artifact requirements.
 
         Raises:
             PermissionDenied: If the actor cannot view tasks.
@@ -533,7 +545,7 @@ class TaskService:
         require_any_role(actor, TASK_CLAIM_ROLES)
         task = await self._get_task(task_id)
         self._ensure_transition_allowed(task.status, TASK_STATUS_CLAIMED)
-        await self._require_active_worker_profile(actor)
+        await self._require_legacy_submitter_eligibility(actor)
         if await self._repo.get_active_assignment(task_id) is not None:
             raise TaskAssignmentConflict("task already has an active assignment")
 
@@ -597,6 +609,8 @@ class TaskService:
         )
         if assignment.worker_id != actor.actor_id and not is_operator_override:
             raise TaskTransitionBlocked("actor is not assigned to this task")
+        if not is_operator_override:
+            await self._require_legacy_submitter_eligibility(actor)
         if is_operator_override and (reason is None or not reason.strip()):
             raise TaskValidationError("operator start override reason is required")
         await self._change_task_status(
@@ -626,13 +640,13 @@ class TaskService:
         Args:
             actor: Verified Flow actor context for the current request.
             task_id: Task receiving the submission packet.
-            payload: Submission packet fields supplied by the worker.
+            payload: Submission packet fields supplied by the Contributor.
 
         Returns:
             Created submission response with evidence items.
 
         Raises:
-            PermissionDenied: If the actor cannot create worker submissions.
+            PermissionDenied: If the actor cannot create Contributor submissions.
             TaskProjectNotReady: If locked project policy context is invalid.
             TaskTransitionBlocked: If task state or assignment does not allow submission.
             TaskValidationError: If required submission fields are missing.
@@ -642,7 +656,7 @@ class TaskService:
         task = await self._get_task(task_id)
         if "worker" in actor.roles and task.assigned_to not in {None, actor.actor_id}:
             raise TaskNotFound("task not found")
-        await self._require_active_worker_profile(actor)
+        await self._require_legacy_submitter_eligibility(actor)
         assignment = await self._repo.get_active_assignment(task_id)
         if assignment is None:
             raise TaskTransitionBlocked("task has no active assignment")
@@ -1499,8 +1513,10 @@ class TaskService:
         actor: ActorContext,
         task: WorkstreamTask,
         context: LockedTaskContext,
+        *,
+        has_active_submitter_eligibility: bool,
     ) -> TaskWorkContextResponse:
-        """Build the worker-safe work-context response."""
+        """Build the Contributor-safe work-context response."""
         return TaskWorkContextResponse(
             task=self._worker_safe_task_response(task),
             project=TaskProjectContext(
@@ -1528,7 +1544,11 @@ class TaskService:
                 currency=task.currency,
                 payout_type=task.payout_type,
             ),
-            lifecycle=self._worker_lifecycle_context(actor, task),
+            lifecycle=self._worker_lifecycle_context(
+                actor,
+                task,
+                has_active_submitter_eligibility=has_active_submitter_eligibility,
+            ),
         )
 
     def _submission_requirements_response(
@@ -1536,7 +1556,7 @@ class TaskService:
         task: WorkstreamTask,
         context: LockedTaskContext,
     ) -> SubmissionRequirementsResponse:
-        """Build worker-facing requirements from the locked effective policy."""
+        """Build Contributor-facing requirements from the locked effective policy."""
         policy = context.effective_policy.effective_policy
         if not isinstance(policy, dict):
             raise TaskLockedContextInvalid(
@@ -1863,17 +1883,32 @@ class TaskService:
         self,
         actor: ActorContext,
         task: WorkstreamTask,
+        *,
+        has_active_submitter_eligibility: bool,
     ) -> TaskWorkerLifecycleContext:
-        """Build worker-facing lifecycle booleans and next actions."""
+        """Build Contributor-facing lifecycle booleans and next actions."""
         assigned_to_current_actor = task.assigned_to == actor.actor_id
-        can_submit = assigned_to_current_actor and task.status in {
-            TASK_STATUS_IN_PROGRESS,
-            TASK_STATUS_NEEDS_REVISION,
-        }
+        can_submit = (
+            has_active_submitter_eligibility
+            and assigned_to_current_actor
+            and task.status
+            in {
+                TASK_STATUS_IN_PROGRESS,
+                TASK_STATUS_NEEDS_REVISION,
+            }
+        )
         next_actions: list[str] = []
-        if task.status == TASK_STATUS_READY and task.assigned_to is None:
+        if (
+            has_active_submitter_eligibility
+            and task.status == TASK_STATUS_READY
+            and task.assigned_to is None
+        ):
             next_actions.append("claim")
-        elif task.status == TASK_STATUS_CLAIMED and assigned_to_current_actor:
+        elif (
+            has_active_submitter_eligibility
+            and task.status == TASK_STATUS_CLAIMED
+            and assigned_to_current_actor
+        ):
             next_actions.append("start")
         elif can_submit:
             next_actions.extend(["run_pre_submit_check", "submit"])
@@ -2018,24 +2053,28 @@ class TaskService:
         except ValueError as exc:
             raise TaskProjectNotReady("locked post-submit checker policy hash is invalid") from exc
 
-    async def _require_active_worker_profile(
+    async def _require_legacy_submitter_eligibility(
         self,
         actor: ActorContext,
-    ) -> ActorProfile:
-        """Require active worker actor profile eligibility before claim.
+    ) -> LegacyWorkflowEligibility:
+        """Require temporary active submitter eligibility for intake workflows.
 
         Args:
             actor: Verified Flow actor context.
 
         Returns:
-            Persisted active worker actor profile.
+            Persisted active legacy submitter eligibility.
 
         Raises:
-            WorkerEligibilityRequired: If the actor has no active worker profile.
+            LegacySubmitterEligibilityRequired: If eligibility is absent or inactive.
         """
-        profile = await self._actor_service.get_active_profile(actor.actor_id, "worker")
+        profile = await self._legacy_workflow_eligibility.get_active_submitter_eligibility(
+            actor.actor_id
+        )
         if profile is None:
-            raise WorkerEligibilityRequired("active worker profile is required to claim task")
+            raise LegacySubmitterEligibilityRequired(
+                "active legacy submitter eligibility is required"
+            )
         return profile
 
     async def _change_task_status(

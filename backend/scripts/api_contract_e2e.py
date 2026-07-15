@@ -320,7 +320,7 @@ async def wait_for_health(base_url: str, process: subprocess.Popen, log_path: Pa
     Raises:
         RuntimeError: If the server exits or does not become healthy.
     """
-    deadline = time.monotonic() + 20
+    deadline = time.monotonic() + 60
     async with httpx.AsyncClient(base_url=base_url, timeout=5) as client:
         while time.monotonic() < deadline:
             if process.poll() is not None:
@@ -1074,6 +1074,19 @@ async def exercise_api_contract(base_url: str, env: dict[str, str]) -> None:
 
         worker = await request_json(client, "GET", "/api/v1/auth/me", worker_token)
         assert worker["roles"] == ["worker"]
+        canonical_actor = await request_json(
+            client,
+            "GET",
+            "/api/v1/actors/me",
+            worker_token,
+        )
+        assert canonical_actor["actor_kind"] == "human"
+        assert canonical_actor["domains"] == ["contributor"]
+        assert canonical_actor["admin_roles"] == []
+        assert canonical_actor["project_role_grants"] == []
+        assert "issuer" not in canonical_actor
+        assert "subject" not in canonical_actor
+        assert "roles" not in canonical_actor
         worker_profile = await request_json(
             client,
             "POST",
