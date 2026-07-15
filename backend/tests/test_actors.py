@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import asyncpg
 from collections.abc import AsyncIterator, Iterator
 from datetime import UTC, datetime
 from pathlib import Path
@@ -26,6 +25,7 @@ from app.modules.actors.models import (
     LegacyActorIdentity,
     LegacyWorkflowEligibility,
 )
+from app.modules.actors.repository import ActorRepository
 from app.modules.actors.schemas import (
     ActorProfileUpdateRequest,
     LegacyWorkflowEligibilityActivationRequest,
@@ -53,47 +53,12 @@ ISSUER = "https://identity.test"
 RATE_SECRET = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8="
 
 
-async def clear_test_audit_events(database_url: str) -> None:
-    """Reset append-only evidence under explicit isolated-test ownership."""
-    connection = await asyncpg.connect(database_url.replace("+asyncpg", ""))
-    try:
-        async with connection.transaction():
-            await connection.execute(
-                "alter table audit_events disable trigger audit_events_reject_update_delete"
-            )
-            await connection.execute(
-                "alter table audit_events disable trigger audit_events_reject_truncate"
-            )
-            await connection.execute("truncate table audit_events cascade")
-            await connection.execute("truncate table api_rate_control_counters")
-            await connection.execute(
-                "alter table actor_profiles disable trigger actor_profile_history_guard"
-            )
-            await connection.execute(
-                "alter table actor_identity_links disable trigger actor_identity_link_history_guard"
-            )
-            await connection.execute("truncate actor_identity_links, actor_profiles cascade")
-            await connection.execute(
-                "alter table actor_profiles enable trigger actor_profile_history_guard"
-            )
-            await connection.execute(
-                "alter table actor_identity_links enable trigger actor_identity_link_history_guard"
-            )
-            await connection.execute(
-                "alter table audit_events enable trigger audit_events_reject_truncate"
-            )
-            await connection.execute(
-                "alter table audit_events enable trigger audit_events_reject_update_delete"
-            )
-    finally:
-        await connection.close()
-
-
 @pytest.fixture
 def actor_database_env(
     monkeypatch: pytest.MonkeyPatch,
     postgres_database_url: str,
     migration_lock,
+    reset_test_database_state,
 ) -> Iterator[str]:
     """Run canonical actor tests against an isolated current schema."""
     monkeypatch.setenv("WORKSTREAM_DATABASE_URL", postgres_database_url)
@@ -102,15 +67,30 @@ def actor_database_env(
     get_settings.cache_clear()
     asyncio.run(db_session.dispose_engine())
     config = alembic_config()
-    with migration_lock():
-        command.downgrade(config, "base")
-        command.upgrade(config, "head")
-        yield postgres_database_url
-        asyncio.run(clear_test_audit_events(postgres_database_url))
-        asyncio.run(db_session.dispose_engine())
-        command.downgrade(config, "base")
-    asyncio.run(db_session.dispose_engine())
-    get_settings.cache_clear()
+    try:
+        with migration_lock():
+            command.downgrade(config, "base")
+            try:
+                command.upgrade(config, "head")
+                yield postgres_database_url
+            finally:
+                try:
+                    asyncio.run(
+                        reset_test_database_state(
+                            postgres_database_url,
+                            include_canonical_actors=True,
+                        )
+                    )
+                finally:
+                    try:
+                        asyncio.run(db_session.dispose_engine())
+                    finally:
+                        command.downgrade(config, "base")
+    finally:
+        try:
+            asyncio.run(db_session.dispose_engine())
+        finally:
+            get_settings.cache_clear()
 
 
 @pytest.fixture
@@ -683,6 +663,76 @@ async def test_repeated_legacy_activation_updates_one_row_and_audits_only_change
             )
             == 1
         )
+        assert (
+            await session.scalar(
+                select(func.count()).select_from(AuditEvent).where(
+                    AuditEvent.entity_type == "legacy_workflow_eligibility",
+                    AuditEvent.actor_id == actor.actor_id,
+                )
+            )
+            == 2
+        )
+
+
+async def test_concurrent_legacy_activation_serializes_payloads_and_actual_audits(
+    actor_database_env: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    actor = legacy_actor("legacy-concurrent-activation")
+    async with db_session.get_session_factory()() as session:
+        await ActorService(session).resolve_verified_actor(
+            verified_token("legacy-concurrent-activation"),
+            request_id=uuid4(),
+            correlation_id=uuid4(),
+        )
+
+    async with (
+        db_session.get_session_factory()() as first_session,
+        db_session.get_session_factory()() as second_session,
+    ):
+        await ActorRepository(first_session).lock_external_identity(
+            actor.external_issuer,
+            actor.external_subject,
+        )
+        original_lock = ActorRepository.lock_external_identity
+        second_lock_reached = asyncio.Event()
+
+        async def observed_lock(
+            repository: ActorRepository,
+            issuer: str,
+            subject: str,
+        ) -> None:
+            if repository._session is second_session:
+                second_lock_reached.set()
+            await original_lock(repository, issuer, subject)
+
+        monkeypatch.setattr(ActorRepository, "lock_external_identity", observed_lock)
+        second_activation = asyncio.create_task(
+            ActorService(second_session).activate_legacy_workflow_eligibility(
+                actor,
+                LegacyWorkflowEligibilityActivationRequest(skill_tags=["second"]),
+            )
+        )
+        await asyncio.wait_for(second_lock_reached.wait(), timeout=1)
+        assert not second_activation.done()
+
+        first = await ActorService(first_session).activate_legacy_workflow_eligibility(
+            actor,
+            LegacyWorkflowEligibilityActivationRequest(skill_tags=["first"]),
+        )
+        second = await second_activation
+
+    assert first.skill_tags == ["first"]
+    assert second.skill_tags == ["second"]
+    assert first.id == second.id
+    async with db_session.get_session_factory()() as session:
+        eligibility = await session.scalar(
+            select(LegacyWorkflowEligibility).where(
+                LegacyWorkflowEligibility.actor_id == actor.actor_id
+            )
+        )
+        assert eligibility is not None
+        assert eligibility.skill_tags == ["second"]
         assert (
             await session.scalar(
                 select(func.count()).select_from(AuditEvent).where(

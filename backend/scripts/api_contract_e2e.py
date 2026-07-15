@@ -1084,6 +1084,9 @@ async def exercise_api_contract(base_url: str, env: dict[str, str]) -> None:
         assert canonical_actor["domains"] == ["contributor"]
         assert canonical_actor["admin_roles"] == []
         assert canonical_actor["project_role_grants"] == []
+        assert "issuer" not in canonical_actor
+        assert "subject" not in canonical_actor
+        assert "roles" not in canonical_actor
         worker_profile = await request_json(
             client,
             "POST",

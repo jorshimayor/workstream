@@ -188,6 +188,10 @@ class ActorService:
     ) -> LegacyWorkflowEligibilityResponse:
         """Activate temporary submitter intake metadata without creating authority."""
         require_any_role(actor, {"worker"})
+        await self._repo.lock_external_identity(
+            actor.external_issuer,
+            actor.external_subject,
+        )
         identity = await self._repo.upsert_legacy_identity(self._legacy_identity_from_actor(actor))
         eligibility = await self._repo.get_legacy_eligibility(
             actor.actor_id,

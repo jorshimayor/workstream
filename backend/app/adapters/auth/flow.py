@@ -401,7 +401,8 @@ class FlowAuthVerifier:
         subject_kind = claims.get("subject_kind")
         if (
             not isinstance(subject, str)
-            or not subject
+            or not subject.strip()
+            or subject != subject.strip()
             or len(subject) > MAX_VERIFIED_IDENTITY_ANCHOR_CHARACTERS
         ):
             raise AuthVerificationError("token subject is required")

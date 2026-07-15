@@ -354,14 +354,14 @@ class TaskService:
         actor: ActorContext,
         task_id: str,
     ) -> TaskWorkContextResponse:
-        """Return worker-safe work context from the task's locked provenance.
+        """Return Contributor-safe work context from the task's locked provenance.
 
         Args:
             actor: Verified Flow actor context for the current request.
             task_id: Task whose context should be returned.
 
         Returns:
-            Worker-facing task, guide, policy, and lifecycle context.
+            Contributor-facing task, guide, policy, and lifecycle context.
 
         Raises:
             PermissionDenied: If the actor cannot view tasks.
@@ -372,7 +372,19 @@ class TaskService:
         task = await self._get_task(task_id)
         await self._ensure_task_visible(actor, task)
         context = await self._load_locked_task_context(task)
-        return self._work_context_response(actor, task, context)
+        eligibility = (
+            await self._legacy_workflow_eligibility.get_active_submitter_eligibility(
+                actor.actor_id
+            )
+        )
+        return self._work_context_response(
+            actor,
+            task,
+            context,
+            has_active_submitter_eligibility=(
+                "worker" in actor.roles and eligibility is not None
+            ),
+        )
 
     async def get_task_submission_requirements(
         self,
@@ -386,7 +398,7 @@ class TaskService:
             task_id: Task whose locked requirements should be returned.
 
         Returns:
-            Worker-facing submission artifact requirements.
+            Contributor-facing submission artifact requirements.
 
         Raises:
             PermissionDenied: If the actor cannot view tasks.
@@ -628,13 +640,13 @@ class TaskService:
         Args:
             actor: Verified Flow actor context for the current request.
             task_id: Task receiving the submission packet.
-            payload: Submission packet fields supplied by the worker.
+            payload: Submission packet fields supplied by the Contributor.
 
         Returns:
             Created submission response with evidence items.
 
         Raises:
-            PermissionDenied: If the actor cannot create worker submissions.
+            PermissionDenied: If the actor cannot create Contributor submissions.
             TaskProjectNotReady: If locked project policy context is invalid.
             TaskTransitionBlocked: If task state or assignment does not allow submission.
             TaskValidationError: If required submission fields are missing.
@@ -1501,8 +1513,10 @@ class TaskService:
         actor: ActorContext,
         task: WorkstreamTask,
         context: LockedTaskContext,
+        *,
+        has_active_submitter_eligibility: bool,
     ) -> TaskWorkContextResponse:
-        """Build the worker-safe work-context response."""
+        """Build the Contributor-safe work-context response."""
         return TaskWorkContextResponse(
             task=self._worker_safe_task_response(task),
             project=TaskProjectContext(
@@ -1530,7 +1544,11 @@ class TaskService:
                 currency=task.currency,
                 payout_type=task.payout_type,
             ),
-            lifecycle=self._worker_lifecycle_context(actor, task),
+            lifecycle=self._worker_lifecycle_context(
+                actor,
+                task,
+                has_active_submitter_eligibility=has_active_submitter_eligibility,
+            ),
         )
 
     def _submission_requirements_response(
@@ -1538,7 +1556,7 @@ class TaskService:
         task: WorkstreamTask,
         context: LockedTaskContext,
     ) -> SubmissionRequirementsResponse:
-        """Build worker-facing requirements from the locked effective policy."""
+        """Build Contributor-facing requirements from the locked effective policy."""
         policy = context.effective_policy.effective_policy
         if not isinstance(policy, dict):
             raise TaskLockedContextInvalid(
@@ -1865,17 +1883,32 @@ class TaskService:
         self,
         actor: ActorContext,
         task: WorkstreamTask,
+        *,
+        has_active_submitter_eligibility: bool,
     ) -> TaskWorkerLifecycleContext:
-        """Build worker-facing lifecycle booleans and next actions."""
+        """Build Contributor-facing lifecycle booleans and next actions."""
         assigned_to_current_actor = task.assigned_to == actor.actor_id
-        can_submit = assigned_to_current_actor and task.status in {
-            TASK_STATUS_IN_PROGRESS,
-            TASK_STATUS_NEEDS_REVISION,
-        }
+        can_submit = (
+            has_active_submitter_eligibility
+            and assigned_to_current_actor
+            and task.status
+            in {
+                TASK_STATUS_IN_PROGRESS,
+                TASK_STATUS_NEEDS_REVISION,
+            }
+        )
         next_actions: list[str] = []
-        if task.status == TASK_STATUS_READY and task.assigned_to is None:
+        if (
+            has_active_submitter_eligibility
+            and task.status == TASK_STATUS_READY
+            and task.assigned_to is None
+        ):
             next_actions.append("claim")
-        elif task.status == TASK_STATUS_CLAIMED and assigned_to_current_actor:
+        elif (
+            has_active_submitter_eligibility
+            and task.status == TASK_STATUS_CLAIMED
+            and assigned_to_current_actor
+        ):
             next_actions.append("start")
         elif can_submit:
             next_actions.extend(["run_pre_submit_check", "submit"])

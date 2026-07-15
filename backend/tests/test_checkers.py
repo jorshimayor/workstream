@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import asyncpg
 from collections.abc import AsyncIterator, Iterator
 from pathlib import Path
 from typing import Any
@@ -58,34 +57,12 @@ from tests.test_tasks import (
 )
 
 
-async def clear_test_audit_events(database_url: str) -> None:
-    """Reset append-only evidence under explicit isolated-test ownership."""
-    connection = await asyncpg.connect(database_url.replace("+asyncpg", ""))
-    try:
-        async with connection.transaction():
-            await connection.execute(
-                "alter table audit_events disable trigger audit_events_reject_update_delete"
-            )
-            await connection.execute(
-                "alter table audit_events disable trigger audit_events_reject_truncate"
-            )
-            await connection.execute("truncate table audit_events cascade")
-            await connection.execute("truncate table api_rate_control_counters")
-            await connection.execute(
-                "alter table audit_events enable trigger audit_events_reject_truncate"
-            )
-            await connection.execute(
-                "alter table audit_events enable trigger audit_events_reject_update_delete"
-            )
-    finally:
-        await connection.close()
-
-
 @pytest.fixture
 def checker_database_env(
     monkeypatch: pytest.MonkeyPatch,
     postgres_database_url: str,
     migration_lock,
+    reset_test_database_state,
 ) -> Iterator[str]:
     monkeypatch.setenv("WORKSTREAM_DATABASE_URL", postgres_database_url)
     monkeypatch.setenv("WORKSTREAM_CELERY_TASK_ALWAYS_EAGER", "true")
@@ -98,15 +75,25 @@ def checker_database_env(
     asyncio.run(db_session.dispose_engine())
 
     config = alembic_config()
-    with migration_lock():
-        command.downgrade(config, "base")
-        command.upgrade(config, "head")
-        yield postgres_database_url
-        asyncio.run(clear_test_audit_events(postgres_database_url))
-        asyncio.run(db_session.dispose_engine())
-        command.downgrade(config, "base")
-    asyncio.run(db_session.dispose_engine())
-    get_settings.cache_clear()
+    try:
+        with migration_lock():
+            command.downgrade(config, "base")
+            try:
+                command.upgrade(config, "head")
+                yield postgres_database_url
+            finally:
+                try:
+                    asyncio.run(reset_test_database_state(postgres_database_url))
+                finally:
+                    try:
+                        asyncio.run(db_session.dispose_engine())
+                    finally:
+                        command.downgrade(config, "base")
+    finally:
+        try:
+            asyncio.run(db_session.dispose_engine())
+        finally:
+            get_settings.cache_clear()
 
 
 @pytest.fixture

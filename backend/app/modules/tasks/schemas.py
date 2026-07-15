@@ -250,7 +250,7 @@ class TaskPaymentPolicyContext(BaseModel):
 
 
 class TaskWorkerLifecycleContext(BaseModel):
-    """Worker-facing lifecycle state for a task."""
+    """Contributor-facing lifecycle state for a task."""
 
     status: str
     assigned_to_current_actor: bool
@@ -272,7 +272,7 @@ class TaskWorkContextResponse(BaseModel):
 
 
 class RequiredArtifactRequirement(BaseModel):
-    """Worker-facing required artifact rule from the locked effective policy."""
+    """Contributor-facing required artifact rule from the locked effective policy."""
 
     key: str
     path: str
@@ -282,7 +282,7 @@ class RequiredArtifactRequirement(BaseModel):
 
 
 class RequiredEvidenceRequirement(BaseModel):
-    """Worker-facing required evidence rule from the locked effective policy."""
+    """Contributor-facing required evidence rule from the locked effective policy."""
 
     key: str
     label: str
@@ -292,7 +292,7 @@ class RequiredEvidenceRequirement(BaseModel):
 
 
 class ForbiddenArtifactRequirement(BaseModel):
-    """Worker-facing forbidden artifact rule from the locked effective policy."""
+    """Contributor-facing forbidden artifact rule from the locked effective policy."""
 
     pattern: str
     reason: str | None = None
@@ -301,7 +301,7 @@ class ForbiddenArtifactRequirement(BaseModel):
 
 
 class StorageReferenceRules(BaseModel):
-    """Worker-facing storage-reference constraints for staged artifacts."""
+    """Contributor-facing storage-reference constraints for staged artifacts."""
 
     allowed_storage_schemes: list[str]
     allowed_uri_prefixes: list[str]

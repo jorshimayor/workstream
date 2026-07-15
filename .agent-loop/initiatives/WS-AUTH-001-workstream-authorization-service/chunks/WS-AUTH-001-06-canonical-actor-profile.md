@@ -54,6 +54,7 @@ backend/tests/test_alembic.py
 backend/tests/test_projects.py
 backend/tests/test_tasks.py
 backend/tests/test_checkers.py
+backend/tests/conftest.py
 backend/scripts/api_contract_e2e.py
 docs/operations_authorization_service.md
 .agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/**

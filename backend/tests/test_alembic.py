@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 import threading
 import time
-from uuid import uuid4
+from uuid import NAMESPACE_URL, uuid4, uuid5
 
 import pytest
 from alembic import command
@@ -332,10 +332,21 @@ def test_canonical_actor_classified_upgrade_preserves_identity_and_attribution(
                     audit_event_id,
                 )
             )
+            asyncio.run(
+                _update_canonical_actor_display_fields(
+                    isolated_database_env,
+                    actor_id,
+                    display_name="Canonical Human",
+                    contact_email=None,
+                )
+            )
             envelope_path.unlink()
             monkeypatch.delenv(CLASSIFICATION_FILE_ENV, raising=False)
             command.downgrade(config, "0019_authority_idempotency")
             restored = asyncio.run(_pre_0020_actor_state(isolated_database_env, actor_id))
+            restored_display = asyncio.run(
+                _pre_0020_actor_display_fields(isolated_database_env, actor_id)
+            )
             with pytest.raises(
                 LegacyClassificationError,
                 match="^classification_file_not_configured$",
@@ -352,6 +363,9 @@ def test_canonical_actor_classified_upgrade_preserves_identity_and_attribution(
         "actor_kind": "human",
         "display_name": None,
         "contact_email": None,
+        "identity_link_id": str(
+            uuid5(NAMESPACE_URL, f"workstream:identity-link:{actor_id}")
+        ),
         "identity_subject": subject,
         "legacy_profile_type": "worker",
         "audit_actor_id": actor_id,
@@ -359,6 +373,10 @@ def test_canonical_actor_classified_upgrade_preserves_identity_and_attribution(
         "source_checksum": envelope.source_row_set_sha256,
     }
     assert restored == {"revision": "0019_authority_idempotency", "legacy_rows": 1}
+    assert restored_display == {
+        "display_name": "Canonical Human",
+        "email": None,
+    }
     assert reupgrade_rejected == restored
 
 
@@ -946,6 +964,54 @@ async def _pre_0020_actor_state(database_url: str, actor_id: str) -> dict[str, o
         await engine.dispose()
 
 
+async def _pre_0020_actor_display_fields(
+    database_url: str,
+    actor_id: str,
+) -> dict[str, str | None]:
+    """Return restored legacy display fields after canonical downgrade."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.connect() as connection:
+            row = (
+                await connection.execute(
+                    text(
+                        "select display_name,email from actor_identities "
+                        "where actor_id=:actor"
+                    ),
+                    {"actor": actor_id},
+                )
+            ).one()
+            return {"display_name": row.display_name, "email": row.email}
+    finally:
+        await engine.dispose()
+
+
+async def _update_canonical_actor_display_fields(
+    database_url: str,
+    actor_id: str,
+    *,
+    display_name: str | None,
+    contact_email: str | None,
+) -> None:
+    """Apply canonical self-service fields before downgrade proof."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(
+                text(
+                    "update actor_profiles set display_name=:display_name, "
+                    "contact_email=:contact_email,updated_at=now() where id=:actor"
+                ),
+                {
+                    "actor": actor_id,
+                    "display_name": display_name,
+                    "contact_email": contact_email,
+                },
+            )
+    finally:
+        await engine.dispose()
+
+
 async def _canonical_actor_migration_state(
     database_url: str,
     actor_id: str,
@@ -964,13 +1030,15 @@ async def _canonical_actor_migration_state(
                     {"actor": actor_id},
                 )
             ).one()
-            identity_subject = await connection.scalar(
-                text(
-                    "select subject from actor_identity_links "
-                    "where actor_profile_id=:actor"
-                ),
-                {"actor": actor_id},
-            )
+            identity_link = (
+                await connection.execute(
+                    text(
+                        "select id,subject from actor_identity_links "
+                        "where actor_profile_id=:actor"
+                    ),
+                    {"actor": actor_id},
+                )
+            ).one()
             legacy_profile_type = await connection.scalar(
                 text(
                     "select profile_type from legacy_workflow_eligibility "
@@ -995,7 +1063,8 @@ async def _canonical_actor_migration_state(
                 "actor_kind": profile.actor_kind,
                 "display_name": profile.display_name,
                 "contact_email": profile.contact_email,
-                "identity_subject": identity_subject,
+                "identity_link_id": identity_link.id,
+                "identity_subject": identity_link.subject,
                 "legacy_profile_type": legacy_profile_type,
                 "audit_actor_id": audit_actor_id,
                 "classified_count": migration_state.classified_count,
@@ -1076,37 +1145,43 @@ async def _reset_canonical_actor_guard_state(
 ) -> None:
     """Restore test-owned state after proving the migration refuses it."""
     engine = create_async_engine(database_url)
+    history_guard_disabled = False
     try:
-        if owner_reset:
+        try:
+            if owner_reset:
+                async with engine.begin() as connection:
+                    await connection.execute(
+                        text(
+                            "alter table actor_profiles disable trigger "
+                            "actor_profile_history_guard"
+                        )
+                    )
+                history_guard_disabled = True
             async with engine.begin() as connection:
                 await connection.execute(
                     text(
-                        "alter table actor_profiles disable trigger actor_profile_history_guard"
-                    )
+                        "update actor_profiles set status='active', suspended_by=null, "
+                        "suspended_at=null, suspension_reason=null, deactivated_by=null, "
+                        "deactivated_at=null, deactivation_reason=null where id=:actor"
+                    ),
+                    {"actor": actor_id},
                 )
-        async with engine.begin() as connection:
-            await connection.execute(
-                text(
-                    "update actor_profiles set status='active', suspended_by=null, "
-                    "suspended_at=null, suspension_reason=null, deactivated_by=null, "
-                    "deactivated_at=null, deactivation_reason=null where id=:actor"
-                ),
-                {"actor": actor_id},
-            )
-            await connection.execute(
-                text(
-                    "update actor_identity_links set status='active', revoked_by=null, "
-                    "revoked_at=null, revoked_reason=null where actor_profile_id=:actor"
-                ),
-                {"actor": actor_id},
-            )
-        if owner_reset:
-            async with engine.begin() as connection:
                 await connection.execute(
                     text(
-                        "alter table actor_profiles enable trigger actor_profile_history_guard"
-                    )
+                        "update actor_identity_links set status='active', revoked_by=null, "
+                        "revoked_at=null, revoked_reason=null where actor_profile_id=:actor"
+                    ),
+                    {"actor": actor_id},
                 )
+        finally:
+            if history_guard_disabled:
+                async with engine.begin() as connection:
+                    await connection.execute(
+                        text(
+                            "alter table actor_profiles enable trigger "
+                            "actor_profile_history_guard"
+                        )
+                    )
     finally:
         await engine.dispose()
 

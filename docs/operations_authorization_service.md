@@ -452,11 +452,12 @@ cd backend
 .venv/bin/alembic downgrade 0019_authority_idempotency
 ```
 
-Rollback restores every new canonical identity to legacy identity storage.
-For identities that already existed before AUTH-06, conflict handling preserves
-their legacy display name and email; it does not backport later canonical
-`PATCH /api/v1/actors/me` display edits into those legacy fields. This is an
-intentional privacy boundary, not a synchronization mechanism.
+Rollback restores every canonical identity to legacy identity storage and
+copies the current canonical `display_name` and `contact_email`, including
+`null`, into the restored row. This prevents a cleared canonical contact email
+from being resurrected by pre-AUTH-06 code. Because canonical migration does
+not import legacy display fields, rollback intentionally scrubs retained legacy
+display data unless it was set through `PATCH /api/v1/actors/me` after AUTH-06.
 
 ## Staged Rollout
 

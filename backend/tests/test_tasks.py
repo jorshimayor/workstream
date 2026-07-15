@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import asyncpg
 import hashlib
 import json
 from collections.abc import AsyncIterator, Iterator
@@ -15,7 +14,7 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import inspect, select, text
+from sqlalchemy import func, inspect, select, text
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -65,29 +64,6 @@ from app.modules.tasks.service import TaskService, TaskServiceError
 from app.schemas.auth import ActorContext
 
 
-async def clear_test_audit_events(database_url: str) -> None:
-    """Reset append-only evidence under explicit isolated-test ownership."""
-    connection = await asyncpg.connect(database_url.replace("+asyncpg", ""))
-    try:
-        async with connection.transaction():
-            await connection.execute(
-                "alter table audit_events disable trigger audit_events_reject_update_delete"
-            )
-            await connection.execute(
-                "alter table audit_events disable trigger audit_events_reject_truncate"
-            )
-            await connection.execute("truncate table audit_events cascade")
-            await connection.execute("truncate table api_rate_control_counters")
-            await connection.execute(
-                "alter table audit_events enable trigger audit_events_reject_truncate"
-            )
-            await connection.execute(
-                "alter table audit_events enable trigger audit_events_reject_update_delete"
-            )
-    finally:
-        await connection.close()
-
-
 async def test_task_repository_delegates_audit_persistence() -> None:
     """Keep legacy task audit methods as same-session shared-writer adapters."""
     session = MagicMock()
@@ -134,6 +110,7 @@ def task_database_env(
     monkeypatch: pytest.MonkeyPatch,
     postgres_database_url: str,
     migration_lock,
+    reset_test_database_state,
 ) -> Iterator[str]:
     monkeypatch.setenv("WORKSTREAM_DATABASE_URL", postgres_database_url)
     monkeypatch.setenv("WORKSTREAM_CELERY_TASK_ALWAYS_EAGER", "true")
@@ -146,15 +123,25 @@ def task_database_env(
     asyncio.run(db_session.dispose_engine())
 
     config = alembic_config()
-    with migration_lock():
-        command.downgrade(config, "base")
-        command.upgrade(config, "head")
-        yield postgres_database_url
-        asyncio.run(clear_test_audit_events(postgres_database_url))
-        asyncio.run(db_session.dispose_engine())
-        command.downgrade(config, "base")
-    asyncio.run(db_session.dispose_engine())
-    get_settings.cache_clear()
+    try:
+        with migration_lock():
+            command.downgrade(config, "base")
+            try:
+                command.upgrade(config, "head")
+                yield postgres_database_url
+            finally:
+                try:
+                    asyncio.run(reset_test_database_state(postgres_database_url))
+                finally:
+                    try:
+                        asyncio.run(db_session.dispose_engine())
+                    finally:
+                        command.downgrade(config, "base")
+    finally:
+        try:
+            asyncio.run(db_session.dispose_engine())
+        finally:
+            get_settings.cache_clear()
 
 
 @pytest.fixture
@@ -2142,6 +2129,12 @@ async def test_worker_without_profile_cannot_claim_ready_task(
 
     assert response.status_code == 403
     assert "active legacy submitter eligibility" in response.json()["detail"]
+    context = await task_client.get(
+        f"/api/v1/tasks/{ready_task['id']}/work-context",
+        headers=auth_headers(),
+    )
+    assert context.status_code == 200, context.text
+    assert context.json()["lifecycle"]["next_actions"] == []
 
 
 async def test_disabled_worker_profile_cannot_claim_ready_task(
@@ -2213,6 +2206,84 @@ async def test_disabled_legacy_eligibility_after_claim_blocks_assigned_submitter
     )
     assert read.status_code == 200
     assert read.json()["status"] == "claimed"
+    context = await task_client.get(
+        f"/api/v1/tasks/{ready_task['id']}/work-context",
+        headers=auth_headers(),
+    )
+    assert context.status_code == 200, context.text
+    assert context.json()["lifecycle"]["next_actions"] == []
+
+
+async def test_disabled_eligibility_suppresses_submit_lifecycle_affordances(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    subject = "eligibility-disabled-after-start"
+    started_task = await create_started_task(
+        task_client,
+        project["id"],
+        monkeypatch,
+        subject=subject,
+    )
+    async with db_session.get_session_factory()() as session:
+        eligibility = await session.scalar(
+            select(LegacyWorkflowEligibility).where(
+                LegacyWorkflowEligibility.actor_id == actor_id(subject),
+                LegacyWorkflowEligibility.profile_type == "worker",
+            )
+        )
+        assert eligibility is not None
+        eligibility.status = "disabled"
+        await session.commit()
+
+    context = await task_client.get(
+        f"/api/v1/tasks/{started_task['id']}/work-context",
+        headers=auth_headers(),
+    )
+
+    assert context.status_code == 200, context.text
+    lifecycle = context.json()["lifecycle"]
+    assert lifecycle["can_run_pre_submit_check"] is False
+    assert lifecycle["can_submit"] is False
+    assert lifecycle["next_actions"] == []
+
+    async with db_session.get_session_factory()() as session:
+        before = {
+            "submissions": await session.scalar(
+                select(func.count()).select_from(Submission).where(
+                    Submission.task_id == started_task["id"]
+                )
+            ),
+            "checker_runs": await session.scalar(
+                select(func.count()).select_from(db_models.CheckerRun)
+            ),
+            "audit_events": await session.scalar(
+                select(func.count()).select_from(AuditEvent)
+            ),
+        }
+    submission = await task_client.post(
+        f"/api/v1/tasks/{started_task['id']}/submissions",
+        headers=auth_headers(),
+        json=complete_submission_payload(),
+    )
+    assert submission.status_code == 403
+    assert "active legacy submitter eligibility" in submission.json()["detail"]
+    async with db_session.get_session_factory()() as session:
+        after = {
+            "submissions": await session.scalar(
+                select(func.count()).select_from(Submission).where(
+                    Submission.task_id == started_task["id"]
+                )
+            ),
+            "checker_runs": await session.scalar(
+                select(func.count()).select_from(db_models.CheckerRun)
+            ),
+            "audit_events": await session.scalar(
+                select(func.count()).select_from(AuditEvent)
+            ),
+        }
+    assert after == before
 
 
 async def test_active_worker_profile_without_worker_token_cannot_claim(
@@ -2232,6 +2303,12 @@ async def test_active_worker_profile_without_worker_token_cannot_claim(
 
     assert response.status_code == 403
     assert "actor lacks required role" in response.json()["detail"]
+    context = await task_client.get(
+        f"/api/v1/tasks/{ready_task['id']}/work-context",
+        headers=auth_headers(),
+    )
+    assert context.status_code == 200, context.text
+    assert context.json()["lifecycle"]["next_actions"] == []
 
 
 @pytest.mark.parametrize("profile_type", ["admin", "project_manager"])

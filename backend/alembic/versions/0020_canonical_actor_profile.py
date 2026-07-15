@@ -294,7 +294,7 @@ def upgrade() -> None:
         kind = kinds[row.actor_id]
         profile_method = "automatic_first_access" if kind == "human" else "manual_service_provisioning"
         creator = row.actor_id if kind == "human" else "workstream:system:legacy-migration"
-        link_id = str(uuid5(NAMESPACE_URL, f"workstream:identity-link:{row.external_issuer}:{row.external_subject}"))
+        link_id = str(uuid5(NAMESPACE_URL, f"workstream:identity-link:{row.actor_id}"))
         bind.execute(
             sa.text(
                 "insert into actor_profiles "
@@ -355,6 +355,7 @@ def downgrade() -> None:
             "select p.id,l.subject,l.issuer,p.display_name,p.contact_email,'[]'::json,'{}'::json,'flow',false,p.created_at,coalesce(p.last_seen_at,p.created_at),p.updated_at "
             "from actor_profiles p join actor_identity_links l on l.actor_profile_id=p.id "
             "on conflict (actor_id) do update set "
+            "display_name=excluded.display_name,email=excluded.email,"
             "last_seen_at=excluded.last_seen_at,updated_at=excluded.updated_at"
         )
     )
