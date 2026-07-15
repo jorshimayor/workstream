@@ -62,19 +62,24 @@ CodeRabbit; explicit human approval merged PR #117 as `4c5d4fc` on 2026-07-14.
 Its post-merge memory merged through PR #118 as `eba7e2b`. AUTH-05B's repaired
 L1 plan, implementation, repair, focused evidence, and required review tracks
 passed before explicit human approval merged PR #119 as `ad71c7e`.
+AUTH-06 then established canonical actor profiles and identity links. Its
+runtime, migration, compatibility, privacy, and API evidence passed required
+internal and external checks; explicit human approval merged PR #124 as
+`f599551` on 2026-07-15. Signed automated memory stopped with AUTH-07 requiring
+a separate start. The user explicitly started AUTH-07 on 2026-07-15; discovery
+and required L1 plan review are now active.
 
 ## Active planning chunk
 
-None. `WS-AUTH-001-06` remains an inactive candidate requiring a separate
-explicit user start.
+None.
 
 ## Active implementation chunk
 
-None.
+`WS-AUTH-001-07` - Authorization Kernel And Permission Registry.
 
 ## Current implementation branch
 
-None recorded by this authored status file.
+`codex/ws-auth-001-07-authorization-kernel`
 
 ## Chunk status
 
@@ -91,8 +96,8 @@ None recorded by this authored status file.
 | `WS-AUTH-001-05A` | Merged | `codex/ws-auth-001-05-authority-evidence` | #115 | Merged as `8e1cde6`; reviewed code `ea16fd8`; final branch head `d023952`. |
 | `WS-AUTH-001-CAT` | Merged | `codex/ws-auth-001-action-catalogue-reconciliation` | #117 | Merged as `4c5d4fc`; final branch head `5b4ec96`. |
 | `WS-AUTH-001-05B` | Merged | `codex/ws-auth-001-05b-idempotency-invalidation` | #119 | Merged as `ad71c7e`; reviewed runtime SHA `e083890`. |
-| `WS-AUTH-001-06` | Proposed | - | - | Canonical actor profile and identity link. |
-| `WS-AUTH-001-07` | Proposed | - | - | Authorization kernel and permissions. |
+| `WS-AUTH-001-06` | Merged | `codex/ws-auth-001-06-canonical-actor-profile` | #124 | Merged as `f599551`; final PR head `4a2193f`. |
+| `WS-AUTH-001-07` | In discovery and plan review | `codex/ws-auth-001-07-authorization-kernel` | - | Explicitly started after signed AUTH-06 merge memory. |
 | `WS-AUTH-001-08` | Proposed | - | - | Bootstrap and administrative grants. |
 | `WS-AUTH-001-09` | Proposed | - | - | Actor/link states and service actors. |
 | `WS-AUTH-001-10` | Proposed | - | - | Project contributor grants. |
@@ -121,8 +126,9 @@ permission identifiers remain approved, including
 `operations.checker.retry`; the three recovery identifiers receive persisted
 parity only in their owning later chunks. `WS-AUTH-001-CAT` retains only safe
 registry/conformance rules. This is a scope decision, not an AUTH-05B runtime
-blocker. PR #118 and AUTH-05B PR #119 are merged. AUTH-06 and POL-002-04 remain
-inactive until an explicit human start.
+blocker. PR #118, AUTH-05B PR #119, and AUTH-06 PR #124 are merged. AUTH-07 has
+an explicit user start and is at its L1 plan-review gate. POL-002-04 remains
+inactive until an explicit human start and its authorization prerequisite.
 
 AUTH-04B review evidence and its PR trust bundle are recorded at
 `reviews/WS-AUTH-001-04B-internal-review-evidence.md` and

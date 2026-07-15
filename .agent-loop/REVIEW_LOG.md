@@ -1,5 +1,14 @@
 # Review Log
 
+## 2026-07-15 - WS-AUTH-001-07 Started
+
+PR #124 merged `WS-AUTH-001-06` as `f599551`; Backend, Agent Gates,
+CodeRabbit, and signed automated merge memory passed. The user explicitly
+started `WS-AUTH-001-07` on branch
+`codex/ws-auth-001-07-authorization-kernel`. This L1 authorization chunk is in
+read-only discovery and required plan review; runtime implementation has not
+started.
+
 ## 2026-07-15 - WS-ENG-001-02 Internal Review Passed
 
 Reviewed implementation SHA `8670005` passed senior engineering,

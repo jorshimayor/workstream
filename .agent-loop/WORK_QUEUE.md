@@ -2,14 +2,14 @@
 
 ## In Progress
 
-None. This authored queue does not select a global next chunk; live post-merge
-state is read from signed `automation/loop-memory` output.
+| Chunk | Title | Risk | Status |
+|---|---|---:|---|
+| `WS-AUTH-001-07` | Authorization Kernel And Permission Registry | L1 | Explicitly started by the user after AUTH-06 merge; L1 discovery and plan review in progress |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-06` | Canonical Actor Profile And Identity Link | L1 | Inactive until a separate explicit user start |
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Paused for AUTH priority; no valid replacement baseline yet |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
@@ -65,6 +65,7 @@ state is read from signed `automation/loop-memory` output.
 | `WS-AUTH-001-CAT` | Action And Resource Catalogue Reconciliation | L1 | Merged through PR #117 as `4c5d4fc` on 2026-07-14 |
 | `WS-AUTH-001-CAT-MEMORY` | Catalogue Post-Merge Memory | L1 | Merged through PR #118 as `eba7e2b` on 2026-07-14 |
 | `WS-AUTH-001-05B` | Authority Idempotency And Invalidation Foundation | L1 | Merged through PR #119 as `ad71c7e` on 2026-07-14 |
+| `WS-AUTH-001-06` | Canonical Actor Profile And Identity Link | L1 | Merged through PR #124 as `f599551` on 2026-07-15 |
 | `WS-ART-001-OBJECT-STORAGE-AMENDMENT` | AWS-First Object Storage Planning Amendment | L1 | Merged through PR #120 as `4408256` on 2026-07-14 |
 | `WS-ENG-001-02` | Automated Post-Merge Memory | L1 | Merged through PR #122 as `fc89fb6`; schema-v1 output superseded by WS-ENG-001-03 |
 
@@ -72,7 +73,8 @@ state is read from signed `automation/loop-memory` output.
 
 AUTH-05A merged through PR #115 as `8e1cde6`, and CAT plus its post-merge memory
 merged through PRs #117 and #118. AUTH-05B merged through PR #119 as `ad71c7e`.
-Do not start AUTH-06 or POL-002-04 automatically.
+AUTH-06 merged through PR #124 as `f599551`, and the user explicitly started
+AUTH-07. Do not start AUTH-08 or POL-002-04 automatically.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.

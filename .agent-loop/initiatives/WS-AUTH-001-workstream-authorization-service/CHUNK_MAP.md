@@ -22,8 +22,8 @@ stopped.
 | `WS-AUTH-001-05A` | Shared Audit Ownership And Append-Only Authority Evidence | L1 | Merged through PR #115 as `8e1cde6` |
 | `WS-AUTH-001-CAT` | Action And Resource Catalogue Reconciliation | L1 | Merged through PR #117 as `4c5d4fc` |
 | `WS-AUTH-001-05B` | Authority Idempotency And Invalidation Foundation | L1 | Merged through PR #119 as `ad71c7e` |
-| `WS-AUTH-001-06` | Canonical Actor Profile And Identity Link | L1 | Proposed |
-| `WS-AUTH-001-07` | Authorization Kernel And Permission Registry | L1 | Proposed |
+| `WS-AUTH-001-06` | Canonical Actor Profile And Identity Link | L1 | Merged through PR #124 as `f599551` |
+| `WS-AUTH-001-07` | Authorization Kernel And Permission Registry | L1 | Explicitly started; discovery and L1 plan review in progress |
 | `WS-AUTH-001-08` | Bootstrap And Administrative Role Grants | L1 | Proposed |
 | `WS-AUTH-001-09` | Actor State, Identity Revocation, And Service Actors | L1 | Proposed |
 | `WS-AUTH-001-10` | Project Qualification And Contributor Role Grants | L1 | Proposed |
@@ -116,5 +116,7 @@ human approval merged PR #115 as `8e1cde6` on 2026-07-14, followed by merged
 post-merge memory. `WS-AUTH-001-CAT` then merged through PR #117 as `4c5d4fc`
 after Backend, Agent Gates, CodeRabbit, and explicit human approval passed. The
 CAT post-merge memory merged through PR #118 as `eba7e2b`; AUTH-05B then merged
-through PR #119 as `ad71c7e`. Do not start AUTH-06 or POL-002-04 without a
-separate explicit user start.
+through PR #119 as `ad71c7e`. AUTH-06 merged through PR #124 as `f599551`, its
+signed automated memory completed, and the user explicitly started AUTH-07. Do
+not start AUTH-08 or POL-002-04 without a separate explicit user start after
+their prerequisites complete.

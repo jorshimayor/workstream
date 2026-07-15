@@ -5,16 +5,19 @@
 - This authored file is reviewed planning/history context, not canonical live
   post-merge state. Canonical state is the signed schema-v2 output on
   `automation/loop-memory`.
-- Active initiative: none recorded here
+- Active initiative: `WS-AUTH-001` - Workstream Authorization Service
 - Active planning chunk: none
-- Active implementation chunk: none
+- Active implementation chunk: `WS-AUTH-001-07` - Authorization Kernel And
+  Permission Registry
+- Current branch: `codex/ws-auth-001-07-authorization-kernel`
+- Start basis: the user explicitly started AUTH-07 after PR #124 merged AUTH-06
+  as `f599551`; signed merge state required a separate explicit start.
 - PR #119 merged `WS-AUTH-001-05B` as `ad71c7e`.
 - PR #120 merged `WS-ART-001-OBJECT-STORAGE-AMENDMENT` as `4408256`.
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: no product chunk is selected by this authored file. A human
-  must explicitly start one candidate after reading current signed state.
+- Current gate: L1 discovery and plan review before runtime implementation.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
@@ -25,9 +28,10 @@
   each owning WS-ART feature chunk activates only its own canonical actions.
 - Next artifact candidate: `WS-ART-001-02A1` remains inactive until the user
   gives a separate explicit start signal.
-- Parallel authorization work: `WS-AUTH-001-05B` merged through PR #119 as
-  `ad71c7e`. `WS-AUTH-001-06` remains inactive pending a separate explicit
-  user start.
+- Authorization checkpoint: `WS-AUTH-001-06` merged through PR #124 as
+  `f599551`. The user separately started `WS-AUTH-001-07`; AUTH-08 remains
+  inactive until AUTH-07 merges, automated memory completes, and the user gives
+  another explicit start.
 - Parallel coverage work: `WS-QUAL-001-01B2` remains paused. Its last official
   whole-app result is `6466/8159` statements (`79.249908%`); no replacement
   evidence exists.
