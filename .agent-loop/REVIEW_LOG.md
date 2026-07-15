@@ -1,5 +1,16 @@
 # Review Log
 
+## 2026-07-15 - WS-AUTH-001-07A Third Repaired Plan Failed
+
+Exact-SHA architecture/reuse and CI review of `8690ef5` passed all prior
+mapping, downgrade, scope, and verification findings but rejected one
+temporal-schema ambiguity. If migration `0021` froze all planned actions to
+denial-only PostgreSQL evidence, AUTH-07B could not activate its two self
+actions without an unowned migration. The repair keeps availability enforcement
+in typed catalogue validation while PostgreSQL permanently enforces registered
+identifiers, decision-event-only use, and exact action-to-permission mapping.
+Runtime code remains unmodified pending fresh exact-SHA review.
+
 ## 2026-07-15 - WS-AUTH-001-07A Second Repaired Plan Failed
 
 Exact-SHA senior engineering, architecture/reuse, QA/test, and CI-integrity

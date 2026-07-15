@@ -137,6 +137,10 @@ owned by later chunks and are not registered here.
   `SensitiveAuthorizationAllowed` when any of them is present. A planned action
   may be persisted only as bounded `SensitiveAuthorizationDenied` evidence;
   activation chunks own later allowed evidence.
+- PostgreSQL is deliberately availability-neutral: it enforces registration,
+  decision-event-only use, and the exact action-to-permission mapping, but does
+  not freeze `planned` versus `active`. Later owner chunks activate catalogue
+  rows in typed code without altering migration `0021`.
 - Existing non-action authority events remain valid with null `action_id`.
 - Downgrade refuses when either any non-null action evidence or any PermissionId
   outside the historical 49-value set exists. A clean database satisfying both
@@ -147,8 +151,10 @@ owned by later chunks and are not registered here.
   session proof shows a concurrent insert cannot pass between the checks and
   destructive DDL.
 - Direct SQL proves unknown ActionIds and mismatched action/permission pairs
-  fail, every new permission without its mapped action fails, and each registered
-  planned ActionId persists only as denied evidence with its mapped permission.
+  fail and every new permission without its mapped action fails. Direct-SQL
+  positive fixtures use denied evidence for every planned ActionId; denial-only
+  availability is tested at `AuthorityAuditEventInput`, not as a PostgreSQL
+  constraint.
 - The canonical specification separates four-field planned registry metadata
   from later feature activation blueprints.
 - Operations docs cover startup catalogue failure, evidence inspection, and the

@@ -48,6 +48,18 @@ acceptance criteria, requires denial-only evidence for planned actions, and
 checks both action and post-`0018` permission evidence under the exclusive
 downgrade lock. No runtime code was written.
 
+## Third repaired review
+
+Exact-SHA architecture/reuse and CI review of `8690ef5` confirmed the mapping
+and downgrade repair but rejected one temporal-schema ambiguity. The contract
+could be read as freezing planned actions to denied events in PostgreSQL, which
+would prevent AUTH-07B from activating its two self actions without another
+migration. The repair makes availability a typed catalogue invariant only.
+PostgreSQL remains stable across activation and enforces registration,
+decision-event-only use, and exact action-to-permission mapping. Direct-SQL
+planned-action fixtures use denied evidence without asserting a database-level
+availability rule. No runtime code was written.
+
 ## Re-review gate
 
 Fresh architecture, security/auth, product/ops, docs, and QA/CI plan review must
