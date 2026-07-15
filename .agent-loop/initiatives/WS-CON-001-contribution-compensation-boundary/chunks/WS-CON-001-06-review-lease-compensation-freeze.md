@@ -57,8 +57,11 @@ provider/artifact/adapter calls
 - [ ] Missing/inactive/invalid policy or binding returns stable typed failure
   with no WS-CON/audit/outbox partial state.
 - [ ] Contract explicitly requires REV-03's immutable non-null ReviewLease FK
-  and REV-06's `review.claim` revalidation, injection, lease write, audit/outbox,
-  release/expiry behavior, and integrated tests; CON-06 implements none of them.
+  plus AUTH's planned `review.claim` typed/prepared contract and REV-06's hidden
+  resource composition, final-context integration, injection, lease write,
+  audit/outbox, release/expiry behavior, and planned-action fail-closed tests;
+  CON-06 implements none of them. After both merge, AUTH alone integrates the
+  evaluator and activates the action before production execution.
 - [ ] Policy publish vs claim concurrency freezes one committed version and
   passes both lock permutations without deadlock.
 - [ ] Binding suspend/retire versus lookup is covered in both permutations.

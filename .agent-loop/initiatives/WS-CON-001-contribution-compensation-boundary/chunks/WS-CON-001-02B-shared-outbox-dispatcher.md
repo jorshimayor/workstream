@@ -30,6 +30,22 @@ dependency, workflow, test or coverage weakening
 
 ## Acceptance criteria
 
+- [ ] AUTH has registered planned `outbox.dispatch` with its new service-only
+  PermissionId, typed context contract, fixed `workstream.outbox.dispatcher`
+  ActorProfile/link, exact action assignment, and D10 prepared-mutation
+  protocol. This chunk keeps dispatcher execution disabled and proves the real
+  kernel denies while planned; only a later AUTH-owned evaluator/activation
+  change may enable it, and no human grant can execute dispatch.
+- [ ] The dispatcher prepares authority from a server-resolved preliminary
+  event target before locking/claiming OutboxEvent, then evaluates the opaque
+  handle exactly once against final typed event/claim/lease/generation facts
+  recomposed from locked rows. It retains the one AuthorizationDecision in the
+  dispatch causation/audit path, never asks AUTH to commit, and rejects missing,
+  reused, mismatched, cross-session or cross-action handles.
+- [ ] While the action is planned, success-path domain tests use only an
+  explicit decision/fake below that prepared seam. Real-kernel and worker tests
+  remain fail-closed; transaction tests cover prepare denial, stale claim,
+  final-context mismatch and both AUTH-first/product-lock race orders.
 - [ ] One explicit handler registry, stable Celery task IDs, fenced claim,
   attempt, retry schedule, dead-letter, replay, retention and bounded recovery
   preserve immutable event identity.
@@ -60,6 +76,9 @@ dependency, workflow, test or coverage weakening
   query outbox persistence directly.
 - [ ] Handler invocation occurs after commit; no feature event semantics or
   compensation adapter is implemented here.
+- [ ] The post-CON AUTH activation gate owns end-to-end central evaluator and
+  service-assignment proof against this merged seam without editing dispatcher
+  code. CON-08A and any worker enablement remain blocked until that gate merges.
 
 ## Verification and reviewers
 

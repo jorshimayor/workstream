@@ -36,19 +36,43 @@ WS-CON never reads grants, roles, or AUTH repositories. Every protected command
 or query declares one ActionId and consumes a request-scoped, caller-session-
 bound `AuthorizationService`.
 
-Every WS-CON ActionId is currently absent and proposed. AUTH-07A is merged on
-trusted `main` through `e9d72a1`; its closed catalogue contains 74 PermissionIds
-and 50 planned non-WS-CON ActionIds. The exact handoff is in
-`AUTHORIZATION_HANDOFF.md`. It enumerates each proposed action separately,
-its existing or proposed PermissionId, canonical target, candidate principal
-class, typed resource facts and guards, transaction revalidation requirement,
-registry owner, resource-context owner, and activation owner.
+Every WS-CON ActionId is currently absent and proposed. Trusted `main`
+`90eca12` includes AUTH-07B's request-scoped deny-by-default kernel. Its closed
+catalogue contains 74 PermissionIds and 50 non-WS-CON ActionIds: two actor-self
+actions are active and 48 actions remain planned. The exact handoff is in
+`AUTHORIZATION_HANDOFF.md`. It enumerates each proposed action separately, its
+existing or proposed PermissionId, canonical target, candidate principal class,
+typed resource facts and guards, transaction protocol, AUTH activation gate,
+and feature resource owner.
 
-WS-AUTH owns identifier/owner-enum registration, typed/PostgreSQL parity,
-service ActorProfile/action-assignment construction, grant semantics, and
-kernel behavior. The feature chunk named in the handoff owns resource
-composition, lifecycle guards, behavioral proof, and activation only after the
-AUTH registration prerequisite is merged. WS-CON never edits AUTH-owned files.
+AUTH-07B currently evaluates only actor-self contexts/actions and rejects
+service subjects at its actor-self dependency. WS-AUTH therefore owns not only
+identifier/owner-enum registration and typed/PostgreSQL parity, but also action
+availability, closed evaluator dispatch, matched-authority expansion, grant
+semantics, service-capable composition, service ActorProfile/action-assignment
+construction, and transaction-local authority revalidation. The feature chunk
+named in the handoff owns product-row loading, construction of AUTH-approved
+typed resource facts, lifecycle guards, and behavioral proof. WS-CON never
+edits AUTH-owned files or activates an AUTH action.
+
+For mutations crossing AUTH and product rows, AUTH must add the prepared
+authorization protocol specified in the handoff. The preliminary target lets
+AUTH lock actor/link/grant or service-assignment rows first; the opaque handle is
+then evaluated exactly once against facts recomposed from product rows locked by
+the feature in canonical order. AUTH stages one decision and never commits.
+This prevents both product-before-AUTH lock inversion and authorization based on
+an unlocked resource snapshot.
+
+Current trusted `main` also lacks an ActionId for upstream `task.claim`, even
+though PermissionId `task.claim` exists. AUTH-13 or an approved AUTH-owned
+successor must register and activate that action before CON-05A adds the
+compensation freeze participant. Review choreography is deliberately staged:
+AUTH first registers the planned `review.claim` and `review.decision` contracts;
+CON-06/07 then supply their hidden capability/participant; REV-06/10 compose and
+prove the final typed resource behavior while the real kernel remains
+fail-closed; only then may AUTH integrate the evaluators and activate those
+actions. Production execution and public routes remain blocked until the later
+readiness/REV-13 gates.
 
 Derived contribution/award writes are mandatory participants of the already
 authorized `review.decision` transaction. They are not separately callable
@@ -84,7 +108,9 @@ composition and proves end-to-end atomicity.
 
 The active contract extends, and may not replace, WS-REV's accepted order:
 
-1. AUTH-owned current actor/identity/grant/control rows in AUTH internal order;
+1. AUTH-owned current actor/identity/grant/service-assignment/control rows in
+   AUTH internal order, locked by the prepared authorization handle for `T`
+   operations;
 2. the operation idempotency row;
 3. for lifecycle-controlled commands, the shared lifecycle advisory fence and
    captured phase snapshot; this is held through the database transaction but
@@ -109,9 +135,12 @@ The active contract extends, and may not replace, WS-REV's accepted order:
 Multiple same-type rows are locked by ascending primary key/UUID. Operations
 skip absent classes but never reorder shared classes.
 
-No feature may reverse this order. Publish, retire, binding suspend/resume/
-retire, assignment claim, review claim, delivery, callback, reconciliation, and
-projection rebuild revalidate authority after acquiring their relevant locks.
+No feature may reverse this order. For `T` operations, AUTH prepares and locks
+authority first; publish, retire, binding suspend/resume/retire, assignment
+claim, review claim, delivery, callback, reconciliation, and projection rebuild
+then evaluate the same prepared handle against final facts recomposed from their
+locked product rows. The handle is request/session/action/target bound and
+single-use. `Q` reads remain request-scoped.
 Freezing requires a published version whose referenced bindings are active.
 Suspension blocks new freezes and new delivery but does not erase already-frozen
 obligations; exact callback/replay behavior is state-matrix controlled. Real
@@ -162,8 +191,17 @@ Markdown build. Preserve generations and create an active reconciled spec.
 ### Replace broad PermissionIds with granular strings
 
 Rejected because the merged AUTH contract preserves 74 stable PermissionIds
-and separately stages 50 planned ActionIds. Granular action names do not replace
+and separately registers 50 ActionIds, of which only two actor-self actions are
+active on current trusted `main`. Granular action names do not replace
 permissions.
+
+### Let WS-CON flip AUTH catalogue availability
+
+Rejected because availability without an AUTH-owned typed evaluator, grant or
+service-assignment path, audit parity, and transaction protocol is either
+deny-only or an authorization bypass. AUTH owns registration, evaluator
+dispatch, principal truth and activation; CON owns canonical product facts and
+behavior only.
 
 ### Reuse `PaymentPolicy` directly as the award policy
 
@@ -220,10 +258,15 @@ backend contract.
    artifact scanner itself is unchanged.
 2. Merge outbox persistence then its feature-neutral dispatcher; add split,
    inactive binding/policy/contribution/award/delivery/receipt persistence.
-3. Merge required AUTH ActionId/PermissionId registrations and exact service
-   action assignments in the AUTH initiative; merge required ART capabilities
-   in ART. Feature chunks then activate only their own registered actions with
-   resource composers and behavioral proof.
+3. Interleave each AUTH registration -> feature implementation -> AUTH
+   activation wave in `AUTHORIZATION_HANDOFF.md`. The registration checkpoint
+   provides planned ActionId/PermissionId/owner/audit parity, typed context
+   contracts, principal prerequisites and prepared mutation protocol. The
+   CON/ART chunk then merges hidden authorization-ready behavior while the real
+   kernel still denies. Only a later AUTH-owned checkpoint integrates the
+   evaluator, proves the exact merged feature and changes availability. CON/ART
+   never edits AUTH or supplies a production allow fallback. Merge required ART
+   capabilities in ART.
 4. Activate hidden binding/policy services. CON-05A atomically removes every
    PaymentPolicy semantic consumer and enables only task claims that freeze a
    CompensationPolicyVersion, only after merged REV-02 establishes the exact
@@ -240,11 +283,11 @@ backend contract.
    required CON-owned dispatch/callback fence ports while consuming the
    read-only fulfillment-drain observation port; it may not edit CON product
    files or import CON/outbox repositories.
-   The content-reviewed sibling working delta atop `3e09e99` currently matches
-   this boundary except for the recorded shared-outbox claim-wording repair. The
-   exact repaired snapshot must become a branch-reachable commit, pass
-   commit-bound freshness review, preserve the boundary through refresh, and
-   merge before it is a consumable dependency. Do not change archival sources.
+   Sibling merge head `e59e2bb` now includes the joint plan atop trusted main
+   `90eca12`, but its status/evidence still cites older heads and REV-12A still
+   assigns claim wording to the handler. The exact repaired snapshot must adopt
+   the AUTH-07B executable gates, pass commit-bound freshness review, and merge
+   before it is a consumable dependency. Do not change archival sources.
 
 At every chunk activation, rebase discovery on trusted `main`, refresh exact
 migration numbers and dependency symbols, and stop if an expected port/action
@@ -264,6 +307,12 @@ is absent or materially changed.
   repository coverage at or above 78 percent.
 - OpenAPI action inventory requires one ActionId per protected surface and
   proves hidden routes remain absent before final activation.
+- Authorization contract tests prove every planned WS-CON action denies, every
+  active action has exactly one AUTH evaluator and one approved typed context,
+  and no active action exists without its owning feature behavior. Mutation
+  tests reject missing/reused/cross-session prepared handles and exercise
+  actor/link/grant or service-assignment revocation against product mutation in
+  both lock permutations.
 - Static architecture tests reject AUTH persistence imports, local role checks,
   provider-specific compensation adapters, concrete-adapter imports or
   construction outside the explicit composition root, raw ArtifactStore

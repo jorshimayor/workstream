@@ -29,8 +29,12 @@ optional/no-op/fallback callback fence or REV edits to CON callback policy
 
 ## Acceptance criteria
 
-- [ ] AUTH callback PermissionId/ActionId/parity/exact assignment is merged;
-  human AdminRoleGrant/ProjectRoleGrant never satisfies it.
+- [ ] The callback PermissionId/ActionId/audit parity, canonical service
+  ActorProfile/link and exact assignment prerequisite already merged before
+  CON-04A. AUTH has now also merged the typed context, service-capable dependency
+  and prepared `T` contracts needed by this handler. The real kernel remains
+  fail-closed while planned; human AdminRoleGrant/ProjectRoleGrant never
+  satisfies it.
 - [ ] Locks revalidate actor/link/assignment/route/award/project/instrument/
   binding/state; durable rate control is per actor+binding.
 - [ ] After signature verification and AUTH/idempotency locking, callback
@@ -55,6 +59,8 @@ optional/no-op/fallback callback fence or REV edits to CON callback policy
 - [ ] Behavior tests prove failed then fulfilled is allowed, fulfilled then
   failed/changed-fulfilled is denied, and partial fulfillment is rejected.
 - [ ] Production OpenAPI remains unchanged and secrets/refs are never stored.
+- [ ] A later AUTH-owned gate integrates the callback evaluator against this
+  merged implementation and alone changes availability; CON-11 waits for it.
 
 ## Verification and reviewers
 

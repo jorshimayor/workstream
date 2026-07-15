@@ -70,8 +70,11 @@ reputation scoring
 - [ ] Participant accepts only a typed allowed `review.decision` whose actor,
   action, Review/lease/Submission/project resource, request, and correlation
   facts match the locked caller transaction; denied, stale, unrelated, or
-  mismatched evidence is rejected. REV-10 owns final transaction-time authority
-  revalidation and mandatory injection.
+  mismatched evidence is rejected. AUTH first supplies the planned
+  `review.decision` typed/prepared contract; REV-10 then owns hidden resource
+  composition, final-context integration and mandatory injection while the real
+  kernel remains fail-closed. After both merge, AUTH alone integrates the
+  evaluator and activates the action before production execution.
 - [ ] Each contribution creates one pending evidence projection and one stable
   projection request event in the same transaction.
 - [ ] Versioned `ContributionRecorded`, `CompensationAwardCreated`,

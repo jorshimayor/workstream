@@ -38,8 +38,11 @@ archival reference edits
 ## Acceptance criteria
 
 - [ ] Startup/preflight fails closed unless exact migrations, AUTH action
-  definitions/owners/availability/service assignments, ART capabilities, outbox
-  dispatcher, REV-10 integration and provider readiness are present.
+  definitions/owners/PermissionId mappings/availability/typed
+  contexts/evaluators/matched authorities/prepared protocol/service
+  dependencies and assignments, ART capabilities, outbox dispatcher, REV-10
+  integration and provider readiness are present. An active action without its
+  executable evaluator or feature behavior fails startup.
 - [ ] Hidden integration proves `/api/v1` target paths are absent from production
   OpenAPI before release and no partial direct construction path exists.
 - [ ] `CONFORMANCE_MATRIX.md` has collected node IDs/evidence for every adopted

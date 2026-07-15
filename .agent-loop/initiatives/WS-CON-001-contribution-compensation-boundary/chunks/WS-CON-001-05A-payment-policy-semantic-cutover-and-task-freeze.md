@@ -78,11 +78,14 @@ review behavior or unrelated checker behavior
   the active specification inventory and REV-13 owns final joint release docs.
 - [ ] A zero-consumer scanner proves the remaining PaymentPolicy model/table is
   unreachable compatibility residue pending 05B, not an executable fallback.
-- [ ] Existing task-claim ActionId/authority is allowed and revalidated before
-  assignment/freeze commit; WS-CON introduces no local role checks.
+- [ ] AUTH-13 or an approved AUTH successor has registered and activated the
+  currently absent ActionId `task.claim` mapped to existing PermissionId
+  `task.claim`, with its exact-project contributor evaluator and prepared `T`
+  protocol. WS-CON introduces no local role checks or AUTH edits.
 - [ ] Claim follows the PLAN lock order, locks every referenced binding by UUID,
-  revalidates task-claim authority after relevant locks, and copies one
-  published same-project version whose bindings are active.
+  evaluates the AUTH-prepared task-claim handle once against final locked task/
+  project/assignment facts, and copies one published same-project version whose
+  bindings are active.
 - [ ] Missing/suspended/invalid policy fails with stable compensation error and
   creates no assignment/task/audit/outbox partial state.
 - [ ] Concurrent publish vs claim freezes one committed old or new version,

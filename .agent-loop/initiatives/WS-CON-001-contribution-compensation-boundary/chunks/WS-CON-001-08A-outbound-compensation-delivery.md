@@ -35,6 +35,12 @@ optional/no-op/fallback dispatch fence or REV edits to CON product files
 
 ## Acceptance criteria
 
+- [ ] The post-CON-02B AUTH checkpoint has integrated and activated the real
+  `outbox.dispatch` evaluator for the fixed dispatcher, including exact active
+  actor/link/action-assignment revalidation and end-to-end proof through the
+  merged prepared-dispatch seam. Real-kernel dispatch succeeds only for that
+  service identity; every human, stale assignment and mismatched event fails
+  closed. This chunk does not edit AUTH or activate a public route.
 - [ ] Reuse shared dispatcher/hashing/idempotency/worker/session/task-settings;
   preserve event/payload/binding/idempotency identity.
 - [ ] Execute only as a handler of a currently claimed `outbox.dispatch`

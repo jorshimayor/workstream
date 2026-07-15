@@ -35,8 +35,9 @@ contribution/award participant before it can expose review decisions.
 - Contribution evidence is produced after commit through an ART-owned typed
   capability and Workstream `ArtifactBinding`, never through a raw artifact
   provider in contribution code.
-- Every public or service operation consumes the merged WS-AUTH
-  `AuthorizationService.require(ActionId, typed ResourceContext)` boundary.
+- Every public or service operation consumes the merged WS-AUTH boundary:
+  request-scoped `require(ActionId, typed ResourceContext)` for `Q` reads and
+  the AUTH-owned prepared, caller-session-bound protocol for `T` mutations.
 - Public APIs use `/api/v1` only.
 
 ## Non-goals
@@ -73,8 +74,9 @@ reputation policy.
    existing broad PermissionIds wherever safe, while the exact bound adapter
    shared outbox dispatch and inbound callbacks require two new service-only
    PermissionIds, `outbox.dispatch` and `compensation.fulfillment.report`,
-   owned and implemented by WS-AUTH. The shared-outbox owner activates dispatch;
-   CON-08A only consumes the claimed command.
+   owned and implemented by WS-AUTH. CON-02B first lands the hidden dispatcher;
+   AUTH then integrates its evaluator and activates dispatch. CON-08A only
+   consumes the already-claimed command.
 4. Approve the cross-initiative sequence, including REV-13 as the sole joint
    production-route activation/live-drill owner after AUTH, ART, REV, shared
    outbox, and WS-CON participants are mandatory and proven.

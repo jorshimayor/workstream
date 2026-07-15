@@ -53,6 +53,10 @@ active runtime documentation adoption
 - [x] First implementation/spec chunk remains proposed until human approval.
 - [x] Required plan reviewers complete and all valid findings are resolved or
   recorded for human decision.
+- [x] AUTH-07B refresh records the two-active/48-planned runtime, separates AUTH
+  registration from post-feature AUTH activation, adds the prepared `T`
+  protocol and absent upstream `task.claim` gate, and receives fresh required
+  review/evidence against current trusted main.
 
 ## Verification commands
 
@@ -71,7 +75,7 @@ only planning Markdown and no CI/tests.
 
 ## Human review focus
 
-Review unresolved D1/D4/D7/D8, confirm accepted D3/D5/D6/D9 and approved D2,
+Review unresolved D1/D4/D7/D8/D10, confirm accepted D3/D5/D6/D9 and approved D2,
 and assess D2's unresolved legacy-row handling rule, exact authorization
 dependencies, artifact boundary, cross-initiative gates, and whether every
 runtime chunk is independently reviewable.

@@ -12,6 +12,7 @@ evidence, not executable authority.
 
 | Requirement family | Owner | Minimum executable cases before owner completes | Final live evidence owner |
 |---|---|---|---|
+| Central authorization integration | AUTH executable gates + each CON resource owner | all absent/planned actions deny; each active action has exact ActionId/PermissionId/owner/context/evaluator parity; human grant and service assignment never substitute; `T` prepared handles reject missing/reuse/cross-session/cross-action/target drift; authority-loss versus product mutation runs in both orders; no CON AUTH-repository import or local role fallback | AUTH conformance + REV-13 |
 | Contribution identity and review lineage | CON-03C/07 + REV-10 | one completed-review contribution per valid Review; accept adds one accepted-submission contribution; second revision review creates a distinct reviewer contribution; automated checker outcomes create none; at-most-one DB constraints and mandatory-participant at-least-one proof | REV-13 |
 | Policy publication and freezing | CON-04B/05/06 + REV-06 | absent/incomplete setup denies; unpaid is explicit; retired frozen version remains valid for started work; later activation changes new assignments/leases only; publish versus both claims in both lock orders | REV-13 |
 | Binding lifecycle | CON-04A/08A/08B/10B | suspended blocks new freeze/delivery but accepts valid existing-work callback; retirement denies dependencies then permits exact accepted-receipt replay only; actor/link revocation denies; project/instrument mismatch denies | REV-13 |

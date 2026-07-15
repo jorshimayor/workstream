@@ -29,8 +29,11 @@ dependency, test, coverage or CI weakening
 
 ## Acceptance criteria
 
-- [ ] Exact proposed actions/canonical facts, stable pre-filter pagination and
-  cross-project concealment are enforced.
+- [ ] The post-CON-09B AUTH contribution-read activation is merged. AUTH has
+  registered the exact planned award self/project actions, typed contexts and
+  applicable actor-self/AdminRoleGrant definitions. CON composes canonical
+  facts; stable pre-filter pagination and cross-project concealment are
+  enforced. A later AUTH gate activates award reads before CON-10B.
 - [ ] Self, Finance/project/Operator/Audit disclosure is separated; Reviewer is
   self-only absent a later approved assigned-review action.
 - [ ] Contribution, money, points, delivery acknowledgement and fulfillment

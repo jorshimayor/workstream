@@ -2,24 +2,31 @@
 
 ## Incorporation status
 
-The inspected sibling working delta atop `3e09e99` has incorporated
-contribution/compensation router registration, the WS-CON-11 preflight
-manifest, the complete joint live matrix, PaymentPolicy removal dependencies,
-the active generated/document companions, and a new REV-12A hidden
-release-control chunk. The delta also corrects REV-12A to consume the CON-owned
+The inspected sibling branch now has committed merge head `e59e2bb`, which
+integrates trusted `main` `90eca12` and includes contribution/compensation
+router registration, the WS-CON-11 preflight manifest, the complete joint live
+matrix, PaymentPolicy removal dependencies, active generated/document
+companions, and REV-12A hidden release control. It consumes the CON-owned
 dispatch and callback fences plus fulfillment-drain observation through
-composition instead of editing CON product files or importing CON/outbox
-repositories. Its required content-review tracks pass, but the snapshot remains
-uncommitted and lacks commit-bound freshness evidence as recorded in
-`SOURCE_MANIFEST.md`; it is working discovery evidence, not a dependency.
-The current REV-12A draft still says the CON handler claims the shared-outbox
-event; before review/merge it must instead accept the dispatcher's already-
-claimed command and return a typed outcome, leaving every outbox transition to
-CON-02B's shared dispatcher.
-WS-CON does not edit the parallel worktree. The WS-REV owner must commit the
-exact content-reviewed delta, run commit-bound freshness review, and merge
-before CON-11, REV-12A, or REV-13 can activate. Until the later implementation
-gates land, both initiatives remain hidden.
+composition instead of importing CON/outbox repositories.
+
+The sibling is still not a consumable dependency: its status/evidence cites
+older AUTH/CON heads and its REV-12A contract still says the CON handler claims
+the shared-outbox event. Before review/merge it must instead accept the
+dispatcher's already-claimed command and return a typed outcome, leaving every
+outbox transition to CON-02B. It must also adopt AUTH-07B's executable-gate and
+prepared-authorization requirements. WS-CON does not edit the parallel
+worktree; the WS-REV owner must repair, commit-bind, internally review and merge
+that exact contract. Until later implementation gates land, both initiatives
+remain hidden.
+
+The refresh must also repair REV-06/10 authorization choreography. AUTH first
+registers the planned review action and typed/prepared contract; CON supplies
+its capability/participant; REV then merges hidden resource composition and
+final-context integration while the real kernel still denies; AUTH alone
+integrates the evaluator and activates the action before production execution.
+REV must not require active review actions before building the hidden
+composition that AUTH activation depends on.
 
 ## Required REV-13 allowed-file additions
 
@@ -70,8 +77,9 @@ historical reviews, and generated loop memory remain excluded.
   award/evidence reads, fulfillment callback, and bounded operations routers in
   the same PR under `/api/v1`; no `/v1` alias and no partial prior surface.
 - Consume CON-11's exact merged-SHA/migration/action/service-assignment/ART/
-  outbox/worker/handler/fence manifest and fail startup/preflight on any
-  mismatch.
+  outbox/worker/handler/fence manifest plus AUTH context/evaluator/matched-
+  authority/prepared-protocol/availability parity, and fail startup/preflight
+  on any mismatch or active action without executable behavior.
 - Use REV-12A only for hidden persisted joint lifecycle control and explicit
   composition. Consume the required CON-owned `FulfillmentDispatchFence`,
   `FulfillmentCallbackFence`, and `FulfillmentLifecycleDrainObservationPort`;

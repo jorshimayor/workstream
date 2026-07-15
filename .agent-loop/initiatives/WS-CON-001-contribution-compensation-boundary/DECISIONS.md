@@ -49,12 +49,17 @@ Use `backend/app/modules/tasks/models.py::Submission` and its `version`/
 ## D4 - ActionIds Do Not Replace PermissionIds
 
 **Status:** separation accepted; all WS-CON actions and service permissions are
-proposed dependencies requiring human approval and AUTH registration.
+proposed dependencies requiring human approval and AUTH-owned executable
+integration.
 
 WS-CON declares granular proposed ActionIds mapped to existing stable
 PermissionIds when semantically safe. AUTH owns registration, audit migration,
-grants/service actors, and kernel behavior; the named feature chunk owns
-resource composition, behavioral proof, and activation after registration.
+availability, evaluator dispatch, grants/service actors, authority
+revalidation, and kernel behavior; the named feature chunk owns product-row
+loading, approved typed resource composition and hidden behavioral proof below
+an explicit test seam while the action remains planned. AUTH later integrates
+the evaluator against that exact merged seam, proves real-kernel behavior and
+alone activates the action.
 Shared outbox dispatch and the external fulfillment callback require the
 proposed service-only PermissionIds `outbox.dispatch` and
 `compensation.fulfillment.report`; neither can borrow human authority. CON-08A
@@ -66,6 +71,10 @@ side effect.
 No WS-CON code edits the AUTH catalogue. `AUTHORIZATION_HANDOFF.md` is the exact
 proposal, and every mapping is re-read from merged trusted `main` before its
 implementation chunk.
+
+Current trusted `main` proves why registration and activation cannot be
+collapsed: AUTH-07B has 50 registered actions but only two active evaluators;
+all planned and unsupported actions fail closed.
 
 ## D5 - Derived Contribution/Award Writes Are Review Participants
 
@@ -112,3 +121,26 @@ Workstream persists awards, exact outbound instructions, adapter delivery
 evidence, immutable fulfillment receipts, and rebuildable status. External
 adapters own payment requests/attempts, approvals, provider reconciliation,
 beneficiary accounts, balances, and project-points ledger entries.
+
+## D10 - AUTH Owns Prepared Cross-Domain Mutation Authorization
+
+**Status:** required architecture correction after merged AUTH-07B review;
+human/AUTH approval required before any `T` action implementation.
+
+The current actor-self kernel can revalidate entirely inside AUTH-owned rows.
+WS-CON mutations cross AUTH and product rows, so one `require()` call against an
+unlocked product snapshot is insufficient, while locking product rows before
+AUTH rows violates the canonical lock order.
+
+AUTH must provide one caller-session-bound prepared authorization protocol. It
+locks actor/link/grant or service-assignment authority first from a
+server-resolved preliminary target, returns an opaque single-use handle, and
+evaluates that handle exactly once against the final typed context recomposed
+from locked product rows. The handle is bound to request, session, actor,
+action, target and authority snapshot; it cannot be serialized, cached, reused,
+or substituted. AUTH stages one decision and never commits. WS-CON supplies
+facts and product guards but cannot implement the handle or query AUTH state.
+
+Rejected: product-row locks before AUTH locks, evaluating an unlocked snapshot,
+calling AUTH twice and emitting competing decisions, or letting feature code
+flip catalogue availability.

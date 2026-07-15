@@ -27,8 +27,11 @@ dependency, test, coverage or CI weakening
 
 ## Acceptance criteria
 
-- [ ] Exact proposed actions/canonical facts, pre-filter pagination and
-  cross-project concealment are required.
+- [ ] AUTH has registered the exact planned contribution self/project read
+  actions, typed contexts and applicable actor-self/AdminRoleGrant definitions.
+  CON composes canonical facts; pre-filter pagination and cross-project
+  concealment are required. The real kernel remains fail-closed while planned;
+  a later AUTH gate owns evaluator integration and availability before CON-10A.
 - [ ] Matrix proves self, Project Manager, Finance, Operator/Audit views and
   Reviewer project-wide denial/self-only behavior without private/provider data.
 - [ ] ART result matches immutable projection identity; evidence failure never

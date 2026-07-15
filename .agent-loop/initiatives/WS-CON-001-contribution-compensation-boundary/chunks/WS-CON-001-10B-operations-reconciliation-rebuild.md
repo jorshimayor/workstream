@@ -29,14 +29,20 @@ dependency, test, coverage or CI weakening
 
 ## Acceptance criteria
 
-- [ ] Ops/audit actions follow handoff and revalidate after locks.
+- [ ] The post-CON-10A AUTH award-read activation is merged. AUTH has registered
+  planned binding-retire, delivery-reconcile, status, reconciliation, rebuild
+  and audit actions with exact AdminRoleGrant definitions, typed contexts and
+  prepared `T` handling where required. CON proves domain behavior below the
+  authorization boundary and changes no AUTH file; a later AUTH gate integrates
+  these evaluators and activates them before CON-11.
 - [ ] Finance project and reason-bound Operator reconciliation use distinct
   guards; Project Manager/contributor denials are explicit.
 - [ ] Reconcile preserves original identities; rebuild changes projection only;
   bounded range/reason/audit/idempotency is durable.
 - [ ] Audit read/export purpose/scope/redaction/max range is proved without
   provider or sensitive failure leakage; OpenAPI remains hidden.
-- [ ] Dependency-aware binding retirement now activates: it locks policy,
+- [ ] Dependency-aware binding retirement is implemented as hidden behavior and
+  remains planned until the later AUTH gate activates it. It locks policy,
   assignment, lease, award, delivery and receipt dependencies, denies any
   active/unfinished/unfulfilled reference, races all dependency changes in both
   orders, and afterward permits only exact accepted-receipt replay.

@@ -32,30 +32,25 @@
 ## Parallel dependency sources inspected
 
 - trusted authorization worktree and `origin/main` at
-  `e9d72a16d95e704f2af514a97d37623940854d95`, which merges AUTH-07A through
-  PR #126
-- merged AUTH-07A catalogue implementation `3ab25cf`, now canonical on trusted
-  `main` with 74 PermissionIds, 50 planned ActionIds, and no WS-CON ActionIds or
-  service-only delivery/fulfillment permissions
+  `90eca12f6398f2ef168e634244d912765572c3e5`, which merges AUTH-07B through PR
+  #130
+- merged AUTH-07B implementation `9fd3bb4` plus CI repair `da0230c`, now
+  canonical on trusted `main`: 74 PermissionIds, 50 ActionIds, exactly two
+  active actor-self actions, 48 planned actions, actor-self/system runtime
+  contexts only, and no WS-CON ActionIds or service-only
+  delivery/fulfillment permissions
 - `/home/abiorh/flow/workstream-auth-001-07/.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/`
 - active sibling REV worktree `/home/abiorh/flow/workstream-rev-001/`, observed
-  at branch-reachable head `3e09e994d500cd45916b449d7bc4f13b7623cdcc`
-  on `2026-07-15T17:48:19+01:00`, plus an uncommitted initiative delta. The
-  branch head integrates trusted `main` `e9d72a1`. The
-  delta introduces REV-12A hidden joint release control, preserves REV-13 as
-  sole production activation, consumes the proposed CON-owned dispatch and
-  callback fences plus fulfillment-drain observation only through composition,
-  and retains the complete PaymentPolicy removal/CON-11 gates. All required
-  content-review tracks pass in the sibling evidence, but the reviewed snapshot
-  and reference changes remain dirty. No dependency SHA is claimed. The exact
-  reviewed delta must become a branch-reachable commit, pass commit-bound
-  freshness review, refresh against trusted main, and merge before it is
-  consumable. The sibling's revised reference Markdown/PDF remain separate
-  worktree-only discovery inputs alongside pre-existing original-reference
-  deletions.
-- trusted `main` at `e9d72a16d95e704f2af514a97d37623940854d95`, including the
-  merged ADR 0014 `ExternalServiceAdapterFactory[TAdapter]` foundation from PR
-  #127 and the AUTH-07A catalogue/audit foundation from PR #126.
+  at branch-reachable merge head
+  `e59e2bbe823bc0ee2b0e59ff35f8352349618b2e` on
+  `2026-07-15T20:22:41+01:00`. It integrates trusted `main` `90eca12` and
+  committed REV-12A/13 planning, while user reference-file renames remain dirty.
+  Its status/evidence still cites older AUTH/CON heads and REV-12A still says
+  the CON handler claims the outbox event. It remains non-consumable until that
+  ownership wording and commit-bound freshness are repaired and the plan merges.
+- trusted `main` at `90eca12f6398f2ef168e634244d912765572c3e5`, including merged
+  ADR 0014 from PR #127, AUTH-07A catalogue/audit foundation from PR #126, and
+  AUTH-07B deny-by-default actor-self kernel from PR #130.
 
 These sibling worktrees are discovery evidence, not dependencies by path. Every
 implementation chunk consumes only contracts merged into trusted `main`.
