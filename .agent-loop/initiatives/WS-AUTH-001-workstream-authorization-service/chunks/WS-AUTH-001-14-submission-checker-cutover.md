@@ -87,11 +87,13 @@ legacy active-worker-profile or workflow-eligibility compatibility fallback
   uses distinct `operations.submission_gate.repair` and
   `operations.checker.retry` permissions. Each path requires a reason and
   records matched grant/permission without granting general project authority.
-- Before `operations.submission_gate.repair` or `operations.checker.retry`
-  becomes active, migration `0026` and the typed audit schema add both already
-  approved identifiers to the 50-item post-AUTH-13 audit base. Upgrade,
-  downgrade, re-upgrade, and direct-SQL parity tests preserve earlier audit rows
-  and establish exact 52-identifier typed/PostgreSQL parity.
+- AUTH-07A migration `0021` already gives
+  `operations.submission_gate.repair` and `operations.checker.retry`
+  PermissionId/ActionId typed and PostgreSQL parity as planned metadata. This
+  chunk promotes each action only with its feature resource composer, Operator
+  candidate, guards, surface declaration, reason, evidence, and behavior tests.
+  Migration `0026` owns submission/checker Contributor-field schema changes
+  only; it does not change the permission or action registry.
 - Contributor reads preserve ownership, hidden-result redaction, and concealed
   not-found behavior.
 - Audit reads expose only permission-appropriate bounded fields before counts.

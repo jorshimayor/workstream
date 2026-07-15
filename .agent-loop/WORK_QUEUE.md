@@ -4,17 +4,18 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
+| `WS-AUTH-001-07A` | Closed Permission And Action Catalogue | L1 | Review/revision amendment internally approved at `160af8a`; PR #126 external/human review pending |
 | `WS-ART-001-02A1` | External Service Adapter Foundation | L1 | Active after explicit user start on 2026-07-15 |
 
 Live post-merge state remains read from signed `automation/loop-memory`
-output. This authored queue records the separately approved active chunk.
+output. This authored queue records the separately approved parallel chunks.
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-06` | Canonical Actor Profile And Identity Link | L1 | Inactive until a separate explicit user start |
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Paused for AUTH priority; no valid replacement baseline yet |
+| `WS-AUTH-001-07B` | Deny-By-Default Kernel And Self-Action Cutover | L1 | Inactive until 07A merge/memory and explicit user start |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02A2` | Committed Source And Local Preparation | L1 | Inactive until 02A1 merge and explicit user start |
@@ -68,6 +69,7 @@ output. This authored queue records the separately approved active chunk.
 | `WS-AUTH-001-CAT` | Action And Resource Catalogue Reconciliation | L1 | Merged through PR #117 as `4c5d4fc` on 2026-07-14 |
 | `WS-AUTH-001-CAT-MEMORY` | Catalogue Post-Merge Memory | L1 | Merged through PR #118 as `eba7e2b` on 2026-07-14 |
 | `WS-AUTH-001-05B` | Authority Idempotency And Invalidation Foundation | L1 | Merged through PR #119 as `ad71c7e` on 2026-07-14 |
+| `WS-AUTH-001-06` | Canonical Actor Profile And Identity Link | L1 | Merged through PR #124 as `f599551` on 2026-07-15 |
 | `WS-ART-001-OBJECT-STORAGE-AMENDMENT` | AWS-First Object Storage Planning Amendment | L1 | Merged through PR #120 as `4408256` on 2026-07-14 |
 | `WS-ENG-001-02` | Automated Post-Merge Memory | L1 | Merged through PR #122 as `fc89fb6`; schema-v1 output superseded by WS-ENG-001-03 |
 
@@ -75,7 +77,9 @@ output. This authored queue records the separately approved active chunk.
 
 AUTH-05A merged through PR #115 as `8e1cde6`, and CAT plus its post-merge memory
 merged through PRs #117 and #118. AUTH-05B merged through PR #119 as `ad71c7e`.
-Do not start AUTH-06 or POL-002-04 automatically.
+AUTH-06 merged through PR #124 as `f599551`, and the user explicitly started
+AUTH-07. Required L1 review split it into 07A/07B before runtime implementation.
+Do not start 07B, AUTH-08, or POL-002-04 automatically.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.

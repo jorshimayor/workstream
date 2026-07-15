@@ -152,6 +152,7 @@ review.decline_preference
 review.decision
 review.lease.force_release
 review.chain.read
+review.queue.override
 
 contribution.read_self
 contribution.read_project
@@ -199,24 +200,79 @@ audit.export
 Artifact permissions are deliberately resource- and operation-specific.
 `artifact.*.read` permissions do not authorize retry or recovery, human
 Operator permissions do not authorize internal execution, and internal service
-permissions do not authorize Operator APIs. AUTH-07 owns this closed registry,
-AUTH-08 owns the Operator grant definitions, AUTH-09 owns the service
+permissions do not authorize Operator APIs. AUTH-07A owns this closed registry,
+AUTH-07B introduces the central kernel, AUTH-08 owns the Operator grant
+definitions, AUTH-09 owns the service
 principals, and WS-ART consumes the resulting decisions without registering
 permissions or inferring authority. Artifact actions activate only through the
 paired feature model below; AUTH-12, AUTH-14, and AUTH-15 do not activate or
 attach artifact actions on behalf of WS-ART.
 
-These are 73 approved `PermissionId` values. `ActionId` values are a separate
-closed registry layer and are not included in that permission count. AUTH-05A's current typed and
-PostgreSQL audit registry accepts 49. The three approved Operator recovery
-identifiers `operations.task.start_override`,
-`operations.submission_gate.repair`, and `operations.checker.retry`, plus the
-21 artifact identifiers above, are reserved planned metadata. AUTH-07 adds
-their matching typed/SQL audit parity without making them executable. An
-artifact action becomes active only when the owning WS-ART chunk supplies its
-canonical resource composer, guards, surface declaration, behavior tests, and
-transaction-local revalidation where required. Both halves are mandatory;
-registry presence alone never grants authority.
+These are 74 approved `PermissionId` values. `ActionId` values are a separate
+closed registry layer and are not included in that permission count. AUTH-05A's
+typed and PostgreSQL audit registry accepts the exact historical 49. The three
+approved Operator recovery identifiers, 21 artifact identifiers, and
+`review.queue.override` are the exact 25 post-`0020` permissions. AUTH-07A adds
+their matching typed/SQL audit parity without making them executable.
+
+The closed action registry contains 50 planned rows: two actor-self actions,
+three Operator recovery actions, 25 artifact actions, canonical
+`submission.create`, and 19 review actions. An action becomes active only when
+its owning chunk supplies its canonical resource composer, guards, surface or
+command declaration, behavior tests, and transaction-local revalidation where
+required. Both halves are mandatory; registry presence alone never grants
+authority.
+
+AUTH-07A also reserves `actor.profile.read_self` and
+`actor.profile.update_self` as four-field planned action metadata. AUTH-07B
+later supplies their complete active definitions and self-route behavior proof
+without changing migration `0021`.
+
+The submission/review dependency matrix is closed. AUTH-07A registers only the
+four stable planned fields shown here; resource facts, candidates, guards, and
+runtime activation remain with the listed owner.
+
+| ActionId | PermissionId | Owner |
+|---|---|---|
+| `submission.create` | `submission.create` | `WS-AUTH-001-14` |
+| `review.queue.read` | `review.queue.read` | `WS-REV-001-05` |
+| `review.queue.inspect` | `review.queue.inspect` | `WS-REV-001-05` |
+| `review.claim` | `review.claim` | `WS-REV-001-06` |
+| `review.release` | `review.release` | `WS-REV-001-06` |
+| `review.decline_preference` | `review.decline_preference` | `WS-REV-001-06` |
+| `review.preference_expiry.run` | `operations.timer.run` | `WS-REV-001-06` |
+| `review.lease_expiry.run` | `operations.timer.run` | `WS-REV-001-06` |
+| `review.context.read` | `submission.read_for_review` | `WS-REV-001-07` |
+| `review.chain.read` | `review.chain.read` | `WS-REV-001-07` |
+| `review.finding_evidence.ingest` | `review.decision` | `WS-REV-001-07` |
+| `review.decision` | `review.decision` | `WS-REV-001-08` |
+| `review.finding_response_evidence.ingest` | `submission.create` | `WS-REV-001-09A` |
+| `review.lease.force_release` | `review.lease.force_release` | `WS-REV-001-11` |
+| `review.queue.routing.override` | `review.queue.override` | `WS-REV-001-11` |
+| `review.queue.routing.correct` | `review.queue.override` | `WS-REV-001-11` |
+| `review.queue.close` | `review.queue.override` | `WS-REV-001-11` |
+| `review.reconcile.run` | `operations.reconcile.run` | `WS-REV-001-11` |
+| `review.artifact_reference.reconcile` | `operations.reconcile.run` | `WS-REV-001-12` |
+| `review.projection.rebuild` | `operations.projection.rebuild` | `WS-REV-001-12` |
+
+Initial and revision submission use the same `submission.create` action,
+permission, and route. Revision preparation is an internal participant and
+lifecycle guard of that command; no `submission.revise` or revision-prepare
+action exists. Finding and finding-response evidence intake are distinct
+protected commands mapped to existing permissions. The only new permission is
+`review.queue.override`.
+
+Artifact verification recovery remains the existing
+`artifact.verification_job.retry` action through the ART-owned
+`ArtifactOperatorRecoveryPort`; no `artifact_recovery.request` permission is
+registered. Shared outbox dispatch/retry remains owned by the shared-outbox
+subsystem and is not represented as a REV-owned projection action.
+
+Migration `0021` is availability-neutral. PostgreSQL enforces the closed
+ActionId set, authorization-decision event shape, exact ActionId-to-PermissionId
+mapping, and the requirement that every post-`0018` permission carry a mapped
+action. Typed catalogue validation separately rejects allowed evidence until an
+owning chunk changes an action from `planned` to `active`.
 
 The paired artifact activation matrix is closed:
 
@@ -230,18 +286,19 @@ The paired artifact activation matrix is closed:
 | `WS-ART-001-06A` | `artifact.post_submit.checker_input.materialize` mapped to `artifact.checker_input.materialize` |
 | `WS-ART-001-06B` | `artifact.checker_output.write` and `artifact.checker_output.binding.create` mapped to `artifact.binding.create` using the checker-run resource |
 
-Every row requires AUTH-07's registry first. A row with an Operator principal
+Every row requires AUTH-07A's registry and AUTH-07B's kernel first. A row with an Operator principal
 also requires its AUTH-08 grant definition; a row with a fixed service
 principal also requires its AUTH-09 service-actor assignment. Feature code
 receives centralized decisions; it never queries grants or constructs
 permission identifiers dynamically.
 
-The following table is the single source of truth for reserved artifact-related
-`ActionId` metadata. AUTH-07 registers each row as `planned`; the owning WS-ART
-chunk may activate it only with its canonical resource composer, guards,
-surface declaration, and behavior tests. A mapping is not a permission alias:
-authorization still evaluates the listed registered `PermissionId` against the
-listed canonical resource and principal class.
+The following table is the single source of truth for the owning WS-ART activation blueprint for
+artifact-related `ActionId` values. AUTH-07A registers only each row's stable
+`ActionId`, approved `PermissionId`, owning WS-ART chunk, and `planned`
+availability. Its principal-class and canonical-resource columns are not AUTH
+registry fields and are not executable authority; the owning WS-ART chunk must
+adopt them with its canonical resource composer, guards, surface declaration,
+and behavior tests before activation. A mapping is not a permission alias.
 
 | ActionId | PermissionId | Principal class | Canonical resource | Owning WS-ART chunk |
 |---|---|---|---|---|
@@ -337,11 +394,12 @@ never serialize a human bearer token as executable authority. Collection
 actions authorize and filter against their canonical parent scope before
 counts, cursors, facets, or distinct values are computed.
 
-Registration and completeness are staged with the approved chunk map. Chunk 07
-introduces the types and registry. Reserved action metadata contains only the
+Registration and completeness are staged with the approved chunk map. Chunk
+07A introduces the identifiers and planned registry; 07B introduces the kernel
+and first active self-actions. Reserved action metadata contains only the
 stable `ActionId`, approved `PermissionId`, owning specification/chunk, and
 `planned` availability; it is not executable and does not predefine a
-foreign-domain target, facts, or guards. Every route-owning chunk from 07
+foreign-domain target, facts, or guards. Every route-owning chunk from 07B
 through 15 may promote an action to active only when its owning domain contract,
 feature-owned resource composition, surface declaration, and behavior tests
 exist. Each such chunk generates a manifest-delta proof for every surface it
@@ -375,9 +433,10 @@ List filtering occurs before counts and pagination cursors.
 `AuthorizationDecision` carries the stable `ActionId` in addition to permission,
 resource, scope, matched authority, and denial information. The action identifier
 is included in bounded logs/metrics and every action-based allowed or denied
-authority event emitted by AUTH-07 or a later chunk. AUTH-07 adds nullable
+authority event emitted by AUTH-07B or a later chunk. AUTH-07A adds nullable
 historical storage and exact typed/SQL registry parity; legacy rows remain null,
-while new action-based decision events must contain a registered identifier. A
+while new AUTH-07B-or-later action-based decision events must contain a
+registered identifier. A
 new action identifier requires the same approved typed/PostgreSQL registry and
 migration treatment as a permission.
 
@@ -480,6 +539,12 @@ POST /api/v1/projects/{project_id}/role-grants/{grant_id}/revoke
 
 Exact request/response/error contracts are introduced by their owning chunks.
 No route may accept role or scope from request JSON as canonical authority.
+
+AUTH-07B cuts only existing `GET|PATCH /api/v1/actors/me` behavior over to the
+kernel. Permission and admin-role definition reads begin in AUTH-08 after
+bootstrap and administrative-grant truth exists. Project-scoped
+`GET /api/v1/actors/me/authorization-context` begins in AUTH-10 after
+exact-project grant and canonical project capability composition exists.
 
 ## Migration And Compatibility
 

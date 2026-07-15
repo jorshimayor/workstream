@@ -15,6 +15,21 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.modules.audit.schemas import ActorReferenceKind, AuthorityAuditEventInput, AuthorityEventType
 from app.modules.audit.service import AuditService
+from app.modules.authorization.catalogue import (
+    ACTION_BY_ID,
+    ACTION_DEFINITIONS,
+    ACTION_IDS,
+    HISTORICAL_PERMISSION_IDS,
+    NEW_PERMISSION_IDS,
+    PERMISSION_IDS,
+    ActionAvailability,
+    ActionDefinition,
+    ActionId,
+    ActionOwner,
+    PermissionId,
+    _index_actions,
+    resolve_executable_action,
+)
 from app.modules.authorization.schemas import (
     ActorIdentityLinkReactivateRequest,
     ActorIdentityLinkRevokeRequest,
@@ -48,6 +63,211 @@ from app.modules.authorization.schemas import (
 from app.modules.authorization.service import AuthorityMutationService
 
 DIGEST = "sha256:" + "a" * 64
+
+
+def test_closed_permission_and_action_catalogue_is_exact_and_non_executable() -> None:
+    historical_permissions = frozenset(
+        """actor.profile.read_self actor.profile.update_self actor.profile.read_any
+        actor.profile.suspend actor.profile.reactivate actor.profile.deactivate
+        actor.identity_link.read actor.identity_link.revoke actor.identity_link.reactivate
+        actor.service.provision admin_role.read admin_role.grant admin_role.revoke
+        project.create project.read project.update project.archive project.guide.manage
+        project.effective_policy.manage project.task.manage project.review_policy.manage
+        project.role_grant.read project.role_grant.manage task.queue.read task.claim
+        submission.create submission.read_own submission.read_for_review review.queue.read
+        review.queue.inspect review.claim review.release review.decline_preference
+        review.decision review.lease.force_release review.chain.read contribution.read_self
+        contribution.read_project compensation.policy.manage
+        compensation.adapter_binding.manage compensation.award.read
+        compensation.delivery.reconcile operations.status.read operations.timer.run
+        operations.reconcile.run operations.outbox.retry operations.projection.rebuild
+        audit.read audit.export""".split()
+    )
+    new_permissions = frozenset(
+        """operations.task.start_override operations.submission_gate.repair
+        operations.checker.retry artifact.binding.read artifact.replica.read
+        artifact.receipt.read artifact.verification_job.read
+        artifact.verification_job.retry artifact.recovery_attempt.read artifact.audit.read
+        artifact.guide_source.ingest artifact.upload_session.create
+        artifact.upload_session.read artifact.upload_item.write artifact.upload_session.seal
+        artifact.upload_session.cancel artifact.upload_session.expire artifact.binding.create
+        artifact.verification.execute artifact.pending_work.scan artifact.put_attempt.resolve
+        artifact.guide_source.read artifact.checker_input.materialize
+        artifact.checker_output.write review.queue.override""".split()
+    )
+    expected = {
+        "actor.profile.read_self": ("actor.profile.read_self", "WS-AUTH-001-07B"),
+        "actor.profile.update_self": ("actor.profile.update_self", "WS-AUTH-001-07B"),
+        "operations.task.start_override": ("operations.task.start_override", "WS-AUTH-001-13"),
+        "operations.submission_gate.repair": ("operations.submission_gate.repair", "WS-AUTH-001-14"),
+        "operations.checker.retry": ("operations.checker.retry", "WS-AUTH-001-14"),
+        "submission.create": ("submission.create", "WS-AUTH-001-14"),
+        "review.queue.read": ("review.queue.read", "WS-REV-001-05"),
+        "review.queue.inspect": ("review.queue.inspect", "WS-REV-001-05"),
+        "review.claim": ("review.claim", "WS-REV-001-06"),
+        "review.release": ("review.release", "WS-REV-001-06"),
+        "review.decline_preference": ("review.decline_preference", "WS-REV-001-06"),
+        "review.preference_expiry.run": ("operations.timer.run", "WS-REV-001-06"),
+        "review.lease_expiry.run": ("operations.timer.run", "WS-REV-001-06"),
+        "review.context.read": ("submission.read_for_review", "WS-REV-001-07"),
+        "review.chain.read": ("review.chain.read", "WS-REV-001-07"),
+        "review.finding_evidence.ingest": ("review.decision", "WS-REV-001-07"),
+        "review.decision": ("review.decision", "WS-REV-001-08"),
+        "review.finding_response_evidence.ingest": (
+            "submission.create",
+            "WS-REV-001-09A",
+        ),
+        "review.lease.force_release": ("review.lease.force_release", "WS-REV-001-11"),
+        "review.queue.routing.override": ("review.queue.override", "WS-REV-001-11"),
+        "review.queue.routing.correct": ("review.queue.override", "WS-REV-001-11"),
+        "review.queue.close": ("review.queue.override", "WS-REV-001-11"),
+        "review.reconcile.run": ("operations.reconcile.run", "WS-REV-001-11"),
+        "review.artifact_reference.reconcile": (
+            "operations.reconcile.run",
+            "WS-REV-001-12",
+        ),
+        "review.projection.rebuild": ("operations.projection.rebuild", "WS-REV-001-12"),
+        "artifact.binding.read": ("artifact.binding.read", "WS-ART-001-02D"),
+        "artifact.replica.read": ("artifact.replica.read", "WS-ART-001-02D"),
+        "artifact.receipt.read": ("artifact.receipt.read", "WS-ART-001-02D"),
+        "artifact.verification_job.read": ("artifact.verification_job.read", "WS-ART-001-02D"),
+        "artifact.verification_job.retry": ("artifact.verification_job.retry", "WS-ART-001-02D"),
+        "artifact.recovery_attempt.read": ("artifact.recovery_attempt.read", "WS-ART-001-02D"),
+        "artifact.audit.read": ("artifact.audit.read", "WS-ART-001-02D"),
+        "operations.artifact_storage_admission.read": ("operations.status.read", "WS-ART-001-02D"),
+        "artifact.guide_source.ingest": ("artifact.guide_source.ingest", "WS-ART-001-03"),
+        "artifact.guide_source.read": ("artifact.guide_source.read", "WS-ART-001-03"),
+        "artifact.upload_session.create": ("artifact.upload_session.create", "WS-ART-001-04A"),
+        "artifact.upload_session.read": ("artifact.upload_session.read", "WS-ART-001-04A"),
+        "artifact.upload_item.write": ("artifact.upload_item.write", "WS-ART-001-04A"),
+        "artifact.upload_session.seal": ("artifact.upload_session.seal", "WS-ART-001-04A"),
+        "artifact.upload_session.cancel": ("artifact.upload_session.cancel", "WS-ART-001-04A"),
+        "artifact.upload_session.expire": ("artifact.upload_session.expire", "WS-ART-001-04A"),
+        "artifact.guide_source.binding.create": ("artifact.binding.create", "WS-ART-001-03"),
+        "artifact.submission.binding.create": ("artifact.binding.create", "WS-ART-001-05"),
+        "artifact.checker_output.binding.create": ("artifact.binding.create", "WS-ART-001-06B"),
+        "artifact.verification.execute": ("artifact.verification.execute", "WS-ART-001-02D"),
+        "artifact.pending_work.scan": ("artifact.pending_work.scan", "WS-ART-001-02D"),
+        "artifact.put_attempt.resolve": ("artifact.put_attempt.resolve", "WS-ART-001-02D"),
+        "artifact.pre_submit.checker_input.materialize": (
+            "artifact.checker_input.materialize",
+            "WS-ART-001-04B",
+        ),
+        "artifact.post_submit.checker_input.materialize": (
+            "artifact.checker_input.materialize",
+            "WS-ART-001-06A",
+        ),
+        "artifact.checker_output.write": ("artifact.checker_output.write", "WS-ART-001-06B"),
+    }
+    assert {item.value for item in HISTORICAL_PERMISSION_IDS} == historical_permissions
+    assert {item.value for item in NEW_PERMISSION_IDS} == new_permissions
+    assert {item.value for item in PERMISSION_IDS} == historical_permissions | new_permissions
+    assert len(ACTION_IDS) == len(ACTION_DEFINITIONS) == len(ACTION_BY_ID) == 50
+    assert set(ACTION_BY_ID) == ACTION_IDS
+    assert {definition.owner for definition in ACTION_DEFINITIONS} == set(ActionOwner)
+    assert all(
+        definition.availability is ActionAvailability.PLANNED
+        for definition in ACTION_DEFINITIONS
+    )
+    assert {
+        definition.action_id.value: (
+            definition.permission_id.value,
+            definition.owner.value,
+        )
+        for definition in ACTION_DEFINITIONS
+    } == expected
+    with pytest.raises(ValueError, match="not active"):
+        resolve_executable_action(ActionId.ACTOR_PROFILE_READ_SELF)
+    with pytest.raises(TypeError):
+        ACTION_BY_ID[ActionId.ACTOR_PROFILE_READ_SELF] = ACTION_DEFINITIONS[0]
+
+
+@pytest.mark.parametrize(
+    "definitions, message",
+    [
+        (ACTION_DEFINITIONS[:-1], "incomplete"),
+        (ACTION_DEFINITIONS[:-1] + (ACTION_DEFINITIONS[0],), "incomplete"),
+        (ACTION_DEFINITIONS + (ACTION_DEFINITIONS[0],), "incomplete"),
+        (
+            ACTION_DEFINITIONS[:-1]
+            + (
+                ActionDefinition(
+                    ActionId.ARTIFACT_CHECKER_OUTPUT_WRITE,
+                    PermissionId.ARTIFACT_CHECKER_OUTPUT_WRITE,
+                    ActionOwner.ART_02D,
+                    ActionAvailability.PLANNED,
+                ),
+            ),
+            "metadata mismatch",
+        ),
+        (
+            ACTION_DEFINITIONS[:-1]
+            + (
+                ActionDefinition(
+                    ActionId.ARTIFACT_CHECKER_OUTPUT_WRITE,
+                    PermissionId.ARTIFACT_CHECKER_OUTPUT_WRITE,
+                    ActionOwner.ART_06B,
+                    ActionAvailability.ACTIVE,
+                ),
+            ),
+            "must remain planned",
+        ),
+        (
+            ACTION_DEFINITIONS[:-1]
+            + (
+                ActionDefinition(
+                    ActionId.ARTIFACT_CHECKER_OUTPUT_WRITE,
+                    "unknown.permission",  # type: ignore[arg-type]
+                    ActionOwner.ART_06B,
+                    ActionAvailability.PLANNED,
+                ),
+            ),
+            "invalid row",
+        ),
+        (
+            ACTION_DEFINITIONS[:-1]
+            + (
+                ActionDefinition(
+                    "unknown.action",  # type: ignore[arg-type]
+                    PermissionId.ARTIFACT_CHECKER_OUTPUT_WRITE,
+                    ActionOwner.ART_06B,
+                    ActionAvailability.PLANNED,
+                ),
+            ),
+            "invalid row",
+        ),
+        (
+            ACTION_DEFINITIONS[:-1]
+            + (
+                ActionDefinition(
+                    ActionId.ARTIFACT_CHECKER_OUTPUT_WRITE,
+                    PermissionId.ARTIFACT_CHECKER_OUTPUT_WRITE,
+                    "unknown.owner",  # type: ignore[arg-type]
+                    ActionAvailability.PLANNED,
+                ),
+            ),
+            "invalid row",
+        ),
+        (
+            ACTION_DEFINITIONS[:-1]
+            + (
+                ActionDefinition(
+                    ActionId.ARTIFACT_CHECKER_OUTPUT_WRITE,
+                    PermissionId.ARTIFACT_CHECKER_OUTPUT_WRITE,
+                    ActionOwner.ART_06B,
+                    "unknown.availability",  # type: ignore[arg-type]
+                ),
+            ),
+            "invalid row",
+        ),
+    ],
+)
+def test_action_catalogue_construction_fails_closed(
+    definitions: tuple[ActionDefinition, ...],
+    message: str,
+) -> None:
+    with pytest.raises(RuntimeError, match=message):
+        _index_actions(definitions)
 
 
 @pytest.fixture

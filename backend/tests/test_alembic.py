@@ -17,6 +17,11 @@ from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.adapters.auth.dev import actor_id_from_external_identity
+from app.modules.authorization.catalogue import (
+    ACTION_DEFINITIONS,
+    HISTORICAL_PERMISSION_IDS,
+    NEW_PERMISSION_IDS,
+)
 from app.modules.actors.legacy_classification import (
     CLASSIFICATION_FILE_ENV,
     LegacyActorClassification,
@@ -426,7 +431,7 @@ def test_canonical_actor_downgrade_refuses_nonactive_authority_state(
                 ):
                     command.downgrade(config, "0019_authority_idempotency")
                 assert asyncio.run(_current_revision(isolated_database_env)) == (
-                    "0020_canonical_actor_profile"
+                    "0021_auth_action_evidence"
                 )
                 asyncio.run(
                     _reset_canonical_actor_guard_state(
@@ -438,6 +443,143 @@ def test_canonical_actor_downgrade_refuses_nonactive_authority_state(
             command.downgrade(config, "0019_authority_idempotency")
         finally:
             command.downgrade(config, "base")
+
+
+def test_authorization_action_evidence_constraints_and_guarded_downgrade(
+    isolated_database_env: str,
+    migration_lock,
+) -> None:
+    """Prove exact action parity, rollback custody, and downgrade locking."""
+    config = _alembic_config()
+    historical_event = str(uuid4())
+    with migration_lock():
+        try:
+            command.downgrade(config, "base")
+            command.upgrade(config, "0020_canonical_actor_profile")
+            asyncio.run(_insert_authority_audit_fixture(isolated_database_env, historical_event))
+            historical_before = asyncio.run(
+                _authorization_action_row(isolated_database_env, historical_event)
+            )
+            command.upgrade(config, "head")
+            schema = asyncio.run(_authorization_action_schema(isolated_database_env))
+            historical_upgraded = asyncio.run(
+                _authorization_action_row(isolated_database_env, historical_event)
+            )
+            asyncio.run(_assert_authorization_action_sql_pairs(isolated_database_env))
+
+            action_event = asyncio.run(
+                _insert_authorization_action_event(isolated_database_env)
+            )
+            with pytest.raises(
+                RuntimeError,
+                match="^cannot downgrade non-empty authorization action evidence$",
+            ):
+                command.downgrade(config, "0020_canonical_actor_profile")
+            asyncio.run(
+                _remove_authorization_action_events(
+                    isolated_database_env, [action_event]
+                )
+            )
+
+            permission_event = asyncio.run(
+                _insert_authorization_action_event(isolated_database_env)
+            )
+            asyncio.run(
+                _convert_to_permission_only_forward_evidence(
+                    isolated_database_env, permission_event
+                )
+            )
+            with pytest.raises(
+                RuntimeError,
+                match="^cannot downgrade non-empty authorization action evidence$",
+            ):
+                command.downgrade(config, "0020_canonical_actor_profile")
+            asyncio.run(
+                _remove_authorization_action_events(
+                    isolated_database_env, [permission_event]
+                )
+            )
+
+            target_reference_event = asyncio.run(
+                _insert_forward_permission_reference(
+                    isolated_database_env,
+                    historical_event,
+                    reference_field="target",
+                )
+            )
+            with pytest.raises(
+                RuntimeError,
+                match="^cannot downgrade non-empty authorization action evidence$",
+            ):
+                command.downgrade(config, "0020_canonical_actor_profile")
+            asyncio.run(
+                _remove_authorization_action_events(
+                    isolated_database_env, [target_reference_event]
+                )
+            )
+
+            invalidation_reference_event = asyncio.run(
+                _insert_forward_permission_reference(
+                    isolated_database_env,
+                    historical_event,
+                    reference_field="invalidation",
+                )
+            )
+            with pytest.raises(
+                RuntimeError,
+                match="^cannot downgrade non-empty authorization action evidence$",
+            ):
+                command.downgrade(config, "0020_canonical_actor_profile")
+            asyncio.run(
+                _remove_authorization_action_events(
+                    isolated_database_env, [invalidation_reference_event]
+                )
+            )
+
+            command.downgrade(config, "0020_canonical_actor_profile")
+            downgraded = asyncio.run(
+                _authorization_action_schema(isolated_database_env)
+            )
+            historical_downgraded = asyncio.run(
+                _authorization_action_row(isolated_database_env, historical_event)
+            )
+            asyncio.run(_assert_historical_permission_registry(isolated_database_env))
+            asyncio.run(
+                _remove_authorization_action_events(
+                    isolated_database_env, [historical_event]
+                )
+            )
+            command.upgrade(config, "head")
+
+            lock_observed, raced_event = _action_downgrade_waits_for_insert(
+                config, isolated_database_env
+            )
+            asyncio.run(
+                _remove_authorization_action_events(
+                    isolated_database_env, [raced_event]
+                )
+            )
+            command.downgrade(config, "0020_canonical_actor_profile")
+            command.upgrade(config, "head")
+        finally:
+            command.downgrade(config, "base")
+
+    assert schema == {
+        "revision": "0021_auth_action_evidence",
+        "action_column": True,
+        "action_constraint": True,
+    }
+    assert downgraded == {
+        "revision": "0020_canonical_actor_profile",
+        "action_column": False,
+        "action_constraint": False,
+    }
+    assert historical_before == historical_upgraded == historical_downgraded == {
+        "event_type": "SensitiveAuthorizationAllowed",
+        "permission_id": "actor.profile.read_any",
+        "action_id": None,
+    }
+    assert lock_observed is True
 
 
 def test_artifact_foundation_upgrade_preserves_prior_head_and_promotes_nothing(
@@ -3485,3 +3627,434 @@ async def _remove_authority_idempotency_fixture(
                 )
     finally:
         await engine.dispose()
+
+
+_ACTION_EVIDENCE_INSERT = text(
+    "insert into audit_events "
+    "(id, entity_type, entity_id, event_type, actor_id, actor_roles, claim_snapshot, "
+    "auth_source, is_dev_auth, event_payload, event_domain, event_version, actor_ref_kind, "
+    "request_id, correlation_id, permission_id, action_id, reason, denial_code, after_facts) "
+    "values (:id, 'authorization_decision', :id, 'SensitiveAuthorizationDenied', "
+    "'workstream:system:bootstrap', '[]'::json, '{}'::json, 'local_authority', false, "
+    "'{}'::json, 'authority', 1, 'system_principal', :request_id, :correlation_id, "
+    ":permission_id, :action_id, 'authorization_evaluation', 'permission_not_granted', "
+    "'{\"allowed\": false}'::json)"
+)
+
+_ALLOWED_ACTION_EVIDENCE_INSERT = text(
+    "insert into audit_events "
+    "(id, entity_type, entity_id, event_type, actor_id, actor_roles, claim_snapshot, "
+    "auth_source, is_dev_auth, event_payload, event_domain, event_version, actor_ref_kind, "
+    "request_id, correlation_id, permission_id, action_id, reason, after_facts) "
+    "values (:id, 'authorization_decision', :id, 'SensitiveAuthorizationAllowed', "
+    "'workstream:system:bootstrap', '[]'::json, '{}'::json, 'local_authority', false, "
+    "'{}'::json, 'authority', 1, 'system_principal', :request_id, :correlation_id, "
+    ":permission_id, :action_id, 'authorization_evaluation', "
+    "'{\"allowed\": true}'::json)"
+)
+
+
+def _action_evidence_values(
+    action_id: str | None, permission_id: str
+) -> dict[str, str | None]:
+    event_id = str(uuid4())
+    return {
+        "id": event_id,
+        "request_id": str(uuid4()),
+        "correlation_id": str(uuid4()),
+        "permission_id": permission_id,
+        "action_id": action_id,
+    }
+
+
+async def _authorization_action_schema(database_url: str) -> dict[str, object]:
+    """Return the migration revision and action-evidence schema markers."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.connect() as connection:
+            return {
+                "revision": await connection.scalar(
+                    text("select version_num from alembic_version")
+                ),
+                "action_column": bool(
+                    await connection.scalar(
+                        text(
+                            "select exists(select 1 from information_schema.columns "
+                            "where table_schema='public' and table_name='audit_events' "
+                            "and column_name='action_id')"
+                        )
+                    )
+                ),
+                "action_constraint": bool(
+                    await connection.scalar(
+                        text(
+                            "select exists(select 1 from pg_constraint where "
+                            "conrelid='audit_events'::regclass and "
+                            "conname='ck_audit_events_authorization_action_evidence')"
+                        )
+                    )
+                ),
+            }
+    finally:
+        await engine.dispose()
+
+
+async def _authorization_action_row(
+    database_url: str, event_id: str
+) -> dict[str, object]:
+    """Fetch stable action evidence across both sides of migration 0021."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.connect() as connection:
+            has_action = await connection.scalar(
+                text(
+                    "select exists(select 1 from information_schema.columns "
+                    "where table_schema='public' and table_name='audit_events' "
+                    "and column_name='action_id')"
+                )
+            )
+            action_column = ", action_id" if has_action else ""
+            row = (
+                (
+                    await connection.execute(
+                        text(
+                            "select event_type, permission_id"
+                            f"{action_column} from audit_events where id=:id"
+                        ),
+                        {"id": event_id},
+                    )
+                )
+                .mappings()
+                .one()
+            )
+            result = dict(row)
+            result.setdefault("action_id", None)
+            return result
+    finally:
+        await engine.dispose()
+
+
+async def _assert_authorization_action_sql_pairs(database_url: str) -> None:
+    """Prove exact pair closure without freezing typed availability in SQL."""
+    engine = create_async_engine(database_url)
+    try:
+        for definition in ACTION_DEFINITIONS:
+            async with engine.connect() as connection:
+                transaction = await connection.begin()
+                await connection.execute(
+                    _ACTION_EVIDENCE_INSERT,
+                    _action_evidence_values(
+                        definition.action_id.value, definition.permission_id.value
+                    ),
+                )
+                await transaction.rollback()
+
+        for definition in ACTION_DEFINITIONS:
+            async with engine.connect() as connection:
+                transaction = await connection.begin()
+                await connection.execute(
+                    _ALLOWED_ACTION_EVIDENCE_INSERT,
+                    _action_evidence_values(
+                        definition.action_id.value, definition.permission_id.value
+                    ),
+                )
+                await transaction.rollback()
+
+        unknown_action = _action_evidence_values("unknown.action", "actor.profile.read_self")
+        async with engine.connect() as connection:
+            transaction = await connection.begin()
+            with pytest.raises(IntegrityError):
+                await connection.execute(_ACTION_EVIDENCE_INSERT, unknown_action)
+            await transaction.rollback()
+
+        for definition in ACTION_DEFINITIONS:
+            wrong_permission = _action_evidence_values(
+                definition.action_id.value, "actor.profile.read_any"
+            )
+            async with engine.connect() as connection:
+                transaction = await connection.begin()
+                with pytest.raises(IntegrityError):
+                    await connection.execute(_ACTION_EVIDENCE_INSERT, wrong_permission)
+                await transaction.rollback()
+
+        for permission in NEW_PERMISSION_IDS:
+            missing_action = _action_evidence_values(None, permission.value)
+            async with engine.connect() as connection:
+                transaction = await connection.begin()
+                with pytest.raises(IntegrityError):
+                    await connection.execute(_ACTION_EVIDENCE_INSERT, missing_action)
+                await transaction.rollback()
+
+        nondecision = text(
+            "insert into audit_events "
+            "(id, entity_type, entity_id, event_type, actor_id, actor_roles, claim_snapshot, "
+            "auth_source, is_dev_auth, event_payload, event_domain, event_version, "
+            "actor_ref_kind, request_id, correlation_id, permission_id, action_id, reason, "
+            "denial_code) values (:id, 'admin_role_grant', :entity_id, "
+            "'AdminRoleGrantIssueDenied', 'workstream:system:bootstrap', '[]'::json, "
+            "'{}'::json, 'local_authority', false, '{}'::json, 'authority', 1, "
+            "'system_principal', :request_id, :correlation_id, 'actor.profile.read_self', "
+            "'actor.profile.read_self', 'authorization_policy_denial', "
+            "'permission_not_granted')"
+        )
+        async with engine.connect() as connection:
+            transaction = await connection.begin()
+            with pytest.raises(IntegrityError):
+                await connection.execute(
+                    nondecision,
+                    {
+                        "id": str(uuid4()),
+                        "entity_id": str(uuid4()),
+                        "request_id": str(uuid4()),
+                        "correlation_id": str(uuid4()),
+                    },
+                )
+            await transaction.rollback()
+    finally:
+        await engine.dispose()
+
+
+async def _insert_authorization_action_event(database_url: str) -> str:
+    """Commit one valid planned-action denial fixture."""
+    values = _action_evidence_values("artifact.binding.read", "artifact.binding.read")
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(_ACTION_EVIDENCE_INSERT, values)
+        return values["id"]
+    finally:
+        await engine.dispose()
+
+
+async def _convert_to_permission_only_forward_evidence(
+    database_url: str, event_id: str
+) -> None:
+    """Simulate a pre-guard forward row to exercise the second rollback predicate."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(text("lock table audit_events in access exclusive mode"))
+            await connection.execute(
+                text(
+                    "alter table audit_events disable trigger "
+                    "audit_events_reject_update_delete"
+                )
+            )
+            await connection.execute(
+                text(
+                    "alter table audit_events drop constraint "
+                    "ck_audit_events_authorization_action_evidence"
+                )
+            )
+            await connection.execute(
+                text("update audit_events set action_id=null where id=:id"),
+                {"id": event_id},
+            )
+            await connection.execute(
+                text(
+                    "alter table audit_events add constraint "
+                    "ck_audit_events_authorization_action_evidence "
+                    "check (action_id is null) not valid"
+                )
+            )
+            await connection.execute(
+                text(
+                    "alter table audit_events enable trigger "
+                    "audit_events_reject_update_delete"
+                )
+            )
+    finally:
+        await engine.dispose()
+
+
+async def _insert_forward_permission_reference(
+    database_url: str,
+    cause_event_id: str,
+    *,
+    reference_field: str,
+) -> str:
+    """Commit one new permission-registry reference without an action ID."""
+    event_id = str(uuid4())
+    values = {
+        "id": event_id,
+        "request_id": str(uuid4()),
+        "correlation_id": str(uuid4()),
+        "permission": "artifact.binding.read",
+        "cause_id": cause_event_id,
+    }
+    if reference_field == "target":
+        statement = text(
+            "insert into audit_events "
+            "(id, entity_type, entity_id, event_type, actor_id, actor_roles, "
+            "claim_snapshot, auth_source, is_dev_auth, event_payload, event_domain, "
+            "event_version, actor_ref_kind, request_id, correlation_id, permission_id, "
+            "target_ref_kind, target_ref_id, reason, after_facts) values "
+            "(:id, 'authorization_decision', :id, 'SensitiveAuthorizationAllowed', "
+            "'workstream:system:bootstrap', '[]'::json, '{}'::json, 'local_authority', "
+            "false, '{}'::json, 'authority', 1, 'system_principal', :request_id, "
+            ":correlation_id, 'actor.profile.read_any', 'permission_registry', "
+            ":permission, 'authorization_evaluation', '{\"allowed\": true}'::json)"
+        )
+    elif reference_field == "invalidation":
+        statement = text(
+            "insert into audit_events "
+            "(id, entity_type, entity_id, event_type, actor_id, actor_roles, "
+            "claim_snapshot, auth_source, is_dev_auth, event_payload, event_domain, "
+            "event_version, actor_ref_kind, request_id, correlation_id, "
+            "invalidation_cause_event_id, invalidation_target_kind, "
+            "invalidation_target_ref, reason, before_facts, after_facts) values "
+            "(:id, 'authority_invalidation', :id, 'AuthorityInvalidationRequested', "
+            "'workstream:system:bootstrap', '[]'::json, '{}'::json, 'local_authority', "
+            "false, '{}'::json, 'authority', 1, 'system_principal', :request_id, "
+            ":correlation_id, :cause_id, 'permission_registry', :permission, "
+            "'authority_state_changed', '{\"effective\": true}'::json, "
+            "'{\"effective\": false}'::json)"
+        )
+    else:
+        raise ValueError(f"unsupported reference field: {reference_field}")
+
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            if reference_field == "invalidation":
+                await connection.execute(
+                    text(
+                        "alter table audit_events disable trigger "
+                        "audit_events_validate_idempotency"
+                    )
+                )
+            await connection.execute(statement, values)
+            if reference_field == "invalidation":
+                await connection.execute(
+                    text(
+                        "alter table audit_events enable trigger "
+                        "audit_events_validate_idempotency"
+                    )
+                )
+        return event_id
+    finally:
+        await engine.dispose()
+
+
+async def _assert_historical_permission_registry(database_url: str) -> None:
+    """Prove downgrade restores every historical permission and rejects every new one."""
+    statement = text(
+        "insert into audit_events "
+        "(id, entity_type, entity_id, event_type, actor_id, actor_roles, claim_snapshot, "
+        "auth_source, is_dev_auth, event_payload, event_domain, event_version, "
+        "actor_ref_kind, request_id, correlation_id, permission_id, reason, after_facts) "
+        "values (:id, 'authorization_decision', :id, 'SensitiveAuthorizationAllowed', "
+        "'workstream:system:bootstrap', '[]'::json, '{}'::json, 'local_authority', false, "
+        "'{}'::json, 'authority', 1, 'system_principal', :request_id, :correlation_id, "
+        ":permission_id, 'authorization_evaluation', '{\"allowed\": true}'::json)"
+    )
+    engine = create_async_engine(database_url)
+    try:
+        for permission in HISTORICAL_PERMISSION_IDS:
+            async with engine.connect() as connection:
+                transaction = await connection.begin()
+                await connection.execute(
+                    statement, _action_evidence_values(None, permission.value)
+                )
+                await transaction.rollback()
+
+        for permission in NEW_PERMISSION_IDS:
+            async with engine.connect() as connection:
+                transaction = await connection.begin()
+                with pytest.raises(IntegrityError):
+                    await connection.execute(
+                        statement, _action_evidence_values(None, permission.value)
+                    )
+                await transaction.rollback()
+    finally:
+        await engine.dispose()
+
+
+async def _remove_authorization_action_events(
+    database_url: str, event_ids: list[str]
+) -> None:
+    """Owner-only cleanup for immutable action-evidence test fixtures."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(text("lock table audit_events in access exclusive mode"))
+            await connection.execute(
+                text(
+                    "alter table audit_events disable trigger "
+                    "audit_events_reject_update_delete"
+                )
+            )
+            await connection.execute(
+                text("delete from audit_events where id = any(:ids)"),
+                {"ids": event_ids},
+            )
+            await connection.execute(
+                text(
+                    "alter table audit_events enable trigger "
+                    "audit_events_reject_update_delete"
+                )
+            )
+    finally:
+        await engine.dispose()
+
+
+def _action_downgrade_waits_for_insert(
+    config: Config, database_url: str
+) -> tuple[bool, str]:
+    """Prove an insert cannot pass between the downgrade check and destructive DDL."""
+    writer_ready = threading.Event()
+    release_writer = threading.Event()
+    values = _action_evidence_values("artifact.binding.read", "artifact.binding.read")
+
+    async def hold_uncommitted_insert() -> None:
+        engine = create_async_engine(database_url)
+        try:
+            async with engine.connect() as connection:
+                transaction = await connection.begin()
+                await connection.execute(_ACTION_EVIDENCE_INSERT, values)
+                writer_ready.set()
+                await asyncio.to_thread(release_writer.wait)
+                await transaction.commit()
+        finally:
+            await engine.dispose()
+
+    async def observe_downgrade_lock() -> bool:
+        engine = create_async_engine(database_url)
+        try:
+            async with engine.connect() as connection:
+                for _ in range(5000):
+                    waiting = await connection.scalar(
+                        text(
+                            "select exists(select 1 from pg_locks locks "
+                            "join pg_class relation on relation.oid=locks.relation "
+                            "where relation.relname='audit_events' "
+                            "and locks.mode='AccessExclusiveLock' and not locks.granted)"
+                        )
+                    )
+                    if waiting:
+                        return True
+                    await asyncio.sleep(0)
+            return False
+        finally:
+            await engine.dispose()
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        writer = executor.submit(asyncio.run, hold_uncommitted_insert())
+        if not writer_ready.wait(timeout=5):
+            release_writer.set()
+            writer.result(timeout=5)
+            return False, values["id"]
+        downgrade = executor.submit(
+            command.downgrade, config, "0020_canonical_actor_profile"
+        )
+        try:
+            observed = asyncio.run(observe_downgrade_lock())
+        finally:
+            release_writer.set()
+        writer.result(timeout=10)
+        with pytest.raises(
+            RuntimeError,
+            match="^cannot downgrade non-empty authorization action evidence$",
+        ):
+            downgrade.result(timeout=10)
+        return observed, values["id"]

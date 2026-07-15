@@ -486,6 +486,7 @@ class AuditEvent(Base):
     target_actor_ref: Mapped[str | None] = mapped_column(String(100))
     matched_grant_id: Mapped[str | None] = mapped_column(String(100))
     permission_id: Mapped[str | None] = mapped_column(String(120))
+    action_id: Mapped[str | None] = mapped_column(String(160))
     project_id: Mapped[str | None] = mapped_column(String(36))
     resource_type: Mapped[str | None] = mapped_column(String(80))
     resource_id: Mapped[str | None] = mapped_column(String(100))

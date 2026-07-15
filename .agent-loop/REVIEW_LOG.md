@@ -1,5 +1,97 @@
 # Review Log
 
+## 2026-07-15 - WS-AUTH-001-07A Canonical Review Amendment Passed
+
+Exact reviewed head `160af8afd030f042ee72ec963e6f47cd8b7d4c9a` reserves
+the canonical `submission.create` dependency and 19 review actions. The closed
+catalogue is now exactly 74 PermissionIds and 50 planned ActionIds; only
+`review.queue.override` is additive. Initial and revision submissions share
+`submission.create`. Required exact-head review passed after removing duplicate
+session authority from the public contract: request-scoped
+`AuthorizationService` binds the caller-owned `AsyncSession` and exposes only
+`require(action_id, typed_resource_context)`. Full migration proof passed 16
+tests; focused authorization/audit coverage remains above 90 percent. PR #126
+is the current external and explicit-human gate; AUTH-07B remains inactive.
+
+## 2026-07-15 - WS-AUTH-001-07A Internal Review Passed
+
+Exact implementation SHA `478a819236b9cff1e1d7b61203015691ce0aaf45`
+passed senior engineering, architecture/reuse, security/auth, product/ops,
+docs, QA/test, test-delta, and CI-integrity review after all valid findings were
+repaired. The final downgrade guard covers action evidence, new permissions,
+permission-registry target references, and permission-registry invalidation
+references under one exclusive table lock. Focused authorization/audit branch
+coverage is 94/93 percent, all 37 focused behavior tests pass, and the full
+isolated Alembic suite passes 16 tests at exact migration head. PR publication
+is pending; AUTH-07B remains inactive.
+
+## 2026-07-15 - WS-AUTH-001-07A Repaired Plan Passed
+
+Exact-SHA `beb85ac` passed senior engineering, architecture/reuse,
+security/auth, product/ops, docs, QA/test, test-delta, and CI-integrity review.
+The final contract keeps planned/active availability in typed validation while
+PostgreSQL enforces registered identifiers, decision-event use, exact
+action-to-permission mapping, post-`0018` permission pairing, and guarded
+downgrade custody. Seventy-one agent-gate tests and all static documentation
+checks passed. Bounded AUTH-07A implementation may begin; AUTH-07B remains
+inactive.
+
+## 2026-07-15 - WS-AUTH-001-07A Third Repaired Plan Failed
+
+Exact-SHA architecture/reuse and CI review of `8690ef5` passed all prior
+mapping, downgrade, scope, and verification findings but rejected one
+temporal-schema ambiguity. If migration `0021` froze all planned actions to
+denial-only PostgreSQL evidence, AUTH-07B could not activate its two self
+actions without an unowned migration. The repair keeps availability enforcement
+in typed catalogue validation while PostgreSQL permanently enforces registered
+identifiers, decision-event-only use, and exact action-to-permission mapping.
+Runtime code remains unmodified pending fresh exact-SHA review.
+
+## 2026-07-15 - WS-AUTH-001-07A Second Repaired Plan Failed
+
+Exact-SHA senior engineering, architecture/reuse, QA/test, and CI-integrity
+review passed `b1b47b0`, while security/auth, product/ops, and docs review found
+one remaining audit-integrity blocker. The contract independently bounded
+ActionIds and PermissionIds but did not enforce each action's exact permission
+mapping, allowed newly admitted permissions without action evidence, did not
+bar planned actions from allowed-decision evidence, and checked only non-null
+actions before downgrade. The repair closes all four cases in typed and
+PostgreSQL acceptance criteria and keeps runtime code unmodified pending fresh
+exact-SHA review.
+
+## 2026-07-15 - WS-AUTH-001-07 Started
+
+PR #124 merged `WS-AUTH-001-06` as `f599551`; Backend, Agent Gates,
+CodeRabbit, and signed automated merge memory passed. The user explicitly
+started `WS-AUTH-001-07` on branch
+`codex/ws-auth-001-07-authorization-kernel`. This L1 authorization chunk is in
+read-only discovery and required plan review; runtime implementation has not
+started.
+
+## 2026-07-15 - WS-AUTH-001-07 Combined Plan Rejected
+
+Architecture/reuse and security/auth/product/docs reviewers failed the combined
+contract; QA/test and CI integrity passed only with blocking conditions. The
+contract required grant-backed admin reads before AUTH-08, project capabilities
+before AUTH-10, omitted the audit ORM and actor-route ownership files, and did
+not define exact active actions, denial precedence, transaction ownership, or
+coverage-compatible verification. No runtime code was written.
+
+The bounded repair splits parent AUTH-07 into 07A closed catalogue/action-aware
+audit parity and 07B minimal kernel/actor self-action cutover. The repaired 07A
+contract must pass fresh L1 plan review before implementation.
+
+## 2026-07-15 - WS-AUTH-001-07A First Repaired Plan Failed
+
+Exact-SHA review of `581ecd7` confirmed the split and deferrals but found four
+remaining blockers: migration `0021` omitted the two AUTH-07B self ActionIds,
+the planned catalogue lacked one exact mapping/owner table, AUTH-13/14 still
+claimed later permission-registry migrations, and combined coverage could hide
+a sub-90 materially changed subsystem. QA additionally corrected the isolated
+database runner invocation, while security required an exclusive audit-table
+lock before downgrade evidence checks. No runtime code was written. The second
+repair closes those exact findings and requires another fresh exact-SHA review.
+
 ## 2026-07-15 - WS-ENG-001-02 Internal Review Passed
 
 Reviewed implementation SHA `8670005` passed senior engineering,

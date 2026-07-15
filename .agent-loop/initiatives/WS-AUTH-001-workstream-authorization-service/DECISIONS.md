@@ -209,8 +209,9 @@ not imply one another.
 
 The authorization decision and operation receipt must share bounded request/
 correlation evidence, resource identity, operation, and service principal.
-Receipts prove that storage work occurred; they do not create authority. AUTH-07
-registers exact artifact permissions, AUTH-08 defines applicable Operator
+Receipts prove that storage work occurred; they do not create authority. AUTH-07A
+registers exact artifact permissions and planned actions, AUTH-07B introduces
+the central kernel, AUTH-08 defines applicable Operator
 grants, and AUTH-09 provisions fixed service principals. Each owning WS-ART
 feature chunk supplies the canonical resource composer, guards, surface
 declaration, and behavior tests that activate its exact actions. AUTH-12,
@@ -222,7 +223,8 @@ no artifact permission or route attachment.
 Status: accepted by the user on 2026-07-14 after repository mapping and internal
 design review.
 
-AUTH-07 introduces a closed typed action registry. Each active `ActionId` binds
+AUTH-07A introduces a closed typed action registry, and AUTH-07B activates the
+first bounded actions. Each active `ActionId` binds
 one already approved `PermissionId` to one canonical authorization target,
 candidate authority sources, mandatory guards, principal class, and
 transaction-revalidation rule. Multiple closed actions may map to one retained
@@ -239,8 +241,9 @@ Each protected route or asynchronous command declares one primary registered
 action as its authorization entry point. Domain invariants remain owned by the
 feature service. Human bearer tokens are never executable worker authority,
 and collection filtering occurs before counts or cursors. Catalogue adoption is
-staged: AUTH-07 owns types and its own current definitions, every route-owning
-AUTH-07 through AUTH-15 chunk owns declarations during its feature cutover, and
+staged: AUTH-07A owns identifiers and planned metadata, AUTH-07B owns the first
+self-route definitions, every later route-owning chunk through AUTH-15 owns
+declarations during its feature cutover, and
 AUTH-16 owns the aggregate generated route/command completeness manifest and
 final no-bypass proof.
 
@@ -251,11 +254,11 @@ composer. An owning cutover chunk activates an action only with its adopted
 domain contract, canonical resource composer, route or command declaration,
 allow/deny behavior proof, and generated manifest-delta proof.
 
-`ActionId` is security-significant evidence. AUTH-07 adds it to
-`AuthorizationDecision`, bounded logs/metrics, and allowed/denied authority
-events with exact typed/PostgreSQL registry parity. Historical events may remain
-null; every AUTH-07-or-later action-based decision event requires a registered
-identifier. Planned IDs can be registered before activation because they encode
+`ActionId` is security-significant evidence. AUTH-07A adds typed/PostgreSQL
+audit parity; AUTH-07B adds it to `AuthorizationDecision`, bounded logs/metrics,
+and allowed/denied authority events. Historical events may remain null; every
+AUTH-07B-or-later action-based decision event requires a registered identifier.
+Planned IDs can be registered before activation because they encode
 only identifier, approved permission, owner, and availability, not foreign
 resource design.
 
@@ -264,10 +267,10 @@ The reviewed proposal did not receive independent normative precedence. Its
 artifact, review, contribution, and compensation resources were rejected. The
 adopted `/api/v1` namespace and original 52 approved permission identifiers
 were unchanged by that catalogue review. The later approved artifact-storage
-contract adds 21 exact identifiers, making the current closed total 73.
+contract added 21 exact identifiers, making the pre-D17 closed total 73.
 AUTH-05A currently enforces a 49-identifier typed/PostgreSQL audit base; the
 three already approved Operator recovery identifiers and 21 artifact
-identifiers remain planned and non-executable until AUTH-07 adds typed/SQL audit
+identifiers remain planned and non-executable until AUTH-07A adds typed/SQL audit
 parity and the paired owning feature activates each action. Other permission additions or renames still
 require an approved specification/ADR change, typed and PostgreSQL registry
 migration, audit-history treatment, cutover ownership, and rollback proof.
@@ -275,6 +278,69 @@ WS-REV, WS-CON, and the artifact-storage specification continue to own their
 resources and state transitions.
 
 Migration custody is reconciled with merged main: AUTH-05A owns `0018`, AUTH-05B
-solely owns `0019`, AUTH-06 uses `0020`, AUTH-07 action evidence uses `0021`,
+solely owns `0019`, AUTH-06 uses `0020`, AUTH-07A action evidence uses `0021`,
 AUTH-08 uses `0022`, AUTH-10 uses `0023`, AUTH-12 uses `0024`, AUTH-13 uses
 `0025`, and AUTH-14 uses `0026`.
+
+## D16: Split AUTH-07 at the catalogue and executable-kernel boundary
+
+Status: accepted as a required L1 preimplementation repair on 2026-07-15.
+
+Required architecture, security/auth, and QA/CI plan review found that the
+combined AUTH-07 contract placed grant-backed administrative APIs before
+AUTH-08, project capability composition before AUTH-10, and mixed the audit
+migration with executable kernel/API behavior. No runtime code had started.
+
+At the split boundary, AUTH-07A owned only the exact 73-PermissionId catalogue,
+30 four-field
+planned ActionId definitions, including both later self actions, and
+action-aware audit migration `0021`. AUTH-07B
+later owns the minimal deny-by-default kernel and activates only
+`actor.profile.read_self` and `actor.profile.update_self`. Permission and
+admin-role definition APIs move to AUTH-08; project-scoped authorization
+context moves to AUTH-10. Each child retains its own merge and explicit-start
+gate.
+
+## D17: Adopt canonical review actions without moving review behavior into AUTH
+
+Status: accepted by the user on 2026-07-15 after mapping the revised WS-REV
+source against the implemented AUTH and ART contracts and completing internal
+architecture, docs/security, and test/migration review.
+
+AUTH-07A expands the closed catalogue to exactly 74 PermissionIds and 50
+planned ActionIds. `review.queue.override` is the only additive PermissionId and
+is explicitly the 25th post-`0020` permission; the historical 49-value set does
+not change. Twenty planned actions are added: canonical `submission.create`
+owned by `WS-AUTH-001-14`, plus 19 review actions owned by exact
+`WS-REV-001-05`, `06`, `07`, `08`, `09A`, `11`, and `12` chunks. All additions
+remain four-field planned metadata and cannot authorize until their owner
+supplies resource composition, guards, candidates, surface declarations,
+revalidation, and behavior tests.
+
+Initial and revision submissions share the same `submission.create` action,
+permission, and route. There is no `submission.revise`, `review.assign`,
+`review_revision.record`, or separately callable revision-preparation action.
+Revision preparation is an internal participant and lifecycle guard of the
+canonical submission command. Finding and finding-response evidence intake use
+distinct actions mapped to existing `review.decision` and `submission.create`
+permissions because each is a protected human command that can create artifact
+state before the final transaction.
+
+`artifact_recovery.request` is rejected. Operator recovery consumes the already
+registered `artifact.verification_job.retry` action through the ART-owned
+`ArtifactOperatorRecoveryPort`; ART retains recovery-attempt, execution,
+fencing, and idempotency ownership. REV owns no projection dispatch/retry action
+because the shared outbox owns dispatch, attempts, retry, dead-letter, and
+delivery state. Immediate grant-revocation recovery remains a participant of
+the originating AUTH mutation, while missed recovery uses the planned
+`review.reconcile.run` action.
+
+AUTH-07B must expose one stable public feature boundary: a request-scoped
+`AuthorizationService` bound to the current `AuthorizationContext` and
+caller-owned `AsyncSession`. Feature modules call
+`require(action_id, typed_resource_context)`; the bound session is the only
+transaction source. The service returns and stages one bounded decision, never
+commits, and never accepts a raw
+PermissionId, candidate grant, or guard. REV owns its ResourceContext composers
+and lifecycle invariants and may import only that public AUTH interface and
+closed types, never AUTH persistence or grant queries.

@@ -22,8 +22,10 @@ stopped.
 | `WS-AUTH-001-05A` | Shared Audit Ownership And Append-Only Authority Evidence | L1 | Merged through PR #115 as `8e1cde6` |
 | `WS-AUTH-001-CAT` | Action And Resource Catalogue Reconciliation | L1 | Merged through PR #117 as `4c5d4fc` |
 | `WS-AUTH-001-05B` | Authority Idempotency And Invalidation Foundation | L1 | Merged through PR #119 as `ad71c7e` |
-| `WS-AUTH-001-06` | Canonical Actor Profile And Identity Link | L1 | Proposed |
-| `WS-AUTH-001-07` | Authorization Kernel And Permission Registry | L1 | Proposed |
+| `WS-AUTH-001-06` | Canonical Actor Profile And Identity Link | L1 | Merged through PR #124 as `f599551` |
+| `WS-AUTH-001-07` | Authorization Kernel And Permission Registry | L1 | Split before implementation after required L1 plan review |
+| `WS-AUTH-001-07A` | Closed Permission And Action Catalogue | L1 | Implementation and repair internally approved at `478a819`; PR pending |
+| `WS-AUTH-001-07B` | Deny-By-Default Kernel And Self-Action Cutover | L1 | Inactive until 07A merge/memory and explicit user start |
 | `WS-AUTH-001-08` | Bootstrap And Administrative Role Grants | L1 | Proposed |
 | `WS-AUTH-001-09` | Actor State, Identity Revocation, And Service Actors | L1 | Proposed |
 | `WS-AUTH-001-10` | Project Qualification And Contributor Role Grants | L1 | Proposed |
@@ -47,7 +49,8 @@ WS-AUTH-001-PLAN
 -> WS-AUTH-001-CAT
 -> WS-AUTH-001-05B
 -> WS-AUTH-001-06
--> WS-AUTH-001-07
+-> WS-AUTH-001-07A
+-> WS-AUTH-001-07B
 -> WS-AUTH-001-08
 -> WS-AUTH-001-09
 -> WS-AUTH-001-10
@@ -75,13 +78,16 @@ WS-AUTH-001-PLAN
 - Chunk 06 establishes canonical actor resolution while preserving only the
   enumerated non-authoritative legacy workflow-eligibility consumers required
   for intermediate-release operability.
-- Chunk 07 provides the single authorization engine before grant APIs.
+- Parent chunk 07 was split before runtime implementation. Chunk 07A owns the
+  closed permission/action catalogue and action-aware audit parity; chunk 07B
+  owns the minimal deny-by-default kernel and actor self-action cutover.
 - Chunks 08-10 establish local grant truth before product cutover.
 - Chunks 11-15 migrate bounded complete product/system surfaces.
 - Artifact upload, read, retention, release/delete, replication, integrity, and
   reconciliation remain mechanically owned by the artifact subsystem but must
-  receive centralized AUTH decisions. Chunk 07 owns the permission registry,
-  chunk 08 owns Operator grant definitions, chunk 09 owns fixed artifact service
+  receive centralized AUTH decisions. Chunk 07A owns the permission/action
+  registry, chunk 07B owns the central kernel, chunk 08 owns Operator grant
+  definitions, chunk 09 owns fixed artifact service
   principals, and each WS-ART feature chunk owns the canonical resource facts,
   guards, surface declarations, and behavior tests for the exact artifact
   actions it activates. AUTH-12, AUTH-14, and AUTH-15 do not pre-activate or
@@ -116,5 +122,8 @@ human approval merged PR #115 as `8e1cde6` on 2026-07-14, followed by merged
 post-merge memory. `WS-AUTH-001-CAT` then merged through PR #117 as `4c5d4fc`
 after Backend, Agent Gates, CodeRabbit, and explicit human approval passed. The
 CAT post-merge memory merged through PR #118 as `eba7e2b`; AUTH-05B then merged
-through PR #119 as `ad71c7e`. Do not start AUTH-06 or POL-002-04 without a
-separate explicit user start.
+through PR #119 as `ad71c7e`. AUTH-06 merged through PR #124 as `f599551`, its
+signed automated memory completed, and the user explicitly started AUTH-07.
+Required L1 review rejected the combined contract before runtime edits and
+required 07A/07B. Do not start 07B, AUTH-08, or POL-002-04 without a separate
+explicit user start after their prerequisites complete.
