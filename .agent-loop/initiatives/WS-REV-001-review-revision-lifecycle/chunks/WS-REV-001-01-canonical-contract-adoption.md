@@ -86,13 +86,16 @@ frontend work
   an intentional backward rebase, and the reviewer consumes
   the context stamped on the leased Submission without a separate guide/rebase.
 - Permission additions are assigned to WS-AUTH ownership, not implemented here.
-- The active action table contains 23 dependencies. The three additions are
+- The active action table contains 24 dependencies. The four additions are
   `review.revision_obligation.close -> project.task.manage` for a covered
   Project Manager, `review.revision_context.repair -> project.task.manage` for a covered Project
   Manager and `review.revision_context.legacy_close -> operations.reconcile.run`
-  for an Operator. Chunk 01 documents their typed resource/guard contract, while
-  AUTH owns registry implementation before WS-REV chunk 11; no new PermissionId
-  is introduced.
+  for an Operator, plus
+  `review.lifecycle.activation.manage -> operations.reconcile.run` for an
+  Operator. Chunk 01 documents their typed resource/guard contract, while
+  AUTH owns typed catalogue/owner and PostgreSQL audit-parity migration from 50
+  to exactly 54 actions. The three closure/repair actions gate chunk 11 and the
+  lifecycle-control action gates 12A; no new PermissionId is introduced.
 - A stale-contract scanner rejects active Flow Node production, `/v1`, full
   reviewer backlog, legacy severity, synthetic reject, direct
   payment/reputation, and bypass wording without scanning archival bytes as

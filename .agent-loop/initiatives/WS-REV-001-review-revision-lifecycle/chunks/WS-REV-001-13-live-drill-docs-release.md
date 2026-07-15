@@ -19,8 +19,10 @@ backend/app/api/router.py only for one joint review/contribution/compensation re
 backend/app/modules/reviews/router.py only for final activation conformance
 backend/app/modules/contributions/router.py only for final activation conformance
 backend/app/modules/compensation/router.py only for final activation conformance
+backend/app/modules/lifecycle_control/router.py only for final Operator control activation conformance
 backend/app/modules/tasks/{schemas,service,router}.py only for Task Context/preparation acknowledgment and strict canonical revision cutover
 backend/app/composition/review_lifecycle.py only for final fail-closed participant activation
+backend/app/composition/joint_lifecycle_control.py only for final active command-class/binding activation
 backend/alembic/versions/<activation-next>_strict_revision_cutover.py
 backend/tests/test_alembic.py only for final revision-cutover migration proof
 docs/architecture_*.md
@@ -75,28 +77,47 @@ reputation formula or deferred product scope
   outbox, workers/schedules, MinIO protocol, migrations, and reconciliation are
   live. Production composition fails closed when any mandatory participant is
   absent.
+- The exact merged WS-REV-12A release-control schema, phase history, advisory
+  lock, command-class matrix, Operator action, and mandatory fence bindings are
+  preflight inputs. REV-13 registers and exercises that foundation; it does not
+  implement an alternate controller or store phase in a proof script.
 - Preflight consumes WS-CON-11's exact merged SHA, migration head, ActionId and
   service-actor assignment, ART capability, outbox/worker, and handler manifest.
   Missing, extra, stale, or mismatched entries block startup and activation.
 - A separate REV-owned activation manifest covers every human endpoint and
   asynchronous command with exact ActionId, PermissionId mapping, resource
   composer owner, allowed principal kind, service ActorProfile/system-principal
-  assignment, and transaction-revalidation rule. It includes at least
+  assignment, transaction-revalidation rule, exact
+  `JointLifecycleCommandClass`, and generation-aware phase policy. Internal
+  checker admission, AUTH-13 replacement, and every operation-specific
+  `review.reconcile.run` mode are manifest entries even when they share an
+  ActionId. The shared-outbox review snapshot projection handler is a separate
+  manifest entry under fixed `outbox.dispatch` authority. It includes at least
   `review.preference_expiry.run`, `review.lease_expiry.run`,
   `review.reconcile.run`, `review.artifact_reference.reconcile`, and
-  `review.projection.rebuild`; missing, extra, stale, or mismatched mappings fail
-  preflight and startup.
+  `review.projection.rebuild`; missing, extra, ambiguous, caller-selected, stale,
+  or mismatched mappings fail preflight and startup. The CON-11 manifest supplies
+  the same fields for every joint contribution/compensation command.
+- AUTH preflight also proves the four additive actions migrated typed catalogue,
+  owner mapping, and PostgreSQL audit parity together from 50 to exactly 54,
+  with no missing or extra action.
 - Final registration exposes coherent current-work, claim, release, decline,
   context, decision, revision preparation/evidence, chain, and authorized admin
   operations alongside the existing canonical task resubmission endpoint.
-  Rollback first closes admission through existing deployment-owned route and
-  worker controls, then drains/revokes active leases. It fences new fulfillment
-  dispatch while allowing authenticated callbacks and already committed
-  awards/outbox work to drain under their original identities, then disables
-  routes, workers, and service assignments in manifest order without deleting
-  pending immutable work. Queued review work remains durable and auditable for
-  forward reactivation. REV-13 does not invent an application-owned persisted
-  shutdown coordinator or attempt schema downgrade after post-cutover rows exist.
+  Shutdown advances the persisted 12A controller through every adjacent phase:
+  `admission_fenced` blocks new submissions, queue admission, claims, and
+  replacement while leased completion may finish; `commands_draining` blocks
+  new completion commands and fresh Operator calls release remaining leases;
+  `leases_released` lets already committed fulfillment dispatch drain;
+  `delivery_draining` blocks new dispatch only after its pending/in-flight count
+  is zero while authenticated callbacks finish; and `disabled` requires zero
+  callback obligations. Routes, workers, and service assignments are then
+  disabled in manifest order without deleting pending immutable work. The
+  authenticated lifecycle-control transition/status route and its AUTH mapping
+  remain available while disabled; all product routes, product workers, and
+  product service assignments remain off. Queued review work remains durable
+  for forward reactivation. REV-13 does not invent a second coordinator or
+  attempt schema downgrade after protected rows exist.
 - The same PR registers the reviewed contribution/compensation binding and
   policy operations, contribution/award/evidence reads, fulfillment callback,
   and bounded Finance/Operator operations under `/api/v1`. No review-only,
@@ -134,18 +155,34 @@ reputation formula or deferred product scope
   forge a legacy exemption, and downgrade is refused once post-cutover rows
   depend on the rule.
 - Deployment does not pretend Alembic and process replacement are simultaneous.
-  The runbook fences legacy version>1 submission writes, drains and verifies no
-  old-writer transaction/process remains, applies the migration, starts and
-  verifies the prepared branch plus mandatory replacement-transfer binding, and
-  only then reopens revision and replacement-assignment admission. First-version
-  submissions may remain open if they cannot enter the fenced path. A live
-  ordering test holds an old writer at the fence and proves it cannot cross the
-  migration/reopen boundary or leak an IntegrityError.
+  The Operator advances `pre_activation -> revision_cutover_fenced`, whose exact
+  matrix allows initial submissions and checker admission but denies legacy and
+  prepared revisions plus both replacement classes. The runbook drains and
+  verifies no old writer remains, applies the migration, starts and verifies the
+  prepared branch plus mandatory replacement-transfer binding, then advances to
+  `active` to open prepared revision/replacement admission. A live ordering test
+  holds an old writer at the fence and proves it cannot cross the migration/
+  activation boundary or leak an IntegrityError.
 - Existing Task Context responses expose the frozen current preparation ID,
   digest, guide/policy versions, and change summary during `needs_revision`.
   The canonical submission request acknowledges preparation ID/digest; neither
   request mutates preparation state.
 - Full conformance suite, lint, docs, coverage, stale scans, and link checks pass.
+- The live drill calls the authenticated Operator lifecycle-control route for
+  every legal edge, proves every illegal/skipped edge, full phase/command matrix,
+  N-to-N+1 reactivation with a new manifest and proof that no retired legacy
+  revision/replacement writer revives, exact and changed replay, and crash
+  after each durable-write boundary. It also proves timeout leaves phase
+  unchanged, fresh retry, bounded lease release, dispatch denial before adapter
+  I/O, callback in flight during delivery drain, and disable denial while any
+  delivery/callback obligation remains.
+- The drill runs fulfillment dispatch and ART-backed review projection against
+  disable in both orderings: durable in-flight state precedes fence release,
+  a disable attempt observes it, returns blocked with phase unchanged, and
+  releases the exclusive lock. Provider I/O observes no lifecycle advisory lock
+  or database transaction; crash returns work to retryable state; fenced
+  finalization clears the observation; and a fresh Operator command advances
+  without changing canonical Review/award truth.
 - The joint drill also proves compensation binding/policy setup, TaskAssignment
   and ReviewLease freezes, reviewer contribution for all three decisions,
   accept-only submitter contribution, a second revision Review, paid and
@@ -181,6 +218,7 @@ cd backend && python scripts/review_lifecycle_live_drill.py --start-api-worker-b
 cd backend && python scripts/review_lifecycle_validate_evidence.py ../.agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/evidence/live-drill.json
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
 cd backend && coverage report --include='app/modules/reviews/*,app/workers/reviews.py' --precision=2 --fail-under=90
+cd backend && for path in app/api/router.py app/modules/contributions/router.py app/modules/compensation/router.py app/modules/lifecycle_control/router.py app/modules/tasks/schemas.py app/modules/tasks/service.py app/modules/tasks/router.py app/composition/review_lifecycle.py app/composition/joint_lifecycle_control.py; do coverage report --include="$path" --precision=2 --fail-under=90 || exit 1; done
 ./docs/diagrams/render_plantuml.sh
 ./docs/architecture_brief/render_pdf.sh
 git diff --exit-code -- docs/diagrams docs/architecture_brief

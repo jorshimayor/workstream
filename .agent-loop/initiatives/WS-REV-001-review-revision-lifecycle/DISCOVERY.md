@@ -47,9 +47,9 @@ one-sided section before producing the reconciled active contract.
 
 ## Authorization boundary
 
-- `main` at discovery is `f599551`, which merged AUTH-06 and now contains
-  canonical `ActorProfile` and `ActorIdentityLink` models and request-time
-  resolution.
+- The original discovery base was `f599551`, which merged AUTH-06. Pull merge
+  `3e09e99` now contains trusted main `e9d72a1`, including merged AUTH-07A and
+  ADR-0014's shared external-adapter foundation.
 - Authority audit and mutation idempotency foundations exist.
 - The authorization kernel, admin and project grants, actor state/service actor
   administration, product cutovers, and conformance proof remain later
@@ -59,23 +59,25 @@ one-sided section before producing the reconciled active contract.
 - Review/task/contribution lineage must store canonical human
   `ActorProfile.id`, not external subject, email, legacy typed-profile ID, or
   role labels. Internal jobs remain explicitly typed service/system actors.
-- `review.queue.override` is required by the revised WS-REV source but is not
-  yet in the implemented permission registry. Artifact recovery already uses
+- `review.queue.override` is present in the merged 74-PermissionId catalogue;
+  its owning review actions remain planned/inactive. Artifact recovery already uses
   the registered `artifact.verification_job.retry` action and ART-owned
   `ArtifactOperatorRecoveryPort`; WS-REV must not add another recovery
-permission or implementation.
+  permission or implementation.
 
-The clean unmerged AUTH-07A branch was reread at commit
+The clean AUTH-07A branch was reread at commit
 `3ab25cf3b1e99336c635a318101375bb4bebdf91` after the user called out its
-changes. It is based on current `main` `f64a8e5`, plans exactly 50 closed
-ActionIds, including canonical `submission.create` and 19 review-owned actions,
+changes. That reviewed commit is now included by trusted-main merge `e9d72a1`.
+It implements exactly 50 closed ActionIds, including canonical
+`submission.create` and 19 review-owned actions,
 and leaves feature resource composition and activation with WS-REV. AUTH-13/14
 also establish the final `TaskAssignment.contributor_id` and
 `Submission.contributor_id` names and authority-loss replacement-assignee
-behavior. The three later revision-obligation-close, repair, and legacy-close
-ActionIds in this plan are absent from that 50-action commit and remain explicit
-AUTH-owned pre-chunk-11 additions; unmerged catalogue code is not runtime
-authority.
+behavior. The four later revision-obligation-close, repair, legacy-close, and
+joint-lifecycle-activation ActionIds in this plan are absent from that 50-action
+catalogue and remain explicit AUTH-owned additions before their owning chunks.
+They must expand AUTH's typed catalogue/owner and PostgreSQL audit parity from
+50 to exactly 54; enum-only registration is not runtime authority.
 
 Review implementation must therefore wait for the WS-AUTH definition of done,
 then consume `AuthorizationService.require(action_id, resource_context)`, canonical resource

@@ -82,19 +82,21 @@ outcomes.
 2. ADR 0010 is retained with the clarified one-Project-Guide task pipeline,
    same-version keep, rebase to any different currently active version including
    backward rebase, Task Context visibility, and no reviewer-side guide.
-
-## Human decisions remaining
-
-1. Approve D6's recommendation: limit/deadline blocks further submission while
+3. D6's recommendation is approved: limit/deadline blocks further submission while
    leaving `needs_revision` active, with only the covered Project Manager's
    explicit reason-bound revision-obligation closure and never a fabricated
    human `reject` Review.
-2. Approve treating the revised reviewer `current` endpoint as controlling over
+4. The revised reviewer `current` endpoint controls over
    the older WS-IMP full-backlog reviewer response.
-3. Approve production-enabling the coherent lifecycle route set only after the
+5. Production enables the coherent lifecycle route set only after the
    repaired and reviewed `WS-CON-001` plan, exact lineage/digest contract,
    atomic participant, lease freeze, recovery, reconciliation, projection
    operations, and WS-CON-11 joint-readiness manifest exist.
+
+Items 3-5 and the proposed chunk sequence were approved by the human on
+2026-07-15 for planning publication. This approval does not activate a successor
+implementation chunk before the planning PR merges and its separately declared
+start gate is satisfied.
 
 ## Proof strategy
 

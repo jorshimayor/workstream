@@ -28,14 +28,15 @@
 
 AUTH-07A discovery was refreshed from clean commit
 `3ab25cf3b1e99336c635a318101375bb4bebdf91` in
-`/home/abiorh/flow/workstream-auth-001-07`. That commit is reviewed, unmerged
-planned catalogue/audit evidence, not a runtime dependency. Runtime chunks
-consume only its eventual trusted-main merge and later AUTH definition of done.
+`/home/abiorh/flow/workstream-auth-001-07`. Pull merge `3e09e99` now contains
+trusted-main merge `e9d72a1`, which includes that reviewed catalogue/audit
+foundation. Later AUTH definition-of-done chunks and the four additive REV
+actions remain future runtime gates.
 
 ## Cross-worktree discovery evidence
 
 The following sibling planning paths were read-only discovery inputs on
-2026-07-15, pinned for this review to CON planning commit `42cf11f`. They are
+2026-07-15, pinned for this review to rebased CON planning head `c965f9b`. They are
 not runtime dependencies by path and no file in that worktree was edited by
 WS-REV:
 
@@ -44,8 +45,9 @@ WS-REV:
 - `/home/abiorh/flow/workstream-con-001/docs/reference_specs/WS-CON-001-contribution-record-and-compensation-boundary-specification.md`
 
 The reconciled CON content passed security/auth, product/QA, and
-architecture/docs delta review before commit `42cf11f`; exact-commit publication
-review remains pending. Its contracts must still be reread from the merged
+architecture/docs delta review on predecessor commit `42cf11f`; exact-head
+publication review of `c965f9b` remains pending. Later uncommitted sibling
+fence-handoff edits are discovery evidence only. Its contracts must still be reread from the merged
 trusted-main SHA named by each runtime gate; the planning commit does not
 substitute for that merge.
 

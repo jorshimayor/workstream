@@ -3,11 +3,13 @@
 ## Scope And State
 
 Reconciled review of `/home/abiorh/flow/workstream-con-001` on 2026-07-15,
-pinned to CON planning commit `42cf11f`. WS-REV edited no sibling file. The
-content received security/auth, product/QA, and architecture/docs delta review
-before that commit; CON's exact-commit publication review remains pending. The
-plan also depends on human approval and merged AUTH/ART/REV contracts; this
-review does not activate `WS-CON-001-01`.
+pinned to rebased committed planning head `c965f9b`. WS-REV edited no sibling
+file. Content-level security/auth, product/QA, and architecture/docs review was
+recorded on predecessor planning commit `42cf11f`; exact-head publication review
+remains pending. The sibling's later uncommitted fence-handoff edits were also
+read and align with the dispatch boundary below, but do not yet specify the
+callback fence and are not a merged dependency. This review does not activate
+`WS-CON-001-01`.
 
 ## Ownership Boundary
 
@@ -21,6 +23,15 @@ participant, contribution-evidence projection, product/operations reads, and
 its exact hidden-readiness manifest. ART owns artifact admission, provider I/O,
 verification, bindings, receipts, retention, and recovery. AUTH owns canonical
 actors, permissions/actions, grants, service assignments, and decisions.
+
+REV-12A owns one shared hidden `JointLifecycleReleaseControl` and typed mutation
+fence. CON-08A/08B/11 must leave exact mandatory fence hooks in fulfillment
+dispatch and authenticated callback handling and name both in the readiness
+manifest; CON does not create a competing shutdown state machine.
+CON-10B/11 also owns a same-session
+`FulfillmentLifecycleDrainObservationPort` over its fulfillment state and the
+shared-outbox capability; REV consumes only that typed port and never imports a
+CON or outbox repository.
 
 ## Adapter And Participant Chain
 
@@ -89,6 +100,7 @@ REV-09B stable review/revision chain + CON-03C exact lineage schema
   -> REV-10 atomic integration
 
 CON-11 exact readiness manifest + REV-12
+  -> REV-12A hidden joint release-control/fence integration
   -> REV-13 sole joint activation and live drill
 ```
 
@@ -98,7 +110,7 @@ capability.
 
 ## Reconciliation Result And Remaining Joint Gates
 
-Closed by CON commit `42cf11f`:
+Present in rebased CON planning commit `c965f9b`:
 
 - executable 05A semantic removal and 05B physical removal contracts replace
   the stale advisory/single-05 direction;
@@ -125,11 +137,21 @@ Still blocking the owning runtime chunks:
    downgrade once canonical rows exist; generic upgrade/downgrade test wording
    is not sufficient.
 4. Before each dependent chunk starts, reread the relevant contract from its
-   merged trusted-main SHA. Planning commit `42cf11f` is evidence, not a runtime
+   merged trusted-main SHA. Planning commit `c965f9b` is evidence, not a runtime
    dependency by worktree path.
 5. CON-05A must add merged REV-02 exact Submission/TaskAssignment lineage as an
    explicit gate before publication or activation. REV records the ordering,
-   but CON commit `42cf11f` does not yet enforce it in its own chunk contract.
+   The required gate appears only in the sibling's later uncommitted planning
+   delta, so `c965f9b` does not yet enforce it in its own chunk contract.
+6. CON-08A/08B/11 must adopt shared lifecycle-fence hooks and prove dispatch
+   loses cleanly to admission fencing before adapter I/O while authenticated
+   callbacks hold the shared transaction fence, remain available through
+   delivery drain, and cannot race disablement.
+7. CON-10B/11 must expose and manifest the same-session typed
+   `FulfillmentLifecycleDrainObservationPort` with pending/claimed/retryable
+   event, in-flight dispatch, and nonterminal delivery/callback counts. It is
+   read-only, never commits/calls a provider, and uses the shared-outbox port
+   rather than exposing CON/outbox persistence to REV.
 
 ## Revision And Compensation Rule
 

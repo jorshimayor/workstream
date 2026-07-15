@@ -10,7 +10,7 @@ explicit start signal.
 
 | Chunk | Title | Risk | Gate | Status |
 |---|---|---:|---|---|
-| `WS-REV-001-PLAN` | Review And Revision Lifecycle Planning | L0 | None | Internally reviewed; awaiting human approval |
+| `WS-REV-001-PLAN` | Review And Revision Lifecycle Planning | L0 | None | Human-approved; PR publication active |
 | `WS-REV-001-01` | Canonical Contract Adoption And Dependency Conformance | L1 | Plan approval; current dependency refresh | Proposed |
 | `WS-REV-001-02` | Locked Review Policy And Task Lifecycle Alignment | L1 | AUTH DoD; ART contract stable; D6 behavior approved | Proposed |
 | `WS-REV-001-03` | Review Queue And Lease Persistence | L1 | 02 merged; WS-CON-03B compensation-policy persistence merged | Proposed |
@@ -24,12 +24,13 @@ explicit start signal.
 | `WS-REV-001-10` | WS-CON Atomic Integration And Hidden API Composition | L1 | 09B; WS-CON-03C exact lineage/digest schema and WS-CON-07 atomic participant merged | Proposed |
 | `WS-REV-001-11` | Admin Overrides, Revocation Recovery, And Reconciliation | L1 | 10; AUTH invalidation plus merged revision-obligation-close/repair/legacy-close ActionIds; ART operator recovery port | Proposed |
 | `WS-REV-001-12` | Snapshot Projection, Notifications, And Observability | L1 | 11; ART projection; outbox foundation | Proposed |
-| `WS-REV-001-13` | Coherent Public Activation, Live API Drill, And Release Proof | L1 | 12; exact WS-CON-11 joint-readiness manifest; AUTH/ART/outbox live readiness | Proposed |
+| `WS-REV-001-12A` | Joint Lifecycle Release-Control Foundation | L1 | 12 review drain-observation port; exact WS-CON-11 hidden-readiness manifest; AUTH exact 54-action parity including lifecycle control; CON dispatch/callback fence hooks plus fulfillment/outbox drain-observation port | Proposed |
+| `WS-REV-001-13` | Coherent Public Activation, Live API Drill, And Release Proof | L1 | 12A; AUTH/ART/CON/outbox live readiness | Proposed |
 
 ## Dependency order
 
 ```text
-PLAN -> 01 -> 02 -> 03 -> 04 -> 05 -> 06 -> 07 -> 08 -> 09A -> 09B -> 10 -> 11 -> 12 -> 13
+PLAN -> 01 -> 02 -> 03 -> 04 -> 05 -> 06 -> 07 -> 08 -> 09A -> 09B -> 10 -> 11 -> 12 -> 12A -> 13
 ```
 
 External initiative gates are inserted without changing same-initiative
@@ -63,6 +64,7 @@ WS-REV-001-09B + WS-CON-03C exact lineage/digest schema + WS-CON-07 atomic Revie
   -> WS-REV-001-10
 
 WS-CON-11 exact hidden-readiness manifest + WS-REV-001-12
+  -> WS-REV-001-12A hidden joint release-control foundation
   -> WS-REV-001-13 sole joint activation
 ```
 
@@ -78,6 +80,7 @@ WS-CON-11 exact hidden-readiness manifest + WS-REV-001-12
 - 09B completes finding replay, resolution, and preferred-return semantics.
 - 10 proves WS-CON atomicity in hidden composition.
 - 11-12 complete operations, recovery, projection, and observability.
+- 12A lands hidden persisted release control and mandatory cross-domain fences.
 - 13 performs fail-closed preflight, activates the coherent public API set,
   proves the whole lifecycle, and closes generated/user/operator docs.
 
@@ -85,12 +88,12 @@ WS-CON-11 exact hidden-readiness manifest + WS-REV-001-12
 
 Every chunk: senior engineering, QA/test, security/auth, and product/ops.
 
-Add architecture and reuse/dedup to 01-12. Add docs to PLAN and every chunk that
+Add architecture and reuse/dedup to 01-13. Add docs to PLAN and every chunk that
 changes schema, routes, workers, configuration, or active behavior: 01-13. Add
 test-delta to every runtime chunk. Add CI integrity whenever a
 workflow, script, dependency, or coverage gate changes.
 
 ## Stop condition
 
-Planning complete only after internal plan review and human discussion. Do not
-start 01 automatically.
+Planning is approved for publication. Do not start 01 automatically; its
+merge-intent gate remains separate.

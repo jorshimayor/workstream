@@ -6,7 +6,8 @@ REV's joint integration evidence was refreshed against CON planning commit
 `42cf11f`. Its content-level reviews closed 05A/05B PaymentPolicy
 removal, AUTH service-only outbox/callback authority, ART capability/recovery,
 adapter composition, disclosure, provenance, and REV-13 joint activation.
-CON exact-commit publication review remains pending.
+CON runtime publication remains a dependency-owned gate; this planning chunk
+does not treat sibling uncommitted changes as merged contracts.
 Remaining runtime gates are the immutable reviewed-submission digest/context
 contract, unsafe canonical-row downgrade refusal, merged dependency SHAs, and
 the normal human start gate.
@@ -15,7 +16,7 @@ Current post-CON delta review:
 
 | Track | Agent | Result | Disposition |
 |---|---|---|---|
-| Security/auth + senior engineering | `/root/rev_con_security` | PASS AFTER FIXES | Trust-state wording corrected; exact-commit CON review remains pending; merge intent added |
+| Security/auth + senior engineering | `/root/rev_con_security` | PASS AFTER FIXES | Trust-state wording corrected; dependency-owned CON publication remains gated; merge intent added |
 | Product/ops + QA/test | `/root/rev_con_product` | PASS AFTER FIXES | Merge intent scoped; missing CON-05A REV-02 gate recorded as an owning-CON blocker |
 | Architecture + docs | `/root/rev_con_arch` | PASS AFTER FIXES | Stale untracked/reviewed wording corrected; original archival deletions excluded from publication |
 
@@ -88,3 +89,32 @@ Material repairs included:
   resolution, duplicate-scan reload, and controlled post-resolution recurrence.
 - corrected source provenance for the current revised Markdown hash/counts and
   its section 4.6 divergence from the unchanged PDF companion.
+
+## Post-Main Release-Control Final Review - 2026-07-15
+
+`git pull --no-rebase origin main` merged trusted main `e9d72a1` into REV HEAD
+`3e09e99` without conflict. AUTH-07A is now merged foundation rather than
+unmerged discovery evidence. The four later REV actions remain AUTH-owned and
+must migrate typed catalogue, owner mapping, and PostgreSQL audit parity from 50
+to exactly 54.
+
+The first fresh review failed because shutdown persistence had no executable
+owner. Chunk 12A was added, then repaired through repeated zero-trust review:
+exact cutover/shutdown phases, generation-aware reactivation, fresh Operator
+authority, command-class mapping, typed review/CON drain ports, mandatory
+dispatch/callback hooks, durable provider-I/O handoff, and complete race proof.
+
+| Track | Agent | Final result | Final scope verified |
+|---|---|---|---|
+| Senior engineering | `/root/rev_repair_senior` | PASS | Executable graph, command mapping, remote-I/O handoff, operable drill |
+| QA/test | `/root/con_contract_review` | PASS | Phase/class matrix, races, crash/retry, migration, coverage gates |
+| Security/auth | `/root/con_code_boundary` | PASS | Actor kind, fresh authority, exact action parity, fences, no lock-held I/O |
+| Product/ops | `/root/con_contract_review` | PASS | Legacy continuity, revision/CON behavior, drain, reactivation |
+| Architecture | `/root/rev_repair_senior` | PASS | Port ownership, composition, repository isolation, ADR 0014 |
+| Docs/spec adoption | `/root/con_code_boundary` | PASS | Provenance, dependency status, terminology, proof ownership |
+| Reuse/dedup | `/root/rev_repair_senior` | PASS | Shared hashing/idempotency/audit/outbox/workers/adapters reused |
+
+All valid findings are closed. The human approved D6, reviewer-current
+precedence, coherent activation, the sequence, and planning publication on
+2026-07-15. Dependency merges, planning merge, and the successor's separate
+post-merge start gate still prevent runtime implementation.

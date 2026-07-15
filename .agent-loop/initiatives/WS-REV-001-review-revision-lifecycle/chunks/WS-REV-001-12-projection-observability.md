@@ -12,7 +12,7 @@ L1 asynchronous delivery, privacy, and operations.
 ## Allowed files
 
 ```text
-backend/app/modules/reviews/{repository,schemas,service,projection}.py
+backend/app/modules/reviews/{ports,repository,schemas,service,projection}.py
 backend/app/workers/{celery_app,reviews}.py
 backend/app/core/config.py only for bounded worker settings
 backend/tests/test_{reviews,artifacts,audit,config}.py
@@ -54,6 +54,11 @@ production `/api/v1` review-router registration
   retained content without editing canonical history.
 - Required queue, lease, decision, authorization, evidence, projection, and lag
   metrics exist with bounded cardinality.
+- Reviews exposes a typed, same-session `ReviewLifecycleDrainObservationPort`
+  that returns server-derived active-lease and review-maintenance counts under
+  canonical review locks. It is read-only, never commits, advances no lifecycle
+  phase, imports no lifecycle-control type, and is named in chunk 12 evidence so
+  12A can consume it through composition.
 - Administrative read models include open/preferred depth, oldest preferred
   age, approaching-expiry leases, expired/released/invalidation counts, and
   bounded turnaround distributions.
@@ -92,4 +97,4 @@ operations, and metric usefulness.
 
 ## Stop condition
 
-Merge, record automated memory, and stop. Do not start 13.
+Merge, record automated memory, and stop. Do not start 12A.

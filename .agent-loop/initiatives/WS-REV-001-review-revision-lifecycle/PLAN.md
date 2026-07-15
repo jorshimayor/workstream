@@ -22,9 +22,10 @@ proven. WS-REV consumes:
   exact AUTH-defined system-principal form for the action, never a fabricated
   human actor;
 - project contributor grants;
-- 23 planned action dependencies: canonical `submission.create`, the original 19
-  review-owned actions, and three additive AUTH-owned registrations required by
-  revision closure/recovery;
+- 24 planned action dependencies: merged AUTH-07A supplies canonical
+  `submission.create` plus the original 19 review-owned actions; four additive
+  AUTH-owned registrations remain required by revision closure/recovery and
+  joint release control;
 - `review.revision_context.repair` maps to existing PermissionId
   `project.task.manage`, a covered Project Manager candidate, and an exact typed
   task/assignment/prior-Submission/episode/head resource with transaction
@@ -37,6 +38,10 @@ proven. WS-REV consumes:
   `project.task.manage`, a covered Project Manager candidate, and the exact
   task/assignment/needs-revision Review/current preparation head/observed
   limit-or-deadline resource with transaction revalidation;
+- `review.lifecycle.activation.manage` maps to existing PermissionId
+  `operations.reconcile.run`, an Operator AdminRoleGrant candidate, and the
+  exact singleton control/current phase/target phase/manifest digest resource
+  with transaction revalidation;
 - registered permissions, with `review.queue.override` as the only additive
   PermissionId;
 - canonical resource contexts and project mismatch handling;
@@ -51,8 +56,15 @@ proven. WS-REV consumes:
 REV owns its typed ResourceContext composers and lifecycle guards. It imports
 the public AUTH service and `ActionId` types only; it never imports AUTH
 repositories/models, queries grants, or reconstructs permission unions.
-The three additive ActionIds and their closed mappings are registered by WS-AUTH,
-not by review code, and must be merged before chunk 11. They add no PermissionId.
+The four additive ActionIds and their closed mappings are registered by WS-AUTH,
+not by review code. The three revision closure/repair actions must merge before
+chunk 11; lifecycle activation must merge before 12A. They add no PermissionId.
+Because merged AUTH-07A freezes its typed catalogue, owner table, and PostgreSQL
+action-to-permission audit constraint at exactly 50 actions, the AUTH-owned
+addition must migrate all four actions across those three representations in
+lockstep to exactly 54. Direct-SQL, allowed
+and denied audit, missing/extra parity, upgrade, and unsafe-downgrade tests are a
+hard gate; adding enum values alone is insufficient.
 
 ### Artifact gate
 
@@ -69,10 +81,12 @@ merged and proven. WS-REV consumes:
 
 ### Contribution gate
 
-WS-CON remains a planning-only dependency. Commit `42cf11f` contains the
-reconciled 05A/05B removal contracts and content-level reviewer repairs, but its
-exact-commit publication review is pending and none of its runtime interfaces
-are merged. It is planning evidence, not an executable dependency.
+WS-CON remains a planning-only dependency. Rebased committed planning head
+`c965f9b` contains the reconciled plan and ADR-0014 foundation; its content-level
+review lineage originates at `42cf11f`, but exact-head publication review is
+pending and none of its runtime interfaces are merged. The sibling's later
+uncommitted fence-handoff edits are discovery evidence only. Neither worktree
+state is an executable dependency.
 
 The cross-initiative sequence is explicit:
 
@@ -88,7 +102,10 @@ The cross-initiative sequence is explicit:
 - the WS-CON ReviewLease freeze capability precedes `WS-REV-001-06`;
 - the exact atomic contribution/award participant precedes
   `WS-REV-001-10`; and
-- the exact WS-CON readiness manifest precedes the sole joint activation in
+- the exact WS-CON readiness manifest, mandatory fulfillment dispatch/callback
+  fence hooks, and same-session fulfillment/outbox drain-observation port
+  precede hidden joint release-control integration in `WS-REV-001-12A`; and
+- the merged 12A controller and fences precede the sole joint activation in
   `WS-REV-001-13`.
 
 Compensation context is independent of guide/review execution context. A
@@ -219,6 +236,30 @@ repository/service import cycles. Import-boundary tests enforce the direction.
 
 AUTH, ART, CON, shared audit, and shared outbox are likewise injected ports.
 
+## Joint release control
+
+Public lifecycle activation and shutdown use one hidden PostgreSQL-canonical
+`JointLifecycleReleaseControl`, not shell-script or process-local state. Chunk
+12A persists compare-and-set phase history, exposes a typed mandatory mutation
+fence, and installs that fence through explicit composition across review
+mutations, every task submission, review-queue admission, authority-loss
+replacement, and the exact CON-owned fulfillment dispatch and callback hooks.
+It adds no public production route.
+
+The fence uses matching PostgreSQL advisory locks so a phase transition waits
+for admitted mutation transactions and then applies the persisted command-class
+matrix. A dedicated `revision_cutover_fenced` phase keeps initial submission and
+checker admission open while blocking legacy revision/replacement writers;
+shutdown phases separately fence all new admission, drain review commands and
+leases, drain fulfillment dispatch, preserve authenticated callbacks, and then
+disable. `disabled(N) -> pre_activation(N+1)` is the only reactivation edge and
+requires a newly reviewed manifest. Every edge and observation is a fresh
+Operator-authorized lifecycle command; lease draining reuses fresh
+`review.lease.force_release` commands rather than widening lifecycle authority.
+No worker replays human authority or advances phase. Timeout leaves phase
+unchanged for forward retry and no edge attempts schema downgrade. Chunk 13 alone registers the Operator surface,
+performs the ordered cutover, and proves crash resume and coherent reactivation.
+
 ## Revision flow
 
 ```text
@@ -332,6 +373,7 @@ foundation change rather than adding review-private storage state.
   atomic conditional updates over canonical rows.
 - Every mutating operation uses this cross-domain lock order: AUTH-owned current
   actor/identity/grant rows in the AUTH-defined internal order; idempotency row;
+  the `JointLifecycleReleaseControl` advisory lock and persisted phase row;
   `Project`; active/candidate `ProjectGuide`; `GuideSourceSnapshot`;
   submission-artifact, effective, pre-submit-checker, post-submit-checker,
   review, and revision policy rows in that order; the active compensation
@@ -383,10 +425,10 @@ Use existing `/api/v1` and structured error conventions.
   execution path.
 - Request JSON never supplies authoritative project relationships, provider
   paths, CIDs, URLs, or service scopes.
-- No reviewer or contributor lifecycle router is included in the production
-  `/api/v1` composition before chunk 13. Chunks 05-12 prove internal router,
-  service, recovery, and operational contracts while OpenAPI tests prove those
-  mutations remain absent.
+- No reviewer, contributor, compensation, or lifecycle-control router is
+  included in production `/api/v1` composition before chunk 13. Chunks 05-12A
+  prove internal service, recovery, fence, and operational contracts while
+  OpenAPI tests prove those mutations remain absent.
 
 ## Dependency ownership rule
 

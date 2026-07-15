@@ -28,9 +28,11 @@ are prohibited.
 
 ### D4 - Review Offer Is Server Selected
 
-The contributor reviewer endpoint returns exactly one of active lease, next
+The reviewer current-work endpoint returns exactly one of active lease, next
 offered review in a selected project, or none. It never returns full preferred
 or open backlogs. Administrative inspection is a separate permission and API.
+
+**Human confirmed 2026-07-15.**
 
 ### D5 - Controlled Revision Rebase Remains Required
 
@@ -130,7 +132,7 @@ and administrative closure do not create a `Review(decision=reject)`. A reject
 Review exists only when an authorized reviewer commits that decision under an
 active lease.
 
-**Recommended approval:** a reached limit/deadline blocks further revision
+**Human-approved behavior:** a reached limit/deadline blocks further revision
 preparation and `submission.create` with a stable policy error but leaves the
 task `needs_revision` and assignment active. It never closes automatically. A
 covered Project Manager may use the dedicated, idempotent, reason-bound
@@ -140,7 +142,9 @@ and `released_at=database_now`, clears the task's active-assignee projection,
 closes any queue entry as `admin_cancelled`, leaves the project grant unchanged,
 prevents reclaim because the task is closed, and creates no Review,
 contribution, award/payment instruction, or reputation
-effect. Human approval of this recommendation is required before chunk 02.
+effect.
+
+**Human confirmed 2026-07-15.**
 
 The normal D6 command maps to existing `project.task.manage` and is not an
 Operator reconciliation shortcut. Operator-only `review.queue.close` and
@@ -179,13 +183,15 @@ stable, through a separately approved successor initiative.
 
 ### D11 - Coherent Public Cutover Is Atomic
 
-Chunks 05-12 may implement and test internal services and routers, but the
+Chunks 05-12A may implement and test internal services and routers, but the
 production API composition exposes none of the reviewer/contributor lifecycle
 mutations. Chunk 13 enables current-work, claim, release, decline, context,
 decision, revision preparation/resubmission, chain reads, and authorized admin
 operations together only when AUTH, ART, WS-CON, audit, outbox, recovery,
 reconciliation, projection, workers, and live preflight are mandatory and
 proven.
+
+**Human confirmed 2026-07-15.**
 
 ### D12 - Shared Outbox And Lock Order Are Prerequisites
 
@@ -317,3 +323,21 @@ guide context is freshly classified against the currently active Project Guide.
 Submission N+1 binds to that target assignment, and WS-CON submitter attribution
 and compensation derive from it. The old contributor cannot submit; no prior
 Submission, assignment, Review, finding, or preparation is rewritten.
+
+### D19 - Joint Release Control Is A Hidden Persisted Foundation
+
+Safe activation/shutdown is product infrastructure, not proof-script state.
+Chunk 12A owns one PostgreSQL-canonical `JointLifecycleReleaseControl`, the
+Operator-only `review.lifecycle.activation.manage` action, advisory-lock-based
+mutation fencing, typed internal fence ports, bounded drain observations, and
+crash-resumable phase history. Every canonical phase change is a fresh
+Operator-authorized adjacent transition; no worker replays the initiating human
+or advances phase. It lands with no production lifecycle route.
+
+Review, every task submission, review-queue admission, authority-loss
+replacement, and compensation dispatch consume the same mandatory fence through
+explicit composition. CON retains fulfillment/callback semantics and exposes
+mandatory dispatch and callback hooks; it does not
+create a second shutdown controller. REV-13 registers and exercises the merged
+foundation, performs the ordered writer fence/migration/process cutover, and
+prohibits downgrade after protected rows exist.
