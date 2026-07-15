@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-07A` | Closed Permission And Action Catalogue | L1 | Repaired contract passed required L1 plan review at `beb85ac`; bounded implementation active |
+| `WS-AUTH-001-07A` | Closed Permission And Action Catalogue | L1 | Implementation and repair internally approved at `478a819`; PR publication pending |
 
 ## Planned Next
 

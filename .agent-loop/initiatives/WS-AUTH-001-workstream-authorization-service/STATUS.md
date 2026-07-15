@@ -68,12 +68,13 @@ internal and external checks; explicit human approval merged PR #124 as
 `f599551` on 2026-07-15. Signed automated memory stopped with AUTH-07 requiring
 a separate start. The user explicitly started AUTH-07 on 2026-07-15; discovery
 and required L1 plan review are complete. The repaired AUTH-07A contract passed
-all required tracks at `beb85ac`; bounded implementation is active.
+all required tracks at `beb85ac`; implementation, repair, deterministic
+evidence, and required internal review pass at `478a819`.
 That review rejected the combined AUTH-07 contract before runtime edits because
 grant-backed/project APIs preceded their authority sources and the audit/API
 ownership files were incomplete. Parent AUTH-07 is now split into 07A catalogue
-and audit parity, followed by 07B kernel and actor self-action cutover. The
-repaired 07A contract is under required plan review.
+and audit parity, followed by 07B kernel and actor self-action cutover. AUTH-07A
+is ready for PR publication; AUTH-07B remains inactive.
 
 ## Active planning chunk
 
@@ -104,7 +105,7 @@ None.
 | `WS-AUTH-001-05B` | Merged | `codex/ws-auth-001-05b-idempotency-invalidation` | #119 | Merged as `ad71c7e`; reviewed runtime SHA `e083890`. |
 | `WS-AUTH-001-06` | Merged | `codex/ws-auth-001-06-canonical-actor-profile` | #124 | Merged as `f599551`; final PR head `4a2193f`. |
 | `WS-AUTH-001-07` | Split | `codex/ws-auth-001-07-authorization-kernel` | - | Required L1 review rejected the combined contract before runtime edits. |
-| `WS-AUTH-001-07A` | Implementing | `codex/ws-auth-001-07-authorization-kernel` | - | Repaired contract approved at `beb85ac`; closed catalogue and action-aware audit parity only. |
+| `WS-AUTH-001-07A` | Internally approved | `codex/ws-auth-001-07-authorization-kernel` | - | Reviewed implementation `478a819`; closed catalogue and action-aware audit parity only. |
 | `WS-AUTH-001-07B` | Proposed | - | - | Inactive until 07A merge/memory and explicit user start. |
 | `WS-AUTH-001-08` | Proposed | - | - | Bootstrap and administrative grants. |
 | `WS-AUTH-001-09` | Proposed | - | - | Actor/link states and service actors. |
@@ -137,8 +138,8 @@ behavior ownership. `WS-AUTH-001-CAT` retains only safe registry/conformance
 rules. This is a scope decision, not an AUTH-05B runtime
 blocker. PR #118, AUTH-05B PR #119, and AUTH-06 PR #124 are merged. AUTH-07 has
 an explicit user start. Required review split it before runtime implementation;
-the repaired 07A contract passed all required tracks at `beb85ac` and bounded
-implementation is active. AUTH-07B and
+the repaired 07A contract passed all required tracks at `beb85ac`; implementation
+and repair passed at `478a819`. AUTH-07B and
 POL-002-04 remain inactive until separate explicit human starts and their
 authorization prerequisites.
 
