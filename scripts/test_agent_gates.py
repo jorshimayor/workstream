@@ -1204,6 +1204,45 @@ def updater_base64(value: str) -> str:
     return base64.b64encode(value.encode("utf-8")).decode("ascii")
 
 
+def sign_loop_state_with_domain(
+    updater, root: Path, private_key: Path, domain: bytes
+) -> None:
+    """Sign canonical generated state with one explicit test signature domain."""
+    payload = bytearray(domain)
+    for relative_path in (
+        updater.STATE_PATH,
+        updater.RENDERED_PATH,
+        updater.LEDGER_PATH,
+    ):
+        path_bytes = relative_path.as_posix().encode("ascii")
+        content = (root / relative_path).read_bytes()
+        payload.extend(len(path_bytes).to_bytes(4, "big"))
+        payload.extend(path_bytes)
+        payload.extend(len(content).to_bytes(8, "big"))
+        payload.extend(content)
+    with tempfile.NamedTemporaryFile() as payload_file:
+        payload_file.write(payload)
+        payload_file.flush()
+        signed = subprocess.run(
+            [
+                "openssl",
+                "pkeyutl",
+                "-sign",
+                "-rawin",
+                "-inkey",
+                str(private_key),
+                "-in",
+                payload_file.name,
+            ],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        ).stdout
+    (root / updater.SIGNATURE_PATH).write_text(
+        base64.b64encode(signed).decode("ascii") + "\n", encoding="ascii"
+    )
+
+
 def loop_record(
     module,
     *,
@@ -2021,38 +2060,11 @@ def test_schema_v1_signed_state_is_discarded_before_clean_v2_bootstrap() -> None
         (root / updater.LEDGER_PATH).write_text(
             f"{updater._canonical_json(entry)}\n", encoding="utf-8"
         )
-        payload = bytearray(b"workstream-loop-memory-signature-v1\0")
-        for relative_path in (
-            updater.STATE_PATH,
-            updater.RENDERED_PATH,
-            updater.LEDGER_PATH,
-        ):
-            path_bytes = relative_path.as_posix().encode("ascii")
-            content = (root / relative_path).read_bytes()
-            payload.extend(len(path_bytes).to_bytes(4, "big"))
-            payload.extend(path_bytes)
-            payload.extend(len(content).to_bytes(8, "big"))
-            payload.extend(content)
-        with tempfile.NamedTemporaryFile() as payload_file:
-            payload_file.write(payload)
-            payload_file.flush()
-            signed = subprocess.run(
-                [
-                    "openssl",
-                    "pkeyutl",
-                    "-sign",
-                    "-rawin",
-                    "-inkey",
-                    str(private_key),
-                    "-in",
-                    payload_file.name,
-                ],
-                check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            ).stdout
-        (root / updater.SIGNATURE_PATH).write_text(
-            base64.b64encode(signed).decode("ascii") + "\n", encoding="ascii"
+        sign_loop_state_with_domain(
+            updater,
+            root,
+            private_key,
+            b"workstream-loop-memory-signature-v1\0",
         )
         sentinel = agent_loop / "preserved.txt"
         sentinel.write_text("not generated\n", encoding="utf-8")
@@ -2074,6 +2086,66 @@ def test_schema_v1_signed_state_is_discarded_before_clean_v2_bootstrap() -> None
             root, public_key, current["source"]["main_sha"]
         )
         assert checker.generated_state_failures(root) == []
+
+
+def test_schema_v1_ledger_and_signature_domains_fail_independently() -> None:
+    """V2 state rejects an isolated v1 ledger envelope and v1 signature domain."""
+    updater = load_module(
+        "post_merge_v1_isolated_rejection", "scripts/update_post_merge_memory.py"
+    )
+    checker = load_module(
+        "post_merge_v1_isolated_checker", "scripts/check_loop_memory_state.py"
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        ledger_root = root / "ledger"
+        updater.apply_merge_record(ledger_root, loop_record(updater))
+        ledger_path = ledger_root / updater.LEDGER_PATH
+        ledger_entry = json.loads(ledger_path.read_text(encoding="utf-8"))
+        ledger_entry["schema_version"] = 1
+        ledger_path.write_text(
+            f"{updater._canonical_json(ledger_entry)}\n", encoding="utf-8"
+        )
+        assert_loop_error(
+            updater,
+            lambda: updater.validate_generated_state(ledger_root),
+            "ledger entry has an invalid schema",
+        )
+        assert any(
+            "invalid entry schema" in failure
+            for failure in checker.generated_state_failures(ledger_root)
+        )
+
+        signature_root = root / "signature"
+        updater.apply_merge_record(signature_root, loop_record(updater))
+        updater.validate_generated_state(signature_root)
+        private_key = root / "private.pem"
+        public_key = root / "public.pem"
+        subprocess.run(
+            ["openssl", "genpkey", "-algorithm", "ED25519", "-out", private_key],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        subprocess.run(
+            ["openssl", "pkey", "-in", private_key, "-pubout", "-out", public_key],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        sign_loop_state_with_domain(
+            updater,
+            signature_root,
+            private_key,
+            b"workstream-loop-memory-signature-v1\0",
+        )
+        assert_loop_error(
+            updater,
+            lambda: updater.verify_generated_state_signature(
+                signature_root, public_key, "a" * 40
+            ),
+            "signature verification failed",
+        )
 
 
 def test_live_and_historical_records_reject_cross_initiative_gates() -> None:
@@ -2157,15 +2229,39 @@ def test_loop_memory_schema_v2_rejection_matrix_is_fail_closed() -> None:
             "a" * 40,
             no_successor,
         )
-    no_successor_record = loop_record(updater)
-    no_successor_record["completed_chunk"] = updater.asdict(no_successor)
-    no_successor_record["gate"] = {
-        "status": "stopped_after_merge",
-        "next_chunk_id": None,
-        "next_chunk_title": None,
-        "next_requires_explicit_start": True,
-    }
-    assert "Next chunk: none recorded" in updater.render_state(no_successor_record)
+        no_successor_record = loop_record(updater)
+        no_successor_record["completed_chunk"] = updater.asdict(no_successor)
+        no_successor_record["gate"] = {
+            "status": "stopped_after_merge",
+            "next_chunk_id": None,
+            "next_chunk_title": None,
+            "next_requires_explicit_start": True,
+        }
+        assert updater.apply_merge_record(root, no_successor_record) is True
+        assert updater.apply_merge_record(root, no_successor_record) is False
+        updater.validate_generated_state(root)
+        assert "Next chunk: none recorded" in (
+            root / updater.RENDERED_PATH
+        ).read_text(encoding="utf-8")
+        assert checker.generated_state_failures(root) == []
+
+        private_key = root / "private.pem"
+        public_key = root / "public.pem"
+        subprocess.run(
+            ["openssl", "genpkey", "-algorithm", "ED25519", "-out", private_key],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        subprocess.run(
+            ["openssl", "pkey", "-in", private_key, "-pubout", "-out", public_key],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        updater.sign_generated_state(root, private_key)
+        updater.verify_generated_state_signature(root, public_key, "a" * 40)
+        assert checker.generated_state_failures(root) == []
 
     assert updater._contract_title("not a contract\n", "WS-AUTH-001-07") is None
     assert (
@@ -4465,6 +4561,7 @@ def main() -> int:
         test_generated_loop_memory_validator_detects_drift,
         test_generated_loop_memory_signature_authenticates_every_canonical_file,
         test_schema_v1_signed_state_is_discarded_before_clean_v2_bootstrap,
+        test_schema_v1_ledger_and_signature_domains_fail_independently,
         test_live_and_historical_records_reject_cross_initiative_gates,
         test_loop_memory_schema_v2_rejection_matrix_is_fail_closed,
         test_generated_loop_memory_prepare_recovers_hostile_path_types,
