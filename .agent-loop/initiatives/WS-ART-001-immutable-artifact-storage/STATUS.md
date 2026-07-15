@@ -24,11 +24,14 @@ approval or reusable evidence. Its source remains on branch
 
 ## Active Work
 
-`WS-ART-001-02A1` implementation and all nine required internal reviewer tracks
-are complete at reviewed code SHA `8224d8c`. The chunk installs only the shared
-typed external-service adapter/factory foundation and does not migrate any
-capability. It is ready for PR publication, GitHub Backend CI, external review,
-and the human merge checkpoint.
+`WS-ART-001-02A1` implementation is complete at reviewed code SHA `05d667a`.
+PR #127 is open. Agent Gates and Backend passed published head `7c8da61`, and
+CodeRabbit's one valid consistency nit is fixed in `05d667a`. Eight technical
+and operational internal tracks passed that exact one-line delta; the docs track
+passed the completed evidence provenance separately. The chunk installs only the
+shared typed external-service adapter/factory foundation and does not migrate
+any capability. Updated-head GitHub checks, external review, and the human merge
+checkpoint remain required.
 
 ## Next Proposed Chunk
 
@@ -41,5 +44,6 @@ owns MinIO and AWS S3. There is no active R2 chunk.
 
 ## Gate
 
-PR #120 is merged. `WS-ART-001-02A1` awaits external and human review. No later
-artifact chunk starts automatically, and only the user may approve merge.
+PR #120 is merged. `WS-ART-001-02A1` is open as PR #127 and awaits updated-head
+external checks plus human review. No later artifact chunk starts automatically,
+and only the user may approve merge.

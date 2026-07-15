@@ -105,8 +105,14 @@ exception-chain retention were repaired and independently re-reviewed.
 
 ## External Review
 
-Pending PR publication, GitHub checks, CodeRabbit, and human review. External
-checks supplement the completed internal review and do not replace it.
+PR #127 is open. Agent Gates and Backend passed published head `7c8da61`;
+Backend completed the repository-wide suite and 78 percent floor in 16m18s.
+CodeRabbit's one valid consistency nit was fixed in `05d667a`: both
+constructor-error branches now suppress provider exception context explicitly.
+Eight technical and operational tracks passed the exact delta; the docs track
+passed the completed evidence provenance separately. GitHub checks and
+CodeRabbit must rerun on the updated head before the human merge checkpoint.
+External checks supplement the internal review and do not replace it.
 
 ## Remaining Risks
 
