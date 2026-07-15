@@ -1147,6 +1147,43 @@ async def test_prepared_artifact_release_can_retry_after_transient_failure(
 
 
 @pytest.mark.asyncio
+async def test_cancelled_close_finishes_cleanup_and_closes_handle(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Re-raise cancellation only after prepared ownership is finalized."""
+    manager = ArtifactScratchManager(root=tmp_path / "scratch", limits=preparation_limits())
+    service = ArtifactPreparationService(manager)
+    prepared = await service.prepare(byte_stream(b"data"), media_type="text/plain")
+    source = prepared.committed_source
+    release_started = asyncio.Event()
+    finish_release = asyncio.Event()
+    original_release = manager.release
+
+    async def delayed_release(reservation: object) -> None:
+        release_started.set()
+        await finish_release.wait()
+        await original_release(reservation)
+
+    monkeypatch.setattr(manager, "release", delayed_release)
+    close_task = asyncio.create_task(prepared.close())
+    await asyncio.wait_for(release_started.wait(), timeout=1)
+    close_task.cancel()
+    finish_release.set()
+    with pytest.raises(asyncio.CancelledError):
+        await close_task
+
+    assert prepared._closed
+    assert service._active == {}
+    assert (await manager.usage()).reservation_count == 0
+    with pytest.raises(RuntimeError, match="closed"):
+        _ = prepared.committed_source
+    with pytest.raises(ArtifactScratchIntegrityError, match="unavailable"):
+        _ = [chunk async for chunk in source.stream()]
+    manager.close()
+
+
+@pytest.mark.asyncio
 async def test_second_pass_deadline_is_enforced(tmp_path: Path) -> None:
     """Keep the provider-consumption deadline shorter than reservation TTL."""
     limits = preparation_limits(

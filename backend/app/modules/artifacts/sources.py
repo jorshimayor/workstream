@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import Protocol, final
@@ -142,8 +143,15 @@ class PreparedArtifact:
         """Release scratch state exactly once."""
         if self._closed:
             return
-        await self._owner.release_prepared_artifact(self._binding)
-        self._closed = True
+        cleanup = asyncio.create_task(self._owner.release_prepared_artifact(self._binding))
+        try:
+            await asyncio.shield(cleanup)
+        except asyncio.CancelledError:
+            await cleanup
+            self._closed = True
+            raise
+        else:
+            self._closed = True
 
     async def __aenter__(self) -> CommittedArtifactSource:
         """Enter the bounded provider-I/O lifetime."""
