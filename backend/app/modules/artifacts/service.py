@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncIterable, Awaitable
+from collections.abc import AsyncIterable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from uuid import uuid4
-from typing import TypeVar
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,6 +24,7 @@ from app.interfaces.artifacts import (
     StoreArtifactRequest,
     StoredArtifact,
 )
+from app.modules.artifacts.cancellation import await_cancellation_resistant
 from app.modules.artifacts.models import (
     ArtifactContent,
     ArtifactOperationReceipt,
@@ -36,19 +36,6 @@ from app.modules.artifacts.repository import ArtifactRepository
 from app.modules.audit.repository import AuditRepository
 from app.modules.tasks.models import AuditEvent
 
-
-CleanupResult = TypeVar("CleanupResult")
-
-
-async def _await_cancellation_resistant(awaitable: Awaitable[CleanupResult]) -> CleanupResult:
-    """Finish caller-session cleanup before propagating repeated cancellation."""
-    task = asyncio.ensure_future(awaitable)
-    while True:
-        try:
-            return await asyncio.shield(task)
-        except asyncio.CancelledError:
-            if task.done():
-                return task.result()
 
 RECONCILER_ACTOR_ID = "workstream.artifact.reconciler"
 RECONCILER_ISSUER = "https://workstream.internal"
@@ -107,7 +94,7 @@ class ArtifactIngestService:
         try:
             stored = await self._store.store(stream, request)
         except asyncio.CancelledError:
-            await _await_cancellation_resistant(
+            await await_cancellation_resistant(
                 self._mark_provider_recovery_required(
                     item_id, request, attempt_cas, provider_commit_confirmed=False
                 )
@@ -124,7 +111,7 @@ class ArtifactIngestService:
         try:
             await self._finalize_provider_operation(item_id, request, stored, attempt_cas)
         except asyncio.CancelledError:
-            await _await_cancellation_resistant(
+            await await_cancellation_resistant(
                 self._mark_provider_recovery_required(
                     item_id, request, attempt_cas, provider_commit_confirmed=True
                 )
@@ -163,7 +150,7 @@ class ArtifactIngestService:
             )
             raise
         except BaseException:
-            await _await_cancellation_resistant(
+            await await_cancellation_resistant(
                 self._mark_provider_recovery_required(
                     item_id, request, attempt_cas, provider_commit_confirmed=True
                 )

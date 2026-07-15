@@ -25,6 +25,7 @@ from app.interfaces.artifacts import (
     ArtifactLimitExceededError,
     ArtifactStoreUnavailableError,
 )
+from app.modules.artifacts.cancellation import await_cancellation_resistant
 from app.modules.artifacts.sources import (
     ArtifactCommitment,
     PreparedArtifact,
@@ -184,12 +185,9 @@ class ArtifactScratchManager:
         try:
             return await asyncio.shield(task)
         except asyncio.CancelledError:
-            try:
-                reservation, descriptor = await task
-            except BaseException:
-                raise
+            reservation, descriptor = await await_cancellation_resistant(task)
             os.close(descriptor)
-            await asyncio.to_thread(self._release_sync, reservation)
+            await await_cancellation_resistant(asyncio.to_thread(self._release_sync, reservation))
             raise
 
     async def seal_for_read(self, reservation: _ScratchReservation, descriptor: int) -> BinaryIO:
@@ -200,11 +198,8 @@ class ArtifactScratchManager:
         try:
             return await asyncio.shield(task)
         except asyncio.CancelledError:
-            try:
-                reader = await task
-            except BaseException:
-                raise
-            reader.close()
+            reader = await await_cancellation_resistant(task)
+            await await_cancellation_resistant(asyncio.to_thread(reader.close))
             raise
 
     async def release(self, reservation: _ScratchReservation) -> None:
@@ -825,10 +820,8 @@ class ArtifactScratchManager:
         try:
             return await asyncio.shield(task)
         except asyncio.CancelledError:
-            try:
-                await task
-            finally:
-                raise
+            await await_cancellation_resistant(task)
+            raise
 
 
 class ArtifactPreparationService:

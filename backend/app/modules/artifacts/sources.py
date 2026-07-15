@@ -7,6 +7,8 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import Protocol, final
 
+from app.modules.artifacts.cancellation import await_cancellation_resistant
+
 
 class _PreparedArtifactOwner(Protocol):
     """Private lifecycle operations retained by one preparation service."""
@@ -147,7 +149,7 @@ class PreparedArtifact:
         try:
             await asyncio.shield(cleanup)
         except asyncio.CancelledError:
-            await cleanup
+            await await_cancellation_resistant(cleanup)
             self._closed = True
             raise
         else:

@@ -1088,6 +1088,49 @@ async def test_allocation_cancellation_waits_then_releases_reservation(
 
 
 @pytest.mark.asyncio
+async def test_repeated_allocation_cancellation_cannot_interrupt_cleanup(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Finish scratch release even when the caller cancels repeatedly."""
+    manager = ArtifactScratchManager(root=tmp_path / "scratch", limits=preparation_limits())
+    allocation_started = threading.Event()
+    finish_allocation = threading.Event()
+    release_started = threading.Event()
+    finish_release = threading.Event()
+    original_allocate = manager._allocate_sync
+    original_release = manager._release_sync
+
+    def delayed_allocate() -> tuple[object, int]:
+        result = original_allocate()
+        allocation_started.set()
+        finish_allocation.wait(timeout=5)
+        return result
+
+    def delayed_release(reservation: object) -> None:
+        release_started.set()
+        finish_release.wait(timeout=5)
+        original_release(reservation)
+
+    monkeypatch.setattr(manager, "_allocate_sync", delayed_allocate)
+    monkeypatch.setattr(manager, "_release_sync", delayed_release)
+    task = asyncio.create_task(manager.allocate())
+    assert await asyncio.to_thread(allocation_started.wait, 5)
+    task.cancel()
+    finish_allocation.set()
+    assert await asyncio.to_thread(release_started.wait, 5)
+    task.cancel()
+    await asyncio.sleep(0)
+    finish_release.set()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+    assert (await manager.usage()).reservation_count == 0
+    assert list((tmp_path / "scratch" / "files").iterdir()) == []
+    manager.close()
+
+
+@pytest.mark.asyncio
 async def test_closed_preparation_rejects_stream_and_is_idempotent(tmp_path: Path) -> None:
     """Make closed source handles unusable without duplicating cleanup."""
     manager = ArtifactScratchManager(
@@ -1169,6 +1212,9 @@ async def test_cancelled_close_finishes_cleanup_and_closes_handle(
     close_task = asyncio.create_task(prepared.close())
     await asyncio.wait_for(release_started.wait(), timeout=1)
     close_task.cancel()
+    await asyncio.sleep(0)
+    close_task.cancel()
+    await asyncio.sleep(0)
     finish_release.set()
     with pytest.raises(asyncio.CancelledError):
         await close_task
