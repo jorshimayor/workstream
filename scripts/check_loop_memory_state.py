@@ -87,6 +87,13 @@ FORBIDDEN_PATTERNS = (
         re.compile(r"PR #122[^\n]*(?:pending|active)", re.IGNORECASE),
         "PR #122 is merged; it cannot remain pending or active",
     ),
+    (
+        re.compile(
+            r"PR publication and external (?:review|checks) remain pending",
+            re.IGNORECASE,
+        ),
+        "merged authored state cannot retain a pending publication claim",
+    ),
 )
 GENERATED_FILES = (
     ".agent-loop/STATE.json",

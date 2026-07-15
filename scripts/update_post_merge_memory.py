@@ -243,6 +243,13 @@ def _is_chunk_contract_path(path: str, initiative_directory: str) -> bool:
     )
 
 
+def _successor_contract_name_matches(name: str, chunk_id: str) -> bool:
+    """Return whether one Markdown filename claims a successor chunk ID."""
+    return name == f"{chunk_id}.md" or (
+        name.startswith(f"{chunk_id}-") and name.endswith(".md")
+    )
+
+
 def _validate_local_successor_contract(
     repository_root: Path, metadata: LoopMetadata
 ) -> None:
@@ -263,14 +270,26 @@ def _validate_local_successor_contract(
         raise LoopMemoryError(
             "initiative_id must resolve to exactly one initiative directory"
         )
-    chunks_root = initiatives_root / initiative_directories[0] / "chunks"
+    initiative_directory = initiative_directories[0]
+    all_candidates = sorted(
+        path
+        for path in initiatives_root.glob("*/chunks/*.md")
+        if _successor_contract_name_matches(path.name, metadata.next_chunk_id)
+    )
+    foreign_candidates = [
+        path
+        for path in all_candidates
+        if path.parent.parent.name != initiative_directory
+    ]
+    if foreign_candidates:
+        raise LoopMemoryError(
+            "next_chunk_id must not exist under another initiative directory"
+        )
+    chunks_root = initiatives_root / initiative_directory / "chunks"
     candidates = sorted(
         path
         for path in chunks_root.glob("*.md")
-        if (
-            path.name == f"{metadata.next_chunk_id}.md"
-            or path.name.startswith(f"{metadata.next_chunk_id}-")
-        )
+        if _successor_contract_name_matches(path.name, metadata.next_chunk_id)
     )
     if len(candidates) != 1:
         raise LoopMemoryError(
@@ -343,6 +362,7 @@ def _validate_remote_successor_contract(
         )
     initiative_directory = initiative_directories[0]
     candidates = []
+    foreign_candidates = []
     for item in tree["tree"]:
         if not isinstance(item, dict) or item.get("type") != "blob":
             continue
@@ -351,14 +371,24 @@ def _validate_remote_successor_contract(
         if not isinstance(path, str) or not isinstance(blob_sha, str):
             continue
         name = path.rsplit("/", 1)[-1]
+        if not _successor_contract_name_matches(name, metadata.next_chunk_id):
+            continue
+        relative = path.removeprefix(CHUNK_CONTRACT_ROOT)
+        parts = relative.split("/")
         if (
-            _is_chunk_contract_path(path, initiative_directory)
-            and (
-                name == f"{metadata.next_chunk_id}.md"
-                or name.startswith(f"{metadata.next_chunk_id}-")
-            )
+            not path.startswith(CHUNK_CONTRACT_ROOT)
+            or len(parts) != 3
+            or parts[1] != "chunks"
         ):
+            continue
+        if parts[0] != initiative_directory:
+            foreign_candidates.append((path, blob_sha))
+        elif _is_chunk_contract_path(path, initiative_directory):
             candidates.append((path, blob_sha))
+    if foreign_candidates:
+        raise LoopMemoryError(
+            "next_chunk_id must not exist under another reviewed-head initiative directory"
+        )
     if len(candidates) != 1:
         raise LoopMemoryError(
             "next_chunk_id must resolve to exactly one reviewed-head chunk contract"

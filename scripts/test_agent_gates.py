@@ -1158,6 +1158,8 @@ def test_loop_memory_state_rejects_known_merged_pr_staleness() -> None:
             "Status: Active planning only"
         ),
         "PR #122 remains active.",
+        "PR publication and external review remain pending.",
+        "PR publication and external checks remain pending.",
     )
     for sample in stale_samples:
         assert any(
@@ -1181,6 +1183,20 @@ def valid_loop_intent() -> str:
         '"next_chunk_id":"WS-AUTH-001-07","next_chunk_title":"Authorization Kernel",'
         '"next_requires_explicit_start":true}\n'
     )
+
+
+def test_pr_templates_share_merge_intent_contract() -> None:
+    """Both human templates must state the same schema-v2 merge-intent contract."""
+
+    def merge_intent_contract(path: Path) -> str:
+        text = path.read_text(encoding="utf-8")
+        start = text.index("Add exactly one new schema-v2 merge-intent file")
+        end = text.index("\n## Goal", start)
+        return " ".join(text[start:end].replace("Trusted ", "").split()).lower()
+
+    assert merge_intent_contract(
+        ROOT / ".agent-loop/templates/PR_TRUST_BUNDLE.md"
+    ) == merge_intent_contract(ROOT / ".github/pull_request_template.md")
 
 
 def updater_base64(value: str) -> str:
@@ -1322,7 +1338,7 @@ def test_next_chunk_contract_binding_is_exact_locally_and_remotely() -> None:
         assert_loop_error(
             updater,
             lambda: updater._validate_local_successor_contract(root, metadata),
-            "exactly one chunk contract",
+            "another initiative directory",
         )
         foreign_contract.unlink()
         spoof_contract = (
@@ -1347,6 +1363,17 @@ def test_next_chunk_contract_binding_is_exact_locally_and_remotely() -> None:
             "# Chunk Contract: WS-AUTH-001-07 - Authorization Kernel\n",
             encoding="utf-8",
         )
+        foreign_contract.parent.mkdir(parents=True, exist_ok=True)
+        foreign_contract.write_text(
+            "# Chunk Contract: WS-AUTH-001-07 - Authorization Kernel\n",
+            encoding="utf-8",
+        )
+        assert_loop_error(
+            updater,
+            lambda: updater._validate_local_successor_contract(root, metadata),
+            "another initiative directory",
+        )
+        foreign_contract.unlink()
         duplicate = (
             contract.parent / "WS-AUTH-001-07-copy.md"
         )
@@ -1394,7 +1421,7 @@ def test_next_chunk_contract_binding_is_exact_locally_and_remotely() -> None:
     ) + ".txt"
     valid_tree = {
         "truncated": False,
-        "tree": [foreign_tree_item, non_contract_tree_item, tree_item],
+        "tree": [non_contract_tree_item, tree_item],
     }
     updater._validate_remote_successor_contract(
         RemoteClient(
@@ -1411,7 +1438,12 @@ def test_next_chunk_contract_binding_is_exact_locally_and_remotely() -> None:
         (
             {"truncated": False, "tree": [foreign_tree_item]},
             "Authorization Kernel",
-            "exactly one",
+            "exactly one reviewed-head initiative directory",
+        ),
+        (
+            {"truncated": False, "tree": [tree_item, foreign_tree_item]},
+            "Authorization Kernel",
+            "another reviewed-head initiative directory",
         ),
         (
             {"truncated": False, "tree": [tree_item, spoof_tree_item]},
@@ -4423,6 +4455,7 @@ def main() -> int:
         test_loop_memory_state_rejects_pre_merge_status,
         test_loop_memory_state_accepts_merged_fixture,
         test_loop_memory_state_rejects_known_merged_pr_staleness,
+        test_pr_templates_share_merge_intent_contract,
         test_post_merge_metadata_is_strict_and_bounded,
         test_next_chunk_contract_binding_is_exact_locally_and_remotely,
         test_post_merge_state_is_idempotent_and_monotonic,

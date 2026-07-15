@@ -11,7 +11,7 @@ signed-snapshot replay, and malformed/symlinked branch-state denial. Fifty-five
 focused behavior tests pass; updater and independent-checker branch coverage are
 90.79 and 94.41 percent. Protected `main` now requires Agent Gates and Backend
 test and dismisses stale approvals; the generated branch blocks deletion and
-force-push. PR publication and external review remain pending.
+force-push. PR #122 subsequently passed external review and merged.
 
 ## 2026-07-14 - WS-ART-001 Object Storage Amendment Internal Review Passed
 
@@ -129,8 +129,8 @@ security/auth/privacy review after repair. Valid findings closed committed-row
 evidence injection, request/result target substitution, incomplete linked-event
 context, mismatch scope/resource semantics, rejected-value retention, and
 missing migration/operation behavior proof. The focused suite passed 26 tests
-at 96.88 percent authorization-subsystem coverage. PR publication and external
-checks remain pending; AUTH-06 is inactive.
+at 96.88 percent authorization-subsystem coverage. PR #119 subsequently passed
+external checks and merged; AUTH-06 remains inactive.
 
 ## 2026-07-14 - WS-AUTH-001-05B Repaired Plan Passed
 
