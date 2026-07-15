@@ -44,6 +44,10 @@ owns MinIO and AWS S3. There is no active R2 chunk.
 
 ## Gate
 
-PR #127 is merged. `WS-ART-001-02A2` is ready for publication, external checks,
-and the human merge checkpoint. No later artifact chunk starts automatically,
-and only the user may approve merge.
+Ready PR #129 is open at
+`https://github.com/Flow-Research/workstream/pull/129`. Agent Gates, Backend,
+and the requested CodeRabbit full review passed published head
+`42f5aaf40dfa59507c5630daf4cbf0189a55a335`; CodeRabbit produced no actionable
+comments or inline threads. The current gate is the explicit human merge
+decision. No later artifact chunk starts automatically, and only the user may
+approve merge.

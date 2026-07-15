@@ -66,7 +66,7 @@ contribution, compensation, or ArtifactStore v2 wiring is present.
 - [x] Exact configuration 90 percent gate was added.
 - [x] Agent tests enforce command, source set, threshold, order, and cumulative retention.
 - [x] No skip, conditional, `continue-on-error`, exclusion, or threshold bypass was added.
-- [ ] GitHub Backend CI must pass the published exact head.
+- [x] GitHub Backend CI passed published head `42f5aaf40dfa59507c5630daf4cbf0189a55a335`.
 
 ## Reviewer Results
 
@@ -85,14 +85,20 @@ re-reviewed.
 
 ## External Review
 
-No PR is open yet. GitHub checks and CodeRabbit begin only after internal
-evidence passes and the branch is published. External review supplements these
-internal tracks and does not replace them.
+Ready PR #129 is open at
+`https://github.com/Flow-Research/workstream/pull/129`. Agent Gates and Backend
+passed published head `42f5aaf40dfa59507c5630daf4cbf0189a55a335`.
+CodeRabbit's initial automatic run was rate-limited; after the stated wait, its
+requested full review completed with a successful status and no actionable
+comments, submitted reviews, or inline review threads. External review remains
+separate from and supplemental to the completed internal tracks.
+
+External response:
+`.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/reviews/WS-ART-001-02A2-external-review-response.md`
 
 ## Remaining Risks
 
 - The preparation boundary remains intentionally inactive until `02A3`.
-- GitHub Backend CI must run the exact-head full suite and 78 percent floor.
 - Provider integration, durable artifact attempts, verification, recovery,
   product bindings, and authorization activation remain separate approved chunks.
 
