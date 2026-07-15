@@ -17,6 +17,7 @@ import time
 from typing import Any, BinaryIO, Iterator
 from uuid import uuid4
 
+from app.core.cancellation import await_cancellation_resistant
 from app.core.hashing import canonical_json_hash
 from app.interfaces.artifacts import (
     ArtifactByteRange,
@@ -1343,10 +1344,8 @@ class LocalStorageAdapter:
         try:
             return await asyncio.shield(task)
         except asyncio.CancelledError:
-            try:
-                await task
-            finally:
-                raise
+            await await_cancellation_resistant(task)
+            raise
 
     async def _acquire_lock_async(self, scope: str) -> tuple[Any, int]:
         """Acquire a lock without leaking it when task cancellation wins the race."""
@@ -1354,8 +1353,8 @@ class LocalStorageAdapter:
         try:
             return await asyncio.shield(task)
         except asyncio.CancelledError:
-            lock = await task
-            await asyncio.to_thread(self._release_lock, lock)
+            lock = await await_cancellation_resistant(task)
+            await await_cancellation_resistant(asyncio.to_thread(self._release_lock, lock))
             raise
 
     @contextmanager

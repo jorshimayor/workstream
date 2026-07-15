@@ -24,7 +24,7 @@ from app.interfaces.artifacts import (
     StoreArtifactRequest,
     StoredArtifact,
 )
-from app.modules.artifacts.cancellation import await_cancellation_resistant
+from app.core.cancellation import await_cancellation_resistant
 from app.modules.artifacts.models import (
     ArtifactContent,
     ArtifactOperationReceipt,

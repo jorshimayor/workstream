@@ -7,7 +7,10 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import Protocol, final
 
-from app.modules.artifacts.cancellation import await_cancellation_resistant
+from app.core.cancellation import await_cancellation_resistant
+
+
+_COMMITTED_SOURCE_SEAL = object()
 
 
 class _PreparedArtifactOwner(Protocol):
@@ -75,7 +78,7 @@ class ArtifactCommitment:
 class CommittedArtifactSource:
     """One server commitment inseparably bound to its second-pass stream."""
 
-    __slots__ = ("_binding", "_commitment", "_owner")
+    __slots__ = ("_binding", "_commitment", "_owner", "_seal")
 
     def __init__(self, *_: object, **__: object) -> None:
         """Reject all direct construction."""
@@ -84,11 +87,17 @@ class CommittedArtifactSource:
     @property
     def commitment(self) -> ArtifactCommitment:
         """Return the server-computed commitment bound to this stream."""
+        self._assert_sealed()
         return self._commitment
 
     def stream(self) -> AsyncIterator[bytes]:
         """Open the single bounded second-pass stream."""
+        self._assert_sealed()
         return self._owner.open_committed_stream(self._binding, self._commitment)
+
+    def _assert_sealed(self) -> None:
+        if getattr(self, "_seal", None) is not _COMMITTED_SOURCE_SEAL:
+            raise RuntimeError("committed artifact source is unavailable")
 
     def __repr__(self) -> str:
         """Avoid exposing scratch identifiers or paths."""
@@ -126,6 +135,7 @@ class PreparedArtifact:
         source._owner = owner
         source._binding = binding
         source._commitment = commitment
+        source._seal = _COMMITTED_SOURCE_SEAL
         prepared._committed_source = source
         return prepared
 

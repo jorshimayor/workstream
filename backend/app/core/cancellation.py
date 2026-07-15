@@ -1,4 +1,4 @@
-"""Cancellation-resistant async ownership handoffs for artifact infrastructure."""
+"""Cancellation-resistant async ownership handoffs."""
 
 from __future__ import annotations
 

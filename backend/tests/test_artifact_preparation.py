@@ -207,6 +207,13 @@ def test_committed_sources_cannot_be_publicly_assembled() -> None:
             owner=owner,
             binding=object(),
         )
+    forged = object.__new__(CommittedArtifactSource)
+    forged._owner = owner
+    forged._binding = object()
+    forged._commitment = commitment
+    forged._seal = object()
+    with pytest.raises(RuntimeError, match="unavailable"):
+        forged.stream()
 
 
 @pytest.mark.asyncio
@@ -1227,6 +1234,41 @@ async def test_prepared_artifact_release_can_retry_after_transient_failure(
         _ = prepared.committed_source
     with pytest.raises(ArtifactScratchIntegrityError, match="unavailable"):
         _ = [chunk async for chunk in source.stream()]
+    manager.close()
+
+
+@pytest.mark.asyncio
+async def test_failed_preparation_retains_cleanup_for_retry(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Preserve the primary input error and retain failed cleanup ownership."""
+    manager = ArtifactScratchManager(root=tmp_path / "scratch", limits=preparation_limits())
+    service = ArtifactPreparationService(manager)
+    original_release = manager.release
+    release_attempts = 0
+
+    async def fail_once(reservation: object) -> None:
+        nonlocal release_attempts
+        release_attempts += 1
+        if release_attempts == 1:
+            raise OSError(errno.EIO, "transient scratch release failure")
+        await original_release(reservation)
+
+    monkeypatch.setattr(manager, "release", fail_once)
+    with pytest.raises(ArtifactInputMismatchError, match="expected digest"):
+        await service.prepare(
+            byte_stream(b"data"),
+            media_type="text/plain",
+            expected_sha256="sha256:" + "0" * 64,
+        )
+    assert service.pending_cleanup_count == 1
+    assert (await manager.usage()).reservation_count == 1
+
+    assert await service.retry_pending_cleanup() == 1
+    assert service.pending_cleanup_count == 0
+    assert (await manager.usage()).reservation_count == 0
+    assert release_attempts == 2
     manager.close()
 
 

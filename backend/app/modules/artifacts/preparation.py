@@ -25,7 +25,7 @@ from app.interfaces.artifacts import (
     ArtifactLimitExceededError,
     ArtifactStoreUnavailableError,
 )
-from app.modules.artifacts.cancellation import await_cancellation_resistant
+from app.core.cancellation import await_cancellation_resistant
 from app.modules.artifacts.sources import (
     ArtifactCommitment,
     PreparedArtifact,
@@ -143,6 +143,13 @@ class _ActivePreparation:
     deadline: float
     handle_issued: bool = False
     stream_claimed: bool = False
+
+
+@dataclass(slots=True)
+class _PendingPreparationCleanup:
+    reservation: _ScratchReservation
+    descriptor: int | None
+    reader: BinaryIO | None
 
 
 class ArtifactScratchManager:
@@ -831,6 +838,12 @@ class ArtifactPreparationService:
         """Bind preparation to one explicitly configured scratch manager."""
         self._manager = manager
         self._active: dict[object, _ActivePreparation] = {}
+        self._pending_cleanup: dict[str, _PendingPreparationCleanup] = {}
+
+    @property
+    def pending_cleanup_count(self) -> int:
+        """Return failed unhanded cleanups retained for explicit retry."""
+        return len(self._pending_cleanup)
 
     async def prepare(
         self,
@@ -895,9 +908,11 @@ class ArtifactPreparationService:
             if not handoff_ready and reservation is not None:
                 await await_cancellation_resistant(
                     self._release_unhanded_preparation(
-                        reservation=reservation,
-                        descriptor=descriptor,
-                        reader=reader,
+                        _PendingPreparationCleanup(
+                            reservation=reservation,
+                            descriptor=descriptor,
+                            reader=reader,
+                        )
                     )
                 )
         assert reservation is not None and reader is not None
@@ -977,19 +992,37 @@ class ArtifactPreparationService:
 
     async def _release_unhanded_preparation(
         self,
-        *,
-        reservation: _ScratchReservation,
-        descriptor: int | None,
-        reader: BinaryIO | None,
-    ) -> None:
-        """Close source ownership and release its reservation as one handoff."""
+        pending: _PendingPreparationCleanup,
+    ) -> bool:
+        """Close unhanded ownership or retain it for explicit retry."""
+        failed = False
         try:
-            if descriptor is not None:
-                await self._close_descriptor(descriptor)
-            if reader is not None:
-                await self._run_io(reader.close)
-        finally:
-            await self._manager.release(reservation)
+            if pending.descriptor is not None:
+                await self._close_descriptor(pending.descriptor)
+                pending.descriptor = None
+            if pending.reader is not None:
+                await self._run_io(pending.reader.close)
+                pending.reader = None
+        except Exception:
+            failed = True
+        try:
+            await self._manager.release(pending.reservation)
+        except Exception:
+            failed = True
+        reservation_id = pending.reservation.reservation_id
+        if failed:
+            self._pending_cleanup[reservation_id] = pending
+            return False
+        self._pending_cleanup.pop(reservation_id, None)
+        return True
+
+    async def retry_pending_cleanup(self) -> int:
+        """Retry retained failed-preparation cleanup without activating a worker."""
+        cleaned = 0
+        for pending in tuple(self._pending_cleanup.values()):
+            if await await_cancellation_resistant(self._release_unhanded_preparation(pending)):
+                cleaned += 1
+        return cleaned
 
     @staticmethod
     def _validate_client_commitment(

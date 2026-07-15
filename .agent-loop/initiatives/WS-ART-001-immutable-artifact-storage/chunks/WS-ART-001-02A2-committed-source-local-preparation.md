@@ -63,7 +63,7 @@ active ArtifactStore v1 contract and runtime behavior remain unchanged.
 ## Exact CI Coverage Gate
 
 ```bash
-coverage report --include='app/adapters/artifacts/*,app/interfaces/artifacts.py,app/modules/artifacts/*' --precision=2 --fail-under=90
+coverage report --include='app/adapters/artifacts/*,app/core/cancellation.py,app/interfaces/artifacts.py,app/modules/artifacts/*' --precision=2 --fail-under=90
 coverage report --include='app/interfaces/external_services.py' --precision=2 --fail-under=90
 coverage report --include='app/core/config.py' --precision=2 --fail-under=90
 ```
@@ -73,7 +73,7 @@ coverage report --include='app/core/config.py' --precision=2 --fail-under=90
 ```bash
 docker compose up -d --wait postgres redis
 (cd backend && .venv/bin/ruff check app tests)
-(cd backend && .venv/bin/pytest tests/test_artifact_preparation.py tests/test_local_artifact_store.py tests/test_config.py -q --cov=app.modules.artifacts.cancellation --cov=app.modules.artifacts.preparation --cov=app.modules.artifacts.sources --cov=app.core.config --cov-report=term-missing --cov-fail-under=90)
+(cd backend && .venv/bin/pytest tests/test_artifact_preparation.py tests/test_local_artifact_store.py tests/test_config.py -q --cov=app.core.cancellation --cov=app.modules.artifacts.preparation --cov=app.modules.artifacts.sources --cov=app.core.config --cov-report=term-missing --cov-fail-under=90)
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/test_agent_gates.py
