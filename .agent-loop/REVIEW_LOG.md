@@ -1,5 +1,17 @@
 # Review Log
 
+## 2026-07-15 - WS-AUTH-001-07A Second Repaired Plan Failed
+
+Exact-SHA senior engineering, architecture/reuse, QA/test, and CI-integrity
+review passed `b1b47b0`, while security/auth, product/ops, and docs review found
+one remaining audit-integrity blocker. The contract independently bounded
+ActionIds and PermissionIds but did not enforce each action's exact permission
+mapping, allowed newly admitted permissions without action evidence, did not
+bar planned actions from allowed-decision evidence, and checked only non-null
+actions before downgrade. The repair closes all four cases in typed and
+PostgreSQL acceptance criteria and keeps runtime code unmodified pending fresh
+exact-SHA review.
+
 ## 2026-07-15 - WS-AUTH-001-07 Started
 
 PR #124 merged `WS-AUTH-001-06` as `f599551`; Backend, Agent Gates,

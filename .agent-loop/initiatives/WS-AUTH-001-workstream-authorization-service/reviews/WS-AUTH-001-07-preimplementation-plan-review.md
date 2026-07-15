@@ -27,12 +27,29 @@ these verdicts.
 - Project-scoped authorization context moves to AUTH-10.
 - Feature loaders, grant matrices, concealment, and revoke races remain with
   their owning cutovers.
-- Verification uses `WORKSTREAM_TEST_DATABASE_URL`, the isolated-test runner,
+- Verification uses `WORKSTREAM_TEST_ADMIN_DATABASE_URL`, the isolated-test runner,
   branch coverage at or above 90 percent for materially changed subsystems, and
   the unchanged repository-wide 78 percent CI floor.
 
+## Second repaired review
+
+Exact-SHA senior engineering, architecture/reuse, QA/test, and CI-integrity
+review passed `b1b47b0`. Security/auth, product/ops, and docs review found one
+remaining audit-integrity blocker before runtime implementation:
+
+- the contract admitted registered actions and permissions independently rather
+  than enforcing the exact action-to-permission mapping;
+- a newly admitted permission could be stored without an action, so the guarded
+  downgrade predicate was incomplete; and
+- planned actions were not explicitly barred from allowed-decision evidence.
+
+The next candidate closes those findings in both typed and PostgreSQL
+acceptance criteria, requires denial-only evidence for planned actions, and
+checks both action and post-`0018` permission evidence under the exclusive
+downgrade lock. No runtime code was written.
+
 ## Re-review gate
 
-Fresh architecture, security/auth, and QA/CI plan review must pass the repaired
-AUTH-07A contract before runtime implementation. Prior failed/conditional
-results are not implementation approval.
+Fresh architecture, security/auth, product/ops, docs, and QA/CI plan review must
+pass the repaired AUTH-07A contract before runtime implementation. Prior
+failed/conditional results are not implementation approval.

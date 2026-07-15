@@ -117,22 +117,38 @@ owned by later chunks and are not registered here.
 - Migration `0021` adds nullable `audit_events.action_id`, preserves all
   historical rows as null, and constrains every non-null value to the registered
   ActionId set.
+- Typed validation and PostgreSQL enforce every non-null ActionId's exact
+  PermissionId mapping from the 30-row catalogue; an action cannot be persisted
+  with another registered permission.
+- Every PermissionId outside migration `0018`'s historical 49-value set requires
+  a non-null ActionId whose catalogue row maps to that PermissionId. The three
+  planned actions mapped to an existing PermissionId may still carry their
+  registered action while the historical permission remains valid without one
+  for pre-`0021` event shapes.
 - A non-null `action_id` is valid only for `SensitiveAuthorizationAllowed` or
   `SensitiveAuthorizationDenied`; unrelated authority/lifecycle events must
   remain null.
 - Migration `0021` replaces the 49-value permission constraint with exact
   73-value typed/PostgreSQL parity without changing historical values.
 - `AuthorityAuditEventInput` admits a bounded registered `action_id`; unknown
-  values fail before rejected input can escape diagnostics.
+  values and action/permission mismatches fail before rejected input can escape
+  diagnostics.
+- Because all 30 actions remain `planned`, `AuthorityAuditEventInput` rejects
+  `SensitiveAuthorizationAllowed` when any of them is present. A planned action
+  may be persisted only as bounded `SensitiveAuthorizationDenied` evidence;
+  activation chunks own later allowed evidence.
 - Existing non-action authority events remain valid with null `action_id`.
-- Downgrade refuses to discard any non-null action evidence. A clean database
-  with only null action IDs can downgrade, restores the exact prior 49-value
-  permission constraint, drops the action column/constraint, and re-upgrades.
+- Downgrade refuses when either any non-null action evidence or any PermissionId
+  outside the historical 49-value set exists. A clean database satisfying both
+  predicates can downgrade, restores the exact prior 49-value permission
+  constraint, drops the action column/constraint, and re-upgrades.
 - Downgrade takes `LOCK audit_events IN ACCESS EXCLUSIVE MODE` before checking
-  for non-null action evidence or changing constraints. Deterministic
-  independent-session proof shows a concurrent insert cannot pass between the
-  check and destructive DDL.
-- Direct SQL proves unknown ActionIds fail and registered ActionIds persist.
+  both refusal predicates or changing constraints. Deterministic independent-
+  session proof shows a concurrent insert cannot pass between the checks and
+  destructive DDL.
+- Direct SQL proves unknown ActionIds and mismatched action/permission pairs
+  fail, every new permission without its mapped action fails, and each registered
+  planned ActionId persists only as denied evidence with its mapped permission.
 - The canonical specification separates four-field planned registry metadata
   from later feature activation blueprints.
 - Operations docs cover startup catalogue failure, evidence inspection, and the
@@ -166,9 +182,10 @@ percent floor.
 
 ## Human review focus
 
-Review exact 73-permission parity, exact 30-action planned mapping, inability to
-execute planned actions, audit privacy, PostgreSQL constraint parity, historical
-null preservation, and guarded downgrade.
+Review exact 73-permission parity, exact 30-action planned mapping, typed/SQL
+mapping enforcement, inability to record planned actions as allowed, audit
+privacy, PostgreSQL constraint parity, historical null preservation, and guarded
+downgrade.
 
 ## Stop conditions
 
