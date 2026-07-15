@@ -66,6 +66,35 @@ DIGEST = "sha256:" + "a" * 64
 
 
 def test_closed_permission_and_action_catalogue_is_exact_and_non_executable() -> None:
+    historical_permissions = frozenset(
+        """actor.profile.read_self actor.profile.update_self actor.profile.read_any
+        actor.profile.suspend actor.profile.reactivate actor.profile.deactivate
+        actor.identity_link.read actor.identity_link.revoke actor.identity_link.reactivate
+        actor.service.provision admin_role.read admin_role.grant admin_role.revoke
+        project.create project.read project.update project.archive project.guide.manage
+        project.effective_policy.manage project.task.manage project.review_policy.manage
+        project.role_grant.read project.role_grant.manage task.queue.read task.claim
+        submission.create submission.read_own submission.read_for_review review.queue.read
+        review.queue.inspect review.claim review.release review.decline_preference
+        review.decision review.lease.force_release review.chain.read contribution.read_self
+        contribution.read_project compensation.policy.manage
+        compensation.adapter_binding.manage compensation.award.read
+        compensation.delivery.reconcile operations.status.read operations.timer.run
+        operations.reconcile.run operations.outbox.retry operations.projection.rebuild
+        audit.read audit.export""".split()
+    )
+    new_permissions = frozenset(
+        """operations.task.start_override operations.submission_gate.repair
+        operations.checker.retry artifact.binding.read artifact.replica.read
+        artifact.receipt.read artifact.verification_job.read
+        artifact.verification_job.retry artifact.recovery_attempt.read artifact.audit.read
+        artifact.guide_source.ingest artifact.upload_session.create
+        artifact.upload_session.read artifact.upload_item.write artifact.upload_session.seal
+        artifact.upload_session.cancel artifact.upload_session.expire artifact.binding.create
+        artifact.verification.execute artifact.pending_work.scan artifact.put_attempt.resolve
+        artifact.guide_source.read artifact.checker_input.materialize
+        artifact.checker_output.write""".split()
+    )
     expected = {
         "actor.profile.read_self": ("actor.profile.read_self", "WS-AUTH-001-07B"),
         "actor.profile.update_self": ("actor.profile.update_self", "WS-AUTH-001-07B"),
@@ -104,9 +133,9 @@ def test_closed_permission_and_action_catalogue_is_exact_and_non_executable() ->
         ),
         "artifact.checker_output.write": ("artifact.checker_output.write", "WS-ART-001-06B"),
     }
-    assert len(PERMISSION_IDS) == 73
-    assert len(HISTORICAL_PERMISSION_IDS) == 49
-    assert len(NEW_PERMISSION_IDS) == 24
+    assert {item.value for item in HISTORICAL_PERMISSION_IDS} == historical_permissions
+    assert {item.value for item in NEW_PERMISSION_IDS} == new_permissions
+    assert {item.value for item in PERMISSION_IDS} == historical_permissions | new_permissions
     assert len(ACTION_IDS) == len(ACTION_DEFINITIONS) == len(ACTION_BY_ID) == 30
     assert set(ACTION_BY_ID) == ACTION_IDS
     assert {definition.owner for definition in ACTION_DEFINITIONS} == set(ActionOwner)
@@ -132,6 +161,7 @@ def test_closed_permission_and_action_catalogue_is_exact_and_non_executable() ->
     [
         (ACTION_DEFINITIONS[:-1], "incomplete"),
         (ACTION_DEFINITIONS[:-1] + (ACTION_DEFINITIONS[0],), "incomplete"),
+        (ACTION_DEFINITIONS + (ACTION_DEFINITIONS[0],), "incomplete"),
         (
             ACTION_DEFINITIONS[:-1]
             + (
@@ -164,6 +194,42 @@ def test_closed_permission_and_action_catalogue_is_exact_and_non_executable() ->
                     "unknown.permission",  # type: ignore[arg-type]
                     ActionOwner.ART_06B,
                     ActionAvailability.PLANNED,
+                ),
+            ),
+            "invalid row",
+        ),
+        (
+            ACTION_DEFINITIONS[:-1]
+            + (
+                ActionDefinition(
+                    "unknown.action",  # type: ignore[arg-type]
+                    PermissionId.ARTIFACT_CHECKER_OUTPUT_WRITE,
+                    ActionOwner.ART_06B,
+                    ActionAvailability.PLANNED,
+                ),
+            ),
+            "invalid row",
+        ),
+        (
+            ACTION_DEFINITIONS[:-1]
+            + (
+                ActionDefinition(
+                    ActionId.ARTIFACT_CHECKER_OUTPUT_WRITE,
+                    PermissionId.ARTIFACT_CHECKER_OUTPUT_WRITE,
+                    "unknown.owner",  # type: ignore[arg-type]
+                    ActionAvailability.PLANNED,
+                ),
+            ),
+            "invalid row",
+        ),
+        (
+            ACTION_DEFINITIONS[:-1]
+            + (
+                ActionDefinition(
+                    ActionId.ARTIFACT_CHECKER_OUTPUT_WRITE,
+                    PermissionId.ARTIFACT_CHECKER_OUTPUT_WRITE,
+                    ActionOwner.ART_06B,
+                    "unknown.availability",  # type: ignore[arg-type]
                 ),
             ),
             "invalid row",

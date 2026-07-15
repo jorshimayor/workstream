@@ -492,10 +492,11 @@ actions. Planned actions can record bounded denial evidence but cannot record an
 allowed decision through the typed writer.
 
 Downgrade is allowed only while every action ID remains null and no permission
-outside migration `0018`'s historical 49-value set exists. The migration takes
-an exclusive audit-table lock before both checks and keeps it through
-destructive DDL. If either kind of forward evidence exists, stop and recover
-forward rather than discarding it.
+outside migration `0018`'s historical 49-value set exists in the decision,
+target-reference, or invalidation-reference fields. The migration takes an
+exclusive audit-table lock before these checks and keeps it through destructive
+DDL. If any forward evidence exists, stop and recover forward rather than
+discarding it.
 
 AUTH-07B later activates only canonical actor self-read and self-update. Admin
 definition reads wait for AUTH-08 grant truth, and project capability context

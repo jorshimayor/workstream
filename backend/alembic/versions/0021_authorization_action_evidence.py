@@ -257,7 +257,11 @@ def downgrade() -> None:
     has_forward_evidence = bind.execute(
         sa.text(
             "select exists(select 1 from audit_events where action_id is not null "
-            f"or permission_id in ({_tokens(NEW_PERMISSIONS)}))"
+            f"or permission_id in ({_tokens(NEW_PERMISSIONS)}) "
+            "or (target_ref_kind = 'permission_registry' "
+            f"and target_ref_id in ({_tokens(NEW_PERMISSIONS)})) "
+            "or (invalidation_target_kind = 'permission_registry' "
+            f"and invalidation_target_ref in ({_tokens(NEW_PERMISSIONS)})))"
         )
     ).scalar_one()
     if has_forward_evidence:

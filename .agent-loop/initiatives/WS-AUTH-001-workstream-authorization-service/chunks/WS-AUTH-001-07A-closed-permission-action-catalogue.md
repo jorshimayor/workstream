@@ -143,9 +143,11 @@ owned by later chunks and are not registered here.
   rows in typed code without altering migration `0021`.
 - Existing non-action authority events remain valid with null `action_id`.
 - Downgrade refuses when either any non-null action evidence or any PermissionId
-  outside the historical 49-value set exists. A clean database satisfying both
-  predicates can downgrade, restores the exact prior 49-value permission
-  constraint, drops the action column/constraint, and re-upgrades.
+  outside the historical 49-value set exists in `permission_id`, a permission-
+  registry target reference, or a permission-registry invalidation reference. A
+  clean database satisfying all predicates can downgrade, restores the exact
+  prior 49-value permission constraint, drops the action column/constraint, and
+  re-upgrades.
 - Downgrade takes `LOCK audit_events IN ACCESS EXCLUSIVE MODE` before checking
   both refusal predicates or changing constraints. Deterministic independent-
   session proof shows a concurrent insert cannot pass between the checks and
