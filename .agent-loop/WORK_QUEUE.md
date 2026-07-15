@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-07A` | Closed Permission And Action Catalogue | L1 | Implementation and repair internally approved at `478a819`; PR publication pending |
+| `WS-AUTH-001-07A` | Closed Permission And Action Catalogue | L1 | Review/revision amendment internally approved at `160af8a`; PR #126 external/human review pending |
 
 ## Planned Next
 

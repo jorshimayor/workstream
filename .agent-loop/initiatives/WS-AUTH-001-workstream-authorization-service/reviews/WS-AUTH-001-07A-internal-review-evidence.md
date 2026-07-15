@@ -1,8 +1,8 @@
 # WS-AUTH-001-07A Internal Review Evidence
 
-Reviewed code SHA: `6287f57936c5e1ec7621bcbf07ff45ee40f0ee91`
-Reviewed runtime SHA: `6287f57936c5e1ec7621bcbf07ff45ee40f0ee91`
-Reviewed at: `2026-07-15T11:33:28Z`
+Reviewed code SHA: `160af8afd030f042ee72ec963e6f47cd8b7d4c9a`
+Reviewed runtime SHA: `3365e67e7b44195069a5c7645fdee0af1d4e0180`
+Reviewed at: `2026-07-15T12:51:26Z`
 Reviewer run IDs: `auth06_final_ci`, `auth06_final_docs`,
 `auth06_final_test_delta`
 
@@ -10,24 +10,24 @@ Reviewer run IDs: `auth06_final_ci`, `auth06_final_docs`,
 
 - The focused authorization and audit suite passed all 37 collected behavior
   tests against isolated PostgreSQL migration head `0021_auth_action_evidence`.
-- Branch-aware subsystem coverage is 94 percent for authorization and 93
+- Branch-aware subsystem coverage is 95 percent for authorization and 93
   percent for audit, above the required 90 percent threshold for materially
   changed backend subsystems.
-- The exact catalogue/startup matrix passed 10 tests covering the independent
-  49 historical and 24 new PermissionId sets, exact 30-action mapping, missing,
+- The exact catalogue/startup matrix covers the independent 49 historical and
+  25 new PermissionId sets, exact 50-action mapping, missing,
   duplicate, extra, and hostile typed rows, immutability, and planned-action
   non-executability.
-- The complete isolated Alembic suite passed 16 tests in 587.24 seconds at
-  runtime SHA `478a819`. It proves upgrade/downgrade/re-upgrade, historical-row
+- The complete isolated Alembic suite passed 16 tests in 503.16 seconds at
+  runtime SHA `3365e67`. It proves upgrade/downgrade/re-upgrade, historical-row
   preservation, exact restored permission behavior, all forward-evidence
   refusal paths, and the concurrent insert lock.
-- Direct SQL accepts all 30 exact action/permission pairs as denied evidence,
-  rejects all 30 wrong registered-permission pairs, and rejects all 24 new
+- Direct SQL accepts all 50 exact action/permission pairs as denied evidence,
+  rejects all 50 wrong registered-permission pairs, and rejects all 25 new
   permissions without a mapped action.
-- External-review repair proves typed validation rejects allowed evidence for
-  all 30 planned actions while PostgreSQL accepts all 30 exact allowed pairs as
+- Amendment proof confirms typed validation rejects allowed evidence for all 50
+  planned actions while PostgreSQL accepts all 50 exact allowed pairs as
   availability-neutral storage. The targeted isolated migration test passed in
-  100.95 seconds at `6287f57`.
+  43.53 seconds at runtime SHA `3365e67`.
 - Ruff, stale Workstream wording, stale authorization documentation, changed
   Markdown links, loop-memory state, and diff integrity passed.
 - No workflow, dependency, test skip, coverage exclusion, package script, or
@@ -62,8 +62,11 @@ lifecycle/merge-intent files, records the evidence accurately, and keeps
 
 External repair review at `6287f57` confirmed CodeRabbit's proposed denial-only
 SQL constraint would contradict the approved availability-neutral migration
-contract. The accepted grammar fix and expanded PR description introduce no
-runtime authority, and no prior negative behavior proof was weakened.
+contract. The review/revision amendment at `3365e67` adds one permission and 20
+planned action dependencies without runtime authority. Exact-head repair
+`160af8a` removes duplicate session authority: the request-scoped service binds
+the caller-owned session once and exposes only
+`require(action_id, typed_resource_context)`.
 
 Valid findings addressed: yes
 
@@ -71,5 +74,5 @@ Open sub-agent sessions: none
 
 ## Remaining Gate
 
-GitHub Backend, Agent Gates, CodeRabbit, and explicit human merge approval remain
-pending. Do not start `WS-AUTH-001-07B` automatically.
+PR #126, GitHub Backend, Agent Gates, CodeRabbit, and explicit human merge
+approval remain pending. Do not start `WS-AUTH-001-07B` automatically.

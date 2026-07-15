@@ -1,5 +1,18 @@
 # Review Log
 
+## 2026-07-15 - WS-AUTH-001-07A Canonical Review Amendment Passed
+
+Exact reviewed head `160af8afd030f042ee72ec963e6f47cd8b7d4c9a` reserves
+the canonical `submission.create` dependency and 19 review actions. The closed
+catalogue is now exactly 74 PermissionIds and 50 planned ActionIds; only
+`review.queue.override` is additive. Initial and revision submissions share
+`submission.create`. Required exact-head review passed after removing duplicate
+session authority from the public contract: request-scoped
+`AuthorizationService` binds the caller-owned `AsyncSession` and exposes only
+`require(action_id, typed_resource_context)`. Full migration proof passed 16
+tests; focused authorization/audit coverage remains above 90 percent. PR #126
+is the current external and explicit-human gate; AUTH-07B remains inactive.
+
 ## 2026-07-15 - WS-AUTH-001-07A Internal Review Passed
 
 Exact implementation SHA `478a819236b9cff1e1d7b61203015691ce0aaf45`

@@ -17,15 +17,16 @@
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: AUTH-07A implementation and repair passed every required
-  internal reviewer track at `478a819`; deterministic evidence is complete and
-  PR publication is pending.
+- Current gate: AUTH-07A's canonical review/revision amendment passed every
+  required internal reviewer track at `160af8a`; deterministic evidence is
+  complete and PR #126 awaits external checks and explicit human approval.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
   and AWS cannot instantiate in production without release-bound live proof.
-- Authorization checkpoint: the approved catalogue contains 73 identifiers,
-  including 21 artifact permissions. AUTH-07 registers them, AUTH-08 defines
+- Authorization checkpoint: the approved catalogue contains 74 PermissionIds
+  and 50 planned ActionIds, including 21 artifact permissions and one additive
+  `review.queue.override` permission. AUTH-07 registers them, AUTH-08 defines
   applicable Operator grants, AUTH-09 provisions fixed service principals, and
   each owning WS-ART feature chunk activates only its own canonical actions.
 - Next artifact candidate: `WS-ART-001-02A1` remains inactive until the user

@@ -69,12 +69,15 @@ internal and external checks; explicit human approval merged PR #124 as
 a separate start. The user explicitly started AUTH-07 on 2026-07-15; discovery
 and required L1 plan review are complete. The repaired AUTH-07A contract passed
 all required tracks at `beb85ac`; implementation, repair, deterministic
-evidence, and required internal review pass at `478a819`.
+evidence, and required internal review pass at `478a819`. The canonical
+review/revision amendment then passed exact-head review at `160af8a`, with 74
+PermissionIds and 50 planned ActionIds.
 That review rejected the combined AUTH-07 contract before runtime edits because
 grant-backed/project APIs preceded their authority sources and the audit/API
 ownership files were incomplete. Parent AUTH-07 is now split into 07A catalogue
 and audit parity, followed by 07B kernel and actor self-action cutover. AUTH-07A
-is ready for PR publication; AUTH-07B remains inactive.
+is published as PR #126 and awaits external checks and explicit human approval;
+AUTH-07B remains inactive.
 
 ## Active planning chunk
 
@@ -105,7 +108,7 @@ None.
 | `WS-AUTH-001-05B` | Merged | `codex/ws-auth-001-05b-idempotency-invalidation` | #119 | Merged as `ad71c7e`; reviewed runtime SHA `e083890`. |
 | `WS-AUTH-001-06` | Merged | `codex/ws-auth-001-06-canonical-actor-profile` | #124 | Merged as `f599551`; final PR head `4a2193f`. |
 | `WS-AUTH-001-07` | Split | `codex/ws-auth-001-07-authorization-kernel` | - | Required L1 review rejected the combined contract before runtime edits. |
-| `WS-AUTH-001-07A` | Internally approved | `codex/ws-auth-001-07-authorization-kernel` | - | Reviewed implementation `478a819`; closed catalogue and action-aware audit parity only. |
+| `WS-AUTH-001-07A` | Internally approved | `codex/ws-auth-001-07-authorization-kernel` | #126 | Reviewed amendment `160af8a`; 74 permissions, 50 planned actions, and action-aware audit parity only. |
 | `WS-AUTH-001-07B` | Proposed | - | - | Inactive until 07A merge/memory and explicit user start. |
 | `WS-AUTH-001-08` | Proposed | - | - | Bootstrap and administrative grants. |
 | `WS-AUTH-001-09` | Proposed | - | - | Actor/link states and service actors. |
@@ -129,7 +132,7 @@ inferred kinds before the owning canonical actor migration.
 
 The proposed external catalogue cannot be adopted as a normative handoff: it
 conflicts with `/api/v1`, AUTH-05A's merged 49-identifier persisted audit base,
-current project and artifact models, and staged domain ownership. All 73
+current project and artifact models, and staged domain ownership. All 74
 permission identifiers are approved, including
 `operations.task.start_override`, `operations.submission_gate.repair`, and
 `operations.checker.retry`; AUTH-07A gives those recovery identifiers exact
@@ -139,7 +142,8 @@ rules. This is a scope decision, not an AUTH-05B runtime
 blocker. PR #118, AUTH-05B PR #119, and AUTH-06 PR #124 are merged. AUTH-07 has
 an explicit user start. Required review split it before runtime implementation;
 the repaired 07A contract passed all required tracks at `beb85ac`; implementation
-and repair passed at `478a819`. AUTH-07B and
+and repair passed at `478a819`, and the review/revision amendment passed at
+`160af8a`. AUTH-07B and
 POL-002-04 remain inactive until separate explicit human starts and their
 authorization prerequisites.
 

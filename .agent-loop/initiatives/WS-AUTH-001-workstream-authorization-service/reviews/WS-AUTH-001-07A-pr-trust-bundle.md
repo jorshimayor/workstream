@@ -6,14 +6,16 @@
 
 ## Goal
 
-Install one closed typed source for all 73 approved PermissionIds and exactly 30
+Install one closed typed source for all 74 approved PermissionIds and exactly 50
 planned ActionIds, then preserve exact typed/PostgreSQL audit parity without
 making any action executable.
 
 ## What Changed
 
 - Added a dependency-free authorization catalogue containing the exact 49
-  historical and 24 new permissions plus 30 four-field planned action rows.
+  historical and 25 new permissions plus 50 four-field planned action rows.
+- Reserved canonical `submission.create` plus 19 review actions. Revision
+  submission reuses `submission.create`; no revision-specific permission exists.
 - Made authority audit validation consume the catalogue, enforce exact action-
   permission mapping, reject planned allowed decisions, and bound hostile input.
 - Added nullable `audit_events.action_id` and PostgreSQL constraints for exact
@@ -35,8 +37,8 @@ and project contexts.
 
 ## Acceptance Proof
 
-- The independent runtime test literals prove the exact 73-value permission set
-  and its exact 49/24 historical/new partition.
+- The independent runtime test literals prove the exact 74-value permission set
+  and its exact 49/25 historical/new partition.
 - Catalogue startup rejects missing, duplicate, extra, unknown, invalid-owner,
   invalid-availability, and metadata-mismatched rows.
 - Planned ActionIds cannot resolve as executable and cannot be recorded as
@@ -50,10 +52,11 @@ and project contexts.
 ## Tests And Coverage
 
 - 37 focused authorization/audit behavior tests passed on isolated PostgreSQL.
-- Authorization branch-aware coverage: 94 percent.
+- Authorization branch-aware coverage: 95 percent.
 - Audit branch-aware coverage: 93 percent.
-- Full isolated Alembic suite: 16 passed in 587.24 seconds at reviewed runtime
-  SHA `478a819236b9cff1e1d7b61203015691ce0aaf45`.
+- Full isolated Alembic suite: 16 passed in 503.16 seconds at reviewed runtime
+  SHA `3365e67e7b44195069a5c7645fdee0af1d4e0180`.
+- Targeted exhaustive migration proof: 1 passed in 43.53 seconds.
 - Catalogue/startup matrix: 10 passed.
 - Ruff, stale wording, authorization-doc consistency, Markdown links,
   loop-memory state, and diff integrity passed.
@@ -63,8 +66,8 @@ this PR does not change any coverage threshold or exclusion.
 
 ## Reviewer Results
 
-Reviewed external-repair head `6287f57936c5e1ec7621bcbf07ff45ee40f0ee91`
-and original runtime candidate `478a819236b9cff1e1d7b61203015691ce0aaf45` passed
+Reviewed exact head `160af8afd030f042ee72ec963e6f47cd8b7d4c9a`
+and runtime amendment `3365e67e7b44195069a5c7645fdee0af1d4e0180` passed
 senior engineering, QA/test, security/auth, product/ops, architecture, CI
 integrity, docs, reuse/dedup, and test-delta review with no remaining findings.
 
@@ -80,7 +83,7 @@ integrity, docs, reuse/dedup, and test-delta review with no remaining findings.
 
 ## Human Review Focus
 
-Review the exact 73/30 catalogue, planned-only typed behavior, exact SQL mapping,
+Review the exact 74/50 catalogue, planned-only typed behavior, exact SQL mapping,
 historical audit preservation, four downgrade refusal paths, exclusive locking,
 and the absence of kernel/grant/resource activation.
 
