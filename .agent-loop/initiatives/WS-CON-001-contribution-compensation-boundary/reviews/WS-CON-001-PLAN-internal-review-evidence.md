@@ -1,5 +1,84 @@
 # Internal Review Evidence: WS-CON-001-PLAN
 
+## 2026-07-15 Final Trusted-Main And Parallel-Dependency Review
+
+This addendum is the current authoritative review state and supersedes older
+statements below about D2, AUTH-07A merge status, REV joint-release adoption, or
+an uncommitted planning candidate. D2 is approved:
+`CompensationPolicyVersion` completely supersedes `PaymentPolicy`; only the
+legacy-row reset-versus-classified-backfill rule remains a human gate.
+
+Reviewed code SHA: ebdd21d231207845d44832a502de9dc56f237fd9
+
+Reviewed planning-tree SHA-256:
+`c3a82c1d5db19038709ff844a3bbde6cc77b21d525f408f2768d71c34883181d`
+
+The tree digest excludes this evidence file and is reproduced from the
+initiative directory with:
+
+```bash
+find . -type f ! -path './reviews/WS-CON-001-PLAN-internal-review-evidence.md' -print0 | sort -z | xargs -0 sha256sum | sha256sum
+```
+
+Reviewed at: 2026-07-15T17:08:45Z
+
+Reviewer run IDs: architecture/senior/reuse=`/root/plan_arch_senior`;
+QA/test/product/ops/docs=`/root/plan_qa_product_docs`;
+security/auth/privacy=`/root/plan_security_auth`
+
+| Reviewer | Result | Blocking findings | Notes |
+|---|---|---|---|
+| senior engineering | PASS | None | The chunk map, ownership seams, stop conditions, and long-term boundaries are coherent. |
+| QA/test | PASS | None | Gates, races, failure cases, evidence retention, and the exact scanner regression contract are executable. |
+| security/auth | PASS | None | Merged AUTH has 74 PermissionIds/50 ActionIds; 23 WS-CON actions and two service permissions remain absent/proposed; all 12 reused permissions exist. |
+| product/ops | PASS | None | Complete PaymentPolicy removal, legacy-row gate, fulfillment lifecycle, drain, and joint release behavior are explicit. |
+| architecture | PASS | None | CON-02B solely owns outbox transitions; CON owns narrow ports; REV supplies only hidden release-control composition. |
+| CI integrity | N/A - with approved reason | None | This reviewed delta changes planning Markdown only; CON-01 itself requires CI-integrity review when its script/test files change. |
+| docs | PASS | None | Source provenance, active/archive precedence, current REV status, and PaymentPolicy removal are truthful. |
+| reuse/dedup | PASS | None | Claim validation, drain observation, and lifecycle fences reuse sole owners through narrow ports without repository duplication. |
+| test delta | N/A - with approved reason | None | No test file changes in this planning delta; CON-01 requires test-delta review for its planned gate regression. |
+
+Open sub-agent sessions: none
+
+Valid findings addressed: yes
+
+- Rebased onto trusted `main` `e9d72a1`, including merged ADR 0014 and AUTH-07A
+  catalogue/audit foundations, and validated exact AUTH counts/mappings.
+- Preserved complete PaymentPolicy removal in split semantic-cutover and physical
+  removal chunks; no advisory, compatibility, or execution fallback survives.
+- Made merged REV-02 exact `Submission.task_assignment_id` lineage a hard
+  CON-05A prerequisite.
+- Preserved CON-02B as the sole OutboxEvent claim/retry/finalization owner. A
+  feature handler only validates immutable claim generation through
+  `OutboxClaimValidationPort`, never locks or mutates OutboxEvent, and returns a
+  typed outcome after CON work.
+- Added canonical lifecycle-fence lock ordering, durable pre-I/O state, and the
+  prohibition on provider I/O under a database transaction, lifecycle fence,
+  or OutboxEvent lock.
+- Assigned `FulfillmentDispatchFence`, `FulfillmentCallbackFence`, and
+  `FulfillmentLifecycleDrainObservationPort` to CON-owned chunks while limiting
+  REV-12A to hidden composition and REV-13 to sole activation/live drill.
+- Recorded the content-reviewed but dirty REV snapshot atop `3e09e99` as
+  non-consumable. Its stale handler-claim wording must be repaired, committed,
+  commit-freshness reviewed, refreshed, and merged before use.
+- Made CON-01 own the exact authorization-scanner history entry created by its
+  hash-proven archival rename plus fail-closed tests. The cross-scanner equality
+  assertion subtracts only that named auth-only path and separately proves the
+  unchanged artifact scanner already excludes reference specs by prefix.
+- Preserved AUTH ownership: WS-CON proposes identifiers and supplies resource
+  facts/guards only; it does not implement the authorization service.
+
+Deterministic evidence passed: Markdown links for 38 changed Markdown files,
+general stale wording, artifact-contract state, loop-memory state, 71 agent-gate
+tests, reference hashes, and `git diff --check`. The authorization stale-doc
+scan continues to flag ten human-worker vocabulary occurrences only in the
+explicitly non-canonical working transcription. CON-01 now owns its exact
+byte-preserving archive rename/classification and the reconciled active spec;
+this is not a waiver for an active document.
+
+Application/runtime code changed: no. The original PDF deletion remains an
+unstaged user-worktree change and was excluded from both reviewed commits.
+
 ## 2026-07-15 End-to-End Reference Reconciliation Addendum
 
 The supplied generation-2 Markdown was audited against AUTH head `3ab25cf`,
@@ -47,7 +126,7 @@ changed.
 | senior engineering | PASS AFTER FIXES | None | Cross-initiative ownership, PR sizing, reusable infrastructure, and executable contracts repaired. |
 | QA/test | PASS AFTER FIXES | None | Traceability, isolated PostgreSQL evidence, separate subsystem coverage, retained attempts, and release handoff repaired. |
 | security/auth | PASS AFTER FIXES | None | Proposed action/resource contracts, service actor, binding states, rate controls, retirement and privacy repaired. |
-| product/ops | SUPERSEDED | Re-review required | This row predates approved complete PaymentPolicy removal and the end-to-end reference reconciliation. |
+| product/ops | PASS AFTER FIXES | None | Current re-review confirms complete PaymentPolicy removal, the open legacy-row gate, REV-02 ordering, fence ownership, and joint activation operations. |
 | architecture | PASS AFTER FIXES | None | REV ownership, sole activation, outbox/audit/factory boundaries and ART/AUTH ownership are coherent. |
 | CI integrity | N/A - with approved reason | None | Planning Markdown only; no workflow, script, dependency, test, or coverage gate changed. |
 | docs | PASS AFTER FIXES | None | Archive provenance, active-doc inventory and generated-companion release ownership are explicit. |
@@ -62,8 +141,10 @@ changed.
   exact evidence-driven release handoff without editing the sibling worktree.
 - Split shared outbox truth from its dispatcher, added a shared lifecycle-audit
   participant owner, and kept feature handlers separate.
-- Reconciled trusted-main 73 PermissionIds versus unmerged AUTH-07A 74/50 state;
-  every WS-CON ActionId remains proposed with exact target/principal/facts/
+- At the original pre-merge review point, reconciled trusted-main 73
+  PermissionIds versus AUTH-07A's 74/50 candidate state. The current addendum
+  records AUTH-07A merged through `e9d72a1`; every WS-CON ActionId remains
+  proposed with exact target/principal/facts/
   guard/revalidation/registry/resource/activation ownership.
 - Added canonical service ActorProfile binding, exact callback assignment,
   actor/link/binding state distinctions, per actor+binding rate control, and
@@ -120,13 +201,14 @@ Results:
 
 ## Remaining Risks
 
-- D1/D2/D7/D8 and the callback PermissionId require explicit human approval.
+- D1/D7/D8 and the callback/outbox service PermissionIds require explicit human
+  approval. D2 removal is approved; only legacy-row handling remains open.
 - Original PDF disposition remains a pre-existing user-worktree concern;
   generation-2 PDF preservation and working-Markdown provenance remain CON-01
   gates.
-- AUTH, ART and REV prerequisites are unmerged. The WS-REV owner must adopt and
-  internally review `JOINT_RELEASE_HANDOFF.md` before either public surface can
-  activate.
+- AUTH, ART and REV prerequisites are unmerged. The active REV working delta
+  incorporates `JOINT_RELEASE_HANDOFF.md` but must become a branch-reachable
+  reviewed commit, rebase, and merge before either public surface can activate.
 - Exact migration numbers, merged symbols, production adapter/provider and live
   values must be refreshed at each approved implementation chunk.
 - This uncommitted reviewed plan still requires a committed exact-head review
