@@ -162,6 +162,45 @@ async def test_private_lock_releases_after_repeated_cancellation(
 
 
 @pytest.mark.asyncio
+async def test_private_nested_locks_all_release_before_cancellation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Release outer and inner operation locks before cancellation escapes."""
+    adapter = LocalStorageAdapter(root=tmp_path / "artifacts", buffer_bytes=2)
+    first = await adapter._acquire_lock_async("nested-first")
+    second = await adapter._acquire_lock_async("nested-second")
+    release_started = threading.Event()
+    finish_release = threading.Event()
+    released: list[int] = []
+    original_release = adapter._release_lock
+
+    def delayed_first_release(lock: tuple[object, int]) -> None:
+        if lock is first:
+            release_started.set()
+            finish_release.wait(timeout=5)
+        original_release(lock)
+        released.append(lock[1])
+
+    monkeypatch.setattr(adapter, "_release_lock", delayed_first_release)
+    release_task = asyncio.create_task(adapter._release_locks(first, second))
+    assert await asyncio.to_thread(release_started.wait, 5)
+    release_task.cancel()
+    await asyncio.sleep(0)
+    release_task.cancel()
+    finish_release.set()
+    with pytest.raises(asyncio.CancelledError):
+        await release_task
+    assert released == [first[1], second[1]]
+
+    monkeypatch.setattr(adapter, "_release_lock", original_release)
+    reacquired_first = await adapter._acquire_lock_async("nested-first")
+    reacquired_second = await adapter._acquire_lock_async("nested-second")
+    await adapter._release_locks(reacquired_second, reacquired_first)
+    adapter.close()
+
+
+@pytest.mark.asyncio
 async def test_store_cleanup_survives_repeated_cancellation(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

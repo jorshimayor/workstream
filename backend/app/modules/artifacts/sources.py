@@ -7,7 +7,7 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import Protocol, final
 
-from app.core.cancellation import await_cancellation_resistant
+from app.core.cancellation import await_completion_preserving_cancellation
 
 
 _COMMITTED_SOURCE_SEAL = object()
@@ -183,10 +183,10 @@ class PreparedArtifact:
             return
         cleanup = asyncio.create_task(self._owner.release_prepared_artifact(self._binding))
         try:
-            await asyncio.shield(cleanup)
+            await await_completion_preserving_cancellation(cleanup)
         except asyncio.CancelledError:
-            await await_cancellation_resistant(cleanup)
-            self._closed = True
+            if cleanup.done() and not cleanup.cancelled() and cleanup.exception() is None:
+                self._closed = True
             raise
         else:
             self._closed = True

@@ -1235,7 +1235,7 @@ async def test_allocation_close_failure_still_releases_reservation(
     assert await asyncio.to_thread(started.wait, 5)
     task.cancel()
     finish_allocation.set()
-    with pytest.raises(OSError, match="descriptor close failure"):
+    with pytest.raises(asyncio.CancelledError):
         await task
 
     assert close_failed
@@ -1314,6 +1314,34 @@ async def test_seal_failure_closes_first_pass_descriptor(
     assert failed
     with pytest.raises(OSError) as closed_error:
         os.fstat(write_descriptor)
+    assert closed_error.value.errno == errno.EBADF
+
+    await manager.release(reservation)
+    assert (await manager.usage()).reservation_count == 0
+    manager.close()
+
+
+@pytest.mark.asyncio
+async def test_fdopen_failure_closes_anonymous_read_descriptor(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Dispose sealed bytes if the read-file wrapper cannot be constructed."""
+    manager = ArtifactScratchManager(root=tmp_path / "scratch", limits=preparation_limits())
+    reservation, write_descriptor = await manager.allocate()
+    read_descriptor: int | None = None
+
+    def fail_fdopen(descriptor: int, *_: object, **__: object) -> BinaryIO:
+        nonlocal read_descriptor
+        read_descriptor = descriptor
+        raise OSError(errno.EIO, "injected fdopen failure")
+
+    monkeypatch.setattr(os, "fdopen", fail_fdopen)
+    with pytest.raises(OSError, match="fdopen failure"):
+        await manager.seal_for_read(reservation, write_descriptor)
+    assert read_descriptor is not None
+    with pytest.raises(OSError) as closed_error:
+        os.fstat(read_descriptor)
     assert closed_error.value.errno == errno.EBADF
 
     await manager.release(reservation)
@@ -1416,6 +1444,57 @@ async def test_failed_preparation_retains_cleanup_for_retry(
 
 
 @pytest.mark.asyncio
+async def test_pending_cleanup_retry_preserves_cancellation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Finish a retained cleanup retry without converting cancellation to success."""
+    manager = ArtifactScratchManager(root=tmp_path / "scratch", limits=preparation_limits())
+    service = ArtifactPreparationService(manager)
+    original_release = manager.release
+    release_attempts = 0
+
+    async def fail_once(reservation: object) -> None:
+        nonlocal release_attempts
+        release_attempts += 1
+        if release_attempts == 1:
+            raise OSError(errno.EIO, "transient scratch release failure")
+        await original_release(reservation)
+
+    monkeypatch.setattr(manager, "release", fail_once)
+    with pytest.raises(ArtifactInputMismatchError, match="expected digest"):
+        await service.prepare(
+            byte_stream(b"data"),
+            media_type="text/plain",
+            expected_sha256="sha256:" + "0" * 64,
+        )
+    assert service.pending_cleanup_count == 1
+
+    cleanup_started = asyncio.Event()
+    finish_cleanup = asyncio.Event()
+    original_cleanup = service._release_unhanded_preparation
+
+    async def delayed_cleanup(pending: object) -> bool:
+        cleanup_started.set()
+        await finish_cleanup.wait()
+        return await original_cleanup(pending)
+
+    monkeypatch.setattr(service, "_release_unhanded_preparation", delayed_cleanup)
+    retry_task = asyncio.create_task(service.retry_pending_cleanup())
+    await asyncio.wait_for(cleanup_started.wait(), timeout=1)
+    retry_task.cancel()
+    await asyncio.sleep(0)
+    retry_task.cancel()
+    finish_cleanup.set()
+    with pytest.raises(asyncio.CancelledError):
+        await retry_task
+
+    assert service.pending_cleanup_count == 0
+    assert (await manager.usage()).reservation_count == 0
+    manager.close()
+
+
+@pytest.mark.asyncio
 async def test_failed_descriptor_close_is_never_retried(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -1485,6 +1564,45 @@ async def test_cancelled_close_finishes_cleanup_and_closes_handle(
         _ = prepared.committed_source
     with pytest.raises(ArtifactScratchIntegrityError, match="unavailable"):
         _ = [chunk async for chunk in source.stream()]
+    manager.close()
+
+
+@pytest.mark.asyncio
+async def test_cancelled_close_preserves_cancellation_when_cleanup_fails(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Keep retryable ownership while cancellation remains the caller result."""
+    manager = ArtifactScratchManager(root=tmp_path / "scratch", limits=preparation_limits())
+    service = ArtifactPreparationService(manager)
+    prepared = await service.prepare(byte_stream(b"data"), media_type="text/plain")
+    original_release = manager.release
+    release_started = asyncio.Event()
+    finish_release = asyncio.Event()
+
+    async def delayed_failure(_: object) -> None:
+        release_started.set()
+        await finish_release.wait()
+        raise OSError(errno.EIO, "injected release failure")
+
+    monkeypatch.setattr(manager, "release", delayed_failure)
+    close_task = asyncio.create_task(prepared.close())
+    await asyncio.wait_for(release_started.wait(), timeout=1)
+    close_task.cancel()
+    await asyncio.sleep(0)
+    close_task.cancel()
+    finish_release.set()
+    with pytest.raises(asyncio.CancelledError):
+        await close_task
+
+    assert not prepared._closed
+    assert len(service._active) == 1
+    assert (await manager.usage()).reservation_count == 1
+    monkeypatch.setattr(manager, "release", original_release)
+    await prepared.close()
+    assert prepared._closed
+    assert service._active == {}
+    assert (await manager.usage()).reservation_count == 0
     manager.close()
 
 

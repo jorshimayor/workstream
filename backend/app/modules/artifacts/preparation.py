@@ -26,6 +26,7 @@ from app.interfaces.artifacts import (
     ArtifactStoreUnavailableError,
 )
 from app.core.cancellation import (
+    await_completion_preserving_cancellation,
     await_cancellation_resistant,
     run_blocking_cancellation_resistant,
 )
@@ -196,15 +197,23 @@ class ArtifactScratchManager:
         task = asyncio.create_task(asyncio.to_thread(self._allocate_sync))
         try:
             return await asyncio.shield(task)
-        except asyncio.CancelledError:
-            reservation, descriptor = await await_cancellation_resistant(task)
+        except asyncio.CancelledError as cancellation:
+            try:
+                reservation, descriptor = await await_cancellation_resistant(task)
+            except BaseException:
+                raise cancellation from None
             try:
                 os.close(descriptor)
+            except BaseException:
+                pass
             finally:
-                await await_cancellation_resistant(
-                    asyncio.to_thread(self._release_sync, reservation)
-                )
-            raise
+                try:
+                    await await_cancellation_resistant(
+                        asyncio.to_thread(self._release_sync, reservation)
+                    )
+                except BaseException:
+                    pass
+            raise cancellation
 
     async def seal_for_read(self, reservation: _ScratchReservation, descriptor: int) -> BinaryIO:
         """Close the first pass and pin one private read-only second-pass file."""
@@ -583,7 +592,14 @@ class ArtifactScratchManager:
                     pass
             raise
         assert read_descriptor is not None
-        return os.fdopen(read_descriptor, "rb", buffering=0)
+        try:
+            return os.fdopen(read_descriptor, "rb", buffering=0)
+        except BaseException:
+            try:
+                os.close(read_descriptor)
+            except BaseException:
+                pass
+            raise
 
     def _release_sync(self, reservation: _ScratchReservation) -> None:
         self._validate_reservation(reservation)
@@ -1073,7 +1089,9 @@ class ArtifactPreparationService:
         """Retry retained failed-preparation cleanup without activating a worker."""
         cleaned = 0
         for pending in tuple(self._pending_cleanup.values()):
-            if await await_cancellation_resistant(self._release_unhanded_preparation(pending)):
+            if await await_completion_preserving_cancellation(
+                self._release_unhanded_preparation(pending)
+            ):
                 cleaned += 1
         return cleaned
 

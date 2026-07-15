@@ -489,10 +489,7 @@ class LocalStorageAdapter:
         except OSError as exc:
             raise ArtifactStoreUnavailableError("local artifact verification failed") from exc
         finally:
-            if artifact_lock is not None:
-                await self._run_io(self._release_lock, artifact_lock)
-            if lock is not None:
-                await self._run_io(self._release_lock, lock)
+            await self._release_locks(artifact_lock, lock)
 
     async def retain(
         self,
@@ -650,10 +647,7 @@ class LocalStorageAdapter:
         except OSError as exc:
             raise ArtifactStoreUnavailableError("local artifact retention failed") from exc
         finally:
-            if artifact_lock is not None:
-                await self._run_io(self._release_lock, artifact_lock)
-            if operation_lock is not None:
-                await self._run_io(self._release_lock, operation_lock)
+            await self._release_locks(artifact_lock, operation_lock)
 
     async def get_operation_receipt(
         self,
@@ -1344,6 +1338,24 @@ class LocalStorageAdapter:
     async def _run_io(self, function: Any, *args: Any) -> Any:
         """Complete one blocking filesystem call before propagating cancellation."""
         return await run_blocking_cancellation_resistant(function, *args)
+
+    async def _release_locks(self, *locks: tuple[Any, int] | None) -> None:
+        """Release every owned lock before propagating cancellation or failure."""
+        cancellation: asyncio.CancelledError | None = None
+        failure: Exception | None = None
+        for lock in locks:
+            if lock is None:
+                continue
+            try:
+                await self._run_io(self._release_lock, lock)
+            except asyncio.CancelledError as exc:
+                cancellation = cancellation or exc
+            except Exception as exc:
+                failure = failure or exc
+        if cancellation is not None:
+            raise cancellation
+        if failure is not None:
+            raise failure
 
     async def _acquire_lock_async(self, scope: str) -> tuple[Any, int]:
         """Acquire a lock without leaking it when task cancellation wins the race."""

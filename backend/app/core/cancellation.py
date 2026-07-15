@@ -24,13 +24,11 @@ async def await_cancellation_resistant(
                 return task.result()
 
 
-async def run_blocking_cancellation_resistant(
-    function: Callable[BlockingParameters, CancellationResult],
-    *args: BlockingParameters.args,
-    **kwargs: BlockingParameters.kwargs,
+async def await_completion_preserving_cancellation(
+    awaitable: Awaitable[CancellationResult],
 ) -> CancellationResult:
-    """Run blocking I/O to completion while preserving caller cancellation."""
-    task = asyncio.create_task(asyncio.to_thread(function, *args, **kwargs))
+    """Finish an awaitable but preserve cancellation as the caller result."""
+    task = asyncio.ensure_future(awaitable)
     try:
         return await asyncio.shield(task)
     except asyncio.CancelledError as cancellation:
@@ -39,3 +37,14 @@ async def run_blocking_cancellation_resistant(
         except BaseException:
             raise cancellation from None
         raise
+
+
+async def run_blocking_cancellation_resistant(
+    function: Callable[BlockingParameters, CancellationResult],
+    *args: BlockingParameters.args,
+    **kwargs: BlockingParameters.kwargs,
+) -> CancellationResult:
+    """Run blocking I/O to completion while preserving caller cancellation."""
+    return await await_completion_preserving_cancellation(
+        asyncio.to_thread(function, *args, **kwargs)
+    )
