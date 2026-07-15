@@ -146,7 +146,7 @@ class ExternalServiceAdapterFactory(Generic[AdapterT]):
         if sanitized_error is not None:
             raise sanitized_error from None
         if construction_validation_failed:
-            raise ExternalServiceConfigurationError(expected_identity)
+            raise ExternalServiceConfigurationError(expected_identity) from None
 
         if not identity_matches:
             raise ExternalServiceAdapterIdentityMismatchError(expected_identity)
