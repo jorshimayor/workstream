@@ -54,6 +54,9 @@ Workstream is how Flow measures, certifies, and coordinates useful human-agent w
 - Every non-trivial task starts with the smallest applicable loop artifact: an initiative plan for large work, or a chunk contract for bounded work.
 - Do not implement a chunk until its allowed files, not-allowed changes, acceptance criteria, risk class, verification commands, and required reviewers are explicit.
 - Do not begin the next chunk automatically after finishing the current chunk.
+- Merge-intent schema v2 may name only a successor in the same initiative. Use
+  a null successor when no same-initiative chunk is declared; cross-initiative
+  priority remains a human-owned work-queue decision.
 - Every implementation or specification chunk must receive internal sub-agent review before external PR review is treated as sufficient.
 - Generated commits on `automation/loop-memory` are deterministic process output, not implementation or specification chunks. They do not require reviewer fanout, a second human approval, or a PR. This exception does not apply to `main`, workflow code, generator code, policies, or hand-edited memory.
 - Required internal reviewer tracks are senior engineering, QA/test, security/auth, and product/ops unless the chunk is explicitly unrelated to that track.

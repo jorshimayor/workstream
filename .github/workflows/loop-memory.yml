@@ -24,7 +24,8 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GITHUB_TOKEN: ${{ github.token }}
-      MERGE_SHA: ${{ github.event_name == 'push' && github.sha || github.event.client_payload.merge_sha }}
+      EVENT_NAME: ${{ github.event_name }}
+      EVENT_SHA: ${{ github.event_name == 'push' && github.sha || github.event.client_payload.merge_sha }}
       STATE_BRANCH: automation/loop-memory
 
     steps:
@@ -32,6 +33,30 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+          ref: main
+
+      - name: Resolve trusted protected-main target
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "${EVENT_SHA}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Invalid event SHA." >&2
+            exit 1
+          fi
+          git fetch --no-tags origin \
+            "+refs/heads/main:refs/remotes/origin/main"
+          target_sha=$(git rev-parse --verify refs/remotes/origin/main)
+          if [[ ! "${target_sha}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Cannot resolve protected main." >&2
+            exit 1
+          fi
+          target_sha=$(python3 scripts/update_post_merge_memory.py resolve-target \
+            --repository-root . \
+            --event-name "${EVENT_NAME}" \
+            --event-sha "${EVENT_SHA}" \
+            --current-main-sha "${target_sha}")
+          git checkout --detach "${target_sha}"
+          echo "TARGET_SHA=${target_sha}" >> "${GITHUB_ENV}"
 
       - name: Prepare generated state branch
         id: state
@@ -65,8 +90,8 @@ jobs:
         run: |
           set -euo pipefail
           state_dir="${{ steps.state.outputs.state_dir }}"
-          if [[ ! "${MERGE_SHA}" =~ ^[0-9a-f]{40}$ ]]; then
-            echo "Invalid merge SHA." >&2
+          if [[ ! "${TARGET_SHA}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Invalid protected-main target SHA." >&2
             exit 1
           fi
           current_sha=""
@@ -79,7 +104,7 @@ jobs:
           plan_args=(
             plan-commits
             --repository-root .
-            --target-sha "${MERGE_SHA}"
+            --target-sha "${TARGET_SHA}"
           )
           if [[ -n "${current_sha}" ]]; then
             plan_args+=(--current-sha "${current_sha}")
@@ -104,7 +129,9 @@ jobs:
           python3 scripts/update_post_merge_memory.py verify-state \
             --state-root "${state_dir}" \
             --public-key .agent-loop/keys/loop-memory-signing-public.pem \
-            --expected-main-sha "${MERGE_SHA}"
+            --expected-main-sha "${TARGET_SHA}"
+          python3 scripts/check_loop_memory_state.py \
+            --state-root "${state_dir}"
 
       - name: Commit generated state branch
         shell: bash

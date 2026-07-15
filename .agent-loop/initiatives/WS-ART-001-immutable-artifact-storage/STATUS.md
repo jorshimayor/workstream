@@ -2,8 +2,9 @@
 
 ## Current State
 
-Original planning merged through PR #97 and artifact/LocalStorage foundation
-merged through PR #101. No artifact implementation chunk is active.
+Original planning merged through PR #97, artifact/LocalStorage foundation
+merged through PR #101, and the AWS-first object-storage amendment merged
+through PR #120 as `4408256`. No artifact implementation chunk is active.
 
 The Flow Node-focused amendment candidate `6cc422d` passed deterministic checks
 but failed internal review on recovery/API completeness. Before repair, the user
@@ -22,39 +23,19 @@ approval or reusable evidence. Its source remains on branch
 
 ## Active Work
 
-`WS-ART-001-OBJECT-STORAGE-AMENDMENT` is planning-only. It updates intent,
-architecture, ADR/spec, chunk contracts, durable memory, and deterministic
-stale-contract protection. It does not edit runtime code, configure AWS S3,
-operate Flow Node, add a deferred provider, or activate artifact routes.
+None. `WS-ART-001-02A1` remains an inactive candidate requiring a separate
+explicit user start.
 
 ## Next Proposed Chunk
 
-`WS-ART-001-02A1` is proposed after this amendment merges and the user starts it
-explicitly. It installs only the shared typed external-service adapter/factory
-foundation. `02A2` adds committed-source preparation and narrows LocalStorage
-internals without changing the active port. `02A3` performs the atomic
+`WS-ART-001-02A1` is proposed only after the user starts it explicitly. It
+installs the shared typed external-service adapter/factory foundation. `02A2`
+adds committed-source preparation and narrows LocalStorage internals without
+changing the active port. `02A3` performs the atomic
 ArtifactStore v2/LocalStorage/schema cut and removes `flow_node`. `02B1` then
 owns MinIO and AWS S3. There is no active R2 chunk.
 
 ## Gate
 
-Merge SHA `1545d9aa37329c13efa53f7ad9076ffca1fbfaf6` received every
-required internal track after `main` advanced through AUTH-05B PR #119: senior
-engineering, architecture, QA/test, security/auth, product/ops, reuse/dedup, CI
-integrity, test delta, and docs. Valid evidence/status findings are closed in
-the permitted post-review files. Every reviewer used `gpt-5.5` with high
-reasoning and every reviewer session is closed.
-
-Deterministic proof passes: Ruff; stale artifact, authorization, and Workstream
-wording scans; loop-memory state; 75 changed Markdown links; diff hygiene; the
-runtime-scope guard; and 44 agent-gate regression tests in a PEP 668-safe,
-hash-pinned temporary environment.
-
-Evidence:
-
-- `reviews/WS-ART-001-OBJECT-STORAGE-AMENDMENT-internal-review-evidence.md`
-- `reviews/WS-ART-001-OBJECT-STORAGE-AMENDMENT-pr-trust-bundle.md`
-
-The current gate is external review and explicit human merge approval. GitHub
-checks and CodeRabbit remain separate from internal review. Do not merge without
-the user's approval, and do not start `WS-ART-001-02A1` automatically.
+PR #120 is merged. No later artifact chunk starts automatically. The next
+artifact event requires an explicit user start for `WS-ART-001-02A1`.

@@ -60,24 +60,21 @@ The user requested action/resource catalogue reconciliation before AUTH-05B.
 That docs-only work passed required internal reviews, Backend, Agent Gates, and
 CodeRabbit; explicit human approval merged PR #117 as `4c5d4fc` on 2026-07-14.
 Its post-merge memory merged through PR #118 as `eba7e2b`. AUTH-05B's repaired
-L1 plan passed before runtime edits. Implementation, repair, focused evidence,
-and all required internal review tracks now pass at reviewed runtime SHA
-`e083890`; PR publication is pending.
+L1 plan, implementation, repair, focused evidence, and required review tracks
+passed before explicit human approval merged PR #119 as `ad71c7e`.
 
 ## Active planning chunk
 
-None. AUTH-05B implementation is internally reviewed under its approved
-repaired contract.
+None. `WS-AUTH-001-06` remains an inactive candidate requiring a separate
+explicit user start.
 
 ## Active implementation chunk
 
-`WS-AUTH-001-05B` is implemented and internally reviewed. GitHub checks,
-CodeRabbit, and explicit human review remain pending.
+None.
 
 ## Current implementation branch
 
-`codex/ws-auth-001-05b-idempotency-invalidation` in
-`/home/abiorh/flow/workstream-authorization-service`.
+None recorded by this authored status file.
 
 ## Chunk status
 
@@ -93,7 +90,7 @@ CodeRabbit, and explicit human review remain pending.
 | `WS-AUTH-001-05` | Split | `codex/ws-auth-001-05-authority-evidence` | - | Parent split before implementation into 05A and 05B. |
 | `WS-AUTH-001-05A` | Merged | `codex/ws-auth-001-05-authority-evidence` | #115 | Merged as `8e1cde6`; reviewed code `ea16fd8`; final branch head `d023952`. |
 | `WS-AUTH-001-CAT` | Merged | `codex/ws-auth-001-action-catalogue-reconciliation` | #117 | Merged as `4c5d4fc`; final branch head `5b4ec96`. |
-| `WS-AUTH-001-05B` | In review | `codex/ws-auth-001-05b-idempotency-invalidation` | - | Reviewed runtime SHA `e083890`; PR publication pending. |
+| `WS-AUTH-001-05B` | Merged | `codex/ws-auth-001-05b-idempotency-invalidation` | #119 | Merged as `ad71c7e`; reviewed runtime SHA `e083890`. |
 | `WS-AUTH-001-06` | Proposed | - | - | Canonical actor profile and identity link. |
 | `WS-AUTH-001-07` | Proposed | - | - | Authorization kernel and permissions. |
 | `WS-AUTH-001-08` | Proposed | - | - | Bootstrap and administrative grants. |

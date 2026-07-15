@@ -15,3 +15,5 @@
 | A required check is missing or failed despite merge | High | Record observed conclusions and mark generated integrity as attention required; never report missing evidence as passed. |
 | Automation permissions or transient GitHub failure prevent update | Medium | Preserve idempotent trusted-default-branch `repository_dispatch` replay by exact merge SHA; do not hand-edit generated state. |
 | Generated branch is edited manually | High | Declare workflow-only ownership, validate JSON/render/ledger agreement, and reject conflicting replay state. |
+| One initiative declares another initiative's next lifecycle gate | High | Schema v2 requires a non-null next chunk to share the completed initiative prefix; global priority remains human-owned. |
+| Invalid schema-v1 state contaminates the corrected ledger | Critical | Reject it completely, clear only fixed generated paths, and bootstrap schema v2 from WS-ENG-001-03. |
