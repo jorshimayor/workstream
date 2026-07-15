@@ -46,6 +46,7 @@ _SCRATCH_FILE = re.compile(r"^prep_([0-9a-f]{32})\.bin$")
 _LEDGER_TEMP_FILE = re.compile(r"^\.ledger\.[0-9a-f]{32}\.tmp$")
 _ROOT_MARKER = ".workstream-artifact-scratch-v1"
 _ROOT_MARKER_PREFIX = b"workstream-artifact-scratch-v1:"
+_LEDGER_LOCK_POLL_SECONDS = 0.01
 
 
 class ArtifactScratchCapacityError(ArtifactStoreUnavailableError):
@@ -174,6 +175,15 @@ class _AllocationCleanupRequired(ArtifactScratchIntegrityError):
         self.reservation = reservation
 
 
+class _DescriptorOwnershipUncertain(ArtifactScratchIntegrityError):
+    """Carry a reservation whose raw descriptor close cannot be proven."""
+
+    def __init__(self, reservation: _ScratchReservation) -> None:
+        """Preserve quota ownership until the process is restarted."""
+        super().__init__("artifact descriptor ownership is uncertain")
+        self.reservation = reservation
+
+
 class ArtifactScratchManager:
     """Coordinate bounded scratch files across API and Celery processes."""
 
@@ -186,6 +196,7 @@ class ArtifactScratchManager:
         self._in_flight_operations = 0
         self._closed = False
         self._owned_reservations: dict[str, _ScratchReservation] = {}
+        self._poisoned_reservations: dict[str, _ScratchReservation] = {}
         self._pending_allocation_releases: dict[str, _ScratchReservation] = {}
         self._pending_readers: dict[int, BinaryIO] = {}
         expected_root = self._initialize_root(root)
@@ -217,7 +228,11 @@ class ArtifactScratchManager:
     @property
     def pending_cleanup_count(self) -> int:
         """Return manager-owned cleanup retained before service handoff."""
-        return len(self._pending_allocation_releases) + len(self._pending_readers)
+        return (
+            len(self._pending_allocation_releases)
+            + len(self._pending_readers)
+            + len(self._poisoned_reservations)
+        )
 
     async def allocate(self) -> tuple[_ScratchReservation, int]:
         """Reserve the full hard maximum before creating one private file."""
@@ -228,6 +243,9 @@ class ArtifactScratchManager:
             except asyncio.CancelledError as cancellation:
                 try:
                     reservation, descriptor = await await_cancellation_resistant(task)
+                except _DescriptorOwnershipUncertain as exc:
+                    self._retain_uncertain_descriptor(exc.reservation)
+                    raise cancellation from None
                 except _AllocationCleanupRequired as exc:
                     self._pending_allocation_releases[exc.reservation.reservation_id] = (
                         exc.reservation
@@ -235,11 +253,14 @@ class ArtifactScratchManager:
                     raise cancellation from None
                 except BaseException:
                     raise cancellation from None
+                descriptor_ownership_uncertain = False
                 try:
                     os.close(descriptor)
                 except BaseException:
-                    pass
-                finally:
+                    if not self._descriptor_is_closed(descriptor):
+                        self._retain_uncertain_descriptor(reservation)
+                        descriptor_ownership_uncertain = True
+                if not descriptor_ownership_uncertain:
                     try:
                         await await_cancellation_resistant(
                             asyncio.to_thread(self._release_sync, reservation)
@@ -253,6 +274,9 @@ class ArtifactScratchManager:
                 self._pending_allocation_releases[exc.reservation.reservation_id] = (
                     exc.reservation
                 )
+                raise
+            except _DescriptorOwnershipUncertain as exc:
+                self._retain_uncertain_descriptor(exc.reservation)
                 raise
             self._owned_reservations[reservation.reservation_id] = reservation
             return reservation, descriptor
@@ -270,17 +294,32 @@ class ArtifactScratchManager:
                 try:
                     reader = await await_cancellation_resistant(task)
                     await await_cancellation_resistant(asyncio.to_thread(reader.close))
+                except _DescriptorOwnershipUncertain as exc:
+                    self._retain_uncertain_descriptor(exc.reservation)
+                    raise cancellation from None
                 except BaseException:
                     if reader is not None:
                         self._pending_readers[id(reader)] = reader
                     raise cancellation from None
                 raise
+            except _DescriptorOwnershipUncertain as exc:
+                self._retain_uncertain_descriptor(exc.reservation)
+                raise
 
     async def release(self, reservation: _ScratchReservation) -> None:
         """Remove one scratch file and reservation under the ledger lock."""
         with self._tracked_operation():
-            await self._run_io(self._release_sync, reservation)
-            self._owned_reservations.pop(reservation.reservation_id, None)
+            if reservation.reservation_id in self._poisoned_reservations:
+                raise ArtifactScratchIntegrityError(
+                    "artifact descriptor ownership is uncertain"
+                )
+
+            async def release_and_forget() -> None:
+                """Durably release and clear local ownership as one handoff."""
+                await self._run_io(self._release_sync, reservation)
+                self._owned_reservations.pop(reservation.reservation_id, None)
+
+            await await_completion_preserving_cancellation(release_and_forget())
 
     async def usage(self) -> ArtifactScratchUsage:
         """Return aggregate reservation facts without filenames or paths."""
@@ -301,7 +340,14 @@ class ArtifactScratchManager:
         if type(now) is not int or now < 0:
             raise ValueError("scratch cleanup time is invalid")
         with self._tracked_operation():
-            cleaned_reservation_ids = await self._run_io(self._cleanup_stale_sync, now)
+            protected_reservation_ids = frozenset(
+                self._owned_reservations | self._poisoned_reservations
+            )
+            cleaned_reservation_ids = await self._run_io(
+                self._cleanup_stale_sync,
+                now,
+                protected_reservation_ids,
+            )
             for reservation_id in cleaned_reservation_ids:
                 self._pending_allocation_releases.pop(reservation_id, None)
             return len(cleaned_reservation_ids)
@@ -379,6 +425,19 @@ class ArtifactScratchManager:
         finally:
             with self._lifecycle_lock:
                 self._in_flight_operations -= 1
+
+    def _retain_uncertain_descriptor(self, reservation: _ScratchReservation) -> None:
+        """Keep permanent process-local custody after an ambiguous raw close."""
+        self._poisoned_reservations[reservation.reservation_id] = reservation
+
+    @staticmethod
+    def _descriptor_is_closed(descriptor: int) -> bool:
+        """Return whether a failed close nevertheless invalidated the descriptor."""
+        try:
+            os.fstat(descriptor)
+        except OSError as exc:
+            return exc.errno == errno.EBADF
+        return False
 
     def _initialize_root(self, configured_root: Path) -> os.stat_result:
         """Create or validate the dedicated private scratch-root directory."""
@@ -641,8 +700,9 @@ class ArtifactScratchManager:
                     descriptor = None
                     try:
                         os.close(descriptor_to_close)
-                    except BaseException:
-                        pass
+                    except BaseException as close_error:
+                        if not self._descriptor_is_closed(descriptor_to_close):
+                            raise _DescriptorOwnershipUncertain(reservation) from close_error
                 try:
                     if file_created:
                         self._unlink_regular_optional(filename)
@@ -673,11 +733,9 @@ class ArtifactScratchManager:
                 {"version": _LEDGER_VERSION, "reservations": previous_entries}
             )
         except BaseException as exc:
-            current = self._read_ledger()["reservations"]
-            if any(entry["reservation_id"] == reservation_id for entry in current):
-                raise ArtifactScratchIntegrityError(
-                    "failed artifact scratch reservation could not be rolled back"
-                ) from exc
+            raise ArtifactScratchIntegrityError(
+                "failed artifact scratch reservation could not be rolled back"
+            ) from exc
         current = self._read_ledger()["reservations"]
         if any(entry["reservation_id"] == reservation_id for entry in current):
             raise ArtifactScratchIntegrityError(
@@ -709,39 +767,40 @@ class ArtifactScratchManager:
                 self._assert_private_file_descriptor(read_descriptor, expected_mode=0o400)
                 os.unlink(reservation.filename, dir_fd=self._files_fd)
                 os.fsync(self._files_fd)
-        except BaseException:
+        except BaseException as operation_error:
             if read_descriptor is not None:
                 descriptor_to_close = read_descriptor
                 read_descriptor = None
-                try:
-                    os.close(descriptor_to_close)
-                except BaseException:
-                    pass
-            try:
-                os.close(descriptor)
-            except BaseException:
-                pass
-            raise
-        try:
-            os.close(descriptor)
-        except BaseException:
+                self._close_raw_descriptor_sync(reservation, descriptor_to_close)
+            self._close_raw_descriptor_sync(reservation, descriptor)
+            raise operation_error
+        close_error = self._close_raw_descriptor_sync(reservation, descriptor)
+        if close_error is not None:
             if read_descriptor is not None:
                 descriptor_to_close = read_descriptor
                 read_descriptor = None
-                try:
-                    os.close(descriptor_to_close)
-                except BaseException:
-                    pass
-            raise
+                self._close_raw_descriptor_sync(reservation, descriptor_to_close)
+            raise close_error
         assert read_descriptor is not None
         try:
             return os.fdopen(read_descriptor, "rb", buffering=0)
-        except BaseException:
-            try:
-                os.close(read_descriptor)
-            except BaseException:
-                pass
-            raise
+        except BaseException as operation_error:
+            self._close_raw_descriptor_sync(reservation, read_descriptor)
+            raise operation_error
+
+    def _close_raw_descriptor_sync(
+        self,
+        reservation: _ScratchReservation,
+        descriptor: int,
+    ) -> BaseException | None:
+        """Close once and poison custody when descriptor invalidation is unproven."""
+        try:
+            os.close(descriptor)
+        except BaseException as close_error:
+            if not self._descriptor_is_closed(descriptor):
+                raise _DescriptorOwnershipUncertain(reservation) from close_error
+            return close_error
+        return None
 
     def _release_sync(self, reservation: _ScratchReservation) -> None:
         """Durably delete scratch bytes before removing their ledger owner."""
@@ -753,6 +812,7 @@ class ArtifactScratchManager:
                 entry for entry in entries if entry["reservation_id"] == reservation.reservation_id
             ]
             if not matching:
+                os.fsync(self._root_fd)
                 return
             if len(matching) != 1 or matching[0]["filename"] != reservation.filename:
                 raise ArtifactScratchIntegrityError("artifact scratch reservation is invalid")
@@ -783,13 +843,23 @@ class ArtifactScratchManager:
                 )
             )
 
-    def _cleanup_stale_sync(self, now_unix_ns: int) -> tuple[str, ...]:
+    def _cleanup_stale_sync(
+        self,
+        now_unix_ns: int,
+        protected_reservation_ids: frozenset[str],
+    ) -> tuple[str, ...]:
         """Durably remove expired files before deleting their ledger entries."""
         with self._locked_ledger():
             ledger = self._read_ledger()
             entries = list(ledger["reservations"])
             stale = sorted(
-                (entry for entry in entries if entry["expires_at_unix_ns"] <= now_unix_ns),
+                (
+                    entry
+                    for entry in entries
+                    if entry["expires_at_unix_ns"] <= now_unix_ns
+                    and entry["reservation_id"] not in protected_reservation_ids
+                    and not self._owner_process_is_alive(entry["owner_pid"])
+                ),
                 key=lambda entry: entry["reservation_id"],
             )
             for entry in stale:
@@ -806,17 +876,42 @@ class ArtifactScratchManager:
                 )
             return tuple(entry["reservation_id"] for entry in stale)
 
+    @staticmethod
+    def _owner_process_is_alive(owner_pid: int) -> bool:
+        """Conservatively retain expired custody while its owner PID exists."""
+        try:
+            os.kill(owner_pid, 0)
+        except ProcessLookupError:
+            return False
+        except PermissionError:
+            return True
+        return True
+
     @contextmanager
     def _locked_ledger(self) -> Iterator[None]:
         """Hold the cross-process ledger lock for one complete state transition."""
         flags = os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0)
         descriptor = os.open(".ledger.lock", flags, 0o600, dir_fd=self._root_fd)
+        locked = False
         try:
             self._assert_private_file_descriptor(descriptor, expected_mode=0o600)
-            fcntl.flock(descriptor, fcntl.LOCK_EX)
+            deadline = time.monotonic() + self._limits.total_deadline_seconds
+            while True:
+                try:
+                    fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    locked = True
+                    break
+                except BlockingIOError:
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        raise ArtifactPreparationDeadlineError(
+                            "artifact scratch ledger lock deadline exceeded"
+                        ) from None
+                    time.sleep(min(_LEDGER_LOCK_POLL_SECONDS, remaining))
             yield
         finally:
-            fcntl.flock(descriptor, fcntl.LOCK_UN)
+            if locked:
+                fcntl.flock(descriptor, fcntl.LOCK_UN)
             os.close(descriptor)
 
     def _read_ledger_optional(self) -> dict[str, Any] | None:
@@ -1213,17 +1308,22 @@ class ArtifactPreparationService:
     ) -> bool:
         """Close unhanded ownership or retain it for explicit retry."""
         failed = False
-        try:
-            if pending.descriptor is not None:
-                descriptor = pending.descriptor
-                pending.descriptor = None
+        if pending.descriptor is not None:
+            descriptor = pending.descriptor
+            pending.descriptor = None
+            try:
                 await self._close_descriptor(descriptor)
-            if pending.reader is not None:
-                reader = pending.reader
+            except Exception:
+                if not self._manager._descriptor_is_closed(descriptor):
+                    self._manager._retain_uncertain_descriptor(pending.reservation)
+                failed = True
+        if pending.reader is not None:
+            reader = pending.reader
+            try:
                 await self._run_io(reader.close)
                 pending.reader = None
-        except Exception:
-            failed = True
+            except Exception:
+                failed = True
         try:
             await self._manager.release(pending.reservation)
         except Exception:
