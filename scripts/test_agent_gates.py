@@ -1192,7 +1192,7 @@ def test_pr_templates_share_merge_intent_contract() -> None:
         text = path.read_text(encoding="utf-8")
         start = text.index("Add exactly one new schema-v2 merge-intent file")
         end = text.index("\n## Goal", start)
-        return " ".join(text[start:end].replace("Trusted ", "").split()).lower()
+        return " ".join(text[start:end].split())
 
     assert merge_intent_contract(
         ROOT / ".agent-loop/templates/PR_TRUST_BUNDLE.md"
