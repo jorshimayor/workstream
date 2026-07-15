@@ -124,17 +124,18 @@ class ExternalServiceAdapterFactory(Generic[AdapterT]):
         if constructor is None:
             raise UnknownExternalServiceProviderError(expected_identity)
 
-        construction_failed = False
+        construction_validation_failed = False
         try:
             adapter = constructor()
+            identity_matches = getattr(adapter, "identity", None) == expected_identity
         except ExternalServiceAdapterError:
             raise
         except Exception:
-            construction_failed = True
-        if construction_failed:
+            construction_validation_failed = True
+        if construction_validation_failed:
             raise ExternalServiceConfigurationError(expected_identity)
 
-        if getattr(adapter, "identity", None) != expected_identity:
+        if not identity_matches:
             raise ExternalServiceAdapterIdentityMismatchError(expected_identity)
         return adapter
 

@@ -81,8 +81,8 @@ Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.
 
 `WS-ART-001-01` and the AWS-first planning amendment are merged. R2 and Flow
-Node are deferred. Do not start 02A1 until the user gives a separate explicit
-start signal.
+Node are deferred. The user explicitly started 02A1 on 2026-07-15; do not start
+02A2 automatically.
 
 Coverage work proceeds independently in its own worktree and is not owned by
 this AUTH queue update.

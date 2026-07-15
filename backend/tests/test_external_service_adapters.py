@@ -173,6 +173,30 @@ def test_factory_maps_untrusted_constructor_failure_without_retaining_it() -> No
     assert set(vars(error)) == {"identity"}
 
 
+def test_factory_maps_identity_validation_failure_without_retaining_it() -> None:
+    """Secret-bearing identity access failures cannot escape factory construction."""
+    secret = "password=do-not-retain"
+
+    class BrokenIdentityAdapter:
+        @property
+        def identity(self) -> ExternalServiceAdapterIdentity:
+            raise RuntimeError(secret)
+
+    factory = ExternalServiceAdapterFactory[BrokenIdentityAdapter]("artifact_store")
+    factory.register("local", BrokenIdentityAdapter)
+
+    with pytest.raises(ExternalServiceConfigurationError) as captured:
+        factory.create("local")
+
+    error = captured.value
+    assert error.identity == ExternalServiceAdapterIdentity("artifact_store", "local")
+    assert secret not in str(error)
+    assert secret not in repr(error)
+    assert error.__cause__ is None
+    assert error.__context__ is None
+    assert set(vars(error)) == {"identity"}
+
+
 def test_factory_preserves_already_sanitized_root_errors() -> None:
     """Capability constructors may return one stable shared failure unchanged."""
     identity = ExternalServiceAdapterIdentity("artifact_store", "local")
