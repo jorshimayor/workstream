@@ -21,9 +21,10 @@ and joint REV-13 activation obligations without importing sibling code.
 
 ## Dependency state at discovery
 
-- Current WS-REV HEAD `3e09e99` contains trusted main `e9d72a1`; the pull was a
-  clean merge and retained every user-owned reference change. Main now includes
-  merged AUTH-07A plus the shared ADR-0014 `ExternalServiceAdapter` foundation.
+- Planning base merge `3e09e99` contains trusted main `e9d72a1`; the pull was a
+  clean merge and retained every user-owned reference change. Reviewed planning
+  revision `706158d` builds on that base. Main now includes merged AUTH-07A plus
+  the shared ADR-0014 `ExternalServiceAdapter` foundation.
 - WS-AUTH authorization kernel, grants, product cutovers, and final proof are
   still required before WS-REV runtime work.
 - Merged AUTH-07A commit `3ab25cf` was reviewed as planning input: 74
@@ -52,10 +53,10 @@ track passes after fixes with no residual blocking finding. Planning is
 human-approved for PR publication. D6, reviewer-current precedence, coherent
 joint activation, and the overall chunk sequence were approved on 2026-07-15.
 
-The internal-review evidence file is complete at the reviewer/content level.
-Publication binds that evidence to the approved planning commit and verifies
-SHA freshness before the branch is pushed. User-owned reference-file changes
-remain outside this chunk and outside its publication commits.
+The internal-review evidence file is complete and bound to approved planning
+commit `706158d8078da508eb022749fb011db5725a45ef`. SHA freshness is verified
+before the branch is pushed. User-owned reference-file changes remain outside
+this chunk and outside its publication commits.
 
 ## Human clarification recorded
 

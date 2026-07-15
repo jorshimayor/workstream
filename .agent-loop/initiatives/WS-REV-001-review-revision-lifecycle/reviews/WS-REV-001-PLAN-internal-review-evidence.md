@@ -10,7 +10,7 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: 3e09e994d500cd45916b449d7bc4f13b7623cdcc
+Reviewed code SHA: 706158d8078da508eb022749fb011db5725a45ef
 
 Trusted main SHA: e9d72a16d95e704f2af514a97d37623940854d95
 
