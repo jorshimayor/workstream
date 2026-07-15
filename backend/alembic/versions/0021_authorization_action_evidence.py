@@ -35,7 +35,8 @@ artifact.audit.read artifact.guide_source.ingest artifact.upload_session.create
 artifact.upload_session.read artifact.upload_item.write artifact.upload_session.seal
 artifact.upload_session.cancel artifact.upload_session.expire artifact.binding.create
 artifact.verification.execute artifact.pending_work.scan artifact.put_attempt.resolve
-artifact.guide_source.read artifact.checker_input.materialize artifact.checker_output.write""".split()
+artifact.guide_source.read artifact.checker_input.materialize artifact.checker_output.write
+review.queue.override""".split()
 
 PERMISSIONS = HISTORICAL_PERMISSIONS + NEW_PERMISSIONS
 
@@ -45,6 +46,26 @@ ACTION_PERMISSION_PAIRS = (
     ("operations.task.start_override", "operations.task.start_override"),
     ("operations.submission_gate.repair", "operations.submission_gate.repair"),
     ("operations.checker.retry", "operations.checker.retry"),
+    ("submission.create", "submission.create"),
+    ("review.queue.read", "review.queue.read"),
+    ("review.queue.inspect", "review.queue.inspect"),
+    ("review.claim", "review.claim"),
+    ("review.release", "review.release"),
+    ("review.decline_preference", "review.decline_preference"),
+    ("review.preference_expiry.run", "operations.timer.run"),
+    ("review.lease_expiry.run", "operations.timer.run"),
+    ("review.context.read", "submission.read_for_review"),
+    ("review.chain.read", "review.chain.read"),
+    ("review.finding_evidence.ingest", "review.decision"),
+    ("review.decision", "review.decision"),
+    ("review.finding_response_evidence.ingest", "submission.create"),
+    ("review.lease.force_release", "review.lease.force_release"),
+    ("review.queue.routing.override", "review.queue.override"),
+    ("review.queue.routing.correct", "review.queue.override"),
+    ("review.queue.close", "review.queue.override"),
+    ("review.reconcile.run", "operations.reconcile.run"),
+    ("review.artifact_reference.reconcile", "operations.reconcile.run"),
+    ("review.projection.rebuild", "operations.projection.rebuild"),
     ("artifact.binding.read", "artifact.binding.read"),
     ("artifact.replica.read", "artifact.replica.read"),
     ("artifact.receipt.read", "artifact.receipt.read"),

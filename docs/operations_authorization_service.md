@@ -477,7 +477,7 @@ resource loader, lifecycle guards, negative tests, and evidence path exist.
 
 ### Catalogue And Action-Evidence Staging
 
-AUTH-07A installs exactly 73 PermissionIds and 30 planned ActionIds. Planned
+AUTH-07A installs exactly 74 PermissionIds and 50 planned ActionIds. Planned
 entries contain only action, permission, owner, and availability; they are not
 executable and must not receive deployment configuration, principals, resource
 facts, or guards. Startup validation failure is a release blocker, not a reason
@@ -490,6 +490,20 @@ for routine diagnosis. Every action must carry its catalogue-mapped PermissionId
 and every permission added after migration `0018` must carry one of its mapped
 actions. Planned actions can record bounded denial evidence but cannot record an
 allowed decision through the typed writer.
+
+The historical permission set remains exactly 49 values. The post-`0020` set
+contains exactly 25 values, including `review.queue.override`; do not derive
+historical status from identifier prefixes. All submission/review rows remain
+planned. Initial and revision submission share `submission.create`, and no
+revision-specific permission or preparation action exists.
+
+Review code must consume the request-scoped public
+`AuthorizationService.require(action_id, typed_resource_context, uow=...)`
+boundary. It must not query grants, import AUTH persistence, select raw
+PermissionIds, or implement permission unions. Artifact recovery remains the
+ART-owned `artifact.verification_job.retry` action through
+`ArtifactOperatorRecoveryPort`; shared outbox dispatch/retry remains outside
+REV ownership.
 
 Downgrade is allowed only while every action ID remains null and no permission
 outside migration `0018`'s historical 49-value set exists in the decision,

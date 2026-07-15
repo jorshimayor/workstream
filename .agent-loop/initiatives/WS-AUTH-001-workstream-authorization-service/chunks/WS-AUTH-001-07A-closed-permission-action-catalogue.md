@@ -6,9 +6,10 @@
 
 ## Goal
 
-Create one closed typed catalogue for all 73 approved PermissionIds and the
-exact reserved self/recovery/artifact ActionIds, then add typed and PostgreSQL action
-evidence parity without making any action executable.
+Create one closed typed catalogue for all 74 approved PermissionIds and the
+exact 50 reserved self, recovery, submission, review, and artifact ActionIds,
+then add typed and PostgreSQL action evidence parity without making any action
+executable.
 
 ## Why this chunk exists
 
@@ -69,6 +70,26 @@ are invalid. Every row has `availability=planned` and cannot authorize.
 | `operations.task.start_override` | `operations.task.start_override` | `WS-AUTH-001-13` | `planned` |
 | `operations.submission_gate.repair` | `operations.submission_gate.repair` | `WS-AUTH-001-14` | `planned` |
 | `operations.checker.retry` | `operations.checker.retry` | `WS-AUTH-001-14` | `planned` |
+| `submission.create` | `submission.create` | `WS-AUTH-001-14` | `planned` |
+| `review.queue.read` | `review.queue.read` | `WS-REV-001-05` | `planned` |
+| `review.queue.inspect` | `review.queue.inspect` | `WS-REV-001-05` | `planned` |
+| `review.claim` | `review.claim` | `WS-REV-001-06` | `planned` |
+| `review.release` | `review.release` | `WS-REV-001-06` | `planned` |
+| `review.decline_preference` | `review.decline_preference` | `WS-REV-001-06` | `planned` |
+| `review.preference_expiry.run` | `operations.timer.run` | `WS-REV-001-06` | `planned` |
+| `review.lease_expiry.run` | `operations.timer.run` | `WS-REV-001-06` | `planned` |
+| `review.context.read` | `submission.read_for_review` | `WS-REV-001-07` | `planned` |
+| `review.chain.read` | `review.chain.read` | `WS-REV-001-07` | `planned` |
+| `review.finding_evidence.ingest` | `review.decision` | `WS-REV-001-07` | `planned` |
+| `review.decision` | `review.decision` | `WS-REV-001-08` | `planned` |
+| `review.finding_response_evidence.ingest` | `submission.create` | `WS-REV-001-09A` | `planned` |
+| `review.lease.force_release` | `review.lease.force_release` | `WS-REV-001-11` | `planned` |
+| `review.queue.routing.override` | `review.queue.override` | `WS-REV-001-11` | `planned` |
+| `review.queue.routing.correct` | `review.queue.override` | `WS-REV-001-11` | `planned` |
+| `review.queue.close` | `review.queue.override` | `WS-REV-001-11` | `planned` |
+| `review.reconcile.run` | `operations.reconcile.run` | `WS-REV-001-11` | `planned` |
+| `review.artifact_reference.reconcile` | `operations.reconcile.run` | `WS-REV-001-12` | `planned` |
+| `review.projection.rebuild` | `operations.projection.rebuild` | `WS-REV-001-12` | `planned` |
 | `artifact.binding.read` | `artifact.binding.read` | `WS-ART-001-02D` | `planned` |
 | `artifact.replica.read` | `artifact.replica.read` | `WS-ART-001-02D` | `planned` |
 | `artifact.receipt.read` | `artifact.receipt.read` | `WS-ART-001-02D` | `planned` |
@@ -101,11 +122,11 @@ owned by later chunks and are not registered here.
 
 ## Acceptance criteria
 
-- `PermissionId` is the single closed typed source for exactly the 73 approved
+- `PermissionId` is the single closed typed source for exactly the 74 approved
   values in `docs/spec_authorization_service.md`.
 - Existing audit validation consumes that source rather than maintaining a
   second permission literal set.
-- A frozen action catalogue contains exactly the 30 planned ActionIds above,
+- A frozen action catalogue contains exactly the 50 planned ActionIds above,
   with exact approved PermissionId mapping, owner, and availability.
 - Catalogue construction fails on duplicate or unknown actions, unknown
   permissions, invalid owners, invalid availability, missing approved entries,
@@ -118,22 +139,25 @@ owned by later chunks and are not registered here.
   historical rows as null, and constrains every non-null value to the registered
   ActionId set.
 - Typed validation and PostgreSQL enforce every non-null ActionId's exact
-  PermissionId mapping from the 30-row catalogue; an action cannot be persisted
+  PermissionId mapping from the 50-row catalogue; an action cannot be persisted
   with another registered permission.
 - Every PermissionId outside migration `0018`'s historical 49-value set requires
-  a non-null ActionId whose catalogue row maps to that PermissionId. The three
-  planned actions mapped to an existing PermissionId may still carry their
+  a non-null ActionId whose catalogue row maps to that PermissionId. The 20
+  planned actions mapped to a historical PermissionId may still carry their
   registered action while the historical permission remains valid without one
   for pre-`0021` event shapes.
 - A non-null `action_id` is valid only for `SensitiveAuthorizationAllowed` or
   `SensitiveAuthorizationDenied`; unrelated authority/lifecycle events must
   remain null.
 - Migration `0021` replaces the 49-value permission constraint with exact
-  73-value typed/PostgreSQL parity without changing historical values.
+  74-value typed/PostgreSQL parity without changing historical values. The
+  historical set remains the exact 49 identifiers from migration `0018`, and
+  `review.queue.override` is explicitly the 25th post-`0020` permission rather
+  than being inferred as historical by prefix.
 - `AuthorityAuditEventInput` admits a bounded registered `action_id`; unknown
   values and action/permission mismatches fail before rejected input can escape
   diagnostics.
-- Because all 30 actions remain `planned`, `AuthorityAuditEventInput` rejects
+- Because all 50 actions remain `planned`, `AuthorityAuditEventInput` rejects
   `SensitiveAuthorizationAllowed` when any of them is present. A planned action
   may be persisted only as bounded `SensitiveAuthorizationDenied` evidence;
   activation chunks own later allowed evidence.
@@ -152,11 +176,13 @@ owned by later chunks and are not registered here.
   both refusal predicates or changing constraints. Deterministic independent-
   session proof shows a concurrent insert cannot pass between the checks and
   destructive DDL.
-- Direct SQL proves unknown ActionIds and mismatched action/permission pairs
-  fail and every new permission without its mapped action fails. Direct-SQL
-  positive fixtures use denied evidence for every planned ActionId; denial-only
-  availability is tested at `AuthorityAuditEventInput`, not as a PostgreSQL
-  constraint.
+- Direct SQL accepts all 50 exact action/permission pairs as
+  `SensitiveAuthorizationDenied` and separately as
+  `SensitiveAuthorizationAllowed`, rejects all 50 wrong action/permission
+  pairs, and rejects all 25 new permissions without a mapped action. Typed
+  `AuthorityAuditEventInput` separately rejects allowed evidence for all 50
+  while they remain planned; PostgreSQL deliberately does not freeze
+  availability.
 - The canonical specification separates four-field planned registry metadata
   from later feature activation blueprints.
 - Operations docs cover startup catalogue failure, evidence inspection, and the
@@ -190,7 +216,7 @@ percent floor.
 
 ## Human review focus
 
-Review exact 73-permission parity, exact 30-action planned mapping, typed/SQL
+Review exact 74-permission parity, exact 50-action planned mapping, typed/SQL
 mapping enforcement, inability to record planned actions as allowed, audit
 privacy, PostgreSQL constraint parity, historical null preservation, and guarded
 downgrade.

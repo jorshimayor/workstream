@@ -10,6 +10,28 @@ human start.
 Implement the minimal request-scoped AuthorizationService and activate it only
 for canonical actor self-read and self-update.
 
+## Public feature interface
+
+The application dependency constructs one request-scoped
+`AuthorizationService` bound to the current `AuthorizationContext` and
+caller-owned `AsyncSession`. Feature application services call only:
+
+```python
+decision = await authorization_service.require(
+    action_id,
+    typed_resource_context,
+    uow=caller_session,
+)
+```
+
+The service returns and stages one bounded `AuthorizationDecision`; it never
+commits. It never accepts a raw `PermissionId`, candidate grant, guard, role, or
+caller-authored resource fact. The caller owns commit/rollback and mutation
+revalidation stays inside the same caller transaction. Feature modules own
+their typed ResourceContext composers and lifecycle invariants and may import
+only this public interface and closed AUTH types, never AUTH repositories,
+models, grant loaders, or private evaluator helpers.
+
 ## Risk routing
 
 - Risk class: L1
@@ -107,6 +129,9 @@ to 404. Feature-owned concealment matrices begin in their owning cutover chunks.
   PermissionId, allowed/denial code, resource reference, matched authority kind,
   revalidation status, request ID, and correlation ID.
 - Unknown permissions, unknown actions, and every planned action deny.
+- The public feature interface has the exact request-scoped `require` contract
+  above; import-boundary tests reject feature imports of AUTH persistence or
+  private evaluation helpers and reject raw permission/candidate/guard input.
 - System scope is not superuser authority.
 - Default human authority is exactly the two self candidates above. Token role
   changes do not alter either decision.

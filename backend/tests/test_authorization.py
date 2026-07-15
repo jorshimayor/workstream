@@ -93,7 +93,7 @@ def test_closed_permission_and_action_catalogue_is_exact_and_non_executable() ->
         artifact.upload_session.cancel artifact.upload_session.expire artifact.binding.create
         artifact.verification.execute artifact.pending_work.scan artifact.put_attempt.resolve
         artifact.guide_source.read artifact.checker_input.materialize
-        artifact.checker_output.write""".split()
+        artifact.checker_output.write review.queue.override""".split()
     )
     expected = {
         "actor.profile.read_self": ("actor.profile.read_self", "WS-AUTH-001-07B"),
@@ -101,6 +101,32 @@ def test_closed_permission_and_action_catalogue_is_exact_and_non_executable() ->
         "operations.task.start_override": ("operations.task.start_override", "WS-AUTH-001-13"),
         "operations.submission_gate.repair": ("operations.submission_gate.repair", "WS-AUTH-001-14"),
         "operations.checker.retry": ("operations.checker.retry", "WS-AUTH-001-14"),
+        "submission.create": ("submission.create", "WS-AUTH-001-14"),
+        "review.queue.read": ("review.queue.read", "WS-REV-001-05"),
+        "review.queue.inspect": ("review.queue.inspect", "WS-REV-001-05"),
+        "review.claim": ("review.claim", "WS-REV-001-06"),
+        "review.release": ("review.release", "WS-REV-001-06"),
+        "review.decline_preference": ("review.decline_preference", "WS-REV-001-06"),
+        "review.preference_expiry.run": ("operations.timer.run", "WS-REV-001-06"),
+        "review.lease_expiry.run": ("operations.timer.run", "WS-REV-001-06"),
+        "review.context.read": ("submission.read_for_review", "WS-REV-001-07"),
+        "review.chain.read": ("review.chain.read", "WS-REV-001-07"),
+        "review.finding_evidence.ingest": ("review.decision", "WS-REV-001-07"),
+        "review.decision": ("review.decision", "WS-REV-001-08"),
+        "review.finding_response_evidence.ingest": (
+            "submission.create",
+            "WS-REV-001-09A",
+        ),
+        "review.lease.force_release": ("review.lease.force_release", "WS-REV-001-11"),
+        "review.queue.routing.override": ("review.queue.override", "WS-REV-001-11"),
+        "review.queue.routing.correct": ("review.queue.override", "WS-REV-001-11"),
+        "review.queue.close": ("review.queue.override", "WS-REV-001-11"),
+        "review.reconcile.run": ("operations.reconcile.run", "WS-REV-001-11"),
+        "review.artifact_reference.reconcile": (
+            "operations.reconcile.run",
+            "WS-REV-001-12",
+        ),
+        "review.projection.rebuild": ("operations.projection.rebuild", "WS-REV-001-12"),
         "artifact.binding.read": ("artifact.binding.read", "WS-ART-001-02D"),
         "artifact.replica.read": ("artifact.replica.read", "WS-ART-001-02D"),
         "artifact.receipt.read": ("artifact.receipt.read", "WS-ART-001-02D"),
@@ -136,7 +162,7 @@ def test_closed_permission_and_action_catalogue_is_exact_and_non_executable() ->
     assert {item.value for item in HISTORICAL_PERMISSION_IDS} == historical_permissions
     assert {item.value for item in NEW_PERMISSION_IDS} == new_permissions
     assert {item.value for item in PERMISSION_IDS} == historical_permissions | new_permissions
-    assert len(ACTION_IDS) == len(ACTION_DEFINITIONS) == len(ACTION_BY_ID) == 30
+    assert len(ACTION_IDS) == len(ACTION_DEFINITIONS) == len(ACTION_BY_ID) == 50
     assert set(ACTION_BY_ID) == ACTION_IDS
     assert {definition.owner for definition in ACTION_DEFINITIONS} == set(ActionOwner)
     assert all(

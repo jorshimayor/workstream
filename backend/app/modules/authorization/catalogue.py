@@ -47,6 +47,7 @@ class PermissionId(StrEnum):
     REVIEW_DECISION = "review.decision"
     REVIEW_LEASE_FORCE_RELEASE = "review.lease.force_release"
     REVIEW_CHAIN_READ = "review.chain.read"
+    REVIEW_QUEUE_OVERRIDE = "review.queue.override"
     CONTRIBUTION_READ_SELF = "contribution.read_self"
     CONTRIBUTION_READ_PROJECT = "contribution.read_project"
     COMPENSATION_POLICY_MANAGE = "compensation.policy.manage"
@@ -95,6 +96,26 @@ class ActionId(StrEnum):
     OPERATIONS_TASK_START_OVERRIDE = "operations.task.start_override"
     OPERATIONS_SUBMISSION_GATE_REPAIR = "operations.submission_gate.repair"
     OPERATIONS_CHECKER_RETRY = "operations.checker.retry"
+    SUBMISSION_CREATE = "submission.create"
+    REVIEW_QUEUE_READ = "review.queue.read"
+    REVIEW_QUEUE_INSPECT = "review.queue.inspect"
+    REVIEW_CLAIM = "review.claim"
+    REVIEW_RELEASE = "review.release"
+    REVIEW_DECLINE_PREFERENCE = "review.decline_preference"
+    REVIEW_PREFERENCE_EXPIRY_RUN = "review.preference_expiry.run"
+    REVIEW_LEASE_EXPIRY_RUN = "review.lease_expiry.run"
+    REVIEW_CONTEXT_READ = "review.context.read"
+    REVIEW_CHAIN_READ = "review.chain.read"
+    REVIEW_FINDING_EVIDENCE_INGEST = "review.finding_evidence.ingest"
+    REVIEW_DECISION = "review.decision"
+    REVIEW_FINDING_RESPONSE_EVIDENCE_INGEST = "review.finding_response_evidence.ingest"
+    REVIEW_LEASE_FORCE_RELEASE = "review.lease.force_release"
+    REVIEW_QUEUE_ROUTING_OVERRIDE = "review.queue.routing.override"
+    REVIEW_QUEUE_ROUTING_CORRECT = "review.queue.routing.correct"
+    REVIEW_QUEUE_CLOSE = "review.queue.close"
+    REVIEW_RECONCILE_RUN = "review.reconcile.run"
+    REVIEW_ARTIFACT_REFERENCE_RECONCILE = "review.artifact_reference.reconcile"
+    REVIEW_PROJECTION_REBUILD = "review.projection.rebuild"
     ARTIFACT_BINDING_READ = "artifact.binding.read"
     ARTIFACT_REPLICA_READ = "artifact.replica.read"
     ARTIFACT_RECEIPT_READ = "artifact.receipt.read"
@@ -131,6 +152,13 @@ class ActionOwner(StrEnum):
     AUTH_07B = "WS-AUTH-001-07B"
     AUTH_13 = "WS-AUTH-001-13"
     AUTH_14 = "WS-AUTH-001-14"
+    REV_05 = "WS-REV-001-05"
+    REV_06 = "WS-REV-001-06"
+    REV_07 = "WS-REV-001-07"
+    REV_08 = "WS-REV-001-08"
+    REV_09A = "WS-REV-001-09A"
+    REV_11 = "WS-REV-001-11"
+    REV_12 = "WS-REV-001-12"
     ART_02D = "WS-ART-001-02D"
     ART_03 = "WS-ART-001-03"
     ART_04A = "WS-ART-001-04A"
@@ -189,6 +217,82 @@ ACTION_DEFINITIONS = (
         ActionId.OPERATIONS_CHECKER_RETRY,
         PermissionId.OPERATIONS_CHECKER_RETRY,
         ActionOwner.AUTH_14,
+    ),
+    _planned(ActionId.SUBMISSION_CREATE, PermissionId.SUBMISSION_CREATE, ActionOwner.AUTH_14),
+    _planned(ActionId.REVIEW_QUEUE_READ, PermissionId.REVIEW_QUEUE_READ, ActionOwner.REV_05),
+    _planned(
+        ActionId.REVIEW_QUEUE_INSPECT,
+        PermissionId.REVIEW_QUEUE_INSPECT,
+        ActionOwner.REV_05,
+    ),
+    _planned(ActionId.REVIEW_CLAIM, PermissionId.REVIEW_CLAIM, ActionOwner.REV_06),
+    _planned(ActionId.REVIEW_RELEASE, PermissionId.REVIEW_RELEASE, ActionOwner.REV_06),
+    _planned(
+        ActionId.REVIEW_DECLINE_PREFERENCE,
+        PermissionId.REVIEW_DECLINE_PREFERENCE,
+        ActionOwner.REV_06,
+    ),
+    _planned(
+        ActionId.REVIEW_PREFERENCE_EXPIRY_RUN,
+        PermissionId.OPERATIONS_TIMER_RUN,
+        ActionOwner.REV_06,
+    ),
+    _planned(
+        ActionId.REVIEW_LEASE_EXPIRY_RUN,
+        PermissionId.OPERATIONS_TIMER_RUN,
+        ActionOwner.REV_06,
+    ),
+    _planned(
+        ActionId.REVIEW_CONTEXT_READ,
+        PermissionId.SUBMISSION_READ_FOR_REVIEW,
+        ActionOwner.REV_07,
+    ),
+    _planned(ActionId.REVIEW_CHAIN_READ, PermissionId.REVIEW_CHAIN_READ, ActionOwner.REV_07),
+    _planned(
+        ActionId.REVIEW_FINDING_EVIDENCE_INGEST,
+        PermissionId.REVIEW_DECISION,
+        ActionOwner.REV_07,
+    ),
+    _planned(ActionId.REVIEW_DECISION, PermissionId.REVIEW_DECISION, ActionOwner.REV_08),
+    _planned(
+        ActionId.REVIEW_FINDING_RESPONSE_EVIDENCE_INGEST,
+        PermissionId.SUBMISSION_CREATE,
+        ActionOwner.REV_09A,
+    ),
+    _planned(
+        ActionId.REVIEW_LEASE_FORCE_RELEASE,
+        PermissionId.REVIEW_LEASE_FORCE_RELEASE,
+        ActionOwner.REV_11,
+    ),
+    _planned(
+        ActionId.REVIEW_QUEUE_ROUTING_OVERRIDE,
+        PermissionId.REVIEW_QUEUE_OVERRIDE,
+        ActionOwner.REV_11,
+    ),
+    _planned(
+        ActionId.REVIEW_QUEUE_ROUTING_CORRECT,
+        PermissionId.REVIEW_QUEUE_OVERRIDE,
+        ActionOwner.REV_11,
+    ),
+    _planned(
+        ActionId.REVIEW_QUEUE_CLOSE,
+        PermissionId.REVIEW_QUEUE_OVERRIDE,
+        ActionOwner.REV_11,
+    ),
+    _planned(
+        ActionId.REVIEW_RECONCILE_RUN,
+        PermissionId.OPERATIONS_RECONCILE_RUN,
+        ActionOwner.REV_11,
+    ),
+    _planned(
+        ActionId.REVIEW_ARTIFACT_REFERENCE_RECONCILE,
+        PermissionId.OPERATIONS_RECONCILE_RUN,
+        ActionOwner.REV_12,
+    ),
+    _planned(
+        ActionId.REVIEW_PROJECTION_REBUILD,
+        PermissionId.OPERATIONS_PROJECTION_REBUILD,
+        ActionOwner.REV_12,
     ),
     _planned(
         ActionId.ARTIFACT_BINDING_READ, PermissionId.ARTIFACT_BINDING_READ, ActionOwner.ART_02D
@@ -309,18 +413,36 @@ ACTION_DEFINITIONS = (
 
 PERMISSION_IDS = frozenset(PermissionId)
 ACTION_IDS = frozenset(ActionId)
-HISTORICAL_PERMISSION_IDS = frozenset(
-    permission
-    for permission in PermissionId
-    if not permission.value.startswith("artifact.")
-    and permission
-    not in {
+NEW_PERMISSION_IDS = frozenset(
+    {
         PermissionId.OPERATIONS_TASK_START_OVERRIDE,
         PermissionId.OPERATIONS_SUBMISSION_GATE_REPAIR,
         PermissionId.OPERATIONS_CHECKER_RETRY,
+        PermissionId.REVIEW_QUEUE_OVERRIDE,
+        PermissionId.ARTIFACT_BINDING_READ,
+        PermissionId.ARTIFACT_REPLICA_READ,
+        PermissionId.ARTIFACT_RECEIPT_READ,
+        PermissionId.ARTIFACT_VERIFICATION_JOB_READ,
+        PermissionId.ARTIFACT_VERIFICATION_JOB_RETRY,
+        PermissionId.ARTIFACT_RECOVERY_ATTEMPT_READ,
+        PermissionId.ARTIFACT_AUDIT_READ,
+        PermissionId.ARTIFACT_GUIDE_SOURCE_INGEST,
+        PermissionId.ARTIFACT_UPLOAD_SESSION_CREATE,
+        PermissionId.ARTIFACT_UPLOAD_SESSION_READ,
+        PermissionId.ARTIFACT_UPLOAD_ITEM_WRITE,
+        PermissionId.ARTIFACT_UPLOAD_SESSION_SEAL,
+        PermissionId.ARTIFACT_UPLOAD_SESSION_CANCEL,
+        PermissionId.ARTIFACT_UPLOAD_SESSION_EXPIRE,
+        PermissionId.ARTIFACT_BINDING_CREATE,
+        PermissionId.ARTIFACT_VERIFICATION_EXECUTE,
+        PermissionId.ARTIFACT_PENDING_WORK_SCAN,
+        PermissionId.ARTIFACT_PUT_ATTEMPT_RESOLVE,
+        PermissionId.ARTIFACT_GUIDE_SOURCE_READ,
+        PermissionId.ARTIFACT_CHECKER_INPUT_MATERIALIZE,
+        PermissionId.ARTIFACT_CHECKER_OUTPUT_WRITE,
     }
 )
-NEW_PERMISSION_IDS = PERMISSION_IDS - HISTORICAL_PERMISSION_IDS
+HISTORICAL_PERMISSION_IDS = PERMISSION_IDS - NEW_PERMISSION_IDS
 
 
 def _index_actions(
@@ -336,11 +458,11 @@ def _index_actions(
     ):
         raise RuntimeError("authorization action catalogue contains an invalid row")
     indexed = {definition.action_id: definition for definition in definitions}
-    if len(PERMISSION_IDS) != 73 or len(ACTION_IDS) != 30:
+    if len(PERMISSION_IDS) != 74 or len(ACTION_IDS) != 50:
         raise RuntimeError("authorization catalogue count mismatch")
     if len(indexed) != len(definitions) or set(indexed) != ACTION_IDS:
         raise RuntimeError("authorization action catalogue is incomplete")
-    if len(HISTORICAL_PERMISSION_IDS) != 49 or len(NEW_PERMISSION_IDS) != 24:
+    if len(HISTORICAL_PERMISSION_IDS) != 49 or len(NEW_PERMISSION_IDS) != 25:
         raise RuntimeError("authorization permission boundary mismatch")
     if any(definition.availability is not ActionAvailability.PLANNED for definition in definitions):
         raise RuntimeError("AUTH-07A actions must remain planned")

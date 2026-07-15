@@ -152,6 +152,7 @@ review.decline_preference
 review.decision
 review.lease.force_release
 review.chain.read
+review.queue.override
 
 contribution.read_self
 contribution.read_project
@@ -207,22 +208,65 @@ permissions or inferring authority. Artifact actions activate only through the
 paired feature model below; AUTH-12, AUTH-14, and AUTH-15 do not activate or
 attach artifact actions on behalf of WS-ART.
 
-These are 73 approved `PermissionId` values. `ActionId` values are a separate
-closed registry layer and are not included in that permission count. AUTH-05A's current typed and
-PostgreSQL audit registry accepts 49. The three approved Operator recovery
-identifiers `operations.task.start_override`,
-`operations.submission_gate.repair`, and `operations.checker.retry`, plus the
-21 artifact identifiers above, are reserved planned metadata. AUTH-07A adds
-their matching typed/SQL audit parity without making them executable. An
-artifact action becomes active only when the owning WS-ART chunk supplies its
-canonical resource composer, guards, surface declaration, behavior tests, and
-transaction-local revalidation where required. Both halves are mandatory;
-registry presence alone never grants authority.
+These are 74 approved `PermissionId` values. `ActionId` values are a separate
+closed registry layer and are not included in that permission count. AUTH-05A's
+typed and PostgreSQL audit registry accepts the exact historical 49. The three
+approved Operator recovery identifiers, 21 artifact identifiers, and
+`review.queue.override` are the exact 25 post-`0020` permissions. AUTH-07A adds
+their matching typed/SQL audit parity without making them executable.
+
+The closed action registry contains 50 planned rows: two actor-self actions,
+three Operator recovery actions, 25 artifact actions, canonical
+`submission.create`, and 19 review actions. An action becomes active only when
+its owning chunk supplies its canonical resource composer, guards, surface or
+command declaration, behavior tests, and transaction-local revalidation where
+required. Both halves are mandatory; registry presence alone never grants
+authority.
 
 AUTH-07A also reserves `actor.profile.read_self` and
 `actor.profile.update_self` as four-field planned action metadata. AUTH-07B
 later supplies their complete active definitions and self-route behavior proof
 without changing migration `0021`.
+
+The submission/review dependency matrix is closed. AUTH-07A registers only the
+four stable planned fields shown here; resource facts, candidates, guards, and
+runtime activation remain with the listed owner.
+
+| ActionId | PermissionId | Owner |
+|---|---|---|
+| `submission.create` | `submission.create` | `WS-AUTH-001-14` |
+| `review.queue.read` | `review.queue.read` | `WS-REV-001-05` |
+| `review.queue.inspect` | `review.queue.inspect` | `WS-REV-001-05` |
+| `review.claim` | `review.claim` | `WS-REV-001-06` |
+| `review.release` | `review.release` | `WS-REV-001-06` |
+| `review.decline_preference` | `review.decline_preference` | `WS-REV-001-06` |
+| `review.preference_expiry.run` | `operations.timer.run` | `WS-REV-001-06` |
+| `review.lease_expiry.run` | `operations.timer.run` | `WS-REV-001-06` |
+| `review.context.read` | `submission.read_for_review` | `WS-REV-001-07` |
+| `review.chain.read` | `review.chain.read` | `WS-REV-001-07` |
+| `review.finding_evidence.ingest` | `review.decision` | `WS-REV-001-07` |
+| `review.decision` | `review.decision` | `WS-REV-001-08` |
+| `review.finding_response_evidence.ingest` | `submission.create` | `WS-REV-001-09A` |
+| `review.lease.force_release` | `review.lease.force_release` | `WS-REV-001-11` |
+| `review.queue.routing.override` | `review.queue.override` | `WS-REV-001-11` |
+| `review.queue.routing.correct` | `review.queue.override` | `WS-REV-001-11` |
+| `review.queue.close` | `review.queue.override` | `WS-REV-001-11` |
+| `review.reconcile.run` | `operations.reconcile.run` | `WS-REV-001-11` |
+| `review.artifact_reference.reconcile` | `operations.reconcile.run` | `WS-REV-001-12` |
+| `review.projection.rebuild` | `operations.projection.rebuild` | `WS-REV-001-12` |
+
+Initial and revision submission use the same `submission.create` action,
+permission, and route. Revision preparation is an internal participant and
+lifecycle guard of that command; no `submission.revise` or revision-prepare
+action exists. Finding and finding-response evidence intake are distinct
+protected commands mapped to existing permissions. The only new permission is
+`review.queue.override`.
+
+Artifact verification recovery remains the existing
+`artifact.verification_job.retry` action through the ART-owned
+`ArtifactOperatorRecoveryPort`; no `artifact_recovery.request` permission is
+registered. Shared outbox dispatch/retry remains owned by the shared-outbox
+subsystem and is not represented as a REV-owned projection action.
 
 Migration `0021` is availability-neutral. PostgreSQL enforces the closed
 ActionId set, authorization-decision event shape, exact ActionId-to-PermissionId

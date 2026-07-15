@@ -267,7 +267,7 @@ The reviewed proposal did not receive independent normative precedence. Its
 artifact, review, contribution, and compensation resources were rejected. The
 adopted `/api/v1` namespace and original 52 approved permission identifiers
 were unchanged by that catalogue review. The later approved artifact-storage
-contract adds 21 exact identifiers, making the current closed total 73.
+contract added 21 exact identifiers, making the pre-D17 closed total 73.
 AUTH-05A currently enforces a 49-identifier typed/PostgreSQL audit base; the
 three already approved Operator recovery identifiers and 21 artifact
 identifiers remain planned and non-executable until AUTH-07A adds typed/SQL audit
@@ -291,7 +291,8 @@ combined AUTH-07 contract placed grant-backed administrative APIs before
 AUTH-08, project capability composition before AUTH-10, and mixed the audit
 migration with executable kernel/API behavior. No runtime code had started.
 
-AUTH-07A now owns only the exact 73-PermissionId catalogue, 30 four-field
+At the split boundary, AUTH-07A owned only the exact 73-PermissionId catalogue,
+30 four-field
 planned ActionId definitions, including both later self actions, and
 action-aware audit migration `0021`. AUTH-07B
 later owns the minimal deny-by-default kernel and activates only
@@ -299,3 +300,46 @@ later owns the minimal deny-by-default kernel and activates only
 admin-role definition APIs move to AUTH-08; project-scoped authorization
 context moves to AUTH-10. Each child retains its own merge and explicit-start
 gate.
+
+## D17: Adopt canonical review actions without moving review behavior into AUTH
+
+Status: accepted by the user on 2026-07-15 after mapping the revised WS-REV
+source against the implemented AUTH and ART contracts and completing internal
+architecture, docs/security, and test/migration review.
+
+AUTH-07A expands the closed catalogue to exactly 74 PermissionIds and 50
+planned ActionIds. `review.queue.override` is the only additive PermissionId and
+is explicitly the 25th post-`0020` permission; the historical 49-value set does
+not change. Twenty planned actions are added: canonical `submission.create`
+owned by `WS-AUTH-001-14`, plus 19 review actions owned by exact
+`WS-REV-001-05`, `06`, `07`, `08`, `09A`, `11`, and `12` chunks. All additions
+remain four-field planned metadata and cannot authorize until their owner
+supplies resource composition, guards, candidates, surface declarations,
+revalidation, and behavior tests.
+
+Initial and revision submissions share the same `submission.create` action,
+permission, and route. There is no `submission.revise`, `review.assign`,
+`review_revision.record`, or separately callable revision-preparation action.
+Revision preparation is an internal participant and lifecycle guard of the
+canonical submission command. Finding and finding-response evidence intake use
+distinct actions mapped to existing `review.decision` and `submission.create`
+permissions because each is a protected human command that can create artifact
+state before the final transaction.
+
+`artifact_recovery.request` is rejected. Operator recovery consumes the already
+registered `artifact.verification_job.retry` action through the ART-owned
+`ArtifactOperatorRecoveryPort`; ART retains recovery-attempt, execution,
+fencing, and idempotency ownership. REV owns no projection dispatch/retry action
+because the shared outbox owns dispatch, attempts, retry, dead-letter, and
+delivery state. Immediate grant-revocation recovery remains a participant of
+the originating AUTH mutation, while missed recovery uses the planned
+`review.reconcile.run` action.
+
+AUTH-07B must expose one stable public feature boundary: a request-scoped
+`AuthorizationService` bound to the current `AuthorizationContext` and
+caller-owned `AsyncSession`. Feature modules call
+`require(action_id, typed_resource_context, uow=...)`; the service returns and
+stages one bounded decision, never commits, and never accepts a raw
+PermissionId, candidate grant, or guard. REV owns its ResourceContext composers
+and lifecycle invariants and may import only that public AUTH interface and
+closed types, never AUTH persistence or grant queries.
