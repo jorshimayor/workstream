@@ -4,17 +4,24 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-05B` | Authority Idempotency And Invalidation Foundation | L1 | Implemented; internal review complete; PR publication pending |
+| `WS-ART-001-OBJECT-STORAGE-AMENDMENT` | AWS-First Object Storage Planning Amendment | L1 | Publication branch updated from `main`; merge-resolution review pending |
 
 ## Planned Next
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-06` | Canonical Actor Profile And Identity Link | L1 | Inactive until AUTH-05B merge/memory and a separate explicit user start |
+| `WS-AUTH-001-06` | Canonical Actor Profile And Identity Link | L1 | Inactive until AUTH-05B post-merge memory and a separate explicit user start |
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Paused for AUTH priority; no valid replacement baseline yet |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
-| `WS-ART-001-02` | Flow Node Adapter And Reconciliation | L1 | Proposed; inactive pending separate explicit user start |
+| `WS-ART-001-02A1` | External Service Adapter Foundation | L1 | Proposed only after amendment merge and explicit user start |
+| `WS-ART-001-02A2` | Committed Source And Local Preparation | L1 | Inactive until 02A1 merge and explicit user start |
+| `WS-ART-001-02A3` | ArtifactStore v2 Local Clean Cut | L1 | Inactive until 02A2 merge and explicit user start |
+| `WS-ART-001-02B1` | S3-Compatible MinIO And AWS | L1 | Inactive until 02A3 merge and explicit user start |
+| `WS-ART-001-02C1` | Admission And Put-Attempt Foundation | L1 | Inactive until 02B1 merge and explicit user start |
+| `WS-ART-001-02C2` | Verification Publication And Fencing | L1 | Inactive until 02C1 merge and explicit user start |
+| `WS-ART-001-02C3` | Recovery Attempt And Idempotency Chain | L1 | Inactive until 02C2 merge and explicit user start |
+| `WS-ART-001-02D` | Operator Artifact Operations And AWS Readiness | L1 | Inactive until 02C3 and exact AUTH prerequisites |
 
 ## Completed
 
@@ -58,19 +65,20 @@
 | `WS-AUTH-001-05A` | Shared Audit Ownership And Append-Only Authority Evidence | L1 | Merged through PR #115 as `8e1cde6` on 2026-07-14 |
 | `WS-AUTH-001-CAT` | Action And Resource Catalogue Reconciliation | L1 | Merged through PR #117 as `4c5d4fc` on 2026-07-14 |
 | `WS-AUTH-001-CAT-MEMORY` | Catalogue Post-Merge Memory | L1 | Merged through PR #118 as `eba7e2b` on 2026-07-14 |
+| `WS-AUTH-001-05B` | Authority Idempotency And Invalidation Foundation | L1 | Merged through PR #119 as `ad71c7e` on 2026-07-14 |
 
 ## Proposed Next
 
 AUTH-05A merged through PR #115 as `8e1cde6`, and CAT plus its post-merge memory
-merged through PRs #117 and #118. AUTH-05B implementation and internal review
-are complete; PR publication is pending. Do not start AUTH-06 or POL-002-04
-automatically.
+merged through PRs #117 and #118. AUTH-05B merged through PR #119 as `ad71c7e`.
+Do not start AUTH-06 or POL-002-04 automatically.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.
 
-`WS-ART-001-01` is merged. Do not start `WS-ART-001-02` or edit Flow Node until
-the user gives a separate explicit start signal.
+`WS-ART-001-01` is merged. The parallel planning amendment makes AWS S3 the
+only v0.1 production provider. R2 and Flow Node are deferred. Do not start 02A1
+until the amendment merges and the user gives a separate explicit start signal.
 
 Coverage work proceeds independently in its own worktree and is not owned by
 this AUTH queue update.

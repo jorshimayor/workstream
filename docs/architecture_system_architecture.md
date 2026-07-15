@@ -59,7 +59,7 @@ Approved stack:
 - Backend API: Python with FastAPI
 - ORM, migrations, and API schemas: SQLAlchemy 2.x async + Alembic + Pydantic schemas
 - Database: Postgres
-- File storage: local development can use filesystem-backed storage, but it must sit behind an object-storage abstraction compatible with R2/S3-style storage
+- File storage: local development can use filesystem-backed storage only behind the provider-neutral `ArtifactStore`; AWS S3 is the v0.1 hosted provider and MinIO is the local/CI protocol proof
 - Auth: external Flow authentication token verification through an auth interface/adapter; Workstream does not own login, signup, password reset, password storage, or primary auth sessions
 - Jobs: async-first background execution through Celery-backed workers for product lifecycle jobs
 
@@ -256,7 +256,10 @@ Owns:
 
 Use Postgres for records.
 
-Use a storage interface for large files and evidence. During local development, the implementation can store files on the local filesystem, but callers use stable object identifiers, content hashes, and an object-storage-style API so the backend will later target R2, S3, or another compatible object store without changing submission/evidence semantics.
+Use the provider-neutral `ArtifactStore` for large files and evidence. During
+local development, the implementation can store files on the local filesystem;
+hosted v0.1 uses AWS S3 and local/CI integration uses MinIO without changing
+submission or evidence semantics.
 
 Submission artifacts are hash-locked during successful submission creation
 before automatic checker execution is queued. Any changed artifact creates a new

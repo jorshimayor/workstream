@@ -123,6 +123,7 @@ Workstream turns that operating knowledge into reusable infrastructure.
 - [ADR 0011: Submission Artifact Policy Drives Pre-Submit Intake](docs/decision_0011_submission_artifact_policy_drives_pre_submit.md)
 - [ADR 0012: Workstream Owns Product Authorization](docs/decision_0012_workstream_authorization_service.md)
 - [ADR 0013: Immutable Artifact Storage Boundary](docs/decision_0013_immutable_artifact_storage_boundary.md)
+- [ADR 0014: External Services Use One Adapter Convention](docs/decision_0014_external_service_adapter_convention.md)
 
 ## Authorization Baseline
 

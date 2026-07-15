@@ -2,33 +2,35 @@
 
 ## Current State
 
-- Active initiative: `WS-AUTH-001` - Workstream Authorization Service
-- Active planning chunk: none
-- Active implementation chunk: `WS-AUTH-001-05B` - Authority Idempotency And
-  Invalidation Foundation
-- Branch: `codex/ws-auth-001-05b-idempotency-invalidation`
-- Worktree: `/home/abiorh/flow/workstream-authorization-service`
-- Status: CAT post-merge memory merged through PR #118 as `eba7e2b` on
-  2026-07-14. `WS-AUTH-001-05B` implementation and repair are complete at
-  reviewed runtime SHA `e083890`; every required internal review track passed.
-- Prior `WS-AUTH-001-01` reviewed implementation SHA: `be0b836`
-- Prior `WS-AUTH-001-01` final merged branch head: `b5217e1`
-- Latest integrated `main` merge commit: `eba7e2b`
-- Current gate: PR publication, GitHub checks, CodeRabbit, and human review.
-- Scope checkpoint: the 52 approved identifiers and `/api/v1` namespace remain
-  unchanged. AUTH-05A's 49-identifier audit base remains runtime truth until the
-  three planned recovery identifiers receive typed/SQL parity in AUTH-13/14.
-- Next chunk: `WS-AUTH-001-06` remains inactive. Do not start it automatically.
-- Focused evidence: 26 AUTH-05B authorization/audit/migration tests passed at
-  96.88 percent authorization-subsystem coverage. The prior main Backend result
-  remains 949 tests at 82.77 percent global coverage and 91.07 percent
-  artifact-foundation coverage; GitHub CI will produce the new full result.
-- Parallel initiative: `WS-QUAL-001-01B2` is paused at the user's direction so
-  AUTH receives the laptop's test capacity. Its last official whole-app result
-  remains `6466/8159` statements (`79.249908%`); no replacement evidence exists.
-- Parallel initiative: `WS-ART-001-01` merged through PR #101 as `050eb15`.
-  `WS-ART-001-02` remains proposed and inactive pending a separate explicit
-  user start.
+- Active initiative in this worktree: `WS-ART-001` - Immutable Artifact Storage
+- Active planning chunk: `WS-ART-001-OBJECT-STORAGE-AMENDMENT`
+- Active implementation chunk: none
+- Branch: `codex/ws-art-001-object-storage-planning-amendment`
+- Worktree: `/home/abiorh/flow/workstream`
+- Latest integrated `main` merge commit: `ad71c7e` from PR #119.
+- Status: PR #120's branch integrates AUTH-05B PR #119 through merge SHA
+  `1545d9aa37329c13efa53f7ad9076ffca1fbfaf6`. The bounded three-file conflict
+  resolution passed deterministic proof and every required `gpt-5.5` high
+  reviewer track; all reviewer sessions are closed.
+- Current gate: publish the evidence-bound branch, wait for fresh GitHub checks
+  and external review, then stop for explicit human review and merge approval.
+  No storage runtime implementation is active.
+- Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
+  local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
+  Flow Node are deferred. Product modules receive narrow artifact capabilities,
+  and AWS cannot instantiate in production without release-bound live proof.
+- Authorization checkpoint: the approved catalogue contains 73 identifiers,
+  including 21 artifact permissions. AUTH-07 registers them, AUTH-08 defines
+  applicable Operator grants, AUTH-09 provisions fixed service principals, and
+  each owning WS-ART feature chunk activates only its own canonical actions.
+- Next artifact chunk: `WS-ART-001-02A1` remains inactive until this amendment
+  merges and the user gives a separate explicit start signal.
+- Parallel authorization work: `WS-AUTH-001-05B` merged through PR #119 as
+  `ad71c7e`. `WS-AUTH-001-06` remains inactive pending post-merge memory and a
+  separate explicit user start.
+- Parallel coverage work: `WS-QUAL-001-01B2` remains paused. Its last official
+  whole-app result is `6466/8159` statements (`79.249908%`); no replacement
+  evidence exists.
 - Parallel initiative: `WS-POL-002-03` merged through PR #90 as `a7aa474`; its
   post-merge memory merged through PR #94 as `b1270d7`. `WS-POL-002-04` remains
   inactive pending the relevant authorization proof and a separate explicit

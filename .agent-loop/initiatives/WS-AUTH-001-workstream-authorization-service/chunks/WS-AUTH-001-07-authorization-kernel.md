@@ -69,6 +69,13 @@ review/compensation permissions beyond registered future definitions
 ## Acceptance criteria
 
 - Permission identifiers are a closed registered enum/value set.
+- The closed registry includes every exact artifact permission in
+  `docs/spec_authorization_service.md`: Operator reads/retry/recovery/audit,
+  guide-source ingest, contributor upload-session create/read/item/seal/cancel
+  actions, binding,
+  verification, pending-work scan, put-attempt resolution, guide-source read, checker-input
+  materialization, and checker-output write. Broad `operations.*` permissions
+  are not aliases for artifact authority.
 - A closed typed action registry gives each active `ActionId` one approved
   `PermissionId`, canonical target resource type, target-resolution rule,
   allowed principal class, authority-candidate sources, mandatory registered
@@ -108,6 +115,20 @@ review/compensation permissions beyond registered future definitions
   another domain's target, facts, guards, or composer. Active definitions
   require the owning domain contract, canonical composer, surface declaration,
   and behavior tests.
+- AUTH-07 registers every artifact-related planned `ActionId` in the canonical
+  table in `docs/spec_authorization_service.md` with its exact approved
+  `PermissionId` and owner. The 73-identifier count applies to PermissionIds,
+  not ActionIds. Registration is reserved metadata only: AUTH does not invent
+  artifact resource facts, guards, composers, or executable authority.
+- `operations.artifact_storage_admission.read` is an operations-status action
+  mapped to the already approved `operations.status.read` PermissionId and the
+  deployment artifact-storage namespace. It is not an alias for any
+  `artifact.*` permission and grants no read/write access to artifact content.
+- Artifact permissions are registered with typed/PostgreSQL audit parity here,
+  but remain reserved and non-executable until their owning WS-ART activation
+  row in `docs/spec_authorization_service.md` supplies the feature resource
+  composer, guards, surface declaration, and behavior tests. AUTH-12, AUTH-14,
+  and AUTH-15 are not alternate artifact activation paths.
 - `AuthorizationDecision`, bounded logs/metrics, and every action-based allowed
   or denied authority event carry the stable `ActionId`. Migration `0021`
   preserves historical nulls, establishes exact typed/PostgreSQL action-registry
@@ -167,7 +188,8 @@ git diff --check
 ## Human review focus
 
 Review deny-by-default ordering, permission matrix completeness, canonical
-resource scope, concealment behavior, and transaction-local revalidation.
+resource scope, artifact permission separation, concealment behavior, and
+transaction-local revalidation.
 
 ## Stop conditions
 

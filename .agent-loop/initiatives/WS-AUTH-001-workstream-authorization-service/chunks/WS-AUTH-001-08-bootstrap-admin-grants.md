@@ -71,6 +71,12 @@ deleting revoked grants
 - Every later bootstrap attempt fails with the stable conflict and is audited;
   bootstrap is never treated as an idempotent replay.
 - Five admin roles and their system/project scope compatibility are enforced.
+- Operator grant definitions map only `artifact.binding.read`,
+  `artifact.replica.read`, `artifact.receipt.read`,
+  `artifact.verification_job.read`, `artifact.verification_job.retry`,
+  `artifact.recovery_attempt.read` and `artifact.audit.read`; they grant no
+  artifact ingest, binding, verification,
+  scan, guide-read, or checker materialization/write authority.
 - Only an effective Access Administrator issues/revokes admin grants.
 - Admin-grant create/revoke identical replay is idempotent; mismatched replay
   is rejected.

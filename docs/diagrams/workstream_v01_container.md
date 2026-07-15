@@ -15,7 +15,7 @@ Source: [workstream_v01_container.puml](workstream_v01_container.puml)
 | React + Vite operations UI | Planned internal project, queue, task, submission, review, payment, and reputation operations surfaces. |
 | FastAPI backend | API contracts, workflow rules, auth dependency, lifecycle guards, module orchestration, audit writes. |
 | Postgres | Record database for workflow state, policy context, submissions, checks, reviews, revisions, contribution records, payment records, reputation events, and audit history. |
-| Storage interface | Stable file/evidence boundary that can use local storage in development and R2/S3-style object storage later. |
+| Storage interface | Stable artifact boundary using local storage for focused development, MinIO for local/CI protocol proof, and AWS S3 for hosted v0.1. |
 | Celery worker boundary | Durable project setup, checker, and background product-job execution path. FastAPI background tasks are not the Workstream product-job boundary. |
 
 ## v0.1 Guardrails

@@ -1,40 +1,60 @@
-# Status: WS-ART-001 Immutable Artifact Storage
+# Status: WS-ART-001 S3-Compatible Object Storage Amendment
 
-## Current Status
+## Current State
 
-Planning merged through PR #97 on 2026-07-12 as `8644a43`. The reviewed
-planning SHA is `f7fbc33`; the final evidence-bound branch head is `c069064`.
-Implementation chunk `WS-ART-001-01` merged through PR #101 on 2026-07-12 as
-`050eb15`. Its reviewed implementation SHA is `5574bf5`; the final
-evidence-bound branch head is `2b8c2a0`. Agent Gates, Backend CI, CodeRabbit,
-all nine internal reviewer tracks, and the explicit user approval gate passed.
+Original planning merged through PR #97 and artifact/LocalStorage foundation
+merged through PR #101. No artifact implementation chunk is active.
 
-## Active Chunk
+The Flow Node-focused amendment candidate `6cc422d` passed deterministic checks
+but failed internal review on recovery/API completeness. Before repair, the user
+approved a first-principle change on 2026-07-14:
 
-None.
+```text
+v0.1 production bytes -> S3CompatibleArtifactStore -> AWS S3
+local/CI proof bytes   -> S3CompatibleArtifactStore -> MinIO
+development bytes     -> LocalStorageAdapter
+future optional bytes -> Flow Node adapter initiative
+```
 
-## Proposed Next Implementation Chunk
+The failed Flow Node candidate and every reviewer session are closed. It is not
+approval or reusable evidence. Its source remains on branch
+`codex/ws-art-001-fn01-isolation-amendment` for the deferred Flow Node plan.
 
-`WS-ART-001-02`: Flow Node adapter and reconciliation. It remains proposed and
-inactive pending a separate explicit user start. Product cutovers remain
-blocked on their named WS-AUTH dependencies even if internal storage
-foundations finish first.
+## Active Work
 
-## Parallel Work
+`WS-ART-001-OBJECT-STORAGE-AMENDMENT` is planning-only. It updates intent,
+architecture, ADR/spec, chunk contracts, durable memory, and deterministic
+stale-contract protection. It does not edit runtime code, configure AWS S3,
+operate Flow Node, add a deferred provider, or activate artifact routes.
 
-WS-AUTH may continue in its dedicated worktree. WS-ART must rebase on current
-`main` before each implementation PR and must not implement or bypass
-authorization contracts owned by WS-AUTH.
+## Next Proposed Chunk
 
-Dependency gates:
+`WS-ART-001-02A1` is proposed after this amendment merges and the user starts it
+explicitly. It installs only the shared typed external-service adapter/factory
+foundation. `02A2` adds committed-source preparation and narrows LocalStorage
+internals without changing the active port. `02A3` performs the atomic
+ArtifactStore v2/LocalStorage/schema cut and removes `flow_node`. `02B1` then
+owns MinIO and AWS S3. There is no active R2 chunk.
 
-- `WS-ART-001-03` waits for the project mutation authorization cutover.
-- `WS-ART-001-04` through `WS-ART-001-06` wait for task, submission, and
-  checker authorization cutovers.
-- Reviewer attachment APIs remain owned by WS-REV after reviewer
-  assignment/lease authority exists.
+## Gate
 
-## Stop Condition
+Merge SHA `1545d9aa37329c13efa53f7ad9076ffca1fbfaf6` received every
+required internal track after `main` advanced through AUTH-05B PR #119: senior
+engineering, architecture, QA/test, security/auth, product/ops, reuse/dedup, CI
+integrity, test delta, and docs. Valid evidence/status findings are closed in
+the permitted post-review files. Every reviewer used `gpt-5.5` with high
+reasoning and every reviewer session is closed.
 
-Merge this post-merge memory update and stop. Do not begin `WS-ART-001-02` or
-edit Flow Node without a separate explicit user start.
+Deterministic proof passes: Ruff; stale artifact, authorization, and Workstream
+wording scans; loop-memory state; 75 changed Markdown links; diff hygiene; the
+runtime-scope guard; and 44 agent-gate regression tests in a PEP 668-safe,
+hash-pinned temporary environment.
+
+Evidence:
+
+- `reviews/WS-ART-001-OBJECT-STORAGE-AMENDMENT-internal-review-evidence.md`
+- `reviews/WS-ART-001-OBJECT-STORAGE-AMENDMENT-pr-trust-bundle.md`
+
+The current gate is external review and explicit human merge approval. GitHub
+checks and CodeRabbit remain separate from internal review. Do not merge without
+the user's approval, and do not start `WS-ART-001-02A1` automatically.

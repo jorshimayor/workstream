@@ -40,9 +40,9 @@ source items with the same `source_kind + durable_ref` before hashing.
 
 Source snapshot items:
 
-| Source Kind | Durable Ref | Ingestion Adapter | Content Hash | Content CID | Media Type | Content Excerpt |
+| Source Kind | Durable Ref | Ingestion Adapter | Content Hash | Artifact Content ID | Media Type | Content Excerpt |
 | --- | --- | --- | --- | --- | --- | --- |
-| `<inline_markdown / url_doc / repository_doc / example / rubric / imported_file / representative_task / task_sample>` | `<opaque sanitized ref>` | `<adapter>` | `sha256:<hash>` | `<future Flow Node CID when available>` | `<media type>` | `<bounded untrusted excerpt when needed>` |
+| `<inline_markdown / url_doc / repository_doc / example / rubric / imported_file / representative_task / task_sample>` | `<opaque sanitized ref>` | `<adapter>` | `sha256:<hash>` | `<ArtifactContent id after ingest>` | `<media type>` | `<bounded untrusted excerpt when needed>` |
 
 Temporary fetch locators are adapter inputs only. Durable source refs must not
 store query strings, signed URLs, credentials, token-bearing refs, local
@@ -98,10 +98,12 @@ Default artifact rules:
 
 Default storage rules:
 
-- allowed schemes: `local://`, `s3://`, `r2://`
-- persisted references must be Workstream-issued opaque object references or validated object-storage adapter references
-- signed URLs, raw local filesystem paths, credentials, query strings, bucket secrets, and token-bearing references are rejected before persistence
-- normalization is allowed only for already-approved adapter references that contain no secrets, credentials, or query material
+- clients submit bytes through Workstream upload sessions and receive only
+  Workstream artifact IDs
+- persisted product references are immutable Workstream artifact bindings
+- signed URLs, raw local filesystem paths, provider references, credentials,
+  query strings, bucket secrets, and token-bearing references are rejected
+  before persistence
 
 Default forbidden artifacts:
 

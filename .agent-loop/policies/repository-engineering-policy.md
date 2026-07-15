@@ -7,7 +7,9 @@
 - Backend: Python, FastAPI, SQLAlchemy 2.x async, Alembic, Pydantic schemas
 - Frontend: React, Vite, TypeScript
 - Record database: Postgres
-- File storage: local filesystem only behind an R2/S3-compatible abstraction
+- File storage: AWS S3 in v0.1 production behind the provider-neutral artifact
+  abstraction; MinIO proves the S3 protocol in local/CI, LocalStorage is
+  development-only, and R2 plus Flow Node are deferred
 
 ## Setup Commands
 

@@ -266,7 +266,7 @@ Fields:
 - `durable_ref`
 - `ingestion_adapter`
 - `content_hash`
-- `content_cid` (future Flow Node binding)
+- `artifact_content_id`
 - `media_type`
 - `created_at`
 
@@ -274,12 +274,13 @@ Fields:
 bundle. `source_kind` distinguishes inline markdown, URL-backed documentation,
 repository docs, examples, rubrics, imported files, and other approved source
 types. `durable_ref` is opaque and sanitized; it is not the temporary fetch
-locator.
+locator. `artifact_content_id` references Workstream's provider-neutral
+immutable content record; provider object references remain replica details.
 
 URL-backed guide ingestion is split into two identities:
 
 - temporary fetch locator: used only by an approved retrieval adapter
-- durable source record: opaque sanitized source ref plus content hash/CID
+- durable source record: opaque sanitized source ref plus `artifact_content_id`
 
 Ordinary URL query parameters can be used by approved adapters when fetching
 legitimate documentation. Query strings are temporary fetch inputs only.
@@ -473,7 +474,6 @@ Example:
     "artifact_hash_algorithm": "sha256",
     "maximum_file_size_bytes": 52428800,
     "maximum_package_size_bytes": 104857600,
-    "allowed_storage_schemes": ["local", "s3", "r2"],
     "packaging": {
       "package_required": true,
       "allowed_package_formats": ["zip"]

@@ -1,5 +1,113 @@
 # Review Log
 
+## 2026-07-14 - WS-ART-001 Object Storage Amendment Internal Review Passed
+
+Planning candidate `74301e87d1490506b11e1546245f389c3211d12b` passed
+senior engineering, architecture, QA/test, security/auth, product/ops,
+reuse/dedup, CI integrity, test delta, and docs review after the final coverage-
+phase wording repair. Every reviewer used `gpt-5.5` with high reasoning and all
+reviewer sessions were closed.
+
+The valid wording finding replaced the nonexistent formatted
+`ARTIFACT_COVERAGE_PHASE` identifier with the accurate phrase "active artifact
+implementation coverage phase." The duplicated historical scanner allowlist
+was rechecked and accepted as local data for independently executable scanners;
+an exact equality regression test prevents drift. Deterministic gates pass,
+including the PEP 668-safe hash-pinned temporary-environment verification and
+44 agent-gate tests. Final evidence must bind to the publication-state commit
+that includes this durable review-log entry before external or human review.
+
+## 2026-07-14 - WS-ART-001 Sixth Exact-Head Review Failed
+
+Planning candidate `acc4476537a61d18f3b416bc2fec3a5d276b58dc` passed
+security/auth and QA/test, and architecture found only a low documentation
+cleanup, but senior engineering failed the active `DISCOVERY.md` contradiction:
+it still denied the bucket-list capability required by the canonical AWS
+contract. All four `gpt-5.5` high
+reviewer sessions were closed; none of these results is reusable approval.
+
+The repair distinguishes IAM-level missing-key classification from the absent
+application/port list operation and adds a foundation scanner rule plus
+regression test so the stale no-list contract cannot return.
+
+## 2026-07-14 - WS-ART-001 Fifth Exact-Head Review Failed
+
+Planning candidate `cb1c0dc9d77ec9e10e47c084627fc1a4064e0896` passed senior
+engineering, architecture, and QA/test but failed security/auth. All four
+`gpt-5.5` high reviewer sessions were closed; none of these results is reusable
+approval.
+
+The valid High finding is AWS-specific: without `s3:ListBucket`, S3 masks a
+missing `HeadObject` as 403, so the planned resolver could not distinguish
+authoritative absence from denied access. The bounded repair keeps the bucket
+dedicated, grants `s3:ListBucket` only on that bucket for missing-key response
+classification, keeps object listing outside the port/application, treats
+every 403 as provider unavailable, and requires live 404 proof before AWS
+activation.
+
+## 2026-07-14 - WS-ART-001 Fourth Exact-Head Review Failed
+
+Planning candidate `b5279be1da1b61c161166903d6144719cf29a17e` passed the
+deterministic gates and architecture review. Senior engineering and
+security/auth found no remaining design defect but correctly noted that final
+review evidence and the PR trust bundle did not yet exist. QA/test found one
+valid High issue: the AWS authorization regression test asserted selected
+substrings instead of proving the principal/action/resource and bucket-deny
+matrices were closed. All four `gpt-5.5` high reviewer sessions were closed;
+none of these results is reusable approval.
+
+The repair converts the bucket-deny rules to a machine-checkable closed matrix
+and makes the gate reject extra S3/IAM actions, extra resources, wildcard
+grants, and altered condition operators or values. Final evidence remains a
+post-review artifact and will be created only after every required exact-head
+reviewer passes.
+
+## 2026-07-14 - WS-ART-001 Third Exact-Head Review Failed
+
+Planning candidate `d2cd73a0debe73930a8311a37b45f3aff4315f11` passed the
+deterministic gates and senior engineering review; QA/test returned pass with
+low risks and no findings. Architecture and security/auth failed the candidate.
+All four `gpt-5.5` high reviewer sessions were closed; no result is reused as
+approval.
+
+Valid findings require one canonical reserved `ActionId` mapping table aligned
+with AUTH-07/AUTH-09, removal of the artifact-prefixed operations-status action,
+active repository-policy scanning, exact AWS IAM actions/resources/condition
+keys, and provider-operation deadlines bounded by activation remaining TTL plus
+a terminal freshness recheck. Repair remains planning-only.
+
+## 2026-07-14 - WS-ART-001 Second Exact-Head Review Failed
+
+Planning candidate `e14376c896f9225a152e932de8789517814ef082` passed the
+deterministic planning gates but failed exact-head senior engineering,
+architecture, QA/test, and security/auth review. All four reviewer sessions
+were closed; this result is not reusable approval.
+
+Valid findings require dependency-manifest/frontend/migration and live Work
+Queue scanner coverage, separate AWS readiness/runtime/negative probe custody,
+per-I/O activation freshness, exact service-identity action assignments, narrow
+Operator recovery/admission-usage capabilities, complete pre/post-submit and
+checker-output action ownership, exact deferred Flow Node v2 observation
+semantics, and splitting admission, verification, and recovery into independent
+chunks. Repair remains planning-only; no artifact runtime implementation is
+active.
+
+## 2026-07-14 - WS-ART-001 Object Storage Exact-Head Review Failed
+
+Planning candidate `e6415886a2474af899eb433c4b42eabea8e794c7` passed the
+deterministic planning gates but failed exact-head senior engineering,
+architecture, QA/test, and security/auth review. All four sub-agent sessions
+were closed; this result is not reusable approval.
+
+Valid findings require closed product capability ports, a durable pre-replica
+put-attempt owner, atomic singleton namespace fencing, server-derived admission
+scopes, release-bound AWS activation, a complete AWS principal and conditional-
+write boundary, paired AUTH/WS-ART action activation, transaction-local service
+authority revalidation, cumulative coverage ownership for `app/main.py` and
+`app/modules/audit/*`, and a live/planned stale-contract scanner that excludes
+explicit history without missing runtime configuration paths. Repair remains
+planning-only on integrated main `eba7e2b`; no storage runtime chunk is active.
+
 ## 2026-07-14 - WS-AUTH-001-05B Internal Review Passed
 
 Reviewed runtime SHA `e083890` passed senior engineering, architecture,
@@ -73,6 +181,24 @@ audit-subsystem coverage. AUTH-05A is complete; AUTH-05B remains inactive until
 post-merge memory merges and the user gives a separate explicit start.
 Senior engineering, docs, architecture, reuse, product/ops, QA/CI/test-delta,
 and security/auth/privacy review passed for this memory-only reconciliation.
+
+## 2026-07-14 - WS-ART-001 AWS-First Replan Approved
+
+Exact-head architecture, senior-engineering, QA/test, and security/auth review
+of planning candidate `70679ab` failed. All four sessions were closed. Valid
+findings were unresolved AUTH ownership for later artifact actions, an
+over-broad speculative reconciliation permission, R2 parent-credential and
+per-workload sidecar risk, undefined guide-URL retrieval security, a missing
+concrete WS-REV handoff dependency, and non-rerunnable coverage metadata paths.
+
+Cloudflare's current contract confirms that temporary credentials derive from a
+parent R2 API token and cannot exceed that parent's permissions. The user
+therefore approved the simpler boundary: AWS S3 is the only v0.1 production
+provider, MinIO remains local/CI protocol proof, LocalStorage remains focused
+development, and R2 plus Flow Node are deferred. The planning branch is rebased
+onto integrated `main` at `8e1cde6`; no artifact runtime implementation is
+active. The amended exact SHA must pass every required internal reviewer before
+PR publication.
 
 ## 2026-07-14 - WS-AUTH-001-05A CodeRabbit Response
 

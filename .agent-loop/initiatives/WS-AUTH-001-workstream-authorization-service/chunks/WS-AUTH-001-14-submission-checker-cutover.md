@@ -71,6 +71,10 @@ legacy active-worker-profile or workflow-eligibility compatibility fallback
 
 - Exact-project submitter/both grant plus active assignment is required to
   create submissions; admin roles alone cannot submit.
+- Contributor artifact staging remains mechanically and authoritatively owned
+  by `WS-ART-001-04A`; this chunk neither activates upload actions nor provides
+  direct provider access. Submission authority never implies artifact-storage
+  authority.
 - Submission creation authorizes against its existing active assignment; every
   migrated submission/checker/audit route declares one primary registered
   action against a feature-owned canonical target and keeps artifact bytes and

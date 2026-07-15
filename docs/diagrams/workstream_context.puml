@@ -36,7 +36,7 @@ rectangle "Workstream\n----\nFlow task evaluation\nand contribution\ninfrastruct
 
 cloud "Flow Identity\n----\nHuman identity\nand auth tokens" as flow_auth
 database "Postgres\n----\nRecord database" as postgres
-rectangle "Object Storage\nAbstraction\n----\nLocal now;\nR2/S3-compatible later" as storage #E6FCF5
+rectangle "Immutable Artifact Storage\n----\nLocal focused dev\nMinIO local/CI proof\nAWS S3 hosted v0.1" as storage #E6FCF5
 
 rectangle "Future Adapter Boundary\n----\nExternal task origins\nERC-8004 agent identity/reputation\nERC-8183 task contract/escrow\nx402 / OmniClaw / USDC settlement\nReputation and reporting consumers" as future_boundary #FFF3BF
 
