@@ -1,60 +1,109 @@
-"""Database access methods for actor identities and profiles."""
+"""Persistence for canonical actors and bounded legacy workflow metadata."""
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+import hashlib
 
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.actors.models import ActorIdentity, ActorProfile
+from app.modules.actors.models import (
+    ActorIdentityLink,
+    ActorProfile,
+    LegacyActorIdentity,
+    LegacyWorkflowEligibility,
+)
 
 
 class ActorRepository:
-    """Wraps SQLAlchemy persistence for actor registry operations."""
+    """Wrap canonical actor persistence in the caller-owned transaction."""
 
     def __init__(self, session: AsyncSession) -> None:
-        """Create a repository bound to one database session.
-
-        Args:
-            session: Async SQLAlchemy session for the current unit of work.
-        """
         self._session = session
 
-    async def get_identity(
+    async def lock_external_identity(self, issuer: str, subject: str) -> None:
+        """Serialize first access for one exact external identity."""
+        digest = hashlib.sha256(
+            len(issuer.encode()).to_bytes(4, "big")
+            + issuer.encode()
+            + len(subject.encode()).to_bytes(4, "big")
+            + subject.encode()
+        ).digest()
+        key = int.from_bytes(digest[:8], "big", signed=True)
+        await self._session.execute(select(func.pg_advisory_xact_lock(key)))
+
+    async def get_identity_link(
+        self,
+        issuer: str,
+        subject: str,
+        *,
+        for_update: bool = False,
+    ) -> ActorIdentityLink | None:
+        """Load the immutable link for one issuer and opaque subject."""
+        query = select(ActorIdentityLink).where(
+            ActorIdentityLink.issuer == issuer,
+            ActorIdentityLink.subject == subject,
+        )
+        if for_update:
+            query = query.with_for_update()
+        return await self._session.scalar(query.execution_options(populate_existing=True))
+
+    async def get_actor_profile(
+        self,
+        actor_profile_id: str,
+        *,
+        for_update: bool = False,
+    ) -> ActorProfile | None:
+        """Load one canonical actor profile."""
+        query = select(ActorProfile).where(ActorProfile.id == actor_profile_id)
+        if for_update:
+            query = query.with_for_update()
+        return await self._session.scalar(query.execution_options(populate_existing=True))
+
+    async def add_actor_profile(self, profile: ActorProfile) -> ActorProfile:
+        """Stage one canonical actor profile."""
+        self._session.add(profile)
+        await self._session.flush()
+        return profile
+
+    async def add_identity_link(self, link: ActorIdentityLink) -> ActorIdentityLink:
+        """Stage one canonical identity link."""
+        self._session.add(link)
+        await self._session.flush()
+        return link
+
+    async def touch_verified_actor(
+        self,
+        profile: ActorProfile,
+        link: ActorIdentityLink,
+    ) -> None:
+        """Record database-time verification without accepting provider metadata."""
+        profile.last_seen_at = func.now()
+        profile.updated_at = func.now()
+        link.last_verified_at = func.now()
+        await self._session.flush()
+
+    async def get_legacy_identity(
         self,
         actor_id: str,
         *,
         populate_existing: bool = False,
-    ) -> ActorIdentity | None:
-        """Load an actor identity by stable Workstream actor id.
-
-        Args:
-            actor_id: Stable actor id.
-            populate_existing: Whether to overwrite any existing session state
-                with the current database row.
-
-        Returns:
-            Actor identity when present; otherwise ``None``.
-        """
+    ) -> LegacyActorIdentity | None:
+        """Load non-authoritative legacy token-observation metadata."""
         return await self._session.get(
-            ActorIdentity,
+            LegacyActorIdentity,
             actor_id,
             populate_existing=populate_existing,
         )
 
-    async def upsert_identity(self, identity: ActorIdentity) -> ActorIdentity:
-        """Create or refresh an actor identity from trusted token claims.
-
-        Args:
-            identity: Actor identity carrying the latest trusted claim snapshot.
-
-        Returns:
-            Persisted actor identity.
-        """
+    async def upsert_legacy_identity(
+        self,
+        identity: LegacyActorIdentity,
+    ) -> LegacyActorIdentity:
+        """Refresh bounded compatibility metadata without touching canonical actors."""
         await self._session.execute(
-            insert(ActorIdentity)
+            insert(LegacyActorIdentity)
             .values(
                 actor_id=identity.actor_id,
                 external_subject=identity.external_subject,
@@ -67,12 +116,10 @@ class ActorRepository:
                 is_dev_auth=identity.is_dev_auth,
             )
             .on_conflict_do_update(
-                index_elements=[ActorIdentity.actor_id],
+                index_elements=[LegacyActorIdentity.actor_id],
                 set_={
                     "external_subject": identity.external_subject,
                     "external_issuer": identity.external_issuer,
-                    "display_name": identity.display_name,
-                    "email": identity.email,
                     "last_seen_roles": identity.last_seen_roles,
                     "last_claim_snapshot": identity.last_claim_snapshot,
                     "auth_source": identity.auth_source,
@@ -83,87 +130,56 @@ class ActorRepository:
             )
         )
         await self._session.flush()
-        persisted = await self.get_identity(identity.actor_id, populate_existing=True)
+        persisted = await self.get_legacy_identity(identity.actor_id, populate_existing=True)
         if persisted is None:
-            raise RuntimeError("actor identity upsert did not return a persisted row")
+            raise RuntimeError("legacy identity upsert did not return a row")
         return persisted
 
-    async def get_profile(
+    async def get_legacy_eligibility(
         self,
         actor_id: str,
         profile_type: str,
         scope_type: str,
         scope_id: str,
-    ) -> ActorProfile | None:
-        """Load one actor profile by actor, type, and scope.
-
-        Args:
-            actor_id: Stable actor id.
-            profile_type: Profile type such as ``worker`` or ``project_manager``.
-            scope_type: Scope namespace, usually ``global``.
-            scope_id: Scope identifier, usually ``global``.
-
-        Returns:
-            Actor profile when present; otherwise ``None``.
-        """
-        result = await self._session.execute(
-            select(ActorProfile)
+    ) -> LegacyWorkflowEligibility | None:
+        """Load one classified legacy workflow-eligibility row."""
+        return await self._session.scalar(
+            select(LegacyWorkflowEligibility)
             .where(
-                ActorProfile.actor_id == actor_id,
-                ActorProfile.profile_type == profile_type,
-                ActorProfile.scope_type == scope_type,
-                ActorProfile.scope_id == scope_id,
+                LegacyWorkflowEligibility.actor_id == actor_id,
+                LegacyWorkflowEligibility.profile_type == profile_type,
+                LegacyWorkflowEligibility.scope_type == scope_type,
+                LegacyWorkflowEligibility.scope_id == scope_id,
             )
             .execution_options(populate_existing=True)
         )
-        return result.scalar_one_or_none()
 
-    async def list_profiles(self, actor_id: str) -> Sequence[ActorProfile]:
-        """List profiles for one actor.
-
-        Args:
-            actor_id: Stable actor id.
-
-        Returns:
-            Actor profiles ordered by type and scope.
-        """
+    async def insert_legacy_eligibility_if_absent(
+        self,
+        eligibility: LegacyWorkflowEligibility,
+    ) -> bool:
+        """Insert compatibility metadata without overwriting established state."""
         result = await self._session.execute(
-            select(ActorProfile)
-            .where(ActorProfile.actor_id == actor_id)
-            .order_by(ActorProfile.profile_type.asc(), ActorProfile.scope_type.asc())
-        )
-        return result.scalars().all()
-
-    async def insert_profile_if_absent(self, profile: ActorProfile) -> bool:
-        """Insert a profile without overwriting existing scoped profile state.
-
-        Args:
-            profile: Actor profile to insert when absent.
-
-        Returns:
-            True when this call inserted the profile; false on conflict.
-        """
-        result = await self._session.execute(
-            insert(ActorProfile)
+            insert(LegacyWorkflowEligibility)
             .values(
-                id=profile.id,
-                actor_id=profile.actor_id,
-                profile_type=profile.profile_type,
-                status=profile.status,
-                skill_tags=profile.skill_tags,
-                scope_type=profile.scope_type,
-                scope_id=profile.scope_id,
-                profile_metadata=profile.profile_metadata,
+                id=eligibility.id,
+                actor_id=eligibility.actor_id,
+                profile_type=eligibility.profile_type,
+                status=eligibility.status,
+                skill_tags=eligibility.skill_tags,
+                scope_type=eligibility.scope_type,
+                scope_id=eligibility.scope_id,
+                profile_metadata=eligibility.profile_metadata,
             )
             .on_conflict_do_nothing(
                 index_elements=[
-                    ActorProfile.actor_id,
-                    ActorProfile.profile_type,
-                    ActorProfile.scope_type,
-                    ActorProfile.scope_id,
+                    LegacyWorkflowEligibility.actor_id,
+                    LegacyWorkflowEligibility.profile_type,
+                    LegacyWorkflowEligibility.scope_type,
+                    LegacyWorkflowEligibility.scope_id,
                 ]
             )
-            .returning(ActorProfile.id)
+            .returning(LegacyWorkflowEligibility.id)
         )
         await self._session.flush()
         return result.scalar_one_or_none() is not None

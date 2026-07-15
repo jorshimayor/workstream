@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import asyncpg
 import hashlib
 import json
 from collections.abc import AsyncIterator, Iterator
@@ -28,8 +29,13 @@ from app.db import models as db_models
 from app.db import session as db_session
 from app.db.base import Base
 from app.main import create_app
-from app.modules.actors.models import ActorIdentity, ActorProfile
-from app.modules.actors.schemas import ActorProfileActivationRequest
+from app.modules.actors.models import (
+    ActorIdentityLink,
+    ActorProfile,
+    LegacyActorIdentity,
+    LegacyWorkflowEligibility,
+)
+from app.modules.actors.schemas import LegacyWorkflowEligibilityActivationRequest
 from app.modules.actors.service import ActorService
 from app.modules.projects.models import (
     EffectiveProjectSubmissionArtifactPolicy,
@@ -57,6 +63,29 @@ from app.modules.tasks.models import (
 from app.modules.tasks.repository import TaskRepository
 from app.modules.tasks.service import TaskService, TaskServiceError
 from app.schemas.auth import ActorContext
+
+
+async def clear_test_audit_events(database_url: str) -> None:
+    """Reset append-only evidence under explicit isolated-test ownership."""
+    connection = await asyncpg.connect(database_url.replace("+asyncpg", ""))
+    try:
+        async with connection.transaction():
+            await connection.execute(
+                "alter table audit_events disable trigger audit_events_reject_update_delete"
+            )
+            await connection.execute(
+                "alter table audit_events disable trigger audit_events_reject_truncate"
+            )
+            await connection.execute("truncate table audit_events cascade")
+            await connection.execute("truncate table api_rate_control_counters")
+            await connection.execute(
+                "alter table audit_events enable trigger audit_events_reject_truncate"
+            )
+            await connection.execute(
+                "alter table audit_events enable trigger audit_events_reject_update_delete"
+            )
+    finally:
+        await connection.close()
 
 
 async def test_task_repository_delegates_audit_persistence() -> None:
@@ -108,6 +137,10 @@ def task_database_env(
 ) -> Iterator[str]:
     monkeypatch.setenv("WORKSTREAM_DATABASE_URL", postgres_database_url)
     monkeypatch.setenv("WORKSTREAM_CELERY_TASK_ALWAYS_EAGER", "true")
+    monkeypatch.setenv(
+        "WORKSTREAM_API_RATE_LIMIT_KEY_SECRET",
+        "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+    )
     set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
     get_settings.cache_clear()
     asyncio.run(db_session.dispose_engine())
@@ -117,6 +150,8 @@ def task_database_env(
         command.downgrade(config, "base")
         command.upgrade(config, "head")
         yield postgres_database_url
+        asyncio.run(clear_test_audit_events(postgres_database_url))
+        asyncio.run(db_session.dispose_engine())
         command.downgrade(config, "base")
     asyncio.run(db_session.dispose_engine())
     get_settings.cache_clear()
@@ -182,16 +217,22 @@ def actor_id(subject: str, issuer: str = "flow-test") -> str:
     return actor_id_from_external_identity(issuer, subject)
 
 
-async def fetch_actor_registry_rows(subject: str, issuer: str = "flow-test") -> tuple[ActorIdentity | None, list[ActorProfile]]:
-    """Load actor registry rows for assertions."""
+async def fetch_legacy_actor_rows(
+    subject: str,
+    issuer: str = "flow-test",
+) -> tuple[LegacyActorIdentity | None, list[LegacyWorkflowEligibility]]:
+    """Load non-authoritative compatibility rows for assertions."""
     expected_actor_id = actor_id(subject, issuer)
     async with db_session.get_session_factory()() as session:
-        identity = await session.get(ActorIdentity, expected_actor_id)
+        identity = await session.get(LegacyActorIdentity, expected_actor_id)
         profiles = (
             await session.scalars(
-                select(ActorProfile)
-                .where(ActorProfile.actor_id == expected_actor_id)
-                .order_by(ActorProfile.profile_type.asc(), ActorProfile.scope_type.asc())
+                select(LegacyWorkflowEligibility)
+                .where(LegacyWorkflowEligibility.actor_id == expected_actor_id)
+                .order_by(
+                    LegacyWorkflowEligibility.profile_type.asc(),
+                    LegacyWorkflowEligibility.scope_type.asc(),
+                )
             )
         ).all()
     return identity, list(profiles)
@@ -696,7 +737,23 @@ async def seed_worker_profile(subject: str, *, skill_tags: list[str] | None = No
     async with db_session.get_session_factory()() as session:
         session.add_all(
             [
-                ActorIdentity(
+                ActorProfile(
+                    id=worker_actor_id,
+                    actor_kind="human",
+                    status="active",
+                    provisioning_method="automatic_first_access",
+                    created_by=worker_actor_id,
+                ),
+                ActorIdentityLink(
+                    id=str(uuid4()),
+                    actor_profile_id=worker_actor_id,
+                    issuer="flow-test",
+                    subject=subject,
+                    subject_kind="human",
+                    status="active",
+                    linked_by=worker_actor_id,
+                ),
+                LegacyActorIdentity(
                     actor_id=worker_actor_id,
                     external_subject=subject,
                     external_issuer="flow-test",
@@ -707,7 +764,7 @@ async def seed_worker_profile(subject: str, *, skill_tags: list[str] | None = No
                     auth_source="dev_mock",
                     is_dev_auth=True,
                 ),
-                ActorProfile(
+                LegacyWorkflowEligibility(
                     id=str(uuid4()),
                     actor_id=worker_actor_id,
                     profile_type="worker",
@@ -735,7 +792,23 @@ async def seed_actor_profile(
     async with db_session.get_session_factory()() as session:
         session.add_all(
             [
-                ActorIdentity(
+                ActorProfile(
+                    id=seeded_actor_id,
+                    actor_kind="human",
+                    status="active",
+                    provisioning_method="automatic_first_access",
+                    created_by=seeded_actor_id,
+                ),
+                ActorIdentityLink(
+                    id=str(uuid4()),
+                    actor_profile_id=seeded_actor_id,
+                    issuer="flow-test",
+                    subject=subject,
+                    subject_kind="human",
+                    status="active",
+                    linked_by=seeded_actor_id,
+                ),
+                LegacyActorIdentity(
                     actor_id=seeded_actor_id,
                     external_subject=subject,
                     external_issuer="flow-test",
@@ -746,7 +819,7 @@ async def seed_actor_profile(
                     auth_source="dev_mock",
                     is_dev_auth=True,
                 ),
-                ActorProfile(
+                LegacyWorkflowEligibility(
                     id=str(uuid4()),
                     actor_id=seeded_actor_id,
                     profile_type=profile_type,
@@ -764,8 +837,10 @@ async def seed_actor_profile(
 
 def test_task_models_are_registered_for_alembic_metadata() -> None:
     expected_tables = {
-        "actor_identities",
         "actor_profiles",
+        "actor_identity_links",
+        "legacy_actor_identities",
+        "legacy_workflow_eligibility",
         "workstream_tasks",
         "task_assignments",
         "submissions",
@@ -776,8 +851,10 @@ def test_task_models_are_registered_for_alembic_metadata() -> None:
     assert expected_tables.issubset(Base.metadata.tables)
     assert "worker_profiles" not in Base.metadata.tables
     assert "reviewer_profiles" not in Base.metadata.tables
-    assert db_models.ActorIdentity is ActorIdentity
     assert db_models.ActorProfile is ActorProfile
+    assert db_models.ActorIdentityLink is ActorIdentityLink
+    assert db_models.LegacyActorIdentity is LegacyActorIdentity
+    assert db_models.LegacyWorkflowEligibility is LegacyWorkflowEligibility
     assert not hasattr(db_models, "WorkerProfile")
     assert not hasattr(db_models, "ReviewerProfile")
     assert db_models.WorkstreamTask is WorkstreamTask
@@ -794,8 +871,10 @@ async def test_chunk4_migration_creates_expected_tables(task_database_env: str) 
         )
 
     assert {
-        "actor_identities",
         "actor_profiles",
+        "actor_identity_links",
+        "legacy_actor_identities",
+        "legacy_workflow_eligibility",
         "workstream_tasks",
         "task_assignments",
         "submissions",
@@ -1021,7 +1100,9 @@ async def test_task_router_service_errors_use_canonical_request_context(
     assert denied.json()["error"]["code"] == "permission_not_granted"
 
 
-async def test_actor_profile_services_update_existing_actor_rows(task_database_env: str) -> None:
+async def test_legacy_eligibility_service_updates_existing_submitter_row(
+    task_database_env: str,
+) -> None:
     async with db_session.get_session_factory()() as session:
         service = ActorService(session)
         worker_actor = ActorContext(
@@ -1035,77 +1116,31 @@ async def test_actor_profile_services_update_existing_actor_rows(task_database_e
             auth_source="dev_mock",
             is_dev_auth=True,
         )
-        first_worker = await service.activate_worker_profile(
+        first_worker = await service.activate_legacy_workflow_eligibility(
             worker_actor,
-            ActorProfileActivationRequest(skill_tags=["stem"]),
+            LegacyWorkflowEligibilityActivationRequest(skill_tags=["stem"]),
         )
-        updated_worker = await service.activate_worker_profile(
+        updated_worker = await service.activate_legacy_workflow_eligibility(
             worker_actor.model_copy(
                 update={"display_name": "Worker Updated", "email": "worker-updated@example.test"}
             ),
-            ActorProfileActivationRequest(skill_tags=["stem", "analysis"]),
+            LegacyWorkflowEligibilityActivationRequest(skill_tags=["stem", "analysis"]),
         )
-
-        reviewer_actor = ActorContext(
-            actor_id=actor_id("reviewer-upsert"),
-            external_subject="reviewer-upsert",
-            external_issuer="flow-test",
-            display_name="Reviewer Upsert",
-            email="reviewer-upsert@example.test",
-            roles=("reviewer",),
-            claim_snapshot={"roles": ("reviewer",)},
-            auth_source="dev_mock",
-            is_dev_auth=True,
-        )
-        first_reviewer = await service.ensure_observed_profile(
-            reviewer_actor,
-            profile_type="reviewer",
-            scope_type="global",
-            scope_id="global",
-            profile_metadata={"source": "test"},
-        )
-        updated_reviewer = await service.ensure_observed_profile(
-            reviewer_actor.model_copy(
-                update={
-                    "display_name": "Reviewer Updated",
-                    "email": "reviewer-updated@example.test",
-                }
-            ),
-            profile_type="reviewer",
-            scope_type="global",
-            scope_id="global",
-            profile_metadata={"source": "test_refresh"},
-        )
-        await session.commit()
 
     async with db_session.get_session_factory()() as session:
         worker_rows = (
             await session.execute(
-                select(ActorProfile).where(
-                    ActorProfile.actor_id == worker_actor.actor_id,
-                    ActorProfile.profile_type == "worker",
-                )
-            )
-        ).scalars().all()
-        reviewer_rows = (
-            await session.execute(
-                select(ActorProfile).where(
-                    ActorProfile.actor_id == reviewer_actor.actor_id,
-                    ActorProfile.profile_type == "reviewer",
+                select(LegacyWorkflowEligibility).where(
+                    LegacyWorkflowEligibility.actor_id == worker_actor.actor_id,
+                    LegacyWorkflowEligibility.profile_type == "worker",
                 )
             )
         ).scalars().all()
 
     assert updated_worker.id == first_worker.id
-    assert updated_worker.display_name == "Worker Updated"
     assert updated_worker.skill_tags == ["stem", "analysis"]
     assert len(worker_rows) == 1
     assert worker_rows[0].id == first_worker.id
-    assert updated_reviewer.id == first_reviewer.id
-    assert updated_reviewer.status == "observed"
-    assert updated_reviewer.profile_metadata == {"source": "test_refresh"}
-    assert len(reviewer_rows) == 1
-    assert reviewer_rows[0].id == first_reviewer.id
 
 
 async def test_task_can_be_created_in_draft(task_client: AsyncClient) -> None:
@@ -2106,7 +2141,7 @@ async def test_worker_without_profile_cannot_claim_ready_task(
     )
 
     assert response.status_code == 403
-    assert "active worker profile" in response.json()["detail"]
+    assert "active legacy submitter eligibility" in response.json()["detail"]
 
 
 async def test_disabled_worker_profile_cannot_claim_ready_task(
@@ -2125,7 +2160,7 @@ async def test_disabled_worker_profile_cannot_claim_ready_task(
     )
 
     assert response.status_code == 403
-    assert "active worker profile" in response.json()["detail"]
+    assert "active legacy submitter eligibility" in response.json()["detail"]
     async with db_session.get_session_factory()() as session:
         assignment = await session.scalar(
             select(TaskAssignment).where(TaskAssignment.task_id == ready_task["id"])
@@ -2134,6 +2169,50 @@ async def test_disabled_worker_profile_cannot_claim_ready_task(
     assert assignment is None
     assert task is not None
     assert task.status == "ready"
+
+
+async def test_disabled_legacy_eligibility_after_claim_blocks_assigned_submitter_start(
+    task_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = await create_active_project(task_client)
+    ready_task = await create_ready_task(task_client, project["id"])
+    worker_actor_id = await seed_worker_profile("eligibility-disabled-after-claim")
+    set_dev_actor(
+        monkeypatch,
+        roles="worker",
+        subject="eligibility-disabled-after-claim",
+    )
+    claim = await task_client.post(
+        f"/api/v1/tasks/{ready_task['id']}/claim",
+        headers=auth_headers(),
+        json={"reason": "claim while eligible"},
+    )
+    assert claim.status_code == 200, claim.text
+
+    async with db_session.get_session_factory()() as session:
+        eligibility = await session.scalar(
+            select(LegacyWorkflowEligibility).where(
+                LegacyWorkflowEligibility.actor_id == worker_actor_id,
+                LegacyWorkflowEligibility.profile_type == "worker",
+            )
+        )
+        assert eligibility is not None
+        eligibility.status = "disabled"
+        await session.commit()
+
+    start = await task_client.post(
+        f"/api/v1/tasks/{ready_task['id']}/start",
+        headers=auth_headers(),
+        json={"reason": "start after eligibility disabled"},
+    )
+    assert start.status_code == 403
+    assert "active legacy submitter eligibility" in start.json()["detail"]
+    read = await task_client.get(
+        f"/api/v1/tasks/{ready_task['id']}", headers=auth_headers()
+    )
+    assert read.status_code == 200
+    assert read.json()["status"] == "claimed"
 
 
 async def test_active_worker_profile_without_worker_token_cannot_claim(
@@ -2216,7 +2295,7 @@ async def test_worker_can_create_profile_before_claiming_task(
     assert claim.json()["assignment"]["worker_id"] == actor_id("worker-self-profile")
 
 
-async def test_worker_profile_response_includes_nullable_identity_fields(
+async def test_worker_profile_response_excludes_identity_display_fields(
     task_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -2239,8 +2318,8 @@ async def test_worker_profile_response_includes_nullable_identity_fields(
     assert body["actor_id"] == actor_id("worker-null-identity")
     assert body["external_subject"] == "worker-null-identity"
     assert body["external_issuer"] == "flow-test"
-    assert body["display_name"] is None
-    assert body["email"] is None
+    assert "display_name" not in body
+    assert "email" not in body
     assert body["skill_tags"] == []
     assert body["status"] == "active"
 
@@ -2272,8 +2351,8 @@ async def test_worker_profile_request_is_fail_closed_and_validated(
         assert unknown_field.status_code == 422
         assert field_name in unknown_field.text
 
-    identity, profiles = await fetch_actor_registry_rows(subject)
-    malicious_identity, malicious_profiles = await fetch_actor_registry_rows("malicious")
+    identity, profiles = await fetch_legacy_actor_rows(subject)
+    malicious_identity, malicious_profiles = await fetch_legacy_actor_rows("malicious")
 
     assert malicious_identity is None
     assert malicious_profiles == []
@@ -2284,9 +2363,7 @@ async def test_worker_profile_request_is_fail_closed_and_validated(
     assert identity.email is None
     assert identity.display_name is None
     assert identity.last_seen_roles == ["worker"]
-    assert [(profile.profile_type, profile.status, profile.scope_type, profile.scope_id) for profile in profiles] == [
-        ("worker", "observed", "global", "global")
-    ]
+    assert profiles == []
 
     blank_tag = await task_client.post(
         "/api/v1/workers/me/profile",
@@ -2300,9 +2377,9 @@ async def test_worker_profile_request_is_fail_closed_and_validated(
     )
 
     assert blank_tag.status_code == 422
-    assert "skill_tags cannot include empty values" in blank_tag.text
+    assert "invalid skill tag" in blank_tag.text
     assert long_tag.status_code == 422
-    assert "skill_tags values must be 64 characters or fewer" in long_tag.text
+    assert "invalid skill tag" in long_tag.text
 
 
 async def test_registered_claim_route_rejects_identity_spoof_fields(
@@ -2336,8 +2413,8 @@ async def test_registered_claim_route_rejects_identity_spoof_fields(
         assert response.status_code == 422
         assert field_name in response.text
 
-    identity, profiles = await fetch_actor_registry_rows("worker-claim-overpost")
-    malicious_identity, malicious_profiles = await fetch_actor_registry_rows("malicious")
+    identity, profiles = await fetch_legacy_actor_rows("worker-claim-overpost")
+    malicious_identity, malicious_profiles = await fetch_legacy_actor_rows("malicious")
 
     assert malicious_identity is None
     assert malicious_profiles == []

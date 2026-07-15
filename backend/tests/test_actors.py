@@ -1,110 +1,92 @@
 from __future__ import annotations
 
 import asyncio
+import asyncpg
 from collections.abc import AsyncIterator, Iterator
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from pathlib import Path
+from uuid import uuid4
 
-import pytest
 from alembic import command
 from alembic.config import Config
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import delete, select, text
+from pydantic import ValidationError
+import pytest
+from sqlalchemy import func, select, text
+from sqlalchemy.exc import SQLAlchemyError
 
-from app.adapters.auth.dev import actor_id_from_external_identity
+from app.api.deps.auth import get_auth_verification_result
+from app.api.deps.rate_controls import get_rate_control_service
 from app.core.config import get_settings
 from app.db import session as db_session
 from app.main import create_app
-from app.modules.actors import legacy_classification as legacy_classification_module
-from app.modules.actors.legacy_classification import snapshot_legacy_actors
-from app.modules.actors.models import ActorIdentity, ActorProfile
-from app.modules.actors.schemas import ActorProfileActivationRequest
-from app.modules.actors.service import ActorService
+from app.modules.actors.models import (
+    ActorIdentityLink,
+    ActorProfile,
+    LegacyActorIdentity,
+    LegacyWorkflowEligibility,
+)
+from app.modules.actors.schemas import (
+    ActorProfileUpdateRequest,
+    LegacyWorkflowEligibilityActivationRequest,
+)
+from app.modules.actors.service import (
+    ActorDeactivated,
+    ActorProfileDisabled,
+    ActorService,
+    IdentityLinkRevoked,
+    LegacyWorkflowEligibilityCompatibility,
+    ServiceActorNotProvisioned,
+    UnsupportedSubjectKind,
+)
+from app.modules.api_controls.service import RateControlDecision, RateControlUnavailableError
+from app.modules.audit.service import AuditService
 from app.modules.tasks.models import AuditEvent
-from app.schemas.auth import ActorContext
+from app.schemas.auth import (
+    ActorContext,
+    AuthVerificationResult,
+    VerifiedIssuerToken,
+    actor_id_from_external_identity,
+)
+
+ISSUER = "https://identity.test"
+RATE_SECRET = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8="
 
 
-async def test_legacy_classification_snapshot_is_complete_and_read_only(
-    actor_database_env: str,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Read exact legacy identity rows without changing registry state."""
-    issuer = "https://issuer.example.test"
-    subject = "opaque-legacy-subject"
-    actor_id = actor_id_from_external_identity(issuer, subject)
-    async with db_session.get_session_factory()() as session:
-        session.add(
-            ActorIdentity(
-                actor_id=actor_id,
-                external_subject=subject,
-                external_issuer=issuer,
-                display_name=None,
-                email=None,
-                last_seen_roles=[],
-                last_claim_snapshot={},
-                auth_source="flow",
-                is_dev_auth=False,
+async def clear_test_audit_events(database_url: str) -> None:
+    """Reset append-only evidence under explicit isolated-test ownership."""
+    connection = await asyncpg.connect(database_url.replace("+asyncpg", ""))
+    try:
+        async with connection.transaction():
+            await connection.execute(
+                "alter table audit_events disable trigger audit_events_reject_update_delete"
             )
-        )
-        await session.commit()
-
-    observed_transaction: dict[str, str] = {}
-    original_reader = legacy_classification_module.read_legacy_actor_snapshot
-
-    async def inspect_transaction(connection):
-        snapshot = await original_reader(connection)
-        observed_transaction["isolation"] = (
-            await connection.exec_driver_sql("SHOW transaction_isolation")
-        ).scalar_one()
-        observed_transaction["read_only"] = (
-            await connection.exec_driver_sql("SHOW transaction_read_only")
-        ).scalar_one()
-        return snapshot
-
-    monkeypatch.setattr(
-        legacy_classification_module,
-        "read_legacy_actor_snapshot",
-        inspect_transaction,
-    )
-    snapshot = await snapshot_legacy_actors(db_session.get_engine())
-
-    assert [(row.actor_id, row.issuer, row.subject) for row in snapshot.rows] == [
-        (actor_id, issuer, subject)
-    ]
-    assert snapshot.database_binding.startswith("postgres-v1:")
-    assert observed_transaction == {"isolation": "repeatable read", "read_only": "on"}
-    async with db_session.get_session_factory()() as session:
-        assert len((await session.execute(select(ActorIdentity))).scalars().all()) == 1
-
-    engine = db_session.get_engine()
-    async with engine.connect() as connection:
-        connection = await connection.execution_options(isolation_level="REPEATABLE READ")
-        async with connection.begin():
-            await connection.exec_driver_sql("SET TRANSACTION READ ONLY")
-            initial_count = (
-                await connection.execute(text("SELECT count(*) FROM actor_identities"))
-            ).scalar_one()
-            concurrent_subject = "concurrent-legacy-subject"
-            async with db_session.get_session_factory()() as session:
-                session.add(
-                    ActorIdentity(
-                        actor_id=actor_id_from_external_identity(issuer, concurrent_subject),
-                        external_subject=concurrent_subject,
-                        external_issuer=issuer,
-                        display_name=None,
-                        email=None,
-                        last_seen_roles=[],
-                        last_claim_snapshot={},
-                        auth_source="flow",
-                        is_dev_auth=False,
-                    )
-                )
-                await session.commit()
-            repeated_count = (
-                await connection.execute(text("SELECT count(*) FROM actor_identities"))
-            ).scalar_one()
-
-    assert initial_count == repeated_count == 1
+            await connection.execute(
+                "alter table audit_events disable trigger audit_events_reject_truncate"
+            )
+            await connection.execute("truncate table audit_events cascade")
+            await connection.execute("truncate table api_rate_control_counters")
+            await connection.execute(
+                "alter table actor_profiles disable trigger actor_profile_history_guard"
+            )
+            await connection.execute(
+                "alter table actor_identity_links disable trigger actor_identity_link_history_guard"
+            )
+            await connection.execute("truncate actor_identity_links, actor_profiles cascade")
+            await connection.execute(
+                "alter table actor_profiles enable trigger actor_profile_history_guard"
+            )
+            await connection.execute(
+                "alter table actor_identity_links enable trigger actor_identity_link_history_guard"
+            )
+            await connection.execute(
+                "alter table audit_events enable trigger audit_events_reject_truncate"
+            )
+            await connection.execute(
+                "alter table audit_events enable trigger audit_events_reject_update_delete"
+            )
+    finally:
+        await connection.close()
 
 
 @pytest.fixture
@@ -113,17 +95,19 @@ def actor_database_env(
     postgres_database_url: str,
     migration_lock,
 ) -> Iterator[str]:
-    """Run actor registry tests against a migrated Postgres schema."""
+    """Run canonical actor tests against an isolated current schema."""
     monkeypatch.setenv("WORKSTREAM_DATABASE_URL", postgres_database_url)
-    set_dev_actor(monkeypatch, roles="worker", subject="actor-registry-worker")
+    monkeypatch.setenv("WORKSTREAM_API_RATE_LIMIT_KEY_SECRET", RATE_SECRET)
+    set_dev_actor(monkeypatch, roles="worker", subject="actor-registry-contributor")
     get_settings.cache_clear()
     asyncio.run(db_session.dispose_engine())
-
     config = alembic_config()
     with migration_lock():
         command.downgrade(config, "base")
         command.upgrade(config, "head")
         yield postgres_database_url
+        asyncio.run(clear_test_audit_events(postgres_database_url))
+        asyncio.run(db_session.dispose_engine())
         command.downgrade(config, "base")
     asyncio.run(db_session.dispose_engine())
     get_settings.cache_clear()
@@ -131,17 +115,14 @@ def actor_database_env(
 
 @pytest.fixture
 async def actor_client(actor_database_env: str) -> AsyncIterator[AsyncClient]:
-    """Yield an in-process client backed by the migrated actor database."""
     app = create_app()
     async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://testserver",
+        transport=ASGITransport(app=app), base_url="http://testserver"
     ) as client:
         yield client
 
 
 def alembic_config() -> Config:
-    """Return Alembic configuration for backend migrations."""
     project_root = Path(__file__).resolve().parents[1]
     config = Config(str(project_root / "alembic.ini"))
     config.set_main_option("script_location", str(project_root / "alembic"))
@@ -154,655 +135,666 @@ def set_dev_actor(
     roles: str,
     subject: str,
     token: str = "actor-token",
-    issuer: str = "flow-test",
-    email: str | None = None,
-    display_name: str | None = None,
+    issuer: str = ISSUER,
 ) -> None:
-    """Configure the development verifier for one actor."""
     monkeypatch.setenv("WORKSTREAM_AUTH_PROVIDER", "dev")
     monkeypatch.setenv("WORKSTREAM_ENVIRONMENT", "test")
     monkeypatch.setenv("WORKSTREAM_DEV_AUTH_TOKEN", token)
     monkeypatch.setenv("WORKSTREAM_DEV_AUTH_SUBJECT", subject)
     monkeypatch.setenv("WORKSTREAM_DEV_AUTH_ISSUER", issuer)
-    monkeypatch.setenv("WORKSTREAM_DEV_AUTH_EMAIL", email or f"{subject}@example.test")
-    monkeypatch.setenv(
-        "WORKSTREAM_DEV_AUTH_DISPLAY_NAME",
-        display_name or subject.replace("-", " ").title(),
-    )
     monkeypatch.setenv("WORKSTREAM_DEV_AUTH_ROLES", roles)
     get_settings.cache_clear()
 
 
 def auth_headers(token: str = "actor-token") -> dict[str, str]:
-    """Return bearer auth headers for actor registry tests."""
     return {"Authorization": f"Bearer {token}"}
 
 
-def actor_id(subject: str, issuer: str = "flow-test") -> str:
-    """Return the stable actor id for a test issuer and subject."""
-    return actor_id_from_external_identity(issuer, subject)
+def verified_token(subject: str, *, kind: str = "human") -> VerifiedIssuerToken:
+    now = int(datetime.now(UTC).timestamp())
+    return VerifiedIssuerToken(
+        issuer=ISSUER,
+        subject=subject,
+        audience=("workstream",),
+        expires_at=now + 300,
+        issued_at=now,
+        token_id=f"token-{subject}",
+        subject_kind=kind,
+        scopes=frozenset({"workstream:access" if kind == "human" else "workstream:service"}),
+    )
 
 
-def actor_context(
-    *,
-    subject: str,
-    roles: tuple[str, ...],
-    claim_snapshot: dict | None = None,
-) -> ActorContext:
-    """Build a trusted actor context for service-level actor tests."""
+def legacy_actor(subject: str, roles: tuple[str, ...] = ("worker",)) -> ActorContext:
     return ActorContext(
-        actor_id=actor_id(subject),
+        actor_id=actor_id_from_external_identity(ISSUER, subject),
         external_subject=subject,
-        external_issuer="flow-test",
-        email=f"{subject}@example.test",
-        display_name=subject.replace("-", " ").title(),
+        external_issuer=ISSUER,
         roles=roles,
-        claim_snapshot=claim_snapshot or {"roles": roles},
+        claim_snapshot={"roles": list(roles)},
         auth_source="dev_mock",
         is_dev_auth=True,
     )
 
 
-async def test_auth_me_registers_identity_and_observed_profiles_without_duplicates(
-    actor_client: AsyncClient,
-    monkeypatch: pytest.MonkeyPatch,
+async def test_first_human_access_atomically_creates_profile_link_and_events(
+    actor_database_env: str,
 ) -> None:
-    set_dev_actor(monkeypatch, roles="worker,reviewer", subject="observed-actor")
-
-    first = await actor_client.get("/api/v1/auth/me", headers=auth_headers())
-    second = await actor_client.get("/api/v1/auth/me", headers=auth_headers())
-
-    assert first.status_code == 200, first.text
-    assert second.status_code == 200, second.text
+    token = verified_token("first-human")
     async with db_session.get_session_factory()() as session:
-        identity_rows = (
-            await session.execute(
-                select(ActorIdentity).where(ActorIdentity.actor_id == actor_id("observed-actor"))
-            )
-        ).scalars().all()
-        profile_rows = (
-            await session.execute(
-                select(ActorProfile)
-                .where(ActorProfile.actor_id == actor_id("observed-actor"))
-                .order_by(ActorProfile.profile_type.asc())
-            )
-        ).scalars().all()
-
-    assert len(identity_rows) == 1
-    assert identity_rows[0].last_seen_roles == ["worker", "reviewer"]
-    assert [(profile.profile_type, profile.status) for profile in profile_rows] == [
-        ("reviewer", "observed"),
-        ("worker", "observed"),
-    ]
-
-
-async def test_repeated_auth_me_does_not_rewrite_unchanged_observed_profile(
-    actor_client: AsyncClient,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    set_dev_actor(monkeypatch, roles="worker", subject="freshness-worker")
-    first = await actor_client.get("/api/v1/auth/me", headers=auth_headers())
-    assert first.status_code == 200, first.text
-    stale_time = datetime.now(UTC) - timedelta(days=1)
-    async with db_session.get_session_factory()() as session:
-        profile = await session.scalar(
-            select(ActorProfile).where(
-                ActorProfile.actor_id == actor_id("freshness-worker"),
-                ActorProfile.profile_type == "worker",
-            )
+        resolved = await ActorService(session).resolve_verified_actor(
+            token,
+            request_id=uuid4(),
+            correlation_id=uuid4(),
         )
-        assert profile is not None
-        profile.updated_at = stale_time
-        await session.commit()
 
-    second = await actor_client.get("/api/v1/auth/me", headers=auth_headers())
-    assert second.status_code == 200, second.text
+    assert resolved.profile.id == actor_id_from_external_identity(ISSUER, token.subject)
+    assert resolved.profile.actor_kind == "human"
+    assert resolved.profile.status == "active"
+    assert resolved.profile.provisioning_method == "automatic_first_access"
+    assert resolved.identity_link.actor_profile_id == resolved.profile.id
+    assert resolved.identity_link.subject_kind == "human"
     async with db_session.get_session_factory()() as session:
-        profile_rows = (
-            await session.execute(
-                select(ActorProfile).where(
-                    ActorProfile.actor_id == actor_id("freshness-worker"),
-                    ActorProfile.profile_type == "worker",
-                )
-            )
-        ).scalars().all()
-
-    assert len(profile_rows) == 1
-    assert profile_rows[0].status == "observed"
-    assert profile_rows[0].updated_at == stale_time
-
-
-async def test_auth_me_refreshes_stale_observed_profile_metadata(
-    actor_client: AsyncClient,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    set_dev_actor(monkeypatch, roles="reviewer", subject="metadata-refresh-reviewer")
-    created = await actor_client.get("/api/v1/auth/me", headers=auth_headers())
-    assert created.status_code == 200, created.text
-    stale_time = datetime.now(UTC) - timedelta(days=1)
-    async with db_session.get_session_factory()() as session:
-        profile = await session.scalar(
-            select(ActorProfile).where(
-                ActorProfile.actor_id == actor_id("metadata-refresh-reviewer"),
-                ActorProfile.profile_type == "reviewer",
-            )
-        )
-        assert profile is not None
-        profile.profile_metadata = {"source": "stale"}
-        profile.updated_at = stale_time
-        await session.commit()
-
-    refreshed = await actor_client.get("/api/v1/auth/me", headers=auth_headers())
-    assert refreshed.status_code == 200, refreshed.text
-    async with db_session.get_session_factory()() as session:
-        profile = await session.scalar(
-            select(ActorProfile).where(
-                ActorProfile.actor_id == actor_id("metadata-refresh-reviewer"),
-                ActorProfile.profile_type == "reviewer",
-            )
-        )
         events = (
-            await session.execute(
-                select(AuditEvent).where(
-                    AuditEvent.entity_type == "actor_profile",
-                    AuditEvent.actor_id == actor_id("metadata-refresh-reviewer"),
-                    AuditEvent.event_type == "actor_profile_observation_refreshed",
+            await session.scalars(
+                select(AuditEvent)
+                .where(AuditEvent.entity_id.in_([resolved.profile.id, resolved.identity_link.id]))
+                .order_by(AuditEvent.created_at, AuditEvent.id)
+            )
+        ).all()
+        assert {event.event_type for event in events} == {
+            "ActorProfileProvisioned",
+            "ActorIdentityLinked",
+        }
+        assert len(events) == 2
+        assert all(event.idempotency_reference is None for event in events)
+        assert all(event.invalidation_cause_event_id is None for event in events)
+
+
+async def test_concurrent_first_access_leaves_one_profile_link_and_event_pair(
+    actor_database_env: str,
+) -> None:
+    token = verified_token("concurrent-human")
+
+    async def resolve():
+        async with db_session.get_session_factory()() as session:
+            return await ActorService(session).resolve_verified_actor(
+                token,
+                request_id=uuid4(),
+                correlation_id=uuid4(),
+            )
+
+    first, second = await asyncio.gather(resolve(), resolve())
+    assert first.profile.id == second.profile.id
+    assert first.identity_link.id == second.identity_link.id
+    async with db_session.get_session_factory()() as session:
+        assert await session.scalar(select(func.count()).select_from(ActorProfile)) == 1
+        assert await session.scalar(select(func.count()).select_from(ActorIdentityLink)) == 1
+        assert (
+            await session.scalar(
+                select(func.count())
+                .select_from(AuditEvent)
+                .where(
+                    AuditEvent.event_type.in_(["ActorProfileProvisioned", "ActorIdentityLinked"])
                 )
             )
-        ).scalars().all()
-
-    assert profile is not None
-    assert profile.profile_metadata == {"source": "verified_token_role"}
-    assert profile.updated_at > stale_time
-    assert len(events) == 1
-    assert events[0].from_status == "observed"
-    assert events[0].to_status == "observed"
-    assert events[0].event_payload["profile_type"] == "reviewer"
-    assert events[0].event_payload["previous_profile_metadata"] == {"source": "stale"}
-    assert events[0].event_payload["profile_metadata"] == {"source": "verified_token_role"}
+            == 2
+        )
 
 
-async def test_auth_me_refreshes_identity_after_configured_interval(
+async def test_repeated_verified_access_reuses_actor_and_advances_database_timestamps(
+    actor_database_env: str,
+) -> None:
+    token = verified_token("repeat-human")
+    async with db_session.get_session_factory()() as session:
+        first = await ActorService(session).resolve_verified_actor(
+            token,
+            request_id=uuid4(),
+            correlation_id=uuid4(),
+        )
+        first_profile_seen_at = first.profile.last_seen_at
+        first_link_verified_at = first.identity_link.last_verified_at
+
+    assert first_profile_seen_at is not None
+    assert first_link_verified_at is not None
+    await asyncio.sleep(0.01)
+    async with db_session.get_session_factory()() as session:
+        second = await ActorService(session).resolve_verified_actor(
+            token,
+            request_id=uuid4(),
+            correlation_id=uuid4(),
+        )
+
+    assert second.profile.id == first.profile.id
+    assert second.identity_link.id == first.identity_link.id
+    assert second.profile.last_seen_at > first_profile_seen_at
+    assert second.identity_link.last_verified_at > first_link_verified_at
+    async with db_session.get_session_factory()() as session:
+        assert await session.scalar(select(func.count()).select_from(ActorProfile)) == 1
+        assert await session.scalar(select(func.count()).select_from(ActorIdentityLink)) == 1
+
+
+async def test_first_access_rolls_back_profile_link_and_first_audit_on_second_audit_failure(
+    actor_database_env: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    token = verified_token("audit-rollback-human")
+    original = AuditService.add_authority_event
+    calls = 0
+
+    async def fail_second_event(self, value):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise RuntimeError("injected audit failure")
+        return await original(self, value)
+
+    monkeypatch.setattr(AuditService, "add_authority_event", fail_second_event)
+    async with db_session.get_session_factory()() as session:
+        with pytest.raises(RuntimeError, match="injected audit failure"):
+            await ActorService(session).resolve_verified_actor(
+                token,
+                request_id=uuid4(),
+                correlation_id=uuid4(),
+            )
+        await session.rollback()
+
+    actor_id = actor_id_from_external_identity(ISSUER, token.subject)
+    async with db_session.get_session_factory()() as session:
+        assert await session.get(ActorProfile, actor_id) is None
+        assert (
+            await session.scalar(
+                select(func.count())
+                .select_from(ActorIdentityLink)
+                .where(ActorIdentityLink.actor_profile_id == actor_id)
+            )
+            == 0
+        )
+        assert (
+            await session.scalar(
+                select(func.count()).select_from(AuditEvent).where(AuditEvent.actor_id == actor_id)
+            )
+            == 0
+        )
+
+
+@pytest.mark.parametrize("kind", ["agent", "space"])
+async def test_unsupported_subject_kinds_create_nothing(
+    actor_database_env: str,
+    kind: str,
+) -> None:
+    async with db_session.get_session_factory()() as session:
+        with pytest.raises(UnsupportedSubjectKind):
+            await ActorService(session).resolve_verified_actor(
+                verified_token(f"unsupported-{kind}", kind=kind),
+                request_id=uuid4(),
+                correlation_id=uuid4(),
+            )
+        await session.rollback()
+    async with db_session.get_session_factory()() as session:
+        assert await session.scalar(select(func.count()).select_from(ActorProfile)) == 0
+        assert await session.scalar(select(func.count()).select_from(ActorIdentityLink)) == 0
+
+
+async def test_unknown_service_creates_nothing(actor_database_env: str) -> None:
+    async with db_session.get_session_factory()() as session:
+        with pytest.raises(ServiceActorNotProvisioned):
+            await ActorService(session).resolve_verified_actor(
+                verified_token("unknown-service", kind="service"),
+                request_id=uuid4(),
+                correlation_id=uuid4(),
+            )
+        await session.rollback()
+    async with db_session.get_session_factory()() as session:
+        assert await session.scalar(select(func.count()).select_from(ActorProfile)) == 0
+
+
+async def test_actors_me_returns_contributor_without_token_role_authority(
     actor_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    set_dev_actor(monkeypatch, roles="worker", subject="stale-identity-worker")
-    created = await actor_client.get("/api/v1/auth/me", headers=auth_headers())
-    assert created.status_code == 200, created.text
-    stale_time = datetime.now(UTC) - timedelta(minutes=10)
+    set_dev_actor(
+        monkeypatch,
+        roles="admin,project_manager,worker,reviewer",
+        subject="role-heavy-human",
+    )
+    response = await actor_client.get("/api/v1/actors/me", headers=auth_headers())
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["actor_kind"] == "human"
+    assert body["domains"] == ["contributor"]
+    assert body["admin_roles"] == []
+    assert body["project_role_grants"] == []
+    assert "issuer" not in body and "subject" not in body and "roles" not in body
+
+
+async def test_patch_actors_me_updates_only_display_fields(
+    actor_client: AsyncClient,
+) -> None:
+    response = await actor_client.patch(
+        "/api/v1/actors/me",
+        headers=auth_headers(),
+        json={"display_name": "Contributor One", "contact_email": "one@example.test"},
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["display_name"] == "Contributor One"
+    assert response.json()["contact_email"] == "one@example.test"
+
+    unknown = await actor_client.patch(
+        "/api/v1/actors/me",
+        headers=auth_headers(),
+        json={"status": "active"},
+    )
+    assert unknown.status_code == 422
+    empty = await actor_client.patch("/api/v1/actors/me", headers=auth_headers(), json={})
+    assert empty.status_code == 422
+
+
+async def test_patch_actors_me_maps_database_failure_to_retryable_unavailable(
+    actor_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    created = await actor_client.get("/api/v1/actors/me", headers=auth_headers())
+    assert created.status_code == 200
+
+    async def fail_update(*_args, **_kwargs):
+        raise SQLAlchemyError("injected database failure")
+
+    monkeypatch.setattr(ActorService, "update_self", fail_update)
+    response = await actor_client.patch(
+        "/api/v1/actors/me",
+        headers=auth_headers(),
+        json={"display_name": "Not persisted"},
+    )
+
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "service_unavailable"
+    assert response.json()["error"]["retryable"] is True
+
+
+async def test_suspended_profile_is_readable_but_not_mutable(
+    actor_client: AsyncClient,
+) -> None:
+    created = await actor_client.get("/api/v1/actors/me", headers=auth_headers())
+    actor_profile_id = created.json()["actor_profile_id"]
     async with db_session.get_session_factory()() as session:
-        identity = await session.scalar(
-            select(ActorIdentity).where(
-                ActorIdentity.actor_id == actor_id("stale-identity-worker")
-            )
-        )
-        assert identity is not None
-        identity.last_seen_at = stale_time
+        profile = await session.get(ActorProfile, actor_profile_id)
+        profile.status = "suspended"
+        profile.suspended_by = actor_profile_id
+        profile.suspended_at = func.now()
+        profile.suspension_reason = "security response"
         await session.commit()
 
-    refreshed = await actor_client.get("/api/v1/auth/me", headers=auth_headers())
-    assert refreshed.status_code == 200, refreshed.text
-    async with db_session.get_session_factory()() as session:
-        identity = await session.scalar(
-            select(ActorIdentity).where(
-                ActorIdentity.actor_id == actor_id("stale-identity-worker")
-            )
-        )
+    read = await actor_client.get("/api/v1/actors/me", headers=auth_headers())
+    assert read.status_code == 200
+    assert read.json()["status"] == "suspended"
+    patch = await actor_client.patch(
+        "/api/v1/actors/me",
+        headers=auth_headers(),
+        json={"display_name": "Blocked"},
+    )
+    assert patch.status_code == 403
+    assert patch.json()["error"]["code"] == "actor_suspended"
 
-    assert identity is not None
-    assert identity.last_seen_at > stale_time
 
-
-async def test_zero_registry_refresh_interval_writes_identity_every_time(
+async def test_revoked_identity_link_is_denied_by_actor_api(
     actor_client: AsyncClient,
-    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("WORKSTREAM_ACTOR_REGISTRY_REFRESH_INTERVAL_SECONDS", "0")
-    get_settings.cache_clear()
-    set_dev_actor(monkeypatch, roles="worker", subject="always-refresh-worker")
-    first = await actor_client.get("/api/v1/auth/me", headers=auth_headers())
-    assert first.status_code == 200, first.text
-    stale_time = datetime.now(UTC) - timedelta(minutes=10)
+    created = await actor_client.get("/api/v1/actors/me", headers=auth_headers())
+    assert created.status_code == 200
+    actor_profile_id = created.json()["actor_profile_id"]
     async with db_session.get_session_factory()() as session:
-        identity = await session.scalar(
-            select(ActorIdentity).where(
-                ActorIdentity.actor_id == actor_id("always-refresh-worker")
-            )
+        link = await session.scalar(
+            select(ActorIdentityLink).where(ActorIdentityLink.actor_profile_id == actor_profile_id)
         )
-        assert identity is not None
-        identity.last_seen_at = stale_time
+        assert link is not None
+        link.status = "revoked"
+        link.revoked_by = actor_profile_id
+        link.revoked_at = func.now()
+        link.revoked_reason = "security response"
         await session.commit()
 
-    second = await actor_client.get("/api/v1/auth/me", headers=auth_headers())
-    assert second.status_code == 200, second.text
+    denied = await actor_client.get("/api/v1/actors/me", headers=auth_headers())
+    assert denied.status_code == 403
+    assert denied.json()["error"]["code"] == "identity_link_revoked"
+
+
+async def test_deactivated_actor_is_denied_by_actor_self_api(
+    actor_client: AsyncClient,
+) -> None:
+    created = await actor_client.get("/api/v1/actors/me", headers=auth_headers())
+    assert created.status_code == 200
+    actor_profile_id = created.json()["actor_profile_id"]
     async with db_session.get_session_factory()() as session:
-        identity = await session.scalar(
-            select(ActorIdentity).where(
-                ActorIdentity.actor_id == actor_id("always-refresh-worker")
-            )
+        profile = await session.get(ActorProfile, actor_profile_id)
+        assert profile is not None
+        profile.status = "deactivated"
+        profile.deactivated_by = actor_profile_id
+        profile.deactivated_at = func.now()
+        profile.deactivation_reason = "operator decision"
+        await session.commit()
+
+    denied = await actor_client.get("/api/v1/actors/me", headers=auth_headers())
+    assert denied.status_code == 403
+    assert denied.json()["error"]["code"] == "actor_deactivated"
+
+
+@pytest.mark.parametrize(
+    ("kind", "expected_code"),
+    [
+        ("service", "service_actor_not_provisioned"),
+        ("agent", "unsupported_subject_kind"),
+        ("space", "unsupported_subject_kind"),
+    ],
+)
+async def test_nonhuman_actor_self_api_denials_create_nothing(
+    actor_client: AsyncClient,
+    kind: str,
+    expected_code: str,
+) -> None:
+    async def verification_override() -> AuthVerificationResult:
+        return AuthVerificationResult(
+            token=verified_token(f"http-{kind}", kind=kind),
+            legacy=None,
         )
 
-    assert identity is not None
-    assert identity.last_seen_at > stale_time
+    actor_client._transport.app.dependency_overrides[get_auth_verification_result] = (  # type: ignore[attr-defined]
+        verification_override
+    )
+    response = await actor_client.get("/api/v1/actors/me", headers=auth_headers())
+
+    assert response.status_code == 403
+    assert response.json()["error"]["code"] == expected_code
+    async with db_session.get_session_factory()() as session:
+        assert await session.scalar(select(func.count()).select_from(ActorProfile)) == 0
+        assert await session.scalar(select(func.count()).select_from(ActorIdentityLink)) == 0
 
 
-@pytest.mark.parametrize("role", ["worker", "reviewer", "admin", "project_manager"])
-async def test_token_roles_create_observed_non_eligibility_profiles(
+async def test_actor_api_accepts_verifier_identity_bounds(
     actor_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
-    role: str,
 ) -> None:
-    subject = f"{role}-observed"
-    set_dev_actor(monkeypatch, roles=role, subject=subject)
+    issuer = ("https://identity.test/" + "i" * 200)[:200]
+    subject = "s" * 200
+    set_dev_actor(monkeypatch, roles="worker", subject=subject, issuer=issuer)
 
-    response = await actor_client.get("/api/v1/auth/me", headers=auth_headers())
+    response = await actor_client.get("/api/v1/actors/me", headers=auth_headers())
 
     assert response.status_code == 200, response.text
     async with db_session.get_session_factory()() as session:
-        profile = await session.scalar(
-            select(ActorProfile).where(
-                ActorProfile.actor_id == actor_id(subject),
-                ActorProfile.profile_type == role,
+        link = await session.scalar(
+            select(ActorIdentityLink).where(
+                ActorIdentityLink.issuer == issuer,
+                ActorIdentityLink.subject == subject,
             )
         )
+        assert link is not None
 
-    assert profile is not None
-    assert profile.status == "observed"
-    assert profile.scope_type == "global"
-    assert profile.scope_id == "global"
+    eligibility = await actor_client.post(
+        "/api/v1/workers/me/profile",
+        headers=auth_headers(),
+        json={"skill_tags": ["stem"]},
+    )
+    assert eligibility.status_code == 200, eligibility.text
+    async with db_session.get_session_factory()() as session:
+        event = await session.scalar(
+            select(AuditEvent).where(
+                AuditEvent.event_type == "legacy_workflow_eligibility_activated"
+            )
+        )
+        assert event is not None
+        assert event.external_issuer == issuer
+        assert event.external_subject == subject
 
 
-async def test_worker_profile_activation_is_explicit_and_audited(
+def test_verified_identity_rejects_values_above_persisted_provenance_bound() -> None:
+    with pytest.raises(ValidationError):
+        verified_token("s" * 201)
+    with pytest.raises(ValidationError):
+        now = int(datetime.now(UTC).timestamp())
+        VerifiedIssuerToken(
+            issuer="i" * 201,
+            subject="subject",
+            audience=("workstream",),
+            expires_at=now + 300,
+            issued_at=now,
+            token_id="oversized-issuer",
+            subject_kind="human",
+            scopes=frozenset({"workstream:access"}),
+        )
+
+
+async def test_first_access_rate_limit_denies_without_actor_write(
     actor_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    set_dev_actor(monkeypatch, roles="worker", subject="explicit-worker")
+    class DeniedRateControl:
+        async def consume(self, **_kwargs):
+            return RateControlDecision(allowed=False, request_count=2, retry_after=30)
 
-    response = await actor_client.post(
-        "/api/v1/workers/me/profile",
-        headers=auth_headers(),
-        json={
-            "skill_tags": [" STEM ", "stem", "finance"],
-            "email": "spoof@example.test",
-        },
+    actor_client._transport.app.dependency_overrides[get_rate_control_service] = (  # type: ignore[attr-defined]
+        lambda: DeniedRateControl()
     )
-    assert response.status_code == 422
-
-    profile_response = await actor_client.post(
-        "/api/v1/workers/me/profile",
-        headers=auth_headers(),
-        json={"skill_tags": [" STEM ", "stem", "finance"]},
-    )
-
-    assert profile_response.status_code == 200, profile_response.text
-    body = profile_response.json()
-    assert body["profile_type"] == "worker"
-    assert body["status"] == "active"
-    assert body["skill_tags"] == ["stem", "finance"]
-    assert body["email"] is None
-    repeat_response = await actor_client.post(
-        "/api/v1/workers/me/profile",
-        headers=auth_headers(),
-        json={"skill_tags": ["stem", "finance"]},
-    )
-    assert repeat_response.status_code == 200, repeat_response.text
-
+    set_dev_actor(monkeypatch, roles="worker", subject="rate-denied-human")
+    response = await actor_client.get("/api/v1/actors/me", headers=auth_headers())
+    assert response.status_code == 429
+    assert response.headers["retry-after"] == "30"
     async with db_session.get_session_factory()() as session:
-        events = (
-            await session.execute(
-                select(AuditEvent).where(
-                    AuditEvent.entity_type == "actor_profile",
-                    AuditEvent.entity_id == body["id"],
+        assert await session.scalar(select(func.count()).select_from(ActorProfile)) == 0
+
+
+async def test_first_access_rate_control_unavailable_fails_closed(
+    actor_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class UnavailableRateControl:
+        async def consume(self, **_kwargs):
+            raise RateControlUnavailableError("unavailable")
+
+    actor_client._transport.app.dependency_overrides[get_rate_control_service] = (  # type: ignore[attr-defined]
+        lambda: UnavailableRateControl()
+    )
+    set_dev_actor(monkeypatch, roles="worker", subject="rate-unavailable-human")
+    response = await actor_client.get("/api/v1/actors/me", headers=auth_headers())
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "service_unavailable"
+    async with db_session.get_session_factory()() as session:
+        assert await session.scalar(select(func.count()).select_from(ActorProfile)) == 0
+        assert await session.scalar(select(func.count()).select_from(ActorIdentityLink)) == 0
+        assert (
+            await session.scalar(
+                select(func.count()).select_from(AuditEvent).where(
+                    AuditEvent.event_type.in_(
+                        ["ActorProfileProvisioned", "ActorIdentityLinked"]
+                    )
                 )
             )
-        ).scalars().all()
-
-    activation_events = [
-        event for event in events if event.event_type == "actor_profile_activated"
-    ]
-    assert len(activation_events) == 1
-    assert activation_events[0].from_status == "observed"
-    assert activation_events[0].to_status == "active"
-    assert activation_events[0].event_payload["profile_type"] == "worker"
-    assert activation_events[0].event_payload["scope_type"] == "global"
-    assert activation_events[0].event_payload["scope_id"] == "global"
-    assert activation_events[0].event_payload["skill_tags"] == ["stem", "finance"]
+            == 0
+        )
 
 
-async def test_observation_preserves_active_and_disabled_statuses(
+async def test_legacy_activation_writes_only_compatibility_metadata(
     actor_database_env: str,
 ) -> None:
-    active_actor = actor_context(subject="active-preserved", roles=("worker",))
-    disabled_actor = actor_context(subject="disabled-preserved", roles=("worker",))
+    actor = legacy_actor("legacy-intake")
     async with db_session.get_session_factory()() as session:
-        service = ActorService(session)
-        await service.activate_worker_profile(
-            active_actor,
-            ActorProfileActivationRequest(skill_tags=["stem"]),
+        await ActorService(session).resolve_verified_actor(
+            verified_token("legacy-intake"),
+            request_id=uuid4(),
+            correlation_id=uuid4(),
         )
-        await service.activate_worker_profile(
-            disabled_actor,
-            ActorProfileActivationRequest(skill_tags=["stem"]),
-        )
-        disabled_profile = await service.get_active_profile(disabled_actor.actor_id, "worker")
-        assert disabled_profile is not None
-        disabled_profile.status = "disabled"
-        await session.commit()
-
-        await service.register_actor(active_actor)
-        await service.register_actor(disabled_actor)
-
-    async with db_session.get_session_factory()() as session:
-        active_profile = await session.scalar(
-            select(ActorProfile).where(ActorProfile.actor_id == active_actor.actor_id)
-        )
-        disabled_profile = await session.scalar(
-            select(ActorProfile).where(ActorProfile.actor_id == disabled_actor.actor_id)
-        )
-
-    assert active_profile is not None
-    assert active_profile.status == "active"
-    assert active_profile.profile_metadata == {"source": "worker_profile_api"}
-    assert disabled_profile is not None
-    assert disabled_profile.status == "disabled"
-    assert disabled_profile.profile_metadata == {"source": "worker_profile_api"}
-
-
-async def test_observation_can_explicitly_clear_metadata(actor_database_env: str) -> None:
-    actor = actor_context(subject="metadata-clear-worker", roles=("worker",))
-    async with db_session.get_session_factory()() as session:
-        service = ActorService(session)
-        await service.ensure_observed_profile(
+        response = await ActorService(session).activate_legacy_workflow_eligibility(
             actor,
-            profile_type="worker",
-            scope_type="global",
-            scope_id="global",
-            profile_metadata={"source": "initial"},
+            LegacyWorkflowEligibilityActivationRequest(skill_tags=["STEM", "stem"]),
         )
-        await service.ensure_observed_profile(
-            actor,
-            profile_type="worker",
-            scope_type="global",
-            scope_id="global",
-            profile_metadata={},
-        )
-        await session.commit()
-
+    assert response.status == "active"
+    assert response.skill_tags == ["stem"]
     async with db_session.get_session_factory()() as session:
-        profile = await session.scalar(
-            select(ActorProfile).where(
-                ActorProfile.actor_id == actor.actor_id,
-                ActorProfile.profile_type == "worker",
+        assert await session.get(LegacyActorIdentity, actor.actor_id) is not None
+        eligibility = await session.scalar(
+            select(LegacyWorkflowEligibility).where(
+                LegacyWorkflowEligibility.actor_id == actor.actor_id
             )
         )
+        assert eligibility is not None
+        assert eligibility.profile_metadata == {"source": "legacy_worker_profile_api"}
+        table_names = set(
+            await session.scalars(
+                text("select tablename from pg_tables where schemaname=current_schema()")
+            )
+        )
+        assert "admin_role_grants" not in table_names
+        assert "project_role_grants" not in table_names
 
-    assert profile is not None
-    assert profile.profile_metadata == {}
 
-
-async def test_scoped_project_owner_profile_comes_from_trusted_relationship_claim(
+async def test_repeated_legacy_activation_updates_one_row_and_audits_only_changes(
     actor_database_env: str,
 ) -> None:
-    actor = actor_context(
-        subject="source-contact",
-        roles=("project_manager",),
-        claim_snapshot={
-            "roles": [" project_manager ", ""],
-            "access_token": "must-not-persist",
-            "claim_source": "must-not-persist",
-            "email": "must-not-persist@example.test",
-            "nested": {"api_key": "must-not-persist"},
-            "secret": "must-not-persist",
-            "workstream_relationship_profiles": [
-                {
-                    "profile_type": "project_owner",
-                    "scope_type": "project",
-                    "scope_id": "project-123",
-                    "profile_metadata": {
-                        "organization": "Example Labs",
-                        "api_key": "must-not-persist",
-                    },
-                }
+    actor = legacy_actor("legacy-repeat")
+    async with db_session.get_session_factory()() as session:
+        await ActorService(session).resolve_verified_actor(
+            verified_token("legacy-repeat"),
+            request_id=uuid4(),
+            correlation_id=uuid4(),
+        )
+        service = ActorService(session)
+        first = await service.activate_legacy_workflow_eligibility(
+            actor,
+            LegacyWorkflowEligibilityActivationRequest(skill_tags=["stem"]),
+        )
+        changed = await service.activate_legacy_workflow_eligibility(
+            actor,
+            LegacyWorkflowEligibilityActivationRequest(skill_tags=["data"]),
+        )
+        unchanged = await service.activate_legacy_workflow_eligibility(
+            actor,
+            LegacyWorkflowEligibilityActivationRequest(skill_tags=["data"]),
+        )
+
+    assert first.id == changed.id == unchanged.id
+    assert first.skill_tags == ["stem"]
+    assert changed.skill_tags == unchanged.skill_tags == ["data"]
+    async with db_session.get_session_factory()() as session:
+        assert (
+            await session.scalar(
+                select(func.count()).select_from(LegacyWorkflowEligibility).where(
+                    LegacyWorkflowEligibility.actor_id == actor.actor_id
+                )
+            )
+            == 1
+        )
+        assert (
+            await session.scalar(
+                select(func.count()).select_from(AuditEvent).where(
+                    AuditEvent.entity_type == "legacy_workflow_eligibility",
+                    AuditEvent.actor_id == actor.actor_id,
+                )
+            )
+            == 2
+        )
+
+
+async def test_existing_actor_and_legacy_negative_states_fail_closed(
+    actor_database_env: str,
+) -> None:
+    """Exercise revoked, deactivated, service, and compatibility state branches."""
+    human_token = verified_token("revoked-human")
+    async with db_session.get_session_factory()() as session:
+        resolved = await ActorService(session).resolve_verified_actor(
+            human_token,
+            request_id=uuid4(),
+            correlation_id=uuid4(),
+        )
+        resolved.identity_link.status = "revoked"
+        resolved.identity_link.revoked_by = resolved.profile.id
+        resolved.identity_link.revoked_at = func.now()
+        resolved.identity_link.revoked_reason = "security response"
+        await session.commit()
+    async with db_session.get_session_factory()() as session:
+        with pytest.raises(IdentityLinkRevoked):
+            await ActorService(session).find_verified_actor(human_token)
+
+    deactivated_token = verified_token("deactivated-human")
+    async with db_session.get_session_factory()() as session:
+        deactivated = await ActorService(session).resolve_verified_actor(
+            deactivated_token,
+            request_id=uuid4(),
+            correlation_id=uuid4(),
+        )
+        deactivated.profile.status = "deactivated"
+        deactivated.profile.deactivated_by = deactivated.profile.id
+        deactivated.profile.deactivated_at = func.now()
+        deactivated.profile.deactivation_reason = "operator decision"
+        await session.commit()
+        with pytest.raises(ActorDeactivated):
+            await ActorService(session).update_self(
+                deactivated,
+                ActorProfileUpdateRequest(display_name="Blocked"),
+            )
+
+    service_token = verified_token("known-service", kind="service")
+    service_actor_id = actor_id_from_external_identity(ISSUER, service_token.subject)
+    async with db_session.get_session_factory()() as session:
+        session.add_all(
+            [
+                ActorProfile(
+                    id=service_actor_id,
+                    actor_kind="service",
+                    status="active",
+                    provisioning_method="manual_service_provisioning",
+                    created_by="workstream:system:test",
+                ),
+                ActorIdentityLink(
+                    id=str(uuid4()),
+                    actor_profile_id=service_actor_id,
+                    issuer=ISSUER,
+                    subject=service_token.subject,
+                    subject_kind="service",
+                    status="active",
+                    linked_by="workstream:system:test",
+                ),
             ]
-        },
-    )
-    async with db_session.get_session_factory()() as session:
-        service = ActorService(session)
-        await service.register_actor(actor)
-        await service.register_actor(actor)
-
-    async with db_session.get_session_factory()() as session:
-        identity = await session.scalar(
-            select(ActorIdentity).where(ActorIdentity.actor_id == actor.actor_id)
-        )
-        profiles = (
-            await session.execute(
-                select(ActorProfile).where(
-                    ActorProfile.actor_id == actor.actor_id,
-                    ActorProfile.profile_type == "project_owner",
-                )
-            )
-        ).scalars().all()
-        audit_events = (
-            await session.execute(
-                select(AuditEvent).where(
-                    AuditEvent.entity_type == "actor_profile",
-                    AuditEvent.actor_id == actor.actor_id,
-                )
-            )
-        ).scalars().all()
-
-    assert identity is not None
-    identity_snapshot = identity.last_claim_snapshot
-    assert identity_snapshot["roles"] == ["project_manager"]
-    assert identity_snapshot["workstream_relationship_profiles"] == [
-        {
-            "profile_type": "project_owner",
-            "scope_type": "project",
-            "scope_id": "project-123",
-        }
-    ]
-    assert "must-not-persist" not in str(identity_snapshot)
-    assert "api_key" not in str(identity_snapshot)
-    assert "access_token" not in str(identity_snapshot)
-    assert "claim_source" not in str(identity_snapshot)
-    assert "nested" not in str(identity_snapshot)
-    assert "email" not in str(identity_snapshot)
-    assert "secret" not in str(identity_snapshot).lower()
-    assert "token" not in str(identity_snapshot).lower()
-    assert len(profiles) == 1
-    assert profiles[0].status == "observed"
-    assert profiles[0].scope_type == "project"
-    assert profiles[0].scope_id == "project-123"
-    assert profiles[0].profile_metadata == {"source": "trusted_relationship_claim"}
-    assert audit_events
-    for audit_event in audit_events:
-        claim_snapshot = audit_event.claim_snapshot
-        assert "must-not-persist" not in str(claim_snapshot)
-        assert "api_key" not in str(claim_snapshot)
-        assert "access_token" not in str(claim_snapshot)
-        assert "claim_source" not in str(claim_snapshot)
-        assert "nested" not in str(claim_snapshot)
-        assert "email" not in str(claim_snapshot)
-        assert "secret" not in str(claim_snapshot).lower()
-        assert "token" not in str(claim_snapshot).lower()
-
-
-async def test_relationship_claims_ignore_malformed_entries_and_observe_multiple_scopes(
-    actor_database_env: str,
-) -> None:
-    actor = actor_context(
-        subject="multi-project-owner",
-        roles=("project_manager",),
-        claim_snapshot={
-            "roles": ["project_manager"],
-            "workstream_relationship_profiles": [
-                {
-                    "profile_type": "project_owner",
-                    "scope_type": " project ",
-                    "scope_id": " project-alpha ",
-                },
-                {
-                    "profile_type": "reviewer",
-                    "scope_type": "project",
-                    "scope_id": "project-ignored",
-                },
-                {
-                    "profile_type": "project_owner",
-                    "scope_type": "project",
-                    "scope_id": "",
-                },
-                {
-                    "profile_type": "project_owner",
-                    "scope_type": "project",
-                    "scope_id": "project-beta",
-                },
-                {"profile_type": "project_owner", "scope_type": 7, "scope_id": "bad"},
-                "not-a-profile",
-            ],
-        },
-    )
-    async with db_session.get_session_factory()() as session:
-        service = ActorService(session)
-        await service.register_actor(actor)
-        await service.register_actor(actor)
-
-    async with db_session.get_session_factory()() as session:
-        identity = await session.scalar(
-            select(ActorIdentity).where(ActorIdentity.actor_id == actor.actor_id)
-        )
-        profiles = (
-            await session.execute(
-                select(ActorProfile).where(
-                    ActorProfile.actor_id == actor.actor_id,
-                    ActorProfile.profile_type == "project_owner",
-                )
-            )
-        ).scalars().all()
-        audit_events = (
-            await session.execute(
-                select(AuditEvent).where(
-                    AuditEvent.entity_type == "actor_profile",
-                    AuditEvent.actor_id == actor.actor_id,
-                    AuditEvent.event_type == "actor_profile_observed",
-                )
-            )
-        ).scalars().all()
-
-    assert identity is not None
-    assert identity.last_claim_snapshot["workstream_relationship_profiles"] == [
-        {
-            "profile_type": "project_owner",
-            "scope_type": "project",
-            "scope_id": "project-alpha",
-        },
-        {
-            "profile_type": "project_owner",
-            "scope_type": "project",
-            "scope_id": "project-beta",
-        },
-    ]
-    assert {
-        (profile.scope_type, profile.scope_id, profile.status)
-        for profile in profiles
-    } == {
-        ("project", "project-alpha", "observed"),
-        ("project", "project-beta", "observed"),
-    }
-    project_owner_events = [
-        event
-        for event in audit_events
-        if event.event_payload["profile_type"] == "project_owner"
-    ]
-    assert len(project_owner_events) == 2
-    assert {
-        (event.event_payload["scope_type"], event.event_payload["scope_id"])
-        for event in project_owner_events
-    } == {("project", "project-alpha"), ("project", "project-beta")}
-
-
-async def test_missing_relationship_profile_forces_registry_refresh(
-    actor_database_env: str,
-) -> None:
-    actor = actor_context(
-        subject="missing-relationship-profile",
-        roles=("project_manager",),
-        claim_snapshot={
-            "roles": ["project_manager"],
-            "workstream_relationship_profiles": [
-                {
-                    "profile_type": "project_owner",
-                    "scope_type": "project",
-                    "scope_id": "project-recreated",
-                }
-            ],
-        },
-    )
-    async with db_session.get_session_factory()() as session:
-        service = ActorService(session)
-        await service.register_actor(actor)
-
-    async with db_session.get_session_factory()() as session:
-        await session.execute(
-            delete(ActorProfile).where(
-                ActorProfile.actor_id == actor.actor_id,
-                ActorProfile.profile_type == "project_owner",
-            )
         )
         await session.commit()
+        resolved_service = await ActorService(session).resolve_verified_actor(
+            service_token,
+            request_id=uuid4(),
+            correlation_id=uuid4(),
+        )
+        with pytest.raises(UnsupportedSubjectKind):
+            ActorService.self_response(resolved_service.profile)
 
+    legacy = legacy_actor("disabled-legacy")
     async with db_session.get_session_factory()() as session:
-        service = ActorService(session)
-        await service.register_actor(actor)
-
-    async with db_session.get_session_factory()() as session:
-        profiles = (
-            await session.execute(
-                select(ActorProfile).where(
-                    ActorProfile.actor_id == actor.actor_id,
-                    ActorProfile.profile_type == "project_owner",
-                )
+        session.add_all(
+            [
+                LegacyActorIdentity(
+                    actor_id=legacy.actor_id,
+                    external_subject=legacy.external_subject,
+                    external_issuer=legacy.external_issuer,
+                    last_seen_roles=["worker"],
+                    last_claim_snapshot={},
+                    auth_source="dev_mock",
+                    is_dev_auth=True,
+                ),
+                LegacyWorkflowEligibility(
+                    id=str(uuid4()),
+                    actor_id=legacy.actor_id,
+                    profile_type="worker",
+                    status="disabled",
+                    skill_tags=[],
+                    scope_type="global",
+                    scope_id="global",
+                    profile_metadata={},
+                ),
+            ]
+        )
+        await session.commit()
+        with pytest.raises(ActorProfileDisabled):
+            await ActorService(session).activate_legacy_workflow_eligibility(
+                legacy,
+                LegacyWorkflowEligibilityActivationRequest(skill_tags=[]),
             )
-        ).scalars().all()
-        audit_events = (
-            await session.execute(
-                select(AuditEvent).where(
-                    AuditEvent.entity_type == "actor_profile",
-                    AuditEvent.actor_id == actor.actor_id,
-                    AuditEvent.event_type == "actor_profile_observed",
-                )
-            )
-        ).scalars().all()
-
-    assert len(profiles) == 1
-    assert profiles[0].scope_type == "project"
-    assert profiles[0].scope_id == "project-recreated"
-    assert profiles[0].status == "observed"
-    project_owner_events = [
-        event
-        for event in audit_events
-        if event.event_payload["profile_type"] == "project_owner"
-    ]
-    assert len(project_owner_events) == 2
-
-
-async def test_active_profile_without_matching_token_role_cannot_use_worker_profile_api(
-    actor_client: AsyncClient,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    set_dev_actor(monkeypatch, roles="worker", subject="role-lost-worker")
-    created = await actor_client.post(
-        "/api/v1/workers/me/profile",
-        headers=auth_headers(),
-        json={"skill_tags": ["stem"]},
-    )
-    assert created.status_code == 200, created.text
-
-    set_dev_actor(monkeypatch, roles="project_manager", subject="role-lost-worker")
-    denied = await actor_client.post(
-        "/api/v1/workers/me/profile",
-        headers=auth_headers(),
-        json={"skill_tags": ["stem"]},
-    )
-
-    assert denied.status_code == 403
+        compatibility = LegacyWorkflowEligibilityCompatibility(session)
+        assert await compatibility.get_active_submitter_eligibility(legacy.actor_id) is None
+        assert await compatibility.get_active_submitter_eligibility(str(uuid4())) is None

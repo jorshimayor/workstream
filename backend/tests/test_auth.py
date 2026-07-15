@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import asyncpg
 import base64
 import hashlib
 import hmac
@@ -48,6 +49,23 @@ def _application_paths(app) -> set[str]:
     return paths
 
 
+def test_legacy_submitter_eligibility_adapter_has_a_shrinking_static_allowlist() -> None:
+    """Keep the temporary bridge confined to its owner and three intake gates."""
+    app_root = Path(__file__).resolve().parents[1] / "app"
+    consumers = {
+        path.relative_to(app_root).as_posix()
+        for path in app_root.rglob("*.py")
+        if "LegacyWorkflowEligibilityCompatibility" in path.read_text()
+    }
+    task_service = (app_root / "modules/tasks/service.py").read_text()
+
+    assert consumers == {
+        "modules/actors/service.py",
+        "modules/tasks/service.py",
+    }
+    assert task_service.count("_require_legacy_submitter_eligibility(actor)") == 3
+
+
 @pytest.fixture(autouse=True)
 def clear_settings_cache() -> None:
     get_settings.cache_clear()
@@ -55,6 +73,29 @@ def clear_settings_cache() -> None:
     yield
     get_settings.cache_clear()
     clear_auth_verifier_cache()
+
+
+async def clear_test_audit_events(database_url: str) -> None:
+    """Reset append-only evidence under explicit isolated-test ownership."""
+    connection = await asyncpg.connect(database_url.replace("+asyncpg", ""))
+    try:
+        async with connection.transaction():
+            await connection.execute(
+                "alter table audit_events disable trigger audit_events_reject_update_delete"
+            )
+            await connection.execute(
+                "alter table audit_events disable trigger audit_events_reject_truncate"
+            )
+            await connection.execute("truncate table audit_events cascade")
+            await connection.execute("truncate table api_rate_control_counters")
+            await connection.execute(
+                "alter table audit_events enable trigger audit_events_reject_truncate"
+            )
+            await connection.execute(
+                "alter table audit_events enable trigger audit_events_reject_update_delete"
+            )
+    finally:
+        await connection.close()
 
 
 @pytest.fixture
@@ -65,6 +106,10 @@ def auth_database_env(
 ) -> Iterator[str]:
     """Run auth route persistence tests against a migrated Postgres schema."""
     monkeypatch.setenv("WORKSTREAM_DATABASE_URL", postgres_database_url)
+    monkeypatch.setenv(
+        "WORKSTREAM_API_RATE_LIMIT_KEY_SECRET",
+        "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+    )
     get_settings.cache_clear()
     asyncio.run(db_session.dispose_engine())
 
@@ -75,6 +120,8 @@ def auth_database_env(
         command.downgrade(config, "base")
         command.upgrade(config, "head")
         yield postgres_database_url
+        asyncio.run(clear_test_audit_events(postgres_database_url))
+        asyncio.run(db_session.dispose_engine())
         command.downgrade(config, "base")
     asyncio.run(db_session.dispose_engine())
     get_settings.cache_clear()
@@ -231,6 +278,36 @@ async def test_local_hmac_fixture_uses_final_claim_shape() -> None:
     assert result.token.token_id == "local-token-id"
     assert result.legacy is not None
     assert result.legacy.roles == ("reviewer",)
+
+
+async def test_flow_auth_rejects_subject_above_persisted_identity_bound() -> None:
+    secret = "local-test-secret"
+    now = int(datetime.now(UTC).timestamp())
+    verifier = FlowAuthVerifier(
+        Settings(
+            environment="test",
+            auth_provider="flow",
+            flow_auth_issuer="https://issuer.local.test",
+            flow_auth_audience="workstream",
+            flow_auth_local_hmac_secret=secret,
+        )
+    )
+    token = issue_local_hmac_token(
+        secret,
+        {
+            "iss": "https://issuer.local.test",
+            "sub": "s" * 201,
+            "aud": "workstream",
+            "exp": now + 300,
+            "iat": now,
+            "jti": "oversized-subject",
+            "subject_kind": "human",
+            "scope": "workstream:access",
+        },
+    )
+
+    with pytest.raises(AuthVerificationError, match="token subject is required"):
+        await verifier.verify(token)
 
 
 @pytest.mark.parametrize("environment", ["staging", "preview", "prod", "production"])
@@ -731,7 +808,7 @@ async def test_service_and_agent_tokens_receive_no_legacy_authority(
     assert agent.legacy is None
     assert space.legacy is None
     with pytest.raises(HTTPException) as exc_info:
-        await get_registered_actor(agent, None)  # type: ignore[arg-type]
+        await get_registered_actor(agent, None, None)  # type: ignore[arg-type]
     assert exc_info.value.status_code == 403
     assert exc_info.value.error_code == "unsupported_subject_kind"
 
@@ -1019,6 +1096,7 @@ async def test_jwks_and_introspection_use_distinct_owned_client_factories(
     assert clients["jwks"][0].is_closed
     assert clients["introspection"][0].is_closed
 
+
 @pytest.mark.parametrize(
     "response_override",
     [
@@ -1209,6 +1287,7 @@ def test_legacy_compatibility_dependency_has_fixed_consumer_allowlist() -> None:
         "adapters/auth/flow.py",
         "api/deps/api_controls.py",
         "api/deps/auth.py",
+        "api/deps/rate_controls.py",
         "core/auth.py",
         "interfaces/auth.py",
         "schemas/auth.py",
@@ -1342,10 +1421,10 @@ async def test_auth_me_maps_actor_registry_failure_to_service_unavailable(
     monkeypatch.setenv("WORKSTREAM_DEV_AUTH_ROLES", "worker")
     get_settings.cache_clear()
 
-    async def fail_register_actor(self, actor):
+    async def fail_resolve_actor(self, token, *, request_id, correlation_id):
         raise SQLAlchemyError("registry unavailable")
 
-    monkeypatch.setattr(ActorService, "register_actor", fail_register_actor)
+    monkeypatch.setattr(ActorService, "resolve_verified_actor", fail_resolve_actor)
     app = create_app()
 
     async with AsyncClient(

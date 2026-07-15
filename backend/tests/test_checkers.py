@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import asyncpg
 from collections.abc import AsyncIterator, Iterator
 from pathlib import Path
 from typing import Any
@@ -57,6 +58,29 @@ from tests.test_tasks import (
 )
 
 
+async def clear_test_audit_events(database_url: str) -> None:
+    """Reset append-only evidence under explicit isolated-test ownership."""
+    connection = await asyncpg.connect(database_url.replace("+asyncpg", ""))
+    try:
+        async with connection.transaction():
+            await connection.execute(
+                "alter table audit_events disable trigger audit_events_reject_update_delete"
+            )
+            await connection.execute(
+                "alter table audit_events disable trigger audit_events_reject_truncate"
+            )
+            await connection.execute("truncate table audit_events cascade")
+            await connection.execute("truncate table api_rate_control_counters")
+            await connection.execute(
+                "alter table audit_events enable trigger audit_events_reject_truncate"
+            )
+            await connection.execute(
+                "alter table audit_events enable trigger audit_events_reject_update_delete"
+            )
+    finally:
+        await connection.close()
+
+
 @pytest.fixture
 def checker_database_env(
     monkeypatch: pytest.MonkeyPatch,
@@ -65,6 +89,10 @@ def checker_database_env(
 ) -> Iterator[str]:
     monkeypatch.setenv("WORKSTREAM_DATABASE_URL", postgres_database_url)
     monkeypatch.setenv("WORKSTREAM_CELERY_TASK_ALWAYS_EAGER", "true")
+    monkeypatch.setenv(
+        "WORKSTREAM_API_RATE_LIMIT_KEY_SECRET",
+        "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+    )
     set_dev_actor(monkeypatch, roles="project_manager", subject="project-manager-subject")
     get_settings.cache_clear()
     asyncio.run(db_session.dispose_engine())
@@ -74,6 +102,8 @@ def checker_database_env(
         command.downgrade(config, "base")
         command.upgrade(config, "head")
         yield postgres_database_url
+        asyncio.run(clear_test_audit_events(postgres_database_url))
+        asyncio.run(db_session.dispose_engine())
         command.downgrade(config, "base")
     asyncio.run(db_session.dispose_engine())
     get_settings.cache_clear()

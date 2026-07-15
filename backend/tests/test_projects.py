@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import asyncpg
 import hashlib
 import inspect
 import json
@@ -32,7 +33,7 @@ from app.adapters.project_agents.openai_agent_sdk import (
 from app.db import session as db_session
 from app.db.base import Base
 from app.main import create_app
-from app.modules.actors.models import ActorIdentity, ActorProfile
+from app.modules.actors.models import ActorIdentityLink, ActorProfile, LegacyActorIdentity
 from app.interfaces.project_agents import (
     GuideSourceMaterial,
     GuideSufficiencyAgentResult,
@@ -73,10 +74,35 @@ from app.modules.projects.service import (
     ProjectService,
     StaleProjectSetupContinuation,
 )
+
+
 from app.modules.projects.post_submit_policy import (
     build_project_post_submit_checker_spec,
     compile_project_post_submit_checker_spec,
 )
+
+
+async def clear_test_audit_events(database_url: str) -> None:
+    """Reset append-only evidence under explicit isolated-test ownership."""
+    connection = await asyncpg.connect(database_url.replace("+asyncpg", ""))
+    try:
+        async with connection.transaction():
+            await connection.execute(
+                "alter table audit_events disable trigger audit_events_reject_update_delete"
+            )
+            await connection.execute(
+                "alter table audit_events disable trigger audit_events_reject_truncate"
+            )
+            await connection.execute("truncate table audit_events cascade")
+            await connection.execute("truncate table api_rate_control_counters")
+            await connection.execute(
+                "alter table audit_events enable trigger audit_events_reject_truncate"
+            )
+            await connection.execute(
+                "alter table audit_events enable trigger audit_events_reject_update_delete"
+            )
+    finally:
+        await connection.close()
 
 
 @pytest.fixture
@@ -86,6 +112,10 @@ def project_database_env(
     migration_lock,
 ) -> Iterator[str]:
     monkeypatch.setenv("WORKSTREAM_DATABASE_URL", postgres_database_url)
+    monkeypatch.setenv(
+        "WORKSTREAM_API_RATE_LIMIT_KEY_SECRET",
+        "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+    )
     monkeypatch.setenv("WORKSTREAM_AUTH_PROVIDER", "dev")
     monkeypatch.setenv("WORKSTREAM_ENVIRONMENT", "test")
     monkeypatch.setenv("WORKSTREAM_DEV_AUTH_TOKEN", "project-token")
@@ -104,6 +134,8 @@ def project_database_env(
         command.downgrade(config, "base")
         command.upgrade(config, "head")
         yield postgres_database_url
+        asyncio.run(clear_test_audit_events(postgres_database_url))
+        asyncio.run(db_session.dispose_engine())
         command.downgrade(config, "base")
     asyncio.run(db_session.dispose_engine())
     get_settings.cache_clear()
@@ -542,20 +574,23 @@ async def test_project_route_registers_project_manager_actor_without_auth_me(
     assert response.status_code == 201, response.text
 
     async with db_session.get_session_factory()() as session:
-        identity = await session.scalar(
-            select(ActorIdentity).where(
-                ActorIdentity.external_subject == "project-manager-subject"
+        identity_link = await session.scalar(
+            select(ActorIdentityLink).where(
+                ActorIdentityLink.subject == "project-manager-subject"
             )
         )
-        assert identity is not None
-        profiles = (
-            await session.execute(
-                select(ActorProfile).where(ActorProfile.actor_id == identity.actor_id)
-            )
-        ).scalars().all()
+        assert identity_link is not None
+        profile = await session.get(ActorProfile, identity_link.actor_profile_id)
+        legacy_identity = await session.get(
+            LegacyActorIdentity,
+            identity_link.actor_profile_id,
+        )
 
-    assert identity.last_seen_roles == ["project_manager"]
-    assert any(profile.profile_type == "project_manager" for profile in profiles)
+    assert profile is not None
+    assert profile.actor_kind == "human"
+    assert profile.status == "active"
+    assert legacy_identity is not None
+    assert legacy_identity.last_seen_roles == ["project_manager"]
 
 
 async def create_guide(client: AsyncClient, project_id: str, payload: dict) -> dict:

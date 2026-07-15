@@ -27,8 +27,8 @@ from app.modules.checkers.service import (
     CheckerServiceError,
     pre_review_gate_system_actor,
 )
-from app.modules.actors.models import ActorProfile
-from app.modules.actors.service import ActorService
+from app.modules.actors.models import LegacyWorkflowEligibility
+from app.modules.actors.service import LegacyWorkflowEligibilityCompatibility
 from app.modules.projects.models import (
     EffectiveProjectSubmissionArtifactPolicy,
     GuideSourceSnapshot,
@@ -180,8 +180,8 @@ class TaskAssignmentConflict(TaskServiceError):
     status_code = 409
 
 
-class WorkerEligibilityRequired(TaskServiceError):
-    """Raised when a worker tries to claim without active worker profile eligibility."""
+class LegacySubmitterEligibilityRequired(TaskServiceError):
+    """Raised when a submitter lacks temporary legacy workflow eligibility."""
 
     status_code = 403
 
@@ -269,7 +269,7 @@ class TaskService:
         self._session = session
         self._repo = TaskRepository(session)
         self._project_repo = ProjectRepository(session)
-        self._actor_service = ActorService(session)
+        self._legacy_workflow_eligibility = LegacyWorkflowEligibilityCompatibility(session)
 
     async def create_task(
         self,
@@ -533,7 +533,7 @@ class TaskService:
         require_any_role(actor, TASK_CLAIM_ROLES)
         task = await self._get_task(task_id)
         self._ensure_transition_allowed(task.status, TASK_STATUS_CLAIMED)
-        await self._require_active_worker_profile(actor)
+        await self._require_legacy_submitter_eligibility(actor)
         if await self._repo.get_active_assignment(task_id) is not None:
             raise TaskAssignmentConflict("task already has an active assignment")
 
@@ -597,6 +597,8 @@ class TaskService:
         )
         if assignment.worker_id != actor.actor_id and not is_operator_override:
             raise TaskTransitionBlocked("actor is not assigned to this task")
+        if not is_operator_override:
+            await self._require_legacy_submitter_eligibility(actor)
         if is_operator_override and (reason is None or not reason.strip()):
             raise TaskValidationError("operator start override reason is required")
         await self._change_task_status(
@@ -642,7 +644,7 @@ class TaskService:
         task = await self._get_task(task_id)
         if "worker" in actor.roles and task.assigned_to not in {None, actor.actor_id}:
             raise TaskNotFound("task not found")
-        await self._require_active_worker_profile(actor)
+        await self._require_legacy_submitter_eligibility(actor)
         assignment = await self._repo.get_active_assignment(task_id)
         if assignment is None:
             raise TaskTransitionBlocked("task has no active assignment")
@@ -2018,24 +2020,28 @@ class TaskService:
         except ValueError as exc:
             raise TaskProjectNotReady("locked post-submit checker policy hash is invalid") from exc
 
-    async def _require_active_worker_profile(
+    async def _require_legacy_submitter_eligibility(
         self,
         actor: ActorContext,
-    ) -> ActorProfile:
-        """Require active worker actor profile eligibility before claim.
+    ) -> LegacyWorkflowEligibility:
+        """Require temporary active submitter eligibility for intake workflows.
 
         Args:
             actor: Verified Flow actor context.
 
         Returns:
-            Persisted active worker actor profile.
+            Persisted active legacy submitter eligibility.
 
         Raises:
-            WorkerEligibilityRequired: If the actor has no active worker profile.
+            LegacySubmitterEligibilityRequired: If eligibility is absent or inactive.
         """
-        profile = await self._actor_service.get_active_profile(actor.actor_id, "worker")
+        profile = await self._legacy_workflow_eligibility.get_active_submitter_eligibility(
+            actor.actor_id
+        )
         if profile is None:
-            raise WorkerEligibilityRequired("active worker profile is required to claim task")
+            raise LegacySubmitterEligibilityRequired(
+                "active legacy submitter eligibility is required"
+            )
         return profile
 
     async def _change_task_status(

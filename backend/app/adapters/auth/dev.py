@@ -9,6 +9,7 @@ from app.interfaces.auth import AuthVerificationError
 from app.schemas.auth import (
     AuthVerificationResult,
     LegacyAuthorizationCompatibilityContext,
+    MAX_VERIFIED_IDENTITY_ANCHOR_CHARACTERS,
     VerifiedIssuerToken,
     actor_id_from_external_identity,
     normalize_legacy_roles,
@@ -34,9 +35,15 @@ class DevelopmentAuthVerifier:
             raise RuntimeError("development auth cannot run in production")
         if not settings.dev_auth_token:
             raise RuntimeError("WORKSTREAM_DEV_AUTH_TOKEN must be set for development auth")
-        if not settings.dev_auth_subject:
+        if (
+            not settings.dev_auth_subject
+            or len(settings.dev_auth_subject) > MAX_VERIFIED_IDENTITY_ANCHOR_CHARACTERS
+        ):
             raise RuntimeError("WORKSTREAM_DEV_AUTH_SUBJECT must be set for development auth")
-        if not settings.dev_auth_issuer:
+        if (
+            not settings.dev_auth_issuer
+            or len(settings.dev_auth_issuer) > MAX_VERIFIED_IDENTITY_ANCHOR_CHARACTERS
+        ):
             raise RuntimeError("WORKSTREAM_DEV_AUTH_ISSUER must be set for development auth")
         self._settings = settings
 

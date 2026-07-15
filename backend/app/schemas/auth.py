@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 SubjectKind = Literal["human", "service", "agent", "space"]
+MAX_VERIFIED_IDENTITY_ANCHOR_CHARACTERS = 200
 
 
 def normalize_legacy_roles(value: Any) -> tuple[str, ...]:
@@ -20,9 +21,7 @@ def normalize_legacy_roles(value: Any) -> tuple[str, ...]:
     else:
         raw_roles = ()
     roles = tuple(
-        role.strip()
-        for role in raw_roles
-        if isinstance(role, str) and 0 < len(role.strip()) <= 128
+        role.strip() for role in raw_roles if isinstance(role, str) and 0 < len(role.strip()) <= 128
     )
     return roles[:32]
 
@@ -32,8 +31,8 @@ class VerifiedIssuerToken(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    issuer: str
-    subject: str
+    issuer: str = Field(min_length=1, max_length=MAX_VERIFIED_IDENTITY_ANCHOR_CHARACTERS)
+    subject: str = Field(min_length=1, max_length=MAX_VERIFIED_IDENTITY_ANCHOR_CHARACTERS)
     audience: tuple[str, ...]
     expires_at: int
     issued_at: int

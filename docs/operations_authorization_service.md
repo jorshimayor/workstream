@@ -4,8 +4,9 @@
 
 This runbook assigns ownership and stop conditions for the staged WS-AUTH-001
 authorization rollout. The verified-token configuration and evidence commands
-are executable contracts; later actor/grant sections remain staged until their
-owning implementation chunks.
+are executable contracts. Canonical actor resolution is active in AUTH-06;
+later actor lifecycle administration and grant sections remain staged until
+their owning implementation chunks.
 
 ## Ownership
 
@@ -29,7 +30,7 @@ preview fail closed when a required value is absent or outside its bound.
 
 | Variable | Accepted value | Default/requirement |
 |---|---|---|
-| `WORKSTREAM_TOKEN_ISSUER` | Canonical HTTPS URL; no userinfo, query, or fragment | Required |
+| `WORKSTREAM_TOKEN_ISSUER` | Canonical HTTPS URL, at most 200 characters; no userinfo, query, or fragment | Required |
 | `WORKSTREAM_TOKEN_AUDIENCE` | Non-empty string | `workstream` |
 | `WORKSTREAM_TOKEN_JWKS_URL` | Canonical HTTPS URL; no userinfo, query, or fragment | Required |
 | `WORKSTREAM_TOKEN_ALGORITHMS` | One-family subset of `RS256,RS384,RS512,ES256,ES384,ES512,EdDSA` | Required; no symmetric algorithms |
@@ -60,7 +61,7 @@ preview fail closed when a required value is absent or outside its bound.
 | `WORKSTREAM_TOKEN_INTROSPECTION_WRITE_TIMEOUT_SECONDS` | Float `0.1..10` | `3` |
 | `WORKSTREAM_TOKEN_INTROSPECTION_POOL_TIMEOUT_SECONDS` | Float `0.1..10` | `1` |
 | `WORKSTREAM_TOKEN_INTROSPECTION_TOTAL_TIMEOUT_SECONDS` | Float `0.5..15` | `5` |
-| `WORKSTREAM_API_RATE_LIMIT_KEY_SECRET` | Canonical padded RFC 4648 Base64 decoding to `32..64` bytes | Optional until a protected route is attached; then required |
+| `WORKSTREAM_API_RATE_LIMIT_KEY_SECRET` | Canonical padded RFC 4648 Base64 decoding to `32..64` bytes | Required |
 | `WORKSTREAM_API_FIRST_ACCESS_RATE_LIMIT` | Integer `1..10000` | `10` |
 | `WORKSTREAM_API_FIRST_ACCESS_RATE_WINDOW_SECONDS` | Integer `1..3600` | `60` |
 | `WORKSTREAM_API_ADMIN_MUTATION_RATE_LIMIT` | Integer `1..10000` | `30` |
@@ -68,6 +69,11 @@ preview fail closed when a required value is absent or outside its bound.
 
 Secrets, private keys, bearer tokens, full claims, and raw JWKS documents must
 not appear in committed configuration or evidence.
+
+Verified issuer and `sub` identity anchors are each limited to 200 characters
+across the verifier, canonical registry, compatibility storage, audit, and
+checker provenance. Development issuer and subject settings use the same bound.
+Oversized values fail verification or configuration before actor persistence.
 
 Verification evidence:
 
@@ -96,12 +102,12 @@ python3 scripts/check_loop_memory_state.py
 git diff --check
 ```
 
-During the compatibility period, `/api/v1/auth/me` and actor registration use
-only the verified issuer/subject plus bounded legacy roles. They do not copy
-issuer email or display name into actor storage or responses, so both response
-fields remain `null`. Consumers must not treat token identity metadata as a
-profile source of truth; canonical profile metadata belongs to the later actor
-profile migration.
+During the compatibility period, `/api/v1/auth/me` uses only the verified
+issuer/subject plus bounded legacy roles. It does not copy issuer email or
+display name into actor storage or responses, so both response fields remain
+`null`. Consumers must not treat token identity metadata or legacy workflow
+eligibility as profile or authorization truth. Human-owned display data is
+written only through `PATCH /api/v1/actors/me`.
 
 ## Request And Error Context
 
@@ -149,14 +155,46 @@ claims, subjects, emails, SQL, provider bodies, exception text, or secrets to
 responses or logs. AUTH-04A does not activate rate controls, grant APIs, or new
 product authority; those remain owned by later separately reviewed chunks.
 
+## Canonical Actor Resolution
+
+Every protected human request resolves the exact verified `(issuer, subject)`
+through one `ActorIdentityLink` to one local `ActorProfile`. The first valid
+human access consumes the PostgreSQL first-access rate control, then creates the
+profile, identity link, `ActorProfileProvisioned`, and `ActorIdentityLinked`
+evidence in one transaction. Concurrent allowed first-access requests cannot
+leave duplicate profiles, links, or evidence. Rate-limited requests may still
+receive HTTP 429 before identity serialization.
+
+`GET /api/v1/actors/me` returns the caller's privacy-bounded Contributor-domain
+profile and no admin role or project grant. `PATCH /api/v1/actors/me` accepts
+only `display_name` and `contact_email`; token roles, issuer metadata, actor
+kind, status, grants, and lifecycle fields are not writable there. Suspended
+profiles remain readable for support, but suspended or deactivated profiles
+cannot be mutated or use legacy product routes.
+
+Unknown services require later manual provisioning and are denied without a
+write. Agent and Space subjects are denied without a write. Operators must not
+convert token roles, email shape, subject shape, or old typed profiles into
+actor kind or authority.
+
+The [approved AUTH-06 chunk contract](../.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/chunks/WS-AUTH-001-06-canonical-actor-profile.md)
+records the exact deprecated compatibility identifier. That temporary,
+enumerated intake route writes only `LegacyWorkflowEligibility` and cannot
+create a grant or change a canonical profile. Its direct compatibility
+consumers are assigned-submitter claim, assigned-submitter start, and submission
+intake. Operator start override does not use the bridge. AUTH-13 removes the
+claim and start consumers; AUTH-14 removes the final submission consumer,
+compatibility route, and adapter.
+
 ## PostgreSQL Rate Controls
 
-AUTH-04B provides unattached dependencies for future first-access and
-authority-management mutations. No production route is rate limited by this
-chunk. When an owning route attaches one, every replica must use the same
-secret and settings. Missing secret or database access fails the dependency
-closed with retryable HTTP 503; an exhausted window returns retryable HTTP 429
-with an integer `Retry-After`.
+First human access now uses the AUTH-04B PostgreSQL control. Future
+authority-management mutations attach their separately configured control in
+their owning chunks. Every replica must use the same secret and settings.
+Missing secret or database access fails first access closed with retryable HTTP
+503; an exhausted window returns retryable HTTP 429 with an integer
+`Retry-After`. Existing exact identity links do not consume first-access
+capacity.
 
 Generate the secret outside the repository and store it in the deployment
 secret manager:
@@ -337,27 +375,88 @@ globally unique deployment identity. A clone, restore, or database recreation
 requires a fresh dry run and envelope even when the human environment label is
 unchanged.
 
-The later actor-schema migration must locate this envelope only through:
+The canonical actor-schema migration locates this envelope only through:
 
 ```bash
 export WORKSTREAM_LEGACY_ACTOR_CLASSIFICATION_FILE=/secure/workstream/prod/legacy-actor-classification-v1.json
 ```
 
-Do not set the variable or run the future migration until its owning reviewed
-AUTH chunk is deployed. That migration must load the strict envelope, recompute
-the complete live row-set digest and database binding inside its transaction,
-and abort on checksum, TOCTOU, missing/extra row, identity, or binding mismatch.
-The envelope never creates grants and is not a supported ad hoc migration path.
+Set the variable only on the reviewed AUTH-06 migration runner. The migration
+loads the strict envelope, recomputes the complete live row-set digest and
+database binding inside its transaction, and aborts on checksum, TOCTOU,
+missing/extra row, identity, or binding mismatch. The envelope never creates
+grants and is not a supported ad hoc migration path.
 
 On validation failure, correct the authoritative manifest or target database,
 rerun dry-run, and export to a new secure path when the evidence bytes change.
-Never edit an envelope or bypass the failure with SQL. Rollback stops at the
-pre-migration schema boundary; it does not restore obsolete authority. Retain
-the envelope only through migration verification and the approved rollback
-window. After the migration records the schema version, manifest checksum,
-envelope checksum, source-row checksum, and migration result durably, delete
-the identity-bearing manifest and envelope from operator storage and retain
-only the bounded report and durable checksum record.
+Never edit an envelope or bypass the failure with SQL.
+
+Deploy AUTH-06 only in a quiesced maintenance window after the dry-run report
+and envelope have been reviewed:
+
+1. Drain in-flight API requests and jobs.
+2. Stop every old-version API replica and asynchronous writer.
+3. Run the migration from the reviewed AUTH-06 release artifact.
+4. Start only replicas and jobs containing the matching AUTH-06 code.
+5. Complete the checks below before resuming traffic.
+
+```bash
+cd backend
+export WORKSTREAM_LEGACY_ACTOR_CLASSIFICATION_FILE=/secure/workstream/prod/legacy-actor-classification-v1.json
+.venv/bin/alembic upgrade 0020_canonical_actor_profile
+```
+
+Verify one durable migration-state row before serving traffic. Record only the
+schema version, classified count, and checksums; do not export identity rows:
+
+```sql
+select schema_version, classified_count, source_row_set_sha256,
+       manifest_sha256, envelope_sha256, migrated_at
+from actor_profile_migration_state where id = 1;
+
+select
+  (select count(*) from actor_profiles) as profile_count,
+  (select count(*) from actor_identity_links) as identity_link_count,
+  not exists (
+    select 1 from actor_profiles p
+    full join actor_identity_links l on l.actor_profile_id = p.id
+    where p.id is null or l.id is null
+  ) as exact_one_link_per_profile,
+  to_regclass('public.admin_role_grants') is null as no_admin_grant_table,
+  to_regclass('public.project_role_grants') is null as no_project_grant_table;
+```
+
+Confirm every canonical profile has exactly one identity link, the classified
+count matches the reviewed report, and no grants were created by the migration.
+Retain the manifest and envelope only through verification and the approved
+rollback window. Then delete both identity-bearing files from operator storage
+and retain only the bounded report and durable checksum record.
+
+Rollback to `0019_authority_idempotency` uses the same quiescence sequence: drain
+requests and jobs, stop all AUTH-06 writers, run the downgrade, deploy only the
+matching pre-AUTH-06 code, verify, and then resume traffic. The downgrade is
+envelope-independent because its required state is in PostgreSQL. It refuses
+while any profile is suspended or any identity link is revoked; those states
+may be repaired only through their reviewed lifecycle operations, never direct
+SQL. Deactivation is terminal: if any actor is deactivated, downgrade is
+unavailable and operators must recover forward on AUTH-06. A non-empty registry
+restored to 0019 cannot be upgraded again from deleted evidence: run the
+classification tool against the exact restored rows and obtain a newly reviewed
+envelope. The migration never guesses a subject kind or bypasses this
+fresh-evidence requirement.
+
+Run the exact rollback only after those checks pass:
+
+```bash
+cd backend
+.venv/bin/alembic downgrade 0019_authority_idempotency
+```
+
+Rollback restores every new canonical identity to legacy identity storage.
+For identities that already existed before AUTH-06, conflict handling preserves
+their legacy display name and email; it does not backport later canonical
+`PATCH /api/v1/actors/me` display edits into those legacy fields. This is an
+intentional privacy boundary, not a synchronization mechanism.
 
 ## Staged Rollout
 

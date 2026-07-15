@@ -29,6 +29,7 @@ from app.interfaces.auth import (
 from app.schemas.auth import (
     AuthVerificationResult,
     LegacyAuthorizationCompatibilityContext,
+    MAX_VERIFIED_IDENTITY_ANCHOR_CHARACTERS,
     VerifiedIssuerToken,
     actor_id_from_external_identity,
     normalize_legacy_roles,
@@ -176,6 +177,8 @@ class FlowAuthVerifier:
 
         if self._local_hmac_secret:
             self._issuer = settings.flow_auth_issuer
+            if not self._issuer or len(self._issuer) > MAX_VERIFIED_IDENTITY_ANCHOR_CHARACTERS:
+                raise RuntimeError("WORKSTREAM_FLOW_AUTH_ISSUER is invalid")
             self._audience = settings.flow_auth_audience
             self._algorithms = ("HS256",)
             self._jwks_url = None
@@ -184,6 +187,8 @@ class FlowAuthVerifier:
             return
 
         self._issuer = _canonical_https_url(settings.token_issuer, name="WORKSTREAM_TOKEN_ISSUER")
+        if len(self._issuer) > MAX_VERIFIED_IDENTITY_ANCHOR_CHARACTERS:
+            raise RuntimeError("WORKSTREAM_TOKEN_ISSUER is invalid")
         if urlsplit(self._issuer).hostname == "auth.flow.local":
             raise RuntimeError("WORKSTREAM_TOKEN_ISSUER cannot use the placeholder issuer")
         self._jwks_url = _canonical_https_url(
@@ -394,7 +399,11 @@ class FlowAuthVerifier:
         subject = claims.get("sub")
         token_id = claims.get("jti")
         subject_kind = claims.get("subject_kind")
-        if not isinstance(subject, str) or not subject or len(subject) > 512:
+        if (
+            not isinstance(subject, str)
+            or not subject
+            or len(subject) > MAX_VERIFIED_IDENTITY_ANCHOR_CHARACTERS
+        ):
             raise AuthVerificationError("token subject is required")
         if not isinstance(token_id, str) or not token_id or len(token_id) > 512:
             raise AuthVerificationError("token identifier is required")

@@ -1,6 +1,11 @@
 """Import domain models so Alembic can discover metadata."""
 
-from app.modules.actors.models import ActorIdentity, ActorProfile  # noqa: F401
+from app.modules.actors.models import (  # noqa: F401
+    ActorIdentityLink,
+    ActorProfile,
+    LegacyActorIdentity,
+    LegacyWorkflowEligibility,
+)
 from app.modules.api_controls.models import ApiRateControlCounter  # noqa: F401
 from app.modules.artifacts.models import (  # noqa: F401
     ArtifactBinding,

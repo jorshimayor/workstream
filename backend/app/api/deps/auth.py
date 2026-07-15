@@ -3,13 +3,19 @@
 from __future__ import annotations
 
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.api_controls import StructuredHTTPException
+from app.core.api_controls import StructuredHTTPException, request_ids
+from app.api.deps.rate_controls import (
+    enforce_rate_control,
+    get_rate_control_service,
+    service_unavailable_error,
+)
 from app.core.auth import get_auth_verifier
 from app.db.session import get_db_session
 from app.interfaces.auth import (
@@ -17,7 +23,18 @@ from app.interfaces.auth import (
     AuthVerificationUnavailableError,
     AuthVerifier,
 )
-from app.modules.actors.service import ActorRegistryError, ActorService
+from app.modules.actors.service import (
+    ActorDeactivated,
+    ActorRegistryError,
+    ActorService,
+    ActorSuspended,
+    ResolvedActor,
+    UnsupportedSubjectKind,
+)
+from app.modules.api_controls.service import (
+    FIRST_ACCESS_SCOPE,
+    RateControlService,
+)
 from app.schemas.auth import ActorContext, AuthVerificationResult, VerifiedIssuerToken
 
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -88,20 +105,63 @@ async def get_current_actor(
     return result.token
 
 
-async def get_registered_actor(
+def actor_registry_http_error(exc: ActorRegistryError) -> StructuredHTTPException:
+    """Map actor resolution to the stable structured API envelope."""
+    return StructuredHTTPException(
+        status_code=exc.status_code,
+        detail=str(exc),
+        error_code=exc.code,
+        error_message=str(exc),
+    )
+
+
+def actor_registry_unavailable_error() -> StructuredHTTPException:
+    """Build the canonical retryable actor-registry unavailable response."""
+    return service_unavailable_error("Actor registry unavailable")
+
+
+async def get_canonical_actor(
+    request: Request,
     result: Annotated[AuthVerificationResult, Depends(get_auth_verification_result)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
+    rate_control: Annotated[RateControlService, Depends(get_rate_control_service)],
+) -> ResolvedActor:
+    """Resolve one verified token to the canonical local actor."""
+    if result.token.subject_kind not in {"human", "service"}:
+        raise actor_registry_http_error(UnsupportedSubjectKind("Unsupported subject kind"))
+    service = ActorService(session)
+    try:
+        existing = await service.find_verified_actor(result.token)
+        if existing is None and result.token.subject_kind == "human":
+            settings = request.app.state.settings
+            await enforce_rate_control(
+                request=request,
+                result=result,
+                service=rate_control,
+                control_scope=FIRST_ACCESS_SCOPE,
+                limit=settings.api_first_access_rate_limit,
+                window_seconds=settings.api_first_access_rate_window_seconds,
+            )
+        request_id, correlation_id = request_ids(request)
+        return await service.resolve_verified_actor(
+            result.token,
+            request_id=UUID(request_id),
+            correlation_id=UUID(correlation_id),
+        )
+    except ActorRegistryError as exc:
+        await session.rollback()
+        raise actor_registry_http_error(exc) from exc
+    except SQLAlchemyError as exc:
+        await session.rollback()
+        raise actor_registry_unavailable_error() from exc
+
+
+async def get_registered_actor(
+    result: Annotated[AuthVerificationResult, Depends(get_auth_verification_result)],
+    resolved: Annotated[ResolvedActor, Depends(get_canonical_actor)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> ActorContext:
-    """Resolve the current actor and refresh local registry metadata.
-
-    Args:
-        result: Verified token result from the pure auth boundary.
-        session: Database session for registry persistence.
-
-    Returns:
-        The same verified actor context. Route authorization must still use
-        this token-derived context, not persisted profile rows.
-    """
+    """Return the bounded legacy context after canonical actor resolution."""
     if result.token.subject_kind != "human" or result.legacy is None:
         raise StructuredHTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -111,17 +171,15 @@ async def get_registered_actor(
         )
     actor = result.legacy_actor()
     try:
-        await ActorService(session).register_actor(actor)
+        if resolved.profile.status == "suspended":
+            raise ActorSuspended("Actor is suspended")
+        if resolved.profile.status == "deactivated":
+            raise ActorDeactivated("Actor is deactivated")
+        await ActorService(session).refresh_legacy_identity(actor)
     except ActorRegistryError as exc:
         await session.rollback()
-        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+        raise actor_registry_http_error(exc) from exc
     except SQLAlchemyError as exc:
         await session.rollback()
-        raise StructuredHTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Actor registry unavailable",
-            error_code="service_unavailable",
-            error_message="Service unavailable",
-            retryable=True,
-        ) from exc
+        raise actor_registry_unavailable_error() from exc
     return actor

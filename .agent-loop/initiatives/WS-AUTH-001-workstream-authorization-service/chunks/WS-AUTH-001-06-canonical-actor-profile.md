@@ -33,10 +33,15 @@ P1
 
 ```text
 backend/app/modules/actors/**
+backend/app/adapters/auth/dev.py
+backend/app/adapters/auth/flow.py
 backend/app/modules/tasks/service.py
 backend/app/modules/tasks/router.py
 backend/app/modules/tasks/schemas.py
 backend/app/api/deps/auth.py
+backend/app/api/deps/api_controls.py
+backend/app/api/deps/rate_controls.py
+backend/app/api/router.py
 backend/app/api/routes/auth.py
 backend/app/schemas/auth.py
 backend/app/db/models.py
@@ -44,6 +49,7 @@ backend/app/modules/audit/**
 backend/alembic/versions/0020_*.py
 backend/tests/test_actors.py
 backend/tests/test_auth.py
+backend/tests/test_api_rate_controls.py
 backend/tests/test_alembic.py
 backend/tests/test_projects.py
 backend/tests/test_tasks.py
@@ -51,6 +57,7 @@ backend/tests/test_checkers.py
 backend/scripts/api_contract_e2e.py
 docs/operations_authorization_service.md
 .agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/**
+.agent-loop/merge-intents/WS-AUTH-001-06.json
 .agent-loop/LOOP_STATE.md
 .agent-loop/WORK_QUEUE.md
 .agent-loop/REVIEW_LOG.md
@@ -93,8 +100,11 @@ review or compensation models
   chunk 13 removes its queue/claim/start consumers after grant provisioning;
   chunk 14 removes the route, activation service/schema, token-role observation
   fields, final submission consumer, and compatibility adapter together.
-- Provisioning uses the established idempotency/audit/invalidation foundation
-  and commits the profile, link, and events atomically.
+- First-human provisioning is transactionally idempotent through exact
+  `(issuer, subject)` uniqueness and concurrent-conflict resolution. Profile,
+  link, `ActorProfileProvisioned`, and `ActorIdentityLinked` evidence commit
+  atomically through the shared audit path. Automatic first access creates no
+  client-key authority-idempotency record and no invalidation event.
 - `/api/v1/actors/me` returns Contributor domain with no implied project/admin
   authority.
 - `GET /api/v1/actors/me` and `PATCH /api/v1/actors/me` have request, privacy,
@@ -107,6 +117,8 @@ review or compensation models
   classified upgrade, and preserved attribution. Downgrade/rollback must
   succeed after the external classification envelope is deleted post-upgrade,
   using only its durably recorded version/checksum and migration state.
+- Behavior tests keep the materially changed actor subsystem at or above 90
+  percent branch coverage without exclusions or weakened assertions.
 
 ## Verification commands
 
@@ -115,7 +127,11 @@ review or compensation models
 (cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic downgrade -1)
 (cd backend && WORKSTREAM_DATABASE_URL=<isolated-test-db> .venv/bin/alembic upgrade head)
 (cd backend && .venv/bin/python -m ruff check app tests)
-(cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q)
+(cd backend && WORKSTREAM_TEST_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q \
+  --cov=app.modules.actors --cov-branch --cov-report=term-missing \
+  --cov-fail-under=90 tests/test_actor_legacy_classification.py \
+  tests/test_actors.py tests/test_auth.py tests/test_tasks.py)
+(cd backend && WORKSTREAM_TEST_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python scripts/api_contract_e2e.py)
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
