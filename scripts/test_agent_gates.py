@@ -1141,6 +1141,10 @@ def test_loop_memory_state_rejects_known_merged_pr_staleness() -> None:
     )
     stale_samples = (
         "AUTH-05B runtime is reviewed; publication is pending.",
+        (
+            "AUTH-05B runtime SHA is internally reviewed. Its current gate is "
+            "PR publication and external checks."
+        ),
         "| `WS-AUTH-001-05B` | In review | branch | - | pending |",
         "PR #120's branch is ready for review.",
         "`WS-ART-001-OBJECT-STORAGE-AMENDMENT` is Active planning.",
@@ -1293,6 +1297,22 @@ def test_next_chunk_contract_binding_is_exact_locally_and_remotely() -> None:
             lambda: updater._validate_local_successor_contract(root, metadata),
             "exactly one chunk contract",
         )
+        foreign_contract = (
+            root
+            / ".agent-loop/initiatives/WS-ART-001-example/chunks/"
+            "WS-AUTH-001-07-authorization-kernel.md"
+        )
+        foreign_contract.parent.mkdir(parents=True)
+        foreign_contract.write_text(
+            "# Chunk Contract: WS-AUTH-001-07 - Authorization Kernel\n",
+            encoding="utf-8",
+        )
+        assert_loop_error(
+            updater,
+            lambda: updater._validate_local_successor_contract(root, metadata),
+            "exactly one chunk contract",
+        )
+        foreign_contract.unlink()
         contract.write_text(
             "# Chunk Contract: WS-AUTH-001-07 - Authorization Kernel\n",
             encoding="utf-8",
@@ -1333,7 +1353,11 @@ def test_next_chunk_contract_binding_is_exact_locally_and_remotely() -> None:
         ),
         "sha": "e" * 40,
     }
-    valid_tree = {"truncated": False, "tree": [tree_item]}
+    foreign_tree_item = dict(tree_item)
+    foreign_tree_item["path"] = foreign_tree_item["path"].replace(
+        "WS-AUTH-001-example", "WS-ART-001-example"
+    )
+    valid_tree = {"truncated": False, "tree": [foreign_tree_item, tree_item]}
     updater._validate_remote_successor_contract(
         RemoteClient(
             valid_tree,
@@ -1346,6 +1370,11 @@ def test_next_chunk_contract_binding_is_exact_locally_and_remotely() -> None:
     remote_cases = (
         ({"truncated": True, "tree": [tree_item]}, "Authorization Kernel", "incomplete"),
         ({"truncated": False, "tree": []}, "Authorization Kernel", "exactly one"),
+        (
+            {"truncated": False, "tree": [foreign_tree_item]},
+            "Authorization Kernel",
+            "exactly one",
+        ),
         (
             {"truncated": False, "tree": [tree_item, dict(tree_item)]},
             "Authorization Kernel",
@@ -2069,13 +2098,21 @@ def test_loop_memory_schema_v2_rejection_matrix_is_fail_closed() -> None:
             "# Chunk Contract: WS-AUTH-001-07 Authorization Kernel\n",
             "WS-AUTH-001-07",
         )
-        == "Authorization Kernel"
+        is None
     )
     assert (
         updater._contract_title(
             "# Chunk Contract: WS-AUTH-001-07\n", "WS-AUTH-001-07"
         )
         is None
+    )
+    assert updater._is_owned_chunk_contract_path(
+        ".agent-loop/initiatives/WS-AUTH-001-example/chunks/WS-AUTH-001-07.md",
+        "WS-AUTH-001",
+    )
+    assert not updater._is_owned_chunk_contract_path(
+        ".agent-loop/initiatives/WS-ART-001-example/chunks/WS-AUTH-001-07.md",
+        "WS-AUTH-001",
     )
 
     metadata_payload = json.loads(valid_loop_intent())
@@ -2188,6 +2225,10 @@ def test_loop_memory_schema_v2_rejection_matrix_is_fail_closed() -> None:
         (lambda row: row["source"].update(pr_url="https://invalid"), "PR URL"),
         (lambda row: row.update(updated_at="2026-07-14T20:01:00Z"), "updated_at"),
         (lambda row: row.update(completed_chunk=[]), "JSON object"),
+        (
+            lambda row: row["completed_chunk"].update(chunk_title="valid\ninjected"),
+            "single-line",
+        ),
         (lambda row: row["source"].update(intent_path="wrong"), "intent path"),
         (lambda row: row.update(active={}), "active chunk state"),
         (lambda row: row.update(checks=[]), "check evidence"),
@@ -2231,9 +2272,12 @@ def test_loop_memory_schema_v2_rejection_matrix_is_fail_closed() -> None:
         lambda value: value.update(initiative_id="bad"),
         lambda value: value.update(chunk_id="WS-ART-001-01"),
         lambda value: value.update(chunk_title=""),
+        lambda value: value.update(chunk_title="x" * 161),
+        lambda value: value.update(chunk_title="valid\ninjected"),
         lambda value: value.update(next_chunk_title=None),
         lambda value: value.update(next_chunk_id="WS-ART-001-02"),
         lambda value: value.update(next_chunk_title=7),
+        lambda value: value.update(next_chunk_title="x" * 161),
         lambda value: value.update(next_requires_explicit_start="yes"),
     )
     for mutate in metadata_failure_mutations:
@@ -2325,6 +2369,11 @@ def test_loop_memory_workflow_isolated_write_boundary() -> None:
     assert "EVENT_SHA" in workflow
     assert "TARGET_SHA" in workflow
     assert "MERGE_SHA" not in workflow
+    job_environment = workflow.split("    steps:", 1)[0]
+    assert "GH_TOKEN:" not in job_environment
+    assert "GITHUB_TOKEN:" not in job_environment
+    assert workflow.count("GH_TOKEN: ${{ github.token }}") == 3
+    assert workflow.count("GITHUB_TOKEN: ${{ github.token }}") == 1
     assert "replay target is stale" in (
         ROOT / "scripts/update_post_merge_memory.py"
     ).read_text(encoding="utf-8")

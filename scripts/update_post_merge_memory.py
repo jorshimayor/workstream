@@ -207,16 +207,26 @@ def _intent_path(metadata: LoopMetadata) -> str:
 
 def _contract_title(contract_text: str, chunk_id: str) -> str | None:
     """Return the title from one canonical chunk-contract heading."""
-    first_line = contract_text.splitlines()[0] if contract_text.splitlines() else ""
-    prefix = f"# Chunk Contract: {chunk_id}"
+    lines = contract_text.splitlines()
+    first_line = lines[0] if lines else ""
+    prefix = f"# Chunk Contract: {chunk_id} - "
     if not first_line.startswith(prefix):
         return None
-    remainder = first_line[len(prefix) :]
-    if remainder.startswith(" - "):
-        return remainder[3:].strip()
-    if remainder.startswith(" "):
-        return remainder.strip()
-    return None
+    title = first_line[len(prefix) :].strip()
+    return title or None
+
+
+def _is_owned_chunk_contract_path(path: str, initiative_id: str) -> bool:
+    """Return whether one contract path belongs to the declared initiative."""
+    if not path.startswith(CHUNK_CONTRACT_ROOT):
+        return False
+    parts = path[len(CHUNK_CONTRACT_ROOT) :].split("/")
+    if len(parts) != 3 or parts[1] != "chunks":
+        return False
+    initiative_directory = parts[0]
+    return initiative_directory == initiative_id or initiative_directory.startswith(
+        f"{initiative_id}-"
+    )
 
 
 def _validate_local_successor_contract(
@@ -229,8 +239,13 @@ def _validate_local_successor_contract(
     candidates = sorted(
         path
         for path in initiatives_root.glob("*/chunks/*.md")
-        if path.name == f"{metadata.next_chunk_id}.md"
-        or path.name.startswith(f"{metadata.next_chunk_id}-")
+        if _is_owned_chunk_contract_path(
+            path.relative_to(repository_root).as_posix(), metadata.initiative_id
+        )
+        and (
+            path.name == f"{metadata.next_chunk_id}.md"
+            or path.name.startswith(f"{metadata.next_chunk_id}-")
+        )
     )
     if len(candidates) != 1:
         raise LoopMemoryError(
@@ -295,8 +310,7 @@ def _validate_remote_successor_contract(
             continue
         name = path.rsplit("/", 1)[-1]
         if (
-            path.startswith(CHUNK_CONTRACT_ROOT)
-            and "/chunks/" in path
+            _is_owned_chunk_contract_path(path, metadata.initiative_id)
             and (
                 name == f"{metadata.next_chunk_id}.md"
                 or name.startswith(f"{metadata.next_chunk_id}-")

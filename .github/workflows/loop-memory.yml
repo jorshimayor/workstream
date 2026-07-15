@@ -22,8 +22,6 @@ jobs:
   loop-memory:
     runs-on: ubuntu-latest
     env:
-      GH_TOKEN: ${{ github.token }}
-      GITHUB_TOKEN: ${{ github.token }}
       EVENT_NAME: ${{ github.event_name }}
       EVENT_SHA: ${{ github.event_name == 'push' && github.sha || github.event.client_payload.merge_sha }}
       STATE_BRANCH: automation/loop-memory
@@ -37,12 +35,15 @@ jobs:
 
       - name: Resolve trusted protected-main target
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           if [[ ! "${EVENT_SHA}" =~ ^[0-9a-f]{40}$ ]]; then
             echo "Invalid event SHA." >&2
             exit 1
           fi
+          gh auth setup-git
           git fetch --no-tags origin \
             "+refs/heads/main:refs/remotes/origin/main"
           target_sha=$(git rev-parse --verify refs/remotes/origin/main)
@@ -62,6 +63,7 @@ jobs:
         id: state
         shell: bash
         env:
+          GH_TOKEN: ${{ github.token }}
           LOOP_MEMORY_SIGNING_KEY: ${{ secrets.LOOP_MEMORY_SIGNING_KEY }}
         run: |
           set -euo pipefail
@@ -87,6 +89,8 @@ jobs:
 
       - name: Reconcile every unrecorded main commit
         shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           state_dir="${{ steps.state.outputs.state_dir }}"
@@ -135,6 +139,8 @@ jobs:
 
       - name: Commit generated state branch
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           state_dir="${{ steps.state.outputs.state_dir }}"

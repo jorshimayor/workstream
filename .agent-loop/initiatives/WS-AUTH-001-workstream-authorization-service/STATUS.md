@@ -109,7 +109,7 @@ AUTH-05A and CAT post-merge memory have no remaining blocker and are merged.
 The combined AUTH-05 contract
 was rejected before runtime changes because shared audit evidence and
 idempotency/invalidation were not reviewable as one L1 change. AUTH-05A owns
-migration `0018`; active AUTH-05B owns migration `0019`. Non-test
+migration `0018`; merged AUTH-05B owns migration `0019`. Non-test
 operators must later supply explicit classification evidence rather than
 inferred kinds before the owning canonical actor migration.
 
@@ -121,9 +121,8 @@ permission identifiers remain approved, including
 `operations.checker.retry`; the three recovery identifiers receive persisted
 parity only in their owning later chunks. `WS-AUTH-001-CAT` retains only safe
 registry/conformance rules. This is a scope decision, not an AUTH-05B runtime
-blocker. PR #118 is merged, and AUTH-05B runtime SHA `e083890` is internally
-reviewed. Its current gate is PR publication and external checks; AUTH-06 and
-POL-002-04 remain inactive.
+blocker. PR #118 and AUTH-05B PR #119 are merged. AUTH-06 and POL-002-04 remain
+inactive until an explicit human start.
 
 AUTH-04B review evidence and its PR trust bundle are recorded at
 `reviews/WS-AUTH-001-04B-internal-review-evidence.md` and

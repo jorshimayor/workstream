@@ -41,7 +41,7 @@
 Workstream engineering chunks move through:
 
 ```text
-Intent -> Discovery -> Plan -> Chunk Map -> Chunk Contract -> Implementation -> Evidence -> Internal Review -> PR -> Human Checkpoint -> Memory Update -> Stop
+Intent -> Discovery -> Plan -> Chunk Map -> Chunk Contract -> Implementation -> Evidence -> Internal Review -> PR -> Human Checkpoint -> Automated Merge Memory -> Stop
 ```
 
 The merged `WS-POL-001-03` chunk moved task readiness and submission creation

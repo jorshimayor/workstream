@@ -56,6 +56,13 @@ FORBIDDEN_PATTERNS = (
         "PR #119 is merged; AUTH-05B publication cannot remain pending",
     ),
     (
+        re.compile(
+            r"AUTH-05B.{0,300}(?:current gate is\s+PR publication|external checks)",
+            re.IGNORECASE | re.DOTALL,
+        ),
+        "PR #119 is merged; AUTH-05B cannot remain at publication or external checks",
+    ),
+    (
         re.compile(r"`WS-AUTH-001-05B`\s*\|\s*In review", re.IGNORECASE),
         "PR #119 is merged; AUTH-05B cannot remain in review",
     ),
@@ -95,6 +102,16 @@ def checked_paths() -> list[Path]:
     return paths
 
 
+def _is_bounded_single_line(value: object, maximum: int) -> bool:
+    """Return whether one value is a bounded non-empty single-line string."""
+    if not isinstance(value, str):
+        return False
+    normalized = value.strip()
+    return bool(normalized) and len(normalized) <= maximum and not any(
+        ord(char) < 32 for char in normalized
+    )
+
+
 def _metadata_failures(metadata: object, label: str) -> list[str]:
     """Independently validate one completed-chunk metadata object."""
     expected = {
@@ -124,9 +141,7 @@ def _metadata_failures(metadata: object, label: str) -> list[str]:
         or not chunk_id.startswith(f"{initiative_id}-")
     ):
         failures.append(f"{label}: completed chunk does not belong to initiative")
-    if not isinstance(metadata.get("chunk_title"), str) or not metadata.get(
-        "chunk_title"
-    ):
+    if not _is_bounded_single_line(metadata.get("chunk_title"), 160):
         failures.append(f"{label}: invalid completed chunk title")
     if (next_chunk_id is None) != (next_chunk_title is None):
         failures.append(f"{label}: incomplete next chunk metadata")
@@ -137,8 +152,8 @@ def _metadata_failures(metadata: object, label: str) -> list[str]:
         or not next_chunk_id.startswith(f"{initiative_id}-")
     ):
         failures.append(f"{label}: next chunk does not belong to initiative")
-    if next_chunk_title is not None and (
-        not isinstance(next_chunk_title, str) or not next_chunk_title
+    if next_chunk_title is not None and not _is_bounded_single_line(
+        next_chunk_title, 160
     ):
         failures.append(f"{label}: invalid next chunk title")
     if not isinstance(metadata.get("next_requires_explicit_start"), bool):
@@ -203,12 +218,7 @@ def _record_failures(record: object, label: str) -> list[str]:
         failures.append(f"{label}: invalid source pr_url")
     for field, maximum in (("pr_title", 240), ("head_ref", 240), ("merged_by", 160)):
         value = source.get(field)
-        if (
-            not isinstance(value, str)
-            or not value.strip()
-            or len(value.strip()) > maximum
-            or any(ord(char) < 32 for char in value.strip())
-        ):
+        if not _is_bounded_single_line(value, maximum):
             failures.append(f"{label}: invalid source {field}")
     merged_at = source.get("merged_at")
     try:

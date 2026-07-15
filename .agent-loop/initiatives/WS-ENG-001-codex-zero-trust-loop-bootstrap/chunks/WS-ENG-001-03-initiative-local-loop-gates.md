@@ -90,8 +90,9 @@ manual edits to automation/loop-memory
 - Generator and independent checker both validate completed-chunk and gate
   agreement, initiative ownership, schema, rendering, and ledger history.
 - Agent Gates require each non-null successor to resolve to exactly one
-  same-initiative chunk contract whose heading matches both successor ID and
-  title. Post-merge collection rechecks the same reviewed-head contract.
+  chunk contract under the declared initiative directory whose canonical
+  heading matches both successor ID and title. Post-merge collection rechecks
+  the same reviewed-head contract.
 - Trusted-main workflow execution resolves current protected `main` after
   checkout. A stale explicit replay target fails closed; a queued push event
   may reconcile forward only when its event SHA is an ancestor of current
@@ -115,6 +116,8 @@ manual edits to automation/loop-memory
 ## Acceptance Criteria
 
 - [ ] New schema-v2 merge intents reject a cross-initiative `next_chunk_id`.
+- [ ] A successor contract under any other initiative directory is rejected,
+      even when its filename and heading claim the expected successor ID.
 - [ ] Same-initiative and null next gates parse, persist, render, sign, verify,
       and replay deterministically.
 - [ ] Every schema-v1 intent, state, ledger entry, and signature domain is
@@ -204,8 +207,9 @@ git diff --check
 
 - schema-v2 same-initiative successor accepted;
 - schema-v2 null successor accepted and rendered without a selected next chunk;
-- schema-v2 cross-initiative, missing-contract, duplicate-contract, and
-  title-mismatched successors rejected;
+- schema-v2 cross-initiative, wrong-directory, non-canonical-heading,
+  missing-contract, duplicate-contract, and title-mismatched successors
+  rejected;
 - every schema-v1 intent and generated-state form rejected;
 - signed schema-v1 state rejected, fixed paths cleared, this chunk used as the
   unique schema-v2 bootstrap, re-signed, freshness-verified, and accepted by
