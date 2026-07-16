@@ -226,3 +226,24 @@ tests, final Backend run `29487194049`, Agent Gates runs `29487194116` and
 publication dependency is resolved. PR #128 still requires current-snapshot
 internal review, exact reviewed-SHA evidence binding, branch update, and fresh
 external checks before human merge.
+
+## PR #128 External Review Response - 2026-07-16
+
+The refreshed PR passed Backend, Agent Gates, and CodeRabbit status checks, but
+a thread-aware audit found eight unresolved actionable CodeRabbit comments.
+Every comment was valid and in scope. The plan was repaired to:
+
+- add the exact WS-IMP archival pair to REV-01 allowed scope;
+- clarify the merged WS-CON compensation-policy prerequisite for REV-03;
+- require TaskService route, checker-worker, and composition-path proof in
+  REV-05 and correct `later-admitted` wording;
+- define submitter chain ownership through the canonical contributor on the
+  exact Submission-associated TaskAssignment;
+- add explicit API-contract/OpenAPI absence proof to REV-07 and REV-09A; and
+- expand REV-13 final conformance tests and lifecycle-control package coverage.
+
+No comment is deferred. The detailed thread mapping is recorded in
+`reviews/WS-REV-001-PLAN-external-review-response.md`. Because these are
+non-evidence planning-contract changes after the prior reviewed SHA, required
+internal reviewer tracks and exact-SHA evidence binding must run again before
+the branch is republished.

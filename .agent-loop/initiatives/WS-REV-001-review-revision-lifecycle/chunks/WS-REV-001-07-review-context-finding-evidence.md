@@ -13,7 +13,7 @@ L1 authorization, private data, and artifact integrity.
 
 ```text
 backend/app/modules/reviews/{repository,schemas,service,router}.py
-backend/tests/test_{reviews,artifacts,authorization,checkers,tasks}.py
+backend/tests/test_{reviews,artifacts,authorization,checkers,tasks,app}.py
 docs/operations_reviewer_workflow.md
 docs/template_review_packet.md
 .agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/**
@@ -38,12 +38,13 @@ production `/api/v1` review-router registration
   separate review-chain endpoint declares `review.chain.read`; one endpoint
   never declares two primary actions.
 - `review.chain.read` additionally requires one server-resolved relationship:
-  the actor owns a Submission's exact TaskAssignment in the chain; owns the
-  active lease anchored to the chain; authored a prior Review in the chain and
-  still has the current project grant; or holds the explicit Project
-  Manager/Operator inspection permission. Arbitrary same-project reviewers,
-  caller-selected unrelated chains, cross-project actors, and revoked grants are
-  denied. Prior participation permits bounded metadata only, never content.
+  the actor is the canonical contributor on the exact TaskAssignment associated
+  with a Submission in the requested chain; owns the active lease anchored to
+  the chain; authored a prior Review in the chain and still has the current
+  project grant; or holds the explicit Project Manager/Operator inspection
+  permission. Arbitrary same-project reviewers, caller-selected unrelated
+  chains, cross-project actors, and revoked grants are denied. Prior
+  participation permits bounded metadata only, never content.
 - Finding-evidence intake declares `review.finding_evidence.ingest` mapped to
   `review.decision`; the active owned lease and exact server-derived evidence
   scope are lifecycle/resource guards. Pre-intake denial creates no ART
@@ -104,8 +105,8 @@ production `/api/v1` review-router registration
 ## Verification
 
 ```text
-cd backend && pytest -q tests/test_reviews.py tests/test_artifacts.py tests/test_authorization.py tests/test_checkers.py tests/test_tasks.py
-cd backend && ruff check app/modules/reviews app/modules/artifacts tests/test_reviews.py tests/test_artifacts.py
+cd backend && pytest -q tests/test_reviews.py tests/test_artifacts.py tests/test_authorization.py tests/test_checkers.py tests/test_tasks.py tests/test_app.py
+cd backend && ruff check app/modules/reviews app/modules/artifacts tests/test_reviews.py tests/test_artifacts.py tests/test_app.py
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
 cd backend && coverage report --include='app/modules/reviews/*' --precision=2 --fail-under=90
 ```

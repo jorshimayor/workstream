@@ -16,6 +16,8 @@ L1 specification and architecture boundary.
 ```text
 docs/reference_specs/WS-REV-001-review-lifecycle-specification.md only to preserve recorded revised archival bytes
 docs/reference_specs/WS-REV-001-review-lifecycle-specification.pdf only to preserve recorded revised archival bytes
+docs/reference_specs/WS-IMP-001-workstream-v0.1-coding-agent-implementation-specification.md only to preserve recorded archival bytes
+docs/reference_specs/WS-IMP-001-workstream-v0.1-coding-agent-implementation-specification.pdf only to preserve recorded archival bytes
 docs/reference_specs/README.md
 docs/reference_specs/SHA256SUMS
 docs/spec_review_lifecycle.md

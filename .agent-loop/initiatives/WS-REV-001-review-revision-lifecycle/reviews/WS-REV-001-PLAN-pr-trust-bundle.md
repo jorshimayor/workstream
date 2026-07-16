@@ -142,9 +142,11 @@ are recorded in `WS-REV-001-PLAN-internal-review-evidence.md`.
 
 ## External Review
 
-The earlier PR revision passed Backend, Agent Gates, and CodeRabbit. The final
-AUTH-08/ART-02A2 dependency refresh requires fresh PR checks and human review
-after the reviewed branch is published.
+The merged-dependency revision passed Backend, Agent Gates, and CodeRabbit.
+Thread-aware audit then found eight actionable planning-contract comments; all
+eight were repaired with no deferral. Exact dispositions are recorded in
+`WS-REV-001-PLAN-external-review-response.md`. The repaired code snapshot
+requires refreshed internal evidence and external checks before human merge.
 
 ## Remaining Risks
 

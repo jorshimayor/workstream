@@ -18,7 +18,7 @@ backend/app/modules/tasks/{models,lifecycle,service}.py only for atomic handoff/
 backend/app/modules/tasks/router.py only to use the explicit TaskService composition constructor
 backend/app/workers/checkers.py only to use the explicit composition constructor
 backend/app/composition/{__init__,review_lifecycle}.py
-backend/tests/test_{reviews,checkers,authorization,artifacts,api_contract_e2e}.py
+backend/tests/test_{reviews,checkers,tasks,app,authorization,artifacts,api_contract_e2e}.py
 backend/scripts/api_contract_e2e.py
 docs/operations_reviewer_workflow.md
 .agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/**
@@ -55,7 +55,7 @@ production `/api/v1` review-router registration
 - Every public task route replaces direct `TaskService(session)` construction
   with the same explicit TaskService assembly; route tests prove there is no
   constructor path that omits the checker admission participant.
-- Version 1 routes open; later admitted version routes preferred to the prior
+- Version 1 routes open; later-admitted version routes preferred to the prior
   needs-revision reviewer.
 - Reviewer current endpoint returns active lease, one eligible preferred/open
   offer, or none and reveals no alternative work.
@@ -91,8 +91,8 @@ production `/api/v1` review-router registration
 ## Verification
 
 ```text
-cd backend && pytest -q tests/test_reviews.py tests/test_checkers.py tests/test_authorization.py tests/test_artifacts.py tests/test_api_contract_e2e.py
-cd backend && ruff check app/modules/reviews app/modules/checkers tests/test_reviews.py tests/test_checkers.py
+cd backend && pytest -q tests/test_reviews.py tests/test_checkers.py tests/test_tasks.py tests/test_app.py tests/test_authorization.py tests/test_artifacts.py tests/test_api_contract_e2e.py
+cd backend && ruff check app/modules/reviews app/modules/checkers app/modules/tasks/router.py app/workers/checkers.py app/composition tests/test_reviews.py tests/test_checkers.py tests/test_tasks.py tests/test_app.py
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
 cd backend && coverage report --include='app/modules/reviews/*' --precision=2 --fail-under=90
 ```

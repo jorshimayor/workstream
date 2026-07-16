@@ -216,7 +216,7 @@ reputation formula or deferred product scope
 
 ```text
 cd backend && alembic upgrade head
-cd backend && pytest -q tests/test_alembic.py tests/test_reviews.py tests/test_contributions.py tests/test_compensation.py tests/test_authorization.py tests/test_api_contract_e2e.py tests/test_review_lifecycle_live_drill.py
+cd backend && pytest -q tests/test_alembic.py tests/test_lifecycle_control.py tests/test_tasks.py tests/test_checkers.py tests/test_reviews.py tests/test_contributions.py tests/test_compensation.py tests/test_authorization.py tests/test_outbox.py tests/test_audit.py tests/test_config.py tests/test_api_contract_e2e.py tests/test_review_lifecycle_live_drill.py
 cd backend && ruff check app tests scripts
 cd backend && docstr-coverage --config .docstr.yaml
 docker compose up -d --wait postgres redis minio
@@ -224,7 +224,7 @@ cd backend && python scripts/review_lifecycle_live_drill.py --start-api-worker-b
 cd backend && python scripts/review_lifecycle_validate_evidence.py ../.agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/evidence/live-drill.json
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
 cd backend && coverage report --include='app/modules/reviews/*,app/workers/reviews.py' --precision=2 --fail-under=90
-cd backend && for path in app/api/router.py app/modules/contributions/router.py app/modules/compensation/router.py app/modules/lifecycle_control/router.py app/modules/tasks/schemas.py app/modules/tasks/service.py app/modules/tasks/router.py app/composition/review_lifecycle.py app/composition/joint_lifecycle_control.py; do coverage report --include="$path" --precision=2 --fail-under=90 || exit 1; done
+cd backend && for path in app/api/router.py app/modules/contributions/router.py app/modules/compensation/router.py 'app/modules/lifecycle_control/*' app/modules/tasks/schemas.py app/modules/tasks/service.py app/modules/tasks/router.py app/composition/review_lifecycle.py app/composition/joint_lifecycle_control.py; do coverage report --include="$path" --precision=2 --fail-under=90 || exit 1; done
 ./docs/diagrams/render_plantuml.sh
 ./docs/architecture_brief/render_pdf.sh
 git diff --exit-code -- docs/diagrams docs/architecture_brief

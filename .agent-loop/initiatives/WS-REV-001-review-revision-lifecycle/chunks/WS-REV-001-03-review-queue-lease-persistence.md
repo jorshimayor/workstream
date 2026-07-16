@@ -5,9 +5,10 @@
 Add review-owned queue and permanent lease-attempt persistence with complete
 database invariants and repository tests, but no public claim behavior.
 
-Activation requires merged WS-CON compensation-policy persistence and its exact
-lease-freeze FK/field types. This chunk owns those exact immutable references on
-`ReviewLease`; it does not invent or implement WS-CON policy.
+Activation requires the WS-CON compensation-policy persistence contract to be
+merged with its exact lease-freeze FK/field types. This chunk owns those exact
+immutable references on `ReviewLease`; it does not invent or implement WS-CON
+policy.
 
 ## Risk class
 

@@ -62,12 +62,12 @@ reviewer read/intake/retention/projection, and live-proof contracts are needed.
 
 ## Snapshot Evidence
 
-Current non-review initiative snapshot digest:
+Merged-ART pre-external-review non-review initiative snapshot digest:
 `a9b37925682a06e7d7871b7b060bf53efd23f8f67535ecb417f5259a1b5f7055`.
 
 The digest hashes sorted `sha256sum` output for initiative files excluding
-`reviews/**`; it binds this merged-ART dependency refresh before the reviewed
-code commit and final evidence-only publication binding.
+`reviews/**`; it binds the merged-ART dependency refresh before later external
+review repairs and their separate exact-SHA evidence binding.
 
 ```text
 git show --check 9a04434e2f23c5dec8939dadb943bba4d85110c0
