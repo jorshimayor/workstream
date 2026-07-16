@@ -6,16 +6,16 @@ PR #129: `https://github.com/Flow-Research/workstream/pull/129`
 
 Reviewed code SHA: `ae70bc2f10334f649c1af7f210e58ee378695a2b`
 
-Published evidence-bound head: pending after trusted `main` integration
+Published evidence-bound head: `4ca80deede70b9b88f4cff01f01939f1309a20f6`
 
 ## External Checks
 
-- Agent Gates: passed before the trusted `main` integration; integrated-head
-  rerun is pending publication.
-- Backend: passed before the trusted `main` integration; integrated-head rerun
-  is pending publication.
-- CodeRabbit: all five prior actionable findings are marked addressed;
-  integrated-head review is pending publication.
+- Agent Gates: passed on integrated head `4ca80de` in GitHub Actions run
+  `29486045005`.
+- Backend: passed on integrated head `4ca80de` in GitHub Actions run
+  `29485906937`, including full-suite, scoped coverage, and real API checks.
+- CodeRabbit: passed on integrated head `4ca80de`; all five prior actionable
+  findings remain addressed and no new comment was posted.
 
 ## Comments Addressed
 
@@ -46,10 +46,10 @@ will not authorize merge or start `02A3`.
 
 Local deterministic and internal integration evidence is recorded in
 `WS-ART-001-02A2-internal-review-evidence.md`. GitHub Agent Gates, Backend, and
-CodeRabbit must now inspect the integrated evidence-bound head.
+CodeRabbit inspected and passed the integrated evidence-bound head.
 
 ## Remaining Risks
 
 - The preparation boundary is intentionally inactive until `02A3`.
-- No prior external finding remains open. Final integrated-head status is
-  pending GitHub publication.
+- No external finding remains open. A later implementation change would
+  invalidate this evidence and require relevant review again.

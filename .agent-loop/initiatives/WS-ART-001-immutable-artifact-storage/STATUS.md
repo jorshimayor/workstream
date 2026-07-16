@@ -52,6 +52,7 @@ The prior published head passed Agent Gates, Backend, and CodeRabbit. Trusted
 conflict. The combined tree passes 154 focused ART tests at 94.40 percent, 38
 isolated artifact PostgreSQL tests, and 207 isolated AUTH/authentication/Alembic
 tests. All nine exact-revision tracks pass and stale queue wording is repaired.
-The current gate is publication followed by fresh Agent Gates, Backend, and
-CodeRabbit checks. No later artifact chunk starts automatically, and only the
-user may approve merge.
+Integrated evidence-bound head `4ca80de` passes Agent Gates, Backend full-suite
+coverage, and CodeRabbit with no new comment. The current gate is the human
+merge decision. No later artifact chunk starts automatically, and only the user
+may approve merge.
