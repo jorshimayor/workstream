@@ -79,6 +79,12 @@ python3 scripts/test_agent_gates.py
 
 ## Current Refresh Reviewer Status
 
-Required exact-snapshot REV reviewer fanout is pending. Final reviewer results
-and run IDs will be recorded here before the reviewed code commit is bound in
-`WS-REV-001-PLAN-internal-review-evidence.md`.
+| Tracks | Agent | Result | Residual |
+|---|---|---|---|
+| Senior engineering, architecture, reuse/dedup | `/root/final_art_senior_review` | PASS WITH LOW RISKS | Reviewer-specific ART read/intake port ownership remains a future fail-closed gate. |
+| QA/test, product/ops | `/root/final_art_qa_review` | PASS | None. |
+| Security/auth, docs, CI integrity | `/root/final_art_security_review` | PASS AFTER FIXES | Provider activation overclaim corrected. |
+
+These reviewers covered the full planning PR plus the merged ART-02A2 refresh.
+Final publication evidence binds reviewed code SHA
+`f729438e063da65add1c5b712f27ffe628ef189f`.

@@ -10,109 +10,116 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: 706158d8078da508eb022749fb011db5725a45ef
+Reviewed code SHA: `f729438e063da65add1c5b712f27ffe628ef189f`
 
-Trusted main SHA: e9d72a16d95e704f2af514a97d37623940854d95
+Trusted main SHA: `9a04434e2f23c5dec8939dadb943bba4d85110c0`
 
-Reviewed planning snapshot digest: `a2331e2f179f3f95c0f91bfc92e5c5d772ee7874d96ba2d327348f6905992d57`
+Reviewed planning snapshot digest:
+`a9b37925682a06e7d7871b7b060bf53efd23f8f67535ecb417f5259a1b5f7055`
 
 Digest method: sorted `sha256sum` output for initiative files excluding
 `reviews/**`, hashed once more with SHA-256.
 
-Reviewed at: 2026-07-15T16:46:51Z
+Reviewed at: 2026-07-16T10:26:02Z
 
-Reviewer run IDs: senior-engineering=/root/rev_repair_senior;
-QA/test=/root/con_contract_review; security/auth=/root/con_code_boundary;
-product/ops=/root/con_contract_review; architecture=/root/rev_repair_senior;
-docs=/root/con_code_boundary; reuse/dedup=/root/rev_repair_senior
+Reviewer run IDs: senior-engineering=/root/final_art_senior_review;
+QA/test=/root/final_art_qa_review;
+security/auth=/root/final_art_security_review;
+product/ops=/root/final_art_qa_review;
+architecture=/root/final_art_senior_review;
+docs=/root/final_art_security_review;
+reuse/dedup=/root/final_art_senior_review;
+CI-integrity=/root/final_art_security_review
 
 ## Reviewed Change
 
-- Reconciled merged AUTH-07A canonical actor, contributor field, 74-permission,
-  and 50-action catalogue contracts with 24 WS-REV dependencies and an explicit
-  AUTH-owned 50-to-54 parity migration gate for four later actions.
-- Reconciled the rebased WS-CON planning head and kept contribution creation,
-  compensation freezes, provider delivery, ART evidence, and shared outbox
-  ownership outside the review module.
-- Added chunk 12A for hidden PostgreSQL-canonical joint lifecycle release
-  control, exact generation/phase transitions, mandatory typed fences, and sole
-  Operator-controlled forward activation/reactivation.
-- Added a generation-aware phase/command matrix, exact action/operation class
-  inventory, server-derived submission/reconciliation classes, typed same-session
-  drain observations, callback fencing, and durable remote-I/O handoff.
-- Kept every runtime chunk proposed and public lifecycle routes hidden until the
-  final coherent REV-13 activation and live drill.
+- Reconciled the revised canonical WS-REV Markdown/PDF pair with current
+  repository architecture, lifecycle, authorization, artifact, contribution,
+  audit, worker, migration, and documentation boundaries.
+- Retained one task-bound Project Guide context, controlled revision-time rebase
+  to any different current active guide, immutable Submission/Review history,
+  server-selected review work, and product decisions limited to `accept`,
+  `needs_revision`, and `reject`.
+- Reconciled merged AUTH-08 PR #131 at trusted main, including 57 ActionIds with
+  9 active and 48 planned, all 24 REV dependencies inactive, the later exact
+  57-to-61 migration, and transaction/error/timestamp regression invariants.
+- Reconciled merged ART-02A2 PR #129 as inactive committed-source/private-scratch
+  preparation only. REV imports or persists no ART scratch/source internals and
+  retains later v2, S3, admission, reviewer read/intake, retention, recovery,
+  checker, projection, and live-proof gates.
+- Preserved WS-CON ownership of contribution and compensation effects, exact
+  atomic participants, shared outbox/audit boundaries, digest/context gates,
+  and coherent joint lifecycle activation through REV-12A/13.
+- Kept every runtime chunk proposed and every public review lifecycle route
+  inactive until its separately approved chunk and final coherent activation.
 
 ## Reviewer Results
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS AFTER FIXES | None | Verified executable phase graph, cutover/shutdown split, reactivation, remote-I/O handoff, and final drill. |
-| QA/test | PASS AFTER FIXES | None | Verified full command matrix, two-stage classification, race orderings, crash/timeout/retry, and per-file coverage gates. |
-| security/auth | PASS AFTER FIXES | None | Verified canonical human actor enforcement, fresh Operator authority, exact 50-to-54 gate, callback/dispatch fences, and no lock-held provider I/O. |
-| product/ops | PASS AFTER FIXES | None | Verified legacy preservation, guide/revision behavior, contribution/compensation rules, controlled drain, and disabled-state recovery. |
-| architecture | PASS AFTER FIXES | None | Verified review/CON observation-port ownership, explicit composition, no cross-repository imports, and ADR-0014 separation. |
-| docs | PASS AFTER FIXES | None | Verified source provenance, merged-dependency status, action terminology, chunk ranges, and release-control proof wording. |
-| reuse/dedup | PASS | None | Existing hashing, idempotency, audit, outbox, force release, workers, ART receipts, handlers, and adapter factory remain canonical. |
+| senior engineering | PASS WITH LOW RISKS | None | Full plan, chunk graph, dependency boundaries, publication sequence, and stop gate are coherent. |
+| QA/test | PASS | None | Exact AUTH/ART evidence, catalogue arithmetic, lifecycle acceptance criteria, and deterministic proof passed. |
+| security/auth | PASS AFTER FIXES | None | Provider activation overclaim was removed; no scratch/path/descriptor authority or premature action activation remains. |
+| product/ops | PASS | None | Guide rebase, reviewer packet access, revision logs, contribution effects, and coherent activation match approved behavior. |
+| architecture | PASS WITH LOW RISKS | None | ART scratch/source internals remain private; AUTH/ART/CON ports and transaction ownership are preserved. |
+| docs | PASS AFTER FIXES | None | Current merge state, reference provenance, provider direction, historical evidence, and remaining gates are accurate. |
+| reuse/dedup | PASS WITH LOW RISKS | None | No alternate adapter, factory, scratch manager, policy path, hashing, audit, outbox, or lifecycle abstraction was introduced. |
+| ci integrity | PASS | None | REV changes no workflow, threshold, skip, dependency, package script, or gate implementation. |
 
 ## Valid Findings Addressed
 
-- Split strict revision migration fencing from complete shutdown by adding
-  persisted `revision_cutover_fenced` and an exact generation-aware matrix.
-- Defined every legal adjacent phase edge, `disabled(N) -> pre_activation(N+1)`,
-  edge guard, blocked timeout attempt, fresh Operator retry, and retained disabled
-  lifecycle-control surface.
-- Removed the authority-ambiguous lifecycle worker; no serialized human identity
-  can authorize deferred phase advancement.
-- Added the missing `review_lifecycle` composition scope and reused the existing
-  `review.lease.force_release` authority rather than widening lifecycle control.
-- Added exact action/internal-operation to `JointLifecycleCommandClass` mapping,
-  including checker admission, AUTH replacement, reconciliation modes, and the
-  fixed-`outbox.dispatch` review projection handler.
-- Assigned `ReviewLifecycleDrainObservationPort` to REV-12 and
-  `FulfillmentLifecycleDrainObservationPort` to CON-10B/11 as hard same-session
-  dependency gates.
-- Required mandatory CON dispatch and callback fence hooks while retaining CON
-  signature, idempotency, handler, delivery, receipt, and outbox ownership.
-- Required durable `in_flight` handoff, provider I/O outside all DB transactions
-  and lifecycle locks, later fenced finalization, both disable race orderings,
-  crash recovery, and fresh transition retry.
-- Corrected stale merged-AUTH, reviewer endpoint, chunk range, authority-loss,
-  lifecycle-worker, and action-parity wording.
+- Replaced the ambiguous claim that S3-compatible storage was active with the
+  approved provider direction: LocalStorage for development, MinIO for local/CI
+  conformance, AWS S3 for production, and Flow Node deferred.
+- Converted dated ART PR #129 review-log wording from present tense to explicit
+  historical state and recorded the exact merged PR, branch head, checks, and
+  trusted-main SHA in current dependency evidence.
+- Kept ART-02A2 preparation-only and made direct REV use of
+  `ArtifactScratchManager`, `PreparedArtifact`, `CommittedArtifactSource`,
+  scratch paths, ledger identities, or source descriptors explicitly forbidden.
 
 ## Commands Run
 
 ```bash
-git pull --no-rebase origin main
+git pull origin main
 git diff --check
 python3 scripts/check_markdown_links.py
 python3 scripts/check_stale_workstream_wording.py
-python3 scripts/check_internal_review_evidence.py
+python3 scripts/check_stale_artifact_contracts.py
+python3 scripts/check_loop_memory_state.py
+python3 scripts/test_agent_gates.py
+sha256sum -c docs/reference_specs/SHA256SUMS
+cd backend && .venv/bin/python -m pytest \
+  tests/test_artifact_preparation.py \
+  tests/test_local_artifact_store.py \
+  tests/test_config.py -q \
+  --cov=app.core.cancellation \
+  --cov=app.core.file_locks \
+  --cov=app.modules.artifacts.preparation \
+  --cov=app.modules.artifacts.sources \
+  --cov=app.core.config \
+  --cov-report=term-missing --cov-fail-under=90
 ```
 
-The AUTH/REV accounting check also proved 74 merged PermissionIds, 50 merged
-registered planned ActionIds, all 20 revised-spec action rows present, four
-additive actions absent and gated, and 24 total dependencies.
-
-`check_internal_review_evidence.py` is rerun after publication binds this record
-to the approved planning commit. User-owned archival deletions and the new `(2)`
-reference pair are excluded from the chunk and from its publication commits.
+Results: diff integrity, Markdown links, stale Workstream wording, stale ART
+contracts, loop-memory state, and all reference checksums passed; 71 agent-gate
+tests passed; 154 focused ART tests passed at 94.40 percent scoped coverage.
+Merged AUTH-08 and ART-02A2 GitHub Backend, Agent Gates, and CodeRabbit checks
+also passed at the exact SHAs recorded in their dependency reviews.
 
 ## Remaining Risks And Human Gates
 
-- AUTH definition of done and the exact four-action 50-to-54 migration must merge
-  before their owning chunks.
-- ART, CON, shared-outbox, exact verified Submission digest, compensation freeze,
-  dispatch/callback fence, and drain-observation ports remain hard merged-SHA
-  gates at their named chunks.
-- D6 closure behavior, reviewer current-work precedence, coherent joint cutover,
-  and the chunk sequence were human-approved on 2026-07-15. The first successor
-  implementation start remains a separate post-merge gate.
-- Internal-review evidence is rebound to the resulting 40-character planning
-  commit SHA before push; the evidence-only publication commit does not alter
-  reviewed planning content.
+- ART has not yet assigned reviewer-specific typed read and two-phase evidence
+  intake ports one-to-one to a concrete future chunk. REV-07 fails closed until
+  an ART-owned merged contract supplies them; REV adds no fallback.
+- Later AUTH, ART, CON, shared-outbox, verified Submission digest,
+  compensation-freeze, dispatch/callback-fence, and drain-observation contracts
+  remain hard merged-SHA gates at their named runtime chunks.
+- The first successor implementation start remains a separate human-owned
+  post-merge gate. This planning PR activates no runtime behavior.
 
 ## Stop Condition
 
-No runtime chunk is active. Planning is internally reviewed and human-approved
-for PR publication. Do not start `WS-REV-001-01` automatically.
+Planning is internally reviewed and human-approved for PR publication. Do not
+start `WS-REV-001-01` automatically and do not merge PR #128 without explicit
+human approval.

@@ -3,9 +3,9 @@
 ## Current status
 
 Discovery and planning are complete on `codex/ws-rev-001-plan`. The AUTH-08 and
-ART-02A2 dependency refreshes are complete. Final planning publication now
-requires exact-snapshot internal review, evidence binding, and PR #128 refresh.
-No application implementation chunk is active.
+ART-02A2 dependency refreshes, final exact-snapshot internal review, and reviewed
+code SHA binding are complete for PR publication. No application implementation
+chunk is active.
 
 The revised WS-REV Markdown and PDF have been read end to end and reconciled
 structurally. Provenance records the current Markdown-only section 4.6 action
@@ -107,7 +107,7 @@ metadata; the accidental `(2)` paths are removed.
 
 ## Stop condition
 
-Do not push a refreshed `WS-REV-001-PLAN` until the ART-02A2 merged contracts are
-reconciled, required internal reviewers pass, and exact reviewed-SHA evidence is
-bound. Do not start `WS-REV-001-01` or runtime implementation; the merge intent
-requires a separate post-merge start gate.
+PR #128 may be refreshed only from the reviewed branch with passing evidence
+gates and still requires explicit human merge approval. Do not start
+`WS-REV-001-01` or runtime implementation; the merge intent requires a separate
+post-merge start gate.

@@ -134,6 +134,12 @@ merged-ART planning snapshot receives senior engineering, QA/test,
 security/auth, product/ops, architecture, docs, and reuse/dedup review before
 its exact code SHA is bound in the internal-review evidence.
 
+Final exact-snapshot results: senior engineering/architecture/reuse passed with
+low risks; QA/test and product/ops passed; security/auth, docs, and CI integrity
+passed after the provider-state wording repair. Reviewed code SHA is
+`f729438e063da65add1c5b712f27ffe628ef189f`; detailed results and reviewer IDs
+are recorded in `WS-REV-001-PLAN-internal-review-evidence.md`.
+
 ## External Review
 
 The earlier PR revision passed Backend, Agent Gates, and CodeRabbit. The final
