@@ -63,6 +63,10 @@ ACTIVE_SHARED_CONTRACT_PATTERNS = (
     re.compile(r"\bCompensationPolicy\b"),
     re.compile(r"\bCompensationRule\b"),
     re.compile(r"\bCompensationAwardDefinition\b"),
+    re.compile(r"\bCompensation\s+Policy\s*Version\b", re.IGNORECASE),
+    re.compile(r"\bCompensation\s+Policy\b", re.IGNORECASE),
+    re.compile(r"\bCompensation\s+Rule\b", re.IGNORECASE),
+    re.compile(r"\bCompensation\s+Award\s*Definition\b", re.IGNORECASE),
     re.compile(r"\bcompensation_policy\b", re.IGNORECASE),
     re.compile(r"\bcompensation_rule_id\b", re.IGNORECASE),
     re.compile(r"\bcompensation\s+polic(?:y|ies)\b", re.IGNORECASE),
@@ -73,6 +77,7 @@ ACTIVE_SHARED_CONTRACT_PATTERNS = (
     re.compile(r"\bPaymentAdjustment\b"),
     re.compile(r"\bPayment\s+Policy\b", re.IGNORECASE),
     re.compile(r"\bPayment\s+Record\b", re.IGNORECASE),
+    re.compile(r"\bPayment\s+Adjustment\b", re.IGNORECASE),
     re.compile(r"\bpayment(?:[-_]|\s+)policy\b", re.IGNORECASE),
     re.compile(r"\bpayment(?:[-_]|\s+)record\b", re.IGNORECASE),
     re.compile(r"\bpayment_ledger\b", re.IGNORECASE),
@@ -103,7 +108,6 @@ ACTIVE_SHARED_CONTRACT_EXCLUDED_PREFIXES = (
     "docs/internal_reviews/",
     "docs/reference_specs/",
 )
-ACTIVE_SHARED_CONTRACT_EXCLUDED_NAME_PREFIXES = ("review_",)
 CURRENT_RUNTIME_CONTRACT_PATHS = {
     "docs/current_system_data_flow.html",
 }
@@ -215,7 +219,7 @@ def is_active_shared_contract_path(path: Path) -> bool:
         return False
     if raw_path.startswith(ACTIVE_SHARED_CONTRACT_EXCLUDED_PREFIXES):
         return False
-    return not path.name.startswith(ACTIVE_SHARED_CONTRACT_EXCLUDED_NAME_PREFIXES)
+    return True
 
 
 def read_text(path: Path) -> str | None:

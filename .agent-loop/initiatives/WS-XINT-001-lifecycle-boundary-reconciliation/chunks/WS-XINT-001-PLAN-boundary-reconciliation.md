@@ -46,6 +46,9 @@ activation custody, transaction order, and cross-initiative handoffs.
 - all 25 currently registered ART actions retain exact mappings and receive a
   proposed AUTH custody group;
 - all seven fixed artifact service identities and exact assignments are listed;
+- one canonical role/service handoff removes the combined project role, keeps
+  adjudication future-only, defines independent revocation, and requires a
+  fixed service runtime-admission path before protected service execution;
 - Operator retry remains independent from internal service actions;
 - ART, REV, AUTH, and CON transaction/commit/audit ownership is explicit;
 - ReviewPacketManifest and ReviewEvidenceArtifact remain REV semantic records
@@ -100,6 +103,9 @@ zero findings at any severity; `PASS WITH LOW RISKS` is not sufficient.
 - Is core contribution creation correctly independent of ART?
 - Can all four agents continue in parallel after merge without editing one
   another's runtime code?
+- Can submitter and reviewer authority be granted and revoked independently?
+- Can a fixed service execute only its exact action without entering any human
+  grant path?
 
 ## Stop conditions
 

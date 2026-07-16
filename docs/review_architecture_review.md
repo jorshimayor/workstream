@@ -6,7 +6,10 @@ Review scope: markdown docs only.
 
 ### High: Missing explicit event log as system source of truth
 
-The domain model has task history implied, but no first-class event log. Workstream is an audit-heavy product, so state changes, checker runs, review decisions, overrides, payment transitions, and reputation updates need a durable event record.
+The domain model has task history implied, but no first-class event log.
+Workstream is an audit-heavy product, so state changes, checker runs, review
+decisions, overrides, compensation fulfillment transitions, and reputation
+updates need a durable event record.
 
 Suggested change: add `TaskEvent` or `AuditEvent` to the domain model and architecture.
 

@@ -61,6 +61,14 @@ ART admission/verification/recovery/operator behavior, then activate internal
 and Operator actions independently through AUTH. AWS provider release remains a
 separate ART live-proof gate.
 
+### AUTH project roles and fixed services
+
+Replace the combined contributor-role model with independent `submitter` and
+`reviewer` ProjectRoleGrants before AUTH-10 creates the grant table. Add the
+missing fixed-service runtime-admission chunk after controlled provisioning and
+before any ART, REV, or CON protected service command executes. The exact owner
+actions are in `AUTH_ROLE_SERVICE_HANDOFF.md`.
+
 ### ART and REV
 
 ART supplies typed packet-read, evidence-intake, binding, verification, and
@@ -91,6 +99,8 @@ project-points instruments to separate adapters.
 ## Verification strategy
 
 - Exact matrices cover every current ART action and fixed service identity.
+- Independent project roles, role-specific invalidation consumers, and fixed
+  service/human admission isolation are explicit.
 - Handoffs identify resource owner, activation custodian, principal, action,
   canonical facts, transaction owner, and release gate.
 - Stale scans reject wording that a feature chunk registers or activates AUTH.

@@ -92,13 +92,14 @@ Finance Authority, and Audit Authority.
 
 ### ProjectRoleGrant
 
-Immutable exact-project contributor-grant history with role `submitter`,
-`reviewer`, or `both`, target profile, issuing Project Manager grant, optional
+Immutable exact-project contributor-grant history with role `submitter` or
+`reviewer`, target profile, issuing Project Manager grant, role-specific
 qualification snapshot, reason, and active/revoked state.
 
-Contributor is the umbrella human product term. `submitter`, `reviewer`, and
-`both` are the persisted exact-project grant values. Celery, checker, setup,
-and background workers are internal services, not human product roles.
+Contributor is the umbrella human product term. A human may hold separate
+active `submitter` and `reviewer` grants for the same project; each is revoked
+independently. Celery, checker, setup, and background workers are internal
+services, not human product roles.
 
 ### QualificationSnapshot
 

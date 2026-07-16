@@ -54,7 +54,7 @@ sequenceDiagram
   Auth-->>API: Verified external identity
   API->>Authorization: Resolve actor profile and project grants
   Authorization->>Authorization: require(task.claim, candidates, assignment/resource/lifecycle guards)
-  Authorization-->>API: Allowed AuthorizationContext with matched submitter/both grant
+  Authorization-->>API: Allowed AuthorizationContext with matched submitter grant
   API->>DB: Validate visibility, qualification, skill tags, and READY status
   API->>DB: Create assignment and move READY -> CLAIMED -> IN_PROGRESS
 
@@ -63,7 +63,7 @@ sequenceDiagram
   API->>Auth: Verify Flow token
   Auth-->>API: Verified external identity
   API->>Authorization: require(submission.create, candidates, ownership/resource/lifecycle guards)
-  Authorization-->>API: Allowed with matched submitter/both grant
+  Authorization-->>API: Allowed with matched submitter grant
   API->>Storage: Store or reference artifacts through storage abstraction
   API->>DB: Create immutable submission version
   API->>DB: Lock submission version and audit submitter-owned finalization
@@ -80,7 +80,7 @@ sequenceDiagram
   Auth-->>API: Verified external identity
   API->>Authorization: Resolve actor profile and project grants
   Authorization->>Authorization: require(review.decision, candidates, assignment/resource/lifecycle guards)
-  Authorization-->>API: Allowed AuthorizationContext with matched reviewer/both grant
+  Authorization-->>API: Allowed AuthorizationContext with matched reviewer grant
   API->>DB: Store decision: accept, needs_revision, or reject
   API->>DB: Create reviewer completed_review contribution and applicable award
 

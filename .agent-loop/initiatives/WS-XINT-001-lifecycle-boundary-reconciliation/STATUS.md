@@ -3,12 +3,12 @@
 ## Current state
 
 Planning and read-only cross-worktree discovery are active. No runtime code has
-changed. ART-02A3 remains isolated in its existing reviewed worktree and has no
-open PR at this point.
+changed. AUTH, ART, REV, and CON runtime branches remain independently owned;
+this initiative neither starts nor edits them.
 
 ## Current gate
 
-Complete the four handoffs, reconcile ART-owned planning documents, run
+Complete the five handoffs, reconcile ART-owned planning documents, run
 deterministic documentation checks and required internal plan reviewers, then
 publish one ready planning PR for external and human review.
 

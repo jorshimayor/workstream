@@ -15,7 +15,8 @@ not load or rederive that value from ART.
 
 ## Preconditions
 
-- reviewer and submitter use canonical human ActorProfile IDs;
+- reviewer and submitter use canonical human ActorProfile IDs and independent
+  exact-project reviewer/submitter grants;
 - TaskAssignment freezes submitter contribution policy;
 - ReviewLease freezes reviewer contribution policy;
 - Submission has immutable assignment/version lineage and a stabilized verified

@@ -64,15 +64,17 @@ only to bind the existing matrix to the activation-custody sequence.
 | `workstream.artifact.materializer` | `artifact.pre_submit.checker_input.materialize`, `artifact.post_submit.checker_input.materialize` |
 | `workstream.artifact.checker_output` | `artifact.checker_output.write` |
 
-AUTH provisions and assigns these identities. Registration and assignment are
-inert while actions are planned. ART accepts only a canonical AUTH service
+AUTH provisions these identities and owns the typed static matrix; there are no
+database assignment rows. Registration and matrix membership are inert while
+actions are planned. After AUTH-09E, ART accepts only a canonical AUTH service
 context at its composition root and never derives identity from a Celery task,
 executor ID, queue, environment string, or provider credential.
 
 ## Delivery order
 
 ```text
-AUTH custody registration and fixed service assignment
+AUTH custody registration and fixed service matrix
+-> AUTH-09E fixed service runtime admission
 -> ART-02C1 admission/put-attempt foundation, inactive
 -> ART-02C2 hidden verification/resolution/scanner behavior
 -> ART-02C3 hidden recovery envelope
@@ -100,8 +102,9 @@ execution fencing remain independent checks.
 ## AUTH owner response
 
 AUTH must add reviewed registration/transfer and activation chunk contracts,
-repair stale AUTH documents and catalogue descriptions, preserve every mapping,
-and prove no action becomes active without its merged ART behavior manifest.
+add the AUTH-09E service-admission contract, repair stale AUTH documents and
+catalogue descriptions, preserve every mapping, and prove no action becomes
+active without its merged ART behavior manifest.
 
 ## ART owner response
 

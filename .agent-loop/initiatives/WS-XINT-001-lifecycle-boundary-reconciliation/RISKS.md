@@ -11,3 +11,6 @@
 | Mandatory CON artifact projection | Contributions fail for unrelated storage projection | Remove ART from core contribution transaction | Atomic Review/CON tests with no ART call |
 | Review artifact over-disclosure | Reviewer sees unrelated bytes | Active-lease exact packet membership and typed ART ports | Cross-task/project/version denial tests |
 | Parallel branch drift | Agents implement different contracts | Merge one immutable coordination PR before owner amendments | Exact merged-SHA handoff references |
+| Combined contributor role couples authority | Revoking review also removes submitter access or forces replacement semantics | Independent submitter/reviewer grants and role-specific invalidation | Partial-unique, regrant, and independent-revocation proof |
+| Dormant adjudicator authority | AUTH invents review behavior without a REV lifecycle | Keep adjudicator future-only until WS-REV approves its full contract | Closed role enum and stale-contract scan |
+| Service tokens enter human authorization | Internal workload gains human grants or first-access behavior | Dedicated fixed service admission and exact static action matrix | Human/service isolation and cross-service denial tests |

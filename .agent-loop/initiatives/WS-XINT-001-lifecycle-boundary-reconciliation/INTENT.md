@@ -4,7 +4,8 @@
 
 The AUTH, ART, REV, and CON initiatives were planned in parallel and use
 inconsistent language for authorization activation, feature ownership, artifact
-custody, and contribution completion. The runtime boundaries are mostly sound,
+custody, contribution completion, combined contributor roles, and service
+runtime admission. The runtime boundaries are mostly sound,
 but the plans can still direct separate agents toward dual ownership or circular
 activation dependencies.
 
@@ -50,6 +51,11 @@ version frozen on `TaskAssignment` or `ReviewLease` decides whether a resulting
 `CompensationAward` rows. Only after that decision do separate downstream
 adapters handle money payment requests/settlement or project-points fulfillment.
 
+Project contributor authority uses independent exact-project `submitter` and
+`reviewer` grants; one human may hold both rows, but either can be revoked
+without changing the other. Fixed service ActorProfiles use a separate AUTH
+runtime-admission path and exact static action matrix, never human grants.
+
 ## Design chosen
 
 - `ActionOwner` means AUTH activation custodian, not feature/resource owner.
@@ -72,6 +78,10 @@ adapters handle money payment requests/settlement or project-points fulfillment.
 - Mandatory contribution-evidence artifact generation: rejected for the core
   contribution transaction because canonical Review/Submission lineage already
   supplies its source facts.
+- A combined submitter/reviewer role: rejected because unrelated capabilities
+  must not replace or revoke one another.
+- A v0.1 adjudicator role: rejected until WS-REV owns a complete adjudication
+  lifecycle and action contract.
 
 ## Boundaries preserved
 
@@ -90,6 +100,8 @@ adapters handle money payment requests/settlement or project-points fulfillment.
   catalogue transfer before any affected action activates.
 - Concurrent planning branches may be based on different trusted-main SHAs.
 - Cross-domain lock order can deadlock if a downstream plan improvises locally.
+- A service token may be provisioned but remain unusable if AUTH lacks a typed
+  fixed-service admission path.
 
 ## What must not change
 
@@ -103,6 +115,7 @@ adapters handle money payment requests/settlement or project-points fulfillment.
 ## How this will be proven
 
 - Complete action and service-identity matrices.
+- Independent-role, role-specific invalidation, and service-admission handoff.
 - Closed ownership and transaction tables for all four boundaries.
 - Stale wording scans for feature-owned authorization activation.
 - Internal architecture, security/auth, product/ops, senior, QA, docs, and reuse
@@ -111,5 +124,6 @@ adapters handle money payment requests/settlement or project-points fulfillment.
 ## Human decisions required
 
 The user has selected AUTH-owned activation custody, separate parallel owner
-work, and no core CON-to-ART dependency. Each downstream initiative still needs
+work, no core CON-to-ART dependency, independent submitter/reviewer grants, and
+a dedicated fixed-service runtime path. Each downstream initiative still needs
 its own reviewed chunk contract and explicit start before implementation.

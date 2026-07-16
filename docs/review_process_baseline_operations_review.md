@@ -50,7 +50,8 @@ Status: fixed in `docs/template_preflight_evidence.md` and `docs/architecture_ch
 
 Finding:
 
-Queue health is not just status count. A lane can look organized while review pending, active work, or accepted-unpaid records quietly pile up.
+Queue health is not just status count. A lane can look organized while review
+pending, active work, or authorized but unfulfilled awards quietly pile up.
 
 Suggested change:
 

@@ -24,7 +24,8 @@ LLM prompts and tool inputs
 
 - Workstream verifies external Flow authentication; it does not own passwords or primary sessions.
 - Dev auth must fail closed outside explicit local/test environments.
-- Payment records are separate from acceptance decisions.
+- Compensation awards and downstream fulfillment records are separate from
+  acceptance decisions.
 - Submitted artifacts and checker results are audit evidence and must not be mutated silently.
 - User-controlled text is untrusted when it reaches LLM prompts, shell commands,
   SQL, filesystem paths, URLs, or rendered HTML.

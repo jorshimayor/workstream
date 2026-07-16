@@ -97,15 +97,16 @@ cannot submit or review by administrative role alone.
 |---|---|
 | `submitter` | Minimal project read, task queue read/claim, own submission create/read, own review-chain read. |
 | `reviewer` | Minimal project read, review queue/claim/release/decision, submission read for review, review-chain read. |
-| `both` | Union of submitter and reviewer candidates, still subject to separation-of-duties and lifecycle guards. |
 
-Contributor is the umbrella human product term. A contributor has an
-exact-project `submitter`, `reviewer`, or `both` grant. Celery, checker, setup,
-and background workers are internal services, not human product roles.
+Contributor is the umbrella human product term. A contributor may hold
+independent exact-project `submitter` and `reviewer` grants. Holding both rows
+does not bypass separation-of-duties or lifecycle guards. Celery, checker,
+setup, and background workers are internal services, not human product roles.
 
-Grants are immutable history. Replacement revokes the prior active grant and
-creates a new row atomically. No observed token role, typed profile, skill,
-qualification, or reputation value creates a grant automatically.
+Grants are immutable history. Issue and revoke target one exact role; one role
+never replaces another. Regrant after revocation creates a new immutable row.
+No observed token role, typed profile, skill, qualification, or reputation
+value creates a grant automatically.
 
 ## Permission Catalog
 
@@ -505,6 +506,14 @@ Internal system workers use fixed Workstream system principals with explicit
 registered system permissions. They never receive fabricated human grants.
 Serialized requester identity is provenance only. Actor-attributed jobs reload
 current actor/link/grant state before committing.
+
+Fixed service callers use a dedicated AUTH service-admission path. It resolves
+the verified service subject to one active identity link and service
+ActorProfile, validates the immutable `service_identity`, and selects only that
+identity's exact static ActionId row. It never enters human provisioning or
+human grant evaluation. Feature actions remain unavailable until their owning
+feature supplies canonical resource facts, guards, hidden behavior, and proof
+and AUTH separately activates them.
 
 ## Bootstrap And Final-Administrator Safety
 

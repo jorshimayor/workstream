@@ -8,6 +8,10 @@ authority, prepared mutation handles, decision evidence, and availability. REV
 owns review resource loading, lifecycle guards, hidden behavior, and product
 state transitions.
 
+Human review authority comes from one exact active `reviewer`
+ProjectRoleGrant. A human who also submits holds a separate `submitter` grant;
+there is no combined role, and revoking either grant leaves the other intact.
+
 ## Required choreography
 
 ```text
@@ -67,7 +71,8 @@ reviewer grant.
 ## Service actions
 
 Timer, reconciliation, artifact-reference, projection, and release-control jobs
-use fixed AUTH service identities and exact assignments. They never use a human
+use fixed AUTH service identities admitted through AUTH-09E and exact static
+matrix rows. They never use a human
 reviewer or Operator identity by convention. AUTH activation remains separate
 from REV job leases, queue claims, and execution fencing.
 
@@ -81,6 +86,8 @@ against merged REV behavior.
 
 REV must repair feature-activation wording, identify every canonical typed
 resource fact and transaction-local guard, build hidden behavior, and publish
-an activation manifest without changing AUTH availability.
+an activation manifest without changing AUTH availability. It must also
+consume reviewer-grant invalidation without mutating submitter authority and
+keep adjudication out of v0.1 until a separate approved contract exists.
 
 This handoff changes no runtime and starts no downstream chunk.

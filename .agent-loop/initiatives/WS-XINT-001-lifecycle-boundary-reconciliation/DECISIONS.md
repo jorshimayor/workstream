@@ -78,3 +78,29 @@ immutable `ContributionAwardDefinition` rows. A resulting
 does the shared outbox route money to a payment-request/settlement adapter or
 points to the project-points adapter. Neither downstream rail decides whether
 the contribution earned an award.
+
+## D11 - Project Contributor Roles Are Independently Granted
+
+The v0.1 `ProjectRoleGrant` values are exactly `submitter` and `reviewer`.
+There is no combined role. One human may hold both capabilities through two
+independent immutable rows, each independently issued, revoked, regranted, and
+revalidated. `adjudicator` remains future WS-REV scope until its complete
+product contract exists.
+
+## D12 - Fixed Services Require A Separate Runtime Admission Path
+
+Service ActorProfiles use the canonical identity-link boundary and one fixed
+`service_identity`, but they never enter human provisioning or human grant
+evaluation. AUTH owns one typed service-admission path from verified subject to
+the exact static action row. Feature owners still own resource facts, guards,
+hidden behavior, and execution. Service provisioning does not activate any
+feature action, and missing service rows deny only the service request rather
+than preventing administrative provisioning.
+
+## D13 - Authority Loss Is Consumed By The Owning Lifecycle
+
+AUTH records exact grant/profile/link invalidation and its cause. Submitter
+grant loss is consumed by task-assignment reconciliation; reviewer grant loss
+is consumed by review reconciliation. AUTH never mutates those product records,
+and one role's revocation never removes another contributor or administrative
+grant.

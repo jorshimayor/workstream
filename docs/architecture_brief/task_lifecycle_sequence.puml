@@ -55,15 +55,15 @@ API -> Auth : verify Flow token
 Auth --> API : verified external identity
 API -> Authorization : resolve actor profile and project grants
 Authorization -> Authorization : require task claim + candidate grant\n+ assignment/resource/lifecycle guards
-Authorization --> API : allowed with matched submitter/both grant
-API -> DB : create assignment, freeze submitter compensation,\n+ move in progress
+Authorization --> API : allowed with matched submitter grant
+API -> DB : create assignment, freeze submitter\nContributionPolicyVersion, move in progress
 
 Contributor -> UI : submit packet
 UI -> API : POST submission packet
 API -> Auth : verify Flow token
 Auth --> API : verified external identity
 API -> Authorization : require submission create + candidate grant\n+ ownership/resource/lifecycle guards
-Authorization --> API : allowed with matched submitter/both grant
+Authorization --> API : allowed with matched submitter grant
 API -> Storage : store/read artifact references
 API -> DB : create immutable submission version
 
@@ -77,8 +77,8 @@ API -> Auth : verify Flow token
 Auth --> API : verified external identity
 API -> Authorization : resolve actor profile and project grants
 Authorization -> Authorization : require review decision + candidate grant\n+ assignment/resource/lifecycle guards
-Authorization --> API : allowed with matched reviewer/both grant
-API -> DB : lock active ReviewLease with frozen reviewer compensation
+Authorization --> API : allowed with matched reviewer grant
+API -> DB : lock active ReviewLease with frozen reviewer\nContributionPolicyVersion
 API -> DB : store review decision
 API -> DB : create reviewer completed_review contribution\n+ applicable award when payable
 

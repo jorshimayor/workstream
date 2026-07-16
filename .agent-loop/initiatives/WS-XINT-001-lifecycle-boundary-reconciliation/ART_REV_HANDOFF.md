@@ -19,6 +19,8 @@ binding IDs without taking ownership of their records.
   immutable ART binding IDs and server commitments.
 - Required ART and REV actions have passed registration -> hidden behavior ->
   AUTH activation.
+- Every protected ART service command first passes AUTH-09E fixed service
+  admission for its exact static matrix row.
 - Current review packet membership is derivable from canonical task,
   Submission, checker-run, revision-context, and binding relations.
 

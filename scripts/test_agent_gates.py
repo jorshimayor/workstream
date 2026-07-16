@@ -1032,6 +1032,12 @@ def test_active_shared_contract_rejects_retired_compensation_model() -> None:
             "CompensationPolicy",
             "CompensationRule",
             "CompensationAwardDefinition",
+            "Compensation\n  PolicyVersion",
+            "Compensation\n  Policy\n  Version",
+            "Compensation\n  Policy",
+            "Compensation\n  Rule",
+            "Compensation\n  AwardDefinition",
+            "Compensation\n  Award\n  Definition",
             "compensation_policy",
             "compensation_rule_id",
             "compensation\n  policy",
@@ -1042,6 +1048,7 @@ def test_active_shared_contract_rejects_retired_compensation_model() -> None:
             "PaymentAdjustment",
             "Payment\n  Policy",
             "Payment\n  Record",
+            "Payment\n  Adjustment",
             "payment-policy",
             "payment-record",
             "payment_ledger",
@@ -1106,7 +1113,7 @@ def test_historical_docs_do_not_define_live_compensation_contract() -> None:
         Path("docs/internal_reviews/example.md")
     )
     assert stale.is_active_shared_contract_path(Path("docs/spec_chunk_5_example.md"))
-    assert not stale.is_active_shared_contract_path(Path("docs/review_architecture.md"))
+    assert stale.is_active_shared_contract_path(Path("docs/review_architecture.md"))
 
 
 def test_current_runtime_walkthrough_rejects_unimplemented_compensation_records() -> (
@@ -4767,6 +4774,9 @@ def main() -> int:
         test_static_sensor_flags_backend_config_as_ci_surface,
         test_markdown_link_checker_collects_base_cached_dirty_and_untracked,
         test_stale_wording_patterns_catch_variants,
+        test_active_shared_contract_rejects_retired_compensation_model,
+        test_historical_docs_do_not_define_live_compensation_contract,
+        test_current_runtime_walkthrough_rejects_unimplemented_compensation_records,
         test_stale_wording_skips_only_docs_internal_reviews_prefix,
         test_stale_wording_catches_multiline_legacy_status_reconstruction,
         test_loop_memory_state_rejects_pre_merge_status,
