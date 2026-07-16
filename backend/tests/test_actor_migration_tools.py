@@ -14,9 +14,11 @@ from app.modules.actors.legacy_classification import database_binding_identifier
 from app.modules.actors.service_identities import SERVICE_IDENTITY_VALUES, ServiceIdentity
 from app.modules.actors.service_identity_migration import (
     MAPPING_FILE_ENV,
+    MAX_MAPPINGS,
     ExistingServiceActorRow,
     ServiceActorIdentityMapping,
     ServiceActorIdentityMappingDraft,
+    ServiceActorIdentityMappingEnvelope,
     ServiceIdentityMappingError,
     build_envelope,
     build_report,
@@ -113,6 +115,22 @@ def test_mapping_rejects_noncanonical_or_unknown_values(field: str, value: str) 
         ServiceActorIdentityMapping.model_validate(payload)
 
 
+@pytest.mark.parametrize(
+    "issuer",
+    [
+        "",
+        " https://identity.example.test",
+        "https://identity.example.test:invalid",
+        "https://identity.example.test/path\nsegment",
+    ],
+)
+def test_mapping_rejects_ambiguous_issuer_bytes(issuer: str) -> None:
+    payload = mapping().model_dump(mode="json")
+    payload["issuer"] = issuer
+    with pytest.raises(ValidationError):
+        ServiceActorIdentityMapping.model_validate(payload)
+
+
 def test_draft_rejects_duplicate_profile_external_identity_and_fixed_identity() -> None:
     duplicate = mapping()
     with pytest.raises(ValidationError):
@@ -157,6 +175,22 @@ def test_exact_mapping_rejects_missing_extra_or_changed_private_source() -> None
         validate_draft(draft(mapping(subject=SUBJECT.lower())), (source_row(),))
 
 
+def test_exact_mapping_rejects_inventory_larger_than_closed_registry() -> None:
+    rows = tuple(
+        source_row(
+            actor_profile_id=f"00000000-0000-4000-8000-{index:012d}",
+            subject=f"subject-{index}",
+        )
+        for index in range(1, MAX_MAPPINGS + 2)
+    )
+    with pytest.raises(
+        ServiceIdentityMappingError,
+        match="service_inventory_exceeds_registry",
+    ) as captured:
+        validate_draft(draft(), rows)
+    assert captured.value.count == MAX_MAPPINGS + 1
+
+
 def test_envelope_has_stable_known_answer_and_detects_any_binding_drift() -> None:
     built = envelope()
     assert built.envelope_sha256 == "1ca678ece8ec42fbd119209b963e3d25b36fc9c60dc00e9788328d4ed517a2d8"
@@ -171,6 +205,26 @@ def test_envelope_has_stable_known_answer_and_detects_any_binding_drift() -> Non
             (source_row(),),
             database_binding=database_binding_identifier("other", 16_384),
         )
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("source_row_set_sha256", "g" * 64),
+        ("manifest_sha256", "0" * 63),
+        ("database_binding", "postgres-v1:not-a-digest"),
+        ("generated_at", "2026-02-31T12:00:00Z"),
+        ("generated_at", "2026-07-16 12:00:00Z"),
+    ],
+)
+def test_envelope_rejects_noncanonical_or_impossible_metadata(
+    field: str,
+    value: str,
+) -> None:
+    payload = envelope().model_dump(mode="json")
+    payload[field] = value
+    with pytest.raises(ValidationError):
+        ServiceActorIdentityMappingEnvelope.model_validate(payload)
 
 
 def test_canonical_hashes_ignore_input_order() -> None:
@@ -209,6 +263,30 @@ def test_private_loader_rejects_ambiguous_json_without_echo(tmp_path: Path, payl
     assert ISSUER not in str(captured.value)
 
 
+def test_private_loader_redacts_strict_schema_failures(tmp_path: Path) -> None:
+    draft_path = tmp_path / "invalid-draft.json"
+    write_private_json(
+        draft_path,
+        {
+            "schema_version": 1,
+            "mappings": [{"actor_profile_id": ACTOR_ID, "subject": SUBJECT}],
+        },
+    )
+    with pytest.raises(ServiceIdentityMappingError, match="service_mapping_draft_invalid"):
+        load_draft(draft_path)
+
+    envelope_path = tmp_path / "invalid-envelope.json"
+    payload = envelope().model_dump(mode="json")
+    payload["unexpected_private_field"] = SUBJECT
+    write_private_json(envelope_path, payload)
+    with pytest.raises(
+        ServiceIdentityMappingError,
+        match="service_mapping_envelope_invalid",
+    ) as captured:
+        load_envelope(envelope_path)
+    assert SUBJECT not in str(captured.value)
+
+
 def test_private_loader_rejects_open_permissions_and_symlink(tmp_path: Path) -> None:
     path = tmp_path / "draft.json"
     write_private_json(path, draft().model_dump(mode="json"))
@@ -229,6 +307,21 @@ def test_publish_envelope_is_owner_only_reloadable_and_never_overwrites(tmp_path
     assert load_envelope(path) == envelope()
     with pytest.raises(ServiceIdentityMappingError, match="output_unavailable"):
         publish_envelope(path, envelope())
+
+
+def test_publish_envelope_removes_partial_output_after_write_failure(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    path = tmp_path / "partial-envelope.json"
+
+    def fail_write(_descriptor: int, _data: object) -> int:
+        raise OSError("simulated private-output failure")
+
+    monkeypatch.setattr(os, "write", fail_write)
+    with pytest.raises(ServiceIdentityMappingError, match="service_mapping_output_failed"):
+        publish_envelope(path, envelope())
+    assert not path.exists()
 
 
 def test_migration_environment_is_required_only_for_existing_services(

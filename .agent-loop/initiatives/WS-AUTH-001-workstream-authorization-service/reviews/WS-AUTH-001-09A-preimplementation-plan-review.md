@@ -7,6 +7,13 @@
 Exact reviewed contract SHA:
 `b44ef8ae1e1b4532d7af9477d688113057ff34cb`.
 
+The contract-only addendum at
+`5ba7bf7e781061f1bc23fb36973ed95ce563ac42` added the existing
+`backend/tests/test_auth.py` service-profile regression fixture to allowed
+files and verification. The same composite senior/architecture/CI/docs/reuse,
+QA/product/test-delta, and security/auth tracks passed that exact addendum; no
+runtime behavior or implementation direction changed.
+
 ## Review results
 
 | Track | Result | Notes |
