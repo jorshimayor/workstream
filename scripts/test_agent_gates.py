@@ -1028,6 +1028,8 @@ def test_active_shared_contract_rejects_retired_contracts() -> None:
     )
     sample = " ".join(
         (
+            "Operator / Access Administrator",
+            "contribution/payment/reputation records",
             "Project Manager manages guides and policies",
             "PM -> UI: publish contribution policy",
             "submitter/both",
@@ -3949,6 +3951,13 @@ def test_stale_authorization_initiative_ratchet_is_position_scoped() -> None:
         text,
         enforced_line_numbers=changed_lines,
     ) == [".agent-loop/initiatives/example/PLAN.md:2: NON_CANONICAL_API_PREFIX"]
+
+    multiline_text = "ActorProfile(\nprofile_type"
+    assert gate.scan_text(
+        ".agent-loop/initiatives/example/PLAN.md",
+        multiline_text,
+        enforced_line_numbers=frozenset({2}),
+    ) == [".agent-loop/initiatives/example/PLAN.md:1: TYPED_PROFILE_AUTHORITY"]
 
 
 def test_stale_authorization_history_allowlist_is_exact() -> None:

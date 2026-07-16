@@ -341,9 +341,11 @@ def scan_text(
     for rule in RULES:
         for match in rule.pattern.finditer(text):
             match_line_number = line_number(text, match.start())
-            if (
-                enforced_line_numbers is not None
-                and match_line_number not in enforced_line_numbers
+            match_end_line_number = line_number(
+                text, max(match.start(), match.end() - 1)
+            )
+            if enforced_line_numbers is not None and enforced_line_numbers.isdisjoint(
+                range(match_line_number, match_end_line_number + 1)
             ):
                 continue
             if exempt_match(relative_path, rule, text, match.start()):

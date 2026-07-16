@@ -27,14 +27,14 @@ database "Postgres" as DB
 participant "Storage\nAbstraction" as Storage
 participant "Checker\nRunner" as Checks
 
-PM -> UI : create project, guide, tasks,\n+ setup/checker/review/revision configuration
+PM -> UI : create project, guide, tasks,\nsetup/checker/review/revision configuration
 UI -> API : POST project / guide / configuration
 API -> Auth : verify Flow token
 Auth --> API : verified external identity
 API -> Authorization : resolve actor profile and local grants
 Authorization -> Authorization : require permission + candidate grant\n+ resource/lifecycle guards
 Authorization --> API : allowed with matched Project Manager grant
-API -> DB : persist draft guide and policy context
+API -> DB : persist draft guide and checker/review/revision policy context
 
 Finance -> UI : publish contribution policy
 UI -> API : POST contribution policy version

@@ -59,6 +59,11 @@ FORBIDDEN_PATH_PATTERNS = (
     re.compile(r"(^|/)claude\.md$", re.IGNORECASE),
 )
 ACTIVE_SHARED_CONTRACT_PATTERNS = (
+    re.compile(r"\bOperator\s*/\s*Access Admin(?:istrator)?\b", re.IGNORECASE),
+    re.compile(
+        r"\bcontribution\s*/\s*payment\s*/\s*reputation records\b",
+        re.IGNORECASE,
+    ),
     re.compile(
         r"\bProject Manager\b[^\n]{0,120}\b(?:manage[sd]?|creat(?:e|es))\b"
         r"[^\n]{0,80}\bpolicies\b",
