@@ -16,6 +16,7 @@ skinparam DatabaseBorderColor #0CA678
 skinparam DatabaseBackgroundColor #E6FCF5
 
 actor "Project\nManager" as PM
+actor "Finance\nAuthority" as Finance
 actor "Human-Agent\nContributor" as Contributor
 actor Reviewer
 participant "React UI" as UI
@@ -26,14 +27,21 @@ database "Postgres" as DB
 participant "Storage\nAbstraction" as Storage
 participant "Checker\nRunner" as Checks
 
-PM -> UI : create project, guide, policies,\n+ contribution policy
-UI -> API : POST project / guide / policies
+PM -> UI : create project, guide, tasks,\n+ setup/checker/review/revision configuration
+UI -> API : POST project / guide / configuration
 API -> Auth : verify Flow token
 Auth --> API : verified external identity
 API -> Authorization : resolve actor profile and local grants
 Authorization -> Authorization : require permission + candidate grant\n+ resource/lifecycle guards
 Authorization --> API : allowed with matched Project Manager grant
 API -> DB : persist draft guide and policy context
+
+Finance -> UI : publish contribution policy
+UI -> API : POST contribution policy version
+API -> Auth : verify Flow token
+Auth --> API : verified external identity
+API -> Authorization : require contribution policy permission\n+ project/resource/lifecycle guards
+Authorization --> API : allowed with matched Finance Authority grant
 API -> DB : publish contribution policy version independently
 
 PM -> UI : activate guide

@@ -1028,6 +1028,8 @@ def test_active_shared_contract_rejects_retired_contracts() -> None:
     )
     sample = " ".join(
         (
+            "Project Manager manages guides and policies",
+            "PM -> UI: publish contribution policy",
             "submitter/both",
             "reviewer/both",
             "Submitter or Both grant",

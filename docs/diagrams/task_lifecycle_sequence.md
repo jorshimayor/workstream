@@ -13,6 +13,7 @@ agent reputation.
 sequenceDiagram
   autonumber
   actor PM as Project Manager
+  actor Finance as Finance Authority
   actor Contributor as Human-Agent Contributor
   actor Reviewer as Reviewer
   participant UI as React UI
@@ -23,14 +24,21 @@ sequenceDiagram
   participant Storage as Storage Abstraction
   participant Checks as Checker Runner
 
-  PM->>UI: Create project, guide, and policies
-  UI->>API: POST project / guide / policies
+  PM->>UI: Create project, guide, tasks, and setup/checker/review/revision configuration
+  UI->>API: POST project / guide / configuration
   API->>Auth: Verify Flow token
   Auth-->>API: Verified external identity
   API->>Authorization: Resolve actor profile and local grants
   Authorization->>Authorization: require(project.create/configure, candidates, resource/lifecycle guards)
   Authorization-->>API: Allowed AuthorizationContext with matched Project Manager grant
   API->>DB: Persist draft guide and checker/review/revision policy context
+
+  Finance->>UI: Publish contribution policy
+  UI->>API: POST contribution policy version
+  API->>Auth: Verify Flow token
+  Auth-->>API: Verified external identity
+  API->>Authorization: require(contribution_policy.publish, candidates, project/resource/lifecycle guards)
+  Authorization-->>API: Allowed with matched Finance Authority grant
   API->>DB: Publish project contribution policy version independently
 
   PM->>UI: Activate guide

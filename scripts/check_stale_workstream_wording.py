@@ -59,6 +59,16 @@ FORBIDDEN_PATH_PATTERNS = (
     re.compile(r"(^|/)claude\.md$", re.IGNORECASE),
 )
 ACTIVE_SHARED_CONTRACT_PATTERNS = (
+    re.compile(
+        r"\bProject Manager\b[^\n]{0,120}\b(?:manage[sd]?|creat(?:e|es))\b"
+        r"[^\n]{0,80}\bpolicies\b",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"(?:\bPM\b|\bProject Manager\b)[^\n]{0,160}"
+        r"\b(?:contribution policy|compensation-adapter binding)\b",
+        re.IGNORECASE,
+    ),
     re.compile(r"\bsubmitter\s*/\s*both\b", re.IGNORECASE),
     re.compile(r"\breviewer\s*/\s*both\b", re.IGNORECASE),
     re.compile(r"\bSubmitter\s+or\s+Both\s+grant\b", re.IGNORECASE),

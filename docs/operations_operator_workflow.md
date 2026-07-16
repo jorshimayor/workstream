@@ -4,8 +4,10 @@
 
 ### Project Manager
 
-Creates projects when system-scoped and manages guides, policies, tasks, and
-contributor grants only for covered projects.
+Creates projects when system-scoped and manages guides, tasks,
+submission/checker configuration, review/revision configuration, and
+contributor grants only for covered projects. This grant cannot publish
+contribution policy or bind compensation adapters.
 
 ### Contributor
 
@@ -29,7 +31,8 @@ grants. This grant does not manage project work.
 
 ### Finance Authority
 
-Tracks compensation awards, delivery, fulfillment, failure, and dispute state.
+Publishes contribution policy and compensation-adapter bindings, and tracks
+compensation awards, delivery, fulfillment, failure, and dispute state.
 
 ### Audit Authority
 
