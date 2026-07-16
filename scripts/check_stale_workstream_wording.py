@@ -59,6 +59,32 @@ FORBIDDEN_PATH_PATTERNS = (
     re.compile(r"(^|/)claude\.md$", re.IGNORECASE),
 )
 ACTIVE_SHARED_CONTRACT_PATTERNS = (
+    re.compile(r"\bsubmitter\s*/\s*both\b", re.IGNORECASE),
+    re.compile(r"\breviewer\s*/\s*both\b", re.IGNORECASE),
+    re.compile(r"\bSubmitter\s+or\s+Both\s+grant\b", re.IGNORECASE),
+    re.compile(r"\bReviewer\s+or\s+Both\s+grant\b", re.IGNORECASE),
+    re.compile(
+        r"\bProjectRoleGrant\s*\(\s*submitter\|reviewer\|both\s*\)",
+        re.IGNORECASE,
+    ),
+    re.compile(r"`submitter`,\s*`reviewer`,\s*or\s*`both`", re.IGNORECASE),
+    re.compile(r"\|\s*Both\s*\|\s*exact project", re.IGNORECASE),
+    re.compile(r"\bActive submitter, reviewer, and both grants\b", re.IGNORECASE),
+    re.compile(
+        r"\bProjectRoleGrant\s+values\s+are\s+exactly\s+"
+        r"`?submitter`?\s*(?:,|and)\s*`?reviewer`?\s*[.;]",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"\bProject issue roles are exactly\s+`?submitter`?\s+or\s+"
+        r"`?reviewer`?\s*[.;]",
+        re.IGNORECASE,
+    ),
+    re.compile(r"\bdo not become normal ActorProfiles\b", re.IGNORECASE),
+    re.compile(
+        r"Proposed after 02C3,\s*AUTH-09,\s*and AUTH custody registration",
+        re.IGNORECASE,
+    ),
     re.compile(r"\bCompensationPolicyVersion\b"),
     re.compile(r"\bCompensationPolicy\b"),
     re.compile(r"\bCompensationRule\b"),

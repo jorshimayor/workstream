@@ -119,6 +119,7 @@ None.
 | `WS-AUTH-001-07B` | Merged | `codex/ws-auth-001-07b-deny-default-kernel` | #130 | Merged as `90eca12`; signed memory passed. |
 | `WS-AUTH-001-08` | In review | `codex/ws-auth-001-08-bootstrap-admin-grants` | - | Implementation `34f87a5` passed deterministic evidence and all required internal reviewers; PR publication pending. |
 | `WS-AUTH-001-09` | Proposed | - | - | Actor/link states and service actors. |
+| `WS-AUTH-001-09E` | Proposed | - | - | Fixed service runtime admission after controlled provisioning. |
 | `WS-AUTH-001-10` | Proposed | - | - | Project contributor grants. |
 | `WS-AUTH-001-11` | Proposed | - | - | Project identity/guide/source/read cutover. |
 | `WS-AUTH-001-12` | Proposed | - | - | Project policy/setup mutation cutover. |

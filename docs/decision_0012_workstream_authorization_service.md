@@ -74,12 +74,16 @@ Contributor project grants are:
 
 - `submitter`
 - `reviewer`
-- `both`
+- `adjudicator`
 
-Contributor is the umbrella human product term. A contributor has an
-exact-project `submitter`, `reviewer`, or `both` grant. Celery, checker, setup,
-and background workers are internal services, not human product roles. Administrative roles alone
-do not authorize submission or review.
+ADR 0015 supersedes the earlier combined-role design. These capabilities are
+independently granted.
+
+Contributor is the umbrella human product term. A contributor may hold separate
+exact-project `submitter`, `reviewer`, and `adjudicator` grants. Adjudicator
+actions remain unavailable until separately activated. Celery, checker, setup,
+and background workers are internal services, not human product roles.
+Administrative roles alone do not authorize submission or review.
 
 The three additive Operator recovery permissions approved with this ADR are:
 

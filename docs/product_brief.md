@@ -43,7 +43,7 @@ The system is source-agnostic without becoming source-adapter-first. A task crea
 
 The person who claims assigned work, packages submissions, submits evidence,
 monitors their contribution status, and resolves revisions under an
-exact-project Submitter or Both grant.
+exact-project Submitter grant.
 
 Needs:
 

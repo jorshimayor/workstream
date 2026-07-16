@@ -737,7 +737,7 @@ The final release owner coordinates a supported API/command drill proving:
 - first human access;
 - one-time bootstrap and concurrent conflict;
 - scoped administrative grants;
-- exact-project submitter/reviewer grants;
+- exact-project submitter/reviewer/adjudicator grants;
 - admin/contributor separation and self-action denial;
 - same-unexpired-token revocation;
 - suspension/reactivation and link revocation;

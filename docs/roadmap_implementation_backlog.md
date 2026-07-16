@@ -116,7 +116,8 @@
   contribution record
 - pending award fulfillment dashboard
 - fulfilled status with immutable receipt and external reference
-- disputed fulfillment status
+- future compensation issue/dispute workflow kept outside the v0.1
+  `CompensationStatusProjection`
 - new published compensation definition for future amount changes; existing
   awards remain immutable
 - contributor reputation events

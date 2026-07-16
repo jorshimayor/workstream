@@ -69,11 +69,12 @@ metadata model only when required by an existing workflow.
 
 ## D7: Internal workers use explicit system authority
 
-Status: accepted by the user on 2026-07-11.
+Status: system-authority requirement retained; ActorProfile clause superseded by
+D20 and D22.
 
 Project setup, pre-review gating, reconciliation, and repair work use fixed
-Workstream system principals and registered system permissions. They do not
-receive fabricated human admin roles and do not become normal ActorProfiles.
+Workstream service ActorProfiles and registered system permissions. They do not
+receive fabricated human admin or project contributor roles.
 
 ## D8: Production issuer details remain configuration
 
@@ -109,14 +110,15 @@ fails closed. Manual SQL is not a supported path.
 
 ## D11: Contributor is the human product term
 
-Status: accepted by the user on 2026-07-11.
+Status: umbrella terminology retained; combined-role clause superseded by D21.
 
-Contributor is the umbrella term for a human participating in Workstream. A
-contributor has an exact-project `submitter`, `reviewer`, or `both` grant.
-Celery, checker, setup, and reconciliation workers are internal services and
-background jobs, not human product roles. Existing human-role
-values using the old term are migration inputs to remove, not target product
-vocabulary or authority concepts.
+Contributor is the umbrella term for a human participating in Workstream.
+D11 originally coupled project contribution capabilities through a combined
+grant option. D21 supersedes only that role-shape clause with three independent
+exact-project grants. Celery, checker, setup, and reconciliation workers are
+internal services and background jobs, not human product roles. Existing
+human-role values using the old term are migration inputs to remove, not target
+product vocabulary or authority concepts.
 
 The field cutover is explicitly owned as follows:
 
@@ -285,8 +287,9 @@ resources and state transitions.
 
 Migration custody is reconciled with merged main: AUTH-05A owns `0018`, AUTH-05B
 solely owns `0019`, AUTH-06 uses `0020`, AUTH-07A action evidence uses `0021`,
-AUTH-08 uses `0022`, AUTH-10 uses `0023`, AUTH-12 uses `0024`, AUTH-13 uses
-`0025`, and AUTH-14 uses `0026`.
+AUTH-08 uses `0022`, the AUTH-09 fixed-service identity foundation uses `0023`,
+AUTH-10 uses `0024`, AUTH-12 uses `0025`, AUTH-13 uses `0026`, and AUTH-14 uses
+`0027`.
 
 ## D16: Split AUTH-07 at the catalogue and executable-kernel boundary
 
@@ -409,3 +412,37 @@ uses `GREATEST(current_value, clock_timestamp())` so crossed commits cannot
 regress recency. Authorization denial or persistence failure rolls the staged
 timestamp changes back. This restores verification recency without letting
 denied requests manufacture successful-use evidence.
+
+## D20: Service ActorProfile is the fixed local service principal
+
+Status: accepted by the user on 2026-07-16.
+
+A service `ActorProfile` is Workstream's stable local service principal. It
+carries one immutable, unique, closed `service_identity`; its
+`ActorIdentityLink` contains the configured issuer and opaque service subject.
+It receives no Contributor domain, AdminRoleGrant, or ProjectRoleGrant. Exact
+service actions come only from one reviewed static matrix, never token claims,
+display data, or database-authored grants.
+
+## D21: Project contributor roles are independently granted
+
+Status: accepted by the user on 2026-07-16 and supersedes D11's combined-role
+clause.
+
+The v0.1 ProjectRoleGrant values are exactly `submitter`, `reviewer`, and
+`adjudicator`. A human may hold all three capabilities through independent
+immutable rows. Each role is independently issued, revoked, regranted,
+invalidated, and revalidated. There is no cross-role replacement. The
+adjudicator grant provides no adjudication operation until WS-REV defines the
+lifecycle and AUTH activates exact actions.
+
+## D22: Fixed service runtime admission is separate from human admission
+
+Status: accepted by the user on 2026-07-16 and supersedes D7's conflicting
+ActorProfile clause while retaining its explicit-system-authority rule.
+
+Every protected service command resolves a verified service subject through an
+active identity link and service ActorProfile, validates the fixed
+`service_identity`, and selects only its exact static ActionId row. It never
+enters human first-access provisioning or human grant evaluation. AUTH-09E owns
+this admission path but activates no feature operation.

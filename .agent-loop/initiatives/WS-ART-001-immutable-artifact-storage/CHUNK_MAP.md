@@ -14,7 +14,7 @@ Each chunk is one PR. No later chunk starts automatically.
 | `WS-ART-001-02C1` | Add the generic durable-byte admission ledger and durable put-attempt state foundation without provider execution. | L1 | Proposed after 02B1 |
 | `WS-ART-001-02C2` | Add put resolution, verification publication, complete-object observation, immutable receipts, and PostgreSQL execution fencing without recovery attempts or routes. | L1 | Proposed after 02C1 |
 | `WS-ART-001-02C3` | Add the recovery-attempt model and exact idempotent source-job to retry-job chain without public or Operator routes. | L1 | Proposed after 02C2 |
-| `WS-ART-001-02D` | Add hidden Operator content/job/retry/recovery/audit APIs, canonical resource composition, and production-readiness checks while actions and provider profiles remain inactive. | L1 | Proposed after 02C3, AUTH-09, and AUTH custody registration |
+| `WS-ART-001-02D` | Add hidden Operator content/job/retry/recovery/audit APIs, canonical resource composition, and production-readiness checks while actions and provider profiles remain inactive. | L1 | Proposed after 02C3, AUTH-09E, and AUTH custody registration |
 | `WS-ART-001-03` | Store and bind guide-source bytes; add same-snapshot setup recovery through the authorized artifact reader. | L1 | Proposed after 02D |
 | `WS-ART-001-04A` | Add task-scoped upload sessions/items, trusted archive inspection, independent verification, immutable sealing, and artifact-set manifests. | L1 | Proposed after 03 |
 | `WS-ART-001-04B` | Execute authoritative pre-submit against sealed artifact sets and persist exact admissions with bounded infrastructure continuation. | L1 | Proposed after 04A |
@@ -54,8 +54,9 @@ Physical deletion and semantic search require separate approved initiatives.
 
 - Artifact actions follow AUTH planned registration -> hidden ART behavior and
   canonical resource composition -> AUTH evaluator integration and activation.
-  They consume canonical `ActorProfile.id`, closed `ActionId` and `PermissionId`
-  catalogues, and exact fixed service assignments. ART never changes action
+  Protected service commands first pass AUTH-09E. They consume canonical
+  `ActorProfile.id`, closed `ActionId` and `PermissionId` catalogues, and exact
+  fixed service matrix rows. ART never changes action
   availability. Provider idempotency labels and persisted role snapshots are
   provenance, not authority.
 - WS-REV owns `ReviewPacketManifest` and `ReviewEvidenceArtifact`. Review code

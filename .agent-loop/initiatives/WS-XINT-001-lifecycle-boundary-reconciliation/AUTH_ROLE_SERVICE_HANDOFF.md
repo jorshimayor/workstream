@@ -25,16 +25,17 @@ The v0.1 persisted project roles are exactly:
 ```text
 submitter
 reviewer
+adjudicator
 ```
 
-There is no `both` value. A human who may submit and review holds two separate
-active `ProjectRoleGrant` rows for the same project. Revoking either row has no
-effect on the other row or on any `AdminRoleGrant`.
+There is no `both` value. A human may hold all three active ProjectRoleGrant
+rows for the same project. Revoking any one row has no effect on the other rows
+or on any `AdminRoleGrant`.
 
-`adjudicator` is not a v0.1 role. AUTH must not create dormant adjudication
-authority before WS-REV defines the adjudication object, actions, decisions,
-queue/lifecycle, separation rules, audit consequences, and owner-approved
-contract.
+The adjudicator grant is part of the closed project-role model now, but it
+provides only the minimal exact-project visibility defined by AUTH-11 until
+WS-REV later defines and AUTH activates explicit adjudication actions. Merely
+holding the grant cannot submit, review, override, or adjudicate.
 
 The database invariant is one active row per exact role:
 
@@ -55,7 +56,7 @@ role. Skills or reputation may inform the snapshot but never create authority.
 
 The change is a clean cut. Previously merged migrations remain immutable, but
 the AUTH-10 migration replaces the current Python/PostgreSQL validators so new
-evidence accepts only `submitter` or `reviewer`. Because no ProjectRoleGrant
+evidence accepts only `submitter`, `reviewer`, or `adjudicator`. Because no ProjectRoleGrant
 runtime has shipped, it must fail closed on unexpected combined-role or
 replacement evidence rather than add compatibility aliases or silently convert
 it. After AUTH-09A owns migration `0023`, AUTH-10 owns the next migration,
@@ -73,6 +74,9 @@ submitter revoked
 
 reviewer revoked
   -> WS-REV review-lease, preference, and queue reconciliation
+
+adjudicator revoked
+  -> WS-REV adjudication-assignment reconciliation when that lifecycle is enabled
 
 AdminRoleGrant revoked
   -> no ProjectRoleGrant is removed
@@ -124,12 +128,20 @@ union is permitted. An external provider needs a Workstream service
 `ActorProfile` only when it calls a protected Workstream command; Workstream
 calling that provider through an adapter does not create a provider actor.
 
+Known future identities must still be proposed by their owning feature rather
+than pre-created here. Expected boundaries include project setup, pre-review
+checker execution, authority-invalidation reconciliation, review preference
+expiry, review lease expiry, review reconciliation, review projection rebuild,
+contribution-event processing, compensation-delivery reconciliation, and
+shared outbox dispatch when it invokes protected Workstream commands. They must
+not collapse into `workstream.system.worker`.
+
 ## Owner responses
 
 ### AUTH
 
-- Add a superseding decision for independent `submitter` and `reviewer` grants;
-  preserve D11's `Contributor` umbrella term.
+- Add a superseding decision for independent `submitter`, `reviewer`, and
+  `adjudicator` grants; preserve D11's `Contributor` umbrella term.
 - Add a superseding decision stating that the service-ActorProfile decision
   replaces only D7's conflicting “not a normal ActorProfile” clause; explicit
   system authority and no human grants remain mandatory.
@@ -142,7 +154,8 @@ calling that provider through an adapter does not create a provider actor.
 - Replace reviewer-or-combined grant checks with one exact active `reviewer`
   grant and preserve no-self-review guards.
 - Consume reviewer revocation without mutating submitter authority.
-- Keep adjudication future-only until a separate reviewed contract exists.
+- Preserve the independent adjudicator grant while keeping every adjudication
+  action unavailable until a separate reviewed lifecycle contract exists.
 - Use fixed service admission for timer, reconciliation, expiry, and projection
   commands; never fabricate a human reviewer or Operator.
 
@@ -163,10 +176,11 @@ calling that provider through an adapter does not create a provider actor.
 
 ## Release proof
 
-The final AUTH proof must show one ActorProfile holding separate submitter and
-reviewer grants, independent revocation in both directions, unaffected admin
-authority, no administrative substitution for contributor actions, no
-self-review, same-token revocation, service/human path isolation, exact
-cross-service denial, and transaction-time revalidation.
+The final AUTH proof must show one ActorProfile holding separate submitter,
+reviewer, and adjudicator grants; independent revocation in every direction;
+unaffected admin authority; no administrative substitution for contributor
+actions; no submit/review/adjudication capability from the wrong grant;
+same-token revocation; service/human path isolation; exact cross-service denial;
+and transaction-time revalidation.
 
 This handoff changes no runtime and starts no downstream chunk.

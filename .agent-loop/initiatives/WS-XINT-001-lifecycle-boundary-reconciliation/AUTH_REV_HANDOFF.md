@@ -10,7 +10,9 @@ state transitions.
 
 Human review authority comes from one exact active `reviewer`
 ProjectRoleGrant. A human who also submits holds a separate `submitter` grant;
-there is no combined role, and revoking either grant leaves the other intact.
+an adjudicator grant is a third independent row. There is no combined role, and
+revoking any one grant leaves the others intact. Adjudication actions remain
+unavailable until WS-REV defines their lifecycle and AUTH activates them.
 
 ## Required choreography
 
@@ -87,7 +89,8 @@ against merged REV behavior.
 REV must repair feature-activation wording, identify every canonical typed
 resource fact and transaction-local guard, build hidden behavior, and publish
 an activation manifest without changing AUTH availability. It must also
-consume reviewer-grant invalidation without mutating submitter authority and
-keep adjudication out of v0.1 until a separate approved contract exists.
+consume reviewer-grant invalidation without mutating submitter/adjudicator
+authority and later consume adjudicator invalidation only when the separately
+approved adjudication lifecycle is enabled.
 
 This handoff changes no runtime and starts no downstream chunk.

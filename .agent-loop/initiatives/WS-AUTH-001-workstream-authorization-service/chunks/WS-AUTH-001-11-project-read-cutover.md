@@ -64,10 +64,12 @@ token role fallback or authorization pagination after unfiltered counts
   minimal project views.
 - Access Administrator and contributor grants do not imply project-management
   visibility.
-- Active submitter, reviewer, and both grants allow the minimal `project.read`
-  projection for their exact project, without management fields or permissions.
-  Each role has exact-project allow, cross-project deny, minimal-field,
-  concealed-not-found, and pre-filtered count/cursor tests.
+- An active submitter, reviewer, or adjudicator grant independently allows the
+  minimal `project.read` projection for its exact project, without management
+  fields or permissions. Each role has exact-project allow, cross-project deny,
+  minimal-field, concealed-not-found, and pre-filtered count/cursor tests.
+- The adjudicator grant supplies no adjudication action in this chunk; it adds
+  only the same minimal exact-project read projection.
 - Canonical project scope is resolved before filtering, counts, and cursors.
 - Every migrated project read/list route declares one primary registered action
   and its canonical project or collection-parent target; permission strings and

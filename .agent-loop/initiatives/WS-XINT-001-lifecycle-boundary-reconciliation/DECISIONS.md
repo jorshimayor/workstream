@@ -81,11 +81,11 @@ the contribution earned an award.
 
 ## D11 - Project Contributor Roles Are Independently Granted
 
-The v0.1 `ProjectRoleGrant` values are exactly `submitter` and `reviewer`.
-There is no combined role. One human may hold both capabilities through two
-independent immutable rows, each independently issued, revoked, regranted, and
-revalidated. `adjudicator` remains future WS-REV scope until its complete
-product contract exists.
+The v0.1 `ProjectRoleGrant` values are exactly `submitter`, `reviewer`, and
+`adjudicator`. There is no combined role. One human may hold all three
+capabilities through independent immutable rows, each independently issued,
+revoked, regranted, and revalidated. Adjudication actions remain unavailable
+until WS-REV defines their complete product contract and AUTH activates them.
 
 ## D12 - Fixed Services Require A Separate Runtime Admission Path
 
@@ -101,6 +101,7 @@ than preventing administrative provisioning.
 
 AUTH records exact grant/profile/link invalidation and its cause. Submitter
 grant loss is consumed by task-assignment reconciliation; reviewer grant loss
-is consumed by review reconciliation. AUTH never mutates those product records,
-and one role's revocation never removes another contributor or administrative
-grant.
+is consumed by review reconciliation; adjudicator grant loss is consumed by
+adjudication-assignment reconciliation only after that lifecycle is enabled.
+AUTH never mutates those product records, and one role's revocation never
+removes another contributor or administrative grant.

@@ -28,6 +28,7 @@ stopped.
 | `WS-AUTH-001-07B` | Deny-By-Default Kernel And Self-Action Cutover | L1 | Merged through PR #130 as `90eca12` |
 | `WS-AUTH-001-08` | Bootstrap And Administrative Role Grants | L1 | Implementation `34f87a5` internally reviewed; PR publication pending |
 | `WS-AUTH-001-09` | Actor State, Identity Revocation, And Service Actors | L1 | Proposed |
+| `WS-AUTH-001-09E` | Fixed Service Runtime Admission | L1 | Proposed after controlled service provisioning |
 | `WS-AUTH-001-10` | Project Qualification And Contributor Role Grants | L1 | Proposed |
 | `WS-AUTH-001-11` | Project Identity, Guide, Source, And Visibility Cutover | L1 | Proposed |
 | `WS-AUTH-001-12` | Project Policy And Setup Mutation Cutover | L1 | Proposed |
@@ -53,6 +54,7 @@ WS-AUTH-001-PLAN
 -> WS-AUTH-001-07B
 -> WS-AUTH-001-08
 -> WS-AUTH-001-09
+-> WS-AUTH-001-09E
 -> WS-AUTH-001-10
 -> WS-AUTH-001-11
 -> WS-AUTH-001-12
@@ -81,19 +83,21 @@ WS-AUTH-001-PLAN
 - Parent chunk 07 was split before runtime implementation. Chunk 07A owns the
   closed permission/action catalogue and action-aware audit parity; chunk 07B
   owns the minimal deny-by-default kernel and actor self-action cutover.
-- Chunks 08-10 establish local grant truth before product cutover.
+- Chunks 08-10 establish local grant truth before product cutover. AUTH-09E
+  separately admits fixed services without entering human grant evaluation.
 - Chunks 11-15 migrate bounded complete product/system surfaces.
 - Artifact upload, read, retention, release/delete, replication, integrity, and
   reconciliation remain mechanically owned by the artifact subsystem but must
   receive centralized AUTH decisions. Chunk 07A owns the permission/action
   registry, chunk 07B owns the central kernel, chunk 08 owns Operator grant
   definitions, chunk 09 owns fixed artifact service
-  principals and exact planned assignments. Each WS-ART feature chunk owns only
+  principals and the exact planned static matrix. AUTH-09E owns fixed service
+  runtime admission. Each WS-ART feature chunk owns only
   hidden canonical resource facts, guards, surface declarations, decision calls,
   behavior, and tests. Dedicated AUTH custodians integrate evaluators and alone
   change availability after the matching ART behavior merges. AUTH-12, AUTH-14,
   and AUTH-15 are not alternate artifact activation paths. WS-ART-001-02D starts
-  only after AUTH-09 and custody registration, then remains hidden until the
+  only after AUTH-09, AUTH-09E, and custody registration, then remains hidden until the
   internal and Operator AUTH activation checkpoints pass. Later ART chunks use
   the same sequence. AUTH-16 proves no bypass remains.
 - Chunk 16 proves the complete initiative; it does not backfill missing audit

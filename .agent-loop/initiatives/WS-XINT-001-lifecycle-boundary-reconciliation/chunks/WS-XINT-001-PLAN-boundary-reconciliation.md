@@ -16,7 +16,8 @@ activation custody, transaction order, and cross-initiative handoffs.
 - ART initiative plans, decisions, risks, chunk map, and future chunk contracts
   only where stale activation language must be corrected
 - AUTH initiative/specification planning documents where stale feature-owned
-  activation language must be corrected
+  activation, combined project-role, service-principal, or service-admission
+  language must be corrected
 - `scripts/check_stale_authorization_docs.py`,
   `scripts/check_stale_workstream_wording.py`, and
   `scripts/test_agent_gates.py` only for deterministic activation-custody and
@@ -26,9 +27,10 @@ activation custody, transaction order, and cross-initiative handoffs.
 - `README.md` only to reconcile the repository's public lifecycle summary with
   the same canonical boundary
 - directly related active architecture, product, operations, roadmap, template,
-  and diagram documents under `docs/` only to reconcile the reviewer
-  `completed_review`, submitter `accepted_submission`, and conditional
-  compensation contract exposed by trusted-main reference specifications
+  decision, and diagram documents under `docs/` only to reconcile the reviewer
+  `completed_review`, submitter `accepted_submission`, conditional compensation,
+  independent three-role project authority, and fixed service-admission
+  contracts exposed by trusted-main reference specifications
 
 ## Not allowed
 
@@ -46,9 +48,11 @@ activation custody, transaction order, and cross-initiative handoffs.
 - all 25 currently registered ART actions retain exact mappings and receive a
   proposed AUTH custody group;
 - all seven fixed artifact service identities and exact assignments are listed;
-- one canonical role/service handoff removes the combined project role, keeps
-  adjudication future-only, defines independent revocation, and requires a
-  fixed service runtime-admission path before protected service execution;
+- one canonical role/service handoff defines `submitter`, `reviewer`, and
+  `adjudicator` as independent grants, removes the combined project role, keeps
+  adjudication actions unavailable until separately activated, defines
+  role-specific invalidation, and requires a fixed service runtime-admission
+  path before protected service execution;
 - Operator retry remains independent from internal service actions;
 - ART, REV, AUTH, and CON transaction/commit/audit ownership is explicit;
 - ReviewPacketManifest and ReviewEvidenceArtifact remain REV semantic records
@@ -83,11 +87,20 @@ python3 scripts/check_markdown_links.py
 python3 scripts/check_stale_authorization_docs.py
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/check_stale_workstream_wording.py
+python3 scripts/test_agent_gates.py
 git diff --check
 ```
 
 `check_stale_workstream_wording.py` is the canonical active-contract scan and
-must return zero failures. Historical review evidence is not rewritten.
+must return zero failures. Public review documents are active documentation and
+use current terminology; immutable internal review evidence remains historical.
+
+Exact-SHA candidate review necessarily runs before its truthful evidence file
+exists. After every required track returns `PASS` with zero findings and all
+sessions close, the coordinator records the reviewed SHA and results in the
+internal evidence/trust bundle. Publication remains blocked until that final
+evidence gate passes; absence of not-yet-producible evidence is not a candidate
+code finding during reviewer fanout.
 
 ## Required reviewers
 
@@ -103,7 +116,8 @@ zero findings at any severity; `PASS WITH LOW RISKS` is not sufficient.
 - Is core contribution creation correctly independent of ART?
 - Can all four agents continue in parallel after merge without editing one
   another's runtime code?
-- Can submitter and reviewer authority be granted and revoked independently?
+- Can submitter, reviewer, and adjudicator authority be granted and revoked
+  independently while adjudication actions remain unavailable?
 - Can a fixed service execute only its exact action without entering any human
   grant path?
 

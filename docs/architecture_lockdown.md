@@ -56,8 +56,8 @@ Workstream uses three separate quality gates:
 
 Workstream verifies external Flow tokens and owns product authorization through
 local ActorProfile/ActorIdentityLink records, administrative grants,
-exact-project submitter/reviewer grants, registered permissions, resource and
-lifecycle guards, revocation, and append-only authority evidence.
+exact-project submitter/reviewer/adjudicator grants, registered permissions,
+resource and lifecycle guards, revocation, and append-only authority evidence.
 
 Token roles and typed workflow profiles are not product authority. All public
 routes remain under `/api/v1`. ADR 0012 and the canonical authorization service

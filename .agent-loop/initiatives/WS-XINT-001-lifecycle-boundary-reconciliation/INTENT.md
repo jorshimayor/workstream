@@ -51,10 +51,12 @@ version frozen on `TaskAssignment` or `ReviewLease` decides whether a resulting
 `CompensationAward` rows. Only after that decision do separate downstream
 adapters handle money payment requests/settlement or project-points fulfillment.
 
-Project contributor authority uses independent exact-project `submitter` and
-`reviewer` grants; one human may hold both rows, but either can be revoked
-without changing the other. Fixed service ActorProfiles use a separate AUTH
-runtime-admission path and exact static action matrix, never human grants.
+Project contributor authority uses independent exact-project `submitter`,
+`reviewer`, and `adjudicator` grants; one human may hold all three rows, but any
+one can be revoked without changing another. Adjudication actions remain
+unavailable until their lifecycle is separately approved. Fixed service
+ActorProfiles use a separate AUTH runtime-admission path and exact static action
+matrix, never human grants.
 
 ## Design chosen
 
@@ -80,8 +82,8 @@ runtime-admission path and exact static action matrix, never human grants.
   supplies its source facts.
 - A combined submitter/reviewer role: rejected because unrelated capabilities
   must not replace or revoke one another.
-- A v0.1 adjudicator role: rejected until WS-REV owns a complete adjudication
-  lifecycle and action contract.
+- Adjudicator grant implying immediate adjudication capability: rejected until
+  WS-REV owns the lifecycle and AUTH activates exact actions.
 
 ## Boundaries preserved
 
@@ -124,6 +126,6 @@ runtime-admission path and exact static action matrix, never human grants.
 ## Human decisions required
 
 The user has selected AUTH-owned activation custody, separate parallel owner
-work, no core CON-to-ART dependency, independent submitter/reviewer grants, and
-a dedicated fixed-service runtime path. Each downstream initiative still needs
+work, no core CON-to-ART dependency, independent submitter/reviewer/adjudicator
+grants, and a dedicated fixed-service runtime path. Each downstream initiative still needs
 its own reviewed chunk contract and explicit start before implementation.

@@ -135,16 +135,17 @@ system/project scope.
 
 ## ProjectRoleGrant
 
-An immutable exact-project contributor authority record with role `submitter`
-or `reviewer`. A contributor may hold both capabilities through two separate
-active grants.
+An immutable exact-project contributor authority record with role `submitter`,
+`reviewer`, or `adjudicator`. A contributor may hold all three capabilities
+through separate active grants.
 
 ## Contributor
 
 The umbrella human product term for a person participating in Workstream. A
-contributor may have an exact-project `submitter` grant, `reviewer` grant, or
-both as independent records. Celery, checker, setup, and background workers are
-internal services, not human product roles.
+contributor may have exact-project `submitter`, `reviewer`, and `adjudicator`
+grants as independent records. Adjudicator actions remain unavailable until
+their lifecycle is activated. Celery, checker, setup, and background workers
+are internal services, not human product roles.
 
 ## Source
 

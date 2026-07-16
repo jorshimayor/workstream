@@ -1,6 +1,6 @@
 # Chunk Contract: WS-ART-001-02D Operator Artifact Operations
 
-Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02C3, AUTH-09, and AUTH custody registration
+Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02C3, AUTH-09E, and AUTH custody registration
 
 Artifact contract phase: `artifact_store_cutover`
 

@@ -64,14 +64,15 @@ docs/operations_authorization_service.md
 
 ```text
 new product lifecycle behavior
-human roles on system principals
+human roles on service ActorProfiles
 authorization allowlist broad enough to hide new token-role consumption
 review/contribution/compensation implementation
 ```
 
 ## Acceptance criteria
 
-- Internal jobs use fixed system principals and registered system permissions.
+- Internal jobs use exact service ActorProfiles admitted through AUTH-09E and
+  their registered static service-action matrix rows.
 - Artifact service actions are activated only by dedicated AUTH activation
   custodians after the owning WS-ART chunks merge hidden resource facts, guards,
   surfaces, behavior, and tests. This chunk does not attach artifact permissions

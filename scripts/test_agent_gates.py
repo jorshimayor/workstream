@@ -1020,14 +1020,26 @@ def test_stale_wording_patterns_catch_variants() -> None:
     assert len(failures) == 2
 
 
-def test_active_shared_contract_rejects_retired_compensation_model() -> None:
-    """Live shared docs cannot revive the retired task-payment abstraction."""
+def test_active_shared_contract_rejects_retired_contracts() -> None:
+    """Live shared docs cannot revive retired roles or compensation models."""
     stale = load_module(
         "stale_wording_active_compensation",
         "scripts/check_stale_workstream_wording.py",
     )
     sample = " ".join(
         (
+            "submitter/both",
+            "reviewer/both",
+            "Submitter or Both grant",
+            "Reviewer or Both grant",
+            "ProjectRoleGrant(submitter|reviewer|both)",
+            "`submitter`, `reviewer`, or `both`",
+            "| Both | exact project",
+            "Active submitter, reviewer, and both grants",
+            "ProjectRoleGrant values are exactly `submitter` and `reviewer`.",
+            "Project issue roles are exactly `submitter` or `reviewer`.",
+            "do not become normal ActorProfiles",
+            "Proposed after 02C3, AUTH-09, and AUTH custody registration",
             "CompensationPolicyVersion",
             "CompensationPolicy",
             "CompensationRule",
@@ -3640,6 +3652,7 @@ def test_activation_custody_discovery_includes_canonical_handoffs() -> None:
     required = {
         "ART_REV_HANDOFF.md",
         "AUTH_ART_HANDOFF.md",
+        "AUTH_ROLE_SERVICE_HANDOFF.md",
         "AUTH_REV_HANDOFF.md",
         "REV_CON_HANDOFF.md",
         "chunks/WS-XINT-001-PLAN-boundary-reconciliation.md",
@@ -4774,7 +4787,7 @@ def main() -> int:
         test_static_sensor_flags_backend_config_as_ci_surface,
         test_markdown_link_checker_collects_base_cached_dirty_and_untracked,
         test_stale_wording_patterns_catch_variants,
-        test_active_shared_contract_rejects_retired_compensation_model,
+        test_active_shared_contract_rejects_retired_contracts,
         test_historical_docs_do_not_define_live_compensation_contract,
         test_current_runtime_walkthrough_rejects_unimplemented_compensation_records,
         test_stale_wording_skips_only_docs_internal_reviews_prefix,

@@ -44,8 +44,9 @@ only validated staged evidence; otherwise deployment fails with a precise
 remediation report. Empty and test databases migrate normally.
 
 Historical actor references remain string identifiers in early chunks because
-fixed system actors are not ordinary human/service profiles and a broad FK
-rewrite is not required to establish correct authority.
+a broad FK rewrite is not required to establish correct authority. Runtime
+services nevertheless use explicitly provisioned service ActorProfiles before
+executing protected commands.
 
 ### Authorization cutover
 
@@ -137,7 +138,8 @@ proving the same token role alone no longer authorizes.
    then implement the minimal AuthorizationService kernel and canonical actor
    self-action cutover in 07B before protected authority-management APIs.
 8. Implement bootstrap, `AuthorityControl`, and immutable admin-role grants.
-9. Implement actor/link state administration and controlled service actors.
+9. Implement actor/link state administration and controlled service actors,
+   then add fixed service runtime admission without activating feature actions.
 10. Implement qualification snapshots and exact-project contributor grants.
 11. Cut project identity, guide, source, and visibility queries over to local
    permissions.
@@ -211,7 +213,8 @@ git diff --check
 ```
 
 The auth live drill must prove first human access, one-time bootstrap, scoped
-admin grants, project submitter/reviewer grants, separation of duties,
+admin grants, independent project submitter/reviewer/adjudicator grants,
+separation of duties,
 revocation using the same unexpired token, suspension/reactivation, service
 subject handling, cross-project denial, and final-admin concurrency safety.
 

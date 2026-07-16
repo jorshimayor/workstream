@@ -43,6 +43,11 @@ superseded.
   are denied in v0.1.
 - Workstream-owned `AdminRoleGrant` and exact-project `ProjectRoleGrant`
   records provide permission candidates.
+- ProjectRoleGrant roles are independently persisted as `submitter`,
+  `reviewer`, and `adjudicator`; adjudication actions remain unavailable until
+  their lifecycle is activated.
+- Explicitly provisioned service subjects resolve through service
+  ActorProfiles and a closed static service-action matrix, never human grants.
 - One `AuthorizationService` combines registered permissions, grant scope,
   canonical resource ownership, actor state, lifecycle state, and explicit
   guards.
@@ -109,6 +114,8 @@ namespace and remains canonical.
 - Cross-project authorization through client-supplied resource scope.
 - Leaking identity claims, token material, or hidden resource existence.
 - Building new approval endpoints on the obsolete bootstrap during cutover.
+- Coupling submitter, reviewer, and adjudicator authority into one grant row.
+- Allowing a service token to enter human first-access or grant evaluation.
 
 ## What must not change
 
@@ -143,6 +150,8 @@ Resolved:
 - `WS-AUTH-001` is prioritized before `WS-POL-002-03`.
 - D4-D10 were explicitly approved and `WS-AUTH-001-01` was started by the user
   on 2026-07-11 after planning and post-merge memory closed.
+- D20-D22 establish service ActorProfiles, independent three-role project
+  grants, and fixed service runtime admission.
 
 External deployment details such as issuer URL, JWKS URL, approved algorithms,
 claim names, and introspection policy are configuration inputs. Their absence

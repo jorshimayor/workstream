@@ -97,11 +97,13 @@ cannot submit or review by administrative role alone.
 |---|---|
 | `submitter` | Minimal project read, task queue read/claim, own submission create/read, own review-chain read. |
 | `reviewer` | Minimal project read, review queue/claim/release/decision, submission read for review, review-chain read. |
+| `adjudicator` | Minimal project read only until WS-REV defines adjudication resources and AUTH activates exact actions. |
 
 Contributor is the umbrella human product term. A contributor may hold
-independent exact-project `submitter` and `reviewer` grants. Holding both rows
-does not bypass separation-of-duties or lifecycle guards. Celery, checker,
-setup, and background workers are internal services, not human product roles.
+independent exact-project `submitter`, `reviewer`, and `adjudicator` grants.
+Holding multiple rows does not bypass separation-of-duties or lifecycle guards.
+Celery, checker, setup, and background workers are internal services, not human
+product roles.
 
 Grants are immutable history. Issue and revoke target one exact role; one role
 never replaces another. Regrant after revocation creates a new immutable row.
