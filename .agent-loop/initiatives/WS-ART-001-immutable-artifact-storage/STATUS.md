@@ -26,14 +26,14 @@ approval or reusable evidence. Its source remains on branch
 ## Active Work
 
 `WS-ART-001-02A2` implementation and internal review are complete at reviewed
-SHA `d8b8c8abc7c6dd8cf254d0c8b3d5d7c066c01b46`. All nine required reviewer
+SHA `967e12cb5d11b895b59be206fee36af911576d66`. All nine required reviewer
 tracks pass and every session is closed. The chunk adds only the inactive
 bounded preparation/committed-source boundary, private filesystem scratch
-ledger and deterministic cleanup mechanics, LocalStorage private helper
-refactoring, settings, documentation, and proof. Active ArtifactStore v1
-behavior and factory wiring remain unchanged. The ledger is
-database-independent scratch coordination and never product or durable artifact
-state.
+ledger and deterministic cleanup mechanics, bounded shared file locking,
+LocalStorage private helper refactoring, settings, documentation, and proof.
+Active ArtifactStore v1 behavior, provider selection, and product lifecycle
+remain unchanged. The ledger is database-independent scratch coordination and
+never product or durable artifact state.
 
 ## Next Proposed Chunk
 
@@ -45,9 +45,8 @@ owns MinIO and AWS S3. There is no active R2 chunk.
 ## Gate
 
 Ready PR #129 is open at
-`https://github.com/Flow-Research/workstream/pull/129`. Agent Gates, Backend,
-and the requested CodeRabbit full review passed published head
-`42f5aaf40dfa59507c5630daf4cbf0189a55a335`; CodeRabbit produced no actionable
-comments or inline threads. The current gate is the explicit human merge
-decision. No later artifact chunk starts automatically, and only the user may
-approve merge.
+`https://github.com/Flow-Research/workstream/pull/129`. Local deterministic
+proof and all nine internal reviewer tracks pass for the reviewed code SHA.
+The current gate is publication of the evidence-bound head followed by fresh
+Agent Gates, Backend, and CodeRabbit results. No later artifact chunk starts
+automatically, and only the user may approve merge.

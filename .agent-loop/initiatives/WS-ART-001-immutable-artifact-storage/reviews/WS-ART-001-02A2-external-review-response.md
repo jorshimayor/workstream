@@ -4,38 +4,42 @@
 
 PR #129: `https://github.com/Flow-Research/workstream/pull/129`
 
-Published head: `42f5aaf40dfa59507c5630daf4cbf0189a55a335`
+Reviewed code SHA: `967e12cb5d11b895b59be206fee36af911576d66`
+
+Published evidence-bound head: pending
 
 ## External Checks
 
-- Agent Gates: passed.
-- Backend: passed, including the full test suite, the repository-wide 78
-  percent coverage floor, and the cumulative artifact/configuration 90 percent
-  gates.
-- CodeRabbit: requested full review completed with a successful status.
+- Agent Gates: pending on the new published head.
+- Backend: pending on the new published head.
+- CodeRabbit: pending incremental review of the new published head.
 
 ## Comments Addressed
 
-None. CodeRabbit produced no actionable comments, submitted reviews, or inline
-review threads for the published head.
+- CodeRabbit: reject `NaN` and infinity in artifact preparation durations.
+  Fixed with finite-number validation and regression cases.
+- CodeRabbit: do not validate an in-progress root marker before acquiring the
+  ledger lock. Fixed by validating marker contents under the lock.
+- CodeRabbit: bound multiprocessing pipe receives and guarantee child cleanup.
+  Fixed with timed `poll`, explicit failure, and `finally` cleanup.
 
 ## Comments Deferred
 
-None.
+- None.
 
 ## Human Decisions Needed
 
-The user remains the only merge authority for PR #129. A successful external
-review is not merge approval.
+The user remains the only merge authority for PR #129. Passing external checks
+will not authorize merge or start `02A3`.
 
 ## Commands Rerun
 
-GitHub ran the authoritative Agent Gates and Backend workflows on the published
-head. The CodeRabbit review surfaces were checked through top-level comments,
-submitted reviews, and inline review comments after the requested full review
-completed.
+Local deterministic and internal review evidence is recorded in
+`WS-ART-001-02A2-internal-review-evidence.md`. GitHub checks and CodeRabbit must
+still inspect the evidence-bound published head.
 
 ## Remaining Risks
 
-The committed-source preparation boundary is intentionally inactive until a
-separately approved `WS-ART-001-02A3` chunk performs the clean runtime cutover.
+- The preparation boundary is intentionally inactive until `02A3`.
+- The external status in this file must be updated only after GitHub reports
+  the exact published head.

@@ -9,106 +9,190 @@ Merge intent: `.agent-loop/merge-intents/WS-ART-001-02A2.json`
 ## Goal
 
 Build the inactive bounded source-preparation boundary that ArtifactStore v2
-will consume, while preserving every active v1 behavior.
+will consume while preserving active v1 behavior.
 
 ## Human-Approved Intent
 
-The user explicitly started this chunk after merging the shared external-service
-adapter foundation. The approved direction is LocalStorage for development,
-MinIO for local/CI S3 proof, AWS S3 for v0.1 production, and Flow Node as a
-separate future initiative. This chunk adds no provider or runtime cutover.
+- Intent: `.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/INTENT.md`
+- Chunk contract: `.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/chunks/WS-ART-001-02A2-committed-source-local-preparation.md`
+
+The approved provider direction is LocalStorage for development, MinIO for
+local/CI S3 proof, AWS S3 for v0.1 production, and Flow Node as a separate
+future initiative. This chunk activates none of those future provider paths.
 
 ## What Changed
 
-- Sealed server commitment plus exact second-pass stream as one non-forgeable
-  value.
-- Cross-process private scratch reservation ledger with full-max admission,
-  private/no-follow files, deadlines, stale cleanup mechanics, and rollback.
-- Canonical full-limit root fingerprint, conservative free-space accounting,
-  and retryable release ownership.
-- Private LocalStorage helper extraction with unchanged public v1 behavior.
-- Exact configuration inventory, focused tests, and cumulative CI gates.
+- Added sealed server commitment plus exact second-pass stream as one
+  non-forgeable value.
+- Added a private cross-process scratch reservation ledger with full-max
+  admission, private/no-follow files, deadlines, process-identity-aware stale
+  cleanup, and retryable custody.
+- Added one shared bounded file-lock primitive and cancellation-safe
+  LocalStorage private lock acquisition.
+- Added configuration, documentation, focused tests, and cumulative CI proof.
+
+## Why It Changed
+
+The future provider path must store the exact bytes Workstream measured and
+committed. Cancellation, lock contention, descriptor-close uncertainty, PID
+reuse, or cleanup failure must not silently change those bytes or free their
+quota early.
+
+## Design Chosen
+
+Workstream temporarily spools one opaque source under a bounded private scratch
+manager, computes SHA-256 and byte count, seals an anonymous read descriptor,
+and exposes only a `CommittedArtifactSource`. PostgreSQL is not used for scratch
+coordination. Durable adapters later consume the committed stream and store
+only their provider reference and commitment in product records.
+
+## Alternatives Rejected
+
+- Hashing while directly streaming an uncommitted source to the provider:
+  rejected because provider bytes could exist before Workstream knows the final
+  commitment.
+- PostgreSQL or Redis scratch coordination: rejected because temporary byte
+  custody is infrastructure state, not product state.
+- PID-only stale ownership: rejected because PID reuse can preserve abandoned
+  quota indefinitely.
+- Unbounded file locks: rejected because cancellation could hang forever.
 
 ## Scope Control
 
-No route, Alembic migration, product record, provider SDK/configuration, MinIO,
-AWS, R2, Flow Node, Celery activation, auth implementation, review lifecycle,
-contribution, compensation, or ArtifactStore v2 wiring is present.
+### Allowed Files Changed
+
+- Artifact preparation/source modules and LocalStorage private helpers.
+- Shared cancellation/file-lock primitives and artifact configuration.
+- Focused tests, workflow/gate assertions, artifact spec, and loop evidence.
+
+### Files Outside Contract
+
+- None. The contract was amended before final review to name the shared lock
+  helper and existing composition-root timeout pass-through.
+
+## Product Behavior
+
+- [x] No Workstream product behavior changed.
+- [ ] Product behavior changed and is explained here:
+
+## Evidence
+
+### Commands Run
+
+```bash
+cd backend && .venv/bin/ruff check app tests
+cd backend && .venv/bin/pytest tests/test_artifact_preparation.py tests/test_local_artifact_store.py tests/test_config.py -q --cov=app.core.cancellation --cov=app.core.file_locks --cov=app.modules.artifacts.preparation --cov=app.modules.artifacts.sources --cov=app.core.config --cov-report=term-missing --cov-fail-under=90
+cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json <temporary-path>/result.json --timeout-seconds 900 -- .venv/bin/python -m pytest tests/test_artifacts.py -q
+python3 scripts/test_agent_gates.py
+python3 scripts/check_stale_artifact_contracts.py
+python3 scripts/check_stale_workstream_wording.py
+python3 scripts/check_markdown_links.py
+```
+
+### Result Summary
+
+```text
+154 focused tests passed; scoped coverage 94.40%
+38 isolated PostgreSQL artifact integration tests passed
+Ruff passed
+Repository docstring coverage 94.8%
+71 agent-gate tests passed
+Stale artifact, wording, Markdown link, and diff checks passed
+```
 
 ## Acceptance Criteria Proof
 
-- Workstream computes SHA-256 and exact size while writing the untrusted first
-  pass once, then verifies the complete sealed second pass before yielding bytes.
-- Client digest/size mismatch fails before any future provider call.
-- Every preparation reserves the full 512 MiB maximum under a cross-process
-  ledger lock.
-- Aggregate bytes, files, concurrency, free-space floor, deadline-before-TTL,
-  stale cleanup, cancellation, crash, filesystem safety, and rollback have
-  focused regression coverage.
-- Existing reservations are included in free-space admission, preventing
-  concurrent processes from reusing logically committed headroom.
-- Active LocalStorage v1 behavior and all existing factory paths are unchanged.
+- [x] Server computes SHA-256 and exact size while writing the untrusted first pass once.
+- [x] Sealed second-pass bytes are verified before the first provider byte can be yielded.
+- [x] Client digest/size mismatch fails before any future provider call.
+- [x] Every preparation reserves the full 512 MiB hard maximum under a bounded cross-process lock.
+- [x] Quota, file count, concurrency, free-space, deadline, crash, cancellation, PID reuse, and filesystem attacks have regression coverage.
+- [x] Active LocalStorage v1 interface and product behavior remain unchanged.
 
-## Tests And Test Delta
+## Test Delta
 
-- 105 focused tests passed at 94.24 percent changed-scope coverage.
-- `ArtifactPreparationService`/scratch behavior, LocalStorage v1 regression, and
-  configuration validation are covered.
-- No test was removed, skipped, xfailed, weakened, or newly excluded.
-- Repository docstring coverage passed at 92.3 percent.
-- GitHub Backend CI owns the authoritative full suite and unchanged 78 percent
-  repository coverage floor.
+### Tests Added
 
-## CI Integrity
+- Scratch construction, capacity, concurrency, stale cleanup, cancellation,
+  descriptor/reader custody, PID reuse, and lock deadline tests.
+- LocalStorage v1 regression, lock deadline, and cancellation-timeout tests.
 
-- [x] Exact repository-wide 78 percent command remains present.
-- [x] Existing artifact and external-service 90 percent gates remain present.
-- [x] Exact configuration 90 percent gate was added.
-- [x] Agent tests enforce command, source set, threshold, order, and cumulative retention.
-- [x] No skip, conditional, `continue-on-error`, exclusion, or threshold bypass was added.
-- [x] GitHub Backend CI passed published head `42f5aaf40dfa59507c5630daf4cbf0189a55a335`.
+### Tests Modified
 
-## Reviewer Results
+- Artifact configuration and cumulative CI gate assertions.
 
-| Reviewer group | Result | Blocking findings |
-|---|---:|---|
-| Senior engineering, architecture, QA, security/auth | PASS | None |
-| Product/ops, reuse/dedup | PASS | None |
-| CI integrity, test delta, docs | PASS | None |
+### Tests Removed Or Skipped
 
-All nine final reviewer sessions inspected
-`d8b8c8abc7c6dd8cf254d0c8b3d5d7c066c01b46` and are closed. Valid findings
-around filesystem durability, root mutation/races, source forging, verification
-ordering, descriptor cleanup, release retryability, process-limit drift,
-operator documentation, and free-space oversubscription were repaired and
-re-reviewed.
+- None.
+
+## Internal Reviewer Results
+
+Reviewed code SHA: `967e12cb5d11b895b59be206fee36af911576d66`
+
+Reviewed at: `2026-07-16T00:27:35Z`
+
+Reviewer run IDs: recorded in `WS-ART-001-02A2-internal-review-evidence.md`
+
+| Reviewer | Result | Blocking Findings | Notes |
+|---|---:|---|---|
+| Senior engineering | PASS | None | Exact code SHA and focused gates passed. |
+| QA/test | PASS | None | Lock-timeout cancellation semantics repaired and re-reviewed. |
+| Security/auth | PASS | None | No authority or protected product surface changed. |
+| Product/ops | PASS | None | No product lifecycle changed. |
+| Architecture | PASS WITH LOW RISKS | None | Linux `/proc` dependency remains localized. |
+| CI integrity | PASS | None | No gate or threshold weakening. |
+| Docs | PASS | None | Required artifact settings and behavior documented. |
+| Reuse/dedup | PASS WITH LOW RISKS | None | Consolidate temporary v1 helpers during 02A3. |
+| Test delta | PASS | None | No removed, skipped, xfailed, or weakened tests. |
+
+All nine final reviewer sessions are closed.
 
 ## External Review
 
-Ready PR #129 is open at
-`https://github.com/Flow-Research/workstream/pull/129`. Agent Gates and Backend
-passed published head `42f5aaf40dfa59507c5630daf4cbf0189a55a335`.
-CodeRabbit's initial automatic run was rate-limited; after the stated wait, its
-requested full review completed with a successful status and no actionable
-comments, submitted reviews, or inline review threads. External review remains
-separate from and supplemental to the completed internal tracks.
+External review response file:
 
-External response:
-`.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/reviews/WS-ART-001-02A2-external-review-response.md`
+- `.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/reviews/WS-ART-001-02A2-external-review-response.md`
+
+| Source | Status | Notes |
+|---|---:|---|
+| CodeRabbit | Pending | Original three findings are fixed; rerun required on the new published head. |
+| GitHub checks | Pending | Backend and Agent Gates must prove the new published head. |
+
+## CI And Gate Integrity
+
+- [x] No workflow weakening.
+- [x] No lint/test/docstring gate weakening.
+- [x] No coverage threshold weakening.
+- [x] No package script weakening.
+- [x] No unpinned new GitHub Action.
+- [x] Checkout credential persistence remains disabled.
 
 ## Remaining Risks
 
-- The preparation boundary remains intentionally inactive until `02A3`.
-- Provider integration, durable artifact attempts, verification, recovery,
-  product bindings, and authorization activation remain separate approved chunks.
+- Linux `/proc` is required by the Linux/`fcntl` scratch implementation.
+- Ambiguous live-process descriptor custody fails closed by retaining quota.
+- The boundary remains inactive until separately approved `02A3`.
+
+## Follow-Up Work
+
+- `02A3` performs the clean ArtifactStore v2/LocalStorage cutover and should
+  consolidate temporary v1 digest/stream helpers.
+- `02B1` adds MinIO protocol proof and AWS S3 only after `02A3` merges and the
+  user explicitly starts it.
 
 ## Human Review Focus
 
-- Confirm callers cannot choose a content key without supplying matching bytes.
-- Confirm free-space and aggregate admission are safe across processes.
-- Confirm LocalStorage v1 remains unchanged and no second active runtime exists.
-- Confirm cleanup mechanics exist without hidden startup/Celery activation.
+Please inspect:
+
+- Whether a caller can detach a commitment from its bytes.
+- Whether cancellation or cleanup can free quota before byte custody ends.
+- Whether LocalStorage v1 behavior remains intact.
+- Whether this stays inactive preparation rather than a second runtime path.
 
 ## Human Merge Ownership
 
-Only the user may approve and merge this PR. Publication is not merge approval.
+- [ ] I can explain what changed.
+- [ ] I can explain why it changed.
+- [ ] I know what could break.
+- [ ] I accept the remaining risks.
+- [ ] The user explicitly approved this specific PR for merge.
