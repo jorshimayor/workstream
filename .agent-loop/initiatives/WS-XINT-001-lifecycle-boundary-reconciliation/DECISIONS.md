@@ -23,7 +23,7 @@ ART-06B. Unused ART owner enum values are removed atomically after transfer.
 ## D4 - Fixed Artifact Services Are Exact
 
 AUTH owns the seven fixed artifact service identities and their exact action
-assignments. A service receives no human role, project grant, broad permission
+matrix rows. A service receives no human role, project grant, broad permission
 union, or implicit access from its identity name. A Celery executor ID is
 execution fencing, not authorization identity.
 

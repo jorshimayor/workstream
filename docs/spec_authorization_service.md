@@ -97,7 +97,7 @@ cannot submit or review by administrative role alone.
 |---|---|
 | `submitter` | Minimal project read, task queue read/claim, own submission create/read, own review-chain read. |
 | `reviewer` | Minimal project read, review queue/claim/release/decision, submission read for review, review-chain read. |
-| `adjudicator` | Minimal project read only until WS-REV defines adjudication resources and AUTH activates exact actions. |
+| `adjudicator` | Minimal project read only; this is shared resource visibility, not adjudication capability. WS-REV must define adjudication resources and AUTH must activate exact actions before adjudication is available. |
 
 Contributor is the umbrella human product term. A contributor may hold
 independent exact-project `submitter`, `reviewer`, and `adjudicator` grants.

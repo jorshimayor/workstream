@@ -104,6 +104,10 @@ ACTIVE_SHARED_CONTRACT_PATTERNS = (
         r"\bservice principals?\s+and\s+(?:exact\s+)?planned\s+assignments?\b",
         re.IGNORECASE,
     ),
+    re.compile(r"\bidentity/action assignment source\b", re.IGNORECASE),
+    re.compile(r"\bservice-action assignments?\b", re.IGNORECASE),
+    re.compile(r"\bservice identities and exact assignments?\b", re.IGNORECASE),
+    re.compile(r"\bservice identities, exact assignments?\b", re.IGNORECASE),
     re.compile(
         r"\bAUTH-09 persists (?:these )?exact service actors and assignments\b",
         re.IGNORECASE,

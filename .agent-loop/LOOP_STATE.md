@@ -28,7 +28,7 @@
 - Authorization checkpoint: merged main contains 74 PermissionIds and 57
   ActionIds, with the two actor-self and seven AUTH-08 administrative actions
   active. AUTH-09A's reviewed parallel branch defines seven fixed artifact
-  service identities and eleven exact planned assignments. ART feature chunks
+  service identities and eleven exact planned static matrix memberships. ART feature chunks
   supply hidden canonical behavior/resource composition; AUTH alone integrates
   evaluators and changes action availability afterward under `WS-XINT-001`.
 - Parallel artifact checkpoint: `WS-ART-001-02A1` was explicitly started and

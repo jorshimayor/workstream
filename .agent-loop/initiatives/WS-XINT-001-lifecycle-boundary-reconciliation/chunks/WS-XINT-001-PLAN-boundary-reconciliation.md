@@ -47,7 +47,8 @@ activation custody, transaction order, and cross-initiative handoffs.
   custodian;
 - all 25 currently registered ART actions retain exact mappings and receive a
   proposed AUTH custody group;
-- all seven fixed artifact service identities and exact assignments are listed;
+- all seven fixed artifact service identities and their exact static matrix rows
+  are listed;
 - one canonical role/service handoff defines `submitter`, `reviewer`, and
   `adjudicator` as independent grants, removes the combined project role, keeps
   adjudication actions unavailable until WS-REV defines the lifecycle and AUTH

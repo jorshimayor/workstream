@@ -35,7 +35,9 @@ or on any `AdminRoleGrant`.
 The adjudicator grant is part of the closed project-role model now, but it
 provides only the minimal exact-project visibility defined by AUTH-11 until
 WS-REV later defines and AUTH activates explicit adjudication actions. Merely
-holding the grant cannot submit, review, override, or adjudicate.
+holding the grant cannot submit, review, override, or adjudicate. This shared
+minimal `project.read` projection is resource visibility, not an adjudication
+operation or an adjudication authority candidate.
 
 The database invariant is one active row per exact role:
 

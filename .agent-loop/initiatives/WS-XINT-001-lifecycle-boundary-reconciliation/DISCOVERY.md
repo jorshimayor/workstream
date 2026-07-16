@@ -20,8 +20,8 @@ to `ActionOwner.ART_02D`; the other fourteen are assigned across `ART_03`,
 non-executable, but the owner field is also being used as activation custody.
 
 The active WS-AUTH-001-09 worktree's reviewed `09A` subchunk defines seven fixed
-artifact service identities and eleven exact service-action assignments. Its
-current plan correctly keeps every assignment planned, but retained obsolete
+artifact service identities and eleven exact static matrix memberships. Its
+current plan correctly keeps every matrix row planned, but retained obsolete
 feature-owned activation wording. That conflicts with the newer AUTH-owned
 activation-custody decision.
 

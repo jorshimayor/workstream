@@ -237,11 +237,11 @@ before AWS activation.
 
 ## D28 - Authorization Owns Artifact Activation Custody
 
-AUTH owns all artifact ActionId registration, service identities, exact
-assignments, evaluators, activation custody, and availability. ART owns artifact
+AUTH owns all artifact ActionId registration, service identities, exact static
+matrix rows, evaluators, activation custody, and availability. ART owns artifact
 resource facts, lifecycle guards, hidden behavior, and capability surfaces. ART
-must not invent a service principal, query a grant/assignment, or activate an
-authorization action.
+must not invent a service principal, inspect AUTH grants or static matrix
+membership, or activate an authorization action.
 
 The seven fixed service identities and complete 25-action custody transfer are
 defined in

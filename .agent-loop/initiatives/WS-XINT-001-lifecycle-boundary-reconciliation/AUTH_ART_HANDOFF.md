@@ -50,11 +50,11 @@ owners, extra owners, and changed mappings.
 
 ## Fixed service-action matrix
 
-`docs/spec_authorization_service.md` remains the canonical fixed service
-identity/action assignment source. This table is a non-authoritative repeat used
-only to bind the existing matrix to the activation-custody sequence.
+`docs/spec_authorization_service.md` remains the canonical fixed service-action
+matrix source. This table is a non-authoritative repeat used only to bind the
+existing matrix to the activation-custody sequence.
 
-| Service identity | Exact assigned actions |
+| Service identity | Exact static matrix actions |
 |---|---|
 | `workstream.artifact.verifier` | `artifact.verification.execute` |
 | `workstream.artifact.put_resolver` | `artifact.put_attempt.resolve` |
@@ -73,7 +73,10 @@ executor ID, queue, environment string, or provider credential.
 ## Delivery order
 
 ```text
-AUTH custody registration and fixed service matrix
+AUTH-09A fixed service identity and static matrix foundation
+-> AUTH-09B controlled service ActorProfile/ActorIdentityLink provisioning
+-> AUTH-09C actor and identity-link administrative reads
+-> AUTH-09D actor and identity-link lifecycle mutations
 -> AUTH-09E fixed service runtime admission
 -> ART-02C1 admission/put-attempt foundation, inactive
 -> ART-02C2 hidden verification/resolution/scanner behavior
@@ -113,6 +116,6 @@ active without its merged ART behavior manifest.
 
 ART must repair its plan/chunk sequencing, implement only hidden behavior before
 activation, publish exact resource/guard/surface manifests, and never edit AUTH
-catalogues, assignments, evaluators, grants, or availability.
+catalogues, static matrix rows, evaluators, grants, or availability.
 
 This handoff changes no runtime and starts no downstream chunk.
