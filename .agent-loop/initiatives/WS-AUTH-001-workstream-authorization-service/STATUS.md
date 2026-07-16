@@ -89,15 +89,16 @@ tracks at `cbe7c6c`; bounded AUTH-08 implementation passed and PR #131 merged as
 the combined contract before runtime edits. The accepted repair splits AUTH-09
 into 09A-09D and makes the service ActorProfile the fixed local service
 principal with a static typed action matrix and no assignment tables. Repaired
-09A is in exact-head plan review.
+09A passed every required exact-head plan-review track at `b44ef8a`; bounded
+implementation is active.
 
 ## Active planning chunk
 
-`WS-AUTH-001-09A` - Fixed Service Identity Foundation.
+None.
 
 ## Active implementation chunk
 
-None. Runtime implementation is prohibited until repaired 09A passes review.
+`WS-AUTH-001-09A` - Fixed Service Identity Foundation.
 
 ## Current implementation branch
 
@@ -124,7 +125,7 @@ None. Runtime implementation is prohibited until repaired 09A passes review.
 | `WS-AUTH-001-07B` | Merged | `codex/ws-auth-001-07b-deny-default-kernel` | #130 | Merged as `90eca12`; signed memory passed. |
 | `WS-AUTH-001-08` | Merged | `codex/ws-auth-001-08-bootstrap-admin-grants` | #131 | Merged as `aa0fdcd`; signed memory passed. |
 | `WS-AUTH-001-09` | Split | `codex/ws-auth-001-09-actor-state-service-actors` | - | Required L1 review rejected the combined contract before runtime edits. |
-| `WS-AUTH-001-09A` | Planning review | `codex/ws-auth-001-09-actor-state-service-actors` | - | Fixed service identity field, eight planned actions, and static matrix only. |
+| `WS-AUTH-001-09A` | Active | `codex/ws-auth-001-09-actor-state-service-actors` | - | Plan passed at `b44ef8a`; fixed service identity field, eight planned actions, and static matrix only. |
 | `WS-AUTH-001-09B` | Proposed | - | - | Controlled fixed service ActorProfile provisioning. |
 | `WS-AUTH-001-09C` | Proposed | - | - | Privacy-bounded actor/link administration reads. |
 | `WS-AUTH-001-09D` | Proposed | - | - | Actor/link lifecycle mutation and final-admin concurrency. |

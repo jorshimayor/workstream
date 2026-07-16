@@ -6,8 +6,9 @@
   post-merge state. Canonical state is the signed schema-v2 output on
   `automation/loop-memory`.
 - Active initiative: `WS-AUTH-001` - Workstream Authorization Service
-- Active planning chunk: `WS-AUTH-001-09A` - Fixed Service Identity Foundation
-- Active implementation chunk: none
+- Active planning chunk: none
+- Active implementation chunk: `WS-AUTH-001-09A` - Fixed Service Identity
+  Foundation
 - Current branch: `codex/ws-auth-001-09-actor-state-service-actors`
 - Start basis: PR #131 merged AUTH-08 into `main` as `aa0fdcd`; signed schema-v2
   memory stopped at AUTH-09, and the user explicitly started AUTH-09.
@@ -16,9 +17,9 @@
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: required L1 review rejected the combined AUTH-09 contract before
-  runtime edits. The user accepted the ServiceAccount-style fixed ActorProfile
-  direction; repaired child 09A must pass exact-head plan review before code.
+- Current gate: repaired AUTH-09A passed every required exact-head
+  preimplementation track at `b44ef8a`; bounded runtime implementation may
+  begin. AUTH-09B remains inactive.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,

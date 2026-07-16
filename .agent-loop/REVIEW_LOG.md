@@ -1,5 +1,15 @@
 # Review Log
 
+## 2026-07-16 - WS-AUTH-001-09A Repaired Plan Passed
+
+Exact-head `b44ef8ae1e1b4532d7af9477d688113057ff34cb` passed senior
+engineering, QA/test, security/auth, product/ops, architecture, CI integrity,
+docs, reuse/dedup, and test-delta review. The approved foundation adds one fixed
+service identity field, eight planned AUTH-09 actions, one static
+seven-identity/eleven-action matrix, and private exact legacy mapping. It adds no
+route, actor provisioning, service-token admission, assignment table, grant, or
+executable action. Bounded implementation may begin; AUTH-09B remains inactive.
+
 ## 2026-07-16 - WS-AUTH-001-09 Combined Plan Rejected And Split
 
 PR #131 merged AUTH-08 as `aa0fdcd`, signed merge memory stopped at AUTH-09,

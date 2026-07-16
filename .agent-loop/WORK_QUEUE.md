@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-09A` | Fixed Service Identity Foundation | L1 | Repaired plan in required exact-head review; no runtime code |
+| `WS-AUTH-001-09A` | Fixed Service Identity Foundation | L1 | Exact-head plan review passed at `b44ef8a`; bounded implementation active |
 
 Live post-merge state remains read from signed `automation/loop-memory`
 output. This authored queue records the separately approved parallel chunks.
