@@ -143,9 +143,10 @@ through separate active grants.
 
 The umbrella human product term for a person participating in Workstream. A
 contributor may have exact-project `submitter`, `reviewer`, and `adjudicator`
-grants as independent records. Adjudicator actions remain unavailable until
-their lifecycle is activated. Celery, checker, setup, and background workers
-are internal services, not human product roles.
+grants as independent records. The adjudicator grant creates no adjudication
+capability until WS-REV defines the lifecycle and AUTH activates exact
+adjudication actions. Celery, checker, setup, and background workers are
+internal services, not human product roles.
 
 ## Source
 

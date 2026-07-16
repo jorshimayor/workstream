@@ -44,8 +44,9 @@ superseded.
 - Workstream-owned `AdminRoleGrant` and exact-project `ProjectRoleGrant`
   records provide permission candidates.
 - ProjectRoleGrant roles are independently persisted as `submitter`,
-  `reviewer`, and `adjudicator`; adjudication actions remain unavailable until
-  their lifecycle is activated.
+  `reviewer`, and `adjudicator`; the adjudicator grant creates no adjudication
+  capability until WS-REV defines the lifecycle and AUTH activates exact
+  adjudication actions.
 - Explicitly provisioned service subjects resolve through service
   ActorProfiles and a closed static service-action matrix, never human grants.
 - One `AuthorizationService` combines registered permissions, grant scope,

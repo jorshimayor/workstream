@@ -26,10 +26,11 @@ evaluates them against canonical resources and lifecycle guards.
 
 Contributor is the umbrella human product term. Independent exact-project
 Submitter, Reviewer, and Adjudicator grants determine candidate authority; one
-actor may hold all three rows. Adjudicator actions remain unavailable until
-their lifecycle is activated. Celery, checker, setup, and background workers
-are internal services, not human product roles. Administrative grants alone
-never authorize submission, review, or adjudication.
+actor may hold all three rows. The adjudicator grant creates no adjudication
+capability until WS-REV defines the lifecycle and AUTH activates exact
+adjudication actions. Celery, checker, setup, and background workers are
+internal services, not human product roles. Administrative grants alone never
+authorize submission, review, or adjudication.
 
 ## Independence
 

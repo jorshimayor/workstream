@@ -50,9 +50,10 @@ activation custody, transaction order, and cross-initiative handoffs.
 - all seven fixed artifact service identities and exact assignments are listed;
 - one canonical role/service handoff defines `submitter`, `reviewer`, and
   `adjudicator` as independent grants, removes the combined project role, keeps
-  adjudication actions unavailable until separately activated, defines
-  role-specific invalidation, and requires a fixed service runtime-admission
-  path before protected service execution;
+  adjudication actions unavailable until WS-REV defines the lifecycle and AUTH
+  activates exact adjudication actions, defines role-specific invalidation, and
+  requires a fixed service runtime-admission path before protected service
+  execution;
 - Operator retry remains independent from internal service actions;
 - ART, REV, AUTH, and CON transaction/commit/audit ownership is explicit;
 - ReviewPacketManifest and ReviewEvidenceArtifact remain REV semantic records

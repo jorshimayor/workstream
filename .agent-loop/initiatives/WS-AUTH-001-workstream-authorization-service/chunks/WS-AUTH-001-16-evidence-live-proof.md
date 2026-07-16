@@ -87,8 +87,9 @@ starting WS-POL-002-03 automatically
   admin/contributor separation, same-token revocation, suspension/reactivation,
   service handling, cross-project denial, and final-admin safety.
 - Adjudicator grant behavior is visible and independently revocable while all
-  adjudication actions remain unavailable; admin authority alone cannot submit,
-  review, or adjudicate.
+  adjudication actions remain unavailable until WS-REV defines the lifecycle
+  and AUTH activates exact adjudication actions; admin authority alone cannot
+  submit, review, or adjudicate.
 - Live drill implements the complete adopted specification sequence, including
   Finance and Audit Authority capability separation, Project Manager inability
   to review by admin role alone, self-grant/self-revoke denials, full authorized

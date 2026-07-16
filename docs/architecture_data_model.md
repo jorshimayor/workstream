@@ -98,9 +98,10 @@ role-specific qualification snapshot, reason, and active/revoked state.
 
 Contributor is the umbrella human product term. A human may hold separate
 active `submitter`, `reviewer`, and `adjudicator` grants for the same project;
-each is revoked independently. Adjudicator grants authorize no adjudication
-action until that lifecycle is activated. Celery, checker, setup, and
-background workers are internal services, not human product roles.
+each is revoked independently. An adjudicator grant authorizes no adjudication
+action until WS-REV defines the lifecycle and AUTH activates exact adjudication
+actions. Celery, checker, setup, and background workers are internal services,
+not human product roles.
 
 ### QualificationSnapshot
 

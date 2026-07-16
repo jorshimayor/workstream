@@ -37,7 +37,7 @@ not permit claiming tasks, submitting work, or recording review decisions.
 |---|---|---|
 | Submitter | exact project | Minimal project read, queue/claim/start under task guards, own submission creation/read. |
 | Reviewer | exact project | Minimal project read, review queue/claim/release/decision under review guards. |
-| Adjudicator | exact project | Minimal project read; adjudication actions remain unavailable until their separate lifecycle is activated. |
+| Adjudicator | exact project | Minimal project read; no adjudication capability until WS-REV defines the lifecycle and AUTH activates exact adjudication actions. |
 
 Contributor is the umbrella human product term. A contributor may hold
 independent exact-project Submitter, Reviewer, and Adjudicator grants. Celery,
@@ -62,7 +62,7 @@ or the exact project; own means record-level ownership still applies.
 | Task queue/claim | no | operational projection only | management projection only | no | read covered | exact project under guards | no | no |
 | Submission create/read | no | operational projection only | management projection only | no | read covered | own assignment | read-for-review only | no |
 | Human review decision | no | no | no without reviewer grant | no | no | no | exact project under review guards | no |
-| Adjudication action | no | no | no | no | no | no | no | unavailable until activation |
+| Adjudication action | no | no | no | no | no | no | no | unavailable; requires WS-REV contract plus AUTH action activation |
 | Compensation mutation | no | reconciliation only where registered | no | covered | no | no | no | no |
 | Audit read/export | authority history system | operational system | project covered | finance covered | covered | own chain only | assigned chain only | no |
 

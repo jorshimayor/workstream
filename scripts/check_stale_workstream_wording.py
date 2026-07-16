@@ -80,6 +80,20 @@ ACTIVE_SHARED_CONTRACT_PATTERNS = (
         r"`?reviewer`?\s*[.;]",
         re.IGNORECASE,
     ),
+    re.compile(
+        r"\bindependent\s+`?submitter`?\s+and\s+`?reviewer`?\s+"
+        r"ProjectRoleGrants?\b",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"\badjudicat(?:ion actions?|or actions?)\s+remain\s+unavailable\s+"
+        r"until\s+(?:their|that)\s+(?:separate\s+)?lifecycle\s+is\s+activated",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"\badjudication actions\s+unavailable\s+until\s+separately\s+activated",
+        re.IGNORECASE,
+    ),
     re.compile(r"\bdo not become normal ActorProfiles\b", re.IGNORECASE),
     re.compile(
         r"Proposed after 02C3,\s*AUTH-09,\s*and AUTH custody registration",

@@ -63,11 +63,13 @@ separate ART live-proof gate.
 
 ### AUTH project roles and fixed services
 
-Replace the combined contributor-role model with independent `submitter` and
-`reviewer` ProjectRoleGrants before AUTH-10 creates the grant table. Add the
-missing fixed-service runtime-admission chunk after controlled provisioning and
-before any ART, REV, or CON protected service command executes. The exact owner
-actions are in `AUTH_ROLE_SERVICE_HANDOFF.md`.
+Replace the combined contributor-role model with independent `submitter`,
+`reviewer`, and `adjudicator` ProjectRoleGrants before AUTH-10 creates the grant
+table. The adjudicator grant creates no adjudication capability until WS-REV
+defines the lifecycle and AUTH activates exact adjudication actions. Add the
+missing fixed-service runtime-admission chunk after controlled provisioning
+and before any ART, REV, or CON protected service command executes. The exact
+owner actions are in `AUTH_ROLE_SERVICE_HANDOFF.md`.
 
 ### ART and REV
 
