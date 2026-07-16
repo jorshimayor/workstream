@@ -223,6 +223,8 @@ def test_envelope_has_stable_known_answer_and_detects_any_binding_drift() -> Non
 @pytest.mark.parametrize(
     "field,value",
     [
+        ("schema_version", True),
+        ("schema_version", 1.0),
         ("source_row_set_sha256", "g" * 64),
         ("manifest_sha256", "0" * 63),
         ("database_binding", "postgres-v1:not-a-digest"),
@@ -232,7 +234,7 @@ def test_envelope_has_stable_known_answer_and_detects_any_binding_drift() -> Non
 )
 def test_envelope_rejects_noncanonical_or_impossible_metadata(
     field: str,
-    value: str,
+    value: object,
 ) -> None:
     payload = envelope().model_dump(mode="json")
     payload[field] = value
@@ -311,6 +313,12 @@ def test_private_loader_rejects_coerced_schema_versions(
     write_private_json(path, payload)
     with pytest.raises(ServiceIdentityMappingError, match="service_mapping_draft_invalid"):
         load_draft(path)
+
+
+def test_private_loader_accepts_only_exact_canonical_draft(tmp_path: Path) -> None:
+    path = tmp_path / "canonical-draft.json"
+    write_private_json(path, draft(mapping()).model_dump(mode="json"))
+    assert load_draft(path) == draft(mapping())
 
 
 def test_private_loader_requires_exact_canonical_bytes(tmp_path: Path) -> None:
@@ -423,6 +431,81 @@ def test_mapping_path_guard_supports_deployments_without_git_metadata(
         private_root / "mapping.json",
         output=True,
     ) == private_root / "mapping.json"
+
+
+def test_mapping_path_guard_handles_main_and_linked_git_layouts(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    main_root = tmp_path / "main"
+    (main_root / ".git").mkdir(parents=True)
+    monkeypatch.setattr(identity_migration, "REPOSITORY_ROOT", main_root)
+    assert set(protected_mapping_roots()) == {main_root, main_root / ".git"}
+
+    linked_root = tmp_path / "linked"
+    linked_root.mkdir()
+    common = tmp_path / "common" / ".git"
+    metadata = common / "worktrees" / "linked"
+    metadata.mkdir(parents=True)
+    (linked_root / ".git").write_text(
+        "gitdir: ../common/.git/worktrees/linked\n",
+        encoding="utf-8",
+    )
+    (metadata / "gitdir").write_text(
+        str(linked_root / ".git") + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(identity_migration, "REPOSITORY_ROOT", linked_root)
+    assert {linked_root, common, common.parent}.issubset(protected_mapping_roots())
+
+
+@pytest.mark.parametrize(
+    "git_marker",
+    [
+        "invalid-marker",
+        "gitdir: /tmp/not-a-worktrees-entry",
+    ],
+)
+def test_mapping_path_guard_rejects_invalid_git_metadata(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    git_marker: str,
+) -> None:
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    (repository / ".git").write_text(git_marker + "\n", encoding="utf-8")
+    monkeypatch.setattr(identity_migration, "REPOSITORY_ROOT", repository)
+    with pytest.raises(ServiceIdentityMappingError, match="git_directory_unavailable"):
+        protected_mapping_roots()
+
+
+def test_mapping_path_guard_rejects_missing_linked_worktree_metadata(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    linked_root = tmp_path / "linked"
+    linked_root.mkdir()
+    common = tmp_path / "common" / ".git"
+    (common / "worktrees" / "linked").mkdir(parents=True)
+    (linked_root / ".git").write_text(
+        f"gitdir: {common / 'worktrees' / 'linked'}\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(identity_migration, "REPOSITORY_ROOT", linked_root)
+    with pytest.raises(ServiceIdentityMappingError, match="git_directory_unavailable"):
+        protected_mapping_roots()
+
+
+def test_mapping_path_guard_rejects_missing_input(
+    tmp_path: Path,
+) -> None:
+    with pytest.raises(ServiceIdentityMappingError, match="service_mapping_path_unavailable"):
+        validate_mapping_path(tmp_path / "missing-envelope.json")
+
+
+def test_envelope_loader_preserves_bounded_file_errors(tmp_path: Path) -> None:
+    with pytest.raises(ServiceIdentityMappingError, match="service_mapping_file_unavailable"):
+        load_envelope(tmp_path / "missing-envelope.json")
 
 
 def test_report_contains_only_counts_and_non_secret_digests() -> None:

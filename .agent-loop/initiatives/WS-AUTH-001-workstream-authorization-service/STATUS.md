@@ -92,7 +92,8 @@ principal with a static typed action matrix and no assignment tables. Repaired
 09A passed every required exact-head plan-review track at `b44ef8a`. Its fixed
 identity schema, exact private migration mapping, eight planned actions, and
 static seven-identity/eleven-action matrix are implemented within contract;
-deterministic evidence and exact-head internal review are in progress.
+deterministic evidence passes after repairing the initial internal-review
+findings. Exact-head re-review is pending.
 
 ## Active planning chunk
 
@@ -127,7 +128,7 @@ None.
 | `WS-AUTH-001-07B` | Merged | `codex/ws-auth-001-07b-deny-default-kernel` | #130 | Merged as `90eca12`; signed memory passed. |
 | `WS-AUTH-001-08` | Merged | `codex/ws-auth-001-08-bootstrap-admin-grants` | #131 | Merged as `aa0fdcd`; signed memory passed. |
 | `WS-AUTH-001-09` | Split | `codex/ws-auth-001-09-actor-state-service-actors` | - | Required L1 review rejected the combined contract before runtime edits. |
-| `WS-AUTH-001-09A` | In review | `codex/ws-auth-001-09-actor-state-service-actors` | - | Implemented within contract; deterministic evidence and exact-head internal review in progress. |
+| `WS-AUTH-001-09A` | In review | `codex/ws-auth-001-09-actor-state-service-actors` | - | Implementation/evidence complete; initial findings repaired and exact-head internal re-review pending. |
 | `WS-AUTH-001-09B` | Proposed | - | - | Controlled fixed service ActorProfile provisioning. |
 | `WS-AUTH-001-09C` | Proposed | - | - | Privacy-bounded actor/link administration reads. |
 | `WS-AUTH-001-09D` | Proposed | - | - | Actor/link lifecycle mutation and final-admin concurrency. |

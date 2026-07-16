@@ -1,5 +1,23 @@
 # Review Log
 
+## 2026-07-16 - WS-AUTH-001-09A Implementation Repaired For Re-review
+
+AUTH-09A implements only the fixed service identity foundation: migration
+`0023`, eight planned AUTH route actions, and the static seven-identity/eleven-
+action matrix. Initial implementation review found four valid fail-closed gaps.
+Repair `6b1c6c8` now validates each exact service row plus PermissionId, owner,
+and planned state; requires strict canonical private JSON; applies one linked-
+worktree path guard in both CLI and Alembic; and makes retained migration
+evidence format-constrained and immutable against update/delete/truncate.
+
+The repaired full actor/auth/audit/API-control/Alembic suite passed 379 tests.
+An additive 47-test confidential mapping and path-custody run passed. Combined
+branch-aware coverage is 90.55 percent for actors and 91.50 percent for
+authorization; the mapping module is 95.91 percent. Ruff, merge-intent
+validation, stale scans, Markdown links, 71 agent-gate tests, docstring
+coverage, and diff integrity pass. Exact-head internal re-review remains the
+publication gate; AUTH-09B is inactive.
+
 ## 2026-07-16 - WS-AUTH-001-09A Repaired Plan Passed
 
 Exact-head `b44ef8ae1e1b4532d7af9477d688113057ff34cb` passed senior

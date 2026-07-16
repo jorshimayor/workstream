@@ -28,7 +28,7 @@ stopped.
 | `WS-AUTH-001-07B` | Deny-By-Default Kernel And Self-Action Cutover | L1 | Merged through PR #130 as `90eca12` |
 | `WS-AUTH-001-08` | Bootstrap And Administrative Role Grants | L1 | Merged through PR #131 as `aa0fdcd` |
 | `WS-AUTH-001-09` | Actor State, Identity Revocation, And Service Actors | L1 | Split before runtime implementation after required L1 review |
-| `WS-AUTH-001-09A` | Fixed Service Identity Foundation | L1 | Implemented within contract; deterministic evidence and internal review in progress |
+| `WS-AUTH-001-09A` | Fixed Service Identity Foundation | L1 | Implementation/evidence complete; repaired exact-head internal re-review pending |
 | `WS-AUTH-001-09B` | Controlled Service Actor Provisioning | L1 | Inactive until 09A merge/memory and explicit start |
 | `WS-AUTH-001-09C` | Actor And Identity-Link Administration Reads | L1 | Inactive until 09B merge/memory and explicit start |
 | `WS-AUTH-001-09D` | Actor And Identity-Link Lifecycle Mutations | L1 | Inactive until 09C merge/memory and explicit start |
