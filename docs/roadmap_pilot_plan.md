@@ -61,8 +61,9 @@ Seed negative or edge-case packets during the pilot:
 - no task without project guide
 - no submission without evidence
 - no review without checker results
-- no accepted task without contribution record
-- no accepted task without payment record
+- no valid human review without a reviewer contribution record
+- no accepted task without a submitter contribution record
+- no payable contribution without an award/payment record
 - no manual status change without audit note
 
 ## Pilot Report

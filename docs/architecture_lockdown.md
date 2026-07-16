@@ -174,9 +174,16 @@ separate deferred adapter initiatives and are not v0.1 runtime dependencies.
 
 ### Contribution Records
 
-Accepted work must create a durable contribution record separate from payment status.
+Every valid recorded human Review creates an immutable reviewer
+`completed_review` contribution record, regardless of whether the decision is
+`accept`, `needs_revision`, or `reject`. An `accept` decision additionally
+creates one submitter `accepted_submission` contribution record. Automated
+checker outcomes create neither type.
 
-The contribution record is the evidence-backed certification that a contributor completed accepted work under a locked project guide. Payment records and reputation events attach to this contribution record, but do not replace it.
+Contribution records are separate from compensation status. Each record freezes
+its exact review, submission, actor, policy, and artifact-hash lineage.
+Compensation awards and reputation events may attach to a contribution record,
+but do not replace it.
 
 ## Deferred
 

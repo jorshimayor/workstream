@@ -83,11 +83,14 @@ original feedback, fix notes, evidence, and closure.
 
 The system must also preserve guide and policy context. Prior submissions keep their locked context; revision policy decides whether the next attempt rebases to the latest active context before the contributor resumes.
 
-## 6. Payment Follows Acceptance
+## 6. Compensation Follows Contribution
 
 The first version uses contribution records and a manual payment ledger. Blockchain settlement comes later.
 
-Accepted work creates a contribution record first. Payment and reputation updates attach to that accepted contribution.
+Every valid human review creates a reviewer contribution. Accepted work
+additionally creates a submitter contribution. Compensation and reputation
+updates attach to the applicable immutable contribution; explicit unpaid rules
+create no award.
 
 Payment records track:
 

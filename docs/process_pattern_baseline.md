@@ -114,7 +114,8 @@ Workstream must support:
 - review-readiness evidence before review
 - submission and review packet records
 - revision replay tied to prior findings
-- contribution records created from accepted evidence-backed work
+- reviewer contribution records created from every valid human review
+- submitter contribution records created from accepted evidence-backed work
 - lessons learned promoted into guides, checkers, or templates
 - payment status separate from task status
 

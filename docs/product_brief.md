@@ -147,5 +147,7 @@ By day 30:
 - 5 review decisions recorded across accept, needs_revision, and reject
 - 3 needs-revision loops completed
 - 100 percent of submissions have checker results
-- 100 percent of accepted tasks have evidence, contribution record, and payment record
+- 100 percent of valid human reviews have reviewer contribution records
+- 100 percent of accepted tasks have evidence and submitter contribution records
+- 100 percent of payable contributions have award/payment records
 - status dashboard reconciles with manual records

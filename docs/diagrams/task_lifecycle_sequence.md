@@ -76,6 +76,7 @@ sequenceDiagram
   Authorization->>Authorization: require(review.decision, candidates, assignment/resource/lifecycle guards)
   Authorization-->>API: Allowed AuthorizationContext with matched reviewer/both grant
   API->>DB: Store decision: accept, needs_revision, or reject
+  API->>DB: Create reviewer completed_review contribution and applicable award
 
   alt needs_revision
     API->>DB: Create revision requirements from findings
@@ -84,13 +85,13 @@ sequenceDiagram
     API->>DB: Link replay to prior findings
     API->>Checks: Run checks again
   else accept
-    API->>DB: Create contribution record
-    API->>DB: Create payment record with PENDING status
+    API->>DB: Create submitter accepted_submission contribution
+    API->>DB: Create applicable submitter award/payment record
     API->>DB: Create reputation event
     API->>DB: Audit acceptance
   else reject
     API->>DB: Store rejection decision and findings
-    API->>DB: Apply payment and reputation policy effects
+    API->>DB: Apply reviewer reputation effects; no submitter contribution
     API->>DB: Audit rejection
   end
 ```
@@ -101,5 +102,7 @@ sequenceDiagram
 - A contributor submission creates a new immutable submission version; locked artifacts are not edited in place.
 - Review decisions are exactly `accept`, `needs_revision`, or `reject`.
 - `needs_revision` starts a revision loop and must replay prior findings.
-- Accepted work creates a contribution record before payment or reputation records.
+- Every valid human review creates a reviewer contribution. Accepted work
+  additionally creates a submitter contribution before compensation or
+  reputation records.
 - Payment status is separate from task acceptance.

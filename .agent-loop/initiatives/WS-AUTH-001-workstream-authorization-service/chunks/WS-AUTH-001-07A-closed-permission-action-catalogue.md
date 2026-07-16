@@ -186,7 +186,8 @@ AUTH custodians own evaluator integration and every availability activation.
   while they remain planned; PostgreSQL deliberately does not freeze
   availability.
 - The canonical specification separates four-field planned registry metadata
-  from later feature activation blueprints.
+  from feature-owned hidden behavior/resource blueprints and AUTH-owned
+  activation manifests.
 - Operations docs cover startup catalogue failure, evidence inspection, and the
   guarded rollback rule.
 - No workflow, dependency, test skip, coverage exclusion, or global threshold

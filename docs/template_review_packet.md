@@ -66,17 +66,36 @@ Required when reviewing a resubmission.
 
 ## Payment Eligibility
 
-State whether this decision creates a pending payment.
+State both determinations independently:
 
-## Contribution Record
+- reviewer `completed_review`: evaluate the ReviewLease-frozen compensation
+  policy for every valid recorded decision; an explicit unpaid rule creates no
+  award;
+- submitter `accepted_submission`: evaluate the TaskAssignment-frozen
+  compensation policy only for `accept`; `needs_revision` and `reject` create no
+  submitter contribution or award.
 
-Required when decision is `accept`.
+## Contribution Records
+
+Reviewer record, required for every valid recorded human Review:
 
 - contribution record id:
-- accepted submission id:
+- contribution type: `completed_review`
+- review id:
+- review lease id:
+- reviewer actor id:
+- submission id and version:
+- artifact hash:
+
+Submitter record, additionally required only when decision is `accept`:
+
+- contribution record id:
+- contribution type: `accepted_submission`
+- accepted submission id and version:
 - accepting review id:
-- guide version:
-- artifact hash manifest:
+- submitter actor id:
+- task assignment id:
+- artifact hash:
 
 ## Reviewer Confidence
 

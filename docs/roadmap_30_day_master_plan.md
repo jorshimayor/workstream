@@ -395,8 +395,9 @@ Operations:
 - at least 10 pilot tasks
 - at least 5 completed cycles
 - median review turnaround under 24 hours for pilot
-- no accepted task without payment record
-- no accepted task without contribution record
+- no valid human review without a reviewer contribution record
+- no accepted task without a submitter contribution record
+- no payable contribution without an award/payment record
 
 Quality:
 
@@ -404,7 +405,7 @@ Quality:
 - reviewer findings are actionable
 - revision replay closes prior feedback
 - accepted work can be audited later
-- accepted work has contribution records before payment and reputation updates
+- contribution records exist before their compensation and reputation updates
 
 ## Main Risks
 

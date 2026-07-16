@@ -273,7 +273,9 @@ integration proof. Cloudflare R2 is deferred to a separate approved initiative.
 
 ## Payment Ledger
 
-The record of accepted amount, pending payout, paid amount, and payment state.
+The fulfillment-status record for payable compensation awards, including
+pending, submitted, paid, disputed, and external-reference facts. Explicitly
+unpaid contribution rules create no award or payment-ledger entry.
 
 ## Reputation Ledger
 
@@ -281,7 +283,11 @@ The outcome-based record of contributor and reviewer performance.
 
 ## Contribution Record
 
-The evidence-backed record that accepted work was completed under a locked project guide. Payment and reputation records attach to contribution records, but do not replace them.
+The immutable, evidence-backed record of one completed contribution under locked
+project context. `completed_review` is created for every valid recorded human
+Review; `accepted_submission` is created for the submitter only on `accept`.
+Compensation and reputation records may attach to either contribution type, but
+do not replace the contribution record.
 
 ## Human Owner
 

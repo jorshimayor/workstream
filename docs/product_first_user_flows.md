@@ -104,12 +104,17 @@ Acceptance:
 3. Reviewer reads guide, task, submission, evidence, and checker results.
 4. Reviewer enters structured findings.
 5. Reviewer selects accept, needs_revision, or reject.
+6. Workstream atomically creates the reviewer `completed_review` contribution;
+   `accept` additionally creates the submitter `accepted_submission`
+   contribution.
 
 Acceptance:
 
 - Review cannot be submitted without a decision.
 - needs_revision and reject require at least one finding.
 - accept requires no unresolved critical- or high-severity checker failure.
+- Every valid human decision has exactly one reviewer contribution.
+- Only accept has a submitter contribution.
 
 ## Flow 6: Revision Replay
 
@@ -130,17 +135,22 @@ Acceptance:
 - Revision count is tracked against the locked revision policy.
 - Resubmission is blocked or rejected when the revision policy limit or deadline says so.
 
-## Flow 7: Accepted Work Creates Contribution Record
+## Flow 7: Accepted Work Creates Submitter Contribution
 
 1. Reviewer accepts task.
 2. Task enters `ACCEPTED`.
-3. Contribution record is created from accepted submission, accepting review, guide version, evidence refs, and artifact hashes.
-4. Payment record is created or updated as `PENDING`.
-5. Contributor reputation updates from the contribution record.
-6. Project dashboard updates.
+3. The reviewer `completed_review` contribution already created with the Review
+   remains immutable.
+4. A submitter `accepted_submission` contribution is created from the accepted
+   submission, accepting review, frozen policy lineage, and artifact hash.
+5. The frozen reviewer and submitter compensation policies independently create
+   applicable awards; explicit unpaid rules create none.
+6. Reputation and project projections update from the contribution records.
 
 Acceptance:
 
-- Accepted task cannot lack contribution record.
-- Accepted task cannot lack payment record.
+- Accepted task cannot lack its submitter contribution record.
+- Every accepted Review cannot lack its reviewer contribution record.
+- A payable contribution cannot lack its award/payment record; an explicit
+  unpaid policy creates no award.
 - Payment status is separate from assignment status.

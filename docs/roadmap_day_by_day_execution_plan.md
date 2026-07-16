@@ -320,8 +320,10 @@ Deliver:
 
 Exit criteria:
 
-- accepted work creates a contribution record
-- accepted work creates pending payment record
+- every valid human review creates a reviewer contribution record
+- accepted work additionally creates a submitter contribution record
+- each payable contribution creates a pending award/payment record; explicit
+  unpaid rules create none
 - paid payment status requires payment reference
 
 ### Day 17: Reputation Ledger
@@ -400,7 +402,9 @@ Deliver:
 
 Exit criteria:
 
-- accepted work has evidence, contribution record, and pending payment
+- every valid review has a reviewer contribution; accepted work also has
+  evidence and a submitter contribution; every payable contribution has a
+  pending award/payment record
 
 ### Day 23: Reviewer Audit
 

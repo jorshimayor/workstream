@@ -227,8 +227,9 @@ Every operating day starts with:
 | `SUBMITTED -> EVALUATION_PENDING` | immutable submission version, locked post-submit checker policy id/version/hash/body copied from the task context |
 | `EVALUATION_PENDING -> REVIEW_PENDING` | checker run for exact submission version, readiness certificate, no blocking failures |
 | `EVALUATION_PENDING -> NEEDS_REVISION` | checker run id, outcome source `auto_checker`, contributor-visible checker failures with severity, message, suggested fix |
-| `REVIEW_PENDING -> NEEDS_REVISION` | review decision, at least one structured finding, revision policy still permits revision |
-| `REVIEW_PENDING -> ACCEPTED` | accepted review, acceptance evidence refs, contribution record, payment record |
+| `REVIEW_PENDING -> NEEDS_REVISION` | review decision, at least one structured finding, reviewer `completed_review` contribution and applicable reviewer award, revision policy still permits revision |
+| `REVIEW_PENDING -> ACCEPTED` | accepted review, acceptance evidence refs, reviewer `completed_review` and submitter `accepted_submission` contributions, applicable awards |
+| `REVIEW_PENDING -> REJECTED` | rejected review, rejection reason/finding, reviewer `completed_review` contribution and applicable reviewer award; no submitter contribution |
 | pre-submit feedback in `NEEDS_REVISION` | prior findings visible to contributor, revision deadline active, no new submission created |
 | `NEEDS_REVISION -> SUBMITTED` | replacement submission packet, revision replay covering every high and medium prior finding, revision count under policy limit |
 | payment `PENDING -> PAID` | payment reference and payment audit event |

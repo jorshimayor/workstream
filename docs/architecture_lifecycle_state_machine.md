@@ -150,7 +150,9 @@ This state can be entered from:
 Required before entering:
 
 - from `EVALUATION_PENDING`: checker run id, blocking checker results, contributor-visible messages, and suggested fixes
-- from `REVIEW_PENDING`: review decision id and at least one structured review finding
+- from `REVIEW_PENDING`: review decision id, at least one structured review
+  finding, reviewer `completed_review` contribution, and any applicable reviewer
+  award
 
 Before the contributor resumes, Workstream prepares the next revision context. That preparation checks whether the active project guide or policy context changed since the prior submission was locked. Revision policy decides whether the next attempt keeps the prior context, rebases to the current active context, or is blocked for project-manager repair.
 
@@ -167,13 +169,17 @@ Required before entering:
 - evidence present
 - reviewer cited evidence supporting acceptance
 - no unresolved high or medium prior revision finding
-- payment amount calculated from the locked project payment policy
+- applicable submitter compensation evaluated from the TaskAssignment-frozen
+  compensation policy
 
 Required side effects:
 
-- contribution record created from accepted submission, accepting review, locked guide version, artifact hash manifest, and acceptance evidence refs
-- payment record created or updated from the contribution record
-- reputation events reference the contribution record
+- reviewer `completed_review` contribution created with the Review
+- submitter `accepted_submission` contribution created from the accepted
+  submission, accepting Review, frozen policy lineage, and artifact hash
+- applicable awards created independently from the reviewer and submitter
+  contribution records
+- reputation events reference the applicable contribution record
 
 ### REJECTED
 
@@ -183,6 +189,7 @@ Required before entering:
 
 - rejection review decision
 - rejection reason
+- reviewer `completed_review` contribution and any applicable reviewer award
 
 ### CANCELLED
 

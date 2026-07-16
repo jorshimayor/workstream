@@ -1385,35 +1385,24 @@ Fields:
 - `id`
 - `project_id`
 - `task_id`
-- `accepted_submission_id`
-- `accepting_review_id`
+- `submission_id`
+- `contribution_type`: `completed_review | accepted_submission`
 - `contributor_id`
-- `locked_guide_version`
-- `checker_run_id`
-- `artifact_hash_manifest`
-- `acceptance_evidence_refs`
-- `skill_tags`
-- `difficulty`
-- `accepted_amount`
-- `currency`
-- `payout_type`
-- `created_from_audit_event_id`
-- `status`
-- `accepted_at`
+- `source_review_id`
+- `source_review_lease_id`
+- `source_task_assignment_id`
+- `artifact_hash`
+- `compensation_policy_version_id`
 - `created_at`
-- `exported_at`
-- `voided_at`
-- `void_reason`
-
-Status:
-
-- recorded
-- exported
-- voided
 
 Purpose:
 
-The contribution record is created when work is accepted. It certifies that a specific contributor completed accepted work under a locked project guide with cited evidence. Payment records and reputation events attach to this record, but do not replace it.
+The record is immutable. Every valid recorded human Review creates one reviewer
+`completed_review` contribution. `accept` additionally creates one submitter
+`accepted_submission`; `needs_revision` and `reject` do not. The record carries
+the exact Review, submission, assignment or lease, frozen compensation policy,
+and stabilized artifact-hash lineage. Compensation awards and reputation events
+may reference it, but do not replace it.
 
 ## PaymentRecord
 
@@ -1541,11 +1530,17 @@ open an independent session.
 - a submission must belong to a task
 - a review must belong to a submission
 - an accepted task must have at least one accepted submission
-- an accepted task must create a contribution record
-- no payment exposure exists without a contribution record
-- a paid task must have an accepted payment record
-- reputation events for accepted work must reference the accepted contribution record
-- reviewer-quality reputation events must reference a review or audit source
+- every valid recorded human review must create one reviewer `completed_review`
+  contribution
+- an accepted task must additionally create one submitter
+  `accepted_submission` contribution
+- `needs_revision` and `reject` must not create a submitter contribution
+- no compensation award or payment exposure exists without its contribution
+  record
+- a paid award must have an accepted payment or fulfillment record
+- reputation events for accepted work must reference the submitter contribution
+- reviewer-quality reputation events must reference the reviewer contribution,
+  Review, or audit source
 - payment amount changes require a payment adjustment record
 - disputed payments cannot become `paid` without a dispute resolution audit event
 - critical- and high-severity checker failures block review; registered

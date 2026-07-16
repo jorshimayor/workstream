@@ -936,6 +936,11 @@ def test_stale_wording_patterns_catch_variants() -> None:
             "project checker " + "hash",
             "PreSubmitCheckerPolicy " + "hash",
             "PreSubmitCheckerPolicy snapshot/" + "hash",
+            "NEEDS_REVISION: no payment owed " + "yet",
+            "no accepted task without payment " + "record",
+            "accepted work creates a pending payment " + "record",
+            "contribution record is created when work is " + "accepted",
+            "the evidence-backed record that accepted " + "work was completed",
         ]
     )
     matches = [
@@ -972,6 +977,11 @@ def test_stale_wording_patterns_catch_variants() -> None:
         "project checker " + "hash(?:es)?",
         "PreSubmitCheckerPolicy " + "hash(?:es)?",
         "PreSubmitCheckerPolicy snapshot/" + "hash(?:es)?",
+        "needs_revision:\\s+no payment owed yet",
+        "no accepted task without payment " + "record",
+        "accepted work creates (?:a )?pending payment " + "record",
+        "contribution record is created when work is " + "accepted",
+        "the evidence-backed record that accepted " + "work",
     }
     case_variant_sample = "\n".join(
         [
@@ -3468,6 +3478,7 @@ def test_feature_owned_authorization_activation_is_rejected() -> None:
         "Actions remain non-executable until their owning chunks activate them.",
         "Later owner chunks activate catalogue rows in typed code.",
         "An owning cutover chunk activates an action after behavior proof.",
+        "Planned metadata is separate from later feature activation blueprints.",
         "Artifact service actions are activated by their owning WS-ART chunks.",
         "Each owning WS-REV chunk activates its review action.",
         "The WS-ART feature chunk owns the actions it activates.",

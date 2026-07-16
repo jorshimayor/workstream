@@ -4,9 +4,11 @@
 
 Payment can be manual in the first version, but it must be tracked with the same discipline as automated settlement.
 
-Accepted work must never disappear into memory or chat. Every accepted task needs a payment record.
-
-Accepted work must create a contribution record first. The contribution record certifies accepted work under a locked guide with evidence. Payment records and reputation events attach to the contribution record.
+Every valid recorded human Review creates a reviewer `completed_review`
+contribution. `accept` additionally creates a submitter `accepted_submission`
+contribution. Compensation is evaluated independently for each record from its
+frozen policy version; an explicit unpaid rule creates no award. Payment and
+reputation records attach to contributions and never replace them.
 
 ## Payment States
 
@@ -42,11 +44,14 @@ Fields:
 
 Default:
 
-- DRAFT through REVIEW_PENDING: no payment owed
-- NEEDS_REVISION: no payment owed yet
-- ACCEPTED: contribution record is created, then accepted amount becomes pending
-- PAID: pending amount becomes paid
-- REJECTED: payment policy decides
+- DRAFT through REVIEW_PENDING: no contribution or payment is created
+- a valid human `needs_revision`, `accept`, or `reject` decision creates one
+  reviewer `completed_review`; the ReviewLease-frozen compensation policy
+  decides whether it creates an award
+- `accept` additionally creates one submitter `accepted_submission`; the
+  TaskAssignment-frozen compensation policy decides whether it creates an award
+- `needs_revision` and `reject` create no submitter contribution or award
+- PAID: a pending payable award becomes paid
 
 Acceptance and payment must remain separate.
 
@@ -66,7 +71,8 @@ Reputation is not a badge. It is an outcome ledger.
 It updates from:
 
 - contribution records
-- accepted work
+- submitter `accepted_submission` contributions
+- reviewer `completed_review` contributions
 - needs revision
 - rejection
 - payment completion

@@ -79,8 +79,10 @@ Accept must create:
 
 - review decision record
 - acceptance audit event
-- contribution record
-- pending payment record
+- reviewer `completed_review` contribution record
+- submitter `accepted_submission` contribution record
+- any awards required by the separately frozen reviewer and submitter
+  compensation policies
 - reputation event
 
 The reviewer cites the strongest evidence supporting acceptance, not only "looks good."
@@ -114,6 +116,11 @@ Use reject when:
 - the contributor submitted prohibited material
 
 Use reject carefully. If the work can be reasonably corrected through one revision cycle, use `needs_revision`.
+
+Every valid recorded `needs_revision` or `reject` decision still creates the
+reviewer's `completed_review` contribution and evaluates the ReviewLease-frozen
+reviewer compensation policy. Neither decision creates a submitter contribution
+or submitter award.
 
 ## Reviewer Quality
 

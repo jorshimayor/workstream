@@ -14,12 +14,16 @@ activation custody, transaction order, and cross-initiative handoffs.
   only where stale activation language must be corrected
 - AUTH initiative/specification planning documents where stale feature-owned
   activation language must be corrected
-- `scripts/check_stale_authorization_docs.py` and `scripts/test_agent_gates.py`
-  only for deterministic activation-custody wording enforcement
+- `scripts/check_stale_authorization_docs.py`,
+  `scripts/check_stale_workstream_wording.py`, and
+  `scripts/test_agent_gates.py` only for deterministic activation-custody and
+  contribution/compensation wording enforcement
 - `.agent-loop/WORK_QUEUE.md`, `.agent-loop/REVIEW_LOG.md`, and one merge intent
 - `.agent-loop/LOOP_STATE.md` for exact parallel planning-state reconciliation
-- directly related active architecture/authorization docs only if required to
-  remove a contradiction visible from trusted main
+- directly related active architecture, product, operations, roadmap, template,
+  and diagram documents under `docs/` only to reconcile the reviewer
+  `completed_review`, submitter `accepted_submission`, and conditional
+  compensation contract exposed by trusted-main reference specifications
 
 ## Not allowed
 
@@ -44,7 +48,11 @@ activation custody, transaction order, and cross-initiative handoffs.
 - review evidence binding has one exact proposed ActionId, existing PermissionId,
   fixed service identity, ART capability owner, and AUTH activation custodian;
 - core ContributionRecord creation makes no ART capability/provider call while
-  preserving its already-stabilized submission artifact digest lineage;
+  copying canonical `SubmissionVersion.artifact_hash` into
+  `ContributionRecord.artifact_hash` lineage;
+- every valid human Review creates one reviewer `completed_review`; `accept`
+  additionally creates one submitter `accepted_submission`; compensation is
+  independently evaluated from each frozen policy and may be explicitly unpaid;
 - each parallel agent receives a bounded handoff and no runtime start signal;
 - ART plans no longer claim that ART registers or activates authorization;
 - Markdown links, stale wording, diff hygiene, and internal review pass.

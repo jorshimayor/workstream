@@ -18,7 +18,7 @@ Workstream is how Flow measures, certifies, and coordinates useful human-agent w
 
 ## Executive Summary
 
-Workstream is the operating system for useful work inside Flow. It does not try to own every possible execution environment. Instead, it gives every project a guide, every task a locked policy context, every submission an evidence packet, every review a canonical decision, and every accepted task a contribution record before payment and reputation events.
+Workstream is the operating system for useful work inside Flow. It does not try to own every possible execution environment. Instead, it gives every project a guide, every task a locked policy context, every submission an evidence packet, every review a canonical decision and reviewer contribution, and every accepted task an additional submitter contribution before compensation and reputation events.
 
 The first 30 days are focused on proving the internal lifecycle:
 
@@ -42,7 +42,7 @@ Current v0.1 is backend-first and internal-loop-first. External source adapters,
 | Postgres record database | Local, CI, and production-like development use Postgres as the record database. |
 | Object-storage abstraction | Local filesystem storage is allowed only behind the provider-neutral `ArtifactStore`; AWS S3 is the v0.1 hosted provider and MinIO is the local/CI protocol proof. |
 | Async-first execution | Long-running checker work does not block request/response paths. |
-| Contribution before payment | Accepted work creates a durable contribution record before payment status or reputation events. |
+| Contribution before compensation | Every valid human review creates a reviewer contribution; accepted work additionally creates a submitter contribution. Compensation and reputation attach afterward. |
 
 <div class="page-break"></div>
 
@@ -125,7 +125,9 @@ The sequence below shows the narrow v0.1 loop the system must prove before expan
 - A contributor submission creates a new immutable submission version; locked artifacts are not edited in place.
 - Review decisions are exactly `accept`, `needs_revision`, or `reject`.
 - `needs_revision` starts a revision loop and must replay prior findings.
-- Accepted work creates a contribution record before payment or reputation records.
+- Every valid human review creates a reviewer contribution; accepted work
+  additionally creates a submitter contribution before compensation or
+  reputation records.
 - Payment status is separate from task acceptance.
 
 <div class="page-break"></div>

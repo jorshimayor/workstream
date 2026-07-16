@@ -90,7 +90,9 @@ Even when payment is manual, Workstream must track:
 - payment status
 - payout date
 
-Accepted work also creates a contribution record. The contribution record certifies accepted work; the payment ledger records money movement.
+Every valid human review creates a reviewer contribution. Accepted work also
+creates a submitter contribution. The payment ledger records fulfillment of
+payable awards; explicit unpaid rules create no payment entry.
 
 ## 10. Build Internal First
 

@@ -38,6 +38,11 @@ FORBIDDEN_PATTERNS = (
     re.compile(r"PreSubmitCheckerPolicy snapshot/hash(?:es)?", re.IGNORECASE),
     re.compile(r"auto_checking", re.IGNORECASE),
     re.compile(r"auto\s*[\"']?\s*\\?\s*\+\s*[\"']?_checking", re.IGNORECASE),
+    re.compile(r"needs_revision:\s+no payment owed yet", re.IGNORECASE),
+    re.compile(r"no accepted task without payment record", re.IGNORECASE),
+    re.compile(r"accepted work creates (?:a )?pending payment record", re.IGNORECASE),
+    re.compile(r"contribution record is created when work is accepted", re.IGNORECASE),
+    re.compile(r"the evidence-backed record that accepted work", re.IGNORECASE),
 )
 FULL_TEXT_FORBIDDEN_PATTERNS = {
     "auto\\s*[\"']?\\s*\\\\?\\s*\\+\\s*[\"']?_checking",

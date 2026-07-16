@@ -183,6 +183,7 @@ ACTIVATION_CUSTODY_RULES = (
             r"chunks?\s+activates?|"
             r"(?:later\s+)?owner\s+chunks?\s+activates?|"
             r"(?:an?\s+)?owning\s+(?:feature\s+)?cutover\s+chunks?\s+activates?|"
+            r"feature\s+activation\s+blueprints?|"
             r"actions?\s+(?:is|are)\s+activated\s+by\s+(?:their\s+)?owning\s+"
             r"WS-(?:ART|REV|CON)\s+chunks?|"
             r"each\s+owning\s+WS-(?:ART|REV|CON)\s+chunk\s+activates?|"
