@@ -59,7 +59,7 @@ Phase:
 - submission_quality
 - pre_review_gate
 - lifecycle_transition
-- payment_reconciliation
+- compensation_fulfillment_reconciliation
 
 Checker names must not drift between project guides, policy templates, implementation code, and checker results. New behavior uses a new checker version or a new checker id.
 

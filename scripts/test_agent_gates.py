@@ -1035,6 +1035,9 @@ def test_active_shared_contract_rejects_retired_compensation_model() -> None:
             "payment_record",
             "payment_ledger",
             "payment_adjustment",
+            "locked_payment_policy_version",
+            "payment_reconciliation",
+            "payment truth",
             "payment policy",
             "payment records",
             "payment ledger",
@@ -1079,9 +1082,7 @@ def test_historical_docs_do_not_define_live_compensation_contract() -> None:
     assert not stale.is_active_shared_contract_path(
         Path("docs/internal_reviews/example.md")
     )
-    assert not stale.is_active_shared_contract_path(
-        Path("docs/spec_chunk_5_example.md")
-    )
+    assert stale.is_active_shared_contract_path(Path("docs/spec_chunk_5_example.md"))
     assert not stale.is_active_shared_contract_path(Path("docs/review_architecture.md"))
 
 

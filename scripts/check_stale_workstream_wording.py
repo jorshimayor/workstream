@@ -66,6 +66,9 @@ ACTIVE_SHARED_CONTRACT_PATTERNS = (
     re.compile(r"\bpayment_record\b", re.IGNORECASE),
     re.compile(r"\bpayment_ledger\b", re.IGNORECASE),
     re.compile(r"\bpayment_adjustment\b", re.IGNORECASE),
+    re.compile(r"\b(?:locked_payment_policy_version)\b", re.IGNORECASE),
+    re.compile(r"\bpayment_reconciliation\b", re.IGNORECASE),
+    re.compile(r"\bpayment truth\b", re.IGNORECASE),
     re.compile(r"\bpayment polic(?:y|ies)\b", re.IGNORECASE),
     re.compile(r"\bpayment records?\b", re.IGNORECASE),
     re.compile(r"\bpayment ledger\b", re.IGNORECASE),
@@ -86,10 +89,7 @@ ACTIVE_SHARED_CONTRACT_EXCLUDED_PREFIXES = (
     "docs/internal_reviews/",
     "docs/reference_specs/",
 )
-ACTIVE_SHARED_CONTRACT_EXCLUDED_NAME_PREFIXES = (
-    "review_",
-    "spec_chunk_",
-)
+ACTIVE_SHARED_CONTRACT_EXCLUDED_NAME_PREFIXES = ("review_",)
 CURRENT_RUNTIME_CONTRACT_PATHS = {
     "docs/current_system_data_flow.html",
 }

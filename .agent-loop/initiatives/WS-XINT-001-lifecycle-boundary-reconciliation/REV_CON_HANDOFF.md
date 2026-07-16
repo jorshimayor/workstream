@@ -63,7 +63,8 @@ A deterministic contribution-evidence document may be added later as an
 asynchronous projection. It is not a gate inside the Review/ContributionRecord
 transaction. If adopted, it uses a separately reviewed ART capability and AUTH
 action, records projection status independently, and cannot change Review,
-ContributionRecord, award, or payment truth when storage is unavailable.
+`ContributionRecord`, `CompensationAward`, `CompensationFulfillmentReceipt`, or
+`CompensationStatusProjection` truth when storage is unavailable.
 
 ## REV owner response
 

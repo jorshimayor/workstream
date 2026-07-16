@@ -4,7 +4,10 @@
 
 Build the Workstream v0.1 project and guide foundation.
 
-This chunk creates the first domain module for projects, versioned project guides, submission artifact policy, checker policies, review policies, revision policies, and payment policies. It implements the backend rules needed before tasks can lock a guide and policy context.
+This chunk creates the first domain module for projects, versioned project
+guides, submission artifact policy, checker policies, review policies, and
+revision policies. It implements the backend rules needed before tasks can lock
+a guide and policy context.
 
 ## Non-Scope
 
@@ -14,7 +17,7 @@ This chunk creates the first domain module for projects, versioned project guide
 - task queue and assignment
 - submission packet logic
 - review workflow
-- payment execution
+- compensation fulfillment execution
 - reputation records
 
 Revision workflow execution is not in this chunk, but revision policy is in scope. The project-guides ADR requires every active guide to drive revision policy, so this chunk stores and validates the revision-policy contract before a guide can become active.
@@ -53,15 +56,15 @@ Architecture target:
 - `checker_policies`
 - `review_policies`
 - `revision_policies`
-- `payment_policies`
 
 Current v0.1 implementation note: project guide rows store human-facing guide
 content only. Submission artifact requirements live in `SubmissionArtifactPolicy`
 and compile into the project `PreSubmitCheckerPolicy`.
 
-Migration note: the migration history now creates the current guide and task
-contract directly. Project payment terms belong to `PaymentPolicy`; task
-artifact requirements come from the locked project policy and checker bundle.
+Migration note: the migration history creates the current guide and task
+contract directly. Compensation policy publication is independent of guide
+activation; task artifact requirements come from the locked project policy and
+checker bundle.
 
 The guide version is the join key for the guide-specific policies.
 
@@ -77,9 +80,7 @@ Project guide activation requires:
 - post-submit checker policy exists for the guide version
 - review policy exists for the guide version
 - revision policy exists for the guide version
-- payment policy exists for the guide version
 - revision policy has max revision rounds, revision deadline hours, and allowed resubmission states
-- payment policy has base amount, currency, payout type, and accepted payment rule
 
 Implementation sequencing: Chunk 1 models the project pre-submit checker
 dependency and fails activation unless compiler-owned compiled bundle fields are
@@ -99,7 +100,12 @@ The v0.1 contract records:
 - states that allow resubmission
 - reviewer reassignment rule
 
-Activation requires a revision policy before the guide can become active. The active guide response returns revision policy beside submission artifact policy, checker policy, review policy, and payment policy so future task records can lock the full policy context. The Non-Scope section keeps only revision workflow execution out of this chunk, not revision policy itself.
+Activation requires a revision policy before the guide can become active. The
+active guide response returns revision policy beside submission artifact
+policy, checker policy, and review policy so future task records can lock the
+full guide-policy context. Compensation is independently published and frozen
+at `TaskAssignment` and `ReviewLease` boundaries. The Non-Scope section keeps
+only revision workflow execution out of this chunk, not revision policy itself.
 
 ## Submission Artifact Policy
 
@@ -184,7 +190,6 @@ setup bundle:
 - `post_submit_checker_policy`
 - `review_policy`
 - `revision_policy`
-- `payment_policy`
 
 ## Lifecycle Impact
 
@@ -205,10 +210,9 @@ The active guide response becomes the future source for task-owned locked guide 
 - project can be created
 - draft guide can be created
 - guide activation is blocked when submission artifact policy is missing
-- guide activation is blocked when checker/review/revision/payment policies are missing
+- guide activation is blocked when checker/review/revision policies are missing
 - guide activation is blocked when revision policy is missing
 - guide activation is blocked when revision policy is incomplete
-- guide activation is blocked when payment policy is incomplete
 - guide activation or policy approval is blocked when project submission artifact policy removes Workstream hash requirements
 - guide activation or policy approval is blocked when project submission artifact policy permits unsafe storage references
 - guide activation or policy approval is blocked when project submission artifact policy requires default-forbidden artifacts

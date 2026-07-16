@@ -32,7 +32,7 @@ This chunk does not run the full checker framework yet. It defines the durable p
 - reviewer queue UI
 - human review decisions
 - revision replay enforcement
-- contribution, payment, or reputation records
+- contribution, compensation, or reputation records
 
 ## Required Model
 
@@ -59,7 +59,6 @@ This chunk does not run the full checker framework yet. It defines the durable p
 - `locked_post_submit_checker_policy_version`
 - `locked_review_policy_version`
 - `locked_revision_policy_version`
-- `locked_payment_policy_version`
 - `package_hash`
 - `artifact_hash_manifest`
 - `artifact_manifest_hash`
@@ -158,7 +157,9 @@ The run snapshots:
 - locked post-submit checker policy version
 - locked review policy version
 - locked revision policy version
-- locked payment policy version
+
+Compensation is not checker-run input. Submitter and reviewer compensation
+versions are frozen independently on `TaskAssignment` and `ReviewLease`.
 
 Post-submit checker runs must be created only from a loaded, finalized submission. The service must copy `task_id`, `submission_version`, `package_hash`, `artifact_hash_manifest`, `artifact_manifest_hash`, and locked policy versions from that submission. The client does not provide locked guide or policy versions for checker runs.
 

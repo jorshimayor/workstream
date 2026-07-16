@@ -1306,7 +1306,7 @@ Phase:
 - submission_quality
 - pre_review_gate
 - lifecycle_transition
-- payment_reconciliation
+- compensation_fulfillment_reconciliation
 
 The checker registry prevents project guide templates, checker policies, and implementation code from drifting into different checker names for the same rule.
 

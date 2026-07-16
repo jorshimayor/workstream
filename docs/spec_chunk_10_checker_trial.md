@@ -21,7 +21,7 @@ This chunk does not add a new lifecycle state or review decision. It exercises t
 - human review decision records
 - revision replay enforcement
 - contribution records
-- payment records
+- compensation awards and fulfillment records
 - reputation records
 - external checker worker infrastructure
 - new checker names unless the trial proves a missing checker is required
