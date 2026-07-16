@@ -197,10 +197,14 @@ def _event_facts_valid(event: AuthorityEventType, before: dict[str, object] | No
         AuthorityEventType.LAST_ACCESS_ADMIN_OPERATION_DENIED: (None, None),
         AuthorityEventType.SENSITIVE_AUTHORIZATION_ALLOWED: (None, {"allowed": True}),
         AuthorityEventType.SENSITIVE_AUTHORIZATION_DENIED: (None, {"allowed": False}),
-        AuthorityEventType.AUTHORITY_INVALIDATION_REQUESTED: ({"effective": True}, {"effective": False}),
     }
     if event in exact:
         return (before, after) == exact[event]
+    if event == AuthorityEventType.AUTHORITY_INVALIDATION_REQUESTED:
+        return (before, after) in (
+            ({"effective": True}, {"effective": False}),
+            ({"effective": False}, {"effective": True}),
+        )
     if event == AuthorityEventType.ACTOR_IDENTITY_LINKED:
         return before is None and after in ({"status": "active", "subject_kind": "human"}, {"status": "active", "subject_kind": "service"})
     if event == AuthorityEventType.ACTOR_PROFILE_DEACTIVATED:
@@ -391,6 +395,22 @@ class AuthorityAuditEventInput(BaseModel):
         elif self.event_type == AuthorityEventType.AUTHORITY_INVALIDATION_REQUESTED:
             if self.invalidation_cause_event_id is None or self.invalidation_target_kind is None or self.denial_code:
                 raise ValueError("invalid authority invalidation evidence")
+            expected_direction = (
+                ({"effective": False}, {"effective": True})
+                if self.permission_id is PermissionId.ADMIN_ROLE_GRANT
+                else ({"effective": True}, {"effective": False})
+            )
+            if (before, after) != expected_direction:
+                raise ValueError("invalid authority invalidation direction")
+            if self.permission_id in {
+                PermissionId.ADMIN_ROLE_GRANT,
+                PermissionId.ADMIN_ROLE_REVOKE,
+            } and (
+                self.resource_type != "actor_profile"
+                or self.invalidation_target_kind != "actor_profile"
+                or self.resource_id != self.invalidation_target_ref
+            ):
+                raise ValueError("admin grant invalidation must target actor projection")
         if self.invalidation_cause_event_id == self.event_id:
             raise ValueError("invalidation cannot reference its own event")
         return self

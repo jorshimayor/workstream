@@ -14,7 +14,7 @@ output. This authored queue records the separately approved parallel chunks.
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Paused for AUTH priority; no valid replacement baseline yet |
-| `WS-AUTH-001-08` | Bootstrap And Administrative Role Grants | L1 | Inactive until 07B merge/memory and explicit user start |
+| `WS-AUTH-001-09` | Actor State, Identity Revocation, And Service Actors | L1 | Inactive until AUTH-08 merge/memory and explicit user start |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02A3` | ArtifactStore v2 Local Clean Cut | L1 | Inactive until 02A2 merge and explicit user start |
@@ -78,8 +78,9 @@ output. This authored queue records the separately approved parallel chunks.
 
 AUTH-05A merged through PR #115 as `8e1cde6`, and CAT plus its post-merge memory
 merged through PRs #117 and #118. AUTH-05B merged through PR #119 as `ad71c7e`.
-AUTH-06 merged through PR #124 as `f599551`. AUTH-07A and AUTH-07B merged
-through PRs #126 and #130. Do not start AUTH-08 or POL-002-04 automatically.
+AUTH-06 merged through PR #124 as `f599551`. AUTH-07A, AUTH-07B, and AUTH-08
+merged through PRs #126, #130, and #131. Do not start AUTH-09 or POL-002-04
+automatically.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.

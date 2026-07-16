@@ -79,8 +79,12 @@ and audit parity, followed by 07B kernel and actor self-action cutover. AUTH-07A
 merged through PR #126 as `e9d72a1`; signed schema-v2 state verified that merge,
 and the user explicitly started AUTH-07B. Its required L1 preimplementation
 review passed with conditions. Implementation, deterministic evidence, review
-repair, and all required internal reviewer tracks pass at `aabc0f4`; ready PR
-publication is pending.
+repair, and all required internal reviewer tracks passed, then PR #130 merged
+as `90eca12`. Signed schema-v2 memory verified that merge and stopped at
+AUTH-08. The user explicitly started AUTH-08. Its inherited L1 contract failed
+initial security/architecture, QA/product, and senior/CI/docs review before
+runtime edits. The repaired contract passed all required preimplementation
+tracks at `cbe7c6c`; bounded AUTH-08 implementation is active.
 
 ## Active planning chunk
 
@@ -88,11 +92,11 @@ None.
 
 ## Active implementation chunk
 
-`WS-AUTH-001-07B` - Deny-By-Default Kernel And Self-Action Cutover.
+`WS-AUTH-001-08` - Bootstrap And Administrative Role Grants.
 
 ## Current implementation branch
 
-`codex/ws-auth-001-07b-deny-default-kernel`
+`codex/ws-auth-001-08-bootstrap-admin-grants`
 
 ## Chunk status
 
@@ -112,8 +116,8 @@ None.
 | `WS-AUTH-001-06` | Merged | `codex/ws-auth-001-06-canonical-actor-profile` | #124 | Merged as `f599551`; final PR head `4a2193f`. |
 | `WS-AUTH-001-07` | Split | `codex/ws-auth-001-07-authorization-kernel` | - | Required L1 review rejected the combined contract before runtime edits. |
 | `WS-AUTH-001-07A` | Merged | `codex/ws-auth-001-07-authorization-kernel` | #126 | Merged as `e9d72a1`; 74 permissions, 50 planned actions, and action-aware audit parity only. |
-| `WS-AUTH-001-07B` | Internally approved | `codex/ws-auth-001-07b-deny-default-kernel` | - | Reviewed at `aabc0f4`; ready PR publication pending. |
-| `WS-AUTH-001-08` | Proposed | - | - | Bootstrap and administrative grants. |
+| `WS-AUTH-001-07B` | Merged | `codex/ws-auth-001-07b-deny-default-kernel` | #130 | Merged as `90eca12`; signed memory passed. |
+| `WS-AUTH-001-08` | In review | `codex/ws-auth-001-08-bootstrap-admin-grants` | - | Implementation `34f87a5` passed deterministic evidence and all required internal reviewers; PR publication pending. |
 | `WS-AUTH-001-09` | Proposed | - | - | Actor/link states and service actors. |
 | `WS-AUTH-001-10` | Proposed | - | - | Project contributor grants. |
 | `WS-AUTH-001-11` | Proposed | - | - | Project identity/guide/source/read cutover. |

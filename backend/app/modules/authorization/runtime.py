@@ -6,9 +6,11 @@ from enum import StrEnum
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.core.hashing import canonical_json_hash
 from app.modules.authorization.catalogue import ActionId, PermissionId
+from app.modules.authorization.schemas import AdminRole, AdminScope
 
 _STRICT_FROZEN = ConfigDict(extra="forbid", frozen=True, strict=True)
 
@@ -75,7 +77,109 @@ class SystemResourceContext(BaseModel):
     resource_id: Literal["workstream:system"]
 
 
-AuthorizationResourceContext = ActorSelfResourceContext | SystemResourceContext
+class PermissionCatalogueResourceContext(BaseModel):
+    """Fixed registered-permission definition target."""
+
+    model_config = _STRICT_FROZEN
+    resource_type: Literal["permission_catalogue"]
+    resource_id: Literal["workstream:permission_catalogue"]
+
+
+class AdminRoleDefinitionsResourceContext(BaseModel):
+    """Fixed administrative-role definition target."""
+
+    model_config = _STRICT_FROZEN
+    resource_type: Literal["admin_role_definitions"]
+    resource_id: Literal["workstream:admin_role_definitions"]
+
+
+class AdminRoleGrantCollectionResourceContext(BaseModel):
+    """Canonical system or exact-project grant collection selector."""
+
+    model_config = _STRICT_FROZEN
+    resource_type: Literal["admin_role_grant_collection"]
+    resource_id: UUID | Literal["workstream:admin_role_grants"]
+    scope_type: AdminScope
+    scope_project_id: UUID | None = None
+
+    @model_validator(mode="after")
+    def validate_scope(self):
+        """Bind the collection identifier to its exact scope."""
+        if self.scope_type is AdminScope.SYSTEM:
+            valid = (
+                self.scope_project_id is None and self.resource_id == "workstream:admin_role_grants"
+            )
+        else:
+            valid = self.scope_project_id is not None and self.resource_id == self.scope_project_id
+        if not valid:
+            raise ValueError("invalid grant collection scope")
+        return self
+
+
+class ActorAdminRoleGrantHistoryResourceContext(BaseModel):
+    """Canonical actor history plus required scope selector."""
+
+    model_config = _STRICT_FROZEN
+    resource_type: Literal["actor_admin_role_grant_history"]
+    resource_id: UUID
+    scope_type: AdminScope
+    scope_project_id: UUID | None = None
+
+    @model_validator(mode="after")
+    def validate_scope(self):
+        """Require one structurally complete scope selector."""
+        if (self.scope_type is AdminScope.PROJECT) != (self.scope_project_id is not None):
+            raise ValueError("invalid actor grant history scope")
+        return self
+
+
+class AdminRoleGrantIssueResourceContext(BaseModel):
+    """Server-composed target and scope facts for grant issuance."""
+
+    model_config = _STRICT_FROZEN
+    resource_type: Literal["admin_role_grant_issue"]
+    resource_id: UUID
+    role: AdminRole
+    scope_type: AdminScope
+    scope_project_id: UUID | None = None
+
+    @model_validator(mode="after")
+    def validate_scope(self):
+        """Require role-compatible system or exact-project scope."""
+        system_only = self.role in {AdminRole.ACCESS_ADMINISTRATOR, AdminRole.OPERATOR}
+        if system_only and self.scope_type is not AdminScope.SYSTEM:
+            raise ValueError("invalid role scope")
+        if (self.scope_type is AdminScope.PROJECT) != (self.scope_project_id is not None):
+            raise ValueError("invalid role scope")
+        return self
+
+
+class AdminRoleGrantResourceContext(BaseModel):
+    """Loaded administrative grant selector for revocation."""
+
+    model_config = _STRICT_FROZEN
+    resource_type: Literal["admin_role_grant"]
+    resource_id: UUID
+    existing_idempotency_record: bool = False
+
+
+AuthorizationResourceContext = (
+    ActorSelfResourceContext
+    | SystemResourceContext
+    | PermissionCatalogueResourceContext
+    | AdminRoleDefinitionsResourceContext
+    | AdminRoleGrantCollectionResourceContext
+    | ActorAdminRoleGrantHistoryResourceContext
+    | AdminRoleGrantIssueResourceContext
+    | AdminRoleGrantResourceContext
+)
+
+
+def authorization_resource_digest(resource: AuthorizationResourceContext) -> str:
+    """Bind a decision to every scalar fact in its typed resource context."""
+    return canonical_json_hash(
+        {"resource_context": resource.model_dump(mode="json", exclude_none=True)}
+    )
 
 
 class AuthorizationDenialCode(StrEnum):
@@ -88,12 +192,19 @@ class AuthorizationDenialCode(StrEnum):
     ACTOR_SUSPENDED = "actor_suspended"
     RESOURCE_GUARD_DENIED = "resource_guard_denied"
     PERMISSION_NOT_GRANTED = "permission_not_granted"
+    SCOPE_NOT_AUTHORIZED = "scope_not_authorized"
+    SELF_GRANT_FORBIDDEN = "self_grant_forbidden"
+    SELF_ROLE_REVOKE_FORBIDDEN = "self_role_revoke_forbidden"
+    ACTOR_NOT_FOUND = "actor_not_found"
+    GRANT_NOT_FOUND = "grant_not_found"
+    RESOURCE_NOT_FOUND = "resource_not_found"
 
 
 class MatchedAuthorityKind(StrEnum):
     """Privacy-bounded authority source classifications."""
 
     ACTOR_SELF = "actor_self"
+    ADMIN_ROLE_GRANT = "admin_role_grant"
 
 
 class AuthorizationDecision(BaseModel):
@@ -106,9 +217,29 @@ class AuthorizationDecision(BaseModel):
     permission_id: PermissionId | None
     allowed: bool
     denial_code: AuthorizationDenialCode | None
-    resource_type: Literal["actor_profile", "system"]
-    resource_id: UUID | Literal["workstream:system"]
+    resource_type: Literal[
+        "actor_profile",
+        "system",
+        "permission_catalogue",
+        "admin_role_definitions",
+        "admin_role_grant_collection",
+        "actor_admin_role_grant_history",
+        "admin_role_grant_issue",
+        "admin_role_grant",
+    ]
+    resource_id: (
+        UUID
+        | Literal[
+            "workstream:system",
+            "workstream:permission_catalogue",
+            "workstream:admin_role_definitions",
+            "workstream:admin_role_grants",
+        ]
+    )
+    resource_context_digest: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     matched_authority_kind: MatchedAuthorityKind | None
+    matched_grant_id: UUID | None = None
+    matched_scope_project_id: UUID | None = None
     revalidated: bool
     request_id: UUID
     correlation_id: UUID
@@ -124,6 +255,14 @@ class AuthorizationDecision(BaseModel):
             raise ValueError("action and permission must be present together")
         if self.allowed and self.action_id is None:
             raise ValueError("allowed decisions require action and permission")
+        if self.matched_authority_kind is MatchedAuthorityKind.ACTOR_SELF:
+            if self.matched_grant_id is not None or self.matched_scope_project_id is not None:
+                raise ValueError("actor-self decisions cannot carry grant scope")
+        elif self.matched_authority_kind is MatchedAuthorityKind.ADMIN_ROLE_GRANT:
+            if self.matched_grant_id is None:
+                raise ValueError("grant decisions require matched grant")
+        elif self.matched_grant_id is not None or self.matched_scope_project_id is not None:
+            raise ValueError("denied decisions cannot carry authority matches")
         return self
 
 
@@ -145,3 +284,7 @@ class AuthorizationDenied(Exception):
         }:
             return AuthorizationDenialCode.PERMISSION_NOT_GRANTED.value
         return self.decision.denial_code.value
+
+
+class AuthorizationEvidenceUnavailable(RuntimeError):
+    """Authorization evidence could not be persisted safely."""

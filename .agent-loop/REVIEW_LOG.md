@@ -1,5 +1,43 @@
 # Review Log
 
+## 2026-07-16 - WS-AUTH-001-08 Internal Review Passed
+
+Exact implementation SHA `34f87a5aa7d75897349f64f5e904cb1847af019b`
+passed senior engineering, QA/test, security/auth, product/ops, architecture,
+CI integrity, docs, reuse/dedup, and test-delta review after all valid findings
+were repaired. The final isolated PostgreSQL suite passed 275 behavior tests at
+90.17 percent branch-aware focused coverage. Ruff, stale wording,
+authorization-doc consistency, Markdown links, loop-memory validation, 71
+agent-gate tests, and diff integrity passed. PR publication is pending;
+AUTH-09 remains inactive.
+
+## 2026-07-15 - WS-AUTH-001-08 Plan Review Passed
+
+All required preimplementation tracks passed the repaired AUTH-08 contract at
+exact clean SHA `cbe7c6c3552f3a26feda20c959e6dcd4bbe16a89`. Security/auth,
+architecture, QA/test, product/ops, senior engineering, CI integrity, docs,
+reuse/dedup, and circuit breaker report no open findings. Runtime implementation
+may begin within the reviewed contract; AUTH-09 remains inactive.
+
+## 2026-07-15 - WS-AUTH-001-08 Initial Plan Rejected
+
+PR #130 merged AUTH-07B as `90eca12`; signed schema-v2 memory passed and the
+user explicitly started AUTH-08. Required security/architecture, QA/product,
+and senior/CI/docs preimplementation review rejected the inherited AUTH-08
+contract before runtime edits. It omitted the surface-specific administrative
+ActionIds,
+definition APIs, exact role matrix, grant-backed decision fields, bootstrap
+trust-root semantics, lock/revalidation order, invalidation direction, scoped
+read privacy, migration rollback custody, and required proof files. The
+contract is repaired and must pass fresh exact-head L1 review before code.
+
+A separate read-only WS-REV consumer review then confirmed three inherited
+AUTH-07B integration defects: generic dependency teardown could commit
+feature-owned work, decision-evidence SQL failures could escape as unstructured
+500s, and successful existing-actor self routes no longer advanced canonical
+verification timestamps. D19 and the AUTH-08 contract now require those repairs
+and regression proof before new admin consumers activate.
+
 ## 2026-07-15 - WS-AUTH-001-07B Internal Review Passed
 
 Exact implementation SHA `aabc0f4c0131c53600750258a0bec8be404c7b90`

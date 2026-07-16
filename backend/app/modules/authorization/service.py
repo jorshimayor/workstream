@@ -14,6 +14,7 @@ from app.modules.audit.schemas import (
     AuthorityEventType,
 )
 from app.modules.audit.service import AuditService
+from app.modules.authorization.catalogue import ActionId
 from app.modules.authorization.repository import AuthorityIdempotencyRepository
 from app.modules.authorization.schemas import (
     ActorIdentityLinkReactivateRequest,
@@ -44,6 +45,7 @@ class _OperationEvidence:
     """Closed success and invalidation evidence mapping for one operation."""
 
     permission: str
+    action: ActionId | None
     resource_type: AuthorityResourceType
     http_status: int
     events: tuple[AuthorityEventType, ...]
@@ -51,43 +53,76 @@ class _OperationEvidence:
 
 _EVIDENCE = {
     AuthorityOperation.SERVICE_ACTOR_CREATE: _OperationEvidence(
-        "actor.service.provision", AuthorityResourceType.ACTOR_PROFILE, 201,
+        "actor.service.provision",
+        None,
+        AuthorityResourceType.ACTOR_PROFILE,
+        201,
         (AuthorityEventType.SERVICE_ACTOR_PROVISIONED,),
     ),
     AuthorityOperation.ADMIN_ROLE_GRANT_ISSUE: _OperationEvidence(
-        "admin_role.grant", AuthorityResourceType.ADMIN_ROLE_GRANT, 201,
+        "admin_role.grant",
+        ActionId.ADMIN_ROLE_GRANT_ISSUE,
+        AuthorityResourceType.ADMIN_ROLE_GRANT,
+        201,
         (AuthorityEventType.ADMIN_ROLE_GRANT_ISSUED,),
     ),
     AuthorityOperation.ADMIN_ROLE_GRANT_REVOKE: _OperationEvidence(
-        "admin_role.revoke", AuthorityResourceType.ADMIN_ROLE_GRANT, 200,
+        "admin_role.revoke",
+        ActionId.ADMIN_ROLE_GRANT_REVOKE,
+        AuthorityResourceType.ADMIN_ROLE_GRANT,
+        200,
         (AuthorityEventType.ADMIN_ROLE_GRANT_REVOKED,),
     ),
     AuthorityOperation.PROJECT_ROLE_GRANT_ISSUE: _OperationEvidence(
-        "project.role_grant.manage", AuthorityResourceType.PROJECT_ROLE_GRANT, 201,
-        (AuthorityEventType.PROJECT_ROLE_GRANT_ISSUED, AuthorityEventType.PROJECT_ROLE_GRANT_REPLACED),
+        "project.role_grant.manage",
+        None,
+        AuthorityResourceType.PROJECT_ROLE_GRANT,
+        201,
+        (
+            AuthorityEventType.PROJECT_ROLE_GRANT_ISSUED,
+            AuthorityEventType.PROJECT_ROLE_GRANT_REPLACED,
+        ),
     ),
     AuthorityOperation.PROJECT_ROLE_GRANT_REVOKE: _OperationEvidence(
-        "project.role_grant.manage", AuthorityResourceType.PROJECT_ROLE_GRANT, 200,
+        "project.role_grant.manage",
+        None,
+        AuthorityResourceType.PROJECT_ROLE_GRANT,
+        200,
         (AuthorityEventType.PROJECT_ROLE_GRANT_REVOKED,),
     ),
     AuthorityOperation.ACTOR_PROFILE_SUSPEND: _OperationEvidence(
-        "actor.profile.suspend", AuthorityResourceType.ACTOR_PROFILE, 200,
+        "actor.profile.suspend",
+        None,
+        AuthorityResourceType.ACTOR_PROFILE,
+        200,
         (AuthorityEventType.ACTOR_PROFILE_SUSPENDED,),
     ),
     AuthorityOperation.ACTOR_PROFILE_REACTIVATE: _OperationEvidence(
-        "actor.profile.reactivate", AuthorityResourceType.ACTOR_PROFILE, 200,
+        "actor.profile.reactivate",
+        None,
+        AuthorityResourceType.ACTOR_PROFILE,
+        200,
         (AuthorityEventType.ACTOR_PROFILE_REACTIVATED,),
     ),
     AuthorityOperation.ACTOR_PROFILE_DEACTIVATE: _OperationEvidence(
-        "actor.profile.deactivate", AuthorityResourceType.ACTOR_PROFILE, 200,
+        "actor.profile.deactivate",
+        None,
+        AuthorityResourceType.ACTOR_PROFILE,
+        200,
         (AuthorityEventType.ACTOR_PROFILE_DEACTIVATED,),
     ),
     AuthorityOperation.ACTOR_IDENTITY_LINK_REVOKE: _OperationEvidence(
-        "actor.identity_link.revoke", AuthorityResourceType.ACTOR_IDENTITY_LINK, 200,
+        "actor.identity_link.revoke",
+        None,
+        AuthorityResourceType.ACTOR_IDENTITY_LINK,
+        200,
         (AuthorityEventType.ACTOR_IDENTITY_LINK_REVOKED,),
     ),
     AuthorityOperation.ACTOR_IDENTITY_LINK_REACTIVATE: _OperationEvidence(
-        "actor.identity_link.reactivate", AuthorityResourceType.ACTOR_IDENTITY_LINK, 200,
+        "actor.identity_link.reactivate",
+        None,
+        AuthorityResourceType.ACTOR_IDENTITY_LINK,
+        200,
         (AuthorityEventType.ACTOR_IDENTITY_LINK_REACTIVATED,),
     ),
 }
@@ -151,7 +186,8 @@ class AuthorityMutationService:
         if isinstance(mutation, ProjectRoleGrantIssueRequest):
             allowed_events = (
                 AuthorityEventType.PROJECT_ROLE_GRANT_REPLACED
-                if mutation.replaced_grant_id else AuthorityEventType.PROJECT_ROLE_GRANT_ISSUED,
+                if mutation.replaced_grant_id
+                else AuthorityEventType.PROJECT_ROLE_GRANT_ISSUED,
             )
         valid = (
             mutation.operation == claim.operation
@@ -176,6 +212,26 @@ class AuthorityMutationService:
         if not valid:
             raise TypeError("invalid authority completion input")
         stored_success = await self._audit.add_authority_event(success)
+        admin_mutation = isinstance(
+            mutation,
+            (AdminRoleGrantIssueRequest, AdminRoleGrantRevokeRequest),
+        )
+        invalidation_target_kind = spec.resource_type.value
+        invalidation_target_ref = success.resource_id
+        invalidation_resource_type = success.resource_type
+        invalidation_resource_id = success.resource_id
+        before_facts = {"effective": True}
+        after_facts = {"effective": False}
+        if admin_mutation:
+            if success.target_actor_ref is None:
+                raise TypeError("admin grant success requires target actor")
+            invalidation_target_kind = AuthorityResourceType.ACTOR_PROFILE.value
+            invalidation_target_ref = success.target_actor_ref
+            invalidation_resource_type = AuthorityResourceType.ACTOR_PROFILE.value
+            invalidation_resource_id = success.target_actor_ref
+            if isinstance(mutation, AdminRoleGrantIssueRequest):
+                before_facts = {"effective": False}
+                after_facts = {"effective": True}
         invalidation_input = AuthorityAuditEventInput(
             event_id=invalidation.event_id,
             event_type=AuthorityEventType.AUTHORITY_INVALIDATION_REQUESTED,
@@ -187,15 +243,15 @@ class AuthorityMutationService:
             correlation_id=invalidation.correlation_id,
             permission_id=spec.permission,
             project_id=success.project_id,
-            resource_type=success.resource_type,
-            resource_id=success.resource_id,
+            resource_type=invalidation_resource_type,
+            resource_id=invalidation_resource_id,
             reason="authority_state_changed",
             idempotency_reference=claim.record_id,
             invalidation_cause_event_id=UUID(stored_success.id),
-            invalidation_target_kind=spec.resource_type.value,
-            invalidation_target_ref=success.resource_id,
-            before_facts={"effective": True},
-            after_facts={"effective": False},
+            invalidation_target_kind=invalidation_target_kind,
+            invalidation_target_ref=invalidation_target_ref,
+            before_facts=before_facts,
+            after_facts=after_facts,
         )
         await self._audit.add_authority_event(invalidation_input)
         await self._repository.complete(claim, response)
@@ -226,7 +282,11 @@ class AuthorityMutationService:
             actor_ref=actor_ref,
             request_id=context.request_id,
             correlation_id=context.correlation_id,
+            matched_grant_id=(
+                str(context.matched_grant_id) if context.matched_grant_id else None
+            ),
             permission_id=spec.permission,
+            action_id=spec.action,
             project_id=_request_project_id(mutation),
             resource_type=spec.resource_type.value if resource_id else None,
             resource_id=str(resource_id) if resource_id else None,
@@ -272,14 +332,19 @@ def _request_matches_success(
             and success.target_actor_ref == str(request.target_actor_id)
             and success.project_id
             == (str(request.scope_project_id) if request.scope_project_id else None)
-            and success.matched_grant_id is None
+            and success.matched_grant_id is not None
             and facts.get("role") == request.role.value
             and facts.get("scope_type") == request.scope_type.value
             and facts.get("scope_id")
             == (str(request.scope_project_id) if request.scope_project_id else None)
         )
     if isinstance(request, AdminRoleGrantRevokeRequest):
-        return resource_id == request.grant_id
+        return (
+            resource_id == request.grant_id
+            and success.target_actor_ref_kind == ActorReferenceKind.ACTOR_PROFILE
+            and success.target_actor_ref is not None
+            and success.matched_grant_id is not None
+        )
     if isinstance(request, ProjectRoleGrantIssueRequest):
         facts = success.after_facts or {}
         return (

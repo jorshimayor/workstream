@@ -344,3 +344,62 @@ commits, and never accepts a raw
 PermissionId, candidate grant, or guard. REV owns its ResourceContext composers
 and lifecycle invariants and may import only that public AUTH interface and
 closed types, never AUTH persistence or grant queries.
+
+## D18: Administrative actions and grants activate together in AUTH-08
+
+Status: accepted as the required L1 contract repair after AUTH-08's explicit
+start on 2026-07-15.
+
+AUTH-08 adds no PermissionId. It adds exactly seven ActionIds owned by AUTH-08:
+`authorization.permission_catalogue.read`,
+`authorization.admin_role_definitions.read`, `admin_role_grant.list`,
+`actor.admin_role_grant_history.read`, `admin_role_grant.issue`,
+`admin_role_grant.revoke`, and `admin_role_grant.bootstrap`. They map to the
+existing `admin_role.read`, `admin_role.grant`, or `admin_role.revoke`
+permissions. This preserves D15's one canonical target, candidate, guard set,
+and principal type per action instead of collapsing definition reads, scoped
+history reads, human mutations, and the local trust root. They activate only
+with the one-time local bootstrap, exact five-role permission matrix, immutable
+AdminRoleGrant persistence, grant-backed central-kernel evaluation, scoped
+definition/history APIs, audit/idempotency parity, and final-administrator
+locking in the same reviewed chunk. The merged 50-action catalogue therefore
+becomes 57 actions with exactly nine active actions after AUTH-08; every other
+action remains planned.
+
+The local bootstrap command declares `admin_role_grant.bootstrap` in its command
+manifest but does not fabricate a bearer AuthorizationContext or human grant.
+HTTP surfaces continue to use only request-scoped
+`AuthorizationService.require(action_id, typed_resource_context)`. System scope
+is not superuser authority, token roles never become candidates, and AUTH-09
+remains the owner of actor/link lifecycle mutations that must later reuse the
+AuthorityControl-first final-administrator lock order.
+
+For the two admin-grant mutations, this decision supersedes AUTH-05B's generic
+grant-resource `effective=true -> false` invalidation placeholder. Issue
+invalidates the target actor authority projection `false -> true`; revoke
+invalidates it `true -> false`. AUTH-08 must update typed and PostgreSQL audit
+validation together and prove both directions. Human-readable bounded grant and
+revocation reasons live on immutable AdminRoleGrant history; request digests
+remain in idempotency evidence, and audit reasons remain closed classifications.
+
+## D19: Protected routes own commit and successful verification timestamps
+
+Status: accepted after read-only AUTH-07B consumer review on 2026-07-15.
+
+The reusable authorization dependency never commits an arbitrary open feature
+transaction during successful teardown. Every protected route explicitly owns
+the commit of its read/mutation plus authorization evidence, while dependency
+teardown rolls back unfinished work. Authorization-evidence SQL failures map at
+that composition boundary through a typed `AuthorizationEvidenceUnavailable`
+to the existing retryable 503 `service_unavailable` envelope without partial
+evidence or business state. Feature SQL errors remain route-owned. Route commit
+failures use the same public retryable envelope but are not mislabeled as audit
+failures, and rollback every staged participant before retry.
+
+For an existing actor, a successful protected request advances canonical
+`ActorProfile.last_seen_at` and `ActorIdentityLink.last_verified_at` after
+authorization in that route-owned transaction. The link-then-profile update
+uses `GREATEST(current_value, clock_timestamp())` so crossed commits cannot
+regress recency. Authorization denial or persistence failure rolls the staged
+timestamp changes back. This restores verification recency without letting
+denied requests manufacture successful-use evidence.

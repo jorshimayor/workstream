@@ -229,6 +229,13 @@ class ActorService:
         await self._session.refresh(profile)
         return self.self_response(profile)
 
+    async def touch_after_authorization(self, resolved: ResolvedActor) -> ResolvedActor:
+        """Stage monotonic verification timestamps after an allowed decision."""
+        await self._repo.touch_verified_actor(resolved.profile, resolved.identity_link)
+        await self._session.refresh(resolved.profile)
+        await self._session.refresh(resolved.identity_link)
+        return resolved
+
     @staticmethod
     def actor_self_resource(
         actor_profile_id: str,
@@ -326,8 +333,12 @@ class ActorService:
         )
 
     @staticmethod
-    def self_response(profile: ActorProfile) -> ActorProfileSelfResponse:
-        """Build the fixed no-grants Contributor-domain response."""
+    def self_response(
+        profile: ActorProfile,
+        *,
+        admin_roles: tuple[str, ...] = (),
+    ) -> ActorProfileSelfResponse:
+        """Build the Contributor-domain response with informational active role names."""
         if profile.actor_kind != "human":
             raise UnsupportedSubjectKind("Unsupported subject kind")
         if profile.status == "deactivated":
@@ -341,6 +352,7 @@ class ActorService:
             created_at=profile.created_at,
             updated_at=profile.updated_at,
             last_seen_at=profile.last_seen_at,
+            admin_roles=admin_roles,
         )
 
     async def _touch_verified_actor(self, resolved: ResolvedActor) -> ResolvedActor:
