@@ -65,8 +65,7 @@ Every backend chunk must be judged against Workstream workflow correctness, not 
 Required test gates across the Week 1 chunks:
 
 - migration tests prove Alembic can create the schema from an empty database and run at least one upgrade/downgrade path during early chunks
-- model invariant tests prove project, guide, task, submission, compensation,
-  and audit ownership rules
+- model invariant tests prove project, guide, task, submission, payment, and audit ownership rules
 - API smoke tests prove health, project, guide, task, claim, and submission paths
 - transition guard tests prove allowed lifecycle moves and block invalid shortcuts
 - submission immutability tests prove locked packets cannot be edited in place and replacements create new versions
@@ -198,11 +197,10 @@ Scope:
 - post-submit checker policy model
 - review policy model
 - revision policy model
-- project contribution policy/version model
+- payment policy model
 - guide versioning fields
 - active guide lock behavior
-- independently published contribution policy/version fields and submission
-  artifact policy fields
+- base payout and submission artifact policy fields
 
 Non-scope:
 
@@ -214,9 +212,7 @@ Conditions of satisfaction:
 
 - project can be created
 - guide version can be created as draft
-- guide version can be activated only when required submission artifact,
-  checker, review, and revision policy fields exist; Assignment/ReviewLease
-  creation separately requires an active published ContributionPolicyVersion
+- guide version can be activated only when required submission artifact, checker, review, revision, and payment policy fields exist
 - active guide can be retrieved for task creation
 - editing a draft guide does not mutate historical task context
 - migrations and model tests pass
@@ -244,7 +240,7 @@ Non-scope:
 - submission artifacts
 - checker runs
 - human review workflow
-- compensation fulfillment execution
+- payment execution
 
 Conditions of satisfaction:
 
@@ -279,7 +275,7 @@ Non-scope:
 
 - checker execution
 - review decisions
-- compensation/reputation creation
+- payment/reputation creation
 
 Conditions of satisfaction:
 

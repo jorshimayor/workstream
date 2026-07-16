@@ -203,14 +203,6 @@ ACTIVATION_CUSTODY_EXACT_PATHS = (
     ".agent-loop/WORK_QUEUE.md",
     "docs/spec_authorization_service.md",
 )
-ACTIVATION_CUSTODY_INITIATIVES = (
-    "WS-AUTH-001-workstream-authorization-service",
-    "WS-ART-001-immutable-artifact-storage",
-    "WS-CON-001-contribution-compensation-boundary",
-    "WS-REV-001-review-revision-lifecycle",
-    "WS-XINT-001-lifecycle-boundary-reconciliation",
-)
-
 TECHNICAL_WORKER_PREFIX = re.compile(
     r"(?:celery(?:[- ]backed)?|checker|setup|system|background|reconciliation|"
     r"execution|"
@@ -271,15 +263,13 @@ def discover_activation_custody_documents(root: Path = ROOT) -> list[Path]:
     if policy_root.is_dir():
         documents.update(policy_root.glob("*.md"))
     initiative_root = root / ".agent-loop/initiatives"
-    for initiative in ACTIVATION_CUSTODY_INITIATIVES:
-        path = initiative_root / initiative
-        if not path.is_dir():
-            continue
+    if initiative_root.is_dir():
         documents.update(
             candidate
-            for candidate in path.rglob("*.md")
-            if "reviews" not in candidate.relative_to(path).parts
-            and candidate.name not in {"DISCOVERY.md", "INTENT.md"}
+            for candidate in initiative_root.rglob("*")
+            if candidate.is_file()
+            and candidate.suffix in {".json", ".md"}
+            and "reviews" not in candidate.relative_to(initiative_root).parts
         )
     return sorted(documents)
 

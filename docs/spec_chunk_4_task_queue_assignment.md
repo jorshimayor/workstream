@@ -26,7 +26,7 @@ This chunk does not implement:
 - human review decisions
 - revision replay execution
 - contribution records
-- compensation fulfillment execution
+- payment execution
 - reputation calculation
 - frontend screens
 
@@ -71,15 +71,13 @@ Task records store:
 - locked post-submit checker policy version
 - locked review policy version
 - locked revision policy version
+- locked payment policy version
 - task source metadata
 - task content fields
 - skill tags
+- base amount, currency, and payout type
 - current lifecycle status
 - assigned worker id
-
-`TaskAssignment` independently freezes the active published submitter
-`ContributionPolicyVersion` when the claim succeeds. Compensation is not guide
-or checker context.
 
 Assignments enforce one active worker per task in v0.1. Project policies that allow multiple workers are later work.
 
@@ -114,10 +112,8 @@ CLAIMED -> IN_PROGRESS
 Rules:
 
 - `DRAFT -> SCREENING` requires active project guide context and complete task source, description, acceptance, and rejection fields, then locks guide and policy versions on the task.
-- `SCREENING -> READY` requires that guide, checker, review, and revision policy context be locked.
-- `READY -> CLAIMED` requires an active published submitter contribution award rule,
-  freezes its `ContributionPolicyVersion` on the new assignment, and blocks a
-  second active assignment.
+- `SCREENING -> READY` requires that guide, checker, review, revision, and payment policy context be locked.
+- `READY -> CLAIMED` creates an active assignment and blocks a second active assignment.
 - `CLAIMED -> IN_PROGRESS` requires an active assignment for the actor or an authorized operator role.
 - every status change writes an audit event.
 

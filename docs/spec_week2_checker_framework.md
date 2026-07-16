@@ -29,7 +29,7 @@ The checker framework protects reviewer time by proving that the latest locked s
 - human review decision records/forms for `accept`, `needs_revision`, or `reject`
 - revision replay enforcement
 - contribution records
-- compensation awards and fulfillment records
+- payment records
 - reputation updates
 - external source adapters
 - blockchain, x402, escrow, or settlement rails
@@ -55,10 +55,7 @@ The checker binding includes:
 - locked post-submit checker policy version
 - locked review policy version
 - locked revision policy version
-
-Compensation is not checker input. The assignment and review-lease boundaries
-freeze their applicable `ContributionPolicyVersion` values independently of
-submission checker execution.
+- locked payment policy version
 
 ## Two-Stage Checker Model
 

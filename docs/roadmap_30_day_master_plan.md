@@ -2,15 +2,9 @@
 
 ## Goal
 
-Build the first serious version of Workstream: Flow's configurable task
-evaluation and contribution infrastructure that can run real internal projects
-from guide to review decision, contribution record, conditional compensation
-award and fulfillment state, and reputation signal.
+Build the first serious version of Workstream: Flow's configurable task evaluation and contribution infrastructure that can run real internal projects from guide to contribution record, review decision, payment status, and reputation signal.
 
-The output of the 30 days is not a demo-only UI. It is usable infrastructure
-with durable contribution records, project templates, automated checks, human
-review, revision replay, compensation awards and fulfillment records, and
-reputation records.
+The output of the 30 days is not a demo-only UI. It is usable infrastructure with durable contribution records, project templates, automated checks, human review, revision replay, and payment/reputation ledgers.
 
 ## Scope
 
@@ -24,7 +18,7 @@ In scope:
 - revision loop
 - evidence storage
 - contribution records
-- compensation awards and fulfillment records
+- payment ledger
 - reputation ledger
 - dashboards for current status
 - pilot with real tasks
@@ -50,15 +44,13 @@ DRAFT -> SCREENING -> READY -> CLAIMED -> IN_PROGRESS -> SUBMITTED -> EVALUATION
 
 `pre_review_gate` is the checker/audit phase that runs while the persisted task status is `evaluation_pending`.
 
-Compensation fulfillment status is separate for payable awards:
+Payment status is separate:
 
 ```text
-pending_delivery -> acknowledged_by_adapter
-pending -> failed | fulfilled
+NONE -> PENDING -> PAYOUT_SUBMITTED -> PAID
 ```
 
-If a feature does not improve lifecycle correctness, review quality, evidence,
-compensation tracking, or reputation, defer it.
+If a feature does not improve lifecycle correctness, review quality, evidence, payment tracking, or reputation, defer it.
 
 ## Week 1: Foundation
 
@@ -76,7 +68,7 @@ Deliverables:
 - roles and permissions matrix
 - submission record
 - evidence record
-- contribution policy/version context
+- payment policy context
 - reputation dimensions
 - backend API smoke paths for project, task, assignment, and submission records
 - workspace/packet convention for the first project
@@ -96,9 +88,7 @@ Day 2:
 
 - build project and guide records
 - create project guide editor or markdown-backed guide import
-- define checker, review, and revision policy fields
-- define the independent ContributionPolicyVersion rules and immutable
-  money/project-points award definitions
+- define checker, review, revision, and payment policy fields, including base amount, currency, and payment rule fields
 - use backend records/API first; frontend editor is deferred until the backend contract is stable
 
 Day 3:
@@ -122,8 +112,7 @@ Day 5:
 
 Week 1 acceptance bar:
 
-- a project can be created with a versioned guide plus checker, review, and
-  revision policy context and an independently published contribution policy
+- a project can be created with a versioned guide plus checker, review, revision, and payment policy context
 - a task can be created, screened, claimed, submitted, and tracked
 - every task status transition is recorded
 - no task exists outside a project
@@ -275,13 +264,13 @@ Week 3 acceptance bar:
 - every resubmission must close prior feedback
 - accept, needs_revision, and reject decisions are auditable
 
-## Week 4: Compensation, Reputation, Pilot
+## Week 4: Payment, Reputation, Pilot
 
 Objective: run real tasks and harden the operating loop.
 
 Deliverables:
 
-- compensation awards, fulfillment receipts, and status projections
+- payment ledger
 - reputation ledger
 - project dashboard
 - worker dashboard
@@ -291,11 +280,12 @@ Deliverables:
 
 Day 16:
 
-- implement contribution and compensation records:
-  - reviewer and submitter ContributionRecords
-  - immutable CompensationAwards for payable rules
-  - immutable fulfillment receipts
-  - rebuildable delivery/fulfillment status projections
+- implement payment records:
+  - base amount
+  - accepted amount
+  - pending payout
+  - paid amount
+  - payment status
 
 Day 17:
 
@@ -312,8 +302,8 @@ Day 18:
   - tasks by status
   - accepted count
   - needs revision count
-  - pending compensation fulfillment
-  - fulfilled compensation total
+  - pending payout
+  - paid total
 
 Day 19:
 
@@ -334,7 +324,7 @@ Day 22:
 
 - accept/reject pilot tasks
 - create contribution records
-- record compensation awards and fulfillment outcomes
+- record payment outcomes
 - update reputation
 
 Day 23:
@@ -364,7 +354,7 @@ Day 27:
   - time to review
   - revision count
   - acceptance rate
-  - compensation pending fulfillment
+  - payment pending
 
 Day 28:
 
@@ -388,7 +378,7 @@ Week 4 acceptance bar:
 - at least 10 real tasks entered
 - at least 5 complete submission cycles
 - at least 2 revision cycles
-- contribution-linked compensation and reputation records generated
+- payment and reputation records generated
 - one pilot report completed
 
 ## Success Metrics
@@ -405,10 +395,8 @@ Operations:
 - at least 10 pilot tasks
 - at least 5 completed cycles
 - median review turnaround under 24 hours for pilot
-- no valid human review without a reviewer contribution record
-- no accepted task without a submitter contribution record
-- no payable contribution without an immutable CompensationAward and
-  fulfillment projection
+- no accepted task without payment record
+- no accepted task without contribution record
 
 Quality:
 
@@ -416,7 +404,7 @@ Quality:
 - reviewer findings are actionable
 - revision replay closes prior feedback
 - accepted work can be audited later
-- contribution records exist before their compensation and reputation updates
+- accepted work has contribution records before payment and reputation updates
 
 ## Main Risks
 
@@ -426,15 +414,12 @@ Mitigation: keep the first 30 days internal.
 
 Risk: project rules living in chat instead of system policy.
 
-Mitigation: every project guide must define checker, review, and revision
-policy; every project independently publishes explicit submitter/reviewer
-contribution award rules before assignments or review leases.
+Mitigation: every project guide must define checker, review, revision, and payment policy.
 
 Risk: reviewers giving vague feedback.
 
 Mitigation: require structured findings and concrete required fixes.
 
-Risk: compensation fulfillment tracking becoming manual chaos.
+Risk: payment tracking becoming manual chaos.
 
-Mitigation: immutable awards and fulfillment records exist from week 4 even
-before automated settlement.
+Mitigation: payment ledger exists from week 4 even before automated payment.

@@ -1147,8 +1147,22 @@ def test_historical_docs_do_not_define_live_compensation_contract() -> None:
     assert not stale.is_active_shared_contract_path(
         Path("docs/internal_reviews/example.md")
     )
+    assert not stale.is_active_shared_contract_path(
+        Path("docs/spec_chunk_3_project_guide_foundation.md")
+    )
     assert stale.is_active_shared_contract_path(Path("docs/spec_chunk_5_example.md"))
     assert stale.is_active_shared_contract_path(Path("docs/review_architecture.md"))
+
+    auth_gate = load_module(
+        "stale_authorization_docs_historical_compensation",
+        "scripts/check_stale_authorization_docs.py",
+    )
+    artifact_gate = load_module(
+        "stale_artifact_contracts_historical_compensation",
+        "scripts/check_stale_artifact_contracts.py",
+    )
+    assert stale.HISTORICAL_PATHS == set(auth_gate.HISTORICAL_PATHS)
+    assert stale.HISTORICAL_PATHS == artifact_gate.HISTORICAL_PATHS
 
 
 def test_current_runtime_walkthrough_rejects_unimplemented_compensation_records() -> (
@@ -3677,6 +3691,8 @@ def test_activation_custody_discovery_includes_canonical_handoffs() -> None:
         "AUTH_ART_HANDOFF.md",
         "AUTH_ROLE_SERVICE_HANDOFF.md",
         "AUTH_REV_HANDOFF.md",
+        "DISCOVERY.md",
+        "INTENT.md",
         "REV_CON_HANDOFF.md",
         "chunks/WS-XINT-001-PLAN-boundary-reconciliation.md",
     }
@@ -3711,6 +3727,10 @@ def test_activation_custody_discovery_includes_canonical_handoffs() -> None:
         policy_text = "Later owner chunks activate catalogue rows in typed code.\n"
         policy_contract.write_text(policy_text, encoding="utf-8")
 
+        intent_contract = initiative / "INTENT.md"
+        intent_text = "The paired owning feature activates each action.\n"
+        intent_contract.write_text(intent_text, encoding="utf-8")
+
         all_discovered = gate.discover_activation_custody_documents(root)
         discovered = {
             path.relative_to(initiative).as_posix()
@@ -3723,6 +3743,7 @@ def test_activation_custody_discovery_includes_canonical_handoffs() -> None:
     assert con_contract in all_discovered
     assert public_contract in all_discovered
     assert policy_contract in all_discovered
+    assert intent_contract in all_discovered
     assert gate.scan_activation_custody_text(
         con_contract.relative_to(root).as_posix(),
         con_text,
@@ -3739,6 +3760,13 @@ def test_activation_custody_discovery_includes_canonical_handoffs() -> None:
         policy_text,
     ) == [
         ".agent-loop/policies/security-boundaries.md:1: FEATURE_OWNED_AUTH_ACTIVATION"
+    ]
+    assert gate.scan_activation_custody_text(
+        intent_contract.relative_to(root).as_posix(),
+        intent_text,
+    ) == [
+        ".agent-loop/initiatives/WS-XINT-001-lifecycle-boundary-reconciliation/"
+        "INTENT.md:1: FEATURE_OWNED_AUTH_ACTIVATION"
     ]
 
 

@@ -25,7 +25,7 @@ This matches the operating pattern we want from serious evaluation systems: the 
 - reviewer queue UI
 - revision replay enforcement
 - contribution records
-- compensation awards and fulfillment records
+- payment records
 - reputation records
 - external checker worker infrastructure
 - override endpoint
@@ -70,6 +70,7 @@ The automatic run uses the policy context already stamped on the locked submissi
 - locked post-submit checker policy body
 - locked review policy version
 - locked revision policy version
+- locked payment policy version
 
 The worker does not provide or restate these policy versions.
 

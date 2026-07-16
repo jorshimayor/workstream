@@ -55,9 +55,9 @@ adapters handle money payment requests/settlement or project-points fulfillment.
 Project contributor authority uses independent exact-project `submitter`,
 `reviewer`, and `adjudicator` grants; one human may hold all three rows, but any
 one can be revoked without changing another. Adjudication actions remain
-unavailable until their lifecycle is separately approved. Fixed service
-ActorProfiles use a separate AUTH runtime-admission path and exact static action
-matrix, never human grants.
+unavailable until WS-REV defines the lifecycle and AUTH activates exact
+adjudication actions. Fixed service ActorProfiles use a separate AUTH
+runtime-admission path and exact static action matrix, never human grants.
 
 ## Design chosen
 

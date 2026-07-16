@@ -62,6 +62,7 @@ verified service token
 -> immutable fixed service_identity
 -> exact static service-action matrix row
 -> typed service AuthorizationContext
+-> canonical feature ResourceContext and guards recomposed from locked rows
 -> authorization decision
 ```
 

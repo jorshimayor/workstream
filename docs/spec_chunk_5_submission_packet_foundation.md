@@ -2,14 +2,7 @@
 
 ## Purpose
 
-This chunk adds the backend record for worker submission packets. A worker
-submits against a task id, Workstream runs pre-submit intake checks from the
-locked project pre-submit checker policy, stamps the task's locked guide source
-snapshot, effective project submission artifact policy, project pre-submit
-checker bundle, post-submit checker, review, and revision context, and every
-submitted packet version becomes immutable during successful submission
-creation before checker execution is queued. Compensation is not submission or
-checker context.
+This chunk adds the backend record for worker submission packets. A worker submits against a task id, Workstream runs pre-submit intake checks from the locked project pre-submit checker policy, stamps the task's locked guide source snapshot, effective project submission artifact policy, project pre-submit checker bundle, post-submit checker, review, revision, and payment context, and every submitted packet version becomes immutable during successful submission creation before checker execution is queued.
 
 This completes the Week 1 backend lifecycle through `SUBMITTED`.
 
@@ -32,7 +25,7 @@ This completes the Week 1 backend lifecycle through `SUBMITTED`.
 - new checker run record schema
 - human review decisions
 - revision replay enforcement
-- contribution, compensation, or reputation records
+- contribution, payment, or reputation records
 - direct file upload or object storage implementation
 
 Chunk 5 stores package and evidence references. Actual file storage still belongs behind the later object-storage abstraction.
@@ -64,6 +57,7 @@ Chunk 5 stores package and evidence references. Actual file storage still belong
 - `locked_post_submit_checker_policy_body`
 - `locked_review_policy_version`
 - `locked_revision_policy_version`
+- `locked_payment_policy_version`
 - `submitted_at`
 - `locked_at`
 - `supersedes_submission_id`
@@ -129,10 +123,7 @@ Request body:
 - `worker_attestation`
 - `evidence_items`
 
-The request body must not accept guide source snapshot ids or hashes, effective
-project submission artifact policy ids or hashes, project pre-submit checker
-policy ids or bundle hashes, or guide/checker/review/revision policy version
-fields. Those fields come from the task.
+The request body must not accept guide source snapshot ids or hashes, effective project submission artifact policy ids or hashes, project pre-submit checker policy ids or bundle hashes, or guide/checker/review/revision/payment policy version fields. Those fields come from the task.
 
 The request body must not accept checker names, checker severities, checker outcomes, submission version, evidence ids, or checker run ids. Workstream owns those values.
 
@@ -238,13 +229,13 @@ Chunk 5 writes task audit events with submission identifiers in `event_payload`.
 ## Conditions Of Satisfaction
 
 - worker submits a draft packet against `task_id` and Workstream assigns version `1` after blocking pre-submit checks pass
-- worker does not provide locked guide source snapshot, effective project submission artifact policy, project pre-submit checker, or guide/checker/review/revision policy context
-- worker-provided locked guide source snapshot, effective project submission artifact policy, project pre-submit checker, or guide/checker/review/revision policy context fields are rejected by the API schema
+- worker does not provide locked guide source snapshot, effective project submission artifact policy, project pre-submit checker, or guide/checker/review/revision/payment policy context
+- worker-provided locked guide source snapshot, effective project submission artifact policy, project pre-submit checker, or guide/checker/review/revision/payment policy context fields are rejected by the API schema
 - worker-provided submission version fields are rejected by the API schema
 - worker-provided checker names, checker outcomes, evidence ids, and checker run ids are rejected by the API schema
 - preflight failures return `PreSubmitCheckResponse(status="failed", eligible_to_submit=false, results=[...])`
 - blocked submission-create attempts return `DomainError(code="pre_submission_checker_failed")` with structured pass/fail/warning details and create no submission row, no submission version, no task transition to `SUBMITTED`, and no submission-created audit event
-- Workstream stamps locked guide source snapshot ids/hashes, effective project submission artifact policy ids/hashes, project pre-submit checker policy ids/bundle hashes, and guide/checker/review/revision policy versions from task context
+- Workstream stamps locked guide source snapshot ids/hashes, effective project submission artifact policy ids/hashes, project pre-submit checker policy ids/bundle hashes, and guide/checker/review/revision/payment policy versions from task context
 - task moves to `SUBMITTED`
 - submitted packet is automatically locked and enters the current post-submit checker gate
 - dispatch failures after packet locking are visible as repairable automatic
