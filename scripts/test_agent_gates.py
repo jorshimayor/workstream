@@ -1064,6 +1064,7 @@ def test_active_shared_contract_rejects_retired_contracts() -> None:
             "Proposed after 02C3, AUTH-09, and AUTH custody registration",
             "worker, reviewer, or project manager",
             "operators, workers, reviewers",
+            "reviews, and payments",
             "CompensationPolicyVersion",
             "CompensationPolicy",
             "CompensationRule",
@@ -3550,6 +3551,15 @@ def test_stale_authorization_rule_examples_are_rejected() -> None:
         "TECHNICAL_WORKER_HUMAN_AUTHORITY": (
             "The checker worker submits a contributor packet."
         ),
+        "ACCESS_ADMIN_CATALOG_ADMINISTRATION": (
+            "Access Administrator manages the permission catalog."
+        ),
+        "OPERATOR_CONTRIBUTION_POLICY_AUTHORITY": (
+            "Operator reconciles contribution policy and compensation-adapter binding."
+        ),
+        "OPERATOR_COMPENSATION_MUTATION": (
+            "Operator reconciles contribution records and compensation awards."
+        ),
     }
     for code, sample in fixtures.items():
         failures = gate.scan_text("docs/new_active_doc.md", sample)
@@ -3560,6 +3570,8 @@ def test_stale_authorization_rule_examples_are_rejected() -> None:
         "Bearer-token role metadata is identity provenance only.",
         "Typed workflow profiles are eligibility metadata only.",
         "An Access Administrator may grant administrative roles.",
+        "AUTH owns the closed permission/action catalog and action availability.",
+        "Operator invokes an exact registered recovery action; WS-CON mutates state.",
     )
     for sample in unambiguous_canonical_statements:
         assert gate.scan_text("docs/new_active_doc.md", sample) == [], sample

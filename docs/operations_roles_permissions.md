@@ -22,7 +22,7 @@ product authority. Scopes are an outer request-class gate only.
 
 | Grant | Scope | Purpose |
 |---|---|---|
-| Access Administrator | system | Actor, identity-link, permission-catalog, and administrative-grant management. |
+| Access Administrator | system | Actor, identity-link, and administrative-grant management. AUTH owns the closed permission/action catalog and action availability. |
 | Operator | system | Runtime observation, reconciliation, retry, and approved recovery against canonically resolved resources. |
 | Project Manager | system or exact covered project | Project configuration, project tasks, guide/setup, submission/checker, review, and revision configuration, and contributor grants. |
 | Finance Authority | system or exact covered project | Contribution policy, compensation-adapter binding, and fulfillment observation under WS-CON-001. |
@@ -57,14 +57,14 @@ or the exact project; own means record-level ownership still applies.
 | Project create | no | no | system only | no | no | no | no | no |
 | Project read | authority-only | system operational | covered | covered finance projection | covered audit projection | exact project minimal | exact project minimal | exact project minimal |
 | Project, guide, submission/checker, review, and revision configuration | no | recovery-only where registered | covered | no | no | no | no | no |
-| Contribution policy and compensation-adapter binding | no | reconciliation-only where registered | no | covered | no | no | no | no |
+| Contribution policy and compensation-adapter binding | no | no | no | covered | no | no | no | no |
 | Project contributor grants | no | no | covered | no | read covered | no | no | no |
 | Task management | no | explicit recovery only | covered | no | read covered | no | no | no |
 | Task queue/claim | no | operational projection only | management projection only | no | read covered | exact project under guards | no | no |
 | Submission create/read | no | operational projection only | management projection only | no | read covered | own assignment | read-for-review only | no |
 | Human review decision | no | no | no without reviewer grant | no | no | no | exact project under review guards | no |
 | Adjudication action | no | no | no | no | no | no | no | unavailable; requires WS-REV contract plus AUTH action activation |
-| Compensation mutation | no | reconciliation only where registered | no | covered | no | no | no | no |
+| Compensation award and fulfillment mutation | no | exact registered recovery invocation only; WS-CON owns state mutation | no | covered | no | no | no | no |
 | Audit read/export | authority history system | operational system | project covered | finance covered | covered | own chain only | assigned chain only | no |
 
 A contributor may hold Submitter, Reviewer, and Adjudicator capabilities
@@ -83,6 +83,8 @@ visibility.
 - A submitter cannot be the sole reviewer of their own task/submission chain.
 - Project Manager authority is limited to covered projects.
 - Access Administrator cannot manage project work by that grant alone.
+- Access Administrator cannot edit the closed permission/action catalog or
+  change action availability by that grant alone; AUTH owns both contracts.
 - Operator cannot issue grants, approve policy, record a review decision, or
   mutate immutable records by that grant alone.
 - Finance Authority cannot create or alter review decisions or contribution

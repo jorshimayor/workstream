@@ -169,6 +169,42 @@ RULES = (
             re.IGNORECASE,
         ),
     ),
+    Rule(
+        "ACCESS_ADMIN_CATALOG_ADMINISTRATION",
+        re.compile(
+            r"\b(?:Access Administrator|access_administrator)\b[^.\n]{0,200}(?:"
+            r"\b(?:manage(?:s|d|ment)?|administer(?:s|ed)?|administration|"
+            r"own(?:s|ership))\b[^.\n]{0,100}\b(?:permission|action)[\s/-]+"
+            r"catalog(?:ue)?\b|"
+            r"\b(?:permission|action)[\s/-]+catalog(?:ue)?\b[^.\n]{0,100}"
+            r"\b(?:management|administration|ownership)\b)",
+            re.IGNORECASE,
+        ),
+    ),
+    Rule(
+        "OPERATOR_CONTRIBUTION_POLICY_AUTHORITY",
+        re.compile(
+            r"(?:\bOperator\b.{0,180}\b(?:publish(?:es|ed)?|approve(?:s|d)?|"
+            r"bind(?:s|ing)?|manage(?:s|d|ment)?|mutate(?:s|d)?|mutation|"
+            r"reconcile(?:s|d)?|reconciliation)\b.{0,120}"
+            r"\b(?:contribution polic(?:y|ies)|compensation-adapter binding)\b|"
+            r"\b(?:contribution polic(?:y|ies)|compensation-adapter binding)\b"
+            r".{0,180}\bOperator\b.{0,100}\b(?:publish|approve|bind|manage|"
+            r"mutat|reconcil))",
+            re.IGNORECASE,
+        ),
+    ),
+    Rule(
+        "OPERATOR_COMPENSATION_MUTATION",
+        re.compile(
+            r"(?:\bOperator\b.{0,160}\b(?:reconcile(?:s|d)?|reconciliation|"
+            r"mutate(?:s|d)?|mutation|create(?:s|d)?|update(?:s|d)?)\b.{0,120}"
+            r"\b(?:contribution records?|compensation awards?|fulfillment records?)\b|"
+            r"\b(?:contribution records?|compensation awards?|fulfillment records?)\b"
+            r".{0,160}\bOperator\b.{0,100}\b(?:reconcil|mutat|creat|updat))",
+            re.IGNORECASE,
+        ),
+    ),
 )
 
 ACTIVATION_CUSTODY_RULES = (

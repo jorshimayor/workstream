@@ -26,8 +26,9 @@ does not issue grants, approve policy, or record review decisions by that grant.
 
 ### Access Administrator
 
-Manages actors, identity links, the permission catalog, and administrative
-grants. This grant does not manage project work.
+Manages actors, identity links, and administrative grants. This grant does not
+manage project work, edit AUTH's closed permission/action catalog, or change
+action availability.
 
 ### Finance Authority
 
@@ -38,19 +39,21 @@ compensation awards, delivery, fulfillment, failure, and dispute state.
 
 Reads authorized immutable and operational evidence without mutation.
 
-## Daily Operating Loop
+## Cross-Role Daily Operating Loop
 
 ```text
-1. Check task queue
-2. Create or release ready tasks
-3. Assign tasks
-4. Review submitted packets
-5. Resolve needs-revision queue
-6. Reconcile contribution, award, and fulfillment records
-7. Review failed checks; apply covered repair where eligible, use registered
-   Operator retry for infrastructure or setup failures, and route
-   contributor-fixable blockers to `NEEDS_REVISION`
-8. Update project lessons learned
+1. Project Manager: check the covered-project task queue.
+2. Project Manager: create or release ready tasks under project lifecycle guards.
+3. Project Manager: assign tasks under project policy.
+4. Reviewer: review assigned checker-passed submission packets.
+5. Reviewer and Submitter: issue and respond to `needs_revision`; Project Manager
+   observes the covered-project queue without recording either party's action.
+6. Finance Authority: reconcile contribution-policy, award, delivery, and
+   fulfillment records through WS-CON-owned commands.
+7. Project Manager: apply covered project repair where eligible. Operator may
+   invoke only an exact registered, reasoned recovery action for infrastructure
+   or setup failure. Submitter-fixable blockers return as `needs_revision`.
+8. Project Manager: update covered-project lessons learned.
 ```
 
 ## Task Creation Workflow

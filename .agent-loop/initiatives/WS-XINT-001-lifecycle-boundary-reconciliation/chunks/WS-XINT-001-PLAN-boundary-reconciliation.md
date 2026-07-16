@@ -131,3 +131,13 @@ zero findings at any severity; `PASS WITH LOW RISKS` is not sufficient.
 Stop if a boundary requires runtime implementation, a new permission, an
 unapproved service identity, dual activation ownership, or a direct repository
 dependency. Stop after publishing the reviewed planning PR.
+
+## Final Repair Boundary
+
+The final review repair is limited to role ownership and active-contract
+consistency in the operations matrix/workflow, authorization specification,
+architecture review/brief/data model, Work Queue, stale-contract scanners and
+their regression tests, generated architecture PDF, and this initiative's
+status/review artifacts. It changes no runtime behavior and introduces no new
+role, permission, action, service identity, lifecycle, or cross-initiative
+successor.

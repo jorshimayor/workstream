@@ -140,6 +140,7 @@ ACTIVE_SHARED_CONTRACT_PATTERNS = (
     ),
     re.compile(r"\bworker, reviewer, or project manager\b", re.IGNORECASE),
     re.compile(r"\boperators?, workers?, reviewers?\b", re.IGNORECASE),
+    re.compile(r"\breviews?,\s+and\s+payments?\b", re.IGNORECASE),
     re.compile(r"\bCompensationPolicyVersion\b"),
     re.compile(r"\bCompensationPolicy\b"),
     re.compile(r"\bCompensationRule\b"),

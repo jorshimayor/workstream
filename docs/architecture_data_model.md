@@ -17,6 +17,7 @@ AuthorityIdempotencyRecord
 AuthorityInvalidationEvent
 
 Project
+  ProjectCompensationAdapterBinding
   ProjectGuide
   GuideSourceSnapshot
   GuideSourceSnapshotItem
@@ -32,7 +33,6 @@ Project
     ContributionPolicyVersion
       ContributionRule
         ContributionAwardDefinition
-    ProjectCompensationAdapterBinding
   ProjectLesson
 
 Task

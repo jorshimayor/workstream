@@ -58,7 +58,9 @@ The context diagram shows Workstream as one system inside the broader Flow ecosy
 
 ### What This Means
 
-- Project managers, contributors, reviewers, and operators interact with Workstream.
+- Project managers, contributors, reviewers, adjudicators, operators, Finance
+  Authorities, Access Administrators, and Audit Authorities interact with
+  Workstream through their independent grants.
 - Flow identity remains the human identity and auth source.
 - Postgres is the record database.
 - Storage sits behind an object-storage abstraction.

@@ -2,15 +2,16 @@
 
 ## Current state
 
-Planning and read-only cross-worktree discovery are active. No runtime code has
-changed. AUTH, ART, REV, and CON runtime branches remain independently owned;
-this initiative neither starts nor edits them.
+The planning reconciliation and bounded final contract cleanup are implemented.
+No runtime code has changed. AUTH, ART, REV, and CON runtime branches remain
+independently owned; this initiative neither starts nor edits them.
 
 ## Current gate
 
-Complete the five handoffs, reconcile ART-owned planning documents, run
-deterministic documentation checks and required internal plan reviewers, then
-publish one ready planning PR for external and human review.
+Commit the deterministic candidate, run every required internal reviewer against
+that exact SHA, resolve valid findings, write separate internal evidence and PR
+trust-bundle records, then publish one ready planning PR for external and human
+review.
 
 ## Stop condition
 

@@ -82,7 +82,7 @@ Legacy typed workflow-profile IDs are unrelated and never promoted.
 
 | Grant | Scope | Purpose |
 |---|---|---|
-| `access_administrator` | system | Actor, identity-link, administrative-grant, and permission-catalog administration. |
+| `access_administrator` | system | Actor, identity-link, and administrative-grant administration. It does not edit the closed permission/action catalog or action availability. |
 | `operator` | system | Runtime inspection and explicit recovery operations against canonically resolved resources. |
 | `project_manager` | system or exact covered project | Project, task, guide/setup, submission/checker, review, and revision configuration plus contributor grants. It cannot mutate contribution policy or compensation-adapter bindings. System scope covers all projects but remains resource- and lifecycle-guarded; exact-project scope covers only that project. |
 | `finance_authority` | system or exact covered project | Contribution policy, compensation-adapter binding, and fulfillment observation owned by WS-CON. |
@@ -111,6 +111,10 @@ No observed token role, typed profile, skill, qualification, or reputation
 value creates a grant automatically.
 
 ## Permission Catalog
+
+AUTH owns the closed PermissionId/ActionId catalog, exact mappings, and action
+availability. No human administrative grant edits catalog definitions or moves
+an action between `planned` and `active`.
 
 The initial registered catalog includes:
 

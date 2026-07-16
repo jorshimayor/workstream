@@ -21,7 +21,11 @@ Suggested change: add a v0.1 roles and permissions table.
 
 ### Medium: Guide and policy versioning should be tied to system records
 
-The docs say guides are versioned, but tasks, submissions, checker runs, reviews, and payments need to record the guide/policy version used by the locked task contract. Otherwise later guide edits can make old reviews ambiguous.
+The docs say guides are versioned, but tasks, submissions, checker runs,
+reviews, ContributionRecords, frozen ContributionPolicyVersions,
+CompensationAwards, and fulfillment records must preserve the governing locked
+context. Otherwise later guide or policy edits can make old reviews and their
+downstream records ambiguous.
 
 Suggested change: add server-stamped locked guide and policy version fields to task-owned system records. Submitters should submit against the task id without restating those versions.
 
