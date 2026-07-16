@@ -8,7 +8,7 @@
 
 Workstream manages project guides, task queues, submission packets, automated
 checks, reviewer routing, evaluation sprints, revision loops, contribution
-records, compensation fulfillment/payment status, and reputation signals.
+records, compensation award and fulfillment state, and reputation signals.
 
 Workstream is how Flow measures, certifies, and coordinates useful human-agent work.
 

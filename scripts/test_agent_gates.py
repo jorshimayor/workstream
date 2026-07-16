@@ -1039,6 +1039,7 @@ def test_active_shared_contract_rejects_retired_compensation_model() -> None:
             "payment_reconciliation",
             "payment truth",
             "Payment And Reputation",
+            "compensation fulfillment/payment status",
             "payment policy",
             "payment records",
             "payment ledger",
