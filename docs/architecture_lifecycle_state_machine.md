@@ -17,15 +17,15 @@ REJECTED
 CANCELLED
 ```
 
-Compensation fulfillment status is separate from task status:
+Compensation projection state is separate from task status:
 
 ```text
-NONE
-PENDING
-PAYOUT_SUBMITTED
-PAID
-DISPUTED
+delivery_status: pending_delivery | acknowledged_by_adapter
+fulfillment_status: pending | failed | fulfilled
 ```
+
+Explicitly unpaid contributions create no award and therefore no compensation
+projection.
 
 External adapter pipeline states such as `INGESTED`, `FILTERED`, `NORMALIZED`, and `ROUTED` are not v0.1 task lifecycle states. If source adapters are added later, they must normalize accepted external input into the canonical task lifecycle before contributors see it.
 

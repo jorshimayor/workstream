@@ -78,6 +78,9 @@ ACTIVE_SHARED_CONTRACT_PATTERNS = (
     re.compile(r"\bcontribution record creation after acceptance\b", re.IGNORECASE),
     re.compile(r"\baccepted paid output\b", re.IGNORECASE),
     re.compile(r"\baward/payment record\b", re.IGNORECASE),
+    re.compile(r"\bPAYOUT_SUBMITTED\b"),
+    re.compile(r"\bPAID\b"),
+    re.compile(r"\bDISPUTED\b"),
 )
 ACTIVE_SHARED_CONTRACT_EXCLUDED_PREFIXES = (
     "docs/internal_reviews/",
@@ -86,6 +89,16 @@ ACTIVE_SHARED_CONTRACT_EXCLUDED_PREFIXES = (
 ACTIVE_SHARED_CONTRACT_EXCLUDED_NAME_PREFIXES = (
     "review_",
     "spec_chunk_",
+)
+CURRENT_RUNTIME_CONTRACT_PATHS = {
+    "docs/current_system_data_flow.html",
+}
+UNIMPLEMENTED_CURRENT_RUNTIME_COMPENSATION_PATTERNS = (
+    re.compile(r"\bCompensationPolicyVersion\b"),
+    re.compile(r"\bReviewLease\b"),
+    re.compile(r"\bCompensationAward\b"),
+    re.compile(r"\bCompensationFulfillmentReceipt\b"),
+    re.compile(r"\bCompensationStatusProjection\b"),
 )
 SKIP_DIRS = {
     ".git",
@@ -247,6 +260,14 @@ def main() -> int:
                     failures.append(
                         f"{path}:{line_number}: active shared contract contains retired "
                         f"compensation wording /{pattern.pattern}/i"
+                    )
+        if path.as_posix() in CURRENT_RUNTIME_CONTRACT_PATHS:
+            for pattern in UNIMPLEMENTED_CURRENT_RUNTIME_COMPENSATION_PATTERNS:
+                for match in pattern.finditer(text):
+                    line_number = line_number_for_offset(text, match.start())
+                    failures.append(
+                        f"{path}:{line_number}: current runtime walkthrough claims "
+                        f"unimplemented compensation record /{pattern.pattern}/"
                     )
 
     if failures:

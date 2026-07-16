@@ -1047,6 +1047,9 @@ def test_active_shared_contract_rejects_retired_compensation_model() -> None:
             "contribution record creation after acceptance",
             "accepted paid output",
             "award/payment record",
+            "PAYOUT_SUBMITTED",
+            "PAID",
+            "DISPUTED",
         )
     )
 
@@ -1080,6 +1083,30 @@ def test_historical_docs_do_not_define_live_compensation_contract() -> None:
         Path("docs/spec_chunk_5_example.md")
     )
     assert not stale.is_active_shared_contract_path(Path("docs/review_architecture.md"))
+
+
+def test_current_runtime_walkthrough_rejects_unimplemented_compensation_records() -> (
+    None
+):
+    """The current-backend walkthrough cannot claim target compensation runtime."""
+    stale = load_module(
+        "stale_wording_current_runtime_compensation",
+        "scripts/check_stale_workstream_wording.py",
+    )
+    sample = " ".join(
+        (
+            "CompensationPolicyVersion",
+            "ReviewLease",
+            "CompensationAward",
+            "CompensationFulfillmentReceipt",
+            "CompensationStatusProjection",
+        )
+    )
+
+    assert all(
+        pattern.search(sample)
+        for pattern in stale.UNIMPLEMENTED_CURRENT_RUNTIME_COMPENSATION_PATTERNS
+    )
 
 
 def test_stale_wording_skips_only_docs_internal_reviews_prefix() -> None:
@@ -3557,6 +3584,7 @@ def test_feature_owned_authorization_activation_is_rejected() -> None:
         "This is the owning WS-ART activation blueprint.",
         "The paired owning feature activates each action.",
         "Runtime activation remain with the listed owner.",
+        "Route-owning chunks may promote an action to active after tests pass.",
     )
     for statement in stale_statements:
         failures = gate.scan_activation_custody_text("contract.md", statement)

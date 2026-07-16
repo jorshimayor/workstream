@@ -415,11 +415,14 @@ and first active self-actions. Reserved action metadata contains only the
 stable `ActionId`, approved `PermissionId`, owning specification/chunk, and
 `planned` availability; it is not executable and does not predefine a
 foreign-domain target, facts, or guards. Every route-owning chunk from 07B
-through 15 may promote an action to active only when its owning domain contract,
-feature-owned resource composition, surface declaration, and behavior tests
-exist. Each such chunk generates a manifest-delta proof for every surface it
-migrates. Chunk 16 aggregates and verifies the complete route/command manifest
-rather than first discovering missing declarations there.
+through 15 supplies hidden behavior, feature-owned resource composition,
+surface declarations, and behavior proof while its action remains planned and
+fails closed. Only the action's dedicated AUTH activation custodian may promote
+it to active after integrating the evaluator and verifying that proof. Each
+feature chunk generates a manifest-delta proof for every surface it prepares;
+the matching AUTH activation chunk records the availability delta. Chunk 16
+aggregates and verifies the complete route/command manifest rather than first
+discovering missing declarations there.
 Resources and transitions owned by WS-REV, WS-CON, or the artifact-storage
 specification are not invented by AUTH; their owning specification must first
 approve the resource facts and operation before a corresponding permission is

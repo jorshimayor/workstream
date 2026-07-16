@@ -157,8 +157,8 @@ Mitigation:
 - enforce state transitions in code
 - require checker run id before `REVIEW_PENDING`
 - require review id before `ACCEPTED`
-- require an immutable payable award, fulfillment receipt, and external reference
-  before `PAID`
+- require an immutable payable award, exact fulfillment receipt, and external
+  reference before fulfillment status can become `fulfilled`
 - replace broad historical override language with registered, scoped,
   reasoned, non-destructive Project Manager repair or Operator recovery
 

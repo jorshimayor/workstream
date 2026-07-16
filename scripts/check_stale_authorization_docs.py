@@ -69,7 +69,10 @@ RULES = (
         re.compile(r"`?admin`?\s*(?:/|or)\s*`?project_manager`?", re.IGNORECASE),
     ),
     Rule("LEGACY_ROLE_HELPER", re.compile(r"require_any_role", re.IGNORECASE)),
-    Rule("TRUSTED_ROLE_CLAIM_AUTHORITY", re.compile(r"trusted role claims", re.IGNORECASE)),
+    Rule(
+        "TRUSTED_ROLE_CLAIM_AUTHORITY",
+        re.compile(r"trusted role claims", re.IGNORECASE),
+    ),
     Rule(
         "CURRENT_TOKEN_ROLE_AUTHORITY",
         re.compile(r"role in the current verified token", re.IGNORECASE),
@@ -88,13 +91,18 @@ RULES = (
     ),
     Rule(
         "OPERATOR_NOT_A_ROLE",
-        re.compile(r"Operator.{0,80}not a separate.{0,40}permission role", re.IGNORECASE),
+        re.compile(
+            r"Operator.{0,80}not a separate.{0,40}permission role", re.IGNORECASE
+        ),
     ),
     Rule(
         "BROAD_ADMIN_OVERRIDE",
         re.compile(r"\badmin\s+(?:can|may|must)\s+override", re.IGNORECASE),
     ),
-    Rule("LEGACY_ADMIN_HEADING", re.compile(r"^#{2,4}\s+Admin\s*$", re.IGNORECASE | re.MULTILINE)),
+    Rule(
+        "LEGACY_ADMIN_HEADING",
+        re.compile(r"^#{2,4}\s+Admin\s*$", re.IGNORECASE | re.MULTILINE),
+    ),
     Rule(
         "LEGACY_ROLE_MATRIX",
         re.compile(r"\|\s*Admin\s*\|.*\|\s*(?:Finance|Auditor)\s*\|", re.IGNORECASE),
@@ -192,7 +200,8 @@ ACTIVATION_CUSTODY_RULES = (
             r"actions?\s+activated\s+by\s+that\s+chunk|"
             r"owning\s+WS-(?:ART|REV|CON)\s+activation\s+blueprint|"
             r"paired\s+owning\s+feature\s+activates?|"
-            r"runtime\s+activation\s+remain\s+with\s+the\s+listed\s+owner"
+            r"runtime\s+activation\s+remain\s+with\s+the\s+listed\s+owner|"
+            r"route-owning\s+chunks?[\s\S]{0,120}?promote\s+an\s+action\s+to\s+active"
             r")",
             re.IGNORECASE,
         ),
@@ -325,9 +334,7 @@ def technical_worker_match(text: str, match: re.Match[str]) -> bool:
         and suffix.startswith(" --")
     )
     return bool(
-        TECHNICAL_WORKER_PREFIX.search(prefix)
-        or exact_code_path
-        or exact_celery_cli
+        TECHNICAL_WORKER_PREFIX.search(prefix) or exact_code_path or exact_celery_cli
     )
 
 
