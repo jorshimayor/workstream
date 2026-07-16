@@ -19,10 +19,11 @@ to `ActionOwner.ART_02D`; the other fourteen are assigned across `ART_03`,
 `ART_04A`, `ART_04B`, `ART_05`, `ART_06A`, and `ART_06B`. Registration is
 non-executable, but the owner field is also being used as activation custody.
 
-AUTH-09A defines seven fixed artifact service identities and eleven exact
-service-action assignments. Its current plan correctly keeps every assignment
-planned, but retains obsolete feature-owned activation wording. That conflicts
-with the newer AUTH-owned activation-custody decision.
+The active WS-AUTH-001-09 worktree's reviewed `09A` subchunk defines seven fixed
+artifact service identities and eleven exact service-action assignments. Its
+current plan correctly keeps every assignment planned, but retained obsolete
+feature-owned activation wording. That conflicts with the newer AUTH-owned
+activation-custody decision.
 
 ART D28 already prohibits ART from inventing service principals or activating
 authorization. ART D25, the ART plan, ART-02C2, ART-02D, AUTH-09 documents, and

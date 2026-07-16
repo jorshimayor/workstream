@@ -174,6 +174,38 @@ RULES = (
     ),
 )
 
+ACTIVATION_CUSTODY_RULES = (
+    Rule(
+        "FEATURE_OWNED_AUTH_ACTIVATION",
+        re.compile(
+            r"(?:"
+            r"actions?\s+remain\s+non-executable\s+until\s+(?:their\s+)?owning\s+"
+            r"chunks?\s+activates?|"
+            r"actions?\s+(?:is|are)\s+activated\s+by\s+(?:their\s+)?owning\s+"
+            r"WS-(?:ART|REV|CON)\s+chunks?|"
+            r"each\s+owning\s+WS-(?:ART|REV|CON)\s+chunk\s+activates?|"
+            r"WS-(?:ART|REV|CON)[\w-]*\s+feature\s+chunk[\s\S]{0,120}?"
+            r"actions?\s+it\s+activates?|"
+            r"actions?\s+activated\s+by\s+that\s+chunk|"
+            r"owning\s+WS-(?:ART|REV|CON)\s+activation\s+blueprint|"
+            r"paired\s+owning\s+feature\s+activates?|"
+            r"runtime\s+activation\s+remain\s+with\s+the\s+listed\s+owner"
+            r")",
+            re.IGNORECASE,
+        ),
+    ),
+)
+
+ACTIVATION_CUSTODY_EXACT_PATHS = (
+    ".agent-loop/LOOP_STATE.md",
+    "docs/spec_authorization_service.md",
+)
+ACTIVATION_CUSTODY_INITIATIVES = (
+    "WS-AUTH-001-workstream-authorization-service",
+    "WS-ART-001-immutable-artifact-storage",
+    "WS-REV-001-review-revision-lifecycle",
+)
+
 TECHNICAL_WORKER_PREFIX = re.compile(
     r"(?:celery(?:[- ]backed)?|checker|setup|system|background|reconciliation|"
     r"execution|"
@@ -220,6 +252,27 @@ def discover_documents(root: Path = ROOT) -> list[Path]:
         if path.is_file():
             documents.append(path)
     return documents
+
+
+def discover_activation_custody_documents(root: Path = ROOT) -> list[Path]:
+    """Return active contracts that may assign authorization activation custody."""
+    documents = [
+        root / relative_path
+        for relative_path in ACTIVATION_CUSTODY_EXACT_PATHS
+        if (root / relative_path).is_file()
+    ]
+    initiative_root = root / ".agent-loop/initiatives"
+    for initiative in ACTIVATION_CUSTODY_INITIATIVES:
+        path = initiative_root / initiative
+        if not path.is_dir():
+            continue
+        documents.extend(
+            candidate
+            for candidate in path.rglob("*.md")
+            if "reviews" not in candidate.relative_to(path).parts
+            and candidate.name not in {"DISCOVERY.md", "INTENT.md"}
+        )
+    return sorted(set(documents))
 
 
 def line_number(text: str, offset: int) -> int:
@@ -291,6 +344,17 @@ def scan_text(relative_path: str, text: str) -> list[str]:
     return failures
 
 
+def scan_activation_custody_text(relative_path: str, text: str) -> list[str]:
+    """Reject feature-owned authorization activation in current contracts."""
+    failures: list[str] = []
+    for rule in ACTIVATION_CUSTODY_RULES:
+        failures.extend(
+            f"{relative_path}:{line_number(text, match.start())}: {rule.code}"
+            for match in rule.pattern.finditer(text)
+        )
+    return failures
+
+
 def scan(root: Path = ROOT) -> list[str]:
     """Scan every discovered active document."""
     failures: list[str] = []
@@ -302,6 +366,14 @@ def scan(root: Path = ROOT) -> list[str]:
             failures.append(f"{relative_path}: unreadable active document: {exc}")
             continue
         failures.extend(scan_text(relative_path, text))
+    for path in discover_activation_custody_documents(root):
+        relative_path = path.relative_to(root).as_posix()
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as exc:
+            failures.append(f"{relative_path}: unreadable custody contract: {exc}")
+            continue
+        failures.extend(scan_activation_custody_text(relative_path, text))
     return failures
 
 

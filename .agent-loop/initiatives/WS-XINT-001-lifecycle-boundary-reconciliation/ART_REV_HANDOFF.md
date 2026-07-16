@@ -61,11 +61,15 @@ Provider I/O never occurs in the finalization transaction. Authority loss or
 REV lineage drift can leave only an ART-owned unbound candidate under ART
 retention; it creates no ReviewEvidenceArtifact relation or product effect.
 
-Before implementation, ART and AUTH must decide whether binding finalization
-requires a new closed service action such as
-`artifact.review_evidence.binding.create` mapped to existing
-`artifact.binding.create`. The decision must be explicit; existing Operator
-read or generic permission tokens cannot be reused as an action alias.
+Binding finalization uses the new closed service action
+`artifact.review_evidence.binding.create`, mapped to the existing
+`artifact.binding.create` PermissionId and assigned only to the existing
+`workstream.artifact.binding` service identity. `AUTH_ART_REV_EVIDENCE` is its
+AUTH activation custodian. AUTH registers it as planned; ART's separately
+approved `WS-ART-001-REV-EVIDENCE` capability chunk supplies hidden canonical
+resource facts, guards, binding behavior, and tests; AUTH then integrates the
+evaluator and alone activates it. Existing Operator read actions and generic
+PermissionId tokens cannot substitute for this ActionId.
 
 ## Review decision
 

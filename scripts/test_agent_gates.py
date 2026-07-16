@@ -3458,6 +3458,38 @@ def test_stale_authorization_rule_examples_are_rejected() -> None:
         assert gate.scan_text("docs/new_active_doc.md", sample), sample
 
 
+def test_feature_owned_authorization_activation_is_rejected() -> None:
+    """Current AUTH/ART/REV contracts cannot assign activation to features."""
+    gate = load_module(
+        "activation_custody_contract_rules",
+        "scripts/check_stale_authorization_docs.py",
+    )
+    stale_statements = (
+        "Actions remain non-executable until their owning chunks activate them.",
+        "Artifact service actions are activated by their owning WS-ART chunks.",
+        "Each owning WS-REV chunk activates its review action.",
+        "The WS-ART feature chunk owns the actions it activates.",
+        "| Owning WS-ART chunk | Actions activated by that chunk |",
+        "This is the owning WS-ART activation blueprint.",
+        "The paired owning feature activates each action.",
+        "Runtime activation remain with the listed owner.",
+    )
+    for statement in stale_statements:
+        failures = gate.scan_activation_custody_text("contract.md", statement)
+        assert failures == [
+            "contract.md:1: FEATURE_OWNED_AUTH_ACTIVATION"
+        ], statement
+
+    canonical_statements = (
+        "AUTH activates the action after hidden ART behavior merges.",
+        "ART activates API-startup scratch cleanup.",
+        "This chunk neither activates its artifact action nor grants provider access.",
+        "The feature owner supplies hidden behavior while AUTH owns availability.",
+    )
+    for statement in canonical_statements:
+        assert gate.scan_activation_custody_text("contract.md", statement) == []
+
+
 def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:
     """A new active doc fails without being added to a hardcoded corpus."""
     gate = load_module(

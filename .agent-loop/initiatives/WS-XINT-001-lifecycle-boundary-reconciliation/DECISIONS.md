@@ -58,3 +58,12 @@ CON does not load, verify, or rederive it through ART.
 This coordination PR changes no runtime. After merge, AUTH, ART, REV, and CON
 owners amend and implement only their own bounded chunks. A handoff is not an
 implementation start signal and cross-initiative successors remain human-owned.
+
+## D9 - Review Evidence Has One Exact Binding Action
+
+Review finding and response bytes bind through
+`artifact.review_evidence.binding.create`, mapped to existing
+`artifact.binding.create`, assigned only to `workstream.artifact.binding`, and
+activated only by `AUTH_ART_REV_EVIDENCE` after hidden ART capability behavior
+merges. No generic artifact-read or binding PermissionId is executable as an
+action alias.

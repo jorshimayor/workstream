@@ -50,6 +50,11 @@ artifact-reference reconciliation, projection rebuild, and the four planned
 revision/release additions. Exact action counts must be derived from the merged
 catalogue at implementation time, not copied from stale worktree prose.
 
+Review evidence binding also requires the separately registered
+`artifact.review_evidence.binding.create` service action defined by the ART/REV
+handoff. It is not a review-human authority alias and does not broaden any
+reviewer grant.
+
 ## Service actions
 
 Timer, reconciliation, artifact-reference, projection, and release-control jobs

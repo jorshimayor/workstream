@@ -12,6 +12,10 @@ activation custody, transaction order, and cross-initiative handoffs.
 - `.agent-loop/initiatives/WS-XINT-001-lifecycle-boundary-reconciliation/**`
 - ART initiative plans, decisions, risks, chunk map, and future chunk contracts
   only where stale activation language must be corrected
+- AUTH initiative/specification planning documents where stale feature-owned
+  activation language must be corrected
+- `scripts/check_stale_authorization_docs.py` and `scripts/test_agent_gates.py`
+  only for deterministic activation-custody wording enforcement
 - `.agent-loop/WORK_QUEUE.md`, `.agent-loop/REVIEW_LOG.md`, and one merge intent
 - directly related active architecture/authorization docs only if required to
   remove a contradiction visible from trusted main
@@ -36,6 +40,8 @@ activation custody, transaction order, and cross-initiative handoffs.
 - ART, REV, AUTH, and CON transaction/commit/audit ownership is explicit;
 - ReviewPacketManifest and ReviewEvidenceArtifact remain REV semantic records
   backed by ART bindings/bytes through typed ports;
+- review evidence binding has one exact proposed ActionId, existing PermissionId,
+  fixed service identity, ART capability owner, and AUTH activation custodian;
 - core ContributionRecord creation makes no ART capability/provider call while
   preserving its already-stabilized submission artifact digest lineage;
 - each parallel agent receives a bounded handoff and no runtime start signal;
@@ -49,7 +55,6 @@ python3 scripts/check_markdown_links.py
 python3 scripts/check_stale_authorization_docs.py
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/check_stale_workstream_wording.py
-! rg -n "Each WS-ART feature chunk activates|02D attaches and activates|activated here through the central AUTH|actions it activates|Actions activated by that chunk|owning WS-ART chunk activates" docs/spec_authorization_service.md .agent-loop/LOOP_STATE.md .agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service .agent-loop/initiatives/WS-ART-001-immutable-artifact-storage
 git diff --check
 ```
 

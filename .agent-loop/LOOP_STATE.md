@@ -5,11 +5,14 @@
 - This authored file is reviewed planning/history context, not canonical live
   post-merge state. Canonical state is the signed schema-v2 output on
   `automation/loop-memory`.
-- Active initiative: `WS-AUTH-001` - Workstream Authorization Service
-- Active planning chunk: none
+- Active initiatives include parallel `WS-AUTH-001`, `WS-ART-001`, and the
+  planning-only `WS-XINT-001` boundary reconciliation.
+- Active planning chunk: `WS-XINT-001-PLAN` on
+  `codex/ws-xint-001-boundary-reconciliation`.
 - Active implementation chunk: `WS-AUTH-001-08` - Bootstrap And Administrative
   Role Grants
-- Current branch: `codex/ws-auth-001-08-bootstrap-admin-grants`
+- The AUTH-08 branch and gate below are retained pre-existing parallel
+  implementation context, not the branch carrying this planning change.
 - Start basis: PR #130 merged AUTH-07B into `main` as `90eca12`; signed schema-v2
   state verified that merge and the user explicitly started AUTH-08.
 - PR #119 merged `WS-AUTH-001-05B` as `ad71c7e`.

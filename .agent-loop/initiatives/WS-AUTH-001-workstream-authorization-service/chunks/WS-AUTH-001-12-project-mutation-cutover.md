@@ -64,9 +64,10 @@ unscoped project-manager access or token role fallback
   only covered projects.
 - Project policy actions use registered permissions and transaction-local grant
   revalidation.
-- Project-guide source ingestion remains mechanically and authoritatively owned
-  by `WS-ART-001-03`; this chunk neither activates its artifact action nor grants
-  direct provider access.
+- Project-guide source ingestion behavior and resource facts remain owned by
+  `WS-ART-001-03`; this chunk neither activates its artifact action nor grants
+  direct provider access. The dedicated AUTH custodian activates it only after
+  hidden ART behavior merges.
 - Every migrated project mutation and setup command declares one primary
   registered action and authorizes against `system`, an existing project, or the
   exact existing parent policy resource defined by the owning project model.

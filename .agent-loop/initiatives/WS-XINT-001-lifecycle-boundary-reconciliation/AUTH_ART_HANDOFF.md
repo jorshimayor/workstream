@@ -50,6 +50,10 @@ owners, extra owners, and changed mappings.
 
 ## Fixed service assignments
 
+`docs/spec_authorization_service.md` remains the canonical fixed service
+identity/action assignment source. This table is a non-authoritative repeat used
+only to bind the existing matrix to the activation-custody sequence.
+
 | Service identity | Exact assigned actions |
 |---|---|
 | `workstream.artifact.verifier` | `artifact.verification.execute` |
