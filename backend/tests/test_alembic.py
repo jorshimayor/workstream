@@ -411,6 +411,7 @@ def test_canonical_actor_downgrade_refuses_nonactive_authority_state(
         try:
             command.downgrade(config, "base")
             command.upgrade(config, "head")
+            retained_revision = asyncio.run(_current_revision(isolated_database_env))
             asyncio.run(_seed_canonical_actor_for_downgrade_guard(isolated_database_env, actor_id))
             for state in ("revoked", "suspended", "deactivated"):
                 asyncio.run(
@@ -421,9 +422,7 @@ def test_canonical_actor_downgrade_refuses_nonactive_authority_state(
                     match="^canonical actor downgrade refused: inactive authority state$",
                 ):
                     command.downgrade(config, "0019_authority_idempotency")
-                assert asyncio.run(_current_revision(isolated_database_env)) == (
-                    "0021_auth_action_evidence"
-                )
+                assert asyncio.run(_current_revision(isolated_database_env)) == retained_revision
                 asyncio.run(
                     _reset_canonical_actor_guard_state(
                         isolated_database_env,
