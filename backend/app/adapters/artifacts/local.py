@@ -180,9 +180,12 @@ class LocalStorageAdapter:
                 receipt=receipt,
                 replayed=False,
             )
-        except asyncio.CancelledError:
+        except asyncio.CancelledError as cancellation:
             if lock is not None:
-                await await_cancellation_resistant(self._cleanup_unpublished(scope))
+                try:
+                    await await_cancellation_resistant(self._cleanup_unpublished(scope))
+                except BaseException:
+                    raise cancellation from None
             raise
         except (
             ArtifactInputMismatchError,

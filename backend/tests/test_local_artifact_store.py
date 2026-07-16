@@ -259,17 +259,25 @@ async def test_store_cleanup_survives_repeated_cancellation(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Complete public-store cleanup and lock release before cancellation escapes."""
+    """Preserve cancellation and retry ownership when temporary cleanup fails."""
     adapter = LocalStorageAdapter(root=tmp_path / "artifacts", buffer_bytes=2)
     request = store_request()
     write_started = asyncio.Event()
     never = asyncio.Event()
     cleanup_started = asyncio.Event()
     finish_cleanup = asyncio.Event()
+    temporary: Path | None = None
     original_write_stream = adapter._write_stream
     original_cleanup = adapter._cleanup_unpublished
 
-    async def blocked_write(*_: object) -> tuple[str, int]:
+    async def blocked_write(
+        _: object,
+        provider_id: str,
+        __: object,
+    ) -> tuple[str, int]:
+        nonlocal temporary
+        temporary = tmp_path / "artifacts" / "tmp" / f"{provider_id}_cancelled.part"
+        temporary.write_bytes(b"partial")
         write_started.set()
         await never.wait()
         raise AssertionError("blocked write unexpectedly resumed")
@@ -277,22 +285,31 @@ async def test_store_cleanup_survives_repeated_cancellation(
     async def delayed_cleanup(scope: str) -> None:
         cleanup_started.set()
         await finish_cleanup.wait()
-        await original_cleanup(scope)
+        raise OSError(f"injected cleanup failure for {scope}")
 
     monkeypatch.setattr(adapter, "_write_stream", blocked_write)
     monkeypatch.setattr(adapter, "_cleanup_unpublished", delayed_cleanup)
     task = asyncio.create_task(adapter.store(byte_stream(b"hello"), request))
     await asyncio.wait_for(write_started.wait(), timeout=1)
-    task.cancel()
+    task.cancel("caller cancelled artifact storage")
     await asyncio.wait_for(cleanup_started.wait(), timeout=1)
     task.cancel()
     await asyncio.sleep(0)
     finish_cleanup.set()
-    with pytest.raises(asyncio.CancelledError):
+    with pytest.raises(
+        asyncio.CancelledError,
+        match="caller cancelled artifact storage",
+    ) as cancellation:
         await task
+    assert cancellation.value.args == ("caller cancelled artifact storage",)
 
-    assert list((tmp_path / "artifacts" / "tmp").iterdir()) == []
+    assert temporary is not None
+    assert temporary.is_file()
+    scope = adapter._scope_key(request.idempotency)
+    await original_cleanup(scope)
+    assert not temporary.exists()
     monkeypatch.setattr(adapter, "_write_stream", original_write_stream)
+    monkeypatch.setattr(adapter, "_cleanup_unpublished", original_cleanup)
     stored = await adapter.store(byte_stream(b"hello"), request)
     assert stored.sha256 == request.expected_sha256
     adapter.close()

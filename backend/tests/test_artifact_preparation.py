@@ -131,6 +131,40 @@ def _initialize_shared_scratch_root(
         connection.close()
 
 
+def _initialize_shared_scratch_root_with_order_probe(
+    root: str,
+    limits: ArtifactPreparationLimits,
+    start: multiprocessing.synchronize.Event,
+    child_started: multiprocessing.synchronize.Event,
+    connection: multiprocessing.connection.Connection,
+) -> None:
+    """Report scratch lock and marker-validation order from a real child."""
+    original_acquire = ArtifactScratchManager._acquire_ledger_lock
+    original_validate = ArtifactScratchManager._validate_existing_root_marker
+
+    def tracked_acquire(manager: ArtifactScratchManager, descriptor: int) -> None:
+        connection.send("lock_wait_started")
+        original_acquire(manager, descriptor)
+        connection.send("lock_acquired")
+
+    def tracked_validate(manager: ArtifactScratchManager) -> None:
+        connection.send("marker_validation_started")
+        original_validate(manager)
+
+    start.wait(timeout=10)
+    ArtifactScratchManager._acquire_ledger_lock = tracked_acquire
+    ArtifactScratchManager._validate_existing_root_marker = tracked_validate
+    child_started.set()
+    try:
+        manager = ArtifactScratchManager(root=Path(root), limits=limits)
+        manager.close()
+        connection.send("initialized")
+    except BaseException as exc:
+        connection.send(f"error:{exc!r}")
+    finally:
+        connection.close()
+
+
 def _hold_live_ledger_publication(
     root: str,
     limits: ArtifactPreparationLimits,
@@ -462,21 +496,29 @@ def test_initializer_validates_live_marker_only_after_acquiring_lock(tmp_path: P
     lock_descriptor = os.open(lock, os.O_RDWR)
     fcntl.flock(lock_descriptor, fcntl.LOCK_EX)
     start = context.Event()
+    child_started = context.Event()
     receiver, sender = context.Pipe(duplex=False)
     limits = preparation_limits()
     process = context.Process(
-        target=_initialize_shared_scratch_root,
-        args=(str(root), limits, start, sender),
+        target=_initialize_shared_scratch_root_with_order_probe,
+        args=(str(root), limits, start, child_started, sender),
     )
     process.start()
     sender.close()
     try:
         start.set()
+        assert child_started.wait(30), "scratch initializer did not start"
+        assert receiver.poll(30), "scratch initializer did not attempt the ledger lock"
+        assert receiver.recv() == "lock_wait_started"
         assert not receiver.poll(0.2)
         marker.write_bytes(ArtifactScratchManager._marker_content(limits))
         fcntl.flock(lock_descriptor, fcntl.LOCK_UN)
-        assert receiver.poll(10), "scratch initializer did not publish a result"
-        assert receiver.recv() is None
+        events: list[str] = []
+        while "initialized" not in events:
+            assert receiver.poll(30), "scratch initializer did not publish its order trace"
+            events.append(receiver.recv())
+        assert events[:2] == ["lock_acquired", "marker_validation_started"]
+        assert events[-1] == "initialized"
     finally:
         fcntl.flock(lock_descriptor, fcntl.LOCK_UN)
         os.close(lock_descriptor)
