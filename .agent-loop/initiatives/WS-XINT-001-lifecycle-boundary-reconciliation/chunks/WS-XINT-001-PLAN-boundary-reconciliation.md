@@ -19,6 +19,7 @@ activation custody, transaction order, and cross-initiative handoffs.
   activation, combined project-role, service-principal, or service-admission
   language must be corrected
 - `scripts/check_stale_authorization_docs.py`,
+  `scripts/check_stale_artifact_contracts.py`,
   `scripts/check_stale_workstream_wording.py`, and
   `scripts/test_agent_gates.py` only for deterministic activation-custody and
   contribution/compensation wording enforcement

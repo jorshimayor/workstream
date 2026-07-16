@@ -198,7 +198,9 @@ ACTIVATION_CUSTODY_RULES = (
 )
 
 ACTIVATION_CUSTODY_EXACT_PATHS = (
+    "AGENTS.md",
     ".agent-loop/LOOP_STATE.md",
+    ".agent-loop/WORK_QUEUE.md",
     "docs/spec_authorization_service.md",
 )
 ACTIVATION_CUSTODY_INITIATIVES = (
@@ -259,23 +261,27 @@ def discover_documents(root: Path = ROOT) -> list[Path]:
 
 def discover_activation_custody_documents(root: Path = ROOT) -> list[Path]:
     """Return active contracts that may assign authorization activation custody."""
-    documents = [
+    documents = set(discover_documents(root))
+    documents.update(
         root / relative_path
         for relative_path in ACTIVATION_CUSTODY_EXACT_PATHS
         if (root / relative_path).is_file()
-    ]
+    )
+    policy_root = root / ".agent-loop/policies"
+    if policy_root.is_dir():
+        documents.update(policy_root.glob("*.md"))
     initiative_root = root / ".agent-loop/initiatives"
     for initiative in ACTIVATION_CUSTODY_INITIATIVES:
         path = initiative_root / initiative
         if not path.is_dir():
             continue
-        documents.extend(
+        documents.update(
             candidate
             for candidate in path.rglob("*.md")
             if "reviews" not in candidate.relative_to(path).parts
             and candidate.name not in {"DISCOVERY.md", "INTENT.md"}
         )
-    return sorted(set(documents))
+    return sorted(documents)
 
 
 def line_number(text: str, offset: int) -> int:

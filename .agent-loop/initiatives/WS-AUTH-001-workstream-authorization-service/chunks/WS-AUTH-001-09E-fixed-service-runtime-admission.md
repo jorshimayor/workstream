@@ -79,8 +79,10 @@ through to administrative or project contributor candidates.
 - Planned actions remain unavailable. This chunk changes no feature action to
   active and attaches no ART, REV, CON, project, task, or checker call site.
 - Sensitive mutation revalidation reloads and locks the exact link/profile,
-  verifies unchanged `service_identity`, matrix membership, active action, and
-  caller-supplied feature context before terminal state can commit.
+  verifies unchanged `service_identity`, matrix membership, and active action,
+  then evaluates a feature-composed canonical `ResourceContext` recomputed from
+  locked rows before terminal state can commit. Request- or service-supplied
+  resource facts remain untrusted hints and never become authority.
 - Service callers never enter human self actions, AdminRoleGrant evaluation,
   ProjectRoleGrant evaluation, contributor candidates, or human rate controls.
 - Missing provisioned rows deny the request but do not prevent startup or the

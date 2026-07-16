@@ -3682,6 +3682,7 @@ def test_activation_custody_discovery_includes_canonical_handoffs() -> None:
     }
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
+        subprocess.run(["git", "init", "-q"], cwd=root, check=True)
         initiative = (
             root
             / ".agent-loop/initiatives/WS-XINT-001-lifecycle-boundary-reconciliation"
@@ -3700,6 +3701,16 @@ def test_activation_custody_discovery_includes_canonical_handoffs() -> None:
         con_text = "Later owner chunks activate catalogue rows in typed code.\n"
         con_contract.write_text(con_text, encoding="utf-8")
 
+        public_contract = root / "docs/review_current_contract.md"
+        public_contract.parent.mkdir(parents=True, exist_ok=True)
+        public_text = "The paired owning feature activates each action.\n"
+        public_contract.write_text(public_text, encoding="utf-8")
+
+        policy_contract = root / ".agent-loop/policies/security-boundaries.md"
+        policy_contract.parent.mkdir(parents=True, exist_ok=True)
+        policy_text = "Later owner chunks activate catalogue rows in typed code.\n"
+        policy_contract.write_text(policy_text, encoding="utf-8")
+
         all_discovered = gate.discover_activation_custody_documents(root)
         discovered = {
             path.relative_to(initiative).as_posix()
@@ -3710,12 +3721,24 @@ def test_activation_custody_discovery_includes_canonical_handoffs() -> None:
     assert required <= discovered
     assert "reviews/closed.md" not in discovered
     assert con_contract in all_discovered
+    assert public_contract in all_discovered
+    assert policy_contract in all_discovered
     assert gate.scan_activation_custody_text(
         con_contract.relative_to(root).as_posix(),
         con_text,
     ) == [
         ".agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/"
         "PLAN.md:1: FEATURE_OWNED_AUTH_ACTIVATION"
+    ]
+    assert gate.scan_activation_custody_text(
+        public_contract.relative_to(root).as_posix(),
+        public_text,
+    ) == ["docs/review_current_contract.md:1: FEATURE_OWNED_AUTH_ACTIVATION"]
+    assert gate.scan_activation_custody_text(
+        policy_contract.relative_to(root).as_posix(),
+        policy_text,
+    ) == [
+        ".agent-loop/policies/security-boundaries.md:1: FEATURE_OWNED_AUTH_ACTIVATION"
     ]
 
 
