@@ -30,7 +30,8 @@ Projects and guides
 -> submission packets and evidence
 -> checker runs
 -> review and revision
--> contribution record
--> payment status
+-> reviewer contribution for every valid Review
+-> submitter contribution only on accept
+-> conditional compensation award and fulfillment status
 -> reputation event
 ```

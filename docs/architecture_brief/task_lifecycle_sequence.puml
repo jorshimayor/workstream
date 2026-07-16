@@ -26,7 +26,7 @@ database "Postgres" as DB
 participant "Storage\nAbstraction" as Storage
 participant "Checker\nRunner" as Checks
 
-PM -> UI : create project, guide, policies
+PM -> UI : create project, guide, policies,\n+ compensation policy
 UI -> API : POST project / guide / policies
 API -> Auth : verify Flow token
 Auth --> API : verified external identity
@@ -34,6 +34,7 @@ API -> Authorization : resolve actor profile and local grants
 Authorization -> Authorization : require permission + candidate grant\n+ resource/lifecycle guards
 Authorization --> API : allowed with matched Project Manager grant
 API -> DB : persist draft guide and policy context
+API -> DB : publish compensation policy version independently
 
 PM -> UI : activate guide
 UI -> API : POST activate guide
@@ -55,7 +56,7 @@ Auth --> API : verified external identity
 API -> Authorization : resolve actor profile and project grants
 Authorization -> Authorization : require task claim + candidate grant\n+ assignment/resource/lifecycle guards
 Authorization --> API : allowed with matched submitter/both grant
-API -> DB : create assignment and move in progress
+API -> DB : create assignment, freeze submitter compensation,\n+ move in progress
 
 Contributor -> UI : submit packet
 UI -> API : POST submission packet
@@ -77,7 +78,9 @@ Auth --> API : verified external identity
 API -> Authorization : resolve actor profile and project grants
 Authorization -> Authorization : require review decision + candidate grant\n+ assignment/resource/lifecycle guards
 Authorization --> API : allowed with matched reviewer/both grant
+API -> DB : lock active ReviewLease with frozen reviewer compensation
 API -> DB : store review decision
+API -> DB : create reviewer completed_review contribution\n+ applicable award when payable
 
 alt needs_revision
   API -> DB : create revision requirements
@@ -85,11 +88,11 @@ alt needs_revision
   UI -> API : new submission version
   API -> Checks : rerun checks
 else accept
-  API -> DB : create contribution record
-  API -> DB : create payment record
+  API -> DB : create submitter accepted_submission contribution
+  API -> DB : create applicable submitter award when payable
   API -> DB : create reputation event
 else reject
   API -> DB : store rejection findings
-  API -> DB : apply payment/reputation policy effects
+  API -> DB : apply reviewer reputation effects\n+ no submitter contribution
 end
 @enduml

@@ -1,68 +1,78 @@
-# Payment And Reputation
+# Compensation And Reputation
 
-## Payment Principle
+## Compensation Principle
 
-Payment can be manual in the first version, but it must be tracked with the same discipline as automated settlement.
+External fulfillment can be manual in the first version, but Workstream records
+the authorized award and immutable fulfillment result with the same discipline
+as automated settlement.
 
 Every valid recorded human Review creates a reviewer `completed_review`
 contribution. `accept` additionally creates a submitter `accepted_submission`
 contribution. Compensation is evaluated independently for each record from its
-frozen policy version; an explicit unpaid rule creates no award. Payment and
-reputation records attach to contributions and never replace them.
+frozen policy version; an explicit unpaid rule creates no award. Awards,
+fulfillment receipts, projections, and reputation events attach to contributions
+and never replace them.
 
-## Payment States
+## Compensation Status Projection
 
 ```text
-NONE
-PENDING
-PAYOUT_SUBMITTED
-PAID
-DISPUTED
+delivery_status: pending_delivery | acknowledged_by_adapter
+fulfillment_status: pending | failed | fulfilled
 ```
 
-Payment status is not task lifecycle status. A task can be `ACCEPTED` while payment remains `PENDING`.
+Compensation status is not task lifecycle status. A Review can be complete and a
+task can be `ACCEPTED` while an award remains pending or failed. Explicitly
+unpaid contributions have no award and therefore no compensation projection.
 
-## Payment Record
+## Compensation Award And Fulfillment
 
-Fields:
+An immutable CompensationAward records:
 
 - contribution record id
-- task id
-- contributor id
 - project id
-- base amount
-- accepted amount
-- pending amount
-- paid amount
-- currency
-- status
-- payment reference
-- accepted at
-- paid at
+- beneficiary actor id
+- frozen compensation policy version and award definition
+- adapter binding
+- instrument: `money | project_points`
+- unit code and exact decimal quantity
 
-## Payment Rules
+An immutable CompensationFulfillmentReceipt records:
+
+- award, project, and adapter-binding ids
+- external event id
+- `fulfilled | failed`
+- external reference and exact fulfilled quantity for success
+- failure code for failure
+- reported, received, and fulfillment timestamps
+
+## Compensation Rules
 
 Default:
 
-- DRAFT through REVIEW_PENDING: no contribution or payment is created
+- DRAFT through REVIEW_PENDING: no contribution or award is created
 - a valid human `needs_revision`, `accept`, or `reject` decision creates one
   reviewer `completed_review`; the ReviewLease-frozen compensation policy
   decides whether it creates an award
 - `accept` additionally creates one submitter `accepted_submission`; the
   TaskAssignment-frozen compensation policy decides whether it creates an award
 - `needs_revision` and `reject` create no submitter contribution or award
-- PAID: a pending payable award becomes paid
+- fulfillment is recorded only by an authenticated adapter callback bound to the
+  award's frozen adapter binding
+- a fulfilled award requires an immutable receipt, exact quantity, and external
+  reference
 
-Acceptance and payment must remain separate.
+Review decisions, task acceptance, award creation, and fulfillment remain
+separate facts.
 
-`ACCEPTED` means the work met the guide. `PAID` means money moved or payout was recorded with a reference.
+`ACCEPTED` means the work met the guide. `fulfilled` means the bound adapter
+reported completion with an immutable receipt and external reference.
 
 The dashboard must always show:
 
-- accepted but unpaid amount
-- payout submitted amount
-- paid amount
-- disputed amount
+- payable awards pending delivery
+- adapter-acknowledged awards pending fulfillment
+- failed awards
+- fulfilled awards by instrument and unit
 
 ## Reputation Principle
 
@@ -140,9 +150,9 @@ Examples:
 - frontend
 - long-context
 
-## Future Settlement Compatibility
+## External Settlement Compatibility
 
-The payment ledger is designed so future payment adapters can attach references:
+Fulfillment adapters can attach opaque references such as:
 
 - bank transfer reference
 - stablecoin transaction hash
@@ -156,10 +166,10 @@ The first version does not depend on these.
 
 Finance reconciles daily:
 
-- accepted tasks without payment records
-- pending payout older than agreed SLA
-- payout submitted without paid confirmation
-- paid records missing references
-- payment amount mismatches
+- payable contributions without their expected award or fulfillment projection
+- pending award delivery older than agreed SLA
+- adapter acknowledgement without a fulfillment receipt
+- fulfilled receipts missing external references
+- fulfilled quantity mismatches
 
 Any mismatch becomes an operations issue, not a silent spreadsheet correction.

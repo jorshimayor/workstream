@@ -42,7 +42,10 @@ Different projects speak different domain languages, but serious task evaluation
 - every submission passes automated checks before human review
 - every review creates a decision
 - every revision must close prior feedback
-- every accepted task updates payment and reputation
+- every valid human review creates a reviewer contribution
+- every accepted task additionally creates a submitter contribution
+- every payable contribution updates compensation fulfillment; all contributions
+  can update reputation
 
 Workstream turns that operating knowledge into reusable infrastructure.
 
@@ -239,8 +242,9 @@ Submit packet
 Run checks
 Review packet
 Record review decision: accept, needs_revision, or reject
-Create contribution record for accepted work
-Record payment status separately for accepted work
+Create reviewer contribution for every valid human review
+Create submitter contribution only for accepted work
+Record compensation status only for payable contribution awards
 Update reputation from review outcome
 Review lessons learned
 ```
@@ -269,11 +273,13 @@ Artifacts, evidence, and auditing:
 - submitted artifacts are immutable and hash-bound to checker runs
 - every checker result is stored and auditable
 
-Acceptance and payment:
+Contribution and compensation:
 
-- accepted work cites evidence before payment exposure is created
-- accepted work creates an evidence-backed contribution record before payment or reputation updates
-- payments are recorded separately from task acceptance
+- every valid human review creates a reviewer contribution from locked evidence
+- accepted work additionally creates a submitter contribution
+- only payable contributions create immutable awards and fulfillment tracking;
+  explicit unpaid rules create none
+- compensation fulfillment is recorded separately from task acceptance
 
 Checkers, lessons, and gates:
 

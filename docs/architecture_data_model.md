@@ -28,7 +28,11 @@ Project
   PostSubmitCheckerPolicy
   ReviewPolicy
   RevisionPolicy
-  PaymentPolicy
+  CompensationPolicy
+    CompensationPolicyVersion
+      CompensationRule
+        CompensationAwardDefinition
+    ProjectCompensationAdapterBinding
   ProjectLesson
 
 Task
@@ -43,7 +47,9 @@ Task
     RevisionReplay
     RevisionContextPreparation
   ContributionRecord
-  PaymentRecord
+    CompensationAward
+      CompensationFulfillmentReceipt
+      CompensationStatusProjection
   ReputationEvent
   AuditEvent
 ```
@@ -206,7 +212,9 @@ When a task is claimed or moved to `IN_PROGRESS`, its locked guide and policy co
 Material changes require a new guide version or policy version. They include
 guide source material, submission artifact policy, pre-submit checker
 generation rules, post-submit checker policy, review policy, revision policy,
-and payment policy.
+and their guide-bound contracts. Compensation policy publication is independent
+of guide versioning and affects only new TaskAssignments and ReviewLeases; their
+frozen versions never drift.
 
 ## GuideSourceSnapshot
 
@@ -908,20 +916,83 @@ Fields:
 
 `context_rebase_rule` defines whether a revision attempt keeps prior context, rebases to current active context, or blocks for project-manager repair when guide or policy context changed. `context_rebase_triggers` names the guide or policy changes that require preparation before the contributor resumes.
 
-## PaymentPolicy
+## CompensationPolicy
 
 Fields:
 
 - `id`
 - `project_id`
-- `guide_version`
-- `base_amount`
-- `currency`
-- `payout_type`
-- `revision_payment_rule`
-- `rejection_payment_rule`
-- `accepted_payment_rule`
+- `name`
+- `status`: `draft | active | retired`
+- `current_published_version_id`
+- `created_by`
 - `created_at`
+- `retired_by`
+- `retired_at`
+
+At most one policy is active for new work in one project. New TaskAssignments
+and ReviewLeases require its published version; missing configuration is not an
+implicit unpaid rule.
+
+## CompensationPolicyVersion
+
+Fields:
+
+- `id`
+- `compensation_policy_id`
+- `project_id`
+- `version_number`
+- `status`: `draft | published | retired`
+- publication and retirement actor/timestamp fields
+
+Published and retired versions are immutable. TaskAssignment freezes the
+submitter version; ReviewLease independently freezes the reviewer version.
+
+## CompensationRule
+
+Fields:
+
+- `id`
+- `compensation_policy_version_id`
+- `project_id`
+- `contribution_type`: `accepted_submission | completed_review`
+- `compensation_mode`: `compensated | unpaid`
+
+Every publishable version contains exactly one rule for each contribution type.
+An unpaid rule has no award definitions. A compensated rule has one or two:
+at most one `money` and one `project_points` definition.
+
+## CompensationAwardDefinition
+
+Fields:
+
+- `id`
+- `compensation_rule_id`
+- `compensation_policy_version_id`
+- `project_id`
+- `contribution_type`
+- `instrument_type`: `money | project_points`
+- `unit_code`
+- `quantity` as an exact decimal greater than zero
+- `adapter_binding_id`
+
+Published definitions are immutable and project/instrument consistent with the
+referenced adapter binding.
+
+## ProjectCompensationAdapterBinding
+
+Fields:
+
+- `id`
+- `project_id`
+- `instrument_type`: `money | project_points`
+- `adapter_actor_id`
+- `route_key`
+- `status`: `active | suspended | retired`
+- creation, suspension, and retirement actor/timestamp fields
+
+Provider endpoints, credentials, and tokens are deployment secrets, not domain
+fields. At most one binding is active per project and instrument.
 
 ## ProjectLesson
 
@@ -946,7 +1017,7 @@ Lesson types:
 - reviewer_policy_update
 - revision_policy_update
 - queue_policy_update
-- payment_policy_update
+- compensation_policy_update
 - risk_note
 
 Status:
@@ -975,7 +1046,6 @@ Fields:
 - `locked_post_submit_checker_policy_body`
 - `locked_review_policy_version`
 - `locked_revision_policy_version`
-- `locked_payment_policy_version`
 - `source_type`
 - `source_ref`
 - `source_payload_hash`
@@ -987,9 +1057,6 @@ Fields:
 - `difficulty`
 - `skill_tags`
 - `estimated_time_minutes`
-- `base_amount`
-- `currency`
-- `payout_type`
 - `status`
 - `acceptance_criteria`
 - `rejection_criteria`
@@ -1026,9 +1093,7 @@ The task id points to the locked task contract. That contract includes the guide
 version, guide source snapshot id/hash, effective project submission artifact
 policy id/hash, generated project pre-submit checker policy id/bundle hash,
 post-submit checker policy id/version/hash, review policy version, revision
-policy version, payment policy version, acceptance criteria, derived display
-summaries, locked payment policy amount, locked payment policy currency, locked
-payment policy payout type, and skill tags.
+policy version, acceptance criteria, derived display summaries, and skill tags.
 Contributors submit against the task id; they do not restate policy versions.
 
 Durable post-submit checker execution uses
@@ -1045,6 +1110,7 @@ Fields:
 - `task_id`
 - `contributor_id`
 - `assigned_by`
+- `submitter_compensation_policy_version_id`
 - `assigned_at`
 - `accepted_at`
 - `released_at`
@@ -1077,7 +1143,6 @@ Fields:
 - `locked_post_submit_checker_policy_body`
 - `locked_review_policy_version`
 - `locked_revision_policy_version`
-- `locked_payment_policy_version`
 - `submitted_at`
 - `locked_at`
 - `supersedes_submission_id`
@@ -1086,12 +1151,13 @@ The contributor submission packet supplies the task id, summary, outputs,
 artifact hashes, evidence references, and contributor attestation. Workstream assigns the
 submission version, creates evidence ids, and stamps locked guide source,
 submission artifact, effective project policy, pre-submit checker, post-submit
-checker, review, revision, and payment policy provenance from trusted
+checker, review, and revision policy provenance from trusted
 task/project state. The contributor does not provide submission version, evidence
 ids, checker results, checker run ids, guide versions, source snapshots,
 effective project policy ids/hashes, pre-submit checker ids/bundle hashes,
-post-submit checker policy ids/versions/hashes, review policy versions, revision
-policy versions, or payment policy versions.
+post-submit checker policy ids/versions/hashes, review policy versions, or
+revision policy versions. Submitter compensation remains the immutable
+TaskAssignment freeze and is not restated on the submission.
 
 Implementation note: submissions stamp explicit post-submit checker provenance
 from the task. Durable `CheckerRun` creation uses those
@@ -1156,7 +1222,6 @@ Fields:
 - `locked_post_submit_checker_policy_body`
 - `locked_review_policy_version`
 - `locked_revision_policy_version`
-- `locked_payment_policy_version`
 - `package_hash`
 - `artifact_hash_manifest`
 - `artifact_manifest_hash`
@@ -1363,8 +1428,6 @@ Fields:
 - `next_locked_review_policy_version`
 - `prior_locked_revision_policy_version`
 - `next_locked_revision_policy_version`
-- `prior_locked_payment_policy_version`
-- `next_locked_payment_policy_version`
 - `context_rebased`
 - `rebase_reason`
 - `change_summary`
@@ -1375,6 +1438,10 @@ Fields:
 Purpose:
 
 This record is created before a contributor resumes a task in `NEEDS_REVISION` when guide or policy context must be checked for the next attempt. It does not mutate the prior submission. It records whether the next attempt keeps the prior context or rebases to the current active guide and policy context under revision policy.
+
+Revision preparation never rebases compensation. Submitter compensation remains
+the TaskAssignment-frozen version; each new ReviewLease independently freezes
+the then-current reviewer compensation version.
 
 The contributor and reviewer packets must show the prior version, next version, rebase reason, and change summary when `context_rebased = true`.
 
@@ -1404,51 +1471,66 @@ the exact Review, submission, assignment or lease, frozen compensation policy,
 and stabilized artifact-hash lineage. Compensation awards and reputation events
 may reference it, but do not replace it.
 
-## PaymentRecord
+## CompensationAward
 
 Fields:
 
 - `id`
+- `project_id`
 - `contribution_record_id`
-- `task_id`
 - `contributor_id`
-- `base_amount`
-- `accepted_amount`
-- `pending_amount`
-- `paid_amount`
-- `currency`
-- `payout_type`
-- `status`
-- `payment_reference`
-- `locked_payment_policy_version`
-- `dispute_reason`
-- `disputed_at`
-- `accepted_at`
-- `paid_at`
+- `compensation_policy_version_id`
+- `award_definition_id`
+- `adapter_binding_id`
+- `instrument_type`: `money | project_points`
+- `unit_code`
+- `quantity` as an exact decimal
+- `created_at`
+- `correlation_id`
 
-Status:
+The award is immutable and copies its instrument, unit, quantity, and binding
+from the published definition. Explicit unpaid rules create no award. At most
+one award exists per contribution and instrument type; fulfillment state is not
+stored on the award.
 
-- none
-- pending
-- payout_submitted
-- paid
-- disputed
-
-## PaymentAdjustment
+## CompensationFulfillmentReceipt
 
 Fields:
 
 - `id`
-- `payment_record_id`
-- `actor_id`
-- `old_amount`
-- `new_amount`
-- `currency`
-- `reason`
-- `evidence_ref`
-- `created_at`
+- `compensation_award_id`
+- `project_id`
+- `adapter_binding_id`
+- `external_event_id`
+- `reported_status`: `fulfilled | failed`
+- `external_reference`
+- `fulfilled_quantity`
+- `fulfilled_at`
+- `failure_code`
+- `failure_message`
+- `reported_at`
+- `received_at`
+- `correlation_id`
 
-Payment adjustments are append-only. Accepted amount changes must use this record instead of editing payment values silently.
+Receipts are immutable. Fulfilled receipts require an exact award quantity,
+external reference, and timestamp. Failed receipts require a failure code. One
+award has at most one fulfilled receipt.
+
+## CompensationStatusProjection
+
+Fields:
+
+- `compensation_award_id`
+- `delivery_status`: `pending_delivery | acknowledged_by_adapter`
+- `fulfillment_status`: `pending | failed | fulfilled`
+- `latest_receipt_id`
+- `external_reference`
+- `last_failure_code`
+- delivery, fulfillment, and update timestamps
+
+This projection is mutable and rebuildable. ContributionRecord,
+CompensationAward, outbox delivery history, and fulfillment receipts remain the
+authoritative records.
 
 ## ReputationEvent
 
@@ -1537,12 +1619,15 @@ open an independent session.
 - `needs_revision` and `reject` must not create a submitter contribution
 - no compensation award or payment exposure exists without its contribution
   record
-- a paid award must have an accepted payment or fulfillment record
+- a fulfilled award must have an immutable fulfillment receipt with the exact
+  authorized quantity and external reference
 - reputation events for accepted work must reference the submitter contribution
 - reviewer-quality reputation events must reference the reviewer contribution,
   Review, or audit source
-- payment amount changes require a payment adjustment record
-- disputed payments cannot become `paid` without a dispute resolution audit event
+- compensation award quantity is immutable after creation
+- failed fulfillment may later receive one valid fulfilled receipt; a fulfilled
+  award is terminal and rejects conflicting callbacks
+- the mutable compensation projection never overrides award or receipt truth
 - critical- and high-severity checker failures block review; registered
   recovery may retry or repair infrastructure but cannot create a review
   decision or erase checker evidence

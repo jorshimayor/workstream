@@ -1,8 +1,13 @@
 # Task Lifecycle Sequence
 
-This sequence shows the v0.1 operating loop from project guide to accepted contribution and payment/reputation records.
+This sequence shows the v0.1 operating loop from project guide to reviewer and
+submitter contributions, conditional compensation awards, fulfillment, and
+reputation records.
 
-It is intentionally separate from the future identity and settlement diagram. v0.1 records payment status and reputation events internally; it does not execute on-chain settlement or write portable agent reputation.
+It is intentionally separate from the future identity and settlement diagram.
+v0.1 records immutable awards, fulfillment receipts/projections, and reputation
+events internally; it does not execute on-chain settlement or write portable
+agent reputation.
 
 ```mermaid
 sequenceDiagram
@@ -25,7 +30,8 @@ sequenceDiagram
   API->>Authorization: Resolve actor profile and local grants
   Authorization->>Authorization: require(project.create/configure, candidates, resource/lifecycle guards)
   Authorization-->>API: Allowed AuthorizationContext with matched Project Manager grant
-  API->>DB: Persist draft guide and checker/review/revision/payment policy context
+  API->>DB: Persist draft guide and checker/review/revision policy context
+  API->>DB: Publish project compensation policy version independently
 
   PM->>UI: Activate guide
   UI->>API: POST activate guide
@@ -86,7 +92,7 @@ sequenceDiagram
     API->>Checks: Run checks again
   else accept
     API->>DB: Create submitter accepted_submission contribution
-    API->>DB: Create applicable submitter award/payment record
+    API->>DB: Create applicable submitter CompensationAward
     API->>DB: Create reputation event
     API->>DB: Audit acceptance
   else reject
@@ -98,11 +104,12 @@ sequenceDiagram
 
 ## Lifecycle Invariants
 
-- A task cannot enter `READY` without locked guide, checker, review, revision, and payment policy context.
+- New TaskAssignments and ReviewLeases require an active published compensation
+  policy version to freeze.
 - A contributor submission creates a new immutable submission version; locked artifacts are not edited in place.
 - Review decisions are exactly `accept`, `needs_revision`, or `reject`.
 - `needs_revision` starts a revision loop and must replay prior findings.
 - Every valid human review creates a reviewer contribution. Accepted work
   additionally creates a submitter contribution before compensation or
   reputation records.
-- Payment status is separate from task acceptance.
+- Compensation fulfillment status is separate from task acceptance.

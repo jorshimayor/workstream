@@ -230,9 +230,10 @@ No administrative or recovery grant authorizes these transitions:
 - `SUBMITTED -> ACCEPTED` directly
 - `SUBMITTED -> NEEDS_REVISION` without checker run unless the submission packet cannot be parsed
 - any transition based on artifacts whose hashes differ from the checker run
-- payment `NONE -> PAID` without accepted task and payment record
-- payment exposure without a contribution record
-- payment `PENDING -> PAID` without payment reference
+- compensation projection `pending -> fulfilled` without an immutable payable
+  award and fulfillment receipt
+- compensation exposure without a contribution record and frozen policy
+- fulfillment without an external reference
 
 ## Submission Versioning
 

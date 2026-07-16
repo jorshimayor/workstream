@@ -941,6 +941,13 @@ def test_stale_wording_patterns_catch_variants() -> None:
             "accepted work creates a pending payment " + "record",
             "contribution record is created when work is " + "accepted",
             "the evidence-backed record that accepted " + "work was completed",
+            "accepted task must create a payment " + "record",
+            "payment record attached to accepted " + "tasks",
+            "acceptance creates a pending payment " + "record",
+            "accepted transition creates payment " + "record",
+            "payment record moves to " + "pending",
+            "payment NONE -> PAID without accepted " + "task",
+            "every accepted task updates " + "payment",
         ]
     )
     matches = [
@@ -982,6 +989,13 @@ def test_stale_wording_patterns_catch_variants() -> None:
         "accepted work creates (?:a )?pending payment " + "record",
         "contribution record is created when work is " + "accepted",
         "the evidence-backed record that accepted " + "work",
+        "accepted tasks?.{0,80}payment " + "records?",
+        "payment records?.{0,80}accepted " + "tasks?",
+        "acceptance.{0,80}payment " + "records?",
+        "accepted transition.{0,80}payment " + "records?",
+        "payment record (?:moves to pending|can be generated)",
+        "payment\\s+NONE\\s*->\\s*PAID.{0,80}accepted task",
+        "every accepted task updates " + "payment",
     }
     case_variant_sample = "\n".join(
         [

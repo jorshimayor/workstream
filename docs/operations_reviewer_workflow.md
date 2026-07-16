@@ -152,7 +152,9 @@ Before accepting:
 - evidence supports the claim
 - checker results are acceptable
 - no prior findings are open
-- payment record can be generated
+- reviewer and submitter contribution lineage can be created atomically
+- both frozen compensation policies can be evaluated; explicit unpaid results
+  are valid and create no award
 
 Before needs revision:
 

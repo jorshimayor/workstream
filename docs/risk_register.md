@@ -83,13 +83,15 @@ Severity: high
 
 Problem:
 
-Acceptance and payment can drift apart if tracked manually.
+Payable awards and external fulfillment can drift apart if tracked manually.
 
 Mitigation:
 
-- acceptance creates pending payment record
-- daily accepted-unpaid reconciliation
-- paid state requires payment reference
+- every valid Review creates its required contribution records atomically
+- payable contributions create immutable awards; explicit unpaid rules create
+  none
+- daily award/fulfillment reconciliation
+- fulfilled state requires an immutable receipt and external reference
 
 ### R6: Reviewer Abuse Or Low-Quality Review
 
@@ -146,14 +148,16 @@ Severity: high
 
 Problem:
 
-Tasks can be moved to review, accepted, or paid without completing the required checker, review, revision, or payment steps.
+Tasks can be moved to review or accepted without required lifecycle evidence, or
+awards can be marked fulfilled without their compensation receipts.
 
 Mitigation:
 
 - enforce state transitions in code
 - require checker run id before `REVIEW_PENDING`
 - require review id before `ACCEPTED`
-- require accepted task and payment reference before `PAID`
+- require an immutable payable award, fulfillment receipt, and external reference
+  before `PAID`
 - replace broad historical override language with registered, scoped,
   reasoned, non-destructive Project Manager repair or Operator recovery
 
@@ -209,14 +213,17 @@ Severity: high
 
 Problem:
 
-Accepted work, payout amount, and paid status can diverge, especially while payment is manual.
+Immutable award quantity and external fulfillment status can diverge, especially
+while fulfillment is manual.
 
 Mitigation:
 
-- acceptance creates payment record automatically
-- amount changes require adjustment record
-- disputed payments move to `DISPUTED`
-- daily reconciliation catches accepted-unpaid and paid-without-reference records
+- frozen compensation policy evaluation creates immutable awards for payable
+  contributions only
+- award quantities are immutable
+- disputed fulfillment remains separate from contribution truth
+- daily reconciliation catches missing projections and fulfilled-without-receipt
+  records
 
 ### R9: Overbuilding Marketplace Before Operating System
 

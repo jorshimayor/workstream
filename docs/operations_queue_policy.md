@@ -172,11 +172,15 @@ Work satisfies the project guide and acceptance criteria.
 
 Owner:
 
-- finance/reconciliation
+- project operations
+- finance/reconciliation only for payable contribution awards
 
 Policy:
 
-- accepted task must create or update payment record immediately
+- the accepting Review creates reviewer `completed_review` and submitter
+  `accepted_submission` contribution records atomically
+- each frozen compensation policy is evaluated independently; only payable
+  contributions create awards and payment follow-up
 - accepted task is not confused with paid task
 
 ### Rejected
@@ -194,15 +198,17 @@ Policy:
 
 ### Payment Follow-Up
 
-Payment follow-up is not a task queue lane. It is derived from payment records attached to accepted tasks.
+Compensation follow-up is not a task queue lane. It is derived from payable
+`CompensationAward` records and their fulfillment projections, whether the
+source contribution is `completed_review` or `accepted_submission`.
 
 Track:
 
-- accepted but no payment record
-- pending payout
-- payout submitted
-- paid
-- disputed
+- payable contribution missing its award or fulfillment projection
+- pending award delivery
+- acknowledged by adapter
+- failed fulfillment
+- fulfilled with immutable receipt
 
 ## Daily Queue Review
 
@@ -294,16 +300,17 @@ Fix:
 - audit reviewer wording
 - update project guide
 
-### Accepted But Unpaid Drift
+### Payable Contribution Fulfillment Drift
 
 Cause:
 
-- acceptance and finance are disconnected
+- contribution award creation and fulfillment are disconnected
 
 Fix:
 
-- accepted transition creates payment record
-- payment dashboard is reviewed daily
+- frozen compensation policy evaluation creates awards only for payable
+  contributions; explicit unpaid rules create none
+- compensation fulfillment dashboard is reviewed daily
 
 ### Ready Lane Contains Weak Tasks
 

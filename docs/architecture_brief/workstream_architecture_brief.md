@@ -25,7 +25,7 @@ The first 30 days are focused on proving the internal lifecycle:
 ```text
 Project Guide -> Task Queue -> Submission Packet -> Checks -> Review
 -> Revision / Acceptance / Rejection -> Contribution Record
--> Payment Record -> Reputation Event
+-> Compensation Award / Fulfillment -> Reputation Event
 ```
 
 <div class="callout">
@@ -80,7 +80,7 @@ The container view shows the first 30-day implementation. It is intentionally sm
 
 | Container | Responsibility |
 | --- | --- |
-| React + Vite operations UI | Planned internal operations dashboard for project, task, submission, review, payment status, and reputation workflows. |
+| React + Vite operations UI | Planned internal operations dashboard for project, task, submission, review, compensation fulfillment, and reputation workflows. |
 | FastAPI backend | API contracts, workflow rules, auth dependency, lifecycle guards, module orchestration, and audit writes. |
 | Celery worker boundary | Durable project setup, checker, and background product-job execution. FastAPI background tasks are not the Workstream product-job boundary. |
 | Checker runner | Executes automated checks and stores checker results. |
@@ -104,7 +104,7 @@ The backend component view zooms into the FastAPI container. It shows how the mo
 | Boundary | Responsibility |
 | --- | --- |
 | HTTP + auth boundary | Routers handle HTTP only. Actor resolution, permission checks, and Pydantic request/response validation stay at the boundary. |
-| Workflow services | Project guide, task queue, submission, checker, review/revision, and contribution/payment/reputation services own business rules. |
+| Workflow services | Project guide, task queue, submission, checker, review/revision, and contribution/compensation/reputation services own business rules. |
 | Shared domain rules | Lifecycle guards and audit writes stay shared instead of being scattered through routers. |
 | Persistence boundary | Repositories own SQLAlchemy async persistence and Postgres access. |
 | External ports/adapters | Flow auth, storage, and checker execution stay behind interfaces. |
@@ -121,14 +121,15 @@ The sequence below shows the narrow v0.1 loop the system must prove before expan
 
 ### Lifecycle Invariants
 
-- A task cannot enter `READY` without locked guide, checker, review, revision, and payment policy context.
+- New TaskAssignments and ReviewLeases cannot be created without an active
+  published compensation policy version to freeze.
 - A contributor submission creates a new immutable submission version; locked artifacts are not edited in place.
 - Review decisions are exactly `accept`, `needs_revision`, or `reject`.
 - `needs_revision` starts a revision loop and must replay prior findings.
 - Every valid human review creates a reviewer contribution; accepted work
   additionally creates a submitter contribution before compensation or
   reputation records.
-- Payment status is separate from task acceptance.
+- Compensation fulfillment status is separate from task acceptance.
 
 <div class="page-break"></div>
 
@@ -154,11 +155,11 @@ This view explains the broader architecture direction without moving it into v0.
 | Task contract and escrow reference | ERC-8183 |
 | Evaluation lifecycle | Workstream |
 | Accepted-work certification | Workstream contribution record |
-| Payment policy and payment status | Workstream payment record |
+| Compensation policy, immutable award, and fulfillment status | Workstream compensation records |
 | Payment request and settlement execution | x402, OmniClaw, and USDC settlement rails |
 
 <div class="boundary">
-Future ERC-8004, ERC-8183, x402, OmniClaw, and USDC integrations do not replace Workstream. They use Workstream records. Workstream remains the evaluation, acceptance, contribution, payment-status, and reputation-signal system.
+Future ERC-8004, ERC-8183, x402, OmniClaw, and USDC integrations do not replace Workstream. They use Workstream records. Workstream remains the evaluation, acceptance, contribution, compensation-award/fulfillment, and reputation-signal system.
 </div>
 
 <div class="page-break"></div>
@@ -174,7 +175,7 @@ Future ERC-8004, ERC-8183, x402, OmniClaw, and USDC integrations do not replace 
 - checker framework and pre-review gate
 - human review and revision replay
 - contribution records
-- payment status records
+- compensation award, receipt, and fulfillment projection records
 - reputation events
 - audit events
 
@@ -192,6 +193,6 @@ Future ERC-8004, ERC-8183, x402, OmniClaw, and USDC integrations do not replace 
 
 ## Closing
 
-Workstream v0.1 succeeds when it can run real internal work from project guide to accepted contribution with evidence, checks, human review, revision discipline, payment status, and reputation events.
+Workstream v0.1 succeeds when it can run real internal work from project guide to reviewer/submitter contributions with evidence, checks, human review, revision discipline, conditional compensation awards, fulfillment status, and reputation events.
 
 The system should expand only after that loop is proven.

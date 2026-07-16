@@ -86,9 +86,12 @@ Reads authorized immutable and operational evidence without mutation.
 
 1. Reviewer accepts submission.
 2. Task moves to ACCEPTED.
-3. Payment record moves to pending.
-4. Reputation event is recorded.
-5. Finance marks payout submitted or paid.
+3. Workstream records reviewer `completed_review` and submitter
+   `accepted_submission` contributions.
+4. Frozen compensation policies create awards only for payable contributions;
+   explicit unpaid rules create none.
+5. Reputation events are recorded from contribution facts.
+6. Finance follows delivery and fulfillment only for created awards.
 
 ## Rejection Workflow
 

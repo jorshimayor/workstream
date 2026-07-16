@@ -43,6 +43,13 @@ FORBIDDEN_PATTERNS = (
     re.compile(r"accepted work creates (?:a )?pending payment record", re.IGNORECASE),
     re.compile(r"contribution record is created when work is accepted", re.IGNORECASE),
     re.compile(r"the evidence-backed record that accepted work", re.IGNORECASE),
+    re.compile(r"accepted tasks?.{0,80}payment records?", re.IGNORECASE),
+    re.compile(r"payment records?.{0,80}accepted tasks?", re.IGNORECASE),
+    re.compile(r"acceptance.{0,80}payment records?", re.IGNORECASE),
+    re.compile(r"accepted transition.{0,80}payment records?", re.IGNORECASE),
+    re.compile(r"payment record (?:moves to pending|can be generated)", re.IGNORECASE),
+    re.compile(r"payment\s+NONE\s*->\s*PAID.{0,80}accepted task", re.IGNORECASE),
+    re.compile(r"every accepted task updates payment", re.IGNORECASE),
 )
 FULL_TEXT_FORBIDDEN_PATTERNS = {
     "auto\\s*[\"']?\\s*\\\\?\\s*\\+\\s*[\"']?_checking",

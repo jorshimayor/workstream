@@ -39,7 +39,8 @@ Exit criteria:
 
 - no task can exist without a project
 - no project can exist without a guide
-- no accepted task can exist without payment and evidence concepts
+- no accepted task can exist without evidence and a submitter contribution;
+  payable contributions additionally require compensation concepts
 - no backend implementation starts without chunk specification and conditions of satisfaction
 
 ### Day 2: Project And Guide Records
@@ -191,7 +192,8 @@ Exit criteria:
 
 - task cannot become review-pending with no evidence
 - task cannot become review-pending when checker artifact hashes do not match submission hashes
-- task cannot be accepted later without payment policy
+- new TaskAssignments and ReviewLeases cannot be created without an active
+  published compensation policy version to freeze
 
 ### Day 9: Project Checker Policy
 
@@ -479,7 +481,8 @@ Deliver:
 Exit criteria:
 
 - no silent state changes
-- no accepted task missing payment/evidence
+- no accepted task missing evidence or submitter contribution, and no payable
+  contribution missing award/fulfillment tracking
 
 ### Day 29: Pilot Report
 

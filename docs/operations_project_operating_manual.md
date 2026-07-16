@@ -230,12 +230,11 @@ Before review decision:
 
 Before marking paid:
 
-- task is accepted
-- payment record exists
-- accepted amount is correct
-- contributor identity is correct
+- compensation award exists for a payable contribution
+- contribution, beneficiary, frozen policy, instrument, unit, and quantity match
+- explicit unpaid rules have no award and cannot be marked paid
 - payment reference is recorded
-- paid amount matches record
+- fulfilled quantity matches the immutable award
 
 ## Lessons Learned Loop
 

@@ -46,7 +46,7 @@ package "Workstream v0.1" #F8FBFF {
 }
 
 package "Durable Records" #F2FBF7 {
-  database "Postgres\n----\nProjects, guides,\ntasks, submissions,\nchecks, reviews,\nrevisions, contribution,\npayment, reputation,\naudit events" as postgres
+  database "Postgres\n----\nProjects, guides,\ntasks, submissions,\nchecks, reviews,\nrevisions, contribution,\ncompensation, reputation,\naudit events" as postgres
   rectangle "Private Object Store\nBehind ArtifactStore\n----\nLocal / MinIO / AWS S3" as file_store #E6FCF5
 }
 
