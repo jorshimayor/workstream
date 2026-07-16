@@ -334,14 +334,17 @@ def scan_text(
     relative_path: str,
     text: str,
     *,
-    historical_baseline_lines: frozenset[str] = frozenset(),
+    enforced_line_numbers: frozenset[int] | None = None,
 ) -> list[str]:
     """Return deterministic rule failures for one active document."""
     failures: list[str] = []
     for rule in RULES:
         for match in rule.pattern.finditer(text):
-            line = containing_line(text, match.start())
-            if line in historical_baseline_lines:
+            match_line_number = line_number(text, match.start())
+            if (
+                enforced_line_numbers is not None
+                and match_line_number not in enforced_line_numbers
+            ):
                 continue
             if exempt_match(relative_path, rule, text, match.start()):
                 continue
@@ -350,26 +353,52 @@ def scan_text(
                 "HUMAN_WORKER_IDENTIFIER",
             } and technical_worker_match(text, match):
                 continue
-            failures.append(
-                f"{relative_path}:{line_number(text, match.start())}: {rule.code}"
-            )
+            failures.append(f"{relative_path}:{match_line_number}: {rule.code}")
     return failures
 
 
-def initiative_baseline_lines(root: Path, relative_path: str) -> frozenset[str]:
-    """Return unchanged initiative-history lines from trusted ``origin/main``."""
+def initiative_changed_line_numbers(
+    root: Path, relative_path: str
+) -> frozenset[int] | None:
+    """Return changed initiative lines, or ``None`` for a new/non-initiative file."""
     if not relative_path.startswith(".agent-loop/initiatives/"):
-        return frozenset()
-    result = subprocess.run(
-        ["git", "-C", str(root), "show", f"origin/main:{relative_path}"],
+        return None
+    baseline = subprocess.run(
+        ["git", "-C", str(root), "cat-file", "-e", f"origin/main:{relative_path}"],
         check=False,
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
-    if result.returncode != 0:
-        return frozenset()
-    return frozenset(result.stdout.splitlines())
+    if baseline.returncode != 0:
+        return None
+    result = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "diff",
+            "--unified=0",
+            "--no-color",
+            "origin/main",
+            "--",
+            relative_path,
+        ],
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    changed_lines: set[int] = set()
+    hunk_pattern = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
+    for line in result.stdout.splitlines():
+        match = hunk_pattern.match(line)
+        if match is None:
+            continue
+        start = int(match.group(1))
+        count = int(match.group(2) or "1")
+        changed_lines.update(range(start, start + count))
+    return frozenset(changed_lines)
 
 
 def scan_activation_custody_text(relative_path: str, text: str) -> list[str]:
@@ -397,7 +426,7 @@ def scan(root: Path = ROOT) -> list[str]:
             scan_text(
                 relative_path,
                 text,
-                historical_baseline_lines=initiative_baseline_lines(
+                enforced_line_numbers=initiative_changed_line_numbers(
                     root, relative_path
                 ),
             )

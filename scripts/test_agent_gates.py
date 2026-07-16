@@ -3901,28 +3901,52 @@ def test_stale_authorization_precedence_exemption_is_line_scoped() -> None:
     assert failures == ["docs/reference_specs/README.md:2: NON_CANONICAL_API_PREFIX"]
 
 
-def test_stale_authorization_initiative_baseline_is_line_scoped() -> None:
-    """Unchanged initiative history is tolerated, but changed stale lines fail."""
+def test_stale_authorization_initiative_ratchet_is_position_scoped() -> None:
+    """A copied stale line fails even when identical history remains unchanged."""
     gate = load_module(
         "stale_authorization_docs_initiative_baseline",
         "scripts/check_stale_authorization_docs.py",
     )
     stale_line = "POST /v1/projects"
-    replacement_line = "A token also carries an authorized Workstream role."
+    text = f"{stale_line}\n{stale_line}\n"
 
-    assert (
-        gate.scan_text(
-            ".agent-loop/initiatives/example/PLAN.md",
-            stale_line,
-            historical_baseline_lines=frozenset({stale_line}),
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        root = Path(tmp_dir)
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=root, check=True)
+        relative_path = ".agent-loop/initiatives/example/PLAN.md"
+        contract = root / relative_path
+        contract.parent.mkdir(parents=True)
+        contract.write_text(f"{stale_line}\n", encoding="utf-8")
+        subprocess.run(["git", "add", relative_path], cwd=root, check=True)
+        subprocess.run(
+            [
+                "git",
+                "-c",
+                "user.name=Test",
+                "-c",
+                "user.email=test@example.com",
+                "commit",
+                "-qm",
+                "baseline",
+            ],
+            cwd=root,
+            check=True,
         )
-        == []
-    )
+        subprocess.run(
+            ["git", "update-ref", "refs/remotes/origin/main", "HEAD"],
+            cwd=root,
+            check=True,
+        )
+        contract.write_text(text, encoding="utf-8")
+        changed_lines = gate.initiative_changed_line_numbers(root, relative_path)
+
+    assert changed_lines == frozenset({2})
+
     assert gate.scan_text(
         ".agent-loop/initiatives/example/PLAN.md",
-        replacement_line,
-        historical_baseline_lines=frozenset({stale_line}),
-    ) == [".agent-loop/initiatives/example/PLAN.md:1: TOKEN_CARRIES_PRODUCT_ROLE"]
+        text,
+        enforced_line_numbers=changed_lines,
+    ) == [".agent-loop/initiatives/example/PLAN.md:2: NON_CANONICAL_API_PREFIX"]
 
 
 def test_stale_authorization_history_allowlist_is_exact() -> None:
@@ -5002,7 +5026,7 @@ def main() -> int:
         test_parallel_initiative_status_matches_trusted_main,
         test_stale_authorization_discovery_includes_new_untracked_docs,
         test_stale_authorization_precedence_exemption_is_line_scoped,
-        test_stale_authorization_initiative_baseline_is_line_scoped,
+        test_stale_authorization_initiative_ratchet_is_position_scoped,
         test_stale_authorization_history_allowlist_is_exact,
         test_agent_gates_runs_stale_authorization_docs_fail_closed,
         test_agent_gates_runs_stale_artifact_contracts_fail_closed,

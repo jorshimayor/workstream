@@ -84,8 +84,8 @@ Legacy typed workflow-profile IDs are unrelated and never promoted.
 |---|---|---|
 | `access_administrator` | system | Actor, identity-link, administrative-grant, and permission-catalog administration. |
 | `operator` | system | Runtime inspection and explicit recovery operations against canonically resolved resources. |
-| `project_manager` | system or exact covered project | Project configuration, task management, and contributor grants. System scope covers all projects but remains resource- and lifecycle-guarded; exact-project scope covers only that project. |
-| `finance_authority` | system or exact covered project | Compensation configuration and fulfillment observation owned by WS-CON. |
+| `project_manager` | system or exact covered project | Project, task, guide/setup, submission/checker, review, and revision configuration plus contributor grants. It cannot mutate contribution policy or compensation-adapter bindings. System scope covers all projects but remains resource- and lifecycle-guarded; exact-project scope covers only that project. |
+| `finance_authority` | system or exact covered project | Contribution policy, compensation-adapter binding, and fulfillment observation owned by WS-CON. |
 | `audit_authority` | system or exact covered project | Read-only evidence access and authorized export. |
 
 Administrative grants do not imply contributor capability. An administrator
