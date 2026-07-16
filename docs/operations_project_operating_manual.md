@@ -118,7 +118,11 @@ A project cannot become active unless guide, immutable guide-source snapshot,
 passed or acknowledged guide sufficiency report, approved submission artifact
 policy, persisted effective project submission artifact policy hash, project
 pre-submit checker bundle hash, approved project post-submit checker policy,
-review policy, and revision policy are present. Compiled
+review policy, revision policy, and an independently published active
+`CompensationPolicyVersion` with exactly one explicit compensated/unpaid rule
+for each of `accepted_submission` and `completed_review` are present. Guide
+policy activation and compensation publication remain independently governed,
+but project activation requires both. Compiled
 post-submit setup output carries exact source/effective/pre-submit provenance,
 but activation remains blocked until the current compiled policy is approved
 through the server-owned approval endpoint. A correction request supersedes the

@@ -69,6 +69,7 @@ ACTIVE_SHARED_CONTRACT_PATTERNS = (
     re.compile(r"\b(?:locked_payment_policy_version)\b", re.IGNORECASE),
     re.compile(r"\bpayment_reconciliation\b", re.IGNORECASE),
     re.compile(r"\bpayment truth\b", re.IGNORECASE),
+    re.compile(r"\bPayment And Reputation\b"),
     re.compile(r"\bpayment polic(?:y|ies)\b", re.IGNORECASE),
     re.compile(r"\bpayment records?\b", re.IGNORECASE),
     re.compile(r"\bpayment ledger\b", re.IGNORECASE),

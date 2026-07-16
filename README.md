@@ -89,7 +89,7 @@ Workstream turns that operating knowledge into reusable infrastructure.
 - [Authorization Service](docs/spec_authorization_service.md)
 - [Immutable Artifact Storage](docs/spec_artifact_storage_service.md)
 - [Authorization Operations](docs/operations_authorization_service.md)
-- [Payment And Reputation](docs/operations_payment_reputation.md)
+- [Compensation And Reputation](docs/operations_payment_reputation.md)
 - [Risk Register](docs/risk_register.md)
 - [Process Pattern Baseline](docs/process_pattern_baseline.md)
 - [Architecture Lockdown](docs/architecture_lockdown.md)
