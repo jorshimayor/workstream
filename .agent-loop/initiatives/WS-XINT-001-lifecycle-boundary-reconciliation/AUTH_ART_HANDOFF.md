@@ -9,8 +9,11 @@ availability.
 
 ## Complete current custody transfer
 
-All mappings remain unchanged. The proposed AUTH custody groups replace the
-current ART-valued `ActionOwner` rows atomically.
+All mappings remain unchanged. `docs/spec_authorization_service.md` remains the
+canonical ActionId-to-PermissionId and principal/resource blueprint. The table
+below repeats those mappings only to bind each row to its proposed AUTH custody
+group; this handoff is the canonical activation-custody transfer. The proposed
+groups replace the current ART-valued `ActionOwner` rows atomically.
 
 | AUTH custody group | ActionId | PermissionId |
 |---|---|---|

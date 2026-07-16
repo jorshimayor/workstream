@@ -49,7 +49,7 @@ python3 scripts/check_markdown_links.py
 python3 scripts/check_stale_authorization_docs.py
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/check_stale_workstream_wording.py
-! rg -n "Each WS-ART feature chunk activates|02D attaches and activates|activated here through the central AUTH" .agent-loop/initiatives/WS-ART-001-immutable-artifact-storage
+! rg -n "Each WS-ART feature chunk activates|02D attaches and activates|activated here through the central AUTH|actions it activates|Actions activated by that chunk|owning WS-ART chunk activates" docs/spec_authorization_service.md .agent-loop/LOOP_STATE.md .agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service .agent-loop/initiatives/WS-ART-001-immutable-artifact-storage
 git diff --check
 ```
 

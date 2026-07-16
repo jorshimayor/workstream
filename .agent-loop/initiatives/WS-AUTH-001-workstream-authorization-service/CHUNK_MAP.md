@@ -88,13 +88,14 @@ WS-AUTH-001-PLAN
   receive centralized AUTH decisions. Chunk 07A owns the permission/action
   registry, chunk 07B owns the central kernel, chunk 08 owns Operator grant
   definitions, chunk 09 owns fixed artifact service
-  principals, and each WS-ART feature chunk owns the canonical resource facts,
-  guards, surface declarations, and behavior tests for the exact artifact
-  actions it activates. AUTH-12, AUTH-14, and AUTH-15 do not pre-activate or
-  attach artifact actions. WS-ART-001-02D starts only after AUTH-09 and activates
-  its bounded Operator and internal-service surfaces through the central kernel;
-  later WS-ART chunks do the same for their own resources. AUTH-16 proves no
-  bypass remains.
+  principals and exact planned assignments. Each WS-ART feature chunk owns only
+  hidden canonical resource facts, guards, surface declarations, decision calls,
+  behavior, and tests. Dedicated AUTH custodians integrate evaluators and alone
+  change availability after the matching ART behavior merges. AUTH-12, AUTH-14,
+  and AUTH-15 are not alternate artifact activation paths. WS-ART-001-02D starts
+  only after AUTH-09 and custody registration, then remains hidden until the
+  internal and Operator AUTH activation checkpoints pass. Later ART chunks use
+  the same sequence. AUTH-16 proves no bypass remains.
 - Chunk 16 proves the complete initiative; it does not backfill missing audit
   or idempotency evidence.
 - `WS-POL-002-03` merged separately through PR #90 as `a7aa474`. This initiative

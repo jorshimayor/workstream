@@ -204,9 +204,10 @@ permissions do not authorize Operator APIs. AUTH-07A owns this closed registry,
 AUTH-07B introduces the central kernel, AUTH-08 owns the Operator grant
 definitions, AUTH-09 owns the service
 principals, and WS-ART consumes the resulting decisions without registering
-permissions or inferring authority. Artifact actions activate only through the
-paired feature model below; AUTH-12, AUTH-14, and AUTH-15 do not activate or
-attach artifact actions on behalf of WS-ART.
+permissions or inferring authority. Artifact actions follow AUTH planned
+registration, hidden ART behavior/resource composition, then dedicated AUTH
+evaluator integration and activation. ART never writes availability. AUTH-12,
+AUTH-14, and AUTH-15 are not alternate artifact activation paths.
 
 These are 74 approved `PermissionId` values. `ActionId` values are a separate
 closed registry layer and are not included in that permission count. AUTH-05A's
@@ -220,10 +221,11 @@ rows. AUTH-08 adds seven active administrative definition, grant-history,
 issue, revoke, and local-bootstrap actions without adding a permission. The
 planned rows cover three Operator recovery actions, 25 artifact actions,
 canonical `submission.create`, and 19 review actions. An action becomes active only when
-its owning chunk supplies its canonical resource composer, guards, surface or
+its feature owner has merged the canonical resource composer, guards, surface or
 command declaration, behavior tests, and transaction-local revalidation where
-required. Both halves are mandatory; registry presence alone never grants
-authority.
+required, and its dedicated AUTH activation custodian has integrated the exact
+evaluator and changed availability. Both halves are mandatory; registry or
+feature presence alone never grants authority.
 
 AUTH-07B activates `actor.profile.read_self` and `actor.profile.update_self`.
 AUTH-08 activates exactly seven administrative actions through migration
@@ -231,9 +233,13 @@ AUTH-08 activates exactly seven administrative actions through migration
 
 The submission/review dependency matrix is closed. AUTH-07A registers only the
 four stable planned fields shown here; resource facts, candidates, guards, and
-runtime activation remain with the listed owner.
+hidden behavior remain with the listed feature owner. The current owner values
+are planned pre-transfer catalogue state, not permission for a feature chunk to
+activate. Before any review action activates, AUTH must transfer activation
+custody according to the reviewed
+`.agent-loop/initiatives/WS-XINT-001-lifecycle-boundary-reconciliation/AUTH_REV_HANDOFF.md`.
 
-| ActionId | PermissionId | Owner |
+| ActionId | PermissionId | Current planned feature owner |
 |---|---|---|
 | `submission.create` | `submission.create` | `WS-AUTH-001-14` |
 | `review.queue.read` | `review.queue.read` | `WS-REV-001-05` |
@@ -272,12 +278,13 @@ subsystem and is not represented as a REV-owned projection action.
 Migration `0021` is availability-neutral. PostgreSQL enforces the closed
 ActionId set, authorization-decision event shape, exact ActionId-to-PermissionId
 mapping, and the requirement that every post-`0018` permission carry a mapped
-action. Typed catalogue validation separately rejects allowed evidence until an
-owning chunk changes an action from `planned` to `active`.
+action. Typed catalogue validation separately rejects allowed evidence until the
+dedicated AUTH activation custodian changes an action from `planned` to `active`
+after merged feature behavior proof.
 
-The paired artifact activation matrix is closed:
+The paired artifact hidden-behavior matrix is closed:
 
-| Owning WS-ART chunk | Actions activated by that chunk |
+| Resource-owning WS-ART chunk | Hidden actions/resources implemented by that chunk |
 |---|---|
 | `WS-ART-001-02D` | Operator binding/replica/receipt/verification-job/recovery-attempt/audit reads; the operations-domain `operations.artifact_storage_admission.read` action mapped to `operations.status.read`; verification retry; `artifact.verification.execute`; `artifact.pending_work.scan`; and `artifact.put_attempt.resolve` |
 | `WS-ART-001-03` | `artifact.guide_source.ingest`, `artifact.guide_source.read`, and `artifact.guide_source.binding.create` mapped to `artifact.binding.create` |
@@ -289,19 +296,24 @@ The paired artifact activation matrix is closed:
 
 Every row requires AUTH-07A's registry and AUTH-07B's kernel first. A row with an Operator principal
 also requires its AUTH-08 grant definition; a row with a fixed service
-principal also requires its AUTH-09 service-actor assignment. Feature code
-receives centralized decisions; it never queries grants or constructs
-permission identifiers dynamically.
+principal also requires its AUTH-09 service-actor assignment. After the named
+ART behavior merges, the dedicated AUTH custodian integrates and activates the
+exact evaluator. Feature code receives centralized decisions; it never queries
+grants, constructs permission identifiers dynamically, or changes availability.
 
-The following table is the single source of truth for the owning WS-ART activation blueprint for
-artifact-related `ActionId` values. AUTH-07A registers only each row's stable
-`ActionId`, approved `PermissionId`, owning WS-ART chunk, and `planned`
+The following table is the single source of truth for artifact ActionId-to-
+PermissionId mappings, principal/resource facts, and ART hidden-behavior
+ownership. AUTH-07A registers only each row's stable `ActionId`, approved
+`PermissionId`, current planned feature owner, and `planned`
 availability. Its principal-class and canonical-resource columns are not AUTH
-registry fields and are not executable authority; the owning WS-ART chunk must
-adopt them with its canonical resource composer, guards, surface declaration,
-and behavior tests before activation. A mapping is not a permission alias.
+registry fields and are not executable authority; the owning WS-ART chunk adopts
+them with its hidden canonical resource composer, guards, surface declaration,
+and behavior tests. The complete AUTH activation-custody transfer is separately
+canonical in
+`.agent-loop/initiatives/WS-XINT-001-lifecycle-boundary-reconciliation/AUTH_ART_HANDOFF.md`.
+A mapping is not a permission alias.
 
-| ActionId | PermissionId | Principal class | Canonical resource | Owning WS-ART chunk |
+| ActionId | PermissionId | Principal class | Canonical resource | Resource-owning WS-ART chunk |
 |---|---|---|---|---|
 | `artifact.binding.read` | `artifact.binding.read` | Operator | artifact binding | `02D` |
 | `artifact.replica.read` | `artifact.replica.read` | Operator | artifact replica | `02D` |
@@ -343,12 +355,14 @@ are also closed:
 | `workstream.artifact.checker_output` | `artifact.checker_output.write` |
 
 AUTH-09 persists these exact service actors and assignments before any WS-ART
-execution chunk activates them. Composition startup proves registry, service
-actor, action, and PermissionId parity and fails closed on a missing or extra
-assignment. Negative authorization tests prove each service identity is denied
-every artifact action outside its row. Human authorization remains attached to
-the initiating product command; an internal service identity never inherits a
-human grant or role.
+execution chunk consumes them. They remain inert while planned. After the ART
+execution behavior merges, the dedicated AUTH activation custodian integrates
+the evaluator and changes only the exact action to active. Composition startup
+proves registry, service actor, action, and PermissionId parity and fails closed
+on a missing or extra assignment. Negative authorization tests prove each
+service identity is denied every artifact action outside its row. Human
+authorization remains attached to the initiating product command; an internal
+service identity never inherits a human grant or role.
 
 Adding a permission requires a specification/ADR update and human approval.
 Routers cannot invent identifiers or evaluate grant unions.

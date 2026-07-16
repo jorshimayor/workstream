@@ -212,11 +212,12 @@ correlation evidence, resource identity, operation, and service principal.
 Receipts prove that storage work occurred; they do not create authority. AUTH-07A
 registers exact artifact permissions and planned actions, AUTH-07B introduces
 the central kernel, AUTH-08 defines applicable Operator
-grants, and AUTH-09 provisions fixed service principals. Each owning WS-ART
-feature chunk supplies the canonical resource composer, guards, surface
-declaration, and behavior tests that activate its exact actions. AUTH-12,
-AUTH-14, and AUTH-15 are not alternate artifact activation paths. AUTH-04B adds
-no artifact permission or route attachment.
+grants, and AUTH-09 provisions fixed service principals and exact planned
+assignments. Each owning WS-ART feature chunk supplies hidden canonical resource
+composition, guards, surface declarations, decision calls, behavior, and tests.
+Dedicated AUTH activation custodians then integrate exact evaluators and alone
+change availability. AUTH-12, AUTH-14, and AUTH-15 are not alternate artifact
+activation paths. AUTH-04B adds no artifact permission or route attachment.
 
 ## D15: Adopt a staged typed action and resource catalogue
 
@@ -271,7 +272,8 @@ contract added 21 exact identifiers, making the pre-D17 closed total 73.
 AUTH-05A currently enforces a 49-identifier typed/PostgreSQL audit base; the
 three already approved Operator recovery identifiers and 21 artifact
 identifiers remain planned and non-executable until AUTH-07A adds typed/SQL audit
-parity and the paired owning feature activates each action. Other permission additions or renames still
+parity, the owning feature merges hidden behavior, and the dedicated AUTH
+custodian activates each action. Other permission additions or renames still
 require an approved specification/ADR change, typed and PostgreSQL registry
 migration, audit-history treatment, cutover ownership, and rollback proof.
 WS-REV, WS-CON, and the artifact-storage specification continue to own their

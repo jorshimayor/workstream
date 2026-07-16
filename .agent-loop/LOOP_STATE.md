@@ -28,8 +28,10 @@
   ActionIds, with only the two actor-self actions active. The repaired AUTH-08
   contract proposes exactly seven administrative actions, the five-role
   matrix, and durable grants; implementation is active. AUTH-09 provisions fixed
-  service principals, and
-  each owning WS-ART feature chunk activates only its own canonical actions.
+  service principals and exact planned assignments. ART feature chunks supply
+  hidden canonical behavior/resource composition; AUTH alone integrates
+  evaluators and changes action availability afterward, as superseded by
+  `WS-XINT-001`.
 - Parallel artifact checkpoint: `WS-ART-001-02A1` was explicitly started and
   merged through PR #127 as `f64a8e5`; it is at the post-merge memory/stop
   checkpoint. `WS-ART-001-02A2` remains inactive until signed memory completes
