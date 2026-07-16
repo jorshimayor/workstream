@@ -73,6 +73,8 @@ async def minted_source(
 class ArtifactStoreConformanceTests:
     """Reusable v2 vectors for LocalStorage and later provider adapters."""
 
+    expected_identity: ExternalServiceAdapterIdentity
+
     def make_store(self, root: Path) -> ArtifactStore:
         """Construct the provider under test."""
         raise NotImplementedError
@@ -89,7 +91,7 @@ class ArtifactStoreConformanceTests:
         """Expose only shared identity and the four ArtifactStore v2 operations."""
         store = self.make_store(tmp_path / "store")
         try:
-            assert store.identity == ExternalServiceAdapterIdentity("artifact_store", "local")
+            assert store.identity == self.expected_identity
             public = {
                 name
                 for name in dir(store)
@@ -263,6 +265,8 @@ class ArtifactStoreConformanceTests:
 
 class TestLocalArtifactStoreConformance(ArtifactStoreConformanceTests):
     """Run the shared v2 contract against LocalStorage."""
+
+    expected_identity = ExternalServiceAdapterIdentity("artifact_store", "local")
 
     def make_store(self, root: Path) -> ArtifactStore:
         """Construct one small-buffer local provider."""

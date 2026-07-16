@@ -29,6 +29,10 @@ CANONICAL_REQUESTS = {
 }
 RAW_TYPES = {"ArtifactStore", "ArtifactStorageOrchestrator"}
 PROVIDER_METHODS = {"put", "observe_put_result", "open", "head"}
+CONCRETE_ADAPTER_MODULES = {
+    "app.adapters.artifacts.local",
+    "app.adapters.artifacts.s3_compatible",
+}
 
 
 def _python_files(*roots: Path) -> tuple[Path, ...]:
@@ -96,8 +100,16 @@ def test_product_api_and_workers_cannot_import_or_inject_raw_artifact_types() ->
 def test_concrete_adapter_construction_has_one_composition_path() -> None:
     factory_calls: list[Path] = []
     adapter_calls: list[Path] = []
+    concrete_imports: list[Path] = []
     for path in _python_files(APP_ROOT):
-        for node in ast.walk(_tree(path)):
+        tree = _tree(path)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and node.module in CONCRETE_ADAPTER_MODULES:
+                concrete_imports.append(path)
+            if isinstance(node, ast.Import) and any(
+                alias.name in CONCRETE_ADAPTER_MODULES for alias in node.names
+            ):
+                concrete_imports.append(path)
             if not isinstance(node, ast.Call):
                 continue
             called = node.func
@@ -116,6 +128,7 @@ def test_concrete_adapter_construction_has_one_composition_path() -> None:
 
     assert factory_calls == [COMPOSITION_ROOT]
     assert adapter_calls == [COMPOSITION_ROOT]
+    assert concrete_imports == [COMPOSITION_ROOT]
 
 
 def test_provider_methods_stay_inside_artifact_orchestration_and_adapters() -> None:
