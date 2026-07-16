@@ -94,6 +94,7 @@ python3 scripts/check_markdown_links.py
 ```text
 154 focused tests passed; scoped coverage 94.40%
 38 isolated PostgreSQL artifact integration tests passed
+207 isolated AUTH/authentication/Alembic integration tests passed after main integration
 Ruff passed
 Repository docstring coverage 94.8%
 71 agent-gate tests passed
@@ -127,9 +128,9 @@ Stale artifact, wording, Markdown link, and diff checks passed
 
 ## Internal Reviewer Results
 
-Reviewed code SHA: `aba8325321b35a92778ffe3ddfb414ac7772f57f`
+Reviewed code SHA: `ae70bc2f10334f649c1af7f210e58ee378695a2b`
 
-Reviewed at: `2026-07-16T07:17:30Z`
+Reviewed at: `2026-07-16T09:03:51Z`
 
 Reviewer run IDs: recorded in `WS-ART-001-02A2-internal-review-evidence.md`
 
@@ -155,8 +156,8 @@ External review response file:
 
 | Source | Status | Notes |
 |---|---:|---|
-| CodeRabbit | PASS | Five findings across two reviews are fixed and marked addressed on `236155a`; no new finding remains. |
-| GitHub checks | PASS | Agent Gates and Backend, including full-suite coverage, passed on `236155a`. |
+| CodeRabbit | Pending integrated head | Five prior findings are fixed and marked addressed; the integrated head requires review. |
+| GitHub checks | Pending integrated head | Agent Gates and Backend must rerun after trusted `main` integration. |
 
 ## CI And Gate Integrity
 

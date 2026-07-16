@@ -26,7 +26,7 @@ approval or reusable evidence. Its source remains on branch
 ## Active Work
 
 `WS-ART-001-02A2` implementation and internal review are complete at reviewed
-SHA `aba8325321b35a92778ffe3ddfb414ac7772f57f`. All nine required reviewer
+SHA `ae70bc2f10334f649c1af7f210e58ee378695a2b`. All nine required reviewer
 tracks pass and every session is closed. The chunk adds only the inactive
 bounded preparation/committed-source boundary, private filesystem scratch
 ledger and deterministic cleanup mechanics, bounded shared file locking,
@@ -47,10 +47,11 @@ owns MinIO and AWS S3. There is no active R2 chunk.
 Ready PR #129 is open at
 `https://github.com/Flow-Research/workstream/pull/129`. Local deterministic
 proof and all nine internal reviewer tracks pass for the reviewed code SHA.
-The prior published head passed Agent Gates and Backend, then received two
-additional CodeRabbit findings. Those findings are repaired and all nine
-internal tracks pass on exact code SHA `aba8325`. Final evidence-bound head
-`236155a` passes Agent Gates, Backend full-suite coverage, and CodeRabbit with
-all findings marked addressed. The current gate is the human merge decision.
-No later artifact chunk starts automatically, and only the user may approve
-merge.
+The prior published head passed Agent Gates, Backend, and CodeRabbit. Trusted
+`main` at AUTH-08 merge `aa0fdcd` was then integrated to resolve the PR's base
+conflict. The combined tree passes 154 focused ART tests at 94.40 percent, 38
+isolated artifact PostgreSQL tests, and 207 isolated AUTH/authentication/Alembic
+tests. All nine exact-revision tracks pass and stale queue wording is repaired.
+The current gate is publication followed by fresh Agent Gates, Backend, and
+CodeRabbit checks. No later artifact chunk starts automatically, and only the
+user may approve merge.

@@ -10,11 +10,13 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: aba8325321b35a92778ffe3ddfb414ac7772f57f
+Reviewed code SHA: ae70bc2f10334f649c1af7f210e58ee378695a2b
 
-Reviewed at: 2026-07-16T07:17:30Z
+Reviewed at: 2026-07-16T09:03:51Z
 
-Reviewer run IDs: senior-engineering=019f69c0-9c33-7433-ac6a-b0f4a42ae628; architecture=019f69c0-9e67-7090-b5e1-9e58637811bc; QA/test=019f69c0-a0a6-7f03-a782-34134a04a80b; security/auth=019f69c0-a2ce-72a1-8027-a48ccc522795; product/ops=019f69c0-a4e7-7960-a6f8-65f752658e31; reuse/dedup=019f69c0-a70a-7940-8a1a-5c2eb382b65b; CI-integrity=019f69c5-cb1a-7530-8ffb-ec33e15449ed; test-delta=019f69c5-ce97-7793-a201-d084ff4554e5; docs=019f69c5-d43d-7990-8615-54ca195ff16e
+Reviewer run IDs: senior-engineering=019f6a24-31a2-7222-b83f-4a0bbcea7579; architecture=019f6a24-426b-7e11-9f7b-7ef4f00c3f17; QA/test=019f6a24-5137-7d43-9335-ea622d1861f6; security/auth=019f6a24-6db3-7f12-b9e0-1eabc39046d2; product/ops=019f6a24-9a10-7e92-b8db-ac2e8ea04e3f; reuse/dedup=019f6a24-b7cf-7e41-a1f5-57bb7aa7f5f4; CI-integrity=019f6a27-5582-7480-9810-972c89935a20; test-delta=019f6a27-6496-7d83-92bc-af1a778a9992; docs=019f6a27-5ba4-7d33-b799-07e838fe193e
+
+AUTH-08 base-integration review run IDs: senior-engineering=019f6a07-2431-7eb1-81f3-57757b44d478; architecture=019f6a07-2d1c-7d90-95e8-985373837c24; QA/test=019f6a07-31f8-70a3-8742-a44cb3ecdf15; security/auth=019f6a07-3cbd-74f3-8d1d-0b930bd1c77e; product/ops=019f6a07-37d6-73c3-8cd0-cfcc390e7369; reuse/dedup=019f6a07-43d8-71d0-befe-9d3aa8a14140
 
 After the reviewed SHA, only initiative review evidence and status files may
 change without invalidating this review.
@@ -71,6 +73,9 @@ change without invalidating this review.
 - Replaced timing-dependent marker-order proof with explicit spawned-child,
   lock-attempt, lock-acquired, and marker-validation events; widened only the
   bounded cold-start allowance after a reviewer reproduced a loaded-run flake.
+- Integrated trusted `main` at AUTH-08 merge `aa0fdcd`, preserved ART-02A2 as
+  the only active authored chunk, and corrected stale queue wording so AUTH-09
+  and POL-002-04 remain inactive pending explicit user starts.
 
 ## Commands Run
 
@@ -90,6 +95,10 @@ cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream
   .venv/bin/python scripts/run_isolated_tests.py \
   --metadata-json <temporary-path>/result.json --timeout-seconds 900 -- \
   .venv/bin/python -m pytest tests/test_artifacts.py -q
+cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres \
+  .venv/bin/python scripts/run_isolated_tests.py \
+  --metadata-json <temporary-path>/result.json --timeout-seconds 12600 -- \
+  .venv/bin/python -m pytest tests/test_authorization.py tests/test_auth.py tests/test_alembic.py -q
 cd backend && .venv/bin/docstr-coverage --config .docstr.yaml
 python3 scripts/test_agent_gates.py
 python3 scripts/check_stale_artifact_contracts.py
@@ -100,9 +109,10 @@ git diff --check
 
 Results: Ruff passed; 154 focused tests passed at 94.40 percent scoped
 coverage; the shared lock primitive is at 100 percent; 38 PostgreSQL artifact
-integration tests passed in an isolated disposable database; repository
-docstring coverage passed at 94.8 percent; 71 agent-gate tests passed; stale
-artifact, stale wording, Markdown link, and diff checks passed.
+integration tests passed in an isolated disposable database; 207 isolated
+AUTH/authentication/Alembic integration tests passed on the merged base;
+repository docstring coverage passed at 94.8 percent; 71 agent-gate tests
+passed; stale artifact, stale wording, Markdown link, and diff checks passed.
 
 The full repository suite and 78 percent whole-app floor remain authoritative
 in GitHub Backend CI for the published evidence-bound head.
