@@ -1,8 +1,8 @@
 # WS-AUTH-001-08 Internal Review Evidence
 
-Reviewed code SHA: `80047434c08bdba0da8d42668defe1693f966d98`
+Reviewed code SHA: `cd464202cc35e05a7fe94231ea35e4f3f56e8646`
 Reviewed implementation SHA: `34f87a5aa7d75897349f64f5e904cb1847af019b`
-Reviewed at: `2026-07-16T06:51:00Z`
+Reviewed at: `2026-07-16T07:18:57Z`
 Reviewer run IDs: auth08_final_senior, auth08_final_qa,
 auth08_final_security
 Reviewer tracks: senior engineering, QA/test, security/auth, product/ops,
@@ -32,6 +32,11 @@ architecture, CI integrity, docs, reuse/dedup, and test delta
 - Ruff, stale Workstream wording, stale authorization documentation, changed
   Markdown links, loop-memory validation, 71 agent-gate tests, and diff
   integrity passed.
+- After GitHub Backend run `29478021300` exposed a stale retained-revision
+  assertion, the full isolated Alembic suite passed all 17 tests. The repaired
+  test captures the actual pre-command head and proves every guarded downgrade
+  failure leaves that revision unchanged; the dedicated AUTH-08 test retains
+  the exact literal `0022_bootstrap_admin_grants` assertion.
 - No workflow, dependency, package, test skip, coverage exclusion, or threshold
   changed. GitHub Backend remains authoritative for the repository-wide 78
   percent floor.
@@ -63,6 +68,13 @@ grant target and proves same-key changed-reason revoke returns the stable 409
 mismatch without changing grant or idempotency state. The final senior repair
 isolates `resource_context_digest` as the only failing predicate and proves
 zero writes for role and revoke-disposition substitution.
+
+GitHub Backend run `29478021300` then found that the historical canonical-actor
+downgrade test still expected the former `0021` head after a transactional
+guard failure. Repair `cd46420` captures the actual head before the downgrade
+attempt and asserts it remains unchanged, preventing both the cleanup cascade
+seen in CI and future coupling to a particular later migration. Exact-head
+senior/CI, QA/test-delta, and security/architecture re-review passed.
 
 Valid findings addressed: yes
 

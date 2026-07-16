@@ -46,6 +46,8 @@ runtime, or Workstream-owned authentication.
 - Administrative mutation service coverage: 100 percent.
 - Signed-token lifecycle, idempotency replay/mismatch, concurrency, final-admin
   safety, audit linkage, and zero-write substitution behavior passed.
+- All 17 isolated Alembic tests passed after repairing the retained-head
+  rollback assertion exposed by GitHub Backend run `29478021300`.
 - Ruff, stale wording, authorization-doc consistency, Markdown links,
   loop-memory validation, 71 agent-gate tests, and diff integrity passed.
 
