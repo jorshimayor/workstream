@@ -2,10 +2,10 @@
 
 ## Current status
 
-Discovery and planning are complete on `codex/ws-rev-001-plan`. The AUTH-08
-dependency refresh is complete; the final planning publication refresh remains
-parked while ART PR #129 is conflict-blocked and until it refreshes from main
-and merges. No application implementation chunk is active.
+Discovery and planning are complete on `codex/ws-rev-001-plan`. The AUTH-08 and
+ART-02A2 dependency refreshes are complete. Final planning publication now
+requires exact-snapshot internal review, evidence binding, and PR #128 refresh.
+No application implementation chunk is active.
 
 The revised WS-REV Markdown and PDF have been read end to end and reconciled
 structurally. Provenance records the current Markdown-only section 4.6 action
@@ -23,9 +23,11 @@ and joint REV-13 activation obligations without importing sibling code.
 
 ## Dependency state at latest refresh
 
-- The 2026-07-16 `git pull origin main` rebased the four REV planning commits
-  without conflict onto trusted main merge `aa0fdcd6912e66609e39a2fbd7b65f67be6c62f3`,
-  AUTH-08 PR #131. The merged AUTH head is
+- The latest 2026-07-16 `git pull origin main` rebased the five REV planning
+  commits without conflict onto trusted main
+  `9a04434e2f23c5dec8939dadb943bba4d85110c0`, ART-02A2 PR #129. The merged ART
+  head is `32aab89262a3944f305e9e5dc4c65a2d31e2e144`; trusted main also includes
+  AUTH-08 PR #131 at `aa0fdcd6912e66609e39a2fbd7b65f67be6c62f3`, final AUTH head
   `0832358a0262805f553d05b50b0d778e6e6ad995`.
 - AUTH-08 retains the request-scoped deny-by-default kernel and activates its
   seven administrative actions alongside the two actor-self actions. The merged
@@ -44,9 +46,19 @@ and joint REV-13 activation obligations without importing sibling code.
   merged internal evidence records 275 focused behavior tests, 90.17 percent
   branch-aware focused coverage, 17 isolated Alembic tests, and green final PR
   Backend, Agent Gates, and CodeRabbit checks.
-- WS-ART provider-neutral v2, S3-compatible provider, admission/cutover,
-  checker routing, recovery, and live proof are still required before review
-  evidence integration.
+- ART-02A2 adds only inactive committed-source preparation, bounded private
+  scratch custody, deterministic cleanup mechanics, shared file locking, and
+  LocalStorage private-helper hardening. It changes no active ArtifactStore v1
+  contract, provider selection, schema, product route, action, permission, or
+  review lifecycle. Its final evidence records 154 focused tests at 94.40
+  percent scoped coverage, 38 isolated artifact PostgreSQL tests, 207 isolated
+  AUTH/authentication/Alembic tests, and green final Backend, Agent Gates, and
+  CodeRabbit checks.
+- WS-ART provider-neutral v2 cutover, MinIO/AWS S3 provider, admission,
+  verification/publication, reviewer packet reads, evidence intake, retention,
+  recovery, checker routing, and live proof remain required at their owning REV
+  runtime gates. REV does not consume ART's scratch manager or committed-source
+  preparation types directly.
 - WS-CON policy freeze and atomic review transaction integration are not yet
   implemented. Its reviewed 05A/05B contracts remove PaymentPolicy completely;
   runtime work still waits for human approval, merged AUTH/ART dependencies,
@@ -66,10 +78,10 @@ human-approved for PR publication. D6, reviewer-current precedence, coherent
 joint activation, and the overall chunk sequence were approved on 2026-07-15.
 
 The previous internal-review evidence is bound to approved planning commit
-`706158d8078da508eb022749fb011db5725a45ef`. The later AUTH-08/main merge and
-dependency repair deliberately make that publication binding stale. Evidence
-will be re-reviewed and rebound only after ART PR #129 merges and the final
-dependency refresh is complete. The supplied revised reference contents are now
+`706158d8078da508eb022749fb011db5725a45ef`. The later AUTH-08 and ART-02A2 main
+merges deliberately make that publication binding stale. Final exact-snapshot
+review and evidence rebinding are required before PR #128 is refreshed. The
+supplied revised reference contents are now
 restored to the canonical Markdown/PDF filenames with matching checksum
 metadata; the accidental `(2)` paths are removed.
 
@@ -95,7 +107,7 @@ metadata; the accidental `(2)` paths are removed.
 
 ## Stop condition
 
-Do not push a refreshed `WS-REV-001-PLAN` while ART PR #129 remains
-conflict-blocked or until its merged contracts are reconciled. Do not start
-`WS-REV-001-01` or runtime implementation; the merge intent requires a separate
-post-merge start gate.
+Do not push a refreshed `WS-REV-001-PLAN` until the ART-02A2 merged contracts are
+reconciled, required internal reviewers pass, and exact reviewed-SHA evidence is
+bound. Do not start `WS-REV-001-01` or runtime implementation; the merge intent
+requires a separate post-merge start gate.

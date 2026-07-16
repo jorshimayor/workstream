@@ -92,6 +92,11 @@ frontend work
   typed authorization-evidence `503` mapping, and route-owned canonical
   verification timestamps as required regression invariants. Chunk 01 changes
   no AUTH implementation.
+- The active contract records merged ART-02A2 as inactive committed-source and
+  private scratch preparation only. Review code never consumes
+  `ArtifactScratchManager`, `PreparedArtifact`, or `CommittedArtifactSource`,
+  persists scratch state, or treats ART-02A2 as reviewer read/intake readiness.
+  Chunk 01 changes no ART implementation.
 - The active action table contains 24 dependencies. The four additions are
   `review.revision_obligation.close -> project.task.manage` for a covered
   Project Manager, `review.revision_context.repair -> project.task.manage` for a covered Project

@@ -10,7 +10,7 @@ explicit start signal.
 
 | Chunk | Title | Risk | Gate | Status |
 |---|---|---:|---|---|
-| `WS-REV-001-PLAN` | Review And Revision Lifecycle Planning | L0 | None | Human-approved; parked for ART PR #129 conflict resolution and merge |
+| `WS-REV-001-PLAN` | Review And Revision Lifecycle Planning | L0 | None | Human-approved; AUTH-08/ART-02A2 refresh complete; final review/evidence/PR refresh required |
 | `WS-REV-001-01` | Canonical Contract Adoption And Dependency Conformance | L1 | Plan approval; current dependency refresh | Proposed |
 | `WS-REV-001-02` | Locked Review Policy And Task Lifecycle Alignment | L1 | AUTH DoD on current main; retain merged AUTH-08 transaction/error/timestamp invariants; ART contract stable; D6 behavior approved | Proposed |
 | `WS-REV-001-03` | Review Queue And Lease Persistence | L1 | 02 merged; WS-CON-03B compensation-policy persistence merged | Proposed |
@@ -96,6 +96,6 @@ workflow, script, dependency, or coverage gate changes.
 
 ## Stop condition
 
-Planning is approved but its refresh is parked while ART PR #129 is
-conflict-blocked and until it merges. Do not start 01 automatically; its
-merge-intent gate remains separate.
+Planning is approved and merged AUTH-08/ART-02A2 contracts are reconciled.
+Publication still requires final exact-snapshot review and evidence binding. Do
+not start 01 automatically; its merge-intent gate remains separate.

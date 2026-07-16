@@ -151,10 +151,10 @@ locally; merged PR #130's Backend, Agent Gates, and CodeRabbit checks passed.
 Database integration was not rerun locally because the isolated test database
 URL was not configured.
 
-PR #128 remains parked and its local main merge is not pushed. ART PR #129 is
-currently conflict-blocked despite approval and green checks; it must refresh
-from main and merge before the final dependency refresh, reviewer pass, SHA
-binding, and PR update.
+At this 2026-07-15 refresh, PR #128 was parked and its local main merge was not
+pushed. ART PR #129 was conflict-blocked despite approval and green checks; it
+still needed to refresh from main and merge before the final dependency refresh,
+reviewer pass, SHA binding, and PR update.
 
 The human also corrected the reference-file ownership decision: the revised
 supplied Markdown/PDF contents belong at the canonical WS-REV filenames. The
@@ -193,8 +193,36 @@ run `29482246184`, and successful CodeRabbit.
 The three former blockers are retained as regression invariants at every REV
 consumer rather than unresolved AUTH work.
 
-ART PR #129 remains open and conflict-blocked at
-`a7432c87719e694038dae5b386b7c9b3ecf9e9b4` despite green checks. PR #128 remains
+At this AUTH-08 refresh, ART PR #129 was open and conflict-blocked at
+`a7432c87719e694038dae5b386b7c9b3ecf9e9b4` despite green checks. PR #128 was
 parked and unpushed. Final PLAN publication review and exact-SHA evidence binding
-remain deferred until ART merges and its contracts are reconciled from trusted
+were deferred until ART merged and its contracts were reconciled from trusted
 main.
+
+## ART-02A2 Dependency Refresh - 2026-07-16
+
+`git pull origin main` rebased the five local REV planning commits without
+conflict onto trusted main `9a04434e2f23c5dec8939dadb943bba4d85110c0`.
+That merge commit is ART-02A2 PR #129; its final branch head is
+`32aab89262a3944f305e9e5dc4c65a2d31e2e144`.
+
+REV reviewed the merged ART contract, implementation, tests, internal evidence,
+external response, and downstream ART chunk gates. ART-02A2 establishes only an
+inactive committed-source/private-scratch preparation boundary. It changes no
+active ArtifactStore v1 interface, provider selection, schema, product route,
+action, permission, reviewer packet read, or evidence-intake behavior.
+
+The boundary is compatible with REV only by remaining behind ART-owned future
+capabilities. REV never imports `ArtifactScratchManager`, `PreparedArtifact`, or
+`CommittedArtifactSource`; stores scratch paths, ledger reservations, or source
+descriptors; or creates an alternate preparation manager. Later ART v2,
+MinIO/AWS S3, admission, verification/publication, read/intake/retention,
+recovery, checker, projection, and live-proof chunks remain hard runtime gates.
+
+ART evidence records 154 focused tests at 94.40 percent scoped coverage, 38
+isolated artifact PostgreSQL tests, 207 isolated AUTH/authentication/Alembic
+tests, final Backend run `29487194049`, Agent Gates runs `29487194116` and
+`29487194180`, and successful CodeRabbit. PR #129 is merged, so the planning
+publication dependency is resolved. PR #128 still requires current-snapshot
+internal review, exact reviewed-SHA evidence binding, branch update, and fresh
+external checks before human merge.

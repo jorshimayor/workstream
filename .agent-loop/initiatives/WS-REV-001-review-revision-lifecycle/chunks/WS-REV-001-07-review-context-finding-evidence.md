@@ -48,6 +48,10 @@ production `/api/v1` review-router registration
   `review.decision`; the active owned lease and exact server-derived evidence
   scope are lifecycle/resource guards. Pre-intake denial creates no ART
   candidate, binding, or receipt.
+- Merged ART-02A2 is preparation-only and does not satisfy this chunk's ART
+  gate. REV imports no ART scratch/source implementation. Activation requires
+  the later merged ART-owned typed reviewer read and two-phase evidence-intake,
+  binding, retention, recovery, and service-scope capabilities.
 - The exact locked guide/policy/submission/checker/prior-review chain is
   disclosed as bounded history. Artifact bytes and complete binding metadata
   are retrievable only for the canonical current review packet anchored to the

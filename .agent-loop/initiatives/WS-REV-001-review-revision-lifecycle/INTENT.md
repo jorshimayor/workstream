@@ -76,9 +76,8 @@ outcomes.
 
 ## Human decisions confirmed
 
-1. LocalStorage plus S3-compatible storage is active: LocalStorage for
-   development, MinIO for local/CI conformance, AWS S3 for production; Flow Node
-   remains deferred.
+1. Approved provider direction: LocalStorage for development, MinIO for local/CI
+   conformance, AWS S3 for production; Flow Node remains deferred.
 2. ADR 0010 is retained with the clarified one-Project-Guide task pipeline,
    same-version keep, rebase to any different currently active version including
    backward rebase, Task Context visibility, and no reviewer-side guide.

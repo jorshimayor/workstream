@@ -101,6 +101,18 @@ merged and proven. WS-REV consumes:
 - deterministic projection storage;
 - LocalStorage and MinIO conformance with AWS S3 as production provider.
 
+Merged ART-02A2 PR #129 at trusted main
+`9a04434e2f23c5dec8939dadb943bba4d85110c0`, final branch head
+`32aab89262a3944f305e9e5dc4c65a2d31e2e144`, establishes only the inactive
+committed-source and private scratch-preparation foundation. It preserves the
+active ArtifactStore v1 contract, provider selection, schema, product routes,
+and authority surface. `ArtifactScratchManager`, `PreparedArtifact`, and
+`CommittedArtifactSource` are ART-internal preparation mechanics, not REV
+capabilities or durable product references; review code never imports or stores
+them. Later ART-owned v2, S3, admission, verification/publication, typed
+read/intake/retention/recovery, checker, and live-proof chunks remain hard gates
+at their named REV consumers.
+
 ### Contribution gate
 
 WS-CON remains a planning-only dependency. Rebased committed planning head

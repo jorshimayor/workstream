@@ -82,19 +82,19 @@ The current merged catalogue baseline is 57 actions, not the historical 50.
 REV's four additions remain a future AUTH-owned 57-to-61 migration. No REV
 action becomes active through this planning refresh.
 
-ART PR #129 remains open and conflict-blocked at
-`a7432c87719e694038dae5b386b7c9b3ecf9e9b4`. The final PLAN publication review
-and exact-SHA binding remain parked until ART merges and its contracts are
-reconciled from trusted main.
+ART PR #129 later merged as ART-02A2 at trusted main
+`9a04434e2f23c5dec8939dadb943bba4d85110c0`, final branch head
+`32aab89262a3944f305e9e5dc4c65a2d31e2e144`. Its separate REV dependency review
+records the final ART reconciliation and publication disposition.
 
 ## Snapshot Evidence
 
-Current non-review initiative snapshot digest:
+AUTH-08 refresh non-review initiative snapshot digest:
 `ad176b2acf5da47194ce0ae786e6bc86ef847efa6cd9159eb1ad6b760fe6f552`.
 
 The digest hashes sorted `sha256sum` output for initiative files excluding
-`reviews/**`; it is a parked dependency-refresh snapshot, not the final PLAN
-publication evidence binding.
+`reviews/**`; it is the historical AUTH-08 dependency-refresh snapshot, not the
+final PLAN publication evidence binding.
 
 The historical PLAN evidence remains bound to its earlier reviewed SHA and is
 therefore stale after the AUTH-08/main rebase. It is not current dependency
@@ -118,9 +118,9 @@ The AUTH-08 dependency-refresh diff received these internal reviewer tracks:
 | QA/test, product/ops | `/root/auth08_qa_review` | PASS |
 | Security/auth, docs, CI integrity | `/root/auth08_security_review` | PASS AFTER FIXES |
 
-These results review the parked AUTH-08 dependency snapshot. They do not replace
-the historical PLAN evidence or bind the final publication SHA. Final exact-SHA
-publication review remains blocked by ART #129.
+These results review the historical AUTH-08 dependency snapshot. They do not
+replace the PLAN publication evidence or bind the final publication SHA. The
+later ART-02A2 review and final exact-SHA evidence own publication readiness.
 
 The focused catalogue and teardown tests passed locally. Two PostgreSQL API
 regressions were inspected but not rerun because

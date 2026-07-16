@@ -38,6 +38,15 @@ activate them. AUTH-08 also provides the required transaction teardown,
 decision-evidence `503`, and canonical verification-timestamp repairs. Later
 AUTH definition-of-done chunks remain runtime gates at their owning REV chunks.
 
+ART discovery was refreshed against merged ART-02A2 PR #129 at trusted-main
+`9a04434e2f23c5dec8939dadb943bba4d85110c0`, final branch head
+`32aab89262a3944f305e9e5dc4c65a2d31e2e144`. The chunk adds only inactive
+committed-source/private-scratch preparation and preserves ArtifactStore v1,
+provider selection, schema, product routes, and authority behavior. REV consumes
+none of its scratch or source types directly. Later ART v2, S3, admission,
+verification/publication, read/intake/retention/recovery, checker, projection,
+and live-proof contracts remain dependency gates at their owning REV chunks.
+
 ## Cross-worktree discovery evidence
 
 The following sibling planning paths were read-only discovery inputs on

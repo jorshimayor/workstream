@@ -109,6 +109,18 @@ without importing grant persistence into the review module.
   verify, retain, release, and receipt lookup. The current application service
   is ingest-focused; public product cutovers and review-specific typed reads do
   not exist.
+- Merged ART-02A2 PR #129 at trusted main
+  `9a04434e2f23c5dec8939dadb943bba4d85110c0`, final head
+  `32aab89262a3944f305e9e5dc4c65a2d31e2e144`, adds an inactive
+  `PreparedArtifact`/`CommittedArtifactSource` boundary, bounded private
+  `ArtifactScratchManager`, deterministic cleanup mechanics, and shared bounded
+  file locking. Active ArtifactStore v1, provider selection, schema, routes, and
+  lifecycle behavior remain unchanged.
+- ART scratch is bounded private ephemeral processing state, not artifact
+  storage or a product reference. REV never imports ART preparation/scratch
+  types, persists their paths or ledger identities, or creates a second scratch
+  manager. Future ART-owned intake capabilities may use that foundation behind
+  their port.
 - The active WS-ART plan changes the production choice to AWS S3 behind
   `S3CompatibleArtifactStore`, proves it with MinIO, removes the old
   `flow_node` configuration value, and leaves review packet/evidence integration
@@ -201,8 +213,9 @@ without importing grant persistence into the review module.
 
 - Exact merged AUTH service, resource-context, invalidation, and system-actor
   interfaces.
-- Exact merged ART read, binding, retention, recovery, service-scope, and
-  projection interfaces.
+- Exact later merged ART v2, S3, admission, verification/publication, read,
+  binding, intake, retention, recovery, service-scope, checker, and projection
+  interfaces. ART-02A2 does not provide those product capabilities.
 - Exact WS-CON policy-freeze and transaction-participant interfaces.
 - Whether a shared outbox foundation lands before the first review consumer.
 - Production timer schedule and operational alert thresholds.

@@ -27,6 +27,9 @@ sequence, and publication of this planning chunk. The approval does not start
   them as REV consumer regression invariants.
 - Reconciled ART and CON ownership boundaries without importing sibling runtime
   code or treating uncommitted sibling work as merged contracts.
+- Reconciled merged ART-02A2 PR #129 as inactive committed-source/private-scratch
+  preparation only, explicitly excluding ART scratch/source implementation from
+  REV and retaining later ART product capability gates.
 - Added a generation-aware joint lifecycle release-control chunk, phase graph,
   command matrix, typed drain observations, callback/dispatch fencing, and
   remote provider-I/O handoff requirements.
@@ -35,7 +38,8 @@ sequence, and publication of this planning chunk. The approval does not start
 
 ## Why It Changed
 
-Trusted `main` now contains AUTH-08 and the shared ADR-0014 adapter foundation.
+Trusted `main` now contains AUTH-08, the shared ADR-0014 adapter foundation, and
+ART-02A2 committed-source/local-preparation foundation.
 The plan needed exact canonical identities, action accounting, integration
 ownership, and an operable joint activation/shutdown contract before runtime
 work could safely begin.
@@ -88,9 +92,10 @@ python3 scripts/check_internal_review_evidence.py
 python3 scripts/test_agent_gates.py
 ```
 
-All deterministic checks pass except `check_internal_review_evidence.py`, which
-correctly rejects the historical reviewed SHA after the AUTH-08/main rebase.
-Final exact-SHA publication evidence remains deferred until ART #129 merges.
+The historical evidence binding is replaced only after the final merged-ART
+planning snapshot receives all required internal reviewers. The evidence-only
+publication commit then binds that exact reviewed code SHA and must make
+`check_internal_review_evidence.py` pass before push.
 
 The AUTH/REV accounting check proves 74 PermissionIds and 57 registered
 ActionIds split into 9 active actions and 48 planned actions. All 20 existing
@@ -105,6 +110,13 @@ AUTH-08 merged through PR #131 at trusted-main
 behavior tests, 90.17 percent branch-aware focused coverage, 17 isolated
 Alembic tests, and green final Backend, Agent Gates, and CodeRabbit checks.
 
+ART-02A2 merged through PR #129 at trusted-main
+`9a04434e2f23c5dec8939dadb943bba4d85110c0`, final branch head
+`32aab89262a3944f305e9e5dc4c65a2d31e2e144`. Its evidence records 154 focused
+tests at 94.40 percent scoped coverage, 38 isolated artifact PostgreSQL tests,
+207 isolated AUTH/authentication/Alembic tests, and green final Backend, Agent
+Gates, and CodeRabbit checks. Active ArtifactStore v1 remains unchanged.
+
 ## Test Delta
 
 No product tests change because this is a planning-only chunk. Repository policy
@@ -117,17 +129,16 @@ merge controls change.
 
 ## Reviewer Results
 
-Historical PLAN review passed senior engineering, QA/test, security/auth,
-product/ops, architecture, docs, and reuse/dedup after valid findings were
-repaired. The current AUTH-08 dependency refresh received a separate exact-diff
-fanout recorded in `WS-REV-001-AUTH-08-dependency-review.md`. Neither review
-rebinds final publication evidence, which remains deferred until ART #129 merges.
+Historical PLAN and AUTH-08 refresh reviews remain durable evidence. The final
+merged-ART planning snapshot receives senior engineering, QA/test,
+security/auth, product/ops, architecture, docs, and reuse/dedup review before
+its exact code SHA is bound in the internal-review evidence.
 
 ## External Review
 
-The earlier PR revision passed Backend, Agent Gates, and CodeRabbit. The
-AUTH-08/ART dependency refresh requires new checks and human review before the
-PR is updated or merged.
+The earlier PR revision passed Backend, Agent Gates, and CodeRabbit. The final
+AUTH-08/ART-02A2 dependency refresh requires fresh PR checks and human review
+after the reviewed branch is published.
 
 ## Remaining Risks
 
