@@ -122,6 +122,11 @@ mapping covers exactly the existing service rows, which may be zero, any valid
 subset, or all seven; it does not pre-provision absent identities. Errors and
 logs expose stable codes and counts only, never IDs, issuers, or subjects.
 
+Draft and envelope bytes use strict key-sorted compact JSON followed by exactly
+one newline. Paths must be absolute and outside the main checkout, every linked
+worktree, and shared Git metadata; the CLI and Alembic consumer use the same
+custody guard.
+
 The supported operator tool reads the exact target database, validates the
 operator-authored choices, and writes the confidential bound envelope. It does
 not infer a service identity or modify the database. Missing, extra, stale,
@@ -172,6 +177,8 @@ composer, guards, surface, and behavior proof.
 - Migration-owned state persists only bounded counts and non-secret source,
   manifest, envelope, and database-binding digests. It never persists raw
   mapping content, actor IDs, issuer, subject, file path, or environment value.
+  Exact format constraints and update/delete/truncate guards keep that retained
+  singleton evidence immutable.
 - No ActorProfile, ActorIdentityLink, idempotency row, or audit event is seeded
   by migration or application startup.
 - Upgrade refusal is exact and redacted: any pre-`0023` service row without a

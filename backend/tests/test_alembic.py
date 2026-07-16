@@ -748,6 +748,17 @@ def test_fixed_service_identity_schema_mapping_and_guarded_downgrade(
                 "unknown_identity_rejected": True,
                 "duplicate_identity_rejected": True,
             }
+            assert asyncio.run(
+                _service_identity_evidence_guards(isolated_database_env)
+            ) == {
+                "update_rejected": True,
+                "delete_rejected": True,
+                "truncate_rejected": True,
+                "invalid_count_rejected": True,
+                "invalid_source_digest_rejected": True,
+                "invalid_manifest_digest_rejected": True,
+                "invalid_database_binding_rejected": True,
+            }
             with pytest.raises(
                 RuntimeError,
                 match="^cannot downgrade fixed service identity authority$",
@@ -4887,6 +4898,61 @@ async def _service_identity_guards(
             try:
                 async with engine.begin() as connection:
                     await connection.execute(text(statement), values)
+            except DBAPIError:
+                results[name] = True
+            else:
+                results[name] = False
+        return results
+    finally:
+        await engine.dispose()
+
+
+async def _service_identity_evidence_guards(database_url: str) -> dict[str, bool]:
+    engine = create_async_engine(database_url)
+    results: dict[str, bool] = {}
+    immutable_cases = {
+        "update_rejected": (
+            "update actor_profile_migration_state set "
+            "service_identity_mapped_count=service_identity_mapped_count where id=1"
+        ),
+        "delete_rejected": "delete from actor_profile_migration_state where id=1",
+        "truncate_rejected": "truncate actor_profile_migration_state",
+    }
+    constraint_cases = {
+        "invalid_count_rejected": (
+            "update actor_profile_migration_state set service_identity_mapped_count=8 where id=1"
+        ),
+        "invalid_source_digest_rejected": (
+            "update actor_profile_migration_state set "
+            "service_identity_source_row_set_sha256='not-a-digest' where id=1"
+        ),
+        "invalid_manifest_digest_rejected": (
+            "update actor_profile_migration_state set "
+            "service_identity_manifest_sha256='not-a-digest' where id=1"
+        ),
+        "invalid_database_binding_rejected": (
+            "update actor_profile_migration_state set "
+            "service_identity_database_binding='postgres-v1:not-a-digest' where id=1"
+        ),
+    }
+    try:
+        for name, statement in immutable_cases.items():
+            try:
+                async with engine.begin() as connection:
+                    await connection.execute(text(statement))
+            except DBAPIError:
+                results[name] = True
+            else:
+                results[name] = False
+        for name, statement in constraint_cases.items():
+            try:
+                async with engine.begin() as connection:
+                    await connection.execute(
+                        text(
+                            "alter table actor_profile_migration_state disable trigger user"
+                        )
+                    )
+                    await connection.execute(text(statement))
             except DBAPIError:
                 results[name] = True
             else:

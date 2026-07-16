@@ -21,10 +21,9 @@ from app.modules.actors.service_identity_migration import (
     publish_envelope,
     snapshot_existing_service_rows,
     validate_draft,
+    validate_mapping_path,
     verify_envelope,
 )
-
-REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 
 
 class PrivacyBoundedParser(argparse.ArgumentParser):
@@ -49,44 +48,10 @@ def _parser() -> PrivacyBoundedParser:
     return parser
 
 
-def _git_common_directory() -> Path:
-    marker = REPOSITORY_ROOT / ".git"
-    if marker.is_dir():
-        return marker.resolve()
-    try:
-        value = marker.read_text(encoding="utf-8").strip()
-    except OSError:
-        raise ServiceIdentityMappingError("git_directory_unavailable") from None
-    prefix = "gitdir: "
-    if not value.startswith(prefix):
-        raise ServiceIdentityMappingError("git_directory_unavailable")
-    worktree_git = Path(value.removeprefix(prefix))
-    if not worktree_git.is_absolute():
-        worktree_git = marker.parent / worktree_git
-    resolved = worktree_git.resolve()
-    if resolved.parent.name != "worktrees":
-        raise ServiceIdentityMappingError("git_directory_unavailable")
-    return resolved.parent.parent
-
-
-def _outside_repository(path: Path, *, output: bool = False) -> Path:
-    """Reject confidential inputs and outputs inside repository metadata or worktree."""
-    try:
-        resolved = path.parent.resolve(strict=True) / path.name
-        if not output and not resolved.exists():
-            raise OSError("missing input")
-    except OSError:
-        raise ServiceIdentityMappingError("service_mapping_path_unavailable") from None
-    protected = (REPOSITORY_ROOT.resolve(), _git_common_directory())
-    if any(resolved == root or resolved.is_relative_to(root) for root in protected):
-        raise ServiceIdentityMappingError("service_mapping_path_forbidden")
-    return resolved
-
-
 async def _execute(args: argparse.Namespace) -> dict:
     snapshot = await snapshot_existing_service_rows(get_engine())
     if args.command == "verify":
-        envelope = load_envelope(_outside_repository(args.envelope))
+        envelope = load_envelope(validate_mapping_path(args.envelope))
         verify_envelope(
             envelope,
             snapshot.rows,
@@ -98,7 +63,7 @@ async def _execute(args: argparse.Namespace) -> dict:
         )
         return build_report(snapshot, draft, envelope=envelope).model_dump(mode="json")
 
-    draft = load_draft(_outside_repository(args.draft))
+    draft = load_draft(validate_mapping_path(args.draft))
     validate_draft(draft, snapshot.rows)
     if args.command == "validate":
         return build_report(snapshot, draft).model_dump(mode="json")
@@ -110,7 +75,7 @@ async def _execute(args: argparse.Namespace) -> dict:
         database_binding=snapshot.database_binding,
         generated_at=generated_at,
     )
-    publish_envelope(_outside_repository(args.output, output=True), envelope)
+    publish_envelope(validate_mapping_path(args.output, output=True), envelope)
     return build_report(
         snapshot,
         draft,

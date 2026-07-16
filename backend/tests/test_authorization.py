@@ -5,6 +5,7 @@ import asyncio
 import base64
 from collections import UserDict
 from collections.abc import Iterator, Mapping
+from dataclasses import replace
 from datetime import UTC, datetime
 import inspect
 import json
@@ -30,6 +31,7 @@ from app.modules.audit.schemas import (
 )
 from app.modules.audit.service import AuditService
 from app.modules.actors.service_identities import SERVICE_IDENTITIES, ServiceIdentity
+from app.modules.authorization import catalogue as authorization_catalogue
 from app.modules.authorization import kernel as authorization_kernel
 from app.modules.authorization.catalogue import (
     ACTION_BY_ID,
@@ -316,7 +318,10 @@ def test_fixed_service_action_matrix_is_exact_planned_and_immutable() -> None:
         SERVICE_ACTIONS_BY_IDENTITY[ServiceIdentity.ARTIFACT_VERIFIER] = frozenset()  # type: ignore[index]
 
 
-@pytest.mark.parametrize("mutation", ["missing_identity", "extra_action", "duplicate_action"])
+@pytest.mark.parametrize(
+    "mutation",
+    ["missing_identity", "extra_action", "duplicate_action", "swapped_rows"],
+)
 def test_fixed_service_action_matrix_construction_fails_closed(mutation: str) -> None:
     rows = dict(SERVICE_ACTIONS_BY_IDENTITY)
     if mutation == "missing_identity":
@@ -325,12 +330,37 @@ def test_fixed_service_action_matrix_construction_fails_closed(mutation: str) ->
         rows[ServiceIdentity.ARTIFACT_VERIFIER] = frozenset(
             {ActionId.ARTIFACT_VERIFICATION_EXECUTE, ActionId.ARTIFACT_AUDIT_READ}
         )
-    else:
+    elif mutation == "duplicate_action":
         rows[ServiceIdentity.ARTIFACT_PUT_RESOLVER] = frozenset(
             {ActionId.ARTIFACT_VERIFICATION_EXECUTE}
         )
+    else:
+        rows[ServiceIdentity.ARTIFACT_VERIFIER], rows[ServiceIdentity.ARTIFACT_PUT_RESOLVER] = (
+            rows[ServiceIdentity.ARTIFACT_PUT_RESOLVER],
+            rows[ServiceIdentity.ARTIFACT_VERIFIER],
+        )
     with pytest.raises(RuntimeError, match="service action matrix"):
         _index_service_actions(rows)
+
+
+@pytest.mark.parametrize("metadata", ["permission", "owner", "availability"])
+def test_fixed_service_action_matrix_rejects_metadata_drift(
+    metadata: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    action = ActionId.ARTIFACT_VERIFICATION_EXECUTE
+    definition = ACTION_BY_ID[action]
+    if metadata == "permission":
+        changed = replace(definition, permission_id=PermissionId.ARTIFACT_PENDING_WORK_SCAN)
+    elif metadata == "owner":
+        changed = replace(definition, owner=ActionOwner.ART_03)
+    else:
+        changed = replace(definition, availability=ActionAvailability.ACTIVE)
+    action_index = dict(ACTION_BY_ID)
+    action_index[action] = changed
+    monkeypatch.setattr(authorization_catalogue, "ACTION_BY_ID", action_index)
+    with pytest.raises(RuntimeError, match="service action matrix metadata mismatch"):
+        _index_service_actions(dict(SERVICE_ACTIONS_BY_IDENTITY))
 
 
 def test_administrative_role_policy_and_definition_responses_are_exact() -> None:

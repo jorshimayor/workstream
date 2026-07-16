@@ -10,6 +10,7 @@ from uuid import uuid4
 import pytest
 from pydantic import ValidationError
 
+from app.modules.actors import service_identity_migration as identity_migration
 from app.modules.actors.legacy_classification import database_binding_identifier
 from app.modules.actors.service_identities import SERVICE_IDENTITY_VALUES, ServiceIdentity
 from app.modules.actors.service_identity_migration import (
@@ -27,8 +28,10 @@ from app.modules.actors.service_identity_migration import (
     load_envelope,
     load_migration_mapping,
     publish_envelope,
+    protected_mapping_roots,
     source_row_set_sha256,
     validate_draft,
+    validate_mapping_path,
     verify_envelope,
 )
 
@@ -79,7 +82,17 @@ def envelope():
 
 
 def write_private_json(path: Path, value: object) -> None:
-    path.write_text(json.dumps(value), encoding="utf-8")
+    path.write_text(
+        json.dumps(
+            value,
+            allow_nan=False,
+            ensure_ascii=True,
+            separators=(",", ":"),
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
     os.chmod(path, 0o600)
 
 
@@ -287,6 +300,41 @@ def test_private_loader_redacts_strict_schema_failures(tmp_path: Path) -> None:
     assert SUBJECT not in str(captured.value)
 
 
+@pytest.mark.parametrize("schema_version", [True, 1.0])
+def test_private_loader_rejects_coerced_schema_versions(
+    tmp_path: Path,
+    schema_version: object,
+) -> None:
+    path = tmp_path / "coerced-version.json"
+    payload = draft().model_dump(mode="json")
+    payload["schema_version"] = schema_version
+    write_private_json(path, payload)
+    with pytest.raises(ServiceIdentityMappingError, match="service_mapping_draft_invalid"):
+        load_draft(path)
+
+
+def test_private_loader_requires_exact_canonical_bytes(tmp_path: Path) -> None:
+    draft_path = tmp_path / "pretty-draft.json"
+    draft_path.write_text(
+        json.dumps(draft().model_dump(mode="json"), indent=2) + "\n",
+        encoding="utf-8",
+    )
+    os.chmod(draft_path, 0o600)
+    with pytest.raises(ServiceIdentityMappingError, match="service_mapping_draft_invalid"):
+        load_draft(draft_path)
+
+    envelope_path = tmp_path / "whitespace-envelope.json"
+    envelope_path.write_bytes(
+        json.dumps(envelope().model_dump(mode="json"), sort_keys=True).encode() + b"\n"
+    )
+    os.chmod(envelope_path, 0o600)
+    with pytest.raises(
+        ServiceIdentityMappingError,
+        match="service_mapping_envelope_invalid",
+    ):
+        load_envelope(envelope_path)
+
+
 def test_private_loader_rejects_open_permissions_and_symlink(tmp_path: Path) -> None:
     path = tmp_path / "draft.json"
     write_private_json(path, draft().model_dump(mode="json"))
@@ -340,6 +388,41 @@ def test_migration_environment_is_required_only_for_existing_services(
     ) == envelope()
     with pytest.raises(ServiceIdentityMappingError, match="service_mapping_not_required"):
         load_migration_mapping((), database_binding=DATABASE_BINDING)
+
+
+def test_mapping_paths_reject_relative_and_every_linked_repository_root(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with pytest.raises(ServiceIdentityMappingError, match="service_mapping_path_forbidden"):
+        validate_mapping_path(Path("relative-private-mapping.json"), output=True)
+    roots = protected_mapping_roots()
+    assert Path(__file__).resolve().parents[2] in roots
+    for root in roots:
+        with pytest.raises(
+            ServiceIdentityMappingError,
+            match="service_mapping_path_forbidden",
+        ):
+            validate_mapping_path(root / "private-mapping.json", output=True)
+
+    monkeypatch.setenv(MAPPING_FILE_ENV, str(Path(__file__).resolve()))
+    with pytest.raises(ServiceIdentityMappingError, match="service_mapping_path_forbidden"):
+        load_migration_mapping((source_row(),), database_binding=DATABASE_BINDING)
+
+
+def test_mapping_path_guard_supports_deployments_without_git_metadata(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    deployed_root = tmp_path / "deployed-workstream"
+    deployed_root.mkdir()
+    private_root = tmp_path / "private"
+    private_root.mkdir()
+    monkeypatch.setattr(identity_migration, "REPOSITORY_ROOT", deployed_root)
+    assert protected_mapping_roots() == (deployed_root,)
+    assert validate_mapping_path(
+        private_root / "mapping.json",
+        output=True,
+    ) == private_root / "mapping.json"
 
 
 def test_report_contains_only_counts_and_non_secret_digests() -> None:

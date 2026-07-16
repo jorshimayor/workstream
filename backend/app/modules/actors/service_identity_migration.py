@@ -25,6 +25,7 @@ MAPPING_FILE_ENV = "WORKSTREAM_SERVICE_ACTOR_IDENTITY_MAPPING_FILE"
 MAX_MAPPING_FILE_BYTES = 64 * 1024
 MAX_MAPPINGS = len(SERVICE_IDENTITIES)
 MAPPING_SCHEMA_VERSION = 1
+REPOSITORY_ROOT = Path(__file__).resolve().parents[4]
 _DATABASE_BINDING_PATTERN = re.compile(r"postgres-v1:[0-9a-f]{64}")
 _GENERATED_AT_PATTERN = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z")
 
@@ -123,6 +124,13 @@ class ServiceActorIdentityMappingDraft(BaseModel):
     schema_version: Literal[1]
     mappings: tuple[ServiceActorIdentityMapping, ...] = Field(max_length=MAX_MAPPINGS)
 
+    @field_validator("schema_version", mode="before")
+    @classmethod
+    def validate_schema_version(cls, value: Any) -> int:
+        if type(value) is not int or value != MAPPING_SCHEMA_VERSION:
+            raise ValueError("invalid schema version")
+        return value
+
     @model_validator(mode="after")
     def validate_uniqueness(self) -> ServiceActorIdentityMappingDraft:
         actor_ids = [row.actor_profile_id for row in self.mappings]
@@ -174,6 +182,13 @@ class ServiceActorIdentityMappingEnvelope(BaseModel):
     generated_at: str
     database_binding: str
     envelope_sha256: str
+
+    @field_validator("schema_version", mode="before")
+    @classmethod
+    def validate_schema_version(cls, value: Any) -> int:
+        if type(value) is not int or value != MAPPING_SCHEMA_VERSION:
+            raise ValueError("invalid schema version")
+        return value
 
     @model_validator(mode="after")
     def validate_mapping_uniqueness(self) -> ServiceActorIdentityMappingEnvelope:
@@ -334,7 +349,7 @@ def _reject_duplicate_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     return result
 
 
-def _read_private_json(path: Path) -> Any:
+def _read_private_json_bytes(path: Path) -> bytes:
     """Read one owner-only regular file without following symlinks."""
     try:
         descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
@@ -362,6 +377,10 @@ def _read_private_json(path: Path) -> Any:
         os.close(descriptor)
     if len(data) > MAX_MAPPING_FILE_BYTES:
         raise ServiceIdentityMappingError("service_mapping_file_too_large")
+    return data
+
+
+def _parse_private_json(data: bytes) -> Any:
     try:
         return json.loads(
             data.decode("utf-8"),
@@ -372,10 +391,79 @@ def _read_private_json(path: Path) -> Any:
         raise ServiceIdentityMappingError("service_mapping_file_invalid") from None
 
 
+def _git_common_directory() -> Path | None:
+    marker = REPOSITORY_ROOT / ".git"
+    if marker.is_dir():
+        return marker.resolve()
+    try:
+        value = marker.read_text(encoding="utf-8").strip()
+    except FileNotFoundError:
+        return None
+    except OSError:
+        raise ServiceIdentityMappingError("git_directory_unavailable") from None
+    prefix = "gitdir: "
+    if not value.startswith(prefix):
+        raise ServiceIdentityMappingError("git_directory_unavailable")
+    worktree_git = Path(value.removeprefix(prefix))
+    if not worktree_git.is_absolute():
+        worktree_git = marker.parent / worktree_git
+    resolved = worktree_git.resolve()
+    if resolved.parent.name != "worktrees":
+        raise ServiceIdentityMappingError("git_directory_unavailable")
+    return resolved.parent.parent
+
+
+def protected_mapping_roots() -> tuple[Path, ...]:
+    """Return every linked worktree root plus shared Git metadata."""
+    common = _git_common_directory()
+    roots = {REPOSITORY_ROOT.resolve()}
+    if common is None:
+        return tuple(roots)
+    roots.update({common, common.parent.resolve()})
+    worktrees = common / "worktrees"
+    if worktrees.exists():
+        try:
+            metadata_directories = tuple(worktrees.iterdir())
+        except OSError:
+            raise ServiceIdentityMappingError("git_directory_unavailable") from None
+        for metadata in metadata_directories:
+            marker = metadata / "gitdir"
+            try:
+                git_file = Path(marker.read_text(encoding="utf-8").strip())
+            except OSError:
+                raise ServiceIdentityMappingError("git_directory_unavailable") from None
+            if git_file.name != ".git" or not git_file.is_absolute():
+                raise ServiceIdentityMappingError("git_directory_unavailable")
+            roots.add(git_file.parent.resolve())
+    return tuple(sorted(roots, key=str))
+
+
+def validate_mapping_path(path: Path, *, output: bool = False) -> Path:
+    """Require an absolute path outside every repository and Git root."""
+    if not path.is_absolute():
+        raise ServiceIdentityMappingError("service_mapping_path_forbidden")
+    try:
+        resolved = path.parent.resolve(strict=True) / path.name
+        if not output and not resolved.exists():
+            raise OSError("missing input")
+    except OSError:
+        raise ServiceIdentityMappingError("service_mapping_path_unavailable") from None
+    if any(
+        resolved == root or resolved.is_relative_to(root)
+        for root in protected_mapping_roots()
+    ):
+        raise ServiceIdentityMappingError("service_mapping_path_forbidden")
+    return resolved
+
+
 def load_draft(path: Path) -> ServiceActorIdentityMappingDraft:
     """Load one strict confidential operator draft."""
     try:
-        return ServiceActorIdentityMappingDraft.model_validate(_read_private_json(path))
+        data = _read_private_json_bytes(path)
+        draft = ServiceActorIdentityMappingDraft.model_validate(_parse_private_json(data))
+        if data != canonical_draft_bytes(draft) + b"\n":
+            raise ValueError("noncanonical draft")
+        return draft
     except ServiceIdentityMappingError:
         raise
     except Exception:
@@ -385,7 +473,11 @@ def load_draft(path: Path) -> ServiceActorIdentityMappingDraft:
 def load_envelope(path: Path) -> ServiceActorIdentityMappingEnvelope:
     """Load one strict confidential database-bound envelope."""
     try:
-        return ServiceActorIdentityMappingEnvelope.model_validate(_read_private_json(path))
+        data = _read_private_json_bytes(path)
+        envelope = ServiceActorIdentityMappingEnvelope.model_validate(_parse_private_json(data))
+        if data != canonical_envelope_bytes(envelope) + b"\n":
+            raise ValueError("noncanonical envelope")
+        return envelope
     except ServiceIdentityMappingError:
         raise
     except Exception:
@@ -473,7 +565,7 @@ def load_migration_mapping(
     if not raw_path:
         raise ServiceIdentityMappingError("service_mapping_required", count=len(rows))
     return verify_envelope(
-        load_envelope(Path(raw_path)),
+        load_envelope(validate_mapping_path(Path(raw_path))),
         rows,
         database_binding=database_binding,
     )

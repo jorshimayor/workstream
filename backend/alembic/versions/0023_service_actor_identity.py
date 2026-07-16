@@ -244,11 +244,33 @@ def _add_mapping_state(
     op.create_check_constraint(
         "service_identity_evidence",
         "actor_profile_migration_state",
-        "(service_identity_mapped_count=0 and service_identity_manifest_sha256 is null "
+        "service_identity_mapped_count between 0 and 7 "
+        "and service_identity_source_row_set_sha256 ~ '^[0-9a-f]{64}$' "
+        "and service_identity_database_binding ~ '^postgres-v1:[0-9a-f]{64}$' "
+        "and ((service_identity_mapped_count=0 "
+        "and service_identity_manifest_sha256 is null "
         "and service_identity_envelope_sha256 is null) or "
         "(service_identity_mapped_count between 1 and 7 "
-        "and service_identity_manifest_sha256 is not null "
-        "and service_identity_envelope_sha256 is not null)",
+        "and service_identity_manifest_sha256 ~ '^[0-9a-f]{64}$' "
+        "and service_identity_envelope_sha256 ~ '^[0-9a-f]{64}$'))",
+    )
+    op.execute(
+        """
+        create function guard_service_identity_migration_evidence() returns trigger
+        language plpgsql as $$ begin
+          raise exception 'service identity migration evidence is immutable' using errcode='55000';
+        end $$
+        """
+    )
+    op.execute(
+        "create trigger service_identity_migration_evidence_row_guard "
+        "before update or delete on actor_profile_migration_state for each row "
+        "execute function guard_service_identity_migration_evidence()"
+    )
+    op.execute(
+        "create trigger service_identity_migration_evidence_truncate_guard "
+        "before truncate on actor_profile_migration_state for each statement "
+        "execute function guard_service_identity_migration_evidence()"
     )
 
 
@@ -314,6 +336,15 @@ def downgrade() -> None:
 
     op.drop_constraint("authorization_action_evidence", "audit_events", type_="check")
     _create_action_constraint(ACTION_PERMISSION_PAIRS[:-8])
+    op.execute(
+        "drop trigger service_identity_migration_evidence_truncate_guard "
+        "on actor_profile_migration_state"
+    )
+    op.execute(
+        "drop trigger service_identity_migration_evidence_row_guard "
+        "on actor_profile_migration_state"
+    )
+    op.execute("drop function guard_service_identity_migration_evidence()")
     op.drop_constraint("service_identity_evidence", "actor_profile_migration_state", type_="check")
     for name in (
         "service_identity_database_binding",

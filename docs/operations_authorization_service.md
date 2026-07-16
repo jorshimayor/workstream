@@ -205,10 +205,14 @@ subject syntax, email, display name, token role, or adapter provenance.
 Run the supported mapping tool first in dry-run mode against the exact target
 database and draft, then generate the database-bound envelope. The output must
 be a regular non-symlink file owned by the invoking operator with mode `0600` in
-an access-controlled directory outside the repository. Verify the envelope
-against the unchanged target database before migration. Zero existing service
-rows require no file; otherwise the envelope must cover exactly every existing
-service row and may select any unique subset of the seven closed identities.
+an access-controlled directory outside the main checkout, every linked
+worktree, and shared Git metadata. Both draft and envelope use one strict,
+key-sorted compact JSON object followed by exactly one newline; boolean,
+floating-point, pretty-printed, reordered, or otherwise noncanonical schema
+input is rejected. Verify the envelope against the unchanged target database
+before migration. Zero existing service rows require no file; otherwise the
+envelope must cover exactly every existing service row and may select any
+unique subset of the seven closed identities.
 
 Using a deployment-secret environment for `WORKSTREAM_DATABASE_URL`, the
 supported sequence is:
@@ -239,11 +243,12 @@ rather than adding issuer subjects to logs.
 
 After database verification, retain the reviewed change record plus the
 non-secret source, manifest, envelope, and database-binding digests stored by
-the migration. Securely delete the confidential draft and bound envelope under
-the operator's storage policy. If any existing service cannot truthfully map to
-the fixed registry, stop the deployment on the prior release and open a
-separately reviewed remediation; do not delete history, guess a mapping, or use
-manual SQL.
+the migration. PostgreSQL format constraints and update/delete/truncate guards
+make that singleton evidence immutable. Securely delete the confidential draft
+and bound envelope under the operator's storage policy. If any existing service
+cannot truthfully map to the fixed registry, stop the deployment on the prior
+release and open a separately reviewed remediation; do not delete history,
+guess a mapping, or use manual SQL.
 
 The [approved AUTH-06 chunk contract](../.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/chunks/WS-AUTH-001-06-canonical-actor-profile.md)
 records the exact deprecated compatibility identifier. That temporary,

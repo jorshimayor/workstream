@@ -627,26 +627,94 @@ def _index_service_actions(
     rows: dict[ServiceIdentity, frozenset[ActionId]],
 ) -> MappingProxyType[ServiceIdentity, frozenset[ActionId]]:
     """Validate the exact fixed service matrix and return an immutable view."""
-    expected_actions = {
-        ActionId.ARTIFACT_VERIFICATION_EXECUTE,
-        ActionId.ARTIFACT_PUT_ATTEMPT_RESOLVE,
-        ActionId.ARTIFACT_PENDING_WORK_SCAN,
-        ActionId.ARTIFACT_UPLOAD_SESSION_EXPIRE,
-        ActionId.ARTIFACT_GUIDE_SOURCE_BINDING_CREATE,
-        ActionId.ARTIFACT_SUBMISSION_BINDING_CREATE,
-        ActionId.ARTIFACT_CHECKER_OUTPUT_BINDING_CREATE,
-        ActionId.ARTIFACT_GUIDE_SOURCE_READ,
-        ActionId.ARTIFACT_PRE_SUBMIT_CHECKER_INPUT_MATERIALIZE,
-        ActionId.ARTIFACT_POST_SUBMIT_CHECKER_INPUT_MATERIALIZE,
-        ActionId.ARTIFACT_CHECKER_OUTPUT_WRITE,
+    expected_rows = {
+        ServiceIdentity.ARTIFACT_VERIFIER: frozenset(
+            {ActionId.ARTIFACT_VERIFICATION_EXECUTE}
+        ),
+        ServiceIdentity.ARTIFACT_PUT_RESOLVER: frozenset(
+            {ActionId.ARTIFACT_PUT_ATTEMPT_RESOLVE}
+        ),
+        ServiceIdentity.ARTIFACT_SCHEDULER: frozenset(
+            {ActionId.ARTIFACT_PENDING_WORK_SCAN, ActionId.ARTIFACT_UPLOAD_SESSION_EXPIRE}
+        ),
+        ServiceIdentity.ARTIFACT_BINDING: frozenset(
+            {
+                ActionId.ARTIFACT_GUIDE_SOURCE_BINDING_CREATE,
+                ActionId.ARTIFACT_SUBMISSION_BINDING_CREATE,
+                ActionId.ARTIFACT_CHECKER_OUTPUT_BINDING_CREATE,
+            }
+        ),
+        ServiceIdentity.ARTIFACT_GUIDE_READER: frozenset(
+            {ActionId.ARTIFACT_GUIDE_SOURCE_READ}
+        ),
+        ServiceIdentity.ARTIFACT_MATERIALIZER: frozenset(
+            {
+                ActionId.ARTIFACT_PRE_SUBMIT_CHECKER_INPUT_MATERIALIZE,
+                ActionId.ARTIFACT_POST_SUBMIT_CHECKER_INPUT_MATERIALIZE,
+            }
+        ),
+        ServiceIdentity.ARTIFACT_CHECKER_OUTPUT: frozenset(
+            {ActionId.ARTIFACT_CHECKER_OUTPUT_WRITE}
+        ),
     }
-    if set(rows) != SERVICE_IDENTITIES or any(not actions for actions in rows.values()):
+    expected_metadata = {
+        ActionId.ARTIFACT_VERIFICATION_EXECUTE: (
+            PermissionId.ARTIFACT_VERIFICATION_EXECUTE,
+            ActionOwner.ART_02D,
+        ),
+        ActionId.ARTIFACT_PUT_ATTEMPT_RESOLVE: (
+            PermissionId.ARTIFACT_PUT_ATTEMPT_RESOLVE,
+            ActionOwner.ART_02D,
+        ),
+        ActionId.ARTIFACT_PENDING_WORK_SCAN: (
+            PermissionId.ARTIFACT_PENDING_WORK_SCAN,
+            ActionOwner.ART_02D,
+        ),
+        ActionId.ARTIFACT_UPLOAD_SESSION_EXPIRE: (
+            PermissionId.ARTIFACT_UPLOAD_SESSION_EXPIRE,
+            ActionOwner.ART_04A,
+        ),
+        ActionId.ARTIFACT_GUIDE_SOURCE_BINDING_CREATE: (
+            PermissionId.ARTIFACT_BINDING_CREATE,
+            ActionOwner.ART_03,
+        ),
+        ActionId.ARTIFACT_SUBMISSION_BINDING_CREATE: (
+            PermissionId.ARTIFACT_BINDING_CREATE,
+            ActionOwner.ART_05,
+        ),
+        ActionId.ARTIFACT_CHECKER_OUTPUT_BINDING_CREATE: (
+            PermissionId.ARTIFACT_BINDING_CREATE,
+            ActionOwner.ART_06B,
+        ),
+        ActionId.ARTIFACT_GUIDE_SOURCE_READ: (
+            PermissionId.ARTIFACT_GUIDE_SOURCE_READ,
+            ActionOwner.ART_03,
+        ),
+        ActionId.ARTIFACT_PRE_SUBMIT_CHECKER_INPUT_MATERIALIZE: (
+            PermissionId.ARTIFACT_CHECKER_INPUT_MATERIALIZE,
+            ActionOwner.ART_04B,
+        ),
+        ActionId.ARTIFACT_POST_SUBMIT_CHECKER_INPUT_MATERIALIZE: (
+            PermissionId.ARTIFACT_CHECKER_INPUT_MATERIALIZE,
+            ActionOwner.ART_06A,
+        ),
+        ActionId.ARTIFACT_CHECKER_OUTPUT_WRITE: (
+            PermissionId.ARTIFACT_CHECKER_OUTPUT_WRITE,
+            ActionOwner.ART_06B,
+        ),
+    }
+    if set(rows) != SERVICE_IDENTITIES:
         raise RuntimeError("service action matrix identity mismatch")
-    flattened = [action for actions in rows.values() for action in actions]
-    if len(flattened) != 11 or set(flattened) != expected_actions:
-        raise RuntimeError("service action matrix action mismatch")
-    if any(ACTION_BY_ID[action].availability is not ActionAvailability.PLANNED for action in flattened):
-        raise RuntimeError("service action matrix contains an active action")
+    if rows != expected_rows:
+        raise RuntimeError("service action matrix row mismatch")
+    for action, (permission, owner) in expected_metadata.items():
+        definition = ACTION_BY_ID[action]
+        if (
+            definition.permission_id is not permission
+            or definition.owner is not owner
+            or definition.availability is not ActionAvailability.PLANNED
+        ):
+            raise RuntimeError("service action matrix metadata mismatch")
     return MappingProxyType(dict(rows))
 
 
