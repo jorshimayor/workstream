@@ -48,7 +48,7 @@ docs/operations_authorization_service.md
 human first-access provisioning for service subjects
 AdminRoleGrant, ProjectRoleGrant, Contributor, or human self-profile authority
 client-supplied service identity, ActionId, PermissionId, role, or matrix membership
-dynamic service grants, generic worker identity, or permission union
+dynamic service grants, shared catch-all service identity, or permission union
 feature resource composition, lifecycle behavior, adapter I/O, or action activation
 application startup failure solely because a provisionable service row is absent
 ```

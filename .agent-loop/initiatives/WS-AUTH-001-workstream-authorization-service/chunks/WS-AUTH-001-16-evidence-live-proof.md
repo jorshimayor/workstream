@@ -129,7 +129,7 @@ python3 scripts/check_internal_review_evidence.py
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python scripts/api_contract_e2e.py)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python scripts/auth_api_e2e.py)
 (cd backend && .venv/bin/docstr-coverage --config .docstr.yaml)
-python3 scripts/check_stale_authorization.py
+python3 scripts/check_stale_authorization_docs.py
 git diff --check
 ```
 

@@ -100,10 +100,10 @@ For a fixed service, AUTH locks the service ActorProfile and ActorIdentityLink,
 then validates immutable `service_identity`, exact static service-action matrix
 membership, and action availability. ART then locks artifact rows, recomposes
 the final typed artifact context, completes one AUTH evaluation, stages ART
-lifecycle/audit state, and lets the route or worker commit once. Terminal
-worker writes additionally require the matching ART executor and execution
-generation. Authorization identity and execution fencing remain independent
-checks.
+lifecycle/audit state, and lets the request boundary or Celery execution commit
+once. Terminal Celery writes additionally require the matching ART executor and
+execution generation. Authorization identity and execution fencing remain
+independent checks.
 
 ## AUTH owner response
 

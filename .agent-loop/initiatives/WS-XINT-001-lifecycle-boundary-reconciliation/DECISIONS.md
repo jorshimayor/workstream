@@ -31,7 +31,7 @@ execution fencing, not authorization identity.
 
 For mutations, AUTH prepares and locks canonical authority first. Feature
 owners then lock their records, recompose final typed facts, complete one AUTH
-evaluation, stage feature/audit/outbox writes, and let the route or worker commit
+evaluation, stage feature/audit/outbox writes, and let the request boundary or Celery execution commit
 once. Reads remain request scoped. Feature domain services flush and never
 commit on behalf of a caller.
 

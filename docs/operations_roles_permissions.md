@@ -24,8 +24,8 @@ product authority. Scopes are an outer request-class gate only.
 |---|---|---|
 | Access Administrator | system | Actor, identity-link, permission-catalog, and administrative-grant management. |
 | Operator | system | Runtime observation, reconciliation, retry, and approved recovery against canonically resolved resources. |
-| Project Manager | system or exact covered project | Project configuration, project tasks, policies, and contributor grants. |
-| Finance Authority | system or exact covered project | Compensation configuration and fulfillment observation under WS-CON-001. |
+| Project Manager | system or exact covered project | Project configuration, project tasks, guide/setup, submission/checker, review, and revision configuration, and contributor grants. |
+| Finance Authority | system or exact covered project | Contribution policy, compensation-adapter binding, and fulfillment observation under WS-CON-001. |
 | Audit Authority | system or exact covered project | Read-only evidence access and authorized export. |
 
 Administrative grants do not imply contributor capability. Holding one does
@@ -56,7 +56,8 @@ or the exact project; own means record-level ownership still applies.
 | Administrative grants | system | no | no | no | history read covered | no | no | no |
 | Project create | no | no | system only | no | no | no | no | no |
 | Project read | authority-only | system operational | covered | covered finance projection | covered audit projection | exact project minimal | exact project minimal | exact project minimal |
-| Project/guide/policy mutation | no | recovery-only where registered | covered | contribution policy only | no | no | no | no |
+| Project, guide, submission/checker, review, and revision configuration | no | recovery-only where registered | covered | no | no | no | no | no |
+| Contribution policy and compensation-adapter binding | no | reconciliation-only where registered | no | covered | no | no | no | no |
 | Project contributor grants | no | no | covered | no | read covered | no | no | no |
 | Task management | no | explicit recovery only | covered | no | read covered | no | no | no |
 | Task queue/claim | no | operational projection only | management projection only | no | read covered | exact project under guards | no | no |

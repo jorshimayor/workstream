@@ -203,7 +203,7 @@ pre-review implementation substitutes.
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
 python3 scripts/check_internal_review_evidence.py
-python3 scripts/check_stale_authorization.py
+python3 scripts/check_stale_authorization_docs.py
 (cd backend && .venv/bin/python -m ruff check app tests scripts)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python scripts/api_contract_e2e.py)

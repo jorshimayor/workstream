@@ -50,7 +50,7 @@ backend/tests/test_projects.py
 backend/tests/test_tasks.py
 backend/tests/test_checkers.py
 backend/tests/test_auth.py
-scripts/check_stale_authorization.py
+scripts/check_stale_authorization_docs.py
 scripts/test_agent_gates.py
 .github/workflows/agent-gates.yml
 docs/operations_authorization_service.md
@@ -104,7 +104,7 @@ review/contribution/compensation implementation
 ## Verification commands
 
 ```bash
-python3 scripts/check_stale_authorization.py
+python3 scripts/check_stale_authorization_docs.py
 python3 scripts/test_agent_gates.py
 (cd backend && .venv/bin/python -m ruff check app tests scripts)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q \

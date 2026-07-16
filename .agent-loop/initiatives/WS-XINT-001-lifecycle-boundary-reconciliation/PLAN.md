@@ -45,7 +45,7 @@ Mutation order is fixed:
 4. Owning feature recomposes final typed facts from locked rows.
 5. AUTH evaluates exactly once and stages bounded decision evidence.
 6. Feature participants stage lifecycle, audit, idempotency and outbox rows.
-7. Route or worker commits once; dependency teardown rolls back abandonment.
+7. Request boundary or Celery execution commits once; dependency teardown rolls back abandonment.
 8. Provider or external I/O runs only after commit from durable work.
 ```
 

@@ -11,7 +11,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DOCUMENT_SUFFIXES = {".md", ".html", ".puml"}
+DOCUMENT_SUFFIXES = {".html", ".json", ".md", ".puml"}
 
 # Exact reviewed history/archive paths. New files are active unless added here
 # with an explicit rationale through normal review.
@@ -239,7 +239,14 @@ def discover_documents(root: Path = ROOT) -> list[Path]:
     raw_paths.extend(git_lines(root, "ls-files", "--others", "--exclude-standard"))
     documents: list[Path] = []
     for raw_path in dict.fromkeys(raw_paths):
-        if raw_path != "README.md" and not raw_path.startswith("docs/"):
+        path_parts = Path(raw_path).parts
+        is_public_document = raw_path == "README.md" or raw_path.startswith("docs/")
+        is_policy = raw_path.startswith(".agent-loop/policies/")
+        is_initiative_contract = (
+            raw_path.startswith(".agent-loop/initiatives/")
+            and "reviews" not in path_parts
+        )
+        if not (is_public_document or is_policy or is_initiative_contract):
             continue
         if Path(raw_path).suffix.lower() not in DOCUMENT_SUFFIXES:
             continue
@@ -323,11 +330,19 @@ def technical_worker_match(text: str, match: re.Match[str]) -> bool:
     )
 
 
-def scan_text(relative_path: str, text: str) -> list[str]:
+def scan_text(
+    relative_path: str,
+    text: str,
+    *,
+    historical_baseline_lines: frozenset[str] = frozenset(),
+) -> list[str]:
     """Return deterministic rule failures for one active document."""
     failures: list[str] = []
     for rule in RULES:
         for match in rule.pattern.finditer(text):
+            line = containing_line(text, match.start())
+            if line in historical_baseline_lines:
+                continue
             if exempt_match(relative_path, rule, text, match.start()):
                 continue
             if rule.code in {
@@ -339,6 +354,22 @@ def scan_text(relative_path: str, text: str) -> list[str]:
                 f"{relative_path}:{line_number(text, match.start())}: {rule.code}"
             )
     return failures
+
+
+def initiative_baseline_lines(root: Path, relative_path: str) -> frozenset[str]:
+    """Return unchanged initiative-history lines from trusted ``origin/main``."""
+    if not relative_path.startswith(".agent-loop/initiatives/"):
+        return frozenset()
+    result = subprocess.run(
+        ["git", "-C", str(root), "show", f"origin/main:{relative_path}"],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if result.returncode != 0:
+        return frozenset()
+    return frozenset(result.stdout.splitlines())
 
 
 def scan_activation_custody_text(relative_path: str, text: str) -> list[str]:
@@ -362,7 +393,15 @@ def scan(root: Path = ROOT) -> list[str]:
         except (OSError, UnicodeDecodeError) as exc:
             failures.append(f"{relative_path}: unreadable active document: {exc}")
             continue
-        failures.extend(scan_text(relative_path, text))
+        failures.extend(
+            scan_text(
+                relative_path,
+                text,
+                historical_baseline_lines=initiative_baseline_lines(
+                    root, relative_path
+                ),
+            )
+        )
     for path in discover_activation_custody_documents(root):
         relative_path = path.relative_to(root).as_posix()
         try:

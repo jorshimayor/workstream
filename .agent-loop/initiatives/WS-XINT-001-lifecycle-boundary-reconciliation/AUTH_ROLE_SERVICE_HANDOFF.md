@@ -125,7 +125,7 @@ The static matrix is typed code, not a service-grant table. A new runtime
 service identity requires an approved owning-feature specification, one new
 closed `ServiceIdentity`, an exact static action row, database constraint
 migration, action ownership, explicit provisioning, and negative cross-service
-tests. No generic worker identity, dynamic service grants, or shared permission
+tests. No shared catch-all service identity, dynamic service grants, or shared permission
 union is permitted. An external provider needs a Workstream service
 `ActorProfile` only when it calls a protected Workstream command; Workstream
 calling that provider through an adapter does not create a provider actor.
@@ -136,7 +136,7 @@ checker execution, authority-invalidation reconciliation, review preference
 expiry, review lease expiry, review reconciliation, review projection rebuild,
 contribution-event processing, compensation-delivery reconciliation, and
 shared outbox dispatch when it invokes protected Workstream commands. They must
-not collapse into `workstream.system.worker`.
+not collapse into one shared service identity.
 
 ## Owner responses
 

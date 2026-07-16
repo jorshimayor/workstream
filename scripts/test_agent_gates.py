@@ -3829,14 +3829,26 @@ def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:
         root = Path(tmp_dir)
         subprocess.run(["git", "init", "-q"], cwd=root, check=True)
         (root / "docs").mkdir()
+        initiative = root / ".agent-loop/initiatives/WS-CON-001-example"
+        initiative.mkdir(parents=True)
+        policy = root / ".agent-loop/policies/security-boundaries.md"
+        policy.parent.mkdir(parents=True)
         active = root / "docs" / "new_active_doc.md"
         diagram = root / "docs" / "new_active_diagram.puml"
+        initiative_contract = initiative / "PLAN.md"
+        initiative_state = initiative / "STATE.json"
         active.write_text("POST /v1/projects\n", encoding="utf-8")
         diagram.write_text(
             "Workstream --> API : POST /api/v1/projects\n", encoding="utf-8"
         )
+        initiative_contract.write_text("current contract\n", encoding="utf-8")
+        initiative_state.write_text('{"status": "current"}\n', encoding="utf-8")
+        policy.write_text("current policy\n", encoding="utf-8")
         assert active in gate.discover_documents(root)
         assert diagram in gate.discover_documents(root)
+        assert initiative_contract in gate.discover_documents(root)
+        assert initiative_state in gate.discover_documents(root)
+        assert policy in gate.discover_documents(root)
         assert gate.scan(root) == ["docs/new_active_doc.md:1: NON_CANONICAL_API_PREFIX"]
 
         active.write_text("POST /api/v1/projects\n", encoding="utf-8")
@@ -3859,6 +3871,20 @@ def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:
             "docs/new_active_diagram.puml:1: NON_CANONICAL_API_PREFIX"
         ]
 
+        diagram.write_text(
+            "Workstream --> API : POST /api/v1/projects\n", encoding="utf-8"
+        )
+        initiative_contract.write_text("POST /v1/projects\n", encoding="utf-8")
+        policy.write_text(
+            "A token also carries an authorized Workstream role.\n",
+            encoding="utf-8",
+        )
+        assert gate.scan(root) == [
+            ".agent-loop/initiatives/WS-CON-001-example/PLAN.md:1: "
+            "NON_CANONICAL_API_PREFIX",
+            ".agent-loop/policies/security-boundaries.md:1: TOKEN_CARRIES_PRODUCT_ROLE",
+        ]
+
 
 def test_stale_authorization_precedence_exemption_is_line_scoped() -> None:
     """The active archive marker exempts one line, not its entire document."""
@@ -3873,6 +3899,30 @@ def test_stale_authorization_precedence_exemption_is_line_scoped() -> None:
         marker + "\nClients call POST /v1/projects.\n",
     )
     assert failures == ["docs/reference_specs/README.md:2: NON_CANONICAL_API_PREFIX"]
+
+
+def test_stale_authorization_initiative_baseline_is_line_scoped() -> None:
+    """Unchanged initiative history is tolerated, but changed stale lines fail."""
+    gate = load_module(
+        "stale_authorization_docs_initiative_baseline",
+        "scripts/check_stale_authorization_docs.py",
+    )
+    stale_line = "POST /v1/projects"
+    replacement_line = "A token also carries an authorized Workstream role."
+
+    assert (
+        gate.scan_text(
+            ".agent-loop/initiatives/example/PLAN.md",
+            stale_line,
+            historical_baseline_lines=frozenset({stale_line}),
+        )
+        == []
+    )
+    assert gate.scan_text(
+        ".agent-loop/initiatives/example/PLAN.md",
+        replacement_line,
+        historical_baseline_lines=frozenset({stale_line}),
+    ) == [".agent-loop/initiatives/example/PLAN.md:1: TOKEN_CARRIES_PRODUCT_ROLE"]
 
 
 def test_stale_authorization_history_allowlist_is_exact() -> None:
@@ -4952,6 +5002,7 @@ def main() -> int:
         test_parallel_initiative_status_matches_trusted_main,
         test_stale_authorization_discovery_includes_new_untracked_docs,
         test_stale_authorization_precedence_exemption_is_line_scoped,
+        test_stale_authorization_initiative_baseline_is_line_scoped,
         test_stale_authorization_history_allowlist_is_exact,
         test_agent_gates_runs_stale_authorization_docs_fail_closed,
         test_agent_gates_runs_stale_artifact_contracts_fail_closed,
