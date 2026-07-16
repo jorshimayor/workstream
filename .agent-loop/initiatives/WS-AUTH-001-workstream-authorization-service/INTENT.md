@@ -71,9 +71,9 @@ move to the new authorization service in bounded cutover chunks.
 
 ## Alternatives considered
 
-### Keep token roles and add project grants
+### Keep issuer role metadata and add project grants
 
-Rejected. Token roles would remain a second authority source and revocation
+Rejected. Issuer role metadata would remain a second authority source and revocation
 would still depend on token lifetime.
 
 ### Add a parallel authorization subsystem
@@ -107,7 +107,7 @@ namespace and remains canonical.
 
 ## Expected risks
 
-- Accidentally accepting token roles after local grants are introduced.
+- Accidentally accepting issuer role metadata after local grants are introduced.
 - Misclassifying legacy actor rows that lack `subject_kind` provenance.
 - Leaving a protected endpoint on the old authorization path.
 - Breaking historical actor attribution during schema migration.

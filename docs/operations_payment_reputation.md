@@ -165,7 +165,7 @@ The first version does not depend on these.
 
 ## Reconciliation Rules
 
-Finance reconciles daily:
+Finance Authority reconciles daily:
 
 - payable contributions without their expected award or fulfillment projection
 - pending award delivery older than agreed SLA

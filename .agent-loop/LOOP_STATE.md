@@ -28,9 +28,11 @@
 - Authorization checkpoint: merged main contains 74 PermissionIds and 57
   ActionIds, with the two actor-self and seven AUTH-08 administrative actions
   active. AUTH-09A's reviewed parallel branch defines seven fixed artifact
-  service identities and eleven exact planned static matrix memberships. ART feature chunks
-  supply hidden canonical behavior/resource composition; AUTH alone integrates
-  evaluators and changes action availability afterward under `WS-XINT-001`.
+  service identities and eleven exact planned static matrix memberships. ART
+  feature chunks supply hidden canonical behavior/resource composition. Future
+  AUTH activation-custodian chunks alone integrate evaluators and change action
+  availability after that hidden behavior merges; `WS-XINT-001` activates
+  nothing.
 - Parallel artifact checkpoint: `WS-ART-001-02A1` was explicitly started and
   merged through PR #127 as `f64a8e5`; it is at the post-merge memory/stop
   checkpoint. ART-02A2 merged through PR #129, and ART-02A3 is reviewed in its

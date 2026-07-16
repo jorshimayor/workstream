@@ -64,7 +64,8 @@ or the exact project; own means record-level ownership still applies.
 | Submission create/read | no | operational projection only | management projection only | no | read covered | own assignment | read-for-review only | no |
 | Human review decision | no | no | no without reviewer grant | no | no | no | exact project under review guards | no |
 | Adjudication action | no | no | no | no | no | no | no | unavailable; requires WS-REV contract plus AUTH action activation |
-| Compensation award and fulfillment mutation | no | exact registered recovery invocation only; WS-CON owns state mutation | no | covered | no | no | no | no |
+| Compensation award read and delivery reconciliation | no | no | no | covered | read covered | no | no | no |
+| Fulfillment result recording | no | no | no | no; authenticated WS-CON adapter callback only | read covered | no | no | no |
 | Audit read/export | authority history system | operational system | project covered | finance covered | covered | own chain only | assigned chain only | no |
 
 A contributor may hold Submitter, Reviewer, and Adjudicator capabilities

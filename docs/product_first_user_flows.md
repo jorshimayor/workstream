@@ -25,7 +25,7 @@ The first user flows prove that Workstream can run real work from intake to acce
     unchanged replacement fails closed, and activation remains blocked.
 15. An authorized covered Project Manager enables review policy.
 16. An authorized covered Project Manager enables revision policy.
-17. The owning compensation authority publishes the active
+17. The owning Finance Authority publishes the active
     ContributionPolicyVersion with explicit submitter and reviewer
     compensated/unpaid rules.
 18. Project becomes active.

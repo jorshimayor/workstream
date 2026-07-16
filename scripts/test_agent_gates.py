@@ -1065,6 +1065,9 @@ def test_active_shared_contract_rejects_retired_contracts() -> None:
             "worker, reviewer, or project manager",
             "operators, workers, reviewers",
             "reviews, and payments",
+            "owning compensation authority",
+            "Finance reconciles",
+            "Finance follows",
             "CompensationPolicyVersion",
             "CompensationPolicy",
             "CompensationRule",
@@ -3686,6 +3689,16 @@ def test_feature_owned_authorization_activation_is_rejected() -> None:
         failures = gate.scan_activation_custody_text("contract.md", statement)
         assert failures == ["contract.md:1: FEATURE_OWNED_AUTH_ACTIVATION"], statement
 
+    planning_activation_statements = (
+        "AUTH activates artifact actions under WS-XINT-001.",
+        "WS-XINT-001 is the AUTH activation custodian.",
+    )
+    for statement in planning_activation_statements:
+        failures = gate.scan_activation_custody_text("contract.md", statement)
+        assert failures == ["contract.md:1: PLANNING_INITIATIVE_AUTH_ACTIVATION"], (
+            statement
+        )
+
     canonical_statements = (
         "AUTH activates the action after hidden ART behavior merges.",
         "ART activates API-startup scratch cleanup.",
@@ -3971,6 +3984,20 @@ def test_stale_authorization_initiative_ratchet_is_position_scoped() -> None:
         enforced_line_numbers=frozenset({2}),
     ) == [".agent-loop/initiatives/example/PLAN.md:1: TYPED_PROFILE_AUTHORITY"]
 
+    assert gate.scan_text(
+        ".agent-loop/initiatives/example/PLAN.md",
+        "A token role grants project access.",
+        enforced_line_numbers=frozenset(),
+    ) == [".agent-loop/initiatives/example/PLAN.md:1: TOKEN_ROLE_PRODUCT_AUTHORITY"]
+    assert (
+        gate.scan_text(
+            ".agent-loop/initiatives/example/PLAN.md",
+            "A worker submits the packet.",
+            enforced_line_numbers=frozenset(),
+        )
+        == []
+    )
+
 
 def test_stale_authorization_history_allowlist_is_exact() -> None:
     """Only reviewed exact history paths bypass active-document scanning."""
@@ -3979,6 +4006,14 @@ def test_stale_authorization_history_allowlist_is_exact() -> None:
         "scripts/check_stale_authorization_docs.py",
     )
     assert "docs/spec_chunk_3_project_guide_foundation.md" in gate.HISTORICAL_PATHS
+    assert (
+        ".agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/chunks/WS-AUTH-001-06-canonical-actor-profile.md"
+        in gate.HISTORICAL_PATHS
+    )
+    assert (
+        ".agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/chunks/WS-POL-001-11-actor-identity-profile-registry.md"
+        in gate.HISTORICAL_PATHS
+    )
     assert "docs/review_architecture_review.md" not in gate.HISTORICAL_PATHS
     assert "docs/spec_chunk_999_future.md" not in gate.HISTORICAL_PATHS
 

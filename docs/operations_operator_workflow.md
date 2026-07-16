@@ -99,7 +99,7 @@ Reads authorized immutable and operational evidence without mutation.
 4. Frozen contribution policies create awards only for payable contributions;
    explicit unpaid rules create none.
 5. Reputation events are recorded from contribution facts.
-6. Finance follows delivery and fulfillment only for created awards.
+6. Finance Authority follows delivery and fulfillment only for created awards.
 
 ## Rejection Workflow
 

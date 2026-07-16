@@ -874,10 +874,10 @@ Acceptance criteria:
   permission.
 - Observation refresh preserves existing `active` and `disabled` profile
   status unless an explicit audited profile workflow changes status.
-- Worker claim requires both verified worker token role and active worker
-  profile.
-- Stored profiles without matching token roles do not grant operator, worker,
-  reviewer, or project-manager access.
+- Task claim requires an independent exact-project `submitter` grant; profile
+  metadata and issuer role metadata grant no product authority.
+- Stored profiles without matching local grants do not grant Operator,
+  Submitter, Reviewer, Adjudicator, or Project Manager access.
 - Stale backend script imports of old worker/reviewer profile models are
   removed or retired so the shared actor profile model is the only profile
   authority.

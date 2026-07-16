@@ -53,7 +53,7 @@ docs/operations_authorization_service.md
 ```text
 project create/update, guide/source mutation, policy approval, activation
 task/submission/checker authorization
-token role fallback or authorization pagination after unfiltered counts
+issuer-role fallback or authorization pagination after unfiltered counts
 ```
 
 ## Acceptance criteria

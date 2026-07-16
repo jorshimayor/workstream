@@ -86,7 +86,7 @@ review/contribution/compensation implementation
   remains owned by chunk 12.
 - Serialized requester context is evidence only; actor-attributed commits reload
   current actor/grant state.
-- Token roles and `require_any_role()` are not product authorization inputs and
+- Issuer role metadata and the retired role helper are not product authorization inputs and
   obsolete runtime paths are removed.
 - The scanner proves the `LegacyWorkflowEligibilityCompatibility` adapter,
   allowlist, and typed-profile workflow eligibility consumers removed in chunk

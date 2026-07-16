@@ -141,6 +141,8 @@ ACTIVE_SHARED_CONTRACT_PATTERNS = (
     re.compile(r"\bworker, reviewer, or project manager\b", re.IGNORECASE),
     re.compile(r"\boperators?, workers?, reviewers?\b", re.IGNORECASE),
     re.compile(r"\breviews?,\s+and\s+payments?\b", re.IGNORECASE),
+    re.compile(r"\bowning compensation authority\b", re.IGNORECASE),
+    re.compile(r"\bFinance\s+(?:reconciles|follows)\b", re.IGNORECASE),
     re.compile(r"\bCompensationPolicyVersion\b"),
     re.compile(r"\bCompensationPolicy\b"),
     re.compile(r"\bCompensationRule\b"),
@@ -194,6 +196,8 @@ ACTIVE_SHARED_CONTRACT_EXCLUDED_PREFIXES = (
 # authorization and artifact contract scanners; unknown future files remain
 # active by default.
 HISTORICAL_PATHS = {
+    ".agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/chunks/WS-AUTH-001-06-canonical-actor-profile.md",
+    ".agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/chunks/WS-POL-001-11-actor-identity-profile-registry.md",
     "docs/checker_trial_failure_catalog.md",
     "docs/internal_reviews/2026-06-11_chunk9_pre_review_gate.md",
     "docs/internal_reviews/2026-06-11_revision_context_rebase.md",

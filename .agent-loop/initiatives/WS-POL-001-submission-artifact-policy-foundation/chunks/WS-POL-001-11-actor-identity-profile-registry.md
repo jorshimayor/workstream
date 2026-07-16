@@ -1,5 +1,10 @@
 # Chunk Contract: WS-POL-001-11 - Actor Identity And Profile Registry
 
+Historical implemented chunk contract. It records the transitional authority
+model used by PR #74 and is not a current authorization source. ADR 0012,
+ADR 0015, `docs/spec_authorization_service.md`, and WS-XINT-001 supersede its
+token-role and typed-profile authorization language.
+
 ## Parent initiative
 
 WS-POL-001 - Submission Artifact Policy Foundation

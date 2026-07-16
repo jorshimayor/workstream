@@ -32,6 +32,8 @@ HISTORICAL_PREFIXES = (
 # Prefixes above remain useful for review/reference trees, while this set covers
 # standalone closed records and implemented plans outside those trees.
 HISTORICAL_PATHS = {
+    ".agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/chunks/WS-AUTH-001-06-canonical-actor-profile.md",
+    ".agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/chunks/WS-POL-001-11-actor-identity-profile-registry.md",
     "docs/checker_trial_failure_catalog.md",
     "docs/internal_reviews/2026-06-11_chunk9_pre_review_gate.md",
     "docs/internal_reviews/2026-06-11_revision_context_rebase.md",

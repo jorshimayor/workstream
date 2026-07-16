@@ -16,6 +16,8 @@ DOCUMENT_SUFFIXES = {".html", ".json", ".md", ".puml"}
 # Exact reviewed history/archive paths. New files are active unless added here
 # with an explicit rationale through normal review.
 HISTORICAL_PATHS = {
+    ".agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/chunks/WS-AUTH-001-06-canonical-actor-profile.md": "merged transitional implementation contract",
+    ".agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/chunks/WS-POL-001-11-actor-identity-profile-registry.md": "merged transitional implementation contract",
     "docs/checker_trial_failure_catalog.md": "closed checker-trial evidence",
     "docs/internal_reviews/2026-06-11_chunk9_pre_review_gate.md": "closed internal review",
     "docs/internal_reviews/2026-06-11_revision_context_rebase.md": "closed internal review",
@@ -207,6 +209,20 @@ RULES = (
     ),
 )
 
+FULL_INITIATIVE_RULE_CODES = {
+    "ACCESS_ADMIN_CATALOG_ADMINISTRATION",
+    "CURRENT_TOKEN_ROLE_AUTHORITY",
+    "NAMED_ROLE_TOKEN_AUTHORITY",
+    "OBSOLETE_ROLE_ASSIGNMENT_MODEL",
+    "OPERATOR_COMPENSATION_MUTATION",
+    "OPERATOR_CONTRIBUTION_POLICY_AUTHORITY",
+    "TOKEN_CARRIES_PRODUCT_ROLE",
+    "TOKEN_ROLE_PRODUCT_AUTHORITY",
+    "TRUSTED_ROLE_CLAIM_AUTHORITY",
+    "TYPED_PROFILE_AUTHORITY",
+    "TYPED_PROFILE_PRODUCT_AUTHORITY",
+}
+
 ACTIVATION_CUSTODY_RULES = (
     Rule(
         "FEATURE_OWNED_AUTH_ACTIVATION",
@@ -228,6 +244,16 @@ ACTIVATION_CUSTODY_RULES = (
             r"runtime\s+activation\s+remain\s+with\s+the\s+listed\s+owner|"
             r"route-owning\s+chunks?[\s\S]{0,120}?promote\s+an\s+action\s+to\s+active"
             r")",
+            re.IGNORECASE,
+        ),
+    ),
+    Rule(
+        "PLANNING_INITIATIVE_AUTH_ACTIVATION",
+        re.compile(
+            r"(?:\bAUTH\b.{0,160}\b(?:activates?|changes?\s+action\s+"
+            r"availability)\b.{0,160}\bunder\s+`?WS-XINT-[\w-]+`?|"
+            r"\bWS-XINT-[\w-]+`?\s+(?:is|acts?\s+as)\s+(?:the\s+)?"
+            r"(?:AUTH\s+)?activation\s+custodian\b)",
             re.IGNORECASE,
         ),
     ),
@@ -380,8 +406,16 @@ def scan_text(
             match_end_line_number = line_number(
                 text, max(match.start(), match.end() - 1)
             )
-            if enforced_line_numbers is not None and enforced_line_numbers.isdisjoint(
-                range(match_line_number, match_end_line_number + 1)
+            enforce_full_initiative = (
+                relative_path.startswith(".agent-loop/initiatives/")
+                and rule.code in FULL_INITIATIVE_RULE_CODES
+            )
+            if (
+                enforced_line_numbers is not None
+                and not enforce_full_initiative
+                and enforced_line_numbers.isdisjoint(
+                    range(match_line_number, match_end_line_number + 1)
+                )
             ):
                 continue
             if exempt_match(relative_path, rule, text, match.start()):

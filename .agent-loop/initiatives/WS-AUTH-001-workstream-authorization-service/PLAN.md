@@ -52,7 +52,7 @@ executing protected commands.
 
 The implementation introduces the canonical service before moving product
 surfaces. Each cutover chunk migrates a complete resource family and removes
-its old token-role authorization. No command accepts token role or local grant
+its old issuer-role authorization. No command accepts issuer role metadata or local grant
 as alternate sufficient proof.
 
 Project configuration moves first because it is required to create project
@@ -116,10 +116,10 @@ their lifecycle assertions loosened. As surfaces migrate, positive
 authorization fixtures must provision canonical profiles, links, and grants
 through supported service/API paths and exercise the real ActorResolver,
 FastAPI dependency, and AuthorizationService. Dependency overrides, fabricated
-ActorContext objects, token-role fallbacks, and direct database grant inserts
+ActorContext objects, issuer-role fallbacks, and direct database grant inserts
 are not valid product-authorization proof. Direct row factories remain limited
 to repository and migration tests. Every migrated surface adds a negative test
-proving the same token role alone no longer authorizes.
+proving the same issuer role metadata alone no longer authorizes.
 
 ## Implementation sequence
 
