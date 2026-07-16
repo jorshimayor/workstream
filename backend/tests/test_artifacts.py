@@ -29,6 +29,7 @@ from app.interfaces.artifacts import (
 )
 from app.interfaces.external_services import ExternalServiceAdapterIdentity
 from app.modules.artifacts.models import (
+    ArtifactContent,
     ArtifactOperationReceipt,
     ArtifactReplica,
     ArtifactStorageNamespace,
@@ -309,6 +310,54 @@ class _TerminalStore(_UnavailableStore):
         raise ArtifactInputMismatchError()
 
 
+class _CancelledStore(_UnavailableStore):
+    async def put(self, _source: CommittedArtifactSource) -> ArtifactPutResult:
+        self.put_calls += 1
+        raise asyncio.CancelledError("provider put cancelled")
+
+
+class _AcknowledgingStore(_UnavailableStore):
+    async def put(self, source: CommittedArtifactSource) -> ArtifactPutResult:
+        self.put_calls += 1
+        digest_hex = source.commitment.sha256[7:]
+        return ArtifactPutResult(
+            f"sha256/{digest_hex[:2]}/{digest_hex[2:]}",
+            replayed=False,
+        )
+
+
+class _FinalizationCancelledOrchestrator(ArtifactStorageOrchestrator):
+    async def _finalize_put(
+        self,
+        item_id: str,
+        commitment: ArtifactCommitment,
+        result: ArtifactPutResult,
+        fence: ProviderAttemptFence,
+        *,
+        correlation_id: str,
+    ) -> None:
+        del item_id, commitment, result, fence, correlation_id
+        raise asyncio.CancelledError("put finalization cancelled")
+
+
+async def _assert_replay_required_without_durable_facts(
+    factory: async_sessionmaker,
+    item_id: str,
+) -> None:
+    async with factory() as session:
+        item = await session.get(ArtifactUploadItem, item_id)
+        assert item is not None
+        upload_session = await session.get(ArtifactUploadSession, item.session_id)
+        assert upload_session is not None
+        assert item.state == "replay_required"
+        assert item.error_code == "artifact_put_acknowledgement_unknown"
+        assert upload_session.reserved_bytes == item.reserved_bytes
+        assert upload_session.reserved_items == 1
+        assert await session.scalar(select(ArtifactContent)) is None
+        assert await session.scalar(select(ArtifactReplica)) is None
+        assert await session.scalar(select(ArtifactOperationReceipt)) is None
+
+
 @pytest.mark.asyncio
 async def test_retryable_put_marks_existing_item_replay_required(
     artifact_database_env: str,
@@ -336,6 +385,58 @@ async def test_retryable_put_marks_existing_item_replay_required(
             assert item.error_code == "artifact_put_acknowledgement_unknown"
             assert await session.scalar(select(ArtifactReplica)) is None
             assert await session.scalar(select(ArtifactOperationReceipt)) is None
+        assert store.put_calls == 1
+    finally:
+        await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_provider_cancellation_persists_replay_required_without_facts(
+    artifact_database_env: str,
+    tmp_path: Path,
+) -> None:
+    engine = create_async_engine(artifact_database_env)
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    store = _CancelledStore()
+    try:
+        async with _minted_source(tmp_path / "scratch", b"provider cancellation") as source:
+            async with factory() as session:
+                item_id = await _seed_reserved_item(session, source.commitment)
+                orchestrator = ArtifactStorageOrchestrator(
+                    session,
+                    store,
+                    artifact_storage_namespace_spec(_settings(tmp_path), store),
+                )
+                with pytest.raises(asyncio.CancelledError, match="provider put cancelled"):
+                    await orchestrator.put_reserved_item(item_id, source)
+
+        await _assert_replay_required_without_durable_facts(factory, item_id)
+        assert store.put_calls == 1
+    finally:
+        await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_finalization_cancellation_persists_replay_required_without_facts(
+    artifact_database_env: str,
+    tmp_path: Path,
+) -> None:
+    engine = create_async_engine(artifact_database_env)
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    store = _AcknowledgingStore()
+    try:
+        async with _minted_source(tmp_path / "scratch", b"finalization cancellation") as source:
+            async with factory() as session:
+                item_id = await _seed_reserved_item(session, source.commitment)
+                orchestrator = _FinalizationCancelledOrchestrator(
+                    session,
+                    store,
+                    artifact_storage_namespace_spec(_settings(tmp_path), store),
+                )
+                with pytest.raises(asyncio.CancelledError, match="finalization cancelled"):
+                    await orchestrator.put_reserved_item(item_id, source)
+
+        await _assert_replay_required_without_durable_facts(factory, item_id)
         assert store.put_calls == 1
     finally:
         await engine.dispose()

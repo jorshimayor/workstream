@@ -804,6 +804,61 @@ def test_artifact_store_v2_refuses_populated_v1_before_ddl(
     }
 
 
+def test_artifact_store_v2_waits_for_concurrent_v1_writer_and_refuses(
+    isolated_database_env: str,
+    migration_lock,
+) -> None:
+    """Serialize the clean-cut emptiness check against every v1 writer."""
+    config = _alembic_config()
+    inserted = threading.Event()
+    release_insert = threading.Event()
+    upgrade_started = threading.Event()
+
+    def guarded_upgrade() -> None:
+        upgrade_started.set()
+        command.upgrade(config, "0023_artifact_store_v2")
+
+    with migration_lock():
+        try:
+            command.downgrade(config, "base")
+            command.upgrade(config, "0022_bootstrap_admin_grants")
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                insert_future = pool.submit(
+                    asyncio.run,
+                    _insert_v1_artifact_content_until_released(
+                        isolated_database_env,
+                        inserted,
+                        release_insert,
+                    ),
+                )
+                assert inserted.wait(timeout=5)
+                upgrade_future = pool.submit(guarded_upgrade)
+                assert upgrade_started.wait(timeout=5)
+                time.sleep(0.2)
+                assert upgrade_future.done() is False
+                release_insert.set()
+                insert_future.result(timeout=5)
+                with pytest.raises(
+                    RuntimeError,
+                    match="artifact storage clean cut requires empty pre-production tables",
+                ):
+                    upgrade_future.result(timeout=5)
+
+            refused = asyncio.run(_artifact_v2_refusal_state(isolated_database_env))
+            asyncio.run(_truncate_artifact_foundation(isolated_database_env))
+            command.upgrade(config, "0023_artifact_store_v2")
+        finally:
+            release_insert.set()
+            asyncio.run(_truncate_artifact_foundation(isolated_database_env))
+            command.downgrade(config, "base")
+
+    assert refused == {
+        "revision": "0022_bootstrap_admin_grants",
+        "namespace_table_exists": False,
+        "v1_content_count": 1,
+    }
+
+
 def test_api_rate_control_schema_preserves_domain_and_guards_downgrade(
     isolated_database_env: str,
     migration_lock,
@@ -2607,6 +2662,29 @@ async def _seed_v1_artifact_content(database_url: str) -> None:
                 ),
                 {"id": str(uuid4()), "sha256": "sha256:" + "1" * 64},
             )
+    finally:
+        await engine.dispose()
+
+
+async def _insert_v1_artifact_content_until_released(
+    database_url: str,
+    inserted: threading.Event,
+    release: threading.Event,
+) -> None:
+    """Hold one uncommitted v1 writer while the clean-cut upgrade requests locks."""
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(
+                text(
+                    "insert into artifact_contents "
+                    "(id, sha256, byte_count, media_type, normalized_display_name) "
+                    "values (:id, :sha256, 1, 'application/octet-stream', 'raced.bin')"
+                ),
+                {"id": str(uuid4()), "sha256": "sha256:" + "2" * 64},
+            )
+            inserted.set()
+            assert await asyncio.to_thread(release.wait, 5)
     finally:
         await engine.dispose()
 

@@ -29,6 +29,9 @@ def _refuse_populated_artifact_rows(*, include_namespace: bool) -> None:
     """Refuse to invent v2 provenance or downgrade durable v2 facts."""
     connection = op.get_bind()
     tables = _ARTIFACT_TABLES + (("artifact_storage_namespaces",) if include_namespace else ())
+    connection.execute(
+        sa.text(f"lock table {', '.join(tables)} in access exclusive mode")
+    )
     populated = [
         table_name
         for table_name in tables
