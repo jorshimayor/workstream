@@ -23,7 +23,7 @@ Feature hidden-behavior checkpoint
 
 AUTH activation checkpoint
   - evaluator and matched authority
-  - exact service assignment or human grant path
+  - exact static service-action matrix row or human grant path
   - transaction-local revalidation
   - active availability and end-to-end negative proof
 
@@ -39,7 +39,8 @@ Mutation order is fixed:
 
 ```text
 1. Resolve verified human or fixed service principal.
-2. AUTH prepares action and locks actor/link/grant/assignment rows.
+2. AUTH prepares action, locking human actor/link/grant rows or service
+   actor/link rows and validating the exact static service-action matrix row.
 3. Owning feature locks canonical product rows in documented order.
 4. Owning feature recomposes final typed facts from locked rows.
 5. AUTH evaluates exactly once and stages bounded decision evidence.

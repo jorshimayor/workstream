@@ -1041,6 +1041,9 @@ def test_active_shared_contract_rejects_retired_contracts() -> None:
             "independent `submitter` and `reviewer` ProjectRoleGrants",
             "Adjudicator actions remain unavailable until their lifecycle is activated",
             "adjudication actions unavailable until separately activated",
+            "Adjudicator actions remain unavailable until separately activated",
+            "locks actor/link/grant/assignment rows",
+            "AUTH-09 persists these exact service actors and assignments",
             "do not become normal ActorProfiles",
             "Proposed after 02C3, AUTH-09, and AUTH custody registration",
             "CompensationPolicyVersion",
@@ -3699,6 +3702,20 @@ def test_activation_custody_discovery_includes_canonical_handoffs() -> None:
     ]
 
 
+def test_auth_spec_orders_service_admission_before_project_roles() -> None:
+    """AUTH-09E is explicit between service provisioning and project grants."""
+    spec = Path("docs/spec_authorization_service.md").read_text(encoding="utf-8")
+    order = spec.split("## Migration And Compatibility", maxsplit=1)[1].split(
+        "## Error And Privacy Contract",
+        maxsplit=1,
+    )[0]
+    auth_09 = order.index("`WS-AUTH-001-09`:")
+    auth_09e = order.index("`WS-AUTH-001-09E`:")
+    auth_10 = order.index("`WS-AUTH-001-10`:")
+    assert auth_09 < auth_09e < auth_10
+    assert "without human grant\n    evaluation or feature action activation" in order
+
+
 def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:
     """A new active doc fails without being added to a hardcoded corpus."""
     gate = load_module(
@@ -4827,6 +4844,7 @@ def main() -> int:
         test_stale_authorization_rule_examples_are_rejected,
         test_feature_owned_authorization_activation_is_rejected,
         test_activation_custody_discovery_includes_canonical_handoffs,
+        test_auth_spec_orders_service_admission_before_project_roles,
         test_stale_authorization_discovery_includes_new_untracked_docs,
         test_stale_authorization_precedence_exemption_is_line_scoped,
         test_stale_authorization_history_allowlist_is_exact,

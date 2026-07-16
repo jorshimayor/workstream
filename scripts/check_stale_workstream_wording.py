@@ -91,7 +91,13 @@ ACTIVE_SHARED_CONTRACT_PATTERNS = (
         re.IGNORECASE,
     ),
     re.compile(
-        r"\badjudication actions\s+unavailable\s+until\s+separately\s+activated",
+        r"\badjudicat(?:ion|or) actions\s+(?:remain\s+)?unavailable\s+until\s+"
+        r"separately\s+activated",
+        re.IGNORECASE,
+    ),
+    re.compile(r"\blocks actor/link/grant/assignment rows\b", re.IGNORECASE),
+    re.compile(
+        r"\bAUTH-09 persists (?:these )?exact service actors and assignments\b",
         re.IGNORECASE,
     ),
     re.compile(r"\bdo not become normal ActorProfiles\b", re.IGNORECASE),

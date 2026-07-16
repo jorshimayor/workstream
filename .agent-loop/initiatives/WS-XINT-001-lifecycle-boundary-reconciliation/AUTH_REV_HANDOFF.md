@@ -3,10 +3,10 @@
 ## Boundary
 
 AUTH owns review ActionId registration, PermissionId mapping, activation custody,
-human/project grants, fixed service assignments, evaluator dispatch, matched
-authority, prepared mutation handles, decision evidence, and availability. REV
-owns review resource loading, lifecycle guards, hidden behavior, and product
-state transitions.
+human/project grants, the typed static service-action matrix, evaluator
+dispatch, matched authority, prepared mutation handles, decision evidence, and
+availability. REV owns review resource loading, lifecycle guards, hidden
+behavior, and product state transitions.
 
 Human review authority comes from one exact active `reviewer`
 ProjectRoleGrant. A human who also submits holds a separate `submitter` grant;

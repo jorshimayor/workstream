@@ -71,7 +71,7 @@ optional projection without gating the core transaction.
 ## Existing tests and proof surfaces
 
 - AUTH catalogue parity and action availability tests.
-- AUTH fixed service identity and assignment matrix tests.
+- AUTH fixed service identity and static service-action matrix tests.
 - ART adapter, migration, cancellation, and concurrency tests.
 - Planned REV conformance matrices for authorization, artifact disclosure, and
   contribution atomicity.

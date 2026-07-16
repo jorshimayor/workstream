@@ -357,15 +357,17 @@ are also closed:
 | `workstream.artifact.materializer` | `artifact.pre_submit.checker_input.materialize`, `artifact.post_submit.checker_input.materialize` |
 | `workstream.artifact.checker_output` | `artifact.checker_output.write` |
 
-AUTH-09 persists these exact service actors and assignments before any WS-ART
-execution chunk consumes them. They remain inert while planned. After the ART
-execution behavior merges, the dedicated AUTH activation custodian integrates
-the evaluator and changes only the exact action to active. Composition startup
-proves registry, service actor, action, and PermissionId parity and fails closed
-on a missing or extra assignment. Negative authorization tests prove each
-service identity is denied every artifact action outside its row. Human
-authorization remains attached to the initiating product command; an internal
-service identity never inherits a human grant or role.
+AUTH-09 persists these exact service ActorProfiles and ActorIdentityLinks before
+any WS-ART execution chunk consumes them. The service-action matrix is typed
+code, not a database assignment or grant table. Its rows remain inert while
+their actions are planned. After the ART execution behavior merges, the
+dedicated AUTH activation custodian integrates the evaluator and changes only
+the exact action to active. Composition startup proves registry, service actor,
+matrix row, action, and PermissionId parity and fails closed on missing or extra
+matrix membership. Negative authorization tests prove each service identity is
+denied every artifact action outside its row. Human authorization remains
+attached to the initiating product command; an internal service identity never
+inherits a human grant or role.
 
 Adding a permission requires a specification/ADR update and human approval.
 Routers cannot invent identifiers or evaluate grant unions.
@@ -606,19 +608,23 @@ exact-project grant and canonical project capability composition exists.
 
 The implementation order is fixed by the WS-AUTH-001 chunk map:
 
-1. canonical docs and ADR;
-2. verified issuer token/JWKS boundary;
-3. legacy actor classification;
-4. request/error/rate controls;
-5. authority evidence/idempotency;
-6. canonical actor/link migration;
-7. authorization kernel;
-8. bootstrap/admin grants;
-9. actor/link state and service actors;
-10. project contributor grants;
-11-14. complete resource-family cutovers;
-15. obsolete authority removal and scanner enforcement;
-16. conformance, observability, concurrency, and live API proof.
+1. `WS-AUTH-001-01`: canonical docs and ADR;
+2. `WS-AUTH-001-02`: verified issuer token/JWKS boundary;
+3. `WS-AUTH-001-03`: legacy actor classification;
+4. `WS-AUTH-001-04`: request/error/rate controls;
+5. `WS-AUTH-001-05`: authority evidence/idempotency;
+6. `WS-AUTH-001-06`: canonical actor/link migration;
+7. `WS-AUTH-001-07`: authorization kernel;
+8. `WS-AUTH-001-08`: bootstrap/admin grants;
+9. `WS-AUTH-001-09`: actor/link state and controlled service provisioning;
+10. `WS-AUTH-001-09E`: fixed service runtime admission without human grant
+    evaluation or feature action activation;
+11. `WS-AUTH-001-10`: independent project contributor grants;
+12. `WS-AUTH-001-11` through `WS-AUTH-001-14`: complete resource-family
+    cutovers;
+13. `WS-AUTH-001-15`: obsolete authority removal and scanner enforcement;
+14. `WS-AUTH-001-16`: conformance, observability, concurrency, and live API
+    proof.
 
 Temporary compatibility mechanisms are explicitly named, enumerated, and
 shrinking. They grant no canonical product authority and are deleted by their

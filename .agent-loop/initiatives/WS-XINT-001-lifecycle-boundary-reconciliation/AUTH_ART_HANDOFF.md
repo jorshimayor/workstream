@@ -48,7 +48,7 @@ After transfer, AUTH removes unused `ART_02D`, `ART_03`, `ART_04A`, `ART_04B`,
 and definition-owner parity must reject partial transfer, dual writers, missing
 owners, extra owners, and changed mappings.
 
-## Fixed service assignments
+## Fixed service-action matrix
 
 `docs/spec_authorization_service.md` remains the canonical fixed service
 identity/action assignment source. This table is a non-authoritative repeat used

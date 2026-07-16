@@ -39,9 +39,10 @@ AUTH planned registration
 ```
 
 ART, REV, and CON own their records, lifecycle guards, and typed capabilities.
-AUTH owns identity, grants, service assignments, evaluators, decision evidence,
-activation custody, and availability. Core ContributionRecord creation consumes
-immutable Review and Submission facts through a CON participant and has no
+AUTH owns identity, grants, the typed static service-action matrix, evaluators,
+decision evidence, activation custody, and availability. Core
+ContributionRecord creation consumes immutable Review and Submission facts
+through a CON participant and has no
 synchronous ART capability or provider dependency. It may retain an already
 stabilized submission artifact digest as lineage without calling ART.
 

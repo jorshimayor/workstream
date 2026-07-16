@@ -80,10 +80,12 @@ ADR 0015 supersedes the earlier combined-role design. These capabilities are
 independently granted.
 
 Contributor is the umbrella human product term. A contributor may hold separate
-exact-project `submitter`, `reviewer`, and `adjudicator` grants. Adjudicator
-actions remain unavailable until separately activated. Celery, checker, setup,
-and background workers are internal services, not human product roles.
-Administrative roles alone do not authorize submission or review.
+exact-project `submitter`, `reviewer`, and `adjudicator` grants. The adjudicator
+grant creates no adjudication capability until WS-REV defines the lifecycle and
+AUTH activates exact adjudication actions. Celery, checker, setup, and
+background workers are internal services, not human product roles.
+Administrative roles alone do not authorize submission, review, or
+adjudication.
 
 The three additive Operator recovery permissions approved with this ADR are:
 
