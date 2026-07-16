@@ -179,6 +179,20 @@ write. Agent and Space subjects are denied without a write. Operators must not
 convert token roles, email shape, subject shape, or old typed profiles into
 actor kind or authority.
 
+A provisioned service ActorProfile is the stable Workstream principal, similar
+to a Kubernetes ServiceAccount. Its immutable `service_identity` is one of the
+closed registered internal services; its identity link separately stores the
+configured issuer and opaque subject used to verify credentials. Operators must
+never use display name, email, subject syntax, token role, or adapter provenance
+as the service identity.
+
+Service authority is not administered as database assignment rows. The exact
+service-to-ActionId matrix is reviewed static code. Services receive no
+Contributor domain, AdminRoleGrant, or ProjectRoleGrant, and every artifact
+action remains unavailable until its owning WS-ART feature activates the
+resource facts and guards. A clean database may start without provisioned
+services; an unprovisioned or mismatched service request fails closed.
+
 The [approved AUTH-06 chunk contract](../.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/chunks/WS-AUTH-001-06-canonical-actor-profile.md)
 records the exact deprecated compatibility identifier. That temporary,
 enumerated intake route writes only `LegacyWorkflowEligibility` and cannot

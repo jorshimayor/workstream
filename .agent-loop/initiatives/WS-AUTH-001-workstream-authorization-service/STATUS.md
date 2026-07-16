@@ -84,19 +84,24 @@ as `90eca12`. Signed schema-v2 memory verified that merge and stopped at
 AUTH-08. The user explicitly started AUTH-08. Its inherited L1 contract failed
 initial security/architecture, QA/product, and senior/CI/docs review before
 runtime edits. The repaired contract passed all required preimplementation
-tracks at `cbe7c6c`; bounded AUTH-08 implementation is active.
+tracks at `cbe7c6c`; bounded AUTH-08 implementation passed and PR #131 merged as
+`aa0fdcd`. The user then explicitly started AUTH-09. Required L1 review rejected
+the combined contract before runtime edits. The accepted repair splits AUTH-09
+into 09A-09D and makes the service ActorProfile the fixed local service
+principal with a static typed action matrix and no assignment tables. Repaired
+09A is in exact-head plan review.
 
 ## Active planning chunk
 
-None.
+`WS-AUTH-001-09A` - Fixed Service Identity Foundation.
 
 ## Active implementation chunk
 
-`WS-AUTH-001-08` - Bootstrap And Administrative Role Grants.
+None. Runtime implementation is prohibited until repaired 09A passes review.
 
 ## Current implementation branch
 
-`codex/ws-auth-001-08-bootstrap-admin-grants`
+`codex/ws-auth-001-09-actor-state-service-actors`
 
 ## Chunk status
 
@@ -117,8 +122,12 @@ None.
 | `WS-AUTH-001-07` | Split | `codex/ws-auth-001-07-authorization-kernel` | - | Required L1 review rejected the combined contract before runtime edits. |
 | `WS-AUTH-001-07A` | Merged | `codex/ws-auth-001-07-authorization-kernel` | #126 | Merged as `e9d72a1`; 74 permissions, 50 planned actions, and action-aware audit parity only. |
 | `WS-AUTH-001-07B` | Merged | `codex/ws-auth-001-07b-deny-default-kernel` | #130 | Merged as `90eca12`; signed memory passed. |
-| `WS-AUTH-001-08` | In review | `codex/ws-auth-001-08-bootstrap-admin-grants` | - | Implementation `34f87a5` passed deterministic evidence and all required internal reviewers; PR publication pending. |
-| `WS-AUTH-001-09` | Proposed | - | - | Actor/link states and service actors. |
+| `WS-AUTH-001-08` | Merged | `codex/ws-auth-001-08-bootstrap-admin-grants` | #131 | Merged as `aa0fdcd`; signed memory passed. |
+| `WS-AUTH-001-09` | Split | `codex/ws-auth-001-09-actor-state-service-actors` | - | Required L1 review rejected the combined contract before runtime edits. |
+| `WS-AUTH-001-09A` | Planning review | `codex/ws-auth-001-09-actor-state-service-actors` | - | Fixed service identity field, eight planned actions, and static matrix only. |
+| `WS-AUTH-001-09B` | Proposed | - | - | Controlled fixed service ActorProfile provisioning. |
+| `WS-AUTH-001-09C` | Proposed | - | - | Privacy-bounded actor/link administration reads. |
+| `WS-AUTH-001-09D` | Proposed | - | - | Actor/link lifecycle mutation and final-admin concurrency. |
 | `WS-AUTH-001-10` | Proposed | - | - | Project contributor grants. |
 | `WS-AUTH-001-11` | Proposed | - | - | Project identity/guide/source/read cutover. |
 | `WS-AUTH-001-12` | Proposed | - | - | Project policy/setup mutation cutover. |

@@ -3,6 +3,29 @@
 Discovery is read-only. No application code was changed while producing this
 artifact.
 
+## AUTH-09 delta discovery - 2026-07-16
+
+Merged AUTH-08 provides `AuthorityControl`, immutable AdminRoleGrants, seven
+active administrative actions, final-admin grant locking, shared authority
+idempotency/audit contracts, and caller-owned route transactions. ActorProfile
+already supports human/service kind and active/suspended/deactivated state;
+ActorIdentityLink already supports active/revoked state and one exact external
+issuer subject. The model has no stable local service-identity field.
+
+The inherited AUTH-09 contract required durable service-action assignments,
+but the repository has no assignment model and the policy is a fixed
+seven-identity/eleven-action matrix. Persisting each pair would duplicate static
+policy and create unnecessary reconciliation. The accepted direction stores one
+immutable `service_identity` on a service ActorProfile and derives candidate
+actions from one closed typed matrix. ActorIdentityLink remains the only opaque
+external credential binding. Services receive no human/admin/project grant.
+
+The combined contract also conflicted with canonical routes, omitted migration
+and test ownership, and combined schema, provisioning, reads, lifecycle
+mutations, and concurrency. Required L1 review split it into 09A-09D before any
+runtime edit. AUTH-09A must take migration `0023`, shifting unimplemented AUTH-10,
+12, 13, and 14 migrations to `0024` through `0027`.
+
 ## Current behavior
 
 ### Authentication

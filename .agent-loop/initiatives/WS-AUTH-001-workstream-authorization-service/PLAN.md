@@ -137,7 +137,9 @@ proving the same token role alone no longer authorizes.
    then implement the minimal AuthorizationService kernel and canonical actor
    self-action cutover in 07B before protected authority-management APIs.
 8. Implement bootstrap, `AuthorityControl`, and immutable admin-role grants.
-9. Implement actor/link state administration and controlled service actors.
+9. Add the fixed service-identity/action foundation, provision controlled
+   service ActorProfiles, expose bounded actor/link reads, then implement
+   actor/link lifecycle mutations with final-admin concurrency proof.
 10. Implement qualification snapshots and exact-project contributor grants.
 11. Cut project identity, guide, source, and visibility queries over to local
    permissions.

@@ -60,12 +60,18 @@ Required concepts:
 
 - UUID identifier;
 - kind: human or explicitly provisioned service;
+- fixed unique `service_identity` for a service and null for a human;
 - status: active, suspended, or deactivated;
 - contributor domain for human self-service;
 - database-time creation/update and immutable historical attribution.
 
 A profile status is a guard, not a grant. Active humans receive only self
 profile capability until an administrative or exact-project grant exists.
+For a service, the ActorProfile is the stable local principal. Its
+`service_identity` is immutable and selects only a closed typed service-action
+matrix; it is never inferred from display data or an external subject. Its
+profile ID is deterministic from that fixed local identity rather than the
+external credential subject. Human profile ID derivation remains unchanged.
 
 ### ActorIdentityLink
 
@@ -215,11 +221,13 @@ approved Operator recovery identifiers, 21 artifact identifiers, and
 `review.queue.override` are the exact 25 post-`0020` permissions. AUTH-07A adds
 their matching typed/SQL audit parity without making them executable.
 
-The closed action registry contains 57 rows: nine active actions and 48 planned
-rows. AUTH-08 adds seven active administrative definition, grant-history,
-issue, revoke, and local-bootstrap actions without adding a permission. The
-planned rows cover three Operator recovery actions, 25 artifact actions,
-canonical `submission.create`, and 19 review actions. An action becomes active only when
+The closed action registry contains 65 rows after AUTH-09A: nine active actions
+and 56 planned rows. AUTH-08 adds seven active administrative definition,
+grant-history, issue, revoke, and local-bootstrap actions without adding a
+permission. AUTH-09A adds eight planned actor, identity-link, and service
+provisioning actions without activating a route. The other planned rows cover
+three Operator recovery actions, 25 artifact actions, canonical
+`submission.create`, and 19 review actions. An action becomes active only when
 its owning chunk supplies its canonical resource composer, guards, surface or
 command declaration, behavior tests, and transaction-local revalidation where
 required. Both halves are mandatory; registry presence alone never grants
@@ -228,6 +236,23 @@ authority.
 AUTH-07B activates `actor.profile.read_self` and `actor.profile.update_self`.
 AUTH-08 activates exactly seven administrative actions through migration
 `0022`; all other registered actions remain planned.
+
+AUTH-09A registers these eight planned route actions through migration `0023`:
+
+| ActionId | PermissionId | Owner |
+|---|---|---|
+| `actor.profile.read` | `actor.profile.read_any` | `WS-AUTH-001-09C` |
+| `actor.profile.suspend` | `actor.profile.suspend` | `WS-AUTH-001-09D` |
+| `actor.profile.reactivate` | `actor.profile.reactivate` | `WS-AUTH-001-09D` |
+| `actor.profile.deactivate` | `actor.profile.deactivate` | `WS-AUTH-001-09D` |
+| `actor.identity_link.read` | `actor.identity_link.read` | `WS-AUTH-001-09C` |
+| `actor.identity_link.revoke` | `actor.identity_link.revoke` | `WS-AUTH-001-09D` |
+| `actor.identity_link.reactivate` | `actor.identity_link.reactivate` | `WS-AUTH-001-09D` |
+| `actor.service.provision` | `actor.service.provision` | `WS-AUTH-001-09B` |
+
+AUTH-09B later activates only service provisioning, AUTH-09C activates the two
+bounded reads, and AUTH-09D activates the five lifecycle mutations. The final
+AUTH-09 state is 17 active and 48 planned actions.
 
 The submission/review dependency matrix is closed. AUTH-07A registers only the
 four stable planned fields shown here; resource facts, candidates, guards, and
@@ -289,7 +314,7 @@ The paired artifact activation matrix is closed:
 
 Every row requires AUTH-07A's registry and AUTH-07B's kernel first. A row with an Operator principal
 also requires its AUTH-08 grant definition; a row with a fixed service
-principal also requires its AUTH-09 service-actor assignment. Feature code
+principal also requires its AUTH-09 fixed service ActorProfile. Feature code
 receives centralized decisions; it never queries grants or constructs
 permission identifiers dynamically.
 
@@ -342,13 +367,16 @@ are also closed:
 | `workstream.artifact.materializer` | `artifact.pre_submit.checker_input.materialize`, `artifact.post_submit.checker_input.materialize` |
 | `workstream.artifact.checker_output` | `artifact.checker_output.write` |
 
-AUTH-09 persists these exact service actors and assignments before any WS-ART
-execution chunk activates them. Composition startup proves registry, service
-actor, action, and PermissionId parity and fails closed on a missing or extra
-assignment. Negative authorization tests prove each service identity is denied
-every artifact action outside its row. Human authorization remains attached to
-the initiating product command; an internal service identity never inherits a
-human grant or role.
+AUTH-09 persists one fixed `service_identity` on each service ActorProfile and
+keeps this exact service-action relationship in the closed typed catalogue. It
+does not persist duplicate assignment rows. Composition startup proves static
+identity, action, and PermissionId parity without requiring provisioned actors
+on a clean database. Runtime resolution fails closed when the fixed service
+ActorProfile/link is missing or when the static matrix is inconsistent.
+Negative authorization tests prove each service identity is denied every
+artifact action outside its row. Human authorization remains attached to the
+initiating product command; an internal service identity never inherits a human
+grant or role.
 
 Adding a permission requires a specification/ADR update and human approval.
 Routers cannot invent identifiers or evaluate grant unions.

@@ -279,8 +279,8 @@ resources and state transitions.
 
 Migration custody is reconciled with merged main: AUTH-05A owns `0018`, AUTH-05B
 solely owns `0019`, AUTH-06 uses `0020`, AUTH-07A action evidence uses `0021`,
-AUTH-08 uses `0022`, AUTH-10 uses `0023`, AUTH-12 uses `0024`, AUTH-13 uses
-`0025`, and AUTH-14 uses `0026`.
+AUTH-08 uses `0022`, AUTH-09A uses `0023`, AUTH-10 uses `0024`, AUTH-12 uses
+`0025`, AUTH-13 uses `0026`, and AUTH-14 uses `0027`.
 
 ## D16: Split AUTH-07 at the catalogue and executable-kernel boundary
 
@@ -403,3 +403,28 @@ uses `GREATEST(current_value, clock_timestamp())` so crossed commits cannot
 regress recency. Authorization denial or persistence failure rolls the staged
 timestamp changes back. This restores verification recency without letting
 denied requests manufacture successful-use evidence.
+
+## D20: Service ActorProfile is the fixed local service principal
+
+Status: accepted by the user on 2026-07-16 after the initial AUTH-09 contract
+failed required L1 preimplementation review.
+
+A service `ActorProfile` is Workstream's stable local principal, analogous to a
+Kubernetes ServiceAccount. It carries one immutable, unique, closed
+`service_identity`. Its `ActorIdentityLink` contains the exact configured issuer
+and opaque subject proving which external token represents that principal.
+Neither value is inferred from email, display name, token roles, or adapter
+provenance.
+
+The seven fixed artifact service identities receive no Contributor domain,
+AdminRoleGrant, ProjectRoleGrant, or database-authored permission assignment.
+Their exact eleven ActionId relationships live in one frozen typed matrix.
+Every artifact action remains planned until its owning WS-ART chunk adds the
+canonical resource facts, guards, surface, transaction revalidation, and
+behavior proof. A missing actor/link or matrix mismatch fails closed; it does
+not prevent a clean application from starting so an Access Administrator can
+provision the principal.
+
+Parent AUTH-09 is split into 09A fixed identity/catalogue foundation, 09B
+controlled service provisioning, 09C bounded actor/link reads, and 09D lifecycle
+mutations. No child automatically starts its successor.

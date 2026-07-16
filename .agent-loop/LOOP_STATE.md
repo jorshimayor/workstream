@@ -6,38 +6,36 @@
   post-merge state. Canonical state is the signed schema-v2 output on
   `automation/loop-memory`.
 - Active initiative: `WS-AUTH-001` - Workstream Authorization Service
-- Active planning chunk: none
-- Active implementation chunk: `WS-AUTH-001-08` - Bootstrap And Administrative
-  Role Grants
-- Current branch: `codex/ws-auth-001-08-bootstrap-admin-grants`
-- Start basis: PR #130 merged AUTH-07B into `main` as `90eca12`; signed schema-v2
-  state verified that merge and the user explicitly started AUTH-08.
+- Active planning chunk: `WS-AUTH-001-09A` - Fixed Service Identity Foundation
+- Active implementation chunk: none
+- Current branch: `codex/ws-auth-001-09-actor-state-service-actors`
+- Start basis: PR #131 merged AUTH-08 into `main` as `aa0fdcd`; signed schema-v2
+  memory stopped at AUTH-09, and the user explicitly started AUTH-09.
 - PR #119 merged `WS-AUTH-001-05B` as `ad71c7e`.
 - PR #120 merged `WS-ART-001-OBJECT-STORAGE-AMENDMENT` as `4408256`.
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: AUTH-08 implementation `34f87a5` passed deterministic evidence
-  and all required internal reviewer tracks; PR publication and external review
-  are pending.
+- Current gate: required L1 review rejected the combined AUTH-09 contract before
+  runtime edits. The user accepted the ServiceAccount-style fixed ActorProfile
+  direction; repaired child 09A must pass exact-head plan review before code.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
   and AWS cannot instantiate in production without release-bound live proof.
-- Authorization checkpoint: merged main contains 74 PermissionIds and 50
-  ActionIds, with only the two actor-self actions active. The repaired AUTH-08
-  contract proposes exactly seven administrative actions, the five-role
-  matrix, and durable grants; implementation is active. AUTH-09 provisions fixed
+- Authorization checkpoint: merged main contains 74 PermissionIds and 57
+  ActionIds, with the two actor-self and seven AUTH-08 administrative actions
+  active. AUTH-09A proposes eight planned actor/link/service route actions and
+  a fixed service identity on service ActorProfile; AUTH-09B provisions fixed
   service principals, and
   each owning WS-ART feature chunk activates only its own canonical actions.
 - Parallel artifact checkpoint: `WS-ART-001-02A1` was explicitly started and
   merged through PR #127 as `f64a8e5`; it is at the post-merge memory/stop
   checkpoint. `WS-ART-001-02A2` remains inactive until signed memory completes
   and the user gives a separate explicit start signal.
-- Authorization checkpoint: AUTH-07B merged through PR #130 as `90eca12`, its
-  signed memory gate passed, and the user separately started AUTH-08. AUTH-09
-  remains inactive until AUTH-08 merges, memory completes, and the user gives a
-  separate explicit start.
+- Authorization checkpoint: AUTH-08 merged through PR #131 as `aa0fdcd`; the
+  user explicitly started AUTH-09. Parent AUTH-09 is split into 09A-09D, with
+  only 09A in planning review and no runtime implementation active.
 - Parallel coverage work: `WS-QUAL-001-01B2` remains paused. Its last official
   whole-app result is `6466/8159` statements (`79.249908%`); no replacement
   evidence exists.

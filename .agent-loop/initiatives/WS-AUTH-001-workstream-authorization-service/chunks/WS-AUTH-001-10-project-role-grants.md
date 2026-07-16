@@ -39,7 +39,7 @@ backend/app/modules/projects/repository.py
 backend/app/api/router.py
 backend/app/db/models.py
 backend/app/modules/audit/**
-backend/alembic/versions/0023_*.py
+backend/alembic/versions/0024_*.py
 backend/tests/test_actors.py
 backend/tests/test_projects.py
 backend/tests/test_auth.py

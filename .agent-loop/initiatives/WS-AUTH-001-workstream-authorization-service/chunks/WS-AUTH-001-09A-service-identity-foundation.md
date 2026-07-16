@@ -1,0 +1,178 @@
+# Chunk Contract: WS-AUTH-001-09A - Fixed Service Identity Foundation
+
+## Parent initiative
+
+`WS-AUTH-001` - Workstream Authorization Service
+
+## Goal
+
+Register the eight planned AUTH-09 route ActionIds, make a service
+`ActorProfile` carry one fixed Workstream service identity, and define the
+closed seven-service/eleven-action matrix without provisioning an actor or
+activating an authorization path.
+
+## Why this chunk exists
+
+A service ActorProfile is Workstream's equivalent of a Kubernetes
+ServiceAccount: a stable local principal. Its exact external Identity Issuer
+`(issuer, subject)` is only the credential link proving which token represents
+that principal. Service permissions come from one closed typed matrix, not from
+token claims, human grants, database-authored action rows, or display data.
+
+## Risk routing
+
+- Risk class: L1
+- SLA: P1
+- Work type: authorization architecture, actor schema, migration, audit parity
+- Human gate: explicit PR review and merge approval
+- Required reviewers: senior engineering, QA/test, security/auth, product/ops,
+  architecture, CI integrity, docs, reuse/dedup, test delta
+
+## Allowed files
+
+```text
+backend/app/modules/actors/models.py
+backend/app/modules/authorization/**
+backend/alembic/versions/0023_service_actor_identity.py
+backend/tests/test_actors.py
+backend/tests/test_authorization.py
+backend/tests/test_audit.py
+backend/tests/test_alembic.py
+docs/spec_authorization_service.md
+docs/operations_authorization_service.md
+.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/**
+.agent-loop/merge-intents/WS-AUTH-001-09A.json
+.agent-loop/LOOP_STATE.md
+.agent-loop/WORK_QUEUE.md
+.agent-loop/REVIEW_LOG.md
+```
+
+## Not allowed
+
+```text
+public routes or command handlers
+active AUTH-09 actions or allowed decisions for them
+service actor/profile/link creation or migration seeding
+service registration or service-action-assignment tables
+runtime service-token admission
+client-authored ActionIds, PermissionIds, assignments, or policy
+AdminRoleGrant, ProjectRoleGrant, or Contributor authority for services
+artifact resource composers, guards, adapters, or call-site activation
+actor/link state mutation or lifecycle reconciliation consumption
+```
+
+## Exact planned route actions
+
+| ActionId | PermissionId | Owner | Availability |
+|---|---|---|---|
+| `actor.profile.read` | `actor.profile.read_any` | `WS-AUTH-001-09C` | `planned` |
+| `actor.profile.suspend` | `actor.profile.suspend` | `WS-AUTH-001-09D` | `planned` |
+| `actor.profile.reactivate` | `actor.profile.reactivate` | `WS-AUTH-001-09D` | `planned` |
+| `actor.profile.deactivate` | `actor.profile.deactivate` | `WS-AUTH-001-09D` | `planned` |
+| `actor.identity_link.read` | `actor.identity_link.read` | `WS-AUTH-001-09C` | `planned` |
+| `actor.identity_link.revoke` | `actor.identity_link.revoke` | `WS-AUTH-001-09D` | `planned` |
+| `actor.identity_link.reactivate` | `actor.identity_link.reactivate` | `WS-AUTH-001-09D` | `planned` |
+| `actor.service.provision` | `actor.service.provision` | `WS-AUTH-001-09B` | `planned` |
+
+The catalogue therefore contains exactly 65 actions after this chunk: nine
+active and 56 planned. This chunk does not change the active count.
+
+## Fixed service ActorProfile contract
+
+- `ActorProfile.service_identity` is null for every human and required for
+  every service.
+- The value is one of the seven fixed identities below and is unique. It is
+  immutable with actor kind, provisioning method, ID, creator, and creation
+  time.
+- A service ActorProfile ID is deterministic from the fixed local
+  `service_identity`, not from the external issuer subject. Human profile ID
+  derivation remains unchanged. Later credential-link replacement therefore
+  cannot redefine the local service principal.
+- It is not a display name, email, token subject, adapter provenance string,
+  PermissionId, role, or grant.
+- `ActorIdentityLink` remains the single v0.1 credential binding. Its issuer and
+  opaque subject are never inferred from `service_identity`, email, or display
+  data.
+- Existing service profiles without an explicit fixed identity are not guessed
+  or silently upgraded. Migration refuses such ambiguous rows with an
+  actionable error; a clean database remains empty and valid.
+
+## Exact static service-action matrix
+
+| Service identity | Exact ActionIds |
+|---|---|
+| `workstream.artifact.verifier` | `artifact.verification.execute` |
+| `workstream.artifact.put_resolver` | `artifact.put_attempt.resolve` |
+| `workstream.artifact.scheduler` | `artifact.pending_work.scan`, `artifact.upload_session.expire` |
+| `workstream.artifact.binding` | `artifact.guide_source.binding.create`, `artifact.submission.binding.create`, `artifact.checker_output.binding.create` |
+| `workstream.artifact.guide_reader` | `artifact.guide_source.read` |
+| `workstream.artifact.materializer` | `artifact.pre_submit.checker_input.materialize`, `artifact.post_submit.checker_input.materialize` |
+| `workstream.artifact.checker_output` | `artifact.checker_output.write` |
+
+The matrix is frozen typed code. It stores no database assignment rows and
+computes no permission union. Changing an identity or row requires a reviewed
+specification and code change. Every listed artifact action remains planned and
+therefore non-executable until its owning WS-ART chunk activates its resource
+composer, guards, surface, and behavior proof.
+
+## Acceptance criteria
+
+- Typed construction fails on any missing/extra fixed service identity, matrix
+  ActionId, route ActionId, PermissionId mapping, owner, availability, duplicate
+  row, or artifact action outside the approved eleven.
+- Migration `0023` advances from exact head `0022`, adds nullable
+  `actor_profiles.service_identity`, rejects ambiguous existing service rows,
+  then enforces human/null and service/fixed-identity parity plus uniqueness.
+- The migration extends PostgreSQL action/evidence parity to exactly the eight
+  route action mappings above without changing historical evidence.
+- All eight route actions remain planned. Typed allowed evidence for them is
+  rejected; registered denial evidence keeps exact ActionId/PermissionId parity.
+- All artifact actions remain planned and inert. No service authority can be
+  created by configuration, database insertion, token claim, role, grant, or
+  request input.
+- Direct SQL proves ActorProfile service-identity nullability, fixed-value,
+  uniqueness, immutability, actor-kind/provisioning parity, and ambiguous-row
+  upgrade refusal.
+- No ActorProfile, ActorIdentityLink, idempotency row, or audit event is seeded
+  by migration or application startup.
+- Downgrade locks affected tables, refuses when a service identity or new
+  ActionId evidence would be lost, and otherwise restores exact `0022`
+  constraints; prior-head upgrade, clean downgrade, and re-upgrade pass.
+- No workflow, dependency, test skip, coverage exclusion, or global threshold
+  changes. Focused branch-aware actor and authorization coverage remains at
+  least 90 percent; GitHub Backend preserves the repository-wide 78 percent
+  floor.
+
+## Verification commands
+
+```bash
+(cd backend && .venv/bin/python -m ruff check app tests alembic/versions/0023_service_actor_identity.py)
+(cd backend && .venv/bin/coverage erase && \
+  WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-dsn> \
+  .venv/bin/python scripts/run_isolated_tests.py --timeout-seconds 1800 -- \
+  .venv/bin/python -m pytest -q tests/test_actors.py tests/test_authorization.py \
+  tests/test_audit.py tests/test_alembic.py --cov=app.modules.actors \
+  --cov=app.modules.authorization --cov-branch --cov-report= \
+  --cov-fail-under=0 && \
+  .venv/bin/coverage report --include='app/modules/actors/*' --fail-under=90 && \
+  .venv/bin/coverage report --include='app/modules/authorization/*' --fail-under=90)
+python3 scripts/check_stale_workstream_wording.py
+python3 scripts/check_stale_authorization_docs.py
+python3 scripts/check_markdown_links.py
+git diff --check
+```
+
+## Human review focus
+
+Review the ServiceAccount-style principal model, separation of local identity
+from external subject, exact seven/eleven matrix parity, lack of database
+assignment rows, planned-action inertness, ambiguous migration refusal, and
+guarded downgrade custody.
+
+## Stop conditions
+
+Stop if the foundation requires a public route, live service token, seeded
+principal, dynamic assignment, service grant, active artifact action, or feature
+resource facts.
+
+Stop after merge and signed memory. Do not start AUTH-09B automatically.

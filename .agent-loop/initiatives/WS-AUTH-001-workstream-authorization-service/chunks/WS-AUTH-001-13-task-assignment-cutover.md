@@ -39,7 +39,7 @@ backend/app/modules/tasks/repository.py
 backend/app/modules/tasks/schemas.py
 backend/app/modules/tasks/models.py
 backend/app/modules/tasks/lifecycle.py
-backend/alembic/versions/0025_*.py
+backend/alembic/versions/0026_*.py
 backend/app/modules/authorization/**
 backend/app/modules/audit/**
 backend/app/api/deps/auth.py
@@ -90,7 +90,7 @@ token role or legacy active-worker-profile fallback
   `operations.task.start_override` PermissionId/ActionId typed and PostgreSQL
   parity as planned metadata. This chunk promotes the action only with its task
   resource composer, Operator candidate, guards, surface declaration, reason,
-  evidence, and behavior tests. Migration `0025` owns task/assignment and
+  evidence, and behavior tests. Migration `0026` owns task/assignment and
   Contributor-field schema changes only; it does not change the permission or
   action registry.
 - Operator `operations.status.read` exposes a read-only cross-project task-queue
@@ -126,7 +126,7 @@ token role or legacy active-worker-profile fallback
   remains bounded only because chunk 14 still owns the final submission
   compatibility consumer; task queue/claim/start no longer depend on it.
 - The assignment persistence column, model/schema/service fields, response
-  contract, and new audit payload keys use `contributor_id`. Migration `0025`
+  contract, and new audit payload keys use `contributor_id`. Migration `0026`
   preserves every existing assignment owner, supports downgrade, and removes
   the legacy storage name without exposing a public compatibility alias.
 - Full backend suite and API contract drill pass.

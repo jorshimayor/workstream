@@ -1,5 +1,24 @@
 # Review Log
 
+## 2026-07-16 - WS-AUTH-001-09 Combined Plan Rejected And Split
+
+PR #131 merged AUTH-08 as `aa0fdcd`, signed merge memory stopped at AUTH-09,
+and the user explicitly started AUTH-09. Required senior/architecture/CI/docs,
+QA/product/test, and security/auth preimplementation tracks all returned
+`FAIL / SPLIT REQUIRED` before runtime edits. The inherited contract combined
+schema, service provisioning, administrative reads, five lifecycle mutations,
+final-admin concurrency, and ART service authority; omitted required files;
+conflicted with canonical routes; and made startup depend on rows provisioned by
+the running API.
+
+The user accepted the simpler ServiceAccount-style model: a service
+ActorProfile is the fixed local principal, its identity link carries the opaque
+external issuer subject, and one static typed matrix supplies exact internal
+actions. There are no service registration or action-assignment tables. Parent
+AUTH-09 is split into 09A fixed identity foundation, 09B service provisioning,
+09C bounded actor/link reads, and 09D lifecycle mutations. Repaired 09A remains
+in required exact-head review; no runtime implementation has started.
+
 ## 2026-07-16 - WS-AUTH-001-08 Internal Review Passed
 
 Exact implementation SHA `34f87a5aa7d75897349f64f5e904cb1847af019b`

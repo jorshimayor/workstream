@@ -26,8 +26,12 @@ stopped.
 | `WS-AUTH-001-07` | Authorization Kernel And Permission Registry | L1 | Split before implementation after required L1 plan review |
 | `WS-AUTH-001-07A` | Closed Permission And Action Catalogue | L1 | Merged through PR #126 as `e9d72a1` |
 | `WS-AUTH-001-07B` | Deny-By-Default Kernel And Self-Action Cutover | L1 | Merged through PR #130 as `90eca12` |
-| `WS-AUTH-001-08` | Bootstrap And Administrative Role Grants | L1 | Implementation `34f87a5` internally reviewed; PR publication pending |
-| `WS-AUTH-001-09` | Actor State, Identity Revocation, And Service Actors | L1 | Proposed |
+| `WS-AUTH-001-08` | Bootstrap And Administrative Role Grants | L1 | Merged through PR #131 as `aa0fdcd` |
+| `WS-AUTH-001-09` | Actor State, Identity Revocation, And Service Actors | L1 | Split before runtime implementation after required L1 review |
+| `WS-AUTH-001-09A` | Fixed Service Identity Foundation | L1 | Repaired plan in required review; no runtime implementation |
+| `WS-AUTH-001-09B` | Controlled Service Actor Provisioning | L1 | Inactive until 09A merge/memory and explicit start |
+| `WS-AUTH-001-09C` | Actor And Identity-Link Administration Reads | L1 | Inactive until 09B merge/memory and explicit start |
+| `WS-AUTH-001-09D` | Actor And Identity-Link Lifecycle Mutations | L1 | Inactive until 09C merge/memory and explicit start |
 | `WS-AUTH-001-10` | Project Qualification And Contributor Role Grants | L1 | Proposed |
 | `WS-AUTH-001-11` | Project Identity, Guide, Source, And Visibility Cutover | L1 | Proposed |
 | `WS-AUTH-001-12` | Project Policy And Setup Mutation Cutover | L1 | Proposed |
@@ -52,7 +56,10 @@ WS-AUTH-001-PLAN
 -> WS-AUTH-001-07A
 -> WS-AUTH-001-07B
 -> WS-AUTH-001-08
--> WS-AUTH-001-09
+-> WS-AUTH-001-09A
+-> WS-AUTH-001-09B
+-> WS-AUTH-001-09C
+-> WS-AUTH-001-09D
 -> WS-AUTH-001-10
 -> WS-AUTH-001-11
 -> WS-AUTH-001-12
@@ -81,14 +88,19 @@ WS-AUTH-001-PLAN
 - Parent chunk 07 was split before runtime implementation. Chunk 07A owns the
   closed permission/action catalogue and action-aware audit parity; chunk 07B
   owns the minimal deny-by-default kernel and actor self-action cutover.
-- Chunks 08-10 establish local grant truth before product cutover.
+- Parent chunk 09 was split before runtime implementation. Chunk 09A adds a
+  fixed `service_identity` to service ActorProfiles and one closed static
+  service-action matrix without routes or active actions. Chunk 09B provisions
+  fixed service principals; 09C owns bounded actor/link reads; 09D owns actor
+  and link lifecycle mutations plus final-admin concurrency.
+- Chunks 08-10 establish local grant and actor truth before product cutover.
 - Chunks 11-15 migrate bounded complete product/system surfaces.
 - Artifact upload, read, retention, release/delete, replication, integrity, and
   reconciliation remain mechanically owned by the artifact subsystem but must
   receive centralized AUTH decisions. Chunk 07A owns the permission/action
   registry, chunk 07B owns the central kernel, chunk 08 owns Operator grant
-  definitions, chunk 09 owns fixed artifact service
-  principals, and each WS-ART feature chunk owns the canonical resource facts,
+  definitions, chunk 09A owns the static service matrix, 09B owns fixed
+  artifact service principals, and each WS-ART feature chunk owns the canonical resource facts,
   guards, surface declarations, and behavior tests for the exact artifact
   actions it activates. AUTH-12, AUTH-14, and AUTH-15 do not pre-activate or
   attach artifact actions. WS-ART-001-02D starts only after AUTH-09 and activates
