@@ -193,6 +193,58 @@ action remains unavailable until its owning WS-ART feature activates the
 resource facts and guards. A clean database may start without provisioned
 services; an unprovisioned or mismatched service request fails closed.
 
+### Existing Service Identity Mapping Custody
+
+This procedure applies only when pre-`0023` service ActorProfiles exist. The
+data-migration owner prepares a private draft containing the exact existing
+ActorProfile ID, issuer, opaque subject, and proposed fixed service identity for
+each row. A security reviewer confirms every choice from authoritative service
+ownership records. Neither the tool nor an operator may infer a value from
+subject syntax, email, display name, token role, or adapter provenance.
+
+Run the supported mapping tool first in dry-run mode against the exact target
+database and draft, then generate the database-bound envelope. The output must
+be a regular non-symlink file owned by the invoking operator with mode `0600` in
+an access-controlled directory outside the repository. Verify the envelope
+against the unchanged target database before migration. Zero existing service
+rows require no file; otherwise the envelope must cover exactly every existing
+service row and may select any unique subset of the seven closed identities.
+
+Using a deployment-secret environment for `WORKSTREAM_DATABASE_URL`, the
+supported sequence is:
+
+```bash
+chmod 600 /secure/workstream/service-identity-draft-v1.json
+.venv/bin/python scripts/service_actor_identity_mapping.py validate \
+  --draft /secure/workstream/service-identity-draft-v1.json
+.venv/bin/python scripts/service_actor_identity_mapping.py bind \
+  --draft /secure/workstream/service-identity-draft-v1.json \
+  --output /secure/workstream/service-identity-envelope-v1.json
+chmod 600 /secure/workstream/service-identity-envelope-v1.json
+.venv/bin/python scripts/service_actor_identity_mapping.py verify \
+  --envelope /secure/workstream/service-identity-envelope-v1.json
+```
+
+`validate` and `verify` never modify the database. `bind` writes only the
+confidential canonical envelope and refuses an existing output path. The tool
+prints stable codes, bounded counts, and non-secret digests only.
+
+Inject `WORKSTREAM_SERVICE_ACTOR_IDENTITY_MAPPING_FILE` through the deployment
+secret runner only in the migration process environment immediately before
+`alembic upgrade head`. Do not place the path or file content in interactive
+shell history, CI logs, application configuration, containers, images, tickets,
+or repository files. Remove the injection after the migration. Stable failures
+expose only a code and bounded count; inspect the private tool report locally
+rather than adding issuer subjects to logs.
+
+After database verification, retain the reviewed change record plus the
+non-secret source, manifest, envelope, and database-binding digests stored by
+the migration. Securely delete the confidential draft and bound envelope under
+the operator's storage policy. If any existing service cannot truthfully map to
+the fixed registry, stop the deployment on the prior release and open a
+separately reviewed remediation; do not delete history, guess a mapping, or use
+manual SQL.
+
 The [approved AUTH-06 chunk contract](../.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/chunks/WS-AUTH-001-06-canonical-actor-profile.md)
 records the exact deprecated compatibility identifier. That temporary,
 enumerated intake route writes only `LegacyWorkflowEligibility` and cannot

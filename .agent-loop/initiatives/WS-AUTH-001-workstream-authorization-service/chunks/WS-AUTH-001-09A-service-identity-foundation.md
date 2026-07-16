@@ -116,8 +116,10 @@ database projection of all existing service profiles and their single links.
 The loader enforces a regular non-symlink file, bounded size/count, restrictive
 permissions, strict schema, canonical JSON, database binding, checksum, exact
 byte-preserving issuer/subject comparison, unique profile/link/identity values,
-and all seven closed service identities. Errors and logs expose stable codes and
-counts only, never IDs, issuers, or subjects.
+and membership of every mapped value in the seven-identity closed set. The
+mapping covers exactly the existing service rows, which may be zero, any valid
+subset, or all seven; it does not pre-provision absent identities. Errors and
+logs expose stable codes and counts only, never IDs, issuers, or subjects.
 
 The supported operator tool reads the exact target database, validates the
 operator-authored choices, and writes the confidential bound envelope. It does
@@ -164,7 +166,11 @@ composer, guards, surface, and behavior proof.
 - Direct SQL proves ActorProfile service-identity nullability, fixed-value,
   uniqueness, immutability, actor-kind/provisioning parity, and mapping-bound
   upgrade behavior. Tool tests prove secure-file, checksum, database-binding,
-  exact-set, redaction, and no-inference behavior.
+  exact-set, redaction, and no-inference behavior for zero, one/subset, and all
+  seven existing service rows.
+- Migration-owned state persists only bounded counts and non-secret source,
+  manifest, envelope, and database-binding digests. It never persists raw
+  mapping content, actor IDs, issuer, subject, file path, or environment value.
 - No ActorProfile, ActorIdentityLink, idempotency row, or audit event is seeded
   by migration or application startup.
 - Upgrade refusal is exact and redacted: any pre-`0023` service row without a
@@ -175,6 +181,10 @@ composer, guards, surface, and behavior proof.
   empty and human-only prior-head upgrade, clean downgrade, and re-upgrade pass.
 - OpenAPI paths and action declarations are byte-for-byte unchanged, and the
   existing nine active actions retain identical allow/deny behavior.
+- The operations runbook defines draft review, bound-envelope generation,
+  database verification, owner-only file custody, short-lived environment use,
+  stable redacted failure handling, post-migration deletion/retention evidence,
+  and the stop path when an existing service cannot truthfully map.
 - No workflow, dependency, test skip, coverage exclusion, or global threshold
   changes. Focused branch-aware actor and authorization coverage remains at
   least 90 percent; GitHub Backend preserves the repository-wide 78 percent
