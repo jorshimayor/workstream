@@ -6,17 +6,15 @@ PR #129: `https://github.com/Flow-Research/workstream/pull/129`
 
 Reviewed code SHA: `aba8325321b35a92778ffe3ddfb414ac7772f57f`
 
-Published evidence-bound head: pending
+Published evidence-bound head: `236155a790fb0a2b71261bb316dcece8a93c4231`
 
 ## External Checks
 
-- Agent Gates: the prior published head `98a7f88` passed; final-head rerun is
-  pending publication.
-- Backend: the prior published head `98a7f88` passed; final-head rerun is
-  pending publication.
-- CodeRabbit: reviewed `98a7f88`, reported two additional actionable findings,
-  and marked its check successful. Final-head incremental review is pending
-  publication.
+- Agent Gates: passed on `236155a` in GitHub Actions run `29479578885`.
+- Backend: passed on `236155a` in GitHub Actions run `29479571744`, including
+  the full repository suite and coverage gates.
+- CodeRabbit: passed on `236155a`; all five actionable findings across the two
+  review rounds are marked addressed and no new finding was posted.
 
 ## Comments Addressed
 
@@ -46,11 +44,11 @@ will not authorize merge or start `02A3`.
 ## Commands Rerun
 
 Local deterministic and internal review evidence is recorded in
-`WS-ART-001-02A2-internal-review-evidence.md`. GitHub checks and CodeRabbit must
-still inspect the evidence-bound published head.
+`WS-ART-001-02A2-internal-review-evidence.md`. GitHub Agent Gates, Backend, and
+CodeRabbit all inspected and passed the evidence-bound published head.
 
 ## Remaining Risks
 
 - The preparation boundary is intentionally inactive until `02A3`.
-- Final external status must be recorded only after GitHub reports the exact
-  published head.
+- No external finding remains open. Any later implementation change invalidates
+  this evidence and requires relevant internal and external review again.

@@ -155,8 +155,8 @@ External review response file:
 
 | Source | Status | Notes |
 |---|---:|---|
-| CodeRabbit | Pending final head | Five findings across two reviews are fixed; incremental review must inspect the new published head. |
-| GitHub checks | Pending final head | Backend and Agent Gates passed on `98a7f88` and must rerun after publication. |
+| CodeRabbit | PASS | Five findings across two reviews are fixed and marked addressed on `236155a`; no new finding remains. |
+| GitHub checks | PASS | Agent Gates and Backend, including full-suite coverage, passed on `236155a`. |
 
 ## CI And Gate Integrity
 

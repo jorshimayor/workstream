@@ -49,7 +49,8 @@ Ready PR #129 is open at
 proof and all nine internal reviewer tracks pass for the reviewed code SHA.
 The prior published head passed Agent Gates and Backend, then received two
 additional CodeRabbit findings. Those findings are repaired and all nine
-internal tracks pass on exact code SHA `aba8325`. The current gate is
-publication of the final evidence-bound head followed by fresh Agent Gates,
-Backend, and CodeRabbit results. No later artifact chunk starts automatically,
-and only the user may approve merge.
+internal tracks pass on exact code SHA `aba8325`. Final evidence-bound head
+`236155a` passes Agent Gates, Backend full-suite coverage, and CodeRabbit with
+all findings marked addressed. The current gate is the human merge decision.
+No later artifact chunk starts automatically, and only the user may approve
+merge.
