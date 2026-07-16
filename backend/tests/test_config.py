@@ -477,8 +477,12 @@ def test_local_artifact_settings_and_resolver(tmp_path) -> None:
         artifact_local_root=tmp_path / "artifacts",
         artifact_retention_policy_version="retention-v1",
         artifact_stream_buffer_bytes=64,
+        artifact_operation_lock_timeout_seconds=17,
     )
-    assert resolve_artifact_store(settings).adapter_name == "local"
+    adapter = resolve_artifact_store(settings)
+    assert adapter.adapter_name == "local"
+    assert adapter._lock_timeout_seconds == 17
+    adapter.close()
     incomplete = settings.model_copy(update={"artifact_local_root": None})
     with pytest.raises(ArtifactConfigurationError, match="root is not configured"):
         resolve_artifact_store(incomplete)

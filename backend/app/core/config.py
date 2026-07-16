@@ -96,6 +96,11 @@ class Settings(BaseSettings):
     artifact_retention_policy_version: str | None = None
     artifact_maximum_bytes: int = Field(default=512 * 1024 * 1024, gt=0)
     artifact_stream_buffer_bytes: int = Field(default=1024 * 1024, gt=0, le=1024 * 1024)
+    artifact_operation_lock_timeout_seconds: float = Field(
+        default=1800.0,
+        gt=0.0,
+        le=7200.0,
+    )
     artifact_scratch_root: Path | None = None
     artifact_scratch_aggregate_reserved_bytes: int = Field(
         default=4 * 512 * 1024 * 1024,

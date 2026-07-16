@@ -14,6 +14,7 @@ import threading
 import pytest
 
 from app.adapters.artifacts.local import LocalStorageAdapter
+from app.core.file_locks import acquire_exclusive_file_lock
 from app.interfaces.artifacts import (
     ArtifactIntegrityError,
     ArtifactOperation,
@@ -53,6 +54,12 @@ def store_request() -> StoreArtifactRequest:
             request_digest=canonical_store_request_digest(request),
         ),
     )
+
+
+def test_private_file_lock_rejects_invalid_durations() -> None:
+    """Reject invalid lock timing before touching a descriptor."""
+    with pytest.raises(ValueError, match="durations are invalid"):
+        acquire_exclusive_file_lock(-1, timeout_seconds=0)
 
 
 @pytest.mark.asyncio
@@ -200,6 +207,25 @@ async def test_private_nested_locks_all_release_before_cancellation(
     reacquired_first = await adapter._acquire_lock_async("nested-first")
     reacquired_second = await adapter._acquire_lock_async("nested-second")
     await adapter._release_locks(reacquired_second, reacquired_first)
+    adapter.close()
+
+
+@pytest.mark.asyncio
+async def test_private_lock_acquisition_has_a_bounded_deadline(tmp_path: Path) -> None:
+    """Fail locally instead of hanging when another operation owns the lock."""
+    adapter = LocalStorageAdapter(
+        root=tmp_path / "artifacts",
+        buffer_bytes=2,
+        lock_timeout_seconds=0.05,
+    )
+    held_lock = adapter._acquire_lock("bounded-lock")
+    started = asyncio.get_running_loop().time()
+    try:
+        with pytest.raises(ArtifactStoreUnavailableError, match="lock deadline"):
+            await adapter._acquire_lock_async("bounded-lock")
+    finally:
+        adapter._release_lock(held_lock)
+    assert asyncio.get_running_loop().time() - started < 1
     adapter.close()
 
 

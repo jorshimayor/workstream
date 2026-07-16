@@ -485,6 +485,28 @@ def test_initializer_validates_live_marker_only_after_acquiring_lock(tmp_path: P
     assert process.exitcode == 0
 
 
+def test_initializer_lock_acquisition_respects_operation_deadline(tmp_path: Path) -> None:
+    """Fail boundedly when scratch initialization cannot acquire its ledger lock."""
+    root = tmp_path / "scratch"
+    initial = ArtifactScratchManager(root=root, limits=preparation_limits())
+    initial.close()
+    lock_descriptor = os.open(root / ".ledger.lock", os.O_RDWR)
+    fcntl.flock(lock_descriptor, fcntl.LOCK_EX)
+    limits = preparation_limits(
+        reservation_ttl_seconds=0.2,
+        total_deadline_seconds=0.05,
+        cleanup_margin_seconds=0.05,
+    )
+    started = time.monotonic()
+    try:
+        with pytest.raises(ArtifactPreparationDeadlineError, match="lock deadline"):
+            ArtifactScratchManager(root=root, limits=limits)
+    finally:
+        fcntl.flock(lock_descriptor, fcntl.LOCK_UN)
+        os.close(lock_descriptor)
+    assert time.monotonic() - started < 1
+
+
 def test_marker_publication_failure_rolls_back_for_retry(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -751,7 +773,7 @@ async def test_cleanup_rejects_symlink_and_non_regular_scratch_entries(
     reservation, descriptor = await manager.allocate()
     os.close(descriptor)
     cleaner = ArtifactScratchManager(root=tmp_path / "scratch", limits=limits)
-    cleaner._owner_process_is_alive = lambda _: False
+    cleaner._owner_process_matches = lambda *_: False
     scratch_file = tmp_path / "scratch" / "files" / reservation.filename
     scratch_file.unlink()
     if replacement == "symlink":
@@ -1293,7 +1315,7 @@ async def test_allocation_close_failure_retains_reservation_custody(
         root=tmp_path / "scratch",
         limits=preparation_limits(),
     )
-    cleaner._owner_process_is_alive = lambda _: False
+    cleaner._owner_process_matches = lambda *_: False
     expires_at = next(iter(manager._poisoned_reservations.values())).expires_at_unix_ns
     assert await cleaner.cleanup_stale(now_unix_ns=expires_at) == 1
     cleaner.close()
@@ -1422,12 +1444,15 @@ async def test_seal_retains_custody_when_write_descriptor_remains_open(
     reservation, write_descriptor = await manager.allocate()
     original_close = os.close
     failed = False
+    closed_after_failure: list[int] = []
 
     def fail_before_write_close(descriptor: int) -> None:
         nonlocal failed
         if descriptor == write_descriptor and not failed:
             failed = True
             raise OSError(errno.EIO, "injected pre-close failure")
+        if failed:
+            closed_after_failure.append(descriptor)
         original_close(descriptor)
 
     monkeypatch.setattr(os, "close", fail_before_write_close)
@@ -1436,10 +1461,15 @@ async def test_seal_retains_custody_when_write_descriptor_remains_open(
     assert failed
     assert manager.pending_cleanup_count == 1
     assert (await manager.usage()).reservation_count == 1
+    assert closed_after_failure
+    for descriptor in closed_after_failure:
+        with pytest.raises(OSError) as closed_error:
+            os.fstat(descriptor)
+        assert closed_error.value.errno == errno.EBADF
 
     original_close(write_descriptor)
     cleaner = ArtifactScratchManager(root=tmp_path / "scratch", limits=limits)
-    cleaner._owner_process_is_alive = lambda _: False
+    cleaner._owner_process_matches = lambda *_: False
     assert await cleaner.cleanup_stale(now_unix_ns=reservation.expires_at_unix_ns) == 1
     cleaner.close()
     manager._poisoned_reservations.clear()
@@ -1551,11 +1581,14 @@ async def test_cancelled_seal_retains_failed_reader_close_for_retry(
     assert wrapped is not None
     assert wrapped.close_attempts == 1
     assert service.pending_cleanup_count == 1
-    await manager.release(reservation)
+    assert (await manager.usage()).reservation_count == 1
+    with pytest.raises(ArtifactScratchIntegrityError, match="reader cleanup"):
+        await manager.release(reservation)
     assert await service.retry_pending_cleanup() == 1
     assert wrapped.close_attempts == 2
     assert wrapped.reader.closed
     assert service.pending_cleanup_count == 0
+    assert (await manager.usage()).reservation_count == 0
     manager.close()
 
 
@@ -1758,6 +1791,25 @@ async def test_stale_cleanup_preserves_other_live_process_custody(tmp_path: Path
 
 
 @pytest.mark.asyncio
+async def test_stale_cleanup_reclaims_reservation_after_pid_reuse(tmp_path: Path) -> None:
+    """Treat a live reused PID with a different process start as a dead owner."""
+    limits = preparation_limits()
+    owner = ArtifactScratchManager(root=tmp_path / "scratch", limits=limits)
+    reservation, descriptor = await owner.allocate()
+    os.close(descriptor)
+    cleaner = ArtifactScratchManager(root=tmp_path / "scratch", limits=limits)
+    cleaner._read_process_identity = lambda _: "f" * 64
+
+    assert await cleaner.cleanup_stale(
+        now_unix_ns=reservation.expires_at_unix_ns
+    ) == 1
+    assert (await cleaner.usage()).reservation_count == 0
+    cleaner.close()
+    owner._owned_reservations.clear()
+    owner.close()
+
+
+@pytest.mark.asyncio
 async def test_manager_close_rejects_in_flight_operation_and_closed_reuse(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -1843,11 +1895,13 @@ async def test_unhanded_reader_remains_owned_until_close_succeeds(tmp_path: Path
     assert not await service._release_unhanded_preparation(pending)
     assert pending.reader is failing_reader
     assert service.pending_cleanup_count == 1
+    assert (await manager.usage()).reservation_count == 1
     assert await service.retry_pending_cleanup() == 1
     assert pending.reader is None
     assert failing_reader.close_attempts == 2
     assert failing_reader.wrapped.closed
     assert service.pending_cleanup_count == 0
+    assert (await manager.usage()).reservation_count == 0
     manager.close()
 
 
@@ -2059,7 +2113,7 @@ async def test_unhanded_open_descriptor_retains_service_and_quota_custody(
     os.close(open_descriptor)
     reservation = next(iter(manager._poisoned_reservations.values()))
     cleaner = ArtifactScratchManager(root=tmp_path / "scratch", limits=limits)
-    cleaner._owner_process_is_alive = lambda _: False
+    cleaner._owner_process_matches = lambda *_: False
     assert await cleaner.cleanup_stale(now_unix_ns=reservation.expires_at_unix_ns) == 1
     cleaner.close()
     manager._poisoned_reservations.clear()

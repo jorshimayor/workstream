@@ -713,6 +713,7 @@ The preparation settings use the standard `WORKSTREAM_` environment prefix:
 | `WORKSTREAM_ARTIFACT_PREPARATION_TOTAL_DEADLINE_SECONDS` | `1800` | Total first-pass and provider-consumption deadline. |
 | `WORKSTREAM_ARTIFACT_SCRATCH_CLEANUP_MARGIN_SECONDS` | `300` | Required margin between the total deadline and reservation TTL. |
 | `WORKSTREAM_ARTIFACT_STREAM_BUFFER_BYTES` | `1048576` | Bounded streaming buffer, limited to at most 1 MiB. |
+| `WORKSTREAM_ARTIFACT_OPERATION_LOCK_TIMEOUT_SECONDS` | `1800` | Maximum wait for a private cross-process artifact-store operation lock before failing closed. |
 
 Every process sharing a scratch root must use the identical complete setting
 set. The root marker binds a canonical fingerprint of those limits and startup

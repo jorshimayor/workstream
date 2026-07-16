@@ -9,6 +9,7 @@ from datetime import UTC, datetime
 import fcntl
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -22,6 +23,7 @@ from app.core.cancellation import (
     run_blocking_cancellation_resistant,
 )
 from app.core.hashing import canonical_json_hash
+from app.core.file_locks import acquire_exclusive_file_lock
 from app.interfaces.artifacts import (
     ArtifactByteRange,
     ArtifactIdempotencyMismatchError,
@@ -62,20 +64,35 @@ class LocalStorageAdapter:
 
     adapter_name = "local"
 
-    def __init__(self, *, root: Path, buffer_bytes: int = 1024 * 1024) -> None:
+    def __init__(
+        self,
+        *,
+        root: Path,
+        buffer_bytes: int = 1024 * 1024,
+        lock_timeout_seconds: float = 1800.0,
+    ) -> None:
         """Initialize a private storage root.
 
         Args:
             root: Dedicated non-symlink storage directory.
             buffer_bytes: Maximum bytes used by one filesystem read or write.
+            lock_timeout_seconds: Maximum wait for one cross-process operation lock.
 
         Raises:
             ValueError: If the root or buffer is unsafe.
         """
         if buffer_bytes <= 0 or buffer_bytes > 1024 * 1024:
             raise ValueError("artifact buffer must be between 1 byte and 1 MiB")
+        if (
+            isinstance(lock_timeout_seconds, bool)
+            or not isinstance(lock_timeout_seconds, (int, float))
+            or not math.isfinite(lock_timeout_seconds)
+            or lock_timeout_seconds <= 0
+        ):
+            raise ValueError("artifact lock timeout is invalid")
         self._root = root.resolve(strict=False)
         self._buffer_bytes = buffer_bytes
+        self._lock_timeout_seconds = lock_timeout_seconds
         self._initialize_root(root)
         self._root_fd = os.open(
             self._root,
@@ -1380,12 +1397,22 @@ class LocalStorageAdapter:
         try:
             descriptor = os.open(path.name, flags, 0o600, dir_fd=directory)
             self._assert_private_descriptor(descriptor)
-            fcntl.flock(descriptor, fcntl.LOCK_EX)
+            try:
+                acquire_exclusive_file_lock(
+                    descriptor,
+                    timeout_seconds=self._lock_timeout_seconds,
+                )
+            except TimeoutError:
+                raise ArtifactStoreUnavailableError(
+                    "local artifact lock deadline exceeded"
+                ) from None
             yield descriptor
         finally:
             if descriptor is not None:
-                fcntl.flock(descriptor, fcntl.LOCK_UN)
-                os.close(descriptor)
+                try:
+                    fcntl.flock(descriptor, fcntl.LOCK_UN)
+                finally:
+                    os.close(descriptor)
             os.close(directory)
 
     def _acquire_lock(self, scope: str) -> tuple[Any, int]:
