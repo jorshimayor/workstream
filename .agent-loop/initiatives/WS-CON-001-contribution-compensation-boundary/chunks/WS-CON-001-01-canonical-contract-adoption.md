@@ -107,8 +107,12 @@ roadmap or broad operational-doc rewrite
   delivery/award/audit role outcomes and any required AUTH amendment without
   treating broad permission candidacy or candidate narrowing as executable.
 - [ ] D12 is human/AUTH-approved and the active spec lists one exact owner for
-  all 23 proposed actions plus the review claim/decision custody amendment; it
-  never conflates feature resource ownership with catalogue activation.
+  all 23 proposed actions plus the review claim/decision and eleven required
+  ART-02D custody amendments; it preserves exact ActionId/PermissionId mappings
+  and never conflates feature resource ownership with catalogue activation. In
+  the recommended transfer model the contract requires atomic removal of unused
+  `REV_08`/`ART_02D`; the global alternative keeps them only as feature owners
+  under a separate closed custody type.
 - [ ] Required specification reviewers pass.
 - [ ] `CONFORMANCE_MATRIX.md` maps every retained normative invariant to its
   owning chunk, concrete behavioral case, and final evidence owner; no blanket

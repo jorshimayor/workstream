@@ -189,9 +189,11 @@ registration or review-action activation amendment.
 The merged enum defines ActionOwner as the implementation chunk allowed to
 activate an action. The user requires AUTH to own authorization activation, so
 the recommended resolution keeps that meaning and adds the exact eight
-AUTH-owned WS-CON activation owners plus two review activation owners listed in
-`AUTHORIZATION_HANDOFF.md`. Every proposed action maps to one owner; CON/ART/REV
-remain feature resource owners but never change availability.
+AUTH-owned WS-CON activation owners, two review activation owners, and two
+AUTH-owned ART-02D activation owners covering all eight Operator plus three
+internal actions listed in `AUTHORIZATION_HANDOFF.md`. Every required action
+maps to one owner without changing its PermissionId; CON/ART/REV remain feature
+resource owners but never change availability.
 
 The alternative is a reviewed global semantic change: ActionOwner becomes the
 feature/resource owner and AUTH adds a separate closed activation-custody type.

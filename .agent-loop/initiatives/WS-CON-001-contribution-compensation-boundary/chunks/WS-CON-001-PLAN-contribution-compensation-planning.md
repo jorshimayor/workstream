@@ -63,6 +63,12 @@ active runtime documentation adoption
   cross-spec role choices and conditional AUTH changes; adds D12's exact
   proposed ActionOwner/custody map; refreshes the clean/non-consumable REV
   dependency; and receives fresh required review/evidence against `aa0fdcd`.
+- [x] ART-02A2 PR #129 refresh records the inactive preparation-only boundary,
+  exact `ArtifactPreparationService`/sealed-source ownership, remaining ART
+  02A3/02B1/02C1/02C2/02C3/02D/write-read-capability gates, concurrent
+  non-consumable REV discovery without a live-head pin, and D12's exact eight-
+  Operator/three-internal ART action custody without ActionId/PermissionId
+  drift; and receives fresh required review/evidence against `9a04434`.
 
 ## Verification commands
 
@@ -72,14 +78,39 @@ python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/check_loop_memory_state.py
 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest -q scripts/test_agent_gates.py
+(cd backend && PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest -p pytest_asyncio.plugin -q \
+  tests/test_artifact_preparation.py::test_preparation_seals_exact_commitment_and_single_stream \
+  tests/test_artifact_preparation.py::test_committed_sources_cannot_be_publicly_assembled \
+  tests/test_artifact_preparation.py::test_client_commitment_mismatch_prevents_provider_call \
+  tests/test_artifact_preparation.py::test_preparation_cancellation_releases_file_and_reservation \
+  tests/test_artifact_preparation.py::test_closed_preparation_rejects_stream_and_is_idempotent \
+  tests/test_artifact_preparation.py::test_cancelled_close_finishes_cleanup_and_closes_handle)
 git diff --check
-test "$(git rev-parse origin/main)" = aa0fdcd6912e66609e39a2fbd7b65f67be6c62f3
-git merge-base --is-ancestor aa0fdcd6912e66609e39a2fbd7b65f67be6c62f3 HEAD
+test "$(git rev-parse origin/main)" = 9a04434e2f23c5dec8939dadb943bba4d85110c0
+git merge-base --is-ancestor 9a04434e2f23c5dec8939dadb943bba4d85110c0 HEAD
 test "$(sha256sum docs/reference_specs/WS-CON-001-contribution-record-and-compensation-boundary-specification.md | cut -d' ' -f1)" = cddbe20f4fadf5307f68519347bdd9520ef49b23fb0b92cad24c31fc9b34c640
 test "$(sha256sum 'docs/reference_specs/WS-CON-001-contribution-record-and-compensation-boundary-specification(2).pdf' | cut -d' ' -f1)" = ce65e208076769f0bafb09779d60ab6f5fc0c596514d4e8f4cc03690c6e6d457
 test "$(git show origin/main:docs/reference_specs/WS-CON-001-contribution-record-and-compensation-boundary-specification.pdf | sha256sum | cut -d' ' -f1)" = 34c4337f27e42a5b0ed5e153fe8ccd492ecede202c2764506a930d109aef66c1
-test "$(git -C /home/abiorh/flow/workstream-rev-001 rev-parse HEAD)" = a13bf352147cbb2c65742802e7c74a9478e5013b
-test -z "$(git -C /home/abiorh/flow/workstream-rev-001 status --porcelain)"
+(cd backend && python3 - <<'PY'
+from inspect import signature
+
+from app.modules.artifacts.preparation import (
+    ArtifactPreparationService,
+    ArtifactScratchManager,
+)
+from app.modules.artifacts.sources import CommittedArtifactSource, PreparedArtifact
+
+parameters = signature(ArtifactPreparationService.prepare).parameters
+assert list(parameters) == [
+    "self", "stream", "media_type", "expected_sha256", "expected_size"
+]
+assert parameters["media_type"].kind.name == "KEYWORD_ONLY"
+assert parameters["expected_sha256"].kind.name == "KEYWORD_ONLY"
+assert parameters["expected_size"].kind.name == "KEYWORD_ONLY"
+for value in (ArtifactScratchManager, PreparedArtifact, CommittedArtifactSource):
+    assert value.__module__.startswith("app.modules.artifacts.")
+PY
+)
 (cd backend && python3 - <<'PY'
 import re
 from pathlib import Path
@@ -132,6 +163,35 @@ for line in owner_section.splitlines():
         owner_actions.extend(re.findall(r"`([^`]+)`", line.split("|")[3]))
 assert len(owner_actions) == len(set(owner_actions)) == 23
 assert set(owner_actions) == ws_con_actions
+definitions = {
+    row.action_id.value: (row.permission_id.value, row.owner.value)
+    for row in ACTION_DEFINITIONS
+}
+art_02d_mappings = {
+    "artifact.binding.read": "artifact.binding.read",
+    "artifact.replica.read": "artifact.replica.read",
+    "artifact.receipt.read": "artifact.receipt.read",
+    "artifact.verification_job.read": "artifact.verification_job.read",
+    "artifact.verification_job.retry": "artifact.verification_job.retry",
+    "artifact.recovery_attempt.read": "artifact.recovery_attempt.read",
+    "artifact.audit.read": "artifact.audit.read",
+    "operations.artifact_storage_admission.read": "operations.status.read",
+    "artifact.verification.execute": "artifact.verification.execute",
+    "artifact.pending_work.scan": "artifact.pending_work.scan",
+    "artifact.put_attempt.resolve": "artifact.put_attempt.resolve",
+}
+assert {
+    action: permission
+    for action, (permission, owner) in definitions.items()
+    if owner == "WS-ART-001-02D"
+} == art_02d_mappings
+assert "`AUTH_ART_02D_OPERATOR`" in owner_section
+assert "`AUTH_ART_02D_INTERNAL`" in owner_section
+for action, permission in art_02d_mappings.items():
+    assert f"`{action}` -> `{permission}`" in owner_section
+assert "removes the now-unused\n`ActionOwner.ART_02D`" in owner_section
+assert "removes the now-unused\n`ActionOwner.REV_08`" in owner_section
+assert "`REV_06` remains" in owner_section
 PY
 )
 ```

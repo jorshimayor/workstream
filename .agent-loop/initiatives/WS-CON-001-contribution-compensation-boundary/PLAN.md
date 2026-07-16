@@ -37,7 +37,8 @@ or query declares one ActionId and consumes a request-scoped, caller-session-
 bound `AuthorizationService`.
 
 Every WS-CON ActionId is currently absent and proposed. Trusted `main`
-`aa0fdcd` includes AUTH-08's scoped administrative grants. Its closed catalogue
+`9a04434` includes AUTH-08's scoped administrative grants at `aa0fdcd` and
+ART-02A2 PR #129, which adds no authority. The closed AUTH catalogue
 contains 74 PermissionIds and 57 non-WS-CON ActionIds: nine self/admin actions
 are active and 48 actions remain planned. The exact handoff is in
 `AUTHORIZATION_HANDOFF.md`. It enumerates each proposed action separately, its
@@ -74,9 +75,17 @@ D12 separately resolves activation custody. The merged ActionOwner type means
 the implementation chunk permitted to activate an action; it cannot name a CON
 feature chunk while this plan says AUTH alone flips availability. The handoff
 therefore proposes exact AUTH-owned activation owners for all 23 WS-CON actions
-and the two coupled review actions. Human/AUTH approval of that model—or a
-global feature-owner semantic plus a separate closed activation-custody type—is
-a registration gate. No action may have two activation authorities.
+and the two coupled review actions, plus all eleven existing ART-02D Operator/
+internal actions required by contribution evidence. The ART transfer preserves
+every merged ActionId -> PermissionId mapping, including
+`operations.artifact_storage_admission.read` -> `operations.status.read`.
+Human/AUTH approval of that model—or a global feature-owner semantic plus a
+separate closed activation-custody type containing the same mappings—is a
+registration gate. In the recommended transfer, AUTH also removes the unused
+`REV_08` and `ART_02D` enum members atomically; `REV_06` remains for its other
+actions and closed owner-definition parity must still be exact. In the global
+alternative those enums remain feature owners and the separate custody type is
+closed independently. No action may have two activation authorities.
 
 For mutations crossing AUTH and product rows, AUTH must add the prepared
 authorization protocol specified in the handoff. The preliminary target lets
@@ -95,11 +104,12 @@ though PermissionId `task.claim` exists. AUTH-13 or an approved AUTH-owned
 successor must register and activate that action before CON-05A adds the
 compensation freeze participant. Review choreography is deliberately staged:
 AUTH first registers the planned `review.claim` and `review.decision` contracts;
-CON-06/07 then supply their hidden capability/participant; REV-06/10 compose and
-prove the final typed resource behavior while the real kernel remains
-fail-closed; only then may AUTH integrate the evaluators and activate those
-actions. Production execution and public routes remain blocked until the later
-readiness/REV-13 gates.
+CON-06/07 then supply their hidden capability/participant; REV-06/08 build the
+core claim/decision behavior and REV-10 proves the final contribution
+composition and typed resource behavior while the real kernel remains fail-
+closed; only then may AUTH integrate the evaluators and activate those actions.
+Production execution and public routes remain blocked until the later readiness/
+REV-13 gates.
 
 Derived contribution/award writes are mandatory participants of the already
 authorized `review.decision` transaction. They are not separately callable
@@ -187,11 +197,37 @@ outbox retry/finalization state.
 
 The Review transaction creates only a pending contribution-evidence projection
 row and a shared-outbox wake-up event. After commit, a worker loads canonical
-PostgreSQL records, produces deterministic canonical JSON, and hands prepared
-bytes plus exact contribution facts to an ART-owned typed capability. ART owns
-admission, raw provider I/O, verification, content/binding/receipt records, and
-recovery. WS-CON stores only its projection state and verified Workstream
-binding reference.
+PostgreSQL records, produces deterministic canonical JSON, computes its
+expected SHA-256 and exact byte count, and passes a bounded async byte source,
+media type `application/vnd.workstream.contribution-evidence+json;version=1`
+and those expected facts to an ART-owned typed capability.
+
+Merged ART-02A2 PR #129 supplies only ART's inactive preparation foundation.
+Before D10 or any database mutation lock, the future capability uses ART's
+`ArtifactPreparationService` to write the complete first pass to canonical
+bounded private scratch, compute digest/size, validate the exact media contract,
+reject mismatch, and retain a sealed source behind an opaque ART operation.
+Transaction A then locks AUTH -> CON -> ART, recomputes the canonical evidence
+commitment from locked product facts, final-evaluates D10 and stages the durable
+attempt. The caller commits explicitly; only then may an ART-owned same-process
+continuation prove/claim that committed attempt in a fresh transaction and
+consume the single second-pass stream outside every database transaction.
+
+Rollback, cancellation and exact replay close the preparation or retain
+fail-closed ART cleanup custody until retry succeeds. Process loss persists no
+handle/path: stale scratch cleanup reclaims custody and deterministic outbox
+replay regenerates identical bytes against the durable attempt. CON never
+imports or constructs `ArtifactScratchManager`, `PreparedArtifact` or
+`CommittedArtifactSource`, receives a scratch path/descriptor, or owns cleanup.
+
+PR #129 does not implement the named contribution-evidence capability or the
+remaining ArtifactStore v2, S3/MinIO, durable admission, provider execution,
+verification/publication, recovery/authorization, binding or receipt gates.
+02A3, 02B1, 02C1, 02C2, 02C3 and 02D must precede the separately approved
+`WS-ART-001-CON-EVIDENCE` chunk, which delivers both named write and read ports.
+It returns only bounded verified ArtifactBinding/receipt data. WS-CON validates
+their digest/size/media/owner/project/role/schema/idempotency facts before it
+stores projection state and the verified Workstream binding reference.
 
 LocalStorage and MinIO exercise the same product capability contract. AWS S3
 deployment proof gates production. Flow Node, R2, semantic search, provider
@@ -285,7 +321,20 @@ backend contract.
    artifact scanner itself is unchanged.
 2. Merge outbox persistence then its feature-neutral dispatcher; add split,
    inactive binding/policy/contribution/award/delivery/receipt persistence.
-3. Interleave each AUTH registration -> feature implementation -> AUTH
+3. Complete the ART sequence needed by evidence intake: merged 02A2 committed-
+   source preparation -> 02A3 ArtifactStore v2 cutover -> 02B1 MinIO/AWS S3 ->
+   02C1 durable admission/put-attempt -> 02C2 verification/publication -> 02C3
+   recovery chain -> 02D hidden internal-executor/Operator recovery behavior ->
+   AUTH-owned evaluator integration/activation -> separately approved
+   `WS-ART-001-CON-EVIDENCE` write/read ports. AUTH-09 first owns the fixed
+   verifier/scanner/resolver registrations, identities and assignments; D12
+   first transfers the eight ART-02D Operator and three internal actions to the
+   exact AUTH activation custodians (or a separate closed custody map); 02D
+   proves hidden resource/feature behavior but never changes availability; AUTH
+   separately activates Operator recovery and internal execution. None of these
+   gates moves scratch, provider, ART
+   persistence or authorization ownership into CON.
+4. Interleave each AUTH registration -> feature implementation -> AUTH
    activation wave in `AUTHORIZATION_HANDOFF.md`. The registration checkpoint
    provides planned ActionId/PermissionId/owner/audit parity, typed context
    contracts, principal prerequisites and prepared mutation protocol. The
@@ -294,30 +343,31 @@ backend contract.
    evaluator, proves the exact merged feature and changes availability. CON/ART
    never edits AUTH or supplies a production allow fallback. Merge required ART
    capabilities in ART.
-4. Activate hidden binding/policy services. CON-05A atomically removes every
+5. Activate hidden binding/policy services. CON-05A atomically removes every
    PaymentPolicy semantic consumer and enables only task claims that freeze a
    CompensationPolicyVersion, only after merged REV-02 establishes the exact
    `Submission.task_assignment_id` lineage. CON-05B drops the unreachable old
    model/table/columns/constraints after a zero-consumer scan.
-5. Interleave with WS-REV: policy schema before REV lease schema; lease freeze
+6. Interleave with WS-REV: policy schema before REV lease schema; lease freeze
    before claims; atomic participant after revision/decision persistence.
-6. Add delivery/callback, evidence projection, reads, and operations behind
+7. Add delivery/callback, evidence projection, reads, and operations behind
    unregistered production routes.
-7. Finish WS-CON hidden readiness and an exact dependency manifest. WS-REV-13
+8. Finish WS-CON hidden readiness and an exact dependency manifest. WS-REV-13
    is the sole production router activation and joint live-drill owner for the
    review/contribution/compensation release. Before it, REV-12A may own hidden
    persisted joint release control and inject its implementation through the
    required CON-owned dispatch/callback fence ports while consuming the
    read-only fulfillment-drain observation port; it may not edit CON product
    files or import CON/outbox repositories.
-   Clean sibling head `a13bf35` now contains a separately reviewed AUTH-08
-   dependency refresh with correct counts and teardown/error/timestamp facts.
-   Its publication evidence intentionally remains stale pending ART; REV-06/10
-   still predate the registration -> CON -> REV hidden -> AUTH activation
-   choreography and D12 owner custody, while REV-12A still assigns claim wording
-   to the handler. The exact repaired snapshot must adopt those current CON/AUTH
-   handoffs, pass commit-bound publication review, and merge before it is
-   consumable. Do not change archival sources.
+   Sibling reviewed baseline `6faccc0` correctly treats PR #129 as inactive
+   preparation; later same-turn external-review repairs are in progress. Both
+   are discovery only. The future merged snapshot must repair REV-06/08 one-step
+   authorization, REV-10 final CON composition, D12 custody and REV-12A's
+   handler-owned outbox transitions. It must adopt the current
+   registration -> CON -> REV hidden -> AUTH activation/prepared-handle
+   choreography and dispatcher-owned typed command/outcome contract, then pass
+   fresh review and merge before consumption. Do not pin the live sibling head/
+   cleanliness or change archival sources.
 
 At every chunk activation, rebase discovery on trusted `main`, refresh exact
 migration numbers and dependency symbols, and stop if an expected port/action
@@ -356,6 +406,12 @@ is absent or materially changed.
   catalogue and stable event payload/digest identity.
 - LocalStorage and MinIO evidence-capability conformance; AWS deployment proof
   remains owned by ART.
+- ART capability tests prove expected digest/size mismatch causes zero durable
+  admission/provider calls; only ART preparation can mint the committed source;
+  the second pass is single-use; success/failure/cancellation either completes
+  close/release or leaves explicit ART-owned cleanup custody unavailable for
+  reuse until retry succeeds; and no scratch path/type crosses into CON. PR
+  #129's preparation tests alone do not satisfy this integration gate.
 - Final live drill covers paid accept, needs revision, reject, unpaid policy,
   frozen-version change, money+points, acknowledgement vs fulfillment,
   failure-then-fulfillment, replay, adapter outage, storage outage, recovery,

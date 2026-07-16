@@ -27,6 +27,10 @@ dependency, test, coverage or CI weakening
 
 ## Acceptance criteria
 
+- [ ] Trusted main contains the separately approved
+  `WS-ART-001-CON-EVIDENCE` `ContributionEvidenceReadPort`; 09A's merged write
+  port does not imply read readiness unless the same ART chunk explicitly
+  delivers and proves both.
 - [ ] AUTH has registered the exact planned contribution self/project read
   actions, typed contexts and applicable actor-self/AdminRoleGrant definitions.
   CON composes canonical facts; pre-filter pagination and cross-project
@@ -39,8 +43,11 @@ dependency, test, coverage or CI weakening
   canonical collection facts. CON tests disclosure with explicit allowed/
   denied decision seams only; the later AUTH activation gate proves exact role,
   revoked-grant, mixed-grant and foreign-project candidate selection.
-- [ ] ART result matches immutable projection identity; evidence failure never
-  changes ContributionRecord truth.
+- [ ] ART result matches immutable projection binding, digest, byte count,
+  exact media type
+  `application/vnd.workstream.contribution-evidence+json;version=1`, owner/
+  project/logical role and schema identity; evidence failure never changes
+  ContributionRecord truth.
 - [ ] All product-fact/project mismatch cases map to CONFORMANCE_MATRIX;
   AUTH-owned role cases map to the activation gate; OpenAPI is hidden.
 

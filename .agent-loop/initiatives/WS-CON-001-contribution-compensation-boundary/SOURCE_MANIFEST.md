@@ -32,8 +32,8 @@
 ## Parallel dependency sources inspected
 
 - trusted authorization worktree and `origin/main` at
-  `aa0fdcd6912e66609e39a2fbd7b65f67be6c62f3`, which merges AUTH-08 through PR
-  #131
+  `9a04434e2f23c5dec8939dadb943bba4d85110c0`, which merges ART-02A2 through PR
+  #129 and includes AUTH-08 merge `aa0fdcd6912e66609e39a2fbd7b65f67be6c62f3`
 - merged AUTH-08 implementation lineage through `0832358`, now canonical on
   trusted `main`: 74 PermissionIds, 57 ActionIds, exactly nine active self/admin
   actions, 48 planned actions, eight closed resource-context variants,
@@ -47,26 +47,36 @@
   candidate. These facts create the unresolved D11 human decision and only its
   chosen AUTH amendment/evaluator or CON-01 matrix-update gates; they are not
   copied into CON runtime.
+- merged ART-02A2 final branch head
+  `32aab89262a3944f305e9e5dc4c65a2d31e2e144`: inactive
+  `ArtifactPreparationService`, `ArtifactScratchManager`, `PreparedArtifact`
+  and `CommittedArtifactSource`; no ArtifactStore v2 cutover, S3/MinIO,
+  admission, verification, contribution capability, action or permission
+- merged AUTH catalogue assigns eight Operator-facing and three internal
+  artifact actions to `ActionOwner.ART_02D`; their existing PermissionId
+  mappings are unchanged. Because `ActionOwner` currently owns activation,
+  contribution-evidence readiness now extends D12 with exact proposed
+  `AUTH_ART_02D_OPERATOR` and `AUTH_ART_02D_INTERNAL` custody rather than
+  allowing ART/CON to write availability.
 - clean trusted authorization worktree `/home/abiorh/flow/workstream-authorization-service/`
-  at `aa0fdcd6912e66609e39a2fbd7b65f67be6c62f3`
-- active sibling REV worktree `/home/abiorh/flow/workstream-rev-001/`, observed
-  at branch-reachable head
-  `a13bf352147cbb2c65742802e7c74a9478e5013b` after its parallel agent committed
-  `Refresh REV plan for merged AUTH-08`; the worktree is clean. Its separate
-  AUTH-08 dependency review now records correct 74/57, 9/48 and transaction/
-  error/timestamp facts. Final publication evidence deliberately remains stale
-  pending ART, REV-06/10 still predate the repaired CON/AUTH choreography and
-  D12 custody, and REV-12A retains incorrect handler-claims-OutboxEvent wording.
-  The sibling remains non-consumable until those contracts are repaired,
-  commit-bound reviewed and merged.
-- trusted `main` at `aa0fdcd6912e66609e39a2fbd7b65f67be6c62f3`, including merged
+  at `9a04434e2f23c5dec8939dadb943bba4d85110c0`
+- active sibling REV worktree `/home/abiorh/flow/workstream-rev-001/`: reviewed
+  evidence-bound baseline `6faccc04e9dbad7c746b081e55a47750f678d37c`
+  was inspected, then later same-turn uncommitted external-review repairs were
+  observed. Its ART-02A2 classification is accurate, but no sibling path/head/
+  dirty state is a durable dependency. Only a reviewed merge on trusted `main`
+  may be consumed, and it must repair REV-06/08 prepared authorization, REV-10
+  final CON composition, D12 custody and dispatcher-owned outbox transitions.
+- trusted `main` at `9a04434e2f23c5dec8939dadb943bba4d85110c0`, including merged
   ADR 0014 from PR #127, AUTH-07A/07B from PRs #126/#130, and AUTH-08 scoped
-  administrative grants from PR #131. Authored loop-state/queue text in that
-  merge still records pre-publication AUTH-08 state; the merge commit and code
-  are authoritative while signed post-merge automation catches up.
+  administrative grants from PR #131 plus ART-02A2 from PR #129. The merge
+  commits and code are authoritative where authored initiative status still
+  describes its pre-merge branch state.
 
 These sibling worktrees are discovery evidence, not dependencies by path. Every
 implementation chunk consumes only contracts merged into trusted `main`.
+The verification contract deliberately does not pin a live sibling head or
+cleanliness because its authorized owner is working concurrently.
 
 ## Adoption note
 

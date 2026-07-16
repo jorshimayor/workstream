@@ -32,8 +32,8 @@ availability writer.
 | `WS-CON-001-08A` | Outbound Compensation Delivery Handler | L1 | 07; 02B; post-02B AUTH `outbox.dispatch` evaluator/activation and exact service-assignment proof merged; ADR 0014 adapter foundation; joint lifecycle-fence port contract | Proposed |
 | `WS-CON-001-08R` | Bound-Service Callback Rate Control | L1 | 08A; shared API-control contract | Proposed |
 | `WS-CON-001-08B` | Inbound Fulfillment Callback | L1 | 08R; callback identity/action registration already merged before 04A; AUTH typed callback context and prepared protocol merged; joint callback-fence port contract | Proposed |
-| `WS-CON-001-09A` | Contribution Evidence Projection Write | L1 | 07; named `WS-ART-001-CON-EVIDENCE` capability; AUTH planned evidence action/context/prepared protocol and exact assignment on existing `workstream.artifact.binding` | Proposed |
-| `WS-CON-001-09B` | Authorized Contribution Evidence Read | L1 | 09A; disclosure schema; AUTH planned contribution-read registrations/typed contexts | Proposed |
+| `WS-CON-001-09A` | Contribution Evidence Projection Write | L1 | 07; D12 exact AUTH custody for all eleven ART-02D actions; AUTH-09 internal executor registration/identities/assignments -> merged ART 02A2 -> 02A3 -> 02B1 -> 02C1 -> 02C2 -> 02C3 -> hidden 02D behavior -> AUTH Operator/internal evaluator activation; named `WS-ART-001-CON-EVIDENCE` write port; AUTH planned evidence action/context/prepared protocol and exact assignment on existing `workstream.artifact.binding` | Proposed |
+| `WS-CON-001-09B` | Authorized Contribution Evidence Read | L1 | 09A; merged named `WS-ART-001-CON-EVIDENCE` read port; disclosure schema; AUTH planned contribution-read registrations/typed contexts | Proposed |
 | `WS-CON-001-10A` | Contribution And Award Product Reads | L1 | 08B,09B; post-09B AUTH contribution-read activation; D11 award/audit role outcome approved; AUTH planned award-read registrations/typed contexts/exact chosen role contract | Proposed |
 | `WS-CON-001-10B` | Operations, Reconciliation, Rebuild, And Fulfillment Drain Observation | L1 | 10A; post-10A AUTH award-read activation; full D11 outcome approved and any chosen AUTH role-matrix amendment merged; AUTH planned binding-retire/ops/audit registrations/typed contexts/exact chosen role contract/prepared protocol; shared-outbox observation capability | Proposed |
 | `WS-CON-001-11` | Hidden Release Readiness And Dependency Manifest | L1 | 10B; REV-10 integration; exact AUTH evaluator/action/service manifest, ART/outbox readiness, required CON-owned dispatch/callback fence hooks and drain port | Proposed |
@@ -59,6 +59,7 @@ AUTH review.claim registration/contracts -> CON-06 -> REV-06 hidden claim compos
 REV-04 exact Review target -> CON-03C foreign keys
 AUTH review.decision registration/contracts + REV-09B + CON-07 participant -> REV-10 hidden decision composition while planned -> AUTH review.decision evaluator/activation
 AUTH callback identity/action registration before CON-04A + remaining typed/prepared callback contracts -> CON-08B hidden callback -> AUTH callback evaluator/activation -> CON-11
+D12 AUTH custody for 8 ART-02D Operator + 3 internal actions -> AUTH-09 fixed executor registration/identities/assignments -> ART-02A2 preparation -> ART-02A3 v2 -> ART-02B1 MinIO/AWS -> ART-02C1 admission -> ART-02C2 verification/publication -> ART-02C3 recovery -> ART-02D hidden executor/Operator behavior -> AUTH Operator/internal evaluator activation -> ART-owned CON-EVIDENCE write/read ports
 AUTH evidence action/typed/prepared/exact-service-assignment registration + ART capability -> CON-09A hidden handler -> AUTH evidence evaluator/activation -> CON-11
 AUTH contribution-read registration/contracts -> CON-09B hidden reads -> AUTH contribution-read activation -> CON-10A
 D11 award-role decision + AUTH award-read registration/contracts -> CON-10A hidden reads -> AUTH exact-role award activation -> CON-10B
@@ -97,7 +98,11 @@ CON-08A/08B/10B/11 required CON-owned dispatch/callback fence ports and fulfillm
   joint composition and may not edit the CON handler. 08R extends the shared
   closed rate-control scopes; 08B owns the separately authenticated callback
   and its narrow mandatory callback-fence consumer port.
-- 09A writes evidence projections through ART; 09B owns safe reads.
+- 09A writes evidence projections through ART; 09B owns safe reads. PR #129's
+  02A2 preparation is only a prerequisite: CON passes a bounded deterministic
+  byte source plus expected digest/size/media type through the named port, while
+  ART alone owns scratch preparation, sealed-source lifetime, admission,
+  provider I/O, verification and binding.
 - 10A owns product reads; 10B owns operations/reconciliation/rebuild plus the
   read-only fulfillment-drain observation port over CON and shared-outbox state.
 - 11 proves hidden readiness, including both required fence injection seams and

@@ -3,7 +3,8 @@
 ## Status and ownership
 
 Every WS-CON-specific ActionId below is **proposed and currently absent**.
-Trusted `main` `aa0fdcd` includes AUTH-08 through PR #131. The canonical
+Trusted `main` `9a04434` includes AUTH-08 through PR #131 at `aa0fdcd` and the
+later ART-02A2 merge, which changes no authorization contract. The canonical
 catalogue contains 74 PermissionIds and 57 non-WS-CON ActionIds: the two
 actor-self actions and seven AUTH-08 administrative actions are active; 48
 actions remain planned. Neither proposed WS-CON service-only PermissionId is
@@ -154,6 +155,42 @@ choose a global, reviewed redefinition of ActionOwner as feature/resource
 owner—but then AUTH must introduce a separate closed activation-custody type.
 Leaving the current dual meaning or allowing both AUTH and product chunks to
 activate is forbidden.
+
+Under the recommended transfer model, AUTH atomically removes the now-unused
+`ActionOwner.REV_08` after moving its only row, `review.decision`, to
+`AUTH_REV_DECISION`. `REV_06` remains because it still owns the other review
+release/decline/expiry actions. Closed enum/definition/SQL/audit parity tests
+must reject an unused old owner or a missing new owner.
+
+The ART prerequisite exposes the same conflict: the merged catalogue assigns
+all eleven 02D Operator/internal actions to `ActionOwner.ART_02D`, while this
+plan and the user require AUTH to own availability. D12 therefore also proposes
+the following complete transfer while every action is still planned. No
+ActionId or PermissionId changes, and ART-02D remains the feature/resource
+owner only.
+
+| Proposed enum member | Exact ActionOwner value / AUTH activation chunk | Existing ActionId -> PermissionId mappings transferred from `ART_02D` |
+|---|---|---|
+| `AUTH_ART_02D_OPERATOR` | `WS-AUTH-001-ART-02D-OPERATOR` | `artifact.binding.read` -> `artifact.binding.read`; `artifact.replica.read` -> `artifact.replica.read`; `artifact.receipt.read` -> `artifact.receipt.read`; `artifact.verification_job.read` -> `artifact.verification_job.read`; `artifact.verification_job.retry` -> `artifact.verification_job.retry`; `artifact.recovery_attempt.read` -> `artifact.recovery_attempt.read`; `artifact.audit.read` -> `artifact.audit.read`; `operations.artifact_storage_admission.read` -> `operations.status.read` |
+| `AUTH_ART_02D_INTERNAL` | `WS-AUTH-001-ART-02D-INTERNAL` | `artifact.verification.execute` -> `artifact.verification.execute`; `artifact.pending_work.scan` -> `artifact.pending_work.scan`; `artifact.put_attempt.resolve` -> `artifact.put_attempt.resolve` |
+
+AUTH-09 owns the fixed internal ActorProfiles, links and exact assignments. After
+ART-02D merges hidden resources, guards, calls and behavior proof, the two AUTH
+activation chunks integrate the closed evaluators and alone change availability.
+The Operator retry action is an independent human action; activating the three
+service actions does not activate `artifact.verification_job.retry`. If D12
+instead adopts global feature-owner semantics, these same eleven mappings must
+appear in the separate closed activation-custody type before ART-02D starts.
+Partial transfer, `ART_02D` plus AUTH dual writers, or a generic ART activation
+owner is forbidden.
+
+Under the recommended transfer model, AUTH atomically removes the now-unused
+`ActionOwner.ART_02D` after all eleven definitions move to the two new AUTH
+owners. The closed invariant remains
+`{definition.owner} == set(ActionOwner)`. Under the global alternative,
+`ART_02D` and `REV_08` remain feature owners in action definitions and the new
+separate activation-custody catalogue—not `ActionOwner`—must independently have
+exact closed coverage. The two models cannot be mixed.
 
 ## Proposed closed handoff
 

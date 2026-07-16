@@ -2,8 +2,9 @@
 
 ## Incorporation status
 
-The inspected sibling branch now has clean committed head `a13bf35`, based
-on trusted `main` including AUTH-08. Its planning contracts assign future
+The inspected sibling has reviewed baseline `6faccc0`, based on trusted `main`
+including AUTH-08 and ART-02A2, plus later same-turn external-review repairs in
+progress. Both are discovery until a reviewed merge. Its planning contracts assign future
 contribution/compensation router registration, consumption of the WS-CON-11
 preflight manifest, the joint live matrix, PaymentPolicy removal dependencies,
 active generated/document companions and REV-12A hidden release control. Those
@@ -11,9 +12,10 @@ runtime changes are not implemented. The planned composition consumes the
 CON-owned dispatch/callback fences and fulfillment-drain observation instead of
 importing CON/outbox repositories.
 
-The AUTH-08 dependency refresh now records correct merged counts and
-transaction/error/timestamp repairs, but final publication evidence remains
-intentionally stale pending ART. The sibling is still not consumable: REV-06/10
+The AUTH-08 dependency refresh records correct merged counts and
+transaction/error/timestamp repairs, and its reviewed ART refresh correctly says
+PR #129 is inactive preparation only. The sibling is still not consumable:
+REV-06/08 core authorization and REV-10 final CON composition
 predate the registration -> CON -> REV hidden -> AUTH activation choreography
 and D12 owner-custody decision, and REV-12A still says the CON handler claims
 the shared-outbox event. Before review/merge it must instead accept the
@@ -24,13 +26,13 @@ requirements. WS-CON does not edit the sibling. The WS-REV owner must repair,
 commit-bind, internally review and merge the exact final contract. Until later
 implementation gates land, both initiatives remain hidden.
 
-The refresh must also repair REV-06/10 authorization choreography. AUTH first
-registers the planned review action and typed/prepared contract; CON supplies
-its capability/participant; REV then merges hidden resource composition and
-final-context integration while the real kernel still denies; AUTH alone
-integrates the evaluator and activates the action before production execution.
-REV must not require active review actions before building the hidden
-composition that AUTH activation depends on.
+The refresh must repair REV-06/08/10 authorization choreography. AUTH first
+registers each planned review action and typed/prepared contract; CON supplies
+the claim-freeze capability/decision participant; REV-06/08 build the hidden
+core behavior and REV-10 supplies final CON composition/resource integration
+while the real kernel still denies; AUTH alone integrates each evaluator and
+activates the action before production execution. REV must not require an active
+review action before building the hidden composition its activation depends on.
 
 ## Required REV-13 allowed-file additions
 
