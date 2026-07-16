@@ -1031,6 +1031,10 @@ def test_active_shared_contract_rejects_retired_compensation_model() -> None:
             "PaymentPolicy",
             "PaymentRecord",
             "PaymentAdjustment",
+            "payment_policy",
+            "payment_record",
+            "payment_ledger",
+            "payment_adjustment",
             "payment policy",
             "payment records",
             "payment ledger",
@@ -1051,6 +1055,9 @@ def test_active_shared_contract_rejects_retired_compensation_model() -> None:
     )
     assert stale.is_active_shared_contract_path(Path("README.md"))
     assert stale.is_active_shared_contract_path(Path("docs/architecture_data_model.md"))
+    assert stale.is_active_shared_contract_path(
+        Path("docs/current_system_data_flow.html")
+    )
     assert stale.is_active_shared_contract_path(
         Path("docs/architecture_brief/workstream_architecture_brief.md")
     )

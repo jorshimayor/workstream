@@ -64,7 +64,6 @@ Common areas:
 - originality
 - package
 - revision_replay
-- payment_policy
 - guide_compliance
 
 ## Accept

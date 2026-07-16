@@ -76,8 +76,8 @@ python3 scripts/check_stale_workstream_wording.py
 git diff --check
 ```
 
-The `rg` command must return no stale active-contract matches. Historical review
-evidence is not rewritten.
+`check_stale_workstream_wording.py` is the canonical active-contract scan and
+must return zero failures. Historical review evidence is not rewritten.
 
 ## Required reviewers
 

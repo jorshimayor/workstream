@@ -62,6 +62,10 @@ ACTIVE_SHARED_CONTRACT_PATTERNS = (
     re.compile(r"\bPaymentPolicy\b"),
     re.compile(r"\bPaymentRecord\b"),
     re.compile(r"\bPaymentAdjustment\b"),
+    re.compile(r"\bpayment_policy\b", re.IGNORECASE),
+    re.compile(r"\bpayment_record\b", re.IGNORECASE),
+    re.compile(r"\bpayment_ledger\b", re.IGNORECASE),
+    re.compile(r"\bpayment_adjustment\b", re.IGNORECASE),
     re.compile(r"\bpayment polic(?:y|ies)\b", re.IGNORECASE),
     re.compile(r"\bpayment records?\b", re.IGNORECASE),
     re.compile(r"\bpayment ledger\b", re.IGNORECASE),
@@ -170,7 +174,7 @@ def is_active_shared_contract_path(path: Path) -> bool:
     raw_path = path.as_posix()
     if raw_path == "README.md":
         return True
-    if not raw_path.startswith("docs/") or path.suffix not in {".md", ".puml"}:
+    if not raw_path.startswith("docs/") or path.suffix not in {".html", ".md", ".puml"}:
         return False
     if raw_path.startswith(ACTIVE_SHARED_CONTRACT_EXCLUDED_PREFIXES):
         return False
