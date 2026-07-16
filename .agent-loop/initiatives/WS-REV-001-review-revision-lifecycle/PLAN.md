@@ -12,9 +12,10 @@ use PostgreSQL constraints as final race guards.
 
 ### Authorization gate
 
-Runtime work starts only after the WS-AUTH definition of done is merged and
-proven. Merged AUTH-07B fixes the public kernel shape but is not yet safe for
-REV consumption. Before any runtime chunk, AUTH must also prove that:
+Runtime work starts only after the WS-AUTH definition of done for the owning
+consumer is merged and proven. Merged AUTH-08 PR #131 establishes the current
+public kernel and resolves the three AUTH-07B consumption blockers. Every
+runtime chunk must retain proof that:
 
 - the reusable authorization dependency never commits a feature-owned open
   transaction during generic successful teardown; every read or mutation owner
@@ -36,7 +37,7 @@ After those gates, WS-REV consumes:
   exact AUTH-defined system-principal form for the action, never a fabricated
   human actor;
 - project contributor grants;
-- 24 planned action dependencies: merged AUTH-07B retains canonical
+- 24 planned action dependencies: merged AUTH-08 retains canonical
   `submission.create` plus the original 19 review-owned actions; four additive
   AUTH-owned registrations remain required by revision closure/recovery and
   joint release control;
@@ -73,19 +74,19 @@ repositories/models, queries grants, or reconstructs permission unions.
 The four additive ActionIds and their closed mappings are registered by WS-AUTH,
 not by review code. The three revision closure/repair actions must merge before
 chunk 11; lifecycle activation must merge before 12A. They add no PermissionId.
-AUTH-08 is not merged, so its runtime and exact evidence remain an unresolved
-gate. Its amended contract projects 57 actions after merge: 9 active and 48
-planned. The AUTH-owned REV addition must then migrate all four actions across
+AUTH-08 is merged at trusted-main `aa0fdcd6912e66609e39a2fbd7b65f67be6c62f3`
+through PR #131, with final branch head
+`0832358a0262805f553d05b50b0d778e6e6ad995`. It establishes 57 actions: 9 active
+and 48 planned. The AUTH-owned REV addition must migrate all four actions across
 typed catalogue, owner table, and PostgreSQL action-to-permission audit parity
 in lockstep from 57 to exactly 61, producing 9 active and 52 planned. Direct-SQL, allowed
 and denied audit, missing/extra parity, upgrade, and unsafe-downgrade tests are a
 hard gate; adding enum values alone is insufficient.
 
-The currently merged pre-AUTH-08 split remains 50 actions: 2 active actor-self
-actions and 48 planned actions. Neither the projected AUTH-08 additions nor the
-four REV additions are treated as merged. Every one of the 24 REV action
-dependencies remains inactive until its owning REV chunk activates it, and the
-AUTH definition-of-done gate is unchanged.
+The current merged split is 57 actions: 9 active and 48 planned. The four REV
+additions are not merged. Every one of the 24 REV action dependencies remains
+inactive until its owning REV chunk activates it, and later AUTH
+definition-of-done gates remain unchanged.
 
 ### Artifact gate
 

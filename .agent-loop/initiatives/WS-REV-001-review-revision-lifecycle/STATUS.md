@@ -2,7 +2,7 @@
 
 ## Current status
 
-Discovery and planning are complete on `codex/ws-rev-001-plan`. An AUTH-07B
+Discovery and planning are complete on `codex/ws-rev-001-plan`. The AUTH-08
 dependency refresh is complete; the final planning publication refresh remains
 parked while ART PR #129 is conflict-blocked and until it refreshes from main
 and merges. No application implementation chunk is active.
@@ -23,24 +23,27 @@ and joint REV-13 activation obligations without importing sibling code.
 
 ## Dependency state at latest refresh
 
-- Local pull merge `e59e2bb` contains trusted main `90eca12`, including merged
-  AUTH-07B and the shared ADR-0014 `ExternalServiceAdapter` foundation. The pull
-  was conflict-free and retained every user-owned reference change.
-- AUTH-07B installs the request-scoped deny-by-default kernel and activates only
-  `actor.profile.read_self` and `actor.profile.update_self`. The merged catalogue
-  remains 74 PermissionIds and 50 ActionIds: 2 active and 48 planned. All 20
+- The 2026-07-16 `git pull origin main` rebased the four REV planning commits
+  without conflict onto trusted main merge `aa0fdcd6912e66609e39a2fbd7b65f67be6c62f3`,
+  AUTH-08 PR #131. The merged AUTH head is
+  `0832358a0262805f553d05b50b0d778e6e6ad995`.
+- AUTH-08 retains the request-scoped deny-by-default kernel and activates its
+  seven administrative actions alongside the two actor-self actions. The merged
+  catalogue is 74 PermissionIds and 57 ActionIds: 9 active and 48 planned. All 20
   existing revised-spec submission/review actions remain planned, and the four
   later REV additions remain absent, so all 24 REV dependencies are inactive.
-- WS-AUTH grants, actor/service administration, product cutovers, the four-action
-  57-to-61 parity migration, and final proof are still required before WS-REV
-  runtime work. AUTH-08 is amended but unmerged; after its expected 57-action
-  state (9 active, 48 planned), the four REV additions produce 61 actions (9
-  active, 52 planned) while all 24 REV dependencies remain inactive.
-- AUTH-07B cannot yet be consumed by REV: its generic dependency teardown can
-  commit any open shared-session transaction, authorization-evidence SQL errors
-  are not consistently mapped to retryable 503 responses, and the cut-over
-  actor-self routes no longer advance canonical verification timestamps. AUTH
-  owns those repairs and their PostgreSQL/API regression proof.
+- Later WS-AUTH actor/service administration, product cutovers, the four-action
+  57-to-61 parity migration, and final proof are still required at their owning
+  REV gates. The four REV additions produce 61 actions (9 active, 52 planned)
+  while all 24 REV dependencies remain inactive.
+- AUTH-08 resolves the three AUTH-07B consumption defects. Generic dependency
+  teardown rolls back open caller transactions, decision-evidence SQL failures
+  map through a typed exception to the retryable `503 service_unavailable`
+  envelope, and successful existing-actor GET/PATCH routes advance both
+  canonical verification timestamps in their route-owned transaction. The
+  merged internal evidence records 275 focused behavior tests, 90.17 percent
+  branch-aware focused coverage, 17 isolated Alembic tests, and green final PR
+  Backend, Agent Gates, and CodeRabbit checks.
 - WS-ART provider-neutral v2, S3-compatible provider, admission/cutover,
   checker routing, recovery, and live proof are still required before review
   evidence integration.
@@ -63,7 +66,7 @@ human-approved for PR publication. D6, reviewer-current precedence, coherent
 joint activation, and the overall chunk sequence were approved on 2026-07-15.
 
 The previous internal-review evidence is bound to approved planning commit
-`706158d8078da508eb022749fb011db5725a45ef`. The later AUTH-07B/main merge and
+`706158d8078da508eb022749fb011db5725a45ef`. The later AUTH-08/main merge and
 dependency repair deliberately make that publication binding stale. Evidence
 will be re-reviewed and rebound only after ART PR #129 merges and the final
 dependency refresh is complete. The supplied revised reference contents are now

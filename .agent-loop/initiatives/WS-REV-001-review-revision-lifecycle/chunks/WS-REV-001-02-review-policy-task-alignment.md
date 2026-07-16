@@ -12,9 +12,10 @@ L1 schema, policy, and lifecycle.
 ## Preconditions
 
 - Current trusted main contains the merged WS-AUTH definition of done.
-- AUTH-owned regression proof removes generic authorization-dependency
-  auto-commit, maps decision-evidence SQL failure to the stable retryable 503,
-  and restores AUTH's documented canonical verification-timestamp semantics.
+- Current trusted main contains AUTH-08's regression proof for rollback-only
+  authorization-dependency teardown, typed decision-evidence SQL failure mapped
+  to the stable retryable 503, and documented route-owned canonical
+  verification-timestamp semantics.
 - This chunk consumes those contracts but changes no AUTH implementation.
 
 ## Allowed files

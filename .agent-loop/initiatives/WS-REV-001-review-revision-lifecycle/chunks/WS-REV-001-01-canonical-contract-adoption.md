@@ -84,14 +84,14 @@ frontend work
   an intentional backward rebase, and the reviewer consumes
   the context stamped on the leased Submission without a separate guide/rebase.
 - Permission additions are assigned to WS-AUTH ownership, not implemented here.
-- The active contract records merged AUTH-07B as 74 PermissionIds and 50
-  ActionIds split into 2 active actor-self actions and 48 planned actions. It
+- The active contract records merged AUTH-08 as 74 PermissionIds and 57
+  ActionIds split into 9 active actions and 48 planned actions. It
   does not describe the authorization kernel as absent and does not treat any
   of the 24 REV dependencies as active.
-- The active contract makes AUTH-owned repair of generic dependency auto-commit,
-  authorization-evidence SQL error mapping, and canonical verification
-  timestamp regression a hard gate before REV runtime consumption. Chunk 01
-  changes no AUTH implementation.
+- The active contract records AUTH-08's rollback-only dependency teardown,
+  typed authorization-evidence `503` mapping, and route-owned canonical
+  verification timestamps as required regression invariants. Chunk 01 changes
+  no AUTH implementation.
 - The active action table contains 24 dependencies. The four additions are
   `review.revision_obligation.close -> project.task.manage` for a covered
   Project Manager, `review.revision_context.repair -> project.task.manage` for a covered Project
@@ -100,7 +100,7 @@ frontend work
   `review.lifecycle.activation.manage -> operations.reconcile.run` for an
   Operator. Chunk 01 documents their typed resource/guard contract, while
   AUTH owns typed catalogue/owner and PostgreSQL audit-parity migration from 57
-  to exactly 61 actions after AUTH-08 establishes 57 actions (9 active, 48
+  to exactly 61 actions from AUTH-08's merged 57 actions (9 active, 48
   planned). The resulting 61 contains 9 active and 52 planned; all 24 REV
   dependencies stay inactive until their owning REV chunks. The three
   closure/repair actions gate chunk 11 and the lifecycle-control action gates

@@ -48,14 +48,15 @@ before producing the reconciled active contract.
 
 ## Authorization boundary
 
-- The original discovery base was `f599551`, which merged AUTH-06. Local pull
-  merge `e59e2bb` now contains trusted main `90eca12`, including merged AUTH-07B
-  and ADR-0014's shared external-adapter foundation.
+- The original discovery base was `f599551`, which merged AUTH-06. The
+  2026-07-16 pull rebased REV onto trusted main
+  `aa0fdcd6912e66609e39a2fbd7b65f67be6c62f3`, which merges AUTH-08 PR #131 and
+  includes ADR-0014's shared external-adapter foundation.
 - Authority audit and mutation idempotency foundations exist.
-- The request-scoped deny-by-default kernel exists and only actor self-read and
-  self-update are active. Admin/project grants, actor state/service actor
-  administration, product cutovers, and conformance proof remain later WS-AUTH
-  chunks.
+- The request-scoped deny-by-default kernel exists. Actor self-read/self-update
+  and seven AUTH-08 administrative actions are active. Project grants, actor
+  state/service actor administration, product cutovers, and conformance proof
+  remain later WS-AUTH chunks.
 - Product services still consume legacy `ActorContext`, role helpers, and
   `LegacyWorkflowEligibility`.
 - Review/task/contribution lineage must store canonical human
@@ -67,28 +68,34 @@ before producing the reconciled active contract.
   `ArtifactOperatorRecoveryPort`; WS-REV must not add another recovery
   permission or implementation.
 
-AUTH-07A catalogue input at `3ab25cf3b1e99336c635a318101375bb4bebdf91`
-is superseded as the live snapshot by merged AUTH-07B `90eca12f6398f2ef168e634244d912765572c3e5`.
-AUTH-07B retains exactly 50 closed ActionIds, activates only two actor-self
+AUTH-07A/07B catalogue input is superseded as the live snapshot by merged
+AUTH-08 PR #131 at trusted-main
+`aa0fdcd6912e66609e39a2fbd7b65f67be6c62f3`, final branch head
+`0832358a0262805f553d05b50b0d778e6e6ad995`. AUTH-08 retains exactly 57 closed
+ActionIds, activates seven administrative actions alongside the two actor-self
 actions, and leaves 48 planned. Canonical `submission.create` plus the original
 19 review-owned actions all remain planned/inactive. AUTH-13/14
 also establish the final `TaskAssignment.contributor_id` and
 `Submission.contributor_id` names and authority-loss replacement-assignee
 behavior. The four later revision-obligation-close, repair, legacy-close, and
 joint-lifecycle-activation ActionIds remain explicit AUTH-owned additions before
-their owning chunks. AUTH-08 is not merged: its amended contract projects a
-57-action baseline with 9 active and 48 planned. After that exact merge, REV's
-four additions must expand typed catalogue/owner and PostgreSQL audit parity
+their owning chunks. REV's four additions must expand the merged 57-action
+baseline's typed catalogue/owner and PostgreSQL audit parity
 from 57 to exactly 61, with 9 active and 52 planned. Enum-only registration is
 not runtime authority, and all 24 REV dependencies remain inactive until their
 owning REV chunks activate them.
 
-The merged kernel has three consumption blockers found during the REV dependency
-review: successful dependency teardown commits any open request-session
-transaction; evidence-write SQL errors can escape as raw 500 responses; and
-existing actor self requests no longer advance `ActorProfile.last_seen_at` and
-`ActorIdentityLink.last_verified_at`. Review implementation must therefore wait
-for WS-AUTH definition of done plus AUTH-owned repair proof, then consume
+AUTH-08 resolves the three consumption blockers found during the AUTH-07B
+dependency review: successful dependency teardown now rolls back any open
+request-session transaction; evidence-write SQL errors become typed
+`AuthorizationEvidenceUnavailable` failures mapped to retryable `503`; and
+successful existing-actor GET/PATCH requests advance
+`ActorProfile.last_seen_at` and `ActorIdentityLink.last_verified_at` in the
+route-owned transaction. Its internal evidence records 275 focused behavior
+tests, 90.17 percent branch-aware focused coverage, and 17 isolated Alembic
+tests. Final PR checks passed Backend, Agent Gates, and CodeRabbit. REV runtime
+chunks must preserve these merged invariants and still wait for the later AUTH
+definition-of-done gate owned by each consumer, then consume
 `AuthorizationService.require(action_id, resource_context)`, canonical resource
 contexts, decision links, revocation invalidation, and provisioned system actors
 without importing grant persistence into the review module.

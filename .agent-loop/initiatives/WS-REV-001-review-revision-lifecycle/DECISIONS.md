@@ -27,11 +27,12 @@ imports, compatibility aliases, fallback constructors, and dual factory paths
 are prohibited.
 
 AUTH remains the transaction-composition owner for its FastAPI dependency.
-Before REV consumes that dependency, generic successful teardown must not
-commit an open feature transaction, evidence persistence failures must use the
-stable retryable service-unavailable contract, and successful canonical actor
-access must preserve verification timestamps. REV records and gates these
-requirements; it does not patch AUTH implementation locally.
+Merged AUTH-08 makes generic successful teardown roll back an open
+feature-owned transaction, maps typed evidence persistence failures to the
+stable retryable service-unavailable contract, and advances canonical actor
+verification timestamps only in successful route-owned transactions. REV
+retains these as regression invariants and does not patch AUTH implementation
+locally.
 
 ### D4 - Review Offer Is Server Selected
 

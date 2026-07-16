@@ -161,3 +161,40 @@ supplied Markdown/PDF contents belong at the canonical WS-REV filenames. The
 temporary `(2)` paths were removed, canonical hashes were refreshed in the
 reference README/SHA256SUMS, and no second archival generation remains in the
 active plan.
+
+## AUTH-08 Dependency Refresh - 2026-07-16
+
+`git pull origin main` rebased the four local REV planning commits without
+conflict onto trusted main `aa0fdcd6912e66609e39a2fbd7b65f67be6c62f3`.
+That merge commit is AUTH-08 PR #131; its final branch head is
+`0832358a0262805f553d05b50b0d778e6e6ad995`.
+
+REV reviewed the merged runtime, migration, tests, AUTH evidence, and external
+review response. AUTH-08 resolves all three AUTH-07B consumption findings:
+
+- dependency teardown rolls back rather than committing an open caller-owned
+  transaction;
+- typed authorization-evidence persistence failure maps once to retryable
+  `503 service_unavailable`; and
+- successful existing-actor GET/PATCH routes advance both canonical
+  verification timestamps in the route-owned transaction while denial or
+  persistence failure rolls them back.
+
+The merged catalogue now contains 74 PermissionIds and 57 ActionIds: 9 active
+and 48 planned. All 20 existing revised-spec submission/review actions remain
+planned, the four later REV additions remain absent, and all 24 REV dependencies
+remain inactive. The later AUTH-owned migration is therefore exactly 57-to-61,
+producing 9 active and 52 planned without activating an action early.
+
+AUTH evidence records 275 focused behavior tests at 90.17 percent branch-aware
+focused coverage, 17 isolated Alembic tests, final Backend run `29481047118`,
+PR-head Agent Gates runs `29481047119` and `29481057005`, final-head Agent Gates
+run `29482246184`, and successful CodeRabbit.
+The three former blockers are retained as regression invariants at every REV
+consumer rather than unresolved AUTH work.
+
+ART PR #129 remains open and conflict-blocked at
+`a7432c87719e694038dae5b386b7c9b3ecf9e9b4` despite green checks. PR #128 remains
+parked and unpushed. Final PLAN publication review and exact-SHA evidence binding
+remain deferred until ART merges and its contracts are reconciled from trusted
+main.

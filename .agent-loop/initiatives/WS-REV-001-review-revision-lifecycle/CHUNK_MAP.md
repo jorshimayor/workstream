@@ -12,7 +12,7 @@ explicit start signal.
 |---|---|---:|---|---|
 | `WS-REV-001-PLAN` | Review And Revision Lifecycle Planning | L0 | None | Human-approved; parked for ART PR #129 conflict resolution and merge |
 | `WS-REV-001-01` | Canonical Contract Adoption And Dependency Conformance | L1 | Plan approval; current dependency refresh | Proposed |
-| `WS-REV-001-02` | Locked Review Policy And Task Lifecycle Alignment | L1 | AUTH DoD plus AUTH-07B transaction/error/timestamp repair proof; ART contract stable; D6 behavior approved | Proposed |
+| `WS-REV-001-02` | Locked Review Policy And Task Lifecycle Alignment | L1 | AUTH DoD on current main; retain merged AUTH-08 transaction/error/timestamp invariants; ART contract stable; D6 behavior approved | Proposed |
 | `WS-REV-001-03` | Review Queue And Lease Persistence | L1 | 02 merged; WS-CON-03B compensation-policy persistence merged | Proposed |
 | `WS-REV-001-04` | Immutable Review, Findings, And Replay Persistence | L1 | 03 merged; WS-CON-02A shared outbox persistence and 02C lifecycle-audit participant merged | Proposed |
 | `WS-REV-001-05` | Checker Admission, Preferred Routing, And Queue Views | L1 | 04; ART submission/checker cutover; AUTH queue reads | Proposed |
@@ -37,7 +37,7 @@ External initiative gates are inserted without changing same-initiative
 successor order:
 
 ```text
-AUTH definition of done + AUTH-07B transaction/error/timestamp repair proof
+AUTH definition of done + merged AUTH-08 transaction/error/timestamp invariants
   + ART stable contracts
   -> WS-REV-001-02
 

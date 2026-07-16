@@ -19,11 +19,12 @@ sequence, and publication of this planning chunk. The approval does not start
 
 ## What Changed
 
-- Reconciled merged AUTH-07B actor, minimal-kernel, contributor, permission, and
-  action contracts plus the prospective AUTH-owned 57-to-61 action-parity gate
-  after unmerged AUTH-08.
-- Added hard AUTH-owned repair gates for generic dependency auto-commit,
-  decision-evidence SQL error mapping, and canonical verification timestamps.
+- Reconciled merged AUTH-08 PR #131 actor, administrative-grant, kernel,
+  permission, and 57-action contracts plus the later AUTH-owned 57-to-61
+  action-parity gate.
+- Verified AUTH-08 resolved generic dependency auto-commit, decision-evidence
+  SQL error mapping, and canonical verification-timestamp blockers; retained
+  them as REV consumer regression invariants.
 - Reconciled ART and CON ownership boundaries without importing sibling runtime
   code or treating uncommitted sibling work as merged contracts.
 - Added a generation-aware joint lifecycle release-control chunk, phase graph,
@@ -34,7 +35,7 @@ sequence, and publication of this planning chunk. The approval does not start
 
 ## Why It Changed
 
-Trusted `main` now contains AUTH-07B and the shared ADR-0014 adapter foundation.
+Trusted `main` now contains AUTH-08 and the shared ADR-0014 adapter foundation.
 The plan needed exact canonical identities, action accounting, integration
 ownership, and an operable joint activation/shutdown contract before runtime
 work could safely begin.
@@ -87,15 +88,22 @@ python3 scripts/check_internal_review_evidence.py
 python3 scripts/test_agent_gates.py
 ```
 
-The AUTH/REV accounting check proves 74 PermissionIds and 50 registered
-ActionIds split into 2 active actor-self actions and 48 planned actions. All 20
-existing revised-spec actions are present but planned, four additive actions are
-absent and gated, and all 24 WS-REV dependencies are inactive.
+All deterministic checks pass except `check_internal_review_evidence.py`, which
+correctly rejects the historical reviewed SHA after the AUTH-08/main rebase.
+Final exact-SHA publication evidence remains deferred until ART #129 merges.
 
-AUTH-08 remains unmerged. Its amended contract projects 57 actions with 9 active
-and 48 planned; the four later REV additions require exact 57-to-61 parity and
-produce 9 active and 52 planned while all 24 REV dependencies remain inactive
-until their owning chunks.
+The AUTH/REV accounting check proves 74 PermissionIds and 57 registered
+ActionIds split into 9 active actions and 48 planned actions. All 20 existing
+revised-spec actions are present but planned, four additive actions are absent
+and gated, and all 24 WS-REV dependencies are inactive. The four later REV
+additions require exact 57-to-61 parity and produce 9 active and 52 planned
+while all 24 dependencies remain inactive until their owning chunks.
+
+AUTH-08 merged through PR #131 at trusted-main
+`aa0fdcd6912e66609e39a2fbd7b65f67be6c62f3`, final branch head
+`0832358a0262805f553d05b50b0d778e6e6ad995`. Its evidence records 275 focused
+behavior tests, 90.17 percent branch-aware focused coverage, 17 isolated
+Alembic tests, and green final Backend, Agent Gates, and CodeRabbit checks.
 
 ## Test Delta
 
@@ -109,14 +117,16 @@ merge controls change.
 
 ## Reviewer Results
 
-Senior engineering, QA/test, security/auth, product/ops, architecture, docs, and
-reuse/dedup all passed after valid findings were repaired. The detailed evidence
-and reviewer run IDs are recorded in the internal-review evidence and review log.
+Historical PLAN review passed senior engineering, QA/test, security/auth,
+product/ops, architecture, docs, and reuse/dedup after valid findings were
+repaired. The current AUTH-08 dependency refresh received a separate exact-diff
+fanout recorded in `WS-REV-001-AUTH-08-dependency-review.md`. Neither review
+rebinds final publication evidence, which remains deferred until ART #129 merges.
 
 ## External Review
 
 The earlier PR revision passed Backend, Agent Gates, and CodeRabbit. The
-AUTH-07B/ART dependency refresh requires new checks and human review before the
+AUTH-08/ART dependency refresh requires new checks and human review before the
 PR is updated or merged.
 
 ## Remaining Risks
@@ -126,9 +136,9 @@ and dispatch/callback contracts remain hard merged-SHA gates at their owning
 chunks. Joint lifecycle activation remains Operator-controlled and cannot occur
 until recovery, operations, and live-drill proof are complete.
 
-AUTH must also repair generic dependency auto-commit, authorization-evidence
-SQL error mapping, and canonical verification timestamps before any REV runtime
-consumer is activated.
+REV runtime consumers must preserve AUTH-08's rollback-only dependency teardown,
+typed authorization-evidence `503` mapping, and route-owned canonical
+verification-timestamp behavior. Missing or regressed proof blocks activation.
 
 ## Follow-Up Work
 

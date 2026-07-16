@@ -26,17 +26,17 @@
 - `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/`
 - `.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/`
 
-AUTH-07A discovery from `3ab25cf3b1e99336c635a318101375bb4bebdf91`
-was refreshed against merged AUTH-07B at trusted-main
-`90eca12f6398f2ef168e634244d912765572c3e5`. AUTH-07B installs the minimal
-deny-by-default kernel and makes 2 of 50 ActionIds active; the remaining 48,
-including all 20 existing revised-spec submission/review actions, stay planned.
-The amended but unmerged AUTH-08 contract projects 57 actions after AUTH-08: 9
-active and 48 planned. The four additive REV actions then require exact 57-to-61
-typed catalogue/owner/PostgreSQL parity, producing 9 active and 52 planned. All
-24 REV dependencies stay inactive until their owning REV chunks activate them.
-AUTH-08 runtime/merge, later AUTH definition-of-done chunks, and AUTH-owned
-kernel transaction/error/timestamp repairs remain runtime gates.
+AUTH-07A/07B discovery was refreshed against merged AUTH-08 PR #131 at
+trusted-main `aa0fdcd6912e66609e39a2fbd7b65f67be6c62f3`, whose final branch head is
+`0832358a0262805f553d05b50b0d778e6e6ad995`. AUTH-08 retains the minimal
+deny-by-default kernel, adds seven active administrative actions, and establishes
+exactly 57 ActionIds: 9 active and 48 planned. All 20 existing revised-spec
+submission/review actions stay planned. The four additive REV actions require
+exact 57-to-61 typed catalogue/owner/PostgreSQL parity, producing 9 active and
+52 planned. All 24 REV dependencies stay inactive until their owning REV chunks
+activate them. AUTH-08 also provides the required transaction teardown,
+decision-evidence `503`, and canonical verification-timestamp repairs. Later
+AUTH definition-of-done chunks remain runtime gates at their owning REV chunks.
 
 ## Cross-worktree discovery evidence
 
