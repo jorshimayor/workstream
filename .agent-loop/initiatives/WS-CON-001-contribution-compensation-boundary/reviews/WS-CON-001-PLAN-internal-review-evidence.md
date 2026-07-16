@@ -1,5 +1,97 @@
 # Internal Review Evidence: WS-CON-001-PLAN
 
+## 2026-07-16 AUTH-08 And Parallel-REV Reconciliation
+
+This addendum is the current authoritative review state and supersedes older
+AUTH counts, trusted-main SHAs, ActionOwner assumptions, role-candidate outcomes
+and REV freshness statements below. Trusted `main`
+`aa0fdcd6912e66609e39a2fbd7b65f67be6c62f3` includes AUTH-08 through PR #131.
+
+Reviewed code SHA: 9df6eace4921755cdd39759cece8e49c9a885382
+
+Reviewed planning-tree SHA-256:
+`7c49d006f505fe923e0194e1331e6e9ab7fb7da36ff506c8785f3c955ec2e372`
+
+The tree digest excludes this evidence file and is reproduced from the
+initiative directory with:
+
+```bash
+find . -type f ! -path './reviews/WS-CON-001-PLAN-internal-review-evidence.md' -print0 | sort -z | xargs -0 sha256sum | sha256sum
+```
+
+Reviewed at: 2026-07-16T09:17:13Z
+
+Reviewer run IDs: architecture/senior/reuse=`/root/auth08_arch_review`;
+QA/test/product/ops/docs=`/root/auth08_qa_product_review`;
+security/auth/privacy=`/root/auth08_security_review`
+
+| Reviewer | Result | Blocking findings | Notes |
+|---|---|---|---|
+| senior engineering | PASS | None | Chunk gates, conditional human decisions, exact ownership and operational commit boundaries are coherent. |
+| QA/test | PASS | None | AUTH/source/REV freshness assertions, conditional role outcomes, chunk-local evidence and release proof are executable. |
+| security/auth | PASS | None | D10, D11, D12, exact matched evidence, service separation and no-CON-auth boundaries are fail-closed. |
+| product/ops | PASS | None | PaymentPolicy removal remains complete; delivery/award/audit role conflicts remain explicit human decisions rather than silent policy. |
+| architecture | PASS | None | All 23 actions map once to proposed activation custody; feature ownership, AUTH activation, route commits, ART and outbox boundaries do not cross. |
+| CI integrity | N/A - with approved reason | None | Planning Markdown only; no workflow, dependency, runner, threshold, test or coverage configuration changed. |
+| docs | PASS | None | Main, source hashes, clean REV head, planning-versus-runtime language and blockers are truthful. |
+| reuse/dedup | PASS | None | One prepared D10 protocol and existing AUTH grant, outbox, ART, session, fence and composition abstractions are reused. |
+| test delta | N/A - with approved reason | None | No runtime test file changed; every later runtime chunk retains test-delta review and isolated evidence gates. |
+
+Open sub-agent sessions: none
+
+Valid findings addressed: yes
+
+- Rebased the branch onto merged AUTH-08. Canonical main now has 74
+  PermissionIds, 57 ActionIds, nine active self/admin actions, 48 planned
+  actions, eight resource-context variants and actor-self/AdminRoleGrant matched
+  authorities. All 23 proposed WS-CON actions, both proposed service permissions
+  and the upstream `task.claim` ActionId remain absent.
+- Reused AUTH-08's resource-context digest, matched grant/project evidence,
+  rollback-only dependency teardown and typed retryable evidence-failure path.
+  Hidden domain services flush without committing; every actual route owns its
+  complete decision/business transaction. The service callback commits its
+  decision, receipt and idempotency state atomically inside its fence.
+- Kept D10 AUTH-owned and single-use: authority locks first, final product facts
+  are evaluated once, AUTH stages one decision and never commits, and CON never
+  queries AUTH state or supplies role policy.
+- Added D11 as an unresolved human cross-spec decision. Merged AUTH gives
+  Finance—but not Operator—delivery-reconcile candidacy and gives Project
+  Manager the broad award-read candidate; audit candidates also differ. Later
+  gates support either human outcome and require only the AUTH amendments or
+  CON-01 active-matrix changes that outcome selects.
+- Added D12 because canonical ActionOwner means the chunk allowed to activate.
+  The recommended model proposes eight exact AUTH activation owners mapping all
+  23 WS-CON actions once plus two AUTH review-action custodians. The globally
+  reviewed alternative must add a separate closed activation-custody type.
+  Missing, dual or feature-side activation custody is forbidden.
+- Moved role-selection and negative grant tests to AUTH activation. CON chunks
+  validate typed decision causation against canonical product facts and do not
+  grow role-aware fakes or a second policy engine.
+- Refreshed the parallel REV dependency to clean committed head
+  `a13bf352147cbb2c65742802e7c74a9478e5013b`. Its AUTH-08 dependency review is
+  accurate, but it remains non-consumable pending ART/final evidence plus
+  review choreography, D12 custody and handler-claims-OutboxEvent repair.
+- Preserved the human-approved complete PaymentPolicy semantic cutover in
+  CON-05A and physical removal in CON-05B. Only legacy-row treatment remains a
+  separate human decision.
+
+Deterministic evidence passed: `git diff --check`; Markdown links for 38 changed
+Markdown files; stale Workstream wording; artifact-contract and loop-memory
+state; 71 agent-gate tests; two focused synchronous AUTH catalogue/role-policy
+tests; exact trusted-main ancestry; all three WS-CON source hashes including the
+tracked original through `git show`; clean REV head assertion; direct AUTH
+catalogue/runtime/role assertions; and exact D12 23/23 unique owner coverage.
+The two focused AUTH tests emitted only expected environment warnings because
+the local system interpreter lacks the async pytest plugin; no async test was
+claimed. The authorization stale-doc scan continues to flag exactly ten
+`HUMAN_WORKER_VOCABULARY` occurrences in the explicitly non-canonical working
+transcription. CON-01 owns its byte-preserving archive classification and
+active-spec reconciliation; this is not a waiver for active documentation.
+
+Application/runtime code changed: no. The original PDF deletion remains the
+pre-existing unstaged user-worktree change and is excluded from the reviewed
+content/evidence commits.
+
 ## 2026-07-15 AUTH-07B Executable-Boundary Reconciliation
 
 This addendum is the current authoritative review state. It supersedes the
