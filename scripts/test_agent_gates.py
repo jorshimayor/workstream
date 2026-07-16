@@ -3467,6 +3467,7 @@ def test_feature_owned_authorization_activation_is_rejected() -> None:
     stale_statements = (
         "Actions remain non-executable until their owning chunks activate them.",
         "Later owner chunks activate catalogue rows in typed code.",
+        "An owning cutover chunk activates an action after behavior proof.",
         "Artifact service actions are activated by their owning WS-ART chunks.",
         "Each owning WS-REV chunk activates its review action.",
         "The WS-ART feature chunk owns the actions it activates.",

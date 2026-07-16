@@ -251,9 +251,11 @@ final no-bypass proof.
 Reserved planned metadata contains only stable `ActionId`, approved
 `PermissionId`, owning specification/chunk, and availability. It cannot
 authorize and does not predefine a foreign-domain target, facts, guards, or
-composer. An owning cutover chunk activates an action only with its adopted
-domain contract, canonical resource composer, route or command declaration,
-allow/deny behavior proof, and generated manifest-delta proof.
+composer. An owning feature cutover supplies its adopted domain contract,
+canonical resource composer, route or command declaration, allow/deny behavior
+proof, and generated manifest delta. A dedicated AUTH activation custodian alone
+integrates the evaluator and changes action availability after that hidden
+behavior has merged.
 
 `ActionId` is security-significant evidence. AUTH-07A adds typed/PostgreSQL
 audit parity; AUTH-07B adds it to `AuthorizationDecision`, bounded logs/metrics,

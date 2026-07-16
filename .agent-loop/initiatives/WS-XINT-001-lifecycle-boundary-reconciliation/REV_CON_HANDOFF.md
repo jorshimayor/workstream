@@ -9,8 +9,9 @@ all separately exposed CON actions.
 
 Core ContributionRecord creation performs no synchronous ART capability call,
 provider I/O, contribution-evidence artifact write, or ART authorization action.
-It may store the already-stabilized `source_submission_artifact_digest` supplied
-by REV as immutable lineage. CON does not load or rederive that value from ART.
+It copies the already-stabilized `SubmissionVersion.artifact_hash` supplied by
+REV into the existing `ContributionRecord.artifact_hash` lineage field. CON does
+not load or rederive that value from ART.
 
 ## Preconditions
 
@@ -72,8 +73,8 @@ single transaction owner, then remove any no-op contribution fallback.
 ## CON owner response
 
 CON must keep the participant flush-only, remove mandatory ART evidence from
-core contribution gates, preserve immutable digest lineage, and own all outbox,
-award, fulfillment, and projection transitions.
+core contribution gates, preserve the canonical `artifact_hash` lineage, and
+own all outbox, award, fulfillment, and projection transitions.
 
 ## AUTH owner response
 

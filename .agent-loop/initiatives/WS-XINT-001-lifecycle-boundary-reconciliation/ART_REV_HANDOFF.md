@@ -65,11 +65,12 @@ Binding finalization uses the new closed service action
 `artifact.review_evidence.binding.create`, mapped to the existing
 `artifact.binding.create` PermissionId and assigned only to the existing
 `workstream.artifact.binding` service identity. `AUTH_ART_REV_EVIDENCE` is its
-AUTH activation custodian. AUTH registers it as planned; ART's separately
-approved `WS-ART-001-REV-EVIDENCE` capability chunk supplies hidden canonical
-resource facts, guards, binding behavior, and tests; AUTH then integrates the
-evaluator and alone activates it. Existing Operator read actions and generic
-PermissionId tokens cannot substitute for this ActionId.
+AUTH activation custodian. AUTH registers it as planned; a future, separately
+approved `WS-ART-001-REV-EVIDENCE` capability chunk would supply hidden
+canonical resource facts, guards, binding behavior, and tests; AUTH would then
+integrate the evaluator and alone activate it. This planning chunk neither
+approves nor starts that future ART chunk. Existing Operator read actions and
+generic PermissionId tokens cannot substitute for this ActionId.
 
 ## Review decision
 

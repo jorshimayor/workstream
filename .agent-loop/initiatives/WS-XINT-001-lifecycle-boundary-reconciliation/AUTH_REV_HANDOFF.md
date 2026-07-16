@@ -46,9 +46,18 @@ PermissionId mappings. Partial transfer or dual writers are forbidden.
 At minimum the mapping must cover queue read/inspect, claim/release/decline,
 preference and lease expiry, context/chain reads, finding and response evidence,
 decision, force release, queue override/correction/close, reconciliation,
-artifact-reference reconciliation, projection rebuild, and the four planned
-revision/release additions. Exact action counts must be derived from the merged
-catalogue at implementation time, not copied from stale worktree prose.
+artifact-reference reconciliation, and projection rebuild. The four proposed
+additive REV ActionIds are exact and are not registered on trusted `main`:
+
+- `review.revision_context.repair` -> `project.task.manage`;
+- `review.revision_context.legacy_close` -> `operations.reconcile.run`;
+- `review.revision_obligation.close` -> `project.task.manage`;
+- `review.lifecycle.activation.manage` -> `operations.reconcile.run`.
+
+They remain out of runtime scope until a separate AUTH registration contract is
+approved and merged. Exact current-action counts must be derived from the merged
+catalogue at implementation time; the four proposed additions must not be
+silently counted as registered actions.
 
 Review evidence binding also requires the separately registered
 `artifact.review_evidence.binding.create` service action defined by the ART/REV
