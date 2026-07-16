@@ -15,13 +15,16 @@ actionable comments against head `c4200a7`.
    explicitly includes the package so installed-wheel replay matches source
    checkout replay. Tests prove the revision import boundary and full mapped
    upgrade/downgrade behavior using an envelope produced by the current
-   operator tool.
+   operator tool. The revision supplies its checkout/deployment root explicitly,
+   so installed-wheel module location cannot weaken repository/worktree path
+   custody.
 2. **CLI engine disposal used a second event loop - valid, fixed.** One async
    entrypoint now runs the workflow and `dispose_engine()` on the same event
    loop. Cleanup failure cannot replace an existing mapping/database failure;
    `database_cleanup_failed` is returned only when workflow execution itself
-   succeeded. Regression tests prove loop identity and both error-priority
-   cases.
+   succeeded. Cleanup `BaseException`, including cancellation, cannot replace
+   an existing privacy-bounded failure. Regression tests prove loop identity
+   and both error-priority cases.
 
 ## Informational Warning Not Applied
 
@@ -32,7 +35,7 @@ repository threshold. No docstring gate or exclusion changed.
 
 ## Validation
 
-- Frozen-contract and CLI lifecycle tests: passed.
+- Frozen-contract, installed-location custody, and CLI lifecycle tests: passed.
 - Focused revision `0023` mapped upgrade/downgrade test: passed against isolated
   PostgreSQL.
 - Ruff over the application, migration-only package, tests, operator script,

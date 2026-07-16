@@ -78,7 +78,9 @@ The first GitHub Backend and Agent Gates runs passed. CodeRabbit found two
 valid issues: mutable historical migration imports and cross-event-loop engine
 cleanup. The repair packages a versioned migration-only `0023` contract and
 uses one async execution/cleanup loop with explicit error precedence. Focused
-regressions pass; refreshed external checks remain pending on the repair head.
+regressions include installed-wheel location independence and cleanup
+cancellation precedence; refreshed external checks remain pending on the repair
+head.
 
 ## Remaining Risk
 

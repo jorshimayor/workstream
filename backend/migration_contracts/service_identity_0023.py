@@ -41,7 +41,6 @@ MAPPING_FILE_ENV = "WORKSTREAM_SERVICE_ACTOR_IDENTITY_MAPPING_FILE"
 MAX_MAPPING_FILE_BYTES = 64 * 1024
 MAX_MAPPINGS = len(SERVICE_IDENTITIES)
 MAPPING_SCHEMA_VERSION = 1
-REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 _DATABASE_BINDING_PATTERN = re.compile(r"postgres-v1:[0-9a-f]{64}")
 _GENERATED_AT_PATTERN = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z")
 
@@ -423,8 +422,8 @@ def _parse_private_json(data: bytes) -> Any:
         raise ServiceIdentityMappingError("service_mapping_file_invalid") from None
 
 
-def _git_common_directory() -> Path | None:
-    marker = REPOSITORY_ROOT / ".git"
+def _git_common_directory(repository_root: Path) -> Path | None:
+    marker = repository_root / ".git"
     if marker.is_dir():
         return marker.resolve()
     try:
@@ -445,10 +444,10 @@ def _git_common_directory() -> Path | None:
     return resolved.parent.parent
 
 
-def protected_mapping_roots() -> tuple[Path, ...]:
+def protected_mapping_roots(repository_root: Path) -> tuple[Path, ...]:
     """Return every linked worktree root plus shared Git metadata."""
-    common = _git_common_directory()
-    roots = {REPOSITORY_ROOT.resolve()}
+    common = _git_common_directory(repository_root)
+    roots = {repository_root.resolve()}
     if common is None:
         return tuple(roots)
     roots.update({common, common.parent.resolve()})
@@ -470,7 +469,12 @@ def protected_mapping_roots() -> tuple[Path, ...]:
     return tuple(sorted(roots, key=str))
 
 
-def validate_mapping_path(path: Path, *, output: bool = False) -> Path:
+def validate_mapping_path(
+    path: Path,
+    *,
+    repository_root: Path,
+    output: bool = False,
+) -> Path:
     """Require an absolute path outside every repository and Git root."""
     if not path.is_absolute():
         raise ServiceIdentityMappingError("service_mapping_path_forbidden")
@@ -482,7 +486,7 @@ def validate_mapping_path(path: Path, *, output: bool = False) -> Path:
         raise ServiceIdentityMappingError("service_mapping_path_unavailable") from None
     if any(
         resolved == root or resolved.is_relative_to(root)
-        for root in protected_mapping_roots()
+        for root in protected_mapping_roots(repository_root)
     ):
         raise ServiceIdentityMappingError("service_mapping_path_forbidden")
     return resolved
@@ -587,6 +591,7 @@ def load_migration_mapping(
     rows: Sequence[ExistingServiceActorRow],
     *,
     database_binding: str,
+    repository_root: Path,
 ) -> ServiceActorIdentityMappingEnvelope | None:
     """Load the required exact mapping from the migration-only environment."""
     raw_path = os.environ.get(MAPPING_FILE_ENV)
@@ -597,7 +602,9 @@ def load_migration_mapping(
     if not raw_path:
         raise ServiceIdentityMappingError("service_mapping_required", count=len(rows))
     return verify_envelope(
-        load_envelope(validate_mapping_path(Path(raw_path))),
+        load_envelope(
+            validate_mapping_path(Path(raw_path), repository_root=repository_root)
+        ),
         rows,
         database_binding=database_binding,
     )

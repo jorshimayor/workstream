@@ -12,9 +12,12 @@ from uuid import NAMESPACE_URL, uuid4, uuid5
 import pytest
 from alembic import command
 from alembic.config import Config
+from migration_contracts import service_identity_0023 as frozen_service_identity_contract
 from migration_contracts.service_identity_0023 import (
     SERVICE_IDENTITY_VALUES as FROZEN_SERVICE_IDENTITY_VALUES,
     ServiceIdentityMappingError as FrozenServiceIdentityMappingError,
+    protected_mapping_roots as frozen_protected_mapping_roots,
+    validate_mapping_path as validate_frozen_mapping_path,
 )
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError, IntegrityError
@@ -66,7 +69,43 @@ def test_service_identity_migration_contract_is_frozen_from_application_modules(
     assert "from migration_contracts.service_identity_0023 import" in revision_source
     assert "app.modules" not in revision_source
     assert "app.modules" not in contract_source
+    assert "repository_root=MIGRATION_REPOSITORY_ROOT" in revision_source
+    assert "REPOSITORY_ROOT" not in contract_source
     assert FROZEN_SERVICE_IDENTITY_VALUES == tuple(identity.value for identity in ServiceIdentity)
+
+
+def test_frozen_mapping_path_custody_is_independent_of_install_location(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repository_root = Path(__file__).resolve().parents[2]
+    monkeypatch.setattr(
+        frozen_service_identity_contract,
+        "__file__",
+        "/installed/site-packages/migration_contracts/service_identity_0023.py",
+    )
+    roots = frozen_protected_mapping_roots(repository_root)
+    assert repository_root in roots
+    for root in roots:
+        with pytest.raises(
+            FrozenServiceIdentityMappingError,
+            match="service_mapping_path_forbidden",
+        ):
+            validate_frozen_mapping_path(
+                root / "private-envelope.json",
+                repository_root=repository_root,
+                output=True,
+            )
+
+    deployment_root = tmp_path / "deployed"
+    private_root = tmp_path / "private"
+    deployment_root.mkdir()
+    private_root.mkdir()
+    assert validate_frozen_mapping_path(
+        private_root / "private-envelope.json",
+        repository_root=deployment_root,
+        output=True,
+    ) == private_root / "private-envelope.json"
 
 
 def test_alembic_upgrade_and_downgrade(isolated_database_env: str, migration_lock) -> None:

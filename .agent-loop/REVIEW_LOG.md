@@ -7,11 +7,16 @@ depended on mutable application mapping helpers, and the operator CLI disposed
 its async engine on a second event loop. The repair moves all historical replay
 inputs into the packaged versioned `migration_contracts.service_identity_0023`
 module and runs execution plus cleanup on one loop with explicit error
-precedence. Frozen-import, loop-identity, cleanup-priority, and mapped migration
-tests pass. The bot's separate docstring warning conflicts with the enforced
-repository result: GitHub Backend passes and configured local coverage is 92.1
-percent. Exact-head internal re-review remains required before pushing the
-repair.
+precedence. Security re-review then caught two valid edge cases before push:
+installed-wheel location could not identify the deployment repository, and
+cleanup cancellation could mask an earlier bounded failure. Revision `0023`
+now supplies its repository root explicitly to the location-independent frozen
+custody contract, and cleanup error precedence covers `BaseException`.
+Frozen-import, wheel-location, loop-identity, cancellation-priority, and mapped
+migration tests pass. The bot's separate docstring warning conflicts with the
+enforced repository result: GitHub Backend passes and configured local coverage
+is 92.1 percent. Exact-head internal re-review remains required before pushing
+the repair.
 
 ## 2026-07-16 - WS-AUTH-001-09A Implementation Repaired For Re-review
 

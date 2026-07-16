@@ -95,12 +95,12 @@ async def _execute_and_dispose(args: argparse.Namespace) -> dict:
     except BaseException:
         try:
             await dispose_engine()
-        except Exception:
+        except BaseException:
             pass
         raise
     try:
         await dispose_engine()
-    except Exception:
+    except BaseException:
         raise DatabaseCleanupError from None
     return report
 

@@ -548,7 +548,7 @@ def test_cli_preserves_workflow_error_when_cleanup_also_fails(
         raise ServiceIdentityMappingError("expected_mapping_failure")
 
     async def dispose() -> None:
-        raise RuntimeError("simulated cleanup failure")
+        raise asyncio.CancelledError
 
     monkeypatch.setattr(mapping_cli, "_execute", execute)
     monkeypatch.setattr(mapping_cli, "dispose_engine", dispose)
@@ -563,7 +563,7 @@ def test_cli_reports_cleanup_failure_only_after_success(
         return {"status": "valid"}
 
     async def dispose() -> None:
-        raise RuntimeError("simulated cleanup failure")
+        raise asyncio.CancelledError
 
     monkeypatch.setattr(mapping_cli, "_execute", execute)
     monkeypatch.setattr(mapping_cli, "dispose_engine", dispose)

@@ -8,6 +8,7 @@ Create Date: 2026-07-16
 from __future__ import annotations
 
 from alembic import op
+from pathlib import Path
 from pydantic import ValidationError
 import sqlalchemy as sa
 
@@ -23,6 +24,7 @@ from migration_contracts.service_identity_0023 import (
 revision = "0023_service_actor_identity"
 down_revision = "0022_bootstrap_admin_grants"
 branch_labels = depends_on = None
+MIGRATION_REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 
 AUTH_09_ACTIONS = (
     "actor.profile.read",
@@ -285,7 +287,11 @@ def upgrade() -> None:
     )
     rows = _existing_service_rows(bind)
     binding = _database_binding(bind)
-    envelope = load_migration_mapping(rows, database_binding=binding)
+    envelope = load_migration_mapping(
+        rows,
+        database_binding=binding,
+        repository_root=MIGRATION_REPOSITORY_ROOT,
+    )
     mapping = {row.actor_profile_id: row.service_identity.value for row in envelope.mappings} if envelope else {}
 
     op.add_column("actor_profiles", sa.Column("service_identity", sa.String(80)))
