@@ -68,7 +68,7 @@ Contributors.
 
 Ruff, merge-intent validation, all stale scans, links, 71 agent-gate tests,
 docstring coverage, and diff integrity pass. Exact reviewed SHA
-`2b2fd92f671c772f56f8fffba0b5d85ca9786414` passed senior engineering,
+`beab5d9149a04c5ab0f8f4ce226b1b61ce24190a` passed senior engineering,
 QA/test, security/auth, product/ops, architecture, CI integrity, docs,
 reuse/dedup, and test-delta review after all valid findings were repaired.
 

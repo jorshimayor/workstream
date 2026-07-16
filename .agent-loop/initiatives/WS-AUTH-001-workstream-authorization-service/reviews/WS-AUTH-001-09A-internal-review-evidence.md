@@ -1,8 +1,8 @@
 # WS-AUTH-001-09A Internal Review Evidence
 
-Reviewed code SHA: `2b2fd92f671c772f56f8fffba0b5d85ca9786414`
-Reviewed implementation SHA: `6b1c6c8898abff25ba603f1edf3d00f11211a4a3`
-Reviewed at: `2026-07-16T13:26:45Z`
+Reviewed code SHA: `beab5d9149a04c5ab0f8f4ce226b1b61ce24190a`
+Reviewed implementation SHA: `beab5d9149a04c5ab0f8f4ce226b1b61ce24190a`
+Reviewed at: `2026-07-16T14:27:18Z`
 Reviewer run IDs: auth09_contract_senior, auth09_contract_qa,
 auth09_contract_security
 Reviewer tracks: senior engineering, QA/test, security/auth, product/ops,
@@ -26,12 +26,18 @@ architecture, CI integrity, docs, reuse/dedup, and test delta
 - Strict canonical JSON, owner-only regular files, database/checksum binding,
   shared CLI/Alembic path custody, redacted failures, and no-Git deployment
   behavior pass adversarial tests.
+- External-review repair tests prove revision `0023` imports only its packaged
+  frozen contract, current v1 envelopes remain compatible, installed-wheel
+  location cannot weaken custody, and async engine cleanup stays on one loop
+  without masking an earlier bounded failure. Fifty-two focused tests, one
+  mapped isolated migration test, and an actual wheel-import custody drill pass.
 - Ruff, merge-intent validation, stale Workstream/authorization/artifact scans,
   Markdown links, 71 agent-gate tests, 92.1 percent docstring coverage, and diff
   integrity pass.
-- No workflow, dependency, package, skip, exclusion, or coverage threshold was
-  changed. GitHub Backend remains authoritative for the repository-wide 78
-  percent floor.
+- No workflow, dependency, skip, exclusion, or coverage threshold was changed.
+  Package discovery adds only the frozen `migration_contracts` package; the
+  built wheel contains its two expected files. GitHub Backend remains
+  authoritative for the repository-wide 78 percent floor.
 
 ## Reviewer Results
 
@@ -58,6 +64,12 @@ supporting deployments without Git metadata. Retained migration evidence has
 exact count/digest/database-binding constraints and rejects update, delete, or
 truncate.
 
+CodeRabbit's valid findings are also repaired. Historical revision `0023` no
+longer imports mutable actor helpers; it receives explicit repository custody
+while using a packaged frozen contract. The operator CLI executes and disposes
+its async engine on one event loop, preserves an existing bounded error across
+cleanup cancellation, and reports cleanup failure only after successful work.
+
 Valid findings addressed: yes
 
 Open sub-agent sessions: none
@@ -69,5 +81,5 @@ parent directory. A host crash may require regenerating the private envelope;
 partial, missing, or unverifiable evidence cannot pass migration or activate
 authority. This is a nonblocking operational recovery risk.
 
-PR publication, GitHub Backend, Agent Gates, CodeRabbit, and explicit human
-merge approval remain. Do not start `WS-AUTH-001-09B` automatically.
+Refreshed GitHub Backend, Agent Gates, CodeRabbit, and explicit human merge
+approval remain. Do not start `WS-AUTH-001-09B` automatically.

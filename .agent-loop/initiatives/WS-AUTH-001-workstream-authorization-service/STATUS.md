@@ -129,7 +129,7 @@ None.
 | `WS-AUTH-001-07B` | Merged | `codex/ws-auth-001-07b-deny-default-kernel` | #130 | Merged as `90eca12`; signed memory passed. |
 | `WS-AUTH-001-08` | Merged | `codex/ws-auth-001-08-bootstrap-admin-grants` | #131 | Merged as `aa0fdcd`; signed memory passed. |
 | `WS-AUTH-001-09` | Split | `codex/ws-auth-001-09-actor-state-service-actors` | - | Required L1 review rejected the combined contract before runtime edits. |
-| `WS-AUTH-001-09A` | Ready for PR | `codex/ws-auth-001-09-actor-state-service-actors` | - | Implementation/evidence complete; all required exact-head reviewer tracks pass. |
+| `WS-AUTH-001-09A` | External review | `codex/ws-auth-001-09-actor-state-service-actors` | #132 | CodeRabbit repairs and exact-head internal re-review pass; refreshed external checks pending. |
 | `WS-AUTH-001-09B` | Proposed | - | - | Controlled fixed service ActorProfile provisioning. |
 | `WS-AUTH-001-09C` | Proposed | - | - | Privacy-bounded actor/link administration reads. |
 | `WS-AUTH-001-09D` | Proposed | - | - | Actor/link lifecycle mutation and final-admin concurrency. |

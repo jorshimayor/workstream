@@ -45,5 +45,5 @@ repository threshold. No docstring gate or exclusion changed.
 
 ## Remaining Gate
 
-Required exact-head internal re-review, refreshed internal evidence, GitHub
-checks, and CodeRabbit re-review remain before human merge approval.
+Exact-head internal re-review passes with no remaining finding. Refreshed GitHub
+checks and CodeRabbit re-review remain before human merge approval.
