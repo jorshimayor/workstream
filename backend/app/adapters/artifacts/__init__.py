@@ -1,13 +1,18 @@
-"""Artifact-store adapter resolution."""
+"""Artifact-store composition and shared scratch construction."""
 
 from __future__ import annotations
 
 from app.core.config import Settings
 from app.interfaces.artifacts import ArtifactConfigurationError, ArtifactStore
+from app.interfaces.external_services import ExternalServiceAdapterFactory
+from app.modules.artifacts.preparation import (
+    ArtifactPreparationLimits,
+    ArtifactScratchManager,
+)
 
 
-def resolve_artifact_store(settings: Settings) -> ArtifactStore:
-    """Resolve the configured artifact provider without implying future support.
+def create_artifact_store(settings: Settings) -> ArtifactStore:
+    """Construct the selected store through one instance-local typed factory.
 
     Args:
         settings: Validated application settings.
@@ -16,11 +21,14 @@ def resolve_artifact_store(settings: Settings) -> ArtifactStore:
         Configured artifact store.
 
     Raises:
-        ArtifactConfigurationError: If storage is disabled or not implemented.
+        ExternalServiceConfigurationError: If the provider is not registered.
     """
-    if settings.artifact_store_backend == "local":
-        from app.adapters.artifacts.local import LocalStorageAdapter
+    from app.adapters.artifacts.local import LocalStorageAdapter
 
+    factory = ExternalServiceAdapterFactory[ArtifactStore]("artifact_store")
+
+    def create_local_store() -> ArtifactStore:
+        """Construct the configured development-only LocalStorage provider."""
         if settings.artifact_local_root is None:
             raise ArtifactConfigurationError("local artifact root is not configured")
         return LocalStorageAdapter(
@@ -28,6 +36,40 @@ def resolve_artifact_store(settings: Settings) -> ArtifactStore:
             buffer_bytes=settings.artifact_stream_buffer_bytes,
             lock_timeout_seconds=settings.artifact_operation_lock_timeout_seconds,
         )
-    if settings.artifact_store_backend == "flow_node":
-        raise ArtifactConfigurationError("configured artifact adapter is not available")
-    raise ArtifactConfigurationError("artifact storage is disabled")
+
+    factory.register("local", create_local_store)
+    return factory.create(settings.artifact_store_backend)
+
+
+def artifact_preparation_limits(settings: Settings) -> ArtifactPreparationLimits:
+    """Map validated settings to the one process-independent scratch contract."""
+    return ArtifactPreparationLimits(
+        aggregate_reserved_bytes=settings.artifact_scratch_aggregate_reserved_bytes,
+        maximum_files=settings.artifact_scratch_maximum_files,
+        maximum_concurrency=settings.artifact_scratch_maximum_concurrency,
+        minimum_free_bytes=settings.artifact_scratch_minimum_free_bytes,
+        reservation_ttl_seconds=settings.artifact_scratch_reservation_ttl_seconds,
+        total_deadline_seconds=settings.artifact_preparation_total_deadline_seconds,
+        cleanup_margin_seconds=settings.artifact_scratch_cleanup_margin_seconds,
+        stream_buffer_bytes=settings.artifact_stream_buffer_bytes,
+        maximum_source_bytes=settings.artifact_maximum_bytes,
+    )
+
+
+def create_artifact_scratch_manager(settings: Settings) -> ArtifactScratchManager:
+    """Construct a scratch manager from the canonical settings mapping."""
+    if settings.artifact_scratch_root is None:
+        raise ArtifactConfigurationError("artifact scratch root is not configured")
+    return ArtifactScratchManager(
+        root=settings.artifact_scratch_root,
+        limits=artifact_preparation_limits(settings),
+    )
+
+
+async def cleanup_stale_artifact_scratch(settings: Settings) -> int:
+    """Run one database-independent stale cleanup with shared construction."""
+    manager = create_artifact_scratch_manager(settings)
+    try:
+        return await manager.cleanup_stale()
+    finally:
+        manager.close()

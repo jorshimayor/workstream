@@ -10,6 +10,7 @@ from app.modules.artifacts.models import (
     ArtifactContent,
     ArtifactOperationReceipt,
     ArtifactReplica,
+    ArtifactStorageNamespace,
     ArtifactUploadItem,
     ArtifactUploadSession,
 )
@@ -68,51 +69,53 @@ class ArtifactRepository:
         return replica
 
     async def add_receipt(self, receipt: ArtifactOperationReceipt) -> ArtifactOperationReceipt:
-        """Persist one append-only provider operation receipt."""
+        """Persist one append-only Workstream put receipt."""
         self._session.add(receipt)
         await self._session.flush()
         return receipt
 
-    async def get_receipt(
-        self,
-        adapter: str,
-        service_principal: str,
-        operation: str,
-        idempotency_key: str,
+    async def get_receipt_for_item(
+        self, upload_item_id: str
     ) -> ArtifactOperationReceipt | None:
-        """Load the authoritative Workstream receipt for one operation identity."""
+        """Load the Workstream put receipt for one upload item."""
         result = await self._session.execute(
             select(ArtifactOperationReceipt).where(
-                ArtifactOperationReceipt.adapter == adapter,
-                ArtifactOperationReceipt.service_principal == service_principal,
-                ArtifactOperationReceipt.operation == operation,
-                ArtifactOperationReceipt.idempotency_key == idempotency_key,
+                ArtifactOperationReceipt.upload_item_id == upload_item_id,
             )
         )
         return result.scalar_one_or_none()
 
-    async def get_replica_by_provider_id(
-        self, adapter: str, provider_artifact_id: str
+    async def get_replica_by_provider_ref(
+        self, storage_namespace_id: str, provider_object_ref: str
     ) -> ArtifactReplica | None:
-        """Load one provider replica by its opaque provider identifier."""
+        """Load one replica by namespace and opaque provider reference."""
         result = await self._session.execute(
             select(ArtifactReplica).where(
-                ArtifactReplica.adapter == adapter,
-                ArtifactReplica.provider_artifact_id == provider_artifact_id,
+                ArtifactReplica.storage_namespace_id == storage_namespace_id,
+                ArtifactReplica.provider_object_ref == provider_object_ref,
             )
         )
         return result.scalar_one_or_none()
 
-    async def lock_replica_by_provider_id(
-        self, adapter: str, provider_artifact_id: str
-    ) -> ArtifactReplica | None:
-        """Load one provider replica under a reconciliation row lock."""
-        result = await self._session.execute(
-            select(ArtifactReplica)
-            .where(
-                ArtifactReplica.adapter == adapter,
-                ArtifactReplica.provider_artifact_id == provider_artifact_id,
+    async def claim_storage_namespace(
+        self, namespace: ArtifactStorageNamespace
+    ) -> ArtifactStorageNamespace:
+        """Atomically claim or load the immutable deployment namespace."""
+        await self._session.execute(
+            insert(ArtifactStorageNamespace)
+            .values(
+                id=namespace.id,
+                backend=namespace.backend,
+                adapter=namespace.adapter,
+                provider_profile=namespace.provider_profile,
+                namespace_descriptor=namespace.namespace_descriptor,
+                namespace_fingerprint=namespace.namespace_fingerprint,
             )
-            .with_for_update()
+            .on_conflict_do_nothing(index_elements=[ArtifactStorageNamespace.id])
         )
-        return result.scalar_one_or_none()
+        result = await self._session.execute(
+            select(ArtifactStorageNamespace).where(
+                ArtifactStorageNamespace.id == namespace.id
+            )
+        )
+        return result.scalar_one()

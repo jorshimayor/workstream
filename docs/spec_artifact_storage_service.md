@@ -986,7 +986,7 @@ Implementation is a clean cut:
   without changing the active v1 port;
 - ArtifactStore v1 methods, active callers, LocalStorage's public adapter
   surface, and schema then migrate atomically in the v2 clean-cut chunk;
-- `flow_node` is removed from configuration without an alias;
+- the Flow Node backend is removed from configuration without an alias;
 - obsolete caller-owned URI/hash and storage-scheme fields are removed in
   their owning guide/submission cutovers;
 - the misleading submission `/finalize` repair route is replaced by

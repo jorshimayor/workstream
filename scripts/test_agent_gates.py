@@ -3692,13 +3692,13 @@ def test_artifact_coverage_phase_is_derived_from_work_queue() -> None:
         ROOT = original_root
 
 
-def test_stale_artifact_contracts_foundation_keeps_later_terms_inactive() -> None:
-    """Foundation checks generic neutrality without preempting later cutovers."""
+def test_stale_artifact_contracts_cutover_rejects_reached_terms_only() -> None:
+    """The active cutover rejects reached terms without preempting later phases."""
     gate = load_module(
         "stale_artifact_contracts_foundation",
         "scripts/check_stale_artifact_contracts.py",
     )
-    assert gate.ARTIFACT_CONTRACT_PHASE == "foundation"
+    assert gate.ARTIFACT_CONTRACT_PHASE == "artifact_store_cutover"
     assert (
         gate.scan_text(
             "backend/app/modules/tasks/schemas.py",
@@ -4589,7 +4589,7 @@ def main() -> int:
         test_agent_gate_dependencies_and_workflow_are_pinned,
         test_backend_coverage_thresholds_are_regression_protected,
         test_artifact_coverage_phase_is_derived_from_work_queue,
-        test_stale_artifact_contracts_foundation_keeps_later_terms_inactive,
+        test_stale_artifact_contracts_cutover_rejects_reached_terms_only,
         test_stale_artifact_contracts_active_later_phase_owns_only_reached_terms,
         test_stale_artifact_contracts_malformed_phase_fails_closed,
         test_stale_artifact_contracts_enforce_aws_first_v01,

@@ -12,8 +12,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
-# ARTIFACT_CONTRACT_PHASE: foundation
-ARTIFACT_CONTRACT_PHASE = "foundation"
+# ARTIFACT_CONTRACT_PHASE: artifact_store_cutover
+ARTIFACT_CONTRACT_PHASE = "artifact_store_cutover"
 
 PHASES = (
     "foundation",

@@ -230,3 +230,12 @@ Workstream never calls `ListObjects` or `ListObjectsV2`. The adapter maps only
 404 to missing; 403 always means provider unavailable. Chunk 07 must prove a
 nonexistent opaque challenge key returns 404 under the actual runtime identity
 before AWS activation.
+
+## D28 - Authorization Owns Artifact Service Identities
+
+ART must not invent service principals or activate authorization actions. The
+02A3 put acknowledgement is internal storage evidence and carries no fabricated
+service-principal identity. Later behavior uses only the fixed identities and
+exact permissions provisioned by AUTH: verifier, scheduler, put resolver, and
+binding service. Operator verification retry remains a separate independently
+activated action.

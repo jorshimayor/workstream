@@ -220,7 +220,7 @@ path.
 
 The existing ArtifactStore v1 provider `verify`, `retain`, `release`, and
 receipt methods are removed in the same chunk that migrates LocalStorage and
-all active callers. The dormant `flow_node` backend setting is removed. The new
+all active callers. The dormant Flow Node backend setting is removed. The new
 backend values are exactly `disabled`, `local`, and `s3_compatible`.
 
 Pre-production rows may be rebuilt when obsolete URI/hash or provider-retention

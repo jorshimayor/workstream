@@ -245,11 +245,20 @@ Proof supporting task completion or review decision. Examples: logs, hashes, tes
 ## Artifact Store
 
 The provider-neutral typed capability through which Workstream stores and reads
-private immutable bytes. `LocalStorageAdapter` implements it for development
-and focused tests. `S3CompatibleArtifactStore` implements it for MinIO
-integration and AWS S3 v0.1 production deployments. Providers do
+private immutable bytes. Its v0.1 byte-only operations are `put`, read-only
+`observe_put_result`, `open`, and `head`. `LocalStorageAdapter` implements it
+for development and focused tests. `S3CompatibleArtifactStore` implements it
+for MinIO integration and AWS S3 v0.1 production deployments. Providers do
 not own Workstream authorization, binding, lifecycle, audit, or integrity
 decisions.
+
+## Artifact Storage Namespace
+
+The immutable deployment-level PostgreSQL fence that binds Workstream to one
+configured artifact backend, adapter, provider profile, and non-secret storage
+namespace fingerprint. Startup and every provider operation must validate the
+same singleton before provider I/O. Changing a populated deployment requires a
+separately reviewed storage migration.
 
 ## Artifact Verification Job
 
