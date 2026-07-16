@@ -339,6 +339,7 @@ def discover_activation_custody_documents(root: Path = ROOT) -> list[Path]:
             if candidate.is_file()
             and candidate.suffix in {".json", ".md"}
             and "reviews" not in candidate.relative_to(initiative_root).parts
+            and candidate.relative_to(root).as_posix() not in HISTORICAL_PATHS
         )
     return sorted(documents)
 

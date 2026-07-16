@@ -3760,6 +3760,14 @@ def test_activation_custody_discovery_includes_canonical_handoffs() -> None:
         intent_text = "The paired owning feature activates each action.\n"
         intent_contract.write_text(intent_text, encoding="utf-8")
 
+        historical_contracts = {root / path for path in gate.HISTORICAL_PATHS}
+        for historical_contract in historical_contracts:
+            historical_contract.parent.mkdir(parents=True, exist_ok=True)
+            historical_contract.write_text(
+                "The paired owning feature activates each action.\n",
+                encoding="utf-8",
+            )
+
         all_discovered = gate.discover_activation_custody_documents(root)
         discovered = {
             path.relative_to(initiative).as_posix()
@@ -3773,6 +3781,7 @@ def test_activation_custody_discovery_includes_canonical_handoffs() -> None:
     assert public_contract in all_discovered
     assert policy_contract in all_discovered
     assert intent_contract in all_discovered
+    assert historical_contracts.isdisjoint(all_discovered)
     assert gate.scan_activation_custody_text(
         con_contract.relative_to(root).as_posix(),
         con_text,
