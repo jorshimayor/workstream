@@ -27,6 +27,8 @@ chunk.
 - Added final Access Administrator protection, transactional revalidation,
   privacy-bounded concealment, exact replay/mismatch behavior, and immutable
   allow/deny/success/invalidation evidence.
+- Added deferred commit-time coupling between the unique bootstrap grant and
+  `authority_control`, preventing orphan grants or mismatched completed control.
 - Repaired AUTH-07B transaction ownership, evidence-failure mapping, and
   existing-actor verification timestamp behavior before adding new consumers.
 
@@ -47,7 +49,9 @@ runtime, or Workstream-owned authentication.
 - Signed-token lifecycle, idempotency replay/mismatch, concurrency, final-admin
   safety, audit linkage, and zero-write substitution behavior passed.
 - All 17 isolated Alembic tests passed after repairing the retained-head
-  rollback assertion exposed by GitHub Backend run `29478021300`.
+  rollback assertion and adding bootstrap/control and evidence-adoption proof.
+- Repository docstring coverage is 92.5 percent under the enforced
+  `docstr-coverage` configuration.
 - Ruff, stale wording, authorization-doc consistency, Markdown links,
   loop-memory validation, 71 agent-gate tests, and diff integrity passed.
 

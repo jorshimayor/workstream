@@ -1,8 +1,8 @@
 # WS-AUTH-001-08 Internal Review Evidence
 
-Reviewed code SHA: `cd464202cc35e05a7fe94231ea35e4f3f56e8646`
+Reviewed code SHA: `a284a718e68f08e072cb965cc5834bcc7ab45ee9`
 Reviewed implementation SHA: `34f87a5aa7d75897349f64f5e904cb1847af019b`
-Reviewed at: `2026-07-16T07:18:57Z`
+Reviewed at: `2026-07-16T07:43:50Z`
 Reviewer run IDs: auth08_final_senior, auth08_final_qa,
 auth08_final_security
 Reviewer tracks: senior engineering, QA/test, security/auth, product/ops,
@@ -75,6 +75,15 @@ guard failure. Repair `cd46420` captures the actual head before the downgrade
 attempt and asserts it remains unchanged, preventing both the cleanup cascade
 seen in CI and future coupling to a particular later migration. Exact-head
 senior/CI, QA/test-delta, and security/architecture re-review passed.
+
+CodeRabbit then identified four valid final-head findings. Repair `a284a71`
+adds deferred commit-time bootstrap grant/control invariants on both tables,
+uses one exact AUTH-08 evidence-event set for upgrade adoption and downgrade
+custody, gives mutation tests a distinct authorizing grant, and synchronizes the
+runbook to 57 actions with nine active and 48 planned. The two direct regression
+tests and all 17 isolated Alembic tests pass. Exact-head senior/CI/docs/reuse,
+QA/test-delta/product, and security/architecture re-review report no remaining
+finding.
 
 Valid findings addressed: yes
 
