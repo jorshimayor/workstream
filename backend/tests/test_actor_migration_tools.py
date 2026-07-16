@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import argparse
+import asyncio
 import json
 import os
 from pathlib import Path
@@ -34,6 +36,7 @@ from app.modules.actors.service_identity_migration import (
     validate_mapping_path,
     verify_envelope,
 )
+from scripts import service_actor_identity_mapping as mapping_cli
 
 ISSUER = "https://identity.example.test"
 SUBJECT = "Opaque-Service-Subject"
@@ -516,3 +519,53 @@ def test_report_contains_only_counts_and_non_secret_digests() -> None:
     assert ACTOR_ID not in serialized
     assert SUBJECT not in serialized
     assert ISSUER not in serialized
+
+
+def test_cli_executes_and_disposes_engine_on_one_event_loop(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    loop_ids: list[int] = []
+
+    async def execute(_args: argparse.Namespace) -> dict[str, str]:
+        loop_ids.append(id(asyncio.get_running_loop()))
+        return {"status": "valid"}
+
+    async def dispose() -> None:
+        loop_ids.append(id(asyncio.get_running_loop()))
+
+    monkeypatch.setattr(mapping_cli, "_execute", execute)
+    monkeypatch.setattr(mapping_cli, "dispose_engine", dispose)
+    assert asyncio.run(mapping_cli._execute_and_dispose(argparse.Namespace())) == {
+        "status": "valid"
+    }
+    assert len(set(loop_ids)) == 1
+
+
+def test_cli_preserves_workflow_error_when_cleanup_also_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def execute(_args: argparse.Namespace) -> dict:
+        raise ServiceIdentityMappingError("expected_mapping_failure")
+
+    async def dispose() -> None:
+        raise RuntimeError("simulated cleanup failure")
+
+    monkeypatch.setattr(mapping_cli, "_execute", execute)
+    monkeypatch.setattr(mapping_cli, "dispose_engine", dispose)
+    with pytest.raises(ServiceIdentityMappingError, match="expected_mapping_failure"):
+        asyncio.run(mapping_cli._execute_and_dispose(argparse.Namespace()))
+
+
+def test_cli_reports_cleanup_failure_only_after_success(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def execute(_args: argparse.Namespace) -> dict[str, str]:
+        return {"status": "valid"}
+
+    async def dispose() -> None:
+        raise RuntimeError("simulated cleanup failure")
+
+    monkeypatch.setattr(mapping_cli, "_execute", execute)
+    monkeypatch.setattr(mapping_cli, "dispose_engine", dispose)
+    with pytest.raises(mapping_cli.DatabaseCleanupError):
+        asyncio.run(mapping_cli._execute_and_dispose(argparse.Namespace()))

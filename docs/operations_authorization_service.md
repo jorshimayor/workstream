@@ -241,6 +241,10 @@ or repository files. Remove the injection after the migration. Stable failures
 expose only a code and bounded count; inspect the private tool report locally
 rather than adding issuer subjects to logs.
 
+Revision `0023` consumes the envelope through its packaged, versioned
+migration-only contract. Later application schema or helper changes do not
+change historical fresh-install replay.
+
 After database verification, retain the reviewed change record plus the
 non-secret source, manifest, envelope, and database-binding digests stored by
 the migration. PostgreSQL format constraints and update/delete/truncate guards

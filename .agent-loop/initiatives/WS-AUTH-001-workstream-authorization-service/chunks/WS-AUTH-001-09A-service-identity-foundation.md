@@ -35,7 +35,10 @@ backend/app/modules/actors/models.py
 backend/app/modules/actors/service_identities.py
 backend/app/modules/actors/service_identity_migration.py
 backend/app/modules/authorization/catalogue.py
+backend/migration_contracts/__init__.py
+backend/migration_contracts/service_identity_0023.py
 backend/alembic/versions/0023_service_actor_identity.py
+backend/pyproject.toml
 backend/scripts/service_actor_identity_mapping.py
 backend/tests/test_actors.py
 backend/tests/test_actor_migration_tools.py
@@ -201,7 +204,7 @@ composer, guards, surface, and behavior proof.
 ## Verification commands
 
 ```bash
-(cd backend && .venv/bin/python -m ruff check app tests scripts/service_actor_identity_mapping.py alembic/versions/0023_service_actor_identity.py)
+(cd backend && .venv/bin/python -m ruff check app migration_contracts tests scripts/service_actor_identity_mapping.py alembic/versions/0023_service_actor_identity.py)
 (cd backend && .venv/bin/coverage erase && \
   WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-dsn> \
   .venv/bin/python scripts/run_isolated_tests.py --timeout-seconds 1800 -- \

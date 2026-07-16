@@ -74,7 +74,11 @@ reuse/dedup, and test-delta review after all valid findings were repaired.
 
 ## External Review
 
-GitHub Backend, Agent Gates, and CodeRabbit remain pending at publication.
+The first GitHub Backend and Agent Gates runs passed. CodeRabbit found two
+valid issues: mutable historical migration imports and cross-event-loop engine
+cleanup. The repair packages a versioned migration-only `0023` contract and
+uses one async execution/cleanup loop with explicit error precedence. Focused
+regressions pass; refreshed external checks remain pending on the repair head.
 
 ## Remaining Risk
 

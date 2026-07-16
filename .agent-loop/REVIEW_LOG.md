@@ -1,5 +1,18 @@
 # Review Log
 
+## 2026-07-16 - WS-AUTH-001-09A CodeRabbit Findings Repaired
+
+CodeRabbit's first PR #132 review found two valid issues: revision `0023`
+depended on mutable application mapping helpers, and the operator CLI disposed
+its async engine on a second event loop. The repair moves all historical replay
+inputs into the packaged versioned `migration_contracts.service_identity_0023`
+module and runs execution plus cleanup on one loop with explicit error
+precedence. Frozen-import, loop-identity, cleanup-priority, and mapped migration
+tests pass. The bot's separate docstring warning conflicts with the enforced
+repository result: GitHub Backend passes and configured local coverage is 92.1
+percent. Exact-head internal re-review remains required before pushing the
+repair.
+
 ## 2026-07-16 - WS-AUTH-001-09A Implementation Repaired For Re-review
 
 AUTH-09A implements only the fixed service identity foundation: migration

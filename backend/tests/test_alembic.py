@@ -12,6 +12,10 @@ from uuid import NAMESPACE_URL, uuid4, uuid5
 import pytest
 from alembic import command
 from alembic.config import Config
+from migration_contracts.service_identity_0023 import (
+    SERVICE_IDENTITY_VALUES as FROZEN_SERVICE_IDENTITY_VALUES,
+    ServiceIdentityMappingError as FrozenServiceIdentityMappingError,
+)
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine
@@ -38,7 +42,6 @@ from app.modules.actors.service_identity_migration import (
     MAPPING_FILE_ENV,
     ServiceActorIdentityMapping,
     ServiceActorIdentityMappingDraft,
-    ServiceIdentityMappingError,
     build_envelope as build_service_identity_envelope,
     publish_envelope as publish_service_identity_envelope,
     snapshot_existing_service_rows,
@@ -50,6 +53,20 @@ def _alembic_config() -> Config:
     config = Config(str(project_root / "alembic.ini"))
     config.set_main_option("script_location", str(project_root / "alembic"))
     return config
+
+
+def test_service_identity_migration_contract_is_frozen_from_application_modules() -> None:
+    backend_root = Path(__file__).resolve().parents[1]
+    revision_source = (
+        backend_root / "alembic/versions/0023_service_actor_identity.py"
+    ).read_text(encoding="utf-8")
+    contract_source = (
+        backend_root / "migration_contracts/service_identity_0023.py"
+    ).read_text(encoding="utf-8")
+    assert "from migration_contracts.service_identity_0023 import" in revision_source
+    assert "app.modules" not in revision_source
+    assert "app.modules" not in contract_source
+    assert FROZEN_SERVICE_IDENTITY_VALUES == tuple(identity.value for identity in ServiceIdentity)
 
 
 def test_alembic_upgrade_and_downgrade(isolated_database_env: str, migration_lock) -> None:
@@ -719,7 +736,10 @@ def test_fixed_service_identity_schema_mapping_and_guarded_downgrade(
                 )
             )
             monkeypatch.delenv(MAPPING_FILE_ENV, raising=False)
-            with pytest.raises(ServiceIdentityMappingError, match="^service_mapping_required$"):
+            with pytest.raises(
+                FrozenServiceIdentityMappingError,
+                match="^service_mapping_required$",
+            ):
                 command.upgrade(config, "0023_service_actor_identity")
             assert asyncio.run(_current_revision(isolated_database_env)) == (
                 "0022_bootstrap_admin_grants"

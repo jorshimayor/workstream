@@ -26,6 +26,10 @@ from app.modules.actors.service_identity_migration import (
 )
 
 
+class DatabaseCleanupError(RuntimeError):
+    """The CLI workflow succeeded but its async engine cleanup failed."""
+
+
 class PrivacyBoundedParser(argparse.ArgumentParser):
     """Argument parser that never reflects confidential paths or values."""
 
@@ -84,6 +88,23 @@ async def _execute(args: argparse.Namespace) -> dict:
     ).model_dump(mode="json")
 
 
+async def _execute_and_dispose(args: argparse.Namespace) -> dict:
+    """Execute and dispose the pooled engine on the same event loop."""
+    try:
+        report = await _execute(args)
+    except BaseException:
+        try:
+            await dispose_engine()
+        except Exception:
+            pass
+        raise
+    try:
+        await dispose_engine()
+    except Exception:
+        raise DatabaseCleanupError from None
+    return report
+
+
 def main(argv: list[str] | None = None) -> int:
     """Run the validate, bind, or verify workflow with bounded output."""
     result = 0
@@ -91,7 +112,7 @@ def main(argv: list[str] | None = None) -> int:
     stderr_message: str | None = None
     try:
         args = _parser().parse_args(argv)
-        report = asyncio.run(_execute(args))
+        report = asyncio.run(_execute_and_dispose(args))
         stdout_message = json.dumps(
             report,
             allow_nan=False,
@@ -107,16 +128,12 @@ def main(argv: list[str] | None = None) -> int:
     except KeyboardInterrupt:
         stderr_message = '{"error":"interrupted","status":"error"}'
         result = 130
+    except DatabaseCleanupError:
+        stderr_message = '{"error":"database_cleanup_failed","status":"error"}'
+        result = 2
     except Exception:
         stderr_message = '{"error":"database_operation_failed","status":"error"}'
         result = 2
-    try:
-        asyncio.run(dispose_engine())
-    except Exception:
-        if result == 0:
-            stdout_message = None
-            stderr_message = '{"error":"database_cleanup_failed","status":"error"}'
-            result = 2
     if stdout_message is not None:
         print(stdout_message)
     if stderr_message is not None:

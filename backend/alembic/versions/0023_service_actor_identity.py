@@ -11,11 +11,11 @@ from alembic import op
 from pydantic import ValidationError
 import sqlalchemy as sa
 
-from app.modules.actors.legacy_classification import database_binding_identifier
-from app.modules.actors.service_identities import SERVICE_IDENTITY_VALUES
-from app.modules.actors.service_identity_migration import (
+from migration_contracts.service_identity_0023 import (
     ExistingServiceActorRow,
+    SERVICE_IDENTITY_VALUES,
     ServiceIdentityMappingError,
+    database_binding_identifier,
     load_migration_mapping,
     source_row_set_sha256,
 )
