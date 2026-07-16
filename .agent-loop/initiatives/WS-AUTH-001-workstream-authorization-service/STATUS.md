@@ -86,7 +86,8 @@ initial security/architecture, QA/product, and senior/CI/docs review before
 runtime edits. The repaired contract passed all required preimplementation
 tracks at `cbe7c6c`; bounded AUTH-08 implementation later merged through PR
 #131 as `aa0fdcd`. AUTH-09 was split before runtime implementation. AUTH-09A is
-in review through PR #132; later children remain inactive.
+reviewed through PR #132 and awaits explicit human merge approval; later
+children remain inactive.
 
 ## Active planning chunk
 
@@ -94,9 +95,10 @@ None.
 
 ## Active implementation chunk
 
-`WS-AUTH-001-09A` - Fixed Service Identity Foundation.
+None. `WS-AUTH-001-09A` has completed implementation and review and is at the
+human merge checkpoint in PR #132.
 
-## Current implementation branch
+## Current review branch
 
 `codex/ws-auth-001-09-actor-state-service-actors`
 
@@ -121,7 +123,7 @@ None.
 | `WS-AUTH-001-07B` | Merged | `codex/ws-auth-001-07b-deny-default-kernel` | #130 | Merged as `90eca12`; signed memory passed. |
 | `WS-AUTH-001-08` | Merged | `codex/ws-auth-001-08-bootstrap-admin-grants` | #131 | Merged as `aa0fdcd`; signed memory passed. |
 | `WS-AUTH-001-09` | Split | - | - | Split into 09A through 09E before runtime implementation. |
-| `WS-AUTH-001-09A` | In review | `codex/ws-auth-001-09-actor-state-service-actors` | #132 | Fixed service identity and static matrix foundation. |
+| `WS-AUTH-001-09A` | Awaiting human merge | `codex/ws-auth-001-09-actor-state-service-actors` | #132 | Implementation and review complete; fixed service identity and static matrix foundation. |
 | `WS-AUTH-001-09B` | Proposed | - | - | Controlled service ActorProfile/ActorIdentityLink provisioning. |
 | `WS-AUTH-001-09C` | Proposed | - | - | Actor and identity-link administrative reads. |
 | `WS-AUTH-001-09D` | Proposed | - | - | Actor and identity-link lifecycle mutations. |

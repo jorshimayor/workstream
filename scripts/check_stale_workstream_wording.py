@@ -123,6 +123,8 @@ ACTIVE_SHARED_CONTRACT_PATTERNS = (
         r"Proposed after 02C3,\s*AUTH-09,\s*and AUTH custody registration",
         re.IGNORECASE,
     ),
+    re.compile(r"\bworker, reviewer, or project manager\b", re.IGNORECASE),
+    re.compile(r"\boperators?, workers?, reviewers?\b", re.IGNORECASE),
     re.compile(r"\bCompensationPolicyVersion\b"),
     re.compile(r"\bCompensationPolicy\b"),
     re.compile(r"\bCompensationRule\b"),
@@ -279,6 +281,8 @@ def is_active_shared_contract_path(path: Path) -> bool:
         return True
     if raw_path.startswith(".agent-loop/initiatives/"):
         return "/reviews/" not in raw_path and path.suffix in {".json", ".md"}
+    if raw_path.startswith(".agent-loop/policies/"):
+        return path.suffix == ".md"
     if not raw_path.startswith("docs/") or path.suffix not in {".html", ".md", ".puml"}:
         return False
     if raw_path.startswith(ACTIVE_SHARED_CONTRACT_EXCLUDED_PREFIXES):

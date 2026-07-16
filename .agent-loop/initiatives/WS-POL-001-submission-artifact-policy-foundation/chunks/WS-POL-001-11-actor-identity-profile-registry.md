@@ -7,7 +7,7 @@ WS-POL-001 - Submission Artifact Policy Foundation
 ## Goal
 
 Add local Workstream actor identity and actor profile registries for verified
-Flow actors so every operator, worker, reviewer, project manager, project
+Flow actors so every operator, contributor, reviewer, project manager, project
 owner, and system actor has a durable Workstream identity anchor and a shared
 profile model for workflow metadata before task assignments, audit events, and
 later reputation records attach to them.

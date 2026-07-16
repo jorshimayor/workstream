@@ -33,7 +33,7 @@ LLM prompts and tool inputs
 ## Security Review Questions
 
 - Can a lower-privileged actor perform a higher-privileged action?
-- Can a worker, reviewer, or project manager access another actor's private data?
+- Can a contributor, reviewer, or project manager access another actor's private data?
 - Can a stale guide or policy context be used silently?
 - Can secrets or tokens leak through logs, errors, artifacts, or review bundles?
 - Can test/demo auth become production auth by misconfiguration?

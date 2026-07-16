@@ -1058,6 +1058,8 @@ def test_active_shared_contract_rejects_retired_contracts() -> None:
             "AUTH-09 persists these exact service actors and assignments",
             "do not become normal ActorProfiles",
             "Proposed after 02C3, AUTH-09, and AUTH custody registration",
+            "worker, reviewer, or project manager",
+            "operators, workers, reviewers",
             "CompensationPolicyVersion",
             "CompensationPolicy",
             "CompensationRule",
@@ -1114,6 +1116,9 @@ def test_active_shared_contract_rejects_retired_contracts() -> None:
     assert stale.is_active_shared_contract_path(Path("AGENTS.md"))
     assert stale.is_active_shared_contract_path(Path(".agent-loop/LOOP_STATE.md"))
     assert stale.is_active_shared_contract_path(Path(".agent-loop/WORK_QUEUE.md"))
+    assert stale.is_active_shared_contract_path(
+        Path(".agent-loop/policies/security-boundaries.md")
+    )
     assert stale.is_active_shared_contract_path(
         Path(".agent-loop/initiatives/example/PLAN.md")
     )
@@ -3746,12 +3751,21 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
     artifact_map = Path(
         ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/CHUNK_MAP.md"
     ).read_text(encoding="utf-8")
+    artifact_status = Path(
+        ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/STATUS.md"
+    ).read_text(encoding="utf-8")
 
     assert "Merged through PR #131 as `aa0fdcd`" in auth_map
-    assert "`WS-AUTH-001-09A` - Fixed Service Identity Foundation." in auth_status
+    assert "None. `WS-AUTH-001-09A` has completed implementation" in auth_status
     assert "| `WS-AUTH-001-08` | Merged |" in auth_status
+    assert "| `WS-AUTH-001-09A` | Awaiting human merge |" in auth_status
     assert "Merged through PR #129 as `9a04434`" in artifact_map
     assert "Reviewed in isolated worktree; PR publication pending" in artifact_map
+    assert "No artifact implementation chunk is active." in artifact_status
+    assert (
+        "`WS-ART-001-02A3` implementation\nand review are complete" in artifact_status
+    )
+    assert "PR #129 merged `WS-ART-001-02A2` as `9a04434`" in artifact_status
 
 
 def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:

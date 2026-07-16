@@ -138,6 +138,7 @@ CAT post-merge memory merged through PR #118 as `eba7e2b`; AUTH-05B then merged
 through PR #119 as `ad71c7e`. AUTH-06 merged through PR #124 as `f599551`, its
 signed automated memory completed, and the user explicitly started AUTH-07.
 Required L1 review rejected the combined contract before runtime edits and
-required 07A/07B. AUTH-07B was separately started and is internally approved;
-do not start AUTH-08 or POL-002-04 without a separate explicit user start after
-their prerequisites complete.
+required 07A/07B. AUTH-07B merged through PR #130 as `90eca12`; AUTH-08 merged
+through PR #131 as `aa0fdcd`. Parent AUTH-09 was split before implementation.
+AUTH-09A implementation and review are complete in PR #132 and await explicit
+human merge approval. Do not start AUTH-09B or POL-002-04 automatically.

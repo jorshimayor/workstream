@@ -24,6 +24,8 @@ activation custody, transaction order, and cross-initiative handoffs.
   contribution/compensation wording enforcement
 - `.agent-loop/WORK_QUEUE.md`, `.agent-loop/REVIEW_LOG.md`, and one merge intent
 - `.agent-loop/LOOP_STATE.md` for exact parallel planning-state reconciliation
+- active `.agent-loop/policies/*.md` only to reconcile stale human product-role
+  and contribution/compensation boundary wording
 - `README.md` only to reconcile the repository's public lifecycle summary with
   the same canonical boundary
 - directly related active architecture, product, operations, roadmap, template,
