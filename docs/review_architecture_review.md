@@ -15,7 +15,7 @@ Suggested change: add `TaskEvent` or `AuditEvent` to the domain model and archit
 
 ### High: Roles and permissions are not defined enough for v0.1
 
-The flows mention admin, operator, worker, and reviewer, but there is no clear permission matrix. This can create unsafe overrides, self-review, or accidental payment changes.
+The flows mention Access Administrator, Operator, Project Manager, Submitter, and Reviewer, but there is no clear permission matrix. This can create unsafe overrides, self-review, or accidental compensation changes.
 
 Suggested change: add a v0.1 roles and permissions table.
 
@@ -23,7 +23,7 @@ Suggested change: add a v0.1 roles and permissions table.
 
 The docs say guides are versioned, but tasks, submissions, checker runs, reviews, and payments need to record the guide/policy version used by the locked task contract. Otherwise later guide edits can make old reviews ambiguous.
 
-Suggested change: add server-stamped locked guide and policy version fields to task-owned system records. Workers should submit against the task id without restating those versions.
+Suggested change: add server-stamped locked guide and policy version fields to task-owned system records. Submitters should submit against the task id without restating those versions.
 
 ### Medium: Artifact storage needs immutability rule
 

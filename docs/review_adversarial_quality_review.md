@@ -13,7 +13,7 @@ checker blind spots.
 
 Files: `docs/architecture_checker_framework.md`, `docs/architecture_lifecycle_state_machine.md`, `docs/template_project_guide.md`
 
-Finding: The plan required evidence, but did not strongly bind evidence to immutable submission versions. A worker could submit logs from an earlier local run, attach unrelated screenshots, or replace artifacts after checks.
+Finding: The plan required evidence, but did not strongly bind evidence to immutable submission versions. A submitter could submit logs from an earlier local run, attach unrelated screenshots, or replace artifacts after checks.
 
 Suggested change: Require artifact hashes, immutable submission versions, checker runs tied to exact hashes, and evidence policies per project. This has been added.
 
@@ -29,9 +29,9 @@ Suggested change: Enforce transition guards in code and record guide version, ar
 
 Files: `docs/roles_permissions.md`, `docs/operations_reviewer_workflow.md`, `docs/risk_register.md`
 
-Finding: Reviewer reputation existed, but collusion signals were underspecified. A reviewer could repeatedly accept the same worker's weak submissions with short comments.
+Finding: Reviewer reputation existed, but collusion signals were underspecified. A reviewer could repeatedly accept the same submitter's weak submissions with short comments.
 
-Suggested change: Flag repeated worker-reviewer pairs, fast accepts with no evidence, overturned accepts, and require second review for high-value, disputed, or override-backed tasks. This has been added to role and risk docs; implementation backlog should include the metrics.
+Suggested change: Flag repeated submitter-reviewer pairs, fast accepts with no evidence, overturned accepts, and require second review for high-value, disputed, or override-backed tasks. This has been added to role and risk docs; implementation backlog should include the metrics.
 
 ### High: Bad Project Guides Can Poison The Whole Workflow
 
@@ -63,11 +63,11 @@ Finding: A generic generated submission can satisfy markdown structure while bei
 
 Suggested change: Each project guide should define banned generated patterns and a checker should flag repeated boilerplate and placeholder artifacts. This has been added as `check_low_quality_generated_artifacts`.
 
-### Medium: Confidentiality Depends Too Much On Worker Honesty
+### Medium: Confidentiality Depends Too Much On Submitter Honesty
 
 Files: `docs/architecture_checker_framework.md`, `docs/risk_register.md`, `docs/template_project_guide.md`
 
-Finding: Worker attestation is necessary but not sufficient. Confidential or copied data can leak through packages, screenshots, logs, and evidence files.
+Finding: Submitter attestation is necessary but not sufficient. Confidential or copied data can leak through packages, screenshots, logs, and evidence files.
 
 Suggested change: Keep attestation, but pair it with forbidden-file checks, guide-specific allowed-material rules, and reviewer escalation for suspected confidential data. The docs now make this explicit.
 

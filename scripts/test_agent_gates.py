@@ -3831,6 +3831,7 @@ def test_stale_authorization_history_allowlist_is_exact() -> None:
         "scripts/check_stale_authorization_docs.py",
     )
     assert "docs/spec_chunk_3_project_guide_foundation.md" in gate.HISTORICAL_PATHS
+    assert "docs/review_architecture_review.md" not in gate.HISTORICAL_PATHS
     assert "docs/spec_chunk_999_future.md" not in gate.HISTORICAL_PATHS
 
 

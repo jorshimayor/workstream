@@ -22,7 +22,7 @@ Add a baseline document that captures metadata-level reusable patterns and makes
 
 Status: fixed in `docs/process_pattern_baseline.md`.
 
-### High: Ready work needed a screening gate before workers see it
+### High: Ready work needed a screening gate before contributors see it
 
 Finding:
 

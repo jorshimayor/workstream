@@ -35,7 +35,7 @@ Tasks recorded guide version, but the locked task contract and downstream system
 
 Suggested change: add server-stamped locked guide and policy version fields to
 the task contract, submissions, checker runs, reviews, ContributionRecords, and
-CompensationAwards. Workers submit against the task id without restating policy
+CompensationAwards. Submitters submit against the task id without restating policy
 versions.
 
 Status: fixed in `docs/architecture_data_model.md`.

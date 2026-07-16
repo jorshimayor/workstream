@@ -21,7 +21,7 @@ required report fields.
 
 ### Medium: Reviewer independence rule is missing
 
-The plan should prevent workers from reviewing their own submissions and should make second review optional by project policy.
+The plan should prevent submitters from reviewing their own submissions and should make second review optional by project policy.
 
 Suggested change: add reviewer independence constraints.
 
