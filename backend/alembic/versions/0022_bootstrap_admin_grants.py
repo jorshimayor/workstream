@@ -24,6 +24,14 @@ AUTH_08_ACTIONS = (
     "admin_role_grant.bootstrap",
 )
 
+AUTH_08_EVIDENCE_EVENTS = (
+    "InitialAccessAdministratorBootstrapped",
+    "AdminRoleGrantIssued",
+    "AdminRoleGrantRevoked",
+    "AdminRoleGrantIssueDenied",
+    "LastAccessAdministratorOperationDenied",
+)
+
 ACTION_PERMISSION_PAIRS = (
     ("actor.profile.read_self", "actor.profile.read_self"),
     ("actor.profile.update_self", "actor.profile.update_self"),
@@ -522,6 +530,35 @@ def _create_table_guards() -> None:
         """create function reject_authority_control_truncate() returns trigger language plpgsql as $$
              begin raise exception 'authority control is immutable' using errcode='55000'; end $$""",
         "create trigger authority_control_reject_truncate before truncate on authority_control execute function reject_authority_control_truncate()",
+        """
+        create function validate_bootstrap_authority_state() returns trigger language plpgsql as $$
+        declare control authority_control%rowtype;
+                bootstrap_count bigint;
+                referenced_bootstrap boolean;
+        begin
+          select * into control from authority_control where id=1;
+          if not found then
+            raise exception 'bootstrap grant/control invariant violated' using errcode='23514';
+          end if;
+          select count(*) into bootstrap_count from admin_role_grants
+          where granted_by_system_principal='workstream:system:bootstrap';
+          referenced_bootstrap := exists(
+            select 1 from admin_role_grants
+            where id=control.bootstrap_grant_id
+              and granted_by_system_principal='workstream:system:bootstrap'
+          );
+          if (not control.bootstrap_completed and
+              (control.bootstrap_grant_id is not null or control.version <> 0 or bootstrap_count <> 0))
+             or (control.bootstrap_completed and
+              (control.bootstrap_grant_id is null or control.version <> 1
+               or bootstrap_count <> 1 or not referenced_bootstrap)) then
+            raise exception 'bootstrap grant/control invariant violated' using errcode='23514';
+          end if;
+          return null;
+        end $$
+        """,
+        "create constraint trigger admin_role_grants_bootstrap_invariant after insert or update or delete on admin_role_grants deferrable initially deferred for each row execute function validate_bootstrap_authority_state()",
+        "create constraint trigger authority_control_bootstrap_invariant after insert or update or delete on authority_control deferrable initially deferred for each row execute function validate_bootstrap_authority_state()",
     )
     for statement in statements:
         op.execute(statement)
@@ -537,7 +574,7 @@ def upgrade() -> None:
     )
     if bind.execute(
         sa.text(
-            "select exists(select 1 from audit_events where event_domain='authority' and event_type in ('InitialAccessAdministratorBootstrapped','AdminRoleGrantIssued','AdminRoleGrantRevoked'))"
+            f"select exists(select 1 from audit_events where event_domain='authority' and event_type in ({_tokens(AUTH_08_EVIDENCE_EVENTS)}))"
         )
     ).scalar_one():
         raise RuntimeError("cannot adopt orphan administrative grant evidence")
@@ -569,9 +606,7 @@ def downgrade() -> None:
       or exists(select 1 from authority_control where bootstrap_completed)
       or exists(select 1 from authority_idempotency_records where operation like 'admin_role_grant.%')
       or exists(select 1 from audit_events where action_id in ({_tokens(AUTH_08_ACTIONS)})
-        or event_type in ('InitialAccessAdministratorBootstrapped','AdminRoleGrantIssued',
-                          'AdminRoleGrantRevoked','AdminRoleGrantIssueDenied',
-                          'LastAccessAdministratorOperationDenied'))
+        or event_type in ({_tokens(AUTH_08_EVIDENCE_EVENTS)}))
     """)
     ).scalar_one()
     if blocked:
@@ -580,6 +615,9 @@ def downgrade() -> None:
     _create_action_constraint(ACTION_PERMISSION_PAIRS[:-7])
     _replace_fact_function(admin_issue_direction=False)
     _replace_linked_function(admin_projection=False)
+    op.execute("drop trigger authority_control_bootstrap_invariant on authority_control")
+    op.execute("drop trigger admin_role_grants_bootstrap_invariant on admin_role_grants")
+    op.execute("drop function validate_bootstrap_authority_state()")
     op.execute("drop trigger authority_control_reject_truncate on authority_control")
     op.execute("drop trigger authority_control_guard on authority_control")
     op.execute("drop function reject_authority_control_truncate()")

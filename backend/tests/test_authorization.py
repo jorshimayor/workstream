@@ -1917,6 +1917,7 @@ def _operation_success(
     request,
     response: AuthorityResponseReference,
     *,
+    admin_authorizer_grant_id: UUID | None = None,
     admin_revoke_target: UUID | None = None,
 ) -> AuthorityAuditEventInput:
     """Build the exact concrete success evidence for one canonical operation case."""
@@ -1988,8 +1989,10 @@ def _operation_success(
             "provisioning_method": "manual_service_provisioning",
         }
     elif isinstance(request, AdminRoleGrantIssueRequest):
+        if admin_authorizer_grant_id is None:
+            raise AssertionError("admin issue proof requires the distinct authorizing grant")
         target_actor = request.target_actor_id
-        matched_grant = response.resource_id
+        matched_grant = admin_authorizer_grant_id
         project_id = request.scope_project_id
         after_facts = {
             "status": "active",
@@ -2000,10 +2003,12 @@ def _operation_success(
         if project_id:
             after_facts["scope_id"] = str(project_id)
     elif isinstance(request, AdminRoleGrantRevokeRequest):
+        if admin_authorizer_grant_id is None:
+            raise AssertionError("admin revoke proof requires the distinct authorizing grant")
         if admin_revoke_target is None:
             raise AssertionError("admin revoke proof requires the distinct grant target")
         target_actor = admin_revoke_target
-        matched_grant = request.grant_id
+        matched_grant = admin_authorizer_grant_id
         before_facts = {
             "status": "active",
             "role": "access_administrator",
@@ -2565,6 +2570,7 @@ async def test_all_operation_and_replacement_mappings_commit_one_linked_pair(
     authorization_factory,
 ) -> None:
     project, actor, resource, admin_revoke_target = uuid4(), uuid4(), uuid4(), uuid4()
+    admin_authorizer_grant_id = uuid4()
     requests = [
         ServiceActorCreateRequest(
             operation=AuthorityOperation.SERVICE_ACTOR_CREATE,
@@ -2650,6 +2656,10 @@ async def test_all_operation_and_replacement_mappings_commit_one_linked_pair(
         AuthorityOperation.ADMIN_ROLE_GRANT_ISSUE,
         AuthorityOperation.PROJECT_ROLE_GRANT_ISSUE,
     }
+    admin_operations = {
+        AuthorityOperation.ADMIN_ROLE_GRANT_ISSUE,
+        AuthorityOperation.ADMIN_ROLE_GRANT_REVOKE,
+    }
     expected_pairs = {}
     async with authorization_factory() as session:
         service = AuthorityMutationService(session)
@@ -2676,6 +2686,9 @@ async def test_all_operation_and_replacement_mappings_commit_one_linked_pair(
                 claim,
                 request,
                 response,
+                admin_authorizer_grant_id=(
+                    admin_authorizer_grant_id if request.operation in admin_operations else None
+                ),
                 admin_revoke_target=(
                     admin_revoke_target
                     if request.operation is AuthorityOperation.ADMIN_ROLE_GRANT_REVOKE
@@ -2684,6 +2697,9 @@ async def test_all_operation_and_replacement_mappings_commit_one_linked_pair(
             )
             if request.operation is AuthorityOperation.ADMIN_ROLE_GRANT_REVOKE:
                 assert success.target_actor_ref == str(admin_revoke_target)
+            if request.operation in admin_operations:
+                assert success.matched_grant_id == str(admin_authorizer_grant_id)
+                assert success.matched_grant_id != str(response.resource_id)
             completed = await service.complete(
                 claim=claim,
                 request=request.model_dump(),

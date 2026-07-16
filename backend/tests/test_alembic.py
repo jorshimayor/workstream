@@ -578,13 +578,18 @@ def test_bootstrap_admin_grant_schema_is_immutable_and_guarded(
         try:
             command.downgrade(config, "base")
             command.upgrade(config, "0021_auth_action_evidence")
-            asyncio.run(_insert_orphan_admin_evidence(isolated_database_env))
-            with pytest.raises(
-                RuntimeError,
-                match="^cannot adopt orphan administrative grant evidence$",
+            for event_type in (
+                "InitialAccessAdministratorBootstrapped",
+                "AdminRoleGrantIssueDenied",
+                "LastAccessAdministratorOperationDenied",
             ):
-                command.upgrade(config, "0022_bootstrap_admin_grants")
-            asyncio.run(_clear_orphan_admin_state(isolated_database_env))
+                asyncio.run(_insert_orphan_admin_evidence(isolated_database_env, event_type))
+                with pytest.raises(
+                    RuntimeError,
+                    match="^cannot adopt orphan administrative grant evidence$",
+                ):
+                    command.upgrade(config, "0022_bootstrap_admin_grants")
+                asyncio.run(_clear_orphan_admin_state(isolated_database_env))
             asyncio.run(_insert_orphan_admin_idempotency(isolated_database_env))
             with pytest.raises(
                 RuntimeError,
@@ -607,6 +612,8 @@ def test_bootstrap_admin_grant_schema_is_immutable_and_guarded(
                 "service_target_rejected": True,
                 "missing_authorizer_rejected": True,
                 "mixed_bootstrap_attribution_rejected": True,
+                "orphan_bootstrap_commit_rejected": True,
+                "mismatched_bootstrap_control_rejected": True,
                 "second_bootstrap_rejected": True,
                 "immutable_provenance_rejected": True,
                 "incomplete_revocation_rejected": True,
@@ -4094,9 +4101,10 @@ def _action_downgrade_waits_for_insert(config: Config, database_url: str) -> tup
         return observed, values["id"]
 
 
-async def _insert_orphan_admin_evidence(database_url: str) -> None:
+async def _insert_orphan_admin_evidence(database_url: str, event_type: str) -> None:
     engine = create_async_engine(database_url)
     event_id, target_id = str(uuid4()), str(uuid4())
+    denied = event_type != "InitialAccessAdministratorBootstrapped"
     try:
         async with engine.begin() as connection:
             await connection.execute(
@@ -4106,19 +4114,24 @@ async def _insert_orphan_admin_evidence(database_url: str) -> None:
                     "auth_source,is_dev_auth,event_payload,event_domain,event_version,"
                     "actor_ref_kind,request_id,correlation_id,target_actor_ref_kind,"
                     "target_actor_ref,resource_type,resource_id,target_ref_kind,target_ref_id,"
-                    "reason,after_facts) values "
-                    "(:id,'admin_role_grant',:id,'InitialAccessAdministratorBootstrapped',"
+                    "reason,denial_code,after_facts) values "
+                    "(:id,'admin_role_grant',:id,:event_type,"
                     "'workstream:system:bootstrap','[]','{}','local_authority',false,'{}',"
                     "'authority',1,'system_principal',:request,:correlation,'actor_profile',"
                     ":target,'admin_role_grant',:id,'admin_role_grant',:id,"
-                    "'initial_access_bootstrap',cast(:facts as json))"
+                    ":reason,:denial_code,cast(:facts as json))"
                 ),
                 {
                     "id": event_id,
+                    "event_type": event_type,
                     "target": target_id,
                     "request": str(uuid4()),
                     "correlation": str(uuid4()),
-                    "facts": json.dumps(
+                    "reason": "authorization_policy_denial" if denied else "initial_access_bootstrap",
+                    "denial_code": "permission_not_granted" if denied else None,
+                    "facts": None
+                    if denied
+                    else json.dumps(
                         {
                             "status": "active",
                             "role": "access_administrator",
@@ -4172,7 +4185,8 @@ async def _clear_orphan_admin_state(database_url: str) -> None:
                 text(
                     "delete from audit_events where event_type in "
                     "('InitialAccessAdministratorBootstrapped','AdminRoleGrantIssued',"
-                    "'AdminRoleGrantRevoked')"
+                    "'AdminRoleGrantRevoked','AdminRoleGrantIssueDenied',"
+                    "'LastAccessAdministratorOperationDenied')"
                 )
             )
             await connection.execute(
@@ -4285,6 +4299,67 @@ async def _exercise_admin_authority_guards(database_url: str) -> dict[str, objec
                 results[name] = True
             else:
                 results[name] = False
+
+        try:
+            async with engine.begin() as connection:
+                await connection.execute(
+                    text(insert_grant),
+                    {
+                        "id": str(uuid4()),
+                        "target": admin_id,
+                        "role": "access_administrator",
+                        "scope": "system",
+                        "actor": None,
+                        "principal": "workstream:system:bootstrap",
+                        "authorizer": None,
+                        "reason": "Orphan bootstrap",
+                    },
+                )
+        except DBAPIError:
+            results["orphan_bootstrap_commit_rejected"] = True
+        else:
+            results["orphan_bootstrap_commit_rejected"] = False
+
+        mismatched_bootstrap_id, mismatched_grant_id = str(uuid4()), str(uuid4())
+        try:
+            async with engine.begin() as connection:
+                await connection.execute(
+                    text(insert_grant),
+                    {
+                        "id": mismatched_bootstrap_id,
+                        "target": admin_id,
+                        "role": "access_administrator",
+                        "scope": "system",
+                        "actor": None,
+                        "principal": "workstream:system:bootstrap",
+                        "authorizer": None,
+                        "reason": "Mismatched bootstrap",
+                    },
+                )
+                await connection.execute(
+                    text(insert_grant),
+                    {
+                        "id": mismatched_grant_id,
+                        "target": target_id,
+                        "role": "operator",
+                        "scope": "system",
+                        "actor": admin_id,
+                        "principal": None,
+                        "authorizer": mismatched_bootstrap_id,
+                        "reason": "Mismatched control target",
+                    },
+                )
+                await connection.execute(
+                    text(
+                        "update authority_control set bootstrap_completed=true,"
+                        "bootstrap_grant_id=:grant,version=1 where id=1"
+                    ),
+                    {"grant": mismatched_grant_id},
+                )
+        except DBAPIError:
+            results["mismatched_bootstrap_control_rejected"] = True
+        else:
+            results["mismatched_bootstrap_control_rejected"] = False
 
         async with engine.begin() as connection:
             await connection.execute(
