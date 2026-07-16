@@ -3734,6 +3734,26 @@ def test_auth_spec_orders_service_admission_before_project_roles() -> None:
     assert "without human grant\n    evaluation or feature action activation" in order
 
 
+def test_parallel_initiative_status_matches_trusted_main() -> None:
+    """Auth and artifact maps cannot regress already merged prerequisites."""
+    auth_map = Path(
+        ".agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/"
+        "CHUNK_MAP.md"
+    ).read_text(encoding="utf-8")
+    auth_status = Path(
+        ".agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/STATUS.md"
+    ).read_text(encoding="utf-8")
+    artifact_map = Path(
+        ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/CHUNK_MAP.md"
+    ).read_text(encoding="utf-8")
+
+    assert "Merged through PR #131 as `aa0fdcd`" in auth_map
+    assert "`WS-AUTH-001-09A` - Fixed Service Identity Foundation." in auth_status
+    assert "| `WS-AUTH-001-08` | Merged |" in auth_status
+    assert "Merged through PR #129 as `9a04434`" in artifact_map
+    assert "Reviewed in isolated worktree; PR publication pending" in artifact_map
+
+
 def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:
     """A new active doc fails without being added to a hardcoded corpus."""
     gate = load_module(
@@ -4863,6 +4883,7 @@ def main() -> int:
         test_feature_owned_authorization_activation_is_rejected,
         test_activation_custody_discovery_includes_canonical_handoffs,
         test_auth_spec_orders_service_admission_before_project_roles,
+        test_parallel_initiative_status_matches_trusted_main,
         test_stale_authorization_discovery_includes_new_untracked_docs,
         test_stale_authorization_precedence_exemption_is_line_scoped,
         test_stale_authorization_history_allowlist_is_exact,

@@ -84,7 +84,9 @@ as `90eca12`. Signed schema-v2 memory verified that merge and stopped at
 AUTH-08. The user explicitly started AUTH-08. Its inherited L1 contract failed
 initial security/architecture, QA/product, and senior/CI/docs review before
 runtime edits. The repaired contract passed all required preimplementation
-tracks at `cbe7c6c`; bounded AUTH-08 implementation is active.
+tracks at `cbe7c6c`; bounded AUTH-08 implementation later merged through PR
+#131 as `aa0fdcd`. AUTH-09 was split before runtime implementation. AUTH-09A is
+in review through PR #132; later children remain inactive.
 
 ## Active planning chunk
 
@@ -92,11 +94,11 @@ None.
 
 ## Active implementation chunk
 
-`WS-AUTH-001-08` - Bootstrap And Administrative Role Grants.
+`WS-AUTH-001-09A` - Fixed Service Identity Foundation.
 
 ## Current implementation branch
 
-`codex/ws-auth-001-08-bootstrap-admin-grants`
+`codex/ws-auth-001-09-actor-state-service-actors`
 
 ## Chunk status
 
@@ -117,7 +119,7 @@ None.
 | `WS-AUTH-001-07` | Split | `codex/ws-auth-001-07-authorization-kernel` | - | Required L1 review rejected the combined contract before runtime edits. |
 | `WS-AUTH-001-07A` | Merged | `codex/ws-auth-001-07-authorization-kernel` | #126 | Merged as `e9d72a1`; 74 permissions, 50 planned actions, and action-aware audit parity only. |
 | `WS-AUTH-001-07B` | Merged | `codex/ws-auth-001-07b-deny-default-kernel` | #130 | Merged as `90eca12`; signed memory passed. |
-| `WS-AUTH-001-08` | In review | `codex/ws-auth-001-08-bootstrap-admin-grants` | - | Implementation `34f87a5` passed deterministic evidence and all required internal reviewers; PR publication pending. |
+| `WS-AUTH-001-08` | Merged | `codex/ws-auth-001-08-bootstrap-admin-grants` | #131 | Merged as `aa0fdcd`; signed memory passed. |
 | `WS-AUTH-001-09` | Split | - | - | Split into 09A through 09E before runtime implementation. |
 | `WS-AUTH-001-09A` | In review | `codex/ws-auth-001-09-actor-state-service-actors` | #132 | Fixed service identity and static matrix foundation. |
 | `WS-AUTH-001-09B` | Proposed | - | - | Controlled service ActorProfile/ActorIdentityLink provisioning. |

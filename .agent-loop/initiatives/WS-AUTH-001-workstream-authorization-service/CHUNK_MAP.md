@@ -26,7 +26,7 @@ stopped.
 | `WS-AUTH-001-07` | Authorization Kernel And Permission Registry | L1 | Split before implementation after required L1 plan review |
 | `WS-AUTH-001-07A` | Closed Permission And Action Catalogue | L1 | Merged through PR #126 as `e9d72a1` |
 | `WS-AUTH-001-07B` | Deny-By-Default Kernel And Self-Action Cutover | L1 | Merged through PR #130 as `90eca12` |
-| `WS-AUTH-001-08` | Bootstrap And Administrative Role Grants | L1 | Implementation `34f87a5` internally reviewed; PR publication pending |
+| `WS-AUTH-001-08` | Bootstrap And Administrative Role Grants | L1 | Merged through PR #131 as `aa0fdcd` |
 | `WS-AUTH-001-09` | Actor State, Identity Revocation, And Service Actors | L1 | Split before runtime implementation |
 | `WS-AUTH-001-09A` | Fixed Service Identity Foundation | L1 | Implementation in PR #132; merge pending |
 | `WS-AUTH-001-09B` | Controlled Service Actor Provisioning | L1 | Inactive until 09A merge/memory and explicit start |
