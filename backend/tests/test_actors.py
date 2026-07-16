@@ -963,6 +963,7 @@ async def test_existing_actor_and_legacy_negative_states_fail_closed(
                     actor_kind="service",
                     status="active",
                     provisioning_method="manual_service_provisioning",
+                    service_identity="workstream.artifact.verifier",
                     created_by="workstream:system:test",
                 ),
                 ActorIdentityLink(

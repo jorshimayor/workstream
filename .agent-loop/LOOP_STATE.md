@@ -17,9 +17,9 @@
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: repaired AUTH-09A passed every required exact-head
-  preimplementation track at `b44ef8a`; bounded runtime implementation may
-  begin. AUTH-09B remains inactive.
+- Current gate: AUTH-09A implementation is complete within the reviewed
+  foundation boundary; deterministic evidence and exact-head internal review
+  are in progress. AUTH-09B remains inactive.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
@@ -35,7 +35,7 @@
   `WS-ART-001-02A3` remains inactive pending its own explicit start.
 - Authorization checkpoint: AUTH-08 merged through PR #131 as `aa0fdcd`; the
   user explicitly started AUTH-09. Parent AUTH-09 is split into 09A-09D, with
-  only 09A in planning review and no runtime implementation active.
+  only the bounded 09A foundation implemented and under evidence review.
 - Parallel coverage work: `WS-QUAL-001-01B2` remains paused. Its last official
   whole-app result is `6466/8159` statements (`79.249908%`); no replacement
   evidence exists.

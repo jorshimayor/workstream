@@ -1716,6 +1716,7 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
                         actor_kind="service",
                         status="active",
                         provisioning_method="manual_service_provisioning",
+                        service_identity="workstream.artifact.verifier",
                         created_by=str(admin_id),
                     ),
                     ActorProfile(
