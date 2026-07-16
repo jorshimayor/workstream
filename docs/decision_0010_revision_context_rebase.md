@@ -18,7 +18,9 @@ Workstream needs both fairness and correctness:
 
 ## Decision
 
-Submitted attempts are immutable. Each submission remains evaluated against the locked project guide, checker policy, review policy, revision policy, and payment policy versions stamped on that submission.
+Submitted attempts are immutable. Each submission remains evaluated against the
+locked project guide, checker policy, review policy, and revision policy
+versions stamped on that submission.
 
 When a task enters `NEEDS_REVISION`, Workstream runs a revision context preparation step before the contributor resumes. That step compares the submission's locked guide and policy context with the current active project guide and policy context.
 
@@ -47,7 +49,6 @@ Out-of-band guidance has no acceptance force until it is encoded in one of:
 - checker policy
 - review policy
 - revision policy
-- payment policy
 - task template
 - checker implementation governed by the checker policy
 
@@ -60,7 +61,12 @@ Positive:
 - contributors are not expected to monitor chat to discover rule changes
 - reviewers can see which standards governed each attempt
 - guide and policy updates can improve future revisions without mutating prior submissions
-- repeated lessons become durable guide, checker, review, revision, payment, or template changes
+- repeated lessons become durable guide, checker, review, revision, or template changes
+
+Compensation never rebases through revision context. Submitter compensation
+remains governed by the `CompensationPolicyVersion` frozen on the
+`TaskAssignment`; every `ReviewLease` independently freezes the reviewer
+version active when that lease is created.
 
 Tradeoff:
 

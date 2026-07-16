@@ -14,9 +14,9 @@ Describe what this project produces and why it matters.
 
 ## Business Terms Summary
 
-Describe payment expectations in plain language when useful for project
-context. The enforceable base amount, currency, payout type, and payout rules
-live in `PaymentPolicy`, not in the project shell or guide request body.
+Describe compensation expectations in plain language when useful for project
+context. Enforceable submitter/reviewer rules live in the independently
+published CompensationPolicyVersion, not in the guide or project shell.
 
 ## Difficulty And Time Policy
 
@@ -112,10 +112,11 @@ Every active guide version must have:
 - PostSubmitCheckerPolicy:
 - ReviewPolicy:
 - RevisionPolicy:
-- PaymentPolicy:
+- CompensationPolicy and active published version:
 
-`PaymentPolicy` is the source of truth for base amount, currency, payout type,
-revision payment rule, rejection payment rule, and accepted payment rule.
+CompensationPolicyVersion is the source of truth for exact
+`accepted_submission` and `completed_review` compensated/unpaid rules and any
+immutable money/project-points award definitions.
 
 Each task later locks:
 
@@ -160,7 +161,7 @@ Second-review sampling:
 Mandatory second review:
 
 - suspected copied or confidential material:
-- payment above threshold:
+- high-value criterion defined by `ReviewPolicy`:
 - reviewer conflict of interest:
 - registered recovery operation used (permission, actor, reason, evidence):
 
@@ -174,7 +175,6 @@ Define:
 - auto-reject after revision limit:
 - missed deadline behavior:
 - reviewer reassignment rule:
-- payment effect during revision:
 
 ## Acceptance Policy
 
@@ -208,19 +208,24 @@ Reject when:
 - low-quality generated artifacts banned by this guide
 - copied confidential/source material
 
-## Payment Dispute Policy
+## Compensation Business Terms Reference
 
-Define:
+Record only project-owner-supplied business terms and their durable source:
 
-- when accepted work becomes payable:
-- who can open a payment dispute:
-- evidence required for dispute:
-- dispute review owner:
-- payment hold rule:
-- final decision authority:
+- source reference:
+- intended submitter terms:
+- intended reviewer terms:
+- intended instrument/unit:
+
+This section is informational. It is not an active compensation rule. Workstream
+publishes `CompensationPolicyVersion` independently, and `TaskAssignment` and
+`ReviewLease` freeze their applicable versions. Revision context never rebases
+compensation.
 
 ## Lessons Learned
 
 Keep this section updated as the project runs.
 
-Each repeated issue becomes a guide update, checker update, review policy update, revision policy update, payment policy update, template update, or reviewer training note.
+Each repeated issue becomes a guide update, checker update, review policy update,
+revision policy update, compensation policy update, template update, or
+reviewer training note.

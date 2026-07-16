@@ -2,7 +2,9 @@
 
 ## Purpose
 
-The queue is the operational truth of Workstream. It tells the team what exists, what is blocked, what needs human action, and what creates payment exposure.
+The queue is the operational truth of Workstream. It tells the team what
+exists, what is blocked, what needs human action, and what creates contribution
+or compensation-award exposure.
 
 Queue lanes must be derived from task status, not manually maintained in separate lists.
 
@@ -21,7 +23,6 @@ Exit requirement:
 
 - project guide attached
 - acceptance criteria present
-- payment policy present
 - required output defined
 
 ### Screening
@@ -46,7 +47,6 @@ Exit requirement:
   provenance
 - review policy is attached
 - revision policy is attached
-- payment policy is attached
 - no open critical- or high-severity readiness finding
 
 Policy:
@@ -180,8 +180,8 @@ Policy:
 - the accepting Review creates reviewer `completed_review` and submitter
   `accepted_submission` contribution records atomically
 - each frozen compensation policy is evaluated independently; only payable
-  contributions create awards and payment follow-up
-- accepted task is not confused with paid task
+  contributions create awards and fulfillment follow-up
+- accepted task is not confused with fulfilled compensation
 
 ### Rejected
 
@@ -196,7 +196,7 @@ Policy:
 
 - rejection requires evidence and guide-grounded reason
 
-### Payment Follow-Up
+### Compensation Fulfillment Follow-Up
 
 Compensation follow-up is not a task queue lane. It is derived from payable
 `CompensationAward` records and their fulfillment projections, whether the
@@ -220,15 +220,16 @@ Every operating day starts with:
 4. clear checker failures
 5. assign review pending tasks
 6. push needs revision tasks to contributors
-7. reconcile accepted but unpaid tasks
+7. reconcile payable awards with pending/failed fulfillment projections
 8. record new lessons learned
 
 ## Transition Guards
 
 | Transition | Required Records |
 | --- | --- |
-| `DRAFT -> SCREENING` | project id, locked guide candidate, task source/description fields, acceptance and rejection criteria, payment policy |
-| `SCREENING -> READY` | screening decision, guide version lock, guide source snapshot id/hash lock, acceptance criteria, effective project submission artifact policy hash lock, project `PreSubmitCheckerPolicy` compiled bundle hash lock, approved generated project `PostSubmitCheckerPolicy` with matching provenance, review policy, revision policy, payment policy |
+| `DRAFT -> SCREENING` | project id, locked guide candidate, task source/description fields, acceptance and rejection criteria |
+| `SCREENING -> READY` | screening decision, guide version lock, guide source snapshot id/hash lock, acceptance criteria, effective project submission artifact policy hash lock, project `PreSubmitCheckerPolicy` compiled bundle hash lock, approved generated project `PostSubmitCheckerPolicy` with matching provenance, review policy, revision policy |
+| `READY -> CLAIMED` | active published CompensationPolicyVersion whose `accepted_submission` rule is explicit; TaskAssignment freezes that version |
 | `IN_PROGRESS -> SUBMITTED` | blocking pre-submit checks passed, submission packet, artifact hash manifest, evidence references, contributor attestation |
 | `SUBMITTED -> EVALUATION_PENDING` | immutable submission version, locked post-submit checker policy id/version/hash/body copied from the task context |
 | `EVALUATION_PENDING -> REVIEW_PENDING` | checker run for exact submission version, readiness certificate, no blocking failures |
@@ -238,7 +239,7 @@ Every operating day starts with:
 | `REVIEW_PENDING -> REJECTED` | rejected review, rejection reason/finding, reviewer `completed_review` contribution and applicable reviewer award; no submitter contribution |
 | pre-submit feedback in `NEEDS_REVISION` | prior findings visible to contributor, revision deadline active, no new submission created |
 | `NEEDS_REVISION -> SUBMITTED` | replacement submission packet, revision replay covering every high and medium prior finding, revision count under policy limit |
-| payment `PENDING -> PAID` | payment reference and payment audit event |
+| compensation `pending -> fulfilled` | immutable fulfillment receipt, external reference, and audit event |
 
 ## Lane Capacity
 
@@ -247,7 +248,7 @@ Each project defines capacity limits:
 - maximum active tasks per contributor
 - maximum review-pending tasks per reviewer
 - maximum stale active age
-- maximum accepted-unpaid age
+- maximum pending/failed payable-award fulfillment age
 
 Capacity limits prevent the queue from looking healthy while hidden work is stuck.
 
@@ -256,7 +257,7 @@ For early pilots, use conservative defaults:
 - contributor active task limit: 2
 - reviewer review-pending limit: 5
 - review SLA: 24 hours
-- payment reconciliation SLA: daily
+- compensation fulfillment reconciliation SLA: daily
 
 ## Queue Health Metrics
 
@@ -266,9 +267,9 @@ For early pilots, use conservative defaults:
 - submitted awaiting checks
 - review pending age
 - needs revision age
-- accepted unpaid amount
+- unfulfilled compensation award amount
 - rejected count
-- paid total
+- fulfilled compensation total
 
 ## Failure Modes
 

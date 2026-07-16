@@ -31,7 +31,9 @@ Allowed decisions:
 
 Decision rules:
 
-- `accept` means the submission satisfies the project guide and can create payment exposure.
+- `accept` means the submission satisfies the project guide and creates the
+  submitter `accepted_submission` contribution. Its frozen compensation rule
+  independently decides whether that contribution creates an award.
 - `needs_revision` means the work is fixable and the reviewer can name concrete required changes.
 - `reject` means the work is not reasonably salvageable or violates policy.
 
@@ -175,6 +177,7 @@ During the first 30 days, sample at least:
 
 - 25 percent of accepted submissions
 - 25 percent of rejected submissions
-- any submission above the configured second-review payment-policy threshold
+- any submission matching the configured high-value criterion in
+  `ReviewPolicy`
 
 Second review checks whether the first reviewer followed the guide, cited evidence, and made the correct decision type.

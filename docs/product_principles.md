@@ -12,18 +12,23 @@ Workstream owns:
 - checker output
 - review decision
 - revision history
-- payment ledger
+- compensation awards and fulfillment state
 - reputation ledger
 
 Workstream is source-agnostic, but v0.1 stays manual-first. External origin adapters and automated routing stay out until the internal loop works.
 
 ## 2. Project Rules Are First-Class
 
-Every project has its own guide, quality bar, submission artifact policy, checker policy, review policy, revision policy, and payment policy.
+Every project has its own guide, quality bar, submission artifact policy,
+checker policy, review policy, revision policy, and independently published
+compensation policy.
 
 Workstream combines the approved submission artifact policy with non-bypassable default artifact rules and generates the pre-submit checker policy.
 
-The platform does not rely on memory or chat messages to enforce rules. If a rule matters, it belongs in the project guide, submission artifact policy, checker policy, review policy, revision policy, payment policy, or task template.
+The platform does not rely on memory or chat messages to enforce rules. If a
+rule matters, it belongs in the project guide, submission artifact policy,
+checker policy, review policy, revision policy, compensation policy, or task
+template.
 
 When a guide or policy changes while work is already in progress, prior submitted attempts remain tied to their locked context. If the task returns for revision, revision policy decides whether the next attempt rebases to the latest active context, and the contributor must see what changed.
 
@@ -32,7 +37,8 @@ When a guide or policy changes while work is already in progress, prior submitte
 Projects may differ by domain, language, task format, or review style. The lifecycle remains stable:
 
 ```text
-Guide -> Task -> Submission -> Checker -> Review -> Revision/Acceptance -> Payment -> Reputation
+Guide -> Task -> Submission -> Checker -> Review -> Revision/Decision
+-> Contribution -> Conditional Compensation Award/Fulfillment -> Reputation
 ```
 
 ## 4. Automated Checks Protect Human Review
@@ -79,20 +85,20 @@ Reputation comes from outcomes:
 
 Reputation is not a manual label.
 
-## 9. Payment Must Be Traceable
+## 9. Compensation Must Be Traceable
 
-Even when payment is manual, Workstream must track:
+Even when fulfillment is manual, Workstream must track:
 
-- base amount
-- accepted amount
-- pending payout
-- paid amount
-- payment status
-- payout date
+- contribution and beneficiary
+- frozen compensation version and award definition
+- instrument, unit, and exact quantity
+- delivery and fulfillment status
+- immutable fulfillment receipt and external reference
 
 Every valid human review creates a reviewer contribution. Accepted work also
-creates a submitter contribution. The payment ledger records fulfillment of
-payable awards; explicit unpaid rules create no payment entry.
+creates a submitter contribution. Frozen compensation rules create immutable
+awards only for payable contributions; explicit unpaid rules create no award.
+Fulfillment receipts and status projections track delivery separately.
 
 ## 10. Build Internal First
 

@@ -635,7 +635,9 @@ projections from the locked rows. `locked-context` requires the registered
 covered Project Manager permission or an explicitly authorized Operator/Audit
 projection and exposes the full
 locked source snapshot, effective policy, pre-submit checker, post-submit
-checker, review, revision, and payment provenance. None of these reads
+checker, review, and revision provenance. Compensation provenance comes from
+the independently frozen `TaskAssignment` or `ReviewLease` version and is not
+guide context. None of these reads
 recompute from the current active guide.
 
 Approval creates a project-scoped `PreSubmitCheckerPolicy` row with lifecycle
@@ -1555,7 +1557,7 @@ Event types:
 - rejected
 - revision_closed
 - contribution_recorded
-- paid
+- compensation_fulfilled
 - review_overturned
 - review_confirmed
 
@@ -1617,8 +1619,7 @@ open an independent session.
 - an accepted task must additionally create one submitter
   `accepted_submission` contribution
 - `needs_revision` and `reject` must not create a submitter contribution
-- no compensation award or payment exposure exists without its contribution
-  record
+- no compensation award exists without its contribution record
 - a fulfilled award must have an immutable fulfillment receipt with the exact
   authorized quantity and external reference
 - reputation events for accepted work must reference the submitter contribution
@@ -1641,4 +1642,4 @@ open an independent session.
 - repeated review/checker failures become ProjectLesson records
 - submission artifacts are immutable after `locked_at`
 - a changed artifact requires a new submission version
-- task lifecycle status and payment status remain separate
+- task lifecycle status and compensation fulfillment status remain separate

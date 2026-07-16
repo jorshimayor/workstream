@@ -74,15 +74,16 @@ directly.
 - project pre-submit checker policy id:
 - project pre-submit checker bundle hash:
 
-## Locked Payment Policy Snapshot
+## Assignment Compensation Snapshot
 
-These values are stamped from the active `PaymentPolicy` during screening.
-Task creators do not provide payout fields directly.
+These values are server-owned and appear only after TaskAssignment creation.
+The TaskAssignment freezes the active published CompensationPolicyVersion; task
+creators do not provide award fields directly.
 
-- payment policy version:
-- base amount:
-- currency:
-- payout type:
+- submitter compensation policy version id:
+- contribution type: `accepted_submission`
+- compensation mode: `compensated | unpaid`
+- immutable award definitions when compensated:
 
 ## Deadline
 

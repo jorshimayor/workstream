@@ -19,7 +19,7 @@ Avoid broad categories until the workflow is stable.
 - 1 admin
 - 2 operators
 - 2 reviewers
-- 1 payment/reconciliation owner
+- 1 compensation-fulfillment/reconciliation owner
 
 ## Pilot Task Volume
 
@@ -29,7 +29,7 @@ Minimum:
 - 10 submissions
 - 5 review decisions
 - 3 needs-revision loops
-- 2 paid records
+- 2 fulfilled compensation awards
 
 ## Pilot Measurements
 
@@ -41,7 +41,7 @@ Track:
 - needs-revision rate
 - acceptance rate
 - reviewer disagreement
-- payout pending amount
+- compensation pending-fulfillment amount
 - operator confusion points
 
 ## Adversarial Drills
@@ -53,7 +53,7 @@ Seed negative or edge-case packets during the pilot:
 - critical- or high-severity checker failure with admin override request
 - reviewer disagreement on review decision
 - imported task rejected during screening
-- payment amount mismatch
+- compensation fulfillment quantity mismatch
 - accepted task missing evidence citation
 
 ## Pilot Rules
@@ -63,7 +63,8 @@ Seed negative or edge-case packets during the pilot:
 - no review without checker results
 - no valid human review without a reviewer contribution record
 - no accepted task without a submitter contribution record
-- no payable contribution without an award/payment record
+- no payable contribution without an immutable CompensationAward and
+  fulfillment projection
 - no manual status change without audit note
 
 ## Pilot Report
@@ -74,6 +75,6 @@ The final report includes:
 - what failed
 - missing checkers
 - unclear review rules
-- payment tracking issues
+- compensation fulfillment tracking issues
 - dashboard mismatches
 - v0.2 priorities

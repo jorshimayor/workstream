@@ -58,6 +58,31 @@ FORBIDDEN_PATH_PATTERNS = (
     re.compile(r"(^|/)\.claude(/|$)", re.IGNORECASE),
     re.compile(r"(^|/)claude\.md$", re.IGNORECASE),
 )
+ACTIVE_SHARED_CONTRACT_PATTERNS = (
+    re.compile(r"\bPaymentPolicy\b"),
+    re.compile(r"\bPaymentRecord\b"),
+    re.compile(r"\bPaymentAdjustment\b"),
+    re.compile(r"\bpayment polic(?:y|ies)\b", re.IGNORECASE),
+    re.compile(r"\bpayment records?\b", re.IGNORECASE),
+    re.compile(r"\bpayment ledger\b", re.IGNORECASE),
+    re.compile(r"\bpayment exposure\b", re.IGNORECASE),
+    re.compile(r"\bpayment follow-up\b", re.IGNORECASE),
+    re.compile(r"\bpayment adjustment record\b", re.IGNORECASE),
+    re.compile(r"\baccepted[- ]unpaid\b", re.IGNORECASE),
+    re.compile(r"\baccepted but unpaid\b", re.IGNORECASE),
+    re.compile(r"\bcontribution record generated on acceptance\b", re.IGNORECASE),
+    re.compile(r"\bcontribution record creation after acceptance\b", re.IGNORECASE),
+    re.compile(r"\baccepted paid output\b", re.IGNORECASE),
+    re.compile(r"\baward/payment record\b", re.IGNORECASE),
+)
+ACTIVE_SHARED_CONTRACT_EXCLUDED_PREFIXES = (
+    "docs/internal_reviews/",
+    "docs/reference_specs/",
+)
+ACTIVE_SHARED_CONTRACT_EXCLUDED_NAME_PREFIXES = (
+    "review_",
+    "spec_chunk_",
+)
 SKIP_DIRS = {
     ".git",
     ".pytest_cache",
@@ -67,9 +92,7 @@ SKIP_DIRS = {
     "downloads",
     "sheets",
 }
-SKIP_PREFIXES = (
-    "docs/internal_reviews/",
-)
+SKIP_PREFIXES = ("docs/internal_reviews/",)
 SKIP_FILES = {
     "scripts/check_stale_workstream_wording.py",
 }
@@ -97,8 +120,12 @@ ALLOWLISTED_PATTERN_LINES = {
         "backend/alembic/versions/0009_evaluation_pending_status.py": (
             'OLD_STATUS = "auto_checking"',
         ),
-        "backend/tests/test_alembic.py": ('LEGACY_EVALUATION_STATUS = "auto_checking"',),
-        "backend/scripts/week2_api_e2e.py": ('LEGACY_EVALUATION_STATUS = "auto_checking"',),
+        "backend/tests/test_alembic.py": (
+            'LEGACY_EVALUATION_STATUS = "auto_checking"',
+        ),
+        "backend/scripts/week2_api_e2e.py": (
+            'LEGACY_EVALUATION_STATUS = "auto_checking"',
+        ),
     },
     "auto\\s*[\"']?\\s*\\\\?\\s*\\+\\s*[\"']?_checking": {},
 }
@@ -132,8 +159,22 @@ def forbidden_path_failures(paths: list[Path]) -> list[str]:
         raw_path = path.as_posix()
         for pattern in FORBIDDEN_PATH_PATTERNS:
             if pattern.search(raw_path):
-                failures.append(f"{raw_path}: forbidden Codex-incompatible path /{pattern.pattern}/i")
+                failures.append(
+                    f"{raw_path}: forbidden Codex-incompatible path /{pattern.pattern}/i"
+                )
     return failures
+
+
+def is_active_shared_contract_path(path: Path) -> bool:
+    """Return whether a path defines the live cross-subsystem product contract."""
+    raw_path = path.as_posix()
+    if raw_path == "README.md":
+        return True
+    if not raw_path.startswith("docs/") or path.suffix not in {".md", ".puml"}:
+        return False
+    if raw_path.startswith(ACTIVE_SHARED_CONTRACT_EXCLUDED_PREFIXES):
+        return False
+    return not path.name.startswith(ACTIVE_SHARED_CONTRACT_EXCLUDED_NAME_PREFIXES)
 
 
 def read_text(path: Path) -> str | None:
@@ -195,6 +236,14 @@ def main() -> int:
                 failures.append(
                     f"{path}:{line_number}: contains stale wording /{pattern.pattern}/i"
                 )
+        if is_active_shared_contract_path(path):
+            for pattern in ACTIVE_SHARED_CONTRACT_PATTERNS:
+                for match in pattern.finditer(text):
+                    line_number = line_number_for_offset(text, match.start())
+                    failures.append(
+                        f"{path}:{line_number}: active shared contract contains retired "
+                        f"compensation wording /{pattern.pattern}/i"
+                    )
 
     if failures:
         print("Stale wording check failed:", file=sys.stderr)

@@ -16,7 +16,8 @@ Project rules scattered across chat, memory, screenshots, or informal notes will
 
 Mitigation:
 
-- every rule belongs in project guide, submission artifact policy, checker policy, review policy, revision policy, or payment policy
+- every rule belongs in project guide, submission artifact policy, checker
+  policy, review policy, revision policy, compensation policy, or task template
 - daily lessons learned become document updates
 - out-of-band guidance has no acceptance force until it becomes a guide, policy, template, or checker contract update
 - revision context preparation shows contributors any guide or policy changes before resubmission
@@ -183,7 +184,8 @@ Severity: high
 
 Problem:
 
-A weak project guide creates vague tasks, inconsistent reviews, payment disputes, and checker blind spots.
+A weak project guide creates vague tasks, inconsistent reviews, compensation
+disputes, and checker blind spots.
 
 Mitigation:
 
@@ -207,7 +209,7 @@ Mitigation:
 - reviewers judge task-specific evidence, not formatting polish
 - repeated pattern matches affect contributor reputation
 
-### R14: Payment Disputes
+### R14: Compensation Disputes
 
 Severity: high
 

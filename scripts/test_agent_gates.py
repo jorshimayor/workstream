@@ -1020,6 +1020,61 @@ def test_stale_wording_patterns_catch_variants() -> None:
     assert len(failures) == 2
 
 
+def test_active_shared_contract_rejects_retired_compensation_model() -> None:
+    """Live shared docs cannot revive the retired task-payment abstraction."""
+    stale = load_module(
+        "stale_wording_active_compensation",
+        "scripts/check_stale_workstream_wording.py",
+    )
+    sample = " ".join(
+        (
+            "PaymentPolicy",
+            "PaymentRecord",
+            "PaymentAdjustment",
+            "payment policy",
+            "payment records",
+            "payment ledger",
+            "payment exposure",
+            "payment follow-up",
+            "payment adjustment record",
+            "accepted-unpaid",
+            "accepted but unpaid",
+            "contribution record generated on acceptance",
+            "contribution record creation after acceptance",
+            "accepted paid output",
+            "award/payment record",
+        )
+    )
+
+    assert all(
+        pattern.search(sample) for pattern in stale.ACTIVE_SHARED_CONTRACT_PATTERNS
+    )
+    assert stale.is_active_shared_contract_path(Path("README.md"))
+    assert stale.is_active_shared_contract_path(Path("docs/architecture_data_model.md"))
+    assert stale.is_active_shared_contract_path(
+        Path("docs/architecture_brief/workstream_architecture_brief.md")
+    )
+
+
+def test_historical_docs_do_not_define_live_compensation_contract() -> None:
+    """Historical/reference files may state explicitly what the clean cut removed."""
+    stale = load_module(
+        "stale_wording_historical_compensation",
+        "scripts/check_stale_workstream_wording.py",
+    )
+
+    assert not stale.is_active_shared_contract_path(
+        Path("docs/reference_specs/example.md")
+    )
+    assert not stale.is_active_shared_contract_path(
+        Path("docs/internal_reviews/example.md")
+    )
+    assert not stale.is_active_shared_contract_path(
+        Path("docs/spec_chunk_5_example.md")
+    )
+    assert not stale.is_active_shared_contract_path(Path("docs/review_architecture.md"))
+
+
 def test_stale_wording_skips_only_docs_internal_reviews_prefix() -> None:
     """Historical review archives are skipped without hiding other folders."""
     stale = load_module(
@@ -1364,8 +1419,7 @@ def test_next_chunk_contract_binding_is_exact_locally_and_remotely() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         root = Path(tmpdir)
         contract = (
-            root
-            / ".agent-loop/initiatives/WS-AUTH-001-example/chunks/"
+            root / ".agent-loop/initiatives/WS-AUTH-001-example/chunks/"
             "WS-AUTH-001-07-authorization-kernel.md"
         )
         contract.parent.mkdir(parents=True)
@@ -1390,8 +1444,7 @@ def test_next_chunk_contract_binding_is_exact_locally_and_remotely() -> None:
             "exactly one chunk contract",
         )
         foreign_contract = (
-            root
-            / ".agent-loop/initiatives/WS-ART-001-example/chunks/"
+            root / ".agent-loop/initiatives/WS-ART-001-example/chunks/"
             "WS-AUTH-001-07-authorization-kernel.md"
         )
         foreign_contract.parent.mkdir(parents=True)
@@ -1406,8 +1459,7 @@ def test_next_chunk_contract_binding_is_exact_locally_and_remotely() -> None:
         )
         foreign_contract.unlink()
         spoof_contract = (
-            root
-            / ".agent-loop/initiatives/WS-AUTH-001-spoof/chunks/"
+            root / ".agent-loop/initiatives/WS-AUTH-001-spoof/chunks/"
             "WS-AUTH-001-07-authorization-kernel.md"
         )
         spoof_contract.parent.mkdir(parents=True)
@@ -1438,9 +1490,7 @@ def test_next_chunk_contract_binding_is_exact_locally_and_remotely() -> None:
             "another initiative directory",
         )
         foreign_contract.unlink()
-        duplicate = (
-            contract.parent / "WS-AUTH-001-07-copy.md"
-        )
+        duplicate = contract.parent / "WS-AUTH-001-07-copy.md"
         duplicate.write_text(contract.read_text(encoding="utf-8"), encoding="utf-8")
         assert_loop_error(
             updater,
@@ -1480,9 +1530,9 @@ def test_next_chunk_contract_binding_is_exact_locally_and_remotely() -> None:
         "WS-AUTH-001-example", "WS-AUTH-001-spoof"
     )
     non_contract_tree_item = dict(tree_item)
-    non_contract_tree_item["path"] = non_contract_tree_item["path"].removesuffix(
-        ".md"
-    ) + ".txt"
+    non_contract_tree_item["path"] = (
+        non_contract_tree_item["path"].removesuffix(".md") + ".txt"
+    )
     valid_tree = {
         "truncated": False,
         "tree": [non_contract_tree_item, tree_item],
@@ -1497,7 +1547,11 @@ def test_next_chunk_contract_binding_is_exact_locally_and_remotely() -> None:
         metadata,
     )
     remote_cases = (
-        ({"truncated": True, "tree": [tree_item]}, "Authorization Kernel", "incomplete"),
+        (
+            {"truncated": True, "tree": [tree_item]},
+            "Authorization Kernel",
+            "incomplete",
+        ),
         ({"truncated": False, "tree": []}, "Authorization Kernel", "exactly one"),
         (
             {"truncated": False, "tree": [foreign_tree_item]},
@@ -2265,9 +2319,9 @@ def test_loop_memory_schema_v2_rejection_matrix_is_fail_closed() -> None:
         assert updater.apply_merge_record(root, no_successor_record) is True
         assert updater.apply_merge_record(root, no_successor_record) is False
         updater.validate_generated_state(root)
-        assert "Next chunk: none recorded" in (
-            root / updater.RENDERED_PATH
-        ).read_text(encoding="utf-8")
+        assert "Next chunk: none recorded" in (root / updater.RENDERED_PATH).read_text(
+            encoding="utf-8"
+        )
         assert checker.generated_state_failures(root) == []
 
         private_key = root / "private.pem"
@@ -2297,22 +2351,20 @@ def test_loop_memory_schema_v2_rejection_matrix_is_fail_closed() -> None:
         is None
     )
     assert (
-        updater._contract_title(
-            "# Chunk Contract: WS-AUTH-001-07\n", "WS-AUTH-001-07"
-        )
+        updater._contract_title("# Chunk Contract: WS-AUTH-001-07\n", "WS-AUTH-001-07")
         is None
     )
     assert (
         updater._initiative_directory_from_path(
-        ".agent-loop/initiatives/WS-AUTH-001-example/chunks/WS-AUTH-001-07.md",
-        "WS-AUTH-001",
+            ".agent-loop/initiatives/WS-AUTH-001-example/chunks/WS-AUTH-001-07.md",
+            "WS-AUTH-001",
         )
         == "WS-AUTH-001-example"
     )
     assert (
         updater._initiative_directory_from_path(
-        ".agent-loop/initiatives/WS-ART-001-example/chunks/WS-AUTH-001-07.md",
-        "WS-AUTH-001",
+            ".agent-loop/initiatives/WS-ART-001-example/chunks/WS-AUTH-001-07.md",
+            "WS-AUTH-001",
         )
         is None
     )
@@ -2411,20 +2463,21 @@ def test_loop_memory_schema_v2_rejection_matrix_is_fail_closed() -> None:
     )
     assert_loop_error(
         updater,
-        lambda: updater._is_ancestor(
-            Path("/not/a/repository"), "a" * 40, "b" * 40
-        ),
+        lambda: updater._is_ancestor(Path("/not/a/repository"), "a" * 40, "b" * 40),
         "cannot resolve main commit ancestry",
     )
-    assert updater._latest_named(
-        [
-            {},
-            {"name": "gate", "started_at": "2026-01-02"},
-            {"name": "gate", "started_at": "2026-01-01"},
-        ],
-        "name",
-        "started_at",
-    )["gate"]["started_at"] == "2026-01-02"
+    assert (
+        updater._latest_named(
+            [
+                {},
+                {"name": "gate", "started_at": "2026-01-02"},
+                {"name": "gate", "started_at": "2026-01-01"},
+            ],
+            "name",
+            "started_at",
+        )["gate"]["started_at"]
+        == "2026-01-02"
+    )
     for value, expected in (
         (None, "ISO timestamp"),
         ("not-a-time", "ISO timestamp"),
@@ -2468,9 +2521,7 @@ def test_loop_memory_schema_v2_rejection_matrix_is_fail_closed() -> None:
             "kind is invalid",
         ),
         (
-            lambda row: row["checks"]["required"]["agent-gates"].update(
-                conclusion=7
-            ),
+            lambda row: row["checks"]["required"]["agent-gates"].update(conclusion=7),
             "conclusion is invalid",
         ),
         (
@@ -2591,7 +2642,7 @@ def test_loop_memory_workflow_isolated_write_boundary() -> None:
     assert "LOOP_MEMORY_SIGNING_KEY" in workflow
     assert workflow.count("LOOP_MEMORY_SIGNING_KEY:") == 1
     assert "LOOP_MEMORY_PRIVATE_KEY" not in workflow
-    assert 'trap \'rm -f "${private_key}"\' EXIT' in workflow
+    assert "trap 'rm -f \"${private_key}\"' EXIT" in workflow
     assert "prepare-state" in workflow
     assert ".agent-loop/STATE.sig" in workflow
     assert 'git -C "${state_dir}" add -f --' in workflow
@@ -3063,8 +3114,7 @@ def test_post_merge_state_rejects_corrupt_files_and_cli_misuse() -> None:
         intent_path.parent.mkdir(parents=True)
         intent_path.write_text(valid_loop_intent(), encoding="utf-8")
         contract_path = (
-            intent_repo
-            / ".agent-loop/initiatives/WS-AUTH-001-example/chunks/"
+            intent_repo / ".agent-loop/initiatives/WS-AUTH-001-example/chunks/"
             "WS-AUTH-001-07-authorization-kernel.md"
         )
         contract_path.parent.mkdir(parents=True)
@@ -3308,8 +3358,8 @@ def test_merge_ledger_rejects_schema_record_and_ancestry_corruption() -> None:
         malformed_envelope["schema_version"] = malformed_schema_version
         assert_loop_error(
             updater,
-            lambda malformed_envelope=malformed_envelope: updater._validate_ledger_entries(
-                [malformed_envelope]
+            lambda malformed_envelope=malformed_envelope: (
+                updater._validate_ledger_entries([malformed_envelope])
             ),
             "invalid schema",
         )
@@ -3503,9 +3553,7 @@ def test_feature_owned_authorization_activation_is_rejected() -> None:
     )
     for statement in stale_statements:
         failures = gate.scan_activation_custody_text("contract.md", statement)
-        assert failures == [
-            "contract.md:1: FEATURE_OWNED_AUTH_ACTIVATION"
-        ], statement
+        assert failures == ["contract.md:1: FEATURE_OWNED_AUTH_ACTIVATION"], statement
 
     canonical_statements = (
         "AUTH activates the action after hidden ART behavior merges.",

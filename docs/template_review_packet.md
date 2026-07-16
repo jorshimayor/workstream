@@ -59,12 +59,12 @@ Required when reviewing a resubmission.
 | context rebased | yes or no |
 | prior guide version | `<guide version>` |
 | next guide version | `<guide version>` |
-| prior policy versions | `<checker/review/revision/payment policy versions>` |
-| next policy versions | `<checker/review/revision/payment policy versions>` |
+| prior policy versions | `<checker/review/revision policy versions>` |
+| next policy versions | `<checker/review/revision policy versions>` |
 | change summary shown to contributor | `<summary>` |
 | revision context audit event | `<audit event id>` |
 
-## Payment Eligibility
+## Compensation Award Eligibility
 
 State both determinations independently:
 

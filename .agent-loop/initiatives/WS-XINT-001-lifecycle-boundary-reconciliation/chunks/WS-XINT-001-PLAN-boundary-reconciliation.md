@@ -20,6 +20,8 @@ activation custody, transaction order, and cross-initiative handoffs.
   contribution/compensation wording enforcement
 - `.agent-loop/WORK_QUEUE.md`, `.agent-loop/REVIEW_LOG.md`, and one merge intent
 - `.agent-loop/LOOP_STATE.md` for exact parallel planning-state reconciliation
+- `README.md` only to reconcile the repository's public lifecycle summary with
+  the same canonical boundary
 - directly related active architecture, product, operations, roadmap, template,
   and diagram documents under `docs/` only to reconcile the reviewer
   `completed_review`, submitter `accepted_submission`, and conditional
@@ -53,6 +55,13 @@ activation custody, transaction order, and cross-initiative handoffs.
 - every valid human Review creates one reviewer `completed_review`; `accept`
   additionally creates one submitter `accepted_submission`; compensation is
   independently evaluated from each frozen policy and may be explicitly unpaid;
+- active shared docs use the canonical compensation model:
+  `CompensationPolicy`, immutable `CompensationPolicyVersion`,
+  `CompensationRule`, `CompensationAwardDefinition`,
+  `ProjectCompensationAdapterBinding`, `CompensationAward`,
+  `CompensationFulfillmentReceipt`, and `CompensationStatusProjection`;
+  `PaymentPolicy` and `PaymentRecord` survive only in explicit
+  historical/reference statements describing their removal;
 - each parallel agent receives a bounded handoff and no runtime start signal;
 - ART plans no longer claim that ART registers or activates authorization;
 - Markdown links, stale wording, diff hygiene, and internal review pass.
@@ -73,7 +82,8 @@ evidence is not rewritten.
 ## Required reviewers
 
 Senior engineering, architecture, QA/test, security/auth, product/ops,
-reuse/dedup, and docs.
+reuse/dedup, docs, CI integrity, and test delta. A passing final verdict means
+zero findings at any severity; `PASS WITH LOW RISKS` is not sufficient.
 
 ## Human review focus
 

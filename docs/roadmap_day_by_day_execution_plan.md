@@ -56,9 +56,9 @@ Deliver:
 - post-submit checker policy fields
 - review policy fields
 - revision policy fields
-- payment policy fields
-- base amount fields
-- payment dispute policy fields
+- independent compensation policy/version fields
+- explicit submitter/reviewer compensated or unpaid rules
+- immutable money/project-points award definitions
 - active/inactive project status
 - SQLAlchemy 2.x async model shape
 - Pydantic request/response schemas
@@ -68,7 +68,12 @@ Exit criteria:
 - create a project from a markdown guide
 - retrieve the active guide version for a task
 - edit a draft guide without changing historical task guide versions
-- block project activation when guide source snapshot, submission artifact policy, effective project submission artifact policy hash, post-submit checker, review policy, revision policy, payment policy, or project pre-submit checker bundle hash is missing
+- block project activation when guide source snapshot, submission artifact
+  policy, effective project submission artifact policy hash, post-submit checker,
+  review policy, revision policy, or project pre-submit checker bundle hash is
+  missing
+- block Assignment/ReviewLease creation when no active published
+  CompensationPolicyVersion can be frozen
 - block task readiness when locked guide snapshot, effective project submission artifact policy hash, or project pre-submit checker bundle hash is missing
 - migrations and model tests define the expected invariants
 
@@ -126,7 +131,9 @@ Deliver:
 Exit criteria:
 
 - submit v1 packet
-- worker does not provide submission version, guide version, submission artifact policy version, pre-submit checker bundle hash, post-submit checker policy version, review policy version, revision policy version, or payment policy version
+- worker does not provide submission version, guide version, submission artifact
+  policy version, pre-submit checker bundle hash, post-submit checker policy
+  version, review policy version, revision policy version, or compensation terms
 - blocking pre-submit failures create no submission row, no submission version, no `SUBMITTED` transition, and no submission-created audit event
 - task moves to `SUBMITTED`
 - package/evidence records are immutable after checker run starts
@@ -134,7 +141,10 @@ Exit criteria:
 
 ## Week 2: Checker System
 
-Week 2 is backend-first checker infrastructure. Checker output is exposed through APIs, backend contract drills, and operational debug output. It does not build the product frontend, reviewer queue UI, review decision form, contribution records, payment records, or reputation updates.
+Week 2 is backend-first checker infrastructure. Checker output is exposed through
+APIs, backend contract drills, and operational debug output. It does not build
+the product frontend, reviewer queue UI, review decision form, contribution
+records, compensation awards/fulfillment, or reputation updates.
 
 The core invariant is:
 
@@ -306,27 +316,23 @@ Exit criteria:
 
 ## Week 4: Ledger, Dashboard, Pilot
 
-### Day 16: Payment Ledger
+### Day 16: Contribution And Compensation Ledger
 
 Deliver:
 
 - `ContributionRecord`
-- `PaymentRecord`
-- accepted amount
-- pending amount
-- paid amount
-- payment status
-- payment reference
-- payment dispute status
-- payment adjustment record
+- `CompensationPolicyVersion`
+- `CompensationAward`
+- `CompensationFulfillmentReceipt`
+- `CompensationStatusProjection`
 
 Exit criteria:
 
 - every valid human review creates a reviewer contribution record
 - accepted work additionally creates a submitter contribution record
-- each payable contribution creates a pending award/payment record; explicit
-  unpaid rules create none
-- paid payment status requires payment reference
+- each payable contribution creates an immutable CompensationAward and pending
+  fulfillment projection; explicit unpaid rules create none
+- fulfilled status requires an immutable receipt and external reference
 
 ### Day 17: Reputation Ledger
 
@@ -347,12 +353,13 @@ Deliver:
 
 - project dashboard
 - queue dashboard
-- payment dashboard
+- compensation fulfillment dashboard
 - reviewer dashboard
 
 Exit criteria:
 
-- dashboard totals reconcile with task and payment records
+- dashboard totals reconcile with contributions, awards, receipts, and
+  fulfillment projections
 
 ### Day 19: Pilot Setup
 
@@ -361,7 +368,7 @@ Deliver:
 - 3 project guides
 - 10 pilot tasks
 - 2 reviewers assigned
-- payment owner assigned
+- compensation fulfillment owner assigned
 
 Exit criteria:
 
@@ -399,14 +406,14 @@ Deliver:
 - accepted decisions
 - rejected decision if warranted
 - contribution records
-- payment records
+- compensation awards and fulfillment projections
 - reputation events
 
 Exit criteria:
 
 - every valid review has a reviewer contribution; accepted work also has
   evidence and a submitter contribution; every payable contribution has a
-  pending award/payment record
+  immutable award and pending fulfillment projection
 
 ### Day 23: Reviewer Audit
 
@@ -450,7 +457,7 @@ Deliver:
 - operator manual
 - reviewer manual
 - task creator checklist
-- payment reconciliation checklist
+- compensation fulfillment reconciliation checklist
 
 Exit criteria:
 
@@ -462,7 +469,7 @@ Deliver:
 
 - throughput metrics
 - review metrics
-- payment metrics
+- compensation award and fulfillment metrics
 - quality metrics
 
 Exit criteria:
@@ -507,4 +514,5 @@ Deliver:
 
 Exit criteria:
 
-- Workstream can run a small real project from guide to payment record
+- Workstream can run a small real project from guide to contribution,
+  conditional award, and fulfillment projection

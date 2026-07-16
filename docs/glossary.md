@@ -6,14 +6,16 @@ Flow's task evaluation and contribution infrastructure: the system for project g
 
 ## Project
 
-A configured work program with its own human-facing guide, submission artifact policy, checker policies, review policy, revision policy, payment policy, and queue.
+A configured work program with its own human-facing guide, submission artifact
+policy, checker policies, review policy, revision policy, independently
+published compensation policy, and queue.
 
 ## Project Owner
 
 The external or internal organization that provides open-ended project material
 and business terms. That material can be markdown, URL-backed documentation,
-repository docs, examples, rubrics, task instructions, base payout or payment
-policy inputs, or other project-specific source material. The project owner
+repository docs, examples, rubrics, task instructions, compensation business
+terms, or other project-specific source material. The project owner
 does not author or approve Workstream's machine-readable internal policy schema.
 
 ## ActorContext
@@ -191,7 +193,7 @@ A unit of work inside a project.
 ## Task Work Context
 
 The contributor-safe API projection of a task's locked guide, project summary,
-review policy, revision policy, payment policy, and lifecycle state. It is read
+review policy, revision policy, and lifecycle state. It is read
 from the task's stamped locked context and does not expose source snapshot
 hashes, private source/import refs, compiled checker bundles, checker configs,
 Celery ids, or setup errors.
@@ -206,9 +208,16 @@ rules, hash algorithm, size limits, and attestation terms before submission.
 ## Task Locked Context
 
 The permission-scoped Project Manager, Operator, or Audit projection of a task's
-locked guide and policy provenance, including guide source snapshot id/hash, effective policy
-id/hash, pre-submit checker policy id/hash, post-submit checker policy
-id/hash/body summary, and review, revision, and payment policy versions.
+locked guide and policy provenance, including guide source snapshot id/hash,
+effective policy id/hash, pre-submit checker policy id/hash, post-submit checker
+policy id/hash/body summary, and review and revision policy versions.
+
+## Compensation Policy Version
+
+An immutable published project policy version containing exact
+`accepted_submission` and `completed_review` rules. TaskAssignment freezes the
+submitter version and ReviewLease freezes the reviewer version. An explicit
+unpaid rule creates no CompensationAward.
 
 ## Task Contract
 
@@ -271,11 +280,12 @@ The object-storage adapter that implements `ArtifactStore` using the S3
 protocol. AWS S3 is the v0.1 production provider; MinIO is used for local and CI
 integration proof. Cloudflare R2 is deferred to a separate approved initiative.
 
-## Payment Ledger
+## Compensation Fulfillment
 
-The fulfillment-status record for payable compensation awards, including
-pending, submitted, paid, disputed, and external-reference facts. Explicitly
-unpaid contribution rules create no award or payment-ledger entry.
+The award-delivery and fulfillment record set for payable compensation:
+immutable `CompensationAward` and `CompensationFulfillmentReceipt` records plus
+a rebuildable `CompensationStatusProjection`. Explicitly unpaid contribution
+rules create no award.
 
 ## Reputation Ledger
 

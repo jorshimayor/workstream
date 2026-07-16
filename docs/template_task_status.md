@@ -58,7 +58,7 @@ External-origin webhook drop delivery is a future adapter concern. In v0.1 this 
 - review id and review lease id:
 - submitter contribution record id, only on `accept`:
 - submitter contribution type, only on `accept`: `accepted_submission`
-- compensation award ids, when the frozen policies are paid:
+- compensation award ids, when the frozen rules are payable:
 
 ## Open Items
 

@@ -6,7 +6,11 @@ Workstream manages project guides, task queues, submission packets, automated ch
 
 Workstream is how Flow measures, certifies, and coordinates useful human-agent work.
 
-It is not a workspace and it is not blockchain-first. Operators can work with any local tools, human-agent workflow, or external execution environment. Workstream owns the project guide, task queue, submission packet, automated checks, human review, revision loop, acceptance state, payment ledger, and reputation record.
+It is not a workspace and it is not blockchain-first. Operators can work with
+any local tools, human-agent workflow, or external execution environment.
+Workstream owns the project guide, task queue, submission packet, automated
+checks, human review, revision loop, contribution record, conditional
+compensation award and fulfillment state, and reputation record.
 
 Workstream is source-agnostic, but v0.1 is manual-first. External origin onboarding, source adapters, automated routing, owner-agent execution workspaces, and on-chain settlement remain later adapters until the internal evaluation loop is proven.
 
@@ -23,7 +27,7 @@ Project Guide
 -> Human Review
 -> Needs Revision / Accepted / Rejected
 -> Contribution Record
--> Payment Record
+-> Compensation Award / Fulfillment when payable
 -> Reputation Update
 -> Lessons Learned
 ```
@@ -35,7 +39,9 @@ Different projects speak different domain languages, but serious task evaluation
 - every project has a guide
 - every project has an approved submission artifact policy
 - every task belongs to a project
-- every project has a payment policy that carries base amount, currency, and payout rules
+- every project has an active published compensation policy version with
+  explicit `accepted_submission` and `completed_review` rules, including
+  explicit unpaid rules where intended
 - every task has acceptance criteria
 - every submission has required artifacts, evidence references, hashes, and contributor attestation
 - every invalid submission packet is blocked before submission creation
@@ -249,7 +255,9 @@ Update reputation from review outcome
 Review lessons learned
 ```
 
-The system is successful only if it prevents weak work from reaching review, preserves evidence, and gives operators a clear path from task intake to accepted paid output.
+The system is successful only if it prevents weak work from reaching review,
+preserves evidence, and gives operators a clear path from task intake through
+review, contribution, conditional compensation, and fulfillment.
 
 ## Operating Standard
 

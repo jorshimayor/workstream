@@ -6,7 +6,8 @@ Accepted
 
 ## Context
 
-Workstream review results drive task state, revision loops, contribution records, payment records, and reputation signals.
+Workstream review results drive task state, revision loops, contribution
+records, conditional compensation awards, and reputation signals.
 
 If projects invent their own review outcome labels, downstream lifecycle rules become ambiguous.
 
@@ -24,7 +25,7 @@ Display labels may render these as "Accept", "Needs revision", and "Reject", but
 
 `Escalated` is not a review decision value.
 
-Disputes, second review, suspected fraud, payment holds, or registered recovery
+Disputes, second review, suspected fraud, compensation holds, or registered recovery
 may create separate workflow records and audit events, but they do not replace
 the reviewer decision contract. Authorization recovery never creates a review
 decision.
@@ -58,7 +59,7 @@ Positive:
 - task state transitions remain simple
 - review analytics can compare decisions across projects
 - revision policy has one clear entry point
-- payment and reputation logic can depend on a stable decision set
+- compensation and reputation logic can depend on a stable decision set
 - automated checker routing cannot accidentally masquerade as human acceptance or rejection
 
 Tradeoff:

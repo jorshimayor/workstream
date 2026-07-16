@@ -25,7 +25,9 @@ The first user flows prove that Workstream can run real work from intake to acce
     unchanged replacement fails closed, and activation remains blocked.
 15. An authorized covered Project Manager enables review policy.
 16. An authorized covered Project Manager enables revision policy.
-17. The owning compensation authority enables payment policy under its specification.
+17. The owning compensation authority publishes the active
+    CompensationPolicyVersion with explicit submitter and reviewer
+    compensated/unpaid rules.
 18. Project becomes active.
 
 Acceptance:
@@ -36,7 +38,7 @@ Acceptance:
   artifact policy hash, project pre-submit checker bundle hash, an approved
   current compiled project post-submit checker policy with matching guide,
   source snapshot, effective project policy, and pre-submit checker provenance,
-  review policy, revision policy, and payment policy.
+  review policy, and revision policy.
 - Normal setup starts from guide/source capture. Project Managers do not
   manually trigger sufficiency or derivation in the happy path.
 - Submission artifact policy is Workstream-derived and approved by an
@@ -45,7 +47,9 @@ Acceptance:
 - This flow is the agent-derived setup path. A manual sufficiency report follows
   the explicit manual policy path; agent derivation requires an agent-created
   sufficiency report for the same snapshot or a fresh guide-source snapshot.
-- Submission artifact, checker, review, revision, and payment policies are visible on the project page.
+- Submission artifact, checker, review, and revision policies are visible on the
+  project page; compensation policy/version is an independently governed
+  project record.
 
 ## Flow 2: Project Manager Creates A Task
 
@@ -53,7 +57,11 @@ Acceptance:
 2. The Project Manager creates a task with title, description, source reference, acceptance criteria, rejection criteria, deadline, and difficulty.
 3. Workstream validates the task source and reviewability fields, then confirms the task fits the active project guide and policy bundle.
 4. Task enters `SCREENING`.
-5. Screening locks the guide source snapshot id/hash, effective project submission artifact policy hash, project pre-submit checker bundle hash, and approved provenance-matched project post-submit checker policy reference, then confirms the task contract, review policy, revision policy, payment policy, and reviewability.
+5. Screening locks the guide source snapshot id/hash, effective project
+   submission artifact policy hash, project pre-submit checker bundle hash, and
+   approved provenance-matched project post-submit checker policy reference,
+   then confirms the task contract, review policy, revision policy, and
+   reviewability.
 6. Task enters `READY`.
 
 Acceptance:
@@ -62,7 +70,8 @@ Acceptance:
 - Missing required fields block `READY`.
 - Task shows project guide, required artifacts, generated project pre-submit
   checker policy summary, permission-appropriate post-submit checker policy
-  summary, review policy, revision policy, and payment policy.
+  summary, review policy, and revision policy. After claim, the contributor sees
+  the Assignment-frozen submitter compensation terms.
 
 ## Flow 3: Contributor Submits Work
 
@@ -151,6 +160,6 @@ Acceptance:
 
 - Accepted task cannot lack its submitter contribution record.
 - Every accepted Review cannot lack its reviewer contribution record.
-- A payable contribution cannot lack its award/payment record; an explicit
-  unpaid policy creates no award.
-- Payment status is separate from assignment status.
+- A payable contribution cannot lack its immutable CompensationAward and
+  fulfillment projection; an explicit unpaid policy creates no award.
+- Compensation fulfillment status is separate from assignment status.

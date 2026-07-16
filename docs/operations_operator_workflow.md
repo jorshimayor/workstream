@@ -29,7 +29,7 @@ grants. This grant does not manage project work.
 
 ### Finance Authority
 
-Tracks accepted work, pending payout, payout submitted, and paid states.
+Tracks compensation awards, delivery, fulfillment, failure, and dispute state.
 
 ### Audit Authority
 
@@ -43,7 +43,7 @@ Reads authorized immutable and operational evidence without mutation.
 3. Assign tasks
 4. Review submitted packets
 5. Resolve needs-revision queue
-6. Update accepted and paid records
+6. Reconcile contribution, award, and fulfillment records
 7. Review failed checks; apply covered repair where eligible, use registered
    Operator retry for infrastructure or setup failures, and route
    contributor-fixable blockers to `NEEDS_REVISION`
@@ -57,7 +57,9 @@ Reads authorized immutable and operational evidence without mutation.
 3. Create task title and description.
 4. Add acceptance criteria.
 5. Add required output format.
-6. Confirm the active payment policy amount and currency that will be locked onto the task.
+6. Confirm an active published CompensationPolicyVersion exists with explicit
+   submitter and reviewer compensated/unpaid rules; the Assignment and
+   ReviewLease freeze it later.
 7. Set skill tags.
 8. Run task schema check.
 9. Move to READY.
@@ -98,7 +100,9 @@ Reads authorized immutable and operational evidence without mutation.
 1. Reviewer rejects submission or task.
 2. Review must include rejection reason.
 3. Reputation event is recorded.
-4. Payment policy determines whether any payment is owed.
+4. The frozen reviewer compensation rule determines whether the resulting
+   `completed_review` contribution creates a `CompensationAward`; rejection
+   creates no submitter `accepted_submission` contribution.
 
 ## Lessons Learned
 
@@ -110,7 +114,7 @@ Every project maintains lessons learned:
 - guide update needed
 - reviewer policy update needed
 - revision policy update needed
-- payment policy update needed
+- compensation policy update needed
 
 This is how Workstream compounds operational knowledge.
 
@@ -120,7 +124,7 @@ Each lesson links to an operating source:
 - reviewer finding
 - rejected task
 - repeated needs-revision loop
-- payment reconciliation issue
+- compensation fulfillment reconciliation issue
 - user/operator incident
 
 Lessons are not just notes. They become one of:
@@ -130,5 +134,5 @@ Lessons are not just notes. They become one of:
 - reviewer workflow update
 - queue policy update
 - revision policy update
-- payment policy update
+- compensation policy update
 - risk register update

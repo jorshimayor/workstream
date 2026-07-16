@@ -36,14 +36,15 @@
 - mark one guide version active
 - require guide approval before activation
 - lock guide and policy versions on every task
-- configure payment policy amount and currency
+- configure active CompensationPolicyVersion with explicit submitter/reviewer
+  rules and award definitions
 - configure submission artifact policy
 - generate pre-submit checker policy
 - configure post-submit checker policy
 - configure review policy
 - configure revision policy
 - configure pre-review gate policy
-- configure payment policy, including payment dispute policy
+- configure compensation policy and adapter bindings
 - configure lessons-learned promotion rule
 
 ### Task Queue
@@ -53,7 +54,8 @@
 - implement `SCREENING` lane before `READY`
 - require readiness gate before task release
 - assign skill tags
-- stamp locked payment policy amount and currency during screening
+- freeze submitter CompensationPolicyVersion on TaskAssignment and reviewer
+  version on ReviewLease
 - change status only through allowed transitions
 - record status audit event
 - block direct `SUBMITTED -> ACCEPTED`
@@ -106,15 +108,17 @@
 - require evidence per fix
 - reviewer closure status
 
-### Payment And Reputation
+### Compensation And Reputation
 
-- contribution record generated on acceptance
-- payment and reputation records reference contribution record
-- payment record generated on acceptance
-- pending payout dashboard
-- paid status with reference
-- disputed payment status
-- payment adjustment record for amount changes
+- reviewer contribution generated for every valid human Review; `accept`
+  additionally creates the submitter contribution
+- compensation awards and reputation events reference the applicable
+  contribution record
+- pending award fulfillment dashboard
+- fulfilled status with immutable receipt and external reference
+- disputed fulfillment status
+- new published compensation definition for future amount changes; existing
+  awards remain immutable
 - contributor reputation events
 - reviewer reputation events
 - reviewer-pair anomaly flags
@@ -126,11 +130,11 @@
 - queue counts
 - accepted count
 - needs revision count
-- pending payout
-- paid total
+- pending compensation fulfillment
+- fulfilled compensation total
 - stale active tasks
 - review pending age
-- accepted unpaid age
+- oldest unfulfilled compensation award age
 
 ## P1: Important After Core Loop Works
 
@@ -140,7 +144,7 @@
 - project guide approval workflow
 - checker false positive flag
 - task batch import
-- CSV export for payment reconciliation
+- CSV export for compensation fulfillment reconciliation
 - evidence hash verification
 - notification events
 - project lessons learned page

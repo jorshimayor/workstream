@@ -4,7 +4,10 @@ Last updated: 2026-07-14
 
 ## Purpose
 
-This note locks the Workstream v0.1 architecture around source-agnostic intake, project guide discipline, task contracts, human accountability for agent-assisted work, contribution records, payment records, and reputation consequences.
+This note locks the Workstream v0.1 architecture around source-agnostic intake,
+project guide discipline, task contracts, human accountability for agent-assisted
+work, contribution records, conditional compensation awards and fulfillment,
+and reputation consequences.
 
 The ADR files under `docs/decision_*.md` are the decision record for this lockdown. When a locked rule changes, update or add an ADR before changing implementation specs.
 
@@ -23,7 +26,7 @@ Project guide
 -> revision replay
 -> review decision: accept / needs_revision / reject
 -> contribution record
--> payment record
+-> compensation award / fulfillment when payable
 -> reputation event
 ```
 
@@ -87,7 +90,6 @@ Every active guide version must also have approved machine-readable policies:
 - post-submit checker policy
 - review policy
 - revision policy
-- payment policy
 
 The guide may summarize or link to those policies, but the policies are the enforcement source.
 
@@ -114,7 +116,8 @@ Tasks lock to the active guide version at creation or screening time before ente
 
 ### Task Contract
 
-Every task must carry enough information to make claiming, checking, reviewing, and payment auditable:
+Every task must carry enough information to make claiming, checking, and
+reviewing auditable:
 
 - project id
 - locked guide version
@@ -127,11 +130,13 @@ Every task must carry enough information to make claiming, checking, reviewing, 
 - difficulty
 - skill tags
 - estimated time when known
-- locked payment policy amount
-- locked payment policy currency
-- locked payment policy payout type
 - deadline or SLA when applicable
 - source type and source reference when imported
+
+Compensation is not task-guide context. TaskAssignment freezes the active
+published submitter `CompensationPolicyVersion`; ReviewLease independently
+freezes the reviewer version. Either rule may be explicitly unpaid and therefore
+create no award.
 
 ### Human Accountability
 
@@ -206,6 +211,10 @@ Use these names consistently:
 
 - `check_acceptance_criteria_present`
 - `ContributionRecord`
+- `CompensationPolicyVersion`
+- `CompensationAward`
+- `CompensationFulfillmentReceipt`
+- `CompensationStatusProjection`
 - `SubmissionArtifactPolicy`
 - `EffectiveProjectSubmissionArtifactPolicy`
 - `PreSubmitCheckerPolicy`

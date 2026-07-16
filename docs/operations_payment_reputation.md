@@ -85,7 +85,7 @@ It updates from:
 - reviewer `completed_review` contributions
 - needs revision
 - rejection
-- payment completion
+- compensation fulfillment completion
 - reviewer decision quality
 - task difficulty
 - skill area
@@ -101,7 +101,7 @@ Track:
 - revision rate
 - average turnaround
 - skill-specific quality
-- payout reliability
+- compensation fulfillment reliability
 
 Suggested v0.1 contributor events:
 

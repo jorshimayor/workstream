@@ -24,7 +24,7 @@ tokens and owns product authorization.
 | Grants, permissions, idempotency, invalidation, decisions | `backend/app/modules/authorization` | Deny by default; no token-role product authority. |
 | Resource facts | Owning feature services/repositories | Repositories return domain records; application services compose `ResourceContext`. |
 | Review lifecycle | WS-REV-001 | Authorization supplies actors and permissions but does not invent review outcomes. |
-| Contribution and compensation | WS-CON-001 | Authorization does not redefine contribution or payment behavior. |
+| Contribution and compensation | WS-CON-001 | Authorization does not redefine contribution or compensation behavior. |
 
 All public routes use `/api/v1`. The archival short prefix is not an alias.
 
@@ -659,6 +659,6 @@ authorization claims. ADR 0006 still controls authentication ownership.
 WS-REV-001 and WS-CON-001 control their own product behavior.
 
 This specification does not add Workstream login, implement runtime code,
-change review decision values, define contribution/payment behavior, add a
+change review decision values, define contribution/compensation behavior, add a
 frontend, enable blockchain settlement, add source adapters, automate routing,
 or create an agent workspace.
