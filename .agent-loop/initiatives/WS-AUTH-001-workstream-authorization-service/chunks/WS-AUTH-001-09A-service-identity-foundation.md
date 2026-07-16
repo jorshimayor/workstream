@@ -40,6 +40,7 @@ backend/scripts/service_actor_identity_mapping.py
 backend/tests/test_actors.py
 backend/tests/test_actor_migration_tools.py
 backend/tests/test_actor_legacy_classification.py
+backend/tests/test_auth.py
 backend/tests/test_authorization.py
 backend/tests/test_audit.py
 backend/tests/test_alembic.py
@@ -199,7 +200,7 @@ composer, guards, surface, and behavior proof.
   .venv/bin/python scripts/run_isolated_tests.py --timeout-seconds 1800 -- \
   .venv/bin/python -m pytest -q tests/test_actors.py \
   tests/test_actor_migration_tools.py tests/test_actor_legacy_classification.py \
-  tests/test_authorization.py \
+  tests/test_auth.py tests/test_authorization.py \
   tests/test_audit.py tests/test_alembic.py tests/test_api_controls.py \
   --cov=app.modules.actors \
   --cov=app.modules.authorization --cov-branch --cov-report= \

@@ -27,6 +27,9 @@ Exact reviewed contract SHA:
 - Add eight planned AUTH-09 route actions and exact audit mapping parity.
 - Add one static seven-identity/eleven-ActionId candidate matrix.
 - Support confidential exact mapping for preexisting `0020` service profiles.
+- Update existing auth regression fixtures that construct a service profile so
+  they satisfy the new fixed identity invariant; no authentication behavior
+  changes.
 - Persist only bounded migration evidence.
 - Do not add routes, provision actors, admit service tokens, activate AUTH-09 or
   artifact actions, create assignment tables, or create service grants.
