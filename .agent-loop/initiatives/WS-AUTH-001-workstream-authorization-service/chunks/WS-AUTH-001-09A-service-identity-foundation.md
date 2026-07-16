@@ -32,12 +32,18 @@ token claims, human grants, database-authored action rows, or display data.
 
 ```text
 backend/app/modules/actors/models.py
-backend/app/modules/authorization/**
+backend/app/modules/actors/service_identities.py
+backend/app/modules/actors/service_identity_migration.py
+backend/app/modules/authorization/catalogue.py
 backend/alembic/versions/0023_service_actor_identity.py
+backend/scripts/service_actor_identity_mapping.py
 backend/tests/test_actors.py
+backend/tests/test_actor_migration_tools.py
+backend/tests/test_actor_legacy_classification.py
 backend/tests/test_authorization.py
 backend/tests/test_audit.py
 backend/tests/test_alembic.py
+backend/tests/test_api_controls.py
 docs/spec_authorization_service.md
 docs/operations_authorization_service.md
 .agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/**
@@ -84,18 +90,42 @@ active and 56 planned. This chunk does not change the active count.
 - The value is one of the seven fixed identities below and is unique. It is
   immutable with actor kind, provisioning method, ID, creator, and creation
   time.
-- A service ActorProfile ID is deterministic from the fixed local
-  `service_identity`, not from the external issuer subject. Human profile ID
-  derivation remains unchanged. Later credential-link replacement therefore
-  cannot redefine the local service principal.
+- ActorProfile ID and `service_identity` are separate stable local fields, like
+  a Kubernetes object's UID and name. AUTH-09B creates a new service profile
+  with a server-generated UUID; it never derives that ID from issuer or subject.
+  Existing explicitly mapped service profiles preserve their IDs and history.
 - It is not a display name, email, token subject, adapter provenance string,
   PermissionId, role, or grant.
 - `ActorIdentityLink` remains the single v0.1 credential binding. Its issuer and
   opaque subject are never inferred from `service_identity`, email, or display
   data.
-- Existing service profiles without an explicit fixed identity are not guessed
-  or silently upgraded. Migration refuses such ambiguous rows with an
-  actionable error; a clean database remains empty and valid.
+- Existing service profiles are assigned a fixed identity only through the
+  strict operator mapping below. They are never guessed from ID, issuer,
+  subject, email, display data, token role, or adapter provenance.
+
+## Existing-service migration input
+
+Migration `0020` could create explicitly classified service profiles before the
+fixed identity field existed. When any such row exists, `0023` requires a
+versioned private mapping file named by
+`WORKSTREAM_SERVICE_ACTOR_IDENTITY_MAPPING_FILE`.
+
+Each entry contains exactly `actor_profile_id`, `issuer`, opaque `subject`, and
+one fixed `service_identity`. The complete entry set must equal the locked
+database projection of all existing service profiles and their single links.
+The loader enforces a regular non-symlink file, bounded size/count, restrictive
+permissions, strict schema, canonical JSON, database binding, checksum, exact
+byte-preserving issuer/subject comparison, unique profile/link/identity values,
+and all seven closed service identities. Errors and logs expose stable codes and
+counts only, never IDs, issuers, or subjects.
+
+The supported operator tool reads the exact target database, validates the
+operator-authored choices, and writes the confidential bound envelope. It does
+not infer a service identity or modify the database. Missing, extra, stale,
+duplicate, or ambiguous mappings stop migration atomically. A database with no
+service profiles requires no file. Mapping count and non-secret manifest,
+source-row-set, envelope, and database-binding digests are retained as migration
+evidence; raw mapping content is not persisted.
 
 ## Exact static service-action matrix
 
@@ -120,24 +150,31 @@ composer, guards, surface, and behavior proof.
 - Typed construction fails on any missing/extra fixed service identity, matrix
   ActionId, route ActionId, PermissionId mapping, owner, availability, duplicate
   row, or artifact action outside the approved eleven.
-- Migration `0023` advances from exact head `0022`, adds nullable
-  `actor_profiles.service_identity`, rejects ambiguous existing service rows,
-  then enforces human/null and service/fixed-identity parity plus uniqueness.
+- Migration `0023` advances from exact head `0022`, locks the complete actor/link
+  source projection, consumes the exact private mapping when service rows
+  exist, adds `actor_profiles.service_identity`, preserves mapped profile IDs,
+  and enforces human/null and service/fixed-identity parity plus uniqueness.
 - The migration extends PostgreSQL action/evidence parity to exactly the eight
   route action mappings above without changing historical evidence.
 - All eight route actions remain planned. Typed allowed evidence for them is
   rejected; registered denial evidence keeps exact ActionId/PermissionId parity.
-- All artifact actions remain planned and inert. No service authority can be
-  created by configuration, database insertion, token claim, role, grant, or
-  request input.
+- All artifact actions remain planned and inert. No executable service
+  authority can be created by configuration, database insertion, token claim,
+  role, grant, or request input.
 - Direct SQL proves ActorProfile service-identity nullability, fixed-value,
-  uniqueness, immutability, actor-kind/provisioning parity, and ambiguous-row
-  upgrade refusal.
+  uniqueness, immutability, actor-kind/provisioning parity, and mapping-bound
+  upgrade behavior. Tool tests prove secure-file, checksum, database-binding,
+  exact-set, redaction, and no-inference behavior.
 - No ActorProfile, ActorIdentityLink, idempotency row, or audit event is seeded
   by migration or application startup.
-- Downgrade locks affected tables, refuses when a service identity or new
-  ActionId evidence would be lost, and otherwise restores exact `0022`
-  constraints; prior-head upgrade, clean downgrade, and re-upgrade pass.
+- Upgrade refusal is exact and redacted: any pre-`0023` service row without a
+  complete valid mapping stops the transaction with a stable code and no row
+  details. Downgrade locks actor/audit state and refuses when any non-null
+  `service_identity` or audit evidence carrying one of the exact eight new
+  ActionIds would be lost. Otherwise it restores exact `0022` checks/triggers;
+  empty and human-only prior-head upgrade, clean downgrade, and re-upgrade pass.
+- OpenAPI paths and action declarations are byte-for-byte unchanged, and the
+  existing nine active actions retain identical allow/deny behavior.
 - No workflow, dependency, test skip, coverage exclusion, or global threshold
   changes. Focused branch-aware actor and authorization coverage remains at
   least 90 percent; GitHub Backend preserves the repository-wide 78 percent
@@ -146,12 +183,15 @@ composer, guards, surface, and behavior proof.
 ## Verification commands
 
 ```bash
-(cd backend && .venv/bin/python -m ruff check app tests alembic/versions/0023_service_actor_identity.py)
+(cd backend && .venv/bin/python -m ruff check app tests scripts/service_actor_identity_mapping.py alembic/versions/0023_service_actor_identity.py)
 (cd backend && .venv/bin/coverage erase && \
   WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-dsn> \
   .venv/bin/python scripts/run_isolated_tests.py --timeout-seconds 1800 -- \
-  .venv/bin/python -m pytest -q tests/test_actors.py tests/test_authorization.py \
-  tests/test_audit.py tests/test_alembic.py --cov=app.modules.actors \
+  .venv/bin/python -m pytest -q tests/test_actors.py \
+  tests/test_actor_migration_tools.py tests/test_actor_legacy_classification.py \
+  tests/test_authorization.py \
+  tests/test_audit.py tests/test_alembic.py tests/test_api_controls.py \
+  --cov=app.modules.actors \
   --cov=app.modules.authorization --cov-branch --cov-report= \
   --cov-fail-under=0 && \
   .venv/bin/coverage report --include='app/modules/actors/*' --fail-under=90 && \
@@ -162,12 +202,16 @@ python3 scripts/check_markdown_links.py
 git diff --check
 ```
 
+Local deterministic evidence is the two independent branch-aware 90 percent
+package reports above. GitHub Backend remains authoritative for the full suite
+and repository-wide 78 percent floor; 09A has no API behavior or API drill.
+
 ## Human review focus
 
-Review the ServiceAccount-style principal model, separation of local identity
-from external subject, exact seven/eleven matrix parity, lack of database
-assignment rows, planned-action inertness, ambiguous migration refusal, and
-guarded downgrade custody.
+Review the ServiceAccount-style principal model, preservation of mapped legacy
+profile IDs, confidential exact-set mapping, separation of local identity from
+external subject, exact seven/eleven matrix parity, lack of database assignment
+rows, planned-action inertness, and guarded downgrade custody.
 
 ## Stop conditions
 

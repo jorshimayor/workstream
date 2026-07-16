@@ -514,12 +514,14 @@ resource loader, lifecycle guards, negative tests, and evidence path exist.
 
 ### Catalogue And Action-Evidence Staging
 
-The catalogue contains exactly 74 PermissionIds and 57 ActionIds. The two
-AUTH-07B actor-self actions and seven AUTH-08 administrative actions are active;
-the other 48 entries remain planned and non-executable. Planned entries contain
-only action, permission, owner, and availability and must not receive deployment
-configuration, principals, resource facts, or guards. Startup validation failure
-is a release blocker, not a reason to relax catalogue checks.
+The catalogue contains exactly 74 PermissionIds and 65 ActionIds after AUTH-09A.
+The two AUTH-07B actor-self actions and seven AUTH-08 administrative actions are
+active; the other 56 entries remain planned and non-executable. Planned entries
+contain only action, permission, owner, and availability and must not receive
+deployment configuration, resource facts, or guards. The separate fixed
+service-action matrix is static candidate policy, not action activation.
+Startup validation failure is a release blocker, not a reason to relax
+catalogue checks.
 
 Migration `0021` preserves historical audit rows with null `action_id`. Inspect
 non-null action evidence only by bounded ActionId, request/correlation IDs, and

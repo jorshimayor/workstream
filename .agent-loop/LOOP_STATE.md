@@ -29,10 +29,9 @@
   a fixed service identity on service ActorProfile; AUTH-09B provisions fixed
   service principals, and
   each owning WS-ART feature chunk activates only its own canonical actions.
-- Parallel artifact checkpoint: `WS-ART-001-02A1` was explicitly started and
-  merged through PR #127 as `f64a8e5`; it is at the post-merge memory/stop
-  checkpoint. `WS-ART-001-02A2` remains inactive until signed memory completes
-  and the user gives a separate explicit start signal.
+- Parallel artifact checkpoint: `WS-ART-001-02A1` merged through PR #127 as
+  `f64a8e5`, and `WS-ART-001-02A2` merged through PR #129 as `9a04434`.
+  `WS-ART-001-02A3` remains inactive pending its own explicit start.
 - Authorization checkpoint: AUTH-08 merged through PR #131 as `aa0fdcd`; the
   user explicitly started AUTH-09. Parent AUTH-09 is split into 09A-09D, with
   only 09A in planning review and no runtime implementation active.

@@ -4,7 +4,6 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-ART-001-02A2` | Committed Source And Local Preparation | L1 | Active after explicit user start on 2026-07-15 |
 | `WS-AUTH-001-09A` | Fixed Service Identity Foundation | L1 | Repaired plan in required exact-head review; no runtime code |
 
 Live post-merge state remains read from signed `automation/loop-memory`
@@ -31,6 +30,7 @@ output. This authored queue records the separately approved parallel chunks.
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
+| `WS-ART-001-02A2` | Committed Source And Local Preparation | L1 | Merged through PR #129 as `9a04434` |
 | `WS-ENG-001-01` | Codex-native zero-trust loop bootstrap | L1 | Merged through PR #23 on 2026-06-20 |
 | `EXAMPLE-TERMINAL-BENCHMARK` | Terminal Benchmark example drill | L3 | Merged through PR #25 on 2026-06-21 |
 | `WS-POL-001-PLAN` | Submission Artifact Policy Foundation planning | L1 | Merged through PR #26 on 2026-06-27 |

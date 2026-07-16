@@ -103,7 +103,7 @@ WS-AUTH-001-PLAN
   artifact service principals, and each WS-ART feature chunk owns the canonical resource facts,
   guards, surface declarations, and behavior tests for the exact artifact
   actions it activates. AUTH-12, AUTH-14, and AUTH-15 do not pre-activate or
-  attach artifact actions. WS-ART-001-02D starts only after AUTH-09 and activates
+  attach artifact actions. WS-ART-001-02D starts only after AUTH-09B and activates
   its bounded Operator and internal-service surfaces through the central kernel;
   later WS-ART chunks do the same for their own resources. AUTH-16 proves no
   bypass remains.

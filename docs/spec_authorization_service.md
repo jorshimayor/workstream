@@ -70,8 +70,9 @@ profile capability until an administrative or exact-project grant exists.
 For a service, the ActorProfile is the stable local principal. Its
 `service_identity` is immutable and selects only a closed typed service-action
 matrix; it is never inferred from display data or an external subject. Its
-profile ID is deterministic from that fixed local identity rather than the
-external credential subject. Human profile ID derivation remains unchanged.
+profile ID and fixed identity are separate stable local fields. New service IDs
+are server-generated rather than derived from credentials; explicitly mapped
+pre-AUTH-09 service profiles preserve their IDs and historical references.
 
 ### ActorIdentityLink
 
