@@ -3466,6 +3466,7 @@ def test_feature_owned_authorization_activation_is_rejected() -> None:
     )
     stale_statements = (
         "Actions remain non-executable until their owning chunks activate them.",
+        "Later owner chunks activate catalogue rows in typed code.",
         "Artifact service actions are activated by their owning WS-ART chunks.",
         "Each owning WS-REV chunk activates its review action.",
         "The WS-ART feature chunk owns the actions it activates.",
@@ -3514,14 +3515,32 @@ def test_activation_custody_discovery_includes_canonical_handoffs() -> None:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text("current contract\n", encoding="utf-8")
 
+        con_contract = (
+            root
+            / ".agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary"
+            / "PLAN.md"
+        )
+        con_contract.parent.mkdir(parents=True, exist_ok=True)
+        con_text = "Later owner chunks activate catalogue rows in typed code.\n"
+        con_contract.write_text(con_text, encoding="utf-8")
+
+        all_discovered = gate.discover_activation_custody_documents(root)
         discovered = {
             path.relative_to(initiative).as_posix()
-            for path in gate.discover_activation_custody_documents(root)
+            for path in all_discovered
             if path.is_relative_to(initiative)
         }
 
     assert required <= discovered
     assert "reviews/closed.md" not in discovered
+    assert con_contract in all_discovered
+    assert gate.scan_activation_custody_text(
+        con_contract.relative_to(root).as_posix(),
+        con_text,
+    ) == [
+        ".agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/"
+        "PLAN.md:1: FEATURE_OWNED_AUTH_ACTIVATION"
+    ]
 
 
 def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:

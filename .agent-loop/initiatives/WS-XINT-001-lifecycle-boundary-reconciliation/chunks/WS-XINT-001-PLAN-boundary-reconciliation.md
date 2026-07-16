@@ -17,6 +17,7 @@ activation custody, transaction order, and cross-initiative handoffs.
 - `scripts/check_stale_authorization_docs.py` and `scripts/test_agent_gates.py`
   only for deterministic activation-custody wording enforcement
 - `.agent-loop/WORK_QUEUE.md`, `.agent-loop/REVIEW_LOG.md`, and one merge intent
+- `.agent-loop/LOOP_STATE.md` for exact parallel planning-state reconciliation
 - directly related active architecture/authorization docs only if required to
   remove a contradiction visible from trusted main
 

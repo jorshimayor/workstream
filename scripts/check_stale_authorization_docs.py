@@ -181,6 +181,7 @@ ACTIVATION_CUSTODY_RULES = (
             r"(?:"
             r"actions?\s+remain\s+non-executable\s+until\s+(?:their\s+)?owning\s+"
             r"chunks?\s+activates?|"
+            r"(?:later\s+)?owner\s+chunks?\s+activates?|"
             r"actions?\s+(?:is|are)\s+activated\s+by\s+(?:their\s+)?owning\s+"
             r"WS-(?:ART|REV|CON)\s+chunks?|"
             r"each\s+owning\s+WS-(?:ART|REV|CON)\s+chunk\s+activates?|"
@@ -203,6 +204,7 @@ ACTIVATION_CUSTODY_EXACT_PATHS = (
 ACTIVATION_CUSTODY_INITIATIVES = (
     "WS-AUTH-001-workstream-authorization-service",
     "WS-ART-001-immutable-artifact-storage",
+    "WS-CON-001-contribution-compensation-boundary",
     "WS-REV-001-review-revision-lifecycle",
     "WS-XINT-001-lifecycle-boundary-reconciliation",
 )

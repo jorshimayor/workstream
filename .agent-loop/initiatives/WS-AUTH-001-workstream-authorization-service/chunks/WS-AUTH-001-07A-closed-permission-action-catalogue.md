@@ -161,10 +161,11 @@ AUTH custodians own evaluator integration and every availability activation.
 - Because all 50 actions remain `planned`, `AuthorityAuditEventInput` rejects
   `SensitiveAuthorizationAllowed` when any of them is present. A planned action
   may be persisted only as bounded `SensitiveAuthorizationDenied` evidence;
-  activation chunks own later allowed evidence.
+  dedicated AUTH activation custodians own later allowed evidence.
 - PostgreSQL is deliberately availability-neutral: it enforces registration,
   decision-event-only use, and the exact action-to-permission mapping, but does
-  not freeze `planned` versus `active`. Later owner chunks activate catalogue
+  not freeze `planned` versus `active`. After feature-owned hidden behavior
+  merges, dedicated AUTH custodians integrate evaluators and activate catalogue
   rows in typed code without altering migration `0021`.
 - Existing non-action authority events remain valid with null `action_id`.
 - Downgrade refuses when either any non-null action evidence or any PermissionId

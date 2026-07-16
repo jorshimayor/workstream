@@ -9,40 +9,35 @@
   planning-only `WS-XINT-001` boundary reconciliation.
 - Active planning chunk: `WS-XINT-001-PLAN` on
   `codex/ws-xint-001-boundary-reconciliation`.
-- Active implementation chunk: `WS-AUTH-001-08` - Bootstrap And Administrative
-  Role Grants
-- The AUTH-08 branch and gate below are retained pre-existing parallel
-  implementation context, not the branch carrying this planning change.
-- Start basis: PR #130 merged AUTH-07B into `main` as `90eca12`; signed schema-v2
-  state verified that merge and the user explicitly started AUTH-08.
+- Parallel implementation worktrees: reviewed `WS-AUTH-001-09A` fixed service
+  identity foundation at `c4200a7` and reviewed `WS-ART-001-02A3` ArtifactStore
+  v2 Local clean cut at `935b1a2`; neither is part of this planning branch.
+- Start basis: PR #131 merged AUTH-08 into `main` as `aa0fdcd`, and PR #129 then
+  merged ART-02A2 into `main` as `9a04434`.
 - PR #119 merged `WS-AUTH-001-05B` as `ad71c7e`.
 - PR #120 merged `WS-ART-001-OBJECT-STORAGE-AMENDMENT` as `4408256`.
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: AUTH-08 implementation `34f87a5` passed deterministic evidence
-  and all required internal reviewer tracks; PR publication and external review
-  are pending.
+- Current gate: exact-SHA internal review and evidence for
+  `WS-XINT-001-PLAN`; no downstream runtime starts from this planning branch.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
   and AWS cannot instantiate in production without release-bound live proof.
-- Authorization checkpoint: merged main contains 74 PermissionIds and 50
-  ActionIds, with only the two actor-self actions active. The repaired AUTH-08
-  contract proposes exactly seven administrative actions, the five-role
-  matrix, and durable grants; implementation is active. AUTH-09 provisions fixed
-  service principals and exact planned assignments. ART feature chunks supply
-  hidden canonical behavior/resource composition; AUTH alone integrates
-  evaluators and changes action availability afterward, as superseded by
-  `WS-XINT-001`.
+- Authorization checkpoint: merged main contains 74 PermissionIds and 57
+  ActionIds, with the two actor-self and seven AUTH-08 administrative actions
+  active. AUTH-09A's reviewed parallel branch defines seven fixed artifact
+  service identities and eleven exact planned assignments. ART feature chunks
+  supply hidden canonical behavior/resource composition; AUTH alone integrates
+  evaluators and changes action availability afterward under `WS-XINT-001`.
 - Parallel artifact checkpoint: `WS-ART-001-02A1` was explicitly started and
   merged through PR #127 as `f64a8e5`; it is at the post-merge memory/stop
-  checkpoint. `WS-ART-001-02A2` remains inactive until signed memory completes
-  and the user gives a separate explicit start signal.
-- Authorization checkpoint: AUTH-07B merged through PR #130 as `90eca12`, its
-  signed memory gate passed, and the user separately started AUTH-08. AUTH-09
-  remains inactive until AUTH-08 merges, memory completes, and the user gives a
-  separate explicit start.
+  checkpoint. ART-02A2 merged through PR #129, and ART-02A3 is reviewed in its
+  isolated parallel worktree but has no open PR at this checkpoint.
+- Authorization checkpoint: AUTH-07B and AUTH-08 merged through PRs #130 and
+  #131. The user separately started AUTH-09; its 09A subchunk is reviewed in the
+  isolated parallel worktree and remains unmerged at this checkpoint.
 - Parallel coverage work: `WS-QUAL-001-01B2` remains paused. Its last official
   whole-app result is `6466/8159` statements (`79.249908%`); no replacement
   evidence exists.
