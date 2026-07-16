@@ -98,12 +98,17 @@ roadmap or broad operational-doc rewrite
   `ArtifactStorePort`, production Flow Node/R2, or broad-permission removal.
 - [ ] Active spec declares AUTH/ART/REV/outbox prerequisites and no local auth
   implementation.
-- [ ] Active spec reflects merged AUTH-07B: 74 PermissionIds, 50 ActionIds, two
-  active actor-self actions and 48 planned actions on reviewed main; every
+- [ ] Active spec reflects merged AUTH-08: 74 PermissionIds, 57 ActionIds, nine
+  active self/admin actions and 48 planned actions on reviewed main; every
   WS-CON action remains absent until an AUTH-owned registration plus typed
   evaluator/principal/transaction/availability gate merges. It defines D10's
   prepared `T` protocol and the absent upstream `task.claim` ActionId gate
-  without authorizing CON to edit AUTH.
+  without authorizing CON to edit AUTH. It also records D11's human-approved
+  delivery/award/audit role outcomes and any required AUTH amendment without
+  treating broad permission candidacy or candidate narrowing as executable.
+- [ ] D12 is human/AUTH-approved and the active spec lists one exact owner for
+  all 23 proposed actions plus the review claim/decision custody amendment; it
+  never conflates feature resource ownership with catalogue activation.
 - [ ] Required specification reviewers pass.
 - [ ] `CONFORMANCE_MATRIX.md` maps every retained normative invariant to its
   owning chunk, concrete behavioral case, and final evidence owner; no blanket

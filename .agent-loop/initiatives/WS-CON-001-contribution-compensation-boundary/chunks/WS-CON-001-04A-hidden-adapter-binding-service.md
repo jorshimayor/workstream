@@ -40,6 +40,11 @@ concrete adapter, provider secret/ref, dependency or CI weakening
 - [ ] Mutations follow PLAN locks and transaction-revalidate authority; own-state
   concurrent suspend/resume is deterministic. They use the AUTH-prepared handle
   and evaluate it once against facts recomposed from locked binding/project rows.
+- [ ] The service accepts only an allowed decision whose complete resource-
+  context digest, matched AdminRoleGrant ID and covered project match the
+  locked binding facts; mismatched decision evidence is rejected. It flushes
+  and never commits. The later AUTH activation gate—not a CON role-aware
+  fake—proves Finance eligibility and every excluded/revoked/scope case.
 - [ ] Retire remains registered/planned but non-executable; any attempt fails
   closed with stable not-active behavior. CON-10B later implements its
   dependency-aware resource behavior after assignment/lease/award/delivery rows

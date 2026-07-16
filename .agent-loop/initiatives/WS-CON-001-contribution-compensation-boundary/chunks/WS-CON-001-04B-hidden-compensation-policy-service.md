@@ -38,6 +38,11 @@ PaymentPolicy fallback, dependency or CI weakening
   validates closed rules/active bindings, and atomically changes selector with
   audit/outbox. It evaluates one AUTH-prepared handle against facts recomposed
   from those locked rows.
+- [ ] The service accepts only an allowed decision whose complete resource-
+  context digest, matched AdminRoleGrant ID and covered project match the
+  locked policy facts; mismatched decision evidence is rejected. It flushes
+  and never commits. The later AUTH activation gate—not a CON role-aware
+  fake—proves Finance eligibility and every excluded/revoked/scope case.
 - [ ] Explicit unpaid is valid; absent/incomplete/contradictory setup is stable
   remediation failure; removed PaymentPolicy never executes or acts as fallback.
 - [ ] Own-state concurrent draft/publish/retire/selector/binding changes are

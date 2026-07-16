@@ -37,29 +37,56 @@ or query declares one ActionId and consumes a request-scoped, caller-session-
 bound `AuthorizationService`.
 
 Every WS-CON ActionId is currently absent and proposed. Trusted `main`
-`90eca12` includes AUTH-07B's request-scoped deny-by-default kernel. Its closed
-catalogue contains 74 PermissionIds and 50 non-WS-CON ActionIds: two actor-self
-actions are active and 48 actions remain planned. The exact handoff is in
+`aa0fdcd` includes AUTH-08's scoped administrative grants. Its closed catalogue
+contains 74 PermissionIds and 57 non-WS-CON ActionIds: nine self/admin actions
+are active and 48 actions remain planned. The exact handoff is in
 `AUTHORIZATION_HANDOFF.md`. It enumerates each proposed action separately, its
 existing or proposed PermissionId, canonical target, candidate principal class,
 typed resource facts and guards, transaction protocol, AUTH activation gate,
 and feature resource owner.
 
-AUTH-07B currently evaluates only actor-self contexts/actions and rejects
-service subjects at its actor-self dependency. WS-AUTH therefore owns not only
-identifier/owner-enum registration and typed/PostgreSQL parity, but also action
-availability, closed evaluator dispatch, matched-authority expansion, grant
-semantics, service-capable composition, service ActorProfile/action-assignment
-construction, and transaction-local authority revalidation. The feature chunk
+AUTH-08 now evaluates actor-self and administrative grant families, carries a
+complete resource-context digest plus matched grant/scope evidence, and rolls
+back a transaction a feature route fails to commit. It still rejects service
+subjects and has no ProjectRoleGrant, service-assignment, D10 or WS-CON action
+evaluator. WS-AUTH therefore owns not only identifier/owner-enum registration
+and typed/PostgreSQL parity, but also action availability, closed evaluator
+dispatch, action-specific candidate-role filtering, matched-authority
+expansion, remaining grant semantics, service-capable composition, service
+ActorProfile/action-assignment construction, and transaction-local authority
+revalidation. Every WS-CON route owns its explicit commit; the feature chunk
 named in the handoff owns product-row loading, construction of AUTH-approved
 typed resource facts, lifecycle guards, and behavioral proof. WS-CON never
 edits AUTH-owned files or activates an AUTH action.
+
+Merged AUTH-08 also exposes a closed-role mismatch that must not be hidden in
+CON. Finance Authority contains `compensation.delivery.reconcile`, but Operator
+does not, while the reconciled candidate matrix proposes both. D11 requires a
+human choice before CON-10B. If Operator delivery recovery is retained, a
+reviewed AUTH-owned successor adds that existing PermissionId to Operator; if
+not, the active WS-CON authority matrix removes the candidate before action
+registration. D11 also decides whether Project Manager's broad
+`compensation.award.read` candidate carries into WS-CON monetary detail and
+which merged audit candidates remain eligible. CON-01 records the chosen sets;
+AUTH activation proves them without CON role logic.
+
+D12 separately resolves activation custody. The merged ActionOwner type means
+the implementation chunk permitted to activate an action; it cannot name a CON
+feature chunk while this plan says AUTH alone flips availability. The handoff
+therefore proposes exact AUTH-owned activation owners for all 23 WS-CON actions
+and the two coupled review actions. Human/AUTH approval of that model—or a
+global feature-owner semantic plus a separate closed activation-custody type—is
+a registration gate. No action may have two activation authorities.
 
 For mutations crossing AUTH and product rows, AUTH must add the prepared
 authorization protocol specified in the handoff. The preliminary target lets
 AUTH lock actor/link/grant or service-assignment rows first; the opaque handle is
 then evaluated exactly once against facts recomposed from product rows locked by
 the feature in canonical order. AUTH stages one decision and never commits.
+The final decision retains AUTH-08's resource-context digest and exact matched
+grant/project evidence. Hidden domain services flush and never commit; the
+actual route/worker/callback transaction owner explicitly commits the complete
+decision-plus-business transaction. REV-13 owns the public route proof.
 This prevents both product-before-AUTH lock inversion and authorization based on
 an unlocked resource snapshot.
 
@@ -191,7 +218,7 @@ Markdown build. Preserve generations and create an active reconciled spec.
 ### Replace broad PermissionIds with granular strings
 
 Rejected because the merged AUTH contract preserves 74 stable PermissionIds
-and separately registers 50 ActionIds, of which only two actor-self actions are
+and separately registers 57 ActionIds, of which nine self/admin actions are
 active on current trusted `main`. Granular action names do not replace
 permissions.
 
@@ -283,11 +310,14 @@ backend contract.
    required CON-owned dispatch/callback fence ports while consuming the
    read-only fulfillment-drain observation port; it may not edit CON product
    files or import CON/outbox repositories.
-   Sibling merge head `e59e2bb` now includes the joint plan atop trusted main
-   `90eca12`, but its status/evidence still cites older heads and REV-12A still
-   assigns claim wording to the handler. The exact repaired snapshot must adopt
-   the AUTH-07B executable gates, pass commit-bound freshness review, and merge
-   before it is a consumable dependency. Do not change archival sources.
+   Clean sibling head `a13bf35` now contains a separately reviewed AUTH-08
+   dependency refresh with correct counts and teardown/error/timestamp facts.
+   Its publication evidence intentionally remains stale pending ART; REV-06/10
+   still predate the registration -> CON -> REV hidden -> AUTH activation
+   choreography and D12 owner custody, while REV-12A still assigns claim wording
+   to the handler. The exact repaired snapshot must adopt those current CON/AUTH
+   handoffs, pass commit-bound publication review, and merge before it is
+   consumable. Do not change archival sources.
 
 At every chunk activation, rebase discovery on trusted `main`, refresh exact
 migration numbers and dependency symbols, and stop if an expected port/action
@@ -312,7 +342,10 @@ is absent or materially changed.
   and no active action exists without its owning feature behavior. Mutation
   tests reject missing/reused/cross-session prepared handles and exercise
   actor/link/grant or service-assignment revocation against product mutation in
-  both lock permutations.
+  both lock permutations. AUTH role-matrix/evaluator tests prove D11's exact
+  human-approved delivery/award/audit sets, including only the amendments and
+  inclusion/exclusion cases that outcome requires, plus exact matched-grant/
+  project evidence and resource-context digest equality.
 - Static architecture tests reject AUTH persistence imports, local role checks,
   provider-specific compensation adapters, concrete-adapter imports or
   construction outside the explicit composition root, raw ArtifactStore

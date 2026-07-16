@@ -31,12 +31,20 @@ dependency, test, coverage or CI weakening
 
 - [ ] The post-CON-10A AUTH award-read activation is merged. AUTH has registered
   planned binding-retire, delivery-reconcile, status, reconciliation, rebuild
-  and audit actions with exact AdminRoleGrant definitions, typed contexts and
-  prepared `T` handling where required. CON proves domain behavior below the
-  authorization boundary and changes no AUTH file; a later AUTH gate integrates
-  these evaluators and activates them before CON-11.
-- [ ] Finance project and reason-bound Operator reconciliation use distinct
-  guards; Project Manager/contributor denials are explicit.
+  and audit actions with D11's chosen AdminRole contracts, typed contexts and
+  prepared `T` handling where required. Any human-approved outcome differing
+  from merged AUTH-08 has a reviewed AUTH-owned amendment; CON makes no local
+  role exception. CON proves domain behavior below the authorization boundary
+  and changes no AUTH file; a later AUTH gate proves roles and activates these
+  evaluators before CON-11.
+- [ ] Finance/Operator/audit behavior follows D11's exact approved sets. CON
+  proves reason/scope/product guards only from allowed/denied decision seams;
+  AUTH activation proves role intersection, mixed grants, revocation and scope.
+- [ ] Every allowed grant-backed decision carries the exact complete resource-
+  context digest, matched AdminRoleGrant ID and covered project scope. Stale,
+  wrong-scope or digest-mismatched decision evidence produces no operation,
+  audit export, outbox request or idempotency completion. AUTH owns revoked/
+  wrong-role decision production and tests.
 - [ ] Reconcile preserves original identities; rebuild changes projection only;
   bounded range/reason/audit/idempotency is durable.
 - [ ] Audit read/export purpose/scope/redaction/max range is proved without

@@ -5,13 +5,16 @@
 One chunk maps to one reviewable PR. No runtime chunk starts until its exact
 AUTH, ART, REV, outbox, migration, and human gates are satisfied on current
 trusted `main`. Every runtime chunk uses the fresh isolated PostgreSQL runner
-and same-invocation coverage evidence defined in `PLAN.md`.
+and same-invocation coverage evidence defined in `PLAN.md`. D12 must resolve
+one exact activation owner/custodian for every action before any AUTH
+registration checkpoint starts; feature ownership never supplies a second
+availability writer.
 
 ## Chunks
 
 | Chunk | Title | Risk | Gate | Status |
 |---|---|---:|---|---|
-| `WS-CON-001-PLAN` | Contribution And Compensation Planning | L0 | None | Reviewed; human approval gate |
+| `WS-CON-001-PLAN` | Contribution And Compensation Planning | L0 | None | Reviewed; D11/D12 human gates |
 | `WS-CON-001-01` | Canonical Contract Adoption And Architecture Decision | L0/L1 | Plan/human decisions approved | Proposed |
 | `WS-CON-001-02A` | Shared Transactional Outbox Persistence | L1 | 01; event ownership approved | Proposed |
 | `WS-CON-001-02B` | Shared Outbox Dispatcher And Recovery | L1 | 02A; worker/operations contract; AUTH planned `outbox.dispatch` registration/context/fixed actor/assignment/prepared protocol merged; dispatcher remains disabled pending later AUTH activation | Proposed |
@@ -31,8 +34,8 @@ and same-invocation coverage evidence defined in `PLAN.md`.
 | `WS-CON-001-08B` | Inbound Fulfillment Callback | L1 | 08R; callback identity/action registration already merged before 04A; AUTH typed callback context and prepared protocol merged; joint callback-fence port contract | Proposed |
 | `WS-CON-001-09A` | Contribution Evidence Projection Write | L1 | 07; named `WS-ART-001-CON-EVIDENCE` capability; AUTH planned evidence action/context/prepared protocol and exact assignment on existing `workstream.artifact.binding` | Proposed |
 | `WS-CON-001-09B` | Authorized Contribution Evidence Read | L1 | 09A; disclosure schema; AUTH planned contribution-read registrations/typed contexts | Proposed |
-| `WS-CON-001-10A` | Contribution And Award Product Reads | L1 | 08B,09B; post-09B AUTH contribution-read activation; AUTH planned award-read registrations/typed contexts | Proposed |
-| `WS-CON-001-10B` | Operations, Reconciliation, Rebuild, And Fulfillment Drain Observation | L1 | 10A; post-10A AUTH award-read activation; AUTH planned binding-retire/ops/audit registrations/typed contexts/grants/prepared protocol; shared-outbox observation capability | Proposed |
+| `WS-CON-001-10A` | Contribution And Award Product Reads | L1 | 08B,09B; post-09B AUTH contribution-read activation; D11 award/audit role outcome approved; AUTH planned award-read registrations/typed contexts/exact chosen role contract | Proposed |
+| `WS-CON-001-10B` | Operations, Reconciliation, Rebuild, And Fulfillment Drain Observation | L1 | 10A; post-10A AUTH award-read activation; full D11 outcome approved and any chosen AUTH role-matrix amendment merged; AUTH planned binding-retire/ops/audit registrations/typed contexts/exact chosen role contract/prepared protocol; shared-outbox observation capability | Proposed |
 | `WS-CON-001-11` | Hidden Release Readiness And Dependency Manifest | L1 | 10B; REV-10 integration; exact AUTH evaluator/action/service manifest, ART/outbox readiness, required CON-owned dispatch/callback fence hooks and drain port | Proposed |
 
 ## Dependency order
@@ -58,8 +61,8 @@ AUTH review.decision registration/contracts + REV-09B + CON-07 participant -> RE
 AUTH callback identity/action registration before CON-04A + remaining typed/prepared callback contracts -> CON-08B hidden callback -> AUTH callback evaluator/activation -> CON-11
 AUTH evidence action/typed/prepared/exact-service-assignment registration + ART capability -> CON-09A hidden handler -> AUTH evidence evaluator/activation -> CON-11
 AUTH contribution-read registration/contracts -> CON-09B hidden reads -> AUTH contribution-read activation -> CON-10A
-AUTH award-read registration/contracts -> CON-10A hidden reads -> AUTH award-read activation -> CON-10B
-AUTH operations registration/contracts -> CON-10B hidden operations -> AUTH operations activation -> CON-11
+D11 award-role decision + AUTH award-read registration/contracts -> CON-10A hidden reads -> AUTH exact-role award activation -> CON-10B
+D11 delivery/audit decisions + any required AUTH matrix amendment + operations registration/typed/prepared/exact-role contracts -> CON-10B hidden operations -> AUTH exact-role operations activation -> CON-11
 CON-08A/B,09A/B,10A/B + REV-12 + AUTH/ART/outbox -> CON-11 hidden readiness
 CON-08A/08B/10B/11 required CON-owned dispatch/callback fence ports and fulfillment-drain observation + CON-11 hidden manifest + REV-12 -> REV-12A hidden joint release-control composition -> REV-13 sole route activation and joint live drill
 ```

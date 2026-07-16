@@ -34,9 +34,15 @@ dependency, test, coverage or CI weakening
   a later AUTH gate owns evaluator integration and availability before CON-10A.
 - [ ] Matrix proves self, Project Manager, Finance, Operator/Audit views and
   Reviewer project-wide denial/self-only behavior without private/provider data.
+- [ ] Grant-backed reads validate the allowed decision's complete resource-
+  context digest, matched AdminRoleGrant ID and matched project against the
+  canonical collection facts. CON tests disclosure with explicit allowed/
+  denied decision seams only; the later AUTH activation gate proves exact role,
+  revoked-grant, mixed-grant and foreign-project candidate selection.
 - [ ] ART result matches immutable projection identity; evidence failure never
   changes ContributionRecord truth.
-- [ ] All role/project denial cases map to CONFORMANCE_MATRIX; OpenAPI is hidden.
+- [ ] All product-fact/project mismatch cases map to CONFORMANCE_MATRIX;
+  AUTH-owned role cases map to the activation gate; OpenAPI is hidden.
 
 ## Verification and reviewers
 

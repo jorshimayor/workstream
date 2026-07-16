@@ -32,25 +32,38 @@
 ## Parallel dependency sources inspected
 
 - trusted authorization worktree and `origin/main` at
-  `90eca12f6398f2ef168e634244d912765572c3e5`, which merges AUTH-07B through PR
-  #130
-- merged AUTH-07B implementation `9fd3bb4` plus CI repair `da0230c`, now
-  canonical on trusted `main`: 74 PermissionIds, 50 ActionIds, exactly two
-  active actor-self actions, 48 planned actions, actor-self/system runtime
-  contexts only, and no WS-CON ActionIds or service-only
-  delivery/fulfillment permissions
-- `/home/abiorh/flow/workstream-auth-001-07/.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/`
+  `aa0fdcd6912e66609e39a2fbd7b65f67be6c62f3`, which merges AUTH-08 through PR
+  #131
+- merged AUTH-08 implementation lineage through `0832358`, now canonical on
+  trusted `main`: 74 PermissionIds, 57 ActionIds, exactly nine active self/admin
+  actions, 48 planned actions, eight closed resource-context variants,
+  actor-self/AdminRoleGrant matched authority, complete resource-context digest
+  and matched grant/scope decision evidence, explicit feature-route commit
+  ownership, and no WS-CON ActionIds or service-only dispatch/fulfillment
+  permissions
+- merged `backend/app/modules/authorization/policy.py`, whose exact role matrix
+  confirms Finance Authority has `compensation.delivery.reconcile`, Operator
+  does not, and Project Manager has the broader `compensation.award.read`
+  candidate. These facts create the unresolved D11 human decision and only its
+  chosen AUTH amendment/evaluator or CON-01 matrix-update gates; they are not
+  copied into CON runtime.
+- clean trusted authorization worktree `/home/abiorh/flow/workstream-authorization-service/`
+  at `aa0fdcd6912e66609e39a2fbd7b65f67be6c62f3`
 - active sibling REV worktree `/home/abiorh/flow/workstream-rev-001/`, observed
-  at branch-reachable merge head
-  `e59e2bbe823bc0ee2b0e59ff35f8352349618b2e` on
-  `2026-07-15T20:22:41+01:00`. It integrates trusted `main` `90eca12` and
-  committed REV-12A/13 planning, while user reference-file renames remain dirty.
-  Its status/evidence still cites older AUTH/CON heads and REV-12A still says
-  the CON handler claims the outbox event. It remains non-consumable until that
-  ownership wording and commit-bound freshness are repaired and the plan merges.
-- trusted `main` at `90eca12f6398f2ef168e634244d912765572c3e5`, including merged
-  ADR 0014 from PR #127, AUTH-07A catalogue/audit foundation from PR #126, and
-  AUTH-07B deny-by-default actor-self kernel from PR #130.
+  at branch-reachable head
+  `a13bf352147cbb2c65742802e7c74a9478e5013b` after its parallel agent committed
+  `Refresh REV plan for merged AUTH-08`; the worktree is clean. Its separate
+  AUTH-08 dependency review now records correct 74/57, 9/48 and transaction/
+  error/timestamp facts. Final publication evidence deliberately remains stale
+  pending ART, REV-06/10 still predate the repaired CON/AUTH choreography and
+  D12 custody, and REV-12A retains incorrect handler-claims-OutboxEvent wording.
+  The sibling remains non-consumable until those contracts are repaired,
+  commit-bound reviewed and merged.
+- trusted `main` at `aa0fdcd6912e66609e39a2fbd7b65f67be6c62f3`, including merged
+  ADR 0014 from PR #127, AUTH-07A/07B from PRs #126/#130, and AUTH-08 scoped
+  administrative grants from PR #131. Authored loop-state/queue text in that
+  merge still records pre-publication AUTH-08 state; the merge commit and code
+  are authoritative while signed post-merge automation catches up.
 
 These sibling worktrees are discovery evidence, not dependencies by path. Every
 implementation chunk consumes only contracts merged into trusted `main`.

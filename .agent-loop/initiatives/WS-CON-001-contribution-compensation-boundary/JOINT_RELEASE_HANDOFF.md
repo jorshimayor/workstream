@@ -2,23 +2,27 @@
 
 ## Incorporation status
 
-The inspected sibling branch now has committed merge head `e59e2bb`, which
-integrates trusted `main` `90eca12` and includes contribution/compensation
-router registration, the WS-CON-11 preflight manifest, the complete joint live
-matrix, PaymentPolicy removal dependencies, active generated/document
-companions, and REV-12A hidden release control. It consumes the CON-owned
-dispatch and callback fences plus fulfillment-drain observation through
-composition instead of importing CON/outbox repositories.
+The inspected sibling branch now has clean committed head `a13bf35`, based
+on trusted `main` including AUTH-08. Its planning contracts assign future
+contribution/compensation router registration, consumption of the WS-CON-11
+preflight manifest, the joint live matrix, PaymentPolicy removal dependencies,
+active generated/document companions and REV-12A hidden release control. Those
+runtime changes are not implemented. The planned composition consumes the
+CON-owned dispatch/callback fences and fulfillment-drain observation instead of
+importing CON/outbox repositories.
 
-The sibling is still not a consumable dependency: its status/evidence cites
-older AUTH/CON heads and its REV-12A contract still says the CON handler claims
+The AUTH-08 dependency refresh now records correct merged counts and
+transaction/error/timestamp repairs, but final publication evidence remains
+intentionally stale pending ART. The sibling is still not consumable: REV-06/10
+predate the registration -> CON -> REV hidden -> AUTH activation choreography
+and D12 owner-custody decision, and REV-12A still says the CON handler claims
 the shared-outbox event. Before review/merge it must instead accept the
 dispatcher's already-claimed command and return a typed outcome, leaving every
-outbox transition to CON-02B. It must also adopt AUTH-07B's executable-gate and
-prepared-authorization requirements. WS-CON does not edit the parallel
-worktree; the WS-REV owner must repair, commit-bind, internally review and merge
-that exact contract. Until later implementation gates land, both initiatives
-remain hidden.
+outbox transition to CON-02B. It must also adopt AUTH-08's current decision/
+transaction contract and the executable-gate/prepared-authorization
+requirements. WS-CON does not edit the sibling. The WS-REV owner must repair,
+commit-bind, internally review and merge the exact final contract. Until later
+implementation gates land, both initiatives remain hidden.
 
 The refresh must also repair REV-06/10 authorization choreography. AUTH first
 registers the planned review action and typed/prepared contract; CON supplies
@@ -76,6 +80,14 @@ historical reviews, and generated loop memory remain excluded.
 - Register review, contribution, compensation policy/binding, contribution/
   award/evidence reads, fulfillment callback, and bounded operations routers in
   the same PR under `/api/v1`; no `/v1` alias and no partial prior surface.
+- Every registered route explicitly commits its own complete read or mutation
+  plus AuthorizationDecision and business/audit/outbox/idempotency state.
+  Domain services remain flush-only. The service-authenticated fulfillment
+  callback explicitly commits its decision plus receipt/idempotency state in
+  the fenced transaction. Tests prove an omitted commit is rolled back by
+  dependency teardown, authorization-evidence failure is one retryable 503 with
+  zero partial state, callback commit failure leaves no partial receipt, and no
+  route relies on dependency ordering to commit.
 - Consume CON-11's exact merged-SHA/migration/action/service-assignment/ART/
   outbox/worker/handler/fence manifest plus AUTH context/evaluator/matched-
   authority/prepared-protocol/availability parity, and fail startup/preflight
@@ -92,7 +104,8 @@ historical reviews, and generated loop memory remain excluded.
   IDs and retained live evidence, including policy/binding setup, task/review
   freezes, accept/needs_revision/reject, second revision review, money+points,
   explicit unpaid, delivery/callback ordering, suspended/retired binding,
-  evidence privacy/rebuild, Finance-versus-Operator operations, denials, atomic
+  evidence privacy/rebuild, D11-approved delivery/operations role behavior,
+  denials, atomic
   rollback, storage/adapter outage, replay and reconciliation.
 - Update all active sources/generated companions in the same release so no
   mutable PaymentRecord, accept-only/voidable contribution, automatic

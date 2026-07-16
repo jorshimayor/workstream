@@ -34,8 +34,15 @@ dependency, test, coverage or CI weakening
   applicable actor-self/AdminRoleGrant definitions. CON composes canonical
   facts; stable pre-filter pagination and cross-project concealment are
   enforced. A later AUTH gate activates award reads before CON-10B.
-- [ ] Self, Finance/project/Operator/Audit disclosure is separated; Reviewer is
-  self-only absent a later approved assigned-review action.
+- [ ] D11's human-approved award-detail role set is frozen in the active
+  contract before this chunk. CON implements only its disclosure projection;
+  Project Manager behavior follows that decision rather than the unadopted
+  candidate or broad PermissionId by inference. Reviewer remains self-only
+  absent a later approved assigned-review action.
+- [ ] Reads validate the allowed decision's complete resource-context digest,
+  matched AdminRoleGrant ID and covered project against canonical award facts.
+  CON uses role-agnostic allowed/denied seams; the later AUTH activation gate
+  proves the chosen role set, mixed grants, revocation and scope denials.
 - [ ] Contribution, money, points, delivery acknowledgement and fulfillment
   remain distinct; no provider/balance/ledger data appears.
 - [ ] Query races never mutate truth; all matrix cases run; OpenAPI stays hidden.

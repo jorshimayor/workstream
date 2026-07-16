@@ -43,6 +43,16 @@ archival reference edits
   dependencies and assignments, ART capabilities, outbox dispatcher, REV-10
   integration and provider readiness are present. An active action without its
   executable evaluator or feature behavior fails startup.
+- [ ] AUTH manifest proves the reviewed post-AUTH-08 baseline, full D11 human
+  outcome plus any required AUTH matrix amendment, exact chosen per-action
+  AdminRole allowlists, complete
+  resource-context digests, matched grant/project evidence, explicit feature-
+  route commits, rollback of abandoned transactions and typed retryable
+  authorization-evidence failure. No service action uses a human grant.
+- [ ] D12 manifest maps all 23 WS-CON actions and the coupled review claim/
+  decision actions to exactly one approved owner/activation custodian, matches
+  the registered enum and AUTH chunk map, and fails startup on dual, missing or
+  feature-side availability custody.
 - [ ] Hidden integration proves `/api/v1` target paths are absent from production
   OpenAPI before release and no partial direct construction path exists.
 - [ ] `CONFORMANCE_MATRIX.md` has collected node IDs/evidence for every adopted

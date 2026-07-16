@@ -42,6 +42,12 @@ optional/no-op/fallback callback fence or REV edits to CON callback policy
   allowed lifecycle phase before any compensation-domain row, and holds the
   shared transaction fence through idempotent receipt commit. Missing injection
   fails closed; there is no optional/no-op/fallback production fence.
+- [ ] The callback route/transaction owner explicitly commits the exact
+  AuthorizationDecision, receipt and idempotency result together; the AUTH
+  dependency remains rollback-only and never rescues an omitted commit.
+  Authorization-evidence or commit failure returns the typed retryable error
+  with no partial receipt/status/idempotency state. REV-13 repeats this proof on
+  the registered service route.
 - [ ] The callback fence allows authenticated callbacks through
   `delivery_draining` and denies them after `disabled`. Deterministic CON test
   doubles prove allow/deny semantics; REV-12A owns integrated callback-versus-

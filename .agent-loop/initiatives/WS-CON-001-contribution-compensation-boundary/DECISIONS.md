@@ -73,8 +73,11 @@ proposal, and every mapping is re-read from merged trusted `main` before its
 implementation chunk.
 
 Current trusted `main` proves why registration and activation cannot be
-collapsed: AUTH-07B has 50 registered actions but only two active evaluators;
-all planned and unsupported actions fail closed.
+collapsed: AUTH-08 has 57 registered actions but only nine active self/admin
+actions; all planned and unsupported actions fail closed. Its complete
+resource-context digest, matched grant/scope evidence and route-owned commit
+boundary become mandatory inputs to later WS-CON evaluators rather than a
+feature-local replacement.
 
 ## D5 - Derived Contribution/Award Writes Are Review Participants
 
@@ -124,7 +127,7 @@ beneficiary accounts, balances, and project-points ledger entries.
 
 ## D10 - AUTH Owns Prepared Cross-Domain Mutation Authorization
 
-**Status:** required architecture correction after merged AUTH-07B review;
+**Status:** required architecture correction after merged AUTH-07B/AUTH-08 review;
 human/AUTH approval required before any `T` action implementation.
 
 The current actor-self kernel can revalidate entirely inside AUTH-owned rows.
@@ -144,3 +147,59 @@ facts and product guards but cannot implement the handle or query AUTH state.
 Rejected: product-row locks before AUTH locks, evaluating an unlocked snapshot,
 calling AUTH twice and emitting competing decisions, or letting feature code
 flip catalogue availability.
+
+## D11 - Reconcile AUTH-08 Role Candidates Per Action
+
+**Status:** unresolved human cross-spec decision before CON-10A/10B
+authorization registration; any resulting AUTH correction remains AUTH-owned.
+
+Merged AUTH-08 is the canonical five-role permission-candidate matrix. It gives
+Finance Authority the existing `compensation.delivery.reconcile` PermissionId
+but omits it from Operator, while the reconciled candidate WS-CON human matrix
+proposes a reason-bound system Operator for delivery reconciliation. Only D2 is
+human-approved. The recommended D11 resolution is to preserve that candidate
+behavior: a reviewed AUTH successor adds the existing PermissionId to Operator
+and updates its closed definition/API/kernel tests. The human may instead
+reject Operator delivery reconciliation; then CON-01 removes it from the active
+matrix before AUTH registration. WS-CON adds no PermissionId, role query or
+local exception under either resolution.
+
+The human must also resolve the inverse mismatches. Project Manager has the
+merged `compensation.award.read` permission while the candidate WS-CON matrix
+excludes it from monetary award/fulfillment detail; candidate audit read/export
+sets are narrower than every merged role containing `audit.read` or
+`audit.export`. D11 chooses whether to preserve each merged candidate or adopt
+the narrower WS-CON action set. Any approved narrowing is implemented only by
+AUTH through an evaluator-owned closed role intersection before grant query.
+The role set is never request- or CON-supplied; an actor with both excluded and
+eligible grants must match only the eligible grant. If the merged set is kept,
+CON-01 updates the active product matrix before registration. No generic
+"permission present means action allowed" branch or silent narrowing is
+accepted.
+
+Rejected: silently choosing either side of a role-matrix conflict, changing a
+candidate set after registration without review, or reproducing role policy in
+CON.
+
+## D12 - ActionOwner And Activation Custody Have One Meaning
+
+**Status:** unresolved AUTH/human contract decision before any WS-CON action
+registration or review-action activation amendment.
+
+The merged enum defines ActionOwner as the implementation chunk allowed to
+activate an action. The user requires AUTH to own authorization activation, so
+the recommended resolution keeps that meaning and adds the exact eight
+AUTH-owned WS-CON activation owners plus two review activation owners listed in
+`AUTHORIZATION_HANDOFF.md`. Every proposed action maps to one owner; CON/ART/REV
+remain feature resource owners but never change availability.
+
+The alternative is a reviewed global semantic change: ActionOwner becomes the
+feature/resource owner and AUTH adds a separate closed activation-custody type.
+That change must update catalogue docs, typed/PostgreSQL parity where
+applicable, startup checks and every existing owner test before use. It cannot
+be inferred locally. Under either choice there is exactly one activation
+authority and the handoff table keeps feature ownership separate.
+
+Rejected: leaving current REV owners while saying AUTH activates, assigning an
+evidence action jointly to AUTH/ART, using a registration PR as a second owner,
+or letting two chunks flip one action.
