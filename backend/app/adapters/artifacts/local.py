@@ -1383,10 +1383,13 @@ class LocalStorageAdapter:
         task = asyncio.create_task(asyncio.to_thread(self._acquire_lock, scope))
         try:
             return await asyncio.shield(task)
-        except asyncio.CancelledError:
-            lock = await await_cancellation_resistant(task)
+        except asyncio.CancelledError as cancellation:
+            try:
+                lock = await await_cancellation_resistant(task)
+            except Exception:
+                raise cancellation from None
             await await_cancellation_resistant(asyncio.to_thread(self._release_lock, lock))
-            raise
+            raise cancellation
 
     @contextmanager
     def _locked_file(self, path: Path) -> Iterator[int]:

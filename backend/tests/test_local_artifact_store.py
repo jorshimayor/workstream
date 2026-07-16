@@ -230,6 +230,31 @@ async def test_private_lock_acquisition_has_a_bounded_deadline(tmp_path: Path) -
 
 
 @pytest.mark.asyncio
+async def test_cancelled_private_lock_wait_preserves_cancellation_after_timeout(
+    tmp_path: Path,
+) -> None:
+    """Keep caller cancellation when its background lock wait times out."""
+    adapter = LocalStorageAdapter(
+        root=tmp_path / "artifacts",
+        buffer_bytes=2,
+        lock_timeout_seconds=0.05,
+    )
+    held_lock = adapter._acquire_lock("cancelled-timeout")
+    waiting = asyncio.create_task(adapter._acquire_lock_async("cancelled-timeout"))
+    await asyncio.sleep(0.01)
+    waiting.cancel()
+    try:
+        with pytest.raises(asyncio.CancelledError):
+            await waiting
+    finally:
+        adapter._release_lock(held_lock)
+
+    reacquired = await adapter._acquire_lock_async("cancelled-timeout")
+    await adapter._release_locks(reacquired)
+    adapter.close()
+
+
+@pytest.mark.asyncio
 async def test_store_cleanup_survives_repeated_cancellation(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
