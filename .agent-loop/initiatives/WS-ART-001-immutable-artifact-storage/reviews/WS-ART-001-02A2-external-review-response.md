@@ -4,15 +4,19 @@
 
 PR #129: `https://github.com/Flow-Research/workstream/pull/129`
 
-Reviewed code SHA: `967e12cb5d11b895b59be206fee36af911576d66`
+Reviewed code SHA: `aba8325321b35a92778ffe3ddfb414ac7772f57f`
 
 Published evidence-bound head: pending
 
 ## External Checks
 
-- Agent Gates: pending on the new published head.
-- Backend: pending on the new published head.
-- CodeRabbit: pending incremental review of the new published head.
+- Agent Gates: the prior published head `98a7f88` passed; final-head rerun is
+  pending publication.
+- Backend: the prior published head `98a7f88` passed; final-head rerun is
+  pending publication.
+- CodeRabbit: reviewed `98a7f88`, reported two additional actionable findings,
+  and marked its check successful. Final-head incremental review is pending
+  publication.
 
 ## Comments Addressed
 
@@ -22,6 +26,13 @@ Published evidence-bound head: pending
   ledger lock. Fixed by validating marker contents under the lock.
 - CodeRabbit: bound multiprocessing pipe receives and guarantee child cleanup.
   Fixed with timed `poll`, explicit failure, and `finally` cleanup.
+- CodeRabbit: preserve the original cancellation when temporary cleanup fails
+  and retain retryable `.part` ownership. Fixed in `aba8325` with exact
+  cancellation-message proof, retained-file proof, canonical cleanup retry,
+  and successful exact-request retry.
+- CodeRabbit: make marker-validation ordering independent of spawned-process
+  startup speed. Fixed in `aba8325` with explicit child-start and lock/order
+  events plus bounded cold-start and child-shutdown limits.
 
 ## Comments Deferred
 
@@ -41,5 +52,5 @@ still inspect the evidence-bound published head.
 ## Remaining Risks
 
 - The preparation boundary is intentionally inactive until `02A3`.
-- The external status in this file must be updated only after GitHub reports
-  the exact published head.
+- Final external status must be recorded only after GitHub reports the exact
+  published head.

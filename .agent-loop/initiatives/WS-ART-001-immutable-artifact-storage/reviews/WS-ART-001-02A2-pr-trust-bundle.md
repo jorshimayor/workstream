@@ -127,22 +127,22 @@ Stale artifact, wording, Markdown link, and diff checks passed
 
 ## Internal Reviewer Results
 
-Reviewed code SHA: `967e12cb5d11b895b59be206fee36af911576d66`
+Reviewed code SHA: `aba8325321b35a92778ffe3ddfb414ac7772f57f`
 
-Reviewed at: `2026-07-16T00:27:35Z`
+Reviewed at: `2026-07-16T07:17:30Z`
 
 Reviewer run IDs: recorded in `WS-ART-001-02A2-internal-review-evidence.md`
 
 | Reviewer | Result | Blocking Findings | Notes |
 |---|---:|---|---|
 | Senior engineering | PASS | None | Exact code SHA and focused gates passed. |
-| QA/test | PASS | None | Lock-timeout cancellation semantics repaired and re-reviewed. |
+| QA/test | PASS | None | Exact cancellation identity, retry cleanup, and marker-order proof passed. |
 | Security/auth | PASS | None | No authority or protected product surface changed. |
 | Product/ops | PASS | None | No product lifecycle changed. |
-| Architecture | PASS WITH LOW RISKS | None | Linux `/proc` dependency remains localized. |
+| Architecture | PASS | None | Boundaries and inactive runtime scope remain intact. |
 | CI integrity | PASS | None | No gate or threshold weakening. |
 | Docs | PASS | None | Required artifact settings and behavior documented. |
-| Reuse/dedup | PASS WITH LOW RISKS | None | Consolidate temporary v1 helpers during 02A3. |
+| Reuse/dedup | PASS | None | Existing cancellation helper is reused; no parallel abstraction added. |
 | Test delta | PASS | None | No removed, skipped, xfailed, or weakened tests. |
 
 All nine final reviewer sessions are closed.
@@ -155,8 +155,8 @@ External review response file:
 
 | Source | Status | Notes |
 |---|---:|---|
-| CodeRabbit | Pending | Original three findings are fixed; rerun required on the new published head. |
-| GitHub checks | Pending | Backend and Agent Gates must prove the new published head. |
+| CodeRabbit | Pending final head | Five findings across two reviews are fixed; incremental review must inspect the new published head. |
+| GitHub checks | Pending final head | Backend and Agent Gates passed on `98a7f88` and must rerun after publication. |
 
 ## CI And Gate Integrity
 

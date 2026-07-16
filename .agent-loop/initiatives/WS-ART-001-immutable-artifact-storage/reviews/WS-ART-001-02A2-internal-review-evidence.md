@@ -10,11 +10,11 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: 967e12cb5d11b895b59be206fee36af911576d66
+Reviewed code SHA: aba8325321b35a92778ffe3ddfb414ac7772f57f
 
-Reviewed at: 2026-07-16T00:27:35Z
+Reviewed at: 2026-07-16T07:17:30Z
 
-Reviewer run IDs: senior-engineering=019f6847-65d7-7ae0-95dd-d54f5d0a9ed1; architecture=019f6847-6c8c-7950-9e8d-1c1cc8c49aeb; QA/test=019f6847-739b-7981-99e9-df26a75ac35e; security/auth=019f6847-7e09-7de3-8163-75e91fe0888f; product/ops=019f6847-8881-7f91-a547-877d41a1967e; reuse/dedup=019f6847-92dd-7501-84eb-b8f89a18d4f5; CI-integrity=019f684d-81c8-7bb3-a24a-4a2c26e19867; test-delta=019f684d-88c6-7090-bda1-ba4694935c92; docs=019f684d-9178-7ed2-8066-cb2561c7244c
+Reviewer run IDs: senior-engineering=019f69c0-9c33-7433-ac6a-b0f4a42ae628; architecture=019f69c0-9e67-7090-b5e1-9e58637811bc; QA/test=019f69c0-a0a6-7f03-a782-34134a04a80b; security/auth=019f69c0-a2ce-72a1-8027-a48ccc522795; product/ops=019f69c0-a4e7-7960-a6f8-65f752658e31; reuse/dedup=019f69c0-a70a-7940-8a1a-5c2eb382b65b; CI-integrity=019f69c5-cb1a-7530-8ffb-ec33e15449ed; test-delta=019f69c5-ce97-7793-a201-d084ff4554e5; docs=019f69c5-d43d-7990-8615-54ca195ff16e
 
 After the reviewed SHA, only initiative review evidence and status files may
 change without invalidating this review.
@@ -43,13 +43,13 @@ change without invalidating this review.
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
 | senior engineering | PASS | None | Exact code SHA and focused gates passed. |
-| QA/test | PASS | None | Cancellation-time lock failure was repaired before final review. |
+| QA/test | PASS | None | Exact cancellation identity, retryable `.part` custody, and lock-order proof passed. |
 | security/auth | PASS | None | No auth, permission, secret, payment, or tenant boundary changed. |
 | product/ops | PASS | None | No operator, contributor, reviewer, payment, or reputation workflow changed. |
-| architecture | PASS WITH LOW RISKS | None | Linux `/proc` process identity and concrete sealed-source custody remain localized. |
+| architecture | PASS | None | No alternate provider, factory, runtime, or product path was introduced. |
 | CI integrity | PASS | None | The 78 percent repository gate and cumulative scoped 90 percent gates remain fail closed. |
 | docs | PASS | None | Settings, defaults, scope, and inactive-cleanup behavior are documented. |
-| reuse/dedup | PASS WITH LOW RISKS | None | Shared lock/cancellation paths are reused; v1 digest helpers should consolidate during 02A3. |
+| reuse/dedup | PASS | None | Existing cancellation ownership helper is reused; test-only order instrumentation is localized. |
 | test delta | PASS | None | No test was removed, skipped, xfailed, or weakened. |
 
 ## Valid Findings Addressed
@@ -65,6 +65,12 @@ change without invalidating this review.
 - Replaced LocalStorage's unbounded private flock with the same bounded helper.
 - Preserved the caller's `CancelledError` when a background lock acquisition
   later reaches its deadline.
+- Preserved the exact original caller cancellation when unpublished temporary
+  cleanup fails, retained the `.part` file under retryable intent ownership,
+  and proved later canonical cleanup plus exact-request retry.
+- Replaced timing-dependent marker-order proof with explicit spawned-child,
+  lock-attempt, lock-acquired, and marker-validation events; widened only the
+  bounded cold-start allowance after a reviewer reproduced a loaded-run flake.
 
 ## Commands Run
 

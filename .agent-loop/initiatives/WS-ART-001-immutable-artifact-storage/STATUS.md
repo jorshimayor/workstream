@@ -26,7 +26,7 @@ approval or reusable evidence. Its source remains on branch
 ## Active Work
 
 `WS-ART-001-02A2` implementation and internal review are complete at reviewed
-SHA `967e12cb5d11b895b59be206fee36af911576d66`. All nine required reviewer
+SHA `aba8325321b35a92778ffe3ddfb414ac7772f57f`. All nine required reviewer
 tracks pass and every session is closed. The chunk adds only the inactive
 bounded preparation/committed-source boundary, private filesystem scratch
 ledger and deterministic cleanup mechanics, bounded shared file locking,
@@ -47,6 +47,9 @@ owns MinIO and AWS S3. There is no active R2 chunk.
 Ready PR #129 is open at
 `https://github.com/Flow-Research/workstream/pull/129`. Local deterministic
 proof and all nine internal reviewer tracks pass for the reviewed code SHA.
-The current gate is publication of the evidence-bound head followed by fresh
-Agent Gates, Backend, and CodeRabbit results. No later artifact chunk starts
-automatically, and only the user may approve merge.
+The prior published head passed Agent Gates and Backend, then received two
+additional CodeRabbit findings. Those findings are repaired and all nine
+internal tracks pass on exact code SHA `aba8325`. The current gate is
+publication of the final evidence-bound head followed by fresh Agent Gates,
+Backend, and CodeRabbit results. No later artifact chunk starts automatically,
+and only the user may approve merge.
