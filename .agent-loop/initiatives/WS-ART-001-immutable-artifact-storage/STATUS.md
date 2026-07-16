@@ -3,9 +3,10 @@
 ## Current State
 
 Original planning merged through PR #97, artifact/LocalStorage foundation
-merged through PR #101, and the AWS-first object-storage amendment merged
-through PR #120 as `4408256`. The user explicitly started
-`WS-ART-001-02A1` on 2026-07-15.
+merged through PR #101, the AWS-first object-storage amendment merged through
+PR #120 as `4408256`, and the external-service adapter foundation merged
+through PR #127 as `f64a8e5`. The user explicitly started
+`WS-ART-001-02A2` on 2026-07-15.
 
 The Flow Node-focused amendment candidate `6cc422d` passed deterministic checks
 but failed internal review on recovery/API completeness. Before repair, the user
@@ -24,26 +25,34 @@ approval or reusable evidence. Its source remains on branch
 
 ## Active Work
 
-`WS-ART-001-02A1` implementation is complete at reviewed code SHA `05d667a`.
-PR #127 is open. Agent Gates and Backend passed published head `7c8da61`, and
-CodeRabbit's one valid consistency nit is fixed in `05d667a`. Eight technical
-and operational internal tracks passed that exact one-line delta; the docs track
-passed the completed evidence provenance separately. The chunk installs only the
-shared typed external-service adapter/factory foundation and does not migrate
-any capability. Updated-head GitHub checks, external review, and the human merge
-checkpoint remain required.
+`WS-ART-001-02A2` implementation and internal review are complete at reviewed
+SHA `ae70bc2f10334f649c1af7f210e58ee378695a2b`. All nine required reviewer
+tracks pass and every session is closed. The chunk adds only the inactive
+bounded preparation/committed-source boundary, private filesystem scratch
+ledger and deterministic cleanup mechanics, bounded shared file locking,
+LocalStorage private helper refactoring, settings, documentation, and proof.
+Active ArtifactStore v1 behavior, provider selection, and product lifecycle
+remain unchanged. The ledger is database-independent scratch coordination and
+never product or durable artifact state.
 
 ## Next Proposed Chunk
 
-`WS-ART-001-02A1` installs the shared typed external-service adapter/factory
-foundation. `02A2`
-adds committed-source preparation and narrows LocalStorage internals without
-changing the active port. `02A3` performs the atomic
+`02A2` adds committed-source preparation and narrows LocalStorage internals
+without changing the active port. `02A3` performs the atomic
 ArtifactStore v2/LocalStorage/schema cut and removes `flow_node`. `02B1` then
 owns MinIO and AWS S3. There is no active R2 chunk.
 
 ## Gate
 
-PR #120 is merged. `WS-ART-001-02A1` is open as PR #127 and awaits updated-head
-external checks plus human review. No later artifact chunk starts automatically,
-and only the user may approve merge.
+Ready PR #129 is open at
+`https://github.com/Flow-Research/workstream/pull/129`. Local deterministic
+proof and all nine internal reviewer tracks pass for the reviewed code SHA.
+The prior published head passed Agent Gates, Backend, and CodeRabbit. Trusted
+`main` at AUTH-08 merge `aa0fdcd` was then integrated to resolve the PR's base
+conflict. The combined tree passes 154 focused ART tests at 94.40 percent, 38
+isolated artifact PostgreSQL tests, and 207 isolated AUTH/authentication/Alembic
+tests. All nine exact-revision tracks pass and stale queue wording is repaired.
+Integrated evidence-bound head `4ca80de` passes Agent Gates, Backend full-suite
+coverage, and CodeRabbit with no new comment. The current gate is the human
+merge decision. No later artifact chunk starts automatically, and only the user
+may approve merge.

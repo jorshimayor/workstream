@@ -72,7 +72,7 @@ jobs:
         working-directory: backend
         run: >-
           coverage report
-          --include='app/adapters/artifacts/*,app/interfaces/artifacts.py,app/modules/artifacts/*'
+          --include='app/adapters/artifacts/*,app/core/cancellation.py,app/core/file_locks.py,app/interfaces/artifacts.py,app/modules/artifacts/*'
           --precision=2
           --fail-under=90
 
@@ -81,6 +81,14 @@ jobs:
         run: >-
           coverage report
           --include='app/interfaces/external_services.py'
+          --precision=2
+          --fail-under=90
+
+      - name: Artifact preparation configuration coverage
+        working-directory: backend
+        run: >-
+          coverage report
+          --include='app/core/config.py'
           --precision=2
           --fail-under=90
 

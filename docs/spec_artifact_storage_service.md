@@ -700,6 +700,26 @@ task as the periodic owner. Tests cover concurrent processes, full-max quota
 boundaries, low disk, slow active work versus cleanup, deadline cancellation,
 crash, stale cleanup, and symlink/non-regular entries.
 
+The preparation settings use the standard `WORKSTREAM_` environment prefix:
+
+| Environment variable | Default | Contract |
+|---|---:|---|
+| `WORKSTREAM_ARTIFACT_SCRATCH_ROOT` | unset | Dedicated private scratch root; required before runtime activation and must not equal, contain, or sit inside `WORKSTREAM_ARTIFACT_LOCAL_ROOT`. |
+| `WORKSTREAM_ARTIFACT_SCRATCH_AGGREGATE_RESERVED_BYTES` | `2147483648` | Maximum bytes reserved across the shared root. Each active preparation reserves the full 512 MiB hard maximum. |
+| `WORKSTREAM_ARTIFACT_SCRATCH_MAXIMUM_FILES` | `8` | Maximum live scratch reservations/files. |
+| `WORKSTREAM_ARTIFACT_SCRATCH_MAXIMUM_CONCURRENCY` | `4` | Maximum concurrent preparations; cannot exceed the file limit. |
+| `WORKSTREAM_ARTIFACT_SCRATCH_MINIMUM_FREE_BYTES` | `536870912` | Free-space floor retained in addition to the next full reservation. |
+| `WORKSTREAM_ARTIFACT_SCRATCH_RESERVATION_TTL_SECONDS` | `2400` | Database-independent wall-clock expiry for abandoned reservations. |
+| `WORKSTREAM_ARTIFACT_PREPARATION_TOTAL_DEADLINE_SECONDS` | `1800` | Total first-pass and provider-consumption deadline. |
+| `WORKSTREAM_ARTIFACT_SCRATCH_CLEANUP_MARGIN_SECONDS` | `300` | Required margin between the total deadline and reservation TTL. |
+| `WORKSTREAM_ARTIFACT_STREAM_BUFFER_BYTES` | `1048576` | Bounded streaming buffer, limited to at most 1 MiB. |
+| `WORKSTREAM_ARTIFACT_OPERATION_LOCK_TIMEOUT_SECONDS` | `1800` | Maximum wait for a private cross-process artifact-store operation lock before failing closed. |
+
+Every process sharing a scratch root must use the identical complete setting
+set. The root marker binds a canonical fingerprint of those limits and startup
+fails closed on mismatch; changing limits therefore requires an empty,
+deliberately reprovisioned scratch root rather than an in-place mixed rollout.
+
 The same canonical `ArtifactScratchManager` also owns checker-workspace
 allocations. Authoritative pre-submit introduces one authorized artifact
 materializer, and post-submit reuses it without a second workspace manager.

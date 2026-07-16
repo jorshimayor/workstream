@@ -1,4 +1,4 @@
-# Chunk Contract: WS-ART-001-02A3 ArtifactStore v2 Local Clean Cut
+# Chunk Contract: WS-ART-001-02A3 - ArtifactStore v2 Local Clean Cut
 
 Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02A2
 
@@ -81,7 +81,7 @@ configuration. No compatibility path remains after this PR.
 ## Exact CI Coverage Gate
 
 ```bash
-coverage report --include='app/adapters/artifacts/*,app/interfaces/artifacts.py,app/modules/artifacts/*' --precision=2 --fail-under=90
+coverage report --include='app/adapters/artifacts/*,app/core/cancellation.py,app/core/file_locks.py,app/interfaces/artifacts.py,app/modules/artifacts/*' --precision=2 --fail-under=90
 coverage report --include='app/interfaces/external_services.py' --precision=2 --fail-under=90
 coverage report --include='app/core/config.py' --precision=2 --fail-under=90
 coverage report --include='app/workers/*' --precision=2 --fail-under=90

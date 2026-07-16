@@ -77,7 +77,7 @@ Do not add recovery attempts, Operator routes, or product cutovers.
 ## Exact CI Coverage Gates
 
 ```bash
-coverage report --include='app/adapters/artifacts/*,app/interfaces/artifacts.py,app/modules/artifacts/*' --precision=2 --fail-under=90
+coverage report --include='app/adapters/artifacts/*,app/core/cancellation.py,app/core/file_locks.py,app/interfaces/artifacts.py,app/modules/artifacts/*' --precision=2 --fail-under=90
 coverage report --include='app/interfaces/external_services.py' --precision=2 --fail-under=90
 coverage report --include='app/core/config.py' --precision=2 --fail-under=90
 coverage report --include='app/workers/*' --precision=2 --fail-under=90

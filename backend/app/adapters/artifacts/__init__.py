@@ -26,6 +26,7 @@ def resolve_artifact_store(settings: Settings) -> ArtifactStore:
         return LocalStorageAdapter(
             root=settings.artifact_local_root,
             buffer_bytes=settings.artifact_stream_buffer_bytes,
+            lock_timeout_seconds=settings.artifact_operation_lock_timeout_seconds,
         )
     if settings.artifact_store_backend == "flow_node":
         raise ArtifactConfigurationError("configured artifact adapter is not available")

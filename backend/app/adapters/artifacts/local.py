@@ -9,6 +9,7 @@ from datetime import UTC, datetime
 import fcntl
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -17,7 +18,12 @@ import time
 from typing import Any, BinaryIO, Iterator
 from uuid import uuid4
 
+from app.core.cancellation import (
+    await_cancellation_resistant,
+    run_blocking_cancellation_resistant,
+)
 from app.core.hashing import canonical_json_hash
+from app.core.file_locks import acquire_exclusive_file_lock
 from app.interfaces.artifacts import (
     ArtifactByteRange,
     ArtifactIdempotencyMismatchError,
@@ -58,20 +64,35 @@ class LocalStorageAdapter:
 
     adapter_name = "local"
 
-    def __init__(self, *, root: Path, buffer_bytes: int = 1024 * 1024) -> None:
+    def __init__(
+        self,
+        *,
+        root: Path,
+        buffer_bytes: int = 1024 * 1024,
+        lock_timeout_seconds: float = 1800.0,
+    ) -> None:
         """Initialize a private storage root.
 
         Args:
             root: Dedicated non-symlink storage directory.
             buffer_bytes: Maximum bytes used by one filesystem read or write.
+            lock_timeout_seconds: Maximum wait for one cross-process operation lock.
 
         Raises:
             ValueError: If the root or buffer is unsafe.
         """
         if buffer_bytes <= 0 or buffer_bytes > 1024 * 1024:
             raise ValueError("artifact buffer must be between 1 byte and 1 MiB")
+        if (
+            isinstance(lock_timeout_seconds, bool)
+            or not isinstance(lock_timeout_seconds, (int, float))
+            or not math.isfinite(lock_timeout_seconds)
+            or lock_timeout_seconds <= 0
+        ):
+            raise ValueError("artifact lock timeout is invalid")
         self._root = root.resolve(strict=False)
         self._buffer_bytes = buffer_bytes
+        self._lock_timeout_seconds = lock_timeout_seconds
         self._initialize_root(root)
         self._root_fd = os.open(
             self._root,
@@ -159,9 +180,12 @@ class LocalStorageAdapter:
                 receipt=receipt,
                 replayed=False,
             )
-        except asyncio.CancelledError:
+        except asyncio.CancelledError as cancellation:
             if lock is not None:
-                await self._cleanup_unpublished(scope)
+                try:
+                    await await_cancellation_resistant(self._cleanup_unpublished(scope))
+                except BaseException:
+                    raise cancellation from None
             raise
         except (
             ArtifactInputMismatchError,
@@ -485,10 +509,7 @@ class LocalStorageAdapter:
         except OSError as exc:
             raise ArtifactStoreUnavailableError("local artifact verification failed") from exc
         finally:
-            if artifact_lock is not None:
-                await self._run_io(self._release_lock, artifact_lock)
-            if lock is not None:
-                await self._run_io(self._release_lock, lock)
+            await self._release_locks(artifact_lock, lock)
 
     async def retain(
         self,
@@ -646,10 +667,7 @@ class LocalStorageAdapter:
         except OSError as exc:
             raise ArtifactStoreUnavailableError("local artifact retention failed") from exc
         finally:
-            if artifact_lock is not None:
-                await self._run_io(self._release_lock, artifact_lock)
-            if operation_lock is not None:
-                await self._run_io(self._release_lock, operation_lock)
+            await self._release_locks(artifact_lock, operation_lock)
 
     async def get_operation_receipt(
         self,
@@ -828,28 +846,22 @@ class LocalStorageAdapter:
         temporary = self._path("tmp", f"{provider_id}_{uuid4().hex}", ".part")
         final = self._path("objects", provider_id, ".blob")
         handle = await self._run_io(self._open_exclusive, temporary)
-        digest = hashlib.sha256()
-        total = 0
         write_complete = False
+        close_complete = False
         try:
-            async for source_chunk in stream:
-                if not isinstance(source_chunk, bytes):
-                    raise ArtifactInputMismatchError("artifact stream must yield bytes")
-                view = memoryview(source_chunk)
-                for offset in range(0, len(view), self._buffer_bytes):
-                    chunk = view[offset : offset + self._buffer_bytes]
-                    total += len(chunk)
-                    if total > request.maximum_bytes:
-                        raise ArtifactLimitExceededError("artifact exceeds maximum bytes")
-                    digest.update(chunk)
-                    await self._run_io(self._write_all, handle, chunk)
-            await self._run_io(os.fsync, handle)
+            sha256, total = await self._write_bounded_stream_to_private_file(
+                stream,
+                handle,
+                request.maximum_bytes,
+            )
             write_complete = True
         finally:
-            await self._run_io(os.close, handle)
-            if not write_complete:
-                await self._run_io(self._unlink_optional, temporary)
-        sha256 = f"sha256:{digest.hexdigest()}"
+            try:
+                await self._run_io(os.close, handle)
+                close_complete = True
+            finally:
+                if not write_complete or not close_complete:
+                    await self._run_io(self._unlink_optional, temporary)
         if request.expected_sha256 is not None and sha256 != request.expected_sha256:
             await self._run_io(self._unlink_optional, temporary)
             raise ArtifactInputMismatchError("artifact bytes do not match expected digest")
@@ -862,6 +874,29 @@ class LocalStorageAdapter:
             await self._run_io(self._unlink_optional, temporary)
             raise
         return sha256, total
+
+    async def _write_bounded_stream_to_private_file(
+        self,
+        stream: AsyncIterable[bytes],
+        descriptor: int,
+        maximum_bytes: int,
+    ) -> tuple[str, int]:
+        """Hash and write one bounded stream to an already-private file."""
+        digest = hashlib.sha256()
+        total = 0
+        async for source_chunk in stream:
+            if not isinstance(source_chunk, bytes):
+                raise ArtifactInputMismatchError("artifact stream must yield bytes")
+            view = memoryview(source_chunk)
+            for offset in range(0, len(view), self._buffer_bytes):
+                chunk = view[offset : offset + self._buffer_bytes]
+                total += len(chunk)
+                if total > maximum_bytes:
+                    raise ArtifactLimitExceededError("artifact exceeds maximum bytes")
+                digest.update(chunk)
+                await self._run_io(self._write_all, descriptor, chunk)
+        await self._run_io(os.fsync, descriptor)
+        return f"sha256:{digest.hexdigest()}", total
 
     async def _consume_stream(
         self, stream: AsyncIterable[bytes], maximum_bytes: int
@@ -1326,24 +1361,38 @@ class LocalStorageAdapter:
 
     async def _run_io(self, function: Any, *args: Any) -> Any:
         """Complete one blocking filesystem call before propagating cancellation."""
-        task = asyncio.create_task(asyncio.to_thread(function, *args))
-        try:
-            return await asyncio.shield(task)
-        except asyncio.CancelledError:
+        return await run_blocking_cancellation_resistant(function, *args)
+
+    async def _release_locks(self, *locks: tuple[Any, int] | None) -> None:
+        """Release every owned lock before propagating cancellation or failure."""
+        cancellation: asyncio.CancelledError | None = None
+        failure: Exception | None = None
+        for lock in locks:
+            if lock is None:
+                continue
             try:
-                await task
-            finally:
-                raise
+                await self._run_io(self._release_lock, lock)
+            except asyncio.CancelledError as exc:
+                cancellation = cancellation or exc
+            except Exception as exc:
+                failure = failure or exc
+        if cancellation is not None:
+            raise cancellation
+        if failure is not None:
+            raise failure
 
     async def _acquire_lock_async(self, scope: str) -> tuple[Any, int]:
         """Acquire a lock without leaking it when task cancellation wins the race."""
         task = asyncio.create_task(asyncio.to_thread(self._acquire_lock, scope))
         try:
             return await asyncio.shield(task)
-        except asyncio.CancelledError:
-            lock = await task
-            await asyncio.to_thread(self._release_lock, lock)
-            raise
+        except asyncio.CancelledError as cancellation:
+            try:
+                lock = await await_cancellation_resistant(task)
+            except Exception:
+                raise cancellation from None
+            await await_cancellation_resistant(asyncio.to_thread(self._release_lock, lock))
+            raise cancellation
 
     @contextmanager
     def _locked_file(self, path: Path) -> Iterator[int]:
@@ -1354,12 +1403,22 @@ class LocalStorageAdapter:
         try:
             descriptor = os.open(path.name, flags, 0o600, dir_fd=directory)
             self._assert_private_descriptor(descriptor)
-            fcntl.flock(descriptor, fcntl.LOCK_EX)
+            try:
+                acquire_exclusive_file_lock(
+                    descriptor,
+                    timeout_seconds=self._lock_timeout_seconds,
+                )
+            except TimeoutError:
+                raise ArtifactStoreUnavailableError(
+                    "local artifact lock deadline exceeded"
+                ) from None
             yield descriptor
         finally:
             if descriptor is not None:
-                fcntl.flock(descriptor, fcntl.LOCK_UN)
-                os.close(descriptor)
+                try:
+                    fcntl.flock(descriptor, fcntl.LOCK_UN)
+                finally:
+                    os.close(descriptor)
             os.close(directory)
 
     def _acquire_lock(self, scope: str) -> tuple[Any, int]:
