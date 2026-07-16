@@ -96,7 +96,7 @@ create no award.
 `CompensationAward` and `CompensationFulfillmentReceipt` records track:
 
 - contribution and beneficiary
-- frozen compensation version and award definition
+- frozen `ContributionPolicyVersion` and `ContributionAwardDefinition`
 - instrument, unit, and exact quantity
 - delivery and fulfillment status
 - immutable fulfillment receipt and external reference

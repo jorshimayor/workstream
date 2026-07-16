@@ -1158,8 +1158,9 @@ task/project state. The contributor does not provide submission version, evidenc
 ids, checker results, checker run ids, guide versions, source snapshots,
 effective project policy ids/hashes, pre-submit checker ids/bundle hashes,
 post-submit checker policy ids/versions/hashes, review policy versions, or
-revision policy versions. Submitter compensation remains the immutable
-TaskAssignment freeze and is not restated on the submission.
+revision policy versions. Submitter award eligibility remains governed by the
+immutable TaskAssignment-frozen `ContributionPolicyVersion` and is not restated
+on the submission.
 
 Implementation note: submissions stamp explicit post-submit checker provenance
 from the task. Durable `CheckerRun` creation uses those
@@ -1441,9 +1442,10 @@ Purpose:
 
 This record is created before a contributor resumes a task in `NEEDS_REVISION` when guide or policy context must be checked for the next attempt. It does not mutate the prior submission. It records whether the next attempt keeps the prior context or rebases to the current active guide and policy context under revision policy.
 
-Revision preparation never rebases compensation. Submitter compensation remains
-the TaskAssignment-frozen version; each new ReviewLease independently freezes
-the then-current reviewer compensation version.
+Revision preparation never rebases award eligibility. Submitter eligibility
+remains governed by the TaskAssignment-frozen `ContributionPolicyVersion`; each
+new ReviewLease independently freezes the then-current
+`ContributionPolicyVersion` for reviewer contributions.
 
 The contributor and reviewer packets must show the prior version, next version, rebase reason, and change summary when `context_rebased = true`.
 

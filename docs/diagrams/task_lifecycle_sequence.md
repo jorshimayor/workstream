@@ -104,8 +104,8 @@ sequenceDiagram
 
 ## Lifecycle Invariants
 
-- New TaskAssignments and ReviewLeases require an active published compensation
-  policy version to freeze.
+- New TaskAssignments and ReviewLeases require an active published
+  `ContributionPolicyVersion` to freeze.
 - A contributor submission creates a new immutable submission version; locked artifacts are not edited in place.
 - Review decisions are exactly `accept`, `needs_revision`, or `reject`.
 - `needs_revision` starts a revision loop and must replay prior findings.

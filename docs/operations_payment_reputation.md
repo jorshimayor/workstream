@@ -45,16 +45,17 @@ An immutable CompensationFulfillmentReceipt records:
 - failure code for failure
 - reported, received, and fulfillment timestamps
 
-## Compensation Rules
+## Contribution Award Rules
 
 Default:
 
 - DRAFT through REVIEW_PENDING: no contribution or award is created
 - a valid human `needs_revision`, `accept`, or `reject` decision creates one
-  reviewer `completed_review`; the ReviewLease-frozen contribution policy
-  decides whether it creates an award
+  reviewer `completed_review`; the ReviewLease-frozen
+  `ContributionPolicyVersion` decides whether it creates an award
 - `accept` additionally creates one submitter `accepted_submission`; the
-  TaskAssignment-frozen contribution policy decides whether it creates an award
+  TaskAssignment-frozen `ContributionPolicyVersion` decides whether it creates
+  an award
 - `needs_revision` and `reject` create no submitter contribution or award
 - fulfillment is recorded only by an authenticated adapter callback bound to the
   award's frozen adapter binding

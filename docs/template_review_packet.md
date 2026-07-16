@@ -68,12 +68,12 @@ Required when reviewing a resubmission.
 
 State both determinations independently:
 
-- reviewer `completed_review`: evaluate the ReviewLease-frozen compensation
-  policy for every valid recorded decision; an explicit unpaid rule creates no
-  award;
+- reviewer `completed_review`: evaluate the ReviewLease-frozen
+  `ContributionPolicyVersion` for every valid recorded decision; an explicit
+  unpaid rule creates no award;
 - submitter `accepted_submission`: evaluate the TaskAssignment-frozen
-  contribution policy only for `accept`; `needs_revision` and `reject` create no
-  submitter contribution or award.
+  `ContributionPolicyVersion` only for `accept`; `needs_revision` and `reject`
+  create no submitter contribution or award.
 
 ## Contribution Records
 

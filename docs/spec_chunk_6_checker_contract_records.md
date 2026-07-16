@@ -158,8 +158,9 @@ The run snapshots:
 - locked review policy version
 - locked revision policy version
 
-Compensation is not checker-run input. Submitter and reviewer compensation
-versions are frozen independently on `TaskAssignment` and `ReviewLease`.
+Award eligibility is not checker-run input. Submitter and reviewer
+`ContributionPolicyVersion` references are frozen independently on
+`TaskAssignment` and `ReviewLease`.
 
 Post-submit checker runs must be created only from a loaded, finalized submission. The service must copy `task_id`, `submission_version`, `package_hash`, `artifact_hash_manifest`, `artifact_manifest_hash`, and locked policy versions from that submission. The client does not provide locked guide or policy versions for checker runs.
 
