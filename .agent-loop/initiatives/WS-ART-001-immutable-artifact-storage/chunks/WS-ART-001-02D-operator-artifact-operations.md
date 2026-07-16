@@ -45,12 +45,14 @@ product cutover. Chunk 07 owns every live AWS provider inspection.
 - exact Operator APIs exist for resource-scoped binding discovery, replicas,
   receipts, verification job, retry, recovery-attempt read, artifact audit
   listing, and read-only admission usage.
-- AUTH-07, AUTH-08, AUTH-09, and the reviewed custody-registration checkpoint
-  are merged before this chunk starts, providing the complete typed/SQL planned
-  action registry, Operator grants, fixed service principals/assignments, and
-  AUTH activation custodians. This feature chunk supplies hidden canonical
-  artifact resources, guards, surfaces, and decision calls; it registers no
-  permission, evaluator, or availability change and creates no fallback.
+- AUTH-07A/07B, AUTH-08, AUTH-09A through AUTH-09E, and the reviewed
+  custody-registration checkpoint are merged before this chunk starts. They
+  provide the complete typed/SQL planned action registry, Operator grants,
+  static service-action matrix, provisioned service ActorProfiles and
+  ActorIdentityLinks, fixed service runtime admission, and AUTH activation
+  custodians. This feature chunk supplies hidden canonical artifact resources,
+  guards, surfaces, and decision calls; it registers no permission, evaluator,
+  or availability change and creates no fallback.
 - binding, replica, receipt, verification-job, and recovery-attempt reads use,
   respectively, `artifact.binding.read`, `artifact.replica.read`,
   `artifact.receipt.read`, `artifact.verification_job.read`, and

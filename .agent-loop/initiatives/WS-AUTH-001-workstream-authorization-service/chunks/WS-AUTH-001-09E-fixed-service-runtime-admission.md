@@ -13,9 +13,12 @@ product/ops, architecture, CI integrity, docs, reuse/dedup, and test delta.
 
 ## Prerequisites
 
-- the fixed service-identity field and static service-action matrix are merged;
-- controlled provisioning can create the exact service ActorProfile and one
-  active identity link;
+- AUTH-09A's fixed service-identity field and static service-action matrix are
+  merged;
+- AUTH-09B controlled provisioning can create the exact service ActorProfile
+  and one active identity link;
+- AUTH-09C administrative reads and AUTH-09D actor/link lifecycle mutations are
+  merged;
 - service lifecycle state is canonical and no feature service action is active
   merely because this chunk starts.
 

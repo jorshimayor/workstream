@@ -205,9 +205,10 @@ Artifact permissions are deliberately resource- and operation-specific.
 Operator permissions do not authorize internal execution, and internal service
 permissions do not authorize Operator APIs. AUTH-07A owns this closed registry,
 AUTH-07B introduces the central kernel, AUTH-08 owns the Operator grant
-definitions, AUTH-09 owns the service
-principals, and WS-ART consumes the resulting decisions without registering
-permissions or inferring authority. Artifact actions follow AUTH planned
+definitions, AUTH-09A owns the static service-action matrix, AUTH-09B provisions
+service ActorProfiles and ActorIdentityLinks, AUTH-09E admits fixed services,
+and WS-ART consumes the resulting decisions without registering permissions or
+inferring authority. Artifact actions follow AUTH planned
 registration, hidden ART behavior/resource composition, then dedicated AUTH
 evaluator integration and activation. ART never writes availability. AUTH-12,
 AUTH-14, and AUTH-15 are not alternate artifact activation paths.
@@ -299,10 +300,12 @@ The paired artifact hidden-behavior matrix is closed:
 
 Every row requires AUTH-07A's registry and AUTH-07B's kernel first. A row with an Operator principal
 also requires its AUTH-08 grant definition; a row with a fixed service
-principal also requires its AUTH-09 service-actor assignment. After the named
-ART behavior merges, the dedicated AUTH custodian integrates and activates the
-exact evaluator. Feature code receives centralized decisions; it never queries
-grants, constructs permission identifiers dynamically, or changes availability.
+principal also requires AUTH-09A's static matrix, AUTH-09B's provisioned service
+ActorProfile and ActorIdentityLink, and AUTH-09E fixed service runtime
+admission. After the named ART behavior merges, the dedicated AUTH custodian
+integrates and activates the exact evaluator. Feature code receives centralized
+decisions; it never queries grants, constructs permission identifiers
+dynamically, or changes availability.
 
 The following table is the single source of truth for artifact ActionId-to-
 PermissionId mappings, principal/resource facts, and ART hidden-behavior
@@ -357,8 +360,8 @@ are also closed:
 | `workstream.artifact.materializer` | `artifact.pre_submit.checker_input.materialize`, `artifact.post_submit.checker_input.materialize` |
 | `workstream.artifact.checker_output` | `artifact.checker_output.write` |
 
-AUTH-09 persists these exact service ActorProfiles and ActorIdentityLinks before
-any WS-ART execution chunk consumes them. The service-action matrix is typed
+AUTH-09B persists these exact service ActorProfiles and ActorIdentityLinks
+before any WS-ART execution chunk consumes them. The service-action matrix is typed
 code, not a database assignment or grant table. Its rows remain inert while
 their actions are planned. After the ART execution behavior merges, the
 dedicated AUTH activation custodian integrates the evaluator and changes only
@@ -616,14 +619,18 @@ The implementation order is fixed by the WS-AUTH-001 chunk map:
 6. `WS-AUTH-001-06`: canonical actor/link migration;
 7. `WS-AUTH-001-07`: authorization kernel;
 8. `WS-AUTH-001-08`: bootstrap/admin grants;
-9. `WS-AUTH-001-09`: actor/link state and controlled service provisioning;
-10. `WS-AUTH-001-09E`: fixed service runtime admission without human grant
+9. `WS-AUTH-001-09A`: fixed service identity and static matrix foundation;
+10. `WS-AUTH-001-09B`: controlled service ActorProfile/ActorIdentityLink
+    provisioning;
+11. `WS-AUTH-001-09C`: actor and identity-link administrative reads;
+12. `WS-AUTH-001-09D`: actor and identity-link lifecycle mutations;
+13. `WS-AUTH-001-09E`: fixed service runtime admission without human grant
     evaluation or feature action activation;
-11. `WS-AUTH-001-10`: independent project contributor grants;
-12. `WS-AUTH-001-11` through `WS-AUTH-001-14`: complete resource-family
+14. `WS-AUTH-001-10`: independent project contributor grants;
+15. `WS-AUTH-001-11` through `WS-AUTH-001-14`: complete resource-family
     cutovers;
-13. `WS-AUTH-001-15`: obsolete authority removal and scanner enforcement;
-14. `WS-AUTH-001-16`: conformance, observability, concurrency, and live API
+16. `WS-AUTH-001-15`: obsolete authority removal and scanner enforcement;
+17. `WS-AUTH-001-16`: conformance, observability, concurrency, and live API
     proof.
 
 Temporary compatibility mechanisms are explicitly named, enumerated, and

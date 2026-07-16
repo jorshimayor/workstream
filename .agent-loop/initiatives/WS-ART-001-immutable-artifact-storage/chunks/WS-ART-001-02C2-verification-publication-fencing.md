@@ -31,8 +31,10 @@ Do not add recovery attempts, Operator routes, or product cutovers.
 - provider mutation replay, overwrite, delete, retain, or release;
 - task-claim or reviewer-lease changes;
 - production dispatch before AUTH registers the exact planned actions and
-  service assignments, 02C2/02D merge hidden behavior/resource composition, and
-  the later AUTH activation checkpoint integrates their evaluators.
+  static service-action matrix, provisions the exact service ActorProfiles and
+  ActorIdentityLinks, admits them through AUTH-09E, 02C2/02D merge hidden
+  behavior/resource composition, and the later AUTH activation checkpoint
+  integrates their evaluators.
 
 ## Acceptance Criteria
 

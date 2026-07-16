@@ -339,8 +339,9 @@ resource drift, or stale execution updates zero rows and writes no terminal
 fact.
 
 AUTH-07 registers the closed artifact permissions, AUTH-08 defines applicable
-Operator grants, and AUTH-09 provisions fixed service principals and exact
-planned assignments. AUTH registers each planned action and its activation
+Operator grants, AUTH-09A defines the static service-action matrix, AUTH-09B
+provisions fixed service ActorProfiles and ActorIdentityLinks, and AUTH-09E
+admits them at runtime. AUTH registers each planned action and its activation
 custodian; the owning WS-ART chunk then supplies hidden canonical resource
 composition, guards, surface declarations, behavior, and tests while the real
 kernel fails closed; AUTH finally integrates the evaluator and alone changes

@@ -30,7 +30,7 @@ binding IDs without taking ownership of their records.
 ReviewQueueEntry/ReviewLease, Submission version, admitting CheckerRun/results,
 locked guide/revision context, response-evidence relations, and ART binding IDs.
 It stores no bytes, provider ref, object key, signed URL, scratch path, receipt,
-or service assignment.
+or authorization-matrix data.
 
 An active ReviewLease authorizes bytes only for that exact current packet. Chain
 history exposes bounded binding metadata, never bytes or provider details. A

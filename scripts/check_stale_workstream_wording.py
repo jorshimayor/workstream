@@ -96,6 +96,14 @@ ACTIVE_SHARED_CONTRACT_PATTERNS = (
         re.IGNORECASE,
     ),
     re.compile(r"\blocks actor/link/grant/assignment rows\b", re.IGNORECASE),
+    re.compile(r"\bservice-assignment authority\b", re.IGNORECASE),
+    re.compile(r"\bservice-actor assignment\b", re.IGNORECASE),
+    re.compile(r"\bfixed service principals?/assignments?\b", re.IGNORECASE),
+    re.compile(r"\bservice assignments?\b", re.IGNORECASE),
+    re.compile(
+        r"\bservice principals?\s+and\s+(?:exact\s+)?planned\s+assignments?\b",
+        re.IGNORECASE,
+    ),
     re.compile(
         r"\bAUTH-09 persists (?:these )?exact service actors and assignments\b",
         re.IGNORECASE,

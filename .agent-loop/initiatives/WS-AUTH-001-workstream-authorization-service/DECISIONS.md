@@ -215,10 +215,11 @@ The authorization decision and operation receipt must share bounded request/
 correlation evidence, resource identity, operation, and service principal.
 Receipts prove that storage work occurred; they do not create authority. AUTH-07A
 registers exact artifact permissions and planned actions, AUTH-07B introduces
-the central kernel, AUTH-08 defines applicable Operator
-grants, and AUTH-09 provisions fixed service principals and exact planned
-assignments. Each owning WS-ART feature chunk supplies hidden canonical resource
-composition, guards, surface declarations, decision calls, behavior, and tests.
+the central kernel, AUTH-08 defines applicable Operator grants, AUTH-09A owns
+the static service-action matrix, AUTH-09B provisions fixed service
+ActorProfiles and ActorIdentityLinks, and AUTH-09E admits them at runtime. Each
+owning WS-ART feature chunk supplies hidden canonical resource composition,
+guards, surface declarations, decision calls, behavior, and tests.
 Dedicated AUTH activation custodians then integrate exact evaluators and alone
 change availability. AUTH-12, AUTH-14, and AUTH-15 are not alternate artifact
 activation paths. AUTH-04B adds no artifact permission or route attachment.
@@ -287,7 +288,7 @@ resources and state transitions.
 
 Migration custody is reconciled with merged main: AUTH-05A owns `0018`, AUTH-05B
 solely owns `0019`, AUTH-06 uses `0020`, AUTH-07A action evidence uses `0021`,
-AUTH-08 uses `0022`, the AUTH-09 fixed-service identity foundation uses `0023`,
+AUTH-08 uses `0022`, the AUTH-09A fixed-service identity foundation uses `0023`,
 AUTH-10 uses `0024`, AUTH-12 uses `0025`, AUTH-13 uses `0026`, and AUTH-14 uses
 `0027`.
 

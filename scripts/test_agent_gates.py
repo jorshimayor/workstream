@@ -1043,6 +1043,11 @@ def test_active_shared_contract_rejects_retired_contracts() -> None:
             "adjudication actions unavailable until separately activated",
             "Adjudicator actions remain unavailable until separately activated",
             "locks actor/link/grant/assignment rows",
+            "service-assignment authority",
+            "service-actor assignment",
+            "fixed service principals/assignments",
+            "service assignments",
+            "service principals and exact planned assignments",
             "AUTH-09 persists these exact service actors and assignments",
             "do not become normal ActorProfiles",
             "Proposed after 02C3, AUTH-09, and AUTH custody registration",
@@ -3703,16 +3708,22 @@ def test_activation_custody_discovery_includes_canonical_handoffs() -> None:
 
 
 def test_auth_spec_orders_service_admission_before_project_roles() -> None:
-    """AUTH-09E is explicit between service provisioning and project grants."""
+    """AUTH-09A through 09E precede project contributor grants."""
     spec = Path("docs/spec_authorization_service.md").read_text(encoding="utf-8")
     order = spec.split("## Migration And Compatibility", maxsplit=1)[1].split(
         "## Error And Privacy Contract",
         maxsplit=1,
     )[0]
-    auth_09 = order.index("`WS-AUTH-001-09`:")
-    auth_09e = order.index("`WS-AUTH-001-09E`:")
-    auth_10 = order.index("`WS-AUTH-001-10`:")
-    assert auth_09 < auth_09e < auth_10
+    chunk_ids = (
+        "WS-AUTH-001-09A",
+        "WS-AUTH-001-09B",
+        "WS-AUTH-001-09C",
+        "WS-AUTH-001-09D",
+        "WS-AUTH-001-09E",
+        "WS-AUTH-001-10",
+    )
+    positions = [order.index(f"`{chunk_id}`:") for chunk_id in chunk_ids]
+    assert positions == sorted(positions)
     assert "without human grant\n    evaluation or feature action activation" in order
 
 

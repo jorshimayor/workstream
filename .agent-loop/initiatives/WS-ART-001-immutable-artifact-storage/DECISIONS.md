@@ -201,9 +201,10 @@ same transaction.
 ## D25 - Paired Authorization Activation
 
 AUTH-07 registers artifact permissions, AUTH-08 owns applicable Operator grant
-definitions, and AUTH-09 provisions fixed service principals and exact planned
-assignments. Registry, grant, principal, assignment, or feature presence alone
-is non-executable. AUTH first registers an exact planned action and activation
+definitions, AUTH-09A owns the static service-action matrix, AUTH-09B provisions
+fixed service ActorProfiles and ActorIdentityLinks, and AUTH-09E admits them at
+runtime. Registry, grant, profile, link, matrix, or feature presence alone is
+non-executable. AUTH first registers an exact planned action and activation
 custodian; the owning WS-ART chunk then supplies hidden canonical resource facts,
 guards, surface declarations, behavior, and tests while the real kernel still
 fails closed; AUTH finally integrates the evaluator and alone changes that
