@@ -71,8 +71,10 @@ ACTIVE_SHARED_CONTRACT_PATTERNS = (
     re.compile(r"\bPaymentPolicy\b"),
     re.compile(r"\bPaymentRecord\b"),
     re.compile(r"\bPaymentAdjustment\b"),
-    re.compile(r"\bpayment[-_ ]policy\b", re.IGNORECASE),
-    re.compile(r"\bpayment[-_ ]record\b", re.IGNORECASE),
+    re.compile(r"\bPayment\s+Policy\b", re.IGNORECASE),
+    re.compile(r"\bPayment\s+Record\b", re.IGNORECASE),
+    re.compile(r"\bpayment(?:[-_]|\s+)policy\b", re.IGNORECASE),
+    re.compile(r"\bpayment(?:[-_]|\s+)record\b", re.IGNORECASE),
     re.compile(r"\bpayment_ledger\b", re.IGNORECASE),
     re.compile(r"\bpayment_adjustment\b", re.IGNORECASE),
     re.compile(r"\b(?:locked_payment_policy_version)\b", re.IGNORECASE),
@@ -81,9 +83,9 @@ ACTIVE_SHARED_CONTRACT_PATTERNS = (
     re.compile(r"\bPayment And Reputation\b"),
     re.compile(r"\bcompensation fulfillment/payment status\b", re.IGNORECASE),
     re.compile(r"\bpayment status\b", re.IGNORECASE),
-    re.compile(r"\bpayment polic(?:y|ies)\b", re.IGNORECASE),
-    re.compile(r"\bpayment records?\b", re.IGNORECASE),
-    re.compile(r"\bpayment ledger\b", re.IGNORECASE),
+    re.compile(r"\bpayment\s+polic(?:y|ies)\b", re.IGNORECASE),
+    re.compile(r"\bpayment\s+records?\b", re.IGNORECASE),
+    re.compile(r"\bpayment\s+ledger\b", re.IGNORECASE),
     re.compile(r"\bpayment exposure\b", re.IGNORECASE),
     re.compile(r"\bpayment follow-up\b", re.IGNORECASE),
     re.compile(r"\bpayment adjustment record\b", re.IGNORECASE),
@@ -204,6 +206,8 @@ def is_active_shared_contract_path(path: Path) -> bool:
     """Return whether a path defines the live cross-subsystem product contract."""
     raw_path = path.as_posix()
     if raw_path in {"AGENTS.md", "README.md"}:
+        return True
+    if raw_path in {".agent-loop/LOOP_STATE.md", ".agent-loop/WORK_QUEUE.md"}:
         return True
     if raw_path.startswith(".agent-loop/initiatives/"):
         return "/reviews/" not in raw_path and path.suffix in {".json", ".md"}

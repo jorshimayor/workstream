@@ -1040,6 +1040,8 @@ def test_active_shared_contract_rejects_retired_compensation_model() -> None:
             "PaymentPolicy",
             "PaymentRecord",
             "PaymentAdjustment",
+            "Payment\n  Policy",
+            "Payment\n  Record",
             "payment-policy",
             "payment-record",
             "payment_ledger",
@@ -1050,9 +1052,9 @@ def test_active_shared_contract_rejects_retired_compensation_model() -> None:
             "Payment And Reputation",
             "compensation fulfillment/payment status",
             "payment status",
-            "payment policy",
-            "payment records",
-            "payment ledger",
+            "payment\n  policy",
+            "payment\n  records",
+            "payment\n  ledger",
             "payment exposure",
             "payment follow-up",
             "payment adjustment record",
@@ -1073,6 +1075,8 @@ def test_active_shared_contract_rejects_retired_compensation_model() -> None:
     )
     assert stale.is_active_shared_contract_path(Path("README.md"))
     assert stale.is_active_shared_contract_path(Path("AGENTS.md"))
+    assert stale.is_active_shared_contract_path(Path(".agent-loop/LOOP_STATE.md"))
+    assert stale.is_active_shared_contract_path(Path(".agent-loop/WORK_QUEUE.md"))
     assert stale.is_active_shared_contract_path(
         Path(".agent-loop/initiatives/example/PLAN.md")
     )

@@ -115,8 +115,9 @@ blockchain, frontend, or agent-runtime behavior.
 - `WS-POL-001-06` follow-up cleanup removed stale project-owned payment fields
   and removed construction-state guide checklist fields, preserved server-written activation
   provenance on reads, added fail-closed migration behavior for old
-  guide-source snapshots, and aligned active docs around `PaymentPolicy` as the
-  payment-term authority.
+  guide-source snapshots, and aligned then-active docs around a payment-term
+  model later superseded by `ContributionPolicyVersion` as the sole award-policy
+  authority.
 - `WS-POL-001-06` internal review evidence is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-06-internal-review-evidence.md`.
 - `WS-POL-001-06` PR trust bundle is tracked at `.agent-loop/initiatives/WS-POL-001-submission-artifact-policy-foundation/reviews/WS-POL-001-06-pr-trust-bundle.md`.
 - PR #67 merged into `main` as `3cce92c`.
