@@ -31,7 +31,7 @@ An immutable CompensationAward records:
 - contribution record id
 - project id
 - beneficiary actor id
-- frozen compensation policy version and award definition
+- frozen contribution policy version and award definition
 - adapter binding
 - instrument: `money | project_points`
 - unit code and exact decimal quantity
@@ -51,10 +51,10 @@ Default:
 
 - DRAFT through REVIEW_PENDING: no contribution or award is created
 - a valid human `needs_revision`, `accept`, or `reject` decision creates one
-  reviewer `completed_review`; the ReviewLease-frozen compensation policy
+  reviewer `completed_review`; the ReviewLease-frozen contribution policy
   decides whether it creates an award
 - `accept` additionally creates one submitter `accepted_submission`; the
-  TaskAssignment-frozen compensation policy decides whether it creates an award
+  TaskAssignment-frozen contribution policy decides whether it creates an award
 - `needs_revision` and `reject` create no submitter contribution or award
 - fulfillment is recorded only by an authenticated adapter callback bound to the
   award's frozen adapter binding

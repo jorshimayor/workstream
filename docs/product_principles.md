@@ -21,13 +21,13 @@ Workstream is source-agnostic, but v0.1 stays manual-first. External origin adap
 
 Every project has its own guide, quality bar, submission artifact policy,
 checker policy, review policy, revision policy, and independently published
-compensation policy.
+contribution policy.
 
 Workstream combines the approved submission artifact policy with non-bypassable default artifact rules and generates the pre-submit checker policy.
 
 The platform does not rely on memory or chat messages to enforce rules. If a
 rule matters, it belongs in the project guide, submission artifact policy,
-checker policy, review policy, revision policy, compensation policy, or task
+checker policy, review policy, revision policy, contribution policy, or task
 template.
 
 When a guide or policy changes while work is already in progress, prior submitted attempts remain tied to their locked context. If the task returns for revision, revision policy decides whether the next attempt rebases to the latest active context, and the contributor must see what changed.
@@ -96,7 +96,7 @@ Even when fulfillment is manual, Workstream must track:
 - immutable fulfillment receipt and external reference
 
 Every valid human review creates a reviewer contribution. Accepted work also
-creates a submitter contribution. Frozen compensation rules create immutable
+creates a submitter contribution. Frozen contribution award rules create immutable
 awards only for payable contributions; explicit unpaid rules create no award.
 Fulfillment receipts and status projections track delivery separately.
 

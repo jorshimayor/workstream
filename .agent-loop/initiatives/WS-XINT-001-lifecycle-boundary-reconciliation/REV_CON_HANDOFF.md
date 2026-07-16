@@ -3,9 +3,9 @@
 ## Boundary
 
 REV owns the Review decision and review/task effects. CON owns
-ContributionRecord, compensation freezes, awards, delivery, shared outbox
-transitions, and CON audit/projections. AUTH owns authorization for review and
-all separately exposed CON actions.
+`ContributionRecord`, `ContributionPolicyVersion` freezes, awards, delivery,
+shared outbox transitions, and CON audit/projections. AUTH owns authorization
+for review and all separately exposed CON actions.
 
 Core ContributionRecord creation performs no synchronous ART capability call,
 provider I/O, contribution-evidence artifact write, or ART authorization action.
@@ -16,8 +16,8 @@ not load or rederive that value from ART.
 ## Preconditions
 
 - reviewer and submitter use canonical human ActorProfile IDs;
-- TaskAssignment freezes submitter compensation policy;
-- ReviewLease freezes reviewer compensation policy;
+- TaskAssignment freezes submitter contribution policy;
+- ReviewLease freezes reviewer contribution policy;
 - Submission has immutable assignment/version lineage and a stabilized verified
   packet digest;
 - `review.decision` registration, prepared evaluator, and grant path are ready;
@@ -36,7 +36,9 @@ AUTH prepares review.decision and locks reviewer authority
 -> REV calls the CON flush-only participant
 -> CON creates one reviewer completed_review ContributionRecord
 -> on accept only, CON creates one submitter accepted_submission ContributionRecord
--> CON creates applicable award, audit and shared-outbox rows
+-> CON evaluates the matching frozen ContributionRule
+-> unpaid creates no award; payable creates money and/or project_points CompensationAward rows
+-> CON creates audit and shared-outbox rows
 -> route commits once
 ```
 
@@ -52,7 +54,7 @@ repositories, commits, or performs network/provider I/O.
 ## Independent CON authorization
 
 CON requires separate AUTH actions only for its independently invoked surfaces:
-contribution/award reads, compensation policy and adapter-binding management,
+contribution/award reads, contribution policy and adapter-binding management,
 fulfillment callback, outbox dispatch, reconciliation, projections, and audit.
 Derived contribution/award inserts inside `review.decision` do not invent
 `contribution.materialize` or `compensation.award.materialize` actions.
@@ -75,7 +77,9 @@ single transaction owner, then remove any no-op contribution fallback.
 
 CON must keep the participant flush-only, remove mandatory ART evidence from
 core contribution gates, preserve the canonical `artifact_hash` lineage, and
-own all outbox, award, fulfillment, and projection transitions.
+own all outbox, award, fulfillment, and projection transitions. Money awards
+route to the payment-request/settlement adapter; project-points awards route to
+the points adapter. Those adapters fulfill awards but never decide eligibility.
 
 ## AUTH owner response
 

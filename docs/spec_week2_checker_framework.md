@@ -57,7 +57,7 @@ The checker binding includes:
 - locked revision policy version
 
 Compensation is not checker input. The assignment and review-lease boundaries
-freeze their applicable `CompensationPolicyVersion` values independently of
+freeze their applicable `ContributionPolicyVersion` values independently of
 submission checker execution.
 
 ## Two-Stage Checker Model

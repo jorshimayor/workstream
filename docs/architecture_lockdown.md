@@ -134,7 +134,7 @@ reviewing auditable:
 - source type and source reference when imported
 
 Compensation is not task-guide context. TaskAssignment freezes the active
-published submitter `CompensationPolicyVersion`; ReviewLease independently
+published submitter `ContributionPolicyVersion`; ReviewLease independently
 freezes the reviewer version. Either rule may be explicitly unpaid and therefore
 create no award.
 
@@ -211,7 +211,7 @@ Use these names consistently:
 
 - `check_acceptance_criteria_present`
 - `ContributionRecord`
-- `CompensationPolicyVersion`
+- `ContributionPolicyVersion`
 - `CompensationAward`
 - `CompensationFulfillmentReceipt`
 - `CompensationStatusProjection`

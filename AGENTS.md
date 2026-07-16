@@ -4,7 +4,9 @@ This repository is for Workstream, Flow's task evaluation and contribution infra
 
 ## Core Definition
 
-Workstream manages project guides, task queues, submission packets, automated checks, reviewer routing, evaluation sprints, revision loops, contribution records, payment status, and reputation signals.
+Workstream manages project guides, task queues, submission packets, automated
+checks, reviewer routing, evaluation sprints, revision loops, contribution
+records, compensation award and fulfillment state, and reputation signals.
 
 Workstream is how Flow measures, certifies, and coordinates useful human-agent work.
 

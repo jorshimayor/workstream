@@ -31,7 +31,7 @@ sequenceDiagram
   Authorization->>Authorization: require(project.create/configure, candidates, resource/lifecycle guards)
   Authorization-->>API: Allowed AuthorizationContext with matched Project Manager grant
   API->>DB: Persist draft guide and checker/review/revision policy context
-  API->>DB: Publish project compensation policy version independently
+  API->>DB: Publish project contribution policy version independently
 
   PM->>UI: Activate guide
   UI->>API: POST activate guide

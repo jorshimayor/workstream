@@ -214,7 +214,7 @@ Owns:
 
 - immutable reviewer `completed_review` and submitter `accepted_submission`
   ContributionRecords
-- project CompensationPolicy and immutable published versions
+- project ContributionPolicy and immutable published versions
 - independently frozen TaskAssignment and ReviewLease policy-version references
 - immutable CompensationAwards for payable contribution rules only
 - immutable fulfillment receipts and rebuildable status projections

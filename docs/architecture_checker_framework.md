@@ -478,7 +478,7 @@ Look for:
 - generated or copied artifacts that evade forbidden-file rules
 
 Each blind spot becomes a guide update, checker update, reviewer policy update,
-revision policy update, compensation policy update, template update, or
+revision policy update, contribution policy update, template update, or
 reviewer-training change.
 
 ## First Implementation

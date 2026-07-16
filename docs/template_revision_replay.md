@@ -34,7 +34,7 @@ Contributor-visible fields:
 
 Compensation is not rebased here. Submitter compensation remains the immutable
 TaskAssignment freeze; each later ReviewLease independently freezes its current
-reviewer CompensationPolicyVersion.
+reviewer ContributionPolicyVersion.
 
 Reviewer and authorized recovery evidence fields:
 

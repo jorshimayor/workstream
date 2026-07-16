@@ -59,11 +59,18 @@ FORBIDDEN_PATH_PATTERNS = (
     re.compile(r"(^|/)claude\.md$", re.IGNORECASE),
 )
 ACTIVE_SHARED_CONTRACT_PATTERNS = (
+    re.compile(r"\bCompensationPolicyVersion\b"),
+    re.compile(r"\bCompensationPolicy\b"),
+    re.compile(r"\bCompensationRule\b"),
+    re.compile(r"\bCompensationAwardDefinition\b"),
+    re.compile(r"\bcompensation_policy\b", re.IGNORECASE),
+    re.compile(r"\bcompensation_rule_id\b", re.IGNORECASE),
+    re.compile(r"\bcompensation polic(?:y|ies)\b", re.IGNORECASE),
     re.compile(r"\bPaymentPolicy\b"),
     re.compile(r"\bPaymentRecord\b"),
     re.compile(r"\bPaymentAdjustment\b"),
-    re.compile(r"\bpayment_policy\b", re.IGNORECASE),
-    re.compile(r"\bpayment_record\b", re.IGNORECASE),
+    re.compile(r"\bpayment[-_ ]policy\b", re.IGNORECASE),
+    re.compile(r"\bpayment[-_ ]record\b", re.IGNORECASE),
     re.compile(r"\bpayment_ledger\b", re.IGNORECASE),
     re.compile(r"\bpayment_adjustment\b", re.IGNORECASE),
     re.compile(r"\b(?:locked_payment_policy_version)\b", re.IGNORECASE),
@@ -71,6 +78,7 @@ ACTIVE_SHARED_CONTRACT_PATTERNS = (
     re.compile(r"\bpayment truth\b", re.IGNORECASE),
     re.compile(r"\bPayment And Reputation\b"),
     re.compile(r"\bcompensation fulfillment/payment status\b", re.IGNORECASE),
+    re.compile(r"\bpayment status\b", re.IGNORECASE),
     re.compile(r"\bpayment polic(?:y|ies)\b", re.IGNORECASE),
     re.compile(r"\bpayment records?\b", re.IGNORECASE),
     re.compile(r"\bpayment ledger\b", re.IGNORECASE),
@@ -94,6 +102,12 @@ ACTIVE_SHARED_CONTRACT_EXCLUDED_PREFIXES = (
 ACTIVE_SHARED_CONTRACT_EXCLUDED_NAME_PREFIXES = ("review_",)
 CURRENT_RUNTIME_CONTRACT_PATHS = {
     "docs/current_system_data_flow.html",
+}
+ACTIVE_COMPENSATION_LINE_EXEMPTIONS = {
+    ".agent-loop/initiatives/WS-XINT-001-lifecycle-boundary-reconciliation/chunks/"
+    "WS-XINT-001-PLAN-boundary-reconciliation.md": (
+        "`PaymentPolicy` and `PaymentRecord` are retired and removed names",
+    ),
 }
 UNIMPLEMENTED_CURRENT_RUNTIME_COMPENSATION_PATTERNS = (
     re.compile(r"\bCompensationPolicyVersion\b"),
@@ -187,8 +201,10 @@ def forbidden_path_failures(paths: list[Path]) -> list[str]:
 def is_active_shared_contract_path(path: Path) -> bool:
     """Return whether a path defines the live cross-subsystem product contract."""
     raw_path = path.as_posix()
-    if raw_path == "README.md":
+    if raw_path in {"AGENTS.md", "README.md"}:
         return True
+    if raw_path.startswith(".agent-loop/initiatives/"):
+        return "/reviews/" not in raw_path and path.suffix in {".json", ".md"}
     if not raw_path.startswith("docs/") or path.suffix not in {".html", ".md", ".puml"}:
         return False
     if raw_path.startswith(ACTIVE_SHARED_CONTRACT_EXCLUDED_PREFIXES):
@@ -259,6 +275,12 @@ def main() -> int:
             for pattern in ACTIVE_SHARED_CONTRACT_PATTERNS:
                 for match in pattern.finditer(text):
                     line_number = line_number_for_offset(text, match.start())
+                    line = line_at_offset(text, match.start())
+                    exempt_fragments = ACTIVE_COMPENSATION_LINE_EXEMPTIONS.get(
+                        path.as_posix(), ()
+                    )
+                    if any(fragment in line for fragment in exempt_fragments):
+                        continue
                     failures.append(
                         f"{path}:{line_number}: active shared contract contains retired "
                         f"compensation wording /{pattern.pattern}/i"

@@ -67,3 +67,14 @@ Review finding and response bytes bind through
 activated only by `AUTH_ART_REV_EVIDENCE` after hidden ART capability behavior
 merges. No generic artifact-read or binding PermissionId is executable as an
 action alias.
+
+## D10 - ContributionPolicy Owns Award Eligibility
+
+`ContributionPolicyVersion` is the sole project policy that determines what an
+immutable `ContributionRecord` earns. Each `ContributionRule` is explicit for
+`accepted_submission` or `completed_review` and is either unpaid or references
+immutable `ContributionAwardDefinition` rows. A resulting
+`CompensationAward` carries instrument `money` or `project_points`; only then
+does the shared outbox route money to a payment-request/settlement adapter or
+points to the project-points adapter. Neither downstream rail decides whether
+the contribution earned an award.

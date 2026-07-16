@@ -2,13 +2,16 @@
 
 ## Workstream
 
-Flow's task evaluation and contribution infrastructure: the system for project guides, task queues, submission packets, automated checks, reviewer routing, evaluation sprints, revision loops, contribution records, payment status, and reputation signals.
+Flow's task evaluation and contribution infrastructure: the system for project
+guides, task queues, submission packets, automated checks, reviewer routing,
+evaluation sprints, revision loops, contribution records, compensation award
+and fulfillment state, and reputation signals.
 
 ## Project
 
 A configured work program with its own human-facing guide, submission artifact
 policy, checker policies, review policy, revision policy, independently
-published compensation policy, and queue.
+published contribution policy, and queue.
 
 ## Project Owner
 
@@ -17,6 +20,23 @@ and business terms. That material can be markdown, URL-backed documentation,
 repository docs, examples, rubrics, task instructions, compensation business
 terms, or other project-specific source material. The project owner
 does not author or approve Workstream's machine-readable internal policy schema.
+
+## ContributionPolicy
+
+The stable project policy that determines what canonical contributions can
+earn. Its immutable published `ContributionPolicyVersion` contains one explicit
+`ContributionRule` for each contribution type. Unpaid rules create no award;
+payable rules reference immutable `ContributionAwardDefinition` rows for money,
+project points, or both. A Finance Authority publishes the policy. Project
+owners provide business terms but do not author the machine policy directly.
+
+## CompensationAward
+
+The immutable result of evaluating one `ContributionRecord` against its frozen
+`ContributionPolicyVersion`. Its instrument is `money` or `project_points`.
+Money awards route downstream to payment-request/settlement adapters; points
+awards route to the project-points adapter. Downstream adapters cannot create
+award eligibility.
 
 ## ActorContext
 
@@ -212,16 +232,10 @@ locked guide and policy provenance, including guide source snapshot id/hash,
 effective policy id/hash, pre-submit checker policy id/hash, post-submit checker
 policy id/hash/body summary, and review and revision policy versions.
 
-## Compensation Policy Version
-
-An immutable published project policy version containing exact
-`accepted_submission` and `completed_review` rules. TaskAssignment freezes the
-submitter version and ReviewLease freezes the reviewer version. An explicit
-unpaid rule creates no CompensationAward.
-
 ## Task Contract
 
-The normalized task fields required for Workstream to screen, assign, check, review, pay, and audit work.
+The normalized task fields required for Workstream to screen, assign, check,
+review, compensate, and audit work.
 
 ## Submission Packet
 

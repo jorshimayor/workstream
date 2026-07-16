@@ -629,7 +629,7 @@ token-role path outside its reviewed compatibility owner.
 Conceptual historical “admin override” statements are not operations. No
 recovery permission may erase checker evidence, create a review decision,
 alter an immutable submission, create/alter a contribution record, or bypass
-compensation policy.
+contribution policy.
 
 ## Monitoring And Alerts
 

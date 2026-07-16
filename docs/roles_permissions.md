@@ -48,4 +48,4 @@ WS-REV-owned `review.lease.force_release`.
 
 Recovery requires exact resource scope, a reason, matched grant/permission, and
 append-only evidence. It does not erase prior evidence or bypass immutable
-submission, review, contribution, or compensation rules.
+submission, review, contribution, or contribution award rules.

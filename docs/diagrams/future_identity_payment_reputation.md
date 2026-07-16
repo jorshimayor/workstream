@@ -18,7 +18,7 @@ Source: [future_identity_payment_reputation.puml](future_identity_payment_reputa
 | Task contract and escrow reference | ERC-8183 |
 | Evaluation lifecycle | Workstream |
 | Reviewer/submitter contribution recognition | Workstream contribution record |
-| Compensation policy, award, and fulfillment status | Workstream compensation records |
+| Contribution policy, compensation award, and fulfillment status | Workstream contribution and compensation records |
 | Payment request and settlement execution | x402, OmniClaw, USDC settlement rails |
 
 ## Future Flow

@@ -26,7 +26,7 @@ The first user flows prove that Workstream can run real work from intake to acce
 15. An authorized covered Project Manager enables review policy.
 16. An authorized covered Project Manager enables revision policy.
 17. The owning compensation authority publishes the active
-    CompensationPolicyVersion with explicit submitter and reviewer
+    ContributionPolicyVersion with explicit submitter and reviewer
     compensated/unpaid rules.
 18. Project becomes active.
 
@@ -39,7 +39,7 @@ Acceptance:
   current compiled project post-submit checker policy with matching guide,
   source snapshot, effective project policy, and pre-submit checker provenance,
   review policy, revision policy, and an independently published active
-  `CompensationPolicyVersion` containing exactly one explicit
+  `ContributionPolicyVersion` containing exactly one explicit
   compensated/unpaid rule for each of `accepted_submission` and
   `completed_review`.
 - Guide-policy activation and compensation publication are independently
@@ -55,7 +55,7 @@ Acceptance:
   the explicit manual policy path; agent derivation requires an agent-created
   sufficiency report for the same snapshot or a fresh guide-source snapshot.
 - Submission artifact, checker, review, and revision policies are visible on the
-  project page; compensation policy/version is an independently governed
+  project page; contribution policy/version is an independently governed
   project record.
 
 ## Flow 2: Project Manager Creates A Task
@@ -159,7 +159,7 @@ Acceptance:
    remains immutable.
 4. A submitter `accepted_submission` contribution is created from the accepted
    submission, accepting review, frozen policy lineage, and artifact hash.
-5. The frozen reviewer and submitter compensation policies independently create
+5. The frozen reviewer and submitter contribution policies independently create
    applicable awards; explicit unpaid rules create none.
 6. Reputation and project projections update from the contribution records.
 

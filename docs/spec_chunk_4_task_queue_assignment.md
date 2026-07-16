@@ -78,7 +78,7 @@ Task records store:
 - assigned worker id
 
 `TaskAssignment` independently freezes the active published submitter
-`CompensationPolicyVersion` when the claim succeeds. Compensation is not guide
+`ContributionPolicyVersion` when the claim succeeds. Compensation is not guide
 or checker context.
 
 Assignments enforce one active worker per task in v0.1. Project policies that allow multiple workers are later work.
@@ -115,8 +115,8 @@ Rules:
 
 - `DRAFT -> SCREENING` requires active project guide context and complete task source, description, acceptance, and rejection fields, then locks guide and policy versions on the task.
 - `SCREENING -> READY` requires that guide, checker, review, and revision policy context be locked.
-- `READY -> CLAIMED` requires an active published submitter compensation rule,
-  freezes its `CompensationPolicyVersion` on the new assignment, and blocks a
+- `READY -> CLAIMED` requires an active published submitter contribution award rule,
+  freezes its `ContributionPolicyVersion` on the new assignment, and blocks a
   second active assignment.
 - `CLAIMED -> IN_PROGRESS` requires an active assignment for the actor or an authorized operator role.
 - every status change writes an audit event.

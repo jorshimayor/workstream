@@ -56,7 +56,7 @@ Deliver:
 - post-submit checker policy fields
 - review policy fields
 - revision policy fields
-- independent compensation policy/version fields
+- independent contribution policy/version fields
 - explicit submitter/reviewer compensated or unpaid rules
 - immutable money/project-points award definitions
 - active/inactive project status
@@ -73,7 +73,7 @@ Exit criteria:
   review policy, revision policy, or project pre-submit checker bundle hash is
   missing
 - block Assignment/ReviewLease creation when no active published
-  CompensationPolicyVersion can be frozen
+  ContributionPolicyVersion can be frozen
 - block task readiness when locked guide snapshot, effective project submission artifact policy hash, or project pre-submit checker bundle hash is missing
 - migrations and model tests define the expected invariants
 
@@ -203,7 +203,7 @@ Exit criteria:
 - task cannot become review-pending with no evidence
 - task cannot become review-pending when checker artifact hashes do not match submission hashes
 - new TaskAssignments and ReviewLeases cannot be created without an active
-  published compensation policy version to freeze
+  published contribution policy version to freeze
 
 ### Day 9: Project Checker Policy
 
@@ -321,7 +321,7 @@ Exit criteria:
 Deliver:
 
 - `ContributionRecord`
-- `CompensationPolicyVersion`
+- `ContributionPolicyVersion`
 - `CompensationAward`
 - `CompensationFulfillmentReceipt`
 - `CompensationStatusProjection`

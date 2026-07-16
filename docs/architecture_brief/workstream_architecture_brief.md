@@ -124,7 +124,7 @@ The sequence below shows the narrow v0.1 loop the system must prove before expan
 ### Lifecycle Invariants
 
 - New TaskAssignments and ReviewLeases cannot be created without an active
-  published compensation policy version to freeze.
+  published contribution policy version to freeze.
 - A contributor submission creates a new immutable submission version; locked artifacts are not edited in place.
 - Review decisions are exactly `accept`, `needs_revision`, or `reject`.
 - `needs_revision` starts a revision loop and must replay prior findings.
@@ -157,7 +157,7 @@ This view explains the broader architecture direction without moving it into v0.
 | Task contract and escrow reference | ERC-8183 |
 | Evaluation lifecycle | Workstream |
 | Accepted-work certification | Workstream contribution record |
-| Compensation policy, immutable award, and fulfillment status | Workstream compensation records |
+| Contribution policy, immutable award, and fulfillment status | Workstream compensation records |
 | Payment request and settlement execution | x402, OmniClaw, and USDC settlement rails |
 
 <div class="boundary">

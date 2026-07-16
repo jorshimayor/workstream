@@ -36,7 +36,7 @@
 - mark one guide version active
 - require guide approval before activation
 - lock guide and policy versions on every task
-- configure active CompensationPolicyVersion with explicit submitter/reviewer
+- configure active ContributionPolicyVersion with explicit submitter/reviewer
   rules and award definitions
 - configure submission artifact policy
 - generate pre-submit checker policy
@@ -44,7 +44,7 @@
 - configure review policy
 - configure revision policy
 - configure pre-review gate policy
-- configure compensation policy and adapter bindings
+- configure contribution policy and adapter bindings
 - configure lessons-learned promotion rule
 
 ### Task Queue
@@ -54,7 +54,7 @@
 - implement `SCREENING` lane before `READY`
 - require readiness gate before task release
 - assign skill tags
-- freeze submitter CompensationPolicyVersion on TaskAssignment and reviewer
+- freeze submitter ContributionPolicyVersion on TaskAssignment and reviewer
   version on ReviewLease
 - change status only through allowed transitions
 - record status audit event

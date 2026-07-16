@@ -64,7 +64,7 @@ Positive:
 - repeated lessons become durable guide, checker, review, revision, or template changes
 
 Compensation never rebases through revision context. Submitter compensation
-remains governed by the `CompensationPolicyVersion` frozen on the
+remains governed by the `ContributionPolicyVersion` frozen on the
 `TaskAssignment`; every `ReviewLease` independently freezes the reviewer
 version active when that lease is created.
 

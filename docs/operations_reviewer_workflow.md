@@ -32,7 +32,7 @@ Allowed decisions:
 Decision rules:
 
 - `accept` means the submission satisfies the project guide and creates the
-  submitter `accepted_submission` contribution. Its frozen compensation rule
+  submitter `accepted_submission` contribution. Its frozen contribution award rule
   independently decides whether that contribution creates an award.
 - `needs_revision` means the work is fixable and the reviewer can name concrete required changes.
 - `reject` means the work is not reasonably salvageable or violates policy.
@@ -83,7 +83,7 @@ Accept must create:
 - reviewer `completed_review` contribution record
 - submitter `accepted_submission` contribution record
 - any awards required by the separately frozen reviewer and submitter
-  compensation policies
+  contribution policies
 - reputation event
 
 The reviewer cites the strongest evidence supporting acceptance, not only "looks good."
@@ -120,7 +120,7 @@ Use reject carefully. If the work can be reasonably corrected through one revisi
 
 Every valid recorded `needs_revision` or `reject` decision still creates the
 reviewer's `completed_review` contribution and evaluates the ReviewLease-frozen
-reviewer compensation policy. Neither decision creates a submitter contribution
+reviewer contribution policy. Neither decision creates a submitter contribution
 or submitter award.
 
 ## Reviewer Quality
@@ -154,7 +154,7 @@ Before accepting:
 - checker results are acceptable
 - no prior findings are open
 - reviewer and submitter contribution lineage can be created atomically
-- both frozen compensation policies can be evaluated; explicit unpaid results
+- both frozen contribution policies can be evaluated; explicit unpaid results
   are valid and create no award
 
 Before needs revision:

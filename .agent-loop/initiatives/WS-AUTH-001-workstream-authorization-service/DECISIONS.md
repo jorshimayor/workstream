@@ -130,8 +130,10 @@ The field cutover is explicitly owned as follows:
   compatibility tests.
 - Revision replay is not implemented yet and must begin with
   `contributor_claim_status`; it must not introduce the legacy name.
-- Contribution and payment records are owned by WS-CON and must begin with
-  `contributor_id`; no new legacy column is permitted.
+- `ContributionRecord`, `CompensationAward`,
+  `CompensationFulfillmentReceipt`, and `CompensationStatusProjection` are
+  owned by WS-CON and must use `contributor_id` where contributor attribution
+  applies; no new legacy column is permitted.
 
 Each owning migration preserves values and immutable attribution, uses only a
 bounded transitional storage compatibility layer inside the migration chunk,

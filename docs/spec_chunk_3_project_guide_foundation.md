@@ -62,7 +62,7 @@ content only. Submission artifact requirements live in `SubmissionArtifactPolicy
 and compile into the project `PreSubmitCheckerPolicy`.
 
 Migration note: the migration history creates the current guide and task
-contract directly. Compensation policy publication is independent of guide
+contract directly. Contribution policy publication is independent of guide
 activation; task artifact requirements come from the locked project policy and
 checker bundle.
 

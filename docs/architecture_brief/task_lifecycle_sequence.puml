@@ -26,7 +26,7 @@ database "Postgres" as DB
 participant "Storage\nAbstraction" as Storage
 participant "Checker\nRunner" as Checks
 
-PM -> UI : create project, guide, policies,\n+ compensation policy
+PM -> UI : create project, guide, policies,\n+ contribution policy
 UI -> API : POST project / guide / policies
 API -> Auth : verify Flow token
 Auth --> API : verified external identity
@@ -34,7 +34,7 @@ API -> Authorization : resolve actor profile and local grants
 Authorization -> Authorization : require permission + candidate grant\n+ resource/lifecycle guards
 Authorization --> API : allowed with matched Project Manager grant
 API -> DB : persist draft guide and policy context
-API -> DB : publish compensation policy version independently
+API -> DB : publish contribution policy version independently
 
 PM -> UI : activate guide
 UI -> API : POST activate guide

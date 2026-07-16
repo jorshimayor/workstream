@@ -98,7 +98,7 @@ A contributor has claimed or been assigned the task.
 
 Required before entering:
 
-- an active published project CompensationPolicyVersion exists
+- an active published project ContributionPolicyVersion exists
 - TaskAssignment freezes that exact version for submitter compensation
 - the `accepted_submission` rule is explicit: compensated or unpaid
 
@@ -173,7 +173,7 @@ Required before entering:
 - reviewer cited evidence supporting acceptance
 - no unresolved high or medium prior revision finding
 - applicable submitter compensation evaluated from the TaskAssignment-frozen
-  compensation policy
+  contribution policy
 
 Required side effects:
 

@@ -28,10 +28,10 @@ Project
   PostSubmitCheckerPolicy
   ReviewPolicy
   RevisionPolicy
-  CompensationPolicy
-    CompensationPolicyVersion
-      CompensationRule
-        CompensationAwardDefinition
+  ContributionPolicy
+    ContributionPolicyVersion
+      ContributionRule
+        ContributionAwardDefinition
     ProjectCompensationAdapterBinding
   ProjectLesson
 
@@ -212,7 +212,7 @@ When a task is claimed or moved to `IN_PROGRESS`, its locked guide and policy co
 Material changes require a new guide version or policy version. They include
 guide source material, submission artifact policy, pre-submit checker
 generation rules, post-submit checker policy, review policy, revision policy,
-and their guide-bound contracts. Compensation policy publication is independent
+and their guide-bound contracts. Contribution policy publication is independent
 of guide versioning and affects only new TaskAssignments and ReviewLeases; their
 frozen versions never drift.
 
@@ -918,7 +918,7 @@ Fields:
 
 `context_rebase_rule` defines whether a revision attempt keeps prior context, rebases to current active context, or blocks for project-manager repair when guide or policy context changed. `context_rebase_triggers` names the guide or policy changes that require preparation before the contributor resumes.
 
-## CompensationPolicy
+## ContributionPolicy
 
 Fields:
 
@@ -936,12 +936,12 @@ At most one policy is active for new work in one project. New TaskAssignments
 and ReviewLeases require its published version; missing configuration is not an
 implicit unpaid rule.
 
-## CompensationPolicyVersion
+## ContributionPolicyVersion
 
 Fields:
 
 - `id`
-- `compensation_policy_id`
+- `contribution_policy_id`
 - `project_id`
 - `version_number`
 - `status`: `draft | published | retired`
@@ -950,12 +950,12 @@ Fields:
 Published and retired versions are immutable. TaskAssignment freezes the
 submitter version; ReviewLease independently freezes the reviewer version.
 
-## CompensationRule
+## ContributionRule
 
 Fields:
 
 - `id`
-- `compensation_policy_version_id`
+- `contribution_policy_version_id`
 - `project_id`
 - `contribution_type`: `accepted_submission | completed_review`
 - `compensation_mode`: `compensated | unpaid`
@@ -964,13 +964,13 @@ Every publishable version contains exactly one rule for each contribution type.
 An unpaid rule has no award definitions. A compensated rule has one or two:
 at most one `money` and one `project_points` definition.
 
-## CompensationAwardDefinition
+## ContributionAwardDefinition
 
 Fields:
 
 - `id`
-- `compensation_rule_id`
-- `compensation_policy_version_id`
+- `contribution_rule_id`
+- `contribution_policy_version_id`
 - `project_id`
 - `contribution_type`
 - `instrument_type`: `money | project_points`
@@ -1019,7 +1019,7 @@ Lesson types:
 - reviewer_policy_update
 - revision_policy_update
 - queue_policy_update
-- compensation_policy_update
+- contribution_policy_update
 - risk_note
 
 Status:
@@ -1112,7 +1112,7 @@ Fields:
 - `task_id`
 - `contributor_id`
 - `assigned_by`
-- `submitter_compensation_policy_version_id`
+- `submitter_contribution_policy_version_id`
 - `assigned_at`
 - `accepted_at`
 - `released_at`
@@ -1461,7 +1461,7 @@ Fields:
 - `source_review_lease_id`
 - `source_task_assignment_id`
 - `artifact_hash`
-- `compensation_policy_version_id`
+- `contribution_policy_version_id`
 - `created_at`
 
 Purpose:
@@ -1469,7 +1469,7 @@ Purpose:
 The record is immutable. Every valid recorded human Review creates one reviewer
 `completed_review` contribution. `accept` additionally creates one submitter
 `accepted_submission`; `needs_revision` and `reject` do not. The record carries
-the exact Review, submission, assignment or lease, frozen compensation policy,
+the exact Review, submission, assignment or lease, frozen contribution policy,
 and stabilized artifact-hash lineage. Compensation awards and reputation events
 may reference it, but do not replace it.
 
@@ -1481,7 +1481,7 @@ Fields:
 - `project_id`
 - `contribution_record_id`
 - `contributor_id`
-- `compensation_policy_version_id`
+- `contribution_policy_version_id`
 - `award_definition_id`
 - `adapter_binding_id`
 - `instrument_type`: `money | project_points`

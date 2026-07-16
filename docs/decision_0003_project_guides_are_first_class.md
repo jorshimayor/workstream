@@ -72,7 +72,7 @@ implementation. Rules that affect submission intake must be encoded in
 enforceable rules until they are moved into those contracts.
 
 Compensation publication is independent of guide activation. A
-`TaskAssignment` freezes the active submitter `CompensationPolicyVersion`, and
+`TaskAssignment` freezes the active submitter `ContributionPolicyVersion`, and
 a `ReviewLease` independently freezes the active reviewer version. Guide or
 revision-context changes never silently replace either frozen version.
 

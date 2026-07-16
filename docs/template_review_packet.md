@@ -72,7 +72,7 @@ State both determinations independently:
   policy for every valid recorded decision; an explicit unpaid rule creates no
   award;
 - submitter `accepted_submission`: evaluate the TaskAssignment-frozen
-  compensation policy only for `accept`; `needs_revision` and `reject` create no
+  contribution policy only for `accept`; `needs_revision` and `reject` create no
   submitter contribution or award.
 
 ## Contribution Records

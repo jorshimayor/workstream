@@ -17,7 +17,7 @@ Project rules scattered across chat, memory, screenshots, or informal notes will
 Mitigation:
 
 - every rule belongs in project guide, submission artifact policy, checker
-  policy, review policy, revision policy, compensation policy, or task template
+  policy, review policy, revision policy, contribution policy, or task template
 - daily lessons learned become document updates
 - out-of-band guidance has no acceptance force until it becomes a guide, policy, template, or checker contract update
 - revision context preparation shows contributors any guide or policy changes before resubmission
@@ -220,7 +220,7 @@ while fulfillment is manual.
 
 Mitigation:
 
-- frozen compensation policy evaluation creates immutable awards for payable
+- frozen contribution policy evaluation creates immutable awards for payable
   contributions only
 - award quantities are immutable
 - disputed fulfillment remains separate from contribution truth

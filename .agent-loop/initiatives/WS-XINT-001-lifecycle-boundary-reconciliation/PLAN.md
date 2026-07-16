@@ -81,6 +81,13 @@ CON participant in the caller transaction. CON independently authorizes only
 its public reads, policy/binding administration, callbacks, and operations.
 Core contribution creation performs no ART call and no external I/O.
 
+The participant loads the `ContributionPolicyVersion` frozen on the originating
+`TaskAssignment` or `ReviewLease`, creates the immutable `ContributionRecord`,
+and evaluates the matching `ContributionRule`. Unpaid rules create no award.
+Payable rules create immutable `CompensationAward` rows from
+`ContributionAwardDefinition`; post-commit delivery routes money and
+project-points instruments to separate adapters.
+
 ## Verification strategy
 
 - Exact matrices cover every current ART action and fixed service identity.

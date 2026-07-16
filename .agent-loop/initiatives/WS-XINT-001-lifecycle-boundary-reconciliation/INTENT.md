@@ -39,10 +39,16 @@ AUTH planned registration
 
 ART, REV, and CON own their records, lifecycle guards, and typed capabilities.
 AUTH owns identity, grants, service assignments, evaluators, decision evidence,
-  activation custody, and availability. Core ContributionRecord creation consumes
+activation custody, and availability. Core ContributionRecord creation consumes
 immutable Review and Submission facts through a CON participant and has no
 synchronous ART capability or provider dependency. It may retain an already
 stabilized submission artifact digest as lineage without calling ART.
+
+`ContributionPolicyVersion` is the upstream award-eligibility policy. The
+version frozen on `TaskAssignment` or `ReviewLease` decides whether a resulting
+`ContributionRecord` is unpaid or creates immutable money and/or project-points
+`CompensationAward` rows. Only after that decision do separate downstream
+adapters handle money payment requests/settlement or project-points fulfillment.
 
 ## Design chosen
 
@@ -88,8 +94,8 @@ stabilized submission artifact digest as lineage without calling ART.
 ## What must not change
 
 - No runtime code, migration, route, action availability, grant, service actor,
-  provider profile, review decision, contribution record, or payment behavior is
-  changed by this planning initiative.
+  provider profile, review decision, contribution record, or compensation
+  behavior is changed by this planning initiative.
 - Product review decisions remain `accept`, `needs_revision`, and `reject`.
 - The existing ART-02A3 implementation remains independently reviewed and is
   not bundled into this planning PR.

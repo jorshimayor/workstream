@@ -55,7 +55,7 @@ or the exact project; own means record-level ownership still applies.
 | Administrative grants | system | no | no | no | history read covered | no | no |
 | Project create | no | no | system only | no | no | no | no |
 | Project read | authority-only | system operational | covered | covered finance projection | covered audit projection | exact project minimal | exact project minimal |
-| Project/guide/policy mutation | no | recovery-only where registered | covered | compensation policy only | no | no | no |
+| Project/guide/policy mutation | no | recovery-only where registered | covered | contribution policy only | no | no | no |
 | Project contributor grants | no | no | covered | no | read covered | no | no |
 | Task management | no | explicit recovery only | covered | no | read covered | no | no |
 | Task queue/claim | no | operational projection only | management projection only | no | read covered | exact project under guards | no |
@@ -103,7 +103,7 @@ Every recovery mutation records the exact actor, matched grant/permission,
 project/resource, reason, bounded before/after state, request/correlation IDs,
 and immutable evidence. Recovery cannot erase checker results, rewrite
 submissions, create review decisions, alter contribution history, or bypass
-compensation rules.
+contribution award rules.
 
 ## Provisioning And Revocation
 

@@ -56,7 +56,7 @@ finalization and for the final review decision that invokes CON.
 
 ## Current CON facts
 
-CON owns ContributionRecord, compensation policies and freezes, awards,
+CON owns `ContributionRecord`, contribution policies and freezes, awards,
 fulfillment, shared outbox delivery, and related audit/projections. Its plan
 already defines a flush-only transaction participant called by REV and forbids
 CON commits or provider I/O inside the review transaction.

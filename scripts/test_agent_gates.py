@@ -1028,11 +1028,18 @@ def test_active_shared_contract_rejects_retired_compensation_model() -> None:
     )
     sample = " ".join(
         (
+            "CompensationPolicyVersion",
+            "CompensationPolicy",
+            "CompensationRule",
+            "CompensationAwardDefinition",
+            "compensation_policy",
+            "compensation_rule_id",
+            "compensation policy",
             "PaymentPolicy",
             "PaymentRecord",
             "PaymentAdjustment",
-            "payment_policy",
-            "payment_record",
+            "payment-policy",
+            "payment-record",
             "payment_ledger",
             "payment_adjustment",
             "locked_payment_policy_version",
@@ -1040,6 +1047,7 @@ def test_active_shared_contract_rejects_retired_compensation_model() -> None:
             "payment truth",
             "Payment And Reputation",
             "compensation fulfillment/payment status",
+            "payment status",
             "payment policy",
             "payment records",
             "payment ledger",
@@ -1062,6 +1070,13 @@ def test_active_shared_contract_rejects_retired_compensation_model() -> None:
         pattern.search(sample) for pattern in stale.ACTIVE_SHARED_CONTRACT_PATTERNS
     )
     assert stale.is_active_shared_contract_path(Path("README.md"))
+    assert stale.is_active_shared_contract_path(Path("AGENTS.md"))
+    assert stale.is_active_shared_contract_path(
+        Path(".agent-loop/initiatives/example/PLAN.md")
+    )
+    assert not stale.is_active_shared_contract_path(
+        Path(".agent-loop/initiatives/example/reviews/evidence.md")
+    )
     assert stale.is_active_shared_contract_path(Path("docs/architecture_data_model.md"))
     assert stale.is_active_shared_contract_path(
         Path("docs/current_system_data_flow.html")

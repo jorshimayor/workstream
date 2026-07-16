@@ -179,7 +179,7 @@ Policy:
 
 - the accepting Review creates reviewer `completed_review` and submitter
   `accepted_submission` contribution records atomically
-- each frozen compensation policy is evaluated independently; only payable
+- each frozen contribution policy is evaluated independently; only payable
   contributions create awards and fulfillment follow-up
 - accepted task is not confused with fulfilled compensation
 
@@ -229,7 +229,7 @@ Every operating day starts with:
 | --- | --- |
 | `DRAFT -> SCREENING` | project id, locked guide candidate, task source/description fields, acceptance and rejection criteria |
 | `SCREENING -> READY` | screening decision, guide version lock, guide source snapshot id/hash lock, acceptance criteria, effective project submission artifact policy hash lock, project `PreSubmitCheckerPolicy` compiled bundle hash lock, approved generated project `PostSubmitCheckerPolicy` with matching provenance, review policy, revision policy |
-| `READY -> CLAIMED` | active published CompensationPolicyVersion whose `accepted_submission` rule is explicit; TaskAssignment freezes that version |
+| `READY -> CLAIMED` | active published ContributionPolicyVersion whose `accepted_submission` rule is explicit; TaskAssignment freezes that version |
 | `IN_PROGRESS -> SUBMITTED` | blocking pre-submit checks passed, submission packet, artifact hash manifest, evidence references, contributor attestation |
 | `SUBMITTED -> EVALUATION_PENDING` | immutable submission version, locked post-submit checker policy id/version/hash/body copied from the task context |
 | `EVALUATION_PENDING -> REVIEW_PENDING` | checker run for exact submission version, readiness certificate, no blocking failures |
@@ -309,7 +309,7 @@ Cause:
 
 Fix:
 
-- frozen compensation policy evaluation creates awards only for payable
+- frozen contribution policy evaluation creates awards only for payable
   contributions; explicit unpaid rules create none
 - compensation fulfillment dashboard is reviewed daily
 

@@ -10,6 +10,9 @@ activation custody, transaction order, and cross-initiative handoffs.
 ## Allowed files
 
 - `.agent-loop/initiatives/WS-XINT-001-lifecycle-boundary-reconciliation/**`
+- `AGENTS.md` and active `.agent-loop/initiatives/**` planning contracts only
+  where stale cross-lifecycle contribution/compensation wording must be
+  reconciled
 - ART initiative plans, decisions, risks, chunk map, and future chunk contracts
   only where stale activation language must be corrected
 - AUTH initiative/specification planning documents where stale feature-owned
@@ -53,15 +56,19 @@ activation custody, transaction order, and cross-initiative handoffs.
   copying canonical `SubmissionVersion.artifact_hash` into
   `ContributionRecord.artifact_hash` lineage;
 - every valid human Review creates one reviewer `completed_review`; `accept`
-  additionally creates one submitter `accepted_submission`; compensation is
-  independently evaluated from each frozen policy and may be explicitly unpaid;
+  additionally creates one submitter `accepted_submission`; the applicable
+  frozen `ContributionPolicyVersion` is evaluated for each record and may be
+  explicitly unpaid;
+- payable contribution rules create immutable money and/or project-points
+  `CompensationAward` rows; downstream adapters fulfill those awards but never
+  decide award eligibility;
 - active shared docs use the canonical compensation model:
-  `CompensationPolicy`, immutable `CompensationPolicyVersion`,
-  `CompensationRule`, `CompensationAwardDefinition`,
+  `ContributionPolicy`, immutable `ContributionPolicyVersion`,
+  `ContributionRule`, `ContributionAwardDefinition`,
   `ProjectCompensationAdapterBinding`, `CompensationAward`,
   `CompensationFulfillmentReceipt`, and `CompensationStatusProjection`;
-  `PaymentPolicy` and `PaymentRecord` survive only in explicit
-  historical/reference statements describing their removal;
+  `PaymentPolicy` and `PaymentRecord` are retired and removed names; only
+  explicit historical/reference removal statements may mention them;
 - each parallel agent receives a bounded handoff and no runtime start signal;
 - ART plans no longer claim that ART registers or activates authorization;
 - Markdown links, stale wording, diff hygiene, and internal review pass.

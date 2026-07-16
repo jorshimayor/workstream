@@ -34,10 +34,10 @@ The policies enforce:
 - post-submit checker policy
 - review policy
 - revision policy
-- compensation policy
+- contribution policy
 
 If a rule matters, it belongs in the guide, submission artifact policy, checker
-policy, review policy, revision policy, compensation policy, or task template.
+policy, review policy, revision policy, contribution policy, or task template.
 
 Out-of-band guidance is not enforceable until it is moved into those contracts or into a checker that is governed by those contracts.
 

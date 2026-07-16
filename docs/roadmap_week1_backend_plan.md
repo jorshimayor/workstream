@@ -198,10 +198,10 @@ Scope:
 - post-submit checker policy model
 - review policy model
 - revision policy model
-- project compensation policy/version model
+- project contribution policy/version model
 - guide versioning fields
 - active guide lock behavior
-- independently published compensation policy/version fields and submission
+- independently published contribution policy/version fields and submission
   artifact policy fields
 
 Non-scope:
@@ -216,7 +216,7 @@ Conditions of satisfaction:
 - guide version can be created as draft
 - guide version can be activated only when required submission artifact,
   checker, review, and revision policy fields exist; Assignment/ReviewLease
-  creation separately requires an active published CompensationPolicyVersion
+  creation separately requires an active published ContributionPolicyVersion
 - active guide can be retrieved for task creation
 - editing a draft guide does not mutate historical task context
 - migrations and model tests pass

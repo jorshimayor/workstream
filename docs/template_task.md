@@ -77,10 +77,10 @@ directly.
 ## Assignment Compensation Snapshot
 
 These values are server-owned and appear only after TaskAssignment creation.
-The TaskAssignment freezes the active published CompensationPolicyVersion; task
+The TaskAssignment freezes the active published ContributionPolicyVersion; task
 creators do not provide award fields directly.
 
-- submitter compensation policy version id:
+- submitter contribution policy version id:
 - contribution type: `accepted_submission`
 - compensation mode: `compensated | unpaid`
 - immutable award definitions when compensated:

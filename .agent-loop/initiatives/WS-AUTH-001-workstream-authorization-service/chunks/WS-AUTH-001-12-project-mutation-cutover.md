@@ -72,8 +72,9 @@ unscoped project-manager access or token role fallback
   registered action and authorizes against `system`, an existing project, or the
   exact existing parent policy resource defined by the owning project model.
   It does not collapse guide, source-snapshot, submission-policy, checker-policy,
-  review-policy, revision-policy, or payment-policy records into an invented
-  generic policy resource.
+  review-policy, or revision-policy records into an invented generic policy
+  resource. Contribution policy resources are independently owned by WS-CON
+  and are outside this project-mutation cutover.
 - Generated OpenAPI/command manifest-delta tests prove every protected project
   mutation/setup surface migrated here has exactly one active `ActionId`
   declaration.

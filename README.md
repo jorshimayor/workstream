@@ -2,7 +2,9 @@
 
 Workstream is Flow's task evaluation and contribution infrastructure.
 
-Workstream manages project guides, task queues, submission packets, automated checks, reviewer routing, evaluation sprints, revision loops, contribution records, payment status, and reputation signals.
+Workstream manages project guides, task queues, submission packets, automated
+checks, reviewer routing, evaluation sprints, revision loops, contribution
+records, compensation award and fulfillment state, and reputation signals.
 
 Workstream is how Flow measures, certifies, and coordinates useful human-agent work.
 
@@ -39,7 +41,7 @@ Different projects speak different domain languages, but serious task evaluation
 - every project has a guide
 - every project has an approved submission artifact policy
 - every task belongs to a project
-- every project has an active published compensation policy version with
+- every project has an active published contribution policy version with
   explicit `accepted_submission` and `completed_review` rules, including
   explicit unpaid rules where intended
 - every task has acceptance criteria

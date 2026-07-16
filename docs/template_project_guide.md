@@ -16,7 +16,7 @@ Describe what this project produces and why it matters.
 
 Describe compensation expectations in plain language when useful for project
 context. Enforceable submitter/reviewer rules live in the independently
-published CompensationPolicyVersion, not in the guide or project shell.
+published ContributionPolicyVersion, not in the guide or project shell.
 
 ## Difficulty And Time Policy
 
@@ -112,9 +112,9 @@ Every active guide version must have:
 - PostSubmitCheckerPolicy:
 - ReviewPolicy:
 - RevisionPolicy:
-- CompensationPolicy and active published version:
+- ContributionPolicy and active published version:
 
-CompensationPolicyVersion is the source of truth for exact
+ContributionPolicyVersion is the source of truth for exact
 `accepted_submission` and `completed_review` compensated/unpaid rules and any
 immutable money/project-points award definitions.
 
@@ -217,8 +217,8 @@ Record only project-owner-supplied business terms and their durable source:
 - intended reviewer terms:
 - intended instrument/unit:
 
-This section is informational. It is not an active compensation rule. Workstream
-publishes `CompensationPolicyVersion` independently, and `TaskAssignment` and
+This section is informational. It is not an active contribution award rule. Workstream
+publishes `ContributionPolicyVersion` independently, and `TaskAssignment` and
 `ReviewLease` freeze their applicable versions. Revision context never rebases
 compensation.
 
@@ -227,5 +227,5 @@ compensation.
 Keep this section updated as the project runs.
 
 Each repeated issue becomes a guide update, checker update, review policy update,
-revision policy update, compensation policy update, template update, or
+revision policy update, contribution policy update, template update, or
 reviewer training note.

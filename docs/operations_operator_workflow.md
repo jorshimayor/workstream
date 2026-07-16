@@ -57,7 +57,7 @@ Reads authorized immutable and operational evidence without mutation.
 3. Create task title and description.
 4. Add acceptance criteria.
 5. Add required output format.
-6. Confirm an active published CompensationPolicyVersion exists with explicit
+6. Confirm an active published ContributionPolicyVersion exists with explicit
    submitter and reviewer compensated/unpaid rules; the Assignment and
    ReviewLease freeze it later.
 7. Set skill tags.
@@ -90,7 +90,7 @@ Reads authorized immutable and operational evidence without mutation.
 2. Task moves to ACCEPTED.
 3. Workstream records reviewer `completed_review` and submitter
    `accepted_submission` contributions.
-4. Frozen compensation policies create awards only for payable contributions;
+4. Frozen contribution policies create awards only for payable contributions;
    explicit unpaid rules create none.
 5. Reputation events are recorded from contribution facts.
 6. Finance follows delivery and fulfillment only for created awards.
@@ -100,7 +100,7 @@ Reads authorized immutable and operational evidence without mutation.
 1. Reviewer rejects submission or task.
 2. Review must include rejection reason.
 3. Reputation event is recorded.
-4. The frozen reviewer compensation rule determines whether the resulting
+4. The frozen reviewer contribution award rule determines whether the resulting
    `completed_review` contribution creates a `CompensationAward`; rejection
    creates no submitter `accepted_submission` contribution.
 
@@ -114,7 +114,7 @@ Every project maintains lessons learned:
 - guide update needed
 - reviewer policy update needed
 - revision policy update needed
-- compensation policy update needed
+- contribution policy update needed
 
 This is how Workstream compounds operational knowledge.
 
@@ -134,5 +134,5 @@ Lessons are not just notes. They become one of:
 - reviewer workflow update
 - queue policy update
 - revision policy update
-- compensation policy update
+- contribution policy update
 - risk register update

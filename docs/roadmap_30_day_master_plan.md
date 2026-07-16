@@ -2,7 +2,10 @@
 
 ## Goal
 
-Build the first serious version of Workstream: Flow's configurable task evaluation and contribution infrastructure that can run real internal projects from guide to contribution record, review decision, payment status, and reputation signal.
+Build the first serious version of Workstream: Flow's configurable task
+evaluation and contribution infrastructure that can run real internal projects
+from guide to review decision, contribution record, conditional compensation
+award and fulfillment state, and reputation signal.
 
 The output of the 30 days is not a demo-only UI. It is usable infrastructure
 with durable contribution records, project templates, automated checks, human
@@ -73,7 +76,7 @@ Deliverables:
 - roles and permissions matrix
 - submission record
 - evidence record
-- compensation policy/version context
+- contribution policy/version context
 - reputation dimensions
 - backend API smoke paths for project, task, assignment, and submission records
 - workspace/packet convention for the first project
@@ -94,7 +97,7 @@ Day 2:
 - build project and guide records
 - create project guide editor or markdown-backed guide import
 - define checker, review, and revision policy fields
-- define the independent CompensationPolicyVersion rules and immutable
+- define the independent ContributionPolicyVersion rules and immutable
   money/project-points award definitions
 - use backend records/API first; frontend editor is deferred until the backend contract is stable
 
@@ -120,7 +123,7 @@ Day 5:
 Week 1 acceptance bar:
 
 - a project can be created with a versioned guide plus checker, review, and
-  revision policy context and an independently published compensation policy
+  revision policy context and an independently published contribution policy
 - a task can be created, screened, claimed, submitted, and tracked
 - every task status transition is recorded
 - no task exists outside a project
@@ -425,7 +428,7 @@ Risk: project rules living in chat instead of system policy.
 
 Mitigation: every project guide must define checker, review, and revision
 policy; every project independently publishes explicit submitter/reviewer
-compensation rules before assignments or review leases.
+contribution award rules before assignments or review leases.
 
 Risk: reviewers giving vague feedback.
 

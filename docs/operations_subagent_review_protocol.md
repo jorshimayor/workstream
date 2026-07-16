@@ -98,7 +98,7 @@ Codex must not merge a PR unless the user explicitly approves that specific PR f
 Before a task moves from `SCREENING` to `READY`, run the same review pattern at task scale:
 
 - product/ops pass: task is worth doing and the project has explicit submitter
-  and reviewer compensation rules before assignment/lease creation
+  and reviewer contribution award rules before assignment/lease creation
 - guide pass: task follows the active project guide
 - checker pass: required automated checks exist for the task type
 - reviewer pass: acceptance criteria are reviewable

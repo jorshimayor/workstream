@@ -35,7 +35,7 @@ provide those ids, versions, hashes, or internal policy bodies in the
 submission packet.
 
 Compensation is not submission input. The server uses the immutable
-TaskAssignment submitter CompensationPolicyVersion freeze and the ReviewLease
+TaskAssignment submitter ContributionPolicyVersion freeze and the ReviewLease
 reviewer freeze during contribution creation.
 
 Workstream runs pre-submit checks from the locked project pre-submit checker policy before creating the submission.
