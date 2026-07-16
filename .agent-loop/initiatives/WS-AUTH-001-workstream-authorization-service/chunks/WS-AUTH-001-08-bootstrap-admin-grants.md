@@ -51,6 +51,7 @@ backend/tests/test_authorization.py
 backend/tests/test_audit.py
 backend/tests/test_auth.py
 backend/tests/test_actors.py
+backend/tests/conftest.py
 backend/tests/test_alembic.py
 backend/tests/test_api_controls.py
 backend/tests/test_api_rate_controls.py
@@ -254,9 +255,10 @@ by their existing WS-ART/AUTH-09 contracts.
   the selected actor, grant, and grant collection itself. Exact-project
   selectors are resolved through the existing ProjectRepository; request/path
   project IDs are never accepted as authority facts.
-- Grant-backed decisions add only bounded `matched_grant_id` and
-  `matched_scope_project_id` fields. Audit evidence records the exact matched
-  grant and canonical project when applicable.
+- Decisions add one bounded `resource_context_digest` over the complete typed
+  resource context. Grant-backed decisions additionally add bounded
+  `matched_grant_id` and `matched_scope_project_id` fields. Audit evidence
+  records the exact matched grant and canonical project when applicable.
 - Effective admin candidates are active grants whose role contains the exact
   permission, whose system/project scope covers the canonical resource, whose
   target is an active human ActorProfile with at least one active identity
@@ -423,7 +425,9 @@ idempotency row exists. Otherwise recovery proceeds forward.
 - Same key/digest reauthorizes and replays. Same key/different digest returns
   `idempotency_mismatch`. A different key for an already-active identical grant
   returns `admin_role_grant_exists`. Revoking an already-revoked grant with a
-  new key returns concealed `grant_not_found`.
+  new key returns concealed `grant_not_found`. Revoke authorization treats an
+  existing same-key replay or mismatch record as sufficient to conceal current
+  grant inactivity until the stored idempotency outcome is classified.
 - Exact public statuses are 403 `self_grant_forbidden`, 403
   `self_role_revoke_forbidden`, 404 `grant_not_found`, 409
   `last_access_administrator`, 409 `admin_role_grant_exists`, and 409
@@ -470,7 +474,10 @@ HTTP issue/revoke follows one caller-session sequence: reserve first, lock
 AuthorityControl, call the central kernel (which revalidates caller/grant and
 canonicalizes the target selector), mutate, write success and invalidation,
 complete idempotency, then commit once. Reservation outcomes are not exposed
-until current authorization succeeds.
+until current authorization succeeds. Mutation success, invalidation,
+idempotency-mismatch, and post-allow conflict evidence derives request and
+correlation IDs only from that exact authorization decision; the feature
+service accepts no alternate identifiers from callers.
 
 Issue invalidates the target actor authority projection from
 `effective=false` to `effective=true`; revoke invalidates that same target

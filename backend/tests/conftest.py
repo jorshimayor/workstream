@@ -31,6 +31,11 @@ async def _reset_test_database_state(
             await connection.execute(
                 "alter table audit_events disable trigger audit_events_reject_truncate"
             )
+            await connection.execute(
+                "alter table authority_idempotency_records disable trigger user"
+            )
+            await connection.execute("alter table admin_role_grants disable trigger user")
+            await connection.execute("alter table authority_control disable trigger user")
             if include_canonical_actors:
                 await connection.execute(
                     "alter table actor_profiles disable trigger actor_profile_history_guard"
@@ -40,6 +45,15 @@ async def _reset_test_database_state(
                     "actor_identity_link_history_guard"
                 )
             await connection.execute("truncate table audit_events cascade")
+            await connection.execute("truncate table authority_idempotency_records cascade")
+            await connection.execute(
+                "truncate table authority_control, admin_role_grants cascade"
+            )
+            await connection.execute(
+                "insert into authority_control"
+                "(id, bootstrap_completed, bootstrap_grant_id, version) "
+                "values (1, false, null, 0)"
+            )
             await connection.execute("truncate table api_rate_control_counters")
             if include_canonical_actors:
                 await connection.execute(
@@ -54,6 +68,11 @@ async def _reset_test_database_state(
                 )
             await connection.execute(
                 "alter table audit_events enable trigger audit_events_reject_truncate"
+            )
+            await connection.execute("alter table authority_control enable trigger user")
+            await connection.execute("alter table admin_role_grants enable trigger user")
+            await connection.execute(
+                "alter table authority_idempotency_records enable trigger user"
             )
             await connection.execute(
                 "alter table audit_events enable trigger audit_events_reject_update_delete"

@@ -366,6 +366,7 @@ class AuthorityMismatchContext(BaseModel):
     event_id: UUID
     request_id: UUID
     correlation_id: UUID
+    matched_grant_id: UUID | None = None
 
 
 class AuthorityCompletionResult(BaseModel):

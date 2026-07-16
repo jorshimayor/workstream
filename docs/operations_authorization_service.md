@@ -4,9 +4,10 @@
 
 This runbook assigns ownership and stop conditions for the staged WS-AUTH-001
 authorization rollout. The verified-token configuration and evidence commands
-are executable contracts. Canonical actor resolution is active in AUTH-06;
-later actor lifecycle administration and grant sections remain staged until
-their owning implementation chunks.
+are executable contracts. Canonical actor resolution, actor-self authorization,
+one-time bootstrap, and administrative grant APIs are active through AUTH-08;
+later actor lifecycle and project-grant sections remain staged until their
+owning implementation chunks.
 
 ## Ownership
 
@@ -166,7 +167,8 @@ leave duplicate profiles, links, or evidence. Rate-limited requests may still
 receive HTTP 429 before identity serialization.
 
 `GET /api/v1/actors/me` returns the caller's privacy-bounded Contributor-domain
-profile and no admin role or project grant. `PATCH /api/v1/actors/me` accepts
+profile plus sorted active administrative role names as a non-authoritative
+self projection; project grants remain empty until AUTH-10. `PATCH /api/v1/actors/me` accepts
 only `display_name` and `contact_email`; token roles, issuer metadata, actor
 kind, status, grants, and lifecycle fields are not writable there. Suspended
 profiles remain readable for support, but suspended or deactivated profiles
@@ -279,13 +281,34 @@ Before execution:
 - verify the target is the intended active human profile and identity link;
 - verify the environment and database;
 - capture a redacted dry-run result;
-- confirm no effective Access Administrator exists;
+- confirm the one-time bootstrap has not already completed;
 - confirm the deployment operator has restricted environment access;
 - confirm audit and database-time behavior are available.
 
-Execution must lock `AuthorityControl(id = 1) FOR UPDATE` before checking the
-effective administrator count. Exactly one initial grant and one success event
-may commit. Later or concurrent attempts return the stable audited conflict.
+Run the supported command from the backend with the target's canonical UUID:
+
+```bash
+WORKSTREAM_DATABASE_URL='<target async Postgres URL>' \
+  .venv/bin/python -m scripts.bootstrap_access_administrator \
+  --actor-profile-id '<canonical actor UUID>' --dry-run
+
+WORKSTREAM_DATABASE_URL='<target async Postgres URL>' \
+  .venv/bin/python -m scripts.bootstrap_access_administrator \
+  --actor-profile-id '<canonical actor UUID>' --execute
+```
+
+Dry-run is read-only and does not promise later success. Execution locks
+`AuthorityControl(id = 1) FOR UPDATE`, revalidates the active human target,
+then commits exactly one initial grant, completed control transition, and
+success event. Exit code `0` is eligible/success, `2` is invalid or ineligible,
+`3` is already bootstrapped/concurrent loser, and `1` is infrastructure
+failure. Preserve the bounded JSON result and correlated authority evidence;
+never add issuer, subject, email, display name, token, or database URL.
+
+If execution returns `1`, leave bootstrap custody with the deployment operator,
+verify transaction rollback and database availability, and retry the same
+supported command. Later or concurrent attempts return the stable audited
+conflict and must not be repaired by editing the control or grant tables.
 
 Never bootstrap through public HTTP, direct SQL, a shared secret, or a
 fabricated human/system role.
@@ -516,10 +539,9 @@ exclusive audit-table lock before these checks and keeps it through destructive
 DDL. If any forward evidence exists, stop and recover forward rather than
 discarding it.
 
-Canonical actor self-read and self-update are now the only active actions.
-Admin definition reads wait for AUTH-08 grant truth, and project capability
-context waits for AUTH-10 exact-project grants and canonical project
-composition.
+Canonical actor self-read/self-update and the seven AUTH-08 administrative
+actions are active. Project capability context waits for AUTH-10 exact-project
+grants and canonical project composition.
 
 ## Actor Self Decision Operations
 
@@ -545,6 +567,37 @@ export issuer subjects, bearer tokens, display names, contact emails, or token
 roles. If a denied PATCH occurs, the route transaction is rolled back and the
 same frozen denial is committed from a clean transaction; a changed decision
 ID or concurrent display-field mutation is an incident signal.
+
+## Administrative Authority Operations
+
+AUTH-08 activates permission and administrative-role definition reads, scoped
+administrative-grant collection and actor-history reads, and administrative
+grant issue/revoke. Access Administrator is the only role that can issue or
+revoke. Audit Authority is read-only and sees only the system or exact-project
+scope covered by its current grant; filtering occurs before totals and cursors.
+Requested target role/scope is mutation data, never caller authority.
+
+Each protected route owns one caller-session transaction. A successful read,
+exact replay, issue, or revoke commits its decision evidence and advances the
+caller's `ActorProfile.last_seen_at` and `ActorIdentityLink.last_verified_at`
+using database time. Issue/revoke additionally commit business state,
+idempotency completion, success evidence, and linked invalidation together.
+Success, invalidation, mismatch, and post-allow conflict evidence derive their
+request/correlation IDs from the exact authorization decision; feature callers
+cannot override them.
+The decision resource-context digest binds role, scope, target, and existing
+idempotency-record disposition. Issue/revoke recomputes the reason digest before
+any state or evidence write.
+The shared authorization dependency never commits an open feature transaction;
+it rolls back anything the route forgot to commit.
+
+If route-owned persistence or decision evidence fails, roll back the entire
+unit and return the bounded retryable `503 service_unavailable` envelope. Do
+not report a mutation as successful, retain a pending idempotency result, or
+advance verification timestamps. A retry uses the same idempotency key. Exact
+replays reauthorize current caller authority and canonical resource state before
+returning the stored response; mismatches commit only bounded denial evidence
+from a clean transaction.
 
 ## Rollback
 
@@ -628,10 +681,11 @@ steal a claim. On mismatch the caller rolls back the reservation transaction,
 starts a clean transaction on the same injected session, commits exactly one
 privacy-bounded denial event, and then translates the conflict.
 
-A replay reference is internal only. Before responding, the future route owner
-must load the canonical resource and evaluate current authority again. There is
-currently no invalidation consumer or backlog processor; the durable event is
-foundation evidence for the owning later chunk.
+A replay reference is internal only. Active administrative routes load the
+canonical resource and evaluate current authority again before responding;
+later route owners must preserve the same rule. There is currently no
+invalidation consumer or backlog processor; the durable event is foundation
+evidence for the owning later chunk.
 
 ## Authority Audit Custody
 

@@ -21,6 +21,7 @@ from app.modules.authorization.catalogue import (
     ACTION_DEFINITIONS,
     HISTORICAL_PERMISSION_IDS,
     NEW_PERMISSION_IDS,
+    ActionOwner,
 )
 from app.modules.actors.legacy_classification import (
     CLASSIFICATION_FILE_ENV,
@@ -200,7 +201,7 @@ def test_canonical_actor_registry_separates_authority_from_legacy_workflow_metad
     with migration_lock():
         try:
             command.downgrade(config, "base")
-            command.upgrade(config, "head")
+            command.upgrade(config, "0021_auth_action_evidence")
             table_names = asyncio.run(_fetch_table_names(isolated_database_env))
         finally:
             command.downgrade(config, "base")
@@ -357,9 +358,7 @@ def test_canonical_actor_classified_upgrade_preserves_identity_and_attribution(
                 match="^classification_file_not_configured$",
             ):
                 command.upgrade(config, "0020_canonical_actor_profile")
-            reupgrade_rejected = asyncio.run(
-                _pre_0020_actor_state(isolated_database_env, actor_id)
-            )
+            reupgrade_rejected = asyncio.run(_pre_0020_actor_state(isolated_database_env, actor_id))
         finally:
             command.downgrade(config, "base")
 
@@ -368,9 +367,7 @@ def test_canonical_actor_classified_upgrade_preserves_identity_and_attribution(
         "actor_kind": "human",
         "display_name": None,
         "contact_email": None,
-        "identity_link_id": str(
-            uuid5(NAMESPACE_URL, f"workstream:identity-link:{actor_id}")
-        ),
+        "identity_link_id": str(uuid5(NAMESPACE_URL, f"workstream:identity-link:{actor_id}")),
         "identity_subject": subject,
         "legacy_profile_type": "worker",
         "audit_actor_id": actor_id,
@@ -414,16 +411,10 @@ def test_canonical_actor_downgrade_refuses_nonactive_authority_state(
         try:
             command.downgrade(config, "base")
             command.upgrade(config, "head")
-            asyncio.run(
-                _seed_canonical_actor_for_downgrade_guard(
-                    isolated_database_env, actor_id
-                )
-            )
+            asyncio.run(_seed_canonical_actor_for_downgrade_guard(isolated_database_env, actor_id))
             for state in ("revoked", "suspended", "deactivated"):
                 asyncio.run(
-                    _set_canonical_actor_guard_state(
-                        isolated_database_env, actor_id, state
-                    )
+                    _set_canonical_actor_guard_state(isolated_database_env, actor_id, state)
                 )
                 with pytest.raises(
                     RuntimeError,
@@ -460,26 +451,29 @@ def test_authorization_action_evidence_constraints_and_guarded_downgrade(
             historical_before = asyncio.run(
                 _authorization_action_row(isolated_database_env, historical_event)
             )
-            command.upgrade(config, "head")
+            command.upgrade(config, "0021_auth_action_evidence")
             schema = asyncio.run(_authorization_action_schema(isolated_database_env))
             historical_upgraded = asyncio.run(
                 _authorization_action_row(isolated_database_env, historical_event)
             )
-            asyncio.run(_assert_authorization_action_sql_pairs(isolated_database_env))
-
-            action_event = asyncio.run(
-                _insert_authorization_action_event(isolated_database_env)
+            asyncio.run(
+                _assert_authorization_action_sql_pairs(
+                    isolated_database_env,
+                    definitions=tuple(
+                        definition
+                        for definition in ACTION_DEFINITIONS
+                        if definition.owner is not ActionOwner.AUTH_08
+                    ),
+                )
             )
+
+            action_event = asyncio.run(_insert_authorization_action_event(isolated_database_env))
             with pytest.raises(
                 RuntimeError,
                 match="^cannot downgrade non-empty authorization action evidence$",
             ):
                 command.downgrade(config, "0020_canonical_actor_profile")
-            asyncio.run(
-                _remove_authorization_action_events(
-                    isolated_database_env, [action_event]
-                )
-            )
+            asyncio.run(_remove_authorization_action_events(isolated_database_env, [action_event]))
 
             permission_event = asyncio.run(
                 _insert_authorization_action_event(isolated_database_env)
@@ -495,9 +489,7 @@ def test_authorization_action_evidence_constraints_and_guarded_downgrade(
             ):
                 command.downgrade(config, "0020_canonical_actor_profile")
             asyncio.run(
-                _remove_authorization_action_events(
-                    isolated_database_env, [permission_event]
-                )
+                _remove_authorization_action_events(isolated_database_env, [permission_event])
             )
 
             target_reference_event = asyncio.run(
@@ -513,9 +505,7 @@ def test_authorization_action_evidence_constraints_and_guarded_downgrade(
             ):
                 command.downgrade(config, "0020_canonical_actor_profile")
             asyncio.run(
-                _remove_authorization_action_events(
-                    isolated_database_env, [target_reference_event]
-                )
+                _remove_authorization_action_events(isolated_database_env, [target_reference_event])
             )
 
             invalidation_reference_event = asyncio.run(
@@ -537,30 +527,22 @@ def test_authorization_action_evidence_constraints_and_guarded_downgrade(
             )
 
             command.downgrade(config, "0020_canonical_actor_profile")
-            downgraded = asyncio.run(
-                _authorization_action_schema(isolated_database_env)
-            )
+            downgraded = asyncio.run(_authorization_action_schema(isolated_database_env))
             historical_downgraded = asyncio.run(
                 _authorization_action_row(isolated_database_env, historical_event)
             )
             asyncio.run(_assert_historical_permission_registry(isolated_database_env))
             asyncio.run(
-                _remove_authorization_action_events(
-                    isolated_database_env, [historical_event]
-                )
+                _remove_authorization_action_events(isolated_database_env, [historical_event])
             )
-            command.upgrade(config, "head")
+            command.upgrade(config, "0021_auth_action_evidence")
 
             lock_observed, raced_event = _action_downgrade_waits_for_insert(
                 config, isolated_database_env
             )
-            asyncio.run(
-                _remove_authorization_action_events(
-                    isolated_database_env, [raced_event]
-                )
-            )
+            asyncio.run(_remove_authorization_action_events(isolated_database_env, [raced_event]))
             command.downgrade(config, "0020_canonical_actor_profile")
-            command.upgrade(config, "head")
+            command.upgrade(config, "0021_auth_action_evidence")
         finally:
             command.downgrade(config, "base")
 
@@ -574,12 +556,82 @@ def test_authorization_action_evidence_constraints_and_guarded_downgrade(
         "action_column": False,
         "action_constraint": False,
     }
-    assert historical_before == historical_upgraded == historical_downgraded == {
-        "event_type": "SensitiveAuthorizationAllowed",
-        "permission_id": "actor.profile.read_any",
-        "action_id": None,
-    }
+    assert (
+        historical_before
+        == historical_upgraded
+        == historical_downgraded
+        == {
+            "event_type": "SensitiveAuthorizationAllowed",
+            "permission_id": "actor.profile.read_any",
+            "action_id": None,
+        }
+    )
     assert lock_observed is True
+
+
+def test_bootstrap_admin_grant_schema_is_immutable_and_guarded(
+    isolated_database_env: str,
+    migration_lock,
+) -> None:
+    """Prove clean migration reversibility and irreversible grant history guards."""
+    config = _alembic_config()
+    with migration_lock():
+        try:
+            command.downgrade(config, "base")
+            command.upgrade(config, "0021_auth_action_evidence")
+            asyncio.run(_insert_orphan_admin_evidence(isolated_database_env))
+            with pytest.raises(
+                RuntimeError,
+                match="^cannot adopt orphan administrative grant evidence$",
+            ):
+                command.upgrade(config, "0022_bootstrap_admin_grants")
+            asyncio.run(_clear_orphan_admin_state(isolated_database_env))
+            asyncio.run(_insert_orphan_admin_idempotency(isolated_database_env))
+            with pytest.raises(
+                RuntimeError,
+                match="^cannot adopt orphan administrative idempotency$",
+            ):
+                command.upgrade(config, "0022_bootstrap_admin_grants")
+            asyncio.run(_clear_orphan_admin_state(isolated_database_env))
+            command.upgrade(config, "0022_bootstrap_admin_grants")
+            assert asyncio.run(_admin_authority_schema(isolated_database_env)) == {
+                "revision": "0022_bootstrap_admin_grants",
+                "grant_table": True,
+                "control": (False, None, 0),
+            }
+            asyncio.run(_assert_authorization_action_sql_pairs(isolated_database_env))
+            command.downgrade(config, "0021_auth_action_evidence")
+            command.upgrade(config, "0022_bootstrap_admin_grants")
+
+            proof = asyncio.run(_exercise_admin_authority_guards(isolated_database_env))
+            assert proof == {
+                "service_target_rejected": True,
+                "missing_authorizer_rejected": True,
+                "mixed_bootstrap_attribution_rejected": True,
+                "second_bootstrap_rejected": True,
+                "immutable_provenance_rejected": True,
+                "incomplete_revocation_rejected": True,
+                "immutable_provenance_preserved": True,
+                "immutable_reason_rejected": True,
+                "delete_rejected": True,
+                "truncate_rejected": True,
+                "control_reset_rejected": True,
+                "revoked_status": "revoked",
+                "revoked_version": 2,
+                "grant_reason": "Operations assignment",
+                "revoked_reason": "Rotation ended",
+                "bootstrap_completed": True,
+            }
+            with pytest.raises(
+                RuntimeError,
+                match="^cannot downgrade non-empty administrative authority$",
+            ):
+                command.downgrade(config, "0021_auth_action_evidence")
+            asyncio.run(_clear_admin_authority_guard_fixtures(isolated_database_env))
+            command.downgrade(config, "0021_auth_action_evidence")
+            command.upgrade(config, "0022_bootstrap_admin_grants")
+        finally:
+            command.downgrade(config, "base")
 
 
 def test_artifact_foundation_upgrade_preserves_prior_head_and_promotes_nothing(
@@ -899,9 +951,7 @@ def test_authority_idempotency_schema_preserves_audit_and_guards_downgrade(
         try:
             command.downgrade(config, "0018_authority_audit_evidence")
             asyncio.run(
-                _insert_pre_0019_forward_reference(
-                    isolated_database_env, orphan_event, orphan_ref
-                )
+                _insert_pre_0019_forward_reference(isolated_database_env, orphan_event, orphan_ref)
             )
             command.upgrade(config, "0019_authority_idempotency")
             schema = asyncio.run(_authority_idempotency_schema(isolated_database_env))
@@ -925,7 +975,9 @@ def test_authority_idempotency_schema_preserves_audit_and_guards_downgrade(
             downgrade_lock_observed = _authority_downgrade_waits_for_writer(
                 config, isolated_database_env
             )
-            preserved = asyncio.run(_authority_idempotency_state(isolated_database_env, orphan_event))
+            preserved = asyncio.run(
+                _authority_idempotency_state(isolated_database_env, orphan_event)
+            )
             command.upgrade(config, "0019_authority_idempotency")
             restored = asyncio.run(_authority_idempotency_schema(isolated_database_env))
         finally:
@@ -939,11 +991,19 @@ def test_authority_idempotency_schema_preserves_audit_and_guards_downgrade(
     assert schema == restored
     assert schema == {
         "columns": {
-            "actor_ref:varchar:NO", "actor_ref_kind:varchar:NO", "committed_at:timestamptz:YES",
-            "created_at:timestamptz:NO", "id:uuid:NO", "idempotency_key:uuid:NO",
-            "operation:varchar:NO", "request_digest:varchar:NO", "response_http_status:int2:YES",
-            "response_resource_id:uuid:YES", "response_resource_type:varchar:YES",
-            "response_resource_version:int8:YES", "status:varchar:NO",
+            "actor_ref:varchar:NO",
+            "actor_ref_kind:varchar:NO",
+            "committed_at:timestamptz:YES",
+            "created_at:timestamptz:NO",
+            "id:uuid:NO",
+            "idempotency_key:uuid:NO",
+            "operation:varchar:NO",
+            "request_digest:varchar:NO",
+            "response_http_status:int2:YES",
+            "response_resource_id:uuid:YES",
+            "response_resource_type:varchar:YES",
+            "response_resource_version:int8:YES",
+            "status:varchar:NO",
         },
         "constraints": {
             "authority_idempotency_pending_guard",
@@ -1049,7 +1109,7 @@ async def _seed_pre_0020_actor(
                     "(id,actor_id,profile_type,status,skill_tags,scope_type,scope_id,"
                     "profile_metadata) values "
                     "(:id,:actor,'worker','active','[\"stem\"]'::json,'global','global',"
-                    "'{\"source\":\"legacy\"}'::json)"
+                    '\'{"source":"legacy"}\'::json)'
                 ),
                 {"id": str(uuid4()), "actor": actor_id},
             )
@@ -1116,10 +1176,7 @@ async def _pre_0020_actor_display_fields(
         async with engine.connect() as connection:
             row = (
                 await connection.execute(
-                    text(
-                        "select display_name,email from actor_identities "
-                        "where actor_id=:actor"
-                    ),
+                    text("select display_name,email from actor_identities where actor_id=:actor"),
                     {"actor": actor_id},
                 )
             ).one()
@@ -1175,17 +1232,13 @@ async def _canonical_actor_migration_state(
             identity_link = (
                 await connection.execute(
                     text(
-                        "select id,subject from actor_identity_links "
-                        "where actor_profile_id=:actor"
+                        "select id,subject from actor_identity_links where actor_profile_id=:actor"
                     ),
                     {"actor": actor_id},
                 )
             ).one()
             legacy_profile_type = await connection.scalar(
-                text(
-                    "select profile_type from legacy_workflow_eligibility "
-                    "where actor_id=:actor"
-                ),
+                text("select profile_type from legacy_workflow_eligibility where actor_id=:actor"),
                 {"actor": actor_id},
             )
             audit_actor_id = await connection.scalar(
@@ -1294,8 +1347,7 @@ async def _reset_canonical_actor_guard_state(
                 async with engine.begin() as connection:
                     await connection.execute(
                         text(
-                            "alter table actor_profiles disable trigger "
-                            "actor_profile_history_guard"
+                            "alter table actor_profiles disable trigger actor_profile_history_guard"
                         )
                     )
                 history_guard_disabled = True
@@ -1320,8 +1372,7 @@ async def _reset_canonical_actor_guard_state(
                 async with engine.begin() as connection:
                     await connection.execute(
                         text(
-                            "alter table actor_profiles enable trigger "
-                            "actor_profile_history_guard"
+                            "alter table actor_profiles enable trigger actor_profile_history_guard"
                         )
                     )
     finally:
@@ -1345,13 +1396,12 @@ async def _assert_actor_registry_unique_constraints(database_url: str) -> None:
                 )
             ).all()
             indexes = {row.indexname: row.indexdef for row in index_rows}
-            assert "(status, actor_kind)" in indexes[
-                "ix_actor_profiles_status_actor_kind"
-            ]
+            assert "(status, actor_kind)" in indexes["ix_actor_profiles_status_actor_kind"]
             assert "(last_seen_at)" in indexes["ix_actor_profiles_last_seen_at"]
-            assert "(issuer, subject, status)" in indexes[
-                "ix_actor_identity_links_issuer_subject_status"
-            ]
+            assert (
+                "(issuer, subject, status)"
+                in indexes["ix_actor_identity_links_issuer_subject_status"]
+            )
             assert "ix_actor_profiles_actor_kind" not in indexes
             assert "ix_actor_profiles_status" not in indexes
             assert "ix_actor_identity_links_status" not in indexes
@@ -1438,10 +1488,7 @@ async def _assert_actor_registry_unique_constraints(database_url: str) -> None:
         )
         await _expect_dbapi_error(
             engine,
-            text(
-                "update actor_identity_links set subject='changed' "
-                "where actor_profile_id=:actor"
-            ),
+            text("update actor_identity_links set subject='changed' where actor_profile_id=:actor"),
             {"actor": actor_id},
         )
         await _expect_dbapi_error(
@@ -1454,9 +1501,7 @@ async def _assert_actor_registry_unique_constraints(database_url: str) -> None:
             text("delete from actor_identity_links where actor_profile_id=:actor"),
             {"actor": actor_id},
         )
-        orphan_id = actor_id_from_external_identity(
-            "https://identity.test", "orphan-profile"
-        )
+        orphan_id = actor_id_from_external_identity("https://identity.test", "orphan-profile")
         await _expect_integrity_error(
             engine,
             text(
@@ -1490,19 +1535,13 @@ async def _assert_actor_registry_unique_constraints(database_url: str) -> None:
             await transaction.rollback()
             await connection.close()
 
-        width_actor_id = actor_id_from_external_identity(
-            "https://identity.test", "s" * 200
-        )
+        width_actor_id = actor_id_from_external_identity("https://identity.test", "s" * 200)
         async with engine.begin() as connection:
             await _insert_canonical_actor(connection, width_actor_id, "s" * 200, "human")
-        oversized_actor_id = actor_id_from_external_identity(
-            "https://identity.test", "s" * 201
-        )
+        oversized_actor_id = actor_id_from_external_identity("https://identity.test", "s" * 201)
         with pytest.raises(DBAPIError):
             async with engine.begin() as connection:
-                await _insert_canonical_actor(
-                    connection, oversized_actor_id, "s" * 201, "human"
-                )
+                await _insert_canonical_actor(connection, oversized_actor_id, "s" * 201, "human")
 
         other_actor_id = actor_id_from_external_identity(
             "https://identity.test", "other-unique-actor"
@@ -1542,9 +1581,7 @@ async def _insert_canonical_actor(
 ) -> None:
     """Insert a complete profile-link pair in one deferred-constraint transaction."""
     provisioning = (
-        "automatic_first_access"
-        if actor_kind == "human"
-        else "manual_service_provisioning"
+        "automatic_first_access" if actor_kind == "human" else "manual_service_provisioning"
     )
     await connection.execute(
         text(
@@ -1606,6 +1643,8 @@ async def _expect_invalid_canonical_pair(
                     "status": status,
                 },
             )
+
+
 async def _expect_integrity_error(engine, statement, params: dict) -> None:
     """Assert that one SQL statement raises a database integrity error."""
     with pytest.raises(IntegrityError):
@@ -3344,16 +3383,25 @@ async def _authority_idempotency_invalid_writes(database_url: str) -> dict[str, 
                 "response_resource_id,response_http_status,committed_at) values "
                 "(:id,:key,'actor_profile',:actor,'actor_profile.suspend',:digest,'committed',"
                 "'actor_profile',:resource,200,statement_timestamp())",
-                {"id": str(uuid4()), "key": str(uuid4()), "actor": str(uuid4()),
-                 "resource": str(uuid4()), "digest": "sha256:" + "a" * 64},
+                {
+                    "id": str(uuid4()),
+                    "key": str(uuid4()),
+                    "actor": str(uuid4()),
+                    "resource": str(uuid4()),
+                    "digest": "sha256:" + "a" * 64,
+                },
             ),
             (
                 "pending_commit",
                 "insert into authority_idempotency_records (id,idempotency_key,actor_ref_kind,"
                 "actor_ref,operation,request_digest,status) values "
                 "(:id,:key,'actor_profile',:actor,'actor_profile.suspend',:digest,'pending')",
-                {"id": str(uuid4()), "key": str(uuid4()), "actor": str(uuid4()),
-                 "digest": "sha256:" + "a" * 64},
+                {
+                    "id": str(uuid4()),
+                    "key": str(uuid4()),
+                    "actor": str(uuid4()),
+                    "digest": "sha256:" + "a" * 64,
+                },
             ),
             (
                 "new_orphan",
@@ -3364,9 +3412,14 @@ async def _authority_idempotency_invalid_writes(database_url: str) -> dict[str, 
                 "'SensitiveAuthorizationAllowed',:actor,'[]','{}','local_authority',false,'{}',"
                 "'authority',1,'actor_profile',:request,:correlation,'actor.profile.read_any',"
                 "'authorization_evaluation',:reference,cast(:facts as json))",
-                {"id": str(uuid4()), "actor": str(uuid4()), "request": str(uuid4()),
-                 "correlation": str(uuid4()), "reference": str(uuid4()),
-                 "facts": json.dumps({"allowed": True})},
+                {
+                    "id": str(uuid4()),
+                    "actor": str(uuid4()),
+                    "request": str(uuid4()),
+                    "correlation": str(uuid4()),
+                    "reference": str(uuid4()),
+                    "facts": json.dumps({"allowed": True}),
+                },
             ),
         ):
             try:
@@ -3396,8 +3449,12 @@ async def _insert_committed_authority_idempotency(
                     "actor_ref,operation,request_digest,status) values "
                     "(:id,:key,'actor_profile',:actor,'actor_profile.suspend',:digest,'pending')"
                 ),
-                {"id": record_id, "key": str(uuid4()), "actor": actor_id,
-                 "digest": "sha256:" + "a" * 64},
+                {
+                    "id": record_id,
+                    "key": str(uuid4()),
+                    "actor": actor_id,
+                    "digest": "sha256:" + "a" * 64,
+                },
             )
             common = (
                 "actor_roles,claim_snapshot,auth_source,is_dev_auth,event_payload,event_domain,"
@@ -3471,10 +3528,14 @@ async def _authority_idempotency_state(database_url: str, orphan_event: str) -> 
                 )
             )
             return {
-                "revision": await connection.scalar(text("select version_num from alembic_version")),
+                "revision": await connection.scalar(
+                    text("select version_num from alembic_version")
+                ),
                 "records": await connection.scalar(
                     text("select count(*) from authority_idempotency_records")
-                ) if exists else None,
+                )
+                if exists
+                else None,
                 "orphan": await connection.scalar(
                     text("select count(*) from audit_events where id=:id"), {"id": orphan_event}
                 ),
@@ -3564,9 +3625,7 @@ def _authority_downgrade_waits_for_writer(config: Config, database_url: str) -> 
             release_writer.set()
             writer.result(timeout=5)
             return False
-        downgrade = executor.submit(
-            command.downgrade, config, "0018_authority_audit_evidence"
-        )
+        downgrade = executor.submit(command.downgrade, config, "0018_authority_audit_evidence")
         try:
             observed = asyncio.run(observe_downgrade_lock())
         finally:
@@ -3654,9 +3713,7 @@ _ALLOWED_ACTION_EVIDENCE_INSERT = text(
 )
 
 
-def _action_evidence_values(
-    action_id: str | None, permission_id: str
-) -> dict[str, str | None]:
+def _action_evidence_values(action_id: str | None, permission_id: str) -> dict[str, str | None]:
     event_id = str(uuid4())
     return {
         "id": event_id,
@@ -3699,9 +3756,7 @@ async def _authorization_action_schema(database_url: str) -> dict[str, object]:
         await engine.dispose()
 
 
-async def _authorization_action_row(
-    database_url: str, event_id: str
-) -> dict[str, object]:
+async def _authorization_action_row(database_url: str, event_id: str) -> dict[str, object]:
     """Fetch stable action evidence across both sides of migration 0021."""
     engine = create_async_engine(database_url)
     try:
@@ -3734,11 +3789,15 @@ async def _authorization_action_row(
         await engine.dispose()
 
 
-async def _assert_authorization_action_sql_pairs(database_url: str) -> None:
+async def _assert_authorization_action_sql_pairs(
+    database_url: str,
+    *,
+    definitions: tuple = ACTION_DEFINITIONS,
+) -> None:
     """Prove exact pair closure without freezing typed availability in SQL."""
     engine = create_async_engine(database_url)
     try:
-        for definition in ACTION_DEFINITIONS:
+        for definition in definitions:
             async with engine.connect() as connection:
                 transaction = await connection.begin()
                 await connection.execute(
@@ -3749,7 +3808,7 @@ async def _assert_authorization_action_sql_pairs(database_url: str) -> None:
                 )
                 await transaction.rollback()
 
-        for definition in ACTION_DEFINITIONS:
+        for definition in definitions:
             async with engine.connect() as connection:
                 transaction = await connection.begin()
                 await connection.execute(
@@ -3767,7 +3826,7 @@ async def _assert_authorization_action_sql_pairs(database_url: str) -> None:
                 await connection.execute(_ACTION_EVIDENCE_INSERT, unknown_action)
             await transaction.rollback()
 
-        for definition in ACTION_DEFINITIONS:
+        for definition in definitions:
             wrong_permission = _action_evidence_values(
                 definition.action_id.value, "actor.profile.read_any"
             )
@@ -3826,19 +3885,14 @@ async def _insert_authorization_action_event(database_url: str) -> str:
         await engine.dispose()
 
 
-async def _convert_to_permission_only_forward_evidence(
-    database_url: str, event_id: str
-) -> None:
+async def _convert_to_permission_only_forward_evidence(database_url: str, event_id: str) -> None:
     """Simulate a pre-guard forward row to exercise the second rollback predicate."""
     engine = create_async_engine(database_url)
     try:
         async with engine.begin() as connection:
             await connection.execute(text("lock table audit_events in access exclusive mode"))
             await connection.execute(
-                text(
-                    "alter table audit_events disable trigger "
-                    "audit_events_reject_update_delete"
-                )
+                text("alter table audit_events disable trigger audit_events_reject_update_delete")
             )
             await connection.execute(
                 text(
@@ -3858,10 +3912,7 @@ async def _convert_to_permission_only_forward_evidence(
                 )
             )
             await connection.execute(
-                text(
-                    "alter table audit_events enable trigger "
-                    "audit_events_reject_update_delete"
-                )
+                text("alter table audit_events enable trigger audit_events_reject_update_delete")
             )
     finally:
         await engine.dispose()
@@ -3919,16 +3970,14 @@ async def _insert_forward_permission_reference(
             if reference_field == "invalidation":
                 await connection.execute(
                     text(
-                        "alter table audit_events disable trigger "
-                        "audit_events_validate_idempotency"
+                        "alter table audit_events disable trigger audit_events_validate_idempotency"
                     )
                 )
             await connection.execute(statement, values)
             if reference_field == "invalidation":
                 await connection.execute(
                     text(
-                        "alter table audit_events enable trigger "
-                        "audit_events_validate_idempotency"
+                        "alter table audit_events enable trigger audit_events_validate_idempotency"
                     )
                 )
         return event_id
@@ -3953,9 +4002,7 @@ async def _assert_historical_permission_registry(database_url: str) -> None:
         for permission in HISTORICAL_PERMISSION_IDS:
             async with engine.connect() as connection:
                 transaction = await connection.begin()
-                await connection.execute(
-                    statement, _action_evidence_values(None, permission.value)
-                )
+                await connection.execute(statement, _action_evidence_values(None, permission.value))
                 await transaction.rollback()
 
         for permission in NEW_PERMISSION_IDS:
@@ -3970,37 +4017,27 @@ async def _assert_historical_permission_registry(database_url: str) -> None:
         await engine.dispose()
 
 
-async def _remove_authorization_action_events(
-    database_url: str, event_ids: list[str]
-) -> None:
+async def _remove_authorization_action_events(database_url: str, event_ids: list[str]) -> None:
     """Owner-only cleanup for immutable action-evidence test fixtures."""
     engine = create_async_engine(database_url)
     try:
         async with engine.begin() as connection:
             await connection.execute(text("lock table audit_events in access exclusive mode"))
             await connection.execute(
-                text(
-                    "alter table audit_events disable trigger "
-                    "audit_events_reject_update_delete"
-                )
+                text("alter table audit_events disable trigger audit_events_reject_update_delete")
             )
             await connection.execute(
                 text("delete from audit_events where id = any(:ids)"),
                 {"ids": event_ids},
             )
             await connection.execute(
-                text(
-                    "alter table audit_events enable trigger "
-                    "audit_events_reject_update_delete"
-                )
+                text("alter table audit_events enable trigger audit_events_reject_update_delete")
             )
     finally:
         await engine.dispose()
 
 
-def _action_downgrade_waits_for_insert(
-    config: Config, database_url: str
-) -> tuple[bool, str]:
+def _action_downgrade_waits_for_insert(config: Config, database_url: str) -> tuple[bool, str]:
     """Prove an insert cannot pass between the downgrade check and destructive DDL."""
     writer_ready = threading.Event()
     release_writer = threading.Event()
@@ -4044,9 +4081,7 @@ def _action_downgrade_waits_for_insert(
             release_writer.set()
             writer.result(timeout=5)
             return False, values["id"]
-        downgrade = executor.submit(
-            command.downgrade, config, "0020_canonical_actor_profile"
-        )
+        downgrade = executor.submit(command.downgrade, config, "0020_canonical_actor_profile")
         try:
             observed = asyncio.run(observe_downgrade_lock())
         finally:
@@ -4058,3 +4093,407 @@ def _action_downgrade_waits_for_insert(
         ):
             downgrade.result(timeout=10)
         return observed, values["id"]
+
+
+async def _insert_orphan_admin_evidence(database_url: str) -> None:
+    engine = create_async_engine(database_url)
+    event_id, target_id = str(uuid4()), str(uuid4())
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(
+                text(
+                    "insert into audit_events "
+                    "(id,entity_type,entity_id,event_type,actor_id,actor_roles,claim_snapshot,"
+                    "auth_source,is_dev_auth,event_payload,event_domain,event_version,"
+                    "actor_ref_kind,request_id,correlation_id,target_actor_ref_kind,"
+                    "target_actor_ref,resource_type,resource_id,target_ref_kind,target_ref_id,"
+                    "reason,after_facts) values "
+                    "(:id,'admin_role_grant',:id,'InitialAccessAdministratorBootstrapped',"
+                    "'workstream:system:bootstrap','[]','{}','local_authority',false,'{}',"
+                    "'authority',1,'system_principal',:request,:correlation,'actor_profile',"
+                    ":target,'admin_role_grant',:id,'admin_role_grant',:id,"
+                    "'initial_access_bootstrap',cast(:facts as json))"
+                ),
+                {
+                    "id": event_id,
+                    "target": target_id,
+                    "request": str(uuid4()),
+                    "correlation": str(uuid4()),
+                    "facts": json.dumps(
+                        {
+                            "status": "active",
+                            "role": "access_administrator",
+                            "scope_type": "system",
+                            "effective": True,
+                        }
+                    ),
+                },
+            )
+    finally:
+        await engine.dispose()
+
+
+async def _insert_orphan_admin_idempotency(database_url: str) -> None:
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(
+                text("alter table authority_idempotency_records disable trigger user")
+            )
+            await connection.execute(
+                text(
+                    "insert into authority_idempotency_records "
+                    "(id,idempotency_key,actor_ref_kind,actor_ref,operation,request_digest,status) "
+                    "values (:id,:key,'actor_profile',:actor,'admin_role_grant.issue',"
+                    ":digest,'pending')"
+                ),
+                {
+                    "id": str(uuid4()),
+                    "key": str(uuid4()),
+                    "actor": str(uuid4()),
+                    "digest": "sha256:" + "a" * 64,
+                },
+            )
+            await connection.execute(
+                text("alter table authority_idempotency_records enable trigger user")
+            )
+    finally:
+        await engine.dispose()
+
+
+async def _clear_orphan_admin_state(database_url: str) -> None:
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(text("alter table audit_events disable trigger user"))
+            await connection.execute(
+                text("alter table authority_idempotency_records disable trigger user")
+            )
+            await connection.execute(
+                text(
+                    "delete from audit_events where event_type in "
+                    "('InitialAccessAdministratorBootstrapped','AdminRoleGrantIssued',"
+                    "'AdminRoleGrantRevoked')"
+                )
+            )
+            await connection.execute(
+                text(
+                    "delete from authority_idempotency_records "
+                    "where operation like 'admin_role_grant.%'"
+                )
+            )
+            await connection.execute(
+                text("alter table authority_idempotency_records enable trigger user")
+            )
+            await connection.execute(text("alter table audit_events enable trigger user"))
+    finally:
+        await engine.dispose()
+
+
+async def _admin_authority_schema(database_url: str) -> dict[str, object]:
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.connect() as connection:
+            control = (
+                await connection.execute(
+                    text(
+                        "select bootstrap_completed,bootstrap_grant_id,version "
+                        "from authority_control where id=1"
+                    )
+                )
+            ).one()
+            return {
+                "revision": await connection.scalar(
+                    text("select version_num from alembic_version")
+                ),
+                "grant_table": bool(
+                    await connection.scalar(
+                        text("select to_regclass('public.admin_role_grants') is not null")
+                    )
+                ),
+                "control": tuple(control),
+            }
+    finally:
+        await engine.dispose()
+
+
+async def _exercise_admin_authority_guards(database_url: str) -> dict[str, object]:
+    engine = create_async_engine(database_url)
+    admin_id = actor_id_from_external_identity("https://identity.test", "auth08-admin")
+    target_id = actor_id_from_external_identity("https://identity.test", "auth08-target")
+    service_id = actor_id_from_external_identity("https://identity.test", "auth08-service")
+    bootstrap_id, grant_id = str(uuid4()), str(uuid4())
+    results: dict[str, object] = {}
+    try:
+        async with engine.begin() as connection:
+            await _insert_canonical_actor(connection, admin_id, "auth08-admin", "human")
+            await _insert_canonical_actor(connection, target_id, "auth08-target", "human")
+            await _insert_canonical_actor(connection, service_id, "auth08-service", "service")
+
+        insert_grant = (
+            "insert into admin_role_grants "
+            "(id,target_actor_profile_id,role,scope_type,status,version,"
+            "granted_by_actor_profile_id,granted_by_system_principal,"
+            "granted_by_admin_role_grant_id,grant_reason) values "
+            "(:id,:target,:role,:scope,'active',1,:actor,:principal,:authorizer,:reason)"
+        )
+        invalid_cases = (
+            (
+                "service_target_rejected",
+                {
+                    "id": str(uuid4()),
+                    "target": service_id,
+                    "role": "access_administrator",
+                    "scope": "system",
+                    "actor": None,
+                    "principal": "workstream:system:bootstrap",
+                    "authorizer": None,
+                    "reason": "Invalid service target",
+                },
+            ),
+            (
+                "missing_authorizer_rejected",
+                {
+                    "id": str(uuid4()),
+                    "target": target_id,
+                    "role": "operator",
+                    "scope": "system",
+                    "actor": admin_id,
+                    "principal": None,
+                    "authorizer": None,
+                    "reason": "Missing authorizer",
+                },
+            ),
+            (
+                "mixed_bootstrap_attribution_rejected",
+                {
+                    "id": str(uuid4()),
+                    "target": admin_id,
+                    "role": "access_administrator",
+                    "scope": "system",
+                    "actor": admin_id,
+                    "principal": "workstream:system:bootstrap",
+                    "authorizer": None,
+                    "reason": "Mixed attribution",
+                },
+            ),
+        )
+        for name, values in invalid_cases:
+            try:
+                async with engine.begin() as connection:
+                    await connection.execute(text(insert_grant), values)
+            except DBAPIError:
+                results[name] = True
+            else:
+                results[name] = False
+
+        async with engine.begin() as connection:
+            await connection.execute(
+                text(insert_grant),
+                {
+                    "id": bootstrap_id,
+                    "target": admin_id,
+                    "role": "access_administrator",
+                    "scope": "system",
+                    "actor": None,
+                    "principal": "workstream:system:bootstrap",
+                    "authorizer": None,
+                    "reason": "Initial Access Administrator bootstrap",
+                },
+            )
+            await connection.execute(
+                text(
+                    "update authority_control set bootstrap_completed=true,"
+                    "bootstrap_grant_id=:grant,version=1 where id=1"
+                ),
+                {"grant": bootstrap_id},
+            )
+
+        try:
+            async with engine.begin() as connection:
+                await connection.execute(
+                    text(insert_grant),
+                    {
+                        "id": str(uuid4()),
+                        "target": target_id,
+                        "role": "access_administrator",
+                        "scope": "system",
+                        "actor": None,
+                        "principal": "workstream:system:bootstrap",
+                        "authorizer": None,
+                        "reason": "Second bootstrap",
+                    },
+                )
+        except DBAPIError:
+            results["second_bootstrap_rejected"] = True
+        else:
+            results["second_bootstrap_rejected"] = False
+
+        async with engine.begin() as connection:
+            await connection.execute(
+                text(insert_grant),
+                {
+                    "id": grant_id,
+                    "target": target_id,
+                    "role": "operator",
+                    "scope": "system",
+                    "actor": admin_id,
+                    "principal": None,
+                    "authorizer": bootstrap_id,
+                    "reason": "Operations assignment",
+                },
+            )
+
+        immutable_columns = (
+            "id,target_actor_profile_id,role,scope_type,scope_project_id,"
+            "granted_by_actor_profile_id,granted_by_system_principal,"
+            "granted_by_admin_role_grant_id,grant_reason,granted_at"
+        )
+        async with engine.connect() as connection:
+            immutable_before = tuple(
+                (
+                    await connection.execute(
+                        text(
+                            f"select {immutable_columns} from admin_role_grants where id=:id"
+                        ),
+                        {"id": grant_id},
+                    )
+                ).one()
+            )
+
+        guarded_writes = (
+            (
+                "immutable_reason_rejected",
+                "update admin_role_grants set grant_reason='Changed' where id=:id",
+                {"id": grant_id},
+            ),
+            (
+                "delete_rejected",
+                "delete from admin_role_grants where id=:id",
+                {"id": grant_id},
+            ),
+            (
+                "truncate_rejected",
+                "truncate table admin_role_grants",
+                {},
+            ),
+            (
+                "control_reset_rejected",
+                "update authority_control set bootstrap_completed=false,"
+                "bootstrap_grant_id=null,version=0 where id=1",
+                {},
+            ),
+        )
+        immutable_updates = (
+            ("id", str(uuid4())),
+            ("target_actor_profile_id", admin_id),
+            ("role", "finance_authority"),
+            ("scope_type", "project"),
+            ("scope_project_id", str(uuid4())),
+            ("granted_by_actor_profile_id", target_id),
+            ("granted_by_system_principal", "workstream:system:bootstrap"),
+            ("granted_by_admin_role_grant_id", grant_id),
+            ("grant_reason", "Changed provenance"),
+        )
+        immutable_rejected = True
+        for column, value in immutable_updates:
+            try:
+                async with engine.begin() as connection:
+                    await connection.execute(
+                        text(f"update admin_role_grants set {column}=:value where id=:id"),
+                        {"id": grant_id, "value": value},
+                    )
+            except DBAPIError:
+                continue
+            immutable_rejected = False
+        try:
+            async with engine.begin() as connection:
+                await connection.execute(
+                    text(
+                        "update admin_role_grants set granted_at=granted_at + interval '1 second' "
+                        "where id=:id"
+                    ),
+                    {"id": grant_id},
+                )
+        except DBAPIError:
+            pass
+        else:
+            immutable_rejected = False
+        results["immutable_provenance_rejected"] = immutable_rejected
+        try:
+            async with engine.begin() as connection:
+                await connection.execute(
+                    text(
+                        "update admin_role_grants set status='revoked',version=2 where id=:id"
+                    ),
+                    {"id": grant_id},
+                )
+        except DBAPIError:
+            results["incomplete_revocation_rejected"] = True
+        else:
+            results["incomplete_revocation_rejected"] = False
+
+        async with engine.begin() as connection:
+            await connection.execute(
+                text(
+                    "update admin_role_grants set status='revoked',version=2,"
+                    "revoked_by_actor_profile_id=:actor,"
+                    "revoked_by_admin_role_grant_id=:authorizer,"
+                    "revoked_reason='Rotation ended',revoked_at=clock_timestamp() where id=:id"
+                ),
+                {"id": grant_id, "actor": admin_id, "authorizer": bootstrap_id},
+            )
+        for name, statement, values in guarded_writes:
+            try:
+                async with engine.begin() as connection:
+                    await connection.execute(text(statement), values)
+            except DBAPIError:
+                results[name] = True
+            else:
+                results[name] = False
+
+        async with engine.connect() as connection:
+            row = (
+                await connection.execute(
+                    text(
+                        f"select {immutable_columns},status,version,revoked_reason "
+                        "from admin_role_grants where id=:id"
+                    ),
+                    {"id": grant_id},
+                )
+            ).one()
+            immutable_after = tuple(row)[: len(immutable_before)]
+            results.update(
+                immutable_provenance_preserved=immutable_after == immutable_before,
+                revoked_status=row.status,
+                revoked_version=row.version,
+                grant_reason=row.grant_reason,
+                revoked_reason=row.revoked_reason,
+                bootstrap_completed=bool(
+                    await connection.scalar(
+                        text("select bootstrap_completed from authority_control where id=1")
+                    )
+                ),
+            )
+        return results
+    finally:
+        await engine.dispose()
+
+
+async def _clear_admin_authority_guard_fixtures(database_url: str) -> None:
+    engine = create_async_engine(database_url)
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(text("alter table authority_control disable trigger user"))
+            await connection.execute(text("alter table admin_role_grants disable trigger user"))
+            await connection.execute(
+                text(
+                    "update authority_control set bootstrap_completed=false,"
+                    "bootstrap_grant_id=null,version=0 where id=1"
+                )
+            )
+            await connection.execute(text("delete from admin_role_grants"))
+            await connection.execute(text("alter table admin_role_grants enable trigger user"))
+            await connection.execute(text("alter table authority_control enable trigger user"))
+    finally:
+        await engine.dispose()

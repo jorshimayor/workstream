@@ -184,6 +184,13 @@ def test_action_aware_audit_input_enforces_mapping_and_action_availability() -> 
     assert allowed_action_ids == {
         ActionId.ACTOR_PROFILE_READ_SELF,
         ActionId.ACTOR_PROFILE_UPDATE_SELF,
+        ActionId.AUTHORIZATION_PERMISSION_CATALOGUE_READ,
+        ActionId.AUTHORIZATION_ADMIN_ROLE_DEFINITIONS_READ,
+        ActionId.ADMIN_ROLE_GRANT_LIST,
+        ActionId.ACTOR_ADMIN_ROLE_GRANT_HISTORY_READ,
+        ActionId.ADMIN_ROLE_GRANT_ISSUE,
+        ActionId.ADMIN_ROLE_GRANT_REVOKE,
+        ActionId.ADMIN_ROLE_GRANT_BOOTSTRAP,
     }
     with pytest.raises(TypeError, match="invalid authority audit input"):
         _authority_input(
@@ -669,6 +676,29 @@ def test_authority_input_rejects_unbounded_or_inconsistent_evidence() -> None:
         )
     with pytest.raises(ValidationError, match="invalidation evidence"):
         _authority_input(AuthorityEventType.AUTHORITY_INVALIDATION_REQUESTED)
+    target_id = str(uuid4())
+    issued = _authority_input(
+        AuthorityEventType.AUTHORITY_INVALIDATION_REQUESTED,
+        permission_id="admin_role.grant",
+        resource_type="actor_profile",
+        resource_id=target_id,
+        invalidation_cause_event_id=uuid4(),
+        invalidation_target_kind="actor_profile",
+        invalidation_target_ref=target_id,
+        before_facts={"effective": False},
+        after_facts={"effective": True},
+    )
+    assert issued.before_facts == {"effective": False}
+    with pytest.raises(ValidationError, match="invalidation direction"):
+        _authority_input(
+            AuthorityEventType.AUTHORITY_INVALIDATION_REQUESTED,
+            permission_id="admin_role.grant",
+            resource_type="actor_profile",
+            resource_id=target_id,
+            invalidation_cause_event_id=uuid4(),
+            invalidation_target_kind="actor_profile",
+            invalidation_target_ref=target_id,
+        )
     event_id = uuid4()
     with pytest.raises(ValidationError, match="own event"):
         _authority_input(

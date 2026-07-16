@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.exc import SQLAlchemyError
@@ -17,6 +18,7 @@ from app.api.deps.authorization import get_authorization_actor, get_authorizatio
 from app.db.session import get_db_session
 from app.modules.actors.schemas import ActorProfileSelfResponse, ActorProfileUpdateRequest
 from app.modules.actors.service import ActorRegistryError, ActorService, ResolvedActor
+from app.modules.authorization.admin_service import AdminRoleGrantService
 from app.modules.authorization.catalogue import ActionId
 from app.modules.authorization.kernel import AuthorizationService
 from app.schemas.auth import ActorContext, ActorResponse
@@ -48,6 +50,7 @@ async def read_current_actor(
 async def read_current_actor_profile(
     resolved: Annotated[ResolvedActor, Depends(get_authorization_actor)],
     authorization: Annotated[AuthorizationService, Depends(get_authorization_service)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> ActorProfileSelfResponse:
     """Return the caller's canonical Contributor-domain profile."""
     try:
@@ -55,9 +58,19 @@ async def read_current_actor_profile(
             ActionId.ACTOR_PROFILE_READ_SELF,
             ActorService.actor_self_resource(resolved.profile.id, frozenset()),
         )
-        return ActorService.self_response(resolved.profile)
+        resolved = await ActorService(session).touch_after_authorization(resolved)
+        admin_roles = await AdminRoleGrantService(session).active_roles_for_actor(
+            UUID(resolved.profile.id)
+        )
+        response = ActorService.self_response(resolved.profile, admin_roles=admin_roles)
+        await session.commit()
+        return response
     except ActorRegistryError as exc:
+        await session.rollback()
         raise actor_registry_http_error(exc) from exc
+    except SQLAlchemyError as exc:
+        await session.rollback()
+        raise actor_registry_unavailable_error() from exc
 
 
 @actors_router.patch(
@@ -77,7 +90,13 @@ async def update_current_actor_profile(
             ActionId.ACTOR_PROFILE_UPDATE_SELF,
             ActorService.actor_self_resource(resolved.profile.id, payload.model_fields_set),
         )
-        response = await ActorService(session).update_self(resolved, payload)
+        service = ActorService(session)
+        resolved = await service.touch_after_authorization(resolved)
+        response = await service.update_self(resolved, payload)
+        admin_roles = await AdminRoleGrantService(session).active_roles_for_actor(
+            UUID(resolved.profile.id)
+        )
+        response = response.model_copy(update={"admin_roles": admin_roles})
         await session.commit()
         return response
     except ActorRegistryError as exc:

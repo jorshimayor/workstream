@@ -2,10 +2,14 @@ from __future__ import annotations
 
 import ast
 import asyncio
+import base64
 from collections import UserDict
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
+from datetime import UTC, datetime
 import inspect
+import json
 from pathlib import Path
+from types import SimpleNamespace
 from uuid import UUID, uuid4
 
 from alembic import command
@@ -15,8 +19,15 @@ from pydantic import ValidationError
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from starlette.requests import Request
 
-from app.modules.audit.schemas import ActorReferenceKind, AuthorityAuditEventInput, AuthorityEventType
+from app.api.deps.authorization import get_authorization_service
+from app.core.config import get_settings
+from app.modules.audit.schemas import (
+    ActorReferenceKind,
+    AuthorityAuditEventInput,
+    AuthorityEventType,
+)
 from app.modules.audit.service import AuditService
 from app.modules.authorization import kernel as authorization_kernel
 from app.modules.authorization.catalogue import (
@@ -66,20 +77,53 @@ from app.modules.authorization.schemas import (
 )
 from app.modules.authorization.service import AuthorityMutationService
 from app.modules.authorization.kernel import AuthorizationService
+from app.modules.authorization.admin_service import (
+    AdminRoleGrantService,
+    BootstrapAlreadyCompleted,
+    BootstrapTargetIneligible,
+    LastAccessAdministratorConflict,
+)
+from app.modules.authorization.policy import ADMIN_ROLE_PERMISSIONS, ADMIN_ROLE_SCOPES
 from app.modules.authorization.runtime import (
+    ActorAdminRoleGrantHistoryResourceContext,
     ActorKind,
     ActorSelfResourceContext,
     ActorStatus,
+    AdminRoleGrantCollectionResourceContext,
+    AdminRoleGrantIssueResourceContext,
+    AdminRoleGrantResourceContext,
     AuthorizationContext,
     AuthorizationDecision,
     AuthorizationDenied,
     AuthorizationDenialCode,
     IdentityLinkStatus,
     MatchedAuthorityKind,
+    PermissionCatalogueResourceContext,
     SystemResourceContext,
+    authorization_resource_digest,
 )
 
 DIGEST = "sha256:" + "a" * 64
+
+
+def _admin_resource_context(
+    request: AdminRoleGrantIssueRequest | AdminRoleGrantRevokeRequest,
+    *,
+    existing_idempotency_record: bool = False,
+):
+    if isinstance(request, AdminRoleGrantIssueRequest):
+        return AdminRoleGrantIssueResourceContext(
+            resource_type="admin_role_grant_issue",
+            resource_id=request.target_actor_id,
+            role=request.role,
+            scope_type=request.scope_type,
+            scope_project_id=request.scope_project_id,
+        )
+    return AdminRoleGrantResourceContext(
+        resource_type="admin_role_grant",
+        resource_id=request.grant_id,
+        existing_idempotency_record=existing_idempotency_record,
+    )
 
 
 def test_closed_permission_and_action_catalogue_is_exact_and_non_executable() -> None:
@@ -116,7 +160,10 @@ def test_closed_permission_and_action_catalogue_is_exact_and_non_executable() ->
         "actor.profile.read_self": ("actor.profile.read_self", "WS-AUTH-001-07B"),
         "actor.profile.update_self": ("actor.profile.update_self", "WS-AUTH-001-07B"),
         "operations.task.start_override": ("operations.task.start_override", "WS-AUTH-001-13"),
-        "operations.submission_gate.repair": ("operations.submission_gate.repair", "WS-AUTH-001-14"),
+        "operations.submission_gate.repair": (
+            "operations.submission_gate.repair",
+            "WS-AUTH-001-14",
+        ),
         "operations.checker.retry": ("operations.checker.retry", "WS-AUTH-001-14"),
         "submission.create": ("submission.create", "WS-AUTH-001-14"),
         "review.queue.read": ("review.queue.read", "WS-REV-001-05"),
@@ -175,18 +222,35 @@ def test_closed_permission_and_action_catalogue_is_exact_and_non_executable() ->
             "WS-ART-001-06A",
         ),
         "artifact.checker_output.write": ("artifact.checker_output.write", "WS-ART-001-06B"),
+        "authorization.permission_catalogue.read": ("admin_role.read", "WS-AUTH-001-08"),
+        "authorization.admin_role_definitions.read": ("admin_role.read", "WS-AUTH-001-08"),
+        "admin_role_grant.list": ("admin_role.read", "WS-AUTH-001-08"),
+        "actor.admin_role_grant_history.read": ("admin_role.read", "WS-AUTH-001-08"),
+        "admin_role_grant.issue": ("admin_role.grant", "WS-AUTH-001-08"),
+        "admin_role_grant.revoke": ("admin_role.revoke", "WS-AUTH-001-08"),
+        "admin_role_grant.bootstrap": ("admin_role.grant", "WS-AUTH-001-08"),
     }
     assert {item.value for item in HISTORICAL_PERMISSION_IDS} == historical_permissions
     assert {item.value for item in NEW_PERMISSION_IDS} == new_permissions
     assert {item.value for item in PERMISSION_IDS} == historical_permissions | new_permissions
-    assert len(ACTION_IDS) == len(ACTION_DEFINITIONS) == len(ACTION_BY_ID) == 50
+    assert len(ACTION_IDS) == len(ACTION_DEFINITIONS) == len(ACTION_BY_ID) == 57
     assert set(ACTION_BY_ID) == ACTION_IDS
     assert {definition.owner for definition in ACTION_DEFINITIONS} == set(ActionOwner)
     assert {
         definition.action_id
         for definition in ACTION_DEFINITIONS
         if definition.availability is ActionAvailability.ACTIVE
-    } == {ActionId.ACTOR_PROFILE_READ_SELF, ActionId.ACTOR_PROFILE_UPDATE_SELF}
+    } == {
+        ActionId.ACTOR_PROFILE_READ_SELF,
+        ActionId.ACTOR_PROFILE_UPDATE_SELF,
+        ActionId.AUTHORIZATION_PERMISSION_CATALOGUE_READ,
+        ActionId.AUTHORIZATION_ADMIN_ROLE_DEFINITIONS_READ,
+        ActionId.ADMIN_ROLE_GRANT_LIST,
+        ActionId.ACTOR_ADMIN_ROLE_GRANT_HISTORY_READ,
+        ActionId.ADMIN_ROLE_GRANT_ISSUE,
+        ActionId.ADMIN_ROLE_GRANT_REVOKE,
+        ActionId.ADMIN_ROLE_GRANT_BOOTSTRAP,
+    }
     assert {
         definition.action_id.value: (
             definition.permission_id.value,
@@ -201,6 +265,64 @@ def test_closed_permission_and_action_catalogue_is_exact_and_non_executable() ->
         resolve_executable_action(ActionId.REVIEW_QUEUE_READ)
     with pytest.raises(TypeError):
         ACTION_BY_ID[ActionId.ACTOR_PROFILE_READ_SELF] = ACTION_DEFINITIONS[0]
+
+
+def test_administrative_role_policy_and_definition_responses_are_exact() -> None:
+    expected_permissions = {
+        AdminRole.ACCESS_ADMINISTRATOR: """actor.profile.read_any actor.profile.suspend
+            actor.profile.reactivate actor.profile.deactivate actor.identity_link.read
+            actor.identity_link.revoke actor.identity_link.reactivate actor.service.provision
+            admin_role.read admin_role.grant admin_role.revoke audit.read audit.export""".split(),
+        AdminRole.OPERATOR: """project.read review.queue.inspect review.lease.force_release
+            contribution.read_project compensation.award.read operations.status.read
+            operations.timer.run operations.reconcile.run operations.outbox.retry
+            operations.projection.rebuild operations.task.start_override
+            operations.submission_gate.repair operations.checker.retry artifact.binding.read
+            artifact.replica.read artifact.receipt.read artifact.verification_job.read
+            artifact.verification_job.retry artifact.recovery_attempt.read artifact.audit.read
+            audit.read""".split(),
+        AdminRole.PROJECT_MANAGER: """project.create project.read project.update project.archive
+            project.guide.manage project.effective_policy.manage project.task.manage
+            project.review_policy.manage project.role_grant.read project.role_grant.manage
+            review.queue.inspect contribution.read_project compensation.award.read
+            audit.read""".split(),
+        AdminRole.FINANCE_AUTHORITY: """project.read contribution.read_project
+            compensation.policy.manage compensation.adapter_binding.manage
+            compensation.award.read compensation.delivery.reconcile audit.read""".split(),
+        AdminRole.AUDIT_AUTHORITY: """actor.profile.read_any actor.identity_link.read
+            admin_role.read project.read project.role_grant.read review.queue.inspect
+            review.chain.read contribution.read_project compensation.award.read audit.read
+            audit.export""".split(),
+    }
+    expected_scopes = {
+        AdminRole.ACCESS_ADMINISTRATOR: [AdminScope.SYSTEM],
+        AdminRole.OPERATOR: [AdminScope.SYSTEM],
+        AdminRole.PROJECT_MANAGER: [AdminScope.SYSTEM, AdminScope.PROJECT],
+        AdminRole.FINANCE_AUTHORITY: [AdminScope.SYSTEM, AdminScope.PROJECT],
+        AdminRole.AUDIT_AUTHORITY: [AdminScope.SYSTEM, AdminScope.PROJECT],
+    }
+
+    assert {
+        role: [permission.value for permission in permissions]
+        for role, permissions in ADMIN_ROLE_PERMISSIONS.items()
+    } == expected_permissions
+    assert {role: list(scopes) for role, scopes in ADMIN_ROLE_SCOPES.items()} == expected_scopes
+    assert all(
+        not permission.value.startswith("artifact.")
+        for permission in ADMIN_ROLE_PERMISSIONS[AdminRole.AUDIT_AUTHORITY]
+    )
+
+    permission_response = AdminRoleGrantService.permission_definitions()
+    role_response = AdminRoleGrantService.role_definitions()
+    assert permission_response.total == 74
+    assert [item.permission_id.value for item in permission_response.items] == sorted(
+        permission.value for permission in PermissionId
+    )
+    assert role_response.total == 5
+    assert [item.role for item in role_response.items] == list(AdminRole)
+    assert [list(item.allowed_scopes) for item in role_response.items] == [
+        expected_scopes[role] for role in AdminRole
+    ]
 
 
 @pytest.mark.parametrize(
@@ -327,6 +449,972 @@ def _runtime_service(
     return service, evidence
 
 
+class _AdminPolicyFacts:
+    """Configurable canonical facts for focused kernel policy tests."""
+
+    def __init__(self, context: AuthorizationContext) -> None:
+        self.context = context
+        self.matched = SimpleNamespace(id=uuid4())
+        self.has_any = False
+        self.target_exists = True
+        self.project_is_present = True
+        self.actor_is_present = True
+        self.grant = SimpleNamespace(
+            id=uuid4(),
+            status="active",
+            target_actor_profile_id=str(uuid4()),
+        )
+        self.request_actor_is_present = True
+        self.control_locked = False
+
+    async def lock_control(self):
+        self.control_locked = True
+        return SimpleNamespace(id=1)
+
+    async def lock_request_actor(self, identity_link_id, actor_profile_id):
+        if not self.request_actor_is_present:
+            return None
+        return (
+            SimpleNamespace(id=str(identity_link_id), status="active"),
+            SimpleNamespace(id=str(actor_profile_id), actor_kind="human", status="active"),
+        )
+
+    async def find_effective_grant(self, *_args, **_kwargs):
+        return self.matched
+
+    async def has_effective_permission_any_scope(self, *_args, **_kwargs):
+        return self.has_any
+
+    async def lock_eligible_human(self, _actor_profile_id):
+        return (object(), object()) if self.target_exists else None
+
+    async def project_exists(self, _project_id, **_kwargs):
+        return self.project_is_present
+
+    async def actor_exists(self, _actor_profile_id):
+        return self.actor_is_present
+
+    async def get_grant(self, _grant_id, **_kwargs):
+        return self.grant
+
+
+def _admin_runtime_service(
+    context: AuthorizationContext,
+) -> tuple[AuthorizationService, _DecisionEvidence, _AdminPolicyFacts]:
+    service, evidence = _runtime_service(context)
+    facts = _AdminPolicyFacts(context)
+    service._admin = facts  # type: ignore[assignment]
+    return service, evidence, facts
+
+
+async def test_admin_kernel_allows_only_a_matched_registered_grant() -> None:
+    context = _runtime_context()
+    service, evidence, facts = _admin_runtime_service(context)
+    resource = PermissionCatalogueResourceContext(
+        resource_type="permission_catalogue",
+        resource_id="workstream:permission_catalogue",
+    )
+
+    decision = await service.require(ActionId.AUTHORIZATION_PERMISSION_CATALOGUE_READ, resource)
+
+    assert decision.allowed is True
+    assert decision.matched_authority_kind is MatchedAuthorityKind.ADMIN_ROLE_GRANT
+    assert decision.matched_grant_id == facts.matched.id
+    assert decision.matched_scope_project_id is None
+    assert evidence.events[0].matched_grant_id == str(facts.matched.id)
+
+    facts.matched = None
+    with pytest.raises(AuthorizationDenied) as denied:
+        await service.require(ActionId.AUTHORIZATION_PERMISSION_CATALOGUE_READ, resource)
+    assert denied.value.public_code == "permission_not_granted"
+
+
+async def test_admin_kernel_conceals_targets_until_permission_and_scope_match() -> None:
+    context = _runtime_context()
+    service, _, facts = _admin_runtime_service(context)
+    project_id = uuid4()
+    resource = AdminRoleGrantCollectionResourceContext(
+        resource_type="admin_role_grant_collection",
+        resource_id=project_id,
+        scope_type=AdminScope.PROJECT,
+        scope_project_id=project_id,
+    )
+    facts.matched = None
+    facts.has_any = True
+    facts.project_is_present = False
+
+    with pytest.raises(AuthorizationDenied) as wrong_scope:
+        await service.require(ActionId.ADMIN_ROLE_GRANT_LIST, resource)
+    assert wrong_scope.value.public_code == "scope_not_authorized"
+
+    facts.has_any = False
+    with pytest.raises(AuthorizationDenied) as no_permission:
+        await service.require(ActionId.ADMIN_ROLE_GRANT_LIST, resource)
+    assert no_permission.value.public_code == "permission_not_granted"
+
+    facts.matched = SimpleNamespace(id=uuid4())
+    with pytest.raises(AuthorizationDenied) as absent_project:
+        await service.require(ActionId.ADMIN_ROLE_GRANT_LIST, resource)
+    assert absent_project.value.public_code == "resource_not_found"
+
+
+async def test_admin_issue_guards_are_central_and_revalidated_under_control_lock() -> None:
+    context = _runtime_context()
+    service, _, facts = _admin_runtime_service(context)
+
+    self_resource = AdminRoleGrantIssueResourceContext(
+        resource_type="admin_role_grant_issue",
+        resource_id=context.actor_profile_id,
+        role=AdminRole.OPERATOR,
+        scope_type=AdminScope.SYSTEM,
+    )
+    with pytest.raises(AuthorizationDenied) as self_grant:
+        await service.require(ActionId.ADMIN_ROLE_GRANT_ISSUE, self_resource)
+    assert self_grant.value.public_code == "self_grant_forbidden"
+    assert facts.control_locked is True
+
+    facts.request_actor_is_present = False
+    target_resource = self_resource.model_copy(update={"resource_id": uuid4()})
+    with pytest.raises(AuthorizationDenied) as missing_request_actor:
+        await service.require(ActionId.ADMIN_ROLE_GRANT_ISSUE, target_resource)
+    assert missing_request_actor.value.public_code == "identity_link_revoked"
+
+    facts.request_actor_is_present = True
+    facts.target_exists = False
+    with pytest.raises(AuthorizationDenied) as missing_target:
+        await service.require(ActionId.ADMIN_ROLE_GRANT_ISSUE, target_resource)
+    assert missing_target.value.public_code == "actor_not_found"
+
+
+async def test_admin_revoke_and_history_guards_fail_closed() -> None:
+    context = _runtime_context()
+    service, _, facts = _admin_runtime_service(context)
+    grant_id = uuid4()
+    revoke_resource = AdminRoleGrantResourceContext(
+        resource_type="admin_role_grant",
+        resource_id=grant_id,
+    )
+    facts.grant = None
+    with pytest.raises(AuthorizationDenied) as missing_grant:
+        await service.require(ActionId.ADMIN_ROLE_GRANT_REVOKE, revoke_resource)
+    assert missing_grant.value.public_code == "grant_not_found"
+
+    facts.grant = SimpleNamespace(
+        id=grant_id,
+        status="active",
+        target_actor_profile_id=str(context.actor_profile_id),
+    )
+    with pytest.raises(AuthorizationDenied) as self_revoke:
+        await service.require(ActionId.ADMIN_ROLE_GRANT_REVOKE, revoke_resource)
+    assert self_revoke.value.public_code == "self_role_revoke_forbidden"
+
+    target_id = uuid4()
+    history = ActorAdminRoleGrantHistoryResourceContext(
+        resource_type="actor_admin_role_grant_history",
+        resource_id=target_id,
+        scope_type=AdminScope.SYSTEM,
+        scope_project_id=None,
+    )
+    facts.actor_is_present = False
+    with pytest.raises(AuthorizationDenied) as missing_actor:
+        await service.require(ActionId.ACTOR_ADMIN_ROLE_GRANT_HISTORY_READ, history)
+    assert missing_actor.value.public_code == "actor_not_found"
+
+
+@pytest.mark.parametrize(
+    ("operation", "decision_change"),
+    [
+        ("issue", {"action_id": ActionId.ADMIN_ROLE_GRANT_REVOKE}),
+        ("issue", {"resource_type": "admin_role_grant"}),
+        ("issue", {"resource_id": uuid4()}),
+        ("issue", {"permission_id": PermissionId.ADMIN_ROLE_REVOKE}),
+        ("issue", {"matched_grant_id": None}),
+        ("issue", {"matched_authority_kind": MatchedAuthorityKind.ACTOR_SELF}),
+        ("issue", {"matched_scope_project_id": uuid4()}),
+        ("issue", {"revalidated": False}),
+        ("revoke", {"action_id": ActionId.ADMIN_ROLE_GRANT_ISSUE}),
+        ("revoke", {"resource_type": "admin_role_grant_issue"}),
+        ("revoke", {"resource_id": uuid4()}),
+        ("revoke", {"permission_id": PermissionId.ADMIN_ROLE_GRANT}),
+        ("revoke", {"matched_grant_id": None}),
+        ("revoke", {"matched_authority_kind": MatchedAuthorityKind.ACTOR_SELF}),
+        ("revoke", {"matched_scope_project_id": uuid4()}),
+        ("revoke", {"revalidated": False}),
+    ],
+)
+async def test_admin_mutations_reject_decisions_not_bound_to_exact_request(
+    operation: str,
+    decision_change: dict,
+) -> None:
+    """Feature mutation cannot consume authority issued for another operation."""
+    actor_id, target_id, grant_id, matched_grant_id = uuid4(), uuid4(), uuid4(), uuid4()
+    if operation == "issue":
+        request = AdminRoleGrantIssueRequest(
+            operation=AuthorityOperation.ADMIN_ROLE_GRANT_ISSUE,
+            target_actor_id=target_id,
+            role=AdminRole.OPERATOR,
+            scope_type=AdminScope.SYSTEM,
+            reason_digest=DIGEST,
+        )
+        action_id = ActionId.ADMIN_ROLE_GRANT_ISSUE
+        permission_id = PermissionId.ADMIN_ROLE_GRANT
+        resource_type = "admin_role_grant_issue"
+        resource_id = target_id
+    else:
+        request = AdminRoleGrantRevokeRequest(
+            operation=AuthorityOperation.ADMIN_ROLE_GRANT_REVOKE,
+            grant_id=grant_id,
+            reason_digest=DIGEST,
+        )
+        action_id = ActionId.ADMIN_ROLE_GRANT_REVOKE
+        permission_id = PermissionId.ADMIN_ROLE_REVOKE
+        resource_type = "admin_role_grant"
+        resource_id = grant_id
+    decision = AuthorizationDecision(
+        decision_id=uuid4(),
+        action_id=action_id,
+        permission_id=permission_id,
+        allowed=True,
+        denial_code=None,
+        resource_type=resource_type,
+        resource_id=resource_id,
+        resource_context_digest=authorization_resource_digest(_admin_resource_context(request)),
+        matched_authority_kind=MatchedAuthorityKind.ADMIN_ROLE_GRANT,
+        matched_grant_id=matched_grant_id,
+        matched_scope_project_id=None,
+        revalidated=True,
+        request_id=uuid4(),
+        correlation_id=uuid4(),
+    ).model_copy(update=decision_change)
+    claim = AuthorityClaimHandle(
+        record_id=uuid4(),
+        idempotency_key=uuid4(),
+        actor_ref_kind=ActorReferenceKind.ACTOR_PROFILE,
+        actor_ref=str(actor_id),
+        operation=request.operation,
+        request_digest=DIGEST,
+    )
+    service = AdminRoleGrantService(object())  # type: ignore[arg-type]
+
+    if operation == "issue":
+        with pytest.raises(TypeError, match="requires exact matched authority"):
+            await service.complete_issue(
+                claim=claim,
+                request=request,
+                decision=decision,
+                actor_profile_id=actor_id,
+                reason="Bounded reason",
+            )
+        with pytest.raises(TypeError, match="requires exact matched authority"):
+            await service.record_mismatch(
+                actor_profile_id=actor_id,
+                request=request,
+                decision=decision,
+            )
+        with pytest.raises(TypeError, match="requires exact matched authority"):
+            await service.record_issue_conflict(
+                actor_profile_id=actor_id,
+                request=request,
+                grant_id=uuid4(),
+                decision=decision,
+            )
+    else:
+        with pytest.raises(TypeError, match="requires exact matched authority"):
+            await service.complete_revoke(
+                claim=claim,
+                request=request,
+                decision=decision,
+                actor_profile_id=actor_id,
+                reason="Bounded reason",
+            )
+        with pytest.raises(TypeError, match="requires exact matched authority"):
+            await service.record_mismatch(
+                actor_profile_id=actor_id,
+                request=request,
+                decision=decision,
+            )
+        with pytest.raises(TypeError, match="requires exact matched authority"):
+            await service.record_last_admin_denial(
+                actor_profile_id=actor_id,
+                grant_id=grant_id,
+                target_actor_profile_id=target_id,
+                decision=decision,
+            )
+
+
+async def test_admin_resource_digest_alone_rejects_substituted_role_and_disposition() -> None:
+    """Every admin consumer rejects cross-wiring hidden by equal target IDs."""
+    actor_id, target_id, grant_id, matched_grant_id = uuid4(), uuid4(), uuid4(), uuid4()
+
+    class NoWrites:
+        def __getattr__(self, name):
+            raise AssertionError(f"unexpected write boundary access: {name}")
+
+    issue_request = AdminRoleGrantIssueRequest(
+        operation=AuthorityOperation.ADMIN_ROLE_GRANT_ISSUE,
+        target_actor_id=target_id,
+        role=AdminRole.OPERATOR,
+        scope_type=AdminScope.SYSTEM,
+        reason_digest=derive_reason_digest("Bound issue reason"),
+    )
+    substituted_issue_context = AdminRoleGrantIssueResourceContext(
+        resource_type="admin_role_grant_issue",
+        resource_id=target_id,
+        role=AdminRole.ACCESS_ADMINISTRATOR,
+        scope_type=AdminScope.SYSTEM,
+    )
+    issue_digest = authorization_resource_digest(_admin_resource_context(issue_request))
+    substituted_issue_digest = authorization_resource_digest(substituted_issue_context)
+    assert issue_digest != substituted_issue_digest
+    issue_decision = AuthorizationDecision(
+        decision_id=uuid4(),
+        action_id=ActionId.ADMIN_ROLE_GRANT_ISSUE,
+        permission_id=PermissionId.ADMIN_ROLE_GRANT,
+        allowed=True,
+        denial_code=None,
+        resource_type="admin_role_grant_issue",
+        resource_id=target_id,
+        resource_context_digest=substituted_issue_digest,
+        matched_authority_kind=MatchedAuthorityKind.ADMIN_ROLE_GRANT,
+        matched_grant_id=matched_grant_id,
+        matched_scope_project_id=None,
+        revalidated=True,
+        request_id=uuid4(),
+        correlation_id=uuid4(),
+    )
+    issue_claim = AuthorityClaimHandle(
+        record_id=uuid4(),
+        idempotency_key=uuid4(),
+        actor_ref_kind=ActorReferenceKind.ACTOR_PROFILE,
+        actor_ref=str(actor_id),
+        operation=issue_request.operation,
+        request_digest=DIGEST,
+    )
+    service = AdminRoleGrantService(object())  # type: ignore[arg-type]
+    service._repository = NoWrites()  # type: ignore[assignment]
+    service._mutation = NoWrites()  # type: ignore[assignment]
+    service._audit = NoWrites()  # type: ignore[assignment]
+    with pytest.raises(TypeError, match="requires exact matched authority"):
+        await service.complete_issue(
+            claim=issue_claim,
+            request=issue_request,
+            decision=issue_decision,
+            actor_profile_id=actor_id,
+            reason="Bound issue reason",
+        )
+    with pytest.raises(TypeError, match="requires exact matched authority"):
+        await service.record_mismatch(
+            actor_profile_id=actor_id,
+            request=issue_request,
+            decision=issue_decision,
+        )
+    with pytest.raises(TypeError, match="requires exact matched authority"):
+        await service.record_issue_conflict(
+            actor_profile_id=actor_id,
+            request=issue_request,
+            grant_id=uuid4(),
+            decision=issue_decision,
+        )
+
+    revoke_request = AdminRoleGrantRevokeRequest(
+        operation=AuthorityOperation.ADMIN_ROLE_GRANT_REVOKE,
+        grant_id=grant_id,
+        reason_digest=derive_reason_digest("Bound revoke reason"),
+    )
+    normal_digest = authorization_resource_digest(_admin_resource_context(revoke_request))
+    existing_digest = authorization_resource_digest(
+        _admin_resource_context(revoke_request, existing_idempotency_record=True)
+    )
+    assert normal_digest != existing_digest
+    revoke_decision = AuthorizationDecision(
+        decision_id=uuid4(),
+        action_id=ActionId.ADMIN_ROLE_GRANT_REVOKE,
+        permission_id=PermissionId.ADMIN_ROLE_REVOKE,
+        allowed=True,
+        denial_code=None,
+        resource_type="admin_role_grant",
+        resource_id=grant_id,
+        resource_context_digest=existing_digest,
+        matched_authority_kind=MatchedAuthorityKind.ADMIN_ROLE_GRANT,
+        matched_grant_id=matched_grant_id,
+        matched_scope_project_id=None,
+        revalidated=True,
+        request_id=uuid4(),
+        correlation_id=uuid4(),
+    )
+    revoke_claim = issue_claim.model_copy(
+        update={"operation": revoke_request.operation}
+    )
+    with pytest.raises(TypeError, match="requires exact matched authority"):
+        await service.complete_revoke(
+            claim=revoke_claim,
+            request=revoke_request,
+            decision=revoke_decision,
+            actor_profile_id=actor_id,
+            reason="Bound revoke reason",
+        )
+    with pytest.raises(TypeError, match="requires exact matched authority"):
+        await service.record_last_admin_denial(
+            actor_profile_id=actor_id,
+            grant_id=grant_id,
+            target_actor_profile_id=target_id,
+            decision=revoke_decision,
+        )
+    with pytest.raises(TypeError, match="requires exact matched authority"):
+        await service.record_mismatch(
+            actor_profile_id=actor_id,
+            request=revoke_request,
+            decision=revoke_decision.model_copy(
+                update={"resource_context_digest": normal_digest}
+            ),
+        )
+
+
+async def test_final_access_admin_guard_ignores_ineffective_target_and_is_service_owned() -> None:
+    grant_id, target_id = uuid4(), uuid4()
+    grant = SimpleNamespace(
+        id=grant_id,
+        target_actor_profile_id=str(target_id),
+        role=AdminRole.ACCESS_ADMINISTRATOR.value,
+        scope_type=AdminScope.SYSTEM.value,
+        status="active",
+    )
+
+    class Facts:
+        target_is_effective = False
+
+        async def get_grant(self, _grant_id, **_kwargs):
+            return grant
+
+        async def lock_eligible_human(self, _actor_profile_id):
+            return (object(), object()) if self.target_is_effective else None
+
+        async def count_effective_access_administrators(self):
+            return 1
+
+    service = AdminRoleGrantService(object())  # type: ignore[arg-type]
+    facts = Facts()
+    service._repository = facts  # type: ignore[assignment]
+    original_grant = grant
+    async def get_missing_grant(*_args, **_kwargs):
+        return None
+
+    facts.get_grant = get_missing_grant  # type: ignore[method-assign]
+    assert await service.final_access_administrator_conflict(grant_id) is None
+
+    async def get_revoked_grant(*_args, **_kwargs):
+        return SimpleNamespace(**(vars(original_grant) | {"status": "revoked"}))
+
+    facts.get_grant = get_revoked_grant  # type: ignore[method-assign]
+    assert await service.final_access_administrator_conflict(grant_id) is None
+
+    async def get_active_grant(*_args, **_kwargs):
+        return original_grant
+
+    facts.get_grant = get_active_grant  # type: ignore[method-assign]
+    assert await service.final_access_administrator_conflict(grant_id) is None
+
+    facts.target_is_effective = True
+    assert await service.final_access_administrator_conflict(grant_id) is grant
+
+    async def force_conflict(_grant_id):
+        return grant
+
+    service.final_access_administrator_conflict = force_conflict  # type: ignore[method-assign]
+    request = AdminRoleGrantRevokeRequest(
+        operation=AuthorityOperation.ADMIN_ROLE_GRANT_REVOKE,
+        grant_id=grant_id,
+        reason_digest=derive_reason_digest("Cannot remove final access"),
+    )
+    actor_id, authorizer_id = uuid4(), uuid4()
+    decision = AuthorizationDecision(
+        decision_id=uuid4(),
+        action_id=ActionId.ADMIN_ROLE_GRANT_REVOKE,
+        permission_id=PermissionId.ADMIN_ROLE_REVOKE,
+        allowed=True,
+        denial_code=None,
+        resource_type="admin_role_grant",
+        resource_id=grant_id,
+        resource_context_digest=authorization_resource_digest(_admin_resource_context(request)),
+        matched_authority_kind=MatchedAuthorityKind.ADMIN_ROLE_GRANT,
+        matched_grant_id=authorizer_id,
+        matched_scope_project_id=None,
+        revalidated=True,
+        request_id=uuid4(),
+        correlation_id=uuid4(),
+    )
+    claim = AuthorityClaimHandle(
+        record_id=uuid4(),
+        idempotency_key=uuid4(),
+        actor_ref_kind=ActorReferenceKind.ACTOR_PROFILE,
+        actor_ref=str(actor_id),
+        operation=request.operation,
+        request_digest=DIGEST,
+    )
+    with pytest.raises(LastAccessAdministratorConflict) as exc_info:
+        await service.complete_revoke(
+            claim=claim,
+            request=request,
+            decision=decision,
+            actor_profile_id=actor_id,
+            reason="Cannot remove final access",
+        )
+    assert exc_info.value.grant_id == grant_id
+    assert exc_info.value.target_actor_profile_id == target_id
+
+
+async def test_admin_revoke_stages_complete_state_and_evidence() -> None:
+    """A valid revoke mutates history and completes one linked evidence unit."""
+    actor_id, target_id, grant_id, authorizer_id = uuid4(), uuid4(), uuid4(), uuid4()
+    request = AdminRoleGrantRevokeRequest(
+        operation=AuthorityOperation.ADMIN_ROLE_GRANT_REVOKE,
+        grant_id=grant_id,
+        reason_digest=derive_reason_digest("Rotation ended"),
+    )
+    decision = AuthorizationDecision(
+        decision_id=uuid4(),
+        action_id=ActionId.ADMIN_ROLE_GRANT_REVOKE,
+        permission_id=PermissionId.ADMIN_ROLE_REVOKE,
+        allowed=True,
+        denial_code=None,
+        resource_type="admin_role_grant",
+        resource_id=grant_id,
+        resource_context_digest=authorization_resource_digest(_admin_resource_context(request)),
+        matched_authority_kind=MatchedAuthorityKind.ADMIN_ROLE_GRANT,
+        matched_grant_id=authorizer_id,
+        matched_scope_project_id=None,
+        revalidated=True,
+        request_id=uuid4(),
+        correlation_id=uuid4(),
+    )
+    claim = AuthorityClaimHandle(
+        record_id=uuid4(),
+        idempotency_key=uuid4(),
+        actor_ref_kind=ActorReferenceKind.ACTOR_PROFILE,
+        actor_ref=str(actor_id),
+        operation=request.operation,
+        request_digest=DIGEST,
+    )
+    grant = SimpleNamespace(
+        id=grant_id,
+        target_actor_profile_id=str(target_id),
+        role=AdminRole.OPERATOR.value,
+        scope_type=AdminScope.SYSTEM.value,
+        scope_project_id=None,
+        status="active",
+        version=1,
+        revoked_by_actor_profile_id=None,
+        revoked_by_admin_role_grant_id=None,
+        revoked_reason=None,
+        revoked_at=None,
+    )
+
+    class Session:
+        flush_count = 0
+        refresh_count = 0
+
+        async def flush(self):
+            self.flush_count += 1
+
+        async def refresh(self, refreshed):
+            assert refreshed is grant
+            self.refresh_count += 1
+
+    class Repository:
+        async def get_grant(self, selected_grant_id, *, for_update=False):
+            assert selected_grant_id == grant_id
+            assert for_update is True
+            return grant
+
+    class Mutation:
+        completed = None
+
+        async def complete(self, **kwargs):
+            self.completed = kwargs
+
+    session = Session()
+    service = AdminRoleGrantService(session)  # type: ignore[arg-type]
+    service._repository = Repository()  # type: ignore[assignment]
+    mutation = Mutation()
+    service._mutation = mutation  # type: ignore[assignment]
+
+    async def no_final_admin_conflict(_grant_id):
+        return None
+
+    service.final_access_administrator_conflict = no_final_admin_conflict  # type: ignore[method-assign]
+
+    with pytest.raises(TypeError, match="requires exact matched authority"):
+        await service.complete_revoke(
+            claim=claim,
+            request=request,
+            decision=decision,
+            actor_profile_id=actor_id,
+            reason="Cross-wired reason",
+        )
+    assert grant.status == "active"
+    assert session.flush_count == session.refresh_count == 0
+    assert mutation.completed is None
+
+    response = await service.complete_revoke(
+        claim=claim,
+        request=request,
+        decision=decision,
+        actor_profile_id=actor_id,
+        reason="Rotation ended",
+    )
+
+    assert response.model_dump(mode="json") == {
+        "resource_type": "admin_role_grant",
+        "resource_id": str(grant_id),
+        "version": 2,
+        "http_status": 200,
+    }
+    assert grant.status == "revoked"
+    assert grant.revoked_by_actor_profile_id == str(actor_id)
+    assert grant.revoked_by_admin_role_grant_id == authorizer_id
+    assert grant.revoked_reason == "Rotation ended"
+    assert session.flush_count == session.refresh_count == 1
+    assert mutation.completed["success"].event_type is AuthorityEventType.ADMIN_ROLE_GRANT_REVOKED
+    assert mutation.completed["success"].target_actor_ref == str(target_id)
+    assert mutation.completed["success"].request_id == decision.request_id
+    assert mutation.completed["success"].correlation_id == decision.correlation_id
+    assert mutation.completed["invalidation"].request_id == decision.request_id
+    assert mutation.completed["invalidation"].correlation_id == decision.correlation_id
+
+    class MissingRepository:
+        async def get_grant(self, _grant_id, *, for_update=False):
+            assert for_update is True
+            return None
+
+    service._repository = MissingRepository()  # type: ignore[assignment]
+    with pytest.raises(RuntimeError, match="authorized grant disappeared"):
+        await service.complete_revoke(
+            claim=claim,
+            request=request,
+            decision=decision,
+            actor_profile_id=actor_id,
+            reason="Rotation ended",
+        )
+
+
+async def test_admin_issue_stages_complete_state_and_evidence() -> None:
+    """A valid issue returns its bounded reference and linked success evidence."""
+    actor_id, target_id, authorizer_id = uuid4(), uuid4(), uuid4()
+    request = AdminRoleGrantIssueRequest(
+        operation=AuthorityOperation.ADMIN_ROLE_GRANT_ISSUE,
+        target_actor_id=target_id,
+        role=AdminRole.OPERATOR,
+        scope_type=AdminScope.SYSTEM,
+        reason_digest=derive_reason_digest("On-call operations coverage"),
+    )
+    decision = AuthorizationDecision(
+        decision_id=uuid4(),
+        action_id=ActionId.ADMIN_ROLE_GRANT_ISSUE,
+        permission_id=PermissionId.ADMIN_ROLE_GRANT,
+        allowed=True,
+        denial_code=None,
+        resource_type="admin_role_grant_issue",
+        resource_id=target_id,
+        resource_context_digest=authorization_resource_digest(_admin_resource_context(request)),
+        matched_authority_kind=MatchedAuthorityKind.ADMIN_ROLE_GRANT,
+        matched_grant_id=authorizer_id,
+        matched_scope_project_id=None,
+        revalidated=True,
+        request_id=uuid4(),
+        correlation_id=uuid4(),
+    )
+    claim = AuthorityClaimHandle(
+        record_id=uuid4(),
+        idempotency_key=uuid4(),
+        actor_ref_kind=ActorReferenceKind.ACTOR_PROFILE,
+        actor_ref=str(actor_id),
+        operation=request.operation,
+        request_digest=DIGEST,
+    )
+
+    class Repository:
+        issued = None
+
+        async def add_grant(self, grant):
+            self.issued = grant
+            return grant
+
+    class Mutation:
+        completed = None
+
+        async def complete(self, **kwargs):
+            self.completed = kwargs
+
+    service = AdminRoleGrantService(object())  # type: ignore[arg-type]
+    repository = Repository()
+    mutation = Mutation()
+    service._repository = repository  # type: ignore[assignment]
+    service._mutation = mutation  # type: ignore[assignment]
+    with pytest.raises(TypeError, match="requires exact matched authority"):
+        await service.complete_issue(
+            claim=claim,
+            request=request,
+            decision=decision,
+            actor_profile_id=actor_id,
+            reason="Cross-wired reason",
+        )
+    assert repository.issued is None
+    assert mutation.completed is None
+
+    response = await service.complete_issue(
+        claim=claim,
+        request=request,
+        decision=decision,
+        actor_profile_id=actor_id,
+        reason="On-call operations coverage",
+    )
+
+    assert response.resource_id == repository.issued.id
+    assert response.version == 1
+    assert response.http_status == 201
+    assert repository.issued.target_actor_profile_id == str(target_id)
+    assert repository.issued.granted_by_admin_role_grant_id == authorizer_id
+    assert mutation.completed["success"].event_type is AuthorityEventType.ADMIN_ROLE_GRANT_ISSUED
+    assert mutation.completed["success"].request_id == decision.request_id
+    assert mutation.completed["success"].correlation_id == decision.correlation_id
+    assert mutation.completed["invalidation"].request_id == decision.request_id
+    assert mutation.completed["invalidation"].correlation_id == decision.correlation_id
+
+
+async def test_admin_grant_pagination_and_bootstrap_corruption_fail_closed() -> None:
+    """Pagination is stable, while malformed cursors/control rows fail closed."""
+    now = datetime.now(UTC)
+
+    def grant(index: int):
+        return SimpleNamespace(
+            id=uuid4(),
+            target_actor_profile_id=str(uuid4()),
+            role=AdminRole.OPERATOR.value,
+            scope_type=AdminScope.SYSTEM.value,
+            scope_project_id=None,
+            status="active",
+            version=1,
+            granted_by_system_principal="workstream:system:bootstrap",
+            granted_by_actor_profile_id=None,
+            granted_by_admin_role_grant_id=None,
+            grant_reason=f"grant-{index}",
+            granted_at=now,
+            revoked_by_actor_profile_id=None,
+            revoked_by_admin_role_grant_id=None,
+            revoked_reason=None,
+            revoked_at=None,
+        )
+
+    rows = [grant(1), grant(2)]
+
+    class Repository:
+        decoded_cursor = None
+
+        async def list_grants(self, **kwargs):
+            self.decoded_cursor = kwargs["cursor"]
+            return rows, 2
+
+        async def get_eligible_human(self, _actor_id):
+            return None
+
+        async def lock_control(self):
+            return self.control
+
+        async def lock_eligible_human(self, _actor_id):
+            return None
+
+    class Session:
+        control = None
+
+        async def get(self, _model, _key):
+            return self.control
+
+    session = Session()
+    repository = Repository()
+    service = AdminRoleGrantService(session)  # type: ignore[arg-type]
+    service._repository = repository  # type: ignore[assignment]
+    page = await service.list_page(
+        scope_type=AdminScope.SYSTEM,
+        scope_project_id=None,
+        target_actor_profile_id=None,
+        status="active",
+        limit=1,
+        cursor=None,
+    )
+    assert len(page.items) == 1
+    assert page.total == 2
+    assert page.next_cursor is not None
+    await service.list_page(
+        scope_type=AdminScope.SYSTEM,
+        scope_project_id=None,
+        target_actor_profile_id=None,
+        status="active",
+        limit=1,
+        cursor=page.next_cursor,
+    )
+    assert repository.decoded_cursor == (now, rows[0].id)
+
+    malformed_payloads = [
+        {"unexpected": "mapping"},
+        [now.isoformat(), "not-a-uuid"],
+        [now.replace(tzinfo=None).isoformat(), str(uuid4())],
+    ]
+    for payload in malformed_payloads:
+        cursor = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip("=")
+        with pytest.raises(ValueError, match="invalid cursor"):
+            await service.list_page(
+                scope_type=AdminScope.SYSTEM,
+                scope_project_id=None,
+                target_actor_profile_id=None,
+                status="active",
+                limit=1,
+                cursor=cursor,
+            )
+
+    actor_id, completed_grant_id = uuid4(), uuid4()
+    with pytest.raises(RuntimeError, match="authority control is missing"):
+        await service.bootstrap_eligible(actor_id)
+    session.control = SimpleNamespace(bootstrap_completed=True, bootstrap_grant_id=None)
+    with pytest.raises(RuntimeError, match="missing its grant"):
+        await service.bootstrap_eligible(actor_id)
+    session.control.bootstrap_grant_id = completed_grant_id
+    with pytest.raises(BootstrapAlreadyCompleted) as completed:
+        await service.bootstrap_eligible(actor_id)
+    assert completed.value.grant_id == completed_grant_id
+
+    repository.control = SimpleNamespace(bootstrap_completed=True, bootstrap_grant_id=None)
+    with pytest.raises(RuntimeError, match="missing its grant"):
+        await service.bootstrap(actor_id)
+    repository.control = SimpleNamespace(bootstrap_completed=False, bootstrap_grant_id=None)
+    with pytest.raises(BootstrapTargetIneligible):
+        await service.bootstrap(actor_id)
+
+
+async def test_post_allow_admin_denials_preserve_matched_grant_provenance() -> None:
+    actor_id, target_id, matched_grant_id = uuid4(), uuid4(), uuid4()
+    request = AdminRoleGrantIssueRequest(
+        operation=AuthorityOperation.ADMIN_ROLE_GRANT_ISSUE,
+        target_actor_id=target_id,
+        role=AdminRole.OPERATOR,
+        scope_type=AdminScope.SYSTEM,
+        reason_digest=DIGEST,
+    )
+    decision = AuthorizationDecision(
+        decision_id=uuid4(),
+        action_id=ActionId.ADMIN_ROLE_GRANT_ISSUE,
+        permission_id=PermissionId.ADMIN_ROLE_GRANT,
+        allowed=True,
+        denial_code=None,
+        resource_type="admin_role_grant_issue",
+        resource_id=target_id,
+        resource_context_digest=authorization_resource_digest(_admin_resource_context(request)),
+        matched_authority_kind=MatchedAuthorityKind.ADMIN_ROLE_GRANT,
+        matched_grant_id=matched_grant_id,
+        matched_scope_project_id=None,
+        revalidated=True,
+        request_id=uuid4(),
+        correlation_id=uuid4(),
+    )
+
+    class EvidenceRepository:
+        def __init__(self) -> None:
+            self.events = []
+
+        async def _add_validated_authority_event(self, event):
+            self.events.append(event)
+            return event
+
+    evidence = EvidenceRepository()
+    audit = AuditService(object())  # type: ignore[arg-type]
+    audit._repository = evidence  # type: ignore[assignment]
+    service = AdminRoleGrantService(object())  # type: ignore[arg-type]
+    service._mutation._audit = audit
+    await service.record_mismatch(
+        actor_profile_id=actor_id,
+        request=request,
+        decision=decision,
+    )
+    service._audit = audit
+    await service.record_issue_conflict(
+        actor_profile_id=actor_id,
+        request=request,
+        grant_id=uuid4(),
+        decision=decision,
+    )
+    revoke_grant_id = uuid4()
+    revoke_request = AdminRoleGrantRevokeRequest(
+        operation=AuthorityOperation.ADMIN_ROLE_GRANT_REVOKE,
+        grant_id=revoke_grant_id,
+        reason_digest=DIGEST,
+    )
+    revoke_decision = decision.model_copy(
+        update={
+            "action_id": ActionId.ADMIN_ROLE_GRANT_REVOKE,
+            "permission_id": PermissionId.ADMIN_ROLE_REVOKE,
+            "resource_type": "admin_role_grant",
+            "resource_id": revoke_grant_id,
+            "resource_context_digest": authorization_resource_digest(
+                _admin_resource_context(revoke_request)
+            ),
+        }
+    )
+    await service.record_last_admin_denial(
+        actor_profile_id=actor_id,
+        grant_id=revoke_grant_id,
+        target_actor_profile_id=target_id,
+        decision=revoke_decision,
+    )
+
+    assert [event.matched_grant_id for event in evidence.events] == [
+        str(matched_grant_id),
+        str(matched_grant_id),
+        str(matched_grant_id),
+    ]
+    assert evidence.events[0].action_id == ActionId.ADMIN_ROLE_GRANT_ISSUE.value
+    assert evidence.events[0].permission_id == PermissionId.ADMIN_ROLE_GRANT.value
+    assert {(event.request_id, event.correlation_id) for event in evidence.events} == {
+        (str(decision.request_id), str(decision.correlation_id))
+    }
+
+
+async def test_authorization_dependency_rolls_back_a_forgotten_route_transaction() -> None:
+    class ForgottenCommitSession:
+        def __init__(self) -> None:
+            self.rollback_count = 0
+
+        def in_transaction(self) -> bool:
+            return True
+
+        async def rollback(self) -> None:
+            self.rollback_count += 1
+
+    actor_id, link_id = uuid4(), uuid4()
+    resolved = SimpleNamespace(
+        profile=SimpleNamespace(id=str(actor_id), actor_kind="human", status="active"),
+        identity_link=SimpleNamespace(id=str(link_id), status="active"),
+    )
+    session = ForgottenCommitSession()
+    request = Request({"type": "http", "method": "GET", "path": "/", "headers": []})
+    dependency = get_authorization_service(request, resolved, session)  # type: ignore[arg-type]
+    service = await anext(dependency)
+    evidence = _DecisionEvidence()
+    service._audit = evidence  # type: ignore[assignment]
+
+    await service.require(
+        ActionId.ACTOR_PROFILE_READ_SELF,
+        ActorSelfResourceContext(
+            resource_type="actor_profile",
+            resource_id=actor_id,
+            requested_fields=(),
+        ),
+    )
+    with pytest.raises(StopAsyncIteration):
+        await anext(dependency)
+
+    assert len(evidence.events) == 1
+    assert session.rollback_count == 1
+
+
 def test_authorization_runtime_contracts_are_strict_and_two_argument() -> None:
     context = _runtime_context()
     public_methods = {
@@ -340,6 +1428,15 @@ def test_authorization_runtime_contracts_are_strict_and_two_argument() -> None:
         "action_id",
         "resource_context",
     )
+    for method in (
+        AdminRoleGrantService.complete_issue,
+        AdminRoleGrantService.complete_revoke,
+        AdminRoleGrantService.record_mismatch,
+        AdminRoleGrantService.record_issue_conflict,
+        AdminRoleGrantService.record_last_admin_denial,
+    ):
+        assert "request_id" not in inspect.signature(method).parameters
+        assert "correlation_id" not in inspect.signature(method).parameters
     with pytest.raises(ValidationError):
         AuthorizationContext(
             **context.model_dump(),
@@ -574,6 +1671,13 @@ def test_authorization_decision_and_denial_reject_incoherent_outcomes() -> None:
         "permission_id": PermissionId.ACTOR_PROFILE_READ_SELF,
         "resource_type": "actor_profile",
         "resource_id": context.actor_profile_id,
+        "resource_context_digest": authorization_resource_digest(
+            ActorSelfResourceContext(
+                resource_type="actor_profile",
+                resource_id=context.actor_profile_id,
+                requested_fields=(),
+            )
+        ),
         "revalidated": False,
         "request_id": context.request_id,
         "correlation_id": context.correlation_id,
@@ -717,14 +1821,21 @@ async def test_actor_self_update_requires_transaction_revalidation() -> None:
 
 
 @pytest.fixture
-def authorization_database_env(postgres_database_url: str, migration_lock) -> str:
+def authorization_database_env(
+    postgres_database_url: str,
+    migration_lock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> Iterator[str]:
     """Ensure authorization tests run at the current isolated schema head."""
+    monkeypatch.setenv("WORKSTREAM_DATABASE_URL", postgres_database_url)
+    get_settings.cache_clear()
     project_root = Path(__file__).resolve().parents[1]
     config = Config(str(project_root / "alembic.ini"))
     config.set_main_option("script_location", str(project_root / "alembic"))
     with migration_lock():
         command.upgrade(config, "head")
-    return postgres_database_url
+    yield postgres_database_url
+    get_settings.cache_clear()
 
 
 @pytest.fixture
@@ -735,14 +1846,32 @@ async def authorization_factory(authorization_database_env: str):
         yield async_sessionmaker(engine, expire_on_commit=False)
     finally:
         async with engine.begin() as connection:
-            await connection.execute(text("lock table authority_idempotency_records in access exclusive mode"))
+            await connection.execute(
+                text("lock table authority_idempotency_records in access exclusive mode")
+            )
             await connection.execute(text("lock table audit_events in access exclusive mode"))
-            await connection.execute(text("alter table audit_events disable trigger audit_events_reject_update_delete"))
-            await connection.execute(text("alter table authority_idempotency_records disable trigger authority_idempotency_guard"))
-            await connection.execute(text("delete from audit_events where idempotency_reference is not null or denial_code='idempotency_mismatch'"))
+            await connection.execute(
+                text("alter table audit_events disable trigger audit_events_reject_update_delete")
+            )
+            await connection.execute(
+                text(
+                    "alter table authority_idempotency_records disable trigger authority_idempotency_guard"
+                )
+            )
+            await connection.execute(
+                text(
+                    "delete from audit_events where idempotency_reference is not null or denial_code='idempotency_mismatch'"
+                )
+            )
             await connection.execute(text("delete from authority_idempotency_records"))
-            await connection.execute(text("alter table authority_idempotency_records enable trigger authority_idempotency_guard"))
-            await connection.execute(text("alter table audit_events enable trigger audit_events_reject_update_delete"))
+            await connection.execute(
+                text(
+                    "alter table authority_idempotency_records enable trigger authority_idempotency_guard"
+                )
+            )
+            await connection.execute(
+                text("alter table audit_events enable trigger audit_events_reject_update_delete")
+            )
         await engine.dispose()
 
 
@@ -787,6 +1916,8 @@ def _operation_success(
     claim: AuthorityClaimHandle,
     request,
     response: AuthorityResponseReference,
+    *,
+    admin_revoke_target: UUID | None = None,
 ) -> AuthorityAuditEventInput:
     """Build the exact concrete success evidence for one canonical operation case."""
     event, permission, reason = {
@@ -858,6 +1989,7 @@ def _operation_success(
         }
     elif isinstance(request, AdminRoleGrantIssueRequest):
         target_actor = request.target_actor_id
+        matched_grant = response.resource_id
         project_id = request.scope_project_id
         after_facts = {
             "status": "active",
@@ -868,6 +2000,10 @@ def _operation_success(
         if project_id:
             after_facts["scope_id"] = str(project_id)
     elif isinstance(request, AdminRoleGrantRevokeRequest):
+        if admin_revoke_target is None:
+            raise AssertionError("admin revoke proof requires the distinct grant target")
+        target_actor = admin_revoke_target
+        matched_grant = request.grant_id
         before_facts = {
             "status": "active",
             "role": "access_administrator",
@@ -1063,10 +2199,13 @@ async def test_committed_record_rejects_additional_success_and_invalidation(
         await session.rollback()
 
     async with authorization_factory() as session:
-        assert await session.scalar(
-            text("select count(*) from audit_events where idempotency_reference=:id"),
-            {"id": claim.record_id},
-        ) == 2
+        assert (
+            await session.scalar(
+                text("select count(*) from audit_events where idempotency_reference=:id"),
+                {"id": claim.record_id},
+            )
+            == 2
+        )
 
 
 @pytest.mark.asyncio
@@ -1182,6 +2321,7 @@ async def test_database_rejects_cross_actor_entity_and_cause_context_bypasses(
             await AuditService(session).add_authority_event(wrong_context)
         await session.rollback()
 
+
 @pytest.mark.asyncio
 async def test_pending_commit_fails_and_rollback_allows_retry(authorization_factory) -> None:
     actor, key, request = uuid4(), uuid4(), _request()
@@ -1267,7 +2407,13 @@ async def test_mismatch_is_private_and_denial_uses_clean_transaction(authorizati
             ),
             {"id": claim.record_id},
         )
-    assert denial == ("idempotency_mismatch", None, "actor_profile", str(different.actor_profile_id), 1)
+    assert denial == (
+        "idempotency_mismatch",
+        None,
+        "actor_profile",
+        str(different.actor_profile_id),
+        1,
+    )
     assert linked == 2
 
 
@@ -1418,7 +2564,7 @@ def test_every_operation_has_one_strict_canonical_request_variant() -> None:
 async def test_all_operation_and_replacement_mappings_commit_one_linked_pair(
     authorization_factory,
 ) -> None:
-    project, actor, resource = uuid4(), uuid4(), uuid4()
+    project, actor, resource, admin_revoke_target = uuid4(), uuid4(), uuid4(), uuid4()
     requests = [
         ServiceActorCreateRequest(
             operation=AuthorityOperation.SERVICE_ACTOR_CREATE,
@@ -1504,7 +2650,7 @@ async def test_all_operation_and_replacement_mappings_commit_one_linked_pair(
         AuthorityOperation.ADMIN_ROLE_GRANT_ISSUE,
         AuthorityOperation.PROJECT_ROLE_GRANT_ISSUE,
     }
-    record_ids = []
+    expected_pairs = {}
     async with authorization_factory() as session:
         service = AuthorityMutationService(session)
         for request in requests:
@@ -1515,7 +2661,9 @@ async def test_all_operation_and_replacement_mappings_commit_one_linked_pair(
                 else getattr(
                     request,
                     "grant_id",
-                    getattr(request, "actor_profile_id", getattr(request, "identity_link_id", None)),
+                    getattr(
+                        request, "actor_profile_id", getattr(request, "identity_link_id", None)
+                    ),
                 )
             )
             response = AuthorityResponseReference(
@@ -1524,7 +2672,18 @@ async def test_all_operation_and_replacement_mappings_commit_one_linked_pair(
                 version=1,
                 http_status=201 if request.operation in create_operations else 200,
             )
-            success = _operation_success(claim, request, response)
+            success = _operation_success(
+                claim,
+                request,
+                response,
+                admin_revoke_target=(
+                    admin_revoke_target
+                    if request.operation is AuthorityOperation.ADMIN_ROLE_GRANT_REVOKE
+                    else None
+                ),
+            )
+            if request.operation is AuthorityOperation.ADMIN_ROLE_GRANT_REVOKE:
+                assert success.target_actor_ref == str(admin_revoke_target)
             completed = await service.complete(
                 claim=claim,
                 request=request.model_dump(),
@@ -1537,20 +2696,51 @@ async def test_all_operation_and_replacement_mappings_commit_one_linked_pair(
                 ),
             )
             assert completed.response == response
-            record_ids.append(claim.record_id)
+            expected_pairs[claim.record_id] = success
             await session.commit()
-        counts = (
+        rows = (
             await session.execute(
                 text(
-                    "select idempotency_reference, count(*) from audit_events "
+                    "select id, event_type, idempotency_reference, "
+                    "invalidation_cause_event_id, request_id, correlation_id, "
+                    "invalidation_target_ref, before_facts, after_facts "
+                    "from audit_events "
                     "where idempotency_reference = any(:records) "
-                    "group by idempotency_reference"
+                    "order by idempotency_reference, event_type"
                 ),
-                {"records": record_ids},
+                {"records": list(expected_pairs)},
             )
         ).all()
-    assert len(counts) == len(requests)
-    assert {count for _, count in counts} == {2}
+    assert len(rows) == len(requests) * 2
+    for record_id, success in expected_pairs.items():
+        pair = [row for row in rows if row.idempotency_reference == record_id]
+        assert len(pair) == 2
+        success_row = next(row for row in pair if row.event_type == success.event_type.value)
+        invalidation_row = next(
+            row for row in pair if row.event_type == "AuthorityInvalidationRequested"
+        )
+        assert invalidation_row.invalidation_cause_event_id == success_row.id
+        assert {
+            (row.request_id, row.correlation_id) for row in pair
+        } == {(success.request_id, success.correlation_id)}
+        expected_target = (
+            success.target_actor_ref
+            if success.event_type
+            in {
+                AuthorityEventType.ADMIN_ROLE_GRANT_ISSUED,
+                AuthorityEventType.ADMIN_ROLE_GRANT_REVOKED,
+            }
+            else success.resource_id
+        )
+        assert invalidation_row.invalidation_target_ref == expected_target
+        expected_before = (
+            {"effective": False}
+            if success.event_type is AuthorityEventType.ADMIN_ROLE_GRANT_ISSUED
+            else {"effective": True}
+        )
+        expected_after = {"effective": not expected_before["effective"]}
+        assert invalidation_row.before_facts == expected_before
+        assert invalidation_row.after_facts == expected_after
 
 
 @pytest.mark.asyncio
@@ -1565,9 +2755,7 @@ async def test_issue_mismatch_derives_project_and_omits_nonexistent_grant_resour
         role=ProjectRole.REVIEWER,
         reason_digest=DIGEST,
     )
-    context = AuthorityMismatchContext(
-        event_id=uuid4(), request_id=uuid4(), correlation_id=uuid4()
-    )
+    context = AuthorityMismatchContext(event_id=uuid4(), request_id=uuid4(), correlation_id=uuid4())
     async with authorization_factory() as session:
         event_id = await AuthorityMutationService(session).record_mismatch_denial(
             actor_ref_kind=ActorReferenceKind.ACTOR_PROFILE,
@@ -1615,18 +2803,27 @@ async def test_failure_after_evidence_flush_rolls_back_claim_and_events(
             await _complete(service, claim, request)
         await session.rollback()
     async with authorization_factory() as session:
-        assert await session.scalar(
-            text("select count(*) from authority_idempotency_records where id=:id"),
-            {"id": claim.record_id},
-        ) == 0
-        assert await session.scalar(
-            text("select count(*) from audit_events where idempotency_reference=:id"),
-            {"id": claim.record_id},
-        ) == 0
-        assert await session.scalar(
-            text("select count(*) from audit_events where id=:id"),
-            {"id": str(synthetic_id)},
-        ) == 0
+        assert (
+            await session.scalar(
+                text("select count(*) from authority_idempotency_records where id=:id"),
+                {"id": claim.record_id},
+            )
+            == 0
+        )
+        assert (
+            await session.scalar(
+                text("select count(*) from audit_events where idempotency_reference=:id"),
+                {"id": claim.record_id},
+            )
+            == 0
+        )
+        assert (
+            await session.scalar(
+                text("select count(*) from audit_events where id=:id"),
+                {"id": str(synthetic_id)},
+            )
+            == 0
+        )
 
 
 async def _wait_for_database_lock(database_url: str, application_name: str) -> None:

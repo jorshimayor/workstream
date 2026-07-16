@@ -215,17 +215,19 @@ approved Operator recovery identifiers, 21 artifact identifiers, and
 `review.queue.override` are the exact 25 post-`0020` permissions. AUTH-07A adds
 their matching typed/SQL audit parity without making them executable.
 
-The closed action registry contains 50 rows: two active actor-self actions,
-plus 48 planned rows covering three Operator recovery actions, 25 artifact actions, canonical
-`submission.create`, and 19 review actions. An action becomes active only when
+The closed action registry contains 57 rows: nine active actions and 48 planned
+rows. AUTH-08 adds seven active administrative definition, grant-history,
+issue, revoke, and local-bootstrap actions without adding a permission. The
+planned rows cover three Operator recovery actions, 25 artifact actions,
+canonical `submission.create`, and 19 review actions. An action becomes active only when
 its owning chunk supplies its canonical resource composer, guards, surface or
 command declaration, behavior tests, and transaction-local revalidation where
 required. Both halves are mandatory; registry presence alone never grants
 authority.
 
-AUTH-07B activates `actor.profile.read_self` and `actor.profile.update_self`
-with strict self-resource facts and request-scoped behavior proof without
-changing migration `0021`. All other registered actions remain planned.
+AUTH-07B activates `actor.profile.read_self` and `actor.profile.update_self`.
+AUTH-08 activates exactly seven administrative actions through migration
+`0022`; all other registered actions remain planned.
 
 The submission/review dependency matrix is closed. AUTH-07A registers only the
 four stable planned fields shown here; resource facts, candidates, guards, and
@@ -428,7 +430,9 @@ For every protected operation:
 10. Return allow or a stable denial code without leaking hidden resources.
 
 Authorization decisions are request-scoped and are not cached across requests.
-List filtering occurs before counts and pagination cursors.
+Each decision carries a bounded SHA-256 digest of its complete typed resource
+context so feature code cannot reuse it with substituted role, scope, target,
+or replay facts. List filtering occurs before counts and pagination cursors.
 
 For the two active self actions, the default human authority source is
 `actor_self`; token roles and client-supplied permissions never enter the
@@ -491,10 +495,10 @@ The first Access Administrator is created through a local management command
 for an existing active human. There is no public bootstrap endpoint or shared
 bootstrap bearer secret.
 
-Bootstrap locks `AuthorityControl(id = 1) FOR UPDATE`, checks that no effective
-Access Administrator exists, and writes the initial grant, one-time state, and
-audit event atomically. Every later bootstrap attempt returns a stable audited
-conflict.
+Bootstrap locks `AuthorityControl(id = 1) FOR UPDATE`, validates its incomplete
+irreversible state and the target's active human profile and identity link, and
+writes the initial grant, completed control state, and audit event atomically.
+Every later or losing bootstrap attempt returns a stable audited conflict.
 
 Bootstrap and every grant/profile/link operation that could remove the final
 effective Access Administrator use the same row lock and transaction-local
@@ -531,7 +535,11 @@ Authority events are append-only and include, when applicable:
 
 Business state, idempotency result, authority event, and invalidation event
 commit in one `AsyncSession` transaction. Missing evidence is not backfilled
-later.
+later. Administrative mutation and post-allow denial evidence derives its
+request and correlation identifiers from the exact authorization decision;
+feature callers cannot supply alternate evidence identifiers.
+Administrative issue/revoke also recomputes the bounded reason digest before
+any state or evidence write and rejects cross-wired reason text.
 
 ## API Families
 
@@ -539,6 +547,8 @@ Canonical route families use `/api/v1`:
 
 ```text
 GET|PATCH /api/v1/actors/me
+GET /api/v1/authorization/permissions
+GET /api/v1/authorization/admin-role-definitions
 GET|PATCH /api/v1/actors/{actor_profile_id}
 POST /api/v1/actors/{actor_profile_id}/suspend|reactivate|deactivate
 GET /api/v1/actors/{actor_profile_id}/identity-links
@@ -555,11 +565,12 @@ POST /api/v1/projects/{project_id}/role-grants/{grant_id}/revoke
 ```
 
 Exact request/response/error contracts are introduced by their owning chunks.
-No route may accept role or scope from request JSON as canonical authority.
+Grant issue input may select a registered role and compatible scope, but that
+selection is only the requested grant; it never supplies the caller's authority.
 
-AUTH-07B cuts only existing `GET|PATCH /api/v1/actors/me` behavior over to the
-kernel. Permission and admin-role definition reads begin in AUTH-08 after
-bootstrap and administrative-grant truth exists. Project-scoped
+AUTH-07B cuts existing `GET|PATCH /api/v1/actors/me` behavior over to the
+kernel. AUTH-08 activates the two definition reads, scoped grant/history reads,
+issue/revoke APIs, and local bootstrap command. Project-scoped
 `GET /api/v1/actors/me/authorization-context` begins in AUTH-10 after
 exact-project grant and canonical project capability composition exists.
 
