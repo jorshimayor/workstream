@@ -73,16 +73,26 @@ class ProjectRepository:
         await self._session.refresh(project)
         return project
 
-    async def get_project(self, project_id: str) -> Project | None:
+    async def get_project(
+        self,
+        project_id: str,
+        *,
+        for_update: bool = False,
+    ) -> Project | None:
         """Load one project by primary key.
 
         Args:
             project_id: Project id to load.
+            for_update: Lock the canonical project row in the caller transaction.
 
         Returns:
             Project model when found; otherwise ``None``.
         """
-        return await self._session.get(Project, project_id)
+        if not for_update:
+            return await self._session.get(Project, project_id)
+        return await self._session.scalar(
+            select(Project).where(Project.id == project_id).with_for_update()
+        )
 
     async def add_guide(self, guide: ProjectGuide) -> ProjectGuide:
         """Persist a new project guide and refresh generated database fields.

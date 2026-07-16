@@ -33,6 +33,7 @@ from app.modules.authorization.runtime import (
     ActorStatus,
     AuthorizationContext,
     AuthorizationDenied,
+    AuthorizationEvidenceUnavailable,
     IdentityLinkStatus,
 )
 from app.schemas.auth import AuthVerificationResult
@@ -103,11 +104,22 @@ def authorization_http_error(exc: AuthorizationDenied) -> StructuredHTTPExceptio
         "actor_suspended": "Actor is suspended",
         "resource_guard_denied": "Resource guard denied",
         "permission_not_granted": "Permission not granted",
+        "scope_not_authorized": "Scope not authorized",
+        "self_grant_forbidden": "Self grant is forbidden",
+        "self_role_revoke_forbidden": "Self role revocation is forbidden",
+        "actor_not_found": "Actor not found",
+        "grant_not_found": "Grant not found",
+        "resource_not_found": "Resource not found",
     }
     code = exc.public_code
     message = messages[code]
+    status_code = (
+        status.HTTP_404_NOT_FOUND
+        if code in {"actor_not_found", "grant_not_found", "resource_not_found"}
+        else status.HTTP_403_FORBIDDEN
+    )
     return StructuredHTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
+        status_code=status_code,
         detail=message,
         error_code=code,
         error_message=message,
@@ -145,17 +157,16 @@ async def get_authorization_service(
         try:
             await service._restage_denial(exc.decision)
             await session.commit()
-        except SQLAlchemyError as persistence_error:
+        except (AuthorizationEvidenceUnavailable, SQLAlchemyError) as persistence_error:
             await session.rollback()
             raise actor_registry_unavailable_error() from persistence_error
         raise authorization_http_error(exc) from exc
+    except AuthorizationEvidenceUnavailable as exc:
+        await session.rollback()
+        raise actor_registry_unavailable_error() from exc
     except BaseException:
         await session.rollback()
         raise
     else:
         if session.in_transaction():
-            try:
-                await session.commit()
-            except SQLAlchemyError as exc:
-                await session.rollback()
-                raise actor_registry_unavailable_error() from exc
+            await session.rollback()

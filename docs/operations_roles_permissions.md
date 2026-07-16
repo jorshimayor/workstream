@@ -108,7 +108,9 @@ compensation rules.
 ## Provisioning And Revocation
 
 The first Access Administrator is created once through a restricted local
-management command. Later administrative and project grants use supported APIs
+management command, `python -m scripts.bootstrap_access_administrator`, using
+an existing active human ActorProfile UUID and exactly one of `--dry-run` or
+`--execute`. Later administrative and project grants use supported APIs
 and require current authority, exact scope, target-state guards, reason where
 required, idempotency, and append-only evidence.
 
@@ -122,5 +124,8 @@ Routers parse input and map stable errors. Application services load canonical
 resources, compose `ResourceContext`, and call the single authorization
 service. Repositories own persistence queries and do not evaluate permissions.
 
-No protected operation may accept request-body role/scope, a token role, a
-typed workflow profile, or a direct database edit as authority.
+No protected operation may accept a request-body role/scope, token role, typed
+workflow profile, or direct database edit as the caller's authority. An
+administrative grant request carries the target grant's requested role and
+scope as mutation data; Workstream still derives the caller's authority from
+current canonical grants and resolves every project scope from its own records.

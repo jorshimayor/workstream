@@ -5,7 +5,20 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import BigInteger, CheckConstraint, DateTime, SmallInteger, String, UniqueConstraint, Uuid
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Index,
+    SmallInteger,
+    String,
+    Text,
+    UniqueConstraint,
+    Uuid,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
@@ -18,7 +31,10 @@ class AuthorityIdempotencyRecord(Base):
     __tablename__ = "authority_idempotency_records"
     __table_args__ = (
         UniqueConstraint(
-            "actor_ref_kind", "actor_ref", "operation", "idempotency_key",
+            "actor_ref_kind",
+            "actor_ref",
+            "operation",
+            "idempotency_key",
             name="replay_namespace",
         ),
         UniqueConstraint("id", "actor_ref_kind", "actor_ref", name="actor_reference"),
@@ -91,3 +107,128 @@ class AuthorityIdempotencyRecord(Base):
     response_http_status: Mapped[int | None] = mapped_column(SmallInteger)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     committed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class AdminRoleGrant(Base):
+    """Immutable administrative authority history."""
+
+    __tablename__ = "admin_role_grants"
+    __table_args__ = (
+        CheckConstraint(
+            "role in ('access_administrator','operator','project_manager',"
+            "'finance_authority','audit_authority')",
+            name="role",
+        ),
+        CheckConstraint("scope_type in ('system','project')", name="scope_type"),
+        CheckConstraint(
+            "(scope_type='system' and scope_project_id is null) or "
+            "(scope_type='project' and scope_project_id is not null and "
+            "role not in ('access_administrator','operator'))",
+            name="role_scope",
+        ),
+        CheckConstraint(
+            "(granted_by_system_principal='workstream:system:bootstrap' and "
+            "granted_by_actor_profile_id is null and "
+            "granted_by_admin_role_grant_id is null) or "
+            "(granted_by_system_principal is null and "
+            "granted_by_actor_profile_id is not null and "
+            "granted_by_admin_role_grant_id is not null)",
+            name="grant_attribution",
+        ),
+        CheckConstraint("octet_length(grant_reason) between 1 and 500", name="grant_reason"),
+        CheckConstraint(
+            "(status='active' and version=1 and revoked_by_actor_profile_id is null "
+            "and revoked_by_admin_role_grant_id is null and revoked_reason is null "
+            "and revoked_at is null) or (status='revoked' and version=2 and "
+            "revoked_by_actor_profile_id is not null and "
+            "revoked_by_admin_role_grant_id is not null and revoked_reason is not null "
+            "and octet_length(revoked_reason) between 1 and 500 and revoked_at is not null)",
+            name="lifecycle",
+        ),
+        Index(
+            "uq_admin_role_grants_active_system",
+            "target_actor_profile_id",
+            "role",
+            unique=True,
+            postgresql_where=text("status='active' and scope_type='system'"),
+        ),
+        Index(
+            "uq_admin_role_grants_active_project",
+            "target_actor_profile_id",
+            "role",
+            "scope_project_id",
+            unique=True,
+            postgresql_where=text("status='active' and scope_type='project'"),
+        ),
+        Index(
+            "ix_admin_role_grants_effective_candidate",
+            "target_actor_profile_id",
+            "status",
+            "scope_type",
+            "scope_project_id",
+        ),
+        Index(
+            "ix_admin_role_grants_history",
+            "target_actor_profile_id",
+            "granted_at",
+            "id",
+        ),
+        Index(
+            "ix_admin_role_grants_final_access_admin",
+            "role",
+            "status",
+            postgresql_where=text(
+                "role='access_administrator' and status='active' and scope_type='system'"
+            ),
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(), primary_key=True)
+    target_actor_profile_id: Mapped[str] = mapped_column(
+        ForeignKey("actor_profiles.id"), nullable=False
+    )
+    role: Mapped[str] = mapped_column(String(40), nullable=False)
+    scope_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    scope_project_id: Mapped[str | None] = mapped_column(ForeignKey("projects.id"))
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="active")
+    version: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=1)
+    granted_by_actor_profile_id: Mapped[str | None] = mapped_column(ForeignKey("actor_profiles.id"))
+    granted_by_system_principal: Mapped[str | None] = mapped_column(String(100))
+    granted_by_admin_role_grant_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("admin_role_grants.id")
+    )
+    grant_reason: Mapped[str] = mapped_column(Text, nullable=False)
+    granted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    revoked_by_actor_profile_id: Mapped[str | None] = mapped_column(ForeignKey("actor_profiles.id"))
+    revoked_by_admin_role_grant_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("admin_role_grants.id")
+    )
+    revoked_reason: Mapped[str | None] = mapped_column(Text)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class AuthorityControl(Base):
+    """Irreversible singleton governing bootstrap and final-admin mutation order."""
+
+    __tablename__ = "authority_control"
+    __table_args__ = (
+        CheckConstraint("id=1", name="singleton"),
+        CheckConstraint(
+            "(bootstrap_completed=false and bootstrap_grant_id is null and version=0) or "
+            "(bootstrap_completed=true and bootstrap_grant_id is not null and version=1)",
+            name="bootstrap_state",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(SmallInteger, primary_key=True)
+    bootstrap_completed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    bootstrap_grant_id: Mapped[UUID | None] = mapped_column(ForeignKey("admin_role_grants.id"))
+    version: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )

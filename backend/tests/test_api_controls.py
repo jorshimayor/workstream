@@ -439,13 +439,13 @@ def test_openapi_documents_request_error_and_response_context() -> None:
         for method, operation in path_item.items()
         if method in methods and operation.get("security")
     )
-    assert len(route_inventory) == 48
+    assert len(route_inventory) == 54
     assert sha256("\n".join(route_inventory).encode()).hexdigest() == (
-        "fa394a491b7e24f53f373e7ff54f4699d72d04a1ab88c79b53f70ffb48f2592e"
+        "2369cb557cb12fb466b261fcf0accca8a45780f1cd1741954ca11cf9ed20052c"
     )
-    assert len(protected_inventory) == 46
+    assert len(protected_inventory) == 52
     assert sha256("\n".join(protected_inventory).encode()).hexdigest() == (
-        "faa2176c8b222a6e3ae216b5d1dfd1c1b5a4c436045b13d3d2d8e7de5818706e"
+        "1aa4e6dd38a02b8575d70580eb6e4992ca0e5cd1af7655ef1bdc89985efacc78"
     )
     assert set(schema["paths"]["/health"]["get"]["responses"]) == {"200", "400", "500"}
     assert {"401", "403", "503"} <= set(
@@ -466,7 +466,18 @@ def test_openapi_documents_request_error_and_response_context() -> None:
     assert action_declarations == {
         "GET /api/v1/actors/me": "actor.profile.read_self",
         "PATCH /api/v1/actors/me": "actor.profile.update_self",
+        "GET /api/v1/authorization/permissions": "authorization.permission_catalogue.read",
+        "GET /api/v1/authorization/admin-role-definitions": (
+            "authorization.admin_role_definitions.read"
+        ),
+        "GET /api/v1/admin-role-grants": "admin_role_grant.list",
+        "POST /api/v1/admin-role-grants": "admin_role_grant.issue",
+        "GET /api/v1/actors/{actor_profile_id}/admin-role-grants": (
+            "actor.admin_role_grant_history.read"
+        ),
+        "POST /api/v1/admin-role-grants/{grant_id}/revoke": "admin_role_grant.revoke",
     }
+    assert not any("bootstrap" in path for path in schema["paths"])
     assert {"404", "409"} <= set(
         schema["paths"]["/api/v1/projects/{project_id}/guides/{guide_id}/activate"][
             "post"

@@ -377,6 +377,18 @@ async def test_patch_actors_me_maps_database_failure_to_retryable_unavailable(
 ) -> None:
     created = await actor_client.get("/api/v1/actors/me", headers=auth_headers())
     assert created.status_code == 200
+    actor_id = created.json()["actor_profile_id"]
+    async with db_session.get_session_factory()() as session:
+        timestamps_before = (
+            await session.execute(
+                select(ActorProfile.last_seen_at, ActorIdentityLink.last_verified_at)
+                .join(
+                    ActorIdentityLink,
+                    ActorIdentityLink.actor_profile_id == ActorProfile.id,
+                )
+                .where(ActorProfile.id == actor_id)
+            )
+        ).one()
 
     async def fail_update(*_args, **_kwargs):
         raise SQLAlchemyError("injected database failure")
@@ -397,7 +409,60 @@ async def test_patch_actors_me_maps_database_failure_to_retryable_unavailable(
             .select_from(AuditEvent)
             .where(AuditEvent.action_id == ActionId.ACTOR_PROFILE_UPDATE_SELF.value)
         )
+        timestamps_after = (
+            await session.execute(
+                select(ActorProfile.last_seen_at, ActorIdentityLink.last_verified_at)
+                .join(
+                    ActorIdentityLink,
+                    ActorIdentityLink.actor_profile_id == ActorProfile.id,
+                )
+                .where(ActorProfile.id == actor_id)
+            )
+        ).one()
     assert update_evidence == 0
+    assert timestamps_after == timestamps_before
+
+
+async def test_actor_self_evidence_failure_is_retryable_and_rolls_back_touch(
+    actor_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    created = await actor_client.get("/api/v1/actors/me", headers=auth_headers())
+    assert created.status_code == 200
+    actor_id = created.json()["actor_profile_id"]
+    async with db_session.get_session_factory()() as session:
+        timestamps_before = (
+            await session.execute(
+                select(ActorProfile.last_seen_at, ActorIdentityLink.last_verified_at)
+                .join(
+                    ActorIdentityLink,
+                    ActorIdentityLink.actor_profile_id == ActorProfile.id,
+                )
+                .where(ActorProfile.id == actor_id)
+            )
+        ).one()
+
+    async def fail_evidence(*_args, **_kwargs):
+        raise SQLAlchemyError("injected evidence failure")
+
+    monkeypatch.setattr(AuditService, "add_authority_event", fail_evidence)
+    response = await actor_client.get("/api/v1/actors/me", headers=auth_headers())
+
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "service_unavailable"
+    assert response.json()["error"]["retryable"] is True
+    async with db_session.get_session_factory()() as session:
+        timestamps_after = (
+            await session.execute(
+                select(ActorProfile.last_seen_at, ActorIdentityLink.last_verified_at)
+                .join(
+                    ActorIdentityLink,
+                    ActorIdentityLink.actor_profile_id == ActorProfile.id,
+                )
+                .where(ActorProfile.id == actor_id)
+            )
+        ).one()
+    assert timestamps_after == timestamps_before
 
 
 async def test_missing_bearer_has_no_actor_self_decision_evidence(
@@ -728,7 +793,8 @@ async def test_legacy_activation_writes_only_compatibility_metadata(
                 text("select tablename from pg_tables where schemaname=current_schema()")
             )
         )
-        assert "admin_role_grants" not in table_names
+        assert "admin_role_grants" in table_names
+        assert await session.scalar(text("select count(*) from admin_role_grants")) == 0
         assert "project_role_grants" not in table_names
 
 

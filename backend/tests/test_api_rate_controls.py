@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import asyncio
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
+from alembic import command
+from alembic.config import Config
 from fastapi import Depends
 from httpx import ASGITransport, AsyncClient
 from pydantic import SecretStr
@@ -17,7 +20,7 @@ from app.api.deps.api_controls import (
     get_rate_control_service,
 )
 from app.api.deps.auth import get_auth_verification_result
-from app.core.config import Settings
+from app.core.config import Settings, get_settings
 from app.main import create_app
 from app.modules.api_controls import service as rate_service_module
 from app.modules.api_controls.models import ApiRateControlCounter
@@ -66,9 +69,27 @@ def test_rate_control_orm_model_matches_the_migration_contract() -> None:
 
 
 @pytest.fixture
-async def rate_control_factory(postgres_database_url: str):
+def rate_control_database_env(
+    postgres_database_url: str,
+    migration_lock,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """Bind settings and migrate the exact isolated database used by this suite."""
+    monkeypatch.setenv("WORKSTREAM_DATABASE_URL", postgres_database_url)
+    get_settings.cache_clear()
+    project_root = Path(__file__).resolve().parents[1]
+    config = Config(str(project_root / "alembic.ini"))
+    config.set_main_option("script_location", str(project_root / "alembic"))
+    with migration_lock():
+        command.upgrade(config, "head")
+    yield postgres_database_url
+    get_settings.cache_clear()
+
+
+@pytest.fixture
+async def rate_control_factory(rate_control_database_env: str):
     """Provide independent sessions over a clean, migrated rate-control table."""
-    engine = create_async_engine(postgres_database_url)
+    engine = create_async_engine(rate_control_database_env)
     factory = async_sessionmaker(engine, expire_on_commit=False)
     async with engine.begin() as connection:
         await connection.execute(text("delete from api_rate_control_counters"))

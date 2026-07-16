@@ -93,6 +93,13 @@ class ActionId(StrEnum):
 
     ACTOR_PROFILE_READ_SELF = "actor.profile.read_self"
     ACTOR_PROFILE_UPDATE_SELF = "actor.profile.update_self"
+    AUTHORIZATION_PERMISSION_CATALOGUE_READ = "authorization.permission_catalogue.read"
+    AUTHORIZATION_ADMIN_ROLE_DEFINITIONS_READ = "authorization.admin_role_definitions.read"
+    ADMIN_ROLE_GRANT_LIST = "admin_role_grant.list"
+    ACTOR_ADMIN_ROLE_GRANT_HISTORY_READ = "actor.admin_role_grant_history.read"
+    ADMIN_ROLE_GRANT_ISSUE = "admin_role_grant.issue"
+    ADMIN_ROLE_GRANT_REVOKE = "admin_role_grant.revoke"
+    ADMIN_ROLE_GRANT_BOOTSTRAP = "admin_role_grant.bootstrap"
     OPERATIONS_TASK_START_OVERRIDE = "operations.task.start_override"
     OPERATIONS_SUBMISSION_GATE_REPAIR = "operations.submission_gate.repair"
     OPERATIONS_CHECKER_RETRY = "operations.checker.retry"
@@ -150,6 +157,7 @@ class ActionOwner(StrEnum):
     """Closed implementation chunks allowed to activate reserved actions."""
 
     AUTH_07B = "WS-AUTH-001-07B"
+    AUTH_08 = "WS-AUTH-001-08"
     AUTH_13 = "WS-AUTH-001-13"
     AUTH_14 = "WS-AUTH-001-14"
     REV_05 = "WS-REV-001-05"
@@ -210,6 +218,41 @@ ACTION_DEFINITIONS = (
         ActionId.ACTOR_PROFILE_UPDATE_SELF,
         PermissionId.ACTOR_PROFILE_UPDATE_SELF,
         ActionOwner.AUTH_07B,
+    ),
+    _active(
+        ActionId.AUTHORIZATION_PERMISSION_CATALOGUE_READ,
+        PermissionId.ADMIN_ROLE_READ,
+        ActionOwner.AUTH_08,
+    ),
+    _active(
+        ActionId.AUTHORIZATION_ADMIN_ROLE_DEFINITIONS_READ,
+        PermissionId.ADMIN_ROLE_READ,
+        ActionOwner.AUTH_08,
+    ),
+    _active(
+        ActionId.ADMIN_ROLE_GRANT_LIST,
+        PermissionId.ADMIN_ROLE_READ,
+        ActionOwner.AUTH_08,
+    ),
+    _active(
+        ActionId.ACTOR_ADMIN_ROLE_GRANT_HISTORY_READ,
+        PermissionId.ADMIN_ROLE_READ,
+        ActionOwner.AUTH_08,
+    ),
+    _active(
+        ActionId.ADMIN_ROLE_GRANT_ISSUE,
+        PermissionId.ADMIN_ROLE_GRANT,
+        ActionOwner.AUTH_08,
+    ),
+    _active(
+        ActionId.ADMIN_ROLE_GRANT_REVOKE,
+        PermissionId.ADMIN_ROLE_REVOKE,
+        ActionOwner.AUTH_08,
+    ),
+    _active(
+        ActionId.ADMIN_ROLE_GRANT_BOOTSTRAP,
+        PermissionId.ADMIN_ROLE_GRANT,
+        ActionOwner.AUTH_08,
     ),
     _planned(
         ActionId.OPERATIONS_TASK_START_OVERRIDE,
@@ -466,7 +509,7 @@ def _index_actions(
     ):
         raise RuntimeError("authorization action catalogue contains an invalid row")
     indexed = {definition.action_id: definition for definition in definitions}
-    if len(PERMISSION_IDS) != 74 or len(ACTION_IDS) != 50:
+    if len(PERMISSION_IDS) != 74 or len(ACTION_IDS) != 57:
         raise RuntimeError("authorization catalogue count mismatch")
     if len(indexed) != len(definitions) or set(indexed) != ACTION_IDS:
         raise RuntimeError("authorization action catalogue is incomplete")
@@ -475,6 +518,13 @@ def _index_actions(
     active_actions = {
         ActionId.ACTOR_PROFILE_READ_SELF,
         ActionId.ACTOR_PROFILE_UPDATE_SELF,
+        ActionId.AUTHORIZATION_PERMISSION_CATALOGUE_READ,
+        ActionId.AUTHORIZATION_ADMIN_ROLE_DEFINITIONS_READ,
+        ActionId.ADMIN_ROLE_GRANT_LIST,
+        ActionId.ACTOR_ADMIN_ROLE_GRANT_HISTORY_READ,
+        ActionId.ADMIN_ROLE_GRANT_ISSUE,
+        ActionId.ADMIN_ROLE_GRANT_REVOKE,
+        ActionId.ADMIN_ROLE_GRANT_BOOTSTRAP,
     }
     if {
         definition.action_id

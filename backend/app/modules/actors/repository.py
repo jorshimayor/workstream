@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -90,10 +90,37 @@ class ActorRepository:
         profile: ActorProfile,
         link: ActorIdentityLink,
     ) -> None:
-        """Record database-time verification without accepting provider metadata."""
-        profile.last_seen_at = func.now()
-        profile.updated_at = func.now()
-        link.last_verified_at = func.now()
+        """Record monotonic execution-time verification under canonical locks."""
+        locked_link = await self.get_identity_link_by_id(link.id, for_update=True)
+        if locked_link is None or locked_link.actor_profile_id != profile.id:
+            raise RuntimeError("resolved identity link disappeared")
+        locked_profile = await self.get_actor_profile(profile.id, for_update=True)
+        if locked_profile is None:
+            raise RuntimeError("resolved actor profile disappeared")
+        await self._session.execute(
+            update(ActorIdentityLink)
+            .where(ActorIdentityLink.id == locked_link.id)
+            .values(
+                last_verified_at=func.greatest(
+                    ActorIdentityLink.last_verified_at,
+                    func.clock_timestamp(),
+                )
+            )
+        )
+        await self._session.execute(
+            update(ActorProfile)
+            .where(ActorProfile.id == locked_profile.id)
+            .values(
+                last_seen_at=func.greatest(
+                    func.coalesce(ActorProfile.last_seen_at, func.clock_timestamp()),
+                    func.clock_timestamp(),
+                ),
+                updated_at=func.greatest(
+                    ActorProfile.updated_at,
+                    func.clock_timestamp(),
+                ),
+            )
+        )
         await self._session.flush()
 
     async def get_legacy_identity(
