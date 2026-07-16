@@ -87,4 +87,4 @@ python3 scripts/test_agent_gates.py
 
 These reviewers covered the full planning PR plus the merged ART-02A2 refresh.
 Final publication evidence binds reviewed code SHA
-`f729438e063da65add1c5b712f27ffe628ef189f`.
+`cce3884033a187d40b9a8ae67af8163098e19318` after external review repairs.

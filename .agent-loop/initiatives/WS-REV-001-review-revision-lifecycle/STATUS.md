@@ -5,8 +5,9 @@
 Discovery and planning are complete on `codex/ws-rev-001-plan`. The AUTH-08 and
 ART-02A2 dependency refreshes, final exact-snapshot internal review, and reviewed
 code SHA binding were published to PR #128. Eight valid external review comments
-have since been repaired; exact internal re-review and evidence rebinding are
-required before republishing. No application implementation chunk is active.
+have since been repaired; exact internal re-review and evidence rebinding to
+`cce3884033a187d40b9a8ae67af8163098e19318` are complete for republishing. No
+application implementation chunk is active.
 
 The revised WS-REV Markdown and PDF have been read end to end and reconciled
 structurally. Provenance records the current Markdown-only section 4.6 action

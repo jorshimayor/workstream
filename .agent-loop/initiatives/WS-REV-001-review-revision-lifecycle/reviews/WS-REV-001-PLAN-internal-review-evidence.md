@@ -10,17 +10,17 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: `f729438e063da65add1c5b712f27ffe628ef189f`
+Reviewed code SHA: `cce3884033a187d40b9a8ae67af8163098e19318`
 
 Trusted main SHA: `9a04434e2f23c5dec8939dadb943bba4d85110c0`
 
 Reviewed planning snapshot digest:
-`a9b37925682a06e7d7871b7b060bf53efd23f8f67535ecb417f5259a1b5f7055`
+`5e14cd65270e699b27506e428f7ac876f6a18524ecf052eef51d19ea0a9ea03c`
 
 Digest method: sorted `sha256sum` output for initiative files excluding
 `reviews/**`, hashed once more with SHA-256.
 
-Reviewed at: 2026-07-16T10:26:02Z
+Reviewed at: 2026-07-16T10:57:23Z
 
 Reviewer run IDs: senior-engineering=/root/final_art_senior_review;
 QA/test=/root/final_art_qa_review;
@@ -50,6 +50,9 @@ CI-integrity=/root/final_art_security_review
 - Preserved WS-CON ownership of contribution and compensation effects, exact
   atomic participants, shared outbox/audit boundaries, digest/context gates,
   and coherent joint lifecycle activation through REV-12A/13.
+- Addressed all eight actionable PR #128 review threads: archival scope,
+  dependency wording, composition proof, chain authority, hidden-route proof,
+  final conformance coverage, lifecycle-control coverage, and grammar.
 - Kept every runtime chunk proposed and every public review lifecycle route
   inactive until its separately approved chunk and final coherent activation.
 
@@ -57,13 +60,13 @@ CI-integrity=/root/final_art_security_review
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS WITH LOW RISKS | None | Full plan, chunk graph, dependency boundaries, publication sequence, and stop gate are coherent. |
-| QA/test | PASS | None | Exact AUTH/ART evidence, catalogue arithmetic, lifecycle acceptance criteria, and deterministic proof passed. |
-| security/auth | PASS AFTER FIXES | None | Provider activation overclaim was removed; no scratch/path/descriptor authority or premature action activation remains. |
+| senior engineering | PASS | None | All eight external repairs and the established OpenAPI proof path are coherent and within scope. |
+| QA/test | PASS | None | Exact AUTH/ART evidence, lifecycle criteria, verification suites, coverage commands, and external dispositions passed. |
+| security/auth | PASS AFTER FIXES | None | Chain ownership is server-derived and exact; hidden-route proof and provider/scratch boundaries remain fail closed. |
 | product/ops | PASS | None | Guide rebase, reviewer packet access, revision logs, contribution effects, and coherent activation match approved behavior. |
-| architecture | PASS WITH LOW RISKS | None | ART scratch/source internals remain private; AUTH/ART/CON ports and transaction ownership are preserved. |
-| docs | PASS AFTER FIXES | None | Current merge state, reference provenance, provider direction, historical evidence, and remaining gates are accurate. |
-| reuse/dedup | PASS WITH LOW RISKS | None | No alternate adapter, factory, scratch manager, policy path, hashing, audit, outbox, or lifecycle abstraction was introduced. |
+| architecture | PASS | None | ART scratch/source internals remain private; AUTH/ART/CON ports, composition proof, and transaction ownership are preserved. |
+| docs | PASS AFTER FIXES | None | All eight thread repairs, archival scope, current merge state, provider direction, and evidence records are accurate. |
+| reuse/dedup | PASS | None | Existing `test_app.py` OpenAPI inventory is reused; no alternate adapter, factory, scratch manager, or proof abstraction was introduced. |
 | ci integrity | PASS | None | REV changes no workflow, threshold, skip, dependency, package script, or gate implementation. |
 
 ## Valid Findings Addressed
@@ -77,6 +80,13 @@ CI-integrity=/root/final_art_security_review
 - Kept ART-02A2 preparation-only and made direct REV use of
   `ArtifactScratchManager`, `PreparedArtifact`, `CommittedArtifactSource`,
   scratch paths, ledger identities, or source descriptors explicitly forbidden.
+- Added the exact WS-IMP archival pair to REV-01 allowed scope and clarified the
+  merged WS-CON compensation-policy prerequisite for REV-03.
+- Expanded REV-05 composition/route/worker proof and REV-13 final suite plus
+  complete lifecycle-control package coverage without weakening thresholds.
+- Defined chain ownership through the canonical contributor on the exact
+  Submission-associated TaskAssignment and reused `test_app.py` OpenAPI path
+  inventory in REV-07/09A hidden-route proof.
 
 ## Commands Run
 
@@ -88,7 +98,9 @@ python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/check_loop_memory_state.py
 python3 scripts/test_agent_gates.py
+python3 scripts/check_internal_review_evidence.py
 sha256sum -c docs/reference_specs/SHA256SUMS
+cd backend && .venv/bin/python -m pytest -q tests/test_app.py
 cd backend && .venv/bin/python -m pytest \
   tests/test_artifact_preparation.py \
   tests/test_local_artifact_store.py \
@@ -104,6 +116,7 @@ cd backend && .venv/bin/python -m pytest \
 Results: diff integrity, Markdown links, stale Workstream wording, stale ART
 contracts, loop-memory state, and all reference checksums passed; 71 agent-gate
 tests passed; 154 focused ART tests passed at 94.40 percent scoped coverage.
+The current OpenAPI inventory suite passed 4 tests.
 Merged AUTH-08 and ART-02A2 GitHub Backend, Agent Gates, and CodeRabbit checks
 also passed at the exact SHAs recorded in their dependency reviews.
 

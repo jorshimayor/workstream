@@ -137,7 +137,7 @@ its exact code SHA is bound in the internal-review evidence.
 Final exact-snapshot results: senior engineering/architecture/reuse passed with
 low risks; QA/test and product/ops passed; security/auth, docs, and CI integrity
 passed after the provider-state wording repair. Reviewed code SHA is
-`f729438e063da65add1c5b712f27ffe628ef189f`; detailed results and reviewer IDs
+`cce3884033a187d40b9a8ae67af8163098e19318`; detailed results and reviewer IDs
 are recorded in `WS-REV-001-PLAN-internal-review-evidence.md`.
 
 ## External Review
@@ -146,7 +146,8 @@ The merged-dependency revision passed Backend, Agent Gates, and CodeRabbit.
 Thread-aware audit then found eight actionable planning-contract comments; all
 eight were repaired with no deferral. Exact dispositions are recorded in
 `WS-REV-001-PLAN-external-review-response.md`. The repaired code snapshot
-requires refreshed internal evidence and external checks before human merge.
+passed refreshed internal review and exact-SHA evidence binding. Fresh external
+checks are required on the published repair before human merge.
 
 ## Remaining Risks
 
