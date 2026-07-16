@@ -117,8 +117,9 @@ are invalid. Every row has `availability=planned` and cannot authorize.
 | `artifact.checker_output.write` | `artifact.checker_output.write` | `WS-ART-001-06B` | `planned` |
 
 Each definition stores only these four fields. Principal class, resource facts,
-guards, composers, concealment, and revalidation are activation blueprints
-owned by later chunks and are not registered here.
+guards, composers, concealment, and revalidation are hidden behavior/resource
+blueprints owned by later feature chunks and are not registered here. Dedicated
+AUTH custodians own evaluator integration and every availability activation.
 
 ## Acceptance criteria
 

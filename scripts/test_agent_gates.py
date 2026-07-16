@@ -3490,6 +3490,40 @@ def test_feature_owned_authorization_activation_is_rejected() -> None:
         assert gate.scan_activation_custody_text("contract.md", statement) == []
 
 
+def test_activation_custody_discovery_includes_canonical_handoffs() -> None:
+    """The fail-closed scan covers every canonical WS-XINT handoff."""
+    gate = load_module(
+        "activation_custody_contract_discovery",
+        "scripts/check_stale_authorization_docs.py",
+    )
+    required = {
+        "ART_REV_HANDOFF.md",
+        "AUTH_ART_HANDOFF.md",
+        "AUTH_REV_HANDOFF.md",
+        "REV_CON_HANDOFF.md",
+        "chunks/WS-XINT-001-PLAN-boundary-reconciliation.md",
+    }
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        initiative = (
+            root
+            / ".agent-loop/initiatives/WS-XINT-001-lifecycle-boundary-reconciliation"
+        )
+        for relative_path in required | {"reviews/closed.md"}:
+            path = initiative / relative_path
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("current contract\n", encoding="utf-8")
+
+        discovered = {
+            path.relative_to(initiative).as_posix()
+            for path in gate.discover_activation_custody_documents(root)
+            if path.is_relative_to(initiative)
+        }
+
+    assert required <= discovered
+    assert "reviews/closed.md" not in discovered
+
+
 def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:
     """A new active doc fails without being added to a hardcoded corpus."""
     gate = load_module(
@@ -4613,6 +4647,8 @@ def main() -> int:
         test_full_merge_ledger_hash_chain_detects_history_tampering,
         test_merge_ledger_rejects_schema_record_and_ancestry_corruption,
         test_stale_authorization_rule_examples_are_rejected,
+        test_feature_owned_authorization_activation_is_rejected,
+        test_activation_custody_discovery_includes_canonical_handoffs,
         test_stale_authorization_discovery_includes_new_untracked_docs,
         test_stale_authorization_precedence_exemption_is_line_scoped,
         test_stale_authorization_history_allowlist_is_exact,

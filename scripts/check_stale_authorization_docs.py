@@ -204,6 +204,7 @@ ACTIVATION_CUSTODY_INITIATIVES = (
     "WS-AUTH-001-workstream-authorization-service",
     "WS-ART-001-immutable-artifact-storage",
     "WS-REV-001-review-revision-lifecycle",
+    "WS-XINT-001-lifecycle-boundary-reconciliation",
 )
 
 TECHNICAL_WORKER_PREFIX = re.compile(
