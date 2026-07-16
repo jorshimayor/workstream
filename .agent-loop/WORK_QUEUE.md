@@ -5,6 +5,7 @@
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
 | `WS-ART-001-02A2` | Committed Source And Local Preparation | L1 | Active after explicit user start on 2026-07-15 |
+| `WS-XINT-001-PLAN` | Lifecycle Boundary Reconciliation | L1 | Planning-only coordination active after explicit user start on 2026-07-16 |
 
 Live post-merge state remains read from signed `automation/loop-memory`
 output. This authored queue records the separately approved parallel chunks.

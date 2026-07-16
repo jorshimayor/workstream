@@ -52,19 +52,21 @@ Physical deletion and semantic search require separate approved initiatives.
 
 ## Cross-Initiative Handoffs
 
-- Artifact actions activated after `02A2` must consume the authorization
-  service's canonical `ActorProfile.id`, closed `ActionId` and `PermissionId`
-  catalogues, fixed service identities, and feature-owned resource context.
-  Provider idempotency labels and persisted role snapshots are provenance, not
-  authority.
+- Artifact actions follow AUTH planned registration -> hidden ART behavior and
+  canonical resource composition -> AUTH evaluator integration and activation.
+  They consume canonical `ActorProfile.id`, closed `ActionId` and `PermissionId`
+  catalogues, and exact fixed service assignments. ART never changes action
+  availability. Provider idempotency labels and persisted role snapshots are
+  provenance, not authority.
 - WS-REV owns `ReviewPacketManifest` and `ReviewEvidenceArtifact`. Review code
   receives verified Workstream `ArtifactBinding` IDs through a narrow
   review-facing capability; it must not receive provider references, scratch
   paths, or concrete adapters.
-- WS-CON requires separately approved ART-owned contribution-evidence read and
-  write capabilities plus its canonical artifact action registration before
-  contribution evidence can activate. That prerequisite is not part of
-  `02A2`, and no contribution capability is implied by this chunk map yet.
+- A future optional contribution-evidence projection requires separately
+  approved ART-owned read/write capabilities and AUTH action activation. Core
+  ContributionRecord creation makes no ART capability/provider call and is not
+  gated by that projection. No contribution capability is implied by this chunk
+  map.
 - Cross-initiative terminology must use ART's canonical `resource_type`,
   `resource_id`, and `logical_role`, or define an explicit integration mapping;
   product initiatives must not create a second binding vocabulary implicitly.
