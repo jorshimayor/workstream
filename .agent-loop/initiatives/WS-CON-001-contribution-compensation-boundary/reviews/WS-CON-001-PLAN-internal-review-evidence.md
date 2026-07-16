@@ -1,5 +1,101 @@
 # Internal Review Evidence: WS-CON-001-PLAN
 
+## 2026-07-16 ART-02A2 PR #129 And Exact Custody Reconciliation
+
+This addendum is the current authoritative review state and supersedes older
+trusted-main, ART readiness, REV worktree and ActionOwner statements below.
+Trusted `main` `9a04434e2f23c5dec8939dadb943bba4d85110c0` merges ART-02A2 PR #129 and
+includes AUTH-08 merge `aa0fdcd6912e66609e39a2fbd7b65f67be6c62f3`.
+
+Reviewed code SHA: `5538e94a66718b867280f806c9beac97ac212972`
+
+Reviewed non-review planning-tree SHA-256:
+`b44c0685e842c57694ba0e3b4af34cbcdcaa6a423f965af3cd8d71f9fad9ea92`
+
+The digest excludes `reviews/**` and is reproduced from the repository root:
+
+```bash
+find .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary \
+  -type f -name '*.md' ! -path '*/reviews/*' -print0 \
+  | sort -z | xargs -0 sha256sum | sha256sum
+```
+
+Reviewed at: 2026-07-16T11:00:58Z
+
+Reviewer run IDs: architecture/senior/reuse=`/root/auth08_arch_review`;
+QA/test/product/ops/docs=`/root/auth08_qa_product_review`;
+security/auth/privacy=`/root/auth08_security_review`
+
+| Reviewer | Result | Blocking findings | Notes |
+|---|---|---|---|
+| senior engineering | PASS | None | Pre-lock preparation, bounded Transaction A, explicit caller commit and ART-owned post-commit execution form one executable protocol. |
+| QA/test | PASS | None | Exact ART write/read/recovery/media/receipt gates and concurrent-sibling discovery rules are testable. |
+| security/auth | PASS | None | All eleven ART-02D actions retain exact mappings and move to closed AUTH custody without dual availability writers. |
+| product/ops | PASS | None | Contribution truth remains PostgreSQL-canonical and complete PaymentPolicy removal remains unchanged. |
+| architecture | PASS | None | ART owns preparation/storage; AUTH owns registration/evaluators/availability; CON owns deterministic evidence facts only. |
+| docs | PASS | None | PR #129 is described as inactive preparation only and later gates are named exactly. |
+| reuse/dedup | PASS | None | Canonical ART scratch/preparation, AUTH D10, shared outbox, sessions and recovery paths are reused. |
+| CI integrity | N/A - with approved reason | None | Planning Markdown only; no workflow, dependency, test, threshold or runner changed. |
+| test delta | N/A - with approved reason | None | No runtime test file changed; focused merged-code tests are dependency evidence only. |
+
+Open sub-agent sessions: none
+
+Valid findings addressed: yes
+
+- Classified merged ART-02A2 final head `32aab89262a3944f305e9e5dc4c65a2d31e2e144`
+  correctly: inactive `ArtifactPreparationService`, canonical bounded scratch and
+  sealed one-shot source only. ArtifactStore v1, providers, schema, admission,
+  verification, binding, contribution behavior and authorization are unchanged.
+- Replaced the unsafe long-lock draft with ART-owned pre-transaction
+  `prepare_source`; locked AUTH -> CON -> ART staging and commitment
+  revalidation; caller-owned commit; a fresh committed-attempt claim; and
+  one-shot provider I/O outside every database transaction. Rollback,
+  cancellation, process loss, stale cleanup, acknowledgement loss and
+  deterministic replay serialize no scratch handle and retain cleanup custody
+  fail closed when release cannot complete.
+- Made the dependency chain exact: AUTH-09 fixed identities/assignments; ART
+  02A2 -> 02A3 -> 02B1 -> 02C1 -> 02C2 -> 02C3 -> hidden 02D behavior;
+  AUTH-owned Operator/internal evaluator activation; then the separately
+  approved `WS-ART-001-CON-EVIDENCE` write/read ports. CON-09A, 09B and 11 gate
+  the exact owning symbols separately.
+- Froze media type
+  `application/vnd.workstream.contribution-evidence+json;version=1`, zero-I/O
+  rejection for invalid media or digest/size mismatch, and exact returned
+  binding/receipt digest, size, media, owner, project, role, schema and
+  idempotency validation before projection success.
+- Extended D12 without changing canonical identifiers. All eight current
+  Operator-facing `ART_02D` ActionIds retain their existing PermissionIds under
+  proposed `AUTH_ART_02D_OPERATOR`; all three internal ActionIds retain theirs
+  under `AUTH_ART_02D_INTERNAL`. In the recommended model, AUTH atomically
+  removes now-unused `ART_02D` and `REV_08`, retains `REV_06`, and preserves
+  `{definition.owner} == set(ActionOwner)` across typed/SQL/audit parity. The
+  global alternative must keep feature owners and add a separate exact closed
+  activation-custody catalogue; mixed models and dual writers are forbidden.
+- Preserved AUTH ownership. ART-02D supplies hidden feature/resource behavior
+  only; AUTH-09 owns service identities/assignments and later AUTH chunks alone
+  integrate evaluators and change availability. The three internal actions do
+  not imply Operator `artifact.verification_job.retry`, and the later
+  contribution binding action cannot substitute for either authority family.
+- Inspected REV evidence-bound baseline `6faccc0`, then observed its owner begin
+  later external-review repairs. The live sibling is discovery only and is not
+  pinned by WS-CON verification; only a reviewed merge on trusted `main` may be
+  consumed.
+
+Deterministic evidence passed: `git diff --check`; Markdown links for 38 changed
+Markdown files; stale Workstream wording; artifact-contract and loop-memory
+state; 71 agent-gate tests; seven focused ART commitment/single-stream/
+cancellation/cleanup tests; exact trusted-main ancestry; no backend diff;
+direct proof of all eleven current `ART_02D` ActionId -> PermissionId mappings;
+and exact proposed owner/removal/parity assertions. The authorization stale-doc
+scanner continues to flag exactly ten `HUMAN_WORKER_VOCABULARY` occurrences in
+the explicitly non-canonical generation-2 working transcription. CON-01 owns
+its byte-preserving archive classification and active-spec reconciliation; no
+active documentation waiver was added.
+
+Application/runtime code changed: no. The original PDF deletion remains the
+pre-existing unstaged user-worktree change and is excluded from the reviewed
+content/evidence commits.
+
 ## 2026-07-16 AUTH-08 And Parallel-REV Reconciliation
 
 This addendum is the current authoritative review state and supersedes older
