@@ -117,7 +117,7 @@ None.
 | `WS-AUTH-001-07` | Split | `codex/ws-auth-001-07-authorization-kernel` | - | Required L1 review rejected the combined contract before runtime edits. |
 | `WS-AUTH-001-07A` | Merged | `codex/ws-auth-001-07-authorization-kernel` | #126 | Merged as `e9d72a1`; 74 permissions, 50 planned actions, and action-aware audit parity only. |
 | `WS-AUTH-001-07B` | Merged | `codex/ws-auth-001-07b-deny-default-kernel` | #130 | Merged as `90eca12`; signed memory passed. |
-| `WS-AUTH-001-08` | Implementing | `codex/ws-auth-001-08-bootstrap-admin-grants` | - | Exact-head L1 plan review passed at `cbe7c6c`; runtime implementation active. |
+| `WS-AUTH-001-08` | In review | `codex/ws-auth-001-08-bootstrap-admin-grants` | - | Implementation `34f87a5` passed deterministic evidence and all required internal reviewers; PR publication pending. |
 | `WS-AUTH-001-09` | Proposed | - | - | Actor/link states and service actors. |
 | `WS-AUTH-001-10` | Proposed | - | - | Project contributor grants. |
 | `WS-AUTH-001-11` | Proposed | - | - | Project identity/guide/source/read cutover. |
