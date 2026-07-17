@@ -46,7 +46,7 @@ ARTIFACT_COVERAGE_ORDER = (
 FOUNDATION_ARTIFACT_COVERAGE_COMMAND = (
     "coverage report "
     "--include='app/adapters/artifacts/*,app/core/cancellation.py,app/core/file_locks.py,"
-    "app/interfaces/artifacts.py,"
+    "app/interfaces/artifact_operations.py,app/interfaces/artifacts.py,"
     "app/modules/artifacts/*' --precision=2 --fail-under=90"
 )
 ARTIFACT_COVERAGE_COMMAND_OWNERS = {

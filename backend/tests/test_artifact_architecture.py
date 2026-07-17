@@ -5,6 +5,8 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
+from app.interfaces import artifact_operations
+
 
 BACKEND_ROOT = Path(__file__).parents[1]
 APP_ROOT = BACKEND_ROOT / "app"
@@ -159,6 +161,9 @@ def test_provider_methods_stay_inside_artifact_orchestration_and_adapters() -> N
 
 
 def test_artifact_operations_exports_only_canonical_closed_contracts() -> None:
+    assert set(artifact_operations.__all__) == (
+        CLOSED_PORTS | CANONICAL_REQUESTS | CANONICAL_TYPE_ALIASES
+    )
     tree = _tree(ARTIFACT_OPERATIONS)
     protocol_names = {
         node.name

@@ -2162,3 +2162,9 @@ valid v2 marker could retain unknown top-level entries. Initialization now
 accepts only the marker, `objects`, `tmp`, and `locks` entries, with regression
 proof that an added legacy directory fails closed. All reviewer sessions were
 closed; the repaired SHA requires fresh review.
+
+The final CI-integrity review found that the cumulative artifact-foundation
+coverage source set omitted the new closed product-capability interface module.
+The 90 percent workflow gate and its deterministic command-shape assertion now
+include `app/interfaces/artifact_operations.py`. All reviewer sessions were
+closed; the repaired SHA requires fresh exact-SHA review.

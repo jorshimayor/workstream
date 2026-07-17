@@ -72,7 +72,7 @@ jobs:
         working-directory: backend
         run: >-
           coverage report
-          --include='app/adapters/artifacts/*,app/core/cancellation.py,app/core/file_locks.py,app/interfaces/artifacts.py,app/modules/artifacts/*'
+          --include='app/adapters/artifacts/*,app/core/cancellation.py,app/core/file_locks.py,app/interfaces/artifact_operations.py,app/interfaces/artifacts.py,app/modules/artifacts/*'
           --precision=2
           --fail-under=90
 
