@@ -4,8 +4,8 @@
 
 - Pull request: `#144`
 - Reviewer: CodeRabbit
-- Reviewed repair SHA: `c027a4bef7b87db0af8bff5af7551c36e671b0bf`
-- Trusted base SHA: `a947b8693a97bdb94c9dc63202a51e197834d613`
+- Reviewed repair SHA: `a6a88fb42da8ffb37e8293f1495f6be3513e8ad1`
+- Trusted base SHA: `053242b90d927ace3fab92eeca72da27a61cecec`
 
 ## Comments Addressed
 
@@ -23,6 +23,17 @@
 ## Comments Deferred
 
 None.
+
+## Current-Main Reconciliation
+
+After both CodeRabbit threads resolved, AUTH-09B PR #143 merged to `main`.
+CON-01 pulled that merge and replaced its prior 74/65/9/56 baseline with
+74/65/10/55. Only `actor.service.provision` became active. The reconciled
+contract records that provisioning creates an approved service actor/link but
+does not create a role, grant, assignment, runtime admission, database action
+assignment, or executable authority. The current identities/static rows remain
+ART-only; future CON services still require separate reviewed AUTH contracts,
+provisioning, AUTH-09E, evaluator integration, and activation.
 
 ## Human Decisions Needed
 
@@ -42,15 +53,16 @@ git diff --quiet origin/main...HEAD -- docs/reference_specs
 git diff --check
 ```
 
-Results: Markdown links and all stale-contract scans passed; all 80 agent-gate
-tests passed; the committed reference-spec diff remained empty; and diff
-integrity passed. Senior engineering, QA/test, security/auth, product/ops,
-architecture, docs, reuse/dedup, and CI-integrity reviewers all passed the exact
-repair SHA with no findings.
+Results: Markdown links passed for 18 changed Markdown files and all
+stale-contract scans passed; all 80 agent-gate tests and ten focused AUTH
+catalogue/static-matrix tests passed; the committed reference-spec diff remained
+empty; and diff integrity passed. Senior engineering, QA/test, security/auth,
+product/ops, architecture, docs, reuse/dedup, and CI-integrity reviewers all
+passed the exact current-main repair SHA with no findings.
 
 ## Remaining Risks
 
-- GitHub CI and CodeRabbit must review the pushed evidence commit.
+- GitHub CI and CodeRabbit must review the pushed evidence/current-main merge.
 - The canonical contract is target architecture; runtime remains unchanged and
   hidden until its separately approved implementation and activation chunks.
 - The unstaged user-owned reference PDF deletion remains outside this chunk and

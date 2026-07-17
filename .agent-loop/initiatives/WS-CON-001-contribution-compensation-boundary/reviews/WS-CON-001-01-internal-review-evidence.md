@@ -10,11 +10,11 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: `c027a4bef7b87db0af8bff5af7551c36e671b0bf`
+Reviewed code SHA: `a6a88fb42da8ffb37e8293f1495f6be3513e8ad1`
 
-Trusted main SHA: `a947b8693a97bdb94c9dc63202a51e197834d613`
+Trusted main SHA: `053242b90d927ace3fab92eeca72da27a61cecec`
 
-Reviewed at: 2026-07-17T21:32:41Z
+Reviewed at: 2026-07-17T23:00:33Z
 
 Reviewer run IDs: senior-engineering/architecture/reuse-dedup=/root/con01_arch_senior_reuse; QA-test/product-ops/docs=/root/con01_qa_product_docs; security-auth/CI-integrity=/root/con01_security_ci
 
@@ -44,6 +44,13 @@ Reviewer run IDs: senior-engineering/architecture/reuse-dedup=/root/con01_arch_s
   quantity/unit copy integrity, receipt redaction, and operations observation.
 - Added exactly one schema-v2 merge intent naming same-initiative successor
   `WS-CON-001-02A` with a separate explicit start.
+- Reconciled the active contract with merged AUTH-09B: 74 PermissionIds, 65
+  ActionIds, ten active and 55 planned; only `actor.service.provision` was newly
+  activated.
+- Reused AUTH's controlled service ActorProfile/ActorIdentityLink provisioning
+  while preserving the separate ServiceIdentity/static-row, AUTH-09E admission,
+  evaluator, activation, and cross-service-denial gates for every future CON
+  fixed service. The current seven identities and eleven rows remain ART-only.
 
 ## Reviewer Results
 
@@ -84,6 +91,10 @@ file changed. Existing agent-gate tests were retained and executed unchanged.
   identifiers allowed only in canonical receipt/status fields.
 - Re-ran every required internal track against the exact repaired SHA after the
   two CodeRabbit findings; all eight tracks passed with no remaining findings.
+- Pulled merged AUTH-09B PR #143, replaced the stale 74/65/9/56 baseline with
+  74/65/10/55, and made provisioning-versus-execution separation explicit.
+- Re-ran all eight internal tracks at the exact current-main reconciliation SHA;
+  every track passed with no findings.
 
 ## Commands Run
 
@@ -102,11 +113,12 @@ sha256sum docs/reference_specs/WS-CON-001-contribution-record-and-compensation-b
 git diff --check
 ```
 
-Results: Markdown links passed; stale Workstream, AUTH, and ART scans passed;
-all 80 agent-gate tests passed; exactly 22 proposed mappings were present; both
-present archival hashes matched; the committed diff contained no reference-spec
-change; and diff integrity passed. No backend, migration, test, dependency,
-workflow, or coverage command changed.
+Results: Markdown links passed for 18 changed Markdown files; stale Workstream,
+AUTH, and ART scans passed; all 80 agent-gate tests and ten focused AUTH
+catalogue/static-matrix tests passed; exactly 22 proposed mappings were present;
+both present archival hashes matched; the committed diff contained no
+reference-spec change; and diff integrity passed. No backend, migration, test,
+dependency, workflow, or coverage command changed relative to trusted main.
 
 The local worktree retains one user-owned unstaged deletion of the older
 reference PDF. It was excluded from staging, the reviewed commit, every
@@ -118,8 +130,9 @@ reviewer verdict, and PR scope.
 - D11 AdminRole candidates remain unresolved before CON-10A/10B.
 - Legacy economic rows require deterministic rebuild or classified migration
   before CON-05A/05B.
-- Protected service identities/actions/static rows require human/AUTH approval.
-- AUTH-PREP, project grants, fixed-service admission, complete REV custody,
+- New CON service identities/actions/static rows require human/AUTH approval;
+  AUTH-09B provisioning alone grants no execution authority.
+- AUTH-09C through 09E, AUTH-PREP, project grants, complete REV custody,
   FinalAcceptance runtime, stabilized artifact lineage, and named integration
   chunks remain upstream gates.
 - Optional contribution evidence remains deferred.

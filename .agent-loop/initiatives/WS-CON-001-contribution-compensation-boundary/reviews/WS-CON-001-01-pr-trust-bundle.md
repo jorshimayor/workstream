@@ -26,6 +26,8 @@ of this chunk.
 - Corrected active data-model naming and mirrored numeric/receipt rules.
 - Recorded active-doc inventory, conformance proof, decisions, status, review
   evidence, and one merge intent.
+- Reconciled the contract with merged AUTH-09B PR #143 and its
+  74-permission/65-action/10-active/55-planned runtime baseline.
 
 ## Why It Changed
 
@@ -45,6 +47,9 @@ is required before schema/runtime chunks proceed.
 - Awards are immutable policy results; adapters only fulfill them after commit.
 - AUTH owns identifier, evaluator, evidence, service admission, and activation;
   22 mappings remain non-final proposals.
+- AUTH-09B provisioning creates only an approved service actor/link. It does not
+  admit service credentials or grant feature authority, and the current ART
+  identities/static rows cannot be reused by CON.
 - One shared outbox and one REV-owned controller/fence govern delivery.
 - Quantities use `NUMERIC(38, 18)` and receipts store only bounded, minimized
   canonical facts.
@@ -116,7 +121,7 @@ coverage threshold changed. CI-integrity review passed.
 
 ## Reviewer Results
 
-Exact reviewed SHA: `c027a4bef7b87db0af8bff5af7551c36e671b0bf`.
+Exact reviewed SHA: `a6a88fb42da8ffb37e8293f1495f6be3513e8ad1`.
 
 | Track | Result |
 |---|---|
@@ -139,16 +144,20 @@ states that policy definitions and awards reference the matching adapter binding
 without reverse policy/award identifiers on the binding, and distinguishes
 allowed bounded non-secret receipt identifiers from prohibited raw secrets,
 authentication tokens, and unbounded provider payloads. Every internal track
-then passed again at the exact repaired SHA. GitHub CI and CodeRabbit reruns are
-required on the pushed evidence commit; human review remains the merge gate.
+then passed again at the exact repaired SHA. Both CodeRabbit threads are resolved
+and outdated. After AUTH-09B merged, all tracks passed again at the exact
+current-main reconciliation SHA. GitHub CI and CodeRabbit must rerun on the
+pushed evidence commit; human review remains the merge gate.
 
 ## Remaining Risks
 
 - D11 administrative role candidates are still human/AUTH gates.
 - Legacy row classification is still a human migration gate.
-- Protected service identities/actions/static rows are not yet approved.
-- AUTH, REV, task, ART-lineage, outbox, and release runtime prerequisites remain
-  unimplemented and must refresh from trusted main per chunk.
+- Protected CON service identities/actions/static rows are not yet approved;
+  merged AUTH-09B provisioning does not satisfy them.
+- AUTH-09C through 09E, AUTH-PREP, REV, task, ART-lineage, outbox, and release
+  runtime prerequisites remain unimplemented and must refresh from trusted main
+  per chunk.
 
 ## Follow-Up Work
 
