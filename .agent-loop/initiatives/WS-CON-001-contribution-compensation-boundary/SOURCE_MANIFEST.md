@@ -10,13 +10,15 @@
 
 ## Trusted baseline
 
-- `origin/main` / merged PR #139 at
-  `5d353b6d3f8a36b9b9ffdc1959487a150ac25fd1`.
-- PR #139 title: `ws-xint-001-boundary-reconciliation` / AUTH, ART, REV, and
-  CON lifecycle boundary reconciliation.
+- `origin/main` / merged AUTH PR #140 at
+  `d541521790a0441cfd2193f466e00ef81248ec31`.
+- PR #140 title/branch: AUTH WS-XINT reconciliation /
+  `codex/ws-auth-001-xint-reconciliation`; it adopts the earlier PR #139 AUTH,
+  ART, REV, and CON lifecycle boundary.
 - Runtime AUTH remains 74 PermissionIds, 57 ActionIds, nine active, 48 planned.
-- PR #139 changed planning/canonical docs/scanners, not runtime CON behavior or
-  action availability.
+- PR #140 adds AUTH activation-custody, prepared-protocol, revised chunk,
+  operations, and verification contracts. It changes no runtime CON behavior,
+  registers no CON action, and activates no feature action.
 
 ## Human boundary amendment
 
@@ -57,6 +59,10 @@
 - `docs/decision_0015_project_contributor_roles_are_independent.md`
 - `docs/spec_authorization_service.md`
 - `docs/spec_artifact_storage_service.md`
+- `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/ACTIVATION_CUSTODY.md`
+- `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/chunks/WS-AUTH-001-PREP-prepared-mutation-protocol.md`
+- `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/chunks/WS-AUTH-001-13-task-assignment-cutover.md`
+- `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/chunks/WS-AUTH-001-16-evidence-live-proof.md`
 - `.agent-loop/policies/*`
 
 ## Normative WS-XINT handoffs

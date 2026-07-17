@@ -2,9 +2,9 @@
 
 ## Proposed approach
 
-Adopt the merged WS-XINT-001 boundary from PR #139 before runtime work, then
-deliver WS-CON through hidden, reviewable chunks. The core path is PostgreSQL-
-local and has no ART dependency:
+Adopt merged AUTH PR #140 and its underlying WS-XINT PR #139 boundary before
+runtime work, then deliver WS-CON through hidden, reviewable chunks. The core
+path is PostgreSQL-local and has no ART dependency:
 
 ```text
 AUTH prepares review.decision and locks reviewer authority
@@ -149,9 +149,11 @@ models, routes, lifecycle decisions, or commits.
 
 ## Authorization boundary
 
-Trusted `main` is `5d353b6`, merging WS-XINT-001 through PR #139. Runtime
-catalogue counts remain 74 PermissionIds, 57 ActionIds, nine active actions, and
-48 planned actions. No WS-CON ActionId is registered yet.
+Trusted `main` is `d541521`, merging AUTH PR #140 after WS-XINT PR #139.
+Runtime catalogue counts remain 74 PermissionIds, 57 ActionIds, nine active
+actions, and 48 planned actions. No WS-CON ActionId is registered. PR #140
+adds reviewed AUTH custody/PREP/activation contracts only; the custody
+transfers and prepared protocol remain proposed runtime work.
 
 WS-XINT D1/D2 is final for this plan: `ActionOwner` is the exact AUTH activation
 custodian. Each protected surface follows:
@@ -168,12 +170,14 @@ CON never reads grants, imports AUTH repositories, constructs PermissionIds or
 roles, changes availability, or supplies a production allow fallback. AUTH
 never imports CON repositories or mutates contribution/award state.
 
-The current complete ART and REV custody transfers are AUTH-owned coordination
-work. WS-CON references the canonical WS-XINT `AUTH_ART_HANDOFF.md` and
-`AUTH_REV_HANDOFF.md`; it does not prescribe a partial transfer. CON depends on
-`review.claim` and `review.decision`, but AUTH must reconcile every current REV
-action as one complete boundary. The four proposed additive REV actions remain
-unregistered until their own reviewed registration contract.
+PR #140's complete ART and REV custody-transfer contracts are AUTH-owned
+coordination work; their runtime transfers have not yet merged. WS-CON
+references the canonical AUTH `ACTIVATION_CUSTODY.md` plus WS-XINT
+`AUTH_ART_HANDOFF.md` and `AUTH_REV_HANDOFF.md`; it does not prescribe a partial
+transfer. CON depends on `review.claim` and `review.decision`, but AUTH must
+transfer every current REV action as one complete boundary. The four proposed
+additive REV actions remain unregistered until their own reviewed registration
+contract.
 
 ### Human project grants
 
@@ -187,14 +191,18 @@ outside this lifecycle contract.
 
 ### Prepared mutation protocol
 
-For mutations, AUTH first locks and revalidates either human actor/link/grant
-rows or fixed-service actor/link rows. A fixed service additionally requires an
-unchanged closed `ServiceIdentity`, exact static service-action matrix
-membership, AUTH-09E typed service admission, and active action. AUTH returns a
-single-use, non-serializable handle bound to request, session, actor, action,
-target, and authority snapshot. The feature locks canonical rows, recomposes
-final typed facts, and AUTH evaluates once. AUTH stages one decision and never
-commits. Reads use request-scoped `require()` and canonical feature loaders.
+For mutations, AUTH first locks and revalidates either human actor/link/exact-
+grant rows or fixed-service actor/link rows. It returns an opaque, single-use,
+non-serializable `PreparedAuthorizationHandle` bound exactly to session,
+ActionId, actor-reference kind/reference, idempotency key, and canonical
+request digest. A fixed service additionally requires closed ServiceIdentity,
+exact static service-action matrix membership, AUTH-09E admission, and active
+action as code-owned validations after profile/link locks, not database lock
+targets. The feature then locks canonical rows and recomposes final typed
+facts; AUTH consumes the handle, evaluates once, and stages decision evidence.
+AUTH and feature participants flush only; the route or service command commits
+once. Substitution/reuse denial does not consume an otherwise valid handle.
+Reads use request-scoped `require()` and canonical feature loaders.
 
 Missing provisioned service ActorProfile/ActorIdentityLink rows deny that
 runtime request and block release readiness, but do not fail application startup
@@ -312,9 +320,13 @@ subsystem owns no contribution, award, adapter, review, or provider semantics.
    CON-03C lands only after REV's FinalAcceptance persistence target is merged.
 4. CON-04A/B add hidden binding and ContributionPolicy behavior behind planned
    AUTH actions.
-5. CON-05A removes retired semantic consumers and freezes the published
-   ContributionPolicyVersion on new TaskAssignments; 05B drops unreachable
-   physical schema after a zero-consumer proof.
+5. After AUTH-PREP, exact-project submitter grants, and the planned task-claim
+   contract exist, CON-05A removes retired semantic consumers and lands the
+   hidden participant that freezes the published ContributionPolicyVersion on
+   new TaskAssignments. Task-owned claim composition consumes it before
+   `WS-AUTH-001-13` enumerates/registers the task-claim ActionId, integrates its
+   evaluator, and activates; 05B then drops unreachable physical schema after
+   zero-consumer proof.
 6. CON-06 supplies reviewer policy freeze; the REV owner wires it into hidden
    review claim behavior before AUTH activates `review.claim`.
 7. CON-07 supplies the flush-only decision participant that consumes REV-owned

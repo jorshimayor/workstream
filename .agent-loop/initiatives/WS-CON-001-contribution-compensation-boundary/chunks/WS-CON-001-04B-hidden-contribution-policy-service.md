@@ -31,9 +31,10 @@ legacy fallback, dependency or CI weakening
 - [ ] AUTH registration is merged for planned `contribution.policy.*` actions,
   each mapped to stable `compensation.policy.manage`, with typed contexts,
   Finance candidates, AUTH ActionOwner, and prepared T protocol.
-- [ ] Publish locks project, active policy, version, rules, definitions, and
-  bindings; evaluates one prepared handle against recomposed final facts; and
-  atomically updates current_published_version_id with audit/outbox.
+- [ ] AUTH prepares its exact bound handle first. Publish then locks project,
+  active policy, version, rules, definitions, and bindings; recomposes final
+  facts; AUTH consumes the handle and evaluates once; only then may the caller
+  atomically update current_published_version_id with audit/outbox.
 - [ ] Allowed decision evidence matches complete resource digest, grant ID,
   project scope, request, and correlation. Service flushes and never commits.
 - [ ] Explicit unpaid is valid. Missing/incomplete/contradictory setup is a

@@ -38,6 +38,11 @@ archival input edits
   proposed core CON mappings plus separately approved executor actions, D11
   role sets, exact grants/static rows, AUTH-09E admission, prepared protocol,
   decision digests/matched authority, and activation evidence.
+- [ ] Prepared-protocol proof binds handles exactly to session, ActionId,
+  actor-reference kind/reference, idempotency key, and request digest; proves
+  same-session/action cross-actor/request substitution does not mutate state or
+  consume a valid handle; and proves ServiceIdentity/matrix/availability are not
+  database lock targets.
 - [ ] No partial ART/REV transfer is restated. Complete mappings are referenced
   from merged WS-XINT handoffs. ART and optional CON-09A/09B are absent from
   core prerequisites.

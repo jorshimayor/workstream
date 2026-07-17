@@ -48,11 +48,11 @@ roadmap changes without synchronized local XLSX/CSV exports
   commit. It adds no SubmissionVersion alias or adjudication dependency.
 - [ ] Optional evidence is clearly deferred with separate ART/AUTH approval and
   is absent from the core release path.
-- [ ] AUTH boundary matches PR #139: independent project grants, fixed-service
+- [ ] AUTH boundary matches PR #140 (adopting PR #139): independent project grants, fixed-service
   static matrix/AUTH-09E, prepared mutations, AUTH-only activation, complete
   ART/REV custody references, and no service-row startup dependency.
-- [ ] Active spec lists the proposed 22 core surface mappings using
-  `contribution.policy.*`; optional evidence is separate; protected handler
+- [ ] Active spec lists the proposed 22 core surface mappings as unregistered,
+  non-final identifiers using `contribution.policy.*`; optional evidence is separate; protected handler
   execution actions remain explicit human/AUTH gates until approved.
 - [ ] Dispatcher authority is limited to outbox mechanics; delivery,
   reconciliation, rebuild, and callback cannot inherit it.

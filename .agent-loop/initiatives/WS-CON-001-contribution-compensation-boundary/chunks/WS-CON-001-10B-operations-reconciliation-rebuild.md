@@ -33,6 +33,9 @@ AUTH implementation; production router registration; CI weakening
 - [ ] D11 is final. AUTH registers binding-retire, delivery-reconcile, status,
   reconcile-request, rebuild-request, and audit actions with exact candidates,
   contexts, prepared protocol, and AUTH custodians.
+- [ ] Every mutation uses the exact PR #140 prepared protocol: AUTH prepares
+  authority first; CON locks and recomposes final facts; AUTH consumes/evaluates
+  once before request/retirement mutation; the route commits once.
 - [ ] Human operations create bounded durable idempotent requests only; they do
   not execute reconciliation/rebuild under human or dispatcher authority.
 - [ ] Binding retirement locks policy/assignment/lease/award/delivery/receipt

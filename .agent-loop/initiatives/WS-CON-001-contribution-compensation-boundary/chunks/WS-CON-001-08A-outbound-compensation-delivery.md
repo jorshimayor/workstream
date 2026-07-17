@@ -49,9 +49,10 @@ database/fence lock held during external I/O
 - [ ] Delivery authority is independent from `outbox.dispatch`. Dispatcher is
   denied delivery; delivery identity is denied dispatch and every other
   handler/action; humans are denied fixed-service execution.
-- [ ] Prepared authorization locks service ActorProfile/link, validates exact
-  ServiceIdentity/static row/action, then CON locks award/binding/delivery rows
-  and evaluates final facts once.
+- [ ] Prepared authorization locks service ActorProfile/link and validates exact
+  ServiceIdentity/static row/action as code-owned facts. AUTH prepares its exact
+  bound handle; CON locks award/binding/delivery rows and recomposes final
+  facts; AUTH consumes/evaluates once before durable delivery mutation.
 - [ ] Durable in-flight generation and exact event/payload/binding/idempotency
   identity commit before adapter I/O; every database transaction and lifecycle
   fence is released before the call.

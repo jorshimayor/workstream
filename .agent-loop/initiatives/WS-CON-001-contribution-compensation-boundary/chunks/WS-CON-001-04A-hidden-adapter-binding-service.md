@@ -39,8 +39,9 @@ concrete adapter, provider secret/ref, dependency or CI weakening
 - [ ] Create validates canonical active service ActorProfile/link, immutable
   approved ServiceIdentity, exact static row, and non-secret route identity.
 - [ ] Mutations follow PLAN locks and transaction-revalidate authority; own-state
-  concurrent suspend/resume is deterministic. They use the AUTH-prepared handle
-  and evaluate it once against facts recomposed from locked binding/project rows.
+  concurrent suspend/resume is deterministic. AUTH prepares its exact bound
+  handle first; CON locks binding/project rows and recomposes final facts; AUTH
+  consumes the handle and evaluates once before CON mutates or flushes.
 - [ ] The service accepts only an allowed decision whose complete resource-
   context digest, matched AdminRoleGrant ID and covered project match the
   locked binding facts; mismatched decision evidence is rejected. It flushes

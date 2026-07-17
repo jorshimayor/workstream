@@ -15,9 +15,10 @@ reviewed and merged to trusted `main`.
 ## Required decision composition
 
 ```text
-AUTH prepares review.decision with exact reviewer grant
+AUTH locks exact reviewer authority and prepares review.decision handle bound to
+session/action/actor reference/idempotency key/canonical request digest
 -> REV locks and recomposes canonical facts
--> AUTH evaluates once
+-> AUTH consumes the handle, evaluates once, and stages decision evidence
 -> REV stages Review/findings/resolutions, consumes ReviewLease, closes queue
 -> on accept, REV creates immutable FinalAcceptance linked to Review,
    canonical Submission, Task, submitter, reviewer and locked ReviewPolicy
@@ -90,7 +91,8 @@ Review.decision.
 - REV hidden claim/decision composition then consumes CON-06/07 and has no
   fallback.
 - AUTH complete REV custody transfer, exact evaluators, reviewer grant path,
-  prepared protocol, and activation are merged.
+  prepared protocol, and activation are merged. The transfer is the complete
+  PR #140 19-action map, not a local review.claim/review.decision subset.
 - Every public/service CON action has exact AUTH registration, evaluator,
   principal path, and activation after hidden behavior.
 - Protected outbox handlers have their own exact service authority; dispatcher

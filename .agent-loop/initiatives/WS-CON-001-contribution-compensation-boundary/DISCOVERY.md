@@ -2,7 +2,8 @@
 
 ## Baseline inspected
 
-- trusted `origin/main` at `5d353b6`, merged PR #139;
+- trusted `origin/main` at `d541521`, merged AUTH PR #140, including the earlier
+  WS-XINT PR #139 boundary;
 - complete WS-XINT intent, decisions, plan, REV/CON, AUTH/role-service,
   AUTH/REV, AUTH/ART, and ART/REV handoffs;
 - current WS-CON initiative package and archival reference inputs;
@@ -11,7 +12,7 @@
 - current backend project/task/submission/checker, AUTH, audit, artifact, and
   migration code/tests;
 - human-approved 2026-07-17 FinalAcceptance/no-adjudication direction and the
-  current sibling REV planning head `69fb231` as discovery-only context;
+  current sibling REV planning worktree as discovery-only context;
 - stale wording, authorization, artifact, link, loop-memory, and agent-gate
   scanners/tests.
 
@@ -26,14 +27,15 @@
   named `submission_version_id` therefore maps to canonical `Submission.id` and
   is stored as `submission_id`.
 - No FinalAcceptance runtime or reviewed merged REV contract exists yet. The
-  current sibling REV plan creates Review/task effects directly and must be
-  reconciled and merged before CON consumes the new fact.
+  current sibling REV plan now includes FinalAcceptance and exact outcome
+  effects, but must be reviewed and merged before CON consumes that fact.
 - The merged AUTH catalogue has 74 PermissionIds and 57 ActionIds. Nine
   self/admin actions are active and 48 are planned. No WS-CON ActionId is
   registered.
 - Current AUTH supports actor-self and AdminRoleGrant evaluation. Independent
   ProjectRoleGrant runtime, fixed-service runtime admission, CON evaluators,
-  and the cross-domain prepared mutation protocol remain future AUTH work.
+  ART/REV custody transfer, and the cross-domain prepared mutation protocol
+  remain future AUTH work. PR #140 adds their reviewed plans, not runtime.
 - AUTH's static service-action matrix is typed code; it is not a database grant
   table. AUTH-09E is the required runtime admission path.
 - PR #129 added inactive ART preparation/source values only. It added no
@@ -68,6 +70,17 @@
 9. REV owns FinalAcceptance persistence, Review/task effects, shared audit/
    outbox staging, and the single commit. CON validates the locked acceptance
    fact, flushes contributions/awards, returns a typed result, and never commits.
+10. PR #140 fixes the prepared handle to exact session, ActionId,
+    actor-reference kind/reference, idempotency key, and canonical request
+    digest bindings. Final resource facts are recomposed after feature locks;
+    AUTH consumes the handle, evaluates once, and stages evidence.
+11. PR #140 publishes complete 25-ART/19-REV custody-transfer maps, but those
+    availability-neutral runtime transfers remain proposed. CON depends on the
+    complete REV transfer and never restates a two-action subset.
+12. Trusted main has stable PermissionId `task.claim` but no task-claim
+    ActionId. CON-05A's hidden TaskAssignment policy freeze must merge into
+    task-owned claim composition before AUTH-13 enumerates/registers and
+    activates that action.
 
 ## Relevant files and symbols
 
@@ -76,6 +89,10 @@
 | `docs/architecture_data_model.md` | Canonical policy/rule/definition, binding, contribution, award, receipt, and projection names/fields |
 | `docs/decision_0015_project_contributor_roles_are_independent.md` | Exact project role values and independent revocation |
 | `docs/spec_authorization_service.md` | Stable permissions, current actions, ActionOwner semantics, static service matrix, AUTH-09E order |
+| `WS-AUTH-001/ACTIVATION_CUSTODY.md` | Exact complete custody transfers, feature-manifest activation gates, and mandatory CON participant prerequisite for review.decision |
+| `WS-AUTH-001-PREP` chunk | Exact prepared-handle bindings, authority-first locks, single use, caller-owned commit, and concurrency/rollback proof |
+| `WS-AUTH-001-13` chunk | Future task-claim ActionId enumeration, registration, evaluator integration, and activation owner; exact submitter grant, task-owned resource composition, and AUTH-PREP dependency |
+| `WS-AUTH-001-16` chunk | Aggregate proof that active review.decision uses one rollback-safe REV+CON transaction with no ART/fallback |
 | `WS-XINT-001/REV_CON_HANDOFF.md` | Exact core participant sequence and optional-evidence boundary |
 | `WS-XINT-001/AUTH_ROLE_SERVICE_HANDOFF.md` | Fixed service and project grant contract |
 | `WS-XINT-001/AUTH_REV_HANDOFF.md` | Full review activation-custody/hidden behavior sequence |
@@ -92,9 +109,10 @@
 - Project/task tests cover current setup/claim/submission behavior but not
   ContributionPolicy freezes or retirement of the legacy economic schema.
 - AUTH tests cover catalogue parity, planned denial, actor-self/admin grants,
-  decision digest, scope evidence, and route commit/rollback. They do not cover
-  CON contexts, independent project grants at CON call sites, AUTH-09E CON
-  identities, or prepared cross-domain mutations.
+  decision digest, scope evidence, and route commit/rollback. PR #140 changes
+  planning/tests for documentation gates but does not implement CON contexts,
+  independent project grants at CON call sites, AUTH-09E CON identities,
+  custody transfer, or prepared cross-domain mutations.
 - ART tests prove preparation only. No optional evidence projection capability
   exists or is needed for core contribution tests.
 - No tests yet cover ContributionRecord cardinality, frozen rule evaluation,
@@ -105,9 +123,11 @@
 
 ## Dependencies
 
-- AUTH: reviewed registration and later activation chunks, independent project
-  grants, prepared mutation protocol, fixed service admission, exact CON
-  service identities/static rows, and action-specific evaluators.
+- AUTH: AUTH-10 independent project grants, AUTH-09A-E fixed-service sequence,
+  complete ART/REV custody transfers, AUTH-PREP, reviewed CON registration and
+  later activation chunks, exact CON service identities/static rows, and
+  action-specific evaluators. Task claim activation must consume the merged
+  CON-05A freeze participant; review.decision activation must consume CON-07.
 - REV: ReviewLease reviewer policy FK; canonical claim/decision composition;
   REV-owned FinalAcceptance with exact policy-context typing; stabilized
   artifact-hash facts; mandatory CON participant injection; REV-staged shared

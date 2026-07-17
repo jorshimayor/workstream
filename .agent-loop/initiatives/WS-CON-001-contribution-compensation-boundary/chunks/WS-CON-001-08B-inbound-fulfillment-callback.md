@@ -31,9 +31,11 @@ outbox transition ownership; production route registration
   `compensation.fulfillment.report` row (or an explicitly closed set of
   identities), provisions ActorProfile/link, admits through AUTH-09E, and keeps
   the action planned until hidden callback behavior merges.
-- [ ] Prepared callback locks profile/link, validates immutable ServiceIdentity,
-  matrix membership and active action, then locks binding/award/delivery/
-  receipt rows and evaluates final typed facts once.
+- [ ] Prepared callback locks profile/link and validates immutable
+  ServiceIdentity, matrix membership and active action as code-owned facts.
+  AUTH prepares its exact bound handle; CON locks binding/award/delivery/
+  receipt rows and recomposes final facts; AUTH consumes/evaluates once before
+  callback mutation.
 - [ ] Exact route identity, project, instrument, award, frozen binding, external
   event, quantity/status, and idempotency must match. Actor/link/binding state
   loss denies.

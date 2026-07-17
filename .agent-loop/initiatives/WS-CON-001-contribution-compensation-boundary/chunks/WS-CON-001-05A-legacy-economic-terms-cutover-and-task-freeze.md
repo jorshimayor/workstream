@@ -47,13 +47,21 @@ provider/artifact calls; unrelated checker behavior
 - [ ] No runtime/API/setup/task/checker/review consumer treats retired guide-
   bound terms as current economic authority. A zero-consumer scanner proves
   remaining physical schema is unreachable until 05B.
-- [ ] `task.claim` is registered and active through AUTH with exact same-project
-  submitter ProjectRoleGrant, prepared T protocol, actor/link/grant
-  revalidation, and canonical task guards. No unrelated project/admin grant
-  substitutes and CON contains no role logic.
-- [ ] Claim locks active ContributionPolicy, published version, exact rule/
-  definition/binding dependencies, evaluates the prepared handle once, and
-  copies one same-project published version.
+- [ ] Stable PermissionId `task.claim` exists but no task-claim ActionId is
+  registered. AUTH-10 exact same-project submitter ProjectRoleGrant and
+  AUTH-PREP contracts are merged; no unrelated project/admin grant substitutes
+  and CON contains no role logic.
+- [ ] AUTH prepares exact submitter authority first. Task-owned composition
+  locks canonical task/assignment facts, invokes the CON participant to lock
+  active ContributionPolicy, published version, exact rule/definition/binding
+  dependencies and return one same-project version, then recomposes final
+  facts. AUTH consumes the handle and evaluates once before TaskAssignment is
+  created with that immutable version. CON flushes only and never commits.
+- [ ] CON-05A and task-owned claim composition merge while the task-claim
+  ActionId remains absent. `WS-AUTH-001-13` enumerates/registers the exact
+  action, integrates its evaluator, and activates only after the merged feature
+  manifest proves the freeze, canonical guards, rollback, and real-kernel
+  unavailable behavior before activation.
 - [ ] Missing/invalid policy fails with no assignment/task/audit/outbox partial
   state. Later publication never updates an assignment.
 - [ ] Publish versus claim and binding-state versus claim pass both lock orders
@@ -66,5 +74,6 @@ provider/artifact calls; unrelated checker behavior
 ## Review and stop
 
 Required tracks: senior, QA, security, product, architecture, docs, reuse, test-
-delta, and CI integrity. Stop if exact task/Submission lineage, task.claim
-authority, or migration classification is not merged.
+delta, and CI integrity. Stop if exact task/Submission lineage, AUTH-PREP,
+task-owned composition seam, or migration classification is not merged. Do not
+wait for or perform `task.claim` activation inside this chunk.

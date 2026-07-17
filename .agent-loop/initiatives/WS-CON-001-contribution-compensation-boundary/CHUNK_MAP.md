@@ -13,6 +13,7 @@ availability writer. Optional evidence chunks are not part of the core order.
 |---|---|---:|---|---|
 | `WS-CON-001-PLAN` | Contribution And Compensation Planning | L0 | None | Complete; unpublished |
 | `WS-CON-001-PLAN2` | Final Acceptance Reconciliation | L0 | Human FinalAcceptance/no-adjudication direction | Complete; unpublished |
+| `WS-CON-001-PLAN3` | AUTH PR 140 Reconciliation | L0/L1 | Merged AUTH PR #140 at `d541521` | Complete; unpublished |
 | `WS-CON-001-01` | Canonical Contract Adoption And Architecture Decision | L0/L1 | Reconciled plan and human decisions approved | Proposed |
 | `WS-CON-001-02A` | Shared Transactional Outbox Persistence | L1 | 01; event ownership approved | Proposed |
 | `WS-CON-001-02B` | Shared Outbox Dispatcher And Recovery | L1 | 02A; AUTH registers `outbox.dispatch`, approved `workstream.outbox.dispatcher` ServiceIdentity/static row, AUTH-09E admission, prepared protocol; dispatcher remains disabled until AUTH activation | Proposed |
@@ -23,10 +24,10 @@ availability writer. Optional evidence chunks are not part of the core order.
 | `WS-CON-001-03D` | Delivery, Receipt, And Status Persistence | L1 | 03C | Proposed |
 | `WS-CON-001-04A` | Hidden Adapter-Binding Service | L1 | 03A; planned AUTH binding actions/contexts/prepared protocol; callback ServiceIdentity/action/static row approved but inactive | Proposed |
 | `WS-CON-001-04B` | Hidden Contribution-Policy Service | L1 | 03B, 04A; binding activation merged; planned `contribution.policy.*` actions/contexts/prepared protocol | Proposed |
-| `WS-CON-001-05A` | Legacy Economic Terms Cutover And Task Freeze | L1 | 04B; exact Submission/TaskAssignment lineage; AUTH task.claim with exact submitter grant and prepared protocol active; legacy rule | Proposed |
+| `WS-CON-001-05A` | Legacy Economic Terms Cutover And Task Freeze | L1 | 04B; exact Submission/TaskAssignment lineage; AUTH-10 exact submitter grants and AUTH-PREP merged; task.claim PermissionId exists but ActionId remains absent; stable task-owned claim seam; legacy rule | Proposed |
 | `WS-CON-001-05B` | Legacy Economic Schema Removal | L1 | 05A; zero-consumer scan; removal migration approval | Proposed |
-| `WS-CON-001-06` | Review-Lease Contribution-Policy Freeze Capability | L1 | REV lease schema; 05B; planned review.claim typed/prepared contract; exact reviewer grant facts stable | Proposed |
-| `WS-CON-001-07` | Atomic Contribution/Award Decision Participant | L1 | 03C-D, 05A, 06; merged TaskAssignment freeze field and REV ReviewLease plus accept-only FinalAcceptance persistence and locked decision-lineage contract; shared audit/outbox; planned review.decision typed/prepared contract | Proposed |
+| `WS-CON-001-06` | Review-Lease Contribution-Policy Freeze Capability | L1 | REV lease schema; 05B; AUTH-PREP; planned review.claim typed contract; exact reviewer grant facts stable | Proposed |
+| `WS-CON-001-07` | Atomic Contribution/Award Decision Participant | L1 | 03C-D, 05A, 06; AUTH-PREP and complete REV custody transfer; merged TaskAssignment freeze field and REV ReviewLease plus accept-only FinalAcceptance persistence and locked decision-lineage contract; shared audit/outbox; planned review.decision typed contract | Proposed |
 | `WS-CON-001-08A` | Outbound Compensation Delivery Handler | L1 | 07, 02B; exact delivery ServiceIdentity/ActionId/static row registered but planned; AUTH-09E typed context/prepared protocol; ADR 0014 adapter foundation; lifecycle-fence port | Proposed |
 | `WS-CON-001-08R` | Bound-Service Callback Rate Control | L1 | 08A; shared API-control contract | Proposed |
 | `WS-CON-001-08B` | Inbound Fulfillment Callback | L1 | 08R; exact callback ServiceIdentity/ActionId/static row, AUTH-09E context, prepared protocol, and callback-fence port | Proposed |
@@ -40,7 +41,7 @@ availability writer. Optional evidence chunks are not part of the core order.
 ## Core dependency order
 
 ```text
-PLAN -> PLAN2 -> 01 -> 02A -> 02B -> 02C -> 03A -> 03B -> 03C -> 03D
+PLAN -> PLAN2 -> PLAN3 -> 01 -> 02A -> 02B -> 02C -> 03A -> 03B -> 03C -> 03D
 -> 04A -> 04B -> 05A -> 05B -> 06 -> 07 -> 08A -> 08R -> 08B
 -> 10A -> 10B -> 10C -> 11
 ```
@@ -62,8 +63,11 @@ AUTH registration -> CON hidden behavior -> AUTH activation -> later consumer/re
   provisioning never activates a feature action.
 - The outbox dispatcher owns only claim/invoke/finalize under
   `outbox.dispatch`. Each protected handler has independent approved authority.
-- Task claim requires one exact active same-project submitter grant and freezes
-  the published ContributionPolicyVersion through CON-05A.
+- Task claim requires AUTH-PREP and one exact active same-project submitter
+  grant. CON-05A first lands the hidden freeze participant; task-owned claim
+  composition consumes it after task/assignment locks; `WS-AUTH-001-13` then
+  enumerates/registers the exact ActionId, integrates its evaluator, and
+  activates. Registration/activation before that freeze proof is prohibited.
 - Review claim requires one exact active same-project reviewer grant. CON-06
   supplies only the freeze port; REV supplies hidden claim composition; AUTH
   activates review.claim after both merge.
@@ -87,8 +91,9 @@ AUTH registration -> CON hidden behavior -> AUTH activation -> later consumer/re
 - CON-11 has no ART or evidence-projection prerequisite. It hands typed
   fulfillment fence/drain seams to the reviewed REV release-control work and
   registers no production route.
-- AUTH's complete ART and REV activation-custody transfers are consumed by
-  reference to WS-XINT handoffs. WS-CON does not define partial subsets.
+- AUTH PR #140's complete ART and REV activation-custody transfer contracts are
+  consumed by reference to AUTH/WS-XINT handoffs. The runtime transfers remain
+  upstream gates; WS-CON does not define partial subsets.
 
 ## Chunk boundaries
 

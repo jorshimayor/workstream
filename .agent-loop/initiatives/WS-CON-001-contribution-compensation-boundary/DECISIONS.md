@@ -6,8 +6,8 @@
 
 The supplied reference files are archival inputs. The active implementation
 contract is the repository specification produced by CON-01 and reconciled with
-trusted `main`, including WS-XINT-001 from PR #139. Archival files are not edited
-or treated as runtime authority.
+trusted `main`, including AUTH PR #140 and WS-XINT-001 PR #139. Archival files
+are not edited or treated as runtime authority.
 
 ## D2 - ContributionPolicy Is The Only Award-Eligibility Policy
 
@@ -109,14 +109,19 @@ eligibility.
 AUTH locks and revalidates human actor/link/grant rows or fixed-service
 actor/link rows first. Fixed services additionally require immutable
 ServiceIdentity, exact static service-action matrix membership, AUTH-09E typed
-admission, and active action. AUTH returns one opaque, request/session/action/
-target-bound, single-use handle. The feature locks product rows, recomposes
-final typed facts, and AUTH evaluates exactly once. AUTH stages one decision and
-never commits.
+admission, and active action as code-owned validations rather than lock targets.
+AUTH returns one opaque, single-use `PreparedAuthorizationHandle` bound exactly
+to session, ActionId, actor-reference kind/reference, idempotency key, and
+canonical request digest. The feature then locks product rows and recomposes
+final typed facts; AUTH consumes the handle, evaluates exactly once, and stages
+decision evidence. AUTH and feature participants flush only; the route or
+service command commits once.
 
-Missing, reused, serialized, cross-session, cross-action, target-drifted, or
-authority-drifted handles fail closed. Product-first locks, unlocked resource
-snapshots, double decisions, and feature-side catalogue changes are rejected.
+Missing, reused, serialized, caller-constructed, cross-session/action/actor/
+request, binding-mismatched, or authority-lost handles fail closed before
+feature mutation. A failed substitution does not consume an otherwise valid
+handle. Product-first locks, unlocked resource snapshots, double decisions,
+and feature-side catalogue changes are rejected.
 
 ## D11 - Project Roles Are Independent; Admin Candidate Differences Remain Exact
 
@@ -211,3 +216,22 @@ outbox records, and commits once. CON failure rolls the entire unit back. ART
 and provider calls remain absent; fulfillment begins asynchronously after
 commit. V0.1 has no adjudication policy, queue, lease, state, decision,
 contribution type, branch, action, readiness check, or initiative dependency.
+
+## D16 - AUTH PR 140 Is Planning Authority, Not Runtime Activation
+
+**Status:** accepted by merged AUTH PR #140 on 2026-07-17.
+
+Trusted main remains at 74 PermissionIds, 57 ActionIds, nine active actions, and
+48 planned actions, with no registered CON ActionId. PR #140 supplies the exact
+prepared protocol, complete ART/REV custody maps, and feature-manifest
+activation rule; their runtime implementation remains upstream work.
+
+CON removes speculative `AUTH_CON_*` owner labels. Its proposed action mappings
+remain unregistered and non-final until each complete feature manifest exists
+and AUTH assigns an exact `WS-AUTH-001-*` custodian. Only the `task.claim`
+PermissionId exists today; AUTH-13 must not register or activate a task-claim
+ActionId before task-owned composition consumes CON-05A's immutable
+TaskAssignment policy freeze. `review.claim` similarly consumes CON-06 through
+REV, and `review.decision` consumes CON-07 through the rollback-safe REV-owned
+transaction. AUTH alone registers/evaluates/activates; CON alone supplies its
+hidden facts and participants.

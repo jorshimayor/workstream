@@ -38,6 +38,11 @@ test/coverage/CI weakening
   singleton static row, controlled ActorProfile/link provisioning, AUTH-09E
   admission, typed context, and prepared protocol. Hidden dispatcher remains
   disabled until later AUTH evaluator integration/activation.
+- [ ] Prepared dispatch follows PR #140 exactly: AUTH locks service profile/link
+  and prepares the session/action/actor-ref/idempotency/request-digest-bound
+  handle; the dispatcher locks and recomposes canonical claim facts; AUTH
+  consumes/evaluates once before claim mutation. Matrix/availability are
+  code-owned validations, not database lock targets.
 - [ ] Dispatcher claims with lease/generation fencing, commits and releases all
   locks before invoking a handler, and alone applies typed outcomes to retry/
   dead-letter/final state.

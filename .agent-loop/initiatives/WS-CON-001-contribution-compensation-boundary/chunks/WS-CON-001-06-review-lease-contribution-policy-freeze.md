@@ -41,6 +41,10 @@ task assignment changes; provider/artifact/adapter calls
   unrelated project/admin grants do not substitute. No-self-review and REV
   lifecycle guards remain REV-owned; no adjudication behavior or dependency is
   introduced.
+- [ ] AUTH-PREP locks reviewer authority and prepares its exact bound handle;
+  REV locks queue/lease/Submission facts; CON locks policy dependencies and
+  returns the version; REV recomposes final facts; AUTH consumes/evaluates once
+  before REV writes the lease freeze. CON flushes only and never commits.
 - [ ] CON hidden port and REV hidden composition merge while review.claim
   remains planned; AUTH later integrates the evaluator and alone activates.
 - [ ] Policy publish and binding state versus claim pass both lock orders;

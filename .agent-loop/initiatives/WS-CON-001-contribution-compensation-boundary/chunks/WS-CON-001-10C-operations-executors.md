@@ -44,9 +44,10 @@ outbox claim/finalization transitions; AUTH implementation
 - [ ] Dispatcher can invoke but is denied both executor actions. Each executor
   is denied dispatch, the other executor's action, delivery/callback/ART/REV
   actions, and every human action outside its exact row.
-- [ ] Handler validates committed claim generation, prepares fixed-service
-  authority, locks bounded request/product rows, evaluates final facts once,
-  stages result/audit/projection state, and returns typed outcome.
+- [ ] Handler validates committed claim generation; AUTH locks fixed-service
+  authority and prepares its exact bound handle; CON locks bounded request/
+  product rows and recomposes final facts; AUTH consumes/evaluates once; CON
+  then stages result/audit/projection state and returns a typed outcome.
 - [ ] Compensation reconciliation compares immutable award/delivery/receipt
   truth and creates durable findings/actions allowed by the approved contract;
   it never changes award amount/eligibility or fabricates receipt truth.

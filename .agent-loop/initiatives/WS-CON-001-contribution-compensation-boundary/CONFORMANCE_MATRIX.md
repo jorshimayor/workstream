@@ -4,7 +4,7 @@
 |---|---|---|---|
 | Canonical policy model | 01,03B,04B | ContributionPolicy/version/rules/definitions; explicit unpaid; immutable publish; one active policy; stable binding references | CON-11 |
 | Legacy clean cut | 05A,05B | zero semantic consumers before schema removal; deterministic row treatment; no alias/fallback; migration upgrade/downgrade | CON-11 |
-| Authorization | AUTH + each feature | 74/57 baseline refreshed; proposed mappings exact; full ART/REV custody referenced; one AUTH custodian; planned denial; exact grant/static row; AUTH-09E; prepared handle misuse; no local role logic | AUTH activation + CON-11 |
+| Authorization | AUTH + each feature | PR #140 / 74-57-9-48 baseline refreshed; proposed mappings remain unregistered; full ART/REV custody referenced; one future AUTH custodian; planned denial; exact grant/static row; AUTH-09E; prepared handle bound to session/action/actor-ref/idempotency/request digest with substitution non-consumption; no local role logic | AUTH activation + CON-11 |
 | Final acceptance | REV + 03C,07 | accept creates one immutable FinalAcceptance per task/Review/Submission; needs_revision/reject create none; no create API/action, reopen, replacement, or adjudication path | joint live drill |
 | Contribution cardinality | 03C,07 + REV | one completed_review per valid Review with direct Review/lease lineage; one accepted_submission per FinalAcceptance with assignment lineage; mutually exclusive sources; revision Reviews distinct; automated outcomes create none | joint live drill |
 | Policy freeze | 05A,06 + task/REV | exact submitter/reviewer fields; published version; no drift; publish/suspend races both orders | joint live drill |
