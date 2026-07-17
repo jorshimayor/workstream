@@ -22,13 +22,7 @@ from app.interfaces.artifacts import (
     ArtifactStoreNamespaceIdentity,
 )
 from app.interfaces.external_services import ExternalServiceAdapterIdentity
-from app.modules.artifacts.preparation import (
-    ArtifactPreparationService,
-    ArtifactScratchManager,
-)
 from tests.artifact_store_helpers import (
-    artifact_byte_stream as byte_stream,
-    artifact_preparation_limits as preparation_limits,
     initialize_local_store,
     minted_source,
 )
@@ -134,34 +128,25 @@ class ArtifactStoreConformanceTests:
         """Allow one immutable publication and return one exact replay."""
         first_store = self.make_store(tmp_path / "store")
         second_store = self.make_store(tmp_path / "store")
-        first_manager = ArtifactScratchManager(
-            root=tmp_path / "scratch-a",
-            limits=preparation_limits(),
-        )
-        second_manager = ArtifactScratchManager(
-            root=tmp_path / "scratch-b",
-            limits=preparation_limits(),
-        )
-        first_prepared = await ArtifactPreparationService(first_manager).prepare(
-            byte_stream(b"same bytes"),
-            media_type="text/plain",
-        )
-        second_prepared = await ArtifactPreparationService(second_manager).prepare(
-            byte_stream(b"same ", b"bytes"),
-            media_type="text/plain",
-        )
         try:
-            first, second = await asyncio.gather(
-                first_store.put(first_prepared.committed_source),
-                second_store.put(second_prepared.committed_source),
-            )
+            async with minted_source(
+                tmp_path / "scratch-a",
+                b"same bytes",
+                media_type="text/plain",
+            ) as first_source:
+                async with minted_source(
+                    tmp_path / "scratch-b",
+                    b"same ",
+                    b"bytes",
+                    media_type="text/plain",
+                ) as second_source:
+                    first, second = await asyncio.gather(
+                        first_store.put(first_source),
+                        second_store.put(second_source),
+                    )
             assert first.provider_object_ref == second.provider_object_ref
             assert sorted((first.replayed, second.replayed)) == [False, True]
         finally:
-            await first_prepared.close()
-            await second_prepared.close()
-            first_manager.close()
-            second_manager.close()
             self.close_store(first_store)
             self.close_store(second_store)
 

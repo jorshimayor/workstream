@@ -24,8 +24,11 @@ from app.interfaces.artifacts import (
     ArtifactStoreNamespaceClaim,
 )
 from app.modules.artifacts.sources import ArtifactCommitment, CommittedArtifactSource
-from tests.test_artifact_store_conformance import minted_source
-from tests.artifact_store_helpers import initialize_local_store, local_namespace_claim
+from tests.artifact_store_helpers import (
+    initialize_local_store,
+    local_namespace_claim,
+    minted_source,
+)
 
 
 def object_path(root: Path, provider_object_ref: str) -> Path:
