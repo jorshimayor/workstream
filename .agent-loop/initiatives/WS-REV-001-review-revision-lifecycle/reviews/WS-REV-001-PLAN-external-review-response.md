@@ -82,3 +82,25 @@ failure is historical rather than a remaining gate.
 - This response changes planning contracts only; every named future test and
   coverage command must exist and pass when its owning implementation chunk is
   activated.
+
+## PR #140 Reconciliation Refresh - 2026-07-17
+
+PR #128 was rebased onto trusted main
+`d541521790a0441cfd2193f466e00ef81248ec31`. Exact normative snapshot
+`7a76da2a79243cf61936d3bc7cf2606a82f0b5d8` passed all nine required internal
+tracks after repair of AUTH dependency, PREP, transaction, and cutover-ownership
+findings. Publication head `9ee090b9f44ec7c81be5a0a112898be6386b4aba`
+then passed both agent-gate jobs and CodeRabbit while the backend suite continued.
+
+The thread-aware GitHub query reported nine total review threads and zero
+unresolved threads. CodeRabbit's only remaining comment was a non-blocking PR-
+description warning: the body contained the correct evidence but did not use all
+repository template headings. The evidence-only trust-bundle refresh now adds
+Human-Approved Intent, Why/Design/Alternatives, allowed-file scope, product
+behavior, commands/results, acceptance proof, test delta, the exact nine-track
+reviewer table, external review, CI integrity, remaining risks, follow-up work,
+and human merge ownership. No normative plan, chunk contract, runtime, workflow,
+or test threshold changed.
+
+Final publication-head CodeRabbit and GitHub checks must rerun after this
+description-only commit. Explicit human approval remains required to merge.

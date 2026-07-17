@@ -1,195 +1,251 @@
-# PR Trust Bundle: WS-REV-001-PLAN
+# Workstream PR Trust Bundle
 
 ## Chunk
 
 `WS-REV-001-PLAN` - Review And Revision Lifecycle Planning
 
+Merge intent: `.agent-loop/merge-intents/WS-REV-001-PLAN.json`
+
 ## Goal
 
-Reconcile the review/revision lifecycle plan with trusted main after merged AUTH
-reconciliation PR #140, preserve the WS-XINT handoffs, and incorporate the
-human-approved FinalAcceptance boundary without changing runtime behavior or
-starting a successor.
+Reconcile the complete review/revision lifecycle plan with trusted main after
+AUTH reconciliation PR #140, retain the WS-XINT handoffs and human-approved
+FinalAcceptance boundary, and leave all runtime chunks inactive.
 
-## Trusted Baseline
+## Human-Approved Intent
 
-- Trusted main: `d541521790a0441cfd2193f466e00ef81248ec31`.
-- AUTH reconciliation final head: `b80e89837d5204bb2ba59bb1ee0cbc3fe59b1ad5`.
-- WS-XINT branch head: `f315ffacf09db433af54e84f081c5425167d0a9a`.
-- Current authority: ADR 0015 plus the merged AUTH/REV, AUTH role/service,
-  ART/REV, and REV/CON handoffs.
-- The WS-REV reference Markdown/PDF pair remains immutable archival input.
+- Intent: `.agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/INTENT.md`
+- Chunk contract: `.agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/chunks/WS-REV-001-PLAN-review-revision-lifecycle-planning.md`
+- Human clarifications retained: one Project Guide context; controlled next-
+  attempt rebase; exact leased-Submission context for reviewers; immutable Review,
+  finding, and resolution history for every decision; accept-only
+  FinalAcceptance; no v0.1 adjudication runtime.
 
 ## What Changed
 
-- Assigned all action registration, evaluator integration, activation custody,
-  `ActionOwner`, and availability changes to AUTH. REV builds hidden behavior
-  and releases product surfaces only after exact AUTH activation.
-- Replaced fixed future action totals with current-main-derived accounting. The
-  24 REV dependencies are one registered planned submission action, 19
-  registered planned review actions, and four approved but unregistered REV
-  actions; ART's evidence-binding proposal is separate.
-- Adopted PR #140's exact `REV-CUSTODY`, `PREP`, `REV-REG`, per-feature REV
-  activation, and `REV-LIFECYCLE` gates without treating planning as runtime.
-- Bound every sensitive mutation consumer to AUTH's opaque single-use handle by
-  exact session, action, actor-reference kind/ID, idempotency key, and request
-  digest. REV locks feature rows and recomposes final facts; AUTH alone validates
-  bindings/current authority, consumes once, evaluates once, and stages evidence.
-- Made the request route or service command the sole committer; REV remains the
-  lifecycle orchestrator and stages shared audit/outbox rows.
-- Required an AUTH-owned schema-only contributor-field foundation before REV-02
-  to prevent parallel schema and migration ownership collisions without making
-  full AUTH-13/14 depend on their own downstream prerequisites. REV-09A hidden
-  behavior follows that foundation; amended full AUTH-13/14 cutovers then precede
-  REV-13.
-- Made REV-01's merged active contract the immutable four-action registration
-  and six-service identity manifest. AUTH may register planned rows and provision
-  exact identities from it before the consuming runtime chunks, eliminating the
-  registration/consumer cycle without activating behavior.
-- Added AUTH-14 `submission.create` activation and prepared revision/replay proof
-  to the final REV-13 release manifest.
-- Split prepared-handle outcomes: rejected pre-consumption substitution/forgery
-  preserves the legitimate handle for one later exact first use; stale,
-  already-consumed, and concurrent duplicate use remains invalid and stages no
-  new state; evaluated denial uses caller rollback, clean unchanged AUTH evidence
-  restaging, and one route/service evidence commit.
-- Assigned the mandatory preparation-transfer binding, legacy replacement and
-  submission-path removal, and strict revision migration to the amended full
-  AUTH-13/14 cutovers after REV-09A. REV-12A classifies/fences those commands and
-  REV-13 verifies and exposes them without editing AUTH/task-owned behavior.
-- Made REV-12A behavior-neutral about whether its fence foundation or amended
-  AUTH-13 merges first: it classifies the exact owner-installed command mode;
-  active and later generations require prepared mode and never revive legacy.
-- Required exact independent `reviewer` grants, role-specific invalidation, six
-  fixed review service identities through AUTH-09E, request-scoped AUTH reads,
-  and AUTH-first prepared mutations.
-- Restricted REV to ART v2 packet-read and evidence candidate/finalize ports.
-  REV owns `ReviewPacketManifest` and `ReviewEvidenceArtifact`; ART owns bytes,
-  bindings, candidates, providers, and finalization mechanics.
-- Made unscheduled `WS-ART-001-REV-EVIDENCE` an explicit hard blocker for
-  REV-07 instead of assuming the capability exists.
-- Reordered decision work so REV-08 cannot commit a canonical Review and REV-10
-  creates the first such transaction only with CON's mandatory flush-only
-  participant.
-- Replaced stale compensation-policy and mandatory evidence assumptions with
-  `ContributionPolicyVersion`, server-derived versioned Submission
-  `artifact_hash`, explicit unpaid/payable award behavior, and optional
-  post-commit contribution evidence.
-- Preserved canonical task states: human reject uses `rejected`; approved
-  administrative closure uses `cancelled` plus a bounded reason.
-- Removed REV ownership of CON routes and separated AUTH activation from the
-  REV-12A/13 product release controller.
-- Made every Review, submitted finding, and later resolution immutable for all
-  three decisions; later rounds append rather than rewrite.
-- Added REV-owned FinalAcceptance only for `accept`, with submitter
-  `accepted_submission` sourced only from that fact and no separate create API
-  or authorization action.
-- Split the mandatory CON interface into a reviewer operation for every decision
-  and an accept-only submitter operation after FinalAcceptance, each with its own
-  frozen actor-policy lineage and mutually exclusive source fields.
-- Fixed the atomic write order: common Review history, lease and queue closure,
-  reviewer contribution, decision branch, accept-only FinalAcceptance and
-  submitter contribution, REV audit and outbox staging, then one commit.
-- Updated the shared REV/CON handoff to the accept-only FinalAcceptance source,
-  two operation-specific CON inputs, and corrected audit/outbox ownership.
-- Made `delivery_draining` a reachable completion-only phase for fulfillment
-  obligations committed before the immutable generation cutoff. Every CON root
-  writer must acquire the shared fence before ordinal allocation, and the
-  exclusive transition captures the server-derived maximum only after prior
-  writers drain.
-- Required same-generation, pre-cutoff dispatch and callbacks, complete
-  zero-obligation proof before `disabled`, denial before provider or successor
-  I/O, bounded audit, and dispatcher-owned same-root claim recovery.
+- Adopted PR #140's exact AUTH custody, PREP, registration, service identity,
+  per-feature activation, and lifecycle gates without claiming runtime exists.
+- Kept all 24 REV dependencies unavailable and separated the ART evidence action.
+- Made REV-01 publish availability-neutral four-action registration and six exact
+  service identity manifests.
+- Repaired the AUTH-13/14 dependency cycle: an AUTH-owned schema-only contributor
+  foundation precedes REV-02; REV-09A supplies hidden preparation behavior;
+  amended AUTH-13/14 own their command/schema/migration cutovers; AUTH activation
+  precedes REV-13 exposure.
+- Made REV-12A merge-order-neutral relative to AUTH-13 and limited it to
+  classifying/fencing owner-installed behavior.
+- Assigned PREP validation, current-authority checking, single consumption,
+  evaluation, and evidence staging solely to AUTH after REV locks and recomposes
+  final feature facts.
+- Split rejected pre-consumption substitution, permanently invalid consumed/
+  duplicate use, and evaluated denial with clean AUTH evidence restaging.
+- Made the request route or service command the caller `AsyncSession` owner and
+  sole committer; REV orchestrates and stages shared audit/outbox rows.
+- Added internal accept-only FinalAcceptance and changed submitter contribution
+  lineage to consume it. Reviewer contribution remains direct from Review and
+  ReviewLease for all three decisions.
+- Preserved reachable fulfillment drain with CON-owned cutoff/ordinal lineage,
+  completion-only delivery work, universal writer fencing, and same-root claim
+  recovery.
+- Updated the shared REV/CON handoff, archival reference provenance/checksums,
+  and a narrowly bounded AUTH documentation scanner regression.
 
-## Boundary Decisions
+## Why It Changed
 
-REV never imports AUTH, ART, or CON repositories and never commits their
-authority independently. Evidence finalization is provider-I/O-free inside the
-database transaction and follows AUTH authority lock -> REV lineage locks ->
-ART candidate/admission/binding locks -> final fact recomposition -> one AUTH
-evaluation -> participant flush -> one caller commit.
+Merged WS-XINT and AUTH planning changed actor identity, activation custody,
+prepared mutation, service identity, and cross-domain transaction boundaries.
+The previous REV plan also predated the approved FinalAcceptance source and
+contained stale sequencing that could not be implemented without ownership
+collisions or circular prerequisites.
 
-The repository's existing versioned `Submission` is the concrete form of the
-XINT handoff's conceptual `SubmissionVersion`. The future ART submission/checker
-cutover must persist verified server-derived `Submission.artifact_hash`; CON
-copies that exact value and does not rederive it or trust caller `package_hash`.
+## Design Chosen
 
-The reviewer contribution operation receives Review and ReviewLease lineage and
-the lease-frozen reviewer policy. It never receives FinalAcceptance or submitter
-policy facts. Only the `accept` branch creates FinalAcceptance and then invokes
-the submitter contribution operation with FinalAcceptance, TaskAssignment, and
-the assignment-frozen submitter policy. `needs_revision` and `reject` never
-create FinalAcceptance or a submitter contribution.
+```text
+AUTH schema-only contributor foundation
+-> REV persistence and hidden behavior through REV-09A
+-> amended AUTH-13/14 owner cutovers
+-> remaining REV hidden behavior and REV-12A fencing
+-> exact AUTH activations, including submission.create
+-> REV-13 verification and product exposure
+```
 
-CON owns fulfillment-obligation roots and their monotonic ordinals. REV owns the
-single release controller and stores only the cutoff returned through CON's
-typed same-session port. CON obligation creation, requeue, successor, repair,
-dispatch, and callback paths all consume the shared fence through mandatory
-composition; REV imports no CON repository and creates no second dispatcher.
+Every valid decision appends immutable Review/finding/resolution history. The
+reviewer contribution operation runs for all decisions. Only `accept` adds
+FinalAcceptance and invokes the submitter contribution operation. CON flushes
+only; REV stages shared audit/outbox inputs; the request route or service command
+commits once. Decision-time code performs no ART or provider call.
+
+## Alternatives Rejected
+
+- Feature-owned ActionId registration or activation.
+- Full AUTH-13/14 before their downstream REV-09A preparation dependency.
+- REV-owned prepared-handle validation or transaction commit.
+- Inferring submitter acceptance directly from `Review.decision`.
+- A second review submission route, raw ArtifactStore access, or CON router
+  ownership in REV.
+- Adjudication actions, queues, states, policy, runtime, or readiness gates in
+  v0.1.
 
 ## Scope Control
 
-This PR changes WS-REV initiative planning, the exact shared REV/CON handoff,
-review evidence, its one merge intent, the human-supplied canonical archival Markdown/PDF replacement,
-reference provenance/checksums, the exact `.gitattributes` rule required to
-preserve that Markdown's bytes, and a narrowly tested AUTH documentation-scanner
-correction for literal technical paths/CLI flags. It changes no backend,
-migration, workflow, package script, test threshold, active product route,
-authorization catalogue, artifact provider, or contribution runtime.
+### Allowed Files Changed
 
-## Verification
+- `.agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/**`
+- Exact FinalAcceptance amendment to the shared `REV_CON_HANDOFF.md`
+- `.agent-loop/merge-intents/WS-REV-001-PLAN.json`
+- Canonical WS-REV reference Markdown/PDF, provenance README, and checksums
+- `.gitattributes` for the byte-preserved canonical Markdown
+- `scripts/check_stale_authorization_docs.py` and its exact gate regressions
 
-Exact snapshot `7a76da2a79243cf61936d3bc7cf2606a82f0b5d8` passed all nine
-required internal reviewer tracks. Deterministic gates, including loop-memory
-validation, also pass. The REV contract scanner is
-created only by successor chunk REV-01 and is not claimed as current proof. The
-PR #140 loop-memory repair is therefore no longer an outstanding issue. No
-product tests are expected because runtime code is unchanged.
+### Files Outside Contract
 
-## Review State
+- None
 
-The pre-amendment reviews repaired material WS-XINT drift, executable ordering,
-coverage, concealment, external owner gates, and scanner integrity. The
-FinalAcceptance amendment then received two repair cycles: reviewers corrected
-the contribution order, full decision matrix, an obsolete nullable omnibus
-input, and an incomplete reviewer negative-source constraint. Pre-rebase snapshot
-`86ee0a5e263ac306b3bf195a9fb9043aa5439416` passed every required track. It is
-historical after PR #140. The reconciled snapshot initially failed on dependency
-cycles, PREP ownership/replay semantics, and residual AUTH-13/14 cutover
-ownership; all findings were repaired before the final exact-SHA pass.
+## Product Behavior
 
-The latest CodeRabbit pass found one unreachable fulfillment-drain contract.
-The repaired state machine and its cutoff/writer-fence hardening passed every
-required internal track; the external response records each repair cycle and
-the exact thread disposition.
+- [x] No Workstream product behavior changed.
+- [ ] Product behavior changed and is explained here:
 
-## Remaining Gates
+This is planning, reference repair, review evidence, and a documentation-scanner
+classification fix. It changes no backend runtime, migration, API, authorization
+catalogue, artifact provider, contribution behavior, workflow, dependency, or
+test threshold.
 
-- AUTH must implement and merge the exact per-consumer gates defined by PR #140,
-  including REV-CUSTODY, PREP, reviewer grants, contributor-field cutovers,
-  exact service identity extensions, registrations, evaluators, and activations.
-- ART must schedule, approve, and merge `WS-ART-001-REV-EVIDENCE`; REV-07 is
-  blocked until then.
-- The ART owner must publish approved amendments for the currently unassigned
-  v2 packet-read port and server-derived `Submission.artifact_hash`; exact
-  packet bindings and lineage remain hard REV-07/10 gates.
-- CON must merge its frozen policy lineage, mutually exclusive source schema,
-  and exact two-operation flush-only participant before REV-10. Before REV-12A,
-  it must merge every obligation-writer, dispatch, and callback fence hook, its
-  monotonic root ordinal, and the drain-cutoff/observation port.
-- Every runtime chunk requires a fresh main-SHA dependency audit, explicit
-  human start, its own evidence, reviewer fanout, and merge approval.
+## Evidence
+
+### Commands Run
+
+```bash
+python3 scripts/check_internal_review_evidence.py
+python3 scripts/check_markdown_links.py
+python3 scripts/check_stale_workstream_wording.py
+python3 scripts/check_stale_artifact_contracts.py
+python3 scripts/check_stale_authorization_docs.py
+python3 scripts/test_agent_gates.py
+sha256sum -c docs/reference_specs/SHA256SUMS
+python3 scripts/check_loop_memory_state.py
+git diff --check
+```
+
+### Result Summary
+
+```text
+Internal review evidence passed.
+Markdown links passed for 36 changed Markdown files.
+Workstream, ART, and AUTH stale scans passed.
+80 agent-gate tests passed.
+All reference checksums passed.
+Loop-memory state passed.
+Diff integrity passed.
+```
+
+## Acceptance Criteria Proof
+
+- [x] Canonical reference Markdown/PDF and hashes are restored with no duplicate
+  `(2)` paths.
+- [x] PR #140 and WS-XINT owner boundaries are reconciled without runtime claims.
+- [x] Every decision has immutable Review/finding/resolution history; only accept
+  adds FinalAcceptance and submitter contribution.
+- [x] AUTH, ART, task, REV, CON, audit, outbox, and caller transaction ownership
+  are explicit and non-circular.
+- [x] All proposed chunks have scope, exclusions, acceptance criteria, proof,
+  reviewers, and human focus.
+- [x] First runtime chunk remains inactive and requires a separate explicit start.
+
+## Test Delta
+
+### Tests Added
+
+- Added exact positive and fail-closed AUTH documentation-scanner cases for
+  technical execution-package paths and existing live-drill CLI flags.
+
+### Tests Modified
+
+- Extended `scripts/test_agent_gates.py` only for the matching scanner boundary
+  cases, including malicious suffix/path near misses and retained human-role
+  rejection.
+
+### Tests Removed Or Skipped
+
+- None
+
+## Internal Reviewer Results
+
+Reviewed code SHA: `7a76da2a79243cf61936d3bc7cf2606a82f0b5d8`
+
+Reviewed at: `2026-07-17T10:20:14Z`
+
+Reviewer run IDs: senior/architecture/reuse=`/root/finalaccept_senior_arch_r2`; QA/product/test-delta=`/root/finalaccept_qa_product_r2`; security/docs/CI=`/root/finalaccept_security_docs_r2`
+
+| Reviewer | Result | Blocking Findings | Notes |
+|---|---:|---|---|
+| Senior engineering | PASS | None | Executable dependency graph and ownership are coherent. |
+| QA/test | PASS | None | PREP, decision, rebase, activation, and release proof are testable. |
+| Security/auth | PASS | None | AUTH ownership, caller commit, denial atomicity, and lineage fail closed. |
+| Product/ops | PASS | None | Approved review, revision, contribution, and release behavior is preserved. |
+| Architecture | PASS | None | Cross-owner graph is acyclic; REV-12A only classifies/fences. |
+| CI integrity | PASS | None | No workflow, threshold, dependency, or package gate weakened. |
+| Docs | PASS | None | Normative plan, chunks, handoff, log, and evidence are consistent. |
+| Reuse/dedup | PASS | None | Existing routes, participants, PREP, composition, and typed ports are reused. |
+| Test delta | PASS | None | Scanner tests are additive; none were weakened or removed. |
+
+## External Review
+
+External review response file:
+
+- `.agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/reviews/WS-REV-001-PLAN-external-review-response.md`
+
+| Source | Status | Notes |
+|---|---:|---|
+| CodeRabbit | PASS on prior publication head; rerun required | Zero unresolved inline threads; PR-description template warning addressed by this bundle. |
+| GitHub checks | Rerun required | Agent gates passed on the prior publication head; final backend and gate checks must pass after this evidence-only update. |
+
+## CI And Gate Integrity
+
+- [x] No workflow weakening.
+- [x] No lint/test/docstring gate weakening.
+- [x] No coverage threshold weakening.
+- [x] No package script weakening.
+- [x] No unpinned new GitHub Action.
+- [x] Checkout credential persistence remains unchanged; no workflow was edited.
+
+## Remaining Risks
+
+- AUTH must merge the schema-only contributor foundation, PREP, custody,
+  registration, exact service identity extensions, amended AUTH-13/14 cutovers,
+  evaluators, and activations at the named gates.
+- ART must schedule review-evidence ownership and merge packet-read plus
+  server-derived `Submission.artifact_hash` amendments.
+- CON must merge frozen policy lineage, mutually exclusive contribution sources,
+  the two-operation flush-only participant, and later fulfillment fence/cutoff
+  capabilities.
+- PR #128 still needs final-head external checks and explicit human merge approval.
+
+## Follow-Up Work
+
+- Merge intent names `WS-REV-001-01` as the same-initiative successor with
+  `next_requires_explicit_start: true`.
+- Every runtime chunk requires a fresh main-SHA audit, its own contract/evidence,
+  reviewer fanout, and explicit human start.
 
 ## Human Review Focus
 
-Check AUTH activation custody, the exact reviewer/service authority model, ART
-v2 ownership and missing ART gate, all-decision Review immutability, accept-only
-FinalAcceptance, the two ordered CON operations, mutually exclusive contribution
-sources, canonical task states, fulfillment cutoff ownership, universal CON
-writer fencing, completion-only drain, and the absence of runtime implementation.
+Please inspect:
+
+- AUTH activation and service identity custody.
+- AUTH-13/14 versus REV-09A/12A/13 ownership and ordering.
+- All-decision immutability and accept-only FinalAcceptance.
+- Two ordered CON operations and mutually exclusive contribution lineage.
+- Guide rebase, ART lease isolation, transaction ownership, and fulfillment drain.
+- Absence of adjudication and runtime implementation.
 
 ## Human Merge Ownership
 
-Only the human may approve and merge PR #128. Its merge intent names
-`WS-REV-001-01` with `next_requires_explicit_start: true`; this PR does not
-start that successor.
+- [ ] I can explain what changed.
+- [ ] I can explain why it changed.
+- [ ] I know what could break.
+- [ ] I accept the remaining risks.
+- [ ] The user explicitly approved this specific PR for merge.
+
+Only the human may approve and merge PR #128. This PR does not start
+`WS-REV-001-01`.
