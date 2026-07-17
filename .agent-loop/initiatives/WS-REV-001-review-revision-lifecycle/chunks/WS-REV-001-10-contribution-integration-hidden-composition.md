@@ -44,9 +44,13 @@ reputation scoring
 ## Acceptance criteria
 
 - `review.decision` uses AUTH's prepared mutation protocol: AUTH locks exact
-  reviewer authority; REV locks idempotency, queue, lease, task, assignment,
+  reviewer authority and creates an opaque, non-Pydantic, single-use handle
+  bound to exact session, ActionId, reviewer actor-reference kind and ID,
+  idempotency key, and canonical request digest; REV locks idempotency, queue,
+  lease, task, assignment,
   versioned Submission, predecessor Review, and packet/evidence facts; REV
-  recomposes final context; AUTH evaluates once and stages evidence; REV appends
+  recomposes final context and consumes the exactly matching handle before its
+  first feature mutation; AUTH evaluates once and stages evidence; REV appends
   the immutable Review, findings, and resolutions; consumes the lease; closes
   the queue entry; and then calls the CON reviewer operation. That operation
   creates `completed_review` and evaluates the reviewer policy. REV then applies
@@ -54,7 +58,10 @@ reputation scoring
   `accepted`, and sets TaskAssignment to `completed` before calling the CON
   submitter operation. That operation creates `accepted_submission` and
   evaluates the submitter policy. REV stages shared audit and outbox rows, and
-  the caller commits once.
+  the request route or service command commits once. Reuse, serialization,
+  caller construction, wrong-session/action, same-session cross-actor/request
+  substitution, or authority loss fails before Review, lifecycle, CON, audit, or
+  outbox mutation.
   This hidden service has no public route or background-command entry point.
   REV-12A later installs the mandatory lifecycle fence before REV-13 releases
   any decision surface.
@@ -142,8 +149,9 @@ reputation scoring
   the exact merged CON participant. Review services import no concrete CON or
   ART implementation.
 - This chunk supplies hidden decision behavior and its feature-manifest delta.
-  AUTH activates `review.decision` only after this chunk merges; REV-13 later
-  exposes the route. This chunk changes no action availability.
+  `WS-AUTH-001-REV-08` activates `review.decision` only after this chunk's full
+  REV+CON composition merges; REV-13 later exposes the route. This chunk changes
+  no action availability.
 - Optional contribution-evidence projection is outside this chunk and outside
   core release readiness. Its absence/outage cannot affect canonical truth.
 

@@ -41,11 +41,17 @@ reputation or fulfillment logic
   expiry, no-self-review, queue state, idempotency, predecessor chain, packet
   manifest, evidence relations, and stabilized binding facts using database time.
 - The command declares planned `review.decision`. Mutation choreography is AUTH
-  prepare/authority lock -> REV locks and final fact recomposition -> one AUTH
+  prepare/authority lock -> opaque, non-Pydantic, single-use handle bound to the
+  exact session, ActionId, reviewer actor-reference kind and ID, idempotency key,
+  and canonical request digest -> REV locks and final fact recomposition -> exact
+  handle validation/consumption before the first feature mutation -> one AUTH
   evaluation -> REV appends the Review, findings, and resolutions -> CON
   reviewer operation -> REV decision branch -> CON submitter operation only for
-  `accept` -> REV audit and outbox staging -> route commit once. No plain
-  mutation-time `require()` or serialized authorization handle substitutes.
+  `accept` -> REV audit and outbox staging -> request route or service command
+  commits once. No plain mutation-time `require()` or serialized authorization
+  handle substitutes. Reuse, caller construction, wrong-session/action,
+  same-session cross-actor/request substitution, or authority loss fails before
+  Review, lifecycle, CON, audit, or outbox mutation.
 - Decision, finding, evidence, and resolution rules match the canonical spec.
 - Task effects use the task-owned `TaskReviewEffectsParticipant` with the
   caller's AsyncSession. It flushes without commit, reuses TaskRepository and

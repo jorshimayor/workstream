@@ -91,11 +91,16 @@ production `/api/v1` review-router registration
 - Finding-response evidence intake declares
   `review.finding_response_evidence.ingest` mapped to `submission.create`; it
   uses request-scoped preflight before ART candidate intake. Finalization uses
-  AUTH prepare/authority lock -> REV exact assignment, preparation head, prior
+  AUTH prepare/authority lock and an opaque, non-Pydantic, single-use handle
+  bound to exact session, ActionId, actor-reference kind and ID, idempotency key,
+  and canonical request digest -> REV exact assignment, preparation head, prior
   Submission, finding and evidence-slot locks -> ART candidate/admission/binding
-  locks -> final fact recomposition -> one AUTH evaluation -> binding plus
-  ReviewEvidenceArtifact flush. Pre-intake denial creates no ART candidate,
-  binding, or receipt.
+  locks -> final fact recomposition -> exact handle validation/consumption before
+  the first binding or REV mutation -> one AUTH evaluation -> binding plus
+  ReviewEvidenceArtifact flush. Reuse, serialization, caller construction,
+  cross-session/action/actor/request substitution, or authority loss fails before
+  canonical mutation. Pre-intake denial creates no ART candidate, binding, or
+  receipt.
 - Contributor and later reviewer see old/new guide/task-execution-policy context
   and change summary. ContributionPolicyVersion is not part of this context.
 - While the task is `needs_revision`, the assigned submitter's Task Context API
@@ -167,7 +172,8 @@ production `/api/v1` review-router registration
   Existing first-submission and legacy revision behavior is unchanged until the
   coherent chunk-13 cutover; internal composition/tests prove the new path.
 - This chunk changes no AUTH availability. It supplies hidden behavior and a
-  feature-manifest delta for later AUTH activation; route exposure waits for 13.
+  feature-manifest delta for later `WS-AUTH-001-REV-09A` activation; route
+  exposure waits for REV-13.
 - Preparation-reference columns and conditional lineage constraints land here,
   but the global rule requiring every newly written version greater than one to
   reference a preparation does not. REV-13 installs that `NOT VALID` check in
@@ -195,11 +201,15 @@ production `/api/v1` review-router registration
   successor append against N+1 submission on the formerly current head. Exactly
   one unsuperseded head remains; submission either commits against its still-
   current acknowledged head or fails `repreparation_required`, with no fallback,
-  partial response rows, audit, or enqueue intent.
+  partial response rows, or feature audit/enqueue intent. AUTH may retain only
+  its bounded clean denial evidence under the AUTH-owned rollback/restaging
+  protocol.
 - A post-read activation test prepares and reads context, activates a newer
   guide, then proves the still-valid frozen head stamps one complete old context
   without drift. Separate revocation/corruption tests require re-preparation and
-  produce no Submission/response/audit/enqueue side effects.
+  produce no Submission/response or feature audit/enqueue side effects. AUTH may
+  persist only its bounded clean denial evidence; evidence, participant,
+  cancellation, or commit failure leaves no partial authority evidence.
 - Independent-session tests race grant revocation, assignment loss, and
   preparation-head supersession against response-evidence candidate intake and
   finalization in both orders. Submission creation revalidates the finalized

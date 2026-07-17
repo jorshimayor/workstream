@@ -2,19 +2,21 @@
 
 ## Authority And State
 
-Reconciled on 2026-07-17 against merged WS-XINT-001 PR #139 at trusted main
-`5d353b6d3f8a36b9b9ffdc1959487a150ac25fd1`, especially
-`REV_CON_HANDOFF.md`, plus the later explicit human amendment establishing
-`FinalAcceptance` and REV-owned audit and outbox staging. Sibling WS-CON worktree
-content remains discovery evidence until its owning contracts merge; it cannot
-act as a runtime dependency.
+Reconciled on 2026-07-17 against merged AUTH reconciliation PR #140 at trusted
+main `d541521790a0441cfd2193f466e00ef81248ec31`, merged WS-XINT-001 PR #139, and
+the amended `REV_CON_HANDOFF.md`. The handoff now incorporates the explicit human
+amendment establishing FinalAcceptance, two ordered CON operations, REV-owned
+audit/outbox staging, and request-route/service-command commit ownership. Sibling
+WS-CON worktree content remains discovery evidence until its owning contracts
+merge; it cannot act as a runtime dependency.
 
 ## Ownership Boundary
 
 REV owns queue, ReviewLease, ReviewPacketManifest, ReviewEvidenceArtifact,
 Review/finding/revision state, FinalAcceptance, decision orchestration, task
-effects, shared audit and outbox staging, the caller transaction, and joint
-product-surface release. CON owns ContributionPolicy,
+effects, shared audit and outbox staging, and joint product-surface release. The
+request route or service command owns the caller transaction and its only commit.
+CON owns ContributionPolicy,
 immutable ContributionPolicyVersion and rules, ContributionRecord, awards,
 fulfillment, CON audit/projections, and every
 separately exposed CON surface. AUTH owns review authorization and action
@@ -57,7 +59,7 @@ AUTH prepares review.decision and locks reviewer authority
    project_points CompensationAward rows
 -> CON flushes contribution and award rows and returns typed audit and outbox inputs
 -> REV stages shared audit and outbox rows
--> route commits once
+-> request route or service command commits once
 ```
 
 This is the hidden pre-12A order and has no public or background-command entry
@@ -89,8 +91,10 @@ internal fact with:
 
 - canonical `submission_id`, implementing the handoff's conceptual
   `submission_version_id`;
-- exact project, task, source Review, accepted submitter, acceptance time, and
-  recording reviewer lineage;
+- exact project, task, source Review, acceptance time, and canonical human actor
+  lineage: `accepted_submitter_id` equals the contributor on the reviewed
+  Submission and TaskAssignment, while `recorded_by` equals the reviewer on the
+  source Review and ReviewLease;
 - `policy_context_ref` constrained to the immutable ReviewPolicy row matching
   the reviewed Submission context; and
 - unique task, source Review, and Submission constraints.
@@ -165,7 +169,7 @@ REV-09B stable review/revision lineage + CON exact lineage schema
 
 CON core hidden-readiness manifest + REV-12
   -> REV-12A hidden joint release control
-  -> AUTH action activation after hidden behavior
+  -> named AUTH action activation gates after hidden behavior
   -> REV-13 joint product release
 ```
 

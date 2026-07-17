@@ -26,8 +26,10 @@ authorization, direct grant reads, raw provider paths, concrete provider
 imports, compatibility aliases, fallback constructors, and dual factory paths
 are prohibited.
 
-AUTH remains the transaction-composition owner for its FastAPI dependency.
-Merged AUTH-08 makes generic successful teardown roll back an open
+AUTH owns construction of its request-scoped, session-bound dependency. The
+request route or service command owns the caller `AsyncSession` transaction and
+its only commit; AUTH, REV, task, ART, CON, audit, and outbox participants stage
+or flush only. Merged AUTH-08 makes generic successful teardown roll back an open
 feature-owned transaction, maps typed evidence persistence failures to the
 stable retryable service-unavailable contract, and advances canonical actor
 verification timestamps only in successful route-owned transactions. REV
@@ -35,9 +37,14 @@ retains these as regression invariants and does not patch AUTH implementation
 locally.
 
 Reads use request-scoped `AuthorizationService.require`. Mutations use AUTH's
-prepared protocol: AUTH locks authority, REV locks canonical feature rows and
-recomposes final facts, AUTH evaluates exactly once, participants flush, and the
-caller boundary commits once. REV never registers or activates actions.
+prepared protocol: AUTH locks authority and creates an opaque, non-Pydantic,
+single-use handle bound to the exact session, ActionId, actor-reference kind and
+ID, idempotency key, and canonical request digest. REV locks canonical feature
+rows, recomposes final facts, validates and consumes that exact handle before its
+first mutation, AUTH evaluates exactly once, participants flush, and the request
+route or service command commits once. Reuse, serialization, caller construction,
+cross-session/action/actor/request substitution, or authority loss denies before
+feature mutation. REV never registers or activates actions.
 
 REV receives ART v2 typed packet-read and evidence candidate/finalize ports, not
 ArtifactStore, v1 verify/retain/release, ART repositories, provider references,
@@ -306,7 +313,10 @@ The repository's existing immutable `Submission` row is the version identity,
 so the handoff's conceptual `submission_version_id` is persisted as canonical
 `submission_id`. `FinalAcceptance` contains `id`, `project_id`, `task_id`,
 `submission_id`, `source_review_id`, `accepted_submitter_id`, `accepted_at`,
-`recorded_by`, and `policy_context_ref`. The policy reference is a foreign key
+`recorded_by`, and `policy_context_ref`. `accepted_submitter_id` is the canonical
+human `ActorProfile.id` on the reviewed Submission and exact TaskAssignment;
+`recorded_by` is the canonical human `ActorProfile.id` on the source Review and
+ReviewLease. The policy reference is a foreign key
 to the exact immutable `ReviewPolicy.id` whose project/guide version matches the
 reviewed Submission context. PostgreSQL enforces unique task, source Review, and
 Submission acceptance, same-chain project/task/submission/reviewer/submitter
@@ -356,7 +366,8 @@ creates immutable money and/or project-points awards when payable. Derived
 inserts do not invent `contribution.materialize` or
 `compensation.award.materialize` actions.
 
-REV owns the request transaction. It appends Review, findings, and resolutions,
+REV owns lifecycle orchestration inside the request transaction. It appends
+Review, findings, and resolutions,
 consumes the lease, and closes the queue entry. It then calls the mandatory CON
 participant's flush-only reviewer operation, which creates `completed_review`
 and evaluates the lease-frozen reviewer policy. REV next applies the decision
@@ -365,7 +376,8 @@ TaskAssignment effects, and calls the participant's flush-only submitter
 operation. That operation creates `accepted_submission` and evaluates the
 assignment-frozen submitter policy. The other decisions do not call the
 submitter operation. REV stages shared audit and outbox rows from every invoked
-operation and commits once. A failure in CON or any later REV stage rolls back
+operation; the request route or service command commits once. A failure in CON
+or any later REV stage rolls back
 the entire decision. Core creation calls no ART capability and performs no
 external I/O. External fulfillment and optional contribution-evidence
 projection begin only after commit and cannot alter canonical acceptance or
@@ -424,7 +436,8 @@ mutation fencing, typed internal fence ports, bounded drain observations, and
 crash-resumable phase history. Every canonical phase change is a fresh
 Operator-authorized adjacent transition; no background job replays the initiating human
 or advances phase. It lands with no production lifecycle route and no action
-availability change. AUTH activates that exact action only after 12A merges.
+availability change. `WS-AUTH-001-REV-LIFECYCLE` activates that exact action only
+after 12A and all other additive hidden manifests merge.
 
 Review, every task submission, review-queue admission, authority-loss
 replacement, every CON fulfillment-obligation root creation, requeue, successor,
@@ -452,8 +465,14 @@ adjudicator, or administrative authority. Adjudication actions and lifecycle
 remain unavailable and outside this initiative.
 
 AUTH is the sole registration, evaluator, activation-custody, and availability
-owner. REV chunks build hidden behavior and feature-manifest deltas; AUTH later
-activates exact actions; REV-13 performs the separate product-surface release.
-The 57-action AUTH-08 snapshot is not a promised final total because the four
-proposed REV actions and separate ART review-evidence binding action require
-independent current-main registration accounting.
+owner. `WS-AUTH-001-REV-CUSTODY` transfers the 19 registered review rows to seven
+exact AUTH custodians without changing availability. REV feature chunks build
+hidden behavior and feature-manifest deltas; the exact
+`WS-AUTH-001-REV-05/06/07/08/09A/11/12` gates later activate their action groups.
+`WS-AUTH-001-REV-REG` registers the four approved additions and
+`WS-AUTH-001-REV-LIFECYCLE` activates them only after all hidden manifests merge.
+REV-13 performs the separate product-surface release. The 24 REV dependencies
+are one registered planned submission action, 19 registered planned review
+actions, and four approved but unregistered additions; none is active. The
+separate ART review-evidence binding proposal is not one of the 24, so future
+counts remain current-main-derived rather than a promised fixed total.

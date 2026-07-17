@@ -51,12 +51,15 @@ review-private outbox or delivery queue
   `project_id`, `task_id`, `source_review_id`, `accepted_submitter_id`,
   `accepted_at`, `recorded_by`, and `policy_context_ref` constrained to the
   exact immutable ReviewPolicy row matching the reviewed Submission context.
+  `accepted_submitter_id` is the canonical human `ActorProfile.id` shared by the
+  reviewed Submission and its exact TaskAssignment. `recorded_by` is the
+  canonical human `ActorProfile.id` shared by the source Review and ReviewLease.
 - PostgreSQL enforces `UNIQUE(task_id)`, `UNIQUE(source_review_id)`, and
   `UNIQUE(submission_id)`, plus same-chain project/task/Submission/Review,
   accepted-submitter and TaskAssignment lineage, recording-reviewer and
   ReviewLease lineage, exact ReviewPolicy context, and canonical-human-actor
-  integrity. Direct SQL cannot update or delete it or create a crossed
-  acceptance.
+  integrity. Direct-SQL tests cross each actor and lineage independently; none
+  may update or delete the record or create a crossed acceptance.
 - This persistence chunk exposes no service, route, action, or background
   command capable of creating FinalAcceptance. Only REV-10 may append it, and
   only in the same transaction that appends a new Review whose decision is

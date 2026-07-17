@@ -60,7 +60,8 @@ schema/application downgrade after protected post-cutover rows exist
   constraints reject skipped, reversed, concurrent, crossed-generation, or
   unknown edges and preserve every prior generation unchanged.
 - Every lifecycle-control observe, transition, and crash-resume attempt is a
-  fresh authenticated Operator command declaring proposed AUTH-owned
+  fresh authenticated Operator command declaring approved but unregistered
+  AUTH-owned
   `review.lifecycle.activation.manage` mapped to existing
   `operations.reconcile.run`. Only an Operator AdminRoleGrant is a candidate.
   Its typed resource contains operation, singleton ID, expected generation and
@@ -83,15 +84,22 @@ schema/application downgrade after protected post-cutover rows exist
   through composition and does not edit CON-owned writer logic. There is no
   fallback constructor, service locator, optional/no-op port, or concrete
   cross-domain repository import.
-- After AUTH prepares and locks current authority, every mutation locks its
-  feature-owned operation-idempotency row, then acquires the shared PostgreSQL transaction advisory lock before
+- After AUTH prepares and locks current authority, it returns an opaque,
+  non-Pydantic, single-use handle bound to exact session, ActionId,
+  actor-reference kind and ID, idempotency key, and canonical request digest.
+  Every mutation locks its feature-owned operation-idempotency row, validates and
+  consumes that exact handle before its first feature mutation, then acquires the
+  shared PostgreSQL transaction advisory lock before
   reading the current phase and before any product-domain row. Phase transition
   follows the same prefix and acquires the matching exclusive advisory lock, so
   it waits for prior mutation transactions and blocks new entrants without
   reversing the global lock order. After commit, new commands acquire the shared
   lock and fail or pass from the persisted phase. Independent-session tests prove
   both orderings, AUTH/fence concurrency without deadlock, and that process-local
-  locks cannot substitute. The phase snapshot remains held for the transaction.
+  locks cannot substitute. Reuse, serialization, caller construction,
+  cross-session/action/actor/request substitution, and authority loss fail before
+  phase, fence, product, audit, or outbox mutation. The phase snapshot remains
+  held for the transaction.
 - Submission fencing is two-stage. After acquiring the shared fence and phase,
   the service loads canonical task, predecessor, assignment, and preparation
   rows in normal order; derives initial, legacy-revision, or prepared-revision
@@ -130,8 +138,9 @@ schema/application downgrade after protected post-cutover rows exist
   not merge those authorities into lifecycle control.
 - This chunk implements hidden lifecycle-control behavior, typed resource facts,
   guards, fence composition, and a feature-manifest delta while
-  `review.lifecycle.activation.manage` remains planned. AUTH separately
-  integrates its evaluator and activates it after this chunk merges. The
+  `review.lifecycle.activation.manage` remains unregistered until
+  `WS-AUTH-001-REV-REG`. `WS-AUTH-001-REV-LIFECYCLE` integrates its evaluator and
+  activates it only after this chunk and all other additive manifests merge. The
   controller's `pre_activation` token is product state, not AUTH availability.
 - The REV action/operation map is exact:
 

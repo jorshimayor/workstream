@@ -11,6 +11,9 @@
   tests
 - Merged WS-XINT-001 PR #139 at trusted main `5d353b6`, including its
   AUTH/REV, AUTH role/service, ART/REV, and REV/CON handoffs
+- Merged AUTH reconciliation PR #140 at trusted main `d541521`, final reviewed
+  branch head `b80e898`, including exact REV activation custody, prepared
+  mutation, registration, and activation planning contracts
 
 The current revised Markdown contains 2,396 lines and 12,570 words. Its SHA-256 is
 `fffadc271c267801250b044edc570e515a250eff48afdc64f9c1f8753e6ab058`.
@@ -51,10 +54,11 @@ before producing the reconciled active contract.
 
 ## Authorization boundary
 
-- The original discovery base was `f599551`, which merged AUTH-06. The
+- The original discovery base was `f599551`, which merged AUTH-06. The latest
   2026-07-17 reconciliation rebased REV onto trusted main
-  `5d353b6d3f8a36b9b9ffdc1959487a150ac25fd1`, which merges WS-XINT-001 PR #139
-  and includes AUTH-08, ART-02A2, ADR 0015, and the four lifecycle handoffs.
+  `d541521790a0441cfd2193f466e00ef81248ec31`, which merges AUTH planning PR #140
+  after WS-XINT-001 PR #139 and includes AUTH-08, ART-02A2, ADR 0015, the four
+  lifecycle handoffs, and AUTH decisions D23-D27.
 - Authority audit and mutation idempotency foundations exist.
 - The request-scoped deny-by-default kernel exists. Actor self-read/self-update
   and seven AUTH-08 administrative actions are active. Project grants, actor
@@ -70,7 +74,7 @@ before producing the reconciled active contract.
   exact active identity link/profile, immutable service identity, and static
   action row. A generic system-principal or fabricated human is not allowed.
 - `review.queue.override` is present in the merged 74-PermissionId catalogue;
-  its owning review actions remain planned/inactive. Artifact recovery already uses
+  the review actions mapped to it remain planned/inactive. Artifact recovery already uses
   the registered `artifact.verification_job.retry` action and ART-owned
   `ArtifactOperatorRecoveryPort`; WS-REV must not add another recovery
   permission or implementation.
@@ -80,18 +84,29 @@ AUTH-08 PR #131 at trusted-main
 `aa0fdcd6912e66609e39a2fbd7b65f67be6c62f3`, final branch head
 `0832358a0262805f553d05b50b0d778e6e6ad995`. AUTH-08 retains exactly 57 closed
 ActionIds, activates seven administrative actions alongside the two actor-self
-actions, and leaves 48 planned. Canonical `submission.create` plus the original
-19 review-owned actions all remain planned/inactive. AUTH-13/14
+actions, and leaves 48 planned. Canonical `submission.create` plus the 19
+registered review actions all remain planned/inactive. AUTH-13/14
 also establish the final `TaskAssignment.contributor_id` and
 `Submission.contributor_id` names and authority-loss replacement-assignee
   behavior. The four later revision-obligation-close, repair, legacy-close, and
-  joint-lifecycle-control ActionIds remain proposed AUTH-owned additions before
+  joint-lifecycle-control ActionIds remain approved but unregistered AUTH-owned additions before
   their owning hidden-behavior chunks. The merged 57-action count is a historical
   AUTH-08 snapshot, not a future fixed total. WS-XINT-001 also proposes the
   separate ART service action `artifact.review_evidence.binding.create`; each
   later AUTH registration/activation contract must derive exact before/after
   counts from current trusted main and account for its delta independently.
-  REV builds hidden behavior and typed facts; AUTH alone changes availability.
+  REV feature chunks build hidden behavior and typed facts; exact AUTH activation
+  custodians alone integrate evaluators and change availability.
+
+Merged AUTH reconciliation PR #140 is planning-only. It preserves the runtime
+`74` PermissionId / `57` ActionId / `9` active / `48` planned snapshot. It defines
+`WS-AUTH-001-REV-CUSTODY` as an availability-neutral transfer of the 19 registered
+review actions to seven exact AUTH activation custodians, followed by the shared
+`WS-AUTH-001-PREP` prerequisite. It also defines one future
+`WS-AUTH-001-REV-REG` registration for the four approved REV additions, exact
+per-feature activation gates `REV-05/06/07/08/09A/11/12`, and one
+`WS-AUTH-001-REV-LIFECYCLE` activation after all four additive hidden manifests
+merge. None of these planning contracts activates an action or starts runtime.
 
 AUTH-08 resolves the three consumption blockers found during the AUTH-07B
 dependency review: successful dependency teardown now rolls back any open
@@ -175,8 +190,9 @@ chunks must preserve these merged invariants and still wait for the later AUTH
 ## WS-XINT-001 reconciliation findings
 
 1. Current `ActionOwner.REV_*` values are stale activation-custody encodings,
-   not feature ownership. AUTH must transfer every approved review action to an
-   exact AUTH activation custodian.
+   not feature ownership. `WS-AUTH-001-REV-CUSTODY` must transfer all 19
+   registered review actions to the seven exact AUTH activation custodians
+   without changing counts, mappings, or availability.
 2. Delivery order is AUTH registration, hidden dependency and REV behavior,
    AUTH evaluator integration/activation, then REV joint product release.
 3. Reviewer authority is one exact active independent `reviewer` grant;
@@ -201,10 +217,11 @@ chunks must preserve these merged invariants and still wait for the later AUTH
 - The structured API error envelope and request/correlation IDs exist.
 - `AuditEvent` is shared and append-only for authority evidence; lifecycle
   audit input is still legacy-shaped and needs a bounded WS-REV event contract.
-- There are 20 migrations through canonical actor profile migration `0020` at
-  this snapshot. Parallel initiatives mean WS-REV contracts must allocate the
-  next migration number only at activation time.
-- The backend has 609 discovered test functions across 18 test modules.
+- Trusted main has 22 numbered migrations through AUTH-08 migration `0022`.
+  Parallel initiatives mean WS-REV contracts must allocate the next migration
+  number only when a chunk starts from current main; no REV number is reserved
+  in planning.
+- The backend has 746 discovered test functions across 22 test modules.
 
 ## Specification and documentation conflicts
 

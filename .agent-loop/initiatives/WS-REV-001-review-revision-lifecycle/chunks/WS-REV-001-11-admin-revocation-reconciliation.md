@@ -44,9 +44,12 @@ production `/api/v1` review-router registration
   administrative closure, and reconciliation declare, respectively,
   `review.lease.force_release`, `review.queue.routing.override`,
   `review.queue.routing.correct`, `review.queue.close`, and
-  `review.reconcile.run`. Human mutations use AUTH prepare/authority lock, REV
-  canonical row locks and final fact recomposition, one AUTH evaluation, then
-  flush/one caller commit. They require exact covered scope and mandatory
+  `review.reconcile.run`. Human mutations use AUTH prepare/authority lock and an
+  opaque, non-Pydantic, single-use handle bound to exact session, ActionId,
+  actor-reference kind and ID, idempotency key, and canonical request digest;
+  REV canonical row locks and final fact recomposition; exact handle consumption
+  before first feature mutation; one AUTH evaluation; then participant flush and
+  one request-route/service-command commit. They require exact covered scope and mandatory
   reasons; queue closure,
   correction, and force release remain Operator-only.
 - `POST /api/v1/tasks/{task_id}/revision-obligation/close` declares the additive
@@ -86,7 +89,8 @@ production `/api/v1` review-router registration
 - Repair-versus-repair and repair-versus-submission barriers run both commit
   orders. Exact replay returns the same successor; changed replay conflicts;
   stale head returns a stable conflict/re-preparation response; one head remains
-  and no partial audit/outbox/lifecycle effect commits.
+  and no partial feature audit/outbox/lifecycle effect commits. AUTH denial
+  evidence follows the separate clean rollback/restaging protocol.
 - Reconciliation classifies legacy `needs_revision` rows without an originating
   Review/root as `legacy_revision_context_unrecoverable`. The exact
   `POST /api/v1/admin/review-reconciliation/{finding_id}/legacy-revision-close`
@@ -172,7 +176,9 @@ production `/api/v1` review-router registration
   `review.reconcile.run` row, provisioned ActorProfile/link, AUTH-09E admission,
   cross-service denial, and later AUTH action activation. Neither borrows
   Operator or reviewer identity; human Operator closure/force-release remains a
-  separate prepared path.
+  separate prepared path. Generic AUTH-09E admission does not provision either
+  identity; AUTH adds each exact identity, constraint, static membership, and
+  admission proof only from this chunk's reviewed service manifest.
 - Artifact verification recovery calls the existing ART-owned
   `ArtifactOperatorRecoveryPort` with the registered
   `artifact.verification_job.retry` action. The provisioned Artifact Storage
@@ -183,10 +189,18 @@ production `/api/v1` review-router registration
 - Release, decline, override, force-release, admin closure, recovery, and any
   actor-attributed deferred commit use AUTH's prepared mutation protocol,
   persist the AuthorizationDecision link, follow the command-specific lock order, and
-  fail without durable side effects on denial.
+  reject reused, serialized, caller-constructed, wrong-session/action,
+  same-session cross-actor/request, or authority-lost handles before feature
+  mutation. Denial leaves no REV/task/ART/CON mutation or feature audit/outbox
+  event. AUTH may persist only its bounded denial evidence after rolling back the
+  dirty transaction and restaging unchanged evidence through its clean AUTH-owned
+  protocol; evidence, participant, cancellation, or commit failure leaves no
+  partial authority evidence.
 - This chunk supplies hidden behavior/resource facts for its actions and changes
-  no ActionOwner or availability. AUTH separately activates exact actions after
-  merge; product route release waits for REV-13.
+  no ActionOwner or availability. `WS-AUTH-001-REV-11` activates the existing
+  action group after merge. `WS-AUTH-001-REV-LIFECYCLE` activates the three
+  additive chunk-11 actions only after all four additive manifests, including
+  REV-12A, merge. Product route release waits for REV-13.
 - Production OpenAPI remains free of lifecycle routes.
 - Recovery/reconciliation jobs reuse `run_async_task`, fresh execution
   engine/session disposal, stable task IDs, and `sync_task_settings`; they do

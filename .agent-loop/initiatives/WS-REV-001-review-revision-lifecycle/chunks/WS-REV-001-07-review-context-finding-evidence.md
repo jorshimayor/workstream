@@ -96,7 +96,12 @@ production `/api/v1` review-router registration
   review locks; finalization uses AUTH authority lock -> REV lease/assignment,
   Submission, evidence-slot and packet-lineage locks -> ART candidate/admission/
   binding locks -> final fact recomposition -> one AUTH evaluation -> binding
-  plus ReviewEvidenceArtifact flush. A mid-intake stale
+  plus ReviewEvidenceArtifact flush. AUTH's opaque, non-Pydantic, single-use
+  handle is bound to the exact session, ActionId, actor-reference kind and ID,
+  idempotency key, and canonical request digest and is consumed before the first
+  binding or REV mutation. Reuse, serialization, caller construction,
+  cross-session/action/actor/request substitution, or authority loss fails before
+  canonical mutation. A mid-intake stale
   lease, revocation, assignment loss, preparation supersession, or cross-project
   mismatch creates no canonical Workstream binding/relation or lifecycle effect;
   an already uploaded unbound candidate remains only under ART retention and
@@ -110,8 +115,10 @@ production `/api/v1` review-router registration
 - Production OpenAPI remains free of lifecycle routes; no private context is
   exposed before the final product release.
 - REV supplies hidden read/evidence behavior and feature-manifest deltas while
-  human actions remain planned. AUTH separately activates them only after this
-  chunk and the exact ART binding action/capability have merged.
+  human actions remain planned. `WS-AUTH-001-REV-07` separately activates the
+  three REV actions only after this chunk, and
+  `WS-AUTH-001-ART-REV-EVIDENCE` activates the ART binding action only after its
+  hidden ART capability and exact service identity merge.
 - Authorization tests cover submitter, active reviewer, prior participating
   reviewer, takeover reviewer, Project Manager/Operator, arbitrary same-project
   reviewer, cross-project actor, expired lease, and revoked grant. Independent

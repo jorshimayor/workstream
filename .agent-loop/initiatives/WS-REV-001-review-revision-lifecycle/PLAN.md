@@ -12,7 +12,8 @@ use PostgreSQL constraints as final race guards.
 
 ### Authorization gate
 
-Merged WS-XINT-001 fixes one delivery protocol for every protected REV surface:
+Merged WS-XINT-001 and AUTH reconciliation PR #140 fix one delivery protocol for
+every protected REV surface:
 
 ```text
 AUTH planned registration and activation-custody assignment
@@ -22,12 +23,21 @@ AUTH planned registration and activation-custody assignment
 ```
 
 REV never registers an ActionId, edits `ActionOwner`, integrates an AUTH
-evaluator, or changes action availability. An action-owning REV chunk produces
-hidden behavior, lifecycle guards, a canonical typed ResourceContext composer,
-and a feature-manifest delta while the real kernel still returns
+evaluator, or changes action availability. A REV feature chunk owning hidden
+behavior and resource facts produces lifecycle guards, a canonical typed
+ResourceContext composer, and a feature-manifest delta while the real kernel returns
 `action_unavailable`. AUTH alone activates the action after that evidence and
 all required hidden participants merge. REV-13 exposes only already-active
 surfaces after a separate joint readiness check.
+
+PR #140 changes planning only. `WS-AUTH-001-REV-CUSTODY` must first transfer all
+19 registered planned review actions to seven exact AUTH activation custodians
+without changing mappings, counts, or availability. `WS-AUTH-001-PREP` then lands
+the shared prepared-mutation runtime. Exact feature gates
+`WS-AUTH-001-REV-05/06/07/08/09A/11/12` integrate evaluators and activate only
+their merged hidden behavior. `WS-AUTH-001-REV-REG` later registers the four
+approved REV additions, and `WS-AUTH-001-REV-LIFECYCLE` activates those additions
+only after the REV-11 and REV-12A manifests are complete.
 
 Merged AUTH-08 PR #131 establishes the current public kernel and resolves the
 three AUTH-07B consumption blockers. Every runtime chunk retains proof that:
@@ -57,10 +67,13 @@ After the exact owning AUTH gates merge, WS-REV consumes:
   reconciliation, artifact-reference reconciliation, and projection rebuild
   use distinct immutable service identities and exact static ActionId rows,
   never a generic service, human reviewer, or Operator fallback;
-- 24 review-lifecycle action dependencies: merged AUTH-08 retains canonical
-  `submission.create` plus the original 19 review-owned actions; four additive
-  AUTH registrations remain proposed for revision closure/recovery and joint
-  release control;
+- exact service identities are registered only after REV publishes each
+  identity-to-ActionId manifest; generic AUTH-09E admission does not pre-create a
+  catch-all review service or make a later identity extension executable;
+- 24 non-executable review-lifecycle action dependencies: registered planned
+  `submission.create`, 19 registered planned review actions, and four approved
+  but unregistered REV actions for revision closure/recovery and joint release
+  control. The separate ART evidence-binding action is not one of the 24;
 - `review.revision_context.repair` maps to existing PermissionId
   `project.task.manage`, a covered Project Manager candidate, and an exact typed
   task/assignment/prior-Submission/episode/head resource with transaction
@@ -82,20 +95,27 @@ After the exact owning AUTH gates merge, WS-REV consumes:
 - canonical resource contexts and project mismatch handling;
 - request-scoped `AuthorizationService.require(action_id, resource_context)` for
   reads only;
-- the AUTH prepared mutation protocol for writes: AUTH locks current authority
-  first, REV locks canonical feature rows, REV recomposes final typed facts,
-  AUTH evaluates exactly once and stages bounded decision evidence, participants
-  flush, and the route or Celery boundary commits once;
+- the AUTH prepared mutation protocol for writes: AUTH returns an opaque,
+  non-Pydantic, single-use `PreparedAuthorizationHandle` bound to the exact
+  `AsyncSession`, ActionId, actor-reference kind and ID, idempotency key, and
+  canonical request digest after locking current authority. REV locks canonical
+  feature rows, recomposes final typed facts, and consumes the exactly matching
+  handle before its first feature mutation; AUTH evaluates exactly once and
+  stages bounded decision evidence; participants flush; and the request route or
+  service command commits once. Reuse, serialization, caller construction,
+  cross-session/action/actor/request substitution, or authority loss denies
+  before feature mutation;
 - immutable authorization decisions and audit links;
 - revocation invalidation used to recover active review leases.
 
 REV owns its typed ResourceContext composers and lifecycle guards. It imports
 the public AUTH service and `ActionId` types only; it never imports AUTH
 repositories/models, queries grants, or reconstructs permission unions.
-The four additive ActionIds and their closed mappings are registered by AUTH,
-not review code. Their planned registration gates chunk 11 or 12A; their later
-AUTH evaluator/activation gates follow the matching hidden REV behavior. They
-add no PermissionId. The current AUTH-08 snapshot contains 57 actions: 9 active
+The four additive ActionIds and their closed mappings are registered together by
+`WS-AUTH-001-REV-REG`, not review code. Their hidden manifests land in chunks 11
+and 12A; `WS-AUTH-001-REV-LIFECYCLE` later integrates their evaluators and
+activates them together. They add no PermissionId. The current AUTH-08 runtime
+snapshot contains 57 actions: 9 active
 and 48 planned. That is historical provenance, not a fixed future total.
 WS-XINT-001 separately proposes
 `artifact.review_evidence.binding.create -> artifact.binding.create` for the
@@ -166,7 +186,10 @@ contracts merge to trusted main.
 
 The cross-initiative sequence is explicit:
 
-- `WS-REV-001-02` first establishes immutable
+- AUTH-13 and AUTH-14 first complete the canonical contributor-field clean cuts
+  on TaskAssignment and Submission; a separately approved schema handoff is the
+  only alternative to waiting for those owners;
+- `WS-REV-001-02` then establishes immutable
   `Submission.task_assignment_id` attribution and guide activation sequence;
 - WS-CON's approved replacement chunks then freeze submitter
   `ContributionPolicyVersion` on `TaskAssignment` and remove legacy
@@ -216,7 +239,8 @@ Both operations belong to the same mandatory participant, use the caller's
 AsyncSession, flush without commit, copy the stabilized versioned Submission
 `artifact_hash`, and return typed audit and outbox inputs. CON never infers
 acceptance from `Review.decision`, calls ART, rederives the digest, or commits.
-REV stages the shared audit and outbox rows, and the review request commits once.
+REV stages the shared audit and outbox rows, and the request route or service
+command commits once.
 Any contribution-evidence document is a later optional asynchronous projection
 with its own action and failure state, not a core transaction or joint-release
 gate.
@@ -325,7 +349,7 @@ durable checker allow_review
   -> final transaction: AUTH prepares and locks reviewer authority; REV locks
      the selected queue and canonical packet rows and recomposes final facts;
      AUTH evaluates once; REV and typed participants flush the ReviewLease and
-     immutable ReviewPacketManifest; the caller commits once
+     immutable ReviewPacketManifest; the request route or service command commits once
   -> authorized Review Context shows the bounded immutable chain but retrieves
      artifact content only for the currently leased Submission version
   -> finding evidence is ingested and verified before decision
@@ -343,7 +367,8 @@ durable checker allow_review
         submitter operation
      -> reject: block assignment and then reject task; no FinalAcceptance and no
         submitter operation
-  -> REV stages shared audit and outbox records and commits once
+  -> REV stages shared audit and outbox records
+  -> request route or service command commits once
   -> projection and notifications execute from the canonical shared outbox
      event after commit; optional contribution-evidence export is outside the
      core readiness contract
@@ -376,7 +401,8 @@ The outcome-specific effects are exact:
   no submitter operation. No other task or project grant changes.
 
 CON flushes contribution and award rows and returns typed audit and outbox
-inputs. REV stages the shared records, and the request commits once. Any failure
+inputs. REV stages the shared records, and the request route or service command
+commits once. Any failure
 rolls back the immutable records, lifecycle state changes, contributions,
 awards, audit records, and outbox records together.
 
@@ -425,7 +451,9 @@ Operator-authorized lifecycle command; lease draining reuses fresh
 `review.lease.force_release` commands rather than widening lifecycle authority.
 No background job replays human authority or advances phase. Timeout leaves phase
 unchanged for forward retry and no edge attempts schema downgrade. After 12A's
-hidden behavior merges, AUTH activates `review.lifecycle.activation.manage`.
+hidden behavior and the other additive manifests merge,
+`WS-AUTH-001-REV-LIFECYCLE` activates
+`review.lifecycle.activation.manage` with the other three registered additions.
 Chunk 13 then exposes the already-active Operator surface, performs the ordered
 product cutover, and proves crash resume and coherent reactivation. The
 controller's `pre_activation` state is a REV product-release phase, not AUTH
@@ -547,10 +575,15 @@ foundation change rather than adding review-private storage state.
   remote artifact availability before acquiring review row locks.
 - Inside claims and decisions, use database time and targeted `FOR UPDATE` or
   atomic conditional updates over canonical rows.
-- Every mutation starts with AUTH's prepared handle locking current actor/link/
-  exact grant or service-matrix authority in AUTH-defined order. REV then locks
-  only the feature rows required by that command, recomposes final typed facts,
-  and asks AUTH to evaluate exactly once. No reusable cross-session handle exists.
+- Every mutation starts with AUTH locking current actor/link/exact grant or
+  service-matrix authority in AUTH-defined order and returning its opaque,
+  single-use prepared handle. Before its first feature mutation, REV must prove
+  exact session, ActionId, actor-reference kind and ID, idempotency key, canonical
+  request digest, and current authority; it then consumes the handle exactly
+  once. Reuse, serialized or caller-constructed handles, wrong action/session,
+  same-session cross-actor or cross-request substitution, and authority loss fail
+  without feature mutation. AUTH evaluates exactly once after final locked-fact
+  recomposition.
 - Before REV-12A, hidden claim order after AUTH is review idempotency, queue,
   Task/Assignment/Submission/CheckerRun, then lease and packet-manifest rows;
   it has no public or background-command entry point. REV-12A inserts the
@@ -576,7 +609,7 @@ foundation change rather than adding review-private storage state.
 - Revision, administrative, and service commands publish their smaller ordered
   row sets in their owning chunk and preserve the same AUTH-first prefix. Rows of
   one type lock by ascending primary key. Audit and outbox append after state
-  locks. The route or Celery boundary commits once.
+  locks. The request route or service command commits once.
 - Partial unique indexes enforce one active lease per queue entry and reviewer.
 - Consume stabilized typed binding facts inside the decision transaction; do
   not call a remote provider or import ART persistence while holding locks.
@@ -656,8 +689,10 @@ Protected commands use these exact proposed service rows:
 | `workstream.review.artifact_reference_reconciliation` | `review.artifact_reference.reconcile` |
 | `workstream.review.projection` | `review.projection.rebuild` |
 
-Each identity requires its own AUTH registration/provisioning/static-row proof,
-AUTH-09E admission, and later action activation. No service row exists for the
+Generic AUTH-09E admission creates none of these identities. Each requires a
+reviewed REV identity-to-ActionId manifest followed by its own AUTH enum,
+constraint, provisioning, static-membership, admission, and later action-
+activation proof. No service row exists for the
 human Operator `review.lifecycle.activation.manage` action, and shared outbox
 dispatch retains its separately owned service identity.
 All review jobs reuse `run_async_task`, fresh execution engine/session disposal,

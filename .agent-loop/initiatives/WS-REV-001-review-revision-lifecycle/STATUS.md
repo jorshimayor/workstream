@@ -4,10 +4,12 @@
 
 `WS-REV-001-PLAN` is active on `codex/ws-rev-001-plan`; no runtime chunk is
 active. On 2026-07-17 the branch rebased without conflict onto trusted main
-`5d353b6d3f8a36b9b9ffdc1959487a150ac25fd1`, merge commit for WS-XINT-001 PR
-#139. The REV plan is reconciled to that boundary and the FinalAcceptance
-amendment. Exact snapshot `86ee0a5e263ac306b3bf195a9fb9043aa5439416`
-passed every required internal reviewer track before PR #128 is republished.
+`d541521790a0441cfd2193f466e00ef81248ec31`, merge commit for AUTH reconciliation
+PR #140. That merge adopts the WS-XINT boundaries in AUTH planning but changes no
+runtime catalogue, action availability, evaluator, grant, service identity,
+prepared-mutation implementation, or feature behavior. The rebased REV snapshot
+requires fresh exact-SHA internal and external evidence before PR #128 can merge;
+the pre-rebase `86ee0a5` review remains historical only.
 
 The revised WS-REV Markdown/PDF pair remains byte-preserved at canonical paths
 with recorded provenance. It is archival input, not authority for stale combined
@@ -21,13 +23,21 @@ decisions.
   with 9 active and 48 planned at that historical snapshot. Its rollback-only
   dependency teardown, typed authorization-evidence 503, and canonical timestamp
   behavior remain required regression invariants.
-- The 57 count is not a promised future total. Four REV actions remain proposed,
-  and WS-XINT separately proposes
-  `artifact.review_evidence.binding.create`. Exact counts, owners, availability,
-  and SHAs are derived at each later AUTH registration/activation gate.
-- AUTH still must merge project grants, exact reviewer evaluation, fixed service
-  ActorProfiles/static rows, AUTH-09E admission, prepared mutations, resource
-  evaluators, activation custody, and product cutovers before their REV consumers.
+- The 24 REV lifecycle dependencies are registered planned `submission.create`,
+  19 registered planned review actions, and four approved but unregistered REV
+  lifecycle actions. None is active. The separate unregistered
+  `artifact.review_evidence.binding.create` ART action is not one of the 24.
+  Exact counts, custodians, availability, and SHAs are derived at each later AUTH
+  registration or activation gate.
+- PR #140 defines, but does not implement, the exact AUTH sequence and ownership:
+  AUTH-09A reconvergence, AUTH-09B through AUTH-09E, availability-neutral
+  `WS-AUTH-001-REV-CUSTODY`, `WS-AUTH-001-PREP`, AUTH-10/13/14 product contracts,
+  feature-gated `WS-AUTH-001-REV-REG`, per-feature `WS-AUTH-001-REV-05/06/07/08/09A/11/12`
+  activation, and `WS-AUTH-001-REV-LIFECYCLE` for the four additions. Hidden REV
+  schema, pure validation, resource facts, guards, and behavior may proceed when
+  their exact data/participant contracts exist while actions remain unavailable.
+  Each committing sensitive mutation waits for PREP; REV-13 waits for every exact
+  activation and is the only product-surface release.
 - Project contributor grants are independent `submitter`, `reviewer`, and
   `adjudicator`. REV consumes only reviewer authority/invalidation; adjudication
   remains unavailable.
@@ -47,7 +57,8 @@ decisions.
   reviewer operation runs before every decision branch; the submitter operation
   runs only after FinalAcceptance exists for `accept`. Submitter
   `accepted_submission` consumes FinalAcceptance rather than inferring
-  `Review.decision`. REV stages shared audit and outbox rows and commits once. Core
+  `Review.decision`. REV stages shared audit and outbox rows; the request route or
+  service command commits once. Core
   creation copies stabilized versioned Submission `artifact_hash` lineage,
   performs no ART call, and has no mandatory contribution-evidence projection.
 - REV-12A also waits for CON-owned mandatory fence hooks on every fulfillment
@@ -94,9 +105,10 @@ The repaired contract now fences every CON obligation writer before ordinal
 allocation, captures an immutable cutoff after prior writers drain, permits only
 pre-cutoff completion work, and retains audited same-root recovery for denied
 already-claimed dispatch. Snapshot
-`86ee0a5e263ac306b3bf195a9fb9043aa5439416` passes senior engineering,
+`86ee0a5e263ac306b3bf195a9fb9043aa5439416` passed senior engineering,
 QA/test, security/auth, product/ops, architecture, docs, reuse/dedup, test-delta,
-and CI integrity with no findings.
+and CI integrity with no findings before the PR #140 rebase. It is historical
+evidence and does not approve the current snapshot.
 
 ## Human clarification retained
 

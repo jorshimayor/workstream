@@ -128,17 +128,26 @@ AUTH action registration, ActionOwner/evaluator edit, or availability change
   Evidence binding separately proves `workstream.artifact.binding` plus
   `artifact.review_evidence.binding.create`.
 - A separate AUTH availability manifest proves every required action was
-  registered, transferred to an exact AUTH activation custodian, paired with
-  merged hidden behavior/evaluator, and activated by AUTH before release. It
+  registered, transferred by `WS-AUTH-001-REV-CUSTODY` to an exact AUTH activation
+  custodian, paired with merged hidden behavior/evaluator, and activated through
+  `WS-AUTH-001-REV-05/06/07/08/09A/11/12` or
+  `WS-AUTH-001-REV-LIFECYCLE` before release. It
   derives exact counts and SHAs from current trusted main, separately inventories
-  the four proposed REV actions and
+  the four additive REV actions and
   `artifact.review_evidence.binding.create`, and rejects missing/extra or early
   activation. The historical 57/9/48 snapshot is not a fixed expected total.
 - AUTH preflight proves its reusable dependency has no generic success
-  auto-commit, every REV read/mutation owns its explicit transaction boundary,
+  auto-commit, every request route or service command owns its explicit
+  transaction boundary and only commit,
   authorization-evidence SQL failures produce a retryable 503 without partial
   state, and successful existing-actor GET/PATCH access matches AUTH's repaired,
   documented verification-timestamp semantics.
+- Live mutation proof rejects reused, serialized, caller-constructed,
+  wrong-session/action, same-session cross-actor/request, and authority-lost
+  `PreparedAuthorizationHandle` inputs before any REV/task/ART/CON mutation. A
+  normal denial leaves no feature audit/outbox effect while AUTH may persist only
+  bounded clean denial evidence; evidence, participant, cancellation, and commit
+  failures leave no partial authority evidence.
 - Final product registration exposes coherent current-work, claim, release, decline,
   context, decision, revision preparation/evidence, chain, and authorized admin
   operations alongside the existing canonical task resubmission endpoint.

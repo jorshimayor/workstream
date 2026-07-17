@@ -122,7 +122,11 @@ outcomes.
    review request uses one CON participant with an ordered reviewer contribution
    operation before the decision branch. It invokes the submitter contribution
    operation only after FinalAcceptance exists. REV stages shared audit and
-   outbox records and commits once.
+   outbox records; the request route or service command commits once.
+10. Merged AUTH reconciliation PR #140 is planning authority, not runtime proof.
+    Exact AUTH custody, PREP, registration, service-identity, and activation gates
+    apply per consumer so hidden REV work can proceed while every action remains
+    unavailable; REV-13 alone releases product surfaces.
 
 Items 3-5 and the proposed chunk sequence were approved by the human on
 2026-07-15 for planning publication. This approval does not activate a successor

@@ -470,3 +470,44 @@ same contract.
 Exact snapshot `615964e16e9f03257fc8631f5af8e35544c01f81` passed senior
 engineering, architecture, reuse/dedup, QA/test, product/ops, test-delta,
 security/auth, docs, and CI integrity with no findings.
+
+## AUTH PR #140 Reconciliation - 2026-07-17
+
+REV rebased cleanly onto trusted main
+`d541521790a0441cfd2193f466e00ef81248ec31`, merge commit for AUTH
+reconciliation PR #140. That merge changes planning and authorization
+documentation only; runtime remains 74 PermissionIds and 57 ActionIds, with 9
+active and 48 planned. The 24 REV dependencies remain non-executable:
+`submission.create`, 19 registered review actions, and four approved but
+unregistered REV additions. The separate ART evidence-binding proposal is not
+part of the 24.
+
+Read-only AUTH/REV, catalogue, and post-rebase audits found seven material
+planning gaps: unnamed AUTH custody/registration/activation gates; incomplete
+prepared-handle binding and misuse proof; denial wording that could suppress
+AUTH's clean denial evidence; ambiguous transaction commit ownership; missing
+AUTH-13/14 contributor-field sequencing; generic fixed-service identity
+assumptions; and a stale shared REV/CON handoff that still encoded the
+pre-FinalAcceptance one-call transaction.
+
+The repair names `WS-AUTH-001-REV-CUSTODY`, `WS-AUTH-001-PREP`,
+`WS-AUTH-001-REV-REG`, every exact per-feature REV activation gate, and
+`WS-AUTH-001-REV-LIFECYCLE`. Every sensitive consumer now validates and consumes
+AUTH's opaque single-use handle against exact session, ActionId, actor-reference
+kind/ID, idempotency key, and canonical request digest before feature mutation.
+Normal denial rolls back feature effects while AUTH may persist only its bounded
+unchanged denial evidence through the clean AUTH-owned restaging protocol. The
+request route or service command owns the one commit; REV remains lifecycle
+orchestrator and stages shared audit/outbox rows. REV-02 waits for AUTH-13/14
+schema ownership, and each protected service identity requires a reviewed
+identity-to-ActionId manifest before AUTH provisioning.
+
+The planning chunk's scope now includes only the exact shared
+`REV_CON_HANDOFF.md` amendment requested by the human. That handoff now records
+immutable FinalAcceptance, the ordered reviewer and accept-only submitter CON
+operations, canonical versioned `Submission.artifact_hash`, REV audit/outbox
+staging, and request-route/service-command commit ownership.
+
+The rebase and these normative edits invalidate pre-rebase exact-SHA evidence.
+Fresh deterministic gates and every required internal reviewer track must pass
+before PR #128 is force-updated.

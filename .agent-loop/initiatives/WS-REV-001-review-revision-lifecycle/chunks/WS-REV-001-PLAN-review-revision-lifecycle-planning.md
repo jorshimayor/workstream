@@ -13,6 +13,7 @@ L1 planning with a narrowly scoped CI documentation-gate correction.
 
 ```text
 .agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/**
+.agent-loop/initiatives/WS-XINT-001-lifecycle-boundary-reconciliation/REV_CON_HANDOFF.md only to apply the human-approved FinalAcceptance and two-operation transaction amendment
 .agent-loop/merge-intents/WS-REV-001-PLAN.json
 docs/reference_specs/WS-REV-001-review-lifecycle-specification.md
 docs/reference_specs/WS-REV-001-review-lifecycle-specification.pdf
@@ -49,6 +50,12 @@ runtime implementation or dependency changes
 - Merged WS-XINT-001 PR #139, ADR 0015, and all four owner handoffs are treated
   as current authority. The plan distinguishes AUTH action activation from REV
   product release and derives future catalogue counts from exact trusted main.
+- Merged AUTH reconciliation PR #140 is the exact planning authority for REV
+  activation custody, prepared mutations, registration, service identity, and
+  per-feature activation gates. It changed no runtime catalogue or availability.
+- The shared REV/CON handoff records the approved accept-only FinalAcceptance
+  source and ordered reviewer/submitter CON operations; it no longer presents
+  the superseded one-call contribution or CON-owned audit/outbox sequence.
 - Independent reviewer grants, AUTH-09E fixed services, AUTH-first prepared
   mutations, ART v2 packet/evidence ports, ReviewPacketManifest,
   ReviewEvidenceArtifact, flush-only CON integration, stabilized artifact_hash

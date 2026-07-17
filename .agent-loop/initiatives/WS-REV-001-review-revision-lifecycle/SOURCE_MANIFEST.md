@@ -45,16 +45,36 @@ On 2026-07-17 the human explicitly amended the merged REV/CON handoff for v0.1:
 - the REV request owns one transaction; one CON participant first creates the
   reviewer contribution and evaluates the reviewer policy; REV applies the
   decision branch; the CON submitter operation runs only after FinalAcceptance
-  exists for `accept`; REV stages shared audit and outbox rows; and REV commits
-  once; and
+  exists for `accept`; REV stages shared audit and outbox rows; and the request
+  route or service command commits once; and
 - adjudication remains disabled and unimplemented in v0.1 while existing
   boundary/interface compatibility is retained for separately approved future
   work.
 
 This explicit amendment supersedes conflicting contribution-trigger and
-audit/outbox-staging wording in the merged handoff. It changes planning only;
-the corresponding CON/handoff/shared-doc owner changes must merge before any
-runtime REV consumer starts.
+audit/outbox-staging wording in the original merged handoff. This planning PR
+updates the shared handoff text; the corresponding CON owner changes must still
+merge before any runtime REV consumer starts.
+
+## Merged AUTH reconciliation authority
+
+AUTH reconciliation PR #140 merged to trusted main
+`d541521790a0441cfd2193f466e00ef81248ec31` from final branch head
+`b80e89837d5204bb2ba59bb1ee0cbc3fe59b1ad5`. It makes the XINT boundary concrete
+in AUTH planning through:
+
+- `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/ACTIVATION_CUSTODY.md`;
+- `WS-AUTH-001-REV-CUSTODY` for the availability-neutral 19-row custody transfer;
+- `WS-AUTH-001-PREP` for the opaque, single-use prepared mutation handle;
+- `WS-AUTH-001-REV-REG` for the four approved but unregistered REV actions;
+- `WS-AUTH-001-REV-05/06/07/08/09A/11/12` for exact feature-gated activation; and
+- `WS-AUTH-001-REV-LIFECYCLE` for the four additive lifecycle actions.
+
+PR #140 changes planning and authorization documentation only. Runtime remains
+74 PermissionIds and 57 ActionIds, with 9 active and 48 planned; none of the 24
+REV lifecycle dependencies is active. Later gates derive counts from then-current
+trusted main, and the separate ART evidence-binding proposal is not counted among
+the 24.
 
 ## Dependency specifications and plans
 

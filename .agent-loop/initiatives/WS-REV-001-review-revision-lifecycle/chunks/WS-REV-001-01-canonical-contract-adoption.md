@@ -93,6 +93,11 @@ frontend work
   changes availability. REV chunks produce hidden behavior, canonical typed
   facts/guards, and feature-manifest evidence before AUTH activation; REV-13 is
   a separate product release.
+- The active contract names merged PR #140's exact gates:
+  `WS-AUTH-001-REV-CUSTODY`, `WS-AUTH-001-PREP`,
+  `WS-AUTH-001-REV-REG`, `WS-AUTH-001-REV-05/06/07/08/09A/11/12`, and
+  `WS-AUTH-001-REV-LIFECYCLE`. It distinguishes the availability-neutral
+  19-row custody transfer from later registration and activation.
 - The active contract records merged AUTH-08 as 74 PermissionIds and 57
   ActionIds split into 9 active actions and 48 planned actions. It
   does not describe the authorization kernel as absent and does not treat any
@@ -106,7 +111,9 @@ frontend work
   `ArtifactScratchManager`, `PreparedArtifact`, or `CommittedArtifactSource`,
   persists scratch state, or treats ART-02A2 as reviewer read/intake readiness.
   Chunk 01 changes no ART implementation.
-- The active action table contains 24 review-lifecycle dependencies. The four
+- The active action table contains 24 non-executable review-lifecycle
+  dependencies: registered planned `submission.create`, 19 registered planned
+  review actions, and four approved but unregistered additions. The four
   proposed additions are
   `review.revision_obligation.close -> project.task.manage` for a covered
   Project Manager, `review.revision_context.repair -> project.task.manage` for a covered Project
@@ -140,6 +147,9 @@ frontend work
   `ActorProfile.id`, defines distinct AUTH-09E fixed-service identities/static
   rows for protected jobs, removes retired compensation context from revision context,
   and records exact AUTH-first mutation choreography and REV/CON interleaving.
+  It requires the opaque single-use prepared handle to match exact session,
+  ActionId, actor-reference kind and ID, idempotency key, and canonical request
+  digest before first feature mutation, with misuse and authority-loss negatives.
 - The active contract defines REV-owned `ReviewPacketManifest` and
   `ReviewEvidenceArtifact`, ART v2 packet-read/candidate-finalize boundaries,
   exact binding service action, and no raw ArtifactStore version-1/provider access.

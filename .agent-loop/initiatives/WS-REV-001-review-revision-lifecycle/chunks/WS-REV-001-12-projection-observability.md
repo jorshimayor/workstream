@@ -55,8 +55,14 @@ production `/api/v1` review-router registration
   only as `workstream.review.artifact_reference_reconciliation`; projection
   rebuild runs only as `workstream.review.projection`. Each requires its exact
   static ActionId row, provisioned ActorProfile/link, AUTH-09E admission, AUTH
-  prepare for the mutation, final REV facts, and one evaluation. Human Operator
-  or reviewer authority cannot substitute.
+  prepare for the mutation, final REV facts, exact prepared-handle consumption,
+  and one evaluation. The opaque, non-Pydantic, single-use handle binds exact
+  session, ActionId, service actor-reference kind and ID, idempotency key, and
+  canonical request digest. Reuse, serialization, caller construction,
+  cross-session/action/actor/request substitution, or lost authority fails before
+  feature mutation. Human Operator or reviewer authority cannot substitute.
+  Generic AUTH-09E admission creates neither identity; AUTH provisions each exact
+  identity and static membership only from this reviewed service manifest.
 - Artifact relation reconciliation covers verification, project/task scope,
   missing projection, receipt mismatch, uncertainty, and unavailable content
   through ART-owned typed facts without importing ART repositories, invoking v1
@@ -86,7 +92,8 @@ production `/api/v1` review-router registration
   session factory, or queue helper is introduced.
 - This chunk supplies hidden behavior, service resource facts, and feature-
   manifest deltas while both review actions remain planned. AUTH separately
-  activates them after merge; product release waits for REV-13.
+  activates them through `WS-AUTH-001-REV-12` after merge; product release waits
+  for REV-13.
 
 ## Verification
 

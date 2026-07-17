@@ -16,6 +16,12 @@ L1 schema, policy, and lifecycle.
   authorization-dependency teardown, typed decision-evidence SQL failure mapped
   to the stable retryable 503, and documented route-owned canonical
   verification-timestamp semantics.
+- Current trusted main contains the merged AUTH-13 clean cut from the legacy
+  assignment-owner field to canonical `TaskAssignment.contributor_id` and the
+  merged AUTH-14 clean cut to canonical `Submission.contributor_id`. If either
+  owner has not merged, a separately approved handoff must reassign the exact
+  schema/migration ownership before this chunk starts; parallel edits to those
+  fields are prohibited.
 - This chunk consumes those contracts but changes no AUTH implementation.
 
 ## Allowed files
@@ -68,7 +74,9 @@ synthetic reject from checker, deadline, or revision limit
   constraints or deferred constraint triggers guard direct SQL as well as the
   service path; unsafe historical lineage fails with a remediation message.
 - Submission gains an immutable `task_assignment_id` bound by composite
-  integrity to the same task and canonical AUTH-14 `contributor_id`. Existing rows are
+  integrity to the same task. Its AUTH-14-owned `Submission.contributor_id` must
+  equal the AUTH-13-owned `TaskAssignment.contributor_id` on that exact
+  assignment. Existing rows are
   backfilled only when exactly one assignment is provably responsible; ambiguous
   lineage fails migration with explicit remediation instead of selecting a
   current or recent assignment. Assignment release/reassignment never changes

@@ -69,9 +69,17 @@ production `/api/v1` review-router registration
   respectively, `review.claim`, `review.release`,
   `review.decline_preference`, `review.preference_expiry.run`, and
   `review.lease_expiry.run`. Every mutation uses AUTH's prepared protocol:
-  authority first, REV locks/recomposes final facts, AUTH evaluates once, then
-  REV flushes. Denial, evidence failure, or revocation commits no
-  lease/routing/audit/outbox effect.
+  authority first; an opaque, non-Pydantic, single-use handle binds exact
+  session, ActionId, actor-reference kind and ID, idempotency key, and canonical
+  request digest; REV locks/recomposes final facts and consumes the matching
+  handle before its first feature mutation; AUTH evaluates once; then participants
+  flush. Reused, serialized, caller-constructed, wrong-session/action,
+  same-session cross-actor/request, and authority-lost handles fail before REV
+  mutation. Denial leaves no lease/routing or feature audit/outbox effect. AUTH
+  may persist only its bounded denial evidence after rolling back the dirty
+  transaction and restaging that unchanged evidence through its clean AUTH-owned
+  protocol. Evidence, participant, cancellation, or commit failure leaves no
+  partial feature state or authority evidence.
 - Preference expiry runs only as fixed service
   `workstream.review.preference_expiry`; lease expiry runs only as
   `workstream.review.lease_expiry`. Each requires its exact static action row,
@@ -87,8 +95,10 @@ production `/api/v1` review-router registration
   of every lifecycle mutation through chunk 09B.
 - All five actions remain planned while this chunk supplies hidden behavior,
   composers, guards, static-service requirements, and a feature-manifest delta.
-  AUTH activates exact actions only after the chunk merges; route exposure still
-  waits for REV-13.
+  `WS-AUTH-001-REV-06` activates them only after the chunk merges; route exposure
+  still waits for REV-13. The exact preference-expiry and lease-expiry service
+  identity extensions are separately provisioned from the published manifest;
+  generic AUTH-09E admission creates no catch-all review service.
 - Operator docs enumerate every timer environment variable, bounded default,
   Celery beat/execution command, lazy-recovery behavior, alert, and rollout rule.
 - Timer jobs reuse `run_async_task`, the existing fresh engine/session disposal

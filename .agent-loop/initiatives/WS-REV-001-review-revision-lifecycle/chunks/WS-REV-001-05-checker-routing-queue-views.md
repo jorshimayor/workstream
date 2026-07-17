@@ -73,9 +73,9 @@ production `/api/v1` review-router registration
   no-self-review remains a separate lifecycle guard.
 - This chunk supplies hidden read behavior, canonical resource composers,
   guards, surface declarations, and a feature-manifest delta while both actions
-  remain planned and real-kernel requests return `action_unavailable`. AUTH
-  separately integrates evaluators and activates them after merge; this chunk
-  changes no catalogue owner or availability.
+  remain planned and real-kernel requests return `action_unavailable`.
+  `WS-AUTH-001-REV-05` separately integrates evaluators and activates them after
+  merge; this chunk changes no activation custodian or availability.
 - Merged AUTH-08 dependency tests prove successful teardown cannot commit an
   uncommitted queue/checker/review mutation, decision evidence SQL failure
   returns the stable retryable 503 with no partial state, and canonical actor

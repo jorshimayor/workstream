@@ -6,13 +6,15 @@
 
 ## Goal
 
-Reconcile the review/revision lifecycle plan with trusted main after merged
-WS-XINT-001 PR #139 and incorporate the human-approved FinalAcceptance boundary,
-without changing runtime behavior or starting a successor.
+Reconcile the review/revision lifecycle plan with trusted main after merged AUTH
+reconciliation PR #140, preserve the WS-XINT handoffs, and incorporate the
+human-approved FinalAcceptance boundary without changing runtime behavior or
+starting a successor.
 
 ## Trusted Baseline
 
-- Trusted main: `5d353b6d3f8a36b9b9ffdc1959487a150ac25fd1`.
+- Trusted main: `d541521790a0441cfd2193f466e00ef81248ec31`.
+- AUTH reconciliation final head: `b80e89837d5204bb2ba59bb1ee0cbc3fe59b1ad5`.
 - WS-XINT branch head: `f315ffacf09db433af54e84f081c5425167d0a9a`.
 - Current authority: ADR 0015 plus the merged AUTH/REV, AUTH role/service,
   ART/REV, and REV/CON handoffs.
@@ -24,8 +26,18 @@ without changing runtime behavior or starting a successor.
   `ActionOwner`, and availability changes to AUTH. REV builds hidden behavior
   and releases product surfaces only after exact AUTH activation.
 - Replaced fixed future action totals with current-main-derived accounting. The
-  four proposed REV actions and ART's proposed evidence-binding action are
-  separately inventoried.
+  24 REV dependencies are one registered planned submission action, 19
+  registered planned review actions, and four approved but unregistered REV
+  actions; ART's evidence-binding proposal is separate.
+- Adopted PR #140's exact `REV-CUSTODY`, `PREP`, `REV-REG`, per-feature REV
+  activation, and `REV-LIFECYCLE` gates without treating planning as runtime.
+- Bound every sensitive mutation consumer to AUTH's opaque single-use handle by
+  exact session, action, actor-reference kind/ID, idempotency key, and request
+  digest, with misuse, authority-loss, and clean-denial-evidence proof.
+- Made the request route or service command the sole committer; REV remains the
+  lifecycle orchestrator and stages shared audit/outbox rows.
+- Required AUTH-13/14 contributor-field clean cuts before REV-02 to prevent
+  parallel schema and migration ownership collisions.
 - Required exact independent `reviewer` grants, role-specific invalidation, six
   fixed review service identities through AUTH-09E, request-scoped AUTH reads,
   and AUTH-first prepared mutations.
@@ -56,6 +68,8 @@ without changing runtime behavior or starting a successor.
 - Fixed the atomic write order: common Review history, lease and queue closure,
   reviewer contribution, decision branch, accept-only FinalAcceptance and
   submitter contribution, REV audit and outbox staging, then one commit.
+- Updated the shared REV/CON handoff to the accept-only FinalAcceptance source,
+  two operation-specific CON inputs, and corrected audit/outbox ownership.
 - Made `delivery_draining` a reachable completion-only phase for fulfillment
   obligations committed before the immutable generation cutoff. Every CON root
   writer must acquire the shared fence before ordinal allocation, and the
@@ -93,8 +107,8 @@ composition; REV imports no CON repository and creates no second dispatcher.
 
 ## Scope Control
 
-This PR changes WS-REV initiative planning, review evidence, its one merge
-intent, the human-supplied canonical archival Markdown/PDF replacement,
+This PR changes WS-REV initiative planning, the exact shared REV/CON handoff,
+review evidence, its one merge intent, the human-supplied canonical archival Markdown/PDF replacement,
 reference provenance/checksums, the exact `.gitattributes` rule required to
 preserve that Markdown's bytes, and a narrowly tested AUTH documentation-scanner
 correction for literal technical paths/CLI flags. It changes no backend,
@@ -103,14 +117,11 @@ authorization catalogue, artifact provider, or contribution runtime.
 
 ## Verification
 
-The planning snapshot passes diff integrity, Markdown links, the implemented
-stale Workstream/AUTH/ART scanners, reference checksums, 80 agent-gate tests,
-and exact internal-review evidence validation. The REV contract scanner is
+The rebased planning snapshot requires fresh deterministic gates and exact-SHA
+internal evidence before publication. The REV contract scanner is
 created only by successor chunk REV-01 and is not claimed as current proof. The
-repository loop-memory check reports a trusted-main AUTH status that still names
-a pre-merge human checkpoint; this REV PR records but does not edit that
-AUTH-owned issue. No product tests are expected because runtime code is
-unchanged.
+repository loop-memory check will be rerun against PR #140's repaired main state.
+No product tests are expected because runtime code is unchanged.
 
 ## Review State
 
@@ -118,11 +129,9 @@ The pre-amendment reviews repaired material WS-XINT drift, executable ordering,
 coverage, concealment, external owner gates, and scanner integrity. The
 FinalAcceptance amendment then received two repair cycles: reviewers corrected
 the contribution order, full decision matrix, an obsolete nullable omnibus
-input, and an incomplete reviewer negative-source constraint. Final snapshot
-`86ee0a5e263ac306b3bf195a9fb9043aa5439416` passes senior engineering,
-QA/test, security/auth, product/ops, architecture, docs, reuse/dedup, test-delta,
-and CI integrity with no findings. Exact reviewer IDs and results are recorded
-in the internal-review evidence.
+input, and an incomplete reviewer negative-source constraint. Pre-rebase snapshot
+`86ee0a5e263ac306b3bf195a9fb9043aa5439416` passed every required track. It is
+historical after PR #140; the current snapshot requires fresh exact-SHA review.
 
 The latest CodeRabbit pass found one unreachable fulfillment-drain contract.
 The repaired state machine and its cutoff/writer-fence hardening passed every
@@ -131,9 +140,9 @@ the exact thread disposition.
 
 ## Remaining Gates
 
-- AUTH must merge the exact registration, grants, prepared mutation,
-  AUTH-09E, evaluator, activation, and cutover chunks required by each REV
-  consumer.
+- AUTH must implement and merge the exact per-consumer gates defined by PR #140,
+  including REV-CUSTODY, PREP, reviewer grants, contributor-field cutovers,
+  exact service identity extensions, registrations, evaluators, and activations.
 - ART must schedule, approve, and merge `WS-ART-001-REV-EVIDENCE`; REV-07 is
   blocked until then.
 - The ART owner must publish approved amendments for the currently unassigned
