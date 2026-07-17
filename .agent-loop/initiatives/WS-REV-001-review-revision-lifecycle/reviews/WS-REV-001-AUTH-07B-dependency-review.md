@@ -1,5 +1,9 @@
 # Dependency Review: Merged AUTH-07B
 
+> Historical evidence only. Merged AUTH-08 and AUTH-09A supersede this file's
+> catalogue counts and future `57-to-61` arithmetic. Current gates derive exact
+> counts from trusted main and keep all action activation custody in AUTH.
+
 ## Scope
 
 Read-only review of merged AUTH-07B diff `e9d72a1..90eca12` and its impact on

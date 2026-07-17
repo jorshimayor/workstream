@@ -3,7 +3,7 @@
 ## Authority And State
 
 Reconciled on 2026-07-17 against merged AUTH reconciliation PR #140 at trusted
-main `d541521790a0441cfd2193f466e00ef81248ec31`, merged WS-XINT-001 PR #139, and
+main `299363af5d9e8a68bcc9b17457188048483caeed`, merged WS-XINT-001 PR #139, and
 the amended `REV_CON_HANDOFF.md`. The handoff now incorporates the explicit human
 amendment establishing FinalAcceptance, two ordered CON operations, REV-owned
 audit/outbox staging, and request-route/service-command commit ownership. Sibling

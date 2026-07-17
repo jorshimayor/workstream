@@ -174,12 +174,14 @@ production `/api/v1` review-router registration
   `workstream.review.authority_invalidation_reconciliation`; general queue,
   lease, and history reconciliation runs only as
   `workstream.review.reconciliation`. Both have their own exact static
-  `review.reconcile.run` row, provisioned ActorProfile/link, AUTH-09E admission,
-  cross-service denial, and later AUTH action activation. Neither borrows
+  `review.reconcile.run` row, an AUTH-09A-compatible identity/matrix extension,
+  AUTH-09B-provisioned ActorProfile/link, AUTH-09E admission, cross-service
+  denial, and later AUTH action activation. Neither borrows
   Operator or reviewer identity; human Operator closure/force-release remains a
-  separate prepared path. Generic AUTH-09E admission does not provision either
-  identity; AUTH adds each exact identity, constraint, static membership, and
-  admission proof only from this chunk's reviewed service manifest.
+  separate prepared path. Neither identity belongs to AUTH-09A's seven-identity
+  ART set. Generic AUTH-09E admission does not provision either identity; AUTH
+  adds each exact identity, constraint, static membership, and admission proof
+  only from this chunk's reviewed service manifest.
 - Artifact verification recovery calls the existing ART-owned
   `ArtifactOperatorRecoveryPort` with the registered
   `artifact.verification_job.retry` action. The provisioned Artifact Storage

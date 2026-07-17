@@ -100,8 +100,10 @@ frontend work
   19-row custody transfer from later registration and activation.
 - The active contract records merged AUTH-08 as 74 PermissionIds and 57
   ActionIds split into 9 active actions and 48 planned actions. It
-  does not describe the authorization kernel as absent and does not treat any
-  of the 24 REV dependencies as active.
+  identifies that count as historical. It records current trusted main after
+  AUTH-09A as 74 PermissionIds and 65 ActionIds split into 9 active and 56
+  planned, and does not describe the authorization kernel as absent or treat
+  any of the 24 REV dependencies as active.
 - The active contract records AUTH-08's rollback-only dependency teardown,
   typed authorization-evidence `503` mapping, and route-owned canonical
   verification timestamps as required regression invariants. Chunk 01 changes
@@ -137,8 +139,11 @@ frontend work
   manifests for preference expiry, lease expiry, authority-invalidation
   reconciliation, general reconciliation, artifact-reference reconciliation,
   and projection. AUTH may create separately reviewed identity-specific extension
-  contracts from that immutable manifest before the consuming REV chunk. Generic
-  AUTH-09E admission never creates a catch-all identity.
+  contracts from that immutable manifest before the consuming REV chunk. Those
+  extensions build on AUTH-09A's common schema but add exact enum, database
+  constraint, matrix, provisioning, and admission coverage; AUTH-09A's seven ART
+  identities contain no REV identity. Generic AUTH-09E admission never creates a
+  catch-all identity.
 - A stale-contract scanner rejects active Flow Node production, the archival
   noncanonical API prefix, full
   reviewer backlog, legacy severity, synthetic reject, direct

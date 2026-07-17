@@ -53,10 +53,16 @@ runtime implementation or dependency changes
 - Merged AUTH reconciliation PR #140 is the exact planning authority for REV
   activation custody, prepared mutations, registration, service identity, and
   per-feature activation gates. It changed no runtime catalogue or availability.
+- Merged AUTH-09A PR #132 is the current runtime authority for migration `0023`,
+  the seven-identity/eleven-membership ART service matrix, and the 65-action
+  catalogue split into 9 active and 56 planned actions. It provisions no actor,
+  admits no service token, activates no action, and contains none of REV's six
+  proposed identities; all 24 REV dependencies remain unavailable.
 - The shared REV/CON handoff records the approved accept-only FinalAcceptance
   source and ordered reviewer/submitter CON operations; it no longer presents
   the superseded one-call contribution or CON-owned audit/outbox sequence.
-- Independent reviewer grants, AUTH-09E fixed services, AUTH-first prepared
+- Independent reviewer grants, AUTH-09A-compatible REV identity extensions with
+  AUTH-09B provisioning and AUTH-09E admission, AUTH-first prepared
   mutations, ART v2 packet/evidence ports, ReviewPacketManifest,
   ReviewEvidenceArtifact, flush-only CON integration, stabilized artifact_hash
   lineage, and optional contribution evidence are closed across all artifacts.

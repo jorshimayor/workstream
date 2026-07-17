@@ -4,14 +4,14 @@
 
 `WS-REV-001-PLAN` is active on `codex/ws-rev-001-plan`; no runtime chunk is
 active. On 2026-07-17 the branch rebased without conflict onto trusted main
-`d541521790a0441cfd2193f466e00ef81248ec31`, merge commit for AUTH reconciliation
-PR #140. That merge adopts the WS-XINT boundaries in AUTH planning but changes no
-runtime catalogue, action availability, evaluator, grant, service identity,
-prepared-mutation implementation, or feature behavior. The rebased REV snapshot
-  passed all nine internal reviewer tracks at exact snapshot
-  `7a76da2a79243cf61936d3bc7cf2606a82f0b5d8`; fresh external evidence remains
-  required before PR #128 can merge. The pre-rebase `86ee0a5` review remains
-  historical only.
+`299363af5d9e8a68bcc9b17457188048483caeed`, merge commit for AUTH-09A PR #132.
+That merge follows AUTH reconciliation PR #140 and implements migration `0023`,
+the common fixed-service enum/schema, seven ART service identities, eleven
+static ART memberships, and eight planned AUTH-09 route actions. It provisions
+no actor, admits no service token, activates no action, and adds no REV service
+identity. The earlier exact-snapshot review at `7a76da2` predates this rebase and
+is historical; the refreshed normative snapshot requires all nine internal
+review tracks and fresh external evidence before PR #128 can merge.
 
 The revised WS-REV Markdown/PDF pair remains byte-preserved at canonical paths
 with recorded provenance. It is archival input, not authority for stale combined
@@ -21,18 +21,19 @@ decisions.
 
 ## Reconciled dependency state
 
-- AUTH-08 remains the implemented baseline: 74 PermissionIds and 57 ActionIds,
-  with 9 active and 48 planned at that historical snapshot. Its rollback-only
-  dependency teardown, typed authorization-evidence 503, and canonical timestamp
-  behavior remain required regression invariants.
+- AUTH-08 remains a historical implemented checkpoint: 74 PermissionIds and 57
+  ActionIds, with 9 active and 48 planned. Current trusted main after AUTH-09A
+  contains 74 PermissionIds and 65 ActionIds, with 9 active and 56 planned. Its
+  rollback-only dependency teardown, typed authorization-evidence 503, and
+  canonical timestamp behavior remain required regression invariants.
 - The 24 REV lifecycle dependencies are registered planned `submission.create`,
   19 registered planned review actions, and four approved but unregistered REV
   lifecycle actions. None is active. The separate unregistered
   `artifact.review_evidence.binding.create` ART action is not one of the 24.
   Exact counts, custodians, availability, and SHAs are derived at each later AUTH
   registration or activation gate.
-- PR #140 defines, but does not implement, the exact AUTH sequence and ownership:
-  AUTH-09A reconvergence, AUTH-09B through AUTH-09E, availability-neutral
+- PR #140 defines the exact AUTH sequence and ownership. AUTH-09A is now merged;
+  AUTH-09B through AUTH-09E, availability-neutral
   `WS-AUTH-001-REV-CUSTODY`, `WS-AUTH-001-PREP`, and later AUTH product contracts,
   feature-gated `WS-AUTH-001-REV-REG`, per-feature `WS-AUTH-001-REV-05/06/07/08/09A/11/12`
   activation, and `WS-AUTH-001-REV-LIFECYCLE` for the four additions. Hidden REV
@@ -40,6 +41,11 @@ decisions.
   their exact data/participant contracts exist while actions remain unavailable.
   Each committing sensitive mutation waits for PREP; REV-13 waits for every exact
   activation and is the only product-surface release.
+- AUTH-09A's fixed-service foundation is reusable, but its closed set and matrix
+  contain only seven ART identities and eleven ART memberships. Each of REV's
+  six service identities still needs the immutable REV-01 manifest, a separately
+  reviewed AUTH enum/constraint/matrix extension, AUTH-09B provisioning, and
+  AUTH-09E admission. No catch-all service authority exists.
 - PR #140 also exposes one blocking AUTH graph defect: full AUTH-13/14 currently
   require prepared revision/replacement behavior owned by downstream REV-09A.
   Before REV-02 starts, AUTH must split and merge a schema-only contributor-field
@@ -124,6 +130,10 @@ finding is recorded in `REVIEW_LOG.md` and repaired. Exact snapshot
 `7a76da2a79243cf61936d3bc7cf2606a82f0b5d8` passed senior engineering, QA/test,
 security/auth, product/ops, architecture, docs, reuse/dedup, test-delta, and CI
 integrity with no findings. No runtime chunk is active.
+
+That approval predates merged AUTH-09A PR #132 and is historical after the
+rebase onto `299363a`. The current refreshed normative snapshot must be reviewed
+and rebound before publication.
 
 ## Human clarification retained
 

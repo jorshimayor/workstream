@@ -598,3 +598,28 @@ amended AUTH-13 merges first: it classifies the exact owner-installed command
 mode, while active and later generations require prepared mode. REV-11's early
 choreography now also names AUTH as the sole binding validator, handle consumer,
 evaluator, and evidence stager.
+
+## AUTH-09A PR #132 Reconciliation - 2026-07-17
+
+REV rebased cleanly onto trusted main
+`299363af5d9e8a68bcc9b17457188048483caeed`, merge commit for AUTH-09A PR #132.
+The merge advances the migration head to `0023`, adds the common fixed-service
+enum/schema, closes the current set at seven ART service identities with eleven
+exact memberships, and adds eight planned AUTH-09 route actions. The current
+catalogue is 74 PermissionIds and 65 ActionIds: 9 active and 56 planned.
+
+This merge does not provision a service ActorProfile/link, admit a service
+token, activate an action, or add any REV identity. The 24 REV dependencies
+remain unavailable: planned `submission.create`, 19 planned review actions, and
+four approved but unregistered additions. REV's six protected job identities
+remain separate AUTH extension work driven by the immutable REV-01 manifests;
+each needs exact enum/constraint/matrix coverage, AUTH-09B provisioning,
+AUTH-09E admission, cross-service denial proof, and the later action-activation
+gate. No catch-all service identity is introduced.
+
+The refreshed plan treats AUTH-08's 57/9/48 count as historical and AUTH-09A's
+65/9/56 count as current-main evidence, not as a promised later total. It also
+updates the discovered migration/test inventory and preserves the previously
+reviewed PREP, FinalAcceptance, transaction ownership, revision rebase, and no-
+adjudication boundaries. The exact `7a76da2` approval predates this rebase and
+must be replaced by fresh exact-SHA review and evidence before publication.

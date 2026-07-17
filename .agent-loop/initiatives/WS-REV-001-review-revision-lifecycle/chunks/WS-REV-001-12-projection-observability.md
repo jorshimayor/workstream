@@ -54,7 +54,8 @@ production `/api/v1` review-router registration
   declares `review.projection.rebuild`. Artifact-reference reconciliation runs
   only as `workstream.review.artifact_reference_reconciliation`; projection
   rebuild runs only as `workstream.review.projection`. Each requires its exact
-  static ActionId row, provisioned ActorProfile/link, AUTH-09E admission, AUTH
+  static ActionId row, an AUTH-09A-compatible identity/matrix extension,
+  AUTH-09B-provisioned ActorProfile/link, AUTH-09E admission, AUTH
   prepare for the mutation and final REV facts, followed by AUTH-owned exact
   binding/current-authority validation, single consumption, evaluation, and
   evidence staging. The opaque, non-Pydantic, single-use handle binds exact
@@ -66,8 +67,9 @@ production `/api/v1` review-router registration
   concurrent duplicate attempts remain invalid and stage no new state. Current-authority
   or policy denial after valid consumption follows AUTH's clean denial-evidence
   protocol. Human Operator or reviewer authority cannot substitute.
-  Generic AUTH-09E admission creates neither identity; AUTH provisions each exact
-  identity and static membership only from this reviewed service manifest.
+  AUTH-09A's seven-identity ART set contains neither identity. Generic AUTH-09E
+  admission creates neither identity; AUTH provisions each exact identity and
+  static membership only from this reviewed service manifest.
 - Artifact relation reconciliation covers verification, project/task scope,
   missing projection, receipt mismatch, uncertainty, and unavailable content
   through ART-owned typed facts without importing ART repositories, invoking v1

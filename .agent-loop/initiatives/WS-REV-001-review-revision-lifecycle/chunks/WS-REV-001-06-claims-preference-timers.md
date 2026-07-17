@@ -88,8 +88,10 @@ production `/api/v1` review-router registration
 - Preference expiry runs only as fixed service
   `workstream.review.preference_expiry`; lease expiry runs only as
   `workstream.review.lease_expiry`. Each requires its exact static action row,
-  provisioned service ActorProfile/link, AUTH-09E admission, and cross-service/
-  human-path denial. Neither borrows Operator or reviewer authority.
+  an AUTH-09A-compatible enum/constraint/matrix extension, AUTH-09B-provisioned
+  service ActorProfile/link, AUTH-09E admission, and cross-service/human-path
+  denial. Neither is one of AUTH-09A's seven ART identities or borrows Operator
+  or reviewer authority.
 - Lease expiry clears stickiness and uses PostgreSQL time.
 - Sweeps are idempotent and lazy recovery invokes the same transition service.
 - Expected uniqueness races map to stable 409 codes, never 500.
@@ -102,8 +104,9 @@ production `/api/v1` review-router registration
   composers, guards, static-service requirements, and a feature-manifest delta.
   `WS-AUTH-001-REV-06` activates them only after the chunk merges; route exposure
   still waits for REV-13. The exact preference-expiry and lease-expiry service
-  identity extensions are separately provisioned from the published manifest;
-  generic AUTH-09E admission creates no catch-all review service.
+  identity extensions build on AUTH-09A and are separately provisioned from the
+  published manifest through AUTH-09B/09E; generic admission creates no catch-all
+  review service.
 - Operator docs enumerate every timer environment variable, bounded default,
   Celery beat/execution command, lazy-recovery behavior, alert, and rollout rule.
 - Timer jobs reuse `run_async_task`, the existing fresh engine/session disposal

@@ -70,11 +70,21 @@ in AUTH planning through:
 - `WS-AUTH-001-REV-05/06/07/08/09A/11/12` for exact feature-gated activation; and
 - `WS-AUTH-001-REV-LIFECYCLE` for the four additive lifecycle actions.
 
-PR #140 changes planning and authorization documentation only. Runtime remains
-74 PermissionIds and 57 ActionIds, with 9 active and 48 planned; none of the 24
-REV lifecycle dependencies is active. Later gates derive counts from then-current
-trusted main, and the separate ART evidence-binding proposal is not counted among
-the 24.
+PR #140 changes planning and authorization documentation only. Its runtime
+snapshot was 74 PermissionIds and 57 ActionIds, with 9 active and 48 planned;
+none of the 24 REV lifecycle dependencies was active.
+
+AUTH-09A PR #132 then merged to current trusted main
+`299363af5d9e8a68bcc9b17457188048483caeed` from reviewed code
+`fe61df64fbf82a1f6871c380e6fc1986a4f12205` and final branch head
+`d4b65400d35c1036f8d6f15bb81fe5e0b81f10be`. It advances the migration head to
+`0023`, adds the common fixed-service schema and seven ART identities with
+eleven exact memberships, and registers eight planned AUTH-09 route actions.
+The current catalogue is therefore 74 PermissionIds and 65 ActionIds: 9 active
+and 56 planned. It provisions no actor, admits no service token, and does not
+add any of REV's six identities. Later gates derive counts from then-current
+trusted main, and the separate ART evidence-binding proposal is not counted
+among the 24 REV dependencies.
 
 ## Dependency specifications and plans
 

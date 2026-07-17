@@ -14,6 +14,10 @@
 - Merged AUTH reconciliation PR #140 at trusted main `d541521`, final reviewed
   branch head `b80e898`, including exact REV activation custody, prepared
   mutation, registration, and activation planning contracts
+- Merged AUTH-09A PR #132 at trusted main `299363a`, reviewed code `fe61df6`
+  and final branch head `d4b6540`, including migration `0023`, the
+  seven-identity fixed-service foundation, eleven ART service-action
+  memberships, and eight planned AUTH-09 route actions
 
 The current revised Markdown contains 2,396 lines and 12,570 words. Its SHA-256 is
 `fffadc271c267801250b044edc570e515a250eff48afdc64f9c1f8753e6ab058`.
@@ -56,9 +60,10 @@ before producing the reconciled active contract.
 
 - The original discovery base was `f599551`, which merged AUTH-06. The latest
   2026-07-17 reconciliation rebased REV onto trusted main
-  `d541521790a0441cfd2193f466e00ef81248ec31`, which merges AUTH planning PR #140
-  after WS-XINT-001 PR #139 and includes AUTH-08, ART-02A2, ADR 0015, the four
-  lifecycle handoffs, and AUTH decisions D23-D27.
+  `299363af5d9e8a68bcc9b17457188048483caeed`, which merges AUTH-09A PR #132
+  after AUTH planning PR #140 and WS-XINT-001 PR #139. It includes AUTH-08,
+  ART-02A2, ADR 0015, the four lifecycle handoffs, AUTH decisions D23-D27, and
+  the fixed-service schema/catalogue foundation.
 - Authority audit and mutation idempotency foundations exist.
 - The request-scoped deny-by-default kernel exists. Actor self-read/self-update
   and seven AUTH-08 administrative actions are active. Project grants, actor
@@ -70,9 +75,12 @@ before producing the reconciled active contract.
   `ActorProfile.id`, not external subject, email, legacy typed-profile ID, or
   role labels. Review authority requires the independent exact-project
   `reviewer` grant; `submitter` and `adjudicator` grants do not substitute.
-- Protected review jobs require AUTH-09E fixed-service admission through an
-  exact active identity link/profile, immutable service identity, and static
-  action row. A generic system-principal or fabricated human is not allowed.
+- AUTH-09A now supplies the fixed-service enum/schema/migration and the closed
+  seven-identity ART matrix, but it provisions no service actor and admits no
+  service token. Protected review jobs still require AUTH-09B provisioning,
+  AUTH-09E admission, and separately reviewed enum/constraint/matrix extensions
+  for each of REV's six exact identities. A generic system-principal or
+  fabricated human is not allowed.
 - `review.queue.override` is present in the merged 74-PermissionId catalogue;
   the review actions mapped to it remain planned/inactive. Artifact recovery already uses
   the registered `artifact.verification_job.retry` action and ART-owned
@@ -96,7 +104,10 @@ contracts assign the final `TaskAssignment.contributor_id` and
   later AUTH registration/activation contract must derive exact before/after
   counts from current trusted main and account for its delta independently.
   REV feature chunks build hidden behavior and typed facts; exact AUTH activation
-  custodians alone integrate evaluators and change availability.
+  custodians alone integrate evaluators and change availability. Current trusted
+  main contains 65 ActionIds: 9 active and 56 planned. The eight AUTH-09A
+  additions do not change the 24 REV dependencies, all of which remain
+  unavailable.
 
 The merged AUTH plan contains an execution cycle: full AUTH-13/14 require
 prepared revision/replacement behavior owned by REV-09A, while REV-02 needs
@@ -105,8 +116,9 @@ AUTH-owned schema-only contributor-field foundation before REV-02. REV-09A
 hidden behavior then precedes amended full AUTH-13/14 product cutovers. This is
 an AUTH repair gate, not permission for REV to rename AUTH-owned fields.
 
-Merged AUTH reconciliation PR #140 is planning-only. It preserves the runtime
-`74` PermissionId / `57` ActionId / `9` active / `48` planned snapshot. It defines
+Merged AUTH reconciliation PR #140 is planning-only. Its `74` PermissionId /
+`57` ActionId / `9` active / `48` planned snapshot is now historical because
+AUTH-09A PR #132 added eight planned actions. PR #140 defines
 `WS-AUTH-001-REV-CUSTODY` as an availability-neutral transfer of the 19 registered
 review actions to seven exact AUTH activation custodians, followed by the shared
 `WS-AUTH-001-PREP` prerequisite. It also defines one future
@@ -125,8 +137,9 @@ route-owned transaction. Its internal evidence records 275 focused behavior
 tests, 90.17 percent branch-aware focused coverage, and 17 isolated Alembic
 tests. Final PR checks passed Backend, Agent Gates, and CodeRabbit. REV runtime
 chunks must preserve these merged invariants and still wait for the later AUTH
-  definition-of-done gate owned by each consumer, AUTH-09E for protected service
-  callers, and the matching AUTH activation checkpoint. Reads consume
+  definition-of-done gate owned by each consumer, AUTH-09B/09E plus the exact
+  REV identity extensions for protected service callers, and the matching AUTH
+  activation checkpoint. Reads consume
   request-scoped `AuthorizationService.require`; mutations consume the future
   authority-first prepared protocol and exactly one final evaluation without
   importing grant persistence into the review module.
@@ -225,11 +238,11 @@ chunks must preserve these merged invariants and still wait for the later AUTH
 - The structured API error envelope and request/correlation IDs exist.
 - `AuditEvent` is shared and append-only for authority evidence; lifecycle
   audit input is still legacy-shaped and needs a bounded WS-REV event contract.
-- Trusted main has 22 numbered migrations through AUTH-08 migration `0022`.
+- Trusted main has 23 numbered migrations through AUTH-09A migration `0023`.
   Parallel initiatives mean WS-REV contracts must allocate the next migration
   number only when a chunk starts from current main; no REV number is reserved
   in planning.
-- The backend has 746 discovered test functions across 22 test modules.
+- The backend has 782 discovered test functions across 23 test modules.
 
 ## Specification and documentation conflicts
 

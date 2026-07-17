@@ -83,8 +83,9 @@ The three findings are resolved for the merged AUTH-08 baseline. REV changes no
 AUTH runtime code. Every consuming chunk treats the behavior above as a
 regression invariant and must re-prove it on that chunk's trusted-main SHA.
 
-The current merged catalogue baseline is 57 actions, not the historical 50.
-REV's four additions remain a future AUTH-owned 57-to-61 migration. No REV
+At this historical AUTH-08 snapshot, the merged catalogue baseline was 57
+actions rather than the earlier 50. REV's four additions were then described as
+a future AUTH-owned 57-to-61 migration. No REV
 action becomes active through this planning refresh.
 
 ART PR #129 later merged as ART-02A2 at trusted main

@@ -30,7 +30,10 @@ ResourceContext composer, and a feature-manifest delta while the real kernel ret
 all required hidden participants merge. REV-13 exposes only already-active
 surfaces after a separate joint readiness check.
 
-PR #140 changes planning only. `WS-AUTH-001-REV-CUSTODY` must first transfer all
+PR #140 changes planning only. Merged AUTH-09A PR #132 now provides the common
+fixed-service enum/schema/migration and the closed seven-identity ART matrix,
+but it activates no action, provisions no actor, admits no service token, and
+does not add REV's six identities. `WS-AUTH-001-REV-CUSTODY` must first transfer all
 19 registered planned review actions to seven exact AUTH activation custodians
 without changing mappings, counts, or availability. `WS-AUTH-001-PREP` then lands
 the shared prepared-mutation runtime. Exact feature gates
@@ -46,8 +49,10 @@ complete four-action registration manifest consumed by
 `WS-AUTH-001-REV-REG`, and six independent service identity-to-ActionId manifests
 consumed by later AUTH identity-specific extension contracts. Those manifests
 name required hidden dependencies but do not claim behavior is implemented.
-AUTH may register planned actions and provision exact identities from the merged
-REV-01 SHA while REV persistence chunks continue in parallel. Hidden behavior
+AUTH may register planned actions and define/provision exact REV identity
+extensions from the merged REV-01 SHA while REV persistence chunks continue in
+parallel. Those extensions build on, and do not replace, AUTH-09A's fixed-service
+foundation. Hidden behavior
 chunks later emit separate activation manifests; no registration or identity
 extension activates an action or exposes a product surface.
 
@@ -74,7 +79,8 @@ After the exact owning AUTH gates merge, WS-REV consumes:
 - one exact active project `reviewer` grant for human review. Separate
   `submitter`, `adjudicator`, and administrative grants never substitute, and
   revoking reviewer authority never mutates another grant;
-- AUTH-09E fixed-service admission for protected jobs. Preference expiry, lease
+- AUTH-09B provisioning and AUTH-09E fixed-service admission for protected jobs.
+  Preference expiry, lease
   expiry, reviewer-authority invalidation reconciliation, general review
   reconciliation, artifact-reference reconciliation, and projection rebuild
   use distinct immutable service identities and exact static ActionId rows,
@@ -146,9 +152,11 @@ repositories/models, queries grants, or reconstructs permission unions.
 The four additive ActionIds and their closed mappings are registered together by
 `WS-AUTH-001-REV-REG`, not review code. Their hidden manifests land in chunks 11
 and 12A; `WS-AUTH-001-REV-LIFECYCLE` later integrates their evaluators and
-activates them together. They add no PermissionId. The current AUTH-08 runtime
-snapshot contains 57 actions: 9 active
-and 48 planned. That is historical provenance, not a fixed future total.
+activates them together. They add no PermissionId. The AUTH-08 runtime snapshot
+contained 57 actions: 9 active and 48 planned. That is historical provenance,
+not a fixed future total. Current trusted main after AUTH-09A contains 65
+actions: 9 active and 56 planned; its eight additions are unrelated to the 24
+unavailable REV dependencies.
 WS-XINT-001 separately proposes
 `artifact.review_evidence.binding.create -> artifact.binding.create` for the
 ART binding service. Every later AUTH registration or activation chunk derives
@@ -726,8 +734,9 @@ Protected commands use these exact proposed service rows:
 | `workstream.review.artifact_reference_reconciliation` | `review.artifact_reference.reconcile` |
 | `workstream.review.projection` | `review.projection.rebuild` |
 
-Generic AUTH-09E admission creates none of these identities. Each requires a
-reviewed REV identity-to-ActionId manifest followed by its own AUTH enum,
+AUTH-09A's merged seven-identity ART set contains none of these identities, and
+generic AUTH-09E admission creates none of them. Each requires a reviewed REV
+identity-to-ActionId manifest followed by its own AUTH enum,
 constraint, provisioning, static-membership, admission, and later action-
 activation proof. No service row exists for the
 human Operator `review.lifecycle.activation.manage` action, and shared outbox
