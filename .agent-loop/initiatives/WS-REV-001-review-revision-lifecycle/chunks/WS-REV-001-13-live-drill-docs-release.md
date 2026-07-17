@@ -130,12 +130,16 @@ AUTH action registration, ActionOwner/evaluator edit, or availability change
 - A separate AUTH availability manifest proves every required action was
   registered, transferred by `WS-AUTH-001-REV-CUSTODY` to an exact AUTH activation
   custodian, paired with merged hidden behavior/evaluator, and activated through
-  `WS-AUTH-001-REV-05/06/07/08/09A/11/12` or
+  AUTH-14 for `submission.create`, `WS-AUTH-001-REV-05/06/07/08/09A/11/12`, or
   `WS-AUTH-001-REV-LIFECYCLE` before release. It
   derives exact counts and SHAs from current trusted main, separately inventories
   the four additive REV actions and
   `artifact.review_evidence.binding.create`, and rejects missing/extra or early
   activation. The historical 57/9/48 snapshot is not a fixed expected total.
+  AUTH-14 proof specifically covers one `submission.create` action for initial
+  and prepared revision submission, the merged REV-09A preparation/replay
+  participant, final locked-fact recomposition, misuse/denial behavior, and no
+  legacy revision bypass.
 - AUTH preflight proves its reusable dependency has no generic success
   auto-commit, every request route or service command owns its explicit
   transaction boundary and only commit,
@@ -143,11 +147,15 @@ AUTH action registration, ActionOwner/evaluator edit, or availability change
   state, and successful existing-actor GET/PATCH access matches AUTH's repaired,
   documented verification-timestamp semantics.
 - Live mutation proof rejects reused, serialized, caller-constructed,
-  wrong-session/action, same-session cross-actor/request, and authority-lost
-  `PreparedAuthorizationHandle` inputs before any REV/task/ART/CON mutation. A
-  normal denial leaves no feature audit/outbox effect while AUTH may persist only
-  bounded clean denial evidence; evidence, participant, cancellation, and commit
-  failures leave no partial authority evidence.
+  wrong-session/action, and same-session cross-actor/request
+  `PreparedAuthorizationHandle` inputs before any REV/task/ART/CON mutation. Each
+  misuse stages no AuthorizationDecision/evidence, does not consume the original
+  valid handle, and a subsequent exact first use succeeds. Separate
+  current-authority and policy denials after valid consumption prove dirty
+  caller-transaction rollback, unchanged bounded AUTH evidence restaging in a
+  clean transaction, one request-route/service-command evidence commit, and no
+  feature/shared audit/outbox effect. Evidence, participant, cancellation,
+  commit, or denial-restaging failure leaves no partial authority evidence.
 - Final product registration exposes coherent current-work, claim, release, decline,
   context, decision, revision preparation/evidence, chain, and authorized admin
   operations alongside the existing canonical task resubmission endpoint.

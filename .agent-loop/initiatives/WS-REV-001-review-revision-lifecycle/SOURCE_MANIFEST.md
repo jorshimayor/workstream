@@ -42,11 +42,11 @@ On 2026-07-17 the human explicitly amended the merged REV/CON handoff for v0.1:
   `FinalAcceptance`;
 - submitter `accepted_submission` consumes FinalAcceptance rather than inferring
   acceptance directly from `Review.decision`;
-- the REV request owns one transaction; one CON participant first creates the
+- REV owns lifecycle orchestration inside the caller transaction; one CON participant first creates the
   reviewer contribution and evaluates the reviewer policy; REV applies the
   decision branch; the CON submitter operation runs only after FinalAcceptance
   exists for `accept`; REV stages shared audit and outbox rows; and the request
-  route or service command commits once; and
+  route or service command owns the caller `AsyncSession` and commits once; and
 - adjudication remains disabled and unimplemented in v0.1 while existing
   boundary/interface compatibility is retained for separately approved future
   work.

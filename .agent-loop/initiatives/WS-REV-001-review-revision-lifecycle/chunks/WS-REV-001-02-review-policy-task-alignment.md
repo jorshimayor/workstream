@@ -16,12 +16,18 @@ L1 schema, policy, and lifecycle.
   authorization-dependency teardown, typed decision-evidence SQL failure mapped
   to the stable retryable 503, and documented route-owned canonical
   verification-timestamp semantics.
-- Current trusted main contains the merged AUTH-13 clean cut from the legacy
-  assignment-owner field to canonical `TaskAssignment.contributor_id` and the
-  merged AUTH-14 clean cut to canonical `Submission.contributor_id`. If either
-  owner has not merged, a separately approved handoff must reassign the exact
-  schema/migration ownership before this chunk starts; parallel edits to those
-  fields are prohibited.
+- Before this chunk starts, AUTH must amend its current circular AUTH-13/14 graph
+  and merge an AUTH-owned schema-only contributor-field foundation. That bounded
+  foundation performs only the canonical `TaskAssignment.contributor_id` and
+  `Submission.contributor_id` clean cuts while preserving current task,
+  submission, checker, and legacy-revision behavior. It must not claim the later
+  replacement/replay behavior that depends on REV-09A. AUTH assigns the exact
+  chunk ID and migration numbers from then-current main through a separately
+  reviewed contract; REV does not invent them or edit the retired fields.
+- Full AUTH-13/14 product cutovers are not REV-02 prerequisites. After REV-09A
+  merges hidden prepared revision/replacement behavior, AUTH must amend and
+  complete those cutovers before REV-13. Parallel edits to contributor fields or
+  revision behavior outside this order are prohibited.
 - This chunk consumes those contracts but changes no AUTH implementation.
 
 ## Allowed files

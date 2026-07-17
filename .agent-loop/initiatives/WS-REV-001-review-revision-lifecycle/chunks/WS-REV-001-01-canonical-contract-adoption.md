@@ -127,6 +127,18 @@ frontend work
   catalogue at each AUTH gate; 57/9/48 remains only the AUTH-08 snapshot. The
   four REV additions and ART service action are independently inventoried and
   cannot be silently collapsed into 61. No new REV PermissionId is introduced.
+- The merged REV-01 active contract and its immutable SHA are the feature
+  registration manifest for `WS-AUTH-001-REV-REG`. For each of the four additions
+  it names principal class, typed resource and canonical facts, candidates,
+  guards, surface, transaction owner, revalidation, and exact hidden-behavior
+  dependency. Registration may then add four planned rows before REV-11/12A
+  implementation; it activates nothing and does not claim hidden behavior exists.
+- The same active contract publishes six separate service identity-to-ActionId
+  manifests for preference expiry, lease expiry, authority-invalidation
+  reconciliation, general reconciliation, artifact-reference reconciliation,
+  and projection. AUTH may create separately reviewed identity-specific extension
+  contracts from that immutable manifest before the consuming REV chunk. Generic
+  AUTH-09E admission never creates a catch-all identity.
 - A stale-contract scanner rejects active Flow Node production, the archival
   noncanonical API prefix, full
   reviewer backlog, legacy severity, synthetic reject, direct
@@ -149,7 +161,11 @@ frontend work
   and records exact AUTH-first mutation choreography and REV/CON interleaving.
   It requires the opaque single-use prepared handle to match exact session,
   ActionId, actor-reference kind and ID, idempotency key, and canonical request
-  digest before first feature mutation, with misuse and authority-loss negatives.
+  digest before first feature mutation. Protocol misuse stages no decision or
+  evidence, does not consume the original valid handle, and permits later exact
+  first use. Evaluated authority/policy denial uses dirty-transaction rollback,
+  clean unchanged AUTH denial-evidence restaging, and one route/service-command
+  evidence commit with no feature/shared audit/outbox effects.
 - The active contract defines REV-owned `ReviewPacketManifest` and
   `ReviewEvidenceArtifact`, ART v2 packet-read/candidate-finalize boundaries,
   exact binding service action, and no raw ArtifactStore version-1/provider access.

@@ -95,13 +95,17 @@ production `/api/v1` review-router registration
   preflight derives scope and ingests/verifies an unbound candidate outside
   review locks; finalization uses AUTH authority lock -> REV lease/assignment,
   Submission, evidence-slot and packet-lineage locks -> ART candidate/admission/
-  binding locks -> final fact recomposition -> one AUTH evaluation -> binding
-  plus ReviewEvidenceArtifact flush. AUTH's opaque, non-Pydantic, single-use
+  binding locks -> final fact recomposition -> exact handle validation/consumption
+  -> one AUTH evaluation and decision-evidence staging -> binding plus
+  ReviewEvidenceArtifact flush. AUTH's opaque, non-Pydantic, single-use
   handle is bound to the exact session, ActionId, actor-reference kind and ID,
   idempotency key, and canonical request digest and is consumed before the first
   binding or REV mutation. Reuse, serialization, caller construction,
-  cross-session/action/actor/request substitution, or authority loss fails before
-  canonical mutation. A mid-intake stale
+  or cross-session/action/actor/request substitution fails before canonical
+  mutation, stages no AuthorizationDecision/evidence, does not consume the
+  original valid handle, and permits its later exact first use. Current-authority
+  or policy denial after valid consumption follows AUTH's clean denial-evidence
+  protocol. A mid-intake stale
   lease, revocation, assignment loss, preparation supersession, or cross-project
   mismatch creates no canonical Workstream binding/relation or lifecycle effect;
   an already uploaded unbound candidate remains only under ART retention and

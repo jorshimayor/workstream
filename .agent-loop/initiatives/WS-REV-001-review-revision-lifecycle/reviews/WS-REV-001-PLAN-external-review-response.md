@@ -67,10 +67,11 @@ python3 scripts/check_internal_review_evidence.py
 cd backend && .venv/bin/python -m pytest -q tests/test_app.py
 ```
 
-All applicable REV commands pass after the evidence-only binding. The OpenAPI
-inventory suite passes 4 tests. The repository-wide loop-memory check still
-reports the AUTH-owned stale status on trusted main; this REV response does not
-edit AUTH memory.
+All applicable REV commands passed after the earlier evidence-only binding. The
+OpenAPI inventory suite passed 4 tests. At that time the repository-wide
+loop-memory check reported AUTH-owned stale status. Merged AUTH PR #140 repaired
+that trusted-main state, and the current reconciliation rerun passes; the earlier
+failure is historical rather than a remaining gate.
 
 ## Remaining Risks
 

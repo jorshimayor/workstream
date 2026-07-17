@@ -98,9 +98,11 @@ production `/api/v1` review-router registration
   locks -> final fact recomposition -> exact handle validation/consumption before
   the first binding or REV mutation -> one AUTH evaluation -> binding plus
   ReviewEvidenceArtifact flush. Reuse, serialization, caller construction,
-  cross-session/action/actor/request substitution, or authority loss fails before
-  canonical mutation. Pre-intake denial creates no ART candidate, binding, or
-  receipt.
+  or cross-session/action/actor/request substitution fails before canonical
+  mutation, stages no AuthorizationDecision/evidence, does not consume the
+  original valid handle, and permits its later exact first use. Current-authority
+  or policy denial after valid consumption follows AUTH's clean denial-evidence
+  protocol. Pre-intake denial creates no ART candidate, binding, or receipt.
 - Contributor and later reviewer see old/new guide/task-execution-policy context
   and change summary. ContributionPolicyVersion is not part of this context.
 - While the task is `needs_revision`, the assigned submitter's Task Context API

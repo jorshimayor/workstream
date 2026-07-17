@@ -73,12 +73,15 @@ production `/api/v1` review-router registration
   session, ActionId, actor-reference kind and ID, idempotency key, and canonical
   request digest; REV locks/recomposes final facts and consumes the matching
   handle before its first feature mutation; AUTH evaluates once; then participants
-  flush. Reused, serialized, caller-constructed, wrong-session/action,
-  same-session cross-actor/request, and authority-lost handles fail before REV
-  mutation. Denial leaves no lease/routing or feature audit/outbox effect. AUTH
-  may persist only its bounded denial evidence after rolling back the dirty
-  transaction and restaging that unchanged evidence through its clean AUTH-owned
-  protocol. Evidence, participant, cancellation, or commit failure leaves no
+  flush. Reused, serialized, caller-constructed, wrong-session/action, and
+  same-session cross-actor/request handles fail before REV mutation, stage no
+  AuthorizationDecision/evidence, do not consume the original valid handle, and
+  permit its later exact first use. Current-authority or policy denial after
+  valid consumption leaves no lease/routing or feature audit/outbox effect. The
+  request route or service command rolls back the dirty transaction; AUTH
+  restages the unchanged bounded denial evidence in a clean transaction; and the
+  request route or service command commits that evidence once. Evidence,
+  participant, cancellation, commit, or denial-restaging failure leaves no
   partial feature state or authority evidence.
 - Preference expiry runs only as fixed service
   `workstream.review.preference_expiry`; lease expiry runs only as

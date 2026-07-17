@@ -31,13 +31,18 @@ decisions.
   registration or activation gate.
 - PR #140 defines, but does not implement, the exact AUTH sequence and ownership:
   AUTH-09A reconvergence, AUTH-09B through AUTH-09E, availability-neutral
-  `WS-AUTH-001-REV-CUSTODY`, `WS-AUTH-001-PREP`, AUTH-10/13/14 product contracts,
+  `WS-AUTH-001-REV-CUSTODY`, `WS-AUTH-001-PREP`, and later AUTH product contracts,
   feature-gated `WS-AUTH-001-REV-REG`, per-feature `WS-AUTH-001-REV-05/06/07/08/09A/11/12`
   activation, and `WS-AUTH-001-REV-LIFECYCLE` for the four additions. Hidden REV
   schema, pure validation, resource facts, guards, and behavior may proceed when
   their exact data/participant contracts exist while actions remain unavailable.
   Each committing sensitive mutation waits for PREP; REV-13 waits for every exact
   activation and is the only product-surface release.
+- PR #140 also exposes one blocking AUTH graph defect: full AUTH-13/14 currently
+  require prepared revision/replacement behavior owned by downstream REV-09A.
+  Before REV-02 starts, AUTH must split and merge a schema-only contributor-field
+  foundation. REV-09A then supplies hidden behavior; amended full AUTH-13/14
+  cutovers and AUTH-14 `submission.create` activation follow before REV-13.
 - Project contributor grants are independent `submitter`, `reviewer`, and
   `adjudicator`. REV consumes only reviewer authority/invalidation; adjudication
   remains unavailable.

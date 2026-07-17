@@ -188,6 +188,7 @@ Optional contribution-evidence projection work is not on this critical path.
 - Shared outbox claim ownership remains with the dispatcher.
 - REV stages shared audit and outbox rows after the reviewer operation and the
   applicable decision branch, including the submitter operation for `accept`.
-  REV owns the single commit; CON returns typed staging inputs and never commits.
+  The request route or service command owns the caller `AsyncSession` and only
+  commit; CON returns typed staging inputs and never commits.
 - REV owns no CON public route, policy, award, fulfillment, or projection state.
 - All runtime gates must be reread from their exact merged trusted-main SHAs.

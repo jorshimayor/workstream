@@ -59,9 +59,12 @@ reputation scoring
   submitter operation. That operation creates `accepted_submission` and
   evaluates the submitter policy. REV stages shared audit and outbox rows, and
   the request route or service command commits once. Reuse, serialization,
-  caller construction, wrong-session/action, same-session cross-actor/request
-  substitution, or authority loss fails before Review, lifecycle, CON, audit, or
-  outbox mutation.
+  caller construction, wrong-session/action, or same-session cross-actor/request
+  substitution stages no AuthorizationDecision/evidence, does not consume the
+  original valid handle, and permits its later exact first use. Current-authority
+  or policy denial after valid consumption follows AUTH's clean denial-evidence
+  protocol and leaves no Review, lifecycle, CON, or feature/shared audit/outbox
+  mutation.
   This hidden service has no public route or background-command entry point.
   REV-12A later installs the mandatory lifecycle fence before REV-13 releases
   any decision surface.

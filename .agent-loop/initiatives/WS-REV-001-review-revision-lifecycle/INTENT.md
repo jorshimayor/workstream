@@ -73,8 +73,10 @@ outcomes.
   asynchronous, and retryable.
 - Keep review code free of contribution-policy, award, fulfillment, and
   reputation policy. `WS-CON-001` owns the flush-only transaction participant;
-  REV owns the request transaction and shared audit/outbox staging, while core
-  contribution/award creation performs no ART call or external I/O.
+  REV owns lifecycle orchestration and shared audit/outbox staging inside the
+  caller transaction, while the request route or service command owns the caller
+  `AsyncSession` and only commit. Core contribution/award creation performs no
+  ART call or external I/O.
 - Keep frontend delivery separate until backend contracts and lifecycle guards
   are stable and proven.
 

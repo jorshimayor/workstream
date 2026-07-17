@@ -35,9 +35,21 @@ PR #140 changes planning only. `WS-AUTH-001-REV-CUSTODY` must first transfer all
 without changing mappings, counts, or availability. `WS-AUTH-001-PREP` then lands
 the shared prepared-mutation runtime. Exact feature gates
 `WS-AUTH-001-REV-05/06/07/08/09A/11/12` integrate evaluators and activate only
-their merged hidden behavior. `WS-AUTH-001-REV-REG` later registers the four
-approved REV additions, and `WS-AUTH-001-REV-LIFECYCLE` activates those additions
+their merged hidden behavior. After REV-01 publishes the immutable registration
+manifest, `WS-AUTH-001-REV-REG` registers the four approved REV additions as
+planned; `WS-AUTH-001-REV-LIFECYCLE` activates those additions
 only after the REV-11 and REV-12A manifests are complete.
+
+REV-01 turns this reviewed plan into the active contract and publishes two
+immutable, availability-neutral inputs before runtime feature chunks: the
+complete four-action registration manifest consumed by
+`WS-AUTH-001-REV-REG`, and six independent service identity-to-ActionId manifests
+consumed by later AUTH identity-specific extension contracts. Those manifests
+name required hidden dependencies but do not claim behavior is implemented.
+AUTH may register planned actions and provision exact identities from the merged
+REV-01 SHA while REV persistence chunks continue in parallel. Hidden behavior
+chunks later emit separate activation manifests; no registration or identity
+extension activates an action or exposes a product surface.
 
 Merged AUTH-08 PR #131 establishes the current public kernel and resolves the
 three AUTH-07B consumption blockers. Every runtime chunk retains proof that:
@@ -74,6 +86,10 @@ After the exact owning AUTH gates merge, WS-REV consumes:
   `submission.create`, 19 registered planned review actions, and four approved
   but unregistered REV actions for revision closure/recovery and joint release
   control. The separate ART evidence-binding action is not one of the 24;
+- AUTH-14 activation of `submission.create` only after merged REV-09A prepared
+  revision/replay behavior, exact final-fact recomposition, and initial/revision
+  API proof; this action is a required REV-13 release gate alongside the named
+  review activations;
 - `review.revision_context.repair` maps to existing PermissionId
   `project.task.manage`, a covered Project Manager candidate, and an exact typed
   task/assignment/prior-Submission/episode/head resource with transaction
@@ -107,6 +123,17 @@ After the exact owning AUTH gates merge, WS-REV consumes:
   before feature mutation;
 - immutable authorization decisions and audit links;
 - revocation invalidation used to recover active review leases.
+
+Prepared-handle protocol rejection and evaluated denial are different outcomes.
+A reused, serialized, caller-constructed, wrong-session/action, or
+same-session cross-actor/request handle stages no AuthorizationDecision or
+evidence, does not consume the original valid handle, and must allow that exact
+valid handle's later first use. When an exactly bound handle reaches evaluation
+but current authority or policy denies, the request route or service command
+rolls back the dirty caller transaction; AUTH restages the unchanged bounded
+denial evidence in a clean transaction; and the request route or service command
+commits that evidence once. No REV/task/ART/CON mutation or feature/shared
+audit/outbox effect survives. If denial-evidence restaging fails, nothing commits.
 
 REV owns its typed ResourceContext composers and lifecycle guards. It imports
 the public AUTH service and `ActionId` types only; it never imports AUTH
@@ -186,9 +213,10 @@ contracts merge to trusted main.
 
 The cross-initiative sequence is explicit:
 
-- AUTH-13 and AUTH-14 first complete the canonical contributor-field clean cuts
-  on TaskAssignment and Submission; a separately approved schema handoff is the
-  only alternative to waiting for those owners;
+- AUTH first repairs the circular AUTH-13/14 graph and merges a separately
+  reviewed schema-only contributor-field foundation. That foundation performs
+  only the canonical TaskAssignment/Submission field clean cuts and preserves
+  current behavior; full AUTH-13/14 product cutovers are explicitly later;
 - `WS-REV-001-02` then establishes immutable
   `Submission.task_assignment_id` attribution and guide activation sequence;
 - WS-CON's approved replacement chunks then freeze submitter
@@ -203,7 +231,10 @@ The cross-initiative sequence is explicit:
 - the WS-CON ReviewLease freeze capability precedes `WS-REV-001-06`;
 - REV-04's `FinalAcceptance` schema and REV-09B's stable lineage precede CON's
   exact source-lineage schema and flush-only contribution/award participant;
-- that exact CON participant precedes `WS-REV-001-10`; and
+- that exact CON participant precedes `WS-REV-001-10`;
+- REV-09A's hidden prepared revision/replacement behavior precedes the amended
+  full AUTH-13/14 product cutovers and AUTH-14 activation of `submission.create`;
+- those AUTH cutovers and activation precede REV-13 product release; and
 - the exact WS-CON readiness manifest, mandatory fulfillment obligation-writer,
   dispatch, and callback fence hooks, and same-session fulfillment/outbox
   drain-cutoff and observation port

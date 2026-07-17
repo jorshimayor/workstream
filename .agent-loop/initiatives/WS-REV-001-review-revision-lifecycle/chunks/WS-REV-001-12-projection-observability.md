@@ -59,8 +59,11 @@ production `/api/v1` review-router registration
   and one evaluation. The opaque, non-Pydantic, single-use handle binds exact
   session, ActionId, service actor-reference kind and ID, idempotency key, and
   canonical request digest. Reuse, serialization, caller construction,
-  cross-session/action/actor/request substitution, or lost authority fails before
-  feature mutation. Human Operator or reviewer authority cannot substitute.
+  or cross-session/action/actor/request substitution fails before feature
+  mutation, stages no AuthorizationDecision/evidence, does not consume the
+  original valid handle, and permits its later exact first use. Current-authority
+  or policy denial after valid consumption follows AUTH's clean denial-evidence
+  protocol. Human Operator or reviewer authority cannot substitute.
   Generic AUTH-09E admission creates neither identity; AUTH provisions each exact
   identity and static membership only from this reviewed service manifest.
 - Artifact relation reconciliation covers verification, project/task scope,

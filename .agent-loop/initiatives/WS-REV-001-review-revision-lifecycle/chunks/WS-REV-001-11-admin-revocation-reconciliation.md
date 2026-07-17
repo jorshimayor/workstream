@@ -189,13 +189,15 @@ production `/api/v1` review-router registration
 - Release, decline, override, force-release, admin closure, recovery, and any
   actor-attributed deferred commit use AUTH's prepared mutation protocol,
   persist the AuthorizationDecision link, follow the command-specific lock order, and
-  reject reused, serialized, caller-constructed, wrong-session/action,
-  same-session cross-actor/request, or authority-lost handles before feature
-  mutation. Denial leaves no REV/task/ART/CON mutation or feature audit/outbox
-  event. AUTH may persist only its bounded denial evidence after rolling back the
-  dirty transaction and restaging unchanged evidence through its clean AUTH-owned
-  protocol; evidence, participant, cancellation, or commit failure leaves no
-  partial authority evidence.
+  reject reused, serialized, caller-constructed, wrong-session/action, or
+  same-session cross-actor/request handles before feature mutation. Protocol
+  rejection stages no AuthorizationDecision/evidence, does not consume the
+  original valid handle, and permits its later exact first use. Current-authority
+  or policy denial after valid consumption leaves no REV/task/ART/CON mutation or
+  feature audit/outbox event. The request route or service command rolls back the
+  dirty transaction; AUTH restages the unchanged bounded denial in a clean
+  transaction; and that route or command commits the evidence once. Evidence,
+  participant, cancellation, commit, or restaging failure commits nothing.
 - This chunk supplies hidden behavior/resource facts for its actions and changes
   no ActionOwner or availability. `WS-AUTH-001-REV-11` activates the existing
   action group after merge. `WS-AUTH-001-REV-LIFECYCLE` activates the three

@@ -70,7 +70,9 @@ runtime implementation or dependency changes
 - Reviewer `completed_review` lineage remains direct from Review and ReviewLease.
   Submitter `accepted_submission` lineage requires FinalAcceptance and never
   infers acceptance directly from `Review.decision`.
-- REV owns the decision transaction and shared audit and outbox staging. CON is a
+- REV owns decision orchestration and shared audit/outbox staging inside the
+  caller transaction; the request route or service command owns the caller
+  `AsyncSession` and only commit. CON is a
   mandatory participant with an ordered reviewer operation before the decision
   branch and a submitter operation only after FinalAcceptance exists.
   Both operations are flush-only, return typed audit and outbox inputs, never

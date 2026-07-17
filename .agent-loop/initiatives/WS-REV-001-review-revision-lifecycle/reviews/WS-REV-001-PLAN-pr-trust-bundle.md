@@ -36,8 +36,21 @@ starting a successor.
   digest, with misuse, authority-loss, and clean-denial-evidence proof.
 - Made the request route or service command the sole committer; REV remains the
   lifecycle orchestrator and stages shared audit/outbox rows.
-- Required AUTH-13/14 contributor-field clean cuts before REV-02 to prevent
-  parallel schema and migration ownership collisions.
+- Required an AUTH-owned schema-only contributor-field foundation before REV-02
+  to prevent parallel schema and migration ownership collisions without making
+  full AUTH-13/14 depend on their own downstream prerequisites. REV-09A hidden
+  behavior follows that foundation; amended full AUTH-13/14 cutovers then precede
+  REV-13.
+- Made REV-01's merged active contract the immutable four-action registration
+  and six-service identity manifest. AUTH may register planned rows and provision
+  exact identities from it before the consuming runtime chunks, eliminating the
+  registration/consumer cycle without activating behavior.
+- Added AUTH-14 `submission.create` activation and prepared revision/replay proof
+  to the final REV-13 release manifest.
+- Distinguished prepared-handle protocol misuse from evaluated denial: misuse
+  stages no evidence and does not consume the valid handle; evaluated denial uses
+  caller rollback, clean unchanged AUTH evidence restaging, and one route/service
+  evidence commit.
 - Required exact independent `reviewer` grants, role-specific invalidation, six
   fixed review service identities through AUTH-09E, request-scoped AUTH reads,
   and AUTH-first prepared mutations.
@@ -117,11 +130,12 @@ authorization catalogue, artifact provider, or contribution runtime.
 
 ## Verification
 
-The rebased planning snapshot requires fresh deterministic gates and exact-SHA
-internal evidence before publication. The REV contract scanner is
+The rebased planning snapshot requires fresh exact-SHA internal evidence before
+publication. Deterministic gates, including loop-memory validation, pass after
+the current repairs. The REV contract scanner is
 created only by successor chunk REV-01 and is not claimed as current proof. The
-repository loop-memory check will be rerun against PR #140's repaired main state.
-No product tests are expected because runtime code is unchanged.
+PR #140 loop-memory repair is therefore no longer an outstanding issue. No
+product tests are expected because runtime code is unchanged.
 
 ## Review State
 

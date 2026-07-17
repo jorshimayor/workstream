@@ -511,3 +511,41 @@ staging, and request-route/service-command commit ownership.
 The rebase and these normative edits invalidate pre-rebase exact-SHA evidence.
 Fresh deterministic gates and every required internal reviewer track must pass
 before PR #128 is force-updated.
+
+### First AUTH reconciliation review of `777468d`
+
+Senior engineering, architecture, QA/test, product/ops, security/auth, and docs
+failed the snapshot. Reuse/dedup passed; test-delta and CI integrity passed with
+the condition that exact-SHA evidence be rebound after repair.
+
+The reviewers found three executable-graph defects. Full AUTH-13/14 were placed
+before REV-02 even though their own contracts require revision/replacement
+behavior owned by downstream REV-09A. `WS-AUTH-001-REV-REG` and exact service
+identities were prerequisites for chunks that appeared to produce their own
+registration/identity manifests. Final release also omitted AUTH-14 activation
+of `submission.create`, despite counting it among the 24 REV dependencies.
+
+The repaired graph requires AUTH to split and merge a schema-only
+contributor-field foundation before REV-02. REV-09A then publishes hidden
+prepared revision/replacement behavior; amended full AUTH-13/14 cutovers and
+AUTH-14 `submission.create` activation follow before REV-13. REV-01's merged
+active contract is now the immutable four-action registration manifest and the
+six exact service identity-to-ActionId manifests, so AUTH may register planned
+rows and provision identities before consuming chunks without claiming hidden
+behavior exists.
+
+Security review also found that REV-12A consumed PREP before fence/domain locks
+and final fact recomposition, and several chunks conflated prepared-handle misuse
+with evaluated denial. The repair restores AUTH prepare -> feature locks and final
+facts -> handle validation/consumption -> one AUTH evaluation/evidence stage ->
+feature mutation -> participant flush -> request-route/service-command commit.
+Protocol misuse stages no decision/evidence, does not consume the original valid
+handle, and permits later exact use. Evaluated authority/policy denial rolls back
+the dirty caller transaction, restages unchanged bounded AUTH denial evidence in
+a clean transaction, and commits that evidence once through the request route or
+service command. Feature/shared audit/outbox effects remain absent and restaging
+failure commits nothing.
+
+Finally, the repair removes remaining REV-owned-commit wording, aligns PLAN risk
+to L1, records the now-passing loop-memory gate, and makes registered/planned
+status consistent in REV-12A.

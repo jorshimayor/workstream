@@ -85,8 +85,8 @@ AUTH-08 PR #131 at trusted-main
 `0832358a0262805f553d05b50b0d778e6e6ad995`. AUTH-08 retains exactly 57 closed
 ActionIds, activates seven administrative actions alongside the two actor-self
 actions, and leaves 48 planned. Canonical `submission.create` plus the 19
-registered review actions all remain planned/inactive. AUTH-13/14
-also establish the final `TaskAssignment.contributor_id` and
+registered review actions all remain planned/inactive. Proposed AUTH-13/14
+contracts assign the final `TaskAssignment.contributor_id` and
 `Submission.contributor_id` names and authority-loss replacement-assignee
   behavior. The four later revision-obligation-close, repair, legacy-close, and
   joint-lifecycle-control ActionIds remain approved but unregistered AUTH-owned additions before
@@ -97,6 +97,13 @@ also establish the final `TaskAssignment.contributor_id` and
   counts from current trusted main and account for its delta independently.
   REV feature chunks build hidden behavior and typed facts; exact AUTH activation
   custodians alone integrate evaluators and change availability.
+
+The merged AUTH plan contains an execution cycle: full AUTH-13/14 require
+prepared revision/replacement behavior owned by REV-09A, while REV-02 needs
+canonical contributor fields before REV-09A can exist. REV therefore requires an
+AUTH-owned schema-only contributor-field foundation before REV-02. REV-09A
+hidden behavior then precedes amended full AUTH-13/14 product cutovers. This is
+an AUTH repair gate, not permission for REV to rename AUTH-owned fields.
 
 Merged AUTH reconciliation PR #140 is planning-only. It preserves the runtime
 `74` PermissionId / `57` ActionId / `9` active / `48` planned snapshot. It defines
@@ -177,7 +184,8 @@ chunks must preserve these merged invariants and still wait for the later AUTH
 - WS-CON requires the reviewer `ContributionPolicyVersion` to be frozen on the
   `ReviewLease` and its flush-only contribution/award participant to commit or
   roll back with Review, FinalAcceptance, task/assignment effects, audit, and
-  outbox. REV owns audit/outbox staging and the single commit.
+  outbox. REV owns lifecycle orchestration and audit/outbox staging; the request
+  route or service command owns the caller transaction and only commit.
 - Review core may be built behind an unexposed composition boundary, but the
   public decision endpoint cannot be enabled with a no-op contribution path.
 - Core contribution creation first receives locked Review, ReviewLease,
