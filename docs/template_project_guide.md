@@ -152,12 +152,18 @@ Needs revision requires:
 - concrete issue and required fix per blocking finding
 - optional advisory findings that do not block acceptance
 
-Offline quality sampling only; it creates no product decision or adjudication
-state:
+Offline post-decision reviewer-quality sampling only:
 
-- accepted:
-- rejected:
-- high-value tasks:
+- accepted sample rate:
+- rejected sample rate:
+- suspected copied or confidential material:
+- high-value criterion defined by `ReviewPolicy`:
+- reviewer conflict of interest:
+
+These criteria select non-product quality analysis only. They do not delay Review,
+FinalAcceptance, contribution creation, or task closure and do not create a
+second decision, reputation mutation, or adjudication path.
+- registered recovery operation used (permission, actor, reason, evidence):
 
 ## Revision Policy
 

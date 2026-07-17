@@ -11,6 +11,12 @@
 - preferred/open routing reason:
 - lease issued/expires at:
 - conflict-of-interest attestation:
+- contributor-reviewer pair risk:
+- offline non-mutating quality sampling selected:
+- quality sampling reason:
+
+Quality sampling cannot delay or replace the Review decision, FinalAcceptance,
+task effects, or contribution transaction.
 
 ## Exact Submission Packet
 

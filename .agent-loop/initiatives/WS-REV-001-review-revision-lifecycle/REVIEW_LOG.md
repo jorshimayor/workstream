@@ -742,3 +742,23 @@ The repaired stale-review and stale-workstream gates pass, the expanded agent
 gate suite passes all 85 tests, archival literal hashes remain exact, and both
 local roadmap exports remain absent. A new committed exact-SHA candidate and
 full internal reviewer fanout are still required before PR publication.
+
+## WS-REV-001-01 CON PR #142 Main Reconciliation - 2026-07-17
+
+Candidate `9b2fc11c12e8c0cb19914c9772f95ba4e9814688` later passed all nine
+required reviewer tracks and its evidence gate. Before publication, CON planning
+PR #142 merged to main at `a947b8693a97bdb94c9dc63202a51e197834d613` from
+branch head `4b13c3ee28ecddd7c92be70ad2059c130604f9d1`.
+
+`git pull --no-rebase origin main` exposed conflicts in 15 shared active
+documents. The reconciliation retains CON's exact reviewer/submitter operation
+shapes, frozen-policy award rules, source constraints, and joint transaction
+boundary while preserving REV's blocking/advisory finding model, optional
+reject findings, deterministic revision preparation, deferred reputation, and
+no-adjudication v0.1 boundary. The newly supplied CON reference Markdown is
+classified as an exact archive by the fail-closed review scanner.
+
+PR #142 contains planning and documentation only. It activates no CON or REV
+runtime behavior. Because current-main reconciliation changed review-relevant
+files, the earlier exact-SHA PASS is historical and a fresh full reviewer pass
+is required on the merge candidate.

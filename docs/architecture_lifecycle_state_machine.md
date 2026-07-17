@@ -156,6 +156,8 @@ Required before entering:
 - from `REVIEW_PENDING`: immutable `needs_revision` Review, at least one
   unresolved blocking ReviewFinding, reviewer `completed_review` contribution,
   and any applicable reviewer award
+- from `REVIEW_PENDING`: the same TaskAssignment remains `active`, with no
+  FinalAcceptance or submitter contribution
 
 Before the contributor resumes from a human Review, Workstream appends an
 immutable RevisionContextPreparation. Exact prior Submission guide
@@ -174,6 +176,9 @@ The submission is accepted.
 Required before entering:
 
 - accepted review decision
+- one immutable FinalAcceptance bound to the accepted Review, existing
+  versioned Submission, task, submitter, recording reviewer, and locked
+  ReviewPolicy
 - no unresolved blocking checker failure under the locked post-submit checker policy
 - evidence present
 - reviewer cited evidence supporting acceptance
@@ -185,8 +190,9 @@ Required side effects:
 
 - reviewer `completed_review` contribution created with the Review
 - immutable FinalAcceptance created from the accepting Review
-- submitter `accepted_submission` contribution created only from
-  FinalAcceptance, TaskAssignment, frozen policy lineage, and artifact hash
+- submitter `accepted_submission` contribution created from FinalAcceptance,
+  the exact TaskAssignment, frozen policy lineage, and artifact hash; it is not
+  inferred directly from Review.decision
 - applicable awards created independently from the reviewer and submitter
   contribution records
 - reputation projection remains deferred
@@ -198,10 +204,16 @@ The task or submission is rejected.
 Required before entering:
 
 - rejection review decision
-- rejection reason
+- bounded human rejection reason
 - reviewer `completed_review` contribution and any applicable reviewer award
 - the same-task TaskAssignment is blocked
 - no FinalAcceptance or submitter contribution is created
+
+Required side effects:
+
+- same-task TaskAssignment is `blocked` and bound to the source reject Review
+- no other task, assignment, or actor grant changes
+- no FinalAcceptance or submitter `accepted_submission` exists
 
 ### CANCELLED
 
@@ -250,6 +262,7 @@ No administrative or recovery grant authorizes these transitions:
 - compensation projection `pending -> fulfilled` without an immutable payable
   award and fulfillment receipt
 - compensation exposure without a contribution record and frozen policy
+- adjudication, appeal, acceptance replacement, or reopen transition in v0.1
 - fulfillment without an external reference
 
 ## Submission Versioning

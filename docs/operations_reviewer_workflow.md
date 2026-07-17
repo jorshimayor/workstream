@@ -107,6 +107,89 @@ AUTH prepared authority and final evaluation
 The transaction performs no Artifact Storage call. Any participant failure rolls
 back all lifecycle, contribution, award, audit, and outbox effects.
 
+Accept must create:
+
+- review decision record
+- one immutable internal FinalAcceptance linked to the exact Review, existing
+  versioned Submission, task, submitter, recording reviewer, and locked
+  ReviewPolicy
+- acceptance audit event
+- reviewer `completed_review` contribution record
+- submitter `accepted_submission` contribution record sourced from
+  FinalAcceptance, not directly from Review.decision
+- any awards required by the separately frozen reviewer and submitter
+  contribution policies
+
+The reviewer cites the strongest evidence supporting acceptance, not only
+"looks good."
+
+## Needs Revision
+
+Use needs_revision when:
+
+- issues are fixable
+- the submission is not acceptable yet
+- reviewer can describe concrete required fixes
+
+Do not write vague feedback. Every blocking issue must tell the contributor
+what is wrong and what must change.
+
+Needs-revision feedback must not introduce preference-only work. If the guide
+does not require it and acceptance is not blocked by it, record it as advisory.
+
+Each blocking finding must have:
+
+- exact issue
+- why it blocks acceptance
+- required fix
+- evidence reference or file/section reference
+
+Recording `needs_revision` sets the Task to `needs_revision`, keeps the same
+TaskAssignment `active`, and creates no FinalAcceptance or submitter
+contribution. The reviewer `completed_review` still commits atomically.
+
+## Reject
+
+Use reject when:
+
+- the work is fundamentally wrong
+- the submission is non-original or violates policy
+- the task cannot be salvaged by reasonable revision
+- the contributor submitted prohibited material
+
+Use reject carefully. If the work can be reasonably corrected through one
+revision cycle, use `needs_revision`.
+
+Recording `reject` sets the Task to canonical `rejected` with the bounded human
+reason and blocks only the same-task TaskAssignment with its source Review. It
+changes no actor grant or unrelated task and creates no FinalAcceptance or
+submitter contribution. `closed/review_rejected` is not a canonical state.
+
+Every valid recorded `needs_revision` or `reject` decision still creates the
+reviewer's `completed_review` contribution and evaluates the ReviewLease-frozen
+reviewer contribution policy. Neither decision creates a submitter contribution
+or submitter award.
+
+## Offline Reviewer Quality
+
+Track:
+
+- review count
+- decision distribution
+- non-mutating sampled-quality findings
+- unclear feedback reports
+- average turnaround
+- repeated missed prior findings
+
+Offline quality evidence may be recorded when:
+
+- feedback is marked unclear
+- non-mutating sampling finds unsupported acceptance/rejection reasoning
+- reviewer misses unresolved prior findings
+
+These quality signals never reopen or replace Review, FinalAcceptance, task, or
+ContributionRecord truth. V0.1 has no adjudication decision or queue.
+
 ## Reviewer Checklist
 
 Before any decision:
@@ -119,6 +202,25 @@ Before any decision:
 - distinguish blocking requirements from advisory observations;
 - confirm the decision-specific task, assignment, FinalAcceptance, and
   contribution effects can commit atomically.
+- confirm both frozen contribution policies can be evaluated and that an
+  explicit unpaid result is valid and creates no award.
+
+Before `needs_revision`, confirm every blocking issue has an actionable required
+change and no unrelated preference is demanded. Before `reject`, confirm the
+bounded reason is guide-grounded and the work is not reasonably fixable.
 
 Offline sampling and calibration may evaluate review quality, but they do not
 create adjudication state, overturn a Review, or mutate immutable history.
+
+## Non-Mutating Quality Sampling
+
+During the first 30 days, audit at least:
+
+- 25 percent of accepted submissions
+- 25 percent of rejected submissions
+- any submission matching the configured high-value criterion in
+  `ReviewPolicy`
+
+Sampling checks whether the reviewer followed the guide and cited evidence. It
+does not create a Review, adjudication result, reopen path, replacement
+FinalAcceptance, or lifecycle mutation.

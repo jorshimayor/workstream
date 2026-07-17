@@ -94,6 +94,24 @@ among the 24 REV dependencies.
 - `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/`
 - `.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/`
 
+## Merged CON planning authority
+
+WS-CON-001 planning PR #142 merged to current main
+`a947b8693a97bdb94c9dc63202a51e197834d613` from final branch head
+`4b13c3ee28ecddd7c92be70ad2059c130604f9d1`. Its PLAN3 reconciliation is now
+the repository-owned CON planning authority. It confirms:
+
+- one reviewer `completed_review` operation before the REV decision branch;
+- one accept-only `accepted_submission` operation after REV creates
+  FinalAcceptance and applies accepted task/assignment effects;
+- operation-specific typed inputs rather than one nullable omnibus request;
+- one REV-owned caller transaction and no ART call or mandatory evidence
+  projection in the core decision path; and
+- no adjudication dependency.
+
+PR #142 changes planning and shared active documentation only. Its CON runtime
+chunks remain proposed/inactive and continue to gate REV implementation.
+
 AUTH-07A/07B discovery was refreshed against merged AUTH-08 PR #131 at
 trusted-main `aa0fdcd6912e66609e39a2fbd7b65f67be6c62f3`, whose final branch head is
 `0832358a0262805f553d05b50b0d778e6e6ad995`. AUTH-08 retains the minimal
@@ -135,8 +153,8 @@ WS-REV:
 - `/home/abiorh/flow/workstream-con-001/.agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/JOINT_RELEASE_HANDOFF.md`
 - `/home/abiorh/flow/workstream-con-001/docs/reference_specs/WS-CON-001-contribution-record-and-compensation-boundary-specification.md`
 
-These paths are dated discovery only. Merged WS-XINT
-`REV_CON_HANDOFF.md` supersedes their conflicting mandatory evidence-projection,
+These paths are dated discovery only. Merged WS-XINT `REV_CON_HANDOFF.md` and
+merged CON PR #142 supersede their conflicting mandatory evidence-projection,
 policy naming, activation, and core ART-dependency assumptions. Owning WS-CON
 runtime contracts must still merge before a REV gate consumes them.
 
@@ -164,3 +182,8 @@ The active contract, its four-action registration manifest, and its six-service
 identity manifest become immutable inputs for downstream AUTH gates only after
 this chunk is reviewed and merged. Until their owning chunks and AUTH activation
 gates complete, every review-lifecycle action and endpoint remains unavailable.
+
+After the initial exact-SHA review, the branch pulled merged CON PR #142 at
+`a947b8693a97bdb94c9dc63202a51e197834d613`. The original `0302bcf` start and
+archive-integrity proofs remain fixed; final PR scope and exact-SHA review use
+the newer merged-main boundary.

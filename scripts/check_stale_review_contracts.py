@@ -16,6 +16,7 @@ TEXT_SUFFIXES = {".html", ".md", ".puml"}
 # These supplied files are immutable evidence, not active repository policy.
 ARCHIVAL_PATHS = {
     "docs/reference_specs/WS-AUTH-001-actor-profile-role-and-authorization-service-specification.md",
+    "docs/reference_specs/WS-CON-001-contribution-record-and-compensation-boundary-specification.md",
     "docs/reference_specs/WS-REV-001-review-lifecycle-specification.md",
     "docs/reference_specs/WS-IMP-001-workstream-v0.1-coding-agent-implementation-specification.md",
 }

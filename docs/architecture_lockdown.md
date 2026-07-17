@@ -60,6 +60,10 @@ local ActorProfile/ActorIdentityLink records, administrative grants,
 exact-project submitter/reviewer/adjudicator grants, registered permissions,
 resource and lifecycle guards, revocation, and append-only authority evidence.
 
+The global role catalogue does not define the v0.1 review lifecycle. Shipping
+uses submitter and reviewer authority only; no adjudication policy, action,
+queue, lease, state, decision, contribution, or readiness dependency exists.
+
 Token roles and typed workflow profiles are not product authority. All public
 routes remain under `/api/v1`. ADR 0012 and the canonical authorization service
 specification control authorization wording in this lockdown.
@@ -197,15 +201,22 @@ metadata only. Decision and contribution creation perform no ART call.
 
 Every valid recorded human Review creates an immutable reviewer
 `completed_review` contribution record, regardless of whether the decision is
-`accept`, `needs_revision`, or `reject`. An `accept` Review additionally creates
-one immutable FinalAcceptance; only that fact creates one submitter
-`accepted_submission` contribution record. Automated
-checker outcomes create neither type.
+`accept`, `needs_revision`, or `reject`. REV creates one immutable
+FinalAcceptance only for `accept`; that fact, not direct inspection of
+`Review.decision`, sources one submitter `accepted_submission` contribution
+record. `needs_revision`, `reject`, and automated checker outcomes create no
+FinalAcceptance or submitter contribution.
 
 Contribution records are separate from compensation status. Each record freezes
 its exact review, submission, actor, policy, and artifact-hash lineage.
 Compensation awards may attach to a contribution record but do not replace it.
 Reputation projection is deferred.
+
+FinalAcceptance is internal and REV-owned. It has no independent API/action,
+uses canonical `Submission.id` because each Submission row is already a
+version, and is unique per task, source Review, and Submission. V0.1 contains
+no adjudication policy, action, queue, lease, state, decision, contribution
+type, branch, readiness check, or adjudication-initiative dependency.
 
 ## Deferred
 

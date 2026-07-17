@@ -12,7 +12,7 @@ It is not a workspace and it is not blockchain-first. Operators can work with
 any local tools, human-agent workflow, or external execution environment.
 Workstream owns the project guide, task queue, submission packet, automated
 checks, human review, revision loop, contribution record, conditional
-compensation award and fulfillment state, and reputation record.
+compensation award and fulfillment state, and reputation signals.
 
 Workstream is source-agnostic, but v0.1 is manual-first. External origin onboarding, source adapters, automated routing, owner-agent execution workspaces, and on-chain settlement remain later adapters until the internal evaluation loop is proven.
 
@@ -27,7 +27,8 @@ Project Guide
 -> Submission Packet
 -> Platform Checkers
 -> Human Review
--> Needs Revision / FinalAcceptance / Rejected
+-> Needs Revision / Accepted / Rejected
+-> FinalAcceptance on Accepted
 -> Contribution Record
 -> Compensation Award / Fulfillment when payable
 -> Reputation projection when separately implemented
@@ -52,8 +53,8 @@ Different projects speak different domain languages, but serious task evaluation
   and later resolutions are immutable
 - every revision responds to unresolved blocking feedback without rewriting it
 - every valid human review creates a reviewer contribution
-- every accepted task creates an immutable FinalAcceptance, which is the sole
-  source of the submitter contribution
+- every accepted Review creates one immutable FinalAcceptance
+- every submitter accepted_submission contribution consumes FinalAcceptance
 - every payable contribution updates compensation fulfillment; all contributions
   may feed a separately implemented reputation projection
 

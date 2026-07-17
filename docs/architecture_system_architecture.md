@@ -25,7 +25,7 @@ Frontend
   Review queue
   Review page
   Compensation dashboard
-  Reputation dashboard
+  Reputation dashboard (deferred)
 
 Backend API
   Actor service
@@ -39,7 +39,7 @@ Backend API
   Revision service
   Contribution and compensation service
   Evidence service
-  Reputation service
+  Reputation service (deferred)
 
 Storage
   Postgres for records
@@ -87,7 +87,7 @@ Frontend policy:
 
 The architecture avoids framework coupling in the domain model. Project, task,
 submission, checker, review, revision, contribution, compensation, reputation,
-and audit behavior remain portable.
+and audit behavior remain portable; reputation behavior remains deferred.
 
 Auth policy:
 

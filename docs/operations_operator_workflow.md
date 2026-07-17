@@ -93,22 +93,34 @@ Reads authorized immutable and operational evidence without mutation.
 ## Acceptance Workflow
 
 1. Reviewer accepts submission.
-2. Workstream records the immutable Review and reviewer `completed_review`.
-3. REV creates FinalAcceptance, moves the task to ACCEPTED, and completes the assignment.
-4. CON creates submitter `accepted_submission` only from FinalAcceptance.
-5. Frozen contribution policies create awards only for payable contributions;
+2. REV records the immutable Review and one internal FinalAcceptance for the
+   exact task, Submission, submitter, reviewer, and locked ReviewPolicy.
+3. CON records reviewer `completed_review` directly from Review.
+4. REV moves the task to ACCEPTED and completes the TaskAssignment.
+5. CON records submitter `accepted_submission` only from FinalAcceptance.
+6. Frozen contribution policies create awards only for payable contributions;
    explicit unpaid rules create none.
-6. Finance Authority follows post-commit delivery only for created awards.
-7. Reputation projection remains deferred.
+7. Finance Authority follows post-commit delivery only for created awards.
+8. Reputation projection remains deferred.
+
+The Review request owns one commit for Review, FinalAcceptance, task effects,
+contributions, awards, audit, and outbox. There is no manual FinalAcceptance
+command and no adjudication/reopen step in v0.1.
 
 ## Rejection Workflow
 
 1. Reviewer rejects submission or task.
-2. Review must include rejection reason.
-3. The same-task assignment is blocked and the task becomes `rejected`.
+2. Review must include a bounded human rejection reason.
+3. REV sets the Task to canonical `rejected`, blocks only the same-task
+   TaskAssignment, and binds that block to the reject Review. It changes no
+   actor grant or unrelated task.
 4. The frozen reviewer contribution award rule determines whether the resulting
    `completed_review` contribution creates a `CompensationAward`; rejection
    creates no submitter `accepted_submission` contribution.
+
+For `needs_revision`, REV instead sets the Task to `needs_revision`, keeps the
+same TaskAssignment `active`, and creates no FinalAcceptance or submitter
+contribution. `closed/review_rejected` is not a canonical task state.
 
 ## Planned Revision Recovery
 

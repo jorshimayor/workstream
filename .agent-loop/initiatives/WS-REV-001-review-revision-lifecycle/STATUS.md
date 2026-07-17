@@ -7,6 +7,11 @@
 `WS-REV-001-01`, which is active on `codex/ws-rev-001-01` from that exact base.
 No runtime review or revision behavior is active in this chunk.
 
+While Chunk 01 was under review, CON planning PR #142 merged to main at
+`a947b8693a97bdb94c9dc63202a51e197834d613`. The branch pulled that merge and
+reconciled its shared active documents. PR #142 changes planning/contracts only;
+no CON runtime behavior became active.
+
 Chunk 01 adopts `docs/spec_review_lifecycle.md` as the active normative
 contract, preserves the supplied WS-REV and WS-IMP archival Markdown/PDF bytes,
 reconciles active documentation, and adds a fail-closed stale review-contract
@@ -31,6 +36,9 @@ gate. It changes no backend, migration, AUTH, ART, or CON runtime code.
   two-operation flush-only participant before a canonical Review can commit.
   Every valid Review creates reviewer contribution; only an accept-created
   FinalAcceptance creates submitter contribution.
+- Merged CON PLAN3 now publishes that exact two-operation boundary and the
+  shared release order. Its implementation chunks remain proposed/inactive and
+  still gate REV runtime composition.
 - AUTH-owned contributor-field foundations, ART submission commitment and
   packet-read contracts, CON persistence/participant contracts, and the
   remaining per-chunk gates stay external prerequisites exactly as listed in
@@ -58,14 +66,13 @@ gate. It changes no backend, migration, AUTH, ART, or CON runtime code.
 
 ## Chunk 01 evidence state
 
-Candidate `9b2fc11c12e8c0cb19914c9772f95ba4e9814688` passed the final L1
-plan review, deterministic evidence gate, and all nine required exact-SHA
-internal reviewer tracks with no blocking findings. The evidence record and PR
-trust bundle are under `reviews/WS-REV-001-01-*`.
+Candidate `9b2fc11c12e8c0cb19914c9772f95ba4e9814688` passed all nine required
+tracks before CON PR #142 merged. That PASS is retained as historical repair
+evidence, but current-main reconciliation changed shared active documents and
+therefore requires a new deterministic gate and exact-SHA reviewer pass.
 
-Chunk 01 is internally reviewed and ready for PR publication. External CI,
-CodeRabbit, and human review remain required. This status does not activate a
-review action or endpoint and does not authorize merge.
+Chunk 01 is not yet PR-ready after the main refresh. This status does not
+activate a review action or endpoint and does not authorize merge.
 
 ## Stop condition
 

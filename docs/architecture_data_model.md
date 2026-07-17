@@ -1510,12 +1510,24 @@ Fields:
 - `source_review_id`
 - `accepted_submitter_id`
 - `accepted_at`
-- `recorded_by`
-- `policy_context_ref`
+- `recorded_by_reviewer_id`
+- `review_policy_id`
 
-This internal immutable fact is created only inside an authorized
-`Review(accept)` transaction. It has unique task, source Review, and Submission
-lineage, no public/manual API, and no independent action.
+Purpose:
+
+This immutable REV-owned internal fact is created only inside the authorized
+`Review(accept)` transaction. Existing `Submission` is already the version
+identity, so the stored FK is `submission_id`; no SubmissionVersion entity or
+`submission_version_id` alias is introduced. `review_policy_id` is the exact
+locked ReviewPolicy context for the accepted Review.
+
+PostgreSQL enforces `UNIQUE(task_id)`, `UNIQUE(source_review_id)`, and
+`UNIQUE(submission_id)` plus same-project/task/Submission/Review/submitter/
+reviewer/policy lineage. There is no public/manual create API and no separate
+authorization action. `needs_revision` and `reject` create none. Accept/reject
+are terminal in v0.1; no adjudication or replacement-acceptance path exists.
+Reviewer-quality sampling is a non-mutating audit and never delays or changes
+this record.
 
 ## ContributionRecord
 
@@ -1538,12 +1550,20 @@ Fields:
 Purpose:
 
 The record is immutable. Every valid recorded human Review creates one reviewer
-`completed_review` contribution sourced from Review and ReviewLease. `accept`
-also creates FinalAcceptance; only that fact and TaskAssignment source one
-submitter `accepted_submission`. `needs_revision` and `reject` do not. The record carries
-the exact Review, submission, assignment or lease, frozen contribution policy,
-and stabilized artifact-hash lineage. Compensation awards may reference it;
-reputation projection is deferred.
+`completed_review` contribution with direct Review and ReviewLease lineage.
+`Review(accept)` creates FinalAcceptance; exactly one submitter
+`accepted_submission` consumes that fact plus the exact TaskAssignment.
+`needs_revision` and `reject` create no FinalAcceptance or submitter record.
+
+Reviewer rows require `source_review_id` and `source_review_lease_id` and have
+null FinalAcceptance/assignment sources. Submitter rows require
+`source_final_acceptance_id` and `source_task_assignment_id` and have null
+direct Review/lease sources. Partial unique constraints enforce one
+`completed_review` per Review and one `accepted_submission` per
+FinalAcceptance; database checks reject mixed or incomplete source shapes. The
+record carries the exact Submission, actor, frozen contribution policy, and
+stabilized artifact-hash lineage. Compensation awards may reference it but do
+not replace it; reputation projection remains deferred.
 
 ## CompensationAward
 
@@ -1696,7 +1716,12 @@ open an independent session.
   contribution
 - an accepted task must additionally create one submitter
   `accepted_submission` contribution sourced from FinalAcceptance
-- `needs_revision` and `reject` must not create a submitter contribution
+- `needs_revision` and `reject` must not create FinalAcceptance or a submitter
+  contribution
+- FinalAcceptance is unique per task, source Review, and Submission and has no
+  independent creation API/action
+- v0.1 has no adjudication state/action/queue/lease/decision/contribution or
+  readiness dependency
 - no compensation award exists without its contribution record
 - a fulfilled award must have an immutable fulfillment receipt with the exact
   authorized quantity and external reference

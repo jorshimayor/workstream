@@ -127,9 +127,9 @@ Acceptance:
 3. Reviewer reads the leased Submission's stamped guide context, evidence, and checker results.
 4. Reviewer enters immutable blocking/advisory findings where applicable.
 5. Reviewer selects accept, needs_revision, or reject.
-6. Workstream appends the immutable Review and reviewer `completed_review`;
-   `accept` additionally creates FinalAcceptance and only then the submitter
-   `accepted_submission` contribution.
+6. Workstream atomically creates the reviewer `completed_review` contribution;
+   `accept` also creates internal FinalAcceptance and then the submitter
+   `accepted_submission` contribution from that fact.
 
 Acceptance:
 
@@ -138,6 +138,14 @@ Acceptance:
   bounded human reason and may include findings.
 - accept requires no unresolved critical- or high-severity checker failure.
 - Every valid human decision has exactly one reviewer contribution.
+- Accept sets Task `accepted`, Assignment `completed`, and has exactly one
+  FinalAcceptance and one submitter contribution.
+- Needs revision sets Task `needs_revision`, keeps Assignment `active`, and has
+  neither FinalAcceptance nor submitter contribution.
+- Reject sets Task `rejected` with a bounded human reason, blocks only the
+  same-task Assignment with its source Review, changes no grant or unrelated
+  task, and has neither FinalAcceptance nor submitter contribution.
+- FinalAcceptance has no manual API/action and no adjudication/reopen path.
 - Only accept has a submitter contribution.
 
 ## Flow 6: Revision Replay

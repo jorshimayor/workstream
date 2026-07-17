@@ -190,9 +190,9 @@ Owner:
 
 Policy:
 
-- the accepting Review creates reviewer `completed_review`, then
-  FinalAcceptance, then submitter `accepted_submission` from that fact, all
-  atomically
+- the accepting Review creates reviewer `completed_review`, REV-owned
+  FinalAcceptance, and FinalAcceptance-sourced submitter `accepted_submission`
+  contribution records atomically
 - each frozen contribution policy is evaluated independently; only payable
   contributions create awards and fulfillment follow-up
 - accepted task is not confused with fulfilled compensation
@@ -210,6 +210,10 @@ Policy:
 
 - rejection requires a bounded human, guide-grounded reason; structured
   findings and finalized evidence are optional when they add useful support
+- the Task enters canonical `rejected`; only its same-task TaskAssignment is
+  blocked and bound to the reject Review
+- no FinalAcceptance or submitter contribution is created; no actor grant or
+  unrelated task changes
 
 ### Compensation Fulfillment Follow-Up
 

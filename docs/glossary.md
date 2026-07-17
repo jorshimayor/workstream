@@ -366,10 +366,21 @@ It is not a v0.1 review-transaction side effect.
 
 The immutable, evidence-backed record of one completed contribution under locked
 project context. `completed_review` is created for every valid recorded human
-Review; `accepted_submission` is created for the submitter only on `accept`.
-The submitter record is sourced from FinalAcceptance rather than inferred from
-Review.decision. Compensation records may attach to either contribution type;
-deferred reputation projections do not replace the contribution record.
+Review and binds directly to that Review and ReviewLease.
+`accepted_submission` is created only from FinalAcceptance and the exact
+TaskAssignment; it is never inferred directly from `Review.decision`.
+Compensation records may attach to either contribution type but do not replace
+the contribution record; reputation projections remain deferred.
+
+## Final Acceptance
+
+The immutable REV-owned internal fact created only as a lifecycle consequence
+of `Review(accept)`. It binds one project, task, existing versioned Submission,
+source Review, accepted submitter, recording reviewer, acceptance time, and
+locked ReviewPolicy. There is no public/manual create API or separate
+authorization action. `needs_revision` and `reject` create none. In v0.1 it is
+unique per task, source Review, and Submission and is the sole source of an
+`accepted_submission` ContributionRecord.
 
 ## Human Owner
 

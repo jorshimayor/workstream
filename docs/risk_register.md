@@ -65,6 +65,8 @@ Mitigation:
 - structured blocking/advisory findings
 - immutable SubmissionFindingResponse and later FindingResolution
 - offline reviewer calibration without mutating product history
+- reviewer quality metrics
+- post-decision non-mutating reviewer-quality audits
 
 ### R4: Revision Loops Without Closure
 
@@ -182,6 +184,8 @@ Mitigation:
 - require evidence citation on accept
 - record quality concerns as audit/operations evidence without overturning or
   mutating the immutable Review
+- include high-value or disputed tasks in configurable offline samples; sampling
+  cannot delay or replace the recorded decision
 
 ### R12: Bad Project Guides
 
@@ -212,7 +216,8 @@ Mitigation:
 - project guides define banned low-quality patterns
 - checkers flag repeated boilerplate, placeholders, and fabricated helper artifacts
 - reviewers judge task-specific evidence, not formatting polish
-- repeated pattern matches affect contributor reputation
+- repeated pattern matches remain future reputation inputs only after separate
+  reputation implementation
 
 ### R14: Compensation Disputes
 
