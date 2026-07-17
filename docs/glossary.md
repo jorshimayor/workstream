@@ -84,7 +84,7 @@ protocol observations are replica details, not this record's identity.
 
 The per-item mutable upload-operation ledger inside an
 `ArtifactUploadSession`. It owns byte reservation, logical role, scoped
-idempotency, request digest, CAS state, provider operation reference, and the
+idempotency, request digest, CAS state, opaque `provider_object_ref`, and the
 resulting `ArtifactContent`. It is not an `ArtifactBinding`.
 
 ## ArtifactBinding
@@ -96,10 +96,11 @@ records Workstream meaning and provenance, not storage-provider state.
 
 ## ArtifactReplica
 
-One provider copy of `ArtifactContent`, identified by opaque provider artifact
-and optional bounded protocol observations. Verification, availability, and
-integrity states belong here and do not create task or review states. Logical
-Workstream references are represented only by `ArtifactBinding`.
+One provider copy of `ArtifactContent`, identified by an opaque
+`provider_object_ref` and optional bounded protocol observations. Verification,
+availability, and integrity states belong here and do not create task or review
+states. Logical Workstream references are represented only by
+`ArtifactBinding`.
 
 ## ArtifactOperationReceipt
 

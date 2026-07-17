@@ -56,6 +56,7 @@ class LocalStorageBootstrap:
     """Composition-only namespace lifecycle for one pinned local store."""
 
     def __init__(self, adapter: LocalStorageAdapter) -> None:
+        """Own one unopened-layout adapter created by the composition root."""
         if type(adapter) is not LocalStorageAdapter:
             raise ValueError("local artifact bootstrap adapter is invalid")
         self._adapter = adapter

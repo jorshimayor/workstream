@@ -312,6 +312,7 @@ def test_namespace_startup_values_are_closed_and_immutable() -> None:
         ("local-v2", (("z", "1"), ("a", "2"))),
         ("local-v2", (("a", "1"), ("a", "2"))),
         ("local-v2", (("", "1"),)),
+        ("local-v2", (("backend", "local"),)),
     ):
         with pytest.raises(ValueError):
             ArtifactStoreNamespaceIdentity(profile, items)

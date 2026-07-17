@@ -2118,3 +2118,11 @@ factory boundary before namespace work. Operator binding and audit lookups use
 closed resource vocabularies and exact method names. All prior reviewer sessions
 were closed; this candidate requires fresh deterministic coverage and all nine
 exact-SHA reviewer tracks before evidence can be refreshed.
+
+The first review of the startup-claim candidate then found two Low issues. A
+future provider descriptor could collide with canonical `backend`, `adapter`,
+or `provider_profile` keys, and the glossary retained two v1 provider-reference
+phrases. The interface now rejects every reserved descriptor key, regression
+coverage pins that rule, and the glossary uses the exact opaque
+`provider_object_ref` term. Those reviewer sessions were closed; no prior pass
+or pass-with-risk result is reusable for the repaired revision.

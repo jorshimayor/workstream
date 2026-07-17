@@ -15,6 +15,9 @@ from app.modules.artifacts.sources import ArtifactCommitment, CommittedArtifactS
 
 ARTIFACT_STORE_CAPABILITY_KEY = "artifact_store"
 _MAXIMUM_PROVIDER_OBJECT_REF_LENGTH = 1024
+_RESERVED_NAMESPACE_DESCRIPTOR_KEYS = frozenset(
+    {"adapter", "backend", "provider_profile"}
+)
 
 
 def _validate_provider_object_ref(provider_object_ref: str) -> None:
@@ -114,7 +117,11 @@ class ArtifactStoreNamespaceIdentity:
             ):
                 raise ValueError("artifact namespace descriptor is invalid")
             keys.append(item[0])
-        if keys != sorted(keys) or len(keys) != len(set(keys)):
+        if (
+            keys != sorted(keys)
+            or len(keys) != len(set(keys))
+            or not _RESERVED_NAMESPACE_DESCRIPTOR_KEYS.isdisjoint(keys)
+        ):
             raise ValueError("artifact namespace descriptor is not canonical")
 
     def as_dict(self) -> dict[str, str]:
