@@ -74,17 +74,25 @@ PR #140 changes planning and authorization documentation only. Its runtime
 snapshot was 74 PermissionIds and 57 ActionIds, with 9 active and 48 planned;
 none of the 24 REV lifecycle dependencies was active.
 
-AUTH-09A PR #132 then merged to current trusted main
+AUTH-09A PR #132 then merged to its trusted main
 `299363af5d9e8a68bcc9b17457188048483caeed` from reviewed code
 `fe61df64fbf82a1f6871c380e6fc1986a4f12205` and final branch head
 `d4b65400d35c1036f8d6f15bb81fe5e0b81f10be`. It advances the migration head to
 `0023`, adds the common fixed-service schema and seven ART identities with
 eleven exact memberships, and registers eight planned AUTH-09 route actions.
-The current catalogue is therefore 74 PermissionIds and 65 ActionIds: 9 active
+The AUTH-09A catalogue was therefore 74 PermissionIds and 65 ActionIds: 9 active
 and 56 planned. It provisions no actor, admits no service token, and does not
 add any of REV's six identities. Later gates derive counts from then-current
 trusted main, and the separate ART evidence-binding proposal is not counted
 among the 24 REV dependencies.
+
+AUTH-09B PR #143 later merged to current trusted main
+`053242b90d927ace3fab92eeca72da27a61cecec` from final branch head
+`9ee5646`. It activates only `actor.service.provision`, producing 74
+PermissionIds and 65 ActionIds split into 10 active and 55 planned. The
+controlled route may provision only identities already present in AUTH's closed
+registry. It adds none of REV's six identities, admits no service token, and
+activates no review action; all 24 REV dependencies remain unavailable.
 
 ## Dependency specifications and plans
 
@@ -185,5 +193,6 @@ gates complete, every review-lifecycle action and endpoint remains unavailable.
 
 After the initial exact-SHA review, the branch pulled merged CON PR #142 at
 `a947b8693a97bdb94c9dc63202a51e197834d613`. The original `0302bcf` start and
-archive-integrity proofs remain fixed; final PR scope and exact-SHA review use
-the newer merged-main boundary.
+archive-integrity proofs remain fixed. The branch then pulled merged AUTH-09B
+PR #143 at `053242b90d927ace3fab92eeca72da27a61cecec`; final PR scope and
+exact-SHA review use that newest merged-main boundary.

@@ -538,11 +538,13 @@ or CON record.
 ## Action Inventory And Activation Custody
 
 Merged AUTH-08 is historical provenance: 74 PermissionIds and 57 ActionIds,
-with 9 active and 48 planned. Trusted main after merged AUTH-09A contains 74
-PermissionIds and 65 ActionIds, with 9 active and 56 planned. AUTH-09A adds the
-common fixed-service schema and seven ART identities with eleven memberships;
-it provisions no actor, admits no service token, activates no action, and
-contains none of REV's six future service identities.
+with 9 active and 48 planned. Trusted main after merged AUTH-09B contains 74
+PermissionIds and 65 ActionIds, with 10 active and 55 planned. AUTH-09A added
+the common fixed-service schema and seven ART identities with eleven
+memberships. AUTH-09B activates only `actor.service.provision` and supplies
+controlled provisioning for identities already in AUTH's closed registry; it
+admits no service token, activates no review action, and contains none of REV's
+six future service identities.
 
 The review lifecycle currently depends on 24 unavailable actions:
 
@@ -647,11 +649,12 @@ revalidation.
 ## Fixed Service Identity Manifests
 
 Each identity is a distinct fixed service ActorProfile with its own exact static
-ActionId membership. None exists in AUTH-09A. Each requires a separately
-reviewed AUTH enum/database-constraint/static-matrix extension, AUTH-09B
-provisioning, AUTH-09E admission, cross-service and human denial proof, and
-later exact action activation. An extension or admission activates nothing by
-itself and no catch-all review service exists.
+ActionId membership. None exists through AUTH-09B. Each requires a separately
+reviewed AUTH enum/database-constraint/static-matrix extension, controlled
+provisioning through the merged AUTH-09B capability, AUTH-09E admission,
+cross-service and human denial proof, and later exact action activation. An
+extension or admission activates nothing by itself and no catch-all review
+service exists.
 
 | Fixed service identity | Exact ActionId | PermissionId | Hidden consumer | Activation gate |
 |---|---|---|---|---|

@@ -127,9 +127,10 @@ frontend work
 - The active contract records merged AUTH-08 as 74 PermissionIds and 57
   ActionIds split into 9 active actions and 48 planned actions. It
   identifies that count as historical. It records current trusted main after
-  AUTH-09A as 74 PermissionIds and 65 ActionIds split into 9 active and 56
-  planned, and does not describe the authorization kernel as absent or treat
-  any of the 24 REV dependencies as active.
+  AUTH-09B as 74 PermissionIds and 65 ActionIds split into 10 active and 55
+  planned; only `actor.service.provision` changed availability. It does not
+  describe the authorization kernel as absent, claim a REV service identity was
+  added, or treat any of the 24 REV dependencies as active.
 - The active contract records AUTH-08's rollback-only dependency teardown,
   typed authorization-evidence `503` mapping, and route-owned canonical
   verification timestamps as required regression invariants. Chunk 01 changes
@@ -278,7 +279,7 @@ test ! -e sheets/workstream_roadmap.csv
 test -z "$(git ls-files sheets/)"
 python3 scripts/test_agent_gates.py
 python3 scripts/check_internal_review_evidence.py
-git diff --name-only a947b8693a97bdb94c9dc63202a51e197834d613
+git diff --name-only 053242b90d927ace3fab92eeca72da27a61cecec
 git diff --check
 ```
 

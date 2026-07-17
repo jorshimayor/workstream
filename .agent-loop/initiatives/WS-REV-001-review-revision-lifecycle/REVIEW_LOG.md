@@ -807,3 +807,20 @@ The follow-up plan gate accepted the active prose and required the regression
 to bind Flow 5's verified facts and every checker-forbidden Review record or
 reviewer contribution explicitly. The final fixture scopes those assertions to
 the checker-remediation `creates no` clause.
+
+## WS-REV-001-01 AUTH-09B Main Reconciliation - 2026-07-18
+
+After candidate `df098f203fae4982806568dcc25a81043d9f7211` passed all nine
+tracks, AUTH-09B PR #143 advanced main to
+`053242b90d927ace3fab92eeca72da27a61cecec`. The branch pulled that merge
+cleanly. Only `scripts/test_agent_gates.py` overlapped, and Git retained both
+AUTH's new gates and REV's registered 87-test baseline without conflict.
+
+AUTH-09B activates only `actor.service.provision`, changing the current
+catalogue snapshot to 74 PermissionIds and 65 ActionIds split into 10 active and
+55 planned. It supplies controlled provisioning for AUTH's existing closed
+identity registry but adds none of REV's six future identities, admits no
+service token, and activates no review action. All 24 REV action dependencies
+remain unavailable. The prior exact-SHA PASS is historical; the reconciled
+candidate requires fresh deterministic and full reviewer evidence against
+`053242b`.

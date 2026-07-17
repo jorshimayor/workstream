@@ -12,6 +12,11 @@ While Chunk 01 was under review, CON planning PR #142 merged to main at
 reconciled its shared active documents. PR #142 changes planning/contracts only;
 no CON runtime behavior became active.
 
+AUTH-09B PR #143 then merged to main at
+`053242b90d927ace3fab92eeca72da27a61cecec`. The branch pulled it cleanly;
+only the shared agent-gate test file overlapped. AUTH-09B activates controlled
+`actor.service.provision`, not service admission or any REV action.
+
 Chunk 01 adopts `docs/spec_review_lifecycle.md` as the active normative
 contract, preserves the supplied WS-REV and WS-IMP archival Markdown/PDF bytes,
 reconciles active documentation, and adds a fail-closed stale review-contract
@@ -20,8 +25,8 @@ gate. It changes no backend, migration, AUTH, ART, or CON runtime code.
 ## Dependency state
 
 - AUTH-08 remains the historical 74-PermissionId, 57-ActionId snapshot: 9
-  active and 48 planned. Current trusted main after AUTH-09A has 74
-  PermissionIds and 65 ActionIds: 9 active and 56 planned.
+  active and 48 planned. Current trusted main after AUTH-09B has 74
+  PermissionIds and 65 ActionIds: 10 active and 55 planned.
 - All 24 REV lifecycle action dependencies remain unavailable: planned
   `submission.create`, 19 planned review actions, and four approved but
   unregistered REV additions. The separately proposed ART evidence-binding
@@ -29,6 +34,10 @@ gate. It changes no backend, migration, AUTH, ART, or CON runtime code.
 - AUTH owns registration, service identity admission, evaluator integration,
   activation, and prepared-mutation authority. REV publishes immutable feature
   manifests and hidden behavior evidence; it does not activate actions.
+- Merged AUTH-09B supplies controlled provisioning only for identities already
+  in AUTH's closed registry. None of REV's six identities exists yet; their
+  exact extensions, provisioning, AUTH-09E admission, and feature activation
+  remain downstream gates.
 - ART-02A2 remains preparation-only. Review consumes only later approved ART v2
   typed packet-read and evidence candidate/finalize ports. It never consumes
   ART scratch, v1 store, provider, or repository APIs.
@@ -67,14 +76,12 @@ gate. It changes no backend, migration, AUTH, ART, or CON runtime code.
 ## Chunk 01 evidence state
 
 Candidate `df098f203fae4982806568dcc25a81043d9f7211` passed all nine required
-tracks against trusted current main
-`a947b8693a97bdb94c9dc63202a51e197834d613`: senior engineering, QA/test,
-security/auth, product/ops, architecture, docs, reuse/dedup, test delta, and CI
-integrity. All valid current-main reconciliation and repair findings are closed;
-87 agent-gate tests and the deterministic contract gates pass.
+tracks against the prior CON main boundary. That evidence is historical after
+AUTH-09B PR #143 advanced main and changed the shared agent-gate suite. The
+merged candidate requires a fresh exact-SHA reviewer pass and evidence binding.
 
-Chunk 01 is PR-ready for external checks and human review. It activates no
-review action or endpoint and does not authorize merge.
+Chunk 01 is not yet PR-ready after the AUTH-09B refresh. It activates no review
+action or endpoint and does not authorize merge.
 
 ## Stop condition
 

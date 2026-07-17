@@ -154,9 +154,10 @@ The four additive ActionIds and their closed mappings are registered together by
 and 12A; `WS-AUTH-001-REV-LIFECYCLE` later integrates their evaluators and
 activates them together. They add no PermissionId. The AUTH-08 runtime snapshot
 contained 57 actions: 9 active and 48 planned. That is historical provenance,
-not a fixed future total. Current trusted main after AUTH-09A contains 65
-actions: 9 active and 56 planned; its eight additions are unrelated to the 24
-unavailable REV dependencies.
+not a fixed future total. Current trusted main after AUTH-09B contains 65
+actions: 10 active and 55 planned. AUTH-09B activates only
+`actor.service.provision`; it adds no REV identity or action and leaves all 24
+REV dependencies unavailable.
 WS-XINT-001 separately proposes
 `artifact.review_evidence.binding.create -> artifact.binding.create` for the
 ART binding service. Every later AUTH registration or activation chunk derives
