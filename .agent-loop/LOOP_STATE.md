@@ -19,10 +19,10 @@
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: required internal review passes on reviewed planning SHA
-  `223a15b`, and final deterministic closure passes on evidence head `c287f44`;
-  PR publication, external checks, and the human checkpoint remain. No runtime
-  starts from this planning branch.
+- Current gate: required internal review passes on the externally repaired
+  planning state at `bac3073`, and final deterministic closure passes on
+  evidence head `7cb02b5`; replacement external checks and the human checkpoint
+  remain for PR #140. No runtime starts from this planning branch.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
