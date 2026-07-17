@@ -4525,9 +4525,8 @@ def test_checker_admission_and_reject_sampling_remain_nonhuman_and_nonmutating()
     checker_prohibitions = revision_flow.split("creates no ", maxsplit=1)[1].split(
         "and returns through", maxsplit=1
     )[0]
+    assert "Review, ReviewFinding" in checker_prohibitions
     for prohibited_record in (
-        "Review",
-        "ReviewFinding",
         "SubmissionFindingResponse",
         "FindingResolution",
         "reviewer contribution",
