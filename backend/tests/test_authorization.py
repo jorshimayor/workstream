@@ -97,6 +97,7 @@ from app.modules.authorization.runtime import (
     ActorKind,
     ActorSelfResourceContext,
     ActorStatus,
+    AdminRoleDefinitionsResourceContext,
     AdminRoleGrantCollectionResourceContext,
     AdminRoleGrantIssueResourceContext,
     AdminRoleGrantResourceContext,
@@ -476,6 +477,7 @@ async def test_definition_reads_authorize_touch_and_commit_before_disclosure(
     assert isinstance(first_resource, PermissionCatalogueResourceContext)
     assert first_resource.resource_id == "workstream:permission_catalogue"
     assert second_action is ActionId.AUTHORIZATION_ADMIN_ROLE_DEFINITIONS_READ
+    assert isinstance(second_resource, AdminRoleDefinitionsResourceContext)
     assert second_resource.resource_id == "workstream:admin_role_definitions"
     assert [event for event, _ in events] == [
         "authorize",
