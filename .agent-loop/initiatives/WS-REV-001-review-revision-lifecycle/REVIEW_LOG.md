@@ -824,3 +824,12 @@ service token, and activates no review action. All 24 REV action dependencies
 remain unavailable. The prior exact-SHA PASS is historical; the reconciled
 candidate requires fresh deterministic and full reviewer evidence against
 `053242b`.
+
+## WS-REV-001-01 PR #145 Initial External Gate - 2026-07-18
+
+PR #145 opened from head `9ad0420e`. GitHub Agent Gates failed only at the
+schema-v2 merge-intent validator because the existing `WS-REV-001-02` contract
+heading omitted the successor title declared by the exact REV-01 merge intent.
+The repair adds that exact title to the heading without changing successor
+scope or starting Chunk 02. CodeRabbit reported a review-limit cooldown and
+produced no findings.

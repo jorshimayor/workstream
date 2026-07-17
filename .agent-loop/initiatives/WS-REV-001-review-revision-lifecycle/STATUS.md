@@ -82,8 +82,11 @@ security/auth, product/ops, architecture, docs, reuse/dedup, test delta, and CI
 integrity. All 80 current-main agent tests and seven REV additions are retained;
 87 agent-gate tests and the deterministic contract gates pass.
 
-Chunk 01 is PR-ready for external checks and human review. It activates no
-review action or endpoint and does not authorize merge.
+Chunk 01 is published as PR #145. Its initial Agent Gates run found a
+successor-heading/merge-intent title mismatch; the exact metadata repair is
+under internal and replacement-CI review. CodeRabbit was rate-limited and
+produced no findings. This chunk activates no review action or endpoint and
+does not authorize merge.
 
 ## Stop condition
 

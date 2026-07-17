@@ -100,7 +100,11 @@ integrity. No blocking findings remain.
 
 ## External Review
 
-Pending PR checks, CodeRabbit, and human review. External checks supplement the
+PR #145's initial Agent Gates run found a successor-heading/merge-intent title
+mismatch. The heading was aligned to the existing reviewed title and the exact
+validator and internal loop were rerun. CodeRabbit did not review because its
+organization rate limit was reached; it produced no findings. Backend and
+replacement PR checks remain external gates. External checks supplement the
 completed internal review and do not replace it.
 
 ## Remaining Risks
