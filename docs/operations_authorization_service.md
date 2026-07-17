@@ -502,10 +502,19 @@ resource loader, lifecycle guards, negative tests, and evidence path exist.
 
 The catalogue contains exactly 74 PermissionIds and 57 ActionIds. The two
 AUTH-07B actor-self actions and seven AUTH-08 administrative actions are active;
-the other 48 entries remain planned and non-executable. Planned entries contain
-only action, permission, owner, and availability and must not receive deployment
-configuration, principals, resource facts, or guards. Startup validation failure
-is a release blocker, not a reason to relax catalogue checks.
+the other 48 entries remain planned and non-executable. Planned runtime entries
+contain only action, permission, exact AUTH activation owner, and availability.
+Their owning feature must publish the approved principal/resource/guard/surface/
+transaction contract before registration or activation, but those foreign facts
+do not become free-form catalogue fields. Startup validation failure is a release
+blocker, not a reason to relax catalogue checks.
+
+PR #139 requires availability-neutral transfer of all 25 ART and 19 REV owner
+rows to exact AUTH chunks before feature activation. Counts and mappings remain
+unchanged. Four later REV registrations would make 61 actions with nine active;
+the later review-evidence binding registration would make 62. Neither addition
+is operational until its complete feature contract and separate reviewed AUTH
+registration exist.
 
 Migration `0021` preserves historical audit rows with null `action_id`. Inspect
 non-null action evidence only by bounded ActionId, request/correlation IDs, and
@@ -521,7 +530,7 @@ historical status from identifier prefixes. All submission/review rows remain
 planned. Initial and revision submission share `submission.create`, and no
 revision-specific permission or preparation action exists.
 
-Review code must consume the request-scoped public
+Review reads consume the request-scoped public
 `AuthorizationService.require(action_id, typed_resource_context)` boundary.
 The service's bound caller-owned `AsyncSession` is the only transaction source;
 the method accepts no session or `uow` argument. Review code must not query
@@ -530,6 +539,13 @@ PermissionIds, or implement permission unions. Artifact recovery remains the
 ART-owned `artifact.verification_job.retry` action through
 `ArtifactOperatorRecoveryPort`; shared outbox dispatch/retry remains outside
 REV ownership.
+
+Review and other sensitive mutations must wait for `WS-AUTH-001-PREP`. That
+protocol locks authority first, gives the feature one session/action-bound
+single-use handle, lets the feature lock rows and recompose final facts, then
+evaluates and stages evidence once before one route/service-command commit.
+Never serialize or reuse a prepared handle, let dependency teardown commit it,
+or commit AUTH evidence separately from feature state.
 
 Downgrade is allowed only while every action ID remains null and no permission
 outside migration `0018`'s historical 49-value set exists in the decision,
@@ -541,6 +557,28 @@ discarding it.
 Canonical actor self-read/self-update and the seven AUTH-08 administrative
 actions are active. Project capability context waits for AUTH-10 exact-project
 grants and canonical project composition.
+
+AUTH-10 is a clean cut to independent `submitter`, `reviewer`, and
+`adjudicator` grants. Before rollout, scan current typed schemas, audit facts,
+idempotency records, and PostgreSQL validators for `both`, replacement fields,
+replacement events, and replacement reasons. Migration `0024` must stop on any
+incompatible evidence; operators must remediate through a separately approved
+data decision, never an automatic conversion. A safe downgrade also refuses
+rather than deleting adjudicator or new exact-role evidence.
+
+Project-role revocation is routed by exact role. Submitter invalidation may
+reach task assignment; reviewer invalidation reaches only REV; adjudicator
+invalidation remains dormant until that lifecycle exists. Verify grant ID,
+actor, project, role, and cause event before a consumer changes product state.
+Revoking one role must leave the other project roles and all AdminRoleGrants
+unchanged.
+
+The first fixed-service set remains seven artifact identities and eleven matrix
+memberships from AUTH-09A. Missing provisioned rows deny without stopping the
+application. New REV/CON service identities require an exact owning-feature
+manifest followed by AUTH-owned enum/constraint/matrix, provisioning, admission,
+and cross-service denial proof. Do not create a shared review service or a
+database service-grant table.
 
 ## Actor Self Decision Operations
 

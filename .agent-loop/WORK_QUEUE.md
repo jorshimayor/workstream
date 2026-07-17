@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-XINT-001-PLAN` | Lifecycle Boundary Reconciliation | L1 | Planning-only coordination active after explicit user start on 2026-07-16 |
+| `WS-AUTH-001-XINT` | Lifecycle Boundary Plan Reconciliation | L1 | Planning-only AUTH owner response to merged PR #139 |
 
 Live post-merge state remains read from signed `automation/loop-memory`
 output. This authored queue records the separately approved parallel chunks.
@@ -14,7 +14,9 @@ output. This authored queue records the separately approved parallel chunks.
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Paused for AUTH priority; no valid replacement baseline yet |
-| `WS-AUTH-001-09A` | Fixed Service Identity Foundation | L1 | Reviewed in PR #132; awaiting explicit human merge approval |
+| `WS-AUTH-001-09A` | Fixed Service Identity Foundation | L1 | PR #132 open/conflicting; converge on merged XINT and re-review after this plan merges |
+| `WS-AUTH-001-ART-CUSTODY` | ART Activation Custody Transfer | L1 | Inactive until repaired 09A merge/memory and explicit start |
+| `WS-AUTH-001-REV-CUSTODY` | REV Activation Custody Transfer | L1 | Inactive until ART custody merge/memory and explicit start |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02A3` | ArtifactStore v2 Local Clean Cut | L1 | Reviewed in isolated parallel worktree; pending its own PR and merge |
@@ -72,6 +74,7 @@ output. This authored queue records the separately approved parallel chunks.
 | `WS-AUTH-001-07B` | Deny-By-Default Kernel And Self-Action Cutover | L1 | Merged through PR #130 as `90eca12` on 2026-07-15 |
 | `WS-AUTH-001-08` | Bootstrap Access Administrator Grant | L1 | Merged through PR #131 as `aa0fdcd` on 2026-07-16 |
 | `WS-ART-001-02A2` | Committed Source And Local Preparation | L1 | Merged through PR #129 as `9a04434` on 2026-07-16 |
+| `WS-XINT-001-PLAN` | Lifecycle Boundary Reconciliation | L1 | Merged through PR #139 as `5d353b6` on 2026-07-17 |
 | `WS-ART-001-OBJECT-STORAGE-AMENDMENT` | AWS-First Object Storage Planning Amendment | L1 | Merged through PR #120 as `4408256` on 2026-07-14 |
 | `WS-ART-001-02A1` | External Service Adapter Foundation | L1 | Merged through PR #127 as `f64a8e5` on 2026-07-15 |
 | `WS-ENG-001-02` | Automated Post-Merge Memory | L1 | Merged through PR #122 as `fc89fb6`; schema-v1 output superseded by WS-ENG-001-03 |
@@ -81,9 +84,10 @@ output. This authored queue records the separately approved parallel chunks.
 AUTH-05A merged through PR #115 as `8e1cde6`, and CAT plus its post-merge memory
 merged through PRs #117 and #118. AUTH-05B merged through PR #119 as `ad71c7e`.
 AUTH-06 merged through PR #124 as `f599551`. AUTH-07A, AUTH-07B, and AUTH-08
-merged through PRs #126, #130, and #131. AUTH-09A is reviewed in its isolated
-parallel worktree; do not start an AUTH-09 successor or POL-002-04
-automatically.
+merged through PRs #126, #130, and #131. WS-XINT planning merged through PR
+#139. `WS-AUTH-001-XINT` now reconciles AUTH's owner plan. AUTH-09A remains open
+and conflicting in PR #132; converge and re-review it only after this planning
+amendment merges. Do not start an AUTH-09 successor or POL-002-04 automatically.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.

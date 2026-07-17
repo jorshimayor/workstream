@@ -52,6 +52,11 @@ superseded.
 - One `AuthorizationService` combines registered permissions, grant scope,
   canonical resource ownership, actor state, lifecycle state, and explicit
   guards.
+- Sensitive mutations use an AUTH-first prepared handle, feature-owned final
+  fact recomposition, one authorization evaluation, and one caller-owned commit.
+- `ActionOwner` names one exact AUTH activation custodian; ART, REV, CON, and
+  product modules keep resource facts and behavior but never change action
+  availability.
 - Revocation and suspension take effect from database state without requiring
   token refresh.
 - Sensitive authority changes are idempotent, concurrency-safe, and auditable.
@@ -117,6 +122,11 @@ namespace and remains canonical.
 - Building new approval endpoints on the obsolete bootstrap during cutover.
 - Coupling submitter, reviewer, and adjudicator authority into one grant row.
 - Allowing a service token to enter human first-access or grant evaluation.
+- Letting a feature label remain an activation owner after PR #139.
+- Registering or activating review/artifact actions before complete feature
+  manifests and transaction proof exist.
+- Retaining `both` or replacement evidence in current typed or PostgreSQL
+  validators after independent project-role grants ship.
 
 ## What must not change
 

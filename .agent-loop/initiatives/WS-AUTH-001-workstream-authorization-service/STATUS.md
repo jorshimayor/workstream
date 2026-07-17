@@ -85,22 +85,25 @@ AUTH-08. The user explicitly started AUTH-08. Its inherited L1 contract failed
 initial security/architecture, QA/product, and senior/CI/docs review before
 runtime edits. The repaired contract passed all required preimplementation
 tracks at `cbe7c6c`; bounded AUTH-08 implementation later merged through PR
-#131 as `aa0fdcd`. AUTH-09 was split before runtime implementation. AUTH-09A is
-reviewed through PR #132 and awaits explicit human merge approval; later
-children remain inactive.
+#131 as `aa0fdcd`. AUTH-09 was split before runtime implementation. AUTH-09A was
+reviewed through PR #132. PR #139 then merged the authoritative WS-XINT boundary
+reconciliation as `5d353b6` on 2026-07-17. PR #132 remains open and now
+conflicts with trusted `main`; its fixed service foundation remains valid, but
+its planning and evidence must converge from the merged XINT contract and be
+re-reviewed before merge. `WS-AUTH-001-XINT` is the active planning-only AUTH
+owner response. No runtime successor or feature action is active.
 
 ## Active planning chunk
 
-None.
+`WS-AUTH-001-XINT` - Lifecycle Boundary Plan Reconciliation.
 
 ## Active implementation chunk
 
-None. `WS-AUTH-001-09A` has completed implementation and review and is at the
-human merge checkpoint in PR #132.
+None. This chunk changes plans and future contracts only.
 
 ## Current review branch
 
-`codex/ws-auth-001-09-actor-state-service-actors`
+`codex/ws-auth-001-xint-reconciliation`
 
 ## Chunk status
 
@@ -122,21 +125,45 @@ human merge checkpoint in PR #132.
 | `WS-AUTH-001-07A` | Merged | `codex/ws-auth-001-07-authorization-kernel` | #126 | Merged as `e9d72a1`; 74 permissions, 50 planned actions, and action-aware audit parity only. |
 | `WS-AUTH-001-07B` | Merged | `codex/ws-auth-001-07b-deny-default-kernel` | #130 | Merged as `90eca12`; signed memory passed. |
 | `WS-AUTH-001-08` | Merged | `codex/ws-auth-001-08-bootstrap-admin-grants` | #131 | Merged as `aa0fdcd`; signed memory passed. |
+| `WS-AUTH-001-XINT` | Planning active | `codex/ws-auth-001-xint-reconciliation` | - | Reconciles merged PR #139 into AUTH plans only. |
 | `WS-AUTH-001-09` | Split | - | - | Split into 09A through 09E before runtime implementation. |
-| `WS-AUTH-001-09A` | Awaiting human merge | `codex/ws-auth-001-09-actor-state-service-actors` | #132 | Implementation and review complete; fixed service identity and static matrix foundation. |
-| `WS-AUTH-001-09B` | Proposed | - | - | Controlled service ActorProfile/ActorIdentityLink provisioning. |
+| `WS-AUTH-001-09A` | Convergence required | `codex/ws-auth-001-09-actor-state-service-actors` | #132 | Open/conflicting; foundation valid, planning must converge on PR #139 and repeat exact-head review. |
+| `WS-AUTH-001-ART-CUSTODY` | Proposed | - | - | Availability-neutral 25-row ART owner transfer after repaired 09A. |
+| `WS-AUTH-001-REV-CUSTODY` | Proposed | - | - | Availability-neutral 19-row REV owner transfer after ART custody. |
+| `WS-AUTH-001-09B` | Proposed | - | - | Controlled service ActorProfile/ActorIdentityLink provisioning after both custody transfers. |
 | `WS-AUTH-001-09C` | Proposed | - | - | Actor and identity-link administrative reads. |
 | `WS-AUTH-001-09D` | Proposed | - | - | Actor and identity-link lifecycle mutations. |
 | `WS-AUTH-001-09E` | Proposed | - | - | Fixed service runtime admission after 09D. |
+| `WS-AUTH-001-PREP` | Proposed | - | - | AUTH-first prepared mutation protocol after 09E. |
 | `WS-AUTH-001-10` | Proposed | - | - | Project contributor grants. |
 | `WS-AUTH-001-11` | Proposed | - | - | Project identity/guide/source/read cutover. |
 | `WS-AUTH-001-12` | Proposed | - | - | Project policy/setup mutation cutover. |
 | `WS-AUTH-001-13` | Proposed | - | - | Task management and assignment cutover. |
 | `WS-AUTH-001-14` | Proposed | - | - | Submission/checker/audit visibility cutover. |
-| `WS-AUTH-001-15` | Proposed | - | - | Remaining system worker and obsolete authority removal. |
+| `WS-AUTH-001-15` | Proposed | - | - | Remaining internal service and obsolete authority removal. |
 | `WS-AUTH-001-16` | Proposed | - | - | Conformance and live proof. |
 
+Feature-gated registration and activation chunks are enumerated in
+`CHUNK_MAP.md` and `ACTIVATION_CUSTODY.md`. They remain inactive until exact
+merged feature manifests and separate human starts exist.
+
 ## Blockers
+
+PR #132 cannot merge unchanged because PR #139 modified overlapping AUTH loop,
+plan, chunk, and public-spec files. Resolve this only after the planning
+reconciliation merges: converge the 09A runtime/migration/evidence onto current
+`main`, preserve XINT role/service/activation wording, repeat required internal
+review on the exact head, and rerun external checks.
+
+The four proposed REV lifecycle actions and review-evidence binding action are
+blocked on complete feature-owned typed manifests. REV fixed services are also
+blocked on exact identity-to-ActionId contracts. These are deliberate
+registration gates, not reasons to weaken AUTH or invent catch-all authority.
+
+AUTH-10 through AUTH-15 require exact action enumeration before each starts.
+AUTH-10 additionally owns the current typed/PostgreSQL clean cut from `both`
+and replacement evidence; AUTH-11 through AUTH-15 own shifted migrations
+`0025` through `0029` for their action/evidence parity.
 
 AUTH-05A and CAT post-merge memory have no remaining blocker and are merged.
 The combined AUTH-05 contract

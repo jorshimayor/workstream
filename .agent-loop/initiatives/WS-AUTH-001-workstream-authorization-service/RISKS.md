@@ -20,7 +20,7 @@
 | A4 | Bootstrap races or the final Access Administrator is lost | Multiple trust roots or administrative lockout | Bootstrap and every final-admin-removal path lock `AuthorityControl(id=1) FOR UPDATE` before the effective-admin check and mutation | Different-target concurrent bootstrap plus revoke/suspend/deactivate concurrency tests |
 | A5 | Cross-project grant or IDOR | Unauthorized project access | Canonical DB resource resolution and composite ownership constraints | Cross-project read/mutation tests |
 | A6 | Revocation loses a race to mutation | Revoked actor commits sensitive change | Revalidate grants and state inside sensitive transaction | Grant-revoke versus command concurrency test |
-| A7 | Worker job trusts serialized authority | Stale grant remains effective | Serialized context is evidence only; reload current authority before commit | Revoked queued-command test |
+| A7 | Internal service job trusts serialized authority | Stale grant remains effective | Serialized context is evidence only; reload current authority before commit | Revoked queued-command test |
 | A8 | JWKS outage weakens verification | Unverifiable token accepted | Pinned algorithms, bounded cache, one refresh, fail closed | Cache/rotation/outage contract tests |
 | A9 | Claims or personal data leak | Security/privacy incident | Minimal verified token type, bounded logging, no raw token/JWKS persistence | Log/error/audit redaction tests |
 | A10 | Approval provenance breaks | Existing policy activation becomes unreadable or forgeable | Preserve historical values; new actions reference matched local grant | Migration and project approval tests |
@@ -37,6 +37,11 @@
 | A21 | Kernel APIs ship before their grant/resource authority exists | Fabricated authority, deny-only public surfaces, or hidden dual policy | Split AUTH-07 into 07A catalogue/audit and 07B self-only kernel; defer admin definitions to 08 and project context to 10 | Child-contract plan review, exact active-action tables, and no-grant/no-project surface scans |
 | A22 | Combined project role couples submitter, reviewer, and adjudicator authority | One revocation removes unrelated capability or forces replacement | One active immutable grant per actor/project/role; no cross-role replacement | Three-role issue/revoke/regrant concurrency and invalidation tests |
 | A23 | Service token enters human admission or uses another service row | Privilege escalation across human/service or workload boundaries | AUTH-09E fixed service admission and closed static matrix | Cross-service, human/service, inactive-link, and transaction-revalidation denials |
+| A24 | Feature owner labels remain executable activation custody | Dual writer or action activation before behavior exists | Atomic ART/REV owner transfers to exact AUTH chunks | Exact owner/mapping/count parity and all-planned denial |
+| A25 | Sensitive feature mutation evaluates stale pre-lock facts | Revoked authority commits business state | Session/action-bound single-use prepared handle and AUTH-first lock order | Authority-loss, handle-reuse, cancellation, and rollback concurrency tests |
+| A26 | Current validators keep `both` or replacement evidence | Combined authority survives the clean cut or history is silently converted | AUTH-10 replaces current typed/SQL validators and fails closed on obsolete evidence | Prior-head migration, no-conversion, downgrade-refusal, and stale-token tests |
+| A27 | Wrong role invalidation reaches the wrong consumer | Reviewer/adjudicator revocation releases submitter work or one role removes another | Exact role in grant, cause event, obligation, and consumer filter | Three-role revoke/regrant and wrong-consumer negative tests |
+| A28 | AUTH invents incomplete REV/ART/CON resource or service contracts | Cross-domain privilege, deadlock, or unreviewable coupling | Block registration until immutable feature manifests name facts, guards, service identity, and transaction owner | Registration gate plus manifest and cross-service parity tests |
 
 ## Required reviewers
 
