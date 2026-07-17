@@ -40,8 +40,9 @@ contract conflation, not a valid repair for this planning PR.
 
 ## CodeRabbit Pre-Merge Warning
 
-The PR-description warning is valid. The PR body will be expanded to match the
-repository trust-bundle sections before external checks rerun.
+The PR-description warning was valid and is addressed. PR #140 now contains the
+repository trust-bundle sections, and CodeRabbit's current Description check
+passes. Replacement checks remain required after the repair head is pushed.
 
 ## Remaining Gate
 
