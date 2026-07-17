@@ -49,7 +49,7 @@ created/updated/last-seen timestamps, and bounded lifecycle timestamps. Link
 response fields are link ID, actor ID, subject kind, status, linked/last-verified
 and bounded revoke/reactivate timestamps. Neither response exposes issuer,
 subject, contact email, raw reason, token material, claim data, grants, or
-service assignments.
+static service-matrix details.
 
 ## Boundary and acceptance
 

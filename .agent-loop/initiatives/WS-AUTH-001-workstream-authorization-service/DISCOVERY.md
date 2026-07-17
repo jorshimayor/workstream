@@ -12,7 +12,7 @@ already supports human/service kind and active/suspended/deactivated state;
 ActorIdentityLink already supports active/revoked state and one exact external
 issuer subject. The model has no stable local service-identity field.
 
-The inherited AUTH-09 contract required durable service-action assignments,
+The inherited AUTH-09 contract required durable service-to-action matrix rows,
 but the repository has no assignment model and the policy is a fixed
 seven-identity/eleven-action matrix. Persisting each pair would duplicate static
 policy and create unnecessary reconciliation. The accepted direction stores one
