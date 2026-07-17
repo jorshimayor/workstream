@@ -38,6 +38,7 @@ from app.modules.authorization.runtime import (
     IdentityLinkStatus,
     MatchedAuthorityKind,
     PermissionCatalogueResourceContext,
+    ServiceActorProvisionResourceContext,
     authorization_resource_digest,
 )
 
@@ -54,9 +55,16 @@ _ADMIN_ACTIONS = frozenset(
         ActionId.ADMIN_ROLE_GRANT_ISSUE,
         ActionId.ADMIN_ROLE_GRANT_REVOKE,
         ActionId.ADMIN_ROLE_GRANT_BOOTSTRAP,
+        ActionId.ACTOR_SERVICE_PROVISION,
     }
 )
-_ADMIN_MUTATIONS = frozenset({ActionId.ADMIN_ROLE_GRANT_ISSUE, ActionId.ADMIN_ROLE_GRANT_REVOKE})
+_ADMIN_MUTATIONS = frozenset(
+    {
+        ActionId.ADMIN_ROLE_GRANT_ISSUE,
+        ActionId.ADMIN_ROLE_GRANT_REVOKE,
+        ActionId.ACTOR_SERVICE_PROVISION,
+    }
+)
 
 
 class AuthorizationService:
@@ -257,6 +265,7 @@ class AuthorizationService:
             ActionId.ACTOR_ADMIN_ROLE_GRANT_HISTORY_READ: ActorAdminRoleGrantHistoryResourceContext,
             ActionId.ADMIN_ROLE_GRANT_ISSUE: AdminRoleGrantIssueResourceContext,
             ActionId.ADMIN_ROLE_GRANT_REVOKE: AdminRoleGrantResourceContext,
+            ActionId.ACTOR_SERVICE_PROVISION: ServiceActorProvisionResourceContext,
         }.get(action_id)
         return expected is not None and isinstance(resource, expected)
 

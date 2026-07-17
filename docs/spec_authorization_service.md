@@ -119,7 +119,7 @@ The active model has no `both`, replacement field, replacement event, or
 replacement reason. Qualification evidence is bound to the same actor, project,
 and exact requested role. One active row is permitted per
 actor/project/role. Issue idempotency includes the requested role; revoke derives
-the role from the locked grant. Migration `0024` refuses upgrade when obsolete
+the role from the locked grant. Migration `0025` refuses upgrade when obsolete
 combined or replacement evidence exists and never converts or deletes those
 rows. It replaces current typed and PostgreSQL validators without changing
 historical migrations.
@@ -238,11 +238,12 @@ approved Operator recovery identifiers, 21 artifact identifiers, and
 `review.queue.override` are the exact 25 post-`0020` permissions. AUTH-07A adds
 their matching typed/SQL audit parity without making them executable.
 
-The closed action registry contains 65 rows after AUTH-09A: nine active actions
-and 56 planned rows. AUTH-08 adds seven active administrative definition,
+The closed action registry contains 65 rows after AUTH-09B: ten active actions
+and 55 planned rows. AUTH-08 adds seven active administrative definition,
 grant-history, issue, revoke, and local-bootstrap actions without adding a
 permission. AUTH-09A adds eight planned actor, identity-link, and service
-provisioning actions without activating a route. The other planned rows cover
+provisioning actions without activating a route; AUTH-09B activates only
+`actor.service.provision`. The other planned rows cover
 three Operator recovery actions, 25 artifact actions, canonical
 `submission.create`, and 19 review actions. An action becomes active only when
 its feature owner has merged the canonical resource composer, guards, surface or
@@ -276,9 +277,11 @@ AUTH-09A registers these exact planned actions through migration `0023`:
 | `actor.identity_link.reactivate` | `actor.identity_link.reactivate` | `WS-AUTH-001-09D` |
 | `actor.service.provision` | `actor.service.provision` | `WS-AUTH-001-09B` |
 
-All eight remain unavailable until their exact AUTH owner supplies the route,
-typed resource context, evaluator, guards, transaction proof, and availability
-change. AUTH-09A supplies none of those runtime paths.
+AUTH-09B activates only `actor.service.provision` through the controlled route
+described below. The other seven remain unavailable until their exact AUTH
+owner supplies the route, typed resource context, evaluator, guards,
+transaction proof, and availability change. AUTH-09A supplies none of those
+runtime paths.
 
 The submission/review dependency matrix is closed. AUTH-07A registers only the
 four stable planned fields shown here; resource facts, candidates, guards, and
@@ -405,10 +408,16 @@ are also closed:
 | `workstream.artifact.materializer` | `artifact.pre_submit.checker_input.materialize`, `artifact.post_submit.checker_input.materialize` |
 | `workstream.artifact.checker_output` | `artifact.checker_output.write` |
 
-AUTH-09B persists these exact service ActorProfiles and ActorIdentityLinks
-before any WS-ART execution chunk consumes them. The service-action matrix is typed
-code, not a database assignment or grant table. Its rows remain inert while
-their actions are planned. After the ART execution behavior merges, the
+AUTH-09B lets a system Access Administrator bind an exact configured-issuer
+subject with no leading or trailing whitespace to one of these fixed identities
+through `POST /api/v1/service-actors`. Accepted subject bytes are preserved
+without normalization.
+It creates the service ActorProfile and ActorIdentityLink, but creates no role,
+grant, assignment, or executable service authority. A newly provisioned service
+profile has null `last_seen_at`, and its link has null `last_verified_at` until
+AUTH-09E verifies and admits that exact service token. The service-action matrix
+is typed code, not a database assignment or grant table. Its rows remain inert
+while their actions are planned. After the ART execution behavior merges, the
 dedicated AUTH activation custodian integrates the evaluator and changes only
 the exact action to active. Composition startup proves registry, service actor,
 matrix row, action, and PermissionId parity and fails closed on missing or extra
@@ -713,7 +722,8 @@ The implementation order is fixed by the WS-AUTH-001 chunk map:
 8. `WS-AUTH-001-08`: bootstrap/admin grants;
 9. `WS-AUTH-001-09A`: fixed service identity and static matrix foundation;
 10. `WS-AUTH-001-09B`: controlled service ActorProfile/ActorIdentityLink
-    provisioning;
+    provisioning with an unverified service link until AUTH-09E verifies the
+    service token;
 11. `WS-AUTH-001-09C`: actor and identity-link administrative reads;
 12. `WS-AUTH-001-09D`: actor and identity-link lifecycle mutations;
 13. `WS-AUTH-001-09E`: fixed service runtime admission without human grant

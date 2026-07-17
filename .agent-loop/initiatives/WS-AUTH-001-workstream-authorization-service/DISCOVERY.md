@@ -24,9 +24,10 @@ The combined contract also conflicted with canonical routes, omitted migration
 and test ownership, and combined schema, provisioning, reads, lifecycle
 mutations, service admission, and concurrency. Required L1 review split it into
 09A through 09E before runtime implementation. AUTH-09A takes migration `0023`;
-the merged XINT plan reserves `0024` through `0029` for AUTH-10 through AUTH-15
-without allocating migrations to the availability-neutral custody or PREP
-chunks.
+09B requires forward migration `0024` so provisioned service links remain
+unverified until a token is actually verified. AUTH-10 through AUTH-15 therefore
+shift to `0025` through `0030`, without allocating migrations to the
+availability-neutral custody or PREP chunks.
 
 ## Current behavior
 
@@ -301,7 +302,7 @@ need an independently reviewable contract and production-code budget.
   `replaced_grant_id`, replacement events, and replacement reasons.
 - Migration `0022_bootstrap_admin_grants.py` recreates current PostgreSQL audit
   and linked-idempotency validators with the same combined/replacement values.
-  Historical migrations remain immutable; AUTH-10 `0024` must replace current
+  Historical migrations remain immutable; AUTH-10 `0025` must replace current
   validators and fail closed on incompatible evidence.
 - The current kernel has request-scoped `require()` but no AUTH-first prepared
   mutation handle. Cross-module mutations therefore lack the merged lock,
