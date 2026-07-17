@@ -5163,6 +5163,7 @@ def main() -> int:
         test_stale_authorization_discovery_includes_new_untracked_docs,
         test_stale_authorization_precedence_exemption_is_line_scoped,
         test_stale_authorization_initiative_ratchet_is_position_scoped,
+        test_stale_authorization_full_initiative_rules_ignore_changed_line_filter,
         test_stale_authorization_history_allowlist_is_exact,
         test_agent_gates_runs_stale_authorization_docs_fail_closed,
         test_agent_gates_runs_stale_artifact_contracts_fail_closed,
