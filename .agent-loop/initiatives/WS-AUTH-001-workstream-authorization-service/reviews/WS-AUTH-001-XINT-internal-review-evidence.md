@@ -1,7 +1,7 @@
 # WS-AUTH-001-XINT Internal Review Evidence
 
-Reviewed code SHA: `bc714d4969dc2c6411db421de37050bbf92da2ed`
-Reviewed at: `2026-07-17T05:38:00Z`
+Reviewed code SHA: `223a15b7c7de15b1a7bd38a0718f951ba5c89734`
+Reviewed at: `2026-07-17T05:48:00Z`
 Reviewer run IDs: auth_xint_roles, auth_xint_art_service,
 auth_xint_rev_con
 Reviewer tracks: senior engineering, QA/test, security/auth, product/ops,
@@ -12,6 +12,9 @@ architecture, CI integrity, docs, and reuse/dedup
 - Stale Workstream wording and stale authorization documentation checks passed.
 - Markdown links passed for all changed Markdown files.
 - All 80 agent-gate tests passed.
+- Merge-intent validation passes with a null successor because trusted `main`
+  does not contain an exact AUTH-09A contract; runtime priority remains a human
+  work-queue decision.
 - A typed catalogue comparison proved the custody map contains exactly all 25
   current ART actions and all 19 current REV actions, with the canonical eight
   ART custody groups.

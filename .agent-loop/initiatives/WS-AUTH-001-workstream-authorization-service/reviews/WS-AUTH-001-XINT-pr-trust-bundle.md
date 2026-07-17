@@ -36,7 +36,7 @@ action availability, service provisioning, or feature behavior.
 - Direct typed comparison proved the exact 25 ART / 19 REV custody map and eight
   canonical ART owner groups.
 - Required senior, QA, security, product, architecture, CI, docs, and reuse
-  tracks passed exact reviewed state SHA `bc714d4` after all findings were fixed.
+  tracks passed exact reviewed state SHA `223a15b` after all findings were fixed.
 
 Coverage is not recalculated for a documentation-only change. No threshold or
 exclusion changed; future activation contracts require at least 90 percent for
