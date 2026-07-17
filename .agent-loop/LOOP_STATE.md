@@ -6,23 +6,22 @@
   post-merge state. Canonical state is the signed schema-v2 output on
   `automation/loop-memory`.
 - Active initiatives include parallel `WS-AUTH-001` and `WS-ART-001`.
-- PR #139 merged the planning-only `WS-XINT-001-PLAN` boundary reconciliation
-  into `main` as `5d353b6` on 2026-07-17.
-- Active planning chunk: `WS-AUTH-001-XINT` on
-  `codex/ws-auth-001-xint-reconciliation`.
-- PR #132 remains open at `79d1989` and conflicts with current `main`. Its
-  AUTH-09A fixed service foundation remains valid but must converge after this
-  AUTH planning amendment; AUTH-09B remains inactive.
-- Start basis: trusted `main` at `5d353b6` after PR #139.
+- PR #140 merged `WS-AUTH-001-XINT` into `main` as `d541521` on
+  2026-07-17; signed schema-v2 memory recorded the stopped checkpoint.
+- Active implementation chunk: `WS-AUTH-001-09A` on
+  `codex/ws-auth-001-09-actor-state-service-actors` after explicit user start.
+- PR #132 is being converged from trusted `main`; its fixed service foundation
+  remains bounded to migration `0023`, seven identities, eleven static matrix
+  memberships, and eight planned route actions. AUTH-09B remains inactive.
+- Start basis: trusted `main` at `d541521` after PR #140.
 - PR #119 merged `WS-AUTH-001-05B` as `ad71c7e`.
 - PR #120 merged `WS-ART-001-OBJECT-STORAGE-AMENDMENT` as `4408256`.
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: required internal review passes on the externally repaired
-  planning state at `bac3073`, and final deterministic closure passes on
-  evidence head `7cb02b5`; replacement external checks and the human checkpoint
-  remain for PR #140. No runtime starts from this planning branch.
+- Current gate: resolve PR #132 against merged XINT, run deterministic migration
+  and catalogue proof, repeat exact-head internal review, and rerun external
+  checks. No AUTH-09 action or service caller becomes executable in 09A.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,

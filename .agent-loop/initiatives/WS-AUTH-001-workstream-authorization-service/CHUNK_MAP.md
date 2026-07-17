@@ -27,9 +27,9 @@ stopped.
 | `WS-AUTH-001-07A` | Closed Permission And Action Catalogue | L1 | Merged through PR #126 as `e9d72a1` |
 | `WS-AUTH-001-07B` | Deny-By-Default Kernel And Self-Action Cutover | L1 | Merged through PR #130 as `90eca12` |
 | `WS-AUTH-001-08` | Bootstrap And Administrative Role Grants | L1 | Merged through PR #131 as `aa0fdcd` |
-| `WS-AUTH-001-XINT` | Lifecycle Boundary Plan Reconciliation | L1 | Active planning-only correction after merged PR #139 |
+| `WS-AUTH-001-XINT` | Lifecycle Boundary Plan Reconciliation | L1 | Merged through PR #140 as `d541521` |
 | `WS-AUTH-001-09` | Actor State, Identity Revocation, And Service Actors | L1 | Split before runtime implementation |
-| `WS-AUTH-001-09A` | Fixed Service Identity Foundation | L1 | PR #132 remains open and conflicting; converge on XINT before merge |
+| `WS-AUTH-001-09A` | Fixed Service Identity Foundation | L1 | Active PR #132 convergence and exact-head re-review from merged XINT |
 | `WS-AUTH-001-09B` | Controlled Service Actor Provisioning | L1 | Inactive until 09A merge/memory and explicit start |
 | `WS-AUTH-001-09C` | Actor And Identity-Link Administration Reads | L1 | Inactive until 09B merge/memory and explicit start |
 | `WS-AUTH-001-09D` | Actor And Identity-Link Lifecycle Mutations | L1 | Inactive until 09C merge/memory and explicit start |
@@ -185,10 +185,9 @@ signed automated memory completed, and the user explicitly started AUTH-07.
 Required L1 review rejected the combined contract before runtime edits and
 required 07A/07B. AUTH-07B merged through PR #130 as `90eca12`; AUTH-08 merged
 through PR #131 as `aa0fdcd`. Parent AUTH-09 was split before implementation.
-AUTH-09A implementation and review are complete in PR #132, but merged PR #139
-changed its planning base and the PR now conflicts with trusted `main`. Its
-seven identities, eleven static matrix actions, and migration `0023` remain
-valid. After this planning amendment merges, PR #132 must be converged without
-restoring stale owner or combined-role wording, re-reviewed on the exact head,
-and pass checks before human merge. Do not start AUTH-09B or POL-002-04
-automatically.
+PR #140 merged the required XINT planning reconciliation as `d541521`, signed
+memory stopped, and the user explicitly started the PR #132 convergence. Its
+seven identities, eleven static matrix memberships, eight planned actions, and
+migration `0023` remain valid. The repair must preserve XINT custody and
+independent-role wording, pass exact-head review and checks, and stop for human
+merge. Do not start AUTH-09B or POL-002-04 automatically.

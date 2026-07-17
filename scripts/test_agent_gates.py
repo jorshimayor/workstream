@@ -3883,6 +3883,9 @@ def test_stale_authorization_rule_examples_are_rejected() -> None:
         "The checker worker_id is included in internal telemetry.",
         "See backend/app/workers/tasks.py.",
         "See app/workers/tasks.py.",
+        "coverage report --include='app/workers/*' --precision=2 --fail-under=90",
+        "ruff check app/workers/reviews.py",
+        "review_lifecycle_live_drill.py --start-api-worker-beat --require-workers",
     )
     for sample in technical_worker_statements:
         assert gate.scan_text("docs/new_active_doc.md", sample) == [], sample
@@ -3921,6 +3924,10 @@ def test_stale_authorization_rule_examples_are_rejected() -> None:
         "The Celery worker accepts the submission.",
         "The background worker rejects project work.",
         "The checker worker requests revision.",
+        "review_lifecycle_live_drill.py --start-api-worker-beat-extra",
+        "review_lifecycle_live_drill.py --require-workers-extra",
+        "maliciousapp/workers/reviews.py",
+        "maliciousapp.workers.reviews",
     )
     for sample in human_worker_statements:
         assert gate.scan_text("docs/new_active_doc.md", sample), sample
@@ -4106,9 +4113,10 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
     ).read_text(encoding="utf-8")
 
     assert "Merged through PR #131 as `aa0fdcd`" in auth_map
-    assert "None. `WS-AUTH-001-09A` has completed implementation" in auth_status
+    assert "`WS-AUTH-001-09A` - Fixed Service Identity Foundation" in auth_status
     assert "| `WS-AUTH-001-08` | Merged |" in auth_status
-    assert "| `WS-AUTH-001-09A` | Awaiting human merge |" in auth_status
+    assert "| `WS-AUTH-001-XINT` | Merged |" in auth_status
+    assert "| `WS-AUTH-001-09A` | In progress |" in auth_status
     assert "Merged through PR #129 as `9a04434`" in artifact_map
     assert "Reviewed in isolated worktree; PR publication pending" in artifact_map
     assert "No artifact implementation chunk is active." in artifact_status

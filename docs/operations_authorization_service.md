@@ -179,6 +179,63 @@ write. Agent and Space subjects are denied without a write. Operators must not
 convert token roles, email shape, subject shape, or old typed profiles into
 actor kind or authority.
 
+A provisioned service ActorProfile is the stable Workstream principal, similar
+to a Kubernetes ServiceAccount. Its immutable `service_identity` is one of the
+closed registered internal services; its identity link separately stores the
+configured issuer and opaque subject used to verify credentials. Display name,
+email, subject syntax, token role, and adapter provenance are never service
+identity evidence.
+
+Service authority is a reviewed static service-to-ActionId matrix, not a grant
+or database assignment table. A service receives no Contributor,
+AdminRoleGrant, or ProjectRoleGrant authority. Every matrix action remains
+unavailable until merged feature behavior exists and the dedicated AUTH
+activation custodian integrates its evaluator and changes only that action's
+availability.
+
+### Existing Service Identity Mapping Custody
+
+This procedure applies only when service ActorProfiles already exist before
+migration `0023`. The data-migration owner prepares a private draft containing
+the exact existing ActorProfile ID, issuer, opaque subject, and proposed fixed
+service identity for every row. A security reviewer verifies each choice from
+authoritative ownership records. Neither the tool nor an operator may infer a
+value from subject syntax, email, display name, token role, or adapter
+provenance.
+
+Run the supported tool against the exact target database. Draft and envelope
+files must be regular, non-symlink, owner-only mode `0600` files in a controlled
+directory outside the checkout, every linked worktree, and shared Git metadata.
+Zero existing service rows require no file; otherwise the envelope must cover
+the complete locked service projection and select unique values from the seven
+closed identities.
+
+```bash
+chmod 600 /secure/workstream/service-identity-draft-v1.json
+.venv/bin/python scripts/service_actor_identity_mapping.py validate \
+  --draft /secure/workstream/service-identity-draft-v1.json
+.venv/bin/python scripts/service_actor_identity_mapping.py bind \
+  --draft /secure/workstream/service-identity-draft-v1.json \
+  --output /secure/workstream/service-identity-envelope-v1.json
+chmod 600 /secure/workstream/service-identity-envelope-v1.json
+.venv/bin/python scripts/service_actor_identity_mapping.py verify \
+  --envelope /secure/workstream/service-identity-envelope-v1.json
+```
+
+`validate` and `verify` never modify PostgreSQL. `bind` refuses an existing
+output path. The tool prints only stable codes, bounded counts, and non-secret
+digests. Inject `WORKSTREAM_SERVICE_ACTOR_IDENTITY_MAPPING_FILE` only into the
+migration process immediately before `alembic upgrade head`; never commit or
+log the path or confidential contents.
+
+Migration `0023` consumes the packaged versioned contract, locks the complete
+actor/link source projection, and refuses missing, extra, stale, duplicate, or
+ambiguous mappings atomically. It retains only bounded counts and non-secret
+source, manifest, envelope, and database-binding digests. After database
+verification and the approved rollback window, securely delete the draft and
+envelope. If any row cannot truthfully map, remain on `0022` and open a reviewed
+data-remediation decision; never guess, delete history, or use manual SQL.
+
 The [approved AUTH-06 chunk contract](../.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/chunks/WS-AUTH-001-06-canonical-actor-profile.md)
 records the exact deprecated compatibility identifier. That temporary,
 enumerated intake route writes only `LegacyWorkflowEligibility` and cannot
@@ -490,7 +547,8 @@ For each chunk:
 2. Run focused tests plus the full backend suite/API drill required by the
    contract.
 3. Run migration upgrade, downgrade-one, and re-upgrade where applicable.
-4. Confirm the temporary compatibility allowlist only shrinks.
+4. Confirm the obsolete-path allowlist only shrinks and no compatibility path
+   was added or restored.
 5. Run required internal reviewers and repair valid findings.
 6. Publish one chunk-sized PR and stop for human merge approval.
 7. Update post-merge memory before activating the next chunk.
@@ -500,9 +558,12 @@ resource loader, lifecycle guards, negative tests, and evidence path exist.
 
 ### Catalogue And Action-Evidence Staging
 
-The catalogue contains exactly 74 PermissionIds and 57 ActionIds. The two
+The catalogue contains exactly 74 PermissionIds and 65 ActionIds after
+AUTH-09A. The two
 AUTH-07B actor-self actions and seven AUTH-08 administrative actions are active;
-the other 48 entries remain planned and non-executable. The target post-custody
+the other 56 entries remain planned and non-executable. Eight of those planned
+rows are the AUTH-09B through AUTH-09D actor/link/service actions introduced by
+`0023`. The target post-custody
 invariant is that planned runtime entries contain only action, permission, exact
 AUTH activation owner, and availability. Until the availability-neutral custody
 transfers merge, the 25 ART and 19 REV rows retain their historical feature
@@ -666,8 +727,8 @@ Stop rollout when:
 - an intermediate release cannot execute the established intake lifecycle;
 - tests, CI, privacy, or auth defaults would need weakening.
 
-Do not restore deleted authority through direct SQL or re-enable an obsolete
-token-role path outside its reviewed compatibility owner.
+Do not restore deleted authority through direct SQL or re-enable any obsolete
+token-role path.
 
 ## Recovery Permission Inventory
 

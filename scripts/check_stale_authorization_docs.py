@@ -378,8 +378,24 @@ def technical_worker_match(text: str, match: re.Match[str]) -> bool:
     token_end = worker_offset + len(token.group(0))
     suffix = text[token_end : token_end + 20]
     exact_code_path = token.group(0).lower() == "workers" and (
-        (prefix.endswith(("backend/app/", "app/")) and suffix.startswith("/"))
-        or (prefix.endswith("app.") and suffix.startswith("."))
+        (
+            re.search(r"(?:^|[^A-Za-z0-9_.-])(?:backend/)?app/$", prefix)
+            is not None
+            and suffix.startswith("/")
+        )
+        or (
+            re.search(r"(?:^|[^A-Za-z0-9_.-])app\.$", prefix) is not None
+            and suffix.startswith(".")
+        )
+    )
+    exact_technical_cli_flag = (
+        token.group(0).lower() == "worker"
+        and prefix.endswith("--start-api-")
+        and re.match(r"^-beat(?:\s|$)", suffix) is not None
+    ) or (
+        token.group(0).lower() == "workers"
+        and prefix.endswith("--require-")
+        and (not suffix or suffix[0].isspace())
     )
     exact_celery_cli = bool(
         re.search(
@@ -390,7 +406,10 @@ def technical_worker_match(text: str, match: re.Match[str]) -> bool:
         and suffix.startswith(" --")
     )
     return bool(
-        TECHNICAL_WORKER_PREFIX.search(prefix) or exact_code_path or exact_celery_cli
+        TECHNICAL_WORKER_PREFIX.search(prefix)
+        or exact_code_path
+        or exact_celery_cli
+        or exact_technical_cli_flag
     )
 
 
