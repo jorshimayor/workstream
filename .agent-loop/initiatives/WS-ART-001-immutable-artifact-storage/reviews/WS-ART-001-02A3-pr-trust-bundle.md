@@ -91,15 +91,15 @@ guide/task/submission cutover, product review decision, or authorization action.
 ## Tests And Checks
 
 ```text
-254 ART-focused tests PASS
+268 ART-focused tests PASS
 1 real PostgreSQL replica-finalization race PASS
-47 LocalStorage/conformance tests PASS, 91.64% coverage
+56 LocalStorage/conformance tests PASS, 91.08% coverage
 4 ArtifactStore v2 migration safety tests PASS
-ART changed scope coverage 93.32%
+ART changed scope coverage 93.18%
 Configuration coverage 96.92%
 app/main.py coverage 90.35%
 Ruff PASS
-Docstring coverage 93.0%
+Docstring coverage 92.0%
 80 agent-gate tests PASS
 Stale artifact/authorization/Workstream wording, Markdown links, and diff PASS
 ```
