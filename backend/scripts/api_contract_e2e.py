@@ -537,6 +537,17 @@ def assert_local_database_url(database_url: str) -> None:
     )
 
 
+def assert_isolated_database_url(database_url: str) -> None:
+    """Require this destructive drill to use an isolated derived test database."""
+    assert_local_database_url(database_url)
+    database_name = urlparse(database_url).path.lstrip("/")
+    if DERIVED_DATABASE_NAME.fullmatch(database_name) is None:
+        raise RuntimeError(
+            "Refusing to run API contract E2E against a persistent test database. "
+            "Use scripts/run_isolated_tests.py to provide an isolated derived database."
+        )
+
+
 def guide_payload(run_id: str) -> dict:
     """Build a complete project guide payload.
 
@@ -1462,7 +1473,7 @@ async def main(env: dict[str, str]) -> None:
 
 if __name__ == "__main__":
     api_env = api_environment()
-    assert_local_database_url(api_env["WORKSTREAM_DATABASE_URL"])
+    assert_isolated_database_url(api_env["WORKSTREAM_DATABASE_URL"])
     os.environ.update(api_env)
     command.upgrade(alembic_config(), "head")
     asyncio.run(main(api_env))

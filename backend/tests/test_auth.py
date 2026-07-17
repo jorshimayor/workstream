@@ -6,6 +6,7 @@ import base64
 import hashlib
 import hmac
 import json
+import logging
 from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -25,7 +26,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
 
 from app.adapters.auth.dev import DevelopmentAuthVerifier
-from app.adapters.auth.flow import FlowAuthVerifier
+from app.adapters.auth.flow import (
+    FlowAuthVerifier,
+    _normalize_audience,
+    _normalize_scopes,
+    actor_id_from_flow_identity,
+)
 from app.adapters.auth.metrics import InProcessAuthVerifierMetrics
 from app.api.deps.auth import get_registered_actor
 from app.core.auth import clear_auth_verifier_cache
@@ -42,6 +48,7 @@ from app.modules.actors.models import ActorIdentityLink, ActorProfile
 from app.modules.actors.repository import ActorRepository
 from app.modules.actors.service_identities import ServiceIdentity
 from app.modules.authorization.models import AdminRoleGrant, AuthorityIdempotencyRecord
+from app.modules.authorization.catalogue import ActionId
 from app.modules.authorization.repository import (
     AdminAuthorizationRepository,
     AuthorityIdempotencyRepository,
@@ -811,6 +818,48 @@ async def test_malformed_tokens_fail_without_network(token: str) -> None:
         await verifier.verify(token)
 
     assert requests == []
+
+
+def test_flow_verifier_rejects_ambiguous_clients_and_malformed_claim_collections() -> None:
+    """Keep provider inputs bounded before token or network processing begins."""
+    assert UUID(actor_id_from_flow_identity("https://issuer.example", "opaque-subject"))
+    assert _normalize_audience(["workstream-api", "secondary-api"]) == (
+        "workstream-api",
+        "secondary-api",
+    )
+    assert _normalize_scopes(["workstream:human", "profile:read"]) == frozenset(
+        {"workstream:human", "profile:read"}
+    )
+    with pytest.raises(AuthVerificationError, match="audience"):
+        _normalize_audience(["audience"] * 17)
+    with pytest.raises(AuthVerificationError, match="audience"):
+        _normalize_audience("a" * 257)
+    with pytest.raises(AuthVerificationError, match="scope"):
+        _normalize_scopes(["embedded whitespace"])
+    with pytest.raises(AuthVerificationError, match="scope"):
+        _normalize_scopes([f"scope-{index}" for index in range(65)])
+
+    settings = production_verifier_settings()
+    transport = MockTransport(lambda _request: Response(500))
+    with pytest.raises(ValueError, match="JWKS transport"):
+        FlowAuthVerifier(
+            settings,
+            jwks_transport=transport,
+            jwks_client_factory=AsyncClient,
+        )
+    with pytest.raises(ValueError, match="introspection transport"):
+        FlowAuthVerifier(
+            settings,
+            introspection_transport=transport,
+            introspection_client_factory=AsyncClient,
+        )
+
+    with pytest.raises(ValueError, match="modulus"):
+        FlowAuthVerifier._validate_jwk_strength({}, algorithm="RS256")
+    with pytest.raises(ValueError, match="curve"):
+        FlowAuthVerifier._validate_jwk_strength({"crv": "P-384"}, algorithm="ES256")
+    with pytest.raises(ValueError, match="curve"):
+        FlowAuthVerifier._validate_jwk_strength({"crv": "X25519"}, algorithm="EdDSA")
 
 
 @pytest.mark.parametrize("limit", ["total", "header", "payload"])
@@ -2910,6 +2959,7 @@ async def test_controlled_service_actor_provisioning_is_atomic_private_and_concu
     auth_database_env: str,
     rsa_signing_material: tuple[rsa.RSAPrivateKey, dict[str, Any]],
     monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Prove fixed service binding, replay, conflicts, rollback, and pre-admission denial."""
     private_key, jwk = rsa_signing_material
@@ -2919,7 +2969,11 @@ async def test_controlled_service_actor_provisioning_is_atomic_private_and_concu
     app.state.auth_verifier = verifier
     admin_token = issue_asymmetric_token(
         private_key,
-        claims={"sub": "auth09b-admin", "jti": "auth09b-admin-token"},
+        claims={
+            "sub": "auth09b-admin",
+            "email": "private-admin@example.test",
+            "jti": "auth09b-admin-token",
+        },
     )
     ordinary_token = issue_asymmetric_token(
         private_key,
@@ -3010,25 +3064,36 @@ async def test_controlled_service_actor_provisioning_is_atomic_private_and_concu
         try:
             first, second = calls
             return tuple(
-                await asyncio.gather(
-                    client.post(
-                        "/api/v1/service-actors",
-                        headers={**admin_headers, "Idempotency-Key": first[1]},
-                        json=first[0],
+                await asyncio.wait_for(
+                    asyncio.gather(
+                        client.post(
+                            "/api/v1/service-actors",
+                            headers={**admin_headers, "Idempotency-Key": first[1]},
+                            json=first[0],
+                        ),
+                        client.post(
+                            "/api/v1/service-actors",
+                            headers={**admin_headers, "Idempotency-Key": second[1]},
+                            json=second[0],
+                        ),
                     ),
-                    client.post(
-                        "/api/v1/service-actors",
-                        headers={**admin_headers, "Idempotency-Key": second[1]},
-                        json=second[0],
-                    ),
+                    timeout=60,
                 )
             )
         finally:
             monkeypatch.setattr(AuthorityIdempotencyRepository, "reserve", original_reserve)
 
+    observed_response_bodies: list[str] = []
+
+    async def capture_response(response: Response) -> None:
+        await response.aread()
+        observed_response_bodies.append(response.text)
+
+    caplog.set_level(logging.DEBUG, logger="app")
     async with AsyncClient(
         transport=ASGITransport(app=app),
         base_url="http://testserver",
+        event_hooks={"response": [capture_response]},
     ) as client:
         admin_profile = await client.get("/api/v1/actors/me", headers=admin_headers)
         ordinary_profile = await client.get("/api/v1/actors/me", headers=ordinary_headers)
@@ -3374,6 +3439,43 @@ async def test_controlled_service_actor_provisioning_is_atomic_private_and_concu
         assert unavailable.status_code == 503
         assert unavailable.json()["error"]["code"] == "identity_verification_unavailable"
 
+    sensitive_values = {
+        admin_token,
+        ordinary_token,
+        service_token,
+        *(
+            headers["Authorization"].removeprefix("Bearer ")
+            for headers in nonhuman_headers.values()
+        ),
+        settings.token_issuer,
+        "private-admin@example.test",
+        "auth09b-admin",
+        "auth09b-admin-token",
+        "auth09b-ordinary",
+        "auth09b-ordinary-token",
+        service_subject,
+        "auth09b-service-token",
+        *(f"auth09b-{kind}" for kind in nonhuman_headers),
+        *(f"auth09b-{kind}-token" for kind in nonhuman_headers),
+        reason,
+        "A different bounded reason",
+        "another-subject",
+        rejected_subject,
+        rejected_reason,
+        invalid_identity,
+        invalid_key,
+        scheduler_payload["subject"],
+        materializer_payload["subject"],
+        "auth09b-materializer-b",
+        output_payload["subject"],
+        "auth09b-output-b",
+        shared_subject,
+        failure_payload["subject"],
+        commit_payload["subject"],
+    }
+    assert all(value not in body for value in sensitive_values for body in observed_response_bodies)
+    assert all(value not in caplog.text for value in sensitive_values)
+
     async with db_session.get_session_factory()() as session:
         service_profiles = (
             await session.scalars(select(ActorProfile).where(ActorProfile.actor_kind == "service"))
@@ -3393,22 +3495,14 @@ async def test_controlled_service_actor_provisioning_is_atomic_private_and_concu
                 )
             )
         ).all()
-        privacy_leaks = int(
-            await session.scalar(
-                text(
-                    "select count(*) from audit_events where "
-                    "position(:subject in row_to_json(audit_events)::text) > 0 or "
-                    "position(:issuer in row_to_json(audit_events)::text) > 0 or "
-                    "position(:reason in row_to_json(audit_events)::text) > 0"
-                ),
-                {"subject": service_subject, "issuer": settings.token_issuer, "reason": reason},
-            )
-            or 0
-        )
+        audit_rows = (
+            await session.scalars(text("select row_to_json(audit_events)::text from audit_events"))
+        ).all()
         conflict_denials = (
             await session.scalars(
                 select(AuditEvent).where(
-                    AuditEvent.event_type == AuthorityEventType.SENSITIVE_AUTHORIZATION_DENIED.value,
+                    AuditEvent.event_type
+                    == AuthorityEventType.SENSITIVE_AUTHORIZATION_DENIED.value,
                     AuditEvent.denial_code == "identity_link_conflict",
                 )
             )
@@ -3432,9 +3526,421 @@ async def test_controlled_service_actor_provisioning_is_atomic_private_and_concu
     assert service_events
     assert all(event.action_id is None for event in service_events)
     assert all(event.permission_id == "actor.service.provision" for event in service_events)
-    assert privacy_leaks == 0
+    serialized_audit = "\n".join(audit_rows)
+    assert all(value not in serialized_audit for value in sensitive_values)
     assert conflict_denials
     assert all(event.action_id == "actor.service.provision" for event in conflict_denials)
+    await db_session.dispose_engine()
+
+
+async def test_service_actor_provisioning_failure_and_authority_races_are_atomic(
+    auth_database_env: str,
+    rsa_signing_material: tuple[rsa.RSAPrivateKey, dict[str, Any]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Bound evidence failures and crossed authority changes without partial state."""
+    private_key, jwk = rsa_signing_material
+    settings = production_verifier_settings(database_url=auth_database_env)
+    verifier = FlowAuthVerifier(settings, jwks_transport=jwks_transport(jwk))
+    app = create_app(settings)
+    app.state.auth_verifier = verifier
+    first_token = issue_asymmetric_token(
+        private_key,
+        claims={"sub": "auth09b-race-admin-one", "jti": "auth09b-race-admin-one-token"},
+    )
+    second_token = issue_asymmetric_token(
+        private_key,
+        claims={"sub": "auth09b-race-admin-two", "jti": "auth09b-race-admin-two-token"},
+    )
+    first_headers = {"Authorization": f"Bearer {first_token}"}
+    second_headers = {"Authorization": f"Bearer {second_token}"}
+
+    async def snapshot(actor_id: UUID) -> tuple[int, int, int, int, datetime, datetime]:
+        async with db_session.get_session_factory()() as session:
+            timestamps = (
+                await session.execute(
+                    text(
+                        "select p.last_seen_at,l.last_verified_at "
+                        "from actor_profiles p join actor_identity_links l "
+                        "on l.actor_profile_id=p.id where p.id=:actor"
+                    ),
+                    {"actor": str(actor_id)},
+                )
+            ).one()
+            return (
+                int(await session.scalar(select(func.count()).select_from(ActorProfile)) or 0),
+                int(await session.scalar(select(func.count()).select_from(ActorIdentityLink)) or 0),
+                int(
+                    await session.scalar(
+                        select(func.count()).select_from(AuthorityIdempotencyRecord)
+                    )
+                    or 0
+                ),
+                int(await session.scalar(select(func.count()).select_from(AuditEvent)) or 0),
+                timestamps[0],
+                timestamps[1],
+            )
+
+    async def binding_count(identity: ServiceIdentity, subject: str) -> tuple[int, int]:
+        async with db_session.get_session_factory()() as session:
+            profiles = int(
+                await session.scalar(
+                    select(func.count())
+                    .select_from(ActorProfile)
+                    .where(ActorProfile.service_identity == identity.value)
+                )
+                or 0
+            )
+            links = int(
+                await session.scalar(
+                    select(func.count())
+                    .select_from(ActorIdentityLink)
+                    .where(
+                        ActorIdentityLink.issuer == settings.token_issuer,
+                        ActorIdentityLink.subject == subject,
+                    )
+                )
+                or 0
+            )
+            return profiles, links
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as client:
+        first_profile = await client.get("/api/v1/actors/me", headers=first_headers)
+        second_profile = await client.get("/api/v1/actors/me", headers=second_headers)
+        assert first_profile.status_code == second_profile.status_code == 200
+        first_id = UUID(first_profile.json()["actor_profile_id"])
+        second_id = UUID(second_profile.json()["actor_profile_id"])
+        assert (await run_admin_bootstrap(first_id, execute=True))[0] == 0
+        second_grant = await client.post(
+            "/api/v1/admin-role-grants",
+            headers={**first_headers, "Idempotency-Key": str(uuid4())},
+            json={
+                "target_actor_profile_id": str(second_id),
+                "role": "access_administrator",
+                "scope_type": "system",
+                "scope_project_id": None,
+                "reason": "Independent authority for crossed mutation proof",
+            },
+        )
+        assert second_grant.status_code == 201, second_grant.text
+
+        failure_cases = (
+            (
+                ServiceIdentity.ARTIFACT_VERIFIER,
+                "auth09b-decision-evidence-failure",
+                AuthorityEventType.SENSITIVE_AUTHORIZATION_ALLOWED,
+                False,
+            ),
+            (
+                ServiceIdentity.ARTIFACT_PUT_RESOLVER,
+                "auth09b-invalidation-evidence-failure",
+                AuthorityEventType.AUTHORITY_INVALIDATION_REQUESTED,
+                False,
+            ),
+            (
+                ServiceIdentity.ARTIFACT_BINDING,
+                "auth09b-idempotency-completion-failure",
+                None,
+                True,
+            ),
+        )
+        original_add_authority_event = AuditService.add_authority_event
+        original_complete = AuthorityIdempotencyRepository.complete
+        for identity, subject, failed_event, fail_completion in failure_cases:
+            key = str(uuid4())
+            payload = {
+                "service_identity": identity.value,
+                "subject": subject,
+                "reason": "Prove exact failure rollback and retry",
+            }
+            before = await snapshot(first_id)
+
+            async def fail_selected_evidence(self, event, *, selected=failed_event):
+                if selected is not None and event.event_type is selected:
+                    raise SQLAlchemyError("forced bounded authority evidence failure")
+                return await original_add_authority_event(self, event)
+
+            async def fail_idempotency_completion(self, claim, response):
+                raise SQLAlchemyError("forced idempotency completion failure")
+
+            if fail_completion:
+                monkeypatch.setattr(
+                    AuthorityIdempotencyRepository,
+                    "complete",
+                    fail_idempotency_completion,
+                )
+            else:
+                monkeypatch.setattr(AuditService, "add_authority_event", fail_selected_evidence)
+            try:
+                failed = await client.post(
+                    "/api/v1/service-actors",
+                    headers={**first_headers, "Idempotency-Key": key},
+                    json=payload,
+                )
+            finally:
+                monkeypatch.setattr(
+                    AuditService,
+                    "add_authority_event",
+                    original_add_authority_event,
+                )
+                monkeypatch.setattr(
+                    AuthorityIdempotencyRepository,
+                    "complete",
+                    original_complete,
+                )
+            assert failed.status_code == 503, failed.text
+            failure_error = failed.json()["error"]
+            assert failure_error["code"] == "service_unavailable"
+            assert failure_error["message"] == "Service unavailable"
+            assert failure_error["retryable"] is True
+            assert UUID(failure_error["correlation_id"])
+            assert failure_error["details"] == {}
+            assert await snapshot(first_id) == before
+            assert await binding_count(identity, subject) == (0, 0)
+
+            retried = await client.post(
+                "/api/v1/service-actors",
+                headers={**first_headers, "Idempotency-Key": key},
+                json=payload,
+            )
+            assert retried.status_code == 201, retried.text
+            assert await binding_count(identity, subject) == (1, 1)
+
+        same_pair_identity = ServiceIdentity.ARTIFACT_SCHEDULER
+        same_pair_subject = "auth09b-same-pair-distinct-keys"
+        same_pair_payload = {
+            "service_identity": same_pair_identity.value,
+            "subject": same_pair_subject,
+            "reason": "Serialize one exact binding across distinct request keys",
+        }
+        same_pair_keys = (str(uuid4()), str(uuid4()))
+        original_reserve = AuthorityIdempotencyRepository.reserve
+        reservation_ready = asyncio.Event()
+        reservation_arrivals = 0
+
+        async def barrier_reserve(self, **kwargs):
+            nonlocal reservation_arrivals
+            reservation_arrivals += 1
+            if reservation_arrivals == 2:
+                reservation_ready.set()
+            await reservation_ready.wait()
+            return await original_reserve(self, **kwargs)
+
+        monkeypatch.setattr(AuthorityIdempotencyRepository, "reserve", barrier_reserve)
+        try:
+            same_pair_responses = await asyncio.wait_for(
+                asyncio.gather(
+                    *(
+                        client.post(
+                            "/api/v1/service-actors",
+                            headers={**first_headers, "Idempotency-Key": key},
+                            json=same_pair_payload,
+                        )
+                        for key in same_pair_keys
+                    )
+                ),
+                timeout=60,
+            )
+        finally:
+            monkeypatch.setattr(AuthorityIdempotencyRepository, "reserve", original_reserve)
+        assert sorted(response.status_code for response in same_pair_responses) == [201, 409]
+        losing_response = next(
+            response for response in same_pair_responses if response.status_code == 409
+        )
+        assert losing_response.json()["error"]["code"] == "service_identity_already_provisioned"
+        winner = next(response for response in same_pair_responses if response.status_code == 201)
+        winner_actor_id = winner.json()["actor_profile_id"]
+        assert await binding_count(same_pair_identity, same_pair_subject) == (1, 1)
+        async with db_session.get_session_factory()() as session:
+            pair_records = (
+                await session.scalars(
+                    select(AuthorityIdempotencyRecord).where(
+                        AuthorityIdempotencyRecord.idempotency_key.in_(same_pair_keys)
+                    )
+                )
+            ).all()
+            pair_events = (
+                await session.scalars(
+                    select(AuditEvent).where(
+                        AuditEvent.resource_id == winner_actor_id,
+                        AuditEvent.event_type.in_(
+                            [
+                                AuthorityEventType.SERVICE_ACTOR_PROVISIONED.value,
+                                AuthorityEventType.AUTHORITY_INVALIDATION_REQUESTED.value,
+                            ]
+                        ),
+                    )
+                )
+            ).all()
+        assert len(pair_records) == 1
+        assert pair_records[0].status == "committed"
+        assert [event.event_type for event in pair_events].count(
+            AuthorityEventType.SERVICE_ACTOR_PROVISIONED.value
+        ) == 1
+        assert [event.event_type for event in pair_events].count(
+            AuthorityEventType.AUTHORITY_INVALIDATION_REQUESTED.value
+        ) == 1
+
+        async with db_session.get_session_factory()() as session:
+            first_grant_id = await session.scalar(
+                select(AdminRoleGrant.id).where(
+                    AdminRoleGrant.target_actor_profile_id == str(first_id),
+                    AdminRoleGrant.role == "access_administrator",
+                    AdminRoleGrant.status == "active",
+                )
+            )
+        assert first_grant_id is not None
+        crossed_identity = ServiceIdentity.ARTIFACT_MATERIALIZER
+        crossed_subject = "auth09b-crossed-revocation"
+        crossed_key = str(uuid4())
+        crossed_payload = {
+            "service_identity": crossed_identity.value,
+            "subject": crossed_subject,
+            "reason": "Cross provisioning with matched grant revocation",
+        }
+        original_lock_control = AdminAuthorizationRepository.lock_control
+        control_ready = asyncio.Event()
+        control_arrivals = 0
+
+        async def barrier_lock_control(self):
+            nonlocal control_arrivals
+            control_arrivals += 1
+            if control_arrivals == 2:
+                control_ready.set()
+            await control_ready.wait()
+            return await original_lock_control(self)
+
+        monkeypatch.setattr(AdminAuthorizationRepository, "lock_control", barrier_lock_control)
+        try:
+            crossed_provision, crossed_revoke = await asyncio.wait_for(
+                asyncio.gather(
+                    client.post(
+                        "/api/v1/service-actors",
+                        headers={**first_headers, "Idempotency-Key": crossed_key},
+                        json=crossed_payload,
+                    ),
+                    client.post(
+                        f"/api/v1/admin-role-grants/{first_grant_id}/revoke",
+                        headers={**second_headers, "Idempotency-Key": str(uuid4())},
+                        json={"reason": "Revoke while service provisioning is queued"},
+                    ),
+                ),
+                timeout=60,
+            )
+        finally:
+            monkeypatch.setattr(
+                AdminAuthorizationRepository,
+                "lock_control",
+                original_lock_control,
+            )
+        assert crossed_revoke.status_code == 200, crossed_revoke.text
+        assert crossed_provision.status_code in {201, 403}, crossed_provision.text
+        if crossed_provision.status_code == 403:
+            assert crossed_provision.json()["error"]["code"] == "permission_not_granted"
+        expected_binding = (1, 1) if crossed_provision.status_code == 201 else (0, 0)
+        assert await binding_count(crossed_identity, crossed_subject) == expected_binding
+        crossed_actor_id = (
+            crossed_provision.json()["actor_profile_id"]
+            if crossed_provision.status_code == 201
+            else None
+        )
+
+        denied_after_revoke = await client.post(
+            "/api/v1/service-actors",
+            headers={**first_headers, "Idempotency-Key": crossed_key},
+            json=crossed_payload,
+        )
+        assert denied_after_revoke.status_code == 403
+        assert denied_after_revoke.json()["error"]["code"] == "permission_not_granted"
+        crossed_denial_request_ids = [denied_after_revoke.headers["x-request-id"]]
+        if crossed_provision.status_code == 403:
+            crossed_denial_request_ids.append(crossed_provision.headers["x-request-id"])
+
+    async with db_session.get_session_factory()() as session:
+        first_grant = await session.get(AdminRoleGrant, first_grant_id)
+        pending = int(
+            await session.scalar(
+                select(func.count())
+                .select_from(AuthorityIdempotencyRecord)
+                .where(AuthorityIdempotencyRecord.status == "pending")
+            )
+            or 0
+        )
+        crossed_records = (
+            await session.scalars(
+                select(AuthorityIdempotencyRecord).where(
+                    AuthorityIdempotencyRecord.idempotency_key == crossed_key
+                )
+            )
+        ).all()
+        crossed_events = (
+            await session.scalars(
+                select(AuditEvent).where(
+                    AuditEvent.action_id == ActionId.ACTOR_SERVICE_PROVISION.value,
+                    AuditEvent.actor_id == str(first_id),
+                    AuditEvent.request_id.in_(crossed_denial_request_ids),
+                )
+            )
+        ).all()
+        revoked_events = (
+            await session.scalars(
+                select(AuditEvent).where(
+                    AuditEvent.resource_id == str(first_grant_id),
+                    AuditEvent.event_type == AuthorityEventType.ADMIN_ROLE_GRANT_REVOKED.value,
+                )
+            )
+        ).all()
+        assert len(revoked_events) == 1
+        revoke_invalidations = int(
+            await session.scalar(
+                select(func.count())
+                .select_from(AuditEvent)
+                .where(
+                    AuditEvent.event_type
+                    == AuthorityEventType.AUTHORITY_INVALIDATION_REQUESTED.value,
+                    AuditEvent.invalidation_cause_event_id == revoked_events[0].id,
+                )
+            )
+            or 0
+        )
+        crossed_success_evidence = []
+        if crossed_actor_id is not None:
+            crossed_success_evidence = (
+                await session.scalars(
+                    select(AuditEvent).where(
+                        AuditEvent.resource_id == crossed_actor_id,
+                        AuditEvent.event_type.in_(
+                            [
+                                AuthorityEventType.SERVICE_ACTOR_PROVISIONED.value,
+                                AuthorityEventType.AUTHORITY_INVALIDATION_REQUESTED.value,
+                            ]
+                        ),
+                    )
+                )
+            ).all()
+    assert first_grant is not None and first_grant.status == "revoked"
+    assert pending == 0
+    expected_success = crossed_provision.status_code == 201
+    assert len(crossed_records) == int(expected_success)
+    if crossed_records:
+        assert crossed_records[0].status == "committed"
+    expected_denials = 1 if expected_success else 2
+    assert len(crossed_events) == expected_denials
+    assert all(
+        event.event_type == AuthorityEventType.SENSITIVE_AUTHORIZATION_DENIED.value
+        and event.denial_code == "permission_not_granted"
+        for event in crossed_events
+    )
+    assert revoke_invalidations == 1
+    assert len(crossed_success_evidence) == 2 * int(expected_success)
+    if crossed_success_evidence:
+        assert {event.event_type for event in crossed_success_evidence} == {
+            AuthorityEventType.SERVICE_ACTOR_PROVISIONED.value,
+            AuthorityEventType.AUTHORITY_INVALIDATION_REQUESTED.value,
+        }
     await db_session.dispose_engine()
 
 

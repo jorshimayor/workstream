@@ -451,6 +451,13 @@ def test_openapi_documents_request_error_and_response_context() -> None:
     assert {"401", "403", "503"} <= set(
         schema["paths"]["/api/v1/auth/me"]["get"]["responses"]
     )
+    service_actor_responses = schema["paths"]["/api/v1/service-actors"]["post"][
+        "responses"
+    ]
+    assert "409" in service_actor_responses
+    assert service_actor_responses["409"]["content"]["application/json"]["schema"] == {
+        "$ref": "#/components/schemas/ApiErrorResponse"
+    }
     assert {"404"} <= set(
         schema["paths"]["/api/v1/tasks/{task_id}"]["get"]["responses"]
     )

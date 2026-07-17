@@ -123,13 +123,14 @@ class ActorService:
         correlation_id: UUID,
     ) -> ResolvedActor:
         """Resolve an existing actor or atomically provision one verified human."""
-        resolved = await self.find_verified_actor(token)
-        if resolved is not None:
-            return await self._touch_verified_actor(resolved)
         if token.subject_kind == "service":
             raise ServiceActorNotProvisioned("Service actor is not provisioned")
         if token.subject_kind != "human":
             raise UnsupportedSubjectKind("Unsupported subject kind")
+
+        resolved = await self.find_verified_actor(token)
+        if resolved is not None:
+            return await self._touch_verified_actor(resolved)
 
         await self._repo.lock_external_identity(token.issuer, token.subject)
         resolved = await self.find_verified_actor(token)
@@ -178,6 +179,11 @@ class ActorService:
         correlation_id: UUID,
     ) -> ResolvedActor:
         """Resolve self authorization without preempting lifecycle decisions."""
+        if token.subject_kind == "service":
+            raise ServiceActorNotProvisioned("Service actor is not provisioned")
+        if token.subject_kind != "human":
+            raise UnsupportedSubjectKind("Unsupported subject kind")
+
         resolved = await self.find_actor_for_authorization(token)
         if resolved is None:
             return await self.resolve_verified_actor(

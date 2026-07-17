@@ -382,10 +382,10 @@ async def test_concurrent_first_access_leaves_one_profile_link_and_event_pair(
         assert await session.scalar(select(func.count()).select_from(ActorIdentityLink)) == 1
         assert (
             await session.scalar(
-                select(func.count())
-                .select_from(AuditEvent)
-                .where(
-                    AuditEvent.event_type.in_(["ActorProfileProvisioned", "ActorIdentityLinked"])
+                select(func.count()).select_from(AuditEvent).where(
+                    AuditEvent.event_type.in_(
+                        ["ActorProfileProvisioned", "ActorIdentityLinked"]
+                    )
                 )
             )
             == 2
@@ -923,10 +923,10 @@ async def test_first_access_rate_control_unavailable_fails_closed(
         assert await session.scalar(select(func.count()).select_from(ActorIdentityLink)) == 0
         assert (
             await session.scalar(
-                select(func.count()).select_from(AuditEvent).where(
-                    AuditEvent.event_type.in_(
-                        ["ActorProfileProvisioned", "ActorIdentityLinked"]
-                    )
+                select(func.count())
+                .select_from(AuditEvent)
+                .where(
+                    AuditEvent.event_type.in_(["ActorProfileProvisioned", "ActorIdentityLinked"])
                 )
             )
             == 0
@@ -1135,6 +1135,7 @@ async def test_existing_actor_and_legacy_negative_states_fail_closed(
                     provisioning_method="manual_service_provisioning",
                     service_identity="workstream.artifact.verifier",
                     created_by="workstream:system:test",
+                    last_seen_at=None,
                 ),
                 ActorIdentityLink(
                     id=str(uuid4()),
@@ -1144,17 +1145,28 @@ async def test_existing_actor_and_legacy_negative_states_fail_closed(
                     subject_kind="service",
                     status="active",
                     linked_by="workstream:system:test",
+                    last_verified_at=None,
                 ),
             ]
         )
         await session.commit()
-        resolved_service = await ActorService(session).resolve_verified_actor(
-            service_token,
-            request_id=uuid4(),
-            correlation_id=uuid4(),
-        )
-        with pytest.raises(UnsupportedSubjectKind):
-            ActorService.self_response(resolved_service.profile)
+        service = ActorService(session)
+        with pytest.raises(ServiceActorNotProvisioned):
+            await service.resolve_verified_actor(
+                service_token,
+                request_id=uuid4(),
+                correlation_id=uuid4(),
+            )
+        with pytest.raises(ServiceActorNotProvisioned):
+            await service.resolve_actor_for_authorization(
+                service_token,
+                request_id=uuid4(),
+                correlation_id=uuid4(),
+            )
+        persisted = await service.find_actor_for_authorization(service_token)
+        assert persisted is not None
+        assert persisted.profile.last_seen_at is None
+        assert persisted.identity_link.last_verified_at is None
 
     legacy = legacy_actor("disabled-legacy")
     async with db_session.get_session_factory()() as session:

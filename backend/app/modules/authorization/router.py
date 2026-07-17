@@ -14,7 +14,7 @@ from app.api.deps.api_controls import enforce_admin_mutation_rate_limit
 from app.api.deps.rate_controls import service_unavailable_error
 from app.api.deps.auth import get_application_auth_verifier
 from app.api.deps.authorization import get_authorization_actor, get_authorization_service
-from app.core.api_controls import StructuredHTTPException
+from app.core.api_controls import ApiErrorResponse, StructuredHTTPException
 from app.db.session import get_db_session
 from app.interfaces.auth import AuthVerificationUnavailableError, AuthVerifier
 from app.modules.actors.service import ActorService, ResolvedActor
@@ -162,6 +162,7 @@ async def _database_call(session: AsyncSession, operation: Awaitable[T]) -> T:
     status_code=status.HTTP_201_CREATED,
     response_model=ServiceActorProvisionResponse,
     dependencies=[Depends(enforce_admin_mutation_rate_limit)],
+    responses={409: {"model": ApiErrorResponse, "description": "Provisioning conflict."}},
     openapi_extra={"x-workstream-action-id": ActionId.ACTOR_SERVICE_PROVISION.value},
 )
 async def provision_service_actor(

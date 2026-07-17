@@ -36,6 +36,7 @@ backend/tests/test_alembic.py
 backend/tests/test_tasks.py
 backend/tests/test_api_controls.py
 backend/tests/test_api_rate_controls.py
+backend/tests/test_api_contract_e2e.py
 backend/scripts/api_contract_e2e.py
 scripts/test_agent_gates.py
 docs/spec_authorization_service.md
@@ -250,7 +251,8 @@ architecture, CI integrity, docs, reuse/dedup, and test delta.
 (cd backend && WORKSTREAM_TEST_DATABASE_URL=<test-db> .venv/bin/python -m coverage erase)
 (cd backend && WORKSTREAM_TEST_DATABASE_URL=<test-db> .venv/bin/python -m coverage run \
   --branch --source=app.modules.actors -m pytest -q tests/test_actors.py \
-  tests/test_auth.py tests/test_authorization.py)
+  tests/test_auth.py tests/test_authorization.py tests/test_actor_legacy_classification.py \
+  tests/test_actor_migration_tools.py)
 (cd backend && .venv/bin/python -m coverage report --fail-under=90)
 (cd backend && WORKSTREAM_TEST_DATABASE_URL=<test-db> .venv/bin/python -m coverage erase)
 (cd backend && WORKSTREAM_TEST_DATABASE_URL=<test-db> .venv/bin/python -m coverage run \
