@@ -502,10 +502,23 @@ resource loader, lifecycle guards, negative tests, and evidence path exist.
 
 The catalogue contains exactly 74 PermissionIds and 57 ActionIds. The two
 AUTH-07B actor-self actions and seven AUTH-08 administrative actions are active;
-the other 48 entries remain planned and non-executable. Planned entries contain
-only action, permission, owner, and availability and must not receive deployment
-configuration, principals, resource facts, or guards. Startup validation failure
-is a release blocker, not a reason to relax catalogue checks.
+the other 48 entries remain planned and non-executable. The target post-custody
+invariant is that planned runtime entries contain only action, permission, exact
+AUTH activation owner, and availability. Until the availability-neutral custody
+transfers merge, the 25 ART and 19 REV rows retain their historical feature
+owner values as an explicitly blocked exception.
+Their owning feature must publish the approved principal/resource/guard/surface/
+transaction contract before registration or activation, but those foreign facts
+do not become free-form catalogue fields. Startup validation failure is a release
+blocker, not a reason to relax catalogue checks.
+
+PR #139 requires availability-neutral transfer of all 25 ART and 19 REV owner
+rows to exact AUTH chunks before feature activation. Counts and mappings remain
+unchanged. Catalogue totals are derived from the trusted entry head: four later
+REV registrations add exactly four planned and zero active actions, while the
+review-evidence binding registration adds exactly one planned and zero active
+action, in either order. Neither addition is operational until its complete
+feature contract and separate reviewed AUTH registration exist.
 
 Migration `0021` preserves historical audit rows with null `action_id`. Inspect
 non-null action evidence only by bounded ActionId, request/correlation IDs, and
@@ -521,7 +534,7 @@ historical status from identifier prefixes. All submission/review rows remain
 planned. Initial and revision submission share `submission.create`, and no
 revision-specific permission or preparation action exists.
 
-Review code must consume the request-scoped public
+Review reads consume the request-scoped public
 `AuthorizationService.require(action_id, typed_resource_context)` boundary.
 The service's bound caller-owned `AsyncSession` is the only transaction source;
 the method accepts no session or `uow` argument. Review code must not query
@@ -530,6 +543,24 @@ PermissionIds, or implement permission unions. Artifact recovery remains the
 ART-owned `artifact.verification_job.retry` action through
 `ArtifactOperatorRecoveryPort`; shared outbox dispatch/retry remains outside
 REV ownership.
+
+Review and other sensitive mutations must wait for `WS-AUTH-001-PREP`. That
+protocol locks `AuthorityControl(id=1)` first when final-admin safety applies,
+orders multiple principals by ActorProfile ID, then locks each human profile,
+exact link, and exact matched grant or each service profile and exact link.
+Service identity, static matrix membership, and action availability are
+code-owned validations, not database lock targets. Only then does AUTH create an
+internal, non-Pydantic `PreparedAuthorizationHandle` bound to the exact session,
+ActionId, actor reference kind, actor reference, idempotency key, and canonical
+request digest. It is never a route schema or caller input. Consumption matches
+every binding before the feature locks rows and recomposes final facts, then AUTH
+evaluates and stages evidence once before one route/service-command commit.
+Crossed tests must cover link revoke, actor suspend/deactivate, exact grant
+revoke, final-admin mutation, and same-session/action cross-actor or
+cross-request substitution. Never serialize or reuse the handle, let dependency
+teardown commit it, or commit AUTH evidence separately from feature state. The
+existing `AuthorityClaimHandle` is a separate idempotency-reservation contract,
+not this prepared authorization handle.
 
 Downgrade is allowed only while every action ID remains null and no permission
 outside migration `0018`'s historical 49-value set exists in the decision,
@@ -541,6 +572,28 @@ discarding it.
 Canonical actor self-read/self-update and the seven AUTH-08 administrative
 actions are active. Project capability context waits for AUTH-10 exact-project
 grants and canonical project composition.
+
+AUTH-10 is a clean cut to independent `submitter`, `reviewer`, and
+`adjudicator` grants. Before rollout, scan current typed schemas, audit facts,
+idempotency records, and PostgreSQL validators for `both`, replacement fields,
+replacement events, and replacement reasons. Migration `0024` must stop on any
+incompatible evidence; operators must remediate through a separately approved
+data decision, never an automatic conversion. A safe downgrade also refuses
+rather than deleting adjudicator or new exact-role evidence.
+
+Project-role revocation is routed by exact role. Submitter invalidation may
+reach task assignment; reviewer invalidation reaches only REV; adjudicator
+invalidation remains dormant until that lifecycle exists. Verify grant ID,
+actor, project, role, and cause event before a consumer changes product state.
+Revoking one role must leave the other project roles and all AdminRoleGrants
+unchanged.
+
+The first fixed-service set remains seven artifact identities and eleven matrix
+memberships from AUTH-09A. Missing provisioned rows deny without stopping the
+application. New REV/CON service identities require an exact owning-feature
+manifest followed by AUTH-owned enum/constraint/matrix, provisioning, admission,
+and cross-service denial proof. Do not create a shared review service or a
+database service-grant table.
 
 ## Actor Self Decision Operations
 

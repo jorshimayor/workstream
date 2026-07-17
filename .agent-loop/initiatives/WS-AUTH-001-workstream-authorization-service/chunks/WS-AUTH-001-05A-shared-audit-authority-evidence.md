@@ -174,7 +174,7 @@ required and event-compatible as follows:
 | actor reactivate | `administrative_correction` |
 | initial Access Administrator bootstrap | `initial_access_bootstrap` |
 | admin/project grant issue | `authority_assignment` |
-| project grant replacement | `authority_replacement` |
+| project grant replacement | `authority_replacement` (historical foundation value; AUTH-10 removes current emission/validation under D21) |
 | admin/project grant revoke | `authority_revocation` |
 | admin grant/last-admin denial | `authorization_policy_denial` |
 | qualification snapshot | `qualification_evidence_captured` |

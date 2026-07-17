@@ -27,19 +27,51 @@ stopped.
 | `WS-AUTH-001-07A` | Closed Permission And Action Catalogue | L1 | Merged through PR #126 as `e9d72a1` |
 | `WS-AUTH-001-07B` | Deny-By-Default Kernel And Self-Action Cutover | L1 | Merged through PR #130 as `90eca12` |
 | `WS-AUTH-001-08` | Bootstrap And Administrative Role Grants | L1 | Merged through PR #131 as `aa0fdcd` |
+| `WS-AUTH-001-XINT` | Lifecycle Boundary Plan Reconciliation | L1 | Active planning-only correction after merged PR #139 |
 | `WS-AUTH-001-09` | Actor State, Identity Revocation, And Service Actors | L1 | Split before runtime implementation |
-| `WS-AUTH-001-09A` | Fixed Service Identity Foundation | L1 | Implementation in PR #132; merge pending |
+| `WS-AUTH-001-09A` | Fixed Service Identity Foundation | L1 | PR #132 remains open and conflicting; converge on XINT before merge |
 | `WS-AUTH-001-09B` | Controlled Service Actor Provisioning | L1 | Inactive until 09A merge/memory and explicit start |
 | `WS-AUTH-001-09C` | Actor And Identity-Link Administration Reads | L1 | Inactive until 09B merge/memory and explicit start |
 | `WS-AUTH-001-09D` | Actor And Identity-Link Lifecycle Mutations | L1 | Inactive until 09C merge/memory and explicit start |
 | `WS-AUTH-001-09E` | Fixed Service Runtime Admission | L1 | Inactive until 09D merge/memory and explicit start |
+| `WS-AUTH-001-ART-CUSTODY` | ART Activation Custody Transfer | L1 | Inactive until 09E merge/memory and explicit start |
+| `WS-AUTH-001-REV-CUSTODY` | REV Activation Custody Transfer | L1 | Inactive until 09E merge/memory and explicit start |
+| `WS-AUTH-001-PREP` | Prepared Mutation Authorization Protocol | L1 | Inactive until 09E merge/memory and explicit start |
 | `WS-AUTH-001-10` | Project Qualification And Contributor Role Grants | L1 | Proposed |
 | `WS-AUTH-001-11` | Project Identity, Guide, Source, And Visibility Cutover | L1 | Proposed |
 | `WS-AUTH-001-12` | Project Policy And Setup Mutation Cutover | L1 | Proposed |
 | `WS-AUTH-001-13` | Task Management And Assignment Cutover | L1 | Proposed |
 | `WS-AUTH-001-14` | Submission, Checker, And Audit Visibility Cutover | L1 | Proposed |
-| `WS-AUTH-001-15` | Remaining System Worker Cutover And Obsolete Authority Removal | L1 | Proposed |
+| `WS-AUTH-001-15` | Remaining Internal Service Cutover And Obsolete Authority Removal | L1 | Proposed |
 | `WS-AUTH-001-16` | Conformance, Observability, And Live API Proof | L1 | Proposed |
+
+## Feature-gated registration and activation chunks
+
+These identifiers are exact future gates, not executable chunk contracts or
+automatic successors. AUTH materializes each contract only after its immutable
+feature manifest exists, then requires a separate explicit start.
+
+| Chunk | Title | Risk | Status |
+|---|---|---:|---|
+| `WS-AUTH-001-REV-REG` | REV Lifecycle Action Registration | L1 | Blocked on complete REV typed manifests |
+| `WS-AUTH-001-ART-REV-EVIDENCE-REG` | Review Evidence Binding Action Registration | L1 | Blocked on complete ART/REV dual-authority contract |
+| `WS-AUTH-001-ART-02D-INTERNAL` | ART 02D Internal Action Activation | L1 | Feature-gated |
+| `WS-AUTH-001-ART-02D-OPERATOR` | ART 02D Operator Read/Status And Independently Evaluated Retry Activation | L1 | Feature-gated |
+| `WS-AUTH-001-ART-03` | ART 03 Guide Source Action Activation | L1 | Feature-gated |
+| `WS-AUTH-001-ART-04A` | ART 04A Upload Action Activation | L1 | Feature-gated |
+| `WS-AUTH-001-ART-04B` | ART 04B Pre-Submit Materialization Activation | L1 | Feature-gated |
+| `WS-AUTH-001-ART-05` | ART 05 Submission Binding Activation | L1 | Feature-gated |
+| `WS-AUTH-001-ART-06A` | ART 06A Post-Submit Materialization Activation | L1 | Feature-gated |
+| `WS-AUTH-001-ART-06B` | ART 06B Checker Output Action Activation | L1 | Feature-gated |
+| `WS-AUTH-001-REV-05` | REV 05 Queue Read Activation | L1 | Feature-gated |
+| `WS-AUTH-001-REV-06` | REV 06 Claim Lease And Expiry Activation | L1 | Feature/service-gated |
+| `WS-AUTH-001-REV-07` | REV 07 Context Chain And Finding Evidence Activation | L1 | Feature/ART-gated |
+| `WS-AUTH-001-REV-08` | REV 08 Decision Activation | L1 | Feature/CON-gated |
+| `WS-AUTH-001-REV-09A` | REV 09A Finding Response Evidence Activation | L1 | Feature/ART-gated |
+| `WS-AUTH-001-REV-11` | REV 11 Recovery And Reconciliation Activation | L1 | Feature/service-gated |
+| `WS-AUTH-001-REV-12` | REV 12 Artifact Reconciliation And Projection Activation | L1 | Feature/service-gated |
+| `WS-AUTH-001-REV-LIFECYCLE` | REV Lifecycle Repair Action Activation | L1 | Blocked until REV-REG and four hidden manifests merge |
+| `WS-AUTH-001-ART-REV-EVIDENCE` | Review Evidence Binding Action Activation | L1 | Blocked until registration and hidden ART/REV behavior merge |
 
 ## Dependency order
 
@@ -57,17 +89,21 @@ WS-AUTH-001-PLAN
 -> WS-AUTH-001-07A
 -> WS-AUTH-001-07B
 -> WS-AUTH-001-08
+-> WS-AUTH-001-XINT
 -> WS-AUTH-001-09A
 -> WS-AUTH-001-09B
 -> WS-AUTH-001-09C
 -> WS-AUTH-001-09D
 -> WS-AUTH-001-09E
+-> WS-AUTH-001-ART-CUSTODY and WS-AUTH-001-REV-CUSTODY
+-> WS-AUTH-001-PREP
 -> WS-AUTH-001-10
 -> WS-AUTH-001-11
 -> WS-AUTH-001-12
 -> WS-AUTH-001-13
 -> WS-AUTH-001-14
 -> WS-AUTH-001-15
+-> all registration/activation chunks whose feature surfaces have merged
 -> WS-AUTH-001-16
 ```
 
@@ -90,9 +126,14 @@ WS-AUTH-001-PLAN
 - Parent chunk 07 was split before runtime implementation. Chunk 07A owns the
   closed permission/action catalogue and action-aware audit parity; chunk 07B
   owns the minimal deny-by-default kernel and actor self-action cutover.
+- PR #139 merged the WS-XINT boundary contract. `WS-AUTH-001-XINT` is the
+  planning-only AUTH owner response; it changes no runtime.
 - Chunks 08-10 establish local grant truth before product cutover. Parent chunk
-  09 is split into 09A through 09E; 09E separately admits fixed services without
-  entering human grant evaluation.
+  09 is split into 09A through 09E with no inserted dependency; 09E separately
+  admits fixed services without entering human grant evaluation. ART/REV custody
+  transfer follows 09E and changes only owner metadata and availability-neutral
+  parity. PREP then establishes AUTH-first
+  locking and caller-owned commit before sensitive product/review mutations.
 - Chunks 11-15 migrate bounded complete product/system surfaces.
 - Artifact upload, read, retention, release/delete, replication, integrity, and
   reconciliation remain mechanically owned by the artifact subsystem but must
@@ -105,11 +146,15 @@ WS-AUTH-001-PLAN
   behavior, and tests. Dedicated AUTH custodians integrate evaluators and alone
   change availability after the matching ART behavior merges. AUTH-12, AUTH-14,
   and AUTH-15 are not alternate artifact activation paths. WS-ART-001-02D starts
-  only after AUTH-09A through AUTH-09E and custody registration, then remains hidden until the
-  internal and Operator AUTH activation checkpoints pass. Later ART chunks use
-  the same sequence. AUTH-16 proves no bypass remains.
-- Chunk 16 proves the complete initiative; it does not backfill missing audit
-  or idempotency evidence.
+  only after AUTH-09A through AUTH-09E and custody registration, then remains
+  hidden until the internal and Operator AUTH activation checkpoints pass.
+  Later ART and REV chunks use the same sequence. Exact mappings, registration
+  counts, service-extension gates, and activation proof live in
+  `ACTIVATION_CUSTODY.md`.
+- Chunk 16 proves the complete initiative after every protected surface already
+  merged has its matching AUTH activation and every unimplemented registered
+  action still denies as planned. It does not backfill missing audit or
+  idempotency evidence.
 - `WS-POL-002-03` merged separately through PR #90 as `a7aa474`. This initiative
   does not own it; post-merge memory completed through PR #94. `WS-POL-002-04`
   remains inactive until the relevant project authorization cutover is complete
@@ -140,5 +185,10 @@ signed automated memory completed, and the user explicitly started AUTH-07.
 Required L1 review rejected the combined contract before runtime edits and
 required 07A/07B. AUTH-07B merged through PR #130 as `90eca12`; AUTH-08 merged
 through PR #131 as `aa0fdcd`. Parent AUTH-09 was split before implementation.
-AUTH-09A implementation and review are complete in PR #132 and await explicit
-human merge approval. Do not start AUTH-09B or POL-002-04 automatically.
+AUTH-09A implementation and review are complete in PR #132, but merged PR #139
+changed its planning base and the PR now conflicts with trusted `main`. Its
+seven identities, eleven static matrix actions, and migration `0023` remain
+valid. After this planning amendment merges, PR #132 must be converged without
+restoring stale owner or combined-role wording, re-reviewed on the exact head,
+and pass checks before human merge. Do not start AUTH-09B or POL-002-04
+automatically.
