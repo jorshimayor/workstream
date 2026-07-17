@@ -26,10 +26,13 @@ The user accepted a smaller ServiceAccount-style model:
 - one frozen typed seven-identity/eleven-ActionId matrix supplies service
   candidates;
 - no service registration or action-assignment table exists;
-- every artifact action remains planned until its owning WS-ART chunk activates
-  its resource and guards.
+- every artifact action remains planned while WS-ART supplies the hidden
+  resource facts, guards, behavior, and typed manifest required for a later
+  AUTH-owned evaluator integration and activation.
 
 Parent AUTH-09 is split into 09A identity/catalogue foundation, 09B controlled
 service provisioning, 09C bounded actor/link reads, and 09D lifecycle mutations
-with final-admin concurrency. Repaired 09A requires fresh exact-head L1 review
-before implementation.
+with final-admin concurrency. XINT subsequently made 09E fixed-service runtime
+admission mandatory before the availability-neutral ART/REV custody transfers
+and prepared-mutation protocol. Repaired 09A requires fresh exact-head L1
+review before implementation.

@@ -40,10 +40,15 @@ repository threshold. No docstring gate or exclusion changed.
   PostgreSQL.
 - Ruff over the application, migration-only package, tests, operator script,
   and revision: passed.
-- Full GitHub Backend and Agent Gates passed before the repair and will rerun on
-  the pushed repair head.
+- The converged implementation at
+  `fe61df64fbf82a1f6871c380e6fc1986a4f12205` passed all required internal
+  reviewer tracks, 80 local agent-gate tests, and the exact revision `0023`
+  PostgreSQL proof.
+- Replacement GitHub Backend, Agent Gates, and CodeRabbit will run after the
+  repaired branch is pushed.
 
 ## Remaining Gate
 
-Exact-head internal re-review passes with no remaining finding. Refreshed GitHub
-checks and CodeRabbit re-review remain before human merge approval.
+Exact-head internal review passes after reconciling stale pre-XINT evidence.
+Replacement GitHub checks and CodeRabbit review remain before explicit human
+merge approval.
