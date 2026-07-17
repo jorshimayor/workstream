@@ -120,9 +120,11 @@ editing migrations `0018`, `0019`, or `0022`
   downstream consumers reconcile only the matching task, review, or future
   adjudication responsibility.
 - The linked invalidation retains exact grant and cause-event references. A
-  submitter revocation creates only the task-assignment obligation; reviewer and
-  adjudicator revocations create only their REV-owned obligations. No path
-  changes another project role or an AdminRoleGrant.
+  submitter revocation creates only the task-assignment obligation and reviewer
+  revocation may create only its exact REV-owned review obligation. Adjudicator
+  revocation persists exact invalidation only and creates or consumes no
+  adjudication obligation until that separately approved lifecycle is active.
+  No path changes another project role or an AdminRoleGrant.
 - Project manager/admin role alone never creates contributor capability.
 - PostgreSQL concurrency tests cover identical-role creates, concurrent
   different-role creates, regrant versus revoke, and revocation versus

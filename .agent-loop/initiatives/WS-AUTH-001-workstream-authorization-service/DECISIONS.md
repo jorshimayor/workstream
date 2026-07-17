@@ -457,10 +457,12 @@ or replacement evidence exists and refuses an unsafe downgrade rather than
 converting or deleting evidence. Only issued and revoked success events remain.
 Linked invalidation preserves exact grant, actor, project, role, and cause.
 Submitter revocation alone can enter AUTH-13 assignment reconciliation;
-reviewer and adjudicator revocation remain distinct REV obligations. No role
-revocation changes another project role or an AdminRoleGrant. The adjudicator
-grant provides only exact-project visibility until WS-REV defines the lifecycle
-and AUTH activates exact adjudication actions.
+reviewer revocation may create only its exact REV-owned review obligation.
+Adjudicator revocation persists exact invalidation only: it creates or consumes
+no adjudication obligation until WS-REV separately defines that lifecycle and
+AUTH activates its exact actions. No role revocation changes another project
+role or an AdminRoleGrant. The adjudicator grant provides only exact-project
+visibility until that separate activation.
 
 ## D22: Fixed service runtime admission is separate from human admission
 
@@ -487,19 +489,30 @@ or service-admission wording is not an alternate contract.
 PR #132's fixed service foundation remains technically valid: seven artifact
 service identities, eleven exact static ActionId memberships, no database
 assignment rows, and migration `0023`. Its branch must converge from trusted
-`main` without restoring pre-XINT planning text, then repeat exact-head internal
-review and external checks before merge.
+`main` without restoring pre-XINT planning text. Convergence must preserve the
+packaged frozen migration contract, zero mutable `app.modules` imports from the
+migration, explicit Alembic-script-owned repository root, location-independent
+built-wheel custody/replay proof, same-event-loop CLI execution and engine
+disposal, and original `BaseException` precedence with cancellation/cleanup
+tests. The exact converged head then repeats required internal review and
+external checks before merge.
 
 ## D24: Sensitive cross-module mutations use prepared authorization
 
 Status: adopted by the WS-XINT transaction contract; runtime remains proposed.
 
 `WS-AUTH-001-PREP` introduces a session-bound, action-bound, opaque,
-single-use, nonserializable prepared authority handle. AUTH first locks the
-canonical human link/profile/exact grant or service link/profile/identity/matrix
-row. The feature then locks its records, recomposes final typed facts, and asks
-AUTH to evaluate exactly once and stage decision evidence. Feature participants
-flush, and the route or service command commits once. Reads retain `require()`.
+single-use, nonserializable prepared authority handle. When final-admin safety
+applies, AUTH locks `AuthorityControl(id=1)` first. It orders multiple authority
+principals by `ActorProfile.id`; for each human it locks `ActorProfile`, the exact
+`ActorIdentityLink`, then the exact matched admin or project grant; for each
+service it locks `ActorProfile` then the exact `ActorIdentityLink`. It validates
+the code-owned `service_identity`, static matrix membership, and action
+availability after those locks; those values are not database lock targets. The
+feature locks its records only after all authority rows, recomposes final typed
+facts, and asks AUTH to evaluate exactly once and stage decision evidence.
+Feature participants flush, and the route or service command commits once.
+Reads retain `require()`.
 Handle reuse, cross-session/action use, authority loss, evidence failure,
 participant failure, cancellation, and commit failure leave no feature mutation
 or partial evidence. AUTH never imports a feature repository.
@@ -511,7 +524,7 @@ Status: accepted through merged PR #139; runtime transfer remains proposed.
 `ActionOwner` no longer names a resource-owning feature chunk. The exact
 availability-neutral transfers and future activation groups are canonical in
 `ACTIVATION_CUSTODY.md`. `WS-AUTH-001-ART-CUSTODY` atomically transfers all 25
-current ART rows to eight AUTH groups and removes seven ART owner values.
+current ART rows to nine AUTH groups and removes seven ART owner values.
 `WS-AUTH-001-REV-CUSTODY` atomically transfers all 19 current REV rows to seven
 AUTH groups and removes seven REV owner values. Counts, mappings, and planned
 availability remain unchanged; no migration is required for owner metadata.

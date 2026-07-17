@@ -257,7 +257,12 @@ need an independently reviewable contract and production-code budget.
 - PR #132 remains open at `79d1989` and conflicts with current `main`. Its seven
   service identities, eleven exact static ActionId memberships, versioned
   migration-only `0023` contract, and no-database-assignment design remain
-  valid. Its loop/planning/spec conflicts must not overwrite PR #139.
+  valid. Its reviewed repairs also remain mandatory: a packaged frozen migration
+  contract with zero mutable `app.modules` imports, an explicit
+  Alembic-script-owned repository root, location-independent built-wheel
+  custody/replay proof, CLI execution and engine disposal on the same event
+  loop, and original `BaseException` precedence with cancellation/cleanup tests.
+  Its loop/planning/spec conflicts must not overwrite PR #139.
 
 ### Current runtime gaps
 

@@ -7,12 +7,23 @@
 ## Goal
 
 Atomically transfer all 25 current planned ART actions from historical feature
-owner labels to the eight exact AUTH activation custodians in
+owner labels to the nine exact AUTH activation custodians in
 `ACTIVATION_CUSTODY.md` without changing mappings or availability.
+
+## Why this chunk exists
+
+Merged XINT makes `ActionOwner` an AUTH activation custodian, while the current
+25 ART rows still name historical feature owners. The metadata must be corrected
+atomically before any ART action can be activated.
 
 ## Risk class
 
-L1 / P1.
+L1.
+
+## SLA
+
+P1. No ART activation may proceed while feature owner values remain in the
+closed activation-custody registry.
 
 ## Allowed files
 
@@ -41,10 +52,11 @@ partial transfer or retained ART activation-owner enum
 
 ## Acceptance criteria
 
-- Exactly the 25 canonical rows move to the eight AUTH owner values.
+- Exactly the 25 canonical rows move to the nine AUTH owner values.
 - All seven ART owner enum values are removed atomically.
-- The catalogue remains 57 actions, nine active, 48 planned, and 74
-  permissions with identical ActionId-to-PermissionId pairs.
+- Catalogue ActionId, PermissionId, active/planned counts, static matrix rows,
+  and every ActionId-to-PermissionId pair remain exactly equal to the trusted
+  entry head; this chunk has a zero-count and zero-availability delta.
 - Typed, PostgreSQL, audit, definition-owner, and documentation parity reject
   missing, extra, dual, or changed mappings.
 - Every ART action remains unavailable through the real kernel.
@@ -66,7 +78,7 @@ CI integrity, docs, reuse/dedup, and test delta.
 
 ## Human review focus
 
-Verify exact 25-row custody transfer, unchanged mappings/counts, and zero
+Verify exact 25-row/nine-owner custody transfer, unchanged mappings/counts, and zero
 activation.
 
 ## Stop conditions

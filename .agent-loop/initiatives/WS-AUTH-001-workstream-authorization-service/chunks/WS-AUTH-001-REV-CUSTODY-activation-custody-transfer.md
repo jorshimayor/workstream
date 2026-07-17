@@ -10,9 +10,20 @@ Atomically transfer all 19 current planned REV actions from historical feature
 owner labels to the seven exact AUTH activation custodians in
 `ACTIVATION_CUSTODY.md` without changing mappings or availability.
 
+## Why this chunk exists
+
+Merged XINT makes `ActionOwner` an AUTH activation custodian, while the current
+19 REV rows still name historical feature owners. The metadata must be corrected
+atomically without registering or activating later REV lifecycle actions.
+
 ## Risk class
 
-L1 / P1.
+L1.
+
+## SLA
+
+P1. No REV activation may proceed while feature owner values remain in the
+closed activation-custody registry.
 
 ## Allowed files
 

@@ -20,7 +20,12 @@ not yet provide complete, executable chunk custody.
 
 ## Risk class
 
-L1 / P1 planning and security-contract correction.
+L1 planning and security-contract correction.
+
+## SLA
+
+P1. Stop all affected AUTH runtime work until this boundary reconciliation is
+reviewed and merged.
 
 ## Allowed files
 
@@ -37,7 +42,7 @@ docs/operations_authorization_service.md
 ## Not allowed
 
 ```text
-backend runtime, migration, schema, route, worker, or test implementation
+backend runtime, migration, schema, route, background-service, or test implementation
 ActionId or PermissionId registration
 ActionOwner or ActionAvailability runtime changes
 service provisioning or feature action activation
@@ -51,8 +56,13 @@ resolving PR #132 by restoring pre-XINT planning text
 - The plan records PR #139 and treats all four merged XINT handoffs as
   authoritative inputs.
 - PR #132's seven fixed identities, eleven static matrix actions, and migration
-  `0023` remain valid, while its planning conflicts are assigned to a separate
-  exact-main convergence and re-review step.
+  `0023` remain valid. Convergence must preserve its packaged frozen migration
+  contract, zero mutable `app.modules` imports from the migration, explicit
+  Alembic-script-owned repository root, location-independent built-wheel
+  custody/replay proof, same-event-loop CLI execution and engine disposal, and
+  original `BaseException` precedence with cancellation/cleanup tests. Its
+  planning conflicts are assigned to a separate exact-main convergence and
+  re-review step.
 - `ActionOwner` means only an exact AUTH activation custodian. All 25 current
   ART and 19 current REV mappings have explicit availability-neutral transfer
   chunks and exact future AUTH activation chunks.

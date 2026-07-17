@@ -81,9 +81,10 @@ starting WS-POL-002-04 or another initiative automatically
 - Tokens, raw claims, JWKS bodies, secrets, and unnecessary PII are absent from
   logs, errors, audit, and committed evidence.
 - Table-driven tests cover every permission role/scope allow and deny case.
-- Exact conformance proves all 74 PermissionIds and the trusted-main ActionId
-  count at execution time: 57 before additive registrations, 61 after REV-REG,
-  and 62 after review-evidence registration. It proves every
+- Exact conformance proves all 74 PermissionIds and derives the trusted-main
+  ActionId total at execution time. REV-REG contributes exactly four planned
+  actions and review-evidence registration contributes exactly one planned
+  action, in either order; both contribute zero active actions. It proves every
   ActionId-to-PermissionId mapping, exact AUTH owner, availability, and static
   service-matrix row, with no feature-valued activation owner remaining.
 - A generated conformance manifest covers every protected `/api/v1` route and

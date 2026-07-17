@@ -243,12 +243,13 @@ required, and its dedicated AUTH activation custodian has integrated the exact
 evaluator and changed availability. Both halves are mandatory; registry or
 feature presence alone never grants authority.
 
-The four proposed REV lifecycle actions are not part of the 57-row runtime
-registry. Their separately reviewed registration would produce 61 actions: nine
-active and 52 planned. The separately reviewed
-`artifact.review_evidence.binding.create` registration would then produce 62:
-nine active and 53 planned. Both registrations retain 74 PermissionIds and stay
-blocked until complete feature-owned typed and transaction manifests exist.
+The four proposed REV lifecycle actions and
+`artifact.review_evidence.binding.create` are not part of the current runtime
+registry. Catalogue totals are derived from trusted `main` when each gate runs:
+REV registration adds exactly four planned and zero active actions, while the
+review-evidence registration adds exactly one planned and zero active action, in
+either order. Both retain 74 PermissionIds and stay blocked until complete
+feature-owned typed and transaction manifests exist.
 
 AUTH-07B activates `actor.profile.read_self` and `actor.profile.update_self`.
 AUTH-08 activates exactly seven administrative actions through migration
@@ -482,7 +483,10 @@ Sensitive mutations use the prepared protocol instead of evaluating final
 authority against unlocked feature facts:
 
 ```text
-AUTH locks current link/profile and exact human grant or service identity row
+AUTH locks AuthorityControl first when final-admin safety applies
+-> AUTH orders principals by ActorProfile ID
+-> human: ActorProfile -> exact ActorIdentityLink -> exact matched grant
+-> service: ActorProfile -> exact ActorIdentityLink -> code-owned validations
 -> AUTH returns one opaque session/action-bound prepared handle
 -> feature locks its canonical rows and recomposes final typed facts
 -> AUTH consumes the handle, evaluates once, and stages decision evidence
@@ -490,11 +494,19 @@ AUTH locks current link/profile and exact human grant or service identity row
 -> route or service command commits once
 ```
 
+Service identity, static service-action matrix membership, and action
+availability are immutable code-owned validations after the service profile and
+link locks; they are not database rows or lock targets. Existing actor-self,
+administrative, and lifecycle mutations must use the same authority-row order
+before any prepared consumer ships.
+
 The handle is single-use and nonserializable. Reuse, wrong action, cross-session
 use, authority loss, evidence failure, participant failure, cancellation, or
 commit failure leaves no feature mutation or partial authority evidence. Reads
 continue to use request-scoped `require()`. AUTH never imports feature
 repositories, and dependency teardown never commits shared feature work.
+Crossed PostgreSQL tests cover PREP against link revocation, actor suspension or
+deactivation, exact grant revocation, and final-admin mutation.
 
 For the two active self actions, the default human authority source is
 `actor_self`; token roles and client-supplied permissions never enter the

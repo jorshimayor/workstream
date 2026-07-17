@@ -30,12 +30,12 @@ stopped.
 | `WS-AUTH-001-XINT` | Lifecycle Boundary Plan Reconciliation | L1 | Active planning-only correction after merged PR #139 |
 | `WS-AUTH-001-09` | Actor State, Identity Revocation, And Service Actors | L1 | Split before runtime implementation |
 | `WS-AUTH-001-09A` | Fixed Service Identity Foundation | L1 | PR #132 remains open and conflicting; converge on XINT before merge |
-| `WS-AUTH-001-ART-CUSTODY` | ART Activation Custody Transfer | L1 | Inactive until repaired 09A merge/memory and explicit start |
-| `WS-AUTH-001-REV-CUSTODY` | REV Activation Custody Transfer | L1 | Inactive until ART custody merge/memory and explicit start |
-| `WS-AUTH-001-09B` | Controlled Service Actor Provisioning | L1 | Inactive until both custody transfers merge/memory and explicit start |
+| `WS-AUTH-001-09B` | Controlled Service Actor Provisioning | L1 | Inactive until 09A merge/memory and explicit start |
 | `WS-AUTH-001-09C` | Actor And Identity-Link Administration Reads | L1 | Inactive until 09B merge/memory and explicit start |
 | `WS-AUTH-001-09D` | Actor And Identity-Link Lifecycle Mutations | L1 | Inactive until 09C merge/memory and explicit start |
 | `WS-AUTH-001-09E` | Fixed Service Runtime Admission | L1 | Inactive until 09D merge/memory and explicit start |
+| `WS-AUTH-001-ART-CUSTODY` | ART Activation Custody Transfer | L1 | Inactive until 09E merge/memory and explicit start |
+| `WS-AUTH-001-REV-CUSTODY` | REV Activation Custody Transfer | L1 | Inactive until 09E merge/memory and explicit start |
 | `WS-AUTH-001-PREP` | Prepared Mutation Authorization Protocol | L1 | Inactive until 09E merge/memory and explicit start |
 | `WS-AUTH-001-10` | Project Qualification And Contributor Role Grants | L1 | Proposed |
 | `WS-AUTH-001-11` | Project Identity, Guide, Source, And Visibility Cutover | L1 | Proposed |
@@ -47,16 +47,17 @@ stopped.
 
 ## Feature-gated registration and activation chunks
 
-These chunks belong to AUTH but are not automatic successors in the core
-sequence. Each remains inactive until its exact feature manifest and all
-prerequisites in `ACTIVATION_CUSTODY.md` have merged.
+These identifiers are exact future gates, not executable chunk contracts or
+automatic successors. AUTH materializes each contract only after its immutable
+feature manifest exists, then requires a separate explicit start.
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
 | `WS-AUTH-001-REV-REG` | REV Lifecycle Action Registration | L1 | Blocked on complete REV typed manifests |
 | `WS-AUTH-001-ART-REV-EVIDENCE-REG` | Review Evidence Binding Action Registration | L1 | Blocked on complete ART/REV dual-authority contract |
 | `WS-AUTH-001-ART-02D-INTERNAL` | ART 02D Internal Action Activation | L1 | Feature-gated |
-| `WS-AUTH-001-ART-02D-OPERATOR` | ART 02D Operator Action Activation | L1 | Feature-gated; retry independent |
+| `WS-AUTH-001-ART-02D-OPERATOR` | ART 02D Operator Read/Status Activation | L1 | Feature-gated |
+| `WS-AUTH-001-ART-02D-RETRY` | ART 02D Verification Retry Activation | L1 | Independently feature-gated |
 | `WS-AUTH-001-ART-03` | ART 03 Guide Source Action Activation | L1 | Feature-gated |
 | `WS-AUTH-001-ART-04A` | ART 04A Upload Action Activation | L1 | Feature-gated |
 | `WS-AUTH-001-ART-04B` | ART 04B Pre-Submit Materialization Activation | L1 | Feature-gated |
@@ -91,12 +92,11 @@ WS-AUTH-001-PLAN
 -> WS-AUTH-001-08
 -> WS-AUTH-001-XINT
 -> WS-AUTH-001-09A
--> WS-AUTH-001-ART-CUSTODY
--> WS-AUTH-001-REV-CUSTODY
 -> WS-AUTH-001-09B
 -> WS-AUTH-001-09C
 -> WS-AUTH-001-09D
 -> WS-AUTH-001-09E
+-> WS-AUTH-001-ART-CUSTODY and WS-AUTH-001-REV-CUSTODY
 -> WS-AUTH-001-PREP
 -> WS-AUTH-001-10
 -> WS-AUTH-001-11
@@ -130,9 +130,10 @@ WS-AUTH-001-PLAN
 - PR #139 merged the WS-XINT boundary contract. `WS-AUTH-001-XINT` is the
   planning-only AUTH owner response; it changes no runtime.
 - Chunks 08-10 establish local grant truth before product cutover. Parent chunk
-  09 is split into 09A through 09E; 09E separately admits fixed services without
-  entering human grant evaluation. ART/REV custody transfer changes only owner
-  metadata and availability-neutral parity. PREP then establishes AUTH-first
+  09 is split into 09A through 09E with no inserted dependency; 09E separately
+  admits fixed services without entering human grant evaluation. ART/REV custody
+  transfer follows 09E and changes only owner metadata and availability-neutral
+  parity. PREP then establishes AUTH-first
   locking and caller-owned commit before sensitive product/review mutations.
 - Chunks 11-15 migrate bounded complete product/system surfaces.
 - Artifact upload, read, retention, release/delete, replication, integrity, and

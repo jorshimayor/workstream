@@ -177,12 +177,13 @@ proving the same issuer role metadata alone no longer authorizes.
    then implement the minimal AuthorizationService kernel and canonical actor
    self-action cutover in 07B before protected authority-management APIs.
 8. Implement bootstrap, `AuthorityControl`, and immutable admin-role grants.
-9. Reconcile merged WS-XINT boundaries, converge AUTH-09A on trusted `main`,
-   and transfer all current ART/REV owner labels to exact AUTH custodians without
-   changing availability.
-10. Implement actor/link state administration and controlled service actors,
-   then add fixed service runtime admission without activating feature actions.
-11. Add the prepared mutation authorization protocol.
+9. Reconcile merged WS-XINT boundaries and converge AUTH-09A on trusted `main`.
+10. Complete the uninterrupted AUTH-09B through 09E sequence: controlled
+    provisioning, actor/link administration, lifecycle mutations, and fixed
+    service runtime admission without activating feature actions.
+11. Transfer all current ART/REV owner labels to exact AUTH custodians without
+    changing availability, then add the prepared mutation authorization
+    protocol.
 12. Implement qualification snapshots and exact-project independent
    contributor grants, including the typed/PostgreSQL clean cut from `both` and
    replacement evidence.

@@ -511,10 +511,11 @@ blocker, not a reason to relax catalogue checks.
 
 PR #139 requires availability-neutral transfer of all 25 ART and 19 REV owner
 rows to exact AUTH chunks before feature activation. Counts and mappings remain
-unchanged. Four later REV registrations would make 61 actions with nine active;
-the later review-evidence binding registration would make 62. Neither addition
-is operational until its complete feature contract and separate reviewed AUTH
-registration exist.
+unchanged. Catalogue totals are derived from the trusted entry head: four later
+REV registrations add exactly four planned and zero active actions, while the
+review-evidence binding registration adds exactly one planned and zero active
+action, in either order. Neither addition is operational until its complete
+feature contract and separate reviewed AUTH registration exist.
 
 Migration `0021` preserves historical audit rows with null `action_id`. Inspect
 non-null action evidence only by bounded ActionId, request/correlation IDs, and
@@ -541,9 +542,15 @@ ART-owned `artifact.verification_job.retry` action through
 REV ownership.
 
 Review and other sensitive mutations must wait for `WS-AUTH-001-PREP`. That
-protocol locks authority first, gives the feature one session/action-bound
-single-use handle, lets the feature lock rows and recompose final facts, then
-evaluates and stages evidence once before one route/service-command commit.
+protocol locks `AuthorityControl(id=1)` first when final-admin safety applies,
+orders multiple principals by ActorProfile ID, then locks each human profile,
+exact link, and exact matched grant or each service profile and exact link.
+Service identity, static matrix membership, and action availability are
+code-owned validations, not database lock targets. Only then does AUTH give the
+feature one session/action-bound single-use handle, let the feature lock rows
+and recompose final facts, and evaluate and stage evidence once before one
+route/service-command commit. Crossed tests must cover link revoke, actor
+suspend/deactivate, exact grant revoke, and final-admin mutations.
 Never serialize or reuse a prepared handle, let dependency teardown commit it,
 or commit AUTH evidence separately from feature state.
 

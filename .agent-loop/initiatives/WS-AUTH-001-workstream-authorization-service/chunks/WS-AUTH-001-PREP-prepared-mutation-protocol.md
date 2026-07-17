@@ -9,9 +9,21 @@
 Add the AUTH-first, caller-committed prepared authorization protocol required
 for sensitive cross-module mutations without changing feature behavior.
 
+## Why this chunk exists
+
+Request-scoped authorization against unlocked feature facts cannot guarantee
+that authority, decision evidence, and business state remain consistent under
+concurrency. Sensitive mutations need one explicit AUTH-first lock protocol and
+one caller-owned transaction before feature cutovers consume it.
+
 ## Risk class
 
-L1 / P1.
+L1.
+
+## SLA
+
+P1. Sensitive cross-module mutation cutovers remain blocked until the prepared
+protocol and its crossed-concurrency proof merge.
 
 ## Prerequisites
 
@@ -41,7 +53,7 @@ docs/operations_authorization_service.md
 
 ```text
 feature repository imports or feature lifecycle mutations in AUTH
-feature route, worker, resource-composer, or adapter changes
+feature route, background-service, resource-composer, or adapter changes
 new grant type, permission, action, service identity, or activation
 dependency-teardown commit of an arbitrary shared session
 serializable, reusable, cross-session, or caller-constructible prepared handles
@@ -51,6 +63,17 @@ serializable, reusable, cross-session, or caller-constructible prepared handles
 
 - AUTH creates an opaque, session-bound, action-bound, single-use prepared
   handle only after locking canonical current human or service authority.
+- The database lock order is exact: lock `AuthorityControl(id=1)` first when
+  final-admin safety applies; order multiple authority principals by
+  `ActorProfile.id`; for each human lock `ActorProfile`, its exact
+  `ActorIdentityLink`, then its exact matched `AdminRoleGrant` or
+  `ProjectRoleGrant`; for each service lock `ActorProfile` then its exact
+  `ActorIdentityLink`. Only after every authority row is locked may the feature
+  lock its rows in its documented order.
+- `service_identity`, static service-action matrix membership, and action
+  availability are immutable code-owned validations performed after the service
+  profile/link locks. They are not database rows and must never be described or
+  implemented as lock targets.
 - The feature locks its records and recomposes final typed facts before AUTH
   evaluates exactly once and stages decision evidence.
 - The route or service command owns one commit; AUTH and feature participants
@@ -63,6 +86,11 @@ serializable, reusable, cross-session, or caller-constructible prepared handles
   error and no partial evidence.
 - Lock-order, concurrency, rollback, denial-concealment, and at-least-90-percent
   focused authorization coverage are proven with real PostgreSQL behavior.
+- Crossed concurrency proves PREP against identity-link revoke, actor suspend or
+  deactivate, exact grant revoke, and final-admin mutations without deadlock,
+  stale authorization, partial evidence, or partial feature state. Any existing
+  inverse actor-self/admin/lifecycle lock path is reconciled before a PREP
+  consumer is allowed to start.
 
 ## Verification commands
 
