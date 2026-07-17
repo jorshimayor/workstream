@@ -333,10 +333,14 @@ to the last code before persistence. Failed receipts have null quantity,
 fulfillment time, and external reference. One award has at most one fulfilled
 receipt. A conflicting replay fails closed.
 
-Raw callback bodies, free-form provider messages/codes, headers, signatures,
-tokens, endpoints, credentials, URLs, markup, and provider metadata MUST NOT be
-persisted, logged, emitted, exported, or returned. Only closed canonical facts,
-bounded opaque tokens, and canonical request/payload digests may cross into
+Raw provider secrets, authentication tokens, unbounded callback bodies,
+free-form messages/codes, headers, signatures, endpoints, credentials, URLs,
+markup, and provider metadata MUST NOT be persisted, logged, emitted, exported,
+or returned. This prohibition does not include the bounded non-secret opaque
+`external_event_id` and `external_reference` identifiers defined above; those
+may be stored only in their canonical receipt/status fields and remain excluded
+from product reads and integration events. Only closed canonical facts, those
+bounded identifiers, and canonical request/payload digests may cross into
 receipt, audit, outbox, or diagnostic records.
 
 ### CompensationStatusProjection

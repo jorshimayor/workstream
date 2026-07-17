@@ -286,8 +286,10 @@ conversion path. Money units are enabled uppercase ISO 4217 codes;
 project-points unit identity is `(project_id, unit_code)`.
 
 Immutable fulfillment receipts store only closed status/failure facts,
-binding-scoped bounded opaque event/reference tokens, exact quantities, and
-canonical digests. Free-form provider messages/codes and raw bodies, headers,
-signatures, tokens, endpoints, credentials, URLs, markup, or metadata are never
-persisted, logged, emitted, exported, or returned. Unknown provider failures
-map to the closed generic failure code before persistence.
+binding-scoped bounded non-secret opaque event/reference identifiers, exact
+quantities, and canonical digests. Raw provider secrets, authentication tokens,
+unbounded bodies, free-form messages/codes, headers, signatures, endpoints,
+credentials, URLs, markup, or metadata are never persisted, logged, emitted,
+exported, or returned. The bounded receipt identifiers are not authentication
+tokens and may appear only in their canonical receipt/status fields. Unknown
+provider failures map to the closed generic failure code before persistence.
