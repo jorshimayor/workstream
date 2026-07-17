@@ -407,16 +407,19 @@ Product-surface release and shutdown use one hidden PostgreSQL-canonical
 12A persists compare-and-set phase history, exposes a typed mandatory mutation
 fence, and installs that fence through explicit composition across review
 mutations, every task submission, review-queue admission, authority-loss
-replacement, and the exact CON-owned fulfillment dispatch and callback hooks.
-It adds no public production route.
+replacement, every CON-owned fulfillment-obligation root creation, requeue,
+successor, and repair writer, and the exact CON-owned fulfillment dispatch and
+callback hooks. Every obligation writer acquires the fence before allocating its
+monotonic ordinal. It adds no public production route.
 
 The fence uses matching PostgreSQL advisory locks so a phase transition waits
 for admitted mutation transactions and then applies the persisted command-class
 matrix. A dedicated `revision_cutover_fenced` phase keeps initial submission and
 checker admission open while blocking legacy revision/replacement writers;
 shutdown phases separately fence all new admission, drain review commands and
-leases, drain fulfillment dispatch, preserve authenticated callbacks, and then
-disable. `disabled(N) -> pre_activation(N+1)` is the only reactivation edge and
+leases, capture the immutable fulfillment-obligation cutoff, drain only
+pre-cutoff fulfillment work and completion-only callbacks, and then disable.
+`disabled(N) -> pre_activation(N+1)` is the only reactivation edge and
 requires a newly reviewed manifest. Every edge and observation is a fresh
 Operator-authorized lifecycle command; lease draining reuses fresh
 `review.lease.force_release` commands rather than widening lifecycle authority.

@@ -427,12 +427,14 @@ or advances phase. It lands with no production lifecycle route and no action
 availability change. AUTH activates that exact action only after 12A merges.
 
 Review, every task submission, review-queue admission, authority-loss
-replacement, and compensation dispatch consume the same mandatory fence through
-explicit composition. CON retains fulfillment/callback semantics and exposes
-mandatory dispatch and callback hooks; it does not
-create a second shutdown controller. REV-13 exposes and exercises the merged,
-AUTH-active foundation, performs the ordered writer fence/migration/process
-cutover, and prohibits downgrade after protected rows exist.
+replacement, every CON fulfillment-obligation root creation, requeue, successor,
+and repair writer, and compensation dispatch and callbacks consume the same
+mandatory fence through explicit composition. CON retains fulfillment and
+callback semantics and exposes mandatory obligation-writer, dispatch, callback,
+drain-cutoff, and observation hooks; it does not create a second shutdown
+controller. REV-13 exposes and exercises the merged, AUTH-active foundation,
+performs the ordered writer fence, migration, and process cutover, and prohibits
+downgrade after protected rows exist.
 
 ### D20 - Independent Roles And AUTH Activation Custody Supersede The Archive
 

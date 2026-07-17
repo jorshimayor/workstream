@@ -29,8 +29,9 @@ monotonically increasing ordinal for each fulfillment-obligation root only after
 the shared fence is acquired. REV persists only the server-derived cutoff and
 never imports CON or outbox repositories. The shared dispatcher owns
 claim/retry/dead-letter state. A CON handler receives an already-claimed command
-and may stage a delivery attempt only under an eligible pre-cutoff root; it never
-claims or transitions the outbox event itself.
+and may stage a delivery attempt under the normal active-phase rules. During
+`delivery_draining`, that root must be in the eligible pre-cutoff cohort. The
+handler never claims or transitions the outbox event itself.
 
 ## Atomic Decision Contract
 
