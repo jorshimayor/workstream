@@ -2,16 +2,18 @@
 
 ## AUTH And REV current-main provenance rebind
 
-Reviewed code SHA: e968430b0c3b5f1432899c9aa31ef209b774eae0
-Reviewed at: 2026-07-17T15:17:58Z
-Reviewer run IDs: auth08_arch_review/final-e968430, auth08_qa_product_review/final-e968430, auth08_security_review/final-e968430
+Reviewed code SHA: a69fad3a32ad47e3bd60a79cd75f5867eefc52b3
+Reviewed at: 2026-07-17T18:14:54Z
+Reviewer run IDs: auth08_arch_review/final-a69fad3, auth08_qa_product_review/final-a69fad3, auth08_security_review/final-a69fad3
 
 This provenance-only addendum binds the reviewed FinalAcceptance reconciliation
 to the final cumulative planning snapshot. It changes no PLAN2 lifecycle fact.
 The exact-SHA re-review confirms that PLAN3 preserves REV-owned
 FinalAcceptance, CON flush-only participation, all three review outcomes, and
 the no-adjudication boundary while adopting merged REV's exact two-operation
-ordering and joint release-control contract.
+ordering and joint release-control contract. The external-review repair changes
+only future chunk executability, AUTH prerequisite placement, and deferred
+proposal classification; it does not alter PLAN2 lifecycle facts.
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---|---|---|

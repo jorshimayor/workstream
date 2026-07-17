@@ -2,27 +2,28 @@
 
 ## 2026-07-17 AUTH And REV Current-Main Provenance Rebind
 
-Reviewed code SHA: e968430b0c3b5f1432899c9aa31ef209b774eae0
-Reviewed at: 2026-07-17T15:17:58Z
-Reviewer run IDs: auth08_arch_review/final-e968430, auth08_qa_product_review/final-e968430, auth08_security_review/final-e968430
+Reviewed code SHA: a69fad3a32ad47e3bd60a79cd75f5867eefc52b3
+Reviewed at: 2026-07-17T18:14:54Z
+Reviewer run IDs: auth08_arch_review/final-a69fad3, auth08_qa_product_review/final-a69fad3, auth08_security_review/final-a69fad3
 
 This provenance-only addendum binds the earlier substantive PLAN review chain to
 the final reviewed cumulative planning snapshot. PLAN3 authorizes this evidence
 rebind because the PR-level gate validates every evidence file added by the
 branch. It changes no historical finding or product conclusion. The exact-SHA
 re-review confirmed that the merged AUTH runtime and REV plan, exact
-FinalAcceptance/CON participant boundary, joint release-control contract, and
-evidence-schema update introduce no remaining blocker.
+FinalAcceptance/CON participant boundary, joint release-control contract,
+CodeRabbit contract repairs, and evidence-schema update introduce no remaining
+blocker.
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---|---|---|
-| senior engineering | PASS AFTER FIXES | None | The cumulative specification remains coherent after the PLAN3 title and duplicate allowed-file repairs. |
+| senior engineering | PASS AFTER FIXES | None | The cumulative specification remains coherent after current-main and external-review repairs. |
 | qa/test | PASS | None | Exact two-operation ordering, branch effects, rollback coverage, and deterministic gates pass. |
 | security/auth | PASS | None | Current AUTH catalogue facts, prepared semantics, and AUTH-only identifier/evaluator/activation ownership pass. |
 | product/ops | PASS | None | Review outcomes, FinalAcceptance lineage, contribution atomicity, release cutoff, and no-adjudication boundary pass. |
-| architecture | PASS AFTER FIXES | None | Ownership, transaction, rollout, joint release control, and same-initiative successor boundaries remain coherent. |
+| architecture | PASS AFTER FIXES | None | Ownership, executable chunk gates, transaction, rollout, joint release control, and successor boundaries remain coherent. |
 | ci integrity | PASS | None | The rebind changes evidence only; no CI, runtime, test, script, workflow, dependency, or threshold changes. |
-| docs | PASS AFTER FIXES | None | Runtime-versus-planned identifiers, merged REV dependencies, contract title, and cumulative evidence provenance are explicit. |
+| docs | PASS AFTER FIXES | None | Runtime-versus-planned identifiers, merged REV dependencies, CodeRabbit dispositions, and cumulative evidence provenance are explicit. |
 | reuse/dedup | PASS | None | No duplicate service, evaluator, registry, or transaction abstraction is introduced. |
 | test delta | PASS | None | No test delta; all 80 agent-gate tests pass. |
 

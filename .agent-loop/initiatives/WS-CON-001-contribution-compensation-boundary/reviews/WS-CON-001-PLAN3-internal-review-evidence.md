@@ -1,18 +1,18 @@
 # WS-CON-001-PLAN3 Internal Review Evidence
 
-Reviewed code SHA: e968430b0c3b5f1432899c9aa31ef209b774eae0
-Reviewed at: 2026-07-17T15:17:58Z
-Reviewer run IDs: auth08_arch_review/final-e968430, auth08_qa_product_review/final-e968430, auth08_security_review/final-e968430
+Reviewed code SHA: a69fad3a32ad47e3bd60a79cd75f5867eefc52b3
+Reviewed at: 2026-07-17T18:14:54Z
+Reviewer run IDs: auth08_arch_review/final-a69fad3, auth08_qa_product_review/final-a69fad3, auth08_security_review/final-a69fad3
 
 ## Reviewed boundary
 
 The exact reviewed snapshot reconciles CON planning with merged AUTH PR #140,
 AUTH-09A runtime, and REV PR #128 at trusted `main` `0302bcf`. It authorizes the
 provenance-only rebind of the older PLAN/PLAN2 evidence required by the
-cumulative PR gate. The current-main reconciliation changes 22
-planning/merge-intent files with 429 insertions and 178 deletions and changes no
-backend, migration, runtime catalogue, test, script, workflow, or dependency
-file.
+cumulative PR gate. After that reconciliation, the CodeRabbit repair changes 24
+planning-path entries with 713 insertions and 120 deletions relative to
+`adf5cc1`. It changes no backend, migration, runtime catalogue, test, script,
+workflow, dependency, or merge-intent content.
 
 The reviewed boundary establishes:
 
@@ -41,21 +41,27 @@ The reviewed boundary establishes:
   transaction owner, no separate FinalAcceptance action/API, no adjudication
   dependency, and no independent CON commit; and
 - one schema-v2 merge intent naming `WS-CON-001-01` as an explicit-start
-  same-initiative successor.
+  same-initiative successor;
+- executable, fail-closed verification commands and pass criteria for 16 active
+  future chunks, with 78 percent repository and 90 percent focused coverage;
+- AUTH registration/context/custody/prepared-port inputs as merged upstream
+  prerequisites, never CON-owned acceptance work; and
+- optional CON-09B outside `chunks/` as a zero-file deferred proposal requiring
+  separate ART/AUTH/human approval and a fresh reviewed replacement contract.
 
 ## Reviewer results
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---|---|---|
-| senior engineering | PASS AFTER FIXES | None | The 22-file reconciliation is coherent and bounded after its title and duplicate allowed-file repairs. |
-| qa/test | PASS | None | All three lifecycle outcomes, exact source cardinality, rollback stages, REV interleaving, and deterministic gates pass. |
-| security/auth | PASS | None | Current catalogue facts, prepared semantics, same-decision lineage, and AUTH-only identifier/evaluator/activation ownership pass. |
-| product/ops | PASS | None | FinalAcceptance, contribution, compensation, fulfillment cutoff, and no-adjudication boundaries remain correct. |
-| architecture | PASS AFTER FIXES | None | Two-operation sequencing, single ownership, joint release control, and same-initiative successor all pass after metadata repairs. |
-| ci integrity | PASS | None | PLAN3 changes no CI, workflow, threshold, runner, script, dependency, test, or runtime file and adds no bypass. |
-| docs | PASS AFTER FIXES | None | Runtime versus planned identifiers, merged AUTH/REV provenance, canonical names, and evidence are explicit after contract metadata repair. |
+| senior engineering | PASS AFTER FIXES | None | The 24-path external repair is cohesive, bounded, executable, and planning-only after all review findings. |
+| qa/test | PASS AFTER FIXES | None | Focused selectors, migrations, rollback/race proof, coverage, 08B scope, and deferred 09B semantics pass. |
+| security/auth | PASS AFTER FIXES | None | AUTH prerequisites, registration order, fail-closed commands, 09B whitelist, and template CI controls pass. |
+| product/ops | PASS AFTER FIXES | None | FinalAcceptance, contribution, compensation, fulfillment cutoff, and no-adjudication behavior remain unchanged. |
+| architecture | PASS AFTER FIXES | None | Two-operation sequencing, upstream AUTH ownership, executable gates, 09B deferral, and release control pass. |
+| ci integrity | PASS AFTER FIXES | None | No CI/workflow/test/runtime delta or bypass; repository 78 and focused 90 percent floors remain mandatory. |
+| docs | PASS AFTER FIXES | None | PR-template structure, external response, review log, allowed scope, canonical names, and provenance are explicit. |
 | reuse/dedup | PASS | None | No duplicate runtime abstraction or alternative authorization path is introduced; common AUTH/REV contracts are referenced. |
-| test delta | PASS | None | No tests changed or were required for the planning-only reconciliation; 80 existing agent-gate tests pass. |
+| test delta | PASS | None | No tests changed; 80 existing agent-gate tests and all static gates pass. |
 
 ## Findings and repairs
 
@@ -86,6 +92,31 @@ contract title now matches the AUTH-and-REV current-main merge intent and the
 duplicate row is removed. All required reviewers re-ran against exact SHA
 `e968430b0c3b5f1432899c9aa31ef209b774eae0`.
 
+### Resolved external-review findings
+
+CodeRabbit's five consolidated threads and description warning were valid at
+the contract/process level. The repair:
+
+- adds exact focused commands, non-empty selection, coverage floors, and pass
+  criteria to all 16 affected active chunks;
+- moves AUTH registration/context/custody/prepared-port requirements to
+  upstream prerequisites while retaining registration -> hidden behavior ->
+  evaluator/activation ordering;
+- moves CON-09B from `chunks/` to `deferred/`, gives it no current allowed
+  implementation files, and fail-closes promotion to an exact planning-path
+  whitelist;
+- aligns CON-08B allowed tests, runtime-verification row, selector, and Ruff
+  targets;
+- replaces fail-open Git/Ripgrep absence checks with status-sensitive checks;
+  and
+- mirrors the repository PR template and records the repair in the external
+  response and root review log.
+
+Initial internal re-review found and repaired the remaining 04B ordering,
+09B whitelist/location, 08B scope, review-log, allowlist, shell-failure, and
+trust-template defects. All required tracks then passed exact SHA
+`a69fad3a32ad47e3bd60a79cd75f5867eefc52b3`.
+
 ### Confirmed non-findings
 
 - A failed same-session/action substitution does not consume an otherwise valid
@@ -107,7 +138,7 @@ duplicate row is removed. All required reviewers re-ran against exact SHA
 
 ```text
 python3 scripts/check_markdown_links.py
-  PASS - 59 changed Markdown files before evidence refresh
+  PASS - 61 changed Markdown files before evidence refresh
 python3 scripts/check_stale_workstream_wording.py
   PASS
 python3 scripts/check_stale_authorization_docs.py
@@ -118,11 +149,11 @@ python3 scripts/check_loop_memory_state.py
   PASS
 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest -q scripts/test_agent_gates.py
   PASS - 80 tests
-git diff --check 5e1311c^..e968430
+git diff --check adf5cc1..a69fad3
   PASS
 git diff --check
   PASS
-current-main CON reconciliation backend/.github/scripts delta
+external-review repair backend/.github/scripts delta
   none
 python3 scripts/update_post_merge_memory.py validate-merge-intent --base-ref origin/main
   PASS - WS-CON-001-PLAN3
@@ -130,8 +161,8 @@ python3 scripts/update_post_merge_memory.py validate-merge-intent --base-ref ori
 
 The circuit-breaker passed with a documentation-only size exception. The full
 branch is large because it contains the original reference transcription and
-durable planning/review history, but the current-main refresh is one bounded
-22-file planning correction, has no runtime boundary, and required no split.
+durable planning/review history, but the external repair is one bounded 24-path
+planning correction, has no runtime boundary, and required no split.
 
 Valid findings addressed: yes
 
@@ -139,6 +170,6 @@ Open sub-agent sessions: none
 
 ## Stop
 
-PLAN3 is reviewed for draft PR #142 refresh. This evidence authorizes no merge
+PLAN3 is reviewed for PR #142 refresh. This evidence authorizes no merge
 or CON-01 start. The user retains the human checkpoint and must explicitly
 approve PR #142 before merge.

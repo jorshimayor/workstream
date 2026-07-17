@@ -22,12 +22,12 @@ triaged on 2026-07-17.
 4. `PRRT_kwDOSwL_U86R1pGE`: added deterministic runnable verification commands,
    coverage targets, and explicit pass criteria to CON-04B, 05A, 05B, 06, 07,
    08A, 08B, and 08R.
-5. `PRRT_kwDOSwL_U86R1pGI`: corrected CON-09B from an incomplete “Chunk
-   Contract” to a non-executable “Deferred Proposal.” It now has prospective
-   risk, zero current allowed files, explicit prohibitions, promotion criteria,
-   planning-only promotion checks, required reviewers, and a mandatory fresh
-   replacement contract after separate human/ART/AUTH approval. This preserves
-   the intentional deferral instead of freezing stale implementation scope.
+5. `PRRT_kwDOSwL_U86R1pGI`: moved CON-09B out of executable `chunks/` and
+   corrected it from an incomplete “Chunk Contract” to a non-executable
+   “Deferred Proposal.” It now has prospective risk, zero current allowed
+   files, explicit prohibitions, exact-whitelist promotion checks, required
+   reviewers, and a mandatory fresh replacement contract after separate
+   human/ART/AUTH approval.
 6. CodeRabbit description warning: the PR body is replaced with the complete
    PLAN3 trust-bundle structure after the reviewed repair is pushed.
 
@@ -45,10 +45,22 @@ remain unchanged.
 
 ## Commands rerun
 
-Pending final candidate: Markdown links, stale Workstream wording, stale
-authorization docs, stale artifact contracts, loop-memory state, agent gates,
-merge-intent validation, internal-review evidence gate, diff integrity, and
-all required internal reviewer tracks.
+```text
+Markdown links: PASS (61 changed Markdown files before evidence refresh)
+Stale Workstream wording: PASS
+Stale authorization docs: PASS
+Stale artifact contracts: PASS at foundation phase
+Loop-memory state: PASS
+Agent gates: PASS (80 tests)
+Merge-intent validation: PASS
+Bash syntax for every new verification block: PASS
+Diff integrity: PASS
+Repair backend/.github/scripts delta: none
+Required exact-SHA internal tracks: PASS at a69fad3a32ad47e3bd60a79cd75f5867eefc52b3
+```
+
+The internal-review evidence gate is run in a clean worktree after this
+provenance-only rebind commit; it must pass before push.
 
 ## Remaining risks
 
@@ -58,3 +70,5 @@ all required internal reviewer tracks.
   selection is a failure, not a pass.
 - CON-09B remains non-executable until a fresh replacement contract is
   separately approved and reviewed against then-current ART/AUTH boundaries.
+- GitHub threads remain open until the reviewed repair is pushed; they are
+  resolved only after the remote diff contains these fixes.

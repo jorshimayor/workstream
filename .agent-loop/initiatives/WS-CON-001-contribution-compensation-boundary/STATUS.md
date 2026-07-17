@@ -12,11 +12,11 @@ decision input with two ordered operations, and adopts REV-12A's exact
 obligation-writer/ordinal/cutoff hooks. PLAN2's human-approved v0.1
 `Review(accept) -> FinalAcceptance -> accepted_submission` boundary remains
 intact. Runtime code is unchanged.
-CodeRabbit then opened five consolidated contract-quality threads. PLAN3 is
-temporarily reopened only to add executable verification gates, restore exact
-AUTH prerequisite ownership, reclassify optional CON-09B as a deferred proposal,
-and record the external response. A new exact-SHA internal review is required
-before the repair is pushed.
+CodeRabbit then opened five consolidated contract-quality threads. PLAN3's
+planning-only repair added executable verification gates, restored exact AUTH
+prerequisite ownership, moved optional CON-09B to a deferred proposal, aligned
+the PR trust bundle, and recorded the external response/review log. All required
+tracks passed exact SHA `a69fad3a32ad47e3bd60a79cd75f5867eefc52b3`.
 The prior plan is superseded where it used the older policy aggregate, made ART
 evidence mandatory, described service action rows as persisted assignments,
 allowed partial activation-custody transfer, or let outbox dispatch imply
@@ -55,13 +55,13 @@ feature-handler authority.
 ## Active chunk
 
 No implementation chunk is active or starts automatically. PLAN3 external
-review repair is active only; it does not authorize merge or CON-01.
+review repair is complete; it does not authorize merge or CON-01.
 
 | Chunk | Status | Notes |
 |---|---|---|
 | `WS-CON-001-PLAN` | Complete; superseded baseline | Based on PR #139 / `5d353b6`; reviewed content `c4242e0` |
 | `WS-CON-001-PLAN2` | Complete; unpublished | FinalAcceptance is REV-owned; CON trigger changes only; all required internal tracks pass |
-| `WS-CON-001-PLAN3` | External review repair in progress | CodeRabbit contract gates/AUTH scope/09B classification; exact-SHA re-review required |
+| `WS-CON-001-PLAN3` | Complete; externally repaired and internally reviewed | CodeRabbit gates/AUTH scope/09B/trust repairs pass at `a69fad3` |
 | `WS-CON-001-01` through `08B`, `10A` through `11` | Proposed | Separate explicit start required after PLAN3 and upstream merge refresh |
 | `WS-CON-001-09A/09B` | Deferred optional | Separate approval and fresh ART/AUTH review required |
 

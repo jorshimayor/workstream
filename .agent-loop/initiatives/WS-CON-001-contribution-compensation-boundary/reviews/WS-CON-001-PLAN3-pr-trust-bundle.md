@@ -124,9 +124,9 @@ and fence.
 
 The current-main reconciliation changes 22 planning/merge-intent files with 429
 insertions and 178 deletions. It changes no backend, migration, test, workflow,
-script, dependency, runtime catalogue, or active product document. Before this
-evidence refresh, the full planning branch is 67 files with 8,235 insertions and
-90 deletions against `origin/main`; most of that delta is the original reference
+script, dependency, runtime catalogue, or active product document. Before the
+final evidence rebind, the full planning branch is 69 files with 8,874
+insertions and 90 deletions against `origin/main`; most of that delta is the original reference
 transcription and durable planning/review record.
 
 The circuit-breaker passed with a documentation-only size exception: the branch
@@ -221,27 +221,27 @@ Local roadmap workbook: not present, so no sheet-export check applies
 
 ## Internal Reviewer Results
 
-Reviewed code SHA: pending final repair SHA
+Reviewed code SHA: a69fad3a32ad47e3bd60a79cd75f5867eefc52b3
 
-Reviewed at: pending
+Reviewed at: 2026-07-17T18:14:54Z
 
-Reviewer run IDs: pending final re-review
+Reviewer run IDs: auth08_arch_review/final-a69fad3, auth08_qa_product_review/final-a69fad3, auth08_security_review/final-a69fad3
 
 | Reviewer | Result | Blocking Findings | Notes |
 |---|---:|---|---|
-| Senior engineering | Pending | | Final exact-SHA repair review required. |
-| QA/test | Pending | | Final exact-SHA repair review required. |
-| Security/auth | Pending | | Final exact-SHA repair review required. |
-| Product/ops | Pending | | Final exact-SHA repair review required. |
-| Architecture | Pending | | Final exact-SHA repair review required. |
-| CI integrity | Pending | | Final exact-SHA repair review required. |
-| Docs | Pending | | Final exact-SHA repair review required. |
-| Reuse/dedup | Pending | | Final exact-SHA repair review required. |
-| Test delta | Pending | | Final exact-SHA repair review required. |
+| Senior engineering | PASS AFTER FIXES | None | Scope, executable gates, deferred proposal, and durable review record pass. |
+| QA/test | PASS AFTER FIXES | None | Selectors, migrations, rollback/races, 08B scope, and coverage criteria pass. |
+| Security/auth | PASS AFTER FIXES | None | AUTH ownership/order, fail-closed checks, 09B whitelist, and trust controls pass. |
+| Product/ops | PASS AFTER FIXES | None | No contribution, compensation, review, or release behavior changed. |
+| Architecture | PASS AFTER FIXES | None | Boundaries and future chunk ordering remain coherent. |
+| CI integrity | PASS AFTER FIXES | None | No CI/test/runtime delta or threshold/bypass weakening. |
+| Docs | PASS AFTER FIXES | None | PR template, external response, scope, review log, and provenance pass. |
+| Reuse/dedup | PASS | None | Existing runtime-verification and AUTH/REV contracts are reused. |
+| Test delta | PASS | None | No tests changed; 80 agent-gate tests pass. |
 
-The pre-external-review snapshot
-`e968430b0c3b5f1432899c9aa31ef209b774eae0` passed every required track. Final
-repair results will be rebound in `WS-CON-001-PLAN3-internal-review-evidence.md`.
+The final repair results are rebound in
+`WS-CON-001-PLAN3-internal-review-evidence.md` without changing reviewed
+planning content after exact-SHA review.
 
 ## External Review
 
