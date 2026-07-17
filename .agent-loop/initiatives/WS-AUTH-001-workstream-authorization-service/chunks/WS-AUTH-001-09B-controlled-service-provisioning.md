@@ -76,7 +76,9 @@ UUID.
 
 The issuer comes only from `AuthVerifier.canonical_issuer()`. The verifier port
 returns the exact validated configured issuer; development and Flow adapters
-return their normalized `_issuer`, and the unavailable verifier fails closed.
+return that exact `_issuer`, and the unavailable verifier fails closed. Adapter
+tests prove `canonical_issuer()` exactly equals the issuer used by a successful
+token result for that verifier.
 The route injects the existing application verifier and never selects a
 provider, reads a caller identity link as issuer configuration, or accepts an
 issuer override. The identity digest binds this issuer and the byte-exact

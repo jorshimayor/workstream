@@ -293,8 +293,9 @@ consumers:
   feature routes and cannot be relabeled as evidence failures.
 - For an existing actor, successful protected GET/PATCH access advances both
   `ActorProfile.last_seen_at` and `ActorIdentityLink.last_verified_at` once in
-  the route-owned transaction after authorization. The update follows the
-  declared identity-link-then-profile lock order and uses execution-time
+  the route-owned transaction after authorization. D28 supersedes this
+  contract's original lock-order clause: current helpers lock ActorProfile then
+  the exact ActorIdentityLink and use execution-time
   `GREATEST(current_value, clock_timestamp())`, never transaction-start
   `now()`. Kernel denial or evidence/business persistence failure rolls both
   back. First-access provisioning retains its existing atomic actor/link
