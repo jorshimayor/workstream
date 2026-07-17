@@ -37,6 +37,11 @@ production `/api/v1` review-router registration
 ## Acceptance criteria
 
 - Projection bytes are deterministic for Review ID and schema version.
+- Every projection represents the immutable Review and submitted
+  finding and resolution history for its decision. An accept projection includes
+  bounded FinalAcceptance identity, source-Review identity, and acceptance time;
+  `needs_revision` and `reject` projections contain no inferred or synthetic
+  FinalAcceptance. Projection content never becomes the acceptance source.
 - Same operation/bytes replay one logical receipt; changed bytes conflict.
 - Projection-job retry/dead-letter/reconciliation changes only delivery status.
 - The shared outbox dispatcher remains the sole event claimant and owner of

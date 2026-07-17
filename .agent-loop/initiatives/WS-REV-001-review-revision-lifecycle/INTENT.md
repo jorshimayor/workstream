@@ -119,8 +119,10 @@ outcomes.
 9. The v0.1 acceptance boundary is `Review(accept) -> FinalAcceptance ->
    accepted_submission`. `FinalAcceptance` is an internal REV-owned derived
    fact with no manual/public create API or separate authorization action. The
-   review request creates it and calls CON's flush-only participant in one
-   transaction; REV stages shared audit/outbox records and commits once.
+   review request uses one CON participant with an ordered reviewer contribution
+   operation before the decision branch. It invokes the submitter contribution
+   operation only after FinalAcceptance exists. REV stages shared audit and
+   outbox records and commits once.
 
 Items 3-5 and the proposed chunk sequence were approved by the human on
 2026-07-15 for planning publication. This approval does not activate a successor

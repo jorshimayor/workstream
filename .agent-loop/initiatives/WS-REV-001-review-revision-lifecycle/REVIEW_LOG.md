@@ -371,20 +371,43 @@ immutable FinalAcceptance. CON creates `accepted_submission` only from that
 fact; `completed_review` remains directly sourced from every Review.
 
 The human also clarified transaction ownership: the review request owns the
-single transaction, CON is a flush-only contribution/award participant, REV
-stages shared audit/outbox rows, and REV commits once. No ART/provider call is
-allowed in the transaction. Adjudication remains disabled for v0.1; dormant
-interface compatibility does not authorize adjudication behavior or readiness.
+single transaction, CON is a flush-only contribution and award participant, REV
+stages shared audit and outbox rows, and REV commits once. No ART or provider
+call is allowed in the transaction. Adjudication remains disabled for v0.1;
+dormant interface compatibility does not authorize adjudication behavior or
+readiness.
 
 Initial amendment wording used the phrase "accept-only immutable
 FinalAcceptance." The human correctly rejected it as ambiguous because it could
 suggest that only accepted Reviews are immutable. The plan now states the two
-independent rules explicitly throughout: all Review/finding/resolution history
-is immutable, and FinalAcceptance is an additional immutable record created only
-when the new Review decision is `accept`. The lock choreography was also
-corrected: FinalAcceptance is appended after the Review; it is not an existing
-row in the pre-write lock set.
+independent rules explicitly throughout: every Review, submitted finding, and
+later resolution is immutable, while FinalAcceptance is an additional immutable
+record created only when the new Review decision is `accept`. The lock
+choreography was also corrected: FinalAcceptance is appended after the Review;
+it is not an existing row in the pre-write lock set.
 
 This material change invalidates the prior exact-SHA publication evidence.
 Fresh deterministic gates and all required internal reviewer tracks must pass on
 a new immutable snapshot before PR #128 is refreshed.
+
+### First amendment review of `8e4d376`
+
+Senior engineering and architecture failed the snapshot because normative flow
+text applied the decision branch before creating and evaluating the mandatory
+reviewer `completed_review`. QA/test also required the final live drill to prove
+the full positive and negative contribution-source matrix for all three
+decisions. Product/ops rejected remaining `Review/FinalAcceptance` shorthand
+because it could imply that every Review creates FinalAcceptance. Reuse/dedup,
+test-delta, security/auth, docs, and CI integrity passed.
+
+The repair keeps one injected CON participant but gives its two operations
+explicit purposes and a fixed order in the caller-owned transaction. The
+reviewer operation creates `completed_review` and evaluates the reviewer policy
+after immutable review history is appended and the lease and queue entry are
+closed. REV then applies the decision branch. Only `accept` appends
+FinalAcceptance and invokes the submitter operation, which creates
+`accepted_submission` and evaluates the submitter policy. REV stages audit and
+outbox records after the branch and commits once. REV-13 now proves all three
+contribution source shapes, negative cardinalities, Task and TaskAssignment
+outcomes, the exact write order, and rollback after the reviewer operation or
+any later stage.

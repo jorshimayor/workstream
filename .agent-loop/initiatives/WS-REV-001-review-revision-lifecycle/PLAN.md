@@ -194,24 +194,31 @@ TaskAssignment `ContributionPolicyVersion`. Each new ReviewLease independently
 freezes the current reviewer `ContributionPolicyVersion`. Review services do not
 implement rules, awards, fulfillment, evidence projection, or provider delivery.
 
-Every valid decision appends an immutable Review and any submitted findings and
-resolutions; later review rounds append new immutable records. Every such Review
-creates a reviewer `completed_review` contribution directly from Review and
-ReviewLease lineage. When the decision is `accept`, REV also creates one
-immutable `FinalAcceptance`; CON creates the submitter `accepted_submission`
-only from that locked fact and never infers it from `Review.decision`.
-`needs_revision` and `reject` create no FinalAcceptance and no submitter
-contribution.
+Every valid `review.decision` request appends one immutable Review. Every finding
+and resolution submitted with that decision is also appended as an immutable
+record. A later review round creates new records; it never updates the history
+from an earlier round. After closing the lease and queue entry, the request calls
+the reviewer operation on one mandatory typed CON participant. That operation
+creates `completed_review` directly from Review and ReviewLease lineage and
+evaluates the lease-frozen reviewer rule.
 
-The review request owns the transaction. It supplies the stabilized versioned
-Submission `artifact_hash` plus locked Review/lease/assignment/policy facts and
-FinalAcceptance when the decision is `accept`, otherwise null, to CON. CON copies
-the digest lineage, creates and
-flushes contributions and applicable awards, returns typed audit/outbox inputs,
-and never commits. REV stages the shared audit/outbox rows and commits once. CON
-never calls ART or rederives the digest. Any contribution-evidence document is a
-later optional asynchronous projection with its own action and failure state,
-not a core transaction or joint-release gate.
+Only after that common reviewer-contribution operation does REV apply the
+decision branch. When the decision is `accept`, REV creates one immutable
+`FinalAcceptance`, applies accepted Task and TaskAssignment effects, and calls the
+participant's submitter operation. That operation creates `accepted_submission`
+from FinalAcceptance and TaskAssignment lineage and evaluates the
+assignment-frozen rule.
+`needs_revision` and `reject` apply their Task and TaskAssignment effects without
+FinalAcceptance or the submitter contribution operation.
+
+Both operations belong to the same mandatory participant, use the caller's
+AsyncSession, flush without commit, copy the stabilized versioned Submission
+`artifact_hash`, and return typed audit and outbox inputs. CON never infers
+acceptance from `Review.decision`, calls ART, rederives the digest, or commits.
+REV stages the shared audit and outbox rows, and the review request commits once.
+Any contribution-evidence document is a later optional asynchronous projection
+with its own action and failure state, not a core transaction or joint-release
+gate.
 
 ### Transactional outbox gate
 
@@ -322,15 +329,20 @@ durable checker allow_review
      artifact content only for the currently leased Submission version
   -> finding evidence is ingested and verified before decision
   -> decision transaction locks AUTH authority first, then REV canonical rows,
-     recomposes final facts, evaluates once, and invokes the CON participant
-  -> REV appends the immutable Review and submitted findings/resolutions, then
+     recomposes final facts, and evaluates once
+  -> REV appends the immutable Review, submitted findings, and resolutions, then
      consumes the lease and closes the queue entry
-  -> when the decision is accept, REV appends FinalAcceptance; REV applies the
-     decision-specific task and assignment effects
-  -> CON flush-only participant creates and evaluates the reviewer contribution;
-     when FinalAcceptance is present, it creates and evaluates the submitter
-     contribution from that fact; applicable awards are appended
-  -> REV stages shared audit/outbox records and commits once
+  -> CON reviewer operation creates completed_review, evaluates the
+     lease-frozen reviewer policy, and appends any reviewer award
+  -> REV applies the decision branch
+     -> accept: append FinalAcceptance, accept task, complete assignment, then
+        CON submitter operation creates accepted_submission, evaluates the
+        assignment-frozen submitter policy, and appends any submitter award
+     -> needs_revision: set task needs_revision; no FinalAcceptance and no
+        submitter operation
+     -> reject: block assignment and then reject task; no FinalAcceptance and no
+        submitter operation
+  -> REV stages shared audit and outbox records and commits once
   -> projection and notifications execute from the canonical shared outbox
      event after commit; optional contribution-evidence export is outside the
      core readiness contract
@@ -344,27 +356,28 @@ fence, queue, ReviewLease, task, TaskAssignment, Submission, predecessor Review,
 and evidence facts. REV recomposes the final context, AUTH evaluates once, and
 REV appends one immutable Review plus every submitted immutable finding and
 resolution. REV then consumes the ReviewLease and closes the ReviewQueueEntry.
-Later revision rounds append a different Review and never update that history.
+REV next invokes the mandatory CON participant's reviewer operation, which
+creates `completed_review`, evaluates the ReviewLease-frozen rule, and appends
+any reviewer award. Later revision rounds append a different Review and never
+update that history.
 
 The outcome-specific effects are exact:
 
 - `accept`: append FinalAcceptance linked to the new Review; set Task to
-  `accepted`; set TaskAssignment to `completed`; CON creates the reviewer
-  `completed_review`, evaluates its lease-frozen rule, then creates the submitter
-  `accepted_submission` from FinalAcceptance and evaluates the
-  assignment-frozen rule.
+  `accepted`; set TaskAssignment to `completed`; invoke the same CON
+  participant's submitter operation to create `accepted_submission` from
+  FinalAcceptance, evaluate the assignment-frozen rule, and append any submitter
+  award.
 - `needs_revision`: set Task to `needs_revision`; keep the TaskAssignment active;
-  CON creates and evaluates only the reviewer `completed_review`; append no
-  FinalAcceptance and no submitter contribution.
-- `reject`: set Task to canonical `rejected` with the bounded human reason and
-  block the same-task TaskAssignment; CON creates and evaluates only the
-  reviewer `completed_review`; append no FinalAcceptance and no submitter
-  contribution. No other task or project grant changes.
+  append no FinalAcceptance and invoke no submitter operation.
+- `reject`: block the same-task TaskAssignment, then set Task to canonical
+  `rejected` with the bounded human reason; append no FinalAcceptance and invoke
+  no submitter operation. No other task or project grant changes.
 
-CON flushes contribution/award rows and returns typed audit/outbox inputs. REV
-stages the shared records and the request commits once. Any failure rolls back
-the immutable records, mutable lifecycle effects, contributions, awards, audit,
-and outbox together.
+CON flushes contribution and award rows and returns typed audit and outbox
+inputs. REV stages the shared records, and the request commits once. Any failure
+rolls back the immutable records, lifecycle state changes, contributions,
+awards, audit records, and outbox records together.
 
 ## Application dependency direction
 
@@ -546,13 +559,15 @@ foundation change rather than adding review-private storage state.
   REV never imports or directly locks ArtifactBinding/Replica repositories.
 - Before REV-12A, hidden decision lock order after AUTH is decision idempotency,
   queue, lease, Task, Assignment, Submission, Review predecessor, relevant
-  finding/resolution rows, and stabilized typed binding facts. REV then appends
-  the immutable Review, submitted findings/resolutions, and, when the decision
-  is `accept`, FinalAcceptance. REV calls CON's flush-only participant, which owns its
-  internal `ContributionPolicyVersion`, ContributionRecord, and award
-  lock/write order; REV appends shared audit/outbox rows after the participant.
-  REV-12A inserts
-  the lifecycle fence between idempotency and queue before REV-13 releases the
+  finding and resolution rows, and stabilized typed binding facts. REV then
+  appends the immutable Review, findings, and resolutions; consumes the lease;
+  and closes the queue. The CON reviewer operation owns the reviewer policy,
+  contribution, and award locks and writes. REV then applies the decision
+  branch. For `accept`, REV appends FinalAcceptance, applies the accepted Task and
+  TaskAssignment effects, and invokes the CON submitter operation. That operation
+  owns the submitter policy, contribution, and award locks and writes. REV
+  appends shared audit and outbox rows after the branch. REV-12A inserts the
+  lifecycle fence between idempotency and queue before REV-13 releases the
   surface.
 - Revision, administrative, and service commands publish their smaller ordered
   row sets in their owning chunk and preserve the same AUTH-first prefix. Rows of
@@ -705,8 +720,8 @@ The final live proof covers first submit, needs revision, controlled
 continuation, preferred return, preference expiry/takeover, accept with exactly
 one FinalAcceptance, reject,
 lease expiry, revocation during lease, evidence attachment, provider outage,
-integrity failure, recovery, FinalAcceptance/contribution atomicity, and
-projection retry.
+integrity failure, recovery, atomicity across FinalAcceptance and contributions,
+and projection retry.
 The versioned conformance matrix maps specification sections 25.1-25.9 to the
 owning chunk, executable tests, live drill cases, and retained evidence.
 

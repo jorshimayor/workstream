@@ -18,7 +18,7 @@ explicit start signal.
 | `WS-REV-001-05` | Checker Admission, Preferred Routing, And Queue Views | L1 | 04; ART v2 submission/checker cutover; AUTH-10 reviewer grants and AUTH-11 project visibility; actions registered/planned | Proposed |
 | `WS-REV-001-06` | Atomic Claims, Release, Preference, And Timers | L1 | 05; AUTH prepared mutation protocol; AUTH-09E plus exact expiry service rows; WS-CON ReviewLease ContributionPolicyVersion freeze participant; actions registered/planned | Proposed |
 | `WS-REV-001-07` | Artifact-Backed Review Context And Finding Evidence | L1 | 06; approved and merged ART-owner amendment for v2 packet-read; separately approved `WS-ART-001-REV-EVIDENCE` candidate/finalize capability; `artifact.review_evidence.binding.create` registered/planned with exact binding service row | Proposed |
-| `WS-REV-001-08` | Decision, Final Acceptance, And Task-Effect Contract | L1 | 07; AUTH prepared mutation contract; no canonical Review/FinalAcceptance commit until 10 | Proposed |
+| `WS-REV-001-08` | Decision, Final Acceptance, And Task-Effect Contract | L1 | 07; AUTH prepared mutation contract; Review persistence and the accept-only FinalAcceptance write remain disabled until 10 | Proposed |
 | `WS-REV-001-09A` | Revision Context Preparation And Resubmission | L1 | 08; ADR 0010 adopted; retired compensation-context field removal merged; AUTH-14 submission cutover | Proposed |
 | `WS-REV-001-09B` | Finding Replay, Resolution, And Return Routing | L1 | 09A | Proposed |
 | `WS-REV-001-10` | Final Acceptance, WS-CON Atomic Integration, And Hidden Composition | L1 | 09B; approved and merged ART/task-owner `Submission.artifact_hash` amendment; merged CON FinalAcceptance-sourced lineage schema and flush-only contribution/award participant; no mandatory contribution-evidence projection | Proposed |
@@ -54,7 +54,7 @@ WS-REV-001-03 + merged CON-owned shared transactional-outbox persistence
 merged CON-owned caller-transaction shared lifecycle-audit participant
   -> WS-REV-001-04
 
-WS-REV-001-04 stable Review/FinalAcceptance/lease/Submission schemas
+WS-REV-001-04 stable Review, FinalAcceptance, ReviewLease, and Submission schemas
   + merged ART submission/checker cutover with server-derived stabilized
     Submission.artifact_hash
   -> WS-CON exact FinalAcceptance-sourced contribution/award lineage persistence
@@ -83,12 +83,13 @@ REV planning does not create or start it on ART's behalf.
 - 05-07 build routing, leases, and evidence consumption behind an unregistered
   production composition boundary.
 - 08 freezes decision inputs, validation, task effects, and the
-  FinalAcceptance consequence of `accept`, but cannot commit canonical Review
-  or FinalAcceptance without the CON participant.
+  FinalAcceptance consequence of `accept`. It cannot commit a canonical Review
+  or an accept-path FinalAcceptance until the CON participant is installed.
 - 09A prepares controlled revision context and immutable resubmission input.
 - 09B completes finding replay, resolution, and preferred-return semantics.
-- 10 creates the first canonical Review/FinalAcceptance-committing transaction
-  and proves WS-CON atomicity in hidden composition.
+- 10 creates the first transaction capable of committing every canonical Review
+  and, for `accept`, the additional FinalAcceptance record. It proves WS-CON
+  atomicity in hidden composition.
 - 11-12 complete operations, recovery, projection, and observability.
 - 12A lands hidden persisted release control and mandatory cross-domain fences.
 - 13 performs fail-closed preflight, exposes the already-AUTH-active coherent

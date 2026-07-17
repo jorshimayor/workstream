@@ -42,8 +42,11 @@ On 2026-07-17 the human explicitly amended the merged REV/CON handoff for v0.1:
   `FinalAcceptance`;
 - submitter `accepted_submission` consumes FinalAcceptance rather than inferring
   acceptance directly from `Review.decision`;
-- the REV request owns one transaction, CON flushes contribution/award rows,
-  REV stages shared audit/outbox rows, and REV commits once; and
+- the REV request owns one transaction; one CON participant first creates the
+  reviewer contribution and evaluates the reviewer policy; REV applies the
+  decision branch; the CON submitter operation runs only after FinalAcceptance
+  exists for `accept`; REV stages shared audit and outbox rows; and REV commits
+  once; and
 - adjudication remains disabled and unimplemented in v0.1 while existing
   boundary/interface compatibility is retained for separately approved future
   work.

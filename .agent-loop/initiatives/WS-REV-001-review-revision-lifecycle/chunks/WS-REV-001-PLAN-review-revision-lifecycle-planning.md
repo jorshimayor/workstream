@@ -60,12 +60,14 @@ runtime implementation or dependency changes
   `Submission.id`, binds the exact ReviewPolicy context and canonical actors,
   enforces unique task/Review/Submission lineage, and adds no separate create
   action or public/manual API.
-- Reviewer `completed_review` lineage remains direct from Review/ReviewLease.
+- Reviewer `completed_review` lineage remains direct from Review and ReviewLease.
   Submitter `accepted_submission` lineage requires FinalAcceptance and never
   infers acceptance directly from `Review.decision`.
-- REV owns the decision transaction and shared audit/outbox staging. CON is a
-  mandatory flush-only contribution/award participant that returns typed
-  audit/outbox inputs, never commits, and performs no ART/provider call.
+- REV owns the decision transaction and shared audit and outbox staging. CON is a
+  mandatory participant with an ordered reviewer operation before the decision
+  branch and a submitter operation only after FinalAcceptance exists.
+  Both operations are flush-only, return typed audit and outbox inputs, never
+  commit, and perform no ART or provider call.
 - Observations, decisions, risks, unknowns, and dependencies are separated.
 - Every proposed chunk has scope, exclusions, testable criteria, risk,
   verification, reviewers, and human focus.

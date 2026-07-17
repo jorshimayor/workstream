@@ -148,8 +148,9 @@ frontend work
   `Submission`, copied to `ContributionRecord.artifact_hash`; caller
   `package_hash` is not trusted or silently renamed.
 - Core contribution creation uses frozen `ContributionPolicyVersion`, a CON
-  flush-only participant, no ART call, and no mandatory contribution-evidence
-  projection. REV stages shared audit/outbox records and owns the single
+  participant with ordered flush-only reviewer and submitter operations, no ART
+  call, and no mandatory contribution-evidence projection. REV stages shared
+  audit and outbox records and owns the single
   decision commit; CON owns its contribution/award behavior, public routes, and
   fulfillment transitions.
 - Active contracts define FinalAcceptance as an internal immutable REV fact

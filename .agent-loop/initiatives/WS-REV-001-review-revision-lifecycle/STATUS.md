@@ -42,9 +42,11 @@ decisions.
 - Merged `REV_CON_HANDOFF.md` plus the human-approved 2026-07-17 amendment
   controls contribution integration. REV owns immutable FinalAcceptance and
   creates it only for accept; CON must supply ContributionPolicyVersion freezes
-  and a mandatory flush-only contribution/award participant. Submitter
+  and one mandatory participant with two ordered flush-only operations. The
+  reviewer operation runs before every decision branch; the submitter operation
+  runs only after FinalAcceptance exists for `accept`. Submitter
   `accepted_submission` consumes FinalAcceptance rather than inferring
-  `Review.decision`. REV stages shared audit/outbox rows and commits once. Core
+  `Review.decision`. REV stages shared audit and outbox rows and commits once. Core
   creation copies stabilized versioned Submission `artifact_hash` lineage,
   performs no ART call, and has no mandatory contribution-evidence projection.
 - The current canonical lifecycle uses `rejected` for human reject and

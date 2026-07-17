@@ -165,8 +165,10 @@ chunks must preserve these merged invariants and still wait for the later AUTH
   outbox. REV owns audit/outbox staging and the single commit.
 - Review core may be built behind an unexposed composition boundary, but the
   public decision endpoint cannot be enabled with a no-op contribution path.
-- Core contribution creation receives locked Review/FinalAcceptance/Submission/
-  assignment/policy facts from REV, copies the stabilized versioned Submission
+- Core contribution creation first receives locked Review, ReviewLease,
+  Submission, assignment, and policy facts from REV. For `accept`, the
+  participant's submitter operation also receives FinalAcceptance. CON copies
+  the stabilized versioned Submission
   `artifact_hash` into `ContributionRecord.artifact_hash`, and performs no ART
   call, provider I/O, or mandatory contribution-evidence artifact write.
 
@@ -184,10 +186,10 @@ chunks must preserve these merged invariants and still wait for the later AUTH
    and exact AUTH-09E static rows.
 5. Review evidence uses ART candidate/finalize and its exact binding service
    action. Final decisions use stabilized binding facts without provider I/O.
-6. Contribution creation is a REV-request-owned single transaction using a CON
-   flush-only contribution/award participant, FinalAcceptance for `accept`,
-   frozen `ContributionPolicyVersion` rows, REV-staged audit/outbox records, and
-   no core ART dependency or mandatory evidence projection.
+6. Contribution creation is a REV-request-owned single transaction using one
+   CON participant with ordered flush-only reviewer and submitter operations,
+   frozen `ContributionPolicyVersion` rows, REV-staged audit and outbox records,
+   and no core ART dependency or mandatory evidence projection.
 
 ## Existing infrastructure
 

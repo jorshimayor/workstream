@@ -5,7 +5,7 @@
 Reconciled on 2026-07-17 against merged WS-XINT-001 PR #139 at trusted main
 `5d353b6d3f8a36b9b9ffdc1959487a150ac25fd1`, especially
 `REV_CON_HANDOFF.md`, plus the later explicit human amendment establishing
-`FinalAcceptance` and REV-owned audit/outbox staging. Sibling WS-CON worktree
+`FinalAcceptance` and REV-owned audit and outbox staging. Sibling WS-CON worktree
 content remains discovery evidence until its owning contracts merge; it cannot
 act as a runtime dependency.
 
@@ -13,7 +13,7 @@ act as a runtime dependency.
 
 REV owns queue, ReviewLease, ReviewPacketManifest, ReviewEvidenceArtifact,
 Review/finding/revision state, FinalAcceptance, decision orchestration, task
-effects, shared audit/outbox staging, the caller transaction, and joint
+effects, shared audit and outbox staging, the caller transaction, and joint
 product-surface release. CON owns ContributionPolicy,
 immutable ContributionPolicyVersion and rules, ContributionRecord, awards,
 fulfillment, CON audit/projections, and every
@@ -36,18 +36,22 @@ AUTH prepares review.decision and locks reviewer authority
    versioned Submission, Review predecessor, findings and stabilized facts
 -> REV recomposes final typed review-decision context
 -> AUTH evaluates once and stages decision evidence
--> REV appends immutable Review/findings/resolutions and consumes lease/queue
--> when decision=accept, REV appends immutable FinalAcceptance linked to Review
--> REV applies the decision-specific task and assignment effects
--> REV calls the CON flush-only participant
--> CON creates reviewer completed_review ContributionRecord
--> CON evaluates the ReviewLease-frozen reviewer ContributionPolicyVersion rule
--> when FinalAcceptance is present, CON creates submitter accepted_submission
-   from it and evaluates the TaskAssignment-frozen submitter rule
+-> REV appends immutable Review, findings, and resolutions; consumes the lease;
+   and closes the queue entry
+-> CON reviewer operation creates completed_review
+-> CON evaluates the ReviewLease-frozen reviewer rule and appends any award
+-> REV applies the decision branch
+   -> accept: append FinalAcceptance, accept task, complete assignment, then
+      CON submitter operation creates accepted_submission from FinalAcceptance and
+      evaluates the TaskAssignment-frozen submitter rule
+   -> needs_revision: set task needs_revision; no FinalAcceptance and no
+      submitter operation
+   -> reject: block assignment, then reject task; no FinalAcceptance and no
+      submitter operation
 -> explicit unpaid creates no award; payable creates immutable money and/or
    project_points CompensationAward rows
--> CON flushes contribution/award rows and returns typed audit/outbox inputs
--> REV stages shared audit/outbox rows
+-> CON flushes contribution and award rows and returns typed audit and outbox inputs
+-> REV stages shared audit and outbox rows
 -> route commits once
 ```
 
@@ -56,12 +60,16 @@ point. REV-12A inserts the mandatory lifecycle fence between idempotency and
 queue before REV-13 releases the decision surface; the remaining order and CON
 participant contract do not change.
 
-CON receives the originating AuthorizationDecision reference and locked facts,
-including FinalAcceptance for accept and null otherwise. It never infers
-submitter acceptance from `Review.decision`, evaluates that action, imports
-REV/AUTH persistence, commits, or performs network/provider I/O. CON or later
-REV failure rolls back the complete Review decision. There is no no-op
-participant or post-commit repair for canonical contribution creation.
+One mandatory typed CON participant exposes the two ordered operations above in
+the caller's AsyncSession. The reviewer operation receives the originating
+AuthorizationDecision and locked Review and ReviewLease facts. The submitter
+operation additionally receives FinalAcceptance and TaskAssignment facts and is
+unavailable for `needs_revision` or `reject`. CON never infers submitter
+acceptance from `Review.decision`, performs a separate authorization check for a
+derived record, imports REV or AUTH persistence, commits, or performs network or
+provider I/O. A failure in either CON operation or any later REV stage rolls back
+the complete review decision. There is no no-op participant or post-commit
+repair for canonical contribution creation.
 
 No canonical Review-committing service may land before the CON participant.
 REV-08 therefore freezes schemas, pure validation, task-effect inputs, and the
@@ -146,7 +154,7 @@ REV-04 stable FinalAcceptance schema
   -> CON exact FinalAcceptance-sourced contribution schema
 
 REV-09B stable review/revision lineage + CON exact lineage schema
-  -> CON flush-only decision participant
+  -> CON participant with ordered flush-only reviewer and submitter operations
   -> REV-10 first canonical Review-committing transaction
 
 CON core hidden-readiness manifest + REV-12
@@ -168,7 +176,8 @@ Optional contribution-evidence projection work is not on this critical path.
 - Money and project-points adapters fulfill already-created awards; they never
   decide eligibility.
 - Shared outbox claim ownership remains with the dispatcher.
-- REV stages shared audit/outbox rows after the CON participant and owns the
-  single commit; CON returns typed staging inputs and never commits.
+- REV stages shared audit and outbox rows after the reviewer operation and the
+  applicable decision branch, including the submitter operation for `accept`.
+  REV owns the single commit; CON returns typed staging inputs and never commits.
 - REV owns no CON public route, policy, award, fulfillment, or projection state.
 - All runtime gates must be reread from their exact merged trusted-main SHAs.

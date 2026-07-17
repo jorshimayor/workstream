@@ -329,8 +329,10 @@ through ART. The current caller-supplied `Submission.package_hash` is not that
 field; the ART submission/checker cutover must add and bind the exact verified
 value before REV-10.
 
-CON creates one reviewer `completed_review` directly from Review/ReviewLease and
-one submitter `accepted_submission` only from FinalAcceptance/TaskAssignment.
+CON creates one reviewer `completed_review` directly from Review and ReviewLease
+and one submitter `accepted_submission` only from FinalAcceptance and
+TaskAssignment.
+
 Database checks keep those source shapes mutually exclusive, with one
 `completed_review` per Review and one `accepted_submission` per
 FinalAcceptance. CON evaluates the matching frozen ContributionRule, creates no
@@ -338,13 +340,20 @@ award for explicit unpaid, and creates immutable money and/or project-points
 awards when payable. Derived inserts do not invent `contribution.materialize` or
 `compensation.award.materialize` actions.
 
-REV owns the request transaction: it creates Review and optional
-FinalAcceptance, applies lifecycle effects, calls the mandatory CON flush-only
-participant, stages shared audit/outbox rows from typed participant results, and
-commits once. Any CON or later REV failure rolls everything back. Core creation
-calls no ART capability and performs no external I/O. External fulfillment and
-optional contribution-evidence projection begin only after commit and cannot
-alter canonical acceptance or contribution truth.
+REV owns the request transaction. It appends Review, findings, and resolutions,
+consumes the lease, and closes the queue entry. It then calls the mandatory CON
+participant's flush-only reviewer operation, which creates `completed_review`
+and evaluates the lease-frozen reviewer policy. REV next applies the decision
+branch. For `accept`, it appends FinalAcceptance, applies the accepted Task and
+TaskAssignment effects, and calls the participant's flush-only submitter
+operation. That operation creates `accepted_submission` and evaluates the
+assignment-frozen submitter policy. The other decisions do not call the
+submitter operation. REV stages shared audit and outbox rows from every invoked
+operation and commits once. A failure in CON or any later REV stage rolls back
+the entire decision. Core creation calls no ART capability and performs no
+external I/O. External fulfillment and optional contribution-evidence
+projection begin only after commit and cannot alter canonical acceptance or
+contribution truth.
 
 ### D16 - Canonical Actor IDs Are Product Lineage
 

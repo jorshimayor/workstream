@@ -66,6 +66,21 @@ AUTH action registration, ActionOwner/evaluator edit, or availability change
 - Separate drills prove reject, lease expiry, grant revocation during lease,
   finding evidence, artifact unavailable/integrity failure/recovery, projection
   retry, and WS-CON atomicity.
+- API plus database evidence proves the complete three-decision matrix. Each
+  `accept`, `needs_revision`, and `reject` has exactly one immutable Review and
+  one `completed_review` whose `source_review_id` and
+  `source_review_lease_id` identify that Review and lease and whose
+  `source_final_acceptance_id` is null. `needs_revision` and `reject` each have
+  zero FinalAcceptance and zero `accepted_submission`. `accept` has exactly one
+  FinalAcceptance and one `accepted_submission` whose
+  `source_final_acceptance_id` and `source_task_assignment_id` identify that
+  acceptance and assignment and whose direct Review and ReviewLease source
+  fields are null.
+- The same proof asserts exact lifecycle effects: accept sets Task `accepted`
+  and TaskAssignment `completed`; needs_revision sets Task `needs_revision` and
+  keeps its assignment active; reject sets Task `rejected`, blocks that
+  assignment, and changes no other task or project grant. Lease consumption and
+  queue closure occur for every decision.
 - Separate drills prove reason-bound preparation repair after guide correction,
   stale-head/concurrent repair behavior, and audited legacy unrecoverable closure
   without a fabricated Review or contribution.
@@ -207,20 +222,26 @@ AUTH action registration, ActionOwner/evaluator edit, or availability change
   without changing canonical Review/award truth.
 - The joint drill also proves contribution-policy/binding setup, TaskAssignment
   and ReviewLease ContributionPolicyVersion freezes, reviewer contribution for
-  all three decisions, immutable Review/findings/resolutions for every round,
+  all three decisions, immutable Review, findings, and resolutions for every round,
   FinalAcceptance and its sole submitter contribution only when the decision is
   `accept`, mutually exclusive source lineage, a second revision Review, paid and
   explicit-unpaid awards, outbound delivery/callback ordering, suspended or
   retired binding behavior, core contribution/award privacy,
   Finance-versus-Operator denials, atomic rollback, adapter/storage outage,
   replay, and reconciliation.
+- Barrier and fault evidence proves the exact write order: immutable Review,
+  findings, and resolutions; lease consumption and queue closure; reviewer
+  contribution and rule evaluation; decision branch; for `accept` only,
+  FinalAcceptance followed by the submitter contribution and rule evaluation;
+  REV-staged audit and outbox rows; then one commit. Failure after the reviewer
+  operation or any later branch stage leaves none of those writes committed.
 - Forward and backward Project Guide rebase leave the TaskAssignment
   ContributionPolicyVersion unchanged; each new ReviewLease freezes reviewer terms
   independently and decision-neutral reviewer awards agree across
   `accept`/`needs_revision`/`reject` for the same frozen terms.
 - Active docs use blocking/advisory findings, server-selected offer semantics,
   controlled rebase, canonical decisions, `Review(accept) -> FinalAcceptance ->
-  accepted_submission`, REV-owned atomic audit/outbox staging, WS-CON
+  accepted_submission`, REV-owned atomic audit and outbox staging, WS-CON
   contribution/award boundaries, AWS S3/MinIO, and deferred reputation
   consistently.
 - Optional contribution-evidence projection is outside core release readiness.

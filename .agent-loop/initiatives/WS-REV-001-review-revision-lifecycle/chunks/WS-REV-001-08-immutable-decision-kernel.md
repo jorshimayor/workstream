@@ -5,7 +5,8 @@
 Freeze the immutable review-decision request, pure validation, task-effect
 participant, lock/fact contract, the FinalAcceptance consequence of `accept`,
 and CON participant input for all three decisions. Do not create a canonical
-Review/FinalAcceptance-committing service before CON merges.
+Review-committing service, including the additional FinalAcceptance write for
+`accept`, before CON merges.
 
 ## Risk class
 
@@ -27,7 +28,8 @@ backend/tests/test_{reviews,tasks,authorization,artifacts,audit}.py
 ```text
 public decision route
 production no-op WS-CON participant
-any code path that commits a canonical Review or FinalAcceptance without the exact CON participant
+any code path that commits a canonical Review, or an accept-path FinalAcceptance,
+without the exact CON participant
 remote storage calls inside the transaction
 mutation of prior Submission, Review, ReviewFinding, or FindingResolution
 reputation or fulfillment logic
@@ -40,36 +42,45 @@ reputation or fulfillment logic
   manifest, evidence relations, and stabilized binding facts using database time.
 - The command declares planned `review.decision`. Mutation choreography is AUTH
   prepare/authority lock -> REV locks and final fact recomposition -> one AUTH
-  evaluation -> REV/task/CON participants flush -> route commit once. No plain
+  evaluation -> REV appends the Review, findings, and resolutions -> CON
+  reviewer operation -> REV decision branch -> CON submitter operation only for
+  `accept` -> REV audit and outbox staging -> route commit once. No plain
   mutation-time `require()` or serialized authorization handle substitutes.
-- Decision/finding/evidence/resolution rules match the canonical spec.
+- Decision, finding, evidence, and resolution rules match the canonical spec.
 - Task effects use the task-owned `TaskReviewEffectsParticipant` with the
   caller's AsyncSession. It flushes without commit, reuses TaskRepository and
   lifecycle guards internally, and is the only path for review-driven task or
   assignment effects; review code never imports TaskRepository.
 - Common effects append one immutable Review and every submitted immutable
-  finding/resolution, consume the ReviewLease, and close the ReviewQueueEntry.
-  Accept then appends FinalAcceptance, completes the assignment, and targets
-  `accepted`; needs revision appends no FinalAcceptance, keeps the assignment
-  active, and targets `needs_revision`; human reject appends no FinalAcceptance,
-  blocks only that assignment, and targets canonical `rejected` with reason.
+  finding and resolution, consume the ReviewLease, close the ReviewQueueEntry,
+  and invoke the mandatory CON participant's reviewer operation. That operation
+  creates `completed_review` and evaluates the reviewer policy. Accept then
+  appends FinalAcceptance, targets the Task state `accepted`, completes the
+  TaskAssignment, and invokes the participant's submitter operation. Needs revision appends no
+  FinalAcceptance, keeps the assignment active, targets `needs_revision`, and
+  invokes no submitter operation. Human reject appends no FinalAcceptance,
+  blocks only that assignment, targets canonical `rejected` with reason, and
+  invokes no submitter operation.
   Administrative closure is not a decision.
-- Every decision branch appends one immutable Review and any submitted immutable
-  findings/resolutions. The `accept` branch additionally prepares one
-  same-chain immutable FinalAcceptance after creating the Review;
-  needs_revision/reject prepare none and cannot create a submitter contribution.
+- Every decision appends one immutable Review and any submitted immutable
+  findings and resolutions before the reviewer contribution operation. The `accept`
+  branch later prepares one same-chain immutable FinalAcceptance;
+  `needs_revision` and `reject` prepare none and cannot invoke the submitter
+  operation.
   No separate FinalAcceptance authorization action or public/manual creation
   contract exists.
-- The frozen CON request carries exact Review/ReviewLease facts and carries the
-  newly created FinalAcceptance when the decision is `accept`, otherwise null.
-  Reviewer contribution is direct Review lineage; submitter contribution is
-  FinalAcceptance lineage. CON returns typed audit/outbox staging inputs and
-  never commits.
+- One mandatory typed CON participant exposes two ordered flush-only operations
+  in the caller's AsyncSession. The reviewer operation always receives exact
+  Review and ReviewLease facts, creates the reviewer contribution, and evaluates
+  the reviewer policy. The submitter operation is called only after REV creates
+  FinalAcceptance for `accept`; it receives FinalAcceptance and TaskAssignment
+  facts, creates the submitter contribution, and evaluates the submitter policy.
+  Both operations return typed audit and outbox staging inputs and never commit.
 - Pure tests prove the future atomic write set: immutable Review and submitted
-  findings/resolutions for every decision, FinalAcceptance for `accept`,
-  ReviewEvidenceArtifact links,
-  queue/lease, task effects, CON contributions/awards, REV-staged audit, and
-  outbox. This chunk does not expose a service capable of committing that set.
+  findings and resolutions for every decision, FinalAcceptance for `accept`,
+  ReviewEvidenceArtifact links, queue and lease state, Task and TaskAssignment
+  effects, CON contributions and awards, REV-staged audit records, and outbox
+  records. This chunk does not expose a service capable of committing that set.
 - Exact replay contract returns the Review after REV-10; changed replay fails.
 - Idempotency is bound to actor, operation, lease, submission, and canonical
   payload. Replay reauthorizes disclosure for the same actor without requiring
@@ -78,9 +89,10 @@ reputation or fulfillment logic
 - The decision actor is the active canonical human `ActorProfile.id` that owns
   the exact ReviewLease. UUID shape alone is insufficient; a service actor,
   system principal, legacy ID, or external subject cannot decide a Review.
-- No hidden or production composition can commit a Review or FinalAcceptance.
-  Absence of the exact CON participant fails construction; no optional/no-op
-  path exists.
+- No hidden or production composition can commit a Review before the exact CON
+  participant is installed. The same rule covers the additional FinalAcceptance
+  write on the `accept` path. Absence of either ordered CON operation fails
+  construction; no optional or no-op path exists.
 - This chunk proves command-specific lock planning and the task participant. Full
   decision races, participant rollback, and canonical commits move to REV-10
   after CON merges.
