@@ -599,3 +599,25 @@ def test_short_write_and_idempotent_cleanup_fail_safely(
         adapter._cleanup_resources(-1, ".put." + "0" * 32 + ".tmp", None)
     finally:
         adapter.close()
+
+
+def test_cleanup_attempts_lock_release_after_temporary_unlink_failure(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Contain cleanup errors without leaking the owned digest lock."""
+    adapter = LocalStorageAdapter(root=tmp_path / "artifacts")
+    released: list[tuple[object, int]] = []
+    lock = (object(), -1)
+
+    def fail_unlink(*_args: object, **_kwargs: object) -> None:
+        raise OSError("private temporary path")
+
+    monkeypatch.setattr(os, "unlink", fail_unlink)
+    monkeypatch.setattr(adapter, "_release_lock", released.append)
+    try:
+        adapter._cleanup_resources(None, ".put." + "0" * 32 + ".tmp", lock)
+    finally:
+        adapter.close()
+
+    assert released == [lock]

@@ -655,19 +655,26 @@ class LocalStorageAdapter:
         lock: tuple[Any, int] | None,
     ) -> None:
         """Release all private put resources after failure or cancellation."""
-        if descriptor is not None:
-            try:
-                os.close(descriptor)
-            except OSError:
-                pass
-        if temporary_name is not None and _TEMPORARY_NAME.fullmatch(temporary_name):
-            try:
-                os.unlink(temporary_name, dir_fd=self._tmp_fd)
-                os.fsync(self._tmp_fd)
-            except FileNotFoundError:
-                pass
-        if lock is not None:
-            self._release_lock(lock)
+        try:
+            if descriptor is not None:
+                try:
+                    os.close(descriptor)
+                except OSError:
+                    pass
+            if temporary_name is not None and _TEMPORARY_NAME.fullmatch(temporary_name):
+                try:
+                    os.unlink(temporary_name, dir_fd=self._tmp_fd)
+                    os.fsync(self._tmp_fd)
+                except FileNotFoundError:
+                    pass
+                except OSError:
+                    pass
+        finally:
+            if lock is not None:
+                try:
+                    self._release_lock(lock)
+                except OSError:
+                    pass
 
     @staticmethod
     def _write_all(descriptor: int, chunk: memoryview) -> None:
