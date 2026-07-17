@@ -432,9 +432,15 @@ and repair writer, and compensation dispatch and callbacks consume the same
 mandatory fence through explicit composition. CON retains fulfillment and
 callback semantics and exposes mandatory obligation-writer, dispatch, callback,
 drain-cutoff, and observation hooks; it does not create a second shutdown
-controller. REV-13 exposes and exercises the merged, AUTH-active foundation,
-performs the ordered writer fence, migration, and process cutover, and prohibits
-downgrade after protected rows exist.
+controller. Every obligation-root writer acquires the shared fence before CON
+allocates its server-derived monotonic ordinal. The exclusive
+`admission_fenced -> commands_draining` transition waits for those writers and
+atomically stores the CON-derived maximum ordinal as the immutable generation
+cutoff. During `delivery_draining`, dispatch and callbacks may only complete a
+same-generation root at or below that cutoff; root creation, requeue, successor,
+and repair work remains denied. REV-13 exposes and exercises the merged,
+AUTH-active foundation, performs the ordered writer fence, migration, and
+process cutover, and prohibits downgrade after protected rows exist.
 
 ### D20 - Independent Roles And AUTH Activation Custody Supersede The Archive
 
