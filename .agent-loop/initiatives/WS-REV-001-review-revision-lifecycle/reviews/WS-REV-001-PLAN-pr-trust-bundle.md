@@ -7,7 +7,8 @@
 ## Goal
 
 Reconcile the review/revision lifecycle plan with trusted main after merged
-WS-XINT-001 PR #139, without changing runtime behavior or starting a successor.
+WS-XINT-001 PR #139 and incorporate the human-approved FinalAcceptance boundary,
+without changing runtime behavior or starting a successor.
 
 ## Trusted Baseline
 
@@ -44,6 +45,17 @@ WS-XINT-001 PR #139, without changing runtime behavior or starting a successor.
   administrative closure uses `cancelled` plus a bounded reason.
 - Removed REV ownership of CON routes and separated AUTH activation from the
   REV-12A/13 product release controller.
+- Made every Review, submitted finding, and later resolution immutable for all
+  three decisions; later rounds append rather than rewrite.
+- Added REV-owned FinalAcceptance only for `accept`, with submitter
+  `accepted_submission` sourced only from that fact and no separate create API
+  or authorization action.
+- Split the mandatory CON interface into a reviewer operation for every decision
+  and an accept-only submitter operation after FinalAcceptance, each with its own
+  frozen actor-policy lineage and mutually exclusive source fields.
+- Fixed the atomic write order: common Review history, lease and queue closure,
+  reviewer contribution, decision branch, accept-only FinalAcceptance and
+  submitter contribution, REV audit and outbox staging, then one commit.
 
 ## Boundary Decisions
 
@@ -57,6 +69,13 @@ The repository's existing versioned `Submission` is the concrete form of the
 XINT handoff's conceptual `SubmissionVersion`. The future ART submission/checker
 cutover must persist verified server-derived `Submission.artifact_hash`; CON
 copies that exact value and does not rederive it or trust caller `package_hash`.
+
+The reviewer contribution operation receives Review and ReviewLease lineage and
+the lease-frozen reviewer policy. It never receives FinalAcceptance or submitter
+policy facts. Only the `accept` branch creates FinalAcceptance and then invokes
+the submitter contribution operation with FinalAcceptance, TaskAssignment, and
+the assignment-frozen submitter policy. `needs_revision` and `reject` never
+create FinalAcceptance or a submitter contribution.
 
 ## Scope Control
 
@@ -81,13 +100,15 @@ unchanged.
 
 ## Review State
 
-The pre-repair reviews failed on material WS-XINT drift, executable ordering,
-coverage, concealment, external owner gates, and scanner integrity. Every valid
-finding was repaired through four immutable review cycles. Final snapshot
-`341d920496fbf7586d95a1c00bf8a6e575b9b157` passes senior engineering,
-QA/test, security/auth, product/ops, architecture, docs, reuse/dedup,
-test-delta, and CI integrity with no findings. Exact reviewer IDs and results
-are recorded in the internal-review evidence.
+The pre-amendment reviews repaired material WS-XINT drift, executable ordering,
+coverage, concealment, external owner gates, and scanner integrity. The
+FinalAcceptance amendment then received two repair cycles: reviewers corrected
+the contribution order, full decision matrix, an obsolete nullable omnibus
+input, and an incomplete reviewer negative-source constraint. Final snapshot
+`2d4fb07feb35366661b385372d556813fc6d0d4d` passes senior engineering,
+QA/test, security/auth, product/ops, architecture, docs, reuse/dedup, test-delta,
+and CI integrity with no findings. Exact reviewer IDs and results are recorded
+in the internal-review evidence.
 
 ## Remaining Gates
 
@@ -99,16 +120,17 @@ are recorded in the internal-review evidence.
 - The ART owner must publish approved amendments for the currently unassigned
   v2 packet-read port and server-derived `Submission.artifact_hash`; exact
   packet bindings and lineage remain hard REV-07/10 gates.
-- CON must merge its frozen policy lineage and flush-only Review decision
-  participant before REV-10.
+- CON must merge its frozen policy lineage, mutually exclusive source schema,
+  and exact two-operation flush-only participant before REV-10.
 - Every runtime chunk requires a fresh main-SHA dependency audit, explicit
   human start, its own evidence, reviewer fanout, and merge approval.
 
 ## Human Review Focus
 
 Check AUTH activation custody, the exact reviewer/service authority model, ART
-v2 ownership and missing ART gate, first canonical Review placement, CON atomic
-effects, canonical task states, and the absence of runtime implementation.
+v2 ownership and missing ART gate, all-decision Review immutability, accept-only
+FinalAcceptance, the two ordered CON operations, mutually exclusive contribution
+sources, canonical task states, and the absence of runtime implementation.
 
 ## Human Merge Ownership
 

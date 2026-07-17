@@ -5,8 +5,9 @@
 `WS-REV-001-PLAN` is active on `codex/ws-rev-001-plan`; no runtime chunk is
 active. On 2026-07-17 the branch rebased without conflict onto trusted main
 `5d353b6d3f8a36b9b9ffdc1959487a150ac25fd1`, merge commit for WS-XINT-001 PR
-#139. The REV plan is being reconciled to that merged boundary before PR #128 is
-republished.
+#139. The REV plan is reconciled to that boundary and the FinalAcceptance
+amendment. Exact snapshot `2d4fb07feb35366661b385372d556813fc6d0d4d`
+passed every required internal reviewer track before PR #128 is republished.
 
 The revised WS-REV Markdown/PDF pair remains byte-preserved at canonical paths
 with recorded provenance. It is archival input, not authority for stale combined
@@ -80,7 +81,12 @@ review track with no findings. The later human-approved FinalAcceptance
 amendment reopens planning review; that older evidence remains historical and
 must not be used to publish the amended snapshot. Earlier AUTH/ART dependency
 review files remain dated evidence; their old future-count assumptions do not
-override WS-XINT.
+override WS-XINT. The FinalAcceptance amendment initially failed transaction
+ordering and proof-matrix review, then failed on one obsolete omnibus CON input
+and one incomplete negative-source constraint. Both findings were repaired.
+Snapshot `2d4fb07feb35366661b385372d556813fc6d0d4d` passes senior engineering,
+QA/test, security/auth, product/ops, architecture, docs, reuse/dedup, test-delta,
+and CI integrity with no findings.
 
 ## Human clarification retained
 

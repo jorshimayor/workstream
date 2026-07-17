@@ -10,13 +10,13 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: `341d920496fbf7586d95a1c00bf8a6e575b9b157`
+Reviewed code SHA: `2d4fb07feb35366661b385372d556813fc6d0d4d`
 
 Trusted main SHA: `5d353b6d3f8a36b9b9ffdc1959487a150ac25fd1`
 
-Reviewed at: 2026-07-17T05:45:13Z
+Reviewed at: 2026-07-17T07:27:55Z
 
-Reviewer run IDs: senior-engineering/architecture/reuse-dedup=/root/xint_final_senior_arch; QA-test/product-ops/test-delta=/root/xint_final_qa_product; security-auth/docs/CI-integrity=/root/xint_final_security_docs
+Reviewer run IDs: senior-engineering/architecture/reuse-dedup=/root/finalaccept_senior_arch_r2; QA-test/product-ops/test-delta=/root/finalaccept_qa_product_r2; security-auth/docs/CI-integrity=/root/finalaccept_security_docs_r2
 
 ## Reviewed Change
 
@@ -42,20 +42,31 @@ Reviewer run IDs: senior-engineering/architecture/reuse-dedup=/root/xint_final_s
 - Added exact cross-project current-work concealment, full changed-subsystem
   90-percent coverage mapping, literal proof commands, and narrowly tested AUTH
   documentation-scanner classification for technical paths/CLI flags.
+- Added immutable FinalAcceptance as the internal accept-only fact between
+  Review and submitter `accepted_submission`, with no public API or separate
+  authorization action.
+- Defined one mandatory CON participant with a reviewer contribution operation
+  for every decision and a distinct submitter contribution operation only after
+  the accept branch creates FinalAcceptance.
+- Made every Review, submitted finding, and later resolution immutable for all
+  three decisions and required later review rounds to append new history.
+- Required mutually exclusive contribution source fields, exact three-decision
+  outcomes, REV-owned audit and outbox staging, and one atomic commit without a
+  decision-time ART call.
 
 ## Reviewer Results
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS | None | Executable chunk graph, pre-12A hidden order, external owner gates, and final release order are coherent. |
-| qa/test | PASS | None | Acceptance, race, coverage, concealment, scanner-boundary, and evidence commands are testable and complete for planning. |
-| security/auth | PASS | None | Exact grants/services, AUTH-first mutations, artifact concealment, and activation custody fail closed. |
-| product/ops | PASS | None | Guide rebase, leased work, decisions, task effects, revision return, and contribution outcomes match the approved lifecycle. |
-| architecture | PASS | None | AUTH/ART/CON ownership, composition roots, fence insertion, and capability/SHA gates are explicit. |
-| docs | PASS | None | XINT precedence, historical evidence banners, trust scope, canonical terms, and current/future scanner claims are accurate. |
+| senior engineering | PASS | None | All-decision immutability, reviewer-before-branch order, accept-only FinalAcceptance, exact branch effects, and rollback are coherent. |
+| qa/test | PASS | None | REV-10 and REV-13 require the complete positive and negative source-field matrix, cardinalities, states, order, and rollback. |
+| security/auth | PASS | None | Operation-specific actor and policy inputs fail closed; no omnibus DTO, separate acceptance action, or provider call remains. |
+| product/ops | PASS | None | Guide rebase, leased Submission context, immutable review rounds, and all three decision outcomes match the approved lifecycle. |
+| architecture | PASS | None | REV, CON, AUTH, ART, task-owner, audit, outbox, and transaction ownership remain explicit and acyclic. |
+| docs | PASS | None | Active planning consistently separates immutable Review history from the additional accept-only FinalAcceptance fact. |
 | reuse/dedup | PASS | None | Existing task/checker participants, composition, audit/outbox, hashing, job, and adapter conventions are reused. |
-| test delta | PASS | None | Only targeted positive/negative scanner cases were added; no assertion, skip, threshold, or existing test was weakened. |
-| ci integrity | PASS | None | Exact scanner exemptions are boundary-tested; workflows, packages, thresholds, and literal proof commands remain intact. |
+| test delta | PASS | None | No test was changed or weakened; the planned database and final-drill assertions were strengthened. |
+| ci integrity | PASS | None | No CI, workflow, scanner, package, threshold, or test configuration changed in the amendment. |
 
 ## Findings Addressed
 
@@ -74,6 +85,19 @@ Reviewer run IDs: senior-engineering/architecture/reuse-dedup=/root/xint_final_s
   errors concealment-equivalent.
 - Restored literal technical proof paths/flags and fixed the shared scanner
   centrally, including fail-closed suffixed and concatenated near-miss tests.
+- Reordered the contribution boundary so the reviewer operation runs after
+  immutable Review history and lease/queue closure but before the decision
+  branch; the submitter operation runs only after accept creates
+  FinalAcceptance and applies accepted task effects.
+- Replaced the obsolete nullable FinalAcceptance omnibus input with distinct
+  reviewer and submitter inputs carrying their own actor and frozen policy
+  lineage.
+- Required reviewer contributions to leave FinalAcceptance and TaskAssignment
+  sources null, and submitter contributions to leave direct Review and
+  ReviewLease sources null.
+- Expanded REV-13 to prove the contribution matrix, negative cardinalities,
+  exact Task and TaskAssignment outcomes, ordered writes, and atomic rollback
+  for `accept`, `needs_revision`, and `reject`.
 
 ## Commands Run
 
@@ -101,6 +125,8 @@ upstream main-state issue, not claimed as passing REV evidence.
 - AUTH, ART, and CON runtime capabilities remain hard exact-SHA gates in their
   owning REV chunks. The ART packet-read, review-evidence, and Submission hash
   owner amendments are not yet scheduled/merged.
+- CON must merge the exact two-operation, flush-only participant and mutually
+  exclusive contribution lineage schema before REV-10 can start.
 - PR #128 still requires fresh external checks and explicit human merge
   approval.
 - `WS-REV-001-01` remains inactive and requires a separate explicit start after
