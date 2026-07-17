@@ -10,11 +10,11 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: `f110a21dd694c9744d0036d380898f602d0d96ff`
+Reviewed code SHA: `18fa2030ed736576eb5c2ab27048b3137a9b8222`
 
-Reviewed at: 2026-07-17T18:38:59Z
+Reviewed at: 2026-07-17T23:11:21Z
 
-Reviewer run IDs: senior-engineering=019f7161-b4a3-7170-9e99-0be3f8464603; architecture=019f7161-bdad-7030-8104-902a61b4d6fb; QA/test=019f7161-d775-7e00-b493-1201899227fe; security/auth=019f7161-c843-7e02-9c6c-6b9f90e77f76; product/ops=019f7161-e69f-7593-96e2-e784499237ec; reuse/dedup=019f7161-f8ba-7d80-bf97-b2d28b6ac41e; CI-integrity=019f7167-7753-7481-9d4f-8a2e5f300333; test-delta=019f7167-7b6d-7850-b400-f7d0c39d6f4f; docs=019f7167-8271-7a13-8bea-c1fcf2a41151
+Reviewer run IDs: senior-engineering=019f721d-d3bc-74d3-9363-8c1ce653279f; architecture=019f7222-2088-7520-afd3-42fb5861c46e; QA/test=019f7222-2775-7963-b476-88259b5f0dfb; security/auth=019f7218-561f-7df2-a226-8a57960bd44e; product/ops=019f7229-9a15-7252-be04-fdc5f29ff6e1; reuse/dedup=019f7229-a0e2-7392-bf78-829e09b7a6a7; CI-integrity=019f7230-cab6-7331-b17e-1829b9ad2f6f; test-delta=019f7230-d04c-7d13-824a-fc0aa0f50018; docs=019f7252-f636-76f1-807d-a0adc0e01dc5
 
 Only review artifacts may change after this reviewed SHA while follow-up review
 and evidence closure complete. No implementation, migration, test, workflow,
@@ -30,8 +30,11 @@ policy, or chunk-contract change is permitted without invalidating this record.
 - Added the immutable storage-namespace fence and recorded provider
   acknowledgement as `stored_pending_verification` with replica state
   `pending/unknown/unknown`.
+- Made LocalStorage layout-marker publication exclusive and crash recoverable,
+  including the durable marker-plus-temporary hard-link state.
 - Made same-object replica finalization atomic across concurrent PostgreSQL
-  transactions while retaining one append-only receipt per upload item.
+  transactions while retaining one append-only receipt per upload item and
+  allowing independent items in one upload session to finalize concurrently.
 - Guaranteed best-effort resource cleanup always attempts digest-lock release
   without masking the original sanitized error or caller cancellation.
 - Removed v1 provider-retention/receipt semantics, dormant Flow Node
@@ -43,15 +46,15 @@ policy, or chunk-contract change is permitted without invalidating this record.
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS | None | The test covers a real worker failure contract rather than padding lines; operational evidence remains truthful. |
-| QA/test | PASS | None | Real PostgreSQL state, sanitized response, bounded log metadata, and secret non-disclosure are asserted. |
-| security/auth | PASS | None | The repair strengthens redaction proof and changes no auth or privilege boundary. |
-| product/ops | PASS | None | `setup_blocked` remains the established project-setup outcome; no product lifecycle was activated. |
-| architecture | PASS | None | Test-only repair changes no ART, AUTH, REV, CON, adapter, or capability boundary. |
-| ci integrity | PASS | None | The unchanged cumulative worker gate is expected to rise above 90 percent from the newly covered statements. |
-| docs | PASS | None | The failed external run and bounded test repair are described without overstating the rerun result. |
-| reuse/dedup | PASS | None | The bounded test follows the existing real-DB worker-test pattern without adding production duplication. |
-| test delta | PASS | None | Assertions prove the exact missed domain-failure branch and do not weaken existing tests or gates. |
+| senior engineering | PASS | None | The v2 port remains narrow; namespace validation, transaction boundaries, crash recovery, migration refusal, and cleanup activation have no remaining operational defect. |
+| QA/test | PASS | None | V2 surface, crash states, namespace fencing, migration refusal, cleanup wiring, concurrency, and shared preparation helpers have complete focused regression proof. |
+| security/auth | PASS | None | Filesystem ownership/mode/link checks, namespace fencing, sanitized errors, and ART/AUTH separation have no remaining actionable security finding. |
+| product/ops | PASS | None | Acknowledgement remains non-bindable; no Operator route, review/revision decision, contribution, compensation, or reputation behavior is activated. |
+| architecture | PASS | None | One ADR 0014 factory path remains; writable storage stays inside ART orchestration and product modules receive only closed capabilities. |
+| ci integrity | PASS | None | The exact five cumulative 90 percent gates and the 78 percent whole-app floor remain fail closed with no workflow bypass. |
+| docs | PASS | None | ADR, specification, glossary, migration wording, links, and future-chunk boundaries match the implementation. |
+| reuse/dedup | PASS | None | Sealed-source preparation is centralized in the shared test helper; no factory bypass, production duplication, or cross-initiative runtime coupling remains. |
+| test delta | PASS | None | V1 vectors were replaced by stronger v2 assertions without skips, weakened expectations, or false concurrency proof. |
 
 ## Valid Findings Addressed
 
@@ -73,16 +76,27 @@ policy, or chunk-contract change is permitted without invalidating this record.
   or replace the caller's sanitized failure/cancellation semantics.
 - Added a namespace-only populated-v2 downgrade refusal test so the deployment
   fence cannot be discarded by a clean-cut rollback.
-- Reconciled merged-main loop state and marked the pre-main review record as
-  superseded rather than reusing stale review provenance.
+- Applied every still-valid CodeRabbit finding: atomic marker publication,
+  complete upload-result metadata constraints, per-item rather than shared
+  session CAS fencing, exact reservation accounting, full downgrade cleanup,
+  typed receiver provenance, complete import scanning, cache teardown,
+  mutually exclusive failure handlers, deterministic concurrent test results,
+  cutover-phase binding, exact coverage-source alignment, and removed-field
+  assertions. External dispositions are recorded separately.
+- Restored AUTH status to trusted `main` and kept ART gate assertions within
+  the ART boundary.
+- Consolidated sealed-source test preparation into one shared helper after the
+  reuse reviewer found two residual duplicate paths; the repair received a
+  clean exact-SHA reuse review before the final nine-track fanout.
 
 ## Commands Run
 
 ```bash
 cd backend && .venv/bin/ruff check app/modules/artifacts/repository.py app/modules/artifacts/service.py app/adapters/artifacts/local.py tests/test_artifacts.py tests/test_local_artifact_store.py
 cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest -q tests/test_artifacts.py::test_concurrent_same_object_finalization_reuses_one_replica
+cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest -q tests/test_artifacts.py::test_put_acknowledgement_stops_at_pending_verification tests/test_artifacts.py::test_concurrent_same_object_finalization_reuses_one_replica tests/test_artifacts.py::test_independent_items_in_one_session_finalize_without_shared_cas_replay tests/test_artifacts.py::test_database_rejects_partial_upload_result_metadata tests/test_artifacts.py::test_reservation_accounting_rejects_drift_without_clamping tests/test_artifacts.py::test_same_item_replay_finalizes_once_without_double_accounting tests/test_artifacts.py::test_terminal_put_failure_releases_reservation_and_fails_item tests/test_artifacts.py::test_namespace_mismatch_fails_before_provider_io tests/test_artifacts.py::test_concurrent_different_first_namespace_writers_have_one_winner
 cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test COVERAGE_FILE=.coverage.art02a3 .venv/bin/coverage run -m pytest -q tests/test_artifacts.py tests/test_artifact_preparation.py tests/test_config.py tests/test_app.py tests/test_api_controls.py tests/test_artifact_architecture.py tests/test_artifact_cleanup_wiring.py tests/test_artifact_store_conformance.py tests/test_local_artifact_store.py
-cd backend && .venv/bin/pytest -q tests/test_artifact_store_conformance.py tests/test_local_artifact_store.py --cov=app.adapters.artifacts.local --cov=app.interfaces.artifacts --cov-report=term-missing --cov-fail-under=90
+cd backend && .venv/bin/pytest -q tests/test_artifact_architecture.py tests/test_artifact_cleanup_wiring.py tests/test_artifact_store_conformance.py tests/test_local_artifact_store.py
 cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/pytest -q tests/test_alembic.py::test_artifact_store_v2_empty_clean_cut_and_reversible_shape tests/test_alembic.py::test_artifact_store_v2_refuses_populated_v1_before_ddl tests/test_alembic.py::test_artifact_store_v2_refuses_populated_v2_downgrade_before_ddl tests/test_alembic.py::test_artifact_store_v2_waits_for_concurrent_v1_writer_and_refuses
 cd backend && WORKSTREAM_TEST_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test .venv/bin/pytest -q tests/test_projects.py::test_project_setup_worker_persists_sanitized_domain_failure
 cd backend && .venv/bin/docstr-coverage --config .docstr.yaml
@@ -94,9 +108,11 @@ python3 scripts/test_agent_gates.py
 git diff --check
 ```
 
-Results: 268 ART-focused tests passed; 56 LocalStorage/conformance tests passed
-at 91.08 percent; all four clean-cut migration cases passed; ART scope coverage
-was 93.18 percent. Ruff, 92.0 percent docstring coverage, stale
+Results: the prior complete focused run passed 268 ART tests; the final repaired
+candidate passed 73 filesystem/architecture/wiring tests, 59 final
+LocalStorage/conformance tests, nine critical real-PostgreSQL orchestration
+cases, and all four clean-cut migration cases. The corrected exact ART scope
+coverage was 93.31 percent. Ruff, 92.0 percent docstring coverage, stale
 contract/authorization/wording,
 Markdown links, 80 agent-gate tests, and diff checks passed.
 The added real-PostgreSQL worker test passed and executes the ten statements in
@@ -119,6 +135,7 @@ evidence; it was stopped because full regression is assigned to GitHub Actions.
 
 ## Stop Condition
 
-Publish the evidence-bound head for GitHub CI, CodeRabbit, and human review.
+Publish the evidence-bound head for GitHub CI, a fresh CodeRabbit review, and
+human review.
 Do not merge without explicit user approval and do not start
 `WS-ART-001-02B1`.

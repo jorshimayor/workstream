@@ -91,11 +91,12 @@ guide/task/submission cutover, product review decision, or authorization action.
 ## Tests And Checks
 
 ```text
-268 ART-focused tests PASS
-1 real PostgreSQL replica-finalization race PASS
-56 LocalStorage/conformance tests PASS, 91.08% coverage
+268 prior complete ART-focused tests PASS
+73 final filesystem/architecture/wiring tests PASS
+59 final LocalStorage/conformance tests PASS
+9 final critical real PostgreSQL orchestration cases PASS
 4 ArtifactStore v2 migration safety tests PASS
-ART changed scope coverage 93.18%
+ART changed scope coverage 93.31%
 Configuration coverage 96.92%
 app/main.py coverage 90.35%
 Ruff PASS
@@ -122,13 +123,13 @@ configuration tests. No tests were skipped or weakened.
 
 ## Internal Reviewer Results
 
-Reviewed code SHA: `f110a21dd694c9744d0036d380898f602d0d96ff`
+Reviewed code SHA: `18fa2030ed736576eb5c2ab27048b3137a9b8222`
 
-The first external Backend run exposed a real cumulative worker-coverage gap.
-The gate remains unchanged, and a real-PostgreSQL domain-failure test now covers
-the missing setup-worker path. All nine required tracks passed the exact
-repaired SHA with no remaining finding. Reviewer IDs and final results are
-recorded in the internal review evidence.
+All nine required tracks passed the exact repaired SHA with no remaining
+finding. The reuse track first found incomplete test-helper consolidation; all
+review sessions were closed, the duplicate paths were removed, and a fresh
+exact-SHA fanout passed. Reviewer IDs and final results are recorded in the
+internal review evidence.
 
 ## External Review
 
