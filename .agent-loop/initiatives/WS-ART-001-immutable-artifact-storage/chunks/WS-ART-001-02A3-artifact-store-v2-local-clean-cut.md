@@ -22,6 +22,8 @@ configuration. No compatibility path remains after this PR.
   startup cleanup wiring under `backend/app/workers/` and the composition root;
 - one Alembic migration and migration tests;
 - focused configuration, factory, LocalStorage, and v2 conformance tests;
+- `backend/tests/test_projects.py` only for the real-PostgreSQL cumulative
+  `app/workers/*` coverage repair exposed by GitHub CI; no project runtime code;
 - `.github/workflows/backend.yml` only to expand the exact 90 percent scoped gate;
 - `scripts/check_stale_artifact_contracts.py` only to advance the artifact
   contract phase to `artifact_store_cutover` after the atomic clean cut;

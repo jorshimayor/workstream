@@ -113,6 +113,28 @@ def test_local_recovers_only_one_complete_durable_marker_temporary(
     assert not temporary.exists()
 
 
+def test_local_recovers_linked_marker_after_interrupted_temporary_unlink(
+    tmp_path: Path,
+) -> None:
+    """Reduce the exact two-link crash state back to one canonical marker."""
+    root = tmp_path / "artifacts"
+    root.mkdir(mode=0o700)
+    temporary = root / ".workstream-artifact-store-v2.initializing"
+    marker = root / ".workstream-artifact-store-v2"
+    temporary.write_bytes(b"workstream-artifact-store-v2\n")
+    temporary.chmod(0o600)
+    os.link(temporary, marker)
+    assert temporary.stat().st_ino == marker.stat().st_ino
+    assert temporary.stat().st_nlink == 2
+
+    adapter = initialize_local_store(root=root)
+    adapter.close()
+
+    assert marker.read_bytes() == b"workstream-artifact-store-v2\n"
+    assert marker.stat().st_nlink == 1
+    assert not temporary.exists()
+
+
 def test_local_refuses_v1_or_unknown_disk_layout(tmp_path: Path) -> None:
     """Do not install a dual reader over an incompatible pre-cutover root."""
     root = tmp_path / "artifacts"

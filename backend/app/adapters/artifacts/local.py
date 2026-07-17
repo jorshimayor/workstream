@@ -544,12 +544,25 @@ class LocalStorageAdapter:
 
     def _recover_layout_marker(self, entries: set[str]) -> None:
         """Complete or remove one exact durable marker publication remnant."""
-        self._validate_marker(_LAYOUT_MARKER_TEMPORARY)
+        temporary_details = self._validate_marker(
+            _LAYOUT_MARKER_TEMPORARY,
+            recoverable=True,
+        )
         if _LAYOUT_MARKER in entries:
-            self._validate_marker()
+            marker_details = self._validate_marker(_LAYOUT_MARKER, recoverable=True)
+            if (
+                temporary_details.st_dev != marker_details.st_dev
+                or temporary_details.st_ino != marker_details.st_ino
+                or temporary_details.st_nlink != 2
+                or marker_details.st_nlink != 2
+            ):
+                raise ArtifactConfigurationError("local artifact layout is incompatible")
             os.unlink(_LAYOUT_MARKER_TEMPORARY, dir_fd=self._root_fd)
         else:
-            if entries != {_LAYOUT_MARKER_TEMPORARY}:
+            if (
+                entries != {_LAYOUT_MARKER_TEMPORARY}
+                or temporary_details.st_nlink != 1
+            ):
                 raise ArtifactConfigurationError("local artifact layout is incompatible")
             os.link(
                 _LAYOUT_MARKER_TEMPORARY,
@@ -658,7 +671,12 @@ class LocalStorageAdapter:
         if not self._initialized:
             raise ArtifactConfigurationError("artifact store namespace is not initialized")
 
-    def _validate_marker(self, name: str = _LAYOUT_MARKER) -> None:
+    def _validate_marker(
+        self,
+        name: str = _LAYOUT_MARKER,
+        *,
+        recoverable: bool = False,
+    ) -> os.stat_result:
         """Require the exact private v2 layout marker."""
         descriptor = os.open(
             name,
@@ -666,12 +684,17 @@ class LocalStorageAdapter:
             dir_fd=self._root_fd,
         )
         try:
-            details = self._assert_private_regular(descriptor)
+            details = (
+                self._assert_recoverable_object(descriptor)
+                if recoverable
+                else self._assert_private_regular(descriptor)
+            )
             if stat.S_IMODE(details.st_mode) != 0o600:
                 raise ArtifactConfigurationError("local artifact layout is incompatible")
             content = os.read(descriptor, len(_LAYOUT_MARKER_BYTES) + 1)
             if content != _LAYOUT_MARKER_BYTES:
                 raise ArtifactConfigurationError("local artifact layout is incompatible")
+            return details
         finally:
             os.close(descriptor)
 
