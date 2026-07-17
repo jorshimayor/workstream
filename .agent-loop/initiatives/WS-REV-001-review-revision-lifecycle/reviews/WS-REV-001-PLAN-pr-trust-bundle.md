@@ -56,6 +56,14 @@ without changing runtime behavior or starting a successor.
 - Fixed the atomic write order: common Review history, lease and queue closure,
   reviewer contribution, decision branch, accept-only FinalAcceptance and
   submitter contribution, REV audit and outbox staging, then one commit.
+- Made `delivery_draining` a reachable completion-only phase for fulfillment
+  obligations committed before the immutable generation cutoff. Every CON root
+  writer must acquire the shared fence before ordinal allocation, and the
+  exclusive transition captures the server-derived maximum only after prior
+  writers drain.
+- Required same-generation, pre-cutoff dispatch and callbacks, complete
+  zero-obligation proof before `disabled`, denial before provider or successor
+  I/O, bounded audit, and dispatcher-owned same-root claim recovery.
 
 ## Boundary Decisions
 
@@ -76,6 +84,12 @@ policy facts. Only the `accept` branch creates FinalAcceptance and then invokes
 the submitter contribution operation with FinalAcceptance, TaskAssignment, and
 the assignment-frozen submitter policy. `needs_revision` and `reject` never
 create FinalAcceptance or a submitter contribution.
+
+CON owns fulfillment-obligation roots and their monotonic ordinals. REV owns the
+single release controller and stores only the cutoff returned through CON's
+typed same-session port. CON obligation creation, requeue, successor, repair,
+dispatch, and callback paths all consume the shared fence through mandatory
+composition; REV imports no CON repository and creates no second dispatcher.
 
 ## Scope Control
 
@@ -105,10 +119,15 @@ coverage, concealment, external owner gates, and scanner integrity. The
 FinalAcceptance amendment then received two repair cycles: reviewers corrected
 the contribution order, full decision matrix, an obsolete nullable omnibus
 input, and an incomplete reviewer negative-source constraint. Final snapshot
-`2d4fb07feb35366661b385372d556813fc6d0d4d` passes senior engineering,
+`86ee0a5e263ac306b3bf195a9fb9043aa5439416` passes senior engineering,
 QA/test, security/auth, product/ops, architecture, docs, reuse/dedup, test-delta,
 and CI integrity with no findings. Exact reviewer IDs and results are recorded
 in the internal-review evidence.
+
+The latest CodeRabbit pass found one unreachable fulfillment-drain contract.
+The repaired state machine and its cutoff/writer-fence hardening passed every
+required internal track; the external response records each repair cycle and
+the exact thread disposition.
 
 ## Remaining Gates
 
@@ -121,7 +140,9 @@ in the internal-review evidence.
   v2 packet-read port and server-derived `Submission.artifact_hash`; exact
   packet bindings and lineage remain hard REV-07/10 gates.
 - CON must merge its frozen policy lineage, mutually exclusive source schema,
-  and exact two-operation flush-only participant before REV-10.
+  and exact two-operation flush-only participant before REV-10. Before REV-12A,
+  it must merge every obligation-writer, dispatch, and callback fence hook, its
+  monotonic root ordinal, and the drain-cutoff/observation port.
 - Every runtime chunk requires a fresh main-SHA dependency audit, explicit
   human start, its own evidence, reviewer fanout, and merge approval.
 
@@ -130,7 +151,8 @@ in the internal-review evidence.
 Check AUTH activation custody, the exact reviewer/service authority model, ART
 v2 ownership and missing ART gate, all-decision Review immutability, accept-only
 FinalAcceptance, the two ordered CON operations, mutually exclusive contribution
-sources, canonical task states, and the absence of runtime implementation.
+sources, canonical task states, fulfillment cutoff ownership, universal CON
+writer fencing, completion-only drain, and the absence of runtime implementation.
 
 ## Human Merge Ownership
 

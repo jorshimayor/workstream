@@ -10,11 +10,11 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: `2d4fb07feb35366661b385372d556813fc6d0d4d`
+Reviewed code SHA: `86ee0a5e263ac306b3bf195a9fb9043aa5439416`
 
 Trusted main SHA: `5d353b6d3f8a36b9b9ffdc1959487a150ac25fd1`
 
-Reviewed at: 2026-07-17T07:27:55Z
+Reviewed at: 2026-07-17T08:02:32Z
 
 Reviewer run IDs: senior-engineering/architecture/reuse-dedup=/root/finalaccept_senior_arch_r2; QA-test/product-ops/test-delta=/root/finalaccept_qa_product_r2; security-auth/docs/CI-integrity=/root/finalaccept_security_docs_r2
 
@@ -53,17 +53,25 @@ Reviewer run IDs: senior-engineering/architecture/reuse-dedup=/root/finalaccept_
 - Required mutually exclusive contribution source fields, exact three-decision
   outcomes, REV-owned audit and outbox staging, and one atomic commit without a
   decision-time ART call.
+- Made `delivery_draining` a reachable completion-only phase. The exclusive
+  cutoff transition waits for every fenced CON obligation writer and stores the
+  server-derived maximum root ordinal; only same-generation, pre-cutoff roots
+  may dispatch or complete callbacks during the drain.
+- Required every obligation creation, requeue, successor, and repair writer to
+  acquire the shared fence before ordinal allocation, with fail-closed
+  composition, both-order races, bounded denial audit, and same-root claim
+  recovery before provider I/O.
 
 ## Reviewer Results
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS | None | All-decision immutability, reviewer-before-branch order, accept-only FinalAcceptance, exact branch effects, and rollback are coherent. |
-| qa/test | PASS | None | REV-10 and REV-13 require the complete positive and negative source-field matrix, cardinalities, states, order, and rollback. |
-| security/auth | PASS | None | Operation-specific actor and policy inputs fail closed; no omnibus DTO, separate acceptance action, or provider call remains. |
-| product/ops | PASS | None | Guide rebase, leased Submission context, immutable review rounds, and all three decision outcomes match the approved lifecycle. |
-| architecture | PASS | None | REV, CON, AUTH, ART, task-owner, audit, outbox, and transaction ownership remain explicit and acyclic. |
-| docs | PASS | None | Active planning consistently separates immutable Review history from the additional accept-only FinalAcceptance fact. |
+| senior engineering | PASS | None | Review ordering and release control are coherent; every CON obligation writer is fenced before ordinal allocation and one controller owns the cutoff. |
+| qa/test | PASS | None | REV-10/13 prove the decision matrix; REV-12A/13 prove writer/cutoff races, completion-only drain, denial audit, and claim recovery. |
+| security/auth | PASS | None | Operation-specific contribution inputs and server-derived drain lineage fail closed before provider or successor I/O. |
+| product/ops | PASS | None | Guide rebase, immutable review rounds, all decision outcomes, reachable shutdown, and auditable recovery match the approved lifecycle. |
+| architecture | PASS | None | REV, CON, AUTH, ART, task-owner, audit, outbox, fence, ordinal, and transaction ownership remain explicit and acyclic. |
+| docs | PASS | None | Active planning consistently states all-decision immutability, accept-only FinalAcceptance, and the pre-cutoff completion-only drain. |
 | reuse/dedup | PASS | None | Existing task/checker participants, composition, audit/outbox, hashing, job, and adapter conventions are reused. |
 | test delta | PASS | None | No test was changed or weakened; the planned database and final-drill assertions were strengthened. |
 | ci integrity | PASS | None | No CI, workflow, scanner, package, threshold, or test configuration changed in the amendment. |
@@ -98,6 +106,16 @@ Reviewer run IDs: senior-engineering/architecture/reuse-dedup=/root/finalaccept_
 - Expanded REV-13 to prove the contribution matrix, negative cardinalities,
   exact Task and TaskAssignment outcomes, ordered writes, and atomic rollback
   for `accept`, `needs_revision`, and `reject`.
+- Resolved CodeRabbit thread `PRRT_kwDOSwL_U86Rr721` by allowing fulfillment
+  dispatch and callbacks during `delivery_draining` and moving the complete
+  zero-obligation guard to the transition into `disabled`.
+- Added a durable, CON-derived fulfillment-obligation cutoff and mandatory
+  fence-before-ordinal hooks for every root writer. Post-cutoff, crossed,
+  requeue, successor, repair, and callback-successor work fails before external
+  I/O.
+- Corrected denied already-claimed dispatch proof to retain bounded audit and
+  permit only idempotent same-root claim-to-retryable recovery by the shared
+  dispatcher, without creating a successor event.
 
 ## Commands Run
 
@@ -126,7 +144,9 @@ upstream main-state issue, not claimed as passing REV evidence.
   owning REV chunks. The ART packet-read, review-evidence, and Submission hash
   owner amendments are not yet scheduled/merged.
 - CON must merge the exact two-operation, flush-only participant and mutually
-  exclusive contribution lineage schema before REV-10 can start.
+  exclusive contribution lineage schema before REV-10 can start. Before 12A it
+  must also merge every obligation-writer, dispatch, and callback fence hook,
+  the monotonic root ordinal, and the drain-cutoff/observation port.
 - PR #128 still requires fresh external checks and explicit human merge
   approval.
 - `WS-REV-001-01` remains inactive and requires a separate explicit start after

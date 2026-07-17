@@ -6,7 +6,7 @@
 active. On 2026-07-17 the branch rebased without conflict onto trusted main
 `5d353b6d3f8a36b9b9ffdc1959487a150ac25fd1`, merge commit for WS-XINT-001 PR
 #139. The REV plan is reconciled to that boundary and the FinalAcceptance
-amendment. Exact snapshot `2d4fb07feb35366661b385372d556813fc6d0d4d`
+amendment. Exact snapshot `86ee0a5e263ac306b3bf195a9fb9043aa5439416`
 passed every required internal reviewer track before PR #128 is republished.
 
 The revised WS-REV Markdown/PDF pair remains byte-preserved at canonical paths
@@ -50,6 +50,11 @@ decisions.
   `Review.decision`. REV stages shared audit and outbox rows and commits once. Core
   creation copies stabilized versioned Submission `artifact_hash` lineage,
   performs no ART call, and has no mandatory contribution-evidence projection.
+- REV-12A also waits for CON-owned mandatory fence hooks on every fulfillment
+  obligation writer, dispatch, and callback path; a monotonic root ordinal; and
+  a same-session drain-cutoff/observation port. The exclusive cutoff transition
+  waits for prior writers, and `delivery_draining` permits only completion of
+  same-generation roots at or below the stored cutoff.
 - The current canonical lifecycle uses `rejected` for human reject and
   `cancelled` with bounded reasons for approved administrative closure; REV will
   not introduce archival `closed/review_rejected` as a new status token.
@@ -84,7 +89,12 @@ review files remain dated evidence; their old future-count assumptions do not
 override WS-XINT. The FinalAcceptance amendment initially failed transaction
 ordering and proof-matrix review, then failed on one obsolete omnibus CON input
 and one incomplete negative-source constraint. Both findings were repaired.
-Snapshot `2d4fb07feb35366661b385372d556813fc6d0d4d` passes senior engineering,
+CodeRabbit's latest refresh then found an unreachable fulfillment-drain phase.
+The repaired contract now fences every CON obligation writer before ordinal
+allocation, captures an immutable cutoff after prior writers drain, permits only
+pre-cutoff completion work, and retains audited same-root recovery for denied
+already-claimed dispatch. Snapshot
+`86ee0a5e263ac306b3bf195a9fb9043aa5439416` passes senior engineering,
 QA/test, security/auth, product/ops, architecture, docs, reuse/dedup, test-delta,
 and CI integrity with no findings.
 
