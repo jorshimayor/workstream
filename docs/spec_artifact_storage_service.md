@@ -1040,7 +1040,7 @@ Implementation is a clean cut:
   normal submission creation still enters evaluation automatically;
 - no dual write, nullable shadow field, fake verified backfill, fallback
   adapter, compatibility constructor, or second factory remains;
-- migration `0024` refuses every populated v1 artifact table before DDL and
+- migration `0025` refuses every populated v1 artifact table before DDL and
   leaves the prior schema and rows unchanged. It performs no automated rebuild
   or fabricated backfill. Because this is a pre-production clean cut, the
   Operator must reprovision an empty database/storage namespace out of band and

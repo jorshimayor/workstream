@@ -225,7 +225,7 @@ receipt methods are removed in the same chunk that migrates LocalStorage and
 all active callers. The dormant Flow Node backend setting is removed. The new
 backend values are exactly `disabled`, `local`, and `s3_compatible`.
 
-Migration `0024` refuses populated v1 artifact tables before DDL and preserves
+Migration `0025` refuses populated v1 artifact tables before DDL and preserves
 their prior schema and rows. An empty pre-production environment may be
 reprovisioned out of band and authoritative bytes reingested through v2; the
 migration performs no automated rebuild or fabricated backfill. No alias,

@@ -417,7 +417,7 @@ atomicity.
 
 ## Migration Rules
 
-- Migration `0024` refuses populated v1 artifact tables before DDL and preserves
+- Migration `0025` refuses populated v1 artifact tables before DDL and preserves
   the prior schema and rows. Pre-production reprovisioning happens out of band
   into an empty database/storage namespace, followed by v2 reingest from
   authoritative bytes; unavailable bytes are not fabricated or migrated.
