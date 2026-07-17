@@ -88,9 +88,26 @@ archival input edits
 
 ## Verification
 
-Run the initiative runtime commands plus Markdown links, stale wording,
-authorization/artifact scanners, loop-memory check, internal evidence check, and
-git diff check.
+Execute the exact clean isolated CON-11 row in `../RUNTIME_VERIFICATION.md`,
+then run:
+
+```bash
+(cd backend && .venv/bin/python -m pytest -q tests/test_api_contract_e2e.py tests/test_authorization.py tests/test_contributions.py tests/test_compensation.py tests/test_outbox.py tests/test_audit.py -k '(manifest or readiness or openapi or isolation or fence or cutoff or generation or drain or provider)')
+python3 scripts/check_markdown_links.py
+python3 scripts/check_stale_workstream_wording.py
+python3 scripts/check_stale_authorization_docs.py
+python3 scripts/check_stale_artifact_contracts.py
+python3 scripts/check_loop_memory_state.py
+python3 scripts/check_internal_review_evidence.py
+git diff --check
+```
+
+Pass requires a non-empty selected test set, a complete exact AUTH/REV/CON
+manifest, no public OpenAPI registration, service/action isolation, every
+writer/dispatch/callback fence race in both orders, same-generation
+at-or-below-cutoff completion only, provider I/O outside transaction/fence,
+repository coverage at least 78 percent and each CON-11 focused subsystem at
+least 90 percent in the same clean run, plus every repository gate above.
 
 ## Review and stop
 

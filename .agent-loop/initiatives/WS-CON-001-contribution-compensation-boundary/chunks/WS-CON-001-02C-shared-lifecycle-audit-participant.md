@@ -37,7 +37,18 @@ commit ownership, route, background executor, dependency or CI weakening
 
 ## Verification and reviewers
 
-Execute CON-02C in `../RUNTIME_VERIFICATION.md`; changed audit code is at least
-90 percent. Senior engineering, QA/test, security/auth, product/ops,
-architecture, docs, reuse/dedup and test-delta are required. Stop after the
-feature-neutral participant.
+Execute the exact clean isolated CON-02C row in `../RUNTIME_VERIFICATION.md`,
+then run:
+
+```bash
+(cd backend && .venv/bin/python -m pytest -q tests/test_audit.py -k 'participant and (rollback or payload or boundary or idempotency or replay)')
+(cd backend && .venv/bin/python -m coverage report --include='app/modules/audit/*' --fail-under=90)
+(cd backend && .venv/bin/ruff check app/modules/audit tests/test_audit.py)
+```
+
+Pass requires a non-empty selected test set, flush-only rollback, closed typed
+payload enforcement, exact replay idempotency, changed-payload conflict,
+repository coverage at least 78 percent in the same clean run, and focused
+audit coverage at least 90 percent. Senior engineering, QA/test, security/auth,
+product/ops, architecture, docs, reuse/dedup and test-delta are required. Stop
+after the feature-neutral participant.

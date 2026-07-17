@@ -26,11 +26,18 @@ operations mutation/rebuild/reconciliation; AUTH edit
 balance/ledger; production route registration; CI weakening
 ```
 
+## Approved AUTH prerequisites and handoff inputs
+
+- AUTH must first merge the approved contribution/award self/project
+  ActionIds, typed contexts, ActionOwner custody, and real-kernel decision
+  ports. CON neither registers nor activates them.
+- The actions remain planned until CON's hidden read composition and negative
+  proof merge; AUTH alone performs later evaluator integration and activation.
+
 ## Acceptance criteria
 
-- [ ] AUTH registers planned contribution/award self/project actions and typed
-  contexts. CON composes canonical PostgreSQL facts while real kernel denies;
-  AUTH later integrates evaluators/activation.
+- [ ] CON composes canonical PostgreSQL resource facts for the supplied AUTH
+  decision ports while the real kernel continues to deny planned actions.
 - [ ] D11 exact award-detail candidate set is approved before implementation.
   CON contains no role logic and never infers access from broad PermissionId.
 - [ ] Self reads require exact contributor/beneficiary. Project reads use exact
@@ -42,6 +49,24 @@ balance/ledger; production route registration; CI weakening
   are distinct. No provider/balance/ledger/evidence artifact data appears.
 - [ ] CON-09A/09B absence or failure has no effect. OpenAPI remains hidden;
   coverage stays at required floors.
+
+## Verification
+
+Execute the exact clean isolated CON-10A row in `../RUNTIME_VERIFICATION.md`,
+then run:
+
+```bash
+(cd backend && .venv/bin/python -m pytest -q tests/test_contributions.py tests/test_compensation.py tests/test_authorization.py tests/test_api_contract_e2e.py -k '(contribution or award) and (read or list or pagination or conceal or cross_project or unauthorized or stale or openapi)')
+(cd backend && .venv/bin/python -m coverage report --include='app/modules/contributions/*' --fail-under=90)
+(cd backend && .venv/bin/python -m coverage report --include='app/modules/compensation/*' --fail-under=90)
+(cd backend && .venv/bin/ruff check app/modules/contributions app/modules/compensation app/api/internal_contributions.py app/api/internal_compensation.py app/composition/contributions.py app/composition/compensation.py tests/test_contributions.py tests/test_compensation.py tests/test_authorization.py tests/test_api_contract_e2e.py)
+```
+
+Pass requires a non-empty selected test set, stable pre-filtered pagination,
+self/project authorization negatives, cross-project concealment, stale-decision
+denial, hidden OpenAPI routes, no evidence/provider disclosure, repository
+coverage at least 78 percent in the same clean run, and both focused reports at
+least 90 percent.
 
 ## Review and stop
 

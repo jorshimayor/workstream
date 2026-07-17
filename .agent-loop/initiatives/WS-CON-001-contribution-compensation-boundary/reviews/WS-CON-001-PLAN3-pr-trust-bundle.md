@@ -114,6 +114,12 @@ is one coherent specification initiative, its runtime boundary is empty, and
 the earlier planning snapshots retain their own review evidence. The user-owned
 deletion of the archival CON PDF is unstaged and excluded.
 
+The PR #142 external-review repair updates 17 future chunk/deferred-proposal
+files plus the PLAN3 scope, status, trust bundle, and external-response log. It
+adds no runtime, AUTH/REV/ART-owned, workflow, dependency, migration, or test
+change. The repair makes verification executable and preserves upstream AUTH
+ownership rather than changing product behavior.
+
 ## Acceptance-criteria proof
 
 - Runtime catalogue verified at 74 PermissionIds and 65 ActionIds: nine active,
@@ -153,18 +159,21 @@ no threshold, and adds no bypass. Existing agent-gate coverage remains intact.
 
 ## Internal reviewer results
 
-The exact reviewed code SHA `e968430b0c3b5f1432899c9aa31ef209b774eae0`
-and complete reviewer table are recorded in
-`WS-CON-001-PLAN3-internal-review-evidence.md`. Earlier task-claim and evidence
-findings remain resolved. The current-main architecture review additionally
-required the PLAN3 title to name AUTH and REV and removal of a duplicate CON-07
-allowed-file row; all required tracks passed the repaired exact SHA. No blocking
-finding remains.
+The pre-external-review snapshot
+`e968430b0c3b5f1432899c9aa31ef209b774eae0` passed every required track. The
+CodeRabbit repair requires a new exact-SHA internal re-review before push; the
+final evidence rebind will be recorded in
+`WS-CON-001-PLAN3-internal-review-evidence.md`.
 
 ## External review
 
-Draft PR #142 awaits refresh to this reviewed snapshot. CodeRabbit, GitHub
-checks, and human PR review supplement but do not replace internal review.
+CodeRabbit posted five unresolved consolidated threads and one description
+warning after PR #142 became ready for review. All five are addressed in
+`WS-CON-001-PLAN3-external-review-response.md`: 16 active chunks gain exact
+focused commands/pass criteria, AUTH requirements move to explicit upstream
+prerequisites, and optional CON-09B is correctly reclassified as a deferred
+proposal requiring a fresh contract. The PR body will be replaced with this
+full trust-bundle structure after the reviewed repair is pushed.
 
 ## Risks and follow-up
 
@@ -180,10 +189,13 @@ checks, and human PR review supplement but do not replace internal review.
 
 Confirm the corrected task-claim ordering, exact prepared-handle contract,
 two-operation Review/FinalAcceptance/contribution transaction, canonical
-FinalAcceptance names, and sole REV-12A release controller/fence. Also confirm
-that the 67-file planning PR is acceptable as one coherent specification record.
+FinalAcceptance names, sole REV-12A release controller/fence, executable future
+chunk gates, and upstream-only AUTH registration/activation ownership. Also
+confirm that optional CON-09B remains non-executable until fresh approval and
+that the cumulative planning PR is acceptable as one coherent specification
+record.
 
 ## Human merge ownership
 
-This bundle authorizes refreshing draft PR #142, not merging it. The user must
+This bundle authorizes refreshing PR #142, not merging it. The user must
 explicitly approve PR #142 for merge. No successor chunk starts automatically.

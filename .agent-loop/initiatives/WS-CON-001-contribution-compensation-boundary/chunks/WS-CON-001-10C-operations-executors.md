@@ -65,6 +65,26 @@ outbox claim/finalization transitions; AUTH implementation
   activation is a later checkpoint after hidden behavior and exact evaluator
   composition merge.
 
+## Verification
+
+Execute the exact clean isolated CON-10C row in `../RUNTIME_VERIFICATION.md`,
+then run:
+
+```bash
+(cd backend && .venv/bin/python -m pytest -q tests/test_contributions.py tests/test_compensation.py tests/test_outbox.py tests/test_authorization.py -k '(executor or reconcile or rebuild) and (fence or ordinal or retry or replay or crash or concurrency or unauthorized or deny)')
+(cd backend && .venv/bin/python -m coverage report --include='app/modules/contributions/*' --fail-under=90)
+(cd backend && .venv/bin/python -m coverage report --include='app/modules/compensation/*' --fail-under=90)
+(cd backend && .venv/bin/python -m coverage report --include='app/workers/contributions.py' --fail-under=90)
+(cd backend && .venv/bin/python -m coverage report --include='app/workers/compensation.py' --fail-under=90)
+(cd backend && .venv/bin/ruff check app/modules/contributions app/modules/compensation app/modules/outbox/handlers.py app/workers/contributions.py app/workers/compensation.py app/composition/contributions.py app/composition/compensation.py tests/test_contributions.py tests/test_compensation.py tests/test_outbox.py tests/test_authorization.py)
+```
+
+Pass requires a non-empty selected test set, exact executor isolation,
+claim-generation validation, shared-fence-before-ordinal ordering, retry/replay
+and crash idempotency, concurrent drain denial of new obligation work,
+repository coverage at least 78 percent in the same clean run, and every
+focused report at least 90 percent.
+
 ## Review and stop
 
 All baseline plus architecture, security, product, docs, reuse, CI integrity,

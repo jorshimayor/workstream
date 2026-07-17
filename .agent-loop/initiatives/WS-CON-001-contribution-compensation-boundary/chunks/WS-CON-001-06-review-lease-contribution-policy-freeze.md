@@ -50,6 +50,23 @@ task assignment changes; provider/artifact/adapter calls
 - [ ] Policy publish and binding state versus claim pass both lock orders;
   changed modules stay at least 90 percent and global floor stays 78.
 
+## Verification
+
+Execute the exact clean isolated CON-06 row in `../RUNTIME_VERIFICATION.md`,
+then run:
+
+```bash
+(cd backend && .venv/bin/python -m pytest -q tests/test_contributions.py tests/test_authorization.py -k '(review or lease or claim or policy) and (freeze or lock or race or rollback or authorization or deny or no_self_review)')
+(cd backend && .venv/bin/python -m coverage report --include='app/modules/contributions/*' --fail-under=90)
+(cd backend && .venv/bin/ruff check app/modules/contributions tests/test_contributions.py tests/test_authorization.py)
+```
+
+Pass requires a non-empty selected test set, caller-session flush-only freeze,
+both publish/claim and binding/claim race orders, missing-policy rollback,
+same-project reviewer authorization with unrelated-grant and self-review
+denials, repository coverage at least 78 percent in the same clean run, and
+focused contribution coverage at least 90 percent.
+
 ## Review and stop
 
 Required tracks: senior, QA, security, product, architecture, docs, reuse, and

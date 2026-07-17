@@ -71,6 +71,28 @@ provider/artifact calls; unrelated checker behavior
   ambiguity and downgrade refuses post-cutover data loss.
 - [ ] Changed subsystems remain at least 90 percent; global floor remains 78.
 
+## Verification
+
+Execute the exact clean isolated CON-05A row in `../RUNTIME_VERIFICATION.md`,
+replace its migration placeholder with the one new revision, then run:
+
+```bash
+(cd backend && .venv/bin/python -m pytest -q tests/test_contributions.py tests/test_projects.py tests/test_tasks.py tests/test_checkers.py tests/test_authorization.py tests/test_alembic.py tests/test_api_contract_e2e.py -k '(policy or assignment or claim or migration or downgrade) and (freeze or rollback or race or lock or ambiguous or authorization or lineage)')
+(cd backend && .venv/bin/python -m coverage report --include='app/modules/contributions/*' --fail-under=90)
+(cd backend && .venv/bin/python -m coverage report --include='app/modules/projects/*' --fail-under=90)
+(cd backend && .venv/bin/python -m coverage report --include='app/modules/tasks/*' --fail-under=90)
+(cd backend && .venv/bin/python -m coverage report --include='app/modules/checkers/*' --fail-under=90)
+legacy_pattern='locked_''payment_''policy_version|payment_''policies|accepted_''payment_rule|revision_''payment_rule|rejection_''payment_rule'
+! rg -n "$legacy_pattern" backend/app --glob '*.py' --glob '!**/models.py' --glob '!db/models.py'
+```
+
+Pass requires a non-empty selected test set, upgrade and guarded downgrade,
+exact assignment freeze and Submission lineage, full rollback on missing or
+ambiguous policy, both publication/claim and binding/claim race orders,
+real-kernel denial before activation, no runtime legacy-policy consumer,
+repository coverage at least 78 percent in the same clean run, and every
+focused report at least 90 percent.
+
 ## Review and stop
 
 Required tracks: senior, QA, security, product, architecture, docs, reuse, test-

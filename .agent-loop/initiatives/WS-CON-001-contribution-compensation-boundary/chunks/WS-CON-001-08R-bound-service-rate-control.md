@@ -39,6 +39,19 @@ in-memory/shared-IP-only limiter, new rate-control framework, dependency/CI weak
 
 ## Verification and reviewers
 
-Execute CON-08R in `../RUNTIME_VERIFICATION.md`; changed api-controls code is at
-least 90 percent. Senior engineering, QA/test, security/auth, product/ops,
-architecture, docs, reuse/dedup and test-delta are required. Stop before callback.
+Execute the exact clean isolated CON-08R row in `../RUNTIME_VERIFICATION.md`,
+replace its migration placeholder with the one new revision, then run:
+
+```bash
+(cd backend && .venv/bin/python -m pytest -q tests/test_api_rate_controls.py tests/test_config.py tests/test_alembic.py -k '(compensation_fulfillment_report or rate) and (atomic or window or concurrent or isolation or upgrade or downgrade or fail_closed or retry_after)')
+(cd backend && .venv/bin/python -m coverage report --include='app/modules/api_controls/*' --fail-under=90)
+(cd backend && .venv/bin/python -m coverage report --include='app/api/deps/api_controls.py' --fail-under=90)
+(cd backend && .venv/bin/python -m coverage report --include='app/core/config.py' --fail-under=90)
+```
+
+Pass requires a non-empty selected test set, atomic PostgreSQL window races,
+actor and binding isolation, upgrade/downgrade proof, bounded configuration,
+fail-closed storage errors, deterministic retry-after, repository coverage at
+least 78 percent in the same clean run, and every focused report at least 90
+percent. Senior engineering, QA/test, security/auth, product/ops, architecture,
+docs, reuse/dedup and test-delta are required. Stop before callback.

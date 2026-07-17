@@ -1,14 +1,49 @@
-# Chunk Contract: WS-CON-001-09B - Optional Authorized Contribution Evidence Read
+# Deferred Proposal: WS-CON-001-09B - Optional Authorized Contribution Evidence Read
 
 ## Status
 
 Deferred optional successor after separately approved and merged CON-09A. It is
-not a prerequisite for core contribution/award reads.
+not a prerequisite for core contribution/award reads. This file is deliberately
+not an implementation contract and authorizes no file changes.
+
+## Prospective risk
+
+L1 disclosure, authorization, artifact-retention, and cross-subsystem read
+boundary. Risk and scope must be reclassified against then-current ART/AUTH
+contracts before promotion.
 
 ## Goal if separately approved
 
 Expose a bounded evidence-export read through a separately proven ART read
 capability and exact AUTH disclosure contract.
+
+## Allowed files now
+
+None. A separately human-approved, internally reviewed replacement chunk
+contract must name exact allowed files before implementation.
+
+## Prohibited changes
+
+```text
+runtime, route, schema, migration, dependency, workflow, AUTH, ART, or activation changes
+CON-10A contribution/award truth or availability dependencies
+public evidence route or provider/credential disclosure
+reuse of the CON-09A write capability as an implicit read capability
+```
+
+## Promotion acceptance criteria
+
+- [ ] CON-09A is separately approved, merged, and refreshed against trusted
+  main; its absence or failure still cannot affect CON-10A.
+- [ ] The replacement contract names exact ART read capability, projection
+  schema/binding/retention, AUTH disclosure ActionIds/contexts/candidates, and
+  self/project concealment rules without reviewer-private/provider/credential
+  disclosure.
+- [ ] Exact allowed files, prohibited changes, runtime tests, migration impact,
+  coverage targets, reviewers, and stop conditions are approved before any
+  implementation.
+- [ ] Routes stay hidden until their own merged AUTH evaluator/activation and
+  optional release gate pass.
 
 ## Mandatory refresh gate
 
@@ -21,7 +56,32 @@ capability and exact AUTH disclosure contract.
 - Keep routes hidden until its own AUTH evaluator/activation and optional release
   gate pass.
 
+## Verification before promotion
+
+Run from the repository root against the proposed replacement contract:
+
+```bash
+test -f docs/spec_artifact_storage_service.md
+test -f docs/spec_authorization_service.md
+python3 scripts/check_markdown_links.py
+python3 scripts/check_stale_workstream_wording.py
+python3 scripts/check_stale_authorization_docs.py
+python3 scripts/check_stale_artifact_contracts.py
+git diff --check
+test -z "$(git diff --name-only origin/main...HEAD -- backend .github)"
+```
+
+Pass only proves that a planning-only replacement contract is eligible for
+internal review: every command exits zero, no runtime/workflow delta exists,
+and the contract closes every promotion criterion above. It does not authorize
+implementation.
+
+## Required reviewers before promotion
+
+Senior engineering, QA/test, security/auth, product/ops, architecture, docs,
+reuse/dedup, ART boundary, AUTH boundary, CI integrity, and test delta.
+
 ## Stop
 
-Do not start without separate human approval and a refreshed internally reviewed
-chunk contract. CON-10A proceeds independently.
+Do not start without separate human approval and a replacement internally
+reviewed chunk contract. CON-10A proceeds independently.

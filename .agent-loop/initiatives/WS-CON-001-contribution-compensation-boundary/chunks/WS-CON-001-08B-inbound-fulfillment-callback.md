@@ -59,6 +59,24 @@ outbox transition ownership; production route registration
 - [ ] Missing provisioned callback rows deny callback/readiness but do not fail
   startup/provisioning. AUTH later activates after hidden behavior proof.
 
+## Verification
+
+Execute the exact clean isolated CON-08B row in `../RUNTIME_VERIFICATION.md`,
+then run:
+
+```bash
+(cd backend && .venv/bin/python -m pytest -q tests/test_compensation.py tests/test_authorization.py tests/test_api_rate_controls.py tests/test_api_contract_e2e.py -k '(callback or receipt or fulfillment) and (replay or conflict or fence or cutoff or generation or rate or authorization or signature or concurrency)')
+(cd backend && .venv/bin/python -m coverage report --include='app/modules/compensation/*' --fail-under=90)
+(cd backend && .venv/bin/ruff check app/modules/compensation app/api/internal_compensation.py app/composition/compensation.py tests/test_compensation.py tests/test_authorization.py tests/test_api_rate_controls.py tests/test_api_contract_e2e.py)
+```
+
+Pass requires a non-empty selected test set, exact callback replay and changed
+replay conflict, signature and authorization negatives, actor-plus-binding rate
+isolation, both fence race orders, same-generation at-or-below-cutoff
+finalization only, no follow-on obligation while draining, repository coverage
+at least 78 percent in the same clean run, and focused compensation coverage at
+least 90 percent.
+
 ## Review and stop
 
 All baseline plus architecture, security, product, docs, reuse, test-delta, and

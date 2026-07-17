@@ -26,11 +26,19 @@ AUTH catalogue/grant/kernel/static-matrix edits, adapter/provider calls
 legacy fallback, dependency or CI weakening
 ```
 
+## Approved AUTH prerequisites and deferred activation gate
+
+- Before this chunk starts, AUTH must supply reviewed typed contexts and the
+  PR #140 prepared-mutation ports used by the hidden service. CON does not edit
+  the AUTH catalogue, grants, kernel, ActionOwner custody, or static matrix.
+- The proposed `contribution.policy.*` actions remain unregistered and
+  inactive unless a separate AUTH registration chunk has merged them. Whether
+  registration precedes or follows this hidden implementation, AUTH alone
+  integrates evaluators and activates the actions after the feature manifest
+  passes; CON-05A waits for that activation.
+
 ## Acceptance criteria
 
-- [ ] AUTH registration is merged for planned `contribution.policy.*` actions,
-  each mapped to stable `compensation.policy.manage`, with typed contexts,
-  Finance candidates, AUTH ActionOwner, and prepared T protocol.
 - [ ] AUTH prepares its exact bound handle first. Publish then locks project,
   active policy, version, rules, definitions, and bindings; recomposes final
   facts; AUTH consumes the handle and evaluates once; only then may the caller
@@ -41,11 +49,23 @@ legacy fallback, dependency or CI weakening
   stable failure. No legacy authority executes.
 - [ ] Concurrent draft/publish/retire/selector/binding changes are
   deterministic. Production OpenAPI remains unchanged.
-- [ ] AUTH later integrates exact evaluators and alone activates the actions;
-  CON-05A waits for activation.
+- [ ] The feature manifest is sufficient for later AUTH registration/evaluator
+  integration and activation without transferring any AUTH-owned work to CON.
 
 ## Verification and reviewers
 
-Execute CON-04B in `../RUNTIME_VERIFICATION.md`; changed code is at least 90
+Execute the exact clean isolated CON-04B row in `../RUNTIME_VERIFICATION.md`,
+then run:
+
+```bash
+(cd backend && .venv/bin/python -m pytest -q tests/test_contributions.py tests/test_projects.py tests/test_authorization.py tests/test_api_contract_e2e.py -k '(policy or publish or retire or binding) and (authorization or rollback or concurrency or idempotency or missing or invalid or openapi)')
+(cd backend && .venv/bin/python -m coverage report --include='app/modules/contributions/*' --fail-under=90)
+(cd backend && .venv/bin/ruff check app/modules/contributions app/modules/projects/repository.py app/composition/contributions.py tests/test_contributions.py tests/test_projects.py tests/test_authorization.py tests/test_api_contract_e2e.py)
+```
+
+Pass requires a non-empty selected test set, supplied prepared-authorization
+ordering, flush-only rollback, deterministic concurrent publication/binding
+changes, missing-policy failure, hidden OpenAPI, repository coverage at least
+78 percent in the same clean run, and focused contribution coverage at least 90
 percent. Required tracks: senior, QA, security, product, architecture, docs,
 reuse, and test-delta. Stop after hidden behavior.

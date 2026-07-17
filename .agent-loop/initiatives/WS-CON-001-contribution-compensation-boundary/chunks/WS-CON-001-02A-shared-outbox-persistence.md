@@ -37,7 +37,18 @@ new JSON canonicalizer, idempotency framework, dependency or CI weakening
 
 ## Verification and reviewers
 
-Execute the exact CON-02A expansion in `../RUNTIME_VERIFICATION.md`.
-Same-run outbox coverage is at least 90 percent. Baseline plus architecture,
-security/auth, product/ops, docs, reuse/dedup, test-delta, and CI integrity.
-Stop before dispatcher behavior.
+Execute the exact clean isolated CON-02A row in `../RUNTIME_VERIFICATION.md`,
+replace its migration placeholder with the one new revision, then run:
+
+```bash
+(cd backend && .venv/bin/python -m pytest -q tests/test_outbox.py tests/test_alembic.py -k 'outbox and (migration or append or idempotency or duplicate or race or rollback)')
+(cd backend && .venv/bin/python -m coverage report --include='app/modules/outbox/*' --fail-under=90)
+(cd backend && .venv/bin/ruff check app/modules/outbox app/db/models.py tests/test_outbox.py tests/test_alembic.py)
+```
+
+Pass requires a non-empty selected test set, PostgreSQL migration and duplicate
+race proof, stable exact replay, changed-payload conflict, caller rollback with
+no commit/publish, repository coverage at least 78 percent in the same clean
+run, and focused outbox coverage at least 90 percent. Baseline plus
+architecture, security/auth, product/ops, docs, reuse/dedup, test-delta, and CI
+integrity are required. Stop before dispatcher behavior.

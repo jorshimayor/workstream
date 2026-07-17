@@ -77,6 +77,26 @@ database/fence lock held during external I/O
   a later checkpoint after this hidden handler and its evaluator composition
   merge.
 
+## Verification
+
+Execute the exact clean isolated CON-08A row in `../RUNTIME_VERIFICATION.md`,
+then run:
+
+```bash
+(cd backend && .venv/bin/python -m pytest -q tests/test_compensation.py tests/test_outbox.py tests/test_authorization.py tests/test_external_service_adapters.py -k '(delivery or adapter or fulfillment) and (fence or cutoff or generation or retry or replay or concurrency or authorization or pre_io or transaction)')
+(cd backend && .venv/bin/python -m coverage report --include='app/modules/compensation/*' --fail-under=90)
+(cd backend && .venv/bin/python -m coverage report --include='app/workers/compensation.py' --fail-under=90)
+(cd backend && .venv/bin/python -m coverage report --include='app/interfaces/compensation.py' --fail-under=90)
+(cd backend && .venv/bin/python -m coverage report --include='app/adapters/compensation/*' --fail-under=90)
+```
+
+Pass requires a non-empty selected test set, pre-I/O durable fencing, no
+transaction or lifecycle fence held during adapter I/O, both cutoff race
+orders, same-generation pre-cutoff completion, post-cutoff/cross-generation
+denial before provider calls, retry/replay and ambiguous-result safety, typed
+adapter-factory use, repository coverage at least 78 percent in the same clean
+run, and every focused report at least 90 percent.
+
 ## Review and stop
 
 All baseline plus architecture, security, product, docs, reuse, CI integrity,

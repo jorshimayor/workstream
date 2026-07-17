@@ -40,6 +40,25 @@ AUTH, ART, provider, frontend, dependency or CI changes
 - [ ] PostgreSQL upgrade/downgrade and fresh install pass; changed code remains
   at least 90 percent and repository coverage at least 78 percent.
 
+## Verification
+
+Execute the exact clean isolated CON-05B row in `../RUNTIME_VERIFICATION.md`,
+replace its migration placeholder with the one removal revision, then run:
+
+```bash
+(cd backend && .venv/bin/python -m pytest -q tests/test_projects.py tests/test_tasks.py tests/test_checkers.py tests/test_alembic.py tests/test_api_contract_e2e.py -k '(upgrade or downgrade or fresh or migration or schema) and (legacy or economic or contribution_policy)')
+legacy_pattern='Payment''Policy|payment_''policies|locked_''payment_''policy_version|accepted_''payment_rule|revision_''payment_rule|rejection_''payment_rule'
+! rg -n "$legacy_pattern" backend/app docs/architecture_data_model.md docs/operations_payment_reputation.md docs/spec_contribution_compensation.md
+(cd backend && .venv/bin/python -m coverage report --include='app/modules/projects/models.py' --fail-under=90)
+(cd backend && .venv/bin/python -m coverage report --include='app/modules/tasks/models.py' --fail-under=90)
+(cd backend && .venv/bin/python -m coverage report --include='app/modules/checkers/models.py' --fail-under=90)
+```
+
+Pass requires a non-empty selected test set, PostgreSQL upgrade, guarded
+downgrade, fresh install, zero retired schema/API/OpenAPI references, preserved
+ContributionPolicy freezes, repository coverage at least 78 percent in the same
+clean run, and every focused model report at least 90 percent.
+
 ## Review and stop
 
 Required tracks: senior, QA, security, product, architecture, docs, reuse, test-

@@ -74,10 +74,28 @@ roadmap changes without synchronized local XLSX/CSV exports
 
 ## Verification
 
-Run all repository stale/link/agent gates, SHA verification for files actually
-present, active-doc inventory checks, and git diff checks. Required reviewers:
-senior, QA, security, product, architecture, docs, reuse, CI integrity, and test
-delta when scanners/tests change.
+Run from the repository root:
+
+```bash
+python3 scripts/check_markdown_links.py
+python3 scripts/check_stale_workstream_wording.py
+python3 scripts/check_stale_authorization_docs.py
+python3 scripts/check_stale_artifact_contracts.py
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest -q scripts/test_agent_gates.py
+test -f docs/spec_contribution_compensation.md
+test -f docs/decision_0016_contribution_compensation_boundary.md
+test "$(rg -c 'docs/spec_contribution_compensation\.md' README.md)" -eq 1
+test -z "$(git diff --name-only origin/main...HEAD -- docs/reference_specs)"
+test "$(sha256sum 'docs/reference_specs/WS-CON-001-contribution-record-and-compensation-boundary-specification.md' | cut -d ' ' -f1)" = cddbe20f4fadf5307f68519347bdd9520ef49b23fb0b92cad24c31fc9b34c640
+test "$(sha256sum 'docs/reference_specs/WS-CON-001-contribution-record-and-compensation-boundary-specification(2).pdf' | cut -d ' ' -f1)" = ce65e208076769f0bafb09779d60ab6f5fc0c596514d4e8f4cc03690c6e6d457
+git diff --check
+```
+
+Pass requires every command to exit zero, both active documents to exist, one
+README canonical link, no reference-input delta, both present archival hashes
+to match, and all repository gates to pass. Required reviewers: senior, QA,
+security, product, architecture, docs, reuse, CI integrity, and test delta when
+scanners/tests change.
 
 ## Stop
 

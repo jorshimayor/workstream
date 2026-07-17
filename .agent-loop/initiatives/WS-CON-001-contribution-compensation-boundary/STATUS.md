@@ -2,7 +2,7 @@
 
 ## Current status
 
-`WS-CON-001-PLAN3` completed exact-SHA internal review at
+`WS-CON-001-PLAN3` completed its pre-external-review exact-SHA review at
 `e968430b0c3b5f1432899c9aa31ef209b774eae0` after current-main reconciliation
 with merged REV PR #128 at `0302bcf`, which also contains AUTH-09A after AUTH PR
 #140. The prior planning snapshot `09128ee1aed941682c7cb59ca04698de496de682`
@@ -12,6 +12,11 @@ decision input with two ordered operations, and adopts REV-12A's exact
 obligation-writer/ordinal/cutoff hooks. PLAN2's human-approved v0.1
 `Review(accept) -> FinalAcceptance -> accepted_submission` boundary remains
 intact. Runtime code is unchanged.
+CodeRabbit then opened five consolidated contract-quality threads. PLAN3 is
+temporarily reopened only to add executable verification gates, restore exact
+AUTH prerequisite ownership, reclassify optional CON-09B as a deferred proposal,
+and record the external response. A new exact-SHA internal review is required
+before the repair is pushed.
 The prior plan is superseded where it used the older policy aggregate, made ART
 evidence mandatory, described service action rows as persisted assignments,
 allowed partial activation-custody transfer, or let outbox dispatch imply
@@ -49,14 +54,14 @@ feature-handler authority.
 
 ## Active chunk
 
-No implementation chunk is active or starts automatically. PLAN3 is complete
-and may only refresh draft PR #142; it does not authorize merge or CON-01.
+No implementation chunk is active or starts automatically. PLAN3 external
+review repair is active only; it does not authorize merge or CON-01.
 
 | Chunk | Status | Notes |
 |---|---|---|
 | `WS-CON-001-PLAN` | Complete; superseded baseline | Based on PR #139 / `5d353b6`; reviewed content `c4242e0` |
 | `WS-CON-001-PLAN2` | Complete; unpublished | FinalAcceptance is REV-owned; CON trigger changes only; all required internal tracks pass |
-| `WS-CON-001-PLAN3` | Complete; internally reviewed | Exact AUTH/REV current-main participant, FinalAcceptance, and release-control reconciliation at `e968430` |
+| `WS-CON-001-PLAN3` | External review repair in progress | CodeRabbit contract gates/AUTH scope/09B classification; exact-SHA re-review required |
 | `WS-CON-001-01` through `08B`, `10A` through `11` | Proposed | Separate explicit start required after PLAN3 and upstream merge refresh |
 | `WS-CON-001-09A/09B` | Deferred optional | Separate approval and fresh ART/AUTH review required |
 
@@ -81,5 +86,5 @@ and may only refresh draft PR #142; it does not authorize merge or CON-01.
 ## Stop condition
 
 Do not edit runtime code, start CON-01, or merge PR #142 without explicit human
-direction. The reviewed PLAN3 may refresh the existing draft PR only; it does
+direction. The reviewed PLAN3 repair may refresh the existing PR only; it does
 not authorize its merge or any successor start.

@@ -101,6 +101,25 @@ never uses direct Review/ReviewLease contribution-source fields.
 - [ ] PostgreSQL uniqueness, replay, changed-fact conflict, and concurrency tests
   pass; changed code is at least 90 percent and repository floor at least 78.
 
+## Verification
+
+Execute the exact clean isolated CON-07 row in `../RUNTIME_VERIFICATION.md`,
+then run:
+
+```bash
+(cd backend && .venv/bin/python -m pytest -q tests/test_contributions.py tests/test_compensation.py tests/test_authorization.py tests/test_outbox.py -k '(review or final_acceptance or contribution or award) and (fault or rollback or replay or idempotency or uniqueness or conflict or concurrency or no_art)')
+(cd backend && .venv/bin/python -m coverage report --include='app/modules/contributions/*' --fail-under=90)
+(cd backend && .venv/bin/python -m coverage report --include='app/modules/compensation/*' --fail-under=90)
+(cd backend && .venv/bin/ruff check app/modules/contributions app/modules/compensation tests/test_contributions.py tests/test_compensation.py tests/test_authorization.py tests/test_outbox.py)
+```
+
+Pass requires a non-empty selected test set, fault injection after every
+reviewer/branch/FinalAcceptance/submitter/audit/outbox stage with total
+rollback, exact replay idempotency, changed-fact conflict, database uniqueness
+under concurrency, all three decision branches, zero ART/provider calls,
+repository coverage at least 78 percent in the same clean run, and both focused
+reports at least 90 percent.
+
 ## Review and stop
 
 Required tracks: senior, QA, security, product, architecture, docs, reuse, and

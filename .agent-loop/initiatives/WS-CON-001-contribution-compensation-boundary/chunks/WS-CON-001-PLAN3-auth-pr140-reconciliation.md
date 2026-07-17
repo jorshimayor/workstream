@@ -26,16 +26,21 @@ L0/L1 authorization, transaction, and release specification; P1.
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/SOURCE_MANIFEST.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/STATUS.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-01-canonical-contract-adoption.md
+.agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-02A-shared-outbox-persistence.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-02B-shared-outbox-dispatcher.md
+.agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-02C-shared-lifecycle-audit-participant.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-03C-contribution-award-persistence.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-03D-delivery-receipt-status-persistence.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-04A-hidden-adapter-binding-service.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-04B-hidden-contribution-policy-service.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-05A-legacy-economic-terms-cutover-and-task-freeze.md
+.agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-05B-legacy-economic-schema-removal.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-06-review-lease-contribution-policy-freeze.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-07-atomic-review-contribution-award-participant.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-08A-outbound-compensation-delivery.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-08B-inbound-fulfillment-callback.md
+.agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-08R-bound-service-rate-control.md
+.agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-09B-authorized-contribution-evidence-read.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-10A-contribution-award-product-reads.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-10B-operations-reconciliation-rebuild.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-10C-operations-executors.md
@@ -43,6 +48,7 @@ L0/L1 authorization, transaction, and release specification; P1.
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/reviews/WS-CON-001-PLAN-internal-review-evidence.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/reviews/WS-CON-001-PLAN2-internal-review-evidence.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/reviews/WS-CON-001-PLAN3-internal-review-evidence.md
+.agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/reviews/WS-CON-001-PLAN3-external-review-response.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/reviews/WS-CON-001-PLAN3-pr-trust-bundle.md
 .agent-loop/merge-intents/WS-CON-001-PLAN3.json
 ```
@@ -103,6 +109,12 @@ reference specification/PDF edits, restoration, rename, or replacement
   allocating a monotonic root ordinal; the same-session drain port returns the
   maximum ordinal; and delivery-draining dispatch/callback paths are limited to
   same-generation roots at or below the persisted cutoff.
+- [x] Every unresolved CodeRabbit thread is dispositioned: active chunks name
+  deterministic runnable verification commands and pass criteria; AUTH-owned
+  registration, context, custody, and activation remain prerequisites rather
+  than CON-owned acceptance work; optional CON-09B is explicitly a deferred
+  proposal pending a fresh contract; and the PR description carries the full
+  trust bundle.
 
 ## Verification
 

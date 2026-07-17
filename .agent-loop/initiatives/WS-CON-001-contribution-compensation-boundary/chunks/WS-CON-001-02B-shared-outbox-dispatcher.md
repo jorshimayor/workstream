@@ -31,18 +31,25 @@ AUTH implementation edits; dynamic registry/plugins; second outbox
 test/coverage/CI weakening
 ```
 
+## Approved AUTH prerequisites and handoff inputs
+
+- AUTH must first merge the planned `outbox.dispatch` ActionId/PermissionId,
+  AUTH custodian, closed `workstream.outbox.dispatcher` ServiceIdentity and
+  singleton static row, controlled ActorProfile/link provisioning, AUTH-09E
+  admission, typed context, and PR #140 prepared-mutation protocol.
+- The handoff supplies AUTH-owned prepare/consume/evaluate ports and the exact
+  session/action/actor-reference/idempotency/request-digest binding. CON does
+  not register those identifiers, provision service authority, query grants,
+  or implement the AUTH evaluator. Matrix and availability remain code-owned
+  AUTH validations. The hidden dispatcher stays disabled until later AUTH
+  evaluator integration and activation.
+
 ## Acceptance criteria
 
-- [ ] AUTH registers planned `outbox.dispatch` plus its PermissionId and AUTH
-  custodian, closed `workstream.outbox.dispatcher` ServiceIdentity with exact
-  singleton static row, controlled ActorProfile/link provisioning, AUTH-09E
-  admission, typed context, and prepared protocol. Hidden dispatcher remains
-  disabled until later AUTH evaluator integration/activation.
-- [ ] Prepared dispatch follows PR #140 exactly: AUTH locks service profile/link
-  and prepares the session/action/actor-ref/idempotency/request-digest-bound
-  handle; the dispatcher locks and recomposes canonical claim facts; AUTH
-  consumes/evaluates once before claim mutation. Matrix/availability are
-  code-owned validations, not database lock targets.
+- [ ] Using the approved AUTH handoff, dispatcher claim composition locks and
+  recomposes canonical claim facts between AUTH prepare and AUTH
+  consume/evaluate; no claim mutation occurs before the supplied authorization
+  succeeds.
 - [ ] Dispatcher claims with lease/generation fencing, commits and releases all
   locks before invoking a handler, and alone applies typed outcomes to retry/
   dead-letter/final state.
@@ -62,6 +69,24 @@ test/coverage/CI weakening
 - [ ] Missing provisioned dispatcher rows deny dispatch/readiness but do not
   fail app startup or administrative provisioning.
 - [ ] Changed subsystem coverage is at least 90 percent; global floor 78.
+
+## Verification
+
+Execute the exact clean isolated CON-02B row in `../RUNTIME_VERIFICATION.md`,
+then run:
+
+```bash
+(cd backend && .venv/bin/python -m pytest -q tests/test_outbox.py tests/test_authorization.py tests/test_config.py -k 'dispatcher and (claim or authorization or deny or lease or generation or retry or dead_letter or replay or recovery or drain)')
+(cd backend && .venv/bin/python -m coverage report --include='app/modules/outbox/*' --fail-under=90)
+(cd backend && .venv/bin/python -m coverage report --include='app/workers/outbox.py' --fail-under=90)
+(cd backend && .venv/bin/ruff check app/modules/outbox app/workers/outbox.py app/workers/celery_app.py app/core/config.py tests/test_outbox.py tests/test_authorization.py tests/test_config.py)
+```
+
+Pass requires a non-empty selected test set, real-kernel denial without the
+approved AUTH handoff, claim-generation fencing, crash recovery, bounded
+retry/dead-letter/replay, accurate drain counts, no handler authority
+inheritance, repository coverage at least 78 percent in the same clean run, and
+both focused coverage reports at least 90 percent.
 
 ## Review and stop
 
