@@ -14,7 +14,7 @@ output. This authored queue records the separately approved parallel chunks.
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Paused for AUTH priority; no valid replacement baseline yet |
-| `WS-AUTH-001-09A` | Fixed Service Identity Foundation | L1 | PR #132 open/conflicting; converge on merged XINT and re-review after this plan merges |
+| `WS-AUTH-001-09A` | Fixed Service Identity Foundation | L1 | PR #132 remains unmerged/conflicting; converge on merged XINT and re-review after this plan merges |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02A3` | ArtifactStore v2 Local Clean Cut | L1 | Reviewed in isolated parallel worktree; pending its own PR and merge |
