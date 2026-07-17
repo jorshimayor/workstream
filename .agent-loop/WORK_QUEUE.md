@@ -14,7 +14,7 @@ output. This authored queue records the separately approved parallel chunks.
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Paused for AUTH priority; no valid replacement baseline yet |
-| `WS-AUTH-001-09B` | Controlled Service Actor Provisioning | L1 | Inactive until 09A merge/memory and explicit user start |
+| `WS-AUTH-001-09C` | Actor And Identity-Link Administration Reads | L1 | Inactive until 09B merge/memory and explicit user start |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02B1` | S3-Compatible MinIO And AWS | L1 | Inactive until 02A3 merge and explicit user start |
@@ -84,7 +84,8 @@ merged through PRs #117 and #118. AUTH-05B merged through PR #119 as `ad71c7e`.
 AUTH-06 merged through PR #124 as `f599551`. AUTH-07A, AUTH-07B, and AUTH-08
 merged through PRs #126, #130, and #131. WS-XINT planning merged through PR #139,
 and its AUTH owner reconciliation merged through PR #140 as `d541521`.
-AUTH-09A merged through PR #132 as `299363a`. Do not start AUTH-09B or
+AUTH-09A merged through PR #132 as `299363a`, and signed schema-v2 memory
+stopped. AUTH-09B merged through PR #143 as `053242b`. Do not start AUTH-09C or
 POL-002-04 automatically.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another

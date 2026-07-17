@@ -123,13 +123,14 @@ class ActorService:
         correlation_id: UUID,
     ) -> ResolvedActor:
         """Resolve an existing actor or atomically provision one verified human."""
-        resolved = await self.find_verified_actor(token)
-        if resolved is not None:
-            return await self._touch_verified_actor(resolved)
         if token.subject_kind == "service":
             raise ServiceActorNotProvisioned("Service actor is not provisioned")
         if token.subject_kind != "human":
             raise UnsupportedSubjectKind("Unsupported subject kind")
+
+        resolved = await self.find_verified_actor(token)
+        if resolved is not None:
+            return await self._touch_verified_actor(resolved)
 
         await self._repo.lock_external_identity(token.issuer, token.subject)
         resolved = await self.find_verified_actor(token)
@@ -155,6 +156,7 @@ class ActorService:
             subject_kind="human",
             status="active",
             linked_by=profile_id,
+            last_verified_at=func.clock_timestamp(),
         )
         await self._repo.add_actor_profile(profile)
         await self._repo.add_identity_link(link)
@@ -177,6 +179,11 @@ class ActorService:
         correlation_id: UUID,
     ) -> ResolvedActor:
         """Resolve self authorization without preempting lifecycle decisions."""
+        if token.subject_kind == "service":
+            raise ServiceActorNotProvisioned("Service actor is not provisioned")
+        if token.subject_kind != "human":
+            raise UnsupportedSubjectKind("Unsupported subject kind")
+
         resolved = await self.find_actor_for_authorization(token)
         if resolved is None:
             return await self.resolve_verified_actor(
@@ -190,16 +197,16 @@ class ActorService:
         self,
         resolved: ResolvedActor,
     ) -> ResolvedActor:
-        """Lock the exact link then its profile and reject identity drift."""
+        """Lock the exact profile then its link and reject identity drift."""
+        profile = await self._repo.get_actor_profile(resolved.profile.id, for_update=True)
+        if profile is None:
+            raise RuntimeError("resolved actor profile disappeared")
         link = await self._repo.get_identity_link_by_id(
             resolved.identity_link.id,
             for_update=True,
         )
         if link is None:
             raise RuntimeError("resolved identity link disappeared")
-        profile = await self._repo.get_actor_profile(link.actor_profile_id, for_update=True)
-        if profile is None:
-            raise RuntimeError("identity link references a missing actor profile")
         if (
             link.actor_profile_id != resolved.profile.id
             or link.issuer != resolved.identity_link.issuer

@@ -13,6 +13,9 @@
   without activating ART, REV, or CON feature behavior.
 - AUTH-09A merged through PR #132 as `299363a`; its fixed service identity
   foundation is preserved as migration `0023_service_actor_identity`.
+- AUTH-09B merged through PR #143 as `053242b`; it adds controlled service
+  actor provisioning and leaves service runtime admission plus feature actions
+  inactive.
 - Active ART implementation chunk: `WS-ART-001-02A3` on
   `codex/ws-art-001-02a3-artifact-store-v2-local-clean-cut`.
 - Parallel AUTH, REV, and CON worktrees remain independently owned. This ART
@@ -26,15 +29,16 @@
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
 - Current gate: publish PR #141 for GitHub Actions, CodeRabbit, and explicit
-  human review after binding the completed exact-SHA internal review evidence.
-  No later ART chunk starts automatically.
+  human review after reconciling merged AUTH-09B and rebinding exact-SHA ART
+  evidence. No later ART chunk starts automatically.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
   and AWS cannot instantiate in production without release-bound live proof.
 - Authorization checkpoint: merged main contains 74 PermissionIds and 65
   ActionIds, with the two actor-self and seven AUTH-08 administrative actions
-  active. Merged AUTH-09A defines seven fixed artifact
+  active, plus the AUTH-09B `actor.service.provision` action. Merged AUTH-09A
+  defines seven fixed artifact
   service identities and eleven exact planned static matrix memberships. ART
   feature chunks supply hidden canonical behavior/resource composition. Merged
   AUTH planning requires availability-neutral ART custody transfer, fixed-service
@@ -46,7 +50,8 @@
   review. PR #141 is open; refreshed evidence, external checks, and explicit
   human merge approval remain. ART-02B1 remains inactive.
 - Authorization checkpoint: AUTH-07B, AUTH-08, and AUTH-09A merged through PRs
-  #130, #131, and #132. AUTH-09B remains inactive until explicit user start.
+  #130, #131, and #132; AUTH-09B merged through PR #143 as `053242b`.
+  AUTH-09C remains inactive until a separate explicit user start.
 - Parallel coverage work: `WS-QUAL-001-01B2` remains paused. Its last official
   whole-app result is `6466/8159` statements (`79.249908%`); no replacement
   evidence exists.

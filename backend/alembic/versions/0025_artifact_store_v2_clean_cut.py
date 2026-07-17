@@ -1,7 +1,7 @@
 """replace artifact provider v1 with byte-only v2
 
-Revision ID: 0024_artifact_store_v2
-Revises: 0023_service_actor_identity
+Revision ID: 0025_artifact_store_v2
+Revises: 0024_service_link_verification
 Create Date: 2026-07-16
 """
 
@@ -11,8 +11,8 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision = "0024_artifact_store_v2"
-down_revision = "0023_service_actor_identity"
+revision = "0025_artifact_store_v2"
+down_revision = "0024_service_link_verification"
 branch_labels = depends_on = None
 
 _ARTIFACT_TABLES = (

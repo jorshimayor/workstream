@@ -869,6 +869,207 @@ def test_fixed_service_identity_schema_mapping_and_guarded_downgrade(
             command.downgrade(config, "base")
 
 
+def test_service_link_verification_timestamp_schema_and_guarded_downgrade(
+    isolated_database_env: str,
+    migration_lock,
+) -> None:
+    """Allow null verification only for services and refuse proof-losing rollback."""
+    config = _alembic_config()
+    human_id, human_link_id = str(uuid4()), str(uuid4())
+    rejected_human_id, rejected_human_link_id = str(uuid4()), str(uuid4())
+    service_id, service_link_id = str(uuid4()), str(uuid4())
+
+    async def seed_human_before_upgrade() -> None:
+        engine = create_async_engine(isolated_database_env)
+        try:
+            async with engine.begin() as connection:
+                await connection.execute(
+                    text(
+                        "insert into actor_profiles "
+                        "(id,actor_kind,status,provisioning_method,created_by) values "
+                        "(:id,'human','active','automatic_first_access',:id)"
+                    ),
+                    {"id": human_id},
+                )
+                await connection.execute(
+                    text(
+                        "insert into actor_identity_links "
+                        "(id,actor_profile_id,issuer,subject,subject_kind,status,linked_by) "
+                        "values (:link,:actor,'issuer-0024','human-0024','human','active',:actor)"
+                    ),
+                    {"link": human_link_id, "actor": human_id},
+                )
+        finally:
+            await engine.dispose()
+
+    async def schema_state() -> dict[str, object]:
+        engine = create_async_engine(isolated_database_env)
+        try:
+            async with engine.connect() as connection:
+                column = (
+                    (
+                        await connection.execute(
+                            text(
+                                "select is_nullable,column_default from information_schema.columns "
+                                "where table_schema='public' and table_name='actor_identity_links' "
+                                "and column_name='last_verified_at'"
+                            )
+                        )
+                    )
+                    .mappings()
+                    .one()
+                )
+                human_verified = await connection.scalar(
+                    text(
+                        "select last_verified_at is not null from actor_identity_links "
+                        "where id=:id"
+                    ),
+                    {"id": human_link_id},
+                )
+                constraint = await connection.scalar(
+                    text(
+                        "select pg_get_constraintdef(oid) from pg_constraint where "
+                        "conrelid='actor_identity_links'::regclass and "
+                        "conname='ck_actor_identity_links_human_verified'"
+                    )
+                )
+                return {
+                    "nullable": column["is_nullable"],
+                    "default": column["column_default"],
+                    "human_verified": human_verified,
+                    "constraint": constraint,
+                }
+        finally:
+            await engine.dispose()
+
+    async def insert_service_and_reject_null_human() -> None:
+        engine = create_async_engine(isolated_database_env)
+        try:
+            async with engine.begin() as connection:
+                await connection.execute(
+                    text(
+                        "insert into actor_profiles "
+                        "(id,actor_kind,status,provisioning_method,service_identity,created_by) "
+                        "values (:id,'service','active','manual_service_provisioning',"
+                        "'workstream.artifact.verifier',:id)"
+                    ),
+                    {"id": service_id},
+                )
+                await connection.execute(
+                    text(
+                        "insert into actor_identity_links "
+                        "(id,actor_profile_id,issuer,subject,subject_kind,status,linked_by,"
+                        "last_verified_at) values (:link,:actor,'issuer-0024','service-0024',"
+                        "'service','active',:actor,null)"
+                    ),
+                    {"link": service_link_id, "actor": service_id},
+                )
+            with pytest.raises(IntegrityError):
+                async with engine.begin() as connection:
+                    await connection.execute(
+                        text(
+                            "insert into actor_profiles "
+                            "(id,actor_kind,status,provisioning_method,created_by) values "
+                            "(:id,'human','active','automatic_first_access',:id)"
+                        ),
+                        {"id": rejected_human_id},
+                    )
+                    await connection.execute(
+                        text(
+                            "insert into actor_identity_links "
+                            "(id,actor_profile_id,issuer,subject,subject_kind,status,linked_by,"
+                            "last_verified_at) values (:link,:actor,'issuer-0024',"
+                            "'rejected-human-0024','human','active',:actor,null)"
+                        ),
+                        {"link": rejected_human_link_id, "actor": rejected_human_id},
+                    )
+        finally:
+            await engine.dispose()
+
+    async def make_service_downgrade_safe() -> None:
+        engine = create_async_engine(isolated_database_env)
+        try:
+            async with engine.begin() as connection:
+                await connection.execute(
+                    text(
+                        "update actor_identity_links set last_verified_at=clock_timestamp() "
+                        "where id=:id"
+                    ),
+                    {"id": service_link_id},
+                )
+        finally:
+            await engine.dispose()
+
+    async def cleanup() -> None:
+        engine = create_async_engine(isolated_database_env)
+        try:
+            async with engine.begin() as connection:
+                await connection.execute(
+                    text("alter table actor_identity_links disable trigger user")
+                )
+                await connection.execute(text("alter table actor_profiles disable trigger user"))
+                await connection.execute(
+                    text(
+                        "delete from actor_identity_links where id in (:human_link,:service_link)"
+                    ),
+                    {"human_link": human_link_id, "service_link": service_link_id},
+                )
+                await connection.execute(
+                    text(
+                        "delete from actor_profiles where id in "
+                        "(:human,:rejected_human,:service)"
+                    ),
+                    {
+                        "human": human_id,
+                        "rejected_human": rejected_human_id,
+                        "service": service_id,
+                    },
+                )
+                await connection.execute(text("alter table actor_profiles enable trigger user"))
+                await connection.execute(
+                    text("alter table actor_identity_links enable trigger user")
+                )
+        finally:
+            await engine.dispose()
+
+    with migration_lock():
+        try:
+            command.downgrade(config, "base")
+            command.upgrade(config, "0023_service_actor_identity")
+            asyncio.run(seed_human_before_upgrade())
+            command.upgrade(config, "0024_service_link_verification")
+            state = asyncio.run(schema_state())
+            assert state["nullable"] == "YES"
+            assert state["default"] is None
+            assert state["human_verified"] is True
+            assert "subject_kind" in str(state["constraint"])
+            assert "last_verified_at IS NOT NULL" in str(state["constraint"])
+            asyncio.run(insert_service_and_reject_null_human())
+            with pytest.raises(
+                RuntimeError,
+                match="^cannot downgrade with unverified service identity links$",
+            ):
+                command.downgrade(config, "0023_service_actor_identity")
+            assert asyncio.run(_current_revision(isolated_database_env)) == (
+                "0024_service_link_verification"
+            )
+            asyncio.run(make_service_downgrade_safe())
+            command.downgrade(config, "0023_service_actor_identity")
+            historical = asyncio.run(schema_state())
+            assert historical["nullable"] == "NO"
+            assert "now()" in str(historical["default"])
+            assert historical["constraint"] is None
+            command.upgrade(config, "0024_service_link_verification")
+            asyncio.run(cleanup())
+        finally:
+            try:
+                asyncio.run(make_service_downgrade_safe())
+                asyncio.run(cleanup())
+            except DBAPIError:
+                pass
+            command.downgrade(config, "base")
+
+
 def test_artifact_foundation_upgrade_preserves_prior_head_and_promotes_nothing(
     isolated_database_env: str,
     migration_lock,
@@ -969,11 +1170,11 @@ def test_artifact_store_v2_empty_clean_cut_and_reversible_shape(
         try:
             command.downgrade(config, "base")
             command.upgrade(config, "0023_service_actor_identity")
-            command.upgrade(config, "0024_artifact_store_v2")
+            command.upgrade(config, "0025_artifact_store_v2")
             v2_columns = asyncio.run(_fetch_columns(isolated_database_env))
             command.downgrade(config, "0023_service_actor_identity")
             v1_columns = asyncio.run(_fetch_columns(isolated_database_env))
-            command.upgrade(config, "0024_artifact_store_v2")
+            command.upgrade(config, "0025_artifact_store_v2")
         finally:
             command.downgrade(config, "base")
 
@@ -1021,10 +1222,10 @@ def test_artifact_store_v2_refuses_populated_v1_before_ddl(
                 RuntimeError,
                 match="artifact storage clean cut requires empty pre-production tables",
             ):
-                command.upgrade(config, "0024_artifact_store_v2")
+                command.upgrade(config, "0025_artifact_store_v2")
             refused = asyncio.run(_artifact_v2_refusal_state(isolated_database_env))
             asyncio.run(_truncate_artifact_foundation(isolated_database_env))
-            command.upgrade(config, "0024_artifact_store_v2")
+            command.upgrade(config, "0025_artifact_store_v2")
         finally:
             command.downgrade(config, "base")
 
@@ -1044,7 +1245,7 @@ def test_artifact_store_v2_refuses_populated_v2_downgrade_before_ddl(
     with migration_lock():
         try:
             command.downgrade(config, "base")
-            command.upgrade(config, "0024_artifact_store_v2")
+            command.upgrade(config, "0025_artifact_store_v2")
             asyncio.run(_seed_v2_artifact_namespace(isolated_database_env))
             with pytest.raises(
                 RuntimeError,
@@ -1062,7 +1263,7 @@ def test_artifact_store_v2_refuses_populated_v2_downgrade_before_ddl(
             asyncio.run(_truncate_v2_artifact_namespace(isolated_database_env))
             command.downgrade(config, "base")
 
-    assert refused_revision == "0024_artifact_store_v2"
+    assert refused_revision == "0025_artifact_store_v2"
     assert refused_namespace_count == 1
     assert "artifact_replicas.provider_object_ref" in refused_columns
 
@@ -1079,7 +1280,7 @@ def test_artifact_store_v2_waits_for_concurrent_v1_writer_and_refuses(
 
     def guarded_upgrade() -> None:
         upgrade_started.set()
-        command.upgrade(config, "0024_artifact_store_v2")
+        command.upgrade(config, "0025_artifact_store_v2")
 
     with migration_lock():
         try:
@@ -1109,7 +1310,7 @@ def test_artifact_store_v2_waits_for_concurrent_v1_writer_and_refuses(
 
             refused = asyncio.run(_artifact_v2_refusal_state(isolated_database_env))
             asyncio.run(_truncate_artifact_foundation(isolated_database_env))
-            command.upgrade(config, "0024_artifact_store_v2")
+            command.upgrade(config, "0025_artifact_store_v2")
         finally:
             release_insert.set()
             asyncio.run(_truncate_artifact_foundation(isolated_database_env))
@@ -1828,8 +2029,9 @@ async def _assert_actor_registry_unique_constraints(database_url: str) -> None:
             engine,
             text(
                 "insert into actor_identity_links "
-                "(id,actor_profile_id,issuer,subject,subject_kind,status,linked_by) values "
-                "(:id,:actor,'https://identity.test','second-link','human','active',:actor)"
+                "(id,actor_profile_id,issuer,subject,subject_kind,status,linked_by,"
+                "last_verified_at) values (:id,:actor,'https://identity.test',"
+                "'second-link','human','active',:actor,clock_timestamp())"
             ),
             {"id": str(uuid4()), "actor": actor_id},
         )
@@ -1992,8 +2194,9 @@ async def _insert_canonical_actor(
     await connection.execute(
         text(
             "insert into actor_identity_links "
-            "(id,actor_profile_id,issuer,subject,subject_kind,status,linked_by) values "
-            "(:id,:actor,'https://identity.test',:subject,:kind,'active',:actor)"
+            "(id,actor_profile_id,issuer,subject,subject_kind,status,linked_by,"
+            "last_verified_at) values (:id,:actor,'https://identity.test',:subject,"
+            ":kind,'active',:actor,clock_timestamp())"
         ),
         {
             "id": str(uuid4()),
@@ -2029,8 +2232,9 @@ async def _expect_invalid_canonical_pair(
             await connection.execute(
                 text(
                     "insert into actor_identity_links "
-                    "(id,actor_profile_id,issuer,subject,subject_kind,status,linked_by) "
-                    "values (:id,:actor,:issuer,:subject,:kind,:status,:actor)"
+                    "(id,actor_profile_id,issuer,subject,subject_kind,status,linked_by,"
+                    "last_verified_at) values (:id,:actor,:issuer,:subject,:kind,:status,"
+                    ":actor,clock_timestamp())"
                 ),
                 {
                     "id": link_id or str(uuid4()),
