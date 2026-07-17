@@ -319,6 +319,89 @@ def test_evidence_requires_completed_yes_statements() -> None:
 def test_evidence_must_reference_changed_chunk() -> None:
     """Evidence must mention the changed chunk contract when one exists."""
     gate = load_module("review_gate_chunk", "scripts/check_internal_review_evidence.py")
+    headings = {
+        "# Chunk Contract: WS-XINT-001-PLAN Boundary Reconciliation": (
+            "ws-xint-001-plan"
+        ),
+        "# Chunk Contract: WS-ART-001-02A3 - ArtifactStore v2 Local Clean Cut": (
+            "ws-art-001-02a3"
+        ),
+        "# Chunk Contract: WS-QUAL-001-01B1A-R1 Normalization Closure": (
+            "ws-qual-001-01b1a-r1"
+        ),
+        "# Chunk Contract: WS-QUAL-001-01B1A-R2 Canonical Coverage Grammar": (
+            "ws-qual-001-01b1a-r2"
+        ),
+        "# Chunk Contract: WS-AUTH-001-CAT - Action Catalogue": "ws-auth-001-cat",
+        "# Chunk Contract: WS-ART-001-OBJECT-STORAGE-AMENDMENT": (
+            "ws-art-001-object-storage-amendment"
+        ),
+        "# Parent Chunk: WS-AUTH-001-07 - Authorization Kernel": "ws-auth-001-07",
+        "# WS-ART-001-01: Artifact Domain And Local Adapter": "ws-art-001-01",
+        "# Chunk Contract: WS-XINT-001-PLAN2 Distinct Chunk": "ws-xint-001-plan2",
+        "# Chunk Contract: WS-XINT-001-PLANNER Distinct Chunk": ("ws-xint-001-planner"),
+    }
+    assert {
+        heading: gate.chunk_id_from_heading(heading) for heading in headings
+    } == headings
+    assert gate.chunk_id_from_heading("# WS-XINT-001-PLAN without colon") is None
+    assert gate.required_chunk_ids(
+        [
+            ".agent-loop/initiatives/WS-XINT-001-lifecycle-boundary-reconciliation/"
+            "chunks/WS-XINT-001-PLAN-boundary-reconciliation.md",
+            ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/"
+            "chunks/WS-ART-001-02A3-artifact-store-v2-local-clean-cut.md",
+            ".agent-loop/initiatives/WS-QUAL-001-backend-coverage-floor/"
+            "chunks/WS-QUAL-001-01B1A-R1-normalization-closure.md",
+            ".agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/"
+            "chunks/WS-AUTH-001-CAT-action-resource-catalogue-reconciliation.md",
+            ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/"
+            "chunks/WS-ART-001-OBJECT-STORAGE-AMENDMENT.md",
+        ]
+    ) == [
+        "ws-xint-001-plan",
+        "ws-art-001-02a3",
+        "ws-qual-001-01b1a-r1",
+        "ws-auth-001-cat",
+        "ws-art-001-object-storage-amendment",
+    ]
+    original_root = gate.ROOT
+    try:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            gate.ROOT = Path(tmpdir)
+            chunks = gate.ROOT / ".agent-loop/initiatives/example/chunks"
+            chunks.mkdir(parents=True)
+            invalid_contracts = {
+                "missing.md": None,
+                "empty.md": b"",
+                "malformed.md": b"# Contract without a lifecycle id\n",
+                "invalid-utf8.md": b"\xff",
+            }
+            for filename, content in invalid_contracts.items():
+                relative_path = ".agent-loop/initiatives/example/chunks/" + filename
+                if content is not None:
+                    (chunks / filename).write_bytes(content)
+                try:
+                    gate.required_chunk_ids([relative_path])
+                except RuntimeError:
+                    pass
+                else:
+                    raise AssertionError(
+                        f"invalid changed contract did not fail closed: {filename}"
+                    )
+
+            unreadable_path = chunks / "unreadable.md"
+            unreadable_path.mkdir()
+            try:
+                gate.required_chunk_ids(
+                    [".agent-loop/initiatives/example/chunks/unreadable.md"]
+                )
+            except RuntimeError:
+                pass
+            else:
+                raise AssertionError("unreadable changed contract did not fail closed")
+    finally:
+        gate.ROOT = original_root
     original_changed_files = gate.changed_files
     gate.changed_files = lambda: [
         ".agent-loop/initiatives/WS-ENG-001-codex-zero-trust-loop-bootstrap/"
@@ -356,6 +439,46 @@ def test_evidence_must_reference_changed_chunk() -> None:
                 )
                 == []
             )
+
+            collision_template = (
+                "{chunk_id}\n"
+                "| Reviewer | Result | Blocking findings |\n"
+                "|---|---:|---|\n"
+                "| senior engineering | PASS | None |\n"
+                "open sub-agent sessions: none\nvalid findings addressed: yes\n"
+            )
+            for collision in (
+                "WS-XINT-001-PLAN2",
+                "WS-XINT-001-PLANNER",
+            ):
+                evidence.write_text(
+                    collision_template.format(chunk_id=collision),
+                    encoding="utf-8",
+                )
+                assert "chunk id: one of ws-xint-001-plan" in gate.validate_evidence(
+                    evidence,
+                    required,
+                    chunk_ids=["ws-xint-001-plan"],
+                    enforce_reviewed_revision=False,
+                )
+
+            evidence.write_text(
+                collision_template.format(chunk_id="WS-QUAL-001-01B1A-R10"),
+                encoding="utf-8",
+            )
+            assert "chunk id: one of ws-qual-001-01b1a-r1" in gate.validate_evidence(
+                evidence,
+                required,
+                chunk_ids=["ws-qual-001-01b1a-r1"],
+                enforce_reviewed_revision=False,
+            )
+            assert gate.evidence_chunk_ids(
+                "WS-XINT-001-PLAN WS-XINT-001-PLAN2 WS-QUAL-001-01B1A-R1"
+            ) == {
+                "ws-xint-001-plan",
+                "ws-xint-001-plan2",
+                "ws-qual-001-01b1a-r1",
+            }
     finally:
         gate.changed_files = original_changed_files
 
