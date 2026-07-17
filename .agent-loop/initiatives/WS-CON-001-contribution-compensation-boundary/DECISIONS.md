@@ -5,9 +5,10 @@
 **Status:** accepted.
 
 The supplied reference files are archival inputs. The active implementation
-contract is the repository specification produced by CON-01 and reconciled with
-trusted `main`, including AUTH PR #140 and WS-XINT-001 PR #139. Archival files
-are not edited or treated as runtime authority.
+contract is `docs/spec_contribution_compensation.md` plus ADR 0016, produced by
+CON-01 and reconciled with trusted `main`, including AUTH PR #140, merged
+AUTH-09B PR #143, and WS-XINT-001 PR #139. Archival files are not edited or
+treated as runtime authority.
 
 ## D2 - ContributionPolicy Is The Only Award-Eligibility Policy
 
@@ -76,7 +77,7 @@ ContributionRecord, CompensationAward, fulfillment receipt, or status truth.
 
 ## D7 - Shared Outbox Is A Prerequisite
 
-**Status:** recommended; human approval required with the chunk sequence.
+**Status:** accepted through ADR 0016 and explicit CON-01 start.
 
 One generic shared outbox owns append, claim, retry, dead-letter, replay, and
 finalization mechanics. Feature handlers return typed outcomes and do not query
@@ -85,7 +86,7 @@ private dispatcher is allowed.
 
 ## D8 - Coherent Public Activation
 
-**Status:** recommended; human approval required.
+**Status:** accepted through ADR 0016 and explicit CON-01 start.
 
 Contribution-policy, binding, contribution, award, callback, and operations
 routes remain hidden until exact AUTH actions/evaluators/principals, required
@@ -218,16 +219,18 @@ and provider calls remain absent; fulfillment begins asynchronously after
 commit. V0.1 has no adjudication policy, queue, lease, state, decision,
 contribution type, branch, action, readiness check, or initiative dependency.
 
-## D16 - AUTH PR 140 Is Planning Authority, Not Runtime Activation
+## D16 - AUTH Planning And Provisioning Do Not Activate CON
 
-**Status:** accepted by merged AUTH PR #140 on 2026-07-17.
+**Status:** accepted by merged AUTH PR #140 and AUTH-09B PR #143 on 2026-07-17.
 
-Trusted main after AUTH-09A and merged REV PR #128 has 74 PermissionIds, 65
-ActionIds, nine active actions, and 56 planned actions, with no registered CON
-or task-claim ActionId. The eight additional planned actions are AUTH-09
-identity-administration surfaces. PR #140 supplies the exact prepared protocol,
-complete ART/REV custody maps, and feature-manifest activation rule; their
-runtime implementation remains upstream work.
+Trusted main `053242b` after AUTH-09B has 74 PermissionIds, 65 ActionIds, ten
+active actions, and 55 planned actions, with no registered CON or task-claim
+ActionId. AUTH-09B activates only `actor.service.provision`; its controlled
+human-administrator route can create the ActorProfile/ActorIdentityLink for an
+already-approved closed ServiceIdentity but grants no service execution,
+runtime admission, role, grant, or database action assignment. PR #140 supplies
+the exact prepared protocol, complete ART/REV custody maps, and feature-manifest
+activation rule; those runtime implementations remain upstream work.
 
 CON removes speculative `AUTH_CON_*` owner labels. Its proposed action mappings
 remain unregistered and non-final until each complete feature manifest exists
@@ -237,7 +240,9 @@ ActionId before task-owned composition consumes CON-05A's immutable
 TaskAssignment policy freeze. `review.claim` similarly consumes CON-06 through
 REV, and `review.decision` consumes CON-07 through the rollback-safe REV-owned
 transaction. AUTH alone registers/evaluates/activates; CON alone supplies its
-hidden facts and participants.
+hidden facts and participants. Future CON fixed services require new reviewed
+ServiceIdentity/static-matrix additions and later AUTH-09E admission; AUTH-09B
+does not make the current ART-only fixed identity set reusable by CON.
 
 ## D17 - Review Contribution Integration Uses Two Ordered Operations
 
@@ -273,3 +278,22 @@ cutoff after admitted writers drain. During `delivery_draining`, dispatch and
 callback may finalize only a same-generation root at or below the cutoff and
 cannot create follow-on obligations. Provider I/O occurs after the fenced
 pre-I/O transaction commits and releases every database/advisory lock.
+
+## D19 - Economic Quantities And Provider Receipts Are Bounded Canonical Facts
+
+**Status:** accepted through ADR 0016 security review.
+
+All policy definitions, immutable awards, and fulfilled quantities use
+`NUMERIC(38, 18)` with canonical decimal-string input, common Pydantic,
+application, and PostgreSQL bounds, and no binary float, exponent, rounding, or
+conversion path. Money units are enabled uppercase ISO 4217 codes;
+project-points unit identity is `(project_id, unit_code)`.
+
+Immutable fulfillment receipts store only closed status/failure facts,
+binding-scoped bounded non-secret opaque event/reference identifiers, exact
+quantities, and canonical digests. Raw provider secrets, authentication tokens,
+unbounded bodies, free-form messages/codes, headers, signatures, endpoints,
+credentials, URLs, markup, or metadata are never persisted, logged, emitted,
+exported, or returned. The bounded receipt identifiers are not authentication
+tokens and may appear only in their canonical receipt/status fields. Unknown
+provider failures map to the closed generic failure code before persistence.

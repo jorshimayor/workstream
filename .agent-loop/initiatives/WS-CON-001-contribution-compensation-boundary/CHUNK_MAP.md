@@ -14,7 +14,7 @@ availability writer. Optional evidence chunks are not part of the core order.
 | `WS-CON-001-PLAN` | Contribution And Compensation Planning | L0 | None | Complete; unpublished |
 | `WS-CON-001-PLAN2` | Final Acceptance Reconciliation | L0 | Human FinalAcceptance/no-adjudication direction | Complete; unpublished |
 | `WS-CON-001-PLAN3` | AUTH/REV Current-Main Reconciliation | L0/L1 | Merged AUTH PR #140 plus AUTH-09A and REV PR #128 at `0302bcf` | Complete; unpublished |
-| `WS-CON-001-01` | Canonical Contract Adoption And Architecture Decision | L0/L1 | Reconciled plan and human decisions approved | Proposed |
+| `WS-CON-001-01` | Canonical Contract Adoption And Architecture Decision | L0/L1 | Reconciled plan and human decisions approved | Complete; awaiting human review |
 | `WS-CON-001-02A` | Shared Transactional Outbox Persistence | L1 | 01; event ownership approved | Proposed |
 | `WS-CON-001-02B` | Shared Outbox Dispatcher And Recovery | L1 | 02A; AUTH registers `outbox.dispatch`, approved `workstream.outbox.dispatcher` ServiceIdentity/static row, AUTH-09E admission, prepared protocol; dispatcher remains disabled until AUTH activation | Proposed |
 | `WS-CON-001-02C` | Shared Lifecycle Audit Participant | L1 | 02B; current AuditEvent contract refreshed | Proposed |
@@ -58,9 +58,12 @@ separate human approval -> refreshed ART/AUTH handoff -> 09A -> 09B
 AUTH registration -> CON hidden behavior -> AUTH activation -> later consumer/release
 ```
 
-- AUTH-09A through 09E must precede protected fixed-service execution. New CON
-  ServiceIdentity/static-row additions require separate reviewed AUTH contracts;
-  provisioning never activates a feature action.
+- AUTH-09A/09B are merged; AUTH-09B activates only the human administrative
+  provisioning route and grants no service execution. AUTH-09C through 09E must
+  still precede protected fixed-service execution. New CON
+  ServiceIdentity/static-row additions require separate reviewed AUTH contracts
+  before provisioning; no existing ART identity or provisioning result may be
+  reused as CON authority.
 - The outbox dispatcher owns only claim/invoke/finalize under
   `outbox.dispatch`. Each protected handler has independent approved authority.
 - Task claim requires AUTH-PREP and one exact active same-project submitter

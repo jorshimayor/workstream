@@ -92,6 +92,7 @@ Workstream turns that operating knowledge into reusable infrastructure.
 - [Roles And Permissions](docs/operations_roles_permissions.md)
 - [Authorization Service](docs/spec_authorization_service.md)
 - [Immutable Artifact Storage](docs/spec_artifact_storage_service.md)
+- [Contribution And Compensation](docs/spec_contribution_compensation.md)
 - [Authorization Operations](docs/operations_authorization_service.md)
 - [Compensation And Reputation](docs/operations_payment_reputation.md)
 - [Risk Register](docs/risk_register.md)
@@ -138,6 +139,7 @@ Workstream turns that operating knowledge into reusable infrastructure.
 - [ADR 0013: Immutable Artifact Storage Boundary](docs/decision_0013_immutable_artifact_storage_boundary.md)
 - [ADR 0014: External Services Use One Adapter Convention](docs/decision_0014_external_service_adapter_convention.md)
 - [ADR 0015: Project Contributor Roles Are Independent](docs/decision_0015_project_contributor_roles_are_independent.md)
+- [ADR 0016: Contribution Recognition Precedes External Fulfillment](docs/decision_0016_contribution_compensation_boundary.md)
 
 ## Authorization Baseline
 
@@ -149,8 +151,11 @@ exact-project contributor grants, registered permissions, resource/lifecycle
 guards, revocation, and append-only evidence.
 
 All public API documentation uses `/api/v1`. Imported reference specifications
-are immutable archival inputs; ADR 0012 and the canonical authorization service
-specification record repository-specific precedence and implementation order.
+are immutable archival inputs. ADR 0012 and the canonical authorization service
+specification control authorization; ADR 0016 and the canonical contribution
+and compensation specification control contribution recognition, award
+eligibility, and fulfillment boundaries. Older chunk specifications remain
+implementation history until their owning migrations replace the runtime.
 
 ## Engineering Loop
 
