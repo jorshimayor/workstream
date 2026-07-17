@@ -785,7 +785,7 @@ def test_artifact_store_v2_refuses_populated_v1_before_ddl(
         try:
             command.downgrade(config, "base")
             command.upgrade(config, "0022_bootstrap_admin_grants")
-            asyncio.run(_seed_v1_artifact_content(isolated_database_env))
+            asyncio.run(_seed_artifact_content(isolated_database_env))
             with pytest.raises(
                 RuntimeError,
                 match="artifact storage clean cut requires empty pre-production tables",
@@ -802,6 +802,36 @@ def test_artifact_store_v2_refuses_populated_v1_before_ddl(
         "namespace_table_exists": False,
         "v1_content_count": 1,
     }
+
+
+def test_artifact_store_v2_refuses_populated_v2_downgrade_before_ddl(
+    isolated_database_env: str,
+    migration_lock,
+) -> None:
+    """Never drop a populated v2 artifact table during downgrade."""
+    config = _alembic_config()
+    with migration_lock():
+        try:
+            command.downgrade(config, "base")
+            command.upgrade(config, "0023_artifact_store_v2")
+            asyncio.run(_seed_artifact_content(isolated_database_env))
+            with pytest.raises(
+                RuntimeError,
+                match="artifact storage clean cut requires empty pre-production tables",
+            ):
+                command.downgrade(config, "0022_bootstrap_admin_grants")
+            refused_revision = asyncio.run(_current_revision(isolated_database_env))
+            refused_columns = asyncio.run(_fetch_columns(isolated_database_env))
+            refused_counts = asyncio.run(_artifact_table_counts(isolated_database_env))
+            asyncio.run(_truncate_artifact_foundation(isolated_database_env))
+            command.downgrade(config, "0022_bootstrap_admin_grants")
+        finally:
+            asyncio.run(_truncate_artifact_foundation(isolated_database_env))
+            command.downgrade(config, "base")
+
+    assert refused_revision == "0023_artifact_store_v2"
+    assert refused_counts["artifact_contents"] == 1
+    assert "artifact_replicas.provider_object_ref" in refused_columns
 
 
 def test_artifact_store_v2_waits_for_concurrent_v1_writer_and_refuses(
@@ -2649,8 +2679,8 @@ async def _artifact_table_counts(database_url: str) -> dict[str, int]:
         await engine.dispose()
 
 
-async def _seed_v1_artifact_content(database_url: str) -> None:
-    """Insert one v1 content fact that the v2 migration must refuse."""
+async def _seed_artifact_content(database_url: str) -> None:
+    """Insert one content fact that a clean-cut migration must refuse."""
     engine = create_async_engine(database_url)
     try:
         async with engine.begin() as connection:

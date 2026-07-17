@@ -4015,7 +4015,7 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
     assert "| `WS-AUTH-001-08` | Merged |" in auth_status
     assert "| `WS-AUTH-001-09A` | Awaiting human merge |" in auth_status
     assert "Merged through PR #129 as `9a04434`" in artifact_map
-    assert "Reviewed in isolated worktree; PR publication pending" in artifact_map
+    assert "Merged-main deterministic proof passed; exact-SHA internal review pending" in artifact_map
     assert (
         "`WS-ART-001-02A3` implementation and merged-main deterministic repair are\n"
         "complete" in artifact_status
