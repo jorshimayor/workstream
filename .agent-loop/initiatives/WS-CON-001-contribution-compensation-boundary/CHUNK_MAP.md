@@ -11,21 +11,22 @@ availability writer. Optional evidence chunks are not part of the core order.
 
 | Chunk | Title | Risk | Gate | Status |
 |---|---|---:|---|---|
-| `WS-CON-001-PLAN` | Contribution And Compensation Planning | L0 | None | Reconciled to PR #139; internal review pending |
+| `WS-CON-001-PLAN` | Contribution And Compensation Planning | L0 | None | Complete; unpublished |
+| `WS-CON-001-PLAN2` | Final Acceptance Reconciliation | L0 | Human FinalAcceptance/no-adjudication direction | Complete; unpublished |
 | `WS-CON-001-01` | Canonical Contract Adoption And Architecture Decision | L0/L1 | Reconciled plan and human decisions approved | Proposed |
 | `WS-CON-001-02A` | Shared Transactional Outbox Persistence | L1 | 01; event ownership approved | Proposed |
 | `WS-CON-001-02B` | Shared Outbox Dispatcher And Recovery | L1 | 02A; AUTH registers `outbox.dispatch`, approved `workstream.outbox.dispatcher` ServiceIdentity/static row, AUTH-09E admission, prepared protocol; dispatcher remains disabled until AUTH activation | Proposed |
 | `WS-CON-001-02C` | Shared Lifecycle Audit Participant | L1 | 02B; current AuditEvent contract refreshed | Proposed |
 | `WS-CON-001-03A` | Project Compensation Adapter-Binding Persistence | L1 | 02C; migration head refreshed | Proposed |
 | `WS-CON-001-03B` | Contribution Policy Persistence | L1 | 03A; legacy-data rule | Proposed |
-| `WS-CON-001-03C` | Contribution And Award Persistence | L1 | 03B; exact merged REV FK targets | Proposed |
+| `WS-CON-001-03C` | Contribution And Award Persistence | L1 | 03B; exact merged REV FinalAcceptance/Review/ReviewLease FK targets | Proposed |
 | `WS-CON-001-03D` | Delivery, Receipt, And Status Persistence | L1 | 03C | Proposed |
 | `WS-CON-001-04A` | Hidden Adapter-Binding Service | L1 | 03A; planned AUTH binding actions/contexts/prepared protocol; callback ServiceIdentity/action/static row approved but inactive | Proposed |
 | `WS-CON-001-04B` | Hidden Contribution-Policy Service | L1 | 03B, 04A; binding activation merged; planned `contribution.policy.*` actions/contexts/prepared protocol | Proposed |
 | `WS-CON-001-05A` | Legacy Economic Terms Cutover And Task Freeze | L1 | 04B; exact Submission/TaskAssignment lineage; AUTH task.claim with exact submitter grant and prepared protocol active; legacy rule | Proposed |
 | `WS-CON-001-05B` | Legacy Economic Schema Removal | L1 | 05A; zero-consumer scan; removal migration approval | Proposed |
 | `WS-CON-001-06` | Review-Lease Contribution-Policy Freeze Capability | L1 | REV lease schema; 05B; planned review.claim typed/prepared contract; exact reviewer grant facts stable | Proposed |
-| `WS-CON-001-07` | Atomic Contribution/Award Decision Participant | L1 | 03C-D, 05A, 06; merged TaskAssignment freeze field and REV ReviewLease schema/hidden claim composition carrying non-null reviewer policy version; shared audit/outbox; planned review.decision typed/prepared contract | Proposed |
+| `WS-CON-001-07` | Atomic Contribution/Award Decision Participant | L1 | 03C-D, 05A, 06; merged TaskAssignment freeze field and REV ReviewLease plus accept-only FinalAcceptance persistence and locked decision-lineage contract; shared audit/outbox; planned review.decision typed/prepared contract | Proposed |
 | `WS-CON-001-08A` | Outbound Compensation Delivery Handler | L1 | 07, 02B; exact delivery ServiceIdentity/ActionId/static row registered but planned; AUTH-09E typed context/prepared protocol; ADR 0014 adapter foundation; lifecycle-fence port | Proposed |
 | `WS-CON-001-08R` | Bound-Service Callback Rate Control | L1 | 08A; shared API-control contract | Proposed |
 | `WS-CON-001-08B` | Inbound Fulfillment Callback | L1 | 08R; exact callback ServiceIdentity/ActionId/static row, AUTH-09E context, prepared protocol, and callback-fence port | Proposed |
@@ -39,7 +40,7 @@ availability writer. Optional evidence chunks are not part of the core order.
 ## Core dependency order
 
 ```text
-PLAN -> 01 -> 02A -> 02B -> 02C -> 03A -> 03B -> 03C -> 03D
+PLAN -> PLAN2 -> 01 -> 02A -> 02B -> 02C -> 03A -> 03B -> 03C -> 03D
 -> 04A -> 04B -> 05A -> 05B -> 06 -> 07 -> 08A -> 08R -> 08B
 -> 10A -> 10B -> 10C -> 11
 ```
@@ -68,13 +69,17 @@ AUTH registration -> CON hidden behavior -> AUTH activation -> later consumer/re
   activates review.claim after both merge.
 - Review decision requires the reviewer grant and no-self-review/lifecycle
   guards. CON-07 starts only after the TaskAssignment submitter freeze and REV
-  ReviewLease reviewer freeze/hidden claim composition are merged with non-null
-  policy-version lineage. CON-07 supplies the flush-only participant with no
-  ART/evidence work; REV supplies hidden decision composition; AUTH activates
-  review.decision afterward.
-- CON-07 creates contributions, applicable awards, audit, and shared-outbox rows
-  in the Review transaction. It copies stabilized artifact-hash lineage and
-  performs no ART call.
+  ReviewLease reviewer freeze plus accept-only FinalAcceptance persistence and
+  locked decision-lineage contract are merged with non-null policy-version
+  lineage. CON-07 then supplies the flush-only participant with no ART/evidence
+  work; REV consumes that participant in hidden decision composition, stages
+  shared audit/outbox, and owns the single commit. AUTH activates
+  `review.decision` only after that hidden REV composition merges.
+- CON-07 creates contributions and applicable awards in the Review transaction.
+  Reviewer work is sourced from Review; submitter work is sourced only from
+  REV-owned FinalAcceptance. REV stages shared audit/outbox rows, owns the
+  single commit, and supplies stabilized artifact-hash lineage; no ART call is
+  made.
 - CON-08A/B and 10C cannot reuse outbox dispatcher authority for delivery,
   callback, reconciliation, or rebuild execution.
 - CON-10A owns core PostgreSQL contribution/award reads directly; it does not
@@ -93,15 +98,17 @@ AUTH registration -> CON hidden behavior -> AUTH activation -> later consumer/re
   owns the shared caller-transaction audit participant.
 - 03A uses `ProjectCompensationAdapterBinding`; 03B owns ContributionPolicy,
   versions, rules, and award definitions; 03C/D own contribution/award and
-  downstream fulfillment records respectively.
+  downstream fulfillment records respectively. 03C references but never owns
+  REV's FinalAcceptance.
 - 04A/04B add hidden binding and policy services while AUTH actions remain
   planned.
 - 05A removes semantic consumers and freezes task assignments; 05B removes dead
   physical schema.
 - 06 exposes only a CON policy-freeze capability; REV owns ReviewLease schema
   and wiring.
-- 07 exposes only the flush-only decision participant; REV owns Review and the
-  single commit. No evidence projection is staged.
+- 07 exposes only the flush-only decision participant; REV owns Review,
+  FinalAcceptance, shared audit/outbox staging, and the single commit. No
+  evidence projection is staged.
 - 08A is a feature handler with its own protected execution boundary; 08R owns
   rate-control scope; 08B owns callback authentication/composition.
 - 09A/09B are deferred optional projection chunks and must be re-reviewed if

@@ -10,9 +10,14 @@ local and has no ART dependency:
 AUTH prepares review.decision and locks reviewer authority
 -> REV locks and recomposes canonical Review/Submission facts
 -> AUTH evaluates once and stages decision evidence
--> REV stages Review, lease/queue consumption, and task effects
--> CON flush-only participant creates contributions and applicable awards
--> CON stages audit and shared-outbox rows
+-> REV stages Review/findings/resolutions, consumes ReviewLease, and closes queue
+-> on accept, REV creates immutable FinalAcceptance, accepts Task, and completes Assignment
+-> on needs_revision, REV sets Task to needs_revision and keeps Assignment active
+-> on reject, REV sets Task to rejected with a bounded human reason and blocks
+   only the same-task Assignment with its source Review
+-> CON flush-only participant creates reviewer contribution and, only from
+   FinalAcceptance, submitter contribution plus applicable awards
+-> REV stages shared audit and outbox rows
 -> REV route commits once
 ```
 
@@ -23,8 +28,11 @@ activation sequence and the joint REV/CON release gate pass.
 ## Canonical product model
 
 - `ContributionRecord` is immutable. Every valid recorded human Review creates
-  one reviewer `completed_review`; only `accept` additionally creates one
-  submitter `accepted_submission`.
+  one reviewer `completed_review`. REV creates `FinalAcceptance` only for
+  `accept`; one submitter `accepted_submission` consumes that stable fact.
+- `FinalAcceptance` is an immutable REV-owned internal derived fact, not a
+  public resource command. It has no independent authorization action or manual
+  creation API.
 - Existing `Submission` plus its `version` and `supersedes_submission_id` is the
   versioned submission identity. WS-CON does not add `SubmissionVersion`.
 - `ContributionPolicy` is the stable project aggregate. It has one active
@@ -53,6 +61,7 @@ activation sequence and the joint REV/CON release gate pass.
 `AsyncSession` and a typed request containing:
 
 - exact Review, ReviewLease, queue/lifecycle fence, and decision;
+- exact FinalAcceptance for accept, otherwise null;
 - versioned Submission, TaskAssignment, task, and project identities;
 - reviewer and submitter canonical ActorProfile IDs;
 - lease-frozen reviewer and assignment-frozen submitter
@@ -64,15 +73,61 @@ activation sequence and the joint REV/CON release gate pass.
 
 CON validates the supplied locked facts, copies the stabilized digest into
 `ContributionRecord.artifact_hash`, evaluates the matching frozen
-`ContributionRule`, stages applicable awards/audit/outbox rows, flushes, and
-never commits. It never reads REV or AUTH repositories, evaluates
+`ContributionRule`, stages applicable contribution/award rows, returns typed
+audit/outbox inputs to REV, flushes, and never commits. It never reads REV or AUTH repositories, evaluates
 `review.decision`, calls ART, rehashes artifact bytes, performs provider I/O, or
 offers a no-op production participant. Any CON failure rolls back the complete
 Review decision.
 
 `needs_revision` and `reject` still create the reviewer contribution and any
-award earned by its frozen reviewer rule. They create no submitter contribution.
-Automated checker outcomes create neither contribution type.
+award earned by its frozen reviewer rule. They create no FinalAcceptance or
+submitter contribution. Automated checker outcomes create neither contribution
+type.
+
+The REV-owned lifecycle effects are exact and remain inputs to CON rather than
+CON behavior: `needs_revision` sets `Task.status = needs_revision` and keeps the
+same TaskAssignment `active`; `reject` sets `Task.status = rejected` with the
+bounded human reason and sets only the same-task TaskAssignment to `blocked`
+with its reject Review reference. Reject changes no actor grant and no other
+task or assignment. The archival `closed/review_rejected` wording is not a
+canonical status.
+
+### FinalAcceptance lineage
+
+REV persists the minimal same-chain fact:
+
+```text
+FinalAcceptance
+  id
+  project_id
+  task_id
+  submission_id
+  source_review_id
+  accepted_submitter_id
+  accepted_at
+  recorded_by_reviewer_id
+  review_policy_id
+```
+
+The external handoff's `submission_version_id` maps to `submission_id` because
+the existing immutable Submission row is already the version identity. The
+external `policy_context_ref` maps to the exact locked `ReviewPolicy.id`; REV
+must prove the Review, policy, project, task, Submission, submitter and reviewer
+chain. PostgreSQL enforces `UNIQUE(task_id)`, `UNIQUE(source_review_id)`, and
+`UNIQUE(submission_id)`. There is no reopen, replacement, adjudication, or
+second acceptance path in v0.1.
+
+Any reviewer-quality sampling is a non-mutating audit after the transaction. It
+does not delay FinalAcceptance, create a second Review decision, or alter
+acceptance/contribution truth.
+
+Reviewer contributions require direct `source_review_id` and
+`source_review_lease_id`, with `source_final_acceptance_id` null. Submitter
+contributions require `source_final_acceptance_id` and
+`source_task_assignment_id`, with direct `source_review_id` and
+`source_review_lease_id` null. Partial unique constraints enforce one
+`completed_review` per Review and one `accepted_submission` per
+FinalAcceptance; checks reject mixed or missing source shapes.
 
 ## Contribution-policy freezing
 
@@ -122,12 +177,13 @@ unregistered until their own reviewed registration contract.
 
 ### Human project grants
 
-Project contributor grants are exactly independent `submitter`, `reviewer`,
-and `adjudicator` rows. Task claim requires one active exact-project submitter
-grant. Review claim/decision require one active exact-project reviewer grant
-plus no-self-review and lifecycle guards. Adjudicator authority does not
-substitute for either. Revoking one grant does not revoke the other two or any
-AdminRoleGrant; the owning task/review lifecycle consumes its exact invalidation.
+The shipping path consumes exactly two project authorities: task claim requires
+one active exact-project `submitter` grant, while review claim/decision require
+one active exact-project `reviewer` grant plus no-self-review and lifecycle
+guards. Any unrelated project or administrative grant does not substitute.
+WS-CON introduces no adjudicator grant/action, adjudication invalidation
+consumer, or readiness dependency; the separate global AUTH role catalogue is
+outside this lifecycle contract.
 
 ### Prepared mutation protocol
 
@@ -185,10 +241,12 @@ actor/link authority, then its idempotency row and applicable lifecycle fence.
 After that common prefix, the owning operation uses one explicit order:
 
 - `review.decision`: REV task, assignment, Submission, queue/lease, Review and
-  finding rows in REV's canonical order; the assignment- and lease-frozen
+  finding/resolution rows in REV's canonical order; accept-only
+  FinalAcceptance plus exact task/assignment effects; the assignment- and lease-frozen
   ContributionPolicyVersion, matching rule/definition, and referenced binding;
   stabilized reviewed-packet and Submission artifact-hash lineage; then
-  ContributionRecord, CompensationAward, audit, and shared-outbox rows;
+  ContributionRecord and CompensationAward; then REV-owned shared audit and
+  outbox append participants;
 - task/review claim freeze: the owning task/assignment/Submission or REV
   queue/lease rows first, then the selected published policy version,
   rule/definition and referenced binding, then the frozen lineage write;
@@ -251,6 +309,7 @@ subsystem owns no contribution, award, adapter, review, or provider semantics.
    and activation gates pass.
 3. CON-03A-D add inactive policy, binding, contribution, award, delivery,
    receipt, and status persistence using the canonical names and boundaries.
+   CON-03C lands only after REV's FinalAcceptance persistence target is merged.
 4. CON-04A/B add hidden binding and ContributionPolicy behavior behind planned
    AUTH actions.
 5. CON-05A removes retired semantic consumers and freezes the published
@@ -258,8 +317,9 @@ subsystem owns no contribution, award, adapter, review, or provider semantics.
    physical schema after a zero-consumer proof.
 6. CON-06 supplies reviewer policy freeze; the REV owner wires it into hidden
    review claim behavior before AUTH activates `review.claim`.
-7. CON-07 supplies the flush-only decision participant; the REV owner wires it
-   into the complete hidden decision path before AUTH activates
+7. CON-07 supplies the flush-only decision participant that consumes REV-owned
+   FinalAcceptance for submitter work; the REV owner wires it into the complete
+   hidden decision path and owns audit/outbox staging before AUTH activates
    `review.decision`.
 8. CON-08A/R/B add fulfillment delivery and callback behavior only after exact
    service execution/callback identities, actions, static rows, AUTH-09E, and
@@ -282,11 +342,12 @@ automatically.
 - Same-run repository coverage at or above 78 percent and each new/materially
   changed subsystem at or above 90 percent.
 - Exact contribution cardinality for all three decisions and repeated/revision
-  Reviews; automated checks create none.
+  Reviews; accept-only FinalAcceptance one-to-one constraints; mutually
+  exclusive reviewer/submitter source shapes; automated checks create none.
 - Policy publication/freeze races, explicit unpaid rules, immutable published
   versions, and at most one award per contribution/instrument.
-- Participant fault injection proving Review/task/contribution/award/audit/
-  outbox atomic rollback and no ART call.
+- Participant fault injection proving Review/FinalAcceptance/task/contribution/
+  award/audit/outbox atomic rollback and no ART call.
 - AUTH tests for planned denial, exact grant/static-matrix candidates, prepared
   handle misuse, role-specific revocation, cross-service denial, and one
   activation custodian per action.
@@ -308,6 +369,8 @@ automatically.
   approved and registered by AUTH.
 - Legacy pre-production row classification before CON-05A/05B migration.
 - Optional evidence projection remains deferred unless separately approved.
+- No adjudication decision remains: v0.1 accept/reject are terminal and no
+  adjudication initiative or readiness gate may enter the core order.
 
 ## Review and stop
 

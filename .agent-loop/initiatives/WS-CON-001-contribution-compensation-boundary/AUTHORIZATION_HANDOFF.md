@@ -44,9 +44,15 @@ turn a fake/test decision into a production allow path.
 - administrative policy, binding, project reads, and operations: one exact
   eligible AdminRoleGrant selected by the action evaluator.
 
-`submitter`, `reviewer`, and `adjudicator` are independent immutable grants.
-There is no combined grant. Adjudicator does not substitute for submitter or
-reviewer. One role's revocation leaves every other project/admin grant intact.
+The shipping path consumes exact `submitter` and `reviewer` grants. There is no
+combined grant and no unrelated project/admin grant substitutes. WS-CON adds no
+adjudication grant or action and has no adjudication readiness dependency; any
+separate global project-role catalogue state remains AUTH-owned and outside
+this transaction.
+
+FinalAcceptance creation has no ActionId. It is an internal REV-owned
+consequence of an already-authorized `review.decision` with `accept`; CON only
+validates and consumes the locked fact when creating `accepted_submission`.
 
 ### Fixed service
 

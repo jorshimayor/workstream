@@ -53,8 +53,16 @@ archival input edits
   and fail-closed construction without REV release-control implementation.
 - [ ] Core conformance matrix has executable evidence; same-run repository
   coverage is at least 78 and changed subsystems at least 90.
-- [ ] Joint drill contract covers all core families and explicitly asserts zero
-  ART calls in Review-to-contribution creation. It is not marked executed here.
+- [ ] Joint drill contract covers all core families. Accept proves Task
+  `accepted`, Assignment `completed`, one FinalAcceptance and one submitter
+  contribution. Needs_revision proves Task `needs_revision`, Assignment still
+  `active`, and neither acceptance fact nor submitter contribution. Reject
+  proves Task `rejected` with bounded human reason, only the same-task
+  Assignment blocked with its source Review, and neither acceptance fact nor
+  submitter contribution. Every Review proves one reviewer contribution. It
+  explicitly
+  asserts zero ART calls and no adjudication model/action/state/queue/readiness
+  dependency. It is not marked executed here.
 
 ## Verification
 

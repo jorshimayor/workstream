@@ -2,8 +2,9 @@
 
 ## Goal and risk
 
-Persist immutable contribution/award truth against exact merged Review,
-ReviewLease, TaskAssignment, and Submission targets. L1 history/economic risk.
+Persist immutable contribution/award truth against exact merged
+FinalAcceptance, Review, ReviewLease, TaskAssignment, and Submission targets.
+L1 history/economic risk.
 
 ## Allowed files
 
@@ -28,16 +29,21 @@ mutable/void/delete/adjust path, dependency or CI weakening
 ## Acceptance criteria
 
 - [ ] Existing Submission is the version identity. Project/task/submission/
-  Review/lease/assignment/contributor and stabilized artifact_hash lineage are
-  same-chain and non-null as applicable.
+  FinalAcceptance/Review/lease/assignment/contributor and stabilized
+  artifact_hash lineage are same-chain and non-null as applicable. No
+  SubmissionVersion entity or `submission_version_id` alias is added.
 - [ ] Reviewer rows are completed_review and bind source Review + ReviewLease +
-  reviewer + reviewer-frozen policy. Submitter rows are accepted_submission,
-  bind accepted source Review + TaskAssignment + submitter + submitter-frozen
-  policy, and are impossible for needs_revision/reject.
-- [ ] Exact database uniqueness on `(source_review_id, contribution_type)`
-  prevents duplicate contribution type for one source Review while allowing
-  distinct reviewer contributions for distinct revision Reviews. Contributor
-  identity is a validated lineage field, never part of this uniqueness key.
+  reviewer + reviewer-frozen policy, with FinalAcceptance/assignment sources
+  null. Submitter rows are accepted_submission and bind source FinalAcceptance
+  + TaskAssignment + submitter + submitter-frozen policy, with direct Review/
+  lease sources null; they are impossible for needs_revision/reject.
+- [ ] Partial uniqueness enforces one completed_review per source Review and one
+  accepted_submission per source FinalAcceptance. Contributor identity is a
+  validated lineage field, never part of either uniqueness key. Checks reject
+  mixed, incomplete, or wrong-type source shapes.
+- [ ] `source_final_acceptance_id` references REV's immutable record; the exact
+  FinalAcceptance task/project/submission/submitter/source-Review chain matches
+  the contribution, but CON does not infer acceptance from that Review.
 - [ ] Each award references the exact ContributionRecord, its frozen
   ContributionPolicyVersion, matching rule/definition, same project/contributor/
   contribution type, and same-project/instrument adapter binding.
@@ -46,6 +52,8 @@ mutable/void/delete/adjust path, dependency or CI weakening
 - [ ] Database enforces immutability/at-most-one but does not require a
   contribution child during staged Review persistence before CON-07 flushes.
 - [ ] At-least-one per valid Review is deferred to CON-07 + REV-10 + preflight.
+- [ ] At-least-one accepted_submission per FinalAcceptance is deferred to
+  CON-07 + REV hidden composition + preflight.
 - [ ] No mutable/void/delete/adjust path or legacy accepted-work settlement row/reputation schema.
 
 ## Verification and reviewers
@@ -53,4 +61,4 @@ mutable/void/delete/adjust path, dependency or CI weakening
 Execute CON-03C in `../RUNTIME_VERIFICATION.md`; changed subsystems are at least
 90 percent. Senior engineering, QA/test, security/auth, product/ops,
 architecture, docs, reuse/dedup and test-delta are required. Stop if exact
-REV-03/REV-04 targets are not merged.
+REV FinalAcceptance/Review/ReviewLease targets are not merged.

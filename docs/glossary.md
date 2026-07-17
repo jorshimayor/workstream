@@ -144,9 +144,9 @@ through separate active grants.
 The umbrella human product term for a person participating in Workstream. A
 contributor may have exact-project `submitter`, `reviewer`, and `adjudicator`
 grants as independent records. The adjudicator grant creates no adjudication
-capability until WS-REV defines the lifecycle and AUTH activates exact
-adjudication actions. Celery, checker, setup, and background workers are
-internal services, not human product roles.
+capability in v0.1 and creates no review-lifecycle or release dependency.
+Celery, checker, setup, and background workers are internal services, not
+human product roles.
 
 ## Source
 
@@ -312,9 +312,21 @@ The outcome-based record of contributor and reviewer performance.
 
 The immutable, evidence-backed record of one completed contribution under locked
 project context. `completed_review` is created for every valid recorded human
-Review; `accepted_submission` is created for the submitter only on `accept`.
+Review and binds directly to that Review and ReviewLease.
+`accepted_submission` is created only from FinalAcceptance and the exact
+TaskAssignment; it is never inferred directly from `Review.decision`.
 Compensation and reputation records may attach to either contribution type, but
 do not replace the contribution record.
+
+## Final Acceptance
+
+The immutable REV-owned internal fact created only as a lifecycle consequence
+of `Review(accept)`. It binds one project, task, existing versioned Submission,
+source Review, accepted submitter, recording reviewer, acceptance time, and
+locked ReviewPolicy. There is no public/manual create API or separate
+authorization action. `needs_revision` and `reject` create none. In v0.1 it is
+unique per task, source Review, and Submission and is the sole source of an
+`accepted_submission` ContributionRecord.
 
 ## Human Owner
 

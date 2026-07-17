@@ -49,7 +49,7 @@ provider/artifact calls; unrelated checker behavior
   remaining physical schema is unreachable until 05B.
 - [ ] `task.claim` is registered and active through AUTH with exact same-project
   submitter ProjectRoleGrant, prepared T protocol, actor/link/grant
-  revalidation, and canonical task guards. No admin/adjudicator/reviewer grant
+  revalidation, and canonical task guards. No unrelated project/admin grant
   substitutes and CON contains no role logic.
 - [ ] Claim locks active ContributionPolicy, published version, exact rule/
   definition/binding dependencies, evaluates the prepared handle once, and

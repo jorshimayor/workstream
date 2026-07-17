@@ -18,6 +18,27 @@
 - PR #139 changed planning/canonical docs/scanners, not runtime CON behavior or
   action availability.
 
+## Human boundary amendment
+
+- On 2026-07-17 the human fixed the v0.1 shipping path as
+  `Review(accept) -> FinalAcceptance -> accepted_submission` and explicitly
+  excluded adjudication lifecycle/actions/readiness.
+- The current sibling REV worktree now plans FinalAcceptance and the exact
+  `accepted`/`needs_revision`/`rejected` effects. That concurrent work remains
+  discovery-only; WS-CON implementation consumes only reviewed REV contracts
+  merged to trusted main.
+- The amendment's `submission_version_id` is normalized to canonical
+  `Submission.id` / `submission_id`; current runtime already stores each
+  immutable version as a Submission row.
+- The amendment's `policy_context_ref` is normalized to exact locked
+  `ReviewPolicy.id` / `review_policy_id`; REV owns and proves that lineage.
+- `docs/review_closure.md`, `docs/review_final_adversarial_review.md`, and
+  `docs/review_adversarial_quality_review.md` are historical internal-review
+  recommendations, not live lifecycle specifications. Their older “second
+  review” or “overturned” proposals cannot delay FinalAcceptance, add a second
+  decision, or gate CON readiness. PLAN2 updates active operations/templates
+  only and preserves those review records as historical evidence.
+
 ## Normative repository sources
 
 - `AGENTS.md`
@@ -56,6 +77,8 @@
   and 05B own semantic then physical removal after a human migration decision.
 - No ContributionPolicy, ContributionRecord, CompensationAward, fulfillment, or
   WS-CON action runtime exists yet.
+- No FinalAcceptance runtime exists yet; it will be REV-owned and is a hard
+  merged-schema/composition prerequisite for CON-03C/07.
 - Existing `Submission` is the versioned identity; no new SubmissionVersion is
   required.
 - ART preparation from PR #129 is inactive foundation only and does not approve

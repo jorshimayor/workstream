@@ -42,6 +42,10 @@ roadmap changes without synchronized local XLSX/CSV exports
   unpaid.
 - [ ] Existing versioned Submission is retained. CON copies stabilized
   artifact_hash lineage and performs no core ART/evidence operation.
+- [ ] Active spec defines REV-owned accept-only FinalAcceptance with canonical
+  `submission_id` and `review_policy_id`; FinalAcceptance-sourced submitter
+  contribution; direct Review-sourced reviewer contribution; and one REV-owned
+  commit. It adds no SubmissionVersion alias or adjudication dependency.
 - [ ] Optional evidence is clearly deferred with separate ART/AUTH approval and
   is absent from the core release path.
 - [ ] AUTH boundary matches PR #139: independent project grants, fixed-service

@@ -16,14 +16,16 @@ the merged WS-XINT-001 boundary from PR #139.
 
 - Every valid recorded human Review creates one immutable reviewer
   `completed_review` contribution.
-- `accept` additionally creates one immutable submitter
-  `accepted_submission`; `needs_revision` and `reject` do not.
+- REV creates one immutable `FinalAcceptance` only for `Review(accept)`.
+  `accepted_submission` consumes that FinalAcceptance; it is never inferred
+  directly from `Review.decision`. `needs_revision` and `reject` create neither.
 - TaskAssignment and ReviewLease freeze independent published
   ContributionPolicyVersions before work is performed.
 - Explicit unpaid rules create no award; compensated rules create at most one
   money and one project-points CompensationAward.
-- Review/task effects, contributions, awards, audit, and shared-outbox rows
-  commit or roll back in one caller-owned transaction.
+- REV owns the request and single commit: Review/task effects, optional
+  FinalAcceptance, CON-flushed contributions/awards, and REV-staged shared
+  audit/outbox rows commit or roll back together.
 - Core contribution creation copies stabilized artifact-hash lineage supplied
   by REV and has no ART or provider dependency.
 - Downstream adapters fulfill awards but never determine eligibility.
@@ -41,8 +43,10 @@ the merged WS-XINT-001 boundary from PR #139.
   and separately approved.
 - Provider-specific settlement SDKs, attempts, payout batches, accounts,
   balances, points ledgers, credits, or blockchain work.
-- Reputation scores, aggregates, adjudication, reversals, or mutable
-  contribution/award truth.
+- Reputation scores, aggregates, adjudication, appeals, reversals, or mutable
+  contribution/award truth. V0.1 has no adjudication policy, action, queue,
+  lease, state, decision, contribution, branch, readiness gate, or initiative
+  dependency.
 - A second artifact store, raw provider references, or ArtifactStore injection.
 - Frontend work before backend contracts and guards stabilize.
 
@@ -50,8 +54,10 @@ the merged WS-XINT-001 boundary from PR #139.
 
 Workstream certifies useful human work independently from external fulfillment.
 Reviewer work is a contribution for every valid Review. ContributionPolicy
-decides what that work earns; immutable awards record the result; adapters carry
-out fulfillment later.
+decides what that work earns. FinalAcceptance is the stable REV-owned fact that
+allows CON to recognize accepted submitter work without treating the mutable
+shape of a Review decision as its source. Immutable awards record the result;
+adapters carry out fulfillment later.
 
 ## Human judgment required
 

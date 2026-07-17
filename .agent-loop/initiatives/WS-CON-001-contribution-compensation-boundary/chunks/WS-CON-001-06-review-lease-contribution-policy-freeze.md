@@ -38,8 +38,9 @@ task assignment changes; provider/artifact/adapter calls
 - [ ] REV-owned ReviewLease has immutable non-null
   `reviewer_contribution_policy_version_id` and REV owns its write/wiring.
 - [ ] review.claim uses exact active same-project reviewer ProjectRoleGrant;
-  submitter/adjudicator/admin grants do not substitute. No-self-review and REV
-  lifecycle guards remain REV-owned.
+  unrelated project/admin grants do not substitute. No-self-review and REV
+  lifecycle guards remain REV-owned; no adjudication behavior or dependency is
+  introduced.
 - [ ] CON hidden port and REV hidden composition merge while review.claim
   remains planned; AUTH later integrates the evaluator and alone activates.
 - [ ] Policy publish and binding state versus claim pass both lock orders;

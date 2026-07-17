@@ -2,10 +2,11 @@
 
 ## Current status
 
-`WS-CON-001-PLAN` is reconciled and internally reviewed against trusted `main`
-`5d353b6`, which merged WS-XINT-001 boundary reconciliation through PR #139.
-The reviewed content commit is `c4242e0`; runtime code is unchanged and the
-result remains local/unpublished.
+`WS-CON-001-PLAN2` has reconciled the human-approved v0.1
+`Review(accept) -> FinalAcceptance -> accepted_submission` boundary against the
+previously reviewed WS-XINT plan. Runtime code is unchanged. The addendum passed
+architecture, QA/product/test-delta, and security/auth review on 2026-07-17 and
+remains unpublished pending human direction.
 The prior plan is superseded where it used the older policy aggregate, made ART
 evidence mandatory, described service action rows as persisted assignments,
 allowed partial activation-custody transfer, or let outbox dispatch imply
@@ -16,7 +17,10 @@ feature-handler authority.
 - ContributionPolicyVersion and ContributionRule decide award eligibility.
 - Core Review -> ContributionRecord/Award is one PostgreSQL transaction with no
   ART call or evidence projection.
-- Project grants are independently submitter/reviewer/adjudicator.
+- REV creates FinalAcceptance only for accept. Reviewer contributions source
+  Review directly; submitter contributions source FinalAcceptance only.
+- Shipping authority uses exact submitter and reviewer grants only; unrelated
+  grants do not substitute and WS-CON has no adjudication dependency.
 - Fixed services require closed ServiceIdentity, exact static matrix membership,
   provisioned ActorProfile/link, AUTH-09E admission, and active action.
 - ActionOwner is AUTH activation custody. Complete ART/REV transfers are
@@ -27,18 +31,20 @@ feature-handler authority.
 
 ## Active chunk
 
-`WS-CON-001-PLAN` only. No implementation chunk is active.
+No implementation chunk is active.
 
 | Chunk | Status | Notes |
 |---|---|---|
-| `WS-CON-001-PLAN` | Reconciled and internally reviewed; unpublished | Based on PR #139 / `5d353b6`; reviewed content `c4242e0` |
-| `WS-CON-001-01` through `08B`, `10A` through `11` | Proposed | Separate explicit start required |
+| `WS-CON-001-PLAN` | Complete; unpublished | Based on PR #139 / `5d353b6`; reviewed content `c4242e0` |
+| `WS-CON-001-PLAN2` | Complete; unpublished | FinalAcceptance is REV-owned; CON trigger changes only; all required internal tracks pass |
+| `WS-CON-001-01` through `08B`, `10A` through `11` | Proposed | Separate explicit start required after PLAN2 and upstream merge refresh |
 | `WS-CON-001-09A/09B` | Deferred optional | Separate approval and fresh ART/AUTH review required |
 
 ## Open gates
 
 | Gate | Owner | Required action |
 |---|---|---|
+| FinalAcceptance and decision integration | REV + CON | Merge REV-owned persistence and locked lineage first; then CON-03C/07; then REV consumes CON-07 in hidden single-commit composition before AUTH activation |
 | Active specification/archive handling | Human | Approve CON-01 repository-owned specification |
 | Pre-production legacy rows | Human | Choose deterministic rebuild or explicit classified migration before 05A/05B |
 | D11 AdminRole candidates | Human + AUTH | Fix award-detail, delivery-recovery, and audit candidates before registration |

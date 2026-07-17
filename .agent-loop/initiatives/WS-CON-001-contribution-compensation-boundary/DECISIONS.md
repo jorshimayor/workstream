@@ -51,10 +51,12 @@ canonical product model.
 
 The authorized `review.decision` transaction invokes one mandatory CON
 participant in the caller's AsyncSession. It creates a reviewer
-`completed_review` for every committed Review and a submitter
-`accepted_submission` only for `accept`, evaluates each applicable frozen
-ContributionRule, and stages applicable awards/audit/outbox rows. It flushes
-and never commits. There is no `contribution.materialize` or
+`completed_review` for every committed Review. For accept only, REV first
+creates FinalAcceptance and CON creates `accepted_submission` from that locked
+fact, never directly from Review.decision. CON evaluates each applicable frozen
+ContributionRule, stages applicable contribution/award rows, returns typed
+audit/outbox inputs to REV, flushes, and never commits. REV stages the shared
+audit/outbox records and owns the single commit. There is no `contribution.materialize` or
 `compensation.award.materialize` action and no no-op production participant.
 
 ## D6 - ART Is Not A Core Contribution Dependency
@@ -121,11 +123,11 @@ snapshots, double decisions, and feature-side catalogue changes are rejected.
 **Status:** project-role model resolved by ADR 0015; AdminRole surface choices
 remain human gates before CON-10A/10B.
 
-ProjectRoleGrant values are exactly `submitter`, `reviewer`, and `adjudicator`.
-Task claim requires submitter; review claim/decision require reviewer plus
-no-self-review. Adjudicator does not substitute. Revoking one role leaves the
-others and AdminRoleGrants unchanged; the owning task/review lifecycle consumes
-the exact invalidation.
+The current shipping path requires exact `submitter` for task claim and exact
+`reviewer` plus no-self-review for review claim/decision. Any unrelated project
+or administrative grant does not substitute. The existing global AUTH project-
+role catalogue remains AUTH-owned, but WS-CON adds no adjudication grant,
+action, invalidation consumer, or readiness dependency.
 
 Merged AUTH currently gives Finance Authority
 `compensation.delivery.reconcile` but not Operator, while the earlier WS-CON
@@ -172,3 +174,40 @@ CON-09A/09B are outside the core dependency order. If the human later approves
 them, their chunk contracts must be refreshed against then-current ART/AUTH
 contracts and internally reviewed again. The optional evidence action is not
 counted as a core release action and cannot gate product reads or release.
+
+## D15 - FinalAcceptance Is The Sole Submitter-Acceptance Source
+
+**Status:** accepted by explicit human direction on 2026-07-17; REV merge is an
+upstream implementation gate.
+
+REV owns immutable FinalAcceptance and creates it only inside an authorized
+`Review(accept)` transaction. There is no manual/public create API and no
+separate authorization action: creation is a lifecycle consequence of the
+already-authorized review operation. `needs_revision` and `reject` create none.
+
+The non-accept effects follow REV's canonical lifecycle: `needs_revision` sets
+the Task to `needs_revision` and keeps its TaskAssignment `active`; `reject`
+sets the Task to `rejected` with a bounded human reason and blocks only the
+same-task TaskAssignment with its source Review. Reject changes no grant or
+unrelated task. The archival `closed/review_rejected` wording is not adopted.
+
+The repository's existing immutable `Submission` row is already the submission
+version identity. Therefore FinalAcceptance stores canonical `submission_id`,
+not `submission_version_id`, and enforces unique task, source Review, and
+Submission lineage. The handoff's `policy_context_ref` maps to canonical
+immutable `ReviewPolicy.id`, stored as `review_policy_id`; REV proves the locked
+same-chain lineage. CON does not interpret it as contribution policy or use it
+to decide awards.
+
+`completed_review` keeps direct Review/ReviewLease lineage and is unique per
+Review. `accepted_submission` requires `source_final_acceptance_id` plus the
+exact TaskAssignment and is unique per FinalAcceptance; its direct
+`source_review_id` is null because the FinalAcceptance already owns that link.
+Database checks enforce the mutually exclusive source shapes.
+
+REV creates Review and optional FinalAcceptance, applies task/assignment
+effects, invokes the mandatory CON flush-only participant, stages shared audit/
+outbox records, and commits once. CON failure rolls the entire unit back. ART
+and provider calls remain absent; fulfillment begins asynchronously after
+commit. V0.1 has no adjudication policy, queue, lease, state, decision,
+contribution type, branch, action, readiness check, or initiative dependency.

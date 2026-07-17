@@ -3,9 +3,10 @@
 ## Goal
 
 Implement the mandatory flush-only participant that creates reviewer and
-accept-only submitter contributions, evaluates frozen ContributionRules, creates
-applicable awards, and stages audit/outbox rows in the caller-owned Review
-transaction. It performs no evidence projection or ART work.
+FinalAcceptance-sourced submitter contributions, evaluates frozen
+ContributionRules, creates applicable awards, and returns typed audit/outbox
+inputs in the caller-owned Review transaction. It performs no evidence
+projection or ART work.
 
 ## Risk
 
@@ -37,6 +38,7 @@ mutable/delete/void/adjust contribution/award path; reputation scoring
 The typed request carries the caller AsyncSession and exact locked:
 
 - Review, ReviewLease, queue/lifecycle fence, and canonical decision;
+- accept-only REV-owned FinalAcceptance, otherwise null;
 - versioned Submission, TaskAssignment, task, and project;
 - reviewer/submitter ActorProfile IDs;
 - reviewer and submitter frozen ContributionPolicyVersion IDs;
@@ -47,8 +49,14 @@ The typed request carries the caller AsyncSession and exact locked:
 ## Acceptance criteria
 
 - [ ] Every valid committed Review creates exactly one reviewer
-  `completed_review`; accept additionally creates one submitter
-  `accepted_submission`; needs_revision/reject create no submitter record.
+  `completed_review`. Accept requires exactly one same-chain FinalAcceptance and
+  creates one submitter `accepted_submission` from it; needs_revision/reject
+  require no FinalAcceptance and create no submitter record.
+- [ ] Locked participant inputs prove REV already applied the exact outcome:
+  accept has Task `accepted` and Assignment `completed`; needs_revision has Task
+  `needs_revision` and Assignment still `active`; reject has Task `rejected`
+  with the bounded human reason and only the same-task Assignment `blocked` with
+  its source Review. CON does not own or mutate those lifecycle effects.
 - [ ] Repeated idempotent decision returns the same rows; a later revision
   Review creates a distinct reviewer contribution; automated outcomes create
   none.
@@ -58,20 +66,24 @@ The typed request carries the caller AsyncSession and exact locked:
   definitions.
 - [ ] CON copies the supplied stabilized digest exactly into
   ContributionRecord.artifact_hash. It does not load/rederive it or call ART.
-- [ ] Participant validates exact Review/Submission/assignment/lease/project/
-  actor/policy lineage and an allowed review.decision whose actor, action,
+- [ ] Participant validates exact FinalAcceptance/Review/Submission/assignment/
+  lease/project/actor/policy lineage and an allowed review.decision whose actor, action,
   resource digest, matched reviewer grant/project, request, and correlation
   match the locked transaction.
-- [ ] Participant uses caller AsyncSession, stages contribution/award/audit and
-  stable shared-outbox events, flushes, and never commits. It creates no
-  evidence projection or evidence-request event.
+- [ ] Participant uses caller AsyncSession, stages contribution/award rows,
+  returns canonical typed audit/outbox inputs, flushes, and never commits. REV
+  stages shared audit/outbox rows after the participant and before its single
+  commit. CON creates no evidence projection or evidence-request event.
 - [ ] CON never reads REV/AUTH repositories or evaluates review.decision. REV
   owns canonical composition and the single route commit.
 - [ ] AUTH registration -> CON participant -> REV hidden composition -> AUTH
   evaluator/activation order is proven. Real kernel denies while planned.
 - [ ] Fault injection at every CON write/flush and every later REV step rolls
-  back Review/task/contribution/award/audit/outbox together. No post-commit
-  repair path exists.
+  back Review/FinalAcceptance/task/assignment/contribution/award/audit/outbox
+  together. No post-commit repair path exists.
+- [ ] No FinalAcceptance create action/API exists. Static/runtime proof finds no
+  adjudication policy, grant/action, queue/lease, state, decision, contribution,
+  conditional branch, readiness check, or initiative dependency.
 - [ ] Static/runtime spies prove zero ART capability, repository, preparation,
   provider, or evidence calls in every decision path.
 - [ ] PostgreSQL uniqueness, replay, changed-fact conflict, and concurrency tests

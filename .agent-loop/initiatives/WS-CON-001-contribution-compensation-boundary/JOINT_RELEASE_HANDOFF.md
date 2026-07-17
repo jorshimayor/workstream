@@ -2,10 +2,11 @@
 
 ## Boundary
 
-REV owns Review decisions, queue/lease/task effects, release-control state, and
+REV owns Review decisions, FinalAcceptance, queue/lease/task effects, shared
+audit/outbox staging for the decision transaction, release-control state, and
 the single route commit. CON owns ContributionPolicy, ContributionRecord,
-CompensationAward, fulfillment, shared outbox participation, and CON
-audit/projections. AUTH owns all authorization and activation.
+CompensationAward, fulfillment behavior, and CON projections. AUTH owns all
+authorization and activation.
 
 The canonical cross-boundary source is merged
 `WS-XINT-001/REV_CON_HANDOFF.md`. Sibling worktree state is discovery only until
@@ -17,11 +18,18 @@ reviewed and merged to trusted `main`.
 AUTH prepares review.decision with exact reviewer grant
 -> REV locks and recomposes canonical facts
 -> AUTH evaluates once
--> REV stages Review/lease/queue/task effects
+-> REV stages Review/findings/resolutions, consumes ReviewLease, closes queue
+-> on accept, REV creates immutable FinalAcceptance linked to Review,
+   canonical Submission, Task, submitter, reviewer and locked ReviewPolicy
+   then accepts Task and completes TaskAssignment
+-> on needs_revision, REV sets Task to needs_revision and keeps TaskAssignment active
+-> on reject, REV sets Task to rejected with a bounded human reason and blocks
+   only the same-task TaskAssignment with its source Review
 -> CON flush-only participant creates reviewer contribution
--> on accept only, CON creates submitter contribution
+-> on accept only, CON creates submitter contribution from FinalAcceptance,
+   never directly from Review.decision
 -> CON evaluates frozen ContributionRules and creates applicable awards
--> CON stages audit/outbox rows
+-> REV stages shared audit/outbox rows from the typed participant result
 -> REV route commits once
 ```
 
@@ -29,12 +37,58 @@ No no-op participant, post-commit repair, ART call, evidence projection, or
 provider I/O exists in this transaction. CON copies stabilized artifact-hash
 lineage from REV facts.
 
+## FinalAcceptance contract
+
+The external shorthand `submission_version_id` means canonical
+`Submission.id`; the repository stores `submission_id` because each immutable
+Submission row is already one version. The external `policy_context_ref` means
+the exact locked `ReviewPolicy.id`; the repository stores `review_policy_id`.
+REV owns this record and the composite same-chain constraints.
+
+```text
+FinalAcceptance
+  id
+  project_id
+  task_id                  UNIQUE
+  submission_id            UNIQUE
+  source_review_id         UNIQUE
+  accepted_submitter_id
+  accepted_at
+  recorded_by_reviewer_id
+  review_policy_id
+```
+
+It is created only inside `Review(accept)`. There is no public/manual creation
+API and no separate authorization action. `needs_revision` and `reject` create
+none. Accept/reject are terminal in v0.1; there is no adjudication, appeal,
+replacement acceptance, or reopen path.
+
+For `needs_revision`, REV keeps the same TaskAssignment `active`. For `reject`,
+REV blocks only that same-task TaskAssignment, binds the block to the reject
+Review, and sets the Task to canonical `rejected` with its bounded human reason;
+it changes no grant or unrelated task. The archival `closed/review_rejected`
+wording is not a lifecycle token.
+
+Optional reviewer-quality sampling is non-mutating audit only. It does not
+delay or replace FinalAcceptance and cannot change Review/task/contribution
+truth.
+
+`completed_review` binds directly to Review and ReviewLease and is unique per
+Review. `accepted_submission` binds to FinalAcceptance and TaskAssignment and
+is unique per FinalAcceptance. Database checks make those source shapes
+mutually exclusive; CON never infers a submitter record by reading
+Review.decision.
+
 ## Release prerequisites
 
 - ContributionPolicy publish/freeze and adapter-binding behavior are merged.
 - TaskAssignment and ReviewLease carry exact frozen policy-version IDs.
+- REV FinalAcceptance persistence and its locked decision-lineage contract are
+  merged, including exact task/Review/Submission uniqueness and ReviewPolicy
+  lineage.
 - Shared outbox/audit participants and CON-07 are mandatory and merged.
-- REV hidden claim/decision composition consumes CON-06/07 and has no fallback.
+- REV hidden claim/decision composition then consumes CON-06/07 and has no
+  fallback.
 - AUTH complete REV custody transfer, exact evaluators, reviewer grant path,
   prepared protocol, and activation are merged.
 - Every public/service CON action has exact AUTH registration, evaluator,
@@ -58,11 +112,17 @@ readiness remains false until exact rows exist.
 
 ## Joint live proof
 
-The release drill covers accept, needs_revision, reject, explicit unpaid,
-money+points, frozen-version changes, repeated/revision Reviews, no-self-review,
-grant revocation, atomic rollback, adapter outage/replay, callback-before-ack,
-failure then fulfillment, reconciliation, drain fencing, and hidden-to-active
-route transition. It asserts zero ART calls in core contribution creation.
+The release drill covers accept with exactly one FinalAcceptance, accepted Task,
+completed Assignment, and submitter contribution; needs_revision with an active
+Assignment and neither acceptance fact nor submitter contribution; reject with
+canonical rejected Task, same-task blocked Assignment/source Review, and neither
+acceptance fact nor submitter contribution; one reviewer contribution per
+Review, explicit unpaid, money+points, frozen-version changes,
+repeated/revision Reviews, no-self-review, grant revocation, source-shape and
+uniqueness conflicts, atomic rollback, adapter outage/replay,
+callback-before-ack, failure then fulfillment, reconciliation, drain fencing,
+and hidden-to-active route transition. It asserts zero ART calls and no
+adjudication action/state/queue/readiness dependency.
 
 ## Ownership and stop
 

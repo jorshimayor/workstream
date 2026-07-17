@@ -28,6 +28,7 @@ Project Guide
 -> Platform Checkers
 -> Human Review
 -> Needs Revision / Accepted / Rejected
+-> Final Acceptance on Accepted
 -> Contribution Record
 -> Compensation Award / Fulfillment when payable
 -> Reputation Update
@@ -51,7 +52,8 @@ Different projects speak different domain languages, but serious task evaluation
 - every review creates a decision
 - every revision must close prior feedback
 - every valid human review creates a reviewer contribution
-- every accepted task additionally creates a submitter contribution
+- every accepted Review creates one immutable FinalAcceptance
+- every submitter accepted_submission contribution consumes FinalAcceptance
 - every payable contribution updates compensation fulfillment; all contributions
   can update reputation
 
@@ -252,7 +254,7 @@ Run checks
 Review packet
 Record review decision: accept, needs_revision, or reject
 Create reviewer contribution for every valid human review
-Create submitter contribution only for accepted work
+On accept, create FinalAcceptance then create the submitter contribution only from it
 Record compensation status only for payable contribution awards
 Update reputation from review outcome
 Review lessons learned
@@ -287,7 +289,8 @@ Artifacts, evidence, and auditing:
 Contribution and compensation:
 
 - every valid human review creates a reviewer contribution from locked evidence
-- accepted work additionally creates a submitter contribution
+- accepted work creates an immutable FinalAcceptance, which is the sole source
+  for the submitter contribution
 - only payable contributions create immutable awards and fulfillment tracking;
   explicit unpaid rules create none
 - compensation fulfillment is recorded separately from task acceptance
