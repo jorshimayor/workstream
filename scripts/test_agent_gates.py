@@ -103,6 +103,23 @@ BACKEND_FULL_SUITE_COVERAGE_COMMAND = "\n".join(
         "--cov=app --cov-report=term-missing --cov-fail-under=78",
     )
 )
+BACKEND_API_CONTRACT_E2E_COMMAND = "\n".join(
+    (
+        'metadata_dir="$(mktemp -d)"',
+        "trap 'rm -rf \"$metadata_dir\"' EXIT",
+        "python scripts/run_isolated_tests.py "
+        '--metadata-json "$metadata_dir/result.json" --timeout-seconds 3600 -- '
+        "python scripts/api_contract_e2e.py",
+    )
+)
+AUTH_09B_COVERAGE_COMMANDS = (
+    "coverage report --include='app/modules/actors/*' --precision=2 --fail-under=90",
+    "coverage report --include='app/modules/authorization/*' "
+    "--precision=2 --fail-under=90",
+    "coverage report "
+    "--include='app/interfaces/auth.py,app/core/auth.py,app/adapters/auth/dev.py,"
+    "app/adapters/auth/flow.py' --precision=2 --fail-under=90",
+)
 
 
 def artifact_contract_phase_for(coverage_phase: str) -> str:
@@ -4107,10 +4124,11 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
     ).read_text(encoding="utf-8")
 
     assert "Merged through PR #131 as `aa0fdcd`" in auth_map
-    assert "`WS-AUTH-001-09A` - Fixed Service Identity Foundation" in auth_status
+    assert "`WS-AUTH-001-09B` - Controlled Service Actor Provisioning" in auth_status
     assert "| `WS-AUTH-001-08` | Merged |" in auth_status
     assert "| `WS-AUTH-001-XINT` | Merged |" in auth_status
-    assert "| `WS-AUTH-001-09A` | In progress |" in auth_status
+    assert "| `WS-AUTH-001-09A` | Merged |" in auth_status
+    assert "| `WS-AUTH-001-09B` | In progress |" in auth_status
     assert "Merged through PR #129 as `9a04434`" in artifact_map
     assert "Reviewed in isolated worktree; PR publication pending" in artifact_map
     assert "No artifact implementation chunk is active." in artifact_status
@@ -4755,6 +4773,34 @@ def test_backend_coverage_thresholds_are_regression_protected() -> None:
         "run": "python -m pytest -q tests/test_isolated_database_runner.py",
     }
     assert steps.index(isolated_step) < full_suite_index
+    api_e2e_steps = [
+        step for step in steps if step.get("name") == "API contract real API e2e"
+    ]
+    assert len(api_e2e_steps) == 1
+    api_e2e_step = api_e2e_steps[0]
+    assert set(api_e2e_step) == {"name", "working-directory", "env", "run"}
+    assert api_e2e_step["working-directory"] == "backend"
+    assert api_e2e_step["env"] == {
+        "WORKSTREAM_TEST_ADMIN_DATABASE_URL": (
+            "postgresql+asyncpg://workstream:workstream@localhost:5433/postgres"
+        )
+    }
+    assert str(api_e2e_step["run"]).strip() == BACKEND_API_CONTRACT_E2E_COMMAND
+    assert steps.index(api_e2e_step) > full_suite_index
+    assert "WORKSTREAM_DATABASE_URL" not in api_e2e_step["env"]
+    auth_coverage_steps = [
+        step
+        for step in steps
+        if str(step.get("run", "")).strip() in AUTH_09B_COVERAGE_COMMANDS
+    ]
+    assert tuple(str(step["run"]).strip() for step in auth_coverage_steps) == (
+        AUTH_09B_COVERAGE_COMMANDS
+    )
+    for coverage_step in auth_coverage_steps:
+        assert full_suite_index < steps.index(coverage_step) < steps.index(api_e2e_step)
+        assert coverage_step.get("working-directory") == "backend"
+        for forbidden_key in ("if", "continue-on-error", "shell", "env"):
+            assert forbidden_key not in coverage_step
     active_phase = active_artifact_coverage_phase()
     expected_coverage = artifact_expected_coverage_commands_for(active_phase)
     actual_coverage = tuple(
@@ -4763,7 +4809,7 @@ def test_backend_coverage_thresholds_are_regression_protected() -> None:
         if str(step.get("run", "")).strip().startswith("coverage report ")
         and "--fail-under=90" in str(step.get("run", ""))
     )
-    assert actual_coverage == expected_coverage
+    assert actual_coverage == (*expected_coverage, *AUTH_09B_COVERAGE_COMMANDS)
     for command in expected_coverage:
         matches = [
             step for step in steps if str(step.get("run", "")).strip() == command
@@ -4779,7 +4825,9 @@ def test_backend_coverage_thresholds_are_regression_protected() -> None:
     assert any("app/modules/checkers/*" in command for command in later_commands)
     assert workflow.count("--cov-fail-under=78") == 1
     assert ("--cov=app --cov-report=term-missing --cov-fail-under=78") in workflow
-    assert workflow.count("--fail-under=90") == len(expected_coverage)
+    assert workflow.count("--fail-under=90") == len(expected_coverage) + len(
+        AUTH_09B_COVERAGE_COMMANDS
+    )
     assert "continue-on-error" not in workflow
 
 

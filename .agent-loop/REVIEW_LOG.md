@@ -1,5 +1,71 @@
 # Review Log
 
+## 2026-07-17 - WS-AUTH-001-09B Coverage Repair Internal Review Passed
+
+PR #143's replacement Backend run passed all 1,242 tests and measured 84.92
+percent global coverage, then the newly enforced authorization subsystem gate
+reported 1,600 statements, 164 misses, and 89.75 percent coverage. The bounded
+test-only repair at exact SHA
+`127615fde8f1b5583acf9dbbb3c606db514a455d` proves both successful definition
+read routes authorize the exact typed resource, touch the caller, and commit
+before disclosure. It also proves query and commit SQL failures each roll back
+and map to the stable retryable 503 response. The nine newly exercised
+statements project 155 misses and 90.31 percent on the unchanged denominator.
+All required internal reviewer tracks pass; replacement GitHub checks remain,
+and AUTH-09C is inactive.
+
+## 2026-07-17 - WS-AUTH-001-09B External Review Repair Passed
+
+PR #143 CodeRabbit review reported four valid fresh-row, subject-validation,
+replay-lifecycle, and CI coverage-enforcement findings. The first Backend run
+also exposed one stale exact active-action audit expectation while 1,240 other
+tests passed at 84.87 percent global coverage. The bounded repair at exact SHA
+`52d4d076c151bed3f47428b573c014e131096f4a` passed every required internal
+track. It adds real two-session stale ORM proof in both lifecycle directions,
+rejects unusable surrounding subject whitespace without normalization, denies
+inactive replay state, enforces three independent 90 percent CI reports, and
+restores exact audit parity. Replacement external checks remain; AUTH-09C is
+inactive.
+
+## 2026-07-17 - WS-AUTH-001-09B Internal Review Passed
+
+Integrated code SHA `641b439ceb370ecc792322e33c73b6668c244290` passed senior
+engineering, QA/test, security/auth, product/ops, architecture, CI integrity,
+docs, reuse/dedup, and test-delta review after every valid finding was repaired.
+The exact route provisions one fixed service principal atomically, activates
+only `actor.service.provision`, preserves unverified service timestamps, and
+continues to deny service callers before actor lookup. Focused actor,
+authorization, and verifier coverage each exceed 90 percent; all 80 agent gates
+and the isolated real HTTP contract drill pass. PR publication and external
+checks remain; AUTH-09C is inactive.
+
+## 2026-07-17 - WS-AUTH-001-09B Plan Review Passed
+
+The repaired contract passed every required preimplementation group at exact SHA
+`4a980fdd024a3311d604ec3e2cb38a8897f8a2cf`. It binds configured issuer through
+the verifier port, records service links as unverified until AUTH-09E, uses the
+canonical profile-before-link order, preserves negative-projection invalidation,
+adds migration `0024`, and requires behavior, privacy, concurrency, rollback,
+and three focused 90 percent coverage proofs. Runtime implementation may now
+begin within this boundary; AUTH-09C remains inactive.
+
+## 2026-07-17 - WS-AUTH-001-09B Initial Plan Review Failed
+
+The first exact-head L1 review rejected the inherited 09B contract before any
+runtime edit. It incorrectly derived the service issuer from the human caller,
+fabricated service verification time, inverted existing invalidation direction,
+left canonical request/resource/evidence bindings incomplete, omitted a required
+forward migration, and did not close lock ordering or concurrency proof. The
+contract is being repaired as one planning-only candidate; runtime remains
+untouched until fresh exact-head reviewer approval.
+
+## 2026-07-17 - WS-AUTH-001-09B Started
+
+PR #132 merged AUTH-09A as `299363a`; Loop Memory passed and stopped with 09B
+requiring a separate start. The user explicitly started controlled service actor
+provisioning. The L1 contract is being tightened and reviewed before runtime
+edits; AUTH-09C and service runtime admission remain inactive.
+
 ## 2026-07-17 - WS-CON-001-PLAN3 External Review Repair Started
 
 CodeRabbit posted five consolidated actionable threads and one PR-description

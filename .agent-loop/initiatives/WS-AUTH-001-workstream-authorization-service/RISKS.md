@@ -43,6 +43,8 @@
 | A27 | Wrong role invalidation reaches the wrong consumer | Reviewer/adjudicator revocation releases submitter work or one role removes another | Exact role in grant, cause event, obligation, and consumer filter | Three-role revoke/regrant and wrong-consumer negative tests |
 | A28 | AUTH invents incomplete REV/ART/CON resource or service contracts | Cross-domain privilege, deadlock, or unreviewable coupling | Block registration until immutable feature manifests name facts, guards, service identity, and transaction owner | Registration gate plus manifest and cross-service parity tests |
 | A29 | PR #132 convergence drops reviewed migration or cleanup repairs | Migration replay imports mutable runtime code, wheel installs fail, or cleanup hides the original error | Preserve frozen packaged contract, script-owned root, location-independent replay, same-loop cleanup, and original-exception precedence | Exact-head internal re-review plus wheel replay and cancellation/cleanup tests |
+| A30 | Provisioning fabricates service-token verification | An untested service identity appears recently authenticated | Nullable service-link verification timestamp in `0024`, explicit human timestamp writes, and AUTH-09E-only service verification updates | Upgrade/downgrade, create/replay/denial/failure timestamp state-table tests |
+| A31 | Service provisioning crosses inverse actor/link locks | Administrative and lifecycle mutations deadlock or admit stale authority | Canonical AuthorityControl -> profile -> exact link -> exact grant order before fixed-identity and issuer/subject advisory locks | Independent-session same-key, identity collision, revoke/lifecycle crossing, rollback, and no-deadlock proof |
 
 ## Required reviewers
 

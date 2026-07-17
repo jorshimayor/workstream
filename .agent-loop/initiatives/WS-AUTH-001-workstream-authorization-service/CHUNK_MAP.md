@@ -29,8 +29,8 @@ stopped.
 | `WS-AUTH-001-08` | Bootstrap And Administrative Role Grants | L1 | Merged through PR #131 as `aa0fdcd` |
 | `WS-AUTH-001-XINT` | Lifecycle Boundary Plan Reconciliation | L1 | Merged through PR #140 as `d541521` |
 | `WS-AUTH-001-09` | Actor State, Identity Revocation, And Service Actors | L1 | Split before runtime implementation |
-| `WS-AUTH-001-09A` | Fixed Service Identity Foundation | L1 | Active PR #132 convergence and exact-head re-review from merged XINT |
-| `WS-AUTH-001-09B` | Controlled Service Actor Provisioning | L1 | Inactive until 09A merge/memory and explicit start |
+| `WS-AUTH-001-09A` | Fixed Service Identity Foundation | L1 | Merged through PR #132 as `299363a` |
+| `WS-AUTH-001-09B` | Controlled Service Actor Provisioning | L1 | Active after explicit user start from signed 09A memory |
 | `WS-AUTH-001-09C` | Actor And Identity-Link Administration Reads | L1 | Inactive until 09B merge/memory and explicit start |
 | `WS-AUTH-001-09D` | Actor And Identity-Link Lifecycle Mutations | L1 | Inactive until 09C merge/memory and explicit start |
 | `WS-AUTH-001-09E` | Fixed Service Runtime Admission | L1 | Inactive until 09D merge/memory and explicit start |
@@ -185,9 +185,8 @@ signed automated memory completed, and the user explicitly started AUTH-07.
 Required L1 review rejected the combined contract before runtime edits and
 required 07A/07B. AUTH-07B merged through PR #130 as `90eca12`; AUTH-08 merged
 through PR #131 as `aa0fdcd`. Parent AUTH-09 was split before implementation.
-PR #140 merged the required XINT planning reconciliation as `d541521`, signed
-memory stopped, and the user explicitly started the PR #132 convergence. Its
-seven identities, eleven static matrix memberships, eight planned actions, and
-migration `0023` remain valid. The repair must preserve XINT custody and
-independent-role wording, pass exact-head review and checks, and stop for human
-merge. Do not start AUTH-09B or POL-002-04 automatically.
+PR #140 merged the required XINT planning reconciliation as `d541521`. PR #132
+then merged seven identities, eleven static matrix memberships, eight planned
+actions, and migration `0023` as `299363a`; signed memory stopped. The user
+explicitly started AUTH-09B. It must pass exact-head review and checks, then
+stop for human merge. Do not start AUTH-09C or POL-002-04 automatically.
