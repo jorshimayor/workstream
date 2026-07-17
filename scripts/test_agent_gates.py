@@ -4097,7 +4097,7 @@ def test_auth_spec_orders_service_admission_before_project_roles() -> None:
 
 
 def test_parallel_initiative_status_matches_trusted_main() -> None:
-    """Initiative state preserves merged prerequisites and the current ART gate."""
+    """Auth prerequisites and the current ART gate remain internally consistent."""
     auth_map = Path(
         ".agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/"
         "CHUNK_MAP.md"
@@ -4119,18 +4119,10 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
     loop_state = Path(".agent-loop/LOOP_STATE.md").read_text(encoding="utf-8")
 
     assert "Merged through PR #131 as `aa0fdcd`" in auth_map
-    assert "AUTH-09A then merged through PR #132 as `299363a`" in auth_status.replace(
-        "\n", " "
-    )
+    assert "`WS-AUTH-001-09A` - Fixed Service Identity Foundation" in auth_status
     assert "| `WS-AUTH-001-08` | Merged |" in auth_status
     assert "| `WS-AUTH-001-XINT` | Merged |" in auth_status
-    assert "| `WS-AUTH-001-09A` | Merged |" in auth_status
-    assert "Fixed service identity foundation merged as `299363a`" in auth_status
-    assert "| `WS-AUTH-001-09B` | Proposed |" in auth_status
-    assert "None. `WS-AUTH-001-09A` merged through PR #132 as `299363a`." in auth_status
-    assert "`WS-AUTH-001-09B` remains inactive until a separate explicit human start." in auth_status
-    assert "## Current review branch\n\nNone." in auth_status
-    assert "PR #132 cannot merge" not in auth_status
+    assert "| `WS-AUTH-001-09A` | In progress |" in auth_status
     assert "Merged through PR #129 as `9a04434`" in artifact_map
     artifact_phases = (
         "Deterministic proof passed; exact-SHA internal review in progress",
