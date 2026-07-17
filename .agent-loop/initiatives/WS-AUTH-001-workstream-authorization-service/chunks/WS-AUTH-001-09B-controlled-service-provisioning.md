@@ -6,6 +6,13 @@ Activate only `actor.service.provision` and let an effective Access
 Administrator bind one opaque Identity Issuer subject to one unprovisioned
 fixed service ActorProfile whose authority is derived from the closed matrix.
 
+## Why this chunk exists
+
+AUTH-09A established stable fixed identities and inert matrix candidates but
+created no supported binding path. This chunk lets one already-authorized human
+administrator bind the configured Identity Issuer to one fixed local service
+principal without admitting that principal to runtime authorization.
+
 ## Allowed files
 
 ```text
@@ -19,6 +26,7 @@ backend/tests/test_authorization.py
 backend/tests/test_api_controls.py
 backend/tests/test_api_rate_controls.py
 backend/scripts/api_contract_e2e.py
+scripts/test_agent_gates.py
 docs/spec_authorization_service.md
 docs/operations_authorization_service.md
 .agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/**
@@ -36,6 +44,8 @@ generic or unknown service identities
 service actor list/detail routes
 broadening the human admin dependency to admit service callers
 artifact action activation, resource composition, or adapter attachment
+compatibility aliases, fallback constructors, dual issuer paths, or a second
+service identity model
 ```
 
 ## Exact surface
@@ -45,10 +55,44 @@ artifact action activation, resource composition, or adapter attachment
 | `POST /api/v1/service-actors` | `actor.service.provision` | `actor.service.provision` | requested unprovisioned fixed service identity | effective system-scoped Access Administrator grant |
 
 The strict body contains only `service_identity`, opaque `subject`, and required
-reason. The issuer is the server-configured canonical Identity Issuer. Response
-fields are actor profile ID, service identity, actor/link status, provisioning
-method, and timestamps; it returns no subject, issuer, email, raw reason, grant,
-token material, or redundant assignment list.
+`reason`. `service_identity` is the closed `ServiceIdentity` enum. `subject` is
+preserved byte-for-byte as one non-empty 200-character identity anchor and is
+never normalized, logged, returned, or placed in evidence. `reason` is bounded
+to 1-500 UTF-8 bytes and only its canonical digest enters idempotency input.
+
+The issuer is the exact issuer on the successfully verified caller's active
+server-owned identity link. The request cannot select or override it. A new
+service ActorProfile receives a random UUID independent of issuer or subject;
+the fixed `service_identity` is its stable local name. `created_by` and
+`linked_by` are the authorized human ActorProfile ID.
+
+The response contains only `actor_profile_id`, `service_identity`, fixed active
+actor/link statuses, `manual_service_provisioning`, `created_at`, and
+`linked_at`. It returns no identity-link ID, subject, issuer, email, raw reason,
+grant, token material, or redundant assignment list.
+
+## Transaction and evidence contract
+
+The route first reserves the caller/operation/idempotency namespace, then the
+kernel locks `AuthorityControl`, the caller's exact identity link and profile,
+and the matched system Access Administrator grant. After an allowed decision,
+actor persistence serializes the fixed service identity and exact issuer/subject
+before checking occupancy. ActorProfile, ActorIdentityLink, idempotency
+completion, `service_actor_provisioned`, and authority-invalidation evidence
+flush in the same caller-owned transaction; the route commits once.
+
+The success and invalidation events bind to `actor.service.provision`, the
+matched Access Administrator grant, the created ActorProfile, and the exact
+idempotency record. They contain fixed lifecycle facts and request digests only,
+never issuer, subject, raw reason, token claims, email, or matrix memberships.
+The invalidation transition is ineffective-to-effective for the new local actor
+record; it does not claim that any service ActionId is executable.
+
+Conflict codes are closed: `service_identity_already_provisioned` for an
+occupied fixed identity, `identity_subject_already_linked` for an occupied exact
+issuer/subject, and `idempotency_mismatch` for key/request drift. SQL,
+authorization-evidence, invalidation-evidence, or commit failure maps to the
+retryable `service_unavailable` 503 envelope after rollback.
 
 ## Acceptance criteria
 
@@ -68,6 +112,9 @@ token material, or redundant assignment list.
   failure is the stable 503 envelope.
 - Only the successful human caller verification timestamps advance. A replay,
   denial, conflict, or failure does not fabricate service verification.
+- Replay revalidates the current human caller and matched grant, reconstructs
+  the original committed response from immutable creation facts, and does not
+  touch the service ActorProfile or service identity-link verification fields.
 - The admin mutation limiter applies; response/log/audit tests prove opaque
   subject, issuer, token, email, and raw reason are not disclosed.
 - Provisioning confers no executable service authority. Only AUTH-09E may add
@@ -76,6 +123,15 @@ token material, or redundant assignment list.
   artifact action.
 - Focused actor and authorization subsystem coverage is at least 90 percent;
   GitHub Backend preserves the repository-wide 78 percent floor.
+
+## Migration and compatibility boundary
+
+No schema migration is required: migration `0023` already owns the fixed
+identity column and constraints, while `0021`/`0022` audit parity already knows
+the action/permission pair and service creation operation. AUTH-09B changes the
+typed availability row only. Historical migrations remain immutable. No old
+route, alias, inferred identity, token-role authority, or fallback path is
+retained or introduced.
 
 ## Risk and reviewers
 

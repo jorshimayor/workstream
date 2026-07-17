@@ -1,5 +1,12 @@
 # Review Log
 
+## 2026-07-17 - WS-AUTH-001-09B Started
+
+PR #132 merged AUTH-09A as `299363a`; Loop Memory passed and stopped with 09B
+requiring a separate start. The user explicitly started controlled service actor
+provisioning. The L1 contract is being tightened and reviewed before runtime
+edits; AUTH-09C and service runtime admission remain inactive.
+
 ## 2026-07-17 - WS-AUTH-001-09A Convergence Started
 
 After PR #140 merged as `d541521` and signed memory stopped, the user explicitly
