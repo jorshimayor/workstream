@@ -9,6 +9,8 @@
 - `WS-AUTH-001`, `WS-CON-001`, `WS-IMP-001`, architecture lockdown, ADRs,
   operations docs, current initiative plans, migrations, backend modules, and
   tests
+- Merged WS-XINT-001 PR #139 at trusted main `5d353b6`, including its
+  AUTH/REV, AUTH role/service, ART/REV, and REV/CON handoffs
 
 The current revised Markdown contains 2,396 lines and 12,570 words. Its SHA-256 is
 `fffadc271c267801250b044edc570e515a250eff48afdc64f9c1f8753e6ab058`.
@@ -36,8 +38,9 @@ before producing the reconciled active contract.
    moves an allowed checker result to `review_pending`; it creates no review
    queue entry.
 4. `backend/app/modules/tasks/lifecycle.py` has statuses through
-   `needs_revision`, but no `accepted` or terminal `closed` transition and no
-   task `closed_reason`.
+   `needs_revision`. Canonical active docs use `accepted`, `rejected`, and
+   `cancelled`; the archival REV source's `closed/review_rejected` wording is
+   stale and must not introduce an undocumented `closed` status.
 5. `TaskAssignment` supports one active assignment per task but has no blocked
    fields or completed-review effects.
 6. `ReviewPolicy` and `RevisionPolicy` exist, but review preference, review
@@ -49,9 +52,9 @@ before producing the reconciled active contract.
 ## Authorization boundary
 
 - The original discovery base was `f599551`, which merged AUTH-06. The
-  2026-07-16 pull rebased REV onto trusted main
-  `aa0fdcd6912e66609e39a2fbd7b65f67be6c62f3`, which merges AUTH-08 PR #131 and
-  includes ADR-0014's shared external-adapter foundation.
+  2026-07-17 reconciliation rebased REV onto trusted main
+  `5d353b6d3f8a36b9b9ffdc1959487a150ac25fd1`, which merges WS-XINT-001 PR #139
+  and includes AUTH-08, ART-02A2, ADR 0015, and the four lifecycle handoffs.
 - Authority audit and mutation idempotency foundations exist.
 - The request-scoped deny-by-default kernel exists. Actor self-read/self-update
   and seven AUTH-08 administrative actions are active. Project grants, actor
@@ -61,7 +64,11 @@ before producing the reconciled active contract.
   `LegacyWorkflowEligibility`.
 - Review/task/contribution lineage must store canonical human
   `ActorProfile.id`, not external subject, email, legacy typed-profile ID, or
-  role labels. Internal jobs remain explicitly typed service/system actors.
+  role labels. Review authority requires the independent exact-project
+  `reviewer` grant; `submitter` and `adjudicator` grants do not substitute.
+- Protected review jobs require AUTH-09E fixed-service admission through an
+  exact active identity link/profile, immutable service identity, and static
+  action row. A generic system-principal or fabricated human is not allowed.
 - `review.queue.override` is present in the merged 74-PermissionId catalogue;
   its owning review actions remain planned/inactive. Artifact recovery already uses
   the registered `artifact.verification_job.retry` action and ART-owned
@@ -77,13 +84,14 @@ actions, and leaves 48 planned. Canonical `submission.create` plus the original
 19 review-owned actions all remain planned/inactive. AUTH-13/14
 also establish the final `TaskAssignment.contributor_id` and
 `Submission.contributor_id` names and authority-loss replacement-assignee
-behavior. The four later revision-obligation-close, repair, legacy-close, and
-joint-lifecycle-activation ActionIds remain explicit AUTH-owned additions before
-their owning chunks. REV's four additions must expand the merged 57-action
-baseline's typed catalogue/owner and PostgreSQL audit parity
-from 57 to exactly 61, with 9 active and 52 planned. Enum-only registration is
-not runtime authority, and all 24 REV dependencies remain inactive until their
-owning REV chunks activate them.
+  behavior. The four later revision-obligation-close, repair, legacy-close, and
+  joint-lifecycle-control ActionIds remain proposed AUTH-owned additions before
+  their owning hidden-behavior chunks. The merged 57-action count is a historical
+  AUTH-08 snapshot, not a future fixed total. WS-XINT-001 also proposes the
+  separate ART service action `artifact.review_evidence.binding.create`; each
+  later AUTH registration/activation contract must derive exact before/after
+  counts from current trusted main and account for its delta independently.
+  REV builds hidden behavior and typed facts; AUTH alone changes availability.
 
 AUTH-08 resolves the three consumption blockers found during the AUTH-07B
 dependency review: successful dependency teardown now rolls back any open
@@ -95,20 +103,21 @@ route-owned transaction. Its internal evidence records 275 focused behavior
 tests, 90.17 percent branch-aware focused coverage, and 17 isolated Alembic
 tests. Final PR checks passed Backend, Agent Gates, and CodeRabbit. REV runtime
 chunks must preserve these merged invariants and still wait for the later AUTH
-definition-of-done gate owned by each consumer, then consume
-`AuthorizationService.require(action_id, resource_context)`, canonical resource
-contexts, decision links, revocation invalidation, and provisioned system actors
-without importing grant persistence into the review module.
+  definition-of-done gate owned by each consumer, AUTH-09E for protected service
+  callers, and the matching AUTH activation checkpoint. Reads consume
+  request-scoped `AuthorizationService.require`; mutations consume the future
+  authority-first prepared protocol and exactly one final evaluation without
+  importing grant persistence into the review module.
 
 ## Artifact boundary
 
 - `ArtifactContent`, immutable `ArtifactBinding`, `ArtifactReplica`, operation
   receipts, upload staging, a provider-neutral `ArtifactStore`, and a
   LocalStorage adapter exist.
-- Current artifact operations cover store, recover committed store, open, stat,
-  verify, retain, release, and receipt lookup. The current application service
-  is ingest-focused; public product cutovers and review-specific typed reads do
-  not exist.
+- Current ArtifactStore v1 operations cover store, recover committed store,
+  open, stat, verify, retain, release, and receipt lookup. They are discovery
+  state only: WS-XINT-001 requires ART v2 as the sole future provider boundary,
+  and REV must not consume the v1 provider contract.
 - Merged ART-02A2 PR #129 at trusted main
   `9a04434e2f23c5dec8939dadb943bba4d85110c0`, final head
   `32aab89262a3944f305e9e5dc4c65a2d31e2e144`, adds an inactive
@@ -132,18 +141,50 @@ without importing grant persistence into the review module.
   retrieval, finding-evidence intake, retention, and projection capabilities
   supplied through composition-root registration. Tests may use fakes; no
   production bypass or provider import is acceptable.
+- WS-XINT-001 assigns immutable bytes, commitments, bindings, verification,
+  recovery, and candidates to ART while REV owns `ReviewPacketManifest`,
+  `ReviewEvidenceArtifact`, packet membership, and lifecycle semantics. Exact
+  packet read uses `review.context.read`, never generic `artifact.retrieve` or
+  Operator-only `artifact.binding.read`.
+- Evidence finalization requires the separate service action
+  `artifact.review_evidence.binding.create`, mapped to
+  `artifact.binding.create`, restricted to `workstream.artifact.binding`, backed
+  by a separately approved ART review-evidence capability, and activated only by
+  AUTH after its hidden behavior merges.
 
 ## Contribution boundary
 
-- No contribution, compensation policy, award, fulfillment outbox, or callback
+- No contribution policy, award, fulfillment outbox, or callback
   models are implemented in this snapshot.
 - Revised WS-REV requires one reviewer contribution for every Review and a
   submitter contribution only on `accept`.
-- WS-CON requires the reviewer compensation policy to be frozen on the
-  `ReviewLease` and its transaction participant to commit or roll back with the
-  Review, task/assignment effects, awards, audit, and outbox.
+- WS-CON requires the reviewer `ContributionPolicyVersion` to be frozen on the
+  `ReviewLease` and its flush-only transaction participant to commit or roll
+  back with the Review, task/assignment effects, awards, audit, and outbox.
 - Review core may be built behind an unexposed composition boundary, but the
   public decision endpoint cannot be enabled with a no-op contribution path.
+- Core contribution creation receives locked Review/Submission/assignment/
+  policy facts from REV, copies the stabilized versioned Submission
+  `artifact_hash` into `ContributionRecord.artifact_hash`, and performs no ART
+  call, provider I/O, or mandatory contribution-evidence artifact write.
+
+## WS-XINT-001 reconciliation findings
+
+1. Current `ActionOwner.REV_*` values are stale activation-custody encodings,
+   not feature ownership. AUTH must transfer every approved review action to an
+   exact AUTH activation custodian.
+2. Delivery order is AUTH registration, hidden dependency and REV behavior,
+   AUTH evaluator integration/activation, then REV joint product release.
+3. Reviewer authority is one exact active independent `reviewer` grant;
+   reviewer revocation changes only review-owned state.
+4. Preference expiry, lease expiry, review reconciliation, artifact-reference
+   reconciliation, and projection rebuild need distinct fixed service identities
+   and exact AUTH-09E static rows.
+5. Review evidence uses ART candidate/finalize and its exact binding service
+   action. Final decisions use stabilized binding facts without provider I/O.
+6. Contribution creation is a caller-owned single transaction using a CON
+   flush-only participant, frozen `ContributionPolicyVersion` rows, and no core
+   ART dependency or mandatory evidence projection.
 
 ## Existing infrastructure
 

@@ -34,6 +34,15 @@ verification timestamps only in successful route-owned transactions. REV
 retains these as regression invariants and does not patch AUTH implementation
 locally.
 
+Reads use request-scoped `AuthorizationService.require`. Mutations use AUTH's
+prepared protocol: AUTH locks authority, REV locks canonical feature rows and
+recomposes final facts, AUTH evaluates exactly once, participants flush, and the
+caller boundary commits once. REV never registers or activates actions.
+
+REV receives ART v2 typed packet-read and evidence candidate/finalize ports, not
+ArtifactStore, v1 verify/retain/release, ART repositories, provider references,
+or scratch paths.
+
 ### D4 - Review Offer Is Server Selected
 
 The reviewer current-work endpoint returns exactly one of active lease, next
@@ -144,12 +153,14 @@ active lease.
 preparation and `submission.create` with a stable policy error but leaves the
 task `needs_revision` and assignment active. It never closes automatically. A
 covered Project Manager may use the dedicated, idempotent, reason-bound
-`review.revision_obligation.close` command in chunk 11; that closes the task with `revision_limit_reached` or
-`revision_deadline_expired`, atomically sets `TaskAssignment.status=released`
+`review.revision_obligation.close` command in chunk 11; that moves the task from
+`needs_revision` to canonical `cancelled` with terminal reason
+`revision_limit_reached` or `revision_deadline_expired`, atomically sets
+`TaskAssignment.status=released`
 and `released_at=database_now`, clears the task's active-assignee projection,
 closes any queue entry as `admin_cancelled`, leaves the project grant unchanged,
-prevents reclaim because the task is closed, and creates no Review,
-contribution, award/payment instruction, or reputation
+prevents reclaim because the task is terminal, and creates no Review,
+contribution, award, fulfillment instruction, or reputation
 effect.
 
 **Human confirmed 2026-07-15.**
@@ -168,12 +179,15 @@ and the preflight identity before creating a lease. A subsequent provider
 outage is handled as an outage during an active lease and cannot create an
 adverse review outcome.
 
-### D8 - Public Decision Activation Waits For WS-CON
+### D8 - No Canonical Review Commit Exists Without WS-CON
 
-The internal review decision kernel may be implemented and tested behind an
-unexposed composition boundary. Production routing for the decision endpoint
-remains disabled until lease compensation-policy freeze and the WS-CON atomic
-transaction participant are installed. No production no-op participant exists.
+REV may land decision schemas, pure validation, and transaction input types
+behind an unexposed boundary, but no service may commit a canonical Review until
+the merged CON flush-only participant and ReviewLease/TaskAssignment
+`ContributionPolicyVersion` freezes are mandatory. CON failure rolls back the
+entire decision. No production or test-only no-op participant exists. AUTH may
+activate `review.decision` only after the complete hidden REV+CON composition
+merges.
 
 ### D9 - Canonical Review Projection Is Post-Commit
 
@@ -189,15 +203,16 @@ WS-REV-001 completes backend contracts, operational read models, and HTTP proof.
 The React frontend begins only after these contracts and lifecycle guards are
 stable, through a separately approved successor initiative.
 
-### D11 - Coherent Public Cutover Is Atomic
+### D11 - Coherent Public Release Is Atomic
 
 Chunks 05-12A may implement and test internal services and routers, but the
 production API composition exposes none of the reviewer/contributor lifecycle
-mutations. Chunk 13 enables current-work, claim, release, decline, context,
+mutations. After AUTH has separately activated every exact action, chunk 13
+exposes current-work, claim, release, decline, context,
 decision, revision preparation/resubmission, chain reads, and authorized admin
 operations together only when AUTH, ART, WS-CON, audit, outbox, recovery,
 reconciliation, projection, workers, and live preflight are mandatory and
-proven.
+proven. REV-13 changes product composition, not AUTH availability.
 
 **Human confirmed 2026-07-15.**
 
@@ -221,7 +236,7 @@ or legacy-incompatible rows remain unqueued for explicit operator remediation.
 Reviewer history and Review Context expose the authorized chain of Submission
 versions, Reviews, findings, responses, resolutions, guide-version transitions,
 and bounded audit facts. Artifact content is narrower: an active ReviewLease
-authorizes only the exact current review packet anchored to its single
+authorizes only the immutable `ReviewPacketManifest` anchored to its single
 Submission version. That packet contains the Submission bindings, the durable
 checker-run bindings from the exact immutable CheckerRun ID stored on its queue
 admission, its finding-response evidence bindings,
@@ -230,6 +245,11 @@ from canonical relations, never caller-supplied IDs. It does not authorize
 artifact bytes from a prior, later, sibling, cross-task, or cross-project
 submission packet. An expired or consumed historical lease is not current read
 authority.
+
+The manifest is a REV-owned semantic record containing only the exact queue/
+lease, versioned Submission, admitting CheckerRun/results, locked guide/revision
+context, response-evidence relations, and ART binding IDs. It contains no bytes,
+digest, provider data, receipt, scratch path, or AUTH matrix facts.
 
 Historical artifact projection is deliberately bounded to ArtifactBinding ID,
 relation kind/purpose, media type, verification/availability state, and required
@@ -240,20 +260,24 @@ scope, and credentials.
 Chain metadata authorization is relationship-specific. It permits the exact
 submitter whose immutable TaskAssignment/Submission appears in the chain, an
 active reviewer leased to that chain, a prior reviewer who authored a Review in
-that chain and still has a current project grant, or an explicitly authorized
+that chain and still has the exact current project `reviewer` grant, or an explicitly authorized
 Project Manager/Operator. It does not permit an arbitrary same-project reviewer.
 Prior participation grants metadata history only; artifact content still
 requires the current active lease for the exact Submission packet.
 
 Reviewer finding evidence enters through typed ART intake under the active
-lease and is attached to ReviewFinding by ArtifactBinding ID. Submitter response
+lease and creates an immutable REV-owned `ReviewEvidenceArtifact` relation to
+one ArtifactBinding ID. Its pre-decision slot is lease/operation scoped and is
+later linked to the exact finding without changing binding identity. Submitter response
 evidence uses the same ART boundary under the assigned submitter's
 `submission.create` scope. Human bearer tokens and raw provider locations never
 cross into storage calls.
 
 Evidence upload uses an ART-owned two-phase candidate/finalize capability.
-Authority and scope are checked before candidate intake, then re-locked and
-revalidated before a canonical ArtifactBinding/review relation is created.
+Provider I/O completes before finalization. AUTH then locks human authority,
+REV locks lineage, ART's database-local participant locks candidate/admission/
+binding state, REV recomposes final facts, AUTH evaluates once, and binding plus
+`ReviewEvidenceArtifact` flush together.
 Expiry, revocation, assignment loss, or preparation supersession during upload
 may leave only an ART-owned unbound candidate governed by ART retention; it
 creates no canonical binding/relation or lifecycle effect. Decision and
@@ -271,24 +295,23 @@ Every committed Review creates exactly one reviewer ContributionRecord. Only an
 for the accepted Submission version. All records, review effects, audit, and
 outbox state commit or roll back together through WS-CON.
 
-The WS-CON input is derived exclusively from immutable lineage. The reviewer
-record uses `Review.id`, `Review.review_lease_id`, the reviewed Submission row
-and version, the Submission's immutable TaskAssignment binding,
-`Review.reviewer_id`, the adopted immutable verified Submission packet digest
-mapped to WS-CON `source_submission_artifact_digest`, and the ReviewLease's
-frozen reviewer compensation policy version. The submitter record uses the same accepting Review and reviewed
-Submission, null review lease, that Submission's TaskAssignment,
-the canonical `Submission.contributor_id`, the same immutable Submission
-packet digest, and the
-TaskAssignment's frozen submitter compensation policy version. Project and task
-come from the same constrained chain. Actor, assignment, lease, Review, and
-Submission cross-links are database- and transaction-validated; no current task
-projection or current project compensation policy may substitute for them.
+The WS-CON input is derived exclusively from locked immutable lineage. It
+contains Review, ReviewLease, versioned Submission, TaskAssignment, reviewer,
+submitter, project/task, originating AuthorizationDecision, the exact frozen
+`ContributionPolicyVersion`, and the server-derived stabilized Submission
+`artifact_hash`. CON copies that value to `ContributionRecord.artifact_hash` and
+does not load, verify, or rederive it through ART. The current caller-supplied
+`Submission.package_hash` is not that field; the ART submission/checker cutover
+must add and bind the exact verified value before REV-10.
 
-ART, CON, and REV must adopt the exact underlying Submission digest field,
-representation, derivation, and database binding before CON-03C or REV-10. The
-current unconstrained caller-supplied `Submission.package_hash` is not accepted
-as canonical evidence without that adoption.
+CON creates one reviewer `completed_review` record for every Review and one
+submitter `accepted_submission` record only for `accept`, evaluates the matching
+frozen ContributionRule, creates no award for explicit unpaid, and creates
+immutable money and/or project-points awards when payable. Derived inserts do
+not invent `contribution.materialize` or `compensation.award.materialize`
+actions. Core creation calls no ART capability and performs no external I/O.
+Any contribution-evidence document is optional post-commit projection state and
+cannot gate or alter Review, ContributionRecord, award, fulfillment, or status.
 
 ### D16 - Canonical Actor IDs Are Product Lineage
 
@@ -299,21 +322,22 @@ author, and human administrative actor. External issuer/subject, email, legacy
 typed-profile row IDs, token roles, and profile labels are evidence or
 compatibility data, never actor IDs or authority.
 
-Internal timer, reconciliation, projection, and dispatch work uses the exact
-AUTH-registered service ActorProfile or system-principal representation required
-by its ActionId. It cannot occupy a human reviewer/submitter FK or receive a
-fabricated human grant. Authorization and audit retain the canonical actor
-reference kind so UUID-shaped service identities are not inferred to be human.
+Protected preference expiry, lease expiry, review reconciliation, artifact-
+reference reconciliation, and projection rebuild use distinct exact fixed
+service ActorProfiles/static ActionId rows admitted through AUTH-09E. They never
+enter human grant evaluation, borrow Operator authority, or occupy a human FK.
+Shared outbox dispatch retains its separately owned identity. Authorization and
+audit retain actor kind so UUID shape never implies human authority.
 
-### D17 - Compensation Freeze Is Independent Of Revision Context
+### D17 - Contribution Policy Freeze Is Independent Of Revision Context
 
-Legacy `PaymentPolicy` is removed by WS-CON-05A/05B. It is not retained in the
+Legacy payment policy is removed by WS-CON. It is not retained in the
 final Project Guide, Submission, CheckerRun, Task Context, or
 RevisionContextPreparation contract, and it is not replaced by the current
-CompensationPolicyVersion.
+moving `ContributionPolicyVersion`.
 
-Submitter compensation freezes once on the exact TaskAssignment; reviewer
-compensation freezes separately on each ReviewLease. Forward or backward guide
+Submitter `ContributionPolicyVersion` freezes once on the exact TaskAssignment;
+reviewer `ContributionPolicyVersion` freezes separately on each ReviewLease. Forward or backward guide
 rebase changes neither an existing assignment freeze nor an existing lease
 freeze. A later lease may independently freeze the then-current reviewer terms.
 
@@ -329,23 +353,41 @@ TaskAssignment as source lineage. Replacement assignment appends one immutable
 preparation successor whose target assignment is the replacement and whose
 guide context is freshly classified against the currently active Project Guide.
 Submission N+1 binds to that target assignment, and WS-CON submitter attribution
-and compensation derive from it. The old contributor cannot submit; no prior
+and contribution-policy freeze derive from it. The old contributor cannot submit; no prior
 Submission, assignment, Review, finding, or preparation is rewritten.
 
 ### D19 - Joint Release Control Is A Hidden Persisted Foundation
 
-Safe activation/shutdown is product infrastructure, not proof-script state.
+Safe product release/shutdown is product infrastructure, not proof-script state.
 Chunk 12A owns one PostgreSQL-canonical `JointLifecycleReleaseControl`, the
-Operator-only `review.lifecycle.activation.manage` action, advisory-lock-based
+hidden behavior and resource facts for the Operator-only
+`review.lifecycle.activation.manage` action, advisory-lock-based
 mutation fencing, typed internal fence ports, bounded drain observations, and
 crash-resumable phase history. Every canonical phase change is a fresh
 Operator-authorized adjacent transition; no worker replays the initiating human
-or advances phase. It lands with no production lifecycle route.
+or advances phase. It lands with no production lifecycle route and no action
+availability change. AUTH activates that exact action only after 12A merges.
 
 Review, every task submission, review-queue admission, authority-loss
 replacement, and compensation dispatch consume the same mandatory fence through
 explicit composition. CON retains fulfillment/callback semantics and exposes
 mandatory dispatch and callback hooks; it does not
-create a second shutdown controller. REV-13 registers and exercises the merged
-foundation, performs the ordered writer fence/migration/process cutover, and
-prohibits downgrade after protected rows exist.
+create a second shutdown controller. REV-13 exposes and exercises the merged,
+AUTH-active foundation, performs the ordered writer fence/migration/process
+cutover, and prohibits downgrade after protected rows exist.
+
+### D20 - Independent Roles And AUTH Activation Custody Supersede The Archive
+
+The project roles are exactly independent `submitter`, `reviewer`, and
+`adjudicator` grants. There is no combined role. Review behavior requires the
+exact active reviewer grant and no-self-review guard. Reviewer invalidation may
+change only review preference/lease/queue state; it never mutates submitter,
+adjudicator, or administrative authority. Adjudication actions and lifecycle
+remain unavailable and outside this initiative.
+
+AUTH is the sole registration, evaluator, activation-custody, and availability
+owner. REV chunks build hidden behavior and feature-manifest deltas; AUTH later
+activates exact actions; REV-13 performs the separate product-surface release.
+The 57-action AUTH-08 snapshot is not a promised final total because the four
+proposed REV actions and separate ART review-evidence binding action require
+independent current-main registration accounting.

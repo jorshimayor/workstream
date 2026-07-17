@@ -46,12 +46,16 @@ production `/api/v1` review-router registration
 - Search/projection reads are reauthorized through Workstream.
 - Artifact-reference reconciliation declares
   `review.artifact_reference.reconcile`; an authorized projection rebuild
-  declares `review.projection.rebuild`. Both call the centralized
-  `AuthorizationService.require` boundary with system or Operator context as
-  defined by their activation guards.
+  declares `review.projection.rebuild`. Artifact-reference reconciliation runs
+  only as `workstream.review.artifact_reference_reconciliation`; projection
+  rebuild runs only as `workstream.review.projection`. Each requires its exact
+  static ActionId row, provisioned ActorProfile/link, AUTH-09E admission, AUTH
+  prepare for the mutation, final REV facts, and one evaluation. Human Operator
+  or reviewer authority cannot substitute.
 - Artifact relation reconciliation covers verification, project/task scope,
-  retention, missing projection, receipt mismatch, uncertainty, and unavailable
-  retained content without editing canonical history.
+  missing projection, receipt mismatch, uncertainty, and unavailable content
+  through ART-owned typed facts without importing ART repositories, invoking v1
+  retain/release, or editing canonical history.
 - Required queue, lease, decision, authorization, evidence, projection, and lag
   metrics exist with bounded cardinality.
 - Reviews exposes a typed, same-session `ReviewLifecycleDrainObservationPort`
@@ -75,6 +79,9 @@ production `/api/v1` review-router registration
 - Projection handlers reuse `run_async_task`, fresh worker engine/session
   disposal, stable task IDs, and `sync_task_settings`; no second async bridge,
   session factory, or queue helper is introduced.
+- This chunk supplies hidden behavior, service resource facts, and feature-
+  manifest deltas while both review actions remain planned. AUTH separately
+  activates them after merge; product release waits for REV-13.
 
 ## Verification
 

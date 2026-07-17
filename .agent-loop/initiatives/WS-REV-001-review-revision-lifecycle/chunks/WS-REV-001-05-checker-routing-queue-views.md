@@ -64,16 +64,24 @@ production `/api/v1` review-router registration
 - Reviewer and administrative reads declare, respectively,
   `review.queue.read` and `review.queue.inspect`, use canonical project resource
   contexts, and call the centralized `AuthorizationService.require` boundary.
+- Reviewer current requires the exact active independent project `reviewer`
+  grant. Submitter, adjudicator, and administrative grants cannot substitute;
+  no-self-review remains a separate lifecycle guard.
+- This chunk supplies hidden read behavior, canonical resource composers,
+  guards, surface declarations, and a feature-manifest delta while both actions
+  remain planned and real-kernel requests return `action_unavailable`. AUTH
+  separately integrates evaluators and activates them after merge; this chunk
+  changes no catalogue owner or availability.
 - Merged AUTH-08 dependency tests prove successful teardown cannot commit an
   uncommitted queue/checker/review mutation, decision evidence SQL failure
   returns the stable retryable 503 with no partial state, and canonical actor
   verification timestamps retain their AUTH-defined allowed-access behavior.
-  Missing or regressed proof on the activation main SHA blocks this chunk.
+  Missing or regressed proof on the chunk-start main SHA blocks this chunk.
 - FIFO ordering is deterministic and preserves original age.
 - Historical admission follows D13: only latest, finalized, current
   `allow_review`, artifact-ready rows are reconciled; ambiguous rows receive an
   auditable remediation state and are not queued.
-- An idempotent activation scan covers existing `review_pending` rows, reports
+- An idempotent deployment admission scan covers existing `review_pending` rows, reports
   admitted/skipped/ambiguous counts in the admin view, and classifies legacy
   revision chains lacking structured responses for explicit operator handling.
 - Internal HTTP contract tests cover the routes while production OpenAPI proves

@@ -38,7 +38,8 @@ production `/api/v1` review-router registration
 - Evidence preflight occurs before row locks; claim transaction revalidates
   canonical binding/preflight identity and current authorization.
 - Claim eligibility is re-evaluated inside the transaction before any private
-  context is disclosed: canonical active human actor, project reviewer grant,
+  context is disclosed: canonical active human actor, exact active independent
+  project `reviewer` grant,
   required permissions, project match, no self-review against submitter,
   creator, or current/prior task assignees, eligible queue state, and no global
   active lease. Cross-project, suspended/revoked, self, creator, and assigned
@@ -48,20 +49,29 @@ production `/api/v1` review-router registration
   match it. Arbitrary, guessed, stale, lower-priority open, and concurrently
   superseded IDs fail without disclosure or mutation.
 - Concurrent claims create exactly one lease per entry and per reviewer.
-- Lease compensation-policy freeze required by WS-CON is present and is
+- Lease `ContributionPolicyVersion` freeze required by WS-CON is present and is
   resolved for the newly created lease through the merged WS-CON capability.
   It is independent of decision outcome and any forward/backward Project Guide
-  rebase. A later lease may freeze a newer reviewer compensation version, but a
+  rebase. A later lease may freeze a newer reviewer contribution-policy version, but a
   prior lease is never rewritten.
+- Claim creates one immutable `ReviewPacketManifest` atomically with the lease
+  from locked queue, Submission/version, admitting CheckerRun/results, locked
+  context, response-evidence relations, and ART binding IDs. Manifest creation
+  failure rolls back the lease and AuthorizationDecision.
 - Release, decline, preference expiry, and lease expiry use distinct immutable
   audit facts and preserve `first_queued_at`.
 - Claim, release, decline, preference expiry, and lease expiry declare,
   respectively, `review.claim`, `review.release`,
   `review.decline_preference`, `review.preference_expiry.run`, and
-  `review.lease_expiry.run`. Each calls the transaction-aware
-  `AuthorizationService.require` boundary and persists canonical
-  AuthorizationDecision linkage; denial or revocation commits no
+  `review.lease_expiry.run`. Every mutation uses AUTH's prepared protocol:
+  authority first, REV locks/recomposes final facts, AUTH evaluates once, then
+  REV flushes. Denial, evidence failure, or revocation commits no
   lease/routing/audit/outbox effect.
+- Preference expiry runs only as fixed service
+  `workstream.review.preference_expiry`; lease expiry runs only as
+  `workstream.review.lease_expiry`. Each requires its exact static action row,
+  provisioned service ActorProfile/link, AUTH-09E admission, and cross-service/
+  human-path denial. Neither borrows Operator or reviewer authority.
 - Lease expiry clears stickiness and uses PostgreSQL time.
 - Sweeps are idempotent and lazy recovery invokes the same transition service.
 - Expected uniqueness races map to stable 409 codes, never 500.
@@ -70,6 +80,10 @@ production `/api/v1` review-router registration
   both operation permutations, and rollback fault injection.
 - Services and internal route tests exist, but production OpenAPI remains free
   of every lifecycle mutation through chunk 09B.
+- All five actions remain planned while this chunk supplies hidden behavior,
+  composers, guards, static-service requirements, and a feature-manifest delta.
+  AUTH activates exact actions only after the chunk merges; route exposure still
+  waits for REV-13.
 - Operator docs enumerate every timer environment variable, bounded default,
   Celery beat/worker command, lazy-recovery behavior, alert, and rollout rule.
 - Timer jobs reuse `run_async_task`, the existing fresh engine/session disposal

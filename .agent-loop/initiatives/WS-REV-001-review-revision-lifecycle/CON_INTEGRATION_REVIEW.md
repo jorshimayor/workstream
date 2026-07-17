@@ -1,162 +1,138 @@
 # WS-CON Integration Review For WS-REV-001
 
-## Scope And State
+## Authority And State
 
-Reconciled review of `/home/abiorh/flow/workstream-con-001` on 2026-07-15,
-pinned to rebased committed planning head `c965f9b`. WS-REV edited no sibling
-file. Content-level security/auth, product/QA, and architecture/docs review was
-recorded on predecessor planning commit `42cf11f`; exact-head publication review
-remains pending. The sibling's later uncommitted fence-handoff edits were also
-read and align with the dispatch boundary below, but do not yet specify the
-callback fence and are not a merged dependency. This review does not activate
-`WS-CON-001-01`.
+Reconciled on 2026-07-17 against merged WS-XINT-001 PR #139 at trusted main
+`5d353b6d3f8a36b9b9ffdc1959487a150ac25fd1`, especially
+`REV_CON_HANDOFF.md`. Sibling WS-CON worktree content remains discovery evidence
+until its owning contracts merge; it cannot override the merged handoff or act
+as a runtime dependency.
 
 ## Ownership Boundary
 
-WS-REV owns queue, ReviewLease schema, Review and revision state, exact
-Submission-to-TaskAssignment lineage, decision orchestration, final transaction
-commit, and the sole joint production activation in REV-13.
-
-WS-CON owns compensation policy/version/binding, immutable contribution and
-award records, delivery/receipt/status, the database-local decision
-participant, contribution-evidence projection, product/operations reads, and
-its exact hidden-readiness manifest. ART owns artifact admission, provider I/O,
-verification, bindings, receipts, retention, and recovery. AUTH owns canonical
-actors, permissions/actions, grants, service assignments, and decisions.
+REV owns queue, ReviewLease, ReviewPacketManifest, ReviewEvidenceArtifact,
+Review/finding/revision state, decision orchestration, task effects, the caller
+transaction, and joint product-surface release. CON owns ContributionPolicy,
+immutable ContributionPolicyVersion and rules, ContributionRecord, awards,
+fulfillment, shared-outbox transitions, CON audit/projections, and every
+separately exposed CON surface. AUTH owns review authorization and action
+activation. ART owns bytes, bindings, verification, recovery, and typed artifact
+capabilities.
 
 REV-12A owns one shared hidden `JointLifecycleReleaseControl` and typed mutation
-fence. CON-08A/08B/11 must leave exact mandatory fence hooks in fulfillment
-dispatch and authenticated callback handling and name both in the readiness
-manifest; CON does not create a competing shutdown state machine.
-CON-10B/11 also owns a same-session
-`FulfillmentLifecycleDrainObservationPort` over its fulfillment state and the
-shared-outbox capability; REV consumes only that typed port and never imports a
-CON or outbox repository.
+fence. CON supplies mandatory fulfillment dispatch/callback fence hooks and one
+same-session drain-observation port; REV never imports CON or outbox repositories.
+The shared dispatcher owns claim/retry/dead-letter state. A CON handler receives
+an already-claimed command and may stage its delivery attempt, but never claims
+or transitions the outbox event itself.
 
-## Adapter And Participant Chain
+## Atomic Decision Contract
 
-`ContributionRecord` does not consume an external provider adapter. During the
-authorized review decision, REV calls the typed
-`ContributionCompensationDecisionParticipant` with the caller-owned
-`AsyncSession`, exact immutable Review/ReviewLease/Submission/TaskAssignment
-facts, AuthorizationDecision reference, and request/correlation IDs. The
-participant validates and flushes ContributionRecord, award, projection, audit,
-and outbox rows and never commits or performs network I/O.
+```text
+AUTH prepares review.decision and locks reviewer authority
+-> REV locks idempotency, lifecycle fence, queue, lease, task, assignment,
+   versioned Submission, Review predecessor, findings and stabilized facts
+-> REV recomposes final typed review-decision context
+-> AUTH evaluates once and stages decision evidence
+-> REV stages Review/findings/resolutions, consumes lease/queue, applies task effects
+-> REV calls the CON flush-only participant
+-> CON creates reviewer completed_review ContributionRecord
+-> on accept only, CON creates submitter accepted_submission ContributionRecord
+-> CON evaluates each frozen ContributionPolicyVersion rule
+-> explicit unpaid creates no award; payable creates immutable money and/or
+   project_points CompensationAward rows
+-> CON stages audit and shared-outbox rows
+-> route commits once
+```
 
-After commit, two separate adapters/capabilities may be consumed:
+CON receives the originating AuthorizationDecision reference and locked facts.
+It never evaluates `review.decision`, imports REV/AUTH persistence, commits, or
+performs network/provider I/O. CON failure rolls back the complete Review
+decision. There is no no-op participant or post-commit repair for canonical
+contribution creation.
 
-- the contribution-evidence worker consumes the ART-owned typed contribution
-  evidence write capability. It must not import raw `ArtifactStore` or a Local,
-  MinIO, or S3 adapter;
-- the fulfillment handler consumes
-  `CompensationDeliveryAdapter`, constructed only by the shared ADR-0014
-  `ExternalServiceAdapterFactory[CompensationDeliveryAdapter]` at the explicit
-  composition root. The planned deterministic adapter is conformance-only; no
-  production payment provider, balance, ledger, or settlement lives here.
-
-The generic outbox dispatcher invokes those post-commit handlers under its
-fixed AUTH service actor and `outbox.dispatch` authority. Human retry or
-reconciliation permission cannot execute adapter side effects.
+No canonical Review-committing service may land before the CON participant.
+REV-08 therefore freezes schemas, pure validation, task-effect inputs, and the
+participant request only. After stable REV-09B lineage exists, CON may implement
+the participant; REV-10 creates the first hidden canonical decision transaction.
 
 ## Exact Lineage Contract
 
-Both reviewer and accept-only submitter records derive from immutable rows:
+The repository's existing `Submission` row is the version identity; no separate
+SubmissionVersion table is added. Both contributions receive:
 
-- Submission version identity is the existing `Submission` row plus its
-  explicit version, not a second SubmissionVersion entity;
-- `source_task_assignment_id = Submission.task_assignment_id`;
-- reviewer actor is `Review.reviewer_id`; submitter actor is the final AUTH-14
-  `Submission.contributor_id`; both it and AUTH-13
-  `TaskAssignment.contributor_id` are canonical human `ActorProfile.id` values;
-- reviewer lease is `Review.review_lease_id`; submitter lease is null;
-- reviewer compensation comes from the exact ReviewLease freeze; submitter
-  compensation comes from the exact TaskAssignment freeze;
-- project/task come from the database-constrained chain; and
-- `source_submission_artifact_digest` comes from one ART/CON/REV-adopted,
-  immutable verified Submission packet digest.
+- `Review.id`, the exact reviewed `Submission.id` and version, project, and task;
+- `Submission.task_assignment_id` and canonical actor IDs from the constrained
+  lineage;
+- the reviewer record's exact `ReviewLease.id` and frozen reviewer
+  `ContributionPolicyVersion`;
+- the submitter record's null lease and exact TaskAssignment-frozen submitter
+  `ContributionPolicyVersion`;
+- the server-derived stabilized `Submission.artifact_hash`, copied to
+  `ContributionRecord.artifact_hash`; and
+- the originating AuthorizationDecision, request, and correlation references.
 
-The current unconstrained caller-supplied `Submission.package_hash` cannot be
-silently renamed into that last field. CON-01/03C, ART's capability owner, and
-REV-10 must close the field name, representation, derivation, and database
-binding before implementation.
+The XINT `SubmissionVersion.artifact_hash` wording means the field on the
+existing versioned Submission row. It does not authorize a duplicate entity.
+Current caller-supplied `Submission.package_hash` is not silently renamed or
+trusted; the ART submission/checker cutover must add the exact verified field and
+database binding before REV-10. CON does not call ART to load or rederive it.
+
+## Independent CON Authorization
+
+Derived ContributionRecord and CompensationAward inserts inside
+`review.decision` do not create `contribution.materialize` or
+`compensation.award.materialize` actions. CON requires its own AUTH actions only
+for independently invoked reads, policy/binding administration, callbacks,
+outbox dispatch, reconciliation, projections, and audit. REV-13 does not edit or
+register CON routers; it consumes the exact merged CON readiness manifest and
+verifies that CON-owned surfaces are already composed by their owner.
+
+## Optional Evidence Projection
+
+A deterministic contribution-evidence document may be added later as an
+asynchronous projection with its own ART capability, AUTH action, status, and
+failure lifecycle. It is not created or required by the core Review transaction,
+does not gate CON readiness or REV product release, and cannot change Review,
+ContributionRecord, CompensationAward, fulfillment receipt, or status truth when
+storage is unavailable.
 
 ## Required Interleaving
 
 ```text
 REV-02 exact Submission/TaskAssignment lineage
-  -> CON-05A/05B PaymentPolicy consumer/schema removal
+  -> CON contribution-policy and legacy-policy cutover
 
-CON-03B compensation policy persistence
+CON ContributionPolicyVersion persistence
   -> REV-03 ReviewLease FK
 
-CON-02A outbox persistence + CON-02C lifecycle audit
+CON shared outbox + lifecycle-audit participants
   -> REV-04 immutable review chain
 
-CON-06 lease freeze capability
+CON ReviewLease freeze capability + AUTH prepared mutation protocol
   -> REV-06 claim integration
 
-REV-09B stable review/revision chain + CON-03C exact lineage schema
-  -> CON-07 decision participant
-  -> REV-10 atomic integration
+REV-09B stable review/revision lineage + CON exact lineage schema
+  -> CON flush-only decision participant
+  -> REV-10 first canonical Review-committing transaction
 
-CON-11 exact readiness manifest + REV-12
-  -> REV-12A hidden joint release-control/fence integration
-  -> REV-13 sole joint activation and live drill
+CON core hidden-readiness manifest + REV-12
+  -> REV-12A hidden joint release control
+  -> AUTH action activation after hidden behavior
+  -> REV-13 joint product release
 ```
 
-CON-02B dispatcher activation additionally waits for AUTH's fixed dispatcher
-actor/action assignment. CON-09A waits for the ART-owned contribution-evidence
-capability.
+Optional contribution-evidence projection work is not on this critical path.
 
-## Reconciliation Result And Remaining Joint Gates
+## Reconciliation Result
 
-Present in rebased CON planning commit `c965f9b`:
-
-- executable 05A semantic removal and 05B physical removal contracts replace
-  the stale advisory/single-05 direction;
-- source provenance, working-Markdown hash, and internal review evidence are
-  truthful;
-- the existing versioned `Submission` identity and `submission_id` are used;
-- shared-outbox `outbox.dispatch` and bound
-  `compensation.fulfillment.report` are explicit service-only AUTH dependencies;
-- ART typed capabilities, verification-job retry, provider roles, and ADR-0014
-  adapter composition are aligned; and
-- REV-13 joint contribution/compensation activation scope is represented in
-  both plans.
-
-Still blocking the owning runtime chunks:
-
-1. CON-01/03C, REV-09A/09B/10, and the ART capability owner must freeze one
-   immutable reviewed-submission packet digest field, representation,
-   derivation, and database binding. No caller `package_hash` substitution is
-   allowed.
-2. Contribution evidence must derive guide/policy facts from the exact context
-   stamped on the reviewed Submission after forward or backward rebase, not a
-   later current Project/Task context.
-3. Immutable outbox/contribution/award/delivery migrations must refuse unsafe
-   downgrade once canonical rows exist; generic upgrade/downgrade test wording
-   is not sufficient.
-4. Before each dependent chunk starts, reread the relevant contract from its
-   merged trusted-main SHA. Planning commit `c965f9b` is evidence, not a runtime
-   dependency by worktree path.
-5. CON-05A must add merged REV-02 exact Submission/TaskAssignment lineage as an
-   explicit gate before publication or activation. REV records the ordering,
-   The required gate appears only in the sibling's later uncommitted planning
-   delta, so `c965f9b` does not yet enforce it in its own chunk contract.
-6. CON-08A/08B/11 must adopt shared lifecycle-fence hooks and prove dispatch
-   loses cleanly to admission fencing before adapter I/O while authenticated
-   callbacks hold the shared transaction fence, remain available through
-   delivery drain, and cannot race disablement.
-7. CON-10B/11 must expose and manifest the same-session typed
-   `FulfillmentLifecycleDrainObservationPort` with pending/claimed/retryable
-   event, in-flight dispatch, and nonterminal delivery/callback counts. It is
-   read-only, never commits/calls a provider, and uses the shared-outbox port
-   rather than exposing CON/outbox persistence to REV.
-
-## Revision And Compensation Rule
-
-The currently active Project Guide is authoritative for the next attempt even
-when that is a backward rebase. That rebase changes task-execution context only.
-It never mutates TaskAssignment submitter compensation or an existing
-ReviewLease reviewer compensation freeze. A later ReviewLease independently
-freezes the reviewer terms current for that new lease.
+- Every valid Review creates one reviewer contribution; only `accept` also
+  creates one submitter contribution.
+- Frozen ContributionPolicyVersion rules, not guide context or an adapter,
+  decide unpaid/payable eligibility.
+- Core creation makes no ART call and uses no external adapter.
+- Money and project-points adapters fulfill already-created awards; they never
+  decide eligibility.
+- Shared outbox claim ownership remains with the dispatcher.
+- REV owns no CON public route, policy, award, fulfillment, or projection state.
+- All runtime gates must be reread from their exact merged trusted-main SHAs.

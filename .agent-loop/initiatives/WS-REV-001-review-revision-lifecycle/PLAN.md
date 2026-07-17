@@ -12,10 +12,25 @@ use PostgreSQL constraints as final race guards.
 
 ### Authorization gate
 
-Runtime work starts only after the WS-AUTH definition of done for the owning
-consumer is merged and proven. Merged AUTH-08 PR #131 establishes the current
-public kernel and resolves the three AUTH-07B consumption blockers. Every
-runtime chunk must retain proof that:
+Merged WS-XINT-001 fixes one delivery protocol for every protected REV surface:
+
+```text
+AUTH planned registration and activation-custody assignment
+-> required ART/CON capability plus REV hidden behavior and canonical facts
+-> AUTH evaluator integration and exact action activation
+-> REV joint product-surface release
+```
+
+REV never registers an ActionId, edits `ActionOwner`, integrates an AUTH
+evaluator, or changes action availability. An action-owning REV chunk produces
+hidden behavior, lifecycle guards, a canonical typed ResourceContext composer,
+and a feature-manifest delta while the real kernel still returns
+`action_unavailable`. AUTH alone activates the action after that evidence and
+all required hidden participants merge. REV-13 exposes only already-active
+surfaces after a separate joint readiness check.
+
+Merged AUTH-08 PR #131 establishes the current public kernel and resolves the
+three AUTH-07B consumption blockers. Every runtime chunk retains proof that:
 
 - the reusable authorization dependency never commits a feature-owned open
   transaction during generic successful teardown; every read or mutation owner
@@ -28,19 +43,24 @@ runtime chunk must retain proof that:
   GET/PATCH access, with API regression proof. REV does not prescribe AUTH's
   sequencing or lifecycle-denial timestamp policy.
 
-After those gates, WS-REV consumes:
+After the exact owning AUTH gates merge, WS-REV consumes:
 
 - canonical actors: every human lifecycle FK stores the active canonical
   `ActorProfile.id`; external issuer/subject, email, legacy profile row IDs,
   token roles, and contributor profile labels never substitute for actor
-  identity. Internal jobs use their registered service `ActorProfile.id` or the
-  exact AUTH-defined system-principal form for the action, never a fabricated
-  human actor;
-- project contributor grants;
-- 24 planned action dependencies: merged AUTH-08 retains canonical
+  identity;
+- one exact active project `reviewer` grant for human review. Separate
+  `submitter`, `adjudicator`, and administrative grants never substitute, and
+  revoking reviewer authority never mutates another grant;
+- AUTH-09E fixed-service admission for protected jobs. Preference expiry, lease
+  expiry, reviewer-authority invalidation reconciliation, general review
+  reconciliation, artifact-reference reconciliation, and projection rebuild
+  use distinct immutable service identities and exact static ActionId rows,
+  never a generic service, human reviewer, or Operator fallback;
+- 24 review-lifecycle action dependencies: merged AUTH-08 retains canonical
   `submission.create` plus the original 19 review-owned actions; four additive
-  AUTH-owned registrations remain required by revision closure/recovery and
-  joint release control;
+  AUTH registrations remain proposed for revision closure/recovery and joint
+  release control;
 - `review.revision_context.repair` maps to existing PermissionId
   `project.task.manage`, a covered Project Manager candidate, and an exact typed
   task/assignment/prior-Submission/episode/head resource with transaction
@@ -60,99 +80,113 @@ After those gates, WS-REV consumes:
 - registered permissions, with `review.queue.override` as the only additive
   PermissionId;
 - canonical resource contexts and project mismatch handling;
-- a request-scoped, transaction-aware
-  `AuthorizationService.require(action_id, resource_context)` whose service is
-  bound to the current AuthorizationContext and caller-owned AsyncSession,
-  returns/stages one bounded decision, never commits, and never accepts a raw
-  PermissionId, candidate grant, or guard from feature code;
+- request-scoped `AuthorizationService.require(action_id, resource_context)` for
+  reads only;
+- the AUTH prepared mutation protocol for writes: AUTH locks current authority
+  first, REV locks canonical feature rows, REV recomposes final typed facts,
+  AUTH evaluates exactly once and stages bounded decision evidence, participants
+  flush, and the route or Celery boundary commits once;
 - immutable authorization decisions and audit links;
 - revocation invalidation used to recover active review leases.
 
 REV owns its typed ResourceContext composers and lifecycle guards. It imports
 the public AUTH service and `ActionId` types only; it never imports AUTH
 repositories/models, queries grants, or reconstructs permission unions.
-The four additive ActionIds and their closed mappings are registered by WS-AUTH,
-not by review code. The three revision closure/repair actions must merge before
-chunk 11; lifecycle activation must merge before 12A. They add no PermissionId.
-AUTH-08 is merged at trusted-main `aa0fdcd6912e66609e39a2fbd7b65f67be6c62f3`
-through PR #131, with final branch head
-`0832358a0262805f553d05b50b0d778e6e6ad995`. It establishes 57 actions: 9 active
-and 48 planned. The AUTH-owned REV addition must migrate all four actions across
-typed catalogue, owner table, and PostgreSQL action-to-permission audit parity
-in lockstep from 57 to exactly 61, producing 9 active and 52 planned. Direct-SQL, allowed
-and denied audit, missing/extra parity, upgrade, and unsafe-downgrade tests are a
-hard gate; adding enum values alone is insufficient.
-
-The current merged split is 57 actions: 9 active and 48 planned. The four REV
-additions are not merged. Every one of the 24 REV action dependencies remains
-inactive until its owning REV chunk activates it, and later AUTH
-definition-of-done gates remain unchanged.
+The four additive ActionIds and their closed mappings are registered by AUTH,
+not review code. Their planned registration gates chunk 11 or 12A; their later
+AUTH evaluator/activation gates follow the matching hidden REV behavior. They
+add no PermissionId. The current AUTH-08 snapshot contains 57 actions: 9 active
+and 48 planned. That is historical provenance, not a fixed future total.
+WS-XINT-001 separately proposes
+`artifact.review_evidence.binding.create -> artifact.binding.create` for the
+ART binding service. Every later AUTH registration or activation chunk derives
+the exact before/after count and SHA from then-current trusted main and proves
+typed catalogue, activation custodian, PostgreSQL audit parity, allowed/denied
+evidence, upgrade, and unsafe-downgrade behavior. The four REV proposals and the
+separate ART service action are never silently combined into a hard-coded total.
 
 ### Artifact gate
 
 Artifact-sensitive work starts only after the required WS-ART contracts are
 merged and proven. WS-REV consumes:
 
-- immutable binding/content identity and project/task ownership resolution;
-- typed, authorized complete retrieval and metadata reads;
-- fresh availability/integrity observation with classified failures;
-- generic intake for finding and finding-response evidence;
-- retention and recovery operations;
-- deterministic projection storage;
+- immutable ART binding IDs and server commitments;
+- a narrow active-lease packet-read capability that revalidates exact packet
+  membership and returns a bounded stream;
+- ART-owned two-phase evidence candidate/finalize ports for finding and response
+  evidence;
+- stable verification/availability facts and deterministic projection storage;
 - LocalStorage and MinIO conformance with AWS S3 as production provider.
 
 Merged ART-02A2 PR #129 at trusted main
 `9a04434e2f23c5dec8939dadb943bba4d85110c0`, final branch head
 `32aab89262a3944f305e9e5dc4c65a2d31e2e144`, establishes only the inactive
-committed-source and private scratch-preparation foundation. It preserves the
-active ArtifactStore v1 contract, provider selection, schema, product routes,
-and authority surface. `ArtifactScratchManager`, `PreparedArtifact`, and
+committed-source and private scratch-preparation foundation. Its active
+ArtifactStore v1 state is not a REV interface: ART v2 must be the sole provider
+boundary before any REV artifact consumer starts. `ArtifactScratchManager`, `PreparedArtifact`, and
 `CommittedArtifactSource` are ART-internal preparation mechanics, not REV
 capabilities or durable product references; review code never imports or stores
-them. Later ART-owned v2, S3, admission, verification/publication, typed
-read/intake/retention/recovery, checker, and live-proof chunks remain hard gates
-at their named REV consumers.
+them. Later ART-owned v2, S3, submission/checker binding cutovers, admission,
+verification/publication, packet read, evidence candidate/finalize, projection,
+and live-proof chunks remain hard gates. ART owns candidate retention and
+Operator recovery; REV does not consume v1 verify/retain/release, raw
+ArtifactStore, `artifact.binding.read`, or a generic artifact-retrieval action.
+
+REV owns immutable `ReviewPacketManifest` and `ReviewEvidenceArtifact` semantic
+records. The manifest names the exact queue/lease, versioned Submission,
+admitting CheckerRun/results, locked guide/revision context, response-evidence
+relations, and ART binding IDs. It contains no bytes, digest, provider reference,
+object key, signed URL, scratch path, receipt, or authorization-matrix data.
+
+Evidence binding additionally requires the separately registered
+`artifact.review_evidence.binding.create` service action, mapped to existing
+`artifact.binding.create` and available only to `workstream.artifact.binding`.
+A separately approved `WS-ART-001-REV-EVIDENCE` capability supplies hidden
+canonical facts and binding behavior; AUTH alone integrates its evaluator and
+activates it. That ART owner chunk is not scheduled by the currently merged ART
+plan, so REV-07 remains blocked until ART adds, approves, and merges it. No
+Operator read action or generic PermissionId substitutes.
 
 ### Contribution gate
 
-WS-CON remains a planning-only dependency. Rebased committed planning head
-`c965f9b` contains the reconciled plan and ADR-0014 foundation; its content-level
-review lineage originates at `42cf11f`, but exact-head publication review is
-pending and none of its runtime interfaces are merged. The sibling's later
-uncommitted fence-handoff edits are discovery evidence only. Neither worktree
-state is an executable dependency.
+The merged WS-XINT `REV_CON_HANDOFF.md` is the current boundary authority. Any
+sibling WS-CON worktree remains discovery evidence until its owning contracts
+merge to trusted main.
 
 The cross-initiative sequence is explicit:
 
 - `WS-REV-001-02` first establishes immutable
   `Submission.task_assignment_id` attribution and guide activation sequence;
-- WS-CON's approved `05A/05B` replacement chunks then freeze submitter
-  compensation on `TaskAssignment` and remove legacy `PaymentPolicy` fields and
+- WS-CON's approved replacement chunks then freeze submitter
+  `ContributionPolicyVersion` on `TaskAssignment` and remove legacy payment
+  policy fields and
   consumers before `WS-REV-001-09A`;
-- merged WS-CON compensation-policy persistence precedes `WS-REV-001-03`, so
+- merged WS-CON contribution-policy persistence precedes `WS-REV-001-03`, so
   ReviewLease FKs target a real owner;
 - merged shared outbox persistence and caller-transaction lifecycle audit
   participants precede `WS-REV-001-04`;
 - the WS-CON ReviewLease freeze capability precedes `WS-REV-001-06`;
-- the exact atomic contribution/award participant precedes
+- the exact flush-only contribution/award participant precedes
   `WS-REV-001-10`; and
 - the exact WS-CON readiness manifest, mandatory fulfillment dispatch/callback
   fence hooks, and same-session fulfillment/outbox drain-observation port
   precede hidden joint release-control integration in `WS-REV-001-12A`; and
-- the merged 12A controller and fences precede the sole joint activation in
+- all matching AUTH actions activate after their hidden behavior, and the merged
+  12A controller and fences precede the sole joint product release in
   `WS-REV-001-13`.
 
-Compensation context is independent of guide/review execution context. A
+Contribution policy context is independent of guide/review execution context. A
 forward or backward Project Guide rebase never changes the submitter's frozen
-TaskAssignment compensation version. Each newly created ReviewLease freezes its
-own current reviewer compensation version. Review services do not implement
-policy, awards, fulfillment, evidence projection, or provider delivery.
+TaskAssignment `ContributionPolicyVersion`. Each new ReviewLease independently
+freezes the current reviewer `ContributionPolicyVersion`. Review services do not
+implement rules, awards, fulfillment, evidence projection, or provider delivery.
 
-Before WS-CON contribution persistence or REV-10 integration, ART, CON, and REV
-must freeze one exact immutable Submission packet-digest contract: canonical
-field name, strict representation and derivation, binding, and database
-validation. A caller-supplied unconstrained `Submission.package_hash` cannot be
-treated as contribution evidence merely by renaming it.
+The decision transaction supplies the stabilized versioned Submission
+`artifact_hash` and locked Review/lease/assignment/policy facts to CON. CON copies
+that lineage into `ContributionRecord.artifact_hash`; it never calls ART or
+rederives the value. Any contribution-evidence document is a later optional
+asynchronous projection with its own action and failure state, not a core
+transaction or joint-release gate.
 
 ### Transactional outbox gate
 
@@ -183,10 +217,14 @@ prohibited.
   TaskAssignment that produced it, constrained to the same task and contributor, so
   history and WS-CON never infer attribution from a later active assignment.
   Its submitter and assignment contributor are canonical human
-  `ActorProfile.id` values. The adopted ART/CON digest contract supplies the
-  immutable reviewed-packet digest; no contribution participant trusts an
-  unverified caller string.
-- `WorkstreamTask` receives accepted/closed state support and terminal reason.
+  `ActorProfile.id` values. The ART submission/checker cutover supplies one
+  server-derived verified `artifact_hash` on this existing versioned row; the
+  XINT shorthand `SubmissionVersion.artifact_hash` does not create a duplicate
+  entity, and no participant trusts caller `package_hash`.
+- `WorkstreamTask` receives canonical `accepted`, `rejected`, and `cancelled`
+  transitions plus bounded terminal reasons. Human reject enters `rejected`;
+  the approved administrative revision-limit/deadline closure enters
+  `cancelled` with its exact reason and creates no Review.
 - `TaskAssignment` receives completed/blocked compatibility fields and a reject
   Review reference.
 - `ReviewPolicy` receives locked preference, lease, capacity, self-review,
@@ -198,11 +236,17 @@ prohibited.
 
 - `ReviewQueueEntry`
 - `ReviewLease`
+- `ReviewPacketManifest`, an immutable lease/packet projection over exact queue,
+  Submission version, admitting CheckerRun/results, locked guide/revision
+  context, response-evidence relations, and ART binding IDs
 - `Review`
 - `ReviewFinding`
 - `SubmissionFindingResponse`
 - `FindingResolution`
-- evidence relation rows for review findings and finding responses
+- `ReviewEvidenceArtifact`, an immutable semantic relation from a pre-decision
+  lease-scoped evidence slot to one finalized ART binding, later linked to its
+  exact ReviewFinding or SubmissionFindingResponse without changing the binding
+  identity
 - review-owned `ReviewDecisionRequest` idempotency aggregate bound to actor,
   operation, lease, submission, and canonical payload (the existing
   AUTH-owned authority idempotency record is not reused)
@@ -216,8 +260,11 @@ prohibited.
   attempts/status remain owned by the shared outbox and immutable artifact
   receipts remain owned by ART, with no review-private delivery table
 
-All mutable-state compatibility, predecessor, uniqueness, and partial-active
-invariants are enforced in PostgreSQL as well as in services.
+All mutable-state compatibility, predecessor, uniqueness, packet-membership,
+evidence-slot, and partial-active invariants are enforced in PostgreSQL as well
+as in services. `ReviewLease` remains the permanent attempt identity;
+`ReviewDecisionRequest` remains request idempotency. No mutable ReviewAttempt or
+ReviewVersion entity is introduced.
 
 `ReviewLease.reviewer_id`, `Review.reviewer_id`, preferred-reviewer references,
 and every human administrative actor reference use canonical `ActorProfile.id`
@@ -237,17 +284,19 @@ durable checker allow_review
      with task review_pending and the exact admitting CheckerRun ID
   -> server selects current lease or one next offer
   -> artifact availability preflight
-  -> transaction-aware authorization and atomic ReviewLease claim
+  -> AUTH prepares and locks reviewer authority; REV atomically creates the
+     ReviewLease and immutable ReviewPacketManifest from locked canonical rows;
+     AUTH evaluates the final facts once
   -> authorized Review Context shows the bounded immutable chain but retrieves
      artifact content only for the currently leased Submission version
   -> finding evidence is ingested and verified before decision
-  -> decision transaction follows the canonical lock order across current
-     authority, idempotency, task, assignment, submission, queue, lease,
-     immutable predecessors, binding facts, and WS-CON rows
+  -> decision transaction locks AUTH authority first, then REV canonical rows,
+     recomposes final facts, evaluates once, and invokes the CON participant
   -> Review/findings/resolutions + task effects + WS-CON effects + audit +
      projection request commit together
   -> projection and notifications execute from the canonical shared outbox
-     event after commit
+     event after commit; optional contribution-evidence export is outside the
+     core readiness contract
 ```
 
 ## Application dependency direction
@@ -272,7 +321,7 @@ AUTH, ART, CON, shared audit, and shared outbox are likewise injected ports.
 
 ## Joint release control
 
-Public lifecycle activation and shutdown use one hidden PostgreSQL-canonical
+Product-surface release and shutdown use one hidden PostgreSQL-canonical
 `JointLifecycleReleaseControl`, not shell-script or process-local state. Chunk
 12A persists compare-and-set phase history, exposes a typed mandatory mutation
 fence, and installs that fence through explicit composition across review
@@ -291,8 +340,12 @@ requires a newly reviewed manifest. Every edge and observation is a fresh
 Operator-authorized lifecycle command; lease draining reuses fresh
 `review.lease.force_release` commands rather than widening lifecycle authority.
 No worker replays human authority or advances phase. Timeout leaves phase
-unchanged for forward retry and no edge attempts schema downgrade. Chunk 13 alone registers the Operator surface,
-performs the ordered cutover, and proves crash resume and coherent reactivation.
+unchanged for forward retry and no edge attempts schema downgrade. After 12A's
+hidden behavior merges, AUTH activates `review.lifecycle.activation.manage`.
+Chunk 13 then exposes the already-active Operator surface, performs the ordered
+product cutover, and proves crash resume and coherent reactivation. The
+controller's `pre_activation` state is a REV product-release phase, not AUTH
+action availability.
 
 ## Revision flow
 
@@ -334,7 +387,7 @@ task-execution policy context stamped on the single Submission covered by its
 active lease.
 Preparation freezes exact guide/source-snapshot and task-execution policy IDs,
 versions, and hashes; Task Context and Submission N+1 must use that same record.
-It never freezes or rebases compensation policy. Later guide
+It never freezes or rebases `ContributionPolicyVersion`. Later guide
 activation does not silently drift it, while invalidation requires explicit
 re-preparation.
 
@@ -362,14 +415,15 @@ manager's replacement assignment transaction invokes the review-owned
 preparation-transfer participant, which appends one successor bound to the new
 target TaskAssignment and the then-authoritative Project Guide context. The
 episode keeps the reviewed Submission and its original assignment as immutable
-source lineage; Submission N+1 and submitter compensation use the replacement
-target assignment. Partial transfer rolls back assignment and preparation
+source lineage; Submission N+1 and the submitter contribution-policy freeze use
+the replacement target assignment. Partial transfer rolls back assignment and preparation
 together.
 
 History access and artifact-content access are separate. Authorized history may
 show every Submission/Review version, findings, responses, resolutions,
-guide-version transitions, and bounded audit facts. ART retrieval is limited to
-the canonical current review packet anchored to the leased Submission:
+guide-version transitions, and bounded audit facts. ART packet read is limited
+to the immutable `ReviewPacketManifest` anchored to the active lease and its
+versioned Submission:
 submission, the queue's exact admitting checker-run, current finding-response evidence, and
 required locked-context bindings. No prior-version packet bytes are disclosed
 merely because they appear in the chain.
@@ -383,17 +437,20 @@ detail, service scope, content excerpt, or credential.
 submitter may read a chain containing a Submission bound to their exact
 TaskAssignment; an active reviewer may read the chain anchored to their exact
 lease; a prior participating reviewer may read metadata only when they authored
-a Review in that chain and still hold the current project grant; and an
+a Review in that chain and still hold the exact current project `reviewer`
+grant; and an
 Operator/Project Manager needs the explicit inspection permission. The server
 resolves these relationships from canonical rows. Arbitrary same-project,
 cross-project, revoked, or caller-supplied chain IDs confer no access. Only the
 active exact lease can authorize current-packet content.
 
-Evidence intake is two phase across PostgreSQL and ART. The service first
-authorizes and derives an exact scope, then ingests an idempotent ART-owned
-unbound candidate. In a database transaction it re-locks and revalidates actor,
-grant, lease or assignment, Submission/finding, and preparation before creating
-the canonical binding/relation. Failure after upload can leave only an ART-owned
+Evidence intake is two phase across PostgreSQL and ART. Request-scoped preflight
+derives exact scope, then ART ingests and verifies an idempotent unbound candidate
+without review locks. In finalization AUTH prepares and locks human authority;
+REV locks lease or prepared assignment, Submission, finding/response slot, and
+packet lineage; an ART participant locks candidate/admission/binding state; REV
+recomposes final facts; AUTH evaluates once; and ART binding plus
+`ReviewEvidenceArtifact` relation flush together. Failure after upload can leave only an ART-owned
 orphan candidate under ART retention/cleanup; it creates no Workstream binding,
 review/submission relation, or lifecycle effect. Decision and submission
 transactions validate the canonical binding and authority again. If merged ART
@@ -405,26 +462,28 @@ foundation change rather than adding review-private storage state.
 - Preflight remote artifact availability before acquiring review row locks.
 - Inside claims and decisions, use database time and targeted `FOR UPDATE` or
   atomic conditional updates over canonical rows.
-- Every mutating operation uses this cross-domain lock order: AUTH-owned current
-  actor/identity/grant rows in the AUTH-defined internal order; idempotency row;
-  the `JointLifecycleReleaseControl` advisory lock and persisted phase row;
-  `Project`; active/candidate `ProjectGuide`; `GuideSourceSnapshot`;
-  submission-artifact, effective, pre-submit-checker, post-submit-checker,
-  review, and revision policy rows in that order; the active compensation
-  selector, `CompensationPolicyVersion`, and referenced
-  `CompensationAdapterBinding` rows; `WorkstreamTask`;
-  `TaskAssignment`; `Submission`; `CheckerRun`; `RevisionContextPreparation`;
-  `ReviewQueueEntry`;
-  `ReviewLease`; `ReviewReconciliationFinding`; prior Review/finding rows;
-  ArtifactBinding/Replica facts; then ContributionRecord, CompensationAward,
-  delivery, receipt, and projection rows in the WS-CON-defined internal order.
-  Multiple same-type rows are
-  locked by ascending primary key. Audit and outbox rows are append-only writes
-  after state locks. Operations skip absent resource classes but never reorder
-  those they share.
+- Every mutation starts with AUTH's prepared handle locking current actor/link/
+  exact grant or service-matrix authority in AUTH-defined order. REV then locks
+  only the feature rows required by that command, recomposes final typed facts,
+  and asks AUTH to evaluate exactly once. No reusable cross-session handle exists.
+- Claim order after AUTH is review idempotency, lifecycle fence, queue,
+  Task/Assignment/Submission/CheckerRun, then lease and packet-manifest rows.
+- Evidence finalization order after AUTH is lifecycle fence, lease or prepared
+  assignment, Submission, finding/response slot, packet lineage, then an
+  ART-owned database-local participant locks candidate/admission/binding state.
+  REV never imports or directly locks ArtifactBinding/Replica repositories.
+- Decision order after AUTH is decision idempotency, lifecycle fence, queue,
+  lease, Task, Assignment, Submission, Review predecessor, findings/resolutions,
+  and stabilized typed binding facts. REV then calls CON's flush-only participant,
+  which owns its internal `ContributionPolicyVersion`, ContributionRecord,
+  award, audit, and outbox lock/write order.
+- Revision, administrative, and service commands publish their smaller ordered
+  row sets in their owning chunk and preserve the same AUTH-first prefix. Rows of
+  one type lock by ascending primary key. Audit and outbox append after state
+  locks. The route or Celery boundary commits once.
 - Partial unique indexes enforce one active lease per queue entry and reviewer.
-- Stabilize verified binding/replica facts inside the decision transaction; do
-  not call a remote provider while holding decision locks.
+- Consume stabilized typed binding facts inside the decision transaction; do
+  not call a remote provider or import ART persistence while holding locks.
 - Map expected constraint races to stable 409 or replay results.
 - Timer workers use deterministic batches with `SKIP LOCKED`; user claims do
   not.
@@ -467,29 +526,44 @@ Use existing `/api/v1` and structured error conventions.
 ## Dependency ownership rule
 
 WS-REV contracts import only merged AUTH, ART, CON, audit, and outbox ports. They
-do not list dependency-module wildcards as editable scope. At activation, each
+do not list dependency-module wildcards as editable scope. At chunk start, each
 chunk replaces any composition locator with an exact existing file path. A
 missing typed capability becomes a separately approved dependency-owner chunk;
 it is not added opportunistically to a WS-REV PR.
 
-The pre-WS-CON task/project schema may still contain legacy `PaymentPolicy`
+The pre-WS-CON task/project schema may still contain retired payment-policy
 locks when chunk 02 lands. Those are transitional migration inputs only.
-WS-CON `05A/05B` owns their consumer cutover and schema removal; WS-REV-09A and
-every public/final context operate only after that removal and must not replace
-them with a moving current `CompensationPolicyVersion`.
+WS-CON owns their consumer cutover and schema removal; WS-REV-09A and every
+public/final context operate only after that removal and must not replace the
+frozen `ContributionPolicyVersion` with a moving current policy.
 
 ## Background processing
 
 - Preference-expiry sweep
 - Lease-expiry sweep
-- Grant-revocation lease recovery
+- Reviewer-grant revocation reconciliation
 - Queue/lease/review orphan reconciliation
 - Review snapshot projection
-- Artifact binding/retention/projection reconciliation
+- Artifact-reference reconciliation through an ART-owned typed port
 - Event-driven notifications
 
 Correctness does not depend only on scheduled delivery. Jobs reload current
 PostgreSQL state and are idempotent under duplicate execution.
+Protected commands use these exact proposed service rows:
+
+| Service identity | Exact review action |
+|---|---|
+| `workstream.review.preference_expiry` | `review.preference_expiry.run` |
+| `workstream.review.lease_expiry` | `review.lease_expiry.run` |
+| `workstream.review.authority_invalidation_reconciliation` | `review.reconcile.run` |
+| `workstream.review.reconciliation` | `review.reconcile.run` |
+| `workstream.review.artifact_reference_reconciliation` | `review.artifact_reference.reconcile` |
+| `workstream.review.projection` | `review.projection.rebuild` |
+
+Each identity requires its own AUTH registration/provisioning/static-row proof,
+AUTH-09E admission, and later action activation. No service row exists for the
+human Operator `review.lifecycle.activation.manage` action, and shared outbox
+dispatch retains its separately owned service identity.
 All review jobs reuse `run_async_task`, fresh worker engine/session disposal,
 stable Celery task IDs, and `sync_task_settings`. The shared outbox dispatcher
 is the sole claimant/retry/dead-letter owner; reviews registers only a typed,
@@ -514,8 +588,8 @@ contribution boundaries, controlled rebase, and deferred reputation.
   enables cherry-picking against the revised contract.
 - **Call storage inside the decision transaction:** risks long locks and
   ambiguous cross-system atomicity.
-- **Emit only ContributionRecordRequested:** conflicts with the revised
-  WS-REV/WS-CON atomic integration contract.
+- **Emit only ContributionRecordRequested:** conflicts with the merged
+  flush-only WS-CON atomic participant contract.
 - **Treat revision limits or artifact errors as reject:** fabricates human
   judgment and contaminates contributor history.
 - **Build frontend concurrently:** violates backend-first sequencing before

@@ -3,7 +3,7 @@
 ## Goal
 
 Implement the hidden, persisted joint review/contribution release-control
-aggregate and mandatory typed mutation fences required for safe activation,
+aggregate and mandatory typed mutation fences required for safe product release,
 shutdown, crash recovery, and forward reactivation.
 
 ## Risk class
@@ -58,7 +58,7 @@ schema/application downgrade after protected post-cutover rows exist
   constraints reject skipped, reversed, concurrent, crossed-generation, or
   unknown edges and preserve every prior generation unchanged.
 - Every lifecycle-control observe, transition, and crash-resume attempt is a
-  fresh authenticated Operator command declaring additive AUTH-owned
+  fresh authenticated Operator command declaring proposed AUTH-owned
   `review.lifecycle.activation.manage` mapped to existing
   `operations.reconcile.run`. Only an Operator AdminRoleGrant is a candidate.
   Its typed resource contains operation, singleton ID, expected generation and
@@ -78,8 +78,8 @@ schema/application downgrade after protected post-cutover rows exist
   and compensation fulfillment dispatch and callback handling. There is no
   fallback constructor, service locator, optional/no-op port, or concrete
   cross-domain repository import.
-- After the AUTH-owned current-authority and operation-idempotency locks, every
-  mutation entry acquires the shared PostgreSQL transaction advisory lock before
+- After AUTH prepares and locks current authority, every mutation locks its
+  feature-owned operation-idempotency row, then acquires the shared PostgreSQL transaction advisory lock before
   reading the current phase and before any product-domain row. Phase transition
   follows the same prefix and acquires the matching exclusive advisory lock, so
   it waits for prior mutation transactions and blocks new entrants without
@@ -122,6 +122,11 @@ schema/application downgrade after protected post-cutover rows exist
   closed. Recovery/lease release retains each
   existing action and fixed service-actor or Operator authority; the matrix does
   not merge those authorities into lifecycle control.
+- This chunk implements hidden lifecycle-control behavior, typed resource facts,
+  guards, fence composition, and a feature-manifest delta while
+  `review.lifecycle.activation.manage` remains planned. AUTH separately
+  integrates its evaluator and activates it after this chunk merges. The
+  controller's `pre_activation` token is product state, not AUTH availability.
 - The REV action/operation map is exact:
 
 | Action or internal operation | `JointLifecycleCommandClass` |
@@ -147,17 +152,20 @@ schema/application downgrade after protected post-cutover rows exist
   mappings fail startup and preflight.
 - The replacement-assignment command has a required typed slot for the
   preparation-transfer participant. Bootstrap `pre_activation(1)` preserves
-  AUTH-13 legacy behavior; generation N>1 never re-enables it. Activation in
+  AUTH-13 legacy behavior; generation N>1 never re-enables it. Product release in
   REV-13 changes the command class to require both the fence and transfer
   participant atomically. The schema cannot infer or fabricate a preparation
   before REV-13.
 - The composition root supplies the shared fence through the exact mandatory
-  CON dispatch and callback hooks. Under the shared fence, the CON-owned dispatch
-  handler claims its event and persists durable `in_flight` state, then commits
+  CON dispatch and callback hooks. Under the shared fence, the shared outbox
+  dispatcher claims the event and passes an already-claimed command plus
+  generation to the CON-owned handler. The handler validates that claim through
+  a typed port and persists its durable `in_flight` delivery state, then commits
   and releases the database transaction and advisory fence. Only then may it call
   the adapter, with no lifecycle advisory lock or database transaction held; it
-  finalizes success/retry in a new fenced transaction. A lost pre-I/O race returns
-  the event to retryable pending state without changing award/delivery truth.
+  finalizes delivery success/retry in a new fenced transaction. Only the shared
+  dispatcher changes outbox claim/retry/dead-letter state. A lost pre-I/O race
+  returns the event to retryable pending without changing award/delivery truth.
   After CON-owned signature verification plus AUTH/idempotency locking,
   the callback transaction acquires the shared fence, reads the captured phase,
   and holds it through idempotent receipt commit. It remains allowed through
@@ -179,7 +187,7 @@ schema/application downgrade after protected post-cutover rows exist
   then finalize through a new fenced transaction. Pending work may survive
   shutdown; persisted in-flight work blocks disable until completion or
   canonical crash recovery returns it to retryable state.
-- Edge guards are exact: cutover entry verifies the reviewed manifest; activation
+- Edge guards are exact: cutover entry verifies the reviewed manifest; product activation
   requires zero old writers plus strict migration/composition readiness;
   `admission_fenced -> commands_draining` takes the exclusive lock and therefore
   waits for admitted completion commands; `commands_draining -> leases_released`
@@ -206,8 +214,8 @@ schema/application downgrade after protected post-cutover rows exist
   from production OpenAPI. Internal service, affected-worker integration,
   migration, and composition tests prove the foundation is present and fail
   closed if any mandatory fence binding is missing.
-- REV-13 registration keeps only the authenticated lifecycle-control transition
-  and status surface plus its AUTH mapping available in `disabled`; product
+- REV-13 release keeps only the already-AUTH-active authenticated lifecycle-
+  control transition and status surface available in `disabled`; product
   routes, product workers, and their service assignments remain disabled. This
   retained control surface is the sole way to request `pre_activation(N+1)`.
 - Migration/direct-SQL and independent-session tests cover singleton uniqueness,

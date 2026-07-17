@@ -90,13 +90,14 @@ production `/api/v1` review-router registration
   head or a stable stale-head conflict.
 - Finding-response evidence intake declares
   `review.finding_response_evidence.ingest` mapped to `submission.create`; it
-  calls the centralized `AuthorizationService.require` boundary before ART
-  candidate intake. It then re-locks and revalidates the actor/grant, exact
-  assignment, preparation head, prior Submission, and finding before canonical
-  binding/relation creation; pre-intake denial creates no ART candidate,
+  uses request-scoped preflight before ART candidate intake. Finalization uses
+  AUTH prepare/authority lock -> REV exact assignment, preparation head, prior
+  Submission, finding and evidence-slot locks -> ART candidate/admission/binding
+  locks -> final fact recomposition -> one AUTH evaluation -> binding plus
+  ReviewEvidenceArtifact flush. Pre-intake denial creates no ART candidate,
   binding, or receipt.
 - Contributor and later reviewer see old/new guide/task-execution-policy context
-  and change summary. Compensation policy is not part of this context.
+  and change summary. ContributionPolicyVersion is not part of this context.
 - While the task is `needs_revision`, the assigned submitter's Task Context API
   returns the prepared next-attempt guide/policy context. Submission N+1 stamps
   that same context; the reviewer later consumes it from Submission N+1 and
@@ -105,8 +106,8 @@ production `/api/v1` review-router registration
   or duplicate TaskAssignment guide-version field is introduced.
 - Preparation freezes exact guide/source-snapshot and task-execution policy IDs,
   versions, and hashes. It never copies, substitutes, or rebases
-  `CompensationPolicyVersion`; submitter compensation remains frozen on the
-  immutable TaskAssignment and reviewer compensation remains frozen on each
+  `ContributionPolicyVersion`; submitter policy remains frozen on the
+  immutable TaskAssignment and reviewer policy remains frozen on each
   ReviewLease. Task Context returns the preparation and Submission N+1 must
   match it exactly. A later guide activation causes no silent drift; a revoked,
   corrupt, or invalid prepared context fails with an explicit re-preparation
@@ -157,10 +158,16 @@ production `/api/v1` review-router registration
   revocation, assignment loss, or preparation supersession creates no canonical
   binding/relation, Submission response, or lifecycle effect; any uploaded
   unbound candidate is ART-owned and expires through ART retention.
+- Response finalization depends on the same merged
+  `WS-ART-001-REV-EVIDENCE` port and AUTH-active
+  `artifact.review_evidence.binding.create` service action as REV-07; human
+  `submission.create` authority cannot execute that ART action.
 - Revision preparation, evidence-intake, structured response fields, and the
   strict revision guard remain absent from production OpenAPI/composition.
   Existing first-submission and legacy revision behavior is unchanged until the
   coherent chunk-13 cutover; internal composition/tests prove the new path.
+- This chunk changes no AUTH availability. It supplies hidden behavior and a
+  feature-manifest delta for later AUTH activation; route exposure waits for 13.
 - Preparation-reference columns and conditional lineage constraints land here,
   but the global rule requiring every newly written version greater than one to
   reference a preparation does not. REV-13 installs that `NOT VALID` check in
@@ -175,10 +182,10 @@ production `/api/v1` review-router registration
   acknowledgment mismatch, invalid preparation, constraint-safe N+1 stamping,
   and immutable N/prior task locks.
 - Forward and backward rebase tests prove the TaskAssignment submitter
-  compensation version is byte-for-byte unchanged. A later reviewer lease may
-  independently freeze the then-current reviewer compensation version; no
+  ContributionPolicyVersion is unchanged. A later reviewer lease may
+  independently freeze the then-current reviewer ContributionPolicyVersion; no
   Submission, CheckerRun, Task Context, or preparation field duplicates either
-  compensation freeze.
+  contribution-policy freeze.
 - Independent-session barrier tests race guide activation against
   `needs_revision` and prove one complete old/new context, canonical lock order,
   and no mixed policy generation or deadlock. Head-selection tests prove no
@@ -200,7 +207,7 @@ production `/api/v1` review-router registration
 - Replacement-assignment tests prove authority-loss close, durable unassigned
   obligation, atomic successor transfer, replacement Task Context/read and N+1
   submission, old-contributor denial, replay requirements, guide re-evaluation,
-  target-assignment compensation source, and rollback/concurrent replacement.
+  target-assignment contribution-policy source, and rollback/concurrent replacement.
 - Fault injection during initial preparation rolls back the Review,
   `needs_revision` task/assignment effect, lease consumption, audit, and outbox
   so contributor access can never observe `needs_revision` without one head.

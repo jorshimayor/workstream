@@ -41,7 +41,7 @@ production `/api/v1` review-router registration
   the actor is the canonical contributor on the exact TaskAssignment associated
   with a Submission in the requested chain; owns the active lease anchored to
   the chain; authored a prior Review in the chain and still has the current
-  project grant; or holds the explicit Project Manager/Operator inspection
+  exact current project `reviewer` grant; or holds the explicit Project Manager/Operator inspection
   permission. Arbitrary same-project reviewers, caller-selected unrelated
   chains, cross-project actors, and revoked grants are denied. Prior
   participation permits bounded metadata only, never content.
@@ -50,9 +50,16 @@ production `/api/v1` review-router registration
   scope are lifecycle/resource guards. Pre-intake denial creates no ART
   candidate, binding, or receipt.
 - Merged ART-02A2 is preparation-only and does not satisfy this chunk's ART
-  gate. REV imports no ART scratch/source implementation. Activation requires
-  the later merged ART-owned typed reviewer read and two-phase evidence-intake,
-  binding, retention, recovery, and service-scope capabilities.
+  gate. REV imports no ART scratch/source implementation. Chunk start requires
+  ART v2 submission/checker cutovers, a narrow packet-read port, and a separately
+  approved/merged `WS-ART-001-REV-EVIDENCE` candidate/finalize capability with
+  canonical ART facts, guards, orphan retention, and tests.
+- Binding finalization requires separately registered planned action
+  `artifact.review_evidence.binding.create`, mapped only to
+  `artifact.binding.create` and fixed identity `workstream.artifact.binding`.
+  It is not an alias of either human evidence-ingest action, generic artifact
+  retrieval, or Operator `artifact.binding.read`. AUTH activates it only after
+  the hidden ART capability merges.
 - The exact locked guide/policy/submission/checker/prior-review chain is
   disclosed as bounded history. Artifact bytes and complete binding metadata
   are retrievable only for the canonical current review packet anchored to the
@@ -69,8 +76,9 @@ production `/api/v1` review-router registration
   without an active lease for that exact Submission. An expired or consumed
   lease grants no residual content authority; history remains metadata-only.
 - Human tokens never enter artifact calls; service scope is least privilege.
-- Finding evidence and response evidence enter generic intake, become verified
-  bindings, and are referenced publicly only by ArtifactBinding ID.
+- Finding evidence and response evidence enter the ART candidate port, become
+  verified bindings, and create immutable REV-owned `ReviewEvidenceArtifact`
+  relations referenced publicly only by ArtifactBinding ID.
 - Reviewer finding evidence uses ART intake under the active lease before its
   ArtifactBinding ID is attached to ReviewFinding. Raw bytes and provider
   locations never enter the Review decision payload.
@@ -79,10 +87,12 @@ production `/api/v1` review-router registration
   `review.finding_response_evidence.ingest`, the contributor's owned active
   assignment, and a prepared revision context.
   Scope is derived server-side as exact project/task/submission/finding and
-  operation. Intake uses the merged ART-owned two-phase capability: preauthorize
-  and derive scope; idempotently ingest an unbound candidate; then re-lock and
-  revalidate actor/grant, lease or assignment, Submission/finding, and
-  preparation before canonical binding/relation creation. A mid-intake stale
+  operation. Intake uses the merged ART-owned two-phase capability: request
+  preflight derives scope and ingests/verifies an unbound candidate outside
+  review locks; finalization uses AUTH authority lock -> REV lease/assignment,
+  Submission, evidence-slot and packet-lineage locks -> ART candidate/admission/
+  binding locks -> final fact recomposition -> one AUTH evaluation -> binding
+  plus ReviewEvidenceArtifact flush. A mid-intake stale
   lease, revocation, assignment loss, preparation supersession, or cross-project
   mismatch creates no canonical Workstream binding/relation or lifecycle effect;
   an already uploaded unbound candidate remains only under ART retention and
@@ -94,7 +104,10 @@ production `/api/v1` review-router registration
   credentials, or unrestricted finding text.
 - LocalStorage and MinIO pass the same review-artifact contract tests.
 - Production OpenAPI remains free of lifecycle routes; no private context is
-  exposed before the final release activation.
+  exposed before the final product release.
+- REV supplies hidden read/evidence behavior and feature-manifest deltas while
+  human actions remain planned. AUTH separately activates them only after this
+  chunk and the exact ART binding action/capability have merged.
 - Authorization tests cover submitter, active reviewer, prior participating
   reviewer, takeover reviewer, Project Manager/Operator, arbitrary same-project
   reviewer, cross-project actor, expired lease, and revoked grant. Independent

@@ -5,7 +5,7 @@
 Add immutable Review, finding, submitter response, resolution, evidence
 relation, decision idempotency, and projection-request persistence.
 
-Activation requires the merged shared transactional-outbox contract. All
+Chunk start requires the merged shared transactional-outbox contract. All
 projection requests below use that shared foundation.
 
 ## Risk class
@@ -39,6 +39,12 @@ review-private outbox or delivery queue
 ## Acceptance criteria
 
 - One Review per Submission and synchronized predecessor-chain constraints.
+- `ReviewEvidenceArtifact` is an immutable REV semantic relation over one
+  finalized ART binding. Before decision it is identified by exact lease,
+  operation kind, evidence slot, and idempotency identity; after decision it may
+  be linked set-once to the exact ReviewFinding or SubmissionFindingResponse.
+  Binding identity and scope never change. This is not artifact byte storage,
+  a provider reference, or a mutable ReviewAttempt.
 - `Review.reviewer_id` is the exact canonical human `ActorProfile.id` on its
   ReviewLease; a composite constraint rejects a crossed lease/reviewer and no
   external subject, email, legacy profile ID, service actor, or system principal

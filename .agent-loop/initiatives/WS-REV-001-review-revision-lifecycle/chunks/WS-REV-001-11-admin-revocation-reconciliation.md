@@ -44,8 +44,10 @@ production `/api/v1` review-router registration
   administrative closure, and reconciliation declare, respectively,
   `review.lease.force_release`, `review.queue.routing.override`,
   `review.queue.routing.correct`, `review.queue.close`, and
-  `review.reconcile.run`. They call `AuthorizationService.require` with exact
-  covered scope and mandatory reasons where actor initiated; queue closure,
+  `review.reconcile.run`. Human mutations use AUTH prepare/authority lock, REV
+  canonical row locks and final fact recomposition, one AUTH evaluation, then
+  flush/one caller commit. They require exact covered scope and mandatory
+  reasons; queue closure,
   correction, and force release remain Operator-only.
 - `POST /api/v1/tasks/{task_id}/revision-obligation/close` declares the additive
   AUTH-owned `review.revision_obligation.close` ActionId mapped to existing
@@ -68,7 +70,8 @@ production `/api/v1` review-router registration
   `project.task.manage`. Its candidate authority is only a Project Manager grant
   covering the canonical project. Its typed resource contains exact project,
   task, assignment, prior Submission, revision episode, and current head facts,
-  and requires transaction revalidation. The command requires idempotency, a
+  and requires transaction revalidation. AUTH locks authority before REV locks
+  these feature rows. The command requires idempotency, a
   bounded reason, and the
   current preparation head ID/digest. Through the existing task-owned revision
   participant it locks and revalidates authority, project/guide/policies,
@@ -94,9 +97,9 @@ production `/api/v1` review-router registration
   assignment, queue, and no-Review/no-root facts and requires transaction
   revalidation. The command is idempotent, requires the reconciliation finding
   ID and reason, and closes the task with that
-  stable terminal reason, releases/clears its assignment, closes any queue as
+  stable terminal reason by moving the task to canonical `cancelled`, releases/clears its assignment, closes any queue as
   `admin_cancelled`, preserves immutable history/project grant, and creates no
-  Review, preparation root, CON/payment/reputation record, or synthetic reject.
+  Review, preparation root, CON/award/reputation record, or synthetic reject.
 - Chunk 11 owns `ReviewReconciliationFinding` with immutable defect/evidence
   facts and a set-once resolution pointer, plus one-to-one immutable
   `ReviewReconciliationResolution` records for domain inconsistency evidence;
@@ -141,22 +144,35 @@ production `/api/v1` review-router registration
   reconciliation versus closure, post-resolution recurrence, worker retry/
   restart, and fault rollback, proving one unresolved finding, at most one
   resolution, stable alert/outbox effects, and no partial administrative request.
-- D6 limit/deadline closure is explicit and idempotent: task closes with
-  `revision_limit_reached` or `revision_deadline_expired`, assignment atomically
+- D6 limit/deadline closure is explicit and idempotent: task moves from
+  `needs_revision` to `cancelled` with `revision_limit_reached` or
+  `revision_deadline_expired`, assignment atomically
   becomes `released` with `released_at=database_now`, the task's active-assignee
-  projection clears, reclaim is denied because the task is closed, queue closes
+  projection clears, reclaim is denied because the task is terminal, queue closes
   `admin_cancelled`, project grant is unchanged, and no
-  Review/CON/payment/reputation record is created.
+  Review/CON/award/reputation record is created.
 - D6 tests cover PM allow, non-PM and Operator denial, cross-project concealment,
   not-yet-reached denial, both terminal causes, stale/crossed head, exact and
   changed replay, closure versus submission/repair/reassignment, and fault
   rollback after every state/audit/outbox participant.
-- Grant revocation, actor suspension/deactivation, corrected attribution that
+- Exact reviewer-grant revocation, actor suspension/deactivation, corrected attribution that
   creates self-review, and policy ineligibility immediately invalidate
   preference/decision authority and revoke/requeue an active lease while
   preserving queue age; missed recovery is detected idempotently.
+- Reviewer-grant reconciliation changes only review preference, lease, and queue
+  state. It never revokes, replaces, or mutates submitter, adjudicator, or
+  AdminRoleGrant rows. Submitter revocation remains task-assignment owned;
+  adjudicator invalidation remains dormant until a separate lifecycle exists.
 - Reconciliation detects every specified queue/lease/review inconsistency and
   emits alerts/compensating events rather than silent edits.
+- Reviewer-authority invalidation reconciliation runs only as fixed service
+  `workstream.review.authority_invalidation_reconciliation`; general queue,
+  lease, and history reconciliation runs only as
+  `workstream.review.reconciliation`. Both have their own exact static
+  `review.reconcile.run` row, provisioned ActorProfile/link, AUTH-09E admission,
+  cross-service denial, and later AUTH action activation. Neither borrows
+  Operator or reviewer identity; human Operator closure/force-release remains a
+  separate prepared path.
 - Artifact verification recovery calls the existing ART-owned
   `ArtifactOperatorRecoveryPort` with the registered
   `artifact.verification_job.retry` action. The provisioned Artifact Storage
@@ -165,9 +181,12 @@ production `/api/v1` review-router registration
 - Admin without reviewer grant still cannot claim or decide.
 - Revocation/decision and override/claim races are deterministic.
 - Release, decline, override, force-release, admin closure, recovery, and any
-  actor-attributed deferred commit reauthorize through transaction-aware AUTH,
-  persist the AuthorizationDecision link, follow the canonical lock order, and
+  actor-attributed deferred commit use AUTH's prepared mutation protocol,
+  persist the AuthorizationDecision link, follow the command-specific lock order, and
   fail without durable side effects on denial.
+- This chunk supplies hidden behavior/resource facts for its actions and changes
+  no ActionOwner or availability. AUTH separately activates exact actions after
+  merge; product route release waits for REV-13.
 - Production OpenAPI remains free of lifecycle routes.
 - Recovery/reconciliation jobs reuse `run_async_task`, fresh worker
   engine/session disposal, stable task IDs, and `sync_task_settings`; they do

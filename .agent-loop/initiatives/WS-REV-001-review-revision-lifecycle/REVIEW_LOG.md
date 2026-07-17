@@ -247,3 +247,60 @@ No comment is deferred. The detailed thread mapping is recorded in
 non-evidence planning-contract changes after the prior reviewed SHA, required
 internal reviewer tracks and exact-SHA evidence binding must run again before
 the branch is republished.
+
+## WS-XINT-001 Boundary Reconciliation - 2026-07-17
+
+The branch rebased without conflict onto trusted main
+`5d353b6d3f8a36b9b9ffdc1959487a150ac25fd1`, merge commit for WS-XINT-001 PR
+#139. Its ADR 0015 and AUTH/REV, AUTH role/service, ART/REV, and REV/CON handoffs
+supersede conflicting active REV planning wording. The archival WS-REV Markdown
+and PDF remain provenance inputs, not authority over merged boundary decisions.
+
+Three read-only discovery reviews failed the pre-reconciliation plan and found
+the same material drift:
+
+| Review | Result before repair | Required correction |
+|---|---|---|
+| Architecture | FAIL | AUTH-only activation custody; prepared mutation order; ART v2 ports; no CON or ART repository ownership |
+| Security/auth + product/ops | FAIL | Independent exact reviewer grant; role-specific invalidation; fixed AUTH-09E services; canonical task effects |
+| ART + CON integration | FAIL | REV-owned packet/evidence relations; two-phase binding; mandatory flush-only CON participant; stable artifact lineage |
+
+The reconciled plan now requires registration -> hidden behavior -> AUTH
+activation -> REV product release, derives future action totals from trusted
+main, and keeps the four proposed REV actions separate from ART's proposed
+`artifact.review_evidence.binding.create` action. It uses request-scoped AUTH
+for reads and the AUTH-first prepared protocol for mutations.
+
+ART v2 is the only future provider boundary. REV owns
+`ReviewPacketManifest` and `ReviewEvidenceArtifact` while ART owns bytes,
+bindings, candidates, finalization, and providers. The currently merged ART
+plan does not schedule `WS-ART-001-REV-EVIDENCE`; REV-07 is blocked until ART
+adds, approves, and merges that owner chunk.
+
+Review authority requires one exact active `reviewer` grant. Reviewer
+invalidation changes only review preference, lease, and queue state. Six
+protected review jobs use separate fixed AUTH-09E identities for preference
+expiry, lease expiry, authority-invalidation reconciliation, general review
+reconciliation, artifact-reference reconciliation, and projection. Human
+Operator authority is never borrowed as a job identity.
+
+REV-08 now freezes the decision contract without committing a canonical
+Review. REV-10 creates the first canonical Review transaction only after the
+CON flush-only participant is merged; every Review creates a reviewer
+ContributionRecord, accept also creates the submitter record, and CON performs
+no ART call. The plan interprets the handoff's versioned Submission lineage as
+the repository's existing immutable versioned `Submission`, requiring the ART
+cutover to stabilize server-derived `Submission.artifact_hash` before CON copies
+it to `ContributionRecord.artifact_hash`. Optional contribution-evidence
+projection is outside the core transaction and release gate.
+
+Human reject moves the task to canonical `rejected`; approved administrative
+limit/deadline or unrecoverable-legacy closure moves it to `cancelled` with an
+exact reason. No `closed/review_rejected` status is introduced. REV-13 exposes
+only REV-owned surfaces after AUTH activation and CON-owned readiness; it does
+not edit or register CON routers.
+
+All earlier exact-SHA PLAN review evidence is historical after this material
+change. Fresh senior engineering, QA/test, security/auth, product/ops,
+architecture, docs, reuse/dedup, test-delta, and CI-integrity review plus a new
+snapshot binding are required before PR #128 is republished.

@@ -76,7 +76,8 @@ frontend work
 - `docs/spec_review_lifecycle.md` is the active normative implementation
   contract. It reconciles `/api/v1`, server-selected current work, artifact
   evidence, AUTH/CON ownership, LocalStorage/MinIO/AWS S3, and every approved
-  repository decision without claiming the supplied PDF is a generated twin.
+  repository decision, including WS-XINT-001 and ADR 0015, without claiming the
+  supplied PDF is a generated twin.
 - README, reference README, checksum manifest, architecture lockdown, and ADR
   precedence point to the active contract while retaining all archival hashes.
 - ADR 0010 remains explicitly additive to revised submissions and is reconciled
@@ -85,7 +86,13 @@ frontend work
   currently active guide prepares the next attempt's complete context including
   an intentional backward rebase, and the reviewer consumes
   the context stamped on the leased Submission without a separate guide/rebase.
-- Permission additions are assigned to WS-AUTH ownership, not implemented here.
+- The active contract supersedes archival combined-role wording with independent
+  `submitter`, `reviewer`, and `adjudicator` grants; review requires exact active
+  reviewer authority, and adjudication remains unavailable.
+- AUTH alone registers, owns activation custody, integrates evaluators, and
+  changes availability. REV chunks produce hidden behavior, canonical typed
+  facts/guards, and feature-manifest evidence before AUTH activation; REV-13 is
+  a separate product release.
 - The active contract records merged AUTH-08 as 74 PermissionIds and 57
   ActionIds split into 9 active actions and 48 planned actions. It
   does not describe the authorization kernel as absent and does not treat any
@@ -99,24 +106,25 @@ frontend work
   `ArtifactScratchManager`, `PreparedArtifact`, or `CommittedArtifactSource`,
   persists scratch state, or treats ART-02A2 as reviewer read/intake readiness.
   Chunk 01 changes no ART implementation.
-- The active action table contains 24 dependencies. The four additions are
+- The active action table contains 24 review-lifecycle dependencies. The four
+  proposed additions are
   `review.revision_obligation.close -> project.task.manage` for a covered
   Project Manager, `review.revision_context.repair -> project.task.manage` for a covered Project
   Manager and `review.revision_context.legacy_close -> operations.reconcile.run`
   for an Operator, plus
   `review.lifecycle.activation.manage -> operations.reconcile.run` for an
-  Operator. Chunk 01 documents their typed resource/guard contract, while
-  AUTH owns typed catalogue/owner and PostgreSQL audit-parity migration from 57
-  to exactly 61 actions from AUTH-08's merged 57 actions (9 active, 48
-  planned). The resulting 61 contains 9 active and 52 planned; all 24 REV
-  dependencies stay inactive until their owning REV chunks. The three
-  closure/repair actions gate chunk 11 and the lifecycle-control action gates
-  12A; no new PermissionId is introduced.
+  Operator. Chunk 01 documents their typed resource/guard contract. Separately,
+  ART/REV evidence finalization requires proposed service action
+  `artifact.review_evidence.binding.create -> artifact.binding.create` for
+  `workstream.artifact.binding`. Exact future counts are derived from the merged
+  catalogue at each AUTH gate; 57/9/48 remains only the AUTH-08 snapshot. The
+  four REV additions and ART service action are independently inventoried and
+  cannot be silently collapsed into 61. No new REV PermissionId is introduced.
 - A stale-contract scanner rejects active Flow Node production, `/v1`, full
   reviewer backlog, legacy severity, synthetic reject, direct
   payment/reputation, and bypass wording without scanning archival bytes as
   active policy.
-- Active reviewer/revision/queue/payment flow docs and templates are reconciled
+- Active reviewer/revision/queue/contribution flow docs and templates are reconciled
   now as contract/status documentation, clearly distinguishing planned
   unavailable endpoints from implemented behavior; the scanner has no temporary
   allowlist or exception that can outlive this chunk.
@@ -125,13 +133,22 @@ frontend work
   committed Review creates reviewer contribution, while only accept additionally
   creates the accepted Submission's submitter contribution.
 - The active contract defines every human lifecycle identity as canonical
-  `ActorProfile.id`, preserves explicit service/system actor kinds, removes
-  legacy PaymentPolicy from final revision context, and records the exact
-  WS-CON interleaving and sole REV-13 joint activation boundary.
-- Active contract adoption does not guess the unresolved Submission packet
-  digest. It records that CON-01/03C, ART, and REV-10 must adopt one verified
-  immutable digest field, representation, derivation, and binding before
-  contribution integration.
+  `ActorProfile.id`, defines distinct AUTH-09E fixed-service identities/static
+  rows for protected jobs, removes retired payment policy from revision context,
+  and records exact AUTH-first mutation choreography and REV/CON interleaving.
+- The active contract defines REV-owned `ReviewPacketManifest` and
+  `ReviewEvidenceArtifact`, ART v2 packet-read/candidate-finalize boundaries,
+  exact binding service action, and no raw ArtifactStore/v1/provider access.
+- The active contract maps XINT's conceptual `SubmissionVersion.artifact_hash`
+  to a server-derived verified `artifact_hash` on the existing versioned
+  `Submission`, copied to `ContributionRecord.artifact_hash`; caller
+  `package_hash` is not trusted or silently renamed.
+- Core contribution creation uses frozen `ContributionPolicyVersion`, a CON
+  flush-only participant, no ART call, and no mandatory contribution-evidence
+  projection. CON owns its public routes and transitions.
+- Human reject uses canonical task `rejected`; approved administrative
+  revision-obligation closure uses `cancelled` with a bounded reason. No active
+  `closed/review_rejected` status token is introduced.
 
 ## Verification
 

@@ -19,8 +19,9 @@ outcomes.
 ## Success state
 
 - An admitted submission creates exactly one review queue entry.
-- A current, explicitly granted reviewer sees only their active lease or one
-  next offered item and can claim at most one review globally.
+- A current human holding one exact active project `reviewer` grant sees only
+  their active lease or one next offered item and can claim at most one review
+  globally. Separate `submitter` or `adjudicator` grants add no review authority.
 - Claims, releases, preference changes, decisions, overrides, and recovery use
   current centralized authorization and canonical resource scope.
 - Every human identity in task/submission/review lineage is the canonical
@@ -55,19 +56,23 @@ outcomes.
   Submission and do not maintain a separate review guide.
 - Consume `WS-AUTH-001` through its authorization kernel and decisions; do not
   query grant tables or reconstruct permissions in review code.
-- Consume typed, Workstream-owned artifact capabilities over the canonical
-  `ArtifactStore`; do not import provider adapters into review services.
+- Consume only typed ART-owned packet-read and evidence candidate/finalize
+  capabilities backed by the canonical `ArtifactStore`; review services never
+  receive the raw store, provider adapters, provider references, or scratch paths.
 - Keep PostgreSQL canonical for review truth. Storage projection is derived,
   asynchronous, and retryable.
-- Keep review code free of contribution, compensation, fulfillment, and
-  reputation policy. `WS-CON-001` owns the transaction participant.
+- Keep review code free of contribution-policy, award, fulfillment, and
+  reputation policy. `WS-CON-001` owns the flush-only transaction participant;
+  core contribution creation performs no ART call or external I/O.
 - Keep frontend delivery separate until backend contracts and lifecycle guards
   are stable and proven.
 
 ## Non-goals
 
 - Self-review, reviewer bidding, multiple concurrent review leases, automated
-  reviewer grants, reputation scoring, adjudication, or reject reassignment.
+  reviewer grants, reputation scoring, adjudication lifecycle/actions, or reject
+  reassignment. The independent `adjudicator` grant exists but confers no REV
+  operation in this initiative.
 - Flow Node or R2 provider implementation in v0.1.
 - Workstream-owned authentication, login, sessions, or credentials.
 - A second artifact store or review-authoritative search index.
@@ -91,6 +96,15 @@ outcomes.
    repaired and reviewed `WS-CON-001` plan, exact lineage/digest contract,
    atomic participant, lease freeze, recovery, reconciliation, projection
    operations, and WS-CON-11 joint-readiness manifest exist.
+6. Merged WS-XINT-001 PR #139 controls cross-initiative ownership: feature
+   chunks build hidden behavior, AUTH alone registers/transfers/activates exact
+   actions, and REV performs only the later joint product-surface release.
+7. Project roles are independent `submitter`, `reviewer`, and `adjudicator`
+   grants. REV consumes only the exact reviewer grant and reviewer invalidation.
+8. Core ContributionRecord creation copies the stabilized versioned
+   Submission `artifact_hash` lineage, evaluates the frozen
+   `ContributionPolicyVersion`, and has no mandatory contribution-evidence
+   artifact projection.
 
 Items 3-5 and the proposed chunk sequence were approved by the human on
 2026-07-15 for planning publication. This approval does not activate a successor

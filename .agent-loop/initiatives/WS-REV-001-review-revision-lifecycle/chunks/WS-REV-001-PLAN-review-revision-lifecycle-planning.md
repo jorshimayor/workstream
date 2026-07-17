@@ -44,6 +44,13 @@ runtime implementation or dependency changes
   spaces path-specifically; no global whitespace rule is weakened.
 - Current task, submission, checker, auth, artifact, contribution, audit,
   worker, API, migration, test, and documentation boundaries are cited.
+- Merged WS-XINT-001 PR #139, ADR 0015, and all four owner handoffs are treated
+  as current authority. The plan distinguishes AUTH action activation from REV
+  product release and derives future catalogue counts from exact trusted main.
+- Independent reviewer grants, AUTH-09E fixed services, AUTH-first prepared
+  mutations, ART v2 packet/evidence ports, ReviewPacketManifest,
+  ReviewEvidenceArtifact, flush-only CON integration, stabilized artifact_hash
+  lineage, and optional contribution evidence are closed across all artifacts.
 - Observations, decisions, risks, unknowns, and dependencies are separated.
 - Every proposed chunk has scope, exclusions, testable criteria, risk,
   verification, reviewers, and human focus.

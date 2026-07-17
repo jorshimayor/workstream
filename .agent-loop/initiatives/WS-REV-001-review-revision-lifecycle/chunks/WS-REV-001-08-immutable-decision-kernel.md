@@ -2,9 +2,9 @@
 
 ## Goal
 
-Implement the internal immutable review-decision transaction for all three
-decisions, including findings, resolutions, task/assignment effects, audit, and
-the shared-outbox projection event, without production route activation.
+Freeze the immutable review-decision request, pure validation, task-effect
+participant, lock/fact contract, and CON participant input for all three
+decisions. Do not create a canonical Review-committing service before CON merges.
 
 ## Risk class
 
@@ -26,6 +26,7 @@ backend/tests/test_{reviews,tasks,authorization,artifacts,audit}.py
 ```text
 public decision route
 production no-op WS-CON participant
+any code path that commits a canonical Review without the exact CON participant
 remote storage calls inside the transaction
 mutation of prior Submission, Review, ReviewFinding, or FindingResolution
 reputation or fulfillment logic
@@ -33,23 +34,26 @@ reputation or fulfillment logic
 
 ## Acceptance criteria
 
-- Transaction rechecks current authorization, lease ownership/expiry, grant,
-  self-review, queue state, idempotency, predecessor chain, and stabilized
-  binding facts using database time.
-- The command declares `review.decision` and runs through the transaction-aware
-  `AuthorizationService.require` boundary. The Review, audit event, and shared
-  outbox payload retain the canonical ActionId-bearing AuthorizationDecision
-  link.
+- The frozen transaction contract rechecks exact reviewer grant, lease ownership/
+  expiry, no-self-review, queue state, idempotency, predecessor chain, packet
+  manifest, evidence relations, and stabilized binding facts using database time.
+- The command declares planned `review.decision`. Mutation choreography is AUTH
+  prepare/authority lock -> REV locks and final fact recomposition -> one AUTH
+  evaluation -> REV/task/CON participants flush -> route commit once. No plain
+  mutation-time `require()` or serialized authorization handle substitutes.
 - Decision/finding/evidence/resolution rules match the canonical spec.
 - Task effects use the task-owned `TaskReviewEffectsParticipant` with the
   caller's AsyncSession. It flushes without commit, reuses TaskRepository and
   lifecycle guards internally, and is the only path for review-driven task or
   assignment effects; review code never imports TaskRepository.
-- Accept completes assignment and accepts task; needs revision keeps assignment
-  active; reject blocks only that assignment and closes task with reason.
-- Review, findings, evidence relations, resolutions, queue close, lease consume,
-  task effects, audit, and projection request commit or roll back together.
-- Exact replay returns the Review; changed replay fails.
+- Accept effects complete assignment and target `accepted`; needs revision keeps
+  assignment active; human reject blocks only that assignment and targets
+  canonical `rejected` with reason. Administrative closure is not a decision.
+- Pure tests prove the future atomic write set: Review, findings,
+  ReviewEvidenceArtifact links, resolutions, queue/lease, task effects, audit,
+  projection event, CON records, awards, and outbox. This chunk does not expose a
+  service capable of committing that set.
+- Exact replay contract returns the Review after REV-10; changed replay fails.
 - Idempotency is bound to actor, operation, lease, submission, and canonical
   payload. Replay reauthorizes disclosure for the same actor without requiring
   a consumed lease to remain active; cross-actor, revoked-disclosure, or changed
@@ -57,14 +61,11 @@ reputation or fulfillment logic
 - The decision actor is the active canonical human `ActorProfile.id` that owns
   the exact ReviewLease. UUID shape alone is insufficient; a service actor,
   system principal, legacy ID, or external subject cannot decide a Review.
-- Decision-versus-expiry, revocation-versus-decision, binding-state, and duplicate
-  decision races are deterministic on PostgreSQL.
-- Production composition cannot invoke the kernel without the later WS-CON
-  participant gate.
-- The transaction follows the canonical lock order. Independent Postgres
-  sessions/barriers exercise decision versus expiry, revocation, binding-state,
-  duplicate decision, and opposite-order attempts, with participant-by-
-  participant rollback fault injection and bounded deadlock retry proof.
+- No hidden or production composition can commit a Review. Absence of the exact
+  CON participant fails construction; no optional/no-op path exists.
+- This chunk proves command-specific lock planning and the task participant. Full
+  decision races, participant rollback, and canonical commits move to REV-10
+  after CON merges.
 - Audit, outbox, dead-letter, alerts, and error details contain only bounded
   typed projections: no finding body, private artifact metadata, signed access,
   provider path, or unrestricted identity value.
@@ -87,8 +88,8 @@ reuse/dedup, and test-delta.
 
 ## Human review focus
 
-Atomic state matrix, route remains closed, race resolution, and no contribution
-or storage side effect gap hidden by tests.
+Complete decision input/effect contract, no premature canonical commit, route
+absence, and no contribution or storage side-effect gap hidden by tests.
 
 ## Stop condition
 

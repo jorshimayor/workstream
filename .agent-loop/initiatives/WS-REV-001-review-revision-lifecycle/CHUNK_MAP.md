@@ -10,22 +10,22 @@ explicit start signal.
 
 | Chunk | Title | Risk | Gate | Status |
 |---|---|---:|---|---|
-| `WS-REV-001-PLAN` | Review And Revision Lifecycle Planning | L0 | None | Human-approved; AUTH-08/ART-02A2 refresh complete; final review/evidence/PR refresh required |
-| `WS-REV-001-01` | Canonical Contract Adoption And Dependency Conformance | L1 | Plan approval; current dependency refresh | Proposed |
-| `WS-REV-001-02` | Locked Review Policy And Task Lifecycle Alignment | L1 | AUTH DoD on current main; retain merged AUTH-08 transaction/error/timestamp invariants; ART contract stable; D6 behavior approved | Proposed |
-| `WS-REV-001-03` | Review Queue And Lease Persistence | L1 | 02 merged; WS-CON-03B compensation-policy persistence merged | Proposed |
+| `WS-REV-001-PLAN` | Review And Revision Lifecycle Planning | L0 | None | Active; WS-XINT-001 reconciliation in review |
+| `WS-REV-001-01` | Canonical Contract Adoption And Dependency Conformance | L1 | Plan approval; current-main refresh; merged WS-XINT-001 handoffs | Proposed |
+| `WS-REV-001-02` | Locked Review Policy And Task Lifecycle Alignment | L1 | AUTH canonical actor foundation; ART submission commitment contract stable; canonical rejected/cancelled lifecycle amendment; D6 behavior approved | Proposed |
+| `WS-REV-001-03` | Review Queue And Lease Persistence | L1 | 02 merged; WS-CON ContributionPolicyVersion persistence merged | Proposed |
 | `WS-REV-001-04` | Immutable Review, Findings, And Replay Persistence | L1 | 03 merged; WS-CON-02A shared outbox persistence and 02C lifecycle-audit participant merged | Proposed |
-| `WS-REV-001-05` | Checker Admission, Preferred Routing, And Queue Views | L1 | 04; ART submission/checker cutover; AUTH queue reads | Proposed |
-| `WS-REV-001-06` | Atomic Claims, Release, Preference, And Timers | L1 | 05; AUTH mutation decisions; WS-CON-06 ReviewLease freeze participant merged; lock order approved | Proposed |
-| `WS-REV-001-07` | Artifact-Backed Review Context And Finding Evidence | L1 | 06; ART read/intake/retention/recovery contracts | Proposed |
-| `WS-REV-001-08` | Immutable Decision Kernel And Task Effects | L1 | 07; AUTH decision/revocation contract | Proposed |
-| `WS-REV-001-09A` | Revision Context Preparation And Resubmission | L1 | 08; ADR 0010 decision adopted; WS-CON-05A/05B legacy PaymentPolicy removal merged | Proposed |
+| `WS-REV-001-05` | Checker Admission, Preferred Routing, And Queue Views | L1 | 04; ART v2 submission/checker cutover; AUTH-10 reviewer grants and AUTH-11 project visibility; actions registered/planned | Proposed |
+| `WS-REV-001-06` | Atomic Claims, Release, Preference, And Timers | L1 | 05; AUTH prepared mutation protocol; AUTH-09E plus exact expiry service rows; WS-CON ReviewLease ContributionPolicyVersion freeze participant; actions registered/planned | Proposed |
+| `WS-REV-001-07` | Artifact-Backed Review Context And Finding Evidence | L1 | 06; merged ART v2 packet-read and separately approved `WS-ART-001-REV-EVIDENCE` candidate/finalize capability; `artifact.review_evidence.binding.create` registered/planned with exact binding service row | Proposed |
+| `WS-REV-001-08` | Decision Contract, Validation, And Task Effects | L1 | 07; AUTH prepared mutation contract; no canonical Review commit until 10 | Proposed |
+| `WS-REV-001-09A` | Revision Context Preparation And Resubmission | L1 | 08; ADR 0010 adopted; retired payment-policy removal merged; AUTH-14 submission cutover | Proposed |
 | `WS-REV-001-09B` | Finding Replay, Resolution, And Return Routing | L1 | 09A | Proposed |
-| `WS-REV-001-10` | WS-CON Atomic Integration And Hidden API Composition | L1 | 09B; WS-CON-03C exact lineage/digest schema and WS-CON-07 atomic participant merged | Proposed |
-| `WS-REV-001-11` | Admin Overrides, Revocation Recovery, And Reconciliation | L1 | 10; AUTH invalidation plus merged revision-obligation-close/repair/legacy-close ActionIds; ART operator recovery port | Proposed |
-| `WS-REV-001-12` | Snapshot Projection, Notifications, And Observability | L1 | 11; ART projection; outbox foundation | Proposed |
-| `WS-REV-001-12A` | Joint Lifecycle Release-Control Foundation | L1 | 12 review drain-observation port; exact WS-CON-11 hidden-readiness manifest; AUTH exact 61-action parity (9 active, 52 planned) including inactive lifecycle control before this owning chunk; CON dispatch/callback fence hooks plus fulfillment/outbox drain-observation port | Proposed |
-| `WS-REV-001-13` | Coherent Public Activation, Live API Drill, And Release Proof | L1 | 12A; AUTH/ART/CON/outbox live readiness | Proposed |
+| `WS-REV-001-10` | WS-CON Atomic Integration And Hidden API Composition | L1 | 09B; merged CON lineage schema and flush-only decision participant using stabilized Submission `artifact_hash`; no mandatory contribution-evidence projection | Proposed |
+| `WS-REV-001-11` | Admin Overrides, Reviewer-Revocation Recovery, And Reconciliation | L1 | 10; AUTH invalidation; four proposed REV actions registered/planned; AUTH-09E plus exact reconciliation service row; ART Operator recovery port | Proposed |
+| `WS-REV-001-12` | Snapshot Projection, Notifications, And Observability | L1 | 11; ART projection port; outbox foundation; AUTH-09E plus exact artifact-reference/projection service rows | Proposed |
+| `WS-REV-001-12A` | Joint Lifecycle Release-Control Foundation | L1 | 12 review drain-observation port; exact core WS-CON hidden-readiness manifest; `review.lifecycle.activation.manage` registered/planned; CON dispatch/callback fence hooks plus fulfillment/outbox drain-observation port | Proposed |
+| `WS-REV-001-13` | Coherent Public Release, Live API Drill, And Release Proof | L1 | 12A; every required REV and ART binding action activated by AUTH after hidden behavior; ART/CON/outbox live readiness | Proposed |
 
 ## Dependency order
 
@@ -37,14 +37,15 @@ External initiative gates are inserted without changing same-initiative
 successor order:
 
 ```text
-AUTH definition of done + merged AUTH-08 transaction/error/timestamp invariants
-  + ART stable contracts
+AUTH canonical human/grant/prepared-mutation contracts
+  + merged AUTH-08 transaction/error/timestamp invariants
+  + ART v2 stable contracts
   -> WS-REV-001-02
 
 WS-REV-001-02
-  -> WS-CON-05A/05B exact attribution consumption and PaymentPolicy removal
+  -> WS-CON exact attribution consumption and retired payment-policy removal
 
-WS-REV-001-02 + merged WS-CON-03B compensation-policy persistence
+WS-REV-001-02 + merged WS-CON ContributionPolicyVersion persistence
   -> WS-REV-001-03
 
 WS-REV-001-03 + merged WS-CON-02A shared transactional-outbox persistence
@@ -54,20 +55,25 @@ merged WS-CON-02C caller-transaction shared lifecycle-audit participant
   -> WS-REV-001-04
 
 WS-REV-001-04 stable Review/lease/Submission schemas
-  + merged ART/CON/REV adoption of one verified Submission packet-digest field,
-    representation, derivation, and database binding
-  -> WS-CON-03C exact contribution/award lineage persistence
+  + merged ART submission/checker cutover with server-derived stabilized
+    Submission.artifact_hash
+  -> WS-CON exact contribution/award lineage persistence
 
-WS-CON-05A/05B
+WS-CON retired payment-policy removal
   -> WS-REV-001-09A
 
-WS-REV-001-09B + WS-CON-03C exact lineage/digest schema + WS-CON-07 atomic Review transaction participant
+WS-REV-001-09B + WS-CON exact lineage schema + flush-only Review decision participant
   -> WS-REV-001-10
 
-WS-CON-11 exact hidden-readiness manifest + WS-REV-001-12
+WS-CON exact core hidden-readiness manifest + WS-REV-001-12
   -> WS-REV-001-12A hidden joint release-control foundation
-  -> WS-REV-001-13 sole joint activation
+  -> AUTH activates each exact action after its hidden behavior
+  -> WS-REV-001-13 sole joint product release
 ```
+
+The merged ART plan does not yet schedule `WS-ART-001-REV-EVIDENCE`. REV-07 is
+therefore explicitly blocked until ART owns, approves, and merges that chunk;
+REV planning does not create or start it on ART's behalf.
 
 ## Chunk boundaries
 
@@ -75,14 +81,16 @@ WS-CON-11 exact hidden-readiness manifest + WS-REV-001-12
 - 02-04 land persistence and constraints without public review mutations.
 - 05-07 build routing, leases, and evidence consumption behind an unregistered
   production composition boundary.
-- 08 builds the full internal decision transaction but exposes no production
-  lifecycle route.
+- 08 freezes decision inputs, validation, and task effects but cannot commit a
+  canonical Review without the CON participant.
 - 09A prepares controlled revision context and immutable resubmission input.
 - 09B completes finding replay, resolution, and preferred-return semantics.
-- 10 proves WS-CON atomicity in hidden composition.
+- 10 creates the first canonical Review-committing transaction and proves
+  WS-CON atomicity in hidden composition.
 - 11-12 complete operations, recovery, projection, and observability.
 - 12A lands hidden persisted release control and mandatory cross-domain fences.
-- 13 performs fail-closed preflight, activates the coherent public API set,
+- 13 performs fail-closed preflight, exposes the already-AUTH-active coherent
+  public API set,
   proves the whole lifecycle, and closes generated/user/operator docs.
 
 ## Required reviewer tracks

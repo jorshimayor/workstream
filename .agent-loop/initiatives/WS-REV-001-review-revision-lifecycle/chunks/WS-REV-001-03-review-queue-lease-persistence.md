@@ -5,7 +5,7 @@
 Add review-owned queue and permanent lease-attempt persistence with complete
 database invariants and repository tests, but no public claim behavior.
 
-Activation requires the WS-CON compensation-policy persistence contract to be
+Chunk start requires the WS-CON `ContributionPolicyVersion` persistence contract to be
 merged with its exact lease-freeze FK/field types. This chunk owns those exact
 immutable references on `ReviewLease`; it does not invent or implement WS-CON
 policy.
@@ -63,9 +63,17 @@ WS-CON implementation
   subject, legacy profile ID, and crossed human actor attempts.
 - `first_queued_at` and permanent lease attempt history cannot be silently
   overwritten or deleted.
-- Frozen compensation-policy identifiers/versions required by the approved
-  WS-CON contract are persisted immutably on each lease attempt. They are not
+- Frozen contribution-policy identifiers/versions required by the approved
+  WS-CON contract are persisted as exact immutable
+  `ContributionPolicyVersion` references on each lease attempt. They are not
   part of the Submission guide/checker context and are never rebased with it.
+- `ReviewPacketManifest` persistence is defined as an immutable lease-scoped
+  semantic projection. Its base schema can name the exact queue, lease,
+  Submission/version, admitting CheckerRun/results, locked guide/policy context
+  digest, response-evidence relation set, and ART binding ID set. It stores no
+  bytes, digest of artifact content, provider/scratch/receipt data, or AUTH
+  matrix facts. Chunk 06 creates manifests atomically with leases; 09A may add a
+  constrained revision-preparation reference without rewriting prior manifests.
 - The schema migration performs no blanket historical queue backfill. Ambiguous
   existing submissions remain unqueued; later admission/reconciliation is
   limited by D13 and produces explicit audit/remediation evidence.

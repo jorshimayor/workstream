@@ -16,7 +16,21 @@
 - `docs/decision_0012_workstream_authorization_service.md`
 - `docs/decision_0013_immutable_artifact_storage_boundary.md`
 - `docs/decision_0014_external_service_adapter_convention.md`
+- `docs/decision_0015_project_contributor_roles_are_independent.md`
 - `.agent-loop/policies/repository-engineering-policy.md`
+
+## Merged cross-initiative authority
+
+WS-XINT-001 PR #139 merged to trusted main
+`5d353b6d3f8a36b9b9ffdc1959487a150ac25fd1` from reviewed head
+`f315ffacf09db433af54e84f081c5425167d0a9a`. REV adopts:
+
+- `.agent-loop/initiatives/WS-XINT-001-lifecycle-boundary-reconciliation/PLAN.md`
+- `.agent-loop/initiatives/WS-XINT-001-lifecycle-boundary-reconciliation/DECISIONS.md`
+- `.agent-loop/initiatives/WS-XINT-001-lifecycle-boundary-reconciliation/AUTH_REV_HANDOFF.md`
+- `.agent-loop/initiatives/WS-XINT-001-lifecycle-boundary-reconciliation/AUTH_ROLE_SERVICE_HANDOFF.md`
+- `.agent-loop/initiatives/WS-XINT-001-lifecycle-boundary-reconciliation/ART_REV_HANDOFF.md`
+- `.agent-loop/initiatives/WS-XINT-001-lifecycle-boundary-reconciliation/REV_CON_HANDOFF.md`
 
 ## Dependency specifications and plans
 
@@ -32,22 +46,26 @@ trusted-main `aa0fdcd6912e66609e39a2fbd7b65f67be6c62f3`, whose final branch head
 deny-by-default kernel, adds seven active administrative actions, and establishes
 exactly 57 ActionIds: 9 active and 48 planned. All 20 existing revised-spec
 submission/review actions stay planned. The four additive REV actions require
-exact 57-to-61 typed catalogue/owner/PostgreSQL parity, producing 9 active and
-52 planned. All 24 REV dependencies stay inactive until their owning REV chunks
-activate them. AUTH-08 also provides the required transaction teardown,
+separate AUTH registration and later activation contracts. The 57 count is a
+historical snapshot, not a future fixed total: WS-XINT-001 also proposes the
+separate ART service action `artifact.review_evidence.binding.create`. Every
+gate derives exact counts from current trusted main and inventories both deltas.
+REV chunks never activate actions. AUTH-08 also provides the required transaction teardown,
 decision-evidence `503`, and canonical verification-timestamp repairs. Later
-AUTH definition-of-done chunks remain runtime gates at their owning REV chunks.
+AUTH registration, evaluator, service-admission, and activation chunks remain
+independent runtime gates before their corresponding REV behavior is released.
 
 ART discovery was refreshed against merged ART-02A2 PR #129 at trusted-main
 `9a04434e2f23c5dec8939dadb943bba4d85110c0`, final branch head
 `32aab89262a3944f305e9e5dc4c65a2d31e2e144`. The chunk adds only inactive
-committed-source/private-scratch preparation and preserves ArtifactStore v1,
-provider selection, schema, product routes, and authority behavior. REV consumes
-none of its scratch or source types directly. Later ART v2, S3, admission,
-verification/publication, read/intake/retention/recovery, checker, projection,
-and live-proof contracts remain dependency gates at their owning REV chunks.
+committed-source/private-scratch preparation. Its current ArtifactStore v1 state
+is not a REV interface. REV consumes none of its scratch/source types or raw
+store methods. Later ART v2, S3, submission/checker binding cutovers, packet
+read, review-evidence candidate/finalize, projection, and live-proof contracts,
+including a separately approved `WS-ART-001-REV-EVIDENCE` owner chunk, remain
+dependency gates.
 
-## Cross-worktree discovery evidence
+## Historical cross-worktree discovery evidence
 
 The following sibling planning paths were read-only discovery inputs on
 2026-07-15, pinned for this review to rebased CON planning head `c965f9b`. They are
@@ -58,12 +76,10 @@ WS-REV:
 - `/home/abiorh/flow/workstream-con-001/.agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/JOINT_RELEASE_HANDOFF.md`
 - `/home/abiorh/flow/workstream-con-001/docs/reference_specs/WS-CON-001-contribution-record-and-compensation-boundary-specification.md`
 
-The reconciled CON content passed security/auth, product/QA, and
-architecture/docs delta review on predecessor commit `42cf11f`; exact-head
-publication review of `c965f9b` remains pending. Later uncommitted sibling
-fence-handoff edits are discovery evidence only. Its contracts must still be reread from the merged
-trusted-main SHA named by each runtime gate; the planning commit does not
-substitute for that merge.
+These paths are dated discovery only. Merged WS-XINT
+`REV_CON_HANDOFF.md` supersedes their conflicting mandatory evidence-projection,
+policy naming, activation, and core ART-dependency assumptions. Owning WS-CON
+runtime contracts must still merge before a REV gate consumes them.
 
 ## Adoption note
 

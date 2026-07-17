@@ -52,8 +52,10 @@ synthetic reject from checker, deadline, or revision limit
   self-review=false, close-task reject, and finding-evidence settings.
 - Existing policy rows receive an explicit safe migration rule; unsafe data
   fails with a remediation message.
-- Task supports `accepted` and `closed/review_rejected` without weakening
-  existing transitions.
+- Task supports canonical `accepted`, `rejected`, and `cancelled` transitions
+  without weakening existing transitions. Only human reject enters `rejected`;
+  reason-bound administrative revision closure enters `cancelled`. No
+  undocumented `closed` status or synthetic reject is added.
 - TaskAssignment supports `completed` and `blocked` state compatibility, but no
   reject Review FK is added and no code can block before the Review table lands.
 - Existing Submission remains the only version chain and its predecessor and
@@ -88,11 +90,11 @@ synthetic reject from checker, deadline, or revision limit
   refusal once task/Submission contexts stamp activation sequence.
 - Project-guide activation locks Project, candidate/current guide,
   source-snapshot, and artifact/effective/pre-check/post-check/review/revision/
-  policy rows in the canonical PLAN order before publication. If legacy
-  `PaymentPolicy` still exists before WS-CON-05A/05B, it is locked only as a
+  policy rows in the canonical PLAN order before publication. If retired
+  payment-policy state still exists before WS-CON cutover, it is locked only as a
   transitional consistency input; WS-CON owns its later consumer and schema
   removal. The final Project Guide/revision context contains no payment or
-  compensation policy. Publication never assembles mixed generations.
+  ContributionPolicyVersion. Publication never assembles mixed generations.
 - Every persisted human identity added or validated here is the canonical
   active human `ActorProfile.id`. External subjects, email, legacy typed-profile
   IDs, token roles, and current-assignment inference are rejected as identity

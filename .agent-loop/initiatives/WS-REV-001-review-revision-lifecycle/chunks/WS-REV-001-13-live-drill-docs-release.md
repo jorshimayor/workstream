@@ -2,7 +2,7 @@
 
 ## Goal
 
-Perform fail-closed public lifecycle activation, run privacy-safe HTTP-visible
+Perform fail-closed public lifecycle release of already-AUTH-active actions, run privacy-safe HTTP-visible
 conformance drills, close active documentation, and prove the complete backend
 review/revision lifecycle.
 
@@ -14,15 +14,13 @@ L1 release proof and documentation closure.
 
 ```text
 backend/scripts/review_lifecycle_{stack_preflight,live_drill,validate_evidence}.py
-backend/tests/test_{reviews,contributions,compensation,authorization,api_contract_e2e,review_lifecycle_live_drill}.py only for final conformance gaps
-backend/app/api/router.py only for one joint review/contribution/compensation registration
-backend/app/modules/reviews/router.py only for final activation conformance
-backend/app/modules/contributions/router.py only for final activation conformance
-backend/app/modules/compensation/router.py only for final activation conformance
-backend/app/modules/lifecycle_control/router.py only for final Operator control activation conformance
+backend/tests/test_{reviews,contributions,compensation,authorization,api_contract_e2e,review_lifecycle_live_drill}.py only for final integration conformance gaps
+backend/app/api/router.py only for review and lifecycle-control registration after owner readiness
+backend/app/modules/reviews/router.py only for final product-release conformance
+backend/app/modules/lifecycle_control/router.py only for final Operator control product-release conformance
 backend/app/modules/tasks/{schemas,service,router}.py only for Task Context/preparation acknowledgment and strict canonical revision cutover
-backend/app/composition/review_lifecycle.py only for final fail-closed participant activation
-backend/app/composition/joint_lifecycle_control.py only for final active command-class/binding activation
+backend/app/composition/review_lifecycle.py only for final fail-closed participant composition
+backend/app/composition/joint_lifecycle_control.py only for final active command-class/binding product release
 backend/alembic/versions/<activation-next>_strict_revision_cutover.py
 backend/tests/test_alembic.py only for final revision-cutover migration proof
 docs/architecture_*.md
@@ -55,6 +53,8 @@ frontend implementation
 real secrets, private artifact content, local absolute paths, or personal IDs
 provider or authorization bypass for the drill
 reputation formula or deferred product scope
+CON router, policy, contribution, award, outbox, fulfillment, callback, or projection ownership
+AUTH action registration, ActionOwner/evaluator edit, or availability change
 ```
 
 ## Acceptance criteria
@@ -73,7 +73,7 @@ reputation formula or deferred product scope
   prior finding is resolved.
 - Database and API audit evidence agree; no direct database mutation creates
   the claimed lifecycle result.
-- Before registration, stack preflight proves merged AUTH/ART/CON, shared
+- Before product registration, stack preflight proves merged AUTH/ART/CON, shared
   outbox, workers/schedules, MinIO protocol, migrations, and reconciliation are
   live. Production composition fails closed when any mandatory participant is
   absent.
@@ -83,31 +83,44 @@ reputation formula or deferred product scope
   implement an alternate controller or store phase in a proof script.
 - Preflight consumes WS-CON-11's exact merged SHA, migration head, ActionId and
   service-actor assignment, ART capability, outbox/worker, and handler manifest.
-  Missing, extra, stale, or mismatched entries block startup and activation.
-- A separate REV-owned activation manifest covers every human endpoint and
+  Missing, extra, stale, or mismatched entries block startup and product release.
+- A REV-owned feature/release manifest covers every human endpoint and
   asynchronous command with exact ActionId, PermissionId mapping, resource
-  composer owner, allowed principal kind, service ActorProfile/system-principal
+  composer owner, allowed principal kind, exact fixed service ActorProfile
   assignment, transaction-revalidation rule, exact
   `JointLifecycleCommandClass`, and generation-aware phase policy. Internal
   checker admission, AUTH-13 replacement, and every operation-specific
   `review.reconcile.run` mode are manifest entries even when they share an
   ActionId. The shared-outbox review snapshot projection handler is a separate
   manifest entry under fixed `outbox.dispatch` authority. It includes at least
-  `review.preference_expiry.run`, `review.lease_expiry.run`,
-  `review.reconcile.run`, `review.artifact_reference.reconcile`, and
-  `review.projection.rebuild`; missing, extra, ambiguous, caller-selected, stale,
-  or mismatched mappings fail preflight and startup. The CON-11 manifest supplies
-  the same fields for every joint contribution/compensation command.
-- AUTH preflight also proves the four additive actions migrated typed catalogue,
-  owner mapping, and PostgreSQL audit parity together from 57 to exactly 61,
-  with 9 active and 52 planned, no missing or extra action, and no REV action
-  activated before its owning chunk.
+  `review.preference_expiry.run`, `review.lease_expiry.run`, the separately
+  assigned authority-invalidation and general `review.reconcile.run` modes,
+  `review.artifact_reference.reconcile`, and `review.projection.rebuild`;
+  missing, extra, ambiguous, caller-selected, stale, or mismatched mappings fail
+  preflight and startup. The CON-11 manifest supplies the same fields for every
+  joint contribution/compensation command.
+- The six protected review jobs map exactly to
+  `workstream.review.preference_expiry`, `workstream.review.lease_expiry`,
+  `workstream.review.authority_invalidation_reconciliation`,
+  `workstream.review.reconciliation`,
+  `workstream.review.artifact_reference_reconciliation`, and
+  `workstream.review.projection`. AUTH-09E admission, exact static rows,
+  provisioning, cross-service denial, and human/Operator isolation are live.
+  Evidence binding separately proves `workstream.artifact.binding` plus
+  `artifact.review_evidence.binding.create`.
+- A separate AUTH availability manifest proves every required action was
+  registered, transferred to an exact AUTH activation custodian, paired with
+  merged hidden behavior/evaluator, and activated by AUTH before release. It
+  derives exact counts and SHAs from current trusted main, separately inventories
+  the four proposed REV actions and
+  `artifact.review_evidence.binding.create`, and rejects missing/extra or early
+  activation. The historical 57/9/48 snapshot is not a fixed expected total.
 - AUTH preflight proves its reusable dependency has no generic success
   auto-commit, every REV read/mutation owns its explicit transaction boundary,
   authorization-evidence SQL failures produce a retryable 503 without partial
   state, and successful existing-actor GET/PATCH access matches AUTH's repaired,
   documented verification-timestamp semantics.
-- Final registration exposes coherent current-work, claim, release, decline,
+- Final product registration exposes coherent current-work, claim, release, decline,
   context, decision, revision preparation/evidence, chain, and authorized admin
   operations alongside the existing canonical task resubmission endpoint.
   Shutdown advances the persisted 12A controller through every adjacent phase:
@@ -124,17 +137,17 @@ reputation formula or deferred product scope
   product service assignments remain off. Queued review work remains durable
   for forward reactivation. REV-13 does not invent a second coordinator or
   attempt schema downgrade after protected rows exist.
-- The same PR registers the reviewed contribution/compensation binding and
-  policy operations, contribution/award/evidence reads, fulfillment callback,
-  and bounded Finance/Operator operations under `/api/v1`. No review-only,
-  contribution-only, `/v1` alias, or optional-participant activation occurs
-  earlier.
+- CON-owned readiness proves its binding/policy operations, contribution/award
+  reads, callback, and bounded Finance/Operator operations are composed by CON
+  under `/api/v1`. REV-13 neither edits nor registers those routers. Missing CON
+  readiness blocks joint release; `/v1` aliases and optional participants remain
+  prohibited.
 - API proof includes the exact Project Manager D6 obligation-close and repair
   routes plus Operator legacy-close, their registered AUTH mappings/resource
   composers, PM cross-project/not-reached denial, Operator D6 denial,
   non-Operator legacy-close denial, stale/crossed head or finding denial, exact
   replay, and changed-replay conflict.
-- Activation registers only the review-owned evidence-intake routes and installs
+- Product release registers only the review-owned evidence-intake routes and installs
   frozen-preparation acknowledgment as an internal lifecycle guard of the
   existing canonical task submission command. The same commit unlocks that
   command's prepared, structured-response branch, removes the legacy
@@ -168,7 +181,7 @@ reputation formula or deferred product scope
   prepared branch plus mandatory replacement-transfer binding, then advances to
   `active` to open prepared revision/replacement admission. A live ordering test
   holds an old writer at the fence and proves it cannot cross the migration/
-  activation boundary or leak an IntegrityError.
+  product-release boundary or leak an IntegrityError.
 - Existing Task Context responses expose the frozen current preparation ID,
   digest, guide/policy versions, and change summary during `needs_revision`.
   The canonical submission request acknowledges preparation ID/digest; neither
@@ -189,20 +202,23 @@ reputation formula or deferred product scope
   or database transaction; crash returns work to retryable state; fenced
   finalization clears the observation; and a fresh Operator command advances
   without changing canonical Review/award truth.
-- The joint drill also proves compensation binding/policy setup, TaskAssignment
-  and ReviewLease freezes, reviewer contribution for all three decisions,
+- The joint drill also proves contribution-policy/binding setup, TaskAssignment
+  and ReviewLease ContributionPolicyVersion freezes, reviewer contribution for all three decisions,
   accept-only submitter contribution, a second revision Review, paid and
   explicit-unpaid awards, outbound delivery/callback ordering, suspended or
-  retired binding behavior, contribution-evidence privacy/rebuild,
+  retired binding behavior, core contribution/award privacy,
   Finance-versus-Operator denials, atomic rollback, adapter/storage outage,
   replay, and reconciliation.
 - Forward and backward Project Guide rebase leave the TaskAssignment
-  compensation freeze unchanged; each new ReviewLease freezes reviewer terms
+  ContributionPolicyVersion unchanged; each new ReviewLease freezes reviewer terms
   independently and decision-neutral reviewer awards agree across
   `accept`/`needs_revision`/`reject` for the same frozen terms.
 - Active docs use blocking/advisory findings, server-selected offer semantics,
   controlled rebase, canonical decisions, WS-CON boundaries, AWS S3/MinIO, and
   deferred reputation consistently.
+- Optional contribution-evidence projection is outside core release readiness.
+  Its absence or ART outage cannot block Review, ContributionRecord, awards,
+  fulfillment, or core reads.
 - Evidence report contains only placeholder paths/IDs and approved bounded
   excerpts.
 - A terminology/retirement matrix covers every review object and removes active
