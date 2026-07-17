@@ -6,30 +6,34 @@
   post-merge state. Canonical state is the signed schema-v2 output on
   `automation/loop-memory`.
 - Active initiatives include parallel `WS-AUTH-001` and `WS-ART-001`.
-- PR #140 merged `WS-AUTH-001-XINT` into `main` as `d541521` on
+- PR #132 merged `WS-AUTH-001-09A` into `main` as `299363a` on
   2026-07-17; signed schema-v2 memory recorded the stopped checkpoint.
-- Active implementation chunk: `WS-AUTH-001-09A` on
-  `codex/ws-auth-001-09-actor-state-service-actors` after explicit user start.
-- PR #132 is being converged from trusted `main`; its fixed service foundation
-  remains bounded to migration `0023`, seven identities, eleven static matrix
-  memberships, and eight planned route actions. AUTH-09B remains inactive.
-- Start basis: trusted `main` at `d541521` after PR #140.
+- Active implementation chunk: `WS-AUTH-001-09B` on
+  `codex/ws-auth-001-09b-controlled-service-provisioning` after explicit user
+  start.
+- AUTH-09B is bounded to one controlled service-actor provisioning route and
+  activates only `actor.service.provision`. AUTH-09C remains inactive.
+- Start basis: trusted `main` at `299363a` after PR #132, integrated through
+  `a947b86` after PR #142 before publication.
 - PR #119 merged `WS-AUTH-001-05B` as `ad71c7e`.
 - PR #120 merged `WS-ART-001-OBJECT-STORAGE-AMENDMENT` as `4408256`.
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: resolve PR #132 against merged XINT, run deterministic migration
-  and catalogue proof, repeat exact-head internal review, and rerun external
-  checks. No AUTH-09 action or service caller becomes executable in 09A.
+- Current gate: PR #143's replacement Backend run passed all 1,242 tests but
+  exposed 89.75 percent authorization coverage at the new 90 percent gate. The
+  behavior-test repair passes every required reviewer track at exact SHA
+  `127615f` and projects 90.31 percent on the unchanged 1,600-statement
+  denominator. Replacement GitHub checks and evidence rebinding remain; no
+  service caller becomes executable before AUTH-09E.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
   local/CI S3 protocol proof; LocalStorage is focused development/test; R2 and
   Flow Node are deferred. Product modules receive narrow artifact capabilities,
   and AWS cannot instantiate in production without release-bound live proof.
-- Authorization checkpoint: merged main contains 74 PermissionIds and 57
+- Authorization checkpoint: merged main contains 74 PermissionIds and 65
   ActionIds, with the two actor-self and seven AUTH-08 administrative actions
-  active. AUTH-09A's reviewed parallel branch defines seven fixed artifact
-  service identities and eleven exact planned static matrix memberships. The
+  active. AUTH-09A defines seven fixed artifact service identities and eleven
+  exact planned static matrix memberships. The
   plan now requires availability-neutral ART/REV custody transfer, fixed-service
   admission, prepared mutation authority, feature-owned hidden behavior, and
   exact AUTH-only activation chunks. This planning amendment activates nothing.
@@ -37,9 +41,9 @@
   merged through PR #127 as `f64a8e5`; it is at the post-merge memory/stop
   checkpoint. ART-02A2 merged through PR #129, and ART-02A3 is reviewed in its
   isolated parallel worktree but has no open PR at this checkpoint.
-- Authorization checkpoint: AUTH-07B and AUTH-08 merged through PRs #130 and
-  #131. The user separately started AUTH-09; its 09A subchunk is reviewed in the
-  isolated parallel worktree and remains unmerged at this checkpoint.
+- Authorization checkpoint: AUTH-07B, AUTH-08, and AUTH-09A merged through PRs
+  #130, #131, and #132. Signed memory stopped after 09A, and the user explicitly
+  started 09B.
 - Parallel coverage work: `WS-QUAL-001-01B2` remains paused. Its last official
   whole-app result is `6466/8159` statements (`79.249908%`); no replacement
   evidence exists.

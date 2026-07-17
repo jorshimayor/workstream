@@ -84,8 +84,9 @@ project role or an AdminRoleGrant.
 
 Every cutover chunk enumerates its exact ActionIds before implementation and
 updates current typed/PostgreSQL audit mapping validation in its own migration.
-After AUTH-09A migration `0023`, core reservations are AUTH-10 `0024`, AUTH-11
-`0025`, AUTH-12 `0026`, AUTH-13 `0027`, AUTH-14 `0028`, and AUTH-15 `0029`.
+After AUTH-09A migration `0023`, AUTH-09B uses `0024` for service-link
+verification timestamp semantics. Core reservations are AUTH-10 `0025`, AUTH-11
+`0026`, AUTH-12 `0027`, AUTH-13 `0028`, AUTH-14 `0029`, and AUTH-15 `0030`.
 Blocked cross-initiative additions allocate the next trusted-main migration head
 only when their complete feature contracts become executable. No migration
 number is reserved or allocated while the work remains blocked.

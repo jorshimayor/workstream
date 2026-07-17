@@ -302,7 +302,7 @@ ACTION_DEFINITIONS = (
         PermissionId.ACTOR_IDENTITY_LINK_REACTIVATE,
         ActionOwner.AUTH_09D,
     ),
-    _planned(
+    _active(
         ActionId.ACTOR_SERVICE_PROVISION,
         PermissionId.ACTOR_SERVICE_PROVISION,
         ActionOwner.AUTH_09B,
@@ -578,6 +578,7 @@ def _index_actions(
         ActionId.ADMIN_ROLE_GRANT_ISSUE,
         ActionId.ADMIN_ROLE_GRANT_REVOKE,
         ActionId.ADMIN_ROLE_GRANT_BOOTSTRAP,
+        ActionId.ACTOR_SERVICE_PROVISION,
     }
     if {
         definition.action_id
