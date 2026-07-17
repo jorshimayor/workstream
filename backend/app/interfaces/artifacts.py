@@ -6,6 +6,7 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import Protocol
 
+from app.core.hashing import canonical_json_hash
 from app.interfaces.external_services import (
     ExternalServiceAdapter,
     ExternalServiceAdapterIdentity,
@@ -136,6 +137,22 @@ class ArtifactStoreNamespaceIdentity:
     def as_dict(self) -> dict[str, str]:
         """Return a fresh JSON-compatible descriptor projection."""
         return dict(self.descriptor_items)
+
+
+def artifact_store_namespace_material(
+    *,
+    backend: str,
+    adapter_identity: ExternalServiceAdapterIdentity,
+    namespace_identity: ArtifactStoreNamespaceIdentity,
+) -> tuple[dict[str, object], str]:
+    """Build one canonical namespace descriptor and its matching fingerprint."""
+    descriptor: dict[str, object] = {
+        "backend": backend,
+        "adapter": adapter_identity.provider_key,
+        "provider_profile": namespace_identity.provider_profile,
+        **namespace_identity.as_dict(),
+    }
+    return descriptor, canonical_json_hash(descriptor)
 
 
 @dataclass(frozen=True, slots=True)

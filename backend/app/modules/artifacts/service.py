@@ -10,7 +10,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
 from app.core.cancellation import await_cancellation_resistant
-from app.core.hashing import canonical_json_hash
 from app.db.session import get_session_factory
 from app.interfaces.artifacts import (
     ArtifactInputMismatchError,
@@ -20,6 +19,7 @@ from app.interfaces.artifacts import (
     ArtifactStoreBootstrap,
     ArtifactStoreError,
     ArtifactStoreNamespaceClaim,
+    artifact_store_namespace_material,
 )
 from app.interfaces.external_services import ExternalServiceAdapterIdentity
 from app.modules.artifacts.models import (
@@ -75,18 +75,17 @@ def artifact_storage_namespace_spec(
     if settings.artifact_store_backend != identity.provider_key:
         raise ArtifactStorageNamespaceError("artifact adapter identity does not match configuration")
     namespace_identity = store.namespace_identity
-    descriptor: dict[str, object] = {
-        "backend": settings.artifact_store_backend,
-        "adapter": identity.provider_key,
-        "provider_profile": namespace_identity.provider_profile,
-        **namespace_identity.as_dict(),
-    }
+    descriptor, fingerprint = artifact_store_namespace_material(
+        backend=settings.artifact_store_backend,
+        adapter_identity=identity,
+        namespace_identity=namespace_identity,
+    )
     return ArtifactStorageNamespaceSpec(
         backend=settings.artifact_store_backend,
         adapter=identity.provider_key,
         provider_profile=namespace_identity.provider_profile,
         namespace_descriptor=descriptor,
-        namespace_fingerprint=canonical_json_hash(descriptor),
+        namespace_fingerprint=fingerprint,
     )
 
 

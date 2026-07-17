@@ -5,8 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 
 from app.adapters.artifacts.local import LocalStorageAdapter, LocalStorageBootstrap
-from app.core.hashing import canonical_json_hash
-from app.interfaces.artifacts import ArtifactStoreNamespaceClaim
+from app.interfaces.artifacts import (
+    ArtifactStoreNamespaceClaim,
+    artifact_store_namespace_material,
+)
 
 
 def initialize_local_store(
@@ -30,14 +32,13 @@ def initialize_local_store(
 def local_namespace_claim(bootstrap: LocalStorageBootstrap) -> ArtifactStoreNamespaceClaim:
     """Mint the exact test-only namespace claim for one pinned adapter."""
     namespace_identity = bootstrap.namespace_identity
-    descriptor: dict[str, object] = {
-        "backend": "local",
-        "adapter": "local",
-        "provider_profile": namespace_identity.provider_profile,
-        **namespace_identity.as_dict(),
-    }
+    _, fingerprint = artifact_store_namespace_material(
+        backend="local",
+        adapter_identity=bootstrap.identity,
+        namespace_identity=namespace_identity,
+    )
     return ArtifactStoreNamespaceClaim(
         adapter_identity=bootstrap.identity,
         namespace_identity=namespace_identity,
-        namespace_fingerprint=canonical_json_hash(descriptor),
+        namespace_fingerprint=fingerprint,
     )

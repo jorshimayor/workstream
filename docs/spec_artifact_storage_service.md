@@ -656,6 +656,16 @@ single-link writable or sealed provider temporary blocks startup with an
 operator-cleanup error; initialization does not delete it because another live
 process may still own that file.
 
+Local development recovery requires a maintenance window in which every API
+and Celery process using that local root is stopped. The Operator may remove or
+move a file from `tmp/` to an owner-private quarantine directory outside the
+artifact root only after verifying that its name matches the canonical
+`.put.<32 lowercase hex>.tmp` shape, it is a regular file owned by the service
+account, it has exactly one link, and its mode is `0600` or `0400`. Workstream
+must then restart and revalidate the complete layout. Any different name,
+owner, type, link count, or mode is an integrity incident and must not be
+repaired by this procedure.
+
 The v1 local provider metadata for retain/release/provider receipts is removed
 in the v2 clean cut. No compatibility adapter or dual format remains.
 

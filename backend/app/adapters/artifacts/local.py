@@ -38,6 +38,7 @@ from app.interfaces.artifacts import (
     ArtifactStoreNamespaceClaim,
     ArtifactStoreNamespaceIdentity,
     ArtifactStoreUnavailableError,
+    artifact_store_namespace_material,
 )
 from app.interfaces.external_services import ExternalServiceAdapterIdentity
 from app.core.hashing import canonical_json_hash
@@ -160,15 +161,7 @@ class LocalStorageAdapter:
                 type(claim) is not ArtifactStoreNamespaceClaim
                 or claim.adapter_identity != self.identity
                 or claim.namespace_identity != self._namespace_identity
-                or claim.namespace_fingerprint
-                != canonical_json_hash(
-                    {
-                        "backend": "local",
-                        "adapter": self.identity.provider_key,
-                        "provider_profile": self._namespace_identity.provider_profile,
-                        **self._namespace_identity.as_dict(),
-                    }
-                )
+                or claim.namespace_fingerprint != self._expected_namespace_fingerprint()
             ):
                 raise ArtifactConfigurationError(
                     "artifact namespace claim does not match provider"
@@ -187,6 +180,15 @@ class LocalStorageAdapter:
         except OSError:
             self.close()
             raise ArtifactConfigurationError("local artifact storage is unavailable") from None
+
+    def _expected_namespace_fingerprint(self) -> str:
+        """Return the shared canonical fingerprint for this pinned local namespace."""
+        _, fingerprint = artifact_store_namespace_material(
+            backend="local",
+            adapter_identity=self.identity,
+            namespace_identity=self._namespace_identity,
+        )
+        return fingerprint
 
     def close(self) -> None:
         """Release pinned private directory descriptors."""
