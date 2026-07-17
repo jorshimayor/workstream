@@ -48,6 +48,7 @@ from app.modules.artifacts.sources import ArtifactCommitment, CommittedArtifactS
 _IDENTITY = ExternalServiceAdapterIdentity(ARTIFACT_STORE_CAPABILITY_KEY, "local")
 _LAYOUT_MARKER = ".workstream-artifact-store-v2"
 _LAYOUT_MARKER_BYTES = b"workstream-artifact-store-v2\n"
+_LAYOUT_ENTRY_NAMES = frozenset({_LAYOUT_MARKER, "locks", "objects", "tmp"})
 _PROVIDER_OBJECT_REF = re.compile(r"^sha256/([0-9a-f]{2})/([0-9a-f]{62})$")
 _TEMPORARY_NAME = re.compile(r"^\.put\.[0-9a-f]{32}\.tmp$")
 
@@ -480,6 +481,8 @@ class LocalStorageAdapter:
         """Initialize only an empty or already-valid v2 layout on the pinned root."""
 
         entries = set(os.listdir(self._root_fd))
+        if not entries.issubset(_LAYOUT_ENTRY_NAMES):
+            raise ArtifactConfigurationError("local artifact layout is incompatible")
         if _LAYOUT_MARKER not in entries:
             if entries:
                 raise ArtifactConfigurationError("local artifact layout is incompatible")

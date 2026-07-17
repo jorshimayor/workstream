@@ -87,6 +87,13 @@ def test_local_refuses_v1_or_unknown_disk_layout(tmp_path: Path) -> None:
     with pytest.raises(ArtifactConfigurationError, match="layout is incompatible"):
         initialize_local_store(root=executable_marker_root)
 
+    extra_entry_root = tmp_path / "extra-entry"
+    initialized = initialize_local_store(root=extra_entry_root)
+    initialized.close()
+    (extra_entry_root / "legacy").mkdir(mode=0o700)
+    with pytest.raises(ArtifactConfigurationError, match="layout is incompatible"):
+        initialize_local_store(root=extra_entry_root)
+
 
 def test_local_sanitizes_root_initialization_oserror(
     tmp_path: Path,

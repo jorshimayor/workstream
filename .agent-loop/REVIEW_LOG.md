@@ -2156,3 +2156,9 @@ the bootstrap -> PostgreSQL namespace claim -> byte-store initialization
 sequence. The stale-evidence finding raised during the review was a sequencing
 false positive: exact-SHA evidence is written only after reviewer sessions
 complete. All reviewer sessions were closed; this repair requires fresh review.
+
+The next exact-SHA review found one Low LocalStorage layout issue: a root with a
+valid v2 marker could retain unknown top-level entries. Initialization now
+accepts only the marker, `objects`, `tmp`, and `locks` entries, with regression
+proof that an added legacy directory fails closed. All reviewer sessions were
+closed; the repaired SHA requires fresh review.
