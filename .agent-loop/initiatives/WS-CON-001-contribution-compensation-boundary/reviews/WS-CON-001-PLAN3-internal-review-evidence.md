@@ -1,15 +1,17 @@
 # WS-CON-001-PLAN3 Internal Review Evidence
 
-Reviewed code SHA: 545f250db8d5d1df05cf33cc5b22d1c933217ae8
-Reviewed at: 2026-07-17T09:16:36Z
-Reviewer run IDs: auth08_arch_review/McClintock, auth08_qa_product_review/Popper, auth08_security_review/Newton
+Reviewed code SHA: 09128ee1aed941682c7cb59ca04698de496de682
+Reviewed at: 2026-07-17T09:22:25Z
+Reviewer run IDs: auth08_arch_review/rebind-09128ee, auth08_qa_product_review/rebind-09128ee, auth08_security_review/rebind-09128ee
 
 ## Reviewed boundary
 
-The exact reviewed commit reconciles CON planning with merged AUTH PR #140. It
-changes 24 planning/merge-intent files with 412 insertions and 143 deletions and
-changes no backend, migration, runtime catalogue, test, script, workflow, or
-dependency file.
+The exact reviewed snapshot reconciles CON planning with merged AUTH PR #140
+and authorizes the provenance-only rebind of the older PLAN/PLAN2 evidence that
+the cumulative PR gate requires. Its substantive PLAN3 commit changes 24
+planning/merge-intent files with 412 insertions and 143 deletions and changes no
+backend, migration, runtime catalogue, test, script, workflow, or dependency
+file.
 
 The reviewed boundary establishes:
 
@@ -62,6 +64,9 @@ The exact-SHA QA re-review found that the PLAN3 contract's evidence criterion
 could not be complete until this evidence file and the PR trust bundle existed.
 Both were added after review through paths explicitly allowed by the repository
 evidence gate; no reviewed planning or implementation file changed afterward.
+The final exact-SHA rebind then added the two older evidence paths to PLAN3's
+allowed scope so every evidence file added by the cumulative branch can carry
+current, parser-complete provenance without rewriting historical conclusions.
 
 ### Confirmed non-findings
 

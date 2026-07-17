@@ -133,7 +133,9 @@ no threshold, and adds no bypass. Existing agent-gate coverage remains intact.
 The exact reviewed code SHA and complete reviewer table are recorded in
 `WS-CON-001-PLAN3-internal-review-evidence.md`. The initial QA/security finding
 that `task.claim` was incorrectly described as an existing ActionId was fixed
-before the exact-SHA review. No blocking finding remains.
+before the exact-SHA review. A final process-only rebind authorized
+parser-complete provenance addenda for the older PLAN/PLAN2 evidence files
+validated by the cumulative PR gate. No blocking finding remains.
 
 ## External review
 

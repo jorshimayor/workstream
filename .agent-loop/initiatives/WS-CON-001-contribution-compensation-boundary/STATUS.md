@@ -4,7 +4,7 @@
 
 `WS-CON-001-PLAN3` completed reconciliation of merged AUTH PR #140 at trusted
 main `d541521` with the previously reviewed CON plan. The planning snapshot at
-`545f250db8d5d1df05cf33cc5b22d1c933217ae8` passed all required exact-SHA
+`09128ee1aed941682c7cb59ca04698de496de682` passed all required exact-SHA
 internal reviewer tracks and deterministic gates. Its review evidence, trust
 bundle, and schema-v2 merge intent are prepared; it remains unpublished pending
 the user's explicit PR direction. PLAN2 already reconciled the

@@ -1,5 +1,34 @@
 # WS-CON-001-PLAN2 Internal Review Evidence
 
+## Final PR provenance rebind
+
+Reviewed code SHA: 09128ee1aed941682c7cb59ca04698de496de682
+Reviewed at: 2026-07-17T09:22:25Z
+Reviewer run IDs: auth08_arch_review/rebind-09128ee, auth08_qa_product_review/rebind-09128ee, auth08_security_review/rebind-09128ee
+
+This provenance-only addendum binds the reviewed FinalAcceptance reconciliation
+to the final cumulative planning snapshot. It changes no PLAN2 lifecycle fact.
+The exact-SHA re-review confirms that PLAN3 preserves REV-owned
+FinalAcceptance, CON flush-only participation, all three review outcomes, and
+the no-adjudication boundary while correcting only AUTH sequencing and evidence
+provenance.
+
+| Reviewer | Result | Blocking findings | Notes |
+|---|---|---|---|
+| senior engineering | PASS | None | FinalAcceptance and contribution responsibilities retain single owners and one commit. |
+| qa/test | PASS AFTER FIXES | None | Accept, needs-revision, reject, lineage, rollback, and evidence completeness pass. |
+| security/auth | PASS AFTER FIXES | None | No FinalAcceptance action/API, adjudication path, authorization bypass, or CON evaluator is introduced. |
+| product/ops | PASS AFTER FIXES | None | Reviewer and submitter contribution triggers remain Review and FinalAcceptance respectively. |
+| architecture | PASS | None | REV persistence, CON participant, REV composition, and later AUTH activation remain correctly ordered. |
+| ci integrity | PASS | None | The rebind changes evidence only and weakens no gate. |
+| docs | PASS AFTER FIXES | None | Historical PLAN2 conclusions and final provenance are explicit. |
+| reuse/dedup | PASS | None | Existing REV/AUTH contracts are referenced without a parallel path. |
+| test delta | PASS | None | No test delta; all 80 agent-gate tests pass. |
+
+Valid findings addressed: yes
+
+Open sub-agent sessions: none
+
 Date: 2026-07-17
 
 ## Reviewed boundary
