@@ -4,21 +4,21 @@
 
 `WS-ART-001-02A3`: ArtifactStore v2 Local Clean Cut
 
-open sub-agent sessions: none
+open sub-agent sessions: follow-up review pending
 
-valid findings addressed: yes
+valid findings addressed: stale-evidence repair in progress
 
 ## Reviewed Revision
 
-Reviewed code SHA: `441d39230a341f2c43dd548776a2437ae6b2395d`
+Reviewed code SHA: `956dbcf9fd4b23b1d8daed8c0c666fd49f08303f`
 
-Reviewed at: 2026-07-17T08:20:30Z
+Reviewed at: 2026-07-17T17:06:39Z
 
-Reviewer run IDs: senior-engineering=019f6ef7-e1b5-7952-a261-aa73faad5816; architecture=019f6ef7-e901-7a30-9240-2027703ff4ae; QA/test=019f6ef7-f1ff-72a1-9e88-9b47557fad89; security/auth=019f6ef7-fec4-7b53-99ff-a349d3d113f9; product/ops=019f6ef8-0d4a-7610-befb-9431d4483880; reuse/dedup=019f6ef8-190a-7b60-932d-71f6d3b422c1; CI-integrity=019f6f0b-3052-7123-bf19-36c7ec9e1bc6; test-delta=019f6f0b-36d1-7833-b1ed-08b19011a984; docs=019f6f0b-3fc2-7f12-9ea1-3b8a43ccc0eb
+Reviewer run IDs: senior-engineering=follow-up-pending; architecture=019f7101-7405-7e42-9910-023cef1badf1; QA/test=019f7101-821c-72c1-96f0-3bd76d131e2d; security/auth=019f7101-9945-78e0-9b97-7e0bf0049cdf; product/ops=follow-up-pending; reuse/dedup=follow-up-pending; CI-integrity=final-evidence-review-pending; test-delta=review-pending; docs=final-evidence-review-pending
 
-Only review artifacts, this initiative's status, and `LOOP_STATE.md` changed
-after the reviewed SHA. No implementation, migration, test, workflow, policy,
-or chunk-contract content changed after review.
+Only review artifacts may change after this reviewed SHA while follow-up review
+and evidence closure complete. No implementation, migration, test, workflow,
+policy, or chunk-contract change is permitted without invalidating this record.
 
 ## Reviewed Change
 
@@ -43,15 +43,15 @@ or chunk-contract content changed after review.
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS | None | Atomic finalization and independent cleanup ownership passed after repair. |
+| senior engineering | FAIL - FOLLOW-UP REQUIRED | Stale evidence record | No implementation defect found; rerun after this exact-SHA evidence repair. |
 | QA/test | PASS | None | Concurrency, cancellation, migration, namespace, and state-transition proof passed. |
 | security/auth | PASS | None | Filesystem, integrity, namespace, sanitization, and AUTH custody remained fail closed. |
-| product/ops | PASS | None | No product review, contribution, payment, reputation, or recovery lifecycle was activated. |
+| product/ops | FAIL - FOLLOW-UP REQUIRED | Stale evidence record | No product lifecycle defect found; rerun after this exact-SHA evidence repair. |
 | architecture | PASS | None | Byte-only adapter, typed factory, capability boundaries, and chunk scope passed. |
-| ci integrity | PASS | None | Scoped 90 percent gates and the repository 78 percent floor remain fail closed. |
-| docs | PASS | None | Artifact contract and operations documentation match the implemented boundary. |
-| reuse/dedup | PASS | None | Shared adapter, scratch, cancellation, locking, and hashing abstractions are reused. |
-| test delta | PASS | None | V1 tests were replaced by stronger v2 contract, race, migration, and cleanup proof. |
+| ci integrity | PENDING | Final evidence not yet reviewed | Runs only after all implementation-facing tracks close. |
+| docs | PENDING | Final evidence not yet reviewed | Runs only after all implementation-facing tracks close. |
+| reuse/dedup | FAIL - FOLLOW-UP REQUIRED | Stale evidence record | No reuse defect found; rerun after this exact-SHA evidence repair. |
+| test delta | PENDING | None | Exact-SHA review has not run yet. |
 
 ## Valid Findings Addressed
 
@@ -86,11 +86,10 @@ python3 scripts/test_agent_gates.py
 git diff --check
 ```
 
-Results: 254 ART-focused tests passed; the dedicated PostgreSQL replica-race
-test passed; 47 LocalStorage/conformance tests passed at 91.64 percent; all four
-clean-cut migration cases passed; ART scope coverage was 93.32 percent,
-configuration coverage 96.92 percent, and `app/main.py` coverage 90.35 percent.
-Ruff, 93.0 percent docstring coverage, stale contract/authorization/wording,
+Results: 268 ART-focused tests passed; 56 LocalStorage/conformance tests passed
+at 91.08 percent; all four clean-cut migration cases passed; ART scope coverage
+was 93.18 percent. Ruff, 92.0 percent docstring coverage, stale
+contract/authorization/wording,
 Markdown links, 80 agent-gate tests, and diff checks passed.
 
 The isolated full repository suite, 78 percent whole-app floor, cumulative
