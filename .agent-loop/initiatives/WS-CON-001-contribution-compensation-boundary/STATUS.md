@@ -21,6 +21,11 @@ The prior plan is superseded where it used the older policy aggregate, made ART
 evidence mandatory, described service action rows as persisted assignments,
 allowed partial activation-custody transfer, or let outbox dispatch imply
 feature-handler authority.
+CON-01 then published the canonical active specification and ADR 0016. Internal
+review required explicit `NUMERIC(38, 18)` and project-scoped unit semantics,
+bounded/redacted immutable provider receipt facts, plus complete conformance
+rows for adapter binding, lifecycle audit, and ADR 0014. Those findings were
+repaired without changing runtime, CI, tests, dependencies, or archival inputs.
 
 ## Corrected boundary
 
@@ -54,15 +59,19 @@ feature-handler authority.
 
 ## Active chunk
 
-No implementation chunk is active or starts automatically. PLAN3 external
-review repair is complete; it does not authorize merge or CON-01.
+`WS-CON-001-01` is complete through internal review after explicit human start.
+It publishes the repository-owned active specification and ADR 0016; it changes
+no runtime, migration, AUTH/ART/REV-owned contract, or archival reference input.
+It awaits the specific PR human checkpoint. CON-02A does not start
+automatically.
 
 | Chunk | Status | Notes |
 |---|---|---|
 | `WS-CON-001-PLAN` | Complete; superseded baseline | Based on PR #139 / `5d353b6`; reviewed content `c4242e0` |
 | `WS-CON-001-PLAN2` | Complete; unpublished | FinalAcceptance is REV-owned; CON trigger changes only; all required internal tracks pass |
 | `WS-CON-001-PLAN3` | Complete; externally repaired and internally reviewed | CodeRabbit gates/AUTH scope/09B/trust repairs pass at `a69fad3` |
-| `WS-CON-001-01` through `08B`, `10A` through `11` | Proposed | Separate explicit start required after PLAN3 and upstream merge refresh |
+| `WS-CON-001-01` | Complete; awaiting human review | Specification and ADR only; stop at the PR checkpoint |
+| `WS-CON-001-02A` through `08B`, `10A` through `11` | Proposed | Separate explicit start required after predecessor merge and upstream refresh |
 | `WS-CON-001-09A/09B` | Deferred optional | Separate approval and fresh ART/AUTH review required |
 
 ## Open gates
@@ -70,7 +79,7 @@ review repair is complete; it does not authorize merge or CON-01.
 | Gate | Owner | Required action |
 |---|---|---|
 | FinalAcceptance and decision integration | REV + CON | REV-04 runtime persistence -> CON-03C; REV-09B lineage + CON-07 two-operation participant -> REV-10 hidden single-commit composition -> AUTH activation |
-| Active specification/archive handling | Human | Approve CON-01 repository-owned specification |
+| Active specification/archive handling | Human | Review and approve the specific CON-01 PR; archival inputs remain untouched |
 | Pre-production legacy rows | Human | Choose deterministic rebuild or explicit classified migration before 05A/05B |
 | D11 AdminRole candidates | Human + AUTH | Fix award-detail, delivery-recovery, and audit candidates before registration |
 | Core WS-CON action registration/activation | AUTH | Add reviewed registration and later activation chunks; CON remains hidden |
@@ -85,6 +94,6 @@ review repair is complete; it does not authorize merge or CON-01.
 
 ## Stop condition
 
-Do not edit runtime code, start CON-01, or merge PR #142 without explicit human
-direction. The reviewed PLAN3 repair may refresh the existing PR only; it does
-not authorize its merge or any successor start.
+Do not edit runtime code or begin CON-02A from this chunk. Stop after CON-01
+evidence, internal review, and the human checkpoint; merge still requires
+explicit approval for its specific PR.
