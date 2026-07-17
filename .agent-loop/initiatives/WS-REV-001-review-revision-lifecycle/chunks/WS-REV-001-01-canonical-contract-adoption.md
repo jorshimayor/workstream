@@ -120,7 +120,8 @@ frontend work
   catalogue at each AUTH gate; 57/9/48 remains only the AUTH-08 snapshot. The
   four REV additions and ART service action are independently inventoried and
   cannot be silently collapsed into 61. No new REV PermissionId is introduced.
-- A stale-contract scanner rejects active Flow Node production, `/v1`, full
+- A stale-contract scanner rejects active Flow Node production, the archival
+  noncanonical API prefix, full
   reviewer backlog, legacy severity, synthetic reject, direct
   payment/reputation, and bypass wording without scanning archival bytes as
   active policy.
@@ -134,11 +135,11 @@ frontend work
   creates the accepted Submission's submitter contribution.
 - The active contract defines every human lifecycle identity as canonical
   `ActorProfile.id`, defines distinct AUTH-09E fixed-service identities/static
-  rows for protected jobs, removes retired payment policy from revision context,
+  rows for protected jobs, removes retired compensation context from revision context,
   and records exact AUTH-first mutation choreography and REV/CON interleaving.
 - The active contract defines REV-owned `ReviewPacketManifest` and
   `ReviewEvidenceArtifact`, ART v2 packet-read/candidate-finalize boundaries,
-  exact binding service action, and no raw ArtifactStore/v1/provider access.
+  exact binding service action, and no raw ArtifactStore version-1/provider access.
 - The active contract maps XINT's conceptual `SubmissionVersion.artifact_hash`
   to a server-derived verified `artifact_hash` on the existing versioned
   `Submission`, copied to `ContributionRecord.artifact_hash`; caller

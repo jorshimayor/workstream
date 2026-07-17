@@ -40,10 +40,12 @@ reputation scoring
 ## Acceptance criteria
 
 - `review.decision` uses AUTH's prepared mutation protocol: AUTH locks exact
-  reviewer authority; REV locks idempotency, lifecycle fence, queue, lease,
-  task, assignment, versioned Submission, predecessor Review, packet/evidence
-  facts; REV recomposes final context; AUTH evaluates once and stages evidence;
-  REV/task/CON participants flush; the caller commits once.
+  reviewer authority; REV locks idempotency, queue, lease, task, assignment,
+  versioned Submission, predecessor Review, and packet/evidence facts; REV
+  recomposes final context; AUTH evaluates once and stages evidence; REV/task/
+  CON participants flush; the caller commits once. This hidden service has no
+  public route or background-command entry point. REV-12A later installs the
+  mandatory lifecycle fence before REV-13 releases any decision surface.
 - Every committed Review creates exactly one reviewer
   `contribution_type=completed_review`. `accept` additionally creates exactly one
   submitter `contribution_type=accepted_submission`; `needs_revision` and
@@ -52,7 +54,8 @@ reputation scoring
   TaskAssignment, canonical reviewer/submitter, project/task, originating
   AuthorizationDecision, request/correlation references, and the exact frozen
   reviewer/submitter `ContributionPolicyVersion` references.
-- The ART submission/checker cutover has persisted a server-derived verified
+- A separately approved and merged ART/task-owner amendment to the current
+  submission/checker cutover has persisted server-derived verified
   `Submission.artifact_hash` on the existing versioned Submission. CON copies it
   to `ContributionRecord.artifact_hash`. Caller `package_hash`, a renamed
   source-digest field, or a live ART lookup cannot substitute.
@@ -105,7 +108,7 @@ reputation scoring
 cd backend && pytest -q tests/test_reviews.py tests/test_contributions.py tests/test_compensation.py tests/test_authorization.py tests/test_api_contract_e2e.py
 cd backend && ruff check app/modules/reviews app/composition/review_lifecycle.py tests/test_reviews.py
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
-cd backend && coverage report --include='app/modules/reviews/*' --precision=2 --fail-under=90
+cd backend && for path in 'app/modules/reviews/*' app/composition/review_lifecycle.py; do coverage report --include="$path" --precision=2 --fail-under=90 || exit 1; done
 ```
 
 ## Required reviewers

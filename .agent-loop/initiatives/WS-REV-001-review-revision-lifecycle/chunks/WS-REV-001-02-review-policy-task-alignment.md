@@ -91,9 +91,9 @@ synthetic reject from checker, deadline, or revision limit
 - Project-guide activation locks Project, candidate/current guide,
   source-snapshot, and artifact/effective/pre-check/post-check/review/revision/
   policy rows in the canonical PLAN order before publication. If retired
-  payment-policy state still exists before WS-CON cutover, it is locked only as a
+  compensation-context state still exists before WS-CON cutover, it is locked only as a
   transitional consistency input; WS-CON owns its later consumer and schema
-  removal. The final Project Guide/revision context contains no payment or
+  removal. The final Project Guide/revision context contains no retired compensation or
   ContributionPolicyVersion. Publication never assembles mixed generations.
 - Every persisted human identity added or validated here is the canonical
   active human `ActorProfile.id`. External subjects, email, legacy typed-profile
@@ -117,7 +117,7 @@ cd backend && pytest -q tests/test_alembic.py tests/test_projects.py tests/test_
 cd backend && ruff check app/modules/projects app/modules/tasks tests/test_alembic.py tests/test_projects.py tests/test_tasks.py
 cd backend && docstr-coverage --config .docstr.yaml
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
-cd backend && coverage report --include='app/modules/projects/models.py,app/modules/projects/schemas.py,app/modules/tasks/models.py,app/modules/tasks/lifecycle.py,app/modules/tasks/schemas.py' --precision=2 --fail-under=90
+cd backend && for path in app/modules/projects/models.py app/modules/projects/schemas.py app/modules/projects/repository.py app/modules/projects/service.py app/modules/tasks/models.py app/modules/tasks/schemas.py app/modules/tasks/lifecycle.py app/modules/tasks/repository.py app/modules/tasks/service.py; do coverage report --include="$path" --precision=2 --fail-under=90 || exit 1; done
 ```
 
 ## Required reviewers

@@ -43,7 +43,7 @@ runtime implementation or dependency changes
 - Git classifies the canonical revised Markdown's supplied hard-break trailing
   spaces path-specifically; no global whitespace rule is weakened.
 - Current task, submission, checker, auth, artifact, contribution, audit,
-  worker, API, migration, test, and documentation boundaries are cited.
+  job execution, API, migration, test, and documentation boundaries are cited.
 - Merged WS-XINT-001 PR #139, ADR 0015, and all four owner handoffs are treated
   as current authority. The plan distinguishes AUTH action activation from REV
   product release and derives future catalogue counts from exact trusted main.

@@ -65,6 +65,11 @@ read, review-evidence candidate/finalize, projection, and live-proof contracts,
 including a separately approved `WS-ART-001-REV-EVIDENCE` owner chunk, remain
 dependency gates.
 
+The merged ART plan also leaves the narrow active-lease packet-read port and
+server-derived `Submission.artifact_hash` field unassigned to an approved chunk.
+REV-07/10 require exact merged ART/task-owner amendments for those capabilities;
+existing artifact-set context is not treated as either contract.
+
 ## Historical cross-worktree discovery evidence
 
 The following sibling planning paths were read-only discovery inputs on

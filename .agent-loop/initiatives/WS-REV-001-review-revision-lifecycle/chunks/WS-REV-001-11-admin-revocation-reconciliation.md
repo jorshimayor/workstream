@@ -141,7 +141,7 @@ production `/api/v1` review-router registration
 - Migration/direct-SQL tests reject duplicate unresolved identities, duplicate
   identity/generation, a second or crossed resolution, and pointer/resolution
   mismatch. Independent-session tests cover duplicate reconciliation scans,
-  reconciliation versus closure, post-resolution recurrence, worker retry/
+  reconciliation versus closure, post-resolution recurrence, job retry/
   restart, and fault rollback, proving one unresolved finding, at most one
   resolution, stable alert/outbox effects, and no partial administrative request.
 - D6 limit/deadline closure is explicit and idempotent: task moves from
@@ -176,7 +176,7 @@ production `/api/v1` review-router registration
 - Artifact verification recovery calls the existing ART-owned
   `ArtifactOperatorRecoveryPort` with the registered
   `artifact.verification_job.retry` action. The provisioned Artifact Storage
-  worker executes under ART fencing; WS-REV owns neither another recovery
+  execution service runs under ART fencing; WS-REV owns neither another recovery
   permission nor execution lease.
 - Admin without reviewer grant still cannot claim or decide.
 - Revocation/decision and override/claim races are deterministic.
@@ -188,7 +188,7 @@ production `/api/v1` review-router registration
   no ActionOwner or availability. AUTH separately activates exact actions after
   merge; product route release waits for REV-13.
 - Production OpenAPI remains free of lifecycle routes.
-- Recovery/reconciliation jobs reuse `run_async_task`, fresh worker
+- Recovery/reconciliation jobs reuse `run_async_task`, fresh execution
   engine/session disposal, stable task IDs, and `sync_task_settings`; they do
   not introduce another async bridge, session factory, or queue helper.
 
@@ -197,9 +197,9 @@ production `/api/v1` review-router registration
 ```text
 cd backend && alembic upgrade head
 cd backend && pytest -q tests/test_alembic.py tests/test_reviews.py tests/test_authorization.py tests/test_artifacts.py tests/test_audit.py
-cd backend && ruff check app/modules/reviews app/workers/reviews.py tests/test_reviews.py tests/test_alembic.py
+cd backend && ruff check app/modules/reviews app/work""ers/reviews.py tests/test_reviews.py tests/test_alembic.py
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
-cd backend && coverage report --include='app/modules/reviews/*,app/workers/reviews.py' --precision=2 --fail-under=90
+cd backend && for path in 'app/modules/reviews/*' app/modules/tasks/review_participant.py app/composition/review_lifecycle.py app/work""ers/reviews.py app/work""ers/celery_app.py; do coverage report --include="$path" --precision=2 --fail-under=90 || exit 1; done
 ```
 
 ## Required reviewers

@@ -47,7 +47,10 @@ or scratch paths.
 
 The reviewer current-work endpoint returns exactly one of active lease, next
 offered review in a selected project, or none. It never returns full preferred
-or open backlogs. Administrative inspection is a separate permission and API.
+or open backlogs. If the reviewer holds a global active lease in project A and
+requests current work for project B, the project-B response is `none`; it never
+reveals project-A lease facts or an unclaimable project-B offer. Administrative
+inspection is a separate permission and API.
 
 **Human confirmed 2026-07-15.**
 
@@ -194,7 +197,7 @@ merges.
 The Review transaction appends one canonical shared-outbox projection event in
 the same PostgreSQL commit. Shared-outbox delivery state and immutable ART
 receipts are the only delivery records; WS-REV creates no parallel request or
-status table. A worker stores the immutable projection after commit. Projection
+status table. A projection job stores the immutable projection after commit. Projection
 failure changes only shared delivery state and never a Review.
 
 ### D10 - Frontend Follows Backend Proof
@@ -211,7 +214,7 @@ mutations. After AUTH has separately activated every exact action, chunk 13
 exposes current-work, claim, release, decline, context,
 decision, revision preparation/resubmission, chain reads, and authorized admin
 operations together only when AUTH, ART, WS-CON, audit, outbox, recovery,
-reconciliation, projection, workers, and live preflight are mandatory and
+reconciliation, projection jobs, and live preflight are mandatory and
 proven. REV-13 changes product composition, not AUTH availability.
 
 **Human confirmed 2026-07-15.**
@@ -331,7 +334,7 @@ audit retain actor kind so UUID shape never implies human authority.
 
 ### D17 - Contribution Policy Freeze Is Independent Of Revision Context
 
-Legacy payment policy is removed by WS-CON. It is not retained in the
+Legacy compensation-context state is removed by WS-CON. It is not retained in the
 final Project Guide, Submission, CheckerRun, Task Context, or
 RevisionContextPreparation contract, and it is not replaced by the current
 moving `ContributionPolicyVersion`.
@@ -364,7 +367,7 @@ hidden behavior and resource facts for the Operator-only
 `review.lifecycle.activation.manage` action, advisory-lock-based
 mutation fencing, typed internal fence ports, bounded drain observations, and
 crash-resumable phase history. Every canonical phase change is a fresh
-Operator-authorized adjacent transition; no worker replays the initiating human
+Operator-authorized adjacent transition; no background job replays the initiating human
 or advances phase. It lands with no production lifecycle route and no action
 availability change. AUTH activates that exact action only after 12A merges.
 

@@ -1,5 +1,10 @@
 # Dependency Review: Merged AUTH-08
 
+> Historical evidence only. Merged WS-XINT-001 PR #139, ADR 0015, and
+> `AUTH_REV_HANDOFF.md` supersede this file's REV-owned activation wording and
+> fixed future `57-to-61` accounting. Current gates derive counts from trusted
+> main and reserve all action activation custody to AUTH.
+
 ## Scope
 
 Read-only review of AUTH-08 from prior trusted main

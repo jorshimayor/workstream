@@ -60,17 +60,21 @@ copies that exact value and does not rederive it or trust caller `package_hash`.
 
 ## Scope Control
 
-This PR changes only WS-REV initiative planning, review evidence, and its one
-existing merge intent. It changes no backend, migration, workflow, package
-script, test threshold, active product route, authorization catalogue, artifact
-provider, or contribution runtime.
+This PR changes WS-REV initiative planning, review evidence, its one merge
+intent, the human-supplied canonical archival Markdown/PDF replacement,
+reference provenance/checksums, and the exact `.gitattributes` rule required to
+preserve that Markdown's bytes. It changes no backend, migration, workflow,
+package script, test threshold, active product route, authorization catalogue,
+artifact provider, or contribution runtime.
 
 ## Verification
 
-The planning snapshot is checked with diff integrity, Markdown links, stale
-Workstream/AUTH/ART/REV contract scanners, reference checksums, loop-memory
-state, agent gates, and internal-review evidence validation. No product tests
-are expected because runtime code is unchanged.
+The planning snapshot is checked with diff integrity, Markdown links, the
+currently implemented stale Workstream/AUTH/ART scanners, reference checksums,
+loop-memory state, agent gates, and internal-review evidence validation. The REV
+contract scanner is created only by successor chunk REV-01 and is not claimed
+as current proof. No product tests are expected because runtime code is
+unchanged.
 
 ## Review State
 
@@ -88,8 +92,9 @@ before publication.
   consumer.
 - ART must schedule, approve, and merge `WS-ART-001-REV-EVIDENCE`; REV-07 is
   blocked until then.
-- ART v2 submission/checker lineage and packet-read contracts must stabilize
-  `Submission.artifact_hash` and exact packet bindings.
+- The ART owner must publish approved amendments for the currently unassigned
+  v2 packet-read port and server-derived `Submission.artifact_hash`; exact
+  packet bindings and lineage remain hard REV-07/10 gates.
 - CON must merge its frozen policy lineage and flush-only Review decision
   participant before REV-10.
 - Every runtime chunk requires a fresh main-SHA dependency audit, explicit

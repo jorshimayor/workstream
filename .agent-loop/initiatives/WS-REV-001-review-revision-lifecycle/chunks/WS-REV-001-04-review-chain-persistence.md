@@ -28,7 +28,7 @@ docs/operations_reviewer_workflow.md only for deployment/rollback/immutability n
 ## Not allowed
 
 ```text
-public routes, decision service, task effects, or workers
+public routes, decision service, task effects, or background jobs
 artifact provider implementation
 grant or permission implementation
 contribution/compensation models
@@ -82,7 +82,7 @@ cd backend && alembic upgrade head
 cd backend && pytest -q tests/test_alembic.py tests/test_audit.py tests/test_reviews.py
 cd backend && ruff check app/modules/reviews app/modules/audit tests/test_reviews.py tests/test_audit.py tests/test_alembic.py
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
-cd backend && coverage report --include='app/modules/reviews/*' --precision=2 --fail-under=90
+cd backend && for path in 'app/modules/reviews/*' app/modules/tasks/models.py; do coverage report --include="$path" --precision=2 --fail-under=90 || exit 1; done
 ```
 
 ## Required reviewers

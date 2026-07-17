@@ -126,8 +126,8 @@ production `/api/v1` review-router registration
   preserves the original task locks and every prior Submission unchanged.
 - The same migration removes CheckerRun composite FKs that require guide/review/
   revision context to equal `WorkstreamTask.locked_*`. Any legacy checker or
-  Submission payment-context fields have already been removed by WS-CON-05B and
-  are not replaced here. A CheckerRun for
+  Submission payment-context fields have already been removed by the exact
+  merged CON-owned retirement capability and are not replaced here. A CheckerRun for
   Submission N is instead constrained to the exact immutable context stamped on
   Submission N, including its post-submit policy and rebased guide/policy/source
   facts. This permits checker execution for a valid rebased N+1 without allowing
@@ -240,7 +240,7 @@ cd backend && alembic upgrade head
 cd backend && pytest -q tests/test_reviews.py tests/test_tasks.py tests/test_projects.py tests/test_checkers.py tests/test_artifacts.py tests/test_authorization.py tests/test_alembic.py tests/test_app.py
 cd backend && ruff check app/modules/reviews app/modules/tasks app/modules/projects app/modules/checkers/models.py tests/test_reviews.py tests/test_tasks.py tests/test_checkers.py tests/test_app.py
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
-cd backend && coverage report --include='app/modules/reviews/*' --precision=2 --fail-under=90
+cd backend && for path in 'app/modules/reviews/*' app/modules/tasks/models.py app/modules/tasks/repository.py app/modules/tasks/service.py app/modules/tasks/lifecycle.py app/modules/tasks/submission_participant.py app/modules/projects/models.py app/modules/projects/repository.py app/modules/projects/service.py app/modules/checkers/models.py app/composition/review_lifecycle.py; do coverage report --include="$path" --precision=2 --fail-under=90 || exit 1; done
 ```
 
 ## Required reviewers

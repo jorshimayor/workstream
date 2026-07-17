@@ -95,7 +95,7 @@ outcomes.
 5. Production enables the coherent lifecycle route set only after the
    repaired and reviewed `WS-CON-001` plan, exact lineage/digest contract,
    atomic participant, lease freeze, recovery, reconciliation, projection
-   operations, and WS-CON-11 joint-readiness manifest exist.
+   operations, and the exact merged CON-owned joint-readiness manifest exist.
 6. Merged WS-XINT-001 PR #139 controls cross-initiative ownership: feature
    chunks build hidden behavior, AUTH alone registers/transfers/activates exact
    actions, and REV performs only the later joint product-surface release.

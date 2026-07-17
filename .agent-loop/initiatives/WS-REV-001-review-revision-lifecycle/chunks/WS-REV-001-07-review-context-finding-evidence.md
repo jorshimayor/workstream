@@ -13,6 +13,7 @@ L1 authorization, private data, and artifact integrity.
 
 ```text
 backend/app/modules/reviews/{repository,schemas,service,router}.py
+backend/app/composition/review_lifecycle.py only to install exact merged ART packet-read and evidence ports
 backend/tests/test_{reviews,artifacts,authorization,checkers,tasks,app}.py
 docs/operations_reviewer_workflow.md
 docs/template_review_packet.md
@@ -51,9 +52,10 @@ production `/api/v1` review-router registration
   candidate, binding, or receipt.
 - Merged ART-02A2 is preparation-only and does not satisfy this chunk's ART
   gate. REV imports no ART scratch/source implementation. Chunk start requires
-  ART v2 submission/checker cutovers, a narrow packet-read port, and a separately
-  approved/merged `WS-ART-001-REV-EVIDENCE` candidate/finalize capability with
-  canonical ART facts, guards, orphan retention, and tests.
+  ART v2 submission/checker cutovers, a separately approved and merged ART-owner
+  amendment for the currently unassigned narrow packet-read port, and a
+  separately approved/merged `WS-ART-001-REV-EVIDENCE` candidate/finalize
+  capability with canonical ART facts, guards, orphan retention, and tests.
 - Binding finalization requires separately registered planned action
   `artifact.review_evidence.binding.create`, mapped only to
   `artifact.binding.create` and fixed identity `workstream.artifact.binding`.
@@ -70,8 +72,10 @@ production `/api/v1` review-router registration
   bindings. The server derives packet membership from canonical relations.
 - Review service consumes the checker-owned context-reader port and task-owned
   public relationships; it imports neither CheckerRepository nor TaskRepository.
-- Cross-project/task bindings, unavailable content, and digest/manifest mismatch
-  fail closed with distinct stable errors and audit.
+- Unauthorized, cross-project/task, guessed, and nonexistent bindings are
+  concealment-equivalent and expose no binding existence or state. Distinct
+  stable availability and integrity errors plus bounded audit are permitted only
+  after exact in-scope authority and packet membership are established.
 - Prior, later, sibling, and previously leased Submission artifacts fail closed
   without an active lease for that exact Submission. An expired or consumed
   lease grants no residual content authority; history remains metadata-only.
@@ -121,7 +125,7 @@ production `/api/v1` review-router registration
 cd backend && pytest -q tests/test_reviews.py tests/test_artifacts.py tests/test_authorization.py tests/test_checkers.py tests/test_tasks.py tests/test_app.py
 cd backend && ruff check app/modules/reviews app/modules/artifacts tests/test_reviews.py tests/test_artifacts.py tests/test_app.py
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
-cd backend && coverage report --include='app/modules/reviews/*' --precision=2 --fail-under=90
+cd backend && for path in 'app/modules/reviews/*' app/composition/review_lifecycle.py; do coverage report --include="$path" --precision=2 --fail-under=90 || exit 1; done
 ```
 
 ## Required reviewers

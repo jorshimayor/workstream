@@ -35,8 +35,10 @@ decisions.
   candidate/finalize behavior, exact binding service action, projection, and
   live proof. The current merged ART plan does not schedule
   `WS-ART-001-REV-EVIDENCE`, so REV-07 is blocked until ART adds and merges that
-  owner chunk. REV never consumes ArtifactStore v1, scratch, provider, or ART
-  repository APIs.
+  owner chunk. The ART plan also does not yet assign the exact active-lease
+  packet-read port or server-derived `Submission.artifact_hash` persistence;
+  those require approved owner amendments before REV-07/10. REV never consumes
+  ArtifactStore v1, scratch, provider, or ART repository APIs.
 - Merged `REV_CON_HANDOFF.md` controls contribution integration. CON must supply
   ContributionPolicyVersion freezes and a mandatory flush-only participant.
   Core creation copies stabilized versioned Submission `artifact_hash` lineage,
@@ -45,7 +47,7 @@ decisions.
   `cancelled` with bounded reasons for approved administrative closure; REV will
   not introduce archival `closed/review_rejected` as a new status token.
 
-## Planning corrections in progress
+## Reconciled plan state
 
 The reconciliation updates intent, discovery, decisions, plan, chunk map,
 conformance, CON integration, risks, source manifest, every affected chunk
@@ -60,11 +62,14 @@ changes include:
 - first canonical Review commit only with the CON participant; and
 - removal of CON router ownership and optional evidence projection from REV-13.
 
-All prior internal-review evidence and the previous PR-head binding are
-historical after the main rebase and this material plan change. Fresh required
-reviewers and a new exact reviewed-SHA evidence binding are mandatory before
-push. Earlier AUTH/ART dependency review files remain dated evidence; their old
-future-count assumptions do not override WS-XINT.
+The first final review of snapshot `a916692` found executable-graph, external
+dependency ownership, cross-project concealment, coverage, claim-order, and
+artifact-error ambiguities. Those findings are repaired in a new immutable
+snapshot that requires fresh final review. All prior internal-review evidence
+and the previous PR-head binding remain historical until that review and a new
+exact reviewed-SHA evidence binding pass. Earlier AUTH/ART dependency review
+files remain dated evidence; their old future-count assumptions do not override
+WS-XINT.
 
 ## Human clarification retained
 

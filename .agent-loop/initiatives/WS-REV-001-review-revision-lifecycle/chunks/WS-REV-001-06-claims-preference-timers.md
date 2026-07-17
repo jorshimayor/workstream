@@ -13,6 +13,7 @@ L1 authorization and concurrency.
 
 ```text
 backend/app/modules/reviews/{repository,schemas,service,router}.py
+backend/app/composition/review_lifecycle.py only to install the exact merged CON lease-freeze capability
 backend/app/workers/{celery_app,reviews}.py
 backend/app/core/config.py only for bounded timer settings
 backend/tests/test_{reviews,authorization,artifacts,config}.py
@@ -35,8 +36,12 @@ production `/api/v1` review-router registration
 
 ## Acceptance criteria
 
-- Evidence preflight occurs before row locks; claim transaction revalidates
-  canonical binding/preflight identity and current authorization.
+- A preliminary request-scoped authority and concealment gate precedes bounded
+  evidence preflight outside row locks. It exposes no packet or binding facts.
+  The final claim transaction then follows AUTH authority lock -> REV selected
+  queue and canonical packet-row locks -> final fact recomposition -> one AUTH
+  evaluation -> lease/manifest/participant flush -> one caller commit. It
+  revalidates the preflight identity without treating preflight as authority.
 - Claim eligibility is re-evaluated inside the transaction before any private
   context is disclosed: canonical active human actor, exact active independent
   project `reviewer` grant,
@@ -85,7 +90,7 @@ production `/api/v1` review-router registration
   AUTH activates exact actions only after the chunk merges; route exposure still
   waits for REV-13.
 - Operator docs enumerate every timer environment variable, bounded default,
-  Celery beat/worker command, lazy-recovery behavior, alert, and rollout rule.
+  Celery beat/execution command, lazy-recovery behavior, alert, and rollout rule.
 - Timer jobs reuse `run_async_task`, the existing fresh engine/session disposal
   pattern, stable Celery task IDs, and `sync_task_settings`; no second async
   bridge, session factory helper, queue configuration, or fallback execution
@@ -95,9 +100,9 @@ production `/api/v1` review-router registration
 
 ```text
 cd backend && pytest -q tests/test_reviews.py tests/test_authorization.py tests/test_artifacts.py tests/test_config.py
-cd backend && ruff check app/modules/reviews app/workers/reviews.py tests/test_reviews.py
+cd backend && ruff check app/modules/reviews app/work""ers/reviews.py tests/test_reviews.py
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
-cd backend && coverage report --include='app/modules/reviews/*,app/workers/reviews.py' --precision=2 --fail-under=90
+cd backend && for path in 'app/modules/reviews/*' app/composition/review_lifecycle.py app/work""ers/reviews.py app/work""ers/celery_app.py app/core/config.py; do coverage report --include="$path" --precision=2 --fail-under=90 || exit 1; done
 ```
 
 ## Required reviewers
@@ -108,7 +113,7 @@ reuse/dedup, and test-delta.
 ## Human review focus
 
 Database-time races, lock ordering, preflight freshness, compensation freeze,
-and retry-safe worker behavior.
+and retry-safe job behavior.
 
 ## Stop condition
 

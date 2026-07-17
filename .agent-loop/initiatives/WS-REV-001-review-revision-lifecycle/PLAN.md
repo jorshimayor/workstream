@@ -3,7 +3,7 @@
 ## Approach
 
 Build the lifecycle as one review-owned backend module integrated with existing
-tasks, submissions, checkers, audit, authorization, artifact, worker, and API
+tasks, submissions, checkers, audit, authorization, artifact, job execution, and API
 composition boundaries. Land persistence before behavior, keep every public
 mutation hidden until its invariants and cross-domain participants exist, and
 use PostgreSQL constraints as final race guards.
@@ -132,6 +132,14 @@ and live-proof chunks remain hard gates. ART owns candidate retention and
 Operator recovery; REV does not consume v1 verify/retain/release, raw
 ArtifactStore, `artifact.binding.read`, or a generic artifact-retrieval action.
 
+The current merged ART plan does not yet assign two other exact XINT
+requirements to an approved owner chunk: a narrow active-lease packet-read port
+and server-derived verified `Submission.artifact_hash` persistence in the
+submission/checker cutover. Both require ART/task-owner amendments, approval,
+and merge before their REV consumers; the existing artifact-set context or
+caller `package_hash` is not equivalent. REV does not name a dependency chunk
+until the ART owner publishes one.
+
 REV owns immutable `ReviewPacketManifest` and `ReviewEvidenceArtifact` semantic
 records. The manifest names the exact queue/lease, versioned Submission,
 admitting CheckerRun/results, locked guide/revision context, response-evidence
@@ -144,8 +152,9 @@ Evidence binding additionally requires the separately registered
 A separately approved `WS-ART-001-REV-EVIDENCE` capability supplies hidden
 canonical facts and binding behavior; AUTH alone integrates its evaluator and
 activates it. That ART owner chunk is not scheduled by the currently merged ART
-plan, so REV-07 remains blocked until ART adds, approves, and merges it. No
-Operator read action or generic PermissionId substitutes.
+plan, so REV-07 remains blocked until ART adds, approves, and merges it together
+with an approved packet-read owner contract. No Operator read action or generic
+PermissionId substitutes.
 
 ### Contribution gate
 
@@ -158,8 +167,8 @@ The cross-initiative sequence is explicit:
 - `WS-REV-001-02` first establishes immutable
   `Submission.task_assignment_id` attribution and guide activation sequence;
 - WS-CON's approved replacement chunks then freeze submitter
-  `ContributionPolicyVersion` on `TaskAssignment` and remove legacy payment
-  policy fields and
+  `ContributionPolicyVersion` on `TaskAssignment` and remove legacy
+  compensation-context fields and
   consumers before `WS-REV-001-09A`;
 - merged WS-CON contribution-policy persistence precedes `WS-REV-001-03`, so
   ReviewLease FKs target a real owner;
@@ -283,10 +292,12 @@ durable checker allow_review
   -> create at most one open/preferred ReviewQueueEntry for an admitted version
      with task review_pending and the exact admitting CheckerRun ID
   -> server selects current lease or one next offer
-  -> artifact availability preflight
-  -> AUTH prepares and locks reviewer authority; REV atomically creates the
-     ReviewLease and immutable ReviewPacketManifest from locked canonical rows;
-     AUTH evaluates the final facts once
+  -> preliminary request-scoped authority and concealment gate permits bounded
+     artifact availability preflight without disclosing packet facts
+  -> final transaction: AUTH prepares and locks reviewer authority; REV locks
+     the selected queue and canonical packet rows and recomposes final facts;
+     AUTH evaluates once; REV and typed participants flush the ReviewLease and
+     immutable ReviewPacketManifest; the caller commits once
   -> authorized Review Context shows the bounded immutable chain but retrieves
      artifact content only for the currently leased Submission version
   -> finding evidence is ingested and verified before decision
@@ -313,7 +324,7 @@ review-admission participant implemented by reviews; the durable
 `_apply_pre_review_gate_result` transaction invokes it directly and never polls
 or recomputes `allow_review`. One explicit `app.composition.review_lifecycle`
 constructor assembly supplies these ports to checker routers, task services,
-checker workers, and review routers. It is not a service locator and has no
+checker execution processes, and review routers. It is not a service locator and has no
 fallback constructor. Models may hold database relationships without creating
 repository/service import cycles. Import-boundary tests enforce the direction.
 
@@ -339,7 +350,7 @@ disable. `disabled(N) -> pre_activation(N+1)` is the only reactivation edge and
 requires a newly reviewed manifest. Every edge and observation is a fresh
 Operator-authorized lifecycle command; lease draining reuses fresh
 `review.lease.force_release` commands rather than widening lifecycle authority.
-No worker replays human authority or advances phase. Timeout leaves phase
+No background job replays human authority or advances phase. Timeout leaves phase
 unchanged for forward retry and no edge attempts schema downgrade. After 12A's
 hidden behavior merges, AUTH activates `review.lifecycle.activation.manage`.
 Chunk 13 then exposes the already-active Operator surface, performs the ordered
@@ -459,24 +470,31 @@ foundation change rather than adding review-private storage state.
 
 ## Concurrency design
 
-- Preflight remote artifact availability before acquiring review row locks.
+- After a preliminary request-scoped authority and concealment gate, preflight
+  remote artifact availability before acquiring review row locks.
 - Inside claims and decisions, use database time and targeted `FOR UPDATE` or
   atomic conditional updates over canonical rows.
 - Every mutation starts with AUTH's prepared handle locking current actor/link/
   exact grant or service-matrix authority in AUTH-defined order. REV then locks
   only the feature rows required by that command, recomposes final typed facts,
   and asks AUTH to evaluate exactly once. No reusable cross-session handle exists.
-- Claim order after AUTH is review idempotency, lifecycle fence, queue,
-  Task/Assignment/Submission/CheckerRun, then lease and packet-manifest rows.
-- Evidence finalization order after AUTH is lifecycle fence, lease or prepared
-  assignment, Submission, finding/response slot, packet lineage, then an
-  ART-owned database-local participant locks candidate/admission/binding state.
+- Before REV-12A, hidden claim order after AUTH is review idempotency, queue,
+  Task/Assignment/Submission/CheckerRun, then lease and packet-manifest rows;
+  it has no public or background-command entry point. REV-12A inserts the
+  lifecycle fence between idempotency and queue before product release.
+- Before REV-12A, hidden evidence-finalization order after AUTH is lease or
+  prepared assignment, Submission, finding/response slot, packet lineage, then
+  an ART-owned database-local participant locks candidate/admission/binding
+  state. REV-12A inserts the lifecycle fence before those REV rows before
+  product release.
   REV never imports or directly locks ArtifactBinding/Replica repositories.
-- Decision order after AUTH is decision idempotency, lifecycle fence, queue,
-  lease, Task, Assignment, Submission, Review predecessor, findings/resolutions,
-  and stabilized typed binding facts. REV then calls CON's flush-only participant,
-  which owns its internal `ContributionPolicyVersion`, ContributionRecord,
-  award, audit, and outbox lock/write order.
+- Before REV-12A, hidden decision order after AUTH is decision idempotency,
+  queue, lease, Task, Assignment, Submission, Review predecessor,
+  findings/resolutions, and stabilized typed binding facts. REV then calls CON's
+  flush-only participant, which owns its internal `ContributionPolicyVersion`,
+  ContributionRecord, award, audit, and outbox lock/write order. REV-12A inserts
+  the lifecycle fence between idempotency and queue before REV-13 releases the
+  surface.
 - Revision, administrative, and service commands publish their smaller ordered
   row sets in their owning chunk and preserve the same AUTH-first prefix. Rows of
   one type lock by ascending primary key. Audit and outbox append after state
@@ -485,7 +503,7 @@ foundation change rather than adding review-private storage state.
 - Consume stabilized typed binding facts inside the decision transaction; do
   not call a remote provider or import ART persistence while holding locks.
 - Map expected constraint races to stable 409 or replay results.
-- Timer workers use deterministic batches with `SKIP LOCKED`; user claims do
+- Timer jobs use deterministic batches with `SKIP LOCKED`; user claims do
   not.
 - Lazy request-time recovery shares the same transition service as sweeps.
 - Retry only database-classified serialization/deadlock failures, with a
@@ -531,7 +549,7 @@ chunk replaces any composition locator with an exact existing file path. A
 missing typed capability becomes a separately approved dependency-owner chunk;
 it is not added opportunistically to a WS-REV PR.
 
-The pre-WS-CON task/project schema may still contain retired payment-policy
+The pre-WS-CON task/project schema may still contain retired compensation-context
 locks when chunk 02 lands. Those are transitional migration inputs only.
 WS-CON owns their consumer cutover and schema removal; WS-REV-09A and every
 public/final context operate only after that removal and must not replace the
@@ -564,7 +582,7 @@ Each identity requires its own AUTH registration/provisioning/static-row proof,
 AUTH-09E admission, and later action activation. No service row exists for the
 human Operator `review.lifecycle.activation.manage` action, and shared outbox
 dispatch retains its separately owned service identity.
-All review jobs reuse `run_async_task`, fresh worker engine/session disposal,
+All review jobs reuse `run_async_task`, fresh execution engine/session disposal,
 stable Celery task IDs, and `sync_task_settings`. The shared outbox dispatcher
 is the sole claimant/retry/dead-letter owner; reviews registers only a typed,
 deterministic projection handler and records ART receipts.
@@ -601,13 +619,13 @@ Every chunk runs focused tests and lint. Every runtime chunk also runs a fresh
 isolated real-PostgreSQL coverage invocation; a stale `.coverage` file is never
 accepted as evidence. The runner requires a disposable administrative database
 URL through `WORKSTREAM_TEST_ADMIN_DATABASE_URL`, creates independent databases
-for concurrent workers, and fails rather than silently falling back. Artifact
+for concurrent test processes, and fails rather than silently falling back. Artifact
 chunks use provider-neutral fakes plus LocalStorage and MinIO conformance as
 applicable. The common runtime evidence is:
 
 ```text
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
-cd backend && coverage report --include='app/modules/reviews/*,app/workers/reviews.py' --precision=2 --fail-under=90
+cd backend && coverage report --include=app/modules/reviews/\*,app/work""ers/reviews.py --precision=2 --fail-under=90
 cd backend && ruff check app tests scripts
 python3 scripts/check_internal_review_evidence.py
 python3 scripts/check_markdown_links.py

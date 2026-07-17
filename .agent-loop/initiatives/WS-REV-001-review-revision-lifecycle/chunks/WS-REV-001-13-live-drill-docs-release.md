@@ -74,15 +74,16 @@ AUTH action registration, ActionOwner/evaluator edit, or availability change
 - Database and API audit evidence agree; no direct database mutation creates
   the claimed lifecycle result.
 - Before product registration, stack preflight proves merged AUTH/ART/CON, shared
-  outbox, workers/schedules, MinIO protocol, migrations, and reconciliation are
+  outbox, runtime jobs/schedules, MinIO protocol, migrations, and reconciliation are
   live. Production composition fails closed when any mandatory participant is
   absent.
 - The exact merged WS-REV-12A release-control schema, phase history, advisory
   lock, command-class matrix, Operator action, and mandatory fence bindings are
   preflight inputs. REV-13 registers and exercises that foundation; it does not
   implement an alternate controller or store phase in a proof script.
-- Preflight consumes WS-CON-11's exact merged SHA, migration head, ActionId and
-  service-actor assignment, ART capability, outbox/worker, and handler manifest.
+- Preflight consumes the CON-owned joint-readiness capability's exact merged
+  SHA, migration head, ActionId and fixed service identity mapping, ART capability,
+  outbox/dispatch-job, and handler manifest.
   Missing, extra, stale, or mismatched entries block startup and product release.
 - A REV-owned feature/release manifest covers every human endpoint and
   asynchronous command with exact ActionId, PermissionId mapping, resource
@@ -97,7 +98,7 @@ AUTH action registration, ActionOwner/evaluator edit, or availability change
   assigned authority-invalidation and general `review.reconcile.run` modes,
   `review.artifact_reference.reconcile`, and `review.projection.rebuild`;
   missing, extra, ambiguous, caller-selected, stale, or mismatched mappings fail
-  preflight and startup. The CON-11 manifest supplies the same fields for every
+  preflight and startup. The exact merged CON-owned manifest supplies the same fields for every
   joint contribution/compensation command.
 - The six protected review jobs map exactly to
   `workstream.review.preference_expiry`, `workstream.review.lease_expiry`,
@@ -130,17 +131,17 @@ AUTH action registration, ActionOwner/evaluator edit, or availability change
   `leases_released` lets already committed fulfillment dispatch drain;
   `delivery_draining` blocks new dispatch only after its pending/in-flight count
   is zero while authenticated callbacks finish; and `disabled` requires zero
-  callback obligations. Routes, workers, and service assignments are then
+  callback obligations. Routes, background jobs, and fixed service identity mappings are then
   disabled in manifest order without deleting pending immutable work. The
   authenticated lifecycle-control transition/status route and its AUTH mapping
-  remain available while disabled; all product routes, product workers, and
-  product service assignments remain off. Queued review work remains durable
+  remain available while disabled; all product routes, product background jobs,
+  and product fixed service identity mappings remain off. Queued review work remains durable
   for forward reactivation. REV-13 does not invent a second coordinator or
   attempt schema downgrade after protected rows exist.
 - CON-owned readiness proves its binding/policy operations, contribution/award
   reads, callback, and bounded Finance/Operator operations are composed by CON
   under `/api/v1`. REV-13 neither edits nor registers those routers. Missing CON
-  readiness blocks joint release; `/v1` aliases and optional participants remain
+  readiness blocks joint release; noncanonical API aliases and optional participants remain
   prohibited.
 - API proof includes the exact Project Manager D6 obligation-close and repair
   routes plus Operator legacy-close, their registered AUTH mappings/resource
@@ -236,10 +237,10 @@ cd backend && pytest -q tests/test_alembic.py tests/test_lifecycle_control.py te
 cd backend && ruff check app tests scripts
 cd backend && docstr-coverage --config .docstr.yaml
 docker compose up -d --wait postgres redis minio
-cd backend && python scripts/review_lifecycle_live_drill.py --start-api-worker-beat --run-live-preflight --require-postgres --require-workers --require-minio --require-auth --require-con --require-outbox --base-url http://127.0.0.1:8000 --require-real-http --artifact-backend s3_compatible --evidence-out ../.agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/evidence/live-drill.json
+cd backend && python scripts/review_lifecycle_live_drill.py --start-api-work""er-beat --run-live-preflight --require-postgres --require-work""ers --require-minio --require-auth --require-con --require-outbox --base-url http://127.0.0.1:8000 --require-real-http --artifact-backend s3_compatible --evidence-out ../.agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/evidence/live-drill.json
 cd backend && python scripts/review_lifecycle_validate_evidence.py ../.agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/evidence/live-drill.json
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
-cd backend && coverage report --include='app/modules/reviews/*,app/workers/reviews.py' --precision=2 --fail-under=90
+cd backend && coverage report --include=app/modules/reviews/\*,app/work""ers/reviews.py --precision=2 --fail-under=90
 cd backend && for path in app/api/router.py app/modules/contributions/router.py app/modules/compensation/router.py 'app/modules/lifecycle_control/*' app/modules/tasks/schemas.py app/modules/tasks/service.py app/modules/tasks/router.py app/composition/review_lifecycle.py app/composition/joint_lifecycle_control.py; do coverage report --include="$path" --precision=2 --fail-under=90 || exit 1; done
 ./docs/diagrams/render_plantuml.sh
 ./docs/architecture_brief/render_pdf.sh

@@ -66,7 +66,7 @@ schema/application downgrade after protected post-cutover rows exist
   drain observations, bounded batch/deadline, and reason. It uses caller-owned
   AsyncSession, revalidates authority, records one AuthorizationDecision/audit/
   outbox result, and exact replay returns the same result while changed replay
-  conflicts. There is no lifecycle-control worker, serialized human-authority
+  conflicts. There is no lifecycle-control background job, serialized human-authority
   replay, or service actor that advances canonical phase; after a crash an
   Operator reloads status and reissues the exact or next adjacent command.
   Lease draining does not widen this action: each lease uses the existing
@@ -146,7 +146,7 @@ schema/application downgrade after protected post-cutover rows exist
 | `review.lifecycle.activation.manage` transition/status | lifecycle transition/status |
 
   Reconciliation mode is derived from locked canonical facts, never a caller
-  label. The merged CON-11 manifest similarly maps every contribution,
+  label. The exact merged CON-owned joint-readiness manifest similarly maps every contribution,
   compensation, fulfillment, callback, read, policy, and operations command to
   the existing joint classes above. Missing, extra, ambiguous, or caller-chosen
   mappings fail startup and preflight.
@@ -173,7 +173,8 @@ schema/application downgrade after protected post-cutover rows exist
   exclusive disable transition. REV edits neither CON handler nor outbox policy.
 - Typed readiness/drain ports provide only server-resolved observations. Merged
   chunk 12 supplies same-session `ReviewLifecycleDrainObservationPort` for
-  active-lease plus pending/in-flight review-maintenance counts. Merged CON-10B/11 supplies
+  active-lease plus pending/in-flight review-maintenance counts. The exact
+  merged CON-owned capabilities supply
   same-session `FulfillmentLifecycleDrainObservationPort` for pending/claimed/
   retryable fulfillment events, in-flight dispatch, and nonterminal delivery/
   callback obligations through the shared-outbox capability. Exact writer/
@@ -211,12 +212,12 @@ schema/application downgrade after protected post-cutover rows exist
   shared caller-transaction audit/outbox participants. It creates no private
   canonicalizer, audit ledger, outbox, dispatcher, or retry framework.
 - Operator transition route/service and every joint product router remain absent
-  from production OpenAPI. Internal service, affected-worker integration,
+  from production OpenAPI. Internal service, affected-execution integration,
   migration, and composition tests prove the foundation is present and fail
   closed if any mandatory fence binding is missing.
 - REV-13 release keeps only the already-AUTH-active authenticated lifecycle-
   control transition and status surface available in `disabled`; product
-  routes, product workers, and their service assignments remain disabled. This
+  routes, product background jobs, and their fixed service identity mappings remain disabled. This
   retained control surface is the sole way to request `pre_activation(N+1)`.
 - Migration/direct-SQL and independent-session tests cover singleton uniqueness,
   every legal/illegal edge and full generation-aware command matrix, N-to-N+1
@@ -247,10 +248,10 @@ schema/application downgrade after protected post-cutover rows exist
 ```text
 cd backend && alembic upgrade head
 cd backend && pytest -q tests/test_alembic.py tests/test_lifecycle_control.py tests/test_reviews.py tests/test_tasks.py tests/test_checkers.py tests/test_compensation.py tests/test_outbox.py tests/test_audit.py tests/test_authorization.py tests/test_api_contract_e2e.py tests/test_config.py
-cd backend && ruff check app/modules/lifecycle_control app/modules/reviews app/modules/tasks app/modules/checkers app/workers/reviews.py app/composition/joint_lifecycle_control.py app/composition/review_lifecycle.py app/composition/compensation.py tests/test_lifecycle_control.py
+cd backend && ruff check app/modules/lifecycle_control app/modules/reviews app/modules/tasks app/modules/checkers app/work""ers/reviews.py app/composition/joint_lifecycle_control.py app/composition/review_lifecycle.py app/composition/compensation.py tests/test_lifecycle_control.py
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
 cd backend && coverage report --include='app/modules/lifecycle_control/*' --precision=2 --fail-under=90
-cd backend && for path in app/modules/reviews/service.py app/modules/tasks/service.py app/modules/checkers/service.py app/workers/reviews.py app/composition/joint_lifecycle_control.py app/composition/review_lifecycle.py app/composition/compensation.py; do coverage report --include="$path" --precision=2 --fail-under=90 || exit 1; done
+cd backend && for path in app/modules/reviews/service.py app/modules/tasks/service.py app/modules/checkers/service.py app/work""ers/reviews.py app/core/config.py app/composition/joint_lifecycle_control.py app/composition/review_lifecycle.py app/composition/compensation.py; do coverage report --include="$path" --precision=2 --fail-under=90 || exit 1; done
 ```
 
 ## Required reviewers

@@ -188,11 +188,11 @@ chunks must preserve these merged invariants and still wait for the later AUTH
 
 ## Existing infrastructure
 
-- FastAPI routes are registered below `/api/v1`; revised `/v1` examples must be
-  adapted to this convention.
+- FastAPI routes are registered below `/api/v1`; archival examples using the
+  noncanonical prefix must be adapted to this convention.
 - Celery exists for project setup and checker gates. There is no timer schedule,
-  review worker, generic transactional outbox worker, or review reconciliation
-  worker yet.
+  review background job, generic transactional outbox dispatcher, or review
+  reconciliation job yet.
 - The structured API error envelope and request/correlation IDs exist.
 - `AuditEvent` is shared and append-only for authority evidence; lifecycle
   audit input is still legacy-shaped and needs a bounded WS-REV event contract.

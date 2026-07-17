@@ -14,7 +14,7 @@ L1 asynchronous delivery, privacy, and operations.
 ```text
 backend/app/modules/reviews/{ports,repository,schemas,service,projection}.py
 backend/app/workers/{celery_app,reviews}.py
-backend/app/core/config.py only for bounded worker settings
+backend/app/core/config.py only for bounded job settings
 backend/tests/test_{reviews,artifacts,audit,config}.py
 docs/operations_reviewer_workflow.md
 docs/operations_operator_workflow.md
@@ -38,7 +38,7 @@ production `/api/v1` review-router registration
 
 - Projection bytes are deterministic for Review ID and schema version.
 - Same operation/bytes replay one logical receipt; changed bytes conflict.
-- Worker retry/dead-letter/reconciliation changes only delivery status.
+- Projection-job retry/dead-letter/reconciliation changes only delivery status.
 - The shared outbox dispatcher remains the sole event claimant and owner of
   attempt, retry, dead-letter, and delivery status. Reviews registers only a
   typed deterministic projection handler and relies on ART receipts; no review
@@ -73,10 +73,10 @@ production `/api/v1` review-router registration
   only bounded typed identifiers/reasons and never finding text, private
   artifact metadata, signed access, provider paths, or secrets.
 - Production OpenAPI remains free of lifecycle routes.
-- Operator docs enumerate every projection/notification worker variable,
-  bounded default, schedule/worker command, retry/dead-letter alert, rollout,
+- Operator docs enumerate every projection/notification job variable,
+  bounded default, schedule/execution command, retry/dead-letter alert, rollout,
   drain, and rollback behavior in the same chunk.
-- Projection handlers reuse `run_async_task`, fresh worker engine/session
+- Projection handlers reuse `run_async_task`, fresh execution engine/session
   disposal, stable task IDs, and `sync_task_settings`; no second async bridge,
   session factory, or queue helper is introduced.
 - This chunk supplies hidden behavior, service resource facts, and feature-
@@ -87,9 +87,9 @@ production `/api/v1` review-router registration
 
 ```text
 cd backend && pytest -q tests/test_reviews.py tests/test_artifacts.py tests/test_audit.py tests/test_config.py
-cd backend && ruff check app/modules/reviews app/workers/reviews.py tests/test_reviews.py
+cd backend && ruff check app/modules/reviews app/work""ers/reviews.py tests/test_reviews.py
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
-cd backend && coverage report --include='app/modules/reviews/*,app/workers/reviews.py' --precision=2 --fail-under=90
+cd backend && for path in 'app/modules/reviews/*' app/work""ers/reviews.py app/work""ers/celery_app.py app/core/config.py; do coverage report --include="$path" --precision=2 --fail-under=90 || exit 1; done
 ```
 
 ## Required reviewers

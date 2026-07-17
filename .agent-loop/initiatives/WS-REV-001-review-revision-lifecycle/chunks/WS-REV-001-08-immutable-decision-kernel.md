@@ -78,7 +78,7 @@ reputation or fulfillment logic
 cd backend && pytest -q tests/test_reviews.py tests/test_tasks.py tests/test_authorization.py tests/test_artifacts.py tests/test_audit.py
 cd backend && ruff check app/modules/reviews app/modules/tasks tests/test_reviews.py tests/test_tasks.py
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
-cd backend && coverage report --include='app/modules/reviews/*' --precision=2 --fail-under=90
+cd backend && for path in 'app/modules/reviews/*' app/modules/tasks/models.py app/modules/tasks/review_participant.py app/composition/review_lifecycle.py; do coverage report --include="$path" --precision=2 --fail-under=90 || exit 1; done
 ```
 
 ## Required reviewers

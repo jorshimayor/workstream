@@ -3,7 +3,7 @@
 ## CON Reconciliation Addendum - 2026-07-15
 
 REV's joint integration evidence was refreshed against CON planning commit
-`42cf11f`. Its content-level reviews closed 05A/05B PaymentPolicy
+`42cf11f`. Its content-level reviews closed the former compensation-context
 removal, AUTH service-only outbox/callback authority, ART capability/recovery,
 adapter composition, disclosure, provenance, and REV-13 joint activation.
 CON runtime publication remains a dependency-owned gate; this planning chunk
@@ -36,7 +36,7 @@ each implementation chunk still requires its own zero-trust reviewer fanout.
 | Security/auth | `/root/rev_plan_security` | PASS | Transaction-aware AUTH links, eligibility/self-review, evidence authorization, replay disclosure, bounded privacy, closed rollout |
 | Product/ops | `/root/rev_plan_product` | PASS | Final coherent cutover, existing-row activation, D6 effects, invalidations, metrics/notifications, no non-review CON effects |
 | Architecture | `/root/rev_plan_architecture` | PASS | AUTH/ART/CON ownership, shared audit/outbox, lock hierarchy, one-way ports, composition and activation sequence |
-| Docs/spec adoption | `/root/rev_plan_docs` | PASS | Immutable archival provenance, active contract, scanner scope, migration/worker docs, generated/checksum proof |
+| Docs/spec adoption | `/root/rev_plan_docs` | PASS | Immutable archival provenance, active contract, scanner scope, migration/job docs, generated/checksum proof |
 | Reuse/dedup | `/root/rev_plan_reuse` | PASS | Existing Submission/task/checker/audit/outbox/idempotency/Celery reuse and single canonical submission path |
 
 ## Initial failures and disposition
@@ -113,7 +113,7 @@ dispatch/callback hooks, durable provider-I/O handoff, and complete race proof.
 | Product/ops | `/root/con_contract_review` | PASS | Legacy continuity, revision/CON behavior, drain, reactivation |
 | Architecture | `/root/rev_repair_senior` | PASS | Port ownership, composition, repository isolation, ADR 0014 |
 | Docs/spec adoption | `/root/con_code_boundary` | PASS | Provenance, dependency status, terminology, proof ownership |
-| Reuse/dedup | `/root/rev_repair_senior` | PASS | Shared hashing/idempotency/audit/outbox/workers/adapters reused |
+| Reuse/dedup | `/root/rev_repair_senior` | PASS | Shared hashing/idempotency/audit/outbox/job execution/adapters reused |
 
 All valid findings are closed. The human approved D6, reviewer-current
 precedence, coherent activation, the sequence, and planning publication on
@@ -235,7 +235,7 @@ Every comment was valid and in scope. The plan was repaired to:
 
 - add the exact WS-IMP archival pair to REV-01 allowed scope;
 - clarify the merged WS-CON compensation-policy prerequisite for REV-03;
-- require TaskService route, checker-worker, and composition-path proof in
+- require TaskService route, checker-execution, and composition-path proof in
   REV-05 and correct `later-admitted` wording;
 - define submitter chain ownership through the canonical contributor on the
   exact Submission-associated TaskAssignment;
@@ -304,3 +304,42 @@ All earlier exact-SHA PLAN review evidence is historical after this material
 change. Fresh senior engineering, QA/test, security/auth, product/ops,
 architecture, docs, reuse/dedup, test-delta, and CI-integrity review plus a new
 snapshot binding are required before PR #128 is republished.
+
+## WS-XINT Final Review Repair Cycle - 2026-07-17
+
+Final review of immutable snapshot `a916692` failed senior engineering,
+architecture, QA/test, product/ops, security/auth, and docs while passing
+reuse/dedup, test-delta, and CI integrity. Every substantive failure was valid:
+
+- REV-10 named a lifecycle fence that did not exist until REV-12A;
+- active gates named unmerged sibling CON chunk numbers as though canonical;
+- ART packet-read and `Submission.artifact_hash` had no approved owner chunk;
+- REV-06/07 omitted their composition-root wiring scope;
+- materially changed non-review modules were missing from 90-percent coverage;
+- cross-project current-work behavior was ambiguous under global lease capacity;
+- claim preflight/finalization order did not fully state AUTH-first preparation;
+- cross-scope artifact errors could disclose guessed binding existence;
+- current stale wording scanners failed on retired terminology; and
+- trust/evidence scope remained bound to the pre-XINT publication.
+
+The repair makes hidden pre-12A claim/evidence/decision services inaccessible
+from public/background command entry points and gives them executable AUTH-first
+orders without a fence. REV-12A later inserts the fence before REV-13 release.
+CON dependencies are capability-and-SHA gates until their owner merges exact
+contracts. ART packet-read, review evidence, and server-derived Submission hash
+are explicit owner amendments, with REV-07/10 blocked until merge. REV-06/07
+wire typed ports only through the existing composition root. Coverage commands
+now name every materially changed module, composition path, and runtime job.
+
+Selected-project current work returns `none` without disclosure when global
+capacity is occupied in another project. Preliminary artifact preflight is
+authority/concealment-gated; the final transaction follows AUTH authority lock,
+REV locks/final facts, one AUTH evaluation, participant flush, and one caller
+commit. Cross-scope, unauthorized, and nonexistent bindings are
+concealment-equivalent; detailed availability/integrity errors require proven
+in-scope authority.
+
+The implemented Workstream, AUTH, and ART stale scanners pass after terminology
+repair. The future REV scanner remains a REV-01 deliverable and is not claimed
+as current proof. The repaired snapshot still requires fresh exact-revision
+review and evidence binding before publication.

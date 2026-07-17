@@ -49,7 +49,7 @@ production `/api/v1` review-router registration
   polls/recomputes `allow_review` or imports CheckerRepository. Review context
   uses the checker-owned typed reader, not direct checker repository access.
 - Every concrete CheckerService construction in checker routes, TaskService,
-  and checker workers is replaced by the single explicit composition assembly;
+  and checker execution processes is replaced by the single explicit composition assembly;
   no optional participant, fallback constructor, or runtime service locator
   exists. Import-boundary tests prohibit checker/review repository cycles.
 - Every public task route replaces direct `TaskService(session)` construction
@@ -59,6 +59,10 @@ production `/api/v1` review-router registration
   needs-revision reviewer.
 - Reviewer current endpoint returns active lease, one eligible preferred/open
   offer, or none and reveals no alternative work.
+- A reviewer with a global active lease in project A receives `none` when
+  requesting current work for project B. The response exposes neither the
+  project-A lease nor a project-B offer that global capacity makes unclaimable;
+  an independent cross-project test proves both suppression and concealment.
 - Admin inspection is separately authorized and distinguishes open depth from
   preferred backlog.
 - Reviewer and administrative reads declare, respectively,
@@ -100,9 +104,9 @@ production `/api/v1` review-router registration
 
 ```text
 cd backend && pytest -q tests/test_reviews.py tests/test_checkers.py tests/test_tasks.py tests/test_app.py tests/test_authorization.py tests/test_artifacts.py tests/test_api_contract_e2e.py
-cd backend && ruff check app/modules/reviews app/modules/checkers app/modules/tasks/router.py app/workers/checkers.py app/composition tests/test_reviews.py tests/test_checkers.py tests/test_tasks.py tests/test_app.py
+cd backend && ruff check app/modules/reviews app/modules/checkers app/modules/tasks/router.py app/work""ers/checkers.py app/composition tests/test_reviews.py tests/test_checkers.py tests/test_tasks.py tests/test_app.py
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
-cd backend && coverage report --include='app/modules/reviews/*' --precision=2 --fail-under=90
+cd backend && for path in 'app/modules/reviews/*' app/modules/checkers/ports.py app/modules/checkers/service.py app/modules/checkers/repository.py app/modules/checkers/router.py app/modules/tasks/models.py app/modules/tasks/lifecycle.py app/modules/tasks/service.py app/modules/tasks/router.py app/work""ers/checkers.py app/composition/__init__.py app/composition/review_lifecycle.py; do coverage report --include="$path" --precision=2 --fail-under=90 || exit 1; done
 ```
 
 ## Required reviewers

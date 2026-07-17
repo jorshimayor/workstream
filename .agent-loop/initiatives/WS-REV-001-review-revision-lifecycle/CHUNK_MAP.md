@@ -14,14 +14,14 @@ explicit start signal.
 | `WS-REV-001-01` | Canonical Contract Adoption And Dependency Conformance | L1 | Plan approval; current-main refresh; merged WS-XINT-001 handoffs | Proposed |
 | `WS-REV-001-02` | Locked Review Policy And Task Lifecycle Alignment | L1 | AUTH canonical actor foundation; ART submission commitment contract stable; canonical rejected/cancelled lifecycle amendment; D6 behavior approved | Proposed |
 | `WS-REV-001-03` | Review Queue And Lease Persistence | L1 | 02 merged; WS-CON ContributionPolicyVersion persistence merged | Proposed |
-| `WS-REV-001-04` | Immutable Review, Findings, And Replay Persistence | L1 | 03 merged; WS-CON-02A shared outbox persistence and 02C lifecycle-audit participant merged | Proposed |
+| `WS-REV-001-04` | Immutable Review, Findings, And Replay Persistence | L1 | 03 merged; CON-owned shared transactional-outbox persistence and caller-transaction lifecycle-audit participant merged at exact refreshed SHAs | Proposed |
 | `WS-REV-001-05` | Checker Admission, Preferred Routing, And Queue Views | L1 | 04; ART v2 submission/checker cutover; AUTH-10 reviewer grants and AUTH-11 project visibility; actions registered/planned | Proposed |
 | `WS-REV-001-06` | Atomic Claims, Release, Preference, And Timers | L1 | 05; AUTH prepared mutation protocol; AUTH-09E plus exact expiry service rows; WS-CON ReviewLease ContributionPolicyVersion freeze participant; actions registered/planned | Proposed |
-| `WS-REV-001-07` | Artifact-Backed Review Context And Finding Evidence | L1 | 06; merged ART v2 packet-read and separately approved `WS-ART-001-REV-EVIDENCE` candidate/finalize capability; `artifact.review_evidence.binding.create` registered/planned with exact binding service row | Proposed |
+| `WS-REV-001-07` | Artifact-Backed Review Context And Finding Evidence | L1 | 06; approved and merged ART-owner amendment for v2 packet-read; separately approved `WS-ART-001-REV-EVIDENCE` candidate/finalize capability; `artifact.review_evidence.binding.create` registered/planned with exact binding service row | Proposed |
 | `WS-REV-001-08` | Decision Contract, Validation, And Task Effects | L1 | 07; AUTH prepared mutation contract; no canonical Review commit until 10 | Proposed |
-| `WS-REV-001-09A` | Revision Context Preparation And Resubmission | L1 | 08; ADR 0010 adopted; retired payment-policy removal merged; AUTH-14 submission cutover | Proposed |
+| `WS-REV-001-09A` | Revision Context Preparation And Resubmission | L1 | 08; ADR 0010 adopted; retired compensation-context field removal merged; AUTH-14 submission cutover | Proposed |
 | `WS-REV-001-09B` | Finding Replay, Resolution, And Return Routing | L1 | 09A | Proposed |
-| `WS-REV-001-10` | WS-CON Atomic Integration And Hidden API Composition | L1 | 09B; merged CON lineage schema and flush-only decision participant using stabilized Submission `artifact_hash`; no mandatory contribution-evidence projection | Proposed |
+| `WS-REV-001-10` | WS-CON Atomic Integration And Hidden API Composition | L1 | 09B; approved and merged ART/task-owner `Submission.artifact_hash` amendment; merged CON lineage schema and flush-only decision participant; no mandatory contribution-evidence projection | Proposed |
 | `WS-REV-001-11` | Admin Overrides, Reviewer-Revocation Recovery, And Reconciliation | L1 | 10; AUTH invalidation; four proposed REV actions registered/planned; AUTH-09E plus exact reconciliation service row; ART Operator recovery port | Proposed |
 | `WS-REV-001-12` | Snapshot Projection, Notifications, And Observability | L1 | 11; ART projection port; outbox foundation; AUTH-09E plus exact artifact-reference/projection service rows | Proposed |
 | `WS-REV-001-12A` | Joint Lifecycle Release-Control Foundation | L1 | 12 review drain-observation port; exact core WS-CON hidden-readiness manifest; `review.lifecycle.activation.manage` registered/planned; CON dispatch/callback fence hooks plus fulfillment/outbox drain-observation port | Proposed |
@@ -43,15 +43,15 @@ AUTH canonical human/grant/prepared-mutation contracts
   -> WS-REV-001-02
 
 WS-REV-001-02
-  -> WS-CON exact attribution consumption and retired payment-policy removal
+  -> WS-CON exact attribution consumption and retired compensation-context field removal
 
 WS-REV-001-02 + merged WS-CON ContributionPolicyVersion persistence
   -> WS-REV-001-03
 
-WS-REV-001-03 + merged WS-CON-02A shared transactional-outbox persistence
+WS-REV-001-03 + merged CON-owned shared transactional-outbox persistence
   -> WS-REV-001-04
 
-merged WS-CON-02C caller-transaction shared lifecycle-audit participant
+merged CON-owned caller-transaction shared lifecycle-audit participant
   -> WS-REV-001-04
 
 WS-REV-001-04 stable Review/lease/Submission schemas
@@ -59,7 +59,7 @@ WS-REV-001-04 stable Review/lease/Submission schemas
     Submission.artifact_hash
   -> WS-CON exact contribution/award lineage persistence
 
-WS-CON retired payment-policy removal
+WS-CON retired compensation-context field removal
   -> WS-REV-001-09A
 
 WS-REV-001-09B + WS-CON exact lineage schema + flush-only Review decision participant
@@ -98,7 +98,7 @@ REV planning does not create or start it on ART's behalf.
 Every chunk: senior engineering, QA/test, security/auth, and product/ops.
 
 Add architecture and reuse/dedup to 01-13. Add docs to PLAN and every chunk that
-changes schema, routes, workers, configuration, or active behavior: 01-13. Add
+changes schema, routes, runtime jobs, configuration, or active behavior: 01-13. Add
 test-delta to every runtime chunk. Add CI integrity whenever a
 workflow, script, dependency, or coverage gate changes.
 
