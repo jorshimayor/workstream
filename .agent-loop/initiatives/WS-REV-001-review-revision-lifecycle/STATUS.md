@@ -58,14 +58,14 @@ gate. It changes no backend, migration, AUTH, ART, or CON runtime code.
 
 ## Chunk 01 evidence state
 
-The chunk contract received an L1 plan review. Its conditions were incorporated:
-the complete documentation surface is explicit, archival bytes are forbidden,
-literal hash and trusted-base proofs are required, the four action and six
-service manifests are exact, and initiative state/evidence reconciliation is
-part of acceptance.
+Candidate `9b2fc11c12e8c0cb19914c9772f95ba4e9814688` passed the final L1
+plan review, deterministic evidence gate, and all nine required exact-SHA
+internal reviewer tracks with no blocking findings. The evidence record and PR
+trust bundle are under `reviews/WS-REV-001-01-*`.
 
-Implementation, deterministic gates, exact-SHA internal reviewer fanout, and
-the PR trust bundle must all complete before the chunk is reported ready.
+Chunk 01 is internally reviewed and ready for PR publication. External CI,
+CodeRabbit, and human review remain required. This status does not activate a
+review action or endpoint and does not authorize merge.
 
 ## Stop condition
 
