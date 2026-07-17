@@ -126,9 +126,9 @@ Reviewed code SHA: `f110a21dd694c9744d0036d380898f602d0d96ff`
 
 The first external Backend run exposed a real cumulative worker-coverage gap.
 The gate remains unchanged, and a real-PostgreSQL domain-failure test now covers
-the missing setup-worker path. All nine required tracks must revalidate this
-exact repaired SHA before the branch is republished. Reviewer IDs and final
-results are recorded in the internal review evidence.
+the missing setup-worker path. All nine required tracks passed the exact
+repaired SHA with no remaining finding. Reviewer IDs and final results are
+recorded in the internal review evidence.
 
 ## External Review
 
