@@ -1,7 +1,7 @@
 # WS-AUTH-001-XINT Internal Review Evidence
 
-Reviewed code SHA: `2acabdac0658c3f0109db4235458827b8a06bf31`
-Reviewed at: `2026-07-17T05:30:31Z`
+Reviewed code SHA: `bc714d4969dc2c6411db421de37050bbf92da2ed`
+Reviewed at: `2026-07-17T05:38:00Z`
 Reviewer run IDs: auth_xint_roles, auth_xint_art_service,
 auth_xint_rev_con
 Reviewer tracks: senior engineering, QA/test, security/auth, product/ops,
