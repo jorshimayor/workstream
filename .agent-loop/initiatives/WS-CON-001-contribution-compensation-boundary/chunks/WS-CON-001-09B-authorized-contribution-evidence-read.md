@@ -1,59 +1,27 @@
-# Chunk Contract: WS-CON-001-09B - Authorized Contribution Evidence Read
+# Chunk Contract: WS-CON-001-09B - Optional Authorized Contribution Evidence Read
 
-## Goal and risk
+## Status
 
-Expose safe self/project evidence reads behind unregistered routes through ART's
-typed read capability. L1 auth/privacy risk.
+Deferred optional successor after separately approved and merged CON-09A. It is
+not a prerequisite for core contribution/award reads.
 
-## Allowed files
+## Goal if separately approved
 
-```text
-backend/app/modules/contributions/{schemas,repository,service}.py
-backend/app/api/internal_contributions.py
-backend/app/composition/contributions.py
-backend/tests/{test_contributions,test_authorization,test_api_contract_e2e}.py
-docs/spec_contribution_compensation.md
-.agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/**
-.agent-loop/merge-intents/WS-CON-001-09B.json
-```
+Expose a bounded evidence-export read through a separately proven ART read
+capability and exact AUTH disclosure contract.
 
-## Not allowed
+## Mandatory refresh gate
 
-```text
-write projection, raw ArtifactStore/provider ref, AUTH/ART implementation edit
-production router registration or broad artifact disclosure
-dependency, test, coverage or CI weakening
-```
+- Re-review the then-current projection schema/binding/retention state and ART
+  read port independently from the write port.
+- Define exact self/project candidates, pre-filtering, concealment, media/schema
+  validation, and no reviewer-private/provider/credential disclosure.
+- Prove evidence absence/failure leaves PostgreSQL contribution/award truth and
+  CON-10A reads unaffected.
+- Keep routes hidden until its own AUTH evaluator/activation and optional release
+  gate pass.
 
-## Acceptance criteria
+## Stop
 
-- [ ] Trusted main contains the separately approved
-  `WS-ART-001-CON-EVIDENCE` `ContributionEvidenceReadPort`; 09A's merged write
-  port does not imply read readiness unless the same ART chunk explicitly
-  delivers and proves both.
-- [ ] AUTH has registered the exact planned contribution self/project read
-  actions, typed contexts and applicable actor-self/AdminRoleGrant definitions.
-  CON composes canonical facts; pre-filter pagination and cross-project
-  concealment are required. The real kernel remains fail-closed while planned;
-  a later AUTH gate owns evaluator integration and availability before CON-10A.
-- [ ] Matrix proves self, Project Manager, Finance, Operator/Audit views and
-  Reviewer project-wide denial/self-only behavior without private/provider data.
-- [ ] Grant-backed reads validate the allowed decision's complete resource-
-  context digest, matched AdminRoleGrant ID and matched project against the
-  canonical collection facts. CON tests disclosure with explicit allowed/
-  denied decision seams only; the later AUTH activation gate proves exact role,
-  revoked-grant, mixed-grant and foreign-project candidate selection.
-- [ ] ART result matches immutable projection binding, digest, byte count,
-  exact media type
-  `application/vnd.workstream.contribution-evidence+json;version=1`, owner/
-  project/logical role and schema identity; evidence failure never changes
-  ContributionRecord truth.
-- [ ] All product-fact/project mismatch cases map to CONFORMANCE_MATRIX;
-  AUTH-owned role cases map to the activation gate; OpenAPI is hidden.
-
-## Verification and reviewers
-
-Execute CON-09B in `../RUNTIME_VERIFICATION.md`; changed code is at least 90
-percent. Senior engineering, QA/test, security/privacy, product/ops,
-architecture, docs, reuse/dedup and test-delta are required. Stop before public
-registration.
+Do not start without separate human approval and a refreshed internally reviewed
+chunk contract. CON-10A proceeds independently.

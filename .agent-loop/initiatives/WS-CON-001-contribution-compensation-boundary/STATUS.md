@@ -2,65 +2,54 @@
 
 ## Current status
 
-Base planning and its AUTH-07B/AUTH-08 reconciliations passed earlier review.
-The branch is now rebased onto trusted main `9a04434`, which merges ART-02A2 PR
-#129 and includes AUTH-08 at `aa0fdcd`. The ART delta reconciliation passed
-fresh architecture/senior/reuse, QA/product/docs and security/auth review after
-repairing preparation timing, continuation custody, exact ART/AUTH gates and
-D12 closed-owner parity. Application code is unchanged.
-The reconciled working Markdown transcription, supplied generation-2 PDF,
-original archival PDF, current backend, active docs, merged WS-AUTH
-authorization catalogue, and active parallel WS-REV plan delta have been mapped.
+`WS-CON-001-PLAN` is being reconciled to trusted `main` `5d353b6`, which merged
+WS-XINT-001 boundary reconciliation through PR #139. Runtime code is unchanged.
+The prior plan is superseded where it used the older policy aggregate, made ART
+evidence mandatory, described service action rows as persisted assignments,
+allowed partial activation-custody transfer, or let outbox dispatch imply
+feature-handler authority.
 
-The candidate cannot be canonically adopted as written because it conflicts
-with `/api/v1`, the ActionId/PermissionId model, artifact-storage ownership and
-providers, existing versioned `Submission`, and active payment architecture.
+## Corrected boundary
+
+- ContributionPolicyVersion and ContributionRule decide award eligibility.
+- Core Review -> ContributionRecord/Award is one PostgreSQL transaction with no
+  ART call or evidence projection.
+- Project grants are independently submitter/reviewer/adjudicator.
+- Fixed services require closed ServiceIdentity, exact static matrix membership,
+  provisioned ActorProfile/link, AUTH-09E admission, and active action.
+- ActionOwner is AUTH activation custody. Complete ART/REV transfers are
+  referenced from WS-XINT and not partially restated by CON.
+- Outbox dispatch owns outbox mechanics only. Protected handlers need exact
+  independent authority.
+- CON-09A/09B are deferred optional successors and do not gate the core release.
 
 ## Active chunk
 
-`WS-CON-001-PLAN` only. The human approved complete PaymentPolicy removal on
-2026-07-15. AUTH-08 proves that durable grant and permission candidacy still do
-not activate a WS-CON action, so the plan keeps typed evaluators, exact per-
-action role filters, principal truth, active availability and a prepared cross-
-domain mutation protocol AUTH-owned. No implementation is active.
+`WS-CON-001-PLAN` only. No implementation chunk is active.
 
-## Chunk status
-
-| Chunk | Status | Branch | PR | Notes |
-|---|---|---|---:|---|
-| `WS-CON-001-PLAN` | Reviewed; D11/D12 human gates | `codex/ws-con-001-plan` | - | Approved D2 removal remains split into 05A/05B; reviewed refresh records PR #129 as inactive ART preparation only, exact ART/AUTH prerequisites and ownership, and treats concurrent REV work as non-consumable discovery until merged. |
-| `WS-CON-001-01` | Proposed | - | - | No runtime work. |
-| `WS-CON-001-02A` through `11` | Proposed | - | - | Each requires separate explicit start; REV-13 owns final activation. |
-
-## Blockers
-
-| Blocker | Owner | Next action |
+| Chunk | Status | Notes |
 |---|---|---|
-| Active-contract/archive handling approval | Human | Approve D1. |
-| Legacy PaymentPolicy/task/assignment row handling | Human | Choose pre-production rebuild or an explicit classified backfill before 05A/05B; PaymentPolicy removal itself is approved. |
-| Exact WS-CON executable authorization integration | WS-AUTH + human | Approve and implement registration, typed contexts/evaluators, matched authorities, grants/service assignments, prepared `T` protocol and active availability only in AUTH-owned chunks. |
-| D11 AUTH/CON human-role conflicts | Human + WS-AUTH | Choose Operator delivery reconciliation, Project Manager award detail and WS-CON audit/export role sets. AUTH amends only chosen behavior that differs from its merged matrix; CON-01 updates the active contract before registration. |
-| D12 ActionOwner/activation custody | Human + WS-AUTH | Approve exact AUTH-owned custody for 23 WS-CON, two coupled review and eleven existing ART-02D actions, or approve global feature-owner semantics plus a separate closed custody type with the same mappings. Do not register/activate with dual ownership. |
-| Upstream `task.claim` ActionId is absent | WS-AUTH-001-13 or reviewed AUTH successor | Register/evaluate/activate `task.claim` against existing PermissionId before CON-05A integrates compensation freeze. |
-| Contribution evidence typed capabilities | WS-ART + human | Create and approve the named `WS-ART-001-CON-EVIDENCE` write/read ports after 02D; write gates CON-09A, read gates CON-09B, and both gate CON-11. |
-| ART provider/admission/verification/recovery chain remains incomplete | WS-ART + WS-AUTH | PR #129 supplies only 02A2 preparation. D12 must transfer all eleven ART-02D activation custodians; AUTH-09 must register fixed internal identities/assignments; ART must merge 02A3-02D hidden behavior; AUTH then separately activates Operator recovery and the three internal actions before the named contribution ports are ready. |
-| ReviewLease/Review contracts | WS-REV | Merge owning persistence/behavior chunks at declared gates. |
-| REV-06/08/10 authorization choreography predates the prepared-handle repair | WS-REV + WS-AUTH | Repair core claim/decision sites in REV-06/08 and final CON composition in REV-10 to AUTH registration -> CON capability/participant -> REV hidden planned-action composition -> AUTH activation; commit-bind and review before consumption. |
-| Shared outbox | WS-CON-001-02A/B after approval | Land persistence and dispatcher before asynchronous integration. |
-| REV reviewed baseline plus active external-review repairs remains non-consumable | WS-REV owner + human | Repair prepared authorization/activation choreography, D12 custody and dispatcher-owned outbox transitions, bind review, and merge; WS-CON does not pin the concurrent live worktree. |
-| REV-12A draft assigns shared-outbox claim wording to the CON handler | WS-REV owner | Consume an already-claimed command and return a typed outcome; preserve CON-02B as sole outbox transition owner before sibling review/merge. |
-| External publication | Human | Push or open a PR only after explicit direction; local review evidence does not authorize publication. |
+| `WS-CON-001-PLAN` | Reconciliation and internal review in progress | Based on PR #139 / `5d353b6` |
+| `WS-CON-001-01` through `08B`, `10A` through `11` | Proposed | Separate explicit start required |
+| `WS-CON-001-09A/09B` | Deferred optional | Separate approval and fresh ART/AUTH review required |
 
-## Follow-ups
+## Open gates
 
-| Item | Source | Priority |
-|---|---|---:|
-| Re-read merged AUTH kernel plus later AUTH-09/10 service/project-grant state and each WS-CON evaluator gate at activation. | Trusted `main` | P1 |
-| Re-read REV contracts at CON-03C/06/07 activation. | Parallel worktree | P1 |
-| Re-read merged ART v2/admission/verification and named capability ports before CON-09A; do not treat 02A2 preparation as capability readiness. | ADR 0013/spec/trusted main | P1 |
-| Decide pre-production row rebuild vs classified backfill. | Migration risk | P1 |
+| Gate | Owner | Required action |
+|---|---|---|
+| Active specification/archive handling | Human | Approve CON-01 repository-owned specification |
+| Pre-production legacy rows | Human | Choose deterministic rebuild or explicit classified migration before 05A/05B |
+| D11 AdminRole candidates | Human + AUTH | Fix award-detail, delivery-recovery, and audit candidates before registration |
+| Core WS-CON action registration/activation | AUTH | Add reviewed registration and later activation chunks; CON remains hidden |
+| Fixed service runtime | AUTH | Complete AUTH-09A through 09E before protected service calls |
+| Feature handler authority | Human + AUTH + CON | Approve exact identities/actions/static rows; no dispatcher inheritance |
+| Repository loop-memory state | AUTH / merged-main owner | `check_loop_memory_state.py` currently fails on the unchanged AUTH status inherited from `origin/main`; WS-CON must not repair that external initiative file |
+| task.claim | AUTH/task owner | Register/evaluate/activate with exact submitter grant before CON-05A |
+| review.claim/review.decision | AUTH + REV + CON | Complete hidden participants/composition, full REV custody transfer, then AUTH activation |
+| Shared outbox | CON-02A/B | Land generic persistence/dispatcher after approval |
+| Joint release | REV + CON + AUTH | Consume exact hidden manifest; optional evidence and ART are not prerequisites |
 
 ## Stop condition
 
-Do not edit runtime code or start `WS-CON-001-01` from this planning turn.
-Present the plan, risks, and human decisions, then wait for explicit approval.
+Do not edit runtime code, start CON-01, publish, push, or open a PR without
+explicit human direction.

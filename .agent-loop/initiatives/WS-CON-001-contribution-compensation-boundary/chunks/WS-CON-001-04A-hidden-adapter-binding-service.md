@@ -31,12 +31,13 @@ concrete adapter, provider secret/ref, dependency or CI weakening
 - [ ] AUTH's registration checkpoint is merged: exact planned binding actions,
   typed context contracts, applicable AdminRoleGrant definitions and prepared
   `T` protocol, plus the planned `compensation.fulfillment.report` ActionId/new
-  PermissionId and an active canonical callback service ActorProfile/link with
-  its exact action assignment. Both binding and callback actions remain planned
-  and fail-closed. This chunk changes no AUTH file and uses only an explicit
+  PermissionId plus the human/AUTH-approved callback ServiceIdentity and exact
+  static action row, with controlled ActorProfile/link provisioning and
+  AUTH-09E admission. Both binding and callback actions remain planned and
+  fail-closed. This chunk changes no AUTH file and uses only an explicit
   test decision/fake below the authorization boundary for domain-success tests.
-- [ ] Create validates canonical active service ActorProfile, exact AUTH-owned
-  action assignment and non-secret route identity.
+- [ ] Create validates canonical active service ActorProfile/link, immutable
+  approved ServiceIdentity, exact static row, and non-secret route identity.
 - [ ] Mutations follow PLAN locks and transaction-revalidate authority; own-state
   concurrent suspend/resume is deterministic. They use the AUTH-prepared handle
   and evaluate it once against facts recomposed from locked binding/project rows.

@@ -2,16 +2,15 @@
 
 ## Goal and risk
 
-Implement authorized self/project contribution and award reads behind
-unregistered routes. L1 auth/privacy/product risk.
+Implement hidden authorized self/project reads directly from canonical
+PostgreSQL ContributionRecord and CompensationAward truth. L1 auth/privacy risk.
 
 ## Allowed files
 
 ```text
 backend/app/modules/contributions/{schemas,repository,service}.py
 backend/app/modules/compensation/{schemas,repository,service}.py
-backend/app/api/internal_contributions.py
-backend/app/api/internal_compensation.py
+backend/app/api/internal_{contributions,compensation}.py
 backend/app/composition/{contributions,compensation}.py
 backend/tests/{test_contributions,test_compensation,test_authorization,test_api_contract_e2e}.py
 docs/spec_contribution_compensation.md
@@ -22,34 +21,29 @@ docs/spec_contribution_compensation.md
 ## Not allowed
 
 ```text
-operations mutation/rebuild/reconciliation, AUTH edit
-provider/evidence bytes/ref, balance/ledger, production registration
-dependency, test, coverage or CI weakening
+ART/evidence read or provider reference
+operations mutation/rebuild/reconciliation; AUTH edit
+balance/ledger; production route registration; CI weakening
 ```
 
 ## Acceptance criteria
 
-- [ ] The post-CON-09B AUTH contribution-read activation is merged. AUTH has
-  registered the exact planned award self/project actions, typed contexts and
-  applicable actor-self/AdminRoleGrant definitions. CON composes canonical
-  facts; stable pre-filter pagination and cross-project concealment are
-  enforced. A later AUTH gate activates award reads before CON-10B.
-- [ ] D11's human-approved award-detail role set is frozen in the active
-  contract before this chunk. CON implements only its disclosure projection;
-  Project Manager behavior follows that decision rather than the unadopted
-  candidate or broad PermissionId by inference. Reviewer remains self-only
-  absent a later approved assigned-review action.
-- [ ] Reads validate the allowed decision's complete resource-context digest,
-  matched AdminRoleGrant ID and covered project against canonical award facts.
-  CON uses role-agnostic allowed/denied seams; the later AUTH activation gate
-  proves the chosen role set, mixed grants, revocation and scope denials.
-- [ ] Contribution, money, points, delivery acknowledgement and fulfillment
-  remain distinct; no provider/balance/ledger data appears.
-- [ ] Query races never mutate truth; all matrix cases run; OpenAPI stays hidden.
+- [ ] AUTH registers planned contribution/award self/project actions and typed
+  contexts. CON composes canonical PostgreSQL facts while real kernel denies;
+  AUTH later integrates evaluators/activation.
+- [ ] D11 exact award-detail candidate set is approved before implementation.
+  CON contains no role logic and never infers access from broad PermissionId.
+- [ ] Self reads require exact contributor/beneficiary. Project reads use exact
+  eligible AdminRole, covered project, pre-filtered stable pagination, and
+  cross-project concealment. Reviewer has no project-wide access by review role.
+- [ ] Allowed decisions bind complete resource digest, matched grant/project,
+  request, and correlation. Stale/mismatched evidence denies.
+- [ ] Contribution, money, points, delivery acknowledgement, and fulfillment
+  are distinct. No provider/balance/ledger/evidence artifact data appears.
+- [ ] CON-09A/09B absence or failure has no effect. OpenAPI remains hidden;
+  coverage stays at required floors.
 
-## Verification and reviewers
+## Review and stop
 
-Execute CON-10A in `../RUNTIME_VERIFICATION.md`; changed code is at least 90
-percent. Senior engineering, QA/test, security/privacy, product/ops,
-architecture, docs, reuse/dedup and test-delta are required. Stop before public
-registration.
+Required tracks: senior, QA, security, product, architecture, docs, reuse, and
+test-delta. Stop before operations/public registration.

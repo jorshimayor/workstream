@@ -1,20 +1,21 @@
-# Chunk Contract: WS-CON-001-10B - Operations, Reconciliation, And Rebuild
+# Chunk Contract: WS-CON-001-10B - Operations Requests, Reads, And Drain Observation
 
 ## Goal and risk
 
-Implement bounded status/audit reads, reconciliation and projection rebuild
-without repairing immutable truth. L1 operations/auth/data risk.
+Implement hidden bounded status/audit reads, binding retirement, durable
+reconciliation/rebuild request creation, and fulfillment drain observation.
+Execution belongs to 10C. L1 operations/auth/data risk.
 
 ## Allowed files
 
 ```text
 backend/app/modules/contributions/{schemas,repository,service}.py
 backend/app/modules/compensation/{schemas,repository,service,ports}.py
-backend/app/modules/audit/{schemas,repository,service}.py only bounded WS-CON query/export capability
+backend/app/modules/audit/{schemas,repository,service}.py only bounded WS-CON projection
 backend/app/api/internal_operations.py
 backend/app/composition/{contributions,compensation}.py
 backend/tests/{test_contributions,test_compensation,test_authorization,test_outbox,test_audit}.py
-docs/operations_payment_reputation.md only WS-CON operations
+docs/operations_payment_reputation.md only implemented WS-CON operations
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/**
 .agent-loop/merge-intents/WS-CON-001-10B.json
 ```
@@ -22,49 +23,32 @@ docs/operations_payment_reputation.md only WS-CON operations
 ## Not allowed
 
 ```text
-production router registration, canonical award/receipt repair, AUTH edit
-provider settlement/attempt/balance/ledger or second dispatcher
-dependency, test, coverage or CI weakening
+async reconciliation/rebuild execution or provider I/O
+outbox dispatcher/transition implementation; immutable truth repair
+AUTH implementation; production router registration; CI weakening
 ```
 
 ## Acceptance criteria
 
-- [ ] The post-CON-10A AUTH award-read activation is merged. AUTH has registered
-  planned binding-retire, delivery-reconcile, status, reconciliation, rebuild
-  and audit actions with D11's chosen AdminRole contracts, typed contexts and
-  prepared `T` handling where required. Any human-approved outcome differing
-  from merged AUTH-08 has a reviewed AUTH-owned amendment; CON makes no local
-  role exception. CON proves domain behavior below the authorization boundary
-  and changes no AUTH file; a later AUTH gate proves roles and activates these
-  evaluators before CON-11.
-- [ ] Finance/Operator/audit behavior follows D11's exact approved sets. CON
-  proves reason/scope/product guards only from allowed/denied decision seams;
-  AUTH activation proves role intersection, mixed grants, revocation and scope.
-- [ ] Every allowed grant-backed decision carries the exact complete resource-
-  context digest, matched AdminRoleGrant ID and covered project scope. Stale,
-  wrong-scope or digest-mismatched decision evidence produces no operation,
-  audit export, outbox request or idempotency completion. AUTH owns revoked/
-  wrong-role decision production and tests.
-- [ ] Reconcile preserves original identities; rebuild changes projection only;
-  bounded range/reason/audit/idempotency is durable.
-- [ ] Audit read/export purpose/scope/redaction/max range is proved without
-  provider or sensitive failure leakage; OpenAPI remains hidden.
-- [ ] Dependency-aware binding retirement is implemented as hidden behavior and
-  remains planned until the later AUTH gate activates it. It locks policy,
-  assignment, lease, award, delivery and receipt dependencies, denies any
-  active/unfinished/unfulfilled reference, races all dependency changes in both
-  orders, and afterward permits only exact accepted-receipt replay.
-- [ ] A same-session read-only `FulfillmentLifecycleDrainObservationPort`
-  reports pending/claimed/retryable fulfillment outbox events, durable
-  in-flight dispatch, and nonterminal delivery/callback obligations using the
-  shared-outbox capability rather than importing its repository. It never
-  commits, repairs state, calls a provider, or widens Operator authority.
-- [ ] Observation is transactionally stable, bounded and fail-closed; tests
-  cover concurrent claim/retry/callback/finalization and prove no false zero
-  while work can still perform remote I/O or accept a terminal receipt.
+- [ ] D11 is final. AUTH registers binding-retire, delivery-reconcile, status,
+  reconcile-request, rebuild-request, and audit actions with exact candidates,
+  contexts, prepared protocol, and AUTH custodians.
+- [ ] Human operations create bounded durable idempotent requests only; they do
+  not execute reconciliation/rebuild under human or dispatcher authority.
+- [ ] Binding retirement locks policy/assignment/lease/award/delivery/receipt
+  dependencies and denies active/unfinished/unfulfilled references in both race
+  orders. Exact prior receipt replay remains the only post-retirement path.
+- [ ] Audit read/export enforces purpose/scope/range/redaction with no provider
+  or sensitive failure leakage.
+- [ ] `FulfillmentLifecycleDrainObservationPort` reports pending/claimed/
+  retryable outbox work, durable in-flight delivery, and nonterminal callback
+  obligations through typed outbox capability, never repository import.
+- [ ] Observation is same-session, bounded, read-only, and never returns false
+  zero while remote I/O or terminal receipt remains possible.
+- [ ] AUTH later activates after hidden behavior; 10C waits for approved
+  executor identities/actions/static rows.
 
-## Verification and reviewers
+## Review and stop
 
-Execute CON-10B in `../RUNTIME_VERIFICATION.md`; changed code is at least 90
-percent. Senior engineering, QA/test, security/auth, product/ops, architecture,
-docs, reuse/dedup and test-delta are required. Stop before public registration.
+Required tracks: senior, QA, security, product, architecture, docs, reuse, and
+test-delta. Stop before executor work.

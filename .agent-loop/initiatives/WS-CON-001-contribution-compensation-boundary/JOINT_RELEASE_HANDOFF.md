@@ -1,125 +1,71 @@
-# Joint Release Handoff: WS-CON-001 To WS-REV-001-13
+# Joint REV/CON Release Handoff
 
-## Incorporation status
+## Boundary
 
-The inspected sibling has reviewed baseline `6faccc0`, based on trusted `main`
-including AUTH-08 and ART-02A2, plus later same-turn external-review repairs in
-progress. Both are discovery until a reviewed merge. Its planning contracts assign future
-contribution/compensation router registration, consumption of the WS-CON-11
-preflight manifest, the joint live matrix, PaymentPolicy removal dependencies,
-active generated/document companions and REV-12A hidden release control. Those
-runtime changes are not implemented. The planned composition consumes the
-CON-owned dispatch/callback fences and fulfillment-drain observation instead of
-importing CON/outbox repositories.
+REV owns Review decisions, queue/lease/task effects, release-control state, and
+the single route commit. CON owns ContributionPolicy, ContributionRecord,
+CompensationAward, fulfillment, shared outbox participation, and CON
+audit/projections. AUTH owns all authorization and activation.
 
-The AUTH-08 dependency refresh records correct merged counts and
-transaction/error/timestamp repairs, and its reviewed ART refresh correctly says
-PR #129 is inactive preparation only. The sibling is still not consumable:
-REV-06/08 core authorization and REV-10 final CON composition
-predate the registration -> CON -> REV hidden -> AUTH activation choreography
-and D12 owner-custody decision, and REV-12A still says the CON handler claims
-the shared-outbox event. Before review/merge it must instead accept the
-dispatcher's already-claimed command and return a typed outcome, leaving every
-outbox transition to CON-02B. It must also adopt AUTH-08's current decision/
-transaction contract and the executable-gate/prepared-authorization
-requirements. WS-CON does not edit the sibling. The WS-REV owner must repair,
-commit-bind, internally review and merge the exact final contract. Until later
-implementation gates land, both initiatives remain hidden.
+The canonical cross-boundary source is merged
+`WS-XINT-001/REV_CON_HANDOFF.md`. Sibling worktree state is discovery only until
+reviewed and merged to trusted `main`.
 
-The refresh must repair REV-06/08/10 authorization choreography. AUTH first
-registers each planned review action and typed/prepared contract; CON supplies
-the claim-freeze capability/decision participant; REV-06/08 build the hidden
-core behavior and REV-10 supplies final CON composition/resource integration
-while the real kernel still denies; AUTH alone integrates each evaluator and
-activates the action before production execution. REV must not require an active
-review action before building the hidden composition its activation depends on.
-
-## Required REV-13 allowed-file additions
+## Required decision composition
 
 ```text
-backend/app/api/router.py for one joint review/contribution/compensation registration
-backend/app/modules/reviews/router.py
-backend/app/modules/contributions/router.py
-backend/app/modules/compensation/router.py
-backend/tests/test_api_contract_e2e.py
-backend/tests/test_authorization.py
-backend/tests/test_reviews.py
-backend/tests/test_contributions.py
-backend/tests/test_compensation.py
-README.md
-docs/product_brief.md
-docs/product_principles.md
-docs/principles.md
-docs/architecture_data_model.md
-docs/operations_payment_reputation.md
-docs/operations_operator_workflow.md
-docs/operations_project_operating_manual.md
-docs/template_project_guide.md
-docs/template_task.md
-docs/architecture_brief/workstream_architecture_brief.md
-docs/architecture_brief/workstream_architecture_brief.pdf
-docs/architecture_brief/task_lifecycle_sequence.puml
-docs/architecture_brief/images/task_lifecycle_sequence.png
-docs/architecture_brief/images/future_identity_payment_reputation.png
-docs/architecture_brief/images/workstream_v01_container.png
-docs/diagrams/task_lifecycle_sequence.md
-docs/diagrams/workstream_v01_container.md
-docs/diagrams/workstream_v01_container.puml
-docs/diagrams/rendered/workstream_v01_container.svg
-docs/diagrams/future_identity_payment_reputation.md
-docs/diagrams/future_identity_payment_reputation.puml
-docs/diagrams/rendered/future_identity_payment_reputation.svg
+AUTH prepares review.decision with exact reviewer grant
+-> REV locks and recomposes canonical facts
+-> AUTH evaluates once
+-> REV stages Review/lease/queue/task effects
+-> CON flush-only participant creates reviewer contribution
+-> on accept only, CON creates submitter contribution
+-> CON evaluates frozen ContributionRules and creates applicable awards
+-> CON stages audit/outbox rows
+-> REV route commits once
 ```
 
-This is a seed list, not a closed substitute for discovery. REV-13 must replace
-it with CON-01's exact generated active-document/companion inventory and may add
-or remove paths only from that evidence. It must include every active/template/
-operations/generated file containing an affected claim. Archival inputs,
-historical reviews, and generated loop memory remain excluded.
+No no-op participant, post-commit repair, ART call, evidence projection, or
+provider I/O exists in this transaction. CON copies stabilized artifact-hash
+lineage from REV facts.
 
-## Required joint activation criteria
+## Release prerequisites
 
-- Register review, contribution, compensation policy/binding, contribution/
-  award/evidence reads, fulfillment callback, and bounded operations routers in
-  the same PR under `/api/v1`; no `/v1` alias and no partial prior surface.
-- Every registered route explicitly commits its own complete read or mutation
-  plus AuthorizationDecision and business/audit/outbox/idempotency state.
-  Domain services remain flush-only. The service-authenticated fulfillment
-  callback explicitly commits its decision plus receipt/idempotency state in
-  the fenced transaction. Tests prove an omitted commit is rolled back by
-  dependency teardown, authorization-evidence failure is one retryable 503 with
-  zero partial state, callback commit failure leaves no partial receipt, and no
-  route relies on dependency ordering to commit.
-- Consume CON-11's exact merged-SHA/migration/action/service-assignment/ART/
-  outbox/worker/handler/fence manifest plus AUTH context/evaluator/matched-
-  authority/prepared-protocol/availability parity, and fail startup/preflight
-  on any mismatch or active action without executable behavior.
-- Use REV-12A only for hidden persisted joint lifecycle control and explicit
-  composition. Consume the required CON-owned `FulfillmentDispatchFence`,
-  `FulfillmentCallbackFence`, and `FulfillmentLifecycleDrainObservationPort`;
-  do not edit CON delivery/callback/outbox policy or import CON/outbox
-  repositories from REV.
-- Preserve CON-02B as sole outbox claim/retry/finalization owner. REV-12A may
-  fence the CON handler and observe drain state, but neither REV nor the handler
-  claims or directly transitions the shared OutboxEvent.
-- Prove the complete `CONFORMANCE_MATRIX.md` plus REV matrix with collected node
-  IDs and retained live evidence, including policy/binding setup, task/review
-  freezes, accept/needs_revision/reject, second revision review, money+points,
-  explicit unpaid, delivery/callback ordering, suspended/retired binding,
-  evidence privacy/rebuild, D11-approved delivery/operations role behavior,
-  denials, atomic
-  rollback, storage/adapter outage, replay and reconciliation.
-- Update all active sources/generated companions in the same release so no
-  mutable PaymentRecord, accept-only/voidable contribution, automatic
-  reputation, executable PaymentPolicy or stale prefix claim remains.
-- Preserve the one-sheet roadmap rule if the roadmap is touched; do not change
-  archival reference bytes.
+- ContributionPolicy publish/freeze and adapter-binding behavior are merged.
+- TaskAssignment and ReviewLease carry exact frozen policy-version IDs.
+- Shared outbox/audit participants and CON-07 are mandatory and merged.
+- REV hidden claim/decision composition consumes CON-06/07 and has no fallback.
+- AUTH complete REV custody transfer, exact evaluators, reviewer grant path,
+  prepared protocol, and activation are merged.
+- Every public/service CON action has exact AUTH registration, evaluator,
+  principal path, and activation after hidden behavior.
+- Protected outbox handlers have their own exact service authority; dispatcher
+  authority is not inherited.
+- CON-owned fulfillment dispatch/callback fence ports and same-session drain
+  observation are injected through composition without REV importing CON/outbox
+  repositories.
+- Exact migrations, handler registry, task IDs, route inventory, and retained
+  tests are bound to merged SHAs.
 
-## Ownership
+ART storage and optional contribution-evidence projection are not prerequisites.
 
-WS-REV-001-12A owns only the hidden joint release-control foundation and typed
-composition; WS-REV-001-13 remains the sole production activation/live-drill
-PR. This file does not authorize WS-CON to edit the sibling plan or start REV
-work. The incorporated sibling contract must be preserved through rebase,
-receive any required delta review, and merge before an implementation chunk may
-consume it.
+## Startup and readiness
+
+Startup fails on closed catalogue/static-matrix/context/evaluator/active-feature
+parity drift. Missing provisioned fixed-service ActorProfile/link rows do not
+stop startup or administrative provisioning, but runtime calls deny and release
+readiness remains false until exact rows exist.
+
+## Joint live proof
+
+The release drill covers accept, needs_revision, reject, explicit unpaid,
+money+points, frozen-version changes, repeated/revision Reviews, no-self-review,
+grant revocation, atomic rollback, adapter outage/replay, callback-before-ack,
+failure then fulfillment, reconciliation, drain fencing, and hidden-to-active
+route transition. It asserts zero ART calls in core contribution creation.
+
+## Ownership and stop
+
+CON-11 publishes the hidden dependency manifest but registers no route. The
+reviewed REV release chunk consumes that manifest and owns public activation and
+the joint live drill. This handoff starts neither chunk automatically.

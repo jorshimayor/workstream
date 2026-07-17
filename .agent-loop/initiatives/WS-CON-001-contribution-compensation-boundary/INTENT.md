@@ -2,87 +2,74 @@
 
 ## Human-level goal
 
-Implement an evidence-backed contribution and compensation boundary that joins
-the canonical human Review transaction without taking ownership of
-authentication, authorization, provider payment execution, a points ledger, or
-reputation scoring.
+Implement the canonical contribution-policy, ContributionRecord,
+CompensationAward, fulfillment, and operations boundary that participates
+atomically in human Review without taking ownership of authentication,
+authorization, review decisions, artifact storage, external settlement, a
+points ledger, or reputation scoring.
 
-The supplied revised WS-CON Markdown/PDF pair is an input to reconcile, not an
-authority to accept blindly. The active contract must conform to the repository,
-the live WS-AUTH action/permission catalogue, the parallel WS-REV plan, and the
-accepted artifact-storage and external-adapter decisions.
-
-## Why now
-
-The backend currently stops at `review_pending`. The parallel review initiative
-needs real compensation-policy persistence before ReviewLease creation, a
-transaction participant that freezes compensation terms, and an atomic
-contribution/award participant before it can expose review decisions.
+The supplied WS-CON reference pair is input to reconcile, not authority to
+accept blindly. The active contract follows trusted repository decisions and
+the merged WS-XINT-001 boundary from PR #139.
 
 ## Success state
 
-- Every valid Review records one immutable reviewer contribution.
-- `accept` additionally records one immutable submitter contribution; the other
-  canonical decisions do not.
-- Contributions and awards use compensation terms frozen before the work.
-- Review, task/assignment effects, contributions, awards, audit, and shared
-  outbox events commit or roll back together.
-- Money and project-points awards remain project-scoped obligations. Provider
-  payment attempts, balances, point ledgers, and settlement stay outside
-  Workstream.
-- Fulfillment delivery, acknowledgement, callback receipts, and rebuildable
-  status projections are distinct.
-- Contribution evidence is produced after commit through an ART-owned typed
-  capability and Workstream `ArtifactBinding`, never through a raw artifact
-  provider in contribution code.
-- Every public or service operation consumes the merged WS-AUTH boundary:
-  request-scoped `require(ActionId, typed ResourceContext)` for `Q` reads and
-  the AUTH-owned prepared, caller-session-bound protocol for `T` mutations.
+- Every valid recorded human Review creates one immutable reviewer
+  `completed_review` contribution.
+- `accept` additionally creates one immutable submitter
+  `accepted_submission`; `needs_revision` and `reject` do not.
+- TaskAssignment and ReviewLease freeze independent published
+  ContributionPolicyVersions before work is performed.
+- Explicit unpaid rules create no award; compensated rules create at most one
+  money and one project-points CompensationAward.
+- Review/task effects, contributions, awards, audit, and shared-outbox rows
+  commit or roll back in one caller-owned transaction.
+- Core contribution creation copies stabilized artifact-hash lineage supplied
+  by REV and has no ART or provider dependency.
+- Downstream adapters fulfill awards but never determine eligibility.
+- Every protected human/service surface uses AUTH's exact grant or
+  ServiceIdentity/static-matrix path, prepared mutation protocol when needed,
+  and AUTH-owned activation.
 - Public APIs use `/api/v1` only.
 
 ## Non-goals
 
 - Workstream-owned login, sessions, passwords, or token-role authority.
-- AUTH catalogue/kernel/grant/service-actor implementation in this initiative.
-- Provider-specific payment SDKs, payment attempts, payout batching, settlement,
-  beneficiary onboarding, balances, point ledgers, credits, or blockchain work.
-- Reputation scores, aggregates, adjudication, reversals, or contribution
-  mutation.
-- A second artifact store, direct `ArtifactStore` injection into contribution
-  services, Flow Node, R2, semantic-search authority, or public provider refs.
-- Frontend work before backend contracts and guards are proven.
+- AUTH catalogue, grant, static-matrix, evaluator, or activation implementation.
+- REV models, routes, lifecycle decisions, or commits.
+- Mandatory contribution-evidence artifacts. A future projection is optional
+  and separately approved.
+- Provider-specific settlement SDKs, attempts, payout batches, accounts,
+  balances, points ledgers, credits, or blockchain work.
+- Reputation scores, aggregates, adjudication, reversals, or mutable
+  contribution/award truth.
+- A second artifact store, raw provider references, or ArtifactStore injection.
+- Frontend work before backend contracts and guards stabilize.
 
-## Business/product/engineering context
+## Context
 
-Workstream must certify useful human work independently from whether an external
-provider has paid or credited it. Reviewer work is itself a contribution for
-every valid completed review. This creates a durable economic and reputation
-input while preserving the separation between human judgment, contribution
-recognition, compensation authorization, external fulfillment, and future
-reputation policy.
+Workstream certifies useful human work independently from external fulfillment.
+Reviewer work is a contribution for every valid Review. ContributionPolicy
+decides what that work earns; immutable awards record the result; adapters carry
+out fulfillment later.
 
 ## Human judgment required
 
-1. Approve the recommended active-contract model: preserve both supplied
-   reference generations byte-for-byte and create a separately reconciled
-   `docs/spec_contribution_compensation.md`, instead of editing archival input.
-2. **Approved 2026-07-15:** remove `PaymentPolicy` completely because
-   `CompensationPolicyVersion` supersedes it. The removal must migrate every
-   project/task/submission/checker/schema/API/doc consumer, preserve no fallback
-   alias, and leave CompensationPolicyVersion as the only economic policy.
-3. Approve the additive WS-AUTH dependency: granular WS-CON ActionIds map to
-   existing broad PermissionIds wherever safe, while the exact bound adapter
-   shared outbox dispatch and inbound callbacks require two new service-only
-   PermissionIds, `outbox.dispatch` and `compensation.fulfillment.report`,
-   owned and implemented by WS-AUTH. CON-02B first lands the hidden dispatcher;
-   AUTH then integrates its evaluator and activates dispatch. CON-08A only
-   consumes the already-claimed command.
-4. Approve the cross-initiative sequence, including REV-13 as the sole joint
-   production-route activation/live-drill owner after AUTH, ART, REV, shared
-   outbox, and WS-CON participants are mandatory and proven.
+1. Approve the repository-owned active specification while preserving archival
+   reference inputs.
+2. The complete removal of the retired guide-bound economic schema remains
+   approved; choose only the deterministic pre-production row classification
+   for migration.
+3. Resolve D11 action-specific AdminRole candidates for award detail, delivery
+   recovery, and audit.
+4. Approve exact ServiceIdentity/ActionId/static-row boundaries for dispatcher,
+   delivery, reconciliation, projection rebuild, and callback execution. The
+   shared dispatcher cannot inherit handler authority.
+5. Optional contribution-evidence projection remains deferred unless separately
+   approved.
 
-## Initial risk class
+## Risk class
 
-L0 for architecture direction and contract adoption. Each approved runtime
-chunk is L1 because it touches payment, permissions, lifecycle, audit, schema,
-and cross-domain transactions.
+L0 for planning/contract reconciliation. Each runtime chunk is L1 because it
+touches authorization, economic records, schema, lifecycle, audit, or cross-
+domain transactions.

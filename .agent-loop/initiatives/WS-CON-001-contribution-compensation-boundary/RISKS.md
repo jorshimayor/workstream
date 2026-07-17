@@ -1,33 +1,20 @@
 # Risks: WS-CON-001 Contribution Record And Compensation Boundary
 
-| Risk | Severity | Mitigation | Owner | Status |
-|---|---|---|---|---|
-| Candidate spec replaces canonical API/permission/storage rules | Critical | Preserve as input; reconcile into active spec with ADR precedence and exact scans. | WS-CON-001-01 | Open |
-| Dual `PaymentPolicy` and `CompensationPolicyVersion` truth | Critical | D2 approved complete removal; 05A cuts all consumers atomically and 05B drops schema under a zero-consumer scanner. | WS-CON-001-05A/B | Direction resolved; implementation open |
-| Existing rows lack safe frozen compensation refs | High | CON-05A classifies/drains or approved-backfills; migration fails on ambiguity and never guesses conversion. | Human / WS-CON-001-05A | Legacy rule decision needed |
-| Bound adapter callback lacks a safe current service permission | Critical | AUTH-owned additive service-only PermissionId/action, fixed actor, exact binding guards. | WS-AUTH | Open |
-| Shared outbox dispatcher borrows human retry/reconciliation authority | Critical | Add service-only `outbox.dispatch`, fixed dispatcher assignment, and claimed-command generation guards in CON-02B; CON-08A is only a handler. | WS-AUTH / WS-CON-001-02B | Open |
-| Review/CON circular dependency | High | Interleaved gates: policy schema -> lease schema -> freeze -> claims -> participant -> integration. | WS-CON / WS-REV | Mitigated in plan |
-| Partial Review/contribution/economic commit | Critical | Caller-owned session, shared lock order, DB constraints, fault injection, exact replay. | WS-CON-001-07 / WS-REV | Open |
-| Direct provider call bypasses ART controls | Critical | Named `WS-ART-001-CON-EVIDENCE` capability prerequisite; import/composition tests reject raw store/provider access. | WS-ART / WS-CON-001-09A | Open |
-| PR #129 scratch/source types leak into CON | Critical | ART alone invokes preparation, holds `PreparedArtifact`, consumes the sealed source and either releases scratch or retains explicit cleanup custody until retry succeeds. CON passes only bounded deterministic bytes plus expected commitment through the named capability; static and cancellation tests reject a second scratch path. | WS-ART / WS-CON-001-09A | Open |
-| ART-02A2 is mistaken for contribution capability readiness | Critical | Keep AUTH-09 registration/assignments, ART 02A3-02C3, hidden 02D behavior, later AUTH evaluator activation, and `WS-ART-001-CON-EVIDENCE` write/read ports as explicit gates; 02D proves/consumes authority but never writes availability. | WS-ART / WS-AUTH / WS-CON-001-09A/B/11 | Open |
-| First-pass preparation holds AUTH/product locks | Critical | ART prepares before D10 or any mutation lock; Transaction A revalidates locked canonical facts/commitment and stages only bounded database work. | WS-ART / WS-CON-001-09A | Open |
-| Process-local prepared source is lost across transaction outcome | Critical | Opaque ART context retains the source; caller commit is followed by a fresh committed-attempt claim before I/O; rollback/cancellation closes, process loss uses stale cleanup, and outbox replay regenerates bytes without serializing a handle. | WS-ART / WS-CON-001-09A | Open |
-| Outbox duplication or loss | High | 02A owns truth/append; 02B alone owns dispatch/retry/replay with stable identities. | WS-CON-001-02A/B | Open |
-| Human role or token claims leak into feature authorization | Critical | Central AUTH service only; no grant queries/local role checks; deny/race tests. | WS-AUTH / all WS-CON | Open |
-| Merged AdminRole permission candidates conflict with candidate WS-CON roles | Critical | D11 chooses Operator delivery, Project Manager award-detail and audit/export candidates. AUTH amends only a chosen outcome that differs from its merged matrix; CON-01 updates the active matrix and AUTH activation proves exact roles. | Human + WS-AUTH + WS-CON-001-01/10A/B | Decision needed |
-| Registered WS-CON action has no executable AUTH evaluator | Critical | AUTH owns typed contexts, closed evaluator dispatch, matched authority and active availability; CON cannot flip catalogue state; startup parity rejects active-without-evaluator and evaluator-without-feature behavior. | WS-AUTH | Open |
-| ActionOwner names a feature chunk while AUTH is said to activate | Critical | D12 approves exact AUTH-owned activation owners for all 23 WS-CON and two coupled review actions, or introduces a separately reviewed activation-custody type; startup/parity tests reject dual or missing owners. | Human + WS-AUTH | Decision needed |
-| Required ART-02D actions retain feature activation custody | Critical | D12 transfers all eight Operator and three internal ART-02D actions to exact AUTH owners without changing ActionId/PermissionId mappings, or records the same mappings in a separate closed custody type. Operator retry and internal executor activation remain distinct. | Human + WS-AUTH / WS-ART | Decision needed |
-| Owner transfer leaves unused closed enum members | Critical | Recommended D12 atomically removes `REV_08` and `ART_02D` after their last rows transfer and proves owner-definition/SQL/audit parity; the global feature-owner alternative retains them only with a separate exact closed custody catalogue. | WS-AUTH | Decision needed |
-| Feature route relies on authorization dependency teardown to commit | Critical | Preserve AUTH-08's rollback-only teardown: every route explicitly commits decision plus business/audit/outbox state; forgotten commit and evidence-failure tests prove zero partial state. | WS-AUTH + every WS-CON route owner | Open |
-| Cross-domain mutation authorizes unlocked facts or reverses locks | Critical | D10 AUTH-owned prepared handle locks authority first and evaluates once against final locked product facts; missing/reused/cross-session handles deny. | WS-AUTH + each `T` CON owner | Open |
-| Task compensation freeze assumes nonexistent `task.claim` ActionId | Critical | AUTH-13 or reviewed AUTH successor registers/evaluates/activates exact `task.claim` -> existing `task.claim` before CON-05A. | WS-AUTH / WS-CON-001-05A | Open |
-| Provider payment logic leaks into Workstream | High | Typed instruction/ack/receipt contract; provider attempts/balances/ledger prohibited. | WS-CON-001-08A/B | Open |
-| Fulfilled state regresses or duplicates | High | Immutable receipts, unique fulfilled row, row locks, exact callback idempotency. | WS-CON-001-08B | Open |
-| Lifecycle disable races adapter I/O or authenticated callback | Critical | CON-owned mandatory dispatch/callback fence ports, durable pre-I/O in-flight state, same-session drain observations, REV-12A exclusive transition lock, and both-order PostgreSQL tests. | WS-CON-001-03D/08A/08B/10B/11 + WS-REV-001-12A | Open |
-| Artifact outage changes contribution truth | High | Projection is post-commit/rebuildable; canonical records never depend on provider availability. | WS-CON-001-09A | Open |
-| Sensitive financial/provider/token data leaks | Critical | Bounded schemas, redaction, no human-token forwarding, no provider refs in APIs/events. | Security review | Open |
-| Public routes expose partial system | High | CON-11 proves hidden readiness; REV-13 alone registers the joint surface. | WS-CON-001-11 / WS-REV-001-13 | Open |
-| Initiative becomes unreviewable | High | One PR-sized chunk, circuit-breaker, explicit stop after each. | Primary agent / human | Mitigated in plan |
+| Risk | Impact | Mitigation | Owner |
+|---|---|---|---|
+| Competing award-eligibility models | Critical | ContributionPolicy is sole authority; semantic then physical clean cut with no fallback | CON-05A/B |
+| Review commits without contribution | Critical | Mandatory flush-only participant and one REV-owned commit; fault-injection rollback | CON-07 + REV |
+| Mandatory ART projection blocks product truth | Critical | No ART/evidence work in core transaction or release; optional successor only | CON-07/09/11 |
+| Wrong frozen policy | Critical | Assignment/lease freeze before work; immutable versions; concurrency proof | CON-05A/06 |
+| Dispatcher inherits handler authority | Critical | Dispatcher-only action; exact independent service authority for protected handlers | CON-02B/08A/10C + AUTH |
+| Operations request authority leaks into execution | Critical | 10B persists bounded human requests only; 10C uses exact fixed-service actions, cross-executor denial, replay/finding proof, and projection-only mutation | CON-10B/10C + AUTH |
+| Broad or dynamic service access | Critical | Closed ServiceIdentity/static rows, controlled provisioning, AUTH-09E, cross-service denial | AUTH + CON |
+| Partial ART/REV custody transfer | High | Reference complete WS-XINT handoffs; no local subset or dual writer | AUTH |
+| Cross-domain deadlock/partial commit | Critical | AUTH-first common prefix; operation-specific REV/task lifecycle-before-policy order; one session/commit; both-order PostgreSQL tests | AUTH + REV + CON |
+| Role coupling or substitution | High | Independent submitter/reviewer/adjudicator grants and exact invalidation | AUTH + lifecycle owners |
+| Provider I/O under locks | Critical | Durable pre-I/O state; release transaction/fence before adapter call | CON-08A/outbox |
+| Callback spoofing/replay | Critical | Exact service identity/static row, binding match, prepared protocol, idempotent receipt | CON-08B + AUTH |
+| Legacy row ambiguity | High | Human-approved deterministic rebuild/classification; migration fails closed | Human + CON-05 |
+| Premature public release | High | Hidden OpenAPI, exact manifest, AUTH activation, joint REV/CON gate | CON-11 + REV |
+
+No runtime work starts while a blocking decision or prerequisite remains open.

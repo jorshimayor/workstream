@@ -2,435 +2,317 @@
 
 ## Proposed approach
 
-Reconcile the supplied candidate into an active repository contract first, then
-deliver the backend through small hidden-composition chunks. Land the shared
-outbox and compensation policy ownership before Review persistence needs them;
-interleave the remaining WS-CON participants with WS-REV at explicit gates;
-activate public contribution/compensation APIs only after AUTH, ART, REV, and
-outbox dependencies are mandatory and proven.
+Adopt the merged WS-XINT-001 boundary from PR #139 before runtime work, then
+deliver WS-CON through hidden, reviewable chunks. The core path is PostgreSQL-
+local and has no ART dependency:
 
-## Design chosen
+```text
+AUTH prepares review.decision and locks reviewer authority
+-> REV locks and recomposes canonical Review/Submission facts
+-> AUTH evaluates once and stages decision evidence
+-> REV stages Review, lease/queue consumption, and task effects
+-> CON flush-only participant creates contributions and applicable awards
+-> CON stages audit and shared-outbox rows
+-> REV route commits once
+```
 
-### Canonical records
+Public contribution, policy, award, fulfillment, and operations surfaces stay
+hidden until their exact AUTH registration -> feature behavior -> AUTH
+activation sequence and the joint REV/CON release gate pass.
 
-- `ContributionRecord` is immutable and recognizes one exact contributor unit:
-  `completed_review` for every valid Review and `accepted_submission` only for
-  `accept`.
-- Existing `Submission` is the versioned submission identity. Contribution
-  fields use `submission_id`, not a new `SubmissionVersion` table.
-- `CompensationPolicyVersion` is the sole executable economic authority for new
-  assignments/leases. Rules match only contribution type and create at most one
-  money plus one project-points award.
-- `CompensationAward` is immutable. Adapter delivery/acknowledgement and
-  immutable fulfillment receipts are separate; a rebuildable status projection
-  supports reads.
-- `PaymentPolicy` is removed completely. `CompensationPolicyVersion` is the
-  only economic policy in persistence, APIs, task/review freezes, checker
-  context and active documentation; no alias or fallback survives.
-- Provider payment attempts, balances, payout batches, points ledgers, and
-  settlement remain external.
+## Canonical product model
 
-### Authorization dependency
+- `ContributionRecord` is immutable. Every valid recorded human Review creates
+  one reviewer `completed_review`; only `accept` additionally creates one
+  submitter `accepted_submission`.
+- Existing `Submission` plus its `version` and `supersedes_submission_id` is the
+  versioned submission identity. WS-CON does not add `SubmissionVersion`.
+- `ContributionPolicy` is the stable project aggregate. It has one active
+  policy per project and points to an immutable published
+  `ContributionPolicyVersion`.
+- Each published version has exactly one `ContributionRule` for
+  `accepted_submission` and one for `completed_review`. A rule is explicitly
+  `unpaid` or `compensated`.
+- An unpaid rule creates no award. A compensated rule references one or two
+  immutable `ContributionAwardDefinition` rows: at most one `money` and one
+  `project_points` definition.
+- `CompensationAward` is the immutable evaluated result. Delivery,
+  acknowledgement, immutable `CompensationFulfillmentReceipt`, and rebuildable
+  `CompensationStatusProjection` are downstream fulfillment concerns and never
+  decide eligibility.
+- `ProjectCompensationAdapterBinding` binds one project/instrument to a
+  non-secret adapter route and canonical service actor. Credentials and
+  provider endpoints remain deployment configuration.
+- The retired guide-bound economic schema and every semantic consumer are
+  removed in two fail-closed chunks. No alias, automatic conversion, or
+  executable fallback survives.
 
-WS-CON never reads grants, roles, or AUTH repositories. Every protected command
-or query declares one ActionId and consumes a request-scoped, caller-session-
-bound `AuthorizationService`.
+## Review and contribution boundary
 
-Every WS-CON ActionId is currently absent and proposed. Trusted `main`
-`9a04434` includes AUTH-08's scoped administrative grants at `aa0fdcd` and
-ART-02A2 PR #129, which adds no authority. The closed AUTH catalogue
-contains 74 PermissionIds and 57 non-WS-CON ActionIds: nine self/admin actions
-are active and 48 actions remain planned. The exact handoff is in
-`AUTHORIZATION_HANDOFF.md`. It enumerates each proposed action separately, its
-existing or proposed PermissionId, canonical target, candidate principal class,
-typed resource facts and guards, transaction protocol, AUTH activation gate,
-and feature resource owner.
+`ContributionCompensationDecisionParticipant` receives the caller-owned
+`AsyncSession` and a typed request containing:
 
-AUTH-08 now evaluates actor-self and administrative grant families, carries a
-complete resource-context digest plus matched grant/scope evidence, and rolls
-back a transaction a feature route fails to commit. It still rejects service
-subjects and has no ProjectRoleGrant, service-assignment, D10 or WS-CON action
-evaluator. WS-AUTH therefore owns not only identifier/owner-enum registration
-and typed/PostgreSQL parity, but also action availability, closed evaluator
-dispatch, action-specific candidate-role filtering, matched-authority
-expansion, remaining grant semantics, service-capable composition, service
-ActorProfile/action-assignment construction, and transaction-local authority
-revalidation. Every WS-CON route owns its explicit commit; the feature chunk
-named in the handoff owns product-row loading, construction of AUTH-approved
-typed resource facts, lifecycle guards, and behavioral proof. WS-CON never
-edits AUTH-owned files or activates an AUTH action.
+- exact Review, ReviewLease, queue/lifecycle fence, and decision;
+- versioned Submission, TaskAssignment, task, and project identities;
+- reviewer and submitter canonical ActorProfile IDs;
+- lease-frozen reviewer and assignment-frozen submitter
+  `ContributionPolicyVersion` IDs;
+- the stabilized reviewed-packet/submission artifact digest already established
+  by REV and Submission;
+- the originating allowed `review.decision` AuthorizationDecision reference,
+  request ID, and correlation ID.
 
-Merged AUTH-08 also exposes a closed-role mismatch that must not be hidden in
-CON. Finance Authority contains `compensation.delivery.reconcile`, but Operator
-does not, while the reconciled candidate matrix proposes both. D11 requires a
-human choice before CON-10B. If Operator delivery recovery is retained, a
-reviewed AUTH-owned successor adds that existing PermissionId to Operator; if
-not, the active WS-CON authority matrix removes the candidate before action
-registration. D11 also decides whether Project Manager's broad
-`compensation.award.read` candidate carries into WS-CON monetary detail and
-which merged audit candidates remain eligible. CON-01 records the chosen sets;
-AUTH activation proves them without CON role logic.
+CON validates the supplied locked facts, copies the stabilized digest into
+`ContributionRecord.artifact_hash`, evaluates the matching frozen
+`ContributionRule`, stages applicable awards/audit/outbox rows, flushes, and
+never commits. It never reads REV or AUTH repositories, evaluates
+`review.decision`, calls ART, rehashes artifact bytes, performs provider I/O, or
+offers a no-op production participant. Any CON failure rolls back the complete
+Review decision.
 
-D12 separately resolves activation custody. The merged ActionOwner type means
-the implementation chunk permitted to activate an action; it cannot name a CON
-feature chunk while this plan says AUTH alone flips availability. The handoff
-therefore proposes exact AUTH-owned activation owners for all 23 WS-CON actions
-and the two coupled review actions, plus all eleven existing ART-02D Operator/
-internal actions required by contribution evidence. The ART transfer preserves
-every merged ActionId -> PermissionId mapping, including
-`operations.artifact_storage_admission.read` -> `operations.status.read`.
-Human/AUTH approval of that model—or a global feature-owner semantic plus a
-separate closed activation-custody type containing the same mappings—is a
-registration gate. In the recommended transfer, AUTH also removes the unused
-`REV_08` and `ART_02D` enum members atomically; `REV_06` remains for its other
-actions and closed owner-definition parity must still be exact. In the global
-alternative those enums remain feature owners and the separate custody type is
-closed independently. No action may have two activation authorities.
+`needs_revision` and `reject` still create the reviewer contribution and any
+award earned by its frozen reviewer rule. They create no submitter contribution.
+Automated checker outcomes create neither contribution type.
 
-For mutations crossing AUTH and product rows, AUTH must add the prepared
-authorization protocol specified in the handoff. The preliminary target lets
-AUTH lock actor/link/grant or service-assignment rows first; the opaque handle is
-then evaluated exactly once against facts recomposed from product rows locked by
-the feature in canonical order. AUTH stages one decision and never commits.
-The final decision retains AUTH-08's resource-context digest and exact matched
-grant/project evidence. Hidden domain services flush and never commit; the
-actual route/worker/callback transaction owner explicitly commits the complete
-decision-plus-business transaction. REV-13 owns the public route proof.
-This prevents both product-before-AUTH lock inversion and authorization based on
-an unlocked resource snapshot.
+## Contribution-policy freezing
 
-Current trusted `main` also lacks an ActionId for upstream `task.claim`, even
-though PermissionId `task.claim` exists. AUTH-13 or an approved AUTH-owned
-successor must register and activate that action before CON-05A adds the
-compensation freeze participant. Review choreography is deliberately staged:
-AUTH first registers the planned `review.claim` and `review.decision` contracts;
-CON-06/07 then supply their hidden capability/participant; REV-06/08 build the
-core claim/decision behavior and REV-10 proves the final contribution
-composition and typed resource behavior while the real kernel remains fail-
-closed; only then may AUTH integrate the evaluators and activate those actions.
-Production execution and public routes remain blocked until the later readiness/
-REV-13 gates.
+TaskAssignment freezes `submitter_contribution_policy_version_id` during an
+authorized task claim. ReviewLease freezes
+`reviewer_contribution_policy_version_id` during an authorized review claim.
+Both use a narrow CON-owned lookup/freeze participant, lock the active
+`ContributionPolicy` and current published version plus referenced award
+definitions and adapter bindings, return one exact version ID, flush only their
+own state, and never commit.
 
-Derived contribution/award writes are mandatory participants of the already
-authorized `review.decision` transaction. They are not separately callable
-human/service commands and do not invent `contribution.materialize` or
-`compensation.award.materialize` permissions. Shared outbox dispatch likewise
-belongs to the outbox subsystem, not WS-CON.
+Later policy publication changes only new assignments or leases. Retired frozen
+versions remain valid for started work. Missing policy configuration is not an
+implicit unpaid rule.
 
-### Review composition
+TaskAssignment and task-claim wiring remain task-owned. ReviewLease and review-
+claim wiring remain REV-owned. CON supplies typed participants, not foreign
+models, routes, lifecycle decisions, or commits.
 
-`ContributionCompensationDecisionParticipant` accepts the caller's
-`AsyncSession`, exact Review/lease/assignment/Submission facts, originating
-AuthorizationDecision reference, and canonical request/correlation IDs. It
-flushes contributions, awards, projections, audit, and outbox events but never
-commits. WS-REV owns the decision and final commit. No optional/no-op production
-participant exists.
+## Authorization boundary
 
-Policy lookup/freezing uses separate narrow participants:
+Trusted `main` is `5d353b6`, merging WS-XINT-001 through PR #139. Runtime
+catalogue counts remain 74 PermissionIds, 57 ActionIds, nine active actions, and
+48 planned actions. No WS-CON ActionId is registered yet.
 
-- task-owned assignment claim calls a WS-CON policy-freeze participant;
-- review-owned lease claim calls the same policy lookup contract with a distinct
-  lease freeze operation;
-- both lock the Project active compensation selector and copy exactly one
-  published version ID.
+WS-XINT D1/D2 is final for this plan: `ActionOwner` is the exact AUTH activation
+custodian. Each protected surface follows:
 
-`ReviewLease` schema and review-claim wiring remain wholly WS-REV-owned:
-REV-03 adds the immutable policy-version FK/field, CON-06 supplies only the
-narrow compensation lookup/freeze participant against caller-supplied canonical
-facts, and REV-06 injects it and proves integrated claim behavior. Likewise,
-CON-07 supplies the decision participant; REV-10 alone wires it into review
-composition and proves end-to-end atomicity.
+```text
+AUTH registers planned ActionId, stable PermissionId mapping, typed context,
+principal path, and activation custodian
+-> CON merges hidden canonical resource composition, guards, and behavior
+-> AUTH integrates the evaluator and alone changes planned to active
+-> joint release exposes the surface
+```
 
-### Canonical lock and revalidation order
+CON never reads grants, imports AUTH repositories, constructs PermissionIds or
+roles, changes availability, or supplies a production allow fallback. AUTH
+never imports CON repositories or mutates contribution/award state.
 
-The active contract extends, and may not replace, WS-REV's accepted order:
+The current complete ART and REV custody transfers are AUTH-owned coordination
+work. WS-CON references the canonical WS-XINT `AUTH_ART_HANDOFF.md` and
+`AUTH_REV_HANDOFF.md`; it does not prescribe a partial transfer. CON depends on
+`review.claim` and `review.decision`, but AUTH must reconcile every current REV
+action as one complete boundary. The four proposed additive REV actions remain
+unregistered until their own reviewed registration contract.
 
-1. AUTH-owned current actor/identity/grant/service-assignment/control rows in
-   AUTH internal order, locked by the prepared authorization handle for `T`
-   operations;
-2. the operation idempotency row;
-3. for lifecycle-controlled commands, the shared lifecycle advisory fence and
-   captured phase snapshot; this is held through the database transaction but
-   never through remote I/O;
-4. for an already-claimed outbox handler command only, read-only validation of
-   the immutable event/claim generation through the outbox-owned capability;
-   the handler acquires no OutboxEvent row lock and performs no outbox state
-   transition;
-5. `Project`;
-6. active/candidate ProjectGuide, GuideSourceSnapshot, submission-artifact,
-   effective, checker, review, revision and legacy payment-policy rows in the
-   existing REV order; then the active compensation selector,
-   CompensationPolicyVersion and referenced CompensationAdapterBinding rows;
-7. WorkstreamTask, TaskAssignment, Submission, CheckerRun,
-   RevisionContextPreparation, ReviewQueueEntry, ReviewLease,
-   ReviewReconciliationFinding and prior Review/finding rows in REV order;
-8. stabilized ArtifactBinding/Replica facts without remote provider I/O;
-9. ContributionRecord, CompensationAward, delivery, receipt and projection rows
-   in WS-CON order;
-10. append-only audit and shared-outbox rows after all state locks.
+### Human project grants
 
-Multiple same-type rows are locked by ascending primary key/UUID. Operations
-skip absent classes but never reorder shared classes.
+Project contributor grants are exactly independent `submitter`, `reviewer`,
+and `adjudicator` rows. Task claim requires one active exact-project submitter
+grant. Review claim/decision require one active exact-project reviewer grant
+plus no-self-review and lifecycle guards. Adjudicator authority does not
+substitute for either. Revoking one grant does not revoke the other two or any
+AdminRoleGrant; the owning task/review lifecycle consumes its exact invalidation.
 
-No feature may reverse this order. For `T` operations, AUTH prepares and locks
-authority first; publish, retire, binding suspend/resume/retire, assignment
-claim, review claim, delivery, callback, reconciliation, and projection rebuild
-then evaluate the same prepared handle against final facts recomposed from their
-locked product rows. The handle is request/session/action/target bound and
-single-use. `Q` reads remain request-scoped.
-Freezing requires a published version whose referenced bindings are active.
-Suspension blocks new freezes and new delivery but does not erase already-frozen
-obligations; exact callback/replay behavior is state-matrix controlled. Real
-PostgreSQL tests cover publish/suspend versus both claim types and suspend/
-retire versus dispatch/callback in both lock permutations.
+### Prepared mutation protocol
 
-The dispatcher claim is a separate, previously committed CON-02B transaction.
-It releases its session and every database lock before invoking a feature
-handler. The handler starts a new caller transaction, acquires the lifecycle
-fence/phase, validates the supplied claim generation through the typed outbox
-capability without locking or mutating the OutboxEvent, and only then locks CON
-rows. It commits durable pre-I/O state and releases the transaction/fence before
-remote I/O. Only the dispatcher later applies the handler's typed outcome to
-outbox retry/finalization state.
+For mutations, AUTH first locks and revalidates either human actor/link/grant
+rows or fixed-service actor/link rows. A fixed service additionally requires an
+unchanged closed `ServiceIdentity`, exact static service-action matrix
+membership, AUTH-09E typed service admission, and active action. AUTH returns a
+single-use, non-serializable handle bound to request, session, actor, action,
+target, and authority snapshot. The feature locks canonical rows, recomposes
+final typed facts, and AUTH evaluates once. AUTH stages one decision and never
+commits. Reads use request-scoped `require()` and canonical feature loaders.
 
-### Artifact evidence
+Missing provisioned service ActorProfile/ActorIdentityLink rows deny that
+runtime request and block release readiness, but do not fail application startup
+or the Access Administrator provisioning surface. Startup may fail on closed
+catalogue/matrix/context/evaluator/active-behavior parity drift.
 
-The Review transaction creates only a pending contribution-evidence projection
-row and a shared-outbox wake-up event. After commit, a worker loads canonical
-PostgreSQL records, produces deterministic canonical JSON, computes its
-expected SHA-256 and exact byte count, and passes a bounded async byte source,
-media type `application/vnd.workstream.contribution-evidence+json;version=1`
-and those expected facts to an ART-owned typed capability.
+### Fixed services and handler authority
 
-Merged ART-02A2 PR #129 supplies only ART's inactive preparation foundation.
-Before D10 or any database mutation lock, the future capability uses ART's
-`ArtifactPreparationService` to write the complete first pass to canonical
-bounded private scratch, compute digest/size, validate the exact media contract,
-reject mismatch, and retain a sealed source behind an opaque ART operation.
-Transaction A then locks AUTH -> CON -> ART, recomputes the canonical evidence
-commitment from locked product facts, final-evaluates D10 and stages the durable
-attempt. The caller commits explicitly; only then may an ART-owned same-process
-continuation prove/claim that committed attempt in a fresh transaction and
-consume the single second-pass stream outside every database transaction.
+The shared outbox dispatcher is not a catch-all feature executor.
+`workstream.outbox.dispatcher` with exact `outbox.dispatch` static membership
+may claim, invoke, and finalize outbox work only. It cannot inherit compensation
+delivery, reconciliation, contribution projection, callback, ART, or provider
+authority from an event type.
 
-Rollback, cancellation and exact replay close the preparation or retain
-fail-closed ART cleanup custody until retry succeeds. Process loss persists no
-handle/path: stale scratch cleanup reclaims custody and deterministic outbox
-replay regenerates identical bytes against the durable attempt. CON never
-imports or constructs `ArtifactScratchManager`, `PreparedArtifact` or
-`CommittedArtifactSource`, receives a scratch path/descriptor, or owns cleanup.
+Before a protected feature handler is implemented, its owning specification and
+AUTH must approve one exact ServiceIdentity/ActionId/static-row contract. The
+current candidate boundaries requiring decisions are:
 
-PR #129 does not implement the named contribution-evidence capability or the
-remaining ArtifactStore v2, S3/MinIO, durable admission, provider execution,
-verification/publication, recovery/authorization, binding or receipt gates.
-02A3, 02B1, 02C1, 02C2, 02C3 and 02D must precede the separately approved
-`WS-ART-001-CON-EVIDENCE` chunk, which delivers both named write and read ports.
-It returns only bounded verified ArtifactBinding/receipt data. WS-CON validates
-their digest/size/media/owner/project/role/schema/idempotency facts before it
-stores projection state and the verified Workstream binding reference.
+- outbound compensation delivery execution;
+- asynchronous compensation reconciliation;
+- asynchronous contribution projection rebuild;
+- fulfillment result reporting by the bound external service;
+- optional contribution-evidence binding, if that projection is later adopted.
 
-LocalStorage and MinIO exercise the same product capability contract. AWS S3
-deployment proof gates production. Flow Node, R2, semantic search, provider
-retain/pin APIs, and raw provider refs are excluded.
+Suggested semantic identifiers are discovery candidates only, not approved
+catalogue strings: `workstream.compensation.delivery`,
+`workstream.compensation.reconciler`,
+`workstream.contribution.projection_rebuilder`, and
+`workstream.compensation.fulfillment_reporter`. AUTH may instead approve a
+closed dual-principal evaluator for an existing action, but CON must not infer
+one. Therefore the previously proposed 22 core WS-CON ActionIds are not a final
+closed runtime count until these service execution boundaries are decided.
 
-### Shared outbox
+The callback path requires a verified service token, provisioned service
+ActorProfile/ActorIdentityLink, immutable approved ServiceIdentity, its exact
+static matrix row, matching `ProjectCompensationAdapterBinding`, and AUTH-09E.
+It never uses a human role or dynamic service grant.
 
-Land one generic PostgreSQL outbox before contribution integration. CON-02A
-owns persistence/caller-transaction append. CON-02B owns the feature-neutral
-Celery dispatcher, claim fencing, stable task IDs, retry/dead-letter/replay,
-retention, operational recovery, a single explicit handler registry, and the
-read-only same-session `OutboxDrainObservationPort` plus
-`OutboxClaimValidationPort`. Feature handlers own deterministic delivery
-semantics, never dispatch infrastructure or repository queries.
+## Operation-specific lock and commit order
 
-## Alternatives considered
+There is no global sequence that moves CON policy rows ahead of REV lifecycle
+rows. Every mutation first locks AUTH human actor/link/grant or fixed-service
+actor/link authority, then its idempotency row and applicable lifecycle fence.
+After that common prefix, the owning operation uses one explicit order:
 
-### Edit the supplied reference pair in place
+- `review.decision`: REV task, assignment, Submission, queue/lease, Review and
+  finding rows in REV's canonical order; the assignment- and lease-frozen
+  ContributionPolicyVersion, matching rule/definition, and referenced binding;
+  stabilized reviewed-packet and Submission artifact-hash lineage; then
+  ContributionRecord, CompensationAward, audit, and shared-outbox rows;
+- task/review claim freeze: the owning task/assignment/Submission or REV
+  queue/lease rows first, then the selected published policy version,
+  rule/definition and referenced binding, then the frozen lineage write;
+- binding retirement or reconciliation that inspects task/assignment/lease
+  dependencies: affected lifecycle rows in the same task/REV order first, then
+  binding/policy and CON delivery/receipt/projection rows. If the bounded rows
+  cannot be enumerated before locking, the operation takes its approved
+  project-scoped advisory fence before either family and still locks lifecycle
+  rows before policy/binding rows;
+- an outbox handler: immutable claim-generation validation without handler
+  ownership of outbox transitions, then its feature-owned award, binding,
+  delivery, receipt, request, finding, or rebuildable projection rows.
 
-Rejected because reference inputs are provenance evidence, the original PDF is
-already checksum-bound, and the revised PDF is not a declared reproducible
-Markdown build. Preserve generations and create an active reconciled spec.
+Pure policy/binding administration that does not inspect lifecycle dependencies
+locks Project and its own aggregate only. Rows of one type lock by ascending
+primary key/UUID. Missing classes are skipped without reordering. Provider or
+external I/O happens only after durable pre-I/O state commits and every database
+transaction/fence is released.
 
-### Replace broad PermissionIds with granular strings
+The dispatcher owns claim, retry, dead-letter, and finalization transitions.
+Feature handlers validate the committed claim generation through a typed port,
+stage feature state, perform post-commit I/O under their own exact authority,
+and return a typed outcome. They do not lock or mutate OutboxEvent rows.
 
-Rejected because the merged AUTH contract preserves 74 stable PermissionIds
-and separately registers 57 ActionIds, of which nine self/admin actions are
-active on current trusted `main`. Granular action names do not replace
-permissions.
+## Optional contribution-evidence projection
 
-### Let WS-CON flip AUTH catalogue availability
+A deterministic contribution-evidence document is optional later work. It is
+not written or requested by CON-07, does not gate ContributionRecord creation,
+and is excluded from core reads, operations, release readiness, and the joint
+live drill.
 
-Rejected because availability without an AUTH-owned typed evaluator, grant or
-service-assignment path, audit parity, and transaction protocol is either
-deny-only or an authorization bypass. AUTH owns registration, evaluator
-dispatch, principal truth and activation; CON owns canonical product facts and
-behavior only.
+If separately approved, CON-09A/09B may implement an asynchronous projection
+with independent status/failure semantics through a separately reviewed ART
+capability and AUTH action. Storage failure cannot change Review,
+ContributionRecord, CompensationAward, fulfillment receipt, or status
+projection truth. The future contract must revalidate the then-current ART and
+AUTH boundaries, exact media/schema/retention/disclosure rules, and service
+identity. CON never receives ArtifactStore, scratch/preparation types, provider
+references, or ART repositories. PR #129's preparation foundation does not
+approve this capability.
 
-### Reuse `PaymentPolicy` directly as the award policy
+Core contribution and award reads move directly to CON-10A and read PostgreSQL
+truth. They do not depend on an evidence artifact or ART read port.
 
-Rejected because it is guide-version-bound, submitter-oriented, and cannot
-represent reviewer compensation, explicit unpaid rules, points, bindings, or
-immutable publication lifecycle without becoming a second incompatible model.
+## Shared outbox
 
-### Retain `PaymentPolicy` as advisory or historical context
+CON-02A provides generic PostgreSQL persistence and caller-transaction append.
+CON-02B provides the feature-neutral dispatcher, stable task IDs, claim fencing,
+retry/dead-letter/replay, retention, explicit handler registry,
+`OutboxClaimValidationPort`, and same-session drain observation. The outbox
+subsystem owns no contribution, award, adapter, review, or provider semantics.
 
-Rejected by the human. CompensationPolicyVersion supersedes it. A two-step
-expand/contract removal keeps the semantic cutover atomic in CON-05A and drops
-the unreachable physical schema in CON-05B; neither step exposes a fallback.
+## Rollout
 
-### Call ArtifactStore from contribution workers
+1. CON-01 adopts the merged WS-XINT contract and publishes the active
+   contribution/compensation specification without altering archival inputs.
+2. CON-02A/B/C land shared outbox persistence/dispatch and shared lifecycle
+   audit participation, with outbox execution still disabled until its AUTH
+   registration, static service identity, AUTH-09E admission, hidden behavior,
+   and activation gates pass.
+3. CON-03A-D add inactive policy, binding, contribution, award, delivery,
+   receipt, and status persistence using the canonical names and boundaries.
+4. CON-04A/B add hidden binding and ContributionPolicy behavior behind planned
+   AUTH actions.
+5. CON-05A removes retired semantic consumers and freezes the published
+   ContributionPolicyVersion on new TaskAssignments; 05B drops unreachable
+   physical schema after a zero-consumer proof.
+6. CON-06 supplies reviewer policy freeze; the REV owner wires it into hidden
+   review claim behavior before AUTH activates `review.claim`.
+7. CON-07 supplies the flush-only decision participant; the REV owner wires it
+   into the complete hidden decision path before AUTH activates
+   `review.decision`.
+8. CON-08A/R/B add fulfillment delivery and callback behavior only after exact
+   service execution/callback identities, actions, static rows, AUTH-09E, and
+   lifecycle fencing are approved.
+9. CON-10A/B add PostgreSQL product reads and bounded operation requests; 10C
+   adds independently authorized reconciliation/rebuild executors. Optional
+   09A/09B remain outside the core dependency sequence.
+10. CON-11 proves hidden readiness. REV release-control composition consumes
+    only typed fence/drain ports; the reviewed REV release chunk owns the final
+    public route activation and joint live drill.
 
-Rejected by ADR 0013/0014 because it bypasses ART admission, verification,
-binding, receipts, recovery, and composition ownership.
-
-### Implement ContributionRecordRequested first
-
-Rejected because the approved REV/CON seam is direct atomic participation in
-the Review transaction. A temporary event would create a partial-history risk.
-
-### Publish partial APIs early
-
-Rejected because action activation, policy freeze, callback service identity,
-review atomicity, and artifact capabilities must fail closed as one coherent
-backend contract.
-
-## Boundaries preserved
-
-- Auth/session: external tokens are verified by existing issuer adapters;
-  WS-AUTH alone owns product authorization and service actors.
-- Permission/policy: WS-CON supplies resource facts/guards but never edits
-  grants or implements an authorization kernel.
-- Payment/execution: Workstream records awards/instructions/receipts; external
-  adapters own provider attempts, approvals, balances, and ledgers.
-- Persistence/data: PostgreSQL owns canonical contribution/award/receipt truth;
-  provider bytes are never canonical product state.
-- Presentation/API: `/api/v1`; deterministic concealment and pagination; no
-  provider refs, tokens, or credentials.
-- CI/deployment: no threshold weakening; no new production provider or
-  dependency without explicit approval.
-
-## Rollout/migration strategy
-
-1. Adopt the ADR-backed active contract while preserving both archival
-   generations. The same chunk adds only the exact renamed generation-2
-   Markdown path to the stale-authorization scanner's reviewed history map,
-   with near-miss/new-document fail-closed regression proof; the active spec
-   remains scanned. Its gate test repairs the existing cross-scanner set
-   comparison by subtracting only this authorization-only path and proves the
-   artifact scanner already excludes it through the reference-spec prefix; the
-   artifact scanner itself is unchanged.
-2. Merge outbox persistence then its feature-neutral dispatcher; add split,
-   inactive binding/policy/contribution/award/delivery/receipt persistence.
-3. Complete the ART sequence needed by evidence intake: merged 02A2 committed-
-   source preparation -> 02A3 ArtifactStore v2 cutover -> 02B1 MinIO/AWS S3 ->
-   02C1 durable admission/put-attempt -> 02C2 verification/publication -> 02C3
-   recovery chain -> 02D hidden internal-executor/Operator recovery behavior ->
-   AUTH-owned evaluator integration/activation -> separately approved
-   `WS-ART-001-CON-EVIDENCE` write/read ports. AUTH-09 first owns the fixed
-   verifier/scanner/resolver registrations, identities and assignments; D12
-   first transfers the eight ART-02D Operator and three internal actions to the
-   exact AUTH activation custodians (or a separate closed custody map); 02D
-   proves hidden resource/feature behavior but never changes availability; AUTH
-   separately activates Operator recovery and internal execution. None of these
-   gates moves scratch, provider, ART
-   persistence or authorization ownership into CON.
-4. Interleave each AUTH registration -> feature implementation -> AUTH
-   activation wave in `AUTHORIZATION_HANDOFF.md`. The registration checkpoint
-   provides planned ActionId/PermissionId/owner/audit parity, typed context
-   contracts, principal prerequisites and prepared mutation protocol. The
-   CON/ART chunk then merges hidden authorization-ready behavior while the real
-   kernel still denies. Only a later AUTH-owned checkpoint integrates the
-   evaluator, proves the exact merged feature and changes availability. CON/ART
-   never edits AUTH or supplies a production allow fallback. Merge required ART
-   capabilities in ART.
-5. Activate hidden binding/policy services. CON-05A atomically removes every
-   PaymentPolicy semantic consumer and enables only task claims that freeze a
-   CompensationPolicyVersion, only after merged REV-02 establishes the exact
-   `Submission.task_assignment_id` lineage. CON-05B drops the unreachable old
-   model/table/columns/constraints after a zero-consumer scan.
-6. Interleave with WS-REV: policy schema before REV lease schema; lease freeze
-   before claims; atomic participant after revision/decision persistence.
-7. Add delivery/callback, evidence projection, reads, and operations behind
-   unregistered production routes.
-8. Finish WS-CON hidden readiness and an exact dependency manifest. WS-REV-13
-   is the sole production router activation and joint live-drill owner for the
-   review/contribution/compensation release. Before it, REV-12A may own hidden
-   persisted joint release control and inject its implementation through the
-   required CON-owned dispatch/callback fence ports while consuming the
-   read-only fulfillment-drain observation port; it may not edit CON product
-   files or import CON/outbox repositories.
-   Sibling reviewed baseline `6faccc0` correctly treats PR #129 as inactive
-   preparation; later same-turn external-review repairs are in progress. Both
-   are discovery only. The future merged snapshot must repair REV-06/08 one-step
-   authorization, REV-10 final CON composition, D12 custody and REV-12A's
-   handler-owned outbox transitions. It must adopt the current
-   registration -> CON -> REV hidden -> AUTH activation/prepared-handle
-   choreography and dispatcher-owned typed command/outcome contract, then pass
-   fresh review and merge before consumption. Do not pin the live sibling head/
-   cleanliness or change archival sources.
-
-At every chunk activation, rebase discovery on trusted `main`, refresh exact
-migration numbers and dependency symbols, and stop if an expected port/action
-is absent or materially changed.
+Every chunk refreshes trusted-main SHA, migration custody, exact port/action
+symbols, and merged dependency evidence. No cross-initiative successor starts
+automatically.
 
 ## Verification strategy
 
-- Ruff and focused unit/service tests for every chunk.
-- Every runtime chunk uses `scripts/run_isolated_tests.py` with one unique,
-  attempt-specific metadata JSON retained under the initiative evidence
-  directory and same-invocation `pytest --cov=app --cov-fail-under=78`; stale
-  `.coverage` output is never evidence. Focused reports from that invocation
-  prove each new/materially changed subsystem is at least 90 percent.
-- Fresh isolated real-PostgreSQL tests cover migrations, constraints,
-  transaction rollback, idempotency, and both concurrency permutations.
-- New/materially changed module coverage at or above 90 percent; same-run
-  repository coverage at or above 78 percent.
-- OpenAPI action inventory requires one ActionId per protected surface and
-  proves hidden routes remain absent before final activation.
-- Authorization contract tests prove every planned WS-CON action denies, every
-  active action has exactly one AUTH evaluator and one approved typed context,
-  and no active action exists without its owning feature behavior. Mutation
-  tests reject missing/reused/cross-session prepared handles and exercise
-  actor/link/grant or service-assignment revocation against product mutation in
-  both lock permutations. AUTH role-matrix/evaluator tests prove D11's exact
-  human-approved delivery/award/audit sets, including only the amendments and
-  inclusion/exclusion cases that outcome requires, plus exact matched-grant/
-  project evidence and resource-context digest equality.
-- Static architecture tests reject AUTH persistence imports, local role checks,
-  provider-specific compensation adapters, concrete-adapter imports or
-  construction outside the explicit composition root, raw ArtifactStore
-  injection, provider refs, and duplicate outbox implementations. The
-  deterministic conformance adapter is allowed only through the shared typed
-  factory and explicit composition.
-- Contract tests prove proposed ActionId -> PermissionId parity with the merged AUTH
-  catalogue and stable event payload/digest identity.
-- LocalStorage and MinIO evidence-capability conformance; AWS deployment proof
-  remains owned by ART.
-- ART capability tests prove expected digest/size mismatch causes zero durable
-  admission/provider calls; only ART preparation can mint the committed source;
-  the second pass is single-use; success/failure/cancellation either completes
-  close/release or leaves explicit ART-owned cleanup custody unavailable for
-  reuse until retry succeeds; and no scratch path/type crosses into CON. PR
-  #129's preparation tests alone do not satisfy this integration gate.
-- Final live drill covers paid accept, needs revision, reject, unpaid policy,
-  frozen-version change, money+points, acknowledgement vs fulfillment,
-  failure-then-fulfillment, replay, adapter outage, storage outage, recovery,
-  authorization denials, atomic rollback, and reconciliation.
-- `CONFORMANCE_MATRIX.md` maps every adopted candidate invariant to an owning
-  chunk, executable case, final live case, and retained evidence; activation
-  replaces proposed names with collected test node IDs.
-- Stale wording scan, Markdown links, reference checksums, `git diff --check`,
-  and one-sheet roadmap checks when sheets are present.
+- Isolated PostgreSQL migration, constraint, rollback, idempotency, and both-
+  order concurrency tests.
+- Same-run repository coverage at or above 78 percent and each new/materially
+  changed subsystem at or above 90 percent.
+- Exact contribution cardinality for all three decisions and repeated/revision
+  Reviews; automated checks create none.
+- Policy publication/freeze races, explicit unpaid rules, immutable published
+  versions, and at most one award per contribution/instrument.
+- Participant fault injection proving Review/task/contribution/award/audit/
+  outbox atomic rollback and no ART call.
+- AUTH tests for planned denial, exact grant/static-matrix candidates, prepared
+  handle misuse, role-specific revocation, cross-service denial, and one
+  activation custodian per action.
+- Outbox tests proving the dispatcher cannot execute feature authority and each
+  protected handler has an approved independent authorization path.
+- Callback/delivery/reconciliation tests with no provider I/O under database
+  locks and immutable receipt/award identities under replay.
+- Hidden OpenAPI proof before release; exact `/api/v1` inventory at release.
+- Stale wording, stale authorization/artifact contracts, Markdown links, loop
+  memory, `git diff --check`, and one-sheet roadmap checks when local sheets are
+  present.
 
-## Review strategy
+## Open human/AUTH decisions
+
+- D11 exact AdminRole candidate sets for award detail, delivery recovery, and
+  WS-CON audit actions.
+- Exact ServiceIdentity/ActionId/static-row design for each protected feature
+  handler and fulfillment callback; proposed strings are not executable until
+  approved and registered by AUTH.
+- Legacy pre-production row classification before CON-05A/05B migration.
+- Optional evidence projection remains deferred unless separately approved.
+
+## Review and stop
 
 Planning and every specification/runtime chunk require senior engineering,
 QA/test, security/auth, product/ops, architecture, docs, and reuse/dedup.
-Runtime/test chunks add test-delta. Outbox/worker/script/config/CI changes add CI
-integrity. Critical/High findings block; Medium findings require human decision.
-
-## Sequencing
-
-See `CHUNK_MAP.md`. Only one WS-CON chunk is active at a time. Cross-initiative
-gates do not authorize another initiative's work and no successor starts
-without a new explicit human instruction.
+Runtime/test chunks add test-delta; background-execution/script/config/CI changes add CI
+integrity. Stop after planning reconciliation. Do not start CON-01 or another
+initiative without explicit human instruction.

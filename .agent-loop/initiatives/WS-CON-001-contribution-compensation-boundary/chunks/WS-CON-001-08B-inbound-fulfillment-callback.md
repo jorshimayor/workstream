@@ -2,17 +2,17 @@
 
 ## Goal and risk
 
-Accept immutable reports from the exact service actor bound to the frozen
-adapter binding, behind an unregistered route. L1 external-auth/payment risk.
+Accept authenticated bound-service fulfillment results and create immutable
+receipts/status updates. L1 auth/economic/replay risk.
 
 ## Allowed files
 
 ```text
-backend/app/modules/compensation/{schemas,repository,service,ports,callback}.py
+backend/app/modules/compensation/{schemas,repository,service,ports}.py
 backend/app/api/internal_compensation.py
 backend/app/composition/compensation.py
-backend/tests/{test_compensation,test_authorization,test_api_contract_e2e}.py
-docs/operations_payment_reputation.md only callback operations
+backend/tests/{test_compensation,test_authorization,test_api_controls}.py
+docs/spec_contribution_compensation.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/**
 .agent-loop/merge-intents/WS-CON-001-08B.json
 ```
@@ -20,57 +20,34 @@ docs/operations_payment_reputation.md only callback operations
 ## Not allowed
 
 ```text
-production router registration or human authority
-AUTH catalogue/grant/kernel/service-assignment edits
-outbound adapter/dispatcher, provider secret/ref, dependency/CI weakening
-REV-owned lifecycle-control persistence/phase policy or implementation
-optional/no-op/fallback callback fence or REV edits to CON callback policy
+AUTH catalogue/grant/ServiceIdentity/static-matrix implementation edits
+human role fallback; dynamic service grant; provider credentials
+outbox transition ownership; production route registration
 ```
 
 ## Acceptance criteria
 
-- [ ] The callback PermissionId/ActionId/audit parity, canonical service
-  ActorProfile/link and exact assignment prerequisite already merged before
-  CON-04A. AUTH has now also merged the typed context, service-capable dependency
-  and prepared `T` contracts needed by this handler. The real kernel remains
-  fail-closed while planned; human AdminRoleGrant/ProjectRoleGrant never
-  satisfies it.
-- [ ] Locks revalidate actor/link/assignment/route/award/project/instrument/
-  binding/state; durable rate control is per actor+binding.
-- [ ] After signature verification and AUTH/idempotency locking, callback
-  handling requires a narrow CON-owned `FulfillmentCallbackFence`, captures the
-  allowed lifecycle phase before any compensation-domain row, and holds the
-  shared transaction fence through idempotent receipt commit. Missing injection
-  fails closed; there is no optional/no-op/fallback production fence.
-- [ ] The callback route/transaction owner explicitly commits the exact
-  AuthorizationDecision, receipt and idempotency result together; the AUTH
-  dependency remains rollback-only and never rescues an omitted commit.
-  Authorization-evidence or commit failure returns the typed retryable error
-  with no partial receipt/status/idempotency state. REV-13 repeats this proof on
-  the registered service route.
-- [ ] The callback fence allows authenticated callbacks through
-  `delivery_draining` and denies them after `disabled`. Deterministic CON test
-  doubles prove allow/deny semantics; REV-12A owns integrated callback-versus-
-  disable independent-session tests in both lock orderings, and REV-13 repeats
-  the behavior in the joint live drill.
-- [ ] CON owns callback verification, receipt/idempotency policy, and the
-  callback-fence consumer port. REV-12A may inject its durable implementation
-  only through explicit composition and may not edit CON callback policy.
-- [ ] Suspended accepts valid already-issued work; retired accepts only exact
-  previously accepted receipt replay; actor/link revocation always denies.
-- [ ] Callback-before-ack suppresses delivery; replay is idempotent; changed
-  receipt conflicts; callback-vs-delivery/retire races cover both orders.
-- [ ] Callback-before-ack derives `acknowledged_by_adapter`; a late dispatcher
-  acknowledgement is idempotent and cannot regress fulfillment or delivery.
-- [ ] Behavior tests prove failed then fulfilled is allowed, fulfilled then
-  failed/changed-fulfilled is denied, and partial fulfillment is rejected.
-- [ ] Production OpenAPI remains unchanged and secrets/refs are never stored.
-- [ ] A later AUTH-owned gate integrates the callback evaluator against this
-  merged implementation and alone changes availability; CON-11 waits for it.
+- [ ] Human/AUTH approves exact callback ServiceIdentity and static
+  `compensation.fulfillment.report` row (or an explicitly closed set of
+  identities), provisions ActorProfile/link, admits through AUTH-09E, and keeps
+  the action planned until hidden callback behavior merges.
+- [ ] Prepared callback locks profile/link, validates immutable ServiceIdentity,
+  matrix membership and active action, then locks binding/award/delivery/
+  receipt rows and evaluates final typed facts once.
+- [ ] Exact route identity, project, instrument, award, frozen binding, external
+  event, quantity/status, and idempotency must match. Actor/link/binding state
+  loss denies.
+- [ ] Duplicate exact receipt is idempotent; changed replay conflicts; fulfilled
+  receipt is immutable and at most one exists per award.
+- [ ] Suspended binding accepts only valid already-issued obligations; retired
+  binding accepts only exact replay of a receipt accepted before retirement.
+- [ ] Callback-before-local-ack creates terminal truth and suppresses later
+  delivery without regression. Both lock orders and rate limits per actor plus
+  binding are covered.
+- [ ] Missing provisioned callback rows deny callback/readiness but do not fail
+  startup/provisioning. AUTH later activates after hidden behavior proof.
 
-## Verification and reviewers
+## Review and stop
 
-Execute CON-08B in `../RUNTIME_VERIFICATION.md`; changed code is at least 90
-percent. Senior engineering, QA/test, security/privacy, product/ops,
-architecture, docs, reuse/dedup and test-delta are required. Stop before public
-registration.
+All baseline plus architecture, security, product, docs, reuse, test-delta, and
+CI integrity. Stop before public registration.

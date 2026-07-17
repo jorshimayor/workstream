@@ -1,194 +1,138 @@
 # Discovery: WS-CON-001 Contribution Record And Compensation Boundary
 
-Discovery was read-only for application code. No contribution or compensation
-runtime implementation was performed.
+## Baseline inspected
 
-## Current behavior
+- trusted `origin/main` at `5d353b6`, merged PR #139;
+- complete WS-XINT intent, decisions, plan, REV/CON, AUTH/role-service,
+  AUTH/REV, AUTH/ART, and ART/REV handoffs;
+- current WS-CON initiative package and archival reference inputs;
+- canonical README, glossary, architecture lockdown/data model/lifecycle,
+  authorization spec, artifact spec, roles/operations docs, and ADRs 0012-0015;
+- current backend project/task/submission/checker, AUTH, audit, artifact, and
+  migration code/tests;
+- stale wording, authorization, artifact, link, loop-memory, and agent-gate
+  scanners/tests.
 
-- `backend/app/api/router.py` exposes the current backend only under
-  `/api/v1` (plus the unversioned health compatibility route).
-- `backend/app/modules/tasks/models.py::Submission` is already the immutable,
-  version-numbered submission record. There is no separate `SubmissionVersion`
-  table and WS-CON must not create one.
-- `TaskService.claim_task` creates `TaskAssignment` but freezes no compensation
-  policy. The parallel WS-REV plan will create `ReviewLease`; no review models
-  exist on current `main`.
-- `WorkstreamTask` and `Submission` lock guide-bound `PaymentPolicy` versions.
-  The task also copies `base_amount`, `currency`, and `payout_type`. No runtime
-  `ContributionRecord`, `PaymentRecord`, `CompensationPolicy`, award, receipt,
-  fulfillment, or reputation model exists.
-- Durable checker execution advances a locked Submission through the automatic
-  gate to `review_pending`. The review/revision lifecycle is planned in the
-  sibling `workstream-rev-001` worktree and remains unimplemented.
-- Current task/project services still contain explicitly temporary legacy role
-  checks. WS-AUTH owns their cutover; WS-CON must not reproduce or repair them.
-- The shared `AuditEvent` ledger and caller-owned `AsyncSession` are the
-  transaction foundation. There is no shared transactional-outbox module yet.
-- Merged ART-02A2 PR #129 adds the inactive provider-neutral
-  `ArtifactPreparationService`, sealed `PreparedArtifact`/
-  `CommittedArtifactSource` values, canonical `ArtifactScratchManager`, and
-  cancellation/file-lock primitives. Active ArtifactStore v1, schema, provider
-  selection, product routes, admission, verification and binding behavior are
-  unchanged. Product modules still use only narrow ART-owned capability ports.
-- Trusted `main` now includes ADR 0014's generic typed
-  `ExternalServiceAdapterFactory[TAdapter]` foundation. It does not supply a
-  contribution-evidence capability or compensation provider adapter; those
-  remain separately gated, explicit composition-root registrations.
-- Trusted `main` `9a04434` includes ART-02A2 PR #129 and AUTH-08 PR #131 at
-  `aa0fdcd`. The authorization catalogue remains
-  74 PermissionIds/57 ActionIds with nine active and 48 planned actions. Durable
-  scoped AdminRoleGrants, the five-role permission matrix, typed grant resource
-  contexts, resource-context digests, matched grant/scope evidence, explicit
-  route-owned commits and retryable authorization-evidence failure handling are
-  merged. Service actors, ProjectRoleGrants, D10 and every WS-CON action remain
-  future AUTH-owned work.
+## Current runtime observations
 
-## Reconciled working source and supplied generation-2 PDF
+- The backend stops before the human Review/ContributionRecord implementation.
+- Project code still has the retired guide-bound economic schema. There is no
+  canonical ContributionPolicy aggregate, ContributionRecord,
+  CompensationAward, fulfillment receipt, or status projection runtime.
+- Existing Submission rows carry `version` and supersession lineage. A separate
+  SubmissionVersion model would duplicate current identity.
+- The merged AUTH catalogue has 74 PermissionIds and 57 ActionIds. Nine
+  self/admin actions are active and 48 are planned. No WS-CON ActionId is
+  registered.
+- Current AUTH supports actor-self and AdminRoleGrant evaluation. Independent
+  ProjectRoleGrant runtime, fixed-service runtime admission, CON evaluators,
+  and the cross-domain prepared mutation protocol remain future AUTH work.
+- AUTH's static service-action matrix is typed code; it is not a database grant
+  table. AUTH-09E is the required runtime admission path.
+- PR #129 added inactive ART preparation/source values only. It added no
+  contribution-evidence capability, ART admission/provider execution, binding,
+  action, permission, or CON dependency.
+- No shared transactional outbox exists with the required generic dispatcher,
+  claim fencing, replay, and typed handler outcome contract.
 
-The working tree contains an editable reconciled Markdown transcription derived
-from the supplied generation-2 PDF, plus that immutable PDF companion:
+## Canonical merged changes affecting CON
 
-| File | SHA-256 | Observation |
-|---|---|---|
-| `docs/reference_specs/WS-CON-001-contribution-record-and-compensation-boundary-specification.md` | `cddbe20f4fadf5307f68519347bdd9520ef49b23fb0b92cad24c31fc9b34c640` | Editable reconciled working transcription derived from the revised PDF; not canonically adopted |
-| `docs/reference_specs/WS-CON-001-contribution-record-and-compensation-boundary-specification(2).pdf` | `ce65e208076769f0bafb09779d60ab6f5fc0c596514d4e8f4cc03690c6e6d457` | Revised archival companion; text extracts successfully; not a reproducible Markdown build contract |
+1. `ContributionPolicy`, `ContributionPolicyVersion`, `ContributionRule`, and
+   `ContributionAwardDefinition` decide award eligibility. CompensationAward
+   is the evaluated downstream result.
+2. Every valid Review creates reviewer `completed_review`; `accept` additionally
+   creates submitter `accepted_submission`.
+3. Core contribution creation is a flush-only CON participant in the REV-owned
+   transaction. It performs no ART call or evidence projection.
+4. CON copies the stabilized versioned Submission/packet digest supplied by REV
+   into `ContributionRecord.artifact_hash`; it does not verify or rederive it.
+5. Project grants are exactly independent submitter, reviewer, and adjudicator.
+6. ActionOwner is AUTH activation custody. ART and REV transfers must be
+   complete across their full current catalogues; WS-CON cannot prescribe
+   partial subsets.
+7. Fixed services use provisioned ActorProfile/ActorIdentityLink, immutable
+   ServiceIdentity, exact static ActionId row, and AUTH-09E admission.
+8. The shared outbox dispatcher cannot inherit protected feature-handler
+   authority. Delivery, reconciliation, rebuild, and callback boundaries need
+   exact approved service contracts.
 
-The original tracked PDF is currently deleted in the user's working tree but
-remains the immutable first archival generation at SHA-256
-`34c4337f27e42a5b0ed5e153fe8ccd492ecede202c2764506a930d109aef66c1`.
-`docs/reference_specs/README.md` and `SHA256SUMS` require that original to remain
-unchanged. The revised candidate should therefore be retained as a second
-generation rather than replacing the first.
+## Relevant files and symbols
 
-## Reconciliation findings
+| Source | Observation |
+|---|---|
+| `docs/architecture_data_model.md` | Canonical policy/rule/definition, binding, contribution, award, receipt, and projection names/fields |
+| `docs/decision_0015_project_contributor_roles_are_independent.md` | Exact project role values and independent revocation |
+| `docs/spec_authorization_service.md` | Stable permissions, current actions, ActionOwner semantics, static service matrix, AUTH-09E order |
+| `WS-XINT-001/REV_CON_HANDOFF.md` | Exact core participant sequence and optional-evidence boundary |
+| `WS-XINT-001/AUTH_ROLE_SERVICE_HANDOFF.md` | Fixed service and project grant contract |
+| `WS-XINT-001/AUTH_REV_HANDOFF.md` | Full review activation-custody/hidden behavior sequence |
+| `WS-XINT-001/AUTH_ART_HANDOFF.md` | Full 25-action ART transfer; not a core CON gate |
+| `backend/app/modules/projects/{models,schemas,repository,service}.py` | Current guide-bound economic fields and consumers to cut over/remove |
+| `backend/app/modules/tasks/**` | TaskAssignment creation and future submitter policy freeze seam |
+| `backend/app/modules/authorization/{catalogue,policy,kernel,schemas}.py` | Current 74/57/9/48 runtime and stable PermissionIds |
+| `backend/app/modules/audit/**` | Shared append-only audit extension point |
+| `backend/app/modules/artifacts/{preparation,sources}.py` | Inactive ART-only preparation; no core CON import |
 
-| Finding | Evidence | Required correction in active contract |
-|---|---|---|
-| Wrong public prefix | Candidate section 18 uses `/v1`; router and ADR 0012 use `/api/v1`. | Use `/api/v1` only; no alias. |
-| ActionId/PermissionId conflation | Candidate calls granular `compensation.policy.*` values permissions and says broad IDs were removed. Merged AUTH-08 preserves 74 approved PermissionIds and separately registers 57 ActionIds: nine active self/admin actions and 48 planned actions. | Publish an exact proposed ActionId -> PermissionId handoff. Never call an ActionId a permission or a registered/planned identifier executable. |
-| Registration treated as activation | AUTH-08 evaluates only its self/admin action families; all planned, unsupported, wrong-context and unimplemented actions deny. No WS-CON evaluator exists. | AUTH must own typed-context/evaluator/principal/transaction integration and active availability. CON owns product facts/guards only and cannot flip the AUTH catalogue. |
-| Cross-domain mutation lock gap | Current `require()` can revalidate actor-self wholly inside AUTH, but WS-CON mutations need AUTH rows before product rows and final evaluation against locked product facts. | AUTH supplies the prepared, caller-session-bound, single-use `T` protocol in D10; no unlocked-snapshot decision or product-before-AUTH lock order. |
-| Merged Operator permission gap | AUTH-08's closed `operator` definition omits existing PermissionId `compensation.delivery.reconcile`, but the reconciled candidate WS-CON matrix proposes a reason-bound Operator as well as Finance Authority to request delivery reconciliation. Only D2 is human-approved. | D11 human decision: an AUTH-owned reviewed successor adds the existing permission before CON-10B if Operator behavior is retained, otherwise CON-01 removes the candidate before registration. CON has no role-query/local fallback. |
-| Cross-spec role-set conflict | AUTH-08 gives Project Manager `compensation.award.read` and broader roles `audit.read`/`audit.export`, while the unadopted WS-CON candidate proposes narrower monetary/audit sets. | D11 human choice freezes each active set. Any approved narrowing is AUTH evaluator policy with matched grant/scope proof; preserving merged candidates updates CON-01. Permission membership or candidate text alone never settles the action. |
-| ActionOwner activation conflict | Canonical `ActionOwner` means the implementation chunk allowed to activate an action. Existing review actions name REV owners and all eleven required ART-02D actions name `ART_02D`, while the reconciled boundary says only AUTH activates after feature composition; the 23 WS-CON actions had no owner mapping. | D12 human/AUTH decision plus the exact closed owners for 23 WS-CON, two review and eleven ART actions in `AUTHORIZATION_HANDOFF.md`; preserve all ActionId/PermissionId mappings and never permit dual availability writers. |
-| Missing upstream task action | PermissionId `task.claim` exists, but current ActionId has no `task.claim` member. | AUTH-13 or reviewed AUTH successor registers/evaluates/activates `task.claim` before CON-05A integrates compensation freeze. |
-| Wrong Review action | Candidate uses `review.decision.record`; merged AUTH catalogue and WS-REV use registered planned ActionId `review.decision` mapped to PermissionId `review.decision`. | Consume `review.decision` only after its AUTH evaluator/availability and REV resource-composition gates. |
-| Invented WS-AUTH source | Candidate names `WS-AUTH-001-A`, which is not a canonical repository artifact. | Cite merged `docs/spec_authorization_service.md`, ADR 0012, and the closed catalogue. |
-| Invented artifact permissions | Candidate uses `artifact.recovery.request`, `artifact.recovery.execute`, and `artifact.retrieve`. AUTH explicitly rejected the first; none is a registered PermissionId. | Use `artifact.verification_job.retry` through `ArtifactOperatorRecoveryPort`; require ART-owned typed storage/read capabilities and approved action mappings. |
-| Wrong artifact port | Candidate injects `ArtifactStorePort` with store/projection/retain/retrieve methods. ADR 0013's target `ArtifactStore` has only provider-byte behavior and cannot enter product services. | WS-CON consumes narrow ART capability ports. Only ART orchestration receives the raw store. |
-| ART-02A2 mistaken for the contribution capability | PR #129 adds only inactive first-pass scratch preparation and a sealed one-shot second-pass source. It adds no admission, provider execution, verification, binding, contribution intake or authorization. | Keep `WS-ART-001-CON-EVIDENCE` as a separately approved ART-owned prerequisite. CON supplies deterministic bytes plus expected digest/size/media type to that port; ART alone prepares, consumes and closes the committed source. |
-| Wrong providers | Candidate requires Local Storage/Flow Node parity. ADR 0013 locks LocalStorage for dev/focused tests, MinIO for local/CI S3 proof, AWS S3 for v0.1 production, and defers Flow Node/R2. | Test LocalStorage and MinIO; AWS deployment proof gates production; Flow Node remains future. |
-| Wrong retention/search claims | Candidate assumes retain/pin and semantic indexing APIs that ADR 0013 deliberately excludes from v0.1 `ArtifactStore`. | Use ART's immutable completed-byte retention policy and typed lifecycle records; omit semantic indexing/search from WS-CON v0.1. |
-| Duplicate submission model language | Candidate defines `SubmissionVersion` as if separate. | Treat existing `Submission` as the versioned identity and use `submission_id` in repository schemas. |
-| Payment model collision | Active docs/model use guide-bound `PaymentPolicy`, a future mutable `PaymentRecord`, adjustments, and voidable contributions; candidate introduces immutable policies/awards/receipts and prohibits adjustments/voiding. | D2 approves `CompensationPolicyVersion` as the sole authority and complete PaymentPolicy removal; CON-01 records the ADR, 05A/05B perform the cutover, and only the legacy-row rule remains open. |
-| Outbox assumed but absent | Candidate requires atomic outbox effects; repository has no shared outbox. WS-REV also blocks on it. | Land a shared caller-transaction outbox foundation before review-chain and contribution integration. |
-| Direct system-action invention | Candidate adds `contribution.materialize`, `compensation.award.materialize`, and `outbox.dispatch` as if already registered permissions. | Derived contribution/award creation is a required participant of authorized `review.decision`. Shared outbox owns the proposed service-only dispatch action; CON adds no feature-local bypass action. |
+## Existing tests and gaps
 
-## Relevant files/modules
+- Project/task tests cover current setup/claim/submission behavior but not
+  ContributionPolicy freezes or retirement of the legacy economic schema.
+- AUTH tests cover catalogue parity, planned denial, actor-self/admin grants,
+  decision digest, scope evidence, and route commit/rollback. They do not cover
+  CON contexts, independent project grants at CON call sites, AUTH-09E CON
+  identities, or prepared cross-domain mutations.
+- ART tests prove preparation only. No optional evidence projection capability
+  exists or is needed for core contribution tests.
+- No tests yet cover ContributionRecord cardinality, frozen rule evaluation,
+  money/points award uniqueness, fulfillment callback, delivery replay,
+  shared-outbox handler isolation, or REV/CON atomic rollback.
 
-| Path | Purpose | Notes |
-|---|---|---|
-| `backend/app/api/router.py` | API composition | Canonical `/api/v1`; future routes stay unregistered until coherent cutover. |
-| `backend/app/modules/tasks/models.py` | Task, assignment, versioned Submission, shared audit | Must gain exact assignment compensation freeze; Submission remains canonical version identity. |
-| `backend/app/modules/tasks/service.py` | Claim, submission, task lifecycle | WS-CON may integrate only through task-owned participants; auth cutover stays WS-AUTH-owned. |
-| `backend/app/modules/projects/models.py` | Project and guide-bound `PaymentPolicy` | Approved for complete semantic removal in CON-05A and physical removal in CON-05B; the legacy-row rebuild/classification rule remains a human gate. |
-| `backend/app/modules/projects/service.py` | Guide activation and policy locking | Must not become a second compensation-policy engine. |
-| `backend/app/modules/authorization/{catalogue,kernel,runtime,policy}.py` from merged AUTH-08 | Canonical closed registry, grant policy and executable kernel | 74 PermissionIds, 57 ActionIds, nine active self/admin actions and 48 planned; eight resource-context variants and actor-self/AdminRoleGrant matched authority. All WS-CON-specific actions and both service permissions remain absent. |
-| `backend/app/api/deps/authorization.py` | Current human composition root and transaction cleanup | Human self/admin only; it rejects service subjects, maps typed evidence failure to retryable 503 and rolls back any transaction a feature route leaves open. WS-CON routes must explicitly commit their own unit and need AUTH-owned project/service composition, not a copied dependency. |
-| `backend/app/modules/authorization/policy.py::ADMIN_ROLE_PERMISSIONS` | Exact merged AdminRole permission candidates | Finance has delivery reconcile; Operator does not; Project Manager has award-read. D11 decides whether each candidate WS-CON difference changes AUTH or the active CON matrix. |
-| sibling `workstream-rev-001/.../` reviewed baseline `6faccc0` plus later external-review repairs | Parallel review plan discovery | Head `6faccc0` was inspected after its commit-bound ART refresh; later in the same turn the sibling became dirty while its owner applied external-review repairs. Neither live sibling state is a dependency. Only a future reviewed merge on trusted `main` is consumable, and it must repair prepared authorization/D12/outbox ownership before WS-CON integration. |
-| `backend/app/modules/artifacts/{preparation,sources}.py` | Merged inactive committed-source preparation | ART alone owns scratch allocation, first-pass hash/count, expected commitment comparison, sealed single-use second pass and cleanup. WS-CON must not import these implementation types or create a second scratch path. |
-| `backend/app/modules/artifacts/*` | Current artifact metadata/orchestration foundation | ArtifactStore v1 remains active; v2, S3, admission, verification and named contribution capabilities are still WS-ART gates. |
-| `backend/app/interfaces/artifacts.py` | Current v1 raw provider port | Not a WS-CON dependency; it is being clean-cut to ADR 0013 v2. |
-| `docs/spec_artifact_storage_service.md` | Canonical target artifact contract | Owns narrow product capability ports, recovery, verification, quotas, and provider policy. |
-| `docs/spec_authorization_service.md` | Canonical target authorization contract | Preserves broad PermissionIds; ActionIds are separate. |
-| `docs/architecture_data_model.md` | Existing contribution/payment target | Conflicts with supplied candidate and needs ADR-backed reconciliation. |
-| `docs/operations_payment_reputation.md` | Existing manual payment/reputation workflow | Needs coordinated update only after architecture adoption. |
-| `backend/alembic/versions/*` | Current schema through merged AUTH-08 migration `0022_bootstrap_admin_grants.py` | Every runtime chunk must refresh the next migration number from trusted `main`; no WS-CON contract pre-reserves `0023`. |
+## Dependencies
 
-## Current tests
+- AUTH: reviewed registration and later activation chunks, independent project
+  grants, prepared mutation protocol, fixed service admission, exact CON
+  service identities/static rows, and action-specific evaluators.
+- REV: ReviewLease reviewer policy FK, canonical claim/decision composition,
+  stabilized artifact-hash facts, mandatory CON participant injection, single
+  route commit, and no no-op fallback.
+- Task/Submission: submitter policy freeze and stable assignment/version lineage.
+- Shared outbox/audit: caller-transaction append and feature-neutral dispatch.
+- ADR 0014 adapters: typed capability port, factory, and composition-root
+  registration for external fulfillment.
+- ART: no core dependency; optional projection only after separate approval.
 
-| Test path | What it covers | Gaps relevant to WS-CON |
-|---|---|---|
-| `backend/tests/test_tasks.py` | Task policy locks, assignment uniqueness, immutable Submission versions, checker admission, concurrency | No compensation freeze, review effects, contribution, or award tests. |
-| `backend/tests/test_projects.py` | Guide/policy activation including `PaymentPolicy` | No CompensationPolicy lifecycle or Finance Authority behavior. |
-| `backend/tests/test_authorization.py` | Closed catalogue plus AUTH-08 self/admin kernel/runtime | Self/admin allow/deny, scope/grant revalidation, complete resource digests, unknown/planned/unsupported denial, evidence failure and request-local state are covered. ProjectRoleGrants, service composition, WS-CON contexts/evaluators and prepared cross-domain mutation authorization remain AUTH-owned work. |
-| `backend/tests/test_audit.py` | Typed append-only authority evidence | No contribution/compensation lifecycle audit contract. |
-| `backend/tests/test_artifacts.py` | Current artifact port, local adapter, content/binding/receipt foundation | Target v2, S3/MinIO, typed contribution projection capability, and evidence reads are not merged. |
-| `backend/tests/test_artifact_preparation.py` | ART-02A2 scratch, commitment, cancellation, integrity and cleanup boundary | Proves preparation only; it does not prove contribution-evidence admission, provider execution, verification or binding. |
-| `backend/tests/test_checkers.py` | Durable checker run and `allow_review` routing | Stops before Review persistence. |
-| `backend/tests/test_alembic.py` | Migration upgrade/downgrade guards | No outbox, review, or WS-CON schema. |
-| `backend/tests/test_api_contract_e2e.py` | Current API contract drill | No review/contribution/compensation routes or events. |
+## Risks
 
-## Dependencies/integrations
+| Risk | Mitigation |
+|---|---|
+| Two award-eligibility models | Clean semantic then physical cutover; no fallback |
+| Contribution missing after Review | Mandatory flush-only participant and one caller commit |
+| ART outage suppresses contribution | No core ART/evidence operation |
+| Wrong policy version | Assignment/lease freeze before work; immutable published versions |
+| Cross-domain deadlock | AUTH-first lock order and two-order PostgreSQL tests |
+| Dispatcher gains feature authority | Exact dispatcher-only action plus independent handler authorization |
+| Dynamic/broad service access | Closed ServiceIdentity/static rows, AUTH-09E, cross-service denial |
+| Role coupling | Independent grants and role-specific invalidation consumers |
+| Partial activation transfer | Consume complete WS-XINT AUTH handoffs, never local subsets |
+| Legacy row ambiguity | Human-approved deterministic rebuild/classification before migration |
+| Premature public surface | Hidden behavior until AUTH activation and joint release proof |
 
-- WS-AUTH: merged actor-self/admin kernel and AdminRoleGrants plus future
-  ProjectRoleGrants/service actors, exact
-  WS-CON ActionId/PermissionId/ActionOwner/audit registration, typed resource
-  contexts, closed evaluators, matched authorities, prepared `T` protocol,
-  service-capable composition, active availability and final bypass removal.
-  WS-CON does not edit those owned surfaces.
-- WS-REV: `Review`, `ReviewLease`, findings/resolutions, decision idempotency,
-  task effects, hidden composition, and final public review cutover.
-- WS-ART: merged 02A2 committed-source preparation; future 02A3 v2 store, 02B1
-  LocalStorage/MinIO/AWS provider work, 02C1 admission, 02C2 verification/
-  publication, 02C3 recovery, 02D hidden internal-executor/Operator recovery
-  behavior, AUTH-owned evaluator activation, and a separately approved narrow
-  system-generated contribution-evidence write/read capability. ART owns
-  preparation, scratch, provider execution and artifact records end to end;
-  AUTH alone owns registrations, assignments, evaluators and availability.
-- Shared outbox: caller-transaction append, stable event identity, post-commit
-  publication, at-least-once dispatch, delivery attempts, dead-letter, replay,
-  and idempotent consumer contract.
-- PostgreSQL: exact decimals, composite project ownership, uniqueness, row
-  locking, immutable history, and atomic cross-domain commit.
-- Celery/Redis: post-commit dispatch/projection/reconciliation execution only;
-  correctness must remain PostgreSQL-backed.
-- External compensation adapters: typed ADR 0014 capability, deterministic test
-  adapter for proof, no provider-specific runtime integration in WS-CON.
+## Open questions
 
-## Risks discovered
+- Exact D11 AdminRole candidates for award detail, delivery recovery, and audit.
+- Exact ServiceIdentity/ActionId/static-row contracts for delivery,
+  reconciliation, projection rebuild, and callback execution.
+- Deterministic treatment of pre-production legacy rows.
+- Whether optional evidence projection is ever approved; it is not part of the
+  current core plan.
 
-| Risk | Why it matters | Suggested handling |
-|---|---|---|
-| Dual payment truth | `PaymentPolicy`/future `PaymentRecord` and new compensation versions/awards can disagree. | ADR-backed sole execution authority and clean documentation/schema cutover. |
-| Permission replacement | Treating ActionIds as replacement permissions would break merged audit/grants. | Exact mapping table; AUTH-owned additive registration; typed manifest tests. |
-| Merged AdminRole matrix conflicts with candidate WS-CON human matrix | Operator cannot currently satisfy candidate delivery reconciliation; award/audit candidate sets differ in the other direction. | D11 human decision, followed by only the required AUTH matrix/evaluator amendments or CON-01 active-matrix updates; no local role policy. |
-| Registered-but-inexecutable AUTH action | Planned availability or a missing evaluator causes every WS-CON command to deny; a feature-local workaround would bypass central AUTH. | Separate AUTH registration and executable activation gates; startup parity rejects active-without-evaluator and CON never edits AUTH. |
-| AUTH/product lock inversion | One-step authorization after product locks reverses canonical order; authorization before product locks can evaluate stale facts. | AUTH-owned prepared handle locks authority first and evaluates once against final locked product facts. |
-| Circular REV/CON dependency | Leases need policy FKs; claims need freeze; decisions need contribution participant. | Explicit interleaving gates in chunk map. |
-| Cross-domain deadlock/partial commit | Review, authority, tasks, artifacts, CON, audit, and outbox share one transaction. | One canonical lock order, caller-owned session, fault injection, real Postgres concurrency tests. |
-| Economic overreach | Payment-provider or points-ledger logic could leak into Workstream. | Typed outbound instruction/receipt boundary and architecture import tests. |
-| Artifact bypass | Direct store injection could bypass quotas, verification, binding, and audit. | ART-owned typed capability only; static import/composition tests. |
-| Scratch/source custody leaks into CON | Importing PR #129 types or paths would make CON a second artifact orchestrator and can leak quota or cleanup ownership under cancellation. | The CON port request carries only bounded deterministic bytes and expected commitment facts; ART prepares/consumes the source and either releases scratch or retains explicit cleanup custody until retry succeeds. |
-| Premature public surface | Partial routes would create authorization or lifecycle gaps. | Hidden internal composition until final coherent activation. |
-| Legacy/pre-production rows | Existing PaymentPolicy/tasks/assignments cannot be safely guessed into new frozen terms. | Human-approved rebuild/classification/backfill rule before migration. |
-| Event/schema drift | The candidate names many events without a shared outbox registry. | Freeze envelope/ownership in the outbox chunk before persistence consumers. |
-| Scope size | The candidate is a multi-initiative system, not one PR. | PR-sized L1 chunks with hard stop after each merge. |
+## Conventions to preserve
 
-## Unknowns/questions for human
-
-| Question | Why it matters | Needed before chunk? |
-|---|---|---|
-| Preserve both candidate generations and reconcile into active spec? | Maintains archival provenance and follows repository precedent. | Before 01. |
-| May pre-production payment/task rows be rebuilt, or must they be classified/backfilled? | Determines migration safety and atomic claim cutover. | Before 05. |
-| Approve two new service-only PermissionIds, `outbox.dispatch` and `compensation.fulfillment.report`? | Human outbox recovery/reconciliation authority must not execute async side effects; no existing permission safely names the external adapter callback entitlement. | Before CON-02B for dispatch and before CON-04A for callback binding identity. |
-| Approve the AUTH-owned WS-CON registration/evaluator/activation work and D10 prepared mutation protocol? | Current AUTH-08 supports nine self/admin actions but no WS-CON action; CON cannot safely or physically activate its own actions. | Before any authorized CON service chunk. |
-| Approve adding existing `compensation.delivery.reconcile` to the Operator role definition? | The reconciled candidate proposes reason-bound Operator delivery reconciliation, but merged AUTH-08 does not make that role a permission candidate. Rejecting the addition removes Operator from the active WS-CON action contract. | Before AUTH registration for CON-10B. |
-| Approve the separately named ART-owned `WS-ART-001-CON-EVIDENCE` capability after ART's remaining storage gates? | PR #129 deliberately excludes contribution intake and WS-CON cannot own raw storage orchestration. | Before 09A. |
-
-## Existing conventions to preserve
-
-- One caller-owned async SQLAlchemy session and explicit commit boundary.
-- Router -> service -> repository separation with stable structured errors.
-- `/api/v1`, no short-prefix alias.
-- Existing `Submission` is the versioned submission identity.
-- Canonical review decisions only: `accept`, `needs_revision`, `reject`.
-- ActionId and PermissionId are distinct closed types.
-- Authorization resource facts come from canonical rows, never request JSON.
-- Provider-neutral external adapters follow ADR 0014 with explicit composition.
-- Only ART orchestration receives raw `ArtifactStore`.
-- AWS S3 production, MinIO local/CI protocol proof, LocalStorage focused
-  development/tests; Flow Node and R2 deferred.
-- New/materially changed backend subsystems stay at or above 90 percent while
-  repository coverage stays at or above 78 percent.
+- Review decisions are only `accept`, `needs_revision`, and `reject`.
+- PostgreSQL owns canonical contribution/award/receipt truth.
+- External I/O occurs only after commit and outside lifecycle/database locks.
+- Domain participants flush and never commit.
+- AUTH and feature repositories never cross-import.
+- Fixed service identity is authorization; Celery executor/generation is
+  separate execution fencing.
+- `/api/v1` is the only public prefix.

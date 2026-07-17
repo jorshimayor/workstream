@@ -21,7 +21,7 @@ docs/architecture_data_model.md only exact shared-audit ownership note
 ```text
 AuditEvent schema/migration rewrite
 review, contribution, compensation, task, AUTH or outbox event semantics
-commit ownership, route, worker, dependency or CI weakening
+commit ownership, route, background executor, dependency or CI weakening
 ```
 
 ## Acceptance criteria

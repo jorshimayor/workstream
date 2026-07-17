@@ -2,8 +2,8 @@
 
 ## Goal and risk
 
-Persist immutable contribution/award truth against merged REV-03/REV-04 exact
-targets. L1 history/payment risk.
+Persist immutable contribution/award truth against exact merged Review,
+ReviewLease, TaskAssignment, and Submission targets. L1 history/economic risk.
 
 ## Allowed files
 
@@ -21,18 +21,32 @@ backend/tests/{test_contributions,test_compensation,test_alembic}.py
 
 ```text
 review model/service/composition edits
-service, route, worker, receipt, artifact, reputation or PaymentRecord behavior
+service, route, background executor, receipt, artifact, reputation or legacy accepted-work settlement row behavior
 mutable/void/delete/adjust path, dependency or CI weakening
 ```
 
 ## Acceptance criteria
 
-- [ ] Existing Submission is the version identity; exact project/review/lease/
-  assignment/contributor lineage and immutable digests are constrained.
-- [ ] DB enforces immutability/at-most-one but does not require a contribution
-  child for staged Review writes.
+- [ ] Existing Submission is the version identity. Project/task/submission/
+  Review/lease/assignment/contributor and stabilized artifact_hash lineage are
+  same-chain and non-null as applicable.
+- [ ] Reviewer rows are completed_review and bind source Review + ReviewLease +
+  reviewer + reviewer-frozen policy. Submitter rows are accepted_submission,
+  bind accepted source Review + TaskAssignment + submitter + submitter-frozen
+  policy, and are impossible for needs_revision/reject.
+- [ ] Exact database uniqueness on `(source_review_id, contribution_type)`
+  prevents duplicate contribution type for one source Review while allowing
+  distinct reviewer contributions for distinct revision Reviews. Contributor
+  identity is a validated lineage field, never part of this uniqueness key.
+- [ ] Each award references the exact ContributionRecord, its frozen
+  ContributionPolicyVersion, matching rule/definition, same project/contributor/
+  contribution type, and same-project/instrument adapter binding.
+- [ ] Unique `(contribution_record_id, instrument_type)` enforces at most one
+  money and one project_points award; quantity is exact and positive.
+- [ ] Database enforces immutability/at-most-one but does not require a
+  contribution child during staged Review persistence before CON-07 flushes.
 - [ ] At-least-one per valid Review is deferred to CON-07 + REV-10 + preflight.
-- [ ] No mutable/void/delete/adjust path or PaymentRecord/reputation schema.
+- [ ] No mutable/void/delete/adjust path or legacy accepted-work settlement row/reputation schema.
 
 ## Verification and reviewers
 

@@ -19,7 +19,7 @@ backend/tests/{test_compensation,test_alembic}.py
 ## Not allowed
 
 ```text
-worker, callback, adapter, router or reconciliation behavior
+background executor, callback, adapter, router or reconciliation behavior
 provider request/attempt/balance, points ledger or settlement data
 AUTH/ART edit, dependency or CI weakening
 ```
@@ -28,6 +28,10 @@ AUTH/ART edit, dependency or CI weakening
 
 - [ ] Immutable award/event/payload/binding/idempotency identities are retained;
   acknowledgement is not fulfillment; receipts are append-only and terminal.
+- [ ] Closed stored values are exact: receipt `reported_status` is `fulfilled`
+  or `failed`; delivery status is `pending_delivery` or
+  `acknowledged_by_adapter`; fulfillment status is `pending`, `failed`, or
+  `fulfilled`. No synonym or provider status is persisted.
 - [ ] Delivery state durably represents fenced pre-I/O `in_flight` ownership,
   the originating dispatcher claim generation, retryable recovery and callback
   suppression without storing a provider payment attempt. Crash recovery cannot
