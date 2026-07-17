@@ -146,11 +146,14 @@ AUTH action registration, ActionOwner/evaluator edit, or availability change
   `admission_fenced` blocks new submissions, queue admission, claims, and
   replacement while leased completion may finish; `commands_draining` blocks
   new completion commands and fresh Operator calls release remaining leases;
-  `leases_released` lets already committed fulfillment dispatch drain;
-  `delivery_draining` blocks new dispatch only after its pending/in-flight count
-  is zero while authenticated callbacks finish; and `disabled` requires zero
-  callback obligations. Routes, background jobs, and fixed service identity mappings are then
-  disabled in manifest order without deleting pending immutable work. The
+  `leases_released -> delivery_draining` begins the bounded drain of fulfillment
+  work committed before completion commands were fenced. During
+  `delivery_draining`, fulfillment dispatch and authenticated callbacks remain
+  allowed, while decisions and policy changes cannot create new obligations.
+  The transition to `disabled` requires zero dispatchable, retryable, claimed,
+  or in-flight fulfillment events and zero nonterminal delivery or callback
+  obligations. Routes, background jobs, and fixed service identity mappings are
+  then disabled in manifest order without deleting pending immutable work. The
   authenticated lifecycle-control transition/status route and its AUTH mapping
   remain available while disabled; all product routes, product background jobs,
   and product fixed service identity mappings remain off. Queued review work remains durable
@@ -214,13 +217,14 @@ AUTH action registration, ActionOwner/evaluator edit, or availability change
   unchanged, fresh retry, bounded lease release, dispatch denial before adapter
   I/O, callback in flight during delivery drain, and disable denial while any
   delivery/callback obligation remains.
-- The drill runs fulfillment dispatch and ART-backed review projection against
-  disable in both orderings: durable in-flight state precedes fence release,
+- In `delivery_draining`, the drill runs fulfillment dispatch, authenticated
+  callbacks, and ART-backed review projection against the transition to
+  `disabled` in both orderings. Durable in-flight state precedes fence release;
   a disable attempt observes it, returns blocked with phase unchanged, and
   releases the exclusive lock. Provider I/O observes no lifecycle advisory lock
   or database transaction; crash returns work to retryable state; fenced
-  finalization clears the observation; and a fresh Operator command advances
-  without changing canonical Review/award truth.
+  finalization or callback completion clears the observation; and a fresh
+  Operator command advances without changing canonical Review or award truth.
 - The joint drill also proves contribution-policy/binding setup, TaskAssignment
   and ReviewLease ContributionPolicyVersion freezes, reviewer contribution for
   all three decisions, immutable Review, findings, and resolutions for every round,

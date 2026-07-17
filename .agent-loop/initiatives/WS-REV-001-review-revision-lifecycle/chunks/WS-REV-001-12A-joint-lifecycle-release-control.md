@@ -109,7 +109,7 @@ schema/application downgrade after protected post-cutover rows exist
 | legacy authority-loss replacement | allow | deny | deny | deny | deny | deny | deny | deny | deny |
 | prepared authority-loss replacement | deny | deny | deny | allow | deny | deny | deny | deny | deny |
 | authorized review recovery/lease release | deny | deny | deny | allow | allow | allow | deny | deny | deny |
-| fulfillment dispatch | deny | deny | deny | allow | allow | allow | allow | deny | deny |
+| fulfillment dispatch | deny | deny | deny | allow | allow | allow | allow | allow | deny |
 | authenticated fulfillment callback | allow | allow | allow | allow | allow | allow | allow | allow | deny |
 | bounded canonical/control read | allow | allow | allow | allow | allow | allow | allow | allow | allow |
 | lifecycle transition/status | allow | allow | allow | allow | allow | allow | allow | allow | allow |
@@ -193,13 +193,17 @@ schema/application downgrade after protected post-cutover rows exist
   `admission_fenced -> commands_draining` takes the exclusive lock and therefore
   waits for admitted completion commands; `commands_draining -> leases_released`
   requires zero active leases after fresh Operator force-release calls;
-  `leases_released -> delivery_draining` requires zero dispatchable, retryable,
-  claimed, or in-flight fulfillment work; and disable requires zero nonterminal
-  delivery/callback obligations plus zero in-flight review maintenance after the
-  exclusive lock drains callbacks. Pending retryable review projection work may
-  remain durable for forward reactivation, but no remote operation may remain in
-  flight. No provider I/O occurs while any lifecycle advisory fence or database
-  transaction is held.
+  `leases_released -> delivery_draining` begins the bounded drain of fulfillment
+  work that was committed before completion commands were fenced. Fulfillment
+  dispatch and authenticated callbacks remain allowed in `delivery_draining`,
+  but no decision or policy command can create a new obligation. The
+  `delivery_draining -> disabled` guard requires zero dispatchable, retryable,
+  claimed, or in-flight fulfillment events; zero nonterminal delivery or
+  callback obligations; and zero in-flight review maintenance after the
+  exclusive lock drains concurrent finalization and callback transactions.
+  Pending retryable review projection work may remain durable for forward
+  reactivation, but no remote operation may remain in flight. No provider I/O
+  occurs while any lifecycle advisory fence or database transaction is held.
   New-generation pre-activation requires prior `disabled`, a new manifest, and
   no schema downgrade.
 - Bounded settings use database time and reject invalid/unbounded values. A
