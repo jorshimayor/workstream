@@ -149,12 +149,12 @@ merged feature manifests and separate human starts exist.
 
 ## Blockers
 
-PR #132 cannot merge until its current convergence preserves XINT
-role/service/activation wording, repeats required internal review on the exact
-head, and reruns external checks. The convergence must also
-preserve PR #132's packaged frozen migration contract, zero mutable migration
-imports, script-owned repository root, built-wheel location-independent replay,
-same-event-loop CLI cleanup, and original-exception/cancellation behavior.
+AUTH-09A has no remaining blocker and merged through PR #132 as `299363a`. Its
+packaged frozen migration contract, zero mutable migration imports, script-owned
+repository root, built-wheel location-independent replay, same-event-loop CLI
+cleanup, and original-exception/cancellation behavior remain required merged
+invariants. AUTH-09B through AUTH-09E remain proposed and require their own
+explicit human starts, chunk contracts, deterministic proof, and review.
 
 The four proposed REV lifecycle actions and review-evidence binding action are
 blocked on complete feature-owned typed manifests. REV fixed services are also
