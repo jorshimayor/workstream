@@ -214,6 +214,22 @@ def test_local_rejects_nonmatching_namespace_claim_before_layout_mutation(
     bootstrap.close()
 
 
+def test_local_closes_pinned_descriptors_after_integrity_failure(tmp_path: Path) -> None:
+    """Release bootstrap ownership after any sanitized store initialization error."""
+    root = tmp_path / "artifacts"
+    root.mkdir(mode=0o700)
+    marker = root / ".workstream-artifact-store-v2"
+    marker.write_bytes(b"workstream-artifact-store-v2\n")
+    marker.chmod(0o644)
+    bootstrap = LocalStorageBootstrap(LocalStorageAdapter(root=root))
+    claim = local_namespace_claim(bootstrap)
+
+    with pytest.raises(ArtifactIntegrityError, match="object is unsafe"):
+        bootstrap.initialize_after_namespace_claim(claim)
+
+    assert bootstrap._adapter._root_fd == -1
+
+
 @pytest.mark.asyncio
 async def test_v2_operations_reject_unsealed_or_malformed_values(tmp_path: Path) -> None:
     adapter = initialize_local_store(root=tmp_path / "artifacts")

@@ -2168,3 +2168,11 @@ coverage source set omitted the new closed product-capability interface module.
 The 90 percent workflow gate and its deterministic command-shape assertion now
 include `app/interfaces/artifact_operations.py`. All reviewer sessions were
 closed; the repaired SHA requires fresh exact-SHA review.
+
+The next review found two Low closure gaps. The active and next ART focused
+commands did not explicitly measure the operations interface, and bootstrap
+initialization closed descriptors for configuration and operating-system errors
+but not every sanitized `ArtifactStoreError`. Both focused commands now include
+the operations interface, and initialization closes on all store errors with a
+regression test for an integrity failure. All reviewer sessions were closed;
+the repaired SHA requires fresh review.

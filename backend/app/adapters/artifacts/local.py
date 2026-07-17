@@ -117,7 +117,7 @@ class LocalStorageAdapter:
         self._initialized = False
         try:
             self._open_root(root)
-        except (ArtifactConfigurationError, ValueError):
+        except (ArtifactStoreError, ValueError):
             self.close()
             raise
         except OSError:
@@ -174,7 +174,7 @@ class LocalStorageAdapter:
             self._initialize_layout()
             self._initialized = True
             return self
-        except (ArtifactConfigurationError, ValueError):
+        except (ArtifactStoreError, ValueError):
             self.close()
             raise
         except OSError:
