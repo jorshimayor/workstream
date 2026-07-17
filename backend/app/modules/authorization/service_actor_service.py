@@ -202,6 +202,7 @@ class ServiceActorProvisioningService:
         if (
             profile is None
             or profile.actor_kind != "service"
+            or profile.status != "active"
             or profile.service_identity != request.service_identity.value
         ):
             raise ServiceActorProvisioningUnavailable(
@@ -213,6 +214,7 @@ class ServiceActorProvisioningService:
             or link.issuer != issuer
             or link.subject != subject
             or link.subject_kind != "service"
+            or link.status != "active"
         ):
             raise ServiceActorProvisioningUnavailable(
                 "committed service identity link is unavailable"

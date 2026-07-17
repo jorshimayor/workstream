@@ -409,7 +409,9 @@ are also closed:
 | `workstream.artifact.checker_output` | `artifact.checker_output.write` |
 
 AUTH-09B lets a system Access Administrator bind an exact configured-issuer
-subject to one of these fixed identities through `POST /api/v1/service-actors`.
+subject with no leading or trailing whitespace to one of these fixed identities
+through `POST /api/v1/service-actors`. Accepted subject bytes are preserved
+without normalization.
 It creates the service ActorProfile and ActorIdentityLink, but creates no role,
 grant, assignment, or executable service authority. A newly provisioned service
 profile has null `last_seen_at`, and its link has null `last_verified_at` until

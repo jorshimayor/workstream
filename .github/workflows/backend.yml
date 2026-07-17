@@ -92,6 +92,30 @@ jobs:
           --precision=2
           --fail-under=90
 
+      - name: Actor subsystem coverage
+        working-directory: backend
+        run: >-
+          coverage report
+          --include='app/modules/actors/*'
+          --precision=2
+          --fail-under=90
+
+      - name: Authorization subsystem coverage
+        working-directory: backend
+        run: >-
+          coverage report
+          --include='app/modules/authorization/*'
+          --precision=2
+          --fail-under=90
+
+      - name: Auth verifier boundary coverage
+        working-directory: backend
+        run: >-
+          coverage report
+          --include='app/interfaces/auth.py,app/core/auth.py,app/adapters/auth/dev.py,app/adapters/auth/flow.py'
+          --precision=2
+          --fail-under=90
+
       - name: API contract real API e2e
         working-directory: backend
         env:

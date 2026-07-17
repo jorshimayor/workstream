@@ -82,6 +82,7 @@ from app.modules.authorization.schemas import (
 )
 from app.modules.authorization.service import AuthorityMutationService
 from app.modules.authorization.kernel import AuthorizationService
+from app.modules.authorization.repository import AdminAuthorizationRepository
 from app.modules.authorization.admin_service import (
     AdminRoleGrantService,
     BootstrapAlreadyCompleted,
@@ -1978,6 +1979,79 @@ async def authorization_factory(authorization_database_env: str):
         await engine.dispose()
 
 
+@pytest.mark.asyncio
+async def test_authorization_locks_refresh_cached_actor_lifecycle_state(
+    authorization_factory,
+) -> None:
+    """Locked authorization rows must replace stale identity-map state."""
+    profile_id, link_id = uuid4(), uuid4()
+    now = datetime.now(UTC)
+    async with authorization_factory() as seed:
+        seed.add_all(
+            [
+                ActorProfile(
+                    id=str(profile_id),
+                    actor_kind="human",
+                    status="active",
+                    provisioning_method="automatic_first_access",
+                    created_by=str(profile_id),
+                ),
+                ActorIdentityLink(
+                    id=str(link_id),
+                    actor_profile_id=str(profile_id),
+                    issuer="https://identity.flowresearch.tech",
+                    subject=f"lock-refresh-{profile_id}",
+                    subject_kind="human",
+                    status="active",
+                    linked_by=str(profile_id),
+                    last_verified_at=now,
+                ),
+            ]
+        )
+        await seed.commit()
+
+    async with authorization_factory() as stale:
+        cached_profile = await stale.get(ActorProfile, str(profile_id))
+        cached_link = await stale.get(ActorIdentityLink, str(link_id))
+        assert cached_profile is not None and cached_profile.status == "active"
+        assert cached_link is not None and cached_link.status == "active"
+
+        async with authorization_factory() as lifecycle:
+            await lifecycle.execute(
+                text(
+                    "update actor_profiles set status='suspended', "
+                    "suspended_by=:actor, suspended_at=:changed_at, "
+                    "suspension_reason='security hold' where id=:actor"
+                ),
+                {"actor": str(profile_id), "changed_at": now},
+            )
+            await lifecycle.execute(
+                text(
+                    "update actor_identity_links set status='revoked', "
+                    "revoked_by=:actor, revoked_at=:changed_at, "
+                    "revoked_reason='credential revoked' where id=:link"
+                ),
+                {"actor": str(profile_id), "changed_at": now, "link": str(link_id)},
+            )
+            await lifecycle.commit()
+
+        locked = await AdminAuthorizationRepository(stale).lock_request_actor(
+            link_id,
+            profile_id,
+        )
+        assert locked is not None
+        locked_link, locked_profile = locked
+        assert locked_profile is cached_profile
+        assert locked_link is cached_link
+        assert locked_profile.status == "suspended"
+        assert locked_link.status == "revoked"
+        assert (
+            await AdminAuthorizationRepository(stale).lock_eligible_human(profile_id)
+            is None
+        )
+        await stale.rollback()
+
+
 def _request(target: UUID | None = None) -> ActorProfileSuspendRequest:
     return ActorProfileSuspendRequest(
         operation=AuthorityOperation.ACTOR_PROFILE_SUSPEND,
@@ -2754,6 +2828,17 @@ async def test_service_actor_replay_fails_closed_on_committed_state_drift() -> N
             service_identity=ServiceIdentity.ARTIFACT_SCHEDULER.value,
             created_by=profile.id,
         ),
+        profile.__class__(
+            id=profile.id,
+            actor_kind="service",
+            status="deactivated",
+            provisioning_method="manual_service_provisioning",
+            service_identity=profile.service_identity,
+            created_by=profile.id,
+            deactivated_by=profile.id,
+            deactivated_at=datetime.now(UTC),
+            deactivation_reason="retired",
+        ),
     ):
         actors.current_profile = current_profile
         with pytest.raises(ServiceActorProvisioningUnavailable, match="actor is unavailable"):
@@ -2794,6 +2879,18 @@ async def test_service_actor_replay_fails_closed_on_committed_state_drift() -> N
             status="active",
             linked_by=link.linked_by,
             last_verified_at=datetime.now(UTC),
+        ),
+        link.__class__(
+            id=link.id,
+            actor_profile_id=profile.id,
+            issuer=link.issuer,
+            subject=link.subject,
+            subject_kind="service",
+            status="revoked",
+            linked_by=link.linked_by,
+            revoked_by=link.linked_by,
+            revoked_at=datetime.now(UTC),
+            revoked_reason="rotated",
         ),
     ):
         actors.current_link = current_link

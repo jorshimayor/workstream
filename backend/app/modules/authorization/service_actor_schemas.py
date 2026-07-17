@@ -14,7 +14,7 @@ _STRICT = ConfigDict(extra="forbid", hide_input_in_errors=True)
 
 
 def _bounded_subject(value: str) -> str:
-    if not value.strip() or len(value.encode("utf-8")) > 200:
+    if not value.strip() or value != value.strip() or len(value.encode("utf-8")) > 200:
         raise ValueError("subject must contain 1 to 200 UTF-8 bytes")
     return value
 

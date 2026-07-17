@@ -712,8 +712,10 @@ it rolls back anything the route forgot to commit.
 ### Controlled Service Provisioning
 
 `POST /api/v1/service-actors` accepts only a fixed `service_identity`, opaque
-subject, bounded reason, and UUID `Idempotency-Key`. The issuer comes from the
-configured provider-neutral verifier; operators cannot submit or override it.
+subject with no leading or trailing whitespace, bounded reason, and UUID
+`Idempotency-Key`. Accepted subject bytes are preserved without normalization.
+The issuer comes from the configured provider-neutral verifier; operators
+cannot submit or override it.
 Only an effective system Access Administrator may call the route. A successful
 request creates one active service ActorProfile and exact identity link plus the
 allowed decision, `ServiceActorProvisioned`, linked invalidation, and committed
@@ -739,7 +741,8 @@ unit and return the bounded retryable `503 service_unavailable` envelope. Do
 not report a mutation as successful, retain a pending idempotency result, or
 advance verification timestamps. A retry uses the same idempotency key. Exact
 replays reauthorize current caller authority and canonical resource state before
-returning the stored response; mismatches commit only bounded denial evidence
+returning the stored response. A deactivated service profile or revoked service
+link makes replay unavailable; mismatches commit only bounded denial evidence
 from a clean transaction.
 
 ## Rollback

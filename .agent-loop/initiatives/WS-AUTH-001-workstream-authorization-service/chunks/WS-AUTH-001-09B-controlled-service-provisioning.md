@@ -71,8 +71,9 @@ identity model
 
 The strict body contains only `service_identity`, opaque `subject`, and required
 `reason`. `service_identity` is the closed `ServiceIdentity` enum. `subject` is
-preserved byte-for-byte as one non-empty identity anchor of at most 200 UTF-8
-bytes and is never normalized, logged, returned, or placed in evidence.
+one non-empty identity anchor of at most 200 UTF-8 bytes with no leading or
+trailing whitespace. Accepted subjects are preserved byte-for-byte and are
+never normalized, logged, returned, or placed in evidence.
 `reason` is bounded to 1-500 UTF-8 bytes, is never persisted, and only its
 canonical digest enters idempotency input. The required `Idempotency-Key` is a
 UUID.
@@ -203,9 +204,10 @@ migrations remain immutable. AUTH-10 through AUTH-15 move to `0025` through
 - Provisioning atomically creates one active fixed service ActorProfile and one
   active exact issuer/subject link plus the exact evidence/idempotency chain. It
   creates no assignment or grant rows and grants no executable service action.
-- Replay revalidates current human authority, reconstructs the original response
-  from immutable creation facts, advances only caller verification timestamps,
-  and never touches service verification state.
+- Replay revalidates current human authority, rejects a deactivated service
+  profile or revoked service link, reconstructs the original response from
+  immutable active creation facts, advances only caller verification
+  timestamps, and never touches service verification state.
 - Canonical request drift is independently proved for service identity,
   issuer/subject digest, and reason digest.
 - Unknown identities, service callers, agent/space subjects, duplicate subjects,

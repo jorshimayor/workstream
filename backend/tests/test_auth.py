@@ -3248,6 +3248,18 @@ async def test_controlled_service_actor_provisioning_is_atomic_private_and_concu
         assert invalid.status_code == 422
         assert rejected_subject not in invalid.text
         assert rejected_reason not in invalid.text
+        whitespace_subject = " private-service-subject "
+        whitespace = await client.post(
+            "/api/v1/service-actors",
+            headers={**admin_headers, "Idempotency-Key": str(uuid4())},
+            json=payload
+            | {
+                "service_identity": ServiceIdentity.ARTIFACT_PUT_RESOLVER.value,
+                "subject": whitespace_subject,
+            },
+        )
+        assert whitespace.status_code == 422
+        assert whitespace_subject not in whitespace.text
         invalid_identity = "private-unknown-service-identity"
         unknown = await client.post(
             "/api/v1/service-actors",

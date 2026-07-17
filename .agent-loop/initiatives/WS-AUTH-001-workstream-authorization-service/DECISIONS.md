@@ -580,9 +580,11 @@ registrations.
 Status: accepted as required AUTH-09B preimplementation repair on 2026-07-17.
 
 The provisioning administrator selects one fixed `ServiceIdentity` and supplies
-one opaque subject. The issuer is server-owned configuration exposed through the
-provider-neutral `AuthVerifier` port. It never comes from request input, provider
-branching, fallback configuration, or the administrator's own identity link.
+one opaque subject with no leading or trailing whitespace. Accepted subject
+bytes are preserved without normalization. The issuer is server-owned
+configuration exposed through the provider-neutral `AuthVerifier` port. It
+never comes from request input, provider branching, fallback configuration, or
+the administrator's own identity link.
 The identity digest consumes that exact already-validated issuer without a new
 scheme restriction, normalization step, or provider-specific path.
 

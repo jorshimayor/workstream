@@ -58,7 +58,10 @@ class AdminAuthorizationRepository:
     ) -> tuple[ActorIdentityLink, ActorProfile] | None:
         """Lock and validate the request actor profile before its exact link."""
         profile = await self._session.scalar(
-            select(ActorProfile).where(ActorProfile.id == str(actor_profile_id)).with_for_update()
+            select(ActorProfile)
+            .where(ActorProfile.id == str(actor_profile_id))
+            .with_for_update()
+            .execution_options(populate_existing=True)
         )
         if profile is None:
             return None
@@ -66,6 +69,7 @@ class AdminAuthorizationRepository:
             select(ActorIdentityLink)
             .where(ActorIdentityLink.id == str(identity_link_id))
             .with_for_update()
+            .execution_options(populate_existing=True)
         )
         if link is None or link.actor_profile_id != str(actor_profile_id):
             return None
@@ -156,6 +160,7 @@ class AdminAuthorizationRepository:
                 ActorProfile.status == "active",
             )
             .with_for_update()
+            .execution_options(populate_existing=True)
         )
         if profile is None:
             return None
@@ -168,6 +173,7 @@ class AdminAuthorizationRepository:
             .order_by(ActorIdentityLink.id)
             .limit(1)
             .with_for_update()
+            .execution_options(populate_existing=True)
         )
         if link is None:
             return None
