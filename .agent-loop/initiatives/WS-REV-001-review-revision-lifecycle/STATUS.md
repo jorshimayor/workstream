@@ -39,9 +39,13 @@ decisions.
   packet-read port or server-derived `Submission.artifact_hash` persistence;
   those require approved owner amendments before REV-07/10. REV never consumes
   ArtifactStore v1, scratch, provider, or ART repository APIs.
-- Merged `REV_CON_HANDOFF.md` controls contribution integration. CON must supply
-  ContributionPolicyVersion freezes and a mandatory flush-only participant.
-  Core creation copies stabilized versioned Submission `artifact_hash` lineage,
+- Merged `REV_CON_HANDOFF.md` plus the human-approved 2026-07-17 amendment
+  controls contribution integration. REV owns immutable FinalAcceptance and
+  creates it only for accept; CON must supply ContributionPolicyVersion freezes
+  and a mandatory flush-only contribution/award participant. Submitter
+  `accepted_submission` consumes FinalAcceptance rather than inferring
+  `Review.decision`. REV stages shared audit/outbox rows and commits once. Core
+  creation copies stabilized versioned Submission `artifact_hash` lineage,
   performs no ART call, and has no mandatory contribution-evidence projection.
 - The current canonical lifecycle uses `rejected` for human reject and
   `cancelled` with bounded reasons for approved administrative closure; REV will
@@ -70,9 +74,11 @@ fence sentence. Both are repaired through literal proof commands, a narrow
 tested technical-path/CLI classifier, and consistent pre-12A/released fence
 wording. Immutable snapshot
 `341d920496fbf7586d95a1c00bf8a6e575b9b157` then passed every required final
-review track with no findings. Its exact reviewed-SHA evidence binding and
-publication gates are current. Earlier AUTH/ART dependency review files remain
-dated evidence; their old future-count assumptions do not override WS-XINT.
+review track with no findings. The later human-approved FinalAcceptance
+amendment reopens planning review; that older evidence remains historical and
+must not be used to publish the amended snapshot. Earlier AUTH/ART dependency
+review files remain dated evidence; their old future-count assumptions do not
+override WS-XINT.
 
 ## Human clarification retained
 
@@ -85,8 +91,11 @@ dated evidence; their old future-count assumptions do not override WS-XINT.
   and Flow Node remains deferred.
 - Artifact bytes are restricted to the exact active leased packet; bounded chain
   metadata remains available to authorized participants.
-- Every Review creates reviewer contribution; only accept also creates submitter
-  contribution. Guide rebase never changes frozen ContributionPolicyVersion.
+- Every decision appends an immutable Review, and every submitted finding and
+  later resolution is immutable. Every Review creates reviewer contribution.
+  When the decision is `accept`, REV also creates one immutable FinalAcceptance;
+  only that fact creates submitter contribution. Guide rebase never changes the
+  frozen ContributionPolicyVersion.
 
 ## Stop condition
 

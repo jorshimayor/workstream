@@ -32,6 +32,27 @@ WS-XINT-001 PR #139 merged to trusted main
 - `.agent-loop/initiatives/WS-XINT-001-lifecycle-boundary-reconciliation/ART_REV_HANDOFF.md`
 - `.agent-loop/initiatives/WS-XINT-001-lifecycle-boundary-reconciliation/REV_CON_HANDOFF.md`
 
+## Later human-approved boundary amendment
+
+On 2026-07-17 the human explicitly amended the merged REV/CON handoff for v0.1:
+
+- every valid reviewer decision, submitted finding, and later resolution is
+  immutable; later rounds append new history;
+- `Review(accept)` additionally creates one immutable REV-owned
+  `FinalAcceptance`;
+- submitter `accepted_submission` consumes FinalAcceptance rather than inferring
+  acceptance directly from `Review.decision`;
+- the REV request owns one transaction, CON flushes contribution/award rows,
+  REV stages shared audit/outbox rows, and REV commits once; and
+- adjudication remains disabled and unimplemented in v0.1 while existing
+  boundary/interface compatibility is retained for separately approved future
+  work.
+
+This explicit amendment supersedes conflicting contribution-trigger and
+audit/outbox-staging wording in the merged handoff. It changes planning only;
+the corresponding CON/handoff/shared-doc owner changes must merge before any
+runtime REV consumer starts.
+
 ## Dependency specifications and plans
 
 - `docs/reference_specs/WS-AUTH-001-actor-profile-role-and-authorization-service-specification.md`

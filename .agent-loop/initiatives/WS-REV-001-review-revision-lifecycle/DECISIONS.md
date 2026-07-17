@@ -286,35 +286,65 @@ may leave only an ART-owned unbound candidate governed by ART retention; it
 creates no canonical binding/relation or lifecycle effect. Decision and
 resubmission revalidate the relation again.
 
-### D15 - Submission And Review Chains Drive Contributions
+### D15 - FinalAcceptance Is The Sole Submitter-Acceptance Source
 
 There is one immutable Review for each reviewed Submission version, with the
 Review predecessor chain following the Submission predecessor chain. A separate
 mutable "review version" entity is unnecessary. Both submitter and authorized
 reviewer history views traverse all Submission/Review versions and bounded logs.
 
-Every committed Review creates exactly one reviewer ContributionRecord. Only an
-`accept` Review additionally creates exactly one submitter ContributionRecord
-for the accepted Submission version. All records, review effects, audit, and
-outbox state commit or roll back together through WS-CON.
+Every valid reviewer decision appends one immutable Review. Every submitted
+finding and every later resolution is immutable; later revision rounds append a
+new Review, findings, and resolutions rather than updating prior judgment.
+Every committed Review creates exactly one reviewer ContributionRecord. When
+that Review's decision is `accept`, REV also creates one immutable
+`FinalAcceptance`; CON creates the submitter ContributionRecord only from that
+fact. `needs_revision` and `reject` create no FinalAcceptance and no submitter
+contribution.
+
+The repository's existing immutable `Submission` row is the version identity,
+so the handoff's conceptual `submission_version_id` is persisted as canonical
+`submission_id`. `FinalAcceptance` contains `id`, `project_id`, `task_id`,
+`submission_id`, `source_review_id`, `accepted_submitter_id`, `accepted_at`,
+`recorded_by`, and `policy_context_ref`. The policy reference is a foreign key
+to the exact immutable `ReviewPolicy.id` whose project/guide version matches the
+reviewed Submission context. PostgreSQL enforces unique task, source Review, and
+Submission acceptance, same-chain project/task/submission/reviewer/submitter
+integrity, immutability, and human actor kinds.
+
+FinalAcceptance has no public/manual create API and no independent authorization
+action. It is created only as the internal consequence of an already-authorized
+`Review(accept)` transaction. This v0.1 model has no reopen or replacement path;
+future adjudication may consume immutable facts through a separately approved
+lifecycle without changing this decision path now.
 
 The WS-CON input is derived exclusively from locked immutable lineage. It
-contains Review, ReviewLease, versioned Submission, TaskAssignment, reviewer,
-submitter, project/task, originating AuthorizationDecision, the exact frozen
-`ContributionPolicyVersion`, and the server-derived stabilized Submission
-`artifact_hash`. CON copies that value to `ContributionRecord.artifact_hash` and
-does not load, verify, or rederive it through ART. The current caller-supplied
-`Submission.package_hash` is not that field; the ART submission/checker cutover
-must add and bind the exact verified value before REV-10.
+contains Review, ReviewLease, FinalAcceptance for `accept` and null otherwise,
+versioned Submission,
+TaskAssignment, reviewer, submitter, project/task, originating
+AuthorizationDecision, the exact frozen `ContributionPolicyVersion`, and the
+server-derived stabilized Submission `artifact_hash`. CON copies that value to
+`ContributionRecord.artifact_hash` and does not load, verify, or rederive it
+through ART. The current caller-supplied `Submission.package_hash` is not that
+field; the ART submission/checker cutover must add and bind the exact verified
+value before REV-10.
 
-CON creates one reviewer `completed_review` record for every Review and one
-submitter `accepted_submission` record only for `accept`, evaluates the matching
-frozen ContributionRule, creates no award for explicit unpaid, and creates
-immutable money and/or project-points awards when payable. Derived inserts do
-not invent `contribution.materialize` or `compensation.award.materialize`
-actions. Core creation calls no ART capability and performs no external I/O.
-Any contribution-evidence document is optional post-commit projection state and
-cannot gate or alter Review, ContributionRecord, award, fulfillment, or status.
+CON creates one reviewer `completed_review` directly from Review/ReviewLease and
+one submitter `accepted_submission` only from FinalAcceptance/TaskAssignment.
+Database checks keep those source shapes mutually exclusive, with one
+`completed_review` per Review and one `accepted_submission` per
+FinalAcceptance. CON evaluates the matching frozen ContributionRule, creates no
+award for explicit unpaid, and creates immutable money and/or project-points
+awards when payable. Derived inserts do not invent `contribution.materialize` or
+`compensation.award.materialize` actions.
+
+REV owns the request transaction: it creates Review and optional
+FinalAcceptance, applies lifecycle effects, calls the mandatory CON flush-only
+participant, stages shared audit/outbox rows from typed participant results, and
+commits once. Any CON or later REV failure rolls everything back. Core creation
+calls no ART capability and performs no external I/O. External fulfillment and
+optional contribution-evidence projection begin only after commit and cannot
+alter canonical acceptance or contribution truth.
 
 ### D16 - Canonical Actor IDs Are Product Lineage
 

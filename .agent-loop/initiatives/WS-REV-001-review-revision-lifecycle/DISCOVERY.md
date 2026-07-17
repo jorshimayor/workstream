@@ -156,15 +156,17 @@ chunks must preserve these merged invariants and still wait for the later AUTH
 
 - No contribution policy, award, fulfillment outbox, or callback
   models are implemented in this snapshot.
-- Revised WS-REV requires one reviewer contribution for every Review and a
-  submitter contribution only on `accept`.
+- Revised WS-REV requires one reviewer contribution for every Review. On
+  `accept`, REV creates one immutable `FinalAcceptance`; the submitter
+  contribution consumes that fact rather than `Review.decision` directly.
 - WS-CON requires the reviewer `ContributionPolicyVersion` to be frozen on the
-  `ReviewLease` and its flush-only transaction participant to commit or roll
-  back with the Review, task/assignment effects, awards, audit, and outbox.
+  `ReviewLease` and its flush-only contribution/award participant to commit or
+  roll back with Review, FinalAcceptance, task/assignment effects, audit, and
+  outbox. REV owns audit/outbox staging and the single commit.
 - Review core may be built behind an unexposed composition boundary, but the
   public decision endpoint cannot be enabled with a no-op contribution path.
-- Core contribution creation receives locked Review/Submission/assignment/
-  policy facts from REV, copies the stabilized versioned Submission
+- Core contribution creation receives locked Review/FinalAcceptance/Submission/
+  assignment/policy facts from REV, copies the stabilized versioned Submission
   `artifact_hash` into `ContributionRecord.artifact_hash`, and performs no ART
   call, provider I/O, or mandatory contribution-evidence artifact write.
 
@@ -182,9 +184,10 @@ chunks must preserve these merged invariants and still wait for the later AUTH
    and exact AUTH-09E static rows.
 5. Review evidence uses ART candidate/finalize and its exact binding service
    action. Final decisions use stabilized binding facts without provider I/O.
-6. Contribution creation is a caller-owned single transaction using a CON
-   flush-only participant, frozen `ContributionPolicyVersion` rows, and no core
-   ART dependency or mandatory evidence projection.
+6. Contribution creation is a REV-request-owned single transaction using a CON
+   flush-only contribution/award participant, FinalAcceptance for `accept`,
+   frozen `ContributionPolicyVersion` rows, REV-staged audit/outbox records, and
+   no core ART dependency or mandatory evidence projection.
 
 ## Existing infrastructure
 

@@ -53,6 +53,19 @@ runtime implementation or dependency changes
   mutations, ART v2 packet/evidence ports, ReviewPacketManifest,
   ReviewEvidenceArtifact, flush-only CON integration, stabilized artifact_hash
   lineage, and optional contribution evidence are closed across all artifacts.
+- Every valid decision appends an immutable Review; every submitted finding and
+  later resolution is immutable; later rounds append rather than overwrite.
+- The plan defines one internal immutable FinalAcceptance only as a consequence
+  of `Review(accept)`, maps conceptual submission-version identity to existing
+  `Submission.id`, binds the exact ReviewPolicy context and canonical actors,
+  enforces unique task/Review/Submission lineage, and adds no separate create
+  action or public/manual API.
+- Reviewer `completed_review` lineage remains direct from Review/ReviewLease.
+  Submitter `accepted_submission` lineage requires FinalAcceptance and never
+  infers acceptance directly from `Review.decision`.
+- REV owns the decision transaction and shared audit/outbox staging. CON is a
+  mandatory flush-only contribution/award participant that returns typed
+  audit/outbox inputs, never commits, and performs no ART/provider call.
 - Observations, decisions, risks, unknowns, and dependencies are separated.
 - Every proposed chunk has scope, exclusions, testable criteria, risk,
   verification, reviewers, and human focus.
@@ -83,9 +96,11 @@ reuse/dedup, test-delta, and CI integrity.
 
 ## Human review focus
 
-Archival provenance, provider correction, revision-limit behavior, controlled
-rebase, server-selected review offers, cross-initiative gates, and coherent
-production activation only after recovery/operations/live proof.
+Archival provenance, immutable Review/finding/resolution history,
+FinalAcceptance lineage and uniqueness, transaction ownership, provider
+correction, revision-limit behavior, controlled rebase, server-selected review
+offers, cross-initiative gates, and coherent production activation only after
+recovery/operations/live proof.
 
 ## Stop condition
 

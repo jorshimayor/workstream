@@ -286,9 +286,10 @@ Operator authority is never borrowed as a job identity.
 
 REV-08 now freezes the decision contract without committing a canonical
 Review. REV-10 creates the first canonical Review transaction only after the
-CON flush-only participant is merged; every Review creates a reviewer
-ContributionRecord, accept also creates the submitter record, and CON performs
-no ART call. The plan interprets the handoff's versioned Submission lineage as
+CON flush-only participant is merged. At that historical snapshot, every Review
+created a reviewer ContributionRecord and the submitter record was triggered
+directly by `accept`; the later FinalAcceptance amendment below supersedes that
+trigger. CON performs no ART call. The plan interprets the handoff's versioned Submission lineage as
 the repository's existing immutable versioned `Submission`, requiring the ART
 cutover to stabilize server-derived `Submission.artifact_hash` before CON copies
 it to `ContributionRecord.artifact_hash`. Optional contribution-evidence
@@ -359,3 +360,31 @@ that the exact live-drill CLI classifier accepted a suffixed `-beat` near miss.
 The matcher now requires end-of-token or whitespace after `-beat`, and negative
 regressions reject suffixed variants of both allowed flags. No broader exemption
 or test weakening is permitted.
+
+## FinalAcceptance Boundary Amendment - 2026-07-17
+
+After the prior publication snapshot, the human approved a material lifecycle
+amendment: every reviewer decision remains an immutable Review, every submitted
+finding and later resolution remains immutable, and later rounds append rather
+than rewrite. When a Review decision is `accept`, REV additionally creates one
+immutable FinalAcceptance. CON creates `accepted_submission` only from that
+fact; `completed_review` remains directly sourced from every Review.
+
+The human also clarified transaction ownership: the review request owns the
+single transaction, CON is a flush-only contribution/award participant, REV
+stages shared audit/outbox rows, and REV commits once. No ART/provider call is
+allowed in the transaction. Adjudication remains disabled for v0.1; dormant
+interface compatibility does not authorize adjudication behavior or readiness.
+
+Initial amendment wording used the phrase "accept-only immutable
+FinalAcceptance." The human correctly rejected it as ambiguous because it could
+suggest that only accepted Reviews are immutable. The plan now states the two
+independent rules explicitly throughout: all Review/finding/resolution history
+is immutable, and FinalAcceptance is an additional immutable record created only
+when the new Review decision is `accept`. The lock choreography was also
+corrected: FinalAcceptance is appended after the Review; it is not an existing
+row in the pre-write lock set.
+
+This material change invalidates the prior exact-SHA publication evidence.
+Fresh deterministic gates and all required internal reviewer tracks must pass on
+a new immutable snapshot before PR #128 is refreshed.

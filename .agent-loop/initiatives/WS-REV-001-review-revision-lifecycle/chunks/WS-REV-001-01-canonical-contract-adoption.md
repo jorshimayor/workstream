@@ -130,9 +130,12 @@ frontend work
   unavailable endpoints from implemented behavior; the scanner has no temporary
   allowlist or exception that can outlive this chunk.
 - Principles, lifecycle-state, and project-operating docs state the same
-  deterministic one-guide rebase rule and the WS-CON creation matrix: every
-  committed Review creates reviewer contribution, while only accept additionally
-  creates the accepted Submission's submitter contribution.
+  deterministic one-guide rebase rule and the WS-CON creation matrix. Every
+  valid decision appends an immutable Review; every submitted finding and later
+  resolution is immutable; every committed Review creates reviewer contribution.
+  When the decision is `accept`, REV also creates one immutable FinalAcceptance,
+  and the submitter contribution is sourced from that fact rather than inferred
+  from `Review.decision`.
 - The active contract defines every human lifecycle identity as canonical
   `ActorProfile.id`, defines distinct AUTH-09E fixed-service identities/static
   rows for protected jobs, removes retired compensation context from revision context,
@@ -146,7 +149,14 @@ frontend work
   `package_hash` is not trusted or silently renamed.
 - Core contribution creation uses frozen `ContributionPolicyVersion`, a CON
   flush-only participant, no ART call, and no mandatory contribution-evidence
-  projection. CON owns its public routes and transitions.
+  projection. REV stages shared audit/outbox records and owns the single
+  decision commit; CON owns its contribution/award behavior, public routes, and
+  fulfillment transitions.
+- Active contracts define FinalAcceptance as an internal immutable REV fact
+  created only when a new Review has decision `accept`. It has unique
+  task/source-Review/Submission lineage, exact ReviewPolicy and canonical actor
+  links, no manual/public create API, and no separate AUTH action. The existing
+  Submission is the version identity.
 - Human reject uses canonical task `rejected`; approved administrative
   revision-obligation closure uses `cancelled` with a bounded reason. No active
   `closed/review_rejected` status token is introduced.

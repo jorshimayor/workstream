@@ -2,8 +2,10 @@
 
 ## Goal
 
-Add immutable Review, finding, submitter response, resolution, evidence
-relation, decision idempotency, and projection-request persistence.
+Add persistence for immutable Review records, immutable submitted findings and
+resolutions, and the immutable FinalAcceptance created only for an `accept`
+Review, together with submitter responses, evidence relations, decision
+idempotency, and projection requests.
 
 Chunk start requires the merged shared transactional-outbox contract. All
 projection requests below use that shared foundation.
@@ -33,12 +35,31 @@ artifact provider implementation
 grant or permission implementation
 contribution/compensation models
 mutable Review/finding/resolution rows
+manual/public FinalAcceptance creation
 review-private outbox or delivery queue
 ```
 
 ## Acceptance criteria
 
 - One Review per Submission and synchronized predecessor-chain constraints.
+- Every Review is immutable regardless of whether its decision is `accept`,
+  `needs_revision`, or `reject`. Every submitted ReviewFinding and every later
+  FindingResolution is immutable. A later review round appends new rows and
+  never updates prior judgment or findings.
+- `FinalAcceptance` is an immutable internal REV record with canonical
+  `submission_id` implementing the conceptual Submission-version identity,
+  `project_id`, `task_id`, `source_review_id`, `accepted_submitter_id`,
+  `accepted_at`, `recorded_by`, and `policy_context_ref` constrained to the
+  exact immutable ReviewPolicy row matching the reviewed Submission context.
+- PostgreSQL enforces `UNIQUE(task_id)`, `UNIQUE(source_review_id)`, and
+  `UNIQUE(submission_id)`, plus same-chain project/task/Submission/Review,
+  accepted-submitter/TaskAssignment, recording-reviewer/ReviewLease, policy,
+  and canonical-human-actor integrity. Direct SQL cannot update/delete it or
+  create a crossed acceptance.
+- This persistence chunk exposes no service, route, action, or background
+  command capable of creating FinalAcceptance. Only REV-10 may append it, and
+  only in the same transaction that appends a new Review whose decision is
+  `accept`, after the mandatory CON participant has merged.
 - `ReviewEvidenceArtifact` is an immutable REV semantic relation over one
   finalized ART binding. Before decision it is identified by exact lease,
   operation kind, evidence slot, and idempotency identity; after decision it may
@@ -55,8 +76,8 @@ review-private outbox or delivery queue
 - Immutable findings use only blocking/advisory severity.
 - Finding responses and resolutions are immutable and uniquely scoped.
 - Evidence relation rows reference canonical ArtifactBinding IDs and are unique.
-- Decision idempotency commits only with one canonical Review and detects changed
-  payload reuse.
+- Decision idempotency completes only with one canonical Review and, for accept,
+  exactly one FinalAcceptance; it detects changed payload reuse.
 - `ReviewDecisionRequest` reuses `canonical_json_hash`, shared request and
   correlation identifiers, and the reserve/lock/complete transaction shape,
   while keeping a review-specific operation/response matrix. No cloned JSON
@@ -92,9 +113,9 @@ reuse/dedup, and test-delta.
 
 ## Human review focus
 
-Immutability enforcement, predecessor integrity, evidence ownership, and
-idempotency atomicity. Multi-version/takeover chain negatives receive explicit
-human attention.
+Immutability enforcement, FinalAcceptance uniqueness/cross-chain integrity,
+predecessor integrity, evidence ownership, and idempotency atomicity.
+Multi-version/takeover chain negatives receive explicit human attention.
 
 ## Stop condition
 

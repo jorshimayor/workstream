@@ -2,8 +2,9 @@
 
 ## Goal
 
-Install the exact merged CON flush-only participant and create the first hidden
-service capable of committing a canonical Review decision atomically with task,
+Install the exact merged CON flush-only contribution/award participant and
+create the first hidden service capable of committing a canonical Review and
+the FinalAcceptance created for an `accept` Review atomically with task,
 contribution, award, audit, and outbox effects. Production routes remain absent.
 
 ## Risk class
@@ -34,6 +35,9 @@ ART capability call, provider I/O, or contribution-evidence artifact write in th
 production `/api/v1` review-router registration
 CON router, repository, policy, outbox, award, fulfillment, or projection edits
 submitter contribution for needs_revision or reject
+submitter contribution inferred directly from Review.decision
+manual/public FinalAcceptance create route or separate authorization action
+CON-owned commit or shared audit/outbox staging
 reputation scoring
 ```
 
@@ -43,14 +47,32 @@ reputation scoring
   reviewer authority; REV locks idempotency, queue, lease, task, assignment,
   versioned Submission, predecessor Review, and packet/evidence facts; REV
   recomposes final context; AUTH evaluates once and stages evidence; REV/task/
-  CON participants flush; the caller commits once. This hidden service has no
+  CON participants flush; REV stages shared audit/outbox rows; the caller
+  commits once. This hidden service has no
   public route or background-command entry point. REV-12A later installs the
   mandatory lifecycle fence before REV-13 releases any decision surface.
 - Every committed Review creates exactly one reviewer
-  `contribution_type=completed_review`. `accept` additionally creates exactly one
-  submitter `contribution_type=accepted_submission`; `needs_revision` and
-  `reject` create none for the submitter.
-- CON receives locked Review, ReviewLease, Submission row/version,
+  `contribution_type=completed_review` directly from Review and ReviewLease.
+  Every Review, submitted finding, and resolution is immutable for all three
+  decisions. When the decision is `accept`, REV also creates exactly one
+  immutable same-chain FinalAcceptance and CON creates exactly one submitter
+  `contribution_type=accepted_submission` from that fact plus TaskAssignment.
+  `needs_revision` and `reject` create no FinalAcceptance or submitter record.
+- Reviewer contributions require `source_review_id` and
+  `source_review_lease_id`, with `source_final_acceptance_id` null. Submitter
+  contributions require `source_final_acceptance_id` and
+  `source_task_assignment_id`, with direct `source_review_id` and
+  `source_review_lease_id` null. PostgreSQL checks enforce these mutually
+  exclusive shapes, one `completed_review` per Review, and one
+  `accepted_submission` per FinalAcceptance.
+- `FinalAcceptance` uses the exact REV-04 schema and constraints: unique task,
+  source Review, and Submission; exact accepted submitter, recording reviewer,
+  project/task, and immutable ReviewPolicy context. It is created only as an
+  internal consequence of the authorized accept path, with no separate action
+  or API.
+- CON receives locked Review and ReviewLease plus FinalAcceptance when the
+  decision is `accept`, otherwise null, together with the
+  Submission row/version,
   TaskAssignment, canonical reviewer/submitter, project/task, originating
   AuthorizationDecision, request/correlation references, and the exact frozen
   reviewer/submitter `ContributionPolicyVersion` references.
@@ -60,21 +82,26 @@ reputation scoring
   to `ContributionRecord.artifact_hash`. Caller `package_hash`, a renamed
   source-digest field, or a live ART lookup cannot substitute.
 - Database/transaction validation requires Review/reviewer/lease consistency,
-  Review/Submission consistency, Submission contributor/assignment consistency,
-  and same project/task lineage. Current TaskAssignment, current project policy,
-  or caller-supplied actor/hash facts cannot substitute.
+  FinalAcceptance/Review/Submission/policy/actor consistency,
+  Submission contributor/assignment consistency, and same project/task lineage.
+  Current TaskAssignment, current project policy, direct `Review.decision`
+  inference, or caller-supplied actor/hash facts cannot substitute.
 - CON evaluates the frozen ContributionRule. Explicit unpaid creates no award;
   payable creates immutable money and/or project-points CompensationAward rows.
   Adapters fulfill awards after commit and never decide eligibility.
 - Derived inserts inside `review.decision` do not invent
   `contribution.materialize` or `compensation.award.materialize` actions.
-- Review, findings, ReviewEvidenceArtifact links, resolutions, queue/lease,
-  task/assignment effects, contributions, awards, audit, and shared-outbox rows
-  commit or roll back together. CON never commits or performs network/provider I/O.
+- Review and submitted findings/resolutions for every decision,
+  FinalAcceptance when the decision is `accept`, ReviewEvidenceArtifact links,
+  queue/lease, task/assignment effects, contributions, awards,
+  audit, and shared-outbox rows commit or roll back together. CON flushes only
+  its contribution/award rows, returns typed audit/outbox inputs, never commits,
+  and performs no network/provider I/O. REV stages the shared rows.
 - CON failure rolls back the entire decision. No no-op participant, post-commit
   canonical contribution repair, or Review-only success path exists.
-- Exact replay duplicates no Review, contribution, award, audit, or outbox row;
-  changed replay conflicts. Replay reauthorizes result disclosure.
+- Exact replay duplicates no Review, FinalAcceptance, contribution, award,
+  audit, or outbox row; changed replay conflicts. Replay reauthorizes result
+  disclosure.
 - Independent Postgres barriers cover decision versus expiry, reviewer
   revocation, binding-state drift, and duplicate/changed replay in both orders.
   Fault injection after every REV/task/CON/audit/outbox stage proves zero partial
@@ -84,8 +111,9 @@ reputation scoring
   outbox state together.
 - Same-reviewer and takeover matrices prove v1 `needs_revision` then v2
   accept/reject follows exact Submission/Review predecessors, attributes each
-  reviewer record to the actual Review author, and creates the sole submitter
-  record only for accepted v2.
+  reviewer record to the actual Review author. The v1 Review/findings remain
+  unchanged, and only accepted v2 creates FinalAcceptance and its submitter
+  record.
 - Forward/backward guide rebase leaves TaskAssignment ContributionPolicyVersion
   unchanged; each Review uses its lease freeze; reviewer award eligibility is
   decision-neutral for the same frozen rule.
@@ -118,9 +146,9 @@ reuse/dedup, and test-delta.
 
 ## Human review focus
 
-AUTH-first lock/evaluation order, mandatory CON participant, exact immutable
-lineage, no ART call, contribution creation matrix, replay, rollback, and route
-absence.
+AUTH-first lock/evaluation order, FinalAcceptance uniqueness and exact immutable
+lineage, mandatory CON participant, REV-owned audit/outbox staging, no ART call,
+contribution creation matrix, replay, rollback, and route absence.
 
 ## Stop condition
 

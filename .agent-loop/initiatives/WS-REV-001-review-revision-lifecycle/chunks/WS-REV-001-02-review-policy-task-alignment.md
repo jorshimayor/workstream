@@ -50,6 +50,10 @@ synthetic reject from checker, deadline, or revision limit
   precondition above before migration or runtime edits begin.
 - Review policy stores task-lockable preference, lease, capacity=1,
   self-review=false, close-task reject, and finding-evidence settings.
+- Once a ReviewPolicy is part of an activated Project Guide context, it is
+  immutable; policy changes require a new guide version. Its canonical UUID is
+  the typed `policy_context_ref` later stored by FinalAcceptance, while Task and
+  Submission continue to stamp the matching locked review-policy version.
 - Existing policy rows receive an explicit safe migration rule; unsafe data
   fails with a remediation message.
 - Task supports canonical `accepted`, `rejected`, and `cancelled` transitions

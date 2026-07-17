@@ -3,8 +3,9 @@
 ## Goal
 
 Freeze the immutable review-decision request, pure validation, task-effect
-participant, lock/fact contract, and CON participant input for all three
-decisions. Do not create a canonical Review-committing service before CON merges.
+participant, lock/fact contract, the FinalAcceptance consequence of `accept`,
+and CON participant input for all three decisions. Do not create a canonical
+Review/FinalAcceptance-committing service before CON merges.
 
 ## Risk class
 
@@ -26,7 +27,7 @@ backend/tests/test_{reviews,tasks,authorization,artifacts,audit}.py
 ```text
 public decision route
 production no-op WS-CON participant
-any code path that commits a canonical Review without the exact CON participant
+any code path that commits a canonical Review or FinalAcceptance without the exact CON participant
 remote storage calls inside the transaction
 mutation of prior Submission, Review, ReviewFinding, or FindingResolution
 reputation or fulfillment logic
@@ -46,13 +47,29 @@ reputation or fulfillment logic
   caller's AsyncSession. It flushes without commit, reuses TaskRepository and
   lifecycle guards internally, and is the only path for review-driven task or
   assignment effects; review code never imports TaskRepository.
-- Accept effects complete assignment and target `accepted`; needs revision keeps
-  assignment active; human reject blocks only that assignment and targets
-  canonical `rejected` with reason. Administrative closure is not a decision.
-- Pure tests prove the future atomic write set: Review, findings,
-  ReviewEvidenceArtifact links, resolutions, queue/lease, task effects, audit,
-  projection event, CON records, awards, and outbox. This chunk does not expose a
-  service capable of committing that set.
+- Common effects append one immutable Review and every submitted immutable
+  finding/resolution, consume the ReviewLease, and close the ReviewQueueEntry.
+  Accept then appends FinalAcceptance, completes the assignment, and targets
+  `accepted`; needs revision appends no FinalAcceptance, keeps the assignment
+  active, and targets `needs_revision`; human reject appends no FinalAcceptance,
+  blocks only that assignment, and targets canonical `rejected` with reason.
+  Administrative closure is not a decision.
+- Every decision branch appends one immutable Review and any submitted immutable
+  findings/resolutions. The `accept` branch additionally prepares one
+  same-chain immutable FinalAcceptance after creating the Review;
+  needs_revision/reject prepare none and cannot create a submitter contribution.
+  No separate FinalAcceptance authorization action or public/manual creation
+  contract exists.
+- The frozen CON request carries exact Review/ReviewLease facts and carries the
+  newly created FinalAcceptance when the decision is `accept`, otherwise null.
+  Reviewer contribution is direct Review lineage; submitter contribution is
+  FinalAcceptance lineage. CON returns typed audit/outbox staging inputs and
+  never commits.
+- Pure tests prove the future atomic write set: immutable Review and submitted
+  findings/resolutions for every decision, FinalAcceptance for `accept`,
+  ReviewEvidenceArtifact links,
+  queue/lease, task effects, CON contributions/awards, REV-staged audit, and
+  outbox. This chunk does not expose a service capable of committing that set.
 - Exact replay contract returns the Review after REV-10; changed replay fails.
 - Idempotency is bound to actor, operation, lease, submission, and canonical
   payload. Replay reauthorizes disclosure for the same actor without requiring
@@ -61,8 +78,9 @@ reputation or fulfillment logic
 - The decision actor is the active canonical human `ActorProfile.id` that owns
   the exact ReviewLease. UUID shape alone is insufficient; a service actor,
   system principal, legacy ID, or external subject cannot decide a Review.
-- No hidden or production composition can commit a Review. Absence of the exact
-  CON participant fails construction; no optional/no-op path exists.
+- No hidden or production composition can commit a Review or FinalAcceptance.
+  Absence of the exact CON participant fails construction; no optional/no-op
+  path exists.
 - This chunk proves command-specific lock planning and the task participant. Full
   decision races, participant rollback, and canonical commits move to REV-10
   after CON merges.
@@ -88,8 +106,9 @@ reuse/dedup, and test-delta.
 
 ## Human review focus
 
-Complete decision input/effect contract, no premature canonical commit, route
-absence, and no contribution or storage side-effect gap hidden by tests.
+Complete decision contract and FinalAcceptance consequence, no premature
+canonical commit, route absence, and no contribution or storage side-effect gap
+hidden by tests.
 
 ## Stop condition
 

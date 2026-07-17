@@ -30,15 +30,25 @@ outcomes.
 - Reviewers see full bounded Submission/Review history, but artifact content is
   restricted to the canonical current review packet anchored to the exact
   Submission covered by their active lease.
-- `accept`, `needs_revision`, and `reject` are immutable, idempotent, atomic
-  decisions with the specified task and assignment effects.
+- Every valid reviewer decision appends a new immutable `Review`. Every finding
+  submitted with that Review and every later finding resolution is also
+  immutable; later revision rounds append new records rather than changing old
+  ones. `accept`, `needs_revision`, and `reject` remain idempotent, atomic
+  decision values with their specified task and assignment effects.
+- When the immutable Review decision is `accept`, the same transaction also
+  creates one immutable REV-owned `FinalAcceptance` linked to that Review and
+  Submission. Submitter contribution lineage consumes that stable fact rather
+  than inferring acceptance from `Review.decision`.
 - Revisions respond to every unresolved blocking finding, preserve both
   predecessor chains, prepare the latest approved Project Guide context when it
   changed, and return to the prior reviewer before falling back to open FIFO.
 - Artifact outage or integrity failure blocks judgment without creating an
   adverse contributor outcome.
-- Every committed review joins the `WS-CON-001` contribution and compensation
-  transaction before any public review lifecycle route is enabled.
+- Every committed Review joins the `WS-CON-001` contribution and conditional
+  compensation transaction before any public review lifecycle route is enabled.
+  Every decision creates the reviewer contribution. When the decision is
+  `accept`, REV also creates `FinalAcceptance`, and CON creates the submitter
+  contribution from that fact.
 - Guide rebase never rebases compensation: TaskAssignment freezes submitter
   terms and each ReviewLease independently freezes reviewer terms.
 - Timers, revocation recovery, reconciliation, projection, audit,
@@ -63,7 +73,8 @@ outcomes.
   asynchronous, and retryable.
 - Keep review code free of contribution-policy, award, fulfillment, and
   reputation policy. `WS-CON-001` owns the flush-only transaction participant;
-  core contribution creation performs no ART call or external I/O.
+  REV owns the request transaction and shared audit/outbox staging, while core
+  contribution/award creation performs no ART call or external I/O.
 - Keep frontend delivery separate until backend contracts and lifecycle guards
   are stable and proven.
 
@@ -105,6 +116,11 @@ outcomes.
    Submission `artifact_hash` lineage, evaluates the frozen
    `ContributionPolicyVersion`, and has no mandatory contribution-evidence
    artifact projection.
+9. The v0.1 acceptance boundary is `Review(accept) -> FinalAcceptance ->
+   accepted_submission`. `FinalAcceptance` is an internal REV-owned derived
+   fact with no manual/public create API or separate authorization action. The
+   review request creates it and calls CON's flush-only participant in one
+   transaction; REV stages shared audit/outbox records and commits once.
 
 Items 3-5 and the proposed chunk sequence were approved by the human on
 2026-07-15 for planning publication. This approval does not activate a successor

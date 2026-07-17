@@ -60,7 +60,9 @@ AUTH action registration, ActionOwner/evaluator edit, or availability change
 ## Acceptance criteria
 
 - HTTP drill proves first submission, needs revision, revision preparation,
-  response evidence, preferred return, preference expiry/takeover, and accept.
+  response evidence, preferred return, preference expiry/takeover, and accept
+  with a new immutable Review and exactly one immutable FinalAcceptance. It
+  proves the earlier needs_revision Review and findings remain unchanged.
 - Separate drills prove reject, lease expiry, grant revocation during lease,
   finding evidence, artifact unavailable/integrity failure/recovery, projection
   retry, and WS-CON atomicity.
@@ -204,8 +206,10 @@ AUTH action registration, ActionOwner/evaluator edit, or availability change
   finalization clears the observation; and a fresh Operator command advances
   without changing canonical Review/award truth.
 - The joint drill also proves contribution-policy/binding setup, TaskAssignment
-  and ReviewLease ContributionPolicyVersion freezes, reviewer contribution for all three decisions,
-  accept-only submitter contribution, a second revision Review, paid and
+  and ReviewLease ContributionPolicyVersion freezes, reviewer contribution for
+  all three decisions, immutable Review/findings/resolutions for every round,
+  FinalAcceptance and its sole submitter contribution only when the decision is
+  `accept`, mutually exclusive source lineage, a second revision Review, paid and
   explicit-unpaid awards, outbound delivery/callback ordering, suspended or
   retired binding behavior, core contribution/award privacy,
   Finance-versus-Operator denials, atomic rollback, adapter/storage outage,
@@ -215,8 +219,10 @@ AUTH action registration, ActionOwner/evaluator edit, or availability change
   independently and decision-neutral reviewer awards agree across
   `accept`/`needs_revision`/`reject` for the same frozen terms.
 - Active docs use blocking/advisory findings, server-selected offer semantics,
-  controlled rebase, canonical decisions, WS-CON boundaries, AWS S3/MinIO, and
-  deferred reputation consistently.
+  controlled rebase, canonical decisions, `Review(accept) -> FinalAcceptance ->
+  accepted_submission`, REV-owned atomic audit/outbox staging, WS-CON
+  contribution/award boundaries, AWS S3/MinIO, and deferred reputation
+  consistently.
 - Optional contribution-evidence projection is outside core release readiness.
   Its absence or ART outage cannot block Review, ContributionRecord, awards,
   fulfillment, or core reads.
