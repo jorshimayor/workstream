@@ -55,6 +55,7 @@ docs/operations_authorization_service.md
 .agent-loop/LOOP_STATE.md
 .agent-loop/WORK_QUEUE.md
 .agent-loop/REVIEW_LOG.md
+scripts/test_agent_gates.py
 ```
 
 ## Not allowed
