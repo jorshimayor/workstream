@@ -2176,3 +2176,14 @@ but not every sanitized `ArtifactStoreError`. Both focused commands now include
 the operations interface, and initialization closes on all store errors with a
 regression test for an integrity failure. All reviewer sessions were closed;
 the repaired SHA requires fresh review.
+
+The next review found that claim validation still occurred before the cleanup
+guard and that exact root names did not constrain nested LocalStorage contents.
+All namespace-claim failures now close pinned descriptors. Existing marked
+stores are validated before mutation against the real local grammar: one
+`objects/sha256` tree with canonical digest names, bounded private put
+temporaries, canonical digest locks, and matched crash-recovery hard links.
+Foreign nested entries, owners, modes, link counts, and recovery links fail
+closed. Regression proof covers mismatched/repeated claims, foreign entries at
+every level, and reopening a valid populated store. All reviewer sessions were
+closed; the repaired SHA requires fresh review.

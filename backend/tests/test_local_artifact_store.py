@@ -87,12 +87,28 @@ def test_local_refuses_v1_or_unknown_disk_layout(tmp_path: Path) -> None:
     with pytest.raises(ArtifactConfigurationError, match="layout is incompatible"):
         initialize_local_store(root=executable_marker_root)
 
-    extra_entry_root = tmp_path / "extra-entry"
-    initialized = initialize_local_store(root=extra_entry_root)
-    initialized.close()
-    (extra_entry_root / "legacy").mkdir(mode=0o700)
-    with pytest.raises(ArtifactConfigurationError, match="layout is incompatible"):
-        initialize_local_store(root=extra_entry_root)
+    for index, relative_path in enumerate(
+        (
+            "legacy",
+            "objects/legacy",
+            "objects/sha256/zz",
+            "objects/sha256/aa/not-an-object",
+            "tmp/not-a-temporary",
+            "locks/not-a-lock",
+        )
+    ):
+        extra_entry_root = tmp_path / f"extra-entry-{index}"
+        initialized = initialize_local_store(root=extra_entry_root)
+        initialized.close()
+        extra_entry = extra_entry_root / relative_path
+        extra_entry.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        if "not-" in extra_entry.name:
+            extra_entry.write_bytes(b"foreign")
+            extra_entry.chmod(0o600)
+        else:
+            extra_entry.mkdir(mode=0o700)
+        with pytest.raises(ArtifactConfigurationError, match="layout is incompatible"):
+            initialize_local_store(root=extra_entry_root)
 
 
 def test_local_sanitizes_root_initialization_oserror(
@@ -211,7 +227,21 @@ def test_local_rejects_nonmatching_namespace_claim_before_layout_mutation(
         bootstrap.initialize_after_namespace_claim(mismatched)
 
     assert list(root.iterdir()) == []
-    bootstrap.close()
+    assert bootstrap._adapter._root_fd == -1
+
+
+def test_local_closes_after_repeated_initialization_attempt(tmp_path: Path) -> None:
+    """A repeated bootstrap call fails closed instead of retaining descriptors."""
+    root = tmp_path / "artifacts"
+    root.mkdir(mode=0o700)
+    bootstrap = LocalStorageBootstrap(LocalStorageAdapter(root=root))
+    claim = local_namespace_claim(bootstrap)
+    bootstrap.initialize_after_namespace_claim(claim)
+
+    with pytest.raises(ArtifactConfigurationError, match="already initialized"):
+        bootstrap.initialize_after_namespace_claim(claim)
+
+    assert bootstrap._adapter._root_fd == -1
 
 
 def test_local_closes_pinned_descriptors_after_integrity_failure(tmp_path: Path) -> None:
@@ -228,6 +258,26 @@ def test_local_closes_pinned_descriptors_after_integrity_failure(tmp_path: Path)
         bootstrap.initialize_after_namespace_claim(claim)
 
     assert bootstrap._adapter._root_fd == -1
+
+
+def test_local_reopens_one_valid_populated_layout(tmp_path: Path) -> None:
+    """Accept canonical immutable objects and persistent digest locks on restart."""
+
+    async def publish(root: Path) -> str:
+        adapter = initialize_local_store(root=root, buffer_bytes=2)
+        try:
+            async with minted_source(tmp_path / "scratch", b"restart-safe") as source:
+                return (await adapter.put(source)).provider_object_ref
+        finally:
+            adapter.close()
+
+    root = tmp_path / "populated"
+    provider_object_ref = asyncio.run(publish(root))
+    reopened = initialize_local_store(root=root)
+    try:
+        assert asyncio.run(reopened.head(provider_object_ref)).exists is True
+    finally:
+        reopened.close()
 
 
 @pytest.mark.asyncio

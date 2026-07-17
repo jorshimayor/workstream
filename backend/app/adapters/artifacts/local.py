@@ -50,7 +50,10 @@ _LAYOUT_MARKER = ".workstream-artifact-store-v2"
 _LAYOUT_MARKER_BYTES = b"workstream-artifact-store-v2\n"
 _LAYOUT_ENTRY_NAMES = frozenset({_LAYOUT_MARKER, "locks", "objects", "tmp"})
 _PROVIDER_OBJECT_REF = re.compile(r"^sha256/([0-9a-f]{2})/([0-9a-f]{62})$")
+_DIGEST_PREFIX_NAME = re.compile(r"^[0-9a-f]{2}$")
+_DIGEST_OBJECT_NAME = re.compile(r"^[0-9a-f]{62}$")
 _TEMPORARY_NAME = re.compile(r"^\.put\.[0-9a-f]{32}\.tmp$")
+_LOCK_NAME = re.compile(r"^[0-9a-f]{64}\.lock$")
 
 
 class LocalStorageBootstrap:
@@ -152,24 +155,28 @@ class LocalStorageAdapter:
         claim: ArtifactStoreNamespaceClaim,
     ) -> LocalStorageAdapter:
         """Create or validate layout through the same root accepted by PostgreSQL."""
-        if (
-            type(claim) is not ArtifactStoreNamespaceClaim
-            or claim.adapter_identity != self.identity
-            or claim.namespace_identity != self._namespace_identity
-            or claim.namespace_fingerprint
-            != canonical_json_hash(
-                {
-                    "backend": "local",
-                    "adapter": self.identity.provider_key,
-                    "provider_profile": self._namespace_identity.provider_profile,
-                    **self._namespace_identity.as_dict(),
-                }
-            )
-        ):
-            raise ArtifactConfigurationError("artifact namespace claim does not match provider")
-        if self._initialized:
-            raise ArtifactConfigurationError("local artifact storage is already initialized")
         try:
+            if (
+                type(claim) is not ArtifactStoreNamespaceClaim
+                or claim.adapter_identity != self.identity
+                or claim.namespace_identity != self._namespace_identity
+                or claim.namespace_fingerprint
+                != canonical_json_hash(
+                    {
+                        "backend": "local",
+                        "adapter": self.identity.provider_key,
+                        "provider_profile": self._namespace_identity.provider_profile,
+                        **self._namespace_identity.as_dict(),
+                    }
+                )
+            ):
+                raise ArtifactConfigurationError(
+                    "artifact namespace claim does not match provider"
+                )
+            if self._initialized:
+                raise ArtifactConfigurationError(
+                    "local artifact storage is already initialized"
+                )
             self._assert_pinned_root_is_current()
             self._initialize_layout()
             self._initialized = True
@@ -483,6 +490,8 @@ class LocalStorageAdapter:
         entries = set(os.listdir(self._root_fd))
         if not entries.issubset(_LAYOUT_ENTRY_NAMES):
             raise ArtifactConfigurationError("local artifact layout is incompatible")
+        if _LAYOUT_MARKER in entries:
+            self._validate_existing_layout(entries)
         if _LAYOUT_MARKER not in entries:
             if entries:
                 raise ArtifactConfigurationError("local artifact layout is incompatible")
@@ -512,6 +521,94 @@ class LocalStorageAdapter:
         self._tmp_fd = self._ensure_directory(self._root_fd, "tmp")
         self._locks_fd = self._ensure_directory(self._root_fd, "locks")
 
+    def _validate_existing_layout(self, root_entries: set[str]) -> None:
+        """Validate the complete existing v2 grammar before any mutation."""
+        self._validate_marker()
+        temporary_links: set[tuple[int, int]] = set()
+        if "tmp" in root_entries:
+            temporary_fd = self._open_existing_directory(self._root_fd, "tmp")
+            try:
+                temporary_links = self._validate_temporary_entries(temporary_fd)
+            finally:
+                os.close(temporary_fd)
+        object_links: set[tuple[int, int]] = set()
+        if "objects" in root_entries:
+            objects_fd = self._open_existing_directory(self._root_fd, "objects")
+            try:
+                object_links = self._validate_object_entries(objects_fd)
+            finally:
+                os.close(objects_fd)
+        if object_links != temporary_links:
+            raise ArtifactIntegrityError("local artifact recovery links are inconsistent")
+        if "locks" in root_entries:
+            locks_fd = self._open_existing_directory(self._root_fd, "locks")
+            try:
+                self._validate_lock_entries(locks_fd)
+            finally:
+                os.close(locks_fd)
+
+    def _validate_object_entries(self, objects_fd: int) -> set[tuple[int, int]]:
+        """Require only canonical immutable objects and recoverable hard links."""
+        object_entries = set(os.listdir(objects_fd))
+        if not object_entries.issubset({"sha256"}):
+            raise ArtifactConfigurationError("local artifact layout is incompatible")
+        if "sha256" not in object_entries:
+            return set()
+        sha256_fd = self._open_existing_directory(objects_fd, "sha256")
+        recovery_links: set[tuple[int, int]] = set()
+        try:
+            for prefix in os.listdir(sha256_fd):
+                if _DIGEST_PREFIX_NAME.fullmatch(prefix) is None:
+                    raise ArtifactConfigurationError("local artifact layout is incompatible")
+                prefix_fd = self._open_existing_directory(sha256_fd, prefix)
+                try:
+                    for name in os.listdir(prefix_fd):
+                        if _DIGEST_OBJECT_NAME.fullmatch(name) is None:
+                            raise ArtifactConfigurationError(
+                                "local artifact layout is incompatible"
+                            )
+                        details = self._stat_layout_file(
+                            prefix_fd,
+                            name,
+                            recoverable=True,
+                        )
+                        if details is None:
+                            continue
+                        if stat.S_IMODE(details.st_mode) != 0o400:
+                            raise ArtifactIntegrityError("local artifact object is mutable")
+                        if details.st_nlink == 2:
+                            recovery_links.add((details.st_dev, details.st_ino))
+                finally:
+                    os.close(prefix_fd)
+        finally:
+            os.close(sha256_fd)
+        return recovery_links
+
+    def _validate_temporary_entries(self, temporary_fd: int) -> set[tuple[int, int]]:
+        """Require only bounded private put temporaries and recovery links."""
+        recovery_links: set[tuple[int, int]] = set()
+        for name in os.listdir(temporary_fd):
+            if _TEMPORARY_NAME.fullmatch(name) is None:
+                raise ArtifactConfigurationError("local artifact layout is incompatible")
+            details = self._stat_layout_file(temporary_fd, name, recoverable=True)
+            if details is None:
+                continue
+            mode = stat.S_IMODE(details.st_mode)
+            if mode not in {0o400, 0o600} or (details.st_nlink == 2 and mode != 0o400):
+                raise ArtifactIntegrityError("local artifact temporary is unsafe")
+            if details.st_nlink == 2:
+                recovery_links.add((details.st_dev, details.st_ino))
+        return recovery_links
+
+    def _validate_lock_entries(self, locks_fd: int) -> None:
+        """Require only canonical private digest-lock files."""
+        for name in os.listdir(locks_fd):
+            if _LOCK_NAME.fullmatch(name) is None:
+                raise ArtifactConfigurationError("local artifact layout is incompatible")
+            details = self._stat_layout_file(locks_fd, name, recoverable=False)
+            if details is not None and stat.S_IMODE(details.st_mode) != 0o600:
+                raise ArtifactIntegrityError("local artifact lock is unsafe")
+
     def _require_initialized(self) -> None:
         """Reject provider operations before PostgreSQL namespace admission."""
         if not self._initialized:
@@ -540,13 +637,44 @@ class LocalStorageAdapter:
             os.mkdir(name, 0o700, dir_fd=parent_fd)
         except FileExistsError:
             pass
+        return self._open_existing_directory(parent_fd, name)
+
+    def _open_existing_directory(self, parent_fd: int, name: str) -> int:
+        """Open and validate one existing private directory without leaking it."""
         descriptor = os.open(
             name,
             os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0),
             dir_fd=parent_fd,
         )
-        self._assert_private_directory(descriptor)
-        return descriptor
+        try:
+            self._assert_private_directory(descriptor)
+            return descriptor
+        except BaseException:
+            os.close(descriptor)
+            raise
+
+    def _stat_layout_file(
+        self,
+        parent_fd: int,
+        name: str,
+        *,
+        recoverable: bool,
+    ) -> os.stat_result | None:
+        """Open one raced layout file safely and return its validated metadata."""
+        try:
+            descriptor = os.open(
+                name,
+                os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0),
+                dir_fd=parent_fd,
+            )
+        except FileNotFoundError:
+            return None
+        try:
+            if recoverable:
+                return self._assert_recoverable_object(descriptor)
+            return self._assert_private_regular(descriptor)
+        finally:
+            os.close(descriptor)
 
     def _provider_object_ref(self, commitment: ArtifactCommitment) -> str:
         """Derive one identity-free object reference from canonical SHA-256."""
