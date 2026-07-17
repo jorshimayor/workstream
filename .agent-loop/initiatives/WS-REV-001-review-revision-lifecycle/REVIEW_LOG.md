@@ -763,3 +763,23 @@ PR #142 contains planning and documentation only. It activates no CON or REV
 runtime behavior. Because current-main reconciliation changed review-relevant
 files, the earlier exact-SHA PASS is historical and a fresh full reviewer pass
 is required on the merge candidate.
+
+## WS-REV-001-01 Current-Main Candidate Repair - 2026-07-17
+
+Exact candidate `1c7c3e75cffbe91a44d5cd10d333a5ec0fcf1fd4` passed the
+current-main plan review but failed the first full reviewer fanout. Senior
+engineering, architecture, QA, and product/ops found that three active
+operational workflows inverted or ambiguously described the canonical reviewer
+CON operation, FinalAcceptance, task-effect, and submitter CON operation order.
+They also found an optional human simulation inserted into automated checker
+admission, an undefined disputed-reject owner, and missing planned/unavailable
+review-lifecycle status in the operator workflow.
+
+The repair aligns every numbered accept workflow to Review and lease/queue
+closure -> reviewer CON operation -> FinalAcceptance -> accepted task and
+completed assignment -> submitter CON operation. Submitted-work admission is
+now a mandatory durable CheckerRun decision; human judgment begins only with an
+immutable Review. Terminal-reject sampling is explicitly non-mutating and has
+no dispute, reopen, or adjudication path. Focused scanner fixtures and
+structural workflow-order tests prevent recurrence. Candidate `1c7c3e75` is
+historical failure evidence; a new exact-SHA full reviewer fanout is required.

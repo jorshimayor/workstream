@@ -127,9 +127,11 @@ Acceptance:
 3. Reviewer reads the leased Submission's stamped guide context, evidence, and checker results.
 4. Reviewer enters immutable blocking/advisory findings where applicable.
 5. Reviewer selects accept, needs_revision, or reject.
-6. Workstream atomically creates the reviewer `completed_review` contribution;
-   `accept` also creates internal FinalAcceptance and then the submitter
-   `accepted_submission` contribution from that fact.
+6. Workstream atomically appends Review history, consumes the lease, closes the
+   queue entry, and runs the CON reviewer operation for `completed_review`.
+7. For `accept`, REV then creates internal FinalAcceptance, applies accepted
+   Task and completed Assignment effects, and runs the CON submitter operation
+   for `accepted_submission` from that fact.
 
 Acceptance:
 
@@ -172,11 +174,11 @@ Acceptance:
 ## Flow 7: Accepted Work, FinalAcceptance, And Submitter Contribution
 
 1. Reviewer accepts task.
-2. Task enters `ACCEPTED`.
-3. The reviewer `completed_review` contribution already created with the Review
+2. The reviewer `completed_review` contribution created after the Review
    remains immutable.
-4. REV creates immutable FinalAcceptance from the accepting Review.
-5. A submitter `accepted_submission` contribution is created only from
+3. REV creates immutable FinalAcceptance from the accepting Review.
+4. The Task enters `ACCEPTED` and the TaskAssignment becomes `completed`.
+5. The CON submitter operation creates `accepted_submission` only from
    FinalAcceptance, TaskAssignment, frozen policy lineage, and artifact hash.
 6. The frozen reviewer and submitter contribution policies independently create
    applicable awards; explicit unpaid rules create none.

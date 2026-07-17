@@ -119,23 +119,26 @@ Policy:
 - retry and repair actions record matched grant/permission, reason, attempt, and
   immutable audit history
 
-### Pre Review Gate
+### Checker Admission Gate
 
-Optional reviewer-simulation or adversarial readiness audit after automated checks and before normal human review.
+Mandatory automated admission after post-submit checks and before human review.
 
 Owner:
 
-- reviewer lead
-- quality lead
-- assigned simulation reviewer
+- checker system
 
 Policy:
 
-- use this for high-value tasks, new project types, disputed checker outcomes, or projects still being calibrated
-- the gate records findings or explicitly clears the packet for normal review
-- unresolved blocking issues go to `NEEDS_REVISION` when contributor-fixable or
-  remain blocked from review until the owning covered repair/retry action
-  succeeds
+- only a durable, final, current `CheckerRun` outcome of `allow_review` admits
+  the exact immutable Submission
+- admission records the exact CheckerRun and verified binding facts; retries,
+  superseded runs, and different Submissions cannot replace that anchor
+- contributor-fixable checker failures may route the Task to `needs_revision`
+  but create no Review, ReviewFinding, or reviewer contribution
+- setup or provenance defects remain blocked until the owning covered repair or
+  retry action succeeds
+- human judgment begins only after admission and is recorded as an immutable
+  Review
 
 ### Review Pending
 
@@ -203,8 +206,8 @@ Work is not acceptable and will not continue in the normal revision loop.
 
 Owner:
 
-- project manager
-- reviewer lead if disputed
+- project manager for terminal-state observation
+- authorized audit authority for non-mutating quality sampling only
 
 Policy:
 
@@ -214,6 +217,8 @@ Policy:
   blocked and bound to the reject Review
 - no FinalAcceptance or submitter contribution is created; no actor grant or
   unrelated task changes
+- quality sampling cannot reopen, adjudicate, replace, or change the immutable
+  Review, rejection, task state, assignment effect, or contribution lineage
 
 ### Compensation Fulfillment Follow-Up
 

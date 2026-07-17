@@ -1,5 +1,12 @@
 # Operator Workflow
 
+## Status
+
+Existing project and task operations retain their owning implementation status.
+Review, revision, FinalAcceptance, and review-sourced contribution behavior
+below is planned and unavailable until its owning REV/CON chunks, exact AUTH
+activation, and REV-13 joint release complete.
+
 ## Roles
 
 ### Project Manager
@@ -93,15 +100,19 @@ Reads authorized immutable and operational evidence without mutation.
 ## Acceptance Workflow
 
 1. Reviewer accepts submission.
-2. REV records the immutable Review and one internal FinalAcceptance for the
-   exact task, Submission, submitter, reviewer, and locked ReviewPolicy.
-3. CON records reviewer `completed_review` directly from Review.
-4. REV moves the task to ACCEPTED and completes the TaskAssignment.
-5. CON records submitter `accepted_submission` only from FinalAcceptance.
-6. Frozen contribution policies create awards only for payable contributions;
+2. REV appends the immutable Review and any submitted findings or resolutions,
+   consumes the ReviewLease, and closes the ReviewQueueEntry.
+3. CON records reviewer `completed_review` directly from Review and evaluates
+   the ReviewLease-frozen contribution policy.
+4. REV records one internal FinalAcceptance for the exact task, Submission,
+   submitter, reviewer, and locked ReviewPolicy.
+5. REV moves the task to ACCEPTED and completes the TaskAssignment.
+6. CON records submitter `accepted_submission` only from FinalAcceptance and
+   evaluates the TaskAssignment-frozen contribution policy.
+7. Frozen contribution policies create awards only for payable contributions;
    explicit unpaid rules create none.
-7. Finance Authority follows post-commit delivery only for created awards.
-8. Reputation projection remains deferred.
+8. Finance Authority follows post-commit delivery only for created awards.
+9. Reputation projection remains deferred.
 
 The Review request owns one commit for Review, FinalAcceptance, task effects,
 contributions, awards, audit, and outbox. There is no manual FinalAcceptance

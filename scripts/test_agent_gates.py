@@ -4357,6 +4357,11 @@ def test_stale_review_contract_rule_inventory_is_complete() -> None:
             "Adjudication remains unavailable until enabled."
         ),
         "BROAD_REVIEW_BYPASS": ("An admin can override the review decision."),
+        "AMBIGUOUS_ACCEPT_ORDER": ("Review(accept) first creates FinalAcceptance."),
+        "HUMAN_PRE_REVIEW_ADMISSION": (
+            "### Pre Review Gate\n\nOptional reviewer-simulation before review."
+        ),
+        "DISPUTED_REJECT_PATH": "Reviewer lead if disputed.",
     }
     assert set(samples) == {rule.code for rule in gate.RULES}
     for code, sample in samples.items():
@@ -4416,6 +4421,64 @@ def test_stale_review_contract_rule_inventory_is_complete() -> None:
     ):
         failures = gate.scan_text("docs/spec_review_lifecycle.md", sample)
         assert any(failure.endswith(": REVIEWER_REBASE") for failure in failures)
+
+
+def test_active_review_workflows_preserve_canonical_transaction_order() -> None:
+    """Operational workflows retain the normative accept transaction order."""
+    operator = (ROOT / "docs/operations_operator_workflow.md").read_text(
+        encoding="utf-8"
+    )
+    operator_accept = operator.split("## Acceptance Workflow", maxsplit=1)[1].split(
+        "## Rejection Workflow", maxsplit=1
+    )[0]
+    operator_markers = (
+        "REV appends the immutable Review",
+        "CON records reviewer `completed_review`",
+        "REV records one internal FinalAcceptance",
+        "REV moves the task to ACCEPTED",
+        "CON records submitter `accepted_submission`",
+    )
+    operator_positions = [operator_accept.index(item) for item in operator_markers]
+    assert operator_positions == sorted(operator_positions)
+
+    flows = (ROOT / "docs/product_first_user_flows.md").read_text(encoding="utf-8")
+    accepted_flow = flows.split(
+        "## Flow 7: Accepted Work, FinalAcceptance, And Submitter Contribution",
+        maxsplit=1,
+    )[1]
+    flow_markers = (
+        "reviewer `completed_review` contribution",
+        "REV creates immutable FinalAcceptance",
+        "Task enters `ACCEPTED`",
+        "CON submitter operation creates `accepted_submission`",
+    )
+    flow_positions = [accepted_flow.index(item) for item in flow_markers]
+    assert flow_positions == sorted(flow_positions)
+
+
+def test_checker_admission_and_reject_sampling_remain_nonhuman_and_nonmutating() -> (
+    None
+):
+    """Submitted-work admission and terminal sampling cannot become hidden review."""
+    queue_policy = (ROOT / "docs/operations_queue_policy.md").read_text(
+        encoding="utf-8"
+    )
+    admission = queue_policy.split("### Checker Admission Gate", maxsplit=1)[1].split(
+        "### Review Pending", maxsplit=1
+    )[0]
+    assert "Mandatory automated admission" in admission
+    assert "durable, final, current `CheckerRun` outcome of `allow_review`" in admission
+    assert "human judgment begins only after admission" in admission
+    assert "reviewer-simulation" not in admission
+    assert "reviewer lead" not in admission
+    assert "quality lead" not in admission
+
+    rejected = queue_policy.split("### Rejected", maxsplit=1)[1].split(
+        "### Compensation Fulfillment Follow-Up", maxsplit=1
+    )[0]
+    assert "non-mutating quality sampling only" in rejected
+    assert "cannot reopen, adjudicate, replace, or change" in rejected
+    assert "if disputed" not in rejected
 
 
 def test_stale_review_contract_classification_is_exact() -> None:

@@ -245,6 +245,27 @@ RULES = (
             re.IGNORECASE,
         ),
     ),
+    Rule(
+        "AMBIGUOUS_ACCEPT_ORDER",
+        re.compile(
+            r"\bReview\(accept\)[^.\n]{0,80}\bfirst\s+creates?\b"
+            r"[^.\n]{0,80}\bFinalAcceptance\b",
+            re.IGNORECASE,
+        ),
+    ),
+    Rule(
+        "HUMAN_PRE_REVIEW_ADMISSION",
+        re.compile(
+            r"^#{2,4}\s+(?:Pre[- ]?Review|Checker\s+Admission)\s+Gate\b"
+            r"[\s\S]{0,600}\b(?:reviewer[- ]simulation|"
+            r"assigned\s+simulation\s+reviewer|reviewer\s+lead|quality\s+lead)\b",
+            re.IGNORECASE | re.MULTILINE,
+        ),
+    ),
+    Rule(
+        "DISPUTED_REJECT_PATH",
+        re.compile(r"\breviewer\s+lead\s+if\s+disputed\b", re.IGNORECASE),
+    ),
 )
 
 
