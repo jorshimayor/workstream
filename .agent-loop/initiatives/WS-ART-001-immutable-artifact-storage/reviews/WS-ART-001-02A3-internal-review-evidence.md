@@ -4,17 +4,17 @@
 
 `WS-ART-001-02A3`: ArtifactStore v2 Local Clean Cut
 
-open sub-agent sessions: none
+open sub-agent sessions: fresh CI-repair review pending
 
-valid findings addressed: yes
+valid findings addressed: worker coverage repair review in progress
 
 ## Reviewed Revision
 
-Reviewed code SHA: `956dbcf9fd4b23b1d8daed8c0c666fd49f08303f`
+Reviewed code SHA: `f110a21dd694c9744d0036d380898f602d0d96ff`
 
-Reviewed at: 2026-07-17T17:06:39Z
+Reviewed at: 2026-07-17T18:38:59Z
 
-Reviewer run IDs: senior-engineering=019f712e-1587-7c33-acec-a11887ea70a3; architecture=019f7101-7405-7e42-9910-023cef1badf1; QA/test=019f7101-821c-72c1-96f0-3bd76d131e2d; security/auth=019f7101-9945-78e0-9b97-7e0bf0049cdf; product/ops=019f7112-43ce-7d10-bba3-7078d431f646; reuse/dedup=019f710c-af16-7823-9ef1-0a380b878f04; CI-integrity=019f70f4-68fe-73a0-999e-194487788070; test-delta=019f710c-bd3f-7142-b2a6-77ed19e3ea62; docs=019f70f4-75fe-77c3-b9da-661e0d3d9d4a
+Reviewer run IDs: senior-engineering=fresh-review-pending; architecture=fresh-review-pending; QA/test=fresh-review-pending; security/auth=fresh-review-pending; product/ops=fresh-review-pending; reuse/dedup=fresh-review-pending; CI-integrity=fresh-review-pending; test-delta=fresh-review-pending; docs=fresh-review-pending
 
 Only review artifacts may change after this reviewed SHA while follow-up review
 and evidence closure complete. No implementation, migration, test, workflow,
@@ -43,17 +43,24 @@ policy, or chunk-contract change is permitted without invalidating this record.
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS AFTER FIXES | None | Exact-SHA binding, closed evidence state, and current proof values were repaired after follow-up. |
-| QA/test | PASS | None | Concurrency, cancellation, migration, namespace, and state-transition proof passed. |
-| security/auth | PASS | None | Filesystem, integrity, namespace, sanitization, and AUTH custody remained fail closed. |
-| product/ops | PASS | None | No product review, contribution, compensation, reputation, or recovery lifecycle was activated. |
-| architecture | PASS | None | Byte-only adapter, typed factory, capability boundaries, and chunk scope passed. |
-| ci integrity | PASS AFTER FIXES | None | Exact-SHA evidence binding and current deterministic proof values now satisfy the fail-closed gate. |
-| docs | PASS AFTER FIXES | None | Stale SHA, phase, and proof-value contradictions were removed from the evidence and trust bundle. |
-| reuse/dedup | PASS | None | Shared adapter, scratch, cancellation, locking, hashing, and namespace abstractions are reused. |
-| test delta | PASS AFTER FIXES | None | Current proof values match the strengthened v2 contract, race, migration, and cleanup test delta. |
+| senior engineering | PENDING | None | Fresh review required after the worker-coverage test repair. |
+| QA/test | PENDING | None | Fresh review required after the worker-coverage test repair. |
+| security/auth | PENDING | None | Fresh review required after the worker-coverage test repair. |
+| product/ops | PENDING | None | Fresh review required after the worker-coverage test repair. |
+| architecture | PENDING | None | Fresh review required after the worker-coverage test repair. |
+| ci integrity | PENDING | None | Fresh review required after the worker-coverage test repair. |
+| docs | PENDING | None | Fresh review required after the worker-coverage test repair. |
+| reuse/dedup | PENDING | None | Fresh review required after the worker-coverage test repair. |
+| test delta | PENDING | None | Fresh review required after the worker-coverage test repair. |
 
 ## Valid Findings Addressed
+
+- GitHub Backend CI passed the full repository coverage and first three focused
+  gates, then reported 88.20 percent cumulative `app/workers/*` coverage. Added
+  real-PostgreSQL coverage for the known `ProjectServiceError` worker path,
+  including sanitized result, persisted `setup_blocked` state, and bounded log
+  metadata. The new test executes the previously missed lines 174-193 without
+  narrowing or weakening the 90 percent worker gate.
 
 - Replaced the replica read-then-insert race with PostgreSQL
   `ON CONFLICT DO NOTHING` plus a current-row load and strict content,

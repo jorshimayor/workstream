@@ -122,13 +122,13 @@ configuration tests. No tests were skipped or weakened.
 
 ## Internal Reviewer Results
 
-Reviewed code SHA: `956dbcf9fd4b23b1d8daed8c0c666fd49f08303f`
+Reviewed code SHA: `f110a21dd694c9744d0036d380898f602d0d96ff`
 
-All nine required tracks passed with no remaining findings: senior engineering,
-architecture, QA/test, security/auth, product/ops, reuse/dedup, CI integrity,
-test delta, and docs. Stale reviewed-SHA, phase, and proof-value findings were
-addressed in the evidence-only descendant. Reviewer IDs and final results are
-recorded in the internal review evidence.
+The first external Backend run exposed a real cumulative worker-coverage gap.
+The gate remains unchanged, and a real-PostgreSQL domain-failure test now covers
+the missing setup-worker path. All nine required tracks must revalidate this
+exact repaired SHA before the branch is republished. Reviewer IDs and final
+results are recorded in the internal review evidence.
 
 ## External Review
 
