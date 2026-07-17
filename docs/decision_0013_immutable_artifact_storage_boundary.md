@@ -225,9 +225,11 @@ receipt methods are removed in the same chunk that migrates LocalStorage and
 all active callers. The dormant Flow Node backend setting is removed. The new
 backend values are exactly `disabled`, `local`, and `s3_compatible`.
 
-Pre-production rows may be rebuilt when obsolete URI/hash or provider-retention
-contracts cannot be derived from authoritative stored bytes. No alias, fake
-verified backfill, nullable shadow field, dual write, or fallback remains.
+Migration `0024` refuses populated v1 artifact tables before DDL and preserves
+their prior schema and rows. An empty pre-production environment may be
+reprovisioned out of band and authoritative bytes reingested through v2; the
+migration performs no automated rebuild or fabricated backfill. No alias,
+nullable shadow field, dual write, or fallback remains.
 
 ## Review Boundary
 

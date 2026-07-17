@@ -85,12 +85,11 @@ AUTH-08. The user explicitly started AUTH-08. Its inherited L1 contract failed
 initial security/architecture, QA/product, and senior/CI/docs review before
 runtime edits. The repaired contract passed all required preimplementation
 tracks at `cbe7c6c`; bounded AUTH-08 implementation later merged through PR #131
-as `aa0fdcd`. AUTH-09 was split before runtime implementation. AUTH-09A was
-reviewed through PR #132. PR #140 then merged the authoritative AUTH XINT
-reconciliation as `d541521` on 2026-07-17 and signed memory stopped. The user
-explicitly started PR #132 convergence from that trusted head. Prior review
-evidence is stale until exact-head review repeats. No AUTH-09 runtime action or
-feature action is active.
+as `aa0fdcd`. AUTH-09 was split before runtime implementation. PR #140 then
+merged the authoritative AUTH XINT reconciliation as `d541521` on 2026-07-17
+and signed memory stopped. The user explicitly started PR #132 convergence from
+that trusted head. AUTH-09A then merged through PR #132 as `299363a`, and signed
+memory passed. No AUTH-09 runtime action or feature action is active.
 
 ## Active planning chunk
 
@@ -98,12 +97,12 @@ None. `WS-AUTH-001-XINT` merged through PR #140.
 
 ## Active implementation chunk
 
-`WS-AUTH-001-09A` - Fixed Service Identity Foundation convergence and exact-head
-re-review. This chunk activates no route, action, or service admission path.
+None. `WS-AUTH-001-09A` merged through PR #132 as `299363a`.
+`WS-AUTH-001-09B` remains inactive until a separate explicit human start.
 
 ## Current review branch
 
-`codex/ws-auth-001-09-actor-state-service-actors`
+None.
 
 ## Chunk status
 

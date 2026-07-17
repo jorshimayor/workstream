@@ -32,12 +32,13 @@ approval or reusable evidence. Its source remains on branch
 ## Current Work
 
 `WS-ART-001-02A3` implementation and merged-main deterministic repair are
-complete. PR #141 is open. Exact-SHA review found and repaired a residual LocalStorage startup
-race, typed-factory startup mismatch, and vague Operator resource vocabulary;
-fresh deterministic coverage and all nine reviewer tracks are now required
-before external review resumes. Its approved boundary atomically replaces
-ArtifactStore v1 with byte-only v2, migrates LocalStorage and the empty
-pre-production artifact schema, installs the immutable storage-namespace fence,
+complete. PR #141 is open. Exact-SHA review found and repaired a residual
+LocalStorage startup race, typed-factory startup mismatch, and vague Operator
+resource vocabulary. Fresh deterministic coverage passed, and all nine reviewer
+tracks are now in progress before external review resumes. Its approved
+boundary atomically replaces ArtifactStore v1 with byte-only v2, migrates
+LocalStorage and the empty pre-production artifact schema, installs the
+immutable storage-namespace fence,
 removes dormant `flow_node` configuration, and activates startup plus periodic
 scratch cleanup. It does not activate product ingest, durable admission,
 put-attempt resolution, verification jobs, or recovery.
@@ -50,9 +51,9 @@ Flow Node chunk.
 
 ## Gate
 
-All reviews before the latest startup-claim repair are retained as history, not
-reused as final provenance. The current gate is refreshed
-deterministic proof and all nine exact-SHA internal tracks, followed by GitHub
-Actions, CodeRabbit, and explicit human review. Durable admission, put attempts,
-verification publication, and recovery remain in their later owning chunks. No
+All reviews before the latest repairs are retained as history, not reused as
+final provenance. Deterministic proof has passed. The current gate is all nine
+exact-SHA internal tracks, followed by GitHub Actions, CodeRabbit, and explicit
+human review. Durable admission, put attempts, verification publication, and
+recovery remain in their later owning chunks. No
 later artifact chunk starts automatically, and only the user may approve merge.

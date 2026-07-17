@@ -4009,16 +4009,36 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
     artifact_status = Path(
         ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/STATUS.md"
     ).read_text(encoding="utf-8")
+    artifact_contract = Path(
+        ".agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/chunks/"
+        "WS-ART-001-02A3-artifact-store-v2-local-clean-cut.md"
+    ).read_text(encoding="utf-8")
+    work_queue = Path(".agent-loop/WORK_QUEUE.md").read_text(encoding="utf-8")
+    loop_state = Path(".agent-loop/LOOP_STATE.md").read_text(encoding="utf-8")
 
     assert "Merged through PR #131 as `aa0fdcd`" in auth_map
-    assert "`WS-AUTH-001-09A` - Fixed Service Identity Foundation" in auth_status
+    assert "AUTH-09A then merged through PR #132 as `299363a`" in auth_status.replace(
+        "\n", " "
+    )
     assert "| `WS-AUTH-001-08` | Merged |" in auth_status
     assert "| `WS-AUTH-001-XINT` | Merged |" in auth_status
     assert "| `WS-AUTH-001-09A` | Merged |" in auth_status
     assert "Fixed service identity foundation merged as `299363a`" in auth_status
     assert "| `WS-AUTH-001-09B` | Proposed |" in auth_status
+    assert "None. `WS-AUTH-001-09A` merged through PR #132 as `299363a`." in auth_status
+    assert "`WS-AUTH-001-09B` remains inactive until a separate explicit human start." in auth_status
+    assert "## Current review branch\n\nNone." in auth_status
+    assert "PR #132 cannot merge" not in auth_status
     assert "Merged through PR #129 as `9a04434`" in artifact_map
-    assert "Internal review and deterministic evidence passed; external checks pending" in artifact_map
+    artifact_phases = (
+        "Deterministic proof passed; exact-SHA internal review in progress",
+        "Internal review and deterministic evidence passed; external checks pending",
+    )
+    selected_phases = [phase for phase in artifact_phases if phase in artifact_map]
+    assert len(selected_phases) == 1
+    selected_phase = selected_phases[0]
+    assert selected_phase in work_queue
+    assert f"Status: {selected_phase}" in artifact_contract
     assert (
         "AUTH's owner reconciliation merged through PR #140 as\n"
         "`d541521`" in artifact_status
@@ -4027,7 +4047,16 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
         "`WS-ART-001-02A3` implementation and merged-main deterministic repair are\n"
         "complete" in artifact_status
     )
-    assert "The current gate is refreshed\ndeterministic proof" in artifact_status
+    if selected_phase == artifact_phases[0]:
+        assert "The current gate is all nine\nexact-SHA internal tracks" in artifact_status
+        assert "Current gate: complete all nine exact-SHA internal reviewer tracks" in loop_state
+    else:
+        assert "The current gate is GitHub Actions, CodeRabbit, and explicit human review" in (
+            artifact_status.replace("\n", " ")
+        )
+        assert "Current gate: publish PR #141 for GitHub Actions, CodeRabbit, and explicit" in (
+            loop_state.replace("\n", " ")
+        )
     assert "No\nlater artifact chunk starts automatically" in artifact_status
 
 

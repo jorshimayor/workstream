@@ -25,8 +25,8 @@
 - PR #122 merged the first automated post-merge memory implementation as
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
-- Current gate: complete deterministic proof and all nine exact-SHA internal
-  reviewer tracks for ART-02A3 after merging AUTH-09A, then refresh evidence
+- Current gate: complete all nine exact-SHA internal reviewer tracks for
+  ART-02A3 after merged AUTH-09A reconciliation, then refresh evidence
   before publishing PR #141 for GitHub Actions, CodeRabbit, and explicit human
   review. No later ART chunk starts automatically.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is
