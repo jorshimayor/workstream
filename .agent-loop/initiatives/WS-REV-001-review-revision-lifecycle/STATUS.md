@@ -84,9 +84,9 @@ integrity. All 80 current-main agent tests and seven REV additions are retained;
 
 Chunk 01 is published as PR #145. Its initial Agent Gates run found a
 successor-heading/merge-intent title mismatch; the exact metadata repair is
-under internal review and awaits replacement CI after the reviewed repair is
-pushed. CodeRabbit was rate-limited and produced no findings. This chunk
-activates no review action or endpoint and does not authorize merge.
+internally reviewed at `b20b766f5aa1f87373ac0f4e575d2e0671ad42a5` and awaits
+replacement CI after push. CodeRabbit was rate-limited and produced no findings.
+This chunk activates no review action or endpoint and does not authorize merge.
 
 ## Stop condition
 

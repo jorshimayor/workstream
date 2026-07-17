@@ -1,10 +1,10 @@
 # WS-REV-001-01 Internal Review Evidence
 
-Reviewed code SHA: `6da45b2765de68dc5a0628024bdfeacb98d1ea85`
+Reviewed code SHA: `b20b766f5aa1f87373ac0f4e575d2e0671ad42a5`
 
 Trusted main SHA: `053242b90d927ace3fab92eeca72da27a61cecec`
 
-Reviewed at: `2026-07-17T23:17:19Z`
+Reviewed at: `2026-07-17T23:38:22Z`
 
 Reviewer run IDs: `/root/rev01_senior_arch_reuse`, `/root/rev01_qa_product_test`, `/root/rev01_security_docs_ci`
 
@@ -34,8 +34,10 @@ repaired before this review: FinalAcceptance field/provenance drift, canonical
 transaction ordering, planned availability, automated exact CheckerRun
 admission, checker versus Review-rooted revision lineage, non-mutating reject
 sampling, executable structural regression coverage, and exact AUTH-09B
-provisioning/action availability. Candidate `6da45b27` received a fresh complete
-review rather than inheriting any earlier approval.
+provisioning/action availability. PR #145's initial CI finding also aligned the
+successor heading to the reviewed schema-v2 merge-intent title without starting
+Chunk 02. Candidate `b20b766f` received a fresh complete review rather than
+inheriting any earlier approval.
 
 ## Deterministic Evidence
 

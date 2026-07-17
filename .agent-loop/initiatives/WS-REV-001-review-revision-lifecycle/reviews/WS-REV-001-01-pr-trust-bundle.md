@@ -93,7 +93,7 @@ This chunk adds a mandatory scanner invoked by the existing agent-gate suite.
 ## Reviewer Results
 
 All nine required tracks passed exact SHA
-`6da45b2765de68dc5a0628024bdfeacb98d1ea85` against trusted main
+`b20b766f5aa1f87373ac0f4e575d2e0671ad42a5` against trusted main
 `053242b90d927ace3fab92eeca72da27a61cecec`: senior engineering, QA/test,
 security/auth, product/ops, architecture, docs, reuse/dedup, test delta, and CI
 integrity. No blocking findings remain.
