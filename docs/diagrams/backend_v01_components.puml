@@ -46,7 +46,7 @@ package "FastAPI Backend - Modular Monolith" as backend #F8FBFF {
     rectangle "Submission\nService\n----\nPackets, evidence,\nartifact manifest,\nversions, locking" as submission_service
     rectangle "Checker\nService\n----\nChecker runs,\nblocking results,\npre-review gate" as checker_service
     rectangle "Review + Revision\nService\n----\naccept,\nneeds_revision,\nreject, findings,\nrevision replay" as review_service
-    rectangle "Contribution /\nCompensation /\nReputation\nService\n----\nReviewer/submitter records,\naward fulfillment,\noutcome events" as ledger_service
+    rectangle "Contribution /\nCompensation\nService\n----\nReviewer/submitter records,\naward fulfillment" as ledger_service
   }
 
   package "Shared Domain Rules" as shared_rules #EDF2FF {

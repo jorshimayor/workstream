@@ -27,8 +27,8 @@ sequence with the currently active guide:
 The preparation freezes the selected guide/source/task-execution policy context,
 context digest, prior Submission, originating Review, source and target
 TaskAssignments, and change summary. Task Context returns the validated head,
-not a moving live guide. The reviewer never rebases and reads the context stamped
-on the leased Submission.
+not a moving live guide. No guide rebase occurs during review; the reviewer
+reads the context stamped on the leased Submission.
 
 ContributionPolicyVersion is independent. The TaskAssignment freeze and each
 ReviewLease freeze never change because guide context rebases.

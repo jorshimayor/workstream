@@ -48,7 +48,7 @@ Current v0.1 is backend-first and internal-loop-first. External source adapters,
 | Postgres record database | Local, CI, and production-like development use Postgres as the record database. |
 | Object-storage abstraction | Local filesystem storage is allowed only behind the provider-neutral `ArtifactStore`; AWS S3 is the v0.1 hosted provider and MinIO is the local/CI protocol proof. |
 | Async-first execution | Long-running checker work does not block request/response paths. |
-| Contribution before compensation | Every valid human Review creates a reviewer contribution; accept creates FinalAcceptance, which alone sources the submitter contribution. Compensation may attach afterward; reputation is deferred. |
+| Contribution before compensation | Every valid human Review creates a reviewer contribution. FinalAcceptance is created only for accept and is the sole source of the submitter contribution. Compensation may attach afterward; reputation is deferred. |
 
 <div class="page-break"></div>
 
@@ -89,7 +89,7 @@ The container view shows the first 30-day implementation. It is intentionally sm
 
 | Container | Responsibility |
 | --- | --- |
-| React + Vite operations UI | Planned internal operations dashboard for project, task, submission, review, compensation fulfillment, and reputation workflows. |
+| React + Vite operations UI | Planned internal operations dashboard for project, task, submission, review, and compensation fulfillment workflows. Reputation UI remains deferred. |
 | FastAPI backend | API contracts, workflow rules, auth dependency, lifecycle guards, module orchestration, and audit writes. |
 | Celery worker boundary | Durable project setup, checker, and background product-job execution. FastAPI background tasks are not the Workstream product-job boundary. |
 | Checker runner | Executes automated checks and stores checker results. |

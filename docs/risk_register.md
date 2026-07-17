@@ -176,11 +176,12 @@ Reviewers can repeatedly approve weak work for favored contributors or skip evid
 
 Mitigation:
 
-- sample accepted work for second review
-- flag repeated contributor-reviewer pairs
+- sample accepted work through offline quality analysis that creates no product
+  Review, decision, adjudication state, or authority
+- flag repeated contributor-reviewer pairs for operator investigation
 - require evidence citation on accept
-- track overturned accept decisions
-- require independent review for high-value or disputed tasks
+- record quality concerns as audit/operations evidence without overturning or
+  mutating the immutable Review
 
 ### R12: Bad Project Guides
 

@@ -56,13 +56,18 @@ ACTIVE_PATHS = {
     "docs/architecture_lifecycle_state_machine.md",
     "docs/architecture_lockdown.md",
     "docs/architecture_system_architecture.md",
+    "docs/decision_0001_core_scope.md",
     "docs/decision_0009_review_decisions_are_canonical.md",
     "docs/decision_0003_project_guides_are_first_class.md",
     "docs/decision_0010_revision_context_rebase.md",
     "docs/decision_0012_workstream_authorization_service.md",
     "docs/decision_0013_immutable_artifact_storage_boundary.md",
     "docs/decision_0015_project_contributor_roles_are_independent.md",
+    "docs/diagrams/backend_v01_components.md",
+    "docs/diagrams/backend_v01_components.puml",
     "docs/diagrams/task_lifecycle_sequence.md",
+    "docs/diagrams/workstream_v01_container.md",
+    "docs/diagrams/workstream_v01_container.puml",
     "docs/glossary.md",
     "docs/operations_operator_workflow.md",
     "docs/operations_payment_reputation.md",
@@ -79,7 +84,9 @@ ACTIVE_PATHS = {
     "docs/roadmap_30_day_master_plan.md",
     "docs/roadmap_day_by_day_execution_plan.md",
     "docs/roadmap_implementation_backlog.md",
+    "docs/roadmap_pilot_plan.md",
     "docs/roles_permissions.md",
+    "docs/spec_chunk_3_project_guide_foundation.md",
     "docs/spec_review_lifecycle.md",
     "docs/template_prior_feedback_checklist.md",
     "docs/template_project_guide.md",
@@ -87,8 +94,6 @@ ACTIVE_PATHS = {
     "docs/template_revision_replay.md",
     "docs/template_task_status.md",
 }
-
-REVIEW_DOCUMENT_NAME = re.compile(r"(?:review|revision)", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -131,7 +136,9 @@ RULES = (
         "LEGACY_FINDING_CLOSURE",
         re.compile(
             r"\b(?:contributor_claim_status|reviewer_closure_status|"
-            r"closed_fixed|closed_rebutted|partially_closed|still_open)\b",
+            r"closed_fixed|closed_rebutted|partially_closed|still_open)\b|"
+            r"\bclosed\s*/\s*still\s+open\b|"
+            r"\bclose\s+prior\s+revision\s+findings\b",
             re.IGNORECASE,
         ),
     ),
@@ -163,9 +170,8 @@ RULES = (
     Rule(
         "DIRECT_ACCEPT_TO_SUBMITTER_CONTRIBUTION",
         re.compile(
-            r"\baccept(?:ed|ance)?\b(?:(?!FinalAcceptance)[^.\n]){0,100}"
-            r"\b(?:directly\s+)?creates?\b"
-            r"(?:(?!FinalAcceptance)[^.\n]){0,80}"
+            r"\baccept(?:ed|ance)?\b[^.\n]{0,120}"
+            r"\b(?:directly\s+)?creates?\b[^.\n]{0,100}"
             r"\b(?:submitter\s+contribution|accepted_submission)\b",
             re.IGNORECASE,
         ),
@@ -175,8 +181,8 @@ RULES = (
         re.compile(
             r"\bauto_reject_after_limit\b|"
             r"\b(?:revision\s+(?:limit|deadline)|limit\s+or\s+deadline)\b"
-            r"[^.\n]{0,100}\b(?:automatically\s+reject|auto-reject)\b|"
-            r"\b(?:automatically\s+reject|auto-reject)\b[^.\n]{0,100}"
+            r"[^.\n]{0,100}\b(?:automatically\s+reject(?:s|ed)?|auto-reject)\b|"
+            r"\b(?:automatically\s+reject(?:s|ed)?|auto-reject)\b[^.\n]{0,100}"
             r"\brevision\s+(?:limit|deadline)\b",
             re.IGNORECASE,
         ),
@@ -194,8 +200,31 @@ RULES = (
     Rule(
         "REVIEW_REPUTATION_SIDE_EFFECT",
         re.compile(
-            r"\b(?:review|accept|reject)\b[^.\n]{0,100}\b(?:creates?|records?|updates?|applies?)\b"
-            r"[^.\n]{0,50}\breputation\s+(?:event|effect|update)\b",
+            r"\b(?:review|accept(?:ed|ance)?|reject(?:ed|ion)?)\b"
+            r"[^.\n]{0,120}\b(?:creates?|records?|updates?|applies?|"
+            r"are\s+recorded)\b[^.\n]{0,60}"
+            r"\breputation\s+(?:event|effect|update)s?\b|"
+            r"\b(?:review|accept(?:ed|ance)?|reject(?:ed|ion)?)\b"
+            r"[^.\n]{0,120}\breputation\s+(?:event|effect|update)s?\b"
+            r"[^.\n]{0,60}\bare\s+recorded\b",
+            re.IGNORECASE,
+        ),
+    ),
+    Rule(
+        "ACTIVE_REPUTATION_LEDGER",
+        re.compile(
+            r"^#{2,4}\s+Day\s+\d+:\s+Reputation\s+Ledger\s*$",
+            re.IGNORECASE | re.MULTILINE,
+        ),
+    ),
+    Rule(
+        "UNCONDITIONAL_REVIEW_PAYMENT",
+        re.compile(
+            r"\baccepted\s+(?:work|task)\b[^.\n]{0,100}"
+            r"\b(?:creates?|must\s+have|without)\b[^.\n]{0,60}"
+            r"\b(?:pending\s+)?payment\s+(?:record|status)?\b|"
+            r"\bno\s+accepted\s+task\b[^.\n]{0,60}"
+            r"\b(?:without|missing)\b[^.\n]{0,30}\bpayment\b",
             re.IGNORECASE,
         ),
     ),
@@ -269,21 +298,6 @@ def scan_text(relative_path: str, text: str) -> list[str]:
     failures: list[str] = []
     for rule in RULES:
         for match in rule.pattern.finditer(text):
-            line_start = text.rfind("\n", 0, match.start()) + 1
-            line_end = text.find("\n", match.end())
-            if line_end == -1:
-                line_end = len(text)
-            matched_line = text[line_start:line_end]
-            if rule.code == "REVIEWER_REBASE" and re.search(
-                r"\breviewer\b[^.\n]{0,80}\b(?:never\s+(?:rebases?|"
-                r"performs?\s+(?:an?\s+)?(?:guide\s+)?rebase)|"
-                r"(?:does\s+not|must\s+not|cannot)\s+(?:perform\s+)?"
-                r"(?:an?\s+)?(?:guide\s+)?rebase|"
-                r"performs?\s+no\s+(?:guide\s+)?rebase)\b",
-                matched_line,
-                re.IGNORECASE,
-            ):
-                continue
             failures.append(
                 f"{relative_path}:{line_number(text, match.start())}: {rule.code}"
             )

@@ -134,10 +134,9 @@ Track:
 
 - completed reviews
 - decision distribution
-- overturned decisions
 - unclear feedback reports
 - average turnaround
-- second-review agreement
+- offline sampled-quality signals
 
 Possible future reviewer events:
 
@@ -145,9 +144,12 @@ Possible future reviewer events:
 | --- | ---: | --- |
 | clear_review | +2 | Structured findings or clear acceptance evidence. |
 | unclear_feedback | -2 | Finding lacks issue, evidence, or required fix. |
-| overturned_accept | -3 | Accepted work later found non-compliant. |
-| overturned_reject | -3 | Rejected work that belonged in accepted or needs-revision state. |
+| sampled_quality_concern | -3 | Offline evidence flags review quality without changing the product decision. |
 | missed_prior_finding | -2 | Resubmission accepted with unresolved prior issue. |
+
+These are future reputation inputs only. Sampling creates no product Review,
+decision, queue, lease, or adjudication state and cannot mutate existing review
+history.
 
 ## Skill Tags
 

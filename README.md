@@ -255,7 +255,8 @@ Run checks
 Review packet
 Record review decision: accept, needs_revision, or reject
 Create reviewer contribution for every valid human review
-For accept, create FinalAcceptance and then the submitter contribution
+For accept, create FinalAcceptance
+Use FinalAcceptance as the sole source of the submitter contribution
 Record compensation status only for payable contribution awards
 Project reputation only after its separate implementation
 Review lessons learned
@@ -292,7 +293,7 @@ Artifacts, evidence, and auditing:
 Contribution and compensation:
 
 - every valid human review creates a reviewer contribution from locked evidence
-- accept creates FinalAcceptance; only that fact creates the submitter contribution
+- for an accept decision, FinalAcceptance alone sources the submitter contribution
 - only payable contributions create immutable awards and fulfillment tracking;
   explicit unpaid rules create none
 - compensation fulfillment is recorded separately from task acceptance

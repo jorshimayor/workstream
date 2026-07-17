@@ -121,8 +121,8 @@ that attempt. After a human `needs_revision` Review, exact stamped identity and
 activation-sequence match with the currently active guide keeps context. Any
 different valid active pair prepares a forward or backward rebase; incomplete,
 inconsistent, revoked, or unsafe context blocks for manager repair. Task Context
-returns the frozen preparation, and the reviewer never rebases the context
-stamped on the leased Submission.
+returns the frozen preparation. No guide rebase occurs during review; the
+reviewer uses the context stamped on the leased Submission.
 
 ### Task Contract
 

@@ -45,7 +45,7 @@ Exit criteria:
 
 - no task can exist without a project
 - no project can exist without a guide
-- no accepted task can exist without payment and evidence concepts
+- no accepted task can bypass contribution-policy evaluation or evidence lineage
 - no backend implementation starts without chunk specification and conditions of satisfaction
 
 ### Day 2: Project And Guide Records
@@ -139,7 +139,9 @@ Exit criteria:
 
 ## Week 2: Checker System
 
-Week 2 is backend-first checker infrastructure. Checker output is exposed through APIs, backend contract drills, and operational debug output. It does not build the product frontend, reviewer queue UI, review decision form, contribution records, payment records, or reputation updates.
+Week 2 is backend-first checker infrastructure. Checker output is exposed
+through APIs, backend contract drills, and operational debug output. It builds
+none of the later product surfaces. Deferred reputation is outside Week 2.
 
 The core invariant is:
 
@@ -327,22 +329,25 @@ Deliver:
 
 Exit criteria:
 
-- accepted work creates a contribution record
-- accepted work creates pending payment record
+- every valid Review creates reviewer contribution
+- for accepted work, FinalAcceptance alone sources the additional submitter
+  contribution
+- only a payable contribution creates a CompensationAward and fulfillment
+  projection
 - paid payment status requires payment reference
 
-### Day 17: Reputation Ledger
+### Day 17: Compensation Delivery Proof
 
 Deliver:
 
-- `ReputationEvent`
-- worker quality events
-- reviewer quality events
-- skill-tag scoring
+- outbox delivery and retry
+- authenticated fulfillment callback
+- immutable fulfillment receipt
+- failed/pending/fulfilled projection recovery
 
 Exit criteria:
 
-- accepted, needs revision, rejected, and review-quality events are recorded
+- payable awards have exact delivery lineage; reputation remains deferred
 
 ### Day 18: Dashboards
 
@@ -406,7 +411,8 @@ Deliver:
 
 Exit criteria:
 
-- accepted work has evidence, contribution record, and pending payment
+- accepted work has evidence and both required contribution source checks;
+  payable records alone have pending compensation fulfillment
 
 ### Day 23: Reviewer Audit
 
@@ -481,7 +487,7 @@ Deliver:
 Exit criteria:
 
 - no silent state changes
-- no accepted task missing payment/evidence
+- no accepted task bypasses evidence lineage or contribution-policy evaluation
 
 ### Day 29: Pilot Report
 

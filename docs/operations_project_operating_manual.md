@@ -233,7 +233,7 @@ The output is one of:
 Before review decision:
 
 - read the Project Guide identity/version/activation sequence stamped on the
-  exact leased Submission; the reviewer never rebases
+  exact leased Submission; no guide rebase occurs during review
 - read task acceptance criteria
 - inspect checker results
 - inspect evidence

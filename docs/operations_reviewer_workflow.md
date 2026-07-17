@@ -9,8 +9,8 @@ REV-13 joint release complete. `spec_review_lifecycle.md` is normative.
 ## Reviewer Job
 
 The reviewer decides whether one exact leased Submission satisfies the task and
-the Project Guide context stamped on that Submission. The reviewer never rebases
-guide context and does not use whatever guide happens to be active at read time.
+the Project Guide context stamped on that Submission. No guide rebase occurs
+during review, and the active-at-read-time guide does not replace stamped context.
 
 The reviewer must have an exact active project `reviewer` grant represented by
 canonical human `ActorProfile.id`. Submitter, adjudicator, administrative, or

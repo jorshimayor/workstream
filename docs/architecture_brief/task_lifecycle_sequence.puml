@@ -84,13 +84,31 @@ UI -> API : GET current work
 API -> Auth : verify Flow token
 Auth --> API : verified external identity
 API -> Authorization : resolve actor profile and project grants
-Authorization -> Authorization : prepare exact reviewer action\n+ resource/lifecycle guards
+Authorization -> Authorization : require review.queue.read\n+ resource/lifecycle guards
 Authorization --> API : allowed with matched reviewer grant
-API -> DB : claim offer; freeze reviewer policy;\ncreate ReviewLease + ReviewPacketManifest
 API --> UI : active lease / one server-selected offer / none
+
+Reviewer -> UI : claim server-selected offer
+UI -> API : POST claim
+API -> Auth : verify Flow token
+Auth --> API : verified external identity
+API -> Authorization : PREP review.claim with exact request bindings
+Authorization --> API : opaque single-use prepared handle
+API -> DB : lock idempotency, lifecycle fence, queue;\nlock task, assignment, Submission, CheckerRun;\nrecompose canonical final facts
+API -> Authorization : consume prepared handle and evaluate final facts
+Authorization --> API : allowed; authorization evidence staged
+API -> DB : freeze reviewer policy; create ReviewLease\n+ ReviewPacketManifest; commit once
+API --> UI : exact leased Review Context
+
 Reviewer -> UI : submit accept / needs_revision / reject
-UI -> API : decision + immutable findings/resolutions
-API -> DB : lock lease, queue, task, assignment, Submission
+UI -> API : POST decision + immutable findings/resolutions
+API -> Auth : freshly verify Flow token
+Auth --> API : verified external identity
+API -> Authorization : PREP review.decision with exact request bindings
+Authorization --> API : opaque single-use prepared handle
+API -> DB : lock idempotency, lifecycle fence, queue, lease;\nlock task, assignment, Submission, predecessor/evidence;\nrecompose canonical final facts
+API -> Authorization : consume prepared handle and evaluate final facts
+Authorization --> API : allowed; authorization evidence staged
 API -> DB : append immutable Review/findings/resolutions;\nconsume lease and close queue
 API -> DB : CON reviewer completed_review\n+ applicable award when payable
 

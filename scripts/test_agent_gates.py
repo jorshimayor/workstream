@@ -4262,6 +4262,8 @@ def test_stale_review_contract_rule_inventory_is_complete() -> None:
         "AUTO_REJECT_REVISION_LIMIT": "auto_reject_after_limit: true",
         "REJECT_REQUIRES_FINDING": "Reject requires one finding.",
         "REVIEW_REPUTATION_SIDE_EFFECT": ("The review creates a reputation event."),
+        "ACTIVE_REPUTATION_LEDGER": "## Day 17: Reputation Ledger",
+        "UNCONDITIONAL_REVIEW_PAYMENT": ("Accepted work must have payment status."),
         "ADJUDICATION_ACTIVATION_PROMISE": (
             "Adjudication remains unavailable until enabled."
         ),
@@ -4274,11 +4276,15 @@ def test_stale_review_contract_rule_inventory_is_complete() -> None:
 
     assert not gate.scan_text(
         "docs/spec_review_lifecycle.md",
-        "Accept creates FinalAcceptance, which alone creates the submitter contribution.",
+        "FinalAcceptance alone sources the submitter contribution.",
     )
     assert not gate.scan_text(
         "docs/spec_review_lifecycle.md",
-        "The reviewer never rebases the stamped Submission context.",
+        "No guide rebase occurs during review.",
+    )
+    assert not gate.scan_text(
+        "docs/glossary.md",
+        "## Reputation Ledger\n\nA future offline evidence concept.",
     )
 
     adversarial_samples = {
@@ -4292,10 +4298,35 @@ def test_stale_review_contract_rule_inventory_is_complete() -> None:
             "The reviewer should not delay and performs a rebase before judgment."
         ),
         "LEGACY_REVIEW_SEVERITY": "ReviewFinding severity: high",
+        "LEGACY_FINDING_CLOSURE": "resolution: closed / still open",
+        "AUTO_REJECT_REVISION_LIMIT": (
+            "The task automatically rejects after the revision limit."
+        ),
+        "REVIEW_REPUTATION_SIDE_EFFECT": (
+            "Accepted and rejected review reputation events are recorded."
+        ),
+        "UNCONDITIONAL_REVIEW_PAYMENT": ("No accepted task missing payment/evidence."),
     }
     for code, sample in adversarial_samples.items():
         failures = gate.scan_text("docs/spec_review_lifecycle.md", sample)
         assert any(failure.endswith(f": {code}") for failure in failures), code
+
+    for sample in (
+        "Accept creates FinalAcceptance only afterward and directly creates accepted_submission first.",
+        "Acceptance creates a FinalAcceptance audit row but directly creates the submitter contribution from Review.decision.",
+    ):
+        failures = gate.scan_text("docs/spec_review_lifecycle.md", sample)
+        assert any(
+            failure.endswith(": DIRECT_ACCEPT_TO_SUBMITTER_CONTRIBUTION")
+            for failure in failures
+        )
+
+    for sample in (
+        "Reviewer never rebases old context, then rebases production context.",
+        "The reviewer must not perform a rebase in tests but performs a rebase in production.",
+    ):
+        failures = gate.scan_text("docs/spec_review_lifecycle.md", sample)
+        assert any(failure.endswith(": REVIEWER_REBASE") for failure in failures)
 
 
 def test_stale_review_contract_classification_is_exact() -> None:

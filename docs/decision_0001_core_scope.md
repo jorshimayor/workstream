@@ -21,8 +21,10 @@ Project Guide
 -> Needs Revision / Accepted / Rejected
 -> Contribution Record
 -> Conditional Compensation Award / Fulfillment
--> Reputation Event
 ```
+
+Reputation is a separately approved future consumer of immutable review and
+contribution lineage. It is not a v0.1 review-transaction side effect.
 
 The same evaluation and contribution infrastructure can support many project domains if project-specific rules are configurable.
 
@@ -39,7 +41,6 @@ The first version prioritizes:
 - evidence
 - contribution records
 - compensation awards and fulfillment records
-- reputation ledger
 
 Deferred:
 
@@ -48,5 +49,6 @@ Deferred:
 - marketplace discovery
 - blockchain settlement
 - external client billing
+- reputation policy, events, scoring, and projections
 
 This keeps the build focused on the part that determines quality and acceptance.

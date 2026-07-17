@@ -699,3 +699,46 @@ context-diagram pixels across invocations, which also changes the composed PDF.
 The renderer default now rebuilds only Chunk 01's lifecycle PNG and PDF; full
 context regeneration requires explicit `--all`. The four context images are
 restored and remain trusted-base bound.
+
+## WS-REV-001-01 Second Exact-SHA Review And Repair - 2026-07-17
+
+Candidate `0a0be1acd870f769ac5d27661a01d45ce3b402b6` failed the grouped
+senior-engineering/architecture, QA/product/test-delta, and
+security/docs/CI-integrity reviews. Reuse/dedup remained passing. The failed
+candidate is historical evidence only.
+
+The valid findings produced this repair:
+
+- reconciled all three active roadmaps and the Project Guide template to
+  immutable finding responses/resolutions, decision-specific evidence, the
+  FinalAcceptance contribution matrix, payable-only awards, and deferred
+  reputation;
+- removed remaining automatic-reject, mandatory second-review, overturned-
+  decision, and adjudication-like product semantics from active decision,
+  risk, data-model, operations, and diagram surfaces;
+- expanded the fail-closed scanner and adversarial fixtures for spaced legacy
+  closure, plural automatic rejection, unconditional payment, passive
+  reputation, direct-contribution decoys containing FinalAcceptance, and mixed
+  reviewer-rebase negation;
+- separated concealed `review.queue.read`, `review.claim`, and
+  `review.decision` operations, with fresh token verification, AUTH PREP,
+  canonical lock/recomposition order, exact handle validation/consumption,
+  evaluation, and staged evidence before the first feature mutation; and
+- regenerated the two context diagrams whose v0.1 reputation content changed,
+  while the Workstream context and future identity/payment/reputation images
+  remain byte-bound to trusted base.
+
+The amended L1 contract added the affected active sources and generated files
+to allowed scope. Its final plan re-review passed after the renderer was made
+portable and deterministic: it requires the repository-standard PlantUML
+1.2026.6 jar, verifies SHA-256
+`89948f14c93756c7a3fb7b69078ff37e8489fd79dd430c582b931e2f65358690`,
+uses that jar unconditionally, fixes `SOURCE_DATE_EPOCH`, strips lifecycle PNG
+metadata, and exposes explicit `--review-context` source-to-SVG-to-PNG
+rendering. Two complete pinned render passes produced identical SVG, PNG, and
+PDF hashes.
+
+The repaired stale-review and stale-workstream gates pass, the expanded agent
+gate suite passes all 85 tests, archival literal hashes remain exact, and both
+local roadmap exports remain absent. A new committed exact-SHA candidate and
+full internal reviewer fanout are still required before PR publication.

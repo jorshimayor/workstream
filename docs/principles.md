@@ -85,7 +85,8 @@ evidence, and later resolutions.
 Prior Submissions keep their stamped context. Preparation compares the prior
 guide identity/activation sequence with the currently active guide: exact match
 keeps, any different valid pair rebases forward or backward, and unsafe context
-blocks. Task Context returns the frozen preparation; the reviewer never rebases.
+blocks. Task Context returns the frozen preparation. No guide rebase occurs
+during review.
 
 ## 6. Compensation Follows Contribution
 

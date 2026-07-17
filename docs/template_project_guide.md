@@ -178,7 +178,8 @@ Accepted work must:
 - satisfy acceptance criteria
 - pass blocking checks
 - include evidence
-- close prior revision findings
+- preserve one immutable response and later resolution for each required prior
+  blocking finding
 
 ## Rejection Policy
 

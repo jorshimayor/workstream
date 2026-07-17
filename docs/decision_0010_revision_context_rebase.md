@@ -61,8 +61,8 @@ context, and change summary before submitting. Submission N+1 acknowledges and
 stamps that preparation exactly. A later guide activation cannot silently drift
 an already prepared attempt.
 
-The reviewer never rebases. The reviewer consumes the guide and policy context
-stamped on the single Submission covered by the active ReviewLease. History
+No guide rebase occurs during review. The reviewer consumes the guide and policy
+context stamped on the single Submission covered by the active ReviewLease. History
 shows the guide transition without changing any prior Submission.
 
 Out-of-band guidance has no acceptance force until it is encoded in one of:

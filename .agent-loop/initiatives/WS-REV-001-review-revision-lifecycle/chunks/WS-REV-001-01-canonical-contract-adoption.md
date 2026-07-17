@@ -21,6 +21,8 @@ docs/architecture_data_model.md
 docs/architecture_lockdown.md
 docs/architecture_lifecycle_state_machine.md
 docs/architecture_system_architecture.md
+docs/decision_0001_core_scope.md
+docs/decision_0002_db_first_not_blockchain_first.md
 docs/decision_0003_project_guides_are_first_class.md
 docs/decision_*.md only when an approved decision requires it
 docs/glossary.md
@@ -38,18 +40,28 @@ docs/risk_register.md
 docs/roadmap_30_day_master_plan.md
 docs/roadmap_day_by_day_execution_plan.md
 docs/roadmap_implementation_backlog.md
+docs/roadmap_pilot_plan.md
 docs/roles_permissions.md
 docs/template_review_packet.md
 docs/template_revision_replay.md
 docs/template_prior_feedback_checklist.md
 docs/template_task_status.md
 docs/template_project_guide.md
+docs/spec_chunk_3_project_guide_foundation.md
 docs/architecture_brief/task_lifecycle_sequence.puml
 docs/architecture_brief/workstream_architecture_brief.md
 docs/architecture_brief/workstream_architecture_brief.pdf
 docs/architecture_brief/images/task_lifecycle_sequence.png
+docs/architecture_brief/images/backend_v01_components.png
+docs/architecture_brief/images/workstream_v01_container.png
 docs/architecture_brief/render_pdf.sh
 docs/diagrams/task_lifecycle_sequence.md
+docs/diagrams/backend_v01_components.md
+docs/diagrams/backend_v01_components.puml
+docs/diagrams/rendered/backend_v01_components.svg
+docs/diagrams/workstream_v01_container.md
+docs/diagrams/workstream_v01_container.puml
+docs/diagrams/rendered/workstream_v01_container.svg
 README.md
 scripts/check_stale_review_contracts.py
 scripts/check_stale_artifact_contracts.py
@@ -169,9 +181,10 @@ frontend work
   active policy. Its durable active-path classifier discovers tracked, staged,
   untracked, and newly added documentation, excludes archival inputs by exact
   path rather than broad directory suppression, and fails on an unclassified
-  active document. Every documentation file is classified fail closed; only
-  exact supplied archives, exact reviewed historical records, and the explicit
-  non-product engineering-review protocol bypass active product scanning.
+  active document. Every tracked or untracked Markdown, PlantUML, and HTML
+  documentation file is classified fail closed; only exact supplied archives,
+  exact reviewed historical records, and the explicit non-product
+  engineering-review protocol bypass active product scanning.
   Table-driven regression fixtures cover every prohibited category, adversarial
   lexical decoys, exact archival exclusion, unclassified-document rejection,
   and fail-closed invocation from `scripts/test_agent_gates.py`.
@@ -182,9 +195,9 @@ frontend work
 - The architecture brief render is byte-reproducible for the generated PDF and
   lifecycle PNG. The render command fixes the PDF identifier and embeds full
   fonts so repeated WeasyPrint runs do not create random subset names. Default
-  rendering rebuilds only Chunk 01's lifecycle PNG and PDF; the four unrelated
-  context-diagram conversions require explicit `--all` and cannot escape this
-  chunk's verification scope.
+  rendering rebuilds only Chunk 01's lifecycle PNG and PDF. This chunk uses
+  explicit source-specific rendering for the two reconciled context diagrams;
+  the other two context images remain trusted-base bound.
 - The three active roadmap documents are reconciled. Discovery at chunk start
   found neither ignored local export at `sheets/workstream_roadmap.xlsx` nor
   `sheets/workstream_roadmap.csv`, and final verification records the same
@@ -254,9 +267,12 @@ printf '%s  %s\n' \
   12f094e49c5c80f117e42d0f7f962b843f34508ab58d7f1d8def5f50fef532ed docs/reference_specs/WS-IMP-001-workstream-v0.1-coding-agent-implementation-specification.pdf | sha256sum -c -
 git diff --exit-code 0302bcf854a565d429e232ad6b076a1931ea74e4 -- docs/reference_specs/WS-REV-001-review-lifecycle-specification.md docs/reference_specs/WS-REV-001-review-lifecycle-specification.pdf docs/reference_specs/WS-IMP-001-workstream-v0.1-coding-agent-implementation-specification.md docs/reference_specs/WS-IMP-001-workstream-v0.1-coding-agent-implementation-specification.pdf
 git check-attr diff merge text -- docs/reference_specs/*.pdf | awk '$3 != "unset" {bad=1} END {exit bad}'
-./docs/architecture_brief/render_pdf.sh
-git diff --exit-code -- docs/architecture_brief/workstream_architecture_brief.pdf docs/architecture_brief/images/task_lifecycle_sequence.png
-git diff --exit-code 0302bcf854a565d429e232ad6b076a1931ea74e4 -- docs/architecture_brief/images/backend_v01_components.png docs/architecture_brief/images/future_identity_payment_reputation.png docs/architecture_brief/images/workstream_context.png docs/architecture_brief/images/workstream_v01_container.png
+printf '%s  %s\n' 89948f14c93756c7a3fb7b69078ff37e8489fd79dd430c582b931e2f65358690 "$PLANTUML_JAR" | sha256sum -c -
+java -jar "$PLANTUML_JAR" -version | grep -F "PlantUML version 1.2026.6"
+./docs/architecture_brief/render_pdf.sh --review-context
+./docs/architecture_brief/render_pdf.sh --review-context
+git diff --exit-code -- docs/diagrams/rendered/backend_v01_components.svg docs/diagrams/rendered/workstream_v01_container.svg docs/architecture_brief/images/backend_v01_components.png docs/architecture_brief/images/workstream_v01_container.png docs/architecture_brief/workstream_architecture_brief.pdf docs/architecture_brief/images/task_lifecycle_sequence.png
+git diff --exit-code 0302bcf854a565d429e232ad6b076a1931ea74e4 -- docs/architecture_brief/images/future_identity_payment_reputation.png docs/architecture_brief/images/workstream_context.png
 test ! -e sheets/workstream_roadmap.xlsx
 test ! -e sheets/workstream_roadmap.csv
 test -z "$(git ls-files sheets/)"

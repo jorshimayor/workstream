@@ -36,7 +36,7 @@ bounded metadata only.
 - revision preparation ID/head/digest, when applicable:
 - context outcome/direction/change summary, when applicable:
 
-The reviewer uses this stamped context and performs no rebase.
+Use this stamped context. No guide rebase occurs during review.
 
 ## Decision
 

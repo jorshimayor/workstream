@@ -258,7 +258,7 @@ Day 14:
   - prior issue
   - fix summary
   - evidence
-  - closed / still open
+  - immutable later resolution: `resolved | unresolved | not_applicable`
 
 Day 15:
 
@@ -267,7 +267,9 @@ Day 15:
 
 Week 3 acceptance bar:
 
-- reviewers cannot issue vague decisions without findings
+- accept requires acceptance evidence; `needs_revision` requires an unresolved
+  blocking finding; reject requires a bounded human reason and findings remain
+  optional
 - every `needs_revision` has concrete fix requirements
 - every resubmission must answer each unresolved blocking finding and preserve
   later immutable resolution
@@ -398,7 +400,7 @@ Operations:
 - at least 10 pilot tasks
 - at least 5 completed cycles
 - median review turnaround under 24 hours for pilot
-- no accepted task without payment record
+- no payable accepted contribution without its CompensationAward
 - no accepted task without contribution record
 
 Quality:

@@ -1487,8 +1487,8 @@ human-review revision. Exact prior Submission guide identity/activation-sequence
 match with the currently active guide keeps context. Any different valid active
 pair rebases forward or backward. Missing, inconsistent, revoked, or unsafe
 context blocks for manager repair. Task Context returns the validated chain
-head; the reviewer never rebases and reads the context stamped on the leased
-Submission.
+head. No guide rebase occurs during review; the reviewer reads the context
+stamped on the leased Submission.
 
 Revision preparation never rebases award eligibility. Submitter eligibility
 remains governed by the TaskAssignment-frozen `ContributionPolicyVersion`; each
@@ -1630,8 +1630,13 @@ Event types:
 - revision_closed
 - contribution_recorded
 - compensation_fulfilled
-- review_overturned
-- review_confirmed
+- review_quality_sampled
+- review_feedback_flagged
+
+This entire record is deferred to a separate reputation initiative. Future
+review-quality inputs are offline non-product evidence: they cannot alter an
+immutable Review, create another product decision, or introduce adjudication
+state.
 
 ## AuditEvent
 

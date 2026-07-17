@@ -85,13 +85,31 @@ sequenceDiagram
   API->>Auth: Verify Flow token
   Auth-->>API: Verified external identity
   API->>Authorization: Resolve actor profile and project grants
-  Authorization->>Authorization: Prepare exact reviewer action and guards
+  Authorization->>Authorization: require(review.queue.read, resource/lifecycle guards)
   Authorization-->>API: Allowed AuthorizationContext with matched reviewer grant
-  API->>DB: Claim offer; freeze policy; create ReviewLease and ReviewPacketManifest
   API-->>UI: Active lease, one server-selected offer, or none
+
+  Reviewer->>UI: Claim server-selected offer
+  UI->>API: POST claim
+  API->>Auth: Verify Flow token
+  Auth-->>API: Verified external identity
+  API->>Authorization: PREP review.claim with exact request bindings
+  Authorization-->>API: Opaque single-use prepared handle
+  API->>DB: Lock idempotency, lifecycle fence, queue, Task, Assignment, Submission, and CheckerRun; recompose canonical final facts
+  API->>Authorization: Consume prepared handle and evaluate final facts
+  Authorization-->>API: Allowed; authorization evidence staged
+  API->>DB: Freeze reviewer policy; create ReviewLease and ReviewPacketManifest; commit once
+  API-->>UI: Exact leased Review Context
+
   Reviewer->>UI: Submit accept, needs_revision, or reject
-  UI->>API: Decision with immutable findings/resolutions
-  API->>DB: Lock lease, queue, task, assignment, and Submission
+  UI->>API: POST decision with immutable findings/resolutions
+  API->>Auth: Freshly verify Flow token
+  Auth-->>API: Verified external identity
+  API->>Authorization: PREP review.decision with exact request bindings
+  Authorization-->>API: Opaque single-use prepared handle
+  API->>DB: Lock idempotency, lifecycle fence, queue, lease, Task, Assignment, Submission, predecessor, and evidence; recompose canonical final facts
+  API->>Authorization: Consume prepared handle and evaluate final facts
+  Authorization-->>API: Allowed; authorization evidence staged
   API->>DB: Append Review/findings/resolutions; consume lease; close queue
   API->>DB: CON reviewer completed_review and applicable award
 

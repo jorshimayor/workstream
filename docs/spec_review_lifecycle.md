@@ -86,6 +86,41 @@ AUTH repositories or models, read grants, reconstruct permission unions,
 register actions, integrate evaluators, change `ActionOwner`, or change action
 availability.
 
+### Current Work And Claim Choreography
+
+All of these endpoints remain planned and unavailable until the owning REV
+chunks provide hidden behavior, AUTH registers and activates their dependencies,
+and REV-13 releases the product surface.
+
+`GET /api/v1/reviews/current` is a concealed read, not a claim:
+
+```text
+freshly verify the Flow token and resolve canonical ActorProfile.id
+-> require(review.queue.read, exact project/resource/lifecycle context)
+-> return the caller's active lease, one server-selected offer, or none
+-> create no ReviewLease, packet manifest, queue mutation, or policy freeze
+```
+
+`POST /api/v1/reviews/claim` uses this exact AUTH-first order:
+
+```text
+freshly verify the Flow token
+-> AUTH PREP review.claim with exact request bindings
+-> lock claim idempotency
+-> lock the review lifecycle fence
+-> lock ReviewQueueEntry
+-> lock Task, TaskAssignment, Submission, and CheckerRun facts
+-> recompose canonical final facts
+-> AUTH validates all prepared-handle bindings, consumes the handle once,
+   evaluates exact current authority once, and stages bounded evidence
+-> freeze the reviewer ContributionPolicyVersion and append ReviewLease plus
+   ReviewPacketManifest
+-> stage audit/outbox rows and commit once
+```
+
+Any denial or race before the append follows the prepared-protocol rollback path
+and creates no lease, manifest, policy freeze, audit, or product outbox effect.
+
 ## Prepared Mutation Protocol
 
 Every protected review/revision mutation uses the AUTH-owned prepared protocol:
@@ -276,11 +311,15 @@ participant. No production or test no-op participant exists.
 Every valid decision follows this order:
 
 ```text
-authorize review
--> lock review idempotency and lifecycle fence
--> lock ReviewLease, ReviewQueueEntry, task, TaskAssignment, Submission,
+freshly verify the Flow token
+-> AUTH PREP review.decision with exact request bindings
+-> lock review idempotency
+-> lock the review lifecycle fence
+-> lock ReviewQueueEntry, ReviewLease, task, TaskAssignment, Submission,
    predecessor Review, finding/resolution lineage, and stabilized binding facts
--> recompose final facts and evaluate AUTH once
+-> recompose canonical final facts
+-> AUTH validates all prepared-handle bindings, consumes the handle once,
+   evaluates exact current authority once, and stages bounded evidence
 -> append immutable Review, submitted findings, and resolutions
 -> consume ReviewLease
 -> close ReviewQueueEntry
@@ -440,8 +479,8 @@ the submitter. Submission N+1 acknowledges the head ID and digest and stamps
 that context exactly. If it is no longer valid, submission fails with an
 explicit re-preparation requirement.
 
-The reviewer never performs a guide rebase. The reviewer evaluates the exact
-guide and task-execution context stamped on the single Submission covered by
+No guide rebase occurs during review. The reviewer evaluates the exact guide and
+task-execution context stamped on the single Submission covered by
 the active lease. History shows the prior and new guide versions, direction,
 and change summary.
 
