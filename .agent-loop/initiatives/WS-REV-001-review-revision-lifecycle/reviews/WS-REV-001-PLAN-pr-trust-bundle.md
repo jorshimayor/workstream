@@ -139,9 +139,9 @@ authorization catalogue, artifact provider, or contribution runtime.
 
 ## Verification
 
-The rebased planning snapshot requires fresh exact-SHA internal evidence before
-publication. Deterministic gates, including loop-memory validation, pass after
-the current repairs. The REV contract scanner is
+Exact snapshot `7a76da2a79243cf61936d3bc7cf2606a82f0b5d8` passed all nine
+required internal reviewer tracks. Deterministic gates, including loop-memory
+validation, also pass. The REV contract scanner is
 created only by successor chunk REV-01 and is not claimed as current proof. The
 PR #140 loop-memory repair is therefore no longer an outstanding issue. No
 product tests are expected because runtime code is unchanged.
@@ -154,7 +154,9 @@ FinalAcceptance amendment then received two repair cycles: reviewers corrected
 the contribution order, full decision matrix, an obsolete nullable omnibus
 input, and an incomplete reviewer negative-source constraint. Pre-rebase snapshot
 `86ee0a5e263ac306b3bf195a9fb9043aa5439416` passed every required track. It is
-historical after PR #140; the current snapshot requires fresh exact-SHA review.
+historical after PR #140. The reconciled snapshot initially failed on dependency
+cycles, PREP ownership/replay semantics, and residual AUTH-13/14 cutover
+ownership; all findings were repaired before the final exact-SHA pass.
 
 The latest CodeRabbit pass found one unreachable fulfillment-drain contract.
 The repaired state machine and its cutoff/writer-fence hardening passed every

@@ -8,8 +8,10 @@ active. On 2026-07-17 the branch rebased without conflict onto trusted main
 PR #140. That merge adopts the WS-XINT boundaries in AUTH planning but changes no
 runtime catalogue, action availability, evaluator, grant, service identity,
 prepared-mutation implementation, or feature behavior. The rebased REV snapshot
-requires fresh exact-SHA internal and external evidence before PR #128 can merge;
-the pre-rebase `86ee0a5` review remains historical only.
+  passed all nine internal reviewer tracks at exact snapshot
+  `7a76da2a79243cf61936d3bc7cf2606a82f0b5d8`; fresh external evidence remains
+  required before PR #128 can merge. The pre-rebase `86ee0a5` review remains
+  historical only.
 
 The revised WS-REV Markdown/PDF pair remains byte-preserved at canonical paths
 with recorded provenance. It is archival input, not authority for stale combined
@@ -114,6 +116,14 @@ already-claimed dispatch. Snapshot
 QA/test, security/auth, product/ops, architecture, docs, reuse/dedup, test-delta,
 and CI integrity with no findings before the PR #140 rebase. It is historical
 evidence and does not approve the current snapshot.
+
+After the PR #140 reconciliation, snapshots `777468d`, `4084cd4`, and `2146b8c`
+failed internal review on dependency cycles, PREP ownership/replay semantics,
+transaction ownership, and residual AUTH-13/14 cutover ownership. Every valid
+finding is recorded in `REVIEW_LOG.md` and repaired. Exact snapshot
+`7a76da2a79243cf61936d3bc7cf2606a82f0b5d8` passed senior engineering, QA/test,
+security/auth, product/ops, architecture, docs, reuse/dedup, test-delta, and CI
+integrity with no findings. No runtime chunk is active.
 
 ## Human clarification retained
 

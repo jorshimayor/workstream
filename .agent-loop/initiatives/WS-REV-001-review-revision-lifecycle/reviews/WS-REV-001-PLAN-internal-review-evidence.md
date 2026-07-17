@@ -10,112 +10,89 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: `86ee0a5e263ac306b3bf195a9fb9043aa5439416`
+Reviewed code SHA: `7a76da2a79243cf61936d3bc7cf2606a82f0b5d8`
 
-Trusted main SHA: `5d353b6d3f8a36b9b9ffdc1959487a150ac25fd1`
+Trusted main SHA: `d541521790a0441cfd2193f466e00ef81248ec31`
 
-Reviewed at: 2026-07-17T08:02:32Z
+Reviewed at: 2026-07-17T10:20:14Z
 
 Reviewer run IDs: senior-engineering/architecture/reuse-dedup=/root/finalaccept_senior_arch_r2; QA-test/product-ops/test-delta=/root/finalaccept_qa_product_r2; security-auth/docs/CI-integrity=/root/finalaccept_security_docs_r2
 
 ## Reviewed Change
 
-- Reconciled every active REV plan artifact and chunk contract to merged
-  WS-XINT-001 PR #139, ADR 0015, and its AUTH/REV, AUTH role/service, ART/REV,
-  and REV/CON handoffs.
-- Reserved registration, evaluator integration, activation custody,
-  `ActionOwner`, and availability changes to AUTH; REV owns hidden lifecycle
-  behavior and later product release only.
-- Required independent exact reviewer grants, role-specific invalidation,
-  AUTH-09E fixed services, request-scoped read authorization, and AUTH-first
-  prepared mutations.
-- Restricted REV to ART v2 typed ports, made packet-read, review evidence, and
-  server-derived `Submission.artifact_hash` explicit owner gates, and blocked
-  REV-07/10 until their exact amendments merge.
-- Made REV-10 the first hidden canonical Review transaction with mandatory
-  flush-only CON participation and installed the joint lifecycle fence only in
-  REV-12A before REV-13 product release.
-- Preserved the one-Project-Guide controlled rebase, active-lease packet-byte
-  isolation, immutable Review/Submission history, canonical `rejected` versus
-  administrative `cancelled`, and the exact reviewer/submitter contribution
-  matrix.
-- Added exact cross-project current-work concealment, full changed-subsystem
-  90-percent coverage mapping, literal proof commands, and narrowly tested AUTH
-  documentation-scanner classification for technical paths/CLI flags.
-- Added immutable FinalAcceptance as the internal accept-only fact between
-  Review and submitter `accepted_submission`, with no public API or separate
-  authorization action.
-- Defined one mandatory CON participant with a reviewer contribution operation
-  for every decision and a distinct submitter contribution operation only after
-  the accept branch creates FinalAcceptance.
-- Made every Review, submitted finding, and later resolution immutable for all
-  three decisions and required later review rounds to append new history.
-- Required mutually exclusive contribution source fields, exact three-decision
-  outcomes, REV-owned audit and outbox staging, and one atomic commit without a
-  decision-time ART call.
-- Made `delivery_draining` a reachable completion-only phase. The exclusive
-  cutoff transition waits for every fenced CON obligation writer and stores the
-  server-derived maximum root ordinal; only same-generation, pre-cutoff roots
-  may dispatch or complete callbacks during the drain.
-- Required every obligation creation, requeue, successor, and repair writer to
-  acquire the shared fence before ordinal allocation, with fail-closed
-  composition, both-order races, bounded denial audit, and same-root claim
-  recovery before provider I/O.
+- Rebased the complete REV planning branch onto merged AUTH reconciliation PR
+  #140 and retained the WS-XINT-001 handoffs, ADR 0015, and the human-approved
+  FinalAcceptance boundary.
+- Assigned ActionId registration, evaluator integration, activation custody,
+  `ActionOwner`, service identity constraints, and availability changes to AUTH.
+  REV owns hidden lifecycle behavior and later product exposure only.
+- Kept all 24 REV dependencies unavailable: registered planned
+  `submission.create`, 19 registered planned review actions, and four approved
+  but unregistered REV actions. ART evidence binding remains separate.
+- Required REV-01 to publish availability-neutral four-action registration and
+  six exact service identity-to-ActionId manifests before consuming chunks.
+- Broke the AUTH-13/14 and REV-09A cycle with an AUTH-owned schema-only
+  contributor-field foundation before REV-02. REV-09A then supplies hidden
+  preparation behavior; amended AUTH-13/14 own their command, binding, route,
+  schema, migration, and legacy-removal cutovers; AUTH-14 activation and all
+  other owner gates precede REV-13 exposure.
+- Bound sensitive writes to AUTH PREP. REV locks feature rows and recomposes
+  final facts; AUTH alone validates exact bindings/current authority, consumes
+  once, evaluates once, and stages decision evidence before feature mutation.
+- Separated rejected pre-consumption substitution/forgery, permanently invalid
+  stale/already-consumed/concurrent duplicate use, and evaluated authority/policy
+  denial with dirty rollback plus clean unchanged AUTH evidence restaging.
+- Made the request route or service command the caller `AsyncSession` owner and
+  sole committer. REV orchestrates lifecycle effects and stages shared
+  audit/outbox rows; AUTH, ART, task, REV, and CON participants flush only.
+- Kept every `accept`, `needs_revision`, and `reject` Review plus submitted
+  findings and resolutions immutable. Only `accept` also creates immutable
+  FinalAcceptance and the FinalAcceptance-sourced submitter contribution.
+- Preserved controlled Project Guide rebase for the next submission attempt,
+  exact leased-Submission context for the reviewer, ART v2 typed ports, active-
+  lease artifact-byte isolation, and the no-ART decision transaction.
+- Kept adjudication dormant and unimplemented in v0.1 with no adjudication
+  action, policy, queue, state, runtime, or readiness dependency.
 
 ## Reviewer Results
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | PASS | None | Review ordering and release control are coherent; every CON obligation writer is fenced before ordinal allocation and one controller owns the cutoff. |
-| qa/test | PASS | None | REV-10/13 prove the decision matrix; REV-12A/13 prove writer/cutoff races, completion-only drain, denial audit, and claim recovery. |
-| security/auth | PASS | None | Operation-specific contribution inputs and server-derived drain lineage fail closed before provider or successor I/O. |
-| product/ops | PASS | None | Guide rebase, immutable review rounds, all decision outcomes, reachable shutdown, and auditable recovery match the approved lifecycle. |
-| architecture | PASS | None | REV, CON, AUTH, ART, task-owner, audit, outbox, fence, ordinal, and transaction ownership remain explicit and acyclic. |
-| docs | PASS | None | Active planning consistently states all-decision immutability, accept-only FinalAcceptance, and the pre-cutoff completion-only drain. |
-| reuse/dedup | PASS | None | Existing task/checker participants, composition, audit/outbox, hashing, job, and adapter conventions are reused. |
-| test delta | PASS | None | No test was changed or weakened; the planned database and final-drill assertions were strengthened. |
-| ci integrity | PASS | None | No CI, workflow, scanner, package, threshold, or test configuration changed in the amendment. |
+| senior engineering | PASS | None | The dependency graph, AUTH-13/14 ownership, PREP order, transaction owner, and release boundary are executable and coherent. |
+| qa/test | PASS | None | The three PREP outcomes, all-decision matrix, revision rebase, owner gates, and release proof are testable without contradictory replay behavior. |
+| security/auth | PASS | None | AUTH alone validates/consumes/evaluates/stages; caller commit, service identity, action custody, FinalAcceptance lineage, and denial atomicity fail closed. |
+| product/ops | PASS | None | Guide keep/forward/backward rebase, immutable review rounds, all decision effects, accept-only submitter recognition, and release sequencing match the approved lifecycle. |
+| architecture | PASS | None | AUTH schema foundation -> REV-02 -> REV-09A -> amended AUTH-13/14 -> AUTH activation -> REV-13 is acyclic; REV-12A only classifies and fences owner-installed behavior. |
+| docs | PASS | None | Plan, decisions, risks, chunks, review log, handoff, and trust bundle use consistent ownership and lifecycle wording. |
+| reuse/dedup | PASS | None | Canonical task submission, task-owned participants, composition roots, PREP, hashing/idempotency, shared audit/outbox, and typed ART/CON ports are reused. |
+| test delta | PASS | None | No tests were weakened or removed; the full PR scanner delta only adds bounded positive and fail-closed negative cases. |
+| ci integrity | PASS | None | Changed files stay within the planning contract; no workflow, threshold, dependency, package command, or runtime gate is weakened. |
 
 ## Findings Addressed
 
-- Removed REV-owned activation and fixed future catalogue totals.
-- Split reviewer-authority invalidation from general review reconciliation into
-  distinct fixed service identities.
-- Reordered the decision chunks so no canonical Review commits before the CON
-  participant and no pre-12A service requires a nonexistent fence.
-- Replaced unmerged sibling chunk numbers with capability-and-exact-SHA gates.
-- Marked ART packet-read and Submission hash persistence as unassigned owner
-  amendments instead of assuming the current ART plan supplies them.
-- Added missing REV-06/07 composition scope and exact coverage paths for every
-  materially changed module.
-- Defined global-lease behavior for cross-project current-work queries.
-- Made claim preflight authority/concealment-gated and cross-scope artifact
-  errors concealment-equivalent.
-- Restored literal technical proof paths/flags and fixed the shared scanner
-  centrally, including fail-closed suffixed and concatenated near-miss tests.
-- Reordered the contribution boundary so the reviewer operation runs after
-  immutable Review history and lease/queue closure but before the decision
-  branch; the submitter operation runs only after accept creates
-  FinalAcceptance and applies accepted task effects.
-- Replaced the obsolete nullable FinalAcceptance omnibus input with distinct
-  reviewer and submitter inputs carrying their own actor and frozen policy
-  lineage.
-- Required reviewer contributions to leave FinalAcceptance and TaskAssignment
-  sources null, and submitter contributions to leave direct Review and
-  ReviewLease sources null.
-- Expanded REV-13 to prove the contribution matrix, negative cardinalities,
-  exact Task and TaskAssignment outcomes, ordered writes, and atomic rollback
-  for `accept`, `needs_revision`, and `reject`.
-- Resolved CodeRabbit thread `PRRT_kwDOSwL_U86Rr721` by allowing fulfillment
-  dispatch and callbacks during `delivery_draining` and moving the complete
-  zero-obligation guard to the transition into `disabled`.
-- Added a durable, CON-derived fulfillment-obligation cutoff and mandatory
-  fence-before-ordinal hooks for every root writer. Post-cutoff, crossed,
-  requeue, successor, repair, and callback-successor work fails before external
-  I/O.
-- Corrected denied already-claimed dispatch proof to retain bounded audit and
-  permit only idempotent same-root claim-to-retryable recovery by the shared
-  dispatcher, without creating a successor event.
+- Replaced the circular full AUTH-13/14 prerequisite for REV-02 with an
+  AUTH-owned schema-only contributor-field foundation.
+- Made REV-01's active contract the immutable registration and service identity
+  manifest, breaking registration/consumer cycles without activating actions.
+- Added AUTH-14 `submission.create` activation and prepared revision proof to the
+  final release gate.
+- Moved handle binding validation, current-authority validation, consumption,
+  evaluation, and evidence staging from REV wording to AUTH ownership.
+- Split pre-consumption binding/forgery rejection from consumed replay and
+  concurrent duplicate use; only the first preserves a legitimate handle for a
+  later exact first use.
+- Preserved evaluated-denial evidence through dirty rollback, exact unchanged
+  clean AUTH restaging, one caller commit, and no-commit restaging failure.
+- Moved the preparation-transfer binding and legacy replacement removal to
+  amended AUTH-13; moved prepared submission behavior, strict `NOT VALID` guard,
+  legacy submission removal, and atomic route/schema cutover to amended AUTH-14.
+- Made REV-12A merge-order-neutral relative to AUTH-13 and limited it to
+  classifying/fencing the exact owner-installed command mode.
+- Removed every remaining REV-owned-commit statement and made REV-13 verification
+  and exposure only, with explicit AUTH-13/14 ownership exclusions.
+- Retained all-decision immutable Review/finding/resolution history, accept-only
+  FinalAcceptance, two ordered CON operations, and mutually exclusive
+  contribution source lineage.
 
 ## Commands Run
 
@@ -124,31 +101,31 @@ python3 scripts/check_markdown_links.py
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_stale_artifact_contracts.py
 python3 scripts/check_stale_authorization_docs.py
-sha256sum -c docs/reference_specs/SHA256SUMS
 python3 scripts/test_agent_gates.py
+sha256sum -c docs/reference_specs/SHA256SUMS
+python3 scripts/check_loop_memory_state.py
 git diff --check
 ```
 
-Results: Markdown links passed for 35 changed Markdown files; Workstream, ART,
+Results: Markdown links passed for 36 changed Markdown files; Workstream, ART,
 and AUTH stale scans passed; all reference checksums passed; 80 agent-gate tests
-passed; diff integrity passed.
-
-`python3 scripts/check_loop_memory_state.py` remains blocked by trusted main's
-AUTH-owned `STATUS.md` still recording a human merge checkpoint after merge.
-This REV PR does not edit AUTH-owned memory. The failure is recorded as an
-upstream main-state issue, not claimed as passing REV evidence.
+passed; loop-memory state passed; diff integrity passed. The local roadmap XLSX
+is absent, so no workbook-sheet check was applicable.
 
 ## Remaining Risks And Human Gates
 
-- AUTH, ART, and CON runtime capabilities remain hard exact-SHA gates in their
-  owning REV chunks. The ART packet-read, review-evidence, and Submission hash
-  owner amendments are not yet scheduled/merged.
-- CON must merge the exact two-operation, flush-only participant and mutually
-  exclusive contribution lineage schema before REV-10 can start. Before 12A it
-  must also merge every obligation-writer, dispatch, and callback fence hook,
-  the monotonic root ordinal, and the drain-cutoff/observation port.
-- PR #128 still requires fresh external checks and explicit human merge
-  approval.
+- AUTH must repair its AUTH-13/14 graph with the reviewed schema-only
+  contributor-field foundation, then implement and merge REV-CUSTODY, PREP,
+  REV-REG, exact service identity extensions, amended AUTH-13/14 cutovers,
+  per-feature evaluators/activations, `submission.create` activation, and
+  REV-LIFECYCLE before their owning REV chunks expose behavior.
+- ART must schedule and merge `WS-ART-001-REV-EVIDENCE` and owner amendments for
+  active-lease packet read and server-derived `Submission.artifact_hash`.
+- CON must merge frozen policy lineage, mutually exclusive contribution sources,
+  the exact two-operation flush-only participant, and later fulfillment fence,
+  ordinal, cutoff, and observation capabilities at the named chunk gates.
+- PR #128 still requires fresh remote CI, CodeRabbit, GitHub review, and explicit
+  human merge approval.
 - `WS-REV-001-01` remains inactive and requires a separate explicit start after
   this planning PR merges.
 
