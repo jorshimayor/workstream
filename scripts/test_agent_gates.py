@@ -1068,6 +1068,8 @@ def test_active_shared_contract_rejects_retired_contracts() -> None:
             "owning compensation authority",
             "Finance reconciles",
             "Finance follows",
+            "compensation publication",
+            "published compensation definition",
             "CompensationPolicyVersion",
             "CompensationPolicy",
             "CompensationRule",

@@ -71,7 +71,7 @@ implementation. Rules that affect submission intake must be encoded in
 `PreSubmitCheckerPolicy`. Chat messages and informal notices are not
 enforceable rules until they are moved into those contracts.
 
-Compensation publication is independent of guide activation. A
+Publication of a `ContributionPolicyVersion` is independent of guide activation. A
 `TaskAssignment` freezes the active submitter `ContributionPolicyVersion`, and
 a `ReviewLease` independently freezes the active reviewer version. Guide or
 revision-context changes never silently replace either frozen version.

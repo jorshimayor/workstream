@@ -118,8 +118,8 @@
 - fulfilled status with immutable receipt and external reference
 - future compensation issue/dispute workflow kept outside the v0.1
   `CompensationStatusProjection`
-- new published compensation definition for future amount changes; existing
-  awards remain immutable
+- new published `ContributionPolicyVersion` and `ContributionAwardDefinition`
+  records for future amount changes; existing awards remain immutable
 - contributor reputation events
 - reviewer reputation events
 - reviewer-pair anomaly flags
