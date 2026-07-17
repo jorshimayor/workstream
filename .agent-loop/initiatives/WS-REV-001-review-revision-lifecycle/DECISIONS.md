@@ -318,12 +318,23 @@ action. It is created only as the internal consequence of an already-authorized
 future adjudication may consume immutable facts through a separately approved
 lifecycle without changing this decision path now.
 
-The WS-CON input is derived exclusively from locked immutable lineage. It
-contains Review, ReviewLease, FinalAcceptance for `accept` and null otherwise,
-versioned Submission,
-TaskAssignment, reviewer, submitter, project/task, originating
-AuthorizationDecision, the exact frozen `ContributionPolicyVersion`, and the
-server-derived stabilized Submission `artifact_hash`. CON copies that value to
+The CON participant exposes two operation-specific inputs derived exclusively
+from locked immutable lineage. The reviewer input is required for every valid
+decision. It contains Review, ReviewLease, the reviewer, the lease-frozen
+reviewer `ContributionPolicyVersion`, the versioned Submission, project and task
+lineage, the originating AuthorizationDecision, request and correlation
+references, and the server-derived stabilized Submission `artifact_hash`. It
+never contains FinalAcceptance or submitter-specific source or policy facts.
+
+The submitter input exists only after the `accept` branch creates
+FinalAcceptance and applies the accepted Task and TaskAssignment effects. It
+contains FinalAcceptance, TaskAssignment, the submitter, the assignment-frozen
+submitter `ContributionPolicyVersion`, and the same locked Submission, project,
+task, authorization, request, correlation, and artifact-hash lineage. There is
+no combined input with nullable FinalAcceptance and no submitter input for
+`needs_revision` or `reject`.
+
+CON copies the stabilized Submission `artifact_hash` to
 `ContributionRecord.artifact_hash` and does not load, verify, or rederive it
 through ART. The current caller-supplied `Submission.package_hash` is not that
 field; the ART submission/checker cutover must add and bind the exact verified
@@ -335,9 +346,14 @@ TaskAssignment.
 
 Database checks keep those source shapes mutually exclusive, with one
 `completed_review` per Review and one `accepted_submission` per
-FinalAcceptance. CON evaluates the matching frozen ContributionRule, creates no
-award for explicit unpaid, and creates immutable money and/or project-points
-awards when payable. Derived inserts do not invent `contribution.materialize` or
+FinalAcceptance. A reviewer record requires `source_review_id` and
+`source_review_lease_id` and requires both `source_final_acceptance_id` and
+`source_task_assignment_id` to be null. A submitter record requires
+`source_final_acceptance_id` and `source_task_assignment_id` and requires both
+`source_review_id` and `source_review_lease_id` to be null. CON evaluates the
+matching frozen ContributionRule, creates no award for explicit unpaid, and
+creates immutable money and/or project-points awards when payable. Derived
+inserts do not invent `contribution.materialize` or
 `compensation.award.materialize` actions.
 
 REV owns the request transaction. It appends Review, findings, and resolutions,

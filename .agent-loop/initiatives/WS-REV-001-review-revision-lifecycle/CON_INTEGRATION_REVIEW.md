@@ -96,9 +96,10 @@ action. Only the already-authorized accept decision creates it.
 Both contribution shapes receive common project/task/Submission/digest lineage,
 but their canonical sources are distinct:
 
-- reviewer `completed_review` receives `Review.id` and `ReviewLease.id` directly;
+- reviewer `completed_review` receives `Review.id` and `ReviewLease.id` directly,
+  with FinalAcceptance and TaskAssignment source fields null;
 - submitter `accepted_submission` receives `FinalAcceptance.id` and the exact
-  `TaskAssignment.id`, with direct Review/ReviewLease source fields null;
+  `TaskAssignment.id`, with direct Review and ReviewLease source fields null;
 - each receives canonical actor IDs and its exact frozen
   `ContributionPolicyVersion`;
 - each receives the server-derived stabilized `Submission.artifact_hash`, copied

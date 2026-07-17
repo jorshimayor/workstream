@@ -4,9 +4,9 @@
 
 Freeze the immutable review-decision request, pure validation, task-effect
 participant, lock/fact contract, the FinalAcceptance consequence of `accept`,
-and CON participant input for all three decisions. Do not create a canonical
-Review-committing service, including the additional FinalAcceptance write for
-`accept`, before CON merges.
+and the two operation-specific CON participant inputs. Do not create a
+canonical Review-committing service, including the additional FinalAcceptance
+write for `accept`, before CON merges.
 
 ## Risk class
 
@@ -75,7 +75,9 @@ reputation or fulfillment logic
   the reviewer policy. The submitter operation is called only after REV creates
   FinalAcceptance for `accept`; it receives FinalAcceptance and TaskAssignment
   facts, creates the submitter contribution, and evaluates the submitter policy.
-  Both operations return typed audit and outbox staging inputs and never commit.
+  Neither input uses nullable FinalAcceptance or combines both actors' frozen
+  policy contexts. Both operations return typed audit and outbox staging inputs
+  and never commit.
 - Pure tests prove the future atomic write set: immutable Review and submitted
   findings and resolutions for every decision, FinalAcceptance for `accept`,
   ReviewEvidenceArtifact links, queue and lease state, Task and TaskAssignment

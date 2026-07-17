@@ -66,8 +66,9 @@ reputation scoring
   `contribution_type=accepted_submission` from that fact plus TaskAssignment.
   `needs_revision` and `reject` create no FinalAcceptance or submitter record.
 - Reviewer contributions require `source_review_id` and
-  `source_review_lease_id`, with `source_final_acceptance_id` null. Submitter
-  contributions require `source_final_acceptance_id` and
+  `source_review_lease_id`, with `source_final_acceptance_id` and
+  `source_task_assignment_id` null. Submitter contributions require
+  `source_final_acceptance_id` and
   `source_task_assignment_id`, with direct `source_review_id` and
   `source_review_lease_id` null. PostgreSQL checks enforce these mutually
   exclusive shapes, one `completed_review` per Review, and one
@@ -84,7 +85,8 @@ reputation scoring
   reviewer ContributionPolicyVersion. The submitter operation is called only
   after FinalAcceptance exists for `accept`; it additionally receives that fact,
   TaskAssignment, canonical submitter, and the assignment-frozen submitter
-  ContributionPolicyVersion.
+  ContributionPolicyVersion. There is no omnibus input with nullable
+  FinalAcceptance or both actors' policy contexts.
 - A separately approved and merged ART/task-owner amendment to the current
   submission/checker cutover has persisted server-derived verified
   `Submission.artifact_hash` on the existing versioned Submission. CON copies it

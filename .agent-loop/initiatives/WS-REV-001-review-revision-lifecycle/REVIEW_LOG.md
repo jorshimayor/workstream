@@ -411,3 +411,22 @@ outbox records after the branch and commits once. REV-13 now proves all three
 contribution source shapes, negative cardinalities, Task and TaskAssignment
 outcomes, the exact write order, and rollback after the reviewer operation or
 any later stage.
+
+### Second amendment review of `370fb54`
+
+Senior engineering, architecture, security/auth, docs, QA/test, and product/ops
+rejected one remaining omnibus-input paragraph in `DECISIONS.md`. It still
+carried nullable FinalAcceptance and one unspecified frozen policy context,
+which contradicted the ordered reviewer and submitter operations. Reuse/dedup,
+test-delta, and CI integrity passed. QA/test and product/ops also found that the
+reviewer contribution shape did not explicitly require
+`source_task_assignment_id` to be null.
+
+The repair defines two non-interchangeable typed inputs. The reviewer operation
+always receives Review and ReviewLease lineage plus the lease-frozen reviewer
+policy and never receives FinalAcceptance or submitter policy facts. The
+submitter operation exists only after `accept` creates FinalAcceptance and
+receives FinalAcceptance and TaskAssignment lineage plus the assignment-frozen
+submitter policy. The canonical checks and final drill now require both
+acceptance-source fields to be null on reviewer contributions and both direct
+review-source fields to be null on submitter contributions.

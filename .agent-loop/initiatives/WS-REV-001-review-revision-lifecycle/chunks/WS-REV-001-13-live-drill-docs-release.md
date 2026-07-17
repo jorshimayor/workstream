@@ -70,9 +70,10 @@ AUTH action registration, ActionOwner/evaluator edit, or availability change
   `accept`, `needs_revision`, and `reject` has exactly one immutable Review and
   one `completed_review` whose `source_review_id` and
   `source_review_lease_id` identify that Review and lease and whose
-  `source_final_acceptance_id` is null. `needs_revision` and `reject` each have
-  zero FinalAcceptance and zero `accepted_submission`. `accept` has exactly one
-  FinalAcceptance and one `accepted_submission` whose
+  `source_final_acceptance_id` and `source_task_assignment_id` are null.
+  `needs_revision` and `reject` each have zero FinalAcceptance and zero
+  `accepted_submission`. `accept` has exactly one FinalAcceptance and one
+  `accepted_submission` whose
   `source_final_acceptance_id` and `source_task_assignment_id` identify that
   acceptance and assignment and whose direct Review and ReviewLease source
   fields are null.
