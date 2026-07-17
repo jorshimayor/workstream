@@ -1,4 +1,4 @@
-# Chunk Contract: WS-ART-001-02B1 S3-Compatible MinIO And AWS
+# Chunk Contract: WS-ART-001-02B1 - S3-Compatible MinIO And AWS
 
 Initiative: `WS-ART-001` | Risk: L1 | Status: Proposed after 02A3
 

@@ -4015,12 +4015,12 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
     assert "| `WS-AUTH-001-08` | Merged |" in auth_status
     assert "| `WS-AUTH-001-09A` | Awaiting human merge |" in auth_status
     assert "Merged through PR #129 as `9a04434`" in artifact_map
-    assert "Merged-main deterministic proof passed; exact-SHA internal review pending" in artifact_map
+    assert "Internal review and deterministic evidence passed; external checks pending" in artifact_map
     assert (
-        "`WS-ART-001-02A3` implementation and merged-main deterministic repair are\n"
-        "complete" in artifact_status
+        "`WS-ART-001-02A3` implementation, merged-main deterministic repair, and\n"
+        "exact-SHA internal review are complete" in artifact_status
     )
-    assert "The current gate is exact-SHA internal review" in artifact_status
+    assert "The current gate is publication for GitHub Actions" in artifact_status
 
 
 def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:

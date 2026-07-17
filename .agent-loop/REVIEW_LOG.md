@@ -2048,3 +2048,14 @@ This review was invalidated for publication when merged-main reconciliation
 changed the candidate. The current gate is final exact-SHA review and fresh
 evidence for the merged-main ART-02A3 revision. Do not publish, merge, or start
 `WS-ART-001-02B1` from this historical record.
+
+## 2026-07-17 - WS-ART-001-02A3 Merged-Main Review Passed Before Gate Repair
+
+Reviewed code SHA: `441d39230a341f2c43dd548776a2437ae6b2395d`.
+
+All nine required tracks passed with no remaining findings after atomic
+provider-replica finalization and LocalStorage cleanup ownership were repaired.
+Every reviewer session was closed. GitHub Agent Gates then found a process-only
+successor-heading mismatch and a stale durable-state assertion. This record is
+historical; the process-only repair must receive fresh exact-SHA review and
+evidence before publication resumes.

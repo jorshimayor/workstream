@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-ART-001-02A3` | ArtifactStore v2 Local Clean Cut | L1 | Merged-main deterministic proof passed; exact-SHA internal review pending |
+| `WS-ART-001-02A3` | ArtifactStore v2 Local Clean Cut | L1 | Internal review and deterministic evidence passed; external checks pending |
 
 Live post-merge state remains read from signed `automation/loop-memory`
 output. This authored queue records the separately approved parallel chunks.
@@ -89,8 +89,9 @@ coverage implementation chunk from this worktree.
 
 `WS-ART-001-01`, the AWS-first planning amendment, `02A1`, and `02A2` are
 merged. R2 and Flow Node are deferred. The user explicitly started `02A3` on
-2026-07-16. Its merged-main deterministic proof is complete and exact-SHA
-internal review is pending; do not start `02B1` automatically.
+2026-07-16. Its merged-main deterministic proof and exact-SHA internal review
+are complete; external checks remain pending and `02B1` must not start
+automatically.
 
 Coverage work proceeds independently in its own worktree and is not owned by
 this AUTH queue update.
