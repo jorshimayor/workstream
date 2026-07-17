@@ -10,6 +10,12 @@ Reviewed branch head before repair:
 Reviewed repaired code SHA:
 `86ee0a5e263ac306b3bf195a9fb9043aa5439416`
 
+Current reviewed normative SHA:
+`d1d7dbc704f85ad77a8c8238e71189400c92e651`
+
+Current trusted main SHA:
+`299363af5d9e8a68bcc9b17457188048483caeed`
+
 ## Comments Addressed
 
 | Thread | Disposition | Repair |
@@ -104,3 +110,28 @@ or test threshold changed.
 
 Final publication-head CodeRabbit and GitHub checks must rerun after this
 description-only commit. Explicit human approval remains required to merge.
+
+## AUTH-09A PR #132 Reconciliation Refresh - 2026-07-17
+
+PR #128 was rebased cleanly onto trusted main
+`299363af5d9e8a68bcc9b17457188048483caeed`. Exact normative snapshot
+`d1d7dbc704f85ad77a8c8238e71189400c92e651` passed all nine required internal
+tracks after current catalogue/migration/service-identity reconciliation and
+repair of the guide identity/activation-sequence wording.
+
+The plan now records 74 PermissionIds and 65 ActionIds: 9 active and 56 planned.
+AUTH-09A supplies migration `0023` and a seven-identity/eleven-membership ART
+foundation but no provisioning, service-token admission, action activation, or
+REV identity. All 24 REV dependencies remain unavailable; each of REV's six
+service identities remains separately gated through exact extensions,
+AUTH-09B provisioning, and AUTH-09E admission.
+
+The guide rule is now exact across active planning: compare the prior
+Submission's stamped identity/activation sequence with the internally
+consistent Project Guide active during preparation. Exact match keeps; a valid
+difference rebases forward or backward; invalid or unsafe context blocks. Task
+Context returns the frozen preparation, and the reviewer never rebases.
+
+No current external result is claimed for the rebased head. Agent Gates,
+Backend, CodeRabbit, and thread state must be refreshed after force-push before
+the PR is reported merge-ready. Explicit human merge approval remains required.

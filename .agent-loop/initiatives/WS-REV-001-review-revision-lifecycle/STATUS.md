@@ -10,8 +10,9 @@ the common fixed-service enum/schema, seven ART service identities, eleven
 static ART memberships, and eight planned AUTH-09 route actions. It provisions
 no actor, admits no service token, activates no action, and adds no REV service
 identity. The earlier exact-snapshot review at `7a76da2` predates this rebase and
-is historical; the refreshed normative snapshot requires all nine internal
-review tracks and fresh external evidence before PR #128 can merge.
+is historical. Refreshed normative snapshot
+`d1d7dbc704f85ad77a8c8238e71189400c92e651` passed all nine internal review
+tracks; fresh external evidence remains required before PR #128 can merge.
 
 The revised WS-REV Markdown/PDF pair remains byte-preserved at canonical paths
 with recorded provenance. It is archival input, not authority for stale combined
@@ -132,8 +133,9 @@ security/auth, product/ops, architecture, docs, reuse/dedup, test-delta, and CI
 integrity with no findings. No runtime chunk is active.
 
 That approval predates merged AUTH-09A PR #132 and is historical after the
-rebase onto `299363a`. The current refreshed normative snapshot must be reviewed
-and rebound before publication.
+rebase onto `299363a`. Refreshed normative snapshot `d1d7dbc` passed all nine
+required tracks after the AUTH-09A, catalogue, service-identity, migration, and
+guide-authority reconciliation. Its evidence is bound in the PLAN review file.
 
 ## Human clarification retained
 

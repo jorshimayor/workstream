@@ -9,8 +9,9 @@ Merge intent: `.agent-loop/merge-intents/WS-REV-001-PLAN.json`
 ## Goal
 
 Reconcile the complete review/revision lifecycle plan with trusted main after
-AUTH reconciliation PR #140, retain the WS-XINT handoffs and human-approved
-FinalAcceptance boundary, and leave all runtime chunks inactive.
+AUTH reconciliation PR #140 and AUTH-09A PR #132, retain the WS-XINT handoffs
+and human-approved FinalAcceptance boundary, and leave all runtime chunks
+inactive.
 
 ## Human-Approved Intent
 
@@ -25,6 +26,10 @@ FinalAcceptance boundary, and leave all runtime chunks inactive.
 
 - Adopted PR #140's exact AUTH custody, PREP, registration, service identity,
   per-feature activation, and lifecycle gates without claiming runtime exists.
+- Reconciled AUTH-09A's merged migration `0023`, seven ART identities, eleven
+  exact memberships, and 65-action catalogue (`9` active, `56` planned). It
+  provisions no actor, admits no service token, activates no action, and includes
+  no REV identity.
 - Kept all 24 REV dependencies unavailable and separated the ART evidence action.
 - Made REV-01 publish availability-neutral four-action registration and six exact
   service identity manifests.
@@ -49,11 +54,15 @@ FinalAcceptance boundary, and leave all runtime chunks inactive.
   recovery.
 - Updated the shared REV/CON handoff, archival reference provenance/checksums,
   and a narrowly bounded AUTH documentation scanner regression.
+- Made guide resolution exact: compare the prior Submission's stamped identity/
+  activation sequence with an internally consistent active pair, freeze the
+  selected preparation for Task Context, and block invalid or unsafe context.
 
 ## Why It Changed
 
-Merged WS-XINT and AUTH planning changed actor identity, activation custody,
-prepared mutation, service identity, and cross-domain transaction boundaries.
+Merged WS-XINT, AUTH planning, and AUTH-09A changed actor identity, activation
+custody, prepared mutation, service-identity foundations, catalogue/migration
+facts, and cross-domain transaction boundaries.
 The previous REV plan also predated the approved FinalAcceptance source and
 contained stale sequencing that could not be implemented without ownership
 collisions or circular prerequisites.
@@ -144,6 +153,8 @@ Diff integrity passed.
 - [x] Canonical reference Markdown/PDF and hashes are restored with no duplicate
   `(2)` paths.
 - [x] PR #140 and WS-XINT owner boundaries are reconciled without runtime claims.
+- [x] AUTH-09A's current 65/9/56 catalogue, migration `0023`, and closed ART
+  service matrix are recorded without claiming provisioning or REV readiness.
 - [x] Every decision has immutable Review/finding/resolution history; only accept
   adds FinalAcceptance and submitter contribution.
 - [x] AUTH, ART, task, REV, CON, audit, outbox, and caller transaction ownership
@@ -171,16 +182,18 @@ Diff integrity passed.
 
 ## Internal Reviewer Results
 
-Reviewed code SHA: `7a76da2a79243cf61936d3bc7cf2606a82f0b5d8`
+Reviewed code SHA: `d1d7dbc704f85ad77a8c8238e71189400c92e651`
 
-Reviewed at: `2026-07-17T10:20:14Z`
+Trusted main SHA: `299363af5d9e8a68bcc9b17457188048483caeed`
+
+Reviewed at: `2026-07-17T13:42:46Z`
 
 Reviewer run IDs: senior/architecture/reuse=`/root/finalaccept_senior_arch_r2`; QA/product/test-delta=`/root/finalaccept_qa_product_r2`; security/docs/CI=`/root/finalaccept_security_docs_r2`
 
 | Reviewer | Result | Blocking Findings | Notes |
 |---|---:|---|---|
 | Senior engineering | PASS | None | Executable dependency graph and ownership are coherent. |
-| QA/test | PASS | None | PREP, decision, rebase, activation, and release proof are testable. |
+| QA/test | PASS | None | PREP, exact guide keep/rebase/block behavior, frozen Task Context, decisions, activation, and release proof are testable. |
 | Security/auth | PASS | None | AUTH ownership, caller commit, denial atomicity, and lineage fail closed. |
 | Product/ops | PASS | None | Approved review, revision, contribution, and release behavior is preserved. |
 | Architecture | PASS | None | Cross-owner graph is acyclic; REV-12A only classifies/fences. |
@@ -211,9 +224,9 @@ External review response file:
 
 ## Remaining Risks
 
-- AUTH must merge the schema-only contributor foundation, PREP, custody,
-  registration, exact service identity extensions, amended AUTH-13/14 cutovers,
-  evaluators, and activations at the named gates.
+- AUTH must merge the schema-only contributor foundation, AUTH-09B/09E,
+  PREP, custody, registration, exact REV service identity extensions, amended
+  AUTH-13/14 cutovers, evaluators, and activations at the named gates.
 - ART must schedule review-evidence ownership and merge packet-read plus
   server-derived `Submission.artifact_hash` amendments.
 - CON must merge frozen policy lineage, mutually exclusive contribution sources,

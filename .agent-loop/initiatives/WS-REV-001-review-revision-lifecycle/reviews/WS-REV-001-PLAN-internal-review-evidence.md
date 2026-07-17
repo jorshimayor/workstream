@@ -10,19 +10,23 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: `7a76da2a79243cf61936d3bc7cf2606a82f0b5d8`
+Reviewed code SHA: `d1d7dbc704f85ad77a8c8238e71189400c92e651`
 
-Trusted main SHA: `d541521790a0441cfd2193f466e00ef81248ec31`
+Trusted main SHA: `299363af5d9e8a68bcc9b17457188048483caeed`
 
-Reviewed at: 2026-07-17T10:20:14Z
+Reviewed at: 2026-07-17T13:42:46Z
 
 Reviewer run IDs: senior-engineering/architecture/reuse-dedup=/root/finalaccept_senior_arch_r2; QA-test/product-ops/test-delta=/root/finalaccept_qa_product_r2; security-auth/docs/CI-integrity=/root/finalaccept_security_docs_r2
 
 ## Reviewed Change
 
-- Rebased the complete REV planning branch onto merged AUTH reconciliation PR
-  #140 and retained the WS-XINT-001 handoffs, ADR 0015, and the human-approved
-  FinalAcceptance boundary.
+- Rebased the complete REV planning branch onto merged AUTH-09A PR #132 after
+  AUTH reconciliation PR #140 and retained the WS-XINT-001 handoffs, ADR 0015,
+  and the human-approved FinalAcceptance boundary.
+- Recorded current main as migration `0023`, 74 PermissionIds, and 65 ActionIds
+  split into 9 active and 56 planned. AUTH-09A supplies the seven-identity,
+  eleven-membership ART fixed-service foundation but provisions no actor, admits
+  no service token, activates no action, and adds none of REV's six identities.
 - Assigned ActionId registration, evaluator integration, activation custody,
   `ActionOwner`, service identity constraints, and availability changes to AUTH.
   REV owns hidden lifecycle behavior and later product exposure only.
@@ -48,9 +52,12 @@ Reviewer run IDs: senior-engineering/architecture/reuse-dedup=/root/finalaccept_
 - Kept every `accept`, `needs_revision`, and `reject` Review plus submitted
   findings and resolutions immutable. Only `accept` also creates immutable
   FinalAcceptance and the FinalAcceptance-sourced submitter contribution.
-- Preserved controlled Project Guide rebase for the next submission attempt,
-  exact leased-Submission context for the reviewer, ART v2 typed ports, active-
-  lease artifact-byte isolation, and the no-ART decision transaction.
+- Preserved controlled Project Guide rebase for the next submission attempt:
+  exact stamped identity/activation-sequence match keeps; a different internally
+  consistent active pair rebases; invalid or unsafe active context blocks; Task
+  Context returns the frozen preparation. The reviewer uses the exact leased-
+  Submission context. ART v2 typed ports, active-lease artifact-byte isolation,
+  and the no-ART decision transaction remain required.
 - Kept adjudication dormant and unimplemented in v0.1 with no adjudication
   action, policy, queue, state, runtime, or readiness dependency.
 
@@ -59,9 +66,9 @@ Reviewer run IDs: senior-engineering/architecture/reuse-dedup=/root/finalaccept_
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
 | senior engineering | PASS | None | The dependency graph, AUTH-13/14 ownership, PREP order, transaction owner, and release boundary are executable and coherent. |
-| qa/test | PASS | None | The three PREP outcomes, all-decision matrix, revision rebase, owner gates, and release proof are testable without contradictory replay behavior. |
+| qa/test | PASS | None | PREP outcomes, valid rebase versus invalid-context blocking, frozen Task Context, all-decision effects, and release gates are testable. |
 | security/auth | PASS | None | AUTH alone validates/consumes/evaluates/stages; caller commit, service identity, action custody, FinalAcceptance lineage, and denial atomicity fail closed. |
-| product/ops | PASS | None | Guide keep/forward/backward rebase, immutable review rounds, all decision effects, accept-only submitter recognition, and release sequencing match the approved lifecycle. |
+| product/ops | PASS | None | Exact guide-pair keep/rebase/block behavior, immutable review rounds, all decision effects, accept-only submitter recognition, and release sequencing match intent. |
 | architecture | PASS | None | AUTH schema foundation -> REV-02 -> REV-09A -> amended AUTH-13/14 -> AUTH activation -> REV-13 is acyclic; REV-12A only classifies and fences owner-installed behavior. |
 | docs | PASS | None | Plan, decisions, risks, chunks, review log, handoff, and trust bundle use consistent ownership and lifecycle wording. |
 | reuse/dedup | PASS | None | Canonical task submission, task-owned participants, composition roots, PREP, hashing/idempotency, shared audit/outbox, and typed ART/CON ports are reused. |
@@ -93,6 +100,12 @@ Reviewer run IDs: senior-engineering/architecture/reuse-dedup=/root/finalaccept_
 - Retained all-decision immutable Review/finding/resolution history, accept-only
   FinalAcceptance, two ordered CON operations, and mutually exclusive
   contribution source lineage.
+- Reconciled merged AUTH-09A's `0023` migration, 65/9/56 catalogue, and closed
+  ART identity matrix without treating provisioning, admission, REV identity
+  extensions, or action activation as implemented.
+- Removed version-label and read-time guide ambiguity. Preparation compares the
+  prior Submission's stamped identity/activation sequence to an internally
+  consistent active pair, freezes the result, and blocks corrupt/unsafe context.
 
 ## Commands Run
 
@@ -114,9 +127,9 @@ is absent, so no workbook-sheet check was applicable.
 
 ## Remaining Risks And Human Gates
 
-- AUTH must repair its AUTH-13/14 graph with the reviewed schema-only
-  contributor-field foundation, then implement and merge REV-CUSTODY, PREP,
-  REV-REG, exact service identity extensions, amended AUTH-13/14 cutovers,
+- AUTH must implement and merge the reviewed schema-only contributor-field
+  foundation, AUTH-09B provisioning/AUTH-09E admission, REV-CUSTODY, PREP,
+  REV-REG, exact REV service identity extensions, amended AUTH-13/14 cutovers,
   per-feature evaluators/activations, `submission.create` activation, and
   REV-LIFECYCLE before their owning REV chunks expose behavior.
 - ART must schedule and merge `WS-ART-001-REV-EVIDENCE` and owner amendments for
