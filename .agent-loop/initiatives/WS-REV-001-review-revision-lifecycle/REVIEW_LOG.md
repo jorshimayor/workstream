@@ -802,3 +802,8 @@ Flow 5 to the exact admitting CheckerRun, keeps setup/provenance defects on
 `Review(needs_revision)`, and states that checker remediation has only
 CheckerResult lineage and returns through the normal submission/checker spine.
 The registered structural test now covers these distinctions.
+
+The follow-up plan gate accepted the active prose and required the regression
+to bind Flow 5's verified facts and every checker-forbidden Review record or
+reviewer contribution explicitly. The final fixture scopes those assertions to
+the checker-remediation `creates no` clause.

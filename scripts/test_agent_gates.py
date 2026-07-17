@@ -4511,6 +4511,7 @@ def test_checker_admission_and_reject_sampling_remain_nonhuman_and_nonmutating()
         "exact durable, final, current\n  `allow_review` CheckerRun admission"
         in review_flow
     )
+    assert "verified binding facts" in review_flow
 
     revision_flow = flows.split("## Flow 6: Human Review Revision Replay", maxsplit=1)[
         1
@@ -4521,7 +4522,17 @@ def test_checker_admission_and_reject_sampling_remain_nonhuman_and_nonmutating()
     assert "`Review(needs_revision)`" in revision_flow
     assert "Checker-caused remediation is separate" in revision_flow
     assert "retains `CheckerResult` lineage" in revision_flow
-    assert "creates no Review, ReviewFinding" in revision_flow
+    checker_prohibitions = revision_flow.split("creates no ", maxsplit=1)[1].split(
+        "and returns through", maxsplit=1
+    )[0]
+    for prohibited_record in (
+        "Review",
+        "ReviewFinding",
+        "SubmissionFindingResponse",
+        "FindingResolution",
+        "reviewer contribution",
+    ):
+        assert prohibited_record in checker_prohibitions
 
     rejected = queue_policy.split("### Rejected", maxsplit=1)[1].split(
         "### Compensation Fulfillment Follow-Up", maxsplit=1
