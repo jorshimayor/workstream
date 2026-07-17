@@ -82,10 +82,10 @@ output. This authored queue records the separately approved parallel chunks.
 AUTH-05A merged through PR #115 as `8e1cde6`, and CAT plus its post-merge memory
 merged through PRs #117 and #118. AUTH-05B merged through PR #119 as `ad71c7e`.
 AUTH-06 merged through PR #124 as `f599551`. AUTH-07A, AUTH-07B, and AUTH-08
-merged through PRs #126, #130, and #131. WS-XINT planning merged through PR #139.
-`WS-AUTH-001-XINT` now reconciles AUTH's owner plan. AUTH-09A remains open
-and conflicting in PR #132; converge and re-review it only after this planning
-amendment merges. Do not start an AUTH-09 successor or POL-002-04 automatically.
+merged through PRs #126, #130, and #131. WS-XINT planning merged through PR #139,
+and its AUTH owner reconciliation merged through PR #140 as `d541521`.
+AUTH-09A convergence and exact-head re-review are active on PR #132. Do not
+start AUTH-09B or POL-002-04 automatically.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
 coverage implementation chunk from this worktree.

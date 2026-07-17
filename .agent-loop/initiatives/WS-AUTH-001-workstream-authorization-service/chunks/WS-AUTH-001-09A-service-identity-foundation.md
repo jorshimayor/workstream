@@ -70,7 +70,7 @@ AdminRoleGrant, ProjectRoleGrant, or Contributor authority for services
 artifact resource composers, guards, adapters, or call-site activation
 actor/link state mutation or lifecycle reconciliation consumption
 compatibility aliases, fallback constructors, dual authority paths, or token-role authority
-legacy human `worker` profile, role, grant, or API behavior
+obsolete role-shaped profile, grant, or API behavior for human contributors
 ```
 
 ## Exact planned route actions

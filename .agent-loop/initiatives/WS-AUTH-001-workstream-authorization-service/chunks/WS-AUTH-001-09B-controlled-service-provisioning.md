@@ -70,9 +70,9 @@ token material, or redundant assignment list.
   denial, conflict, or failure does not fabricate service verification.
 - The admin mutation limiter applies; response/log/audit tests prove opaque
   subject, issuer, token, email, and raw reason are not disclosed.
-- A separate future typed service dependency may consume fixed service
-  identities; this
-  chunk does not weaken `get_authorization_actor` or authorize any planned
+- Provisioning confers no executable service authority. Only AUTH-09E may add
+  fixed-service admission after 09C and 09D merge; this chunk does not weaken
+  `get_authorization_actor`, admit a service caller, or authorize any planned
   artifact action.
 - Focused actor and authorization subsystem coverage is at least 90 percent;
   GitHub Backend preserves the repository-wide 78 percent floor.

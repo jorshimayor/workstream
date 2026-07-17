@@ -76,11 +76,11 @@ adds terminal deactivation attribution; deactivation is irreversible.
 ## Atomic lock and evidence contract
 
 Final-admin-affecting mutations use one order in the route-owned transaction:
-idempotency reservation; `AuthorityControl(id=1) FOR UPDATE`; all acting and
-target principals ordered by ActorProfile ID; for each human, ActorProfile then
-exact ActorIdentityLink and exact matched grant; effective-admin count after the
-proposed transition; state, success event, exactly one invalidation obligation,
-and idempotency completion; commit.
+`AuthorityControl(id=1) FOR UPDATE`; all acting and target principals ordered by
+ActorProfile ID; for each human, ActorProfile then exact ActorIdentityLink and
+exact matched grant; exact idempotency reservation; effective-admin count after
+the proposed transition; state, success event, exactly one invalidation
+obligation, and idempotency completion; commit.
 The effective count requires an active human profile, active identity link, and
 active system-scoped Access Administrator grant. Self-suspend,
 self-deactivate, final-admin loss, and unsafe concurrent different-target
