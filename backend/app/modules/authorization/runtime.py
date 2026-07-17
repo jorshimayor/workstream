@@ -9,6 +9,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.core.hashing import canonical_json_hash
+from app.modules.actors.service_identities import ServiceIdentity
 from app.modules.authorization.catalogue import ActionId, PermissionId
 from app.modules.authorization.schemas import AdminRole, AdminScope
 
@@ -163,6 +164,14 @@ class AdminRoleGrantResourceContext(BaseModel):
     existing_idempotency_record: bool = False
 
 
+class ServiceActorProvisionResourceContext(BaseModel):
+    """Fixed local identity targeted by controlled service provisioning."""
+
+    model_config = _STRICT_FROZEN
+    resource_type: Literal["service_actor_provisioning"]
+    resource_id: ServiceIdentity
+
+
 AuthorizationResourceContext = (
     ActorSelfResourceContext
     | SystemResourceContext
@@ -172,6 +181,7 @@ AuthorizationResourceContext = (
     | ActorAdminRoleGrantHistoryResourceContext
     | AdminRoleGrantIssueResourceContext
     | AdminRoleGrantResourceContext
+    | ServiceActorProvisionResourceContext
 )
 
 
@@ -226,9 +236,11 @@ class AuthorizationDecision(BaseModel):
         "actor_admin_role_grant_history",
         "admin_role_grant_issue",
         "admin_role_grant",
+        "service_actor_provisioning",
     ]
     resource_id: (
         UUID
+        | ServiceIdentity
         | Literal[
             "workstream:system",
             "workstream:permission_catalogue",

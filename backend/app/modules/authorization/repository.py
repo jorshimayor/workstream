@@ -56,18 +56,18 @@ class AdminAuthorizationRepository:
         identity_link_id: UUID,
         actor_profile_id: UUID,
     ) -> tuple[ActorIdentityLink, ActorProfile] | None:
-        """Lock and validate the request identity link before its actor profile."""
+        """Lock and validate the request actor profile before its exact link."""
+        profile = await self._session.scalar(
+            select(ActorProfile).where(ActorProfile.id == str(actor_profile_id)).with_for_update()
+        )
+        if profile is None:
+            return None
         link = await self._session.scalar(
             select(ActorIdentityLink)
             .where(ActorIdentityLink.id == str(identity_link_id))
             .with_for_update()
         )
         if link is None or link.actor_profile_id != str(actor_profile_id):
-            return None
-        profile = await self._session.scalar(
-            select(ActorProfile).where(ActorProfile.id == str(actor_profile_id)).with_for_update()
-        )
-        if profile is None:
             return None
         return link, profile
 
@@ -147,7 +147,18 @@ class AdminAuthorizationRepository:
         self,
         actor_profile_id: UUID,
     ) -> tuple[ActorIdentityLink, ActorProfile] | None:
-        """Lock one deterministic active identity link and then its active human profile."""
+        """Lock one active human profile and then its deterministic active link."""
+        profile = await self._session.scalar(
+            select(ActorProfile)
+            .where(
+                ActorProfile.id == str(actor_profile_id),
+                ActorProfile.actor_kind == "human",
+                ActorProfile.status == "active",
+            )
+            .with_for_update()
+        )
+        if profile is None:
+            return None
         link = await self._session.scalar(
             select(ActorIdentityLink)
             .where(
@@ -159,17 +170,6 @@ class AdminAuthorizationRepository:
             .with_for_update()
         )
         if link is None:
-            return None
-        profile = await self._session.scalar(
-            select(ActorProfile)
-            .where(
-                ActorProfile.id == str(actor_profile_id),
-                ActorProfile.actor_kind == "human",
-                ActorProfile.status == "active",
-            )
-            .with_for_update()
-        )
-        if profile is None:
             return None
         return link, profile
 

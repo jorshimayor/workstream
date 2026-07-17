@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncIterator, Iterator
 from datetime import UTC, datetime
+import hashlib
 from pathlib import Path
 from uuid import uuid4
 
@@ -52,6 +53,25 @@ from app.schemas.auth import (
 
 ISSUER = "https://identity.test"
 RATE_SECRET = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8="
+
+
+def test_service_identity_lock_has_a_distinct_domain_without_changing_external_keys() -> None:
+    issuer = "service_identity"
+    subject = "workstream.artifact.verifier"
+    framed = (
+        len(issuer.encode()).to_bytes(4, "big")
+        + issuer.encode()
+        + len(subject.encode()).to_bytes(4, "big")
+        + subject.encode()
+    )
+    historical_external_key = int.from_bytes(
+        hashlib.sha256(framed).digest()[:8],
+        "big",
+        signed=True,
+    )
+
+    assert ActorRepository._advisory_key(issuer, subject) == historical_external_key
+    assert ActorRepository._advisory_key(subject, domain=b"\x01") != historical_external_key
 
 
 @pytest.fixture

@@ -559,11 +559,10 @@ resource loader, lifecycle guards, negative tests, and evidence path exist.
 ### Catalogue And Action-Evidence Staging
 
 The catalogue contains exactly 74 PermissionIds and 65 ActionIds after
-AUTH-09A. The two
-AUTH-07B actor-self actions and seven AUTH-08 administrative actions are active;
-the other 56 entries remain planned and non-executable. Eight of those planned
-rows are the AUTH-09B through AUTH-09D actor/link/service actions introduced by
-`0023`. The target post-custody
+AUTH-09B. The two AUTH-07B actor-self actions, seven AUTH-08 administrative
+actions, and `actor.service.provision` are active; the other 55 entries remain
+planned and non-executable. Seven of those planned rows are the AUTH-09C and
+AUTH-09D actor/link actions introduced by `0023`. The target post-custody
 invariant is that planned runtime entries contain only action, permission, exact
 AUTH activation owner, and availability. Until the availability-neutral custody
 transfers merge, the 25 ART and 19 REV rows retain their historical feature
@@ -631,8 +630,9 @@ DDL. If any forward evidence exists, stop and recover forward rather than
 discarding it.
 
 Canonical actor self-read/self-update and the seven AUTH-08 administrative
-actions are active. Project capability context waits for AUTH-10 exact-project
-grants and canonical project composition.
+actions plus AUTH-09B controlled service provisioning are active. Project
+capability context waits for AUTH-10 exact-project grants and canonical project
+composition.
 
 AUTH-10 is a clean cut to independent `submitter`, `reviewer`, and
 `adjudicator` grants. Before rollout, scan current typed schemas, audit facts,
@@ -703,6 +703,31 @@ idempotency-record disposition. Issue/revoke recomputes the reason digest before
 any state or evidence write.
 The shared authorization dependency never commits an open feature transaction;
 it rolls back anything the route forgot to commit.
+
+### Controlled Service Provisioning
+
+`POST /api/v1/service-actors` accepts only a fixed `service_identity`, opaque
+subject, bounded reason, and UUID `Idempotency-Key`. The issuer comes from the
+configured provider-neutral verifier; operators cannot submit or override it.
+Only an effective system Access Administrator may call the route. A successful
+request creates one active service ActorProfile and exact identity link plus the
+allowed decision, `ServiceActorProvisioned`, linked invalidation, and committed
+idempotency result in one transaction. It creates no role, grant, assignment,
+or service admission.
+
+Treat `service_identity_already_provisioned` and
+`identity_subject_already_linked` as final 409 occupancy conflicts. Treat
+`idempotency_mismatch` as client request drift. Retry `service_unavailable` with
+the same key and exact body. Do not inspect or export issuer, subject, bearer
+token, email, or raw reason when diagnosing a failure; use bounded
+request/correlation IDs and ActionId `actor.service.provision`.
+
+Provisioning is not token verification. The new service profile's
+`last_seen_at` and link's `last_verified_at` stay null, including on replay.
+Only the human caller timestamps advance on a committed create or replay.
+Service tokens remain denied before actor lookup on both central AUTH and
+legacy dependencies until AUTH-09E explicitly activates fixed-service
+admission.
 
 If route-owned persistence or decision evidence fails, roll back the entire
 unit and return the bounded retryable `503 service_unavailable` envelope. Do

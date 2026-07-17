@@ -155,6 +155,7 @@ class ActorService:
             subject_kind="human",
             status="active",
             linked_by=profile_id,
+            last_verified_at=func.clock_timestamp(),
         )
         await self._repo.add_actor_profile(profile)
         await self._repo.add_identity_link(link)
@@ -190,16 +191,16 @@ class ActorService:
         self,
         resolved: ResolvedActor,
     ) -> ResolvedActor:
-        """Lock the exact link then its profile and reject identity drift."""
+        """Lock the exact profile then its link and reject identity drift."""
+        profile = await self._repo.get_actor_profile(resolved.profile.id, for_update=True)
+        if profile is None:
+            raise RuntimeError("resolved actor profile disappeared")
         link = await self._repo.get_identity_link_by_id(
             resolved.identity_link.id,
             for_update=True,
         )
         if link is None:
             raise RuntimeError("resolved identity link disappeared")
-        profile = await self._repo.get_actor_profile(link.actor_profile_id, for_update=True)
-        if profile is None:
-            raise RuntimeError("identity link references a missing actor profile")
         if (
             link.actor_profile_id != resolved.profile.id
             or link.issuer != resolved.identity_link.issuer

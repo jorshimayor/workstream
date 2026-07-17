@@ -12,9 +12,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps.api_controls import enforce_admin_mutation_rate_limit
 from app.api.deps.rate_controls import service_unavailable_error
+from app.api.deps.auth import get_application_auth_verifier
 from app.api.deps.authorization import get_authorization_actor, get_authorization_service
 from app.core.api_controls import StructuredHTTPException
 from app.db.session import get_db_session
+from app.interfaces.auth import AuthVerificationUnavailableError, AuthVerifier
 from app.modules.actors.service import ActorService, ResolvedActor
 from app.modules.authorization.admin_schemas import (
     AdminRoleDefinitionsResponse,
@@ -37,6 +39,7 @@ from app.modules.authorization.runtime import (
     AdminRoleGrantIssueResourceContext,
     AdminRoleGrantResourceContext,
     PermissionCatalogueResourceContext,
+    ServiceActorProvisionResourceContext,
 )
 from app.modules.authorization.schemas import (
     AdminRole,
@@ -44,7 +47,18 @@ from app.modules.authorization.schemas import (
     AdminRoleGrantRevokeRequest,
     AdminScope,
     AuthorityOperation,
+    ServiceActorCreateRequest,
     derive_reason_digest,
+    derive_service_identity_digest,
+)
+from app.modules.authorization.service_actor_schemas import (
+    ServiceActorProvisionBody,
+    ServiceActorProvisionResponse,
+)
+from app.modules.authorization.service_actor_service import (
+    ServiceActorConflict,
+    ServiceActorProvisioningUnavailable,
+    ServiceActorProvisioningService,
 )
 
 router = APIRouter(tags=["authorization"])
@@ -99,6 +113,33 @@ def _revoke_request(grant_id: UUID, reason: str) -> AdminRoleGrantRevokeRequest:
     )
 
 
+def _service_actor_request(
+    payload: ServiceActorProvisionBody,
+    issuer: str,
+) -> ServiceActorCreateRequest:
+    return ServiceActorCreateRequest(
+        operation=AuthorityOperation.SERVICE_ACTOR_CREATE,
+        service_identity=payload.service_identity,
+        identity_reference_digest=derive_service_identity_digest(issuer, payload.subject),
+        reason_digest=derive_reason_digest(payload.reason),
+    )
+
+
+def _configured_issuer(verifier: AuthVerifier) -> str:
+    try:
+        issuer = verifier.canonical_issuer()
+        derive_service_identity_digest(issuer, "validation-anchor")
+        return issuer
+    except (AuthVerificationUnavailableError, TypeError) as exc:
+        raise StructuredHTTPException(
+            status_code=503,
+            detail="Identity verification unavailable",
+            error_code="identity_verification_unavailable",
+            error_message="Identity verification unavailable",
+            retryable=True,
+        ) from exc
+
+
 async def _commit_or_unavailable(session: AsyncSession) -> None:
     try:
         await session.commit()
@@ -114,6 +155,139 @@ async def _database_call(session: AsyncSession, operation: Awaitable[T]) -> T:
     except SQLAlchemyError as exc:
         await session.rollback()
         raise service_unavailable_error() from exc
+
+
+@router.post(
+    "/service-actors",
+    status_code=status.HTTP_201_CREATED,
+    response_model=ServiceActorProvisionResponse,
+    dependencies=[Depends(enforce_admin_mutation_rate_limit)],
+    openapi_extra={"x-workstream-action-id": ActionId.ACTOR_SERVICE_PROVISION.value},
+)
+async def provision_service_actor(
+    payload: ServiceActorProvisionBody,
+    idempotency_key: Annotated[UUID, Header(alias="Idempotency-Key")],
+    resolved: Annotated[ResolvedActor, Depends(get_authorization_actor)],
+    authorization: Annotated[AuthorizationService, Depends(get_authorization_service)],
+    verifier: Annotated[AuthVerifier, Depends(get_application_auth_verifier)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> ServiceActorProvisionResponse:
+    issuer = _configured_issuer(verifier)
+    canonical = _service_actor_request(payload, issuer)
+    actor_profile_id = UUID(resolved.profile.id)
+    service = ServiceActorProvisioningService(session)
+    reservation = await _database_call(
+        session,
+        service.reserve(
+            idempotency_key=idempotency_key,
+            actor_profile_id=actor_profile_id,
+            request=canonical,
+        ),
+    )
+    decision = await _database_call(
+        session,
+        authorization.require(
+            ActionId.ACTOR_SERVICE_PROVISION,
+            ServiceActorProvisionResourceContext(
+                resource_type="service_actor_provisioning",
+                resource_id=payload.service_identity,
+            ),
+        ),
+    )
+    if reservation.outcome == "mismatch":
+        await session.rollback()
+        await _database_call(
+            session,
+            service.record_mismatch(
+                actor_profile_id=actor_profile_id,
+                request=canonical,
+                decision=decision,
+            ),
+        )
+        await _commit_or_unavailable(session)
+        raise _domain_error(409, "idempotency_mismatch", "Idempotency key does not match")
+    if reservation.outcome == "replay":
+        try:
+            response = await _database_call(
+                session,
+                service.replay_response(
+                    response=reservation.response,
+                    request=canonical,
+                    issuer=issuer,
+                    subject=payload.subject,
+                ),
+            )
+        except ServiceActorProvisioningUnavailable as exc:
+            await session.rollback()
+            raise service_unavailable_error() from exc
+        await _database_call(session, ActorService(session).touch_after_authorization(resolved))
+        await _commit_or_unavailable(session)
+        return response
+
+    conflict = await _database_call(
+        session,
+        service.lock_and_find_conflict(
+            service_identity=payload.service_identity,
+            issuer=issuer,
+            subject=payload.subject,
+        ),
+    )
+    if conflict is not None:
+        await session.rollback()
+        await _database_call(
+            session,
+            service.record_conflict(
+                actor_profile_id=actor_profile_id,
+                request=canonical,
+                decision=decision,
+            ),
+        )
+        await _commit_or_unavailable(session)
+        raise _service_actor_conflict(conflict)
+    try:
+        await ActorService(session).touch_after_authorization(resolved)
+        response = await service.complete(
+            claim=reservation.claim,
+            request=canonical,
+            decision=decision,
+            actor_profile_id=actor_profile_id,
+            issuer=issuer,
+            subject=payload.subject,
+            reason=payload.reason,
+        )
+        await session.commit()
+        return response
+    except IntegrityError as exc:
+        await session.rollback()
+        conflict = await _database_call(
+            session,
+            service.find_conflict(
+                service_identity=payload.service_identity,
+                issuer=issuer,
+                subject=payload.subject,
+            ),
+        )
+        if conflict is None:
+            raise service_unavailable_error() from exc
+        await _database_call(
+            session,
+            service.record_conflict(
+                actor_profile_id=actor_profile_id,
+                request=canonical,
+                decision=decision,
+            ),
+        )
+        await _commit_or_unavailable(session)
+        raise _service_actor_conflict(conflict) from exc
+    except SQLAlchemyError as exc:
+        await session.rollback()
+        raise service_unavailable_error() from exc
+
+
+def _service_actor_conflict(conflict: ServiceActorConflict) -> StructuredHTTPException:
+    if conflict is ServiceActorConflict.SERVICE_IDENTITY:
+        return _domain_error(409, conflict.value, "Service identity is already provisioned")
+    return _domain_error(409, conflict.value, "Identity subject is already linked")
 
 
 @router.get(

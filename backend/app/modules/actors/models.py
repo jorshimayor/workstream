@@ -113,6 +113,10 @@ class ActorIdentityLink(Base):
             "revoked_reason is not null)",
             name="revocation_fields",
         ),
+        CheckConstraint(
+            "subject_kind = 'service' or last_verified_at is not null",
+            name="human_verified",
+        ),
         UniqueConstraint("issuer", "subject", name="external_identity"),
         UniqueConstraint("actor_profile_id", name="actor_profile"),
         Index(
@@ -133,9 +137,7 @@ class ActorIdentityLink(Base):
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="active")
     linked_by: Mapped[str] = mapped_column(String(120), nullable=False)
     linked_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    last_verified_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    last_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     revoked_by: Mapped[str | None] = mapped_column(String(120))
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     revoked_reason: Mapped[str | None] = mapped_column(String(500))

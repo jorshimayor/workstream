@@ -35,13 +35,20 @@ from app.db import session as db_session
 from app.db.session import get_db_session
 from app.interfaces.auth import AuthVerificationError, AuthVerificationUnavailableError
 from app.main import create_app
+from app.modules.audit.schemas import AuthorityEventType
+from app.modules.audit.service import AuditService
 from app.modules.actors.service import ActorService
 from app.modules.actors.models import ActorIdentityLink, ActorProfile
 from app.modules.actors.repository import ActorRepository
+from app.modules.actors.service_identities import ServiceIdentity
 from app.modules.authorization.models import AdminRoleGrant, AuthorityIdempotencyRecord
 from app.modules.authorization.repository import (
     AdminAuthorizationRepository,
     AuthorityIdempotencyRepository,
+)
+from app.modules.authorization.service_actor_service import (
+    ServiceActorProvisioningService,
+    ServiceActorProvisioningUnavailable,
 )
 from app.modules.projects.models import Project
 from app.modules.tasks.models import AuditEvent
@@ -338,6 +345,7 @@ async def test_local_hmac_fixture_uses_final_claim_shape() -> None:
 
     result = await verifier.verify(token)
 
+    assert verifier.canonical_issuer() == result.token.issuer
     assert result.token.token_id == "local-token-id"
     assert result.legacy is not None
     assert result.legacy.roles == ("reviewer",)
@@ -428,6 +436,7 @@ async def test_asymmetric_token_returns_minimal_canonical_contract(
 
     result = await verifier.verify(issue_asymmetric_token(private_key))
 
+    assert verifier.canonical_issuer() == result.token.issuer
     assert result.token.model_dump().keys() == {
         "issuer",
         "subject",
@@ -1758,6 +1767,7 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
                         subject_kind="human",
                         status="active",
                         linked_by=str(admin_id),
+                        last_verified_at=now,
                     ),
                     ActorIdentityLink(
                         id=str(uuid4()),
@@ -1767,6 +1777,7 @@ async def test_signed_tokens_bootstrap_and_admin_grant_lifecycle(
                         subject_kind="human",
                         status="revoked",
                         linked_by=str(admin_id),
+                        last_verified_at=now,
                         revoked_by=str(admin_id),
                         revoked_at=now,
                         revoked_reason="Concealment fixture",
@@ -2895,6 +2906,538 @@ async def test_admin_bootstrap_replay_and_cross_revoke_are_concurrency_safe(
     await db_session.dispose_engine()
 
 
+async def test_controlled_service_actor_provisioning_is_atomic_private_and_concurrent(
+    auth_database_env: str,
+    rsa_signing_material: tuple[rsa.RSAPrivateKey, dict[str, Any]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Prove fixed service binding, replay, conflicts, rollback, and pre-admission denial."""
+    private_key, jwk = rsa_signing_material
+    settings = production_verifier_settings(database_url=auth_database_env)
+    verifier = FlowAuthVerifier(settings, jwks_transport=jwks_transport(jwk))
+    app = create_app(settings)
+    app.state.auth_verifier = verifier
+    admin_token = issue_asymmetric_token(
+        private_key,
+        claims={"sub": "auth09b-admin", "jti": "auth09b-admin-token"},
+    )
+    ordinary_token = issue_asymmetric_token(
+        private_key,
+        claims={"sub": "auth09b-ordinary", "jti": "auth09b-ordinary-token"},
+    )
+    service_subject = "Opaque-Service-Subject/Verifier:01"
+    service_token = issue_asymmetric_token(
+        private_key,
+        subject_kind="service",
+        scope="workstream:service",
+        claims={"sub": service_subject, "jti": "auth09b-service-token"},
+    )
+    admin_headers = {"Authorization": f"Bearer {admin_token}"}
+    ordinary_headers = {"Authorization": f"Bearer {ordinary_token}"}
+    service_headers = {"Authorization": f"Bearer {service_token}"}
+    nonhuman_headers = {
+        kind: {
+            "Authorization": "Bearer "
+            + issue_asymmetric_token(
+                private_key,
+                subject_kind=kind,
+                scope=f"{kind}:identity",
+                claims={"sub": f"auth09b-{kind}", "jti": f"auth09b-{kind}-token"},
+            )
+        }
+        for kind in ("agent", "space")
+    }
+
+    async def actor_timestamps(actor_id: UUID) -> tuple[datetime | None, datetime | None]:
+        async with db_session.get_session_factory()() as session:
+            return tuple(
+                (
+                    await session.execute(
+                        text(
+                            "select p.last_seen_at,l.last_verified_at "
+                            "from actor_profiles p join actor_identity_links l "
+                            "on l.actor_profile_id=p.id where p.id=:actor"
+                        ),
+                        {"actor": str(actor_id)},
+                    )
+                ).one()
+            )
+
+    async def service_state(identity: ServiceIdentity) -> tuple | None:
+        async with db_session.get_session_factory()() as session:
+            return (
+                await session.execute(
+                    text(
+                        "select p.id,p.actor_kind,p.status,p.provisioning_method,p.created_by,"
+                        "p.last_seen_at,l.issuer,l.subject,l.subject_kind,l.status,l.linked_by,"
+                        "l.last_verified_at from actor_profiles p join actor_identity_links l "
+                        "on l.actor_profile_id=p.id where p.service_identity=:identity"
+                    ),
+                    {"identity": identity.value},
+                )
+            ).one_or_none()
+
+    async def authority_counts() -> tuple[int, int, int, int]:
+        async with db_session.get_session_factory()() as session:
+            return (
+                int(await session.scalar(select(func.count()).select_from(ActorProfile)) or 0),
+                int(await session.scalar(select(func.count()).select_from(ActorIdentityLink)) or 0),
+                int(
+                    await session.scalar(
+                        select(func.count()).select_from(AuthorityIdempotencyRecord)
+                    )
+                    or 0
+                ),
+                int(await session.scalar(select(func.count()).select_from(AuditEvent)) or 0),
+            )
+
+    async def run_reservation_race(
+        calls: tuple[tuple[dict[str, Any], str], tuple[dict[str, Any], str]],
+    ) -> tuple[Response, Response]:
+        original_reserve = AuthorityIdempotencyRepository.reserve
+        ready = asyncio.Event()
+        arrivals = 0
+
+        async def barrier_reserve(self, **kwargs):
+            nonlocal arrivals
+            arrivals += 1
+            if arrivals == 2:
+                ready.set()
+            await ready.wait()
+            return await original_reserve(self, **kwargs)
+
+        monkeypatch.setattr(AuthorityIdempotencyRepository, "reserve", barrier_reserve)
+        try:
+            first, second = calls
+            return tuple(
+                await asyncio.gather(
+                    client.post(
+                        "/api/v1/service-actors",
+                        headers={**admin_headers, "Idempotency-Key": first[1]},
+                        json=first[0],
+                    ),
+                    client.post(
+                        "/api/v1/service-actors",
+                        headers={**admin_headers, "Idempotency-Key": second[1]},
+                        json=second[0],
+                    ),
+                )
+            )
+        finally:
+            monkeypatch.setattr(AuthorityIdempotencyRepository, "reserve", original_reserve)
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as client:
+        admin_profile = await client.get("/api/v1/actors/me", headers=admin_headers)
+        ordinary_profile = await client.get("/api/v1/actors/me", headers=ordinary_headers)
+        assert admin_profile.status_code == ordinary_profile.status_code == 200
+        admin_id = UUID(admin_profile.json()["actor_profile_id"])
+        assert (await run_admin_bootstrap(admin_id, execute=True))[0] == 0
+        caller_before = await actor_timestamps(admin_id)
+
+        reason = "Bind the verifier service to its exact issuer subject"
+        payload = {
+            "service_identity": ServiceIdentity.ARTIFACT_VERIFIER.value,
+            "subject": service_subject,
+            "reason": reason,
+        }
+        key = str(uuid4())
+        created = await client.post(
+            "/api/v1/service-actors",
+            headers={**admin_headers, "Idempotency-Key": key},
+            json=payload,
+        )
+        assert created.status_code == 201, created.text
+        created_body = created.json()
+        assert set(created_body) == {
+            "actor_profile_id",
+            "service_identity",
+            "actor_status",
+            "identity_link_status",
+            "provisioning_method",
+            "created_at",
+            "linked_at",
+        }
+        assert created_body["service_identity"] == ServiceIdentity.ARTIFACT_VERIFIER.value
+        assert created_body["actor_status"] == created_body["identity_link_status"] == "active"
+        assert created_body["provisioning_method"] == "manual_service_provisioning"
+        assert service_subject not in created.text
+        assert reason not in created.text
+        assert settings.token_issuer not in created.text
+
+        state = await service_state(ServiceIdentity.ARTIFACT_VERIFIER)
+        assert state is not None
+        assert state[0] == created_body["actor_profile_id"]
+        assert state[1:5] == (
+            "service",
+            "active",
+            "manual_service_provisioning",
+            str(admin_id),
+        )
+        assert state[5] is None
+        assert state[6:11] == (
+            settings.token_issuer,
+            service_subject,
+            "service",
+            "active",
+            str(admin_id),
+        )
+        assert state[11] is None
+        caller_after_create = await actor_timestamps(admin_id)
+        assert caller_after_create[0] > caller_before[0]
+        assert caller_after_create[1] > caller_before[1]
+
+        replayed = await client.post(
+            "/api/v1/service-actors",
+            headers={**admin_headers, "Idempotency-Key": key},
+            json=payload,
+        )
+        assert replayed.status_code == 201
+        assert replayed.json() == created_body
+        assert await service_state(ServiceIdentity.ARTIFACT_VERIFIER) == state
+        caller_after_replay = await actor_timestamps(admin_id)
+        assert caller_after_replay[0] > caller_after_create[0]
+        assert caller_after_replay[1] > caller_after_create[1]
+
+        original_replay_response = ServiceActorProvisioningService.replay_response
+
+        async def unavailable_replay(self, **kwargs):
+            raise ServiceActorProvisioningUnavailable("forced unavailable replay")
+
+        monkeypatch.setattr(
+            ServiceActorProvisioningService,
+            "replay_response",
+            unavailable_replay,
+        )
+        unavailable_replay_result = await client.post(
+            "/api/v1/service-actors",
+            headers={**admin_headers, "Idempotency-Key": key},
+            json=payload,
+        )
+        monkeypatch.setattr(
+            ServiceActorProvisioningService,
+            "replay_response",
+            original_replay_response,
+        )
+        assert unavailable_replay_result.status_code == 503
+        assert unavailable_replay_result.json()["error"]["code"] == "service_unavailable"
+        assert await actor_timestamps(admin_id) == caller_after_replay
+        assert await service_state(ServiceIdentity.ARTIFACT_VERIFIER) == state
+
+        mismatched = await client.post(
+            "/api/v1/service-actors",
+            headers={**admin_headers, "Idempotency-Key": key},
+            json=payload | {"reason": "A different bounded reason"},
+        )
+        assert mismatched.status_code == 409
+        assert mismatched.json()["error"]["code"] == "idempotency_mismatch"
+        assert await actor_timestamps(admin_id) == caller_after_replay
+        assert await service_state(ServiceIdentity.ARTIFACT_VERIFIER) == state
+
+        fixed_identity_conflict = await client.post(
+            "/api/v1/service-actors",
+            headers={**admin_headers, "Idempotency-Key": str(uuid4())},
+            json=payload | {"subject": "another-subject"},
+        )
+        assert fixed_identity_conflict.status_code == 409
+        assert (
+            fixed_identity_conflict.json()["error"]["code"]
+            == "service_identity_already_provisioned"
+        )
+        subject_conflict = await client.post(
+            "/api/v1/service-actors",
+            headers={**admin_headers, "Idempotency-Key": str(uuid4())},
+            json=payload
+            | {"service_identity": ServiceIdentity.ARTIFACT_PUT_RESOLVER.value},
+        )
+        assert subject_conflict.status_code == 409
+        assert subject_conflict.json()["error"]["code"] == "identity_subject_already_linked"
+        assert await service_state(ServiceIdentity.ARTIFACT_PUT_RESOLVER) is None
+
+        denied = await client.post(
+            "/api/v1/service-actors",
+            headers={**ordinary_headers, "Idempotency-Key": str(uuid4())},
+            json=payload | {"service_identity": ServiceIdentity.ARTIFACT_PUT_RESOLVER.value},
+        )
+        assert denied.status_code == 403
+        assert denied.json()["error"]["code"] == "permission_not_granted"
+        for kind, headers in nonhuman_headers.items():
+            unsupported = await client.post(
+                "/api/v1/service-actors",
+                headers={**headers, "Idempotency-Key": str(uuid4())},
+                json=payload
+                | {"service_identity": ServiceIdentity.ARTIFACT_PUT_RESOLVER.value},
+            )
+            assert unsupported.status_code == 403
+            assert unsupported.json()["error"]["code"] == "unsupported_subject_kind", kind
+
+        rejected_subject = "private-" + "x" * 220
+        rejected_reason = "private-" + "y" * 520
+        invalid = await client.post(
+            "/api/v1/service-actors",
+            headers={**admin_headers, "Idempotency-Key": str(uuid4())},
+            json=payload | {"subject": rejected_subject, "reason": rejected_reason},
+        )
+        assert invalid.status_code == 422
+        assert rejected_subject not in invalid.text
+        assert rejected_reason not in invalid.text
+        invalid_identity = "private-unknown-service-identity"
+        unknown = await client.post(
+            "/api/v1/service-actors",
+            headers={**admin_headers, "Idempotency-Key": str(uuid4())},
+            json=payload | {"service_identity": invalid_identity},
+        )
+        assert unknown.status_code == 422
+        assert invalid_identity not in unknown.text
+        invalid_key = "private-invalid-idempotency-key"
+        invalid_header = await client.post(
+            "/api/v1/service-actors",
+            headers={**admin_headers, "Idempotency-Key": invalid_key},
+            json=payload,
+        )
+        assert invalid_header.status_code == 422
+        assert invalid_key not in invalid_header.text
+        assert service_subject not in invalid_header.text
+        assert reason not in invalid_header.text
+
+        for path in ("/api/v1/actors/me", "/api/v1/auth/me"):
+            service_denial = await client.get(path, headers=service_headers)
+            assert service_denial.status_code == 403
+            assert service_denial.json()["error"]["code"] == "service_actor_not_provisioned"
+        assert await service_state(ServiceIdentity.ARTIFACT_VERIFIER) == state
+
+        race_key = str(uuid4())
+        scheduler_payload = payload | {
+            "service_identity": ServiceIdentity.ARTIFACT_SCHEDULER.value,
+            "subject": "auth09b-scheduler",
+        }
+        same_replays = await run_reservation_race(
+            ((scheduler_payload, race_key), (scheduler_payload, race_key))
+        )
+        assert [response.status_code for response in same_replays] == [201, 201]
+        assert same_replays[0].json() == same_replays[1].json()
+
+        drift_key = str(uuid4())
+        materializer_payload = payload | {
+            "service_identity": ServiceIdentity.ARTIFACT_MATERIALIZER.value,
+            "subject": "auth09b-materializer-a",
+        }
+        drift_race = await run_reservation_race(
+            (
+                (materializer_payload, drift_key),
+                (materializer_payload | {"subject": "auth09b-materializer-b"}, drift_key),
+            )
+        )
+        assert sorted(response.status_code for response in drift_race) == [201, 409]
+        assert (
+            next(response for response in drift_race if response.status_code == 409).json()[
+                "error"
+            ]["code"]
+            == "idempotency_mismatch"
+        )
+
+        output_payload = payload | {
+            "service_identity": ServiceIdentity.ARTIFACT_CHECKER_OUTPUT.value,
+            "subject": "auth09b-output-a",
+        }
+        fixed_race = await run_reservation_race(
+            (
+                (output_payload, str(uuid4())),
+                (output_payload | {"subject": "auth09b-output-b"}, str(uuid4())),
+            )
+        )
+        assert sorted(response.status_code for response in fixed_race) == [201, 409]
+        assert (
+            next(response for response in fixed_race if response.status_code == 409).json()[
+                "error"
+            ]["code"]
+            == "service_identity_already_provisioned"
+        )
+
+        shared_subject = "auth09b-shared-external-identity"
+        external_race = await run_reservation_race(
+            (
+                (
+                    payload
+                    | {
+                        "service_identity": ServiceIdentity.ARTIFACT_BINDING.value,
+                        "subject": shared_subject,
+                    },
+                    str(uuid4()),
+                ),
+                (
+                    payload
+                    | {
+                        "service_identity": ServiceIdentity.ARTIFACT_GUIDE_READER.value,
+                        "subject": shared_subject,
+                    },
+                    str(uuid4()),
+                ),
+            )
+        )
+        assert sorted(response.status_code for response in external_race) == [201, 409]
+        assert (
+            next(response for response in external_race if response.status_code == 409).json()[
+                "error"
+            ]["code"]
+            == "identity_subject_already_linked"
+        )
+
+        failure_identity = (
+            ServiceIdentity.ARTIFACT_BINDING
+            if await service_state(ServiceIdentity.ARTIFACT_BINDING) is None
+            else ServiceIdentity.ARTIFACT_GUIDE_READER
+        )
+        failure_payload = payload | {
+            "service_identity": failure_identity.value,
+            "subject": "auth09b-evidence-retry",
+        }
+        failure_key = str(uuid4())
+        before_failure = await authority_counts()
+        original_add_authority_event = AuditService.add_authority_event
+
+        async def fail_success_evidence(self, event):
+            if event.event_type is AuthorityEventType.SERVICE_ACTOR_PROVISIONED:
+                raise SQLAlchemyError("forced service evidence failure")
+            return await original_add_authority_event(self, event)
+
+        monkeypatch.setattr(AuditService, "add_authority_event", fail_success_evidence)
+        failed = await client.post(
+            "/api/v1/service-actors",
+            headers={**admin_headers, "Idempotency-Key": failure_key},
+            json=failure_payload,
+        )
+        monkeypatch.setattr(AuditService, "add_authority_event", original_add_authority_event)
+        assert failed.status_code == 503
+        assert failed.json()["error"]["code"] == "service_unavailable"
+        assert failed.json()["error"]["retryable"] is True
+        assert await authority_counts() == before_failure
+        assert await service_state(failure_identity) is None
+
+        retried = await client.post(
+            "/api/v1/service-actors",
+            headers={**admin_headers, "Idempotency-Key": failure_key},
+            json=failure_payload,
+        )
+        assert retried.status_code == 201, retried.text
+
+        commit_payload = payload | {
+            "service_identity": ServiceIdentity.ARTIFACT_PUT_RESOLVER.value,
+            "subject": "auth09b-commit-retry",
+        }
+        commit_key = str(uuid4())
+        before_commit_failure = await authority_counts()
+        original_commit = AsyncSession.commit
+        fail_next_commit = True
+
+        async def fail_service_commit(session: AsyncSession) -> None:
+            nonlocal fail_next_commit
+            if fail_next_commit:
+                fail_next_commit = False
+                raise SQLAlchemyError("forced service commit failure")
+            await original_commit(session)
+
+        monkeypatch.setattr(AsyncSession, "commit", fail_service_commit)
+        commit_failed = await client.post(
+            "/api/v1/service-actors",
+            headers={**admin_headers, "Idempotency-Key": commit_key},
+            json=commit_payload,
+        )
+        monkeypatch.setattr(AsyncSession, "commit", original_commit)
+        assert commit_failed.status_code == 503
+        assert commit_failed.json()["error"]["code"] == "service_unavailable"
+        assert await authority_counts() == before_commit_failure
+        assert await service_state(ServiceIdentity.ARTIFACT_PUT_RESOLVER) is None
+        commit_retried = await client.post(
+            "/api/v1/service-actors",
+            headers={**admin_headers, "Idempotency-Key": commit_key},
+            json=commit_payload,
+        )
+        assert commit_retried.status_code == 201, commit_retried.text
+
+        class CanonicalIssuerUnavailable:
+            async def verify(self, token: str):
+                return await verifier.verify(token)
+
+            def canonical_issuer(self) -> str:
+                raise AuthVerificationUnavailableError("issuer unavailable")
+
+        app.state.auth_verifier = CanonicalIssuerUnavailable()
+        unavailable = await client.post(
+            "/api/v1/service-actors",
+            headers={**admin_headers, "Idempotency-Key": str(uuid4())},
+            json=payload,
+        )
+        app.state.auth_verifier = verifier
+        assert unavailable.status_code == 503
+        assert unavailable.json()["error"]["code"] == "identity_verification_unavailable"
+
+    async with db_session.get_session_factory()() as session:
+        service_profiles = (
+            await session.scalars(select(ActorProfile).where(ActorProfile.actor_kind == "service"))
+        ).all()
+        pending = int(
+            await session.scalar(
+                select(func.count())
+                .select_from(AuthorityIdempotencyRecord)
+                .where(AuthorityIdempotencyRecord.status == "pending")
+            )
+            or 0
+        )
+        service_events = (
+            await session.scalars(
+                select(AuditEvent).where(
+                    AuditEvent.event_type == AuthorityEventType.SERVICE_ACTOR_PROVISIONED.value
+                )
+            )
+        ).all()
+        privacy_leaks = int(
+            await session.scalar(
+                text(
+                    "select count(*) from audit_events where "
+                    "position(:subject in row_to_json(audit_events)::text) > 0 or "
+                    "position(:issuer in row_to_json(audit_events)::text) > 0 or "
+                    "position(:reason in row_to_json(audit_events)::text) > 0"
+                ),
+                {"subject": service_subject, "issuer": settings.token_issuer, "reason": reason},
+            )
+            or 0
+        )
+        conflict_denials = (
+            await session.scalars(
+                select(AuditEvent).where(
+                    AuditEvent.event_type == AuthorityEventType.SENSITIVE_AUTHORIZATION_DENIED.value,
+                    AuditEvent.denial_code == "identity_link_conflict",
+                )
+            )
+        ).all()
+        service_grants = int(
+            await session.scalar(
+                select(func.count())
+                .select_from(AdminRoleGrant)
+                .where(
+                    AdminRoleGrant.target_actor_profile_id.in_(
+                        [profile.id for profile in service_profiles]
+                    )
+                )
+            )
+            or 0
+        )
+    assert service_profiles
+    assert all(profile.last_seen_at is None for profile in service_profiles)
+    assert pending == 0
+    assert service_grants == 0
+    assert service_events
+    assert all(event.action_id is None for event in service_events)
+    assert all(event.permission_id == "actor.service.provision" for event in service_events)
+    assert privacy_leaks == 0
+    assert conflict_denials
+    assert all(event.action_id == "actor.service.provision" for event in conflict_denials)
+    await db_session.dispose_engine()
+
+
 async def test_auth_me_maps_actor_registry_failure_to_service_unavailable(
     monkeypatch: pytest.MonkeyPatch,
     auth_database_env: str,
@@ -2947,11 +3490,15 @@ async def test_actor_id_uses_subject_and_issuer_not_email() -> None:
         dev_auth_email="second@example.test",
     )
 
-    first_actor = (await DevelopmentAuthVerifier(first).verify(first.dev_auth_token)).legacy_actor()
-    second_actor = (
-        await DevelopmentAuthVerifier(second).verify(second.dev_auth_token)
-    ).legacy_actor()
+    first_verifier = DevelopmentAuthVerifier(first)
+    second_verifier = DevelopmentAuthVerifier(second)
+    first_result = await first_verifier.verify(first.dev_auth_token)
+    second_result = await second_verifier.verify(second.dev_auth_token)
+    first_actor = first_result.legacy_actor()
+    second_actor = second_result.legacy_actor()
 
+    assert first_verifier.canonical_issuer() == first_result.token.issuer == "same-issuer"
+    assert second_verifier.canonical_issuer() == second_result.token.issuer == "same-issuer"
     assert first_actor.actor_id == second_actor.actor_id
     assert first_actor.email is None
     assert second_actor.email is None
@@ -3049,6 +3596,35 @@ def test_dev_auth_rejects_surrounding_identity_anchor_whitespace(field_name: str
 
     with pytest.raises(RuntimeError, match=f"WORKSTREAM_{field_name.upper()}"):
         DevelopmentAuthVerifier(Settings(**values))
+
+
+def test_dev_auth_rejects_issuer_above_persisted_utf8_bound() -> None:
+    with pytest.raises(RuntimeError, match="WORKSTREAM_DEV_AUTH_ISSUER"):
+        DevelopmentAuthVerifier(
+            Settings(
+                environment="local",
+                auth_provider="dev",
+                dev_auth_token="local-token",
+                dev_auth_subject="subject",
+                dev_auth_issuer="é" * 101,
+            )
+        )
+    with pytest.raises(RuntimeError, match="WORKSTREAM_FLOW_AUTH_ISSUER"):
+        FlowAuthVerifier(
+            Settings(
+                environment="test",
+                auth_provider="flow",
+                flow_auth_issuer="é" * 101,
+                flow_auth_audience="workstream",
+                flow_auth_local_hmac_secret="local-secret",
+            )
+        )
+    with pytest.raises(RuntimeError, match="WORKSTREAM_TOKEN_ISSUER"):
+        FlowAuthVerifier(
+            production_verifier_settings(
+                token_issuer="https://issuer.example.test/" + "é" * 100,
+            )
+        )
 
 
 async def test_flow_auth_verifier_boundary_rejects_unconfigured_verification() -> None:

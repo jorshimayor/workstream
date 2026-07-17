@@ -33,6 +33,7 @@ backend/tests/test_auth.py
 backend/tests/test_config.py
 backend/tests/test_authorization.py
 backend/tests/test_alembic.py
+backend/tests/test_tasks.py
 backend/tests/test_api_controls.py
 backend/tests/test_api_rate_controls.py
 backend/scripts/api_contract_e2e.py

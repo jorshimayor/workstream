@@ -77,7 +77,6 @@ from app.modules.authorization.schemas import (
     ServiceActorCreateRequest,
     derive_reason_digest,
     derive_service_identity_digest,
-    derive_service_profile_digest,
     parse_authority_request,
 )
 from app.modules.authorization.service import AuthorityMutationService
@@ -266,6 +265,7 @@ def test_closed_permission_and_action_catalogue_is_exact_and_non_executable() ->
         ActionId.ADMIN_ROLE_GRANT_ISSUE,
         ActionId.ADMIN_ROLE_GRANT_REVOKE,
         ActionId.ADMIN_ROLE_GRANT_BOOTSTRAP,
+        ActionId.ACTOR_SERVICE_PROVISION,
     }
     assert {
         definition.action_id.value: (
@@ -2560,7 +2560,7 @@ def test_request_admission_is_frozen_bounded_and_nonretaining() -> None:
         ),
         lambda: derive_reason_digest("\ud800" + secret),
         lambda: derive_service_identity_digest("https://identity.example", "\ud800" + secret),
-        lambda: derive_service_profile_digest("\ud800" + secret, "approved"),
+        lambda: derive_service_identity_digest("\ud800" + secret, "service-subject"),
     ):
         with pytest.raises(TypeError) as caught:
             construct()
@@ -2598,10 +2598,11 @@ def test_every_operation_has_one_strict_canonical_request_variant() -> None:
     requests = [
         ServiceActorCreateRequest(
             operation=AuthorityOperation.SERVICE_ACTOR_CREATE,
+            service_identity=ServiceIdentity.ARTIFACT_VERIFIER,
             identity_reference_digest=derive_service_identity_digest(
                 "https://identity.flowresearch.tech", "opaque-service-subject"
             ),
-            profile_payload_digest=derive_service_profile_digest("Adapter", "Approved"),
+            reason_digest=derive_reason_digest("Approved"),
         ),
         AdminRoleGrantIssueRequest(
             operation=AuthorityOperation.ADMIN_ROLE_GRANT_ISSUE,
@@ -2670,10 +2671,11 @@ async def test_all_operation_and_replacement_mappings_commit_one_linked_pair(
     requests = [
         ServiceActorCreateRequest(
             operation=AuthorityOperation.SERVICE_ACTOR_CREATE,
+            service_identity=ServiceIdentity.ARTIFACT_VERIFIER,
             identity_reference_digest=derive_service_identity_digest(
                 "https://identity.flowresearch.tech", "opaque-service-subject"
             ),
-            profile_payload_digest=derive_service_profile_digest("Adapter", "Approved"),
+            reason_digest=derive_reason_digest("Approved"),
         ),
         AdminRoleGrantIssueRequest(
             operation=AuthorityOperation.ADMIN_ROLE_GRANT_ISSUE,
