@@ -1,5 +1,17 @@
 # Review Log
 
+## 2026-07-17 - WS-AUTH-001-09B Internal Review Passed
+
+Integrated code SHA `641b439ceb370ecc792322e33c73b6668c244290` passed senior
+engineering, QA/test, security/auth, product/ops, architecture, CI integrity,
+docs, reuse/dedup, and test-delta review after every valid finding was repaired.
+The exact route provisions one fixed service principal atomically, activates
+only `actor.service.provision`, preserves unverified service timestamps, and
+continues to deny service callers before actor lookup. Focused actor,
+authorization, and verifier coverage each exceed 90 percent; all 80 agent gates
+and the isolated real HTTP contract drill pass. PR publication and external
+checks remain; AUTH-09C is inactive.
+
 ## 2026-07-17 - WS-AUTH-001-09B Plan Review Passed
 
 The repaired contract passed every required preimplementation group at exact SHA

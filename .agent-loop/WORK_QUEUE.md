@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-09B` | Controlled Service Actor Provisioning | L1 | Explicitly started from merged PR #132 and signed memory |
+| `WS-AUTH-001-09B` | Controlled Service Actor Provisioning | L1 | Implemented and internally reviewed; PR publication pending |
 
 Live post-merge state remains read from signed `automation/loop-memory`
 output. This authored queue records the separately approved parallel chunks.
