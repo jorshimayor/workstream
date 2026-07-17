@@ -2,17 +2,16 @@
 
 ## Current status
 
-`WS-CON-001-PLAN3` is reopened only for current-main reconciliation after merged
-REV PR #128 at `0302bcf`, which also contains AUTH-09A after AUTH PR #140. The
-prior planning snapshot `09128ee1aed941682c7cb59ca04698de496de682` remains
-historically reviewed but no longer controls publication. The refresh corrects
-the AUTH catalogue baseline, replaces the obsolete omnibus nullable CON
+`WS-CON-001-PLAN3` completed exact-SHA internal review at
+`e968430b0c3b5f1432899c9aa31ef209b774eae0` after current-main reconciliation
+with merged REV PR #128 at `0302bcf`, which also contains AUTH-09A after AUTH PR
+#140. The prior planning snapshot `09128ee1aed941682c7cb59ca04698de496de682`
+remains historical and no longer controls publication. The reviewed refresh
+corrects the AUTH catalogue baseline, replaces the obsolete omnibus nullable CON
 decision input with two ordered operations, and adopts REV-12A's exact
-obligation-writer/ordinal/cutoff hooks. Runtime code remains unchanged. PLAN2
-already reconciled the
-human-approved v0.1
-`Review(accept) -> FinalAcceptance -> accepted_submission` boundary against the
-previously reviewed WS-XINT plan. Runtime code is unchanged.
+obligation-writer/ordinal/cutoff hooks. PLAN2's human-approved v0.1
+`Review(accept) -> FinalAcceptance -> accepted_submission` boundary remains
+intact. Runtime code is unchanged.
 The prior plan is superseded where it used the older policy aggregate, made ART
 evidence mandatory, described service action rows as persisted assignments,
 allowed partial activation-custody transfer, or let outbox dispatch imply
@@ -50,14 +49,14 @@ feature-handler authority.
 
 ## Active chunk
 
-`WS-CON-001-PLAN3` current-main refresh only. No implementation chunk is active
-or starts automatically.
+No implementation chunk is active or starts automatically. PLAN3 is complete
+and may only refresh draft PR #142; it does not authorize merge or CON-01.
 
 | Chunk | Status | Notes |
 |---|---|---|
 | `WS-CON-001-PLAN` | Complete; superseded baseline | Based on PR #139 / `5d353b6`; reviewed content `c4242e0` |
 | `WS-CON-001-PLAN2` | Complete; unpublished | FinalAcceptance is REV-owned; CON trigger changes only; all required internal tracks pass |
-| `WS-CON-001-PLAN3` | Current-main refresh in review | AUTH PR #140 PREP/custody plus merged REV PR #128 participant/release-control reconciliation |
+| `WS-CON-001-PLAN3` | Complete; internally reviewed | Exact AUTH/REV current-main participant, FinalAcceptance, and release-control reconciliation at `e968430` |
 | `WS-CON-001-01` through `08B`, `10A` through `11` | Proposed | Separate explicit start required after PLAN3 and upstream merge refresh |
 | `WS-CON-001-09A/09B` | Deferred optional | Separate approval and fresh ART/AUTH review required |
 
@@ -81,6 +80,6 @@ or starts automatically.
 
 ## Stop condition
 
-Do not edit runtime code, start CON-01, push, open, or merge a PR without
-explicit human direction. PLAN3 may prepare its trust bundle and merge intent
-for review readiness only.
+Do not edit runtime code, start CON-01, or merge PR #142 without explicit human
+direction. The reviewed PLAN3 may refresh the existing draft PR only; it does
+not authorize its merge or any successor start.

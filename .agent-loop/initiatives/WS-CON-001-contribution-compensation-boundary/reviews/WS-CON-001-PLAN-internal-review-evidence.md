@@ -1,27 +1,28 @@
 # Internal Review Evidence: WS-CON-001-PLAN
 
-## 2026-07-17 Final PR Provenance Rebind
+## 2026-07-17 AUTH And REV Current-Main Provenance Rebind
 
-Reviewed code SHA: 09128ee1aed941682c7cb59ca04698de496de682
-Reviewed at: 2026-07-17T09:22:25Z
-Reviewer run IDs: auth08_arch_review/rebind-09128ee, auth08_qa_product_review/rebind-09128ee, auth08_security_review/rebind-09128ee
+Reviewed code SHA: e968430b0c3b5f1432899c9aa31ef209b774eae0
+Reviewed at: 2026-07-17T15:17:58Z
+Reviewer run IDs: auth08_arch_review/final-e968430, auth08_qa_product_review/final-e968430, auth08_security_review/final-e968430
 
 This provenance-only addendum binds the earlier substantive PLAN review chain to
 the final reviewed cumulative planning snapshot. PLAN3 authorizes this evidence
 rebind because the PR-level gate validates every evidence file added by the
 branch. It changes no historical finding or product conclusion. The exact-SHA
-re-review confirmed that the merged AUTH boundary, later FinalAcceptance
-reconciliation, and evidence-schema update introduce no remaining blocker.
+re-review confirmed that the merged AUTH runtime and REV plan, exact
+FinalAcceptance/CON participant boundary, joint release-control contract, and
+evidence-schema update introduce no remaining blocker.
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---|---|---|
-| senior engineering | PASS | None | The cumulative specification remains coherent and PLAN3 is a bounded process/specification correction. |
-| qa/test | PASS AFTER FIXES | None | The task-claim ActionId error and missing-evidence process gap are resolved. |
-| security/auth | PASS AFTER FIXES | None | Exact AUTH-PREP semantics and AUTH-only identifier/evaluator/activation ownership pass. |
-| product/ops | PASS AFTER FIXES | None | Review outcomes, FinalAcceptance lineage, contribution atomicity, and no-adjudication boundary pass. |
-| architecture | PASS | None | Ownership, transaction, rollout, and same-initiative successor boundaries remain coherent. |
+| senior engineering | PASS AFTER FIXES | None | The cumulative specification remains coherent after the PLAN3 title and duplicate allowed-file repairs. |
+| qa/test | PASS | None | Exact two-operation ordering, branch effects, rollback coverage, and deterministic gates pass. |
+| security/auth | PASS | None | Current AUTH catalogue facts, prepared semantics, and AUTH-only identifier/evaluator/activation ownership pass. |
+| product/ops | PASS | None | Review outcomes, FinalAcceptance lineage, contribution atomicity, release cutoff, and no-adjudication boundary pass. |
+| architecture | PASS AFTER FIXES | None | Ownership, transaction, rollout, joint release control, and same-initiative successor boundaries remain coherent. |
 | ci integrity | PASS | None | The rebind changes evidence only; no CI, runtime, test, script, workflow, dependency, or threshold changes. |
-| docs | PASS AFTER FIXES | None | Runtime-versus-planned identifiers and cumulative evidence provenance are explicit. |
+| docs | PASS AFTER FIXES | None | Runtime-versus-planned identifiers, merged REV dependencies, contract title, and cumulative evidence provenance are explicit. |
 | reuse/dedup | PASS | None | No duplicate service, evaluator, registry, or transaction abstraction is introduced. |
 | test delta | PASS | None | No test delta; all 80 agent-gate tests pass. |
 
