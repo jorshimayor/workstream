@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import AsyncMock
@@ -40,12 +39,6 @@ from app.modules.artifacts.models import (
     ArtifactUploadItem,
     ArtifactUploadSession,
 )
-from app.modules.artifacts.preparation import (
-    HARD_MAXIMUM_ARTIFACT_BYTES,
-    ArtifactPreparationLimits,
-    ArtifactPreparationService,
-    ArtifactScratchManager,
-)
 from app.modules.artifacts.service import (
     ArtifactIngestStateError,
     ArtifactStorageNamespaceError,
@@ -58,7 +51,10 @@ from app.modules.artifacts.service import (
 import app.modules.artifacts.service as artifact_service_module
 from app.modules.artifacts.sources import ArtifactCommitment, CommittedArtifactSource
 from app.modules.projects.models import Project
-from tests.artifact_store_helpers import local_namespace_claim
+from tests.artifact_store_helpers import (
+    local_namespace_claim,
+    minted_source as _minted_source,
+)
 
 
 def _alembic_config() -> Config:
@@ -118,44 +114,6 @@ async def _truncate_artifacts_if_present(database_url: str) -> None:
                 await connection.execute(text(f"truncate table {', '.join(existing)} cascade"))
     finally:
         await engine.dispose()
-
-
-async def _byte_stream(*chunks: bytes) -> AsyncIterator[bytes]:
-    for chunk in chunks:
-        yield chunk
-
-
-def _preparation_limits() -> ArtifactPreparationLimits:
-    return ArtifactPreparationLimits(
-        aggregate_reserved_bytes=HARD_MAXIMUM_ARTIFACT_BYTES,
-        maximum_files=2,
-        maximum_concurrency=2,
-        minimum_free_bytes=0,
-        reservation_ttl_seconds=30,
-        total_deadline_seconds=10,
-        cleanup_margin_seconds=1,
-        stream_buffer_bytes=2,
-        maximum_source_bytes=1024,
-    )
-
-
-@asynccontextmanager
-async def _minted_source(
-    scratch_root: Path,
-    content: bytes,
-    *,
-    media_type: str = "application/octet-stream",
-) -> AsyncIterator[CommittedArtifactSource]:
-    manager = ArtifactScratchManager(root=scratch_root, limits=_preparation_limits())
-    prepared = await ArtifactPreparationService(manager).prepare(
-        _byte_stream(content[:2], content[2:]),
-        media_type=media_type,
-    )
-    try:
-        async with prepared as source:
-            yield source
-    finally:
-        manager.close()
 
 
 def _settings(tmp_path: Path) -> Settings:
