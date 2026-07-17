@@ -11,7 +11,7 @@ Reviewed repaired code SHA:
 `86ee0a5e263ac306b3bf195a9fb9043aa5439416`
 
 Current reviewed normative SHA:
-`d1d7dbc704f85ad77a8c8238e71189400c92e651`
+`12a781b2c4e8e8bb3378e3c4cb4f7c32ac9ba5be`
 
 Current trusted main SHA:
 `299363af5d9e8a68bcc9b17457188048483caeed`
@@ -29,6 +29,8 @@ Current trusted main SHA:
 | `PRRT_kwDOSwL_U86RaIEc` | Fixed | Added `test_app.py` OpenAPI path-inventory verification to REV-07 and REV-09A so hidden lifecycle routes are proved absent before activation. |
 | `PRRT_kwDOSwL_U86RaIEi` | Fixed | Expanded the REV-13 90 percent coverage gate from the lifecycle-control router to the complete lifecycle-control package. |
 | `PRRT_kwDOSwL_U86Rr721` | Fixed | Made `delivery_draining` reachable, moved the full zero-obligation guard to `disabled`, added a CON-derived immutable root cutoff and mandatory writer fencing, restricted the drain to pre-cutoff completion work, and specified audited same-root claim recovery for denied dispatch. |
+| `PRRT_kwDOSwL_U86Ryg7Z` | Fixed | Classified Flow Node wording as hash-verified byte-preserved archival evidence, stated canonical adoption remains incomplete, and assigned future AWS S3/MinIO active-contract creation to REV-01 without editing the source. |
+| `PRRT_kwDOSwL_U86Ryg7i` | Fixed | Rendered WS-XINT PR `#139` as inline code so Markdown cannot parse it as a malformed heading. |
 
 ## Comments Deferred
 
@@ -115,7 +117,7 @@ description-only commit. Explicit human approval remains required to merge.
 
 PR #128 was rebased cleanly onto trusted main
 `299363af5d9e8a68bcc9b17457188048483caeed`. Exact normative snapshot
-`d1d7dbc704f85ad77a8c8238e71189400c92e651` passed all nine required internal
+`12a781b2c4e8e8bb3378e3c4cb4f7c32ac9ba5be` passed all nine required internal
 tracks after current catalogue/migration/service-identity reconciliation and
 repair of the guide identity/activation-sequence wording.
 
@@ -131,6 +133,10 @@ Submission's stamped identity/activation sequence with the internally
 consistent Project Guide active during preparation. Exact match keeps; a valid
 difference rebases forward or backward; invalid or unsafe context blocks. Task
 Context returns the frozen preparation, and the reviewer never rebases.
+
+CodeRabbit's two findings on the first AUTH-09A publication were repaired at
+`12a781b`: archival Flow Node wording is now clearly separated from future
+active provider adoption, and the PR `#139` continuation is valid Markdown.
 
 No current external result is claimed for the rebased head. Agent Gates,
 Backend, CodeRabbit, and thread state must be refreshed after force-push before

@@ -54,6 +54,9 @@ inactive.
   recovery.
 - Updated the shared REV/CON handoff, archival reference provenance/checksums,
   and a narrowly bounded AUTH documentation scanner regression.
+- Clarified that archival Flow Node text remains byte-preserved evidence while
+  REV-01 must create the future active AWS S3/MinIO contract; fixed PR `#139`
+  Markdown rendering without changing its meaning.
 - Made guide resolution exact: compare the prior Submission's stamped identity/
   activation sequence with an internally consistent active pair, freeze the
   selected preparation for Task Context, and block invalid or unsafe context.
@@ -182,11 +185,11 @@ Diff integrity passed.
 
 ## Internal Reviewer Results
 
-Reviewed code SHA: `d1d7dbc704f85ad77a8c8238e71189400c92e651`
+Reviewed code SHA: `12a781b2c4e8e8bb3378e3c4cb4f7c32ac9ba5be`
 
 Trusted main SHA: `299363af5d9e8a68bcc9b17457188048483caeed`
 
-Reviewed at: `2026-07-17T13:42:46Z`
+Reviewed at: `2026-07-17T14:07:20Z`
 
 Reviewer run IDs: senior/architecture/reuse=`/root/finalaccept_senior_arch_r2`; QA/product/test-delta=`/root/finalaccept_qa_product_r2`; security/docs/CI=`/root/finalaccept_security_docs_r2`
 

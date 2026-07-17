@@ -10,11 +10,11 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: `d1d7dbc704f85ad77a8c8238e71189400c92e651`
+Reviewed code SHA: `12a781b2c4e8e8bb3378e3c4cb4f7c32ac9ba5be`
 
 Trusted main SHA: `299363af5d9e8a68bcc9b17457188048483caeed`
 
-Reviewed at: 2026-07-17T13:42:46Z
+Reviewed at: 2026-07-17T14:07:20Z
 
 Reviewer run IDs: senior-engineering/architecture/reuse-dedup=/root/finalaccept_senior_arch_r2; QA-test/product-ops/test-delta=/root/finalaccept_qa_product_r2; security-auth/docs/CI-integrity=/root/finalaccept_security_docs_r2
 
@@ -60,6 +60,9 @@ Reviewer run IDs: senior-engineering/architecture/reuse-dedup=/root/finalaccept_
   and the no-ART decision transaction remain required.
 - Kept adjudication dormant and unimplemented in v0.1 with no adjudication
   action, policy, queue, state, runtime, or readiness dependency.
+- Preserved the supplied Flow Node wording as hash-verified archival evidence,
+  made clear that active provider adoption is incomplete, and assigned future
+  AWS S3/MinIO active-contract creation to REV-01 without editing archival bytes.
 
 ## Reviewer Results
 
@@ -106,6 +109,9 @@ Reviewer run IDs: senior-engineering/architecture/reuse-dedup=/root/finalaccept_
 - Removed version-label and read-time guide ambiguity. Preparation compares the
   prior Submission's stamped identity/activation sequence to an internally
   consistent active pair, freezes the result, and blocks corrupt/unsafe context.
+- Resolved external review by separating archival Flow Node provenance from the
+  future `S3CompatibleArtifactStore` active contract and by preventing PR `#139`
+  from being parsed as a malformed Markdown heading.
 
 ## Commands Run
 
