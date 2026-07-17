@@ -1,4 +1,4 @@
-# Chunk Contract: WS-CON-001-PLAN3 - AUTH PR 140 Reconciliation
+# Chunk Contract: WS-CON-001-PLAN3 - AUTH And REV Current-Main Reconciliation
 
 ## Goal
 
@@ -33,7 +33,6 @@ L0/L1 authorization, transaction, and release specification; P1.
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-04B-hidden-contribution-policy-service.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-05A-legacy-economic-terms-cutover-and-task-freeze.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-06-review-lease-contribution-policy-freeze.md
-.agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-07-atomic-review-contribution-award-participant.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-07-atomic-review-contribution-award-participant.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-08A-outbound-compensation-delivery.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-08B-inbound-fulfillment-callback.md
