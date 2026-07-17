@@ -56,8 +56,7 @@ feature manifest exists, then requires a separate explicit start.
 | `WS-AUTH-001-REV-REG` | REV Lifecycle Action Registration | L1 | Blocked on complete REV typed manifests |
 | `WS-AUTH-001-ART-REV-EVIDENCE-REG` | Review Evidence Binding Action Registration | L1 | Blocked on complete ART/REV dual-authority contract |
 | `WS-AUTH-001-ART-02D-INTERNAL` | ART 02D Internal Action Activation | L1 | Feature-gated |
-| `WS-AUTH-001-ART-02D-OPERATOR` | ART 02D Operator Read/Status Activation | L1 | Feature-gated |
-| `WS-AUTH-001-ART-02D-RETRY` | ART 02D Verification Retry Activation | L1 | Independently feature-gated |
+| `WS-AUTH-001-ART-02D-OPERATOR` | ART 02D Operator Read/Status And Independently Evaluated Retry Activation | L1 | Feature-gated |
 | `WS-AUTH-001-ART-03` | ART 03 Guide Source Action Activation | L1 | Feature-gated |
 | `WS-AUTH-001-ART-04A` | ART 04A Upload Action Activation | L1 | Feature-gated |
 | `WS-AUTH-001-ART-04B` | ART 04B Pre-Submit Materialization Activation | L1 | Feature-gated |

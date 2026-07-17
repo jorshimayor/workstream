@@ -7,7 +7,7 @@
 ## Goal
 
 Atomically transfer all 25 current planned ART actions from historical feature
-owner labels to the nine exact AUTH activation custodians in
+owner labels to the eight exact AUTH activation custodians in
 `ACTIVATION_CUSTODY.md` without changing mappings or availability.
 
 ## Why this chunk exists
@@ -52,7 +52,7 @@ partial transfer or retained ART activation-owner enum
 
 ## Acceptance criteria
 
-- Exactly the 25 canonical rows move to the nine AUTH owner values.
+- Exactly the 25 canonical rows move to the eight AUTH owner values.
 - All seven ART owner enum values are removed atomically.
 - Catalogue ActionId, PermissionId, active/planned counts, static matrix rows,
   and every ActionId-to-PermissionId pair remain exactly equal to the trusted
@@ -78,7 +78,7 @@ CI integrity, docs, reuse/dedup, and test delta.
 
 ## Human review focus
 
-Verify exact 25-row/nine-owner custody transfer, unchanged mappings/counts, and zero
+Verify exact 25-row/eight-owner custody transfer, unchanged mappings/counts, and zero
 activation.
 
 ## Stop conditions

@@ -27,8 +27,7 @@ must remain identical.
 | AUTH activation chunk | Exact planned ActionIds |
 |---|---|
 | `WS-AUTH-001-ART-02D-INTERNAL` | `artifact.verification.execute`, `artifact.pending_work.scan`, `artifact.put_attempt.resolve` |
-| `WS-AUTH-001-ART-02D-OPERATOR` | `artifact.binding.read`, `artifact.replica.read`, `artifact.receipt.read`, `artifact.verification_job.read`, `artifact.recovery_attempt.read`, `artifact.audit.read`, `operations.artifact_storage_admission.read` |
-| `WS-AUTH-001-ART-02D-RETRY` | `artifact.verification_job.retry` |
+| `WS-AUTH-001-ART-02D-OPERATOR` | `artifact.binding.read`, `artifact.replica.read`, `artifact.receipt.read`, `artifact.verification_job.read`, `artifact.verification_job.retry`, `artifact.recovery_attempt.read`, `artifact.audit.read`, `operations.artifact_storage_admission.read` |
 | `WS-AUTH-001-ART-03` | `artifact.guide_source.ingest`, `artifact.guide_source.read`, `artifact.guide_source.binding.create` |
 | `WS-AUTH-001-ART-04A` | `artifact.upload_session.create`, `artifact.upload_session.read`, `artifact.upload_item.write`, `artifact.upload_session.seal`, `artifact.upload_session.cancel`, `artifact.upload_session.expire` |
 | `WS-AUTH-001-ART-04B` | `artifact.pre_submit.checker_input.materialize` |
@@ -36,7 +35,7 @@ must remain identical.
 | `WS-AUTH-001-ART-06A` | `artifact.post_submit.checker_input.materialize` |
 | `WS-AUTH-001-ART-06B` | `artifact.checker_output.write`, `artifact.checker_output.binding.create` |
 
-`WS-AUTH-001-ART-CUSTODY` performs the atomic 25-row transfer to nine exact AUTH
+`WS-AUTH-001-ART-CUSTODY` performs the atomic 25-row transfer to eight exact AUTH
 groups and removes the seven historical ART owner enum values. It adds no migration because owner and
 availability are typed metadata, while PostgreSQL preserves the exact
 ActionId-to-PermissionId set.
@@ -125,8 +124,10 @@ applicable” proof or AUTH-only tests cannot authorize activation.
 `WS-AUTH-001-ART-02D-INTERNAL` requires the exact merged ART-02C2 verification,
 resolution, and scanner behavior plus ART-02C3 recovery/fencing foundations and
 any ART-02D resource-composer dependency. ART-02D does not own the internal
-behavior. `WS-AUTH-001-ART-02D-RETRY` is a separate human checkpoint and
-availability delta from the seven Operator read/status actions.
+behavior. Within `WS-AUTH-001-ART-02D-OPERATOR`,
+`artifact.verification_job.retry` requires its own evaluator, guards, behavior
+tests, and explicit availability assertion; passing the seven read/status cases
+does not authorize retry.
 
 Service actions additionally require a previously reviewed exact fixed-service
 identity and matrix extension plus controlled provisioning and AUTH-09E

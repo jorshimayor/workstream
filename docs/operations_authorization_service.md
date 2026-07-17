@@ -502,8 +502,11 @@ resource loader, lifecycle guards, negative tests, and evidence path exist.
 
 The catalogue contains exactly 74 PermissionIds and 57 ActionIds. The two
 AUTH-07B actor-self actions and seven AUTH-08 administrative actions are active;
-the other 48 entries remain planned and non-executable. Planned runtime entries
-contain only action, permission, exact AUTH activation owner, and availability.
+the other 48 entries remain planned and non-executable. The target post-custody
+invariant is that planned runtime entries contain only action, permission, exact
+AUTH activation owner, and availability. Until the availability-neutral custody
+transfers merge, the 25 ART and 19 REV rows retain their historical feature
+owner values as an explicitly blocked exception.
 Their owning feature must publish the approved principal/resource/guard/surface/
 transaction contract before registration or activation, but those foreign facts
 do not become free-form catalogue fields. Startup validation failure is a release

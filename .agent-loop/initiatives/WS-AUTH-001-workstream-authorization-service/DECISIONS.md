@@ -524,7 +524,7 @@ Status: accepted through merged PR #139; runtime transfer remains proposed.
 `ActionOwner` no longer names a resource-owning feature chunk. The exact
 availability-neutral transfers and future activation groups are canonical in
 `ACTIVATION_CUSTODY.md`. `WS-AUTH-001-ART-CUSTODY` atomically transfers all 25
-current ART rows to nine AUTH groups and removes seven ART owner values.
+current ART rows to eight AUTH groups and removes seven ART owner values.
 `WS-AUTH-001-REV-CUSTODY` atomically transfers all 19 current REV rows to seven
 AUTH groups and removes seven REV owner values. Counts, mappings, and planned
 availability remain unchanged; no migration is required for owner metadata.
