@@ -70,21 +70,24 @@ authorization catalogue, artifact provider, or contribution runtime.
 
 ## Verification
 
-The planning snapshot is checked with diff integrity, Markdown links, the
-currently implemented stale Workstream/AUTH/ART scanners, reference checksums,
-loop-memory state, agent gates, and internal-review evidence validation. The REV
-contract scanner is created only by successor chunk REV-01 and is not claimed
-as current proof. No product tests are expected because runtime code is
+The planning snapshot passes diff integrity, Markdown links, the implemented
+stale Workstream/AUTH/ART scanners, reference checksums, 80 agent-gate tests,
+and exact internal-review evidence validation. The REV contract scanner is
+created only by successor chunk REV-01 and is not claimed as current proof. The
+repository loop-memory check reports a trusted-main AUTH status that still names
+a pre-merge human checkpoint; this REV PR records but does not edit that
+AUTH-owned issue. No product tests are expected because runtime code is
 unchanged.
 
 ## Review State
 
-The pre-repair architecture, security/product, and ART/CON discovery reviews
-all failed on material WS-XINT drift. Their findings were incorporated. Fresh
-final senior engineering, QA/test, security/auth, product/ops, architecture,
-docs, reuse/dedup, test-delta, and CI-integrity results, including the exact
-reviewed SHA and snapshot digest, are recorded in the internal-review evidence
-before publication.
+The pre-repair reviews failed on material WS-XINT drift, executable ordering,
+coverage, concealment, external owner gates, and scanner integrity. Every valid
+finding was repaired through four immutable review cycles. Final snapshot
+`341d920496fbf7586d95a1c00bf8a6e575b9b157` passes senior engineering,
+QA/test, security/auth, product/ops, architecture, docs, reuse/dedup,
+test-delta, and CI integrity with no findings. Exact reviewer IDs and results
+are recorded in the internal-review evidence.
 
 ## Remaining Gates
 
