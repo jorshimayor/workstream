@@ -12,9 +12,9 @@ valid findings addressed: yes
 
 ## Reviewed Revision
 
-Reviewed code SHA: `7bd4a4ee4195812a1b57e2a67d7b78887e7906e6`
+Reviewed code SHA: `423f99d13472850da7f1b2686aa62fc7c4145683`
 
-Reviewed at: `2026-07-17T01:19:53Z`
+Reviewed at: `2026-07-17T02:10:13Z`
 
 Reviewer run IDs: `019f6d57-4585-7a42-b818-1e9188f03c27`,
 `019f6d57-870b-72c3-96eb-8ac7c79b73c5`,
@@ -54,6 +54,12 @@ and status record changed.
 - Replaced aggregate self-referential scanner checks with an exact one-to-one
   mapping between all 84 active patterns and 84 ordered fixtures, plus explicit
   alternation and multiline variants.
+- Repaired the CI evidence gate to extract exact lifecycle IDs from canonical
+  chunk headings and compare complete evidence tokens. All 97 tracked contracts
+  parse uniquely; prefix collisions and missing, empty, malformed,
+  invalid-UTF-8, and unreadable contracts have fail-closed regression proof.
+- Documented the canonical chunk heading in the producer skill and template,
+  and made both changed Python scripts Ruff-format clean.
 
 ## Commands Run
 
@@ -65,12 +71,13 @@ python3 scripts/check_stale_workstream_wording.py
 python3 scripts/test_agent_gates.py
 python3 -m ruff check scripts/check_stale_workstream_wording.py scripts/test_agent_gates.py
 python3 -m ruff format --check scripts/check_stale_workstream_wording.py scripts/test_agent_gates.py
+python3 -m ruff format --check scripts/check_internal_review_evidence.py scripts/test_agent_gates.py
 git diff --check
 ```
 
 Results: Markdown links passed for 114 changed Markdown files; all three stale
-contract scanners passed; all 80 agent-gate tests passed; Ruff and diff hygiene
-passed.
+contract scanners passed; all 80 agent-gate tests passed; all 97 tracked chunk
+contracts produced unique exact IDs; Ruff and diff hygiene passed.
 
 ## Remaining Risks
 

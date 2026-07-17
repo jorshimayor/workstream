@@ -107,6 +107,7 @@ python3 scripts/check_stale_workstream_wording.py
 python3 scripts/test_agent_gates.py
 python3 -m ruff check scripts/check_stale_workstream_wording.py scripts/test_agent_gates.py
 python3 -m ruff format --check scripts/check_stale_workstream_wording.py scripts/test_agent_gates.py
+python3 -m ruff format --check scripts/check_internal_review_evidence.py scripts/test_agent_gates.py
 git diff --check
 ```
 
@@ -119,6 +120,7 @@ Stale artifact contracts: PASS
 Stale Workstream wording: PASS
 Agent gate tests: PASS (80/80)
 Ruff check and format: PASS
+Chunk-contract ID inventory: PASS (97 unique IDs from 97 contracts)
 Diff hygiene: PASS
 ```
 
@@ -149,20 +151,19 @@ None.
 
 ## External Review
 
-External review response file: pending; create a separate response record only
-if GitHub checks, CodeRabbit, or human review produces feedback requiring
-triage.
+External review response file:
+`.agent-loop/initiatives/WS-XINT-001-lifecycle-boundary-reconciliation/reviews/WS-XINT-001-PLAN-external-review-response.md`.
 
 | Source | Status | Notes |
 |---|---:|---|
-| CodeRabbit | Pending | External review starts after PR publication. |
-| GitHub checks | Pending | GitHub remains authoritative for remote workflow execution. |
+| CodeRabbit | Skipped | Status passed, but review was skipped because 127 files exceeded its 100-file limit. |
+| GitHub checks | Pending after repair | Initial Agent Gates and Backend runs exposed the same PLAN-ID evidence parser defect; exact-ID repair is pending rerun. |
 
 ## Reviewer Results
 
-Reviewed code SHA: `7bd4a4ee4195812a1b57e2a67d7b78887e7906e6`
+Reviewed code SHA: `423f99d13472850da7f1b2686aa62fc7c4145683`
 
-Reviewed at: `2026-07-17T01:19:53Z`
+Reviewed at: `2026-07-17T02:10:13Z`
 
 Reviewer run IDs: nine closed runs recorded in the internal review evidence.
 
