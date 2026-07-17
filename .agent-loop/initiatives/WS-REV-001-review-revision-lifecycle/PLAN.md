@@ -182,7 +182,8 @@ The cross-initiative sequence is explicit:
   exact source-lineage schema and flush-only contribution/award participant;
 - that exact CON participant precedes `WS-REV-001-10`; and
 - the exact WS-CON readiness manifest, mandatory fulfillment dispatch/callback
-  fence hooks, and same-session fulfillment/outbox drain-observation port
+  fence hooks, and same-session fulfillment/outbox drain-cutoff and observation
+  port
   precede hidden joint release-control integration in `WS-REV-001-12A`; and
 - all matching AUTH actions activate after their hidden behavior, and the merged
   12A controller and fences precede the sole joint product release in

@@ -149,7 +149,10 @@ AUTH action registration, ActionOwner/evaluator edit, or availability change
   `leases_released -> delivery_draining` begins the bounded drain of fulfillment
   work committed before completion commands were fenced. During
   `delivery_draining`, fulfillment dispatch and authenticated callbacks remain
-  allowed, while decisions and policy changes cannot create new obligations.
+  allowed only for canonical obligation roots at or below the immutable cutoff
+  stored when `commands_draining` began. Decisions, policy changes,
+  maintenance, reconciliation, callback successor work, and post-cutoff events
+  cannot create, requeue, extend, or repair an obligation.
   The transition to `disabled` requires zero dispatchable, retryable, claimed,
   or in-flight fulfillment events and zero nonterminal delivery or callback
   obligations. Routes, background jobs, and fixed service identity mappings are
@@ -225,6 +228,14 @@ AUTH action registration, ActionOwner/evaluator edit, or availability change
   or database transaction; crash returns work to retryable state; fenced
   finalization or callback completion clears the observation; and a fresh
   Operator command advances without changing canonical Review or award truth.
+- The same drill proves the cutoff is captured under the exclusive fence after
+  all admitted completion transactions finish. CON allocates every immutable
+  fulfillment-obligation ordinal only after acquiring the shared fence. A
+  pre-cutoff root may create and finalize only attempts under that root;
+  post-cutoff, crossed-generation, caller-supplied-ordinal, requeue, maintenance,
+  reconciliation, and callback-successor cases fail before adapter or successor
+  I/O and leave the phase, event, delivery, callback, award, audit, and outbox
+  state unchanged.
 - The joint drill also proves contribution-policy/binding setup, TaskAssignment
   and ReviewLease ContributionPolicyVersion freezes, reviewer contribution for
   all three decisions, immutable Review, findings, and resolutions for every round,

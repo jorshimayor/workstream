@@ -23,10 +23,13 @@ capabilities.
 
 REV-12A owns one shared hidden `JointLifecycleReleaseControl` and typed mutation
 fence. CON supplies mandatory fulfillment dispatch/callback fence hooks and one
-same-session drain-observation port; REV never imports CON or outbox repositories.
-The shared dispatcher owns claim/retry/dead-letter state. A CON handler receives
-an already-claimed command and may stage its delivery attempt, but never claims
-or transitions the outbox event itself.
+same-session drain-cutoff and observation port. CON allocates an immutable,
+monotonically increasing ordinal for each fulfillment-obligation root only after
+the shared fence is acquired. REV persists only the server-derived cutoff and
+never imports CON or outbox repositories. The shared dispatcher owns
+claim/retry/dead-letter state. A CON handler receives an already-claimed command
+and may stage a delivery attempt only under an eligible pre-cutoff root; it never
+claims or transitions the outbox event itself.
 
 ## Atomic Decision Contract
 

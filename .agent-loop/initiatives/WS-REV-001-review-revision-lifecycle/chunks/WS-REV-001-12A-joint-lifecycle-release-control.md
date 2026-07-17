@@ -45,10 +45,12 @@ schema/application downgrade after protected post-cutover rows exist
 
 - `JointLifecycleReleaseControl` is one PostgreSQL-canonical singleton with a
   monotonically increasing generation, current phase, exact reviewed manifest
-  digest, database timestamps, and latest successful transition. Immutable
+  digest, database timestamps, latest successful transition, and the immutable
+  fulfillment-obligation cutoff captured for the current generation. Immutable
   transition/attempt rows store expected generation/prior phase, target phase,
-  bounded reason, exact `initiating_actor_id` referencing canonical human
-  `ActorProfile.id`, AuthorizationDecision, audit, and idempotency linkage.
+  bounded reason, the server-derived cutoff when applicable, exact
+  `initiating_actor_id` referencing canonical human `ActorProfile.id`,
+  AuthorizationDecision, audit, and idempotency linkage.
 - The only legal graph is
   `pre_activation(N) -> revision_cutover_fenced(N) -> active(N) ->
   admission_fenced(N) -> commands_draining(N) -> leases_released(N) ->
@@ -104,13 +106,14 @@ schema/application downgrade after protected post-cutover rows exist
 | new review claim/routing mutation | deny | deny | deny | allow | deny | deny | deny | deny | deny |
 | leased review completion/owned release | deny | deny | deny | allow | allow | deny | deny | deny | deny |
 | revision preparation/evidence/admin mutation | deny | deny | deny | allow | deny | deny | deny | deny | deny |
-| review/CON maintenance or projection | deny | deny | deny | allow | allow | allow | allow | allow | deny |
+| review maintenance/projection or CON completion-only maintenance | deny | deny | deny | allow | allow | allow | allow | allow | deny |
+| fulfillment-obligation creation, requeue, successor, or repair | deny | deny | deny | allow | allow | deny | deny | deny | deny |
 | joint policy/configuration mutation | deny | deny | deny | allow | deny | deny | deny | deny | deny |
 | legacy authority-loss replacement | allow | deny | deny | deny | deny | deny | deny | deny | deny |
 | prepared authority-loss replacement | deny | deny | deny | allow | deny | deny | deny | deny | deny |
 | authorized review recovery/lease release | deny | deny | deny | allow | allow | allow | deny | deny | deny |
-| fulfillment dispatch | deny | deny | deny | allow | allow | allow | allow | allow | deny |
-| authenticated fulfillment callback | allow | allow | allow | allow | allow | allow | allow | allow | deny |
+| fulfillment dispatch | deny | deny | deny | allow | allow | allow | allow | pre-cutoff completion only | deny |
+| authenticated fulfillment callback | allow | allow | allow | allow | allow | allow | allow | pre-cutoff completion only | deny |
 | bounded canonical/control read | allow | allow | allow | allow | allow | allow | allow | allow | allow |
 | lifecycle transition/status | allow | allow | allow | allow | allow | allow | allow | allow | allow |
 
@@ -149,7 +152,9 @@ schema/application downgrade after protected post-cutover rows exist
   label. The exact merged CON-owned joint-readiness manifest similarly maps every contribution,
   compensation, fulfillment, callback, read, policy, and operations command to
   the existing joint classes above. Missing, extra, ambiguous, or caller-chosen
-  mappings fail startup and preflight.
+  mappings fail startup and preflight. A command that can create, requeue,
+  extend, or repair a fulfillment obligation cannot be classified as
+  completion-only.
 - The replacement-assignment command has a required typed slot for the
   preparation-transfer participant. Bootstrap `pre_activation(1)` preserves
   AUTH-13 legacy behavior; generation N>1 never re-enables it. Product release in
@@ -160,28 +165,44 @@ schema/application downgrade after protected post-cutover rows exist
   CON dispatch and callback hooks. Under the shared fence, the shared outbox
   dispatcher claims the event and passes an already-claimed command plus
   generation to the CON-owned handler. The handler validates that claim through
-  a typed port and persists its durable `in_flight` delivery state, then commits
-  and releases the database transaction and advisory fence. Only then may it call
-  the adapter, with no lifecycle advisory lock or database transaction held; it
-  finalizes delivery success/retry in a new fenced transaction. Only the shared
-  dispatcher changes outbox claim/retry/dead-letter state. A lost pre-I/O race
-  returns the event to retryable pending without changing award/delivery truth.
+  a typed port and resolves the immutable root
+  `fulfillment_obligation_ordinal` from canonical CON lineage. During
+  `delivery_draining`, the captured generation must match and the root ordinal
+  must be at or below the persisted cutoff. The handler may then persist a
+  durable `in_flight` attempt under that existing root, commit, and release the
+  database transaction and advisory fence. Only then may it call the adapter,
+  with no lifecycle advisory lock or database transaction held; it finalizes
+  delivery success or retry state for the same root in a new fenced transaction.
+  It cannot create a new root, requeue a different root, or enqueue successor
+  work. Only the shared dispatcher changes outbox claim/retry/dead-letter state.
+  A lost pre-I/O race returns the same root event to retryable pending without
+  changing award or delivery truth.
   After CON-owned signature verification plus AUTH/idempotency locking,
   the callback transaction acquires the shared fence, reads the captured phase,
-  and holds it through idempotent receipt commit. It remains allowed through
-  `delivery_draining`, fails closed after `disabled`, and cannot race the
-  exclusive disable transition. REV edits neither CON handler nor outbox policy.
+  resolves the callback's canonical root obligation and ordinal, and holds the
+  fence through idempotent receipt commit. In `delivery_draining`, the callback
+  must target the captured generation and a root at or below the cutoff. It may
+  only finalize that root; it cannot create a successor event, retry root,
+  delivery obligation, award, or other follow-on work. It fails closed before
+  provider or successor I/O on crossed, missing, or post-cutoff lineage, fails
+  closed after `disabled`, and cannot race the exclusive disable transition.
+  REV edits neither CON handler nor outbox policy.
 - Typed readiness/drain ports provide only server-resolved observations. Merged
   chunk 12 supplies same-session `ReviewLifecycleDrainObservationPort` for
   active-lease plus pending/in-flight review-maintenance counts. The exact
   merged CON-owned capabilities supply
   same-session `FulfillmentLifecycleDrainObservationPort` for pending/claimed/
   retryable fulfillment events, in-flight dispatch, and nonterminal delivery/
-  callback obligations through the shared-outbox capability. Exact writer/
-  composition/migration readiness is also typed. Each port uses the caller's
-  AsyncSession, is read-only, never commits or calls a provider, and is named in
-  the readiness manifest. Lifecycle control imports no review, CON, or outbox
-  repository.
+  callback obligations through the shared-outbox capability. The same port
+  returns the current maximum immutable, monotonically increasing
+  `fulfillment_obligation_ordinal`, allocated by CON only after the shared fence
+  is acquired. The lifecycle transition persists that server-derived value as
+  the generation's cutoff; zero is valid when no obligation exists. Exact
+  writer/composition/migration readiness is also typed. Each port uses the
+  caller's AsyncSession, is read-only, never commits or calls a provider, and is
+  named in the readiness manifest. Caller-supplied timestamps, ordinals, event
+  IDs, or generation claims cannot substitute. Lifecycle control imports no
+  review, CON, or outbox repository.
 - ART-backed review maintenance/projection uses the same fenced handoff: claim
   and persist durable `in_flight` under the shared fence, commit/release, perform
   provider I/O outside every database transaction and lifecycle advisory lock,
@@ -191,12 +212,16 @@ schema/application downgrade after protected post-cutover rows exist
 - Edge guards are exact: cutover entry verifies the reviewed manifest; product activation
   requires zero old writers plus strict migration/composition readiness;
   `admission_fenced -> commands_draining` takes the exclusive lock and therefore
-  waits for admitted completion commands; `commands_draining -> leases_released`
-  requires zero active leases after fresh Operator force-release calls;
+  waits for admitted completion commands, reads the CON-owned ordinal through
+  the same-session port, and atomically stores the generation's immutable drain
+  cutoff; `commands_draining -> leases_released` requires zero active leases
+  after fresh Operator force-release calls;
   `leases_released -> delivery_draining` begins the bounded drain of fulfillment
   work that was committed before completion commands were fenced. Fulfillment
-  dispatch and authenticated callbacks remain allowed in `delivery_draining`,
-  but no decision or policy command can create a new obligation. The
+  dispatch and authenticated callbacks remain allowed in `delivery_draining`
+  only for roots at or below the stored cutoff. Every command that can create,
+  requeue, extend, or repair an obligation is denied, including maintenance,
+  reconciliation, callback successor work, and post-cutoff events. The
   `delivery_draining -> disabled` guard requires zero dispatchable, retryable,
   claimed, or in-flight fulfillment events; zero nonterminal delivery or
   callback obligations; and zero in-flight review maintenance after the
@@ -229,8 +254,10 @@ schema/application downgrade after protected post-cutover rows exist
   compare-and-set/generation races, two-stage forged/crossed classification,
   actor/action linkage with the same composite/trigger human-kind enforcement
   used by review records, direct-SQL rejection of service/system/external/legacy
-  actor IDs, AUTH/fence ordering, callback-versus-disable, dispatch
-  before adapter I/O, and downgrade refusal once protected history exists.
+  actor IDs, AUTH/fence ordering, cutoff capture after prior completion
+  transactions, callback-versus-disable, pre-cutoff dispatch before adapter I/O,
+  post-cutoff/crossed-generation denial before adapter I/O, maintenance and
+  callback-successor denial, and downgrade refusal once protected history exists.
   Failure injection after reservation, observation, history append, control CAS,
   audit, and outbox flush proves rollback; crash after commit plus exact replay,
   timeout-without-advance, bounded lease release, and forward retry are explicit.
@@ -266,7 +293,8 @@ reuse/dedup, test-delta, and CI integrity if proof tooling changes.
 ## Human review focus
 
 Cross-domain fence ownership, advisory-lock behavior, Operator authority,
-timeout/forward-recovery semantics, callback preservation, and no public surface.
+timeout/forward-recovery semantics, immutable fulfillment cutoff, completion-only
+drain authority, callback preservation, and no public surface.
 
 ## Stop condition
 
