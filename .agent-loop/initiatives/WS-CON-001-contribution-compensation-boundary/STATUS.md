@@ -2,13 +2,15 @@
 
 ## Current status
 
-`WS-CON-001-PLAN3` is reconciling merged AUTH PR #140 at trusted main
-`d541521` with the previously reviewed CON plan. PLAN2 already reconciled the
+`WS-CON-001-PLAN3` completed reconciliation of merged AUTH PR #140 at trusted
+main `d541521` with the previously reviewed CON plan. The planning snapshot at
+`545f250db8d5d1df05cf33cc5b22d1c933217ae8` passed all required exact-SHA
+internal reviewer tracks and deterministic gates. Its review evidence, trust
+bundle, and schema-v2 merge intent are prepared; it remains unpublished pending
+the user's explicit PR direction. PLAN2 already reconciled the
 human-approved v0.1
 `Review(accept) -> FinalAcceptance -> accepted_submission` boundary against the
-previously reviewed WS-XINT plan. Runtime code is unchanged. The addendum passed
-architecture, QA/product/test-delta, and security/auth review on 2026-07-17 and
-remains unpublished pending human direction.
+previously reviewed WS-XINT plan. Runtime code is unchanged.
 The prior plan is superseded where it used the older policy aggregate, made ART
 evidence mandatory, described service action rows as persisted assignments,
 allowed partial activation-custody transfer, or let outbox dispatch imply
@@ -37,13 +39,14 @@ feature-handler authority.
 
 ## Active chunk
 
-`WS-CON-001-PLAN3` only. No implementation chunk is active.
+No chunk is active. PLAN3 is complete and unpublished; no implementation chunk
+starts automatically.
 
 | Chunk | Status | Notes |
 |---|---|---|
 | `WS-CON-001-PLAN` | Complete; superseded baseline | Based on PR #139 / `5d353b6`; reviewed content `c4242e0` |
 | `WS-CON-001-PLAN2` | Complete; unpublished | FinalAcceptance is REV-owned; CON trigger changes only; all required internal tracks pass |
-| `WS-CON-001-PLAN3` | Reconciliation and internal review in progress | AUTH PR #140 exact PREP/custody/activation sequencing only |
+| `WS-CON-001-PLAN3` | Complete; unpublished | Exact-SHA reviewers and deterministic gates pass; AUTH PR #140 PREP/custody/activation sequencing only |
 | `WS-CON-001-01` through `08B`, `10A` through `11` | Proposed | Separate explicit start required after PLAN3 and upstream merge refresh |
 | `WS-CON-001-09A/09B` | Deferred optional | Separate approval and fresh ART/AUTH review required |
 
