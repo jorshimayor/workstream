@@ -73,15 +73,11 @@ class ActorRepository:
     async def get_identity_link_for_actor(
         self,
         actor_profile_id: str,
-        *,
-        for_update: bool = False,
     ) -> ActorIdentityLink | None:
         """Load the single identity link owned by one canonical actor."""
         query = select(ActorIdentityLink).where(
             ActorIdentityLink.actor_profile_id == actor_profile_id
         )
-        if for_update:
-            query = query.with_for_update()
         return await self._session.scalar(query.execution_options(populate_existing=True))
 
     async def get_actor_profile(
@@ -99,16 +95,12 @@ class ActorRepository:
     async def get_service_actor(
         self,
         service_identity: str,
-        *,
-        for_update: bool = False,
     ) -> ActorProfile | None:
         """Load one fixed service ActorProfile by its immutable local identity."""
         query = select(ActorProfile).where(
             ActorProfile.actor_kind == "service",
             ActorProfile.service_identity == service_identity,
         )
-        if for_update:
-            query = query.with_for_update()
         return await self._session.scalar(query.execution_options(populate_existing=True))
 
     async def add_actor_profile(self, profile: ActorProfile) -> ActorProfile:

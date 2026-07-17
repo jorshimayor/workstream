@@ -30,6 +30,7 @@ from app.modules.audit.schemas import (
     AuthorityEventType,
 )
 from app.modules.audit.service import AuditService
+from app.modules.actors.models import ActorIdentityLink, ActorProfile
 from app.modules.actors.service_identities import SERVICE_IDENTITIES, ServiceIdentity
 from app.modules.authorization import catalogue as authorization_catalogue
 from app.modules.authorization import kernel as authorization_kernel
@@ -103,8 +104,14 @@ from app.modules.authorization.runtime import (
     IdentityLinkStatus,
     MatchedAuthorityKind,
     PermissionCatalogueResourceContext,
+    ServiceActorProvisionResourceContext,
     SystemResourceContext,
     authorization_resource_digest,
+)
+from app.modules.authorization.service_actor_service import (
+    ServiceActorConflict,
+    ServiceActorProvisioningService,
+    ServiceActorProvisioningUnavailable,
 )
 
 DIGEST = "sha256:" + "a" * 64
@@ -2591,6 +2598,290 @@ def test_state_changing_mapping_cannot_change_validated_snapshot() -> None:
     hostile = _ChangingMapping(first, {**first, "reason_digest": "not-a-digest"})
     with pytest.raises(TypeError, match="invalid authority mutation request"):
         parse_authority_request(hostile)
+
+
+def _service_actor_request() -> ServiceActorCreateRequest:
+    return ServiceActorCreateRequest(
+        operation=AuthorityOperation.SERVICE_ACTOR_CREATE,
+        service_identity=ServiceIdentity.ARTIFACT_VERIFIER,
+        identity_reference_digest=derive_service_identity_digest(
+            "https://identity.flowresearch.tech", "opaque-service-subject"
+        ),
+        reason_digest=derive_reason_digest("Approved"),
+    )
+
+
+def _service_actor_decision(request: ServiceActorCreateRequest) -> AuthorizationDecision:
+    resource = ServiceActorProvisionResourceContext(
+        resource_type="service_actor_provisioning",
+        resource_id=request.service_identity,
+    )
+    return AuthorizationDecision(
+        decision_id=uuid4(),
+        action_id=ActionId.ACTOR_SERVICE_PROVISION,
+        permission_id=PermissionId.ACTOR_SERVICE_PROVISION,
+        allowed=True,
+        denial_code=None,
+        resource_type=resource.resource_type,
+        resource_id=resource.resource_id,
+        resource_context_digest=authorization_resource_digest(resource),
+        matched_authority_kind=MatchedAuthorityKind.ADMIN_ROLE_GRANT,
+        matched_grant_id=uuid4(),
+        matched_scope_project_id=None,
+        revalidated=True,
+        request_id=uuid4(),
+        correlation_id=uuid4(),
+    )
+
+
+async def test_service_actor_conflict_precedence_is_fixed_and_private() -> None:
+    service = ServiceActorProvisioningService(object())  # type: ignore[arg-type]
+
+    class Actors:
+        profile = None
+        link = None
+        link_reads = 0
+
+        async def get_service_actor(self, _service_identity):
+            return self.profile
+
+        async def get_identity_link(self, _issuer, _subject):
+            self.link_reads += 1
+            return self.link
+
+    actors = Actors()
+    service._actors = actors  # type: ignore[assignment]
+    actors.profile = object()
+    actors.link = object()
+    assert (
+        await service.find_conflict(
+            service_identity=ServiceIdentity.ARTIFACT_VERIFIER,
+            issuer="private-issuer",
+            subject="private-subject",
+        )
+        is ServiceActorConflict.SERVICE_IDENTITY
+    )
+    assert actors.link_reads == 0
+
+    actors.profile = None
+    assert (
+        await service.find_conflict(
+            service_identity=ServiceIdentity.ARTIFACT_VERIFIER,
+            issuer="private-issuer",
+            subject="private-subject",
+        )
+        is ServiceActorConflict.EXTERNAL_IDENTITY
+    )
+    actors.link = None
+    assert (
+        await service.find_conflict(
+            service_identity=ServiceIdentity.ARTIFACT_VERIFIER,
+            issuer="private-issuer",
+            subject="private-subject",
+        )
+        is None
+    )
+
+
+async def test_service_actor_replay_fails_closed_on_committed_state_drift() -> None:
+    actor_id, creator_id = uuid4(), uuid4()
+    request = _service_actor_request()
+    response = AuthorityResponseReference(
+        resource_type=AuthorityResourceType.ACTOR_PROFILE,
+        resource_id=actor_id,
+        version=None,
+        http_status=201,
+    )
+    profile = ActorProfile(
+        id=str(actor_id),
+        actor_kind="service",
+        status="active",
+        provisioning_method="manual_service_provisioning",
+        service_identity=request.service_identity.value,
+        created_by=str(creator_id),
+    )
+    profile.created_at = datetime.now(UTC)
+    link = ActorIdentityLink(
+        id=str(uuid4()),
+        actor_profile_id=profile.id,
+        issuer="https://identity.flowresearch.tech",
+        subject="opaque-service-subject",
+        subject_kind="service",
+        status="active",
+        linked_by=str(creator_id),
+        last_verified_at=None,
+    )
+    link.linked_at = datetime.now(UTC)
+
+    class Actors:
+        current_profile = profile
+        current_link = link
+
+        async def get_actor_profile(self, _actor_profile_id):
+            return self.current_profile
+
+        async def get_identity_link_for_actor(self, _actor_profile_id):
+            return self.current_link
+
+    actors = Actors()
+    service = ServiceActorProvisioningService(object())  # type: ignore[arg-type]
+    service._actors = actors  # type: ignore[assignment]
+    wrong_resource = response.model_copy(
+        update={"resource_type": AuthorityResourceType.ADMIN_ROLE_GRANT}
+    )
+    with pytest.raises(TypeError, match="replay resource changed"):
+        await service.replay_response(
+            response=wrong_resource,
+            request=request,
+            issuer=link.issuer,
+            subject=link.subject,
+        )
+
+    for current_profile in (
+        None,
+        profile.__class__(
+            id=profile.id,
+            actor_kind="human",
+            status="active",
+            provisioning_method="automatic_first_access",
+            created_by=profile.id,
+        ),
+        profile.__class__(
+            id=profile.id,
+            actor_kind="service",
+            status="active",
+            provisioning_method="manual_service_provisioning",
+            service_identity=ServiceIdentity.ARTIFACT_SCHEDULER.value,
+            created_by=profile.id,
+        ),
+    ):
+        actors.current_profile = current_profile
+        with pytest.raises(ServiceActorProvisioningUnavailable, match="actor is unavailable"):
+            await service.replay_response(
+                response=response,
+                request=request,
+                issuer=link.issuer,
+                subject=link.subject,
+            )
+
+    actors.current_profile = profile
+    for current_link in (
+        None,
+        link.__class__(
+            id=link.id,
+            actor_profile_id=profile.id,
+            issuer="different-issuer",
+            subject=link.subject,
+            subject_kind="service",
+            status="active",
+            linked_by=link.linked_by,
+        ),
+        link.__class__(
+            id=link.id,
+            actor_profile_id=profile.id,
+            issuer=link.issuer,
+            subject="different-subject",
+            subject_kind="service",
+            status="active",
+            linked_by=link.linked_by,
+        ),
+        link.__class__(
+            id=link.id,
+            actor_profile_id=profile.id,
+            issuer=link.issuer,
+            subject=link.subject,
+            subject_kind="human",
+            status="active",
+            linked_by=link.linked_by,
+            last_verified_at=datetime.now(UTC),
+        ),
+    ):
+        actors.current_link = current_link
+        with pytest.raises(ServiceActorProvisioningUnavailable, match="link is unavailable"):
+            await service.replay_response(
+                response=response,
+                request=request,
+                issuer=link.issuer,
+                subject=link.subject,
+            )
+
+    actors.current_link = link
+    profile.created_at = None
+    with pytest.raises(RuntimeError, match="creation facts are incomplete"):
+        await service.replay_response(
+            response=response,
+            request=request,
+            issuer=link.issuer,
+            subject=link.subject,
+        )
+    profile.created_at = datetime.now(UTC)
+    replayed = await service.replay_response(
+        response=response,
+        request=request,
+        issuer=link.issuer,
+        subject=link.subject,
+    )
+    assert replayed.actor_profile_id == actor_id
+    assert replayed.service_identity is request.service_identity
+
+
+async def test_service_actor_mutation_rejects_authority_and_request_drift_before_writes() -> None:
+    actor_id = uuid4()
+    request = _service_actor_request()
+    decision = _service_actor_decision(request)
+    claim = AuthorityClaimHandle(
+        record_id=uuid4(),
+        idempotency_key=uuid4(),
+        actor_ref_kind=ActorReferenceKind.ACTOR_PROFILE,
+        actor_ref=str(actor_id),
+        operation=request.operation,
+        request_digest=DIGEST,
+    )
+    service = ServiceActorProvisioningService(object())  # type: ignore[arg-type]
+
+    with pytest.raises(TypeError, match="exact matched authority"):
+        await service.complete(
+            claim=claim,
+            request=request,
+            decision=decision.model_copy(update={"revalidated": False}),
+            actor_profile_id=actor_id,
+            issuer="https://identity.flowresearch.tech",
+            subject="opaque-service-subject",
+            reason="Approved",
+        )
+    with pytest.raises(TypeError, match="identity digest changed"):
+        await service.complete(
+            claim=claim,
+            request=request.model_copy(update={"identity_reference_digest": DIGEST}),
+            decision=decision,
+            actor_profile_id=actor_id,
+            issuer="https://identity.flowresearch.tech",
+            subject="opaque-service-subject",
+            reason="Approved",
+        )
+    with pytest.raises(TypeError, match="reason digest changed"):
+        await service.complete(
+            claim=claim,
+            request=request.model_copy(update={"reason_digest": DIGEST}),
+            decision=decision,
+            actor_profile_id=actor_id,
+            issuer="https://identity.flowresearch.tech",
+            subject="opaque-service-subject",
+            reason="Approved",
+        )
+    invalid_decision = decision.model_copy(update={"revalidated": False})
+    with pytest.raises(TypeError, match="mismatch requires exact matched authority"):
+        await service.record_mismatch(
+            actor_profile_id=actor_id,
+            request=request,
+            decision=invalid_decision,
+        )
+    with pytest.raises(TypeError, match="conflict requires exact matched authority"):
+        await service.record_conflict(
+            actor_profile_id=actor_id,
+            request=request,
+            decision=invalid_decision,
+        )
 
 
 def test_every_operation_has_one_strict_canonical_request_variant() -> None:

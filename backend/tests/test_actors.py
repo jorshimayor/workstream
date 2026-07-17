@@ -37,6 +37,7 @@ from app.modules.actors.service import (
     ActorService,
     IdentityLinkRevoked,
     LegacyWorkflowEligibilityCompatibility,
+    ResolvedActor,
     ServiceActorNotProvisioned,
     UnsupportedSubjectKind,
 )
@@ -175,6 +176,155 @@ def legacy_actor(subject: str, roles: tuple[str, ...] = ("worker",)) -> ActorCon
         auth_source="dev_mock",
         is_dev_auth=True,
     )
+
+
+async def test_actor_resolution_fails_closed_on_profile_or_subject_kind_drift() -> None:
+    token = verified_token("actor-drift")
+    link = ActorIdentityLink(
+        id=str(uuid4()),
+        actor_profile_id=str(uuid4()),
+        issuer=token.issuer,
+        subject=token.subject,
+        subject_kind="human",
+        status="active",
+        linked_by=str(uuid4()),
+        last_verified_at=datetime.now(UTC),
+    )
+
+    class Repository:
+        profile = None
+
+        async def get_identity_link(self, _issuer, _subject):
+            return link
+
+        async def get_actor_profile(self, _actor_profile_id):
+            return self.profile
+
+    repository = Repository()
+    service = ActorService(object())  # type: ignore[arg-type]
+    service._repo = repository  # type: ignore[assignment]
+    with pytest.raises(RuntimeError, match="missing actor profile"):
+        await service.find_actor_for_authorization(token)
+
+    repository.profile = ActorProfile(
+        id=link.actor_profile_id,
+        actor_kind="service",
+        status="active",
+        provisioning_method="manual_service_provisioning",
+        service_identity="workstream.artifact.verifier",
+        created_by=link.actor_profile_id,
+    )
+    with pytest.raises(UnsupportedSubjectKind, match="does not match actor"):
+        await service.find_actor_for_authorization(token)
+
+
+async def test_actor_authorization_lock_rejects_disappearance_and_identity_drift() -> None:
+    profile = ActorProfile(
+        id=str(uuid4()),
+        actor_kind="human",
+        status="active",
+        provisioning_method="automatic_first_access",
+        created_by=str(uuid4()),
+    )
+    link = ActorIdentityLink(
+        id=str(uuid4()),
+        actor_profile_id=profile.id,
+        issuer=ISSUER,
+        subject="locked-actor",
+        subject_kind="human",
+        status="active",
+        linked_by=profile.id,
+        last_verified_at=datetime.now(UTC),
+    )
+    resolved = ResolvedActor(profile=profile, identity_link=link)
+
+    class Repository:
+        locked_profile = None
+        locked_link = None
+        calls: list[str] = []
+
+        async def get_actor_profile(self, _actor_profile_id, *, for_update=False):
+            assert for_update is True
+            self.calls.append("profile")
+            return self.locked_profile
+
+        async def get_identity_link_by_id(self, _identity_link_id, *, for_update=False):
+            assert for_update is True
+            self.calls.append("link")
+            return self.locked_link
+
+    repository = Repository()
+    service = ActorService(object())  # type: ignore[arg-type]
+    service._repo = repository  # type: ignore[assignment]
+    with pytest.raises(RuntimeError, match="profile disappeared"):
+        await service.lock_actor_self_for_authorization(resolved)
+    assert repository.calls == ["profile"]
+
+    repository.locked_profile = profile
+    repository.calls = []
+    with pytest.raises(RuntimeError, match="link disappeared"):
+        await service.lock_actor_self_for_authorization(resolved)
+    assert repository.calls == ["profile", "link"]
+
+    repository.locked_link = ActorIdentityLink(
+        id=link.id,
+        actor_profile_id=profile.id,
+        issuer=link.issuer,
+        subject="changed-subject",
+        subject_kind="human",
+        status="active",
+        linked_by=profile.id,
+        last_verified_at=datetime.now(UTC),
+    )
+    with pytest.raises(RuntimeError, match="identity changed"):
+        await service.lock_actor_self_for_authorization(resolved)
+
+    repository.locked_link = link
+    locked = await service.lock_actor_self_for_authorization(resolved)
+    assert locked.profile is profile
+    assert locked.identity_link is link
+
+
+async def test_actor_timestamp_touch_fails_closed_before_writes_on_missing_rows() -> None:
+    profile = ActorProfile(
+        id=str(uuid4()),
+        actor_kind="human",
+        status="active",
+        provisioning_method="automatic_first_access",
+        created_by=str(uuid4()),
+    )
+    link = ActorIdentityLink(
+        id=str(uuid4()),
+        actor_profile_id=profile.id,
+        issuer=ISSUER,
+        subject="timestamp-actor",
+        subject_kind="human",
+        status="active",
+        linked_by=profile.id,
+        last_verified_at=datetime.now(UTC),
+    )
+    repository = ActorRepository(object())  # type: ignore[arg-type]
+
+    async def missing_profile(_actor_profile_id, *, for_update=False):
+        assert for_update is True
+        return None
+
+    repository.get_actor_profile = missing_profile  # type: ignore[method-assign]
+    with pytest.raises(RuntimeError, match="profile disappeared"):
+        await repository.touch_verified_actor(profile, link)
+
+    async def locked_profile(_actor_profile_id, *, for_update=False):
+        assert for_update is True
+        return profile
+
+    async def missing_link(_identity_link_id, *, for_update=False):
+        assert for_update is True
+        return None
+
+    repository.get_actor_profile = locked_profile  # type: ignore[method-assign]
+    repository.get_identity_link_by_id = missing_link  # type: ignore[method-assign]
+    with pytest.raises(RuntimeError, match="link disappeared"):
+        await repository.touch_verified_actor(profile, link)
 
 
 async def test_first_human_access_atomically_creates_profile_link_and_events(

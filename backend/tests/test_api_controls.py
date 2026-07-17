@@ -439,13 +439,13 @@ def test_openapi_documents_request_error_and_response_context() -> None:
         for method, operation in path_item.items()
         if method in methods and operation.get("security")
     )
-    assert len(route_inventory) == 54
+    assert len(route_inventory) == 55
     assert sha256("\n".join(route_inventory).encode()).hexdigest() == (
-        "2369cb557cb12fb466b261fcf0accca8a45780f1cd1741954ca11cf9ed20052c"
+        "2e9a0023e08fa1ff58fd1d8a60843eef8c83f5f6f351f9664400d27e72b22df0"
     )
-    assert len(protected_inventory) == 52
+    assert len(protected_inventory) == 53
     assert sha256("\n".join(protected_inventory).encode()).hexdigest() == (
-        "1aa4e6dd38a02b8575d70580eb6e4992ca0e5cd1af7655ef1bdc89985efacc78"
+        "ed0ae2fd8fabeb2745c998a6d473188ca2d39ced58c0d545b105c853d31a0b95"
     )
     assert set(schema["paths"]["/health"]["get"]["responses"]) == {"200", "400", "500"}
     assert {"401", "403", "503"} <= set(
@@ -466,6 +466,7 @@ def test_openapi_documents_request_error_and_response_context() -> None:
     assert action_declarations == {
         "GET /api/v1/actors/me": "actor.profile.read_self",
         "PATCH /api/v1/actors/me": "actor.profile.update_self",
+        "POST /api/v1/service-actors": "actor.service.provision",
         "GET /api/v1/authorization/permissions": "authorization.permission_catalogue.read",
         "GET /api/v1/authorization/admin-role-definitions": (
             "authorization.admin_role_definitions.read"
