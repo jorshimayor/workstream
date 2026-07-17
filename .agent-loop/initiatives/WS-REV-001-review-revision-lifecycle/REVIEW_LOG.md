@@ -440,3 +440,33 @@ immutability, accept-only FinalAcceptance, mutually exclusive contribution
 sources, exact branch effects, guide-context rules, no-ART transaction boundary,
 atomic rollback, and dormant adjudication boundary are consistent across the
 plan and chunk contracts.
+
+## FinalAcceptance Refresh External Review - 2026-07-17
+
+CodeRabbit thread `PRRT_kwDOSwL_U86Rr721` found that the release controller
+required fulfillment work to be zero before entering `delivery_draining`, while
+the live drill expected fulfillment work to drain during that phase. The first
+repair made the phase reachable by allowing fulfillment dispatch and callbacks
+through `delivery_draining` and moving the complete zero-obligation guard to the
+transition into `disabled`.
+
+Internal security review then required a durable boundary between eligible
+drain work and post-cutoff work. CON now owns a monotonic ordinal for each
+immutable fulfillment-obligation root and allocates it only after acquiring the
+shared lifecycle fence. The exclusive transition into `commands_draining` waits
+for prior writers and stores the CON-derived maximum ordinal as the generation
+cutoff. During `delivery_draining`, dispatch and callbacks are completion-only
+for same-generation roots at or below that cutoff.
+
+Subsequent internal review added every CON root creation, requeue, successor,
+and repair writer to mandatory fence composition and both-order race proof. It
+also aligned the exact command-class token and corrected denied already-claimed
+dispatch behavior: bounded denial audit is retained, no successor or provider
+I/O occurs, and only the shared dispatcher's idempotent same-root
+claim-to-retryable recovery may change outbox state. High-level PLAN, DECISIONS,
+CON integration, dependency, risk, chunk, and live-drill wording now state the
+same contract.
+
+Exact snapshot `615964e16e9f03257fc8631f5af8e35544c01f81` passed senior
+engineering, architecture, reuse/dedup, QA/test, product/ops, test-delta,
+security/auth, docs, and CI integrity with no findings.
