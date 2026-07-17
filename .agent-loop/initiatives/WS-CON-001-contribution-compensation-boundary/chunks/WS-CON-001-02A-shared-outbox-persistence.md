@@ -46,9 +46,10 @@ replace its migration placeholder with the one new revision, then run:
 (cd backend && .venv/bin/ruff check app/modules/outbox app/db/models.py tests/test_outbox.py tests/test_alembic.py)
 ```
 
-Pass requires a non-empty selected test set, PostgreSQL migration and duplicate
-race proof, stable exact replay, changed-payload conflict, caller rollback with
-no commit/publish, repository coverage at least 78 percent in the same clean
-run, and focused outbox coverage at least 90 percent. Baseline plus
+Pass requires a non-empty selected test set, PostgreSQL upgrade and guarded
+downgrade plus duplicate-race proof, stable exact replay, changed-payload
+conflict, caller rollback with no commit/publish, repository coverage at least
+78 percent in the same clean run, and focused outbox coverage at least 90
+percent. Baseline plus
 architecture, security/auth, product/ops, docs, reuse/dedup, test-delta, and CI
 integrity are required. Stop before dispatcher behavior.

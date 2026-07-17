@@ -1,8 +1,10 @@
-# WS-CON-001-PLAN3 PR Trust Bundle
+# Workstream PR Trust Bundle: WS-CON-001-PLAN3
 
 ## Chunk
 
 `WS-CON-001-PLAN3` - AUTH And REV Current-Main Reconciliation.
+
+Merge intent: `.agent-loop/merge-intents/WS-CON-001-PLAN3.json`
 
 ## Goal
 
@@ -10,7 +12,10 @@ Reconcile the contribution and compensation plan with trusted `main` at merged
 REV PR #128 (`0302bcf`), which contains AUTH-09A after AUTH PR #140, before any
 CON runtime implementation begins.
 
-## Human-approved intent
+## Human-Approved Intent
+
+- Intent: `.agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/INTENT.md`
+- Chunk contract: `.agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-PLAN3-auth-pr140-reconciliation.md`
 
 - The current compensation-policy model completely supersedes the retired
   policy model; no compatibility path returns.
@@ -26,7 +31,7 @@ CON runtime implementation begins.
 - Consume merged REV's exact FinalAcceptance shape, two-operation CON
   participant, initiative interleaving, and sole joint release-control contract.
 
-## What changed
+## What Changed
 
 - Rebased CON authorization assumptions on AUTH PR #140 and AUTH-09A's current
   runtime catalogue while preserving PR #139 as the underlying boundary.
@@ -51,14 +56,14 @@ CON runtime implementation begins.
 - Added the reviewed PLAN3 contract and one schema-v2 merge intent naming
   `WS-CON-001-01` as the same-initiative successor with an explicit start gate.
 
-## Why
+## Why It Changed
 
 Treating a PermissionId as an existing ActionId would invert the safe rollout:
 AUTH could activate task claim before the assignment captured its immutable
 contribution-policy version. The corrected order keeps the feature unavailable
 until hidden behavior and rollback proof are merged.
 
-## Design and boundaries
+## Design Chosen
 
 AUTH locks current actor/link/exact-grant authority first and prepares one
 opaque handle bound to session, ActionId, actor-reference kind/reference,
@@ -87,7 +92,7 @@ allocation. Delivery-draining completion is limited to same-generation roots
 at or below the persisted cutoff; provider I/O occurs outside the transaction
 and fence.
 
-## Alternatives rejected
+## Alternatives Rejected
 
 - Activating task claim before CON-05A: rejected because assignment policy
   lineage would not be guaranteed.
@@ -100,7 +105,18 @@ and fence.
 - Adding a FinalAcceptance action or adjudication branch: rejected by the
   approved v0.1 lifecycle.
 
-## Scope
+## Scope Control
+
+### Allowed Files Changed
+
+- Seventeen WS-CON future chunk/deferred-proposal files.
+- PLAN3 contract, STATUS, trust bundle, internal evidence, and external response
+  under the WS-CON initiative.
+- Exactly one existing PLAN3 schema-v2 merge intent for the cumulative PR.
+
+### Files Outside Contract
+
+- None. The user-owned archival PDF deletion is unstaged and excluded.
 
 The current-main reconciliation changes 22 planning/merge-intent files with 429
 insertions and 178 deletions. It changes no backend, migration, test, workflow,
@@ -120,7 +136,16 @@ adds no runtime, AUTH/REV/ART-owned, workflow, dependency, migration, or test
 change. The repair makes verification executable and preserves upstream AUTH
 ownership rather than changing product behavior.
 
-## Acceptance-criteria proof
+## Product Behavior
+
+- [x] No Workstream product behavior changed.
+- [ ] Product behavior changed and is explained here.
+
+This PR changes planning, lifecycle wording, future chunk contracts, and review
+evidence only. It adds no runtime route, model, migration, action, permission,
+grant, worker, provider call, or activation.
+
+## Acceptance Criteria Proof
 
 - Runtime catalogue verified at 74 PermissionIds and 65 ActionIds: nine active,
   56 planned, no CON-specific ActionId, and no task-claim ActionId.
@@ -135,47 +160,116 @@ ownership rather than changing product behavior.
 - The 22 CON mappings are explicitly unregistered/non-final; only the two
   proposed service PermissionIds remain identified as proposals.
 - Merge-intent validation passes for successor `WS-CON-001-01`.
+- Every CodeRabbit contract finding is dispositioned without moving AUTH-owned
+  registration, evaluation, or activation into CON.
+- Sixteen active future chunks name runnable focused commands, non-empty test
+  selection, repository coverage 78, focused coverage 90, and explicit pass
+  criteria.
+- Optional CON-09B is a zero-file deferred proposal until a separately approved
+  replacement contract closes then-current ART/AUTH disclosure scope.
 
-## Tests and checks
+## Evidence
+
+### Commands Run
+
+```bash
+python3 scripts/check_markdown_links.py
+python3 scripts/check_stale_workstream_wording.py
+python3 scripts/check_stale_authorization_docs.py
+python3 scripts/check_stale_artifact_contracts.py
+python3 scripts/check_loop_memory_state.py
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest -q scripts/test_agent_gates.py
+python3 scripts/update_post_merge_memory.py validate-merge-intent --base-ref origin/main
+git diff --check
+```
+
+### Result Summary
 
 ```text
-Markdown link check: PASS (59 changed Markdown files before evidence refresh)
+Markdown link check: PASS (60 changed Markdown files before final evidence refresh)
 Stale Workstream wording: PASS
 Stale authorization documentation: PASS
 Stale artifact contracts: PASS at foundation phase
 Loop-memory state: PASS
 Agent gates: PASS (80 tests)
-Current-main reconciliation diff check: PASS
+External-review repair diff check: PASS
 Working-tree diff check: PASS
-Current-main CON reconciliation backend/.github/scripts delta: none
+External-review repair backend/.github/scripts delta: none
 Merge-intent schema-v2 validation: PASS
 Local roadmap workbook: not present, so no sheet-export check applies
 ```
 
-## Test delta and CI integrity
+## Test Delta
+
+### Tests Added
+
+- None; this planning repair defines mandatory commands for future chunks.
+
+### Tests Modified
+
+- None.
+
+### Tests Removed Or Skipped
+
+- None.
+
+## CI And Gate Integrity
+
+- [x] No workflow weakening.
+- [x] No lint/test/docstring gate weakening.
+- [x] No coverage threshold weakening.
+- [x] No package script weakening.
+- [x] No unpinned new GitHub Action.
+- [x] Checkout credential persistence remains unchanged; no workflow changed.
+
+### Integrity Detail
 
 PLAN3 changes no test or CI file, removes no assertion, skips no test, changes
 no threshold, and adds no bypass. Existing agent-gate coverage remains intact.
 
-## Internal reviewer results
+## Internal Reviewer Results
+
+Reviewed code SHA: pending final repair SHA
+
+Reviewed at: pending
+
+Reviewer run IDs: pending final re-review
+
+| Reviewer | Result | Blocking Findings | Notes |
+|---|---:|---|---|
+| Senior engineering | Pending | | Final exact-SHA repair review required. |
+| QA/test | Pending | | Final exact-SHA repair review required. |
+| Security/auth | Pending | | Final exact-SHA repair review required. |
+| Product/ops | Pending | | Final exact-SHA repair review required. |
+| Architecture | Pending | | Final exact-SHA repair review required. |
+| CI integrity | Pending | | Final exact-SHA repair review required. |
+| Docs | Pending | | Final exact-SHA repair review required. |
+| Reuse/dedup | Pending | | Final exact-SHA repair review required. |
+| Test delta | Pending | | Final exact-SHA repair review required. |
 
 The pre-external-review snapshot
-`e968430b0c3b5f1432899c9aa31ef209b774eae0` passed every required track. The
-CodeRabbit repair requires a new exact-SHA internal re-review before push; the
-final evidence rebind will be recorded in
-`WS-CON-001-PLAN3-internal-review-evidence.md`.
+`e968430b0c3b5f1432899c9aa31ef209b774eae0` passed every required track. Final
+repair results will be rebound in `WS-CON-001-PLAN3-internal-review-evidence.md`.
 
-## External review
+## External Review
 
-CodeRabbit posted five unresolved consolidated threads and one description
-warning after PR #142 became ready for review. All five are addressed in
-`WS-CON-001-PLAN3-external-review-response.md`: 16 active chunks gain exact
-focused commands/pass criteria, AUTH requirements move to explicit upstream
-prerequisites, and optional CON-09B is correctly reclassified as a deferred
-proposal requiring a fresh contract. The PR body will be replaced with this
-full trust-bundle structure after the reviewed repair is pushed.
+External review response file:
 
-## Risks and follow-up
+- `.agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/reviews/WS-CON-001-PLAN3-external-review-response.md`
+
+| Source | Status | Notes |
+|---|---:|---|
+| CodeRabbit | Addressed locally; push pending | Five consolidated threads and the description warning are repaired. |
+| GitHub checks | Pending rerun | Agent Gates and Backend passed before this repair. |
+
+## Remaining Risks
+
+- Future test selectors must select at least one test and future migration
+  placeholders must be replaced by exact reviewed filenames.
+- Optional CON-09B could drift unless its fresh contract repeats the separate
+  ART/AUTH/human approval gate.
+
+## Follow-Up Work
 
 - AUTH-13 must be refreshed to consume the merged CON-05A/task-composition
   manifest before task-claim registration or activation.
@@ -185,7 +279,7 @@ full trust-bundle structure after the reviewed repair is pushed.
   REV/CON composition and AUTH gates merge.
 - CON-01 remains a separate explicit human start after this planning PR.
 
-## Human review focus
+## Human Review Focus
 
 Confirm the corrected task-claim ordering, exact prepared-handle contract,
 two-operation Review/FinalAcceptance/contribution transaction, canonical
@@ -195,7 +289,13 @@ confirm that optional CON-09B remains non-executable until fresh approval and
 that the cumulative planning PR is acceptable as one coherent specification
 record.
 
-## Human merge ownership
+## Human Merge Ownership
 
 This bundle authorizes refreshing PR #142, not merging it. The user must
 explicitly approve PR #142 for merge. No successor chunk starts automatically.
+
+- [ ] I can explain what changed.
+- [ ] I can explain why it changed.
+- [ ] I know what could break.
+- [ ] I accept the remaining risks.
+- [ ] The user explicitly approved this specific PR for merge.

@@ -83,7 +83,12 @@ replace its migration placeholder with the one new revision, then run:
 (cd backend && .venv/bin/python -m coverage report --include='app/modules/tasks/*' --fail-under=90)
 (cd backend && .venv/bin/python -m coverage report --include='app/modules/checkers/*' --fail-under=90)
 legacy_pattern='locked_''payment_''policy_version|payment_''policies|accepted_''payment_rule|revision_''payment_rule|rejection_''payment_rule'
-! rg -n "$legacy_pattern" backend/app --glob '*.py' --glob '!**/models.py' --glob '!db/models.py'
+if rg -n "$legacy_pattern" backend/app --glob '*.py' --glob '!**/models.py' --glob '!db/models.py'; then
+  exit 1
+else
+  rg_status=$?
+  test "$rg_status" -eq 1
+fi
 ```
 
 Pass requires a non-empty selected test set, upgrade and guarded downgrade,

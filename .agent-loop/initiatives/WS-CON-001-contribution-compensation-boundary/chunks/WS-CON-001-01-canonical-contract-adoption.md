@@ -85,7 +85,7 @@ PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest -q scripts/test_agent_gates.p
 test -f docs/spec_contribution_compensation.md
 test -f docs/decision_0016_contribution_compensation_boundary.md
 test "$(rg -c 'docs/spec_contribution_compensation\.md' README.md)" -eq 1
-test -z "$(git diff --name-only origin/main...HEAD -- docs/reference_specs)"
+git diff --quiet origin/main...HEAD -- docs/reference_specs
 test "$(sha256sum 'docs/reference_specs/WS-CON-001-contribution-record-and-compensation-boundary-specification.md' | cut -d ' ' -f1)" = cddbe20f4fadf5307f68519347bdd9520ef49b23fb0b92cad24c31fc9b34c640
 test "$(sha256sum 'docs/reference_specs/WS-CON-001-contribution-record-and-compensation-boundary-specification(2).pdf' | cut -d ' ' -f1)" = ce65e208076769f0bafb09779d60ab6f5fc0c596514d4e8f4cc03690c6e6d457
 git diff --check

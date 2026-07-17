@@ -11,7 +11,7 @@ receipts/status updates. L1 auth/economic/replay risk.
 backend/app/modules/compensation/{schemas,repository,service,ports}.py
 backend/app/api/internal_compensation.py
 backend/app/composition/compensation.py
-backend/tests/{test_compensation,test_authorization,test_api_controls}.py
+backend/tests/{test_compensation,test_authorization,test_api_controls,test_api_rate_controls,test_api_contract_e2e}.py
 docs/spec_contribution_compensation.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/**
 .agent-loop/merge-intents/WS-CON-001-08B.json
@@ -65,9 +65,9 @@ Execute the exact clean isolated CON-08B row in `../RUNTIME_VERIFICATION.md`,
 then run:
 
 ```bash
-(cd backend && .venv/bin/python -m pytest -q tests/test_compensation.py tests/test_authorization.py tests/test_api_rate_controls.py tests/test_api_contract_e2e.py -k '(callback or receipt or fulfillment) and (replay or conflict or fence or cutoff or generation or rate or authorization or signature or concurrency)')
+(cd backend && .venv/bin/python -m pytest -q tests/test_compensation.py tests/test_authorization.py tests/test_api_controls.py tests/test_api_rate_controls.py tests/test_api_contract_e2e.py -k '(callback or receipt or fulfillment) and (replay or conflict or fence or cutoff or generation or rate or authorization or signature or concurrency or openapi)')
 (cd backend && .venv/bin/python -m coverage report --include='app/modules/compensation/*' --fail-under=90)
-(cd backend && .venv/bin/ruff check app/modules/compensation app/api/internal_compensation.py app/composition/compensation.py tests/test_compensation.py tests/test_authorization.py tests/test_api_rate_controls.py tests/test_api_contract_e2e.py)
+(cd backend && .venv/bin/ruff check app/modules/compensation app/api/internal_compensation.py app/composition/compensation.py tests/test_compensation.py tests/test_authorization.py tests/test_api_controls.py tests/test_api_rate_controls.py tests/test_api_contract_e2e.py)
 ```
 
 Pass requires a non-empty selected test set, exact callback replay and changed

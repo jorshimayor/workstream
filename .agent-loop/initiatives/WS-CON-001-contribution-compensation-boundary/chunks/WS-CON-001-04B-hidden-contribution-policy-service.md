@@ -28,14 +28,13 @@ legacy fallback, dependency or CI weakening
 
 ## Approved AUTH prerequisites and deferred activation gate
 
-- Before this chunk starts, AUTH must supply reviewed typed contexts and the
-  PR #140 prepared-mutation ports used by the hidden service. CON does not edit
-  the AUTH catalogue, grants, kernel, ActionOwner custody, or static matrix.
-- The proposed `contribution.policy.*` actions remain unregistered and
-  inactive unless a separate AUTH registration chunk has merged them. Whether
-  registration precedes or follows this hidden implementation, AUTH alone
-  integrates evaluators and activates the actions after the feature manifest
-  passes; CON-05A waits for that activation.
+- Before this chunk starts, AUTH must merge reviewed registration of the
+  planned `contribution.policy.*` actions, stable permission mapping, typed
+  contexts, ActionOwner custody, and PR #140 prepared-mutation ports. The
+  actions remain planned. CON does not edit the AUTH catalogue, grants, kernel,
+  ActionOwner custody, or static matrix.
+- After this hidden feature manifest merges, AUTH alone integrates evaluators
+  and activates the actions. CON-05A waits for that activation.
 
 ## Acceptance criteria
 

@@ -68,7 +68,16 @@ python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_stale_authorization_docs.py
 python3 scripts/check_stale_artifact_contracts.py
 git diff --check
-test -z "$(git diff --name-only origin/main...HEAD -- backend .github)"
+if ! changed_files="$(git diff --name-only origin/main...HEAD)"; then
+  exit 1
+fi
+if unexpected="$(printf '%s\n' "$changed_files" | rg -v '^\.agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/|^\.agent-loop/merge-intents/WS-CON-001-09B\.json$')"; then
+  printf '%s\n' "$unexpected"
+  exit 1
+else
+  rg_status=$?
+  test "$rg_status" -eq 1
+fi
 ```
 
 Pass only proves that a planning-only replacement contract is eligible for

@@ -23,6 +23,7 @@ L0/L1 authorization, transaction, and release specification; P1.
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/JOINT_RELEASE_HANDOFF.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/PLAN.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/RISKS.md
+.agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/RUNTIME_VERIFICATION.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/SOURCE_MANIFEST.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/STATUS.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-01-canonical-contract-adoption.md
@@ -40,7 +41,7 @@ L0/L1 authorization, transaction, and release specification; P1.
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-08A-outbound-compensation-delivery.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-08B-inbound-fulfillment-callback.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-08R-bound-service-rate-control.md
-.agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-09B-authorized-contribution-evidence-read.md
+.agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/deferred/WS-CON-001-09B-authorized-contribution-evidence-read.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-10A-contribution-award-product-reads.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-10B-operations-reconciliation-rebuild.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-10C-operations-executors.md
@@ -50,6 +51,7 @@ L0/L1 authorization, transaction, and release specification; P1.
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/reviews/WS-CON-001-PLAN3-internal-review-evidence.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/reviews/WS-CON-001-PLAN3-external-review-response.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/reviews/WS-CON-001-PLAN3-pr-trust-bundle.md
+.agent-loop/REVIEW_LOG.md
 .agent-loop/merge-intents/WS-CON-001-PLAN3.json
 ```
 

@@ -48,7 +48,12 @@ replace its migration placeholder with the one removal revision, then run:
 ```bash
 (cd backend && .venv/bin/python -m pytest -q tests/test_projects.py tests/test_tasks.py tests/test_checkers.py tests/test_alembic.py tests/test_api_contract_e2e.py -k '(upgrade or downgrade or fresh or migration or schema) and (legacy or economic or contribution_policy)')
 legacy_pattern='Payment''Policy|payment_''policies|locked_''payment_''policy_version|accepted_''payment_rule|revision_''payment_rule|rejection_''payment_rule'
-! rg -n "$legacy_pattern" backend/app docs/architecture_data_model.md docs/operations_payment_reputation.md docs/spec_contribution_compensation.md
+if rg -n "$legacy_pattern" backend/app docs/architecture_data_model.md docs/operations_payment_reputation.md docs/spec_contribution_compensation.md; then
+  exit 1
+else
+  rg_status=$?
+  test "$rg_status" -eq 1
+fi
 (cd backend && .venv/bin/python -m coverage report --include='app/modules/projects/models.py' --fail-under=90)
 (cd backend && .venv/bin/python -m coverage report --include='app/modules/tasks/models.py' --fail-under=90)
 (cd backend && .venv/bin/python -m coverage report --include='app/modules/checkers/models.py' --fail-under=90)
