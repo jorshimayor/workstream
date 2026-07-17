@@ -75,12 +75,13 @@ before producing the reconciled active contract.
   `ActorProfile.id`, not external subject, email, legacy typed-profile ID, or
   role labels. Review authority requires the independent exact-project
   `reviewer` grant; `submitter` and `adjudicator` grants do not substitute.
-- AUTH-09A now supplies the fixed-service enum/schema/migration and the closed
-  seven-identity ART matrix, but it provisions no service actor and admits no
-  service token. Protected review jobs still require AUTH-09B provisioning,
-  AUTH-09E admission, and separately reviewed enum/constraint/matrix extensions
-  for each of REV's six exact identities. A generic system-principal or
-  fabricated human is not allowed.
+- AUTH-09A supplies the fixed-service enum/schema/migration and the closed
+  seven-identity ART matrix. Merged AUTH-09B supplies controlled provisioning
+  only for that closed registry and admits no service token. Protected review
+  jobs still require separately reviewed enum/constraint/matrix extensions for
+  each of REV's six exact identities, provisioning through the merged AUTH-09B
+  capability, and AUTH-09E admission. A generic system-principal or fabricated
+  human is not allowed.
 - `review.queue.override` is present in the merged 74-PermissionId catalogue;
   the review actions mapped to it remain planned/inactive. Artifact recovery already uses
   the registered `artifact.verification_job.retry` action and ART-owned
@@ -137,9 +138,9 @@ route-owned transaction. Its internal evidence records 275 focused behavior
 tests, 90.17 percent branch-aware focused coverage, and 17 isolated Alembic
 tests. Final PR checks passed Backend, Agent Gates, and CodeRabbit. REV runtime
 chunks must preserve these merged invariants and still wait for the later AUTH
-  definition-of-done gate owned by each consumer, AUTH-09B/09E plus the exact
-  REV identity extensions for protected service callers, and the matching AUTH
-  activation checkpoint. Reads consume
+  definition-of-done gate owned by each consumer, exact REV identity extensions
+  and provisioning through merged AUTH-09B, AUTH-09E admission for protected
+  service callers, and the matching AUTH activation checkpoint. Reads consume
   request-scoped `AuthorizationService.require`; mutations consume the future
   authority-first prepared protocol and exactly one final evaluation without
   importing grant persistence into the review module.

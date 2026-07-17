@@ -79,7 +79,8 @@ After the exact owning AUTH gates merge, WS-REV consumes:
 - one exact active project `reviewer` grant for human review. Separate
   `submitter`, `adjudicator`, and administrative grants never substitute, and
   revoking reviewer authority never mutates another grant;
-- AUTH-09B provisioning and AUTH-09E fixed-service admission for protected jobs.
+- exact REV identity extensions, controlled provisioning through merged
+  AUTH-09B, and AUTH-09E fixed-service admission for protected jobs.
   Preference expiry, lease
   expiry, reviewer-authority invalidation reconciliation, general review
   reconciliation, artifact-reference reconciliation, and projection rebuild
