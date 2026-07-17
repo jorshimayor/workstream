@@ -61,10 +61,11 @@ Human clarification confirmed the one-Project-Guide ADR 0010 flow, ART-backed
 current packet, immutable Submission/Review history, and WS-CON creation matrix.
 The plan was then repaired and re-reviewed across the following tracks.
 
-The later D5 clarification confirmed that any difference between the prior
+The later D5 clarification confirmed that an exact match between the prior
 Submission's stamped guide identity/activation sequence and the project's
-currently active guide is authoritative for rebase. An older active sequence
-causes a recorded backward rebase rather than a manager-repair block.
+currently active guide keeps context. Any different internally consistent active
+pair is authoritative for forward or backward rebase; an internally inconsistent
+pair or missing, incomplete, or unsafe active context blocks for manager repair.
 
 | Track | Final result | Final scope verified |
 |---|---|---|
