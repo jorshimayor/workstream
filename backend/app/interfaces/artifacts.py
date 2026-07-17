@@ -10,6 +10,7 @@ from app.interfaces.external_services import ExternalServiceAdapter
 from app.modules.artifacts.sources import ArtifactCommitment, CommittedArtifactSource
 
 
+ARTIFACT_STORE_CAPABILITY_KEY = "artifact_store"
 _MAXIMUM_PROVIDER_OBJECT_REF_LENGTH = 1024
 
 

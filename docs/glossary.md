@@ -285,6 +285,9 @@ configured artifact backend, adapter, provider profile, and non-secret storage
 namespace fingerprint. Startup and every provider operation must validate the
 same singleton before provider I/O. Changing a populated deployment requires a
 separately reviewed storage migration.
+For LocalStorage, the pre-provisioned private root's normalized path and
+filesystem identity are hashed into that fingerprint, so replacing the root at
+the same path fails closed before adapter construction mutates it.
 
 ## Artifact Verification Job
 

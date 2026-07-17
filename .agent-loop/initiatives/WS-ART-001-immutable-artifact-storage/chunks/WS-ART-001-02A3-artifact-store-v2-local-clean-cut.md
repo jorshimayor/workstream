@@ -50,7 +50,10 @@ configuration. No compatibility path remains after this PR.
   non-secret namespace fingerprint. Startup and every provider operation
   insert-or-validate it transactionally before I/O; concurrent differing first
   writers prove one winner and one pre-I/O failure. Every replica references it.
-  v0.1 uses one deployment fence, not a per-operation router or hot switch;
+  LocalStorage startup requires a pre-provisioned owner-private durable root and
+  hashes its normalized path plus filesystem identity, so same-path replacement
+  fails before adapter layout mutation. v0.1 uses one deployment fence, not a
+  per-operation router or hot switch;
 - upload state includes `replay_required`; provider acknowledgement creates
   `stored_pending_verification` and `pending/unknown/unknown`, never bindability;
 - v1 verify/retain/release/provider-receipt methods are absent from active code;

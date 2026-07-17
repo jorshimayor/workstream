@@ -197,6 +197,26 @@ def test_artifact_operations_exports_only_canonical_closed_contracts() -> None:
     }
     assert fields.isdisjoint(forbidden_fields)
 
+    operator_read = next(
+        node
+        for node in tree.body
+        if isinstance(node, ast.ClassDef) and node.name == "ArtifactOperatorReadPort"
+    )
+    operator_methods = {
+        node.name
+        for node in operator_read.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+    assert operator_methods == {
+        "list_bindings",
+        "list_replicas",
+        "list_receipts",
+        "get_verification_job",
+        "get_recovery_attempt",
+        "list_audit_events",
+        "admission_usage",
+    }
+
 
 def test_scratch_cleanup_worker_has_no_product_or_database_state() -> None:
     path = APP_ROOT / "workers" / "artifacts.py"

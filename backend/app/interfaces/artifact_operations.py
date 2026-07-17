@@ -192,24 +192,63 @@ class CheckerArtifactOutputPort(Protocol):
 class ArtifactOperatorReadPort(Protocol):
     """Expose bounded Operator reads without provider references."""
 
-    async def list(
+    async def list_bindings(
         self,
         *,
         authorization_context: AuthorizationContext,
-        project_id: UUID | None,
-        task_id: UUID | None,
+        resource_type: str,
+        resource_id: UUID,
         cursor: str | None,
         limit: int,
     ) -> object:
-        """List bounded artifact records under canonical filters."""
+        """List bindings for one exact canonical product resource."""
 
-    async def get(
+    async def list_replicas(
         self,
         *,
         authorization_context: AuthorizationContext,
-        artifact_record_id: UUID,
+        content_id: UUID,
+        cursor: str | None,
+        limit: int,
     ) -> object:
-        """Read one Workstream artifact record."""
+        """List replicas for one exact Workstream content identity."""
+
+    async def list_receipts(
+        self,
+        *,
+        authorization_context: AuthorizationContext,
+        replica_id: UUID,
+        cursor: str | None,
+        limit: int,
+    ) -> object:
+        """List receipts for one exact Workstream replica identity."""
+
+    async def get_verification_job(
+        self,
+        *,
+        authorization_context: AuthorizationContext,
+        verification_job_id: UUID,
+    ) -> object:
+        """Read one exact verification job."""
+
+    async def get_recovery_attempt(
+        self,
+        *,
+        authorization_context: AuthorizationContext,
+        recovery_attempt_id: UUID,
+    ) -> object:
+        """Read one exact recovery attempt."""
+
+    async def list_audit_events(
+        self,
+        *,
+        authorization_context: AuthorizationContext,
+        resource_type: str,
+        resource_id: UUID,
+        cursor: str | None,
+        limit: int,
+    ) -> object:
+        """List bounded artifact audit events for one exact resource."""
 
     async def admission_usage(
         self,

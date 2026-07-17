@@ -2081,3 +2081,20 @@ Every reviewer session was closed. GitHub Agent Gates then found a process-only
 successor-heading mismatch and a stale durable-state assertion. This record is
 historical; the process-only repair must receive fresh exact-SHA review and
 evidence before publication resumes.
+
+## 2026-07-17 - WS-ART-001-02A3 AUTH-Reconciled Review Repair
+
+The first internal review after merging AUTH PR #140 found four valid issues:
+provider initialization preceded the startup namespace fence, the LocalStorage
+fingerprint did not distinguish same-path root replacement, the Operator read
+port used vague generic methods, and same-item `replay_required` recovery lacked
+an end-to-end accounting/receipt regression.
+
+The repair now claims and validates the namespace before adapter construction,
+binds LocalStorage to a pre-provisioned private root's hashed filesystem
+identity, exposes exact Operator read method names, and proves one same-item
+replay produces one content, replica, receipt, and accounting transition.
+Deterministic proof passed 81 ART/PostgreSQL/conformance tests plus 177
+preparation/config/application tests with 93.35 percent combined changed-scope
+coverage. The first review results are superseded; fresh exact-SHA review and
+evidence remain mandatory before PR #141 is republished.

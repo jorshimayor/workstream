@@ -203,6 +203,12 @@ MinIO, and AWS S3, including region, bucket or private-root identity, normalized
 endpoint identity where applicable, private prefix, and addressing style; it
 contains no credential or resolved secret.
 
+For LocalStorage, the durable root must already exist with owner-private
+permissions before application startup. Its descriptor stores only a hash over
+the normalized path plus filesystem device/inode identity. Replacing or
+remounting that root at the same configured path therefore changes the
+fingerprint and fails before adapter construction can create layout files.
+
 Startup and every provider operation transactionally insert-or-validate this
 singleton before I/O. A concurrent first writer claims the namespace; a loser
 with a different fingerprint fails before provider access. Replicas and put
@@ -617,9 +623,10 @@ and the AWS live readiness profile.
 ## LocalStorage Adapter
 
 LocalStorage implements the same v2 port and conformance vectors. It uses a
-private configured root, opaque content-derived paths, exclusive no-overwrite
-publication, bounded off-event-loop file I/O, no-follow path handling, private
-permissions, full read verification, and sanitized failures.
+pre-provisioned private configured root, opaque content-derived paths,
+exclusive no-overwrite publication, bounded off-event-loop file I/O, no-follow
+path handling, private permissions, full read verification, and sanitized
+failures.
 
 The v1 local provider metadata for retain/release/provider receipts is removed
 in the v2 clean cut. No compatibility adapter or dual format remains.

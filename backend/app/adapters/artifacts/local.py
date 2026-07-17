@@ -22,6 +22,7 @@ from app.core.cancellation import (
 )
 from app.core.file_locks import acquire_exclusive_file_lock
 from app.interfaces.artifacts import (
+    ARTIFACT_STORE_CAPABILITY_KEY,
     ArtifactByteRange,
     ArtifactConfigurationError,
     ArtifactInputMismatchError,
@@ -41,7 +42,7 @@ from app.modules.artifacts.preparation import HARD_MAXIMUM_ARTIFACT_BYTES
 from app.modules.artifacts.sources import ArtifactCommitment, CommittedArtifactSource
 
 
-_IDENTITY = ExternalServiceAdapterIdentity("artifact_store", "local")
+_IDENTITY = ExternalServiceAdapterIdentity(ARTIFACT_STORE_CAPABILITY_KEY, "local")
 _LAYOUT_MARKER = ".workstream-artifact-store-v2"
 _LAYOUT_MARKER_BYTES = b"workstream-artifact-store-v2\n"
 _PROVIDER_OBJECT_REF = re.compile(r"^sha256/([0-9a-f]{2})/([0-9a-f]{62})$")

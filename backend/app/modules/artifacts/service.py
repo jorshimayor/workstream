@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
+import os
+import stat
 from uuid import uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,6 +21,7 @@ from app.interfaces.artifacts import (
     ArtifactStore,
     ArtifactStoreError,
 )
+from app.interfaces.external_services import ExternalServiceAdapterIdentity
 from app.modules.artifacts.models import (
     ArtifactContent,
     ArtifactOperationReceipt,
@@ -66,15 +69,22 @@ def artifact_storage_namespace_spec(
     store: ArtifactStore,
 ) -> ArtifactStorageNamespaceSpec:
     """Build the canonical namespace descriptor without retaining a local path."""
-    identity = store.identity
+    return artifact_storage_namespace_spec_for_identity(settings, store.identity)
+
+
+def artifact_storage_namespace_spec_for_identity(
+    settings: Settings,
+    identity: ExternalServiceAdapterIdentity,
+) -> ArtifactStorageNamespaceSpec:
+    """Build a namespace descriptor before constructing its provider adapter."""
+    if type(identity) is not ExternalServiceAdapterIdentity:
+        raise ArtifactStorageNamespaceError("artifact adapter identity is invalid")
     if settings.artifact_store_backend != identity.provider_key:
         raise ArtifactStorageNamespaceError("artifact adapter identity does not match configuration")
     if settings.artifact_store_backend != "local" or settings.artifact_local_root is None:
         raise ArtifactStorageNamespaceError("artifact namespace profile is unavailable")
 
-    root_identity = canonical_json_hash(
-        {"private_root": str(settings.artifact_local_root.resolve(strict=False))}
-    )
+    root_identity = _local_root_identity(settings.artifact_local_root)
     descriptor: dict[str, object] = {
         "backend": "local",
         "adapter": identity.provider_key,
@@ -88,6 +98,28 @@ def artifact_storage_namespace_spec(
         provider_profile="local-v2",
         namespace_descriptor=descriptor,
         namespace_fingerprint=canonical_json_hash(descriptor),
+    )
+
+
+def _local_root_identity(root: object) -> str:
+    """Hash one pre-provisioned private root's path and filesystem identity."""
+    if not isinstance(root, os.PathLike):
+        raise ArtifactStorageNamespaceError("artifact namespace root is invalid")
+    path = os.fspath(root)
+    try:
+        details = os.lstat(path)
+    except OSError:
+        raise ArtifactStorageNamespaceError(
+            "artifact namespace root is unavailable"
+        ) from None
+    if not stat.S_ISDIR(details.st_mode) or stat.S_IMODE(details.st_mode) & 0o077:
+        raise ArtifactStorageNamespaceError("artifact namespace root is unsafe")
+    return canonical_json_hash(
+        {
+            "private_root": os.path.abspath(path),
+            "device": details.st_dev,
+            "inode": details.st_ino,
+        }
     )
 
 
@@ -271,24 +303,7 @@ class ArtifactStorageOrchestrator:
 
     async def _claim_and_validate_namespace(self) -> ArtifactStorageNamespace:
         """Atomically claim the singleton or reject deployment identity drift."""
-        candidate = ArtifactStorageNamespace(
-            id=ARTIFACT_STORAGE_NAMESPACE_ID,
-            backend=self._namespace.backend,
-            adapter=self._namespace.adapter,
-            provider_profile=self._namespace.provider_profile,
-            namespace_descriptor=self._namespace.namespace_descriptor,
-            namespace_fingerprint=self._namespace.namespace_fingerprint,
-        )
-        persisted = await self._repo.claim_storage_namespace(candidate)
-        if (
-            persisted.backend != candidate.backend
-            or persisted.adapter != candidate.adapter
-            or persisted.provider_profile != candidate.provider_profile
-            or persisted.namespace_descriptor != candidate.namespace_descriptor
-            or persisted.namespace_fingerprint != candidate.namespace_fingerprint
-        ):
-            raise ArtifactStorageNamespaceError("artifact storage namespace does not match")
-        return persisted
+        return await _claim_and_validate_storage_namespace(self._repo, self._namespace)
 
     async def _locked_attempt(
         self,
@@ -361,10 +376,39 @@ class ArtifactStorageOrchestrator:
 
 
 async def validate_artifact_storage_namespace_at_startup(
-    store: ArtifactStore,
+    identity: ExternalServiceAdapterIdentity,
     settings: Settings,
 ) -> None:
-    """Claim or validate the configured namespace before accepting artifact work."""
-    namespace = artifact_storage_namespace_spec(settings, store)
+    """Claim the namespace before constructing a provider adapter."""
+    namespace = artifact_storage_namespace_spec_for_identity(settings, identity)
     async with get_session_factory()() as session:
-        await ArtifactStorageOrchestrator(session, store, namespace).ensure_storage_namespace()
+        async with session.begin():
+            await _claim_and_validate_storage_namespace(
+                ArtifactRepository(session),
+                namespace,
+            )
+
+
+async def _claim_and_validate_storage_namespace(
+    repository: ArtifactRepository,
+    namespace: ArtifactStorageNamespaceSpec,
+) -> ArtifactStorageNamespace:
+    """Atomically claim the singleton or reject deployment identity drift."""
+    candidate = ArtifactStorageNamespace(
+        id=ARTIFACT_STORAGE_NAMESPACE_ID,
+        backend=namespace.backend,
+        adapter=namespace.adapter,
+        provider_profile=namespace.provider_profile,
+        namespace_descriptor=namespace.namespace_descriptor,
+        namespace_fingerprint=namespace.namespace_fingerprint,
+    )
+    persisted = await repository.claim_storage_namespace(candidate)
+    if (
+        persisted.backend != candidate.backend
+        or persisted.adapter != candidate.adapter
+        or persisted.provider_profile != candidate.provider_profile
+        or persisted.namespace_descriptor != candidate.namespace_descriptor
+        or persisted.namespace_fingerprint != candidate.namespace_fingerprint
+    ):
+        raise ArtifactStorageNamespaceError("artifact storage namespace does not match")
+    return persisted

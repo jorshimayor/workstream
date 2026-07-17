@@ -154,6 +154,7 @@ async def _minted_source(
 
 
 def _settings(tmp_path: Path) -> Settings:
+    (tmp_path / "store").mkdir(mode=0o700, exist_ok=True)
     return Settings(
         environment="test",
         artifact_store_backend="local",
@@ -308,6 +309,20 @@ class _TerminalStore(_UnavailableStore):
     async def put(self, _source: CommittedArtifactSource) -> ArtifactPutResult:
         self.put_calls += 1
         raise ArtifactInputMismatchError()
+
+
+class _AcknowledgementUnknownThenReplayStore(_UnavailableStore):
+    """Lose the first acknowledgement and return an exact replay next."""
+
+    async def put(self, source: CommittedArtifactSource) -> ArtifactPutResult:
+        self.put_calls += 1
+        if self.put_calls == 1:
+            raise RuntimeError("provider acknowledgement lost")
+        digest_hex = source.commitment.sha256[7:]
+        return ArtifactPutResult(
+            f"sha256/{digest_hex[:2]}/{digest_hex[2:]}",
+            replayed=True,
+        )
 
 
 class _CancelledStore(_UnavailableStore):
@@ -474,6 +489,61 @@ async def test_retryable_put_marks_existing_item_replay_required(
             assert await session.scalar(select(ArtifactReplica)) is None
             assert await session.scalar(select(ArtifactOperationReceipt)) is None
         assert store.put_calls == 1
+    finally:
+        await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_same_item_replay_finalizes_once_without_double_accounting(
+    artifact_database_env: str,
+    tmp_path: Path,
+) -> None:
+    engine = create_async_engine(artifact_database_env)
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    store = _AcknowledgementUnknownThenReplayStore()
+    content = b"same-item-replay"
+    try:
+        async with _minted_source(tmp_path / "scratch-first", content) as source:
+            async with factory() as session:
+                item_id = await _seed_reserved_item(session, source.commitment)
+                orchestrator = ArtifactStorageOrchestrator(
+                    session,
+                    store,
+                    artifact_storage_namespace_spec(_settings(tmp_path), store),
+                )
+                with pytest.raises(RuntimeError, match="acknowledgement lost"):
+                    await orchestrator.put_reserved_item(item_id, source)
+
+        async with _minted_source(tmp_path / "scratch-replay", content) as replay:
+            async with factory() as session:
+                result = await ArtifactStorageOrchestrator(
+                    session,
+                    store,
+                    artifact_storage_namespace_spec(_settings(tmp_path), store),
+                ).put_reserved_item(item_id, replay)
+
+        assert result.replayed is True
+        async with factory() as session:
+            item = await session.get(ArtifactUploadItem, item_id)
+            assert item is not None
+            upload_session = await session.get(ArtifactUploadSession, item.session_id)
+            assert upload_session is not None
+            receipts = (await session.execute(select(ArtifactOperationReceipt))).scalars().all()
+            replicas = (await session.execute(select(ArtifactReplica))).scalars().all()
+            contents = (await session.execute(select(ArtifactContent))).scalars().all()
+
+        assert item.state == "stored_pending_verification"
+        assert item.error_code is None
+        assert upload_session.reserved_bytes == 0
+        assert upload_session.reserved_items == 0
+        assert upload_session.current_bytes == len(content)
+        assert upload_session.current_items == 1
+        assert len(contents) == 1
+        assert len(replicas) == 1
+        assert len(receipts) == 1
+        assert receipts[0].upload_item_id == item_id
+        assert receipts[0].replayed is True
+        assert store.put_calls == 2
     finally:
         await engine.dispose()
 
@@ -674,9 +744,33 @@ def test_namespace_descriptor_is_canonical_and_does_not_store_local_path(
     assert spec.provider_profile == "local-v2"
     assert spec.namespace_fingerprint == canonical_json_hash(spec.namespace_descriptor)
     assert str(settings.artifact_local_root) not in serialized
-    assert spec.namespace_descriptor["private_root_identity"] == canonical_json_hash(
-        {"private_root": str(settings.artifact_local_root.resolve(strict=False))}
+    assert spec.namespace_descriptor["private_root_identity"].startswith("sha256:")
+
+
+def test_namespace_descriptor_changes_when_local_root_is_replaced(tmp_path: Path) -> None:
+    settings = _settings(tmp_path)
+    store = _UnavailableStore()
+    original = artifact_storage_namespace_spec(settings, store)
+
+    root = settings.artifact_local_root
+    assert root is not None
+    root.rename(tmp_path / "replaced-store")
+    root.mkdir(mode=0o700)
+
+    replacement = artifact_storage_namespace_spec(settings, store)
+    assert replacement.namespace_descriptor != original.namespace_descriptor
+    assert replacement.namespace_fingerprint != original.namespace_fingerprint
+
+
+def test_namespace_descriptor_requires_preprovisioned_private_root(tmp_path: Path) -> None:
+    settings = Settings(
+        environment="test",
+        artifact_store_backend="local",
+        artifact_local_root=tmp_path / "missing-store",
+        artifact_scratch_root=tmp_path / "scratch",
     )
+    with pytest.raises(ArtifactStorageNamespaceError, match="root is unavailable"):
+        artifact_storage_namespace_spec(settings, _UnavailableStore())
 
 
 def test_namespace_spec_rejects_adapter_drift_and_nonlocal_profile(tmp_path: Path) -> None:
@@ -770,7 +864,19 @@ async def test_startup_namespace_validation_uses_canonical_session_factory(
 ) -> None:
     settings = _settings(tmp_path)
     store = _UnavailableStore()
-    session = object()
+
+    class _TransactionContext:
+        async def __aenter__(self) -> None:
+            return None
+
+        async def __aexit__(self, *_args: object) -> None:
+            return None
+
+    class _Session:
+        def begin(self) -> _TransactionContext:
+            return _TransactionContext()
+
+    session = _Session()
 
     class _SessionContext:
         async def __aenter__(self) -> object:
@@ -779,25 +885,28 @@ async def test_startup_namespace_validation_uses_canonical_session_factory(
         async def __aexit__(self, *_args: object) -> None:
             return None
 
+    repository = object()
     ensured = AsyncMock()
 
-    class _Orchestrator:
-        def __init__(self, candidate_session: object, candidate_store: object, spec: object) -> None:
-            assert candidate_session is session
-            assert candidate_store is store
-            assert isinstance(spec, ArtifactStorageNamespaceSpec)
-
-        ensure_storage_namespace = ensured
+    def create_repository(candidate_session: object) -> object:
+        assert candidate_session is session
+        return repository
 
     monkeypatch.setattr(
         artifact_service_module,
         "get_session_factory",
         lambda: lambda: _SessionContext(),
     )
-    monkeypatch.setattr(artifact_service_module, "ArtifactStorageOrchestrator", _Orchestrator)
+    monkeypatch.setattr(artifact_service_module, "ArtifactRepository", create_repository)
+    monkeypatch.setattr(
+        artifact_service_module,
+        "_claim_and_validate_storage_namespace",
+        ensured,
+    )
 
-    await validate_artifact_storage_namespace_at_startup(store, settings)
-    ensured.assert_awaited_once()
+    await validate_artifact_storage_namespace_at_startup(store.identity, settings)
+    assert isinstance(ensured.await_args.args[1], ArtifactStorageNamespaceSpec)
+    assert ensured.await_args.args[0] is repository
 
 
 def test_models_remove_v1_provider_retention_and_receipt_fields() -> None:

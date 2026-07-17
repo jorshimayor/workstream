@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 from app.core.config import Settings
-from app.interfaces.artifacts import ArtifactConfigurationError, ArtifactStore
+from app.interfaces.artifacts import (
+    ARTIFACT_STORE_CAPABILITY_KEY,
+    ArtifactConfigurationError,
+    ArtifactStore,
+)
 from app.interfaces.external_services import ExternalServiceAdapterFactory
 from app.modules.artifacts.preparation import (
     ArtifactPreparationLimits,
@@ -25,7 +29,7 @@ def create_artifact_store(settings: Settings) -> ArtifactStore:
     """
     from app.adapters.artifacts.local import LocalStorageAdapter
 
-    factory = ExternalServiceAdapterFactory[ArtifactStore]("artifact_store")
+    factory = ExternalServiceAdapterFactory[ArtifactStore](ARTIFACT_STORE_CAPABILITY_KEY)
 
     def create_local_store() -> ArtifactStore:
         """Construct the configured development-only LocalStorage provider."""

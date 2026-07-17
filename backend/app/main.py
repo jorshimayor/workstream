@@ -27,7 +27,8 @@ from app.core.api_controls import (
 )
 from app.core.auth import build_auth_verifier, cache_auth_verifier, prepare_auth_verifier
 from app.core.config import Settings, get_settings
-from app.interfaces.artifacts import ArtifactStore
+from app.interfaces.artifacts import ARTIFACT_STORE_CAPABILITY_KEY
+from app.interfaces.external_services import ExternalServiceAdapterIdentity
 
 PRODUCTION_LIKE_ENVIRONMENTS = {"staging", "preview", "prod", "production"}
 MAX_VALIDATION_ERRORS = 20
@@ -66,9 +67,9 @@ async def _application_lifespan(app: FastAPI) -> AsyncIterator[None]:
     ):
         build_auth_verifier(settings)
     if settings.artifact_store_backend != "disabled":
+        await _validate_artifact_storage_namespace_at_startup(settings)
         store = create_artifact_store(settings)
         try:
-            await _validate_artifact_storage_namespace_at_startup(store, settings)
             await cleanup_stale_artifact_scratch(settings)
         finally:
             close = getattr(store, "close", None)
@@ -78,7 +79,6 @@ async def _application_lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 async def _validate_artifact_storage_namespace_at_startup(
-    store: ArtifactStore,
     settings: Settings,
 ) -> None:
     """Call the artifact owner's exact startup namespace fence."""
@@ -89,7 +89,13 @@ async def _validate_artifact_storage_namespace_at_startup(
     except ImportError as exc:
         raise RuntimeError("artifact namespace startup validation is unavailable") from exc
 
-    await validate_artifact_storage_namespace_at_startup(store, settings)
+    await validate_artifact_storage_namespace_at_startup(
+        ExternalServiceAdapterIdentity(
+            ARTIFACT_STORE_CAPABILITY_KEY,
+            settings.artifact_store_backend,
+        ),
+        settings,
+    )
 
 
 def _validation_error_detail(error: dict[str, Any]) -> dict[str, Any]:
