@@ -2051,6 +2051,38 @@ async def test_authorization_locks_refresh_cached_actor_lifecycle_state(
         )
         await stale.rollback()
 
+        cached_profile = await stale.get(ActorProfile, str(profile_id))
+        cached_link = await stale.get(ActorIdentityLink, str(link_id))
+        assert cached_profile is not None and cached_profile.status == "suspended"
+        assert cached_link is not None and cached_link.status == "revoked"
+        async with authorization_factory() as lifecycle:
+            await lifecycle.execute(
+                text(
+                    "update actor_profiles set status='active', suspended_by=null, "
+                    "suspended_at=null, suspension_reason=null where id=:actor"
+                ),
+                {"actor": str(profile_id)},
+            )
+            await lifecycle.execute(
+                text(
+                    "update actor_identity_links set status='active', revoked_by=null, "
+                    "revoked_at=null, revoked_reason=null where id=:link"
+                ),
+                {"link": str(link_id)},
+            )
+            await lifecycle.commit()
+
+        eligible = await AdminAuthorizationRepository(stale).lock_eligible_human(
+            profile_id
+        )
+        assert eligible is not None
+        eligible_link, eligible_profile = eligible
+        assert eligible_profile is cached_profile
+        assert eligible_link is cached_link
+        assert eligible_profile.status == "active"
+        assert eligible_link.status == "active"
+        await stale.rollback()
+
 
 def _request(target: UUID | None = None) -> ActorProfileSuspendRequest:
     return ActorProfileSuspendRequest(

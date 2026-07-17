@@ -29,6 +29,7 @@ backend/app/api/deps/auth.py
 backend/app/api/deps/authorization.py
 backend/alembic/versions/0024_*.py
 backend/tests/test_actors.py
+backend/tests/test_audit.py
 backend/tests/test_auth.py
 backend/tests/test_config.py
 backend/tests/test_authorization.py
