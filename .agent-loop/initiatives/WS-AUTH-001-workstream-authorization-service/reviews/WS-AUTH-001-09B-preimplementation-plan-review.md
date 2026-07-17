@@ -31,5 +31,10 @@ canonical profile-before-link lock order, keeps the existing negative-projection
 invalidation direction, removes the obsolete idempotency request shape without
 compatibility, and leaves all service and feature actions denied.
 
-Fresh exact-SHA reviewer results are pending. Runtime implementation must not
-begin until every required preimplementation track passes.
+The first repaired candidate at `8f53fe3` passed architecture/concurrency review
+but failed service-boundary and security review on five still-valid details: the
+test database variable, pre-resolution legacy service denial, an obsolete HTTPS
+digest restriction, stale link-before-profile documentation, and missing
+verifier-boundary coverage. All five are repaired in the next planning-only
+candidate. Runtime implementation must not begin until every required
+preimplementation track passes that exact SHA.

@@ -30,6 +30,7 @@ backend/app/api/deps/authorization.py
 backend/alembic/versions/0024_*.py
 backend/tests/test_actors.py
 backend/tests/test_auth.py
+backend/tests/test_config.py
 backend/tests/test_authorization.py
 backend/tests/test_alembic.py
 backend/tests/test_api_controls.py
@@ -79,7 +80,9 @@ return their normalized `_issuer`, and the unavailable verifier fails closed.
 The route injects the existing application verifier and never selects a
 provider, reads a caller identity link as issuer configuration, or accepts an
 issuer override. The identity digest binds this issuer and the byte-exact
-subject.
+subject. Its helper accepts the exact already-validated configured issuer under
+the same non-empty bounded identity-anchor rules; it does not impose an
+`https://` scheme, renormalize the issuer, or branch by provider.
 
 The canonical `ServiceActorCreateRequest` contains only the operation, fixed
 `service_identity`, `identity_reference_digest`, and `reason_digest`. Its full
@@ -210,7 +213,12 @@ migrations remain immutable. AUTH-10 through AUTH-15 move to `0025` through
   dependency teardown never commits shared-session state.
 - Only AUTH-09E may admit fixed services. This chunk does not weaken
   `get_authorization_actor`, evaluate a human grant for a service caller, or
-  activate any ART, REV, or CON action.
+  activate any ART, REV, or CON action. Both `get_authorization_actor` and the
+  legacy `get_canonical_actor` dependency deny every service subject before any
+  actor lookup, canonical resolution, or timestamp touch. Representative central
+  AUTH and legacy-route tests present a provisioned service token and prove the
+  same stable denial while service `last_seen_at` and `last_verified_at` remain
+  null. AUTH-09E alone may remove this pre-resolution denial.
 - Focused actor and authorization subsystem branch coverage is each at least 90
   percent; GitHub Backend preserves the repository-wide 78 percent floor.
 
@@ -232,19 +240,25 @@ architecture, CI integrity, docs, reuse/dedup, and test delta.
 
 ```bash
 (cd backend && .venv/bin/python -m ruff check app tests scripts/api_contract_e2e.py)
-(cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q \
+(cd backend && WORKSTREAM_TEST_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q \
   tests/test_actors.py tests/test_auth.py tests/test_authorization.py \
-  tests/test_alembic.py tests/test_api_controls.py tests/test_api_rate_controls.py)
-(cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m coverage erase)
-(cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m coverage run \
+  tests/test_alembic.py tests/test_config.py tests/test_api_controls.py \
+  tests/test_api_rate_controls.py)
+(cd backend && WORKSTREAM_TEST_DATABASE_URL=<test-db> .venv/bin/python -m coverage erase)
+(cd backend && WORKSTREAM_TEST_DATABASE_URL=<test-db> .venv/bin/python -m coverage run \
   --branch --source=app.modules.actors -m pytest -q tests/test_actors.py \
   tests/test_auth.py tests/test_authorization.py)
 (cd backend && .venv/bin/python -m coverage report --fail-under=90)
-(cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m coverage erase)
-(cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m coverage run \
+(cd backend && WORKSTREAM_TEST_DATABASE_URL=<test-db> .venv/bin/python -m coverage erase)
+(cd backend && WORKSTREAM_TEST_DATABASE_URL=<test-db> .venv/bin/python -m coverage run \
   --branch --source=app.modules.authorization -m pytest -q \
   tests/test_authorization.py tests/test_actors.py tests/test_auth.py \
   tests/test_api_controls.py tests/test_api_rate_controls.py)
+(cd backend && .venv/bin/python -m coverage report --fail-under=90)
+(cd backend && WORKSTREAM_TEST_DATABASE_URL=<test-db> .venv/bin/python -m coverage erase)
+(cd backend && WORKSTREAM_TEST_DATABASE_URL=<test-db> .venv/bin/python -m coverage run \
+  --branch --source=app.interfaces.auth,app.core.auth,app.adapters.auth.dev,app.adapters.auth.flow \
+  -m pytest -q tests/test_auth.py tests/test_config.py)
 (cd backend && .venv/bin/python -m coverage report --fail-under=90)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python scripts/api_contract_e2e.py)
 python3 scripts/check_stale_workstream_wording.py

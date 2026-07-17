@@ -414,13 +414,15 @@ evidence or business state. Feature SQL errors remain route-owned. Route commit
 failures use the same public retryable envelope but are not mislabeled as audit
 failures, and rollback every staged participant before retry.
 
-For an existing actor, a successful protected request advances canonical
+For an existing human actor, a successful protected request advances canonical
 `ActorProfile.last_seen_at` and `ActorIdentityLink.last_verified_at` after
-authorization in that route-owned transaction. The link-then-profile update
-uses `GREATEST(current_value, clock_timestamp())` so crossed commits cannot
+authorization in that route-owned transaction. D28 supersedes this decision's
+original lock-order clause: every current helper locks profile then exact link
+and uses `GREATEST(current_value, clock_timestamp())` so crossed commits cannot
 regress recency. Authorization denial or persistence failure rolls the staged
 timestamp changes back. This restores verification recency without letting
-denied requests manufacture successful-use evidence.
+denied requests manufacture successful-use evidence. Service subjects remain
+pre-resolution denials until AUTH-09E and cannot manufacture either timestamp.
 
 ## D20: Service ActorProfile is the fixed local service principal
 
@@ -581,6 +583,8 @@ The provisioning administrator selects one fixed `ServiceIdentity` and supplies
 one opaque subject. The issuer is server-owned configuration exposed through the
 provider-neutral `AuthVerifier` port. It never comes from request input, provider
 branching, fallback configuration, or the administrator's own identity link.
+The identity digest consumes that exact already-validated issuer without a new
+scheme restriction, normalization step, or provider-specific path.
 
 Provisioning is not proof that the service presented a token. AUTH-09B migration
 `0024` therefore makes `ActorIdentityLink.last_verified_at` nullable only for
@@ -590,6 +594,11 @@ profiles and links keep `last_seen_at` and `last_verified_at` null until AUTH-09
 successfully verifies that exact service token. The migration allocation shifts
 AUTH-10 through AUTH-15 to `0025` through `0030`; historical migrations remain
 immutable.
+
+Both central AUTH and legacy actor dependencies reject service subjects before
+actor resolution or timestamp mutation until AUTH-09E. Provisioning a service
+therefore cannot make an existing legacy route an alternate service-admission
+path.
 
 The administrative mutation locks `AuthorityControl`, caller profile, exact
 caller link, and matched system Access Administrator grant before fixed service

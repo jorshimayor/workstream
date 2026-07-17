@@ -662,7 +662,7 @@ database service-grant table.
 active identity link with an active or suspended human actor and commits only
 the bounded read-decision evidence after authorization. `PATCH
 /api/v1/actors/me` declares `actor.profile.update_self`; it locks the exact
-identity link first and actor profile second, rechecks current state, mutates
+actor profile first and its exact identity link second, rechecks current state, mutates
 only `display_name` or `contact_email`, and commits mutation plus allow evidence
 once. The authorization kernel never commits or rolls back.
 
