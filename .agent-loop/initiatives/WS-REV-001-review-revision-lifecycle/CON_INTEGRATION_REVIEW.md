@@ -30,7 +30,7 @@ or transitions the outbox event itself.
 
 ```text
 AUTH prepares review.decision and locks reviewer authority
--> REV locks idempotency, lifecycle fence, queue, lease, task, assignment,
+-> REV locks idempotency, queue, lease, task, assignment,
    versioned Submission, Review predecessor, findings and stabilized facts
 -> REV recomposes final typed review-decision context
 -> AUTH evaluates once and stages decision evidence
@@ -44,6 +44,11 @@ AUTH prepares review.decision and locks reviewer authority
 -> CON stages audit and shared-outbox rows
 -> route commits once
 ```
+
+This is the hidden pre-12A order and has no public or background-command entry
+point. REV-12A inserts the mandatory lifecycle fence between idempotency and
+queue before REV-13 releases the decision surface; the remaining order and CON
+participant contract do not change.
 
 CON receives the originating AuthorizationDecision reference and locked facts.
 It never evaluates `review.decision`, imports REV/AUTH persistence, commits, or

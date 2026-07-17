@@ -343,3 +343,13 @@ The implemented Workstream, AUTH, and ART stale scanners pass after terminology
 repair. The future REV scanner remains a REV-01 deliverable and is not claimed
 as current proof. The repaired snapshot still requires fresh exact-revision
 review and evidence binding before publication.
+
+Second review of `93955f1` confirmed the substantive lifecycle repairs but
+rejected split shell tokens used in proof commands to avoid false positives for
+literal technical paths/flags. That finding was valid. The commands again use
+canonical technical execution-package paths and live-drill flags. The shared
+AUTH documentation scanner now has a narrow, tested classifier for those exact
+technical forms while continuing to reject human contributor-role vocabulary.
+The planning chunk explicitly owns this CI gate change
+and requires CI-integrity review. The same pass also found and repaired one
+remaining stale lifecycle-fence reference in `CON_INTEGRATION_REVIEW.md`.

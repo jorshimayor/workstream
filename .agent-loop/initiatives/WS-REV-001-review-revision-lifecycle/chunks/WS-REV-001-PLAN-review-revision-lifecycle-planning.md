@@ -7,7 +7,7 @@ reviewed end-to-end initiative plan without changing runtime behavior.
 
 ## Risk class
 
-L0 planning with L1 downstream implications.
+L1 planning with a narrowly scoped CI documentation-gate correction.
 
 ## Allowed files
 
@@ -19,6 +19,8 @@ docs/reference_specs/WS-REV-001-review-lifecycle-specification.pdf
 docs/reference_specs/README.md only for exact canonical WS-REV provenance/hash rows and directly associated provenance/checksum prose
 docs/reference_specs/SHA256SUMS only for exact canonical WS-REV hash rows
 .gitattributes only for the canonical byte-immutable WS-REV Markdown whitespace classification
+scripts/check_stale_authorization_docs.py only to recognize exact technical execution-package paths and live-drill CLI flags
+scripts/test_agent_gates.py only for the matching false-positive and fail-closed regressions
 ```
 
 ## Not allowed
@@ -58,12 +60,18 @@ runtime implementation or dependency changes
 - First implementation chunk remains proposed and inactive.
 - Exactly one merge intent names WS-REV-001-01 as the successor and requires a
   separate explicit start; it does not activate that chunk.
+- The AUTH stale-documentation gate recognizes only exact technical execution-
+  package paths and the existing live-drill execution flags; human contributor-
+  role wording remains rejected by regression tests.
 
 ## Verification
 
 ```text
 python3 scripts/check_markdown_links.py
 python3 scripts/check_stale_workstream_wording.py
+python3 scripts/check_stale_artifact_contracts.py
+python3 scripts/check_stale_authorization_docs.py
+python3 scripts/test_agent_gates.py
 sha256sum -c docs/reference_specs/SHA256SUMS
 git diff --check
 ```
@@ -71,7 +79,7 @@ git diff --check
 ## Required reviewers
 
 Senior engineering, QA/test, security/auth, product/ops, architecture, docs,
-and reuse/dedup.
+reuse/dedup, test-delta, and CI integrity.
 
 ## Human review focus
 

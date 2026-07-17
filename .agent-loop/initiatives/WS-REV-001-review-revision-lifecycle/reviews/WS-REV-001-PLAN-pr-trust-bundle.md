@@ -62,10 +62,11 @@ copies that exact value and does not rederive it or trust caller `package_hash`.
 
 This PR changes WS-REV initiative planning, review evidence, its one merge
 intent, the human-supplied canonical archival Markdown/PDF replacement,
-reference provenance/checksums, and the exact `.gitattributes` rule required to
-preserve that Markdown's bytes. It changes no backend, migration, workflow,
-package script, test threshold, active product route, authorization catalogue,
-artifact provider, or contribution runtime.
+reference provenance/checksums, the exact `.gitattributes` rule required to
+preserve that Markdown's bytes, and a narrowly tested AUTH documentation-scanner
+correction for literal technical paths/CLI flags. It changes no backend,
+migration, workflow, package script, test threshold, active product route,
+authorization catalogue, artifact provider, or contribution runtime.
 
 ## Verification
 

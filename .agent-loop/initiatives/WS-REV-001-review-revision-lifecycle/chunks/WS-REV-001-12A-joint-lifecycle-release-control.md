@@ -248,10 +248,10 @@ schema/application downgrade after protected post-cutover rows exist
 ```text
 cd backend && alembic upgrade head
 cd backend && pytest -q tests/test_alembic.py tests/test_lifecycle_control.py tests/test_reviews.py tests/test_tasks.py tests/test_checkers.py tests/test_compensation.py tests/test_outbox.py tests/test_audit.py tests/test_authorization.py tests/test_api_contract_e2e.py tests/test_config.py
-cd backend && ruff check app/modules/lifecycle_control app/modules/reviews app/modules/tasks app/modules/checkers app/work""ers/reviews.py app/composition/joint_lifecycle_control.py app/composition/review_lifecycle.py app/composition/compensation.py tests/test_lifecycle_control.py
+cd backend && ruff check app/modules/lifecycle_control app/modules/reviews app/modules/tasks app/modules/checkers app/workers/reviews.py app/composition/joint_lifecycle_control.py app/composition/review_lifecycle.py app/composition/compensation.py tests/test_lifecycle_control.py
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
 cd backend && coverage report --include='app/modules/lifecycle_control/*' --precision=2 --fail-under=90
-cd backend && for path in app/modules/reviews/service.py app/modules/tasks/service.py app/modules/checkers/service.py app/work""ers/reviews.py app/core/config.py app/composition/joint_lifecycle_control.py app/composition/review_lifecycle.py app/composition/compensation.py; do coverage report --include="$path" --precision=2 --fail-under=90 || exit 1; done
+cd backend && for path in app/modules/reviews/service.py app/modules/tasks/service.py app/modules/checkers/service.py app/workers/reviews.py app/core/config.py app/composition/joint_lifecycle_control.py app/composition/review_lifecycle.py app/composition/compensation.py; do coverage report --include="$path" --precision=2 --fail-under=90 || exit 1; done
 ```
 
 ## Required reviewers

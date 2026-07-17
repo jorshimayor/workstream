@@ -378,7 +378,17 @@ def technical_worker_match(text: str, match: re.Match[str]) -> bool:
     suffix = text[token_end : token_end + 20]
     exact_code_path = token.group(0).lower() == "workers" and (
         (prefix.endswith("backend/app/") and suffix.startswith("/"))
+        or (prefix.endswith("app/") and suffix.startswith("/"))
         or (prefix.endswith("app.") and suffix.startswith("."))
+    )
+    exact_technical_cli_flag = (
+        token.group(0).lower() == "worker"
+        and prefix.endswith("--start-api-")
+        and suffix.startswith("-beat")
+    ) or (
+        token.group(0).lower() == "workers"
+        and prefix.endswith("--require-")
+        and (not suffix or suffix[0].isspace())
     )
     exact_celery_cli = bool(
         re.search(
@@ -389,7 +399,10 @@ def technical_worker_match(text: str, match: re.Match[str]) -> bool:
         and suffix.startswith(" --")
     )
     return bool(
-        TECHNICAL_WORKER_PREFIX.search(prefix) or exact_code_path or exact_celery_cli
+        TECHNICAL_WORKER_PREFIX.search(prefix)
+        or exact_code_path
+        or exact_celery_cli
+        or exact_technical_cli_flag
     )
 
 

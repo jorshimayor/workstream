@@ -3788,6 +3788,9 @@ def test_stale_authorization_rule_examples_are_rejected() -> None:
         "Celery worker_id identifies the background process.",
         "The checker worker_id is included in internal telemetry.",
         "See backend/app/workers/tasks.py.",
+        "coverage report --include='app/workers/*' --precision=2 --fail-under=90",
+        "ruff check app/workers/reviews.py",
+        "review_lifecycle_live_drill.py --start-api-worker-beat --require-workers",
     )
     for sample in technical_worker_statements:
         assert gate.scan_text("docs/new_active_doc.md", sample) == [], sample

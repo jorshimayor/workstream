@@ -625,7 +625,7 @@ applicable. The common runtime evidence is:
 
 ```text
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
-cd backend && coverage report --include=app/modules/reviews/\*,app/work""ers/reviews.py --precision=2 --fail-under=90
+cd backend && coverage report --include='app/modules/reviews/*,app/workers/reviews.py' --precision=2 --fail-under=90
 cd backend && ruff check app tests scripts
 python3 scripts/check_internal_review_evidence.py
 python3 scripts/check_markdown_links.py

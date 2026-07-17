@@ -197,9 +197,9 @@ production `/api/v1` review-router registration
 ```text
 cd backend && alembic upgrade head
 cd backend && pytest -q tests/test_alembic.py tests/test_reviews.py tests/test_authorization.py tests/test_artifacts.py tests/test_audit.py
-cd backend && ruff check app/modules/reviews app/work""ers/reviews.py tests/test_reviews.py tests/test_alembic.py
+cd backend && ruff check app/modules/reviews app/workers/reviews.py tests/test_reviews.py tests/test_alembic.py
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && (cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=postgresql+asyncpg://workstream:workstream@localhost:5433/postgres .venv/bin/python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 12600 -- .venv/bin/python -m pytest -q --ignore=tests/test_isolated_database_runner.py --cov=app --cov-report=term-missing --cov-fail-under=78))
-cd backend && for path in 'app/modules/reviews/*' app/modules/tasks/review_participant.py app/composition/review_lifecycle.py app/work""ers/reviews.py app/work""ers/celery_app.py; do coverage report --include="$path" --precision=2 --fail-under=90 || exit 1; done
+cd backend && for path in 'app/modules/reviews/*' app/modules/tasks/review_participant.py app/composition/review_lifecycle.py app/workers/reviews.py app/workers/celery_app.py; do coverage report --include="$path" --precision=2 --fail-under=90 || exit 1; done
 ```
 
 ## Required reviewers

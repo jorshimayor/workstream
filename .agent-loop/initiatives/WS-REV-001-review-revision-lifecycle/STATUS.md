@@ -64,8 +64,11 @@ changes include:
 
 The first final review of snapshot `a916692` found executable-graph, external
 dependency ownership, cross-project concealment, coverage, claim-order, and
-artifact-error ambiguities. Those findings are repaired in a new immutable
-snapshot that requires fresh final review. All prior internal-review evidence
+artifact-error ambiguities. Those findings were repaired in `93955f1`; its
+second review found a duplicated scanner workaround and one stale integration-
+fence sentence. Both are repaired through literal proof commands, a narrow
+tested technical-path/CLI classifier, and consistent pre-12A/released fence
+wording. The next immutable snapshot requires fresh final review. All prior internal-review evidence
 and the previous PR-head binding remain historical until that review and a new
 exact reviewed-SHA evidence binding pass. Earlier AUTH/ART dependency review
 files remain dated evidence; their old future-count assumptions do not override
