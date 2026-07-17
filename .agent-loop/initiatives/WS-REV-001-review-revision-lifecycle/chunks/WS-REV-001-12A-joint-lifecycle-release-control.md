@@ -16,7 +16,7 @@ L1 cross-domain release control, authorization, and operational safety.
 backend/app/modules/lifecycle_control/{__init__,models,repository,schemas,service,ports,router}.py
 backend/app/composition/joint_lifecycle_control.py
 backend/app/composition/review_lifecycle.py only to inject the mandatory fence into existing task/checker/review construction
-backend/app/composition/compensation.py only to install the exact merged CON dispatch and callback fence hooks
+backend/app/composition/compensation.py only to install the exact merged CON obligation-writer, dispatch, and callback fence hooks
 backend/app/modules/reviews/service.py only to require the merged lifecycle fence on mutations
 backend/app/modules/tasks/service.py only to require the merged lifecycle fence on submission/replacement commands
 backend/app/modules/checkers/service.py only to require the merged lifecycle fence on review-queue admission
@@ -77,7 +77,10 @@ schema/application downgrade after protected post-cutover rows exist
 - A shared typed `JointLifecycleMutationFence` is injected through one explicit
   composition root into review mutations, every task submission, review-queue
   admission, review maintenance commands, authority-loss replacement assignment,
-  and compensation fulfillment dispatch and callback handling. There is no
+  every CON fulfillment-obligation root creation, requeue, successor, and repair
+  writer, and compensation fulfillment dispatch and callback handling. The CON
+  writer hooks must be approved and merged before 12A; this chunk installs them
+  through composition and does not edit CON-owned writer logic. There is no
   fallback constructor, service locator, optional/no-op port, or concrete
   cross-domain repository import.
 - After AUTH prepares and locks current authority, every mutation locks its
@@ -143,8 +146,8 @@ schema/application downgrade after protected post-cutover rows exist
 | `review.lease_expiry.run`, `review.lease.force_release` | authorized review recovery/lease release |
 | `review.reconcile.run` queue/routing mode | new review claim/routing mutation |
 | `review.reconcile.run` lease-only mode | authorized review recovery/lease release |
-| `review.reconcile.run` evidence-only scan, `review.artifact_reference.reconcile`, `review.projection.rebuild` | review/CON maintenance or projection |
-| shared-outbox review snapshot projection handler under fixed `outbox.dispatch` authority | review/CON maintenance or projection |
+| `review.reconcile.run` evidence-only scan, `review.artifact_reference.reconcile`, `review.projection.rebuild` | review maintenance/projection or CON completion-only maintenance |
+| shared-outbox review snapshot projection handler under fixed `outbox.dispatch` authority | review maintenance/projection or CON completion-only maintenance |
 | AUTH-13 revision-obligation replacement operation | server-derived legacy or prepared authority-loss replacement |
 | `review.lifecycle.activation.manage` transition/status | lifecycle transition/status |
 
@@ -203,6 +206,14 @@ schema/application downgrade after protected post-cutover rows exist
   named in the readiness manifest. Caller-supplied timestamps, ordinals, event
   IDs, or generation claims cannot substitute. Lifecycle control imports no
   review, CON, or outbox repository.
+- The CON readiness manifest enumerates every obligation-root writer and proves
+  that each writer acquires the shared fence before allocating its ordinal or
+  locking CON-owned obligation rows. Missing, optional, or differently ordered
+  writer hooks fail composition and preflight. Independent-session tests race
+  every creation, requeue, successor, and repair writer against
+  `admission_fenced -> commands_draining` in both orders. The writer either
+  commits under an ordinal included by the cutoff or observes
+  `commands_draining` and fails without allocating or mutating an obligation.
 - ART-backed review maintenance/projection uses the same fenced handoff: claim
   and persist durable `in_flight` under the shared fence, commit/release, perform
   provider I/O outside every database transaction and lifecycle advisory lock,
@@ -255,9 +266,12 @@ schema/application downgrade after protected post-cutover rows exist
   actor/action linkage with the same composite/trigger human-kind enforcement
   used by review records, direct-SQL rejection of service/system/external/legacy
   actor IDs, AUTH/fence ordering, cutoff capture after prior completion
-  transactions, callback-versus-disable, pre-cutoff dispatch before adapter I/O,
-  post-cutoff/crossed-generation denial before adapter I/O, maintenance and
-  callback-successor denial, and downgrade refusal once protected history exists.
+  transactions, every obligation writer versus cutoff capture in both orders,
+  missing-writer-hook composition failure, callback-versus-disable, pre-cutoff
+  dispatch before adapter I/O, post-cutoff/crossed-generation denial before
+  adapter I/O, maintenance and callback-successor denial, canonical same-root
+  claim recovery, bounded denial audit, and downgrade refusal once protected
+  history exists.
   Failure injection after reservation, observation, history append, control CAS,
   audit, and outbox flush proves rollback; crash after commit plus exact replay,
   timeout-without-advance, bounded lease release, and forward retry are explicit.

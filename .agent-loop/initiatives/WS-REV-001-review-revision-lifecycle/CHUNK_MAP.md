@@ -24,7 +24,7 @@ explicit start signal.
 | `WS-REV-001-10` | Final Acceptance, WS-CON Atomic Integration, And Hidden Composition | L1 | 09B; approved and merged ART/task-owner `Submission.artifact_hash` amendment; merged CON FinalAcceptance-sourced lineage schema and flush-only contribution/award participant; no mandatory contribution-evidence projection | Proposed |
 | `WS-REV-001-11` | Admin Overrides, Reviewer-Revocation Recovery, And Reconciliation | L1 | 10; AUTH invalidation; four proposed REV actions registered/planned; AUTH-09E plus exact reconciliation service row; ART Operator recovery port | Proposed |
 | `WS-REV-001-12` | Snapshot Projection, Notifications, And Observability | L1 | 11; ART projection port; outbox foundation; AUTH-09E plus exact artifact-reference/projection service rows | Proposed |
-| `WS-REV-001-12A` | Joint Lifecycle Release-Control Foundation | L1 | 12 review drain-observation port; exact core WS-CON hidden-readiness manifest; `review.lifecycle.activation.manage` registered/planned; CON dispatch/callback fence hooks plus fulfillment/outbox drain-cutoff and observation port | Proposed |
+| `WS-REV-001-12A` | Joint Lifecycle Release-Control Foundation | L1 | 12 review drain-observation port; exact core WS-CON hidden-readiness manifest; `review.lifecycle.activation.manage` registered/planned; CON obligation-writer, dispatch, and callback fence hooks plus fulfillment/outbox drain-cutoff and observation port | Proposed |
 | `WS-REV-001-13` | Coherent Public Release, Live API Drill, And Release Proof | L1 | 12A; every required REV and ART binding action activated by AUTH after hidden behavior; ART/CON/outbox live readiness | Proposed |
 
 ## Dependency order

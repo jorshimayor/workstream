@@ -22,8 +22,9 @@ activation. ART owns bytes, bindings, verification, recovery, and typed artifact
 capabilities.
 
 REV-12A owns one shared hidden `JointLifecycleReleaseControl` and typed mutation
-fence. CON supplies mandatory fulfillment dispatch/callback fence hooks and one
-same-session drain-cutoff and observation port. CON allocates an immutable,
+fence. CON supplies mandatory fulfillment obligation-writer, dispatch, and
+callback fence hooks plus one same-session drain-cutoff and observation port.
+CON allocates an immutable,
 monotonically increasing ordinal for each fulfillment-obligation root only after
 the shared fence is acquired. REV persists only the server-derived cutoff and
 never imports CON or outbox repositories. The shared dispatcher owns

@@ -234,8 +234,17 @@ AUTH action registration, ActionOwner/evaluator edit, or availability change
   pre-cutoff root may create and finalize only attempts under that root;
   post-cutoff, crossed-generation, caller-supplied-ordinal, requeue, maintenance,
   reconciliation, and callback-successor cases fail before adapter or successor
-  I/O and leave the phase, event, delivery, callback, award, audit, and outbox
-  state unchanged.
+  I/O. They preserve phase, obligation-root, award, delivery, and callback truth;
+  append bounded denial audit evidence; create no successor outbox event; and
+  permit only the shared dispatcher's canonical claim-to-retryable recovery for
+  the same root event. The drill proves that recovery transition is idempotent,
+  cannot change provider or award truth, and does not strand a claimed event.
+- Preflight enumerates every CON obligation creation, requeue, successor, and
+  repair writer and requires its exact merged shared-fence hook. Barrier tests
+  race each writer against cutoff capture in both orders: the writer either
+  commits under an ordinal included by the cutoff or observes
+  `commands_draining` and fails before allocating an ordinal or changing an
+  obligation.
 - The joint drill also proves contribution-policy/binding setup, TaskAssignment
   and ReviewLease ContributionPolicyVersion freezes, reviewer contribution for
   all three decisions, immutable Review, findings, and resolutions for every round,
