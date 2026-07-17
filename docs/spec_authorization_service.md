@@ -119,7 +119,7 @@ The active model has no `both`, replacement field, replacement event, or
 replacement reason. Qualification evidence is bound to the same actor, project,
 and exact requested role. One active row is permitted per
 actor/project/role. Issue idempotency includes the requested role; revoke derives
-the role from the locked grant. Migration `0024` refuses upgrade when obsolete
+the role from the locked grant. Migration `0025` refuses upgrade when obsolete
 combined or replacement evidence exists and never converts or deletes those
 rows. It replaces current typed and PostgreSQL validators without changing
 historical migrations.
@@ -713,7 +713,8 @@ The implementation order is fixed by the WS-AUTH-001 chunk map:
 8. `WS-AUTH-001-08`: bootstrap/admin grants;
 9. `WS-AUTH-001-09A`: fixed service identity and static matrix foundation;
 10. `WS-AUTH-001-09B`: controlled service ActorProfile/ActorIdentityLink
-    provisioning;
+    provisioning with an unverified service link until AUTH-09E verifies the
+    service token;
 11. `WS-AUTH-001-09C`: actor and identity-link administrative reads;
 12. `WS-AUTH-001-09D`: actor and identity-link lifecycle mutations;
 13. `WS-AUTH-001-09E`: fixed service runtime admission without human grant

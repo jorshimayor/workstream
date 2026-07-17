@@ -290,8 +290,9 @@ resources and state transitions.
 Migration custody is reconciled with merged main: AUTH-05A owns `0018`, AUTH-05B
 solely owns `0019`, AUTH-06 uses `0020`, AUTH-07A action evidence uses `0021`,
 AUTH-08 uses `0022`, and the AUTH-09A fixed-service identity foundation uses
-`0023`. After `0023` merges, AUTH-10 uses `0024`, AUTH-11 uses `0025`, AUTH-12
-uses `0026`, AUTH-13 uses `0027`, AUTH-14 uses `0028`, and AUTH-15 uses `0029`
+`0023`. AUTH-09B uses `0024` for service-link verification timestamps. AUTH-10
+uses `0025`, AUTH-11 uses `0026`, AUTH-12 uses `0027`, AUTH-13 uses `0028`,
+AUTH-14 uses `0029`, and AUTH-15 uses `0030`
 so every new protected surface receives typed/PostgreSQL ActionId evidence
 parity in its owning cutover. Feature-gated REV/ART additive registrations use
 the next trusted-main migration head when their complete contracts become
@@ -451,7 +452,7 @@ idempotency hashes the requested role; revoke derives the role from the locked
 grant. Same key/different role mismatches, new-key duplicate same-role issue is
 a stable audited conflict, and replay reauthorizes before disclosure.
 
-AUTH-10 replaces current typed and PostgreSQL validators in migration `0024`
+AUTH-10 replaces current typed and PostgreSQL validators in migration `0025`
 without editing `0018`, `0019`, or `0022`. It fails closed if obsolete combined
 or replacement evidence exists and refuses an unsafe downgrade rather than
 converting or deleting evidence. Only issued and revoked success events remain.
@@ -568,6 +569,37 @@ PermissionId mapping, canonical target, principal class, candidates, guards,
 surface, and revalidation rule before runtime edits. Each owning migration
 updates current typed and PostgreSQL audit validation; no chunk may promise an
 active surface whose ActionId is absent. AUTH-11 therefore owns migration
-`0025`, and later migration reservations shift through AUTH-15 as recorded in
-D15. AUTH-16 aggregates proof; it does not discover or backfill missing
+`0026`, and later migration reservations shift through AUTH-15 as recorded in
+D15 and D28. AUTH-16 aggregates proof; it does not discover or backfill missing
 registrations.
+
+## D28: Service provisioning records an unverified issuer binding
+
+Status: accepted as required AUTH-09B preimplementation repair on 2026-07-17.
+
+The provisioning administrator selects one fixed `ServiceIdentity` and supplies
+one opaque subject. The issuer is server-owned configuration exposed through the
+provider-neutral `AuthVerifier` port. It never comes from request input, provider
+branching, fallback configuration, or the administrator's own identity link.
+
+Provisioning is not proof that the service presented a token. AUTH-09B migration
+`0024` therefore makes `ActorIdentityLink.last_verified_at` nullable only for
+service links, removes its implicit default, and requires human links to remain
+verified. Human first access writes database time explicitly. New service
+profiles and links keep `last_seen_at` and `last_verified_at` null until AUTH-09E
+successfully verifies that exact service token. The migration allocation shifts
+AUTH-10 through AUTH-15 to `0025` through `0030`; historical migrations remain
+immutable.
+
+The administrative mutation locks `AuthorityControl`, caller profile, exact
+caller link, and matched system Access Administrator grant before fixed service
+identity and external issuer/subject advisory locks. All canonical human lock
+helpers use profile-before-link order. Success advances only the human caller's
+verification timestamps. Replay reauthorizes and advances only that caller;
+mismatch, denial, conflict, or failure advances neither caller nor service.
+
+Service creation keeps the current `effective=true -> false` authority
+invalidation direction because the new binding invalidates cached negative
+identity-absence projections. It does not claim that a service permission was
+previously or is now executable. AUTH-09E remains the only runtime service
+admission owner.

@@ -161,8 +161,9 @@ AUTH-10 through AUTH-15 require exact action enumeration before each starts.
 AUTH-10 additionally owns the clean cut across the typed `ProjectRole`, audit,
 and idempotency contracts plus the current PostgreSQL validators recreated by
 migration `0022`, removing obsolete `ProjectRole.BOTH` and replacement evidence.
-AUTH-11 through AUTH-15 own shifted migrations `0025` through `0029` for their
-action/evidence parity.
+AUTH-09B owns migration `0024` for service-link verification timestamp
+semantics. AUTH-10 through AUTH-15 own shifted migrations `0025` through `0030`
+for their action/evidence parity.
 
 AUTH-05A and CAT post-merge memory have no remaining blocker and are merged.
 The combined AUTH-05 contract

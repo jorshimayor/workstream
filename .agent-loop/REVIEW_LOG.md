@@ -1,5 +1,15 @@
 # Review Log
 
+## 2026-07-17 - WS-AUTH-001-09B Initial Plan Review Failed
+
+The first exact-head L1 review rejected the inherited 09B contract before any
+runtime edit. It incorrectly derived the service issuer from the human caller,
+fabricated service verification time, inverted existing invalidation direction,
+left canonical request/resource/evidence bindings incomplete, omitted a required
+forward migration, and did not close lock ordering or concurrency proof. The
+contract is being repaired as one planning-only candidate; runtime remains
+untouched until fresh exact-head reviewer approval.
+
 ## 2026-07-17 - WS-AUTH-001-09B Started
 
 PR #132 merged AUTH-09A as `299363a`; Loop Memory passed and stopped with 09B
