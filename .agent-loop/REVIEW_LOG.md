@@ -1,5 +1,15 @@
 # Review Log
 
+## 2026-07-17 - WS-AUTH-001-09B Plan Review Passed
+
+The repaired contract passed every required preimplementation group at exact SHA
+`4a980fdd024a3311d604ec3e2cb38a8897f8a2cf`. It binds configured issuer through
+the verifier port, records service links as unverified until AUTH-09E, uses the
+canonical profile-before-link order, preserves negative-projection invalidation,
+adds migration `0024`, and requires behavior, privacy, concurrency, rollback,
+and three focused 90 percent coverage proofs. Runtime implementation may now
+begin within this boundary; AUTH-09C remains inactive.
+
 ## 2026-07-17 - WS-AUTH-001-09B Initial Plan Review Failed
 
 The first exact-head L1 review rejected the inherited 09B contract before any

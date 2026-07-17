@@ -38,3 +38,19 @@ digest restriction, stale link-before-profile documentation, and missing
 verifier-boundary coverage. All five are repaired in the next planning-only
 candidate. Runtime implementation must not begin until every required
 preimplementation track passes that exact SHA.
+
+## Final candidate
+
+- SHA: `4a980fdd024a3311d604ec3e2cb38a8897f8a2cf`
+- Result: **PASS**
+- Runtime edits at review: none
+
+| Reviewer group | Result | Open finding |
+|---|---|---|
+| security/auth and role semantics | PASS | none |
+| actor/service and ART integration | PASS | none |
+| architecture/concurrency and REV/CON integration | PASS | none |
+
+The exact candidate passed all 80 agent-gate tests, stale wording,
+authorization-doc consistency, Markdown links, and diff integrity. Runtime may
+begin only within this reviewed 09B contract.
