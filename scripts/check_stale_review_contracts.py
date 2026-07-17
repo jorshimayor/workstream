@@ -16,13 +16,13 @@ TEXT_SUFFIXES = {".html", ".md", ".puml"}
 # These supplied files are immutable evidence, not active repository policy.
 ARCHIVAL_PATHS = {
     "docs/reference_specs/WS-AUTH-001-actor-profile-role-and-authorization-service-specification.md",
-    "docs/reference_specs/WS-CON-001-contribution-record-and-compensation-boundary-specification.md",
     "docs/reference_specs/WS-REV-001-review-lifecycle-specification.md",
     "docs/reference_specs/WS-IMP-001-workstream-v0.1-coding-agent-implementation-specification.md",
 }
 
 # Closed engineering/product reviews may describe earlier contracts verbatim.
 HISTORICAL_PATHS = {
+    "docs/reference_specs/WS-CON-001-contribution-record-and-compensation-boundary-specification.md",
     "docs/internal_reviews/2026-06-11_chunk9_pre_review_gate.md",
     "docs/internal_reviews/2026-06-11_revision_context_rebase.md",
     "docs/internal_reviews/2026-06-12_chunk10_checker_trial.md",

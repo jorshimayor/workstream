@@ -4434,7 +4434,7 @@ def test_stale_review_contract_classification_is_exact() -> None:
         gate.classification(
             "docs/reference_specs/WS-CON-001-contribution-record-and-compensation-boundary-specification.md"
         )
-        == "archival"
+        == "historical"
     )
     assert gate.classification("docs/reference_specs/WS-REV-001-copy.md") == (
         "unclassified"

@@ -755,8 +755,9 @@ documents. The reconciliation retains CON's exact reviewer/submitter operation
 shapes, frozen-policy award rules, source constraints, and joint transaction
 boundary while preserving REV's blocking/advisory finding model, optional
 reject findings, deterministic revision preparation, deferred reputation, and
-no-adjudication v0.1 boundary. The newly supplied CON reference Markdown is
-classified as an exact archive by the fail-closed review scanner.
+no-adjudication v0.1 boundary. The newly supplied CON reference Markdown is an
+exact historical path in the fail-closed review scanner: it is a noncanonical
+working transcription, not an archival or runtime-authority input.
 
 PR #142 contains planning and documentation only. It activates no CON or REV
 runtime behavior. Because current-main reconciliation changed review-relevant

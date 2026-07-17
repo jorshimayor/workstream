@@ -1510,16 +1510,18 @@ Fields:
 - `source_review_id`
 - `accepted_submitter_id`
 - `accepted_at`
-- `recorded_by_reviewer_id`
-- `review_policy_id`
+- `recorded_by`
+- `policy_context_ref`
 
 Purpose:
 
 This immutable REV-owned internal fact is created only inside the authorized
 `Review(accept)` transaction. Existing `Submission` is already the version
 identity, so the stored FK is `submission_id`; no SubmissionVersion entity or
-`submission_version_id` alias is introduced. `review_policy_id` is the exact
-locked ReviewPolicy context for the accepted Review.
+`submission_version_id` alias is introduced. `recorded_by` is the canonical
+human reviewer `ActorProfile.id` on the source Review and ReviewLease.
+`policy_context_ref` is a foreign key to the exact immutable `ReviewPolicy.id`
+whose project and guide version match the reviewed Submission context.
 
 PostgreSQL enforces `UNIQUE(task_id)`, `UNIQUE(source_review_id)`, and
 `UNIQUE(submission_id)` plus same-project/task/Submission/Review/submitter/
