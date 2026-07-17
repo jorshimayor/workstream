@@ -6,7 +6,8 @@ Original planning merged through PR #97, artifact/LocalStorage foundation
 merged through PR #101, the AWS-first object-storage amendment merged through
 PR #120 as `4408256`, the external-service adapter foundation merged through
 PR #127 as `f64a8e5`, and committed-source preparation merged through PR #129
-as `9a04434`. The user explicitly started `WS-ART-001-02A3` on 2026-07-16.
+as `9a04434` on 2026-07-16. The user explicitly started
+`WS-ART-001-02A3` on 2026-07-16.
 
 The Flow Node-focused amendment candidate `6cc422d` passed deterministic checks
 but failed internal review on recovery/API completeness. Before repair, the user
@@ -23,10 +24,10 @@ The failed Flow Node candidate and every reviewer session are closed. It is not
 approval or reusable evidence. Its source remains on branch
 `codex/ws-art-001-fn01-isolation-amendment` for the deferred Flow Node plan.
 
-## Active Work
+## Current Work
 
-`WS-ART-001-02A3` implementation and deterministic repair are complete. Its
-approved boundary atomically replaces
+`WS-ART-001-02A3` implementation, deterministic repair, and internal review are
+complete. Its approved boundary atomically replaces
 ArtifactStore v1 with byte-only v2, migrates LocalStorage and the empty
 pre-production artifact schema, installs the immutable storage-namespace fence,
 removes dormant `flow_node` configuration, and activates startup plus periodic
@@ -41,7 +42,8 @@ Flow Node chunk.
 
 ## Gate
 
-The current gate is exact-SHA internal review for `WS-ART-001-02A3`. The L1
-plan review passed after keeping durable admission, put attempts, verification
-publication, and recovery in their later owning chunks. No later artifact
-chunk starts automatically, and only the user may approve merge.
+The current gate is external GitHub CI, CodeRabbit, and human review for
+`WS-ART-001-02A3`. The L1 plan and implementation reviews passed after keeping
+durable admission, put attempts, verification publication, and recovery in
+their later owning chunks. No later artifact chunk starts automatically, and
+only the user may approve merge.

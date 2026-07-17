@@ -17,15 +17,15 @@ REJECTED
 CANCELLED
 ```
 
-Payment status is separate from task status:
+Compensation projection state is separate from task status:
 
 ```text
-NONE
-PENDING
-PAYOUT_SUBMITTED
-PAID
-DISPUTED
+delivery_status: pending_delivery | acknowledged_by_adapter
+fulfillment_status: pending | failed | fulfilled
 ```
+
+Explicitly unpaid contributions create no award and therefore no compensation
+projection.
 
 External adapter pipeline states such as `INGESTED`, `FILTERED`, `NORMALIZED`, and `ROUTED` are not v0.1 task lifecycle states. If source adapters are added later, they must normalize accepted external input into the canonical task lifecycle before contributors see it.
 
@@ -43,14 +43,13 @@ Required before leaving:
 - title
 - description
 - acceptance criteria
-- base amount
 - required output
 
 ### SCREENING
 
 The task is structurally prepared but not yet released. This is the pre-release
 quality gate used to catch weak guides, vague acceptance criteria, missing
-submission artifact requirements, bad payment policy, missing generated project
+submission artifact requirements, missing generated project
 pre-submit checker policy, missing approved generated project post-submit checker
 policy with matching provenance, missing review policy, or missing revision
 policy before contributors see the task.
@@ -59,7 +58,6 @@ Required before entering:
 
 - draft task has required fields
 - project guide version is attached
-- payment policy is present
 - task creator believes the task is ready for independent screening
 
 Required before leaving:
@@ -89,7 +87,6 @@ Required before entering:
   locked in the task context
 - review policy present
 - revision policy present
-- payment policy present
 - guide version locked for this task
 - source reference recorded when imported
 - acceptance criteria frozen; a controlled new guide/task context follows its
@@ -98,6 +95,12 @@ Required before entering:
 ### CLAIMED
 
 A contributor has claimed or been assigned the task.
+
+Required before entering:
+
+- an active published project ContributionPolicyVersion exists
+- TaskAssignment freezes that exact version for submitter compensation
+- the `accepted_submission` rule is explicit: compensated or unpaid
 
 ### IN_PROGRESS
 
@@ -150,7 +153,9 @@ This state can be entered from:
 Required before entering:
 
 - from `EVALUATION_PENDING`: checker run id, blocking checker results, contributor-visible messages, and suggested fixes
-- from `REVIEW_PENDING`: review decision id and at least one structured review finding
+- from `REVIEW_PENDING`: review decision id, at least one structured review
+  finding, reviewer `completed_review` contribution, and any applicable reviewer
+  award
 
 Before the contributor resumes, Workstream prepares the next revision context. That preparation checks whether the active project guide or policy context changed since the prior submission was locked. Revision policy decides whether the next attempt keeps the prior context, rebases to the current active context, or is blocked for project-manager repair.
 
@@ -167,13 +172,17 @@ Required before entering:
 - evidence present
 - reviewer cited evidence supporting acceptance
 - no unresolved high or medium prior revision finding
-- payment amount calculated from the locked project payment policy
+- applicable submitter compensation evaluated from the TaskAssignment-frozen
+  contribution policy
 
 Required side effects:
 
-- contribution record created from accepted submission, accepting review, locked guide version, artifact hash manifest, and acceptance evidence refs
-- payment record created or updated from the contribution record
-- reputation events reference the contribution record
+- reviewer `completed_review` contribution created with the Review
+- submitter `accepted_submission` contribution created from the accepted
+  submission, accepting Review, frozen policy lineage, and artifact hash
+- applicable awards created independently from the reviewer and submitter
+  contribution records
+- reputation events reference the applicable contribution record
 
 ### REJECTED
 
@@ -183,6 +192,7 @@ Required before entering:
 
 - rejection review decision
 - rejection reason
+- reviewer `completed_review` contribution and any applicable reviewer award
 
 ### CANCELLED
 
@@ -223,9 +233,10 @@ No administrative or recovery grant authorizes these transitions:
 - `SUBMITTED -> ACCEPTED` directly
 - `SUBMITTED -> NEEDS_REVISION` without checker run unless the submission packet cannot be parsed
 - any transition based on artifacts whose hashes differ from the checker run
-- payment `NONE -> PAID` without accepted task and payment record
-- payment exposure without a contribution record
-- payment `PENDING -> PAID` without payment reference
+- compensation projection `pending -> fulfilled` without an immutable payable
+  award and fulfillment receipt
+- compensation exposure without a contribution record and frozen policy
+- fulfillment without an external reference
 
 ## Submission Versioning
 
@@ -282,7 +293,8 @@ Every transition records:
 
 No lifecycle change happens silently.
 
-Payment transitions are recorded in the payment ledger and audit log, not as task lifecycle states.
+Compensation-award and fulfillment transitions are recorded in their own
+records and audit events, not as task lifecycle states.
 
 ## Anti-Bypass Rules
 
@@ -292,7 +304,7 @@ Payment transitions are recorded in the payment ledger and audit log, not as tas
   prior submissions.
 - Guide edits do not retroactively change active tasks; an owning policy/rebase
   path records affected tasks, context, actor authority, and reason.
-- A task with disputed evidence, suspected copied material, or payment conflict
+- A task with disputed evidence, suspected copied material, or compensation conflict
   cannot be accepted until the issue is resolved through its owning review,
-  rejection, revision, or payment-dispute behavior. Authorization recovery does
+  rejection, revision, or compensation-dispute behavior. Authorization recovery does
   not create a product resolution.

@@ -201,7 +201,7 @@ include `artifact_storage_unavailable`, `artifact_input_mismatch`,
 Transient post-submit retrieval failure keeps the task in
 `evaluation_pending`. Integrity mismatch quarantines the replica and blocks
 binding. Neither condition creates `accept`, `needs_revision`, `reject`, a
-contribution, payment exposure, or reputation effect.
+contribution, compensation-award, or reputation effect.
 
 ## Shared Adapter Convention
 

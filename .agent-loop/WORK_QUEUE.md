@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-ART-001-02A3` | ArtifactStore v2 Local Clean Cut | L1 | Implementation and deterministic repair complete; exact-SHA internal review pending |
+| `WS-ART-001-02A3` | ArtifactStore v2 Local Clean Cut | L1 | Internal review complete; awaiting external PR checks and human review |
 
 Live post-merge state remains read from signed `automation/loop-memory`
 output. This authored queue records the separately approved parallel chunks.
@@ -14,7 +14,7 @@ output. This authored queue records the separately approved parallel chunks.
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
 | `WS-QUAL-001-01B2` | Baseline Evidence And CI Ratchet | L1 | Paused for AUTH priority; no valid replacement baseline yet |
-| `WS-AUTH-001-09` | Actor State, Identity Revocation, And Service Actors | L1 | Inactive until AUTH-08 merge/memory and explicit user start |
+| `WS-AUTH-001-09A` | Fixed Service Identity Foundation | L1 | Reviewed in PR #132; awaiting explicit human merge approval |
 | `WS-QUAL-001-02` | Project Service Coverage | L1 | Inactive until 01B2 merge/memory plus explicit user start |
 | `WS-POL-002-04` | Locked Runtime Execution And Routing Hardening | L1 | Inactive pending relevant authorization proof and a separate explicit user start |
 | `WS-ART-001-02B1` | S3-Compatible MinIO And AWS | L1 | Inactive until 02A3 merge and explicit user start |
@@ -69,6 +69,8 @@ output. This authored queue records the separately approved parallel chunks.
 | `WS-AUTH-001-06` | Canonical Actor Profile And Identity Link | L1 | Merged through PR #124 as `f599551` on 2026-07-15 |
 | `WS-AUTH-001-07A` | Closed Permission And Action Catalogue | L1 | Merged through PR #126 as `e9d72a1` on 2026-07-15 |
 | `WS-AUTH-001-07B` | Deny-By-Default Kernel And Self-Action Cutover | L1 | Merged through PR #130 as `90eca12` on 2026-07-15 |
+| `WS-AUTH-001-08` | Bootstrap Access Administrator Grant | L1 | Merged through PR #131 as `aa0fdcd` on 2026-07-16 |
+| `WS-ART-001-02A2` | Committed Source And Local Preparation | L1 | Merged through PR #129 as `9a04434` on 2026-07-16 |
 | `WS-ART-001-OBJECT-STORAGE-AMENDMENT` | AWS-First Object Storage Planning Amendment | L1 | Merged through PR #120 as `4408256` on 2026-07-14 |
 | `WS-ART-001-02A1` | External Service Adapter Foundation | L1 | Merged through PR #127 as `f64a8e5` on 2026-07-15 |
 | `WS-ART-001-02A2` | Committed Source And Local Preparation | L1 | Merged through PR #129 as `9a04434` on 2026-07-16 |
@@ -79,7 +81,8 @@ output. This authored queue records the separately approved parallel chunks.
 AUTH-05A merged through PR #115 as `8e1cde6`, and CAT plus its post-merge memory
 merged through PRs #117 and #118. AUTH-05B merged through PR #119 as `ad71c7e`.
 AUTH-06 merged through PR #124 as `f599551`. AUTH-07A, AUTH-07B, and AUTH-08
-merged through PRs #126, #130, and #131. Do not start AUTH-09 or POL-002-04
+merged through PRs #126, #130, and #131. AUTH-09A is reviewed in its isolated
+parallel worktree; do not start an AUTH-09 successor or POL-002-04
 automatically.
 
 Coverage R10 merged through PR #108. Do not start 01B2, chunk 02, or another
@@ -87,7 +90,8 @@ coverage implementation chunk from this worktree.
 
 `WS-ART-001-01`, the AWS-first planning amendment, `02A1`, and `02A2` are
 merged. R2 and Flow Node are deferred. The user explicitly started `02A3` on
-2026-07-16; do not start `02B1` automatically.
+2026-07-16. Its internal review is complete and it awaits its own PR
+publication and human review; do not start `02B1` automatically.
 
 Coverage work proceeds independently in its own worktree and is not owned by
 this AUTH queue update.

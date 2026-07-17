@@ -30,8 +30,11 @@ Do not add recovery attempts, Operator routes, or product cutovers.
 - guide, task, submission, checker, or review cutover;
 - provider mutation replay, overwrite, delete, retain, or release;
 - task-claim or reviewer-lease changes;
-- production dispatch before AUTH-07 and AUTH-09 register the exact service
-  principals/actions and 02D attaches and activates their enforcement.
+- production dispatch before AUTH registers the exact planned actions and
+  static service-action matrix, provisions the exact service ActorProfiles and
+  ActorIdentityLinks, admits them through AUTH-09E, 02C2/02D merge hidden
+  behavior/resource composition, and the later AUTH activation checkpoint
+  integrates their evaluators.
 
 ## Acceptance Criteria
 
@@ -65,8 +68,9 @@ Do not add recovery attempts, Operator routes, or product cutovers.
   `integrity_mismatch/available/invalid` and cannot reset;
 - complete reads enforce a total deadline shorter than the lease by a tested
   persistence margin, including continuously progressing slow streams;
-- mechanics remain inactive until 02D registers and tests exact internal
-  authorization;
+- mechanics remain inactive through 02D while ART builds and tests hidden
+  resource/behavior composition; only the later AUTH internal-action activation
+  checkpoint can make them executable;
 - migrations prove fresh, prior-head, populated, and empty round-trip behavior;
 - changed subsystem coverage is at least 90 percent and repository coverage
   remains at least 78 percent;

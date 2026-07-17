@@ -201,11 +201,15 @@ same transaction.
 ## D25 - Paired Authorization Activation
 
 AUTH-07 registers artifact permissions, AUTH-08 owns applicable Operator grant
-definitions, and AUTH-09 provisions fixed service principals. Registry or
-principal presence alone is non-executable. Each WS-ART feature chunk activates
-only its exact actions by supplying canonical resource facts, guards, surface
-declarations, and behavior tests. AUTH-12, AUTH-14, and AUTH-15 do not provide a
-second artifact activation path.
+definitions, AUTH-09A owns the static service-action matrix, AUTH-09B provisions
+fixed service ActorProfiles and ActorIdentityLinks, and AUTH-09E admits them at
+runtime. Registry, grant, profile, link, matrix, or feature presence alone is
+non-executable. AUTH first registers an exact planned action and activation
+custodian; the owning WS-ART chunk then supplies hidden canonical resource facts,
+guards, surface declarations, behavior, and tests while the real kernel still
+fails closed; AUTH finally integrates the evaluator and alone changes that
+action to active. ART never writes action availability. AUTH-12, AUTH-14, and
+AUTH-15 do not provide alternate artifact activation paths.
 
 ## D26 - AWS Release Activation
 
@@ -231,11 +235,17 @@ Workstream never calls `ListObjects` or `ListObjectsV2`. The adapter maps only
 nonexistent opaque challenge key returns 404 under the actual runtime identity
 before AWS activation.
 
-## D28 - Authorization Owns Artifact Service Identities
+## D28 - Authorization Owns Artifact Activation Custody
 
-ART must not invent service principals or activate authorization actions. The
-02A3 put acknowledgement is internal storage evidence and carries no fabricated
-service-principal identity. Later behavior uses only the fixed identities and
-exact permissions provisioned by AUTH: verifier, scheduler, put resolver, and
-binding service. Operator verification retry remains a separate independently
-activated action.
+AUTH owns all artifact ActionId registration, service identities, exact static
+matrix rows, evaluators, activation custody, and availability. ART owns artifact
+resource facts, lifecycle guards, hidden behavior, and capability surfaces. ART
+must not invent a service principal, inspect AUTH grants or static matrix
+membership, or activate an authorization action.
+
+The seven fixed service identities and complete 25-action custody transfer are
+defined in
+`../WS-XINT-001-lifecycle-boundary-reconciliation/AUTH_ART_HANDOFF.md`. Operator
+verification retry remains an independently authorized human action. Service
+identity, Celery executor identity, and execution-generation fencing never
+substitute for one another.

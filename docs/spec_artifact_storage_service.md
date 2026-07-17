@@ -8,7 +8,7 @@ schemas change only when their owning implementation chunk merges.
 The specification covers provider-neutral immutable byte storage, independent
 verification, guide/submission/checker binding, Operator observability, and
 durable recovery. It does not implement review decisions, contribution,
-payment, reputation, semantic search, public publication, physical deletion,
+compensation, reputation, semantic search, public publication, physical deletion,
 or Flow Node.
 
 ## Architecture
@@ -787,7 +787,7 @@ tests cover each authority input for both service-execution mutation classes.
 | stale executor/generation | no terminal write | no effect | current execution owns outcome |
 
 Storage failures never become contributor checker findings, review decisions,
-contribution records, payment exposure, or reputation events.
+contribution records, compensation-award exposure, or reputation events.
 
 ## Operator Recovery
 
@@ -877,7 +877,7 @@ code = pre_submission_infrastructure_unavailable
 
 This is infrastructure state, not a checker result, review decision, or
 contributor outcome. It creates no admission, submission, checker finding,
-payment, contribution, or reputation effect. The sealed upload session and
+compensation, contribution, or reputation effect. The sealed upload session and
 artifact set remain sealed, unconsumed, and reusable until normal expiry; only
 the infrastructure attempt and audit are persisted. Idempotency scope is actor,
 task, sealed session/artifact set, locked context, client key, and canonical

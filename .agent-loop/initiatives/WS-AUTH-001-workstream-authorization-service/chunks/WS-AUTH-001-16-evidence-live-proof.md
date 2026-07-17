@@ -82,9 +82,14 @@ starting WS-POL-002-03 automatically
   policy source.
 - PostgreSQL tests cover provisioning, grant, final-admin, revocation/command,
   and idempotency races.
-- Live drill proves bootstrap, scoped admin grants, submitter/reviewer grants,
+- Live drill proves bootstrap, scoped admin grants, separate submitter,
+  reviewer, and adjudicator grants and independent revocation,
   admin/contributor separation, same-token revocation, suspension/reactivation,
   service handling, cross-project denial, and final-admin safety.
+- Adjudicator grant behavior is visible and independently revocable while all
+  adjudication actions remain unavailable until WS-REV defines the lifecycle
+  and AUTH activates exact adjudication actions; admin authority alone cannot
+  submit, review, or adjudicate.
 - Live drill implements the complete adopted specification sequence, including
   Finance and Audit Authority capability separation, Project Manager inability
   to review by admin role alone, self-grant/self-revoke denials, full authorized
@@ -124,7 +129,7 @@ python3 scripts/check_internal_review_evidence.py
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python scripts/api_contract_e2e.py)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python scripts/auth_api_e2e.py)
 (cd backend && .venv/bin/docstr-coverage --config .docstr.yaml)
-python3 scripts/check_stale_authorization.py
+python3 scripts/check_stale_authorization_docs.py
 git diff --check
 ```
 

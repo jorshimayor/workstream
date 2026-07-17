@@ -20,7 +20,7 @@ Project Guide
 -> Human Review
 -> Needs Revision / Accepted / Rejected
 -> Contribution Record
--> Payment Record
+-> Conditional Compensation Award / Fulfillment
 -> Reputation Event
 ```
 
@@ -38,7 +38,7 @@ The first version prioritizes:
 - revisions
 - evidence
 - contribution records
-- payment ledger
+- compensation awards and fulfillment records
 - reputation ledger
 
 Deferred:

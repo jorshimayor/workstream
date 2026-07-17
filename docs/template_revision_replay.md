@@ -29,10 +29,12 @@ Contributor-visible fields:
 | next review policy version | `<review policy version>` |
 | prior revision policy version | `<revision policy version>` |
 | next revision policy version | `<revision policy version>` |
-| prior payment policy version | `<payment policy version>` |
-| next payment policy version | `<payment policy version>` |
 | rebase reason | `<reason>` |
 | change summary shown to contributor | `<summary>` |
+
+Compensation is not rebased here. Submitter compensation remains the immutable
+TaskAssignment freeze; each later ReviewLease independently freezes its current
+reviewer ContributionPolicyVersion.
 
 Reviewer and authorized recovery evidence fields:
 

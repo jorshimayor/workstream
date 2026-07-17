@@ -2,11 +2,17 @@
 
 Workstream is Flow's task evaluation and contribution infrastructure.
 
-Workstream manages project guides, task queues, submission packets, automated checks, reviewer routing, evaluation sprints, revision loops, contribution records, payment status, and reputation signals.
+Workstream manages project guides, task queues, submission packets, automated
+checks, reviewer routing, evaluation sprints, revision loops, contribution
+records, compensation award and fulfillment state, and reputation signals.
 
 Workstream is how Flow measures, certifies, and coordinates useful human-agent work.
 
-It is not a workspace and it is not blockchain-first. Operators can work with any local tools, human-agent workflow, or external execution environment. Workstream owns the project guide, task queue, submission packet, automated checks, human review, revision loop, acceptance state, payment ledger, and reputation record.
+It is not a workspace and it is not blockchain-first. Operators can work with
+any local tools, human-agent workflow, or external execution environment.
+Workstream owns the project guide, task queue, submission packet, automated
+checks, human review, revision loop, contribution record, conditional
+compensation award and fulfillment state, and reputation record.
 
 Workstream is source-agnostic, but v0.1 is manual-first. External origin onboarding, source adapters, automated routing, owner-agent execution workspaces, and on-chain settlement remain later adapters until the internal evaluation loop is proven.
 
@@ -23,7 +29,7 @@ Project Guide
 -> Human Review
 -> Needs Revision / Accepted / Rejected
 -> Contribution Record
--> Payment Record
+-> Compensation Award / Fulfillment when payable
 -> Reputation Update
 -> Lessons Learned
 ```
@@ -35,14 +41,19 @@ Different projects speak different domain languages, but serious task evaluation
 - every project has a guide
 - every project has an approved submission artifact policy
 - every task belongs to a project
-- every project has a payment policy that carries base amount, currency, and payout rules
+- every project has an active published contribution policy version with
+  explicit `accepted_submission` and `completed_review` rules, including
+  explicit unpaid rules where intended
 - every task has acceptance criteria
 - every submission has required artifacts, evidence references, hashes, and contributor attestation
 - every invalid submission packet is blocked before submission creation
 - every submission passes automated checks before human review
 - every review creates a decision
 - every revision must close prior feedback
-- every accepted task updates payment and reputation
+- every valid human review creates a reviewer contribution
+- every accepted task additionally creates a submitter contribution
+- every payable contribution updates compensation fulfillment; all contributions
+  can update reputation
 
 Workstream turns that operating knowledge into reusable infrastructure.
 
@@ -80,7 +91,7 @@ Workstream turns that operating knowledge into reusable infrastructure.
 - [Authorization Service](docs/spec_authorization_service.md)
 - [Immutable Artifact Storage](docs/spec_artifact_storage_service.md)
 - [Authorization Operations](docs/operations_authorization_service.md)
-- [Payment And Reputation](docs/operations_payment_reputation.md)
+- [Compensation And Reputation](docs/operations_payment_reputation.md)
 - [Risk Register](docs/risk_register.md)
 - [Process Pattern Baseline](docs/process_pattern_baseline.md)
 - [Architecture Lockdown](docs/architecture_lockdown.md)
@@ -124,6 +135,7 @@ Workstream turns that operating knowledge into reusable infrastructure.
 - [ADR 0012: Workstream Owns Product Authorization](docs/decision_0012_workstream_authorization_service.md)
 - [ADR 0013: Immutable Artifact Storage Boundary](docs/decision_0013_immutable_artifact_storage_boundary.md)
 - [ADR 0014: External Services Use One Adapter Convention](docs/decision_0014_external_service_adapter_convention.md)
+- [ADR 0015: Project Contributor Roles Are Independent](docs/decision_0015_project_contributor_roles_are_independent.md)
 
 ## Authorization Baseline
 
@@ -239,13 +251,16 @@ Submit packet
 Run checks
 Review packet
 Record review decision: accept, needs_revision, or reject
-Create contribution record for accepted work
-Record payment status separately for accepted work
+Create reviewer contribution for every valid human review
+Create submitter contribution only for accepted work
+Record compensation status only for payable contribution awards
 Update reputation from review outcome
 Review lessons learned
 ```
 
-The system is successful only if it prevents weak work from reaching review, preserves evidence, and gives operators a clear path from task intake to accepted paid output.
+The system is successful only if it prevents weak work from reaching review,
+preserves evidence, and gives operators a clear path from task intake through
+review, contribution, conditional compensation, and fulfillment.
 
 ## Operating Standard
 
@@ -269,11 +284,13 @@ Artifacts, evidence, and auditing:
 - submitted artifacts are immutable and hash-bound to checker runs
 - every checker result is stored and auditable
 
-Acceptance and payment:
+Contribution and compensation:
 
-- accepted work cites evidence before payment exposure is created
-- accepted work creates an evidence-backed contribution record before payment or reputation updates
-- payments are recorded separately from task acceptance
+- every valid human review creates a reviewer contribution from locked evidence
+- accepted work additionally creates a submitter contribution
+- only payable contributions create immutable awards and fulfillment tracking;
+  explicit unpaid rules create none
+- compensation fulfillment is recorded separately from task acceptance
 
 Checkers, lessons, and gates:
 
