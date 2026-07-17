@@ -81,6 +81,28 @@ requires AUTH-09B merge, signed post-merge memory, and a new explicit human
 start. AUTH-09D and AUTH-09E remain later separate lifecycle and service
 admission boundaries.
 
+## Merge Intent
+
+The immutable schema-v2 merge intent is
+`.agent-loop/merge-intents/WS-AUTH-001-09B.json`. It records AUTH-09B as the
+completed chunk candidate and names AUTH-09C only as the same-initiative
+successor. AUTH-09C still requires this PR to merge, signed automated memory to
+pass, and a separate explicit human start.
+
+## Reviewer Results
+
+| Track | Result | Blocking findings |
+|---|---|---|
+| Senior engineering | PASS AFTER FIXES | none |
+| QA/test | PASS AFTER FIXES | none |
+| Security/auth | PASS AFTER FIXES | none |
+| Product/ops | PASS | none |
+| Architecture | PASS AFTER FIXES | none |
+| CI integrity | PASS AFTER FIXES | none |
+| Docs | PASS AFTER FIXES | none |
+| Reuse/dedup | PASS AFTER FIXES | none |
+| Test delta | PASS AFTER FIXES | none |
+
 ## Remaining Risk
 
 The created service link is intentionally unverified and unusable by service
@@ -93,3 +115,10 @@ Review the server-owned issuer, strict fixed identity request, atomic
 idempotency/evidence chain, nullable unverified service timestamps,
 profile-before-link ordering, pre-lookup service denial, and absence of grants
 or feature activation. Only the human may approve and merge this PR.
+
+## Merge Ownership
+
+The agent may repair and publish this branch but may not merge it. Only the
+human may approve PR #143 for merge. After merge, trusted-main automation owns
+schema-v2 memory generation; no manual post-merge memory PR should be opened if
+that workflow succeeds.
