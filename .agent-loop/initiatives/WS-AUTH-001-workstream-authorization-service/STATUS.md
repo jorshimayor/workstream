@@ -128,7 +128,7 @@ contracts only.
 | `WS-AUTH-001-07A` | Merged | `codex/ws-auth-001-07-authorization-kernel` | #126 | Merged as `e9d72a1`; 74 permissions, 50 planned actions, and action-aware audit parity only. |
 | `WS-AUTH-001-07B` | Merged | `codex/ws-auth-001-07b-deny-default-kernel` | #130 | Merged as `90eca12`; signed memory passed. |
 | `WS-AUTH-001-08` | Merged | `codex/ws-auth-001-08-bootstrap-admin-grants` | #131 | Merged as `aa0fdcd`; signed memory passed. |
-| `WS-AUTH-001-XINT` | Planning active | `codex/ws-auth-001-xint-reconciliation` | - | Reconciles merged PR #139 into AUTH plans only. |
+| `WS-AUTH-001-XINT` | Internally reviewed | `codex/ws-auth-001-xint-reconciliation` | - | Exact planning SHA `2acabda` passed all required tracks; PR publication pending. |
 | `WS-AUTH-001-09` | Split | - | - | Split into 09A through 09E before runtime implementation. |
 | `WS-AUTH-001-09A` | Awaiting human merge | `codex/ws-auth-001-09-actor-state-service-actors` | #132 | Merge checkpoint is blocked: branch is open/conflicting; foundation valid, planning must converge on PR #139 and repeat exact-head review. |
 | `WS-AUTH-001-09B` | Proposed | - | - | Controlled service ActorProfile/ActorIdentityLink provisioning after 09A. |
