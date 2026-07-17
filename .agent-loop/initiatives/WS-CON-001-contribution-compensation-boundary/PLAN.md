@@ -2,23 +2,24 @@
 
 ## Proposed approach
 
-Adopt merged AUTH PR #140 and its underlying WS-XINT PR #139 boundary before
-runtime work, then deliver WS-CON through hidden, reviewable chunks. The core
-path is PostgreSQL-local and has no ART dependency:
+Adopt merged REV PR #128 at trusted main `0302bcf`, including AUTH-09A, AUTH PR
+#140, and the underlying WS-XINT PR #139 boundary before runtime work, then
+deliver WS-CON through hidden, reviewable chunks. The core path is
+PostgreSQL-local and has no ART dependency:
 
 ```text
 AUTH prepares review.decision and locks reviewer authority
 -> REV locks and recomposes canonical Review/Submission facts
 -> AUTH evaluates once and stages decision evidence
 -> REV stages Review/findings/resolutions, consumes ReviewLease, and closes queue
+-> CON reviewer operation creates completed_review and applicable reviewer awards
 -> on accept, REV creates immutable FinalAcceptance, accepts Task, and completes Assignment
+   -> CON submitter operation creates accepted_submission and applicable submitter awards
 -> on needs_revision, REV sets Task to needs_revision and keeps Assignment active
 -> on reject, REV sets Task to rejected with a bounded human reason and blocks
    only the same-task Assignment with its source Review
--> CON flush-only participant creates reviewer contribution and, only from
-   FinalAcceptance, submitter contribution plus applicable awards
 -> REV stages shared audit and outbox rows
--> REV route commits once
+-> request route or service command commits once
 ```
 
 Public contribution, policy, award, fulfillment, and operations surfaces stay
@@ -57,27 +58,36 @@ activation sequence and the joint REV/CON release gate pass.
 
 ## Review and contribution boundary
 
-`ContributionCompensationDecisionParticipant` receives the caller-owned
-`AsyncSession` and a typed request containing:
+One mandatory `ContributionCompensationDecisionParticipant` exposes two ordered
+operation-specific methods in the caller-owned `AsyncSession`; it does not
+accept one omnibus request with nullable FinalAcceptance or both actors' policy
+contexts.
 
-- exact Review, ReviewLease, queue/lifecycle fence, and decision;
-- exact FinalAcceptance for accept, otherwise null;
-- versioned Submission, TaskAssignment, task, and project identities;
-- reviewer and submitter canonical ActorProfile IDs;
-- lease-frozen reviewer and assignment-frozen submitter
-  `ContributionPolicyVersion` IDs;
-- the stabilized reviewed-packet/submission artifact digest already established
-  by REV and Submission;
-- the originating allowed `review.decision` AuthorizationDecision reference,
-  request ID, and correlation ID.
+The reviewer operation is required for every valid decision after REV appends
+Review/findings/resolutions, consumes ReviewLease, and closes the queue but
+before REV applies the decision branch. Its typed input contains only exact
+locked Review, ReviewLease, versioned Submission, project/task, reviewer,
+lease-frozen reviewer `ContributionPolicyVersion`, originating allowed
+`review.decision` AuthorizationDecision, request/correlation references, and
+the stabilized server-derived `Submission.artifact_hash`. It contains no
+FinalAcceptance, TaskAssignment source field, submitter, or submitter policy.
 
-CON validates the supplied locked facts, copies the stabilized digest into
-`ContributionRecord.artifact_hash`, evaluates the matching frozen
+The submitter operation exists only after the `accept` branch creates
+FinalAcceptance and applies Task `accepted` plus TaskAssignment `completed`. Its
+typed input contains exact locked FinalAcceptance, TaskAssignment, versioned
+Submission, project/task, submitter, assignment-frozen submitter
+`ContributionPolicyVersion`, the same authorization/request/correlation
+references, and stabilized artifact hash. It contains no direct Review or
+ReviewLease contribution-source fields and is unavailable for `needs_revision`
+or `reject`.
+
+Each operation validates only its supplied locked lineage, copies the stabilized
+digest into `ContributionRecord.artifact_hash`, evaluates its matching frozen
 `ContributionRule`, stages applicable contribution/award rows, returns typed
-audit/outbox inputs to REV, flushes, and never commits. It never reads REV or AUTH repositories, evaluates
-`review.decision`, calls ART, rehashes artifact bytes, performs provider I/O, or
-offers a no-op production participant. Any CON failure rolls back the complete
-Review decision.
+audit/outbox inputs to REV, flushes, and never commits. CON never reads REV or
+AUTH repositories, evaluates `review.decision`, calls ART, rehashes artifact
+bytes, performs provider I/O, or offers a no-op production participant. Any CON
+failure rolls back the complete Review decision.
 
 `needs_revision` and `reject` still create the reviewer contribution and any
 award earned by its frozen reviewer rule. They create no FinalAcceptance or
@@ -105,15 +115,17 @@ FinalAcceptance
   source_review_id
   accepted_submitter_id
   accepted_at
-  recorded_by_reviewer_id
-  review_policy_id
+  recorded_by
+  policy_context_ref
 ```
 
 The external handoff's `submission_version_id` maps to `submission_id` because
-the existing immutable Submission row is already the version identity. The
-external `policy_context_ref` maps to the exact locked `ReviewPolicy.id`; REV
-must prove the Review, policy, project, task, Submission, submitter and reviewer
-chain. PostgreSQL enforces `UNIQUE(task_id)`, `UNIQUE(source_review_id)`, and
+the existing immutable Submission row is already the version identity. Merged
+REV-04 retains `policy_context_ref` as the foreign key to the exact locked
+`ReviewPolicy.id` and `recorded_by` as the reviewer ActorProfile field; CON adds
+no alias. REV must prove the Review, policy, project, task, Submission,
+submitter and reviewer chain. PostgreSQL enforces `UNIQUE(task_id)`,
+`UNIQUE(source_review_id)`, and
 `UNIQUE(submission_id)`. There is no reopen, replacement, adjudication, or
 second acceptance path in v0.1.
 
@@ -149,9 +161,10 @@ models, routes, lifecycle decisions, or commits.
 
 ## Authorization boundary
 
-Trusted `main` is `d541521`, merging AUTH PR #140 after WS-XINT PR #139.
-Runtime catalogue counts remain 74 PermissionIds, 57 ActionIds, nine active
-actions, and 48 planned actions. No WS-CON ActionId is registered. PR #140
+Trusted `main` is `0302bcf`, merging REV PR #128 and AUTH-09A after AUTH PR
+#140 and WS-XINT PR #139. Runtime catalogue counts are 74 PermissionIds, 65
+ActionIds, nine active actions, and 56 planned actions. No WS-CON or task-claim
+ActionId is registered. PR #140
 adds reviewed AUTH custody/PREP/activation contracts only; the custody
 transfers and prepared protocol remain proposed runtime work.
 
@@ -248,13 +261,14 @@ rows. Every mutation first locks AUTH human actor/link/grant or fixed-service
 actor/link authority, then its idempotency row and applicable lifecycle fence.
 After that common prefix, the owning operation uses one explicit order:
 
-- `review.decision`: REV task, assignment, Submission, queue/lease, Review and
-  finding/resolution rows in REV's canonical order; accept-only
-  FinalAcceptance plus exact task/assignment effects; the assignment- and lease-frozen
-  ContributionPolicyVersion, matching rule/definition, and referenced binding;
-  stabilized reviewed-packet and Submission artifact-hash lineage; then
-  ContributionRecord and CompensationAward; then REV-owned shared audit and
-  outbox append participants;
+- `review.decision`: REV follows its canonical idempotency/fence, queue, lease,
+  task, assignment, Submission, predecessor Review, finding/resolution order;
+  the reviewer operation then locks only the lease-frozen policy/rule/definition/
+  binding and reviewer contribution/award rows. REV applies the branch. For
+  accept, REV creates FinalAcceptance and applies accepted task/assignment
+  effects before the submitter operation locks only the assignment-frozen
+  policy/rule/definition/binding and submitter contribution/award rows. REV then
+  stages shared audit and outbox rows;
 - task/review claim freeze: the owning task/assignment/Submission or REV
   queue/lease rows first, then the selected published policy version,
   rule/definition and referenced binding, then the frozen lineage write;
@@ -335,17 +349,55 @@ subsystem owns no contribution, award, adapter, review, or provider semantics.
    `review.decision`.
 8. CON-08A/R/B add fulfillment delivery and callback behavior only after exact
    service execution/callback identities, actions, static rows, AUTH-09E, and
-   lifecycle fencing are approved.
+   lifecycle fencing are approved. Every fulfillment-obligation root writer,
+   requeue, successor, and repair path acquires the shared lifecycle fence
+   before allocating its immutable monotonic ordinal. Dispatch and callback
+   composition exposes same-generation/pre-cutoff completion behavior without
+   provider I/O under the fence.
 9. CON-10A/B add PostgreSQL product reads and bounded operation requests; 10C
    adds independently authorized reconciliation/rebuild executors. Optional
    09A/09B remain outside the core dependency sequence.
-10. CON-11 proves hidden readiness. REV release-control composition consumes
-    only typed fence/drain ports; the reviewed REV release chunk owns the final
-    public route activation and joint live drill.
+10. CON-11 proves hidden readiness. It enumerates every obligation writer and
+    supplies mandatory dispatch/callback hooks plus a same-session observation
+    port returning outbox/fulfillment counts and the maximum root ordinal. REV-
+    12A injects the one shared `JointLifecycleMutationFence`, persists the
+    generation cutoff, and owns release-control state; CON creates no second
+    controller. REV-13 owns final public release and the joint live drill.
 
 Every chunk refreshes trusted-main SHA, migration custody, exact port/action
 symbols, and merged dependency evidence. No cross-initiative successor starts
 automatically.
+
+### Merged REV interleaving
+
+Merged REV PR #128 fixes cross-initiative gates without starting either
+initiative automatically:
+
+```text
+REV-02 immutable Submission/TaskAssignment attribution
+  -> CON-05A/B task freeze and retired-field cutover
+
+CON-03B ContributionPolicyVersion persistence
+  -> REV-03 ReviewLease foreign key
+
+CON-02A shared outbox + CON-02C lifecycle audit participant
+  -> REV-04 Review/FinalAcceptance persistence
+  -> CON-03C exact contribution source schema
+
+CON-06 reviewer policy freeze
+  -> REV-06 claim composition
+
+REV-09B stable lineage + CON-03C schema + CON-07 two-operation participant
+  -> REV-10 first canonical Review-committing transaction
+
+CON-11 writer/dispatch/callback/ordinal/drain manifest + REV-12 observations
+  -> REV-12A shared lifecycle controller/fence
+  -> AUTH action-specific activation
+  -> REV-13 joint release
+```
+
+The merged REV plan proves ownership and ordering only. Each arrow still waits
+for the exact runtime predecessor on then-current trusted main.
 
 ## Verification strategy
 

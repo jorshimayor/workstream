@@ -2,8 +2,9 @@
 
 ## Goal
 
-Reconcile WS-CON planning with trusted `main` at merged AUTH PR #140 without
-implementing runtime behavior, changing AUTH-owned files, or weakening the
+Reconcile WS-CON planning with trusted `main` after merged AUTH PR #140 and the
+later merged AUTH-09A/REV PR #128 boundary without implementing runtime
+behavior, changing AUTH/REV-owned files, or weakening the
 review/FinalAcceptance/contribution transaction.
 
 ## Risk
@@ -26,10 +27,13 @@ L0/L1 authorization, transaction, and release specification; P1.
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/STATUS.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-01-canonical-contract-adoption.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-02B-shared-outbox-dispatcher.md
+.agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-03C-contribution-award-persistence.md
+.agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-03D-delivery-receipt-status-persistence.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-04A-hidden-adapter-binding-service.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-04B-hidden-contribution-policy-service.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-05A-legacy-economic-terms-cutover-and-task-freeze.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-06-review-lease-contribution-policy-freeze.md
+.agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-07-atomic-review-contribution-award-participant.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-07-atomic-review-contribution-award-participant.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-08A-outbound-compensation-delivery.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-08B-inbound-fulfillment-callback.md
@@ -58,9 +62,9 @@ reference specification/PDF edits, restoration, rename, or replacement
 
 ## Acceptance criteria
 
-- [x] Trusted baseline is merged PR #140 at `d541521`; the runtime catalogue
-  remains 74 PermissionIds, 57 ActionIds, nine active and 48 planned, with no
-  registered CON-specific ActionId.
+- [x] Trusted baseline is merged REV PR #128 at `0302bcf`, containing AUTH-09A
+  after PR #140. The runtime catalogue has 74 PermissionIds, 65 ActionIds, nine
+  active and 56 planned, with no registered CON-specific or task-claim ActionId.
 - [x] CON consumes AUTH's exact prepared mutation protocol: AUTH locks current
   authority first and creates an opaque single-use handle bound to session,
   ActionId, actor-reference kind/reference, idempotency key, and canonical
@@ -76,8 +80,10 @@ reference specification/PDF edits, restoration, rename, or replacement
   `review.claim` and `review.decision` ActionIds remain planned and require the
   exact reviewer grant plus REV guards before activation.
 - [x] `review.decision` activation requires the merged mandatory CON flush-only
-  participant and rollback-safe REV+CON single transaction. FinalAcceptance
-  remains an internal REV consequence with no action/API.
+  participant with two ordered operation-specific inputs and rollback-safe
+  REV+CON single transaction. The reviewer operation precedes the branch; the
+  accept-only submitter operation follows FinalAcceptance and accepted task
+  effects. FinalAcceptance remains an internal REV consequence with no action/API.
 - [x] All 19 REV actions are referenced through the complete AUTH custody
   transfer. CON names only its `review.claim` and `review.decision`
   dependencies and never owns or partially transfers ActionOwner metadata.
@@ -93,6 +99,11 @@ reference specification/PDF edits, restoration, rename, or replacement
   intent is present in the branch delta. Older PLAN/PLAN2 evidence receives a
   provenance-only rebind when the PR-level gate requires every evidence file
   added by the cumulative branch to match the final reviewed revision.
+- [x] Merged REV PR #128 release-control dependencies are reflected exactly:
+  every fulfillment-obligation writer uses the shared lifecycle fence before
+  allocating a monotonic root ordinal; the same-session drain port returns the
+  maximum ordinal; and delivery-draining dispatch/callback paths are limited to
+  same-generation roots at or below the persisted cutoff.
 
 ## Verification
 

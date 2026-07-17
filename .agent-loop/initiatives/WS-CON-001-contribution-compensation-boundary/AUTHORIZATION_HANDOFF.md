@@ -2,12 +2,13 @@
 
 ## Current baseline
 
-Trusted `main` is `d541521` from merged AUTH PR #140, which reconciles AUTH to
-the earlier WS-XINT PR #139 boundary. The runtime catalogue still contains 74
-PermissionIds and 57 ActionIds: nine active and 48 planned. No WS-CON-specific
-ActionId below is registered. PR #140 adds reviewed AUTH planning contracts; it
-does not implement AUTH-PREP, transfer ART/REV custody, register a CON action,
-or activate a feature action.
+Trusted `main` is `0302bcf` from merged REV PR #128. It contains AUTH-09A after
+AUTH PR #140 and the earlier WS-XINT PR #139 boundary. The runtime catalogue now
+contains 74 PermissionIds and 65 ActionIds: nine active and 56 planned. The
+eight added planned actions belong to AUTH-09 service-identity administration;
+no WS-CON-specific or task-claim ActionId below is registered. PR #140 still
+defines the prepared/custody plan; it does not implement AUTH-PREP, transfer
+ART/REV custody, register a CON action, or activate a feature action.
 
 AUTH owns identifiers, stable mappings, activation custody, typed resource and
 principal contexts, grants, fixed ServiceIdentity/static matrix, AUTH-09E
@@ -188,7 +189,7 @@ activation only after hidden behavior merges.
 ## Upstream review and task actions
 
 Only the stable `task.claim` PermissionId exists on trusted main; there is no
-registered task-claim ActionId among the 57 actions. AUTH-PREP, the exact
+registered task-claim ActionId among the 65 actions. AUTH-PREP, the exact
 submitter grant, and the task-owned claim seam precede CON-05A's hidden freeze
 participant. CON-05A and task-owned composition must merge first. AUTH-13 then
 enumerates/registers the exact task-claim ActionId, integrates its evaluator,

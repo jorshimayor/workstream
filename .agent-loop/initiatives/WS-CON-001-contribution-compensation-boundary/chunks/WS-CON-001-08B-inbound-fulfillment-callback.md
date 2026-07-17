@@ -39,6 +39,16 @@ outbox transition ownership; production route registration
 - [ ] Exact route identity, project, instrument, award, frozen binding, external
   event, quantity/status, and idempotency must match. Actor/link/binding state
   loss denies.
+- [ ] After CON-owned signature verification plus AUTH/idempotency locking, the
+  callback acquires the shared `JointLifecycleMutationFence`, resolves the
+  canonical obligation root, immutable ordinal, and generation, and holds the
+  fence through receipt commit. In `delivery_draining`, only same-generation
+  roots at or below the persisted cutoff may finalize; `disabled`, post-cutoff,
+  crossed-generation, or missing lineage denies before provider/follow-on I/O.
+- [ ] Callback finalization cannot create a successor event, retry root,
+  delivery obligation, repair, award, or other follow-on work while draining.
+  Callback-versus-disable tests prove the exclusive transition cannot cross an
+  in-flight receipt transaction.
 - [ ] Duplicate exact receipt is idempotent; changed replay conflicts; fulfilled
   receipt is immutable and at most one exists per award.
 - [ ] Suspended binding accepts only valid already-issued obligations; retired

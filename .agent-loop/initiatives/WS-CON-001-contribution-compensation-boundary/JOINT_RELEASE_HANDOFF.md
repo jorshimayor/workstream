@@ -9,8 +9,8 @@ CompensationAward, fulfillment behavior, and CON projections. AUTH owns all
 authorization and activation.
 
 The canonical cross-boundary source is merged
-`WS-XINT-001/REV_CON_HANDOFF.md`. Sibling worktree state is discovery only until
-reviewed and merged to trusted `main`.
+`WS-XINT-001/REV_CON_HANDOFF.md`. Merged REV PR #128 at trusted main `0302bcf`
+is the reviewed owner contract; runtime REV behavior remains unimplemented.
 
 ## Required decision composition
 
@@ -20,19 +20,25 @@ session/action/actor reference/idempotency key/canonical request digest
 -> REV locks and recomposes canonical facts
 -> AUTH consumes the handle, evaluates once, and stages decision evidence
 -> REV stages Review/findings/resolutions, consumes ReviewLease, closes queue
+-> CON reviewer operation creates completed_review from Review/ReviewLease,
+   evaluates only the lease-frozen reviewer rule, and returns typed staging inputs
 -> on accept, REV creates immutable FinalAcceptance linked to Review,
    canonical Submission, Task, submitter, reviewer and locked ReviewPolicy
    then accepts Task and completes TaskAssignment
+   -> CON submitter operation creates accepted_submission from FinalAcceptance
+      and TaskAssignment, evaluates only the assignment-frozen submitter rule,
+      and returns typed staging inputs
 -> on needs_revision, REV sets Task to needs_revision and keeps TaskAssignment active
 -> on reject, REV sets Task to rejected with a bounded human reason and blocks
    only the same-task TaskAssignment with its source Review
--> CON flush-only participant creates reviewer contribution
--> on accept only, CON creates submitter contribution from FinalAcceptance,
-   never directly from Review.decision
--> CON evaluates frozen ContributionRules and creates applicable awards
 -> REV stages shared audit/outbox rows from the typed participant result
--> REV route commits once
+-> request route or service command commits once
 ```
+
+The participant is one mandatory interface with two ordered operation-specific
+inputs. The reviewer input never carries nullable FinalAcceptance or submitter
+policy/source facts. The submitter input does not exist outside `accept` and
+never uses direct Review/ReviewLease contribution-source fields.
 
 No no-op participant, post-commit repair, ART call, evidence projection, or
 provider I/O exists in this transaction. CON copies stabilized artifact-hash
@@ -42,9 +48,11 @@ lineage from REV facts.
 
 The external shorthand `submission_version_id` means canonical
 `Submission.id`; the repository stores `submission_id` because each immutable
-Submission row is already one version. The external `policy_context_ref` means
-the exact locked `ReviewPolicy.id`; the repository stores `review_policy_id`.
-REV owns this record and the composite same-chain constraints.
+Submission row is already one version. Merged REV-04 retains
+`policy_context_ref` as the foreign key to the exact locked `ReviewPolicy.id`
+and retains `recorded_by` for the canonical reviewer ActorProfile. CON consumes
+those owner-defined names without aliases. REV owns this record and the
+composite same-chain constraints.
 
 ```text
 FinalAcceptance
@@ -55,8 +63,8 @@ FinalAcceptance
   source_review_id         UNIQUE
   accepted_submitter_id
   accepted_at
-  recorded_by_reviewer_id
-  review_policy_id
+  recorded_by
+  policy_context_ref
 ```
 
 It is created only inside `Review(accept)`. There is no public/manual creation
@@ -97,9 +105,18 @@ Review.decision.
   principal path, and activation after hidden behavior.
 - Protected outbox handlers have their own exact service authority; dispatcher
   authority is not inherited.
-- CON-owned fulfillment dispatch/callback fence ports and same-session drain
-  observation are injected through composition without REV importing CON/outbox
-  repositories.
+- Every CON fulfillment-obligation creation, requeue, successor, and repair
+  writer exposes a mandatory hook that acquires REV-12A's shared
+  `JointLifecycleMutationFence` before allocating an immutable monotonically
+  increasing root ordinal or locking obligation rows.
+- CON dispatch and callback hooks consume that shared fence. In
+  `delivery_draining`, they may complete only the same generation and a root
+  ordinal at or below REV's persisted cutoff; they cannot create successor,
+  retry-root, repair, or other follow-on obligations.
+- `FulfillmentLifecycleDrainObservationPort` is same-session/read-only and
+  returns pending/claimed/retryable/in-flight counts, nonterminal delivery and
+  callback obligations, and the current maximum root ordinal through typed
+  shared-outbox capability. REV imports no CON/outbox repository.
 - Exact migrations, handler registry, task IDs, route inventory, and retained
   tests are bound to merged SHAs.
 
@@ -122,9 +139,11 @@ acceptance fact nor submitter contribution; one reviewer contribution per
 Review, explicit unpaid, money+points, frozen-version changes,
 repeated/revision Reviews, no-self-review, grant revocation, source-shape and
 uniqueness conflicts, atomic rollback, adapter outage/replay,
-callback-before-ack, failure then fulfillment, reconciliation, drain fencing,
-and hidden-to-active route transition. It asserts zero ART calls and no
-adjudication action/state/queue/readiness dependency.
+callback-before-ack, failure then fulfillment, reconciliation, every obligation
+writer versus cutoff capture in both orders, same-generation pre-cutoff
+dispatch/callback completion, post-cutoff denial before provider I/O, drain
+fencing, and hidden-to-active route transition. It asserts zero ART calls and
+no adjudication action/state/queue/readiness dependency.
 
 ## Ownership and stop
 

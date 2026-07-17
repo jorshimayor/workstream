@@ -10,13 +10,15 @@
 
 ## Trusted baseline
 
-- `origin/main` / merged AUTH PR #140 at
-  `d541521790a0441cfd2193f466e00ef81248ec31`.
-- PR #140 title/branch: AUTH WS-XINT reconciliation /
-  `codex/ws-auth-001-xint-reconciliation`; it adopts the earlier PR #139 AUTH,
-  ART, REV, and CON lifecycle boundary.
-- Runtime AUTH remains 74 PermissionIds, 57 ActionIds, nine active, 48 planned.
-- PR #140 adds AUTH activation-custody, prepared-protocol, revised chunk,
+- `origin/main` / merged REV PR #128 at
+  `0302bcf854a565d429e232ad6b076a1931ea74e4`.
+- PR #128 merges the reviewed WS-REV-001 plan after AUTH-09A, AUTH PR #140, and
+  WS-XINT PR #139. It is planning authority, not Review runtime implementation.
+- Runtime AUTH is 74 PermissionIds, 65 ActionIds, nine active, 56 planned.
+  AUTH-09A contributes eight planned identity-administration actions; no CON or
+  task-claim ActionId exists.
+- PR #140 remains the source for AUTH activation-custody, prepared-protocol,
+  revised chunk,
   operations, and verification contracts. It changes no runtime CON behavior,
   registers no CON action, and activates no feature action.
 
@@ -25,15 +27,16 @@
 - On 2026-07-17 the human fixed the v0.1 shipping path as
   `Review(accept) -> FinalAcceptance -> accepted_submission` and explicitly
   excluded adjudication lifecycle/actions/readiness.
-- The current sibling REV worktree now plans FinalAcceptance and the exact
-  `accepted`/`needs_revision`/`rejected` effects. That concurrent work remains
-  discovery-only; WS-CON implementation consumes only reviewed REV contracts
-  merged to trusted main.
+- Merged REV PR #128 now plans FinalAcceptance, exact
+  `accepted`/`needs_revision`/`rejected` effects, two ordered CON participant
+  operations, and REV-12A lifecycle-control hooks. WS-CON implementation still
+  waits for each exact runtime chunk and consumes no sibling-worktree behavior.
 - The amendment's `submission_version_id` is normalized to canonical
   `Submission.id` / `submission_id`; current runtime already stores each
   immutable version as a Submission row.
-- The amendment's `policy_context_ref` is normalized to exact locked
-  `ReviewPolicy.id` / `review_policy_id`; REV owns and proves that lineage.
+- Merged REV-04 retains `policy_context_ref` as the foreign key to exact locked
+  `ReviewPolicy.id` and `recorded_by` as the reviewer ActorProfile field; CON
+  consumes those names and REV owns/proves the lineage.
 - `docs/review_closure.md`, `docs/review_final_adversarial_review.md`, and
   `docs/review_adversarial_quality_review.md` are historical internal-review
   recommendations, not live lifecycle specifications. Their older “second
@@ -63,6 +66,12 @@
 - `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/chunks/WS-AUTH-001-PREP-prepared-mutation-protocol.md`
 - `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/chunks/WS-AUTH-001-13-task-assignment-cutover.md`
 - `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/chunks/WS-AUTH-001-16-evidence-live-proof.md`
+- `.agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/CON_INTEGRATION_REVIEW.md`
+- `.agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/DECISIONS.md`
+- `.agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/PLAN.md`
+- `.agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/chunks/WS-REV-001-08-immutable-decision-kernel.md`
+- `.agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/chunks/WS-REV-001-10-contribution-integration-hidden-composition.md`
+- `.agent-loop/initiatives/WS-REV-001-review-revision-lifecycle/chunks/WS-REV-001-12A-joint-lifecycle-release-control.md`
 - `.agent-loop/policies/*`
 
 ## Normative WS-XINT handoffs
@@ -83,14 +92,14 @@
   and 05B own semantic then physical removal after a human migration decision.
 - No ContributionPolicy, ContributionRecord, CompensationAward, fulfillment, or
   WS-CON action runtime exists yet.
-- No FinalAcceptance runtime exists yet; it will be REV-owned and is a hard
-  merged-schema/composition prerequisite for CON-03C/07.
+- No FinalAcceptance runtime exists yet; merged planning assigns it to REV-04
+  and makes that exact schema a prerequisite for CON-03C/07.
 - Existing `Submission` is the versioned identity; no new SubmissionVersion is
   required.
 - ART preparation from PR #129 is inactive foundation only and does not approve
   optional contribution-evidence projection.
-- Sibling worktrees are discovery evidence only. Implementation consumes only
-  reviewed contracts merged to trusted `main`.
+- Sibling worktrees remain discovery evidence only. Merged REV planning is
+  authoritative for sequencing but does not satisfy its own runtime gates.
 
 ## Adoption note
 

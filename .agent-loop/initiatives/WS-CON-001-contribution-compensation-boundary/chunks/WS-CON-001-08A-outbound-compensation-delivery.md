@@ -54,13 +54,25 @@ database/fence lock held during external I/O
   bound handle; CON locks award/binding/delivery rows and recomposes final
   facts; AUTH consumes/evaluates once before durable delivery mutation.
 - [ ] Durable in-flight generation and exact event/payload/binding/idempotency
-  identity commit before adapter I/O; every database transaction and lifecycle
-  fence is released before the call.
+  identity commit before adapter I/O. The already-claimed command resolves its
+  immutable obligation root, ordinal, and lifecycle generation under the shared
+  `JointLifecycleMutationFence`. In `delivery_draining`, only a same-generation
+  root at or below the persisted cutoff may enter durable `in_flight`; no new
+  root, requeue, successor, or repair work is allowed.
+- [ ] The pre-I/O transaction commits and releases every database transaction
+  and lifecycle fence before the adapter call. Finalization occurs in a new
+  fenced transaction for the same root. A lost pre-I/O race returns the same
+  event to retryable pending without changing award or delivery truth; only the
+  shared dispatcher mutates outbox claim/retry/dead-letter state.
 - [ ] Adapter result cannot change award identity/quantity. Retry, ambiguous
   completion, acknowledgement, callback-before-ack, cancellation, and replay
   preserve monotonic delivery/receipt truth.
 - [ ] Provider I/O is only through typed capability/factory at composition root.
 - [ ] Coverage/concurrency/failure proof meets repository floors.
+- [ ] Independent-session tests cover dispatch versus cutoff/disable in both
+  orders, same-generation pre-cutoff completion, post-cutoff/cross-generation
+  denial before provider I/O, and instrumentation proving no advisory fence or
+  database transaction is held during adapter I/O.
 - [ ] The real kernel continues to deny the planned action. AUTH activation is
   a later checkpoint after this hidden handler and its evaluator composition
   merge.

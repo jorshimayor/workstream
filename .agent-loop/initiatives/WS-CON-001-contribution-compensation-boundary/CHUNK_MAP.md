@@ -13,21 +13,21 @@ availability writer. Optional evidence chunks are not part of the core order.
 |---|---|---:|---|---|
 | `WS-CON-001-PLAN` | Contribution And Compensation Planning | L0 | None | Complete; unpublished |
 | `WS-CON-001-PLAN2` | Final Acceptance Reconciliation | L0 | Human FinalAcceptance/no-adjudication direction | Complete; unpublished |
-| `WS-CON-001-PLAN3` | AUTH PR 140 Reconciliation | L0/L1 | Merged AUTH PR #140 at `d541521` | Complete; unpublished |
+| `WS-CON-001-PLAN3` | AUTH/REV Current-Main Reconciliation | L0/L1 | Merged AUTH PR #140 plus AUTH-09A and REV PR #128 at `0302bcf` | Complete; unpublished |
 | `WS-CON-001-01` | Canonical Contract Adoption And Architecture Decision | L0/L1 | Reconciled plan and human decisions approved | Proposed |
 | `WS-CON-001-02A` | Shared Transactional Outbox Persistence | L1 | 01; event ownership approved | Proposed |
 | `WS-CON-001-02B` | Shared Outbox Dispatcher And Recovery | L1 | 02A; AUTH registers `outbox.dispatch`, approved `workstream.outbox.dispatcher` ServiceIdentity/static row, AUTH-09E admission, prepared protocol; dispatcher remains disabled until AUTH activation | Proposed |
 | `WS-CON-001-02C` | Shared Lifecycle Audit Participant | L1 | 02B; current AuditEvent contract refreshed | Proposed |
 | `WS-CON-001-03A` | Project Compensation Adapter-Binding Persistence | L1 | 02C; migration head refreshed | Proposed |
-| `WS-CON-001-03B` | Contribution Policy Persistence | L1 | 03A; legacy-data rule | Proposed |
-| `WS-CON-001-03C` | Contribution And Award Persistence | L1 | 03B; exact merged REV FinalAcceptance/Review/ReviewLease FK targets | Proposed |
-| `WS-CON-001-03D` | Delivery, Receipt, And Status Persistence | L1 | 03C | Proposed |
+| `WS-CON-001-03B` | Contribution Policy Persistence | L1 | 03A; legacy-data rule; must precede REV-03 ReviewLease FK | Proposed |
+| `WS-CON-001-03C` | Contribution And Award Persistence | L1 | 03B; merged REV-04 runtime FinalAcceptance/Review/ReviewLease FK targets | Proposed |
+| `WS-CON-001-03D` | Delivery, Receipt, And Status Persistence | L1 | 03C; immutable fulfillment root ordinal/generation contract | Proposed |
 | `WS-CON-001-04A` | Hidden Adapter-Binding Service | L1 | 03A; planned AUTH binding actions/contexts/prepared protocol; callback ServiceIdentity/action/static row approved but inactive | Proposed |
 | `WS-CON-001-04B` | Hidden Contribution-Policy Service | L1 | 03B, 04A; binding activation merged; planned `contribution.policy.*` actions/contexts/prepared protocol | Proposed |
 | `WS-CON-001-05A` | Legacy Economic Terms Cutover And Task Freeze | L1 | 04B; exact Submission/TaskAssignment lineage; AUTH-10 exact submitter grants and AUTH-PREP merged; task.claim PermissionId exists but ActionId remains absent; stable task-owned claim seam; legacy rule | Proposed |
 | `WS-CON-001-05B` | Legacy Economic Schema Removal | L1 | 05A; zero-consumer scan; removal migration approval | Proposed |
 | `WS-CON-001-06` | Review-Lease Contribution-Policy Freeze Capability | L1 | REV lease schema; 05B; AUTH-PREP; planned review.claim typed contract; exact reviewer grant facts stable | Proposed |
-| `WS-CON-001-07` | Atomic Contribution/Award Decision Participant | L1 | 03C-D, 05A, 06; AUTH-PREP and complete REV custody transfer; merged TaskAssignment freeze field and REV ReviewLease plus accept-only FinalAcceptance persistence and locked decision-lineage contract; shared audit/outbox; planned review.decision typed contract | Proposed |
+| `WS-CON-001-07` | Atomic Contribution/Award Decision Participant | L1 | 03C-D, 05A, 06; AUTH-PREP and complete REV custody transfer; REV-04 FinalAcceptance plus REV-09B locked lineage; shared audit/outbox; planned review.decision typed contract; two ordered operation-specific inputs | Proposed |
 | `WS-CON-001-08A` | Outbound Compensation Delivery Handler | L1 | 07, 02B; exact delivery ServiceIdentity/ActionId/static row registered but planned; AUTH-09E typed context/prepared protocol; ADR 0014 adapter foundation; lifecycle-fence port | Proposed |
 | `WS-CON-001-08R` | Bound-Service Callback Rate Control | L1 | 08A; shared API-control contract | Proposed |
 | `WS-CON-001-08B` | Inbound Fulfillment Callback | L1 | 08R; exact callback ServiceIdentity/ActionId/static row, AUTH-09E context, prepared protocol, and callback-fence port | Proposed |
@@ -36,7 +36,7 @@ availability writer. Optional evidence chunks are not part of the core order.
 | `WS-CON-001-10A` | Contribution And Award Product Reads | L1 | 08B; D11 award-role outcome; planned contribution/award read actions and typed contexts | Proposed |
 | `WS-CON-001-10B` | Operations Requests, Reads, And Fulfillment Drain Observation | L1 | 10A; D11 complete; operations request/read actions/contexts/prepared protocol; outbox observation port | Proposed |
 | `WS-CON-001-10C` | Reconciliation And Projection Executors | L1 | 10B; exact executor identities/actions/static rows; AUTH-09E; hidden behavior then AUTH activation | Proposed |
-| `WS-CON-001-11` | Hidden Release Readiness And Dependency Manifest | L1 | 10C; merged REV decision integration; exact AUTH evaluator/action/service manifest; outbox readiness; CON fence/drain ports | Proposed |
+| `WS-CON-001-11` | Hidden Release Readiness And Dependency Manifest | L1 | 10C; merged REV-10 decision integration; exact AUTH evaluator/action/service manifest; every obligation-writer/dispatch/callback hook; monotonic root ordinal; same-session cutoff/drain port | Proposed |
 
 ## Core dependency order
 
@@ -84,13 +84,17 @@ AUTH registration -> CON hidden behavior -> AUTH activation -> later consumer/re
   REV-owned FinalAcceptance. REV stages shared audit/outbox rows, owns the
   single commit, and supplies stabilized artifact-hash lineage; no ART call is
   made.
+- Merged REV PR #128 is planning authority, not runtime readiness. CON-03B must
+  precede REV-03; CON-02A/02C precede REV-04; REV-04 precedes CON-03C; CON-06
+  precedes REV-06; REV-09B plus CON-03C/07 precede REV-10; and CON-11's exact
+  obligation hooks/ordinal/drain manifest precedes REV-12A.
 - CON-08A/B and 10C cannot reuse outbox dispatcher authority for delivery,
   callback, reconciliation, or rebuild execution.
 - CON-10A owns core PostgreSQL contribution/award reads directly; it does not
   wait for optional evidence reads.
-- CON-11 has no ART or evidence-projection prerequisite. It hands typed
-  fulfillment fence/drain seams to the reviewed REV release-control work and
-  registers no production route.
+- CON-11 has no ART or evidence-projection prerequisite. It hands mandatory
+  obligation-writer, dispatch, callback, maximum-ordinal, and drain-observation
+  seams to REV-12A's single shared lifecycle controller and registers no route.
 - AUTH PR #140's complete ART and REV activation-custody transfer contracts are
   consumed by reference to AUTH/WS-XINT handoffs. The runtime transfers remain
   upstream gates; WS-CON does not define partial subsets.

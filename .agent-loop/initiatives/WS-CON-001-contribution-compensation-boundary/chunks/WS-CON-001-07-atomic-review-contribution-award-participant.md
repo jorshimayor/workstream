@@ -33,18 +33,24 @@ ART capability/repository/provider call or evidence projection row/event
 mutable/delete/void/adjust contribution/award path; reputation scoring
 ```
 
-## Participant request
+## Participant operations
 
-The typed request carries the caller AsyncSession and exact locked:
+One mandatory typed participant uses the caller AsyncSession and exposes two
+ordered operations rather than an omnibus nullable request.
 
-- Review, ReviewLease, queue/lifecycle fence, and canonical decision;
-- accept-only REV-owned FinalAcceptance, otherwise null;
-- versioned Submission, TaskAssignment, task, and project;
-- reviewer/submitter ActorProfile IDs;
-- reviewer and submitter frozen ContributionPolicyVersion IDs;
-- server-derived stabilized `Submission.artifact_hash`/reviewed-packet digest
-  from the merged REV/Submission lineage, never caller package data;
-- originating review.decision AuthorizationDecision, request, and correlation.
+The reviewer operation receives exact locked Review, ReviewLease, versioned
+Submission, project/task, reviewer ActorProfile, lease-frozen reviewer
+ContributionPolicyVersion, originating `review.decision`
+AuthorizationDecision, request/correlation references, and server-derived
+stabilized `Submission.artifact_hash`. It never receives FinalAcceptance,
+TaskAssignment contribution-source lineage, submitter, or submitter policy.
+
+The submitter operation exists only after REV creates FinalAcceptance and
+applies accepted task/assignment effects. It receives exact locked
+FinalAcceptance, TaskAssignment, versioned Submission, project/task, submitter
+ActorProfile, assignment-frozen submitter ContributionPolicyVersion, the same
+authorization/request/correlation lineage, and stabilized artifact hash. It
+never uses direct Review/ReviewLease contribution-source fields.
 
 ## Acceptance criteria
 
@@ -52,11 +58,14 @@ The typed request carries the caller AsyncSession and exact locked:
   `completed_review`. Accept requires exactly one same-chain FinalAcceptance and
   creates one submitter `accepted_submission` from it; needs_revision/reject
   require no FinalAcceptance and create no submitter record.
-- [ ] Locked participant inputs prove REV already applied the exact outcome:
-  accept has Task `accepted` and Assignment `completed`; needs_revision has Task
-  `needs_revision` and Assignment still `active`; reject has Task `rejected`
-  with the bounded human reason and only the same-task Assignment `blocked` with
-  its source Review. CON does not own or mutate those lifecycle effects.
+- [ ] REV calls the reviewer operation after appending Review/findings/
+  resolutions, consuming the lease, and closing the queue but before any
+  decision branch. It therefore validates Review/ReviewLease lineage without
+  requiring branch effects. REV then applies the exact outcome. Accept creates
+  FinalAcceptance, sets Task `accepted`, and completes the Assignment before the
+  submitter operation. Needs revision keeps the Assignment active and reject
+  blocks only the same-task Assignment; neither invokes the submitter operation.
+  CON owns none of those lifecycle effects.
 - [ ] Repeated idempotent decision returns the same rows; a later revision
   Review creates a distinct reviewer contribution; automated outcomes create
   none.
@@ -66,21 +75,24 @@ The typed request carries the caller AsyncSession and exact locked:
   definitions.
 - [ ] CON copies the supplied stabilized digest exactly into
   ContributionRecord.artifact_hash. It does not load/rederive it or call ART.
-- [ ] Participant validates exact FinalAcceptance/Review/Submission/assignment/
-  lease/project/actor/policy lineage and an allowed review.decision whose actor, action,
+- [ ] Each operation validates only its exact source shape and frozen policy.
+  Both receive the allowed review.decision reference whose actor, action,
   resource digest, matched reviewer grant/project, request, and correlation
-  match the locked transaction.
-- [ ] Participant uses caller AsyncSession, stages contribution/award rows,
-  returns canonical typed audit/outbox inputs, flushes, and never commits. REV
-  stages shared audit/outbox rows after the participant and before its single
-  commit. CON creates no evidence projection or evidence-request event.
+  match the locked transaction; CON does not re-evaluate it.
+- [ ] Both operations use caller AsyncSession, stage contribution/award rows,
+  return canonical typed audit/outbox inputs, flush, and never commit. REV
+  collects results from the reviewer operation and, on accept, the later
+  submitter operation, then stages shared audit/outbox rows before the single
+  caller commit. CON creates no evidence projection or evidence-request event.
 - [ ] CON never reads REV/AUTH repositories or evaluates review.decision. REV
   owns canonical composition and the single route commit.
 - [ ] AUTH registration -> CON participant -> REV hidden composition -> AUTH
   evaluator/activation order is proven. Real kernel denies while planned.
-- [ ] Fault injection at every CON write/flush and every later REV step rolls
-  back Review/FinalAcceptance/task/assignment/contribution/award/audit/outbox
-  together. No post-commit repair path exists.
+- [ ] Fault injection after the reviewer operation, after every branch effect,
+  after FinalAcceptance, after the submitter operation, and at every later REV
+  audit/outbox step rolls back Review/FinalAcceptance/task/assignment/
+  contribution/award/audit/outbox together. The reviewer operation never
+  commits independently and no post-commit repair path exists.
 - [ ] No FinalAcceptance create action/API exists. Static/runtime proof finds no
   adjudication policy, grant/action, queue/lease, state, decision, contribution,
   conditional branch, readiness check, or initiative dependency.

@@ -2,8 +2,8 @@
 
 ## Baseline inspected
 
-- trusted `origin/main` at `d541521`, merged AUTH PR #140, including the earlier
-  WS-XINT PR #139 boundary;
+- trusted `origin/main` at `0302bcf`, merged REV PR #128, including AUTH-09A,
+  AUTH PR #140, and the earlier WS-XINT PR #139 boundary;
 - complete WS-XINT intent, decisions, plan, REV/CON, AUTH/role-service,
   AUTH/REV, AUTH/ART, and ART/REV handoffs;
 - current WS-CON initiative package and archival reference inputs;
@@ -12,7 +12,7 @@
 - current backend project/task/submission/checker, AUTH, audit, artifact, and
   migration code/tests;
 - human-approved 2026-07-17 FinalAcceptance/no-adjudication direction and the
-  current sibling REV planning worktree as discovery-only context;
+  complete merged WS-REV-001 planning package;
 - stale wording, authorization, artifact, link, loop-memory, and agent-gate
   scanners/tests.
 
@@ -26,12 +26,12 @@
   SubmissionVersion model would duplicate current identity. The handoff field
   named `submission_version_id` therefore maps to canonical `Submission.id` and
   is stored as `submission_id`.
-- No FinalAcceptance runtime or reviewed merged REV contract exists yet. The
-  current sibling REV plan now includes FinalAcceptance and exact outcome
-  effects, but must be reviewed and merged before CON consumes that fact.
-- The merged AUTH catalogue has 74 PermissionIds and 57 ActionIds. Nine
-  self/admin actions are active and 48 are planned. No WS-CON ActionId is
-  registered.
+- No FinalAcceptance runtime exists yet. Merged REV PR #128 is reviewed planning
+  authority and defines the exact schema/transaction, but CON-03C still waits
+  for the REV-04 runtime target.
+- The merged AUTH catalogue has 74 PermissionIds and 65 ActionIds. Nine actions
+  are active and 56 are planned. AUTH-09A added eight planned identity-
+  administration actions; no WS-CON or task-claim ActionId is registered.
 - Current AUTH supports actor-self and AdminRoleGrant evaluation. Independent
   ProjectRoleGrant runtime, fixed-service runtime admission, CON evaluators,
   ART/REV custody transfer, and the cross-domain prepared mutation protocol
@@ -81,6 +81,15 @@
     ActionId. CON-05A's hidden TaskAssignment policy freeze must merge into
     task-owned claim composition before AUTH-13 enumerates/registers and
     activates that action.
+13. Merged REV rejects the prior omnibus CON decision input. One mandatory
+    participant exposes a reviewer operation before the decision branch and an
+    accept-only submitter operation after FinalAcceptance and accepted task
+    effects. Neither input carries nullable cross-actor source/policy facts.
+14. REV-12A requires one shared `JointLifecycleMutationFence`. Every CON
+    fulfillment-obligation creation/requeue/successor/repair writer must fence
+    before allocating an immutable monotonic root ordinal. CON must expose the
+    current maximum ordinal with drain counts; delivery-draining dispatch and
+    callback may complete only same-generation roots at or below REV's cutoff.
 
 ## Relevant files and symbols
 
@@ -94,13 +103,16 @@
 | `WS-AUTH-001-13` chunk | Future task-claim ActionId enumeration, registration, evaluator integration, and activation owner; exact submitter grant, task-owned resource composition, and AUTH-PREP dependency |
 | `WS-AUTH-001-16` chunk | Aggregate proof that active review.decision uses one rollback-safe REV+CON transaction with no ART/fallback |
 | `WS-XINT-001/REV_CON_HANDOFF.md` | Exact core participant sequence and optional-evidence boundary |
+| `WS-REV-001/CON_INTEGRATION_REVIEW.md` | Merged two-operation participant, exact lineage, interleaving, and release-control dependencies |
+| `WS-REV-001-08/10` chunks | Decision input freeze followed by first hidden canonical Review commit only after exact CON participant merge |
+| `WS-REV-001-12A` chunk | Single shared lifecycle fence, obligation-writer ordinal order, cutoff capture, and drain-phase behavior required from CON |
 | `WS-XINT-001/AUTH_ROLE_SERVICE_HANDOFF.md` | Fixed service and project grant contract |
 | `WS-XINT-001/AUTH_REV_HANDOFF.md` | Full review activation-custody/hidden behavior sequence |
 | `WS-XINT-001/AUTH_ART_HANDOFF.md` | Full 25-action ART transfer; not a core CON gate |
 | `backend/app/modules/projects/{models,schemas,repository,service}.py` | Current guide-bound economic fields and consumers to cut over/remove |
 | `backend/app/modules/tasks/**` | TaskAssignment creation and future submitter policy freeze seam |
 | `backend/app/modules/tasks/models.py::Submission` | Existing immutable version identity: `id`, integer `version`, and `supersedes_submission_id`; no SubmissionVersion table |
-| `backend/app/modules/authorization/{catalogue,policy,kernel,schemas}.py` | Current 74/57/9/48 runtime and stable PermissionIds |
+| `backend/app/modules/authorization/{catalogue,policy,kernel,schemas}.py` | Current 74/65/9/56 runtime and stable PermissionIds; no CON/task-claim ActionId |
 | `backend/app/modules/audit/**` | Shared append-only audit extension point |
 | `backend/app/modules/artifacts/{preparation,sources}.py` | Inactive ART-only preparation; no core CON import |
 
@@ -120,6 +132,9 @@
   shared-outbox handler isolation, or REV/CON atomic rollback.
 - No tests yet cover FinalAcceptance one-per-task/Review/Submission constraints,
   accept-only creation, source-lineage exclusivity, or rollback when CON fails.
+- No tests yet cover the two ordered CON operation inputs, reviewer-before-
+  branch fault boundaries, immutable fulfillment root ordinals, every writer
+  versus cutoff capture, or same-generation pre-cutoff drain completion.
 
 ## Dependencies
 
@@ -132,6 +147,9 @@
   REV-owned FinalAcceptance with exact policy-context typing; stabilized
   artifact-hash facts; mandatory CON participant injection; REV-staged shared
   audit/outbox; single route commit; and no no-op fallback.
+- REV release control: CON writer/dispatch/callback hooks, immutable root
+  ordinal allocation under the shared fence, and same-session maximum-ordinal/
+  drain observation must merge before REV-12A.
 - Task/Submission: submitter policy freeze and stable assignment/version lineage.
 - Shared outbox/audit: caller-transaction append and feature-neutral dispatch.
 - ADR 0014 adapters: typed capability port, factory, and composition-root
@@ -144,6 +162,7 @@
 |---|---|
 | Two award-eligibility models | Clean semantic then physical cutover; no fallback |
 | Contribution missing after Review | Mandatory flush-only participant and one caller commit |
+| Reviewer contribution ordered after branch | Two operation-specific inputs; reviewer operation always precedes branch and cannot depend on branch effects |
 | Submitter contribution inferred from Review decision | REV-owned immutable FinalAcceptance is the only submitter source; exact one-to-one constraints and lineage checks |
 | ART outage suppresses contribution | No core ART/evidence operation |
 | Wrong policy version | Assignment/lease freeze before work; immutable published versions |
@@ -154,14 +173,16 @@
 | Partial activation transfer | Consume complete WS-XINT AUTH handoffs, never local subsets |
 | Legacy row ambiguity | Human-approved deterministic rebuild/classification before migration |
 | Premature public surface | Hidden behavior until AUTH activation and joint release proof |
+| Shutdown loses or admits fulfillment work | Shared fence before every writer ordinal; immutable cutoff; same-generation pre-cutoff completion only; exact drain counts |
 | Adjudication leaks into v0.1 | No adjudication type/action/state/queue/readiness dependency; reject and accept remain terminal |
 
 ## Resolved FinalAcceptance policy lineage
 
-The handoff's UUID `policy_context_ref` maps to canonical immutable
-`ReviewPolicy.id`, stored as `review_policy_id`. REV must enforce that exact
-locked policy and its same project/task/Submission/Review lineage. CON does not
-interpret it as contribution policy or use it for award eligibility.
+Merged REV-04 retains the handoff's `policy_context_ref` field as a foreign key
+to canonical immutable `ReviewPolicy.id` and retains `recorded_by` for the
+reviewer ActorProfile. REV must enforce that exact locked policy and its same
+project/task/Submission/Review lineage. CON adds no renamed aliases and does not
+interpret review policy as contribution policy or award authority.
 
 ## Open questions
 

@@ -2,12 +2,14 @@
 
 ## Current status
 
-`WS-CON-001-PLAN3` completed reconciliation of merged AUTH PR #140 at trusted
-main `d541521` with the previously reviewed CON plan. The planning snapshot at
-`09128ee1aed941682c7cb59ca04698de496de682` passed all required exact-SHA
-internal reviewer tracks and deterministic gates. Its review evidence, trust
-bundle, and schema-v2 merge intent are prepared; it remains unpublished pending
-the user's explicit PR direction. PLAN2 already reconciled the
+`WS-CON-001-PLAN3` is reopened only for current-main reconciliation after merged
+REV PR #128 at `0302bcf`, which also contains AUTH-09A after AUTH PR #140. The
+prior planning snapshot `09128ee1aed941682c7cb59ca04698de496de682` remains
+historically reviewed but no longer controls publication. The refresh corrects
+the AUTH catalogue baseline, replaces the obsolete omnibus nullable CON
+decision input with two ordered operations, and adopts REV-12A's exact
+obligation-writer/ordinal/cutoff hooks. Runtime code remains unchanged. PLAN2
+already reconciled the
 human-approved v0.1
 `Review(accept) -> FinalAcceptance -> accepted_submission` boundary against the
 previously reviewed WS-XINT plan. Runtime code is unchanged.
@@ -34,19 +36,28 @@ feature-handler authority.
 - CON-09A/09B are deferred optional successors and do not gate the core release.
 - AUTH PR #140 registers no CON ActionId and activates no feature action. Its
   exact custody and prepared-protocol contracts are now upstream gates.
+- Current main has 74 PermissionIds and 65 ActionIds: nine active and 56
+  planned. AUTH-09A added eight planned identity-administration actions; no CON
+  or task-claim ActionId exists.
 - `task.claim` activation must follow, not precede, the CON-05A hidden
   TaskAssignment contribution-policy freeze.
+- Merged REV planning requires the CON reviewer operation before the decision
+  branch and the accept-only submitter operation afterward; it rejects one
+  nullable omnibus participant input.
+- REV-12A requires every CON fulfillment-obligation writer to fence before
+  monotonic ordinal allocation and requires same-session maximum-ordinal/drain
+  observation for the immutable delivery cutoff.
 
 ## Active chunk
 
-No chunk is active. PLAN3 is complete and unpublished; no implementation chunk
-starts automatically.
+`WS-CON-001-PLAN3` current-main refresh only. No implementation chunk is active
+or starts automatically.
 
 | Chunk | Status | Notes |
 |---|---|---|
 | `WS-CON-001-PLAN` | Complete; superseded baseline | Based on PR #139 / `5d353b6`; reviewed content `c4242e0` |
 | `WS-CON-001-PLAN2` | Complete; unpublished | FinalAcceptance is REV-owned; CON trigger changes only; all required internal tracks pass |
-| `WS-CON-001-PLAN3` | Complete; unpublished | Exact-SHA reviewers and deterministic gates pass; AUTH PR #140 PREP/custody/activation sequencing only |
+| `WS-CON-001-PLAN3` | Current-main refresh in review | AUTH PR #140 PREP/custody plus merged REV PR #128 participant/release-control reconciliation |
 | `WS-CON-001-01` through `08B`, `10A` through `11` | Proposed | Separate explicit start required after PLAN3 and upstream merge refresh |
 | `WS-CON-001-09A/09B` | Deferred optional | Separate approval and fresh ART/AUTH review required |
 
@@ -54,7 +65,7 @@ starts automatically.
 
 | Gate | Owner | Required action |
 |---|---|---|
-| FinalAcceptance and decision integration | REV + CON | Merge REV-owned persistence and locked lineage first; then CON-03C/07; then REV consumes CON-07 in hidden single-commit composition before AUTH activation |
+| FinalAcceptance and decision integration | REV + CON | REV-04 runtime persistence -> CON-03C; REV-09B lineage + CON-07 two-operation participant -> REV-10 hidden single-commit composition -> AUTH activation |
 | Active specification/archive handling | Human | Approve CON-01 repository-owned specification |
 | Pre-production legacy rows | Human | Choose deterministic rebuild or explicit classified migration before 05A/05B |
 | D11 AdminRole candidates | Human + AUTH | Fix award-detail, delivery-recovery, and audit candidates before registration |
@@ -66,6 +77,7 @@ starts automatically.
 | review.claim/review.decision | AUTH + REV + CON | Complete REV custody transfer and AUTH-PREP; merge hidden CON participants and REV composition; AUTH-REV-06/08 activate afterward |
 | Shared outbox | CON-02A/B | Land generic persistence/dispatcher after approval |
 | Joint release | REV + CON + AUTH | Consume exact hidden manifest; optional evidence and ART are not prerequisites |
+| Fulfillment cutoff/drain | CON + REV-12A | CON-03D ordinal; all writer/dispatch/callback hooks; CON-10B observation; CON-11 manifest -> REV-12A shared fence/controller |
 
 ## Stop condition
 

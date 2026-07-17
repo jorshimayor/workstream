@@ -51,6 +51,11 @@ outbox claim/finalization transitions; AUTH implementation
 - [ ] Compensation reconciliation compares immutable award/delivery/receipt
   truth and creates durable findings/actions allowed by the approved contract;
   it never changes award amount/eligibility or fabricates receipt truth.
+- [ ] Any reconciliation path that creates, requeues, succeeds, or repairs a
+  fulfillment obligation is classified as an obligation writer, acquires the
+  shared lifecycle fence before allocating/locking its immutable root ordinal,
+  and is denied from `commands_draining` onward. Completion-only observation or
+  same-root finalization cannot be used to smuggle new work into the drain.
 - [ ] Contribution rebuild changes rebuildable projections only and never
   mutates ContributionRecord or CompensationAward.
 - [ ] Retry/replay/idempotency and crash fencing preserve request identity.

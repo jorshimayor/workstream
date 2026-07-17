@@ -10,7 +10,8 @@ points ledger, or reputation scoring.
 
 The supplied WS-CON reference pair is input to reconcile, not authority to
 accept blindly. The active contract follows trusted repository decisions and
-merged AUTH PR #140 and its underlying WS-XINT-001 boundary from PR #139.
+merged REV PR #128 at `0302bcf`, AUTH PR #140, and the underlying WS-XINT-001
+boundary from PR #139.
 
 ## Success state
 
@@ -26,9 +27,15 @@ merged AUTH PR #140 and its underlying WS-XINT-001 boundary from PR #139.
 - REV owns the request and single commit: Review/task effects, optional
   FinalAcceptance, CON-flushed contributions/awards, and REV-staged shared
   audit/outbox rows commit or roll back together.
+- One mandatory CON participant exposes a reviewer operation before the
+  decision branch and an accept-only submitter operation after FinalAcceptance
+  and accepted task effects; no nullable cross-actor omnibus input exists.
 - Core contribution creation copies stabilized artifact-hash lineage supplied
   by REV and has no ART or provider dependency.
 - Downstream adapters fulfill awards but never determine eligibility.
+- Every fulfillment-obligation writer uses REV-12A's one shared lifecycle fence
+  before monotonic root-ordinal allocation; drain dispatch/callback completes
+  only same-generation roots at or below the persisted cutoff.
 - Every protected human/service surface uses AUTH's exact grant or
   ServiceIdentity/static-matrix path, prepared mutation protocol when needed,
   and AUTH-owned activation.

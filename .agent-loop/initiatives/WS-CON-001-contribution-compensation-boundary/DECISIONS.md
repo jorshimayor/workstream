@@ -199,10 +199,11 @@ unrelated task. The archival `closed/review_rejected` wording is not adopted.
 The repository's existing immutable `Submission` row is already the submission
 version identity. Therefore FinalAcceptance stores canonical `submission_id`,
 not `submission_version_id`, and enforces unique task, source Review, and
-Submission lineage. The handoff's `policy_context_ref` maps to canonical
-immutable `ReviewPolicy.id`, stored as `review_policy_id`; REV proves the locked
-same-chain lineage. CON does not interpret it as contribution policy or use it
-to decide awards.
+Submission lineage. Merged REV-04 retains `policy_context_ref` as the foreign
+key to canonical immutable `ReviewPolicy.id` and retains `recorded_by` as the
+reviewer ActorProfile field; REV proves the locked same-chain lineage. CON adds
+no aliases and does not interpret review policy as contribution policy or use
+it to decide awards.
 
 `completed_review` keeps direct Review/ReviewLease lineage and is unique per
 Review. `accepted_submission` requires `source_final_acceptance_id` plus the
@@ -221,10 +222,12 @@ contribution type, branch, action, readiness check, or initiative dependency.
 
 **Status:** accepted by merged AUTH PR #140 on 2026-07-17.
 
-Trusted main remains at 74 PermissionIds, 57 ActionIds, nine active actions, and
-48 planned actions, with no registered CON ActionId. PR #140 supplies the exact
-prepared protocol, complete ART/REV custody maps, and feature-manifest
-activation rule; their runtime implementation remains upstream work.
+Trusted main after AUTH-09A and merged REV PR #128 has 74 PermissionIds, 65
+ActionIds, nine active actions, and 56 planned actions, with no registered CON
+or task-claim ActionId. The eight additional planned actions are AUTH-09
+identity-administration surfaces. PR #140 supplies the exact prepared protocol,
+complete ART/REV custody maps, and feature-manifest activation rule; their
+runtime implementation remains upstream work.
 
 CON removes speculative `AUTH_CON_*` owner labels. Its proposed action mappings
 remain unregistered and non-final until each complete feature manifest exists
@@ -235,3 +238,38 @@ TaskAssignment policy freeze. `review.claim` similarly consumes CON-06 through
 REV, and `review.decision` consumes CON-07 through the rollback-safe REV-owned
 transaction. AUTH alone registers/evaluates/activates; CON alone supplies its
 hidden facts and participants.
+
+## D17 - Review Contribution Integration Uses Two Ordered Operations
+
+**Status:** accepted from merged REV PR #128 on 2026-07-17.
+
+One mandatory CON participant exposes two operation-specific flush-only methods
+in REV's caller session. The reviewer method runs after immutable Review/
+finding/resolution creation plus lease/queue closure and before the decision
+branch. It accepts no FinalAcceptance, submitter source, or submitter policy.
+The submitter method exists only after `accept` creates FinalAcceptance and
+applies accepted Task/TaskAssignment effects. It accepts no direct Review/
+ReviewLease contribution-source shape. An omnibus input with nullable
+FinalAcceptance or both actors' policy contexts is prohibited.
+
+Each method evaluates only its frozen ContributionRule, creates its own
+contribution and eligible awards, returns typed shared-audit/outbox inputs, and
+never commits. REV collects the invoked results, stages the shared rows, and
+the request route or service command commits once.
+
+## D18 - REV Owns One Joint Controller; CON Supplies Fenced Fulfillment Hooks
+
+**Status:** accepted from merged REV PR #128 on 2026-07-17.
+
+REV-12A owns the sole PostgreSQL `JointLifecycleReleaseControl` and shared
+`JointLifecycleMutationFence`. CON creates no parallel phase/controller. Every
+fulfillment-obligation root creation, requeue, successor, and repair writer
+must acquire that fence before it allocates one immutable, monotonically
+increasing root ordinal or locks obligation rows.
+
+CON's same-session drain observation returns outbox/fulfillment counts and the
+current maximum ordinal. REV atomically persists that value as the generation
+cutoff after admitted writers drain. During `delivery_draining`, dispatch and
+callback may finalize only a same-generation root at or below the cutoff and
+cannot create follow-on obligations. Provider I/O occurs after the fenced
+pre-I/O transaction commits and releases every database/advisory lock.

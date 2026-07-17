@@ -61,4 +61,5 @@ mutable/void/delete/adjust path, dependency or CI weakening
 Execute CON-03C in `../RUNTIME_VERIFICATION.md`; changed subsystems are at least
 90 percent. Senior engineering, QA/test, security/auth, product/ops,
 architecture, docs, reuse/dedup and test-delta are required. Stop if exact
-REV FinalAcceptance/Review/ReviewLease targets are not merged.
+REV-04 runtime FinalAcceptance/Review/ReviewLease targets are not merged. Merged
+REV PR #128 is planning authority only and does not satisfy that runtime gate.

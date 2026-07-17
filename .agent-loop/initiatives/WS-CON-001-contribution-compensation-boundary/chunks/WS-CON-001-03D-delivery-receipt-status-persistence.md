@@ -36,6 +36,12 @@ AUTH/ART edit, dependency or CI weakening
   the originating dispatcher claim generation, retryable recovery and callback
   suppression without storing a provider payment attempt. Crash recovery cannot
   erase or guess whether remote I/O may have started.
+- [ ] Every fulfillment-obligation root has one immutable, database-allocated,
+  monotonically increasing `fulfillment_obligation_ordinal` and exact lifecycle
+  generation lineage. Requeue, successor, and repair rows retain their canonical
+  root identity; they do not allocate a second root ordinal. Uniqueness and
+  immutability constraints support REV-12A cutoff capture without making the
+  ordinal a caller-supplied or provider field.
 - [ ] Status is rebuildable and cannot overwrite award/receipt truth.
 - [ ] Callback-before-ack, duplicate exact receipt and changed receipt are
   representable without provider-attempt/balance/ledger data.

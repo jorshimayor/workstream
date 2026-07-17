@@ -52,10 +52,27 @@ archival input edits
 - [ ] Manifest names exact migrations, schemas, event/task IDs, registry rows,
   service identities/actions/static rows, handler execution boundaries, and
   retained test metadata. Dispatcher cannot execute protected handlers.
-- [ ] Manifest names CON-owned FulfillmentDispatchFence,
-  FulfillmentCallbackFence, FulfillmentLifecycleDrainObservationPort,
-  OutboxClaimValidationPort, injection seams, phase mappings, denial states,
-  and fail-closed construction without REV release-control implementation.
+- [ ] Manifest names mandatory CON obligation-writer, dispatch, callback, and
+  same-session `FulfillmentLifecycleDrainObservationPort` hooks plus
+  `OutboxClaimValidationPort`, injection seams, phase mappings, denial states,
+  and fail-closed construction. REV-12A injects the one shared
+  `JointLifecycleMutationFence`; CON defines no second controller or optional/
+  no-op fence.
+- [ ] The manifest enumerates every fulfillment-obligation root creation,
+  requeue, successor, and repair writer and proves each acquires the shared
+  fence before allocating its immutable monotonic ordinal or locking obligation
+  rows. Missing, extra, ambiguous, differently ordered, or completion-only-
+  misclassified writers fail composition and preflight.
+- [ ] Drain observation returns pending/claimed/retryable outbox events, durable
+  in-flight dispatch, nonterminal delivery/callback obligations, and the current
+  maximum root ordinal in the caller session. Independent-session proof races
+  every writer against cutoff capture and proves it either commits under an
+  included ordinal or observes `commands_draining` without allocation/mutation.
+- [ ] Dispatch and callback readiness proves `delivery_draining` permits only
+  same-generation, at-or-below-cutoff completion and denies new roots, requeue,
+  successor, repair, post-cutoff, and crossed-generation work before provider
+  I/O. Disable waits for zero dispatchable/retryable/claimed/in-flight work and
+  zero nonterminal delivery/callback obligations.
 - [ ] Core conformance matrix has executable evidence; same-run repository
   coverage is at least 78 and changed subsystems at least 90.
 - [ ] Joint drill contract covers all core families. Accept proves Task

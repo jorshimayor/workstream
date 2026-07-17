@@ -45,9 +45,13 @@ AUTH implementation; production router registration; CI weakening
   or sensitive failure leakage.
 - [ ] `FulfillmentLifecycleDrainObservationPort` reports pending/claimed/
   retryable outbox work, durable in-flight delivery, and nonterminal callback
-  obligations through typed outbox capability, never repository import.
-- [ ] Observation is same-session, bounded, read-only, and never returns false
-  zero while remote I/O or terminal receipt remains possible.
+  obligations through typed outbox capability, plus the current maximum
+  immutable `fulfillment_obligation_ordinal`; zero is valid only when no root
+  exists. It never imports an outbox or lifecycle-control repository.
+- [ ] Observation uses the caller AsyncSession, is bounded/read-only, never
+  commits or calls a provider, and never returns false zero while remote I/O or
+  terminal receipt remains possible. Caller-supplied timestamps, ordinals,
+  generation, or event IDs cannot substitute.
 - [ ] AUTH later activates after hidden behavior; 10C waits for approved
   executor identities/actions/static rows.
 

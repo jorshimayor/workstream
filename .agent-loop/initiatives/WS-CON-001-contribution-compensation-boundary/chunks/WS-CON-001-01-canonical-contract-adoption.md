@@ -43,9 +43,13 @@ roadmap changes without synchronized local XLSX/CSV exports
 - [ ] Existing versioned Submission is retained. CON copies stabilized
   artifact_hash lineage and performs no core ART/evidence operation.
 - [ ] Active spec defines REV-owned accept-only FinalAcceptance with canonical
-  `submission_id` and `review_policy_id`; FinalAcceptance-sourced submitter
+  `submission_id`, `policy_context_ref`, and `recorded_by`;
+  FinalAcceptance-sourced submitter
   contribution; direct Review-sourced reviewer contribution; and one REV-owned
   commit. It adds no SubmissionVersion alias or adjudication dependency.
+- [ ] Active spec adopts merged REV PR #128's two ordered operation-specific CON
+  inputs: reviewer before branch, accept-only submitter after FinalAcceptance
+  and accepted task effects; no nullable omnibus input.
 - [ ] Optional evidence is clearly deferred with separate ART/AUTH approval and
   is absent from the core release path.
 - [ ] AUTH boundary matches PR #140 (adopting PR #139): independent project grants, fixed-service
@@ -56,6 +60,10 @@ roadmap changes without synchronized local XLSX/CSV exports
   execution actions remain explicit human/AUTH gates until approved.
 - [ ] Dispatcher authority is limited to outbox mechanics; delivery,
   reconciliation, rebuild, and callback cannot inherit it.
+- [ ] Active spec adopts REV-12A's single shared lifecycle controller/fence,
+  immutable monotonic fulfillment-root ordinal, every-writer fence order,
+  maximum-ordinal drain observation, and same-generation pre-cutoff completion
+  rules without moving controller ownership into CON.
 - [ ] Exact D11 outcome and legacy-row decision are recorded before dependent
   implementation.
 - [ ] Public prefix is `/api/v1`; provider refs/credentials and settlement
