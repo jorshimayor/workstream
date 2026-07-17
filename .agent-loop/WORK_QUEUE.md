@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-AUTH-001-09B` | Controlled Service Actor Provisioning | L1 | Implemented and internally reviewed; PR publication pending |
+| `WS-AUTH-001-09B` | Controlled Service Actor Provisioning | L1 | PR #143 open; external-review repair internally reviewed; replacement checks pending |
 
 Live post-merge state remains read from signed `automation/loop-memory`
 output. This authored queue records the separately approved parallel chunks.

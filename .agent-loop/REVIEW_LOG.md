@@ -1,5 +1,18 @@
 # Review Log
 
+## 2026-07-17 - WS-AUTH-001-09B External Review Repair Passed
+
+PR #143 CodeRabbit review reported four valid fresh-row, subject-validation,
+replay-lifecycle, and CI coverage-enforcement findings. The first Backend run
+also exposed one stale exact active-action audit expectation while 1,240 other
+tests passed at 84.87 percent global coverage. The bounded repair at exact SHA
+`52d4d076c151bed3f47428b573c014e131096f4a` passed every required internal
+track. It adds real two-session stale ORM proof in both lifecycle directions,
+rejects unusable surrounding subject whitespace without normalization, denies
+inactive replay state, enforces three independent 90 percent CI reports, and
+restores exact audit parity. Replacement external checks remain; AUTH-09C is
+inactive.
+
 ## 2026-07-17 - WS-AUTH-001-09B Internal Review Passed
 
 Integrated code SHA `641b439ceb370ecc792322e33c73b6668c244290` passed senior

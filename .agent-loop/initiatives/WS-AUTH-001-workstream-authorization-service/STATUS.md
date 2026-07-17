@@ -89,9 +89,10 @@ as `aa0fdcd`. AUTH-09 was split before runtime implementation. PR #140 merged
 the authoritative AUTH XINT reconciliation as `d541521`; PR #132 then merged
 AUTH-09A as `299363a`. Signed memory stopped, and the user explicitly started
 AUTH-09B from that trusted head. Its bounded implementation, deterministic
-evidence, and every required internal reviewer track pass at integrated code
-SHA `641b439ceb370ecc792322e33c73b6668c244290`; PR publication is pending. No
-service caller or feature action is active.
+evidence, external-review repair, and every required internal reviewer track
+pass at exact code SHA `52d4d076c151bed3f47428b573c014e131096f4a` on PR #143.
+Replacement external checks and evidence rebinding are pending. No service
+caller or feature action is active.
 
 ## Active planning chunk
 
@@ -129,7 +130,7 @@ one human-administrator route and no service admission or feature action.
 | `WS-AUTH-001-XINT` | Merged | `codex/ws-auth-001-xint-reconciliation` | #140 | Merged as `d541521`; signed schema-v2 memory passed. |
 | `WS-AUTH-001-09` | Split | - | - | Split into 09A through 09E before runtime implementation. |
 | `WS-AUTH-001-09A` | Merged | `codex/ws-auth-001-09-actor-state-service-actors` | #132 | Merged as `299363a`; signed memory passed. |
-| `WS-AUTH-001-09B` | In progress | `codex/ws-auth-001-09b-controlled-service-provisioning` | - | Internally reviewed controlled service ActorProfile/ActorIdentityLink provisioning; PR publication pending. |
+| `WS-AUTH-001-09B` | In progress | `codex/ws-auth-001-09b-controlled-service-provisioning` | #143 | External-review repair internally reviewed; replacement checks pending. |
 | `WS-AUTH-001-09C` | Proposed | - | - | Actor and identity-link administrative reads. |
 | `WS-AUTH-001-09D` | Proposed | - | - | Actor and identity-link lifecycle mutations. |
 | `WS-AUTH-001-09E` | Proposed | - | - | Fixed service runtime admission after 09D. |
@@ -150,11 +151,11 @@ merged feature manifests and separate human starts exist.
 
 ## Blockers
 
-AUTH-09B passed exact-head L1 review, atomic PostgreSQL behavior proof, privacy
-tests, and focused coverage gates. GitHub Backend, Agent Gates, CodeRabbit, and
-explicit human merge approval remain. It must not add service grants, dynamic
-assignments, token-role authority, service admission, or feature-action
-activation.
+AUTH-09B and its external-review repair passed exact-head L1 review, atomic
+PostgreSQL behavior proof, privacy tests, and focused coverage gates.
+Replacement GitHub Backend, Agent Gates, CodeRabbit, and explicit human merge
+approval remain. It must not add service grants, dynamic assignments,
+token-role authority, service admission, or feature-action activation.
 
 The four proposed REV lifecycle actions and review-evidence binding action are
 blocked on complete feature-owned typed manifests. REV fixed services are also
