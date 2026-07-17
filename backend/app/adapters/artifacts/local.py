@@ -522,7 +522,9 @@ class LocalStorageAdapter:
             dir_fd=self._root_fd,
         )
         try:
-            self._assert_private_regular(descriptor)
+            details = self._assert_private_regular(descriptor)
+            if stat.S_IMODE(details.st_mode) != 0o600:
+                raise ArtifactConfigurationError("local artifact layout is incompatible")
             content = os.read(descriptor, len(_LAYOUT_MARKER_BYTES) + 1)
             if content != _LAYOUT_MARKER_BYTES:
                 raise ArtifactConfigurationError("local artifact layout is incompatible")

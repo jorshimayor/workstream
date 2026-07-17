@@ -296,7 +296,10 @@ def test_namespace_startup_values_are_closed_and_immutable() -> None:
     """Reject malformed provider descriptors and namespace admission proofs."""
     identity = ArtifactStoreNamespaceIdentity(
         provider_profile="local-v2",
-        descriptor_items=(("private_prefix", "objects/sha256"),),
+        descriptor_items=(
+            ("private_prefix", "objects/sha256"),
+            ("private_root_identity", "sha256:" + "0" * 64),
+        ),
     )
     claim = ArtifactStoreNamespaceClaim(
         adapter_identity=ExternalServiceAdapterIdentity("artifact_store", "local"),
@@ -305,7 +308,10 @@ def test_namespace_startup_values_are_closed_and_immutable() -> None:
     )
     with pytest.raises(FrozenInstanceError):
         claim.namespace_fingerprint = "sha256:" + "1" * 64  # type: ignore[misc]
-    assert identity.as_dict() == {"private_prefix": "objects/sha256"}
+    assert identity.as_dict() == {
+        "private_prefix": "objects/sha256",
+        "private_root_identity": "sha256:" + "0" * 64,
+    }
 
     for profile, items in (
         ("", (("private_prefix", "objects/sha256"),)),
@@ -313,13 +319,32 @@ def test_namespace_startup_values_are_closed_and_immutable() -> None:
         ("local-v2", (("a", "1"), ("a", "2"))),
         ("local-v2", (("", "1"),)),
         ("local-v2", (("backend", "local"),)),
+        ("local-v2", (("private_prefix", "objects/sha256"),)),
+        (
+            "local-v2",
+            (
+                ("private_prefix", "objects/sha256"),
+                ("private_root_identity", "sha256:" + "0" * 64),
+                ("unknown", "value"),
+            ),
+        ),
+        (
+            "unknown-v1",
+            (
+                ("private_prefix", "objects/sha256"),
+                ("private_root_identity", "sha256:" + "0" * 64),
+            ),
+        ),
     ):
         with pytest.raises(ValueError):
             ArtifactStoreNamespaceIdentity(profile, items)
     with pytest.raises(ValueError, match="not immutable"):
         ArtifactStoreNamespaceIdentity(
             "local-v2",
-            [("private_prefix", "objects/sha256")],  # type: ignore[arg-type]
+            [  # type: ignore[arg-type]
+                ("private_prefix", "objects/sha256"),
+                ("private_root_identity", "sha256:" + "0" * 64),
+            ],
         )
     for kwargs in (
         {"adapter_identity": object()},

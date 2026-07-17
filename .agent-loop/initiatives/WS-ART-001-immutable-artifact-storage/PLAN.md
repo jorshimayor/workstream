@@ -11,8 +11,9 @@ deferred initiative input.
 
 ```text
 FastAPI / Celery composition roots
--> ExternalServiceAdapterFactory[ArtifactStore]
--> ArtifactStore v2 byte capability
+-> ExternalServiceAdapterFactory[ArtifactStoreBootstrap]
+-> PostgreSQL exact namespace claim
+-> initialized ArtifactStore v2 byte capability
    -> LocalStorageAdapter       local and focused tests
    -> S3CompatibleArtifactStore MinIO integration; AWS S3 production
 -> ArtifactService orchestration

@@ -18,6 +18,9 @@ _MAXIMUM_PROVIDER_OBJECT_REF_LENGTH = 1024
 _RESERVED_NAMESPACE_DESCRIPTOR_KEYS = frozenset(
     {"adapter", "backend", "provider_profile"}
 )
+_NAMESPACE_DESCRIPTOR_KEYS_BY_PROFILE = {
+    "local-v2": frozenset({"private_prefix", "private_root_identity"}),
+}
 
 
 def _validate_provider_object_ref(provider_object_ref: str) -> None:
@@ -110,6 +113,9 @@ class ArtifactStoreNamespaceIdentity:
             raise ValueError("artifact provider profile is invalid")
         if type(self.descriptor_items) is not tuple:
             raise ValueError("artifact namespace descriptor is not immutable")
+        expected_keys = _NAMESPACE_DESCRIPTOR_KEYS_BY_PROFILE.get(self.provider_profile)
+        if expected_keys is None:
+            raise ValueError("artifact provider profile is unsupported")
         keys: list[str] = []
         for item in self.descriptor_items:
             if (
@@ -123,6 +129,7 @@ class ArtifactStoreNamespaceIdentity:
             keys != sorted(keys)
             or len(keys) != len(set(keys))
             or not _RESERVED_NAMESPACE_DESCRIPTOR_KEYS.isdisjoint(keys)
+            or set(keys) != expected_keys
         ):
             raise ValueError("artifact namespace descriptor is not canonical")
 

@@ -79,6 +79,14 @@ def test_local_refuses_v1_or_unknown_disk_layout(tmp_path: Path) -> None:
     with pytest.raises(ArtifactConfigurationError, match="layout is incompatible"):
         initialize_local_store(root=marker_root)
 
+    executable_marker_root = tmp_path / "executable-marker"
+    executable_marker_root.mkdir(mode=0o700)
+    executable_marker = executable_marker_root / ".workstream-artifact-store-v2"
+    executable_marker.write_bytes(b"workstream-artifact-store-v2\n")
+    executable_marker.chmod(0o700)
+    with pytest.raises(ArtifactConfigurationError, match="layout is incompatible"):
+        initialize_local_store(root=executable_marker_root)
+
 
 def test_local_sanitizes_root_initialization_oserror(
     tmp_path: Path,

@@ -79,12 +79,13 @@ access.
 
 S3CompatibleArtifactStore and LocalStorageAdapter are registered explicitly
 through
-`ExternalServiceAdapterFactory[ArtifactStore]`. Only the artifact-storage
-orchestration service receives the writable port through composition-root
-dependency injection. Product modules and Celery jobs receive typed artifact
+`ExternalServiceAdapterFactory[ArtifactStoreBootstrap]`. The composition root
+claims the bootstrap's exact namespace in PostgreSQL before initialization
+yields the writable `ArtifactStore`. Only artifact-storage orchestration
+receives that port. Product modules and Celery jobs receive typed artifact
 operations from that owner. No service locator, plugin discovery, concrete
-import, fallback constructor, dual factory, or bypassing writable-port
-injection exists.
+import, fallback constructor, dual factory, or bypassing writable-port injection
+exists.
 
 ## D13 - Private S3 Deployment
 

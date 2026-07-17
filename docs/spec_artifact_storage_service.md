@@ -15,8 +15,9 @@ or Flow Node.
 
 ```text
 FastAPI and Celery composition roots
--> ExternalServiceAdapterFactory[ArtifactStore]
--> ArtifactStore v2
+-> ExternalServiceAdapterFactory[ArtifactStoreBootstrap]
+-> PostgreSQL exact namespace claim
+-> initialized ArtifactStore v2
    -> LocalStorageAdapter
    -> S3CompatibleArtifactStore
       -> MinIO integration

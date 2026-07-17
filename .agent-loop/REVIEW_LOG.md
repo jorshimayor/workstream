@@ -2145,3 +2145,14 @@ Namespace descriptor containers must be tuples, with regression tests for both
 rules. ADR 0013 and the artifact specification now describe the actual
 factory-bootstrap, PostgreSQL-claim, byte-store initialization sequence. All
 reviewer sessions were closed; the repaired SHA requires fresh review.
+
+The next exact-SHA review found that provider descriptor keys were only
+canonicalized, not closed by provider profile; the local layout marker accepted
+owner-executable mode; and three active summaries still named direct
+`ExternalServiceAdapterFactory[ArtifactStore]` construction. The namespace
+identity now rejects unsupported profiles and any missing or unknown
+`local-v2` key, the marker requires exact `0600`, and all active summaries use
+the bootstrap -> PostgreSQL namespace claim -> byte-store initialization
+sequence. The stale-evidence finding raised during the review was a sequencing
+false positive: exact-SHA evidence is written only after reviewer sessions
+complete. All reviewer sessions were closed; this repair requires fresh review.
