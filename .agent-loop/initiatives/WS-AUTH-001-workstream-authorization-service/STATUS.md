@@ -129,7 +129,7 @@ one human-administrator route and no service admission or feature action.
 | `WS-AUTH-001-XINT` | Merged | `codex/ws-auth-001-xint-reconciliation` | #140 | Merged as `d541521`; signed schema-v2 memory passed. |
 | `WS-AUTH-001-09` | Split | - | - | Split into 09A through 09E before runtime implementation. |
 | `WS-AUTH-001-09A` | Merged | `codex/ws-auth-001-09-actor-state-service-actors` | #132 | Merged as `299363a`; signed memory passed. |
-| `WS-AUTH-001-09B` | Internally reviewed | `codex/ws-auth-001-09b-controlled-service-provisioning` | - | Controlled service ActorProfile/ActorIdentityLink provisioning; PR publication pending. |
+| `WS-AUTH-001-09B` | In progress | `codex/ws-auth-001-09b-controlled-service-provisioning` | - | Internally reviewed controlled service ActorProfile/ActorIdentityLink provisioning; PR publication pending. |
 | `WS-AUTH-001-09C` | Proposed | - | - | Actor and identity-link administrative reads. |
 | `WS-AUTH-001-09D` | Proposed | - | - | Actor and identity-link lifecycle mutations. |
 | `WS-AUTH-001-09E` | Proposed | - | - | Fixed service runtime admission after 09D. |
