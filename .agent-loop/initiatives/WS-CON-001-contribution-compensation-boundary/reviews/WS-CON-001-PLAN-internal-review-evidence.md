@@ -1,5 +1,94 @@
 # Internal Review Evidence: WS-CON-001-PLAN
 
+## 2026-07-17 WS-XINT-001 Boundary Reconciliation
+
+This addendum is the current authoritative review state and supersedes the
+older policy-model, mandatory-evidence, service-assignment, partial-custody,
+trusted-main, and chunk-order statements below. Trusted `main`
+`5d353b6d3f8a36b9b9ffdc1959487a150ac25fd1` merges WS-XINT-001 PR #139.
+
+Reviewed code SHA: `c4242e0b7c3441c23ce8b3a3facc45ae00de848a`
+
+Reviewed non-review planning-tree SHA-256:
+`586658fb55eadcc36f8095051ed7ff3281a714672456221de7d7041c6f040465`
+
+The digest excludes `reviews/**` and is reproduced from the repository root:
+
+```bash
+find .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary \
+  -type f -name '*.md' ! -path '*/reviews/*' -print0 \
+  | sort -z | xargs -0 sha256sum | sha256sum
+```
+
+Reviewed at: 2026-07-17T05:16:47Z
+
+Reviewer run IDs: senior/architecture/reuse=`/root/auth08_arch_review`;
+QA/test/product/ops/docs/test-delta=`/root/auth08_qa_product_review`;
+security/auth/CI-integrity=`/root/auth08_security_review`
+
+| Reviewer | Result | Blocking findings | Notes |
+|---|---|---|---|
+| senior engineering | PASS AFTER FIXES | None | Operation-specific lifecycle-before-policy locking, chunk gates, and hidden-before-activation sequencing are executable. |
+| QA/test | PASS AFTER FIXES | None | Contribution/award cardinality, exact uniqueness/enums, chunk file scopes, and deleted-contract evidence regressions are explicit. |
+| security/auth | PASS AFTER FIXES | None | Human grants, fixed-service static authority, AUTH-only activation custody, callback isolation, and optional evidence separation are fail closed. |
+| product/ops | PASS AFTER FIXES | None | Every valid human Review recognizes reviewer work; accept alone recognizes submitter work; policy, award, fulfillment, and legacy cutover boundaries are coherent. |
+| architecture | PASS AFTER FIXES | None | ContributionPolicy is the eligibility aggregate, ART is absent from the core transaction, and dispatcher authority cannot leak to feature handlers. |
+| CI integrity | PASS AFTER FIXES | None | Scanner changes are exact; deleted contract provenance is recovered index to HEAD to base; regular-file enforcement prevents path/symlink bypass. |
+| docs | PASS AFTER FIXES | None | PR #139 precedence, optional evidence, complete ART/REV custody references, open AUTH decisions, and inherited loop-memory failure are truthful. |
+| reuse/dedup | PASS AFTER FIXES | None | Existing AUTH kernel, static matrix, outbox, lifecycle, audit, adapter-factory, and PostgreSQL truth boundaries are reused. |
+| test delta | PASS AFTER FIXES | None | Added regressions preserve failure for missing, malformed, unreadable, non-file, dangling/resolvable-symlink, pure-deletion, and replacement contracts. |
+
+Open sub-agent sessions: none
+
+Valid findings addressed: yes
+
+- Replaced the obsolete policy model with `ContributionPolicy`, immutable
+  `ContributionPolicyVersion`, exact `ContributionRule`, and
+  `ContributionAwardDefinition`; `CompensationAward` is only the evaluated
+  downstream result. PaymentPolicy has no compatibility path.
+- Removed ART and evidence projection from the atomic Review-to-contribution
+  transaction. CON copies the stabilized versioned `Submission.artifact_hash`;
+  it does not introduce SubmissionVersion or make an ART/provider call.
+- Fixed product cardinality: every valid committed human Review creates one
+  reviewer `completed_review`; only `accept` additionally creates submitter
+  `accepted_submission`; automated outcomes create neither.
+- Replaced combined role semantics with independent exact `submitter`,
+  `reviewer`, and `adjudicator` grants.
+- Reconciled 22 core proposed ActionIds to existing stable PermissionIds where
+  present. Policy actions use `contribution.policy.*` while retaining
+  `compensation.policy.manage`; optional evidence and unapproved executor
+  candidates are outside the core count.
+- Fixed service authorization now requires provisioned ActorProfile/link,
+  immutable closed ServiceIdentity, exact static matrix row, AUTH-09E, typed
+  context, prepared mutation protocol, and later AUTH activation. There is no
+  persisted service grant/action-assignment row.
+- Kept complete 25-action ART and 19-action REV activation-custody transfer in
+  WS-XINT/AUTH ownership. WS-CON references those complete handoffs and does not
+  restate partial subsets.
+- Split human operations requests/reads/drain observation in CON-10B from
+  independently authorized async executors in new CON-10C. Outbox dispatch owns
+  mechanics only and never grants delivery, callback, reconciliation, or
+  rebuild authority.
+- Deferred CON-09A/09B as optional successors. Neither ART nor evidence
+  projection gates core reads, readiness, or joint REV/CON release.
+- Repaired the internal-review evidence gate for renamed/deleted contracts:
+  deleted headings are recovered from index, HEAD, then review base and retain
+  their chunk ID; missing provenance, invalid content, non-regular files, and
+  symlinks fail closed.
+
+Deterministic evidence passed: Markdown links for 44 changed Markdown files;
+stale Workstream wording; stale authorization documentation; stale artifact
+contracts; `git diff --check`; Python compilation for all five changed gate
+files; 80/80 agent-gate tests; trusted-main ancestry; no backend diff; exact
+74 PermissionId / 57 ActionId / nine active / 48 planned runtime catalogue;
+and the 22-action proposal audit. The repository-wide loop-memory check has one
+inherited failure: merged `origin/main` leaves the unchanged WS-AUTH status at
+the human merge checkpoint. WS-CON does not edit that externally owned file to
+conceal the failure.
+
+Application/runtime code changed: no. The original PDF deletion remains the
+pre-existing unstaged user-worktree change and is excluded from both commits.
+
 ## 2026-07-16 ART-02A2 PR #129 And Exact Custody Reconciliation
 
 This addendum is the current authoritative review state and supersedes older

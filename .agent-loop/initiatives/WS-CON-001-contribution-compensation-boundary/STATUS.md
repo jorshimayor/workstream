@@ -2,8 +2,10 @@
 
 ## Current status
 
-`WS-CON-001-PLAN` is being reconciled to trusted `main` `5d353b6`, which merged
-WS-XINT-001 boundary reconciliation through PR #139. Runtime code is unchanged.
+`WS-CON-001-PLAN` is reconciled and internally reviewed against trusted `main`
+`5d353b6`, which merged WS-XINT-001 boundary reconciliation through PR #139.
+The reviewed content commit is `c4242e0`; runtime code is unchanged and the
+result remains local/unpublished.
 The prior plan is superseded where it used the older policy aggregate, made ART
 evidence mandatory, described service action rows as persisted assignments,
 allowed partial activation-custody transfer, or let outbox dispatch imply
@@ -29,7 +31,7 @@ feature-handler authority.
 
 | Chunk | Status | Notes |
 |---|---|---|
-| `WS-CON-001-PLAN` | Reconciliation and internal review in progress | Based on PR #139 / `5d353b6` |
+| `WS-CON-001-PLAN` | Reconciled and internally reviewed; unpublished | Based on PR #139 / `5d353b6`; reviewed content `c4242e0` |
 | `WS-CON-001-01` through `08B`, `10A` through `11` | Proposed | Separate explicit start required |
 | `WS-CON-001-09A/09B` | Deferred optional | Separate approval and fresh ART/AUTH review required |
 
