@@ -74,14 +74,14 @@ WS-REV does not create a separate reviewer guide or reviewer-side rebase.
 The task pipeline owns context resolution. TaskAssignment stores only `task_id`
 and does not duplicate or reference a guide/context lock. Every immutable Submission version
 stamps the exact Project Guide and policy context used for that attempt. After
-`needs_revision`, preparation compares the prior Submission's locked guide with
-the current approved Project Guide:
+`needs_revision`, preparation compares the prior Submission's stamped guide
+identity and activation sequence with the project's currently active Project
+Guide:
 
-- same version: keep the existing context;
-- any different current activated version, whether its activation sequence is
-  greater or lower: prepare the next attempt against that authoritative version
-  and record the transition direction;
-- missing, incomplete, or unsafe current setup: block for Project Manager
+- exact identity and activation-sequence match: keep the existing context;
+- any different active identity or activation sequence: prepare the next attempt
+  against that authoritative guide and record forward or backward direction;
+- missing, incomplete, or unsafe active setup: block for Project Manager
   repair.
 
 The Task Context API returns the prepared next-attempt context to the assigned

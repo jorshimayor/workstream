@@ -508,8 +508,10 @@ action availability.
 ```text
 needs_revision Review
   -> task remains assigned and enters needs_revision
-  -> compare prior locked Project Guide with the current approved Project Guide
-  -> same keeps; any different active guide rebases; inconsistent/unsafe blocks
+  -> compare prior Submission's stamped guide identity/activation sequence with
+     the project's currently active Project Guide
+  -> exact match keeps; any different active identity/sequence rebases forward
+     or backward; missing, incomplete, or unsafe active context blocks
   -> contributor sees prior findings and context delta
   -> same submission.create action creates next existing Submission version
   -> one SubmissionFindingResponse per unresolved blocking finding
@@ -537,7 +539,7 @@ evidence but no Review, contribution, award, payment, or reputation effect.
 The task pipeline owns the only guide binding. TaskAssignment stores only
 `task_id`; it carries no duplicate guide/context field. Each Submission stamps
 its resolved context immutably. During `needs_revision`, the Task Context API resolves
-the prepared next-attempt context so the submitter sees the new approved guide
+the prepared next-attempt context so the submitter sees the currently active guide
 before resubmission. The reviewer never rebases: it consumes the guide and
 task-execution policy context stamped on the single Submission covered by its
 active lease.

@@ -40,8 +40,11 @@ outcomes.
   Submission. Submitter contribution lineage consumes that stable fact rather
   than inferring acceptance from `Review.decision`.
 - Revisions respond to every unresolved blocking finding, preserve both
-  predecessor chains, prepare the latest approved Project Guide context when it
-  changed, and return to the prior reviewer before falling back to open FIFO.
+  predecessor chains, and compare the prior Submission's stamped guide identity
+  and activation sequence with the project's currently active Project Guide.
+  Exact match keeps context; any different active identity or sequence rebases
+  forward or backward; missing, incomplete, or unsafe active context blocks.
+  Return routing prefers the prior reviewer before falling back to open FIFO.
 - Artifact outage or integrity failure blocks judgment without creating an
   adverse contributor outcome.
 - Every committed Review joins the `WS-CON-001` contribution and conditional

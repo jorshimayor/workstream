@@ -45,12 +45,12 @@ production `/api/v1` review-router registration
 
 ## Acceptance criteria
 
-- Revision preparation compares the prior Submission's locked Project Guide
-  with the current approved Project Guide. Equal guide identity/activation
-  sequence records `kept`; any different current active guide records `rebased`
-  plus `forward` or `backward` direction, including a lower activation sequence.
-  A mismatched identity/sequence pair, incomplete, or unsafe current context
-  records manager-repair block. No prior
+- Revision preparation compares the prior Submission's stamped guide identity
+  and activation sequence with the project's currently active Project Guide.
+  Exact identity/activation-sequence match records `kept`; any different active
+  identity or sequence records `rebased` plus `forward` or `backward` direction,
+  including a lower activation sequence. Missing, incomplete, or unsafe active
+  context records manager-repair block. No prior
   task-attempt or Submission row is mutated.
 - Immutable `RevisionContextPreparation` persists task, immutable
   `reviewed_task_assignment_id`, current `target_task_assignment_id`, and prior-
