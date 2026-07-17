@@ -71,7 +71,8 @@ git diff --check
 if ! changed_files="$(git diff --name-only origin/main...HEAD)"; then
   exit 1
 fi
-if unexpected="$(printf '%s\n' "$changed_files" | rg -v '^\.agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/|^\.agent-loop/merge-intents/WS-CON-001-09B\.json$')"; then
+allowed_paths='^\.agent-loop/REVIEW_LOG\.md$|^\.agent-loop/merge-intents/WS-CON-001-09B\.json$|^\.agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/(CHUNK_MAP\.md|STATUS\.md|(chunks|deferred)/WS-CON-001-09B-authorized-contribution-evidence-read\.md|reviews/WS-CON-001-09B-[^/]+\.md)$'
+if unexpected="$(printf '%s\n' "$changed_files" | rg -v "$allowed_paths")"; then
   printf '%s\n' "$unexpected"
   exit 1
 else

@@ -109,10 +109,14 @@ and fence.
 
 ### Allowed Files Changed
 
-- Seventeen WS-CON future chunk/deferred-proposal files.
-- PLAN3 contract, STATUS, trust bundle, internal evidence, and external response
-  under the WS-CON initiative.
-- Exactly one existing PLAN3 schema-v2 merge intent for the cumulative PR.
+- Sixteen active WS-CON future chunk contracts.
+- CON-09B moved from `chunks/` to `deferred/` as one non-executable proposal.
+- PLAN3 contract, STATUS, RUNTIME_VERIFICATION, trust bundle, and external
+  response under the WS-CON initiative.
+- Root `.agent-loop/REVIEW_LOG.md` for the required durable external-review
+  record.
+- No merge-intent content changed; the cumulative PR still contains exactly one
+  existing PLAN3 schema-v2 merge intent.
 
 ### Files Outside Contract
 
@@ -130,11 +134,13 @@ is one coherent specification initiative, its runtime boundary is empty, and
 the earlier planning snapshots retain their own review evidence. The user-owned
 deletion of the archival CON PDF is unstaged and excluded.
 
-The PR #142 external-review repair updates 17 future chunk/deferred-proposal
-files plus the PLAN3 scope, status, trust bundle, and external-response log. It
-adds no runtime, AUTH/REV/ART-owned, workflow, dependency, migration, or test
-change. The repair makes verification executable and preserves upstream AUTH
-ownership rather than changing product behavior.
+The PR #142 external-review repair has 24 changed-path entries relative to the
+pre-review head: 16 active chunk contracts; the old/new paths for one CON-09B
+move; PLAN3, STATUS, RUNTIME_VERIFICATION, trust bundle, external-response log,
+and root REVIEW_LOG. It adds no runtime, AUTH/REV/ART-owned, workflow,
+dependency, migration, test, or merge-intent content change. The repair makes
+verification executable and preserves upstream AUTH ownership rather than
+changing product behavior.
 
 ## Product Behavior
 
@@ -144,29 +150,6 @@ ownership rather than changing product behavior.
 This PR changes planning, lifecycle wording, future chunk contracts, and review
 evidence only. It adds no runtime route, model, migration, action, permission,
 grant, worker, provider call, or activation.
-
-## Acceptance Criteria Proof
-
-- Runtime catalogue verified at 74 PermissionIds and 65 ActionIds: nine active,
-  56 planned, no CON-specific ActionId, and no task-claim ActionId.
-- Prepared-handle wording matches merged AUTH PR #140.
-- The task and review activation sequences explicitly require hidden feature
-  behavior before AUTH-only activation.
-- Reviewer and submitter contribution lineage remains Review and
-  FinalAcceptance respectively, inside the REV-owned transaction.
-- FinalAcceptance names and CON operation ordering match merged REV PR #128.
-- One shared release controller/fence, monotonic root ordinal, cutoff capture,
-  and same-generation at-or-below-cutoff completion match REV-12A.
-- The 22 CON mappings are explicitly unregistered/non-final; only the two
-  proposed service PermissionIds remain identified as proposals.
-- Merge-intent validation passes for successor `WS-CON-001-01`.
-- Every CodeRabbit contract finding is dispositioned without moving AUTH-owned
-  registration, evaluation, or activation into CON.
-- Sixteen active future chunks name runnable focused commands, non-empty test
-  selection, repository coverage 78, focused coverage 90, and explicit pass
-  criteria.
-- Optional CON-09B is a zero-file deferred proposal until a separately approved
-  replacement contract closes then-current ART/AUTH disclosure scope.
 
 ## Evidence
 
@@ -199,6 +182,29 @@ Merge-intent schema-v2 validation: PASS
 Local roadmap workbook: not present, so no sheet-export check applies
 ```
 
+## Acceptance Criteria Proof
+
+- Runtime catalogue verified at 74 PermissionIds and 65 ActionIds: nine active,
+  56 planned, no CON-specific ActionId, and no task-claim ActionId.
+- Prepared-handle wording matches merged AUTH PR #140.
+- The task and review activation sequences explicitly require hidden feature
+  behavior before AUTH-only activation.
+- Reviewer and submitter contribution lineage remains Review and
+  FinalAcceptance respectively, inside the REV-owned transaction.
+- FinalAcceptance names and CON operation ordering match merged REV PR #128.
+- One shared release controller/fence, monotonic root ordinal, cutoff capture,
+  and same-generation at-or-below-cutoff completion match REV-12A.
+- The 22 CON mappings are explicitly unregistered/non-final; only the two
+  proposed service PermissionIds remain identified as proposals.
+- Merge-intent validation passes for successor `WS-CON-001-01`.
+- Every CodeRabbit contract finding is dispositioned without moving AUTH-owned
+  registration, evaluation, or activation into CON.
+- Sixteen active future chunks name runnable focused commands, non-empty test
+  selection, repository coverage 78, focused coverage 90, and explicit pass
+  criteria.
+- Optional CON-09B is a zero-file deferred proposal until a separately approved
+  replacement contract closes then-current ART/AUTH disclosure scope.
+
 ## Test Delta
 
 ### Tests Added
@@ -212,20 +218,6 @@ Local roadmap workbook: not present, so no sheet-export check applies
 ### Tests Removed Or Skipped
 
 - None.
-
-## CI And Gate Integrity
-
-- [x] No workflow weakening.
-- [x] No lint/test/docstring gate weakening.
-- [x] No coverage threshold weakening.
-- [x] No package script weakening.
-- [x] No unpinned new GitHub Action.
-- [x] Checkout credential persistence remains unchanged; no workflow changed.
-
-### Integrity Detail
-
-PLAN3 changes no test or CI file, removes no assertion, skips no test, changes
-no threshold, and adds no bypass. Existing agent-gate coverage remains intact.
 
 ## Internal Reviewer Results
 
@@ -261,6 +253,20 @@ External review response file:
 |---|---:|---|
 | CodeRabbit | Addressed locally; push pending | Five consolidated threads and the description warning are repaired. |
 | GitHub checks | Pending rerun | Agent Gates and Backend passed before this repair. |
+
+## CI And Gate Integrity
+
+- [x] No workflow weakening.
+- [x] No lint/test/docstring gate weakening.
+- [x] No coverage threshold weakening.
+- [x] No package script weakening.
+- [x] No unpinned new GitHub Action.
+- [x] Checkout credential persistence remains unchanged; no workflow changed.
+
+### Integrity Detail
+
+PLAN3 changes no test or CI file, removes no assertion, skips no test, changes
+no threshold, and adds no bypass. Existing agent-gate coverage remains intact.
 
 ## Remaining Risks
 

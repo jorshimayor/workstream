@@ -48,8 +48,8 @@ legacy fallback, dependency or CI weakening
   stable failure. No legacy authority executes.
 - [ ] Concurrent draft/publish/retire/selector/binding changes are
   deterministic. Production OpenAPI remains unchanged.
-- [ ] The feature manifest is sufficient for later AUTH registration/evaluator
-  integration and activation without transferring any AUTH-owned work to CON.
+- [ ] The feature manifest is sufficient for later AUTH evaluator integration
+  and activation without transferring any AUTH-owned work to CON.
 
 ## Verification and reviewers
 

@@ -41,6 +41,7 @@ L0/L1 authorization, transaction, and release specification; P1.
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-08A-outbound-compensation-delivery.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-08B-inbound-fulfillment-callback.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-08R-bound-service-rate-control.md
+.agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-09B-authorized-contribution-evidence-read.md (deletion only; moved to deferred/)
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/deferred/WS-CON-001-09B-authorized-contribution-evidence-read.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-10A-contribution-award-product-reads.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-10B-operations-reconciliation-rebuild.md
@@ -127,7 +128,7 @@ python3 scripts/check_stale_authorization_docs.py
 python3 scripts/check_stale_artifact_contracts.py
 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest -q scripts/test_agent_gates.py
 git diff --check
-test -z "$(git diff origin/main --name-only -- backend)"
+git diff --quiet origin/main -- backend
 ```
 
 ## Required reviewers
