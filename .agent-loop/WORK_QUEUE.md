@@ -70,7 +70,6 @@ output. This authored queue records the separately approved parallel chunks.
 | `WS-AUTH-001-07A` | Closed Permission And Action Catalogue | L1 | Merged through PR #126 as `e9d72a1` on 2026-07-15 |
 | `WS-AUTH-001-07B` | Deny-By-Default Kernel And Self-Action Cutover | L1 | Merged through PR #130 as `90eca12` on 2026-07-15 |
 | `WS-AUTH-001-08` | Bootstrap Access Administrator Grant | L1 | Merged through PR #131 as `aa0fdcd` on 2026-07-16 |
-| `WS-ART-001-02A2` | Committed Source And Local Preparation | L1 | Merged through PR #129 as `9a04434` on 2026-07-16 |
 | `WS-ART-001-OBJECT-STORAGE-AMENDMENT` | AWS-First Object Storage Planning Amendment | L1 | Merged through PR #120 as `4408256` on 2026-07-14 |
 | `WS-ART-001-02A1` | External Service Adapter Foundation | L1 | Merged through PR #127 as `f64a8e5` on 2026-07-15 |
 | `WS-ART-001-02A2` | Committed Source And Local Preparation | L1 | Merged through PR #129 as `9a04434` on 2026-07-16 |
@@ -90,8 +89,8 @@ coverage implementation chunk from this worktree.
 
 `WS-ART-001-01`, the AWS-first planning amendment, `02A1`, and `02A2` are
 merged. R2 and Flow Node are deferred. The user explicitly started `02A3` on
-2026-07-16. Its internal review is complete and it awaits its own PR
-publication and human review; do not start `02B1` automatically.
+2026-07-16. Its merged-main deterministic proof is complete and exact-SHA
+internal review is pending; do not start `02B1` automatically.
 
 Coverage work proceeds independently in its own worktree and is not owned by
 this AUTH queue update.

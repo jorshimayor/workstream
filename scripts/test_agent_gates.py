@@ -3995,7 +3995,7 @@ def test_auth_spec_orders_service_admission_before_project_roles() -> None:
 
 
 def test_parallel_initiative_status_matches_trusted_main() -> None:
-    """Auth and artifact maps cannot regress already merged prerequisites."""
+    """Initiative state preserves merged prerequisites and the current ART gate."""
     auth_map = Path(
         ".agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/"
         "CHUNK_MAP.md"
@@ -4016,11 +4016,11 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
     assert "| `WS-AUTH-001-09A` | Awaiting human merge |" in auth_status
     assert "Merged through PR #129 as `9a04434`" in artifact_map
     assert "Reviewed in isolated worktree; PR publication pending" in artifact_map
-    assert "No artifact implementation chunk is active." in artifact_status
     assert (
-        "`WS-ART-001-02A3` implementation\nand review are complete" in artifact_status
+        "`WS-ART-001-02A3` implementation and merged-main deterministic repair are\n"
+        "complete" in artifact_status
     )
-    assert "PR #129 merged `WS-ART-001-02A2` as `9a04434`" in artifact_status
+    assert "The current gate is exact-SHA internal review" in artifact_status
 
 
 def test_stale_authorization_discovery_includes_new_untracked_docs() -> None:
