@@ -6,8 +6,8 @@
 
 ## Goal
 
-Implement immutable qualification snapshots and exact-project
-`ProjectRoleGrant(submitter|reviewer|both)` create, replace, list, and revoke
+Implement immutable qualification snapshots and exact-project independent
+`ProjectRoleGrant(submitter|reviewer|adjudicator)` create, list, and revoke
 behavior under scoped Project Manager authority.
 
 ## Why this chunk exists
@@ -39,7 +39,7 @@ backend/app/modules/projects/repository.py
 backend/app/api/router.py
 backend/app/db/models.py
 backend/app/modules/audit/**
-backend/alembic/versions/0023_*.py
+backend/alembic/versions/0024_*.py
 backend/tests/test_actors.py
 backend/tests/test_projects.py
 backend/tests/test_auth.py
@@ -59,15 +59,15 @@ docs/spec_authorization_service.md
 automated grants from skills or reputation
 self-grant or self-revoke of the issuer's own contributor grant through the
 administrative project-grant operation
-admin roles satisfying submitter/reviewer permissions
+admin roles satisfying submitter/reviewer/adjudicator permissions
 task/review lifecycle implementation
 project/task/checker authorization cutover
 ```
 
 ## Acceptance criteria
 
-- Snapshot is immutable, project/contributor-bound, privacy-bounded, and
-  records unavailable evidence explicitly.
+- Snapshot is immutable, actor/project/requested-role-bound, privacy-bounded,
+  and records unavailable evidence explicitly.
 - Qualification snapshots and ProjectRoleGrants are owned by the authorization
   module; ActorProfile/IdentityLink remain actor-owned, and ProjectRepository
   remains the canonical project loader. No duplicate grant/project repository
@@ -83,18 +83,26 @@ project/task/checker authorization cutover
 - Target must be an active human and cannot be the issuing manager.
 - A manager who separately holds a contributor grant cannot revoke that grant
   through their own administrative request; denial is stable and audited.
-- At most one active grant exists per contributor/project.
-- Replacement revokes old history and creates a new grant atomically.
-- Create, replace, and revoke require canonical request hashing: same key and
+- A partial unique index on `(actor_profile_id, project_id, role) WHERE status =
+  'active'` permits at most one active grant for the same exact role while a
+  contributor may hold active submitter, reviewer, and adjudicator rows
+  concurrently.
+- Issue never revokes another role. Regrant after revocation creates a new
+  immutable row.
+- Create and revoke require canonical request hashing: same key and
   same request returns the committed graph; same key with different request is
   rejected.
 - State, idempotency result, audit event, and invalidation event commit in one
   transaction.
 - Only manual creation is enabled; automated schema value cannot be emitted.
 - Revocation is visible on the next authorization context build.
+- Revocation evidence and invalidation identify the exact revoked role;
+  downstream consumers reconcile only the matching task, review, or future
+  adjudication responsibility.
 - Project manager/admin role alone never creates contributor capability.
-- PostgreSQL concurrency tests cover identical creates, conflicting creates,
-  replace versus revoke, and revocation versus authorization.
+- PostgreSQL concurrency tests cover identical-role creates, concurrent
+  different-role creates, regrant versus revoke, and revocation versus
+  authorization.
 - `POST/GET /api/v1/projects/{project_id}/role-grants`, grant detail, and grant
   revoke routes have multi-role, self-revoke, scope, privacy, rate-limit,
   replay, and negative tests.
@@ -142,8 +150,8 @@ git diff --check
 
 ## Human review focus
 
-Review exact-project scope, self-grant protection, snapshot privacy, replacement
-atomicity, and absence of implicit grants.
+Review exact-project scope, self-grant protection, role-specific snapshot
+privacy, independent issue/revoke semantics, and absence of implicit grants.
 
 ## Stop conditions
 

@@ -39,7 +39,7 @@ backend/app/modules/tasks/repository.py
 backend/app/modules/tasks/schemas.py
 backend/app/modules/tasks/models.py
 backend/app/modules/tasks/lifecycle.py
-backend/alembic/versions/0025_*.py
+backend/alembic/versions/0026_*.py
 backend/app/modules/authorization/**
 backend/app/modules/audit/**
 backend/app/api/deps/auth.py
@@ -73,8 +73,9 @@ token role or legacy active-worker-profile fallback
   returns domain records. The task application service or a feature-owned
   resource loader composes ResourceContext; persistence does not depend on
   authorization DTOs, and authorization does not duplicate task queries.
-- Submitter/both grant for the exact project is required for queue/claim/start,
-  plus existing task availability, assignment, ownership, and state guards.
+- An active submitter grant for the exact project is required for
+  queue/claim/start, plus existing task availability, assignment, ownership,
+  and state guards.
 - Every migrated task/assignment route or reconciliation command declares one
   primary registered action against the canonically loaded project, task, or
   assignment target. Feature-owned TaskRepository facts remain authoritative.
@@ -90,14 +91,14 @@ token role or legacy active-worker-profile fallback
   `operations.task.start_override` PermissionId/ActionId typed and PostgreSQL
   parity as planned metadata. This chunk promotes the action only with its task
   resource composer, Operator candidate, guards, surface declaration, reason,
-  evidence, and behavior tests. Migration `0025` owns task/assignment and
+  evidence, and behavior tests. Migration `0026` owns task/assignment and
   Contributor-field schema changes only; it does not change the permission or
   action registry.
 - Operator `operations.status.read` exposes a read-only cross-project task-queue
   operational projection with bounded fields; it does not grant task mutation.
   Audit Authority `audit.read` exposes only covered task evidence. Both paths
-  filter before counts/cursors, conceal unauthorized resources, redact contributor
-  details, and have explicit mutation-denial tests.
+  filter before counts/cursors, conceal unauthorized resources, redact
+  contributor details, and have explicit mutation-denial tests.
 - ProjectRoleGrant revocation and ActorProfile suspension/deactivation/link
   revocation reconcile exclusive submitter assignments idempotently. For
   `claimed` or `in_progress`, the active assignment closes as
@@ -105,7 +106,7 @@ token role or legacy active-worker-profile fallback
   immutable prior work/audit history remains. A `needs_revision` task instead
   remains `needs_revision` with a durable unassigned revision obligation. A
   covered manager may reassign it only to an active exact-project submitter;
-  the replacement receives the bounded contributor-visible prior findings, prepared
+  the replacement receives bounded contributor-visible prior findings, prepared
   revision context, supersession linkage, and replay requirements. Reactivation
   does not restore the old assignment. Submitted/evaluation/review-pending
   history is not rewritten.
@@ -121,12 +122,12 @@ token role or legacy active-worker-profile fallback
 - Task queue/claim/start remove their enumerated
   `LegacyWorkflowEligibilityCompatibility` consumers; only the submission
   consumer remains for chunk 14.
-- The API drill provisions an exact-project submitter/both grant through the
+- The API drill provisions an exact-project submitter grant through the
   supported service/API path before claim. The legacy workflow-profile route
   remains bounded only because chunk 14 still owns the final submission
   compatibility consumer; task queue/claim/start no longer depend on it.
 - The assignment persistence column, model/schema/service fields, response
-  contract, and new audit payload keys use `contributor_id`. Migration `0025`
+  contract, and new audit payload keys use `contributor_id`. Migration `0026`
   preserves every existing assignment owner, supports downgrade, and removes
   the legacy storage name without exposing a public compatibility alias.
 - Full backend suite and API contract drill pass.

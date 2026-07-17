@@ -2,19 +2,41 @@
 
 ## Workstream
 
-Flow's task evaluation and contribution infrastructure: the system for project guides, task queues, submission packets, automated checks, reviewer routing, evaluation sprints, revision loops, contribution records, payment status, and reputation signals.
+Flow's task evaluation and contribution infrastructure: the system for project
+guides, task queues, submission packets, automated checks, reviewer routing,
+evaluation sprints, revision loops, contribution records, compensation award
+and fulfillment state, and reputation signals.
 
 ## Project
 
-A configured work program with its own human-facing guide, submission artifact policy, checker policies, review policy, revision policy, payment policy, and queue.
+A configured work program with its own human-facing guide, submission artifact
+policy, checker policies, review policy, revision policy, independently
+published contribution policy, and queue.
 
 ## Project Owner
 
 The external or internal organization that provides open-ended project material
 and business terms. That material can be markdown, URL-backed documentation,
-repository docs, examples, rubrics, task instructions, base payout or payment
-policy inputs, or other project-specific source material. The project owner
+repository docs, examples, rubrics, task instructions, compensation business
+terms, or other project-specific source material. The project owner
 does not author or approve Workstream's machine-readable internal policy schema.
+
+## ContributionPolicy
+
+The stable project policy that determines what canonical contributions can
+earn. Its immutable published `ContributionPolicyVersion` contains one explicit
+`ContributionRule` for each contribution type. Unpaid rules create no award;
+payable rules reference immutable `ContributionAwardDefinition` rows for money,
+project points, or both. A Finance Authority publishes the policy. Project
+owners provide business terms but do not author the machine policy directly.
+
+## CompensationAward
+
+The immutable result of evaluating one `ContributionRecord` against its frozen
+`ContributionPolicyVersion`. Its instrument is `money` or `project_points`.
+Money awards route downstream to payment-request/settlement adapters; points
+awards route to the project-points adapter. Downstream adapters cannot create
+award eligibility.
 
 ## ActorContext
 
@@ -114,14 +136,17 @@ system/project scope.
 ## ProjectRoleGrant
 
 An immutable exact-project contributor authority record with role `submitter`,
-`reviewer`, or `both`.
+`reviewer`, or `adjudicator`. A contributor may hold all three capabilities
+through separate active grants.
 
 ## Contributor
 
 The umbrella human product term for a person participating in Workstream. A
-contributor has an exact-project `submitter`, `reviewer`, or `both` grant.
-Celery, checker, setup, and background workers are internal services, not human
-product roles.
+contributor may have exact-project `submitter`, `reviewer`, and `adjudicator`
+grants as independent records. The adjudicator grant creates no adjudication
+capability until WS-REV defines the lifecycle and AUTH activates exact
+adjudication actions. Celery, checker, setup, and background workers are
+internal services, not human product roles.
 
 ## Source
 
@@ -191,7 +216,7 @@ A unit of work inside a project.
 ## Task Work Context
 
 The contributor-safe API projection of a task's locked guide, project summary,
-review policy, revision policy, payment policy, and lifecycle state. It is read
+review policy, revision policy, and lifecycle state. It is read
 from the task's stamped locked context and does not expose source snapshot
 hashes, private source/import refs, compiled checker bundles, checker configs,
 Celery ids, or setup errors.
@@ -206,13 +231,14 @@ rules, hash algorithm, size limits, and attestation terms before submission.
 ## Task Locked Context
 
 The permission-scoped Project Manager, Operator, or Audit projection of a task's
-locked guide and policy provenance, including guide source snapshot id/hash, effective policy
-id/hash, pre-submit checker policy id/hash, post-submit checker policy
-id/hash/body summary, and review, revision, and payment policy versions.
+locked guide and policy provenance, including guide source snapshot id/hash,
+effective policy id/hash, pre-submit checker policy id/hash, post-submit checker
+policy id/hash/body summary, and review and revision policy versions.
 
 ## Task Contract
 
-The normalized task fields required for Workstream to screen, assign, check, review, pay, and audit work.
+The normalized task fields required for Workstream to screen, assign, check,
+review, compensate, and audit work.
 
 ## Submission Packet
 
@@ -271,9 +297,12 @@ The object-storage adapter that implements `ArtifactStore` using the S3
 protocol. AWS S3 is the v0.1 production provider; MinIO is used for local and CI
 integration proof. Cloudflare R2 is deferred to a separate approved initiative.
 
-## Payment Ledger
+## Compensation Fulfillment
 
-The record of accepted amount, pending payout, paid amount, and payment state.
+The award-delivery and fulfillment record set for payable compensation:
+immutable `CompensationAward` and `CompensationFulfillmentReceipt` records plus
+a rebuildable `CompensationStatusProjection`. Explicitly unpaid contribution
+rules create no award.
 
 ## Reputation Ledger
 
@@ -281,7 +310,11 @@ The outcome-based record of contributor and reviewer performance.
 
 ## Contribution Record
 
-The evidence-backed record that accepted work was completed under a locked project guide. Payment and reputation records attach to contribution records, but do not replace them.
+The immutable, evidence-backed record of one completed contribution under locked
+project context. `completed_review` is created for every valid recorded human
+Review; `accepted_submission` is created for the submitter only on `accept`.
+Compensation and reputation records may attach to either contribution type, but
+do not replace the contribution record.
 
 ## Human Owner
 

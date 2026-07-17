@@ -51,12 +51,14 @@ Use only when a draft/imported task fails before `READY`.
 
 External-origin webhook drop delivery is a future adapter concern. In v0.1 this section records internal screening/import rejection.
 
-## Contribution Record
+## Contribution Records
 
-- contribution record id:
-- accepted submission id:
-- accepting review id:
-- payment record id:
+- reviewer contribution record id:
+- reviewer contribution type: `completed_review`
+- review id and review lease id:
+- submitter contribution record id, only on `accept`:
+- submitter contribution type, only on `accept`: `accepted_submission`
+- compensation award ids, when the frozen `ContributionRule` rows are payable:
 
 ## Open Items
 

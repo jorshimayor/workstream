@@ -44,14 +44,15 @@ only validated staged evidence; otherwise deployment fails with a precise
 remediation report. Empty and test databases migrate normally.
 
 Historical actor references remain string identifiers in early chunks because
-fixed system actors are not ordinary human/service profiles and a broad FK
-rewrite is not required to establish correct authority.
+a broad FK rewrite is not required to establish correct authority. Runtime
+services nevertheless use explicitly provisioned service ActorProfiles before
+executing protected commands.
 
 ### Authorization cutover
 
 The implementation introduces the canonical service before moving product
 surfaces. Each cutover chunk migrates a complete resource family and removes
-its old token-role authorization. No command accepts token role or local grant
+its old issuer-role authorization. No command accepts issuer role metadata or local grant
 as alternate sufficient proof.
 
 Project configuration moves first because it is required to create project
@@ -115,10 +116,10 @@ their lifecycle assertions loosened. As surfaces migrate, positive
 authorization fixtures must provision canonical profiles, links, and grants
 through supported service/API paths and exercise the real ActorResolver,
 FastAPI dependency, and AuthorizationService. Dependency overrides, fabricated
-ActorContext objects, token-role fallbacks, and direct database grant inserts
+ActorContext objects, issuer-role fallbacks, and direct database grant inserts
 are not valid product-authorization proof. Direct row factories remain limited
 to repository and migration tests. Every migrated surface adds a negative test
-proving the same token role alone no longer authorizes.
+proving the same issuer role metadata alone no longer authorizes.
 
 ## Implementation sequence
 
@@ -137,7 +138,8 @@ proving the same token role alone no longer authorizes.
    then implement the minimal AuthorizationService kernel and canonical actor
    self-action cutover in 07B before protected authority-management APIs.
 8. Implement bootstrap, `AuthorityControl`, and immutable admin-role grants.
-9. Implement actor/link state administration and controlled service actors.
+9. Implement actor/link state administration and controlled service actors,
+   then add fixed service runtime admission without activating feature actions.
 10. Implement qualification snapshots and exact-project contributor grants.
 11. Cut project identity, guide, source, and visibility queries over to local
    permissions.
@@ -201,7 +203,7 @@ pre-review implementation substitutes.
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_markdown_links.py
 python3 scripts/check_internal_review_evidence.py
-python3 scripts/check_stale_authorization.py
+python3 scripts/check_stale_authorization_docs.py
 (cd backend && .venv/bin/python -m ruff check app tests scripts)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python scripts/api_contract_e2e.py)
@@ -211,7 +213,8 @@ git diff --check
 ```
 
 The auth live drill must prove first human access, one-time bootstrap, scoped
-admin grants, project submitter/reviewer grants, separation of duties,
+admin grants, independent project submitter/reviewer/adjudicator grants,
+separation of duties,
 revocation using the same unexpired token, suspension/reactivation, service
 subject handling, cross-project denial, and final-admin concurrency safety.
 

@@ -629,7 +629,7 @@ token-role path outside its reviewed compatibility owner.
 Conceptual historical “admin override” statements are not operations. No
 recovery permission may erase checker evidence, create a review decision,
 alter an immutable submission, create/alter a contribution record, or bypass
-compensation policy.
+contribution policy.
 
 ## Monitoring And Alerts
 
@@ -737,7 +737,7 @@ The final release owner coordinates a supported API/command drill proving:
 - first human access;
 - one-time bootstrap and concurrent conflict;
 - scoped administrative grants;
-- exact-project submitter/reviewer grants;
+- exact-project submitter/reviewer/adjudicator grants;
 - admin/contributor separation and self-action denial;
 - same-unexpired-token revocation;
 - suspension/reactivation and link revocation;

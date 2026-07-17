@@ -11,7 +11,7 @@ Operators and agents may do the actual work outside Workstream. Workstream owns 
 - review decisions
 - revision replay
 - contribution records
-- payment records
+- compensation awards, fulfillment receipts, and projections
 - reputation records
 
 The first product is task evaluation and contribution infrastructure, not an execution IDE.
@@ -23,7 +23,6 @@ Each project has a human-facing guide and approved machine-readable policies.
 The guide explains:
 
 - task types
-- base amount
 - quality bar
 - submission format
 - common rejection reasons
@@ -35,9 +34,10 @@ The policies enforce:
 - post-submit checker policy
 - review policy
 - revision policy
-- payment policy
+- contribution policy
 
-If a rule matters, it belongs in the guide, submission artifact policy, checker policy, review policy, revision policy, payment policy, or task template.
+If a rule matters, it belongs in the guide, submission artifact policy, checker
+policy, review policy, revision policy, contribution policy, or task template.
 
 Out-of-band guidance is not enforceable until it is moved into those contracts or into a checker that is governed by those contracts.
 
@@ -83,21 +83,23 @@ original feedback, fix notes, evidence, and closure.
 
 The system must also preserve guide and policy context. Prior submissions keep their locked context; revision policy decides whether the next attempt rebases to the latest active context before the contributor resumes.
 
-## 6. Payment Follows Acceptance
+## 6. Compensation Follows Contribution
 
-The first version uses contribution records and a manual payment ledger. Blockchain settlement comes later.
+The first version uses immutable contribution and compensation-award records
+with manually recorded fulfillment. Blockchain settlement comes later.
 
-Accepted work creates a contribution record first. Payment and reputation updates attach to that accepted contribution.
+Every valid human review creates a reviewer contribution. Accepted work
+additionally creates a submitter contribution. Compensation and reputation
+updates attach to the applicable immutable contribution; explicit unpaid rules
+create no award.
 
-Payment records track:
+`CompensationAward` and `CompensationFulfillmentReceipt` records track:
 
-- base amount
-- accepted amount
-- pending payout
-- paid amount
-- payment status
-- payment date
-- payment reference
+- contribution and beneficiary
+- frozen `ContributionPolicyVersion` and `ContributionAwardDefinition`
+- instrument, unit, and exact quantity
+- delivery and fulfillment status
+- immutable fulfillment receipt and external reference
 
 ## 7. Reputation Must Be Earned From Outcomes
 

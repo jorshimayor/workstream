@@ -119,7 +119,7 @@ requires explicit review in the token-verifier chunk.
 
 | Risk | Why it matters | Suggested handling |
 |---|---|---|
-| Token role escalation | A valid token role currently grants product authority. | Remove role claims from authorization context and prove every protected surface uses local grants. |
+| Issuer-role escalation | Legacy issuer role metadata currently grants product authority. | Remove role claims from authorization context and prove every protected surface uses local grants. |
 | Dual authority during migration | Old and new checks could disagree. | Define a one-way cutover; never accept either path as sufficient. |
 | Legacy subject-kind ambiguity | Existing registry rows do not prove human versus service. | Fail closed on unclassified non-empty data and require an audited classification/remediation input. |
 | Actor ID rewrite | Historical task/checker/audit attribution uses strings. | Preserve valid actor IDs and avoid broad FK conversion in early chunks. |

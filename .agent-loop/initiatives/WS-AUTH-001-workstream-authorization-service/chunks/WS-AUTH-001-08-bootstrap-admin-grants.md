@@ -120,8 +120,9 @@ administrative grant/idempotency history exists.
 
 The implementation exposes one immutable typed mapping from each role to the
 following exact PermissionIds. These are permission candidates only; planned
-actions remain non-executable until their owning chunks activate them and add
-canonical resources and guards. System scope is never superuser authority.
+actions remain non-executable while feature owners add hidden canonical
+resources/guards and until dedicated AUTH custodians integrate evaluators and
+change availability. System scope is never superuser authority.
 
 ### `access_administrator`
 

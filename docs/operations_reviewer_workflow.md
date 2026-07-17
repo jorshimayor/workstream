@@ -31,7 +31,9 @@ Allowed decisions:
 
 Decision rules:
 
-- `accept` means the submission satisfies the project guide and can create payment exposure.
+- `accept` means the submission satisfies the project guide and creates the
+  submitter `accepted_submission` contribution. Its frozen contribution award rule
+  independently decides whether that contribution creates an award.
 - `needs_revision` means the work is fixable and the reviewer can name concrete required changes.
 - `reject` means the work is not reasonably salvageable or violates policy.
 
@@ -62,7 +64,6 @@ Common areas:
 - originality
 - package
 - revision_replay
-- payment_policy
 - guide_compliance
 
 ## Accept
@@ -79,8 +80,10 @@ Accept must create:
 
 - review decision record
 - acceptance audit event
-- contribution record
-- pending payment record
+- reviewer `completed_review` contribution record
+- submitter `accepted_submission` contribution record
+- any awards required by the separately frozen reviewer and submitter
+  contribution policies
 - reputation event
 
 The reviewer cites the strongest evidence supporting acceptance, not only "looks good."
@@ -115,6 +118,11 @@ Use reject when:
 
 Use reject carefully. If the work can be reasonably corrected through one revision cycle, use `needs_revision`.
 
+Every valid recorded `needs_revision` or `reject` decision still creates the
+reviewer's `completed_review` contribution and evaluates the ReviewLease-frozen
+reviewer contribution policy. Neither decision creates a submitter contribution
+or submitter award.
+
 ## Reviewer Quality
 
 Track:
@@ -145,7 +153,9 @@ Before accepting:
 - evidence supports the claim
 - checker results are acceptable
 - no prior findings are open
-- payment record can be generated
+- reviewer and submitter contribution lineage can be created atomically
+- both frozen contribution policies can be evaluated; explicit unpaid results
+  are valid and create no award
 
 Before needs revision:
 
@@ -166,6 +176,7 @@ During the first 30 days, sample at least:
 
 - 25 percent of accepted submissions
 - 25 percent of rejected submissions
-- any submission above the configured second-review payment-policy threshold
+- any submission matching the configured high-value criterion in
+  `ReviewPolicy`
 
 Second review checks whether the first reviewer followed the guide, cited evidence, and made the correct decision type.

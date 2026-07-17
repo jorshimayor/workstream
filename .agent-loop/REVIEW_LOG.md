@@ -2007,3 +2007,20 @@ Trust bundle: `.agent-loop/initiatives/WS-AUTH-001-workstream-authorization-serv
 
 Current gate: validate evidence, publish one ready PR, and stop for external
 checks and explicit human review. Do not merge or start `WS-AUTH-001-03`.
+
+## 2026-07-16 - WS-XINT-001-PLAN Discovery Complete
+
+Read-only discovery compared trusted main and the isolated AUTH-09, ART-02A3,
+REV, and CON worktrees. Three parallel explorer agents audited AUTH/ART custody,
+ART/REV artifact semantics, and REV/AUTH/CON atomic contribution behavior; all
+sessions were closed after their findings were incorporated.
+
+The planning draft establishes AUTH-only activation custody, transfers all 25
+current ART action mappings conceptually without changing runtime, preserves
+seven exact artifact service identities, separates REV semantics from ART byte
+custody, and removes synchronous ART/provider work from core contribution
+creation while preserving the stabilized submission artifact digest as lineage.
+
+Current gate: commit the planning baseline, run required internal plan review,
+repair valid findings, publish one planning PR, and stop. No runtime chunk starts
+from this record.

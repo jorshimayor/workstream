@@ -18,16 +18,19 @@ Exact-project contributor grants:
 
 - Submitter
 - Reviewer
-- Both
+- Adjudicator
 
 The external Flow token identifies a subject and supplies verified coarse
 scope; it does not assign these roles. Workstream stores grants locally and
 evaluates them against canonical resources and lifecycle guards.
 
-Contributor is the umbrella human product term. Exact-project Submitter,
-Reviewer, or Both grants determine candidate authority. Celery, checker, setup,
-and background workers are internal services, not human product roles. Administrative grants
-alone never authorize submission or review.
+Contributor is the umbrella human product term. Independent exact-project
+Submitter, Reviewer, and Adjudicator grants determine candidate authority; one
+actor may hold all three rows. The adjudicator grant creates no adjudication
+capability until WS-REV defines the lifecycle and AUTH activates exact
+adjudication actions. Celery, checker, setup, and background workers are
+internal services, not human product roles. Administrative grants alone never
+authorize submission, review, or adjudication.
 
 ## Independence
 
@@ -48,4 +51,4 @@ WS-REV-owned `review.lease.force_release`.
 
 Recovery requires exact resource scope, a reason, matched grant/permission, and
 append-only evidence. It does not erase prior evidence or bypass immutable
-submission, review, contribution, or compensation rules.
+submission, review, contribution, or contribution award rules.

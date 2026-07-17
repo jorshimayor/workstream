@@ -37,7 +37,7 @@ backend/app/modules/projects/**
 backend/app/modules/authorization/**
 backend/app/api/deps/auth.py
 backend/app/workers/project_setup.py
-backend/alembic/versions/0024_*.py
+backend/alembic/versions/0025_*.py
 backend/tests/test_projects.py
 backend/tests/test_auth.py
 backend/tests/test_alembic.py
@@ -64,21 +64,23 @@ unscoped project-manager access or token role fallback
   only covered projects.
 - Project policy actions use registered permissions and transaction-local grant
   revalidation.
-- Project-guide source ingestion remains mechanically and authoritatively owned
-  by `WS-ART-001-03`; this chunk neither activates its artifact action nor grants
-  direct provider access.
+- Project-guide source ingestion behavior and resource facts remain owned by
+  `WS-ART-001-03`; this chunk neither activates its artifact action nor grants
+  direct provider access. The dedicated AUTH custodian activates it only after
+  hidden ART behavior merges.
 - Every migrated project mutation and setup command declares one primary
   registered action and authorizes against `system`, an existing project, or the
   exact existing parent policy resource defined by the owning project model.
   It does not collapse guide, source-snapshot, submission-policy, checker-policy,
-  review-policy, revision-policy, or payment-policy records into an invented
-  generic policy resource.
+  review-policy, or revision-policy records into an invented generic policy
+  resource. Contribution policy resources are independently owned by WS-CON
+  and are outside this project-mutation cutover.
 - Generated OpenAPI/command manifest-delta tests prove every protected project
   mutation/setup surface migrated here has exactly one active `ActionId`
   declaration.
 - Approval provenance records matched local grant/actor/scope while preserving
   historical bootstrap provenance.
-- Migration `0024` adds matched local grant/scope provenance and ownership
+- Migration `0025` adds matched local grant/scope provenance and ownership
   constraints to project policy approval records without rewriting historical
   bootstrap values; prior-head upgrade, downgrade, and re-upgrade preserve
   readable history.

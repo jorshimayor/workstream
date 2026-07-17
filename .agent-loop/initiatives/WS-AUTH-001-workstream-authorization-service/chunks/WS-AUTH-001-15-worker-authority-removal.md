@@ -50,7 +50,7 @@ backend/tests/test_projects.py
 backend/tests/test_tasks.py
 backend/tests/test_checkers.py
 backend/tests/test_auth.py
-scripts/check_stale_authorization.py
+scripts/check_stale_authorization_docs.py
 scripts/test_agent_gates.py
 .github/workflows/agent-gates.yml
 docs/operations_authorization_service.md
@@ -64,17 +64,19 @@ docs/operations_authorization_service.md
 
 ```text
 new product lifecycle behavior
-human roles on system principals
+human roles on service ActorProfiles
 authorization allowlist broad enough to hide new token-role consumption
 review/contribution/compensation implementation
 ```
 
 ## Acceptance criteria
 
-- Internal jobs use fixed system principals and registered system permissions.
-- Artifact service actions are activated by their owning WS-ART chunks after
-  AUTH-07 registration and AUTH-09 service-principal provisioning. This chunk
-  does not attach artifact permissions or create a second activation path.
+- Internal jobs use exact service ActorProfiles admitted through AUTH-09E and
+  their registered static service-action matrix rows.
+- Artifact service actions are activated only by dedicated AUTH activation
+  custodians after the owning WS-ART chunks merge hidden resource facts, guards,
+  surfaces, behavior, and tests. This chunk does not attach artifact permissions
+  or create a second activation path.
 - Every remaining asynchronous command declares one primary registered action,
   canonical feature-owned target, and fixed service principal. Serialized human
   identity is provenance only and never executable command authority.
@@ -84,7 +86,7 @@ review/contribution/compensation implementation
   remains owned by chunk 12.
 - Serialized requester context is evidence only; actor-attributed commits reload
   current actor/grant state.
-- Token roles and `require_any_role()` are not product authorization inputs and
+- Issuer role metadata and the retired role helper are not product authorization inputs and
   obsolete runtime paths are removed.
 - The scanner proves the `LegacyWorkflowEligibilityCompatibility` adapter,
   allowlist, and typed-profile workflow eligibility consumers removed in chunk
@@ -102,7 +104,7 @@ review/contribution/compensation implementation
 ## Verification commands
 
 ```bash
-python3 scripts/check_stale_authorization.py
+python3 scripts/check_stale_authorization_docs.py
 python3 scripts/test_agent_gates.py
 (cd backend && .venv/bin/python -m ruff check app tests scripts)
 (cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q \
