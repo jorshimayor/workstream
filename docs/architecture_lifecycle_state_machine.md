@@ -153,11 +153,17 @@ This state can be entered from:
 Required before entering:
 
 - from `EVALUATION_PENDING`: checker run id, blocking checker results, contributor-visible messages, and suggested fixes
-- from `REVIEW_PENDING`: review decision id, at least one structured review
-  finding, reviewer `completed_review` contribution, and any applicable reviewer
-  award
+- from `REVIEW_PENDING`: immutable `needs_revision` Review, at least one
+  blocking ReviewFinding, reviewer `completed_review` contribution, and any
+  applicable reviewer award
 
-Before the contributor resumes, Workstream prepares the next revision context. That preparation checks whether the active project guide or policy context changed since the prior submission was locked. Revision policy decides whether the next attempt keeps the prior context, rebases to the current active context, or is blocked for project-manager repair.
+Before the contributor resumes from a human Review, Workstream appends an
+immutable RevisionContextPreparation. Exact prior Submission guide
+identity/activation-sequence match with the currently active guide keeps
+context. Any different valid active pair rebases forward or backward. Missing,
+inconsistent, revoked, or unsafe context blocks for Project Manager repair.
+Checker-caused remediation remains CheckerResult-rooted and creates no Review
+episode.
 
 A revision context rebase never mutates the prior submitted attempt. It only stamps the next submission attempt. The contributor and reviewer must see the prior version, the next version, and the guide or policy change summary.
 
@@ -171,18 +177,19 @@ Required before entering:
 - no unresolved blocking checker failure under the locked post-submit checker policy
 - evidence present
 - reviewer cited evidence supporting acceptance
-- no unresolved high or medium prior revision finding
+- no unresolved blocking prior ReviewFinding
 - applicable submitter compensation evaluated from the TaskAssignment-frozen
   contribution policy
 
 Required side effects:
 
 - reviewer `completed_review` contribution created with the Review
-- submitter `accepted_submission` contribution created from the accepted
-  submission, accepting Review, frozen policy lineage, and artifact hash
+- immutable FinalAcceptance created from the accepting Review
+- submitter `accepted_submission` contribution created only from
+  FinalAcceptance, TaskAssignment, frozen policy lineage, and artifact hash
 - applicable awards created independently from the reviewer and submitter
   contribution records
-- reputation events reference the applicable contribution record
+- reputation projection remains deferred
 
 ### REJECTED
 
@@ -193,10 +200,14 @@ Required before entering:
 - rejection review decision
 - rejection reason
 - reviewer `completed_review` contribution and any applicable reviewer award
+- the same-task TaskAssignment is blocked
+- no FinalAcceptance or submitter contribution is created
 
 ### CANCELLED
 
-The task is cancelled before acceptance.
+The task is cancelled before acceptance. An authorized revision-limit/deadline
+or legacy-context closure uses this state with a bounded reason, releases the
+assignment, and creates no synthetic Review or contribution.
 
 ## Allowed Transitions
 
@@ -228,7 +239,7 @@ No administrative or recovery grant authorizes these transitions:
 
 - `SUBMITTED -> REVIEW_PENDING` without checker run
 - `REVIEW_PENDING -> ACCEPTED` without review decision
-- `REVIEW_PENDING -> ACCEPTED` without contribution record creation
+- `REVIEW_PENDING -> ACCEPTED` without Review, FinalAcceptance, and both required contribution-source checks
 - `NEEDS_REVISION -> ACCEPTED` without new submission or explicit finding closure
 - `SUBMITTED -> ACCEPTED` directly
 - `SUBMITTED -> NEEDS_REVISION` without checker run unless the submission packet cannot be parsed
@@ -250,30 +261,26 @@ submission v2 -> accepted
 
 Each resubmission must link to the prior submission it supersedes.
 
-Each submitted version keeps its own locked guide and policy context. If a later revision is rebased to a newer active guide, that rebase is recorded as next-attempt preparation and does not rewrite earlier submission records.
+Each submitted version keeps its own stamped guide and policy context. A later
+revision may rebase forward or backward to the currently active guide. The
+immutable preparation records that next-attempt context and never rewrites an
+earlier Submission.
 
 ## Revision Replay
 
-When a task enters NEEDS_REVISION, the next submission must include a revision replay:
+After a human Review enters NEEDS_REVISION, the next submission must include one
+immutable response for each unresolved blocking finding:
 
 ```text
-Finding A -> fixed by change X -> evidence Y -> closed
-Finding B -> fixed by change Z -> evidence W -> closed
+ReviewFinding A -> SubmissionFindingResponse X -> evidence Y
+ReviewFinding B -> SubmissionFindingResponse Z -> evidence W
 ```
 
-The contributor can claim each prior finding as:
+The later Review appends one FindingResolution for each required prior finding:
 
-- fixed
-- disputed
+- resolved
+- unresolved
 - not_applicable
-
-The reviewer can mark each prior finding:
-
-- closed_fixed
-- closed_rebutted
-- partially_closed
-- still_open
-- obsolete
 
 ## Audit Requirements
 

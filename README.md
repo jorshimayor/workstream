@@ -27,10 +27,10 @@ Project Guide
 -> Submission Packet
 -> Platform Checkers
 -> Human Review
--> Needs Revision / Accepted / Rejected
+-> Needs Revision / FinalAcceptance / Rejected
 -> Contribution Record
 -> Compensation Award / Fulfillment when payable
--> Reputation Update
+-> Reputation projection when separately implemented
 -> Lessons Learned
 ```
 
@@ -48,12 +48,14 @@ Different projects speak different domain languages, but serious task evaluation
 - every submission has required artifacts, evidence references, hashes, and contributor attestation
 - every invalid submission packet is blocked before submission creation
 - every submission passes automated checks before human review
-- every review creates a decision
-- every revision must close prior feedback
+- every valid human decision appends an immutable Review; submitted findings
+  and later resolutions are immutable
+- every revision responds to unresolved blocking feedback without rewriting it
 - every valid human review creates a reviewer contribution
-- every accepted task additionally creates a submitter contribution
+- every accepted task creates an immutable FinalAcceptance, which is the sole
+  source of the submitter contribution
 - every payable contribution updates compensation fulfillment; all contributions
-  can update reputation
+  may feed a separately implemented reputation projection
 
 Workstream turns that operating knowledge into reusable infrastructure.
 
@@ -87,6 +89,7 @@ Workstream turns that operating knowledge into reusable infrastructure.
 - [Workspace And Packet Convention](docs/operations_workspace_packet_convention.md)
 - [Reviewer Workflow](docs/operations_reviewer_workflow.md)
 - [Revision Replay](docs/operations_revision_replay.md)
+- [Review And Revision Lifecycle](docs/spec_review_lifecycle.md)
 - [Roles And Permissions](docs/operations_roles_permissions.md)
 - [Authorization Service](docs/spec_authorization_service.md)
 - [Immutable Artifact Storage](docs/spec_artifact_storage_service.md)
@@ -252,9 +255,9 @@ Run checks
 Review packet
 Record review decision: accept, needs_revision, or reject
 Create reviewer contribution for every valid human review
-Create submitter contribution only for accepted work
+For accept, create FinalAcceptance and then the submitter contribution
 Record compensation status only for payable contribution awards
-Update reputation from review outcome
+Project reputation only after its separate implementation
 Review lessons learned
 ```
 
@@ -275,8 +278,10 @@ Governance:
 Lifecycle and revision:
 
 - status is a ledger, not a loose label
-- revisions replay prior findings one by one
-- revision context is prepared before resubmission when guide or policy versions change
+- revisions append one response and later resolution per required prior finding
+- revision context is prepared from the active Project Guide before
+  resubmission; exact stamped identity/activation-sequence match keeps context,
+  and any different valid active pair rebases forward or backward
 
 Artifacts, evidence, and auditing:
 
@@ -287,7 +292,7 @@ Artifacts, evidence, and auditing:
 Contribution and compensation:
 
 - every valid human review creates a reviewer contribution from locked evidence
-- accepted work additionally creates a submitter contribution
+- accept creates FinalAcceptance; only that fact creates the submitter contribution
 - only payable contributions create immutable awards and fulfillment tracking;
   explicit unpaid rules create none
 - compensation fulfillment is recorded separately from task acceptance

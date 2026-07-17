@@ -4239,6 +4239,109 @@ def test_stale_authorization_history_allowlist_is_exact() -> None:
     assert "docs/spec_chunk_999_future.md" not in gate.HISTORICAL_PATHS
 
 
+def test_stale_review_contract_rule_inventory_is_complete() -> None:
+    """Every prohibited review-contract category has an executable fixture."""
+    gate = load_module(
+        "stale_review_contract_rule_inventory",
+        "scripts/check_stale_review_contracts.py",
+    )
+    samples = {
+        "NON_CANONICAL_API_PREFIX": "POST /v1/reviews/decision",
+        "ACTIVE_FLOW_NODE_PROVIDER": "Flow Node is the production provider.",
+        "FULL_REVIEWER_BACKLOG": "Reviewer browses the complete review queue.",
+        "LEGACY_REVIEW_SEVERITY": "ReviewFinding uses high-severity.",
+        "LEGACY_FINDING_CLOSURE": "reviewer_closure_status: closed_fixed",
+        "POLICY_SELECTED_LATEST_REBASE": (
+            "Revision policy decides whether to use the latest active context."
+        ),
+        "REVIEWER_REBASE": "The reviewer performs a rebase before judgment.",
+        "SYNTHETIC_REJECT": "A revision deadline sets the task to rejected.",
+        "DIRECT_ACCEPT_TO_SUBMITTER_CONTRIBUTION": (
+            "Acceptance creates the accepted_submission contribution."
+        ),
+        "REVIEW_REPUTATION_SIDE_EFFECT": ("The review creates a reputation event."),
+        "ADJUDICATION_ACTIVATION_PROMISE": (
+            "Adjudication remains unavailable until enabled."
+        ),
+        "BROAD_REVIEW_BYPASS": ("An admin can override the review decision."),
+    }
+    assert set(samples) == {rule.code for rule in gate.RULES}
+    for code, sample in samples.items():
+        failures = gate.scan_text("docs/spec_review_lifecycle.md", sample)
+        assert any(failure.endswith(f": {code}") for failure in failures), code
+
+    assert not gate.scan_text(
+        "docs/spec_review_lifecycle.md",
+        "Accept creates FinalAcceptance, which alone creates the submitter contribution.",
+    )
+    assert not gate.scan_text(
+        "docs/spec_review_lifecycle.md",
+        "The reviewer never rebases the stamped Submission context.",
+    )
+
+
+def test_stale_review_contract_classification_is_exact() -> None:
+    """Only exact supplied archives and reviewed history bypass active scanning."""
+    gate = load_module(
+        "stale_review_contract_classification",
+        "scripts/check_stale_review_contracts.py",
+    )
+    assert (
+        gate.classification(
+            "docs/reference_specs/WS-REV-001-review-lifecycle-specification.md"
+        )
+        == "archival"
+    )
+    assert gate.classification("docs/reference_specs/WS-REV-001-copy.md") == (
+        "unclassified"
+    )
+    assert gate.classification("docs/spec_review_lifecycle.md") == "active"
+    assert (
+        gate.classification("docs/operations_subagent_review_protocol.md")
+        == "non_product_review"
+    )
+
+
+def test_stale_review_contract_discovery_includes_tracked_and_untracked() -> None:
+    """Modified/staged and newly added documents are both discovered."""
+    gate = load_module(
+        "stale_review_contract_discovery",
+        "scripts/check_stale_review_contracts.py",
+    )
+    original_git_lines = gate.git_lines
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        (root / "docs").mkdir()
+        (root / "docs/spec_review_lifecycle.md").write_text(
+            "active\n", encoding="utf-8"
+        )
+        (root / "docs/review_new.md").write_text("new\n", encoding="utf-8")
+
+        def fake_git_lines(_root: Path, *args: str) -> list[str]:
+            if args == ("ls-files",):
+                return ["docs/spec_review_lifecycle.md"]
+            if args == ("ls-files", "--others", "--exclude-standard"):
+                return ["docs/review_new.md"]
+            raise AssertionError(args)
+
+        gate.git_lines = fake_git_lines
+        try:
+            assert {
+                path.relative_to(root).as_posix() for path in gate.discover_paths(root)
+            } == {"docs/spec_review_lifecycle.md", "docs/review_new.md"}
+        finally:
+            gate.git_lines = original_git_lines
+
+
+def test_stale_review_contracts_run_fail_closed_in_agent_gates() -> None:
+    """The active repository scanner is a mandatory Agent Gates test."""
+    gate = load_module(
+        "stale_review_contract_current_repository",
+        "scripts/check_stale_review_contracts.py",
+    )
+    assert gate.scan(ROOT) == []
+
+
 def test_agent_gates_runs_stale_authorization_docs_fail_closed() -> None:
     """The Agent Gates workflow must retain the authorization-doc scanner."""
     workflow = (ROOT / ".github/workflows/agent-gates.yml").read_text(encoding="utf-8")
@@ -5308,6 +5411,10 @@ def main() -> int:
         test_stale_authorization_initiative_ratchet_is_position_scoped,
         test_stale_authorization_full_initiative_rules_ignore_changed_line_filter,
         test_stale_authorization_history_allowlist_is_exact,
+        test_stale_review_contract_rule_inventory_is_complete,
+        test_stale_review_contract_classification_is_exact,
+        test_stale_review_contract_discovery_includes_tracked_and_untracked,
+        test_stale_review_contracts_run_fail_closed_in_agent_gates,
         test_agent_gates_runs_stale_authorization_docs_fail_closed,
         test_agent_gates_runs_stale_artifact_contracts_fail_closed,
         test_agent_gate_dependencies_and_workflow_are_pinned,

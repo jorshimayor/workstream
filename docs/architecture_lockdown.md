@@ -25,6 +25,7 @@ Project guide
 -> human review
 -> revision replay
 -> review decision: accept / needs_revision / reject
+-> FinalAcceptance for accept only
 -> contribution record
 -> compensation award / fulfillment when payable
 -> reputation event
@@ -114,6 +115,15 @@ decision.
 
 Tasks lock to the active guide version at creation or screening time before entering `READY`. Material guide changes require a new guide version.
 
+TaskAssignment stores only the task relationship; each immutable Submission
+stamps the exact Project Guide identity, version, and activation sequence used by
+that attempt. After a human `needs_revision` Review, exact stamped identity and
+activation-sequence match with the currently active guide keeps context. Any
+different valid active pair prepares a forward or backward rebase; incomplete,
+inconsistent, revoked, or unsafe context blocks for manager repair. Task Context
+returns the frozen preparation, and the reviewer never rebases the context
+stamped on the leased Submission.
+
 ### Task Contract
 
 Every task must carry enough information to make claiming, checking, and
@@ -149,14 +159,16 @@ In v0.1, this is enforced through:
 - immutable submission versions
 - checker results bound to artifact hashes
 - human review before acceptance
-- reputation events tied to outcomes
+- immutable Review, finding, response, and resolution history
 
 An explicit owner-agent execution workspace is later work.
 
 ### Immutable Artifact Storage
 
 Workstream stores guide material, submission artifacts, checker inputs, checker
-logs, and checker outputs through the provider-neutral `ArtifactStore` port.
+logs, checker outputs, and review evidence through ART v2 typed capabilities.
+Product services do not import the raw ArtifactStore, provider, repository, or
+scratch interfaces.
 
 ```text
 LocalStorageAdapter          development and focused tests only
@@ -177,18 +189,23 @@ credentials, object references, signed URLs, or direct-upload authority.
 v0.1 performs no physical deletion of completed artifacts. R2 and Flow Node are
 separate deferred adapter initiatives and are not v0.1 runtime dependencies.
 
+An active ReviewLease authorizes artifact bytes only for its immutable
+ReviewPacketManifest and exact Submission. Authorized chain history is bounded
+metadata only. Decision and contribution creation perform no ART call.
+
 ### Contribution Records
 
 Every valid recorded human Review creates an immutable reviewer
 `completed_review` contribution record, regardless of whether the decision is
-`accept`, `needs_revision`, or `reject`. An `accept` decision additionally
-creates one submitter `accepted_submission` contribution record. Automated
+`accept`, `needs_revision`, or `reject`. An `accept` Review additionally creates
+one immutable FinalAcceptance; only that fact creates one submitter
+`accepted_submission` contribution record. Automated
 checker outcomes create neither type.
 
 Contribution records are separate from compensation status. Each record freezes
 its exact review, submission, actor, policy, and artifact-hash lineage.
-Compensation awards and reputation events may attach to a contribution record,
-but do not replace it.
+Compensation awards may attach to a contribution record but do not replace it.
+Reputation projection is deferred.
 
 ## Deferred
 
@@ -204,6 +221,7 @@ These ideas remain architecture-compatible, but they are not part of the first b
 - ERC-8004 reputation writes
 - x402 micropayments
 - marketplace discovery
+- adjudication lifecycle, queues, leases, decisions, and actions
 
 ## Canonical Names
 
@@ -223,19 +241,11 @@ Use these names consistently:
 - `Project activation gate`
 - `Task screening gate`
 - `Submission quality gate`
-- `contributor_claim_status`
-- `reviewer_closure_status`
-
-Revision replay contributor claim statuses:
-
-- `fixed`
-- `disputed`
-- `not_applicable`
-
-Revision replay reviewer closure statuses:
-
-- `closed_fixed`
-- `closed_rebutted`
-- `partially_closed`
-- `still_open`
-- `obsolete`
+- `ReviewQueueEntry`
+- `ReviewLease`
+- `ReviewPacketManifest`
+- `ReviewFinding`: `blocking | advisory`
+- `SubmissionFindingResponse`
+- `FindingResolution`: `resolved | unresolved | not_applicable`
+- `RevisionContextPreparation`
+- `FinalAcceptance`

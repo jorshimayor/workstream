@@ -141,7 +141,8 @@ Owner:
 
 Policy:
 
-- reviewers only see this lane for normal work
+- reviewer current work returns an active lease, one server-selected offer, or
+  none; reviewers never browse the complete lane
 - any critical- or high-severity checker failure in this lane is a system bug;
   no administrative grant can override it into review readiness
 
@@ -151,20 +152,26 @@ Contributor-facing lane for fixable issues from automated checks, pre-review gat
 
 Policy:
 
-- before the contributor resumes, Workstream prepares revision context against the active guide and policy records
-- revision policy decides whether the next attempt keeps the prior locked context or rebases to the current active context
-- a rebase must show the contributor the prior version, next version, and change summary
+- after a human `needs_revision` Review, Workstream compares the prior
+  Submission guide identity/activation sequence with the currently active guide
+- exact match keeps; any different valid pair rebases forward or backward;
+  unsafe context blocks for manager repair
+- Task Context returns the frozen preparation and change summary; the reviewer
+  never rebases the leased Submission
 - out-of-band guidance is not enforceable until it is encoded into guide, policy, task template, or checker contracts
 
 Owner:
 
 - contributor
-- operator
+- covered Project Manager for planned repair/obligation closure; Operator only
+  for evidence-linked legacy recovery
 
 Policy:
 
-- every task in this lane must have at least one structured finding
-- resubmission must include revision replay
+- checker-caused remediation carries CheckerResult lineage; human-review
+  revision carries an immutable Review and at least one blocking finding
+- human-review resubmission includes one immutable response per unresolved
+  blocking finding
 
 ### Accepted
 
@@ -177,8 +184,9 @@ Owner:
 
 Policy:
 
-- the accepting Review creates reviewer `completed_review` and submitter
-  `accepted_submission` contribution records atomically
+- the accepting Review creates reviewer `completed_review`, then
+  FinalAcceptance, then submitter `accepted_submission` from that fact, all
+  atomically
 - each frozen contribution policy is evaluated independently; only payable
   contributions create awards and fulfillment follow-up
 - accepted task is not confused with fulfilled compensation
@@ -218,7 +226,7 @@ Every operating day starts with:
 2. clear screening tasks or send them back to draft
 3. inspect stale active tasks
 4. clear checker failures
-5. assign review pending tasks
+5. monitor server-selected review offers and active leases
 6. push needs revision tasks to contributors
 7. reconcile payable awards with pending/failed fulfillment projections
 8. record new lessons learned
@@ -232,13 +240,13 @@ Every operating day starts with:
 | `READY -> CLAIMED` | active published ContributionPolicyVersion whose `accepted_submission` rule is explicit; TaskAssignment freezes that version |
 | `IN_PROGRESS -> SUBMITTED` | blocking pre-submit checks passed, submission packet, artifact hash manifest, evidence references, contributor attestation |
 | `SUBMITTED -> EVALUATION_PENDING` | immutable submission version, locked post-submit checker policy id/version/hash/body copied from the task context |
-| `EVALUATION_PENDING -> REVIEW_PENDING` | checker run for exact submission version, readiness certificate, no blocking failures |
+| `EVALUATION_PENDING -> REVIEW_PENDING` | current successful CheckerRun for exact Submission, verified bindings, no blocking failures |
 | `EVALUATION_PENDING -> NEEDS_REVISION` | checker run id, outcome source `auto_checker`, contributor-visible checker failures with severity, message, suggested fix |
-| `REVIEW_PENDING -> NEEDS_REVISION` | review decision, at least one structured finding, reviewer `completed_review` contribution and applicable reviewer award, revision policy still permits revision |
-| `REVIEW_PENDING -> ACCEPTED` | accepted review, acceptance evidence refs, reviewer `completed_review` and submitter `accepted_submission` contributions, applicable awards |
-| `REVIEW_PENDING -> REJECTED` | rejected review, rejection reason/finding, reviewer `completed_review` contribution and applicable reviewer award; no submitter contribution |
+| `REVIEW_PENDING -> NEEDS_REVISION` | immutable Review, at least one blocking ReviewFinding, reviewer `completed_review`; no FinalAcceptance or submitter contribution |
+| `REVIEW_PENDING -> ACCEPTED` | immutable accepting Review, FinalAcceptance, reviewer `completed_review`, submitter `accepted_submission` sourced from FinalAcceptance, applicable awards |
+| `REVIEW_PENDING -> REJECTED` | immutable rejected Review, bounded reason, same-task assignment block, reviewer `completed_review`; no FinalAcceptance or submitter contribution |
 | pre-submit feedback in `NEEDS_REVISION` | prior findings visible to contributor, revision deadline active, no new submission created |
-| `NEEDS_REVISION -> SUBMITTED` | replacement submission packet, revision replay covering every high and medium prior finding, revision count under policy limit |
+| `NEEDS_REVISION -> SUBMITTED` | exact preparation head/digest, replacement Submission, response for every unresolved blocking finding, policy limit/deadline not reached |
 | compensation `pending -> fulfilled` | immutable fulfillment receipt, external reference, and audit event |
 
 ## Lane Capacity
@@ -246,7 +254,7 @@ Every operating day starts with:
 Each project defines capacity limits:
 
 - maximum active tasks per contributor
-- maximum review-pending tasks per reviewer
+- maximum active ReviewLeases per reviewer
 - maximum stale active age
 - maximum pending/failed payable-award fulfillment age
 
@@ -255,7 +263,7 @@ Capacity limits prevent the queue from looking healthy while hidden work is stuc
 For early pilots, use conservative defaults:
 
 - contributor active task limit: 2
-- reviewer review-pending limit: 5
+- reviewer active ReviewLease limit: 1
 - review SLA: 24 hours
 - compensation fulfillment reconciliation SLA: daily
 

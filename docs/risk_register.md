@@ -32,9 +32,11 @@ A task can be sent back for revision after the project guide or policies changed
 
 Mitigation:
 
-- prior submissions remain tied to their locked guide and policy versions
-- revision policy controls whether the next attempt rebases to current active guide and policy context
-- contributor and reviewer packets show prior version, next version, rebase reason, and change summary
+- prior Submissions remain tied to their stamped guide and policy context
+- exact stamped guide identity/activation-sequence match keeps context; any
+  different valid active pair rebases forward or backward; unsafe context blocks
+- Task Context returns the frozen preparation; reviewer context uses the exact
+  leased Submission stamp without a separate rebase
 - every rebase records an audit event
 
 ### R2: Weak Submissions Reach Review
@@ -60,9 +62,9 @@ Contributors cannot close feedback that does not specify the issue, evidence, an
 
 Mitigation:
 
-- structured findings required
-- reviewer quality metrics
-- second-review audits
+- structured blocking/advisory findings
+- immutable SubmissionFindingResponse and later FindingResolution
+- offline reviewer calibration without mutating product history
 
 ### R4: Revision Loops Without Closure
 
@@ -74,9 +76,9 @@ Tasks repeatedly return for the same issue because prior feedback is not replaye
 
 Mitigation:
 
-- mandatory revision replay
-- checker verifies prior finding coverage
-- reviewer marks closure per finding
+- one immutable response per unresolved blocking finding
+- checker readmission binds the exact replacement Submission and preparation
+- later reviewer appends a resolution per required finding
 
 ### R5: Accepted Work Not Paid
 
@@ -88,7 +90,8 @@ Payable awards and external fulfillment can drift apart if tracked manually.
 
 Mitigation:
 
-- every valid Review creates its required contribution records atomically
+- every valid Review creates reviewer contribution atomically; accept also
+  creates FinalAcceptance and the submitter contribution sourced from it
 - payable contributions create immutable awards; explicit unpaid rules create
   none
 - daily award/fulfillment reconciliation
@@ -104,10 +107,10 @@ Bad review decisions can demoralize contributors and corrupt quality metrics.
 
 Mitigation:
 
-- reviewer reputation
-- second-review sampling
-- overturned decision tracking
-- escalation process
+- evidence-backed reviewer quality projections when separately implemented
+- offline sampling and calibration
+- immutable decision/finding history for future analysis
+- no v0.1 adjudication or mutable overturn path
 
 ### R7: Fake Evidence
 
@@ -156,7 +159,8 @@ Mitigation:
 
 - enforce state transitions in code
 - require checker run id before `REVIEW_PENDING`
-- require review id before `ACCEPTED`
+- require accepting Review, FinalAcceptance, and exact reviewer/submitter
+  contribution source shapes before `ACCEPTED`
 - require an immutable payable award, exact fulfillment receipt, and external
   reference before fulfillment status can become `fulfilled`
 - replace broad historical override language with registered, scoped,

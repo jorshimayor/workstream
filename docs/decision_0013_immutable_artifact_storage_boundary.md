@@ -230,8 +230,21 @@ verified backfill, nullable shadow field, dual write, or fallback remains.
 ## Review Boundary
 
 WS-REV owns `ReviewPacketManifest` and `ReviewEvidenceArtifact`. Both reference
-general `ArtifactBinding` records and consume the same immutable bytes. Semantic
-search is outside WS-ART-001.
+general `ArtifactBinding` records and consume the same immutable bytes. ART v2
+owns bytes, bindings, candidate/finalize intake, verification, retention,
+provider execution, and recovery. REV owns exact packet membership and the
+finding/response evidence relationship.
+
+Artifact bytes are readable only for the exact Submission packet covered by a
+current active ReviewLease. Authorized history is bounded metadata only. Prior,
+expired, consumed, sibling, later, cross-task, and cross-project leases cannot
+read packet bytes.
+
+Review decision and canonical contribution creation perform no ART call or
+provider I/O. They consume stabilized binding facts and copy the server-derived
+Submission `artifact_hash`. REV never imports ArtifactStore v1, concrete
+providers, ART repositories, scratch state, `ArtifactScratchManager`,
+`PreparedArtifact`, or `CommittedArtifactSource`.
 
 ## Precedence
 
@@ -244,6 +257,8 @@ search is outside WS-ART-001.
 - ADR 0014 governs external adapter construction and injection.
 - `docs/spec_artifact_storage_service.md` is the canonical implementation
   contract.
+- `docs/spec_review_lifecycle.md` is canonical for review packet membership,
+  lease-bounded disclosure, and evidence semantics.
 - Archival reference specifications are non-executable inputs.
 
 ## Consequences

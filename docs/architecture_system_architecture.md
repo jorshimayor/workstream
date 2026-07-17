@@ -5,6 +5,10 @@
 Workstream is organized around projects, tasks, submissions, checks, reviews,
 revisions, contributions, compensation, and reputation.
 
+The review/revision component described below is a planned target contract. Its
+routes remain unavailable until hidden REV behavior, exact AUTH activation, and
+the REV-13 joint release complete. `docs/spec_review_lifecycle.md` is normative.
+
 The architecture stays modular enough to support different project types without becoming abstract to the point that no project can use it.
 
 The visual architecture pack lives in [Architecture Diagrams](diagrams/README.md). It separates the 30-day v0.1 implementation from later adapter boundaries such as ERC-8004 agent identity and reputation, ERC-8183 task contract and escrow, x402 payment requests, OmniClaw settlement orchestration, and USDC settlement.
@@ -181,46 +185,43 @@ Owns:
 
 Owns:
 
-- review queue
-- findings
-- review decisions
-- second-review flags
-- reviewer audit history
+- server-selected ReviewQueueEntry routing and ReviewLeases
+- immutable ReviewPacketManifest and lease-bounded Review Context
+- immutable Reviews, ReviewFindings, FindingResolutions, and FinalAcceptance
+- decision orchestration, task effects, audit, and shared-outbox staging
+- reviewer history and bounded authorized chain metadata
 
 ### Revision Service
 
 Owns:
 
-- prior feedback replay
-- fix summaries
-- issue closure
-- resubmission linkage
+- immutable RevisionContextPreparation chains
+- SubmissionFindingResponse and FindingResolution lineage
+- exact Project Guide keep/forward/backward/block classification
+- resubmission and preferred-return linkage
 
-### Evidence Service
+### Artifact Service Boundary
 
 Owns:
 
-- file attachments
-- logs
-- hashes
-- screenshots
-- checker output
-- reviewer notes
-- artifact immutability after checker execution begins
+- ART v2 immutable content, binding, verification, candidate/finalize, and recovery
+- narrow active-lease packet read
+- REV-owned packet membership and finding/response evidence semantics
+- no provider or ArtifactStore v1 import in review services
 
 ### Contribution And Compensation Service
 
 Owns:
 
-- immutable reviewer `completed_review` and submitter `accepted_submission`
-  ContributionRecords
+- immutable reviewer `completed_review` sourced from Review/ReviewLease
+- immutable submitter `accepted_submission` sourced only from FinalAcceptance
 - project ContributionPolicy and immutable published versions
 - independently frozen TaskAssignment and ReviewLease policy-version references
 - immutable CompensationAwards for payable contribution rules only
 - immutable fulfillment receipts and rebuildable status projections
 - contribution and compensation outbox events
 
-### Reputation Service
+### Reputation Service (Deferred)
 
 Owns:
 
@@ -246,7 +247,7 @@ Owns:
 
 Use Postgres for records.
 
-Use the provider-neutral `ArtifactStore` for large files and evidence. During
+Use ART v2 provider-neutral capabilities for large files and evidence. During
 local development, the implementation can store files on the local filesystem;
 hosted v0.1 uses AWS S3 and local/CI integration uses MinIO without changing
 submission or evidence semantics.
@@ -261,7 +262,8 @@ Every important lifecycle action creates an append-only audit event. State is re
 
 Use explicit domain APIs rather than generic CRUD-only endpoints.
 
-Examples:
+Existing APIs follow the `/api/v1` prefix. The examples below are conceptual;
+planned review/revision routes are not registered before REV-13.
 
 ```text
 POST /projects
@@ -270,8 +272,9 @@ POST /tasks/:id/claim
 POST /tasks/:id/submit
 POST /submissions/:id/finalize          # operational repair for the automatic checker gate
 GET /submissions/:id/checker-runs
-POST /reviews/:id/decision
-POST /submissions/:id/revision-replay
+planned reviewer current-work read under /api/v1
+planned active-lease decision mutation under /api/v1
+planned revision submission through canonical task submission.create
 POST /contributions/:id/export
 POST /compensation-awards/:id/fulfillment-receipts
 ```
@@ -297,9 +300,9 @@ Audit events cover:
 - submission creation and finalization
 - checker runs
 - review decisions
-- revision replay closure
+- immutable revision responses and later finding resolutions
 - compensation award, delivery, and fulfillment transitions
-- reputation events
+- reputation events only after separate implementation
 - admin overrides
 
 ## Future Extension Points

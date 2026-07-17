@@ -625,3 +625,20 @@ updates the discovered migration/test inventory and preserves the previously
 reviewed PREP, FinalAcceptance, transaction ownership, revision rebase, and no-
 adjudication boundaries. The exact `7a76da2` approval predates this rebase and
 must be replaced by fresh exact-SHA review and evidence before publication.
+
+## WS-REV-001-01 Start And Plan Review - 2026-07-17
+
+PR #128 merged as trusted main
+`0302bcf854a565d429e232ad6b076a1931ea74e4`, and the user explicitly started
+`WS-REV-001-01` from that exact base on branch `codex/ws-rev-001-01`.
+
+The initial L1 plan review passed with conditions. The contract was amended to
+name the complete active-document surface, forbid all four archival inputs,
+require literal hashes plus exact trusted-base diffs, specify the fail-closed
+scanner classifier and fixtures, publish exact four-action and six-service
+manifests, reconcile initiative state, and require exact-SHA internal evidence
+plus a changed-path audit. The amended contract then passed plan re-review.
+
+Implementation remains specification and gate work only. No runtime endpoint,
+authorization availability, artifact capability, contribution behavior,
+adjudication behavior, or reputation mutation is introduced.

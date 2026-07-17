@@ -19,9 +19,16 @@ The same values remain machine-checkable in `SHA256SUMS` and are bound by the
 initiative source manifests. A checksum changes only when the human supplies a
 replacement archival input; reconciliation never edits archival content.
 
+The revised WS-REV Markdown includes section 4.6's closed action/permission
+table, while the supplied PDF companion does not. They are separately preserved
+archival artifacts rather than generated twins. The repository reconciles that
+difference in the active contract without editing either file.
+
 These inputs are not the repository's reconciled runtime contract. In
 particular, Workstream retains the canonical `/api/v1` namespace even where an
 archival input uses `/v1`. WS-AUTH-001 takes precedence over the current
 token-role authorization bootstrap under accepted ADR 0012. The reconciled
-canonical text lives in `docs/spec_authorization_service.md`; active repository
-documentation points there without editing the eight archived files.
+canonical authorization text lives in `docs/spec_authorization_service.md`.
+The active review/revision contract lives in `docs/spec_review_lifecycle.md`.
+Active repository documentation points to those contracts without editing the
+eight archived files.

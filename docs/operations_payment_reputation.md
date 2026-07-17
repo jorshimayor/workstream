@@ -7,11 +7,11 @@ the authorized award and immutable fulfillment result with the same discipline
 as automated settlement.
 
 Every valid recorded human Review creates a reviewer `completed_review`
-contribution. `accept` additionally creates a submitter `accepted_submission`
-contribution. Compensation is evaluated independently for each record from its
+contribution. `accept` additionally creates immutable FinalAcceptance, and only
+that fact creates a submitter `accepted_submission` contribution. Compensation is evaluated independently for each record from its
 frozen policy version; an explicit unpaid rule creates no award. Awards,
-fulfillment receipts, projections, and reputation events attach to contributions
-and never replace them.
+fulfillment receipts, and projections attach to contributions and never replace
+them. Reputation events are deferred.
 
 ## Compensation Status Projection
 
@@ -53,7 +53,8 @@ Default:
 - a valid human `needs_revision`, `accept`, or `reject` decision creates one
   reviewer `completed_review`; the ReviewLease-frozen
   `ContributionPolicyVersion` decides whether it creates an award
-- `accept` additionally creates one submitter `accepted_submission`; the
+- `accept` additionally creates FinalAcceptance and one submitter
+  `accepted_submission` sourced from it; the
   TaskAssignment-frozen `ContributionPolicyVersion` decides whether it creates
   an award
 - `needs_revision` and `reject` create no submitter contribution or award
@@ -61,6 +62,8 @@ Default:
   award's frozen adapter binding
 - a fulfilled award requires an immutable receipt, exact quantity, and external
   reference
+- canonical Review, FinalAcceptance, contributions, and eligible awards commit
+  once; external fulfillment begins only after commit through the outbox
 
 Review decisions, task acceptance, award creation, and fulfillment remain
 separate facts.
@@ -75,9 +78,13 @@ The dashboard must always show:
 - failed awards
 - fulfilled awards by instrument and unit
 
-## Reputation Principle
+## Deferred Reputation Principle
 
-Reputation is not a badge. It is an outcome ledger.
+Reputation policy, events, scoring, and projections are not implemented by the
+v0.1 review lifecycle. The review decision transaction writes no reputation
+side effect. The remaining sections are future product guidance only.
+
+When separately implemented, reputation is not a badge. It is an outcome ledger.
 
 It updates from:
 
@@ -104,7 +111,7 @@ Track:
 - skill-specific quality
 - compensation fulfillment reliability
 
-Suggested v0.1 contributor events:
+Possible future contributor events:
 
 | Event | Default Delta | Notes |
 | --- | ---: | --- |
@@ -125,7 +132,7 @@ Track:
 - average turnaround
 - second-review agreement
 
-Suggested v0.1 reviewer events:
+Possible future reviewer events:
 
 | Event | Default Delta | Notes |
 | --- | ---: | --- |

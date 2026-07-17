@@ -14,15 +14,13 @@ L1 specification and architecture boundary.
 ## Allowed files
 
 ```text
-docs/reference_specs/WS-REV-001-review-lifecycle-specification.md only to preserve recorded revised archival bytes
-docs/reference_specs/WS-REV-001-review-lifecycle-specification.pdf only to preserve recorded revised archival bytes
-docs/reference_specs/WS-IMP-001-workstream-v0.1-coding-agent-implementation-specification.md only to preserve recorded archival bytes
-docs/reference_specs/WS-IMP-001-workstream-v0.1-coding-agent-implementation-specification.pdf only to preserve recorded archival bytes
 docs/reference_specs/README.md
 docs/reference_specs/SHA256SUMS
 docs/spec_review_lifecycle.md
+docs/architecture_data_model.md
 docs/architecture_lockdown.md
 docs/architecture_lifecycle_state_machine.md
+docs/architecture_system_architecture.md
 docs/decision_*.md only when an approved decision requires it
 docs/glossary.md
 docs/principles.md
@@ -33,8 +31,10 @@ docs/operations_queue_policy.md
 docs/operations_payment_reputation.md
 docs/operations_operator_workflow.md
 docs/operations_project_operating_manual.md
+docs/operations_roles_permissions.md
 docs/product_first_user_flows.md
 docs/risk_register.md
+docs/roles_permissions.md
 docs/template_review_packet.md
 docs/template_revision_replay.md
 docs/template_prior_feedback_checklist.md
@@ -59,6 +59,10 @@ scripts/test_agent_gates.py
 backend/app/**
 backend/alembic/**
 backend/tests/**
+docs/reference_specs/WS-REV-001-review-lifecycle-specification.md
+docs/reference_specs/WS-REV-001-review-lifecycle-specification.pdf
+docs/reference_specs/WS-IMP-001-workstream-v0.1-coding-agent-implementation-specification.md
+docs/reference_specs/WS-IMP-001-workstream-v0.1-coding-agent-implementation-specification.pdf
 AUTH, ART, or CON runtime implementation
 modification or replacement of any supplied archival reference byte
 new provider choice
@@ -70,6 +74,9 @@ frontend work
 - The supplied revised WS-REV Markdown/PDF pair and the WS-IMP pair remain
   byte-for-byte unchanged, separately hashed, and provenance-labelled as
   archival inputs. No `(2)` duplicate filename or one-sided pair edit remains.
+  Verification compares each literal archival hash and byte diff to trusted
+  base `0302bcf854a565d429e232ad6b076a1931ea74e4`, so changing an archive and its
+  checksum line together cannot pass.
 - Provenance explicitly records that the newest revised Markdown contains
   section 4.6's closed action/permission table while its PDF companion does not;
   adoption reconciles that difference without editing either archival file.
@@ -137,9 +144,13 @@ frontend work
   dependency. Registration may then add four planned rows before REV-11/12A
   implementation; it activates nothing and does not claim hidden behavior exists.
 - The same active contract publishes six separate service identity-to-ActionId
-  manifests for preference expiry, lease expiry, authority-invalidation
-  reconciliation, general reconciliation, artifact-reference reconciliation,
-  and projection. AUTH may create separately reviewed identity-specific extension
+  manifests: `workstream.review.preference_expiry -> review.preference_expiry.run`,
+  `workstream.review.lease_expiry -> review.lease_expiry.run`,
+  `workstream.review.authority_invalidation_reconciliation -> review.reconcile.run`,
+  `workstream.review.reconciliation -> review.reconcile.run`,
+  `workstream.review.artifact_reference_reconciliation -> review.artifact_reference.reconcile`,
+  and `workstream.review.projection -> review.projection.rebuild`. AUTH may create
+  separately reviewed identity-specific extension
   contracts from that immutable manifest before the consuming REV chunk. Those
   extensions build on AUTH-09A's common schema but add exact enum, database
   constraint, matrix, provisioning, and admission coverage; AUTH-09A's seven ART
@@ -149,7 +160,12 @@ frontend work
   noncanonical API prefix, full
   reviewer backlog, legacy severity, synthetic reject, direct
   payment/reputation, and bypass wording without scanning archival bytes as
-  active policy.
+  active policy. Its durable active-path classifier discovers tracked, staged,
+  untracked, and newly added documentation, excludes archival inputs by exact
+  path rather than broad directory suppression, and fails on an unclassified
+  active document. Table-driven regression fixtures cover every prohibited
+  category, exact archival exclusion, and fail-closed invocation from
+  `scripts/test_agent_gates.py`.
 - Active reviewer/revision/queue/contribution flow docs and templates are reconciled
   now as contract/status documentation, clearly distinguishing planned
   unavailable endpoints from implemented behavior; the scanner has no temporary
@@ -196,6 +212,10 @@ frontend work
 - Human reject uses canonical task `rejected`; approved administrative
   revision-obligation closure uses `cancelled` with a bounded reason. No active
   `closed/review_rejected` status token is introduced.
+- Initiative state records PLAN merged through PR #128 at trusted main
+  `0302bcf854a565d429e232ad6b076a1931ea74e4`, marks Chunk 01 active, and
+  reconciles `STATUS.md`, `CHUNK_MAP.md`, and `SOURCE_MANIFEST.md`. Generated
+  loop memory is not edited manually.
 
 ## Verification
 
@@ -206,10 +226,18 @@ python3 scripts/check_stale_review_contracts.py
 python3 scripts/check_markdown_links.py
 python3 scripts/check_stale_workstream_wording.py
 sha256sum -c docs/reference_specs/SHA256SUMS
+printf '%s  %s\n' \
+  fffadc271c267801250b044edc570e515a250eff48afdc64f9c1f8753e6ab058 docs/reference_specs/WS-REV-001-review-lifecycle-specification.md \
+  8c053bc752a7b0c64e04b3eda1873bb5dbc02bbdfef84bd17d07cbbf01bce2fd docs/reference_specs/WS-REV-001-review-lifecycle-specification.pdf \
+  e2116bce55fda1cce46a93e64bedcb47133d3898c1d4a51863385803e9dac210 docs/reference_specs/WS-IMP-001-workstream-v0.1-coding-agent-implementation-specification.md \
+  12f094e49c5c80f117e42d0f7f962b843f34508ab58d7f1d8def5f50fef532ed docs/reference_specs/WS-IMP-001-workstream-v0.1-coding-agent-implementation-specification.pdf | sha256sum -c -
+git diff --exit-code 0302bcf854a565d429e232ad6b076a1931ea74e4 -- docs/reference_specs/WS-REV-001-review-lifecycle-specification.md docs/reference_specs/WS-REV-001-review-lifecycle-specification.pdf docs/reference_specs/WS-IMP-001-workstream-v0.1-coding-agent-implementation-specification.md docs/reference_specs/WS-IMP-001-workstream-v0.1-coding-agent-implementation-specification.pdf
 git check-attr diff merge text -- docs/reference_specs/*.pdf | awk '$3 != "unset" {bad=1} END {exit bad}'
 ./docs/architecture_brief/render_pdf.sh
 git diff --exit-code -- docs/architecture_brief/workstream_architecture_brief.pdf docs/architecture_brief/images/task_lifecycle_sequence.png
 python3 scripts/test_agent_gates.py
+python3 scripts/check_internal_review_evidence.py
+git diff --name-only 0302bcf854a565d429e232ad6b076a1931ea74e4
 git diff --check
 ```
 

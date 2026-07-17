@@ -1,182 +1,124 @@
 # Reviewer Workflow
 
+## Status
+
+This is the planned v0.1 operating contract. Reviewer routes and jobs remain
+unavailable until their hidden REV behavior, exact AUTH activation, and the
+REV-13 joint release complete. `spec_review_lifecycle.md` is normative.
+
 ## Reviewer Job
 
-The reviewer decides whether a submission satisfies the task and project guide.
+The reviewer decides whether one exact leased Submission satisfies the task and
+the Project Guide context stamped on that Submission. The reviewer never rebases
+guide context and does not use whatever guide happens to be active at read time.
 
-The reviewer does not spend time diagnosing basic packaging or schema failures. The checker framework handles that before review.
+The reviewer must have an exact active project `reviewer` grant represented by
+canonical human `ActorProfile.id`. Submitter, adjudicator, administrative, or
+token-role authority does not substitute. No-self-review and lifecycle guards
+still apply.
 
-The reviewer is accountable for judgment, not task execution. A good review is specific enough that a contributor can either fix the issue or clearly dispute it.
+## Current Work And Claim
+
+The reviewer current-work operation returns an active lease, one server-selected
+offer, or none. It never returns the complete backlog. A claim creates one
+ReviewLease and immutable ReviewPacketManifest under PostgreSQL race guards.
+
+The reviewer may read artifact bytes only for the exact Submission packet named
+by the current active lease. Authorized history contains bounded metadata, not
+prior or unrelated artifact bytes.
 
 ## Review Inputs
 
-Every review page shows:
+The planned Review Context contains:
 
-- project guide version
-- task description
-- acceptance criteria
-- submission summary
-- evidence items
-- checker results
-- prior review findings if resubmission
-- revision replay if resubmission
+- queue, lease, Submission, and admitting CheckerRun identity;
+- stamped Project Guide identity, version, and activation sequence;
+- task description and acceptance criteria;
+- submission summary and exact packet bindings;
+- checker results and bounded evidence;
+- prior immutable Reviews and findings when relevant;
+- revision preparation transition, submitter responses, and prior resolutions.
 
 ## Decisions
 
-Allowed decisions:
+Allowed decisions are exactly `accept`, `needs_revision`, and `reject`.
 
-- accept
-- needs_revision
-- reject
+Every valid decision appends one immutable Review. Every submitted finding and
+later resolution is immutable. Every Review creates one reviewer
+`completed_review` ContributionRecord and evaluates the ReviewLease-frozen
+ContributionPolicyVersion, regardless of outcome.
 
-Decision rules:
+`accept` means the Submission satisfies its stamped context. It additionally
+creates one immutable FinalAcceptance, accepts the task, completes the
+TaskAssignment, and creates the submitter `accepted_submission` from
+FinalAcceptance. There is no direct Review-to-submitter contribution inference.
 
-- `accept` means the submission satisfies the project guide and creates the
-  submitter `accepted_submission` contribution. Its frozen contribution award rule
-  independently decides whether that contribution creates an award.
-- `needs_revision` means the work is fixable and the reviewer can name concrete required changes.
-- `reject` means the work is not reasonably salvageable or violates policy.
+`needs_revision` means concrete blocking issues are fixable. It keeps the
+TaskAssignment active, creates no FinalAcceptance, and creates no submitter
+contribution.
 
-## Finding Format
+`reject` means the work is not reasonably salvageable or violates the governing
+contract. It requires a bounded human reason, blocks the same-task assignment,
+sets the task to `rejected`, and creates no FinalAcceptance or submitter
+contribution.
 
-Every finding includes:
+## Findings
 
-- severity
-- area
-- issue
-- required fix
-- evidence reference
+A ReviewFinding contains:
 
-Severity:
+- lifecycle meaning: `blocking` or `advisory`;
+- area;
+- issue and rationale;
+- required change for blocking findings;
+- optional finalized evidence binding.
 
-- high: blocks acceptance
-- medium: fixed unless project policy says otherwise
-- low: note or cleanup
+`needs_revision` requires at least one unresolved blocking finding. Advisory
+findings must not become preference-only acceptance requirements. Reject
+requires its bounded reason; structured findings are optional when they add
+useful evidence and are never fabricated merely to satisfy a field.
 
-Finding areas are project-specific but normalized enough for reporting.
+## Revision Review
 
-Common areas:
+For a revised Submission, the reviewer checks each required immutable
+SubmissionFindingResponse and appends one FindingResolution with result
+`resolved`, `unresolved`, or `not_applicable`. The reviewer does not edit the
+prior finding or response.
 
-- task_spec
-- output_quality
-- evidence
-- checker_failure
-- originality
-- package
-- revision_replay
-- guide_compliance
+The revised Submission initially returns to the reviewer who requested the
+revision. Preference expiry, decline, or authority invalidation opens the same
+queue entry without resetting its age.
 
-## Accept
+## Decision Transaction
 
-Use accept only when:
+The route owns one transaction:
 
-- task requirements are satisfied
-- acceptance criteria are met
-- evidence is sufficient
-- no unresolved critical- or high-severity checker failure exists
-- prior revision findings are closed if applicable
+```text
+AUTH prepared authority and final evaluation
+-> append Review/findings/resolutions
+-> consume ReviewLease and close ReviewQueueEntry
+-> CON reviewer operation
+-> accept: FinalAcceptance + task effects + CON submitter operation
+   needs_revision: task effect only
+   reject: assignment block + task effect
+-> REV stages shared audit/outbox
+-> commit once
+```
 
-Accept must create:
-
-- review decision record
-- acceptance audit event
-- reviewer `completed_review` contribution record
-- submitter `accepted_submission` contribution record
-- any awards required by the separately frozen reviewer and submitter
-  contribution policies
-- reputation event
-
-The reviewer cites the strongest evidence supporting acceptance, not only "looks good."
-
-## Needs Revision
-
-Use needs_revision when:
-
-- issues are fixable
-- the submission is not acceptable yet
-- reviewer can describe concrete required fixes
-
-Do not write vague feedback. Every issue must tell the contributor what is wrong and what must change.
-
-Needs revision feedback must not introduce preference-only work. If the guide does not require it and acceptance is not blocked by it, keep it as a low-severity note.
-
-Each high or medium finding must have:
-
-- exact issue
-- why it blocks acceptance
-- required fix
-- evidence reference or file/section reference
-
-## Reject
-
-Use reject when:
-
-- the work is fundamentally wrong
-- the submission is non-original or violates policy
-- the task cannot be salvaged by reasonable revision
-- the contributor submitted prohibited material
-
-Use reject carefully. If the work can be reasonably corrected through one revision cycle, use `needs_revision`.
-
-Every valid recorded `needs_revision` or `reject` decision still creates the
-reviewer's `completed_review` contribution and evaluates the ReviewLease-frozen
-reviewer contribution policy. Neither decision creates a submitter contribution
-or submitter award.
-
-## Reviewer Quality
-
-Track:
-
-- review count
-- decision distribution
-- overturned decisions
-- unclear feedback reports
-- average turnaround
-- agreement with second reviewer
-
-Reviewer reputation matters because low-quality review damages the whole system.
-
-Reviewer quality events are generated when:
-
-- review is overturned
-- feedback is marked unclear
-- reviewer accepts work later found non-compliant
-- reviewer rejects work that belonged in revision
-- reviewer misses unresolved prior findings
+The transaction performs no Artifact Storage call. Any participant failure rolls
+back all lifecycle, contribution, award, audit, and outbox effects.
 
 ## Reviewer Checklist
 
-Before accepting:
+Before any decision:
 
-- task guide was followed
-- acceptance criteria are satisfied
-- evidence supports the claim
-- checker results are acceptable
-- no prior findings are open
-- reviewer and submitter contribution lineage can be created atomically
-- both frozen contribution policies can be evaluated; explicit unpaid results
-  are valid and create no award
+- confirm the exact active lease and packet;
+- use the guide/policy context stamped on the Submission;
+- verify the admitting CheckerRun belongs to that Submission;
+- ground judgment in acceptance criteria and available evidence;
+- check all required prior responses and resolutions;
+- distinguish blocking requirements from advisory observations;
+- confirm the decision-specific task, assignment, FinalAcceptance, and
+  contribution effects can commit atomically.
 
-Before needs revision:
-
-- each issue has a required fix
-- severity is accurate
-- feedback is actionable
-- no unrelated refactor or preference is demanded
-
-Before rejection:
-
-- rejection reason is grounded in the guide
-- evidence is cited
-- task is not merely fixable
-
-## Second Review Sampling
-
-During the first 30 days, sample at least:
-
-- 25 percent of accepted submissions
-- 25 percent of rejected submissions
-- any submission matching the configured high-value criterion in
-  `ReviewPolicy`
-
-Second review checks whether the first reviewer followed the guide, cited evidence, and made the correct decision type.
+Offline sampling and calibration may evaluate review quality, but they do not
+create adjudication state, overturn a Review, or mutate immutable history.

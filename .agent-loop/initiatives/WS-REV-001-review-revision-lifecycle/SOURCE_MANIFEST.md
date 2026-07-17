@@ -4,7 +4,7 @@
 
 | File | SHA-256 | Status |
 |---|---|---|
-| `docs/reference_specs/WS-REV-001-review-lifecycle-specification.md` | `fffadc271c267801250b044edc570e515a250eff48afdc64f9c1f8753e6ab058` | Canonical revised archival input; includes Markdown-only section 4.6 action mapping; not yet actively adopted |
+| `docs/reference_specs/WS-REV-001-review-lifecycle-specification.md` | `fffadc271c267801250b044edc570e515a250eff48afdc64f9c1f8753e6ab058` | Canonical revised archival input; includes Markdown-only section 4.6 action mapping; adopted through the reconciled active contract without editing this file |
 | `docs/reference_specs/WS-REV-001-review-lifecycle-specification.pdf` | `8c053bc752a7b0c64e04b3eda1873bb5dbc02bbdfef84bd17d07cbbf01bce2fd` | Canonical revised archival companion; does not contain Markdown section 4.6 and is not a generated twin |
 
 ## Normative repository constraints
@@ -151,3 +151,16 @@ unchanged, records their provenance/status differences, and creates
 `docs/spec_review_lifecycle.md` as the reconciled active normative contract.
 Neither WS-REV archival file nor either WS-IMP archival file is edited to
 express active repository policy.
+
+## Chunk 01 adoption base
+
+Planning merged through PR #128 at trusted main
+`0302bcf854a565d429e232ad6b076a1931ea74e4`. The user explicitly started
+`WS-REV-001-01` from that exact commit. Chunk 01 makes
+`docs/spec_review_lifecycle.md` the active normative contract while the four
+archival files remain literal-hash and trusted-base-diff protected inputs.
+
+The active contract, its four-action registration manifest, and its six-service
+identity manifest become immutable inputs for downstream AUTH gates only after
+this chunk is reviewed and merged. Until their owning chunks and AUTH activation
+gates complete, every review-lifecycle action and endpoint remains unavailable.

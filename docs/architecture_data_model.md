@@ -42,15 +42,20 @@ Task
     CheckerRun
       CheckerResult
     ReadinessCertificate (later optional)
+    ReviewQueueEntry
+      ReviewLease
+        ReviewPacketManifest
     Review
       ReviewFinding
-    RevisionReplay
+      FindingResolution
+      FinalAcceptance (accept only)
     RevisionContextPreparation
+    SubmissionFindingResponse
   ContributionRecord
     CompensationAward
       CompensationFulfillmentReceipt
       CompensationStatusProjection
-  ReputationEvent
+  ReputationEvent (deferred)
   AuditEvent
 ```
 
@@ -100,7 +105,9 @@ Contributor is the umbrella human product term. A human may hold separate
 active `submitter`, `reviewer`, and `adjudicator` grants for the same project;
 each is revoked independently. An adjudicator grant authorizes no adjudication
 action until WS-REV defines the lifecycle and AUTH activates exact adjudication
-actions. Celery, checker, setup, and background workers are internal services,
+actions. The v0.1 review contract keeps adjudication unavailable; a future
+separately approved initiative owns any lifecycle definition. Celery, checker,
+setup, and background workers are internal services,
 not human product roles.
 
 ### QualificationSnapshot
@@ -1113,6 +1120,7 @@ Fields:
 
 - `id`
 - `task_id`
+- `task_assignment_id`
 - `contributor_id`
 - `assigned_by`
 - `submitter_contribution_policy_version_id`
@@ -1132,10 +1140,13 @@ Fields:
 - `status`
 - `summary`
 - `package_uri`
-- `package_hash`
+- `package_hash` (legacy caller input, never canonical artifact lineage)
+- `artifact_hash` (server-derived verified lineage)
 - `artifact_hash_manifest`
 - `contributor_attestation`
 - `locked_guide_version`
+- `locked_guide_id`
+- `locked_guide_activation_sequence`
 - `locked_guide_source_snapshot_id`
 - `locked_guide_source_snapshot_hash`
 - `locked_effective_project_submission_artifact_policy_id`
@@ -1151,6 +1162,7 @@ Fields:
 - `submitted_at`
 - `locked_at`
 - `supersedes_submission_id`
+- `revision_context_preparation_id` (revision submissions only)
 
 The contributor submission packet supplies the task id, summary, outputs,
 artifact hashes, evidence references, and contributor attestation. Workstream assigns the
@@ -1341,12 +1353,33 @@ If added later, the readiness certificate records the exact checker run and arti
 
 For v0.1, the current `CheckerRun` is the readiness proof. If any submitted artifact changes, a new submission version and checker run are required.
 
+## ReviewQueueEntry And ReviewLease
+
+`ReviewQueueEntry` immutably anchors one exact finalized Submission and its
+current successful admitting CheckerRun. Mutable routing state carries
+preferred/open/closed lifecycle, original queue age, and current preference.
+The reviewer current-work API returns an active lease, one server-selected
+offer, or none; it never exposes the full backlog.
+
+`ReviewLease` is the permanent identity of one claim attempt. It stores the
+canonical human reviewer ActorProfile ID, queue/Submission lineage, database
+lease times, disposition, and the independently frozen reviewer
+ContributionPolicyVersion. PostgreSQL enforces one active lease per reviewer and
+queue entry.
+
+`ReviewPacketManifest` is an immutable REV semantic projection over the exact
+lease, Submission, admitting CheckerRun/results, stamped context, response
+evidence, and ART binding IDs. It contains no bytes, digest, provider locator,
+signed URL, receipt, scratch path, or AUTH matrix data.
+
 ## Review
 
 Fields:
 
 - `id`
 - `submission_id`
+- `review_lease_id`
+- `predecessor_review_id`
 - `reviewer_id`
 - `decision`
 - `summary`
@@ -1356,6 +1389,9 @@ Fields:
 - `locked_review_policy_version`
 - `created_at`
 - `completed_at`
+
+The Review and its submitted findings/resolutions are immutable. Later rounds
+append a new Review following the Submission predecessor chain.
 
 Decision:
 
@@ -1369,51 +1405,23 @@ Fields:
 
 - `id`
 - `review_id`
-- `severity`
+- `finding_kind`: `blocking | advisory`
 - `area`
 - `issue`
 - `required_fix`
 - `evidence_ref`
 - `created_at`
 
-Severity:
+## SubmissionFindingResponse And FindingResolution
 
-- low
-- medium
-- high
+`SubmissionFindingResponse` immutably binds one unresolved blocking finding to
+the assigned submitter's response text, optional finalized evidence binding,
+exact preparation head, and new Submission. Advisory responses are optional
+unless locked policy requires them.
 
-## RevisionReplay
-
-Fields:
-
-- `id`
-- `task_id`
-- `prior_submission_id`
-- `new_submission_id`
-- `created_by`
-- `created_at`
-
-Each replay has items:
-
-- `prior_finding_id`
-- `fix_summary`
-- `evidence_ref`
-- `contributor_claim_status`
-- `reviewer_closure_status`
-
-Contributor claim status:
-
-- fixed
-- disputed
-- not_applicable
-
-Reviewer closure status:
-
-- closed_fixed
-- closed_rebutted
-- partially_closed
-- still_open
-- obsolete
+`FindingResolution` is appended by the later Review for each required prior
+finding. Its result is `resolved`, `unresolved`, or `not_applicable`; it carries
+bounded rationale/evidence and never edits the finding or response.
 
 ## RevisionContextPreparation
 
@@ -1421,11 +1429,18 @@ Fields:
 
 - `id`
 - `task_id`
+- `originating_review_id`
+- `source_task_assignment_id`
+- `target_task_assignment_id`
 - `prior_submission_id`
 - `prior_submission_version`
 - `next_submission_version`
+- `prior_locked_guide_id`
 - `prior_locked_guide_version`
+- `prior_locked_guide_activation_sequence`
+- `next_locked_guide_id`
 - `next_locked_guide_version`
+- `next_locked_guide_activation_sequence`
 - `prior_locked_effective_project_submission_artifact_policy_hash`
 - `next_locked_effective_project_submission_artifact_policy_hash`
 - `prior_locked_pre_submit_checker_bundle_hash`
@@ -1434,7 +1449,11 @@ Fields:
 - `next_locked_review_policy_version`
 - `prior_locked_revision_policy_version`
 - `next_locked_revision_policy_version`
-- `context_rebased`
+- `outcome`: `kept | rebased | blocked`
+- `direction`: `forward | backward | null`
+- `context_digest`
+- `predecessor_preparation_id`
+- `preparation_sequence`
 - `rebase_reason`
 - `change_summary`
 - `prepared_by`
@@ -1443,14 +1462,40 @@ Fields:
 
 Purpose:
 
-This record is created before a contributor resumes a task in `NEEDS_REVISION` when guide or policy context must be checked for the next attempt. It does not mutate the prior submission. It records whether the next attempt keeps the prior context or rebases to the current active guide and policy context under revision policy.
+This immutable Review-rooted record is created before a contributor resumes a
+human-review revision. Exact prior Submission guide identity/activation-sequence
+match with the currently active guide keeps context. Any different valid active
+pair rebases forward or backward. Missing, inconsistent, revoked, or unsafe
+context blocks for manager repair. Task Context returns the validated chain
+head; the reviewer never rebases and reads the context stamped on the leased
+Submission.
 
 Revision preparation never rebases award eligibility. Submitter eligibility
 remains governed by the TaskAssignment-frozen `ContributionPolicyVersion`; each
 new ReviewLease independently freezes the then-current
 `ContributionPolicyVersion` for reviewer contributions.
 
-The contributor and reviewer packets must show the prior version, next version, rebase reason, and change summary when `context_rebased = true`.
+The contributor and reviewer history show prior/next identity, activation
+sequence, direction, reason, and change summary. No ContributionPolicyVersion is
+stored in this preparation.
+
+## FinalAcceptance
+
+Fields:
+
+- `id`
+- `project_id`
+- `task_id`
+- `submission_id`
+- `source_review_id`
+- `accepted_submitter_id`
+- `accepted_at`
+- `recorded_by`
+- `policy_context_ref`
+
+This internal immutable fact is created only inside an authorized
+`Review(accept)` transaction. It has unique task, source Review, and Submission
+lineage, no public/manual API, and no independent action.
 
 ## ContributionRecord
 
@@ -1464,6 +1509,7 @@ Fields:
 - `contributor_id`
 - `source_review_id`
 - `source_review_lease_id`
+- `source_final_acceptance_id`
 - `source_task_assignment_id`
 - `artifact_hash`
 - `contribution_policy_version_id`
@@ -1472,11 +1518,12 @@ Fields:
 Purpose:
 
 The record is immutable. Every valid recorded human Review creates one reviewer
-`completed_review` contribution. `accept` additionally creates one submitter
-`accepted_submission`; `needs_revision` and `reject` do not. The record carries
+`completed_review` contribution sourced from Review and ReviewLease. `accept`
+also creates FinalAcceptance; only that fact and TaskAssignment source one
+submitter `accepted_submission`. `needs_revision` and `reject` do not. The record carries
 the exact Review, submission, assignment or lease, frozen contribution policy,
-and stabilized artifact-hash lineage. Compensation awards and reputation events
-may reference it, but do not replace it.
+and stabilized artifact-hash lineage. Compensation awards may reference it;
+reputation projection is deferred.
 
 ## CompensationAward
 
