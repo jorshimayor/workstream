@@ -1,5 +1,12 @@
 # Compensation And Reputation
 
+## Status
+
+Existing compensation records retain their owning implementation status. The
+Review-, FinalAcceptance-, and revision-sourced behavior below is planned and
+unavailable until its owning REV/CON chunks, exact AUTH activation, and REV-13
+joint release complete. Reputation behavior is deferred entirely.
+
 ## Compensation Principle
 
 External fulfillment can be manual in the first version, but Workstream records

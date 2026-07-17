@@ -47,6 +47,7 @@ Task
         ReviewPacketManifest
     Review
       ReviewFinding
+      ReviewEvidenceArtifact
       FindingResolution
       FinalAcceptance (accept only)
     RevisionContextPreparation
@@ -103,10 +104,10 @@ role-specific qualification snapshot, reason, and active/revoked state.
 
 Contributor is the umbrella human product term. A human may hold separate
 active `submitter`, `reviewer`, and `adjudicator` grants for the same project;
-each is revoked independently. An adjudicator grant authorizes no adjudication
-action until WS-REV defines the lifecycle and AUTH activates exact adjudication
-actions. The v0.1 review contract keeps adjudication unavailable; a future
-separately approved initiative owns any lifecycle definition. Celery, checker,
+each is revoked independently. An adjudicator grant authorizes no v0.1 action.
+The review lifecycle defines no adjudication policy, queue, state, decision, or
+API; a future separately approved initiative owns any lifecycle definition,
+authorization, and release. Celery, checker,
 setup, and background workers are internal services,
 not human product roles.
 
@@ -904,7 +905,6 @@ Fields:
 - `id`
 - `project_id`
 - `guide_version`
-- `requires_second_review`
 - `allowed_decisions`
 - `minimum_finding_fields`
 - `sla_hours`
@@ -919,14 +919,15 @@ Fields:
 - `guide_version`
 - `max_revision_rounds`
 - `revision_deadline_hours`
-- `auto_reject_after_limit`
 - `allowed_resubmission_states`
-- `context_rebase_rule`
-- `context_rebase_triggers`
 - `reviewer_reassignment_rule`
 - `created_at`
 
-`context_rebase_rule` defines whether a revision attempt keeps prior context, rebases to current active context, or blocks for project-manager repair when guide or policy context changed. `context_rebase_triggers` names the guide or policy changes that require preparation before the contributor resumes.
+Limit or deadline exhaustion blocks further preparation and submission; it does
+not synthesize a reject Review. Project Guide context selection is deterministic,
+not policy-selected: exact prior Submission identity/activation-sequence match
+keeps context, any different valid active pair rebases forward or backward, and
+missing or unsafe active context blocks for manager repair.
 
 ## ContributionPolicy
 
@@ -1120,7 +1121,6 @@ Fields:
 
 - `id`
 - `task_id`
-- `task_assignment_id`
 - `contributor_id`
 - `assigned_by`
 - `submitter_contribution_policy_version_id`
@@ -1135,6 +1135,7 @@ Fields:
 
 - `id`
 - `task_id`
+- `task_assignment_id`
 - `contributor_id`
 - `version`
 - `status`
@@ -1409,8 +1410,27 @@ Fields:
 - `area`
 - `issue`
 - `required_fix`
-- `evidence_ref`
 - `created_at`
+
+## ReviewEvidenceArtifact
+
+Fields:
+
+- `id`
+- `project_id`
+- `review_id` (nullable, exactly one purpose owner)
+- `review_finding_id` (nullable, exactly one purpose owner)
+- `submission_finding_response_id` (nullable, exactly one purpose owner)
+- `finding_resolution_id` (nullable, exactly one purpose owner)
+- `artifact_binding_id`
+- `evidence_purpose`
+- `created_by_actor_id`
+- `created_at`
+
+This immutable REV relation binds one ART-finalized ArtifactBinding to the exact
+review, finding, response, or resolution evidence slot. Exactly one purpose owner is set,
+all lineage is same-project and same-task, and the row stores no bytes, digest,
+provider locator, signed URL, receipt, scratch path, or credentials.
 
 ## SubmissionFindingResponse And FindingResolution
 
@@ -1665,18 +1685,18 @@ open an independent session.
   registered scoped permission and cannot bypass missing task policy context
 - a submission must belong to a task
 - a review must belong to a submission
-- an accepted task must have at least one accepted submission
+- an accepted task must have exactly one FinalAcceptance linked to its accepting
+  Review and versioned Submission
 - every valid recorded human review must create one reviewer `completed_review`
   contribution
 - an accepted task must additionally create one submitter
-  `accepted_submission` contribution
+  `accepted_submission` contribution sourced from FinalAcceptance
 - `needs_revision` and `reject` must not create a submitter contribution
 - no compensation award exists without its contribution record
 - a fulfilled award must have an immutable fulfillment receipt with the exact
   authorized quantity and external reference
-- reputation events for accepted work must reference the submitter contribution
-- reviewer-quality reputation events must reference the reviewer contribution,
-  Review, or audit source
+- review-lifecycle v0.1 creates no reputation event; future reputation records
+  must consume canonical contribution/review lineage without mutating it
 - compensation award quantity is immutable after creation
 - failed fulfillment may later receive one valid fulfilled receipt; a fulfilled
   award is terminal and rejects conflicting callbacks
@@ -1688,7 +1708,8 @@ open an independent session.
 - the current checker run is the v0.1 readiness proof for the submission version that cleared automated checks
 - a review cannot accept a submission if the checker run belongs to a different submission version
 - every status transition creates an audit event
-- every needs-revision decision has at least one review finding
+- every needs-revision decision has at least one unresolved blocking
+  ReviewFinding
 - every revision context rebase creates an audit event and preserves prior submission context
 - every accept decision cites evidence
 - repeated review/checker failures become ProjectLesson records

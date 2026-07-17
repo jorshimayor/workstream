@@ -1,5 +1,12 @@
 # First User Flows
 
+## Status
+
+The review and revision portions are the planned v0.1 contract and remain
+unavailable until their owning REV chunks, exact AUTH activation, and REV-13
+joint release complete. Earlier project/task/submission/checker behavior keeps
+its separately recorded implementation status.
+
 The first user flows prove that Workstream can run real work from intake to acceptance. These flows come before any advanced routing or settlement.
 
 ## Flow 1: Project Manager Creates A Project

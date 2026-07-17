@@ -264,9 +264,9 @@ revalidate evidence lineage again.
 
 ART owns bytes, candidates, bindings, verification, retention, provider
 execution, and recovery. REV owns packet membership, evidence-slot purpose, and
-the immutable relation from a finalized ArtifactBinding to the exact finding or
-response. Human bearer tokens and provider locators never cross into storage
-calls.
+the immutable relation from a finalized ArtifactBinding to the exact Review,
+finding, response, or resolution evidence slot. Human bearer tokens and provider
+locators never cross into storage calls.
 
 ## Decision Transaction
 

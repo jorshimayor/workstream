@@ -18,10 +18,19 @@ convert_diagram() {
   fi
 }
 
-convert_diagram ../diagrams/rendered/workstream_context.svg images/workstream_context.png
-convert_diagram ../diagrams/rendered/workstream_v01_container.svg images/workstream_v01_container.png
-convert_diagram ../diagrams/rendered/backend_v01_components.svg images/backend_v01_components.png
-convert_diagram ../diagrams/rendered/future_identity_payment_reputation.svg images/future_identity_payment_reputation.png
+case "${1:-}" in
+  "") ;;
+  --all)
+    convert_diagram ../diagrams/rendered/workstream_context.svg images/workstream_context.png
+    convert_diagram ../diagrams/rendered/workstream_v01_container.svg images/workstream_v01_container.png
+    convert_diagram ../diagrams/rendered/backend_v01_components.svg images/backend_v01_components.png
+    convert_diagram ../diagrams/rendered/future_identity_payment_reputation.svg images/future_identity_payment_reputation.png
+    ;;
+  *)
+    echo "usage: $0 [--all]" >&2
+    exit 2
+    ;;
+esac
 
 if command -v plantuml >/dev/null 2>&1; then
   plantuml -tpng task_lifecycle_sequence.puml

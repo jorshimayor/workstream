@@ -154,8 +154,8 @@ Required before entering:
 
 - from `EVALUATION_PENDING`: checker run id, blocking checker results, contributor-visible messages, and suggested fixes
 - from `REVIEW_PENDING`: immutable `needs_revision` Review, at least one
-  blocking ReviewFinding, reviewer `completed_review` contribution, and any
-  applicable reviewer award
+  unresolved blocking ReviewFinding, reviewer `completed_review` contribution,
+  and any applicable reviewer award
 
 Before the contributor resumes from a human Review, Workstream appends an
 immutable RevisionContextPreparation. Exact prior Submission guide
@@ -226,6 +226,7 @@ REVIEW_PENDING -> ACCEPTED
 REVIEW_PENDING -> NEEDS_REVISION
 REVIEW_PENDING -> REJECTED
 NEEDS_REVISION -> SUBMITTED
+NEEDS_REVISION -> CANCELLED
 DRAFT -> CANCELLED
 SCREENING -> CANCELLED
 READY -> CANCELLED
@@ -240,9 +241,11 @@ No administrative or recovery grant authorizes these transitions:
 - `SUBMITTED -> REVIEW_PENDING` without checker run
 - `REVIEW_PENDING -> ACCEPTED` without review decision
 - `REVIEW_PENDING -> ACCEPTED` without Review, FinalAcceptance, and both required contribution-source checks
-- `NEEDS_REVISION -> ACCEPTED` without new submission or explicit finding closure
+- `NEEDS_REVISION -> ACCEPTED` directly; a replacement Submission must pass
+  checker admission and receive a later accepting Review
 - `SUBMITTED -> ACCEPTED` directly
-- `SUBMITTED -> NEEDS_REVISION` without checker run unless the submission packet cannot be parsed
+- `SUBMITTED -> NEEDS_REVISION` directly without the persisted
+  `EVALUATION_PENDING` CheckerRun outcome
 - any transition based on artifacts whose hashes differ from the checker run
 - compensation projection `pending -> fulfilled` without an immutable payable
   award and fulfillment receipt

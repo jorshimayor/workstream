@@ -20,7 +20,7 @@
 | current head ID | `<uuid>` |
 | context digest | `<sha256>` |
 | outcome | `kept | rebased | blocked` |
-| direction | `forward | backward | not_applicable` |
+| direction | `forward | backward | null` |
 | prior guide ID/version/activation sequence | `<values>` |
 | next guide ID/version/activation sequence | `<values>` |
 | frozen source snapshot and task-execution policies | `<bounded references>` |

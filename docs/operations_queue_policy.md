@@ -1,5 +1,11 @@
 # Queue Policy
 
+## Status
+
+Review and revision lanes below are the planned v0.1 operating contract. Their
+routes and jobs remain unavailable until the owning REV chunks, exact AUTH
+activation, and REV-13 joint release complete.
+
 ## Purpose
 
 The queue is the operational truth of Workstream. It tells the team what
@@ -202,7 +208,8 @@ Owner:
 
 Policy:
 
-- rejection requires evidence and guide-grounded reason
+- rejection requires a bounded human, guide-grounded reason; structured
+  findings and finalized evidence are optional when they add useful support
 
 ### Compensation Fulfillment Follow-Up
 
@@ -245,8 +252,8 @@ Every operating day starts with:
 | `REVIEW_PENDING -> NEEDS_REVISION` | immutable Review, at least one blocking ReviewFinding, reviewer `completed_review`; no FinalAcceptance or submitter contribution |
 | `REVIEW_PENDING -> ACCEPTED` | immutable accepting Review, FinalAcceptance, reviewer `completed_review`, submitter `accepted_submission` sourced from FinalAcceptance, applicable awards |
 | `REVIEW_PENDING -> REJECTED` | immutable rejected Review, bounded reason, same-task assignment block, reviewer `completed_review`; no FinalAcceptance or submitter contribution |
-| pre-submit feedback in `NEEDS_REVISION` | prior findings visible to contributor, revision deadline active, no new submission created |
 | `NEEDS_REVISION -> SUBMITTED` | exact preparation head/digest, replacement Submission, response for every unresolved blocking finding, policy limit/deadline not reached |
+| `NEEDS_REVISION -> CANCELLED` | covered manager limit/deadline closure or Operator legacy-context closure, bounded canonical reason, assignment release; no synthetic Review or contribution |
 | compensation `pending -> fulfilled` | immutable fulfillment receipt, external reference, and audit event |
 
 ## Lane Capacity

@@ -1,5 +1,11 @@
 # Day-by-Day Execution Plan
 
+## Review Lifecycle Status
+
+The calendar is sequencing guidance, not implementation status. Review and
+revision behavior remains planned and unavailable until its approved WS-REV
+chunks, exact AUTH activation, and REV-13 joint release complete.
+
 ## Purpose
 
 This is the execution calendar for the first 30 days. The master plan explains the strategy; this file defines what happens each day and what must be true before moving on.
@@ -232,7 +238,7 @@ Exit criteria:
 
 Deliver:
 
-- reviewer queue
+- reviewer current work with an active lease, one server-selected offer, or none
 - review page
 - checker result panel
 - task guide panel
@@ -248,15 +254,16 @@ Deliver:
 
 - `Review`
 - `ReviewFinding`
-- severity
+- lifecycle meaning: `blocking | advisory`
 - area
 - issue
 - required fix
-- evidence reference
+- immutable `ReviewEvidenceArtifact` relation to finalized ART binding
 
 Exit criteria:
 
-- `needs_revision` and `reject` require at least one finding
+- `needs_revision` requires at least one unresolved blocking finding
+- `reject` requires a bounded human reason; findings are optional
 - `accept` requires checklist confirmation
 - `accept` requires evidence references, not only a free-text approval
 
@@ -265,8 +272,8 @@ Exit criteria:
 Deliver:
 
 - `review_pending -> needs_revision`
-- feedback history
-- task unlock for worker
+- immutable finding/response/resolution history
+- keep the TaskAssignment active for the assigned submitter
 - resubmission requirements
 
 Exit criteria:
@@ -278,15 +285,16 @@ Exit criteria:
 
 Deliver:
 
-- `RevisionReplay`
-- `RevisionFix`
-- closure status
-- prior finding mapping
+- `RevisionContextPreparation`
+- `SubmissionFindingResponse`
+- immutable later `FindingResolution`
+- prior blocking-finding mapping
 
 Exit criteria:
 
-- every prior high/medium finding is mapped to a fix or explicit dispute
-- reviewer can mark closed/still open
+- every unresolved blocking finding has one immutable response
+- the later reviewer appends `resolved`, `unresolved`, or `not_applicable`
+  without editing prior history
 
 ### Day 15: Review Quality Metrics
 
@@ -295,8 +303,7 @@ Deliver:
 - reviewer turnaround
 - decision distribution
 - unclear feedback flag
-- overturned decision marker
-- second-review marker
+- offline sampled-quality marker with no product adjudication state
 
 Exit criteria:
 
@@ -309,9 +316,9 @@ Exit criteria:
 Deliver:
 
 - `ContributionRecord`
-- `PaymentRecord`
-- accepted amount
-- pending amount
+- `CompensationAward`
+- `CompensationFulfillmentReceipt`
+- pending fulfillment projection
 - paid amount
 - payment status
 - payment reference
@@ -395,8 +402,7 @@ Deliver:
 - accepted decisions
 - rejected decision if warranted
 - contribution records
-- payment records
-- reputation events
+- compensation awards/fulfillment records when payable
 
 Exit criteria:
 
@@ -406,7 +412,7 @@ Exit criteria:
 
 Deliver:
 
-- second-review audit on accepted/rejected tasks
+- offline quality audit on accepted/rejected tasks with no new product decision
 - reviewer findings quality report
 
 Exit criteria:

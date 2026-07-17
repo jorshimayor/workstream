@@ -4259,6 +4259,8 @@ def test_stale_review_contract_rule_inventory_is_complete() -> None:
         "DIRECT_ACCEPT_TO_SUBMITTER_CONTRIBUTION": (
             "Acceptance creates the accepted_submission contribution."
         ),
+        "AUTO_REJECT_REVISION_LIMIT": "auto_reject_after_limit: true",
+        "REJECT_REQUIRES_FINDING": "Reject requires one finding.",
         "REVIEW_REPUTATION_SIDE_EFFECT": ("The review creates a reputation event."),
         "ADJUDICATION_ACTIVATION_PROMISE": (
             "Adjudication remains unavailable until enabled."
@@ -4279,6 +4281,22 @@ def test_stale_review_contract_rule_inventory_is_complete() -> None:
         "The reviewer never rebases the stamped Submission context.",
     )
 
+    adversarial_samples = {
+        "NON_CANONICAL_API_PREFIX": (
+            "The active production API is /v1/reviews, unlike the archival example."
+        ),
+        "DIRECT_ACCEPT_TO_SUBMITTER_CONTRIBUTION": (
+            "Accept creates accepted_submission directly; FinalAcceptance is ignored."
+        ),
+        "REVIEWER_REBASE": (
+            "The reviewer should not delay and performs a rebase before judgment."
+        ),
+        "LEGACY_REVIEW_SEVERITY": "ReviewFinding severity: high",
+    }
+    for code, sample in adversarial_samples.items():
+        failures = gate.scan_text("docs/spec_review_lifecycle.md", sample)
+        assert any(failure.endswith(f": {code}") for failure in failures), code
+
 
 def test_stale_review_contract_classification_is_exact() -> None:
     """Only exact supplied archives and reviewed history bypass active scanning."""
@@ -4296,10 +4314,57 @@ def test_stale_review_contract_classification_is_exact() -> None:
         "unclassified"
     )
     assert gate.classification("docs/spec_review_lifecycle.md") == "active"
+    assert gate.classification("docs/roadmap_status.md") == "active"
     assert (
         gate.classification("docs/operations_subagent_review_protocol.md")
         == "non_product_review"
     )
+
+
+def test_stale_review_contract_scan_excludes_only_exact_archives() -> None:
+    """Exact archives bypass rules and unknown reference documents fail closed."""
+    gate = load_module(
+        "stale_review_contract_archive_scan",
+        "scripts/check_stale_review_contracts.py",
+    )
+    original_active = gate.ACTIVE_PATHS
+    original_archival = gate.ARCHIVAL_PATHS
+    original_git_lines = gate.git_lines
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        (root / "docs/reference_specs").mkdir(parents=True)
+        (root / "docs/spec_review_lifecycle.md").write_text(
+            "Canonical /api/v1 contract.\n", encoding="utf-8"
+        )
+        (root / "docs/reference_specs/archive.md").write_text(
+            "POST /v1/reviews\n", encoding="utf-8"
+        )
+        (root / "docs/reference_specs/copy.md").write_text(
+            "copied archive\n", encoding="utf-8"
+        )
+
+        def fake_git_lines(_root: Path, *args: str) -> list[str]:
+            if args == ("ls-files",):
+                return [
+                    "docs/spec_review_lifecycle.md",
+                    "docs/reference_specs/archive.md",
+                    "docs/reference_specs/copy.md",
+                ]
+            if args == ("ls-files", "--others", "--exclude-standard"):
+                return []
+            raise AssertionError(args)
+
+        gate.ACTIVE_PATHS = {"docs/spec_review_lifecycle.md"}
+        gate.ARCHIVAL_PATHS = {"docs/reference_specs/archive.md"}
+        gate.git_lines = fake_git_lines
+        try:
+            assert gate.scan(root) == [
+                "docs/reference_specs/copy.md:0: UNCLASSIFIED_ACTIVE_DOCUMENT"
+            ]
+        finally:
+            gate.ACTIVE_PATHS = original_active
+            gate.ARCHIVAL_PATHS = original_archival
+            gate.git_lines = original_git_lines
 
 
 def test_stale_review_contract_discovery_includes_tracked_and_untracked() -> None:
@@ -5413,6 +5478,7 @@ def main() -> int:
         test_stale_authorization_history_allowlist_is_exact,
         test_stale_review_contract_rule_inventory_is_complete,
         test_stale_review_contract_classification_is_exact,
+        test_stale_review_contract_scan_excludes_only_exact_archives,
         test_stale_review_contract_discovery_includes_tracked_and_untracked,
         test_stale_review_contracts_run_fail_closed_in_agent_gates,
         test_agent_gates_runs_stale_authorization_docs_fail_closed,

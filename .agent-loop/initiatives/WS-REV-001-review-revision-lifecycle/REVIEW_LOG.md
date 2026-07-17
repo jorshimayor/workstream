@@ -651,3 +651,51 @@ context image. The repaired L1 contract passed final plan review.
 Implementation remains specification and gate work only. No runtime endpoint,
 authorization availability, artifact capability, contribution behavior,
 adjudication behavior, or reputation mutation is introduced.
+
+## WS-REV-001-01 First Exact-SHA Review - 2026-07-17
+
+Candidate `06548c56e9db63e7f73c581c2c974a3ce798ba2f` passed deterministic
+evidence but failed senior engineering, architecture, QA/test, product/ops,
+docs, test-delta, and CI-integrity review. Security/auth and reuse/dedup passed.
+
+The valid findings and repairs are:
+
+- Added active ADR 0003, the Project Guide template, and three README-linked
+  roadmaps to Chunk 01. They now remove automatic revision rejection,
+  policy-selected latest-context rebase, legacy finding severity/closure,
+  direct Review-to-submitter contribution, active reputation, and product
+  second-review assumptions.
+- Moved `task_assignment_id` from Assignment to immutable Submission, removed
+  policy-selected rebase fields, added ReviewEvidenceArtifact, and corrected
+  FinalAcceptance, contribution-source, blocking-finding, reputation, and
+  adjudication model invariants.
+- Made the decision transaction commit before later revision preparation,
+  contributor response, replacement Submission, and checker work in both
+  sequence sources; regenerated the lifecycle image and architecture PDF.
+- Added `NEEDS_REVISION -> CANCELLED`, prohibited direct acceptance from
+  revision, required CheckerRun-rooted automated revision, removed pre-submit
+  revision-lane wording, and made reject findings optional beside its bounded
+  human reason.
+- Added planned/unavailable status to queue, first-user-flow, compensation, and
+  roadmap surfaces. Initiative state now finishes Chunk 01 and stops before 02.
+- Replaced filename-only scanner admission with fail-closed classification for
+  every docs file, exact reference/archive handling, local structural
+  exceptions only, and adversarial tests for keyword decoys, unrelated
+  negation, legacy severity, direct contribution, and unclassified copies.
+
+The repaired scanner passes across the full active docs tree and the expanded
+agent-gate suite passes 85 tests. A new exact-SHA review is required; the failed
+candidate is historical evidence only.
+
+The roadmap scope amendment also records that neither ignored local roadmap
+export existed at start or after repair. The contract fails closed if an XLSX or
+CSV appears without its paired export, exact one-sheet name, current Workstream
+definition, and ignored/untracked status. No spreadsheet file is committed.
+The expanded L1 chunk contract then passed final plan re-review with no
+remaining scope or proof blocker.
+
+A later repeat-render proof showed that ImageMagick SVG antialiasing can change
+context-diagram pixels across invocations, which also changes the composed PDF.
+The renderer default now rebuilds only Chunk 01's lifecycle PNG and PDF; full
+context regeneration requires explicit `--all`. The four context images are
+restored and remain trusted-base bound.

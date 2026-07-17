@@ -133,7 +133,7 @@ Workstream turns that operating knowledge into reusable infrastructure.
 - [ADR 0007: Execution Is Async-First](docs/decision_0007_async_first_execution.md)
 - [ADR 0008: Files Use An Object-Storage Abstraction](docs/decision_0008_object_storage_abstraction.md)
 - [ADR 0009: Review Decisions Are Canonical](docs/decision_0009_review_decisions_are_canonical.md)
-- [ADR 0010: Revision Context Rebase Is Controlled By Policy](docs/decision_0010_revision_context_rebase.md)
+- [ADR 0010: Revision Context Rebase Uses The Active Project Guide](docs/decision_0010_revision_context_rebase.md)
 - [ADR 0011: Submission Artifact Policy Drives Pre-Submit Intake](docs/decision_0011_submission_artifact_policy_drives_pre_submit.md)
 - [ADR 0012: Workstream Owns Product Authorization](docs/decision_0012_workstream_authorization_service.md)
 - [ADR 0013: Immutable Artifact Storage Boundary](docs/decision_0013_immutable_artifact_storage_boundary.md)

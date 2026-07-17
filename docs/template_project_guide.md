@@ -148,22 +148,16 @@ Allowed decisions:
 
 Needs revision requires:
 
-- concrete findings
-- required fix per finding
-- severity per finding
+- at least one unresolved blocking finding
+- concrete issue and required fix per blocking finding
+- optional advisory findings that do not block acceptance
 
-Second-review sampling:
+Offline quality sampling only; it creates no product decision or adjudication
+state:
 
 - accepted:
 - rejected:
 - high-value tasks:
-
-Mandatory second review:
-
-- suspected copied or confidential material:
-- high-value criterion defined by `ReviewPolicy`:
-- reviewer conflict of interest:
-- registered recovery operation used (permission, actor, reason, evidence):
 
 ## Revision Policy
 
@@ -172,8 +166,8 @@ Define:
 - maximum revision rounds:
 - revision deadline hours:
 - allowed resubmission states:
-- auto-reject after revision limit:
-- missed deadline behavior:
+- limit/deadline exhaustion behavior: block preparation and submission pending
+  reason-bound covered-manager closure; never synthesize reject
 - reviewer reassignment rule:
 
 ## Acceptance Policy

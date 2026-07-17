@@ -117,6 +117,7 @@ workflow, script, dependency, or coverage gate changes.
 
 ## Stop condition
 
-Planning is approved and merged AUTH PR #140/AUTH-08/AUTH-09A/ART-02A2 contracts are reconciled.
-Publication still requires final exact-snapshot review and evidence binding. Do
-not start 01 automatically; its merge-intent gate remains separate.
+Planning is approved and merged AUTH PR #140/AUTH-08/AUTH-09A/ART-02A2
+contracts are reconciled. Finish, review, and merge Chunk 01 with explicit human
+approval, then stop. Do not start Chunk 02 automatically; its merge-intent gate
+remains separate.

@@ -21,6 +21,7 @@ docs/architecture_data_model.md
 docs/architecture_lockdown.md
 docs/architecture_lifecycle_state_machine.md
 docs/architecture_system_architecture.md
+docs/decision_0003_project_guides_are_first_class.md
 docs/decision_*.md only when an approved decision requires it
 docs/glossary.md
 docs/principles.md
@@ -34,11 +35,15 @@ docs/operations_project_operating_manual.md
 docs/operations_roles_permissions.md
 docs/product_first_user_flows.md
 docs/risk_register.md
+docs/roadmap_30_day_master_plan.md
+docs/roadmap_day_by_day_execution_plan.md
+docs/roadmap_implementation_backlog.md
 docs/roles_permissions.md
 docs/template_review_packet.md
 docs/template_revision_replay.md
 docs/template_prior_feedback_checklist.md
 docs/template_task_status.md
+docs/template_project_guide.md
 docs/architecture_brief/task_lifecycle_sequence.puml
 docs/architecture_brief/workstream_architecture_brief.md
 docs/architecture_brief/workstream_architecture_brief.pdf
@@ -164,18 +169,28 @@ frontend work
   active policy. Its durable active-path classifier discovers tracked, staged,
   untracked, and newly added documentation, excludes archival inputs by exact
   path rather than broad directory suppression, and fails on an unclassified
-  active document. Table-driven regression fixtures cover every prohibited
-  category, exact archival exclusion, and fail-closed invocation from
-  `scripts/test_agent_gates.py`.
+  active document. Every documentation file is classified fail closed; only
+  exact supplied archives, exact reviewed historical records, and the explicit
+  non-product engineering-review protocol bypass active product scanning.
+  Table-driven regression fixtures cover every prohibited category, adversarial
+  lexical decoys, exact archival exclusion, unclassified-document rejection,
+  and fail-closed invocation from `scripts/test_agent_gates.py`.
 - Active reviewer/revision/queue/contribution flow docs and templates are reconciled
   now as contract/status documentation, clearly distinguishing planned
   unavailable endpoints from implemented behavior; the scanner has no temporary
   allowlist or exception that can outlive this chunk.
 - The architecture brief render is byte-reproducible for the generated PDF and
   lifecycle PNG. The render command fixes the PDF identifier and embeds full
-  fonts so repeated WeasyPrint runs do not create random subset names. Its four
-  unchanged context-diagram conversions use pixel equality to preserve their
-  existing bytes and cannot escape this chunk's allowed output scope.
+  fonts so repeated WeasyPrint runs do not create random subset names. Default
+  rendering rebuilds only Chunk 01's lifecycle PNG and PDF; the four unrelated
+  context-diagram conversions require explicit `--all` and cannot escape this
+  chunk's verification scope.
+- The three active roadmap documents are reconciled. Discovery at chunk start
+  found neither ignored local export at `sheets/workstream_roadmap.xlsx` nor
+  `sheets/workstream_roadmap.csv`, and final verification records the same
+  absence. If either appears before completion, both must be updated together,
+  the XLSX must contain only `WorkStream RoadMap`, both exports must contain the
+  current Workstream definition, and no `sheets/` file may be committed.
 - Principles, lifecycle-state, and project-operating docs state the same
   deterministic one-guide rebase rule and the WS-CON creation matrix. Every
   valid decision appends an immutable Review; every submitted finding and later
@@ -242,6 +257,9 @@ git check-attr diff merge text -- docs/reference_specs/*.pdf | awk '$3 != "unset
 ./docs/architecture_brief/render_pdf.sh
 git diff --exit-code -- docs/architecture_brief/workstream_architecture_brief.pdf docs/architecture_brief/images/task_lifecycle_sequence.png
 git diff --exit-code 0302bcf854a565d429e232ad6b076a1931ea74e4 -- docs/architecture_brief/images/backend_v01_components.png docs/architecture_brief/images/future_identity_payment_reputation.png docs/architecture_brief/images/workstream_context.png docs/architecture_brief/images/workstream_v01_container.png
+test ! -e sheets/workstream_roadmap.xlsx
+test ! -e sheets/workstream_roadmap.csv
+test -z "$(git ls-files sheets/)"
 python3 scripts/test_agent_gates.py
 python3 scripts/check_internal_review_evidence.py
 git diff --name-only 0302bcf854a565d429e232ad6b076a1931ea74e4
@@ -251,7 +269,7 @@ git diff --check
 ## Required reviewers
 
 Senior engineering, QA/test, security/auth, product/ops, architecture, docs,
-reuse/dedup, and CI integrity if scanners change.
+reuse/dedup, test delta, and CI integrity because scanner/tests change.
 
 ## Human review focus
 

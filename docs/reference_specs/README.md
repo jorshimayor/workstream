@@ -26,8 +26,9 @@ difference in the active contract without editing either file.
 
 These inputs are not the repository's reconciled runtime contract. In
 particular, Workstream retains the canonical `/api/v1` namespace even where an
-archival input uses `/v1`. WS-AUTH-001 takes precedence over the current
-token-role authorization bootstrap under accepted ADR 0012. The reconciled
+archival input uses the old root-level version-one namespace. WS-AUTH-001 takes
+precedence over the current token-role authorization bootstrap under accepted
+ADR 0012. The reconciled
 canonical authorization text lives in `docs/spec_authorization_service.md`.
 The active review/revision contract lives in `docs/spec_review_lifecycle.md`.
 Active repository documentation points to those contracts without editing the

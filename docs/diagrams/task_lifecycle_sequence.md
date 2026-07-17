@@ -97,10 +97,6 @@ sequenceDiagram
 
   alt needs_revision
     API->>DB: Set needs_revision and keep assignment active
-    API->>DB: After decision, append frozen RevisionContextPreparation
-    Contributor->>UI: Submit one response per unresolved blocking finding
-    UI->>API: Create replacement Submission bound to preparation head
-    API->>Checks: Run checks again
   else accept
     API->>DB: Append FinalAcceptance; accept task; complete assignment
     API->>DB: CON submitter accepted_submission from FinalAcceptance
@@ -110,6 +106,13 @@ sequenceDiagram
     API->>DB: No FinalAcceptance or submitter contribution
   end
   API->>DB: Stage shared audit/outbox and commit once; no ART call
+
+  opt needs_revision after decision commit
+    API->>DB: In a later authorized transaction, append frozen RevisionContextPreparation
+    Contributor->>UI: Submit one response per unresolved blocking finding
+    UI->>API: Create replacement Submission bound to preparation head
+    API->>Checks: Run checks again
+  end
 ```
 
 ## Lifecycle Invariants

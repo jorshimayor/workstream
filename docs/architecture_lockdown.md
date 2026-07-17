@@ -28,7 +28,7 @@ Project guide
 -> FinalAcceptance for accept only
 -> contribution record
 -> compensation award / fulfillment when payable
--> reputation event
+-> reputation integration (future, separate initiative)
 ```
 
 ## Locked For v0.1

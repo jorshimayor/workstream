@@ -15,6 +15,7 @@ TEXT_SUFFIXES = {".html", ".md", ".puml"}
 
 # These supplied files are immutable evidence, not active repository policy.
 ARCHIVAL_PATHS = {
+    "docs/reference_specs/WS-AUTH-001-actor-profile-role-and-authorization-service-specification.md",
     "docs/reference_specs/WS-REV-001-review-lifecycle-specification.md",
     "docs/reference_specs/WS-IMP-001-workstream-v0.1-coding-agent-implementation-specification.md",
 }
@@ -56,6 +57,7 @@ ACTIVE_PATHS = {
     "docs/architecture_lockdown.md",
     "docs/architecture_system_architecture.md",
     "docs/decision_0009_review_decisions_are_canonical.md",
+    "docs/decision_0003_project_guides_are_first_class.md",
     "docs/decision_0010_revision_context_rebase.md",
     "docs/decision_0012_workstream_authorization_service.md",
     "docs/decision_0013_immutable_artifact_storage_boundary.md",
@@ -74,9 +76,13 @@ ACTIVE_PATHS = {
     "docs/product_principles.md",
     "docs/reference_specs/README.md",
     "docs/risk_register.md",
+    "docs/roadmap_30_day_master_plan.md",
+    "docs/roadmap_day_by_day_execution_plan.md",
+    "docs/roadmap_implementation_backlog.md",
     "docs/roles_permissions.md",
     "docs/spec_review_lifecycle.md",
     "docs/template_prior_feedback_checklist.md",
+    "docs/template_project_guide.md",
     "docs/template_review_packet.md",
     "docs/template_revision_replay.md",
     "docs/template_task_status.md",
@@ -115,7 +121,8 @@ RULES = (
         "LEGACY_REVIEW_SEVERITY",
         re.compile(
             r"(?:ReviewFinding|review\s+finding|prior\s+finding|finding)"
-            r"[^.\n]{0,80}\b(?:high|medium|low)[- ]severity\b|"
+            r"[^.\n]{0,80}(?:\b(?:high|medium|low)[- ]severity\b|"
+            r"\bseverity\s*[:=|]\s*(?:high|medium|low)\b)|"
             r"\bPrior\s+Severity\b",
             re.IGNORECASE,
         ),
@@ -139,9 +146,8 @@ RULES = (
     Rule(
         "REVIEWER_REBASE",
         re.compile(
-            r"\breviewer\b(?![^.\n]{0,50}\b(?:never|not|no)\b)[^.\n]{0,50}"
-            r"\b(?:rebases|performs?\s+(?:an?\s+)?rebase|"
-            r"runs?\s+(?:an?\s+)?rebase)\b",
+            r"\breviewer\b[^.\n]{0,100}\b(?:rebases?|"
+            r"performs?\s+(?:an?\s+)?rebase|runs?\s+(?:an?\s+)?rebase)\b",
             re.IGNORECASE,
         ),
     ),
@@ -157,8 +163,31 @@ RULES = (
     Rule(
         "DIRECT_ACCEPT_TO_SUBMITTER_CONTRIBUTION",
         re.compile(
-            r"\baccept(?:ed|ance)?\b[^.\n]{0,100}\b(?:directly\s+)?creates?\b"
-            r"[^.\n]{0,80}\b(?:submitter\s+contribution|accepted_submission)\b",
+            r"\baccept(?:ed|ance)?\b(?:(?!FinalAcceptance)[^.\n]){0,100}"
+            r"\b(?:directly\s+)?creates?\b"
+            r"(?:(?!FinalAcceptance)[^.\n]){0,80}"
+            r"\b(?:submitter\s+contribution|accepted_submission)\b",
+            re.IGNORECASE,
+        ),
+    ),
+    Rule(
+        "AUTO_REJECT_REVISION_LIMIT",
+        re.compile(
+            r"\bauto_reject_after_limit\b|"
+            r"\b(?:revision\s+(?:limit|deadline)|limit\s+or\s+deadline)\b"
+            r"[^.\n]{0,100}\b(?:automatically\s+reject|auto-reject)\b|"
+            r"\b(?:automatically\s+reject|auto-reject)\b[^.\n]{0,100}"
+            r"\brevision\s+(?:limit|deadline)\b",
+            re.IGNORECASE,
+        ),
+    ),
+    Rule(
+        "REJECT_REQUIRES_FINDING",
+        re.compile(
+            r"\breject(?:ed|ion)?\b[^.\n]{0,100}\brequires?\b"
+            r"[^.\n]{0,60}\b(?:a\s+)?finding\b|"
+            r"\b(?:needs_revision\s+and\s+reject|reject\s+and\s+needs_revision)\b"
+            r"[^.\n]{0,80}\brequire\b[^.\n]{0,40}\bfinding\b",
             re.IGNORECASE,
         ),
     ),
@@ -223,6 +252,10 @@ def classification(relative_path: str) -> str:
         return "non_product_review"
     if relative_path in ACTIVE_PATHS:
         return "active"
+    if relative_path.startswith("docs/reference_specs/"):
+        return "unclassified"
+    if relative_path.startswith("docs/"):
+        return "active"
     return "unclassified"
 
 
@@ -241,14 +274,14 @@ def scan_text(relative_path: str, text: str) -> list[str]:
             if line_end == -1:
                 line_end = len(text)
             matched_line = text[line_start:line_end]
-            if (
-                rule.code == "NON_CANONICAL_API_PREFIX"
-                and "archival" in matched_line.lower()
-            ):
-                continue
-            if (
-                rule.code == "DIRECT_ACCEPT_TO_SUBMITTER_CONTRIBUTION"
-                and "finalacceptance" in matched_line.lower()
+            if rule.code == "REVIEWER_REBASE" and re.search(
+                r"\breviewer\b[^.\n]{0,80}\b(?:never\s+(?:rebases?|"
+                r"performs?\s+(?:an?\s+)?(?:guide\s+)?rebase)|"
+                r"(?:does\s+not|must\s+not|cannot)\s+(?:perform\s+)?"
+                r"(?:an?\s+)?(?:guide\s+)?rebase|"
+                r"performs?\s+no\s+(?:guide\s+)?rebase)\b",
+                matched_line,
+                re.IGNORECASE,
             ):
                 continue
             failures.append(
@@ -271,8 +304,7 @@ def scan(root: Path = ROOT) -> list[str]:
         relative_path = path.relative_to(root).as_posix()
         path_class = classification(relative_path)
         if path_class == "unclassified" and relative_path.startswith("docs/"):
-            if REVIEW_DOCUMENT_NAME.search(Path(relative_path).name):
-                failures.append(f"{relative_path}:0: UNCLASSIFIED_REVIEW_DOCUMENT")
+            failures.append(f"{relative_path}:0: UNCLASSIFIED_ACTIVE_DOCUMENT")
             continue
         if path_class != "active":
             continue

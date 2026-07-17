@@ -96,10 +96,6 @@ API -> DB : CON reviewer completed_review\n+ applicable award when payable
 
 alt needs_revision
   API -> DB : task needs_revision; keep assignment active
-  API -> DB : after decision, append frozen\nRevisionContextPreparation
-  Contributor -> UI : submit finding responses
-  UI -> API : replacement Submission bound to preparation head
-  API -> Checks : rerun checks
 else accept
   API -> DB : append FinalAcceptance; accept task; complete assignment
   API -> DB : CON submitter accepted_submission from FinalAcceptance
@@ -108,4 +104,11 @@ else reject
   API -> DB : block assignment; reject task\n+ no FinalAcceptance or submitter contribution
 end
 API -> DB : stage shared audit/outbox and commit once\n(no ART call in decision transaction)
+
+opt needs_revision after decision commit
+  API -> DB : in a later authorized transaction, append frozen\nRevisionContextPreparation
+  Contributor -> UI : submit finding responses
+  UI -> API : replacement Submission bound to preparation head
+  API -> Checks : rerun checks
+end
 @enduml
