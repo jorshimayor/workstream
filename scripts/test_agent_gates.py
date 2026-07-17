@@ -1069,7 +1069,9 @@ def test_active_shared_contract_rejects_retired_contracts() -> None:
             "Finance reconciles",
             "Finance follows",
             "compensation publication",
+            "compensation\n  publication",
             "published compensation definition",
+            "published\n  compensation\n  definition",
             "CompensationPolicyVersion",
             "CompensationPolicy",
             "CompensationRule",
@@ -1119,8 +1121,25 @@ def test_active_shared_contract_rejects_retired_contracts() -> None:
         )
     )
 
+    required_patterns = {
+        r"\bcompensation\s+publication\b",
+        r"\bpublished\s+compensation\s+definition\b",
+    }
+    assert required_patterns <= {
+        pattern.pattern for pattern in stale.ACTIVE_SHARED_CONTRACT_PATTERNS
+    }
     assert all(
         pattern.search(sample) for pattern in stale.ACTIVE_SHARED_CONTRACT_PATTERNS
+    )
+    assert all(
+        pattern.search("compensation\n  publication")
+        for pattern in stale.ACTIVE_SHARED_CONTRACT_PATTERNS
+        if pattern.pattern == r"\bcompensation\s+publication\b"
+    )
+    assert all(
+        pattern.search("published\n  compensation\n  definition")
+        for pattern in stale.ACTIVE_SHARED_CONTRACT_PATTERNS
+        if pattern.pattern == r"\bpublished\s+compensation\s+definition\b"
     )
     assert stale.is_active_shared_contract_path(Path("README.md"))
     assert stale.is_active_shared_contract_path(Path("AGENTS.md"))
@@ -1193,6 +1212,16 @@ def test_current_runtime_walkthrough_rejects_unimplemented_compensation_records(
         )
     )
 
+    assert {
+        pattern.pattern
+        for pattern in stale.UNIMPLEMENTED_CURRENT_RUNTIME_COMPENSATION_PATTERNS
+    } == {
+        r"\bCompensationPolicyVersion\b",
+        r"\bReviewLease\b",
+        r"\bCompensationAward\b",
+        r"\bCompensationFulfillmentReceipt\b",
+        r"\bCompensationStatusProjection\b",
+    }
     assert all(
         pattern.search(sample)
         for pattern in stale.UNIMPLEMENTED_CURRENT_RUNTIME_COMPENSATION_PATTERNS
@@ -4008,6 +4037,44 @@ def test_stale_authorization_initiative_ratchet_is_position_scoped() -> None:
         )
         == []
     )
+
+
+def test_stale_authorization_full_initiative_rules_ignore_changed_line_filter() -> None:
+    """Every authority-bearing initiative rule scans the complete document."""
+    gate = load_module(
+        "stale_authorization_docs_full_initiative_rules",
+        "scripts/check_stale_authorization_docs.py",
+    )
+    samples = {
+        "ACCESS_ADMIN_CATALOG_ADMINISTRATION": (
+            "Access Administrator manages the permission catalog."
+        ),
+        "CURRENT_TOKEN_ROLE_AUTHORITY": "role in the current verified token",
+        "NAMED_ROLE_TOKEN_AUTHORITY": "admin token can approve this operation",
+        "OBSOLETE_ROLE_ASSIGNMENT_MODEL": "WorkstreamRoleAssignment",
+        "OPERATOR_COMPENSATION_MUTATION": ("Operator reconciles compensation awards."),
+        "OPERATOR_CONTRIBUTION_POLICY_AUTHORITY": (
+            "Operator publishes contribution policy."
+        ),
+        "TOKEN_CARRIES_PRODUCT_ROLE": (
+            "token also carries an authorized Workstream role"
+        ),
+        "TOKEN_ROLE_PRODUCT_AUTHORITY": "A token role grants project access.",
+        "TRUSTED_ROLE_CLAIM_AUTHORITY": "trusted role claims",
+        "TYPED_PROFILE_AUTHORITY": "ActorProfile(profile_type",
+        "TYPED_PROFILE_PRODUCT_AUTHORITY": (
+            "ActorProfile profile_type grants project access"
+        ),
+    }
+
+    assert set(samples) == gate.FULL_INITIATIVE_RULE_CODES
+    for code, sample in samples.items():
+        failures = gate.scan_text(
+            ".agent-loop/initiatives/example/PLAN.md",
+            sample,
+            enforced_line_numbers=frozenset(),
+        )
+        assert any(failure.endswith(f": {code}") for failure in failures), code
 
 
 def test_stale_authorization_history_allowlist_is_exact() -> None:
