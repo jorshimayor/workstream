@@ -25,6 +25,7 @@ backend/app/api/deps/authorization.py
 backend/tests/test_actors.py
 backend/tests/test_auth.py
 backend/tests/test_authorization.py
+backend/tests/test_audit.py
 backend/tests/test_api_controls.py
 backend/tests/test_api_contract_e2e.py
 backend/scripts/api_contract_e2e.py
@@ -43,7 +44,7 @@ docs/operations_authorization_service.md
 actor or identity-link mutation
 collection, list, search, total, or cursor-pagination endpoints
 issuer, subject, contact email, raw reason, token, claim, grant, assignment,
-created-by, lifecycle-actor, or static service-authority disclosure
+created-by, lifecycle-actor, or static service-action-matrix disclosure
 project-scoped authority for actor-registry reads
 service-token admission
 schema migration or new persistence table
@@ -60,38 +61,50 @@ compatibility alias, fallback route, dual response shape, or legacy authority
 
 Project-scoped Audit Authority grants never authorize either route. Access
 Administrator is already system-only. Both actions are administrative kernel
-actions and use one frozen `ActorRegistryReadResourceContext` containing exactly
+actions. `actor.profile.read` accepts only a frozen
+`ActorProfileAdminReadResourceContext` with
 `resource_type: Literal["actor_profile"]`, the requested actor UUID as
-`resource_id`, and `read_kind: Literal["profile", "identity_link"]`. The
-server composes this context from the path and route; clients never submit an
-ActionId, PermissionId, role, scope, or resource fact.
+`resource_id`, and `read_kind: Literal["profile"]`.
+`actor.identity_link.read` accepts only a separate frozen
+`ActorIdentityLinkAdminReadResourceContext` with the same resource type and
+requested actor UUID but `read_kind: Literal["identity_link"]`. Exact class and
+read-kind pairing is enforced in the kernel and covered by negative cross-pair
+tests. The server composes these contexts from the path and route; clients never
+submit an ActionId, PermissionId, role, scope, or resource fact.
 
 The profile response contains exactly `actor_profile_id`, `actor_kind`,
-`status`, `provisioning_method`, `display_name`, `created_at`, `updated_at`,
-`last_seen_at`, `suspended_at`, and `deactivated_at`. The identity-link response
-is one object, not a collection, and contains exactly `identity_link_id`,
+`status`, `provisioning_method`, `service_identity`, `display_name`,
+`created_at`, `updated_at`, `last_seen_at`, `suspended_at`, and
+`deactivated_at`. `service_identity` is the closed `ServiceIdentity` enum for a
+service actor and is null for a human; it is the stable local lifecycle target
+name, not external identity or authority. The identity-link response is one
+object, not a collection, and contains exactly `identity_link_id`,
 `actor_profile_id`, `subject_kind`, `status`, `linked_at`, `last_verified_at`,
-`revoked_at`, and `reactivated_at`. Both schemas forbid extra fields.
+`revoked_at`, and `reactivated_at`. Both schemas forbid extra fields and enforce
+the actor-kind/service-identity invariant.
 
 The routes may return active, suspended, or deactivated target profiles and
 active or revoked target links because those lifecycle states are the subject
 of later administration. They may return human or service targets. They never
 return issuer, subject, `contact_email`, raw lifecycle reason, `created_by`,
 `linked_by`, lifecycle actor IDs, token or claim data, grant or assignment data,
-or `service_identity` and its static action matrix.
+or any static service-action membership.
 
 ## Authorization, lookup, and transaction contract
 
 The caller-owned transaction follows one order:
 
 1. resolve the already-supported human caller and exact verified identity link;
-2. evaluate the route's active action against the requested UUID and require an
-   effective system-scoped Access Administrator or Audit Authority grant;
-3. only after the allowed decision, query the exact target profile or the exact
-   target profile-and-link in one bounded repository operation;
-4. if the target is absent, roll back the staged allowed decision and return the
+2. lock and revalidate the caller profile first and its exact link second;
+3. require and lock the exact effective system-scoped Access Administrator or
+   Audit Authority grant for the route's active action and requested UUID;
+4. only after the allowed decision, use `ActorService` and the existing
+   `ActorRepository.get_actor_profile()` / `get_identity_link_for_actor()` exact
+   lookup methods; the router and `AdminAuthorizationRepository` add no duplicate
+   actor target SQL;
+5. if the target is absent, roll back the staged allowed decision and return the
    same `404 actor_resource_not_found` envelope for a missing actor or link;
-5. for a present target, stage only the caller's normal post-authorization
+6. for a present target, stage only the caller's normal post-authorization
    verification timestamp touch, serialize the strict response, and commit the
    decision evidence and caller touch once in the route.
 
@@ -101,10 +114,16 @@ responses have identical status, code, and message; no list, alternate field
 shape, or pre-authorization lookup provides an existence oracle. The contract
 does not claim constant-time database behavior.
 
-These reads do not acquire `AuthorityControl`, do not lock or mutate the target
-as a read target, and are not charged to the administrative mutation limiter.
-They use the existing shared-session transaction and do not add a second
-session, generic teardown commit, read-side idempotency, or invalidation event.
+The caller profile, exact caller link, and matched grant locks are held through
+target lookup, timestamp touch, response composition, and commit. Two-session
+barrier tests race both reads against caller suspension, caller deactivation,
+caller-link revocation, and matched-grant revocation; disclosure is linearized
+before the lifecycle/grant change or denied after it, and no timestamp advances
+after the disabling change. These reads do not acquire `AuthorityControl`, do
+not lock or mutate a distinct target as a read target, and are not charged to
+the administrative mutation limiter. They use the existing shared-session
+transaction and do not add a second session, generic teardown commit, read-side
+idempotency, or invalidation event.
 
 SQL failure during authorization evidence, target lookup, timestamp touch, or
 commit rolls back every staged change and maps to the retryable
@@ -141,13 +160,20 @@ no mutation, service, ART, REV, CON, task, project, or grant action.
 - Successful reads advance caller verification timestamps monotonically and do
   not touch a distinct target. Self-target tests prove there is one caller touch,
   not a second target touch.
+- Caller lifecycle/link and matched-grant race tests prove the authorization
+  locks are held through disclosure and commit without `AuthorityControl` or
+  target-row locking.
 - Response, OpenAPI, validation, audit, and log tests prove all prohibited
   identity, contact, reason, provenance, grant, assignment, and service-matrix
-  fields remain absent.
+  fields remain absent. Service-target tests prove the response contains only
+  the exact closed `service_identity`, including an unverified service target
+  with null `last_seen_at` and null link `last_verified_at`; human responses
+  require null `service_identity`.
 - SQL/evidence/touch/commit failures return retryable 503 and prove rollback of
   evidence and timestamps with no partial product mutation.
 - Route-manifest, action-count, exact resource-context, no-mutation-limiter, and
-  dependency-teardown behavior tests pass.
+  dependency-teardown behavior tests pass. The audit parity test uses one closed
+  expected set of exactly 12 active ActionIds and is not derived from runtime.
 - Focused actor and authorization subsystem branch coverage is each at least 90
   percent; GitHub Backend preserves the repository-wide 78 percent floor.
 
@@ -162,18 +188,18 @@ architecture, CI integrity, docs, reuse/dedup, and test delta.
 (cd backend && .venv/bin/python -m ruff check app tests scripts/api_contract_e2e.py)
 (cd backend && WORKSTREAM_TEST_DATABASE_URL=<test-db> .venv/bin/python -m pytest -q \
   tests/test_actors.py tests/test_auth.py tests/test_authorization.py \
-  tests/test_api_controls.py tests/test_api_contract_e2e.py)
+  tests/test_audit.py tests/test_api_controls.py tests/test_api_contract_e2e.py)
 (cd backend && WORKSTREAM_TEST_DATABASE_URL=<test-db> .venv/bin/python -m coverage erase)
 (cd backend && WORKSTREAM_TEST_DATABASE_URL=<test-db> .venv/bin/python -m coverage run \
   --branch --source=app.modules.actors -m pytest -q tests/test_actors.py \
   tests/test_auth.py tests/test_authorization.py tests/test_api_controls.py)
-(cd backend && .venv/bin/python -m coverage report --fail-under=90)
+(cd backend && .venv/bin/python -m coverage report --precision=2 --fail-under=90)
 (cd backend && WORKSTREAM_TEST_DATABASE_URL=<test-db> .venv/bin/python -m coverage erase)
 (cd backend && WORKSTREAM_TEST_DATABASE_URL=<test-db> .venv/bin/python -m coverage run \
   --branch --source=app.modules.authorization -m pytest -q \
   tests/test_authorization.py tests/test_actors.py tests/test_auth.py \
   tests/test_api_controls.py)
-(cd backend && .venv/bin/python -m coverage report --fail-under=90)
+(cd backend && .venv/bin/python -m coverage report --precision=2 --fail-under=90)
 (metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && \
   cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-db> \
   .venv/bin/python scripts/run_isolated_tests.py \
@@ -187,10 +213,12 @@ git diff --check
 
 ## Human review focus
 
-Review system-only role separation, authorization-before-lookup ordering, the
+Review system-only role separation, action-specific resource contexts,
+caller/grant lock lifetime, authorization-before-lookup ordering, the
 single-object link contract, caller-only timestamp semantics including
-self-target reads, rollback on missing targets and failures, and the absence of
-private identity, lifecycle provenance, grant, and service-matrix data.
+self-target reads, rollback on missing targets and failures, the bounded closed
+service identity, and the absence of external identity, lifecycle provenance,
+grant, and service-matrix data.
 
 ## Stop condition
 
