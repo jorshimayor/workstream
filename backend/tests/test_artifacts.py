@@ -326,6 +326,94 @@ class _AcknowledgingStore(_UnavailableStore):
         )
 
 
+class _ConcurrentAcknowledgingStore(_AcknowledgingStore):
+    """Release two same-object acknowledgements into finalization together."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._arrivals = 0
+        self._release = asyncio.Event()
+
+    async def put(self, source: CommittedArtifactSource) -> ArtifactPutResult:
+        self.put_calls += 1
+        self._arrivals += 1
+        if self._arrivals == 2:
+            self._release.set()
+        await asyncio.wait_for(self._release.wait(), timeout=2)
+        digest_hex = source.commitment.sha256[7:]
+        return ArtifactPutResult(
+            f"sha256/{digest_hex[:2]}/{digest_hex[2:]}",
+            replayed=self._arrivals > 1,
+        )
+
+
+@pytest.mark.asyncio
+async def test_concurrent_same_object_finalization_reuses_one_replica(
+    artifact_database_env: str,
+    tmp_path: Path,
+) -> None:
+    """Finalize two exact replays with one replica and two receipts."""
+    content = b"concurrent-artifact-v2"
+    engine = create_async_engine(artifact_database_env)
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    store = _ConcurrentAcknowledgingStore()
+    namespace = artifact_storage_namespace_spec(_settings(tmp_path), store)
+    try:
+        async with _minted_source(tmp_path / "scratch-first", content) as first_source:
+            async with _minted_source(tmp_path / "scratch-second", content) as second_source:
+                async with factory() as session:
+                    first_item_id = await _seed_reserved_item(session, first_source.commitment)
+                    second_item_id = await _seed_reserved_item(session, second_source.commitment)
+                    await ArtifactStorageOrchestrator(
+                        session, store, namespace
+                    ).ensure_storage_namespace()
+                    async with session.begin():
+                        session.add(
+                            ArtifactContent(
+                                id=str(uuid4()),
+                                sha256=first_source.commitment.sha256,
+                                byte_count=first_source.commitment.byte_count,
+                                media_type=first_source.commitment.media_type,
+                                normalized_display_name="preexisting.bin",
+                            )
+                        )
+
+                async def finalize(item_id: str, source: CommittedArtifactSource) -> None:
+                    async with factory() as session:
+                        await ArtifactStorageOrchestrator(
+                            session, store, namespace
+                        ).put_reserved_item(item_id, source)
+
+                await asyncio.gather(
+                    finalize(first_item_id, first_source),
+                    finalize(second_item_id, second_source),
+                )
+
+        async with factory() as session:
+            items = (
+                await session.execute(
+                    select(ArtifactUploadItem).where(
+                        ArtifactUploadItem.id.in_((first_item_id, second_item_id))
+                    )
+                )
+            ).scalars().all()
+            replicas = (await session.execute(select(ArtifactReplica))).scalars().all()
+            receipts = (
+                await session.execute(select(ArtifactOperationReceipt))
+            ).scalars().all()
+
+        assert {item.state for item in items} == {"stored_pending_verification"}
+        assert len(items) == 2
+        assert len(replicas) == 1
+        assert replicas[0].verification_state == "pending"
+        assert replicas[0].availability_state == "unknown"
+        assert replicas[0].integrity_state == "unknown"
+        assert len(receipts) == 2
+        assert {receipt.replica_id for receipt in receipts} == {replicas[0].id}
+    finally:
+        await engine.dispose()
+
+
 class _FinalizationCancelledOrchestrator(ArtifactStorageOrchestrator):
     async def _finalize_put(
         self,

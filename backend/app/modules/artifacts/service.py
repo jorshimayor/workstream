@@ -220,28 +220,25 @@ class ArtifactStorageOrchestrator:
                     normalized_display_name=item.display_name,
                 )
             )
-            replica = await self._repo.get_replica_by_provider_ref(
-                namespace.id,
-                result.provider_object_ref,
-            )
-            if replica is None:
-                replica = await self._repo.add_replica(
-                    ArtifactReplica(
-                        id=str(uuid4()),
-                        content_id=content.id,
-                        storage_namespace_id=namespace.id,
-                        namespace_fingerprint=namespace.namespace_fingerprint,
-                        adapter=namespace.adapter,
-                        provider_profile=namespace.provider_profile,
-                        provider_object_ref=result.provider_object_ref,
-                        verification_state="pending",
-                        availability_state="unknown",
-                        integrity_state="unknown",
-                    )
+            replica = await self._repo.get_or_create_replica(
+                ArtifactReplica(
+                    id=str(uuid4()),
+                    content_id=content.id,
+                    storage_namespace_id=namespace.id,
+                    namespace_fingerprint=namespace.namespace_fingerprint,
+                    adapter=namespace.adapter,
+                    provider_profile=namespace.provider_profile,
+                    provider_object_ref=result.provider_object_ref,
+                    verification_state="pending",
+                    availability_state="unknown",
+                    integrity_state="unknown",
                 )
-            elif (
+            )
+            if (
                 replica.content_id != content.id
                 or replica.namespace_fingerprint != namespace.namespace_fingerprint
+                or replica.adapter != namespace.adapter
+                or replica.provider_profile != namespace.provider_profile
             ):
                 raise ArtifactIntegrityError("provider object reference changed content identity")
 

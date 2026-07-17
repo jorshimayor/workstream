@@ -62,11 +62,31 @@ class ArtifactRepository:
         )
         return result.scalar_one()
 
-    async def add_replica(self, replica: ArtifactReplica) -> ArtifactReplica:
-        """Persist a provider replica observation."""
-        self._session.add(replica)
-        await self._session.flush()
-        return replica
+    async def get_or_create_replica(self, replica: ArtifactReplica) -> ArtifactReplica:
+        """Atomically return one replica for a namespace and provider object."""
+        await self._session.execute(
+            insert(ArtifactReplica)
+            .values(
+                id=replica.id,
+                content_id=replica.content_id,
+                storage_namespace_id=replica.storage_namespace_id,
+                namespace_fingerprint=replica.namespace_fingerprint,
+                adapter=replica.adapter,
+                provider_profile=replica.provider_profile,
+                provider_object_ref=replica.provider_object_ref,
+                verification_state=replica.verification_state,
+                availability_state=replica.availability_state,
+                integrity_state=replica.integrity_state,
+            )
+            .on_conflict_do_nothing(constraint="uq_artifact_replica_provider_object")
+        )
+        result = await self._session.execute(
+            select(ArtifactReplica).where(
+                ArtifactReplica.storage_namespace_id == replica.storage_namespace_id,
+                ArtifactReplica.provider_object_ref == replica.provider_object_ref,
+            )
+        )
+        return result.scalar_one()
 
     async def add_receipt(self, receipt: ArtifactOperationReceipt) -> ArtifactOperationReceipt:
         """Persist one append-only Workstream put receipt."""
@@ -81,18 +101,6 @@ class ArtifactRepository:
         result = await self._session.execute(
             select(ArtifactOperationReceipt).where(
                 ArtifactOperationReceipt.upload_item_id == upload_item_id,
-            )
-        )
-        return result.scalar_one_or_none()
-
-    async def get_replica_by_provider_ref(
-        self, storage_namespace_id: str, provider_object_ref: str
-    ) -> ArtifactReplica | None:
-        """Load one replica by namespace and opaque provider reference."""
-        result = await self._session.execute(
-            select(ArtifactReplica).where(
-                ArtifactReplica.storage_namespace_id == storage_namespace_id,
-                ArtifactReplica.provider_object_ref == provider_object_ref,
             )
         )
         return result.scalar_one_or_none()

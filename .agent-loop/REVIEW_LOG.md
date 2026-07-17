@@ -2025,7 +2025,7 @@ Current gate: commit the planning baseline, run required internal plan review,
 repair valid findings, publish one planning PR, and stop. No runtime chunk starts
 from this record.
 
-## 2026-07-16 - WS-ART-001-02A3 Internal Review Passed
+## 2026-07-16 - WS-ART-001-02A3 Pre-Main Review Passed (Superseded)
 
 Reviewed code SHA: `935b1a2bb4663828ecde173b3f91c682250a1aed`.
 
@@ -2034,7 +2034,8 @@ the empty pre-production schema were cleanly cut over, the deployment namespace
 fence and scratch cleanup were activated, and no product ingest, verification,
 recovery, S3, or AUTH action was activated.
 
-All nine required tracks passed after repair. Deterministic proof includes
+All nine required tracks passed for that pre-main revision after repair.
+Deterministic proof includes
 real PostgreSQL cancellation state, concurrent-writer migration refusal, 90
 percent changed-subsystem coverage, stale-contract/wording checks, and the
 engineering evidence gate.
@@ -2043,5 +2044,7 @@ Evidence: `.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/reviews
 
 Trust bundle: `.agent-loop/initiatives/WS-ART-001-immutable-artifact-storage/reviews/WS-ART-001-02A3-pr-trust-bundle.md`
 
-Current gate: publish one ready PR for GitHub CI, CodeRabbit, and explicit human
-review. Do not merge or start `WS-ART-001-02B1`.
+This review was invalidated for publication when merged-main reconciliation
+changed the candidate. The current gate is final exact-SHA review and fresh
+evidence for the merged-main ART-02A3 revision. Do not publish, merge, or start
+`WS-ART-001-02B1` from this historical record.
