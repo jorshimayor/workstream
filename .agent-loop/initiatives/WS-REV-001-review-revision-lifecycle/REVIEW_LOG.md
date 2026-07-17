@@ -254,7 +254,7 @@ the branch is republished.
 
 The branch rebased without conflict onto trusted main
 `5d353b6d3f8a36b9b9ffdc1959487a150ac25fd1`, merge commit for WS-XINT-001 PR
-#139. Its ADR 0015 and AUTH/REV, AUTH role/service, ART/REV, and REV/CON handoffs
+`#139`. Its ADR 0015 and AUTH/REV, AUTH role/service, ART/REV, and REV/CON handoffs
 supersede conflicting active REV planning wording. The archival WS-REV Markdown
 and PDF remain provenance inputs, not authority over merged boundary decisions.
 

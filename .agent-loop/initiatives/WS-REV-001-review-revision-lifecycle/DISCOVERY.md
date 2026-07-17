@@ -169,9 +169,14 @@ chunks must preserve these merged invariants and still wait for the later AUTH
   `S3CompatibleArtifactStore`, proves it with MinIO, removes the old
   `flow_node` configuration value, and leaves review packet/evidence integration
   to WS-REV.
-- The revised WS-REV source still says production Flow Node in sections 6.10,
-  25.8, and 27. That conflicts with AGENTS.md, repository engineering policy,
-  architecture lockdown, and the merged WS-ART amendment.
+- The byte-preserved archival WS-REV source intentionally still says production
+  Flow Node in sections 6.10, 25.8, and 27. Its exact hashes are recorded in
+  `SOURCE_MANIFEST.md`, the reference README, and `SHA256SUMS`; it is discovery
+  evidence, not canonical provider authority, and this planning chunk must not
+  edit it. Canonical adoption is not yet complete: chunk 01 must create
+  `docs/spec_review_lifecycle.md` with AWS S3 through
+  `S3CompatibleArtifactStore`, MinIO protocol proof, and no `flow_node`
+  configuration before that active contract can be treated as adopted.
 - Review services should consume typed binding metadata, complete verified
   retrieval, finding-evidence intake, retention, and projection capabilities
   supplied through composition-root registration. Tests may use fakes; no
