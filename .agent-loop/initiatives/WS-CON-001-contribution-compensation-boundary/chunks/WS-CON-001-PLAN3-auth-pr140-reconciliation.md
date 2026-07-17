@@ -37,6 +37,8 @@ L0/L1 authorization, transaction, and release specification; P1.
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-10B-operations-reconciliation-rebuild.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-10C-operations-executors.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/chunks/WS-CON-001-11-hidden-release-readiness.md
+.agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/reviews/WS-CON-001-PLAN-internal-review-evidence.md
+.agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/reviews/WS-CON-001-PLAN2-internal-review-evidence.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/reviews/WS-CON-001-PLAN3-internal-review-evidence.md
 .agent-loop/initiatives/WS-CON-001-contribution-compensation-boundary/reviews/WS-CON-001-PLAN3-pr-trust-bundle.md
 .agent-loop/merge-intents/WS-CON-001-PLAN3.json
@@ -88,7 +90,9 @@ reference specification/PDF edits, restoration, rename, or replacement
   core contribution creation, or independent CON commit is introduced.
 - [x] Required internal reviewers pass the exact final snapshot, deterministic
   gates pass, the PR trust bundle is complete, and exactly one PLAN3 merge
-  intent is present in the branch delta.
+  intent is present in the branch delta. Older PLAN/PLAN2 evidence receives a
+  provenance-only rebind when the PR-level gate requires every evidence file
+  added by the cumulative branch to match the final reviewed revision.
 
 ## Verification
 
