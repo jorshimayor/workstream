@@ -153,11 +153,12 @@ merged feature manifests and separate human starts exist.
 
 ## Blockers
 
-AUTH-09B and its external-review repair passed exact-head L1 review, atomic
-PostgreSQL behavior proof, privacy tests, and focused coverage gates.
-Replacement GitHub Backend, Agent Gates, CodeRabbit, and explicit human merge
-approval remain. It must not add service grants, dynamic assignments,
-token-role authority, service admission, or feature-action activation.
+AUTH-09B, its external-review repair, and the coverage-gate behavior repair
+passed exact-head L1 internal review, atomic PostgreSQL behavior proof, and
+privacy tests. Replacement GitHub Backend coverage, Agent Gates, CodeRabbit,
+and explicit human merge approval remain. It must not add service grants,
+dynamic assignments, token-role authority, service admission, or
+feature-action activation.
 
 The four proposed REV lifecycle actions and review-evidence binding action are
 blocked on complete feature-owned typed manifests. REV fixed services are also
