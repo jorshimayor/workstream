@@ -93,7 +93,12 @@ cd backend
 WORKSTREAM_DATABASE_URL="$WORKSTREAM_TEST_DATABASE_URL" \
   WORKSTREAM_TEST_DATABASE_URL="$WORKSTREAM_TEST_DATABASE_URL" \
   .venv/bin/python -m pytest -q
-WORKSTREAM_DATABASE_URL="$WORKSTREAM_TEST_DATABASE_URL" \
+: "${WORKSTREAM_TEST_ADMIN_DATABASE_URL:?set a local Postgres admin URL}"
+metadata_dir="$(mktemp -d)"
+trap 'rm -rf "$metadata_dir"' EXIT
+.venv/bin/python scripts/run_isolated_tests.py \
+  --metadata-json "$metadata_dir/result.json" \
+  --timeout-seconds 3600 -- \
   .venv/bin/python scripts/api_contract_e2e.py
 cd ..
 python3 scripts/check_stale_workstream_wording.py

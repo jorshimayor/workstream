@@ -95,5 +95,8 @@ jobs:
       - name: API contract real API e2e
         working-directory: backend
         env:
-          WORKSTREAM_DATABASE_URL: postgresql+asyncpg://workstream:workstream@localhost:5433/workstream_test
-        run: python scripts/api_contract_e2e.py
+          WORKSTREAM_TEST_ADMIN_DATABASE_URL: postgresql+asyncpg://workstream:workstream@localhost:5433/postgres
+        run: |
+          metadata_dir="$(mktemp -d)"
+          trap 'rm -rf "$metadata_dir"' EXIT
+          python scripts/run_isolated_tests.py --metadata-json "$metadata_dir/result.json" --timeout-seconds 3600 -- python scripts/api_contract_e2e.py

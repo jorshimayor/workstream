@@ -39,6 +39,7 @@ backend/tests/test_api_rate_controls.py
 backend/tests/test_api_contract_e2e.py
 backend/scripts/api_contract_e2e.py
 scripts/test_agent_gates.py
+.github/workflows/backend.yml
 docs/spec_authorization_service.md
 docs/operations_authorization_service.md
 .agent-loop/initiatives/WS-AUTH-001-workstream-authorization-service/**
@@ -265,7 +266,11 @@ architecture, CI integrity, docs, reuse/dedup, and test delta.
   --branch --source=app.interfaces.auth,app.core.auth,app.adapters.auth.dev,app.adapters.auth.flow \
   -m pytest -q tests/test_auth.py tests/test_config.py)
 (cd backend && .venv/bin/python -m coverage report --fail-under=90)
-(cd backend && WORKSTREAM_DATABASE_URL=<test-db> .venv/bin/python scripts/api_contract_e2e.py)
+(metadata_dir="$(mktemp -d)" && trap 'rm -rf "$metadata_dir"' EXIT && \
+  cd backend && WORKSTREAM_TEST_ADMIN_DATABASE_URL=<local-admin-db> \
+  .venv/bin/python scripts/run_isolated_tests.py \
+  --metadata-json "$metadata_dir/result.json" --timeout-seconds 3600 -- \
+  .venv/bin/python scripts/api_contract_e2e.py)
 python3 scripts/check_stale_workstream_wording.py
 python3 scripts/check_stale_authorization_docs.py
 python3 scripts/check_markdown_links.py

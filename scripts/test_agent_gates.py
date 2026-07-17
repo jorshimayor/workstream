@@ -103,6 +103,15 @@ BACKEND_FULL_SUITE_COVERAGE_COMMAND = "\n".join(
         "--cov=app --cov-report=term-missing --cov-fail-under=78",
     )
 )
+BACKEND_API_CONTRACT_E2E_COMMAND = "\n".join(
+    (
+        'metadata_dir="$(mktemp -d)"',
+        "trap 'rm -rf \"$metadata_dir\"' EXIT",
+        "python scripts/run_isolated_tests.py "
+        '--metadata-json "$metadata_dir/result.json" --timeout-seconds 3600 -- '
+        "python scripts/api_contract_e2e.py",
+    )
+)
 
 
 def artifact_contract_phase_for(coverage_phase: str) -> str:
@@ -4339,6 +4348,21 @@ def test_backend_coverage_thresholds_are_regression_protected() -> None:
         "run": "python -m pytest -q tests/test_isolated_database_runner.py",
     }
     assert steps.index(isolated_step) < full_suite_index
+    api_e2e_steps = [
+        step for step in steps if step.get("name") == "API contract real API e2e"
+    ]
+    assert len(api_e2e_steps) == 1
+    api_e2e_step = api_e2e_steps[0]
+    assert set(api_e2e_step) == {"name", "working-directory", "env", "run"}
+    assert api_e2e_step["working-directory"] == "backend"
+    assert api_e2e_step["env"] == {
+        "WORKSTREAM_TEST_ADMIN_DATABASE_URL": (
+            "postgresql+asyncpg://workstream:workstream@localhost:5433/postgres"
+        )
+    }
+    assert str(api_e2e_step["run"]).strip() == BACKEND_API_CONTRACT_E2E_COMMAND
+    assert steps.index(api_e2e_step) > full_suite_index
+    assert "WORKSTREAM_DATABASE_URL" not in api_e2e_step["env"]
     active_phase = active_artifact_coverage_phase()
     expected_coverage = artifact_expected_coverage_commands_for(active_phase)
     actual_coverage = tuple(
