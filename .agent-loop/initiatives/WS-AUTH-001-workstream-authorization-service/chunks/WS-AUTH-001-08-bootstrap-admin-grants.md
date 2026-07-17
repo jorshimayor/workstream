@@ -264,8 +264,9 @@ by their existing WS-ART/AUTH-09 contracts.
   permission, whose system/project scope covers the canonical resource, whose
   target is an active human ActorProfile with at least one active identity
   link, and whose request identity link remains active.
-- Reads reload candidates per request. Mutations lock and revalidate the exact
-  caller identity link, caller profile, and matched Access Administrator grant
+- Reads reload candidates per request. Under D28, mutations lock and revalidate
+  the caller ActorProfile, exact caller identity link, and matched Access
+  Administrator grant
   in the committing transaction. Replays reauthorize current authority before
   returning the stored response reference.
 - Evaluation order is link lifecycle, actor lifecycle, registered/active
@@ -321,9 +322,10 @@ All bootstrap and admin grant mutations intentionally serialize in this order:
 ```text
 idempotency reservation when HTTP
 -> AuthorityControl(id=1) FOR UPDATE
--> exact caller identity link and ActorProfile when HTTP
+-> exact caller ActorProfile then exact caller identity link when HTTP
 -> exact matched Access Administrator grant when HTTP
--> target grant, target ActorProfile/identity-link selector, then project row
+-> target grant, target ActorProfile then exact target identity-link selector,
+   then project row
 -> state, evidence, invalidation, and idempotency completion
 -> one route/command-owned commit
 ```
