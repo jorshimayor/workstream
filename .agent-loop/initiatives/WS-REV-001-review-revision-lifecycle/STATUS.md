@@ -138,8 +138,10 @@ and rebound before publication.
 ## Human clarification retained
 
 - Keep ADR 0010 and one Project Guide context through the task pipeline.
-- Same active guide keeps context; any different active guide, including an
-  older reactivated guide, causes a controlled next-attempt rebase.
+- Exact match between the prior Submission's stamped guide identity/activation
+  sequence and the project's currently active guide keeps context; any identity
+  or sequence difference, including an older reactivated guide, causes a
+  controlled next-attempt rebase.
 - Reviewer uses the context stamped on the exact leased Submission and performs
   no separate guide rebase.
 - LocalStorage is development, MinIO proves the protocol, AWS S3 is production,
