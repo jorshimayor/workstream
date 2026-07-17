@@ -124,11 +124,11 @@ configuration tests. No tests were skipped or weakened.
 
 Reviewed code SHA: `956dbcf9fd4b23b1d8daed8c0c666fd49f08303f`
 
-Architecture, QA/test, and security/auth passed the final exact-SHA candidate.
-Senior engineering, product/ops, and reuse/dedup found only the stale evidence
-record now repaired in the evidence-only descendant. Their follow-up plus exact
-test-delta, CI-integrity, and docs verdicts remain required before publication.
-Reviewer IDs and final results are recorded in the internal review evidence.
+All nine required tracks passed with no remaining findings: senior engineering,
+architecture, QA/test, security/auth, product/ops, reuse/dedup, CI integrity,
+test delta, and docs. Stale reviewed-SHA, phase, and proof-value findings were
+addressed in the evidence-only descendant. Reviewer IDs and final results are
+recorded in the internal review evidence.
 
 ## External Review
 

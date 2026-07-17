@@ -4,9 +4,9 @@
 
 `WS-ART-001-02A3`: ArtifactStore v2 Local Clean Cut
 
-open sub-agent sessions: follow-up review pending
+open sub-agent sessions: none
 
-valid findings addressed: stale-evidence repair in progress
+valid findings addressed: yes
 
 ## Reviewed Revision
 
@@ -14,7 +14,7 @@ Reviewed code SHA: `956dbcf9fd4b23b1d8daed8c0c666fd49f08303f`
 
 Reviewed at: 2026-07-17T17:06:39Z
 
-Reviewer run IDs: senior-engineering=follow-up-pending; architecture=019f7101-7405-7e42-9910-023cef1badf1; QA/test=019f7101-821c-72c1-96f0-3bd76d131e2d; security/auth=019f7101-9945-78e0-9b97-7e0bf0049cdf; product/ops=follow-up-pending; reuse/dedup=follow-up-pending; CI-integrity=final-evidence-review-pending; test-delta=review-pending; docs=final-evidence-review-pending
+Reviewer run IDs: senior-engineering=019f712e-1587-7c33-acec-a11887ea70a3; architecture=019f7101-7405-7e42-9910-023cef1badf1; QA/test=019f7101-821c-72c1-96f0-3bd76d131e2d; security/auth=019f7101-9945-78e0-9b97-7e0bf0049cdf; product/ops=019f7112-43ce-7d10-bba3-7078d431f646; reuse/dedup=019f710c-af16-7823-9ef1-0a380b878f04; CI-integrity=019f70f4-68fe-73a0-999e-194487788070; test-delta=019f710c-bd3f-7142-b2a6-77ed19e3ea62; docs=019f70f4-75fe-77c3-b9da-661e0d3d9d4a
 
 Only review artifacts may change after this reviewed SHA while follow-up review
 and evidence closure complete. No implementation, migration, test, workflow,
@@ -43,15 +43,15 @@ policy, or chunk-contract change is permitted without invalidating this record.
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---:|---|---|
-| senior engineering | FAIL - FOLLOW-UP REQUIRED | Stale evidence record | No implementation defect found; rerun after this exact-SHA evidence repair. |
+| senior engineering | PASS AFTER FIXES | None | Exact-SHA binding, closed evidence state, and current proof values were repaired after follow-up. |
 | QA/test | PASS | None | Concurrency, cancellation, migration, namespace, and state-transition proof passed. |
 | security/auth | PASS | None | Filesystem, integrity, namespace, sanitization, and AUTH custody remained fail closed. |
-| product/ops | FAIL - FOLLOW-UP REQUIRED | Stale evidence record | No product lifecycle defect found; rerun after this exact-SHA evidence repair. |
+| product/ops | PASS | None | No product review, contribution, compensation, reputation, or recovery lifecycle was activated. |
 | architecture | PASS | None | Byte-only adapter, typed factory, capability boundaries, and chunk scope passed. |
-| ci integrity | PENDING | Final evidence not yet reviewed | Runs only after all implementation-facing tracks close. |
-| docs | PENDING | Final evidence not yet reviewed | Runs only after all implementation-facing tracks close. |
-| reuse/dedup | FAIL - FOLLOW-UP REQUIRED | Stale evidence record | No reuse defect found; rerun after this exact-SHA evidence repair. |
-| test delta | PENDING | None | Exact-SHA review has not run yet. |
+| ci integrity | PASS AFTER FIXES | None | Exact-SHA evidence binding and current deterministic proof values now satisfy the fail-closed gate. |
+| docs | PASS AFTER FIXES | None | Stale SHA, phase, and proof-value contradictions were removed from the evidence and trust bundle. |
+| reuse/dedup | PASS | None | Shared adapter, scratch, cancellation, locking, hashing, and namespace abstractions are reused. |
+| test delta | PASS AFTER FIXES | None | Current proof values match the strengthened v2 contract, race, migration, and cleanup test delta. |
 
 ## Valid Findings Addressed
 
