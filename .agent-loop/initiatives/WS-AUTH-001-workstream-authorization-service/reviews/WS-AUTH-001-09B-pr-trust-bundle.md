@@ -22,6 +22,12 @@ authority or admitting service tokens.
   provisioned service links remain explicitly unverified.
 - Repaired canonical profile-before-link locking and denied service/nonhuman
   subjects before actor lookup or timestamp touch.
+- Forced locked actor/link queries to replace cached ORM state and proved both
+  lifecycle directions with independent PostgreSQL sessions.
+- Rejected surrounding subject whitespace without normalization and denied
+  replay from deactivated profiles or revoked links.
+- Added three independent GitHub Backend 90 percent coverage reports for the
+  actor, authorization, and verifier boundaries.
 - Added real concurrency, rollback, retry, privacy, migration, API, OpenAPI,
   and isolated HTTP behavior proof.
 
@@ -41,6 +47,9 @@ the only future owner of fixed-service token admission.
 - Broad actor/auth/authorization behavior selection: 236 passed.
 - Actor classification and migration tooling: 109 passed.
 - Current-main API/OpenAPI integration selection: 16 passed.
+- External-review lock/replay selection: two passed in isolated PostgreSQL.
+- External-review provisioning concurrency/privacy selection: one passed.
+- Exact active-action audit parity repair: one passed.
 - Actor coverage: 92.74 percent.
 - Authorization coverage: 90.18 percent.
 - Verifier boundary coverage: 92.27 percent.
@@ -51,16 +60,19 @@ the only future owner of fixed-service token admission.
   diff integrity pass.
 
 Exact reviewed code SHA
-`ebf65f525b01cc07e12c79bb08300bbb40b70db2` passed senior engineering,
+`1b0dc2ec7ab67b8f9f85ea915b00fad0801d72a8` passed senior engineering,
 QA/test, security/auth, product/ops, architecture, CI integrity, docs,
 reuse/dedup, and test-delta review after all valid findings were repaired.
 
 ## External Review
 
-GitHub Backend, Agent Gates, CodeRabbit, and human review will run on the
-published PR head. The Backend workflow is authoritative for the global 78
-percent floor and runs the destructive HTTP contract drill only against an
-isolated derived database.
+CodeRabbit's four actionable fresh-row, subject-validation, replay-lifecycle,
+and CI coverage findings are fixed. The first Backend run exposed one stale
+exact active-action audit expectation after 1,240 tests passed at 84.87 percent
+global coverage; that exact parity assertion is repaired. Replacement GitHub
+Backend, Agent Gates, and CodeRabbit remain pending on the repaired PR head.
+Backend remains authoritative for the global 78 percent floor and runs the
+destructive HTTP contract drill only against an isolated derived database.
 
 ## Follow-up
 
