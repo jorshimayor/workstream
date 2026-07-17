@@ -104,8 +104,11 @@ states. Logical Workstream references are represented only by
 
 ## ArtifactOperationReceipt
 
-An append-only record of an idempotent storage-provider operation, canonical
-request/response digests, provider reference, bounded outcome, and timestamps.
+Append-only Workstream evidence for one immutable put acknowledgement. It links
+the exact upload item and replica and records operation, idempotency key,
+`request_digest`, opaque `provider_object_ref`, replay observation, bounded
+outcome/details, attempt number, correlation ID, and creation time. It contains
+no response digest or provider receipt.
 
 ## ArtifactSetManifest
 

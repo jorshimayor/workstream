@@ -2126,3 +2126,12 @@ phrases. The interface now rejects every reserved descriptor key, regression
 coverage pins that rule, and the glossary uses the exact opaque
 `provider_object_ref` term. Those reviewer sessions were closed; no prior pass
 or pass-with-risk result is reusable for the repaired revision.
+
+The next review round found one remaining Low documentation mismatch shared by
+five tracks: `ArtifactOperationReceipt` still claimed a response digest and
+provider/database timestamps that do not exist in the v2 model. The canonical
+glossary and artifact specification now enumerate the exact Workstream-owned
+put-acknowledgement fields, resolve adapter/namespace identity through the
+linked replica, and explicitly forbid a response digest or provider receipt.
+All reviewer sessions were closed, and this documentation repair requires one
+final exact-SHA review round.

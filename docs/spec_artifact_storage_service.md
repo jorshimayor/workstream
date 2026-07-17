@@ -255,11 +255,13 @@ preserves history.
 
 ### ArtifactOperationReceipt
 
-Append-only Workstream evidence for one operation identity: adapter,
-operation, idempotency key, request digest, bounded provider observation,
-outcome, correlation/attempt references, and provider/database timestamps.
-Credentials, signed headers, endpoints, raw provider responses, and product
-secrets are forbidden.
+Append-only Workstream evidence for one immutable put acknowledgement. It links
+the exact upload item and replica and records operation, idempotency key,
+`request_digest`, opaque `provider_object_ref`, replay observation, bounded
+outcome/details, attempt number, correlation ID, and `created_at`. Adapter and
+namespace identity resolve through the linked replica. A response digest,
+provider receipt, credentials, signed headers, endpoints, raw provider
+responses, and product secrets are forbidden.
 
 ### ArtifactVerificationJob
 
