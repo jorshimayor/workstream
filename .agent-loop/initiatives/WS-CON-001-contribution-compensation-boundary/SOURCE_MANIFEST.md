@@ -10,17 +10,20 @@
 
 ## Trusted baseline
 
-- `origin/main` / merged REV PR #128 at
-  `0302bcf854a565d429e232ad6b076a1931ea74e4`.
-- PR #128 merges the reviewed WS-REV-001 plan after AUTH-09A, AUTH PR #140, and
-  WS-XINT PR #139. It is planning authority, not Review runtime implementation.
-- Runtime AUTH is 74 PermissionIds, 65 ActionIds, nine active, 56 planned.
-  AUTH-09A contributes eight planned identity-administration actions; no CON or
-  task-claim ActionId exists.
+- `origin/main` at `053242b90d927ace3fab92eeca72da27a61cecec`, merging
+  AUTH-09B PR #143 after reviewed REV PR #128, AUTH-09A, AUTH PR #140, and
+  WS-XINT PR #139.
+- PR #128 remains planning authority, not Review runtime implementation.
+- Runtime AUTH is 74 PermissionIds, 65 ActionIds, ten active, 55 planned.
+  AUTH-09B activates only `actor.service.provision`; no CON or task-claim
+  ActionId exists, and provisioning grants no service runtime authority.
 - PR #140 remains the source for AUTH activation-custody, prepared-protocol,
   revised chunk,
   operations, and verification contracts. It changes no runtime CON behavior,
   registers no CON action, and activates no feature action.
+- AUTH-09B provides the controlled human provisioning path for an approved
+  closed fixed ServiceIdentity but does not implement AUTH-09E admission or add
+  any CON identity/static row.
 
 ## Human boundary amendment
 

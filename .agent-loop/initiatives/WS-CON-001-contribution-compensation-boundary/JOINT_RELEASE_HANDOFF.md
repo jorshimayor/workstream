@@ -9,8 +9,9 @@ CompensationAward, fulfillment behavior, and CON projections. AUTH owns all
 authorization and activation.
 
 The canonical cross-boundary source is merged
-`WS-XINT-001/REV_CON_HANDOFF.md`. Merged REV PR #128 at trusted main `0302bcf`
-is the reviewed owner contract; runtime REV behavior remains unimplemented.
+`WS-XINT-001/REV_CON_HANDOFF.md`. Merged REV PR #128, originally landed at
+`0302bcf` and retained in current main `053242b`, is the reviewed owner contract;
+runtime REV behavior remains unimplemented.
 
 ## Required decision composition
 
