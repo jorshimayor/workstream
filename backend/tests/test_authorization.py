@@ -18,11 +18,12 @@ from alembic.config import Config
 import pytest
 from pydantic import ValidationError
 from sqlalchemy import text
-from sqlalchemy.exc import DBAPIError, IntegrityError
+from sqlalchemy.exc import DBAPIError, IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from starlette.requests import Request
 
 from app.api.deps.authorization import get_authorization_service
+from app.core.api_controls import StructuredHTTPException
 from app.core.config import get_settings
 from app.modules.audit.schemas import (
     ActorReferenceKind,
@@ -34,6 +35,7 @@ from app.modules.actors.models import ActorIdentityLink, ActorProfile
 from app.modules.actors.service_identities import SERVICE_IDENTITIES, ServiceIdentity
 from app.modules.authorization import catalogue as authorization_catalogue
 from app.modules.authorization import kernel as authorization_kernel
+from app.modules.authorization import router as authorization_router
 from app.modules.authorization.catalogue import (
     ACTION_BY_ID,
     ACTION_DEFINITIONS,
@@ -427,6 +429,94 @@ def test_administrative_role_policy_and_definition_responses_are_exact() -> None
     assert [list(item.allowed_scopes) for item in role_response.items] == [
         expected_scopes[role] for role in AdminRole
     ]
+
+
+async def test_definition_reads_authorize_touch_and_commit_before_disclosure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    events: list[tuple[str, object]] = []
+    resolved = SimpleNamespace(profile=SimpleNamespace(id=str(uuid4())))
+
+    class Session:
+        async def commit(self) -> None:
+            events.append(("commit", None))
+
+        async def rollback(self) -> None:
+            events.append(("rollback", None))
+
+    class Authorization:
+        async def require(self, action_id, resource):
+            events.append(("authorize", (action_id, resource)))
+
+    class ActorService:
+        def __init__(self, session) -> None:
+            assert session is test_session
+
+        async def touch_after_authorization(self, actor) -> None:
+            assert actor is resolved
+            events.append(("touch", actor))
+
+    test_session = Session()
+    monkeypatch.setattr(authorization_router, "ActorService", ActorService)
+
+    permissions = await authorization_router.read_permission_definitions(
+        resolved,
+        Authorization(),
+        test_session,
+    )
+    roles = await authorization_router.read_admin_role_definitions(
+        resolved,
+        Authorization(),
+        test_session,
+    )
+
+    first_action, first_resource = events[0][1]
+    second_action, second_resource = events[3][1]
+    assert first_action is ActionId.AUTHORIZATION_PERMISSION_CATALOGUE_READ
+    assert isinstance(first_resource, PermissionCatalogueResourceContext)
+    assert first_resource.resource_id == "workstream:permission_catalogue"
+    assert second_action is ActionId.AUTHORIZATION_ADMIN_ROLE_DEFINITIONS_READ
+    assert second_resource.resource_id == "workstream:admin_role_definitions"
+    assert [event for event, _ in events] == [
+        "authorize",
+        "touch",
+        "commit",
+        "authorize",
+        "touch",
+        "commit",
+    ]
+    assert permissions.total == len(PermissionId)
+    assert roles.total == len(AdminRole)
+
+
+async def test_authorization_route_database_failures_rollback_and_map_to_retryable_503() -> None:
+    class Session:
+        def __init__(self) -> None:
+            self.commits = 0
+            self.rollbacks = 0
+
+        async def commit(self) -> None:
+            self.commits += 1
+            raise SQLAlchemyError("commit failed")
+
+        async def rollback(self) -> None:
+            self.rollbacks += 1
+
+    async def failed_operation() -> None:
+        raise SQLAlchemyError("query failed")
+
+    session = Session()
+    with pytest.raises(StructuredHTTPException) as commit_failure:
+        await authorization_router._commit_or_unavailable(session)
+    with pytest.raises(StructuredHTTPException) as query_failure:
+        await authorization_router._database_call(session, failed_operation())
+
+    for failure in (commit_failure.value, query_failure.value):
+        assert failure.status_code == 503
+        assert failure.error_code == "service_unavailable"
+        assert failure.retryable is True
+    assert session.commits == 1
+    assert session.rollbacks == 2
 
 
 @pytest.mark.parametrize(
