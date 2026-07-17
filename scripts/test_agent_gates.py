@@ -1026,119 +1026,131 @@ def test_active_shared_contract_rejects_retired_contracts() -> None:
         "stale_wording_active_compensation",
         "scripts/check_stale_workstream_wording.py",
     )
-    sample = " ".join(
-        (
-            "Operator / Access Administrator",
-            "contribution/payment/reputation records",
-            "Project Manager manages guides and policies",
-            "PM -> UI: publish contribution policy",
-            "submitter/both",
-            "reviewer/both",
-            "Submitter or Both grant",
-            "Reviewer or Both grant",
-            "ProjectRoleGrant(submitter|reviewer|both)",
-            "`submitter`, `reviewer`, or `both`",
-            "| Both | exact project",
-            "Active submitter, reviewer, and both grants",
-            "ProjectRoleGrant values are exactly `submitter` and `reviewer`.",
-            "Project issue roles are exactly `submitter` or `reviewer`.",
-            "independent `submitter` and `reviewer` ProjectRoleGrants",
-            "Adjudicator actions remain unavailable until their lifecycle is activated",
-            "adjudication actions unavailable until separately activated",
-            "Adjudicator actions remain unavailable until separately activated",
-            "locks actor/link/grant/assignment rows",
-            "service-assignment authority",
-            "service-actor assignment",
-            "fixed service principals/assignments",
-            "service assignments",
-            "service principals and exact planned assignments",
-            "identity/action assignment source",
-            "service-action assignments",
-            "service identities and exact assignments",
-            "service identities, exact assignments",
-            "AUTH-09 assigns",
-            "planned assignment remains inert",
-            "PermissionId mapping, or exact assignment",
-            "AUTH-09 persists these exact service actors and assignments",
-            "do not become normal ActorProfiles",
-            "Proposed after 02C3, AUTH-09, and AUTH custody registration",
-            "worker, reviewer, or project manager",
-            "operators, workers, reviewers",
-            "reviews, and payments",
-            "owning compensation authority",
-            "Finance reconciles",
-            "Finance follows",
-            "compensation publication",
-            "compensation\n  publication",
-            "published compensation definition",
-            "published\n  compensation\n  definition",
-            "CompensationPolicyVersion",
-            "CompensationPolicy",
-            "CompensationRule",
-            "CompensationAwardDefinition",
-            "Compensation\n  PolicyVersion",
-            "Compensation\n  Policy\n  Version",
-            "Compensation\n  Policy",
-            "Compensation\n  Rule",
-            "Compensation\n  AwardDefinition",
-            "Compensation\n  Award\n  Definition",
-            "compensation_policy",
-            "compensation_rule_id",
-            "compensation\n  policy",
-            "compensation\n  version",
-            "compensation\n  rule",
-            "PaymentPolicy",
-            "PaymentRecord",
-            "PaymentAdjustment",
-            "Payment\n  Policy",
-            "Payment\n  Record",
-            "Payment\n  Adjustment",
-            "payment-policy",
-            "payment-record",
-            "payment_ledger",
-            "payment_adjustment",
-            "locked_payment_policy_version",
-            "payment_reconciliation",
-            "payment truth",
-            "Payment And Reputation",
-            "compensation fulfillment/payment status",
-            "payment status",
-            "payment\n  policy",
-            "payment\n  records",
-            "payment\n  ledger",
-            "payment exposure",
-            "payment follow-up",
-            "payment adjustment record",
-            "accepted-unpaid",
-            "accepted but unpaid",
-            "contribution record generated on acceptance",
-            "contribution record creation after acceptance",
-            "accepted paid output",
-            "award/payment record",
-            "PAYOUT_SUBMITTED",
-            "PAID",
-            "DISPUTED",
-        )
+    pattern_samples = (
+        "Operator / Access Administrator",
+        "contribution/payment/reputation records",
+        "Project Manager manages guides and policies",
+        "PM -> UI: publish contribution policy",
+        "submitter/both",
+        "reviewer/both",
+        "Submitter or Both grant",
+        "Reviewer or Both grant",
+        "ProjectRoleGrant(submitter|reviewer|both)",
+        "`submitter`, `reviewer`, or `both`",
+        "| Both | exact project",
+        "Active submitter, reviewer, and both grants",
+        "ProjectRoleGrant values are exactly `submitter` and `reviewer`.",
+        "Project issue roles are exactly `submitter` or `reviewer`.",
+        "independent `submitter` and `reviewer` ProjectRoleGrants",
+        "Adjudicator actions remain unavailable until their lifecycle is activated",
+        "adjudication actions unavailable until separately activated",
+        "locks actor/link/grant/assignment rows",
+        "service-assignment authority",
+        "service-actor assignment",
+        "fixed service principals/assignments",
+        "service assignments",
+        "service principals and exact planned assignments",
+        "identity/action assignment source",
+        "service-action assignments",
+        "service identities and exact assignments",
+        "service identities, exact assignments",
+        "AUTH-09 assigns",
+        "planned assignment remains inert",
+        "PermissionId mapping, or exact assignment",
+        "AUTH-09 persists these exact service actors and assignments",
+        "do not become normal ActorProfiles",
+        "Proposed after 02C3, AUTH-09, and AUTH custody registration",
+        "worker, reviewer, or project manager",
+        "operators, workers, reviewers",
+        "reviews, and payments",
+        "owning compensation authority",
+        "Finance reconciles",
+        "compensation publication",
+        "published compensation definition",
+        "CompensationPolicyVersion",
+        "CompensationPolicy",
+        "CompensationRule",
+        "CompensationAwardDefinition",
+        "Compensation\n  PolicyVersion",
+        "Compensation\n  Policy",
+        "Compensation\n  Rule",
+        "Compensation\n  AwardDefinition",
+        "compensation_policy",
+        "compensation_rule_id",
+        "compensation\n  policy",
+        "compensation\n  version",
+        "compensation\n  rule",
+        "PaymentPolicy",
+        "PaymentRecord",
+        "PaymentAdjustment",
+        "Payment\n  Policy",
+        "Payment\n  Record",
+        "Payment\n  Adjustment",
+        "payment-policy",
+        "payment-record",
+        "payment_ledger",
+        "payment_adjustment",
+        "locked_payment_policy_version",
+        "payment_reconciliation",
+        "payment truth",
+        "Payment And Reputation",
+        "compensation fulfillment/payment status",
+        "payment status",
+        "payment\n  policy",
+        "payment\n  records",
+        "payment\n  ledger",
+        "payment exposure",
+        "payment follow-up",
+        "payment adjustment record",
+        "accepted-unpaid",
+        "accepted but unpaid",
+        "contribution record generated on acceptance",
+        "contribution record creation after acceptance",
+        "accepted paid output",
+        "award/payment record",
+        "PAYOUT_SUBMITTED",
+        "PAID",
+        "DISPUTED",
     )
+    sample = " ".join(pattern_samples)
+    active_patterns = stale.ACTIVE_SHARED_CONTRACT_PATTERNS
+
+    assert len(pattern_samples) == len(active_patterns)
+    for pattern, pattern_sample in zip(active_patterns, pattern_samples, strict=True):
+        assert pattern.search(pattern_sample), pattern.pattern
+
+    additional_pattern_samples = {
+        r"\badjudicat(?:ion|or) actions\s+(?:remain\s+)?unavailable\s+until\s+separately\s+activated": (
+            "Adjudicator actions remain unavailable until separately activated",
+        ),
+        r"\bFinance\s+(?:reconciles|follows)\b": ("Finance follows",),
+        r"\bCompensation\s+Policy\s*Version\b": ("Compensation\n  Policy\n  Version",),
+        r"\bCompensation\s+Award\s*Definition\b": (
+            "Compensation\n  Award\n  Definition",
+        ),
+    }
+    active_pattern_by_source = {pattern.pattern: pattern for pattern in active_patterns}
+    assert additional_pattern_samples.keys() <= active_pattern_by_source.keys()
+    for pattern_source, extra_samples in additional_pattern_samples.items():
+        assert all(
+            active_pattern_by_source[pattern_source].search(extra_sample)
+            for extra_sample in extra_samples
+        )
 
     required_patterns = {
         r"\bcompensation\s+publication\b",
         r"\bpublished\s+compensation\s+definition\b",
     }
-    assert required_patterns <= {
-        pattern.pattern for pattern in stale.ACTIVE_SHARED_CONTRACT_PATTERNS
-    }
-    assert all(
-        pattern.search(sample) for pattern in stale.ACTIVE_SHARED_CONTRACT_PATTERNS
-    )
+    assert required_patterns <= {pattern.pattern for pattern in active_patterns}
+    assert all(pattern.search(sample) for pattern in active_patterns)
     assert all(
         pattern.search("compensation\n  publication")
-        for pattern in stale.ACTIVE_SHARED_CONTRACT_PATTERNS
+        for pattern in active_patterns
         if pattern.pattern == r"\bcompensation\s+publication\b"
     )
     assert all(
         pattern.search("published\n  compensation\n  definition")
-        for pattern in stale.ACTIVE_SHARED_CONTRACT_PATTERNS
+        for pattern in active_patterns
         if pattern.pattern == r"\bpublished\s+compensation\s+definition\b"
     )
     assert stale.is_active_shared_contract_path(Path("README.md"))
