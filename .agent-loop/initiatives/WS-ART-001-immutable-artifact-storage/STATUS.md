@@ -26,7 +26,7 @@ approval or reusable evidence. Its source remains on branch
 
 ## Current Work
 
-`WS-ART-001-02A3` implementation, deterministic repair, and internal review are
+`WS-ART-001-02A3` implementation and merged-main deterministic repair are
 complete. Its approved boundary atomically replaces
 ArtifactStore v1 with byte-only v2, migrates LocalStorage and the empty
 pre-production artifact schema, installs the immutable storage-namespace fence,
@@ -42,8 +42,9 @@ Flow Node chunk.
 
 ## Gate
 
-The current gate is external GitHub CI, CodeRabbit, and human review for
-`WS-ART-001-02A3`. The L1 plan and implementation reviews passed after keeping
-durable admission, put attempts, verification publication, and recovery in
+The current gate is exact-SHA internal review for the merged-main
+`WS-ART-001-02A3` revision. The earlier L1 review remains historical evidence,
+but publication requires fresh review bound to the reconciled SHA. Durable
+admission, put attempts, verification publication, and recovery remain in
 their later owning chunks. No later artifact chunk starts automatically, and
 only the user may approve merge.
