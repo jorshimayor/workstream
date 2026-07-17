@@ -110,13 +110,18 @@ Acceptance:
 1. Checker runner validates the submission-stamped locked `PostSubmitCheckerPolicy` id/version/hash/body.
 2. Runner executes enabled checks from that locked policy body.
 3. Results are saved with `passed`, `warning`, or `failed`, plus severity, message, and evidence.
-4. If contributor-fixable blocking failures exist, task enters `NEEDS_REVISION`.
-5. If setup or provenance defects exist, the task stays in the internal operations queue.
-6. If no blocking failures exist, task enters `REVIEW_PENDING`.
+4. Contributor-fixable checker failures route the Task to `NEEDS_REVISION` with
+   `CheckerResult` lineage and no Review or reviewer contribution.
+5. Setup or provenance defects keep the Task `evaluation_pending` on the
+   internal `task_setup_blocked` repair route.
+6. Only a durable, final, current `CheckerRun` outcome of `allow_review` admits
+   the exact immutable Submission with verified binding facts and moves the
+   Task to `REVIEW_PENDING`.
 
 Acceptance:
 
-- Critical- or high-severity failure blocks human review.
+- A retry, superseded run, different Submission, non-final result, or outcome
+  other than `allow_review` cannot admit human review.
 - Warnings remain visible to reviewer.
 - Every checker result is timestamped.
 
@@ -138,7 +143,8 @@ Acceptance:
 - Review cannot be submitted without a decision.
 - needs_revision requires at least one blocking finding; reject requires a
   bounded human reason and may include findings.
-- accept requires no unresolved critical- or high-severity checker failure.
+- the leased Submission must retain its exact durable, final, current
+  `allow_review` CheckerRun admission and verified binding facts.
 - Every valid human decision has exactly one reviewer contribution.
 - Accept sets Task `accepted`, Assignment `completed`, and has exactly one
   FinalAcceptance and one submitter contribution.
@@ -150,9 +156,10 @@ Acceptance:
 - FinalAcceptance has no manual API/action and no adjudication/reopen path.
 - Only accept has a submitter contribution.
 
-## Flow 6: Revision Replay
+## Flow 6: Human Review Revision Replay
 
-1. Contributor opens needs-revision task.
+1. Contributor opens a needs-revision task rooted in an immutable
+   `Review(needs_revision)`.
 2. Workstream prepares immutable context from the currently active Project Guide.
 3. Exact prior identity/activation-sequence match keeps; any different valid
    active pair rebases forward or backward; unsafe context blocks.
@@ -161,6 +168,11 @@ Acceptance:
 6. Contributor resubmits.
 7. Checkers rerun.
 8. Reviewer appends one FindingResolution per required prior finding.
+
+Checker-caused remediation is separate: it retains `CheckerResult` lineage,
+creates no Review, ReviewFinding, SubmissionFindingResponse, FindingResolution,
+or reviewer contribution, and returns through the normal submission/checker
+spine before human review.
 
 Acceptance:
 

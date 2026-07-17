@@ -791,3 +791,14 @@ accept-order regex rejected valid branch-scoped prose. The follow-up registers
 both tests, raises the executed gate count, asserts the complete payment order,
 and removes the overbroad regex while retaining exact human-admission and
 disputed-reject protections.
+
+Candidate `76ed3c14` passed the repaired plan gate and eight of nine full-review
+tracks. The docs track then found two remaining active-flow contradictions:
+Flow 4 used severity/no-blocker shorthand instead of exact durable, final,
+current `allow_review` admission, and generic Flow 6 applied Review-rooted
+revision records to checker-caused remediation. The repair binds Flow 4 and
+Flow 5 to the exact admitting CheckerRun, keeps setup/provenance defects on
+`evaluation_pending` / `task_setup_blocked`, scopes Flow 6 to immutable
+`Review(needs_revision)`, and states that checker remediation has only
+CheckerResult lineage and returns through the normal submission/checker spine.
+The registered structural test now covers these distinctions.

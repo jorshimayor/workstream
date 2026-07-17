@@ -4492,6 +4492,37 @@ def test_checker_admission_and_reject_sampling_remain_nonhuman_and_nonmutating()
     assert "reviewer lead" not in admission
     assert "quality lead" not in admission
 
+    flows = (ROOT / "docs/product_first_user_flows.md").read_text(encoding="utf-8")
+    checker_flow = flows.split("## Flow 4: Automated Checks Run", maxsplit=1)[1].split(
+        "## Flow 5: Reviewer Reviews Submission", maxsplit=1
+    )[0]
+    assert (
+        "durable, final, current `CheckerRun` outcome of `allow_review`" in checker_flow
+    )
+    assert "exact immutable Submission with verified binding facts" in checker_flow
+    assert "`evaluation_pending`" in checker_flow
+    assert "`task_setup_blocked`" in checker_flow
+    assert "Critical- or high-severity failure blocks human review" not in checker_flow
+
+    review_flow = flows.split("## Flow 5: Reviewer Reviews Submission", maxsplit=1)[
+        1
+    ].split("## Flow 6: Human Review Revision Replay", maxsplit=1)[0]
+    assert (
+        "exact durable, final, current\n  `allow_review` CheckerRun admission"
+        in review_flow
+    )
+
+    revision_flow = flows.split("## Flow 6: Human Review Revision Replay", maxsplit=1)[
+        1
+    ].split(
+        "## Flow 7: Accepted Work, FinalAcceptance, And Submitter Contribution",
+        maxsplit=1,
+    )[0]
+    assert "`Review(needs_revision)`" in revision_flow
+    assert "Checker-caused remediation is separate" in revision_flow
+    assert "retains `CheckerResult` lineage" in revision_flow
+    assert "creates no Review, ReviewFinding" in revision_flow
+
     rejected = queue_policy.split("### Rejected", maxsplit=1)[1].split(
         "### Compensation Fulfillment Follow-Up", maxsplit=1
     )[0]
