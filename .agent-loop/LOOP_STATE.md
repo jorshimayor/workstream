@@ -11,6 +11,8 @@
 - AUTH's owner reconciliation merged through PR #140 as `d541521`; it defines
   fixed-service admission, prepared mutation authority, and activation custody
   without activating ART, REV, or CON feature behavior.
+- AUTH-09A merged through PR #132 as `299363a`; its fixed service identity
+  foundation is preserved as migration `0023_service_actor_identity`.
 - Active ART implementation chunk: `WS-ART-001-02A3` on
   `codex/ws-art-001-02a3-artifact-store-v2-local-clean-cut`.
 - Parallel AUTH, REV, and CON worktrees remain independently owned. This ART
@@ -24,7 +26,7 @@
   `fc89fb6`; its schema-v1 cross-initiative next pointer is superseded by the
   schema-v2 initiative-local clean cut.
 - Current gate: complete deterministic proof and all nine exact-SHA internal
-  reviewer tracks for the ART-02A3 startup-claim repair, then refresh evidence
+  reviewer tracks for ART-02A3 after merging AUTH-09A, then refresh evidence
   before publishing PR #141 for GitHub Actions, CodeRabbit, and explicit human
   review. No later ART chunk starts automatically.
 - Scope checkpoint: AWS S3 is the only v0.1 production provider; MinIO is

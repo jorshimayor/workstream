@@ -14,13 +14,15 @@ This plan applies the merged `WS-XINT-001` handoffs to AUTH. It distinguishes:
 Feature chunks never change availability. AUTH never invents feature facts or
 performs feature lifecycle mutations.
 
-## Current catalogue baseline
+## Catalogue baselines
 
-Trusted `main` after PR #139 contains 74 PermissionIds and 57 ActionIds: nine
-active and 48 planned. Of the planned rows, 25 ART actions and 19 REV actions
-still carry historical feature-chunk owner values. The two custody-transfer
-chunks below change only those owner values. Counts, mappings, and availability
-must remain identical.
+Trusted entry `main` after PR #140 contains 74 PermissionIds and 57 ActionIds:
+nine active and 48 planned. AUTH-09A adds zero permissions and eight planned
+actor/link/service actions, producing 74 PermissionIds and 65 ActionIds: nine
+active and 56 planned. Of those planned rows, the same 25 ART actions and 19 REV
+actions still carry historical feature-chunk owner values. The two later
+custody-transfer chunks change only those owner values; their entry counts,
+mappings, and availability must remain identical.
 
 ## ART custody transfer
 

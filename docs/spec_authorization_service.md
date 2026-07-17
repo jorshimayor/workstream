@@ -60,12 +60,17 @@ Required concepts:
 
 - UUID identifier;
 - kind: human or explicitly provisioned service;
+- fixed unique `service_identity` for a service and null for a human;
 - status: active, suspended, or deactivated;
 - contributor domain for human self-service;
 - database-time creation/update and immutable historical attribution.
 
 A profile status is a guard, not a grant. Active humans receive only self
 profile capability until an administrative or exact-project grant exists.
+For a service, the profile is the stable local principal. Its immutable
+`service_identity` selects one closed typed service-action matrix row; it is
+never inferred from display data, token claims, issuer, or subject. Profile ID,
+service identity, and external credential binding remain separate concepts.
 
 ### ActorIdentityLink
 
@@ -233,11 +238,13 @@ approved Operator recovery identifiers, 21 artifact identifiers, and
 `review.queue.override` are the exact 25 post-`0020` permissions. AUTH-07A adds
 their matching typed/SQL audit parity without making them executable.
 
-The closed action registry contains 57 rows: nine active actions and 48 planned
-rows. AUTH-08 adds seven active administrative definition, grant-history,
-issue, revoke, and local-bootstrap actions without adding a permission. The
-planned rows cover three Operator recovery actions, 25 artifact actions,
-canonical `submission.create`, and 19 review actions. An action becomes active only when
+The closed action registry contains 65 rows after AUTH-09A: nine active actions
+and 56 planned rows. AUTH-08 adds seven active administrative definition,
+grant-history, issue, revoke, and local-bootstrap actions without adding a
+permission. AUTH-09A adds eight planned actor, identity-link, and service
+provisioning actions without activating a route. The other planned rows cover
+three Operator recovery actions, 25 artifact actions, canonical
+`submission.create`, and 19 review actions. An action becomes active only when
 its feature owner has merged the canonical resource composer, guards, surface or
 command declaration, behavior tests, and transaction-local revalidation where
 required, and its dedicated AUTH activation custodian has integrated the exact
@@ -255,6 +262,23 @@ feature-owned typed and transaction manifests exist.
 AUTH-07B activates `actor.profile.read_self` and `actor.profile.update_self`.
 AUTH-08 activates exactly seven administrative actions through migration
 `0022`; all other registered actions remain planned.
+
+AUTH-09A registers these exact planned actions through migration `0023`:
+
+| ActionId | PermissionId | Activation owner |
+|---|---|---|
+| `actor.profile.read` | `actor.profile.read_any` | `WS-AUTH-001-09C` |
+| `actor.profile.suspend` | `actor.profile.suspend` | `WS-AUTH-001-09D` |
+| `actor.profile.reactivate` | `actor.profile.reactivate` | `WS-AUTH-001-09D` |
+| `actor.profile.deactivate` | `actor.profile.deactivate` | `WS-AUTH-001-09D` |
+| `actor.identity_link.read` | `actor.identity_link.read` | `WS-AUTH-001-09C` |
+| `actor.identity_link.revoke` | `actor.identity_link.revoke` | `WS-AUTH-001-09D` |
+| `actor.identity_link.reactivate` | `actor.identity_link.reactivate` | `WS-AUTH-001-09D` |
+| `actor.service.provision` | `actor.service.provision` | `WS-AUTH-001-09B` |
+
+All eight remain unavailable until their exact AUTH owner supplies the route,
+typed resource context, evaluator, guards, transaction proof, and availability
+change. AUTH-09A supplies none of those runtime paths.
 
 The submission/review dependency matrix is closed. AUTH-07A registers only the
 four stable planned fields shown here; resource facts, candidates, guards, and
@@ -694,18 +718,22 @@ The implementation order is fixed by the WS-AUTH-001 chunk map:
 12. `WS-AUTH-001-09D`: actor and identity-link lifecycle mutations;
 13. `WS-AUTH-001-09E`: fixed service runtime admission without human grant
     evaluation or feature action activation;
-14. `WS-AUTH-001-10`: independent project contributor grants;
-15. `WS-AUTH-001-11` through `WS-AUTH-001-14`: complete resource-family
+14. `WS-AUTH-001-ART-CUSTODY` and `WS-AUTH-001-REV-CUSTODY`:
+    availability-neutral transfer to exact AUTH activation owners;
+15. `WS-AUTH-001-PREP`: prepared mutation authorization protocol;
+16. `WS-AUTH-001-10`: independent project contributor grants;
+17. `WS-AUTH-001-11` through `WS-AUTH-001-14`: complete resource-family
     cutovers;
-16. `WS-AUTH-001-15`: obsolete authority removal and scanner enforcement;
-17. `WS-AUTH-001-16`: conformance, observability, concurrency, and live API
+18. `WS-AUTH-001-15`: obsolete authority removal and scanner enforcement;
+19. `WS-AUTH-001-16`: conformance, observability, concurrency, and live API
     proof.
 
-Temporary compatibility mechanisms are explicitly named, enumerated, and
-shrinking. They grant no canonical product authority and are deleted by their
-assigned removal chunk. No implementation chunk may create a second canonical
-actor root, verifier hierarchy, audit ledger, unit-of-work abstraction, or
-authorization engine.
+No implementation may add a compatibility alias, fallback authority source,
+dual route, or translation into canonical grants. The remaining explicitly
+enumerated legacy paths are removal-only: their allowlist may only shrink, and
+their assigned cutover must delete them rather than preserve an alternate path.
+No implementation chunk may create a second canonical actor root, verifier
+hierarchy, audit ledger, unit-of-work abstraction, or authorization engine.
 
 ## Error And Privacy Contract
 

@@ -4011,9 +4011,10 @@ def test_parallel_initiative_status_matches_trusted_main() -> None:
     ).read_text(encoding="utf-8")
 
     assert "Merged through PR #131 as `aa0fdcd`" in auth_map
-    assert "None. `WS-AUTH-001-09A` has completed implementation" in auth_status
+    assert "`WS-AUTH-001-09A` - Fixed Service Identity Foundation" in auth_status
     assert "| `WS-AUTH-001-08` | Merged |" in auth_status
-    assert "| `WS-AUTH-001-09A` | Awaiting human merge |" in auth_status
+    assert "| `WS-AUTH-001-XINT` | Merged |" in auth_status
+    assert "| `WS-AUTH-001-09A` | In progress |" in auth_status
     assert "Merged through PR #129 as `9a04434`" in artifact_map
     assert "Internal review and deterministic evidence passed; external checks pending" in artifact_map
     assert (

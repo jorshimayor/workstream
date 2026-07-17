@@ -86,27 +86,24 @@ initial security/architecture, QA/product, and senior/CI/docs review before
 runtime edits. The repaired contract passed all required preimplementation
 tracks at `cbe7c6c`; bounded AUTH-08 implementation later merged through PR #131
 as `aa0fdcd`. AUTH-09 was split before runtime implementation. AUTH-09A was
-reviewed through PR #132. PR #139 then merged the authoritative WS-XINT boundary
-reconciliation as `5d353b6` on 2026-07-17. PR #132 remains open and now
-conflicts with trusted `main`; its fixed service foundation remains valid, but
-its planning and evidence must converge from the merged XINT contract and be
-re-reviewed before merge. `WS-AUTH-001-XINT` is the active planning-only AUTH
-owner response. No runtime successor or feature action is active.
+reviewed through PR #132. PR #140 then merged the authoritative AUTH XINT
+reconciliation as `d541521` on 2026-07-17 and signed memory stopped. The user
+explicitly started PR #132 convergence from that trusted head. Prior review
+evidence is stale until exact-head review repeats. No AUTH-09 runtime action or
+feature action is active.
 
 ## Active planning chunk
 
-`WS-AUTH-001-XINT` - Lifecycle Boundary Plan Reconciliation.
+None. `WS-AUTH-001-XINT` merged through PR #140.
 
 ## Active implementation chunk
 
-None. `WS-AUTH-001-09A` has completed implementation on its PR branch, but its
-prior review no longer authorizes merge until the branch converges on trusted
-`main` and passes exact-head re-review. This chunk changes plans and future
-contracts only.
+`WS-AUTH-001-09A` - Fixed Service Identity Foundation convergence and exact-head
+re-review. This chunk activates no route, action, or service admission path.
 
 ## Current review branch
 
-`codex/ws-auth-001-xint-reconciliation`
+`codex/ws-auth-001-09-actor-state-service-actors`
 
 ## Chunk status
 
@@ -128,9 +125,9 @@ contracts only.
 | `WS-AUTH-001-07A` | Merged | `codex/ws-auth-001-07-authorization-kernel` | #126 | Merged as `e9d72a1`; 74 permissions, 50 planned actions, and action-aware audit parity only. |
 | `WS-AUTH-001-07B` | Merged | `codex/ws-auth-001-07b-deny-default-kernel` | #130 | Merged as `90eca12`; signed memory passed. |
 | `WS-AUTH-001-08` | Merged | `codex/ws-auth-001-08-bootstrap-admin-grants` | #131 | Merged as `aa0fdcd`; signed memory passed. |
-| `WS-AUTH-001-XINT` | External repair reviewed | `codex/ws-auth-001-xint-reconciliation` | #140 | Exact repair state `bac3073` passed all required tracks; replacement external checks pending. |
+| `WS-AUTH-001-XINT` | Merged | `codex/ws-auth-001-xint-reconciliation` | #140 | Merged as `d541521`; signed schema-v2 memory passed. |
 | `WS-AUTH-001-09` | Split | - | - | Split into 09A through 09E before runtime implementation. |
-| `WS-AUTH-001-09A` | Awaiting human merge | `codex/ws-auth-001-09-actor-state-service-actors` | #132 | Merge checkpoint is blocked: branch is open/conflicting; foundation valid, planning must converge on PR #139 and repeat exact-head review. |
+| `WS-AUTH-001-09A` | In progress | `codex/ws-auth-001-09-actor-state-service-actors` | #132 | Converging from merged PR #140; deterministic proof and exact-head re-review required. |
 | `WS-AUTH-001-09B` | Proposed | - | - | Controlled service ActorProfile/ActorIdentityLink provisioning after 09A. |
 | `WS-AUTH-001-09C` | Proposed | - | - | Actor and identity-link administrative reads. |
 | `WS-AUTH-001-09D` | Proposed | - | - | Actor and identity-link lifecycle mutations. |
@@ -152,11 +149,9 @@ merged feature manifests and separate human starts exist.
 
 ## Blockers
 
-PR #132 cannot merge unchanged because PR #139 modified overlapping AUTH loop,
-plan, chunk, and public-spec files. Resolve this only after the planning
-reconciliation merges: converge the 09A runtime/migration/evidence onto current
-`main`, preserve XINT role/service/activation wording, repeat required internal
-review on the exact head, and rerun external checks. The convergence must also
+PR #132 cannot merge until its current convergence preserves XINT
+role/service/activation wording, repeats required internal review on the exact
+head, and reruns external checks. The convergence must also
 preserve PR #132's packaged frozen migration contract, zero mutable migration
 imports, script-owned repository root, built-wheel location-independent replay,
 same-event-loop CLI cleanup, and original-exception/cancellation behavior.

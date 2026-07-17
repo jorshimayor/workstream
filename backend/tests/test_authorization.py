@@ -5,6 +5,7 @@ import asyncio
 import base64
 from collections import UserDict
 from collections.abc import Iterator, Mapping
+from dataclasses import replace
 from datetime import UTC, datetime
 import inspect
 import json
@@ -29,6 +30,8 @@ from app.modules.audit.schemas import (
     AuthorityEventType,
 )
 from app.modules.audit.service import AuditService
+from app.modules.actors.service_identities import SERVICE_IDENTITIES, ServiceIdentity
+from app.modules.authorization import catalogue as authorization_catalogue
 from app.modules.authorization import kernel as authorization_kernel
 from app.modules.authorization.catalogue import (
     ACTION_BY_ID,
@@ -42,7 +45,9 @@ from app.modules.authorization.catalogue import (
     ActionId,
     ActionOwner,
     PermissionId,
+    SERVICE_ACTIONS_BY_IDENTITY,
     _index_actions,
+    _index_service_actions,
     resolve_executable_action,
 )
 from app.modules.authorization.schemas import (
@@ -229,11 +234,22 @@ def test_closed_permission_and_action_catalogue_is_exact_and_non_executable() ->
         "admin_role_grant.issue": ("admin_role.grant", "WS-AUTH-001-08"),
         "admin_role_grant.revoke": ("admin_role.revoke", "WS-AUTH-001-08"),
         "admin_role_grant.bootstrap": ("admin_role.grant", "WS-AUTH-001-08"),
+        "actor.profile.read": ("actor.profile.read_any", "WS-AUTH-001-09C"),
+        "actor.profile.suspend": ("actor.profile.suspend", "WS-AUTH-001-09D"),
+        "actor.profile.reactivate": ("actor.profile.reactivate", "WS-AUTH-001-09D"),
+        "actor.profile.deactivate": ("actor.profile.deactivate", "WS-AUTH-001-09D"),
+        "actor.identity_link.read": ("actor.identity_link.read", "WS-AUTH-001-09C"),
+        "actor.identity_link.revoke": ("actor.identity_link.revoke", "WS-AUTH-001-09D"),
+        "actor.identity_link.reactivate": (
+            "actor.identity_link.reactivate",
+            "WS-AUTH-001-09D",
+        ),
+        "actor.service.provision": ("actor.service.provision", "WS-AUTH-001-09B"),
     }
     assert {item.value for item in HISTORICAL_PERMISSION_IDS} == historical_permissions
     assert {item.value for item in NEW_PERMISSION_IDS} == new_permissions
     assert {item.value for item in PERMISSION_IDS} == historical_permissions | new_permissions
-    assert len(ACTION_IDS) == len(ACTION_DEFINITIONS) == len(ACTION_BY_ID) == 57
+    assert len(ACTION_IDS) == len(ACTION_DEFINITIONS) == len(ACTION_BY_ID) == 65
     assert set(ACTION_BY_ID) == ACTION_IDS
     assert {definition.owner for definition in ACTION_DEFINITIONS} == set(ActionOwner)
     assert {
@@ -265,6 +281,86 @@ def test_closed_permission_and_action_catalogue_is_exact_and_non_executable() ->
         resolve_executable_action(ActionId.REVIEW_QUEUE_READ)
     with pytest.raises(TypeError):
         ACTION_BY_ID[ActionId.ACTOR_PROFILE_READ_SELF] = ACTION_DEFINITIONS[0]
+
+
+def test_fixed_service_action_matrix_is_exact_planned_and_immutable() -> None:
+    expected = {
+        ServiceIdentity.ARTIFACT_VERIFIER: {"artifact.verification.execute"},
+        ServiceIdentity.ARTIFACT_PUT_RESOLVER: {"artifact.put_attempt.resolve"},
+        ServiceIdentity.ARTIFACT_SCHEDULER: {
+            "artifact.pending_work.scan",
+            "artifact.upload_session.expire",
+        },
+        ServiceIdentity.ARTIFACT_BINDING: {
+            "artifact.guide_source.binding.create",
+            "artifact.submission.binding.create",
+            "artifact.checker_output.binding.create",
+        },
+        ServiceIdentity.ARTIFACT_GUIDE_READER: {"artifact.guide_source.read"},
+        ServiceIdentity.ARTIFACT_MATERIALIZER: {
+            "artifact.pre_submit.checker_input.materialize",
+            "artifact.post_submit.checker_input.materialize",
+        },
+        ServiceIdentity.ARTIFACT_CHECKER_OUTPUT: {"artifact.checker_output.write"},
+    }
+    assert set(SERVICE_ACTIONS_BY_IDENTITY) == SERVICE_IDENTITIES
+    assert {
+        identity: {action.value for action in actions}
+        for identity, actions in SERVICE_ACTIONS_BY_IDENTITY.items()
+    } == expected
+    assert sum(map(len, SERVICE_ACTIONS_BY_IDENTITY.values())) == 11
+    assert all(
+        ACTION_BY_ID[action].availability is ActionAvailability.PLANNED
+        for actions in SERVICE_ACTIONS_BY_IDENTITY.values()
+        for action in actions
+    )
+    with pytest.raises(TypeError):
+        SERVICE_ACTIONS_BY_IDENTITY[ServiceIdentity.ARTIFACT_VERIFIER] = frozenset()  # type: ignore[index]
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ["missing_identity", "extra_action", "duplicate_action", "swapped_rows"],
+)
+def test_fixed_service_action_matrix_construction_fails_closed(mutation: str) -> None:
+    rows = dict(SERVICE_ACTIONS_BY_IDENTITY)
+    if mutation == "missing_identity":
+        rows.pop(ServiceIdentity.ARTIFACT_VERIFIER)
+    elif mutation == "extra_action":
+        rows[ServiceIdentity.ARTIFACT_VERIFIER] = frozenset(
+            {ActionId.ARTIFACT_VERIFICATION_EXECUTE, ActionId.ARTIFACT_AUDIT_READ}
+        )
+    elif mutation == "duplicate_action":
+        rows[ServiceIdentity.ARTIFACT_PUT_RESOLVER] = frozenset(
+            {ActionId.ARTIFACT_VERIFICATION_EXECUTE}
+        )
+    else:
+        rows[ServiceIdentity.ARTIFACT_VERIFIER], rows[ServiceIdentity.ARTIFACT_PUT_RESOLVER] = (
+            rows[ServiceIdentity.ARTIFACT_PUT_RESOLVER],
+            rows[ServiceIdentity.ARTIFACT_VERIFIER],
+        )
+    with pytest.raises(RuntimeError, match="service action matrix"):
+        _index_service_actions(rows)
+
+
+@pytest.mark.parametrize("metadata", ["permission", "owner", "availability"])
+def test_fixed_service_action_matrix_rejects_metadata_drift(
+    metadata: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    action = ActionId.ARTIFACT_VERIFICATION_EXECUTE
+    definition = ACTION_BY_ID[action]
+    if metadata == "permission":
+        changed = replace(definition, permission_id=PermissionId.ARTIFACT_PENDING_WORK_SCAN)
+    elif metadata == "owner":
+        changed = replace(definition, owner=ActionOwner.ART_03)
+    else:
+        changed = replace(definition, availability=ActionAvailability.ACTIVE)
+    action_index = dict(ACTION_BY_ID)
+    action_index[action] = changed
+    monkeypatch.setattr(authorization_catalogue, "ACTION_BY_ID", action_index)
+    with pytest.raises(RuntimeError, match="service action matrix metadata mismatch"):
+        _index_service_actions(dict(SERVICE_ACTIONS_BY_IDENTITY))
 
 
 def test_administrative_role_policy_and_definition_responses_are_exact() -> None:

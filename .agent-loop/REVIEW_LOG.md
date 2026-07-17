@@ -1,5 +1,15 @@
 # Review Log
 
+## 2026-07-17 - WS-AUTH-001-09A Convergence Started
+
+After PR #140 merged as `d541521` and signed memory stopped, the user explicitly
+started the bounded PR #132 repair. The branch is converging migration `0023`,
+seven fixed service identities, eleven exact static matrix memberships, and
+eight planned actions onto current XINT without restoring feature-owned
+activation, combined-role, token-role, or compatibility authority. Prior
+SHA-bound evidence is stale until deterministic proof and required exact-head
+review repeat.
+
 ## 2026-07-17 - WS-AUTH-001-XINT External Review Repair Passed
 
 CodeRabbit posted nine actionable comments on PR #140. Eight valid contract,
@@ -2162,6 +2172,16 @@ valid v2 marker could retain unknown top-level entries. Initialization now
 accepts only the marker, `objects`, `tmp`, and `locks` entries, with regression
 proof that an added legacy directory fails closed. All reviewer sessions were
 closed; the repaired SHA requires fresh review.
+
+During the next exact-SHA review, `origin/main` advanced through AUTH-09A PR
+#132. Review stopped immediately because the ART branch still carried a sibling
+`0023` migration and its diff would have obscured merged AUTH history. The
+latest `main` is now merged in full. AUTH's `0023_service_actor_identity`,
+service-identity runtime, merge intent, tests, and evidence remain unchanged;
+ART is renumbered to `0024_artifact_store_v2` and descends from AUTH-09A. The
+authored queue records AUTH-09A complete and ART-02A3 at its independent gate.
+All reviewer sessions were closed; the merged candidate requires fresh
+deterministic proof and exact-SHA review.
 
 The final CI-integrity review found that the cumulative artifact-foundation
 coverage source set omitted the new closed product-capability interface module.
