@@ -27,6 +27,20 @@ requiring a separate start. The user explicitly started controlled service actor
 provisioning. The L1 contract is being tightened and reviewed before runtime
 edits; AUTH-09C and service runtime admission remain inactive.
 
+## 2026-07-17 - WS-CON-001-PLAN3 External Review Repair Started
+
+CodeRabbit posted five consolidated actionable threads and one PR-description
+warning on PR #142 after the AUTH/REV current-main reconciliation became ready
+for review. The bounded planning-only repair adds deterministic executable
+verification gates to 16 active future chunks, moves AUTH registration/context/
+custody/prepared-port requirements into upstream handoffs, preserves the
+canonical registration -> hidden behavior -> activation order, and moves
+optional CON-09B out of executable `chunks/` as a zero-file deferred proposal
+pending separate ART/AUTH/human approval and a fresh contract. It also aligns
+the PR trust bundle with the repository template. No runtime successor is
+active; exact-SHA internal re-review, evidence rebind, external check rerun, and
+thread disposition remain required before merge readiness.
+
 ## 2026-07-17 - WS-AUTH-001-09A Convergence Started
 
 After PR #140 merged as `d541521` and signed memory stopped, the user explicitly

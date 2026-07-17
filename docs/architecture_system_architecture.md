@@ -184,7 +184,7 @@ Owns:
 - review queue
 - findings
 - review decisions
-- second-review flags
+- non-mutating post-decision reviewer-quality audit selections and observations
 - reviewer audit history
 
 ### Revision Service
