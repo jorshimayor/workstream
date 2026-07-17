@@ -34,8 +34,8 @@ approval or reusable evidence. Its source remains on branch
 `WS-ART-001-02A3` implementation and merged-main deterministic repair are
 complete. PR #141 is open. Exact-SHA review found and repaired a residual
 LocalStorage startup race, typed-factory startup mismatch, and vague Operator
-resource vocabulary. Fresh deterministic coverage passed, and all nine reviewer
-tracks are now in progress before external review resumes. Its approved
+resource vocabulary. Fresh deterministic coverage and all required internal
+reviewer tracks passed; external checks are now pending. Its approved
 boundary atomically replaces ArtifactStore v1 with byte-only v2, migrates
 LocalStorage and the empty pre-production artifact schema, installs the
 immutable storage-namespace fence,
@@ -52,8 +52,8 @@ Flow Node chunk.
 ## Gate
 
 All reviews before the latest repairs are retained as history, not reused as
-final provenance. Deterministic proof has passed. The current gate is all nine
-exact-SHA internal tracks, followed by GitHub Actions, CodeRabbit, and explicit
-human review. Durable admission, put attempts, verification publication, and
-recovery remain in their later owning chunks. No
+final provenance. Deterministic proof and exact-SHA internal review have passed.
+The current gate is GitHub Actions, CodeRabbit, and explicit human review.
+Durable admission, put attempts, verification publication, and recovery remain
+in their later owning chunks. No
 later artifact chunk starts automatically, and only the user may approve merge.

@@ -2207,3 +2207,20 @@ Foreign nested entries, owners, modes, link counts, and recovery links fail
 closed. Regression proof covers mismatched/repeated claims, foreign entries at
 every level, and reopening a valid populated store. All reviewer sessions were
 closed; the repaired SHA requires fresh review.
+
+## 2026-07-17 - WS-ART-001-02A3 Merged-Main Final Review
+
+The branch merged trusted `main` at `0302bcf`, preserving the independently
+owned REV planning and the canonical AUTH `0023_service_actor_identity` -> ART
+`0024_artifact_store_v2` migration order. Deterministic proof then passed 268
+ART-focused tests at 93.18 percent changed-scope coverage, 56 byte-store
+contract tests at 91.08 percent, four real PostgreSQL migration-safety cases,
+Ruff, 92.0 percent docstring coverage, 80 agent-gate tests, stale-contract and
+wording scans, Markdown links, and diff hygiene.
+
+The final internal review found no remaining implementation, architecture, QA,
+security, product/ops, reuse, or test-delta defect. Docs and CI correctly
+rejected the stale pre-final evidence record. This state-transition commit is
+therefore the exact review target; its evidence-only descendant must bind the
+reviewed SHA, record every reviewer run, pass the evidence gate, and then receive
+final CI/docs confirmation before external checks resume.

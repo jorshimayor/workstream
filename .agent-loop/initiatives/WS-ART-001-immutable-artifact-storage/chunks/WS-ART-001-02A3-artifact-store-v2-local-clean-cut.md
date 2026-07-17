@@ -1,6 +1,6 @@
 # Chunk Contract: WS-ART-001-02A3 - ArtifactStore v2 Local Clean Cut
 
-Initiative: `WS-ART-001` | Risk: L1 | Status: Deterministic proof passed; exact-SHA internal review in progress
+Initiative: `WS-ART-001` | Risk: L1 | Status: Internal review and deterministic evidence passed; external checks pending
 
 Artifact contract phase: `artifact_store_cutover`
 

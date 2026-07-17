@@ -4,7 +4,7 @@
 
 | Chunk | Title | Risk | Status |
 |---|---|---:|---|
-| `WS-ART-001-02A3` | ArtifactStore v2 Local Clean Cut | L1 | Deterministic proof passed; exact-SHA internal review in progress |
+| `WS-ART-001-02A3` | ArtifactStore v2 Local Clean Cut | L1 | Internal review and deterministic evidence passed; external checks pending |
 
 Live post-merge state remains read from signed `automation/loop-memory`
 output. This authored queue records the separately approved parallel chunks.
