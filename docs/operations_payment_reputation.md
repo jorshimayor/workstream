@@ -15,12 +15,13 @@ as automated settlement.
 
 Every valid recorded human Review creates a reviewer `completed_review`
 contribution through the mandatory CON reviewer operation. After that operation,
-the `Review(accept)` branch creates REV-owned FinalAcceptance before accepted
-task effects and the CON submitter operation. FinalAcceptance is the sole source
-of a submitter `accepted_submission` contribution. Compensation is evaluated
-independently for each record from its frozen policy version; an explicit unpaid
-rule creates no award. Awards, fulfillment receipts, and projections attach to
-contributions and never replace them. Reputation events are deferred.
+the `Review(accept)` branch creates REV-owned FinalAcceptance, then sets the Task
+to `accepted` and the TaskAssignment to `completed`, then runs the CON submitter
+operation. FinalAcceptance is the sole source of that submitter
+`accepted_submission` contribution. Compensation is evaluated independently
+for each record from its frozen policy version; an explicit unpaid rule creates
+no award. Awards, fulfillment receipts, and projections attach to contributions
+and never replace them. Reputation events are deferred.
 
 ## Compensation Status Projection
 

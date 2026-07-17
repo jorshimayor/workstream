@@ -4357,7 +4357,6 @@ def test_stale_review_contract_rule_inventory_is_complete() -> None:
             "Adjudication remains unavailable until enabled."
         ),
         "BROAD_REVIEW_BYPASS": ("An admin can override the review decision."),
-        "AMBIGUOUS_ACCEPT_ORDER": ("Review(accept) first creates FinalAcceptance."),
         "HUMAN_PRE_REVIEW_ADMISSION": (
             "### Pre Review Gate\n\nOptional reviewer-simulation before review."
         ),
@@ -4379,6 +4378,11 @@ def test_stale_review_contract_rule_inventory_is_complete() -> None:
     assert not gate.scan_text(
         "docs/glossary.md",
         "## Reputation Ledger\n\nA future offline evidence concept.",
+    )
+    assert not gate.scan_text(
+        "docs/operations_payment_reputation.md",
+        "After the reviewer operation, Review(accept) first creates "
+        "FinalAcceptance, then applies accepted task effects.",
     )
 
     adversarial_samples = {
@@ -4454,6 +4458,21 @@ def test_active_review_workflows_preserve_canonical_transaction_order() -> None:
     )
     flow_positions = [accepted_flow.index(item) for item in flow_markers]
     assert flow_positions == sorted(flow_positions)
+
+    payment = (ROOT / "docs/operations_payment_reputation.md").read_text(
+        encoding="utf-8"
+    )
+    payment_principle = payment.split("## Compensation Principle", maxsplit=1)[1].split(
+        "## Compensation Status Projection", maxsplit=1
+    )[0]
+    payment_markers = (
+        "mandatory CON reviewer operation",
+        "creates REV-owned FinalAcceptance",
+        "sets the Task\nto `accepted` and the TaskAssignment to `completed`",
+        "runs the CON submitter\noperation",
+    )
+    payment_positions = [payment_principle.index(item) for item in payment_markers]
+    assert payment_positions == sorted(payment_positions)
 
 
 def test_checker_admission_and_reject_sampling_remain_nonhuman_and_nonmutating() -> (
@@ -5666,6 +5685,8 @@ def main() -> int:
         test_stale_authorization_full_initiative_rules_ignore_changed_line_filter,
         test_stale_authorization_history_allowlist_is_exact,
         test_stale_review_contract_rule_inventory_is_complete,
+        test_active_review_workflows_preserve_canonical_transaction_order,
+        test_checker_admission_and_reject_sampling_remain_nonhuman_and_nonmutating,
         test_stale_review_contract_classification_is_exact,
         test_stale_review_contract_scan_excludes_only_exact_archives,
         test_stale_review_contract_discovery_includes_tracked_and_untracked,

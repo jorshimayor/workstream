@@ -246,14 +246,6 @@ RULES = (
         ),
     ),
     Rule(
-        "AMBIGUOUS_ACCEPT_ORDER",
-        re.compile(
-            r"\bReview\(accept\)[^.\n]{0,80}\bfirst\s+creates?\b"
-            r"[^.\n]{0,80}\bFinalAcceptance\b",
-            re.IGNORECASE,
-        ),
-    ),
-    Rule(
         "HUMAN_PRE_REVIEW_ADMISSION",
         re.compile(
             r"^#{2,4}\s+(?:Pre[- ]?Review|Checker\s+Admission)\s+Gate\b"

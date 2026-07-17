@@ -783,3 +783,11 @@ immutable Review. Terminal-reject sampling is explicitly non-mutating and has
 no dispute, reopen, or adjudication path. Focused scanner fixtures and
 structural workflow-order tests prevent recurrence. Candidate `1c7c3e75` is
 historical failure evidence; a new exact-SHA full reviewer fanout is required.
+
+The first repair candidate `e2797fb1` then failed the repair-cycle plan gate:
+the two structural tests were not registered in the custom runner, payment
+wording left task effects versus the submitter operation implicit, and a global
+accept-order regex rejected valid branch-scoped prose. The follow-up registers
+both tests, raises the executed gate count, asserts the complete payment order,
+and removes the overbroad regex while retaining exact human-admission and
+disputed-reject protections.
