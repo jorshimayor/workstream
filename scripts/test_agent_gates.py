@@ -4454,14 +4454,14 @@ def test_stale_artifact_contracts_cutover_rejects_reached_terms_only() -> None:
         gate.scan_text(
             "backend/app/modules/tasks/schemas.py",
             "package_uri content_cid artifact_manifest_hash",
-            "foundation",
+            gate.ARTIFACT_CONTRACT_PHASE,
         )
         == []
     )
     failures = gate.scan_text(
         "contracts/artifact-store/version_1/schema/example.json",
         '{"cid": "provider-specific"}',
-        "foundation",
+        gate.ARTIFACT_CONTRACT_PHASE,
     )
     assert failures == [
         "contracts/artifact-store/version_1/schema/example.json:1: "

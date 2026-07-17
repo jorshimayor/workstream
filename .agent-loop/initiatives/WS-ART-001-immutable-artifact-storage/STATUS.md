@@ -9,8 +9,8 @@ PR #127 as `f64a8e5`, and committed-source preparation merged through PR #129
 as `9a04434` on 2026-07-16. The user explicitly started
 `WS-ART-001-02A3` on 2026-07-16.
 
-The planning-only cross-initiative boundary reconciliation merged through PR
-#139 as `5d353b6`, and AUTH's owner reconciliation merged through PR #140 as
+The planning-only cross-initiative boundary reconciliation merged through
+PR #139 as `5d353b6`, and AUTH's owner reconciliation merged through PR #140 as
 `d541521`. ART now consumes AUTH's canonical activation-custody and prepared
 mutation contracts without editing or activating AUTH runtime behavior.
 

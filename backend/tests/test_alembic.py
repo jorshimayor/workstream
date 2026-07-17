@@ -994,6 +994,15 @@ def test_artifact_store_v2_empty_clean_cut_and_reversible_shape(
         "artifact_operation_receipts.provider_receipt_id",
         "artifact_operation_receipts.retention_reference",
     }.issubset(v1_columns)
+    assert {
+        "artifact_upload_items.provider_object_ref",
+        "artifact_replicas.storage_namespace_id",
+        "artifact_replicas.namespace_fingerprint",
+        "artifact_replicas.provider_profile",
+        "artifact_replicas.provider_object_ref",
+        "artifact_operation_receipts.provider_object_ref",
+        "artifact_operation_receipts.replayed",
+    }.isdisjoint(v1_columns)
     assert "artifact_storage_namespaces.id" not in v1_columns
 
 

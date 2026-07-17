@@ -263,9 +263,13 @@ def test_preparation_limit_mapping_uses_every_canonical_setting(tmp_path: Path) 
     assert limits.maximum_source_bytes == settings.artifact_maximum_bytes
 
 
-def _load_worker_modules(monkeypatch: pytest.MonkeyPatch) -> tuple[ModuleType, ModuleType]:
+def _load_worker_modules(
+    monkeypatch: pytest.MonkeyPatch,
+    request: pytest.FixtureRequest,
+) -> tuple[ModuleType, ModuleType]:
     monkeypatch.setenv("WORKSTREAM_CELERY_TASK_ALWAYS_EAGER", "true")
     get_settings.cache_clear()
+    request.addfinalizer(get_settings.cache_clear)
     celery_module = importlib.import_module("app.workers.celery_app")
     celery_module = importlib.reload(celery_module)
     artifacts_module = importlib.import_module("app.workers.artifacts")
@@ -275,8 +279,9 @@ def _load_worker_modules(monkeypatch: pytest.MonkeyPatch) -> tuple[ModuleType, M
 
 def test_celery_registers_named_task_include_and_exact_beat_cadence(
     monkeypatch: pytest.MonkeyPatch,
+    request: pytest.FixtureRequest,
 ) -> None:
-    celery_module, artifacts_module = _load_worker_modules(monkeypatch)
+    celery_module, artifacts_module = _load_worker_modules(monkeypatch, request)
     settings = Settings(
         environment="test",
         celery_task_always_eager=True,
@@ -296,9 +301,10 @@ def test_celery_registers_named_task_include_and_exact_beat_cadence(
 
 def test_cleanup_task_runs_shared_helper_and_propagates_failure(
     monkeypatch: pytest.MonkeyPatch,
+    request: pytest.FixtureRequest,
     tmp_path: Path,
 ) -> None:
-    _celery_module, artifacts_module = _load_worker_modules(monkeypatch)
+    _celery_module, artifacts_module = _load_worker_modules(monkeypatch, request)
     settings = _enabled_settings(tmp_path)
     calls: list[Settings] = []
 

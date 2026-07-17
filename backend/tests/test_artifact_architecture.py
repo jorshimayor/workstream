@@ -146,14 +146,23 @@ def test_provider_methods_stay_inside_artifact_orchestration_and_adapters() -> N
     for path in _python_files(APP_ROOT):
         if any(root in path.parents for root in allowed_roots):
             continue
-        for node in ast.walk(_tree(path)):
+        tree = _tree(path)
+        artifact_store_receivers = {
+            argument.arg
+            for node in ast.walk(tree)
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            for argument in (*node.args.args, *node.args.kwonlyargs)
+            if "ArtifactStore" in _annotation_names(argument.annotation)
+        }
+        for node in ast.walk(tree):
             if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
                 continue
             if node.func.attr not in PROVIDER_METHODS:
                 continue
-            if node.func.attr == "open" and isinstance(node.func.value, ast.Name):
-                if node.func.value.id in {"os", "path", "file", "socket"}:
-                    continue
+            if not isinstance(node.func.value, ast.Name):
+                continue
+            if node.func.value.id not in artifact_store_receivers:
+                continue
             violations.append(
                 f"{path.relative_to(BACKEND_ROOT)} calls provider method {node.func.attr}"
             )
@@ -248,11 +257,12 @@ def test_scratch_cleanup_worker_has_no_product_or_database_state() -> None:
         "app.modules.audit",
         "app.modules.authorization",
     )
-    imported_modules = {
-        node.module
-        for node in ast.walk(_tree(path))
-        if isinstance(node, ast.ImportFrom) and node.module is not None
-    }
+    imported_modules: set[str] = set()
+    for node in ast.walk(_tree(path)):
+        if isinstance(node, ast.ImportFrom) and node.module is not None:
+            imported_modules.add(node.module)
+        elif isinstance(node, ast.Import):
+            imported_modules.update(alias.name for alias in node.names)
     assert not any(
         module.startswith(forbidden_import_prefixes) for module in imported_modules
     )

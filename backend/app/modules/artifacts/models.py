@@ -110,8 +110,10 @@ class ArtifactUploadItem(Base):
             name="expected_sha256_shape",
         ),
         CheckConstraint(
-            "(state in ('stored_pending_verification', 'ready')) = "
-            "(content_id is not null and provider_object_ref is not null)",
+            "((state in ('stored_pending_verification', 'ready')) and "
+            "content_id is not null and provider_object_ref is not null) or "
+            "((state not in ('stored_pending_verification', 'ready')) and "
+            "content_id is null and provider_object_ref is null)",
             name="stored_result_required",
         ),
         CheckConstraint(

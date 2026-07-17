@@ -58,10 +58,9 @@ class ArtifactStorageNamespaceSpec:
 
 @dataclass(frozen=True, slots=True)
 class ProviderAttemptFence:
-    """Committed item/session CAS values fencing one provider call."""
+    """Committed item CAS value fencing one provider call."""
 
     item_cas: int
-    session_cas: int
 
 
 def artifact_storage_namespace_spec(
@@ -190,7 +189,7 @@ class ArtifactStorageOrchestrator:
             item.error_code = None
             item.cas_version += 1
             upload_session.cas_version += 1
-            return ProviderAttemptFence(item.cas_version, upload_session.cas_version)
+            return ProviderAttemptFence(item.cas_version)
 
     async def _finalize_put(
         self,
@@ -284,9 +283,8 @@ class ArtifactStorageOrchestrator:
         if (
             upload_session is None
             or upload_session.state != "open"
-            or upload_session.cas_version != fence.session_cas
         ):
-            raise ArtifactIngestStateError("artifact upload session changed during provider I/O")
+            raise ArtifactIngestStateError("artifact upload session is not open")
         return item, upload_session
 
     @staticmethod
@@ -296,6 +294,7 @@ class ArtifactStorageOrchestrator:
         byte_count: int,
     ) -> None:
         """Move one item from reserved capacity to acknowledged byte usage."""
+        ArtifactStorageOrchestrator._validate_reserved_accounting(upload_session, item)
         upload_session.reserved_bytes -= item.reserved_bytes
         upload_session.reserved_items -= 1
         upload_session.current_bytes += byte_count
@@ -330,15 +329,29 @@ class ArtifactStorageOrchestrator:
             if item is None or item.state != "uploading" or item.cas_version != fence.item_cas:
                 return
             upload_session = await self._repo.lock_upload_session(item.session_id)
+            if upload_session is None:
+                raise ArtifactIntegrityError("artifact upload session is missing")
+            self._validate_reserved_accounting(upload_session, item)
             item.state = "failed"
             item.error_code = error_code
             item.cas_version += 1
-            if upload_session is not None:
-                upload_session.reserved_bytes = max(
-                    0, upload_session.reserved_bytes - item.reserved_bytes
-                )
-                upload_session.reserved_items = max(0, upload_session.reserved_items - 1)
-                upload_session.cas_version += 1
+            upload_session.reserved_bytes -= item.reserved_bytes
+            upload_session.reserved_items -= 1
+            upload_session.cas_version += 1
+
+    @staticmethod
+    def _validate_reserved_accounting(
+        upload_session: ArtifactUploadSession,
+        item: ArtifactUploadItem,
+    ) -> None:
+        """Reject aggregate drift before consuming one item's reservation."""
+        if (
+            upload_session.reserved_bytes < item.reserved_bytes
+            or upload_session.reserved_items < 1
+        ):
+            raise ArtifactIntegrityError(
+                "artifact upload session reservation accounting is invalid"
+            )
 
 
 async def validate_artifact_storage_namespace_at_startup(

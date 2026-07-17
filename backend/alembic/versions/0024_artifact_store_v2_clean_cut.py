@@ -98,8 +98,10 @@ def upgrade() -> None:
     op.create_check_constraint(
         "stored_result_required",
         "artifact_upload_items",
-        "(state in ('stored_pending_verification', 'ready')) = "
-        "(content_id is not null and provider_object_ref is not null)",
+        "((state in ('stored_pending_verification', 'ready')) and "
+        "content_id is not null and provider_object_ref is not null) or "
+        "((state not in ('stored_pending_verification', 'ready')) and "
+        "content_id is null and provider_object_ref is null)",
     )
 
     op.drop_constraint(

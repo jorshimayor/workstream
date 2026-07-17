@@ -14,6 +14,7 @@ from alembic import command
 from alembic.config import Config
 import pytest
 from sqlalchemy import select, text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.adapters.artifacts.local import LocalStorageAdapter, LocalStorageBootstrap
@@ -23,6 +24,7 @@ from app.interfaces.artifacts import (
     ArtifactByteRange,
     ArtifactConfigurationError,
     ArtifactInputMismatchError,
+    ArtifactIntegrityError,
     ArtifactObjectHead,
     ArtifactPutObservation,
     ArtifactPutResult,
@@ -220,6 +222,62 @@ async def _seed_reserved_item(
     return item_id
 
 
+async def _seed_reserved_items_in_one_session(
+    session,
+    commitments: tuple[ArtifactCommitment, ...],
+) -> tuple[str, ...]:
+    """Create multiple independently fenced items under one aggregate ledger."""
+    project_id = str(uuid4())
+    session_id = str(uuid4())
+    item_ids = tuple(str(uuid4()) for _ in commitments)
+    total_bytes = sum(commitment.byte_count for commitment in commitments)
+    session.add(Project(id=project_id, name="Artifact project", slug=f"artifact-{project_id}"))
+    await session.flush()
+    session.add(
+        ArtifactUploadSession(
+            id=session_id,
+            actor_id="actor-1",
+            project_id=project_id,
+            permitted_roles=["submission"],
+            state="open",
+            maximum_bytes=1024,
+            current_bytes=0,
+            reserved_bytes=total_bytes,
+            maximum_items=len(commitments),
+            current_items=0,
+            reserved_items=len(commitments),
+            expires_at=datetime.now(UTC) + timedelta(minutes=5),
+            cas_version=0,
+        )
+    )
+    await session.flush()
+    for item_id, commitment in zip(item_ids, commitments, strict=True):
+        session.add(
+            ArtifactUploadItem(
+                id=item_id,
+                session_id=session_id,
+                logical_role="submission",
+                display_name=f"{item_id}.bin",
+                media_type=commitment.media_type,
+                reserved_bytes=commitment.byte_count,
+                expected_sha256=commitment.sha256,
+                expected_size=commitment.byte_count,
+                idempotency_key=f"put-{item_id}",
+                request_digest=canonical_json_hash(
+                    {
+                        "sha256": commitment.sha256,
+                        "byte_count": commitment.byte_count,
+                        "media_type": commitment.media_type,
+                    }
+                ),
+                state="reserved",
+                cas_version=0,
+            )
+        )
+    await session.commit()
+    return item_ids
+
+
 @pytest.mark.asyncio
 async def test_put_acknowledgement_stops_at_pending_verification(
     artifact_database_env: str,
@@ -366,14 +424,23 @@ class _ConcurrentAcknowledgingStore(_AcknowledgingStore):
     async def put(self, source: CommittedArtifactSource) -> ArtifactPutResult:
         self.put_calls += 1
         self._arrivals += 1
+        arrival = self._arrivals
         if self._arrivals == 2:
             self._release.set()
         await asyncio.wait_for(self._release.wait(), timeout=2)
         digest_hex = source.commitment.sha256[7:]
         return ArtifactPutResult(
             f"sha256/{digest_hex[:2]}/{digest_hex[2:]}",
-            replayed=self._arrivals > 1,
+            replayed=arrival > 1,
         )
+
+
+class _ConcurrentDistinctAcknowledgingStore(_ConcurrentAcknowledgingStore):
+    """Release two distinct initial publications into finalization together."""
+
+    async def put(self, source: CommittedArtifactSource) -> ArtifactPutResult:
+        result = await super().put(source)
+        return ArtifactPutResult(result.provider_object_ref, replayed=False)
 
 
 @pytest.mark.asyncio
@@ -441,6 +508,125 @@ async def test_concurrent_same_object_finalization_reuses_one_replica(
         assert {receipt.replica_id for receipt in receipts} == {replicas[0].id}
     finally:
         await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_independent_items_in_one_session_finalize_without_shared_cas_replay(
+    artifact_database_env: str,
+    tmp_path: Path,
+) -> None:
+    """Fence provider acknowledgements per item while accounting one session."""
+    engine = create_async_engine(artifact_database_env)
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    store = _ConcurrentDistinctAcknowledgingStore()
+    namespace = artifact_storage_namespace_spec(_settings(tmp_path), store)
+    try:
+        async with _minted_source(tmp_path / "scratch-first", b"first-item") as first:
+            async with _minted_source(tmp_path / "scratch-second", b"second-item") as second:
+                async with factory() as session:
+                    item_ids = await _seed_reserved_items_in_one_session(
+                        session,
+                        (first.commitment, second.commitment),
+                    )
+                    await ArtifactStorageOrchestrator(
+                        session, store, namespace
+                    ).ensure_storage_namespace()
+
+                async def finalize(item_id: str, source: CommittedArtifactSource) -> None:
+                    async with factory() as candidate_session:
+                        await ArtifactStorageOrchestrator(
+                            candidate_session, store, namespace
+                        ).put_reserved_item(item_id, source)
+
+                await asyncio.gather(
+                    finalize(item_ids[0], first),
+                    finalize(item_ids[1], second),
+                )
+
+        async with factory() as session:
+            items = (
+                await session.execute(
+                    select(ArtifactUploadItem).where(ArtifactUploadItem.id.in_(item_ids))
+                )
+            ).scalars().all()
+            upload_session = await session.get(ArtifactUploadSession, items[0].session_id)
+            receipts = (
+                await session.execute(select(ArtifactOperationReceipt))
+            ).scalars().all()
+
+        assert {item.state for item in items} == {"stored_pending_verification"}
+        assert upload_session is not None
+        assert upload_session.reserved_bytes == 0
+        assert upload_session.reserved_items == 0
+        assert upload_session.current_bytes == len(b"first-item") + len(b"second-item")
+        assert upload_session.current_items == 2
+        assert len(receipts) == 2
+    finally:
+        await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_database_rejects_partial_upload_result_metadata(
+    artifact_database_env: str,
+    tmp_path: Path,
+) -> None:
+    """Require both stored-result references or neither in every item state."""
+    engine = create_async_engine(artifact_database_env)
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    try:
+        async with _minted_source(tmp_path / "scratch", b"constraint") as source:
+            async with factory() as session:
+                item_id = await _seed_reserved_item(session, source.commitment)
+                content_id = str(uuid4())
+                session.add(
+                    ArtifactContent(
+                        id=content_id,
+                        sha256=source.commitment.sha256,
+                        byte_count=source.commitment.byte_count,
+                        media_type=source.commitment.media_type,
+                        normalized_display_name="constraint.bin",
+                    )
+                )
+                await session.commit()
+
+            with pytest.raises(IntegrityError):
+                async with engine.begin() as connection:
+                    await connection.execute(
+                        text(
+                            "update artifact_upload_items set content_id = :content_id "
+                            "where id = :item_id"
+                        ),
+                        {"content_id": content_id, "item_id": item_id},
+                    )
+            with pytest.raises(IntegrityError):
+                async with engine.begin() as connection:
+                    await connection.execute(
+                        text(
+                            "update artifact_upload_items "
+                            "set provider_object_ref = 'sha256/00/object' where id = :item_id"
+                        ),
+                        {"item_id": item_id},
+                    )
+
+        async with factory() as session:
+            item = await session.get(ArtifactUploadItem, item_id)
+            assert item is not None
+            assert item.content_id is None
+            assert item.provider_object_ref is None
+    finally:
+        await engine.dispose()
+
+
+def test_reservation_accounting_rejects_drift_without_clamping() -> None:
+    """Never consume capacity belonging to a different upload item."""
+    upload_session = ArtifactUploadSession(reserved_bytes=3, reserved_items=1)
+    item = ArtifactUploadItem(reserved_bytes=4)
+
+    with pytest.raises(ArtifactIntegrityError, match="reservation accounting"):
+        ArtifactStorageOrchestrator._apply_committed_accounting(upload_session, item, 4)
+
+    assert upload_session.reserved_bytes == 3
+    assert upload_session.reserved_items == 1
 
 
 class _FinalizationCancelledOrchestrator(ArtifactStorageOrchestrator):
@@ -807,7 +993,7 @@ async def test_unexpected_or_cancelled_provider_failure_requires_replay(
         artifact_storage_namespace_spec(_settings(tmp_path), store),
     )
     orchestrator._start_put = AsyncMock(  # type: ignore[method-assign]
-        return_value=ProviderAttemptFence(1, 1)
+        return_value=ProviderAttemptFence(1)
     )
     orchestrator._mark_replay_required = AsyncMock()  # type: ignore[method-assign]
 
@@ -840,7 +1026,7 @@ async def test_finalization_failure_never_leaves_uploading_unresolved(
         artifact_storage_namespace_spec(_settings(tmp_path), store),
     )
     orchestrator._start_put = AsyncMock(  # type: ignore[method-assign]
-        return_value=ProviderAttemptFence(1, 1)
+        return_value=ProviderAttemptFence(1)
     )
     orchestrator._finalize_put = AsyncMock(  # type: ignore[method-assign]
         side_effect=finalization_failure
@@ -853,8 +1039,10 @@ async def test_finalization_failure_never_leaves_uploading_unresolved(
             await orchestrator.put_reserved_item("item", source)
     if isinstance(finalization_failure, ArtifactInputMismatchError):
         orchestrator._fail_put.assert_awaited_once()  # type: ignore[attr-defined]
+        orchestrator._mark_replay_required.assert_not_awaited()  # type: ignore[attr-defined]
     else:
         orchestrator._mark_replay_required.assert_awaited_once()  # type: ignore[attr-defined]
+        orchestrator._fail_put.assert_not_awaited()  # type: ignore[attr-defined]
 
 
 @pytest.mark.asyncio
@@ -913,6 +1101,7 @@ async def test_startup_namespace_validation_uses_canonical_session_factory(
 def test_models_remove_v1_provider_retention_and_receipt_fields() -> None:
     assert not hasattr(ArtifactReplica, "retention_state")
     assert not hasattr(ArtifactReplica, "provider_artifact_id")
+    assert not hasattr(ArtifactReplica, "provider_manifest_id")
     assert not hasattr(ArtifactOperationReceipt, "provider_receipt_id")
     assert not hasattr(ArtifactOperationReceipt, "retention_reference")
     assert not hasattr(ArtifactOperationReceipt, "service_principal")

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import AsyncIterator
+from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import os
 from pathlib import Path
@@ -61,6 +62,55 @@ def test_local_layout_is_private_content_derived_and_v2_only(tmp_path: Path) -> 
         path.name for path in root.iterdir()
     }
     assert "private" not in provider_object_ref
+
+
+def test_local_layout_initialization_serializes_and_publishes_marker_atomically(
+    tmp_path: Path,
+) -> None:
+    """Allow concurrent bootstrap only after one complete marker is durable."""
+    root = tmp_path / "artifacts"
+    root.mkdir(mode=0o700)
+    bootstraps = [
+        LocalStorageBootstrap(LocalStorageAdapter(root=root)),
+        LocalStorageBootstrap(LocalStorageAdapter(root=root)),
+    ]
+    claims = [local_namespace_claim(bootstrap) for bootstrap in bootstraps]
+
+    def initialize(index: int) -> None:
+        bootstraps[index].initialize_after_namespace_claim(claims[index])
+
+    try:
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            futures = [pool.submit(initialize, index) for index in range(2)]
+            for future in futures:
+                future.result(timeout=5)
+    finally:
+        for bootstrap in bootstraps:
+            bootstrap.close()
+
+    assert (root / ".workstream-artifact-store-v2").read_bytes() == (
+        b"workstream-artifact-store-v2\n"
+    )
+    assert not (root / ".workstream-artifact-store-v2.initializing").exists()
+
+
+def test_local_recovers_only_one_complete_durable_marker_temporary(
+    tmp_path: Path,
+) -> None:
+    """Finish an interrupted atomic rename only for exact marker bytes."""
+    root = tmp_path / "artifacts"
+    root.mkdir(mode=0o700)
+    temporary = root / ".workstream-artifact-store-v2.initializing"
+    temporary.write_bytes(b"workstream-artifact-store-v2\n")
+    temporary.chmod(0o600)
+
+    adapter = initialize_local_store(root=root)
+    adapter.close()
+
+    assert (root / ".workstream-artifact-store-v2").read_bytes() == (
+        b"workstream-artifact-store-v2\n"
+    )
+    assert not temporary.exists()
 
 
 def test_local_refuses_v1_or_unknown_disk_layout(tmp_path: Path) -> None:

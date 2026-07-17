@@ -48,8 +48,11 @@ from app.modules.artifacts.sources import ArtifactCommitment, CommittedArtifactS
 
 _IDENTITY = ExternalServiceAdapterIdentity(ARTIFACT_STORE_CAPABILITY_KEY, "local")
 _LAYOUT_MARKER = ".workstream-artifact-store-v2"
+_LAYOUT_MARKER_TEMPORARY = ".workstream-artifact-store-v2.initializing"
 _LAYOUT_MARKER_BYTES = b"workstream-artifact-store-v2\n"
-_LAYOUT_ENTRY_NAMES = frozenset({_LAYOUT_MARKER, "locks", "objects", "tmp"})
+_LAYOUT_ENTRY_NAMES = frozenset(
+    {_LAYOUT_MARKER, _LAYOUT_MARKER_TEMPORARY, "locks", "objects", "tmp"}
+)
 _PROVIDER_OBJECT_REF = re.compile(r"^sha256/([0-9a-f]{2})/([0-9a-f]{62})$")
 _DIGEST_PREFIX_NAME = re.compile(r"^[0-9a-f]{2}$")
 _DIGEST_OBJECT_NAME = re.compile(r"^[0-9a-f]{62}$")
@@ -488,40 +491,76 @@ class LocalStorageAdapter:
 
     def _initialize_layout(self) -> None:
         """Initialize only an empty or already-valid v2 layout on the pinned root."""
-
-        entries = set(os.listdir(self._root_fd))
-        if not entries.issubset(_LAYOUT_ENTRY_NAMES):
-            raise ArtifactConfigurationError("local artifact layout is incompatible")
-        if _LAYOUT_MARKER in entries:
-            self._validate_existing_layout(entries)
-        if _LAYOUT_MARKER not in entries:
-            if entries:
-                raise ArtifactConfigurationError("local artifact layout is incompatible")
-            try:
-                marker = os.open(
-                    _LAYOUT_MARKER,
-                    os.O_CREAT | os.O_EXCL | os.O_WRONLY | getattr(os, "O_NOFOLLOW", 0),
-                    0o600,
-                    dir_fd=self._root_fd,
-                )
-            except FileExistsError:
-                pass
-            else:
-                try:
-                    self._write_all(marker, memoryview(_LAYOUT_MARKER_BYTES))
-                    os.fsync(marker)
-                finally:
-                    os.close(marker)
-                os.fsync(self._root_fd)
-        self._validate_marker()
-
-        objects_fd = self._ensure_directory(self._root_fd, "objects")
+        fcntl.flock(self._root_fd, fcntl.LOCK_EX)
         try:
-            self._sha256_fd = self._ensure_directory(objects_fd, "sha256")
+            entries = set(os.listdir(self._root_fd))
+            if not entries.issubset(_LAYOUT_ENTRY_NAMES):
+                raise ArtifactConfigurationError("local artifact layout is incompatible")
+            if _LAYOUT_MARKER_TEMPORARY in entries:
+                self._recover_layout_marker(entries)
+                entries = set(os.listdir(self._root_fd))
+            if _LAYOUT_MARKER in entries:
+                self._validate_existing_layout(entries)
+            else:
+                if entries:
+                    raise ArtifactConfigurationError("local artifact layout is incompatible")
+                self._publish_layout_marker()
+
+            self._validate_marker()
+
+            objects_fd = self._ensure_directory(self._root_fd, "objects")
+            try:
+                self._sha256_fd = self._ensure_directory(objects_fd, "sha256")
+            finally:
+                os.close(objects_fd)
+            self._tmp_fd = self._ensure_directory(self._root_fd, "tmp")
+            self._locks_fd = self._ensure_directory(self._root_fd, "locks")
         finally:
-            os.close(objects_fd)
-        self._tmp_fd = self._ensure_directory(self._root_fd, "tmp")
-        self._locks_fd = self._ensure_directory(self._root_fd, "locks")
+            fcntl.flock(self._root_fd, fcntl.LOCK_UN)
+
+    def _publish_layout_marker(self) -> None:
+        """Durably publish the marker from one private temporary file."""
+        marker = os.open(
+            _LAYOUT_MARKER_TEMPORARY,
+            os.O_CREAT | os.O_EXCL | os.O_WRONLY | getattr(os, "O_NOFOLLOW", 0),
+            0o600,
+            dir_fd=self._root_fd,
+        )
+        try:
+            self._write_all(marker, memoryview(_LAYOUT_MARKER_BYTES))
+            os.fsync(marker)
+        finally:
+            os.close(marker)
+        os.link(
+            _LAYOUT_MARKER_TEMPORARY,
+            _LAYOUT_MARKER,
+            src_dir_fd=self._root_fd,
+            dst_dir_fd=self._root_fd,
+            follow_symlinks=False,
+        )
+        os.fsync(self._root_fd)
+        os.unlink(_LAYOUT_MARKER_TEMPORARY, dir_fd=self._root_fd)
+        os.fsync(self._root_fd)
+
+    def _recover_layout_marker(self, entries: set[str]) -> None:
+        """Complete or remove one exact durable marker publication remnant."""
+        self._validate_marker(_LAYOUT_MARKER_TEMPORARY)
+        if _LAYOUT_MARKER in entries:
+            self._validate_marker()
+            os.unlink(_LAYOUT_MARKER_TEMPORARY, dir_fd=self._root_fd)
+        else:
+            if entries != {_LAYOUT_MARKER_TEMPORARY}:
+                raise ArtifactConfigurationError("local artifact layout is incompatible")
+            os.link(
+                _LAYOUT_MARKER_TEMPORARY,
+                _LAYOUT_MARKER,
+                src_dir_fd=self._root_fd,
+                dst_dir_fd=self._root_fd,
+                follow_symlinks=False,
+            )
+            os.fsync(self._root_fd)
+            os.unlink(_LAYOUT_MARKER_TEMPORARY, dir_fd=self._root_fd)
+        os.fsync(self._root_fd)
 
     def _validate_existing_layout(self, root_entries: set[str]) -> None:
         """Validate the complete existing v2 grammar before any mutation."""
@@ -619,10 +658,10 @@ class LocalStorageAdapter:
         if not self._initialized:
             raise ArtifactConfigurationError("artifact store namespace is not initialized")
 
-    def _validate_marker(self) -> None:
+    def _validate_marker(self, name: str = _LAYOUT_MARKER) -> None:
         """Require the exact private v2 layout marker."""
         descriptor = os.open(
-            _LAYOUT_MARKER,
+            name,
             os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0),
             dir_fd=self._root_fd,
         )
