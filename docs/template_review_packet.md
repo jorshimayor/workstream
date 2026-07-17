@@ -17,8 +17,11 @@
 - assigned reason:
 - conflict-of-interest attestation:
 - contributor-reviewer pair risk:
-- second review required:
-- second review trigger:
+- non-mutating quality audit selected:
+- quality audit selection reason:
+
+Quality-audit selection cannot delay or replace the Review decision,
+FinalAcceptance, task effects, or contribution transaction.
 
 ## Decision
 

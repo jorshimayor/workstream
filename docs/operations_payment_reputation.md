@@ -7,7 +7,8 @@ the authorized award and immutable fulfillment result with the same discipline
 as automated settlement.
 
 Every valid recorded human Review creates a reviewer `completed_review`
-contribution. `accept` additionally creates a submitter `accepted_submission`
+contribution. `Review(accept)` first creates REV-owned FinalAcceptance; that
+immutable fact is the sole source of a submitter `accepted_submission`
 contribution. Compensation is evaluated independently for each record from its
 frozen policy version; an explicit unpaid rule creates no award. Awards,
 fulfillment receipts, projections, and reputation events attach to contributions
@@ -53,17 +54,19 @@ Default:
 - a valid human `needs_revision`, `accept`, or `reject` decision creates one
   reviewer `completed_review`; the ReviewLease-frozen
   `ContributionPolicyVersion` decides whether it creates an award
-- `accept` additionally creates one submitter `accepted_submission`; the
-  TaskAssignment-frozen `ContributionPolicyVersion` decides whether it creates
-  an award
-- `needs_revision` and `reject` create no submitter contribution or award
+- `accept` creates one FinalAcceptance and exactly one submitter
+  `accepted_submission` from it; the TaskAssignment-frozen
+  `ContributionPolicyVersion` decides whether it creates an award
+- `needs_revision` and `reject` create no FinalAcceptance, submitter
+  contribution, or submitter award
 - fulfillment is recorded only by an authenticated adapter callback bound to the
   award's frozen adapter binding
 - a fulfilled award requires an immutable receipt, exact quantity, and external
   reference
 
-Review decisions, task acceptance, award creation, and fulfillment remain
-separate facts.
+Review decisions, FinalAcceptance, contribution recognition, award creation,
+and fulfillment remain separate facts. FinalAcceptance has no manual API/action
+and v0.1 has no adjudication or reopen path.
 
 `ACCEPTED` means the work met the guide. `fulfilled` means the bound adapter
 reported completion with an immutable receipt and external reference.
@@ -120,10 +123,10 @@ Track:
 
 - completed reviews
 - decision distribution
-- overturned decisions
+- non-mutating quality-audit findings
 - unclear feedback reports
 - average turnaround
-- second-review agreement
+- quality-audit agreement
 
 Suggested v0.1 reviewer events:
 
@@ -131,9 +134,13 @@ Suggested v0.1 reviewer events:
 | --- | ---: | --- |
 | clear_review | +2 | Structured findings or clear acceptance evidence. |
 | unclear_feedback | -2 | Finding lacks issue, evidence, or required fix. |
-| overturned_accept | -3 | Accepted work later found non-compliant. |
-| overturned_reject | -3 | Rejected work that belonged in accepted or needs-revision state. |
+| review_quality_audit_completed | 0 | Records that the decision evidence was independently sampled. |
+| review_quality_issue_flagged | -3 | Non-mutating audit found unsupported decision reasoning. |
 | missed_prior_finding | -2 | Resubmission accepted with unresolved prior issue. |
+
+Quality-audit events may affect reputation only. They do not reopen Review,
+replace FinalAcceptance, mutate task status or contributions, or create an
+adjudication decision.
 
 ## Skill Tags
 

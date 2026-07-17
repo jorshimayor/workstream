@@ -230,7 +230,10 @@ def reviewer_rows(text: str) -> dict[str, tuple[str, str, str]]:
             in_reviewer_table = False
             continue
         notes = cells[3] if len(cells) > 3 else ""
-        rows[cells[0]] = (cells[1], cells[2], notes)
+        # Evidence addenda are newest-first, matching reviewed_sha() and
+        # provenance_value(). Preserve the first authoritative result for each
+        # track instead of letting an older table below overwrite it.
+        rows.setdefault(cells[0], (cells[1], cells[2], notes))
     return rows
 
 
@@ -423,8 +426,14 @@ def required_chunk_ids(paths: list[str]) -> list[str]:
             continue
         contract_path = ROOT / path
         try:
-            heading = contract_path.read_text(encoding="utf-8").splitlines()[0]
-        except (IndexError, OSError, UnicodeDecodeError) as exc:
+            if os.path.lexists(contract_path):
+                if contract_path.is_symlink() or not contract_path.is_file():
+                    raise RuntimeError("changed chunk contract is not a regular file")
+                text = contract_path.read_text(encoding="utf-8")
+            else:
+                text = historical_contract_text(path)
+            heading = text.splitlines()[0]
+        except (IndexError, OSError, UnicodeDecodeError, RuntimeError) as exc:
             raise RuntimeError(f"cannot read changed chunk contract {path}") from exc
         chunk_id = chunk_id_from_heading(heading)
         if chunk_id is None:
@@ -434,6 +443,24 @@ def required_chunk_ids(paths: list[str]) -> list[str]:
         if chunk_id not in chunk_ids:
             chunk_ids.append(chunk_id)
     return chunk_ids
+
+
+def historical_contract_text(path: str) -> str:
+    """Recover a deleted contract from index, HEAD, or the review base."""
+    base_ref = resolve_base_ref()
+    object_names = (f":{path}", f"HEAD:{path}", f"{base_ref}:{path}")
+    for object_name in object_names:
+        result = subprocess.run(
+            ["git", "show", object_name],
+            cwd=ROOT,
+            check=False,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if result.returncode == 0:
+            return result.stdout
+    raise RuntimeError(f"deleted contract has no recoverable provenance: {path}")
 
 
 def chunk_id_from_heading(heading: str) -> str | None:

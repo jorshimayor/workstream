@@ -372,15 +372,13 @@ def test_evidence_must_reference_changed_chunk() -> None:
             chunks = gate.ROOT / ".agent-loop/initiatives/example/chunks"
             chunks.mkdir(parents=True)
             invalid_contracts = {
-                "missing.md": None,
                 "empty.md": b"",
                 "malformed.md": b"# Contract without a lifecycle id\n",
                 "invalid-utf8.md": b"\xff",
             }
             for filename, content in invalid_contracts.items():
                 relative_path = ".agent-loop/initiatives/example/chunks/" + filename
-                if content is not None:
-                    (chunks / filename).write_bytes(content)
+                (chunks / filename).write_bytes(content)
                 try:
                     gate.required_chunk_ids([relative_path])
                 except RuntimeError:
@@ -400,6 +398,74 @@ def test_evidence_must_reference_changed_chunk() -> None:
                 pass
             else:
                 raise AssertionError("unreadable changed contract did not fail closed")
+
+            missing_relative = (
+                ".agent-loop/initiatives/example/chunks/missing.md"
+            )
+            try:
+                gate.required_chunk_ids([missing_relative])
+            except RuntimeError:
+                pass
+            else:
+                raise AssertionError("missing changed contract did not fail closed")
+
+            dangling_path = chunks / "dangling.md"
+            dangling_path.symlink_to(chunks / "absent-target.md")
+            try:
+                gate.required_chunk_ids(
+                    [".agent-loop/initiatives/example/chunks/dangling.md"]
+                )
+            except RuntimeError:
+                pass
+            else:
+                raise AssertionError(
+                    "dangling changed contract did not fail closed"
+                )
+
+            linked_target = chunks / "linked-target.md"
+            linked_target.write_text(
+                "# Chunk Contract: WS-EXAMPLE-001-LINKED - External\n",
+                encoding="utf-8",
+            )
+            linked_path = chunks / "linked.md"
+            linked_path.symlink_to(linked_target)
+            try:
+                gate.required_chunk_ids(
+                    [".agent-loop/initiatives/example/chunks/linked.md"]
+                )
+            except RuntimeError:
+                pass
+            else:
+                raise AssertionError(
+                    "resolvable symlink contract did not fail closed"
+                )
+
+            replacement = chunks / "WS-EXAMPLE-001-NEW-replacement.md"
+            replacement.write_text(
+                "# Chunk Contract: WS-EXAMPLE-001-NEW - Replacement\n",
+                encoding="utf-8",
+            )
+            original_historical_contract_text = gate.historical_contract_text
+            gate.historical_contract_text = lambda _path: (
+                "# Chunk Contract: WS-EXAMPLE-001-OLD - Deleted\n"
+            )
+            try:
+                assert gate.required_chunk_ids(
+                    [
+                        ".agent-loop/initiatives/example/chunks/"
+                        "WS-EXAMPLE-001-OLD-deleted.md"
+                    ]
+                ) == ["ws-example-001-old"]
+                assert gate.required_chunk_ids(
+                    [
+                        ".agent-loop/initiatives/example/chunks/"
+                        "WS-EXAMPLE-001-OLD-deleted.md",
+                        ".agent-loop/initiatives/example/chunks/"
+                        "WS-EXAMPLE-001-NEW-replacement.md",
+                    ]
+                ) == ["ws-example-001-old", "ws-example-001-new"]
+            finally:
+                gate.historical_contract_text = original_historical_contract_text
     finally:
         gate.ROOT = original_root
     original_changed_files = gate.changed_files
@@ -525,6 +591,17 @@ def test_evidence_accepts_exact_pass_and_approved_na_results() -> None:
         "| qa/test | N/A - with approved reason | None | explicitly unrelated because docs only |\n"
     )
     assert gate.validate_reviewer_rows(text.lower(), required) == []
+
+    newest_first_text = (
+        "| Reviewer | Result | Blocking findings | Notes |\n"
+        "|---|---:|---|---|\n"
+        "| senior engineering | PASS AFTER FIXES | None | current addendum |\n"
+        "\nHistorical addendum\n\n"
+        "| Reviewer | Result | Blocking findings | Notes |\n"
+        "|---|---:|---|---|\n"
+        "| senior engineering | Pending | Old finding | superseded |\n"
+    )
+    assert gate.validate_reviewer_rows(newest_first_text.lower(), required) == []
 
     bad_text = (
         "| Reviewer | Result | Blocking findings | Notes |\n"
@@ -1339,8 +1416,13 @@ def test_current_runtime_walkthrough_rejects_unimplemented_compensation_records(
     )
     sample = " ".join(
         (
-            "CompensationPolicyVersion",
+            "ContributionPolicy",
+            "ContributionPolicyVersion",
+            "ContributionRule",
+            "ContributionAwardDefinition",
+            "ProjectCompensationAdapterBinding",
             "ReviewLease",
+            "ContributionRecord",
             "CompensationAward",
             "CompensationFulfillmentReceipt",
             "CompensationStatusProjection",
@@ -1351,14 +1433,26 @@ def test_current_runtime_walkthrough_rejects_unimplemented_compensation_records(
         pattern.pattern
         for pattern in stale.UNIMPLEMENTED_CURRENT_RUNTIME_COMPENSATION_PATTERNS
     } == {
-        r"\bCompensationPolicyVersion\b",
+        r"\bContributionPolicy\b",
+        r"\bContributionPolicyVersion\b",
+        r"\bContributionRule\b",
+        r"\bContributionAwardDefinition\b",
+        r"\bProjectCompensationAdapterBinding\b",
         r"\bReviewLease\b",
+        r"\bContributionRecord\b",
         r"\bCompensationAward\b",
         r"\bCompensationFulfillmentReceipt\b",
         r"\bCompensationStatusProjection\b",
     }
     assert all(
         pattern.search(sample)
+        for pattern in stale.UNIMPLEMENTED_CURRENT_RUNTIME_COMPENSATION_PATTERNS
+    )
+    current_walkthrough = Path("docs/current_system_data_flow.html").read_text(
+        encoding="utf-8"
+    )
+    assert not any(
+        pattern.search(current_walkthrough)
         for pattern in stale.UNIMPLEMENTED_CURRENT_RUNTIME_COMPENSATION_PATTERNS
     )
 
@@ -3788,6 +3882,7 @@ def test_stale_authorization_rule_examples_are_rejected() -> None:
         "Celery worker_id identifies the background process.",
         "The checker worker_id is included in internal telemetry.",
         "See backend/app/workers/tasks.py.",
+        "See app/workers/tasks.py.",
         "coverage report --include='app/workers/*' --precision=2 --fail-under=90",
         "ruff check app/workers/reviews.py",
         "review_lifecycle_live_drill.py --start-api-worker-beat --require-workers",

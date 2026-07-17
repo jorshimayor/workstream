@@ -156,6 +156,8 @@ Required before entering:
 - from `REVIEW_PENDING`: review decision id, at least one structured review
   finding, reviewer `completed_review` contribution, and any applicable reviewer
   award
+- from `REVIEW_PENDING`: the same TaskAssignment remains `active`, with no
+  FinalAcceptance or submitter contribution
 
 Before the contributor resumes, Workstream prepares the next revision context. That preparation checks whether the active project guide or policy context changed since the prior submission was locked. Revision policy decides whether the next attempt keeps the prior context, rebases to the current active context, or is blocked for project-manager repair.
 
@@ -168,6 +170,9 @@ The submission is accepted.
 Required before entering:
 
 - accepted review decision
+- one immutable FinalAcceptance bound to the accepted Review, existing
+  versioned Submission, task, submitter, recording reviewer, and locked
+  ReviewPolicy
 - no unresolved blocking checker failure under the locked post-submit checker policy
 - evidence present
 - reviewer cited evidence supporting acceptance
@@ -178,8 +183,9 @@ Required before entering:
 Required side effects:
 
 - reviewer `completed_review` contribution created with the Review
-- submitter `accepted_submission` contribution created from the accepted
-  submission, accepting Review, frozen policy lineage, and artifact hash
+- submitter `accepted_submission` contribution created from FinalAcceptance,
+  the exact TaskAssignment, frozen policy lineage, and artifact hash; it is not
+  inferred directly from Review.decision
 - applicable awards created independently from the reviewer and submitter
   contribution records
 - reputation events reference the applicable contribution record
@@ -191,8 +197,14 @@ The task or submission is rejected.
 Required before entering:
 
 - rejection review decision
-- rejection reason
+- bounded human rejection reason
 - reviewer `completed_review` contribution and any applicable reviewer award
+
+Required side effects:
+
+- same-task TaskAssignment is `blocked` and bound to the source reject Review
+- no other task, assignment, or actor grant changes
+- no FinalAcceptance or submitter `accepted_submission` exists
 
 ### CANCELLED
 
@@ -228,6 +240,7 @@ No administrative or recovery grant authorizes these transitions:
 
 - `SUBMITTED -> REVIEW_PENDING` without checker run
 - `REVIEW_PENDING -> ACCEPTED` without review decision
+- `REVIEW_PENDING -> ACCEPTED` without exactly one FinalAcceptance
 - `REVIEW_PENDING -> ACCEPTED` without contribution record creation
 - `NEEDS_REVISION -> ACCEPTED` without new submission or explicit finding closure
 - `SUBMITTED -> ACCEPTED` directly
@@ -236,6 +249,7 @@ No administrative or recovery grant authorizes these transitions:
 - compensation projection `pending -> fulfilled` without an immutable payable
   award and fulfillment receipt
 - compensation exposure without a contribution record and frozen policy
+- adjudication, appeal, acceptance replacement, or reopen transition in v0.1
 - fulfillment without an external reference
 
 ## Submission Versioning

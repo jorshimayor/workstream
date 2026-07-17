@@ -62,7 +62,7 @@ Mitigation:
 
 - structured findings required
 - reviewer quality metrics
-- second-review audits
+- post-decision non-mutating reviewer-quality audits
 
 ### R4: Revision Loops Without Closure
 
@@ -105,8 +105,8 @@ Bad review decisions can demoralize contributors and corrupt quality metrics.
 Mitigation:
 
 - reviewer reputation
-- second-review sampling
-- overturned decision tracking
+- non-mutating reviewer-quality sampling
+- reviewer-quality signal tracking
 - escalation process
 
 ### R7: Fake Evidence
@@ -172,11 +172,12 @@ Reviewers can repeatedly approve weak work for favored contributors or skip evid
 
 Mitigation:
 
-- sample accepted work for second review
+- sample accepted work for a non-mutating post-decision quality audit
 - flag repeated contributor-reviewer pairs
 - require evidence citation on accept
-- track overturned accept decisions
-- require independent review for high-value or disputed tasks
+- track unsupported-decision quality signals
+- require independent non-mutating quality audits for high-value or disputed
+  tasks; they cannot delay or replace the recorded decision
 
 ### R12: Bad Project Guides
 

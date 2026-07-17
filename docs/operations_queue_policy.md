@@ -177,8 +177,9 @@ Owner:
 
 Policy:
 
-- the accepting Review creates reviewer `completed_review` and submitter
-  `accepted_submission` contribution records atomically
+- the accepting Review creates reviewer `completed_review`, REV-owned
+  FinalAcceptance, and FinalAcceptance-sourced submitter `accepted_submission`
+  contribution records atomically
 - each frozen contribution policy is evaluated independently; only payable
   contributions create awards and fulfillment follow-up
 - accepted task is not confused with fulfilled compensation
@@ -195,6 +196,10 @@ Owner:
 Policy:
 
 - rejection requires evidence and guide-grounded reason
+- the Task enters canonical `rejected`; only its same-task TaskAssignment is
+  blocked and bound to the reject Review
+- no FinalAcceptance or submitter contribution is created; no actor grant or
+  unrelated task changes
 
 ### Compensation Fulfillment Follow-Up
 
@@ -234,9 +239,9 @@ Every operating day starts with:
 | `SUBMITTED -> EVALUATION_PENDING` | immutable submission version, locked post-submit checker policy id/version/hash/body copied from the task context |
 | `EVALUATION_PENDING -> REVIEW_PENDING` | checker run for exact submission version, readiness certificate, no blocking failures |
 | `EVALUATION_PENDING -> NEEDS_REVISION` | checker run id, outcome source `auto_checker`, contributor-visible checker failures with severity, message, suggested fix |
-| `REVIEW_PENDING -> NEEDS_REVISION` | review decision, at least one structured finding, reviewer `completed_review` contribution and applicable reviewer award, revision policy still permits revision |
-| `REVIEW_PENDING -> ACCEPTED` | accepted review, acceptance evidence refs, reviewer `completed_review` and submitter `accepted_submission` contributions, applicable awards |
-| `REVIEW_PENDING -> REJECTED` | rejected review, rejection reason/finding, reviewer `completed_review` contribution and applicable reviewer award; no submitter contribution |
+| `REVIEW_PENDING -> NEEDS_REVISION` | review decision, at least one structured finding, TaskAssignment remains `active`, reviewer `completed_review` contribution and applicable reviewer award, no FinalAcceptance or submitter contribution, revision policy still permits revision |
+| `REVIEW_PENDING -> ACCEPTED` | accepted Review, one FinalAcceptance for the exact task/Review/Submission, acceptance evidence refs, reviewer `completed_review` and FinalAcceptance-sourced submitter `accepted_submission` contributions, applicable awards |
+| `REVIEW_PENDING -> REJECTED` | rejected Review, bounded human reason/finding, only the same-task TaskAssignment blocked with its source Review, reviewer `completed_review` contribution and applicable reviewer award; no FinalAcceptance, submitter contribution, grant change, or unrelated task effect |
 | pre-submit feedback in `NEEDS_REVISION` | prior findings visible to contributor, revision deadline active, no new submission created |
 | `NEEDS_REVISION -> SUBMITTED` | replacement submission packet, revision replay covering every high and medium prior finding, revision count under policy limit |
 | compensation `pending -> fulfilled` | immutable fulfillment receipt, external reference, and audit event |
