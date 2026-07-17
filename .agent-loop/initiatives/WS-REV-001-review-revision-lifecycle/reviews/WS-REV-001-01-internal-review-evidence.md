@@ -1,10 +1,10 @@
 # WS-REV-001-01 Internal Review Evidence
 
-Reviewed code SHA: `9b2fc11c12e8c0cb19914c9772f95ba4e9814688`
+Reviewed code SHA: `df098f203fae4982806568dcc25a81043d9f7211`
 
-Trusted main SHA: `0302bcf854a565d429e232ad6b076a1931ea74e4`
+Trusted main SHA: `a947b8693a97bdb94c9dc63202a51e197834d613`
 
-Reviewed at: `2026-07-17T21:34:54Z`
+Reviewed at: `2026-07-17T22:56:26Z`
 
 Reviewer run IDs: `/root/rev01_senior_arch_reuse`, `/root/rev01_qa_product_test`, `/root/rev01_security_docs_ci`
 
@@ -16,30 +16,32 @@ Valid findings addressed: yes
 
 | Reviewer | Result | Blocking findings | Notes |
 |---|---|---|---|
-| Senior engineering | PASS | None | Exact lifecycle, dependency boundaries, scope, and prior repairs verified |
-| QA/test | PASS | None | Acceptance behavior, edge cases, scanner regression fixtures, and 85 agent gates verified |
+| Senior engineering | PASS | None | Exact lifecycle, dependency boundaries, scope, checker admission, and prior repairs verified |
+| QA/test | PASS | None | Acceptance behavior, edge cases, structural regressions, and 87 agent gates verified |
 | Security/auth | PASS | None | Concealment, AUTH PREP bindings, lock/evaluate/stage order, grants, leases, and artifact privacy verified |
-| Product/ops | PASS | None | Decision effects, revision replay, FinalAcceptance, contribution matrix, payable-only awards, and unavailable surfaces verified |
-| Architecture | PASS | None | REV/AUTH/ART/CON ownership, one-commit transaction, immutable lineage, and deferred boundaries verified |
-| Docs | PASS | None | Active-contract precedence, archive provenance, roadmap alignment, diagrams, and stale wording verified |
+| Product/ops | PASS | None | Decision effects, CheckerResult versus Review-rooted revision, FinalAcceptance, contributions, and unavailable surfaces verified |
+| Architecture | PASS | None | REV/AUTH/ART/CON ownership, canonical ordered one-commit transaction, immutable lineage, and deferred boundaries verified |
+| Docs | PASS | None | Active-contract precedence, exact CheckerRun admission, archive provenance, operational order, diagrams, and stale wording verified |
 | Reuse/dedup | PASS | None | Existing canonical records, shared ports, renderer pattern, and scanner structure verified |
 | Test delta | PASS | None | Tests add coverage without removed or weakened assertions |
 | CI integrity | PASS | None | No workflow, coverage threshold, package script, or gate weakening |
 
 ## Finding Disposition
 
-Two prior exact-SHA candidates failed internal review. Every valid finding was
-repaired before this review: stale roadmap and model semantics, scanner
-fail-open cases, AUTH read/claim/decision choreography, deferred reputation,
-diagram scope, and renderer identity. Candidate `9b2fc11c` received a fresh
-complete review rather than inheriting approval from either failed candidate.
+Earlier exact-SHA reviews are historical after the CON PR #142 main merge and
+the subsequent repair cycles. Every valid finding was repaired before this
+review: FinalAcceptance field/provenance drift, canonical transaction ordering,
+planned availability, automated exact CheckerRun admission, checker versus
+Review-rooted revision lineage, non-mutating reject sampling, and executable
+structural regression coverage. Candidate `df098f20` received a fresh complete
+review rather than inheriting any earlier approval.
 
 ## Deterministic Evidence
 
-- `python3 scripts/test_agent_gates.py`: 85 passed.
+- `python3 scripts/test_agent_gates.py`: 87 passed.
 - All stale artifact, authorization, review-contract, and Workstream wording
   scanners passed.
-- Markdown link validation passed for 47 changed Markdown files.
+- Markdown link validation passed for 49 changed Markdown files.
 - Ruff format and lint passed for both changed Python gate files.
 - All reference-spec checksums passed; the WS-REV and WS-IMP archival pairs are
   byte-identical to trusted base.

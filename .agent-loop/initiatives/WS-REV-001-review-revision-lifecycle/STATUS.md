@@ -66,13 +66,15 @@ gate. It changes no backend, migration, AUTH, ART, or CON runtime code.
 
 ## Chunk 01 evidence state
 
-Candidate `9b2fc11c12e8c0cb19914c9772f95ba4e9814688` passed all nine required
-tracks before CON PR #142 merged. That PASS is retained as historical repair
-evidence, but current-main reconciliation changed shared active documents and
-therefore requires a new deterministic gate and exact-SHA reviewer pass.
+Candidate `df098f203fae4982806568dcc25a81043d9f7211` passed all nine required
+tracks against trusted current main
+`a947b8693a97bdb94c9dc63202a51e197834d613`: senior engineering, QA/test,
+security/auth, product/ops, architecture, docs, reuse/dedup, test delta, and CI
+integrity. All valid current-main reconciliation and repair findings are closed;
+87 agent-gate tests and the deterministic contract gates pass.
 
-Chunk 01 is not yet PR-ready after the main refresh. This status does not
-activate a review action or endpoint and does not authorize merge.
+Chunk 01 is PR-ready for external checks and human review. It activates no
+review action or endpoint and does not authorize merge.
 
 ## Stop condition
 

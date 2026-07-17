@@ -23,6 +23,8 @@ not v0.1 behavior.
 - Added `docs/spec_review_lifecycle.md` as the active normative contract.
 - Reconciled architecture, ADRs, operations, templates, roadmaps, and diagrams.
 - Added a fail-closed stale review-contract scanner and adversarial gate tests.
+- Added registered structural regressions for canonical accept ordering,
+  CheckerRun admission, and checker-versus-human revision lineage.
 - Preserved and proved all supplied archival inputs.
 - Added deterministic pinned rendering for the lifecycle and two changed
   context diagrams.
@@ -70,7 +72,7 @@ roadmap exports remain absent.
 
 ## Tests/Checks Run
 
-`85 agent gate tests passed`; Ruff format/lint, four stale-contract families,
+`87 agent gate tests passed`; Ruff format/lint, four stale-contract families,
 Markdown links, archive checksums/base diffs, PDF attributes, pinned double
 render, spreadsheet absence, merge-intent count, and `git diff --check` passed.
 
@@ -88,7 +90,8 @@ This chunk adds a mandatory scanner invoked by the existing agent-gate suite.
 ## Reviewer Results
 
 All nine required tracks passed exact SHA
-`9b2fc11c12e8c0cb19914c9772f95ba4e9814688`: senior engineering, QA/test,
+`df098f203fae4982806568dcc25a81043d9f7211` against trusted main
+`a947b8693a97bdb94c9dc63202a51e197834d613`: senior engineering, QA/test,
 security/auth, product/ops, architecture, docs, reuse/dedup, test delta, and CI
 integrity. No blocking findings remain.
 
